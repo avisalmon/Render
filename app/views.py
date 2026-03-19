@@ -1,11 +1,23 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout, authenticate
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth import login, logout
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
+from .models import Note
 
 
 def home(request):
-    return render(request, "app/home.html")
+    notes = Note.objects.filter(user=request.user) if request.user.is_authenticated else []
+    return render(request, "app/home.html", {"notes": notes})
+
+
+@login_required
+def add_note(request):
+    if request.method == "POST":
+        title = request.POST.get("title", "").strip()
+        body = request.POST.get("body", "").strip()
+        if title:
+            Note.objects.create(user=request.user, title=title, body=body)
+    return redirect("home")
 
 
 def register(request):
