@@ -5,7 +5,7 @@ services:
     plan: starter
     branch: main
     buildCommand: ./build.sh
-    startCommand: python manage.py migrate && gunicorn mysite.wsgi:application --bind 0.0.0.0:$PORT
+    startCommand: python manage.py migrate && python manage.py createsuperuser --noinput || true && gunicorn mysite.wsgi:application --bind 0.0.0.0:$PORT
     autoDeploy: true
     envVars:
       - key: PYTHON_VERSION
@@ -19,6 +19,12 @@ services:
       - key: CSRF_TRUSTED_ORIGINS
         value: https://mysite-0tu0.onrender.com
       - key: SECRET_KEY
+        sync: false
+      - key: DJANGO_SUPERUSER_USERNAME
+        sync: false
+      - key: DJANGO_SUPERUSER_EMAIL
+        sync: false
+      - key: DJANGO_SUPERUSER_PASSWORD
         sync: false
     disk:
       name: mysite-disk
