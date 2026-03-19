@@ -1,0 +1,31 @@
+body {
+    font-family: Arial, sans-serif;
+    max-width: 700px;
+    margin: 40px auto;
+    padding: 0 20px;
+    background: #f9f9f9;
+    color: #333;
+}
+
+h1 { color: #2c6e49; }
+h2 { color: #444; }
+
+input[type="text"], input[name="title"], input[name="body"] {
+    padding: 6px 10px;
+    margin-right: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+button {
+    padding: 6px 14px;
+    background: #2c6e49;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+ul { padding-left: 20px; }
+li { margin: 8px 0; }
+a { color: #2c6e49; }
