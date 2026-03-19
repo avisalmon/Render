@@ -15,9 +15,9 @@ services:
       - key: PERSISTENT_ROOT
         value: /var/data
       - key: ALLOWED_HOSTS
-        value: mysite.onrender.com
+        value: mysite-0tu0.onrender.com
       - key: CSRF_TRUSTED_ORIGINS
-        value: https://mysite.onrender.com
+        value: https://mysite-0tu0.onrender.com
       - key: SECRET_KEY
         sync: false
     disk:
