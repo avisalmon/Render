@@ -16,9 +16,9 @@ Including another URLconf
 """
 
 from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, re_path, include
+from django.views.static import serve
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -26,6 +26,9 @@ urlpatterns = [
     path("", include("app.urls")),
 ]
 
-# Serve media files in all environments — Gunicorn handles this on Render
-# (acceptable for small sites; use object storage for high traffic)
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Serve media files in all environments — django.conf.urls.static.static()
+# silently returns [] when DEBUG=False, so use re_path + serve directly.
+# Acceptable for small sites; use object storage for high traffic.
+urlpatterns += [
+    re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
+]
