@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: mysite
+    runtime: python
+    plan: starter
+    branch: main
+    buildCommand: ./build.sh
+    startCommand: gunicorn mysite.wsgi:application --bind 0.0.0.0:$PORT
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: DEBUG
+        value: "False"
+      - key: PERSISTENT_ROOT
+        value: /var/data
+      - key: ALLOWED_HOSTS
+        value: mysite.onrender.com
+      - key: CSRF_TRUSTED_ORIGINS
+        value: https://mysite.onrender.com
+      - key: SECRET_KEY
+        sync: false
+    disk:
+      name: mysite-disk
+      mountPath: /var/data
+      sizeGB: 1
