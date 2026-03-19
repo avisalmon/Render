@@ -59,8 +59,11 @@ WSGI_APPLICATION = "mysite.wsgi.application"
 PERSISTENT_ROOT = Path(os.environ.get("PERSISTENT_ROOT", BASE_DIR))
 DATA_DIR = PERSISTENT_ROOT / "data"
 MEDIA_DIR = PERSISTENT_ROOT / "media"
-DATA_DIR.mkdir(parents=True, exist_ok=True)
-MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+try:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+except OSError:
+    pass  # Disk not mounted yet (build phase). Dirs created at runtime.
 
 DATABASES = {
     "default": {
