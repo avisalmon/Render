@@ -15,8 +15,9 @@ def add_note(request):
     if request.method == "POST":
         title = request.POST.get("title", "").strip()
         body = request.POST.get("body", "").strip()
+        image = request.FILES.get("image")
         if title:
-            Note.objects.create(user=request.user, title=title, body=body)
+            Note.objects.create(user=request.user, title=title, body=body, image=image)
     return redirect("home")
 
 

@@ -10,15 +10,22 @@
   {% if user.is_authenticated %}
     <p>Hello, {{ user.username }}. <a href="{% url 'logout' %}">Logout</a></p>
     <h2>My Notes</h2>
-    <form method="post" action="{% url 'add_note' %}">
+    <form method="post" action="{% url 'add_note' %}" enctype="multipart/form-data">
       {% csrf_token %}
       <input name="title" placeholder="Title" required>
       <input name="body" placeholder="Body">
+      <input type="file" name="image" accept="image/*">
       <button type="submit">Add Note</button>
     </form>
     <ul>
       {% for note in notes %}
-        <li><strong>{{ note.title }}</strong> — {{ note.body }} <em>({{ note.created_at|date:"Y-m-d H:i" }})</em></li>
+        <li>
+          <strong>{{ note.title }}</strong> — {{ note.body }}
+          <em>({{ note.created_at|date:"Y-m-d H:i" }})</em>
+          {% if note.image %}
+            <br><img src="{{ note.image.url }}" style="max-width:200px; margin-top:6px;">
+          {% endif %}
+        </li>
       {% empty %}
         <li>No notes yet.</li>
       {% endfor %}
