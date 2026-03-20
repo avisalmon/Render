@@ -142,3 +142,9 @@ SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"
+
+# Local overrides — not committed, not deployed
+try:
+    from .settings_local import *  # noqa: F401 F403
+except ImportError:
+    pass

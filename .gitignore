@@ -8,6 +8,7 @@ __pycache__/
 .env.*
 db.sqlite3
 media/
+settings_local.py
 staticfiles/
 .vscode/
 .idea/
