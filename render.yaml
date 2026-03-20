@@ -15,9 +15,9 @@ services:
       - key: PERSISTENT_ROOT
         value: /var/data
       - key: ALLOWED_HOSTS
-        value: mysite-0tu0.onrender.com
+        value: mysite-0tu0.onrender.com,babook.co.il,www.babook.co.il
       - key: CSRF_TRUSTED_ORIGINS
-        value: https://mysite-0tu0.onrender.com
+        value: https://mysite-0tu0.onrender.com,https://babook.co.il,https://www.babook.co.il
       - key: SECRET_KEY
         sync: false
       - key: DJANGO_SUPERUSER_USERNAME
