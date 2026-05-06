@@ -19,10 +19,17 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import path, re_path, include
 from django.views.static import serve
+from django.http import JsonResponse
+
+
+def healthz(request):
+    return JsonResponse({"status": "ok"})
+
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/", include("allauth.urls")),
+    path("healthz", healthz, name="healthz"),
     path("", include("app.urls")),
 ]
 
