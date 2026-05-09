@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>babook.co.il — Project Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    --bg: #0f1419;
+    --card: #1a2129;
+    --border: #2a3441;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --todo: #6e7681;
+    --wip: #d29922;
+    --done: #3fb950;
+    --blocked: #f85149;
+    --deferred: #a371f7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px;
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    background: var(--bg); color: var(--text);
+  }
+  h1 { margin: 0 0 4px; font-size: 24px; }
+  .sub { color: var(--muted); margin-bottom: 24px; font-size: 14px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .card h2 { margin: 0 0 4px; font-size: 16px; }
+  .card .id { color: var(--muted); font-size: 12px; font-family: ui-monospace, monospace; }
+  .bar {
+    margin-top: 12px;
+    height: 10px; border-radius: 5px; overflow: hidden;
+    display: flex; background: #0d1117;
+  }
+  .bar > div { height: 100%; }
+  .bar .done { background: var(--done); }
+  .bar .wip { background: var(--wip); }
+  .bar .blocked { background: var(--blocked); }
+  .bar .deferred { background: var(--deferred); }
+  .bar .todo { background: var(--todo); }
+  .stats {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    margin-top: 10px; font-size: 12px; color: var(--muted);
+  }
+  .stats span b { color: var(--text); }
+  .pct { float: right; font-size: 13px; color: var(--muted); }
+  .epic-card { grid-column: 1 / -1; background: linear-gradient(180deg, #1a2129, #141a22); }
+  .epic-card h2 { font-size: 18px; }
+  .epic-card .bar { height: 14px; }
+  .legend {
+    display: flex; gap: 14px; flex-wrap: wrap;
+    font-size: 12px; color: var(--muted); margin-bottom: 16px;
+  }
+  .legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .err {
+    background: #5a1d1d; border: 1px solid var(--blocked);
+    padding: 12px; border-radius: 6px; color: #ffd7d7;
+  }
+  table.feat {
+    width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 12px;
+  }
+  table.feat th, table.feat td {
+    padding: 4px 6px; border-bottom: 1px solid var(--border); text-align: left;
+  }
+  table.feat th { color: var(--muted); font-weight: 500; }
+  .pill {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 11px; font-weight: 600;
+  }
+  .pill.TODO { background: #2a3441; color: var(--muted); }
+  .pill.WIP { background: #4a3611; color: var(--wip); }
+  .pill.DONE { background: #133d20; color: var(--done); }
+  .pill.BLOCKED { background: #4a1e1e; color: var(--blocked); }
+  .pill.DEFERRED { background: #2c1d4a; color: var(--deferred); }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+  .footer { color: var(--muted); font-size: 11px; margin-top: 24px; text-align: center; }
+  a { color: #58a6ff; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+  <h1>babook.co.il — Project Dashboard</h1>
+  <div class="sub">
+    Live progress from <a href="backlog.md">backlog.md</a>, traced to
+    <a href="main_spec.md">main_spec.md</a>.
+  </div>
+
+  <div class="legend">
+    <span><span class="dot" style="background: var(--done)"></span>Done</span>
+    <span><span class="dot" style="background: var(--wip)"></span>WIP</span>
+    <span><span class="dot" style="background: var(--blocked)"></span>Blocked</span>
+    <span><span class="dot" style="background: var(--deferred)"></span>Deferred</span>
+    <span><span class="dot" style="background: var(--todo)"></span>Todo</span>
+  </div>
+
+  <div id="root">Loading <code>backlog.md</code>…</div>
+
+  <div class="footer">
+    Open via <code>Live Server</code> or <code>file://</code>. If your browser blocks fetching local files,
+    serve the <code>docs/</code> folder: <code>python -m http.server 8001 --directory docs</code> then open
+    <code>http://localhost:8001/dashboard.html</code>.
+  </div>
+
+<script>
+const STATUSES = ["TODO", "WIP", "DONE", "BLOCKED", "DEFERRED"];
+
+async function load() {
+  let txt;
+  try {
+    const res = await fetch("backlog.md", { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    txt = await res.text();
+  } catch (e) {
+    document.getElementById("root").innerHTML =
+      `<div class="err">Could not load <code>backlog.md</code>: ${e.message}.<br>` +
+      `Run <code>python -m http.server 8001 --directory docs</code> and open ` +
+      `<code>http://localhost:8001/dashboard.html</code>.</div>`;
+    return;
+  }
+  render(parse(txt));
+}
+
+function parse(md) {
+  const lines = md.split(/\r?\n/);
+  const epics = [];
+  let curEpic = null, curSprint = null, inTable = false, headers = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    let m = line.match(/^##\s+(EPIC-[\w.-]+)\s+—\s+(.+)$/);
+    if (m) {
+      curEpic = { id: m[1], title: m[2].trim(), sprints: [] };
+      epics.push(curEpic);
+      curSprint = null; inTable = false;
+      continue;
+    }
+
+    m = line.match(/^###\s+(SPR-[\w.-]+)\s+—\s+(.+)$/);
+    if (m && curEpic) {
+      curSprint = { id: m[1], title: m[2].trim(), features: [] };
+      curEpic.sprints.push(curSprint);
+      inTable = false;
+      continue;
+    }
+
+    if (curSprint && /^\|\s*Feature ID\s*\|/i.test(line)) {
+      inTable = true;
+      headers = line.split("|").map(s => s.trim()).filter(Boolean);
+      continue;
+    }
+    if (inTable && /^\|\s*-+/.test(line)) continue;
+    if (inTable && line.startsWith("|")) {
+      const cells = line.split("|").map(s => s.trim());
+      cells.shift(); cells.pop();
+      if (cells.length >= 4) {
+        const obj = {};
+        headers.forEach((h, idx) => { obj[h] = cells[idx] || ""; });
+        const status = (obj["Status"] || "TODO").toUpperCase().replace(/[^A-Z]/g, "");
+        curSprint.features.push({
+          id: obj["Feature ID"] || "",
+          title: obj["Title"] || "",
+          req: obj["REQ trace"] || "",
+          status: STATUSES.includes(status) ? status : "TODO",
+          notes: obj["Notes"] || "",
+        });
+      }
+      continue;
+    }
+    if (inTable && !line.startsWith("|")) inTable = false;
+  }
+  return epics;
+}
+
+function tally(features) {
+  const t = { TODO: 0, WIP: 0, DONE: 0, BLOCKED: 0, DEFERRED: 0, total: features.length };
+  features.forEach(f => { t[f.status]++; });
+  return t;
+}
+
+function bar(t) {
+  if (!t.total) return `<div class="bar"></div>`;
+  const pct = s => (t[s] / t.total) * 100;
+  return `<div class="bar">
+    <div class="done" style="width:${pct("DONE")}%"></div>
+    <div class="wip" style="width:${pct("WIP")}%"></div>
+    <div class="blocked" style="width:${pct("BLOCKED")}%"></div>
+    <div class="deferred" style="width:${pct("DEFERRED")}%"></div>
+    <div class="todo" style="width:${pct("TODO")}%"></div>
+  </div>`;
+}
+
+function statsLine(t) {
+  return `<div class="stats">
+    <span><b>${t.DONE}</b>/${t.total} done</span>
+    <span>${t.WIP} WIP</span>
+    <span>${t.BLOCKED} blocked</span>
+    <span>${t.DEFERRED} deferred</span>
+    <span>${t.TODO} todo</span>
+  </div>`;
+}
+
+function render(epics) {
+  const root = document.getElementById("root");
+  if (!epics.length) {
+    root.innerHTML = `<div class="err">No epics parsed from backlog.md.</div>`;
+    return;
+  }
+  let html = "";
+  for (const epic of epics) {
+    const allFeats = epic.sprints.flatMap(s => s.features);
+    const et = tally(allFeats);
+    const epct = et.total ? Math.round((et.DONE / et.total) * 100) : 0;
+    html += `<div class="grid"><div class="card epic-card">
+      <span class="pct">${epct}%</span>
+      <div class="id">${epic.id}</div>
+      <h2>${epic.title}</h2>
+      ${bar(et)}
+      ${statsLine(et)}
+    </div></div>`;
+
+    html += `<div class="grid">`;
+    for (const sp of epic.sprints) {
+      const t = tally(sp.features);
+      const pct = t.total ? Math.round((t.DONE / t.total) * 100) : 0;
+      html += `<div class="card">
+        <span class="pct">${pct}%</span>
+        <div class="id">${sp.id}</div>
+        <h2>${sp.title}</h2>
+        ${bar(t)}
+        ${statsLine(t)}
+        <details><summary>${sp.features.length} features</summary>
+          <table class="feat">
+            <tr><th>ID</th><th>Title</th><th>REQ</th><th>Status</th></tr>
+            ${sp.features.map(f => `<tr>
+              <td>${f.id}</td>
+              <td>${f.title}</td>
+              <td><code>${f.req}</code></td>
+              <td><span class="pill ${f.status}">${f.status}</span></td>
+            </tr>`).join("")}
+          </table>
+        </details>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+  root.innerHTML = html;
+}
+
+load();
+</script>
+</body>
+</html>
