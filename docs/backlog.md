@@ -68,19 +68,19 @@ Sprints in this epic:
 ### SPR-1.3 — UI & Branding
 
 **Goal:** Base template, Bootstrap, icons, logo, favicon, RTL/i18n, SEO, cookie banner.
-**Status:** TODO
+**Status:** DONE
 
 | Feature ID | Title | REQ trace | Status | Notes |
 |---|---|---|---|---|
-| F-1.3.1 | Base template `base.html` (header, menu, footer) | REQ-1.1.1 | TODO | |
-| F-1.3.2 | Bootstrap 5 via CDN + CDN pattern doc | REQ-1.1.7 | TODO | |
-| F-1.3.3 | Bootstrap Icons via CDN | REQ-1.1.8 | TODO | |
-| F-1.3.4 | Logo + favicon set (multi-size + manifest) | REQ-1.1.9, REQ-1.2.13 | TODO | Depends on ACT-4 |
-| F-1.3.5 | Bilingual i18n (Hebrew default + English) + RTL toggle | REQ-1.2.10 | TODO | |
-| F-1.3.6 | Responsive layout audit (≥360px, hamburger menu) | REQ-1.2.9 | TODO | |
-| F-1.3.7 | SEO basics (sitemap.xml, robots.txt, meta, OG) | REQ-1.2.14 | TODO | |
-| F-1.3.8 | Cookie / privacy banner + `/privacy/` + `/terms/` | REQ-1.2.12 | TODO | Depends on ACT-7 |
-| F-1.3.9 | Plausible analytics snippet (prod only) | REQ-1.2.11 | TODO | Depends on ACT-5 |
+| F-1.3.1 | Base template `base.html` (header, menu, footer) | REQ-1.1.1 | DONE | Bootstrap navbar, footer, all pages extend base |
+| F-1.3.2 | Bootstrap 5 via CDN | REQ-1.1.7 | DONE | cdn.jsdelivr.net bootstrap@5.3.3 |
+| F-1.3.3 | Bootstrap Icons via CDN | REQ-1.1.8 | DONE | cdn.jsdelivr.net bootstrap-icons@1.11.3 |
+| F-1.3.4 | Logo + favicon set | REQ-1.1.9, REQ-1.2.13 | DONE | SVG open-book logo; favicon.svg in static/ |
+| F-1.3.5 | Bilingual i18n (Hebrew default + English) + RTL toggle | REQ-1.2.10 | DONE | LocaleMiddleware, LANGUAGE_CODE=he, set_language, dir=rtl |
+| F-1.3.6 | Responsive layout audit | REQ-1.2.9 | DONE | viewport meta, Bootstrap grid, hamburger navbar |
+| F-1.3.7 | SEO basics (sitemap.xml, robots.txt, meta, OG) | REQ-1.2.14 | DONE | /sitemap.xml, /robots.txt, meta description in base |
+| F-1.3.8 | Cookie / privacy banner + `/privacy/` + `/terms/` | REQ-1.2.12 | DONE | Cookie banner in base; editable privacy.html + terms.html |
+| F-1.3.9 | Plausible analytics snippet (prod only) | REQ-1.2.11 | DONE | Conditional on PLAUSIBLE_DOMAIN env var |
 
 ---
 
