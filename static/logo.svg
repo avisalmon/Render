@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Left page -->
+  <path d="M32 12 C22 12 8 16 4 26 L4 56 C8 46 22 42 32 42 Z" fill="#4361ee"/>
+  <!-- Right page -->
+  <path d="M32 12 C42 12 56 16 60 26 L60 56 C56 46 42 42 32 42 Z" fill="#3a0ca3"/>
+  <!-- Spine -->
+  <rect x="30" y="10" width="4" height="48" rx="2" fill="#1a1a2e"/>
+  <!-- Left page lines -->
+  <line x1="12" y1="28" x2="28" y2="26" stroke="white" stroke-width="1.5" stroke-opacity="0.5"/>
+  <line x1="11" y1="34" x2="27" y2="32" stroke="white" stroke-width="1.5" stroke-opacity="0.5"/>
+  <line x1="10" y1="40" x2="26" y2="38" stroke="white" stroke-width="1.5" stroke-opacity="0.5"/>
+  <!-- Right page lines -->
+  <line x1="52" y1="28" x2="36" y2="26" stroke="white" stroke-width="1.5" stroke-opacity="0.5"/>
+  <line x1="53" y1="34" x2="37" y2="32" stroke="white" stroke-width="1.5" stroke-opacity="0.5"/>
+  <line x1="54" y1="40" x2="38" y2="38" stroke="white" stroke-width="1.5" stroke-opacity="0.5"/>
+</svg>

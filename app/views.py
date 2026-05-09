@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
 from .models import Note, UserProfile
 
 
@@ -46,4 +47,22 @@ def profile(request):
         user_profile.display_name = display_name
         user_profile.save()
     return render(request, "app/profile.html", {"user_profile": user_profile})
+
+
+def robots_txt(request):
+    lines = [
+        "User-agent: *",
+        "Disallow: /admin/",
+        "Disallow: /accounts/",
+        "Sitemap: https://babook.co.il/sitemap.xml",
+    ]
+    return HttpResponse("\n".join(lines), content_type="text/plain")
+
+
+def privacy(request):
+    return render(request, "app/privacy.html")
+
+
+def terms(request):
+    return render(request, "app/terms.html")
 

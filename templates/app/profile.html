@@ -1,16 +1,28 @@
-<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="utf-8"><title>Profile — babook</title></head>
-<body>
-  <h1>Profile</h1>
-  <form method="post">
-    {% csrf_token %}
-    <label>Display name:
-      <input type="text" name="display_name" value="{{ user_profile.display_name }}">
-    </label>
-    <button type="submit">Save</button>
-  </form>
-  <p>Role: {{ user_profile.role }}</p>
-  <a href="/">Home</a>
-</body>
-</html>
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Profile" %} — babook{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <h1 class="mb-4">{% trans "Profile" %}</h1>
+    <form method="post" class="card p-4">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label">{% trans "Display name" %}</label>
+        <input type="text" class="form-control" name="display_name" value="{{ user_profile.display_name }}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">{% trans "Username" %}</label>
+        <input type="text" class="form-control" value="{{ request.user.username }}" disabled>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">{% trans "Role" %}</label>
+        <input type="text" class="form-control" value="{{ user_profile.role }}" disabled>
+      </div>
+      <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

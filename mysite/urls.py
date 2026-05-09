@@ -18,8 +18,13 @@ Including another URLconf
 from django.conf import settings
 from django.contrib import admin
 from django.urls import path, re_path, include
-from django.views.static import serve
 from django.http import JsonResponse
+from django.views.static import serve
+from django.contrib.sitemaps.views import sitemap
+from app.sitemaps import StaticViewSitemap
+from app.views import robots_txt, privacy, terms
+
+sitemaps = {"static": StaticViewSitemap}
 
 
 def healthz(request):
@@ -29,7 +34,12 @@ def healthz(request):
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/", include("allauth.urls")),
+    path("i18n/", include("django.conf.urls.i18n")),
     path("healthz", healthz, name="healthz"),
+    path("robots.txt", robots_txt, name="robots_txt"),
+    path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="django.contrib.sitemaps.views.sitemap"),
+    path("privacy/", privacy, name="privacy"),
+    path("terms/", terms, name="terms"),
     path("", include("app.urls")),
 ]
 

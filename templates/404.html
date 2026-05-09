@@ -1,9 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="utf-8"><title>Page Not Found — babook</title></head>
-<body>
-  <h1>404 — Page Not Found</h1>
-  <p>The page you were looking for doesn't exist.</p>
-  <a href="/">Go home</a>
-</body>
-</html>
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}404 — babook{% endblock %}
+{% block content %}
+<div class="text-center py-5">
+  <h1 class="display-1 fw-bold text-muted">404</h1>
+  <p class="lead">{% trans "Page not found." %}</p>
+  <a href="/" class="btn btn-primary">{% trans "Go home" %}</a>
+</div>
+{% endblock %}

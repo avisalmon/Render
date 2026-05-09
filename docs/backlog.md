@@ -55,7 +55,7 @@ Sprints in this epic:
 | Feature ID | Title | REQ trace | Status | Notes |
 |---|---|---|---|---|
 | F-1.2.1 | Resend email backend (dev console / prod Resend) | REQ-1.2.2 | DONE | EMAIL_BACKEND declared; Resend setup deferred to ACT-1/2 |
-| F-1.2.2 | Google OAuth verified end-to-end on prod | REQ-1.1.2 | DONE | Config declared; live test deferred to ACT-8 |
+| F-1.2.2 | Google OAuth verified end-to-end on prod | REQ-1.1.2 | DONE | Live on prod — redirects to accounts.google.com with real client ID |
 | F-1.2.3 | GitHub OAuth provider (allauth) | REQ-1.6.1, REQ-1.5.2 | DONE | allauth.socialaccount.providers.github in INSTALLED_APPS |
 | F-1.2.4 | Password signup / login / logout | REQ-1.1.3 | DONE | register fixed for multiple auth backends; /profile/ added |
 | F-1.2.5 | Forgot password / reset password flow | REQ-1.1.3 | DEFERRED | Depends on F-1.2.1 (Resend) — deferred to ACT-1/2 |

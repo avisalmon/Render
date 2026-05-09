@@ -1,42 +1,52 @@
-{% load static %}
-<!DOCTYPE html>
-<html>
-<head>
-  <title>mysite</title>
-  <link rel="stylesheet" href="{% static 'style.css' %}">
-</head>
-<body>
-  <h1>mysite</h1>
-  <!-- auto-deploy working -->
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}babook — Home{% endblock %}
+
+{% block content %}
   {% if user.is_authenticated %}
-    <p>Hello, {{ user.username }}. <a href="{% url 'logout' %}">Logout</a></p>
-    <h2>My Notes</h2>
-    <form method="post" action="{% url 'add_note' %}" enctype="multipart/form-data">
+    <h2>{% trans "My Notes" %}</h2>
+    <form method="post" action="{% url 'add_note' %}" enctype="multipart/form-data" class="mb-4">
       {% csrf_token %}
-      <input name="title" placeholder="Title" required>
-      <input name="body" placeholder="Body">
-      <input type="file" name="image" accept="image/*">
-      <button type="submit">Add Note</button>
+      <div class="row g-2">
+        <div class="col-md-4">
+          <input class="form-control" name="title" placeholder="{% trans 'Title' %}" required>
+        </div>
+        <div class="col-md-5">
+          <input class="form-control" name="body" placeholder="{% trans 'Body' %}">
+        </div>
+        <div class="col-md-2">
+          <input class="form-control" type="file" name="image" accept="image/*">
+        </div>
+        <div class="col-md-1">
+          <button class="btn btn-primary w-100" type="submit"><i class="bi bi-plus-lg"></i></button>
+        </div>
+      </div>
     </form>
-    <ul>
+    <ul class="list-group">
       {% for note in notes %}
-        <li>
-          <strong>{{ note.title }}</strong> — {{ note.body }}
-          <em>({{ note.created_at|date:"Y-m-d H:i" }})</em>
+        <li class="list-group-item">
+          <strong>{{ note.title }}</strong>
+          {% if note.body %} &mdash; {{ note.body }}{% endif %}
+          <small class="text-muted ms-2">{{ note.created_at|date:"Y-m-d H:i" }}</small>
           {% if note.image %}
-            <br><img src="{{ note.image.url }}" style="max-width:200px; margin-top:6px;">
+            <br><img src="{{ note.image.url }}" class="mt-2 rounded" style="max-width:200px;">
           {% endif %}
         </li>
       {% empty %}
-        <li>No notes yet.</li>
+        <li class="list-group-item text-muted">{% trans "No notes yet." %}</li>
       {% endfor %}
     </ul>
   {% else %}
-    <p>
-      <a href="{% url 'login' %}">Login</a> |
-      <a href="{% url 'register' %}">Register</a> |
-      <a href="{% url 'socialaccount_signup' %}?next=/">Login with Google</a>
-    </p>
+    <div class="text-center py-5">
+      <img src="{% static 'logo.svg' %}" width="80" height="80" class="mb-4">
+      <h1 class="display-5 fw-bold">babook</h1>
+      <p class="lead text-muted">{% trans "AI training videos for developers" %}</p>
+      <div class="d-flex gap-3 justify-content-center mt-4">
+        <a class="btn btn-primary btn-lg" href="{% url 'login' %}">{% trans "Login" %}</a>
+        <a class="btn btn-outline-primary btn-lg" href="{% url 'register' %}">{% trans "Register" %}</a>
+        <a class="btn btn-outline-secondary btn-lg" href="{% url 'socialaccount_signup' %}?next=/">{% trans "Login with Google" %}</a>
+      </div>
+    </div>
   {% endif %}
-</body>
-</html>
+{% endblock %}
