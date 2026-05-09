@@ -211,6 +211,7 @@ Sprints in this epic:
 | ACT-19 | Create OpenAI API account + payment method, share API key | F-1.8.1 |
 | ACT-20 | Set token-rate limits per tier (daily caps) | F-1.8.6 |
 | ACT-21 | Set monthly cost cap amount (USD) | F-1.8.8 |
+| ACT-22 | Set up email addresses on babook.co.il domain: `privacy@babook.co.il`, `support@babook.co.il`, `noreply@babook.co.il` | F-1.2.1, F-1.3.8 |
 
 ---
 
