@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
-from .models import Note
+from .models import Note, UserProfile
 
 
 def home(request):
@@ -26,7 +26,7 @@ def register(request):
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)
+            login(request, user, backend="django.contrib.auth.backends.ModelBackend")
             return redirect("home")
     else:
         form = UserCreationForm()
@@ -36,4 +36,14 @@ def register(request):
 def logout_view(request):
     logout(request)
     return redirect("home")
+
+
+@login_required
+def profile(request):
+    user_profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    if request.method == "POST":
+        display_name = request.POST.get("display_name", "").strip()
+        user_profile.display_name = display_name
+        user_profile.save()
+    return render(request, "app/profile.html", {"user_profile": user_profile})
 

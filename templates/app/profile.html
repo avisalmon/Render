@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Profile — babook</title></head>
+<body>
+  <h1>Profile</h1>
+  <form method="post">
+    {% csrf_token %}
+    <label>Display name:
+      <input type="text" name="display_name" value="{{ user_profile.display_name }}">
+    </label>
+    <button type="submit">Save</button>
+  </form>
+  <p>Role: {{ user_profile.role }}</p>
+  <a href="/">Home</a>
+</body>
+</html>
