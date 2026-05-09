@@ -104,6 +104,7 @@ LANGUAGES = [
     ("en", "English"),
 ]
 LOCALE_PATHS = [BASE_DIR / "locale"]
+LANGUAGE_COOKIE_NAME = "django_language"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
