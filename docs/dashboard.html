@@ -108,28 +108,138 @@
   <div id="root">Loading <code>backlog.md</code>…</div>
 
   <div class="footer">
-    Open via <code>Live Server</code> or <code>file://</code>. If your browser blocks fetching local files,
-    serve the <code>docs/</code> folder: <code>python -m http.server 8001 --directory docs</code> then open
-    <code>http://localhost:8001/dashboard.html</code>.
+    Data embedded from <code>backlog.md</code>. To refresh after backlog changes,
+    update the <code>BACKLOG_MD</code> string in this file.
   </div>
 
 <script>
 const STATUSES = ["TODO", "WIP", "DONE", "BLOCKED", "DEFERRED"];
 
+// Backlog data embedded inline so dashboard works from file:// (no server needed).
+// To update: copy contents of backlog.md between the backticks below.
+const BACKLOG_MD = `
+## EPIC-1 — Base Infrastructure
+
+### SPR-1.1 — Foundations
+
+| Feature ID | Title | REQ trace | Status | Notes |
+|---|---|---|---|---|
+| F-1.1.1 | Env & secrets pattern | REQ-1.2.3 | DONE | python-dotenv wired |
+| F-1.1.2 | SQLite WAL tuning + persistent disk path | REQ-1.5, REQ-1.2.6 | DONE | WAL + busy_timeout |
+| F-1.1.3 | Security hardening | REQ-1.2.6 | DONE | SSL redirect, HSTS, cookies |
+| F-1.1.4 | Logging config | REQ-1.2.5 | DONE | console + rotating file |
+| F-1.1.5 | Custom error pages (404/500/403) | REQ-1.2.1 | DONE | templates created |
+| F-1.1.6 | Health check /healthz | REQ-1.2.15 | DONE | JSON status ok |
+| F-1.1.7 | Static files via WhiteNoise | REQ-1.1.4 | DONE | verified by tests |
+| F-1.1.8 | Media files on persistent disk | REQ-1.1.5 | DONE | MEDIA_ROOT under PERSISTENT_ROOT |
+
+### SPR-1.2 — Auth & Users
+
+| Feature ID | Title | REQ trace | Status | Notes |
+|---|---|---|---|---|
+| F-1.2.1 | Resend email backend | REQ-1.2.2 | DONE | Resend setup deferred to ACT-1/2 |
+| F-1.2.2 | Google OAuth on prod | REQ-1.1.2 | DONE | Live on prod |
+| F-1.2.3 | GitHub OAuth provider | REQ-1.6.1, REQ-1.5.2 | DONE | allauth github provider |
+| F-1.2.4 | Password signup/login/logout | REQ-1.1.3 | DONE | register + /profile/ |
+| F-1.2.5 | Forgot password / reset | REQ-1.1.3 | DEFERRED | Depends on Resend |
+| F-1.2.6 | User profile page | REQ-1.1.6 | DONE | /profile/ view + edit |
+| F-1.2.7 | Roles & permissions | REQ-1.2.8 | DONE | UserProfile model with role |
+| F-1.2.8 | Django admin access | REQ-1.2.7 | DONE | /admin/ for superuser |
+
+### SPR-1.3 — UI & Branding
+
+| Feature ID | Title | REQ trace | Status | Notes |
+|---|---|---|---|---|
+| F-1.3.1 | Base template base.html | REQ-1.1.1 | DONE | Bootstrap navbar, footer |
+| F-1.3.2 | Bootstrap 5 via CDN | REQ-1.1.7 | DONE | bootstrap@5.3.3 |
+| F-1.3.3 | Bootstrap Icons via CDN | REQ-1.1.8 | DONE | bootstrap-icons@1.11.3 |
+| F-1.3.4 | Logo + favicon set | REQ-1.1.9, REQ-1.2.13 | DONE | SVG open-book logo |
+| F-1.3.5 | Bilingual i18n + RTL | REQ-1.2.10 | DONE | Hebrew default + English |
+| F-1.3.6 | Responsive layout | REQ-1.2.9 | DONE | viewport meta, Bootstrap grid |
+| F-1.3.7 | SEO basics | REQ-1.2.14 | DONE | sitemap.xml, robots.txt, meta |
+| F-1.3.8 | Cookie/privacy banner | REQ-1.2.12 | DONE | Cookie banner + pages |
+| F-1.3.9 | Plausible analytics | REQ-1.2.11 | DONE | Conditional on env var |
+
+### SPR-1.4 — Video Infrastructure (Bunny Stream)
+
+| Feature ID | Title | REQ trace | Status | Notes |
+|---|---|---|---|---|
+| F-1.4.1 | Bunny Stream env keys | REQ-1.3.1 | DONE | 4 env vars wired |
+| F-1.4.2 | Video + Course models + admin | REQ-1.3.2, REQ-1.3.8 | DONE | Course + Video + UserVideoProgress |
+| F-1.4.3 | Embedded responsive Bunny player | REQ-1.3.3 | DONE | iframe 16:9 responsive |
+| F-1.4.4 | Signed playback URL generation | REQ-1.3.4 | DONE | SHA256 token auth, 24h expiry |
+| F-1.4.5 | UserVideoProgress + heartbeat | REQ-1.3.5 | DONE | POST /api/video-progress/ |
+| F-1.4.6 | Resume playback | REQ-1.3.6 | DONE | last_position_seconds in context |
+| F-1.4.7 | Course progress aggregation | REQ-1.3.7 | DONE | 95% complete threshold |
+| F-1.4.8 | Free preview gating | REQ-1.3.9 | DONE | anon access + entitlement stub |
+
+### SPR-1.5 — Billing (Stripe + Green Invoice)
+
+| Feature ID | Title | REQ trace | Status | Notes |
+|---|---|---|---|---|
+| F-1.5.1 | Stripe account + dj-stripe | REQ-1.4.1 | TODO | Depends on ACT-10 |
+| F-1.5.2 | Pricing model | REQ-1.4.2 | TODO | Depends on ACT-13 |
+| F-1.5.3 | Multi-currency (ILS + USD) | REQ-1.4.3 | TODO | |
+| F-1.5.4 | Stripe Checkout | REQ-1.4.4, REQ-1.4.12 | TODO | |
+| F-1.5.5 | Stripe webhook handler | REQ-1.4.5 | TODO | |
+| F-1.5.6 | Entitlement model | REQ-1.4.6 | TODO | |
+| F-1.5.7 | Stripe Customer Portal | REQ-1.4.7 | TODO | |
+| F-1.5.8 | Coupons & trial | REQ-1.4.8 | TODO | |
+| F-1.5.9 | Green Invoice integration | REQ-1.4.9 | TODO | Depends on ACT-11/12 |
+| F-1.5.10 | Refund flow | REQ-1.4.10 | TODO | |
+| F-1.5.11 | VAT handling | REQ-1.4.11 | TODO | Depends on ACT-12 |
+
+### SPR-1.6 — Copilot Seat Provisioning
+
+| Feature ID | Title | REQ trace | Status | Notes |
+|---|---|---|---|---|
+| F-1.6.1 | GitHub org + Copilot Business | REQ-1.5.1 | TODO | Depends on ACT-14/15/16 |
+| F-1.6.2 | GitHub username on user | REQ-1.5.2 | TODO | |
+| F-1.6.3 | Copilot subscription tier flag | REQ-1.5.3 | TODO | Depends on ACT-17 |
+| F-1.6.4 | Auto-invite to org | REQ-1.5.4 | TODO | |
+| F-1.6.5 | Auto-assign Copilot seat | REQ-1.5.5 | TODO | |
+| F-1.6.6 | Auto-revoke on churn | REQ-1.5.6 | TODO | |
+| F-1.6.7 | Inactivity reclamation | REQ-1.5.7 | TODO | |
+| F-1.6.8 | Admin Copilot dashboard | REQ-1.5.8 | TODO | |
+| F-1.6.9 | Seat cap enforcement | REQ-1.5.9 | TODO | |
+| F-1.6.10 | User-facing seat status | REQ-1.5.10 | TODO | |
+| F-1.6.11 | Audit log | REQ-1.5.11 | TODO | |
+| F-1.6.12 | Org-level Copilot policy | REQ-1.5.12 | TODO | Depends on ACT-18 |
+
+### SPR-1.7 — Ops, Quality & BKMs
+
+| Feature ID | Title | REQ trace | Status | Notes |
+|---|---|---|---|---|
+| F-1.7.1 | pytest-django setup | REQ-1.2.16 | TODO | |
+| F-1.7.2 | black + ruff + pre-commit | REQ-1.2.17 | TODO | |
+| F-1.7.3 | Nightly DB backup | REQ-1.2.4 | TODO | Depends on ACT-3 |
+| F-1.7.4 | backup_restore.md BKM | REQ-1.2.18 | TODO | |
+| F-1.7.5 | rollback.md BKM | REQ-1.2.19 | TODO | |
+| F-1.7.6 | cicd.md BKM | REQ-1.1.10 | TODO | |
+| F-1.7.7 | env_vars.md BKM | REQ-1.2.3 | TODO | |
+| F-1.7.8 | roles.md | REQ-1.2.8 | TODO | |
+| F-1.7.9 | copilot_policy.md | REQ-1.5.12 | TODO | |
+
+### SPR-1.8 — AI Chat (OpenAI)
+
+| Feature ID | Title | REQ trace | Status | Notes |
+|---|---|---|---|---|
+| F-1.8.1 | OpenAI API integration | REQ-1.6.1 | TODO | Depends on ACT-19 |
+| F-1.8.2 | Chat endpoint with SSE | REQ-1.6.2 | TODO | |
+| F-1.8.3 | ChatSession + ChatMessage models | REQ-1.6.3 | TODO | |
+| F-1.8.4 | Context-aware system prompts | REQ-1.6.4 | TODO | |
+| F-1.8.5 | Model selection by tier | REQ-1.6.5 | TODO | |
+| F-1.8.6 | Per-user token rate limiting | REQ-1.6.6 | TODO | Depends on ACT-20 |
+| F-1.8.7 | Usage tracking + cost dashboard | REQ-1.6.7 | TODO | |
+| F-1.8.8 | Monthly cost cap | REQ-1.6.8 | TODO | Depends on ACT-21 |
+| F-1.8.9 | Chat UI widget | REQ-1.6.9 | TODO | |
+| F-1.8.10 | Session management | REQ-1.6.10 | TODO | |
+| F-1.8.11 | Content safety | REQ-1.6.11 | TODO | |
+| F-1.8.12 | Chat in course context | REQ-1.6.12 | TODO | |
+`;
+
 async function load() {
-  let txt;
-  try {
-    const res = await fetch("backlog.md", { cache: "no-store" });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    txt = await res.text();
-  } catch (e) {
-    document.getElementById("root").innerHTML =
-      `<div class="err">Could not load <code>backlog.md</code>: ${e.message}.<br>` +
-      `Run <code>python -m http.server 8001 --directory docs</code> and open ` +
-      `<code>http://localhost:8001/dashboard.html</code>.</div>`;
-    return;
-  }
-  render(parse(txt));
+  render(parse(BACKLOG_MD));
 }
 
 function parse(md) {
