@@ -197,6 +197,12 @@ ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"
 
+# Bunny Stream video hosting
+BUNNY_API_KEY = os.environ.get("BUNNY_API_KEY", "")
+BUNNY_STREAM_LIBRARY_ID = os.environ.get("BUNNY_STREAM_LIBRARY_ID", "")
+BUNNY_STREAM_CDN_HOSTNAME = os.environ.get("BUNNY_STREAM_CDN_HOSTNAME", "")
+BUNNY_STREAM_TOKEN_KEY = os.environ.get("BUNNY_STREAM_TOKEN_KEY", "")
+
 # Local overrides — not committed, not deployed
 try:
     from .settings_local import *  # noqa: F401 F403

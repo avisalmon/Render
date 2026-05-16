@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{{ video.title }} — {{ course.title }} — babook{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'course_detail' course.slug %}">{{ course.title }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ video.title }}</li>
+        </ol>
+    </nav>
+
+    <h1>{{ video.title }}</h1>
+
+    <!-- Responsive 16:9 Bunny Stream player -->
+    <div class="ratio ratio-16x9 mb-3" style="aspect-ratio: 16/9; padding-top: 56.25%; position: relative;">
+        <iframe
+            src="{{ embed_url }}"
+            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"
+            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+            allowfullscreen>
+        </iframe>
+    </div>
+
+    <!-- Resume position data for JS -->
+    <script>
+        var lastPositionSeconds = {{ last_position_seconds }};
+    </script>
+
+    {% if user.is_authenticated %}
+    <!-- Heartbeat: report progress every 15s -->
+    <script>
+        (function() {
+            var videoId = {{ video.id }};
+            var duration = {{ video.duration_seconds }};
+            var currentPosition = lastPositionSeconds || 0;
+
+            setInterval(function() {
+                currentPosition += 15;
+                if (currentPosition > duration) currentPosition = duration;
+                var percent = duration > 0 ? (currentPosition / duration) * 100 : 0;
+                fetch("{% url 'video_progress' %}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: JSON.stringify({
+                        video_id: videoId,
+                        position: currentPosition,
+                        percent: Math.round(percent * 100) / 100
+                    })
+                });
+            }, 15000);
+        })();
+    </script>
+    {% endif %}
+</div>
+{% endblock %}

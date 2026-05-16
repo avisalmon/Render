@@ -1,9 +1,12 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
-from .models import Note, UserProfile
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.http import require_POST
+from .models import Note, UserProfile, Course, Video, UserVideoProgress
+from .bunny import generate_signed_url, get_embed_url
+import json
 
 
 def home(request):
@@ -65,4 +68,93 @@ def privacy(request):
 
 def terms(request):
     return render(request, "app/terms.html")
+
+
+def course_detail(request, slug):
+    course = get_object_or_404(Course, slug=slug)
+    videos = course.videos.all()
+    progress_pct = 0
+    is_complete = False
+    if request.user.is_authenticated and videos.exists():
+        progress_records = UserVideoProgress.objects.filter(
+            user=request.user, video__in=videos
+        )
+        progress_map = {p.video_id: p.percent_watched for p in progress_records}
+        total = videos.count()
+        watched_sum = sum(progress_map.get(v.id, 0) for v in videos)
+        progress_pct = round(watched_sum / total) if total else 0
+        is_complete = all(progress_map.get(v.id, 0) >= 95 for v in videos)
+        if is_complete:
+            progress_pct = 100
+    return render(request, "app/course_detail.html", {
+        "course": course,
+        "videos": videos,
+        "progress_pct": progress_pct,
+        "is_complete": is_complete,
+    })
+
+
+def lesson(request, slug, lesson_order):
+    course = get_object_or_404(Course, slug=slug)
+    video = get_object_or_404(Video, course=course, lesson_order=lesson_order)
+
+    # Gating: non-preview requires login + entitlement
+    if not video.is_free_preview:
+        if not request.user.is_authenticated:
+            from django.conf import settings as s
+            login_url = s.LOGIN_URL if hasattr(s, "LOGIN_URL") else "/accounts/login/"
+            return redirect(f"{login_url}?next={request.path}")
+        # For now, no entitlement model yet (SPR-1.5). Deny all paid videos.
+        # TODO: Check entitlement once billing sprint is done.
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden("Access denied. Purchase required.")
+
+    embed_url = get_embed_url(video.bunny_video_id)
+    last_position = 0
+    if request.user.is_authenticated:
+        progress = UserVideoProgress.objects.filter(
+            user=request.user, video=video
+        ).first()
+        if progress:
+            last_position = progress.last_position_seconds
+
+    return render(request, "app/lesson.html", {
+        "course": course,
+        "video": video,
+        "embed_url": embed_url,
+        "last_position_seconds": last_position,
+    })
+
+
+@require_POST
+def video_progress(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Login required"}, status=401)
+    try:
+        data = json.loads(request.body)
+        video_id = data["video_id"]
+        position = int(data["position"])
+        percent = float(data["percent"])
+    except (json.JSONDecodeError, KeyError, ValueError, TypeError):
+        return JsonResponse({"error": "Invalid data"}, status=400)
+
+    video = Video.objects.filter(id=video_id).first()
+    if not video:
+        return JsonResponse({"error": "Video not found"}, status=404)
+
+    from django.utils import timezone
+    completed_at = None
+    if percent >= 95:
+        completed_at = timezone.now()
+
+    progress, created = UserVideoProgress.objects.update_or_create(
+        user=request.user,
+        video=video,
+        defaults={
+            "last_position_seconds": position,
+            "percent_watched": percent,
+            "completed_at": completed_at,
+        },
+    )
+    return JsonResponse({"status": "ok", "created": created})
 

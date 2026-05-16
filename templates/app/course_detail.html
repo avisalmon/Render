@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{{ course.title }} — babook{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1>{{ course.title }}</h1>
+    <p>{{ course.description }}</p>
+
+    {% if user.is_authenticated %}
+    <div class="mb-3">
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <strong>Progress:</strong>
+            <span>{{ progress_pct }}%</span>
+            {% if is_complete %}<span class="badge bg-success">complete</span>{% endif %}
+        </div>
+        <div class="progress" style="height: 20px;">
+            <div class="progress-bar" role="progressbar" style="width: {{ progress_pct }}%;"
+                 aria-valuenow="{{ progress_pct }}" aria-valuemin="0" aria-valuemax="100">
+                {{ progress_pct }}%
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <h2 class="mt-4">Lessons</h2>
+    <ol class="list-group list-group-numbered">
+        {% for video in videos %}
+        <li class="list-group-item d-flex justify-content-between align-items-start">
+            <div class="ms-2 me-auto">
+                <a href="{% url 'lesson' course.slug video.lesson_order %}">
+                    {{ video.title }}
+                </a>
+                {% if video.is_free_preview %}
+                    <span class="badge bg-info ms-1">Free Preview</span>
+                {% endif %}
+            </div>
+            <span class="text-muted">{{ video.duration_seconds }}s</span>
+        </li>
+        {% endfor %}
+    </ol>
+</div>
+{% endblock %}

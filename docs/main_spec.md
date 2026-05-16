@@ -57,15 +57,15 @@ The foundation the project sits on. Must be in place before any feature work.
 
 | REQ-ID | Title | Expectation (acceptance) | Status |
 |---|---|---|---|
-| REQ-1.3.1 | Video host: Bunny Stream | All course videos uploaded to Bunny Stream library. API key + library ID stored as env vars. | TODO |
-| REQ-1.3.2 | Video model | Django `Video` model: `bunny_video_id`, `title`, `duration_seconds`, `course_id`, `lesson_order`, `is_free_preview`. | TODO |
-| REQ-1.3.3 | Embedded player | Bunny iframe player embedded in lesson page. Responsive 16:9. Hebrew/English captions when uploaded. | TODO |
-| REQ-1.3.4 | Signed playback URLs | Paid videos use Bunny's token-authentication (signed URLs, expire in 24h). Only entitled users get a playable URL. | TODO |
-| REQ-1.3.5 | Per-user progress | Model `UserVideoProgress`: `user`, `video`, `last_position_seconds`, `percent_watched`, `completed_at`. Updated via JS heartbeat every 15s. | TODO |
-| REQ-1.3.6 | Resume playback | Player auto-seeks to `last_position_seconds` on next view. | TODO |
-| REQ-1.3.7 | Course progress aggregation | Course detail page shows % completed across all lessons. Course marked complete when all videos ≥ 95% watched. | TODO |
-| REQ-1.3.8 | Video upload admin flow | Admin can upload via Bunny dashboard, then register the `video_id` in Django admin. (Direct-upload from Django admin is deferred.) | TODO |
-| REQ-1.3.9 | Free preview gating | `is_free_preview=True` videos playable by anonymous users. All others require login + entitlement. | TODO |
+| REQ-1.3.1 | Video host: Bunny Stream | All course videos uploaded to Bunny Stream library. API key + library ID stored as env vars. | DONE |
+| REQ-1.3.2 | Video model | Django `Video` model: `bunny_video_id`, `title`, `duration_seconds`, `course_id`, `lesson_order`, `is_free_preview`. | DONE |
+| REQ-1.3.3 | Embedded player | Bunny iframe player embedded in lesson page. Responsive 16:9. Hebrew/English captions when uploaded. | DONE |
+| REQ-1.3.4 | Signed playback URLs | Paid videos use Bunny's token-authentication (signed URLs, expire in 24h). Only entitled users get a playable URL. | DONE |
+| REQ-1.3.5 | Per-user progress | Model `UserVideoProgress`: `user`, `video`, `last_position_seconds`, `percent_watched`, `completed_at`. Updated via JS heartbeat every 15s. | DONE |
+| REQ-1.3.6 | Resume playback | Player auto-seeks to `last_position_seconds` on next view. | DONE |
+| REQ-1.3.7 | Course progress aggregation | Course detail page shows % completed across all lessons. Course marked complete when all videos ≥ 95% watched. | DONE |
+| REQ-1.3.8 | Video upload admin flow | Admin can upload via Bunny dashboard, then register the `video_id` in Django admin. (Direct-upload from Django admin is deferred.) | DONE |
+| REQ-1.3.9 | Free preview gating | `is_free_preview=True` videos playable by anonymous users. All others require login + entitlement. | DONE |
 
 ### 1.4 Billing Infrastructure (Stripe + Green Invoice)
 

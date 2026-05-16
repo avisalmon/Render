@@ -87,18 +87,18 @@ Sprints in this epic:
 ### SPR-1.4 — Video Infrastructure (Bunny Stream)
 
 **Goal:** Upload, embed, gate, and track video playback per user.
-**Status:** TODO
+**Status:** DONE
 
 | Feature ID | Title | REQ trace | Status | Notes |
 |---|---|---|---|---|
-| F-1.4.1 | Bunny Stream account + library + env keys | REQ-1.3.1 | TODO | Depends on ACT-9 |
-| F-1.4.2 | `Video` model + admin registration | REQ-1.3.2, REQ-1.3.8 | TODO | |
-| F-1.4.3 | Embedded responsive Bunny player | REQ-1.3.3 | TODO | |
-| F-1.4.4 | Signed playback URL generation | REQ-1.3.4 | TODO | |
-| F-1.4.5 | `UserVideoProgress` model + heartbeat endpoint | REQ-1.3.5 | TODO | |
-| F-1.4.6 | Resume playback from `last_position` | REQ-1.3.6 | TODO | |
-| F-1.4.7 | Course progress aggregation (% complete) | REQ-1.3.7 | TODO | |
-| F-1.4.8 | Free preview gating (`is_free_preview`) | REQ-1.3.9 | TODO | |
+| F-1.4.1 | Bunny Stream account + library + env keys | REQ-1.3.1 | DONE | ACT-9 complete; 4 env vars wired via os.environ.get() |
+| F-1.4.2 | `Video` model + `Course` model + admin registration | REQ-1.3.2, REQ-1.3.8 | DONE | Course + Video + UserVideoProgress models; all in admin |
+| F-1.4.3 | Embedded responsive Bunny player | REQ-1.3.3 | DONE | iframe.mediadelivery.net embed, 16:9 responsive |
+| F-1.4.4 | Signed playback URL generation | REQ-1.3.4 | DONE | SHA256 token auth, 24h expiry; app/bunny.py |
+| F-1.4.5 | `UserVideoProgress` model + heartbeat endpoint | REQ-1.3.5 | DONE | POST /api/video-progress/ with JSON body |
+| F-1.4.6 | Resume playback from `last_position` | REQ-1.3.6 | DONE | last_position_seconds in template context + JS var |
+| F-1.4.7 | Course progress aggregation (% complete) | REQ-1.3.7 | DONE | /course/<slug>/ shows %, complete badge at 95% threshold |
+| F-1.4.8 | Free preview gating (`is_free_preview`) | REQ-1.3.9 | DONE | Anonymous→login redirect; logged-in without entitlement→403 |
 
 ---
 
