@@ -148,18 +148,18 @@ Sprints in this epic:
 ### SPR-1.7 — Ops, Quality & BKMs
 
 **Goal:** Tests, code quality, backups, rollback, CI/CD, all BKM docs.
-**Status:** WIP
+**Status:** DONE
 
 | Feature ID | Title | REQ trace | Status | Notes |
 |---|---|---|---|---|
-| F-1.7.1 | pytest-django setup + first tests | REQ-1.2.16 | DONE | 69 tests across 4 sprints |
-| F-1.7.2 | black + ruff + pre-commit hooks | REQ-1.2.17 | TODO | |
+| F-1.7.1 | pytest-django setup + first tests | REQ-1.2.16 | DONE | 82 tests across 5 sprints |
+| F-1.7.2 | black + ruff + pre-commit hooks | REQ-1.2.17 | DONE | pyproject.toml + .pre-commit-config.yaml |
 | F-1.7.3 | Nightly DB backup to Google Drive | REQ-1.2.4 | TODO | Depends on ACT-3 (rclone setup) |
-| F-1.7.4 | `docs/procedures/backup_restore.md` BKM | REQ-1.2.18 | TODO | |
-| F-1.7.5 | `docs/procedures/rollback.md` BKM | REQ-1.2.19 | TODO | |
-| F-1.7.6 | `docs/procedures/cicd.md` BKM | REQ-1.1.10 | TODO | |
-| F-1.7.7 | `docs/procedures/env_vars.md` BKM | REQ-1.2.3 | TODO | |
-| F-1.7.8 | `docs/architecture/roles.md` | REQ-1.2.8 | TODO | |
+| F-1.7.4 | `docs/procedures/backup_restore.md` BKM | REQ-1.2.18 | DONE | Google Drive via rclone |
+| F-1.7.5 | `docs/procedures/rollback.md` BKM | REQ-1.2.19 | DONE | Revert/redeploy/force-push |
+| F-1.7.6 | `docs/procedures/cicd.md` BKM | REQ-1.1.10 | DONE | Full local+deploy workflow |
+| F-1.7.7 | `docs/procedures/env_vars.md` BKM | REQ-1.2.3 | DONE | All vars documented |
+| F-1.7.8 | `docs/architecture/roles.md` | REQ-1.2.8 | DONE | admin/staff/member/guest |
 | F-1.7.9 | `docs/procedures/copilot_policy.md` | REQ-1.5.12 | DEFERRED | Depends on ACT-18 |
 
 ---

@@ -17,12 +17,13 @@ Including another URLconf
 
 from django.conf import settings
 from django.contrib import admin
-from django.urls import path, re_path, include
-from django.http import JsonResponse
-from django.views.static import serve
 from django.contrib.sitemaps.views import sitemap
+from django.http import JsonResponse
+from django.urls import include, path, re_path
+from django.views.static import serve
+
 from app.sitemaps import StaticViewSitemap
-from app.views import robots_txt, privacy, terms
+from app.views import privacy, robots_txt, terms
 
 sitemaps = {"static": StaticViewSitemap}
 

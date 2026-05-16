@@ -6,3 +6,6 @@ requests>=2.31,<3
 Pillow>=10.0,<12
 python-dotenv>=1.0,<2
 pytest-django>=4.9,<5
+black>=24.0,<26
+ruff>=0.4,<1
+pre-commit>=3.7,<5

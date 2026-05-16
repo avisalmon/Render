@@ -4,12 +4,12 @@ Django settings for mysite project — production-ready for Render.
 See render_django_full_guide.md for the full deployment guide.
 """
 
-from pathlib import Path
 import os
-import logging
+from pathlib import Path
 
 # Load .env file for local development (no-op if file not found)
 from dotenv import load_dotenv
+
 load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env")
 
 BASE_DIR = Path(__file__).resolve().parent.parent

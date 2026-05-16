@@ -1,12 +1,14 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, logout
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, JsonResponse
-from django.views.decorators.http import require_POST
-from .models import Note, UserProfile, Course, Video, UserVideoProgress
-from .bunny import generate_signed_url, get_embed_url
 import json
+
+from django.contrib.auth import login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import UserCreationForm
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
+
+from .bunny import get_embed_url
+from .models import Course, Note, UserProfile, UserVideoProgress, Video
 
 
 def home(request):

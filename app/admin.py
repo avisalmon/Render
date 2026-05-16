@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Note, Course, Video, UserVideoProgress
+
+from .models import Course, Note, UserVideoProgress, Video
 
 admin.site.register(Note)
 admin.site.register(Course)

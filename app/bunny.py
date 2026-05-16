@@ -15,7 +15,6 @@ def generate_signed_url(bunny_video_id, expiry_seconds=86400):
     """
     hostname = settings.BUNNY_STREAM_CDN_HOSTNAME
     token_key = settings.BUNNY_STREAM_TOKEN_KEY
-    library_id = settings.BUNNY_STREAM_LIBRARY_ID
 
     expires = int(time.time()) + expiry_seconds
     # Bunny token: SHA256 of token_key + video_id + expires
