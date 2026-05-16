@@ -127,3 +127,84 @@ class SeatEvent(models.Model):
 
     def __str__(self):
         return f"{self.seat.github_username} — {self.event_type} ({self.created_at})"
+
+
+# ---------------------------------------------------------------------------
+# AI Chat (OpenAI) — SPR-1.8
+# ---------------------------------------------------------------------------
+
+
+class SystemPrompt(models.Model):
+    CONTEXT_CHOICES = [
+        ("course_tutor", "Course Tutor"),
+        ("code_helper", "Code Helper"),
+        ("general_assistant", "General Assistant"),
+    ]
+    context_type = models.CharField(max_length=30, choices=CONTEXT_CHOICES, unique=True)
+    content = models.TextField()
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.context_type
+
+
+class ChatSession(models.Model):
+    CONTEXT_CHOICES = [
+        ("course_tutor", "Course Tutor"),
+        ("code_helper", "Code Helper"),
+        ("general_assistant", "General Assistant"),
+    ]
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="chat_sessions")
+    context_type = models.CharField(max_length=30, choices=CONTEXT_CHOICES, default="general_assistant")
+    course = models.ForeignKey("Course", on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_activity_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-last_activity_at"]
+
+    def __str__(self):
+        return f"{self.user.username} — {self.context_type} ({self.created_at:%Y-%m-%d})"
+
+
+class ChatMessage(models.Model):
+    ROLE_CHOICES = [
+        ("user", "User"),
+        ("assistant", "Assistant"),
+        ("system", "System"),
+    ]
+    session = models.ForeignKey(ChatSession, on_delete=models.CASCADE, related_name="messages")
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+    content = models.TextField()
+    tokens_used = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return f"{self.role}: {self.content[:50]}"
+
+
+class UsageLog(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="usage_logs")
+    session = models.ForeignKey(ChatSession, on_delete=models.CASCADE, related_name="usage_logs")
+    model = models.CharField(max_length=50)
+    prompt_tokens = models.PositiveIntegerField(default=0)
+    completion_tokens = models.PositiveIntegerField(default=0)
+    cost_usd = models.FloatField(default=0.0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} — {self.model} ({self.prompt_tokens}+{self.completion_tokens} tokens)"
+
+
+class ModerationLog(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="moderation_logs")
+    content = models.TextField()
+    flagged_categories = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        user_str = self.user.username if self.user else "anonymous"
+        return f"Flagged: {user_str} ({self.created_at})"

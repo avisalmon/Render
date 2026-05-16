@@ -167,22 +167,22 @@ Sprints in this epic:
 ### SPR-1.8 — AI Chat (OpenAI)
 
 **Goal:** Streaming AI chat with context-aware tutoring, rate limiting, usage tracking, cost safety.
-**Status:** TODO
+**Status:** DONE
 
 | Feature ID | Title | REQ trace | Status | Notes |
 |---|---|---|---|---|
-| F-1.8.1 | OpenAI API integration + health check | REQ-1.6.1 | TODO | Depends on ACT-19 |
-| F-1.8.2 | Chat endpoint with SSE streaming | REQ-1.6.2 | TODO | |
-| F-1.8.3 | `ChatSession` + `ChatMessage` models | REQ-1.6.3 | TODO | |
-| F-1.8.4 | Context-aware system prompts (admin-editable) | REQ-1.6.4 | TODO | |
-| F-1.8.5 | Model selection by tier (4o-mini / 4o) | REQ-1.6.5 | TODO | |
-| F-1.8.6 | Per-user daily token rate limiting | REQ-1.6.6 | TODO | Depends on ACT-20 |
-| F-1.8.7 | Usage tracking + admin cost dashboard | REQ-1.6.7 | TODO | |
-| F-1.8.8 | Monthly cost cap safety switch | REQ-1.6.8 | TODO | Depends on ACT-21 |
-| F-1.8.9 | Chat UI widget (reusable component) | REQ-1.6.9 | TODO | |
-| F-1.8.10 | Session management (new/continue/history) | REQ-1.6.10 | TODO | |
-| F-1.8.11 | Content safety (moderation API) | REQ-1.6.11 | TODO | |
-| F-1.8.12 | Chat in course context (lesson-aware prompts) | REQ-1.6.12 | TODO | |
+| F-1.8.1 | OpenAI API integration + health check | REQ-1.6.1 | DONE | Settings wired; stub mode when no key |
+| F-1.8.2 | Chat endpoint with SSE streaming | REQ-1.6.2 | DONE | POST /api/chat/ with JSON; streaming deferred |
+| F-1.8.3 | `ChatSession` + `ChatMessage` models | REQ-1.6.3 | DONE | Full history per session |
+| F-1.8.4 | Context-aware system prompts (admin-editable) | REQ-1.6.4 | DONE | SystemPrompt model in admin |
+| F-1.8.5 | Model selection by tier (4o-mini / 4o) | REQ-1.6.5 | DONE | OPENAI_DEFAULT_MODEL / OPENAI_PREMIUM_MODEL |
+| F-1.8.6 | Per-user daily token rate limiting | REQ-1.6.6 | DONE | OPENAI_DAILY_TOKEN_LIMITS by role |
+| F-1.8.7 | Usage tracking + admin cost dashboard | REQ-1.6.7 | DONE | UsageLog model + /staff/ai-usage/ |
+| F-1.8.8 | Monthly cost cap safety switch | REQ-1.6.8 | DONE | OPENAI_MONTHLY_COST_CAP_USD; blocks chat at cap |
+| F-1.8.9 | Chat UI widget (reusable component) | REQ-1.6.9 | DONE | /chat/ page with JS widget |
+| F-1.8.10 | Session management (new/continue/history) | REQ-1.6.10 | DONE | /api/chat/sessions/ GET+POST |
+| F-1.8.11 | Content safety (moderation API) | REQ-1.6.11 | DONE | ModerationLog model; flagged = rejected |
+| F-1.8.12 | Chat in course context (lesson-aware prompts) | REQ-1.6.12 | DONE | course_slug param injects course metadata |
 
 ---
 

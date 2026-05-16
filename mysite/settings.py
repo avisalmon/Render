@@ -212,6 +212,19 @@ COPILOT_INACTIVITY_WARN_DAYS = int(os.environ.get("COPILOT_INACTIVITY_WARN_DAYS"
 COPILOT_INACTIVITY_RECLAIM_DAYS = int(os.environ.get("COPILOT_INACTIVITY_RECLAIM_DAYS", "60"))
 COPILOT_SEAT_COST_USD = float(os.environ.get("COPILOT_SEAT_COST_USD", "19.0"))
 
+# OpenAI AI Chat
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+OPENAI_DEFAULT_MODEL = os.environ.get("OPENAI_DEFAULT_MODEL", "gpt-4o-mini")
+OPENAI_PREMIUM_MODEL = os.environ.get("OPENAI_PREMIUM_MODEL", "gpt-4o")
+OPENAI_MONTHLY_COST_CAP_USD = float(os.environ.get("OPENAI_MONTHLY_COST_CAP_USD", "50.0"))
+OPENAI_DAILY_TOKEN_LIMITS = {
+    "guest": 0,
+    "member": 50000,
+    "staff": 200000,
+    "admin": 200000,
+}
+CHAT_SESSION_TIMEOUT_MINUTES = int(os.environ.get("CHAT_SESSION_TIMEOUT_MINUTES", "30"))
+
 # Local overrides — not committed, not deployed
 try:
     from .settings_local import *  # noqa: F401 F403

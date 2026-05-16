@@ -101,3 +101,41 @@
 | T-F-1.6.11-1 | SeatEvent model has all required fields | unit | F-1.6.11 | Has created_at, api_response | GREEN |
 | T-F-1.6.11-2 | SeatEvent records actor and reason | unit | F-1.6.11 | actor and reason persist correctly | GREEN |
 | T-F-1.6.12-1 | copilot_policy.md exists | unit | F-1.6.12 | File on disk | GREEN |
+
+---
+
+## SPR-1.8 — AI Chat (OpenAI)
+
+**Sprint goal:** Chat models, stubbed OpenAI API, rate limiting, cost cap, moderation, usage tracking, chat UI, session management, course context.
+**Test file:** `tests/test_spr_1_8.py`
+**pytest marker:** `spr18`
+
+| Test ID | Description | Type | Feature | Expected result | Status |
+|---|---|---|---|---|---|
+| T-F-1.8.1-1 | OPENAI_API_KEY setting reads from env | unit | F-1.8.1 | Setting is str | GREEN |
+| T-F-1.8.1-2 | OPENAI_DEFAULT_MODEL setting exists | unit | F-1.8.1 | Contains "gpt" | GREEN |
+| T-F-1.8.1-3 | OPENAI_PREMIUM_MODEL setting exists | unit | F-1.8.1 | Contains "gpt" | GREEN |
+| T-F-1.8.2-1 | Chat endpoint requires auth | integration | F-1.8.2 | POST /api/chat/ → 401 for anon | GREEN |
+| T-F-1.8.2-2 | Chat endpoint returns 200 with mock | integration | F-1.8.2 | POST /api/chat/ → 200 | GREEN |
+| T-F-1.8.3-1 | ChatSession model exists | unit | F-1.8.3 | Has context_type, created_at, last_activity_at | GREEN |
+| T-F-1.8.3-2 | ChatMessage model exists | unit | F-1.8.3 | Has role, content, tokens_used | GREEN |
+| T-F-1.8.3-3 | ChatMessage linked to ChatSession | unit | F-1.8.3 | session.messages.count() == 1 | GREEN |
+| T-F-1.8.4-1 | SystemPrompt model exists | unit | F-1.8.4 | Has context_type, content | GREEN |
+| T-F-1.8.4-2 | SystemPrompt in Django admin | unit | F-1.8.4 | Registered in admin | GREEN |
+| T-F-1.8.5-1 | Default model is gpt-4o-mini | unit | F-1.8.5 | Setting == "gpt-4o-mini" | GREEN |
+| T-F-1.8.5-2 | Premium model is gpt-4o | unit | F-1.8.5 | Setting == "gpt-4o" | GREEN |
+| T-F-1.8.6-1 | Daily token limits setting exists | unit | F-1.8.6 | member limit > 0 | GREEN |
+| T-F-1.8.6-2 | Rate limiter rejects over limit | integration | F-1.8.6 | allowed == False | GREEN |
+| T-F-1.8.7-1 | UsageLog model exists | unit | F-1.8.7 | Has all fields | GREEN |
+| T-F-1.8.7-2 | Admin usage dashboard returns 200 | integration | F-1.8.7 | GET /staff/ai-usage/ → 200 | GREEN |
+| T-F-1.8.7-3 | Dashboard has cost/token context | integration | F-1.8.7 | total_cost_month, total_tokens_today | GREEN |
+| T-F-1.8.8-1 | Monthly cost cap setting exists | unit | F-1.8.8 | > 0 | GREEN |
+| T-F-1.8.8-2 | Chat blocked at cost cap | integration | F-1.8.8 | → 429 | GREEN |
+| T-F-1.8.9-1 | Chat page returns 200 | integration | F-1.8.9 | GET /chat/ → 200 | GREEN |
+| T-F-1.8.9-2 | Chat page contains widget markup | integration | F-1.8.9 | "chat-widget" in HTML | GREEN |
+| T-F-1.8.10-1 | Create new session via API | integration | F-1.8.10 | POST → 201 | GREEN |
+| T-F-1.8.10-2 | List sessions via API | integration | F-1.8.10 | GET → 200, sessions array | GREEN |
+| T-F-1.8.10-3 | Session timeout setting | unit | F-1.8.10 | == 30 min | GREEN |
+| T-F-1.8.11-1 | Moderation rejects flagged content | integration | F-1.8.11 | is_safe == False | GREEN |
+| T-F-1.8.11-2 | Moderation logs flagged attempt | integration | F-1.8.11 | ModerationLog created | GREEN |
+| T-F-1.8.12-1 | Chat with course context | integration | F-1.8.12 | course_slug sends course metadata | GREEN |

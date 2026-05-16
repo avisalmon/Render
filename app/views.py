@@ -5,12 +5,23 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
+from django.db.models import Sum
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from .bunny import get_embed_url
-from .models import CopilotSeat, Course, Note, UserProfile, UserVideoProgress, Video
+from .models import (
+    ChatSession,
+    CopilotSeat,
+    Course,
+    Note,
+    UsageLog,
+    UserProfile,
+    UserVideoProgress,
+    Video,
+)
 
 
 def home(request):
@@ -188,5 +199,88 @@ def copilot_dashboard(request):
         "waitlisted": waitlisted,
         "all_seats": all_seats,
         "max_seats": django_settings.COPILOT_MAX_SEATS,
+    })
+
+
+# ---------------------------------------------------------------------------
+# AI Chat views — SPR-1.8
+# ---------------------------------------------------------------------------
+
+
+@login_required
+def chat_page(request):
+    """Chat UI page."""
+    sessions = ChatSession.objects.filter(user=request.user)[:10]
+    return render(request, "app/chat.html", {"sessions": sessions})
+
+
+@require_POST
+def chat_api(request):
+    """POST /api/chat/ — handle a chat message."""
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Login required"}, status=401)
+
+    try:
+        data = json.loads(request.body)
+        message = data.get("message", "").strip()
+    except (json.JSONDecodeError, AttributeError):
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    if not message:
+        return JsonResponse({"error": "Message is required"}, status=400)
+
+    from .ai_chat import handle_chat_message
+
+    result, status_code = handle_chat_message(
+        user=request.user,
+        message_text=message,
+        session_id=data.get("session_id"),
+        course_slug=data.get("course_slug"),
+    )
+    return JsonResponse(result, status=status_code)
+
+
+def chat_sessions_api(request):
+    """GET/POST /api/chat/sessions/ — list or create sessions."""
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Login required"}, status=401)
+
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            context_type = data.get("context_type", "general_assistant")
+        except (json.JSONDecodeError, AttributeError):
+            context_type = "general_assistant"
+        session = ChatSession.objects.create(user=request.user, context_type=context_type)
+        return JsonResponse({"session_id": session.id, "context_type": session.context_type}, status=201)
+
+    # GET — list sessions
+    sessions = ChatSession.objects.filter(user=request.user).values(
+        "id", "context_type", "created_at", "last_activity_at"
+    )[:20]
+    return JsonResponse({"sessions": list(sessions)})
+
+
+@staff_member_required
+def ai_usage_dashboard(request):
+    """Admin AI usage dashboard."""
+    now = timezone.now()
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    month_agg = UsageLog.objects.filter(created_at__gte=month_start).aggregate(
+        total_cost=Sum("cost_usd"),
+        total_prompt=Sum("prompt_tokens"),
+        total_completion=Sum("completion_tokens"),
+    )
+    today_agg = UsageLog.objects.filter(created_at__gte=today_start).aggregate(
+        total_tokens=Sum("prompt_tokens") + Sum("completion_tokens"),
+    )
+
+    return render(request, "app/ai_usage_dashboard.html", {
+        "total_cost_month": month_agg["total_cost"] or 0.0,
+        "total_tokens_month": (month_agg["total_prompt"] or 0) + (month_agg["total_completion"] or 0),
+        "total_tokens_today": today_agg["total_tokens"] or 0,
+        "cost_cap": django_settings.OPENAI_MONTHLY_COST_CAP_USD,
     })
 

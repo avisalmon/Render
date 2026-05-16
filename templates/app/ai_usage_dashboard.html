@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}AI Usage Dashboard{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h1>AI Usage Dashboard</h1>
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Monthly Cost</h5>
+                    <p class="display-6">${{ total_cost_month|floatformat:2 }} / ${{ cost_cap|floatformat:0 }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Tokens This Month</h5>
+                    <p class="display-6">{{ total_tokens_month|floatformat:0 }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Tokens Today</h5>
+                    <p class="display-6">{{ total_tokens_today|floatformat:0 }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

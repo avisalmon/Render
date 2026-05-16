@@ -122,3 +122,41 @@
 **Marker:** `spr17`
 **File:** `tests/test_spr_1_7.py`
 **Status:** GREEN ✅
+
+---
+
+## SPR-1.8 — AI Chat / OpenAI (27 tests)
+
+**Marker:** `spr18`
+**File:** `tests/test_spr_1_8.py`
+**Status:** GREEN ✅
+
+| Test ID | Test function | What it verifies |
+|---|---|---|
+| T-F-1.8.1-1 | `test_openai_api_key_setting` | OPENAI_API_KEY from env |
+| T-F-1.8.1-2 | `test_openai_default_model_setting` | Default model contains "gpt" |
+| T-F-1.8.1-3 | `test_openai_premium_model_setting` | Premium model contains "gpt" |
+| T-F-1.8.2-1 | `test_chat_endpoint_requires_auth` | /api/chat/ → 401 for anon |
+| T-F-1.8.2-2 | `test_chat_endpoint_returns_200` | /api/chat/ → 200 with mock |
+| T-F-1.8.3-1 | `test_chat_session_model_exists` | ChatSession fields |
+| T-F-1.8.3-2 | `test_chat_message_model_exists` | ChatMessage fields |
+| T-F-1.8.3-3 | `test_chat_message_linked_to_session` | FK relationship |
+| T-F-1.8.4-1 | `test_system_prompt_model_exists` | SystemPrompt model |
+| T-F-1.8.4-2 | `test_system_prompt_registered_in_admin` | In admin registry |
+| T-F-1.8.5-1 | `test_default_model_is_4o_mini` | == gpt-4o-mini |
+| T-F-1.8.5-2 | `test_premium_model_is_4o` | == gpt-4o |
+| T-F-1.8.6-1 | `test_daily_token_limits_setting` | member limit > 0 |
+| T-F-1.8.6-2 | `test_rate_limiter_rejects_over_limit` | Blocked when exceeded |
+| T-F-1.8.7-1 | `test_usage_log_model_exists` | UsageLog fields |
+| T-F-1.8.7-2 | `test_admin_usage_dashboard_returns_200` | /staff/ai-usage/ → 200 |
+| T-F-1.8.7-3 | `test_usage_dashboard_context` | total_cost_month, total_tokens_today |
+| T-F-1.8.8-1 | `test_monthly_cost_cap_setting` | Cap > 0 |
+| T-F-1.8.8-2 | `test_chat_blocked_at_cost_cap` | → 429 at cap |
+| T-F-1.8.9-1 | `test_chat_page_returns_200` | /chat/ → 200 |
+| T-F-1.8.9-2 | `test_chat_page_contains_widget` | "chat-widget" in HTML |
+| T-F-1.8.10-1 | `test_create_new_chat_session` | POST sessions → 201 |
+| T-F-1.8.10-2 | `test_list_chat_sessions` | GET sessions → list |
+| T-F-1.8.10-3 | `test_session_inactivity_threshold_setting` | == 30 min |
+| T-F-1.8.11-1 | `test_moderation_rejects_flagged_content` | Flagged → not safe |
+| T-F-1.8.11-2 | `test_moderation_logs_flagged_attempt` | ModerationLog created |
+| T-F-1.8.12-1 | `test_chat_course_context_includes_metadata` | Course title in prompt |
