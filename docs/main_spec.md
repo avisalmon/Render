@@ -36,7 +36,7 @@ The foundation the project sits on. Must be in place before any feature work.
 | REQ-1.2.1 | Custom error pages | Branded 404, 500, 403 templates extending `base.html`. Visible in prod (DEBUG=False). | DONE |
 | REQ-1.2.2 | Email backend | Dev = console backend. Prod = **Resend** via env vars. Sender domain `babook.co.il` configured (SPF/DKIM). | TODO |
 | REQ-1.2.3 | Env & secrets | All secrets via env vars. `.env` for local (gitignored). `settings_local.py` pattern. Render env vars list maintained in `docs/procedures/env_vars.md`. No secret in repo. | DONE |
-| REQ-1.2.4 | Database backups | Nightly backup of `db.sqlite3` to **GitHub private repo** (`babook-backups`). Documented restore. Last 30 backups retained. | TODO |
+| REQ-1.2.4 | Database backups | Nightly backup of `db.sqlite3` to **Google Drive** via rclone. Documented restore. Last 30 backups retained. | TODO |
 | REQ-1.2.5 | Logging | Django `LOGGING`: console + rotating file handler. App logs INFO, security WARNING. Procedure for tailing Render logs documented. | DONE |
 | REQ-1.2.6 | Security hardening | `SECURE_SSL_REDIRECT=True` in prod, HSTS, secure cookies, CSRF, `ALLOWED_HOSTS` correct, `DEBUG=False`. `manage.py check --deploy` clean. | DONE |
 | REQ-1.2.7 | Django admin | `/admin/` superusers only. Documented procedure for creating a superuser on Render. Default Django admin UI for now. | TODO |
@@ -81,7 +81,7 @@ The foundation the project sits on. Must be in place before any feature work.
 | REQ-1.4.8 | Coupons & trials | Support Stripe coupons (admin-created). Optional 7-day free trial on first subscription. | TODO |
 | REQ-1.4.9 | Israeli invoice (חשבונית מס) | On every successful payment, generate a kosher חשבונית via **Green Invoice (חשבונית ירוקה) API**. Email PDF to customer. Store invoice number in DB. | TODO |
 | REQ-1.4.10 | Refunds | Admin can issue refunds via Stripe dashboard. Refund webhook revokes entitlement and issues חשבונית זיכוי via Green Invoice. | TODO |
-| REQ-1.4.11 | VAT handling | 17% מע"מ added to ILS prices for Israeli customers. Foreign customers (USD) charged net. Determined by Stripe Tax or billing address. | TODO |
+| REQ-1.4.11 | VAT handling | 17% מע"מ added to ILS prices for Israeli customers. Foreign customers (USD) charged net. Determined by Stripe Tax or billing address. | DEFERRED |
 | REQ-1.4.12 | Billing pages | `/pricing/`, `/billing/` (account management deep-link to Stripe portal), `/billing/success/`, `/billing/cancelled/`. | TODO |
 
 ### 1.5 GitHub Copilot Seat Provisioning
@@ -141,7 +141,7 @@ The foundation the project sits on. Must be in place before any feature work.
 | DEC-4 | Icon set | **Bootstrap Icons** | Pairs with Bootstrap 5, free, comprehensive, simple class API |
 | DEC-5 | Logo source | **AI-generated placeholder**, Avi swaps later | Unblocks build, no external dependency |
 | DEC-6 | Pre-commit hooks | **Yes (black + ruff auto-format)** | Catches issues before push, no debate |
-| DEC-7 | Backup target | **GitHub private repo** (`babook-backups`) | Free, version-controlled, trivial restore via `git clone` |
+| DEC-7 | Backup target | ~~GitHub private repo~~ → see DEC-18 | Superseded by Google Drive decision |
 | DEC-8 | Video host | **Bunny Stream** | Cheap (~$5–10/mo at scale), signed URLs, full per-user tracking, no YouTube distractions |
 | DEC-9 | Payments | **Stripe + Green Invoice (חשבונית ירוקה)** | Stripe = best-in-class payments + subscriptions; Green Invoice = legal Israeli חשבונית מס auto-generation |
 | DEC-10 | Pricing model | **Subscription (monthly/yearly) + per-course one-time**, free preview lessons | Maximizes flexibility for AI training market |
@@ -151,6 +151,8 @@ The foundation the project sits on. Must be in place before any feature work.
 | DEC-14 | Copilot-included pricing floor | **Minimum ₪149/mo (~$40) for any tier including Copilot** | Covers $19 Copilot cost + payment fees + margin |
 | DEC-15 | AI Chat API | **Direct OpenAI API** (not Azure) | Simpler setup, no Azure subscription needed, direct access to latest models |
 | DEC-16 | Default chat model | **GPT-4o-mini** (premium: GPT-4o) | 4o-mini is 10x cheaper, fast enough for tutoring; 4o for premium users who need advanced reasoning |
+| DEC-17 | Tax entity | **עוסק פטור** (exempt dealer, no VAT) | Simplest start; no מע"מ collection/remit; issues קבלות not חשבוניות מס. Revisit if revenue exceeds cap (~120K ILS/yr) |
+| DEC-18 | Backup target (revised) | **Google Drive** via rclone | Already have account, 15GB free, built-in 30-day versioning, no extra repos/keys |
 
 ### 1.9 Avi action items
 
@@ -158,7 +160,7 @@ The foundation the project sits on. Must be in place before any feature work.
 |---|---|---|
 | ACT-1 | Sign up Resend, give Copilot API key | REQ-1.1.3, REQ-1.2.2 |
 | ACT-2 | Add SPF/DKIM DNS records at babook.co.il registrar | REQ-1.2.2 |
-| ACT-3 | Create GitHub private repo `babook-backups` + deploy key | REQ-1.2.4 |
+| ACT-3 | Set up rclone with Google Drive for DB backups | REQ-1.2.4 |
 | ACT-4 | Approve AI-generated logo OR provide own | REQ-1.1.9 |
 | ACT-5 | Create Plausible account, share site ID | REQ-1.2.11 |
 | ACT-6 | Confirm Render persistent disk attached at `/var/data/` | REQ-1.1.5, REQ-1.2.4, REQ-1.5 |

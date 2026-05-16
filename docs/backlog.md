@@ -119,7 +119,7 @@ Sprints in this epic:
 | F-1.5.8 | Coupons & 7-day trial support | REQ-1.4.8 | TODO | |
 | F-1.5.9 | Green Invoice integration (חשבונית מס auto-issue) | REQ-1.4.9 | TODO | Depends on ACT-11, ACT-12 |
 | F-1.5.10 | Refund flow + חשבונית זיכוי | REQ-1.4.10 | TODO | |
-| F-1.5.11 | VAT handling (17% מע"מ for Israeli buyers) | REQ-1.4.11 | TODO | Depends on ACT-12 |
+| F-1.5.11 | VAT handling (17% מע"מ for Israeli buyers) | REQ-1.4.11 | DEFERRED | עוסק פטור — no VAT (DEC-17) |
 
 ---
 
@@ -148,19 +148,19 @@ Sprints in this epic:
 ### SPR-1.7 — Ops, Quality & BKMs
 
 **Goal:** Tests, code quality, backups, rollback, CI/CD, all BKM docs.
-**Status:** TODO
+**Status:** WIP
 
 | Feature ID | Title | REQ trace | Status | Notes |
 |---|---|---|---|---|
-| F-1.7.1 | pytest-django setup + first tests | REQ-1.2.16 | TODO | |
+| F-1.7.1 | pytest-django setup + first tests | REQ-1.2.16 | DONE | 69 tests across 4 sprints |
 | F-1.7.2 | black + ruff + pre-commit hooks | REQ-1.2.17 | TODO | |
-| F-1.7.3 | Nightly DB backup to GitHub private repo | REQ-1.2.4 | TODO | Depends on ACT-3 |
+| F-1.7.3 | Nightly DB backup to Google Drive | REQ-1.2.4 | TODO | Depends on ACT-3 (rclone setup) |
 | F-1.7.4 | `docs/procedures/backup_restore.md` BKM | REQ-1.2.18 | TODO | |
 | F-1.7.5 | `docs/procedures/rollback.md` BKM | REQ-1.2.19 | TODO | |
 | F-1.7.6 | `docs/procedures/cicd.md` BKM | REQ-1.1.10 | TODO | |
 | F-1.7.7 | `docs/procedures/env_vars.md` BKM | REQ-1.2.3 | TODO | |
 | F-1.7.8 | `docs/architecture/roles.md` | REQ-1.2.8 | TODO | |
-| F-1.7.9 | `docs/procedures/copilot_policy.md` | REQ-1.5.12 | TODO | |
+| F-1.7.9 | `docs/procedures/copilot_policy.md` | REQ-1.5.12 | DEFERRED | Depends on ACT-18 |
 
 ---
 
