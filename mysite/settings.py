@@ -203,6 +203,15 @@ BUNNY_STREAM_LIBRARY_ID = os.environ.get("BUNNY_STREAM_LIBRARY_ID", "")
 BUNNY_STREAM_CDN_HOSTNAME = os.environ.get("BUNNY_STREAM_CDN_HOSTNAME", "")
 BUNNY_STREAM_TOKEN_KEY = os.environ.get("BUNNY_STREAM_TOKEN_KEY", "")
 
+# GitHub Copilot Seat Provisioning
+GITHUB_ORG = os.environ.get("GITHUB_ORG", "babook-learn")
+GITHUB_PAT = os.environ.get("GITHUB_PAT", "")
+COPILOT_MAX_SEATS = int(os.environ.get("COPILOT_MAX_SEATS", "10"))
+COPILOT_GRACE_PERIOD_DAYS = int(os.environ.get("COPILOT_GRACE_PERIOD_DAYS", "14"))
+COPILOT_INACTIVITY_WARN_DAYS = int(os.environ.get("COPILOT_INACTIVITY_WARN_DAYS", "30"))
+COPILOT_INACTIVITY_RECLAIM_DAYS = int(os.environ.get("COPILOT_INACTIVITY_RECLAIM_DAYS", "60"))
+COPILOT_SEAT_COST_USD = float(os.environ.get("COPILOT_SEAT_COST_USD", "19.0"))
+
 # Local overrides — not committed, not deployed
 try:
     from .settings_local import *  # noqa: F401 F403

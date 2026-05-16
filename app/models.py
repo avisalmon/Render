@@ -14,6 +14,7 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     display_name = models.CharField(max_length=150, blank=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="member")
+    github_username = models.CharField(max_length=100, blank=True)
 
     def __str__(self):
         return f"{self.user.username} ({self.role})"
@@ -79,3 +80,50 @@ class UserVideoProgress(models.Model):
 
     def __str__(self):
         return f"{self.user.username} — {self.video.title} ({self.percent_watched:.0f}%)"
+
+
+class CopilotSeat(models.Model):
+    STATUS_CHOICES = [
+        ("none", "None"),
+        ("invite_pending", "Invite Pending"),
+        ("active", "Active"),
+        ("expiring", "Expiring"),
+        ("revoked", "Revoked"),
+        ("waitlisted", "Waitlisted"),
+    ]
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="copilot_seat")
+    github_username = models.CharField(max_length=100)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="none")
+    invited_at = models.DateTimeField(null=True, blank=True)
+    accepted_at = models.DateTimeField(null=True, blank=True)
+    assigned_at = models.DateTimeField(null=True, blank=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    last_activity_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.github_username} ({self.status})"
+
+
+class SeatEvent(models.Model):
+    EVENT_CHOICES = [
+        ("invited", "Invited"),
+        ("accepted", "Accepted"),
+        ("assigned", "Assigned"),
+        ("revoked", "Revoked"),
+        ("reclaimed", "Reclaimed"),
+        ("warned", "Warned"),
+        ("waitlisted", "Waitlisted"),
+    ]
+    seat = models.ForeignKey(CopilotSeat, on_delete=models.CASCADE, related_name="events")
+    event_type = models.CharField(max_length=20, choices=EVENT_CHOICES)
+    actor = models.CharField(max_length=100, default="system")
+    reason = models.CharField(max_length=200, blank=True)
+    api_response = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.seat.github_username} — {self.event_type} ({self.created_at})"

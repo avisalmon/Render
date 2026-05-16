@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Copilot Seat Dashboard{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Copilot Seat Dashboard</h1>
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Active Seats</h5>
+                    <p class="display-6">{{ total_seats }} / {{ max_seats }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Monthly Cost</h5>
+                    <p class="display-6">${{ monthly_cost|floatformat:0 }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Invites</h5>
+                    <p class="display-6">{{ pending_invites }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Waitlisted</h5>
+                    <p class="display-6">{{ waitlisted }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <h2>All Seats</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>GitHub</th>
+                <th>Status</th>
+                <th>Assigned</th>
+                <th>Last Activity</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for seat in all_seats %}
+            <tr>
+                <td>{{ seat.user.username }}</td>
+                <td>{{ seat.github_username }}</td>
+                <td><span class="badge bg-{% if seat.status == 'active' %}success{% elif seat.status == 'invite_pending' %}warning{% elif seat.status == 'revoked' %}danger{% else %}secondary{% endif %}">{{ seat.get_status_display }}</span></td>
+                <td>{{ seat.assigned_at|date:"Y-m-d"|default:"-" }}</td>
+                <td>{{ seat.last_activity_at|date:"Y-m-d"|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-muted">No seats provisioned yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

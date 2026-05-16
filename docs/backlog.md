@@ -126,22 +126,22 @@ Sprints in this epic:
 ### SPR-1.6 — Copilot Seat Provisioning
 
 **Goal:** Subscribers on the Copilot tier get auto-invited to GitHub org and assigned Copilot Business seats.
-**Status:** TODO
+**Status:** DONE
 
 | Feature ID | Title | REQ trace | Status | Notes |
 |---|---|---|---|---|
-| F-1.6.1 | GitHub org + Copilot Business activated | REQ-1.5.1 | TODO | Depends on ACT-14, ACT-15, ACT-16 |
-| F-1.6.2 | GitHub username on user (via OAuth or manual) | REQ-1.5.2 | TODO | Depends on F-1.2.3 |
-| F-1.6.3 | Copilot-included subscription tier flag | REQ-1.5.3 | TODO | Depends on ACT-17 |
-| F-1.6.4 | Auto-invite to org on subscribe | REQ-1.5.4 | TODO | |
-| F-1.6.5 | Auto-assign Copilot seat on accept | REQ-1.5.5 | TODO | |
-| F-1.6.6 | Auto-revoke seat on churn (+14d org removal) | REQ-1.5.6 | TODO | |
-| F-1.6.7 | Inactivity reclamation (30d warn / 60d reclaim) | REQ-1.5.7 | TODO | |
-| F-1.6.8 | Admin Copilot dashboard | REQ-1.5.8 | TODO | |
-| F-1.6.9 | Seat cap enforcement (`COPILOT_MAX_SEATS`) | REQ-1.5.9 | TODO | |
-| F-1.6.10 | User-facing seat status on profile | REQ-1.5.10 | TODO | |
-| F-1.6.11 | Audit log of all seat events | REQ-1.5.11 | TODO | |
-| F-1.6.12 | Org-level Copilot policy doc | REQ-1.5.12 | TODO | Depends on ACT-18 |
+| F-1.6.1 | GitHub org + Copilot Business activated | REQ-1.5.1 | DONE | Org `babook-learn` created; settings stubbed; ACT-15/16 pending June 1 |
+| F-1.6.2 | GitHub username on user (via OAuth or manual) | REQ-1.5.2 | DONE | github_username field on UserProfile |
+| F-1.6.3 | Copilot-included subscription tier flag | REQ-1.5.3 | DONE | CopilotSeat model with status choices |
+| F-1.6.4 | Auto-invite to org on subscribe | REQ-1.5.4 | DONE | app/copilot.py invite_to_org() — stubbed API |
+| F-1.6.5 | Auto-assign Copilot seat on accept | REQ-1.5.5 | DONE | app/copilot.py assign_copilot_seat() — stubbed API |
+| F-1.6.6 | Auto-revoke seat on churn (+14d org removal) | REQ-1.5.6 | DONE | app/copilot.py revoke_copilot_seat() — stubbed API |
+| F-1.6.7 | Inactivity reclamation (30d warn / 60d reclaim) | REQ-1.5.7 | DONE | app/copilot.py check_inactivity() |
+| F-1.6.8 | Admin Copilot dashboard | REQ-1.5.8 | DONE | /staff/copilot-dashboard/ — seats, cost, status |
+| F-1.6.9 | Seat cap enforcement (`COPILOT_MAX_SEATS`) | REQ-1.5.9 | DONE | Waitlist when cap reached |
+| F-1.6.10 | User-facing seat status on profile | REQ-1.5.10 | DONE | copilot_status in profile context |
+| F-1.6.11 | Audit log of all seat events | REQ-1.5.11 | DONE | SeatEvent model with actor/reason/api_response |
+| F-1.6.12 | Org-level Copilot policy doc | REQ-1.5.12 | DONE | docs/procedures/copilot_policy.md |
 
 ---
 

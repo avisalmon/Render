@@ -77,3 +77,48 @@
 | T-F-1.4.7-2 | `test_course_complete_at_95_percent` | Complete at 95% threshold |
 | T-F-1.4.8-1 | `test_free_preview_accessible_to_anonymous` | Free preview → 200 for anon |
 | T-F-1.4.8-2 | `test_non_preview_redirects_anonymous_to_login` | Non-preview → redirect to login |
+
+---
+
+## SPR-1.6 — Copilot Seat Provisioning (26 tests)
+
+**Marker:** `spr16`
+**File:** `tests/test_spr_1_6.py`
+**Status:** GREEN ✅
+
+| Test ID | Test function | What it verifies |
+|---|---|---|
+| T-F-1.6.1-1 | `test_github_org_setting` | GITHUB_ORG setting from env |
+| T-F-1.6.1-2 | `test_github_pat_setting` | GITHUB_PAT setting from env |
+| T-F-1.6.1-3 | `test_copilot_max_seats_setting` | COPILOT_MAX_SEATS is int > 0 |
+| T-F-1.6.2-1 | `test_userprofile_has_github_username` | github_username field exists |
+| T-F-1.6.2-2 | `test_github_username_is_optional` | Blank github_username passes validation |
+| T-F-1.6.3-1 | `test_copilot_seat_model_exists` | CopilotSeat has all fields |
+| T-F-1.6.3-2 | `test_copilot_seat_status_choices` | All 6 status values present |
+| T-F-1.6.4-1 | `test_invite_to_org_creates_pending_seat` | invite_to_org → invite_pending |
+| T-F-1.6.4-2 | `test_invite_logs_seat_event` | SeatEvent type=invited logged |
+| T-F-1.6.5-1 | `test_assign_copilot_seat_updates_status` | assign → active, assigned_at set |
+| T-F-1.6.5-2 | `test_assign_logs_seat_event` | SeatEvent type=assigned logged |
+| T-F-1.6.6-1 | `test_revoke_copilot_seat_updates_status` | revoke → revoked, revoked_at set |
+| T-F-1.6.6-2 | `test_revoke_logs_seat_event` | SeatEvent type=revoked with reason |
+| T-F-1.6.6-3 | `test_grace_period_days_setting` | COPILOT_GRACE_PERIOD_DAYS == 14 |
+| T-F-1.6.7-1 | `test_inactivity_warn_days_setting` | COPILOT_INACTIVITY_WARN_DAYS == 30 |
+| T-F-1.6.7-2 | `test_inactivity_reclaim_days_setting` | COPILOT_INACTIVITY_RECLAIM_DAYS == 60 |
+| T-F-1.6.7-3 | `test_check_inactivity_warns_stale_seats` | 35d inactive → warned |
+| T-F-1.6.7-4 | `test_check_inactivity_reclaims_very_stale_seats` | 65d inactive → reclaimed + revoked |
+| T-F-1.6.8-1 | `test_admin_copilot_dashboard_accessible` | /staff/copilot-dashboard/ → 200 for staff |
+| T-F-1.6.8-2 | `test_admin_copilot_dashboard_context` | Context has total_seats, monthly_cost |
+| T-F-1.6.9-1 | `test_invite_refused_at_max_seats` | Cap reached → waitlisted |
+| T-F-1.6.9-2 | `test_waitlisted_seat_status` | Cap 0 → waitlisted |
+| T-F-1.6.10-1 | `test_profile_shows_copilot_status` | copilot_status in profile context |
+| T-F-1.6.11-1 | `test_seat_event_model_exists` | SeatEvent fields present |
+| T-F-1.6.11-2 | `test_seat_event_records_actor_and_reason` | actor + reason persist |
+| T-F-1.6.12-1 | `test_copilot_policy_doc_exists` | copilot_policy.md on disk |
+
+---
+
+## SPR-1.7 — Ops, Quality & BKMs (13 tests)
+
+**Marker:** `spr17`
+**File:** `tests/test_spr_1_7.py`
+**Status:** GREEN ✅

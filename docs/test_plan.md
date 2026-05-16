@@ -64,3 +64,40 @@
 | T-F-1.4.7-2 | Course marked complete at 95% threshold | unit | F-1.4.7 | All videos >= 95% watched marks course complete | GREEN |
 | T-F-1.4.8-1 | Free preview video accessible to anonymous | integration | F-1.4.8 | GET lesson with `is_free_preview=True` returns 200 for anon | GREEN |
 | T-F-1.4.8-2 | Non-preview video redirects anonymous to login | integration | F-1.4.8 | GET lesson with `is_free_preview=False` redirects to login | GREEN |
+
+---
+
+## SPR-1.6 — Copilot Seat Provisioning
+
+**Sprint goal:** Models, stubbed GitHub API, auto-invite/assign/revoke, inactivity reclamation, admin dashboard, seat cap, audit log, user-facing status, policy doc.
+**Test file:** `tests/test_spr_1_6.py`
+**pytest marker:** `spr16`
+
+| Test ID | Description | Type | Feature | Expected result | Status |
+|---|---|---|---|---|---|
+| T-F-1.6.1-1 | GITHUB_ORG setting reads from env | unit | F-1.6.1 | `settings.GITHUB_ORG` is str | GREEN |
+| T-F-1.6.1-2 | GITHUB_PAT setting reads from env | unit | F-1.6.1 | `settings.GITHUB_PAT` is str | GREEN |
+| T-F-1.6.1-3 | COPILOT_MAX_SEATS setting reads from env | unit | F-1.6.1 | `settings.COPILOT_MAX_SEATS` is int > 0 | GREEN |
+| T-F-1.6.2-1 | UserProfile has github_username field | unit | F-1.6.2 | Field exists on profile | GREEN |
+| T-F-1.6.2-2 | github_username is optional (blank) | unit | F-1.6.2 | `full_clean()` passes with empty string | GREEN |
+| T-F-1.6.3-1 | CopilotSeat model exists with all fields | unit | F-1.6.3 | Has status, invited_at, accepted_at, assigned_at, revoked_at, last_activity_at | GREEN |
+| T-F-1.6.3-2 | CopilotSeat.STATUS_CHOICES covers all states | unit | F-1.6.3 | Includes none/invite_pending/active/expiring/revoked/waitlisted | GREEN |
+| T-F-1.6.4-1 | invite_to_org creates pending CopilotSeat | integration | F-1.6.4 | Status = invite_pending, invited_at set | GREEN |
+| T-F-1.6.4-2 | invite logs SeatEvent with type=invited | integration | F-1.6.4 | SeatEvent exists with event_type=invited | GREEN |
+| T-F-1.6.5-1 | assign_copilot_seat updates status to active | integration | F-1.6.5 | Status = active, assigned_at set | GREEN |
+| T-F-1.6.5-2 | assign logs SeatEvent with type=assigned | integration | F-1.6.5 | SeatEvent exists with event_type=assigned | GREEN |
+| T-F-1.6.6-1 | revoke_copilot_seat updates status to revoked | integration | F-1.6.6 | Status = revoked, revoked_at set | GREEN |
+| T-F-1.6.6-2 | revoke logs SeatEvent with type=revoked | integration | F-1.6.6 | SeatEvent with reason=subscription_cancelled | GREEN |
+| T-F-1.6.6-3 | COPILOT_GRACE_PERIOD_DAYS defaults to 14 | unit | F-1.6.6 | Setting == 14 | GREEN |
+| T-F-1.6.7-1 | COPILOT_INACTIVITY_WARN_DAYS defaults to 30 | unit | F-1.6.7 | Setting == 30 | GREEN |
+| T-F-1.6.7-2 | COPILOT_INACTIVITY_RECLAIM_DAYS defaults to 60 | unit | F-1.6.7 | Setting == 60 | GREEN |
+| T-F-1.6.7-3 | check_inactivity warns seats inactive > 30d | integration | F-1.6.7 | User in warned list | GREEN |
+| T-F-1.6.7-4 | check_inactivity reclaims seats inactive > 60d | integration | F-1.6.7 | Seat revoked, user in reclaimed list | GREEN |
+| T-F-1.6.8-1 | Admin copilot dashboard returns 200 for staff | integration | F-1.6.8 | GET /staff/copilot-dashboard/ → 200 | GREEN |
+| T-F-1.6.8-2 | Dashboard context has total_seats and monthly_cost | integration | F-1.6.8 | Context keys present | GREEN |
+| T-F-1.6.9-1 | invite refused when COPILOT_MAX_SEATS reached | integration | F-1.6.9 | Second invite returns waitlisted status | GREEN |
+| T-F-1.6.9-2 | waitlisted seat has status=waitlisted | integration | F-1.6.9 | Seat status == waitlisted | GREEN |
+| T-F-1.6.10-1 | Profile shows copilot_status in context | integration | F-1.6.10 | copilot_status key in response.context | GREEN |
+| T-F-1.6.11-1 | SeatEvent model has all required fields | unit | F-1.6.11 | Has created_at, api_response | GREEN |
+| T-F-1.6.11-2 | SeatEvent records actor and reason | unit | F-1.6.11 | actor and reason persist correctly | GREEN |
+| T-F-1.6.12-1 | copilot_policy.md exists | unit | F-1.6.12 | File on disk | GREEN |

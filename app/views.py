@@ -1,5 +1,7 @@
 import json
 
+from django.conf import settings as django_settings
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
@@ -8,7 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from .bunny import get_embed_url
-from .models import Course, Note, UserProfile, UserVideoProgress, Video
+from .models import CopilotSeat, Course, Note, UserProfile, UserVideoProgress, Video
 
 
 def home(request):
@@ -51,7 +53,17 @@ def profile(request):
         display_name = request.POST.get("display_name", "").strip()
         user_profile.display_name = display_name
         user_profile.save()
-    return render(request, "app/profile.html", {"user_profile": user_profile})
+    # Copilot seat status for user-facing display
+    copilot_status = "none"
+    try:
+        seat = request.user.copilot_seat
+        copilot_status = seat.status
+    except CopilotSeat.DoesNotExist:
+        pass
+    return render(request, "app/profile.html", {
+        "user_profile": user_profile,
+        "copilot_status": copilot_status,
+    })
 
 
 def robots_txt(request):
@@ -159,4 +171,22 @@ def video_progress(request):
         },
     )
     return JsonResponse({"status": "ok", "created": created})
+
+
+@staff_member_required
+def copilot_dashboard(request):
+    """Admin dashboard for Copilot seat management."""
+    total_seats = CopilotSeat.objects.filter(status="active").count()
+    monthly_cost = total_seats * django_settings.COPILOT_SEAT_COST_USD
+    pending_invites = CopilotSeat.objects.filter(status="invite_pending").count()
+    waitlisted = CopilotSeat.objects.filter(status="waitlisted").count()
+    all_seats = CopilotSeat.objects.select_related("user").order_by("-created_at")
+    return render(request, "app/copilot_dashboard.html", {
+        "total_seats": total_seats,
+        "monthly_cost": monthly_cost,
+        "pending_invites": pending_invites,
+        "waitlisted": waitlisted,
+        "all_seats": all_seats,
+        "max_seats": django_settings.COPILOT_MAX_SEATS,
+    })
 
