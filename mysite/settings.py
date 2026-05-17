@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.github",
+    "anymail",
     "app",
 ]
 
@@ -211,6 +212,15 @@ COPILOT_GRACE_PERIOD_DAYS = int(os.environ.get("COPILOT_GRACE_PERIOD_DAYS", "14"
 COPILOT_INACTIVITY_WARN_DAYS = int(os.environ.get("COPILOT_INACTIVITY_WARN_DAYS", "30"))
 COPILOT_INACTIVITY_RECLAIM_DAYS = int(os.environ.get("COPILOT_INACTIVITY_RECLAIM_DAYS", "60"))
 COPILOT_SEAT_COST_USD = float(os.environ.get("COPILOT_SEAT_COST_USD", "19.0"))
+
+# Email — Resend in prod, console in dev
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@babook.co.il")
+if RESEND_API_KEY:
+    EMAIL_BACKEND = "anymail.backends.resend.EmailBackend"
+    ANYMAIL = {"RESEND_API_KEY": RESEND_API_KEY}
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # OpenAI AI Chat
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")

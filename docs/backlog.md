@@ -26,6 +26,8 @@ Sprints in this epic:
 - SPR-1.6 Copilot Seat Provisioning
 - SPR-1.7 Ops, Quality & BKMs
 - SPR-1.8 AI Chat (OpenAI)
+- SPR-1.9 Email Service (Resend)
+- SPR-1.10 Database Backups
 
 ---
 
@@ -154,7 +156,7 @@ Sprints in this epic:
 |---|---|---|---|---|
 | F-1.7.1 | pytest-django setup + first tests | REQ-1.2.16 | DONE | 82 tests across 5 sprints |
 | F-1.7.2 | black + ruff + pre-commit hooks | REQ-1.2.17 | DONE | pyproject.toml + .pre-commit-config.yaml |
-| F-1.7.3 | Nightly DB backup to Google Drive | REQ-1.2.4 | TODO | Depends on ACT-3 (rclone setup) |
+| F-1.7.3 | Nightly DB backup to Google Drive | REQ-1.2.4 | DEFERRED | Moved to SPR-1.10 |
 | F-1.7.4 | `docs/procedures/backup_restore.md` BKM | REQ-1.2.18 | DONE | Google Drive via rclone |
 | F-1.7.5 | `docs/procedures/rollback.md` BKM | REQ-1.2.19 | DONE | Revert/redeploy/force-push |
 | F-1.7.6 | `docs/procedures/cicd.md` BKM | REQ-1.1.10 | DONE | Full local+deploy workflow |
@@ -183,6 +185,38 @@ Sprints in this epic:
 | F-1.8.10 | Session management (new/continue/history) | REQ-1.6.10 | DONE | /api/chat/sessions/ GET+POST |
 | F-1.8.11 | Content safety (moderation API) | REQ-1.6.11 | DONE | ModerationLog model; flagged = rejected |
 | F-1.8.12 | Chat in course context (lesson-aware prompts) | REQ-1.6.12 | DONE | course_slug param injects course metadata |
+
+---
+
+### SPR-1.9 — Email Service (Resend)
+
+**Goal:** Transactional email working on prod via Resend. Password reset, notifications, and all Django `send_mail()` calls delivered to real inboxes.
+**Status:** WIP
+
+| Feature ID | Title | REQ trace | Status | Notes |
+|---|---|---|---|---|
+| F-1.9.1 | `django-anymail[resend]` backend wired in settings | REQ-1.2.2 | DONE | anymail + Resend; console in dev, Resend in prod |
+| F-1.9.2 | `RESEND_API_KEY` + `DEFAULT_FROM_EMAIL` env vars | REQ-1.2.2, REQ-1.2.3 | DONE | settings_local.py + Render env var pending |
+| F-1.9.3 | Forgot-password / reset-password flow works | REQ-1.1.3 | DONE | allauth templates created; needs domain verification |
+| F-1.9.4 | Email verification on signup (optional) | REQ-1.1.3 | DONE | ACCOUNT_EMAIL_VERIFICATION = "none" (configurable) |
+| F-1.9.5 | Admin can test-send from Django shell | REQ-1.2.2 | DONE | send_mail() works; awaiting domain verification |
+| F-1.9.6 | SPF/DKIM DNS records for `babook.co.il` | REQ-1.2.2 | WIP | DNS records added at LiveDNS.co.il; awaiting propagation |
+
+---
+
+### SPR-1.10 — Database Backups
+
+**Goal:** Nightly automated backup of `db.sqlite3` to Google Drive via rclone. Documented restore procedure. Last 30 backups retained.
+**Status:** TODO
+
+| Feature ID | Title | REQ trace | Status | Notes |
+|---|---|---|---|---|
+| F-1.10.1 | rclone configured for Google Drive remote | REQ-1.2.4 | TODO | Depends on ACT-3 |
+| F-1.10.2 | Backup script (`scripts/backup_db.sh`) | REQ-1.2.4 | TODO | Copies SQLite safely (WAL checkpoint first) |
+| F-1.10.3 | Render cron job or external trigger | REQ-1.2.4 | TODO | Nightly at 03:00 UTC |
+| F-1.10.4 | Retention policy — keep last 30 backups | REQ-1.2.4 | TODO | rclone `--max-age 30d` or script cleanup |
+| F-1.10.5 | Restore procedure documented + tested | REQ-1.2.18 | TODO | `docs/procedures/backup_restore.md` updated |
+| F-1.10.6 | Restore dry-run completed once | REQ-1.2.18 | TODO | Verified restore to local dev |
 
 ---
 

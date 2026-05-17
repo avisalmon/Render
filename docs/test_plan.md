@@ -139,3 +139,26 @@
 | T-F-1.8.11-1 | Moderation rejects flagged content | integration | F-1.8.11 | is_safe == False | GREEN |
 | T-F-1.8.11-2 | Moderation logs flagged attempt | integration | F-1.8.11 | ModerationLog created | GREEN |
 | T-F-1.8.12-1 | Chat with course context | integration | F-1.8.12 | course_slug sends course metadata | GREEN |
+
+---
+
+## SPR-1.9 — Email Service (Resend)
+
+**Sprint goal:** Transactional email via Resend in prod (console in dev), password reset flow, email verification toggle, admin send test.
+**Test file:** `tests/test_spr_1_9.py`
+**pytest marker:** `spr19`
+
+| Test ID | Description | Type | Feature | Expected result | Status |
+|---|---|---|---|---|---|
+| T-F-1.9.1-1 | EMAIL_BACKEND setting exists | unit | F-1.9.1 | `settings.EMAIL_BACKEND` is a non-empty string | PLANNED |
+| T-F-1.9.1-2 | Dev uses console email backend | unit | F-1.9.1 | When RESEND_API_KEY empty, backend is console | PLANNED |
+| T-F-1.9.1-3 | Prod uses Resend backend when key set | unit | F-1.9.1 | When RESEND_API_KEY set, backend is `django_resend.EmailBackend` | PLANNED |
+| T-F-1.9.1-4 | django.core.mail.send_mail does not raise | integration | F-1.9.1 | send_mail() succeeds with console backend | PLANNED |
+| T-F-1.9.2-1 | RESEND_API_KEY setting reads from env | unit | F-1.9.2 | `settings.RESEND_API_KEY` is str | PLANNED |
+| T-F-1.9.2-2 | DEFAULT_FROM_EMAIL setting exists | unit | F-1.9.2 | `settings.DEFAULT_FROM_EMAIL` is non-empty | PLANNED |
+| T-F-1.9.3-1 | Password reset URL resolves | integration | F-1.9.3 | `/accounts/password/reset/` returns 200 | PLANNED |
+| T-F-1.9.3-2 | Password reset POST sends email | integration | F-1.9.3 | POST with valid email → mail.outbox has 1 entry | PLANNED |
+| T-F-1.9.3-3 | Reset confirm URL resolves | integration | F-1.9.3 | Password reset confirm page loads | PLANNED |
+| T-F-1.9.3-4 | Login page has forgot-password link | integration | F-1.9.3 | Login template contains link to password reset | PLANNED |
+| T-F-1.9.4-1 | ACCOUNT_EMAIL_VERIFICATION setting exists | unit | F-1.9.4 | Setting is one of none/optional/mandatory | PLANNED |
+| T-F-1.9.5-1 | send_mail function is importable and callable | unit | F-1.9.5 | `from django.core.mail import send_mail` works | PLANNED |
