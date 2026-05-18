@@ -18,4 +18,6 @@ urlpatterns = [
     path("course/<slug:slug>/", views.course_detail, name="course_detail"),
     path("course/<slug:slug>/lesson/<int:lesson_order>/", views.lesson, name="lesson"),
     path("api/video-progress/", views.video_progress, name="video_progress"),
+    path("pricing/", views.pricing, name="pricing"),
+    path("pricing/choose/", views.choose_tier, name="choose_tier"),
 ]

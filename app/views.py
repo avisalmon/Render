@@ -16,6 +16,7 @@ from .models import (
     ChatSession,
     CopilotSeat,
     Course,
+    Entitlement,
     Note,
     UsageLog,
     UserProfile,
@@ -95,6 +96,29 @@ def terms(request):
     return render(request, "app/terms.html")
 
 
+def pricing(request):
+    """Display tiers and let logged-in users pick one (mock billing)."""
+    current_tier = "free"
+    if request.user.is_authenticated:
+        ent = Entitlement.objects.filter(user=request.user).first()
+        if ent:
+            current_tier = ent.tier
+    return render(request, "app/pricing.html", {"current_tier": current_tier})
+
+
+@login_required
+@require_POST
+def choose_tier(request):
+    """Mock billing: instantly assign the chosen tier (no payment)."""
+    tier = request.POST.get("tier", "free")
+    if tier not in ("free", "base", "master"):
+        tier = "free"
+    ent, _created = Entitlement.objects.get_or_create(user=request.user)
+    ent.tier = tier
+    ent.save()
+    return redirect("pricing")
+
+
 def course_detail(request, slug):
     course = get_object_or_404(Course, slug=slug)
     videos = course.videos.all()
@@ -129,10 +153,12 @@ def lesson(request, slug, lesson_order):
             from django.conf import settings as s
             login_url = s.LOGIN_URL if hasattr(s, "LOGIN_URL") else "/accounts/login/"
             return redirect(f"{login_url}?next={request.path}")
-        # For now, no entitlement model yet (SPR-1.5). Deny all paid videos.
-        # TODO: Check entitlement once billing sprint is done.
-        from django.http import HttpResponseForbidden
-        return HttpResponseForbidden("Access denied. Purchase required.")
+        # Check entitlement: Base or Master tier required for paid content
+        from app.models import Entitlement
+        entitlement = Entitlement.objects.filter(user=request.user).first()
+        if not entitlement or not entitlement.has_video_access:
+            from django.http import HttpResponseForbidden
+            return HttpResponseForbidden("Access denied. Upgrade to Base or Master tier.")
 
     embed_url = get_embed_url(video.bunny_video_id)
     last_position = 0

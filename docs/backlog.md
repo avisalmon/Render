@@ -104,23 +104,23 @@ Sprints in this epic:
 
 ---
 
-### SPR-1.5 — Billing (Stripe + Green Invoice)
+### SPR-1.5 — Billing (Mock Mode)
 
-**Goal:** Subscription + per-course payment, Israeli VAT-compliant invoices, refunds.
-**Status:** TODO
+**Goal:** Users choose Free / Base / Master tier at ₪0; access gating enforced. Real Stripe deferred.
+**Status:** DONE (mock mode)
 
 | Feature ID | Title | REQ trace | Status | Notes |
 |---|---|---|---|---|
-| F-1.5.1 | Stripe account (Israel) + `dj-stripe` integration | REQ-1.4.1 | TODO | Depends on ACT-10 |
-| F-1.5.2 | Pricing model (subscription + one-time, free preview) | REQ-1.4.2 | TODO | Depends on ACT-13 |
-| F-1.5.3 | Multi-currency (ILS + USD) | REQ-1.4.3 | TODO | |
-| F-1.5.4 | Stripe Checkout integration (`/pricing/`) | REQ-1.4.4, REQ-1.4.12 | TODO | |
-| F-1.5.5 | Stripe webhook handler + signature verify | REQ-1.4.5 | TODO | |
-| F-1.5.6 | `Entitlement` model + access checks | REQ-1.4.6 | TODO | Used by F-1.4.4 |
-| F-1.5.7 | Stripe Customer Portal link from profile | REQ-1.4.7 | TODO | |
-| F-1.5.8 | Coupons & 7-day trial support | REQ-1.4.8 | TODO | |
-| F-1.5.9 | Green Invoice integration (חשבונית מס auto-issue) | REQ-1.4.9 | TODO | Depends on ACT-11, ACT-12 |
-| F-1.5.10 | Refund flow + חשבונית זיכוי | REQ-1.4.10 | TODO | |
+| F-1.5.1 | Stripe account (Israel) + `dj-stripe` integration | REQ-1.4.1 | DEFERRED | Real billing postponed |
+| F-1.5.2 | Pricing model (Free / Base / Master tiers) | REQ-1.4.2 | DONE | Mock ₪0 — `/pricing/` page |
+| F-1.5.3 | Multi-currency (ILS + USD) | REQ-1.4.3 | DEFERRED | Real billing postponed |
+| F-1.5.4 | Stripe Checkout integration (`/pricing/`) | REQ-1.4.4, REQ-1.4.12 | DEFERRED | Real billing postponed |
+| F-1.5.5 | Stripe webhook handler + signature verify | REQ-1.4.5 | DEFERRED | Real billing postponed |
+| F-1.5.6 | `Entitlement` model + access checks | REQ-1.4.6 | DONE | Tier gating on video + copilot |
+| F-1.5.7 | Stripe Customer Portal link from profile | REQ-1.4.7 | DEFERRED | Real billing postponed |
+| F-1.5.8 | Coupons & 7-day trial support | REQ-1.4.8 | DEFERRED | Real billing postponed |
+| F-1.5.9 | Green Invoice integration (חשבונית מס auto-issue) | REQ-1.4.9 | DEFERRED | Real billing postponed |
+| F-1.5.10 | Refund flow + חשבונית זיכוי | REQ-1.4.10 | DEFERRED | Real billing postponed |
 | F-1.5.11 | VAT handling (17% מע"מ for Israeli buyers) | REQ-1.4.11 | DEFERRED | עוסק פטור — no VAT (DEC-17) |
 
 ---

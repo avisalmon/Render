@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Pricing" %} — babook{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1 class="text-center mb-4">{% trans "Choose Your Plan" %}</h1>
+  <p class="text-center text-muted mb-5">{% trans "All plans are currently free during beta. Pick the tier that matches your learning goals." %}</p>
+
+  <div class="row justify-content-center g-4">
+    <!-- Free -->
+    <div class="col-md-4">
+      <div class="card h-100 {% if current_tier == 'free' %}border-primary{% endif %}">
+        <div class="card-body text-center d-flex flex-column">
+          <h3 class="card-title">Free</h3>
+          <p class="display-6 fw-bold">₪0</p>
+          <p class="text-muted">{% trans "per month" %}</p>
+          <ul class="list-unstyled mt-3 mb-4 flex-grow-1 text-start">
+            <li><i class="bi bi-check-lg text-success"></i> {% trans "Free preview lessons" %}</li>
+            <li><i class="bi bi-check-lg text-success"></i> {% trans "AI chat (limited)" %}</li>
+            <li class="text-muted"><i class="bi bi-x-lg"></i> {% trans "Full video library" %}</li>
+            <li class="text-muted"><i class="bi bi-x-lg"></i> {% trans "GitHub Copilot seat" %}</li>
+          </ul>
+          {% if current_tier == 'free' %}
+            <span class="btn btn-outline-primary disabled">{% trans "Current Plan" %}</span>
+          {% else %}
+            <form method="post" action="{% url 'choose_tier' %}">
+              {% csrf_token %}
+              <input type="hidden" name="tier" value="free">
+              <button type="submit" class="btn btn-outline-primary w-100">{% trans "Switch to Free" %}</button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Base -->
+    <div class="col-md-4">
+      <div class="card h-100 {% if current_tier == 'base' %}border-primary{% endif %}">
+        <div class="card-body text-center d-flex flex-column">
+          <h3 class="card-title">Base</h3>
+          <p class="display-6 fw-bold">₪0 <small class="fs-6 text-muted text-decoration-line-through">₪49</small></p>
+          <p class="text-muted">{% trans "per month" %} ({% trans "beta" %})</p>
+          <ul class="list-unstyled mt-3 mb-4 flex-grow-1 text-start">
+            <li><i class="bi bi-check-lg text-success"></i> {% trans "Free preview lessons" %}</li>
+            <li><i class="bi bi-check-lg text-success"></i> {% trans "AI chat (full)" %}</li>
+            <li><i class="bi bi-check-lg text-success"></i> {% trans "Full video library" %}</li>
+            <li class="text-muted"><i class="bi bi-x-lg"></i> {% trans "GitHub Copilot seat" %}</li>
+          </ul>
+          {% if current_tier == 'base' %}
+            <span class="btn btn-primary disabled">{% trans "Current Plan" %}</span>
+          {% else %}
+            <form method="post" action="{% url 'choose_tier' %}">
+              {% csrf_token %}
+              <input type="hidden" name="tier" value="base">
+              <button type="submit" class="btn btn-primary w-100">{% trans "Choose Base" %}</button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Master -->
+    <div class="col-md-4">
+      <div class="card h-100 {% if current_tier == 'master' %}border-primary{% endif %}">
+        <div class="card-body text-center d-flex flex-column">
+          <span class="badge bg-warning text-dark mb-2">{% trans "Most Popular" %}</span>
+          <h3 class="card-title">Master</h3>
+          <p class="display-6 fw-bold">₪0 <small class="fs-6 text-muted text-decoration-line-through">₪149</small></p>
+          <p class="text-muted">{% trans "per month" %} ({% trans "beta" %})</p>
+          <ul class="list-unstyled mt-3 mb-4 flex-grow-1 text-start">
+            <li><i class="bi bi-check-lg text-success"></i> {% trans "Free preview lessons" %}</li>
+            <li><i class="bi bi-check-lg text-success"></i> {% trans "AI chat (full + premium model)" %}</li>
+            <li><i class="bi bi-check-lg text-success"></i> {% trans "Full video library" %}</li>
+            <li><i class="bi bi-check-lg text-success"></i> {% trans "GitHub Copilot seat included" %}</li>
+          </ul>
+          {% if current_tier == 'master' %}
+            <span class="btn btn-primary disabled">{% trans "Current Plan" %}</span>
+          {% else %}
+            <form method="post" action="{% url 'choose_tier' %}">
+              {% csrf_token %}
+              <input type="hidden" name="tier" value="master">
+              <button type="submit" class="btn btn-primary w-100">{% trans "Choose Master" %}</button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -5,6 +5,7 @@ from .models import (
     ChatSession,
     CopilotSeat,
     Course,
+    Entitlement,
     ModerationLog,
     Note,
     SeatEvent,
@@ -18,6 +19,7 @@ admin.site.register(Note)
 admin.site.register(Course)
 admin.site.register(Video)
 admin.site.register(UserVideoProgress)
+admin.site.register(Entitlement)
 admin.site.register(CopilotSeat)
 admin.site.register(SeatEvent)
 admin.site.register(SystemPrompt)

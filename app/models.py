@@ -208,3 +208,33 @@ class ModerationLog(models.Model):
     def __str__(self):
         user_str = self.user.username if self.user else "anonymous"
         return f"Flagged: {user_str} ({self.created_at})"
+
+
+# ---------------------------------------------------------------------------
+# Billing — SPR-1.5 (mock mode: no real payment, users choose tier freely)
+# ---------------------------------------------------------------------------
+
+
+class Entitlement(models.Model):
+    TIER_CHOICES = [
+        ("free", "Free"),
+        ("base", "Base"),
+        ("master", "Master"),
+    ]
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="entitlement")
+    tier = models.CharField(max_length=10, choices=TIER_CHOICES, default="free")
+    activated_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username} — {self.tier}"
+
+    @property
+    def has_video_access(self):
+        """Base and Master tiers have full video library access."""
+        return self.tier in ("base", "master")
+
+    @property
+    def has_copilot_access(self):
+        """Only Master tier includes Copilot seat."""
+        return self.tier == "master"
