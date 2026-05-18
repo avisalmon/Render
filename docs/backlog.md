@@ -191,16 +191,16 @@ Sprints in this epic:
 ### SPR-1.9 — Email Service (Resend)
 
 **Goal:** Transactional email working on prod via Resend. Password reset, notifications, and all Django `send_mail()` calls delivered to real inboxes.
-**Status:** WIP
+**Status:** DONE
 
 | Feature ID | Title | REQ trace | Status | Notes |
 |---|---|---|---|---|
 | F-1.9.1 | `django-anymail[resend]` backend wired in settings | REQ-1.2.2 | DONE | anymail + Resend; console in dev, Resend in prod |
-| F-1.9.2 | `RESEND_API_KEY` + `DEFAULT_FROM_EMAIL` env vars | REQ-1.2.2, REQ-1.2.3 | DONE | settings_local.py + Render env var pending |
-| F-1.9.3 | Forgot-password / reset-password flow works | REQ-1.1.3 | DONE | allauth templates created; needs domain verification |
+| F-1.9.2 | `RESEND_API_KEY` + `DEFAULT_FROM_EMAIL` env vars | REQ-1.2.2, REQ-1.2.3 | DONE | Local + Render env var set |
+| F-1.9.3 | Forgot-password / reset-password flow works | REQ-1.1.3 | DONE | allauth templates + styled pages |
 | F-1.9.4 | Email verification on signup (optional) | REQ-1.1.3 | DONE | ACCOUNT_EMAIL_VERIFICATION = "none" (configurable) |
-| F-1.9.5 | Admin can test-send from Django shell | REQ-1.2.2 | DONE | send_mail() works; awaiting domain verification |
-| F-1.9.6 | SPF/DKIM DNS records for `babook.co.il` | REQ-1.2.2 | WIP | DNS records added at LiveDNS.co.il; awaiting propagation |
+| F-1.9.5 | Admin can test-send from Django shell | REQ-1.2.2 | DONE | Tested: delivers to Gmail + Intel inboxes |
+| F-1.9.6 | SPF/DKIM DNS records for `babook.co.il` | REQ-1.2.2 | DONE | DNS moved to Cloudflare; fully verified |
 
 ---
 
