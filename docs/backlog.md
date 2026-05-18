@@ -207,16 +207,16 @@ Sprints in this epic:
 ### SPR-1.10 — Database Backups
 
 **Goal:** Nightly automated backup of `db.sqlite3` to Google Drive via rclone. Documented restore procedure. Last 30 backups retained.
-**Status:** TODO
+**Status:** DONE (code ready; ACT-3 pending for Avi to configure rclone token)
 
 | Feature ID | Title | REQ trace | Status | Notes |
 |---|---|---|---|---|
-| F-1.10.1 | rclone configured for Google Drive remote | REQ-1.2.4 | TODO | Depends on ACT-3 |
-| F-1.10.2 | Backup script (`scripts/backup_db.sh`) | REQ-1.2.4 | TODO | Copies SQLite safely (WAL checkpoint first) |
-| F-1.10.3 | Render cron job or external trigger | REQ-1.2.4 | TODO | Nightly at 03:00 UTC |
-| F-1.10.4 | Retention policy — keep last 30 backups | REQ-1.2.4 | TODO | rclone `--max-age 30d` or script cleanup |
-| F-1.10.5 | Restore procedure documented + tested | REQ-1.2.18 | TODO | `docs/procedures/backup_restore.md` updated |
-| F-1.10.6 | Restore dry-run completed once | REQ-1.2.18 | TODO | Verified restore to local dev |
+| F-1.10.1 | rclone configured for Google Drive remote | REQ-1.2.4 | TODO | ACT-3: Avi runs `rclone config`, base64-encodes, sets RCLONE_CONF on Render |
+| F-1.10.2 | Backup management command | REQ-1.2.4 | DONE | `python manage.py backup_db` (WAL checkpoint + upload + retention) |
+| F-1.10.3 | Render cron job (03:00 UTC) | REQ-1.2.4 | DONE | `render.yaml` cron job defined |
+| F-1.10.4 | Retention policy — keep last 30 backups | REQ-1.2.4 | DONE | `rclone delete --min-age 30d` in command |
+| F-1.10.5 | Restore procedure documented | REQ-1.2.18 | DONE | `docs/procedures/backup_restore.md` complete |
+| F-1.10.6 | Restore dry-run completed once | REQ-1.2.18 | TODO | After ACT-3 — first real backup + restore test |
 
 ---
 
