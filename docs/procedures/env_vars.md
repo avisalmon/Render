@@ -28,6 +28,7 @@ Set via Render Dashboard → babook service → Environment.
 | `BUNNY_STREAM_LIBRARY_ID` | `661923` | Render | Bunny library |
 | `BUNNY_STREAM_CDN_HOSTNAME` | `vz-xxx.b-cdn.net` | Render | Bunny CDN |
 | `BUNNY_STREAM_TOKEN_KEY` | `token-...` | Render | Bunny signed URLs |
+| `RESEND_API_KEY` | `re_...` | Render | Resend transactional email |
 
 ## Optional variables
 
