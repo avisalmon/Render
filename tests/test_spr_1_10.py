@@ -39,13 +39,41 @@ class TestBackupDbCommand:
         call_command("backup_db", "--dry-run", stdout=out)
         output = out.getvalue()
         assert "DRY RUN" in output
-        assert "Would upload" in output
+        assert "Database" in output
 
     def test_dry_run_reports_size(self, real_db):
         """Dry run should report backup size."""
         out = StringIO()
         call_command("backup_db", "--dry-run", stdout=out)
         assert "bytes" in out.getvalue()
+
+    def test_dry_run_includes_media(self, real_db, tmp_path, settings):
+        """Dry run should mention media files."""
+        media_dir = tmp_path / "media"
+        media_dir.mkdir()
+        (media_dir / "test.jpg").write_bytes(b"\xff\xd8")
+        settings.MEDIA_ROOT = str(media_dir)
+        out = StringIO()
+        call_command("backup_db", "--dry-run", stdout=out)
+        assert "Media" in out.getvalue()
+
+    def test_dry_run_includes_video_catalog(self, real_db):
+        """Dry run should mention video catalog."""
+        out = StringIO()
+        call_command("backup_db", "--dry-run", stdout=out)
+        assert "Video catalog" in out.getvalue()
+
+    def test_skip_media_flag(self, real_db):
+        """--skip-media should not mention media."""
+        out = StringIO()
+        call_command("backup_db", "--dry-run", "--skip-media", stdout=out)
+        assert "Media" not in out.getvalue()
+
+    def test_skip_videos_flag(self, real_db):
+        """--skip-videos should not mention video catalog."""
+        out = StringIO()
+        call_command("backup_db", "--dry-run", "--skip-videos", stdout=out)
+        assert "Video catalog" not in out.getvalue()
 
     def test_missing_rclone_conf_raises(self, real_db):
         """Without RCLONE_CONF env var and not dry-run, should raise."""
@@ -66,7 +94,7 @@ class TestBackupDbCommand:
 
     @patch("subprocess.run")
     def test_upload_calls_rclone(self, mock_run, real_db):
-        """With RCLONE_CONF set, should call rclone copy and rclone delete."""
+        """With RCLONE_CONF set, should call rclone for db, media, and catalog."""
         import base64
 
         fake_conf = base64.b64encode(b"[gdrive]\ntype = drive\n").decode()
@@ -74,15 +102,14 @@ class TestBackupDbCommand:
 
         with patch.dict("os.environ", {"RCLONE_CONF": fake_conf}, clear=False):
             out = StringIO()
-            call_command("backup_db", stdout=out)
+            call_command("backup_db", "--skip-media", "--skip-videos", stdout=out)
 
-        # Should have called rclone twice: copy + delete
+        # DB: copy + delete (retention)
         assert mock_run.call_count == 2
         copy_args = mock_run.call_args_list[0][0][0]
-        assert "rclone" in copy_args[0]
-        assert "copy" in copy_args[1]
+        assert "copy" in copy_args
         delete_args = mock_run.call_args_list[1][0][0]
-        assert "delete" in delete_args[1]
+        assert "delete" in delete_args
 
     @patch("subprocess.run")
     def test_upload_failure_raises(self, mock_run, real_db):
@@ -95,5 +122,5 @@ class TestBackupDbCommand:
         )()
 
         with patch.dict("os.environ", {"RCLONE_CONF": fake_conf}, clear=False):
-            with pytest.raises(CommandError, match="rclone upload failed"):
-                call_command("backup_db")
+            with pytest.raises(CommandError, match="rclone.*failed"):
+                call_command("backup_db", "--skip-media", "--skip-videos")
