@@ -3,10 +3,11 @@ SPR-1.10 — Database Backups
 Tests for the backup_db management command (dry-run + error handling).
 Run: pytest tests/test_spr_1_10.py -v
 """
+import json
 import sqlite3
 from io import StringIO
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 import pytest
 from django.core.management import call_command
@@ -34,7 +35,7 @@ def real_db(tmp_path, settings):
 
 class TestBackupDbCommand:
     def test_dry_run_succeeds(self, real_db):
-        """Dry run should complete without RCLONE_CONF."""
+        """Dry run should complete without credentials."""
         out = StringIO()
         call_command("backup_db", "--dry-run", stdout=out)
         output = out.getvalue()
@@ -75,11 +76,11 @@ class TestBackupDbCommand:
         call_command("backup_db", "--dry-run", "--skip-videos", stdout=out)
         assert "Video catalog" not in out.getvalue()
 
-    def test_missing_rclone_conf_raises(self, real_db):
-        """Without RCLONE_CONF env var and not dry-run, should raise."""
-        with patch.dict("os.environ", {"RCLONE_CONF": ""}, clear=False):
-            with pytest.raises(CommandError, match="RCLONE_CONF"):
-                call_command("backup_db")
+    def test_missing_credentials_raises(self, real_db):
+        """Without GDRIVE_SERVICE_ACCOUNT env var, should raise."""
+        with patch.dict("os.environ", {"GDRIVE_SERVICE_ACCOUNT": ""}, clear=False):
+            with pytest.raises(CommandError, match="GDRIVE_SERVICE_ACCOUNT"):
+                call_command("backup_db", "--skip-media", "--skip-videos")
 
     def test_missing_database_raises(self, settings):
         """If database file doesn't exist, should raise."""
@@ -92,35 +93,35 @@ class TestBackupDbCommand:
         with pytest.raises(CommandError, match="not found"):
             call_command("backup_db", "--dry-run")
 
-    @patch("subprocess.run")
-    def test_upload_calls_rclone(self, mock_run, real_db):
-        """With RCLONE_CONF set, should call rclone for db, media, and catalog."""
+    @patch("app.management.commands.backup_db._upload_file")
+    @patch("app.management.commands.backup_db._ensure_subfolder")
+    @patch("app.management.commands.backup_db._delete_old_files")
+    @patch("app.management.commands.backup_db._get_drive_service")
+    def test_upload_calls_drive_api(self, mock_service, mock_delete, mock_subfolder, mock_upload, real_db):
+        """With credentials set, should call Drive API."""
         import base64
 
-        fake_conf = base64.b64encode(b"[gdrive]\ntype = drive\n").decode()
-        mock_run.return_value = type("Result", (), {"returncode": 0, "stderr": ""})()
+        fake_creds = base64.b64encode(json.dumps({
+            "type": "service_account",
+            "project_id": "test",
+            "private_key_id": "x",
+            "private_key": "x",
+            "client_email": "test@test.iam.gserviceaccount.com",
+            "client_id": "123",
+        }).encode()).decode()
 
-        with patch.dict("os.environ", {"RCLONE_CONF": fake_conf}, clear=False):
+        mock_service.return_value = MagicMock()
+        mock_subfolder.return_value = "folder123"
+        mock_upload.return_value = "file123"
+        mock_delete.return_value = 0
+
+        with patch.dict("os.environ", {
+            "GDRIVE_SERVICE_ACCOUNT": fake_creds,
+            "GDRIVE_FOLDER_ID": "root_folder_id",
+        }, clear=False):
             out = StringIO()
             call_command("backup_db", "--skip-media", "--skip-videos", stdout=out)
 
-        # DB: copy + delete (retention)
-        assert mock_run.call_count == 2
-        copy_args = mock_run.call_args_list[0][0][0]
-        assert "copy" in copy_args
-        delete_args = mock_run.call_args_list[1][0][0]
-        assert "delete" in delete_args
-
-    @patch("subprocess.run")
-    def test_upload_failure_raises(self, mock_run, real_db):
-        """If rclone copy fails, should raise CommandError."""
-        import base64
-
-        fake_conf = base64.b64encode(b"[gdrive]\ntype = drive\n").decode()
-        mock_run.return_value = type(
-            "Result", (), {"returncode": 1, "stderr": "network error"}
-        )()
-
-        with patch.dict("os.environ", {"RCLONE_CONF": fake_conf}, clear=False):
-            with pytest.raises(CommandError, match="rclone.*failed"):
-                call_command("backup_db", "--skip-media", "--skip-videos")
+        mock_subfolder.assert_called()
+        mock_upload.assert_called_once()
+        assert "Uploaded" in out.getvalue()
