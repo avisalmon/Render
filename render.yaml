@@ -43,9 +43,9 @@ services:
         value: 3.11.9
       - key: PERSISTENT_ROOT
         value: /var/data
-      - key: GDRIVE_SERVICE_ACCOUNT
+      - key: GCS_SERVICE_ACCOUNT
         sync: false
-      - key: GDRIVE_FOLDER_ID
+      - key: GCS_BUCKET
         sync: false
       - key: SECRET_KEY
         sync: false

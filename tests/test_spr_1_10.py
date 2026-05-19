@@ -77,9 +77,9 @@ class TestBackupDbCommand:
         assert "Video catalog" not in out.getvalue()
 
     def test_missing_credentials_raises(self, real_db):
-        """Without GDRIVE_SERVICE_ACCOUNT env var, should raise."""
-        with patch.dict("os.environ", {"GDRIVE_SERVICE_ACCOUNT": ""}, clear=False):
-            with pytest.raises(CommandError, match="GDRIVE_SERVICE_ACCOUNT"):
+        """Without GCS_SERVICE_ACCOUNT env var, should raise."""
+        with patch.dict("os.environ", {"GCS_SERVICE_ACCOUNT": ""}, clear=False):
+            with pytest.raises(CommandError, match="GCS_SERVICE_ACCOUNT"):
                 call_command("backup_db", "--skip-media", "--skip-videos")
 
     def test_missing_database_raises(self, settings):
@@ -94,11 +94,10 @@ class TestBackupDbCommand:
             call_command("backup_db", "--dry-run")
 
     @patch("app.management.commands.backup_db._upload_file")
-    @patch("app.management.commands.backup_db._ensure_subfolder")
-    @patch("app.management.commands.backup_db._delete_old_files")
-    @patch("app.management.commands.backup_db._get_drive_service")
-    def test_upload_calls_drive_api(self, mock_service, mock_delete, mock_subfolder, mock_upload, real_db):
-        """With credentials set, should call Drive API."""
+    @patch("app.management.commands.backup_db._delete_old_objects")
+    @patch("app.management.commands.backup_db._get_gcs_session")
+    def test_upload_calls_drive_api(self, mock_session, mock_delete, mock_upload, real_db):
+        """With credentials set, should call GCS API."""
         import base64
 
         fake_creds = base64.b64encode(json.dumps({
@@ -110,18 +109,16 @@ class TestBackupDbCommand:
             "client_id": "123",
         }).encode()).decode()
 
-        mock_service.return_value = MagicMock()
-        mock_subfolder.return_value = "folder123"
-        mock_upload.return_value = "file123"
+        mock_session.return_value = MagicMock()
+        mock_upload.return_value = "db/db_backup_test.sqlite3"
         mock_delete.return_value = 0
 
         with patch.dict("os.environ", {
-            "GDRIVE_SERVICE_ACCOUNT": fake_creds,
-            "GDRIVE_FOLDER_ID": "root_folder_id",
+            "GCS_SERVICE_ACCOUNT": fake_creds,
+            "GCS_BUCKET": "test-bucket",
         }, clear=False):
             out = StringIO()
             call_command("backup_db", "--skip-media", "--skip-videos", stdout=out)
 
-        mock_subfolder.assert_called()
         mock_upload.assert_called_once()
         assert "Uploaded" in out.getvalue()
