@@ -207,16 +207,16 @@ Sprints in this epic:
 ### SPR-1.10 — Database Backups
 
 **Goal:** Nightly automated backup of `db.sqlite3` to Google Drive via rclone. Documented restore procedure. Last 30 backups retained.
-**Status:** DONE (code ready; ACT-3 pending for Avi to configure rclone token)
+**Status:** BLOCKED (code ready; ACT-3 pending for Avi to configure rclone token)
 
 | Feature ID | Title | REQ trace | Status | Notes |
 |---|---|---|---|---|
-| F-1.10.1 | rclone configured for Google Drive remote | REQ-1.2.4 | TODO | ACT-3: Avi runs `rclone config`, base64-encodes, sets RCLONE_CONF on Render |
+| F-1.10.1 | rclone configured for Google Drive remote | REQ-1.2.4 | BLOCKED | ACT-3: Avi runs `rclone config`, base64-encodes, sets RCLONE_CONF on Render |
 | F-1.10.2 | Backup management command | REQ-1.2.4 | DONE | `python manage.py backup_db` (WAL checkpoint + upload + retention) |
 | F-1.10.3 | Render cron job (03:00 UTC) | REQ-1.2.4 | DONE | `render.yaml` cron job defined |
 | F-1.10.4 | Retention policy — keep last 30 backups | REQ-1.2.4 | DONE | `rclone delete --min-age 30d` in command |
 | F-1.10.5 | Restore procedure documented | REQ-1.2.18 | DONE | `docs/procedures/backup_restore.md` complete |
-| F-1.10.6 | Restore dry-run completed once | REQ-1.2.18 | TODO | After ACT-3 — first real backup + restore test |
+| F-1.10.6 | Restore dry-run completed once | REQ-1.2.18 | BLOCKED | After ACT-3 — first real backup + restore test |
 
 ---
 
@@ -226,7 +226,7 @@ Sprints in this epic:
 |---|---|---|
 | ACT-1 | Sign up Resend, share API key | F-1.2.1 |
 | ACT-2 | SPF/DKIM DNS records for babook.co.il | F-1.2.1 |
-| ACT-3 | GitHub private `babook-backups` repo + deploy key | F-1.7.3 |
+| ACT-3 | Configure Google Drive `rclone` token on Render (`RCLONE_CONF`) | F-1.10.1, F-1.10.6 |
 | ACT-4 | Approve AI logo or provide own | F-1.3.4 |
 | ACT-5 | Plausible account + site ID | F-1.3.9 |
 | ACT-6 | Confirm Render persistent disk at `/var/data/` | F-1.1.2, F-1.1.8 |
