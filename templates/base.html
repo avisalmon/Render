@@ -17,6 +17,10 @@
   {% endif %}
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <!-- Google Fonts: Heebo (Hebrew/Latin) + Inter (Latin UI) + JetBrains Mono (code) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
   <!-- Site CSS -->
   <link rel="stylesheet" href="{% static 'style.css' %}">
   <!-- Favicon -->
@@ -93,6 +97,17 @@
   <main class="container py-4 flex-grow-1">
     {% block content %}{% endblock %}
   </main>
+
+  {% include "app/newsletter_signup.html" %}
+
+  <!-- WhatsApp sticky CTA (REQ-2.1.39) -->
+  <a href="https://wa.me/{{ whatsapp_number|default:'972500000000' }}"
+     class="whatsapp-sticky"
+     target="_blank"
+     rel="noopener noreferrer"
+     aria-label="{% trans 'Contact us on WhatsApp' %}">
+    <i class="bi bi-whatsapp"></i>
+  </a>
 
   <!-- Footer -->
   <footer class="bg-dark text-secondary py-3 mt-auto">

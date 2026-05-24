@@ -1,31 +1,495 @@
+/* ===========================================================================
+ * babook.co.il — Design System (SPR-2.0.1)
+ * Spec: docs/main_spec.md §Chapter 2 → Design Guidelines
+ * REQ-2.1.51, REQ-2.1.52, REQ-2.1.53, REQ-2.1.54, REQ-2.1.39, REQ-2.1.55
+ * =========================================================================== */
+
+/* -------- Design tokens (CSS custom properties) -------- */
+:root {
+    /* Color palette (dark theme) */
+    --bg-primary: #0f1117;
+    --bg-surface: #1a1d27;
+    --bg-elevated: #242836;
+    --text-primary: #f0f0f5;
+    --text-secondary: #9ca3af;
+    --accent-primary: #3b82f6;
+    --accent-warm: #f59e0b;
+    --accent-success: #10b981;
+    --accent-cta: #16a34a;
+    --border: #2d3748;
+
+    /* Typography */
+    --font-heading: "Heebo", "Inter", system-ui, -apple-system, sans-serif;
+    --font-body: "Heebo", "Inter", system-ui, -apple-system, sans-serif;
+    --font-mono: "JetBrains Mono", "Consolas", "Monaco", monospace;
+
+    /* Spacing */
+    --space-section: 80px;
+    --space-section-mobile: 48px;
+    --space-card: 24px;
+    --space-card-gap: 16px;
+    --max-content-width: 1200px;
+
+    /* Radii */
+    --radius-card: 8px;
+    --radius-button: 6px;
+    --radius-input: 4px;
+}
+
+@media (max-width: 768px) {
+    :root {
+        --space-section: 48px;
+    }
+}
+
+/* -------- Base typography & body -------- */
 body {
-    font-family: Arial, sans-serif;
-    max-width: 700px;
-    margin: 40px auto;
-    padding: 0 20px;
-    background: #f9f9f9;
-    color: #333;
+    font-family: var(--font-body);
+    font-weight: 400;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.6;
 }
 
-h1 { color: #2c6e49; }
-h2 { color: #444; }
-
-input[type="text"], input[name="title"], input[name="body"] {
-    padding: 6px 10px;
-    margin-right: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--text-primary);
 }
 
-button {
-    padding: 6px 14px;
-    background: #2c6e49;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
+code, pre, kbd, samp {
+    font-family: var(--font-mono);
 }
 
-ul { padding-left: 20px; }
-li { margin: 8px 0; }
-a { color: #2c6e49; }
+a {
+    color: var(--accent-primary);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* -------- Layout containers -------- */
+.container,
+.container-lg,
+.container-xl {
+    max-width: var(--max-content-width);
+}
+
+/* -------- Component: dark card surface -------- */
+.card-surface {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: var(--space-card);
+    color: var(--text-primary);
+}
+
+.card-surface:hover {
+    border-color: var(--accent-primary);
+    transition: border-color 150ms ease;
+}
+
+.card-elevated {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: var(--space-card);
+}
+
+/* -------- Component: WhatsApp sticky button -------- */
+.whatsapp-sticky {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--accent-cta);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    transition: transform 150ms ease;
+}
+
+.whatsapp-sticky:hover {
+    transform: scale(1.05);
+    text-decoration: none;
+    color: #ffffff;
+}
+
+@media (max-width: 768px) {
+    .whatsapp-sticky {
+        width: 48px;
+        height: 48px;
+        font-size: 24px;
+    }
+}
+
+html[dir="rtl"] .whatsapp-sticky {
+    right: auto;
+    left: 16px;
+}
+
+/* -------- Navbar/footer dark integration -------- */
+.navbar.bg-dark {
+    background: var(--bg-primary) !important;
+    border-bottom: 1px solid var(--border);
+}
+
+footer {
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    border-top: 1px solid var(--border);
+}
+
+footer a {
+    color: var(--text-secondary);
+}
+
+footer a:hover {
+    color: var(--text-primary);
+}
+
+/* -------- Keyboard focus (WCAG 2.1 SC 2.4.7) -------- */
+:focus-visible {
+    outline: 3px solid var(--accent-primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-button);
+}
+
+/* -------- Reduced motion -------- */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* -------- Corporate conversion page (SPR-2.1.1) -------- */
+.corporate-page {
+    color: var(--text-primary);
+}
+
+.corporate-hero {
+    min-height: min(600px, calc(100vh - 160px));
+    padding: var(--space-section) 0;
+}
+
+.corporate-kicker,
+.corporate-section-heading p,
+.corporate-subhead,
+.corporate-tier-meta,
+.corporate-privacy-note {
+    color: var(--text-secondary);
+}
+
+.corporate-kicker {
+    font-weight: 700;
+    color: var(--accent-warm);
+    margin-bottom: 8px;
+}
+
+.corporate-hero h1 {
+    font-size: 2.5rem;
+    margin-bottom: 16px;
+}
+
+.corporate-subhead {
+    max-width: 620px;
+    font-size: 1.1rem;
+}
+
+.corporate-hero-photo {
+    width: 300px;
+    max-width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+}
+
+.corporate-cta-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.corporate-whatsapp-button,
+.corporate-tier-cta,
+.corporate-submit-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: var(--radius-button);
+    font-weight: 700;
+    min-height: 48px;
+}
+
+.corporate-whatsapp-button,
+.corporate-tier-cta {
+    background: var(--accent-cta);
+    color: #ffffff;
+    border: 0;
+}
+
+.corporate-submit-button {
+    width: 100%;
+    background: var(--accent-primary);
+    color: #ffffff;
+    border: 0;
+    margin-top: 16px;
+}
+
+.corporate-whatsapp-button:hover,
+.corporate-tier-cta:hover,
+.corporate-submit-button:hover {
+    color: #ffffff;
+    text-decoration: none;
+    filter: brightness(1.05);
+}
+
+.corporate-secondary-cta {
+    color: var(--accent-primary);
+    text-decoration: underline;
+}
+
+.corporate-section {
+    padding: var(--space-section) 0;
+}
+
+.corporate-section-heading {
+    margin-bottom: 24px;
+}
+
+.corporate-tier-card {
+    height: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.corporate-tier-card.is-popular {
+    border: 2px solid var(--accent-primary);
+}
+
+.corporate-popular-badge {
+    align-self: flex-start;
+    background: var(--accent-warm);
+    color: #111827;
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.corporate-tier-icon {
+    font-size: 2rem;
+    color: var(--accent-primary);
+}
+
+.corporate-tier-card ul {
+    margin: 0;
+    padding-inline-start: 20px;
+}
+
+.corporate-tier-price {
+    color: var(--accent-warm);
+    font-size: 1.15rem;
+}
+
+.corporate-tier-cta {
+    width: 100%;
+    margin-top: auto;
+}
+
+.corporate-faq .accordion-item {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+}
+
+.corporate-faq .accordion-button {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.corporate-faq .accordion-button:not(.collapsed) {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+}
+
+.corporate-faq .accordion-body {
+    color: var(--text-secondary);
+}
+
+.corporate-form-section {
+    padding-bottom: calc(var(--space-section) + 56px);
+}
+
+.corporate-form-section .form-control,
+.corporate-form-section .form-select {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    border-radius: var(--radius-input);
+}
+
+.corporate-form-section .form-label {
+    color: var(--text-primary);
+}
+
+.corporate-honeypot {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+.corporate-privacy-note {
+    font-size: 0.8rem;
+    margin: 16px 0 0;
+}
+
+.corporate-form-status {
+    min-height: 24px;
+    margin-top: 12px;
+    color: var(--text-secondary);
+}
+
+.corporate-form-status.is-success {
+    color: var(--accent-success);
+}
+
+.corporate-footer-cta {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: var(--space-card);
+    margin-bottom: var(--space-section);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.corporate-footer-cta p {
+    margin: 0;
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+/* -------- Newsletter capture (SPR-2.1.3) -------- */
+.newsletter-signup-section {
+    padding: 2rem 0;
+}
+
+.newsletter-signup-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+    gap: 1rem 1.5rem;
+    align-items: center;
+}
+
+.newsletter-copy h2 {
+    margin: 0 0 0.25rem;
+    font-size: 1.35rem;
+}
+
+.newsletter-copy p,
+.newsletter-consent {
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.newsletter-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.newsletter-submit-button {
+    background: var(--accent-primary);
+    color: #ffffff;
+    min-height: 48px;
+    white-space: nowrap;
+}
+
+.newsletter-submit-button:hover {
+    color: #ffffff;
+    filter: brightness(1.05);
+}
+
+.newsletter-honeypot {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+.newsletter-consent,
+.newsletter-signup-status {
+    grid-column: 1 / -1;
+    font-size: 0.85rem;
+}
+
+.newsletter-signup-status.is-success {
+    color: var(--accent-success);
+}
+
+.newsletter-confirm {
+    max-width: 640px;
+}
+
+@media (max-width: 768px) {
+    .corporate-hero {
+        min-height: auto;
+        padding: var(--space-section-mobile) 0;
+    }
+
+    .corporate-hero h1 {
+        font-size: 1.75rem;
+    }
+
+    .corporate-hero-photo {
+        width: 200px;
+    }
+
+    .corporate-cta-stack,
+    .corporate-whatsapp-button {
+        width: 100%;
+    }
+
+    .corporate-footer-cta {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .newsletter-signup-form {
+        grid-template-columns: 1fr;
+    }
+
+    .newsletter-controls {
+        flex-direction: column;
+    }
+
+    .newsletter-submit-button {
+        width: 100%;
+    }
+}

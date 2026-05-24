@@ -1,22 +1,32 @@
+import hashlib
 import json
+from urllib.parse import quote
 
 from django.conf import settings as django_settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
+from django.core.cache import cache
+from django.core.exceptions import ValidationError
+from django.core.mail import send_mail
+from django.core.signing import BadSignature, SignatureExpired, dumps, loads
+from django.core.validators import validate_email
 from django.db.models import Sum
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.html import strip_tags
 from django.views.decorators.http import require_POST
 
 from .bunny import get_embed_url
 from .models import (
     ChatSession,
     CopilotSeat,
+    CorporateLead,
     Course,
     Entitlement,
+    NewsletterSubscriber,
     Note,
     UsageLog,
     UserProfile,
@@ -94,6 +104,235 @@ def privacy(request):
 
 def terms(request):
     return render(request, "app/terms.html")
+
+
+def _corporate_whatsapp_url(message):
+    number = getattr(django_settings, "WHATSAPP_NUMBER", "972500000000")
+    return f"https://wa.me/{number}?text={quote(message)}"
+
+
+def _client_ip(request):
+    forwarded = request.META.get("HTTP_X_FORWARDED_FOR", "")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.META.get("REMOTE_ADDR", "")
+
+
+def _ip_hash(ip_address):
+    raw = f"{django_settings.SECRET_KEY}:{ip_address}".encode("utf-8")
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _newsletter_token(email):
+    return dumps({"email": email}, salt="newsletter-confirm")
+
+
+def _send_newsletter_confirmation(request, subscriber):
+    token = _newsletter_token(subscriber.email)
+    confirm_url = request.build_absolute_uri(f"/newsletter/confirm/{token}")
+    message = "\n".join([
+        "שלום,",
+        "",
+        "כדי לאשר הרשמה לניוזלטר של babook, פתחו את הקישור:",
+        confirm_url,
+        "",
+        "אם לא ביקשתם להירשם, אפשר להתעלם מהמייל הזה.",
+    ])
+    send_mail(
+        subject="אישור הרשמה לניוזלטר babook",
+        message=message,
+        from_email=django_settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[subscriber.email],
+        fail_silently=False,
+    )
+
+
+@require_POST
+def newsletter_signup(request):
+    if request.POST.get("website", "").strip():
+        return JsonResponse({"status": "ok"})
+
+    ip_address = _client_ip(request)
+    hashed_ip = _ip_hash(ip_address)
+    rate_key = f"newsletter_signup:{hashed_ip}"
+    submission_count = cache.get(rate_key, 0)
+    if submission_count >= 3:
+        return JsonResponse({"error": "יותר מדי ניסיונות הרשמה. נסו שוב מאוחר יותר."}, status=429)
+
+    email = request.POST.get("email", "").strip().lower()
+    errors = {}
+    try:
+        validate_email(email)
+    except ValidationError:
+        errors["email"] = "כתובת אימייל לא תקינה"
+    language = request.POST.get("language", "he")[:5]
+    valid_languages = {choice[0] for choice in NewsletterSubscriber.LANGUAGE_CHOICES}
+    if language not in valid_languages:
+        language = "he"
+    if errors:
+        return JsonResponse({"errors": errors}, status=400)
+
+    defaults = {
+        "language": language,
+        "source_page": request.POST.get("source_page", request.path).strip()[:200],
+        "utm_source": request.POST.get("utm_source", "").strip()[:100],
+        "utm_medium": request.POST.get("utm_medium", "").strip()[:100],
+        "utm_campaign": request.POST.get("utm_campaign", "").strip()[:100],
+        "utm_content": request.POST.get("utm_content", "").strip()[:100],
+        "ip_hash": hashed_ip,
+    }
+    subscriber, created = NewsletterSubscriber.objects.get_or_create(email=email, defaults=defaults)
+    if not created:
+        for field, value in defaults.items():
+            setattr(subscriber, field, value)
+        subscriber.save(update_fields=[*defaults.keys(), "updated_at"])
+    cache.set(rate_key, submission_count + 1, 60 * 60)
+
+    if subscriber.confirmed_at is None:
+        _send_newsletter_confirmation(request, subscriber)
+    return JsonResponse({"status": "ok"})
+
+
+def newsletter_confirm(request, token):
+    try:
+        payload = loads(token, salt="newsletter-confirm", max_age=60 * 60 * 24 * 14)
+    except SignatureExpired:
+        return render(request, "app/newsletter_confirm.html", {"status": "expired"}, status=400)
+    except BadSignature:
+        return render(request, "app/newsletter_confirm.html", {"status": "invalid"}, status=400)
+
+    email = payload.get("email", "").strip().lower()
+    subscriber = get_object_or_404(NewsletterSubscriber, email=email)
+    if subscriber.confirmed_at is None:
+        subscriber.confirmed_at = timezone.now()
+        subscriber.save(update_fields=["confirmed_at", "updated_at"])
+    return render(request, "app/newsletter_confirm.html", {"status": "confirmed"})
+
+
+def _corporate_page_context(request):
+    tiers = [
+        {
+            "key": "workshop",
+            "icon": "bi-calendar-event",
+            "title": "סדנה",
+            "duration": "יום אחד (6-8 שעות)",
+            "audience": "8-30 משתתפים",
+            "price": "₪15,000 + מע״מ",
+            "popular": False,
+            "bullets": ["תרגול hands-on", "Live coding", "התקנת כלים", "שאלות ותשובות"],
+            "whatsapp_url": _corporate_whatsapp_url("היי אבי, אני מתעניין/ת בסדנה בנושא AI לצוות שלי."),
+        },
+        {
+            "key": "bootcamp",
+            "icon": "bi-journal-code",
+            "title": "בוטקאמפ",
+            "duration": "4-5 שבועות · 2 שעות שבועיות + שעת קבלה",
+            "audience": "8-20 משתתפים",
+            "price": "₪35,000 + מע״מ",
+            "popular": True,
+            "bullets": ["צלילה עמוקה רב-יומית", "פרויקט צוותי", "מנטורינג המשך", "תוכן מותאם לצוות"],
+            "whatsapp_url": _corporate_whatsapp_url("היי אבי, אני מתעניין/ת בבוטקאמפ בנושא AI לצוות שלי."),
+        },
+        {
+            "key": "keynote",
+            "icon": "bi-mic",
+            "title": "הרצאה",
+            "duration": "עד 3 שעות",
+            "audience": "50-500 משתתפים",
+            "price": "₪9,000 + מע״מ",
+            "popular": False,
+            "bullets": ["פתיחה מעוררת השראה", "מבט הנהלה", "דוגמאות מהשטח", "מתאים לכנס או all-hands"],
+            "whatsapp_url": _corporate_whatsapp_url("היי אבי, אני מתעניין/ת בהרצאה בנושא AI לצוות שלי."),
+        },
+    ]
+    faqs = [
+        ("מה ההבדל בין סדנה לבוטקאמפ?", "סדנה היא יום מרוכז שמכניס את הצוות לעבודה מעשית. בוטקאמפ הוא תהליך עמוק של כמה ימים עם פרויקט וליווי."),
+        ("האם אפשר להתאים את התוכן לצוות שלנו?", "כן. לפני ההדרכה נבין את הכלים, הרמה והיעדים של הצוות ונכוון את הדוגמאות בהתאם."),
+        ("מה המחיר?", "המחיר תלוי בפורמט, מספר המשתתפים ורמת ההתאמה. הסיגנלים בעמוד נותנים סדר גודל לפני שיחה."),
+        ("האם יש אפשרות לשילוב אונליין?", "כן. אפשר להעביר אונליין, פרונטלי או היברידי, לפי צרכי החברה."),
+        ("באיזה שפה ההדרכה?", "ברירת המחדל היא עברית, ואפשר להעביר גם באנגלית לצוותים גלובליים."),
+        ("מה כולל המחיר?", "המחיר כולל הכנה, העברה, חומרי תרגול, דוגמאות קוד וסיכום המלצות לצוות."),
+        ("האם יש NDA?", "כן. אפשר לעבוד תחת NDA ולבנות תרגילים שלא חושפים מידע רגיש."),
+        ("מה לגבי תשלום ותנאים?", "התנאים נסגרים בהצעת מחיר מסודרת אחרי שיחת התאמה קצרה."),
+        ("כמה זמן מראש צריך להזמין?", "מומלץ שבועיים עד ארבעה שבועות מראש, אבל לפעמים אפשר גם מהר יותר."),
+        ("האם אתה מגיע למשרדים שלנו?", "כן. אפשר להגיע למשרדי החברה או להעביר מרחוק."),
+    ]
+    hero_message = "היי אבי, אשמח לשמוע על הדרכות AI לצוות שלי."
+    return {
+        "tiers": tiers,
+        "faqs": faqs,
+        "hero_whatsapp_url": _corporate_whatsapp_url(hero_message),
+        "footer_whatsapp_url": _corporate_whatsapp_url(hero_message),
+    }
+
+
+def corporate(request):
+    if request.method == "POST":
+        if request.POST.get("website", "").strip():
+            return JsonResponse({"status": "ok"})
+
+        ip_address = _client_ip(request)
+        hashed_ip = _ip_hash(ip_address)
+        rate_key = f"corporate_lead:{hashed_ip}"
+        submission_count = cache.get(rate_key, 0)
+        if submission_count >= 3:
+            return JsonResponse({"error": "יותר מדי פניות. נסו שוב מאוחר יותר."}, status=429)
+
+        required_fields = ["name", "company", "team_size", "training_type"]
+        errors = {field: "שדה חובה" for field in required_fields if not request.POST.get(field, "").strip()}
+        training_type = request.POST.get("training_type", "")
+        team_size = request.POST.get("team_size", "")
+        valid_training_types = {choice[0] for choice in CorporateLead.TRAINING_TYPE_CHOICES}
+        valid_team_sizes = {choice[0] for choice in CorporateLead.TEAM_SIZE_CHOICES}
+        if training_type and training_type not in valid_training_types:
+            errors["training_type"] = "בחירה לא תקינה"
+        if team_size and team_size not in valid_team_sizes:
+            errors["team_size"] = "בחירה לא תקינה"
+        if errors:
+            return JsonResponse({"errors": errors}, status=400)
+
+        clean_message = strip_tags(request.POST.get("message", "")).strip()[:1000]
+        lead = CorporateLead.objects.create(
+            name=strip_tags(request.POST.get("name", "")).strip()[:100],
+            company=strip_tags(request.POST.get("company", "")).strip()[:150],
+            role=strip_tags(request.POST.get("role", "")).strip()[:100],
+            team_size=team_size,
+            training_type=training_type,
+            message=clean_message,
+            source_page="/corporate/",
+            utm_source=request.POST.get("utm_source", "").strip()[:100],
+            utm_medium=request.POST.get("utm_medium", "").strip()[:100],
+            utm_campaign=request.POST.get("utm_campaign", "").strip()[:100],
+            utm_content=request.POST.get("utm_content", "").strip()[:100],
+            referrer_url=request.META.get("HTTP_REFERER", "")[:500],
+            ip_hash=hashed_ip,
+        )
+        cache.set(rate_key, submission_count + 1, 60 * 60)
+
+        email_body = "\n".join([
+            f"Name: {lead.name}",
+            f"Company: {lead.company}",
+            f"Role: {lead.role}",
+            f"Team size: {lead.team_size}",
+            f"Training type: {lead.training_type}",
+            f"Message: {lead.message}",
+            f"UTM source: {lead.utm_source}",
+            f"UTM medium: {lead.utm_medium}",
+            f"UTM campaign: {lead.utm_campaign}",
+            f"UTM content: {lead.utm_content}",
+            f"Referrer: {lead.referrer_url}",
+            f"Created: {lead.created_at.isoformat()}",
+        ])
+        send_mail(
+            subject=f"ליד חדש מ-/corporate/ — {lead.company}",
+            message=email_body,
+            from_email=django_settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[getattr(django_settings, "CORPORATE_LEAD_EMAIL", django_settings.DEFAULT_FROM_EMAIL)],
+            fail_silently=False,
+        )
+        return JsonResponse({"status": "ok"})
+
+    return render(request, "app/corporate.html", _corporate_page_context(request))
 
 
 def pricing(request):

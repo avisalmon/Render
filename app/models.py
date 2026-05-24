@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils import timezone
 
 
 class UserProfile(models.Model):
@@ -238,3 +239,91 @@ class Entitlement(models.Model):
     def has_copilot_access(self):
         """Only Master tier includes Copilot seat."""
         return self.tier == "master"
+
+
+# ---------------------------------------------------------------------------
+# Corporate Page — SPR-2.1.1 conversion MVP
+# ---------------------------------------------------------------------------
+
+
+class CorporateLead(models.Model):
+    TEAM_SIZE_CHOICES = [
+        ("1-5", "1-5"),
+        ("6-15", "6-15"),
+        ("16-50", "16-50"),
+        ("50+", "50+"),
+    ]
+    TRAINING_TYPE_CHOICES = [
+        ("workshop", "Workshop"),
+        ("bootcamp", "Bootcamp"),
+        ("keynote", "Keynote"),
+        ("not_sure", "Not sure"),
+    ]
+    STATUS_CHOICES = [
+        ("new", "New"),
+        ("contacted", "Contacted"),
+        ("meeting_scheduled", "Meeting Scheduled"),
+        ("proposal_sent", "Proposal Sent"),
+        ("won", "Won"),
+        ("lost", "Lost"),
+    ]
+
+    name = models.CharField(max_length=100)
+    company = models.CharField(max_length=150)
+    role = models.CharField(max_length=100, blank=True)
+    team_size = models.CharField(max_length=10, choices=TEAM_SIZE_CHOICES)
+    training_type = models.CharField(max_length=20, choices=TRAINING_TYPE_CHOICES)
+    message = models.TextField(blank=True)
+    source_page = models.CharField(max_length=100, default="/corporate/")
+    utm_source = models.CharField(max_length=100, blank=True)
+    utm_medium = models.CharField(max_length=100, blank=True)
+    utm_campaign = models.CharField(max_length=100, blank=True)
+    utm_content = models.CharField(max_length=100, blank=True)
+    referrer_url = models.URLField(max_length=500, blank=True)
+    ip_hash = models.CharField(max_length=64, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default="new")
+    status_changed_at = models.DateTimeField(default=timezone.now)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.company} — {self.name} ({self.training_type})"
+
+
+# ---------------------------------------------------------------------------
+# Newsletter Capture — SPR-2.1.3 MVP
+# ---------------------------------------------------------------------------
+
+
+class NewsletterSubscriber(models.Model):
+    LANGUAGE_CHOICES = [
+        ("he", "Hebrew"),
+        ("en", "English"),
+    ]
+
+    email = models.EmailField(unique=True)
+    name = models.CharField(max_length=100, blank=True)
+    language = models.CharField(max_length=5, choices=LANGUAGE_CHOICES, default="he")
+    source_page = models.CharField(max_length=200, blank=True)
+    utm_source = models.CharField(max_length=100, blank=True)
+    utm_medium = models.CharField(max_length=100, blank=True)
+    utm_campaign = models.CharField(max_length=100, blank=True)
+    utm_content = models.CharField(max_length=100, blank=True)
+    ip_hash = models.CharField(max_length=64, blank=True)
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    unsubscribed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def save(self, *args, **kwargs):
+        self.email = self.email.strip().lower()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.email

@@ -1,0 +1,76 @@
+{% load i18n %}
+{% get_current_language as CURRENT_LANG %}
+
+<section class="newsletter-signup-section" aria-labelledby="newsletter-signup-title">
+  <div class="container">
+    <form id="newsletter-form" class="newsletter-signup-form card-surface" method="post" action="{% url 'newsletter_signup' %}" novalidate>
+      {% csrf_token %}
+      <div class="newsletter-copy">
+        <h2 id="newsletter-signup-title">טיפ AI שבועי לתיבה שלך</h2>
+        <p>כלים, דוגמאות וקיצורי דרך למהנדסים שרוצים לעבוד מהר וחכם יותר.</p>
+      </div>
+      <div class="newsletter-controls">
+        <label class="visually-hidden" for="newsletter_email">אימייל</label>
+        <input id="newsletter_email" class="form-control" type="email" name="email" autocomplete="email" required placeholder="you@example.com">
+        <button class="btn newsletter-submit-button" type="submit">הרשמה</button>
+      </div>
+      <div class="newsletter-honeypot" aria-hidden="true">
+        <label for="newsletter_website">Website</label>
+        <input id="newsletter_website" name="website" type="text" tabindex="-1" autocomplete="off">
+      </div>
+      <input type="hidden" name="language" value="{{ CURRENT_LANG|default:'he' }}">
+      <input type="hidden" name="source_page" value="{{ request.path }}">
+      <input type="hidden" name="utm_source" value="">
+      <input type="hidden" name="utm_medium" value="">
+      <input type="hidden" name="utm_campaign" value="">
+      <input type="hidden" name="utm_content" value="">
+      <p class="newsletter-consent">נשלח אימייל לאישור הרשמה. אפשר להסיר הרשמה בכל רגע.</p>
+      <div id="newsletter-signup-status" class="newsletter-signup-status" role="status" aria-live="polite"></div>
+    </form>
+  </div>
+</section>
+
+<script>
+  (function () {
+    const form = document.getElementById('newsletter-form');
+    if (!form) return;
+    const params = new URLSearchParams(window.location.search);
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'].forEach((name) => {
+      const input = form.querySelector(`[name="${name}"]`);
+      if (input) input.value = params.get(name) || '';
+    });
+    form.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      const status = document.getElementById('newsletter-signup-status');
+      const button = form.querySelector('button[type="submit"]');
+      status.textContent = '';
+      button.disabled = true;
+      button.textContent = 'שולח...';
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST',
+          body: new FormData(form),
+          headers: {'X-Requested-With': 'XMLHttpRequest'}
+        });
+        if (response.ok) {
+          if (window.plausible) {
+            plausible('newsletter_signup', {props: {
+              source_page: form.source_page.value,
+              language: form.language.value
+            }});
+          }
+          form.reset();
+          status.textContent = 'כמעט שם. שלחנו מייל לאישור ההרשמה.';
+          status.classList.add('is-success');
+        } else {
+          status.textContent = response.status === 429 ? 'יותר מדי ניסיונות הרשמה. נסו שוב מאוחר יותר.' : 'בדקו את כתובת האימייל ונסו שוב.';
+        }
+      } catch (error) {
+        status.textContent = 'משהו השתבש. נסו שוב עוד רגע.';
+      } finally {
+        button.disabled = false;
+        button.textContent = 'הרשמה';
+      }
+    });
+  })();
+</script>

@@ -10,6 +10,12 @@ markers = [
     "spr16: SPR-1.6 Copilot Seat Provisioning sprint tests",
     "spr17: SPR-1.7 Ops Quality & BKMs sprint tests",
     "spr18: SPR-1.8 AI Chat sprint tests",
+    "spr19: SPR-1.9 Email Service sprint tests",
+    "spr110: SPR-1.10 Database Backups sprint tests",
+    "spr201: SPR-2.0.1 Design System Foundation sprint tests",
+    "spr211: SPR-2.1.1 Corporate Page Conversion MVP sprint tests",
+    "spr213: SPR-2.1.3 Newsletter Capture MVP sprint tests",
+    "spr214: SPR-2.1.4 Corporate Page Polish & Compliance sprint tests",
 ]
 
 [tool.black]

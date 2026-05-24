@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}אישור הרשמה לניוזלטר — babook{% endblock %}
+
+{% block content %}
+<section class="newsletter-confirm card-surface text-center mx-auto">
+  {% if status == "confirmed" %}
+    <h1>ההרשמה אושרה</h1>
+    <p>תודה. מהשבוע הבא נשלח לך טיפ AI קצר ומעשי.</p>
+  {% elif status == "expired" %}
+    <h1>קישור האישור פג תוקף</h1>
+    <p>אפשר להירשם שוב ולקבל קישור חדש.</p>
+  {% else %}
+    <h1>קישור האישור לא תקין</h1>
+    <p>אפשר להירשם שוב מהטופס באתר.</p>
+  {% endif %}
+</section>
+{% endblock %}

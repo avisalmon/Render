@@ -236,6 +236,72 @@ const BACKLOG_MD = `
 | F-1.8.10 | Session management | REQ-1.6.10 | TODO | |
 | F-1.8.11 | Content safety | REQ-1.6.11 | TODO | |
 | F-1.8.12 | Chat in course context | REQ-1.6.12 | TODO | |
+
+## EPIC-2 — Authority Platform (Chapter 2)
+
+### SPR-2.1.1 — Corporate Page: Conversion MVP
+
+| Feature ID | Title | REQ trace | Status | Notes |
+|---|---|---|---|---|
+| F-2.1.1 | URL route + anonymous view + template | REQ-2.1.1, REQ-2.1.71 | DONE | /corporate/ renders without login and extends base dark theme |
+| F-2.1.2 | Basic SEO + sitemap inclusion | REQ-2.1.2 | DONE | Unique title/meta description + /corporate/ in sitemap |
+| F-2.1.3 | Fast page budget | REQ-2.1.6 | WIP | Code budget kept lean; Lighthouse/FCP audit pending in polish sprint |
+| F-2.1.4 | Responsive breakpoint pass | REQ-2.1.7 | WIP | Bootstrap responsive structure; device visual review pending in polish sprint |
+| F-2.1.5 | Hero section | REQ-2.1.8, REQ-2.1.9, REQ-2.1.10, REQ-2.1.11, REQ-2.1.12 | WIP | Code complete with placeholder image; blocked on ACT-23 real headshot |
+| F-2.1.6 | Static service tier cards | REQ-2.1.16, REQ-2.1.17, REQ-2.1.18, REQ-2.1.19 | WIP | Code complete; ACT-29 final pricing signals pending |
+| F-2.1.7 | FAQ accordion | REQ-2.1.25, REQ-2.1.26 | WIP | Code complete; ACT-28 FAQ review pending |
+| F-2.1.8 | Contact form UI | REQ-2.1.29, REQ-2.1.34 | DONE | Accessible labels, fields per spec, inline success/error states |
+| F-2.1.9 | Contact form submit + email | REQ-2.1.30, REQ-2.1.31, REQ-2.1.35 | DONE | POST creates CorporateLead row and sends notification email |
+| F-2.1.10 | Spam protection + privacy notice | REQ-2.1.32, REQ-2.1.33, REQ-2.1.70 | DONE | Honeypot, rate limit, privacy link near submit |
+| F-2.1.11 | WhatsApp CTAs + prefilled messages | REQ-2.1.39, REQ-2.1.40, REQ-2.1.41 | WIP | Code complete; ACT-24 real env value pending |
+| F-2.1.12 | Basic conversion tracking | REQ-2.1.43, REQ-2.1.46 | DONE | Plausible form-submit event and UTM capture fields |
+| F-2.1.13 | Accessibility baseline | REQ-2.1.58, REQ-2.1.59, REQ-2.1.60, REQ-2.1.61 | WIP | Semantic headings, skip link, labels, reduced motion; a11y audit pending in polish sprint |
+| F-2.1.14 | Mobile-specific polish | REQ-2.1.62, REQ-2.1.63, REQ-2.1.65 | WIP | Mobile hero, stacked cards, sticky WhatsApp spacing hooks; device visual review pending |
+| F-2.1.15 | Security checks | REQ-2.1.68, REQ-2.1.69 | DONE | CSRF enforced; message fields stripped and length-limited |
+
+### SPR-2.1.2 — Corporate Page: CMS & Social Proof (Deferred)
+
+| Feature ID | Title | REQ trace | Status | Notes |
+|---|---|---|---|---|
+| F-2.1.16 | SiteConfig singleton model | REQ-2.1.66 | DEFERRED | whatsapp_number, hero copy, thresholds, manual overrides |
+| F-2.1.17 | ServiceTier model + admin | REQ-2.1.20 | DEFERRED | Move page-local tier data into admin when needed |
+| F-2.1.18 | FAQ model + admin | REQ-2.1.27 | DEFERRED | Move page-local FAQ content into admin when needed |
+| F-2.1.19 | CompanyLogo model + logo strip | REQ-2.1.13, REQ-2.1.14, REQ-2.1.15 | DEFERRED | Requires 3+ approved logos and permission evidence |
+| F-2.1.20 | Testimonial model + section | REQ-2.1.21, REQ-2.1.22, REQ-2.1.23, REQ-2.1.24 | DEFERRED | Requires 2+ approved testimonials and consent evidence |
+| F-2.1.21 | Counter strip + animation | REQ-2.1.47, REQ-2.1.48, REQ-2.1.49, REQ-2.1.50 | DEFERRED | Live aggregates/cached values; hidden below thresholds |
+| F-2.1.22 | Open Graph social card | REQ-2.1.3 | DEFERRED | 1200x630 image and social metadata |
+| F-2.1.23 | JSON-LD structured data | REQ-2.1.4, REQ-2.1.28 | DEFERRED | Organization, Service, and FAQPage schema |
+| F-2.1.24 | Bilingual/LTR content | REQ-2.1.5, REQ-2.1.55, REQ-2.1.56, REQ-2.1.57 | DEFERRED | English copy and full layout flip |
+| F-2.1.25 | Detailed Plausible taxonomy | REQ-2.1.42, REQ-2.1.44, REQ-2.1.45 | DEFERRED | WhatsApp/tier/scroll depth event props |
+| F-2.1.26 | Advanced lead admin + retention | REQ-2.1.36, REQ-2.1.37, REQ-2.1.38 | DEFERRED | Status workflow, filters, bulk actions, 24-month anonymize |
+| F-2.1.27 | Admin preview links | REQ-2.1.67 | DEFERRED | View-on-site and staff edit links |
+
+### SPR-2.1.3 — Newsletter Capture: MVP
+
+| Feature ID | Title | REQ trace | Status | Notes |
+|---|---|---|---|---|
+| F-2.1.28 | Newsletter signup model or provider bridge | REQ-2.3.1 | DONE | NewsletterSubscriber model + admin; provider sync deferred |
+| F-2.1.29 | Signup form component | REQ-2.3.2, REQ-2.3.3 | DONE | Email field, consent text, AJAX success/error state, confirmation email, 14-day purge command |
+| F-2.1.30 | Capture placement | REQ-2.3.2 | DONE | Site-wide reusable footer partial, including /corporate/ |
+| F-2.1.31 | Double-submit/spam protection | REQ-2.3.11 | DONE | Rate limit, duplicate handling, honeypot |
+| F-2.1.32 | Basic signup tracking | REQ-2.3.1, REQ-2.3.12 | DONE | Source page, UTM fields, Plausible signup-success event only |
+
+### SPR-2.1.4 — Corporate Page: Polish & Compliance
+
+| Feature ID | Title | REQ trace | Status | Notes |
+|---|---|---|---|---|
+| F-2.1.35 | WCAG AA contrast check | REQ-2.1.58 | TODO | Automated check; all text meets 4.5:1 / 3:1 ratios |
+| F-2.1.36 | Keyboard navigation (full tab order) | REQ-2.1.59 | TODO | Tab order per spec; skip-to-content link |
+| F-2.1.37 | Screen reader audit (semantic HTML) | REQ-2.1.60 | TODO | Single h1, heading hierarchy, landmarks, aria-live |
+| F-2.1.38 | Reduced motion support | REQ-2.1.61 | TODO | prefers-reduced-motion disables animations |
+| F-2.1.39 | Mobile hero optimization | REQ-2.1.62 | TODO | 200px photo centered, full-width CTA, 48px touch targets |
+| F-2.1.40 | Mobile tiers stacked layout | REQ-2.1.63 | TODO | Full-width cards, full-width CTAs, visible highlight |
+| F-2.1.41 | Mobile sticky WhatsApp (non-overlapping) | REQ-2.1.65 | TODO | 48px, does not overlap form submit; z-index below modals |
+| F-2.1.42 | Performance audit (<400KB, FCP <1.5s) | REQ-2.1.6 | TODO | WebP hero image, no render-blocking JS, audit with Lighthouse |
+| F-2.1.43 | Responsive breakpoint testing | REQ-2.1.7 | TODO | iPhone SE, iPhone 14, Galaxy, iPad, 1920px desktop |
+| F-2.1.44 | RTL layout verification | REQ-2.1.55 | TODO | Photo positioning, icon mirroring, text alignment |
+| F-2.1.46 | CSRF + input sanitization | REQ-2.1.68, REQ-2.1.69 | TODO | Django defaults verified; message field stripped + limited |
+| F-2.1.49 | Sitemap inclusion | REQ-2.1.2 | TODO | /corporate/ added to sitemap.xml |
 `;
 
 async function load() {

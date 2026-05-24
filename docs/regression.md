@@ -160,3 +160,49 @@
 | T-F-1.8.11-1 | `test_moderation_rejects_flagged_content` | Flagged → not safe |
 | T-F-1.8.11-2 | `test_moderation_logs_flagged_attempt` | ModerationLog created |
 | T-F-1.8.12-1 | `test_chat_course_context_includes_metadata` | Course title in prompt |
+
+---
+
+## SPR-2.1.1 — Corporate Page: Conversion MVP (17 tests)
+
+**Marker:** `spr211`
+**File:** `tests/test_spr_2_1_1.py`
+**Status:** GREEN ✅. Full regression: 207/207 PASS.
+
+| Test ID | Test function | What it verifies |
+|---|---|---|
+| T-F-2.1.1-1 | `test_corporate_page_renders_for_anonymous` | `/corporate/` renders for anonymous users |
+| T-F-2.1.2-1 | `test_corporate_page_has_basic_seo_and_sitemap` | SEO meta/canonical and sitemap inclusion |
+| T-F-2.1.3-1 | `test_corporate_page_uses_fast_static_assets` | WebP hero asset and no heavy frontend framework |
+| T-F-2.1.4-1 | `test_corporate_page_responsive_structure` | Responsive Bootstrap structure |
+| T-F-2.1.5-1 | `test_hero_section_has_photo_copy_and_ctas` | Hero copy, image alt text, WhatsApp/form CTAs |
+| T-F-2.1.6-1 | `test_static_service_tier_cards` | Workshop, bootcamp, keynote cards and price signals |
+| T-F-2.1.7-1 | `test_faq_accordion_content` | Hebrew FAQ accordion content |
+| T-F-2.1.8-1 | `test_contact_form_ui_fields_and_accessibility` | Contact form fields, labels, aria-live status |
+| T-F-2.1.9-1 | `test_contact_form_submit_creates_lead_and_sends_email` | AJAX submit creates `CorporateLead` and sends email |
+| T-F-2.1.10-1 | `test_honeypot_silently_rejects_without_db_write` | Honeypot rejects bot submissions silently |
+| T-F-2.1.10-2 | `test_rate_limit_blocks_fourth_submission` | Per-IP 3/hour rate limit |
+| T-F-2.1.11-1 | `test_whatsapp_links_use_env_number_and_encoded_messages` | WhatsApp links use env number and URL-encoded messages |
+| T-F-2.1.12-1 | `test_utm_capture_and_plausible_form_event` | UTM capture and Plausible form-submit event |
+| T-F-2.1.13-1 | `test_accessibility_baseline_markup` | Single h1, skip link, aria labels, reduced motion |
+| T-F-2.1.14-1 | `test_mobile_specific_classes` | Mobile hero/cards/touch target structure |
+| T-F-2.1.15-1 | `test_csrf_enforced_for_ajax_submit` | CSRF rejection when enforced |
+| T-F-2.1.15-2 | `test_input_sanitization_strips_html_and_limits_message` | HTML stripped and message length capped |
+
+---
+
+## SPR-2.1.3 — Newsletter Capture: MVP (7 tests)
+
+**Marker:** `spr213`
+**File:** `tests/test_spr_2_1_3.py`
+**Status:** GREEN ✅. Full regression: 214/214 PASS.
+
+| Test ID | Test function | What it verifies |
+|---|---|---|
+| T-F-2.1.28/29-1 | `test_newsletter_signup_creates_lowercase_subscriber_and_sends_confirmation` | Signup creates lowercase subscriber with source/UTM fields and sends confirmation email |
+| T-F-2.1.29/30-1 | `test_newsletter_component_renders_once_on_corporate_page` | Reusable newsletter CTA renders once on `/corporate/` with consent copy |
+| T-F-2.1.29-2 | `test_newsletter_confirmation_token_sets_confirmed_at` | Confirmation token sets `confirmed_at` and renders success copy |
+| T-F-2.1.31-1 | `test_newsletter_honeypot_rate_limit_and_duplicate_handling` | Honeypot, per-IP rate limit, and duplicate-safe email handling |
+| T-F-2.1.28/31-2 | `test_newsletter_validation_and_csrf` | Invalid email validation and CSRF enforcement |
+| T-F-2.1.32-1 | `test_newsletter_signup_tracking_uses_non_pii_props` | UTM capture and non-PII Plausible signup event |
+| T-F-2.1.29-3 | `test_purge_unconfirmed_newsletter_subscribers_command` | 14-day purge command keeps fresh and confirmed subscribers |

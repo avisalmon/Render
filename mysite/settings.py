@@ -137,6 +137,7 @@ SECURE_HSTS_PRELOAD = not DEBUG
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 PLAUSIBLE_DOMAIN = os.environ.get("PLAUSIBLE_DOMAIN", "")
+WHATSAPP_NUMBER = os.environ.get("WHATSAPP_NUMBER", "972500000000")
 
 LOGGING = {
     "version": 1,
@@ -216,6 +217,7 @@ COPILOT_SEAT_COST_USD = float(os.environ.get("COPILOT_SEAT_COST_USD", "19.0"))
 # Email — Resend in prod, console in dev
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@babook.co.il")
+CORPORATE_LEAD_EMAIL = os.environ.get("CORPORATE_LEAD_EMAIL", DEFAULT_FROM_EMAIL)
 if RESEND_API_KEY:
     EMAIL_BACKEND = "anymail.backends.resend.EmailBackend"
     ANYMAIL = {"RESEND_API_KEY": RESEND_API_KEY}
