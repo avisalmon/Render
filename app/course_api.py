@@ -25,7 +25,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
-from .models import Course, CourseMaterial, Video
+from .models import Course, CourseMaterial, LessonQuiz, Video
 
 
 # ---------------------------------------------------------------------------
@@ -144,11 +144,12 @@ def sync_course(request):
     # --- Upsert Videos ---
     videos_data = data.get("videos", [])
     video_count = 0
+    quiz_count = 0
     for vd in videos_data:
         order = vd.get("lesson_order")
         if order is None:
             continue
-        Video.objects.update_or_create(
+        video, _ = Video.objects.update_or_create(
             course=course,
             lesson_order=order,
             defaults={
@@ -160,6 +161,22 @@ def sync_course(request):
             },
         )
         video_count += 1
+
+        # Optional per-video quiz
+        quiz_data = vd.get("quiz")
+        if quiz_data:
+            LessonQuiz.objects.update_or_create(
+                video=video,
+                defaults={
+                    "question":         quiz_data.get("question", ""),
+                    "options_json":     quiz_data.get("options_json", []),
+                    "requires_correct": quiz_data.get("requires_correct", False),
+                },
+            )
+            quiz_count += 1
+        else:
+            # If push omits a quiz, delete any existing one (kept in sync)
+            LessonQuiz.objects.filter(video=video).delete()
 
     # --- Upsert Materials ---
     materials_data = data.get("materials", [])
@@ -188,6 +205,7 @@ def sync_course(request):
         "course_slug": slug,
         "created": created,
         "videos_synced": video_count,
+        "quizzes_synced": quiz_count,
         "materials_synced": mat_count,
     })
 

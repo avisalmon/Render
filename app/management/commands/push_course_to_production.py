@@ -82,17 +82,25 @@ class Command(BaseCommand):
         self.stdout.write(f"  Videos:    {course.videos.count()}")
         self.stdout.write(f"  Materials: {course.materials.count()}")
 
-        # 2. Build videos payload
+        # 2. Build videos payload (with optional LessonQuiz)
         videos_payload = []
         for v in course.videos.order_by("lesson_order"):
-            videos_payload.append({
+            entry = {
                 "lesson_order":    v.lesson_order,
                 "bunny_video_id":  v.bunny_video_id or "",
                 "title":           v.title,
                 "is_free_preview": v.is_free_preview,
                 "notes_markdown":  v.notes_markdown or "",
                 "duration_seconds": v.duration_seconds or 0,
-            })
+            }
+            quiz = getattr(v, "quiz", None)
+            if quiz is not None:
+                entry["quiz"] = {
+                    "question":         quiz.question,
+                    "options_json":     quiz.options_json,
+                    "requires_correct": quiz.requires_correct,
+                }
+            videos_payload.append(entry)
 
         # 3. Build materials payload — upload files first
         materials_payload = []
@@ -144,6 +152,7 @@ class Command(BaseCommand):
         result = self._post_json(target, api_key, "/api/v1/courses/sync/", payload)
         self.stdout.write(self.style.SUCCESS(
             f"  ✓ synced: {result.get('videos_synced')} videos, "
+            f"{result.get('quizzes_synced', 0)} quizzes, "
             f"{result.get('materials_synced')} materials "
             f"({'created' if result.get('created') else 'updated'})"
         ))
