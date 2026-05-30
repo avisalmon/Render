@@ -118,8 +118,31 @@ def _repair_schema(db_path: str) -> None:
                 )
             """)
 
+        # ── Migration 0009: app_newslettersubscriber table ───────────────────
+        c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='app_newslettersubscriber'")
+        if not c.fetchone():
+            c.execute("""
+                CREATE TABLE app_newslettersubscriber (
+                    id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    email varchar(254) NOT NULL UNIQUE,
+                    name varchar(100) NOT NULL,
+                    language varchar(5) NOT NULL,
+                    source_page varchar(200) NOT NULL,
+                    utm_source varchar(100) NOT NULL,
+                    utm_medium varchar(100) NOT NULL,
+                    utm_campaign varchar(100) NOT NULL,
+                    utm_content varchar(100) NOT NULL,
+                    ip_hash varchar(64) NOT NULL,
+                    confirmed_at datetime NULL,
+                    unsubscribed_at datetime NULL,
+                    created_at datetime NOT NULL,
+                    updated_at datetime NOT NULL
+                )
+            """)
+
         # ── Fake-apply ghost migrations so `migrate` sees them as done ────────
         for mig in [
+            "0009_newslettersubscriber",
             "0010_course_video_enrollment_enhancements",
             "0011_lesson_quiz_certificate",
             "0012_quiz_passed_field",
