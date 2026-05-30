@@ -57,16 +57,20 @@ def require_api_key(view_fn):
 @require_GET
 def list_courses(request):
     """Return all courses with basic counts."""
-    rows = []
-    for c in Course.objects.order_by("title"):
-        rows.append({
-            "slug": c.slug,
-            "title": c.title,
-            "is_published": c.is_published,
-            "video_count": c.videos.count(),
-            "material_count": c.materials.count(),
-        })
-    return JsonResponse({"courses": rows})
+    import traceback
+    try:
+        rows = []
+        for c in Course.objects.order_by("title"):
+            rows.append({
+                "slug": c.slug,
+                "title": c.title,
+                "is_published": c.is_published,
+                "video_count": c.videos.count(),
+                "material_count": c.materials.count(),
+            })
+        return JsonResponse({"courses": rows})
+    except Exception as e:
+        return JsonResponse({"error": str(e), "trace": traceback.format_exc()}, status=500)
 
 
 # ---------------------------------------------------------------------------
