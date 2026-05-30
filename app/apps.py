@@ -142,6 +142,10 @@ def _repair_schema(db_path: str) -> None:
 
         # ── Fake-apply ghost migrations so `migrate` sees them as done ────────
         for mig in [
+            "0005_copilot_seats",
+            "0006_ai_chat",
+            "0007_billing_entitlement",
+            "0008_corporate_lead",
             "0009_newslettersubscriber",
             "0010_course_video_enrollment_enhancements",
             "0011_lesson_quiz_certificate",
