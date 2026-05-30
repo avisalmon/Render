@@ -2,9 +2,14 @@
 ensure_schema — repair production schema when Django migrations were recorded
 as applied but the actual DDL was never executed (SQLite "ghost migration" issue).
 
+Also fake-applies any missing migration records so `migrate` doesn't try to
+re-run operations that ensure_schema already performed.
+
 Run via:  python manage.py ensure_schema
 Idempotent: safe to run on a healthy DB — skips columns/tables that already exist.
 """
+
+import datetime
 
 from django.core.management.base import BaseCommand
 from django.db import connection
@@ -22,11 +27,24 @@ def _table_exists(cursor, table):
     return cursor.fetchone() is not None
 
 
+def _migration_applied(cursor, name):
+    cursor.execute(
+        "SELECT id FROM django_migrations WHERE app=%s AND name=%s",
+        ["app", name],
+    )
+    return cursor.fetchone() is not None
+
+
 class Command(BaseCommand):
     help = "Ensure all migration schema changes are present (fixes ghost-migration state)."
 
     def handle(self, *args, **options):
         with connection.cursor() as c:
+            # Fresh install — django_migrations doesn't exist yet; let migrate handle everything
+            if not _table_exists(c, "django_migrations"):
+                self.stdout.write("Fresh install — skipping ensure_schema.")
+                return
+
             # ── Migration 0010: app_course columns ────────────────────────────
             if _table_exists(c, "app_course"):
                 cols = _existing_cols(c, "app_course")
@@ -133,5 +151,21 @@ class Command(BaseCommand):
                     )
                 """)
                 self.stdout.write("  + table app_coursematerial")
+
+            # ── Fake-apply migrations whose schema is now in place ────────────
+            # Prevents `migrate` from re-running DDL we just applied above.
+            now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+            for mig_name in [
+                "0010_course_video_enrollment_enhancements",
+                "0011_lesson_quiz_certificate",
+                "0012_quiz_passed_field",
+                "0013_coursematerial",
+            ]:
+                if not _migration_applied(c, mig_name):
+                    c.execute(
+                        "INSERT INTO django_migrations (app, name, applied) VALUES (%s, %s, %s)",
+                        ["app", mig_name, now],
+                    )
+                    self.stdout.write(f"  ~ faked {mig_name}")
 
         self.stdout.write(self.style.SUCCESS("ensure_schema complete."))
