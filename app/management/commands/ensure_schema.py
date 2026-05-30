@@ -17,7 +17,7 @@ def _existing_cols(cursor, table):
 
 def _table_exists(cursor, table):
     cursor.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name=?", [table]
+        "SELECT name FROM sqlite_master WHERE type='table' AND name=%s", [table]
     )
     return cursor.fetchone() is not None
 
