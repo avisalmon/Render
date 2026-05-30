@@ -45,11 +45,16 @@ Flags:
 
 ## What it does
 
-1. Loads `Course` + related `Video`s + `CourseMaterial`s from the **local** DB.
+1. Loads `Course` + related `Video`s (+ optional `LessonQuiz` per video) + `CourseMaterial`s from the **local** DB.
 2. For each `FILE` material, uploads the file to
    `<target>/api/v1/media/upload/` and gets back a path on the persistent disk.
 3. POSTs the full course payload to `<target>/api/v1/courses/sync/`.
 4. If `--publish`, the server sets `is_published=True`.
+
+**Quizzes are kept in sync**: if a video has a `LessonQuiz` locally it is
+upserted on the server; if a local video has no quiz, any existing quiz on
+the server for that video is **deleted**. Edit quizzes locally (Django admin)
+then re-run the push.
 
 Output on success:
 
@@ -61,7 +66,7 @@ Course: <title> (<slug>)
     → course_materials/<filename>
 
 Syncing to https://babook.co.il/api/v1/courses/sync/ ...
-  ✓ synced: 16 videos, 2 materials (created|updated)
+  ✓ synced: 16 videos, 2 quizzes, 2 materials (created|updated)
 ```
 
 ## Verify
