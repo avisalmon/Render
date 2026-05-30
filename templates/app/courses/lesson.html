@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% load static course_tags %}
+{% block title %}{{ video.title }} — {{ course.title }} — BaBook{% endblock %}
+
+{% block content %}
+<!-- 4px progress bar at top -->
+<div style="position:fixed;top:0;left:0;width:100%;height:4px;z-index:9999;background:var(--bg-elevated);">
+  <div id="lesson-progress-bar"
+       style="height:100%;background:var(--accent-cta);width:0%;transition:width .3s;"></div>
+</div>
+
+<div class="container-xl py-4">
+
+  <!-- Breadcrumb + nav -->
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb small mb-0" style="color:var(--text-secondary)">
+        <li class="breadcrumb-item"><a href="{% url 'courses_catalog' %}" style="color:var(--accent-primary)">קורסים</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'courses_detail' course.slug %}" style="color:var(--accent-primary)">{{ course.title }}</a></li>
+        <li class="breadcrumb-item active" style="color:var(--text-secondary)">שיעור {{ video.lesson_order }}</li>
+      </ol>
+    </nav>
+    <div class="d-flex gap-2">
+      {% if prev_video %}
+      <a href="{% url 'courses_lesson' course.slug prev_video.lesson_order %}"
+         class="btn btn-sm" style="background:var(--bg-elevated);color:var(--text-primary);border:none;">
+        &laquo; הקודם
+      </a>
+      {% endif %}
+      {% if next_video %}
+      <a href="{% url 'courses_lesson' course.slug next_video.lesson_order %}"
+         class="btn btn-sm" style="background:var(--accent-primary);color:#fff;border:none;">
+        הבא &raquo;
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- Main: video + notes -->
+    <div class="col-lg-9">
+
+      <!-- Lesson title -->
+      <h1 class="h3 fw-bold mb-3" style="color:var(--text-primary)">
+        {{ video.lesson_order }}. {{ video.title }}
+      </h1>
+
+      <!-- Bunny player -->
+      <div class="ratio ratio-16x9 mb-4 rounded-3 overflow-hidden"
+           style="background:#000;box-shadow:0 8px 32px rgba(0,0,0,.5);">
+        <iframe id="bunny-player"
+                src="{{ embed_url }}"
+                loading="lazy"
+                allow="autoplay; fullscreen"
+                allowfullscreen>
+        </iframe>
+      </div>
+
+      <!-- Notes markdown -->
+      {% if video.notes_markdown %}
+      <div class="p-4 rounded-3 mb-4"
+           style="background:var(--bg-surface);border:1px solid var(--bg-elevated);">
+        <h5 class="fw-bold mb-3" style="color:var(--text-primary)">📝 הערות שיעור</h5>
+        <div class="lesson-notes" style="color:var(--text-primary);line-height:1.9;">
+          {{ video.notes_markdown|markdown }}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Code example -->
+      {% if video.has_code_example and video.github_file %}
+      <div class="p-3 rounded-3 mb-4"
+           style="background:var(--bg-elevated);border:1px solid var(--accent-primary)33;">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span style="color:var(--accent-primary)">💻</span>
+          <span class="fw-semibold small" style="color:var(--text-secondary)">קוד לדוגמה:</span>
+          <code style="color:var(--accent-primary);font-size:.85rem;">{{ video.github_file }}</code>
+        </div>
+        <a href="https://github.com/avisalmon/single_button/blob/main/{{ video.github_file|urlencode }}"
+           target="_blank" rel="noopener noreferrer"
+           class="btn btn-sm"
+           style="background:var(--accent-primary)22;color:var(--accent-primary);border:1px solid var(--accent-primary)44;border-radius:6px;">
+          צפה ב-GitHub &rarr;
+        </a>
+      </div>
+      {% endif %}
+
+      <!-- Prev / Next bottom navigation -->
+      <div class="d-flex justify-content-between mt-4">
+        {% if prev_video %}
+        <a href="{% url 'courses_lesson' course.slug prev_video.lesson_order %}"
+           class="btn" style="background:var(--bg-elevated);color:var(--text-primary);border:none;border-radius:10px;">
+          &laquo; {{ prev_video.title }}
+        </a>
+        {% else %}<div></div>{% endif %}
+        {% if next_video %}
+        <a href="{% url 'courses_lesson' course.slug next_video.lesson_order %}"
+           class="btn" style="background:var(--accent-primary);color:#fff;border:none;border-radius:10px;font-weight:600;">
+          {{ next_video.title }} &raquo;
+        </a>
+        {% endif %}
+      </div>
+
+    </div>
+
+    <!-- Sidebar: lesson list + AI chat -->
+    <div class="col-lg-3">
+
+      <!-- Lesson list -->
+      <div class="p-3 rounded-3 mb-3"
+           style="background:var(--bg-surface);border:1px solid var(--bg-elevated);max-height:420px;overflow-y:auto;">
+        <p class="fw-semibold small mb-2" style="color:var(--text-secondary)">תוכן הקורס</p>
+        {% for v in videos %}
+        <a href="{% url 'courses_lesson' course.slug v.lesson_order %}"
+           style="text-decoration:none;"
+           class="d-flex align-items-center gap-2 p-2 rounded mb-1
+                  {% if v.lesson_order == video.lesson_order %}active-lesson{% endif %}">
+          <span style="color:{% if v.lesson_order == video.lesson_order %}var(--accent-primary){% else %}var(--text-secondary){% endif %};font-size:.85rem;min-width:1.4rem;">
+            {{ v.lesson_order }}.
+          </span>
+          <span class="small" style="color:{% if v.lesson_order == video.lesson_order %}var(--accent-primary){% else %}var(--text-primary){% endif %};">
+            {{ v.title }}
+          </span>
+        </a>
+        {% endfor %}
+      </div>
+
+      <!-- AI chat hook -->
+      {% if user.is_authenticated %}
+      <div class="p-3 rounded-3"
+           style="background:var(--bg-elevated);border:1px solid var(--accent-primary)33;">
+        <p class="fw-semibold small mb-2" style="color:var(--text-primary)">🤖 שאל את ה-AI</p>
+        <p class="small mb-3" style="color:var(--text-secondary)">שאלות על השיעור, על הקוד, על כל דבר.</p>
+        <a href="{% url 'chat_page' %}?context=course:{{ course.slug }}:{{ video.lesson_order }}"
+           class="btn btn-sm w-100"
+           style="background:var(--accent-primary);color:#fff;border:none;border-radius:8px;">
+          פתח AI Chat
+        </a>
+      </div>
+      {% endif %}
+
+      <!-- Corporate hook -->
+      <div class="mt-3 p-3 rounded-3"
+           style="background:var(--bg-elevated);border:1px solid var(--accent-warm)33;">
+        <p class="small fw-semibold mb-1" style="color:var(--text-primary)">לארגונים</p>
+        <p class="small mb-2" style="color:var(--text-secondary)">הכשרות צוות עם מעקב ודיווח.</p>
+        <a href="/corporate/"
+           class="btn btn-sm w-100"
+           style="background:var(--accent-warm)22;color:var(--accent-warm);border:1px solid var(--accent-warm)44;border-radius:8px;">
+          פרטים לארגונים
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Video progress heartbeat -->
+<script>
+(function() {
+  const SLUG = "{{ course.slug|escapejs }}";
+  const ORDER = {{ video.lesson_order }};
+  const RESUME = {{ last_position }};
+  const iframe = document.getElementById("bunny-player");
+  const bar = document.getElementById("lesson-progress-bar");
+  let lastPos = RESUME, duration = 0, lastSent = 0;
+
+  // Simple postMessage-based position tracking (Bunny supports this)
+  window.addEventListener("message", function(e) {
+    if (!e.data) return;
+    const d = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
+    if (d.event === "timeupdate") {
+      lastPos = d.currentTime || lastPos;
+      duration = d.duration || duration;
+      if (duration > 0 && bar) {
+        bar.style.width = Math.min(100, (lastPos / duration) * 100).toFixed(1) + "%";
+      }
+    }
+  });
+
+  // Heartbeat every 10 seconds
+  setInterval(function() {
+    if (lastPos === lastSent) return;
+    lastSent = lastPos;
+    const pct = duration > 0 ? Math.round((lastPos / duration) * 100) : 0;
+    const csrf = document.cookie.match(/csrftoken=([^;]+)/);
+    if (!csrf) return;
+    fetch("/api/video-progress/", {
+      method: "POST",
+      headers: {"Content-Type": "application/json", "X-CSRFToken": csrf[1]},
+      body: JSON.stringify({
+        course_slug: SLUG,
+        lesson_order: ORDER,
+        position: Math.round(lastPos),
+        percent: pct,
+      }),
+    });
+  }, 10000);
+})();
+</script>
+
+<style>
+.lesson-notes h1, .lesson-notes h2, .lesson-notes h3 {
+  color: var(--text-primary);
+  margin-top: 1.2em;
+  margin-bottom: .4em;
+}
+.lesson-notes code {
+  background: var(--bg-elevated);
+  color: var(--accent-primary);
+  padding: .15em .4em;
+  border-radius: 4px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: .88em;
+}
+.lesson-notes pre {
+  background: var(--bg-elevated);
+  border: 1px solid var(--bg-primary);
+  border-radius: 8px;
+  padding: 1rem;
+  overflow-x: auto;
+  font-family: "JetBrains Mono", monospace;
+  font-size: .88em;
+}
+.lesson-notes pre code {
+  background: none;
+  padding: 0;
+}
+.active-lesson {
+  background: var(--accent-primary)15;
+  border-radius: 6px;
+}
+</style>
+{% endblock %}

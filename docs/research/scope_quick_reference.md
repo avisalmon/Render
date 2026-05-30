@@ -1,7 +1,5 @@
 # babook.co.il — Scope Definition (Quick Reference)
 
-> **Current strategy note (May 2026):** This quick reference is historical market research. The active Chapter 2 plan is corporate-training authority first: lean `/corporate/` page, WhatsApp/contact conversion, newsletter capture, and one flagship course. Token resale, skill marketplace, advisor marketplace, MCP marketplace, and broad community infrastructure are future options, not the current MVP.
-
 Your 5 scopes, with research findings:
 
 ## 1. Training (3 Levels)
@@ -135,8 +133,8 @@ Your 5 scopes, with research findings:
 | Skill marketplace | Medium | Medium (₪50-300K/year) | 2 weeks | **HIGH** |
 | Newsletters | Low | Low (₪50-200K/year) | 1 week | Medium |
 | Meetups | Medium | Low-Medium (₪50-200K/year) | 6+ weeks | Medium |
-| Copilot resale | Low | High (₪300K-1M/year) | 1 week | Parked |
-| OpenAI credits | Low | Medium (₪100-500K/year) | 1 week | Parked |
+| Copilot resale | Low | High (₪300K-1M/year) | 1 week | **CRITICAL** |
+| OpenAI credits | Low | Medium (₪100-500K/year) | 1 week | **HIGH** |
 | MCP marketplace | High | Medium (₪100-500K/year) | 12+ weeks | Low |
 | Advisor marketplace | High | High (₪200K-2M/year) | 4-6 weeks (soft launch) | Medium |
 | Lecturers hub | Medium | Medium (₪200K-1M/year) | 8+ weeks (B2B) | Medium |
@@ -149,29 +147,14 @@ Your 5 scopes, with research findings:
 
 ---
 
-## Current Recommendation
+## Recommendation (Research Summary)
 
-**MVP (current Chapter 2 execution):**
-1. Ship `/corporate/` as a lean conversion page.
-2. Capture leads through WhatsApp and a contact form.
-3. Add newsletter capture for warm non-buyers.
-4. Publish one flagship course as proof of teaching quality.
-5. Launch forum/community only after there is seed content and traffic.
-
-**Current priority test:** Does this make Avi's phone ring sooner?
-
----
-
-## Historical Recommendation (Superseded)
-
-The following was the original research recommendation and is preserved only as background.
-
-**Old MVP (8-12 weeks):**
+**MVP (MVP sprint, 8-12 weeks):**
 1. ✅ Practical training (2-3 initial skill tracks)
 2. ✅ Community forums
 3. ✅ Skill marketplace
-4. ✅ GitHub Copilot resale (partnership) — parked
-5. ✅ OpenAI credit store (integration) — parked
+4. ✅ GitHub Copilot resale (partnership)
+5. ✅ OpenAI credit store (integration)
 6. ✅ Simple gamification (badges)
 
 **Phase 2 (weeks 13-24):**
@@ -188,9 +171,7 @@ The following was the original research recommendation and is preserved only as 
 
 ---
 
-## Historical Questions for Avi
-
-These questions no longer block the current corporate-training funnel. They become relevant again only if we reopen the broader platform thesis.
+## Questions for Avi
 
 1. **Which level is your passion?** (User? Practical? Deep?)
 2. **Advisor marketplace or skill marketplace first?** (Service sells advisor time; Skill marketplace sells peer courses)

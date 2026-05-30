@@ -1,7 +1,5 @@
 # AI Community Platform - Competitive Landscape Research
 
-> **Historical note (May 2026):** This competitor scan supported the earlier all-in-one community-platform thesis. It is useful background, but the active plan is Research Phase 3 and DEC-19/DEC-19a: corporate-training authority first, with token resale, service marketplace, and broad platform features parked until the funnel proves demand.
-
 ## Executive Summary
 
 We analyzed 8 major platforms in the AI education, community, and tooling space. Key findings:

@@ -1,7 +1,5 @@
 # babook.co.il — Feature Skeleton
 
-> **Historical note (May 2026):** This feature skeleton describes the broad 5-scope platform idea. It is not the active sprint plan. Current delivery is the authority funnel: lean `/corporate/`, WhatsApp/contact conversion, newsletter capture, and one flagship course. Use [../main_spec.md](../main_spec.md) and [../backlog.md](../backlog.md) for execution.
-
 ## Overview
 
 Based on market research, here's a feature skeleton organized by Avi's 5 scopes:

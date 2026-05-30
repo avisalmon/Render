@@ -1,0 +1,32 @@
+{
+  "lesson_order": 8,
+  "youtube_id": "Z9-u8Ub67hw",
+  "youtube_title": "030 more than lines",
+  "duration_seconds": 204,
+  "transcript_he": "בשיעור הזה אני רוצה להראות לכם איך אנחנו יכולים לצייר יותר מקווים כל מיני דברים חמודים אחרים אז תלכו לקובץ שנקרא 030 more than lines בואו נכנס אליו לפני שאני... בואו נריץ אותו נראה אם אני זוכר מה הוא בואו נריץ אותו והנה הוא צייר לי כל מיני דברים על המסך הוא כתב לי גם באותיות אז בואו נסתכל אז קודם כל שורות הראשונות זה כמו פעם שעברה אין לי פה לופ כי אני רק עושה פעם אחת וזהו אז אני קודם כל display fill אנחנו יודעים שהוא ממלא את המסך במקרה הזה ב-0 שזה שחור ואז אני אעשה display line מ-0,0 ל-63,63 זה אותו קו הלכסוני שאתם יכולים לראות שחוצה את המסך אחרי זה אנחנו יכולים גם לעשות display ל-pixel ממש פיקסל נקודה בודדת 310 פה קשה מאוד לראות אבל אם אתם תריצו את זה אצלכם אתם תראו את הנקודה הזאת ואתם יכולים להדליק נקודה אחת אתם יכולים לעשות גם מה שנקרא horizontal line שזה אומר שאתם יכולים לעשות מקו מנקודה x מנקודה xy מסוימת קו שלם אופקי ואתם יכולים לקרוא לו את האובי תנסו את זה יש לכם גם vertical line תנסו את זה ויש לכם פה rectangle rectangle ריבוע מנקודה 10,10 לנקודה 30,30 צבע אחד יש לכם גם אפשרות אני עשיתי פה בערה אבל אתם יכולים גם לעשות fill rectangle ואז זה יעשה לכם ריבוע מלא ואתם יכולים גם לכתוב טקסטים אוקיי לכתוב hello world מנקודה 0,0 וימינה אוקיי ובסוף בסוף עושים show אוקיי עכשיו אתם יכולים ללכת פה ללינק הזה שיש פה ולקרוא על עוד כל מיני דברים שאפשר לעשות נדמה לי שיש גם אני לא סגור על זה אולי גם ליפסוד וכל מיני דברים אפילו מורכבים יותר אגב רק בזאת הדברים האלה אפשר לעשות כמעט הכל אז זהו פשוט תריץ את זה ותסתכלו מה זה צייר ואז תעשו את משימות האתגר הבאות שימו לב אני מזכיר לכם שצד ימין צד שמאל למעלה זה נקודה 0,0 צד ימין למעלה זה 127,0 כי 127 זה x,0 זה y שמאל למטה זה 0,63 וימין למטה זה 127,63 המשימה שלכם זה לצייר קו אבה בולד סקוואר קו אבה עם אלכסונים כמו x אז בהצלחה",
+  "github_file": "030 more than lines.py",
+  "github_code": "# ****************************************\n#\n# Learning Micro Python and programming with ESP32\n# By: Avi Salmon\n# All instructions on https://github.com/avisalmon/single_button\n#\n# Lesson 3: Basic drawing more\n# ****************************************\n\nfrom machine import Pin, I2C\nimport ssd1306\n\ni2c = I2C(scl=Pin(22), sda=Pin(21), freq=4000000) \ndisplay = ssd1306.SSD1306_I2C(128, 64, i2c)  # display object\n\n# Lets see what else we can draw\ndisplay.fill(0)\ndisplay.line(0, 0, 63, 63, 1)\n\n# set pixel at x=3, y=10 to colour=1\ndisplay.pixel(3, 10, 1)\n\n# draw horizontal line x=0, y=8, width=40, colour=1\ndisplay.hline(0, 8, 40, 1)\n\n# draw vertical line x=0, y=8, height=10, colour=1\ndisplay.vline(0, 8, 10, 1)\n\ndisplay.rect(10, 10, 30, 30, 1)        # draw a rectangle outline 10,10 to 117,53, colour=1\n#display.fill_rect(10, 10, 107, 43, 1)   # draw a solid rectangle 10,10 to 117,53, colour=1\ndisplay.text('Hello World', 0, 0, 1)    # draw some text at x=0, y=0, colour=1\n#display.scroll(20, 0)                   # scroll 20 pixels to the right\ndisplay.show()\n\n# more: https://docs.micropython.org/en/latest/esp8266/tutorial/ssd1306.html\n    \n\n        \n\n# our screen:\n# 0,0\t\t\t127,0\n#\n# 0,63\t\t\t127,63\n\n\n#Now you:\n# 1. draw a bold square with diagonals\n\n    \n\n",
+  "analysis": {
+    "title_he": "ציור צורות וטקסט על מסך OLED",
+    "title_en": "Drawing Shapes and Text on OLED",
+    "objectives": [
+      "להשתמש בפונקציות ציור שונות במסך OLED במיקרופייתון",
+      "לצייר פיקסלים, קווים אופקיים ואנכיים על המסך",
+      "ליצור מלבן רגיל ומלבן מלא",
+      "להציג טקסט במיקום מסוים על גבי התצוגה"
+    ],
+    "summary_he": "בשיעור זה מרחיבים את יכולות הציור על מסך ה‑OLED מעבר לקווים בסיסיים. באמצעות ספריית ssd1306 במיקרופייתון ניתן לצייר פיקסלים בודדים, קווים אופקיים ואנכיים, מלבנים ואף להציג טקסט על המסך. כל פעולה מתבצעת על פי קואורדינטות של ציר X ו‑Y בתוך גבולות המסך (128x64).\n\nנלמד כיצד להשתמש בפונקציות כמו pixel, hline, vline, rect ו‑fill_rect כדי ליצור צורות שונות. בנוסף נראה כיצד להוסיף טקסט בעזרת הפונקציה text ולרענן את המסך עם הפקודה show. בסוף השיעור מוצגת משימת תרגול: ציור ריבוע עבה עם אלכסונים, שמדגימה כיצד לשלב כמה פקודות ציור כדי ליצור גרפיקה מורכבת יותר.",
+    "notes_markdown": "### מערכת הקואורדינטות של המסך\nמסך ה‑OLED בגודל **128x64 פיקסלים**. כל ציור נעשה לפי נקודת התחלה:\n\n- הפינה השמאלית‑עליונה: `(0,0)`\n- הפינה הימנית‑עליונה: `(127,0)`\n- הפינה השמאלית‑תחתונה: `(0,63)`\n- הפינה הימנית‑תחתונה: `(127,63)`\n\nהמספר הראשון הוא ציר **X (ימינה)** והמספר השני הוא ציר **Y (למטה)**.\n\n### פונקציות ציור שימושיות\nהספרייה `ssd1306` מספקת כמה פונקציות גרפיות פשוטות:\n\n- `pixel(x, y, color)` – מדליק פיקסל בודד\n- `line(x1, y1, x2, y2, color)` – קו בין שתי נקודות\n- `hline(x, y, width, color)` – קו אופקי\n- `vline(x, y, height, color)` – קו אנכי\n- `rect(x, y, w, h, color)` – מלבן עם מסגרת\n- `fill_rect(x, y, w, h, color)` – מלבן מלא\n- `text(string, x, y, color)` – כתיבת טקסט\n\nבסיום כל הציורים יש לקרוא ל־`display.show()` כדי להציג אותם על המסך.\n\n### דוגמת קוד\n```python\ndisplay.fill(0)\n\ndisplay.line(0, 0, 63, 63, 1)\ndisplay.pixel(3, 10, 1)\ndisplay.hline(0, 8, 40, 1)\ndisplay.vline(0, 8, 10, 1)\n\ndisplay.rect(10, 10, 30, 30, 1)\ndisplay.text('Hello World', 0, 0, 1)\n\ndisplay.show()\n```\n\n### תרגיל\nנסו לצייר:\n- ריבוע עבה (מסגרת כפולה או כמה קווים קרובים)\n- שני קווים אלכסוניים בתוך הריבוע בצורת **X**\n\nכך תתרגלו שילוב של כמה פקודות ציור כדי ליצור צורה מורכבת יותר.",
+    "difficulty": "beginner",
+    "keywords": [
+      "MicroPython",
+      "ESP32",
+      "OLED display",
+      "ssd1306",
+      "גרפיקה",
+      "pixels"
+    ]
+  },
+  "bunny_video_id": "b0d848b8-e3b5-4a83-9c29-a80d3be754cc",
+  "is_free_preview": false
+}

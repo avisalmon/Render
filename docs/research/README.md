@@ -1,7 +1,5 @@
 # babook.co.il Research — README
 
-> **Current strategy note (May 2026):** This folder contains historical market research. The active product direction is now the authority-platform pivot in [../main_spec.md](../main_spec.md): babook is a free credibility and lead-generation platform for Avi's corporate AI training. Token resale, Copilot resale, skill marketplace, and broad community-platform ideas are parked until the corporate funnel is already producing inbound leads. Start with [research_3.md](research_3.md), DEC-19, and DEC-19a in [../main_spec.md](../main_spec.md).
-
 ## What's Here
 
 This folder contains comprehensive research on the AI community platform market, competitive landscape, and a feature skeleton for babook.co.il.
@@ -37,41 +35,38 @@ This folder contains comprehensive research on the AI community platform market,
 ## How to Use This
 
 ### If you have 15 minutes:
-- Read: [research_3.md](research_3.md)
-- Then read [../main_spec.md Chapter 2](../main_spec.md)
+- Read: [scope_quick_reference.md](scope_quick_reference.md)
+- Answer the "Questions for Avi" section
 
 ### If you have 1 hour:
-- Read: [research_3.md](research_3.md)
-- Skim: [research_summary.md](research_summary.md) as historical context only
-- Check DEC-19 and DEC-19a in [../main_spec.md](../main_spec.md)
+- Read: [research_summary.md](research_summary.md)
+- Skim: [competitive_landscape.md](competitive_landscape.md) (focus on gaps section)
 
 ### If you want to deep-dive:
 - Read all 4 documents in order
-- Treat early MVP recommendations as superseded
-- Focus on: market gaps, corporate-training demand signals, and what strengthens Avi's authority funnel
+- Focus on: feature comparisons, market opportunity matrix, MVP recommendations
 
 ---
 
 ## Key Findings (TL;DR)
 
-### **Current Market Opportunity**
-- Companies need practical AI training and trustworthy guidance now.
-- babook's best first job is to make Avi look credible, reachable, and easy to hire.
-- The site should optimize for inbound corporate training inquiries, not consumer subscription complexity.
+### **Market Opportunity**
+- No existing platform combines: multi-level training + community + token provisioning + service marketplace + meetups
+- **babook can fill this gap** — especially for Israel-based AI professionals
 
-### **Current Competitive Advantages**
-1. Avi's real-world corporate AI training experience
-2. Hebrew-first local market fit
-3. Fast, direct WhatsApp/contact conversion
-4. Public proof assets: flagship course, guides, answers, and community content
-5. Optional future platform expansion once demand is proven
+### **Competitive Advantages**
+1. Integrated platform (vs. siloed competitors)
+2. Community-first design (vs. content-only or tools-only)
+3. Token control (Copilot + OpenAI resale)
+4. Local advantage (Hebrew-speaking community)
+5. Multi-sided marketplace
 
-### **Current MVP Focus**
-- **User segment:** HR, L&D, engineering leaders, and managers buying AI training for teams
-- **Primary revenue:** Corporate workshops, bootcamps, and keynotes sold outside the platform
-- **Primary scope:** Corporate training page + lead capture + newsletter capture + one flagship course
-- **Timeline:** Ship the conversion page first, then build proof/content around it
-- **Key features:** `/corporate/`, WhatsApp CTA, lead form, email notification, basic SEO, one excellent flagship course
+### **Recommended MVP Focus**
+- **User segment:** Self-taught + junior developers
+- **Primary revenue:** Token resale (Copilot, OpenAI credits)
+- **Primary scope:** Practical level (co-coding, agents, MCP)
+- **Timeline:** 8-12 weeks
+- **Key features:** Practical courses + forums + skill marketplace + token integration
 
 ### **Market Segments Validated**
 | Segment | Size | Pain | babook Solution |
@@ -81,11 +76,13 @@ This folder contains comprehensive research on the AI community platform market,
 | AI teams at startups | 100s | Need trained staff quickly | Corporate training + hiring board |
 | Freelance advisors | 50s | Hard to find clients | Marketplace + credibility badges |
 
-### **Revenue Model (Current Priority)**
-- Corporate training: **primary**
-- Newsletter/sponsorships: later, after audience exists
-- Courses: proof asset and lead magnet first, paid library later if useful
-- Token resale, skill marketplace, advisor marketplace: parked future options
+### **Revenue Model (Year 1 Potential)**
+- Token resale (Copilot): **₪300K-1M** ⭐
+- Skill marketplace commission: **₪50-300K**
+- OpenAI credits: **₪100-500K**
+- Advisor marketplace: **₪200K-1M** (slower ramp)
+- Corporate training: **₪200K-1M** (B2B, longer cycle)
+- Newsletters + sponsorships: **₪50-200K**
 
 **Total Year 1 potential:** ₪1-4M (if all sources active)
 
@@ -93,17 +90,30 @@ This folder contains comprehensive research on the AI community platform market,
 
 ## Next Steps (For Avi)
 
-1. **Ship the lean `/corporate/` conversion MVP**
-   - Hero, service tiers, FAQ, WhatsApp CTA, lead form, email notification, SEO, mobile polish.
+1. **Answer the 6 critical questions** (in research_summary.md)
+   - Which user segment first? (user / practical / deep / corporate)
+   - Revenue focus? (subscriptions / marketplace / tokens / corporate)
+   - Which scope MVP? (training / community / tokens / services)
+   - Geography? (Israel-only / diaspora / global)
+   - Sync vs async? (live coding / recorded courses / mix)
+   - Advisor marketplace timeline? (soft-launch soon / later)
 
-2. **Add newsletter capture**
-   - Capture warm visitors who are interested but not ready to book a call.
+2. **Validate with target users** (optional but recommended)
+   - Survey 10 Israeli junior devs: "Would you pay ₪X for Copilot bundled with courses?"
+   - Survey 5 ML researchers: "What would help your learning most?"
+   - Interview 3 potential advisors: "Would you be interested in marketplace?"
 
-3. **Publish one flagship course**
-   - Use it as proof of teaching quality and as a lead magnet for corporate training.
+3. **Lock Chapter 2 scope** (once you decide MVP focus)
+   - Based on answers above, we'll define:
+     - Exact feature set for MVP
+     - Sprint breakdown (2-week sprints)
+     - Success metrics
+     - Risk & dependencies
 
-4. **Re-evaluate parked platform ideas only after signal**
-   - Forum, marketplace, token resale, and enterprise dashboards return only if they make corporate inquiries grow faster.
+4. **Start Chapter 2 spec** (in docs/main_spec.md)
+   - Vision, scope, acceptance criteria
+   - Epic-2 sprints
+   - Requirements and decisions
 
 ---
 
@@ -141,6 +151,6 @@ All documents are in `docs/research/`. Add more as you find them:
 
 ---
 
-**Research is complete. Chapter 2 is now locked around the authority-platform path.**
+**Research is complete. Ready to build Chapter 2?**
 
-Use [../main_spec.md](../main_spec.md) and [../backlog.md](../backlog.md) as the active delivery source of truth.
+Go to [research_summary.md](research_summary.md) and answer the 6 critical questions. Then we'll lock the spec.

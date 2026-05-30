@@ -1,42 +1,123 @@
 {% extends "base.html" %}
+{% load static course_tags %}
 {% block title %}{{ course.title }} — babook{% endblock %}
 
+{% block extra_head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Course",
+  "name": "{{ course.title }}",
+  "description": "{{ course.description }}",
+  "provider": {
+    "@type": "Person",
+    "name": "אבי סלמון"
+  }
+}
+</script>
+{% endblock %}
+
 {% block content %}
-<div class="container py-4">
+<div>
     <h1>{{ course.title }}</h1>
-    <p>{{ course.description }}</p>
+    {% if course.description %}
+    <p class="lead mb-4" style="color:var(--text-secondary)">{{ course.description }}</p>
+    {% endif %}
 
     {% if user.is_authenticated %}
-    <div class="mb-3">
+    <div class="mb-4">
         <div class="d-flex align-items-center gap-2 mb-1">
-            <strong>Progress:</strong>
+            <strong>התקדמות:</strong>
             <span>{{ progress_pct }}%</span>
-            {% if is_complete %}<span class="badge bg-success">complete</span>{% endif %}
+            {% if is_complete %}<span class="badge bg-success">הושלם ✓</span>{% endif %}
         </div>
-        <div class="progress" style="height: 20px;">
-            <div class="progress-bar" role="progressbar" style="width: {{ progress_pct }}%;"
+        <div class="progress" style="height: 8px; border-radius: 4px;">
+            <div class="progress-bar bg-success" role="progressbar"
+                 style="width: {{ progress_pct }}%;"
                  aria-valuenow="{{ progress_pct }}" aria-valuemin="0" aria-valuemax="100">
-                {{ progress_pct }}%
             </div>
         </div>
     </div>
     {% endif %}
 
-    <h2 class="mt-4">Lessons</h2>
-    <ol class="list-group list-group-numbered">
+    {% if course.materials.all %}
+    <h2 class="mt-4 mb-2">חומרי לימוד</h2>
+    <div class="d-flex flex-column gap-2 mb-4">
+      {% for m in course.materials.all %}
+      <div class="card-surface d-flex align-items-center px-3 py-2 gap-3">
+        {% if m.material_type == "file" %}
+          <i class="bi bi-file-earmark-arrow-down" style="color:var(--accent-primary);flex-shrink:0"></i>
+          <span class="flex-grow-1">{{ m.title }}</span>
+          <a href="{{ m.file.url }}" download class="btn btn-sm btn-outline-primary">הורדה</a>
+        {% else %}
+          <i class="bi bi-link-45deg" style="color:var(--accent-cta);flex-shrink:0"></i>
+          <span class="flex-grow-1">{{ m.title }}</span>
+          <a href="{{ m.url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">פתח</a>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <h2 class="mt-4 mb-3">שיעורים</h2>
+    <div class="d-flex flex-column gap-2">
         {% for video in videos %}
-        <li class="list-group-item d-flex justify-content-between align-items-start">
-            <div class="ms-2 me-auto">
-                <a href="{% url 'lesson' course.slug video.lesson_order %}">
-                    {{ video.title }}
-                </a>
-                {% if video.is_free_preview %}
-                    <span class="badge bg-info ms-1">Free Preview</span>
+        {% with completed=completed_ids|get_item:video.id locked=False %}
+        <div class="card-surface d-flex align-items-center px-3 py-2 gap-3">
+            <!-- Status icon -->
+            <div style="width: 24px; flex-shrink: 0; text-align: center;">
+                {% if completed %}
+                    <i class="bi bi-check-circle-fill text-success"></i>
+                {% elif video.is_free_preview %}
+                    <i class="bi bi-play-circle" style="color: var(--accent-primary)"></i>
+                {% elif not is_enrolled %}
+                    <i class="bi bi-lock-fill" style="color: var(--text-secondary)"></i>
+                {% else %}
+                    <i class="bi bi-play-circle" style="color: var(--accent-primary)"></i>
                 {% endif %}
             </div>
-            <span class="text-muted">{{ video.duration_seconds }}s</span>
-        </li>
+            <!-- Title and badge -->
+            <div class="flex-grow-1">
+                {% if video.is_free_preview or is_enrolled %}
+                <a href="{% url 'courses_lesson' course.slug video.lesson_order %}"
+                   class="fw-semibold text-decoration-none">
+                    {{ forloop.counter }}. {{ video.title }}
+                </a>
+                {% else %}
+                <span class="fw-semibold" style="color: var(--text-secondary)">
+                    {{ forloop.counter }}. {{ video.title }}
+                </span>
+                {% endif %}
+                {% if video.is_free_preview %}
+                    <span class="badge bg-info ms-1" style="font-size: 0.7rem;">חינם</span>
+                {% endif %}
+            </div>
+            <!-- Duration -->
+            <span style="color: var(--text-secondary); font-size: 0.85rem; flex-shrink: 0;">
+                {{ video.duration_seconds|duration_display }}
+            </span>
+        </div>
+        {% endwith %}
         {% endfor %}
-    </ol>
+    </div>
+
+    {% if not is_enrolled %}
+    <div class="mt-4 card-surface p-4 text-center">
+        <h3 class="h5 mb-2">רוצים גישה לכל {{ videos.count }} השיעורים?</h3>
+        <p style="color: var(--text-secondary)">הירשמו לקורס כדי לפתוח את כל התוכן.</p>
+        {% if user.is_authenticated %}
+        <form method="post" action="{% url 'courses_enroll' course.slug %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary px-4">הרשמה לקורס</button>
+        </form>
+        {% else %}
+        <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-primary px-4">כניסה להרשמה</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="mt-4 p-3 card-surface">
+        <p>מחפשים הכשרה לצוות שלם? <a href="/corporate/">צרו קשר על הדרכות ארגוניות</a>.</p>
+    </div>
 </div>
 {% endblock %}

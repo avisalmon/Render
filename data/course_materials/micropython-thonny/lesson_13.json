@@ -1,0 +1,32 @@
+{
+  "lesson_order": 13,
+  "youtube_id": "eEXuKzupk_w",
+  "youtube_title": "100 pong part 2",
+  "duration_seconds": 71,
+  "transcript_he": "תודה רבה. תודה רבה. תודה רבה.",
+  "github_file": "100 pong part 2.py",
+  "github_code": "# ****************************************\n#\n# Learning Micro Python and programming with ESP32\n# By: Avi Salmon\n# All instructions on https://github.com/avisalmon/single_button\n#\n# Lesson Pong 2: the ball\n# ****************************************\n\nfrom machine import Pin, I2C\nimport ssd1306\nfrom font import Font\nfrom time import sleep, ticks_ms\n\ni2c = I2C(scl=Pin(22), sda=Pin(21), freq=4000000) \ndisplay = ssd1306.SSD1306_I2C(128, 64, i2c)  # display object\nf=Font(display)\n\nbutton = Pin(4, Pin.IN, Pin.PULL_UP)\n\nstick_pos_x = 50\nplayer_position_x = 0\nplayer_position_y = 0\nplayer_speed_x = 1\nplayer_speed_y = 2\n\nlast_button_status = 0\ndirection = 1 # 1 is right, -1 is left\n\nwhile True:\n    # clear the screen\n    display.fill(0)\n    \n    #draw the stick and ball\n    display.fill_rect(stick_pos_x, 50, 30, 5 , 1)\n    display.fill_rect(player_position_x, player_position_y, 10, 10 , 1)\n    display.show()\n    \n    button_pressed = not button.value()\n    \n    # calculate new stick position:\n    if button_pressed: # button is pressed\n        if last_button_status == 0:\n            direction *= -1\n        last_button_status = 1\n        \n        stick_pos_x += 5 * direction\n        \n    else:\n        last_button_status = 0\n        \n    # calculate new player position:\n    player_position_x += player_speed_x\n    player_position_y += player_speed_y\n    if player_position_x > 127 or player_position_x < 0 :\n        player_speed_x *= -1\n    if player_position_y > 63 or player_position_y < 0:\n        player_speed_y *= -1\n    ",
+  "analysis": {
+    "title_he": "פונג חלק 2: תנועת הכדור",
+    "title_en": "Pong Part 2: Ball Movement",
+    "objectives": [
+      "להניע אובייקט על המסך באמצעות משתני מהירות",
+      "לזהות גבולות מסך ולהחזיר כיוון תנועה של אובייקט",
+      "לעדכן מיקום של אובייקטים בכל לולאת משחק",
+      "להשתמש בכפתור כדי לשנות את כיוון התנועה של המחבט"
+    ],
+    "summary_he": "בשיעור זה ממשיכים לפתח את משחק הפונג ולומדים כיצד להזיז את הכדור על המסך. הכדור מיוצג כריבוע קטן שמיקומו מתעדכן בכל איטרציה של הלולאה הראשית בהתאם למהירות בציר ה‑X ובציר ה‑Y. כך נוצרת תנועה רציפה על המסך.\n\nבנוסף, לומדים כיצד לגרום לכדור \"לקפוץ\" כאשר הוא פוגע בגבולות המסך. הדבר נעשה על ידי בדיקה האם המיקום עבר את גבולות התצוגה, ואם כן – הופכים את סימן המהירות. השיעור גם מדגים שליטה במחבט באמצעות כפתור: כל לחיצה משנה את כיוון התנועה של המחבט ימינה או שמאלה.\n\nהקונספט המרכזי הוא שימוש במשתני מצב (מיקום ומהירות) שמתעדכנים בכל מחזור של לולאת המשחק. זהו עיקרון בסיסי בפיתוח משחקים ובמערכות בזמן אמת על מיקרו־בקרים כמו ESP32.",
+    "notes_markdown": "### מבנה המשחק\nבמשחק פונג יש שני אובייקטים מרכזיים:\n\n- **המחבט (Stick)** – נשלט על ידי השחקן\n- **הכדור (Ball)** – נע אוטומטית על המסך\n\nבכל איטרציה של הלולאה:\n1. מנקים את המסך\n2. מציירים את האובייקטים\n3. מחשבים את המיקום החדש שלהם\n4. מציגים את הפריים הבא\n\n### תנועת הכדור\nתנועת הכדור מבוססת על שני משתנים:\n\n- `player_speed_x` – מהירות בציר האופקי\n- `player_speed_y` – מהירות בציר האנכי\n\nבכל לולאה מוסיפים את המהירות למיקום הנוכחי:\n\n```\nplayer_position_x += player_speed_x\nplayer_position_y += player_speed_y\n```\n\nכך הכדור מתקדם מעט בכל פריים.\n\n### זיהוי פגיעה בקירות\nכאשר הכדור מגיע לקצה המסך, צריך להפוך את כיוון התנועה שלו.\n\n```\nif player_position_x > 127 or player_position_x < 0:\n    player_speed_x *= -1\n\nif player_position_y > 63 or player_position_y < 0:\n    player_speed_y *= -1\n```\n\nהכפלה ב־`-1` הופכת את סימן המהירות וכך הכדור \"קופץ\" מהקיר.\n\n### שליטה במחבט עם כפתור\nהמחבט זז ימינה או שמאלה בהתאם למשתנה `direction`.\n\nכל לחיצה על הכפתור מחליפה כיוון:\n\n- `1` – תנועה ימינה\n- `-1` – תנועה שמאלה\n\n```\nif button_pressed:\n    if last_button_status == 0:\n        direction *= -1\n```\n\nכך נמנעים מהחלפת כיוון מספר פעמים בזמן לחיצה אחת.\n\n### טיפ חשוב\nבמשחקים קטנים על מיקרו־בקר נהוג להשתמש ב:\n\n- משתני **מיקום**\n- משתני **מהירות**\n- לולאת משחק שמעדכנת את המסך שוב ושוב\n\nשיטה זו מאפשרת ליצור אנימציה חלקה גם על חומרה פשוטה.",
+    "difficulty": "beginner",
+    "keywords": [
+      "MicroPython",
+      "ESP32",
+      "Pong",
+      "OLED Display",
+      "Game Loop",
+      "תנועת כדור"
+    ]
+  },
+  "bunny_video_id": "bb97a005-06c2-4ddb-ba4a-a3ed62b43592",
+  "is_free_preview": false
+}

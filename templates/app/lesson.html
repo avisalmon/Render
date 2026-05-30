@@ -1,59 +1,363 @@
 {% extends "base.html" %}
+{% load static course_tags %}
 {% block title %}{{ video.title }} — {{ course.title }} — babook{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'course_detail' course.slug %}">{{ course.title }}</a></li>
-            <li class="breadcrumb-item active" aria-current="page">{{ video.title }}</li>
-        </ol>
-    </nav>
+<div class="lesson-layout">
 
-    <h1>{{ video.title }}</h1>
+  <!-- Sidebar: lesson list (right side in RTL) -->
+  <aside class="lesson-sidebar">
+    <div class="lesson-sidebar-inner">
+      <a href="{% url 'courses_detail' course.slug %}" class="lesson-sidebar-course-title">
+        {{ course.title }}
+      </a>
 
-    <!-- Responsive 16:9 Bunny Stream player -->
-    <div class="ratio ratio-16x9 mb-3" style="aspect-ratio: 16/9; padding-top: 56.25%; position: relative;">
-        <iframe
-            src="{{ embed_url }}"
-            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"
-            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
-            allowfullscreen>
-        </iframe>
+      {% if materials %}
+      <div class="mb-3" style="border-bottom:1px solid var(--bg-elevated);padding-bottom:.75rem;">
+        <p class="small fw-semibold mb-2" style="color:var(--text-secondary)">חומרי לימוד</p>
+        {% for m in materials %}
+          {% if m.material_type == "file" %}
+          <a href="{{ m.file.url }}" download
+             class="d-flex align-items-center gap-2 text-decoration-none mb-2 small"
+             style="color:var(--text-primary)">
+            <i class="bi bi-file-earmark-arrow-down" style="color:var(--accent-primary);flex-shrink:0"></i>
+            {{ m.title }}
+          </a>
+          {% else %}
+          <a href="{{ m.url }}" target="_blank" rel="noopener"
+             class="d-flex align-items-center gap-2 text-decoration-none mb-2 small"
+             style="color:var(--text-primary)">
+            <i class="bi bi-link-45deg" style="color:var(--accent-cta);flex-shrink:0"></i>
+            {{ m.title }}
+          </a>
+          {% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="lesson-list">
+        {% for v in all_videos %}
+          {% if locked_ids|get_item:v.id %}
+          <div class="lesson-list-item lesson-list-item--locked">
+          {% else %}
+          <a href="{% url 'courses_lesson' course.slug v.lesson_order %}"
+             class="lesson-list-item{% if v.pk == video.pk %} lesson-list-item--active{% endif %}">
+          {% endif %}
+            <span class="lesson-list-icon">
+              {% if v.pk == video.pk %}
+                <i class="bi bi-play-fill" style="color:var(--accent-primary)"></i>
+              {% elif completed_ids|get_item:v.id %}
+                <i class="bi bi-check-circle-fill text-success"></i>
+              {% elif locked_ids|get_item:v.id %}
+                <i class="bi bi-lock-fill" style="color:var(--text-secondary);opacity:.5"></i>
+              {% else %}
+                <i class="bi bi-circle" style="color:var(--text-secondary)"></i>
+              {% endif %}
+            </span>
+            <span class="lesson-list-title">{{ v.lesson_order }}. {{ v.title }}</span>
+            {% if v.duration_seconds %}<span class="lesson-list-dur">{{ v.duration_seconds|duration_display }}</span>{% endif %}
+          {% if locked_ids|get_item:v.id %}
+          </div>
+          {% else %}
+          </a>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <div class="lesson-main">
+    <h1 class="h4 mb-3">{{ video.title }}</h1>
+
+    <!-- Error banner (redirected from course_finish) -->
+    {% if error_code == "quiz" %}
+    <div class="alert alert-warning d-flex align-items-center gap-2 mb-3">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>יש לענות נכון על שאלת הסיכום בשיעור זה לפני שניתן להמשיך.</span>
+    </div>
+    {% endif %}
+
+    <!-- Top navigation -->
+    <div class="d-flex justify-content-between align-items-center mb-3 gap-2">
+      {% if prev_video %}
+      <a href="{% url 'courses_lesson' course.slug prev_video.lesson_order %}"
+         class="btn btn-sm btn-outline-secondary">
+        {{ prev_video.title }} <i class="bi bi-arrow-right"></i>
+      </a>
+      {% else %}<span></span>{% endif %}
+
+      {% if not video.is_final_lesson and next_video %}
+      <a id="next-lesson-btn-top"
+         href="{% url 'courses_lesson' course.slug next_video.lesson_order %}"
+         class="btn btn-sm btn-outline-primary d-none">
+        <i class="bi bi-arrow-left"></i> {{ next_video.title }}
+      </a>
+      {% endif %}
     </div>
 
-    <!-- Resume position data for JS -->
-    <script>
-        var lastPositionSeconds = {{ last_position_seconds }};
-    </script>
-
-    {% if user.is_authenticated %}
-    <!-- Heartbeat: report progress every 15s -->
-    <script>
-        (function() {
-            var videoId = {{ video.id }};
-            var duration = {{ video.duration_seconds }};
-            var currentPosition = lastPositionSeconds || 0;
-
-            setInterval(function() {
-                currentPosition += 15;
-                if (currentPosition > duration) currentPosition = duration;
-                var percent = duration > 0 ? (currentPosition / duration) * 100 : 0;
-                fetch("{% url 'video_progress' %}", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": "{{ csrf_token }}"
-                    },
-                    body: JSON.stringify({
-                        video_id: videoId,
-                        position: currentPosition,
-                        percent: Math.round(percent * 100) / 100
-                    })
-                });
-            }, 15000);
-        })();
-    </script>
+    <!-- Video player -->
+    {% if video.bunny_video_id %}
+      {% if embed_url %}
+      <div class="lesson-player mb-3">
+        <iframe
+          src="{{ embed_url }}?autoplay=false{% if last_position_seconds > 5 %}&start={{ last_position_seconds }}&t={{ last_position_seconds }}{% endif %}"
+          loading="lazy"
+          allow="accelerometer; gyroscope; encrypted-media; picture-in-picture"
+          allowfullscreen>
+        </iframe>
+      </div>
+      {% else %}
+      <div class="lesson-player-placeholder mb-3">
+        <i class="bi bi-play-circle" style="font-size:3rem;margin-bottom:.75rem;"></i>
+        <p class="mb-1">נגן הוידאו לא מוגדר</p>
+        <small>הגדר <code>BUNNY_STREAM_LIBRARY_ID</code> ב-<code>settings_local.py</code></small>
+      </div>
+      {% endif %}
     {% endif %}
+
+    <!-- Notes / lesson content -->
+    {% if notes_html %}
+    <div class="lesson-notes card-surface mt-3">
+      {{ notes_html|safe }}
+    </div>
+    {% endif %}
+
+    <!-- Quiz -->
+    {% if quiz %}
+    <div id="lesson-quiz" class="card-surface mt-4 p-4">
+      <h5 class="mb-3">
+        <i class="bi bi-patch-question-fill me-2" style="color:var(--accent-primary)"></i>
+        {{ quiz.question }}
+      </h5>
+      <div id="quiz-options" class="d-flex flex-column gap-2">
+        {% for opt in quiz.options_json %}
+        <label class="quiz-option d-flex align-items-center gap-2 p-2 rounded" style="cursor:pointer">
+          <input type="radio" name="quiz_answer" value="{{ forloop.counter0 }}"
+                 data-correct="{{ opt.is_correct|lower }}">
+          <span>{{ opt.text }}</span>
+        </label>
+        {% endfor %}
+      </div>
+      <div id="quiz-feedback" class="mt-3" style="display:none"></div>
+      <button id="quiz-submit" class="btn btn-primary mt-3" disabled>שלח תשובה</button>
+    </div>
+    {% endif %}
+
+    <!-- Bottom navigation -->
+    <div class="d-flex justify-content-between align-items-center mt-4 gap-2">
+      {% if prev_video %}
+      <a href="{% url 'courses_lesson' course.slug prev_video.lesson_order %}"
+         class="btn btn-outline-secondary">
+        {{ prev_video.title }} <i class="bi bi-arrow-right"></i>
+      </a>
+      {% else %}<span></span>{% endif %}
+
+      {% if not video.is_final_lesson and next_video %}
+      <a id="next-lesson-btn"
+         href="{% url 'courses_lesson' course.slug next_video.lesson_order %}"
+         class="btn btn-primary d-none">
+        <i class="bi bi-arrow-left"></i> {{ next_video.title }}
+      </a>
+      {% endif %}
+
+      {% if video.is_final_lesson %}
+        {% if user.is_authenticated %}
+          {% if existing_cert %}
+          <a href="{% url 'certificate_view' existing_cert.certificate_id %}"
+             class="btn btn-success btn-lg">
+            <i class="bi bi-award-fill me-1"></i> הצג תעודת סיום
+          </a>
+          {% else %}
+          <form id="finish-course-form" method="post" action="{% url 'course_finish' course.slug %}">
+            {% csrf_token %}
+            <button id="finish-btn" type="submit" class="btn btn-success btn-lg d-none">
+              <i class="bi bi-award-fill me-1"></i> סיים קורס וקבל תעודה
+            </button>
+          </form>
+          {% endif %}
+        {% else %}
+        <a href="/login/?next={% url 'courses_lesson' course.slug video.lesson_order %}"
+           class="btn btn-success btn-lg">
+          <i class="bi bi-award-fill me-1"></i> התחבר כדי לסיים את הקורס
+        </a>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
 </div>
+
+<!-- Corporate funnel hook -->
+<div class="container mt-4 mb-2 text-center">
+  <small class="text-secondary">
+    מעניין להכשיר צוות שלם?
+    <a href="/corporate/" class="text-secondary text-decoration-underline">לחבילות ארגוניות</a>
+  </small>
+</div>
+
+{% if user.is_authenticated %}
+<script>
+(function () {
+  var videoId     = {{ video.id }};
+  var duration    = {{ video.duration_seconds }};
+  var pos         = {{ last_position_seconds|default:0 }};
+  var csrf        = "{{ csrf_token }}";
+  var progressUrl = "{% url 'video_progress' %}";
+
+  /* Watching the video is NOT required to advance.
+     Only requires_correct quizzes gate the Next button. */
+  var videoOk      = {{ lesson_completed|lower }};  /* true unless a required quiz is pending */
+  var quizRequired = {% if quiz %}{{ quiz.requires_correct|lower }}{% else %}false{% endif %};
+  var quizOk       = {{ quiz_passed_db|lower }};
+
+  function sendProgress(p, pct, qp) {
+    return fetch(progressUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRFToken": csrf },
+      body: JSON.stringify({ video_id: videoId, position: p, percent: pct, quiz_passed: !!qp })
+    });
+  }
+
+  function tryShowNext() {
+    if (!videoOk) return;
+    if (quizRequired && !quizOk) return;
+    ["next-lesson-btn", "next-lesson-btn-top", "finish-btn"].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.classList.remove("d-none");
+    });
+  }
+  tryShowNext();
+
+  /* Mark lesson as visited immediately — no watching requirement */
+  sendProgress(pos || 0, 100, false);
+
+  {% if video.bunny_video_id %}
+  /* ── Bunny player.js SDK — real seek + real position + volume ── */
+  var playerIframe = document.querySelector(".lesson-player iframe");
+  if (playerIframe) {
+    var sdkScript = document.createElement("script");
+    sdkScript.src = "//assets.mediadelivery.net/playerjs/playerjs-latest.min.js";
+    sdkScript.onload = function () {
+      var player = new playerjs.Player(playerIframe);
+
+      player.on("ready", function () {
+        /* Restore saved volume */
+        var savedVol = parseInt(localStorage.getItem("babook_volume") || "80", 10);
+        player.setVolume(savedVol);
+
+        /* Verify Bunny honored ?start= in the iframe src; seek manually if not.
+           Some Bunny builds ignore start/t when autoplay=false and need this. */
+        if (pos > 5) {
+          player.getCurrentTime(function (current) {
+            if (!current || current < pos - 3) {
+              player.setCurrentTime(pos);
+            }
+          });
+        }
+      });
+
+      /* Track exact real-time position */
+      player.on("timeupdate", function (data) {
+        if (data && typeof data.seconds === "number") {
+          pos = Math.floor(data.seconds);
+        }
+      });
+
+      /* Save position + volume immediately on pause */
+      player.on("pause", function () {
+        player.getVolume(function (vol) {
+          localStorage.setItem("babook_volume", vol);
+        });
+        fetch(progressUrl, {
+          keepalive: true, method: "POST",
+          headers: { "Content-Type": "application/json", "X-CSRFToken": csrf },
+          body: JSON.stringify({ video_id: videoId, position: pos, percent: 100 })
+        });
+      });
+
+      /* Save when video finishes */
+      player.on("ended", function () {
+        sendProgress(pos, 100, false);
+      });
+
+      /* Heartbeat every 10 s: save real position + volume */
+      setInterval(function () {
+        player.getVolume(function (vol) {
+          localStorage.setItem("babook_volume", vol);
+        });
+        sendProgress(pos, 100, false);
+      }, 10000);
+    };
+    document.head.appendChild(sdkScript);
+  }
+
+  /* Save exact position when leaving the page */
+  window.addEventListener("beforeunload", function () {
+    fetch(progressUrl, {
+      keepalive: true, method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRFToken": csrf },
+      body: JSON.stringify({ video_id: videoId, position: pos, percent: 100 })
+    });
+  });
+
+  /* When clicking Next: save then navigate */
+  function onNextClick(e) {
+    e.preventDefault();
+    var dest = this.href;
+    sendProgress(pos, 100, quizOk).finally(function () { window.location.href = dest; });
+  }
+  var nb  = document.getElementById("next-lesson-btn");
+  var nbt = document.getElementById("next-lesson-btn-top");
+  if (nb)  nb.addEventListener("click", onNextClick);
+  if (nbt) nbt.addEventListener("click", onNextClick);
+  {% endif %}
+
+  /* ── Quiz ───────────────────────────────────────────────── */
+  {% if quiz %}
+  var radios    = document.querySelectorAll('input[name="quiz_answer"]');
+  var submitBtn = document.getElementById("quiz-submit");
+  var feedback  = document.getElementById("quiz-feedback");
+
+  /* Show "already answered" if quiz was passed in a prior session */
+  if (quizOk && submitBtn) {
+    radios.forEach(function (r) { r.disabled = true; });
+    submitBtn.disabled = true;
+    if (feedback) {
+      feedback.style.display = "block";
+      feedback.innerHTML = '<div class="alert alert-success py-2 mb-0">✓ ענית נכון בעבר!</div>';
+    }
+  }
+
+  radios.forEach(function (r) {
+    r.addEventListener("change", function () { if (submitBtn) submitBtn.disabled = false; });
+  });
+
+  if (submitBtn) {
+    submitBtn.addEventListener("click", function () {
+      var sel = document.querySelector('input[name="quiz_answer"]:checked');
+      if (!sel) return;
+      var isCorrect = sel.dataset.correct === "true";
+      var passed    = !quizRequired || isCorrect;
+      feedback.style.display = "block";
+      if (passed) {
+        feedback.innerHTML = '<div class="alert alert-success py-2 mb-0">' +
+          (isCorrect ? "✓ נכון מאוד!" : "✓ תשובה התקבלה — בהצלחה!") + "</div>";
+        submitBtn.disabled = true;
+        radios.forEach(function (r) { r.disabled = true; });
+        quizOk  = true;
+        videoOk = true;  /* quiz answer itself counts as visiting the lesson */
+        sendProgress(pos || 0, 100, true);
+        tryShowNext();
+      } else {
+        feedback.innerHTML = '<div class="alert alert-warning py-2 mb-0">✗ תשובה שגויה — נסוו שוב!</div>';
+        sel.checked = false;
+        submitBtn.disabled = true;
+      }
+    });
+  }
+  {% endif %}
+})();
+</script>
+{% endif %}
+
 {% endblock %}

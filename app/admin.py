@@ -6,21 +6,41 @@ from .models import (
     CopilotSeat,
     CorporateLead,
     Course,
+    CourseCertificate,
+    CourseMaterial,
+    Enrollment,
     Entitlement,
+    LessonQuiz,
     ModerationLog,
     NewsletterSubscriber,
     Note,
     SeatEvent,
     SystemPrompt,
     UsageLog,
+    UserProfile,
     UserVideoProgress,
     Video,
 )
 
 admin.site.register(Note)
-admin.site.register(Course)
+admin.site.register(UserProfile)
+
+
+class CourseMaterialInline(admin.TabularInline):
+    model = CourseMaterial
+    extra = 1
+    fields = ("order", "title", "material_type", "url", "file")
+
+
+class CourseWithMaterialsAdmin(admin.ModelAdmin):
+    inlines = [CourseMaterialInline]
+
+
+admin.site.register(Course, CourseWithMaterialsAdmin)
+admin.site.register(CourseMaterial)
 admin.site.register(Video)
 admin.site.register(UserVideoProgress)
+admin.site.register(Enrollment)
 admin.site.register(Entitlement)
 admin.site.register(CopilotSeat)
 admin.site.register(SeatEvent)
@@ -29,19 +49,7 @@ admin.site.register(ChatSession)
 admin.site.register(ChatMessage)
 admin.site.register(UsageLog)
 admin.site.register(ModerationLog)
-
-
-@admin.register(NewsletterSubscriber)
-class NewsletterSubscriberAdmin(admin.ModelAdmin):
-    list_display = ("email", "language", "source_page", "confirmed_at", "unsubscribed_at", "created_at")
-    list_filter = ("language", "confirmed_at", "unsubscribed_at", "created_at")
-    search_fields = ("email", "name", "source_page", "utm_source", "utm_campaign")
-    readonly_fields = ("created_at", "updated_at", "ip_hash")
-
-
-@admin.register(CorporateLead)
-class CorporateLeadAdmin(admin.ModelAdmin):
-    list_display = ("name", "company", "training_type", "team_size", "status", "created_at")
-    list_filter = ("status", "training_type", "team_size", "created_at")
-    search_fields = ("name", "company", "role", "message")
-    readonly_fields = ("created_at", "ip_hash", "source_page", "referrer_url")
+admin.site.register(CorporateLead)
+admin.site.register(NewsletterSubscriber)
+admin.site.register(LessonQuiz)
+admin.site.register(CourseCertificate)

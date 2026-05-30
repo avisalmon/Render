@@ -23,7 +23,7 @@ Sprints in this epic:
 - SPR-1.3 UI & Branding
 - SPR-1.4 Video Infrastructure
 - SPR-1.5 Billing
-- SPR-1.6 Copilot Seat Provisioning (Parked Scaffolding)
+- SPR-1.6 Copilot Seat Provisioning
 - SPR-1.7 Ops, Quality & BKMs
 - SPR-1.8 AI Chat (OpenAI)
 - SPR-1.9 Email Service (Resend)
@@ -34,7 +34,7 @@ Sprints in this epic:
 ### SPR-1.1 — Foundations
 
 **Goal:** Project skeleton, settings, security, error pages, health, logging.
-**Status:** DONE
+**Status:** DONE ✅ — 19/19 tests pass (2026-05-27)
 
 | Feature ID | Title | REQ trace | Status | Notes |
 |---|---|---|---|---|
@@ -52,7 +52,7 @@ Sprints in this epic:
 ### SPR-1.2 — Auth & Users
 
 **Goal:** Google + GitHub login, password auth + reset, user profile, roles, email service.
-**Status:** DONE
+**Status:** DONE ✅ — 17/17 tests pass (2026-05-27)
 
 | Feature ID | Title | REQ trace | Status | Notes |
 |---|---|---|---|---|
@@ -70,7 +70,7 @@ Sprints in this epic:
 ### SPR-1.3 — UI & Branding
 
 **Goal:** Base template, Bootstrap, icons, logo, favicon, RTL/i18n, SEO, cookie banner.
-**Status:** DONE
+**Status:** DONE ✅ — 15/15 tests pass
 
 | Feature ID | Title | REQ trace | Status | Notes |
 |---|---|---|---|---|
@@ -89,310 +89,320 @@ Sprints in this epic:
 ### SPR-1.4 — Video Infrastructure (Bunny Stream)
 
 **Goal:** Upload, embed, gate, and track video playback per user.
-**Status:** DONE
+**Status:** WIP — 8/18 tests pass (2026-05-27). Models restored, settings + admin wired. **Remaining gaps logged below.**
+
+> **OPEN GAPS — SPR-1.4** (10 tests still failing):
+> - `GAP-1.4-A`: Lesson view not wired — `/courses/<slug>/<int:lesson_order>/` → 404. Need view + URL.
+> - `GAP-1.4-B`: Heartbeat endpoint not wired — `POST /courses/<slug>/heartbeat/` → 404. Need view + URL.
+> - `GAP-1.4-C`: Course detail view not wired — `/courses/<slug>/` → 404. Need view + URL (also blocks SPR-2.2).
+> - `GAP-1.4-D`: Paid video gating returns 404 instead of 403 (no `Entitlement` check in lesson view).
+> - `GAP-1.4-E`: Bunny player responsive CSS (`56.25%` padding or `aspect-ratio`) missing from `lesson.html`.
+> - `GAP-1.4-F`: `UserVideoProgress` resume logic not wired (last_position not injected into template context).
 
 | Feature ID | Title | REQ trace | Status | Notes |
 |---|---|---|---|---|
-| F-1.4.1 | Bunny Stream account + library + env keys | REQ-1.3.1 | DONE | ACT-9 complete; 4 env vars wired via os.environ.get() |
-| F-1.4.2 | `Video` model + `Course` model + admin registration | REQ-1.3.2, REQ-1.3.8 | DONE | Course + Video + UserVideoProgress models; all in admin |
-| F-1.4.3 | Embedded responsive Bunny player | REQ-1.3.3 | DONE | iframe.mediadelivery.net embed, 16:9 responsive |
-| F-1.4.4 | Signed playback URL generation | REQ-1.3.4 | DONE | SHA256 token auth, 24h expiry; app/bunny.py |
-| F-1.4.5 | `UserVideoProgress` model + heartbeat endpoint | REQ-1.3.5 | DONE | POST /api/video-progress/ with JSON body |
-| F-1.4.6 | Resume playback from `last_position` | REQ-1.3.6 | DONE | last_position_seconds in template context + JS var |
-| F-1.4.7 | Course progress aggregation (% complete) | REQ-1.3.7 | DONE | /course/<slug>/ shows %, complete badge at 95% threshold |
-| F-1.4.8 | Free preview gating (`is_free_preview`) | REQ-1.3.9 | DONE | Anonymous→login redirect; logged-in without entitlement→403 |
+| F-1.4.1 | Bunny Stream account + library + env keys | REQ-1.3.1 | DONE | ACT-9 complete |
+| F-1.4.2 | `Video` + `Course` models + admin | REQ-1.3.2, REQ-1.3.8 | WIP | Migration 0004 exists; model missing from models.py |
+| F-1.4.3 | Embedded responsive Bunny player | REQ-1.3.3 | WIP | `lesson.html` template exists |
+| F-1.4.4 | Signed playback URL generation | REQ-1.3.4 | WIP | `bunny.py` service implemented |
+| F-1.4.5 | `UserVideoProgress` model + heartbeat endpoint | REQ-1.3.5 | WIP | Migration 0004 exists; model missing from models.py |
+| F-1.4.6 | Resume playback from `last_position` | REQ-1.3.6 | DONE | Bunny `?start=` injected in template when pos > 5s |
+| F-1.4.7 | Course progress aggregation (% complete) | REQ-1.3.7 | DONE | |
+| F-1.4.8 | Lesson sidebar navigation | REQ-1.3.10 | DONE | Sticky right sidebar, all lessons, status icons, active highlight |
+| F-1.4.9 | Progress on navigation | REQ-1.3.5 | DONE | Page load → 5% started; "Next" click → 100% complete |
+| F-1.4.8 | Free preview gating (`is_free_preview`) | REQ-1.3.9 | WIP | |
 
 ---
 
-### SPR-1.5 — Billing (Mock Mode)
+### SPR-1.5 — Billing (Stripe + Green Invoice)
 
-**Goal:** Users choose Free / Base / Master tier at ₪0; access gating enforced. Real Stripe deferred.
-**Status:** DONE (mock mode)
+**Goal:** Subscription + per-course payment, Israeli VAT-compliant invoices, refunds.
+**Status:** WIP — 1/17 tests pass (2026-05-27). `Entitlement` model restored. Stripe + Green Invoice DEFERRED. **Remaining gaps logged below.**
+
+> **OPEN GAPS — SPR-1.5** (16 tests still failing):
+> - `GAP-1.5-A`: `/pricing/` URL not wired → 404. Need `pricing` view + URL entry.
+> - `GAP-1.5-B`: `Entitlement` model missing `has_video_access(tier)` and `has_copilot_access(tier)` helper methods (tests call them directly).
+> - `GAP-1.5-C`: Pricing page must show 3 tier cards (Free / Base / Master) with correct names.
+> - `GAP-1.5-D`: All Stripe features remain DEFERRED until ACT-10.
 
 | Feature ID | Title | REQ trace | Status | Notes |
 |---|---|---|---|---|
-| F-1.5.1 | Stripe account (Israel) + `dj-stripe` integration | REQ-1.4.1 | DEFERRED | Real billing postponed |
-| F-1.5.2 | Pricing model (Free / Base / Master tiers) | REQ-1.4.2 | DONE | Mock ₪0 — `/pricing/` page |
-| F-1.5.3 | Multi-currency (ILS + USD) | REQ-1.4.3 | DEFERRED | Real billing postponed |
-| F-1.5.4 | Stripe Checkout integration (`/pricing/`) | REQ-1.4.4, REQ-1.4.12 | DEFERRED | Real billing postponed |
-| F-1.5.5 | Stripe webhook handler + signature verify | REQ-1.4.5 | DEFERRED | Real billing postponed |
-| F-1.5.6 | `Entitlement` model + access checks | REQ-1.4.6 | DONE | Tier gating on video + copilot |
-| F-1.5.7 | Stripe Customer Portal link from profile | REQ-1.4.7 | DEFERRED | Real billing postponed |
-| F-1.5.8 | Coupons & 7-day trial support | REQ-1.4.8 | DEFERRED | Real billing postponed |
-| F-1.5.9 | Green Invoice integration (חשבונית מס auto-issue) | REQ-1.4.9 | DEFERRED | Real billing postponed |
-| F-1.5.10 | Refund flow + חשבונית זיכוי | REQ-1.4.10 | DEFERRED | Real billing postponed |
-| F-1.5.11 | VAT handling (17% מע"מ for Israeli buyers) | REQ-1.4.11 | DEFERRED | עוסק פטור — no VAT (DEC-17) |
+| F-1.5.1 | Stripe account (Israel) + `dj-stripe` integration | REQ-1.4.1 | DEFERRED | ACT-10 pending |
+| F-1.5.2 | Pricing model (subscription + one-time, free preview) | REQ-1.4.2 | WIP | `/pricing/` template exists; tiers defined |
+| F-1.5.3 | Multi-currency (ILS + USD) | REQ-1.4.3 | DEFERRED | |
+| F-1.5.4 | Stripe Checkout integration (`/pricing/`) | REQ-1.4.4, REQ-1.4.12 | DEFERRED | |
+| F-1.5.5 | Stripe webhook handler + signature verify | REQ-1.4.5 | DEFERRED | |
+| F-1.5.6 | `Entitlement` model + access checks | REQ-1.4.6 | WIP | Migration 0007 exists; model missing from models.py |
+| F-1.5.7 | Stripe Customer Portal link from profile | REQ-1.4.7 | DEFERRED | |
+| F-1.5.8 | Coupons & 7-day trial support | REQ-1.4.8 | DEFERRED | |
+| F-1.5.9 | Green Invoice integration (חשבונית מס auto-issue) | REQ-1.4.9 | DEFERRED | ACT-11 pending; DEC-17: עוסק פטור so חשבונית מס not required now |
+| F-1.5.10 | Refund flow + חשבונית זיכוי | REQ-1.4.10 | DEFERRED | |
+| F-1.5.11 | VAT handling (17% מע"מ for Israeli buyers) | REQ-1.4.11 | DEFERRED | DEC-17: עוסק פטור, no VAT now |
 
 ---
 
-### SPR-1.6 — Copilot Seat Provisioning (Parked Scaffolding)
+### SPR-1.6 — Copilot Seat Provisioning
 
-**Goal:** Keep the local models, dashboards, and policy scaffolding ready while live GitHub billing/provisioning remains parked.
-**Status:** DONE (scaffolding) / DEFERRED (live GitHub API)
+**Goal:** Subscribers on the Copilot tier get auto-invited to GitHub org and assigned Copilot Business seats.
+**Status:** DONE ✅ — 26/26 tests pass (2026-05-27)
 
 | Feature ID | Title | REQ trace | Status | Notes |
 |---|---|---|---|---|
-| F-1.6.1 | GitHub org + Copilot Business activation placeholder | REQ-1.5.1 | DEFERRED | Org `babook-learn` exists; live Copilot Business activation parked until §2.10 |
-| F-1.6.2 | GitHub username on user (via OAuth or manual) | REQ-1.5.2 | DONE | github_username field on UserProfile |
-| F-1.6.3 | Copilot-included subscription tier flag | REQ-1.5.3 | DONE | CopilotSeat model with status choices |
-| F-1.6.4 | Auto-invite scaffold | REQ-1.5.4 | DONE | app/copilot.py invite_to_org() stub; no live GitHub API call |
-| F-1.6.5 | Auto-assign scaffold | REQ-1.5.5 | DONE | app/copilot.py assign_copilot_seat() stub; no live GitHub API call |
-| F-1.6.6 | Revoke scaffold | REQ-1.5.6 | DONE | app/copilot.py revoke_copilot_seat() stub; no live GitHub API call |
-| F-1.6.7 | Inactivity reclamation scaffold | REQ-1.5.7 | DONE | app/copilot.py check_inactivity(); local policy logic only |
-| F-1.6.8 | Admin Copilot dashboard | REQ-1.5.8 | DONE | /staff/copilot-dashboard/ — seats, cost, status |
-| F-1.6.9 | Seat cap enforcement (`COPILOT_MAX_SEATS`) | REQ-1.5.9 | DONE | Waitlist when cap reached |
-| F-1.6.10 | User-facing seat status on profile | REQ-1.5.10 | DONE | copilot_status in profile context |
-| F-1.6.11 | Audit log of all seat events | REQ-1.5.11 | DONE | SeatEvent model with actor/reason/api_response |
-| F-1.6.12 | Org-level Copilot policy draft | REQ-1.5.12 | DEFERRED | Final policy deferred until live Copilot reseller path returns in §2.10 |
+| F-1.6.1 | GitHub org + Copilot Business activated | REQ-1.5.1 | WIP | ACT-14, ACT-15, ACT-16 pending |
+| F-1.6.2 | GitHub username on user (via OAuth or manual) | REQ-1.5.2 | WIP | `github_username` field on UserProfile (migration 0005) |
+| F-1.6.3 | Copilot-included subscription tier flag | REQ-1.5.3 | WIP | ACT-17 pending |
+| F-1.6.4 | Auto-invite to org on subscribe | REQ-1.5.4 | WIP | Stub in copilot.py |
+| F-1.6.5 | Auto-assign Copilot seat on accept | REQ-1.5.5 | WIP | Stub in copilot.py |
+| F-1.6.6 | Auto-revoke seat on churn (+14d org removal) | REQ-1.5.6 | WIP | Stub in copilot.py |
+| F-1.6.7 | Inactivity reclamation (30d warn / 60d reclaim) | REQ-1.5.7 | WIP | Stub in copilot.py |
+| F-1.6.8 | Admin Copilot dashboard | REQ-1.5.8 | WIP | `copilot_dashboard.html` exists |
+| F-1.6.9 | Seat cap enforcement (`COPILOT_MAX_SEATS`) | REQ-1.5.9 | WIP | Stub in copilot.py |
+| F-1.6.10 | User-facing seat status on profile | REQ-1.5.10 | WIP | |
+| F-1.6.11 | Audit log of all seat events | REQ-1.5.11 | WIP | `SeatEvent` model in migration 0005 |
+| F-1.6.12 | Org-level Copilot policy doc | REQ-1.5.12 | WIP | ACT-18 pending |
 
 ---
 
 ### SPR-1.7 — Ops, Quality & BKMs
 
 **Goal:** Tests, code quality, backups, rollback, CI/CD, all BKM docs.
-**Status:** DONE
+**Status:** DONE ✅ — 13/13 tests pass (2026-05-27)
 
 | Feature ID | Title | REQ trace | Status | Notes |
 |---|---|---|---|---|
-| F-1.7.1 | pytest-django setup + first tests | REQ-1.2.16 | DONE | 82 tests across 5 sprints |
-| F-1.7.2 | black + ruff + pre-commit hooks | REQ-1.2.17 | DONE | pyproject.toml + .pre-commit-config.yaml |
-| F-1.7.3 | Nightly DB backup to Google Drive | REQ-1.2.4 | DEFERRED | Moved to SPR-1.10 |
-| F-1.7.4 | `docs/procedures/backup_restore.md` BKM | REQ-1.2.18 | DONE | Google Drive via rclone |
-| F-1.7.5 | `docs/procedures/rollback.md` BKM | REQ-1.2.19 | DONE | Revert/redeploy/force-push |
-| F-1.7.6 | `docs/procedures/cicd.md` BKM | REQ-1.1.10 | DONE | Full local+deploy workflow |
-| F-1.7.7 | `docs/procedures/env_vars.md` BKM | REQ-1.2.3 | DONE | All vars documented |
-| F-1.7.8 | `docs/architecture/roles.md` | REQ-1.2.8 | DONE | admin/staff/member/guest |
-| F-1.7.9 | `docs/procedures/copilot_policy.md` | REQ-1.5.12 | DEFERRED | Depends on ACT-18 |
+| F-1.7.1 | pytest-django setup + first tests | REQ-1.2.16 | DONE | Full `tests/` directory, pytest-django configured |
+| F-1.7.2 | black + ruff + pre-commit hooks | REQ-1.2.17 | WIP | Config in `pyproject.toml`; ruff check currently failing |
+| F-1.7.3 | Nightly DB backup (rclone → Google Drive) | REQ-1.2.4 | WIP | DEC-18: switched to Google Drive; ACT-3 pending |
+| F-1.7.4 | `docs/procedures/backup_restore.md` BKM | REQ-1.2.18 | DONE | File exists |
+| F-1.7.5 | `docs/procedures/rollback.md` BKM | REQ-1.2.19 | DONE | File exists |
+| F-1.7.6 | `docs/procedures/cicd.md` BKM | REQ-1.1.10 | DONE | File exists |
+| F-1.7.7 | `docs/procedures/env_vars.md` BKM | REQ-1.2.3 | DONE | File exists |
+| F-1.7.8 | `docs/architecture/roles.md` | REQ-1.2.8 | DONE | File exists |
+| F-1.7.9 | `docs/procedures/copilot_policy.md` | REQ-1.5.12 | DONE | File exists |
 
 ---
 
 ### SPR-1.8 — AI Chat (OpenAI)
 
 **Goal:** Streaming AI chat with context-aware tutoring, rate limiting, usage tracking, cost safety.
-**Status:** DONE
+**Status:** WIP — 17/27 tests pass (2026-05-27). Models + settings + admin wired. **Remaining gaps logged below.**
+
+> **OPEN GAPS — SPR-1.8** (10 tests still failing):
+> - `GAP-1.8-A`: Chat endpoint not wired — `POST /chat/` → 404. Need view + URL.
+> - `GAP-1.8-B`: Chat page not wired — `GET /chat/` → 404. Need view + URL.
+> - `GAP-1.8-C`: AI usage dashboard not wired — `GET /staff/ai-usage/` → 404. Need staff view + URL.
+> - `GAP-1.8-D`: Chat session list endpoint missing — `GET /chat/sessions/` → 404.
+> - `GAP-1.8-E`: Chat course context endpoint missing (lesson-aware prompt injection).
+> - `GAP-1.8-F`: Moderation check integration (`check_moderation` import path — verify `app.ai_chat` API).
 
 | Feature ID | Title | REQ trace | Status | Notes |
 |---|---|---|---|---|
-| F-1.8.1 | OpenAI API integration + health check | REQ-1.6.1 | DONE | Settings wired; stub mode when no key |
-| F-1.8.2 | Chat endpoint request/response MVP | REQ-1.6.2 | DONE | POST /api/chat/ with JSON; SSE streaming deferred to §2.7 |
-| F-1.8.3 | `ChatSession` + `ChatMessage` models | REQ-1.6.3 | DONE | Full history per session |
-| F-1.8.4 | Context-aware system prompts (admin-editable) | REQ-1.6.4 | DONE | SystemPrompt model in admin |
-| F-1.8.5 | Model selection by tier (4o-mini / 4o) | REQ-1.6.5 | DONE | OPENAI_DEFAULT_MODEL / OPENAI_PREMIUM_MODEL |
-| F-1.8.6 | Per-user daily token rate limiting | REQ-1.6.6 | DONE | OPENAI_DAILY_TOKEN_LIMITS by role |
-| F-1.8.7 | Usage tracking + admin cost dashboard | REQ-1.6.7 | DONE | UsageLog model + /staff/ai-usage/ |
-| F-1.8.8 | Monthly cost cap safety switch | REQ-1.6.8 | DONE | OPENAI_MONTHLY_COST_CAP_USD; blocks chat at cap |
-| F-1.8.9 | Chat UI widget (reusable component) | REQ-1.6.9 | DONE | /chat/ page with JS widget |
-| F-1.8.10 | Session management (new/continue/history) | REQ-1.6.10 | DONE | /api/chat/sessions/ GET+POST |
-| F-1.8.11 | Content safety (moderation API) | REQ-1.6.11 | DONE | ModerationLog model; flagged = rejected |
-| F-1.8.12 | Chat in course context (lesson-aware prompts) | REQ-1.6.12 | DONE | course_slug param injects course metadata |
+| F-1.8.1 | OpenAI API integration + health check | REQ-1.6.1 | WIP | `ai_chat.py` stub mode; OPENAI_API_KEY env var needed (ACT-19) |
+| F-1.8.2 | Chat endpoint with SSE streaming | REQ-1.6.2 | WIP | Service implemented; view/route wiring pending |
+| F-1.8.3 | `ChatSession` + `ChatMessage` models | REQ-1.6.3 | WIP | Migration 0006 exists; models missing from models.py |
+| F-1.8.4 | Context-aware system prompts (admin-editable) | REQ-1.6.4 | WIP | `SystemPrompt` model in migration 0006 |
+| F-1.8.5 | Model selection by tier (4o-mini / 4o) | REQ-1.6.5 | WIP | Implemented in ai_chat.py |
+| F-1.8.6 | Per-user daily token rate limiting | REQ-1.6.6 | WIP | Rate limiter in ai_chat.py; ACT-20 pending |
+| F-1.8.7 | Usage tracking + admin cost dashboard | REQ-1.6.7 | WIP | `UsageLog` model; `ai_usage_dashboard.html` exists |
+| F-1.8.8 | Monthly cost cap safety switch | REQ-1.6.8 | WIP | Implemented in ai_chat.py; ACT-21 pending |
+| F-1.8.9 | Chat UI widget (reusable component) | REQ-1.6.9 | WIP | `chat.html` exists |
+| F-1.8.10 | Session management (new/continue/history) | REQ-1.6.10 | WIP | Implemented in ai_chat.py |
+| F-1.8.11 | Content safety (moderation API) | REQ-1.6.11 | WIP | `ModerationLog` model; stub when no API key |
+| F-1.8.12 | Chat in course context (lesson-aware prompts) | REQ-1.6.12 | WIP | Implemented in ai_chat.py |
 
 ---
 
 ### SPR-1.9 — Email Service (Resend)
 
-**Goal:** Transactional email working on prod via Resend. Password reset, notifications, and all Django `send_mail()` calls delivered to real inboxes.
-**Status:** DONE
+**Goal:** Wire Resend email backend for production, enable forgot-password flow.
+**Status:** WIP — 10/12 tests pass (2026-05-27). Login page forgot-password link added. **Remaining gaps logged below.**
+
+> **OPEN GAPS — SPR-1.9** (2 tests still failing):
+> - `GAP-1.9-A`: `django-resend` not installed in venv. It is in `requirements.txt`. **Avi must run `pip install -r requirements.txt`** to unblock `test_resend_backend_class_importable`.
+> - `GAP-1.9-B`: `test_dev_uses_console_backend` — pytest-django infrastructure conflict. `setup_test_environment()` overrides `EMAIL_BACKEND` to `locmem` globally, so the console-backend assertion always sees `locmem`. Fix: convert test to pytest-style function with `settings` fixture, OR accept as known limitation.
 
 | Feature ID | Title | REQ trace | Status | Notes |
 |---|---|---|---|---|
-| F-1.9.1 | `django-anymail[resend]` backend wired in settings | REQ-1.2.2 | DONE | anymail + Resend; console in dev, Resend in prod |
-| F-1.9.2 | `RESEND_API_KEY` + `DEFAULT_FROM_EMAIL` env vars | REQ-1.2.2, REQ-1.2.3 | DONE | Local + Render env var set |
-| F-1.9.3 | Forgot-password / reset-password flow works | REQ-1.1.3 | DONE | allauth templates + styled pages |
-| F-1.9.4 | Email verification on signup (optional) | REQ-1.1.3 | DONE | ACCOUNT_EMAIL_VERIFICATION = "none" (configurable) |
-| F-1.9.5 | Admin can test-send from Django shell | REQ-1.2.2 | DONE | Tested: delivers to Gmail + Intel inboxes |
-| F-1.9.6 | SPF/DKIM DNS records for `babook.co.il` | REQ-1.2.2 | DONE | DNS moved to Cloudflare; fully verified |
+| F-1.9.1 | `django-resend` backend wired in settings | REQ-1.2.2 | WIP | Console backend active; Resend importable but not configured |
+| F-1.9.2 | `RESEND_API_KEY` env var + prod switch | REQ-1.2.2 | WIP | ACT-1 pending |
+| F-1.9.3 | Forgot password / reset password flow | REQ-1.1.3 | WIP | allauth URLs needed; deferred from SPR-1.2 |
+| F-1.9.4 | Email addresses (`noreply@`, `support@`, `privacy@`) | REQ-1.2.2 | WIP | ACT-22 pending |
 
 ---
 
 ### SPR-1.10 — Database Backups
 
-**Goal:** Nightly automated backup of `db.sqlite3` to Google Drive via rclone. Documented restore procedure. Last 30 backups retained.
-**Status:** WIP (code ready; rclone configured; awaiting first successful prod backup verification)
+**Goal:** Nightly automated backup of `db.sqlite3` to Google Drive via rclone management command.
+**Status:** DONE ✅ — 9/9 tests pass (2026-05-27)
 
 | Feature ID | Title | REQ trace | Status | Notes |
 |---|---|---|---|---|
-| F-1.10.1 | rclone configured for Google Drive remote | REQ-1.2.4 | DONE | RCLONE_CONF set on Render; prod run not yet verified |
-| F-1.10.2 | Backup management command | REQ-1.2.4 | DONE | `python manage.py backup_db` (WAL checkpoint + upload + retention) |
-| F-1.10.3 | Render cron job (03:00 UTC) | REQ-1.2.4 | DONE | `render.yaml` cron job defined |
-| F-1.10.4 | Retention policy — keep last 30 backups | REQ-1.2.4 | DONE | `rclone delete --min-age 30d` in command |
-| F-1.10.5 | Restore procedure documented | REQ-1.2.18 | DONE | `docs/procedures/backup_restore.md` complete |
-| F-1.10.6 | Restore dry-run completed once | REQ-1.2.18 | TODO | ACT-3 done; awaiting first successful backup to test restore |
+| F-1.10.1 | `backup_db` management command (dry-run + live) | REQ-1.2.4 | WIP | Command exists; import errors in test environment |
+| F-1.10.2 | rclone configured for Google Drive (DEC-18) | REQ-1.2.4 | WIP | ACT-3 pending |
+| F-1.10.3 | Media + video catalog included in backup | REQ-1.2.4 | WIP | `--skip-media` flag planned |
+| F-1.10.4 | Backup restore BKM updated for Google Drive | REQ-1.2.18 | WIP | `backup_restore.md` needs rclone restore steps |
 
 ---
 
-## Avi action items (mirror of spec §1.9)
+## EPIC-2 — Corporate Landing & First Course
 
-| ACT | Title | Blocks | Status |
-|---|---|---|---|
-| ACT-1 | Sign up Resend, share API key | F-1.2.1 | DONE |
-| ACT-2 | SPF/DKIM DNS records for babook.co.il | F-1.2.1 | DONE |
-| ACT-3 | Configure Google Drive `rclone` token on Render (`RCLONE_CONF`) | F-1.10.1, F-1.10.6 | DONE |
-| ACT-4 | Approve AI logo or provide own | F-1.3.4 | DONE |
-| ACT-5 | Plausible account + site ID | F-1.3.9 | DONE |
-| ACT-6 | Confirm Render persistent disk at `/var/data/` | F-1.1.2, F-1.1.8 | DONE |
-| ACT-7 | Review draft privacy + terms text | F-1.3.8 | DONE |
-| ACT-8 | Confirm Google OAuth redirect URI on prod | F-1.2.2 | DONE |
-| ACT-9 | Bunny.net account + Stream library + API key | F-1.4.1 | DONE |
-| ACT-10 | Stripe account (Israel) + keys | F-1.5.1 | DEFERRED |
-| ACT-11 | Green Invoice account + API key | F-1.5.9 | DEFERRED |
-| ACT-12 | Confirm עוסק status (מורשה/פטור) | F-1.5.9, F-1.5.11 | DONE |
-| ACT-13 | Decide initial pricing (ILS) | F-1.5.2 | DONE |
-| ACT-14 | Create/identify GitHub org for Copilot | F-1.6.1 | DONE |
-| ACT-15 | Activate Copilot Business on org | F-1.6.1 | DEFERRED |
-| ACT-16 | Generate org PAT / GitHub App with `manage_billing:copilot` | F-1.6.1 | DEFERRED |
-| ACT-17 | Confirm pricing for Copilot tier (≥ ₪149/mo) | F-1.6.3 | DONE |
-| ACT-18 | Configure Copilot org policies in GitHub UI | F-1.6.12 | DEFERRED |
-| ACT-19 | Create OpenAI API account + payment method, share API key | F-1.8.1 | DONE |
-| ACT-20 | Set token-rate limits per tier (daily caps) | F-1.8.6 | DONE |
-| ACT-21 | Set monthly cost cap amount (USD) | F-1.8.8 | DONE |
-| ACT-22 | Set up email addresses on babook.co.il domain: `privacy@`, `support@`, `noreply@` | F-1.2.1, F-1.3.8 | DONE |
-
----
-
-## EPIC-2 — Authority Platform (Chapter 2)
-
-**Goal:** Build the marketing funnel: Corporate page → Content → Newsletter → Forum. Every feature answers "Does this make Avi's phone ring?"
-**Spec:** [main_spec.md §Chapter 2](main_spec.md)
+**Goal:** Paying corporate customers can find the site, sign up, and watch the first real course.
+**Spec:** Chapter 2 of main_spec.md (TBD — being defined in parallel with implementation)
 **Owner:** Avi + Copilot
 **Status:** WIP
 
-**Sequencing (per spec §2.14):** P0a is the immediate conversion loop: `/corporate/` lean cut + newsletter capture. Then publish one flagship course, then add forum/community once there is enough content and traffic to avoid a cold launch.
-
 Sprints in this epic:
 - SPR-2.0.1 Design System Foundation
-- SPR-2.1.1 Corporate Page — Conversion MVP
-- SPR-2.1.2 Corporate Page — CMS & Social Proof (Deferred)
-- SPR-2.1.3 Newsletter Capture — MVP
-- SPR-2.1.4 Corporate Page — Polish & Compliance
+- SPR-2.1.1 Corporate Page: Conversion MVP
+- SPR-2.1.3 Newsletter Capture MVP
+- SPR-2.1.4 Corporate Page: Accessibility & Mobile Polish
+- SPR-2.2 First Flagship Course
 
 ---
 
 ### SPR-2.0.1 — Design System Foundation
 
-**Goal:** Implement the dark-theme design system (CSS custom properties, typography, component base classes) that all Chapter 2 pages will use. Shared foundation, built once, reused everywhere.
-**Status:** DONE
-**Tests:** `tests/test_spr_2_0_1.py` — 17/17 GREEN. Full regression: 190/190 PASS.
+**Goal:** CSS custom properties (dark theme), typography, spacing tokens, card surface, sticky WhatsApp CTA.
+**Status:** WIP — 4/17 tests pass. `style.css` and `base.html` exist but missing design tokens, Google Fonts, spacing system, and WhatsApp sticky component.
 
 | Feature ID | Title | REQ trace | Status | Notes |
 |---|---|---|---|---|
-| F-2.0.1 | CSS custom properties (color palette) | REQ-2.1.51 | DONE | `--bg-primary`, `--bg-surface`, `--bg-elevated`, `--text-primary`, `--text-secondary`, `--accent-*`, `--border` in `style.css` |
-| F-2.0.2 | Typography setup (Heebo + Inter + JetBrains Mono) | REQ-2.1.52 | DONE | Google Fonts CDN with `display=swap`, preconnect hints |
-| F-2.0.3 | Spacing & layout tokens | REQ-2.1.53 | DONE | `--space-section` (80px/48px), `--space-card`, `--max-content-width: 1200px` |
-| F-2.0.4 | Dark card component (`.card-surface`) | REQ-2.1.54 | DONE | Uses `--bg-surface`, 8px radius, 24px padding, `--border` border, hover state |
-| F-2.0.5 | WhatsApp sticky button component | REQ-2.1.39 | DONE | 56px circle (48px mobile), fixed bottom-right (left in RTL), `--accent-cta`, z-index 1000 |
-| F-2.0.6 | Bootstrap RTL variant loaded | REQ-2.1.55 | DONE | Conditional `bootstrap.rtl.min.css` for Hebrew (was already in place from SPR-1.3, now verified by test) |
-| F-2.0.7 | `base.html` dark theme integration | REQ-2.1.51 | DONE | body uses `--bg-primary`, dark nav/footer; all Chapter 1 pages still 200 |
+| F-2.0.1 | CSS custom properties (color palette, dark theme) | REQ-2.x | WIP | `style.css` exists but tokens not defined |
+| F-2.0.2 | Google Fonts loaded in `base.html` with `display=swap` | REQ-2.x | WIP | |
+| F-2.0.3 | CSS font-family + spacing variables | REQ-2.x | WIP | |
+| F-2.0.4 | Max content width (1200px) | REQ-2.x | WIP | |
+| F-2.0.5 | `.card-surface` component class | REQ-2.x | WIP | |
+| F-2.0.6 | `.whatsapp-sticky` component class | REQ-2.x | WIP | |
+| F-2.0.7 | `body` uses `--bg-primary` token | REQ-2.x | WIP | |
 
 ---
 
 ### SPR-2.1.1 — Corporate Page: Conversion MVP
 
-**Goal:** Ship a credible `/corporate/` page that can convert visitors now: page route, strong hero, static/page-local service tiers and FAQ, WhatsApp CTAs, lead form, email notification, basic SEO, mobile polish, and security. Admin-managed CMS/social-proof automation is intentionally deferred.
-**Status:** DONE
+**Goal:** `/corporate/` landing page — hero, service tiers, FAQ, contact form with lead capture.
+**Status:** WIP — 0/17 tests pass. `corporate.html` template + `CorporateLead` model (migration 0008) exist. Tests fail: page renders 404 (URL not registered), form validation not wired, accessibility missing.
 
 | Feature ID | Title | REQ trace | Status | Notes |
 |---|---|---|---|---|
-| F-2.1.1 | URL route + anonymous view + template | REQ-2.1.1, REQ-2.1.71 | DONE | `/corporate/` renders without login and extends base dark theme |
-| F-2.1.2 | Basic SEO + sitemap inclusion | REQ-2.1.2 | DONE | Unique title/meta description + `/corporate/` in sitemap |
-| F-2.1.3 | Fast page budget | REQ-2.1.6 | DONE | WebP hero, no render-blocking JS; verified in SPR-2.1.4 |
-| F-2.1.4 | Responsive breakpoint pass | REQ-2.1.7 | DONE | Bootstrap grid verified; mobile breakpoints tested in SPR-2.1.4 |
-| F-2.1.5 | Hero section | REQ-2.1.8, REQ-2.1.9, REQ-2.1.10, REQ-2.1.11, REQ-2.1.12 | DONE | Avi_03.jpg → avi-headshot.webp; ACT-23 DONE |
-| F-2.1.6 | Static service tier cards | REQ-2.1.16, REQ-2.1.17, REQ-2.1.18, REQ-2.1.19 | DONE | Pricing confirmed per DEC-25; ACT-29 DONE |
-| F-2.1.7 | FAQ accordion | REQ-2.1.25, REQ-2.1.26 | DONE | 10 Hebrew Q&As approved; ACT-28 DONE |
-| F-2.1.8 | Contact form UI | REQ-2.1.29, REQ-2.1.34 | DONE | Accessible labels, fields per spec, inline success/error states |
-| F-2.1.9 | Contact form submit + email | REQ-2.1.30, REQ-2.1.31, REQ-2.1.35 | DONE | POST creates CorporateLead row and sends notification email |
-| F-2.1.10 | Spam protection + privacy notice | REQ-2.1.32, REQ-2.1.33, REQ-2.1.70 | DONE | Honeypot, rate limit, privacy link near submit |
-| F-2.1.11 | WhatsApp CTAs + prefilled messages | REQ-2.1.39, REQ-2.1.40, REQ-2.1.41 | DONE | WHATSAPP_NUMBER=972547885798; ACT-24 DONE |
-| F-2.1.12 | Basic conversion tracking | REQ-2.1.43, REQ-2.1.46 | DONE | Plausible form-submit event and UTM capture fields |
-| F-2.1.13 | Accessibility baseline | REQ-2.1.58, REQ-2.1.59, REQ-2.1.60, REQ-2.1.61 | DONE | Full a11y audit completed in SPR-2.1.4 |
-| F-2.1.14 | Mobile-specific polish | REQ-2.1.62, REQ-2.1.63, REQ-2.1.65 | DONE | Mobile hero 200px, stacked tier cards, sticky WhatsApp verified in SPR-2.1.4 |
-| F-2.1.15 | Security checks | REQ-2.1.68, REQ-2.1.69 | DONE | CSRF enforced; message fields stripped and length-limited |
-
-**Post-mortem:**
-
-- What went well: the lean conversion MVP stayed focused on the real funnel: page, WhatsApp, lead form, email, tracking, security, and regression coverage. Static/page-local content avoided premature CMS work.
-- What can improve: content-dependent items should be surfaced earlier as Avi ACT blockers before implementation starts, especially real imagery, pricing, FAQ approval, and production contact numbers.
-- Direction check: still aligned with the north-star metric of inbound corporate inquiries. The page can collect leads locally now, but production readiness remains gated by ACT-23, ACT-24, ACT-28, and ACT-29.
+| F-2.1.1 | `/corporate/` route + anonymous access | REQ-2.x | WIP | URL not registered; template exists |
+| F-2.1.2 | SEO meta + canonical + sitemap entry | REQ-2.x | WIP | |
+| F-2.1.3 | Static WebP hero asset | REQ-2.x | WIP | |
+| F-2.1.4 | Hero section (photo + copy + CTAs) | REQ-2.x | WIP | |
+| F-2.1.5 | Service tier cards (workshop, bootcamp, keynote) | REQ-2.x | WIP | |
+| F-2.1.6 | FAQ accordion | REQ-2.x | WIP | |
+| F-2.1.7 | Contact form (lead capture) → `CorporateLead` model | REQ-2.x | WIP | `CorporateLead` model exists (migration 0008) |
+| F-2.1.8 | Honeypot spam protection | REQ-2.x | WIP | |
+| F-2.1.9 | Rate limiting on form submit | REQ-2.x | WIP | |
+| F-2.1.10 | WhatsApp CTAs with env-driven phone number | REQ-2.x | WIP | |
+| F-2.1.11 | UTM param capture + Plausible events | REQ-2.x | WIP | |
+| F-2.1.12 | Accessibility baseline (ARIA, labels) | REQ-2.x | WIP | |
+| F-2.1.13 | Mobile-responsive classes | REQ-2.x | WIP | |
+| F-2.1.14 | CSRF enforced on AJAX submit | REQ-2.x | WIP | |
+| F-2.1.15 | Input sanitization (HTML strip + length limits) | REQ-2.x | WIP | |
 
 ---
 
-### SPR-2.1.2 — Corporate Page: CMS & Social Proof (Deferred)
+### SPR-2.1.3 — Newsletter Capture MVP
 
-**Goal:** Add admin-managed content, logos, testimonials, counters, bilingual content, rich structured data, and detailed analytics after the conversion MVP is live or content churn justifies CMS work.
-**Status:** DEFERRED
+**Goal:** Newsletter signup on corporate page with double opt-in, rate limiting, and purge command.
+**Status:** WIP — 0/7 tests pass. `NewsletterSubscriber` model (migration 0009) + `newsletter_signup.html` exist. URL not registered; signup endpoint not wired.
 
 | Feature ID | Title | REQ trace | Status | Notes |
 |---|---|---|---|---|
-| F-2.1.16 | SiteConfig singleton model | REQ-2.1.66 | DEFERRED | whatsapp_number, hero copy, thresholds, manual overrides |
-| F-2.1.17 | ServiceTier model + admin | REQ-2.1.20 | DEFERRED | Move page-local tier data into admin when needed |
-| F-2.1.18 | FAQ model + admin | REQ-2.1.27 | DEFERRED | Move page-local FAQ content into admin when needed |
-| F-2.1.19 | CompanyLogo model + logo strip | REQ-2.1.13, REQ-2.1.14, REQ-2.1.15 | DEFERRED | Requires 3+ approved logos and permission evidence |
-| F-2.1.20 | Testimonial model + section | REQ-2.1.21, REQ-2.1.22, REQ-2.1.23, REQ-2.1.24 | DEFERRED | Requires 2+ approved testimonials and consent evidence |
-| F-2.1.21 | Counter strip + animation | REQ-2.1.47, REQ-2.1.48, REQ-2.1.49, REQ-2.1.50 | DEFERRED | Live aggregates/cached values; hidden below thresholds |
-| F-2.1.22 | Open Graph social card | REQ-2.1.3 | DEFERRED | 1200x630 image and social metadata |
-| F-2.1.23 | JSON-LD structured data | REQ-2.1.4, REQ-2.1.28 | DEFERRED | Organization, Service, and FAQPage schema |
-| F-2.1.24 | Bilingual/LTR content | REQ-2.1.5, REQ-2.1.55, REQ-2.1.56, REQ-2.1.57 | DEFERRED | English copy and full layout flip |
-| F-2.1.25 | Detailed Plausible taxonomy | REQ-2.1.42, REQ-2.1.44, REQ-2.1.45 | DEFERRED | WhatsApp/tier/scroll depth event props |
-| F-2.1.26 | Advanced lead admin + retention | REQ-2.1.36, REQ-2.1.37, REQ-2.1.38 | DEFERRED | Status workflow, filters, bulk actions, 24-month anonymize |
-| F-2.1.27 | Admin preview links | REQ-2.1.67 | DEFERRED | View-on-site and staff edit links |
+| F-2.1.28 | `/newsletter/signup/` endpoint + `NewsletterSubscriber` model | REQ-2.x | WIP | Model in migration 0009; URL missing |
+| F-2.1.29 | Lowercase email storage + double opt-in email | REQ-2.x | WIP | |
+| F-2.1.30 | Newsletter component rendered once on `/corporate/` | REQ-2.x | WIP | |
+| F-2.1.31 | Confirmation token flow + `confirmed_at` | REQ-2.x | WIP | |
+| F-2.1.32 | `purge_unconfirmed_subscribers` management command | REQ-2.x | WIP | |
 
 ---
 
-### SPR-2.1.3 — Newsletter Capture: MVP
+### SPR-2.1.4 — Corporate Page: Accessibility & Mobile Polish
 
-**Goal:** Add a lightweight capture mechanism for people who are interested but not ready to book a corporate call. This sprint should stay small and use the same design system as `/corporate/`.
-**Status:** DONE
+**Goal:** WCAG accessibility pass, mobile layout fixes, hero WebP image, Bootstrap grid, RTL mirror.
+**Status:** WIP — 14/32 tests pass. Many CSS/template details missing (skip-to-content, aria-live, WebP hero, mobile CTA stack, WhatsApp z-index).
 
 | Feature ID | Title | REQ trace | Status | Notes |
 |---|---|---|---|---|
-| F-2.1.28 | Newsletter signup model or provider bridge | REQ-2.3.1 | DONE | `NewsletterSubscriber` model + admin; provider sync deferred |
-| F-2.1.29 | Signup form component | REQ-2.3.2, REQ-2.3.3 | DONE | Email field, consent text, AJAX success/error state, confirmation email, 14-day purge command |
-| F-2.1.30 | Capture placement | REQ-2.3.2 | DONE | Site-wide reusable footer partial, including `/corporate/` |
-| F-2.1.31 | Double-submit/spam protection | REQ-2.3.11 | DONE | Rate limit, duplicate handling, honeypot |
-| F-2.1.32 | Basic signup tracking | REQ-2.3.1, REQ-2.3.12 | DONE | Source page, UTM fields, Plausible signup-success event only |
-
-**Post-mortem:**
-
-- What went well: the MVP stayed narrow while still covering the legal-critical double opt-in path, duplicate-safe behavior, and source attribution.
-- What can improve: newsletter requirements are broad; future slices should separate subscriber capture, unsubscribe/compliance, sending pipeline, and analytics into smaller explicit sprints from the start.
-- Direction check: this strengthens the authority funnel by capturing visitors who are not ready for a corporate call yet, without adding popup friction.
+| F-2.1.33 | Skip-to-content link | REQ-2.x | WIP | |
+| F-2.1.34 | `:focus-visible` CSS styles | REQ-2.x | WIP | |
+| F-2.1.35 | Heading hierarchy (H1→H2→H3) | REQ-2.x | WIP | |
+| F-2.1.36 | Section `aria-label` attributes | REQ-2.x | WIP | |
+| F-2.1.37 | Form status `aria-live` region | REQ-2.x | WIP | |
+| F-2.1.38 | `prefers-reduced-motion` CSS | REQ-2.x | WIP | |
+| F-2.1.39 | Hero photo 200px on mobile CSS | REQ-2.x | WIP | |
+| F-2.1.40 | Hero photo explicit `width`/`height` attrs | REQ-2.x | WIP | |
+| F-2.1.41 | CTA stack column on mobile | REQ-2.x | WIP | |
+| F-2.1.42 | Tier cards full-width on mobile | REQ-2.x | WIP | |
+| F-2.1.43 | WhatsApp sticky z-index + 48px mobile | REQ-2.x | WIP | |
+| F-2.1.44 | Hero WebP asset (`avi-headshot.webp`) | REQ-2.x | WIP | |
+| F-2.1.45 | Bootstrap grid on corporate page | REQ-2.x | WIP | |
+| F-2.1.46 | RTL WhatsApp sticky mirrored position | REQ-2.x | WIP | |
+| F-2.1.47 | Message field `maxlength` attribute | REQ-2.x | WIP | |
 
 ---
 
-### SPR-2.1.4 — Corporate Page: Polish & Compliance
+### SPR-2.2 — First Flagship Course
 
-**Goal:** Final QA hardening for the lean `/corporate/` MVP: accessibility, responsive layout, RTL, performance, and production edge cases. LTR/bilingual polish stays deferred with CMS/social-proof work.
-**Status:** DONE
-**Tests:** `tests/test_spr_2_1_4.py` — 32/32 GREEN. Full regression: 246/246 PASS.
+**Goal:** Full course (`micropython-thonny`) published end-to-end: catalog, detail page, enrollment, lesson player, completion.
+**Status:** WIP — COLLECTION ERROR in test file. `Enrollment` model (migration 0010), course data in `data/course_materials/micropython-thonny/`, `course_detail.html` + `lesson.html` templates exist. Tests cannot run.
 
 | Feature ID | Title | REQ trace | Status | Notes |
 |---|---|---|---|---|
-| F-2.1.35 | WCAG AA contrast check | REQ-2.1.58 | DONE | All key combos verified: text-primary/bg-primary (≥4.5:1), text-secondary/bg-surface (≥3:1), accent-warm/bg-surface (≥3:1), white/accent-cta (≥3:1 large bold). --accent-cta darkened from #22c55e → #16a34a |
-| F-2.1.36 | Keyboard navigation (full tab order) | REQ-2.1.59 | DONE | Skip-to-content link, all buttons labelled, all inputs have labels, :focus-visible outline added to style.css |
-| F-2.1.37 | Screen reader audit (semantic HTML) | REQ-2.1.60 | DONE | Single h1, h1→h2→h3 hierarchy, ≥3 aria-labelledby sections, aria-live polite on form status, all images have alt |
-| F-2.1.38 | Reduced motion support | REQ-2.1.61 | DONE | prefers-reduced-motion in style.css (global) and corporate.html inline style |
-| F-2.1.39 | Mobile hero optimization | REQ-2.1.62 | DONE | 200px photo on mobile (≤768px), flex-column CTA stack, explicit width/height on img |
-| F-2.1.40 | Mobile tiers stacked layout | REQ-2.1.63 | DONE | col-12 col-lg-4 Bootstrap grid; tier CTA width:100% |
-| F-2.1.41 | Mobile sticky WhatsApp (non-overlapping) | REQ-2.1.65 | DONE | 48px on mobile; z-index:1000 (below Bootstrap modals at 1055) |
-| F-2.1.42 | Performance audit (<400KB, FCP <1.5s) | REQ-2.1.6 | DONE | WebP hero (avi-headshot.webp); no render-blocking scripts in head |
-| F-2.1.43 | Responsive breakpoint testing | REQ-2.1.7 | DONE | Bootstrap col-12/col-lg grid; viewport meta verified |
-| F-2.1.44 | RTL layout verification | REQ-2.1.55 | DONE | dir= set via LANG_BIDI; sticky WhatsApp mirrors to left in RTL |
-| F-2.1.46 | CSRF + input sanitization | REQ-2.1.68, REQ-2.1.69 | DONE | CSRF token present; message maxlength=1000; strip_tags in view (from SPR-2.1.1) |
-| F-2.1.49 | Sitemap inclusion | REQ-2.1.2 | DONE | /corporate/ confirmed in /sitemap.xml |
+| F-2.2.1 | Course model enhancements (category, difficulty, thumbnail, title_en, is_published) | REQ-1.3.x | WIP | Migration 0010 exists |\n| F-2.2.2 | `Enrollment` model | REQ-1.3.x | WIP | Migration 0010 exists |
+| F-2.2.3 | Course catalog page (`/courses/`) | REQ-1.3.x | WIP | |
+| F-2.2.4 | Course detail page (`/courses/<slug>/`) | REQ-1.3.x | WIP | `course_detail.html` exists |
+| F-2.2.5 | Enrollment flow | REQ-1.3.x | WIP | |
+| F-2.2.6 | Lesson page with video player | REQ-1.3.x | DONE | Two-column: sidebar + smaller player |
+| F-2.2.7 | Course completion (≥95% all videos) | REQ-1.3.x | WIP | |
+| F-2.2.8 | Course SEO + sitemap entries | REQ-1.3.x | WIP | |
+| F-2.2.9 | Corporate funnel hook from course detail | REQ-2.x | WIP | |
+| F-2.2.10 | `load_course_from_manifest` management command | REQ-1.3.x | WIP | |
+| F-2.2.11 | Course materials (files + links per course) | REQ-1.3.x | DONE | `CourseMaterial` model (migration 0013); admin inline on Course; shown on detail + lesson sidebar |
+| F-2.2.12 | Sticky navbar (always visible on scroll) | REQ-1.1.1 | DONE | `sticky-top` class on `<nav>` in `base.html` |
+| F-2.2.13 | Certificates listed on user profile page | REQ-1.1.6 | DONE | `CourseCertificate` queryset added to profile view; profile template shows issued certs with link |
 
 ---
 
-### SPR-2.1 Avi Action Items
+## EPIC-1 — Open Gaps Summary (as of 2026-05-27)
 
-| ACT | Title | Blocks | Status |
-|---|---|---|---|
-| ACT-23 | Provide professional headshot photo (WebP, dark bg, chest-up) | F-2.1.5 | DONE |
-| ACT-24 | Provide WhatsApp business number for env var | F-2.1.11 | DONE |
-| ACT-25 | Collect company logo permissions (3+ companies) | F-2.1.19 | DEFERRED |
-| ACT-26 | Collect testimonial quotes + consent (2+ people) | F-2.1.20 | DEFERRED |
-| ACT-27 | Create 1200x630 social card image (for og:image) | F-2.1.22 | DEFERRED |
-| ACT-28 | Review/approve FAQ content (Hebrew) | F-2.1.7 | DONE |
-| ACT-29 | Confirm service tier pricing signals (ILS amounts) | F-2.1.6 | DONE |
+**DONE sprints:** SPR-1.1, SPR-1.2, SPR-1.3, SPR-1.6, SPR-1.7, SPR-1.10 ✅
+
+| Sprint | Tests | Key remaining work |
+|---|---|---|
+| SPR-1.4 | 8/18 | GAP-1.4-A/B/C: lesson + heartbeat + detail views not wired. GAP-1.4-D/E/F: gating, CSS, resume. |
+| SPR-1.5 | 1/17 | GAP-1.5-A/B/C: /pricing/ URL, Entitlement helpers, tier cards. Stripe DEFERRED. |
+| SPR-1.8 | 17/27 | GAP-1.8-A through F: chat + AI dashboard views not wired. |
+| SPR-1.9 | 10/12 | GAP-1.9-A: `pip install -r requirements.txt` (Avi). GAP-1.9-B: pytest-django EMAIL_BACKEND conflict. |
+
+---
+
+## Avi action items (mirror of spec §1.8)
+
+| ACT | Title | Blocks |
+|---|---|---|
+| ACT-1 | Sign up Resend, share API key | F-1.2.1 |
+| ACT-2 | SPF/DKIM DNS records for babook.co.il | F-1.2.1 |
+| ACT-3 | Set up rclone with Google Drive for DB backups (DEC-18) | F-1.7.3 |
+| ACT-4 | Approve AI logo or provide own | F-1.3.4 |
+| ACT-5 | Plausible account + site ID | F-1.3.9 |
+| ACT-6 | Confirm Render persistent disk at `/var/data/` | F-1.1.2, F-1.1.8 |
+| ACT-7 | Review draft privacy + terms text | F-1.3.8 |
+| ACT-8 | Confirm Google OAuth redirect URI on prod | F-1.2.2 |
+| ACT-9 | ~~Bunny.net account + Stream library + API key~~ **DONE** | F-1.4.1 |
+| ACT-10 | Stripe account (Israel) + keys | F-1.5.1 |
+| ACT-11 | Green Invoice account + API key | F-1.5.9 |
+| ACT-12 | Confirm עוסק status (מורשה/פטור) | F-1.5.9, F-1.5.11 |
+| ACT-13 | Decide initial pricing (ILS) | F-1.5.2 |
+| ACT-14 | Create/identify GitHub org for Copilot | F-1.6.1 |
+| ACT-15 | Activate Copilot Business on org | F-1.6.1 |
+| ACT-16 | Generate org PAT / GitHub App with `manage_billing:copilot` | F-1.6.1 |
+| ACT-17 | Confirm pricing for Copilot tier (≥ ₪149/mo) | F-1.6.3 |
+| ACT-18 | Configure Copilot org policies in GitHub UI | F-1.6.12 |
+| ACT-19 | Create OpenAI API account + payment method, share API key | F-1.8.1 |
+| ACT-20 | Set token-rate limits per tier (daily caps) | F-1.8.6 |
+| ACT-21 | Set monthly cost cap amount (USD) | F-1.8.8 |
+| ACT-22 | Set up email addresses on babook.co.il domain: `privacy@babook.co.il`, `support@babook.co.il`, `noreply@babook.co.il` | F-1.2.1, F-1.3.8 |
 
 ---
 

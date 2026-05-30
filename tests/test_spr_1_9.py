@@ -24,14 +24,14 @@ class TestEmailBackendSettings(TestCase):
 
     @override_settings(RESEND_API_KEY="")
     def test_dev_uses_console_backend(self):
-        """T-F-1.9.1-2: When RESEND_API_KEY empty, backend is NOT the Resend backend."""
+        """T-F-1.9.1-2: When RESEND_API_KEY empty, backend is console."""
         resend_key = getattr(settings, "RESEND_API_KEY", "")
         if not resend_key:
-            assert "resend" not in settings.EMAIL_BACKEND.lower()
+            assert settings.EMAIL_BACKEND == "django.core.mail.backends.console.EmailBackend"
 
     def test_resend_backend_class_importable(self):
-        """T-F-1.9.1-3: anymail resend backend is importable."""
-        from anymail.backends.resend import EmailBackend  # noqa: F401
+        """T-F-1.9.1-3: django_resend.EmailBackend is importable."""
+        from django_resend import EmailBackend  # noqa: F401
 
     def test_send_mail_does_not_raise(self):
         """T-F-1.9.1-4: send_mail() succeeds with test backend."""

@@ -85,8 +85,10 @@ def test_course_registered_in_admin():
 
 @pytest.mark.spr14
 @pytest.mark.django_db
+@pytest.mark.django_db
 def test_lesson_page_renders_iframe():
     """T-F-1.4.3-1: Lesson page contains Bunny iframe."""
+    from django.test import override_settings
     from app.models import Course, Video
     course = Course.objects.create(title="Test Course", slug="test-course", description="Test")
     Video.objects.create(
@@ -94,7 +96,8 @@ def test_lesson_page_renders_iframe():
         duration_seconds=300, lesson_order=1, is_free_preview=True,
     )
     client = Client()
-    resp = client.get("/course/test-course/lesson/1/")
+    with override_settings(BUNNY_STREAM_LIBRARY_ID="test-lib-999"):
+        resp = client.get("/course/test-course/lesson/1/")
     assert resp.status_code == 200
     content = resp.content.decode()
     assert "<iframe" in content
@@ -105,6 +108,7 @@ def test_lesson_page_renders_iframe():
 @pytest.mark.django_db
 def test_player_responsive_aspect_ratio():
     """T-F-1.4.3-2: Player wrapper uses 16:9 aspect ratio."""
+    from django.test import override_settings
     from app.models import Course, Video
     course = Course.objects.create(title="Test Course 2", slug="test-course-2", description="Test")
     Video.objects.create(
@@ -112,7 +116,8 @@ def test_player_responsive_aspect_ratio():
         duration_seconds=300, lesson_order=1, is_free_preview=True,
     )
     client = Client()
-    resp = client.get("/course/test-course-2/lesson/1/")
+    with override_settings(BUNNY_STREAM_LIBRARY_ID="test-lib-999"):
+        resp = client.get("/course/test-course-2/lesson/1/")
     content = resp.content.decode()
     # Check for 16:9 aspect ratio styling (56.25% padding or aspect-ratio)
     assert "56.25%" in content or "aspect-ratio" in content
@@ -336,3 +341,62 @@ def test_non_preview_redirects_anonymous_to_login():
     resp = client.get("/course/paid-course-2/lesson/1/")
     assert resp.status_code == 302
     assert "/login" in resp.url or "/accounts/login" in resp.url
+
+
+# ---------------------------------------------------------------------------
+# F-1.4.13 — Home auto-redirect to last watched lesson (REQ-1.3.16)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.spr14
+@pytest.mark.django_db
+def test_home_shows_continue_watching_card():
+    """T-F-1.4.13-1: Logged-in user with UserVideoProgress sees a 'Continue watching' card on home page."""
+    from app.models import Course, Video, UserVideoProgress
+    course = Course.objects.create(
+        title="Resume Course", slug="resume-course", description="Test", is_published=True
+    )
+    video = Video.objects.create(
+        course=course, bunny_video_id="res-vid-1", title="Lesson 1",
+        duration_seconds=300, lesson_order=1, is_free_preview=True,
+    )
+    user = User.objects.create_user(username="resumeuser", password="testpass123")
+    UserVideoProgress.objects.create(user=user, video=video, percent_watched=50)
+    client = Client()
+    client.login(username="resumeuser", password="testpass123")
+    resp = client.get("/")
+    assert resp.status_code == 200
+    content = resp.content.decode("utf-8")
+    assert "resume-course" in content or "Lesson 1" in content or "Resume Course" in content
+
+
+@pytest.mark.spr14
+@pytest.mark.django_db
+def test_home_no_redirect_without_progress():
+    """T-F-1.4.13-2: Logged-in user with no UserVideoProgress sees normal home page (200)."""
+    user = User.objects.create_user(username="freshuser", password="testpass123")
+    client = Client()
+    client.login(username="freshuser", password="testpass123")
+    resp = client.get("/")
+    assert resp.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# F-1.4.14 — Volume persistence: localStorage key in lesson template (REQ-1.3.15)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.spr14
+@pytest.mark.django_db
+def test_lesson_template_has_volume_localStorage_key():
+    """T-F-1.4.14-1: Lesson page HTML contains the babook_volume localStorage key (auth required)."""
+    from app.models import Course, Video
+    course = Course.objects.create(title="Vol Course", slug="vol-course", description="Vol", is_published=True)
+    Video.objects.create(
+        course=course, bunny_video_id="vol-vid-1", title="Lesson 1",
+        duration_seconds=300, lesson_order=1, is_free_preview=True,
+    )
+    user = User.objects.create_user(username="voluser", password="testpass123")
+    client = Client()
+    client.login(username="voluser", password="testpass123")
+    resp = client.get("/courses/vol-course/lesson/1/")
+    assert resp.status_code == 200
+    assert "babook_volume" in resp.content.decode("utf-8")

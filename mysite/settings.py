@@ -34,7 +34,6 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.github",
-    "anymail",
     "app",
 ]
 
@@ -42,6 +41,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "app.middleware.DefaultHebrewMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -137,7 +137,49 @@ SECURE_HSTS_PRELOAD = not DEBUG
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 PLAUSIBLE_DOMAIN = os.environ.get("PLAUSIBLE_DOMAIN", "")
-WHATSAPP_NUMBER = os.environ.get("WHATSAPP_NUMBER", "972500000000")
+WHATSAPP_NUMBER = os.environ.get("WHATSAPP_NUMBER", "")
+
+# ---------------------------------------------------------------------------
+# Bunny Stream video CDN (SPR-1.4)
+# ---------------------------------------------------------------------------
+BUNNY_STREAM_LIBRARY_ID = os.environ.get("BUNNY_STREAM_LIBRARY_ID", "")
+BUNNY_STREAM_CDN_HOSTNAME = os.environ.get("BUNNY_STREAM_CDN_HOSTNAME", "iframe.mediadelivery.net")
+BUNNY_STREAM_TOKEN_KEY = os.environ.get("BUNNY_STREAM_TOKEN_KEY", "")
+BUNNY_API_KEY = os.environ.get("BUNNY_API_KEY", "")
+
+# ---------------------------------------------------------------------------
+# GitHub Copilot seat management (SPR-1.6)
+# ---------------------------------------------------------------------------
+GITHUB_ORG = os.environ.get("GITHUB_ORG", "")
+GITHUB_PAT = os.environ.get("GITHUB_PAT", "")
+COPILOT_MAX_SEATS = int(os.environ.get("COPILOT_MAX_SEATS", "5"))
+COPILOT_GRACE_PERIOD_DAYS = 14
+COPILOT_INACTIVITY_WARN_DAYS = 30
+COPILOT_INACTIVITY_RECLAIM_DAYS = 60
+
+# ---------------------------------------------------------------------------
+# AI Chat / OpenAI (SPR-1.8)
+# ---------------------------------------------------------------------------
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+OPENAI_DEFAULT_MODEL = os.environ.get("OPENAI_DEFAULT_MODEL", "gpt-4o-mini")
+OPENAI_PREMIUM_MODEL = os.environ.get("OPENAI_PREMIUM_MODEL", "gpt-4o")
+OPENAI_DAILY_TOKEN_LIMITS = {
+    "member": int(os.environ.get("OPENAI_DAILY_TOKENS_MEMBER", "10000")),
+    "base": int(os.environ.get("OPENAI_DAILY_TOKENS_BASE", "50000")),
+    "master": int(os.environ.get("OPENAI_DAILY_TOKENS_MASTER", "200000")),
+}
+OPENAI_MONTHLY_COST_CAP_USD = float(os.environ.get("OPENAI_MONTHLY_COST_CAP_USD", "20.0"))
+CHAT_SESSION_TIMEOUT_MINUTES = 30
+
+# ---------------------------------------------------------------------------
+# Email / Resend (SPR-1.9)
+# ---------------------------------------------------------------------------
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
+if RESEND_API_KEY:
+    EMAIL_BACKEND = "django_resend.EmailBackend"
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@babook.co.il")
 
 LOGGING = {
     "version": 1,
@@ -198,44 +240,6 @@ SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"
-
-# Bunny Stream video hosting
-BUNNY_API_KEY = os.environ.get("BUNNY_API_KEY", "")
-BUNNY_STREAM_LIBRARY_ID = os.environ.get("BUNNY_STREAM_LIBRARY_ID", "")
-BUNNY_STREAM_CDN_HOSTNAME = os.environ.get("BUNNY_STREAM_CDN_HOSTNAME", "")
-BUNNY_STREAM_TOKEN_KEY = os.environ.get("BUNNY_STREAM_TOKEN_KEY", "")
-
-# GitHub Copilot Seat Provisioning
-GITHUB_ORG = os.environ.get("GITHUB_ORG", "babook-learn")
-GITHUB_PAT = os.environ.get("GITHUB_PAT", "")
-COPILOT_MAX_SEATS = int(os.environ.get("COPILOT_MAX_SEATS", "10"))
-COPILOT_GRACE_PERIOD_DAYS = int(os.environ.get("COPILOT_GRACE_PERIOD_DAYS", "14"))
-COPILOT_INACTIVITY_WARN_DAYS = int(os.environ.get("COPILOT_INACTIVITY_WARN_DAYS", "30"))
-COPILOT_INACTIVITY_RECLAIM_DAYS = int(os.environ.get("COPILOT_INACTIVITY_RECLAIM_DAYS", "60"))
-COPILOT_SEAT_COST_USD = float(os.environ.get("COPILOT_SEAT_COST_USD", "19.0"))
-
-# Email — Resend in prod, console in dev
-RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
-DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@babook.co.il")
-CORPORATE_LEAD_EMAIL = os.environ.get("CORPORATE_LEAD_EMAIL", DEFAULT_FROM_EMAIL)
-if RESEND_API_KEY:
-    EMAIL_BACKEND = "anymail.backends.resend.EmailBackend"
-    ANYMAIL = {"RESEND_API_KEY": RESEND_API_KEY}
-else:
-    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-
-# OpenAI AI Chat
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
-OPENAI_DEFAULT_MODEL = os.environ.get("OPENAI_DEFAULT_MODEL", "gpt-4o-mini")
-OPENAI_PREMIUM_MODEL = os.environ.get("OPENAI_PREMIUM_MODEL", "gpt-4o")
-OPENAI_MONTHLY_COST_CAP_USD = float(os.environ.get("OPENAI_MONTHLY_COST_CAP_USD", "50.0"))
-OPENAI_DAILY_TOKEN_LIMITS = {
-    "guest": 0,
-    "member": 50000,
-    "staff": 200000,
-    "admin": 200000,
-}
-CHAT_SESSION_TIMEOUT_MINUTES = int(os.environ.get("CHAT_SESSION_TIMEOUT_MINUTES", "30"))
 
 # Local overrides — not committed, not deployed
 try:

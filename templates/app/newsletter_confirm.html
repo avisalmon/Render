@@ -4,15 +4,15 @@
 
 {% block content %}
 <section class="newsletter-confirm card-surface text-center mx-auto">
-  {% if status == "confirmed" %}
+  {% if confirmed %}
     <h1>ההרשמה אושרה</h1>
     <p>תודה. מהשבוע הבא נשלח לך טיפ AI קצר ומעשי.</p>
-  {% elif status == "expired" %}
-    <h1>קישור האישור פג תוקף</h1>
-    <p>אפשר להירשם שוב ולקבל קישור חדש.</p>
-  {% else %}
+  {% elif error %}
     <h1>קישור האישור לא תקין</h1>
     <p>אפשר להירשם שוב מהטופס באתר.</p>
+  {% else %}
+    <h1>קישור האישור פג תוקף</h1>
+    <p>אפשר להירשם שוב ולקבל קישור חדש.</p>
   {% endif %}
 </section>
 {% endblock %}

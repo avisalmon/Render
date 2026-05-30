@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}תעודת סיום — {{ cert.course.title }} — babook{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column align-items-center py-5">
+
+  <!-- Certificate card -->
+  <div class="certificate-card" id="certificate-printable">
+    <div class="certificate-border">
+
+      <div class="certificate-logo">
+        <span style="font-size:1.6rem;font-weight:900;letter-spacing:-.5px;">ba<span style="color:var(--accent-primary)">book</span></span>
+      </div>
+
+      <p class="certificate-label">תעודת סיום</p>
+
+      <p class="certificate-awarded-to">הוענקה ל</p>
+
+      <h2 class="certificate-name">
+        {{ cert.user.get_full_name|default:cert.user.username }}
+      </h2>
+
+      <p class="certificate-text">על סיום מוצלח של הקורס</p>
+
+      <h3 class="certificate-course">{{ cert.course.title }}</h3>
+
+      <div class="certificate-divider"></div>
+
+      <p class="certificate-date">{{ cert.issued_at|date:"j בF Y" }}</p>
+
+      <p class="certificate-id">
+        מזהה תעודה: <code>{{ cert.certificate_id }}</code>
+      </p>
+
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="d-flex gap-3 mt-4 flex-wrap justify-content-center">
+    <button onclick="window.print()" class="btn btn-outline-secondary">
+      <i class="bi bi-printer me-1"></i> הדפסה
+    </button>
+    <a href="{% url 'courses_detail' cert.course.slug %}" class="btn btn-outline-primary">
+      <i class="bi bi-arrow-right me-1"></i> חזרה לקורס
+    </a>
+    <a href="{% url 'courses_catalog' %}" class="btn btn-primary">
+      <i class="bi bi-collection-play me-1"></i> קורסים נוספים
+    </a>
+  </div>
+
+</div>
+{% endblock %}

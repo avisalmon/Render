@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% load static course_tags %}
+{% block title %}{{ course.title }} — BaBook{% endblock %}
+{% block meta_description %}{{ course.description|truncatewords:25 }}{% endblock %}
+
+{% block extra_head %}
+<!-- JSON-LD Course schema (F-2.2.8) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Course",
+  "name": "{{ course.title|escapejs }}",
+  "description": "{{ course.description|escapejs }}",
+  "provider": {
+    "@type": "Organization",
+    "name": "BaBook",
+    "sameAs": "https://babook.co.il"
+  },
+  "url": "https://babook.co.il{% url 'courses_detail' course.slug %}",
+  "inLanguage": "he"
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container-xl py-5">
+
+  <!-- Hero section -->
+  <div class="row align-items-center mb-5 g-4">
+    <div class="col-lg-7">
+      <!-- Breadcrumb -->
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb small" style="color:var(--text-secondary)">
+          <li class="breadcrumb-item"><a href="{% url 'courses_catalog' %}" style="color:var(--accent-primary)">קורסים</a></li>
+          <li class="breadcrumb-item active" style="color:var(--text-secondary)">{{ course.title }}</li>
+        </ol>
+      </nav>
+
+      <h1 class="fw-bold mb-2" style="color:var(--text-primary)">{{ course.title }}</h1>
+      {% if course.title_en %}
+      <p class="mb-3" style="color:var(--text-secondary)">{{ course.title_en }}</p>
+      {% endif %}
+
+      <!-- Badges -->
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        {% if course.difficulty == "beginner" %}<span class="badge" style="background:var(--accent-cta)">מתחיל</span>{% endif %}
+        {% if course.difficulty == "intermediate" %}<span class="badge" style="background:var(--accent-primary)">בינוני</span>{% endif %}
+        {% if course.difficulty == "advanced" %}<span class="badge bg-danger">מתקדם</span>{% endif %}
+        <span class="badge" style="background:var(--bg-elevated);color:var(--text-secondary)">
+          {{ videos|length }} שיעורים
+        </span>
+        <span class="badge" style="background:var(--bg-elevated);color:var(--text-secondary)">
+          {{ total_minutes }} דקות
+        </span>
+      </div>
+
+      <p style="color:var(--text-secondary);line-height:1.8">{{ course.description }}</p>
+
+      <!-- Progress bar for enrolled users -->
+      {% if enrolled %}
+      <div class="my-3">
+        <div style="height:4px;background:var(--bg-elevated);border-radius:2px;overflow:hidden;">
+          {% widthratio completed_count videos|length 100 as pct %}
+          <div style="height:100%;width:{{ pct }}%;background:var(--accent-cta);transition:width .4s;"></div>
+        </div>
+        <p class="small mt-1" style="color:var(--text-secondary)">{{ completed_count }} / {{ videos|length }} שיעורים הושלמו</p>
+      </div>
+      {% endif %}
+
+      <!-- CTA -->
+      {% if enrolled %}
+      <a href="{% url 'courses_lesson' course.slug 1 %}"
+         class="btn mt-2"
+         style="background:var(--accent-primary);color:#fff;border:none;border-radius:10px;padding:.6rem 1.8rem;font-weight:600;">
+        המשך ללמוד &rarr;
+      </a>
+      {% else %}
+      <form method="post" action="{% url 'courses_enroll' course.slug %}" class="d-inline">
+        {% csrf_token %}
+        <button type="submit" class="btn mt-2"
+                style="background:var(--accent-cta);color:#fff;border:none;border-radius:10px;padding:.6rem 1.8rem;font-weight:700;font-size:1rem;">
+          הרשמה לקורס חינם &rarr;
+        </button>
+      </form>
+      <a href="{% url 'courses_lesson' course.slug 1 %}"
+         class="btn btn-sm mt-2 ms-2"
+         style="background:transparent;color:var(--accent-primary);border:1px solid var(--accent-primary);border-radius:10px;">
+        צפה בשיעור חינמי
+      </a>
+      {% endif %}
+    </div>
+
+    <div class="col-lg-5 text-center">
+      {% if course.thumbnail %}
+      <img src="{% static course.thumbnail %}" alt="{{ course.title }}"
+           style="width:100%;max-width:480px;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.5);">
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Instructor block -->
+  <div class="p-4 rounded-3 mb-5 d-flex align-items-center gap-4"
+       style="background:var(--bg-elevated);">
+    <div style="width:64px;height:64px;border-radius:50%;background:var(--accent-primary);display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0;">
+      🧑‍💻
+    </div>
+    <div>
+      <p class="fw-bold mb-0" style="color:var(--text-primary)">אבי סלמון</p>
+      <p class="small mb-0" style="color:var(--text-secondary)">מהנדס בכיר, מרצה ומפתח. עשר שנות ניסיון בפיתוח תוכנה ואוטומציה.</p>
+    </div>
+  </div>
+
+  <!-- Lessons list -->
+  <h2 class="mb-4 fw-bold" style="color:var(--text-primary)">תוכן הקורס</h2>
+  <div class="d-flex flex-column gap-2">
+    {% for video in videos %}
+    <div class="d-flex align-items-center gap-3 p-3 rounded-3"
+         style="background:var(--bg-surface);border:1px solid var(--bg-elevated);">
+
+      <!-- Status icon -->
+      {% if enrolled %}
+        {% if video.id in progress_map %}
+          {% if progress_map|get_item:video.id >= 95 %}
+          <span style="color:var(--accent-cta);font-size:1.1rem;">✅</span>
+          {% else %}
+          <span style="color:var(--accent-warm);font-size:1.1rem;">▶️</span>
+          {% endif %}
+        {% else %}
+        <span style="color:var(--text-secondary);font-size:1.1rem;">○</span>
+        {% endif %}
+      {% elif video.is_free_preview %}
+      <span style="color:var(--accent-cta);font-size:1.1rem;">▶</span>
+      {% else %}
+      <span style="color:var(--text-secondary);font-size:1.1rem;">🔒</span>
+      {% endif %}
+
+      <!-- Lesson info -->
+      <div class="flex-grow-1">
+        {% if enrolled or video.is_free_preview %}
+        <a href="{% url 'courses_lesson' course.slug video.lesson_order %}"
+           style="text-decoration:none;color:var(--text-primary);font-weight:500;">
+          {{ video.lesson_order }}. {{ video.title }}
+        </a>
+        {% else %}
+        <span style="color:var(--text-secondary);">{{ video.lesson_order }}. {{ video.title }}</span>
+        {% endif %}
+        {% if video.is_free_preview %}
+        <span class="badge ms-2 small" style="background:var(--accent-cta)20;color:var(--accent-cta);border:1px solid var(--accent-cta)44;">חינמי</span>
+        {% endif %}
+        {% if video.has_code_example %}
+        <span class="badge ms-1 small" style="background:var(--accent-primary)20;color:var(--accent-primary);border:1px solid var(--accent-primary)44;">קוד</span>
+        {% endif %}
+      </div>
+
+      <!-- Duration -->
+      <span class="small ms-2" style="color:var(--text-secondary);white-space:nowrap;">
+        {% if video.duration_seconds %}{{ video.duration_seconds|duration_display }}{% endif %}
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Course materials (files + links) -->
+  {% if course.materials.all %}
+  <h2 class="mb-3 mt-5 fw-bold" style="color:var(--text-primary)">חומרי לימוד</h2>
+  <div class="d-flex flex-column gap-2 mb-4">
+    {% for m in course.materials.all %}
+    <div class="d-flex align-items-center gap-3 p-3 rounded-3"
+         style="background:var(--bg-surface);border:1px solid var(--bg-elevated);">
+      {% if m.material_type == "file" %}
+        <i class="bi bi-file-earmark-arrow-down fs-5" style="color:var(--accent-primary);flex-shrink:0"></i>
+        <span class="flex-grow-1" style="color:var(--text-primary)">{{ m.title }}</span>
+        <a href="{{ m.file.url }}" download class="btn btn-sm"
+           style="background:var(--accent-primary);color:#fff;border:none;border-radius:8px;">
+          <i class="bi bi-download me-1"></i>הורדה
+        </a>
+      {% else %}
+        <i class="bi bi-link-45deg fs-5" style="color:var(--accent-cta);flex-shrink:0"></i>
+        <span class="flex-grow-1" style="color:var(--text-primary)">{{ m.title }}</span>
+        <a href="{{ m.url }}" target="_blank" rel="noopener" class="btn btn-sm"
+           style="background:var(--accent-cta);color:#000;border:none;border-radius:8px;">
+          <i class="bi bi-box-arrow-up-right me-1"></i>פתח
+        </a>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Corporate hook (F-2.2.9) -->
+  <div class="mt-5 p-4 rounded-3 text-center"
+       style="background:var(--bg-elevated);border:1px solid var(--accent-primary)33;">
+    <p class="mb-1 fw-semibold" style="color:var(--text-primary)">רוצה להכשיר את הצוות בקורסים כאלה?</p>
+    <p class="small mb-3" style="color:var(--text-secondary)">רישוי ארגוני עם דיווח התקדמות, קורסים מותאמים ותמיכה.</p>
+    <a href="/corporate/" class="btn btn-sm"
+       style="background:var(--accent-warm);color:#000;border:none;border-radius:8px;font-weight:600;">
+      פרטים לארגונים
+    </a>
+  </div>
+
+</div>
+{% endblock %}

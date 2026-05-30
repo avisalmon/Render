@@ -1,7 +1,5 @@
 # babook.co.il — Research Summary & Next Steps
 
-> **Superseded recommendation note (May 2026):** The original recommendation below favored token resale, a skill marketplace, forums, and practical developer tooling. That is now historical context, not the active plan. The current strategy is DEC-19/DEC-19a in [../main_spec.md](../main_spec.md): babook should first act as a free authority and lead-generation platform for Avi's corporate AI training. Current MVP: lean `/corporate/` page, WhatsApp/contact conversion, newsletter capture, and one flagship course.
-
 ## What We Learned
 
 ### Market Landscape
@@ -79,47 +77,16 @@ Before we lock in Chapter 2 scope, we need answers to:
 
 ---
 
-## Current Recommendation: Authority Funnel First
+## Recommendation: Prioritized Roadmap
 
-The strongest near-term path is to sell Avi's expertise, not platform inventory. The site should make a corporate buyer quickly understand what Avi teaches, why he is credible, and how to contact him.
+Based on market research, **I recommend this MVP stack (Avi, please validate):**
 
-### **Primary Buyer:** Israeli companies and teams that need practical AI training
-### **Primary Revenue:** Corporate workshops, bootcamps, and keynotes
-### **Primary Scope:** Authority marketing + lead capture
-
-**Rationale:**
-1. Corporate training can monetize before a large community exists.
-2. A conversion page is faster to ship than a marketplace or token platform.
-3. Avi's trust and teaching quality are the real differentiator.
-4. Newsletter and flagship-course content create proof for future sales calls.
-5. Parked platform ideas can return later if they clearly increase inbound leads.
-
-### **Current Chapter 2 Scope (MVP)**
-
-| Feature | Phase | Owner | Timeline |
-|---------|-------|-------|----------|
-| Corporate training page | P0a | Copilot + Avi | First implementation sprint |
-| WhatsApp CTA + lead form + email notification | P0a | Copilot | First implementation sprint |
-| Newsletter capture | P0a | Copilot | Next small sprint |
-| First flagship course | P0b | Avi + Copilot | After conversion page |
-| Forum/community | P0c | Copilot + Avi | After seed content and traffic |
-
-**Active success metric:** inbound corporate training inquiries/month.
-
----
-
-## Historical Recommendation: Prioritized Roadmap
-
-The following recommendation is preserved for context only. It is not the active delivery plan.
-
-Based on market research, **this was the earlier MVP stack:**
-
-### **Primary User:** Self-taught + junior devs (superseded)
-### **Primary Revenue:** Token resale + Skill marketplace (parked)
-### **Primary Scope:** Practical Level (co-coding, agents, MCP) (parked)
+### **Primary User:** Self-taught + junior devs (lowest barrier to entry)
+### **Primary Revenue:** Token resale + Skill marketplace
+### **Primary Scope:** Practical Level (co-coding, agents, MCP)
 
 **Rationale:**
-1. **Historical assumption:** practitioners have money (paying for Copilot already) → token resale revenue
+1. **Practitioners have money** (paying for Copilot already) → token resale immediate revenue
 2. **Skill marketplace is easier to launch** than full courses (creators drive content)
 3. **Community forums are free retention** (keep users engaged between paid tiers)
 4. **Hands-on labs beat video** for practitioners (learn by doing)
@@ -164,11 +131,9 @@ Based on market research, **this was the earlier MVP stack:**
 
 ---
 
-## Historical Questions for Avi
+## Questions for Avi
 
-These questions were useful before DEC-19/DEC-19a. They no longer block the current corporate-training funnel.
-
-To finalize the earlier platform scope, I asked:
+To finalize Chapter 2 spec, I need your input:
 
 1. **Which segment (user/practical/deep/corporate) is your passion?**
 2. **Do you want to resell Copilot/OpenAI, or just educate users to buy themselves?**
@@ -185,4 +150,4 @@ To finalize the earlier platform scope, I asked:
 ✅ `feature_skeleton.md` — Full feature breakdown by scope  
 ✅ This document — Summary + recommendations + next steps  
 
-Chapter 2 is now built around the authority-platform path. Use [../main_spec.md](../main_spec.md) and [../backlog.md](../backlog.md) for active execution.
+Ready to build Chapter 2?

@@ -7,7 +7,7 @@
 <div class="row justify-content-center">
   <div class="col-md-6">
     <h1 class="mb-4">{% trans "Profile" %}</h1>
-    <form method="post" class="card p-4">
+    <form method="post" class="card p-4 mb-4">
       {% csrf_token %}
       <div class="mb-3">
         <label class="form-label">{% trans "Display name" %}</label>
@@ -23,6 +23,28 @@
       </div>
       <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
     </form>
+
+    {% if certificates %}
+    <h2 class="mb-3 h5">
+      <i class="bi bi-award-fill me-2" style="color:var(--accent-cta,#f59e0b)"></i>תעודות סיום
+    </h2>
+    <div class="d-flex flex-column gap-2 mb-4">
+      {% for cert in certificates %}
+      <div class="card p-3 d-flex flex-row align-items-center gap-3">
+        <i class="bi bi-award fs-3" style="color:var(--accent-cta,#f59e0b);flex-shrink:0"></i>
+        <div class="flex-grow-1">
+          <div class="fw-semibold">{{ cert.course.title }}</div>
+          <small class="text-muted">{{ cert.issued_at|date:"j בF Y" }}</small>
+        </div>
+        <a href="{% url 'certificate_view' cert.certificate_id %}"
+           class="btn btn-outline-secondary btn-sm" target="_blank">
+          <i class="bi bi-eye me-1"></i>צפה
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
   </div>
 </div>
 {% endblock %}

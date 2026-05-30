@@ -22,10 +22,10 @@ from django.http import JsonResponse
 from django.urls import include, path, re_path
 from django.views.static import serve
 
-from app.sitemaps import StaticViewSitemap
+from app.sitemaps import CourseSitemap, StaticViewSitemap
 from app.views import privacy, robots_txt, terms
 
-sitemaps = {"static": StaticViewSitemap}
+sitemaps = {"static": StaticViewSitemap, "courses": CourseSitemap}
 
 
 def healthz(request):

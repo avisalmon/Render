@@ -29,6 +29,8 @@ def generate_signed_url(bunny_video_id, expiry_seconds=86400):
 
 
 def get_embed_url(bunny_video_id):
-    """Get the Bunny Stream iframe embed URL for a video."""
+    """Return the Bunny Stream iframe embed URL, or None if not configured."""
     library_id = settings.BUNNY_STREAM_LIBRARY_ID
+    if not library_id:
+        return None
     return f"https://iframe.mediadelivery.net/embed/{library_id}/{bunny_video_id}"

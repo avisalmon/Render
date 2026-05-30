@@ -1,28 +1,28 @@
 {% extends "base.html" %}
 {% load i18n %}
 
-{% block title %}{% trans "Login" %} — babook{% endblock %}
+{% block title %}כניסה — babook{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-md-5">
-    <h1 class="mb-4">{% trans "Login" %}</h1>
+    <h1 class="mb-4">כניסה</h1>
     <div class="card p-4">
       <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit" class="btn btn-primary w-100">{% trans "Login" %}</button>
+        <button type="submit" class="btn btn-primary w-100">כניסה</button>
       </form>
       <hr>
       <a class="btn btn-outline-secondary w-100" href="{% url 'socialaccount_signup' %}?next=/">
-        <i class="bi bi-google"></i> {% trans "Continue with Google" %}
+        <i class="bi bi-google"></i> המשך עם גוגל
       </a>
     </div>
     <p class="text-center mt-3">
-      <a href="{% url 'register' %}">{% trans "No account? Register" %}</a>
+      <a href="{% url 'register' %}">אין חשבון? הירשמו</a>
     </p>
-    <p class="text-center">
-      <a href="{% url 'account_reset_password' %}">{% trans "Forgot password?" %}</a>
+    <p class="text-center mt-2">
+      <a href="/accounts/password/reset/">שכחתם את הסיסמא?</a>
     </p>
   </div>
 </div>

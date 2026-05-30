@@ -5,7 +5,7 @@ services:
     plan: starter
     branch: main
     buildCommand: ./build.sh
-    startCommand: python manage.py migrate && python manage.py createsuperuser --noinput || true && gunicorn mysite.wsgi:application --bind 0.0.0.0:$PORT
+    startCommand: python manage.py migrate && python manage.py load_course_from_manifest && python manage.py createsuperuser --noinput || true && gunicorn mysite.wsgi:application --bind 0.0.0.0:$PORT
     autoDeploy: true
     envVars:
       - key: PYTHON_VERSION
@@ -30,22 +30,3 @@ services:
       name: mysite-disk
       mountPath: /var/data
       sizeGB: 1
-
-  - type: cron
-    name: nightly-backup
-    runtime: python
-    plan: starter
-    schedule: "0 3 * * *"
-    buildCommand: ./build.sh
-    startCommand: python manage.py backup_db
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.9
-      - key: PERSISTENT_ROOT
-        value: /var/data
-      - key: GCS_SERVICE_ACCOUNT
-        sync: false
-      - key: GCS_BUCKET
-        sync: false
-      - key: SECRET_KEY
-        sync: false

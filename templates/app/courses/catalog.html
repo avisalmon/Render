@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}קורסים — BaBook{% endblock %}
+{% block meta_description %}למד אוטומציה ובינה מלאכותית עם קורסים מקצועיים. Python, MicroPython, GitHub Copilot ועוד.{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+
+  <!-- Page header -->
+  <div class="mb-5 text-center">
+    <h1 class="fw-bold" style="color:var(--text-primary)">קורסים</h1>
+    <p class="mt-2" style="color:var(--text-secondary)">למד בקצב שלך. לכל קורס סרטונים, קוד, ותרגול מעשי.</p>
+  </div>
+
+  <!-- Category filter pills -->
+  <div class="d-flex flex-wrap gap-2 justify-content-center mb-5">
+    <a href="{% url 'courses_catalog' %}"
+       class="btn btn-sm {% if not active_category %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+      הכל
+    </a>
+    {% for value, label in categories %}
+    <a href="?category={{ value }}"
+       class="btn btn-sm {% if active_category == value %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+      {{ label }}
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- Course card grid -->
+  {% if course_list %}
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for item in course_list %}
+    {% with course=item.course %}
+    <div class="col">
+      <div class="card h-100 border-0 shadow-sm"
+           style="background:var(--bg-surface);border-radius:12px;overflow:hidden;">
+        <!-- Thumbnail -->
+        {% if course.thumbnail %}
+        <a href="{% url 'courses_detail' course.slug %}">
+          {% load static %}
+          <img src="{% static course.thumbnail %}"
+               class="card-img-top" style="height:180px;object-fit:cover;" alt="{{ course.title }}">
+        </a>
+        {% else %}
+        <div style="height:180px;background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;">
+          <span style="font-size:3rem;">📚</span>
+        </div>
+        {% endif %}
+
+        <div class="card-body d-flex flex-column p-4">
+          <!-- Badges -->
+          <div class="d-flex gap-2 mb-2 flex-wrap">
+            {% if course.difficulty == "beginner" %}<span class="badge" style="background:var(--accent-cta)">מתחיל</span>{% endif %}
+            {% if course.difficulty == "intermediate" %}<span class="badge" style="background:var(--accent-primary)">בינוני</span>{% endif %}
+            {% if course.difficulty == "advanced" %}<span class="badge bg-danger">מתקדם</span>{% endif %}
+            <span class="badge" style="background:var(--bg-elevated);color:var(--text-secondary)">
+              {{ item.lesson_count }} שיעורים
+            </span>
+            <span class="badge" style="background:var(--bg-elevated);color:var(--text-secondary)">
+              {{ item.total_minutes }} דק&#39;
+            </span>
+          </div>
+
+          <h5 class="card-title mb-1 fw-bold" style="color:var(--text-primary)">
+            <a href="{% url 'courses_detail' course.slug %}"
+               style="text-decoration:none;color:inherit;">{{ course.title }}</a>
+          </h5>
+          {% if course.title_en %}
+          <p class="small mb-2" style="color:var(--text-secondary)">{{ course.title_en }}</p>
+          {% endif %}
+          <p class="card-text small flex-grow-1" style="color:var(--text-secondary)">
+            {{ course.description|truncatewords:20 }}
+          </p>
+
+          <a href="{% url 'courses_detail' course.slug %}"
+             class="btn btn-sm mt-3"
+             style="background:var(--accent-primary);color:#fff;border:none;border-radius:8px;">
+            לקורס &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="text-center py-5" style="color:var(--text-secondary)">
+    <p class="fs-5">אין קורסים זמינים עדיין. בקרוב!</p>
+  </div>
+  {% endif %}
+  <!-- Corporate hook -->
+  <div class="mt-5 p-4 rounded-3 text-center"
+       style="background:var(--bg-elevated);border:1px solid var(--accent-primary)33;">
+    <p class="mb-1 fw-semibold" style="color:var(--text-primary)">רוצה להכשיר את הצוות?</p>
+    <p class="small mb-3" style="color:var(--text-secondary)">רישוי ארגוני, מסלול מותאם, ודיווח התקדמות לניהול.</p>
+    <a href="/corporate/" class="btn btn-sm"
+       style="background:var(--accent-warm);color:#000;border:none;border-radius:8px;font-weight:600;">
+      פרטים לארגונים
+    </a>
+  </div>
+
+</div>
+{% endblock %}

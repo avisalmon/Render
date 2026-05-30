@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}קורסים — babook{% endblock %}
+{% block meta_description %}קורסי AI לצוותי פיתוח — Copilot, agents, MicroPython ועוד. למד עם אבי סלמון.{% endblock %}
+
+{% block content %}
+<div class="py-5">
+    <h1 class="mb-4">קורסים</h1>
+    <div class="row g-4">
+        {% for course in courses %}
+        <div class="col-12 col-md-6 col-lg-4">
+            <article class="card-surface h-100 d-flex flex-column">
+                {% if course.thumbnail %}
+                <img src="{% static course.thumbnail %}" alt="{{ course.title }}" class="img-fluid rounded-top">
+                {% endif %}
+                <div class="p-3 flex-grow-1 d-flex flex-column">
+                    <h2 class="h5">{{ course.title }}</h2>
+                    <p class="small flex-grow-1" style="color: var(--text-secondary)">{{ course.description|truncatewords:20 }}</p>
+                    <a href="{% url 'courses_detail' course.slug %}" class="btn btn-primary mt-2">לקורס</a>
+                </div>
+            </article>
+        </div>
+        {% empty %}
+        <p>אין קורסים זמינים כרגע.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

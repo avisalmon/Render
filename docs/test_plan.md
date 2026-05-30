@@ -61,9 +61,21 @@
 | T-F-1.4.5-3 | Heartbeat updates existing progress record | integration | F-1.4.5 | Second POST updates `last_position_seconds`, no duplicate | GREEN |
 | T-F-1.4.6-1 | Lesson page includes last_position in context | integration | F-1.4.6 | Template context has `last_position_seconds` for logged-in user | GREEN |
 | T-F-1.4.7-1 | Course detail shows progress percentage | integration | F-1.4.7 | GET `/course/<slug>/` shows correct progress % | GREEN |
-| T-F-1.4.7-2 | Course marked complete at 95% threshold | unit | F-1.4.7 | All videos >= 95% watched marks course complete | GREEN |
+| T-F-1.4.7-2 | Visiting a lesson marks it complete (no watch threshold) | integration | F-1.4.7 | UserVideoProgress created on visit; lesson counts as complete for progress | GREEN |
 | T-F-1.4.8-1 | Free preview video accessible to anonymous | integration | F-1.4.8 | GET lesson with `is_free_preview=True` returns 200 for anon | GREEN |
 | T-F-1.4.8-2 | Non-preview video redirects anonymous to login | integration | F-1.4.8 | GET lesson with `is_free_preview=False` redirects to login | GREEN |
+| T-F-1.4.9-1 | Sequential locking: lesson 2 locked without visiting lesson 1 | integration | F-1.4.9 | Enrolled user accessing lesson 2 with no prior progress is redirected to lesson 1 | GREEN |
+| T-F-1.4.9-2 | Sequential locking: lesson 2 unlocks after lesson 1 visited | integration | F-1.4.9 | After UserVideoProgress for lesson 1 exists, lesson 2 returns 200 | GREEN |
+| T-F-1.4.10-1 | LessonQuiz model has required fields | unit | F-1.4.10 | `question`, `options_json`, `requires_correct` exist on model | GREEN |
+| T-F-1.4.10-2 | requires_correct quiz hides Next until passed | integration | F-1.4.10 | `lesson_completed=False` in context when quiz not yet passed | PLANNED |
+| T-F-1.4.10-3 | Non-required quiz: any answer passes | integration | F-1.4.10 | `quiz_passed` saved as True when requires_correct=False and any option chosen | PLANNED |
+| T-F-1.4.11-1 | CourseCertificate model exists | unit | F-1.4.11 | Has `certificate_id` (UUID), `issued_at`, `user`, `course` | PLANNED |
+| T-F-1.4.11-2 | course_finish issues certificate when all required quizzes passed | integration | F-1.4.11 | POST to finish URL creates CourseCertificate and redirects to `/certificate/<uuid>/` | PLANNED |
+| T-F-1.4.11-3 | course_finish blocks if required quiz not passed | integration | F-1.4.11 | POST redirects to the lesson with `?error=quiz` | PLANNED |
+| T-F-1.4.12-1 | Staff user sees all lessons as unlocked | integration | F-1.4.12 | `locked_ids` is empty and `lesson_completed=True` for staff user regardless of progress | PLANNED |
+| T-F-1.4.13-1 | Home shows "Continue watching" card for user with progress | integration | REQ-1.3.16 | GET `/` by logged-in user with `UserVideoProgress` returns 200 and contains course/lesson info | GREEN |
+| T-F-1.4.13-2 | Home shows normal page when no prior progress | integration | REQ-1.3.16 | GET `/` by logged-in user with no `UserVideoProgress` returns 200 (no redirect) | GREEN |
+| T-F-1.4.14-1 | Volume persistence: localStorage key in lesson template | manual | REQ-1.3.15 | Lesson template contains `babook_volume` string (localStorage key for volume save/restore) | GREEN |
 
 ---
 
@@ -162,119 +174,3 @@
 | T-F-1.9.3-4 | Login page has forgot-password link | integration | F-1.9.3 | Login template contains link to password reset | PLANNED |
 | T-F-1.9.4-1 | ACCOUNT_EMAIL_VERIFICATION setting exists | unit | F-1.9.4 | Setting is one of none/optional/mandatory | PLANNED |
 | T-F-1.9.5-1 | send_mail function is importable and callable | unit | F-1.9.5 | `from django.core.mail import send_mail` works | PLANNED |
-
-
-## SPR-2.0.1 - Design System Foundation
-
-**Sprint goal:** Establish dark-theme design tokens, typography (Heebo/Inter/JetBrains Mono), spacing tokens, `.card-surface` component, WhatsApp sticky CTA, Bootstrap RTL variant. Base for all EPIC-2 UI work.
-**Test file:** `tests/test_spr_2_0_1.py`
-**pytest marker:** `spr201`
-
-| Test ID | Description | Type | Feature | Expected result | Status |
-|---|---|---|---|---|---|
-| T-F-2.0.1-1 | Color palette tokens defined | unit | F-2.0.1 | All 10 `--bg-*`/`--text-*`/`--accent-*`/`--border` tokens in style.css | GREEN |
-| T-F-2.0.1-2 | Palette hex values match spec | unit | F-2.0.1 | `--bg-primary: #0f1117`, `--accent-cta: #22c55e`, etc. | GREEN |
-| T-F-2.0.2-1 | Google Fonts loaded in base.html | integration | F-2.0.2 | Heebo + Inter + JetBrains Mono referenced | GREEN |
-| T-F-2.0.2-2 | Fonts use `display=swap` | integration | F-2.0.2 | URL contains `display=swap` | GREEN |
-| T-F-2.0.2-3 | Font-family CSS vars defined | unit | F-2.0.2 | `--font-heading` etc. in style.css | GREEN |
-| T-F-2.0.3-1 | Spacing tokens defined | unit | F-2.0.3 | `--space-section`, `--space-card`, `--max-content-width` | GREEN |
-| T-F-2.0.3-2 | Max content width = 1200px | unit | F-2.0.3 | `--max-content-width: 1200px` | GREEN |
-| T-F-2.0.4-1 | `.card-surface` class defined | unit | F-2.0.4 | Class in style.css | GREEN |
-| T-F-2.0.4-2 | `.card-surface` uses design tokens | unit | F-2.0.4 | Block uses `--bg-surface`, `border-radius`, `padding` | GREEN |
-| T-F-2.0.5-1 | `.whatsapp-sticky` class defined | unit | F-2.0.5 | Class in style.css | GREEN |
-| T-F-2.0.5-2 | WhatsApp sticky positioning | unit | F-2.0.5 | `position: fixed`, `bottom`, `z-index` set | GREEN |
-| T-F-2.0.5-3 | WhatsApp sticky uses CTA color | unit | F-2.0.5 | `--accent-cta` referenced | GREEN |
-| T-F-2.0.6-1 | Bootstrap RTL+LTR conditionally loaded | integration | F-2.0.6 | Both `bootstrap.rtl.min.css` and `bootstrap.min.css` in base.html | GREEN |
-| T-F-2.0.6-2 | Hebrew request uses RTL | integration | F-2.0.6 | Response has RTL bootstrap or `dir=rtl` | GREEN |
-| T-F-2.0.7-1 | Home renders with dark theme | integration | F-2.0.7 | GET / -> 200 | GREEN |
-| T-F-2.0.7-2 | body uses `--bg-primary` | unit | F-2.0.7 | body block references token | GREEN |
-| T-F-2.0.7-3 | Existing pages still render | integration | F-2.0.7 | /, /healthz, /privacy/, /terms/ -> 200 | GREEN |
-
----
-
-## SPR-2.1.1 - Corporate Page: Conversion MVP
-
-**Sprint goal:** Ship a lean `/corporate/` conversion page with hero, service tiers, FAQ, WhatsApp CTAs, contact form, email notification, SEO, UTM capture, mobile/accessibility baseline, and security.
-**Test file:** `tests/test_spr_2_1_1.py`
-**pytest marker:** `spr211`
-
-| Test ID | Description | Type | Feature | Expected result | Status |
-|---|---|---|---|---|---|
-| T-F-2.1.1-1 | Corporate page renders for anonymous users | integration | F-2.1.1 | GET `/corporate/` returns 200 and page markup, no login redirect | GREEN |
-| T-F-2.1.2-1 | SEO meta and sitemap inclusion | integration | F-2.1.2 | Title/meta/canonical present; `/corporate/` in sitemap | GREEN |
-| T-F-2.1.3-1 | Fast static assets | integration | F-2.1.3 | Hero uses WebP; no heavy frontend framework bundle | GREEN |
-| T-F-2.1.4-1 | Responsive page structure | integration | F-2.1.4 | Bootstrap responsive columns, no fixed-width wrapper | GREEN |
-| T-F-2.1.5-1 | Hero photo/copy/CTAs | integration | F-2.1.5 | Headline, Avi alt text, WhatsApp CTA, form CTA render | GREEN |
-| T-F-2.1.6-1 | Static service tier cards | integration | F-2.1.6 | Workshop, bootcamp, keynote cards and pricing signals render | GREEN |
-| T-F-2.1.7-1 | FAQ accordion | integration | F-2.1.7 | Bootstrap accordion with 6+ Hebrew FAQ items | GREEN |
-| T-F-2.1.8-1 | Contact form UI/accessibility | integration | F-2.1.8 | Required fields, labels, aria-live status present | GREEN |
-| T-F-2.1.9-1 | Form creates lead and sends email | integration | F-2.1.9 | AJAX POST creates CorporateLead and sends notification email | GREEN |
-| T-F-2.1.10-1 | Honeypot spam rejection | integration | F-2.1.10 | Filled honeypot returns 200 but writes no lead | GREEN |
-| T-F-2.1.10-2 | Submission rate limit | integration | F-2.1.10 | Fourth submission from same IP in one hour returns 429 | GREEN |
-| T-F-2.1.11-1 | WhatsApp env number and encoded messages | integration | F-2.1.11 | Hero/tier/footer/sticky links use env number and encoded text | GREEN |
-| T-F-2.1.12-1 | UTM capture and Plausible event | integration | F-2.1.12 | Hidden UTM fields and `corporate_form_submit` event exist | GREEN |
-| T-F-2.1.13-1 | Accessibility baseline | integration | F-2.1.13 | Single h1, skip link, aria labels, reduced motion support | GREEN |
-| T-F-2.1.14-1 | Mobile-specific classes | integration | F-2.1.14 | Mobile hero/classes/touch-target styling present | GREEN |
-| T-F-2.1.15-1 | CSRF enforcement | integration | F-2.1.15 | AJAX POST without CSRF is rejected when checks enforced | GREEN |
-| T-F-2.1.15-2 | Input sanitization | integration | F-2.1.15 | HTML stripped from message and message stored at <=1000 chars | GREEN |
-
----
-
-## SPR-2.1.3 - Newsletter Capture: MVP
-
-**Sprint goal:** Add a lightweight site-wide newsletter capture flow with a subscriber model, reusable CTA, double opt-in confirmation, spam protection, duplicate-safe handling, source attribution, UTM capture, and Plausible signup tracking.
-**Test file:** `tests/test_spr_2_1_3.py`
-**pytest marker:** `spr213`
-
-| Test ID | Description | Type | Feature | Expected result | Status |
-|---|---|---|---|---|---|
-| T-F-2.1.28/29-1 | Signup creates subscriber and sends confirmation | integration | F-2.1.28, F-2.1.29 | Lowercased unique email stored with source/UTM fields; confirmation email sent | GREEN |
-| T-F-2.1.29/30-1 | Newsletter component renders once | integration | F-2.1.29, F-2.1.30 | `/corporate/` renders exactly one reusable CTA with consent copy | GREEN |
-| T-F-2.1.29-2 | Confirmation token works | integration | F-2.1.29 | Confirmation link sets `confirmed_at` and renders success page | GREEN |
-| T-F-2.1.31-1 | Honeypot, rate limit, duplicates | integration | F-2.1.31 | Bots write no rows; duplicates stay idempotent; fourth IP submission returns 429 | GREEN |
-| T-F-2.1.28/31-2 | Validation and CSRF | integration | F-2.1.28, F-2.1.31 | Invalid email returns 400; missing CSRF returns 403 with checks enforced | GREEN |
-| T-F-2.1.32-1 | Non-PII signup tracking | integration | F-2.1.32 | UTM fields render; Plausible event uses source page and language only | GREEN |
-| T-F-2.1.29-3 | Purge old unconfirmed subscribers | integration | F-2.1.29 | Management command deletes unconfirmed subscribers older than 14 days only | GREEN |
-
----
-
-## SPR-2.1.4 — Corporate Page: Polish & Compliance
-
-**Sprint goal:** Accessibility (WCAG AA contrast, keyboard nav, screen reader, reduced motion), mobile hero/tiers/sticky WhatsApp, performance (WebP, no blocking JS), RTL verification, responsive breakpoints, CSRF/sanitization, sitemap.
-**Test file:** `tests/test_spr_2_1_4.py`
-**pytest marker:** `spr214`
-
-| Test ID | Description | Type | Feature | Expected result | Status |
-|---|---|---|---|---|---|
-| T-F-2.1.35-1 | --text-primary on --bg-primary ≥4.5:1 | unit | F-2.1.35 | Contrast ratio of #f0f0f5 on #0f1117 ≥ 4.5 | GREEN |
-| T-F-2.1.35-2 | --text-secondary on --bg-surface ≥3:1 | unit | F-2.1.35 | Contrast ratio of #9ca3af on #1a1d27 ≥ 3.0 | GREEN |
-| T-F-2.1.35-3 | --accent-warm price text ≥3:1 | unit | F-2.1.35 | Contrast ratio of #f59e0b on #1a1d27 ≥ 3.0 | GREEN |
-| T-F-2.1.35-4 | White on --accent-cta ≥3:1 (large bold) | unit | F-2.1.35 | Contrast ratio of #fff on #16a34a ≥ 3.0 | GREEN |
-| T-F-2.1.36-1 | Skip-to-content link present | integration | F-2.1.36 | href="#corporate-main" in /corporate/ | GREEN |
-| T-F-2.1.36-2 | All buttons have aria-label or text | integration | F-2.1.36 | No button is empty and unlabelled | GREEN |
-| T-F-2.1.36-3 | Form inputs have matching labels | integration | F-2.1.36 | Every input id has a label[for] | GREEN |
-| T-F-2.1.36-4 | :focus-visible in CSS | unit | F-2.1.36 | style.css contains :focus-visible rule | GREEN |
-| T-F-2.1.37-1 | Single h1 on /corporate/ | integration | F-2.1.37 | Exactly one <h1> | GREEN |
-| T-F-2.1.37-2 | Heading hierarchy h1→h2→h3 | integration | F-2.1.37 | h2 and h3 exist; h1 precedes h2 | GREEN |
-| T-F-2.1.37-3 | Sections have aria-labelledby | integration | F-2.1.37 | ≥3 sections with aria-labelledby | GREEN |
-| T-F-2.1.37-4 | Form status has role=status + aria-live | integration | F-2.1.37 | role="status" and aria-live="polite" present | GREEN |
-| T-F-2.1.37-5 | All images have non-empty alt text | integration | F-2.1.37 | No <img> missing or empty alt | GREEN |
-| T-F-2.1.38-1 | prefers-reduced-motion in CSS | unit | F-2.1.38 | style.css contains prefers-reduced-motion query | GREEN |
-| T-F-2.1.38-2 | prefers-reduced-motion in corporate template | unit | F-2.1.38 | corporate.html inline style contains prefers-reduced-motion | GREEN |
-| T-F-2.1.39-1 | Mobile hero photo 200px in CSS | unit | F-2.1.39 | CSS has 200px width for hero photo at ≤768px | GREEN |
-| T-F-2.1.39-2 | Hero photo has explicit dimensions | integration | F-2.1.39 | <img> has width= and height= attributes | GREEN |
-| T-F-2.1.39-3 | CTA stack flex-column on mobile | unit | F-2.1.39 | .corporate-cta-stack has flex-direction: column | GREEN |
-| T-F-2.1.40-1 | Tier cards use col-12 for mobile | integration | F-2.1.40 | col-12 col-lg-4 on tier card columns | GREEN |
-| T-F-2.1.40-2 | Tier CTA is full-width | unit | F-2.1.40 | .corporate-tier-cta has width:100% | GREEN |
-| T-F-2.1.41-1 | Sticky WhatsApp z-index is 1000 | unit | F-2.1.41 | z-index: 1000 in .whatsapp-sticky | GREEN |
-| T-F-2.1.41-2 | Sticky WhatsApp 48px on mobile | unit | F-2.1.41 | 48px in whatsapp-sticky mobile rule | GREEN |
-| T-F-2.1.42-1 | Hero uses .webp | integration | F-2.1.42 | avi-headshot.webp referenced in /corporate/ | GREEN |
-| T-F-2.1.42-2 | No render-blocking scripts in <head> | integration | F-2.1.42 | No <script src> without defer/async in head | GREEN |
-| T-F-2.1.42-3 | avi-headshot.webp exists in static/ | unit | F-2.1.42 | File exists on disk | GREEN |
-| T-F-2.1.43-1 | Bootstrap responsive grid used | integration | F-2.1.43 | col-12 and col-lg- classes present | GREEN |
-| T-F-2.1.43-2 | Viewport meta in base.html | unit | F-2.1.43 | <meta name="viewport" width=device-width> | GREEN |
-| T-F-2.1.44-1 | dir= set by LANG_BIDI | unit | F-2.1.44 | base.html dir= uses LANG_BIDI template var | GREEN |
-| T-F-2.1.44-2 | RTL flips sticky WhatsApp to left | unit | F-2.1.44 | html[dir="rtl"] .whatsapp-sticky left:16px in CSS | GREEN |
-| T-F-2.1.46-1 | CSRF token in form | integration | F-2.1.46 | csrfmiddlewaretoken in /corporate/ | GREEN |
-| T-F-2.1.46-2 | Message field has maxlength=1000 | integration | F-2.1.46 | maxlength="1000" on textarea | GREEN |
-| T-F-2.1.49-1 | /corporate/ in sitemap.xml | integration | F-2.1.49 | /corporate/ appears in /sitemap.xml | GREEN |

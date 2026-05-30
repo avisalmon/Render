@@ -148,52 +148,120 @@
       דבר איתי בוואטסאפ
     </a>
   </section>
+
+  <section class="corporate-section corporate-newsletter-section" aria-labelledby="newsletter-section-title">
+    <div class="row g-4 align-items-center">
+      <div class="col-12 col-lg-6">
+        <h2 id="newsletter-section-title">טיפ AI שבועי</h2>
+        <p>עצות מעשיות על Copilot, agents וכלי AI לצוותי פיתוח — ישירות למייל, פעם בשבוע.</p>
+        <p class="text-muted small">אפשר להסיר הרשמה בכל רגע.</p>
+      </div>
+      <div class="col-12 col-lg-6">
+        <form class="newsletter-signup-form card-surface newsletter-form-widget" method="post" action="{% url 'newsletter_signup' %}" novalidate>
+          {% csrf_token %}
+          <div class="corporate-honeypot" aria-hidden="true" style="display:none">
+            <input name="website" type="text" tabindex="-1" autocomplete="off">
+          </div>
+          <input type="hidden" name="source_page" value="/corporate/">
+          <input type="hidden" name="language" value="he">
+          <input type="hidden" name="utm_source" value="">
+          <input type="hidden" name="utm_medium" value="">
+          <input type="hidden" name="utm_campaign" value="">
+          <input type="hidden" name="utm_content" value="">
+          <div class="mb-3">
+            <label for="id_newsletter_email" class="form-label">כתובת מייל</label>
+            <input id="id_newsletter_email" name="email" type="email" class="form-control" required placeholder="you@example.com">
+          </div>
+          <button type="submit" class="btn corporate-submit-button w-100" aria-label="הרשמה לניוזלטר" style="min-height: 48px;">הרשמה לטיפ שבועי</button>
+          <div id="newsletter-form-status" role="status" aria-live="polite" class="mt-2"></div>
+        </form>
+      </div>
+    </div>
+  </section>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
   (function () {
+    // Corporate lead form — UTM injection
     const form = document.getElementById('corporate-lead-form');
-    if (!form) return;
-    const params = new URLSearchParams(window.location.search);
-    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'].forEach((name) => {
-      const input = form.querySelector(`[name="${name}"]`);
-      if (input) input.value = params.get(name) || '';
-    });
-    form.addEventListener('submit', async function (event) {
-      event.preventDefault();
-      const status = document.getElementById('corporate-form-status');
-      const button = form.querySelector('button[type="submit"]');
-      status.textContent = '';
-      button.disabled = true;
-      button.textContent = 'שולח...';
-      try {
-        const response = await fetch(form.action, {
-          method: 'POST',
-          body: new FormData(form),
-          headers: {'X-Requested-With': 'XMLHttpRequest'}
-        });
-        if (response.ok) {
-          if (window.plausible) {
-            plausible('corporate_form_submit', {props: {
-              training_type: form.training_type.value,
-              team_size: form.team_size.value
-            }});
+    if (form) {
+      const params = new URLSearchParams(window.location.search);
+      ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'].forEach((name) => {
+        const input = form.querySelector(`[name="${name}"]`);
+        if (input) input.value = params.get(name) || '';
+      });
+      form.addEventListener('submit', async function (event) {
+        event.preventDefault();
+        const status = document.getElementById('corporate-form-status');
+        const button = form.querySelector('button[type="submit"]');
+        status.textContent = '';
+        button.disabled = true;
+        button.textContent = 'שולח...';
+        try {
+          const response = await fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: {'X-Requested-With': 'XMLHttpRequest'}
+          });
+          if (response.ok) {
+            if (window.plausible) {
+              plausible('corporate_form_submit', {props: {
+                training_type: form.training_type.value,
+                team_size: form.team_size.value
+              }});
+            }
+            form.reset();
+            status.textContent = 'תודה! נחזור אליך תוך 24 שעות.';
+            status.classList.add('is-success');
+          } else {
+            status.textContent = response.status === 429 ? 'יותר מדי פניות. נסו שוב מאוחר יותר.' : 'יש שדות שצריך לתקן.';
           }
-          form.reset();
-          status.textContent = 'תודה! נחזור אליך תוך 24 שעות.';
-          status.classList.add('is-success');
-        } else {
-          status.textContent = response.status === 429 ? 'יותר מדי פניות. נסו שוב מאוחר יותר.' : 'יש שדות שצריך לתקן.';
+        } catch (error) {
+          status.textContent = 'משהו השתבש. אפשר לפנות בוואטסאפ.';
+        } finally {
+          button.disabled = false;
+          button.textContent = 'שלח פנייה';
         }
-      } catch (error) {
-        status.textContent = 'משהו השתבש. אפשר לפנות בוואטסאפ.';
-      } finally {
-        button.disabled = false;
-        button.textContent = 'שלח פנייה';
-      }
-    });
+      });
+    }
+
+    // Newsletter form — UTM injection
+    const nlForm = document.querySelector('.newsletter-form-widget');
+    if (nlForm) {
+      const params = new URLSearchParams(window.location.search);
+      ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'].forEach((name) => {
+        const input = nlForm.querySelector(`[name="${name}"]`);
+        if (input) input.value = params.get(name) || '';
+      });
+      nlForm.addEventListener('submit', async function (event) {
+        event.preventDefault();
+        const status = document.getElementById('newsletter-form-status');
+        const button = nlForm.querySelector('button[type="submit"]');
+        status.textContent = '';
+        button.disabled = true;
+        try {
+          const response = await fetch(nlForm.action, {
+            method: 'POST',
+            body: new FormData(nlForm),
+            headers: {'X-Requested-With': 'XMLHttpRequest'}
+          });
+          if (response.ok) {
+            if (window.plausible) {
+              plausible('newsletter_signup', {props: {source_page: '/corporate/', language: 'he'}});
+            }
+            status.textContent = 'תודה! שלחנו לך מייל אישור.';
+          } else {
+            status.textContent = response.status === 429 ? 'יותר מדי בקשות.' : 'נסו שנית.';
+          }
+        } catch (error) {
+          status.textContent = 'משהו השתבש. נסו שנית.';
+        } finally {
+          button.disabled = false;
+        }
+      });
+    }
   })();
 </script>
 {% endblock %}
