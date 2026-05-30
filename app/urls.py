@@ -2,6 +2,7 @@ from django.contrib.auth import views as auth_views
 from django.urls import path
 
 from . import views
+from . import course_api
 
 urlpatterns = [
     path("", views.home, name="home"),
@@ -37,4 +38,9 @@ urlpatterns = [
     path("api/chat/", views.chat_api, name="chat_api"),
     path("api/chat/sessions/", views.chat_sessions_api, name="chat_sessions_api"),
     path("staff/ai-usage/", views.AiUsageDashboardView.as_view(), name="ai_usage_dashboard"),
+
+    # Course Management API (SPR-2.3)
+    path("api/v1/courses/", course_api.list_courses, name="api_courses_list"),
+    path("api/v1/courses/sync/", course_api.sync_course, name="api_courses_sync"),
+    path("api/v1/media/upload/", course_api.upload_media, name="api_media_upload"),
 ]

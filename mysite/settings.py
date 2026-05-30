@@ -172,6 +172,13 @@ OPENAI_MONTHLY_COST_CAP_USD = float(os.environ.get("OPENAI_MONTHLY_COST_CAP_USD"
 CHAT_SESSION_TIMEOUT_MINUTES = 30
 
 # ---------------------------------------------------------------------------
+# Course Management API (SPR-2.3)
+# ---------------------------------------------------------------------------
+# Set this to a strong random secret on production (Render env var).
+# Set it in settings_local.py for local dev.
+COURSE_MGMT_API_KEY = os.environ.get("COURSE_MGMT_API_KEY", "")
+
+# ---------------------------------------------------------------------------
 # Email / Resend (SPR-1.9)
 # ---------------------------------------------------------------------------
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")

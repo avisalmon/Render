@@ -257,6 +257,22 @@ Sprints in this epic:
 - SPR-2.1.3 Newsletter Capture MVP
 - SPR-2.1.4 Corporate Page: Accessibility & Mobile Polish
 - SPR-2.2 First Flagship Course
+- SPR-2.3 Remote Course Management API
+
+---
+
+### SPR-2.3 — Remote Course Management API
+
+**Goal:** Push courses (videos, materials, media files) from local dev to production via a secure REST API — no manual DB or file operations needed.
+**Status:** DONE ✅
+
+| Feature ID | Title | Status | Notes |
+|---|---|---|---|
+| F-2.3.1 | Token auth (`COURSE_MGMT_API_KEY` env var, Bearer header) | DONE | `require_api_key` decorator in `course_api.py` |
+| F-2.3.2 | `GET /api/v1/courses/` — list all courses | DONE | Verification endpoint |
+| F-2.3.3 | `POST /api/v1/courses/sync/` — upsert course + videos + materials | DONE | Idempotent full sync |
+| F-2.3.4 | `POST /api/v1/media/upload/` — upload a file to persistent disk | DONE | Returns stored relative path |
+| F-2.3.5 | `push_course_to_production` management command | DONE | Local CLI: reads DB, uploads files, calls sync API |
 
 ---
 
