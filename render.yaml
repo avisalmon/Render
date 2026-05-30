@@ -5,7 +5,7 @@ services:
     plan: starter
     branch: main
     buildCommand: ./build.sh
-    startCommand: python manage.py ensure_schema && python manage.py migrate && (python manage.py createsuperuser --noinput || true) && gunicorn mysite.wsgi:application --bind 0.0.0.0:$PORT
+    startCommand: python manage.py migrate && (python manage.py createsuperuser --noinput || true) && gunicorn mysite.wsgi:application --bind 0.0.0.0:$PORT
     autoDeploy: true
     envVars:
       - key: PYTHON_VERSION
