@@ -36,7 +36,7 @@ The foundation the project sits on. Must be in place before any feature work.
 | REQ-1.2.1 | Custom error pages | Branded 404, 500, 403 templates extending `base.html`. Visible in prod (DEBUG=False). | DONE |
 | REQ-1.2.2 | Email backend | Dev = console backend. Prod = **Resend** via env vars. Sender domain `babook.co.il` configured (SPF/DKIM). | DONE |
 | REQ-1.2.3 | Env & secrets | All secrets via env vars. `.env` for local (gitignored). `settings_local.py` pattern. Render env vars list maintained in `docs/procedures/env_vars.md`. No secret in repo. | DONE |
-| REQ-1.2.4 | Database backups | Nightly backup of `db.sqlite3` to **Google Drive** via rclone. Documented restore. Last 30 backups retained. | BLOCKED |
+| REQ-1.2.4 | Database backups | Nightly backup of `db.sqlite3` to cloud (GCS). Documented restore. Retention policy. | WIP — `backup_db` command DONE; nightly schedule + cloud target verify pending (ACT-3) |
 | REQ-1.2.5 | Logging | Django `LOGGING`: console + rotating file handler. App logs INFO, security WARNING. Procedure for tailing Render logs documented. | DONE |
 | REQ-1.2.6 | Security hardening | `SECURE_SSL_REDIRECT=True` in prod, HSTS, secure cookies, CSRF, `ALLOWED_HOSTS` correct, `DEBUG=False`. `manage.py check --deploy` clean. | DONE |
 | REQ-1.2.7 | Django admin | `/admin/` superusers only. Documented procedure for creating a superuser on Render. Default Django admin UI for now. | DONE |
@@ -50,7 +50,7 @@ The foundation the project sits on. Must be in place before any feature work.
 | REQ-1.2.15 | Health check | `GET /healthz` → 200 `{"status":"ok"}`. Configured as Render health check URL. | DONE |
 | REQ-1.2.16 | Testing infra | `pytest-django` configured. `tests/` per app. `pytest` exits 0 locally and in CI. | DONE |
 | REQ-1.2.17 | Code quality | `black` + `ruff` in `pyproject.toml`. **Pre-commit hook enabled** (auto-format on commit). | DONE |
-| REQ-1.2.18 | Backup & restore BKM | `docs/procedures/backup_restore.md`: how backups work, where they live, how to restore on Render and locally. Test-restore done once and recorded. | BLOCKED |
+| REQ-1.2.18 | Backup & restore BKM | `docs/procedures/backup_restore.md`: how backups work, where they live, how to restore on Render and locally. Test-restore done once and recorded. | WIP — BKM file exists; one test-restore not yet recorded |
 | REQ-1.2.19 | Rollback BKM | `docs/procedures/rollback.md`: revert bad deploy on Render (manual redeploy of previous commit, env var revert, DB restore if needed). | DONE |
 
 ### 1.3 Video Infrastructure (Bunny Stream)
@@ -196,21 +196,140 @@ Chapter 1 is **DONE** when:
 
 ---
 
-## Chapter 2 — Project Definition
+## Chapter 2 — Corporate Landing & First Course
 
-_TBD — defined after Chapter 1 is locked._
+> **Back-filled 2026-06-09.** EPIC-2 was implemented (and shipped to prod) ahead
+> of a written spec; the backlog used placeholder `REQ-2.x` IDs. This chapter
+> documents the requirements that the built, passing, and live features satisfy,
+> restoring REQ traceability. Same conventions as Chapter 1
+> (`REQ-<chapter>.<group>.<n>`, status `TODO`/`WIP`/`DONE`/`BLOCKED`/`DEFERRED`).
 
-### 2.1 Vision
-_TBD_
+### 2.0 Vision
 
-### 2.2 Scope
-_TBD_
+babook.co.il establishes **Avi Salmon** as a credible AI-training authority for
+the Israeli market and beyond. The site has two jobs:
+1. **Convert corporate decision-makers** into inbound inquiries for paid
+   engagements (workshops, bootcamps, keynotes) — this is the **north-star
+   metric: inbound corporate inquiries**.
+2. **Teach individuals** through flagship, video-based courses with progress
+   tracking, quizzes, and certificates.
 
-### 2.3 Users & Roles
-_TBD_
+### 2.1 Scope
 
-### 2.4 Core Features
-_TBD_
+**In scope (this epic — DONE):** a design-system foundation; a conversion-focused
+`/corporate/` landing page with lead capture; newsletter capture with double
+opt-in; an accessibility/mobile-quality pass; the first flagship course
+(`micropython-thonny`) end-to-end (catalog → detail → enrollment → lessons →
+completion → certificate); and a remote course-management API to publish courses
+from local dev to production.
+
+**Out of scope / deferred:** paid subscriptions and checkout (Chapter 1 §1.4
+billing — DEFERRED); a multi-course marketplace beyond the first course;
+personalized recommendations; native mobile apps.
+
+### 2.2 Users & Roles
+
+Builds on the roles in [architecture/roles.md](architecture/roles.md):
+- **Guest** — anonymous visitor (corporate prospect or browsing learner). Can
+  view `/corporate/`, the course catalog, free-preview lessons, submit the
+  contact form, and subscribe to the newsletter.
+- **Member** — registered/enrolled learner. Watches lessons, takes quizzes,
+  earns certificates.
+- **Staff** — content/QA; can navigate all lessons unlocked (REQ-1.3.14).
+- **Admin** — full Django admin; manages courses, leads, subscribers.
+- **Corporate Lead** — a prospect who submits the contact form (`CorporateLead`).
+- **Newsletter Subscriber** — double-opt-in email subscriber (`NewsletterSubscriber`).
+
+### 2.3 Design System Foundation
+
+| REQ-ID | Title | Expectation (acceptance) | Status |
+|---|---|---|---|
+| REQ-2.3.1 | CSS design tokens | `style.css` defines CSS custom properties for the dark-theme color palette (`--bg-primary`, `--accent-*`, `--text-*`). | DONE |
+| REQ-2.3.2 | Web fonts | Google Fonts loaded in `base.html` with `display=swap`. | DONE |
+| REQ-2.3.3 | Typography & spacing scale | Font-family and spacing variables defined and used consistently. | DONE |
+| REQ-2.3.4 | Max content width | Content constrained to a max width (~1200px) for readability. | DONE |
+| REQ-2.3.5 | Card surface component | Reusable `.card-surface` class for elevated content blocks. | DONE |
+| REQ-2.3.6 | Sticky WhatsApp CTA | `.whatsapp-sticky` component, env-driven number, RTL-aware. | DONE |
+| REQ-2.3.7 | Themed body | `body` uses `--bg-primary` token (no hard-coded colors). | DONE |
+
+### 2.4 Corporate Landing Page (`/corporate/`)
+
+| REQ-ID | Title | Expectation (acceptance) | Status |
+|---|---|---|---|
+| REQ-2.4.1 | Route + anonymous access | `GET /corporate/` → 200 for anonymous users. | DONE |
+| REQ-2.4.2 | SEO | Per-page title/meta/canonical + sitemap entry + OG tags. | DONE |
+| REQ-2.4.3 | Hero | Hero section: photo + value-prop copy + primary/secondary CTAs. | DONE |
+| REQ-2.4.4 | Service tiers | Cards for the engagement types (workshop / bootcamp / keynote). | DONE |
+| REQ-2.4.5 | FAQ | Accordion of common corporate questions. | DONE |
+| REQ-2.4.6 | Lead capture | Contact form persists to `CorporateLead`; success/error states. | DONE |
+| REQ-2.4.7 | Spam protection | Honeypot field + rate limiting on submit. | DONE |
+| REQ-2.4.8 | WhatsApp CTAs | WhatsApp deep-links using `WHATSAPP_NUMBER` env var. | DONE |
+| REQ-2.4.9 | Attribution | UTM param capture + Plausible custom events on key actions. | DONE |
+| REQ-2.4.10 | Form security | CSRF enforced on AJAX submit; input sanitized (HTML strip + length limits). | DONE |
+
+### 2.5 Newsletter Capture
+
+| REQ-ID | Title | Expectation (acceptance) | Status |
+|---|---|---|---|
+| REQ-2.5.1 | Signup endpoint | `POST /newsletter/signup/` creates a `NewsletterSubscriber` (GET → 405). | DONE |
+| REQ-2.5.2 | Double opt-in | Email stored lowercase; confirmation email with token; `confirmed_at` set on confirm. | DONE |
+| REQ-2.5.3 | Placement | Newsletter component rendered once on `/corporate/`. | DONE |
+| REQ-2.5.4 | Hygiene | `purge_unconfirmed_subscribers` management command removes stale unconfirmed signups. | DONE |
+
+### 2.6 Accessibility & Mobile Polish
+
+| REQ-ID | Title | Expectation (acceptance) | Status |
+|---|---|---|---|
+| REQ-2.6.1 | Keyboard/AT basics | Skip-to-content link, `:focus-visible` styles, correct H1→H2→H3 hierarchy, section `aria-label`s. | DONE |
+| REQ-2.6.2 | Live status | Form status uses an `aria-live` region. | DONE |
+| REQ-2.6.3 | Motion | `prefers-reduced-motion` respected in CSS. | DONE |
+| REQ-2.6.4 | Mobile layout | Hero sized for mobile (explicit width/height), CTAs stack, tier cards full-width, Bootstrap grid. | DONE |
+| REQ-2.6.5 | Sticky CTA polish | WhatsApp sticky z-index + 48px touch target; RTL mirrored position. | DONE |
+
+### 2.7 First Flagship Course (`micropython-thonny`)
+
+| REQ-ID | Title | Expectation (acceptance) | Status |
+|---|---|---|---|
+| REQ-2.7.1 | Course model | Fields: category, difficulty, thumbnail, `title_en`, `is_published` (migration 0010). | DONE |
+| REQ-2.7.2 | Enrollment | `Enrollment` model + enrollment flow. | DONE |
+| REQ-2.7.3 | Catalog | `GET /courses/` lists published courses. | DONE |
+| REQ-2.7.4 | Detail page | `GET /courses/<slug>/` shows course detail + progress. | DONE |
+| REQ-2.7.5 | Lessons | Lesson page with Bunny player, sidebar, prev/next (see REQ-1.3.*). | DONE |
+| REQ-2.7.6 | Completion | Course complete when required quizzes passed; certificate issued (REQ-1.3.7). | DONE |
+| REQ-2.7.7 | SEO | Course pages have titles/meta + sitemap entries. | DONE |
+| REQ-2.7.8 | Funnel hook | Course detail links into the `/corporate/` funnel. | DONE |
+| REQ-2.7.9 | Authoring | `load_course_from_manifest` builds a course from a local manifest. | DONE |
+| REQ-2.7.10 | Materials | `CourseMaterial` (files + links) per course; shown on detail + lesson sidebar (migration 0013). | DONE |
+| REQ-2.7.11 | Certificates on profile | Issued certificates listed on the user profile. | DONE |
+
+### 2.8 Remote Course Management API
+
+| REQ-ID | Title | Expectation (acceptance) | Status |
+|---|---|---|---|
+| REQ-2.8.1 | Token auth | All `/api/v1/*` endpoints require `COURSE_MGMT_API_KEY` (Bearer header). | DONE |
+| REQ-2.8.2 | List | `GET /api/v1/courses/` returns all courses (verification). | DONE |
+| REQ-2.8.3 | Sync | `POST /api/v1/courses/sync/` idempotently upserts course + videos + materials + `LessonQuiz` (omitting quiz deletes it). | DONE |
+| REQ-2.8.4 | Media upload | `POST /api/v1/media/upload/` stores a file on the persistent disk; returns its relative path. | DONE |
+| REQ-2.8.5 | Publish command | `push_course_to_production` reads the local DB, uploads files, calls the sync API. | DONE |
+
+### 2.9 Acceptance criteria for Chapter 2
+
+Chapter 2 is **DONE** when:
+1. All `REQ-2.*` are `DONE` (or formally `DEFERRED`). ✅ (as of 2026-06-09)
+2. `/corporate/`, `/courses/`, course detail, and lesson pages render and are
+   reachable in production. ✅
+3. A corporate lead submitted via the form is persisted and retrievable. ✅
+4. A newsletter signup completes the double-opt-in flow. ✅
+5. The first course plays end-to-end with progress, quizzes, and a certificate. ✅
+6. A course can be published from local dev to prod via the management API. ✅
+
+### 2.10 Chapter 2 decisions
+
+| ID | Topic | Choice | Rationale |
+|---|---|---|---|
+| DEC-19 | Course publishing | **Remote management API** (local dev → prod over REST) | Avoids manual DB/file ops on Render; idempotent, repeatable, auth'd |
+| DEC-20 | Lead handling | **Store `CorporateLead` in DB** (no external CRM yet) | Simplest start; export/CRM integration can come later |
+| DEC-21 | Newsletter opt-in | **Double opt-in** | Deliverability + compliance; avoids spam complaints |
 
 ---
 
