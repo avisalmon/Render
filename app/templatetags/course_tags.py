@@ -19,7 +19,15 @@ def render_markdown(value):
 
 @register.filter(name="get_item")
 def get_item(dictionary, key):
-    """Return dictionary[key], or None if not found. Used for progress_map lookups."""
+    """Return dictionary[key], or None if not found. Used for progress_map lookups.
+
+    Guards against a None/empty dictionary: in an ``{% if %}`` an undefined
+    context var (e.g. ``locked_ids`` not passed by a view) resolves to None,
+    which Django 6.0 then feeds to this filter. Returning None keeps templates
+    robust regardless of the calling view.
+    """
+    if not dictionary:
+        return None
     return dictionary.get(key)
 
 
