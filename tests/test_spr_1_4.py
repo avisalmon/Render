@@ -119,8 +119,10 @@ def test_player_responsive_aspect_ratio():
     with override_settings(BUNNY_STREAM_LIBRARY_ID="test-lib-999"):
         resp = client.get("/course/test-course-2/lesson/1/")
     content = resp.content.decode()
-    # Check for 16:9 aspect ratio styling (56.25% padding or aspect-ratio)
-    assert "56.25%" in content or "aspect-ratio" in content
+    # 16:9 responsiveness is provided by the .lesson-player wrapper
+    # (padding-bottom: 56.25% defined in static/style.css). Assert the wrapper
+    # renders rather than the CSS value, which lives in the external stylesheet.
+    assert 'class="lesson-player' in content
 
 
 # ---------------------------------------------------------------------------

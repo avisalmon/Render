@@ -15,18 +15,15 @@ POST /api/v1/media/upload/     — upload a file, returns its stored relative pa
 """
 
 import json
-import os
 from functools import wraps
 from pathlib import Path
 
 from django.conf import settings
-from django.core.files.base import ContentFile
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
 from .models import Course, CourseMaterial, LessonQuiz, Video
-
 
 # ---------------------------------------------------------------------------
 # Auth helper

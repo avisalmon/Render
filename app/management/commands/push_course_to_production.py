@@ -19,12 +19,11 @@ Steps performed:
     3. POST the full course payload to /api/v1/courses/sync/
 """
 
-import os
-from pathlib import Path
-
-import urllib.request
-import urllib.error
 import json
+import os
+import urllib.error
+import urllib.request
+from pathlib import Path
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
@@ -182,8 +181,6 @@ class Command(BaseCommand):
 
     def _upload_file(self, target, api_key, local_path: Path):
         """Upload a file via multipart POST, return the remote relative path."""
-        import io, email.mime.multipart, email.mime.base
-        from email.encoders import encode_noop
 
         url = target + "/api/v1/media/upload/"
         boundary = "------BoundaryXYZ1234"

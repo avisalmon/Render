@@ -183,7 +183,14 @@ COURSE_MGMT_API_KEY = os.environ.get("COURSE_MGMT_API_KEY", "")
 # ---------------------------------------------------------------------------
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
 if RESEND_API_KEY:
-    EMAIL_BACKEND = "django_resend.EmailBackend"
+    # Use django-anymail's Resend backend (the package actually pinned in
+    # requirements.txt). The previous "django_resend.EmailBackend" referenced a
+    # package that is NOT installed, so prod email sending would have crashed.
+    EMAIL_BACKEND = "anymail.backends.resend.EmailBackend"
+    ANYMAIL = {
+        "RESEND_API_KEY": RESEND_API_KEY,
+        "REQUESTS_TIMEOUT": 30,
+    }
 else:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@babook.co.il")
