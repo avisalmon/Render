@@ -24,6 +24,19 @@
     <p class="lead mb-4" style="color:var(--text-secondary)">{{ course.description }}</p>
     {% endif %}
 
+    {% if not is_enrolled %}
+    <div class="mb-4">
+        {% if user.is_authenticated %}
+        <form method="post" action="{% url 'courses_enroll' course.slug %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary px-4">הרשמה לקורס</button>
+        </form>
+        {% else %}
+        <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-primary px-4">כניסה להרשמה</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
     {% if user.is_authenticated %}
     <div class="mb-4">
         <div class="d-flex align-items-center gap-2 mb-1">
