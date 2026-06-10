@@ -14,3 +14,6 @@ staticfiles/
 .idea/
 .DS_Store
 *.log
+
+# Exported video transcripts — local archive, not for the public repo
+data/course_transcripts/
