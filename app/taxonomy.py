@@ -92,6 +92,12 @@ TRAINING_TAXONOMY = {
                 "icon": "bi-graph-up-arrow",
                 "order": 1,
             },
+            "leadership": {
+                "title": "מנהיגות ותרבות חדשנות",
+                "subtitle": "מייקרים, מוטיבציה וכישורי חדשנות",
+                "icon": "bi-people",
+                "order": 2,
+            },
         },
     },
 }

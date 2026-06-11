@@ -605,7 +605,7 @@ def courses_lesson(request, slug, lesson_order):
 
     # Render notes_markdown to HTML (safe subset only)
     try:
-        notes_html = markdown.markdown(video.notes_markdown or "", extensions=["nl2br"])
+        notes_html = markdown.markdown(video.notes_markdown or "", extensions=["fenced_code", "tables", "nl2br"])
     except Exception:
         notes_html = "<p>" + (video.notes_markdown or "").replace("\n", "<br>") + "</p>"
 
@@ -729,7 +729,7 @@ def lesson_view(request, slug, lesson_order):
     next_video = all_videos[idx + 1] if idx < len(all_videos) - 1 else None
 
     try:
-        notes_html = markdown.markdown(video.notes_markdown or "", extensions=["nl2br"])
+        notes_html = markdown.markdown(video.notes_markdown or "", extensions=["fenced_code", "tables", "nl2br"])
     except Exception:
         notes_html = "<p>" + (video.notes_markdown or "").replace("\n", "<br>") + "</p>"
 
