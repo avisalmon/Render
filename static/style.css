@@ -350,6 +350,26 @@ html[dir="rtl"] .whatsapp-sticky {
     direction: ltr;
     unicode-bidi: embed;
 }
+.lesson-notes table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+}
+.lesson-notes th,
+.lesson-notes td {
+    border: 1px solid var(--border);
+    padding: 0.5rem 0.75rem;
+    text-align: start;
+    vertical-align: top;
+}
+.lesson-notes thead th {
+    background: var(--bg-elevated);
+    font-weight: 600;
+}
+.lesson-notes tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.02);
+}
 
 /* ==========================================================================
    Lesson page — two-column layout
