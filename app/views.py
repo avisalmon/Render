@@ -12,7 +12,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.core.validators import validate_email
-from django.http import HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.generic import TemplateView
@@ -46,6 +46,54 @@ def home(request):
         )
 
     return render(request, "app/home.html", {"notes": notes, "last_progress": last_progress})
+
+
+# Apex sections not yet built — rendered as friendly "coming soon" placeholders.
+COMING_SOON_SECTIONS = {
+    "community": {
+        "title": "קהילה",
+        "icon": "bi-people-fill",
+        "tagline": "פורומים, שיתופי ידע ומפגשים.",
+        "blurb": "כאן תקום הקהילה של babook — מקום לשאול, לשתף ולהכיר אנשים שמדברים אותה שפה "
+                 "(ואולי אפילו ישתפו ספר או שניים).",
+    },
+    "services": {
+        "title": "חנות שירותים",
+        "icon": "bi-bag-fill",
+        "tagline": "ייעוץ אישי, ליווי פרויקטים וסקירת קוד.",
+        "blurb": "בקרוב תוכלו להזמין כאן שירותים מקצועיים — ייעוץ 1-על-1, ליווי פרויקטים "
+                 "וסקירות מומחה. ממוקד, מעשי, ובעברית.",
+    },
+    "workshops": {
+        "title": "סדנאות והובלת חדשנות",
+        "icon": "bi-easel2-fill",
+        "tagline": "סדנאות, הדרכות מעשיות והובלת תהליכי חדשנות — לארגונים ולפרטיים.",
+        "blurb": "סדנאות בהזמנה אישית ולארגונים, וליווי תהליכי חדשנות — אונליין או פרונטלי, "
+                 "בהתאמה לצוות שלכם. פרטים, נושאים ותאריכים — בקרוב.",
+    },
+    "nostalgia": {
+        "title": "נוסטלגיה",
+        "icon": "bi-clock-history",
+        "tagline": "ביוגרפיות, שחזור סרטים ותמונות, ועצי משפחה.",
+        "blurb": "פרויקטים אישיים לשימור זיכרונות — כתיבת ביוגרפיות, שחזור ושדרוג סרטים "
+                 "ותמונות ישנים, ובניית עצי משפחה, בעזרת כלים חכמים. בקרוב.",
+    },
+    "research": {
+        "title": "מחקר ואקדמיה",
+        "icon": "bi-journal-bookmark-fill",
+        "tagline": "ליווי מחקר, כתיבה אקדמית וכלי AI לחוקרים.",
+        "blurb": "כלים, ליווי ותכנים לעולם המחקר והאקדמיה — מסקירת ספרות ועד כתיבה וניתוח, "
+                 "בעזרת בינה מלאכותית. בקרוב.",
+    },
+}
+
+
+def coming_soon(request, section):
+    """Placeholder page for apex sections still in the pipeline."""
+    ctx = COMING_SOON_SECTIONS.get(section)
+    if ctx is None:
+        raise Http404("Unknown section")
+    return render(request, "app/coming_soon.html", {"section": ctx, "section_key": section})
 
 
 @login_required
@@ -428,8 +476,41 @@ def _get_frontier_video(all_videos, completed_ids):
 
 
 def courses_catalog(request):
+    """Level 0 — list the training domains (big categories)."""
+    from .taxonomy import build_catalog
     courses = Course.objects.filter(is_published=True).order_by("title")
-    return render(request, "app/courses_catalog.html", {"courses": courses})
+    domains, uncategorized = build_catalog(courses)
+    return render(request, "app/courses_catalog.html", {
+        "domains": domains,
+        "uncategorized": uncategorized,
+    })
+
+
+def courses_domain(request, domain):
+    """Level 1 — list the tracks inside a domain."""
+    from .taxonomy import TRAINING_TAXONOMY, build_catalog
+    if domain not in TRAINING_TAXONOMY:
+        raise Http404("Unknown domain")
+    courses = Course.objects.filter(is_published=True).order_by("title")
+    domains, _ = build_catalog(courses)
+    d = next((x for x in domains if x["key"] == domain), None)
+    if d is None:
+        raise Http404("Unknown domain")
+    return render(request, "app/courses_domain.html", {"d": d})
+
+
+def courses_track(request, domain, track):
+    """Level 2 (leaves) — the course cards inside a track."""
+    from .taxonomy import TRAINING_TAXONOMY, build_catalog
+    if domain not in TRAINING_TAXONOMY or track not in TRAINING_TAXONOMY[domain]["tracks"]:
+        raise Http404("Unknown track")
+    courses = Course.objects.filter(is_published=True).order_by("title")
+    domains, _ = build_catalog(courses)
+    d = next((x for x in domains if x["key"] == domain), None)
+    t = next((tr for tr in d["tracks"] if tr["key"] == track), None) if d else None
+    if t is None:
+        raise Http404("Unknown track")
+    return render(request, "app/courses_track.html", {"d": d, "t": t})
 
 
 def courses_detail(request, slug):

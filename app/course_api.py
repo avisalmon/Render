@@ -140,13 +140,19 @@ def sync_course(request):
         return JsonResponse({"error": "course.slug is required"}, status=400)
 
     # --- Upsert Course ---
+    course_defaults = {
+        "title":        course_data.get("title", slug),
+        "description":  course_data.get("description", ""),
+        "is_published": course_data.get("is_published", False),
+    }
+    # Only set taxonomy if the client sent it (avoids clobbering on old clients).
+    if "domain" in course_data:
+        course_defaults["domain"] = course_data["domain"]
+    if "track" in course_data:
+        course_defaults["track"] = course_data["track"]
     course, created = Course.objects.update_or_create(
         slug=slug,
-        defaults={
-            "title":        course_data.get("title", slug),
-            "description":  course_data.get("description", ""),
-            "is_published": course_data.get("is_published", False),
-        },
+        defaults=course_defaults,
     )
 
     # Handle optional thumbnail (relative path under MEDIA_ROOT)

@@ -58,6 +58,11 @@ class Course(models.Model):
         ("intermediate", "Intermediate"),
         ("advanced", "Advanced"),
     ]
+    DOMAIN_CHOICES = [
+        ("matazim", "מטצים"),
+        ("ai", "בינה מלאכותית"),
+        ("innovation", "הובלת חדשנות"),
+    ]
 
     title = models.CharField(max_length=200)
     title_en = models.CharField(max_length=200, blank=True)
@@ -66,6 +71,9 @@ class Course(models.Model):
     description_en = models.TextField(blank=True)
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default="foundations")
     difficulty = models.CharField(max_length=20, choices=DIFFICULTY_CHOICES, default="beginner")
+    # Training taxonomy (Domain → Track). Keys are defined in app/taxonomy.py.
+    domain = models.CharField(max_length=20, choices=DOMAIN_CHOICES, default="matazim")
+    track = models.CharField(max_length=40, blank=True, default="")
     thumbnail = models.CharField(max_length=200, blank=True)
     is_published = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

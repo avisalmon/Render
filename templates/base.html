@@ -44,8 +44,19 @@
       <div class="collapse navbar-collapse" id="navbarMain">
         <!-- Primary navigation links -->
         <ul class="navbar-nav me-auto align-items-lg-center gap-1">
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'courses_catalog' %}"><i class="bi bi-play-circle"></i> קורסים</a>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="worldsDropdown" role="button"
+               data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-grid-3x3-gap"></i> עולמות
+            </a>
+            <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="worldsDropdown">
+              <li><a class="dropdown-item" href="{% url 'courses_catalog' %}"><i class="bi bi-mortarboard"></i> הדרכה</a></li>
+              <li><a class="dropdown-item" href="{% url 'services' %}"><i class="bi bi-bag"></i> חנות שירותים</a></li>
+              <li><a class="dropdown-item" href="{% url 'community' %}"><i class="bi bi-people"></i> קהילה</a></li>
+              <li><a class="dropdown-item" href="{% url 'workshops' %}"><i class="bi bi-easel2"></i> סדנאות והובלת חדשנות</a></li>
+              <li><a class="dropdown-item" href="{% url 'nostalgia' %}"><i class="bi bi-clock-history"></i> נוסטלגיה</a></li>
+              <li><a class="dropdown-item" href="{% url 'research' %}"><i class="bi bi-journal-bookmark"></i> מחקר ואקדמיה</a></li>
+            </ul>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{% url 'pricing' %}"><i class="bi bi-tag"></i> תמחור</a>

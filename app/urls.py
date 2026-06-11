@@ -12,10 +12,19 @@ urlpatterns = [
     path("profile/", views.profile, name="profile"),
     path("staff/copilot-dashboard/", views.CopilotDashboardView.as_view(), name="copilot_dashboard"),
     path("corporate/", views.corporate, name="corporate"),
+
+    # Apex section placeholders (coming soon)
+    path("community/", views.coming_soon, {"section": "community"}, name="community"),
+    path("services/", views.coming_soon, {"section": "services"}, name="services"),
+    path("workshops/", views.coming_soon, {"section": "workshops"}, name="workshops"),
+    path("nostalgia/", views.coming_soon, {"section": "nostalgia"}, name="nostalgia"),
+    path("research/", views.coming_soon, {"section": "research"}, name="research"),
     path("newsletter/signup/", views.newsletter_signup, name="newsletter_signup"),
     path("newsletter/confirm/<str:token>", views.newsletter_confirm, name="newsletter_confirm"),
     # Courses (plural — SPR-2.2)
     path("courses/", views.courses_catalog, name="courses_catalog"),
+    path("courses/topic/<slug:domain>/", views.courses_domain, name="courses_domain"),
+    path("courses/topic/<slug:domain>/<slug:track>/", views.courses_track, name="courses_track"),
     path("courses/<slug:slug>/", views.courses_detail, name="courses_detail"),
     path("courses/<slug:slug>/enroll/", views.courses_enroll, name="courses_enroll"),
     path("courses/<slug:slug>/finish/", views.course_finish, name="course_finish"),

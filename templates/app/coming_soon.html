@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}{{ section.title }} — בקרוב | babook{% endblock %}
+
+{% block content %}
+  <section class="hero">
+    <span class="hero-badge">בקרוב™ 🙈</span>
+    <i class="bi {{ section.icon }}" style="font-size:3.75rem; color:var(--accent-primary); display:block; margin-bottom:1rem;"></i>
+    <h1 class="hero-title" style="font-size:clamp(2.5rem, 7vw, 4rem);">{{ section.title }}</h1>
+    <p class="hero-tagline">{{ section.tagline }}</p>
+    <p class="hero-punch">{{ section.blurb }}</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary btn-lg" href="{% url 'courses_catalog' %}">
+        <i class="bi bi-mortarboard"></i> בינתיים — להדרכה
+      </a>
+      <a class="btn btn-outline-primary btn-lg" href="{% url 'home' %}">
+        <i class="bi bi-house"></i> חזרה לדף הבית
+      </a>
+    </div>
+  </section>
+{% endblock %}

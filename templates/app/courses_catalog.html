@@ -1,29 +1,52 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}קורסים — babook{% endblock %}
-{% block meta_description %}קורסי AI לצוותי פיתוח — Copilot, agents, MicroPython ועוד. למד עם אבי סלמון.{% endblock %}
+{% block title %}הדרכה — babook{% endblock %}
+{% block meta_description %}קורסי הדרכה מקוונים — מטצים (מובילים טכנולוגיים צעירים), בינה מלאכותית והובלת חדשנות. למד עם אבי סלמון.{% endblock %}
 
 {% block content %}
-<div class="py-5">
-    <h1 class="mb-4">קורסים</h1>
-    <div class="row g-3">
-        {% for course in courses %}
-        <div class="col-6 col-md-4 col-lg-3">
-            <article class="card-surface h-100 d-flex flex-column">
-                {% if course.thumbnail %}
-                <img src="{% static course.thumbnail %}" alt="{{ course.title }}" class="rounded-top"
-                     style="width:100%; height:120px; object-fit:cover;">
-                {% endif %}
-                <div class="p-2 flex-grow-1 d-flex flex-column">
-                    <h2 class="h6 mb-1">{{ course.title }}</h2>
-                    <p class="small flex-grow-1 mb-2" style="color: var(--text-secondary)">{{ course.description|truncatewords:12 }}</p>
-                    <a href="{% url 'courses_detail' course.slug %}" class="btn btn-sm btn-primary mt-auto">לקורס</a>
-                </div>
-            </article>
+<div class="py-4">
+  <h1 class="mb-1">הדרכה</h1>
+  <p class="text-muted mb-4">בחרו תחום כדי להתחיל.</p>
+
+  <div class="row g-3">
+    {% for d in domains %}
+    <div class="col-12 col-md-6 col-lg-4">
+      <a href="{% url 'courses_domain' d.key %}" class="card-surface browse-card h-100 p-3">
+        <div class="d-flex align-items-start gap-3 mb-2">
+          <i class="bi {{ d.meta.icon }} browse-icon"></i>
+          <div>
+            <h2 class="h5 mb-0">
+              {{ d.meta.title }}
+              {% if d.course_count == 0 %}<span class="soon-badge">בקרוב</span>{% endif %}
+            </h2>
+            <div class="text-muted small">{{ d.meta.subtitle }}</div>
+          </div>
         </div>
-        {% empty %}
-        <p>אין קורסים זמינים כרגע.</p>
-        {% endfor %}
+        <div class="browse-hints">
+          {% for t in d.tracks %}
+          <span class="hint-chip">{{ t.meta.title }}{% if t.courses %} · {{ t.courses|length }}{% endif %}</span>
+          {% empty %}
+          <span class="hint-chip">בקרוב</span>
+          {% endfor %}
+        </div>
+      </a>
     </div>
+    {% endfor %}
+  </div>
+
+  {% if uncategorized %}
+  <div class="row g-3 mt-1">
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="card-surface p-3">
+        <h2 class="h6 mb-2">נוספים</h2>
+        <div class="browse-hints">
+          {% for course in uncategorized %}
+          <a href="{% url 'courses_detail' course.slug %}" class="hint-chip">{{ course.title }}</a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

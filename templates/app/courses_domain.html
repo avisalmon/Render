@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ d.meta.title }} — הדרכה | babook{% endblock %}
+
+{% block content %}
+<div class="py-4">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'courses_catalog' %}">הדרכה</a></li>
+      <li class="breadcrumb-item active" aria-current="page">{{ d.meta.title }}</li>
+    </ol>
+  </nav>
+
+  <div class="domain-header card-surface mb-4">
+    <i class="bi {{ d.meta.icon }} domain-icon"></i>
+    <div>
+      <h1 class="h4 mb-0">{{ d.meta.title }}</h1>
+      <div class="text-muted">{{ d.meta.subtitle }}</div>
+      {% if d.meta.description %}
+      <p class="small text-muted mb-0 mt-2">{{ d.meta.description }}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if d.tracks %}
+  <div class="row g-3">
+    {% for t in d.tracks %}
+    <div class="col-12 col-md-6 col-lg-4">
+      {% if t.courses %}
+      <a href="{% url 'courses_track' d.key t.key %}" class="card-surface browse-card h-100 p-3">
+        <div class="d-flex align-items-start gap-3 mb-2">
+          <i class="bi {{ t.meta.icon }} browse-icon"></i>
+          <div>
+            <h2 class="h6 mb-0">{{ t.meta.title }}</h2>
+            <div class="text-muted small">{{ t.meta.subtitle }}</div>
+          </div>
+        </div>
+        <div class="browse-hints">
+          {% for c in t.courses %}<span class="hint-chip">{{ c.title }}</span>{% endfor %}
+        </div>
+        <div class="small text-primary mt-2">{{ t.courses|length }} קורסים ←</div>
+      </a>
+      {% else %}
+      <div class="card-surface browse-card is-soon h-100 p-3">
+        <div class="d-flex align-items-start gap-3 mb-2">
+          <i class="bi {{ t.meta.icon }} browse-icon"></i>
+          <div>
+            <h2 class="h6 mb-0">{{ t.meta.title }} <span class="soon-badge">בקרוב</span></h2>
+            <div class="text-muted small">{{ t.meta.subtitle }}</div>
+          </div>
+        </div>
+        <p class="small text-muted mb-0">אין עדיין קורסים.</p>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="text-muted"><i class="bi bi-hourglass-split"></i> התכנים בתחום זה בהכנה — בקרוב.</p>
+  {% endif %}
+</div>
+{% endblock %}

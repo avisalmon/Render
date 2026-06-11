@@ -138,6 +138,8 @@ class Command(BaseCommand):
                 "description":  course.description or "",
                 "is_published": options["publish"] or course.is_published,
                 "thumbnail":    thumbnail_rel,
+                "domain":       course.domain,
+                "track":        course.track,
             },
             "videos":    videos_payload,
             "materials": materials_payload,

@@ -55,6 +55,196 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ==========================================================================
+   Homepage hero
+   ========================================================================== */
+.hero {
+  padding: 4.5rem 1rem 3rem;
+  text-align: center;
+  background: radial-gradient(circle at 50% -10%, rgba(59, 130, 246, 0.14), transparent 60%);
+  border-radius: 16px;
+}
+.hero-badge {
+  display: inline-block;
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--accent-warm);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 999px;
+  padding: 0.35rem 1.1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 1.75rem;
+}
+.hero-title {
+  font-size: clamp(3.25rem, 9vw, 6rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin-bottom: 0.75rem;
+}
+.hero-tagline {
+  font-size: clamp(1.35rem, 3.2vw, 2rem);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1.25rem;
+}
+.hero-punch {
+  max-width: 660px;
+  margin: 0 auto 2rem;
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  line-height: 1.75;
+}
+.hero-cta {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Feature cards (the "what's actually here" grid) */
+.feature-card {
+  height: 100%;
+  display: block;
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.feature-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+}
+.feature-card .feature-icon {
+  font-size: 1.9rem;
+  color: var(--accent-primary);
+  margin-bottom: 0.5rem;
+  display: block;
+}
+.feature-card.is-soon {
+  opacity: 0.65;
+  cursor: default;
+}
+.feature-card.is-soon:hover {
+  transform: none;
+  border-color: var(--border);
+}
+.feature-card.is-soon .feature-icon {
+  color: var(--text-secondary);
+}
+.soon-badge {
+  display: inline-block;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border-radius: 999px;
+  padding: 0.1rem 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  vertical-align: middle;
+}
+.live-badge {
+  display: inline-block;
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--accent-success);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  border-radius: 999px;
+  padding: 0.1rem 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+/* Apex section cards (the four big pillars) */
+.apex-card {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  height: 100%;
+  padding: 1.6rem 1.75rem;
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.apex-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+}
+.apex-icon {
+  font-size: 2.6rem;
+  color: var(--accent-primary);
+  flex-shrink: 0;
+}
+.apex-card.is-soon .apex-icon {
+  color: var(--text-secondary);
+}
+
+/* Training catalog — domain & track grouping */
+.domain-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+.domain-icon {
+  font-size: 2.2rem;
+  color: var(--accent-primary);
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+.track-title {
+  border-inline-start: 3px solid var(--accent-primary);
+  padding-inline-start: 0.6rem;
+  margin-bottom: 1rem;
+}
+.track-title .bi {
+  color: var(--accent-primary);
+}
+
+/* Drill-down browse cards (domain / track tiles) */
+.browse-card {
+  display: block;
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.browse-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+}
+.browse-icon {
+  font-size: 2.1rem;
+  color: var(--accent-primary);
+  flex-shrink: 0;
+  line-height: 1.1;
+}
+.browse-card.is-soon {
+  cursor: default;
+}
+.browse-card.is-soon:hover {
+  transform: none;
+  border-color: var(--border);
+}
+.browse-card.is-soon .browse-icon {
+  color: var(--text-secondary);
+}
+.browse-hints {
+  line-height: 2;
+}
+.hint-chip {
+  display: inline-block;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border-radius: 999px;
+  padding: 0.15rem 0.65rem;
+  font-size: 0.72rem;
+  margin-inline-end: 0.25rem;
+  text-decoration: none;
+}
+a.hint-chip:hover {
+  color: var(--text-primary);
+}
+
+/* ==========================================================================
    Component: .whatsapp-sticky
    ========================================================================== */
 .whatsapp-sticky {
