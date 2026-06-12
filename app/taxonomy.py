@@ -72,6 +72,7 @@ TRAINING_TAXONOMY = {
                 "icon": "bi-lightning-charge",
                 "order": 2,
                 "intro_label": "מבוא לרמה 2",
+                "intro_slug": "co-coding-copilot",
             },
             "ai-l3": {
                 "title": "רמה 3 — AI לעומק",
