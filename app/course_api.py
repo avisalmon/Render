@@ -176,7 +176,10 @@ def sync_course(request):
                 "bunny_video_id":  vd.get("bunny_video_id", ""),
                 "title":           vd.get("title", f"Lesson {order}"),
                 "is_free_preview": vd.get("is_free_preview", False),
+                "is_final_lesson": vd.get("is_final_lesson", False),
                 "notes_markdown":  vd.get("notes_markdown", ""),
+                "summary_he":      vd.get("summary_he", ""),
+                "reflection_prompt": vd.get("reflection_prompt", ""),
                 "duration_seconds": vd.get("duration_seconds", 0),
             },
         )

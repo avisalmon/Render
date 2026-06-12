@@ -409,6 +409,25 @@ html[dir="rtl"] .whatsapp-sticky {
     background: rgba(255, 255, 255, 0.02);
 }
 
+/* Lesson reflection (AI feedback) */
+.reflection-bubble {
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.65;
+}
+.reflection-user {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+}
+.reflection-ai {
+    background: rgba(59, 130, 246, 0.10);
+    border: 1px solid rgba(59, 130, 246, 0.30);
+}
+.reflection-ai .bi {
+    color: var(--accent-primary);
+}
+
 /* ==========================================================================
    Lesson page — two-column layout
    ========================================================================== */

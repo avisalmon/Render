@@ -36,6 +36,7 @@ urlpatterns = [
     path("certificate/<uuid:cert_id>/", views.certificate_view, name="certificate_view"),
     # Video progress heartbeat (SPR-1.4)
     path("api/video-progress/", views.video_progress_heartbeat, name="video_progress"),
+    path("api/lesson/<int:video_id>/reflect/", views.lesson_reflect, name="lesson_reflect"),
     # Legacy heartbeat alias (used by lesson.html prev/next)
     path("courses/<slug:slug>/heartbeat/", views.video_progress_heartbeat, name="video_heartbeat"),
     # Pricing (SPR-1.5)

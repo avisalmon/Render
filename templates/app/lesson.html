@@ -144,6 +144,37 @@
     </div>
     {% endif %}
 
+    <!-- Reflection (AI feedback instead of a quiz) -->
+    {% if video.reflection_prompt %}
+    <div id="lesson-reflection" class="card-surface mt-4 p-4"
+         data-reflect-url="{% url 'lesson_reflect' video.id %}">
+      <h5 class="mb-2">
+        <i class="bi bi-chat-heart-fill me-2" style="color:var(--accent-primary)"></i> רגע של רפלקציה
+      </h5>
+      <p class="mb-3">{{ video.reflection_prompt }}</p>
+
+      {% if reflection %}
+      <div class="reflection-thread mb-3">
+        <div class="reflection-bubble reflection-user">{{ reflection.user_text }}</div>
+        <div class="reflection-bubble reflection-ai"><i class="bi bi-robot me-1"></i>{{ reflection.ai_reply }}</div>
+      </div>
+      {% endif %}
+
+      {% if user.is_authenticated %}
+      <div id="reflection-feedback" class="mb-2" style="display:none"></div>
+      <textarea id="reflection-text" class="form-control" rows="3"
+                placeholder="ספר לנו מה ניסית — גם אם לא הצלחת, זה בסדר גמור 🙂"></textarea>
+      <button id="reflection-submit" class="btn btn-primary mt-2">
+        <i class="bi bi-send"></i> {% if reflection %}שלח תשובה נוספת{% else %}שלח{% endif %}
+      </button>
+      {% else %}
+      <a href="/login/?next={% url 'courses_lesson' course.slug video.lesson_order %}" class="btn btn-primary">
+        התחבר כדי לשתף ולהמשיך
+      </a>
+      {% endif %}
+    </div>
+    {% endif %}
+
     <!-- Bottom navigation -->
     <div class="d-flex justify-content-between align-items-center mt-4 gap-2">
       {% if prev_video %}
@@ -206,9 +237,11 @@
 
   /* Watching the video is NOT required to advance.
      Only requires_correct quizzes gate the Next button. */
-  var videoOk      = {{ lesson_completed|lower }};  /* true unless a required quiz is pending */
+  var videoOk      = {{ lesson_completed|lower }};  /* true unless a required quiz/reflection is pending */
   var quizRequired = {% if quiz %}{{ quiz.requires_correct|lower }}{% else %}false{% endif %};
   var quizOk       = {{ quiz_passed_db|lower }};
+  var reflectionRequired = {% if video.reflection_prompt %}true{% else %}false{% endif %};
+  var reflectionDone     = {% if reflection or quiz_passed_db %}true{% else %}false{% endif %};
 
   function sendProgress(p, pct, qp) {
     return fetch(progressUrl, {
@@ -221,6 +254,7 @@
   function tryShowNext() {
     if (!videoOk) return;
     if (quizRequired && !quizOk) return;
+    if (reflectionRequired && !reflectionDone) return;
     ["next-lesson-btn", "next-lesson-btn-top", "finish-btn"].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.classList.remove("d-none");
@@ -353,6 +387,47 @@
         sel.checked = false;
         submitBtn.disabled = true;
       }
+    });
+  }
+  {% endif %}
+
+  /* ── Reflection (AI feedback) ───────────────────────────── */
+  {% if video.reflection_prompt %}
+  function escapeHtml(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+  var reflectBox  = document.getElementById("lesson-reflection");
+  var reflectText = document.getElementById("reflection-text");
+  var reflectBtn  = document.getElementById("reflection-submit");
+  var reflectFb   = document.getElementById("reflection-feedback");
+  if (reflectBtn && reflectBox) {
+    var reflectUrl = reflectBox.dataset.reflectUrl;
+    reflectBtn.addEventListener("click", function () {
+      var txt = (reflectText.value || "").trim();
+      if (!txt) { reflectText.focus(); return; }
+      var orig = reflectBtn.innerHTML;
+      reflectBtn.disabled = true;
+      reflectBtn.innerHTML = "שולח…";
+      fetch(reflectUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRFToken": csrf },
+        body: JSON.stringify({ text: txt })
+      }).then(function (r) { return r.json(); }).then(function (d) {
+        reflectFb.style.display = "block";
+        reflectFb.innerHTML =
+          '<div class="reflection-bubble reflection-user">' + escapeHtml(txt) + '</div>' +
+          '<div class="reflection-bubble reflection-ai"><i class="bi bi-robot me-1"></i>' +
+          escapeHtml(d.ai_reply || "") + '</div>';
+        reflectText.value = "";
+        reflectBtn.innerHTML = orig;
+        reflectBtn.disabled = false;
+        reflectionDone = true;
+        videoOk = true;
+        tryShowNext();
+      }).catch(function () {
+        reflectBtn.innerHTML = orig;
+        reflectBtn.disabled = false;
+        reflectFb.style.display = "block";
+        reflectFb.innerHTML = '<div class="alert alert-warning py-2 mb-0">שגיאה — נסה שוב.</div>';
+      });
     });
   }
   {% endif %}

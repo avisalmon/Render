@@ -91,7 +91,10 @@ class Command(BaseCommand):
                 "bunny_video_id":  v.bunny_video_id or "",
                 "title":           v.title,
                 "is_free_preview": v.is_free_preview,
+                "is_final_lesson": v.is_final_lesson,
                 "notes_markdown":  v.notes_markdown or "",
+                "summary_he":      v.summary_he or "",
+                "reflection_prompt": v.reflection_prompt or "",
                 "duration_seconds": v.duration_seconds or 0,
             }
             quiz = getattr(v, "quiz", None)

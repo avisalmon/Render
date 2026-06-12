@@ -136,14 +136,18 @@ def profile(request):
         copilot_status = request.user.copilot_seat.status
     except CopilotSeat.DoesNotExist:
         pass
-    from .models import CourseCertificate
+    from .models import CourseCertificate, LessonReflection
     certificates = CourseCertificate.objects.filter(
         user=request.user
     ).select_related("course").order_by("-issued_at")
+    reflections = LessonReflection.objects.filter(
+        user=request.user
+    ).select_related("video", "video__course").order_by("-created_at")[:50]
     return render(request, "app/profile.html", {
         "user_profile": user_profile,
         "copilot_status": copilot_status,
         "certificates": certificates,
+        "reflections": reflections,
     })
 
 
@@ -619,12 +623,14 @@ def courses_lesson(request, slug, lesson_order):
 
     from .models import CourseCertificate, LessonQuiz
 
-    # Which videos in this course require a correct quiz answer
+    # A lesson requires an interaction if it has a required quiz OR a reflection prompt.
     required_quiz_ids = set(
         LessonQuiz.objects.filter(
             video__course=course, requires_correct=True
         ).values_list("video_id", flat=True)
     )
+    reflection_video_ids = {v.id for v in all_videos if v.reflection_prompt}
+    required_ids = required_quiz_ids | reflection_video_ids
 
     completed_ids = {}
     if request.user.is_authenticated:
@@ -634,16 +640,16 @@ def courses_lesson(request, slug, lesson_order):
                 user=request.user, video__course=course
             ).values_list("video_id", flat=True)
         )
-        # "Passed required quiz" set
-        passed_quiz_ids = set(
+        # quiz_passed=True marks both a passed required quiz AND a submitted reflection
+        passed_ids = set(
             UserVideoProgress.objects.filter(
                 user=request.user, video__course=course, quiz_passed=True
             ).values_list("video_id", flat=True)
-        ) if required_quiz_ids else set()
-        # Complete = visited AND (no required quiz OR quiz passed)
+        ) if required_ids else set()
+        # Complete = visited AND (no required interaction OR it was done)
         completed_ids = {
             v_id: True for v_id in visited_ids
-            if v_id not in required_quiz_ids or v_id in passed_quiz_ids
+            if v_id not in required_ids or v_id in passed_ids
         }
 
     # Enforce sequential access: redirect to frontier if this lesson is locked
@@ -666,10 +672,14 @@ def courses_lesson(request, slug, lesson_order):
 
     # Staff users bypass all locks for free navigation
     is_staff = request.user.is_staff
-    # Lesson is "done" if no required quiz pending (or quiz already passed)
-    lesson_completed_ctx = (video.id not in required_quiz_ids or quiz_passed_db) or is_staff
+    # Lesson is "done" if no required interaction pending (or it was already done)
+    lesson_completed_ctx = (video.id not in required_ids or quiz_passed_db) or is_staff
     quiz_passed_db_ctx = quiz_passed_db or is_staff
     locked_ids_ctx = {} if is_staff else locked_ids
+
+    reflection = None
+    if request.user.is_authenticated and video.reflection_prompt:
+        reflection = video.reflections.filter(user=request.user).first()
 
     return render(request, "app/lesson.html", {
         "course": course,
@@ -684,6 +694,7 @@ def courses_lesson(request, slug, lesson_order):
         "locked_ids": locked_ids_ctx,
         "is_enrolled": is_enrolled,
         "quiz": quiz,
+        "reflection": reflection,
         "lesson_completed": lesson_completed_ctx,
         "quiz_passed_db": quiz_passed_db_ctx,
         "existing_cert": existing_cert,
@@ -718,10 +729,12 @@ def lesson_view(request, slug, lesson_order):
             return HttpResponse(status=403)
 
     last_position_seconds = 0
+    quiz_passed_db = False
     if request.user.is_authenticated:
         prog = UserVideoProgress.objects.filter(user=request.user, video=video).first()
         if prog:
             last_position_seconds = prog.last_position_seconds
+            quiz_passed_db = prog.quiz_passed
 
     all_videos = list(course.videos.order_by("lesson_order"))
     idx = next((i for i, v in enumerate(all_videos) if v.pk == video.pk), 0)
@@ -754,6 +767,13 @@ def lesson_view(request, slug, lesson_order):
             user=request.user, course=course
         ).first()
 
+    reflection = None
+    if request.user.is_authenticated and video.reflection_prompt:
+        reflection = video.reflections.filter(user=request.user).first()
+    # Done if it's not a gated lesson, or the quiz/reflection was completed
+    requires_interaction = bool(video.reflection_prompt) or (quiz and quiz.requires_correct)
+    lesson_completed = (not requires_interaction) or quiz_passed_db or request.user.is_staff
+
     return render(request, "app/lesson.html", {
         "course": course,
         "video": video,
@@ -766,10 +786,74 @@ def lesson_view(request, slug, lesson_order):
         "completed_ids": completed_ids,
         "is_enrolled": is_enrolled,
         "quiz": quiz,
-        "lesson_completed": bool(completed_ids.get(video.id)),
+        "reflection": reflection,
+        "lesson_completed": lesson_completed,
+        "quiz_passed_db": quiz_passed_db or request.user.is_staff,
         "existing_cert": existing_cert,
         "materials": course.materials.all(),
     })
+
+
+# ---------------------------------------------------------------------------
+# Lesson reflection — learner free-text + AI reply (experiential lessons)
+# ---------------------------------------------------------------------------
+
+def _generate_reflection_reply(video, prompt, user_text):
+    """Warm, specific Hebrew reply to a learner's reflection. Never raises."""
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        sys_prompt = (
+            "אתה מנטור AI חם, מעודד ותכליתי בקורס בעברית שמלמד אנשים לנסות כלי בינה מלאכותית. "
+            f"הלומד סיים שיעור על הכלי: '{video.title}'. "
+            f"שאלנו אותו: '{prompt or 'מה ניסית בשיעור הזה?'}'. הוא ענה בטקסט חופשי. "
+            "הגב בעברית, ב-2 עד 4 משפטים, באופן אישי וספציפי למה שכתב: "
+            "אם התקשה או לא ניסה — עודד בעדינות ותן טיפ קונקרטי קטן איך להתחיל; "
+            "אם הצליח — שמח איתו והצע צעד הבא או רעיון לניסוי נוסף. "
+            "בלי לחזור על דבריו מילה במילה, בלי הקדמות, ובלי אימוג'ים מוגזמים."
+        )
+        r = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "system", "content": sys_prompt},
+                      {"role": "user", "content": user_text}],
+            temperature=0.7, max_tokens=300,
+        )
+        return (r.choices[0].message.content or "").strip()
+    except Exception:
+        return ("תודה ששיתפת! כל ניסיון — מוצלח או פחות — הוא חלק מהלמידה. "
+                "המשך לשיעור הבא ונסה עוד כלי. 🙂")
+
+
+@login_required
+def lesson_reflect(request, video_id):
+    """POST /api/lesson/<video_id>/reflect/ — save a reflection, return an AI reply, complete the lesson."""
+    import json as _json
+    from django.shortcuts import get_object_or_404
+    from .models import LessonReflection
+    if request.method != "POST":
+        return JsonResponse({"error": "method not allowed"}, status=405)
+    video = get_object_or_404(Video, pk=video_id)
+    try:
+        data = _json.loads(request.body)
+    except ValueError:
+        return JsonResponse({"error": "bad json"}, status=400)
+    user_text = (data.get("text") or "").strip()[:2000]
+    if not user_text:
+        return JsonResponse({"error": "empty"}, status=400)
+
+    prompt = video.reflection_prompt or ""
+    ai_reply = _generate_reflection_reply(video, prompt, user_text)
+    LessonReflection.objects.create(
+        user=request.user, video=video, prompt=prompt, user_text=user_text, ai_reply=ai_reply,
+    )
+    # Completing the reflection completes the lesson (reuse quiz_passed so all gating/cert logic applies).
+    prog, _ = UserVideoProgress.objects.get_or_create(user=request.user, video=video)
+    prog.quiz_passed = True
+    prog.percent_watched = max(prog.percent_watched or 0, 100.0)
+    if not prog.completed_at:
+        prog.completed_at = timezone.now()
+    prog.save()
+    return JsonResponse({"ok": True, "ai_reply": ai_reply})
 
 
 # ---------------------------------------------------------------------------

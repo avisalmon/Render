@@ -96,6 +96,8 @@ class Video(models.Model):
     is_final_lesson = models.BooleanField(default=False)
     notes_markdown = models.TextField(blank=True)
     summary_he = models.TextField(blank=True)
+    # If set, the lesson ends with an AI "reflection" question (free-text) instead of a quiz.
+    reflection_prompt = models.TextField(blank=True, default="")
     has_code_example = models.BooleanField(default=False)
     github_file = models.CharField(max_length=200, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -160,6 +162,29 @@ class LessonQuiz(models.Model):
 
     def __str__(self):
         return f"Quiz: {self.video}"
+
+
+class LessonReflection(models.Model):
+    """A learner's free-text reflection on a lesson + the AI's encouraging reply.
+
+    Used by experiential lessons (e.g. the Level-1 'try it yourself' AI journey)
+    where, instead of a quiz, we ask the learner what they tried and respond.
+    """
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reflections")
+    video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name="reflections")
+    prompt = models.TextField(blank=True, default="")
+    user_text = models.TextField()
+    ai_reply = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "רפלקציה"
+        verbose_name_plural = "רפלקציות"
+
+    def __str__(self):
+        return f"Reflection: {self.user.username} – {self.video}"
 
 
 class CourseCertificate(models.Model):

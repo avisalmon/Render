@@ -64,6 +64,7 @@ TRAINING_TAXONOMY = {
                 "icon": "bi-stars",
                 "order": 1,
                 "intro_label": "מבוא לרמה 1",
+                "intro_slug": "ai-user-journey",
             },
             "ai-l2": {
                 "title": "רמה 2 — מעשי / מקצועי",
