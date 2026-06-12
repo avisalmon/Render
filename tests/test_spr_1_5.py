@@ -9,7 +9,6 @@ from django.test import Client
 
 from app.models import Course, Entitlement, Video
 
-
 pytestmark = pytest.mark.django_db
 
 

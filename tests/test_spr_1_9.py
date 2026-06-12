@@ -5,8 +5,7 @@ TDD tests written BEFORE implementation. All should fail (RED) until features ar
 import pytest
 from django.conf import settings
 from django.core import mail
-from django.test import Client, TestCase, override_settings
-
+from django.test import Client, TestCase
 
 pytestmark = pytest.mark.spr19
 

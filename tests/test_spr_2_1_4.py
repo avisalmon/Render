@@ -4,10 +4,9 @@ Tests for F-2.1.35 through F-2.1.49.
 Run: pytest -m spr214 -v
 """
 import re
-import colorsys
+from pathlib import Path
 
 import pytest
-from pathlib import Path
 from django.conf import settings
 
 pytestmark = [pytest.mark.spr214, pytest.mark.django_db]

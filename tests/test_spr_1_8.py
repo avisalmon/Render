@@ -4,14 +4,11 @@ Tests for F-1.8.1 through F-1.8.12.
 Run: pytest -m spr18 -v
 """
 
-import pytest
-from datetime import timedelta
 from unittest.mock import patch
 
+import pytest
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.utils import timezone
-
 
 # ---------------------------------------------------------------------------
 # F-1.8.1 — OpenAI API integration + config
@@ -148,6 +145,7 @@ def test_system_prompt_model_exists():
 def test_system_prompt_registered_in_admin():
     """T-F-1.8.4-2: SystemPrompt registered in Django admin."""
     from django.contrib.admin.sites import site
+
     from app.models import SystemPrompt
 
     assert SystemPrompt in site._registry
@@ -189,7 +187,7 @@ def test_daily_token_limits_setting():
 def test_rate_limiter_rejects_over_limit():
     """T-F-1.8.6-2: Rate limiter rejects when daily limit exceeded."""
     from app.ai_chat import check_rate_limit
-    from app.models import UsageLog, ChatSession
+    from app.models import ChatSession, UsageLog
 
     user = User.objects.create_user("ratelimited", password="pass1234")
     session = ChatSession.objects.create(user=user, context_type="general_assistant")
@@ -398,7 +396,7 @@ def test_moderation_logs_flagged_attempt():
 @pytest.mark.django_db
 def test_chat_course_context_includes_metadata(client):
     """T-F-1.8.12-1: Chat from course page includes course context."""
-    from app.models import Course, ChatSession
+    from app.models import Course
 
     user = User.objects.create_user("ctxuser", password="pass1234")
     course = Course.objects.create(title="Python Basics", slug="python-basics")

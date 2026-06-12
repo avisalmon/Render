@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}{% if lesson %}עריכת שיעור{% else %}שיעור חדש{% endif %} - אולפן{% endblock %}
+{% block content %}
+<div class="py-4">
+  <nav aria-label="breadcrumb"><ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'studio_home' %}">אולפן</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'studio_course_edit' course.slug %}">{{ course.title }}</a></li>
+    <li class="breadcrumb-item active">{% if lesson %}שיעור {{ lesson.lesson_order }}{% else %}שיעור חדש{% endif %}</li>
+  </ol></nav>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="row g-3 mb-3">
+      <div class="col-md-8"><label class="form-label small">כותרת השיעור</label>
+        <input class="form-control" name="title" value="{{ lesson.title|default:'' }}" required></div>
+      <div class="col-md-4"><label class="form-label small">משך (שניות)</label>
+        <input class="form-control" name="duration_seconds" type="number" value="{{ lesson.duration_seconds|default:0 }}"></div>
+    </div>
+    <div class="row g-3 mb-3">
+      <div class="col-md-8"><label class="form-label small">Bunny video ID (ריק = שיעור טקסט בלבד)</label>
+        <input class="form-control" name="bunny_video_id" value="{{ lesson.bunny_video_id|default:'' }}"></div>
+      <div class="col-md-4 d-flex align-items-end">
+        <div class="form-check"><input class="form-check-input" type="checkbox" name="is_free_preview" id="free" {% if lesson.is_free_preview %}checked{% endif %}>
+          <label class="form-check-label" for="free">תצוגה חופשית</label></div>
+      </div>
+    </div>
+    <div class="mb-3"><label class="form-label small">שאלת רפלקציה (אופציונלי - מחליפה מבחן)</label>
+      <input class="form-control" name="reflection_prompt" value="{{ lesson.reflection_prompt|default:'' }}"
+             placeholder="מה ניסית בשיעור הזה?"></div>
+
+    <label class="form-label small">תוכן השיעור (Markdown)</label>
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <textarea class="form-control" id="notes" name="notes_markdown" rows="22"
+                  style="font-family:var(--font-mono);font-size:.9rem;direction:ltr;text-align:left;">{{ lesson.notes_markdown|default:'' }}</textarea>
+      </div>
+      <div class="col-lg-6">
+        <div class="card-surface lesson-notes p-3" id="preview" style="min-height:200px;max-height:560px;overflow:auto;">
+          <span class="text-muted">תצוגה מקדימה...</span>
+        </div>
+      </div>
+    </div>
+    <div class="mt-4 d-flex gap-2">
+      <button class="btn btn-primary">שמור שיעור</button>
+      <a href="{% url 'studio_course_edit' course.slug %}" class="btn btn-outline-secondary">ביטול</a>
+    </div>
+  </form>
+</div>
+
+<script>
+(function(){
+  var ta = document.getElementById('notes'), pv = document.getElementById('preview');
+  var url = "{% url 'studio_markdown_preview' %}", t;
+  function render(){
+    fetch(url, {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'}, body:JSON.stringify({markdown: ta.value})})
+      .then(function(r){return r.json();}).then(function(d){ pv.innerHTML = d.html || '<span class="text-muted">...</span>'; });
+  }
+  ta.addEventListener('input', function(){ clearTimeout(t); t=setTimeout(render, 400); });
+  render();
+})();
+</script>
+{% endblock %}

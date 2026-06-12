@@ -2,7 +2,6 @@
 SPR-1.4 — Video Infrastructure (Bunny Stream)
 TDD tests written BEFORE implementation. All should fail (RED) until features are built.
 """
-import hashlib
 import json
 import time
 from urllib.parse import parse_qs, urlparse
@@ -10,8 +9,7 @@ from urllib.parse import parse_qs, urlparse
 import pytest
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.test import Client, TestCase
-
+from django.test import Client
 
 # ---------------------------------------------------------------------------
 # F-1.4.1 — Bunny Stream env keys wired into settings
@@ -31,6 +29,7 @@ def test_bunny_settings_from_env(monkeypatch):
     """T-F-1.4.1-2: Bunny settings use os.environ.get() pattern (verified by code inspection)."""
     # Verify that settings.py contains the os.environ.get pattern for all 4 keys
     import inspect
+
     import mysite.settings as s
     source = inspect.getsource(s)
     for key in ["BUNNY_API_KEY", "BUNNY_STREAM_LIBRARY_ID", "BUNNY_STREAM_CDN_HOSTNAME", "BUNNY_STREAM_TOKEN_KEY"]:
@@ -67,6 +66,7 @@ def test_video_model_fields():
 def test_video_registered_in_admin():
     """T-F-1.4.2-3: Video model is registered in Django admin."""
     from django.contrib import admin
+
     from app.models import Video
     assert Video in admin.site._registry, "Video not registered in admin"
 
@@ -75,6 +75,7 @@ def test_video_registered_in_admin():
 def test_course_registered_in_admin():
     """T-F-1.4.2-4: Course model is registered in Django admin."""
     from django.contrib import admin
+
     from app.models import Course
     assert Course in admin.site._registry, "Course not registered in admin"
 
@@ -89,6 +90,7 @@ def test_course_registered_in_admin():
 def test_lesson_page_renders_iframe():
     """T-F-1.4.3-1: Lesson page contains Bunny iframe."""
     from django.test import override_settings
+
     from app.models import Course, Video
     course = Course.objects.create(title="Test Course", slug="test-course", description="Test")
     Video.objects.create(
@@ -109,6 +111,7 @@ def test_lesson_page_renders_iframe():
 def test_player_responsive_aspect_ratio():
     """T-F-1.4.3-2: Player wrapper uses 16:9 aspect ratio."""
     from django.test import override_settings
+
     from app.models import Course, Video
     course = Course.objects.create(title="Test Course 2", slug="test-course-2", description="Test")
     Video.objects.create(
@@ -201,7 +204,7 @@ def test_heartbeat_endpoint_accepts_post():
 @pytest.mark.django_db
 def test_heartbeat_updates_existing_progress():
     """T-F-1.4.5-3: Second heartbeat updates existing record, no duplicate."""
-    from app.models import Course, Video, UserVideoProgress
+    from app.models import Course, UserVideoProgress, Video
     course = Course.objects.create(title="HB2 Course", slug="hb2-course", description="HB2")
     video = Video.objects.create(
         course=course, bunny_video_id="hb2-vid-1", title="HB2 Lesson",
@@ -236,7 +239,7 @@ def test_heartbeat_updates_existing_progress():
 @pytest.mark.django_db
 def test_lesson_page_includes_last_position():
     """T-F-1.4.6-1: Lesson page context includes last_position_seconds for user with progress."""
-    from app.models import Course, Video, UserVideoProgress
+    from app.models import Course, UserVideoProgress, Video
     course = Course.objects.create(title="Resume Course", slug="resume-course", description="R")
     video = Video.objects.create(
         course=course, bunny_video_id="resume-vid-1", title="Resume Lesson",
@@ -263,7 +266,7 @@ def test_lesson_page_includes_last_position():
 @pytest.mark.django_db
 def test_course_detail_shows_progress():
     """T-F-1.4.7-1: Course page shows correct progress % for logged-in user."""
-    from app.models import Course, Video, UserVideoProgress
+    from app.models import Course, UserVideoProgress, Video
     course = Course.objects.create(title="Prog Course", slug="prog-course", description="P")
     v1 = Video.objects.create(
         course=course, bunny_video_id="prog-v1", title="L1",
@@ -288,7 +291,7 @@ def test_course_detail_shows_progress():
 @pytest.mark.django_db
 def test_course_complete_at_95_percent():
     """T-F-1.4.7-2: Course marked complete when all videos >= 95% watched."""
-    from app.models import Course, Video, UserVideoProgress
+    from app.models import Course, UserVideoProgress, Video
     course = Course.objects.create(title="Complete Course", slug="complete-course", description="C")
     v1 = Video.objects.create(
         course=course, bunny_video_id="comp-v1", title="L1",
@@ -353,7 +356,7 @@ def test_non_preview_redirects_anonymous_to_login():
 @pytest.mark.django_db
 def test_home_shows_continue_watching_card():
     """T-F-1.4.13-1: Logged-in user with UserVideoProgress sees a 'Continue watching' card on home page."""
-    from app.models import Course, Video, UserVideoProgress
+    from app.models import Course, UserVideoProgress, Video
     course = Course.objects.create(
         title="Resume Course", slug="resume-course", description="Test", is_published=True
     )

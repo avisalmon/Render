@@ -3,10 +3,10 @@ SPR-1.3 — UI & Branding
 Tests for F-1.3.1 through F-1.3.9.
 Run: pytest -m spr13 -v
 """
-import pytest
 from pathlib import Path
-from django.conf import settings
 
+import pytest
+from django.conf import settings
 
 # ---------------------------------------------------------------------------
 # F-1.3.1 / F-1.3.2 — base.html + Bootstrap 5

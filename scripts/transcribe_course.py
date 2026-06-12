@@ -199,7 +199,7 @@ Transcript:
         try:
             return json.loads(content)
         except json.JSONDecodeError:
-            print(f"  JSON parse error — raw response saved")
+            print("  JSON parse error — raw response saved")
             return {"raw_analysis": content}
     print(f"  GPT error {r.status_code}: {r.text[:200]}")
     return None
@@ -248,9 +248,9 @@ def main():
             if analysis:
                 result["analysis"] = analysis
                 json_file.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
-                print(f"    Done")
+                print("    Done")
             else:
-                print(f"    Failed")
+                print("    Failed")
         print("\nAnalysis pass complete.")
         return
 
@@ -322,7 +322,7 @@ def main():
                 analysis = analyse_lesson(title, result["transcript_he"], code, azure_key)
                 if analysis:
                     result["analysis"] = analysis
-                    print(f"  Analysis done")
+                    print("  Analysis done")
             else:
                 result["analysis"] = None
 

@@ -863,7 +863,9 @@ def _generate_reflection_reply(video, prompt, user_text):
 def lesson_reflect(request, video_id):
     """POST /api/lesson/<video_id>/reflect/ — save a reflection, return an AI reply, complete the lesson."""
     import json as _json
+
     from django.shortcuts import get_object_or_404
+
     from .models import LessonReflection
     if request.method != "POST":
         return JsonResponse({"error": "method not allowed"}, status=405)

@@ -28,7 +28,6 @@ print(f"L06: set github_file = {l06['github_file']}")
 # --- Fix L14/L15 swap ---
 # L14 (youtube: "110 functions") teaches Python functions in Jupyter — no ESP32 code
 # L15 (youtube: "111 pong colision") IS the pong collision demo — should have 110 pong part 3 colision.py
-import urllib.request
 from urllib.parse import quote
 
 l14 = load(14)
@@ -58,7 +57,7 @@ l14["github_code"] = None
 
 save(14, l14)
 save(15, l15)
-print(f"L14: cleared code (Python functions tutorial, Jupyter only)")
+print("L14: cleared code (Python functions tutorial, Jupyter only)")
 print(f"L15: set github_file = {l15['github_file']}")
 
 print("\nDone.")

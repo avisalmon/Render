@@ -6,13 +6,11 @@ Run: pytest tests/test_spr_1_10.py -v
 import json
 import sqlite3
 from io import StringIO
-from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from django.core.management import call_command
 from django.core.management.base import CommandError
-
 
 pytestmark = pytest.mark.django_db
 

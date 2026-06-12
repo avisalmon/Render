@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}עיבוד קורס - אולפן{% endblock %}
+{% block content %}
+<div class="py-4" style="max-width:760px;margin:0 auto;">
+  <nav aria-label="breadcrumb"><ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'studio_home' %}">אולפן</a></li>
+    <li class="breadcrumb-item active">עיבוד</li>
+  </ol></nav>
+  <h1 class="h4 mb-1">{{ job.title }}</h1>
+  <p class="text-muted">בניית קורס אוטומטית מסרטון. אפשר לעזוב את הדף, התהליך ממשיך ברקע.</p>
+
+  <div class="card-surface p-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <span id="step" class="fw-semibold">{{ job.step }}</span>
+      <span id="badge" class="badge bg-secondary">{{ job.get_status_display }}</span>
+    </div>
+    <div class="progress mb-3" style="height:12px; background:var(--bg-elevated);">
+      <div id="bar" class="progress-bar" style="width:{{ job.progress }}%; background:var(--accent-primary);">{{ job.progress }}%</div>
+    </div>
+    <div id="done-row" class="mb-3 d-none">
+      <a id="edit-link" href="#" class="btn btn-success"><i class="bi bi-pencil-square"></i> ערוך את הקורס</a>
+    </div>
+    <details><summary class="small text-muted">יומן</summary>
+      <pre id="log" class="mt-2 p-2 small" style="background:var(--bg-elevated);border-radius:8px;max-height:280px;overflow:auto;direction:ltr;text-align:left;white-space:pre-wrap;">{{ job.log }}</pre>
+    </details>
+  </div>
+</div>
+
+<script>
+(function(){
+  var url = "{% url 'studio_job_api' job.id %}";
+  var bar=document.getElementById('bar'), step=document.getElementById('step'),
+      badge=document.getElementById('badge'), log=document.getElementById('log'),
+      doneRow=document.getElementById('done-row'), editLink=document.getElementById('edit-link');
+  var timer = setInterval(poll, 2500);
+  function poll(){
+    fetch(url).then(function(r){return r.json();}).then(function(d){
+      bar.style.width = d.progress + '%'; bar.textContent = d.progress + '%';
+      step.textContent = d.step || '';
+      log.textContent = d.log || '';
+      badge.textContent = d.status;
+      badge.className = 'badge bg-' + (d.status==='error'?'danger':(d.status==='done'?'success':(d.status==='running'?'primary':'secondary')));
+      if (d.status==='done' && d.course_slug){
+        clearInterval(timer); doneRow.classList.remove('d-none');
+        editLink.href = "/studio/course/" + d.course_slug + "/";
+      }
+      if (d.status==='error'){ clearInterval(timer); }
+    }).catch(function(){});
+  }
+  poll();
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}{{ course.title }} - אולפן{% endblock %}
+{% block content %}
+<div class="py-4">
+  <nav aria-label="breadcrumb"><ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'studio_home' %}">אולפן</a></li>
+    <li class="breadcrumb-item active">{{ course.title }}</li>
+  </ol></nav>
+
+  {% if messages %}{% for m in messages %}<div class="alert alert-{{ m.tags|default:'info' }} py-2">{{ m }}</div>{% endfor %}{% endif %}
+
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h1 class="h4 mb-0">{{ course.title }}
+      {% if course.is_published %}<span class="badge bg-success">פורסם</span>{% else %}<span class="badge bg-secondary">טיוטה</span>{% endif %}
+    </h1>
+    <div class="d-flex gap-2">
+      <a href="{% url 'courses_detail' course.slug %}" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i> תצוגה</a>
+      <form method="post" action="{% url 'studio_course_publish' course.slug %}" class="d-inline">{% csrf_token %}
+        <button class="btn btn-sm {% if course.is_published %}btn-outline-warning{% else %}btn-success{% endif %}">
+          {% if course.is_published %}בטל פרסום{% else %}פרסם{% endif %}
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Metadata -->
+    <div class="col-lg-5">
+      <div class="card-surface p-4">
+        <h2 class="h6 mb-3">פרטי הקורס</h2>
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-2"><label class="form-label small">כותרת</label>
+            <input class="form-control" name="title" value="{{ course.title }}"></div>
+          <div class="mb-2"><label class="form-label small">תיאור</label>
+            <textarea class="form-control" name="description" rows="3">{{ course.description }}</textarea></div>
+          <div class="row g-2">
+            <div class="col-6"><label class="form-label small">תחום</label>
+              <select class="form-select" name="domain" id="domain-select"></select></div>
+            <div class="col-6"><label class="form-label small">מסלול</label>
+              <select class="form-select" name="track" id="track-select"></select></div>
+          </div>
+          <div class="row g-2 mt-0">
+            <div class="col-6"><label class="form-label small">רמה</label>
+              <select class="form-select" name="difficulty">
+                <option value="beginner" {% if course.difficulty == 'beginner' %}selected{% endif %}>מתחילים</option>
+                <option value="intermediate" {% if course.difficulty == 'intermediate' %}selected{% endif %}>בינוני</option>
+                <option value="advanced" {% if course.difficulty == 'advanced' %}selected{% endif %}>מתקדם</option>
+              </select></div>
+            <div class="col-6"><label class="form-label small">תמונה</label>
+              <input class="form-control" name="thumbnail" value="{{ course.thumbnail }}"></div>
+          </div>
+          <div class="form-check mt-3">
+            <input class="form-check-input" type="checkbox" name="is_published" id="pub" {% if course.is_published %}checked{% endif %}>
+            <label class="form-check-label" for="pub">מפורסם</label>
+          </div>
+          <button class="btn btn-primary mt-3">שמור</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Lessons -->
+    <div class="col-lg-7">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="h6 mb-0">שיעורים ({{ lessons|length }})</h2>
+        <a href="{% url 'studio_lesson_new' course.slug %}" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> שיעור חדש</a>
+      </div>
+      <ul id="lesson-list" class="list-unstyled mb-0" data-reorder-url="{% url 'studio_lesson_reorder' course.slug %}">
+        {% for v in lessons %}
+        <li class="card-surface p-2 mb-2 d-flex align-items-center gap-2" data-id="{{ v.id }}">
+          <span class="drag-handle text-muted" style="cursor:grab"><i class="bi bi-grip-vertical"></i></span>
+          <span class="badge bg-secondary">{{ v.lesson_order }}</span>
+          <span class="flex-grow-1">{{ v.title }}
+            {% if not v.bunny_video_id %}<i class="bi bi-file-text small text-muted" title="טקסט בלבד"></i>{% endif %}
+            {% if v.reflection_prompt %}<i class="bi bi-chat-heart small" title="רפלקציה" style="color:var(--accent-primary)"></i>{% endif %}
+          </span>
+          <a href="{% url 'studio_lesson_edit' course.slug v.lesson_order %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+          <form method="post" action="{% url 'studio_lesson_delete' course.slug v.lesson_order %}" class="d-inline" onsubmit="return confirm('למחוק את השיעור?');">{% csrf_token %}
+            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+          </form>
+        </li>
+        {% empty %}
+        <li class="text-muted text-center py-4 card-surface">אין שיעורים. הוסף שיעור חדש או צור קורס מסרטון.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+
+{{ domains|json_script:"domains-data" }}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script>
+(function(){
+  // domain/track linked dropdowns with current values preselected
+  var domains = JSON.parse(document.getElementById('domains-data').textContent);
+  var cur = {domain: "{{ course.domain }}", track: "{{ course.track }}"};
+  var dsel = document.getElementById('domain-select'), tsel = document.getElementById('track-select');
+  domains.forEach(function(d){ var o=document.createElement('option'); o.value=d[0]; o.textContent=d[1]; if(d[0]===cur.domain)o.selected=true; dsel.appendChild(o); });
+  function fillTracks(keep){
+    tsel.innerHTML=''; var none=document.createElement('option'); none.value=''; none.textContent='(ללא מסלול)'; tsel.appendChild(none);
+    var d = domains.find(function(x){return x[0]===dsel.value;});
+    if(d){ d[2].forEach(function(t){ var o=document.createElement('option'); o.value=t[0]; o.textContent=t[1]; if(keep&&t[0]===cur.track)o.selected=true; tsel.appendChild(o); }); }
+  }
+  dsel.addEventListener('change', function(){ fillTracks(false); }); fillTracks(true);
+
+  // drag reorder
+  var list = document.getElementById('lesson-list');
+  if (window.Sortable && list) {
+    new Sortable(list, { handle:'.drag-handle', animation:150, onEnd:function(){
+      var ids = Array.from(list.querySelectorAll('li[data-id]')).map(function(li){return li.dataset.id;});
+      fetch(list.dataset.reorderUrl, {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'}, body:JSON.stringify({order:ids})})
+        .then(function(){ location.reload(); });
+    }});
+  }
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}אולפן הקורסים - babook{% endblock %}
+
+{% block content %}
+<div class="py-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <h1 class="mb-0"><i class="bi bi-easel2-fill me-2" style="color:var(--accent-primary)"></i> אולפן הקורסים</h1>
+    <div class="d-flex gap-2">
+      <a href="{% url 'studio_new_from_video' %}" class="btn btn-primary">
+        <i class="bi bi-magic"></i> קורס מסרטון (אוטומטי)
+      </a>
+      <a href="{% url 'studio_course_create' %}" class="btn btn-outline-primary">
+        <i class="bi bi-plus-lg"></i> קורס חדש (ידני)
+      </a>
+    </div>
+  </div>
+
+  {% if messages %}{% for m in messages %}
+  <div class="alert alert-{{ m.tags|default:'info' }} py-2">{{ m }}</div>
+  {% endfor %}{% endif %}
+
+  {% if jobs %}
+  <h2 class="h6 text-muted mb-2">עבודות בתהליך</h2>
+  <div class="d-flex flex-column gap-2 mb-4">
+    {% for j in jobs %}
+    <a href="{% url 'studio_job' j.id %}" class="card-surface p-3 d-block text-decoration-none" style="color:var(--text-primary)">
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <span class="fw-semibold">{{ j.title }}</span>
+        <span class="badge bg-{% if j.status == 'error' %}danger{% elif j.status == 'running' %}primary{% else %}secondary{% endif %}">{{ j.get_status_display }} · {{ j.progress }}%</span>
+      </div>
+      <div class="progress" style="height:6px; background:var(--bg-elevated);">
+        <div class="progress-bar" style="width:{{ j.progress }}%; background:var(--accent-primary);"></div>
+      </div>
+      <small class="text-muted">{{ j.step }}</small>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <h2 class="h6 text-muted mb-2">כל הקורסים ({{ courses|length }})</h2>
+  <div class="card-surface p-0 overflow-hidden">
+    <table class="table table-dark table-hover mb-0 align-middle">
+      <thead>
+        <tr><th>קורס</th><th>תחום / מסלול</th><th>שיעורים</th><th>סטטוס</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for c in courses %}
+        <tr>
+          <td><a href="{% url 'studio_course_edit' c.slug %}" class="text-decoration-none">{{ c.title }}</a>
+            <div class="small text-muted">{{ c.slug }}</div></td>
+          <td class="small">{{ c.domain }}{% if c.track %} / {{ c.track }}{% endif %}</td>
+          <td>{{ c.videos.count }}</td>
+          <td>{% if c.is_published %}<span class="badge bg-success">פורסם</span>{% else %}<span class="badge bg-secondary">טיוטה</span>{% endif %}</td>
+          <td class="text-nowrap">
+            <a href="{% url 'studio_course_edit' c.slug %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+            <form method="post" action="{% url 'studio_course_delete' c.slug %}" class="d-inline"
+                  onsubmit="return confirm('למחוק את הקורס {{ c.title|escapejs }}?');">
+              {% csrf_token %}
+              <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-muted text-center py-4">אין עדיין קורסים. צור אחד למעלה.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

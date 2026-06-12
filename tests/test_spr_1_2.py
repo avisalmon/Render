@@ -4,9 +4,8 @@ Tests for F-1.2.1 through F-1.2.8.
 Run: pytest -m spr12 -v
 """
 import pytest
-from django.contrib.auth.models import User
 from django.conf import settings
-
+from django.contrib.auth.models import User
 
 # ---------------------------------------------------------------------------
 # F-1.2.4 — Password signup / login / logout

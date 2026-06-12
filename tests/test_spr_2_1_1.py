@@ -3,16 +3,12 @@ SPR-2.1.1 - Corporate Page: Conversion MVP
 TDD tests for F-2.1.1 through F-2.1.15.
 Run: pytest -m spr211 -v
 """
-import re
 
 import pytest
 from django.apps import apps
-from django.conf import settings
 from django.core import mail
 from django.core.cache import cache
 from django.test import Client, override_settings
-from django.urls import reverse
-
 
 pytestmark = [pytest.mark.spr211, pytest.mark.django_db]
 

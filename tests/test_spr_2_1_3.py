@@ -12,7 +12,6 @@ from django.core.management import call_command
 from django.test import Client, override_settings
 from django.utils import timezone
 
-
 pytestmark = [pytest.mark.spr213, pytest.mark.django_db]
 
 

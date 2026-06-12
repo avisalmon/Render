@@ -3,9 +3,6 @@ Root conftest.py — pytest configuration and global fixtures.
 Overrides STORAGES to use simple (non-manifest) static files storage during tests
 so templates with {% static %} don't require collectstatic to have been run.
 """
-import django
-import pytest
-from django.test import override_settings
 
 
 # Use simple static files storage in all tests so templates with {% static %}

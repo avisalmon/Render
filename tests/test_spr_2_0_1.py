@@ -4,10 +4,10 @@ Tests for F-2.0.1 through F-2.0.7.
 Run: pytest -m spr201 -v
 """
 import re
-import pytest
 from pathlib import Path
-from django.conf import settings
 
+import pytest
+from django.conf import settings
 
 STYLE_CSS = Path(settings.STATICFILES_DIRS[0] if settings.STATICFILES_DIRS else settings.BASE_DIR / "static") / "style.css"
 BASE_HTML = Path(settings.TEMPLATES[0]["DIRS"][0]) / "base.html"

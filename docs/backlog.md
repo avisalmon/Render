@@ -367,6 +367,103 @@ Sprints in this epic:
 
 ---
 
+## EPIC-3 — Training Platform & Course Library
+
+**Goal:** A structured, navigable course library (Domain → Track → Course) with
+experiential lessons and faithful notes, scaling beyond the single first course.
+**Spec:** [main_spec.md §Chapter 3](main_spec.md) — back-filled 2026-06-12 (REQ-3.1–3.8).
+**Owner:** Avi + Claude
+**Status:** DONE ✅ — live on prod; tests in `tests/test_spr_3_1.py`.
+
+Sprints in this epic:
+- SPR-3.1 Taxonomy & Drill-down Catalog — DONE
+- SPR-3.2 Intros & Cross-listing — DONE
+- SPR-3.3 Experiential Lessons (Reflection) — DONE
+- SPR-3.4 Content Sync & Quality — DONE
+
+### SPR-3.1 — Taxonomy & Drill-down Catalog
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-3.1.1 | `Course.domain` + `Course.track` fields (migration 0014) | REQ-3.1.1 | DONE |
+| F-3.1.2 | `TRAINING_TAXONOMY` (domains/tracks metadata) | REQ-3.1.2 | DONE |
+| F-3.1.3 | `build_catalog()` Domain→Track→Course grouping | REQ-3.1.3 | DONE |
+| F-3.1.4 | L0 domains page `/courses/` | REQ-3.2.1 | DONE |
+| F-3.1.5 | L1 tracks page `/courses/topic/<domain>/` | REQ-3.2.2 | DONE |
+| F-3.1.6 | L2 leaves page `/courses/topic/<domain>/<track>/` | REQ-3.2.3 | DONE |
+| F-3.1.7 | Breadcrumbs + coming-soon empties | REQ-3.2.4 | DONE |
+
+### SPR-3.2 — Intros & Cross-listing
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-3.2.1 | Per-level intro cards (`intro_row`/`intro_slug`) | REQ-3.3.1 | DONE |
+| F-3.2.2 | Cross-listing via `extra_slugs` | REQ-3.4.1 | DONE |
+
+### SPR-3.3 — Experiential Lessons (Reflection)
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-3.3.1 | `reflection_prompt` + `LessonReflection` (migration 0015) | REQ-3.5.1 | DONE |
+| F-3.3.2 | Reflection endpoint + lesson completion | REQ-3.5.2 | DONE |
+| F-3.3.3 | Admin-only reflections; profile courses + completion % | REQ-3.5.3 | DONE |
+| F-3.3.4 | Video-optional (text-only) lessons | REQ-3.5.4 | DONE |
+
+### SPR-3.4 — Content Sync & Quality
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-3.4.1 | Extended sync fields + lesson deletion on push | REQ-3.6.1 | DONE |
+| F-3.4.2 | gzip+base64 WAF-safe payload | REQ-3.6.2 | DONE |
+| F-3.4.3 | Homepage worlds + slim hero + placeholder pages | REQ-3.7.1 | DONE |
+| F-3.4.4 | Faithful, em-dash-free notes; fenced code; HTML tables | REQ-3.8.1, REQ-3.8.2 | DONE |
+
+---
+
+## EPIC-4 — Course Authoring Studio
+
+**Goal:** Self-serve, in-product course creation: a manual editor (full CRUD) and
+an automated video → draft-course pipeline, for Avi and authorized authors.
+**Spec:** [main_spec.md §Chapter 4](main_spec.md) (REQ-4.1–4.3).
+**Owner:** Avi + Claude
+**Status:** DONE ✅ — tests in tests/test_spr_4_1.py (15 tests)
+
+Sprints in this epic:
+- SPR-4.1 Access & Studio Shell — DONE
+- SPR-4.2 Manual Authoring (CRUD) — DONE
+- SPR-4.3 Automated Pipeline (video → course) — DONE
+
+### SPR-4.1 — Access & Studio Shell
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-4.1.1 | `UserProfile.is_author` + `@author_required` guard | REQ-4.1.1 | DONE |
+| F-4.1.2 | `/studio/` course list + create/delete + nav link | REQ-4.1.2 | DONE |
+
+### SPR-4.2 — Manual Authoring (CRUD)
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-4.2.1 | Create / edit course metadata | REQ-4.2.1 | DONE |
+| F-4.2.2 | Delete course | REQ-4.2.2 | DONE |
+| F-4.2.3 | Lesson create / edit / delete | REQ-4.2.3 | DONE |
+| F-4.2.4 | Markdown editor + live preview | REQ-4.2.4 | DONE |
+| F-4.2.5 | Reorder lessons | REQ-4.2.5 | DONE |
+| F-4.2.6 | Publish / unpublish | REQ-4.2.6 | DONE |
+
+### SPR-4.3 — Automated Pipeline (video → course)
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-4.3.1 | New-from-video wizard (YouTube URL / upload) | REQ-4.3.1 | DONE |
+| F-4.3.2 | `AuthoringJob` model | REQ-4.3.2 | DONE |
+| F-4.3.3 | `app/authoring/` pipeline (download→transcribe→topics→split→Bunny→notes) | REQ-4.3.3 | DONE |
+| F-4.3.4 | Background runner + live progress polling | REQ-4.3.4 | DONE |
+| F-4.3.5 | Editable draft result | REQ-4.3.5 | DONE |
+| F-4.3.6 | `run_authoring_jobs` worker command | REQ-4.3.6 | DONE |
+
+---
+
 ## Status Summary (reconciled 2026-06-09)
 
 **Full regression: 274/274 passing.** Per-sprint test counts: 1.1=19, 1.2=17,

@@ -333,9 +333,156 @@ Chapter 2 is **DONE** when:
 
 ---
 
+## Chapter 3 — Training Platform & Course Library
+
+> **Back-filled 2026-06-12.** EPIC-3 grew organically (taxonomy, drill-down
+> catalog, per-level intros, cross-listing, experiential reflection lessons, a
+> 16-course library) and shipped to prod ahead of a written spec. This chapter
+> documents the requirements the built, live features satisfy, restoring REQ
+> traceability. Same conventions as Chapters 1-2.
+
+### 3.0 Vision
+
+Scale from a single flagship course to a **structured, navigable library** spanning
+multiple domains, with a self-documenting taxonomy, experiential (try-it-yourself)
+lessons, and faithful, human course notes. The catalog must stay scannable as the
+library grows from tens to hundreds of courses.
+
+### 3.1 Training taxonomy (Domain → Track → Course)
+
+| REQ-ID | Title | Expectation (acceptance) | Status |
+|---|---|---|---|
+| REQ-3.1.1 | Course taxonomy fields | `Course.domain` + `Course.track` (migration 0014). | DONE |
+| REQ-3.1.2 | Taxonomy definition | `app/taxonomy.py` `TRAINING_TAXONOMY`: domains + tracks with title/subtitle/icon/order/description. | DONE |
+| REQ-3.1.3 | Catalog builder | `build_catalog(courses)` groups published courses into Domain → Track → Courses, returns `(domains, uncategorized)`; nothing silently dropped. | DONE |
+| REQ-3.1.4 | Domains | מטצים (4 tracks), בינה מלאכותית (3 levels), הובלת חדשנות (ExO / leadership / presentation). | DONE |
+
+### 3.2 Drill-down catalog
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-3.2.1 | Domains (L0) | `GET /courses/` lists domains as big cards with small topic-chip hints. | DONE |
+| REQ-3.2.2 | Tracks (L1) | `GET /courses/topic/<domain>/` lists the domain's tracks with course-name hints. | DONE |
+| REQ-3.2.3 | Leaves (L2) | `GET /courses/topic/<domain>/<track>/` lists course cards with descriptions. | DONE |
+| REQ-3.2.4 | Breadcrumbs + empties | Breadcrumb nav at L1/L2; empty domains/tracks render a "coming soon" state, not a 404. | DONE |
+
+### 3.3 Per-level intro cards
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-3.3.1 | Intro row | A domain with `intro_row` renders a top row of one "intro" card per track; a track's `intro_slug` course is featured and listed first within the track. | DONE |
+
+### 3.4 Cross-listing
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-3.4.1 | extra_slugs | A track's `extra_slugs` lists a course in additional tracks without changing its primary placement (e.g. Python in matazim/software AND ai-l3). | DONE |
+
+### 3.5 Experiential lessons (reflection)
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-3.5.1 | Reflection model | `Video.reflection_prompt` + `LessonReflection(user, video, prompt, user_text, ai_reply)` (migration 0015). | DONE |
+| REQ-3.5.2 | Reflection endpoint | `POST /api/lesson/<video_id>/reflect/`: save free-text + GPT reply, complete the lesson (reuses `quiz_passed` gating). Graceful fallback if OpenAI fails. | DONE |
+| REQ-3.5.3 | Privacy | Reflections are admin-only (Django admin); the user's own profile shows enrolled courses + completion %, not reflections. | DONE |
+| REQ-3.5.4 | Video-optional lessons | A lesson with empty `bunny_video_id` renders as text-only (no player). | DONE |
+
+### 3.6 Content sync (extended)
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-3.6.1 | Extended sync fields | Sync carries `domain/track/reflection_prompt/is_final_lesson/summary_he`; lessons removed in a push are deleted on prod (rework support). | DONE |
+| REQ-3.6.2 | WAF-safe payload | Optional gzip+base64 body (`X-Payload-Encoding: gzip-base64`) for code-heavy pushes. | DONE |
+
+### 3.7 Homepage worlds
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-3.7.1 | Worlds + slim hero | Slim hero + "worlds of babook" cards (Training live, others placeholders); placeholder section pages (`/community/ /services/ /workshops/ /nostalgia/ /research/`). | DONE |
+
+### 3.8 Content quality
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-3.8.1 | Faithful notes | Lesson notes reflect the source (the speaker's points/examples), lightly enriched, with real sources. | DONE |
+| REQ-3.8.2 | Clean copy | No em-dashes anywhere user-facing; code/commands in fenced ``` snippets; markdown tables render as HTML. | DONE |
+
+### 3.9 Decisions log
+
+| ID | Topic | Choice | Rationale |
+|---|---|---|---|
+| DEC-22 | Taxonomy storage | **Code-defined `TRAINING_TAXONOMY` + `domain`/`track` fields** | Stable, ordered, fast; no extra models; cross-listing via `extra_slugs` |
+| DEC-23 | Assessment | **AI reflection** as an alternative to quizzes for experiential courses | Engagement + captured learner intent; replaces the right/wrong gate |
+| DEC-24 | Note generation | **Faithful-first** (capture the talk, then enrich) over generic write-ups | Preserves the speaker's voice and specific examples |
+| DEC-25 | Transcription | **gpt-4o-transcribe** (stronger) for important courses | Cleaner transcripts for code-switching / technical Hebrew-English talks |
+
+### 3.10 Acceptance criteria for Chapter 3
+
+Chapter 3 is **DONE** when: all `REQ-3.*` are `DONE`; the drill-down catalog, intros,
+cross-listing, reflection flow, and 16-course library are live on babook.co.il; and
+the full regression passes.
+
+---
+
+## Chapter 4 — Course Authoring Studio
+
+### 4.0 Vision
+
+Turn course creation from a developer-run local pipeline into a **self-serve,
+in-product studio** for Avi and any authorized author. Two complementary modes:
+a **manual editor** (full CRUD over courses and lessons) and an **automated
+pipeline** (a video → a complete, editable draft course). The studio must be
+clean, fast, and good enough to beat off-the-shelf course tools.
+
+### 4.1 Authoring access
+
+| REQ-ID | Title | Expectation (acceptance) | Status |
+|---|---|---|---|
+| REQ-4.1.1 | Author capability | `UserProfile.is_author`; staff are implicitly authors. `@author_required` guards every studio route (non-authors → 403/redirect). | DONE |
+| REQ-4.1.2 | Studio entry | `/studio/` lists the courses with create / edit / delete, visible only to authors (link shown in nav for authors). | DONE |
+
+### 4.2 Manual authoring (CRUD)
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-4.2.1 | Create / edit course | Edit title, title_en, description, domain, track, difficulty, thumbnail, is_published. Domain/track from the taxonomy. | DONE |
+| REQ-4.2.2 | Delete course | Delete a course (with confirm). | DONE |
+| REQ-4.2.3 | Lesson CRUD | Add / edit / delete a lesson: title, notes (markdown), bunny_video_id, is_free_preview, is_final_lesson, reflection_prompt, duration. | DONE |
+| REQ-4.2.4 | Markdown editor + preview | The notes editor shows a live rendered preview (same renderer as the lesson page). | DONE |
+| REQ-4.2.5 | Reorder lessons | Reorder lessons (drag and/or up/down); lesson_order persists; the final lesson flag follows the last lesson. | DONE |
+| REQ-4.2.6 | Publish toggle | Publish / unpublish a course from the studio. | DONE |
+
+### 4.3 Automated pipeline (video → course)
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-4.3.1 | New-from-video wizard | Start a course from a YouTube URL **or** an uploaded video, plus title + domain/track. | DONE |
+| REQ-4.3.2 | `AuthoringJob` model | Tracks a build job: source, status (pending/running/done/error), progress %, current step, log, linked course. | DONE |
+| REQ-4.3.3 | Pipeline | download → transcribe (gpt-4o-transcribe) → detect topics → split → upload to Bunny → faithful notes → draft course with lessons. Runs in the background; progress is written to the job. | DONE |
+| REQ-4.3.4 | Live progress | The wizard shows live status/step/progress (polling) until done, then links to the draft course editor. | DONE |
+| REQ-4.3.5 | Editable result | The generated draft is a normal course, fully editable with the manual tools (4.2), and unpublished until the author publishes it. | DONE |
+| REQ-4.3.6 | Worker fallback | `run_authoring_jobs` management command processes pending jobs (for environments where a YouTube download from the web host is blocked). | DONE |
+
+### 4.4 Decisions log
+
+| ID | Topic | Choice | Rationale |
+|---|---|---|---|
+| DEC-26 | Studio access | **`is_author` flag + staff** | Lets Avi authorize specific creators without giving full admin |
+| DEC-27 | Background processing | **Daemon thread + `AuthoringJob` + worker command** | No Celery/Redis on the SQLite/Render setup; thread for self-serve UX, command as robust fallback |
+| DEC-28 | Pipeline reuse | **`app/authoring/` package** (in-app pipeline) | Promotes the proven local scripts into tested, importable app code |
+
+### 4.5 Acceptance criteria for Chapter 4
+
+Chapter 4 is **DONE** when: authors can create/edit/delete/reorder courses and
+lessons in `/studio/` with a live markdown preview; a video (URL or upload) can be
+turned into an editable draft course via the wizard with live progress; non-authors
+are blocked; and the full regression passes.
+
+---
+
 ## Reference
 
-- **Stack**: Django 5.2, Gunicorn, WhiteNoise, SQLite (Render disk), django-allauth (Google + GitHub OAuth), Bunny Stream (video), Stripe + Green Invoice (billing), Resend (email), Plausible (analytics), GitHub Copilot Business (seat provisioning via GitHub REST API), OpenAI API (AI chat, GPT-4o-mini / GPT-4o)
+- **Stack**: Django 5.2, Gunicorn, WhiteNoise, SQLite (Render disk), django-allauth (Google + GitHub OAuth), Bunny Stream (video), Stripe + Green Invoice (billing), Resend (email), Plausible (analytics), GitHub Copilot Business (seat provisioning via GitHub REST API), OpenAI API (AI chat, GPT-4o-mini / GPT-4o, gpt-4o-transcribe), yt-dlp + ffmpeg (authoring pipeline)
 - **Live URL**: https://babook.co.il
 - **Repo**: https://github.com/avisalmon/Render (branch `main`)
 - **Deploy**: `git push origin main` → Render auto-deploys

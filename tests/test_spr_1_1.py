@@ -5,13 +5,10 @@ TDD tests written BEFORE implementation. All should fail (RED) until features ar
 import io
 import json
 import logging
-import os
 from pathlib import Path
 
 import pytest
 from django.conf import settings
-from django.test import Client, TestCase
-
 
 # ---------------------------------------------------------------------------
 # F-1.1.1 — Env & secrets pattern

@@ -6,7 +6,6 @@ F-2.2.6 lesson page, F-2.2.7 course completion, F-2.2.8 SEO/sitemap,
 F-2.2.9 corporate funnel hook, F-2.2.10 load_course_from_manifest.
 """
 import json
-from pathlib import Path
 
 import pytest
 from django.contrib.auth.models import User
@@ -14,7 +13,6 @@ from django.urls import reverse
 from django.utils import timezone
 
 from app.models import Course, Enrollment, UserVideoProgress, Video
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

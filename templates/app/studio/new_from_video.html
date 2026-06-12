@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}קורס מסרטון - אולפן{% endblock %}
+{% block content %}
+<div class="py-4" style="max-width:720px;margin:0 auto;">
+  <nav aria-label="breadcrumb"><ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'studio_home' %}">אולפן</a></li>
+    <li class="breadcrumb-item active">קורס מסרטון</li>
+  </ol></nav>
+  <h1 class="h4 mb-1"><i class="bi bi-magic me-1" style="color:var(--accent-primary)"></i> קורס מסרטון (אוטומטי)</h1>
+  <p class="text-muted">תן קישור YouTube או העלה וידאו, והמערכת תוריד, תתמלל, תחלק לשיעורים, תעלה ל-Bunny ותכתוב סיכומים. בסוף תקבל טיוטת קורס לעריכה.</p>
+  {% if messages %}{% for m in messages %}<div class="alert alert-danger py-2">{{ m }}</div>{% endfor %}{% endif %}
+
+  <form method="post" enctype="multipart/form-data" class="card-surface p-4">
+    {% csrf_token %}
+    <div class="mb-3"><label class="form-label">כותרת הקורס *</label>
+      <input class="form-control" name="title" required></div>
+    <div class="row g-3 mb-3">
+      <div class="col-6"><label class="form-label">תחום</label>
+        <select class="form-select" name="domain" id="domain-select"></select></div>
+      <div class="col-6"><label class="form-label">מסלול</label>
+        <select class="form-select" name="track" id="track-select"></select></div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label d-block">מקור הוידאו</label>
+      <div class="btn-group" role="group">
+        <input type="radio" class="btn-check" name="source_type" id="src-yt" value="youtube" checked>
+        <label class="btn btn-outline-primary" for="src-yt"><i class="bi bi-youtube"></i> YouTube</label>
+        <input type="radio" class="btn-check" name="source_type" id="src-up" value="upload">
+        <label class="btn btn-outline-primary" for="src-up"><i class="bi bi-upload"></i> העלאת קובץ</label>
+      </div>
+    </div>
+    <div class="mb-3" id="url-row">
+      <label class="form-label">קישור YouTube</label>
+      <input class="form-control" name="source_url" placeholder="https://www.youtube.com/watch?v=...">
+    </div>
+    <div class="mb-3 d-none" id="file-row">
+      <label class="form-label">קובץ וידאו (mp4)</label>
+      <input class="form-control" type="file" name="source_file" accept="video/*">
+    </div>
+    <button class="btn btn-primary mt-2"><i class="bi bi-magic"></i> צור קורס</button>
+  </form>
+</div>
+
+{{ domains|json_script:"domains-data" }}
+<script>
+(function(){
+  var domains = JSON.parse(document.getElementById('domains-data').textContent);
+  var dsel = document.getElementById('domain-select'), tsel = document.getElementById('track-select');
+  domains.forEach(function(d){ var o=document.createElement('option'); o.value=d[0]; o.textContent=d[1]; dsel.appendChild(o); });
+  function fillTracks(){ tsel.innerHTML=''; var none=document.createElement('option'); none.value=''; none.textContent='(ללא מסלול)'; tsel.appendChild(none);
+    var d=domains.find(function(x){return x[0]===dsel.value;}); if(d){d[2].forEach(function(t){var o=document.createElement('option');o.value=t[0];o.textContent=t[1];tsel.appendChild(o);});}}
+  dsel.addEventListener('change', fillTracks); fillTracks();
+  function toggle(){ var yt=document.getElementById('src-yt').checked;
+    document.getElementById('url-row').classList.toggle('d-none', !yt);
+    document.getElementById('file-row').classList.toggle('d-none', yt); }
+  document.getElementById('src-yt').addEventListener('change', toggle);
+  document.getElementById('src-up').addEventListener('change', toggle);
+})();
+</script>
+{% endblock %}

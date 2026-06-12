@@ -19,6 +19,8 @@ class UserProfile(models.Model):
     display_name = models.CharField(max_length=150, blank=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="member")
     github_username = models.CharField(max_length=100, blank=True, default="")
+    # Authoring Studio: may create/edit courses. Staff are implicitly authors.
+    is_author = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.user.username} ({self.role})"
@@ -468,3 +470,56 @@ class NewsletterSubscriber(models.Model):
 
     def __str__(self):
         return self.email
+
+
+class AuthoringJob(models.Model):
+    """Tracks an automated 'video -> draft course' build for the Authoring Studio."""
+
+    SOURCE_CHOICES = [("youtube", "YouTube URL"), ("upload", "Uploaded file")]
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("running", "Running"),
+        ("done", "Done"),
+        ("error", "Error"),
+    ]
+
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, related_name="authoring_jobs"
+    )
+    course = models.ForeignKey(
+        Course, on_delete=models.SET_NULL, null=True, blank=True, related_name="authoring_jobs"
+    )
+    title = models.CharField(max_length=200)
+    domain = models.CharField(max_length=20, default="matazim")
+    track = models.CharField(max_length=40, blank=True, default="")
+    source_type = models.CharField(max_length=10, choices=SOURCE_CHOICES, default="youtube")
+    source_url = models.CharField(max_length=500, blank=True, default="")
+    source_file = models.FileField(upload_to="authoring_uploads/", blank=True, null=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
+    progress = models.PositiveSmallIntegerField(default=0)  # 0-100
+    step = models.CharField(max_length=200, blank=True, default="")
+    log = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Authoring job"
+
+    def __str__(self):
+        return f"Job #{self.pk} {self.title} ({self.status})"
+
+    def append_log(self, message):
+        self.log = (self.log or "") + message + "\n"
+
+    def mark(self, *, status=None, progress=None, step=None, log=None, save=True):
+        if status is not None:
+            self.status = status
+        if progress is not None:
+            self.progress = progress
+        if step is not None:
+            self.step = step
+        if log:
+            self.append_log(log)
+        if save:
+            self.save()

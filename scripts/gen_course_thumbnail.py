@@ -2,8 +2,11 @@
 Generate course thumbnail for micropython-thonny using Azure gpt-image-2.
 Output: static/course_thumbnails/micropython-thonny.png
 """
-import os, base64, requests
+import base64
+import os
 from pathlib import Path
+
+import requests
 
 # --- load key ---
 env = {}

@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from .models import (
+    AuthoringJob,
     ChatMessage,
     ChatSession,
     CopilotSeat,
@@ -54,6 +55,13 @@ admin.site.register(CorporateLead)
 admin.site.register(NewsletterSubscriber)
 admin.site.register(LessonQuiz)
 admin.site.register(CourseCertificate)
+
+
+@admin.register(AuthoringJob)
+class AuthoringJobAdmin(admin.ModelAdmin):
+    list_display = ("id", "title", "source_type", "status", "progress", "course", "created_at")
+    list_filter = ("status", "source_type")
+    readonly_fields = ("created_at", "updated_at")
 
 
 @admin.register(LessonReflection)

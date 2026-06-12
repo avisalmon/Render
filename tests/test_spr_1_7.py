@@ -21,7 +21,6 @@ class TestPytestSetup:
 
     def test_pytest_django_marker_registered(self):
         """T-F-1.7.1-1: spr17 marker is declared in pyproject.toml."""
-        import configparser
         import tomllib
 
         with open(BASE_DIR / "pyproject.toml", "rb") as f:

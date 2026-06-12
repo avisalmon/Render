@@ -4,12 +4,12 @@ Tests for F-1.6.1 through F-1.6.12.
 Run: pytest -m spr16 -v
 """
 
-import pytest
 from datetime import timedelta
+
+import pytest
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.utils import timezone
-
 
 # ---------------------------------------------------------------------------
 # F-1.6.1 — GitHub org + Copilot Business config
@@ -47,7 +47,6 @@ def test_copilot_max_seats_setting():
 @pytest.mark.django_db
 def test_userprofile_has_github_username():
     """T-F-1.6.2-1: UserProfile has github_username field."""
-    from app.models import UserProfile
 
     user = User.objects.create_user("ghtest", password="pass1234")
     profile = user.profile
@@ -58,7 +57,6 @@ def test_userprofile_has_github_username():
 @pytest.mark.django_db
 def test_github_username_is_optional():
     """T-F-1.6.2-2: github_username is optional (blank allowed)."""
-    from app.models import UserProfile
 
     user = User.objects.create_user("ghtest2", password="pass1234")
     profile = user.profile
@@ -108,7 +106,6 @@ def test_copilot_seat_status_choices():
 def test_invite_to_org_creates_pending_seat():
     """T-F-1.6.4-1: invite_to_org creates pending CopilotSeat."""
     from app.copilot import invite_to_org
-    from app.models import CopilotSeat
 
     user = User.objects.create_user("inviteuser", password="pass1234")
     user.profile.github_username = "inviteuser"
@@ -147,7 +144,6 @@ def test_invite_logs_seat_event():
 def test_assign_copilot_seat_updates_status():
     """T-F-1.6.5-1: assign_copilot_seat updates status to active."""
     from app.copilot import assign_copilot_seat, invite_to_org
-    from app.models import CopilotSeat
 
     user = User.objects.create_user("assignuser", password="pass1234")
     user.profile.github_username = "assignuser"
@@ -189,7 +185,6 @@ def test_assign_logs_seat_event():
 def test_revoke_copilot_seat_updates_status():
     """T-F-1.6.6-1: revoke_copilot_seat updates status to revoked."""
     from app.copilot import assign_copilot_seat, invite_to_org, revoke_copilot_seat
-    from app.models import CopilotSeat
 
     user = User.objects.create_user("revokeuser", password="pass1234")
     user.profile.github_username = "revokeuser"
@@ -255,7 +250,6 @@ def test_inactivity_reclaim_days_setting():
 def test_check_inactivity_warns_stale_seats():
     """T-F-1.6.7-3: check_inactivity warns seats inactive > 30d."""
     from app.copilot import assign_copilot_seat, check_inactivity, invite_to_org
-    from app.models import CopilotSeat, SeatEvent
 
     user = User.objects.create_user("staleuser", password="pass1234")
     user.profile.github_username = "staleuser"
@@ -276,7 +270,6 @@ def test_check_inactivity_warns_stale_seats():
 def test_check_inactivity_reclaims_very_stale_seats():
     """T-F-1.6.7-4: check_inactivity reclaims seats inactive > 60d."""
     from app.copilot import assign_copilot_seat, check_inactivity, invite_to_org
-    from app.models import CopilotSeat, SeatEvent
 
     user = User.objects.create_user("verystale", password="pass1234")
     user.profile.github_username = "verystale"
@@ -330,7 +323,6 @@ def test_admin_copilot_dashboard_context(client):
 def test_invite_refused_at_max_seats(settings):
     """T-F-1.6.9-1: invite refused when COPILOT_MAX_SEATS reached."""
     from app.copilot import invite_to_org
-    from app.models import CopilotSeat
 
     settings.COPILOT_MAX_SEATS = 1
 
@@ -353,7 +345,6 @@ def test_invite_refused_at_max_seats(settings):
 def test_waitlisted_seat_status(settings):
     """T-F-1.6.9-2: waitlisted seat has status=waitlisted."""
     from app.copilot import invite_to_org
-    from app.models import CopilotSeat
 
     settings.COPILOT_MAX_SEATS = 0  # No seats available
 

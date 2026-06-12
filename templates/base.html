@@ -68,6 +68,11 @@
           <li class="nav-item">
             <a class="nav-link" href="{% url 'chat_page' %}"><i class="bi bi-chat-dots"></i> צ'אט AI</a>
           </li>
+          {% if user.is_staff or user.profile.is_author %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'studio_home' %}"><i class="bi bi-easel2"></i> אולפן</a>
+          </li>
+          {% endif %}
           {% if user.is_staff %}
           <li class="nav-item">
             <a class="nav-link" href="{% url 'copilot_dashboard' %}"><i class="bi bi-speedometer2"></i> לוח בקרה</a>

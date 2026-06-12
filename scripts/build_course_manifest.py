@@ -3,7 +3,8 @@ Build course_manifest.json — single source of truth for lesson page constructi
 Merges lesson JSON data with Bunny video IDs from the DB.
 Run any time lesson JSONs or DB change.
 """
-import sqlite3, json
+import json
+import sqlite3
 from pathlib import Path
 
 BASE  = Path("data/course_materials/micropython-thonny")

@@ -82,3 +82,42 @@
 | T-F-2.2.9-1 | `test_corporate_hook_on_detail` | Course detail contains /corporate/ link |
 | T-F-2.2.9-2 | `test_corporate_hook_on_lesson` | Lesson page contains /corporate/ link |
 | T-F-2.2.10-1 | `test_manifest_command_populates_new_fields` | load_course_from_manifest fills Video fields from JSON |
+
+---
+
+## EPIC-3 — Training Platform (`tests/test_spr_3_1.py`, 12 tests)
+
+| Test | Verifies |
+|---|---|
+| `test_build_catalog_groups_by_domain_and_track` | build_catalog places a course in its (domain, track) |
+| `test_build_catalog_uncategorized_bucket` | unknown-track course surfaced as uncategorized |
+| `test_cross_listing_extra_slugs` | Python appears in ai-l3 AND matazim/software |
+| `test_cross_listed_course_keeps_primary_placement` | MicroPython in matazim/hardware AND uncategorized |
+| `test_intro_course_featured_first` | track intro_slug course featured + first |
+| `test_catalog_drilldown_views_return_200` | L0/L1/L2 catalog pages render |
+| `test_unknown_domain_404` | unknown domain → 404 |
+| `test_reflection_endpoint_saves_and_completes` | reflection saved, AI reply, lesson completed |
+| `test_reflection_endpoint_rejects_empty` | empty reflection → 400 |
+| `test_text_only_lesson_has_no_player` | video-less lesson renders text-only |
+| `test_profile_shows_courses_not_reflections` | profile shows courses, hides reflections |
+| `test_sync_deletes_removed_lessons` | push with fewer lessons deletes extras |
+
+## EPIC-4 — Authoring Studio (`tests/test_spr_4_1.py`, 15 tests)
+
+| Test | Verifies |
+|---|---|
+| `test_non_author_blocked` | non-author → 403 |
+| `test_anonymous_redirected_to_login` | anonymous → login redirect |
+| `test_author_can_open_studio` | author opens /studio/ |
+| `test_staff_is_implicit_author` | staff is an author |
+| `test_create_course` | create course (draft) |
+| `test_edit_course_metadata` | edit course metadata |
+| `test_delete_course` | delete course |
+| `test_publish_toggle` | publish/unpublish toggle |
+| `test_add_and_edit_lesson` | add + edit lesson; final flag |
+| `test_delete_lesson` | delete lesson |
+| `test_reorder_lessons` | reorder persists; final flag follows last |
+| `test_markdown_preview` | preview renders markdown to HTML |
+| `test_new_from_video_creates_job` | wizard creates AuthoringJob + kicks runner |
+| `test_job_status_api` | job status JSON |
+| `test_pipeline_orchestration_builds_course` | run_job builds a draft course (heavy steps mocked) |

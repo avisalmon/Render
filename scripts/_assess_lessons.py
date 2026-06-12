@@ -1,5 +1,6 @@
 """Assess all 15 lessons for completeness."""
-import sqlite3, json
+import json
+import sqlite3
 from pathlib import Path
 
 db = sqlite3.connect('data/db.sqlite3')
