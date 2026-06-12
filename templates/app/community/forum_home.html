@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}פורום הקהילה - babook{% endblock %}
+
+{% block content %}
+<div class="py-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h1 class="h3 mb-0"><i class="bi bi-chat-square-text-fill me-1" style="color:var(--accent-primary)"></i> הפורום</h1>
+    <a href="{% url 'forum_new' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> שאלה חדשה</a>
+  </div>
+
+  {% include "app/community/_guest_note.html" %}
+
+  <form method="get" class="d-flex gap-2 mb-3 flex-wrap">
+    <input class="form-control" style="max-width:340px" name="q" value="{{ query }}" placeholder="חיפוש בפורום..." aria-label="חיפוש בפורום">
+    {% if active_category %}<input type="hidden" name="cat" value="{{ active_category }}">{% endif %}
+    {% if active_tag %}<input type="hidden" name="tag" value="{{ active_tag }}">{% endif %}
+    <button class="btn btn-outline-primary" aria-label="חיפוש"><i class="bi bi-search"></i></button>
+  </form>
+
+  <div class="d-flex gap-2 mb-3 flex-wrap small">
+    <a href="{% url 'forum_home' %}" class="btn btn-sm {% if not active_category and not active_filter and not active_tag %}btn-primary{% else %}btn-outline-secondary{% endif %}">הכל</a>
+    {% for c in categories %}
+    <a href="?cat={{ c.slug }}{% if query %}&q={{ query|urlencode }}{% endif %}" class="btn btn-sm {% if active_category == c.slug %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+      <i class="bi {{ c.meta.icon }}"></i> {{ c.meta.title }} {% if c.count %}({{ c.count }}){% endif %}
+    </a>
+    {% endfor %}
+    <span class="vr d-none d-md-block"></span>
+    <a href="?filter=unanswered" class="btn btn-sm {% if active_filter == 'unanswered' %}btn-warning{% else %}btn-outline-secondary{% endif %}">ללא מענה</a>
+    {% if user.is_authenticated %}
+    <a href="?filter=mine" class="btn btn-sm {% if active_filter == 'mine' %}btn-primary{% else %}btn-outline-secondary{% endif %}">שלי</a>
+    <a href="?filter=following" class="btn btn-sm {% if active_filter == 'following' %}btn-primary{% else %}btn-outline-secondary{% endif %}">במעקב</a>
+    {% endif %}
+    {% if active_tag %}
+    <span class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1">#{{ active_tag }}
+      <a href="{% url 'forum_home' %}" class="text-white text-decoration-none" aria-label="ניקוי סינון תגית">×</a>
+    </span>
+    {% endif %}
+  </div>
+
+  {% for t in threads %}
+  <a href="{% url 'forum_thread' t.pk %}" class="card-surface d-block p-3 mb-2 text-decoration-none" style="color:var(--text-primary)">
+    <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+      <strong>
+        {% if t.is_pinned %}<i class="bi bi-pin-angle-fill" style="color:var(--accent-cta,#f59e0b)" title="מוצמד"></i>{% endif %}
+        {% if t.is_canonical %}<i class="bi bi-bookmark-star-fill" style="color:var(--accent-primary)" title="תשובה קנונית"></i>{% endif %}
+        {% if t.kind == 'question' %}❓{% else %}💬{% endif %} {{ t.title }}
+      </strong>
+      <span class="d-flex gap-1 align-items-center">
+        {% if t.accepted_post %}<span class="badge bg-success">נענתה ✓</span>{% endif %}
+        <span class="badge bg-secondary">{{ t.num_posts }} תגובות</span>
+      </span>
+    </div>
+    <div class="small text-muted mt-1 d-flex gap-2 flex-wrap align-items-center">
+      {% include "app/community/_author.html" with author=t.author %}
+      · {{ t.updated_at|date:"j בF H:i" }}
+      {% if t.course %}<span class="badge" style="background:var(--bg-elevated,#1a1d24)">📚 {{ t.course.title }}</span>{% endif %}
+      {% for tag in t.tags|slice:":3" %}<a href="?tag={{ tag }}" class="badge bg-dark text-decoration-none">#{{ tag }}</a>{% endfor %}
+    </div>
+  </a>
+  {% empty %}
+  <div class="card-surface p-4 text-center text-muted">
+    {% if query %}לא נמצאו תוצאות ל-«{{ query }}».
+    {% elif active_filter == 'unanswered' %}הכל נענה! 🎉
+    {% elif active_filter == 'following' %}עדיין לא עקבתם אחרי שרשורים. כפתור הפעמון בכל שרשור מצרף אתכם.
+    {% elif active_filter == 'mine' %}עוד לא פרסמתם כאן. <a href="{% url 'forum_new' %}">זה הזמן לשאלה הראשונה</a> 🙂
+    {% else %}אין עדיין שאלות כאן. <a href="{% url 'forum_new' %}">תשאלו ראשונים</a> 🙂{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

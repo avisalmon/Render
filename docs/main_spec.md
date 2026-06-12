@@ -654,9 +654,10 @@ Chapter 5 is **DONE** when:
 
 ## Chapter 6 — Community
 
-> **Reviewed by Avi 2026-06-12** — the five open UX questions are decided
-> (DEC-44–47 below); awaiting his final read before build. Everything is
-> `TODO` (nothing built). Grounded in the full research corpus
+> **Reviewed by Avi 2026-06-12** (DEC-44–47a); build started the same night on
+> his explicit "build with no stop" instruction. **EPIC-6.1 + EPIC-6.2 are DONE**
+> (tests test_spr_6_1/6_2.py, 30 tests; independent UX-expert review applied);
+> EPIC-6.3+ remain `TODO`. Grounded in the full research corpus
 > ([docs/research/](research/)): feature_skeleton Scope 2 + 5, the 15 proven
 > AI-Ascent capability types (research_2), the strategic pivot to
 > authority-first (research_3), and the community-architecture deep dive
@@ -695,17 +696,17 @@ before this.
 
 | REQ-ID | Title | Expectation (acceptance) | Status |
 |---|---|---|---|
-| REQ-6.1.1 | Public member profile | Opt-in public profile at `/c/<username>/`: display name, avatar, bio, role (תלמיד/מורה/אחר), badges, certificates (existing), showcase projects, contribution stats. Private by default; the user explicitly enables it. Builds on `UserProfile`/`LearnerProfile`. | TODO |
-| REQ-6.1.2 | Avatars | Upload or pick a generated avatar; shown everywhere the member appears (posts, comments, leaderboards). | TODO |
-| REQ-6.1.3 | Reputation points | `CommunityReputation`: points for accepted answers (+15), upvotes received (+2), published showcase (+10), challenge wins (+25), tips that get reactions (+1). Visible on profile; drives leaderboard + badge tiers. | TODO |
-| REQ-6.1.4 | Badge system | `CommunityBadge` (definition) + `BadgeAward` (user, awarded_at, reason). Launch set: ראשון לענות, תשובה מקובלת, בונה (first showcase), מנטור (10 accepted answers), אלוף אתגר, מדריך (published tip ×10), tier badges (Bronze/Silver/Gold per points). AI-Ascent-proven pattern (research_2 #10). | TODO |
-| REQ-6.1.5 | Follow | Follow a member → their activity appears in your feed (EPIC-6.4); follower counts on profile. | TODO |
-| REQ-6.1.6 | Notifications | In-app notification center (bell icon + unread count): replies to me, accepted my answer, reactions, badge earned, challenge updates, event reminders. Email digest opt-in per type. | TODO |
-| REQ-6.1.7 | Community guidelines | `/community/guidelines/` in Hebrew: respect, no spam, no solicitation, credit sources, minors-safe language. Accept-once gate before first post. | TODO |
-| REQ-6.1.8 | Moderation tools | Report button on every object → staff queue in admin (hide/delete/warn/suspend); automated checks on submit (existing OpenAI moderation reuse, REQ-1.6 infra); rate limits per member. | TODO |
-| REQ-6.1.9 | Minors safety | The matazim audience includes minors: public profiles for `student` role require no real-name policy enforcement, DMs disabled for students by default (EPIC-6.6), all uploads moderated. | TODO |
-| REQ-6.1.10 | RTL + mobile | Every community surface is Hebrew-first RTL and works ≥360px (REQ-1.2.9/1.2.10 inherited). | TODO |
-| REQ-6.1.11 | Anonymous read, member interact (DEC-45) | Logged-out visitors can READ the forum, showcase, challenges and events pages (SEO + guest funnel; extends the §5.1 access matrix). A soft, dismissible "הירשמו כדי להגיב, לדרג ולפרסם" note is shown to guests. EVERY interaction — post, answer, comment, star/rate, vote, RSVP, follow — requires login and routes anonymous users to the context-aware /join/ wall (REQ-5.4.1) naming what they tried to do. | TODO |
+| REQ-6.1.1 | Public member profile | Opt-in public profile at `/c/<username>/`: display name, avatar, bio, role (תלמיד/מורה/אחר), badges, certificates (existing), showcase projects, contribution stats. Private by default; the user explicitly enables it. Builds on `UserProfile`/`LearnerProfile`. | DONE |
+| REQ-6.1.2 | Avatars | Upload or pick a generated avatar; shown everywhere the member appears (posts, comments, leaderboards). | DONE |
+| REQ-6.1.3 | Reputation points | `CommunityReputation`: points for accepted answers (+15), upvotes received (+2), published showcase (+10), challenge wins (+25), tips that get reactions (+1). Visible on profile; drives leaderboard + badge tiers. | DONE |
+| REQ-6.1.4 | Badge system | `CommunityBadge` (definition) + `BadgeAward` (user, awarded_at, reason). Launch set: ראשון לענות, תשובה מקובלת, בונה (first showcase), מנטור (10 accepted answers), אלוף אתגר, מדריך (published tip ×10), tier badges (Bronze/Silver/Gold per points). AI-Ascent-proven pattern (research_2 #10). | DONE |
+| REQ-6.1.5 | Follow | Follow a member → their activity appears in your feed (EPIC-6.4); follower counts on profile. | DONE |
+| REQ-6.1.6 | Notifications | In-app notification center (bell icon + unread count): replies to me, accepted my answer, reactions, badge earned, challenge updates, event reminders. Email digest opt-in per type. | DONE |
+| REQ-6.1.7 | Community guidelines | `/community/guidelines/` in Hebrew: respect, no spam, no solicitation, credit sources, minors-safe language. Accept-once gate before first post. | DONE |
+| REQ-6.1.8 | Moderation tools | Report button on every object → staff queue in admin (hide/delete/warn/suspend); automated checks on submit (existing OpenAI moderation reuse, REQ-1.6 infra); rate limits per member. | DONE |
+| REQ-6.1.9 | Minors safety | The matazim audience includes minors: public profiles for `student` role require no real-name policy enforcement, DMs disabled for students by default (EPIC-6.6), all uploads moderated. | DONE |
+| REQ-6.1.10 | RTL + mobile | Every community surface is Hebrew-first RTL and works ≥360px (REQ-1.2.9/1.2.10 inherited). | DONE |
+| REQ-6.1.11 | Anonymous read, member interact (DEC-45) | Logged-out visitors can READ the forum, showcase, challenges and events pages (SEO + guest funnel; extends the §5.1 access matrix). A soft, dismissible "הירשמו כדי להגיב, לדרג ולפרסם" note is shown to guests. EVERY interaction — post, answer, comment, star/rate, vote, RSVP, follow — requires login and routes anonymous users to the context-aware /join/ wall (REQ-5.4.1) naming what they tried to do. | DONE |
 
 ### 6.2 EPIC-6.2 — Forums & Q&A (durable knowledge)
 
@@ -714,14 +715,14 @@ searchable — the #1 lesson from research_4.
 
 | REQ-ID | Title | Expectation | Status |
 |---|---|---|---|
-| REQ-6.2.1 | Forum structure | Categories mirror the taxonomy (AI / מטצים / חדשנות) + רמות + "כללי". A thread is a Question or a Discussion. | TODO |
-| REQ-6.2.2 | Q&A mechanics | Answers, voting (up only — friendlier than up/down for a Hebrew learning community), **accepted answer** marked by the asker (or staff), accepted floats to top. | TODO |
-| REQ-6.2.3 | Rich posts | Markdown (same renderer as lessons): fenced code blocks, images, links; preview before post. | TODO |
-| REQ-6.2.4 | Tags & search | Tags (topic, course slug, difficulty); full-text search across threads; filter by unanswered / mine / following. | TODO |
-| REQ-6.2.5 | Course-anchored threads | "שאלו את הקהילה" button on every lesson opens a pre-tagged thread; the lesson page shows its open threads. Connects learning to doing. | TODO |
-| REQ-6.2.6 | Canonical / pinned | Staff can pin threads and mark canonical answers (Solutions-Hub pattern, feature_skeleton 2.5); canonical content surfaces in search first. | TODO |
-| REQ-6.2.7 | AI assist | (a) On posting a question, AI suggests existing similar threads + relevant lessons before submit; (b) threads >10 replies get an AI summary box; (c) optional "Avi Bot draft answer" visible to staff for one-click post. Reuses REQ-1.6 infra. | TODO |
-| REQ-6.2.8 | Subscriptions | Follow a thread/category → notification on activity (REQ-6.1.6). | TODO |
+| REQ-6.2.1 | Forum structure | Categories mirror the taxonomy (AI / מטצים / חדשנות) + רמות + "כללי". A thread is a Question or a Discussion. | DONE |
+| REQ-6.2.2 | Q&A mechanics | Answers, voting (up only — friendlier than up/down for a Hebrew learning community), **accepted answer** marked by the asker (or staff), accepted floats to top. | DONE |
+| REQ-6.2.3 | Rich posts | Markdown (same renderer as lessons): fenced code blocks, images, links; preview before post. | DONE |
+| REQ-6.2.4 | Tags & search | Tags (topic, course slug, difficulty); search across titles+bodies (icontains now, FTS5 when scale demands); filter by unanswered / mine / following. | DONE |
+| REQ-6.2.5 | Course-anchored threads | "שאלו את הקהילה" button on every lesson opens a pre-tagged thread; the lesson page shows its open threads. Connects learning to doing. | DONE |
+| REQ-6.2.6 | Canonical / pinned | Staff can pin threads and mark canonical answers (Solutions-Hub pattern, feature_skeleton 2.5); canonical content surfaces in search first. | DONE |
+| REQ-6.2.7 | AI assist | (a) On posting a question, AI suggests existing similar threads + relevant lessons before submit; (b) threads >10 replies get an AI summary box; (c) optional "Avi Bot draft answer" visible to staff for one-click post. Reuses REQ-1.6 infra. | DONE |
+| REQ-6.2.8 | Subscriptions | Follow a thread/category → notification on activity (REQ-6.1.6). | DONE |
 
 ### 6.3 EPIC-6.3 — Showcase: דוכן ההשוויץ (exhibitions / bragging page)
 

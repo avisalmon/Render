@@ -2,8 +2,11 @@ from django.contrib import admin
 
 from .models import (
     AuthoringJob,
+    BadgeAward,
     ChatMessage,
     ChatSession,
+    CommunityReputation,
+    ContentReport,
     CopilotSeat,
     CorporateLead,
     Course,
@@ -11,6 +14,8 @@ from .models import (
     CourseMaterial,
     Enrollment,
     Entitlement,
+    ForumPost,
+    ForumThread,
     LearnerProfile,
     LessonQuiz,
     LessonReflection,
@@ -27,6 +32,49 @@ from .models import (
 
 admin.site.register(Note)
 admin.site.register(UserProfile)
+
+
+# --- Community (EPIC-6.1/6.2) ---
+
+@admin.register(ContentReport)
+class ContentReportAdmin(admin.ModelAdmin):
+    """The moderation queue (REQ-6.1.8)."""
+    list_display = ("created_at", "content_type", "object_id", "reason",
+                    "reporter", "status", "handled_by")
+    list_filter = ("status", "content_type")
+    actions = ["hide_reported_content", "dismiss_reports"]
+
+    @admin.action(description="Hide reported content + mark actioned")
+    def hide_reported_content(self, request, queryset):
+        from django.utils import timezone
+        for report in queryset:
+            model = {"thread": ForumThread, "post": ForumPost}.get(report.content_type)
+            if model:
+                model.objects.filter(pk=report.object_id).update(is_hidden=True)
+            report.status = "actioned"
+            report.handled_by = request.user
+            report.handled_at = timezone.now()
+            report.action_note = "content hidden"
+            report.save()
+
+    @admin.action(description="Dismiss reports")
+    def dismiss_reports(self, request, queryset):
+        from django.utils import timezone
+        queryset.update(status="dismissed", handled_by=request.user,
+                        handled_at=timezone.now())
+
+
+@admin.register(ForumThread)
+class ForumThreadAdmin(admin.ModelAdmin):
+    list_display = ("title", "category", "kind", "author", "is_pinned",
+                    "is_canonical", "is_hidden", "created_at")
+    list_filter = ("category", "kind", "is_pinned", "is_canonical", "is_hidden")
+    search_fields = ("title", "body", "author__username")
+
+
+admin.site.register(ForumPost)
+admin.site.register(BadgeAward)
+admin.site.register(CommunityReputation)
 
 
 @admin.register(LearnerProfile)

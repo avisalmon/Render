@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}שאלה חדשה - פורום babook{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+  <div class="col-lg-8">
+    <h1 class="h4 mb-3"><i class="bi bi-plus-circle me-1" style="color:var(--accent-primary)"></i> שאלה / דיון חדש</h1>
+
+    {% if messages %}{% for m in messages %}<div class="alert alert-{{ m.tags|default:'info' }} py-2">{{ m }}</div>{% endfor %}{% endif %}
+
+    {% if course %}
+    <div class="alert alert-secondary py-2 small">
+      <i class="bi bi-bookmark"></i> השאלה תקושר ל: <strong>{{ course.title }}</strong>{% if video %} - {{ video.title }}{% endif %}
+    </div>
+    {% endif %}
+
+    <form method="post" class="card-surface p-4">
+      {% csrf_token %}
+      {% if course %}<input type="hidden" name="course" value="{{ course.slug }}">{% endif %}
+      {% if video %}<input type="hidden" name="lesson" value="{{ video.lesson_order }}">{% endif %}
+
+      <div class="mb-3">
+        <label class="form-label small fw-semibold">כותרת</label>
+        <input class="form-control" name="title" id="title-input" required maxlength="200"
+               value="{{ form_title }}" placeholder="נסחו את השאלה במשפט אחד ברור">
+      </div>
+
+      <!-- AI dedup suggestions (REQ-6.2.7a) -->
+      <div id="similar-box" class="alert alert-secondary small" style="display:none">
+        <strong>רגע - אולי זה כבר נענה?</strong>
+        <ul id="similar-list" class="mb-0 mt-1"></ul>
+      </div>
+
+      <div class="row g-2 mb-3">
+        <div class="col-12 col-sm-6">
+          <label class="form-label small">קטגוריה</label>
+          <select class="form-select" name="category">
+            {% for slug, meta in categories %}
+            <option value="{{ slug }}" {% if slug == default_category %}selected{% endif %}>{{ meta.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-sm-6">
+          <label class="form-label small">סוג</label>
+          <select class="form-select" name="kind">
+            <option value="question">שאלה (עם תשובה מקובלת)</option>
+            <option value="discussion">דיון פתוח</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <label class="form-label small fw-semibold mb-1">התוכן (Markdown נתמך, כולל בלוקי קוד)</label>
+          <button type="button" id="preview-btn" class="btn btn-sm btn-link p-0 small">תצוגה מקדימה</button>
+        </div>
+        <textarea class="form-control" name="body" id="body-input" rows="8" required
+                  placeholder="פרטו: מה ניסיתם, מה קרה, מה ציפיתם שיקרה...">{{ form_body }}</textarea>
+        <div id="preview-box" class="card-surface p-3 mt-2 lesson-notes" style="display:none"></div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label small">תגיות (מופרדות בפסיק, לא חובה)</label>
+        <input class="form-control" name="tags" value="{{ form_tags }}" placeholder="copilot, python, מתחילים">
+      </div>
+
+      {% if needs_guidelines %}
+      <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" name="accept_guidelines" id="ag" required>
+        <label class="form-check-label small" for="ag">קראתי ואני מקבל/ת את
+          <a href="{% url 'community_guidelines' %}" target="_blank">כללי הקהילה</a> (פעם אחת בלבד)</label>
+      </div>
+      {% endif %}
+
+      <button class="btn btn-primary"><i class="bi bi-send"></i> פרסמו</button>
+      <a href="{% url 'forum_home' %}" class="btn btn-outline-secondary">ביטול</a>
+    </form>
+  </div>
+</div>
+
+<script>
+(function(){
+  if (window.plausible) plausible('community_post', {props: {type: 'thread_form'}});
+
+  // Markdown preview (REQ-6.2.3)
+  var pvBtn = document.getElementById('preview-btn');
+  if (pvBtn) pvBtn.addEventListener('click', function(){
+    var box = document.getElementById('preview-box');
+    if (box.style.display === 'block') { box.style.display = 'none'; pvBtn.textContent = 'תצוגה מקדימה'; return; }
+    fetch('{% url "forum_preview" %}', {
+      method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+      body: JSON.stringify({text: document.getElementById('body-input').value})
+    }).then(function(r){return r.json();}).then(function(d){
+      box.innerHTML = d.html || ''; box.style.display = 'block'; pvBtn.textContent = 'סגירת תצוגה';
+    });
+  });
+
+  var input = document.getElementById('title-input');
+  var box = document.getElementById('similar-box'), list = document.getElementById('similar-list');
+  var timer = null;
+  input.addEventListener('input', function(){
+    clearTimeout(timer);
+    timer = setTimeout(function(){
+      var title = input.value.trim();
+      if (title.length < 8) { box.style.display = 'none'; return; }
+      fetch('{% url "forum_similar" %}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+        body: JSON.stringify({title: title})
+      }).then(function(r){return r.json();}).then(function(d){
+        list.innerHTML = '';
+        var items = (d.threads || []).concat(d.lessons || []);
+        if (!items.length) { box.style.display = 'none'; return; }
+        items.forEach(function(it){
+          var li = document.createElement('li');
+          var a = document.createElement('a');
+          a.href = it.url; a.textContent = it.title; a.target = '_blank';
+          li.appendChild(a);
+          if (it.canonical) li.appendChild(document.createTextNode(' ⭐'));
+          list.appendChild(li);
+        });
+        box.style.display = 'block';
+      }).catch(function(){ box.style.display = 'none'; });
+    }, 600);
+  });
+})();
+</script>
+{% endblock %}

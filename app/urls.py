@@ -1,7 +1,7 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path
 
-from . import course_api, onboarding_views, studio_views, views
+from . import community_views, course_api, forum_views, onboarding_views, studio_views, views
 
 urlpatterns = [
     path("", views.home, name="home"),
@@ -20,8 +20,31 @@ urlpatterns = [
     path("staff/copilot-dashboard/", views.CopilotDashboardView.as_view(), name="copilot_dashboard"),
     path("corporate/", views.corporate, name="corporate"),
 
+    # --- Community (EPIC-6.1) ---
+    path("community/", community_views.community_home, name="community"),
+    path("community/guidelines/", community_views.guidelines, name="community_guidelines"),
+    path("community/leaderboard/", community_views.leaderboard, name="community_leaderboard"),
+    path("community/notifications/", community_views.notifications_page, name="community_notifications"),
+    path("community/members/", community_views.members_directory, name="community_members"),
+    path("community/settings/", community_views.community_settings_save, name="community_settings"),
+    path("community/report/", community_views.report_content, name="community_report"),
+    path("c/<str:username>/", community_views.public_profile, name="community_profile"),
+    path("c/<str:username>/follow/", community_views.follow_toggle, name="community_follow"),
+    # --- Forums & Q&A (EPIC-6.2) ---
+    path("community/forum/", forum_views.forum_home, name="forum_home"),
+    path("community/forum/new/", forum_views.thread_new, name="forum_new"),
+    path("community/forum/similar/", forum_views.similar_threads, name="forum_similar"),
+    path("community/forum/preview/", forum_views.forum_preview, name="forum_preview"),
+    path("community/forum/thread/<int:thread_id>/", forum_views.thread_detail, name="forum_thread"),
+    path("community/forum/thread/<int:thread_id>/answer/", forum_views.post_answer, name="forum_answer"),
+    path("community/forum/thread/<int:thread_id>/subscribe/", forum_views.subscribe_thread, name="forum_subscribe"),
+    path("community/forum/thread/<int:thread_id>/curate/", forum_views.thread_curate, name="forum_curate"),
+    path("community/forum/thread/<int:thread_id>/summarize/", forum_views.summarize_thread, name="forum_summarize"),
+    path("community/forum/thread/<int:thread_id>/draft/", forum_views.draft_answer, name="forum_draft"),
+    path("community/forum/post/<int:post_id>/vote/", forum_views.vote_post, name="forum_vote"),
+    path("community/forum/post/<int:post_id>/accept/", forum_views.accept_answer, name="forum_accept"),
+
     # Apex section placeholders (coming soon)
-    path("community/", views.coming_soon, {"section": "community"}, name="community"),
     path("services/", views.coming_soon, {"section": "services"}, name="services"),
     path("workshops/", views.coming_soon, {"section": "workshops"}, name="workshops"),
     path("nostalgia/", views.coming_soon, {"section": "nostalgia"}, name="nostalgia"),

@@ -47,6 +47,9 @@
           <li class="nav-item">
             <a class="nav-link" href="{% url 'courses_catalog' %}"><i class="bi bi-mortarboard"></i> הדרכות</a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'community' %}"><i class="bi bi-people"></i> קהילה</a>
+          </li>
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="worldsDropdown" role="button"
                data-bs-toggle="dropdown" aria-expanded="false">
@@ -83,6 +86,15 @@
         <!-- User / auth links -->
         <ul class="navbar-nav ms-auto align-items-lg-center gap-1">
           {% if user.is_authenticated %}
+            <!-- Community notifications bell (REQ-6.1.6) -->
+            <li class="nav-item">
+              <a class="nav-link position-relative" href="{% url 'community_notifications' %}" title="התראות" aria-label="התראות">
+                <i class="bi bi-bell"></i>
+                {% if unread_notifications %}
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.6rem">{{ unread_notifications }}</span>
+                {% endif %}
+              </a>
+            </li>
             {% if user.learner_profile and not user.learner_profile.needs_onboarding %}
             <!-- Always-reachable personal recommendations (REQ-5.6.3) -->
             <li class="nav-item">

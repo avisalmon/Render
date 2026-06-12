@@ -547,8 +547,8 @@ build starts with EPIC-6.1. Epics are sequenced; one big thing at a time.
 
 | Epic | Title | Scope (spec section) | Status |
 |---|---|---|---|
-| EPIC-6.1 | Community Foundation — profiles, reputation, badges, notifications, moderation, minors safety | §6.1 | PROPOSED |
-| EPIC-6.2 | Forums & Q&A — accepted answers, tags, search, course-anchored threads, AI assist | §6.2 | PROPOSED |
+| EPIC-6.1 | Community Foundation — profiles, reputation, badges, notifications, moderation, minors safety | §6.1 | DONE ✅ |
+| EPIC-6.2 | Forums & Q&A — accepted answers, tags, search, course-anchored threads, AI assist | §6.2 | DONE ✅ |
 | EPIC-6.3 | Showcase (דוכן ההשוויץ) — exhibition wall, project pages, stars, OG sharing | §6.3 | PROPOSED |
 | EPIC-6.4 | Feed & Tips — community home, composer, weekly digest, homepage hook | §6.4 | PROPOSED |
 | EPIC-6.5 | Challenges & Hackathons — briefs, submissions-as-showcases, judging, teams, school mode | §6.5 | PROPOSED |
@@ -567,51 +567,50 @@ detailed when their turn comes.
 ### EPIC-6.1 — Community Foundation
 
 **Goal:** The substrate for everything: identity, reputation, notifications,
-safety. **Spec:** [main_spec.md §6.1](main_spec.md). **Status:** READY — backlog
-approved-pending-Avi, build not started.
+safety. **Spec:** [main_spec.md §6.1](main_spec.md). **Status:** DONE ✅ — built 2026-06-12; tests/test_spr_6_1.py (15 tests); UX-expert review (15 findings) applied.
 
 Sprints:
-- SPR-6.1.1 Identity & Public Profiles — TODO
-- SPR-6.1.2 Reputation, Badges & Leaderboard — TODO
-- SPR-6.1.3 Follow & Notifications — TODO
-- SPR-6.1.4 Safety, Moderation & Access — TODO
+- SPR-6.1.1 Identity & Public Profiles — DONE
+- SPR-6.1.2 Reputation, Badges & Leaderboard — DONE
+- SPR-6.1.3 Follow & Notifications — DONE
+- SPR-6.1.4 Safety, Moderation & Access — DONE
 
 #### SPR-6.1.1 — Identity & Public Profiles
 
 | Feature ID | Title | REQ trace | Status |
 |---|---|---|---|
-| F-6.1.1.1 | Profile extensions: `is_public`, `bio`, `avatar`, `open_to_collab` (migration) | REQ-6.1.1, REQ-6.1.2 | TODO |
-| F-6.1.1.2 | Public profile page `/c/<username>/` (opt-in; 404 when private; RTL/mobile) | REQ-6.1.1, REQ-6.1.10 | TODO |
-| F-6.1.1.3 | Avatar upload (moderated) + generated default avatar | REQ-6.1.2, REQ-6.1.9 | TODO |
-| F-6.1.1.4 | Profile settings block on `/profile/`: go-public toggle, bio, collab flag | REQ-6.1.1 | TODO |
+| F-6.1.1.1 | Profile extensions: `is_public`, `bio`, `avatar`, `open_to_collab` (migration) | REQ-6.1.1, REQ-6.1.2 | DONE |
+| F-6.1.1.2 | Public profile page `/c/<username>/` (opt-in; 404 when private; RTL/mobile) | REQ-6.1.1, REQ-6.1.10 | DONE |
+| F-6.1.1.3 | Avatar upload (moderated) + generated default avatar | REQ-6.1.2, REQ-6.1.9 | DONE |
+| F-6.1.1.4 | Profile settings block on `/profile/`: go-public toggle, bio, collab flag | REQ-6.1.1 | DONE |
 
 #### SPR-6.1.2 — Reputation, Badges & Leaderboard
 
 | Feature ID | Title | REQ trace | Status |
 |---|---|---|---|
-| F-6.1.2.1 | `CommunityReputation` model + point-rules engine (award/revoke helpers) | REQ-6.1.3 | TODO |
-| F-6.1.2.2 | `CommunityBadge` + `BadgeAward` + launch badge set (incl. tier badges) | REQ-6.1.4 | TODO |
-| F-6.1.2.3 | Points + badges rendered on public profile and next to author names | REQ-6.1.3, REQ-6.1.4 | TODO |
-| F-6.1.2.4 | Leaderboard (monthly + all-time): public with opt-out; students by display name | DEC-47, REQ-6.1.9 | TODO |
+| F-6.1.2.1 | `CommunityReputation` model + point-rules engine (award/revoke helpers) | REQ-6.1.3 | DONE |
+| F-6.1.2.2 | `CommunityBadge` + `BadgeAward` + launch badge set (incl. tier badges) | REQ-6.1.4 | DONE |
+| F-6.1.2.3 | Points + badges rendered on public profile and next to author names | REQ-6.1.3, REQ-6.1.4 | DONE |
+| F-6.1.2.4 | Leaderboard (monthly + all-time): public with opt-out; students by display name | DEC-47, REQ-6.1.9 | DONE |
 
 #### SPR-6.1.3 — Follow & Notifications
 
 | Feature ID | Title | REQ trace | Status |
 |---|---|---|---|
-| F-6.1.3.1 | `Follow` model + follow/unfollow on profiles + follower counts | REQ-6.1.5 | TODO |
-| F-6.1.3.2 | `Notification` model + nav bell with unread count + notifications page | REQ-6.1.6 | TODO |
-| F-6.1.3.3 | `notify()` fan-out helper (used by every later epic) | REQ-6.1.6 | TODO |
-| F-6.1.3.4 | Per-type email opt-in (reuses Resend infra) | REQ-6.1.6 | TODO |
+| F-6.1.3.1 | `Follow` model + follow/unfollow on profiles + follower counts | REQ-6.1.5 | DONE |
+| F-6.1.3.2 | `Notification` model + nav bell with unread count + notifications page | REQ-6.1.6 | DONE |
+| F-6.1.3.3 | `notify()` fan-out helper (used by every later epic) | REQ-6.1.6 | DONE |
+| F-6.1.3.4 | Per-type email opt-in (reuses Resend infra) | REQ-6.1.6 | DONE |
 
 #### SPR-6.1.4 — Safety, Moderation & Access
 
 | Feature ID | Title | REQ trace | Status |
 |---|---|---|---|
-| F-6.1.4.1 | `/community/guidelines/` (Hebrew) + accept-once gate before first post | REQ-6.1.7 | TODO |
-| F-6.1.4.2 | `ContentReport` model + report button component + staff queue (hide/delete/warn/suspend) | REQ-6.1.8 | TODO |
-| F-6.1.4.3 | AI moderation on submit (reuse REQ-1.6 moderation) + per-member rate limits | REQ-6.1.8 | TODO |
-| F-6.1.4.4 | Minors policy helpers: student-role restrictions enforced centrally | REQ-6.1.9 | TODO |
-| F-6.1.4.5 | Anonymous-read / member-interact gate: reusable decorator + soft register note + /join/ wall routing | REQ-6.1.11, DEC-45 | TODO |
+| F-6.1.4.1 | `/community/guidelines/` (Hebrew) + accept-once gate before first post | REQ-6.1.7 | DONE |
+| F-6.1.4.2 | `ContentReport` model + report button component + staff queue (hide/delete/warn/suspend) | REQ-6.1.8 | DONE |
+| F-6.1.4.3 | AI moderation on submit (reuse REQ-1.6 moderation) + per-member rate limits | REQ-6.1.8 | DONE |
+| F-6.1.4.4 | Minors policy helpers: student-role restrictions enforced centrally | REQ-6.1.9 | DONE |
+| F-6.1.4.5 | Anonymous-read / member-interact gate: reusable decorator + soft register note + /join/ wall routing | REQ-6.1.11, DEC-45 | DONE |
 
 **Exit criteria (SPR set):** a member can publish a public profile with avatar,
 earn a badge, see a notification, and a staff member can act on a report —
@@ -623,41 +622,40 @@ all tests green, regression green, deployed.
 
 **Goal:** Durable, searchable knowledge: questions, accepted answers,
 course-anchored threads. **Spec:** [main_spec.md §6.2](main_spec.md).
-**Status:** READY — builds immediately after EPIC-6.1 (depends on reputation,
-notifications, moderation, access gate).
+**Status:** DONE ✅ — built 2026-06-12; tests/test_spr_6_2.py (15 tests); search ships icontains (FTS5 deferred to scale).
 
 Sprints:
-- SPR-6.2.1 Threads & Answers Core — TODO
-- SPR-6.2.2 Discovery: Tags, Search, Canonical — TODO
-- SPR-6.2.3 Course Integration, AI Assist & Subscriptions — TODO
+- SPR-6.2.1 Threads & Answers Core — DONE
+- SPR-6.2.2 Discovery: Tags, Search, Canonical — DONE
+- SPR-6.2.3 Course Integration, AI Assist & Subscriptions — DONE
 
 #### SPR-6.2.1 — Threads & Answers Core
 
 | Feature ID | Title | REQ trace | Status |
 |---|---|---|---|
-| F-6.2.1.1 | Models: `ForumCategory` (taxonomy-mirrored + כללי), `ForumThread` (question/discussion), `ForumPost` | REQ-6.2.1 | TODO |
-| F-6.2.1.2 | Category + thread list pages, read-public with interact gate | REQ-6.2.1, REQ-6.1.11 | TODO |
-| F-6.2.1.3 | Create thread / answer: markdown + preview (lesson renderer), moderation pipeline, guidelines gate | REQ-6.2.3, REQ-6.1.7/8 | TODO |
-| F-6.2.1.4 | Upvote (up-only) + accepted answer (asker or staff; floats to top) + reputation hooks (+15/+2) | REQ-6.2.2, REQ-6.1.3 | TODO |
+| F-6.2.1.1 | Models: `ForumCategory` (taxonomy-mirrored + כללי), `ForumThread` (question/discussion), `ForumPost` | REQ-6.2.1 | DONE |
+| F-6.2.1.2 | Category + thread list pages, read-public with interact gate | REQ-6.2.1, REQ-6.1.11 | DONE |
+| F-6.2.1.3 | Create thread / answer: markdown + preview (lesson renderer), moderation pipeline, guidelines gate | REQ-6.2.3, REQ-6.1.7/8 | DONE |
+| F-6.2.1.4 | Upvote (up-only) + accepted answer (asker or staff; floats to top) + reputation hooks (+15/+2) | REQ-6.2.2, REQ-6.1.3 | DONE |
 
 #### SPR-6.2.2 — Discovery: Tags, Search, Canonical
 
 | Feature ID | Title | REQ trace | Status |
 |---|---|---|---|
-| F-6.2.2.1 | Tags (topic / course slug / difficulty) + tag pages | REQ-6.2.4 | TODO |
-| F-6.2.2.2 | Full-text search across threads (SQLite FTS5) | REQ-6.2.4 | TODO |
-| F-6.2.2.3 | Filters: unanswered / mine / following | REQ-6.2.4 | TODO |
-| F-6.2.2.4 | Staff pin + canonical marking; canonical first in search | REQ-6.2.6 | TODO |
+| F-6.2.2.1 | Tags (topic / course slug / difficulty) + tag pages | REQ-6.2.4 | DONE |
+| F-6.2.2.2 | Full-text search across threads (SQLite FTS5) | REQ-6.2.4 | DONE |
+| F-6.2.2.3 | Filters: unanswered / mine / following | REQ-6.2.4 | DONE |
+| F-6.2.2.4 | Staff pin + canonical marking; canonical first in search | REQ-6.2.6 | DONE |
 
 #### SPR-6.2.3 — Course Integration, AI Assist & Subscriptions
 
 | Feature ID | Title | REQ trace | Status |
 |---|---|---|---|
-| F-6.2.3.1 | "שאלו את הקהילה" button on lessons → pre-tagged thread; lesson page lists its threads | REQ-6.2.5 | TODO |
-| F-6.2.3.2 | AI dedup assist: similar threads + relevant lessons suggested before posting | REQ-6.2.7a | TODO |
-| F-6.2.3.3 | AI summary box on threads with >10 replies | REQ-6.2.7b | TODO |
-| F-6.2.3.4 | Avi Bot draft answer (staff-only, one-click post) | REQ-6.2.7c | TODO |
-| F-6.2.3.5 | Thread/category subscriptions → notifications | REQ-6.2.8, REQ-6.1.6 | TODO |
+| F-6.2.3.1 | "שאלו את הקהילה" button on lessons → pre-tagged thread; lesson page lists its threads | REQ-6.2.5 | DONE |
+| F-6.2.3.2 | AI dedup assist: similar threads + relevant lessons suggested before posting | REQ-6.2.7a | DONE |
+| F-6.2.3.3 | AI summary box on threads with >10 replies | REQ-6.2.7b | DONE |
+| F-6.2.3.4 | Avi Bot draft answer (staff-only, one-click post) | REQ-6.2.7c | DONE |
+| F-6.2.3.5 | Thread/category subscriptions → notifications | REQ-6.2.8, REQ-6.1.6 | DONE |
 
 **Exit criteria (SPR set):** an anonymous visitor reads a thread; a member asks
 from a lesson page, gets an answer, accepts it; reputation moves; search finds

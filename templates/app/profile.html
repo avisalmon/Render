@@ -24,6 +24,37 @@
       <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
     </form>
 
+    <!-- Community settings (EPIC-6.1, F-6.1.1.4) -->
+    <div class="card p-4 mb-4">
+      <h2 class="h6 mb-3"><i class="bi bi-people-fill me-1" style="color:var(--accent-primary)"></i> הקהילה שלי</h2>
+      <form method="post" action="{% url 'community_settings' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" name="is_public" id="cs-public" {% if user.profile.is_public %}checked{% endif %}>
+          <label class="form-check-label" for="cs-public">פרופיל ציבורי
+            {% if user.profile.is_public %}<a href="/c/{{ user.username }}/" class="small ms-1">(צפייה)</a>{% endif %}
+          </label>
+        </div>
+        <div class="mb-2">
+          <label class="form-label small">כמה מילים עליי</label>
+          <input class="form-control" name="bio" maxlength="300" value="{{ user.profile.bio }}" placeholder="מי אני ומה אני בונה...">
+        </div>
+        <div class="mb-2">
+          <label class="form-label small">תמונת פרופיל (עד 2MB)</label>
+          <input type="file" class="form-control" name="avatar" accept="image/*">
+        </div>
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" name="open_to_collab" id="cs-collab" {% if user.profile.open_to_collab %}checked{% endif %}>
+          <label class="form-check-label" for="cs-collab">פתוח/ה לשיתופי פעולה</label>
+        </div>
+        <div class="form-check form-switch mb-3">
+          <input class="form-check-input" type="checkbox" name="leaderboard_opt_out" id="cs-lb" {% if user.profile.leaderboard_opt_out %}checked{% endif %}>
+          <label class="form-check-label" for="cs-lb">להסתיר אותי מלוח המובילים</label>
+        </div>
+        <button class="btn btn-sm btn-primary">שמירה</button>
+      </form>
+    </div>
+
     {% if recommended %}
     <!-- Personalized recommendations live here permanently (REQ-5.6.3) -->
     <h2 class="mb-2 h5" id="recommended">מומלץ עבורך <i class="bi bi-stars" style="color:var(--accent-primary)"></i></h2>

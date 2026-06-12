@@ -667,3 +667,6 @@ html[dir="rtl"] .whatsapp-sticky {
 }
 
 a { color: #2c6e49; }
+
+/* Community (EPIC-6.1/6.2): post bodies inside cards keep card padding only */
+.card-surface .lesson-notes { padding: 0; }

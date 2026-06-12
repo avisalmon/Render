@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}לוח המובילים - קהילת babook{% endblock %}
+
+{% block content %}
+<div class="py-4">
+  <h1 class="h3 mb-1"><i class="bi bi-trophy-fill me-1" style="color:var(--accent-cta,#f59e0b)"></i> לוח המובילים</h1>
+  <p class="text-muted mb-4">נקודות על תשובות מקובלות, הצבעות ותרומה לקהילה. לא רוצים להופיע? אפשר לבטל בהגדרות הפרופיל.</p>
+  <div class="row g-4">
+    {% for board in boards %}
+    <div class="col-md-6">
+      <div class="card-surface p-3">
+        <h2 class="h6 mb-3">{{ board.title }}</h2>
+        {% for row in board.rows %}
+        <div class="d-flex justify-content-between align-items-center py-1 {% if forloop.counter <= 3 %}fw-semibold{% endif %}">
+          <span>
+            {% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% else %}{{ forloop.counter }}.{% endif %}
+            {% include "app/community/_author.html" with author=row.user %}
+          </span>
+          <span class="badge bg-secondary">{{ row.points }}</span>
+        </div>
+        {% empty %}<p class="small text-muted mb-0">עדיין ריק - מי שעונה ראשון, מוביל ראשון 🙂</p>{% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

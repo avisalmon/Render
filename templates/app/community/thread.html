@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block title %}{{ thread.title }} - פורום babook{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+  <div class="col-lg-9">
+    <nav aria-label="breadcrumb"><ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{% url 'community' %}">קהילה</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'forum_home' %}">פורום</a></li>
+      <li class="breadcrumb-item active">{{ thread.title|truncatechars:40 }}</li>
+    </ol></nav>
+
+    {% include "app/community/_guest_note.html" %}
+    {% if messages %}{% for m in messages %}<div class="alert alert-{{ m.tags|default:'info' }} py-2">{{ m }}</div>{% endfor %}{% endif %}
+
+    <!-- The question -->
+    <div class="card-surface p-4 mb-3">
+      <div class="d-flex justify-content-between align-items-start gap-2">
+        <h1 class="h4 mb-2">
+          {% if thread.is_canonical %}<i class="bi bi-bookmark-star-fill" style="color:var(--accent-primary)" title="תשובה קנונית"></i>{% endif %}
+          {{ thread.title }}
+        </h1>
+        <span class="d-flex gap-1">
+          {% if user.is_staff %}
+          <form method="post" action="{% url 'forum_curate' thread.pk %}" class="d-inline">{% csrf_token %}
+            <input type="hidden" name="action" value="pin">
+            <button class="btn btn-sm btn-outline-secondary" title="הצמדה" aria-label="הצמדת שרשור"><i class="bi bi-pin-angle"></i></button>
+          </form>
+          <form method="post" action="{% url 'forum_curate' thread.pk %}" class="d-inline">{% csrf_token %}
+            <input type="hidden" name="action" value="canonical">
+            <button class="btn btn-sm btn-outline-secondary" title="סימון קנוני" aria-label="סימון כתשובה קנונית"><i class="bi bi-bookmark-star"></i></button>
+          </form>
+          {% endif %}
+          {% include "app/community/_report.html" with content_type="thread" object_id=thread.pk %}
+        </span>
+      </div>
+      <div class="small text-muted mb-3 d-flex gap-2 flex-wrap align-items-center">
+        {% include "app/community/_author.html" with author=thread.author %}
+        · {{ thread.created_at|date:"j בF Y H:i" }}
+        {% if thread.course %}
+        <a href="/courses/{{ thread.course.slug }}/{% if thread.video %}lesson/{{ thread.video.lesson_order }}/{% endif %}" class="badge text-decoration-none" style="background:var(--bg-elevated,#1a1d24)">
+          📚 {{ thread.course.title }}{% if thread.video %} - {{ thread.video.title }}{% endif %}
+        </a>
+        {% endif %}
+        {% for tag in thread.tags %}<span class="badge bg-dark">#{{ tag }}</span>{% endfor %}
+      </div>
+      <div class="lesson-notes">{{ thread_body_html|safe }}</div>
+
+      <div class="d-flex gap-2 mt-3 flex-wrap">
+        {% if user.is_authenticated %}
+        <form method="post" action="{% url 'forum_subscribe' thread.pk %}">{% csrf_token %}
+          <button class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-bell{% if is_subscribed %}-fill{% endif %}"></i>
+            {% if is_subscribed %}במעקב ✓{% else %}עקבו אחרי השרשור{% endif %}
+          </button>
+        </form>
+        {% endif %}
+        {% if posts|length > 10 %}
+        <button id="summarize-btn" class="btn btn-sm btn-outline-primary"><i class="bi bi-stars"></i> סיכום AI</button>
+        {% endif %}
+        {% if user.is_staff and thread.kind == 'question' %}
+        <button id="draft-btn" class="btn btn-sm btn-outline-primary" title="טיוטת תשובה של Avi Bot"><i class="bi bi-robot"></i> טיוטת Avi Bot</button>
+        {% endif %}
+      </div>
+      <div id="ai-summary" class="alert alert-secondary small mt-2" style="display:none"></div>
+    </div>
+
+    <!-- Answers -->
+    <h2 class="h6 text-muted mb-2">{{ posts|length }} תשובות</h2>
+    {% for p in posts %}
+    <div class="card-surface p-3 mb-2 {% if p.obj.is_accepted %}border border-success{% endif %}" id="post-{{ p.obj.pk }}">
+      {% if p.obj.is_accepted %}
+      <div class="text-success small fw-semibold mb-2"><i class="bi bi-check-circle-fill"></i> התשובה המקובלת</div>
+      {% endif %}
+      <div class="lesson-notes">{{ p.html|safe }}</div>
+      <div class="d-flex justify-content-between align-items-center mt-2 flex-wrap gap-2">
+        <span class="small text-muted">
+          {% include "app/community/_author.html" with author=p.obj.author %}
+          · {{ p.obj.created_at|date:"j בF H:i" }}
+        </span>
+        <span class="d-flex gap-2 align-items-center">
+          {% if user.is_authenticated and user != p.obj.author %}
+          <button class="btn btn-sm btn-outline-secondary vote-btn" data-id="{{ p.obj.pk }}"
+                  aria-label="הצבעה לתשובה" aria-pressed="{{ p.voted|yesno:'true,false' }}">
+            <i class="bi bi-hand-thumbs-up{% if p.voted %}-fill{% endif %}"></i> <span class="vote-count">{{ p.obj.upvotes }}</span>
+          </button>
+          {% else %}
+          <span class="btn btn-sm btn-outline-secondary disabled"><i class="bi bi-hand-thumbs-up"></i> {{ p.obj.upvotes }}</span>
+          {% endif %}
+          {% if can_accept and not p.obj.is_accepted and thread.kind == 'question' %}
+          <form method="post" action="{% url 'forum_accept' p.obj.pk %}">{% csrf_token %}
+            <button class="btn btn-sm btn-outline-success"><i class="bi bi-check-lg"></i> סמנו כתשובה המקובלת</button>
+          </form>
+          {% endif %}
+          {% include "app/community/_report.html" with content_type="post" object_id=p.obj.pk %}
+        </span>
+      </div>
+    </div>
+    {% empty %}
+    <div class="card-surface p-3 text-muted small mb-2">אין עדיין תשובות - תהיו הראשונים לעזור 🙂</div>
+    {% endfor %}
+
+    <!-- Answer composer -->
+    {% if user.is_authenticated %}
+      <form method="post" action="{% url 'forum_answer' thread.pk %}" class="card-surface p-3 mt-3">
+        {% csrf_token %}
+        <div class="d-flex justify-content-between align-items-center">
+          <label class="form-label small fw-semibold mb-1">התשובה שלך (Markdown נתמך, כולל בלוקי קוד)</label>
+          <button type="button" id="preview-btn" class="btn btn-sm btn-link p-0 small">תצוגה מקדימה</button>
+        </div>
+        <textarea class="form-control mb-2" name="body" id="answer-input" rows="5" required placeholder="כתבו תשובה מועילה...">{{ answer_draft }}</textarea>
+        <div id="preview-box" class="card-surface p-3 mb-2 lesson-notes" style="display:none"></div>
+        {% if needs_guidelines %}
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" name="accept_guidelines" id="ag" required>
+          <label class="form-check-label small" for="ag">קראתי ואני מקבל/ת את
+            <a href="{% url 'community_guidelines' %}" target="_blank">כללי הקהילה</a> (פעם אחת בלבד)</label>
+        </div>
+        {% endif %}
+        <button class="btn btn-primary"><i class="bi bi-send"></i> פרסמו תשובה</button>
+      </form>
+    {% else %}
+    <div class="card-surface p-3 mt-3 text-center">
+      <a class="btn btn-primary" href="/join/?next={{ request.path|urlencode }}&do=answer">הירשמו בחינם כדי לענות</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+(function(){
+  var csrf = '{{ csrf_token }}';
+  document.querySelectorAll('.vote-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      fetch('/community/forum/post/' + btn.dataset.id + '/vote/', {
+        method: 'POST', headers: {'X-CSRFToken': csrf}
+      }).then(function(r){return r.json();}).then(function(d){
+        if (d.ok) {
+          btn.querySelector('.vote-count').textContent = d.upvotes;
+          btn.querySelector('i').className = 'bi bi-hand-thumbs-up' + (d.voted ? '-fill' : '');
+        }
+      });
+    });
+  });
+  document.querySelectorAll('.report-btn').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      var reason = prompt('מה הבעיה בתוכן הזה?');
+      if (!reason) return;
+      var fd = new FormData();
+      fd.append('content_type', btn.dataset.type); fd.append('object_id', btn.dataset.id); fd.append('reason', reason);
+      fetch('{% url "community_report" %}', {method:'POST', headers:{'X-CSRFToken': csrf}, body: fd})
+        .then(function(r){
+          alert(r.ok ? 'תודה! הדיווח התקבל ויטופל.' : 'הדיווח לא נשלח - נסו שוב.');
+        }).catch(function(){ alert('הדיווח לא נשלח - נסו שוב.'); });
+    });
+  });
+  var sumBtn = document.getElementById('summarize-btn');
+  if (sumBtn) sumBtn.addEventListener('click', function(){
+    sumBtn.disabled = true;
+    fetch('{% url "forum_summarize" thread.pk %}', {method:'POST', headers:{'X-CSRFToken': csrf}})
+      .then(function(r){return r.json();}).then(function(d){
+        var box = document.getElementById('ai-summary');
+        box.style.display = 'block';
+        box.textContent = d.summary || 'הסיכום לא זמין כרגע - נסו שוב מאוחר יותר.';
+        sumBtn.disabled = false;
+      });
+  });
+  var pvBtn = document.getElementById('preview-btn');
+  if (pvBtn) pvBtn.addEventListener('click', function(){
+    var box = document.getElementById('preview-box');
+    if (box.style.display === 'block') { box.style.display = 'none'; pvBtn.textContent = 'תצוגה מקדימה'; return; }
+    fetch('{% url "forum_preview" %}', {
+      method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrf},
+      body: JSON.stringify({text: document.getElementById('answer-input').value})
+    }).then(function(r){return r.json();}).then(function(d){
+      box.innerHTML = d.html || ''; box.style.display = 'block'; pvBtn.textContent = 'סגירת תצוגה';
+    });
+  });
+  var draftBtn = document.getElementById('draft-btn');
+  if (draftBtn) draftBtn.addEventListener('click', function(){
+    draftBtn.disabled = true;
+    fetch('{% url "forum_draft" thread.pk %}', {method:'POST', headers:{'X-CSRFToken': csrf}})
+      .then(function(r){return r.json();}).then(function(d){
+        var ta = document.querySelector('textarea[name="body"]');
+        if (ta && d.draft) { ta.value = d.draft; ta.scrollIntoView(); }
+        draftBtn.disabled = false;
+      });
+  });
+})();
+</script>
+{% endblock %}

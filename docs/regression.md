@@ -144,3 +144,10 @@
 | `test_spr_5_3.py` (6) | welcome strip + corporate | strip on first visit, entry-course-aware, cookie-dismissed, hidden when logged in, contains no register ask (DEC-34); corporate "for your team" CTA (DEC-35) |
 | `test_spr_5_4.py` (8) | onboarding | /welcome/ requires login + renders fallback; static form → profile + recommendation + first-lesson hand-off; skip recorded + resumable; stub mode → fallback; interview PROFILE_JSON extraction completes; turn budget forces fallback; bad-JSON parse safe |
 | `test_spr_5_5.py` (12) | personalization | recommender (ai-l1 intro / level→track / entry-course wins / non-AI domain); first_lesson_url; personalized rail; generic fallback for legacy users; checklist reflects progress + disappears when done; entry event fires once; wall/lesson/onboarding funnel events present |
+
+## EPIC-6.1 + EPIC-6.2 — Community Foundation & Forums (`tests/test_spr_6_1.py` 15, `tests/test_spr_6_2.py` 15)
+
+| Suite | Verifies |
+|---|---|
+| test_spr_6_1.py (15) | public/private profiles, settings save, points ledger + tier badges (idempotent + notify), follow toggle, notifications page + bell, guidelines accept-once, report queue, leaderboard opt-out, read-public pages, anonymous interactions routed to the /join/ wall |
+| test_spr_6_2.py (15) | ask->answer->accept (+15/badges/notifications), inline guidelines gate never loses a post, anonymous read/write-wall, upvote toggle + no self-vote, accept permissions, search/filters, staff pin/canonical, lesson-anchored asks (incl. query-string preservation through the wall), AI dedup/summary/draft (mocked), subscriptions notify, open-redirect guard |

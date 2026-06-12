@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}כללי הקהילה - babook{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+  <div class="col-md-8 col-lg-7">
+    <h1 class="h3 mb-1"><i class="bi bi-shield-check me-1" style="color:var(--accent-primary)"></i> כללי קהילת babook</h1>
+    <p class="text-muted small mb-3">כן, גם באתר לשיתוף ספרים שלא משתף ספרים יש כללים 🙂</p>
+    <div class="card-surface p-4 mb-3">
+      <ol class="mb-0" style="line-height:2">
+        <li><strong>מכבדים.</strong> מתווכחים על רעיונות, לא על אנשים. אין לעג, הטרדה או הקנטה.</li>
+        <li><strong>עוזרים באמת.</strong> תשובה טובה מסבירה למה, לא רק מה. אם עזרו לך - סמנו תשובה מקובלת.</li>
+        <li><strong>בלי ספאם ובלי מכירות.</strong> אין פרסום עצמי חוזר, לינקים שיווקיים או שידול.</li>
+        <li><strong>נותנים קרדיט.</strong> משתפים קוד או תוכן של אחרים? מציינים את המקור.</li>
+        <li><strong>שפה ידידותית לכולם.</strong> בקהילה לומדים גם בני נוער - כתבו בהתאם.</li>
+        <li><strong>מדווחים, לא מתלהמים.</strong> נתקלתם בתוכן בעייתי? כפתור הדיווח 🚩 נמצא בכל פינה.</li>
+      </ol>
+    </div>
+    {% if user.is_authenticated and not user.profile.guidelines_accepted_at %}
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <button class="btn btn-primary"><i class="bi bi-check-lg"></i> קראתי ואני מקבל/ת את הכללים</button>
+    </form>
+    {% elif user.is_authenticated %}
+    <p class="text-success small"><i class="bi bi-check-circle-fill"></i> אישרת את הכללים. תודה!</p>
+    {% else %}
+    <a class="btn btn-primary" href="/join/?next=/community/">הצטרפו לקהילה</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

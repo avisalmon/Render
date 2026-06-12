@@ -1,0 +1,7 @@
+{# Report button (REQ-6.1.8). Usage: include with content_type + object_id. #}
+{% if user.is_authenticated %}
+<button class="btn btn-sm btn-link text-secondary p-0 report-btn" title="דיווח" aria-label="דיווח על תוכן"
+        data-type="{{ content_type }}" data-id="{{ object_id }}">
+  <i class="bi bi-flag"></i>
+</button>
+{% endif %}

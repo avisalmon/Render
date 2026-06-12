@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}קהילת babook{% endblock %}
+
+{% block content %}
+<div class="py-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-1">
+    <h1 class="mb-0"><i class="bi bi-people-fill me-2" style="color:var(--accent-primary)"></i>קהילת babook</h1>
+    <a href="{% url 'forum_new' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> שאלה חדשה</a>
+  </div>
+  <p class="text-muted mb-4">שואלים, עונים, משוויצים במה שבניתם - וגדלים ביחד.</p>
+
+  {% include "app/community/_guest_note.html" %}
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="h5 mb-0">שאלות ודיונים אחרונים</h2>
+        <a href="{% url 'forum_home' %}" class="small text-decoration-none">לכל הפורום ←</a>
+      </div>
+      {% for t in recent_threads %}
+      <a href="{% url 'forum_thread' t.pk %}" class="card-surface d-block p-3 mb-2 text-decoration-none" style="color:var(--text-primary)">
+        <div class="d-flex justify-content-between align-items-start gap-2">
+          <strong>{% if t.kind == 'question' %}❓{% else %}💬{% endif %} {{ t.title }}</strong>
+          {% if t.accepted_post %}<span class="badge bg-success">נענתה</span>{% endif %}
+        </div>
+        <div class="small text-muted mt-1">
+          {% include "app/community/_author.html" with author=t.author %}
+          · {{ t.created_at|date:"j בF" }}
+        </div>
+      </a>
+      {% empty %}
+      <div class="card-surface p-4 text-center text-muted">
+        עדיין אין שאלות. תהיו הראשונים -
+        <a href="{% url 'forum_new' %}">שאלו משהו</a> 🙂
+      </div>
+      {% endfor %}
+
+      <div class="row g-3 mt-3">
+        <div class="col-md-6">
+          <a href="{% url 'community_members' %}" class="card-surface d-block p-3 text-decoration-none" style="color:var(--text-primary)">
+            <i class="bi bi-person-badge me-1" style="color:var(--accent-primary)"></i>
+            <strong>חברי הקהילה</strong>
+            <p class="small text-muted mb-0">מי כאן, ומי פתוח לשיתופי פעולה</p>
+          </a>
+        </div>
+        <div class="col-md-6">
+          <div class="card-surface p-3" style="opacity:.7">
+            <i class="bi bi-stars me-1"></i><strong>דוכן ההשוויץ</strong>
+            <span class="badge bg-secondary">בקרוב</span>
+            <p class="small text-muted mb-0">גלריית הפרויקטים של הקהילה - בדרך אליכם</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card-surface p-3 mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h2 class="h6 mb-0"><i class="bi bi-trophy me-1" style="color:var(--accent-cta,#f59e0b)"></i> המובילים</h2>
+          <a href="{% url 'community_leaderboard' %}" class="small text-decoration-none">הכל ←</a>
+        </div>
+        {% for row in top_members %}
+        <div class="d-flex justify-content-between align-items-center py-1">
+          <span class="small">{{ forloop.counter }}. {% include "app/community/_author.html" with author=row.user %}</span>
+          <span class="badge bg-secondary">{{ row.points }}</span>
+        </div>
+        {% empty %}<p class="small text-muted mb-0">עוד אין נקודות - הראשונים שיענו יובילו.</p>{% endfor %}
+      </div>
+      <div class="card-surface p-3">
+        <h2 class="h6"><i class="bi bi-shield-check me-1"></i> כללי הקהילה</h2>
+        <p class="small text-muted mb-2">מכבדים, עוזרים, בלי ספאם.</p>
+        <a href="{% url 'community_guidelines' %}" class="small">לכללים המלאים ←</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

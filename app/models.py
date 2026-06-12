@@ -21,6 +21,17 @@ class UserProfile(models.Model):
     github_username = models.CharField(max_length=100, blank=True, default="")
     # Authoring Studio: may create/edit courses. Staff are implicitly authors.
     is_author = models.BooleanField(default=False)
+    # Community (EPIC-6.1): public member identity. Private by default.
+    is_public = models.BooleanField(default=False)
+    bio = models.CharField(max_length=300, blank=True, default="")
+    avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
+    open_to_collab = models.BooleanField(default=False)
+    guidelines_accepted_at = models.DateTimeField(blank=True, null=True)
+    leaderboard_opt_out = models.BooleanField(default=False)
+
+    @property
+    def public_name(self):
+        return self.display_name or self.user.first_name or self.user.username
 
     def __str__(self):
         return f"{self.user.username} ({self.role})"
@@ -70,6 +81,156 @@ class LearnerProfile(models.Model):
 
     def __str__(self):
         return f"LearnerProfile({self.user.username})"
+
+
+# ---------------------------------------------------------------------------
+# Community foundation (EPIC-6.1) — reputation, badges, follow, notifications,
+# moderation. Badge/point definitions live in app/community.py.
+# ---------------------------------------------------------------------------
+
+class CommunityReputation(models.Model):
+    """Denormalized total points per member (REQ-6.1.3)."""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="reputation")
+    points = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.user.username}: {self.points}"
+
+
+class ReputationEvent(models.Model):
+    """Point ledger — lets the leaderboard compute monthly windows (REQ-6.1.3)."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reputation_events")
+    points = models.IntegerField()
+    reason = models.CharField(max_length=50)
+    ref = models.CharField(max_length=200, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class BadgeAward(models.Model):
+    """A badge earned by a member; definitions in community.BADGES (REQ-6.1.4)."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="badges")
+    slug = models.CharField(max_length=50)
+    awarded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [("user", "slug")]
+
+    @property
+    def meta(self):
+        from .community import BADGES
+        return BADGES.get(self.slug, {"title": self.slug, "icon": "bi-award", "description": ""})
+
+
+class Follow(models.Model):
+    """Member follows member (REQ-6.1.5)."""
+    follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name="following")
+    followed = models.ForeignKey(User, on_delete=models.CASCADE, related_name="followers")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [("follower", "followed")]
+
+
+class Notification(models.Model):
+    """In-app notification (REQ-6.1.6). Created via community.notify()."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
+    actor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                              related_name="+")
+    verb = models.CharField(max_length=30)  # answer / accepted / badge / follow / ...
+    text = models.CharField(max_length=300)
+    url = models.CharField(max_length=500, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    read_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+
+class ContentReport(models.Model):
+    """Member report on any community object → staff queue (REQ-6.1.8)."""
+    STATUS = [("open", "Open"), ("actioned", "Actioned"), ("dismissed", "Dismissed")]
+    reporter = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reports_filed")
+    content_type = models.CharField(max_length=30)  # thread / post / project / ...
+    object_id = models.PositiveIntegerField()
+    reason = models.CharField(max_length=300)
+    status = models.CharField(max_length=10, choices=STATUS, default="open")
+    created_at = models.DateTimeField(auto_now_add=True)
+    handled_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name="+")
+    handled_at = models.DateTimeField(blank=True, null=True)
+    action_note = models.CharField(max_length=300, blank=True, default="")
+
+
+# ---------------------------------------------------------------------------
+# Forums & Q&A (EPIC-6.2). Categories are code-defined (community.forum_categories).
+# ---------------------------------------------------------------------------
+
+class ForumThread(models.Model):
+    KINDS = [("question", "שאלה"), ("discussion", "דיון")]
+    category = models.CharField(max_length=30)  # slug from community.forum_categories()
+    kind = models.CharField(max_length=12, choices=KINDS, default="question")
+    title = models.CharField(max_length=200)
+    body = models.TextField()  # markdown
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="forum_threads")
+    tags = models.JSONField(default=list, blank=True)
+    course = models.ForeignKey("Course", on_delete=models.SET_NULL, null=True, blank=True,
+                               related_name="forum_threads")
+    video = models.ForeignKey("Video", on_delete=models.SET_NULL, null=True, blank=True,
+                              related_name="forum_threads")
+    is_pinned = models.BooleanField(default=False)
+    is_canonical = models.BooleanField(default=False)  # staff-marked (REQ-6.2.6)
+    is_hidden = models.BooleanField(default=False)  # moderation
+    ai_summary = models.TextField(blank=True, default="")  # REQ-6.2.7b
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-is_pinned", "-updated_at"]
+
+    @property
+    def accepted_post(self):
+        return self.posts.filter(is_accepted=True).first()
+
+    def __str__(self):
+        return self.title
+
+
+class ForumPost(models.Model):
+    """An answer/reply in a thread (REQ-6.2.2)."""
+    thread = models.ForeignKey(ForumThread, on_delete=models.CASCADE, related_name="posts")
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="forum_posts")
+    body = models.TextField()  # markdown
+    is_accepted = models.BooleanField(default=False)
+    is_hidden = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-is_accepted", "created_at"]
+
+    @property
+    def upvotes(self):
+        return self.votes.count()
+
+
+class PostVote(models.Model):
+    """Upvote-only (DEC-38)."""
+    post = models.ForeignKey(ForumPost, on_delete=models.CASCADE, related_name="votes")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="+")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [("post", "user")]
+
+
+class ThreadSubscription(models.Model):
+    """Follow a thread (or a whole category when thread is null) (REQ-6.2.8)."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="thread_subs")
+    thread = models.ForeignKey(ForumThread, on_delete=models.CASCADE, null=True, blank=True,
+                               related_name="subscriptions")
+    category = models.CharField(max_length=30, blank=True, default="")
+
+    class Meta:
+        unique_together = [("user", "thread", "category")]
 
 
 class Note(models.Model):

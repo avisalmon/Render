@@ -66,6 +66,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "app.context_processors.site_settings",
                 "app.context_processors.first_visit",
+                "app.context_processors.community_ctx",
             ],
         },
     },

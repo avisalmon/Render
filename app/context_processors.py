@@ -7,6 +7,18 @@ def site_settings(request):
     }
 
 
+def community_ctx(request):
+    """EPIC-6.1: unread-notification count for the nav bell (REQ-6.1.6)."""
+    if not hasattr(request, "user") or not request.user.is_authenticated:
+        return {"unread_notifications": 0}
+    from .models import Notification
+    return {
+        "unread_notifications": Notification.objects.filter(
+            user=request.user, read_at__isnull=True
+        ).count(),
+    }
+
+
 def first_visit(request):
     """EPIC-5: first-visit welcome strip (REQ-5.3.2) + one-shot 'entry' funnel
     event (REQ-5.7.1). Anonymous visitors only; dismissal via cookie."""

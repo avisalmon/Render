@@ -768,6 +768,10 @@ def courses_lesson(request, slug, lesson_order):
     if request.user.is_authenticated and video.reflection_prompt:
         reflection = video.reflections.filter(user=request.user).first()
 
+    # Community threads anchored to this lesson (REQ-6.2.5)
+    from .models import ForumThread
+    lesson_threads = ForumThread.objects.filter(video=video, is_hidden=False)[:5]
+
     # Funnel events (REQ-5.7.1): anonymous free-preview view; first-ever
     # completed lesson (JS adds a localStorage guard against refires).
     fire_free_lesson = (not request.user.is_authenticated) and video.is_free_preview
@@ -791,6 +795,7 @@ def courses_lesson(request, slug, lesson_order):
         "locked_ids": locked_ids_ctx,
         "fire_free_lesson": fire_free_lesson,
         "fire_first_completed": fire_first_completed,
+        "lesson_threads": lesson_threads,
         "is_enrolled": is_enrolled,
         "quiz": quiz,
         "reflection": reflection,

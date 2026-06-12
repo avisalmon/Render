@@ -1,0 +1,17 @@
+{# Author chip: avatar + public name + top badge. Usage: include with `author` (User). #}
+<span class="d-inline-flex align-items-center gap-1">
+  {% if author.profile.avatar %}
+    <img src="{{ author.profile.avatar.url }}" alt="" width="22" height="22" class="rounded-circle" style="object-fit:cover">
+  {% else %}
+    <span class="rounded-circle d-inline-flex align-items-center justify-content-center"
+          style="width:22px;height:22px;background:var(--accent-primary);color:#fff;font-size:0.7rem;">{{ author.profile.public_name|first }}</span>
+  {% endif %}
+  {% if author.profile.is_public %}
+    <a href="/c/{{ author.username }}/" class="text-decoration-none">{{ author.profile.public_name }}</a>
+  {% else %}
+    <span>{{ author.profile.public_name }}</span>
+  {% endif %}
+  {% with badge=author.badges.all|first %}
+    {% if badge %}<i class="bi {{ badge.meta.icon }} small" title="{{ badge.meta.title }}" style="color:var(--accent-primary)"></i>{% endif %}
+  {% endwith %}
+</span>

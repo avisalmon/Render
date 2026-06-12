@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}התראות - babook{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+  <div class="col-md-8 col-lg-6">
+    <h1 class="h4 mb-3"><i class="bi bi-bell-fill me-1" style="color:var(--accent-primary)"></i> התראות</h1>
+    {% for n in notes %}
+    <a href="{{ n.url|default:'#' }}" class="card-surface d-block p-3 mb-2 text-decoration-none {% if not n.read_at %}border-start border-3{% endif %}"
+       style="color:var(--text-primary); {% if not n.read_at %}border-color:var(--accent-primary)!important;{% endif %}">
+      <div class="d-flex justify-content-between gap-2">
+        <span>
+          {% if n.verb == 'accepted' %}✅{% elif n.verb == 'answer' or n.verb == 'reply' %}💬{% elif n.verb == 'badge' %}🏅{% elif n.verb == 'follow' %}👋{% else %}🔔{% endif %}
+          {{ n.text }}
+        </span>
+        <small class="text-muted text-nowrap">{{ n.created_at|date:"j בF H:i" }}</small>
+      </div>
+    </a>
+    {% empty %}
+    <div class="card-surface p-4 text-center text-muted">
+      אין התראות עדיין. ענו על שאלה בפורום - וזה יתחיל לזוז 🙂
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}{{ member_profile.public_name }} - קהילת babook{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+  <div class="col-md-9 col-lg-8">
+    {% if is_owner and not member_profile.is_public %}
+    <div class="alert alert-warning py-2 small">הפרופיל שלך פרטי - רק את/ה רואה את העמוד הזה. אפשר לפרסם אותו מהגדרות <a href="{% url 'profile' %}">הפרופיל</a>.</div>
+    {% endif %}
+
+    <div class="card-surface p-4 mb-3">
+      <div class="d-flex align-items-center gap-3 flex-wrap">
+        {% if member_profile.avatar %}
+          <img src="{{ member_profile.avatar.url }}" alt="" width="72" height="72" class="rounded-circle" style="object-fit:cover; border:2px solid var(--accent-primary)">
+        {% else %}
+          <span class="rounded-circle d-inline-flex align-items-center justify-content-center"
+                style="width:72px;height:72px;background:var(--accent-primary);color:#fff;font-size:1.6rem;">{{ member_profile.public_name|first }}</span>
+        {% endif %}
+        <div class="flex-grow-1">
+          <h1 class="h4 mb-1">{{ member_profile.public_name }}
+            {% for b in badges|slice:":4" %}<i class="bi {{ b.meta.icon }}" title="{{ b.meta.title }}" style="color:var(--accent-primary)"></i>{% endfor %}
+          </h1>
+          {% if member_profile.bio %}<p class="text-muted mb-1">{{ member_profile.bio }}</p>{% endif %}
+          <div class="small text-muted">
+            <span class="me-2"><i class="bi bi-star-fill" style="color:var(--accent-cta,#f59e0b)"></i> {{ points }} נקודות</span>
+            <span class="me-2">✅ {{ accepted_count }} תשובות מקובלות</span>
+            <span class="me-2">👥 {{ follower_count }} עוקבים</span>
+            {% if member_profile.open_to_collab %}<span class="badge bg-success">פתוח/ה לשיתופי פעולה</span>{% endif %}
+          </div>
+        </div>
+        {% if user.is_authenticated and not is_owner %}
+        <form method="post" action="{% url 'community_follow' member.username %}">{% csrf_token %}
+          <button class="btn btn-sm {% if is_following %}btn-outline-secondary{% else %}btn-primary{% endif %}">
+            {% if is_following %}הפסקת מעקב{% else %}<i class="bi bi-person-plus"></i> עקבו{% endif %}
+          </button>
+        </form>
+        {% elif not user.is_authenticated %}
+        <a class="btn btn-sm btn-primary" href="/join/?next={{ request.path|urlencode }}">עקבו</a>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if badges %}
+    <div class="card-surface p-3 mb-3">
+      <h2 class="h6 mb-2">תגים</h2>
+      <div class="d-flex flex-wrap gap-2">
+        {% for b in badges %}
+        <span class="badge bg-secondary" title="{{ b.meta.description }}"><i class="bi {{ b.meta.icon }}"></i> {{ b.meta.title }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if certificates %}
+    <div class="card-surface p-3 mb-3">
+      <h2 class="h6 mb-2"><i class="bi bi-award-fill me-1" style="color:var(--accent-cta,#f59e0b)"></i> תעודות</h2>
+      {% for c in certificates %}
+      <a href="/certificate/{{ c.certificate_id }}/" class="d-block small text-decoration-none py-1">🎓 {{ c.course.title }}</a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if recent_threads %}
+    <div class="card-surface p-3">
+      <h2 class="h6 mb-2">פעילות אחרונה בפורום</h2>
+      {% for t in recent_threads %}
+      <a href="{% url 'forum_thread' t.pk %}" class="d-block small text-decoration-none py-1" style="color:var(--text-primary)">❓ {{ t.title }}</a>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

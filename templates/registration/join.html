@@ -10,6 +10,9 @@
       {% if course %}
         <h1 class="h4 mb-1">כדי להמשיך ב«{{ course.title }}»</h1>
         <p class="text-muted mb-4">הרשמה חינם - שומרת את ההתקדמות שלך בקורס. בלי תשלום.</p>
+      {% elif community_intent %}
+        <h1 class="h4 mb-1">עוד צעד אחד קטן</h1>
+        <p class="text-muted mb-4">{{ community_intent }}</p>
       {% else %}
         <h1 class="h4 mb-1">הרשמה חינם להמשך</h1>
         <p class="text-muted mb-4">חשבון חינם שומר התקדמות, בחנים ותעודות.</p>

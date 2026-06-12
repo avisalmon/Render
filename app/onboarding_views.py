@@ -43,9 +43,22 @@ def join_wall(request):
     slug = request.GET.get("course", "")
     if slug:
         course = Course.objects.filter(slug=slug, is_published=True).first()
+    # Name the community action they tried (REQ-6.1.11): inferred from next
+    community_intent = ""
+    if "/forum/new" in next_url:
+        community_intent = "כדי לשאול בפורום הקהילה צריך חשבון - חינם, 10 שניות."
+    elif "/answer" in next_url or request.GET.get("do") == "answer":
+        community_intent = "כדי לענות בפורום צריך חשבון - חינם, 10 שניות."
+    elif "/follow" in next_url:
+        community_intent = "כדי לעקוב אחרי חברי קהילה צריך חשבון - חינם, 10 שניות."
+    elif "/vote" in next_url:
+        community_intent = "כדי להצביע לתשובות צריך חשבון - חינם, 10 שניות."
+    elif "/community/" in next_url:
+        community_intent = "כדי להשתתף בקהילה צריך חשבון - חינם, 10 שניות."
     return render(request, "registration/join.html", {
         "course": course,
         "next": next_url,
+        "community_intent": community_intent,
     })
 
 

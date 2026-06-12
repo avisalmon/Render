@@ -35,6 +35,20 @@
       </div>
       {% endif %}
 
+      <!-- Community: ask about this lesson (REQ-6.2.5) -->
+      <div class="mb-3" style="border-bottom:1px solid var(--bg-elevated);padding-bottom:.75rem;">
+        <p class="small fw-semibold mb-2" style="color:var(--text-secondary)">קהילה</p>
+        <a href="{% url 'forum_new' %}?course={{ course.slug }}&lesson={{ video.lesson_order }}"
+           class="btn btn-sm btn-outline-primary w-100 mb-2">
+          <i class="bi bi-chat-square-text"></i> שאלו את הקהילה
+        </a>
+        {% for t in lesson_threads %}
+        <a href="{% url 'forum_thread' t.pk %}" class="d-block small text-decoration-none mb-1" style="color:var(--text-primary)">
+          {% if t.accepted_post %}✅{% else %}❓{% endif %} {{ t.title|truncatechars:48 }}
+        </a>
+        {% endfor %}
+      </div>
+
       <div class="lesson-list">
         {% for v in all_videos %}
           {% if locked_ids|get_item:v.id %}

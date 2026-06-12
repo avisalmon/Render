@@ -174,3 +174,50 @@
 | T-F-1.9.3-4 | Login page has forgot-password link | integration | F-1.9.3 | Login template contains link to password reset | PLANNED |
 | T-F-1.9.4-1 | ACCOUNT_EMAIL_VERIFICATION setting exists | unit | F-1.9.4 | Setting is one of none/optional/mandatory | PLANNED |
 | T-F-1.9.5-1 | send_mail function is importable and callable | unit | F-1.9.5 | `from django.core.mail import send_mail` works | PLANNED |
+
+
+## EPIC-6.1 — Community Foundation
+
+**Sprint goal:** Identity, reputation, badges, follow, notifications, safety, anonymous-read gate.
+**Test file:** `tests/test_spr_6_1.py`
+
+| Test ID | Description | Type | Feature | Expected result | Status |
+|---|---|---|---|---|---|
+| T-F-6.1.1.2-1 | Public profile renders | integration | F-6.1.1.2 | /c/<u>/ 200 with name+bio | GREEN |
+| T-F-6.1.1.2-2 | Private profile 404 / owner preview | integration | F-6.1.1.2 | stranger 404, owner 200 | GREEN |
+| T-F-6.1.1.4-1 | Community settings save | integration | F-6.1.1.4 | is_public/bio/collab persist | GREEN |
+| T-F-6.1.2.1-1 | Points ledger + total | unit | F-6.1.2.1 | 15+2=17, 2 events | GREEN |
+| T-F-6.1.2.2-1 | Tier badge at threshold | unit | F-6.1.2.2 | bronze at >=50 | GREEN |
+| T-F-6.1.2.2-2 | Badge idempotent + notifies | unit | F-6.1.2.2 | 1 award, 1 notification | GREEN |
+| T-F-6.1.3.1-1 | Follow toggle + notification | integration | F-6.1.3.1 | follow/unfollow, notify | GREEN |
+| T-F-6.1.3.2-1 | Notifications page + bell | integration | F-6.1.3.2 | mark-read, bell link present | GREEN |
+| T-F-6.1.3.3-1 | notify() never self-notifies | unit | F-6.1.3.3 | None on actor==user | GREEN |
+| T-F-6.1.4.1-1 | Guidelines accept-once | integration | F-6.1.4.1 | accepted_at set | GREEN |
+| T-F-6.1.4.2-1 | Report creates queue item | integration | F-6.1.4.2 | open report persisted | GREEN |
+| T-F-6.1.4.2-2 | Report requires login | integration | F-6.1.4.2/5 | anonymous -> /join/ | GREEN |
+| T-F-6.1.2.4-1 | Leaderboard opt-out | integration | F-6.1.2.4 | opted-out hidden | GREEN |
+| T-F-6.1.4.5-1 | Community pages read-public | integration | F-6.1.4.5 | 5 pages 200 + register note | GREEN |
+| T-F-6.1.4.5-2 | Interactions hit the wall | integration | F-6.1.4.5 | anonymous -> /join/ | GREEN |
+
+## EPIC-6.2 — Forums & Q&A
+
+**Sprint goal:** Threads/answers/votes/accepted, discovery, lesson anchoring, AI assist, subscriptions.
+**Test file:** `tests/test_spr_6_2.py`
+
+| Test ID | Description | Type | Feature | Expected result | Status |
+|---|---|---|---|---|---|
+| T-F-6.2.1.3-1 | Ask->answer->accept flow | integration | F-6.2.1.3/4 | +15, badge, notifications | GREEN |
+| T-F-6.2.1.3-2 | Inline guidelines gate keeps the post | integration | F-6.2.1.3 | re-render w/ content; checkbox publishes | GREEN |
+| T-F-6.2.1.2-1 | Anonymous read, write walled | integration | F-6.2.1.2 | read 200; write -> /join/ | GREEN |
+| T-F-6.2.1.4-1 | Upvote toggle, no self-vote | integration | F-6.2.1.4 | +2 rep; self-vote 400 | GREEN |
+| T-F-6.2.1.4-2 | Accept restricted to asker/staff | integration | F-6.2.1.4 | rando 403 | GREEN |
+| T-F-6.2.2.2-1 | Search + unanswered filter | integration | F-6.2.2.2/3 | filtered results | GREEN |
+| T-F-6.2.2.4-1 | Staff pin + canonical | integration | F-6.2.2.4 | flags set; non-staff 403 | GREEN |
+| T-F-6.2.3.1-1 | Lesson page community block | integration | F-6.2.3.1 | button + threads shown | GREEN |
+| T-F-6.2.3.1-2 | Lesson ask pre-tags | integration | F-6.2.3.1 | course/video/tag linked | GREEN |
+| T-F-6.2.3.1-3 | Anonymous lesson-ask keeps query | integration | F-6.2.3.1 | next preserves course+lesson | GREEN |
+| T-F-6.2.3.2-1 | Similar threads dedup | integration | F-6.2.3.2 | match suggested | GREEN |
+| T-F-6.2.3.3-1 | AI summary long-thread + cache | integration | F-6.2.3.3 | 400 short; cached summary | GREEN |
+| T-F-6.2.3.4-1 | Avi Bot draft staff-only | integration | F-6.2.3.4 | draft for staff; 403 others | GREEN |
+| T-F-6.2.3.5-1 | Subscribers notified | integration | F-6.2.3.5 | reply + answer notifications | GREEN |
+| T-F-6.1.4.1-2 | Guidelines next anti-open-redirect | integration | F-6.1.4.1 | external next -> /community/ | GREEN |
