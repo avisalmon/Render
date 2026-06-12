@@ -435,4 +435,22 @@
 </script>
 {% endif %}
 
+{% if fire_free_lesson or fire_first_completed %}
+<!-- Funnel events (REQ-5.7.1) -->
+<script>
+window.addEventListener('load', function () {
+  if (!window.plausible) return;
+  {% if fire_free_lesson %}
+  plausible('free_lesson_watched', {props: {course: '{{ course.slug|escapejs }}'}});
+  {% endif %}
+  {% if fire_first_completed %}
+  if (!localStorage.getItem('babook_flc')) {
+    plausible('first_lesson_completed', {props: {course: '{{ course.slug|escapejs }}'}});
+    localStorage.setItem('babook_flc', '1');
+  }
+  {% endif %}
+});
+</script>
+{% endif %}
+
 {% endblock %}

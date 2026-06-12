@@ -464,9 +464,76 @@ Sprints in this epic:
 
 ---
 
+## EPIC-5 — Onboarding, Access Model & First-Time Experience
+
+**Goal:** A canonical logged-out-vs-logged-in access model, a value-first
+first-time journey that preserves the visitor's original intent, an AI onboarding
+interview (static fallback), and personalization from minute one.
+**Spec:** [main_spec.md §Chapter 5](main_spec.md) (REQ-5.1–5.7).
+**UX:** [architecture/onboarding_ux.md](architecture/onboarding_ux.md).
+**Owner:** Avi + Claude
+**Status:** DONE ✅ — spec approved by Avi 2026-06-12 (DEC-29-35); all sprints
+built same day. Tests: tests/test_spr_5_1.py … test_spr_5_5.py (47 tests);
+full regression 356 passing.
+
+Sprints in this epic:
+- SPR-5.1 Access Model & Context-Aware Wall — DONE
+- SPR-5.2 Intent Capture & Return-to-Intent — DONE
+- SPR-5.3 First-Visit Exploration & Welcome — DONE
+- SPR-5.4 AI Onboarding Interview & LearnerProfile — DONE
+- SPR-5.5 Personalization, Activation & Measurement — DONE
+
+### SPR-5.1 — Access Model & Context-Aware Wall
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-5.1.1 | Canonical access matrix as source of truth; audit views against it | REQ-5.1.1 | DONE |
+| F-5.1.2 | Context-aware wall replaces bare 403/login for anonymous gated actions | REQ-5.1.2, REQ-5.4.1 | DONE |
+| F-5.1.3 | `roles.md` aligned to the matrix (guest vs member split) | REQ-5.1.3 | DONE |
+
+### SPR-5.2 — Intent Capture & Return-to-Intent
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-5.2.1 | First-touch session capture (entry_path, entry_course, utm, referrer) | REQ-5.2.1 | DONE |
+| F-5.2.2 | Entry-type classifier (home/course/lesson_locked/corporate/other) | REQ-5.2.2 | DONE |
+| F-5.2.3 | `?next=` preserved end-to-end through OAuth → land on intended page | REQ-5.4.2 | DONE |
+| F-5.2.4 | Attribution persisted onto `LearnerProfile` at signup | REQ-5.4.4 | DONE |
+
+### SPR-5.3 — First-Visit Exploration & Welcome
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-5.3.1 | Dismissible first-visit welcome strip (entry-aware, RTL) | REQ-5.3.2 | DONE |
+| F-5.3.2 | No proactive nudges — clean exploration (DEC-34) | REQ-5.3.3 | DONE |
+| F-5.3.3 | Corporate "for your team" learner path CTA (DEC-35) | REQ-5.3.4 | DONE |
+
+### SPR-5.4 — AI Onboarding Interview & LearnerProfile
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-5.4.1 | `LearnerProfile` model + migration | REQ-5.6.1 | DONE |
+| F-5.4.2 | `/welcome/` routing for new users only | REQ-5.5.1 | DONE |
+| F-5.4.3 | Conversational interview (reuse chat infra, gpt-4o-mini, bounded) | REQ-5.5.2, REQ-5.5.6 | DONE |
+| F-5.4.4 | Structured extraction → interests/goal/level/persona | REQ-5.5.3 | DONE |
+| F-5.4.5 | Static 3-tap fallback (skip / AI unavailable) | REQ-5.5.4 | DONE |
+| F-5.4.6 | Skippable + resumable onboarding | REQ-5.5.5 | DONE |
+
+### SPR-5.5 — Personalization, Activation & Measurement
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-5.5.1 | Deterministic taxonomy recommendation mapper | REQ-5.6.2 | DONE |
+| F-5.5.2 | Personalized "Recommended for you / Start here" homepage rail | REQ-5.6.3 | DONE |
+| F-5.5.3 | Activation hand-off into recommended first lesson | REQ-5.6.4 | DONE |
+| F-5.5.4 | Onboarding checklist (first lesson → quiz → reflection → enroll) | REQ-5.6.5 | DONE |
+| F-5.5.5 | Plausible funnel events + activation metric doc | REQ-5.7.1, REQ-5.7.2 | DONE |
+
+---
+
 ## Status Summary (reconciled 2026-06-09)
 
-**Full regression: 274/274 passing.** Per-sprint test counts: 1.1=19, 1.2=17,
+**Full regression: 356/356 passing (2026-06-12, incl. EPIC-3/4/5).** Per-sprint test counts: 1.1=19, 1.2=17,
 1.3=15, 1.4=21, 1.5=17, 1.6=26, 1.7=13, 1.8=27, 1.9=12, 2.0.1=17, 2.1.1=17,
 2.1.3=7, 2.1.4=32, 2.2=25.
 

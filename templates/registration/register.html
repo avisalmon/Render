@@ -10,6 +10,7 @@
     <div class="card p-4">
       <form method="post">
         {% csrf_token %}
+        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
         {{ form.as_p }}
         <button type="submit" class="btn btn-primary w-100">{% trans "Create account" %}</button>
       </form>

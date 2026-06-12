@@ -489,6 +489,165 @@ are blocked; and the full regression passes.
 
 ---
 
+## Chapter 5 — Onboarding, Access Model & First-Time Experience
+
+> **Spec approved by Avi 2026-06-12 (DEC-29-35) and implemented the same day.**
+> Same conventions as Chapters 1-4. Companion UX concept:
+> [architecture/onboarding_ux.md](architecture/onboarding_ux.md). Tests:
+> `tests/test_spr_5_1.py` … `test_spr_5_5.py` (47 tests).
+
+### 5.0 Vision
+
+Today a brand-new visitor lands somewhere (homepage, a shared course link, an ad)
+and is left to figure the site out alone; the rules for what a logged-out vs a
+logged-in user may see live only in code; and nothing captures **why** the visitor
+came or **what** they want. Chapter 5 fixes all three:
+
+1. **A canonical access model** — one authoritative matrix of what an anonymous
+   (logged-out) visitor can see and do vs a registered member, with the
+   enforcement made deliberate and context-aware (not a generic 403).
+2. **A deliberate first-visit journey** — value-first exploration, an entry-point-
+   aware welcome, a low-friction registration that *preserves the visitor's
+   original intent*, and a short **AI onboarding interview** that learns the
+   learner's name, goal, level, and interests by conversation (with a static
+   fallback).
+3. **Personalization from the first minute** — the captured intent and learner
+   profile drive a "start here" recommendation and a personalized homepage, so a
+   new user reaches their first valuable lesson fast (the activation / "aha"
+   moment).
+
+**North-star for this epic:** *activation rate* — the share of new registrations
+that complete onboarding **and** finish their first lesson within the first
+session. Secondary: anonymous→registered conversion at the gated-action wall.
+
+### 5.1 Access model — logged-out vs logged-in (the canonical matrix)
+
+The authoritative statement of what each audience may see/do. Rows marked
+`DONE (existing)` are already enforced in code (cross-referenced); rows marked
+`TODO` are new in this epic. This matrix is the single source of truth; code and
+`roles.md` must match it.
+
+| Area / action | Anonymous (guest, not logged in) | Registered member | Enforcement |
+|---|---|---|---|
+| Homepage `/` (worlds) | View | View **+ "Continue watching" + "Recommended for you"** | REQ-1.3.16 (DONE); recs TODO REQ-5.6.* |
+| `/corporate/`, `/pricing/`, `/privacy/`, `/terms/` | View | View | REQ-2.4.1 — DONE (existing) |
+| Course catalog `/courses/` + drill-down | Browse all published | Browse all | REQ-3.2 — DONE (existing) |
+| Course detail `/courses/<slug>/` | View syllabus + intro | View + progress + enroll | REQ-2.7.4 — DONE (existing) |
+| First lesson (`is_free_preview=True`) | Watch video + read notes | Watch | REQ-1.3.9 — DONE (existing) |
+| Non-preview lessons | **Blocked → context-aware wall** (not generic 403) | Watch if enrolled/entitled | REQ-1.3.9 / REQ-1.3.12 (DONE) + wall TODO REQ-5.4.1 |
+| Enrollment | Blocked → wall | Enroll | TODO REQ-5.4.1 |
+| Reflections (submit) | Blocked → wall | Submit | REQ-3.5 — DONE (existing) |
+| Lesson quizzes | View question (no submit) | Answer / gate Next | REQ-1.3.13 — DONE (existing) |
+| Certificates | None | Earned + on profile | REQ-1.3.7 — DONE (existing) |
+| AI chat | None | Use (tier rate-limited) | REQ-1.6.6 — DONE (existing) |
+| Profile / progress / settings | None | Full | REQ-1.1.6 — DONE (existing) |
+| Newsletter signup, contact form | Submit | Submit | REQ-2.5 / REQ-2.4.6 — DONE (existing) |
+| Studio `/studio/` | None | Authors only | REQ-4.1.1 — DONE (existing) |
+
+| REQ-ID | Title | Expectation (acceptance) | Status |
+|---|---|---|---|
+| REQ-5.1.1 | Canonical access matrix | The table above is the authoritative access model; `roles.md` links to it and matches it; no view grants/denies access in a way that contradicts it. | DONE |
+| REQ-5.1.2 | Anonymous never errors out | A logged-out user attempting a gated action is **never** shown a bare 403/login page; they get the context-aware wall (REQ-5.4.1). 404s for truly missing resources are unaffected. | DONE |
+| REQ-5.1.3 | Roles doc alignment | `docs/architecture/roles.md` updated to reference REQ-5.1.1 and adds the `guest`-vs-`member` capability split explicitly. | DONE |
+
+### 5.2 Entry-point & intent capture (anonymous, zero-friction)
+
+Capture **how the visitor arrived** and **what they came for** without asking a
+single question, by reading the first request. Stored in the session (and the
+attribution carried onto the `LearnerProfile` at registration, REQ-5.6.*).
+
+| REQ-ID | Title | Expectation (acceptance) | Status |
+|---|---|---|---|
+| REQ-5.2.1 | First-touch capture | On a visitor's first request, store in the session: `entry_path`, `entry_course` (slug if the path is a course/lesson page), `referrer`, `utm_*` (reuse REQ-2.4.9 capture), `first_seen_at`. Written once; never overwritten within a session. | DONE |
+| REQ-5.2.2 | Entry-type classification | Classify the entry as one of: `home` (broad), `course` (specific interest = that course/domain), `lesson_locked` (high intent — hit a gate), `corporate` (prospect, routes to the lead funnel not the learner funnel), `other`. | DONE |
+| REQ-5.2.3 | Intent → interest seed | When entry is `course`/`lesson_locked`, the course's domain/track is treated as the visitor's **primary interest seed** and pre-fills onboarding (REQ-5.5.*) and recommendations (REQ-5.6.*). | DONE |
+| REQ-5.2.4 | Privacy | Capture respects the existing cookie/consent banner (REQ-1.2.12); no PII stored for anonymous visitors beyond session attribution; analytics stay on Plausible (no new trackers). | DONE |
+
+### 5.3 First-visit exploration (value before friction)
+
+A logged-out first-time visitor can explore and taste value before being asked to
+do anything.
+
+| REQ-ID | Title | Expectation (acceptance) | Status |
+|---|---|---|---|
+| REQ-5.3.1 | Free exploration | A first-time visitor can browse the full catalog and watch the free first lesson of any course with no login prompt (per the matrix). | DONE (existing, re-verified) |
+| REQ-5.3.2 | First-visit welcome | On the first visit only, a dismissible, RTL welcome strip orients the visitor ("three worlds; start with a free lesson"). If entry is `course`, it acknowledges the course they came for. Dismissal persists (cookie); never shown to logged-in users. | DONE |
+| REQ-5.3.3 | No proactive nudges (DEC-34) | While exploring there are **no** proactive registration prompts or "track progress" banners. The **only** registration ask is the context-aware wall (REQ-5.4.1), shown strictly at a genuinely gated action. Free exploration stays clean. | DONE |
+| REQ-5.3.4 | Corporate "for your team" path (DEC-35) | A visitor whose entry is `corporate` is offered, alongside the existing lead funnel, a **"for your team" learner path** — a CTA into the learner journey framed for teams (e.g. "preview the training your team would get"), seeding a team-oriented interest. The lead form (REQ-2.4.6) is unchanged. | DONE |
+
+### 5.4 Registration with preserved intent
+
+The conversion moment. When a logged-out visitor reaches a gated action, the wall
+is **contextual** and registration **returns them to exactly where they were
+going**.
+
+| REQ-ID | Title | Expectation (acceptance) | Status |
+|---|---|---|---|
+| REQ-5.4.1 | Context-aware wall | Hitting a gated action shows a wall naming the thing they wanted ("Register free to continue *<course title>*"), with one-click Google/GitHub and email options, and the value proposition — not a generic login form. | DONE |
+| REQ-5.4.2 | Return-to-intent | After registration/login the user lands on their original target (`?next=` preserved end-to-end through the OAuth round-trip). For a `lesson_locked` entry, that means the lesson they tried to open. | DONE |
+| REQ-5.4.3 | Minimal friction | Registration asks for the minimum (name + email + password, or one social click). Display name pre-fills the onboarding greeting. | DONE (allauth + display-name greeting) |
+| REQ-5.4.4 | Attribution on signup | At registration, the session intent (REQ-5.2.*) is persisted onto the new `LearnerProfile` (entry path, entry course, utm, referrer). | DONE |
+
+### 5.5 AI onboarding interview (conversational, with static fallback)
+
+Right after first registration, a short conversational interview learns the
+learner and routes them to the right starting point. Grounded in research_2's
+"AI Interview onboarding — personalization via conversation > static forms."
+
+| REQ-ID | Title | Expectation (acceptance) | Status |
+|---|---|---|---|
+| REQ-5.5.1 | Interview entry | A newly registered user with `onboarding_completed_at IS NULL` is routed to `/welcome/` on next page load. Existing/returning users are never sent there. | DONE |
+| REQ-5.5.2 | Conversational flow | An OpenAI-backed chat (reuse REQ-1.6 infra, `gpt-4o-mini`) greets by name and asks 2-4 adaptive questions: goal/why, experience level, role/context, time availability. If entry was `course`, it opens by confirming that interest ("I see you came for *<course>* — your main focus, or the broader path?"). | DONE |
+| REQ-5.5.3 | Structured extraction | The interview extracts a structured result — `interests[]` (domains/tracks), `goal`, `experience_level`, `persona`, `time_per_week` — and maps it to a **recommended track + first course**. | DONE |
+| REQ-5.5.4 | Static fallback | If the user clicks "skip" or AI is unavailable (key unset / error / rate cap), a 3-tap static form (pick interests → level → goal) produces the same `LearnerProfile`. Onboarding is **never** a dead end. | DONE |
+| REQ-5.5.5 | Skippable & resumable | Onboarding can be skipped ("later") and resumed from the profile; skipping still seeds recommendations from the entry intent (REQ-5.2.3). | DONE |
+| REQ-5.5.6 | Cost guard | Interview length is bounded (max N turns) and uses the cheap model; respects the existing per-user token cap (REQ-1.6.6). | DONE |
+
+### 5.6 LearnerProfile & personalization
+
+| REQ-ID | Title | Expectation (acceptance) | Status |
+|---|---|---|---|
+| REQ-5.6.1 | `LearnerProfile` model | OneToOne with user: `interests` (JSON), `goal`, `experience_level`, `persona`, `recommended_track`, `recommended_course`, `time_per_week`, `onboarding_completed_at`, + attribution (`source_entry_path`, `source_course`, `utm_*`, `referrer`). | DONE |
+| REQ-5.6.2 | Recommendation engine | A deterministic mapper turns interests + level + entry intent into a recommended track and first course (taxonomy-driven; no ML). Explainable ("because you're interested in AI and new to it"). | DONE |
+| REQ-5.6.3 | Personalized homepage | Logged-in homepage shows a "Recommended for you" / "Start here" rail driven by `LearnerProfile`, above the generic worlds. Falls back to generic for users with no profile. | DONE |
+| REQ-5.6.4 | Activation hand-off | At the end of onboarding the user is dropped directly into their recommended free first lesson (or their preserved `next`), not a dead dashboard. | DONE |
+| REQ-5.6.5 | Onboarding checklist | A small, dismissible "get started" checklist (watch first lesson → pass a quiz → submit a reflection → enroll) shown on the profile/home until complete. | DONE |
+
+### 5.7 Measurement
+
+| REQ-ID | Title | Expectation (acceptance) | Status |
+|---|---|---|---|
+| REQ-5.7.1 | Funnel events | Plausible custom events for each funnel step: `entry`, `free_lesson_watched`, `wall_shown`, `registered`, `onboarding_started`, `onboarding_completed`, `first_lesson_completed`. | DONE |
+| REQ-5.7.2 | Activation metric | Activation rate (registered → onboarding+first-lesson in first session) is derivable from the events; documented in `docs/procedures/`. | DONE |
+
+### 5.8 Decisions log (confirmed by Avi 2026-06-12)
+
+| ID | Topic | Choice | Rationale |
+|---|---|---|---|
+| DEC-29 | Friction model | **Value-first** — explore + free preview before any wall | Best-practice (Duolingo/Coursera); lets intent build before the ask; matches the existing free-preview model |
+| DEC-30 | Onboarding method | **AI interview default + user-skippable, static form fallback** | research_2: conversation > static forms; skip + fallback guarantee no dead end and respect cost/availability |
+| DEC-31 | Intent storage (anonymous) | **Session + attribute-on-signup** (no anonymous DB row) | Privacy-light, simplest; persists to `LearnerProfile` only once a real user exists |
+| DEC-32 | Recommendations | **Deterministic taxonomy mapper, not ML** | Explainable, testable, zero infra; the taxonomy already encodes domain/track/level |
+| DEC-33 | Return-to-intent | **Django `?next=` preserved through OAuth** | Standard, robust; the single biggest conversion lever for deep-link arrivals |
+| DEC-34 | Nudge policy | **Ask strictly at gated actions** — no proactive banners | Keeps exploration clean; avoids nag fatigue; the wall is the single, well-timed ask |
+| DEC-35 | Corporate door | **Offer a "for your team" learner path** alongside the lead funnel | Lets a B2B visitor experience the product as a learner; complements (doesn't replace) the existing lead capture |
+
+### 5.9 Acceptance criteria for Chapter 5
+
+Chapter 5 is **DONE** when:
+1. The access matrix (REQ-5.1.1) is authoritative, `roles.md` matches it, and no
+   anonymous gated action yields a bare 403 (all route to the contextual wall).
+2. A deep-link arrival (shared course/lesson link) → wall → register → lands back
+   on the exact intended page, with that course seeded as the primary interest.
+3. A newly registered user completes the AI interview (or the static fallback),
+   gets a `LearnerProfile` + a recommended track/first course, and is dropped into
+   their first lesson.
+4. The logged-in homepage shows a personalized "start here" rail.
+5. Funnel events fire and activation rate is measurable.
+6. Full regression green; non-authors/anonymous boundaries covered by tests.
+
+---
+
 ## Reference
 
 - **Stack**: Django 5.2, Gunicorn, WhiteNoise, SQLite (Render disk), django-allauth (Google + GitHub OAuth), Bunny Stream (video), Stripe + Green Invoice (billing), Resend (email), Plausible (analytics), GitHub Copilot Business (seat provisioning via GitHub REST API), OpenAI API (AI chat, GPT-4o-mini / GPT-4o, gpt-4o-transcribe), yt-dlp + ffmpeg (authoring pipeline)

@@ -177,3 +177,12 @@ class AppConfig(AppConfig):
         db_path = settings.DATABASES.get("default", {}).get("NAME", "")
         if db_path and db_path != ":memory:":
             _repair_schema(db_path)
+
+        # EPIC-5: social signups (Google/GitHub) join the onboarding flow too
+        try:
+            from allauth.account.signals import user_signed_up
+
+            from .onboarding import handle_social_signup
+            user_signed_up.connect(handle_social_signup, dispatch_uid="onboarding_signup")
+        except ImportError:
+            pass

@@ -132,6 +132,31 @@
     <button class="btn btn-sm btn-light ms-3" onclick="acceptCookies()">אישור</button>
   </div>
 
+  {% if welcome_strip %}
+  <!-- First-visit welcome strip (REQ-5.3.2) - orientation only, no register ask (DEC-34) -->
+  <div id="welcome-strip" class="py-2 px-3" style="background:var(--bg-elevated, #1a1d24); border-bottom:1px solid rgba(255,255,255,.08);">
+    <div class="container d-flex align-items-center justify-content-between gap-2 flex-wrap">
+      <span class="small">
+        👋 ברוכים הבאים ל-babook - הדרכות AI, מייקרים וחדשנות.
+        {% if welcome_strip.entry_course %}
+          הגעת בשביל «{{ welcome_strip.entry_course.title }}»? השיעור הראשון פתוח חינם.
+        {% else %}
+          השיעור הראשון בכל קורס פתוח חינם.
+        {% endif %}
+      </span>
+      <span class="d-flex align-items-center gap-2">
+        {% if welcome_strip.entry_course %}
+          <a class="btn btn-sm btn-primary" href="/courses/{{ welcome_strip.entry_course.slug }}/">לקורס</a>
+        {% else %}
+          <a class="btn btn-sm btn-outline-light" href="{% url 'courses_catalog' %}">לקטלוג</a>
+        {% endif %}
+        <button class="btn btn-sm btn-link text-secondary p-0" aria-label="סגור"
+                onclick="document.cookie='welcome_dismissed=1;path=/;max-age=31536000';document.getElementById('welcome-strip').remove();">✕</button>
+      </span>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- Main content -->
   <main class="container py-4 flex-grow-1">
     {% block content %}{% endblock %}
@@ -162,6 +187,15 @@
 
   {% if plausible_domain %}
   <script defer data-domain="{{ plausible_domain }}" src="https://plausible.io/js/script.js"></script>
+  {% endif %}
+
+  {% if entry_event %}
+  <!-- One-shot funnel 'entry' event (REQ-5.7.1) -->
+  <script>
+    window.addEventListener('load', function () {
+      if (window.plausible) plausible('entry', {props: {type: '{{ entry_event|escapejs }}'}});
+    });
+  </script>
   {% endif %}
 
   {% block extra_js %}{% endblock %}

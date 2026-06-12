@@ -24,6 +24,13 @@
       <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
     </form>
 
+    <!-- Onboarding is resumable from here (REQ-5.5.5) -->
+    <p class="mb-4">
+      <a href="{% url 'welcome' %}" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-stars"></i> התאמה אישית של מסלול הלמידה
+      </a>
+    </p>
+
     {% if certificates %}
     <h2 class="mb-3 h5">
       <i class="bi bi-award-fill me-2" style="color:var(--accent-cta,#f59e0b)"></i>תעודות סיום

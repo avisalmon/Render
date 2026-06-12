@@ -32,6 +32,42 @@ def create_user_profile(sender, instance, created, **kwargs):
         UserProfile.objects.create(user=instance)
 
 
+class LearnerProfile(models.Model):
+    """Onboarding + personalization profile (EPIC-5, REQ-5.6.1).
+
+    Created at signup (with first-touch attribution) and filled by the AI
+    interview or the static fallback. Pre-EPIC-5 users have none, so they are
+    never routed into onboarding and keep the generic homepage.
+    """
+    LEVELS = [("beginner", "Beginner"), ("intermediate", "Intermediate"), ("advanced", "Advanced")]
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="learner_profile")
+    interests = models.JSONField(default=list, blank=True)  # taxonomy domain keys
+    goal = models.CharField(max_length=200, blank=True, default="")
+    experience_level = models.CharField(max_length=20, choices=LEVELS, blank=True, default="")
+    persona = models.CharField(max_length=200, blank=True, default="")
+    time_per_week = models.CharField(max_length=50, blank=True, default="")
+    recommended_track = models.CharField(max_length=50, blank=True, default="")
+    recommended_course = models.ForeignKey(
+        "Course", null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    onboarding_completed_at = models.DateTimeField(null=True, blank=True)
+    onboarding_skipped_at = models.DateTimeField(null=True, blank=True)
+    # First-touch attribution carried over from the anonymous session (REQ-5.4.4)
+    source_entry_path = models.CharField(max_length=500, blank=True, default="")
+    source_entry_type = models.CharField(max_length=20, blank=True, default="")
+    source_course = models.CharField(max_length=200, blank=True, default="")  # slug
+    source_referrer = models.CharField(max_length=500, blank=True, default="")
+    source_utm = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def needs_onboarding(self):
+        return self.onboarding_completed_at is None and self.onboarding_skipped_at is None
+
+    def __str__(self):
+        return f"LearnerProfile({self.user.username})"
+
+
 class Note(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=200)

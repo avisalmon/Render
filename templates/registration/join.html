@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}הרשמה חינם - babook{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-5">
+  <div class="col-md-6 col-lg-5">
+    <div class="card-surface p-4 text-center">
+      <i class="bi bi-unlock-fill mb-2" style="font-size:2rem; color:var(--accent-primary)"></i>
+      {% if course %}
+        <h1 class="h4 mb-1">כדי להמשיך ב«{{ course.title }}»</h1>
+        <p class="text-muted mb-4">הרשמה חינם - שומרת את ההתקדמות שלך בקורס. בלי תשלום.</p>
+      {% else %}
+        <h1 class="h4 mb-1">הרשמה חינם להמשך</h1>
+        <p class="text-muted mb-4">חשבון חינם שומר התקדמות, בחנים ותעודות.</p>
+      {% endif %}
+
+      <div class="d-grid gap-2 mb-3">
+        <a href="/accounts/google/login/?next={{ next|urlencode }}" class="btn btn-light">
+          <i class="bi bi-google me-1"></i> המשך עם Google
+        </a>
+        <a href="/accounts/github/login/?next={{ next|urlencode }}" class="btn btn-outline-light">
+          <i class="bi bi-github me-1"></i> המשך עם GitHub
+        </a>
+      </div>
+
+      <div class="d-flex align-items-center my-3">
+        <hr class="flex-grow-1"><span class="px-2 text-muted small">או באימייל</span><hr class="flex-grow-1">
+      </div>
+
+      <form method="post" action="{% url 'register' %}" class="text-start">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        <div class="mb-2">
+          <label class="form-label small">שם משתמש</label>
+          <input class="form-control" name="username" required autocomplete="username">
+        </div>
+        <div class="mb-2">
+          <label class="form-label small">סיסמה</label>
+          <input type="password" class="form-control" name="password1" required autocomplete="new-password">
+        </div>
+        <div class="mb-3">
+          <label class="form-label small">אימות סיסמה</label>
+          <input type="password" class="form-control" name="password2" required autocomplete="new-password">
+        </div>
+        <button class="btn btn-primary w-100">
+          {% if course %}הרשמה והמשך לשיעור{% else %}הרשמה והמשך{% endif %} <i class="bi bi-arrow-left"></i>
+        </button>
+      </form>
+
+      <p class="mt-3 mb-1 small">
+        כבר רשומים? <a href="/login/?next={{ next|urlencode }}">התחברות</a>
+      </p>
+      {% if course %}
+      <p class="small text-muted mb-0">
+        <i class="bi bi-check-circle"></i> השיעור הראשון של «{{ course.title }}» פתוח חינם גם בלי חשבון
+      </p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  if (window.plausible) {
+    plausible('wall_shown', {props: {course: '{{ course.slug|default:""|escapejs }}'}});
+  }
+</script>
+{% endblock %}

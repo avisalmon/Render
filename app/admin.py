@@ -11,6 +11,7 @@ from .models import (
     CourseMaterial,
     Enrollment,
     Entitlement,
+    LearnerProfile,
     LessonQuiz,
     LessonReflection,
     ModerationLog,
@@ -26,6 +27,14 @@ from .models import (
 
 admin.site.register(Note)
 admin.site.register(UserProfile)
+
+
+@admin.register(LearnerProfile)
+class LearnerProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "experience_level", "recommended_track",
+                    "onboarding_completed_at", "source_entry_type", "created_at")
+    search_fields = ("user__username", "goal", "source_course")
+    list_filter = ("experience_level", "source_entry_type")
 
 
 class CourseMaterialInline(admin.TabularInline):

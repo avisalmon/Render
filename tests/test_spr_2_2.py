@@ -175,10 +175,12 @@ def test_detail_shows_enroll_cta(client, published_course):
 
 @pytest.mark.django_db
 def test_enroll_requires_login(client, published_course):
-    """T-F-2.2.5-1: POST /courses/<slug>/enroll/ redirects anonymous to login."""
+    """T-F-2.2.5-1: anonymous enroll routes to the context-aware wall
+    (updated by REQ-5.1.2/5.4.1 - was a bare /login redirect)."""
     r = client.post(reverse("courses_enroll", args=["micropython-thonny"]))
     assert r.status_code in (302, 301)
-    assert "/login" in r["Location"] or "/accounts" in r["Location"]
+    assert r["Location"].startswith("/join/")
+    assert "course=micropython-thonny" in r["Location"]
 
 
 @pytest.mark.django_db

@@ -335,7 +335,8 @@ def test_free_preview_accessible_to_anonymous():
 @pytest.mark.spr14
 @pytest.mark.django_db
 def test_non_preview_redirects_anonymous_to_login():
-    """T-F-1.4.8-2: Non-preview video redirects anonymous user to login."""
+    """T-F-1.4.8-2: Non-preview video redirects anonymous users to the
+    context-aware wall, preserving next (updated by REQ-5.1.2/5.4.1)."""
     from app.models import Course, Video
     course = Course.objects.create(title="Paid Course 2", slug="paid-course-2", description="Paid")
     Video.objects.create(
@@ -345,7 +346,8 @@ def test_non_preview_redirects_anonymous_to_login():
     client = Client()
     resp = client.get("/course/paid-course-2/lesson/1/")
     assert resp.status_code == 302
-    assert "/login" in resp.url or "/accounts/login" in resp.url
+    assert resp.url.startswith("/join/")
+    assert "next=/course/paid-course-2/lesson/1/" in resp.url
 
 
 # ---------------------------------------------------------------------------

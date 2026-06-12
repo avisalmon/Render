@@ -2,6 +2,7 @@
 Custom middleware for babook.
 """
 from django.conf import settings
+from django.shortcuts import redirect
 
 
 class DefaultHebrewMiddleware:
@@ -36,3 +37,48 @@ class DefaultHebrewMiddleware:
                 samesite="Lax",
             )
         return response
+
+
+class OnboardingMiddleware:
+    """EPIC-5: first-touch intent capture + new-user onboarding routing.
+
+    1. REQ-5.2.1 — records the anonymous visitor's first page request in the
+       session (entry path/type/course, referrer, utm). Never overwritten.
+    2. REQ-5.5.1 — a session flagged at signup ("onboarding_pending") routes
+       the user's next page load to /welcome/, remembering where they were
+       headed so onboarding can return them there. Only newly registered
+       users are ever flagged; force_login / existing sessions are untouched.
+    """
+
+    _EXEMPT_PREFIXES = (
+        "/welcome/", "/join/", "/logout/", "/login/", "/accounts/", "/admin/",
+        "/static/", "/media/", "/api/", "/healthz", "/stripe/",
+    )
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        from .onboarding import (
+            ONBOARDING_NEXT_KEY,
+            ONBOARDING_PENDING_KEY,
+            capture_first_touch,
+        )
+
+        capture_first_touch(request)
+
+        if (
+            request.method == "GET"
+            and request.user.is_authenticated
+            and request.session.get(ONBOARDING_PENDING_KEY)
+            and not any(request.path.startswith(p) for p in self._EXEMPT_PREFIXES)
+        ):
+            profile = getattr(request.user, "learner_profile", None)
+            if profile is not None and profile.needs_onboarding:
+                if request.path != "/" and ONBOARDING_NEXT_KEY not in request.session:
+                    request.session[ONBOARDING_NEXT_KEY] = request.get_full_path()
+                return redirect("welcome")
+            # Profile gone or already onboarded — stop intercepting.
+            request.session.pop(ONBOARDING_PENDING_KEY, None)
+
+        return self.get_response(request)

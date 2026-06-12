@@ -208,8 +208,10 @@ def test_body_uses_bg_primary_token():
 
 
 @pytest.mark.spr201
+@pytest.mark.django_db
 def test_existing_pages_still_render(client):
-    """T-F-2.0.7-3: Existing Chapter 1 pages still respond 200 after theme change."""
+    """T-F-2.0.7-3: Existing Chapter 1 pages still respond 200 after theme change.
+    (django_db added: REQ-5.2.1 first-touch capture writes a session row.)"""
     # Smoke tests against the dark-theme refactor — must not break existing pages.
     for path in ["/", "/healthz", "/privacy/", "/terms/"]:
         response = client.get(path)

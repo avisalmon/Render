@@ -1,7 +1,7 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path
 
-from . import course_api, studio_views, views
+from . import course_api, onboarding_views, studio_views, views
 
 urlpatterns = [
     path("", views.home, name="home"),
@@ -9,6 +9,12 @@ urlpatterns = [
     path("register/", views.register, name="register"),
     path("login/", auth_views.LoginView.as_view(), name="login"),
     path("logout/", views.logout_view, name="logout"),
+    # Onboarding & first-time experience (EPIC-5)
+    path("join/", onboarding_views.join_wall, name="join_wall"),
+    path("welcome/", onboarding_views.welcome, name="welcome"),
+    path("welcome/chat/", onboarding_views.welcome_chat, name="welcome_chat"),
+    path("welcome/complete/", onboarding_views.welcome_complete, name="welcome_complete"),
+    path("welcome/skip/", onboarding_views.welcome_skip, name="welcome_skip"),
     path("profile/", views.profile, name="profile"),
     path("staff/copilot-dashboard/", views.CopilotDashboardView.as_view(), name="copilot_dashboard"),
     path("corporate/", views.corporate, name="corporate"),

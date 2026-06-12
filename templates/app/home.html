@@ -21,6 +21,45 @@
   </div>
   {% endif %}
 
+  {% if recommended %}
+  <!-- Personalized "start here" rail (REQ-5.6.3) -->
+  <section class="mb-4">
+    <h2 class="h5 mb-1">מומלץ עבורך <i class="bi bi-stars" style="color:var(--accent-primary)"></i></h2>
+    <p class="text-muted small mb-3">לפי תחומי העניין והרמה שבחרת. <a href="{% url 'welcome' %}" class="text-decoration-none">עדכון העדפות</a></p>
+    <div class="row g-3">
+      {% for r in recommended %}
+      <div class="col-12 col-md-4">
+        <a href="{{ r.url }}" class="card-surface feature-card d-block p-3 text-decoration-none" style="color:var(--text-primary)">
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <i class="bi bi-mortarboard-fill" style="color:var(--accent-primary)"></i>
+            <strong>{{ r.course.title }}</strong>
+            {% if forloop.first %}<span class="badge bg-primary">התחל כאן</span>{% endif %}
+          </div>
+          <p class="text-muted small mb-0">{{ r.course.description|truncatechars:90 }}</p>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if checklist %}
+  <!-- Get-started checklist (REQ-5.6.5) -->
+  <section id="starter-checklist" class="card-surface p-3 mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+      <h2 class="h6 mb-0"><i class="bi bi-rocket-takeoff me-1"></i> צעדים ראשונים</h2>
+      <button class="btn btn-sm btn-link text-secondary p-0" aria-label="סגור"
+              onclick="document.cookie='checklist_dismissed=1;path=/;max-age=31536000';document.getElementById('starter-checklist').remove();">✕</button>
+    </div>
+    <div class="d-flex flex-wrap gap-3 mt-2 small">
+      <span>{% if checklist.watched %}✅{% else %}⬜{% endif %} צפייה בשיעור ראשון</span>
+      <span>{% if checklist.quiz %}✅{% else %}⬜{% endif %} מעבר בוחן</span>
+      <span>{% if checklist.reflected %}✅{% else %}⬜{% endif %} שיתוף רפלקציה</span>
+      <span>{% if checklist.enrolled %}✅{% else %}⬜{% endif %} הרשמה לקורס</span>
+    </div>
+  </section>
+  {% endif %}
+
   <!-- ============================ HERO ============================ -->
   <section class="hero-slim">
     <h1 class="hero-brand">babook</h1>

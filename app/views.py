@@ -36,6 +36,8 @@ def home(request):
 
     # Pass last-watched lesson so template can show a "Continue watching" card
     last_progress = None
+    recommended = []
+    checklist = None
     if request.user.is_authenticated:
         last_progress = (
             UserVideoProgress.objects
@@ -45,7 +47,43 @@ def home(request):
             .first()
         )
 
-    return render(request, "app/home.html", {"notes": notes, "last_progress": last_progress})
+        # Personalized "start here" rail + activation checklist (REQ-5.6.3/5.6.5).
+        # Only users with a LearnerProfile (EPIC-5 signups); others stay generic.
+        learner = getattr(request.user, "learner_profile", None)
+        if learner is not None and not learner.needs_onboarding:
+            from .models import LessonReflection
+            from .onboarding import first_lesson_url, recommend
+            track, course = recommend(
+                learner.interests, learner.experience_level,
+                learner.recommended_course,
+            )
+            if course:
+                recommended.append({"course": course, "url": first_lesson_url(course)})
+                # Fill the rail with more published courses from the same domain
+                extra = Course.objects.filter(
+                    is_published=True, domain=course.domain
+                ).exclude(pk=course.pk)[:2]
+                recommended += [
+                    {"course": c, "url": f"/courses/{c.slug}/"} for c in extra
+                ]
+            if request.COOKIES.get("checklist_dismissed") != "1":
+                checklist = {
+                    "watched": UserVideoProgress.objects.filter(user=request.user).exists(),
+                    "quiz": UserVideoProgress.objects.filter(
+                        user=request.user, quiz_passed=True
+                    ).exists(),
+                    "reflected": LessonReflection.objects.filter(user=request.user).exists(),
+                    "enrolled": Enrollment.objects.filter(user=request.user).exists(),
+                }
+                if all(checklist.values()):
+                    checklist = None  # done — stop showing it
+
+    return render(request, "app/home.html", {
+        "notes": notes,
+        "last_progress": last_progress,
+        "recommended": recommended,
+        "checklist": checklist,
+    })
 
 
 # Apex sections not yet built — rendered as friendly "coming soon" placeholders.
@@ -108,15 +146,27 @@ def add_note(request):
 
 
 def register(request):
+    from django.utils.http import url_has_allowed_host_and_scheme
+
+    from .onboarding import FIRST_TOUCH_KEY, attach_attribution, mark_signup
+    next_url = request.POST.get("next") or request.GET.get("next") or ""
+    if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+        next_url = ""
     if request.method == "POST":
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
+            # First-touch attribution must survive login()'s session cycling
+            attribution = dict(request.session.get(FIRST_TOUCH_KEY, {}))
             login(request, user, backend="django.contrib.auth.backends.ModelBackend")
-            return redirect("home")
+            if attribution:
+                request.session[FIRST_TOUCH_KEY] = attribution
+            attach_attribution(user, request)
+            mark_signup(request, next_url)
+            return redirect("welcome")
     else:
         form = UserCreationForm()
-    return render(request, "registration/register.html", {"form": form})
+    return render(request, "registration/register.html", {"form": form, "next": next_url})
 
 
 def logout_view(request):
@@ -586,7 +636,8 @@ def courses_detail(request, slug):
 def courses_enroll(request, slug):
     from django.shortcuts import get_object_or_404
     if not request.user.is_authenticated:
-        return redirect(f"/login/?next=/courses/{slug}/enroll/")
+        # Wall with the course named; lands back on the course page after signup
+        return redirect(f"/join/?next=/courses/{slug}/&course={slug}")
     if request.method != "POST":
         return redirect("courses_detail", slug=slug)
 
@@ -620,10 +671,14 @@ def courses_lesson(request, slug, lesson_order):
     course = get_object_or_404(Course, slug=slug, is_published=True)
     video = get_object_or_404(Video, course=course, lesson_order=lesson_order)
 
-    # Access gate: non-preview videos require enrollment
+    # Access gate: non-preview videos require enrollment.
+    # Anonymous users get the context-aware wall, never a bare login/403
+    # (REQ-5.1.2 / REQ-5.4.1).
     if not video.is_free_preview:
         if not request.user.is_authenticated:
-            return redirect(f"/login/?next=/courses/{slug}/{lesson_order}/")
+            return redirect(
+                f"/join/?next=/courses/{slug}/lesson/{lesson_order}/&course={slug}"
+            )
         if not Enrollment.objects.filter(user=request.user, course=course).exists():
             return redirect("courses_detail", slug=slug)
 
@@ -716,6 +771,16 @@ def courses_lesson(request, slug, lesson_order):
     if request.user.is_authenticated and video.reflection_prompt:
         reflection = video.reflections.filter(user=request.user).first()
 
+    # Funnel events (REQ-5.7.1): anonymous free-preview view; first-ever
+    # completed lesson (JS adds a localStorage guard against refires).
+    fire_free_lesson = (not request.user.is_authenticated) and video.is_free_preview
+    fire_first_completed = (
+        request.user.is_authenticated
+        and lesson_completed_ctx
+        and not is_staff
+        and UserVideoProgress.objects.filter(user=request.user).count() <= 1
+    )
+
     return render(request, "app/lesson.html", {
         "course": course,
         "video": video,
@@ -727,6 +792,8 @@ def courses_lesson(request, slug, lesson_order):
         "notes_html": notes_html,
         "completed_ids": completed_ids,
         "locked_ids": locked_ids_ctx,
+        "fire_free_lesson": fire_free_lesson,
+        "fire_first_completed": fire_first_completed,
         "is_enrolled": is_enrolled,
         "quiz": quiz,
         "reflection": reflection,
@@ -755,7 +822,10 @@ def lesson_view(request, slug, lesson_order):
 
     if not video.is_free_preview:
         if not request.user.is_authenticated:
-            return redirect(f"/login/?next=/course/{slug}/lesson/{lesson_order}/")
+            # Context-aware wall, never a bare login page (REQ-5.1.2)
+            return redirect(
+                f"/join/?next=/course/{slug}/lesson/{lesson_order}/&course={slug}"
+            )
         try:
             ent = request.user.entitlement
             if not ent.has_video_access:

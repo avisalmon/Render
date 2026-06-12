@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}ברוכים הבאים - babook{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+  <div class="col-md-8 col-lg-6">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h1 class="h4 mb-0"><i class="bi bi-stars me-1" style="color:var(--accent-primary)"></i> נבנה לך מסלול אישי</h1>
+      <form method="post" action="{% url 'welcome_skip' %}">{% csrf_token %}
+        <button class="btn btn-sm btn-outline-secondary">דלג, אחר כך</button>
+      </form>
+    </div>
+
+    {% if entry_course %}
+    <div class="alert alert-info py-2 small">
+      <i class="bi bi-bookmark-heart"></i> ראינו שהגעת בשביל «{{ entry_course.title }}» - ניקח את זה בחשבון.
+    </div>
+    {% endif %}
+
+    {% if ai_available %}
+    <!-- AI interview (REQ-5.5.2). Falls back to the static form on any error. -->
+    <div id="interview" class="card-surface p-3 mb-3">
+      <div id="chat-log" class="mb-3" style="min-height:180px; max-height:50vh; overflow-y:auto;"></div>
+      <div class="d-flex gap-2">
+        <input id="chat-input" class="form-control" placeholder="כתבו תשובה..." autocomplete="off">
+        <button id="chat-send" class="btn btn-primary"><i class="bi bi-send"></i></button>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Static fallback (REQ-5.5.4): 3 taps to the same profile -->
+    <div id="fallback" class="card-surface p-4" {% if ai_available %}style="display:none"{% endif %}>
+      <h2 class="h6 mb-3">או בקצרה - שלוש בחירות ונצא לדרך:</h2>
+      <form method="post" action="{% url 'welcome_complete' %}"
+            onsubmit="if(window.plausible)plausible('onboarding_completed');">
+        {% csrf_token %}
+        <label class="form-label small fw-semibold">מה מעניין אותך?</label>
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          {% for d in domains %}
+          <input type="checkbox" class="btn-check" name="interests" value="{{ d.key }}" id="dom-{{ d.key }}">
+          <label class="btn btn-outline-primary btn-sm" for="dom-{{ d.key }}">
+            <i class="bi {{ d.icon }}"></i> {{ d.title }}
+          </label>
+          {% endfor %}
+        </div>
+        <label class="form-label small fw-semibold">מה הרמה שלך?</label>
+        <div class="d-flex gap-2 mb-3">
+          <input type="radio" class="btn-check" name="experience_level" value="beginner" id="lv-b" checked>
+          <label class="btn btn-outline-primary btn-sm" for="lv-b">מתחיל</label>
+          <input type="radio" class="btn-check" name="experience_level" value="intermediate" id="lv-i">
+          <label class="btn btn-outline-primary btn-sm" for="lv-i">יודע קצת</label>
+          <input type="radio" class="btn-check" name="experience_level" value="advanced" id="lv-a">
+          <label class="btn btn-outline-primary btn-sm" for="lv-a">מנוסה</label>
+        </div>
+        <label class="form-label small fw-semibold">מה המטרה?</label>
+        <select class="form-select mb-4" name="goal">
+          <option value="עבודה">להשתפר בעבודה</option>
+          <option value="סקרנות">סקרנות ולמידה</option>
+          <option value="פרויקט">פרויקט שאני בונה</option>
+          <option value="קריירה">שינוי קריירה</option>
+        </select>
+        <button class="btn btn-primary w-100">בנו לי מסלול <i class="bi bi-arrow-left"></i></button>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+<script>
+if (window.plausible) { plausible('registered'); plausible('onboarding_started'); }
+
+(function () {
+  var log = document.getElementById('chat-log');
+  if (!log) return;  // static-only mode
+  var input = document.getElementById('chat-input'), send = document.getElementById('chat-send');
+
+  function add(role, text) {
+    var div = document.createElement('div');
+    div.className = 'mb-2 ' + (role === 'user' ? 'text-end' : '');
+    div.innerHTML = '<span class="badge ' + (role === 'user' ? 'bg-primary' : 'bg-secondary') +
+      '" style="white-space:normal; text-align:start; font-weight:400; font-size:0.9rem;"></span>';
+    div.firstChild.textContent = text;
+    log.appendChild(div); log.scrollTop = log.scrollHeight;
+  }
+
+  function showFallback() {
+    document.getElementById('interview').style.display = 'none';
+    document.getElementById('fallback').style.display = '';
+  }
+
+  function turn(message) {
+    fetch('{% url "welcome_chat" %}', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+      body: JSON.stringify({message: message})
+    }).then(function (r) { return r.json(); }).then(function (data) {
+      if (data.fallback || data.error) { showFallback(); return; }
+      if (data.reply) add('assistant', data.reply);
+      if (data.done) {
+        if (window.plausible) plausible('onboarding_completed');
+        setTimeout(function () { window.location = data.redirect; }, 1200);
+      }
+    }).catch(showFallback);
+  }
+
+  send.addEventListener('click', function () {
+    var msg = input.value.trim();
+    if (!msg) return;
+    add('user', msg); input.value = '';
+    turn(msg);
+  });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); send.click(); }
+  });
+
+  turn('');  // opening greeting
+})();
+</script>
+{% endblock %}
