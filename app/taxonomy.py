@@ -1,5 +1,5 @@
 """
-Training taxonomy — the hierarchy the courses catalog is organised by.
+Training taxonomy - the hierarchy the courses catalog is organised by.
 
 Structure: Domain → Track → Course.
 Each Course stores `domain` + `track` (slugs); this module holds the display
@@ -15,7 +15,7 @@ TRAINING_TAXONOMY = {
         "icon": "bi-rocket-takeoff",
         "order": 1,
         "description": (
-            "הכשרת בני נוער למובילים טכנולוגיים — קורסים מעשיים בתכנות, חומרה, "
+            "הכשרת בני נוער למובילים טכנולוגיים - קורסים מעשיים בתכנות, חומרה, "
             "תלת-מימד ויצירה דיגיטלית, המתאימים לחטיבת הביניים ולתיכון. "
             "מבוסס על תוכנית מטצים."
         ),
@@ -28,13 +28,13 @@ TRAINING_TAXONOMY = {
             },
             "software": {
                 "title": "תכנות ותוכנה",
-                "subtitle": "מבלוקים ועד קוד — Scratch, Python ופיתוח web",
+                "subtitle": "מבלוקים ועד קוד - Scratch, Python ופיתוח web",
                 "icon": "bi-code-slash",
                 "order": 2,
             },
             "hardware": {
                 "title": "חומרה ואלקטרוניקה",
-                "subtitle": "אלקטרוניקה, חיישנים ובקרים — Arduino, MicroPython",
+                "subtitle": "אלקטרוניקה, חיישנים ובקרים - Arduino, MicroPython",
                 "icon": "bi-cpu",
                 "order": 3,
                 "extra_slugs": ["micropython-thonny"],
@@ -53,14 +53,14 @@ TRAINING_TAXONOMY = {
         "icon": "bi-robot",
         "order": 2,
         "description": (
-            "עולם הבינה המלאכותית בשלוש רמות — ממשתמשים סקרנים, דרך אנשי מקצוע "
+            "עולם הבינה המלאכותית בשלוש רמות - ממשתמשים סקרנים, דרך אנשי מקצוע "
             "שמאיצים את עבודתם עם AI, ועד הבנה עמוקה של למידת מכונה ואימון מודלים."
         ),
         # Render a row of per-level "intro" cards at the top of the domain page.
         "intro_row": True,
         "tracks": {
             "ai-l1": {
-                "title": "רמה 1 — משתמש",
+                "title": "רמה 1 - משתמש",
                 "subtitle": "כלים מגניבים שכל אחד יכול",
                 "icon": "bi-stars",
                 "order": 1,
@@ -68,7 +68,7 @@ TRAINING_TAXONOMY = {
                 "intro_slug": "ai-user-journey",
             },
             "ai-l2": {
-                "title": "רמה 2 — מעשי / מקצועי",
+                "title": "רמה 2 - מעשי / מקצועי",
                 "subtitle": "AI כמאיץ למקצוע שלך",
                 "icon": "bi-lightning-charge",
                 "order": 2,
@@ -76,7 +76,7 @@ TRAINING_TAXONOMY = {
                 "intro_slug": "co-coding-copilot",
             },
             "ai-l3": {
-                "title": "רמה 3 — AI לעומק",
+                "title": "רמה 3 - AI לעומק",
                 "subtitle": "למידת מכונה, רשתות נוירונים ואימון מודלים",
                 "icon": "bi-diagram-3",
                 "order": 3,
@@ -92,7 +92,7 @@ TRAINING_TAXONOMY = {
         "icon": "bi-lightbulb",
         "order": 3,
         "description": (
-            "כלים, שיטות ותכנים להובלת חדשנות — איך מזהים הזדמנויות, מובילים "
+            "כלים, שיטות ותכנים להובלת חדשנות - איך מזהים הזדמנויות, מובילים "
             "שינוי טכנולוגי בארגון, והופכים רעיונות למוצרים."
         ),
         "tracks": {

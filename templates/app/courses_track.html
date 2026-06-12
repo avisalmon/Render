@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}{{ t.meta.title }} — {{ d.meta.title }} | babook{% endblock %}
+{% block title %}{{ t.meta.title }} - {{ d.meta.title }} | babook{% endblock %}
 
 {% block content %}
 <div class="py-4">
@@ -36,7 +36,7 @@
     {% endfor %}
   </div>
   {% else %}
-  <p class="text-muted">אין עדיין קורסים במסלול זה — בקרוב.</p>
+  <p class="text-muted">אין עדיין קורסים במסלול זה - בקרוב.</p>
   {% endif %}
 </div>
 {% endblock %}

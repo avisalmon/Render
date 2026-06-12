@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}{{ d.meta.title }} — הדרכה | babook{% endblock %}
+{% block title %}{{ d.meta.title }} - הדרכה | babook{% endblock %}
 
 {% block content %}
 <div class="py-4">
@@ -24,7 +24,7 @@
 
   {% if d.meta.intro_row %}
   <div class="mb-4">
-    <h2 class="h6 text-muted mb-2"><i class="bi bi-flag"></i> מבוא — מאיפה מתחילים בכל רמה</h2>
+    <h2 class="h6 text-muted mb-2"><i class="bi bi-flag"></i> מבוא - מאיפה מתחילים בכל רמה</h2>
     <div class="row g-2">
       {% for t in d.tracks %}
       <div class="col-12 col-md-4">
@@ -79,7 +79,7 @@
     {% endfor %}
   </div>
   {% else %}
-  <p class="text-muted"><i class="bi bi-hourglass-split"></i> התכנים בתחום זה בהכנה — בקרוב.</p>
+  <p class="text-muted"><i class="bi bi-hourglass-split"></i> התכנים בתחום זה בהכנה - בקרוב.</p>
   {% endif %}
 </div>
 {% endblock %}

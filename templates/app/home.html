@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static i18n %}
 
-{% block title %}babook — אתר שיתוף הספרים שלא משתף ספרים{% endblock %}
+{% block title %}babook - אתר שיתוף הספרים שלא משתף ספרים{% endblock %}
 
 {% block content %}
 
@@ -9,7 +9,7 @@
   <div class="alert alert-primary d-flex align-items-center justify-content-between mb-4" role="alert">
     <div>
       <i class="bi bi-play-circle-fill me-2"></i>
-      <strong>המשך לצפות:</strong> {{ last_progress.video.course.title }} — {{ last_progress.video.title }}
+      <strong>המשך לצפות:</strong> {{ last_progress.video.course.title }} - {{ last_progress.video.title }}
       {% if last_progress.last_position_seconds > 5 %}
         <small class="text-muted ms-2">({{ last_progress.last_position_seconds|floatformat:0 }} שניות)</small>
       {% endif %}
@@ -25,7 +25,7 @@
   <section class="hero-slim">
     <h1 class="hero-brand">babook</h1>
     <p class="hero-joke">
-      📚 אתר שיתוף הספרים #1 בישראל — חוץ מ<strong>שיתוף ספרים</strong> עצמו, שעדיין לא בנינו 🙂.
+      📚 אתר שיתוף הספרים #1 בישראל - חוץ מ<strong>שיתוף ספרים</strong> עצמו, שעדיין לא בנינו 🙂.
       בינתיים יש כאן כל השאר 👇
     </p>
   </section>
@@ -33,22 +33,22 @@
   <!-- ===================== THE WORLDS OF BABOOK ===================== -->
   <section class="mt-3">
     <h2 class="text-center mb-1">העולמות של babook</h2>
-    <p class="text-center text-muted mb-4">עולם אחד כבר באוויר. השאר בדרך — חלקם ברצינות גמורה, ואחד… פחות. 🙂</p>
+    <p class="text-center text-muted mb-4">עולם אחד כבר באוויר. השאר בדרך - חלקם ברצינות גמורה, ואחד… פחות. 🙂</p>
 
-    <!-- Training — LIVE, featured full width -->
+    <!-- Training - LIVE, featured full width -->
     <div class="row g-3 mb-3">
       <div class="col-12">
         <a href="{% url 'courses_catalog' %}" class="card-surface apex-card">
           <i class="bi bi-mortarboard-fill apex-icon"></i>
           <div>
             <h4 class="mb-1">הדרכה <span class="live-badge">פעיל</span></h4>
-            <p class="text-muted mb-0">קורסים אונליין — וידאו עם הסברים מלאים בפייתון, ארדואינו, תלת-מימד, AI ועוד. כבר באוויר.</p>
+            <p class="text-muted mb-0">קורסים אונליין - וידאו עם הסברים מלאים בפייתון, ארדואינו, תלת-מימד, AI ועוד. כבר באוויר.</p>
           </div>
         </a>
       </div>
     </div>
 
-    <!-- The rest — placeholders -->
+    <!-- The rest - placeholders -->
     <div class="row g-3">
       <div class="col-12 col-md-6 col-lg-4">
         <a href="{% url 'services' %}" class="card-surface feature-card text-center">

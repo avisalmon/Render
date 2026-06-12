@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static i18n %}
 
-{% block title %}{{ section.title }} — בקרוב | babook{% endblock %}
+{% block title %}{{ section.title }} - בקרוב | babook{% endblock %}
 
 {% block content %}
   <section class="hero">
@@ -12,7 +12,7 @@
     <p class="hero-punch">{{ section.blurb }}</p>
     <div class="hero-cta">
       <a class="btn btn-primary btn-lg" href="{% url 'courses_catalog' %}">
-        <i class="bi bi-mortarboard"></i> בינתיים — להדרכה
+        <i class="bi bi-mortarboard"></i> בינתיים - להדרכה
       </a>
       <a class="btn btn-outline-primary btn-lg" href="{% url 'home' %}">
         <i class="bi bi-house"></i> חזרה לדף הבית

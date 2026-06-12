@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load static course_tags %}
-{% block title %}{{ video.title }} — {{ course.title }} — babook{% endblock %}
+{% block title %}{{ video.title }} - {{ course.title }} - babook{% endblock %}
 
 {% block content %}
 <div class="lesson-layout">
@@ -163,7 +163,7 @@
       {% if user.is_authenticated %}
       <div id="reflection-feedback" class="mb-2" style="display:none"></div>
       <textarea id="reflection-text" class="form-control" rows="3"
-                placeholder="ספר לנו מה ניסית — גם אם לא הצלחת, זה בסדר גמור 🙂"></textarea>
+                placeholder="ספר לנו מה ניסית - גם אם לא הצלחת, זה בסדר גמור 🙂"></textarea>
       <button id="reflection-submit" class="btn btn-primary mt-2">
         <i class="bi bi-send"></i> {% if reflection %}שלח תשובה נוספת{% else %}שלח{% endif %}
       </button>
@@ -262,11 +262,11 @@
   }
   tryShowNext();
 
-  /* Mark lesson as visited immediately — no watching requirement */
+  /* Mark lesson as visited immediately - no watching requirement */
   sendProgress(pos || 0, 100, false);
 
   {% if video.bunny_video_id %}
-  /* ── Bunny player.js SDK — real seek + real position + volume ── */
+  /* ── Bunny player.js SDK - real seek + real position + volume ── */
   var playerIframe = document.querySelector(".lesson-player iframe");
   if (playerIframe) {
     var sdkScript = document.createElement("script");
@@ -375,7 +375,7 @@
       feedback.style.display = "block";
       if (passed) {
         feedback.innerHTML = '<div class="alert alert-success py-2 mb-0">' +
-          (isCorrect ? "✓ נכון מאוד!" : "✓ תשובה התקבלה — בהצלחה!") + "</div>";
+          (isCorrect ? "✓ נכון מאוד!" : "✓ תשובה התקבלה - בהצלחה!") + "</div>";
         submitBtn.disabled = true;
         radios.forEach(function (r) { r.disabled = true; });
         quizOk  = true;
@@ -383,7 +383,7 @@
         sendProgress(pos || 0, 100, true);
         tryShowNext();
       } else {
-        feedback.innerHTML = '<div class="alert alert-warning py-2 mb-0">✗ תשובה שגויה — נסוו שוב!</div>';
+        feedback.innerHTML = '<div class="alert alert-warning py-2 mb-0">✗ תשובה שגויה - נסוו שוב!</div>';
         sel.checked = false;
         submitBtn.disabled = true;
       }
@@ -426,7 +426,7 @@
         reflectBtn.innerHTML = orig;
         reflectBtn.disabled = false;
         reflectFb.style.display = "block";
-        reflectFb.innerHTML = '<div class="alert alert-warning py-2 mb-0">שגיאה — נסה שוב.</div>';
+        reflectFb.innerHTML = '<div class="alert alert-warning py-2 mb-0">שגיאה - נסה שוב.</div>';
       });
     });
   }
