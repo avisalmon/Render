@@ -45,21 +45,29 @@
     </div>
     {% endif %}
 
-    {% if reflections %}
     <h2 class="mb-3 h5">
-      <i class="bi bi-chat-heart-fill me-2" style="color:var(--accent-primary)"></i>המסע שלי ב-AI
+      <i class="bi bi-mortarboard-fill me-2" style="color:var(--accent-primary)"></i>הקורסים שלי
     </h2>
+    {% if my_courses %}
     <div class="d-flex flex-column gap-2 mb-4">
-      {% for r in reflections %}
-      <div class="card-surface p-3">
-        <div class="small text-muted mb-2">
-          <i class="bi bi-mortarboard me-1"></i>{{ r.video.course.title }} · {{ r.video.title }}
-          <span class="ms-2">{{ r.created_at|date:"j בF Y" }}</span>
+      {% for mc in my_courses %}
+      <a href="{% url 'courses_detail' mc.course.slug %}"
+         class="card-surface p-3 text-decoration-none d-block" style="color:var(--text-primary)">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="fw-semibold">{{ mc.course.title }}</span>
+          <span class="small text-muted">{{ mc.pct }}%{% if mc.completed %} · הושלם ✓{% endif %}</span>
         </div>
-        <div class="reflection-bubble reflection-user mb-2">{{ r.user_text }}</div>
-        <div class="reflection-bubble reflection-ai"><i class="bi bi-robot me-1"></i>{{ r.ai_reply }}</div>
-      </div>
+        <div class="progress" style="height:8px; background:var(--bg-elevated);">
+          <div class="progress-bar" role="progressbar"
+               style="width: {{ mc.pct }}%; background:var(--accent-primary);"
+               aria-valuenow="{{ mc.pct }}" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+      </a>
       {% endfor %}
+    </div>
+    {% else %}
+    <div class="card-surface p-3 mb-4 text-center text-muted">
+      עוד לא נרשמת לקורסים. <a href="{% url 'courses_catalog' %}">לכל ההדרכות ←</a>
     </div>
     {% endif %}
 

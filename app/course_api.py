@@ -201,6 +201,11 @@ def sync_course(request):
             # If push omits a quiz, delete any existing one (kept in sync)
             LessonQuiz.objects.filter(video=video).delete()
 
+    # Remove videos no longer present in the push (keeps the course in sync after reworks)
+    pushed_orders = [vd.get("lesson_order") for vd in videos_data if vd.get("lesson_order") is not None]
+    if pushed_orders:
+        course.videos.exclude(lesson_order__in=pushed_orders).delete()
+
     # --- Upsert Materials ---
     materials_data = data.get("materials", [])
     mat_count = 0

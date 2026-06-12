@@ -34,9 +34,10 @@ TRAINING_TAXONOMY = {
             },
             "hardware": {
                 "title": "חומרה ואלקטרוניקה",
-                "subtitle": "אלקטרוניקה, חיישנים ובקרים — Arduino",
+                "subtitle": "אלקטרוניקה, חיישנים ובקרים — Arduino, MicroPython",
                 "icon": "bi-cpu",
                 "order": 3,
+                "extra_slugs": ["micropython-thonny"],
             },
             "media": {
                 "title": "מדיה ויצירה דיגיטלית",
@@ -81,6 +82,7 @@ TRAINING_TAXONOMY = {
                 "order": 3,
                 "intro_label": "מבוא לרמה 3",
                 "intro_slug": "ai-fundamentals",
+                "extra_slugs": ["python"],
             },
         },
     },
@@ -106,6 +108,12 @@ TRAINING_TAXONOMY = {
                 "icon": "bi-people",
                 "order": 2,
             },
+            "presentation": {
+                "title": "הצגה ומצגות",
+                "subtitle": "להציג, לשכנע ולנאום בביטחון",
+                "icon": "bi-easel2",
+                "order": 3,
+            },
         },
     },
 }
@@ -125,14 +133,20 @@ def build_catalog(published_courses):
     domain/track is unknown (so nothing is silently dropped).
     """
     courses = list(published_courses)
+    by_slug = {c.slug: c for c in courses}
     placed = set()
     domains = []
     for dkey, dmeta in sorted(TRAINING_TAXONOMY.items(), key=lambda kv: kv[1]["order"]):
         tracks = []
         for tkey, tmeta in sorted(dmeta["tracks"].items(), key=lambda kv: kv[1]["order"]):
-            tcourses = [c for c in courses if c.domain == dkey and c.track == tkey]
-            for c in tcourses:
-                placed.add(c.pk)
+            primary = [c for c in courses if c.domain == dkey and c.track == tkey]
+            for c in primary:
+                placed.add(c.pk)  # only the PRIMARY placement marks a course as categorized
+            # Cross-listed courses appear here too but keep their own primary placement.
+            primary_pks = {c.pk for c in primary}
+            extra = [by_slug[s] for s in tmeta.get("extra_slugs", [])
+                     if s in by_slug and by_slug[s].pk not in primary_pks]
+            tcourses = primary + extra
             # A track may designate one course as its "intro" (shown first + featured).
             intro_slug = tmeta.get("intro_slug")
             intro = next((c for c in tcourses if c.slug == intro_slug), None) if intro_slug else None

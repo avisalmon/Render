@@ -11,6 +11,7 @@ from .models import (
     Enrollment,
     Entitlement,
     LessonQuiz,
+    LessonReflection,
     ModerationLog,
     NewsletterSubscriber,
     Note,
@@ -53,3 +54,17 @@ admin.site.register(CorporateLead)
 admin.site.register(NewsletterSubscriber)
 admin.site.register(LessonQuiz)
 admin.site.register(CourseCertificate)
+
+
+@admin.register(LessonReflection)
+class LessonReflectionAdmin(admin.ModelAdmin):
+    """Admin-only view of learner reflections (not shown on the user's own profile)."""
+    list_display = ("user", "video", "short_text", "created_at")
+    list_filter = ("created_at", "video__course")
+    search_fields = ("user__username", "user_text", "ai_reply")
+    readonly_fields = ("user", "video", "prompt", "user_text", "ai_reply", "created_at")
+    date_hierarchy = "created_at"
+
+    @admin.display(description="reflection")
+    def short_text(self, obj):
+        return (obj.user_text or "")[:80]

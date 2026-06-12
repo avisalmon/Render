@@ -22,29 +22,16 @@
   {% endif %}
 
   <!-- ============================ HERO ============================ -->
-  <section class="hero">
-    <span class="hero-badge">📚 אתר שיתוף הספרים #1 בישראל*</span>
-    <h1 class="hero-title">babook</h1>
-    <p class="hero-tagline">סוף סוף — שיתוף ספרים כמו שתמיד חלמתם.</p>
-    <p class="hero-punch">
-      * גילוי נאות: שיתוף ספרים הוא בדיוק הדבר היחיד שעדיין <strong>לא</strong> בנינו כאן.
-      בתמורה קיבלתם את כל השאר — קורסי וידאו, בינה מלאכותית, תרגול מעשי ותעודות.
-      ספרים? אולי בגרסה הבאה. 🙂
+  <section class="hero-slim">
+    <h1 class="hero-brand">babook</h1>
+    <p class="hero-joke">
+      📚 אתר שיתוף הספרים #1 בישראל — חוץ מ<strong>שיתוף ספרים</strong> עצמו, שעדיין לא בנינו 🙂.
+      בינתיים יש כאן כל השאר 👇
     </p>
-    <div class="hero-cta">
-      <a class="btn btn-primary btn-lg" href="{% url 'courses_catalog' %}">
-        <i class="bi bi-play-circle"></i> לכל הקורסים <span class="opacity-75">(שזה, כאמור, לא ספרים)</span>
-      </a>
-      {% if not user.is_authenticated %}
-      <a class="btn btn-outline-primary btn-lg" href="{% url 'register' %}">
-        <i class="bi bi-person-plus"></i> הרשמה
-      </a>
-      {% endif %}
-    </div>
   </section>
 
   <!-- ===================== THE WORLDS OF BABOOK ===================== -->
-  <section class="mt-5 pt-3">
+  <section class="mt-3">
     <h2 class="text-center mb-1">העולמות של babook</h2>
     <p class="text-center text-muted mb-4">עולם אחד כבר באוויר. השאר בדרך — חלקם ברצינות גמורה, ואחד… פחות. 🙂</p>
 

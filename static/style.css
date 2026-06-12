@@ -101,6 +101,26 @@ h1, h2, h3, h4, h5, h6 {
   flex-wrap: wrap;
 }
 
+/* Slim homepage hero — keeps the joke but stays out of the way so cards show on entry */
+.hero-slim {
+  text-align: center;
+  padding: 1.25rem 1rem 0.25rem;
+}
+.hero-brand {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin-bottom: 0.35rem;
+}
+.hero-joke {
+  max-width: 720px;
+  margin: 0 auto;
+  font-size: 0.98rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
 /* Feature cards (the "what's actually here" grid) */
 .feature-card {
   height: 100%;

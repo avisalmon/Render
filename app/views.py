@@ -136,18 +136,53 @@ def profile(request):
         copilot_status = request.user.copilot_seat.status
     except CopilotSeat.DoesNotExist:
         pass
-    from .models import CourseCertificate, LessonReflection
+    from .models import CourseCertificate, Enrollment, LessonQuiz
     certificates = CourseCertificate.objects.filter(
         user=request.user
     ).select_related("course").order_by("-issued_at")
-    reflections = LessonReflection.objects.filter(
-        user=request.user
-    ).select_related("video", "video__course").order_by("-created_at")[:50]
+
+    # Courses the user is enrolled in, with a completion percentage.
+    my_courses = []
+    enrollments = (
+        Enrollment.objects.filter(user=request.user)
+        .select_related("course").order_by("-enrolled_at")
+    )
+    for e in enrollments:
+        course = e.course
+        vids = list(course.videos.all())
+        total = len(vids)
+        pct = 0
+        if total:
+            required_ids = set(
+                LessonQuiz.objects.filter(
+                    video__course=course, requires_correct=True
+                ).values_list("video_id", flat=True)
+            ) | {v.id for v in vids if v.reflection_prompt}
+            progs = {
+                p.video_id: p for p in UserVideoProgress.objects.filter(
+                    user=request.user, video__course=course
+                )
+            }
+            done = 0
+            for v in vids:
+                p = progs.get(v.id)
+                if not p:
+                    continue
+                if v.id in required_ids:
+                    done += 1 if p.quiz_passed else 0
+                else:
+                    done += 1
+            pct = int(done / total * 100)
+        my_courses.append({
+            "course": course, "pct": pct,
+            "total": total, "completed": bool(e.completed_at),
+        })
+
     return render(request, "app/profile.html", {
         "user_profile": user_profile,
         "copilot_status": copilot_status,
         "certificates": certificates,
-        "reflections": reflections,
+        "my_courses": my_courses,
     })
 
 
