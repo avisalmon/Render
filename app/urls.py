@@ -12,6 +12,7 @@ urlpatterns = [
     # Onboarding & first-time experience (EPIC-5)
     path("join/", onboarding_views.join_wall, name="join_wall"),
     path("welcome/", onboarding_views.welcome, name="welcome"),
+    path("welcome/basics/", onboarding_views.welcome_basics, name="welcome_basics"),
     path("welcome/chat/", onboarding_views.welcome_chat, name="welcome_chat"),
     path("welcome/complete/", onboarding_views.welcome_complete, name="welcome_complete"),
     path("welcome/skip/", onboarding_views.welcome_skip, name="welcome_skip"),

@@ -40,7 +40,11 @@ class LearnerProfile(models.Model):
     never routed into onboarding and keep the generic homepage.
     """
     LEVELS = [("beginner", "Beginner"), ("intermediate", "Intermediate"), ("advanced", "Advanced")]
+    ROLE_TYPES = [("student", "Student"), ("teacher", "Teacher"), ("other", "Other")]
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="learner_profile")
+    # Welcome basics (captured before the interview): who they are + contact
+    role_type = models.CharField(max_length=20, choices=ROLE_TYPES, blank=True, default="")
+    contact_email = models.EmailField(blank=True, default="")  # optional extra email
     interests = models.JSONField(default=list, blank=True)  # taxonomy domain keys
     goal = models.CharField(max_length=200, blank=True, default="")
     experience_level = models.CharField(max_length=20, choices=LEVELS, blank=True, default="")

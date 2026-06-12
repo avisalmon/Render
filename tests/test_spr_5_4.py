@@ -26,6 +26,13 @@ def _signup(c, username="onb1"):
     return User.objects.get(username=username)
 
 
+def _basics(c, name="אבי הלומד", role="student"):
+    """Complete the welcome basics step (REQ-5.5.7)."""
+    c.post(reverse("welcome_basics"), {
+        "name": name, "email": "learner@example.com", "role_type": role,
+    })
+
+
 def _intro_course():
     """The published ai-l1 intro course the recommender should pick."""
     c = Course.objects.create(slug="ai-user-journey", title="מבוא", is_published=True,
@@ -44,12 +51,40 @@ def test_welcome_requires_login():
 
 
 @pytest.mark.django_db
-def test_welcome_page_renders_with_fallback_form():
+def test_welcome_opens_with_basics_step():
+    """T-F-5.4.7-1 (REQ-5.5.7): first the soft basics form - name, email,
+    student/teacher - only then the interview."""
     c = Client()
     _signup(c)
     body = c.get(reverse("welcome")).content.decode()
+    assert "welcome/basics/" in body
+    assert 'name="role_type"' in body
+    assert 'id="fallback"' not in body  # interview not shown yet
+
+
+@pytest.mark.django_db
+def test_welcome_basics_saves_user_fields():
+    """T-F-5.4.7-2: basics persist to User + UserProfile + LearnerProfile."""
+    c = Client()
+    user = _signup(c, "basics1")
+    _basics(c, name="דנה כהן", role="teacher")
+    user.refresh_from_db()
+    assert user.first_name == "דנה"
+    assert user.email == "learner@example.com"
+    assert user.profile.display_name == "דנה כהן"
+    lp = LearnerProfile.objects.get(user=user)
+    assert lp.role_type == "teacher"
+
+
+@pytest.mark.django_db
+def test_welcome_page_renders_with_fallback_form():
+    c = Client()
+    _signup(c)
+    _basics(c)
+    body = c.get(reverse("welcome")).content.decode()
     assert 'id="fallback"' in body
     assert "interests" in body
+    assert "avi-bot.jpg" in body  # Avi Bot icon present (REQ-5.5.8)
 
 
 # --- static fallback completion (REQ-5.5.4) ---
@@ -157,6 +192,10 @@ def test_interview_prompt_grounded_in_site_topics():
     assert "STAY ON TOPIC" in prompt
     assert "ChatGPT" in prompt  # concrete AI-level phrasing
     assert "PROFILE_JSON" in prompt
+    # Avi Bot persona + warm opening with the house joke (REQ-5.5.8)
+    assert "Avi Bot" in prompt
+    assert "book-sharing" in prompt
+    assert "happy they joined" in prompt
 
 
 @pytest.mark.django_db

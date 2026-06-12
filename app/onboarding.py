@@ -190,27 +190,50 @@ def _catalog_summary():
     return "\n".join(lines)
 
 
+ROLE_TYPE_HE = {"student": "תלמיד/ה", "teacher": "מורה / איש חינוך", "other": ""}
+
+
 def interview_system_prompt(user, entry_course_title=""):
     name = ""
     profile = getattr(user, "profile", None)
     if profile and profile.display_name:
         name = profile.display_name
     name = name or user.first_name or user.username
-    opening = (
-        f'The learner arrived via the course "{entry_course_title}" - your FIRST '
+    learner = getattr(user, "learner_profile", None)
+    role_he = ROLE_TYPE_HE.get(learner.role_type, "") if learner else ""
+    role_line = (
+        f"They told us they are a {learner.role_type} ({role_he}) - weave that "
+        "into your questions and recommendation naturally. "
+        if role_he else ""
+    )
+    first_q = (
+        f'They arrived via the course "{entry_course_title}" - your first '
         f"question confirms it: is that course their main focus, or part of a "
         f"broader interest (name the relevant world)? "
         if entry_course_title
-        else "Your FIRST question presents the three worlds BY NAME (בינה "
+        else "Your first question presents the three worlds BY NAME (בינה "
         "מלאכותית / מטצים למייקרים צעירים / הובלת חדשנות) and asks which "
         "one(s) they came for. "
     )
+    opening = (
+        f"Your VERY FIRST message is a warm, human welcome: greet {name} by "
+        "name, say you are genuinely happy they joined, drop the house joke "
+        "(babook is officially a book-sharing site - the only thing it doesn't "
+        "have yet is the book sharing 🙂), explain in one short sentence what "
+        "it DOES offer (video courses in three worlds: AI, young makers, and "
+        "innovation leadership), and that you hope the site gives them real "
+        "value. THEN, in the same message, ask your first question. Soft and "
+        "polite, like a real human host - never robotic. Up to 65 words for "
+        f"this opening only. {first_q}"
+    )
     return (
-        "You are the onboarding interviewer of babook.co.il, an Israeli video-"
-        "training site. You speak warm, everyday Hebrew and your ONLY job is a "
-        "short intake interview to personalize the learner's path.\n\n"
+        "You are 'Avi Bot' - the personal AI stand-in of Avi Salmon, the creator "
+        "of babook.co.il, an Israeli video-training site. You welcome new "
+        "learners as if Avi himself is greeting them, in first person, warm "
+        "everyday Hebrew. Your ONLY job is a short intake interview to "
+        "personalize the learner's path.\n\n"
         f"The site's actual offering (domain key = name: tracks):\n{_catalog_summary()}\n\n"
-        f"The learner's name is {name}. Greet them by name once, briefly. {opening}"
+        f"{role_line}{opening}"
         "Then AT MOST 2 more questions, ONE at a time, grounded in the topics "
         "above:\n"
         "2) Experience IN THE DOMAIN THEY CHOSE - phrase it concretely (e.g. for "

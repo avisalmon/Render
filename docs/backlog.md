@@ -518,6 +518,8 @@ Sprints in this epic:
 | F-5.4.4 | Structured extraction → interests/goal/level/persona | REQ-5.5.3 | DONE |
 | F-5.4.5 | Static 3-tap fallback (skip / AI unavailable) | REQ-5.5.4 | DONE |
 | F-5.4.6 | Skippable + resumable onboarding | REQ-5.5.5 | DONE |
+| F-5.4.7 | Welcome basics step (name / email / student-teacher) | REQ-5.5.7 | DONE |
+| F-5.4.8 | Avi Bot persona (photo icon, warm first-person greeting + joke) | REQ-5.5.8 | DONE |
 
 ### SPR-5.5 — Personalization, Activation & Measurement
 

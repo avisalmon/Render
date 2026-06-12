@@ -60,7 +60,9 @@ def _get_learner_profile(user):
 
 @login_required
 def welcome(request):
-    """The onboarding page: AI interview with a static fallback form."""
+    """The onboarding page. Step 1 captures the basics (name, email,
+    student/teacher) as a soft form; step 2 is the AI interview with the
+    static fallback (REQ-5.5.7 / REQ-5.5.2)."""
     profile = _get_learner_profile(request.user)
     entry_course = None
     if profile.source_course:
@@ -74,11 +76,39 @@ def welcome(request):
     from .ai_chat import _is_stub_mode
     return render(request, "app/welcome.html", {
         "learner": profile,
+        "basics_needed": not profile.role_type,
+        "prefill_name": request.user.profile.display_name or request.user.first_name,
+        "prefill_email": request.user.email,
         "entry_course": entry_course,
         "domains": domains,
         "ai_available": not _is_stub_mode(),
         "next": request.session.get(ONBOARDING_NEXT_KEY, ""),
     })
+
+
+@login_required
+def welcome_basics(request):
+    """Step 1 submit: name (saved to the user), email confirm + optional
+    contact email, and student/teacher/other (REQ-5.5.7)."""
+    if request.method != "POST":
+        return redirect("welcome")
+    profile = _get_learner_profile(request.user)
+    name = request.POST.get("name", "").strip()[:150]
+    if name:
+        up = request.user.profile
+        up.display_name = name
+        up.save(update_fields=["display_name"])
+        request.user.first_name = name.split()[0][:30]
+    email = request.POST.get("email", "").strip()[:254]
+    if email and "@" in email:
+        request.user.email = email
+    request.user.save(update_fields=["first_name", "email"])
+    contact = request.POST.get("contact_email", "").strip()[:254]
+    profile.contact_email = contact if "@" in contact else ""
+    role = request.POST.get("role_type", "")
+    profile.role_type = role if role in ("student", "teacher", "other") else "other"
+    profile.save(update_fields=["contact_email", "role_type"])
+    return redirect("welcome")
 
 
 def _finish_onboarding(request, profile, completed):

@@ -602,6 +602,8 @@ learner and routes them to the right starting point. Grounded in research_2's
 | REQ-5.5.4 | Static fallback | If the user clicks "skip" or AI is unavailable (key unset / error / rate cap), a 3-tap static form (pick interests → level → goal) produces the same `LearnerProfile`. Onboarding is **never** a dead end. | DONE |
 | REQ-5.5.5 | Skippable & resumable | Onboarding can be skipped ("later") and resumed from the profile; skipping still seeds recommendations from the entry intent (REQ-5.2.3). | DONE |
 | REQ-5.5.6 | Cost guard | Interview length is bounded (max N turns) and uses the cheap model; respects the existing per-user token cap (REQ-1.6.6). | DONE |
+| REQ-5.5.7 | Welcome basics step | Before the interview, a soft form captures: the learner's name (saved to `display_name`/`first_name`), email confirmation (+ optional extra contact email), and student/teacher/other (`LearnerProfile.role_type`, migration 0019). The interview then personalizes by name and role. | DONE |
+| REQ-5.5.8 | Avi Bot persona | The interview is hosted by "Avi Bot" - Avi's photo as a small chat icon, first-person warm greeting ("excited you're here"), the house joke (the book-sharing site without the book sharing), and a one-sentence site intro - before any question. | DONE |
 
 ### 5.6 LearnerProfile & personalization
 
