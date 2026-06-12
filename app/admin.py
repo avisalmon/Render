@@ -31,10 +31,17 @@ admin.site.register(UserProfile)
 
 @admin.register(LearnerProfile)
 class LearnerProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "experience_level", "recommended_track",
+    """The admin's full view of everything onboarding captured (REQ-5.6.1)."""
+    list_display = ("user", "display_name", "role_type", "experience_level",
+                    "recommended_track", "goal", "interests",
                     "onboarding_completed_at", "source_entry_type", "created_at")
-    search_fields = ("user__username", "goal", "source_course")
-    list_filter = ("experience_level", "source_entry_type")
+    search_fields = ("user__username", "user__email", "goal", "persona", "source_course")
+    list_filter = ("role_type", "experience_level", "recommended_track", "source_entry_type")
+    readonly_fields = ("created_at",)
+
+    @admin.display(description="Name")
+    def display_name(self, obj):
+        return obj.user.profile.display_name or obj.user.first_name
 
 
 class CourseMaterialInline(admin.TabularInline):

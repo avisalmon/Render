@@ -186,11 +186,13 @@ def test_interview_prompt_grounded_in_site_topics():
     u = User.objects.create_user("grounded", password="pass12345")
     prompt = interview_system_prompt(u)
     # Knows the three worlds by name + their real tracks
-    for topic in ["מטצים", "בינה מלאכותית", "הובלת חדשנות", "תלת-מימד", "Copilot"]:
+    for topic in ["מטצים", "בינה מלאכותית", "הובלת חדשנות", "תלת-מימד", "תכנות ותוכנה"]:
         assert topic in prompt
-    # Level question must be contextual, scope must be guarded
+    # Level question is plain-language (no level jargon), scope is guarded
     assert "STAY ON TOPIC" in prompt
-    assert "ChatGPT" in prompt  # concrete AI-level phrasing
+    assert "NEVER say" in prompt  # no 'רמה 1/2/3' jargon to the user
+    assert "לבנות כלי AI משלך" in prompt  # the three concrete AI choices
+    assert "איך AI עובד מבפנים" in prompt
     assert "PROFILE_JSON" in prompt
     # Avi Bot persona + warm opening with the house joke (REQ-5.5.8)
     assert "Avi Bot" in prompt
