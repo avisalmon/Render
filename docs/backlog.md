@@ -540,8 +540,10 @@ challenges, chat, events — durable-knowledge-first.
 **Spec:** [main_spec.md §Chapter 6](main_spec.md) (REQ-6.1–6.8).
 **UX:** [architecture/community_ux.md](architecture/community_ux.md).
 **Owner:** Avi + Claude
-**Status:** PROPOSED — awaiting Avi's review of Chapter 6 (DEC-36–43). Epics
-are sequenced; each ships independently, one big thing at a time.
+**Status:** REVIEWED — Avi answered the five open UX questions 2026-06-12
+(DEC-44–47a: showcase name + read-public + MicroPython-kit inaugural challenge
++ digest@50 members + leaderboard opt-out). Awaiting his final spec read, then
+build starts with EPIC-6.1. Epics are sequenced; one big thing at a time.
 
 | Epic | Title | Scope (spec section) | Status |
 |---|---|---|---|

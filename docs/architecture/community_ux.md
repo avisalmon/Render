@@ -157,14 +157,15 @@ Nav: the existing "קהילה" item in the worlds dropdown goes live; a bell ico
 Each epic ships alone, methodology-first (spec → backlog → tests → regression
 → deploy), and the community is usable after every single one.
 
-## 8. Open questions for review
+## 8. Open questions — RESOLVED (Avi, 2026-06-12)
 
-1. **Naming** — "דוכן ההשוויץ" for the showcase wall: keep the playful name or
-   something more formal ("הגלריה")?
-2. **Anonymous visibility** — can logged-out visitors READ the forum/showcase
-   (great for SEO + the guest funnel, per Ch.5 access matrix) with posting
-   gated? (Recommended: yes, read-public.)
-3. **First challenge** — launch EPIC-6.5 with a real inaugural challenge you
-   announce? Which domain first?
-4. **Digest cadence** — weekly from day one, or only after N active members?
-5. **Leaderboard visibility** — public opt-out (AI-Ascent pattern) or opt-in?
+1. **Naming** — keep «דוכן ההשוויץ», add the formal subtitle «גלריית
+   הפרויקטים של קהילת babook»; ratings + comments are core (DEC-44).
+2. **Anonymous visibility** — read-public for forum/showcase/challenges/events,
+   with a soft "הירשמו כדי להגיב ולדרג" note; every interaction (comment, rate,
+   post, vote, RSVP) requires login via the /join/ wall (DEC-45).
+3. **First challenge** — the **MicroPython kit** (matazim/hardware, anchored to
+   `micropython-thonny`) (DEC-47a).
+4. **Digest** — explore only after ~50 active members (DEC-46).
+5. **Leaderboard** — public with opt-out (recommended + accepted); students
+   shown by display name only (DEC-47).

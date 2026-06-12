@@ -654,8 +654,9 @@ Chapter 5 is **DONE** when:
 
 ## Chapter 6 — Community
 
-> **PROPOSED 2026-06-12 — for Avi's review before build.** Everything in this
-> chapter is `TODO`. Grounded in the full research corpus
+> **Reviewed by Avi 2026-06-12** — the five open UX questions are decided
+> (DEC-44–47 below); awaiting his final read before build. Everything is
+> `TODO` (nothing built). Grounded in the full research corpus
 > ([docs/research/](research/)): feature_skeleton Scope 2 + 5, the 15 proven
 > AI-Ascent capability types (research_2), the strategic pivot to
 > authority-first (research_3), and the community-architecture deep dive
@@ -704,6 +705,7 @@ before this.
 | REQ-6.1.8 | Moderation tools | Report button on every object → staff queue in admin (hide/delete/warn/suspend); automated checks on submit (existing OpenAI moderation reuse, REQ-1.6 infra); rate limits per member. | TODO |
 | REQ-6.1.9 | Minors safety | The matazim audience includes minors: public profiles for `student` role require no real-name policy enforcement, DMs disabled for students by default (EPIC-6.6), all uploads moderated. | TODO |
 | REQ-6.1.10 | RTL + mobile | Every community surface is Hebrew-first RTL and works ≥360px (REQ-1.2.9/1.2.10 inherited). | TODO |
+| REQ-6.1.11 | Anonymous read, member interact (DEC-45) | Logged-out visitors can READ the forum, showcase, challenges and events pages (SEO + guest funnel; extends the §5.1 access matrix). A soft, dismissible "הירשמו כדי להגיב, לדרג ולפרסם" note is shown to guests. EVERY interaction — post, answer, comment, star/rate, vote, RSVP, follow — requires login and routes anonymous users to the context-aware /join/ wall (REQ-5.4.1) naming what they tried to do. | TODO |
 
 ### 6.2 EPIC-6.2 — Forums & Q&A (durable knowledge)
 
@@ -725,6 +727,9 @@ searchable — the #1 lesson from research_4.
 
 The skill trust-loop. Proven as AI-Ascent capability #14 (Exhibition/Portfolio,
 Sprints 26-30). The emotional core of the community: "תראו מה בניתי".
+**Naming (DEC-44):** the playful title stays — «דוכן ההשוויץ» — with a formal
+subtitle: «גלריית הפרויקטים של קהילת babook». Partially formal, partially
+humoristic, exactly the site's tone. Ratings (stars) and comments are core.
 
 | REQ-ID | Title | Expectation | Status |
 |---|---|---|---|
@@ -746,7 +751,7 @@ lightweight way to contribute (a tip is 10× easier than a project).
 | REQ-6.4.1 | Community feed | `/community/` home: chronological feed of activity cards — new projects, accepted answers, fresh questions, badges earned, challenge milestones, new tips, upcoming events. Filter: הכל / אני עוקב / התחום שלי (uses LearnerProfile interests). No engagement-bait algorithm (DEC-40). | TODO |
 | REQ-6.4.2 | Tips | `Tip`: short-form post (≤2,000 chars, markdown, optional image/link) — "טיפ: ככה אני גורם ל-Copilot…". Tagged by domain/tool; reactions; best tips surface weekly. | TODO |
 | REQ-6.4.3 | Feed composer | One "שתפו משהו" box on the feed: tip / question (routes to forum) / project (routes to showcase) — one entry point, right destination. | TODO |
-| REQ-6.4.4 | Weekly digest | Reuse the newsletter infra (REQ-2.5): weekly Hebrew email — top tip, featured project, best answer, upcoming events. Opt-in; this is feature_skeleton 2.3 seeded by community content instead of editorial burden. | TODO |
+| REQ-6.4.4 | Weekly digest | Reuse the newsletter infra (REQ-2.5): weekly Hebrew email — top tip, featured project, best answer, upcoming events. Opt-in. **Gated (DEC-46): starts only once the community passes ~50 active members**; until then the feed alone carries the pulse. | TODO |
 | REQ-6.4.5 | Homepage hook | The logged-in homepage shows a compact "מהקהילה" strip (3 cards) linking into the feed — discovery without clutter (respects the clean-homepage decision from Ch.5). | TODO |
 
 ### 6.5 EPIC-6.5 — Challenges, Competitions & Hackathons
@@ -764,6 +769,7 @@ showcase-producing — not ML-metric leaderboards.
 | REQ-6.5.5 | Cadence | Seasonal rhythm: monthly mini-challenge per domain + 1-2 yearly hackathons (multi-day, team-based, virtual event integration from EPIC-6.7). | TODO |
 | REQ-6.5.6 | Teams | Hackathons support teams (2-5): team page, joint submission, "מחפשים חברי צוות" board (the find-collaborators seed, feature_skeleton 5.2). | TODO |
 | REQ-6.5.7 | School mode | A teacher (`role_type=teacher`) can clone a challenge for their class only — private leaderboard for their students (matazim B2B2C angle). | TODO |
+| REQ-6.5.8 | Inaugural challenge (DEC-47a) | EPIC-6.5 launches with a real first challenge: **the MicroPython kit** (matazim/hardware, anchored to the `micropython-thonny` course) — build something with the kit, show it on the wall. Brief written and announced by Avi at launch. | TODO |
 
 ### 6.6 EPIC-6.6 — Chat & Groups (real-time, after the durable layer)
 
@@ -813,9 +819,9 @@ model — these wait until the community is demonstrably alive:
 | Token wallet / credits store | Separate scope (Scope 3), unrelated to community UX |
 | Algorithmic feed / engagement optimization | DEC-40 — chronological + curated only |
 
-### 6.10 Decisions log (proposed — confirm in review)
+### 6.10 Decisions log (confirmed by Avi 2026-06-12)
 
-| ID | Topic | Proposed choice | Rationale |
+| ID | Topic | Choice | Rationale |
 |---|---|---|---|
 | DEC-36 | Build order | **Durable knowledge first** (foundation → forums → showcase → feed → challenges → chat → events) | research_4: chat-only communities die; knowledge must accumulate before real-time |
 | DEC-37 | Reputation currency | **Points + badges + featured visibility** (no monetary economy yet) | Rewards contribution (anti-failure #5) without payments complexity |
@@ -825,6 +831,11 @@ model — these wait until the community is demonstrably alive:
 | DEC-41 | Minors safety | **Student role: no DMs, reviewed publishing, moderated uploads** | matazim audience includes minors; non-negotiable |
 | DEC-42 | Monetary community economy | **Deferred** (marketplace/advisors/hiring in 6.9) | research_3: authority first; payments infra (Stripe) still deferred |
 | DEC-43 | Tech envelope | **Stay on Django/SQLite: polling/SSE, no websockets/Redis** | One deploy unit; the studio + chat patterns already proven on this stack |
+| DEC-44 | Showcase naming | **«דוכן ההשוויץ» + formal subtitle «גלריית הפרויקטים של קהילת babook»** | Avi: partially formal, partially humoristic; ratings + comments are core |
+| DEC-45 | Anonymous access | **Read-public (forum/showcase/challenges/events) + soft register note; ALL interactions require login via the /join/ wall** | Avi confirmed; SEO + guest funnel without anonymous noise |
+| DEC-46 | Digest timing | **Gated: explore the weekly digest only after ~50 active members** | Avi: no point emailing an empty room; the feed carries the pulse first |
+| DEC-47 | Leaderboard | **Public with opt-out** (Claude's recommendation, AI-Ascent-proven); students appear by display name only (REQ-6.1.9) | Opt-in leaderboards stay empty — defaults drive participation; opt-out + minors naming rule keeps it safe |
+| DEC-47a | First challenge | **MicroPython kit** (matazim/hardware, tied to `micropython-thonny`) | Avi's pick; physical-kit projects photograph beautifully on the wall |
 
 ### 6.11 Acceptance criteria for Chapter 6
 
