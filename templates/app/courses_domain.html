@@ -22,6 +22,29 @@
     </div>
   </div>
 
+  {% if d.meta.intro_row %}
+  <div class="mb-4">
+    <h2 class="h6 text-muted mb-2"><i class="bi bi-flag"></i> מבוא — מאיפה מתחילים בכל רמה</h2>
+    <div class="row g-2">
+      {% for t in d.tracks %}
+      <div class="col-12 col-md-4">
+        {% if t.intro %}
+        <a href="{% url 'courses_detail' t.intro.slug %}" class="card-surface intro-card">
+          <span class="intro-label">{{ t.meta.intro_label|default:t.meta.title }}</span>
+          <span class="intro-title">{{ t.intro.title }}</span>
+        </a>
+        {% else %}
+        <div class="card-surface intro-card is-soon">
+          <span class="intro-label">{{ t.meta.intro_label|default:t.meta.title }}</span>
+          <span class="intro-title"><span class="soon-badge">בקרוב</span></span>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
   {% if d.tracks %}
   <div class="row g-3">
     {% for t in d.tracks %}

@@ -55,24 +55,30 @@ TRAINING_TAXONOMY = {
             "עולם הבינה המלאכותית בשלוש רמות — ממשתמשים סקרנים, דרך אנשי מקצוע "
             "שמאיצים את עבודתם עם AI, ועד הבנה עמוקה של למידת מכונה ואימון מודלים."
         ),
+        # Render a row of per-level "intro" cards at the top of the domain page.
+        "intro_row": True,
         "tracks": {
             "ai-l1": {
                 "title": "רמה 1 — משתמש",
                 "subtitle": "כלים מגניבים שכל אחד יכול",
                 "icon": "bi-stars",
                 "order": 1,
+                "intro_label": "מבוא לרמה 1",
             },
             "ai-l2": {
                 "title": "רמה 2 — מעשי / מקצועי",
                 "subtitle": "AI כמאיץ למקצוע שלך",
                 "icon": "bi-lightning-charge",
                 "order": 2,
+                "intro_label": "מבוא לרמה 2",
             },
             "ai-l3": {
                 "title": "רמה 3 — AI לעומק",
                 "subtitle": "למידת מכונה, רשתות נוירונים ואימון מודלים",
                 "icon": "bi-diagram-3",
                 "order": 3,
+                "intro_label": "מבוא לרמה 3",
+                "intro_slug": "ai-fundamentals",
             },
         },
     },
@@ -125,7 +131,12 @@ def build_catalog(published_courses):
             tcourses = [c for c in courses if c.domain == dkey and c.track == tkey]
             for c in tcourses:
                 placed.add(c.pk)
-            tracks.append({"key": tkey, "meta": tmeta, "courses": tcourses})
+            # A track may designate one course as its "intro" (shown first + featured).
+            intro_slug = tmeta.get("intro_slug")
+            intro = next((c for c in tcourses if c.slug == intro_slug), None) if intro_slug else None
+            if intro is not None:
+                tcourses = [intro] + [c for c in tcourses if c.pk != intro.pk]
+            tracks.append({"key": tkey, "meta": tmeta, "courses": tcourses, "intro": intro})
         domains.append({
             "key": dkey,
             "meta": dmeta,

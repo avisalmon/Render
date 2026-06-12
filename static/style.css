@@ -244,6 +244,44 @@ a.hint-chip:hover {
   color: var(--text-primary);
 }
 
+/* Per-level intro cards (top of a domain page) */
+.intro-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  height: 100%;
+  padding: 0.85rem 1rem;
+  text-decoration: none;
+  color: var(--text-primary);
+  border-inline-start: 3px solid var(--accent-primary);
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.intro-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+}
+.intro-card.is-soon {
+  opacity: 0.7;
+  border-inline-start-color: var(--border);
+  cursor: default;
+}
+.intro-card.is-soon:hover {
+  transform: none;
+}
+.intro-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+}
+.intro-card.is-soon .intro-label {
+  color: var(--text-secondary);
+}
+.intro-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
 /* ==========================================================================
    Component: .whatsapp-sticky
    ========================================================================== */
