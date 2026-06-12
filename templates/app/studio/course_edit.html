@@ -12,6 +12,7 @@
   <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
     <h1 class="h4 mb-0">{{ course.title }}
       {% if course.is_published %}<span class="badge bg-success">פורסם</span>{% else %}<span class="badge bg-secondary">טיוטה</span>{% endif %}
+      {% if course.studio_edited_at %}<span class="badge bg-warning text-dark" title="{{ course.studio_edited_at|date:'j בF Y H:i' }}"><i class="bi bi-pencil-fill"></i> נערך באולפן</span>{% endif %}
     </h1>
     <div class="d-flex gap-2">
       <a href="{% url 'courses_detail' course.slug %}" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i> תצוגה</a>

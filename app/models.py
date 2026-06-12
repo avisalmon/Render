@@ -79,6 +79,9 @@ class Course(models.Model):
     thumbnail = models.CharField(max_length=200, blank=True)
     is_published = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    # Set whenever the course is changed in the Authoring Studio (i.e. directly on
+    # the running instance). Lets the local<->prod sync warn before overwriting.
+    studio_edited_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         ordering = ["title"]

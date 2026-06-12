@@ -463,7 +463,16 @@ clean, fast, and good enough to beat off-the-shelf course tools.
 | REQ-4.3.5 | Editable result | The generated draft is a normal course, fully editable with the manual tools (4.2), and unpublished until the author publishes it. | DONE |
 | REQ-4.3.6 | Worker fallback | `run_authoring_jobs` management command processes pending jobs (for environments where a YouTube download from the web host is blocked). | DONE |
 
-### 4.4 Decisions log
+### 4.4 Local / Studio sync safety
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-4.4.1 | Edited marker | A course edited in the Studio sets `Course.studio_edited_at`; shown as a badge in the studio list/editor. | DONE |
+| REQ-4.4.2 | Course-detail API | `GET /api/v1/courses/<slug>/` (Bearer) returns the full course payload; the list endpoint includes `studio_edited_at`. | DONE |
+| REQ-4.4.3 | Pull command | `pull_course_from_production <slug>` rebuilds the local copy from prod (local <- prod). | DONE |
+| REQ-4.4.4 | Push guard | `push_course_to_production` aborts (suggesting pull) if the remote was Studio-edited more recently than local; `--force` overrides. | DONE |
+
+### 4.5 Decisions log
 
 | ID | Topic | Choice | Rationale |
 |---|---|---|---|
@@ -471,7 +480,7 @@ clean, fast, and good enough to beat off-the-shelf course tools.
 | DEC-27 | Background processing | **Daemon thread + `AuthoringJob` + worker command** | No Celery/Redis on the SQLite/Render setup; thread for self-serve UX, command as robust fallback |
 | DEC-28 | Pipeline reuse | **`app/authoring/` package** (in-app pipeline) | Promotes the proven local scripts into tested, importable app code |
 
-### 4.5 Acceptance criteria for Chapter 4
+### 4.6 Acceptance criteria for Chapter 4
 
 Chapter 4 is **DONE** when: authors can create/edit/delete/reorder courses and
 lessons in `/studio/` with a live markdown preview; a video (URL or upload) can be

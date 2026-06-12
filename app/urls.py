@@ -66,5 +66,6 @@ urlpatterns = [
 
     path("api/v1/courses/", course_api.list_courses, name="api_courses_list"),
     path("api/v1/courses/sync/", course_api.sync_course, name="api_courses_sync"),
+    path("api/v1/courses/<slug:slug>/", course_api.course_detail, name="api_courses_detail"),
     path("api/v1/media/upload/", course_api.upload_media, name="api_media_upload"),
 ]

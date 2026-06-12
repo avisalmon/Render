@@ -79,8 +79,60 @@ def list_courses(request):
             "is_published": c.is_published,
             "video_count": c.videos.count(),
             "material_count": c.materials.count(),
+            "studio_edited_at": c.studio_edited_at.isoformat() if c.studio_edited_at else None,
         })
     return JsonResponse({"courses": rows})
+
+
+# ---------------------------------------------------------------------------
+# GET /api/v1/courses/<slug>/  — full course (for local<->prod pull)
+# ---------------------------------------------------------------------------
+
+@require_api_key
+@require_GET
+def course_detail(request, slug):
+    """Return the full course payload (same shape as the sync body) so a local
+    copy can be rebuilt from production."""
+    from django.shortcuts import get_object_or_404
+    c = get_object_or_404(Course, slug=slug)
+    videos = []
+    for v in c.videos.order_by("lesson_order"):
+        entry = {
+            "lesson_order": v.lesson_order,
+            "bunny_video_id": v.bunny_video_id or "",
+            "title": v.title,
+            "title_en": v.title_en or "",
+            "is_free_preview": v.is_free_preview,
+            "is_final_lesson": v.is_final_lesson,
+            "notes_markdown": v.notes_markdown or "",
+            "summary_he": v.summary_he or "",
+            "reflection_prompt": v.reflection_prompt or "",
+            "duration_seconds": v.duration_seconds or 0,
+        }
+        quiz = getattr(v, "quiz", None)
+        if quiz is not None:
+            entry["quiz"] = {
+                "question": quiz.question,
+                "options_json": quiz.options_json,
+                "requires_correct": quiz.requires_correct,
+            }
+        videos.append(entry)
+    materials = [{
+        "title": m.title, "material_type": m.material_type,
+        "url": m.url or "", "order": m.order,
+        "file_path": str(m.file) if m.file else "",
+    } for m in c.materials.order_by("order", "title")]
+    return JsonResponse({
+        "course": {
+            "slug": c.slug, "title": c.title, "title_en": c.title_en or "",
+            "description": c.description or "", "domain": c.domain, "track": c.track,
+            "difficulty": c.difficulty, "thumbnail": str(c.thumbnail) if c.thumbnail else "",
+            "is_published": c.is_published,
+            "studio_edited_at": c.studio_edited_at.isoformat() if c.studio_edited_at else None,
+        },
+        "videos": videos,
+        "materials": materials,
+    })
 
 
 # ---------------------------------------------------------------------------

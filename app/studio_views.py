@@ -5,6 +5,7 @@ import markdown as md
 from django.contrib import messages
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.utils.text import slugify
 from django.views.decorators.http import require_POST
 
@@ -13,6 +14,12 @@ from .models import AuthoringJob, Course, Video
 from .taxonomy import TRAINING_TAXONOMY
 
 MD_EXT = ["fenced_code", "tables", "nl2br"]
+
+
+def _touch(course):
+    """Mark a course as edited in the Studio (so local<->prod sync can warn)."""
+    course.studio_edited_at = timezone.now()
+    course.save(update_fields=["studio_edited_at"])
 
 
 def _domains_for_form():
@@ -74,6 +81,7 @@ def course_edit(request, slug):
         course.difficulty = request.POST.get("difficulty", course.difficulty)
         course.thumbnail = request.POST.get("thumbnail", "").strip()
         course.is_published = request.POST.get("is_published") == "on"
+        course.studio_edited_at = timezone.now()
         course.save()
         messages.success(request, "הקורס נשמר.")
         return redirect("studio_course_edit", slug=course.slug)
@@ -98,7 +106,8 @@ def course_delete(request, slug):
 def course_publish(request, slug):
     course = get_object_or_404(Course, slug=slug)
     course.is_published = not course.is_published
-    course.save(update_fields=["is_published"])
+    course.studio_edited_at = timezone.now()
+    course.save(update_fields=["is_published", "studio_edited_at"])
     return redirect("studio_course_edit", slug=course.slug)
 
 
@@ -127,6 +136,7 @@ def lesson_edit(request, slug, order=None):
         lesson.duration_seconds = dur
         lesson.save()
         _fix_final_flag(course)
+        _touch(course)
         messages.success(request, "השיעור נשמר.")
         return redirect("studio_course_edit", slug=course.slug)
     return render(request, "app/studio/lesson_form.html", {"course": course, "lesson": lesson})
@@ -138,6 +148,7 @@ def lesson_delete(request, slug, order):
     course = get_object_or_404(Course, slug=slug)
     get_object_or_404(Video, course=course, lesson_order=order).delete()
     _fix_final_flag(course)
+    _touch(course)
     return redirect("studio_course_edit", slug=course.slug)
 
 
@@ -162,6 +173,7 @@ def lesson_reorder(request, slug):
             v.lesson_order = i
             v.save(update_fields=["lesson_order"])
     _fix_final_flag(course)
+    _touch(course)
     return JsonResponse({"ok": True})
 
 

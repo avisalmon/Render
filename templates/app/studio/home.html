@@ -48,6 +48,7 @@
         {% for c in courses %}
         <tr>
           <td><a href="{% url 'studio_course_edit' c.slug %}" class="text-decoration-none">{{ c.title }}</a>
+            {% if c.studio_edited_at %}<span class="badge bg-warning text-dark" title="נערך באולפן {{ c.studio_edited_at|date:'j בF H:i' }}"><i class="bi bi-pencil-fill"></i> נערך</span>{% endif %}
             <div class="small text-muted">{{ c.slug }}</div></td>
           <td class="small">{{ c.domain }}{% if c.track %} / {{ c.track }}{% endif %}</td>
           <td>{{ c.videos.count }}</td>

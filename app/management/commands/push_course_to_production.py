@@ -54,6 +54,12 @@ class Command(BaseCommand):
             default=False,
             help="Build payload and print it without sending.",
         )
+        parser.add_argument(
+            "--force",
+            action="store_true",
+            default=False,
+            help="Push even if the remote course was edited in the Studio (overwrites it).",
+        )
 
     def handle(self, *args, **options):
         from app.models import Course
@@ -82,6 +88,31 @@ class Command(BaseCommand):
         self.stdout.write(f"Course: {course.title} ({slug})")
         self.stdout.write(f"  Videos:    {course.videos.count()}")
         self.stdout.write(f"  Materials: {course.materials.count()}")
+
+        # Guard: don't silently overwrite a course that was edited in the remote Studio.
+        if not dry_run and not options["force"]:
+            import json as _json
+            import urllib.error
+            import urllib.request
+
+            from django.utils.dateparse import parse_datetime
+            try:
+                req = urllib.request.Request(f"{target}/api/v1/courses/{slug}/",
+                                             headers={"Authorization": f"Bearer {api_key}"})
+                remote = _json.loads(urllib.request.urlopen(req, timeout=30).read())["course"]
+                remote_edited = (parse_datetime(remote["studio_edited_at"])
+                                 if remote.get("studio_edited_at") else None)
+            except (urllib.error.HTTPError, KeyError, ValueError):
+                remote_edited = None
+            local_edited = course.studio_edited_at
+            if remote_edited and (local_edited is None or remote_edited > local_edited):
+                raise CommandError(
+                    f"Remote '{slug}' was edited in the Studio at {remote_edited.isoformat()} "
+                    f"(local studio_edited_at={local_edited}).\n"
+                    f"  Pushing would OVERWRITE those edits. Either:\n"
+                    f"    pull first:  python manage.py pull_course_from_production {slug}\n"
+                    f"    or override: re-run with --force"
+                )
 
         # 2. Build videos payload (with optional LessonQuiz)
         videos_payload = []
