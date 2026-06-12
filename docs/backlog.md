@@ -533,6 +533,34 @@ Sprints in this epic:
 
 ---
 
+## Chapter 6 — Community (EPIC-6.1 … EPIC-6.7)
+
+**Goal:** Turn babook into a place members belong: Q&A, exhibitions, feed,
+challenges, chat, events — durable-knowledge-first.
+**Spec:** [main_spec.md §Chapter 6](main_spec.md) (REQ-6.1–6.8).
+**UX:** [architecture/community_ux.md](architecture/community_ux.md).
+**Owner:** Avi + Claude
+**Status:** PROPOSED — awaiting Avi's review of Chapter 6 (DEC-36–43). Epics
+are sequenced; each ships independently, one big thing at a time.
+
+| Epic | Title | Scope (spec section) | Status |
+|---|---|---|---|
+| EPIC-6.1 | Community Foundation — profiles, reputation, badges, notifications, moderation, minors safety | §6.1 | PROPOSED |
+| EPIC-6.2 | Forums & Q&A — accepted answers, tags, search, course-anchored threads, AI assist | §6.2 | PROPOSED |
+| EPIC-6.3 | Showcase (דוכן ההשוויץ) — exhibition wall, project pages, stars, OG sharing | §6.3 | PROPOSED |
+| EPIC-6.4 | Feed & Tips — community home, composer, weekly digest, homepage hook | §6.4 | PROPOSED |
+| EPIC-6.5 | Challenges & Hackathons — briefs, submissions-as-showcases, judging, teams, school mode | §6.5 | PROPOSED |
+| EPIC-6.6 | Chat & Groups — channels, course groups, safe DMs, member directory | §6.6 | PROPOSED |
+| EPIC-6.7 | Events & Meetups — RSVP, calendar, recordings, recurring series, physical meetups | §6.7 | PROPOSED |
+
+Deferred (spec §6.9): skill marketplace, advisor marketplace, hiring board,
+token wallet — wait for a demonstrably alive community + payments infra.
+
+Sprint backlogs (SPR-6.x.y + feature tables) will be written per-epic at build
+start, per the methodology.
+
+---
+
 ## Status Summary (reconciled 2026-06-09)
 
 **Full regression: 356/356 passing (2026-06-12, incl. EPIC-3/4/5).** Per-sprint test counts: 1.1=19, 1.2=17,

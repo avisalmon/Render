@@ -652,6 +652,193 @@ Chapter 5 is **DONE** when:
 
 ---
 
+## Chapter 6 — Community
+
+> **PROPOSED 2026-06-12 — for Avi's review before build.** Everything in this
+> chapter is `TODO`. Grounded in the full research corpus
+> ([docs/research/](research/)): feature_skeleton Scope 2 + 5, the 15 proven
+> AI-Ascent capability types (research_2), the strategic pivot to
+> authority-first (research_3), and the community-architecture deep dive
+> (research_4). Companion UX concept:
+> [architecture/community_ux.md](architecture/community_ux.md).
+> The chapter is split into **seven sequenced epics (EPIC-6.1 … EPIC-6.7)** —
+> one big thing at a time, each independently shippable.
+
+### 6.0 Vision
+
+Turn babook from a place where people **consume** courses into a place where
+they **belong**: ask and answer, show what they built, compete, share tips, and
+meet each other. The community is the retention engine between courses and the
+strongest authority signal for the corporate funnel (research_3: the platform
+is a credibility engine — a visibly alive Hebrew AI community is proof no
+competitor in Israel has).
+
+**Design laws — why communities fail and how we don't (research_4):**
+
+| Failure mode (research_4) | Our counter-design |
+|---|---|
+| Chat-only → knowledge disappears | Durable, searchable Q&A and showcases FIRST; chat later (DEC-36) |
+| Creator-dependent → dies when the creator stops | Member-generated content (questions, projects, tips) is the core unit, Avi is host not engine |
+| Learning disconnected from doing | Every community object can link to a course/lesson; showcases are "what I built after X" |
+| No trust system rewarding quality | Reputation: points, badges, accepted answers, featured projects (the three trust loops: knowledge / skill / delivery) |
+| No economy rewarding contribution | Contribution → visibility (featured, leaderboard, badges) now; monetary economy deferred (DEC-42) |
+
+**North-star metric:** weekly active community contributors (members who post,
+answer, react, or submit in a week). Secondary: % of course completers who
+publish a showcase project.
+
+### 6.1 EPIC-6.1 — Community Foundation (identity, reputation, safety)
+
+The substrate every other epic stands on. Nothing community-facing ships
+before this.
+
+| REQ-ID | Title | Expectation (acceptance) | Status |
+|---|---|---|---|
+| REQ-6.1.1 | Public member profile | Opt-in public profile at `/c/<username>/`: display name, avatar, bio, role (תלמיד/מורה/אחר), badges, certificates (existing), showcase projects, contribution stats. Private by default; the user explicitly enables it. Builds on `UserProfile`/`LearnerProfile`. | TODO |
+| REQ-6.1.2 | Avatars | Upload or pick a generated avatar; shown everywhere the member appears (posts, comments, leaderboards). | TODO |
+| REQ-6.1.3 | Reputation points | `CommunityReputation`: points for accepted answers (+15), upvotes received (+2), published showcase (+10), challenge wins (+25), tips that get reactions (+1). Visible on profile; drives leaderboard + badge tiers. | TODO |
+| REQ-6.1.4 | Badge system | `CommunityBadge` (definition) + `BadgeAward` (user, awarded_at, reason). Launch set: ראשון לענות, תשובה מקובלת, בונה (first showcase), מנטור (10 accepted answers), אלוף אתגר, מדריך (published tip ×10), tier badges (Bronze/Silver/Gold per points). AI-Ascent-proven pattern (research_2 #10). | TODO |
+| REQ-6.1.5 | Follow | Follow a member → their activity appears in your feed (EPIC-6.4); follower counts on profile. | TODO |
+| REQ-6.1.6 | Notifications | In-app notification center (bell icon + unread count): replies to me, accepted my answer, reactions, badge earned, challenge updates, event reminders. Email digest opt-in per type. | TODO |
+| REQ-6.1.7 | Community guidelines | `/community/guidelines/` in Hebrew: respect, no spam, no solicitation, credit sources, minors-safe language. Accept-once gate before first post. | TODO |
+| REQ-6.1.8 | Moderation tools | Report button on every object → staff queue in admin (hide/delete/warn/suspend); automated checks on submit (existing OpenAI moderation reuse, REQ-1.6 infra); rate limits per member. | TODO |
+| REQ-6.1.9 | Minors safety | The matazim audience includes minors: public profiles for `student` role require no real-name policy enforcement, DMs disabled for students by default (EPIC-6.6), all uploads moderated. | TODO |
+| REQ-6.1.10 | RTL + mobile | Every community surface is Hebrew-first RTL and works ≥360px (REQ-1.2.9/1.2.10 inherited). | TODO |
+
+### 6.2 EPIC-6.2 — Forums & Q&A (durable knowledge)
+
+The knowledge trust-loop. Q&A-first (not chat) so knowledge accumulates and is
+searchable — the #1 lesson from research_4.
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-6.2.1 | Forum structure | Categories mirror the taxonomy (AI / מטצים / חדשנות) + רמות + "כללי". A thread is a Question or a Discussion. | TODO |
+| REQ-6.2.2 | Q&A mechanics | Answers, voting (up only — friendlier than up/down for a Hebrew learning community), **accepted answer** marked by the asker (or staff), accepted floats to top. | TODO |
+| REQ-6.2.3 | Rich posts | Markdown (same renderer as lessons): fenced code blocks, images, links; preview before post. | TODO |
+| REQ-6.2.4 | Tags & search | Tags (topic, course slug, difficulty); full-text search across threads; filter by unanswered / mine / following. | TODO |
+| REQ-6.2.5 | Course-anchored threads | "שאלו את הקהילה" button on every lesson opens a pre-tagged thread; the lesson page shows its open threads. Connects learning to doing. | TODO |
+| REQ-6.2.6 | Canonical / pinned | Staff can pin threads and mark canonical answers (Solutions-Hub pattern, feature_skeleton 2.5); canonical content surfaces in search first. | TODO |
+| REQ-6.2.7 | AI assist | (a) On posting a question, AI suggests existing similar threads + relevant lessons before submit; (b) threads >10 replies get an AI summary box; (c) optional "Avi Bot draft answer" visible to staff for one-click post. Reuses REQ-1.6 infra. | TODO |
+| REQ-6.2.8 | Subscriptions | Follow a thread/category → notification on activity (REQ-6.1.6). | TODO |
+
+### 6.3 EPIC-6.3 — Showcase: דוכן ההשוויץ (exhibitions / bragging page)
+
+The skill trust-loop. Proven as AI-Ascent capability #14 (Exhibition/Portfolio,
+Sprints 26-30). The emotional core of the community: "תראו מה בניתי".
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-6.3.1 | Project model | `ShowcaseProject`: title, story (markdown), cover image, gallery (images), demo video (Bunny or YouTube embed), repo/demo links, course link ("נבנה בעקבות הקורס X"), tags, status (draft/published). | TODO |
+| REQ-6.3.2 | Exhibition wall | `/community/showcase/` — a visual masonry/grid wall, filterable by domain/course/tag; featured row curated by staff. | TODO |
+| REQ-6.3.3 | Reactions & comments | Star a project (⭐ count drives ranking), emoji reactions, threaded comments (same moderation pipeline). | TODO |
+| REQ-6.3.4 | Course integration | Course pages show member projects built from that course; the course-completion (certificate) page invites "פרסמו מה בניתם" — the natural bragging moment. | TODO |
+| REQ-6.3.5 | Profile portfolio | Published projects appear on the member's public profile (REQ-6.1.1) — portfolio for free, the public-proof layer of micro-credentials (research_4). | TODO |
+| REQ-6.3.6 | Sharing | Per-project OG card (image + title) so projects look great on WhatsApp/LinkedIn; share buttons; this is the community's organic-growth surface. | TODO |
+| REQ-6.3.7 | Student work safety | Projects by `student` role members get a staff review before public listing (REQ-6.1.9). | TODO |
+
+### 6.4 EPIC-6.4 — Feed & Tips
+
+The pulse. Makes the community feel alive on every visit, and gives members a
+lightweight way to contribute (a tip is 10× easier than a project).
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-6.4.1 | Community feed | `/community/` home: chronological feed of activity cards — new projects, accepted answers, fresh questions, badges earned, challenge milestones, new tips, upcoming events. Filter: הכל / אני עוקב / התחום שלי (uses LearnerProfile interests). No engagement-bait algorithm (DEC-40). | TODO |
+| REQ-6.4.2 | Tips | `Tip`: short-form post (≤2,000 chars, markdown, optional image/link) — "טיפ: ככה אני גורם ל-Copilot…". Tagged by domain/tool; reactions; best tips surface weekly. | TODO |
+| REQ-6.4.3 | Feed composer | One "שתפו משהו" box on the feed: tip / question (routes to forum) / project (routes to showcase) — one entry point, right destination. | TODO |
+| REQ-6.4.4 | Weekly digest | Reuse the newsletter infra (REQ-2.5): weekly Hebrew email — top tip, featured project, best answer, upcoming events. Opt-in; this is feature_skeleton 2.3 seeded by community content instead of editorial burden. | TODO |
+| REQ-6.4.5 | Homepage hook | The logged-in homepage shows a compact "מהקהילה" strip (3 cards) linking into the feed — discovery without clutter (respects the clean-homepage decision from Ch.5). | TODO |
+
+### 6.5 EPIC-6.5 — Challenges, Competitions & Hackathons
+
+Cohort cadence + belonging. Designed per the research warning **not to copy
+Kaggle** (research_1): challenges here are course-anchored, human-judged,
+showcase-producing — not ML-metric leaderboards.
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-6.5.1 | Challenge model | `Challenge`: title, brief (markdown), domain, difficulty, start/end dates, rubric, prizes (badges + featured + real prizes optional), linked course(s), status (upcoming/active/judging/done). | TODO |
+| REQ-6.5.2 | Submissions | A submission IS a ShowcaseProject tagged to the challenge — one object, two surfaces; deadline enforced. | TODO |
+| REQ-6.5.3 | Judging | Two-phase: community voting (stars, one per member) + staff/judge scoring per rubric; transparent weights; winners announced on the feed + badges (אלוף אתגר). | TODO |
+| REQ-6.5.4 | Challenge page | Live page per challenge: brief, countdown, submissions wall, leaderboard during judging, winners podium after. | TODO |
+| REQ-6.5.5 | Cadence | Seasonal rhythm: monthly mini-challenge per domain + 1-2 yearly hackathons (multi-day, team-based, virtual event integration from EPIC-6.7). | TODO |
+| REQ-6.5.6 | Teams | Hackathons support teams (2-5): team page, joint submission, "מחפשים חברי צוות" board (the find-collaborators seed, feature_skeleton 5.2). | TODO |
+| REQ-6.5.7 | School mode | A teacher (`role_type=teacher`) can clone a challenge for their class only — private leaderboard for their students (matazim B2B2C angle). | TODO |
+
+### 6.6 EPIC-6.6 — Chat & Groups (real-time, after the durable layer)
+
+Deliberately AFTER forums/showcase (DEC-36): chat amplifies a live community,
+it cannot create one. Scoped to what SQLite/Render handles (polling/SSE, no
+websocket infra).
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-6.6.1 | Channels | Public channels per domain + per active challenge + כללי; message history persists and is searchable; lightweight polling (studio-job pattern) or SSE (chat-stream pattern, REQ-1.6.2). | TODO |
+| REQ-6.6.2 | Course groups | Each course gets an optional members-channel (cohort feel); a "למדו איתי" presence row shows others currently learning the course. | TODO |
+| REQ-6.6.3 | Direct messages | Member-to-member DMs, opt-in (default OFF), **disabled for `student` role members** (REQ-6.1.9); block + report built-in. | TODO |
+| REQ-6.6.4 | Find collaborators | `/community/members/` directory: filter by domain interest, level, role; "פתוח לשיתופי פעולה" flag on the profile (feature_skeleton 5.2). | TODO |
+| REQ-6.6.5 | Knowledge capture | A great chat answer can be promoted to a forum answer/tip in one click (staff or author) — chat never traps knowledge (anti-failure #1). | TODO |
+
+### 6.7 EPIC-6.7 — Events & Meetups
+
+Belonging → conversion: "מפגש live ממיר lurkers ל-contributors" (research_4).
+Also the natural bridge to the corporate funnel (sponsors, exposure).
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-6.7.1 | Event model | `CommunityEvent`: title, description, type (live-coding / AMA / hackathon kickoff / meetup / כנס), virtual link or venue, start/end, capacity, host. | TODO |
+| REQ-6.7.2 | Registration | RSVP + calendar file (.ics) + reminder notifications (24h, 1h); waitlist when full. | TODO |
+| REQ-6.7.3 | Events page | `/community/events/`: upcoming + past; past events show recording (Bunny embed) + linked threads/projects. | TODO |
+| REQ-6.7.4 | Recurring formats | Support a recurring series (e.g. שעת מומחה חודשית עם אבי — the AMA pattern); series page with all sessions. | TODO |
+| REQ-6.7.5 | Physical meetups | Venue events (TLV/JLM/Haifa per research) with attendance check-in; photos feed back to the community feed. | TODO |
+
+### 6.8 Cross-cutting: measurement & health
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-6.8.1 | Community events (Plausible) | `community_post`, `answer_accepted`, `project_published`, `challenge_submission`, `event_rsvp`, `tip_posted` — funnel doc extended. | TODO |
+| REQ-6.8.2 | Health dashboard | Staff dashboard: weekly active contributors, unanswered-question rate, time-to-first-answer, projects/week, report-queue size. | TODO |
+| REQ-6.8.3 | Activation tie-in | Onboarding (Ch.5) gains a community beat: the welcome checklist adds "הצטרפו לקהילה"; Avi Bot mentions the community in the greeting. | TODO |
+
+### 6.9 Deferred (explicitly out of scope for Chapter 6)
+
+Per research_1 "don't launch with advisors" and research_3's authority-first
+model — these wait until the community is demonstrably alive:
+
+| Item | Why deferred |
+|---|---|
+| Skill marketplace (creator economy, 70/30) | Needs critical mass + payments (Stripe still DEFERRED) |
+| Advisor/mentor marketplace (paid 1:1) | Needs trust graph + payments; soft-launch later with ~5 advisors |
+| Hiring board | Needs employer demand; community proof first |
+| Token wallet / credits store | Separate scope (Scope 3), unrelated to community UX |
+| Algorithmic feed / engagement optimization | DEC-40 — chronological + curated only |
+
+### 6.10 Decisions log (proposed — confirm in review)
+
+| ID | Topic | Proposed choice | Rationale |
+|---|---|---|---|
+| DEC-36 | Build order | **Durable knowledge first** (foundation → forums → showcase → feed → challenges → chat → events) | research_4: chat-only communities die; knowledge must accumulate before real-time |
+| DEC-37 | Reputation currency | **Points + badges + featured visibility** (no monetary economy yet) | Rewards contribution (anti-failure #5) without payments complexity |
+| DEC-38 | Voting | **Upvote-only + accepted answer** (no downvotes) | Friendlier for a Hebrew learning community incl. minors; accepted answer carries the quality signal |
+| DEC-39 | Challenges ≠ Kaggle | **Course-anchored, human-judged, showcase-producing** | research_1 explicit warning; fits learning community, not ML-metric racing |
+| DEC-40 | Feed | **Chronological + staff-curated featured; no engagement algorithm** | Trust + simplicity; the site's tone is human, not addictive |
+| DEC-41 | Minors safety | **Student role: no DMs, reviewed publishing, moderated uploads** | matazim audience includes minors; non-negotiable |
+| DEC-42 | Monetary community economy | **Deferred** (marketplace/advisors/hiring in 6.9) | research_3: authority first; payments infra (Stripe) still deferred |
+| DEC-43 | Tech envelope | **Stay on Django/SQLite: polling/SSE, no websockets/Redis** | One deploy unit; the studio + chat patterns already proven on this stack |
+
+### 6.11 Acceptance criteria for Chapter 6
+
+Chapter 6 is **DONE** when, in production: a member has a public profile with
+badges and a portfolio; questions get answered and accepted with knowledge
+searchable; projects are published on the exhibition wall and shared outward;
+the feed shows a living community and a weekly digest goes out; a full
+challenge cycle (brief → submissions → judging → winners) has run; channels
+and member directory operate with minors-safe defaults; an event has run end
+to end with RSVP and recording; the health dashboard reports weekly active
+contributors; and the full regression is green with every epic's tests.
+
+---
+
 ## Reference
 
 - **Stack**: Django 5.2, Gunicorn, WhiteNoise, SQLite (Render disk), django-allauth (Google + GitHub OAuth), Bunny Stream (video), Stripe + Green Invoice (billing), Resend (email), Plausible (analytics), GitHub Copilot Business (seat provisioning via GitHub REST API), OpenAI API (AI chat, GPT-4o-mini / GPT-4o, gpt-4o-transcribe), yt-dlp + ffmpeg (authoring pipeline)
