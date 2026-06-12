@@ -83,6 +83,14 @@
         <!-- User / auth links -->
         <ul class="navbar-nav ms-auto align-items-lg-center gap-1">
           {% if user.is_authenticated %}
+            {% if user.learner_profile and not user.learner_profile.needs_onboarding %}
+            <!-- Always-reachable personal recommendations (REQ-5.6.3) -->
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'profile' %}#recommended" title="מומלץ עבורך" aria-label="מומלץ עבורך">
+                <i class="bi bi-stars" style="color:var(--accent-primary)"></i><span class="d-lg-none ms-1">מומלץ עבורך</span>
+              </a>
+            </li>
+            {% endif %}
             <li class="nav-item">
               <a class="nav-link" href="{% url 'profile' %}">
                 <i class="bi bi-person-circle"></i> {{ user.username }}

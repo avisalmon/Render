@@ -47,25 +47,14 @@ def home(request):
             .first()
         )
 
-        # Personalized "start here" rail + activation checklist (REQ-5.6.3/5.6.5).
-        # Only users with a LearnerProfile (EPIC-5 signups); others stay generic.
+        # Personalized "start here" rail (REQ-5.6.3): shown ONCE right after
+        # onboarding, then it lives on the profile page - homepage stays clean.
         learner = getattr(request.user, "learner_profile", None)
         if learner is not None and not learner.needs_onboarding:
             from .models import LessonReflection
-            from .onboarding import first_lesson_url, recommend
-            track, course = recommend(
-                learner.interests, learner.experience_level,
-                learner.recommended_course,
-            )
-            if course:
-                recommended.append({"course": course, "url": first_lesson_url(course)})
-                # Fill the rail with more published courses from the same domain
-                extra = Course.objects.filter(
-                    is_published=True, domain=course.domain
-                ).exclude(pk=course.pk)[:2]
-                recommended += [
-                    {"course": c, "url": f"/courses/{c.slug}/"} for c in extra
-                ]
+            from .onboarding import RECS_ONCE_KEY, build_recommendations
+            if request.session.pop(RECS_ONCE_KEY, False):
+                recommended = build_recommendations(learner)
             if request.COOKIES.get("checklist_dismissed") != "1":
                 checklist = {
                     "watched": UserVideoProgress.objects.filter(user=request.user).exists(),
@@ -228,11 +217,19 @@ def profile(request):
             "total": total, "completed": bool(e.completed_at),
         })
 
+    # Personalized recommendations live permanently here (REQ-5.6.3)
+    recommended = []
+    learner = getattr(request.user, "learner_profile", None)
+    if learner is not None and not learner.needs_onboarding:
+        from .onboarding import build_recommendations
+        recommended = build_recommendations(learner)
+
     return render(request, "app/profile.html", {
         "user_profile": user_profile,
         "copilot_status": copilot_status,
         "certificates": certificates,
         "my_courses": my_courses,
+        "recommended": recommended,
     })
 
 

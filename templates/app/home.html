@@ -25,7 +25,7 @@
   <!-- Personalized "start here" rail (REQ-5.6.3) -->
   <section class="mb-4">
     <h2 class="h5 mb-1">מומלץ עבורך <i class="bi bi-stars" style="color:var(--accent-primary)"></i></h2>
-    <p class="text-muted small mb-3">לפי תחומי העניין והרמה שבחרת. <a href="{% url 'welcome' %}" class="text-decoration-none">עדכון העדפות</a></p>
+    <p class="text-muted small mb-3">לפי תחומי העניין והרמה שבחרת. ההמלצות נשמרות ב<a href="{% url 'profile' %}" class="text-decoration-none">פרופיל שלך</a>.</p>
     <div class="row g-3">
       {% for r in recommended %}
       <div class="col-12 col-md-4">

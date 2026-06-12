@@ -16,7 +16,6 @@ from .onboarding import (
     MAX_INTERVIEW_TURNS,
     ONBOARDING_NEXT_KEY,
     ONBOARDING_PENDING_KEY,
-    first_lesson_url,
     interview_system_prompt,
     parse_interview_reply,
     recommend,
@@ -102,11 +101,16 @@ def _finish_onboarding(request, profile, completed):
     next_url = _safe_next(request, request.session.pop(ONBOARDING_NEXT_KEY, ""))
     request.session.pop(ONBOARDING_PENDING_KEY, None)
     request.session.pop(INTERVIEW_KEY, None)
+    if completed:
+        # The homepage shows the recommendation rail ONCE right after
+        # onboarding; afterwards it lives on the profile page (REQ-5.6.3).
+        from .onboarding import RECS_ONCE_KEY
+        request.session[RECS_ONCE_KEY] = True
     if next_url:
         return next_url  # preserved intent always wins (REQ-5.4.2)
-    # Activation hand-off into the first lesson on completion (REQ-5.6.4);
-    # a skip just goes home.
-    return first_lesson_url(course) if completed else "/"
+    # Land on the (one-time personalized) homepage - the user chooses where
+    # to go, no auto-drop into a lesson (REQ-5.6.4).
+    return "/"
 
 
 @login_required

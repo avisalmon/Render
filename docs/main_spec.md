@@ -597,7 +597,7 @@ learner and routes them to the right starting point. Grounded in research_2's
 | REQ-ID | Title | Expectation (acceptance) | Status |
 |---|---|---|---|
 | REQ-5.5.1 | Interview entry | A newly registered user with `onboarding_completed_at IS NULL` is routed to `/welcome/` on next page load. Existing/returning users are never sent there. | DONE |
-| REQ-5.5.2 | Conversational flow | An OpenAI-backed chat (reuse REQ-1.6 infra, `gpt-4o-mini`) greets by name and asks 2-4 adaptive questions: goal/why, experience level, role/context, time availability. If entry was `course`, it opens by confirming that interest ("I see you came for *<course>* — your main focus, or the broader path?"). | DONE |
+| REQ-5.5.2 | Conversational flow | An OpenAI-backed chat (reuse REQ-1.6 infra, `gpt-4o-mini`) greets by name and asks 2-4 adaptive questions **grounded in the site's taxonomy**: which world (named: AI / מטצים / חדשנות), experience *in the chosen domain* (concrete phrasing, never a bare "מתחיל/מתקדם"), goal, time. If entry was `course`, it opens by confirming that interest. It can answer "what is on this site?" from the catalog, and **refuses any off-topic request** (weather/news/coding help), steering back to the interview. | DONE |
 | REQ-5.5.3 | Structured extraction | The interview extracts a structured result — `interests[]` (domains/tracks), `goal`, `experience_level`, `persona`, `time_per_week` — and maps it to a **recommended track + first course**. | DONE |
 | REQ-5.5.4 | Static fallback | If the user clicks "skip" or AI is unavailable (key unset / error / rate cap), a 3-tap static form (pick interests → level → goal) produces the same `LearnerProfile`. Onboarding is **never** a dead end. | DONE |
 | REQ-5.5.5 | Skippable & resumable | Onboarding can be skipped ("later") and resumed from the profile; skipping still seeds recommendations from the entry intent (REQ-5.2.3). | DONE |
@@ -609,9 +609,10 @@ learner and routes them to the right starting point. Grounded in research_2's
 |---|---|---|---|
 | REQ-5.6.1 | `LearnerProfile` model | OneToOne with user: `interests` (JSON), `goal`, `experience_level`, `persona`, `recommended_track`, `recommended_course`, `time_per_week`, `onboarding_completed_at`, + attribution (`source_entry_path`, `source_course`, `utm_*`, `referrer`). | DONE |
 | REQ-5.6.2 | Recommendation engine | A deterministic mapper turns interests + level + entry intent into a recommended track and first course (taxonomy-driven; no ML). Explainable ("because you're interested in AI and new to it"). | DONE |
-| REQ-5.6.3 | Personalized homepage | Logged-in homepage shows a "Recommended for you" / "Start here" rail driven by `LearnerProfile`, above the generic worlds. Falls back to generic for users with no profile. | DONE |
-| REQ-5.6.4 | Activation hand-off | At the end of onboarding the user is dropped directly into their recommended free first lesson (or their preserved `next`), not a dead dashboard. | DONE |
+| REQ-5.6.3 | Personalized recommendations | The "Recommended for you" rail (driven by `LearnerProfile`) appears **once** on the homepage right after onboarding, then lives **permanently on the profile page**; a ⭐ nav icon next to the user links to it (`/profile/#recommended`) so it is always reachable. The homepage stays clean afterwards. Users with no profile see nothing (generic). | DONE |
+| REQ-5.6.4 | Activation hand-off | At the end of onboarding the user sees a one-line path summary + a button (no auto-jump into a lesson); it leads to the personalized homepage where the rail presents the recommendation - or to their preserved `next` if they deep-linked in. | DONE |
 | REQ-5.6.5 | Onboarding checklist | A small, dismissible "get started" checklist (watch first lesson → pass a quiz → submit a reflection → enroll) shown on the profile/home until complete. | DONE |
+| REQ-5.6.6 | Usage-driven recommendations | Recommendations evolve with the user's actual usage (watched lessons, completed courses, reflections) instead of the one-time interview snapshot. | DEFERRED (Avi 2026-06-12: capture the interview now, dynamic later) |
 
 ### 5.7 Measurement
 
@@ -639,10 +640,11 @@ Chapter 5 is **DONE** when:
    anonymous gated action yields a bare 403 (all route to the contextual wall).
 2. A deep-link arrival (shared course/lesson link) → wall → register → lands back
    on the exact intended page, with that course seeded as the primary interest.
-3. A newly registered user completes the AI interview (or the static fallback),
-   gets a `LearnerProfile` + a recommended track/first course, and is dropped into
-   their first lesson.
-4. The logged-in homepage shows a personalized "start here" rail.
+3. A newly registered user completes the short, taxonomy-grounded AI interview
+   (or the static fallback), gets a `LearnerProfile` + a recommended track/first
+   course, and chooses where to go (no auto-jump).
+4. The rail shows once on the homepage post-onboarding, permanently on the
+   profile, and via the ⭐ nav icon; the homepage stays clean afterwards.
 5. Funnel events fire and activation rate is measurable.
 6. Full regression green; non-authors/anonymous boundaries covered by tests.
 

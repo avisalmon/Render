@@ -151,11 +151,43 @@ def first_lesson_url(course):
     return f"/courses/{course.slug}/"
 
 
+RECS_ONCE_KEY = "recs_once"  # one-shot homepage rail right after onboarding
+
+
+def build_recommendations(learner):
+    """The 'recommended for you' rail (REQ-5.6.3): the recommended course
+    first (deep-linked to its first lesson) + up to 2 more from its domain."""
+    from .models import Course
+    _, course = recommend(
+        learner.interests, learner.experience_level, learner.recommended_course
+    )
+    if course is None:
+        return []
+    recs = [{"course": course, "url": first_lesson_url(course)}]
+    extra = Course.objects.filter(
+        is_published=True, domain=course.domain
+    ).exclude(pk=course.pk)[:2]
+    recs += [{"course": c, "url": f"/courses/{c.slug}/"} for c in extra]
+    return recs
+
+
 # ---------------------------------------------------------------------------
 # AI interview (REQ-5.5.2 / 5.5.3): conversational profile extraction.
 # ---------------------------------------------------------------------------
 
 PROFILE_MARKER = "PROFILE_JSON:"
+
+
+def _catalog_summary():
+    """A compact Hebrew overview of the actual offering, from the taxonomy,
+    so the interviewer asks about real topics and can answer 'what is here?'."""
+    lines = []
+    for key, d in sorted(TRAINING_TAXONOMY.items(), key=lambda kv: kv[1]["order"]):
+        tracks = ", ".join(
+            t["title"] for t in sorted(d["tracks"].values(), key=lambda t: t["order"])
+        )
+        lines.append(f'- {key} = "{d["title"]}" ({d["subtitle"]}): {tracks}')
+    return "\n".join(lines)
 
 
 def interview_system_prompt(user, entry_course_title=""):
@@ -164,26 +196,39 @@ def interview_system_prompt(user, entry_course_title=""):
     if profile and profile.display_name:
         name = profile.display_name
     name = name or user.first_name or user.username
-    domains = ", ".join(
-        f"{k} ({v['title']})" for k, v in TRAINING_TAXONOMY.items()
-    )
     opening = (
-        f'The learner arrived via the course "{entry_course_title}" - open by '
-        f"confirming whether that is their main focus or part of a broader interest. "
-        if entry_course_title else ""
+        f'The learner arrived via the course "{entry_course_title}" - your FIRST '
+        f"question confirms it: is that course their main focus, or part of a "
+        f"broader interest (name the relevant world)? "
+        if entry_course_title
+        else "Your FIRST question presents the three worlds BY NAME (בינה "
+        "מלאכותית / מטצים למייקרים צעירים / הובלת חדשנות) and asks which "
+        "one(s) they came for. "
     )
     return (
-        "You are the friendly Hebrew onboarding guide of babook.co.il, an AI-training "
-        f"platform. The learner's name is {name}. Greet them by name once. {opening}"
-        "Ask at most 4 short questions, ONE at a time, in warm everyday Hebrew: "
-        "(1) their goal (work / curiosity / a project / career), "
-        "(2) their experience level (beginner / intermediate / advanced), "
-        "(3) which domains interest them, (4) weekly time. "
-        f"Available domains: {domains}. "
-        "Keep every reply under 40 words. When you have enough (even after 2 answers), "
-        "stop asking and output on a separate final line exactly: "
-        f'{PROFILE_MARKER} {{"interests": ["<domain keys>"], "goal": "<short>", '
-        '"experience_level": "beginner|intermediate|advanced", '
+        "You are the onboarding interviewer of babook.co.il, an Israeli video-"
+        "training site. You speak warm, everyday Hebrew and your ONLY job is a "
+        "short intake interview to personalize the learner's path.\n\n"
+        f"The site's actual offering (domain key = name: tracks):\n{_catalog_summary()}\n\n"
+        f"The learner's name is {name}. Greet them by name once, briefly. {opening}"
+        "Then AT MOST 2 more questions, ONE at a time, grounded in the topics "
+        "above:\n"
+        "2) Experience IN THE DOMAIN THEY CHOSE - phrase it concretely (e.g. for "
+        "AI: 'משתמש יומיומי ב-ChatGPT? כותב קוד עם Copilot? מאמן מודלים?'), never "
+        "a bare 'מתחיל/בינוני/מתקדם' without context.\n"
+        "3) (only if still unclear) Their goal - עבודה / סקרנות / פרויקט.\n\n"
+        "BE SHORT: every reply under 25 words, no filler. The moment you know "
+        "domain + level, STOP - do not ask about goal/time if you can infer them.\n"
+        "If they ask what the site offers, answer in 1-2 sentences from the "
+        "offering above, then continue the interview.\n"
+        "STAY ON TOPIC: you only discuss this interview and the site's courses. "
+        "Anything else (weather, news, stocks, recipes, coding help, general "
+        "questions) - decline in one short friendly sentence and return to your "
+        "current question.\n"
+        "When done, end with a one-line summary of the path you chose for them, "
+        "then output on a separate final line exactly: "
+        f'{PROFILE_MARKER} {{"interests": ["<domain keys from the list>"], '
+        '"goal": "<short>", "experience_level": "beginner|intermediate|advanced", '
         '"persona": "<short description>", "time_per_week": "<short>"}'
     )
 

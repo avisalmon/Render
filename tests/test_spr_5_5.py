@@ -68,17 +68,52 @@ def test_first_lesson_url():
     assert first_lesson_url(None) == "/courses/"
 
 
-# --- homepage rail + checklist (REQ-5.6.3/5.6.5) ---
+# --- rail: once on home after onboarding, permanently on profile (REQ-5.6.3) ---
 
 @pytest.mark.django_db
-def test_home_shows_personalized_rail():
+def test_home_rail_shows_once_then_homepage_stays_clean():
+    """The rail appears on the first homepage load after onboarding only."""
     course = _course("ai-user-journey")
     u = _onboarded_user(course=course)
     c = Client()
     c.force_login(u)
-    body = c.get("/").content.decode()
-    assert "מומלץ עבורך" in body
-    assert "ai-user-journey" in body
+    session = c.session
+    session["recs_once"] = True  # set by onboarding completion
+    session.save()
+    first = c.get("/").content.decode()
+    assert "לפי תחומי העניין והרמה שבחרת" in first and "ai-user-journey" in first
+    second = c.get("/").content.decode()
+    # Clean after the first entrance - no rail (the nav ⭐ icon remains)
+    assert "לפי תחומי העניין והרמה שבחרת" not in second
+    assert "ai-user-journey" not in second
+    assert "profile/#recommended" in second
+
+
+@pytest.mark.django_db
+def test_profile_shows_rail_permanently():
+    course = _course("ai-user-journey")
+    u = _onboarded_user("profman", course=course)
+    c = Client()
+    c.force_login(u)
+    for _ in range(2):
+        body = c.get("/profile/").content.decode()
+        assert "מומלץ עבורך" in body and "ai-user-journey" in body
+
+
+@pytest.mark.django_db
+def test_nav_recommendations_icon_for_onboarded_users_only():
+    """The bi-stars nav icon links to /profile/#recommended - always reachable
+    for onboarded users, absent for legacy users."""
+    course = _course("ai-user-journey")
+    u = _onboarded_user("starred", course=course)
+    c = Client()
+    c.force_login(u)
+    assert "profile/#recommended" in c.get("/courses/").content.decode()
+
+    legacy = User.objects.create_user("nostars", password="pass12345")
+    c2 = Client()
+    c2.force_login(legacy)
+    assert "profile/#recommended" not in c2.get("/courses/").content.decode()
 
 
 @pytest.mark.django_db

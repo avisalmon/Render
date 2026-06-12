@@ -55,8 +55,9 @@ def test_welcome_page_renders_with_fallback_form():
 # --- static fallback completion (REQ-5.5.4) ---
 
 @pytest.mark.django_db
-def test_static_complete_builds_profile_and_lands_in_first_lesson():
-    """T-F-5.4.5-1: 3-tap form -> profile + recommendation + activation hand-off."""
+def test_static_complete_builds_profile_and_lands_on_home():
+    """T-F-5.4.5-1: 3-tap form -> profile + recommendation, lands on the
+    homepage (no auto-jump into a lesson - the rail presents the choice)."""
     _intro_course()
     c = Client()
     user = _signup(c)
@@ -64,7 +65,7 @@ def test_static_complete_builds_profile_and_lands_in_first_lesson():
         "interests": ["ai"], "experience_level": "beginner", "goal": "עבודה",
     })
     assert resp.status_code == 302
-    assert resp.url == "/courses/ai-user-journey/lesson/1/"
+    assert resp.url == "/"
     lp = LearnerProfile.objects.get(user=user)
     assert lp.interests == ["ai"]
     assert lp.experience_level == "beginner"
@@ -118,7 +119,7 @@ def test_interview_extracts_profile_and_finishes():
                       content_type="application/json")
     data = resp.json()
     assert data["done"] is True
-    assert data["redirect"] == "/courses/ai-user-journey/lesson/1/"
+    assert data["redirect"] == "/"  # button to home, no auto-drop into a lesson
     assert "PROFILE_JSON" not in data["reply"]
     lp = LearnerProfile.objects.get(user=user)
     assert lp.interests == ["ai"] and lp.persona == "מהנדס סקרן"
@@ -140,6 +141,31 @@ def test_interview_turn_budget_forces_fallback():
                       data=json.dumps({"message": "עוד"}),
                       content_type="application/json")
     assert resp.json() == {"fallback": True}
+
+
+@pytest.mark.django_db
+def test_interview_prompt_grounded_in_site_topics():
+    """T-F-5.4.3-3 (REQ-5.5.2): the interviewer knows the actual catalog,
+    asks domain-contextual level questions, and stays on topic."""
+    from app.onboarding import interview_system_prompt
+    u = User.objects.create_user("grounded", password="pass12345")
+    prompt = interview_system_prompt(u)
+    # Knows the three worlds by name + their real tracks
+    for topic in ["מטצים", "בינה מלאכותית", "הובלת חדשנות", "תלת-מימד", "Copilot"]:
+        assert topic in prompt
+    # Level question must be contextual, scope must be guarded
+    assert "STAY ON TOPIC" in prompt
+    assert "ChatGPT" in prompt  # concrete AI-level phrasing
+    assert "PROFILE_JSON" in prompt
+
+
+@pytest.mark.django_db
+def test_interview_prompt_opens_on_entry_course():
+    from app.onboarding import interview_system_prompt
+    u = User.objects.create_user("arrived", password="pass12345")
+    prompt = interview_system_prompt(u, entry_course_title="קופיילוט למתחילים")
+    assert "קופיילוט למתחילים" in prompt
+    assert "FIRST" in prompt
 
 
 def test_parse_interview_reply_handles_bad_json():
