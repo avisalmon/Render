@@ -196,6 +196,8 @@ def test_interview_prompt_grounded_in_site_topics():
     assert "Avi Bot" in prompt
     assert "book-sharing" in prompt
     assert "happy they joined" in prompt
+    # Explains the purpose: questions tailor content recommendations
+    assert "fit their wants and needs" in prompt
 
 
 @pytest.mark.django_db
