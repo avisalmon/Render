@@ -2,6 +2,15 @@
 {% load static course_tags %}
 {% block title %}{{ video.title }} — {{ course.title }} — BaBook{% endblock %}
 
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'home' %}" style="color:var(--accent-primary)">בית</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'courses_catalog' %}" style="color:var(--accent-primary)">הדרכות</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'courses_detail' course.slug %}" style="color:var(--accent-primary)">{{ course.title }}</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">שיעור {{ video.lesson_order }}</li>
+</ol>
+{% endblock %}
+
 {% block content %}
 <!-- 4px progress bar at top -->
 <div style="position:fixed;top:0;left:0;width:100%;height:4px;z-index:9999;background:var(--bg-elevated);">
@@ -11,15 +20,8 @@
 
 <div class="container-xl py-4">
 
-  <!-- Breadcrumb + nav -->
-  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-    <nav aria-label="breadcrumb">
-      <ol class="breadcrumb small mb-0" style="color:var(--text-secondary)">
-        <li class="breadcrumb-item"><a href="{% url 'courses_catalog' %}" style="color:var(--accent-primary)">קורסים</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'courses_detail' course.slug %}" style="color:var(--accent-primary)">{{ course.title }}</a></li>
-        <li class="breadcrumb-item active" style="color:var(--text-secondary)">שיעור {{ video.lesson_order }}</li>
-      </ol>
-    </nav>
+  <!-- Lesson prev/next nav -->
+  <div class="d-flex align-items-center justify-content-end mb-3 flex-wrap gap-2">
     <div class="d-flex gap-2">
       {% if prev_video %}
       <a href="{% url 'courses_lesson' course.slug prev_video.lesson_order %}"

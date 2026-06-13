@@ -22,20 +22,20 @@
 </script>
 {% endblock %}
 
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'home' %}" style="color:var(--accent-primary)">בית</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'courses_catalog' %}" style="color:var(--accent-primary)">הדרכות</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">{{ course.title }}</li>
+</ol>
+{% endblock %}
+
 {% block content %}
 <div class="container-xl py-5">
 
   <!-- Hero section -->
   <div class="row align-items-center mb-5 g-4">
     <div class="col-lg-7">
-      <!-- Breadcrumb -->
-      <nav aria-label="breadcrumb" class="mb-3">
-        <ol class="breadcrumb small" style="color:var(--text-secondary)">
-          <li class="breadcrumb-item"><a href="{% url 'courses_catalog' %}" style="color:var(--accent-primary)">קורסים</a></li>
-          <li class="breadcrumb-item active" style="color:var(--text-secondary)">{{ course.title }}</li>
-        </ol>
-      </nav>
-
       <h1 class="fw-bold mb-2" style="color:var(--text-primary)">{{ course.title }}</h1>
       {% if course.title_en %}
       <p class="mb-3" style="color:var(--text-secondary)">{{ course.title_en }}</p>

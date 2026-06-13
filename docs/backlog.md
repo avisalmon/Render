@@ -730,6 +730,7 @@ Claude. **Status:** IN PROGRESS — built in one autonomous pass (DEC-54).
 | SPR-7.4 | Design Refresh — light theme + toggle DONE (dark default until Avi confirms); animated bg DEFERRED | PARTIAL |
 | SPR-7.5 | Content re-transcription — REQ-7.5.1 (long batch) | WIP — tooling ready; supervised batch pending |
 | SPR-7.6 | Contact email reliability — REQ-7.6.1 (+ ACT-Avi mailbox) | DONE |
+| SPR-7.8 | Global navigation: breadcrumb + back on every view — REQ-7.8.1 (QA-16, was wrongly marked done) | DONE |
 
 #### SPR-7.1 — Quick wins
 
@@ -786,6 +787,13 @@ Claude. **Status:** IN PROGRESS — built in one autonomous pass (DEC-54).
 | Feature ID | Title | REQ trace | Status |
 |---|---|---|---|
 | F-7.6.1 | On-site contact capture + admin notify | REQ-7.6.1 | DONE |
+
+#### SPR-7.8 — Global navigation hierarchy
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-7.8.1 | Global breadcrumb bar + back button (base.html + breadcrumbs_ctx + central trail map) | REQ-7.8.1 | DONE |
+| F-7.8.2 | Migrate per-page breadcrumbs (courses/studio/project/thread) into the unified bar | REQ-7.8.1 | DONE |
 
 ---
 

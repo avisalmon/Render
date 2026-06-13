@@ -9,15 +9,18 @@
 <meta property="og:type" content="article">
 {% endblock %}
 
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'home' %}" style="color:var(--accent-primary)">בית</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'community' %}" style="color:var(--accent-primary)">קהילה</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'showcase_wall' %}" style="color:var(--accent-primary)">דוכן השוויץ</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">{{ project.title|truncatechars:30 }}</li>
+</ol>
+{% endblock %}
+
 {% block content %}
 <div class="row justify-content-center py-4">
   <div class="col-lg-9">
-    <nav aria-label="breadcrumb"><ol class="breadcrumb small">
-      <li class="breadcrumb-item"><a href="{% url 'community' %}">קהילה</a></li>
-      <li class="breadcrumb-item"><a href="{% url 'showcase_wall' %}">דוכן השוויץ</a></li>
-      <li class="breadcrumb-item active">{{ project.title|truncatechars:30 }}</li>
-    </ol></nav>
-
     {% if not project.is_live %}
     <div class="alert alert-warning py-2 small">
       {% if project.status == 'pending' %}הפרויקט בבדיקה - יפורסם אחרי אישור צוות 🙂{% else %}טיוטה - רק את/ה רואה אותה. <a href="{% url 'showcase_edit' project.pk %}">המשך עריכה</a>{% endif %}

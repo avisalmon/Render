@@ -2,16 +2,17 @@
 {% load static %}
 {% block title %}{{ t.meta.title }} - {{ d.meta.title }} | babook{% endblock %}
 
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'home' %}" style="color:var(--accent-primary)">בית</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'courses_catalog' %}" style="color:var(--accent-primary)">הדרכות</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'courses_domain' d.key %}" style="color:var(--accent-primary)">{{ d.meta.title }}</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">{{ t.meta.title }}</li>
+</ol>
+{% endblock %}
+
 {% block content %}
 <div class="py-4">
-  <nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="{% url 'courses_catalog' %}">הדרכה</a></li>
-      <li class="breadcrumb-item"><a href="{% url 'courses_domain' d.key %}">{{ d.meta.title }}</a></li>
-      <li class="breadcrumb-item active" aria-current="page">{{ t.meta.title }}</li>
-    </ol>
-  </nav>
-
   <h1 class="h4 mb-1"><i class="bi {{ t.meta.icon }}"></i> {{ t.meta.title }}</h1>
   <p class="text-muted mb-4">{{ t.meta.subtitle }}</p>
 

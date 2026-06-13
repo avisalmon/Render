@@ -67,6 +67,7 @@ TEMPLATES = [
                 "app.context_processors.site_settings",
                 "app.context_processors.first_visit",
                 "app.context_processors.community_ctx",
+                "app.context_processors.breadcrumbs_ctx",
             ],
         },
     },

@@ -1,15 +1,18 @@
 {% extends "base.html" %}
 {% block title %}{{ thread.title }} - פורום babook{% endblock %}
 
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'home' %}" style="color:var(--accent-primary)">בית</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'community' %}" style="color:var(--accent-primary)">קהילה</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'forum_home' %}" style="color:var(--accent-primary)">פורום</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">{{ thread.title|truncatechars:40 }}</li>
+</ol>
+{% endblock %}
+
 {% block content %}
 <div class="row justify-content-center py-4">
   <div class="col-lg-9">
-    <nav aria-label="breadcrumb"><ol class="breadcrumb small">
-      <li class="breadcrumb-item"><a href="{% url 'community' %}">קהילה</a></li>
-      <li class="breadcrumb-item"><a href="{% url 'forum_home' %}">פורום</a></li>
-      <li class="breadcrumb-item active">{{ thread.title|truncatechars:40 }}</li>
-    </ol></nav>
-
     {% include "app/community/_guest_note.html" %}
     {% if messages %}{% for m in messages %}<div class="alert alert-{{ m.tags|default:'info' }} py-2">{{ m }}</div>{% endfor %}{% endif %}
 

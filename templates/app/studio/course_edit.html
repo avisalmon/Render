@@ -1,11 +1,14 @@
 {% extends "base.html" %}
 {% block title %}{{ course.title }} - אולפן{% endblock %}
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'home' %}" style="color:var(--accent-primary)">בית</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'studio_home' %}" style="color:var(--accent-primary)">אולפן</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">{{ course.title }}</li>
+</ol>
+{% endblock %}
 {% block content %}
 <div class="py-4">
-  <nav aria-label="breadcrumb"><ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="{% url 'studio_home' %}">אולפן</a></li>
-    <li class="breadcrumb-item active">{{ course.title }}</li>
-  </ol></nav>
 
   {% if messages %}{% for m in messages %}<div class="alert alert-{{ m.tags|default:'info' }} py-2">{{ m }}</div>{% endfor %}{% endif %}
 

@@ -34,6 +34,20 @@ def community_ctx(request):
     }
 
 
+def breadcrumbs_ctx(request):
+    """QA-16 / REQ-7.4.1: global 'you are here' trail + back button on every
+    view. Detail pages may override the trail in-template; this supplies the
+    section hierarchy for all the rest."""
+    from .breadcrumbs import NO_BREADCRUMB, build
+    match = getattr(request, "resolver_match", None)
+    name = match.url_name if match else None
+    return {
+        "auto_breadcrumbs": build(request),
+        # show the back button everywhere except chrome-free pages (home/auth/onboarding)
+        "show_back_button": bool(name) and name not in NO_BREADCRUMB,
+    }
+
+
 def first_visit(request):
     """EPIC-5: first-visit welcome strip (REQ-5.3.2) + one-shot 'entry' funnel
     event (REQ-5.7.1). Anonymous visitors only; dismissal via cookie."""

@@ -1,11 +1,14 @@
 {% extends "base.html" %}
 {% block title %}קורס חדש - אולפן{% endblock %}
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'home' %}" style="color:var(--accent-primary)">בית</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'studio_home' %}" style="color:var(--accent-primary)">אולפן</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">קורס חדש</li>
+</ol>
+{% endblock %}
 {% block content %}
 <div class="py-4" style="max-width:720px;margin:0 auto;">
-  <nav aria-label="breadcrumb"><ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="{% url 'studio_home' %}">אולפן</a></li>
-    <li class="breadcrumb-item active">קורס חדש</li>
-  </ol></nav>
   <h1 class="h4 mb-3">קורס חדש</h1>
   {% if messages %}{% for m in messages %}<div class="alert alert-danger py-2">{{ m }}</div>{% endfor %}{% endif %}
   <form method="post" class="card-surface p-4">

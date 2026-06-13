@@ -2,15 +2,16 @@
 {% load static %}
 {% block title %}{{ d.meta.title }} - הדרכה | babook{% endblock %}
 
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'home' %}" style="color:var(--accent-primary)">בית</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'courses_catalog' %}" style="color:var(--accent-primary)">הדרכות</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">{{ d.meta.title }}</li>
+</ol>
+{% endblock %}
+
 {% block content %}
 <div class="py-4">
-  <nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="{% url 'courses_catalog' %}">הדרכה</a></li>
-      <li class="breadcrumb-item active" aria-current="page">{{ d.meta.title }}</li>
-    </ol>
-  </nav>
-
   <div class="domain-header card-surface mb-4">
     <i class="bi {{ d.meta.icon }} domain-icon"></i>
     <div>

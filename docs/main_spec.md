@@ -944,6 +944,17 @@ contributors; and the full regression is green with every epic's tests.
 |---|---|---|---|
 | REQ-7.6.1 | On-site contact capture + admin notify | Contact/privacy/support routes store the message on-site (admin-visible) and email Avi's admin inbox, so nothing depends on a possibly-dead `privacy@`/`support@` mailbox. **ACT-Avi:** set up the actual mailbox forwarding (DNS). | DONE |
 
+### 7.8 Global navigation hierarchy (QA-16)
+
+> **Correction (2026-06-13):** QA-16 was reported DONE in the build summary but
+> had **no REQ and no feature** — only a few page types carried hand-placed
+> breadcrumbs, with no back button and nothing on most pages. Now built for real
+> as a global element.
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-7.8.1 | Breadcrumb + back on every view | A single global bar (in `base.html`, driven by `breadcrumbs_ctx`) renders a "you are here" trail on every page: «בית › section › subsection …», each ancestor a clickable link, plus a «חזרה» back button. Trails come from a central map (`app/breadcrumbs.py`); detail pages override `{% block breadcrumb %}` to show the real course/project/thread title. Chrome-free on home/auth/onboarding. | DONE |
+
 ### 7.7 Decisions log
 
 | ID | Topic | Choice |

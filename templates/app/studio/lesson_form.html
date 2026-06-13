@@ -1,12 +1,15 @@
 {% extends "base.html" %}
 {% block title %}{% if lesson %}עריכת שיעור{% else %}שיעור חדש{% endif %} - אולפן{% endblock %}
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'home' %}" style="color:var(--accent-primary)">בית</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'studio_home' %}" style="color:var(--accent-primary)">אולפן</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'studio_course_edit' course.slug %}" style="color:var(--accent-primary)">{{ course.title }}</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">{% if lesson %}שיעור {{ lesson.lesson_order }}{% else %}שיעור חדש{% endif %}</li>
+</ol>
+{% endblock %}
 {% block content %}
 <div class="py-4">
-  <nav aria-label="breadcrumb"><ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="{% url 'studio_home' %}">אולפן</a></li>
-    <li class="breadcrumb-item"><a href="{% url 'studio_course_edit' course.slug %}">{{ course.title }}</a></li>
-    <li class="breadcrumb-item active">{% if lesson %}שיעור {{ lesson.lesson_order }}{% else %}שיעור חדש{% endif %}</li>
-  </ol></nav>
 
   <form method="post">
     {% csrf_token %}

@@ -198,6 +198,35 @@
   </div>
   {% endif %}
 
+  <!-- Global breadcrumb + back button (QA-16 / REQ-7.4.1) -->
+  {% if show_back_button or auto_breadcrumbs %}
+  <div class="bb-crumbbar" style="background:var(--bg-elevated); border-bottom:1px solid var(--border);">
+    <div class="container d-flex align-items-center gap-2 py-2 flex-wrap">
+      {% if show_back_button %}
+      <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 bb-back"
+              onclick="if(history.length>1){history.back()}else{location.href='/'}">
+        <i class="bi bi-arrow-right"></i> חזרה
+      </button>
+      {% endif %}
+      <nav aria-label="breadcrumb" class="flex-grow-1">
+        {% block breadcrumb %}
+          {% if auto_breadcrumbs %}
+          <ol class="breadcrumb small mb-0">
+            {% for c in auto_breadcrumbs %}
+              {% if c.active or not c.url_name %}
+                <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">{{ c.label }}</li>
+              {% else %}
+                <li class="breadcrumb-item"><a href="{% url c.url_name %}" style="color:var(--accent-primary)">{{ c.label }}</a></li>
+              {% endif %}
+            {% endfor %}
+          </ol>
+          {% endif %}
+        {% endblock %}
+      </nav>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- Main content -->
   <main class="container py-4 flex-grow-1">
     {% block content %}{% endblock %}
