@@ -1,0 +1,19 @@
+{% comment %}One activity-feed row (REQ-6.4.1). Expects `item` dict from app.feed.{% endcomment %}
+<a href="{{ item.url }}" class="card-surface d-block p-3 mb-2 text-decoration-none" style="color:var(--text-primary)">
+  <div class="d-flex align-items-start gap-2">
+    <i class="bi {{ item.icon }} mt-1" style="color:var(--accent-primary)"></i>
+    <div class="flex-grow-1">
+      <div class="small text-muted mb-1">
+        <strong style="color:var(--text-primary)">{{ item.actor_name }}</strong>
+        {% if item.kind == 'tip' %}שיתף/ה טיפ
+        {% elif item.kind == 'project' %}פרסם/ה פרויקט חדש
+        {% elif item.kind == 'thread' %}פתח/ה דיון
+        {% elif item.kind == 'answer' %}קיבל/ה תשובה מקובלת
+        {% elif item.kind == 'badge' %}זכה/תה בתג
+        {% endif %}
+        · {{ item.timestamp|date:"j בF, H:i" }}
+      </div>
+      <div>{{ item.text }}</div>
+    </div>
+  </div>
+</a>

@@ -774,11 +774,11 @@ lightweight way to contribute (a tip is 10× easier than a project).
 
 | REQ-ID | Title | Expectation | Status |
 |---|---|---|---|
-| REQ-6.4.1 | Community feed | `/community/` home: chronological feed of activity cards — new projects, accepted answers, fresh questions, badges earned, challenge milestones, new tips, upcoming events. Filter: הכל / אני עוקב / התחום שלי (uses LearnerProfile interests). No engagement-bait algorithm (DEC-40). | TODO |
-| REQ-6.4.2 | Tips | `Tip`: short-form post (≤2,000 chars, markdown, optional image/link) — "טיפ: ככה אני גורם ל-Copilot…". Tagged by domain/tool; reactions; best tips surface weekly. | TODO |
-| REQ-6.4.3 | Feed composer | One "שתפו משהו" box on the feed: tip / question (routes to forum) / project (routes to showcase) — one entry point, right destination. | TODO |
-| REQ-6.4.4 | Weekly digest | Reuse the newsletter infra (REQ-2.5): weekly Hebrew email — top tip, featured project, best answer, upcoming events. Opt-in. **Gated (DEC-46): starts only once the community passes ~50 active members**; until then the feed alone carries the pulse. | TODO |
-| REQ-6.4.5 | Homepage hook | The logged-in homepage shows a compact "מהקהילה" strip (3 cards) linking into the feed — discovery without clutter (respects the clean-homepage decision from Ch.5). | TODO |
+| REQ-6.4.1 | Community feed | `/community/` home: chronological feed of activity cards — new projects, accepted answers, fresh questions, badges earned, challenge milestones, new tips, upcoming events. Filter: הכל / אני עוקב / התחום שלי (uses LearnerProfile interests). No engagement-bait algorithm (DEC-40). | DONE — events join when EPIC-6.7 lands |
+| REQ-6.4.2 | Tips | `Tip`: short-form post (≤2,000 chars, markdown, optional image/link) — "טיפ: ככה אני גורם ל-Copilot…". Tagged by domain/tool; reactions; best tips surface weekly. | DONE |
+| REQ-6.4.3 | Feed composer | One "שתפו משהו" box on the feed: tip / question (routes to forum) / project (routes to showcase) — one entry point, right destination. | DONE |
+| REQ-6.4.4 | Weekly digest | Reuse the newsletter infra (REQ-2.5): weekly Hebrew email — top tip, featured project, best answer, upcoming events. Opt-in. **Gated (DEC-46): starts only once the community passes ~50 active members**; until then the feed alone carries the pulse. | DONE (scaffold) — `digest_opt_in` + `send_weekly_digest` command built; stays dormant below the threshold |
+| REQ-6.4.5 | Homepage hook | The logged-in homepage shows a compact "מהקהילה" strip (3 cards) linking into the feed — discovery without clutter (respects the clean-homepage decision from Ch.5). | DONE |
 
 ### 6.5 EPIC-6.5 — Challenges, Competitions & Hackathons
 

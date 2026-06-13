@@ -249,3 +249,24 @@
 | T-F-6.3.3.1-3 | Block prevents messages | integration | F-6.3.3.1 | no message stored | GREEN |
 | T-F-6.3.3.2-1 | Project on profile + course | integration | F-6.3.3.2/3 | shown both places | GREEN |
 | T-F-6.3.3.5-1 | Follower notified on publish | integration | F-6.3.3.5 | notification fired | GREEN |
+
+## SPR-6.4 — Feed & Tips
+
+| Test ID | Description | Type | Feature traced | Expected | Status |
+|---|---|---|---|---|---|
+| T-F-6.4.1-1 | Post tip + listed publicly | integration | F-6.4.1 | Tip saved, body on /community/tips/ | GREEN |
+| T-F-6.4.1-2 | Tip body capped at 2000 chars | integration | F-6.4.1 | stored body <= 2000 | GREEN |
+| T-F-6.4.1-3 | Empty tip rejected | integration | F-6.4.1 | no Tip created | GREEN |
+| T-F-6.4.1-4 | Guest cannot post tip | integration | F-6.4.1 | redirect to /join/ | GREEN |
+| T-F-6.4.1-5 | מדריך badge at 10 tips | integration | F-6.4.1 | tipster badge awarded | GREEN |
+| T-F-6.4.1-6 | Tip reaction toggle + points + notify | integration | F-6.4.1 | +1, notify, toggle off | GREEN |
+| T-F-6.4.1-7 | No self-reaction on tip | integration | F-6.4.1 | 400 | GREEN |
+| T-F-6.4.2-1 | Feed aggregates all sources | integration | F-6.4.2 | tip/project/thread shown | GREEN |
+| T-F-6.4.2-2 | Following scope filters to followed | integration | F-6.4.2 | only followed authors | GREEN |
+| T-F-6.4.2-3 | Domain scope uses interests | integration | F-6.4.2 | only interest-tagged | GREEN |
+| T-F-6.4.2-4 | build_feed reverse-chronological (DEC-40) | unit | F-6.4.2 | newest-first order | GREEN |
+| T-F-6.4.3-1 | Composer present + routes | integration | F-6.4.3 | forum/showcase links | GREEN |
+| T-F-6.4.5-1 | Homepage community strip (logged-in) | integration | F-6.4.5 | מהקהילה shown | GREEN |
+| T-F-6.4.5-2 | No strip for anonymous | integration | F-6.4.5 | מהקהילה absent | GREEN |
+| T-F-6.4.4-1 | digest_opt_in defaults off | unit | F-6.4.4 | False | GREEN |
+| T-F-6.4.4-2 | Digest command dormant below threshold | integration | F-6.4.4 | 0 emails (DEC-46) | GREEN |

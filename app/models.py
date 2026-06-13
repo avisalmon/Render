@@ -30,6 +30,8 @@ class UserProfile(models.Model):
     leaderboard_opt_out = models.BooleanField(default=False)
     # Email verification (REQ-7.2.1): password signups must verify; Google trusted.
     email_verified = models.BooleanField(default=False)
+    # Weekly community digest opt-in (REQ-6.4.4) — dormant until ~50 active members.
+    digest_opt_in = models.BooleanField(default=False)
 
     @property
     def public_name(self):
@@ -367,6 +369,41 @@ class MessageBlock(models.Model):
 
     class Meta:
         unique_together = [("blocker", "blocked")]
+
+
+class Tip(models.Model):
+    """Short-form community tip (REQ-6.4.2) — 10x easier to share than a project.
+    Markdown body (≤2000 chars), optional tags + link; reactions award the
+    author points and feed the activity stream."""
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="tips")
+    body = models.TextField()  # markdown, capped at 2000 chars in the view
+    tags = models.JSONField(default=list, blank=True)  # tool/domain tags
+    link_url = models.CharField(max_length=500, blank=True, default="")
+    is_hidden = models.BooleanField(default=False)  # moderation
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    @property
+    def reaction_count(self):
+        return self.reactions.count()
+
+    def __str__(self):
+        return f"Tip({self.author.username}: {self.body[:30]})"
+
+
+class TipReaction(models.Model):
+    """A reaction on a tip (REQ-6.4.2). One per member per kind; mirrors
+    ProjectReaction. No 'star' here — tips use lightweight emoji only."""
+    KINDS = [("love", "❤️"), ("fire", "🔥"), ("clap", "👏"), ("bulb", "💡")]
+    tip = models.ForeignKey(Tip, on_delete=models.CASCADE, related_name="reactions")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="tip_reactions")
+    kind = models.CharField(max_length=10, default="love")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [("tip", "user", "kind")]
 
 
 class CookieConsent(models.Model):

@@ -60,6 +60,26 @@
   </section>
   {% endif %}
 
+  {% if community_strip %}
+  <!-- "מהקהילה" hook (REQ-6.4.5): compact 3-card strip into the feed -->
+  <section class="mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h2 class="h6 mb-0"><i class="bi bi-people-fill me-1" style="color:var(--accent-primary)"></i> מהקהילה</h2>
+      <a href="{% url 'community' %}" class="small text-decoration-none">לפיד המלא ←</a>
+    </div>
+    <div class="row g-2">
+      {% for item in community_strip %}
+      <div class="col-md-4">
+        <a href="{{ item.url }}" class="card-surface d-block p-3 h-100 text-decoration-none" style="color:var(--text-primary)">
+          <div class="small text-muted mb-1"><i class="bi {{ item.icon }}" style="color:var(--accent-primary)"></i> {{ item.actor_name }}</div>
+          <div class="small">{{ item.text|truncatechars:80 }}</div>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
   {% if show_intro %}
   <!-- ============================ HERO (first day only, REQ-7.1.4) ============================ -->
   <section class="hero-slim">

@@ -39,6 +39,9 @@ TRAILS = {
     "community_notifications": [("קהילה", "community"), ("התראות", None)],
     "community_members": [("קהילה", "community"), ("חברים", None)],
     "community_profile": [("קהילה", "community"), ("חברים", "community_members"), ("פרופיל", None)],
+    # tips
+    "tips_list": [("קהילה", "community"), ("טיפים", "tips_list")],
+    "tip_detail": [("קהילה", "community"), ("טיפים", "tips_list"), ("טיפ", None)],
     # forum
     "forum_home": [("קהילה", "community"), ("פורום", "forum_home")],
     "forum_new": [("קהילה", "community"), ("פורום", "forum_home"), ("שאלה חדשה", None)],

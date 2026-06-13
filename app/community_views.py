@@ -26,24 +26,21 @@ from .models import (
     ReputationEvent,
 )
 
+FEED_SCOPES = ("all", "following", "domain")
+
 
 def community_home(request):
-    """The community hub (read-public). Becomes the feed in EPIC-6.4; for now
-    it orients: forum, showcase-coming, leaderboard, guidelines."""
-    recent_threads = (
-        ForumThread.objects.filter(is_hidden=False)
-        .select_related("author__profile")[:6]
-    )
-    from .models import ShowcaseProject
-    recent_projects = (
-        ShowcaseProject.objects.filter(status="published", is_hidden=False)
-        .select_related("author__profile")[:4]
-    )
-    top = _leaderboard_rows(limit=5)
+    """The community hub = the activity feed (REQ-6.4.1). Read-public,
+    chronological (DEC-40), with scope filters for logged-in members."""
+    from .feed import build_feed
+    scope = request.GET.get("scope", "all")
+    if scope not in FEED_SCOPES or not request.user.is_authenticated:
+        scope = "all"
+    feed = build_feed(request.user if request.user.is_authenticated else None, scope=scope)
     return render(request, "app/community/home.html", {
-        "recent_threads": recent_threads,
-        "recent_projects": recent_projects,
-        "top_members": top,
+        "feed": feed,
+        "scope": scope,
+        "top_members": _leaderboard_rows(limit=5),
     })
 
 

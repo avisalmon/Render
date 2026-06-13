@@ -550,7 +550,7 @@ build starts with EPIC-6.1. Epics are sequenced; one big thing at a time.
 | EPIC-6.1 | Community Foundation — profiles, reputation, badges, notifications, moderation, minors safety | §6.1 | DONE ✅ |
 | EPIC-6.2 | Forums & Q&A — accepted answers, tags, search, course-anchored threads, AI assist | §6.2 | DONE ✅ |
 | EPIC-6.3 | Showcase (דוכן השוויץ) — stands, wall + brag feed, reactions, comments, messaging, gamification | §6.3 | DONE ✅ |
-| EPIC-6.4 | Feed & Tips — community home, composer, weekly digest, homepage hook | §6.4 | PROPOSED |
+| EPIC-6.4 | Feed & Tips — community home, composer, weekly digest, homepage hook | §6.4 | IN PROGRESS |
 | EPIC-6.5 | Challenges & Hackathons — briefs, submissions-as-showcases, judging, teams, school mode | §6.5 | PROPOSED |
 | EPIC-6.6 | Chat & Groups — channels, course groups, safe DMs, member directory | §6.6 | PROPOSED |
 | EPIC-6.7 | Events & Meetups — RSVP, calendar, recordings, recurring series, physical meetups | §6.7 | PROPOSED |
@@ -713,6 +713,29 @@ star/react and comment; the builder earns points + a badge; a fan messages the
 builder (and a student cannot); the project shows on the builder's profile and
 the course page; a guest can view all of it but is walled on every interaction;
 tests + full regression green; deployed + smoke-tested.
+
+### EPIC-6.4 — Feed & Tips
+
+**Spec:** [main_spec.md §6.4](main_spec.md). **Status:** IN PROGRESS — built
+2026-06-13; tests/test_spr_6_4.py. The pulse layer that ties 6.1-6.3 together:
+a `Tip` content type, an aggregated activity feed at `/community/`, one composer,
+a logged-in homepage hook, and a dormant (gated) weekly digest.
+
+#### SPR-6.4 — Feed & Tips
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-6.4.1 | `Tip` model + `TipReaction` (markdown ≤2000, tags, link; one reaction/kind, author points/notify); tips list/detail/create; «מדריך» badge at 10 tips | REQ-6.4.2 | DONE |
+| F-6.4.2 | Aggregated community feed at `/community/` — chronological merge of projects / accepted answers / new questions / badges / tips; filters הכל / אני עוקב / התחום שלי (no engagement algorithm, DEC-40) | REQ-6.4.1 | DONE |
+| F-6.4.3 | Feed composer «שתפו משהו»: tip (inline) / question (→ forum) / project (→ showcase) | REQ-6.4.3 | DONE |
+| F-6.4.4 | Weekly digest scaffold: `digest_opt_in` + `send_weekly_digest` command, gated dormant until ~50 active members (DEC-46) | REQ-6.4.4 | DONE |
+| F-6.4.5 | Logged-in homepage «מהקהילה» 3-card strip linking into the feed | REQ-6.4.5 | DONE |
+
+**Exit criteria:** a member posts a tip and others react (author earns points,
+badge at 10); `/community/` shows a live chronological feed of all activity with
+working scope filters; the composer routes each kind to the right destination;
+the logged-in homepage shows a 3-card community strip; the digest command exists
+but stays dormant below the member threshold; tests + full regression green.
 
 ---
 

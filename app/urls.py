@@ -8,6 +8,7 @@ from . import (
     onboarding_views,
     showcase_views,
     studio_views,
+    tips_views,
     views,
 )
 
@@ -43,6 +44,11 @@ urlpatterns = [
     path("community/report/", community_views.report_content, name="community_report"),
     path("c/<str:username>/", community_views.public_profile, name="community_profile"),
     path("c/<str:username>/follow/", community_views.follow_toggle, name="community_follow"),
+    # --- Tips & Feed (EPIC-6.4) ---
+    path("community/tips/", tips_views.tips_list, name="tips_list"),
+    path("community/tips/new/", tips_views.tip_create, name="tip_create"),
+    path("community/tips/<int:tip_id>/", tips_views.tip_detail, name="tip_detail"),
+    path("community/tips/<int:tip_id>/react/", tips_views.tip_react, name="tip_react"),
     # --- Forums & Q&A (EPIC-6.2) ---
     path("community/forum/", forum_views.forum_home, name="forum_home"),
     path("community/forum/new/", forum_views.thread_new, name="forum_new"),

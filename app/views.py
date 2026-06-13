@@ -72,12 +72,20 @@ def home(request):
     if request.user.is_authenticated:
         show_intro = (timezone.now() - request.user.date_joined) < timezone.timedelta(days=1)
 
+    # Logged-in homepage "מהקהילה" hook (REQ-6.4.5): a compact 3-card strip into
+    # the feed — discovery without cluttering the clean homepage.
+    community_strip = []
+    if request.user.is_authenticated:
+        from .feed import build_feed
+        community_strip = build_feed(request.user, scope="all", limit=3)
+
     return render(request, "app/home.html", {
         "notes": notes,
         "last_progress": last_progress,
         "recommended": recommended,
         "checklist": checklist,
         "show_intro": show_intro,
+        "community_strip": community_strip,
     })
 
 

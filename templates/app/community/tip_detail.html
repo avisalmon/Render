@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load course_tags %}
+{% block title %}טיפ מאת {{ tip.author.profile.public_name }} - babook{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'home' %}" style="color:var(--accent-primary)">בית</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'community' %}" style="color:var(--accent-primary)">קהילה</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'tips_list' %}" style="color:var(--accent-primary)">טיפים</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">טיפ</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+  <div class="col-lg-7">
+    <div class="card-surface p-4">
+      <div class="small text-muted mb-2">
+        {% include "app/community/_author.html" with author=tip.author %} · {{ tip.created_at|date:"j בF Y" }}
+      </div>
+      <div class="tip-body fs-5">{{ tip.body|markdown }}</div>
+      {% if tip.link_url %}<a href="{{ tip.link_url }}" target="_blank" rel="noopener" class="d-block mt-2">{{ tip.link_url }}</a>{% endif %}
+      {% if tip.tags %}<div class="small text-muted mt-2">{% for t in tip.tags %}#{{ t }} {% endfor %}</div>{% endif %}
+    </div>
+    <a href="{% url 'tips_list' %}" class="btn btn-link mt-2">← לכל הטיפים</a>
+  </div>
+</div>
+{% endblock %}

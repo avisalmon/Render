@@ -158,12 +158,19 @@
 |---|---|
 | test_spr_6_3.py (19) | publish (+10/badge/state), drafts private, student-work review queue, אמן-התצוגה + כוכב-עולה badges, wall + stand filter, SQLite-safe tag filter (regression for JSONField __contains), featured row + top sort, brag feed read-public, anonymous-view/create-walled, star toggle (count/points/notify) + emoji + no self-react, comment notify, staff feature (+15/badge/403), DM send/notify, students-cannot-message + block, project on profile + course, follower-notified-on-publish |
 
-## EPIC-7 — QA Hardening (`tests/test_spr_7_1..7_6.py`)
+## EPIC-6.4 — Feed & Tips (`tests/test_spr_6_4.py` 16)
+
+| Suite | Verifies |
+|---|---|
+| test_spr_6_4.py (16) | post tip + listed, body capped at 2000, empty rejected, guest walled to /join/, מדריך badge at 10 tips, tip reaction toggle (+1 points/notify) + no self-react, feed aggregates tips/projects/threads, following-scope filters to followed authors, domain-scope filters by interests, build_feed reverse-chronological (DEC-40), composer «שתפו משהו» routes to forum/showcase, logged-in homepage «מהקהילה» strip (none for anon), digest opt-in defaults off + send_weekly_digest dormant below 50-member gate (DEC-46) |
+
+## EPIC-7 — QA Hardening (`tests/test_spr_7_1..7_8.py`)
 
 | Suite | Verifies |
 |---|---|
 | test_spr_7_1 (13) | EN toggle removed, nav name+avatar (+fallback), hero first-day-only, chat link removed, profile hint, cookie consent logged, footer connect-with-Avi + contact photo, Google button direct OAuth, Arduino titles numbered |
-| test_spr_7_2 (6) | email mandatory at signup, verification email sent + unverified, verify link marks verified, bad token rejected, unverified banner, Google auto-verified |
+| test_spr_7_2 (8) | email mandatory at signup, verification email sent + unverified, verify link marks verified, bad token rejected, unverified banner, Google auto-verified, resend shows confirmation page, account delete frees email for re-signup |
+| test_spr_7_8 (6) | global breadcrumb bar + back button on every view, no bar on home, nested hierarchy links up the tree, course detail uses real title, build() trail for named url, chrome-free pages have no trail |
 | test_spr_7_3 (2) | intro inserted as lesson 1 + shift; idempotent skip |
 | test_spr_7_4 (3) | theme toggle present, default-dark head script, both themes in CSS |
 | test_spr_7_5 (2) | retranscribe updates notes; dry-run doesn't save (download+OpenAI mocked) |
