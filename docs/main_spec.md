@@ -765,6 +765,7 @@ comments, and direct messages (DEC-50). Built rich and gamified.
 | REQ-6.3.13 | Gamification | Points: publish (+10), star received (+1), featured (+15). Badges: בונה (first project), אמן התצוגה (5 projects), כוכב עולה (a project hits 25 stars), מוצג נבחר (staff-featured). "נבחרת השבוע" featured row; reaction-milestone notifications. | DONE |
 | REQ-6.3.14 | Community feed + home hook | Showcase events feed the community home "מהקהילה" strip and Plausible (`project_published`, `project_reaction`); a "השוויצו" CTA on `/community/`. | DONE |
 | REQ-6.3.16 | Live-site cards | For projects with a `live_url` and no uploaded cover, the card + detail auto-show a **live screenshot** of the site (favicon fallback); the cover click opens the live site; a star button + comment count + «בקרו» CTA live on the card itself (no need to open the project). | DONE |
+| REQ-6.3.17 | Stored site screenshot | When a project has a live site and no uploaded cover, a screenshot is captured **once** (free service, no token cost) and saved as the project cover, so cards load instantly. Captured in the background on save + on first view of existing projects; `capture_showcase_covers` backfills. | DONE |
 
 ### 6.4 EPIC-6.4 — Feed & Tips
 

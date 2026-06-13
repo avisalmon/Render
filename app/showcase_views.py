@@ -54,6 +54,43 @@ def _published(qs=None):
 
 
 # ---------------------------------------------------------------------------
+# One-time site screenshot → stored as the project cover (REQ-6.3.17).
+# Free screenshot service (thum.io), NO token / OpenAI cost. Runs in the
+# background so publishing stays instant; the card then loads the stored image.
+# ---------------------------------------------------------------------------
+
+def capture_site_cover(project_id):
+    """Fetch a screenshot of the project's site once and save it as the cover.
+    Best-effort: on any failure the card keeps its live-screenshot fallback."""
+    import urllib.request
+
+    from django.core.files.base import ContentFile
+    from django.db import close_old_connections
+    close_old_connections()
+    try:
+        p = ShowcaseProject.objects.filter(pk=project_id).first()
+        if not p or p.cover or not p.site_url:
+            return
+        url = "https://image.thum.io/get/width/1000/crop/675/noanimate/" + p.site_url
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        data = urllib.request.urlopen(req, timeout=45).read()
+        if data and len(data) > 3000:  # sanity: a real image, not an error page
+            p.cover.save(f"site_{p.pk}.jpg", ContentFile(data), save=True)
+    except Exception:
+        pass
+    finally:
+        close_old_connections()
+
+
+def maybe_capture_cover(project):
+    """Kick off a background capture if the project has a live site but no cover."""
+    if project.cover or not project.site_url:
+        return
+    import threading
+    threading.Thread(target=capture_site_cover, args=(project.pk,), daemon=True).start()
+
+
+# ---------------------------------------------------------------------------
 # Wall + brag feed (read-public)
 # ---------------------------------------------------------------------------
 
@@ -114,6 +151,9 @@ def project_detail(request, project_id):
     if not project.is_live and request.user != project.author and not request.user.is_staff:
         from django.http import Http404
         raise Http404("not published")
+
+    # Backfill: capture the cover once for existing live-site projects (REQ-6.3.17)
+    maybe_capture_cover(project)
 
     my_reactions = set()
     if request.user.is_authenticated:
@@ -254,6 +294,9 @@ def _save_project(request, project, course):
 
     for f in request.FILES.getlist("gallery")[:8]:
         ProjectImage.objects.create(project=project, image=f)
+
+    # Snapshot the live site once → stored cover (REQ-6.3.17), no token cost
+    maybe_capture_cover(project)
 
     return redirect("showcase_project", project_id=project.pk)
 
