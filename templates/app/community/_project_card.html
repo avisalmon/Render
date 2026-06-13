@@ -1,13 +1,13 @@
 {# Project card. Cover → live site (web/app projects) or detail; feedback inline. #}
 <div class="card-surface overflow-hidden h-100 d-flex flex-column" style="color:var(--text-primary)">
   {# Cover: uploaded image, else live-site screenshot (favicon fallback), else stand icon #}
-  <a href="{% if p.live_url %}{{ p.live_url }}{% else %}{% url 'showcase_project' p.pk %}{% endif %}"
-     {% if p.live_url %}target="_blank" rel="noopener"{% endif %} class="d-block position-relative"
-     title="{% if p.live_url %}פתיחת האתר{% else %}{{ p.title }}{% endif %}">
+  <a href="{% if p.site_url %}{{ p.site_url }}{% else %}{% url 'showcase_project' p.pk %}{% endif %}"
+     {% if p.site_url %}target="_blank" rel="noopener"{% endif %} class="d-block position-relative"
+     title="{% if p.site_url %}פתיחת האתר{% else %}{{ p.title }}{% endif %}">
     <div style="aspect-ratio:16/10; background:var(--bg-elevated); overflow:hidden; display:flex; align-items:center; justify-content:center;">
       {% if p.cover %}
         <img src="{{ p.cover.url }}" alt="{{ p.title }}" style="width:100%; height:100%; object-fit:cover;">
-      {% elif p.live_url %}
+      {% elif p.site_url %}
         <img src="{{ p.screenshot_url }}" alt="{{ p.title }}" loading="lazy"
              onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
              style="width:100%; height:100%; object-fit:cover;">
@@ -18,7 +18,7 @@
       {% else %}
         <i class="bi {{ p.stand_meta.icon }}" style="font-size:2.5rem; color:var(--accent-primary); opacity:.5"></i>
       {% endif %}
-      {% if p.live_url %}
+      {% if p.site_url %}
       <span class="position-absolute top-0 end-0 m-2 badge bg-dark bg-opacity-75"><i class="bi bi-box-arrow-up-right"></i> אתר חי</span>
       {% endif %}
     </div>
@@ -44,8 +44,8 @@
       <a href="{% url 'showcase_project' p.pk %}" class="btn btn-sm btn-link text-muted text-decoration-none px-1">
         <i class="bi bi-chat"></i> {{ p.comments.count }}
       </a>
-      {% if p.live_url %}
-      <a href="{{ p.live_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-primary ms-auto"><i class="bi bi-box-arrow-up-right"></i> בקרו</a>
+      {% if p.site_url %}
+      <a href="{{ p.site_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-primary ms-auto"><i class="bi bi-box-arrow-up-right"></i> בקרו</a>
       {% else %}
       <a href="{% url 'showcase_project' p.pk %}" class="btn btn-sm btn-outline-secondary ms-auto">פרטים</a>
       {% endif %}

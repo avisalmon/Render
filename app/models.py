@@ -272,10 +272,25 @@ class ShowcaseProject(models.Model):
         from .community import SHOWCASE_STANDS
         return SHOWCASE_STANDS.get(self.stand, {"title": self.stand, "icon": "bi-stars"})
 
+    # Domains that are themselves a viewable live site (so a repo_url pointing
+    # at GitHub Pages / Vercel / etc. is treated as the site, REQ-6.3.16).
+    _LIVE_HOSTS = ("github.io", ".vercel.app", ".netlify.app", ".pages.dev",
+                   ".web.app", ".streamlit.app", ".onrender.com", ".fly.dev")
+
+    @property
+    def site_url(self):
+        """Best 'visit the live site' URL: the live-demo field, else a repo_url
+        that is itself a hosted site (github.io, vercel, netlify, ...)."""
+        if self.live_url:
+            return self.live_url
+        if self.repo_url and any(h in self.repo_url for h in self._LIVE_HOSTS):
+            return self.repo_url
+        return ""
+
     @property
     def site_host(self):
         from urllib.parse import urlparse
-        return urlparse(self.live_url).netloc if self.live_url else ""
+        return urlparse(self.site_url).netloc if self.site_url else ""
 
     @property
     def favicon_url(self):
@@ -286,8 +301,8 @@ class ShowcaseProject(models.Model):
     def screenshot_url(self):
         """A live screenshot of the site for an auto-cover (REQ-6.3.16)."""
         from urllib.parse import quote
-        return (f"https://s.wordpress.com/mshots/v1/{quote(self.live_url, safe='')}?w=640&h=400"
-                if self.live_url else "")
+        return (f"https://s.wordpress.com/mshots/v1/{quote(self.site_url, safe='')}?w=640&h=400"
+                if self.site_url else "")
 
     @property
     def is_live(self):

@@ -28,6 +28,19 @@ def test_model_site_helpers():
     assert ShowcaseProject(live_url="").screenshot_url == ""
 
 
+def test_site_url_detects_hosted_repo_url():
+    """A GitHub Pages / Vercel / Netlify repo_url IS the live site (REQ-6.3.16) —
+    so it works even if the user put it in the 'code' field."""
+    p = ShowcaseProject(live_url="", repo_url="https://avisalmon.github.io/shakshuka/")
+    assert p.site_url == "https://avisalmon.github.io/shakshuka/"
+    assert p.site_host == "avisalmon.github.io"
+    # a plain GitHub repo is NOT a live site
+    assert ShowcaseProject(repo_url="https://github.com/avi/shakshuka").site_url == ""
+    # the live-demo field always wins
+    p2 = ShowcaseProject(live_url="https://x.netlify.app/", repo_url="https://github.com/a/b")
+    assert p2.site_url == "https://x.netlify.app/"
+
+
 @pytest.mark.django_db
 def test_card_links_to_live_site_and_shows_feedback():
     p = _project(live_url="https://avisalmon.github.io/shakshuka/", tagline="מתכונים")
