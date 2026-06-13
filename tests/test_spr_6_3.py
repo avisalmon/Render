@@ -51,6 +51,25 @@ def _project(author, **kwargs):
 # --- create / publish / stands (REQ-6.3.1/8/9) ---
 
 @pytest.mark.django_db
+def test_create_form_renders_get():
+    """Regression (prod 500): the empty create form must render — project is
+    None, so no template expression may dereference project.* as a filter arg."""
+    c = _client(_member("former"))
+    resp = c.get(reverse("showcase_new"))
+    assert resp.status_code == 200
+    assert "השוויצו בפרויקט" in resp.content.decode()
+
+
+@pytest.mark.django_db
+def test_edit_form_renders_get():
+    u = _member("editor")
+    p = _project(u, title="לעריכה", tagline="טאג")
+    resp = _client(u).get(reverse("showcase_edit", args=[p.pk]))
+    assert resp.status_code == 200
+    assert "לעריכה" in resp.content.decode()
+
+
+@pytest.mark.django_db
 def test_publish_project_awards_points_and_badge():
     """T-F-6.3.1.3-1: publishing a project -> +10, בונה badge, published state."""
     u = _member("builder1")

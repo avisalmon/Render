@@ -16,7 +16,7 @@
 
       <div class="mb-3">
         <label class="form-label small fw-semibold">שם הפרויקט</label>
-        <input class="form-control" name="title" required maxlength="200" value="{{ form_title|default:project.title|default:'' }}">
+        <input class="form-control" name="title" required maxlength="200" value="{% firstof form_title project.title '' %}">
       </div>
       <div class="mb-3">
         <label class="form-label small">משפט תיאור קצר (טאגליין)</label>
@@ -40,7 +40,7 @@
           <label class="form-label small fw-semibold mb-1">הסיפור (Markdown נתמך)</label>
           <button type="button" id="preview-btn" class="btn btn-sm btn-link p-0 small">תצוגה מקדימה</button>
         </div>
-        <textarea class="form-control" name="story" id="story-input" rows="7" placeholder="מה בניתם, איך, מה היה מאתגר, מה למדתם...">{{ form_story|default:project.story|default:'' }}</textarea>
+        <textarea class="form-control" name="story" id="story-input" rows="7" placeholder="מה בניתם, איך, מה היה מאתגר, מה למדתם...">{% firstof form_story project.story '' %}</textarea>
         <div id="preview-box" class="card-surface p-3 mt-2 lesson-notes" style="display:none"></div>
       </div>
       <div class="row g-2 mb-3">
