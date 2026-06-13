@@ -4,6 +4,12 @@
 <!DOCTYPE html>
 <html lang="{{ CURRENT_LANG }}" dir="{% if LANG_BIDI %}rtl{% else %}ltr{% endif %}">
 <head>
+  <!-- Theme: apply before paint to avoid flash (REQ-7.4.2). Default = dark
+       (unchanged) until Avi confirms the new light look; light via the toggle. -->
+  <script>
+    (function(){var m=document.cookie.match(/(?:^|; )theme=(dark|light)/);
+      if(!m||m[1]==='dark'){document.documentElement.setAttribute('data-theme','dark');}})();
+  </script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="{% block meta_description %}babook - AI training videos for developers{% endblock %}">
@@ -139,6 +145,12 @@
             </li>
           {% endif %}
           {# Language toggle removed (REQ-7.1.1) — site is Hebrew/RTL only. #}
+          <!-- Theme toggle: light (default) / dark (REQ-7.4.2) -->
+          <li class="nav-item">
+            <button id="theme-toggle" class="btn btn-link nav-link px-1" title="מצב תצוגה" aria-label="החלפת מצב תצוגה">
+              <i class="bi bi-moon-stars"></i>
+            </button>
+          </li>
         </ul>
       </div>
     </div>
@@ -209,6 +221,24 @@
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Theme toggle logic (REQ-7.4.2) -->
+  <script>
+    (function () {
+      var btn = document.getElementById('theme-toggle');
+      function icon() {
+        var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (btn) btn.firstElementChild.className = dark ? 'bi bi-sun' : 'bi bi-moon-stars';
+      }
+      icon();
+      if (btn) btn.addEventListener('click', function () {
+        var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (dark) { document.documentElement.removeAttribute('data-theme'); document.cookie = 'theme=light;path=/;max-age=31536000'; }
+        else { document.documentElement.setAttribute('data-theme', 'dark'); document.cookie = 'theme=dark;path=/;max-age=31536000'; }
+        icon();
+      });
+    })();
+  </script>
 
   <!-- Cookie banner logic — acceptance also logged server-side (REQ-7.1.8) -->
   <script>

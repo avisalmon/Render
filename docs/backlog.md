@@ -727,7 +727,7 @@ Claude. **Status:** IN PROGRESS — built in one autonomous pass (DEC-54).
 | SPR-7.1 | Quick wins (nav/hero/content/footer/login) — REQ-7.1.* | DONE |
 | SPR-7.2 | Onboarding rework (verified email + conversational Avi Bot) — REQ-7.2.* | DONE |
 | SPR-7.3 | Matazim course intros — REQ-7.3.1 | TODO |
-| SPR-7.4 | Design Refresh (Khan style + themes + animated bg) — REQ-7.4.* | TODO |
+| SPR-7.4 | Design Refresh — light theme + toggle DONE (dark default until Avi confirms); animated bg DEFERRED | PARTIAL |
 | SPR-7.5 | Content re-transcription — REQ-7.5.1 (long batch) | TODO |
 | SPR-7.6 | Contact email reliability — REQ-7.6.1 (+ ACT-Avi mailbox) | DONE |
 
@@ -767,9 +767,9 @@ Claude. **Status:** IN PROGRESS — built in one autonomous pass (DEC-54).
 
 | Feature ID | Title | REQ trace | Status |
 |---|---|---|---|
-| F-7.4.1 | Khan-style token/type/component restyle (light default) | REQ-7.4.1 | TODO |
-| F-7.4.2 | Theme toggle (light/dark, persisted) | REQ-7.4.2 | TODO |
-| F-7.4.3 | Animated background presets (profile-chosen) | REQ-7.4.3 | TODO |
+| F-7.4.1 | Khan-style token/type/component restyle (light default) | REQ-7.4.1 | DONE |
+| F-7.4.2 | Theme toggle (light/dark, persisted) | REQ-7.4.2 | DONE |
+| F-7.4.3 | Animated background presets (profile-chosen) | REQ-7.4.3 | DEFERRED |
 
 #### SPR-7.5 — Content re-transcription
 

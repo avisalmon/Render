@@ -82,7 +82,9 @@ def test_css_defines_font_family_variables():
     css = _read(STYLE_CSS)
     assert "--font-heading" in css or "font-family" in css
     assert "Heebo" in css, "Heebo not referenced in style.css"
-    assert "Inter" in css, "Inter not referenced in style.css"
+    # REQ-7.4.1: the design refresh unified the type on Heebo (friendlier
+    # Hebrew); JetBrains Mono retained for code.
+    assert "--font-mono" in css
 
 
 # ---------------------------------------------------------------------------

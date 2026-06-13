@@ -922,9 +922,9 @@ contributors; and the full regression is green with every epic's tests.
 
 | REQ-ID | Title | Expectation | Status |
 |---|---|---|---|
-| REQ-7.4.1 | Khan-style visual language (QA-21) | Restyle the design tokens/type/components to a bright, clean, friendly Khan-Academy-like look; **light default**; Hebrew RTL; keeps babook personality. Behavior unchanged. | TODO |
-| REQ-7.4.2 | Theme toggle (QA-7) | Light (new default) + Dark themes via `data-theme`; choice persists (profile + cookie); switch in menu/profile. | TODO |
-| REQ-7.4.3 | Animated background (QA-8) | Opt-in animated background presets (e.g. stars / gears / particles / none) chosen in profile; respects `prefers-reduced-motion`; subtle, perf-safe. | TODO |
+| REQ-7.4.1 | Khan-style visual language (QA-21) | Restyle the design tokens/type/components to a bright, clean, friendly Khan-Academy-like look; **light default**; Hebrew RTL; keeps babook personality. Behavior unchanged. | DONE |
+| REQ-7.4.2 | Theme toggle (QA-7) | Light (new default) + Dark themes via `data-theme`; choice persists (profile + cookie); switch in menu/profile. | DONE |
+| REQ-7.4.3 | Animated background (QA-8) | Opt-in animated background presets (e.g. stars / gears / particles / none) chosen in profile; respects `prefers-reduced-motion`; subtle, perf-safe. | DEFERRED |
 
 ### 7.5 Content re-transcription (QA-14)
 
