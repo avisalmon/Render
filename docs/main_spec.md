@@ -877,6 +877,78 @@ contributors; and the full regression is green with every epic's tests.
 
 ---
 
+## Chapter 7 — QA Hardening
+
+> **From Avi's 2026-06-13 QA walkthrough.** Every item logged in the (temporary)
+> `docs/qa_session.md` is promoted here to a tracked REQ, built the_manager.md way
+> (TDD → regression → deploy), then that scratch file is deleted. Avi authorized
+> building the whole chapter in one pass ("do it all, don't stop, report at the
+> end"). Decisions: QA-1 → real email verification (password path); QA-13 intros
+> → Bunny upload; design → Khan-Academy style, light default + dark toggle.
+
+### 7.1 Quick wins (nav, hero, content, footer, login)
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-7.1.1 | Remove EN toggle (QA-9) | The language switcher is removed; site is Hebrew/RTL only. | DONE |
+| REQ-7.1.2 | Nav shows name + avatar (QA-10) | Nav user item shows `public_name` (display_name → first_name → username fallback) + avatar circle when set. | DONE |
+| REQ-7.1.3 | Label recommendations (QA-11) | The ⭐ nav item shows a visible «מומלץ עבורך» label on all breakpoints. | DONE |
+| REQ-7.1.4 | Hero first-day-only (QA-12) | The homepage hero joke + «העולמות» intro show only within 24h of signup; hidden afterward. | DONE |
+| REQ-7.1.5 | Arduino course order in titles (QA-15) | `arduino-tinkercad` title marked #1, `arduino` #2 (confirmed via matazim). | DONE |
+| REQ-7.1.6 | Remove chat from nav (QA-17) | «צ'אט AI» nav link removed; `/chat/` route left dormant. | DONE |
+| REQ-7.1.7 | Profile enrich-later hint (QA-5) | A note (onboarding end + profile) that the user can add avatar/bio/more later in their profile. | DONE |
+| REQ-7.1.8 | Cookie consent logged (QA-18) | Standard consent popup on first visit; acceptance recorded server-side (`CookieConsent` log). | DONE |
+| REQ-7.1.9 | Footer "connect with Avi" + photo (QA-20) | Footer CTA «רוצים להתחבר לאבי סלמון?» → contact form; Avi's background-removed photo (generated from `docs/Avi_03.jpg`) on the contact form. | DONE |
+| REQ-7.1.10 | Google button starts OAuth directly (QA-22) | Login/register «המשך עם גוגל» hits the provider-login URL directly (no `/accounts/login/` detour). | DONE |
+
+### 7.2 Onboarding rework (conversational, verified)
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-7.2.1 | Email mandatory + verified (QA-1) | Email/password signup requires an email; a verification link is sent and required (Google stays trusted). Closes the forgot-password hole. Revises REQ-1.1.3. | TODO |
+| REQ-7.2.2 | Conversational basics (QA-2) | The welcome basics (name / email-confirm / role: student·teacher·professor·industry-engineer·other) are collected **in the Avi Bot chat**, not a form. Revises REQ-5.5.7. | TODO |
+| REQ-7.2.3 | Fixed instant opener (QA-6) | The chat's first message is a hardcoded, instant, name-personalized greeting (verbatim copy in qa_session.md), not AI-generated. | TODO |
+| REQ-7.2.4 | Site intro + interests + remember (QA-3) | The chat introduces the site + the book joke, asks interests, and persists them (attributes + free-text description on the profile). | TODO |
+| REQ-7.2.5 | Finishable, name-only required (QA-4) | A "done" button ends onboarding anytime; the only hard requirement is the name (email enforced at signup). No nagging. | TODO |
+| REQ-7.2.6 | Enrich-later, not in entry (QA-5/tone) | Entry chat stays short; profile enrichment (pictures/hobbies) is offered for later, not required. Avi Bot persona throughout. | TODO |
+
+### 7.3 Matazim course intros (QA-13)
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-7.3.1 | Insert intro as lesson 1 | For each of the 9 matazim courses, the course-page intro video (mapped + extracted from matazim) is inserted as the new lesson 1 (existing lessons shift down), uploaded to Bunny. Mapping table in qa_session.md. | TODO |
+
+### 7.4 Design Refresh (QA-7 / QA-8 / QA-21)
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-7.4.1 | Khan-style visual language (QA-21) | Restyle the design tokens/type/components to a bright, clean, friendly Khan-Academy-like look; **light default**; Hebrew RTL; keeps babook personality. Behavior unchanged. | TODO |
+| REQ-7.4.2 | Theme toggle (QA-7) | Light (new default) + Dark themes via `data-theme`; choice persists (profile + cookie); switch in menu/profile. | TODO |
+| REQ-7.4.3 | Animated background (QA-8) | Opt-in animated background presets (e.g. stars / gears / particles / none) chosen in profile; respects `prefers-reduced-motion`; subtle, perf-safe. | TODO |
+
+### 7.5 Content re-transcription (QA-14)
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-7.5.1 | Re-transcribe scraped courses | Re-transcribe imported courses with the strongest OpenAI model + regenerate faithful high-quality Hebrew notes (Co-Coding method: no em-dashes, fenced code/cmd). Runs as a controlled batch (DB backup first). Long-running. | TODO |
+
+### 7.6 Contact email reliability (QA-19)
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-7.6.1 | On-site contact capture + admin notify | Contact/privacy/support routes store the message on-site (admin-visible) and email Avi's admin inbox, so nothing depends on a possibly-dead `privacy@`/`support@` mailbox. **ACT-Avi:** set up the actual mailbox forwarding (DNS). | TODO |
+
+### 7.7 Decisions log
+
+| ID | Topic | Choice |
+|---|---|---|
+| DEC-51 | QA email verification | Real verification link on the email/password path; Google trusted |
+| DEC-52 | QA intro videos | Download + upload to Bunny (consistent player) |
+| DEC-53 | QA design direction | Khan-Academy style, **light default** + dark toggle |
+| DEC-54 | QA build mode | Whole chapter built in one autonomous pass; review at the end; then delete `qa_session.md` |
+
+---
+
 ## Reference
 
 - **Stack**: Django 5.2, Gunicorn, WhiteNoise, SQLite (Render disk), django-allauth (Google + GitHub OAuth), Bunny Stream (video), Stripe + Green Invoice (billing), Resend (email), Plausible (analytics), GitHub Copilot Business (seat provisioning via GitHub REST API), OpenAI API (AI chat, GPT-4o-mini / GPT-4o, gpt-4o-transcribe), yt-dlp + ffmpeg (authoring pipeline)

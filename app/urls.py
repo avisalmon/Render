@@ -24,6 +24,7 @@ urlpatterns = [
     path("welcome/chat/", onboarding_views.welcome_chat, name="welcome_chat"),
     path("welcome/complete/", onboarding_views.welcome_complete, name="welcome_complete"),
     path("welcome/skip/", onboarding_views.welcome_skip, name="welcome_skip"),
+    path("cookie-consent/", views.cookie_consent, name="cookie_consent"),
     path("profile/", views.profile, name="profile"),
     path("staff/copilot-dashboard/", views.CopilotDashboardView.as_view(), name="copilot_dashboard"),
     path("corporate/", views.corporate, name="corporate"),

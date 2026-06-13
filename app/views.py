@@ -67,11 +67,18 @@ def home(request):
                 if all(checklist.values()):
                     checklist = None  # done — stop showing it
 
+    # Hero joke + worlds intro show only on the user's first day (REQ-7.1.4):
+    # anonymous visitors (new) always; logged-in only within 24h of signup.
+    show_intro = True
+    if request.user.is_authenticated:
+        show_intro = (timezone.now() - request.user.date_joined) < timezone.timedelta(days=1)
+
     return render(request, "app/home.html", {
         "notes": notes,
         "last_progress": last_progress,
         "recommended": recommended,
         "checklist": checklist,
+        "show_intro": show_intro,
     })
 
 
@@ -258,6 +265,23 @@ def robots_txt(request):
         "Sitemap: https://babook.co.il/sitemap.xml",
     ]
     return HttpResponse("\n".join(lines), content_type="text/plain")
+
+
+def cookie_consent(request):
+    """REQ-7.1.8: record cookie-notice acceptance server-side."""
+    if request.method != "POST":
+        return JsonResponse({"error": "method not allowed"}, status=405)
+    from .models import CookieConsent
+    if not request.session.session_key:
+        request.session.save()
+    ip = request.META.get("REMOTE_ADDR", "")
+    CookieConsent.objects.create(
+        user=request.user if request.user.is_authenticated else None,
+        session_key=request.session.session_key or "",
+        ip_hash=hashlib.sha256(ip.encode()).hexdigest()[:64] if ip else "",
+        user_agent=request.META.get("HTTP_USER_AGENT", "")[:300],
+    )
+    return JsonResponse({"ok": True})
 
 
 def privacy(request):

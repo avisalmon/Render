@@ -716,6 +716,75 @@ tests + full regression green; deployed + smoke-tested.
 
 ---
 
+## EPIC-7 — QA Hardening (from Avi's 2026-06-13 walkthrough)
+
+**Goal:** Promote every item in the temporary `docs/qa_session.md` into tracked,
+tested fixes. **Spec:** [main_spec.md §Chapter 7](main_spec.md). **Owner:** Avi +
+Claude. **Status:** IN PROGRESS — built in one autonomous pass (DEC-54).
+
+| Sprint | Scope | Status |
+|---|---|---|
+| SPR-7.1 | Quick wins (nav/hero/content/footer/login) — REQ-7.1.* | DONE |
+| SPR-7.2 | Onboarding rework (verified email + conversational Avi Bot) — REQ-7.2.* | TODO |
+| SPR-7.3 | Matazim course intros — REQ-7.3.1 | TODO |
+| SPR-7.4 | Design Refresh (Khan style + themes + animated bg) — REQ-7.4.* | TODO |
+| SPR-7.5 | Content re-transcription — REQ-7.5.1 (long batch) | TODO |
+| SPR-7.6 | Contact email reliability — REQ-7.6.1 (+ ACT-Avi mailbox) | TODO |
+
+#### SPR-7.1 — Quick wins
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-7.1.1 | Remove EN/language toggle | REQ-7.1.1 | DONE |
+| F-7.1.2 | Nav: name + avatar circle | REQ-7.1.2 | DONE |
+| F-7.1.3 | Label «מומלץ עבורך» on the ⭐ nav item | REQ-7.1.3 | DONE |
+| F-7.1.4 | Hero shown only within 24h of signup | REQ-7.1.4 | DONE |
+| F-7.1.5 | Arduino #1/#2 in titles | REQ-7.1.5 | DONE |
+| F-7.1.6 | Remove «צ'אט AI» nav link | REQ-7.1.6 | DONE |
+| F-7.1.7 | Profile/onboarding "enrich later" hint | REQ-7.1.7 | DONE |
+| F-7.1.8 | Cookie consent popup + server-side log | REQ-7.1.8 | DONE |
+| F-7.1.9 | Footer "connect with Avi" + bg-removed photo on contact | REQ-7.1.9 | DONE |
+| F-7.1.10 | Google button → direct OAuth (login + register) | REQ-7.1.10 | DONE |
+
+#### SPR-7.2 — Onboarding rework
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-7.2.1 | Email mandatory + verification link (password path) | REQ-7.2.1 | TODO |
+| F-7.2.2 | Conversational basics (name/email/role) in chat | REQ-7.2.2 | TODO |
+| F-7.2.3 | Fixed instant name-personalized opener | REQ-7.2.3 | TODO |
+| F-7.2.4 | Site intro + interests + persist to profile | REQ-7.2.4 | TODO |
+| F-7.2.5 | Finishable anytime; name-only required | REQ-7.2.5 | TODO |
+| F-7.2.6 | Enrich-later + Avi Bot persona | REQ-7.2.6 | TODO |
+
+#### SPR-7.3 — Matazim course intros
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-7.3.1 | Insert 9 intro videos as lesson 1 (Bunny, reorder) | REQ-7.3.1 | TODO |
+
+#### SPR-7.4 — Design Refresh
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-7.4.1 | Khan-style token/type/component restyle (light default) | REQ-7.4.1 | TODO |
+| F-7.4.2 | Theme toggle (light/dark, persisted) | REQ-7.4.2 | TODO |
+| F-7.4.3 | Animated background presets (profile-chosen) | REQ-7.4.3 | TODO |
+
+#### SPR-7.5 — Content re-transcription
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-7.5.1 | Re-transcribe scraped courses (strong model) + notes | REQ-7.5.1 | TODO |
+
+#### SPR-7.6 — Contact email reliability
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-7.6.1 | On-site contact capture + admin notify | REQ-7.6.1 | TODO |
+
+---
+
 ## Status Summary (reconciled 2026-06-09)
 
 **Full regression: 356/356 passing (2026-06-12, incl. EPIC-3/4/5).** Per-sprint test counts: 1.1=19, 1.2=17,

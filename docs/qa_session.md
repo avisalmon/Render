@@ -14,7 +14,7 @@
 
 | QA-ID | Where (page/flow) | Feedback (verbatim intent) | Severity | Status |
 |---|---|---|---|---|
-| QA-1 | Signup (email/password path) | **Email must be mandatory at signup.** Today a username+password signup (not Google) can have no email logged → anyone can fake "I forgot password" (security hole). An email is required info *before* the account is created. | High (security) | CAPTURED |
+| QA-1 | Signup (email/password path) | **Email must be mandatory at signup.** Today a username+password signup (not Google) can have no email logged → anyone can fake "I forgot password" (security hole). An email is required info *before* the account is created. **DECISION (Avi): real email-verification link** for password signups — must be reliable. Google signups can stay trusted (verified by Google). I.e. set `ACCOUNT_EMAIL_VERIFICATION` to require confirmation for the email/password path. | High (security) | CAPTURED |
 | QA-2 | `/welcome/` onboarding | **The basics step must NOT be a form — make it an AI chat.** Avi Bot conversationally welcomes the user, asks their **name**, **verifies/confirms the email**, and asks their **role**: student / teacher / professor / industry engineer / other. All in chat, not a static form. | Medium | CAPTURED |
 | QA-3 | `/welcome/` onboarding | **Same chat continues**: introduce the site, drop the book-site joke (not really a book-sharing site), and ask the new user's **interests**. **Remember** what he shares — as user attributes and/or a general free-text description on the profile. | Medium | CAPTURED |
 | QA-4 | `/welcome/` onboarding | **Finishable anytime + no nagging.** A clear "I'm done with the interview" button. The **only hard-required field is the name** (email is enforced at signup per QA-1). Everything else is optional/skippable. | Medium | CAPTURED |
@@ -55,18 +55,37 @@ takes over conversationally (per QA-2/3).
 The matazim-domain courses, each missing its course-page intro video. Avi will
 supply `slug → YouTube URL`; insert each as the new lesson 1.
 
-| # | Course (slug) | Track | Lessons | Current 1st lesson | Intro link |
-|---|---|---|---|---|---|
-| 1 | טינקרקאד (`tinkercad`) | 3d | 9 | כניסה והתחלה | _(pending Avi)_ |
-| 2 | Fusion 360 (`fusion360`) | 3d | 6 | התקנה ויצירת מטבע | _(pending Avi)_ |
-| 3 | ארדואינו עם טינקרקאד (`arduino-tinkercad`) | hardware | 8 | מה זה ארדואינו? | _(pending Avi)_ |
-| 4 | ארדואינו (`arduino`) | hardware | 7 | הבהוב LED | _(pending Avi)_ |
-| 5 | סקראץ' (`scratch`) | software | 18 | התקנה והגדרה | _(pending Avi)_ |
-| 6 | סקראץ' מתקדם (`scratch-advanced`) | software | 14 | כפילים חלק 1 | _(pending Avi)_ |
-| 7 | פייתון (`python`) | software | 21 | התקנת פייתון | _(pending Avi)_ |
-| 8 | Django (`django`) | software | 23 | מבוא ל-Django | _(pending Avi)_ |
-| 9 | עריכת וידאו Corel (`video-editing`) | media | 15 | חומרי גלם | _(pending Avi)_ |
+Auto-discovered from the matazim site 2026-06-13 (raw HTML embed + YouTube
+oEmbed title). 8 of 9 found; only `arduino` (#2) intro still needed.
 
+| # | Course (slug) | matazim | YouTube intro ID | YT title | Status |
+|---|---|---|---|---|---|
+| 1 | `tinkercad` | course/3 | `d0idL0XK2F8` | tinkercad intro2 | ✅ found |
+| 2 | `fusion360` | course/4 | `Ae-3XfZ3itA` | fusion intro | ✅ found |
+| 3 | `arduino-tinkercad` (#1) | course/10 | `308vFRiOm20` | intro to Arduino 1 | ✅ found (Tinkercad sim = Arduino 1) |
+| 4 | `arduino` (#2 בקרה וחיישנים) | course/16 | `nQaaHJIdp2U` | lesson 0 intro | ✅ found («ארדואינו 2», 7 lessons match) |
+| 5 | `scratch` | course/2 | `83_XBSVUS_Q` | scratch intro | ✅ found |
+| 6 | `scratch-advanced` | course/6 | `Qg8PFBOvdYk` | intro to scratch games | ✅ found |
+| 7 | `python` | course/5 | `i9-HWYsrh_k` | Python basic intro | ✅ found |
+| 8 | `django` | course/1 | `0_bt63WLOHw` | django intro | ✅ found |
+| 9 | `video-editing` | course/11 | `uK6P2lTUWwc` | video edit intro | ✅ found |
+
+- Unmapped matazim intros found (courses NOT imported to babook, ignore):
+  course/8 "0000 intro external", course/12 "cpu garage 1 intro", course/14
+  ESP32 series, course/16 "lesson 0 intro", course/18-19 "Basic Python #1".
+- **ALL 9 INTROS FOUND 2026-06-13.** course/16 = «ארדואינו 2» (7 lessons: LED,
+  אנלוגי, חיישן מרחק, סיכום) confirms `arduino` (#2); matazim says "do Arduino 1
+  first" + it's real hardware (vs Tinkercad sim) → confirms `arduino-tinkercad` =
+  #1. This also **resolves QA-15** ordering from the source.
+- **Remaining for build:** only the Bunny-upload-vs-YouTube-embed decision
+  (recommend Bunny) before inserting each as the new lesson 1.
+
+- **Method confirmed 2026-06-13:** the intro video IS publicly embedded on each
+  matazim course page (only the *lessons* are login-gated). Claude can fetch the
+  raw HTML of a matazim course URL, extract the YouTube embed ID, AND read the
+  title to auto-map to the right babook course. **So Avi only needs to paste the
+  matazim course URLs — no manual YouTube-link copying.** (Proven: course/2 =
+  Scratch → `83_XBSVUS_Q`.)
 - **Open question (Avi to decide):** download each intro YouTube → upload to
   Bunny (consistent player, matches existing lessons) **vs** embed YouTube
   directly. Recommend Bunny for consistency.
@@ -92,6 +111,38 @@ supply `slug → YouTube URL`; insert each as the new lesson 1.
   in the transcription pass.
 - **Open question (Avi):** OK to overwrite existing notes in place, or keep a
   backup/diff of the old text first? Recommend a quick DB backup before the run.
+
+| QA-16 | Global navigation | **Back button + breadcrumb on every view.** The site has a hierarchy; reflect it in a **small line at the top** of each page showing where you are and letting you go **back to where you came from**. (Browser back isn't enough — want an in-page back + "you are here" trail.) | Medium | CAPTURED |
+| QA-17 | Nav menu | **Remove «צ'אט AI» from the menu.** Not wanted as a standalone entry point — concern it isn't working well and could **consume too many tokens** to manage. Hide the nav link (keep code dormant). | Medium | CAPTURED |
+| QA-18 | First visit (cookie consent) | **Standard cookie-consent banner/popup** on first visit, with the approval **logged** (so there's a record the user accepted). Can be its own popup (the usual pattern) or folded into the onboarding questionnaire. (A banner exists but approval isn't recorded server-side.) | Medium (compliance) | CAPTURED |
+| QA-19 | Contact emails (privacy@ / support@) | The privacy page lists **privacy@babook.co.il** and the contact page lists **support@babook.co.il**. Ensure **mail sent to these actually reaches Avi** (forwarded to his admin mailbox or surfaced in admin) and is **actionable** — nothing should be written to a dead address. Verify both addresses exist and route. | High (don't lose user mail) | CAPTURED |
+
+| QA-20 | Footer → contact | Add a **"רוצים להתחבר לאבי סלמון?"** entry, best placed in the **footer**, available site-wide, leading to the **contact form** (with Avi's photo). The existing contact form **lost its image** — it should show **Avi's photo with the background removed**. **DECISION (Avi): source = `docs/Avi_03.jpg`.** No background-removed cutout exists in the repo (checked: only `static/avi-headshot.webp` + `static/avi-bot.jpg`, neither a transparent cutout) → **generate a transparent-background PNG from `docs/Avi_03.jpg` at build time** and use it on the contact form + footer CTA. | Low–Medium | CAPTURED |
+
+| QA-21 | Global design / look & feel | **Adopt Khan Academy's design *style*** (https://www.khanacademy.org) — site **behavior stays exactly as defined here**, only the visual language changes. Khan style = bright/light default, clean & calm, generous whitespace, friendly rounded sans typography, soft rounded cards + subtle shadows, a trustworthy education palette (navy text + a friendly accent, calm not flashy), simple friendly illustration accents, strong clarity/accessibility. Adapt to **Hebrew RTL**; keep babook's playful personality (the book joke) inside this clean frame. **This replaces the current generic dark-SaaS look.** | High (big, cross-cutting) | CAPTURED |
+
+### QA-21 — design-overhaul approach (for build time)
+
+- **Light becomes the default** (Khan is bright) → merges with **QA-7**: ship a
+  refreshed **light theme as default + keep a dark theme as the optional toggle**.
+- It's a **token + type + component refresh**, not a rewrite — restyle the CSS
+  tokens (`--bg-*`, `--accent-*`, radii, shadows), the type scale (friendlier
+  rounded Hebrew sans), and the shared components (cards, buttons, nav, hero).
+- **Validation step first:** build a **live style-prototype page on babook**
+  (real content — a course card, the showcase wall, the hero — re-skinned
+  Khan-style) for Avi to approve *before* rolling the new look site-wide.
+- Pairs with QA-8 (animated bg as an opt-in flourish, kept tasteful/subtle so it
+  doesn't fight the clean Khan calm) and QA-20 (Avi's warmth in the footer).
+- Becomes its **own epic** (e.g. EPIC-7 «Design Refresh») given how cross-cutting
+  it is; sequence it deliberately among the other QA fixes.
+
+| QA-22 | Login page → Google button | Pressing **«המשך עם גוגל»** jumps to `https://babook.co.il/accounts/login/` (an unnecessary intermediate page) instead of **immediately starting the Google OAuth flow**. Fix: point the button at the provider-login URL directly (e.g. `/accounts/google/login/?process=login&next=…`, as the `/join/` wall already does) so it kicks off Google right away. Likely cause: the button currently links to `socialaccount_signup`, which bounces to `/accounts/login/` when nothing is pending. Check `register.html` too. | Low–Medium | CAPTURED |
+
+### Bugs found during QA (fixed immediately, not part of the improvement epic)
+
+| Bug | Where | Status |
+|---|---|---|
+| BUG-1 | `/community/showcase/new/` → 500 (`project.*` used as a Django filter argument when project is None → VariableDoesNotExist) | **FIXED + deployed `364fee5`** (+ GET-render regression tests; the suite only POSTed before) |
 
 ## Notes / open questions
 

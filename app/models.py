@@ -331,6 +331,19 @@ class MessageBlock(models.Model):
         unique_together = [("blocker", "blocked")]
 
 
+class CookieConsent(models.Model):
+    """Server-side record that a visitor accepted the cookie notice (REQ-7.1.8)."""
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                             related_name="cookie_consents")
+    session_key = models.CharField(max_length=40, blank=True, default="")
+    ip_hash = models.CharField(max_length=64, blank=True, default="")
+    user_agent = models.CharField(max_length=300, blank=True, default="")
+    accepted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-accepted_at"]
+
+
 class Note(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=200)

@@ -60,7 +60,8 @@
   </section>
   {% endif %}
 
-  <!-- ============================ HERO ============================ -->
+  {% if show_intro %}
+  <!-- ============================ HERO (first day only, REQ-7.1.4) ============================ -->
   <section class="hero-slim">
     <h1 class="hero-brand">babook</h1>
     <p class="hero-joke">
@@ -68,11 +69,14 @@
       בינתיים יש כאן כל השאר 👇
     </p>
   </section>
+  {% endif %}
 
   <!-- ===================== THE WORLDS OF BABOOK ===================== -->
   <section class="mt-3">
+    {% if show_intro %}
     <h2 class="text-center mb-1">העולמות של babook</h2>
     <p class="text-center text-muted mb-4">עולם אחד כבר באוויר. השאר בדרך - חלקם ברצינות גמורה, ואחד… פחות. 🙂</p>
+    {% endif %}
 
     <!-- Training - LIVE, featured full width -->
     <div class="row g-3 mb-3">
