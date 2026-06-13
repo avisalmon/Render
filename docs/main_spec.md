@@ -764,6 +764,7 @@ comments, and direct messages (DEC-50). Built rich and gamified.
 | REQ-6.3.4 | Course & certificate integration | Course detail shows projects built from that course; the certificate page invites "פרסמו מה בניתם" with the course pre-linked — the natural bragging moment. | DONE |
 | REQ-6.3.13 | Gamification | Points: publish (+10), star received (+1), featured (+15). Badges: בונה (first project), אמן התצוגה (5 projects), כוכב עולה (a project hits 25 stars), מוצג נבחר (staff-featured). "נבחרת השבוע" featured row; reaction-milestone notifications. | DONE |
 | REQ-6.3.14 | Community feed + home hook | Showcase events feed the community home "מהקהילה" strip and Plausible (`project_published`, `project_reaction`); a "השוויצו" CTA on `/community/`. | DONE |
+| REQ-6.3.16 | Live-site cards | For projects with a `live_url` and no uploaded cover, the card + detail auto-show a **live screenshot** of the site (favicon fallback); the cover click opens the live site; a star button + comment count + «בקרו» CTA live on the card itself (no need to open the project). | DONE |
 
 ### 6.4 EPIC-6.4 — Feed & Tips
 
@@ -911,6 +912,8 @@ contributors; and the full regression is green with every epic's tests.
 | REQ-7.2.4 | Site intro + interests + remember (QA-3) | The chat introduces the site + the book joke, asks interests, and persists them (attributes + free-text description on the profile). | DONE |
 | REQ-7.2.5 | Finishable, name-only required (QA-4) | A "done" button ends onboarding anytime; the only hard requirement is the name (email enforced at signup). No nagging. | DONE |
 | REQ-7.2.6 | Enrich-later, not in entry (QA-5/tone) | Entry chat stays short; profile enrichment (pictures/hobbies) is offered for later, not required. Avi Bot persona throughout. | DONE |
+| REQ-7.2.7 | No username at signup | The register form collects name + email + password only; the username is **auto-derived from the email** (unique-ified). | DONE |
+| REQ-7.2.8 | Google-first register | The register page leads with **Google/GitHub** (preferred, prominent on top); the email/password form is the secondary option below a divider. | DONE |
 
 ### 7.3 Matazim course intros (QA-13)
 

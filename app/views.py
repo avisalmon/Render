@@ -5,7 +5,6 @@ import urllib.parse
 from django.conf import settings
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core import signing
 from django.core.cache import cache
@@ -141,7 +140,24 @@ def add_note(request):
     return redirect("home")
 
 
+def _username_from_email(email):
+    """Derive a unique username from the email local part (REQ-7.2.7) so the
+    user never has to invent one."""
+    from django.contrib.auth.models import User
+    from django.utils.text import slugify
+    base = slugify(email.split("@")[0]) or "user"
+    base = base[:140]
+    username = base
+    i = 1
+    while User.objects.filter(username=username).exists():
+        i += 1
+        username = f"{base}{i}"
+    return username
+
+
 def register(request):
+    from django.contrib.auth.models import User
+    from django.contrib.auth.password_validation import validate_password
     from django.utils.http import url_has_allowed_host_and_scheme
 
     from .email_verify import send_verification_email
@@ -149,36 +165,41 @@ def register(request):
     next_url = request.POST.get("next") or request.GET.get("next") or ""
     if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
         next_url = ""
+
+    errors = {}
+    values = {}
     if request.method == "POST":
-        form = UserCreationForm(request.POST)
-        # Email is now mandatory at signup (REQ-7.2.1): closes the
-        # forgot-password hole for the username+password path.
-        email = request.POST.get("email", "").strip()
         name = request.POST.get("name", "").strip()[:150]
-        email_ok = bool(email) and "@" in email
-        if form.is_valid() and email_ok:
-            user = form.save()
-            user.email = email
-            if name:
-                user.first_name = name.split()[0][:30]
-            user.save(update_fields=["email", "first_name"])
-            if name:
-                user.profile.display_name = name
-                user.profile.save(update_fields=["display_name"])
-            # First-touch attribution must survive login()'s session cycling
+        email = request.POST.get("email", "").strip().lower()[:254]
+        password = request.POST.get("password", "")
+        values = {"name": name, "email": email}
+        if not name:
+            errors["name"] = "צריך שם"
+        if not email or "@" not in email:
+            errors["email"] = "צריך כתובת אימייל תקינה"
+        elif User.objects.filter(email__iexact=email).exists():
+            errors["email"] = "האימייל הזה כבר רשום. אפשר להתחבר."
+        try:
+            validate_password(password)
+        except ValidationError as e:
+            errors["password"] = " ".join(e.messages)
+        if not errors:
+            user = User.objects.create_user(
+                username=_username_from_email(email), email=email, password=password)
+            user.first_name = name.split()[0][:30]
+            user.save(update_fields=["first_name"])
+            user.profile.display_name = name
+            user.profile.save(update_fields=["display_name"])
             attribution = dict(request.session.get(FIRST_TOUCH_KEY, {}))
             login(request, user, backend="django.contrib.auth.backends.ModelBackend")
             if attribution:
                 request.session[FIRST_TOUCH_KEY] = attribution
             attach_attribution(user, request)
-            send_verification_email(request, user)  # password path: needs verification
+            send_verification_email(request, user)
             mark_signup(request, next_url)
             return redirect("welcome")
-        if not email_ok:
-            form.add_error(None, "צריך כתובת אימייל תקינה")
-    else:
-        form = UserCreationForm()
-    return render(request, "registration/register.html", {"form": form, "next": next_url})
+    return render(request, "registration/register.html",
+                  {"errors": errors, "values": values, "next": next_url})
 
 
 def verify_email(request):

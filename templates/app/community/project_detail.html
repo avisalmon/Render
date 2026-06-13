@@ -27,6 +27,16 @@
 
     {% if project.cover %}
     <img src="{{ project.cover.url }}" alt="{{ project.title }}" class="rounded mb-3" style="width:100%; max-height:420px; object-fit:cover;">
+    {% elif project.live_url %}
+    <a href="{{ project.live_url }}" target="_blank" rel="noopener" class="d-block position-relative mb-3" title="פתיחת האתר">
+      <img src="{{ project.screenshot_url }}" alt="{{ project.title }}" class="rounded" style="width:100%; max-height:420px; object-fit:cover;"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+      <div class="rounded text-center p-5" style="display:none; background:var(--bg-elevated)">
+        {% if project.favicon_url %}<img src="{{ project.favicon_url }}" alt="" width="48" height="48" class="mb-2">{% endif %}
+        <div class="text-muted">{{ project.site_host }}</div>
+      </div>
+      <span class="position-absolute top-0 end-0 m-2 badge bg-dark bg-opacity-75"><i class="bi bi-box-arrow-up-right"></i> בקרו באתר החי</span>
+    </a>
     {% endif %}
 
     <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">

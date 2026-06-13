@@ -17,10 +17,10 @@ def test_signup_requires_email():
     c = Client()
     resp = c.post("/register/", {
         "username": "noemail", "name": "פלוני",
-        "password1": "StrongPass123!", "password2": "StrongPass123!",
+        "password": "StrongPass123!",
     })
     assert resp.status_code == 200  # re-rendered with error
-    assert not User.objects.filter(username="noemail").exists()
+    assert not User.objects.filter(first_name="פלוני").exists()
 
 
 @pytest.mark.django_db
@@ -28,10 +28,10 @@ def test_signup_sends_verification_email_unverified():
     c = Client()
     resp = c.post("/register/", {
         "username": "needsverify", "name": "דנה", "email": "dana@example.com",
-        "password1": "StrongPass123!", "password2": "StrongPass123!",
+        "password": "StrongPass123!",
     })
     assert resp.status_code == 302
-    u = User.objects.get(username="needsverify")
+    u = User.objects.get(email="dana@example.com")
     assert u.email == "dana@example.com"
     assert u.profile.email_verified is False
     assert len(mail.outbox) == 1
@@ -43,9 +43,9 @@ def test_verify_link_marks_verified():
     c = Client()
     c.post("/register/", {
         "username": "verifyme", "name": "דנה", "email": "v@example.com",
-        "password1": "StrongPass123!", "password2": "StrongPass123!",
+        "password": "StrongPass123!",
     })
-    u = User.objects.get(username="verifyme")
+    u = User.objects.get(email="v@example.com")
     resp = c.get("/verify-email/?token=" + make_token(u))
     assert resp.status_code == 200
     u.profile.refresh_from_db()
@@ -65,7 +65,7 @@ def test_unverified_banner_shown():
     c = Client()
     c.post("/register/", {
         "username": "banneruser", "name": "דנה", "email": "b@example.com",
-        "password1": "StrongPass123!", "password2": "StrongPass123!",
+        "password": "StrongPass123!",
     })
     c.post("/welcome/skip/")  # finish onboarding so normal pages render
     body = c.get("/").content.decode()

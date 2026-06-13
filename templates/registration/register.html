@@ -3,40 +3,50 @@
 {% block title %}הרשמה - babook{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-5">
-    <h1 class="h3 mb-1">הרשמה ל-babook</h1>
-    <p class="text-muted small mb-3">חינם. אפשר גם <a href="/accounts/google/login/?process=login&next=/">להמשיך עם Google</a> בלחיצה.</p>
-    <div class="card p-4">
-      <form method="post">
-        {% csrf_token %}
-        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
-        {% if form.non_field_errors %}<div class="alert alert-danger py-2 small">{{ form.non_field_errors }}</div>{% endif %}
+<div class="row justify-content-center py-4">
+  <div class="col-md-5 col-lg-4">
+    <h1 class="h3 mb-1 text-center">הצטרפו ל-babook</h1>
+    <p class="text-muted small text-center mb-4">חינם, וייקח רק כמה שניות.</p>
 
-        <div class="mb-3">
-          <label class="form-label small fw-semibold">איך לקרוא לך?</label>
-          <input class="form-control" name="name" value="{{ request.POST.name }}" required autocomplete="name" placeholder="שם פרטי ומשפחה">
-        </div>
-        <div class="mb-3">
-          <label class="form-label small fw-semibold">אימייל</label>
-          <input type="email" class="form-control" name="email" value="{{ request.POST.email }}" required autocomplete="email" dir="ltr">
-          <small class="text-muted">נשלח קישור אימות. נדרש כדי לאבטח את החשבון.</small>
-        </div>
+    <!-- Preferred: Google (REQ-7.2.8) -->
+    <a class="btn btn-lg btn-primary w-100 d-flex align-items-center justify-content-center gap-2 mb-2"
+       href="/accounts/google/login/?process=login&next={{ next|urlencode }}">
+      <i class="bi bi-google"></i> המשך עם Google
+    </a>
+    <a class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2"
+       href="/accounts/github/login/?process=login&next={{ next|urlencode }}">
+      <i class="bi bi-github"></i> המשך עם GitHub
+    </a>
 
-        {% for field in form %}
-        <div class="mb-2">
-          <label class="form-label small">{{ field.label }}</label>
-          {{ field }}
-          {% if field.errors %}<div class="text-danger small">{{ field.errors|striptags }}</div>{% endif %}
-          {% if field.help_text %}<small class="text-muted d-block">{{ field.help_text|safe }}</small>{% endif %}
-        </div>
-        {% endfor %}
-
-        <button type="submit" class="btn btn-primary w-100 mt-2">צרו חשבון</button>
-      </form>
+    <div class="d-flex align-items-center my-4">
+      <hr class="flex-grow-1"><span class="px-2 text-muted small">או עם אימייל</span><hr class="flex-grow-1">
     </div>
-    <p class="text-center mt-3">
-      <a href="{% url 'login' %}">כבר יש לכם חשבון? התחברו</a>
+
+    <!-- Secondary: email + password (no username — derived from email) -->
+    <form method="post" class="card-surface p-3">
+      {% csrf_token %}
+      {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+      <div class="mb-2">
+        <label class="form-label small">איך לקרוא לך?</label>
+        <input class="form-control" name="name" value="{{ values.name|default:'' }}" required autocomplete="name" placeholder="שם פרטי ומשפחה">
+        {% if errors.name %}<div class="text-danger small">{{ errors.name }}</div>{% endif %}
+      </div>
+      <div class="mb-2">
+        <label class="form-label small">אימייל</label>
+        <input type="email" class="form-control" name="email" value="{{ values.email|default:'' }}" required autocomplete="email" dir="ltr">
+        {% if errors.email %}<div class="text-danger small">{{ errors.email }}</div>{% endif %}
+      </div>
+      <div class="mb-3">
+        <label class="form-label small">סיסמה</label>
+        <input type="password" class="form-control" name="password" required autocomplete="new-password" dir="ltr">
+        {% if errors.password %}<div class="text-danger small">{{ errors.password }}</div>{% endif %}
+        <small class="text-muted">נשלח קישור אימות לאימייל.</small>
+      </div>
+      <button type="submit" class="btn btn-outline-primary w-100">הרשמה עם אימייל</button>
+    </form>
+
+    <p class="text-center mt-3 small">
+      כבר יש לכם חשבון? <a href="{% url 'login' %}">התחברו</a>
     </p>
   </div>
 </div>

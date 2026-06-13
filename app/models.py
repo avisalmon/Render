@@ -273,6 +273,23 @@ class ShowcaseProject(models.Model):
         return SHOWCASE_STANDS.get(self.stand, {"title": self.stand, "icon": "bi-stars"})
 
     @property
+    def site_host(self):
+        from urllib.parse import urlparse
+        return urlparse(self.live_url).netloc if self.live_url else ""
+
+    @property
+    def favicon_url(self):
+        """The site's own icon (REQ-6.3.16) — always resolves."""
+        return f"https://www.google.com/s2/favicons?domain={self.site_host}&sz=128" if self.site_host else ""
+
+    @property
+    def screenshot_url(self):
+        """A live screenshot of the site for an auto-cover (REQ-6.3.16)."""
+        from urllib.parse import quote
+        return (f"https://s.wordpress.com/mshots/v1/{quote(self.live_url, safe='')}?w=640&h=400"
+                if self.live_url else "")
+
+    @property
     def is_live(self):
         return self.status == "published" and not self.is_hidden
 

@@ -16,27 +16,24 @@ from django.contrib.auth.models import User
 def test_register_valid_creates_user_and_redirects(client):
     """T-F-1.2.4-1: POST /register/ with valid data creates user and redirects."""
     response = client.post("/register/", {
-        "username": "newuser",
-        "name": "משתמש חדש",  # name + email now required (REQ-7.2.1)
+        "name": "משתמש חדש",  # name + email required; username derived (REQ-7.2.7)
         "email": "newuser@example.com",
-        "password1": "StrongPass123!",
-        "password2": "StrongPass123!",
+        "password": "StrongPass123!",
     })
     assert response.status_code == 302
-    assert User.objects.filter(username="newuser").exists()
+    assert User.objects.filter(email="newuser@example.com").exists()
 
 
 @pytest.mark.spr12
 @pytest.mark.django_db
-def test_register_mismatched_passwords_returns_form_error(client):
-    """T-F-1.2.4-2: POST /register/ with mismatched passwords stays on form."""
+def test_register_weak_password_returns_form_error(client):
+    """T-F-1.2.4-2: a too-weak password stays on the form (no username field —
+    derived from email; single password validated by REQ-7.2.7)."""
     response = client.post("/register/", {
-        "username": "newuser",
-        "password1": "StrongPass123!",
-        "password2": "WrongPass456!",
+        "name": "משתמש", "email": "weak@example.com", "password": "123",
     })
     assert response.status_code == 200
-    assert not User.objects.filter(username="newuser").exists()
+    assert not User.objects.filter(email="weak@example.com").exists()
 
 
 @pytest.mark.spr12

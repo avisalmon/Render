@@ -19,13 +19,11 @@ from app.onboarding import (
 )
 
 
-def _signup(c, username="onb1", name="אבי הלומד", email="learner@example.com"):
-    # Register now requires name + email (REQ-7.2.1).
-    c.post("/register/", {
-        "username": username, "name": name, "email": email,
-        "password1": "StrongPass123!", "password2": "StrongPass123!",
-    })
-    return User.objects.get(username=username)
+def _signup(c, username="onb1", name="אבי הלומד", email=None):
+    # Register requires name + email; username is derived from the email.
+    email = email or f"{username}@example.com"
+    c.post("/register/", {"name": name, "email": email, "password": "StrongPass123!"})
+    return User.objects.get(email=email)
 
 
 def _intro_course():

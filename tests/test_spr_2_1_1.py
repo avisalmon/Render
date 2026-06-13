@@ -46,9 +46,11 @@ def test_corporate_page_uses_fast_static_assets(client):
     """T-F-2.1.3-1: hero uses a static WebP asset and no framework bundle."""
     html = _content(client.get("/corporate/"))
     assert ".webp" in html
-    assert "react" not in html.lower()
-    assert "vue" not in html.lower()
-    assert "angular" not in html.lower()
+    # No SPA framework bundle (check the actual bundles, not bare substrings —
+    # "react" legitimately appears in the showcase /react/ endpoint URL).
+    assert "react-dom" not in html.lower()
+    assert "vue.js" not in html.lower() and "vue@" not in html.lower()
+    assert "angular.min" not in html.lower()
 
 
 def test_corporate_page_responsive_structure(client):

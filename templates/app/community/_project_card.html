@@ -1,22 +1,54 @@
-{# Project card for the wall + feed. Usage: include with `p` (ShowcaseProject). #}
-<a href="{% url 'showcase_project' p.pk %}" class="card-surface d-block text-decoration-none overflow-hidden h-100" style="color:var(--text-primary)">
-  <div style="aspect-ratio:16/10; background:var(--bg-elevated,#1a1d24); overflow:hidden; display:flex; align-items:center; justify-content:center;">
-    {% if p.cover %}
-      <img src="{{ p.cover.url }}" alt="{{ p.title }}" style="width:100%; height:100%; object-fit:cover;">
-    {% else %}
-      <i class="bi {{ p.stand_meta.icon }}" style="font-size:2.5rem; color:var(--accent-primary); opacity:.5"></i>
-    {% endif %}
-  </div>
-  <div class="p-3">
+{# Project card. Cover → live site (web/app projects) or detail; feedback inline. #}
+<div class="card-surface overflow-hidden h-100 d-flex flex-column" style="color:var(--text-primary)">
+  {# Cover: uploaded image, else live-site screenshot (favicon fallback), else stand icon #}
+  <a href="{% if p.live_url %}{{ p.live_url }}{% else %}{% url 'showcase_project' p.pk %}{% endif %}"
+     {% if p.live_url %}target="_blank" rel="noopener"{% endif %} class="d-block position-relative"
+     title="{% if p.live_url %}פתיחת האתר{% else %}{{ p.title }}{% endif %}">
+    <div style="aspect-ratio:16/10; background:var(--bg-elevated); overflow:hidden; display:flex; align-items:center; justify-content:center;">
+      {% if p.cover %}
+        <img src="{{ p.cover.url }}" alt="{{ p.title }}" style="width:100%; height:100%; object-fit:cover;">
+      {% elif p.live_url %}
+        <img src="{{ p.screenshot_url }}" alt="{{ p.title }}" loading="lazy"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+             style="width:100%; height:100%; object-fit:cover;">
+        <span style="display:none; width:100%;height:100%;align-items:center;justify-content:center;gap:.5rem;flex-direction:column;">
+          {% if p.favicon_url %}<img src="{{ p.favicon_url }}" alt="" width="40" height="40">{% endif %}
+          <small class="text-muted">{{ p.site_host }}</small>
+        </span>
+      {% else %}
+        <i class="bi {{ p.stand_meta.icon }}" style="font-size:2.5rem; color:var(--accent-primary); opacity:.5"></i>
+      {% endif %}
+      {% if p.live_url %}
+      <span class="position-absolute top-0 end-0 m-2 badge bg-dark bg-opacity-75"><i class="bi bi-box-arrow-up-right"></i> אתר חי</span>
+      {% endif %}
+    </div>
+  </a>
+
+  <div class="p-3 d-flex flex-column flex-grow-1">
     <div class="d-flex justify-content-between align-items-start gap-2">
-      <strong class="d-block">{{ p.title }}</strong>
-      <span class="badge bg-secondary text-nowrap"><i class="bi bi-star-fill" style="color:var(--accent-cta,#f59e0b)"></i> {{ p.star_count }}</span>
+      <a href="{% url 'showcase_project' p.pk %}" class="text-decoration-none" style="color:var(--text-primary)"><strong>{{ p.title }}</strong></a>
+      {% if p.favicon_url and not p.cover %}<img src="{{ p.favicon_url }}" alt="" width="18" height="18" class="flex-shrink-0">{% endif %}
     </div>
     {% if p.tagline %}<p class="small text-muted mb-2">{{ p.tagline|truncatechars:70 }}</p>{% endif %}
-    <div class="small text-muted d-flex align-items-center gap-1 flex-wrap">
+    <div class="small text-muted d-flex align-items-center gap-1 flex-wrap mb-2">
       {% include "app/community/_author.html" with author=p.author %}
-      <span class="badge" style="background:var(--bg-elevated,#1a1d24)"><i class="bi {{ p.stand_meta.icon }}"></i> {{ p.stand_meta.title }}</span>
-      {% if p.course %}<span class="badge" style="background:var(--bg-elevated,#1a1d24)">📚 {{ p.course.title|truncatechars:20 }}</span>{% endif %}
+      <span class="badge" style="background:var(--bg-elevated)"><i class="bi {{ p.stand_meta.icon }}"></i> {{ p.stand_meta.title }}</span>
+    </div>
+
+    {# Feedback + actions, right on the card (no need to open the project) #}
+    <div class="d-flex align-items-center gap-2 mt-auto pt-2 border-top">
+      <button class="btn btn-sm btn-outline-warning js-star" data-id="{{ p.pk }}" aria-label="כוכב"
+              {% if p.author == user %}disabled title="הפרויקט שלך"{% endif %}>
+        <i class="bi bi-star-fill"></i> <span class="js-star-count">{{ p.star_count }}</span>
+      </button>
+      <a href="{% url 'showcase_project' p.pk %}" class="btn btn-sm btn-link text-muted text-decoration-none px-1">
+        <i class="bi bi-chat"></i> {{ p.comments.count }}
+      </a>
+      {% if p.live_url %}
+      <a href="{{ p.live_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-primary ms-auto"><i class="bi bi-box-arrow-up-right"></i> בקרו</a>
+      {% else %}
+      <a href="{% url 'showcase_project' p.pk %}" class="btn btn-sm btn-outline-secondary ms-auto">פרטים</a>
+      {% endif %}
     </div>
   </div>
-</a>
+</div>

@@ -69,7 +69,7 @@ def test_register_persists_attribution():
     c.get("/courses/attrme/?utm_source=x")  # anonymous first touch
     resp = c.post("/register/", {
         "username": "newbie1", "name": "ניב", "email": "newbie1@example.com",
-        "password1": "StrongPass123!", "password2": "StrongPass123!",
+        "password": "StrongPass123!",
     })
     assert resp.status_code == 302
     lp = LearnerProfile.objects.get(user__username="newbie1")
@@ -88,7 +88,7 @@ def test_register_routes_to_welcome_then_next_on_skip():
     c = Client()
     resp = c.post("/register/?next=/courses/comeback/", {
         "username": "newbie2", "name": "ניב", "email": "newbie2@example.com",
-        "password1": "StrongPass123!", "password2": "StrongPass123!",
+        "password": "StrongPass123!",
     })
     assert resp.url == "/welcome/"
     resp = c.post("/welcome/skip/")
@@ -102,7 +102,7 @@ def test_new_user_routed_to_welcome_on_next_page_load():
     c = Client()
     c.post("/register/", {
         "username": "newbie3", "name": "ניב", "email": "newbie3@example.com",
-        "password1": "StrongPass123!", "password2": "StrongPass123!",
+        "password": "StrongPass123!",
     })
     resp = c.get("/courses/")
     assert resp.status_code == 302
