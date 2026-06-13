@@ -916,7 +916,7 @@ contributors; and the full regression is green with every epic's tests.
 
 | REQ-ID | Title | Expectation | Status |
 |---|---|---|---|
-| REQ-7.3.1 | Insert intro as lesson 1 | For each of the 9 matazim courses, the course-page intro video (mapped + extracted from matazim) is inserted as the new lesson 1 (existing lessons shift down), uploaded to Bunny. Mapping table in qa_session.md. | TODO |
+| REQ-7.3.1 | Insert intro as lesson 1 | For each of the 9 matazim courses, the course-page intro video (mapped + extracted from matazim) is inserted as the new lesson 1 (existing lessons shift down), uploaded to Bunny. Mapping table in qa_session.md. | DONE |
 
 ### 7.4 Design Refresh (QA-7 / QA-8 / QA-21)
 
@@ -930,7 +930,7 @@ contributors; and the full regression is green with every epic's tests.
 
 | REQ-ID | Title | Expectation | Status |
 |---|---|---|---|
-| REQ-7.5.1 | Re-transcribe scraped courses | Re-transcribe imported courses with the strongest OpenAI model + regenerate faithful high-quality Hebrew notes (Co-Coding method: no em-dashes, fenced code/cmd). Runs as a controlled batch (DB backup first). Long-running. | TODO |
+| REQ-7.5.1 | Re-transcribe scraped courses | Re-transcribe imported courses with the strongest OpenAI model + regenerate faithful high-quality Hebrew notes (Co-Coding method: no em-dashes, fenced code/cmd). Runs as a controlled batch (DB backup first). Long-running. | WIP — tooling ready; supervised batch pending |
 
 ### 7.6 Contact email reliability (QA-19)
 

@@ -726,9 +726,9 @@ Claude. **Status:** IN PROGRESS — built in one autonomous pass (DEC-54).
 |---|---|---|
 | SPR-7.1 | Quick wins (nav/hero/content/footer/login) — REQ-7.1.* | DONE |
 | SPR-7.2 | Onboarding rework (verified email + conversational Avi Bot) — REQ-7.2.* | DONE |
-| SPR-7.3 | Matazim course intros — REQ-7.3.1 | TODO |
+| SPR-7.3 | Matazim course intros — REQ-7.3.1 | DONE |
 | SPR-7.4 | Design Refresh — light theme + toggle DONE (dark default until Avi confirms); animated bg DEFERRED | PARTIAL |
-| SPR-7.5 | Content re-transcription — REQ-7.5.1 (long batch) | TODO |
+| SPR-7.5 | Content re-transcription — REQ-7.5.1 (long batch) | WIP — tooling ready; supervised batch pending |
 | SPR-7.6 | Contact email reliability — REQ-7.6.1 (+ ACT-Avi mailbox) | DONE |
 
 #### SPR-7.1 — Quick wins
@@ -761,7 +761,7 @@ Claude. **Status:** IN PROGRESS — built in one autonomous pass (DEC-54).
 
 | Feature ID | Title | REQ trace | Status |
 |---|---|---|---|
-| F-7.3.1 | Insert 9 intro videos as lesson 1 (Bunny, reorder) | REQ-7.3.1 | TODO |
+| F-7.3.1 | Insert 9 intro videos as lesson 1 (Bunny, reorder) | REQ-7.3.1 | DONE |
 
 #### SPR-7.4 — Design Refresh
 
@@ -775,7 +775,7 @@ Claude. **Status:** IN PROGRESS — built in one autonomous pass (DEC-54).
 
 | Feature ID | Title | REQ trace | Status |
 |---|---|---|---|
-| F-7.5.1 | Re-transcribe scraped courses (strong model) + notes | REQ-7.5.1 | TODO |
+| F-7.5.1 | Re-transcribe scraped courses (strong model) + notes | REQ-7.5.1 | WIP — tooling ready; supervised batch pending |
 
 #### SPR-7.6 — Contact email reliability
 

@@ -10,6 +10,25 @@
 >
 > Started: 2026-06-13. Status: **CAPTURING** (Avi is walking the site).
 
+
+## ⚡ Build status (EPIC-7, 2026-06-13) — updated as built
+
+**DONE + deployed:** QA-5,9,10,11,12,13,15,17,18,20,22 (quick wins, SPR-7.1);
+QA-1,2,3,4,6 + tone (onboarding rework, SPR-7.2); QA-19 (contact email, SPR-7.6);
+QA-13 (9 matazim intros live, SPR-7.3). Bugs: BUG-1 fixed.
+
+**PARTIAL:** QA-7 + QA-21 (Khan light theme + toggle built & live behind the
+toggle; **dark stays default until Avi previews & confirms**, then flip). QA-8
+(animated bg) deferred.
+
+**PENDING (supervised):** QA-14 re-transcription — tooling built & tested;
+the hundreds-of-lessons batch is a supervised run (OpenAI cost + quality review).
+
+**ACTs for Avi:** (1) preview the light theme via the nav sun/moon toggle →
+confirm to make it default; (2) set `CONTACT_NOTIFY_EMAIL` env var + privacy@/
+support@ forwarding; (3) approve running the re-transcription batch.
+
+---
 ## Items
 
 | QA-ID | Where (page/flow) | Feedback (verbatim intent) | Severity | Status |
