@@ -171,6 +171,7 @@
 | test_spr_6_5_1.py (7) | lifecycle advances setup→readiness→active→closed→glory; challenges hidden until kickoff + submissions gated by deadline; per-hackathon multi-roles + organizer gating; staff-only hackathon creation (creator becomes organizer); organizer authors secret challenges (pass_fail + performance_creativity w/ bonus tiers); non-organizer blocked; organizer assigns judges |
 | test_spr_6_5_2.py (8) | invite grants participant role + emails; non-manager blocked; team creation blocked beyond hardware stock; team size bound enforced; glory consent captured up-front; hardware status pending→shipped→received; inventory view counts; countdown-to-start on detail during readiness |
 | test_spr_6_5_3.py (7) | challenges unlock on event page at kickoff (secret before); team member submits video link + zip → pending; non-member blocked; resubmit updates same row; submission blocked before kickoff + after deadline (hard gate); QR token phone-upload binds the right team+challenge |
+| test_spr_6_5_4.py (7) | judge queue is blind (team name hidden); approve awards point_value + notifies team; reject stores feedback, 0 points (points only after approval); participant cannot review; resubmission reopens rejected→pending; organizer-only bonus tiers (judge blocked); anonymized leaderboard (approved + separate pending, anon labels) |
 
 ## EPIC-7 — QA Hardening (`tests/test_spr_7_1..7_8.py`)
 

@@ -11,9 +11,11 @@ from .crashtech import (
     available_stock,
     can_configure,
     can_create_hackathon,
+    compute_leaderboard,
     grant_role,
     manager_required,
     organizer_required,
+    review_required,
     roles_of,
     team_of,
 )
@@ -379,6 +381,91 @@ def challenge_qr(request, slug, challenge_id):
     return render(request, "app/crashtech/qr.html", {
         "h": hackathon, "challenge": challenge, "team": team,
         "upload_url": upload_url, "qr_img": qr_img,
+    })
+
+
+@review_required
+def judge_queue(request, hackathon):
+    """REQ-6.5.12: blind queue of submissions to review. Team identity is hidden
+    from judges (DEC-57) — only the anonymous label is shown."""
+    challenge_id = request.GET.get("challenge")
+    subs = (Submission.objects.filter(challenge__hackathon=hackathon)
+            .select_related("challenge", "team").order_by("status", "submitted_at"))
+    if challenge_id:
+        subs = subs.filter(challenge_id=challenge_id)
+    return render(request, "app/crashtech/judge_queue.html", {
+        "h": hackathon, "subs": subs,
+        "challenges": hackathon.challenges.all(),
+        "active_challenge": challenge_id,
+    })
+
+
+@review_required
+def review_submission(request, hackathon, submission_id):
+    """REQ-6.5.12: approve (award point_value, pass/fail) or reject (+feedback).
+    Points count only after approval. Notifies the team (REQ-6.5.21)."""
+    sub = get_object_or_404(Submission, pk=submission_id, challenge__hackathon=hackathon)
+    if request.method != "POST":
+        return redirect("crashtech_judge", slug=hackathon.slug)
+    action = request.POST.get("action")
+    from .community import notify
+    if action == "approve":
+        sub.status = "approved"
+        sub.points_awarded = sub.challenge.point_value
+        sub.feedback_note = (request.POST.get("feedback_note") or "").strip()
+        verb_text = f"ההגשה שלכם ל«{sub.challenge.title}» אושרה! +{sub.points_awarded} נק'"
+    elif action == "reject":
+        sub.status = "rejected"
+        sub.points_awarded = 0
+        sub.feedback_note = (request.POST.get("feedback_note") or "").strip()
+        verb_text = f"ההגשה ל«{sub.challenge.title}» נדחתה. אפשר לתקן ולהגיש מחדש."
+    else:
+        return redirect("crashtech_judge", slug=hackathon.slug)
+    sub.reviewed_by = request.user
+    sub.reviewed_at = timezone.now()
+    sub.save()
+    for m in sub.team.members.all():
+        notify(m, verb="crashtech_review", text=verb_text,
+               url=f"/crashtech/{hackathon.slug}/")
+    messages.success(request, "ההגשה נשפטה.")
+    return redirect("crashtech_judge", slug=hackathon.slug)
+
+
+@organizer_required
+def bonus_award(request, hackathon, challenge_id):
+    """REQ-6.5.13: organizer-only — rank the top-N of a performance/creativity
+    challenge and award bonus points per tier."""
+    challenge = get_object_or_404(Challenge, pk=challenge_id, hackathon=hackathon)
+    subs = (Submission.objects.filter(challenge=challenge)
+            .select_related("team").order_by("-status"))
+    if request.method == "POST":
+        tiers = challenge.bonus_points_tiers or []
+        for sub in subs:
+            rank_raw = (request.POST.get(f"rank_{sub.pk}") or "").strip()
+            if rank_raw.isdigit():
+                rank = int(rank_raw)
+                bonus = tiers[rank - 1] if 1 <= rank <= len(tiers) else 0
+                sub.bonus_points_awarded = bonus
+                sub.save(update_fields=["bonus_points_awarded"])
+            else:
+                if sub.bonus_points_awarded:
+                    sub.bonus_points_awarded = 0
+                    sub.save(update_fields=["bonus_points_awarded"])
+        messages.success(request, "נקודות הבונוס חולקו.")
+        return redirect("crashtech_manage", slug=hackathon.slug)
+    return render(request, "app/crashtech/bonus.html", {
+        "h": hackathon, "challenge": challenge, "subs": subs,
+    })
+
+
+def leaderboard(request, slug):
+    """REQ-6.5.15/6.5.20: public anonymized leaderboard (approved + pending)."""
+    hackathon = get_object_or_404(Hackathon, slug=slug)
+    # organizer/admin see real names; everyone else sees anonymized labels
+    anonymized = not can_configure(request.user, hackathon)
+    rows = compute_leaderboard(hackathon, anonymized=anonymized)
+    return render(request, "app/crashtech/leaderboard.html", {
+        "h": hackathon, "rows": rows, "anonymized": anonymized,
     })
 
 

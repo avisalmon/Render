@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}שיפוט - {{ h.name }}{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'crashtech_home' %}" style="color:var(--accent-primary)">CrashTech</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'crashtech_detail' h.slug %}" style="color:var(--accent-primary)">{{ h.name }}</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">שיפוט</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="py-4">
+  <h1 class="h4 mb-1"><i class="bi bi-gavel me-1"></i> תור שיפוט</h1>
+  <p class="text-muted small">השיפוט עיוור - זהות הצוותים מוסתרת כדי למנוע הטיה.</p>
+  {% if messages %}{% for m in messages %}<div class="alert alert-{{ m.tags|default:'info' }} py-2 small">{{ m }}</div>{% endfor %}{% endif %}
+
+  <div class="mb-3">
+    <a href="{% url 'crashtech_judge' h.slug %}" class="btn btn-sm {% if not active_challenge %}btn-primary{% else %}btn-outline-secondary{% endif %}">הכל</a>
+    {% for ch in challenges %}
+    <a href="?challenge={{ ch.pk }}" class="btn btn-sm {% if active_challenge == ch.pk|stringformat:'s' %}btn-primary{% else %}btn-outline-secondary{% endif %}">{{ ch.title }}</a>
+    {% endfor %}
+  </div>
+
+  {% for sub in subs %}
+  <div class="card-surface p-3 mb-2">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+      <div>
+        <strong>{{ sub.challenge.title }}</strong>
+        <span class="text-muted small">· {{ sub.team.anon_label }}</span>
+      </div>
+      <span class="badge bg-{% if sub.status == 'approved' %}success{% elif sub.status == 'rejected' %}danger{% else %}secondary{% endif %}">{{ sub.get_status_display }}</span>
+    </div>
+    <div class="small mb-2">
+      {% if sub.video_url %}<a href="{{ sub.video_url }}" target="_blank" rel="noopener"><i class="bi bi-play-circle"></i> וידאו</a>{% endif %}
+      {% if sub.video_file %}<a href="{{ sub.video_file.url }}" target="_blank"><i class="bi bi-camera-video"></i> וידאו שהועלה</a>{% endif %}
+      {% if sub.source_code %}· <a href="{{ sub.source_code.url }}"><i class="bi bi-file-zip"></i> קוד מקור</a>{% endif %}
+      {% if not sub.has_video and not sub.source_code %}<span class="text-muted">אין תוכן עדיין</span>{% endif %}
+    </div>
+    {% if sub.status == 'pending' %}
+    <form method="post" action="{% url 'crashtech_review' h.slug sub.pk %}" class="d-flex gap-2 align-items-center flex-wrap">
+      {% csrf_token %}
+      <input name="feedback_note" class="form-control form-control-sm" style="max-width:320px" placeholder="משוב (חובה בדחייה)">
+      <button name="action" value="approve" class="btn btn-sm btn-success">אישור</button>
+      <button name="action" value="reject" class="btn btn-sm btn-outline-danger">דחייה</button>
+    </form>
+    {% elif sub.feedback_note %}
+    <div class="small text-muted">משוב: {{ sub.feedback_note }}</div>
+    {% endif %}
+  </div>
+  {% empty %}
+  <div class="card-surface p-4 text-center text-muted">אין הגשות בתור.</div>
+  {% endfor %}
+</div>
+{% endblock %}

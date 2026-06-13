@@ -61,6 +61,33 @@ def can_manage(user, hackathon):
     return is_organizer(user, hackathon) or is_admin(user, hackathon)
 
 
+def can_review(user, hackathon):
+    """Judge or organizer: review submissions, pass/fail (REQ-6.5.12)."""
+    return is_judge(user, hackathon) or is_organizer(user, hackathon)
+
+
+def compute_leaderboard(hackathon, anonymized=True):
+    """Per-team standings (REQ-6.5.15): approved points (+bonus) and a separate
+    pending indicator. DEC-40 spirit — pure sums, no engagement weighting.
+    Returns rows sorted by approved desc, then pending desc, anonymized."""
+    rows = []
+    teams = hackathon.teams.prefetch_related("submissions__challenge")
+    for team in teams:
+        approved = pending = 0
+        for s in team.submissions.all():
+            if s.status == "approved":
+                approved += (s.points_awarded or 0) + (s.bonus_points_awarded or 0)
+            elif s.status == "pending":
+                pending += s.challenge.point_value or 0
+        rows.append({
+            "team": team,
+            "label": team.anon_label if anonymized else team.name,
+            "approved": approved, "pending": pending,
+        })
+    rows.sort(key=lambda r: (r["approved"], r["pending"]), reverse=True)
+    return rows
+
+
 def team_of(user, hackathon):
     """The team `user` belongs to in `hackathon`, or None."""
     if not user or not getattr(user, "is_authenticated", False):
@@ -109,5 +136,22 @@ def manager_required(view):
             return redirect(f"/join/?next={quote(request.get_full_path())}")
         if not can_manage(request.user, hackathon):
             return HttpResponseForbidden("רק צוות הניהול של ההאקתון יכול לבצע פעולה זו")
+        return view(request, hackathon, *args, **kwargs)
+    return wrapper
+
+
+def review_required(view):
+    """Gate to judge OR organizer (submission review)."""
+    @wraps(view)
+    def wrapper(request, slug, *args, **kwargs):
+        from django.http import HttpResponseForbidden
+
+        from .models import Hackathon
+        hackathon = get_object_or_404(Hackathon, slug=slug)
+        if not request.user.is_authenticated:
+            from urllib.parse import quote
+            return redirect(f"/join/?next={quote(request.get_full_path())}")
+        if not can_review(request.user, hackathon):
+            return HttpResponseForbidden("רק שופטים או המארגן יכולים לשפוט הגשות")
         return view(request, hackathon, *args, **kwargs)
     return wrapper

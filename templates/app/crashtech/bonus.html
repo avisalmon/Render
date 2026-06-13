@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}בונוס - {{ challenge.title }}{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'crashtech_home' %}" style="color:var(--accent-primary)">CrashTech</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'crashtech_manage' h.slug %}" style="color:var(--accent-primary)">{{ h.name }}</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">בונוס</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+  <div class="col-lg-7">
+    <h1 class="h4 mb-1"><i class="bi bi-trophy me-1"></i> בונוס ביצועים/יצירתיות</h1>
+    <p class="text-muted small">{{ challenge.title }} · דרגו את הטופ {{ challenge.top_submission_count }}. דירוג ← בונוס: {{ challenge.bonus_points_tiers }}</p>
+    <form method="post" class="card-surface p-3">
+      {% csrf_token %}
+      <table class="table table-sm">
+        <thead><tr><th>צוות</th><th>סטטוס</th><th>דירוג</th></tr></thead>
+        <tbody>
+          {% for sub in subs %}
+          <tr>
+            <td>{{ sub.team.name }}</td>
+            <td><span class="badge bg-{% if sub.status == 'approved' %}success{% else %}secondary{% endif %}">{{ sub.get_status_display }}</span></td>
+            <td><input type="number" name="rank_{{ sub.pk }}" min="1" class="form-control form-control-sm" style="width:80px"
+                       value="{% if sub.bonus_points_awarded %}{% endif %}" placeholder="-"></td>
+          </tr>
+          {% empty %}<tr><td colspan="3" class="text-muted text-center">אין הגשות.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+      <button class="btn btn-primary">שמור דירוג ובונוס</button>
+      <a href="{% url 'crashtech_manage' h.slug %}" class="btn btn-outline-secondary">ביטול</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

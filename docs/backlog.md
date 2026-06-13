@@ -790,6 +790,16 @@ gate → certificates + a published Glory Page — with minors-safe defaults, te
 | F-6.5.3.3 | `QRToken` + per-team/challenge QR phone-upload of the demo video (token-bound, no login) | REQ-6.5.11 | DONE |
 | F-6.5.3.4 | Deadline gate: submissions hard-blocked before kickoff and after the deadline | REQ-6.5.16 | DONE |
 
+#### SPR-6.5.4 — Judging & scoring
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-6.5.4.1 | Blind judge queue (team identity hidden) + approve/reject pass-fail with feedback; points only after approval; notify team | REQ-6.5.12 | DONE |
+| F-6.5.4.2 | Resubmission reopens a rejected submission to pending (feedback shown to team) | REQ-6.5.14 | DONE |
+| F-6.5.4.3 | Organizer-only bonus tiers: rank top-N of a performance/creativity challenge → bonus points | REQ-6.5.13 | DONE |
+| F-6.5.4.4 | Anonymized live leaderboard: approved points (+bonus) + separate pending indicator, stable anon labels | REQ-6.5.15 | DONE |
+| F-6.5.4.5 | Notifications: submission approved/rejected (reuse notify) | REQ-6.5.21 | DONE |
+
 ---
 
 ## EPIC-7 — QA Hardening (from Avi's 2026-06-13 walkthrough)
