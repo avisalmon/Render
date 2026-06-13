@@ -707,6 +707,7 @@ before this.
 | REQ-6.1.9 | Minors safety | The matazim audience includes minors: public profiles for `student` role require no real-name policy enforcement, DMs disabled for students by default (EPIC-6.6), all uploads moderated. | DONE |
 | REQ-6.1.10 | RTL + mobile | Every community surface is Hebrew-first RTL and works ≥360px (REQ-1.2.9/1.2.10 inherited). | DONE |
 | REQ-6.1.11 | Anonymous read, member interact (DEC-45) | Logged-out visitors can READ the forum, showcase, challenges and events pages (SEO + guest funnel; extends the §5.1 access matrix). A soft, dismissible "הירשמו כדי להגיב, לדרג ולפרסם" note is shown to guests. EVERY interaction — post, answer, comment, star/rate, vote, RSVP, follow — requires login and routes anonymous users to the context-aware /join/ wall (REQ-5.4.1) naming what they tried to do. | DONE |
+| REQ-6.1.13 | Avatar auto-resize | Profile avatar uploads are **downscaled + recompressed server-side** (Pillow → ≤512px JPEG, EXIF-oriented, transparency flattened) instead of being rejected for size, so any reasonable photo (incl. straight off a phone) just works. Only a sane input cap (15MB) and non-image files are refused, with a friendly message. | DONE |
 
 ### 6.2 EPIC-6.2 — Forums & Q&A (durable knowledge)
 

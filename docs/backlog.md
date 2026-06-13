@@ -611,6 +611,7 @@ Sprints:
 | F-6.1.4.3 | AI moderation on submit (reuse REQ-1.6 moderation) + per-member rate limits | REQ-6.1.8 | DONE |
 | F-6.1.4.4 | Minors policy helpers: student-role restrictions enforced centrally | REQ-6.1.9 | DONE |
 | F-6.1.4.5 | Anonymous-read / member-interact gate: reusable decorator + soft register note + /join/ wall routing | REQ-6.1.11, DEC-45 | DONE |
+| F-6.1.4.6 | Avatar auto-resize on upload (Pillow → ≤512px JPEG) instead of size-reject | REQ-6.1.13 | DONE |
 
 **Exit criteria (SPR set):** a member can publish a public profile with avatar,
 earn a badge, see a notification, and a staff member can act on a report —

@@ -69,6 +69,44 @@ def test_community_settings_save():
     assert u.profile.bio == "שלום"
 
 
+# --- avatar auto-resize (REQ-6.1.13) ---
+
+def _img_upload(px=2000, fmt="PNG", name="big.png"):
+    from io import BytesIO
+
+    from django.core.files.uploadedfile import SimpleUploadedFile
+    from PIL import Image
+    buf = BytesIO()
+    Image.new("RGB", (px, px), (120, 80, 200)).save(buf, format=fmt)
+    return SimpleUploadedFile(name, buf.getvalue(), content_type=f"image/{fmt.lower()}")
+
+
+@pytest.mark.django_db
+def test_large_avatar_is_resized_not_rejected():
+    """REQ-6.1.13: a big upload is downscaled + stored, never rejected for size."""
+    from PIL import Image
+    u = _member("avataruser")
+    resp = _client(u).post(reverse("community_settings"), {
+        "is_public": "on", "avatar": _img_upload(px=2000),
+    })
+    assert resp.status_code == 302
+    u.profile.refresh_from_db()
+    assert u.profile.avatar  # stored, not rejected
+    w, h = Image.open(u.profile.avatar.path).size
+    assert max(w, h) <= 512  # downscaled to a web-friendly size
+
+
+@pytest.mark.django_db
+def test_non_image_avatar_rejected_gracefully():
+    from django.core.files.uploadedfile import SimpleUploadedFile
+    u = _member("baduser")
+    bad = SimpleUploadedFile("note.txt", b"definitely not an image",
+                             content_type="text/plain")
+    _client(u).post(reverse("community_settings"), {"avatar": bad})
+    u.profile.refresh_from_db()
+    assert not u.profile.avatar  # nothing saved, friendly error instead
+
+
 # --- reputation + badges (REQ-6.1.3 / 6.1.4) ---
 
 @pytest.mark.django_db

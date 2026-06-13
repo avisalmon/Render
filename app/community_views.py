@@ -185,10 +185,17 @@ def community_settings_save(request):
     profile.leaderboard_opt_out = request.POST.get("leaderboard_opt_out") == "on"
     avatar = request.FILES.get("avatar")
     if avatar:
-        if avatar.size > 2 * 1024 * 1024:
-            messages.error(request, "התמונה גדולה מדי (עד 2MB)")
+        from .imaging import MAX_INPUT_BYTES, process_avatar
+        if avatar.size > MAX_INPUT_BYTES:
+            messages.error(request, "הקובץ גדול מדי (עד 15MB). נסו תמונה קטנה יותר.")
             return redirect("profile")
-        profile.avatar = avatar
+        try:
+            # Resize + compress on upload (REQ-6.1.13) instead of rejecting.
+            content, fname = process_avatar(avatar)
+        except ValueError:
+            messages.error(request, "קובץ התמונה לא נתמך. נסו JPG או PNG.")
+            return redirect("profile")
+        profile.avatar.save(f"avatar_{request.user.pk}.jpg", content, save=False)
     profile.save()
     messages.success(request, "הגדרות הקהילה נשמרו")
     return redirect("profile")
