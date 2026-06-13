@@ -781,22 +781,45 @@ lightweight way to contribute (a tip is 10× easier than a project).
 | REQ-6.4.4 | Weekly digest | Reuse the newsletter infra (REQ-2.5): weekly Hebrew email — top tip, featured project, best answer, upcoming events. Opt-in. **Gated (DEC-46): starts only once the community passes ~50 active members**; until then the feed alone carries the pulse. | DONE (scaffold) — `digest_opt_in` + `send_weekly_digest` command built; stays dormant below the threshold |
 | REQ-6.4.5 | Homepage hook | The logged-in homepage shows a compact "מהקהילה" strip (3 cards) linking into the feed — discovery without clutter (respects the clean-homepage decision from Ch.5). | DONE |
 
-### 6.5 EPIC-6.5 — Challenges, Competitions & Hackathons
+### 6.5 EPIC-6.5 — CrashTech: Hardware Hackathon Platform
 
-Cohort cadence + belonging. Designed per the research warning **not to copy
-Kaggle** (research_1): challenges here are course-anchored, human-judged,
-showcase-producing — not ML-metric leaderboards.
+**Source:** [docs/Epic6.5.t.md](Epic6.5.t.md) (CrashTech spec v0.1). This epic
+**replaces** the earlier lightweight challenges draft (DEC-55). CrashTech is a
+hardware-centric, timed hackathon module hosted inside babook: babook **is** the
+host system (CrashTech owns no auth — it grants per-hackathon roles to existing
+babook users). Teams receive physical kits (ESP32/FPGA) ~2 weeks ahead, practice
+off a linked GitHub repo, then compete in a fixed window (default 24h) to solve
+secret challenges judged for points, ending in a permanent public Glory Page.
+
+**Lifecycle:** `SETUP → READINESS (~2wk) → LIVE EVENT (~24h) → CLOSED → GLORY (permanent)`.
+
+**Scoring is dual:** breadth (pass/fail challenges solved) + performance/creativity
+(organizer ranks top-N → bonus tiers). Public surfaces are anonymized; a team's
+own dashboard is full detail; judging is blind (DEC-57).
 
 | REQ-ID | Title | Expectation | Status |
 |---|---|---|---|
-| REQ-6.5.1 | Challenge model | `Challenge`: title, brief (markdown), domain, difficulty, start/end dates, rubric, prizes (badges + featured + real prizes optional), linked course(s), status (upcoming/active/judging/done). | TODO |
-| REQ-6.5.2 | Submissions | A submission IS a ShowcaseProject tagged to the challenge — one object, two surfaces; deadline enforced. | TODO |
-| REQ-6.5.3 | Judging | Two-phase: community voting (stars, one per member) + staff/judge scoring per rubric; transparent weights; winners announced on the feed + badges (אלוף אתגר). | TODO |
-| REQ-6.5.4 | Challenge page | Live page per challenge: brief, countdown, submissions wall, leaderboard during judging, winners podium after. | TODO |
-| REQ-6.5.5 | Cadence | Seasonal rhythm: monthly mini-challenge per domain + 1-2 yearly hackathons (multi-day, team-based, virtual event integration from EPIC-6.7). | TODO |
-| REQ-6.5.6 | Teams | Hackathons support teams (2-5): team page, joint submission, "מחפשים חברי צוות" board (the find-collaborators seed, feature_skeleton 5.2). | TODO |
-| REQ-6.5.7 | School mode | A teacher (`role_type=teacher`) can clone a challenge for their class only — private leaderboard for their students (matazim B2B2C angle). | TODO |
-| REQ-6.5.8 | Inaugural challenge (DEC-47a) | EPIC-6.5 launches with a real first challenge: **the MicroPython kit** (matazim/hardware, anchored to the `micropython-thonny` course) — build something with the kit, show it on the wall. Brief written and announced by Avi at launch. | TODO |
+| REQ-6.5.1 | Hackathon model & lifecycle | `Hackathon`: name, start/end, duration, team_size, submission deadline, `github_repo_url`, `hardware_stock`, `status` (setup/readiness/active/closed/glory), organizer. State machine drives what every surface allows. | TODO |
+| REQ-6.5.2 | Per-hackathon roles | `HackRole` (hackathon × user × role): organizer / admin / judge / participant. Many-to-many; a user may hold several roles on one event and different roles across events. Organizer-only powers (bonus points, config, judge assignment) stay gated even when the organizer also judges. | TODO |
+| REQ-6.5.3 | Setup: hackathon config | Organizer creates/configures a hackathon (name, dates, duration, team size, deadline, GitHub repo URL, hardware stock). Stock caps the number of teams. | TODO |
+| REQ-6.5.4 | Setup: challenge authoring | Organizer defines `Challenge` (title, description/brief, point_value, scoring_mode = pass_fail \| performance_creativity, top_submission_count, bonus_points_tiers[], visible). Challenges are **secret** (`visible=false`) until kickoff. | TODO |
+| REQ-6.5.5 | Setup: judge assignment | Organizer assigns judges from existing babook users. | TODO |
+| REQ-6.5.6 | Readiness: invite participants | Organizer/Admin search babook users + invite; invitee gets an email and joins the hackathon as a participant. | TODO |
+| REQ-6.5.7 | Readiness: team formation | Organizer/Admin create/name teams and assign members; team size bounded by the organizer's setting; cannot exceed available hardware stock. | TODO |
+| REQ-6.5.8 | Readiness: hardware tracking | Per-team `hardware_status` pending → shipped → received; marking supplied decrements stock; team creation blocked beyond stock. Inventory view (stock/shipped/received). | TODO |
+| REQ-6.5.9 | Readiness: practice + countdown | Participants access the linked repo/example solutions; a countdown-to-start is visible to all invited participants. | TODO |
+| REQ-6.5.10 | Live: kickoff & event hub | At kickoff all challenges become visible on the Event Main Page (countdown, challenge list, team status). A prominent deadline countdown shows everywhere during the event. | TODO |
+| REQ-6.5.11 | Live: submission | A team submits per challenge: **video demo ≤20s** (paste a YouTube link **or** scan a per-team/per-challenge QR token that opens a phone upload form, the token binding the upload to the right team+challenge) **+ source code as a zip uploaded to the site** (DEC-56). Each submission enters a pending queue. | TODO |
+| REQ-6.5.12 | Live: judging (blind) | Judges review video+code with team identity **hidden** (DEC-57) and approve/reject pass/fail challenges, each rejection carrying a feedback note. Points count **only after approval**. | TODO |
+| REQ-6.5.13 | Live: bonus scoring | **Organizer only** ranks the top-N submissions of a performance/creativity challenge and awards bonus points per rank from `bonus_points_tiers[]`. Judges cannot. | TODO |
+| REQ-6.5.14 | Live: resubmission | A rejected/improvable submission can be resubmitted within the window; resubmission resets `status → pending`. Unlimited until the gate closes (DEC-59). | TODO |
+| REQ-6.5.15 | Live: anonymized leaderboard | Public leaderboard shows each team under a **stable per-hackathon anonymous label** ("Team One…") with approved points (+bonus) and a **separate pending** indicator; no names, no per-challenge detail. | TODO |
+| REQ-6.5.16 | Live: deadline gate | At the deadline (24h or organizer-defined) gates close; submissions are hard-blocked. | TODO |
+| REQ-6.5.17 | Glory: certificates | On close, generate certificates: participation for all; winner/runner-up for top teams. Tie-break: most challenges solved → earliest final qualifying submission → most bonus placements (DEC-59). | TODO |
+| REQ-6.5.18 | Glory: memorial page | Permanent, public `GloryPage` per hackathon: final rankings, highlights, **consented** videos + event photos; organizer curates and publishes. Winners revealed; others anonymous unless consented (DEC-59). | TODO |
+| REQ-6.5.19 | Consent | Glory-page publication consent collected **up-front at team setup**, with a **post-event opt-out** once teams see what would be published (DEC-58). | TODO |
+| REQ-6.5.20 | Public surfaces | Anonymized public leaderboard + anonymized solution-video gallery (no team attribution), plus the permanent Glory Page. Read-public (REQ-6.1.11 spirit). | TODO |
+| REQ-6.5.21 | Notifications | Event reuses `notify()`: event starting, challenges unlocked, submission approved/rejected, deadline approaching. | TODO |
 
 ### 6.6 EPIC-6.6 — Chat & Groups (real-time, after the durable layer)
 
@@ -866,6 +889,11 @@ model — these wait until the community is demonstrably alive:
 | DEC-48 | Showcase surfaces | **Both a stable curated wall AND a flowing brag feed** | Avi: the wall is the portfolio/gallery; the feed is the live pulse — they serve different moments |
 | DEC-49 | Stands (categories) | **Code-defined stand set, extensible one-line** (AI / makers / games / web / research / apps / other) | Curated titles+icons+order, RTL-correct; new stands are cheap to add, no model overhead |
 | DEC-50 | Messaging in 6.3 | **Pull DMs forward from EPIC-6.6** into the showcase (opt-in, student-disabled) | Avi asked for messaging; show-off naturally invites "tell me how you built it"; full chat/channels still in 6.6 |
+| DEC-55 | EPIC-6.5 = CrashTech | **CrashTech (hardware hackathon platform) replaces the old challenges-as-showcase draft** | Avi 2026-06-13: full hardware-hackathon module per docs/Epic6.5.t.md; old REQ-6.5.1–8 retired (MicroPython kit can be a CrashTech event) |
+| DEC-56 | Submission code channel | **Source code = zip uploaded to the site** (the hackathon GitHub repo holds starter/tutorial code only) | Avi 2026-06-13: overrides the doc's GitHub-URL recommendation; simplest for participants |
+| DEC-57 | Judging | **Blind to judges** (team identity hidden in the UI); organizer de-anonymized for bonus ranking | Avi 2026-06-13: reduces bias. NB: best-effort — code contents are not auto-anonymized |
+| DEC-58 | Glory consent | **Up-front at team setup + post-event opt-out** | Avi 2026-06-13: simple early signal, safe final say once teams see the published content |
+| DEC-59 | CrashTech defaults (doc §9) | **Unlimited resubmission; pending anonymized like approved; tie-break most-solved → earliest qualifying → most bonus; winners revealed on Glory, others anonymous unless consented** | Avi accepted the documented defaults |
 
 ### 6.11 Acceptance criteria for Chapter 6
 

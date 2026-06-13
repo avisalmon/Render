@@ -551,7 +551,7 @@ build starts with EPIC-6.1. Epics are sequenced; one big thing at a time.
 | EPIC-6.2 | Forums & Q&A — accepted answers, tags, search, course-anchored threads, AI assist | §6.2 | DONE ✅ |
 | EPIC-6.3 | Showcase (דוכן השוויץ) — stands, wall + brag feed, reactions, comments, messaging, gamification | §6.3 | DONE ✅ |
 | EPIC-6.4 | Feed & Tips — community home, composer, weekly digest, homepage hook | §6.4 | IN PROGRESS |
-| EPIC-6.5 | Challenges & Hackathons — briefs, submissions-as-showcases, judging, teams, school mode | §6.5 | PROPOSED |
+| EPIC-6.5 | CrashTech — hardware hackathon platform (lifecycle, roles, teams, hardware logistics, secret timed challenges, blind judging, dual scoring, anonymized leaderboard, certificates, Glory Page) | §6.5 | SPECCED |
 | EPIC-6.6 | Chat & Groups — channels, course groups, safe DMs, member directory | §6.6 | PROPOSED |
 | EPIC-6.7 | Events & Meetups — RSVP, calendar, recordings, recurring series, physical meetups | §6.7 | PROPOSED |
 
@@ -737,6 +737,29 @@ badge at 10); `/community/` shows a live chronological feed of all activity with
 working scope filters; the composer routes each kind to the right destination;
 the logged-in homepage shows a 3-card community strip; the digest command exists
 but stays dormant below the member threshold; tests + full regression green.
+
+### EPIC-6.5 — CrashTech (hardware hackathon platform)
+
+**Spec:** [main_spec.md §6.5](main_spec.md) + source [Epic6.5.t.md](Epic6.5.t.md).
+**Status:** SPECCED — replaces the old challenges draft (DEC-55). babook is the
+host system; CrashTech grants per-hackathon roles. Large module → **5 sequenced
+sprints**. Sprint backlogs detailed at each sprint's build start (the_manager
+step 2). ACT-Avi: physical kits/logistics + the inaugural event brief.
+
+| Sprint | Scope | REQ trace | Status |
+|---|---|---|---|
+| SPR-6.5.1 | Foundations: `Hackathon` + `HackRole` models & lifecycle state machine; organizer setup form; challenge authoring (secret until kickoff, both scoring modes); judge assignment | REQ-6.5.1–6.5.5 | TODO |
+| SPR-6.5.2 | Readiness: invite babook users (email-join); team formation (size bound + stock cap); hardware tracking pending→shipped→received + inventory view; repo/practice access + countdown-to-start | REQ-6.5.6–6.5.9 | TODO |
+| SPR-6.5.3 | Live core: kickoff unlock + Event Main Page + deadline countdown everywhere; submission (video ≤20s via YouTube link **or** per-team/challenge QR token; code = zip upload) → pending queue; hard deadline gate | REQ-6.5.10, 6.5.11, 6.5.16 | TODO |
+| SPR-6.5.4 | Judging & scoring: blind judge queue; approve/reject pass/fail + feedback; resubmission (resets to pending); organizer-only bonus tiers (top-N); anonymized live leaderboard with separate pending; notifications | REQ-6.5.12–6.5.15, 6.5.21 | TODO |
+| SPR-6.5.5 | Glory: certificates (participation/winner/runner-up, tie-break); Glory Page editor + permanent public memorial; consent up-front + post-event opt-out; anonymized public leaderboard + video gallery | REQ-6.5.17–6.5.20 | TODO |
+
+**Exit criteria (epic):** an organizer runs a full CrashTech event end-to-end on
+babook — setup with secret challenges + hardware stock → invite + team + kit
+tracking → kickoff unlock → teams submit video+zip → blind judges approve with
+feedback → organizer awards bonus tiers → anonymized live leaderboard → deadline
+gate → certificates + a published Glory Page — with minors-safe defaults, tests
++ full regression green, deployed + smoke-tested.
 
 ---
 
