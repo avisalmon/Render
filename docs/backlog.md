@@ -729,7 +729,7 @@ Claude. **Status:** IN PROGRESS — built in one autonomous pass (DEC-54).
 | SPR-7.3 | Matazim course intros — REQ-7.3.1 | TODO |
 | SPR-7.4 | Design Refresh (Khan style + themes + animated bg) — REQ-7.4.* | TODO |
 | SPR-7.5 | Content re-transcription — REQ-7.5.1 (long batch) | TODO |
-| SPR-7.6 | Contact email reliability — REQ-7.6.1 (+ ACT-Avi mailbox) | TODO |
+| SPR-7.6 | Contact email reliability — REQ-7.6.1 (+ ACT-Avi mailbox) | DONE |
 
 #### SPR-7.1 — Quick wins
 
@@ -781,7 +781,7 @@ Claude. **Status:** IN PROGRESS — built in one autonomous pass (DEC-54).
 
 | Feature ID | Title | REQ trace | Status |
 |---|---|---|---|
-| F-7.6.1 | On-site contact capture + admin notify | REQ-7.6.1 | TODO |
+| F-7.6.1 | On-site contact capture + admin notify | REQ-7.6.1 | DONE |
 
 ---
 

@@ -493,8 +493,9 @@ def corporate(request):
         # Increment rate limit counter (1-hour window)
         cache.set(rate_key, count + 1, timeout=3600)
 
-        # Notify Avi
+        # Notify Avi at his real inbox (REQ-7.6.1) — lead is also stored in admin
         from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@babook.co.il")
+        notify_to = getattr(settings, "CONTACT_NOTIFY_EMAIL", from_email)
         send_mail(
             subject=f"[babook] פנייה חדשה מ-{company}",
             message=(
@@ -502,7 +503,7 @@ def corporate(request):
                 f"גודל צוות: {team_size}\n\n{message}"
             ),
             from_email=from_email,
-            recipient_list=[from_email],
+            recipient_list=[notify_to],
             fail_silently=True,
         )
 

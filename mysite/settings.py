@@ -197,6 +197,9 @@ if RESEND_API_KEY:
 else:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@babook.co.il")
+# Where user contact / privacy / support enquiries are delivered (REQ-7.6.1).
+# ACT-Avi: set this env var to Avi's real inbox so nothing is lost.
+CONTACT_NOTIFY_EMAIL = os.environ.get("CONTACT_NOTIFY_EMAIL", DEFAULT_FROM_EMAIL)
 
 LOGGING = {
     "version": 1,

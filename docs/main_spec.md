@@ -936,7 +936,7 @@ contributors; and the full regression is green with every epic's tests.
 
 | REQ-ID | Title | Expectation | Status |
 |---|---|---|---|
-| REQ-7.6.1 | On-site contact capture + admin notify | Contact/privacy/support routes store the message on-site (admin-visible) and email Avi's admin inbox, so nothing depends on a possibly-dead `privacy@`/`support@` mailbox. **ACT-Avi:** set up the actual mailbox forwarding (DNS). | TODO |
+| REQ-7.6.1 | On-site contact capture + admin notify | Contact/privacy/support routes store the message on-site (admin-visible) and email Avi's admin inbox, so nothing depends on a possibly-dead `privacy@`/`support@` mailbox. **ACT-Avi:** set up the actual mailbox forwarding (DNS). | DONE |
 
 ### 7.7 Decisions log
 
