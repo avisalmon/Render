@@ -920,7 +920,10 @@ class AuthoringJob(models.Model):
 # module, re-exported here so Django registers them under the `app` label.
 # ---------------------------------------------------------------------------
 from .crashtech_models import (  # noqa: E402,F401
+    Certificate,
     Challenge,
+    GloryPage,
+    GloryPhoto,
     Hackathon,
     HackRole,
     QRToken,

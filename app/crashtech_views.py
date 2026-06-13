@@ -12,6 +12,7 @@ from .crashtech import (
     can_configure,
     can_create_hackathon,
     compute_leaderboard,
+    final_ranking,
     grant_role,
     manager_required,
     organizer_required,
@@ -19,7 +20,15 @@ from .crashtech import (
     roles_of,
     team_of,
 )
-from .models import Challenge, Hackathon, QRToken, Submission, Team
+from .models import (
+    Certificate,
+    Challenge,
+    GloryPage,
+    Hackathon,
+    QRToken,
+    Submission,
+    Team,
+)
 
 
 def _aware(value):
@@ -484,3 +493,90 @@ def qr_upload(request, token):
         sub.save()
         return render(request, "app/crashtech/qr_upload.html", {"done": True, "tok": tok})
     return render(request, "app/crashtech/qr_upload.html", {"tok": tok})
+
+
+# --- Glory phase (SPR-6.5.5) ---
+
+@organizer_required
+def generate_certificates(request, hackathon):
+    """REQ-6.5.17: issue certificates — winner/runner-up for the top two by
+    final ranking, participation for the rest. Idempotent per team."""
+    if request.method != "POST":
+        return redirect("crashtech_manage", slug=hackathon.slug)
+    ranking = final_ranking(hackathon)
+    for i, row in enumerate(ranking):
+        if i == 0 and row["approved"] > 0:
+            ctype = "winner"
+        elif i == 1 and row["approved"] > 0:
+            ctype = "runner_up"
+        else:
+            ctype = "participation"
+        Certificate.objects.update_or_create(
+            hackathon=hackathon, team=row["team"], defaults={"type": ctype})
+    messages.success(request, "התעודות הונפקו.")
+    return redirect("crashtech_manage", slug=hackathon.slug)
+
+
+def certificate_view(request, cert_id):
+    """Public, shareable certificate page (REQ-6.5.17)."""
+    cert = get_object_or_404(
+        Certificate.objects.select_related("hackathon", "team"), cert_id=cert_id)
+    return render(request, "app/crashtech/certificate.html", {"cert": cert})
+
+
+@organizer_required
+def glory_edit(request, hackathon):
+    """REQ-6.5.18: organizer curates highlights + photos and publishes."""
+    glory, _ = GloryPage.objects.get_or_create(hackathon=hackathon)
+    if request.method == "POST":
+        glory.highlights = (request.POST.get("highlights") or "").strip()
+        publish = request.POST.get("publish") == "on"
+        if publish and not glory.published:
+            glory.published_at = timezone.now()
+        glory.published = publish
+        glory.save()
+        for img in request.FILES.getlist("photos"):
+            glory.photos.create(image=img)
+        messages.success(request, "עמוד התהילה נשמר.")
+        return redirect("crashtech_glory", slug=hackathon.slug)
+    return render(request, "app/crashtech/glory_edit.html", {"h": hackathon, "glory": glory})
+
+
+def glory_page(request, slug):
+    """REQ-6.5.18/6.5.20: the permanent public memorial (published only)."""
+    hackathon = get_object_or_404(Hackathon, slug=slug)
+    glory = getattr(hackathon, "glory_page", None)
+    if glory is None or not glory.published:
+        if not can_configure(request.user, hackathon):
+            from django.http import Http404
+            raise Http404
+    # winners revealed; full final ranking with real names (event is over)
+    ranking = final_ranking(hackathon)
+    return render(request, "app/crashtech/glory.html", {
+        "h": hackathon, "glory": glory, "ranking": ranking,
+        "photos": glory.photos.all() if glory else [],
+    })
+
+
+@login_required
+def consent_toggle(request, slug):
+    """REQ-6.5.19: a team member opts in/out of Glory-Page publication."""
+    hackathon = get_object_or_404(Hackathon, slug=slug)
+    team = team_of(request.user, hackathon)
+    if team and request.method == "POST":
+        team.glory_consent = request.POST.get("glory_consent") == "on"
+        team.save(update_fields=["glory_consent"])
+        messages.success(request, "העדפת הפרסום עודכנה.")
+    return redirect("crashtech_detail", slug=slug)
+
+
+def video_gallery(request, slug):
+    """REQ-6.5.20: anonymized public gallery — approved demos from teams that
+    consented to publication only."""
+    hackathon = get_object_or_404(Hackathon, slug=slug)
+    subs = (Submission.objects.filter(
+                challenge__hackathon=hackathon, status="approved",
+                team__glory_consent=True)
+            .exclude(video_url="", video_file="")
+            .select_related("team", "challenge"))
+    return render(request, "app/crashtech/gallery.html", {"h": hackathon, "subs": subs})

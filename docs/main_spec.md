@@ -799,27 +799,27 @@ own dashboard is full detail; judging is blind (DEC-57).
 
 | REQ-ID | Title | Expectation | Status |
 |---|---|---|---|
-| REQ-6.5.1 | Hackathon model & lifecycle | `Hackathon`: name, start/end, duration, team_size, submission deadline, `github_repo_url`, `hardware_stock`, `status` (setup/readiness/active/closed/glory), organizer. State machine drives what every surface allows. | TODO |
-| REQ-6.5.2 | Per-hackathon roles | `HackRole` (hackathon × user × role): organizer / admin / judge / participant. Many-to-many; a user may hold several roles on one event and different roles across events. Organizer-only powers (bonus points, config, judge assignment) stay gated even when the organizer also judges. | TODO |
-| REQ-6.5.3 | Setup: hackathon config | Organizer creates/configures a hackathon (name, dates, duration, team size, deadline, GitHub repo URL, hardware stock). Stock caps the number of teams. | TODO |
-| REQ-6.5.4 | Setup: challenge authoring | Organizer defines `Challenge` (title, description/brief, point_value, scoring_mode = pass_fail \| performance_creativity, top_submission_count, bonus_points_tiers[], visible). Challenges are **secret** (`visible=false`) until kickoff. | TODO |
-| REQ-6.5.5 | Setup: judge assignment | Organizer assigns judges from existing babook users. | TODO |
-| REQ-6.5.6 | Readiness: invite participants | Organizer/Admin search babook users + invite; invitee gets an email and joins the hackathon as a participant. | TODO |
-| REQ-6.5.7 | Readiness: team formation | Organizer/Admin create/name teams and assign members; team size bounded by the organizer's setting; cannot exceed available hardware stock. | TODO |
-| REQ-6.5.8 | Readiness: hardware tracking | Per-team `hardware_status` pending → shipped → received; marking supplied decrements stock; team creation blocked beyond stock. Inventory view (stock/shipped/received). | TODO |
-| REQ-6.5.9 | Readiness: practice + countdown | Participants access the linked repo/example solutions; a countdown-to-start is visible to all invited participants. | TODO |
-| REQ-6.5.10 | Live: kickoff & event hub | At kickoff all challenges become visible on the Event Main Page (countdown, challenge list, team status). A prominent deadline countdown shows everywhere during the event. | TODO |
-| REQ-6.5.11 | Live: submission | A team submits per challenge: **video demo ≤20s** (paste a YouTube link **or** scan a per-team/per-challenge QR token that opens a phone upload form, the token binding the upload to the right team+challenge) **+ source code as a zip uploaded to the site** (DEC-56). Each submission enters a pending queue. | TODO |
-| REQ-6.5.12 | Live: judging (blind) | Judges review video+code with team identity **hidden** (DEC-57) and approve/reject pass/fail challenges, each rejection carrying a feedback note. Points count **only after approval**. | TODO |
-| REQ-6.5.13 | Live: bonus scoring | **Organizer only** ranks the top-N submissions of a performance/creativity challenge and awards bonus points per rank from `bonus_points_tiers[]`. Judges cannot. | TODO |
-| REQ-6.5.14 | Live: resubmission | A rejected/improvable submission can be resubmitted within the window; resubmission resets `status → pending`. Unlimited until the gate closes (DEC-59). | TODO |
-| REQ-6.5.15 | Live: anonymized leaderboard | Public leaderboard shows each team under a **stable per-hackathon anonymous label** ("Team One…") with approved points (+bonus) and a **separate pending** indicator; no names, no per-challenge detail. | TODO |
-| REQ-6.5.16 | Live: deadline gate | At the deadline (24h or organizer-defined) gates close; submissions are hard-blocked. | TODO |
-| REQ-6.5.17 | Glory: certificates | On close, generate certificates: participation for all; winner/runner-up for top teams. Tie-break: most challenges solved → earliest final qualifying submission → most bonus placements (DEC-59). | TODO |
-| REQ-6.5.18 | Glory: memorial page | Permanent, public `GloryPage` per hackathon: final rankings, highlights, **consented** videos + event photos; organizer curates and publishes. Winners revealed; others anonymous unless consented (DEC-59). | TODO |
-| REQ-6.5.19 | Consent | Glory-page publication consent collected **up-front at team setup**, with a **post-event opt-out** once teams see what would be published (DEC-58). | TODO |
-| REQ-6.5.20 | Public surfaces | Anonymized public leaderboard + anonymized solution-video gallery (no team attribution), plus the permanent Glory Page. Read-public (REQ-6.1.11 spirit). | TODO |
-| REQ-6.5.21 | Notifications | Event reuses `notify()`: event starting, challenges unlocked, submission approved/rejected, deadline approaching. | TODO |
+| REQ-6.5.1 | Hackathon model & lifecycle | `Hackathon`: name, start/end, duration, team_size, submission deadline, `github_repo_url`, `hardware_stock`, `status` (setup/readiness/active/closed/glory), organizer. State machine drives what every surface allows. | DONE |
+| REQ-6.5.2 | Per-hackathon roles | `HackRole` (hackathon × user × role): organizer / admin / judge / participant. Many-to-many; a user may hold several roles on one event and different roles across events. Organizer-only powers (bonus points, config, judge assignment) stay gated even when the organizer also judges. | DONE |
+| REQ-6.5.3 | Setup: hackathon config | Organizer creates/configures a hackathon (name, dates, duration, team size, deadline, GitHub repo URL, hardware stock). Stock caps the number of teams. | DONE |
+| REQ-6.5.4 | Setup: challenge authoring | Organizer defines `Challenge` (title, description/brief, point_value, scoring_mode = pass_fail \| performance_creativity, top_submission_count, bonus_points_tiers[], visible). Challenges are **secret** (`visible=false`) until kickoff. | DONE |
+| REQ-6.5.5 | Setup: judge assignment | Organizer assigns judges from existing babook users. | DONE |
+| REQ-6.5.6 | Readiness: invite participants | Organizer/Admin search babook users + invite; invitee gets an email and joins the hackathon as a participant. | DONE |
+| REQ-6.5.7 | Readiness: team formation | Organizer/Admin create/name teams and assign members; team size bounded by the organizer's setting; cannot exceed available hardware stock. | DONE |
+| REQ-6.5.8 | Readiness: hardware tracking | Per-team `hardware_status` pending → shipped → received; marking supplied decrements stock; team creation blocked beyond stock. Inventory view (stock/shipped/received). | DONE |
+| REQ-6.5.9 | Readiness: practice + countdown | Participants access the linked repo/example solutions; a countdown-to-start is visible to all invited participants. | DONE |
+| REQ-6.5.10 | Live: kickoff & event hub | At kickoff all challenges become visible on the Event Main Page (countdown, challenge list, team status). A prominent deadline countdown shows everywhere during the event. | DONE |
+| REQ-6.5.11 | Live: submission | A team submits per challenge: **video demo ≤20s** (paste a YouTube link **or** scan a per-team/per-challenge QR token that opens a phone upload form, the token binding the upload to the right team+challenge) **+ source code as a zip uploaded to the site** (DEC-56). Each submission enters a pending queue. | DONE |
+| REQ-6.5.12 | Live: judging (blind) | Judges review video+code with team identity **hidden** (DEC-57) and approve/reject pass/fail challenges, each rejection carrying a feedback note. Points count **only after approval**. | DONE |
+| REQ-6.5.13 | Live: bonus scoring | **Organizer only** ranks the top-N submissions of a performance/creativity challenge and awards bonus points per rank from `bonus_points_tiers[]`. Judges cannot. | DONE |
+| REQ-6.5.14 | Live: resubmission | A rejected/improvable submission can be resubmitted within the window; resubmission resets `status → pending`. Unlimited until the gate closes (DEC-59). | DONE |
+| REQ-6.5.15 | Live: anonymized leaderboard | Public leaderboard shows each team under a **stable per-hackathon anonymous label** ("Team One…") with approved points (+bonus) and a **separate pending** indicator; no names, no per-challenge detail. | DONE |
+| REQ-6.5.16 | Live: deadline gate | At the deadline (24h or organizer-defined) gates close; submissions are hard-blocked. | DONE |
+| REQ-6.5.17 | Glory: certificates | On close, generate certificates: participation for all; winner/runner-up for top teams. Tie-break: most challenges solved → earliest final qualifying submission → most bonus placements (DEC-59). | DONE |
+| REQ-6.5.18 | Glory: memorial page | Permanent, public `GloryPage` per hackathon: final rankings, highlights, **consented** videos + event photos; organizer curates and publishes. Winners revealed; others anonymous unless consented (DEC-59). | DONE |
+| REQ-6.5.19 | Consent | Glory-page publication consent collected **up-front at team setup**, with a **post-event opt-out** once teams see what would be published (DEC-58). | DONE |
+| REQ-6.5.20 | Public surfaces | Anonymized public leaderboard + anonymized solution-video gallery (no team attribution), plus the permanent Glory Page. Read-public (REQ-6.1.11 spirit). | DONE |
+| REQ-6.5.21 | Notifications | Event reuses `notify()`: event starting, challenges unlocked, submission approved/rejected, deadline approaching. | DONE |
 
 ### 6.6 EPIC-6.6 — Chat & Groups (real-time, after the durable layer)
 

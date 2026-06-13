@@ -50,6 +50,19 @@
 
   {% if my_team %}
   <div class="alert alert-info py-2 small"><i class="bi bi-people-fill"></i> הצוות שלך: <strong>{{ my_team.name }}</strong> ({{ my_team.anon_label }})</div>
+  {% if h.status == 'closed' or h.status == 'glory' %}
+  <!-- Post-event consent opt-out (REQ-6.5.19) -->
+  <form method="post" action="{% url 'crashtech_consent' h.slug %}" class="card-surface p-3 mb-3 small">
+    {% csrf_token %}
+    <label><input type="checkbox" name="glory_consent" value="on" {% if my_team.glory_consent %}checked{% endif %}
+                  onchange="this.form.submit()">
+      אני מאשר/ת לפרסם את הוידאו והתמונות שלנו בעמוד התהילה הציבורי</label>
+  </form>
+  {% endif %}
+  {% endif %}
+
+  {% if h.is_glory %}
+  <a href="{% url 'crashtech_glory' h.slug %}" class="btn btn-sm btn-warning mb-3"><i class="bi bi-trophy-fill"></i> עמוד התהילה</a>
   {% endif %}
 
   {% if h.challenges_visible %}

@@ -172,6 +172,7 @@
 | test_spr_6_5_2.py (8) | invite grants participant role + emails; non-manager blocked; team creation blocked beyond hardware stock; team size bound enforced; glory consent captured up-front; hardware status pending→shipped→received; inventory view counts; countdown-to-start on detail during readiness |
 | test_spr_6_5_3.py (7) | challenges unlock on event page at kickoff (secret before); team member submits video link + zip → pending; non-member blocked; resubmit updates same row; submission blocked before kickoff + after deadline (hard gate); QR token phone-upload binds the right team+challenge |
 | test_spr_6_5_4.py (7) | judge queue is blind (team name hidden); approve awards point_value + notifies team; reject stores feedback, 0 points (points only after approval); participant cannot review; resubmission reopens rejected→pending; organizer-only bonus tiers (judge blocked); anonymized leaderboard (approved + separate pending, anon labels) |
+| test_spr_6_5_5.py (6) | organizer generates ranked certificates (winner/runner-up/participation, tie-break); public certificate view; non-organizer blocked; Glory Page hidden until published then public (winner revealed); team member post-event consent opt-out; anonymized public video gallery (consenting+approved only) |
 
 ## EPIC-7 — QA Hardening (`tests/test_spr_7_1..7_8.py`)
 

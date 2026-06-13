@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}עריכת Glory - {{ h.name }}{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'crashtech_home' %}" style="color:var(--accent-primary)">CrashTech</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'crashtech_manage' h.slug %}" style="color:var(--accent-primary)">{{ h.name }}</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">עריכת Glory</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+  <div class="col-lg-7">
+    <h1 class="h4 mb-3"><i class="bi bi-trophy-fill me-1"></i> עמוד התהילה</h1>
+    {% if messages %}{% for m in messages %}<div class="alert alert-{{ m.tags|default:'info' }} py-2 small">{{ m }}</div>{% endfor %}{% endif %}
+    <form method="post" enctype="multipart/form-data" class="card-surface p-4">
+      {% csrf_token %}
+      <label class="form-label">היילייטים (Markdown)</label>
+      <textarea name="highlights" rows="5" class="form-control mb-3">{{ glory.highlights }}</textarea>
+      <label class="form-label">הוספת תמונות</label>
+      <input type="file" name="photos" multiple accept="image/*" class="form-control mb-3">
+      <label class="d-block mb-3"><input type="checkbox" name="publish" {% if glory.published %}checked{% endif %}> פרסם את עמוד התהילה (ציבורי וקבוע)</label>
+      <button class="btn btn-primary">שמירה</button>
+      <a href="{% url 'crashtech_glory' h.slug %}" class="btn btn-outline-secondary">תצוגה מקדימה</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

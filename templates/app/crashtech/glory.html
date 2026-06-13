@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load course_tags %}
+{% block title %}Glory - {{ h.name }}{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'crashtech_home' %}" style="color:var(--accent-primary)">CrashTech</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">{{ h.name }} · Glory</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="py-4">
+  <div class="text-center mb-4">
+    <i class="bi bi-trophy-fill" style="font-size:2.5rem; color:var(--accent-cta,#f59e0b)"></i>
+    <h1 class="h2 mb-0">{{ h.name }}</h1>
+    <p class="text-muted">עמוד התהילה · {{ h.end_at|date:"F Y" }}</p>
+    {% if not glory.published %}<span class="badge bg-warning text-dark">טיוטה (לא פורסם)</span>{% endif %}
+  </div>
+
+  {% if glory.highlights %}
+  <div class="card-surface p-4 mb-4">{{ glory.highlights|markdown }}</div>
+  {% endif %}
+
+  <h2 class="h5 mb-3"><i class="bi bi-bar-chart-fill" style="color:var(--accent-primary)"></i> דירוג סופי</h2>
+  <div class="row g-2 mb-4">
+    {% for row in ranking %}
+    <div class="col-md-6">
+      <div class="card-surface p-3 d-flex justify-content-between align-items-center {% if forloop.counter <= 2 %}border{% endif %}"
+           {% if forloop.first %}style="border-color:var(--accent-cta,#f59e0b)!important"{% endif %}>
+        <span>
+          {% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% else %}{{ forloop.counter }}.{% endif %}
+          <strong>{{ row.team.name }}</strong>
+        </span>
+        <span class="badge bg-success">{{ row.approved }} נק'</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if photos %}
+  <h2 class="h5 mb-3"><i class="bi bi-images"></i> רגעים מהאירוע</h2>
+  <div class="row g-2 mb-4">
+    {% for p in photos %}
+    <div class="col-6 col-md-3"><img src="{{ p.image.url }}" class="img-fluid rounded" alt="{{ p.caption }}"></div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="text-center">
+    <a href="{% url 'crashtech_gallery' h.slug %}" class="btn btn-outline-primary"><i class="bi bi-camera-video"></i> גלריית הוידאו</a>
+  </div>
+</div>
+{% endblock %}

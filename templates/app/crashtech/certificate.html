@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}תעודה - {{ cert.hackathon.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-5">
+  <div class="col-lg-7">
+    <div class="card-surface p-5 text-center" style="border:2px solid var(--accent-primary)">
+      <i class="bi bi-award-fill" style="font-size:3rem; color:var(--accent-cta,#f59e0b)"></i>
+      <h1 class="h3 mt-2">תעודת {{ cert.type_label_he }}</h1>
+      <p class="text-muted">CrashTech · {{ cert.hackathon.name }}</p>
+      <hr>
+      <p class="h5">{{ cert.team.name }}</p>
+      <p class="text-muted small">הונפק {{ cert.generated_at|date:"j בF Y" }}</p>
+      {% if cert.type == 'winner' %}<p class="badge bg-warning text-dark">🥇 מקום ראשון</p>
+      {% elif cert.type == 'runner_up' %}<p class="badge bg-secondary">🥈 מקום שני</p>{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -88,6 +88,38 @@ def compute_leaderboard(hackathon, anonymized=True):
     return rows
 
 
+def final_ranking(hackathon):
+    """Ordered teams for winner/runner-up (REQ-6.5.17). Tie-break (DEC-59):
+    approved points → most challenges solved → earliest last-approved submission
+    → most bonus placements."""
+    import datetime
+    teams = hackathon.teams.prefetch_related("submissions")
+    ranked = []
+    for team in teams:
+        approved = solved = bonus_count = 0
+        last_approved = datetime.datetime.max.replace(tzinfo=datetime.timezone.utc)
+        latest = None
+        for s in team.submissions.all():
+            if s.status == "approved":
+                approved += (s.points_awarded or 0) + (s.bonus_points_awarded or 0)
+                solved += 1
+                if s.bonus_points_awarded:
+                    bonus_count += 1
+                ts = s.reviewed_at or s.submitted_at
+                if latest is None or ts > latest:
+                    latest = ts
+        if latest is not None:
+            last_approved = latest
+        ranked.append({
+            "team": team, "approved": approved, "solved": solved,
+            "bonus_count": bonus_count, "last_approved": last_approved,
+        })
+    # sort: more approved, more solved, earlier last-approved, more bonus
+    ranked.sort(key=lambda r: (-r["approved"], -r["solved"],
+                               r["last_approved"], -r["bonus_count"]))
+    return ranked
+
+
 def team_of(user, hackathon):
     """The team `user` belongs to in `hackathon`, or None."""
     if not user or not getattr(user, "is_authenticated", False):

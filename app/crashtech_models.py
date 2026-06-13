@@ -6,6 +6,7 @@ Django registers them under the `app` label. The lifecycle state machine on
 ``Hackathon`` is the spine — every CrashTech surface gates on ``status``.
 """
 import secrets
+import uuid as _uuid
 
 from django.contrib.auth.models import User
 from django.db import models
@@ -218,3 +219,42 @@ class QRToken(models.Model):
             tok.expires_at = timezone.now() + timezone.timedelta(hours=ttl_hours)
             tok.save(update_fields=["token", "expires_at"])
         return tok
+
+
+class Certificate(models.Model):
+    """A CrashTech certificate (REQ-6.5.17): participation for all teams,
+    winner / runner-up for the top two by final ranking."""
+    TYPES = [("participation", "Participation"), ("winner", "Winner"),
+             ("runner_up", "Runner-up")]
+    hackathon = models.ForeignKey(Hackathon, on_delete=models.CASCADE, related_name="certificates")
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="certificates")
+    type = models.CharField(max_length=14, choices=TYPES, default="participation")
+    cert_id = models.UUIDField(default=_uuid.uuid4, unique=True, editable=False)
+    generated_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [("hackathon", "team")]
+
+    @property
+    def type_label_he(self):
+        return {"winner": "מקום ראשון", "runner_up": "מקום שני",
+                "participation": "השתתפות"}.get(self.type, self.type)
+
+
+class GloryPage(models.Model):
+    """Permanent public memorial for a finished hackathon (REQ-6.5.18)."""
+    hackathon = models.OneToOneField(Hackathon, on_delete=models.CASCADE, related_name="glory_page")
+    published = models.BooleanField(default=False)
+    highlights = models.TextField(blank=True, default="")  # markdown
+    published_at = models.DateTimeField(null=True, blank=True)
+
+
+class GloryPhoto(models.Model):
+    """A curated event photo on the Glory Page (REQ-6.5.18)."""
+    glory_page = models.ForeignKey(GloryPage, on_delete=models.CASCADE, related_name="photos")
+    image = models.ImageField(upload_to="crashtech/glory/")
+    caption = models.CharField(max_length=200, blank=True, default="")
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "id"]

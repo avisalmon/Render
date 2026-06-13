@@ -551,7 +551,7 @@ build starts with EPIC-6.1. Epics are sequenced; one big thing at a time.
 | EPIC-6.2 | Forums & Q&A — accepted answers, tags, search, course-anchored threads, AI assist | §6.2 | DONE ✅ |
 | EPIC-6.3 | Showcase (דוכן השוויץ) — stands, wall + brag feed, reactions, comments, messaging, gamification | §6.3 | DONE ✅ |
 | EPIC-6.4 | Feed & Tips — community home, composer, weekly digest, homepage hook | §6.4 | IN PROGRESS |
-| EPIC-6.5 | CrashTech — hardware hackathon platform (lifecycle, roles, teams, hardware logistics, secret timed challenges, blind judging, dual scoring, anonymized leaderboard, certificates, Glory Page) | §6.5 | SPECCED |
+| EPIC-6.5 | CrashTech — hardware hackathon platform (lifecycle, roles, teams, hardware logistics, secret timed challenges, blind judging, dual scoring, anonymized leaderboard, certificates, Glory Page) | §6.5 | DONE ✅ |
 | EPIC-6.6 | Chat & Groups — channels, course groups, safe DMs, member directory | §6.6 | PROPOSED |
 | EPIC-6.7 | Events & Meetups — RSVP, calendar, recordings, recurring series, physical meetups | §6.7 | PROPOSED |
 
@@ -799,6 +799,15 @@ gate → certificates + a published Glory Page — with minors-safe defaults, te
 | F-6.5.4.3 | Organizer-only bonus tiers: rank top-N of a performance/creativity challenge → bonus points | REQ-6.5.13 | DONE |
 | F-6.5.4.4 | Anonymized live leaderboard: approved points (+bonus) + separate pending indicator, stable anon labels | REQ-6.5.15 | DONE |
 | F-6.5.4.5 | Notifications: submission approved/rejected (reuse notify) | REQ-6.5.21 | DONE |
+
+#### SPR-6.5.5 — Glory (certificates, memorial page, consent, public gallery)
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-6.5.5.1 | `Certificate` model + organizer generation (participation all; winner/runner-up by final ranking w/ tie-break) + public certificate view | REQ-6.5.17 | DONE |
+| F-6.5.5.2 | `GloryPage` + `GloryPhoto` editor (highlights, photos, publish) + permanent public memorial (final rankings, highlights) | REQ-6.5.18 | DONE |
+| F-6.5.5.3 | Post-event consent opt-out for team members (toggles glory_consent) | REQ-6.5.19 | DONE |
+| F-6.5.5.4 | Public anonymized video gallery — approved demos from consenting teams only | REQ-6.5.20 | DONE |
 
 ---
 

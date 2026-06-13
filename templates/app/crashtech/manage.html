@@ -36,6 +36,12 @@
     </form>
     {% endif %}
     {% if h.can_edit_setup %}<a href="{% url 'crashtech_edit' h.slug %}" class="btn btn-sm btn-outline-secondary">עריכת הגדרות</a>{% endif %}
+    {% if h.status == 'closed' or h.status == 'glory' %}
+      <form method="post" action="{% url 'crashtech_certificates' h.slug %}" class="d-inline">{% csrf_token %}
+        <button class="btn btn-sm btn-outline-success"><i class="bi bi-award"></i> הנפק תעודות</button>
+      </form>
+      <a href="{% url 'crashtech_glory_edit' h.slug %}" class="btn btn-sm btn-outline-warning"><i class="bi bi-trophy"></i> עמוד תהילה</a>
+    {% endif %}
     <a href="{% url 'crashtech_detail' h.slug %}" class="btn btn-sm btn-link">תצוגת משתתף ←</a>
   </div>
 
