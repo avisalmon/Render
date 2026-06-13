@@ -165,8 +165,8 @@
     <button class="btn btn-sm btn-light ms-3" onclick="acceptCookies()">אישור</button>
   </div>
 
-  {% if user.is_authenticated and not user.profile.email_verified and user.email %}
-  <!-- Email-not-verified nudge (REQ-7.2.1) -->
+  {% if show_verify_banner %}
+  <!-- Email-not-verified nudge (REQ-7.2.1) — password accounts only, not Google/GitHub -->
   <div class="py-2 px-3 text-center small" style="background:var(--accent-warm,#f59e0b); color:#000">
     📧 כדי לאבטח את החשבון, אמתו את האימייל שלך.
     <a href="{% url 'resend_verification' %}" class="fw-semibold text-dark">שליחת קישור אימות מחדש</a>

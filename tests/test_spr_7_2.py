@@ -84,3 +84,17 @@ def test_google_signup_trusted_verified():
     handle_social_signup(req, u)
     u.profile.refresh_from_db()
     assert u.profile.email_verified is True
+
+
+@pytest.mark.django_db
+def test_verify_banner_hidden_for_social_account_users():
+    """T-F-7.2.1-3: a Google/GitHub user (social account) never sees the
+    verify-email nudge, even if the flag wasn't set."""
+    from allauth.socialaccount.models import SocialAccount
+    u = User.objects.create_user("socialguy", password="x", email="s@example.com")
+    # unverified flag + has a social account => banner must NOT show
+    SocialAccount.objects.create(user=u, provider="google", uid="g-123")
+    c = Client()
+    c.force_login(u)
+    body = c.get("/").content.decode()
+    assert "אמתו את האימייל" not in body
