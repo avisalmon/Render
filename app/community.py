@@ -33,13 +33,59 @@ def category_meta(slug):
 
 
 # ---------------------------------------------------------------------------
+# Showcase stands (REQ-6.3.8, DEC-49): code-defined, extensible one-line.
+# ---------------------------------------------------------------------------
+
+SHOWCASE_STANDS = {
+    "ai": {"title": "כלי AI ופרויקטים", "icon": "bi-robot", "order": 1,
+           "blurb": "בוטים, סוכנים, אוטומציות וכל מה שבניתם עם AI"},
+    "maker": {"title": "מייקרים וחומרה", "icon": "bi-cpu", "order": 2,
+              "blurb": "ארדואינו, MicroPython, רובוטים, חיישנים והדפסות תלת-מימד"},
+    "games": {"title": "משחקים ורטרו", "icon": "bi-joystick", "order": 3,
+              "blurb": "משחקים שכתבתם, רטרו, פיקסל-ארט ואינטראקציות"},
+    "web": {"title": "אתרים אישיים", "icon": "bi-globe2", "order": 4,
+            "blurb": "אתרי תיק עבודות, בלוגים ופרויקטים ברשת"},
+    "research": {"title": "מחקר ואקדמיה", "icon": "bi-journal-text", "order": 5,
+                 "blurb": "ניסויים, מאמרים, ניתוחי נתונים ופרויקטים אקדמיים"},
+    "app": {"title": "אפליקציות ואוטומציות", "icon": "bi-phone", "order": 6,
+            "blurb": "אפליקציות מובייל, כלי דסקטופ וזרימות עבודה"},
+    "other": {"title": "אחר", "icon": "bi-stars", "order": 7,
+              "blurb": "כל דבר אחר ששווה להשוויץ בו"},
+}
+
+
+def showcase_stands():
+    """Ordered [(slug, meta)]."""
+    return sorted(SHOWCASE_STANDS.items(), key=lambda kv: kv[1]["order"])
+
+
+def stand_meta(slug):
+    return SHOWCASE_STANDS.get(slug)
+
+
+def can_message(sender, recipient):
+    """REQ-6.3.12 / DEC-41: DMs are member-to-member, opt-in, and blocked for
+    student-role members both ways; honor blocks. Returns (ok, reason)."""
+    from .models import MessageBlock
+    if sender == recipient:
+        return False, "אי אפשר לשלוח הודעה לעצמך"
+    if is_student(sender) or is_student(recipient):
+        return False, "הודעות אישיות אינן זמינות לחשבונות תלמיד/ה (מטעמי בטיחות)"
+    if MessageBlock.objects.filter(blocker=recipient, blocked=sender).exists():
+        return False, "לא ניתן לשלוח הודעה לחבר/ה הזה"
+    return True, ""
+
+
+# ---------------------------------------------------------------------------
 # Reputation (REQ-6.1.3): point rules + award helper.
 # ---------------------------------------------------------------------------
 
 POINTS = {
     "accepted_answer": 15,   # my answer was accepted
     "upvote_received": 2,    # someone upvoted my post
-    "showcase_published": 10,  # EPIC-6.3
+    "showcase_published": 10,  # EPIC-6.3 — published a project
+    "showcase_star": 1,        # EPIC-6.3 — my project got a star
+    "showcase_featured": 15,   # EPIC-6.3 — my project was featured
     "challenge_win": 25,       # EPIC-6.5
     "tip_reaction": 1,         # EPIC-6.4
 }
@@ -56,6 +102,12 @@ BADGES = {
                "description": "10 תשובות שלך התקבלו"},
     "builder": {"title": "בונה", "icon": "bi-hammer",
                 "description": "פרסמת פרויקט ראשון בדוכן ההשוויץ"},
+    "showcase_master": {"title": "אמן התצוגה", "icon": "bi-easel-fill",
+                        "description": "פרסמת 5 פרויקטים בדוכן ההשוויץ"},
+    "rising_star": {"title": "כוכב עולה", "icon": "bi-star-fill",
+                    "description": "פרויקט שלך אסף 25 כוכבים"},
+    "featured": {"title": "מוצג נבחר", "icon": "bi-patch-check-fill",
+                 "description": "פרויקט שלך נבחר לנבחרת השבוע"},
     "challenge_champion": {"title": "אלוף אתגר", "icon": "bi-trophy-fill",
                            "description": "זכית באתגר קהילה"},
     "tipster": {"title": "מדריך", "icon": "bi-lightbulb-fill",

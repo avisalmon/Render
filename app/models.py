@@ -233,6 +233,104 @@ class ThreadSubscription(models.Model):
         unique_together = [("user", "thread", "category")]
 
 
+# ---------------------------------------------------------------------------
+# Showcase — דוכן ההשוויץ (EPIC-6.3). Stand definitions live in app/community.py.
+# ---------------------------------------------------------------------------
+
+class ShowcaseProject(models.Model):
+    """A member's published project (REQ-6.3.1). Star count drives wall ranking."""
+    STATUS = [("draft", "טיוטה"), ("pending", "בבדיקה"), ("published", "פורסם")]
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="showcase_projects")
+    stand = models.CharField(max_length=30, default="other")  # slug from community.SHOWCASE_STANDS
+    title = models.CharField(max_length=200)
+    tagline = models.CharField(max_length=200, blank=True, default="")
+    story = models.TextField(blank=True, default="")  # markdown
+    cover = models.ImageField(upload_to="showcase/", blank=True, null=True)
+    video_url = models.CharField(max_length=500, blank=True, default="")  # YouTube/Bunny
+    repo_url = models.CharField(max_length=500, blank=True, default="")
+    live_url = models.CharField(max_length=500, blank=True, default="")
+    course = models.ForeignKey("Course", on_delete=models.SET_NULL, null=True, blank=True,
+                               related_name="showcase_projects")
+    tags = models.JSONField(default=list, blank=True)
+    status = models.CharField(max_length=12, choices=STATUS, default="draft")
+    is_featured = models.BooleanField(default=False)
+    star_count = models.PositiveIntegerField(default=0)  # denormalized for ranking
+    is_hidden = models.BooleanField(default=False)  # moderation
+    created_at = models.DateTimeField(auto_now_add=True)
+    published_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        ordering = ["-published_at", "-created_at"]
+
+    @property
+    def stand_meta(self):
+        from .community import SHOWCASE_STANDS
+        return SHOWCASE_STANDS.get(self.stand, {"title": self.stand, "icon": "bi-stars"})
+
+    @property
+    def is_live(self):
+        return self.status == "published" and not self.is_hidden
+
+    def __str__(self):
+        return self.title
+
+
+class ProjectImage(models.Model):
+    """Gallery image for a showcase project (REQ-6.3.1)."""
+    project = models.ForeignKey(ShowcaseProject, on_delete=models.CASCADE, related_name="images")
+    image = models.ImageField(upload_to="showcase/gallery/")
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "id"]
+
+
+class ProjectReaction(models.Model):
+    """Star (primary) + emoji reactions, one per member per kind (REQ-6.3.3)."""
+    KINDS = [("star", "⭐"), ("fire", "🔥"), ("love", "❤️"), ("clap", "👏"), ("wow", "🤯")]
+    project = models.ForeignKey(ShowcaseProject, on_delete=models.CASCADE, related_name="reactions")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="project_reactions")
+    kind = models.CharField(max_length=10, default="star")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [("project", "user", "kind")]
+
+
+class ProjectComment(models.Model):
+    """A comment on a showcase project (REQ-6.3.10)."""
+    project = models.ForeignKey(ShowcaseProject, on_delete=models.CASCADE, related_name="comments")
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="project_comments")
+    body = models.TextField()  # markdown
+    is_hidden = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+
+class DirectMessage(models.Model):
+    """Member-to-member DM (REQ-6.3.12). Student role blocked both ways (DEC-41)."""
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sent_messages")
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name="received_messages")
+    body = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    read_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+
+class MessageBlock(models.Model):
+    """One member blocks another from messaging them (REQ-6.3.12)."""
+    blocker = models.ForeignKey(User, on_delete=models.CASCADE, related_name="message_blocks")
+    blocked = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blocked_by")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [("blocker", "blocked")]
+
+
 class Note(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=200)

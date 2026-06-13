@@ -12,6 +12,7 @@ from .models import (
     Course,
     CourseCertificate,
     CourseMaterial,
+    DirectMessage,
     Enrollment,
     Entitlement,
     ForumPost,
@@ -22,7 +23,9 @@ from .models import (
     ModerationLog,
     NewsletterSubscriber,
     Note,
+    ProjectComment,
     SeatEvent,
+    ShowcaseProject,
     SystemPrompt,
     UsageLog,
     UserProfile,
@@ -48,7 +51,10 @@ class ContentReportAdmin(admin.ModelAdmin):
     def hide_reported_content(self, request, queryset):
         from django.utils import timezone
         for report in queryset:
-            model = {"thread": ForumThread, "post": ForumPost}.get(report.content_type)
+            model = {
+                "thread": ForumThread, "post": ForumPost,
+                "project": ShowcaseProject, "projectcomment": ProjectComment,
+            }.get(report.content_type)
             if model:
                 model.objects.filter(pk=report.object_id).update(is_hidden=True)
             report.status = "actioned"
@@ -75,6 +81,35 @@ class ForumThreadAdmin(admin.ModelAdmin):
 admin.site.register(ForumPost)
 admin.site.register(BadgeAward)
 admin.site.register(CommunityReputation)
+
+
+@admin.register(ShowcaseProject)
+class ShowcaseProjectAdmin(admin.ModelAdmin):
+    """Showcase moderation + the student-work review queue (REQ-6.3.7)."""
+    list_display = ("title", "author", "stand", "status", "is_featured",
+                    "star_count", "is_hidden", "published_at")
+    list_filter = ("status", "stand", "is_featured", "is_hidden")
+    search_fields = ("title", "tagline", "author__username")
+    actions = ["approve_projects", "feature_projects"]
+
+    @admin.action(description="Approve (publish) selected projects")
+    def approve_projects(self, request, queryset):
+        from django.utils import timezone
+        for p in queryset.filter(status="pending"):
+            p.status = "published"
+            if not p.published_at:
+                p.published_at = timezone.now()
+            p.save()
+
+    @admin.action(description="Toggle featured (נבחרת השבוע)")
+    def feature_projects(self, request, queryset):
+        for p in queryset:
+            p.is_featured = not p.is_featured
+            p.save(update_fields=["is_featured"])
+
+
+admin.site.register(ProjectComment)
+admin.site.register(DirectMessage)
 
 
 @admin.register(LearnerProfile)

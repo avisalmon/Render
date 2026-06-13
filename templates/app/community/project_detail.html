@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% load course_tags %}
+{% block title %}{{ project.title }} - דוכן ההשוויץ{% endblock %}
+
+{% block extra_head %}
+<meta property="og:title" content="{{ project.title }} - babook">
+<meta property="og:description" content="{{ project.tagline|default:project.title }}">
+{% if project.cover %}<meta property="og:image" content="https://babook.co.il{{ project.cover.url }}">{% endif %}
+<meta property="og:type" content="article">
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+  <div class="col-lg-9">
+    <nav aria-label="breadcrumb"><ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{% url 'community' %}">קהילה</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'showcase_wall' %}">דוכן ההשוויץ</a></li>
+      <li class="breadcrumb-item active">{{ project.title|truncatechars:30 }}</li>
+    </ol></nav>
+
+    {% if not project.is_live %}
+    <div class="alert alert-warning py-2 small">
+      {% if project.status == 'pending' %}הפרויקט בבדיקה - יפורסם אחרי אישור צוות 🙂{% else %}טיוטה - רק את/ה רואה אותה. <a href="{% url 'showcase_edit' project.pk %}">המשך עריכה</a>{% endif %}
+    </div>
+    {% endif %}
+    {% if messages %}{% for m in messages %}<div class="alert alert-{{ m.tags|default:'info' }} py-2">{{ m }}</div>{% endfor %}{% endif %}
+
+    {% if project.cover %}
+    <img src="{{ project.cover.url }}" alt="{{ project.title }}" class="rounded mb-3" style="width:100%; max-height:420px; object-fit:cover;">
+    {% endif %}
+
+    <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+      <div>
+        <h1 class="h3 mb-1">{% if project.is_featured %}<i class="bi bi-trophy-fill" style="color:var(--accent-cta,#f59e0b)" title="נבחרת השבוע"></i> {% endif %}{{ project.title }}</h1>
+        {% if project.tagline %}<p class="text-muted">{{ project.tagline }}</p>{% endif %}
+      </div>
+      <div class="d-flex gap-1">
+        {% if project.author == user or user.is_staff %}
+        <a href="{% url 'showcase_edit' project.pk %}" class="btn btn-sm btn-outline-secondary" aria-label="עריכה"><i class="bi bi-pencil"></i></a>
+        {% endif %}
+        {% if user.is_staff %}
+        <form method="post" action="{% url 'showcase_feature' project.pk %}">{% csrf_token %}
+          <button class="btn btn-sm {% if project.is_featured %}btn-warning{% else %}btn-outline-secondary{% endif %}" title="{% if project.is_featured %}הסרה מנבחרת השבוע{% else %}סימון כנבחרת השבוע{% endif %}" aria-label="נבחרת השבוע"><i class="bi bi-trophy{% if project.is_featured %}-fill{% endif %}"></i></button>
+        </form>
+        {% endif %}
+        {% include "app/community/_report.html" with content_type="project" object_id=project.pk %}
+      </div>
+    </div>
+
+    <div class="small text-muted mb-3 d-flex gap-2 align-items-center flex-wrap">
+      {% include "app/community/_author.html" with author=project.author %}
+      <span class="badge" style="background:var(--bg-elevated,#1a1d24)"><i class="bi {{ project.stand_meta.icon }}"></i> {{ project.stand_meta.title }}</span>
+      {% if project.course %}<a href="/courses/{{ project.course.slug }}/" class="badge text-decoration-none" style="background:var(--bg-elevated,#1a1d24)">📚 נבנה בעקבות {{ project.course.title }}</a>{% endif %}
+      {% for tag in project.tags %}<a href="{% url 'showcase_wall' %}?tag={{ tag|urlencode }}" class="badge bg-dark text-decoration-none">#{{ tag }}</a>{% endfor %}
+    </div>
+
+    <!-- Reactions bar — star is the primary signal (drives ranking), emoji are flavor -->
+    <div class="d-flex gap-2 mb-3 flex-wrap align-items-center" id="reactions" data-project="{{ project.pk }}">
+      <button class="btn react-btn {% if 'star' in my_reactions %}btn-warning{% else %}btn-outline-warning{% endif %}"
+              data-kind="star" {% if project.author == user %}disabled title="זה הפרויקט שלך"{% endif %}
+              aria-label="הוסיפו כוכב" aria-pressed="{% if 'star' in my_reactions %}true{% else %}false{% endif %}">
+        <i class="bi bi-star-fill"></i> כוכב <span class="react-count">{{ reaction_counts|get_item:'star'|default:0 }}</span>
+      </button>
+      <span class="vr"></span>
+      {% for kind, emoji in reaction_kinds.items %}{% if kind != 'star' %}
+      <button class="btn btn-sm react-btn {% if kind in my_reactions %}btn-primary{% else %}btn-outline-secondary{% endif %}"
+              data-kind="{{ kind }}" {% if project.author == user %}disabled title="זה הפרויקט שלך"{% endif %}
+              aria-label="תגובה {{ emoji }}" aria-pressed="{% if kind in my_reactions %}true{% else %}false{% endif %}">
+        {{ emoji }} <span class="react-count">{{ reaction_counts|get_item:kind|default:0 }}</span>
+      </button>
+      {% endif %}{% endfor %}
+      {% if can_message %}
+      <a href="{% url 'messages_thread' project.author.username %}" class="btn btn-sm btn-outline-primary ms-auto"><i class="bi bi-chat-dots"></i> שלחו הודעה לבונה</a>
+      {% elif user.is_authenticated and project.author != user %}
+      <span class="small text-muted ms-auto">הודעות אישיות אינן זמינות לחשבונות תלמיד/ה</span>
+      {% endif %}
+    </div>
+
+    <!-- Demo video -->
+    {% if embed_url %}
+    <div class="ratio ratio-16x9 mb-3 rounded overflow-hidden">
+      <iframe src="{{ embed_url }}" allowfullscreen loading="lazy" title="הדגמה"></iframe>
+    </div>
+    {% endif %}
+
+    <!-- Story -->
+    {% if story_html %}<div class="card-surface p-4 mb-3 lesson-notes">{{ story_html|safe }}</div>{% endif %}
+
+    <!-- Links + gallery -->
+    <div class="d-flex gap-2 mb-3 flex-wrap">
+      {% if project.repo_url %}<a href="{{ project.repo_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-light"><i class="bi bi-github"></i> קוד</a>{% endif %}
+      {% if project.live_url %}<a href="{{ project.live_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-light"><i class="bi bi-box-arrow-up-right"></i> הדגמה חיה</a>{% endif %}
+      <button class="btn btn-sm btn-outline-light" id="share-btn"><i class="bi bi-share"></i> שיתוף</button>
+      <a class="btn btn-sm btn-outline-light" target="_blank" rel="noopener" aria-label="שיתוף בוואטסאפ"
+         href="https://wa.me/?text={{ project.title|urlencode }}%20-%20https://babook.co.il{{ request.path|urlencode }}"><i class="bi bi-whatsapp"></i></a>
+    </div>
+
+    {% if gallery %}
+    <div class="row g-2 mb-4">
+      {% for img in gallery %}
+      <div class="col-6 col-md-4"><a href="{{ img.image.url }}" target="_blank"><img src="{{ img.image.url }}" class="rounded" style="width:100%; height:140px; object-fit:cover;" alt="גלריה"></a></div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Comments -->
+    <h2 class="h5 mb-2"><i class="bi bi-chat-square-text"></i> תגובות ({{ comments|length }})</h2>
+    {% for c in comments %}
+    <div class="card-surface p-3 mb-2">
+      <div class="lesson-notes">{{ c.html|safe }}</div>
+      <div class="small text-muted mt-2 d-flex justify-content-between">
+        <span>{% include "app/community/_author.html" with author=c.obj.author %} · {{ c.obj.created_at|date:"j בF H:i" }}</span>
+        {% include "app/community/_report.html" with content_type="projectcomment" object_id=c.obj.pk %}
+      </div>
+    </div>
+    {% empty %}<p class="text-muted small">תהיו הראשונים להגיב 🙂</p>{% endfor %}
+
+    {% if user.is_authenticated %}
+    <form method="post" action="{% url 'showcase_comment' project.pk %}" class="card-surface p-3 mt-2">
+      {% csrf_token %}
+      <textarea class="form-control mb-2" name="body" rows="3" required placeholder="כתבו תגובה מעודדת..."></textarea>
+      {% if not user.profile.guidelines_accepted_at %}
+      <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="accept_guidelines" id="ag" required>
+        <label class="form-check-label small" for="ag">אני מקבל/ת את <a href="{% url 'community_guidelines' %}" target="_blank">כללי הקהילה</a></label></div>
+      {% endif %}
+      <button class="btn btn-sm btn-primary"><i class="bi bi-send"></i> הגיבו</button>
+    </form>
+    {% else %}
+    <a class="btn btn-primary mt-2" href="/join/?next={{ request.path|urlencode }}">הירשמו כדי להגיב ולדרג</a>
+    {% endif %}
+
+    {% if more_projects %}
+    <h2 class="h6 mt-4 mb-2">עוד מהבונה הזה</h2>
+    <div class="row g-3">
+      {% for p in more_projects %}<div class="col-6 col-md-4">{% include "app/community/_project_card.html" %}</div>{% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+(function(){
+  var csrf = '{{ csrf_token }}';
+  {% if user.is_authenticated %}
+  document.querySelectorAll('.react-btn').forEach(function(btn){
+    if (btn.disabled) return;
+    btn.addEventListener('click', function(){
+      fetch('{% url "showcase_react" project.pk %}', {
+        method: 'POST',
+        headers: {'Content-Type':'application/x-www-form-urlencoded', 'X-CSRFToken': csrf},
+        body: 'kind=' + btn.dataset.kind
+      }).then(function(r){return r.json();}).then(function(d){
+        if (!d.ok) return;
+        btn.querySelector('.react-count').textContent = d.count;
+        btn.className = 'btn btn-sm react-btn ' + (d.on ? 'btn-primary' : 'btn-outline-secondary');
+        btn.setAttribute('aria-pressed', d.on ? 'true' : 'false');
+        if (d.on && window.plausible) plausible('project_reaction', {props: {kind: d.kind}});
+      });
+    });
+  });
+  {% else %}
+  document.querySelectorAll('.react-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){ window.location = '/join/?next={{ request.path|urlencode }}'; });
+  });
+  {% endif %}
+  document.querySelectorAll('.report-btn').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      {% if not user.is_authenticated %}window.location='/join/?next={{ request.path|urlencode }}'; return;{% endif %}
+      var reason = prompt('מה הבעיה בתוכן הזה?');
+      if (!reason) return;
+      var fd = new FormData(); fd.append('content_type', btn.dataset.type); fd.append('object_id', btn.dataset.id); fd.append('reason', reason);
+      fetch('{% url "community_report" %}', {method:'POST', headers:{'X-CSRFToken': csrf}, body: fd})
+        .then(function(r){ alert(r.ok ? 'תודה! הדיווח התקבל.' : 'הדיווח לא נשלח - נסו שוב.'); });
+    });
+  });
+  var sb = document.getElementById('share-btn');
+  if (sb) sb.addEventListener('click', function(){
+    var url = 'https://babook.co.il{{ request.path }}';
+    if (navigator.share) { navigator.share({title: '{{ project.title|escapejs }}', url: url}); }
+    else { navigator.clipboard.writeText(url); sb.innerHTML = '<i class="bi bi-check"></i> הקישור הועתק'; }
+  });
+})();
+</script>
+{% endblock %}

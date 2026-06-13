@@ -1,7 +1,15 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path
 
-from . import community_views, course_api, forum_views, onboarding_views, studio_views, views
+from . import (
+    community_views,
+    course_api,
+    forum_views,
+    onboarding_views,
+    showcase_views,
+    studio_views,
+    views,
+)
 
 urlpatterns = [
     path("", views.home, name="home"),
@@ -43,6 +51,21 @@ urlpatterns = [
     path("community/forum/thread/<int:thread_id>/draft/", forum_views.draft_answer, name="forum_draft"),
     path("community/forum/post/<int:post_id>/vote/", forum_views.vote_post, name="forum_vote"),
     path("community/forum/post/<int:post_id>/accept/", forum_views.accept_answer, name="forum_accept"),
+    # --- Showcase / דוכן ההשוויץ (EPIC-6.3) ---
+    path("community/showcase/", showcase_views.showcase_wall, name="showcase_wall"),
+    path("community/showcase/feed/", showcase_views.showcase_feed, name="showcase_feed"),
+    path("community/showcase/new/", showcase_views.project_create, name="showcase_new"),
+    path("community/showcase/stand/<slug:stand>/", showcase_views.showcase_wall, name="showcase_stand"),
+    path("community/showcase/p/<int:project_id>/", showcase_views.project_detail, name="showcase_project"),
+    path("community/showcase/p/<int:project_id>/edit/", showcase_views.project_edit, name="showcase_edit"),
+    path("community/showcase/p/<int:project_id>/delete/", showcase_views.project_delete, name="showcase_delete"),
+    path("community/showcase/p/<int:project_id>/react/", showcase_views.project_react, name="showcase_react"),
+    path("community/showcase/p/<int:project_id>/comment/", showcase_views.project_comment, name="showcase_comment"),
+    path("community/showcase/p/<int:project_id>/feature/", showcase_views.project_feature, name="showcase_feature"),
+    # --- Direct messages (EPIC-6.3, REQ-6.3.12) ---
+    path("community/messages/", community_views.messages_inbox, name="messages_inbox"),
+    path("community/messages/<str:username>/", community_views.message_thread, name="messages_thread"),
+    path("community/messages/<str:username>/block/", community_views.message_block, name="messages_block"),
 
     # Apex section placeholders (coming soon)
     path("services/", views.coming_soon, {"section": "services"}, name="services"),

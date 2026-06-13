@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}שיחה עם {{ other.profile.public_name }} - babook{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+  <div class="col-md-8 col-lg-6">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <a href="{% url 'messages_inbox' %}" class="text-decoration-none">← הודעות</a>
+      <a href="/c/{{ other.username }}/" class="d-flex align-items-center gap-2 text-decoration-none" style="color:var(--text-primary)">
+        <strong>{{ other.profile.public_name }}</strong>
+        {% if other.profile.avatar %}<img src="{{ other.profile.avatar.url }}" width="32" height="32" class="rounded-circle" style="object-fit:cover" alt="">{% endif %}
+      </a>
+      <form method="post" action="{% url 'messages_block' other.username %}">{% csrf_token %}
+        <button class="btn btn-sm btn-link text-secondary p-0" title="{% if is_blocked %}ביטול חסימה{% else %}חסימה{% endif %}">
+          <i class="bi {% if is_blocked %}bi-lock-fill{% else %}bi-slash-circle{% endif %}"></i>
+        </button>
+      </form>
+    </div>
+
+    {% if messages %}{% for m in messages %}<div class="alert alert-{{ m.tags|default:'info' }} py-2">{{ m }}</div>{% endfor %}{% endif %}
+
+    <div class="card-surface p-3 mb-3" style="min-height:200px; max-height:55vh; overflow-y:auto;">
+      {% for m in messages_list %}
+      <div class="mb-2 d-flex {% if m.sender == user %}justify-content-start{% else %}justify-content-end{% endif %}">
+        <span class="badge {% if m.sender == user %}bg-primary{% else %}bg-secondary{% endif %}"
+              style="white-space:normal; text-align:start; font-weight:400; font-size:0.9rem; max-width:80%;">
+          {{ m.body }}
+          <span class="d-block" style="opacity:.6; font-size:0.7rem">{{ m.created_at|date:"j בF H:i" }}</span>
+        </span>
+      </div>
+      {% empty %}<p class="text-muted small text-center">התחילו שיחה 🙂</p>{% endfor %}
+    </div>
+
+    {% if can_send %}
+    <form method="post" class="d-flex gap-2">
+      {% csrf_token %}
+      <input class="form-control" name="body" required placeholder="כתבו הודעה..." autocomplete="off">
+      <button class="btn btn-primary"><i class="bi bi-send"></i></button>
+    </form>
+    {% else %}
+    <div class="alert alert-secondary py-2 small">{{ reason }}</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

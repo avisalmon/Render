@@ -221,3 +221,31 @@
 | T-F-6.2.3.4-1 | Avi Bot draft staff-only | integration | F-6.2.3.4 | draft for staff; 403 others | GREEN |
 | T-F-6.2.3.5-1 | Subscribers notified | integration | F-6.2.3.5 | reply + answer notifications | GREEN |
 | T-F-6.1.4.1-2 | Guidelines next anti-open-redirect | integration | F-6.1.4.1 | external next -> /community/ | GREEN |
+
+
+## EPIC-6.3 — Showcase (דוכן ההשוויץ)
+
+**Sprint goal:** Projects across stands, wall + brag feed, reactions, comments, messaging, gamification, integration.
+**Test file:** `tests/test_spr_6_3.py`
+
+| Test ID | Description | Type | Feature | Expected result | Status |
+|---|---|---|---|---|---|
+| T-F-6.3.1.3-1 | Publish awards points + builder badge | integration | F-6.3.1.3 | +10, badge, published | GREEN |
+| T-F-6.3.1.3-2 | Draft private until published | integration | F-6.3.1.3 | stranger 404, owner 200 | GREEN |
+| T-F-6.3.1.6-1 | Student work -> review queue | integration | F-6.3.1.6 | pending, not on wall | GREEN |
+| T-F-6.3.3.4-1 | showcase_master badge at 5 | integration | F-6.3.3.4 | badge awarded | GREEN |
+| T-F-6.3.1.4-1 | Wall lists + stand filter | integration | F-6.3.1.4 | filtered by stand | GREEN |
+| T-F-6.3.1.4-2 | Tag filter SQLite-safe (regression) | integration | F-6.3.1.4 | no crash, matches | GREEN |
+| T-F-6.3.1.4-3 | Featured row + top sort | integration | F-6.3.1.4 | featured shown, sorted | GREEN |
+| T-F-6.3.2.3-1 | Brag feed read-public | integration | F-6.3.2.3 | 200 + projects | GREEN |
+| T-F-6.3.1.5-1 | Anonymous view, create walled | integration | F-6.3.1.5 | view 200, new -> /join/ | GREEN |
+| T-F-6.3.2.1-1 | Star toggle: count/points/notify | integration | F-6.3.2.1 | +1, notify, toggle | GREEN |
+| T-F-6.3.2.1-2 | Emoji reaction + no self-react | integration | F-6.3.2.1 | fire toggles; self 400 | GREEN |
+| T-F-6.3.3.4-2 | rising_star badge at 25 stars | integration | F-6.3.3.4 | badge awarded | GREEN |
+| T-F-6.3.2.2-1 | Comment notifies author | integration | F-6.3.2.2 | comment + notify | GREEN |
+| T-F-6.3.3.4-3 | Staff feature awards + notify | integration | F-6.3.3.4 | +15, badge; non-staff 403 | GREEN |
+| T-F-6.3.3.1-1 | DM send + notify | integration | F-6.3.3.1 | message + notify | GREEN |
+| T-F-6.3.3.1-2 | Students cannot message | integration | F-6.3.3.1 | blocked + notice | GREEN |
+| T-F-6.3.3.1-3 | Block prevents messages | integration | F-6.3.3.1 | no message stored | GREEN |
+| T-F-6.3.3.2-1 | Project on profile + course | integration | F-6.3.3.2/3 | shown both places | GREEN |
+| T-F-6.3.3.5-1 | Follower notified on publish | integration | F-6.3.3.5 | notification fired | GREEN |

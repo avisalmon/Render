@@ -11,6 +11,18 @@
 
   {% include "app/community/_guest_note.html" %}
 
+  {% if recent_projects %}
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h2 class="h5 mb-0"><i class="bi bi-easel2-fill" style="color:var(--accent-primary)"></i> מהדוכן</h2>
+    <a href="{% url 'showcase_wall' %}" class="small text-decoration-none">לכל הפרויקטים ←</a>
+  </div>
+  <div class="row g-3 mb-4">
+    {% for p in recent_projects %}
+    <div class="col-6 col-lg-3">{% include "app/community/_project_card.html" %}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
   <div class="row g-4">
     <div class="col-lg-8">
       <div class="d-flex justify-content-between align-items-center mb-2">
@@ -44,11 +56,11 @@
           </a>
         </div>
         <div class="col-md-6">
-          <div class="card-surface p-3" style="opacity:.7">
-            <i class="bi bi-stars me-1"></i><strong>דוכן ההשוויץ</strong>
-            <span class="badge bg-secondary">בקרוב</span>
-            <p class="small text-muted mb-0">גלריית הפרויקטים של הקהילה - בדרך אליכם</p>
-          </div>
+          <a href="{% url 'showcase_wall' %}" class="card-surface d-block p-3 text-decoration-none" style="color:var(--text-primary)">
+            <i class="bi bi-easel2-fill me-1" style="color:var(--accent-primary)"></i>
+            <strong>דוכן ההשוויץ</strong>
+            <p class="small text-muted mb-0">גלריית הפרויקטים של הקהילה - תראו מה בנו, והשוויצו במה שבניתם</p>
+          </a>
         </div>
       </div>
     </div>

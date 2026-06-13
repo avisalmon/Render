@@ -549,7 +549,7 @@ build starts with EPIC-6.1. Epics are sequenced; one big thing at a time.
 |---|---|---|---|
 | EPIC-6.1 | Community Foundation — profiles, reputation, badges, notifications, moderation, minors safety | §6.1 | DONE ✅ |
 | EPIC-6.2 | Forums & Q&A — accepted answers, tags, search, course-anchored threads, AI assist | §6.2 | DONE ✅ |
-| EPIC-6.3 | Showcase (דוכן ההשוויץ) — exhibition wall, project pages, stars, OG sharing | §6.3 | PROPOSED |
+| EPIC-6.3 | Showcase (דוכן ההשוויץ) — stands, wall + brag feed, reactions, comments, messaging, gamification | §6.3 | DONE ✅ |
 | EPIC-6.4 | Feed & Tips — community home, composer, weekly digest, homepage hook | §6.4 | PROPOSED |
 | EPIC-6.5 | Challenges & Hackathons — briefs, submissions-as-showcases, judging, teams, school mode | §6.5 | PROPOSED |
 | EPIC-6.6 | Chat & Groups — channels, course groups, safe DMs, member directory | §6.6 | PROPOSED |
@@ -661,6 +661,58 @@ Sprints:
 from a lesson page, gets an answer, accepts it; reputation moves; search finds
 it; a guest who tries to answer hits the /join/ wall — tests + regression
 green, deployed.
+
+---
+
+### EPIC-6.3 — Showcase (דוכן ההשוויץ)
+
+**Goal:** The bragging wall + flowing feed: members publish projects across
+**stands**, react (stars + emoji), comment, and message each other; gamified.
+**Spec:** [main_spec.md §6.3](main_spec.md) (REQ-6.3.1–6.3.14, DEC-44/48/49/50).
+**Owner:** Avi + Claude
+**Status:** DONE ✅ — built 2026-06-13; tests/test_spr_6_3.py (19 tests); UX-expert review (15 findings) applied incl. a SQLite tag-filter crash fix (also patched EPIC-6.2 forum).
+
+Sprints:
+- SPR-6.3.1 Projects, Stands & Wall — DONE
+- SPR-6.3.2 Engagement: Reactions, Comments, Brag Feed, Sharing — DONE
+- SPR-6.3.3 Messaging, Integration & Gamification — DONE
+
+#### SPR-6.3.1 — Projects, Stands & Wall
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-6.3.1.1 | `ShowcaseProject` + `ProjectImage` models (+ migration) | REQ-6.3.1 | DONE |
+| F-6.3.1.2 | Show-off stands (code-defined set + per-stand page) | REQ-6.3.8 | DONE |
+| F-6.3.1.3 | Create / edit / delete / publish with cover+gallery upload, video URL, markdown preview | REQ-6.3.9 | DONE |
+| F-6.3.1.4 | Exhibition wall: featured row + stand/course/tag filter + sort | REQ-6.3.2 | DONE |
+| F-6.3.1.5 | Project detail page (hero, gallery, video, story, links) | REQ-6.3.1 | DONE |
+| F-6.3.1.6 | Student-work review gate (pending → staff approve) | REQ-6.3.7 | DONE |
+
+#### SPR-6.3.2 — Engagement: Reactions, Comments, Brag Feed, Sharing
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-6.3.2.1 | `ProjectReaction` (star + emoji), toggle, ranking, author points/notify | REQ-6.3.3 | DONE |
+| F-6.3.2.2 | `ProjectComment` (markdown, moderation, notify, report) | REQ-6.3.10 | DONE |
+| F-6.3.2.3 | Brag feed `/community/showcase/feed/` | REQ-6.3.11 | DONE |
+| F-6.3.2.4 | Open Graph tags + share buttons (WhatsApp/copy) | REQ-6.3.6 | DONE |
+
+#### SPR-6.3.3 — Messaging, Integration & Gamification
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-6.3.3.1 | `DirectMessage` + inbox + conversation (opt-in, student-disabled, block/report) | REQ-6.3.12 | DONE |
+| F-6.3.3.2 | Profile portfolio: projects on `/c/<username>/` | REQ-6.3.5 | DONE |
+| F-6.3.3.3 | Course-detail projects + certificate "פרסמו מה בניתם" CTA | REQ-6.3.4 | DONE |
+| F-6.3.3.4 | Gamification: new points + badges (אמן התצוגה / כוכב עולה / מוצג נבחר) | REQ-6.3.13 | DONE |
+| F-6.3.3.5 | Community home hook + Plausible events | REQ-6.3.14 | DONE |
+
+**Exit criteria (SPR set):** a member publishes a project to a stand with a
+cover, gallery and demo video; it appears on the wall and the brag feed; others
+star/react and comment; the builder earns points + a badge; a fan messages the
+builder (and a student cannot); the project shows on the builder's profile and
+the course page; a guest can view all of it but is walled on every interaction;
+tests + full regression green; deployed + smoke-tested.
 
 ---
 

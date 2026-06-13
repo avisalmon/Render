@@ -34,9 +34,15 @@ def community_home(request):
         ForumThread.objects.filter(is_hidden=False)
         .select_related("author__profile")[:6]
     )
+    from .models import ShowcaseProject
+    recent_projects = (
+        ShowcaseProject.objects.filter(status="published", is_hidden=False)
+        .select_related("author__profile")[:4]
+    )
     top = _leaderboard_rows(limit=5)
     return render(request, "app/community/home.html", {
         "recent_threads": recent_threads,
+        "recent_projects": recent_projects,
         "top_members": top,
     })
 
@@ -75,6 +81,16 @@ def public_profile(request, username):
         request.user.is_authenticated
         and Follow.objects.filter(follower=request.user, followed=user).exists()
     )
+    # Portfolio: the member's published projects (REQ-6.3.5)
+    from .community import is_student
+    from .models import ShowcaseProject
+    projects = ShowcaseProject.objects.filter(
+        author=user, status="published", is_hidden=False
+    )[:6]
+    can_message = (
+        request.user.is_authenticated and request.user != user
+        and not is_student(request.user) and not is_student(user)
+    )
     return render(request, "app/community/public_profile.html", {
         "member": user,
         "member_profile": profile,
@@ -82,10 +98,12 @@ def public_profile(request, username):
         "badges": badges,
         "accepted_count": accepted_count,
         "recent_threads": threads,
+        "projects": projects,
         "certificates": certificates,
         "follower_count": user.followers.count(),
         "is_following": is_following,
         "is_owner": request.user == user,
+        "can_message": can_message,
     })
 
 
@@ -197,6 +215,94 @@ def report_content(request):
         object_id=object_id, reason=reason,
     )
     return JsonResponse({"ok": True})
+
+
+# ---------------------------------------------------------------------------
+# Direct messages (REQ-6.3.12) — opt-in, student-disabled, block/report
+# ---------------------------------------------------------------------------
+
+@interact_required
+def messages_inbox(request):
+    from django.db.models import Q
+
+    from .community import is_student
+    from .models import DirectMessage
+    if is_student(request.user):
+        return render(request, "app/community/messages_inbox.html",
+                      {"threads": [], "student_blocked": True})
+    msgs = (
+        DirectMessage.objects.filter(Q(sender=request.user) | Q(recipient=request.user))
+        .select_related("sender__profile", "recipient__profile")
+        .order_by("-created_at")
+    )
+    seen, threads = set(), []
+    for m in msgs:
+        other = m.recipient if m.sender == request.user else m.sender
+        if other.pk in seen:
+            continue
+        seen.add(other.pk)
+        unread = DirectMessage.objects.filter(
+            sender=other, recipient=request.user, read_at__isnull=True
+        ).count()
+        threads.append({"other": other, "last": m, "unread": unread})
+    return render(request, "app/community/messages_inbox.html",
+                  {"threads": threads, "student_blocked": False})
+
+
+@interact_required
+def message_thread(request, username):
+    from django.db.models import Q
+
+    from .community import can_message, notify
+    from .models import DirectMessage, MessageBlock
+    other = get_object_or_404(User, username=username)
+    ok, reason = can_message(request.user, other)
+
+    if request.method == "POST":
+        if not ok:
+            messages.error(request, reason)
+            return redirect("messages_thread", username=username)
+        body = request.POST.get("body", "").strip()[:5000]
+        if body:
+            from .community import moderation_ok, rate_limit_ok
+            if not rate_limit_ok(request.user):
+                messages.error(request, "הגעת למגבלת ההודעות לשעה.")
+            elif not moderation_ok(body, user=request.user):
+                messages.error(request, "ההודעה סומנה על ידי מסנן התוכן.")
+            else:
+                DirectMessage.objects.create(sender=request.user, recipient=other, body=body)
+                notify(other, verb="message", actor=request.user,
+                       text=f"הודעה חדשה מ-{request.user.profile.public_name}",
+                       url=f"/community/messages/{request.user.username}/")
+        return redirect("messages_thread", username=username)
+
+    convo = (
+        DirectMessage.objects.filter(
+            Q(sender=request.user, recipient=other) | Q(sender=other, recipient=request.user)
+        ).select_related("sender__profile").order_by("created_at")
+    )
+    DirectMessage.objects.filter(
+        sender=other, recipient=request.user, read_at__isnull=True
+    ).update(read_at=timezone.now())
+    is_blocked = MessageBlock.objects.filter(blocker=request.user, blocked=other).exists()
+    return render(request, "app/community/message_thread.html", {
+        "other": other, "messages_list": convo, "can_send": ok,
+        "reason": reason, "is_blocked": is_blocked,
+    })
+
+
+@interact_required
+def message_block(request, username):
+    from .models import MessageBlock
+    if request.method != "POST":
+        return redirect("messages_thread", username=username)
+    other = get_object_or_404(User, username=username)
+    block = MessageBlock.objects.filter(blocker=request.user, blocked=other).first()
+    if block:
+        block.delete()
+    else:
+        MessageBlock.objects.get_or_create(blocker=request.user, blocked=other)
+    return redirect("messages_thread", username=username)
 
 
 def members_directory(request):

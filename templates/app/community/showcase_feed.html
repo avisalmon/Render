@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}הזרם - דוכן ההשוויץ - babook{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+  <div class="col-lg-7">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <h1 class="h3 mb-0"><i class="bi bi-activity me-1" style="color:var(--accent-primary)"></i> הזרם</h1>
+      <div class="d-flex gap-2">
+        <a href="{% url 'showcase_wall' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-grid"></i> הגלריה</a>
+        <a href="{% url 'showcase_new' %}" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> השוויצו</a>
+      </div>
+    </div>
+    <p class="text-muted small mb-4">מה נבנה ממש עכשיו בקהילה 👇</p>
+
+    {% include "app/community/_guest_note.html" %}
+
+    {% for p in projects %}
+    <div class="card-surface mb-3 overflow-hidden">
+      <a href="{% url 'showcase_project' p.pk %}" class="text-decoration-none" style="color:var(--text-primary)">
+        {% if p.cover %}
+        <img src="{{ p.cover.url }}" alt="{{ p.title }}" style="width:100%; max-height:320px; object-fit:cover;">
+        {% endif %}
+        <div class="p-3">
+          <div class="small text-muted mb-1 d-flex gap-2 align-items-center flex-wrap">
+            {% include "app/community/_author.html" with author=p.author %}
+            <span class="badge" style="background:var(--bg-elevated,#1a1d24)"><i class="bi {{ p.stand_meta.icon }}"></i> {{ p.stand_meta.title }}</span>
+            · {{ p.published_at|date:"j בF H:i" }}
+          </div>
+          <strong class="d-block">{{ p.title }}</strong>
+          {% if p.tagline %}<p class="text-muted mb-0">{{ p.tagline }}</p>{% endif %}
+        </div>
+      </a>
+      <div class="px-3 pb-3 d-flex gap-3 small text-muted">
+        <span><i class="bi bi-star-fill" style="color:var(--accent-cta,#f59e0b)"></i> {{ p.star_count }}</span>
+        <span><i class="bi bi-chat"></i> {{ p.comments.count }}</span>
+        {% if p.course %}<span>📚 {{ p.course.title|truncatechars:24 }}</span>{% endif %}
+      </div>
+    </div>
+    {% empty %}
+    <div class="card-surface p-5 text-center text-muted">
+      הזרם עוד שקט. <a href="{% url 'showcase_new' %}">פרסמו את הפרויקט הראשון</a> 🚀
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

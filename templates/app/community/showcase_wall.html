@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}דוכן ההשוויץ - babook{% endblock %}
+
+{% block content %}
+<div class="py-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-1">
+    <h1 class="mb-0"><i class="bi bi-easel2-fill me-2" style="color:var(--accent-primary)"></i> דוכן ההשוויץ</h1>
+    <div class="d-flex gap-2">
+      <a href="{% url 'showcase_feed' %}" class="btn btn-outline-secondary"><i class="bi bi-activity"></i> הזרם</a>
+      <a href="{% url 'showcase_new' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> השוויצו בפרויקט</a>
+    </div>
+  </div>
+  <p class="text-muted mb-4">גלריית הפרויקטים של קהילת babook - תראו מה בניתם, ותתפעלו ממה שאחרים בנו 🚀</p>
+
+  {% include "app/community/_guest_note.html" %}
+
+  {% if featured %}
+  <h2 class="h5 mb-2"><i class="bi bi-trophy-fill" style="color:var(--accent-cta,#f59e0b)"></i> נבחרת השבוע</h2>
+  <div class="row g-3 mb-4">
+    {% for p in featured %}
+    <div class="col-12 col-md-4">{% include "app/community/_project_card.html" %}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Stand tabs -->
+  <div class="d-flex gap-2 mb-3 flex-wrap small">
+    <a href="{% url 'showcase_wall' %}" class="btn btn-sm {% if not active_stand %}btn-primary{% else %}btn-outline-secondary{% endif %}">הכל</a>
+    {% for s in stands %}
+    <a href="{% url 'showcase_stand' s.slug %}" class="btn btn-sm {% if active_stand == s.slug %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+      <i class="bi {{ s.meta.icon }}"></i> {{ s.meta.title }} {% if s.count %}({{ s.count }}){% endif %}
+    </a>
+    {% endfor %}
+  </div>
+
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    {% if active_stand_meta %}
+    <p class="text-muted small mb-0"><i class="bi {{ active_stand_meta.icon }}"></i> {{ active_stand_meta.blurb }}</p>
+    {% else %}<span></span>{% endif %}
+    <div class="btn-group btn-group-sm" role="group" aria-label="מיון">
+      {% with extra="" %}{% endwith %}
+      <a href="?sort=new{% if active_tag %}&tag={{ active_tag|urlencode }}{% endif %}{% if request.GET.course %}&course={{ request.GET.course|urlencode }}{% endif %}" class="btn {% if sort != 'top' %}btn-primary{% else %}btn-outline-secondary{% endif %}">חדש</a>
+      <a href="?sort=top{% if active_tag %}&tag={{ active_tag|urlencode }}{% endif %}{% if request.GET.course %}&course={{ request.GET.course|urlencode }}{% endif %}" class="btn {% if sort == 'top' %}btn-primary{% else %}btn-outline-secondary{% endif %}">הכי מוערך</a>
+    </div>
+  </div>
+
+  {% if active_tag %}<p class="small"><span class="btn btn-sm btn-primary">#{{ active_tag }} <a href="{% if active_stand %}{% url 'showcase_stand' active_stand %}{% else %}{% url 'showcase_wall' %}{% endif %}" class="text-white text-decoration-none" aria-label="ניקוי">×</a></span></p>{% endif %}
+
+  <div class="row g-3">
+    {% for p in projects %}
+    <div class="col-12 col-md-6 col-lg-4">{% include "app/community/_project_card.html" %}</div>
+    {% empty %}
+    <div class="col-12"><div class="card-surface p-5 text-center text-muted">
+      <i class="bi bi-easel2 d-block mb-2" style="font-size:2rem"></i>
+      עדיין אין פה פרויקטים{% if active_stand %} בדוכן הזה{% endif %}.
+      <a href="{% url 'showcase_new' %}">תהיו הראשונים להשוויץ</a> 🙂
+    </div></div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

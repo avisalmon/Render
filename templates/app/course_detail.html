@@ -129,6 +129,18 @@
     </div>
     {% endif %}
 
+    {% if course_projects %}
+    <div class="mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h2 class="h5 mb-0"><i class="bi bi-easel2-fill" style="color:var(--accent-primary)"></i> נבנה בעקבות הקורס</h2>
+            <a href="{% url 'showcase_new' %}?course={{ course.slug }}" class="btn btn-sm btn-outline-primary">השוויצו במה שבניתם</a>
+        </div>
+        <div class="row g-3">
+            {% for p in course_projects %}<div class="col-6 col-md-4">{% include "app/community/_project_card.html" %}</div>{% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <div class="mt-4 p-3 card-surface">
         <p>מחפשים הכשרה לצוות שלם? <a href="/corporate/">צרו קשר על הדרכות ארגוניות</a>.</p>
     </div>

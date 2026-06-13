@@ -11,11 +11,18 @@ def community_ctx(request):
     """EPIC-6.1: unread-notification count for the nav bell (REQ-6.1.6)."""
     if not hasattr(request, "user") or not request.user.is_authenticated:
         return {"unread_notifications": 0}
-    from .models import Notification
+    from .community import is_student
+    from .models import DirectMessage, Notification
+    student = is_student(request.user)
     return {
         "unread_notifications": Notification.objects.filter(
             user=request.user, read_at__isnull=True
         ).count(),
+        # Students never get DMs (DEC-41) — hide the bell entirely for them
+        "unread_messages": 0 if student else DirectMessage.objects.filter(
+            recipient=request.user, read_at__isnull=True
+        ).count(),
+        "user_is_student": student,
     }
 
 

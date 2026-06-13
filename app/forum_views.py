@@ -72,7 +72,8 @@ def forum_home(request):
         qs = qs.filter(category=category)
     tag = request.GET.get("tag", "")
     if tag:
-        qs = qs.filter(tags__contains=tag)
+        # JSONField __contains is unsupported on SQLite; icontains casts to text
+        qs = qs.filter(tags__icontains=tag)
     query = request.GET.get("q", "").strip()
     if query:
         qs = qs.filter(Q(title__icontains=query) | Q(body__icontains=query))

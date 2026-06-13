@@ -726,21 +726,44 @@ searchable — the #1 lesson from research_4.
 
 ### 6.3 EPIC-6.3 — Showcase: דוכן ההשוויץ (exhibitions / bragging page)
 
-The skill trust-loop. Proven as AI-Ascent capability #14 (Exhibition/Portfolio,
-Sprints 26-30). The emotional core of the community: "תראו מה בניתי".
+The skill trust-loop and the emotional core of the community: "תראו מה בניתי".
+Proven as AI-Ascent capability #14 (Exhibition/Portfolio, Sprints 26-30).
 **Naming (DEC-44):** the playful title stays — «דוכן ההשוויץ» — with a formal
-subtitle: «גלריית הפרויקטים של קהילת babook». Partially formal, partially
-humoristic, exactly the site's tone. Ratings (stars) and comments are core.
+subtitle: «גלריית הפרויקטים של קהילת babook». Two complementary surfaces
+(DEC-48): a **stable curated wall** (grid, featured, by stand) and a **flowing
+brag feed** (chronological pulse of new projects + reactions). Members organize
+their show-off into **stands** (DEC-49) — AI, makers/hardware, retro games,
+personal sites, research, apps — and engage via stars, emoji reactions,
+comments, and direct messages (DEC-50). Built rich and gamified.
+
+**6.3.a — Projects, stands & wall**
 
 | REQ-ID | Title | Expectation | Status |
 |---|---|---|---|
-| REQ-6.3.1 | Project model | `ShowcaseProject`: title, story (markdown), cover image, gallery (images), demo video (Bunny or YouTube embed), repo/demo links, course link ("נבנה בעקבות הקורס X"), tags, status (draft/published). | TODO |
-| REQ-6.3.2 | Exhibition wall | `/community/showcase/` — a visual masonry/grid wall, filterable by domain/course/tag; featured row curated by staff. | TODO |
-| REQ-6.3.3 | Reactions & comments | Star a project (⭐ count drives ranking), emoji reactions, threaded comments (same moderation pipeline). | TODO |
-| REQ-6.3.4 | Course integration | Course pages show member projects built from that course; the course-completion (certificate) page invites "פרסמו מה בניתם" — the natural bragging moment. | TODO |
-| REQ-6.3.5 | Profile portfolio | Published projects appear on the member's public profile (REQ-6.1.1) — portfolio for free, the public-proof layer of micro-credentials (research_4). | TODO |
-| REQ-6.3.6 | Sharing | Per-project OG card (image + title) so projects look great on WhatsApp/LinkedIn; share buttons; this is the community's organic-growth surface. | TODO |
-| REQ-6.3.7 | Student work safety | Projects by `student` role members get a staff review before public listing (REQ-6.1.9). | TODO |
+| REQ-6.3.1 | Project model | `ShowcaseProject`: title, tagline, story (markdown), stand, cover image, gallery (multiple images), demo video (YouTube/Bunny embed), repo/live links, course link ("נבנה בעקבות הקורס X"), tags, status (draft/published), featured flag, published_at. | DONE |
+| REQ-6.3.2 | Exhibition wall | `/community/showcase/` — a visual masonry/grid wall; **"נבחרת השבוע"** featured row (staff-curated); filterable by **stand**, course, tag; sortable (חדש / הכי מוערך). | DONE |
+| REQ-6.3.8 | Show-off stands (categories) | Distinct stands, each its own page `/community/showcase/stand/<slug>/` with title/icon: כלי AI · מייקרים וחומרה · משחקים ורטרו · אתרים אישיים · מחקר ואקדמיה · אפליקציות ואוטומציות · אחר. New stands are a one-line addition (DEC-49). | DONE |
+| REQ-6.3.9 | Create / edit / publish | Rich authoring: cover + gallery upload, video URL, stand picker, markdown story with live preview (reuse forum preview), tags, draft→publish; edit + delete own projects. | DONE |
+| REQ-6.3.7 | Student work safety | Projects by `student` role members enter a `pending` review state; staff approve before public listing (REQ-6.1.9). | DONE |
+
+**6.3.b — Engagement: reactions, comments, brag feed, sharing**
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-6.3.3 | Reactions | **Star** (⭐, the primary signal — toggle, count drives wall ranking; awards the author +1 and notifies) **+ emoji reactions** (🔥 ❤️ 👏 🤯, lightweight flavor, no points), one per member per type. Self-reaction disabled. | DONE |
+| REQ-6.3.10 | Comments | Per-project comments (markdown, same moderation + rate-limit pipeline as the forum); notify the project author; report button. | DONE |
+| REQ-6.3.11 | Brag feed | `/community/showcase/feed/` — a flowing chronological feed of newly published projects with their cover, builder, stand, and live reaction counts. The pulse of "look what people are building". | DONE |
+| REQ-6.3.6 | Sharing | Per-project page sets Open Graph tags (cover + title + tagline) so it looks great on WhatsApp/LinkedIn; copy-link + WhatsApp share buttons. The community's organic-growth surface. | DONE |
+
+**6.3.c — Messaging, integration & gamification**
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-6.3.12 | Direct messages | Member-to-member DMs (e.g. "אהבתי, איך בנית את X?") with an inbox + conversation view; opt-in, **disabled for `student` role** both ways (DEC-41); block + report; notifies recipient. Pulled forward from EPIC-6.6 because show-off naturally invites "tell me how". | DONE |
+| REQ-6.3.5 | Profile portfolio | A member's published projects appear on their public profile (REQ-6.1.1) — a portfolio for free; the public-proof layer of micro-credentials. | DONE |
+| REQ-6.3.4 | Course & certificate integration | Course detail shows projects built from that course; the certificate page invites "פרסמו מה בניתם" with the course pre-linked — the natural bragging moment. | DONE |
+| REQ-6.3.13 | Gamification | Points: publish (+10), star received (+1), featured (+15). Badges: בונה (first project), אמן התצוגה (5 projects), כוכב עולה (a project hits 25 stars), מוצג נבחר (staff-featured). "נבחרת השבוע" featured row; reaction-milestone notifications. | DONE |
+| REQ-6.3.14 | Community feed + home hook | Showcase events feed the community home "מהקהילה" strip and Plausible (`project_published`, `project_reaction`); a "השוויצו" CTA on `/community/`. | DONE |
 
 ### 6.4 EPIC-6.4 — Feed & Tips
 
@@ -837,6 +860,9 @@ model — these wait until the community is demonstrably alive:
 | DEC-46 | Digest timing | **Gated: explore the weekly digest only after ~50 active members** | Avi: no point emailing an empty room; the feed carries the pulse first |
 | DEC-47 | Leaderboard | **Public with opt-out** (Claude's recommendation, AI-Ascent-proven); students appear by display name only (REQ-6.1.9) | Opt-in leaderboards stay empty — defaults drive participation; opt-out + minors naming rule keeps it safe |
 | DEC-47a | First challenge | **MicroPython kit** (matazim/hardware, tied to `micropython-thonny`) | Avi's pick; physical-kit projects photograph beautifully on the wall |
+| DEC-48 | Showcase surfaces | **Both a stable curated wall AND a flowing brag feed** | Avi: the wall is the portfolio/gallery; the feed is the live pulse — they serve different moments |
+| DEC-49 | Stands (categories) | **Code-defined stand set, extensible one-line** (AI / makers / games / web / research / apps / other) | Curated titles+icons+order, RTL-correct; new stands are cheap to add, no model overhead |
+| DEC-50 | Messaging in 6.3 | **Pull DMs forward from EPIC-6.6** into the showcase (opt-in, student-disabled) | Avi asked for messaging; show-off naturally invites "tell me how you built it"; full chat/channels still in 6.6 |
 
 ### 6.11 Acceptance criteria for Chapter 6
 

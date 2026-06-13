@@ -620,6 +620,12 @@ def courses_detail(request, slug):
             enrollment = Enrollment.objects.filter(user=request.user, course=course).first()
             is_complete = bool(enrollment and enrollment.completed_at)
 
+    # Projects built from this course (REQ-6.3.4)
+    from .models import ShowcaseProject
+    course_projects = ShowcaseProject.objects.filter(
+        course=course, status="published", is_hidden=False
+    ).select_related("author__profile")[:6]
+
     return render(request, "app/course_detail.html", {
         "course": course,
         "videos": videos,
@@ -627,6 +633,7 @@ def courses_detail(request, slug):
         "is_complete": is_complete,
         "is_enrolled": is_enrolled,
         "completed_ids": completed_ids,
+        "course_projects": course_projects,
     })
 
 

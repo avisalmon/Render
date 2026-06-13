@@ -49,5 +49,14 @@
     </a>
   </div>
 
+  <!-- The natural bragging moment (REQ-6.3.4) -->
+  <div class="card-surface p-3 mt-4 text-center">
+    <i class="bi bi-easel2-fill mb-1" style="font-size:1.4rem; color:var(--accent-primary)"></i>
+    <p class="mb-2">בנית משהו בעקבות הקורס? זה הזמן להשוויץ בו בדוכן הקהילה 🚀</p>
+    <a href="{% url 'showcase_new' %}?course={{ cert.course.slug }}" class="btn btn-primary">
+      <i class="bi bi-megaphone me-1"></i> פרסמו מה בניתם
+    </a>
+  </div>
+
 </div>
 {% endblock %}

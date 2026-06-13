@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}הודעות - babook{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+  <div class="col-md-8 col-lg-6">
+    <h1 class="h4 mb-3"><i class="bi bi-chat-dots-fill me-1" style="color:var(--accent-primary)"></i> הודעות</h1>
+    {% if student_blocked %}
+    <div class="card-surface p-4 text-center text-muted">
+      <i class="bi bi-shield-lock d-block mb-2" style="font-size:1.6rem"></i>
+      הודעות אישיות אינן זמינות לחשבונות תלמיד/ה, מטעמי בטיחות.
+    </div>
+    {% else %}
+    {% for t in threads %}
+    <a href="{% url 'messages_thread' t.other.username %}" class="card-surface d-flex align-items-center gap-3 p-3 mb-2 text-decoration-none {% if t.unread %}border-start border-3{% endif %}"
+       style="color:var(--text-primary); {% if t.unread %}border-color:var(--accent-primary)!important;{% endif %}">
+      {% if t.other.profile.avatar %}<img src="{{ t.other.profile.avatar.url }}" width="44" height="44" class="rounded-circle" style="object-fit:cover" alt="">
+      {% else %}<span class="rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width:44px;height:44px;background:var(--accent-primary);color:#fff">{{ t.other.profile.public_name|first }}</span>{% endif %}
+      <div class="flex-grow-1 min-w-0">
+        <strong>{{ t.other.profile.public_name }}</strong>
+        <div class="small text-muted text-truncate">{{ t.last.body|truncatechars:50 }}</div>
+      </div>
+      {% if t.unread %}<span class="badge bg-primary rounded-pill">{{ t.unread }}</span>{% endif %}
+    </a>
+    {% empty %}
+    <div class="card-surface p-4 text-center text-muted">אין הודעות עדיין. הכירו חברי קהילה ב<a href="{% url 'community_members' %}">דף החברים</a> או בדוכן ההשוויץ.</div>
+    {% endfor %}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
