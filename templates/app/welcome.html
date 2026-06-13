@@ -19,41 +19,6 @@
     </div>
     {% endif %}
 
-    {% if basics_needed %}
-    <!-- Step 1: the basics, captured softly before the interview (REQ-5.5.7) -->
-    <div class="card-surface p-4">
-      <p class="mb-3 d-flex align-items-center gap-2">
-        <img src="/static/avi-bot.jpg" alt="Avi Bot" width="28" height="28" class="rounded-circle" style="object-fit:cover">
-        <span>איזה כיף שהגעת! 🎉 רגע לפני שמתחילים - כמה פרטים קטנים כדי שנכיר:</span>
-      </p>
-      <form method="post" action="{% url 'welcome_basics' %}">
-        {% csrf_token %}
-        <div class="mb-3">
-          <label class="form-label small fw-semibold">איך לקרוא לך?</label>
-          <input class="form-control" name="name" value="{{ prefill_name }}" required autocomplete="name" placeholder="השם שלך">
-        </div>
-        <div class="mb-3">
-          <label class="form-label small fw-semibold">האימייל שלך (ודאו שהוא נכון - נשתמש בו לעדכונים)</label>
-          <input type="email" class="form-control" name="email" value="{{ prefill_email }}" required autocomplete="email" dir="ltr">
-        </div>
-        <div class="mb-3">
-          <label class="form-label small">אימייל נוסף לתקשורת (לא חובה)</label>
-          <input type="email" class="form-control" name="contact_email" autocomplete="email" dir="ltr">
-        </div>
-        <label class="form-label small fw-semibold">ומי אתה אצלנו?</label>
-        <div class="d-flex gap-2 mb-4">
-          <input type="radio" class="btn-check" name="role_type" value="student" id="rt-s" required>
-          <label class="btn btn-outline-primary btn-sm" for="rt-s">תלמיד/ה</label>
-          <input type="radio" class="btn-check" name="role_type" value="teacher" id="rt-t">
-          <label class="btn btn-outline-primary btn-sm" for="rt-t">מורה / מחנך</label>
-          <input type="radio" class="btn-check" name="role_type" value="other" id="rt-o">
-          <label class="btn btn-outline-primary btn-sm" for="rt-o">אחר</label>
-        </div>
-        <button class="btn btn-primary w-100">נעים להכיר! ממשיכים <i class="bi bi-arrow-left"></i></button>
-      </form>
-    </div>
-    {% else %}
-
     {% if ai_available %}
     <!-- AI interview (REQ-5.5.2). Falls back to the static form on any error. -->
     <div id="interview" class="card-surface p-3 mb-3">
@@ -103,10 +68,11 @@
         <button class="btn btn-primary w-100">בנו לי מסלול <i class="bi bi-arrow-left"></i></button>
       </form>
     </div>
-    {% endif %}{# basics_needed #}
 
   </div>
 </div>
+
+{{ opener|json_script:"opener-data" }}
 
 <script>
 if (window.plausible) { plausible('registered'); plausible('onboarding_started'); }
@@ -171,7 +137,10 @@ if (window.plausible) { plausible('registered'); plausible('onboarding_started')
     if (e.key === 'Enter') { e.preventDefault(); send.click(); }
   });
 
-  turn('');  // opening greeting
+  // Fixed, instant opener (REQ-7.2.3) — no AI call, always identical.
+  var opener = JSON.parse(document.getElementById('opener-data').textContent);
+  add('assistant', opener);
+  input.focus();
 })();
 </script>
 {% endblock %}

@@ -53,6 +53,7 @@ class OnboardingMiddleware:
     _EXEMPT_PREFIXES = (
         "/welcome/", "/join/", "/logout/", "/login/", "/accounts/", "/admin/",
         "/static/", "/media/", "/api/", "/healthz", "/stripe/",
+        "/verify-email/", "/resend-verification/", "/cookie-consent/",
     )
 
     def __init__(self, get_response):

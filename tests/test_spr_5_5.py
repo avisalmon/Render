@@ -169,7 +169,8 @@ def test_wall_and_lesson_events_present():
 def test_onboarding_events_in_welcome_page():
     c = Client()
     c.post("/register/", {
-        "username": "evt1", "password1": "StrongPass123!", "password2": "StrongPass123!",
+        "username": "evt1", "name": "אירוע", "email": "evt1@example.com",
+        "password1": "StrongPass123!", "password2": "StrongPass123!",
     })
     body = c.get("/welcome/").content.decode()
     assert "onboarding_started" in body and "plausible('registered')" in body

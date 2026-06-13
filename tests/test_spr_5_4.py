@@ -19,18 +19,13 @@ from app.onboarding import (
 )
 
 
-def _signup(c, username="onb1"):
+def _signup(c, username="onb1", name="אבי הלומד", email="learner@example.com"):
+    # Register now requires name + email (REQ-7.2.1).
     c.post("/register/", {
-        "username": username, "password1": "StrongPass123!", "password2": "StrongPass123!",
+        "username": username, "name": name, "email": email,
+        "password1": "StrongPass123!", "password2": "StrongPass123!",
     })
     return User.objects.get(username=username)
-
-
-def _basics(c, name="אבי הלומד", role="student"):
-    """Complete the welcome basics step (REQ-5.5.7)."""
-    c.post(reverse("welcome_basics"), {
-        "name": name, "email": "learner@example.com", "role_type": role,
-    })
 
 
 def _intro_course():
@@ -51,36 +46,43 @@ def test_welcome_requires_login():
 
 
 @pytest.mark.django_db
-def test_welcome_opens_with_basics_step():
-    """T-F-5.4.7-1 (REQ-5.5.7): first the soft basics form - name, email,
-    student/teacher - only then the interview."""
+def test_signup_captures_name_and_email():
+    """T-F-7.2.1-1: name + email captured at signup (REQ-7.2.1/7.2.2)."""
     c = Client()
-    _signup(c)
-    body = c.get(reverse("welcome")).content.decode()
-    assert "welcome/basics/" in body
-    assert 'name="role_type"' in body
-    assert 'id="fallback"' not in body  # interview not shown yet
+    user = _signup(c, "basics1", name="דנה כהן", email="dana@example.com")
+    user.refresh_from_db()
+    assert user.first_name == "דנה"
+    assert user.email == "dana@example.com"
+    assert user.profile.display_name == "דנה כהן"
+    assert user.profile.email_verified is False  # password path needs verification
 
 
 @pytest.mark.django_db
-def test_welcome_basics_saves_user_fields():
-    """T-F-5.4.7-2: basics persist to User + UserProfile + LearnerProfile."""
+def test_fixed_opener_uses_first_name():
+    """T-F-7.2.3-1 (REQ-7.2.3/QA-6): hardcoded opener, first name only."""
+    from app.onboarding import fixed_opener
+    u = User.objects.create_user("yoram", password="pass12345")
+    u.profile.display_name = "יורם חמש"
+    u.profile.save()
+    opener = fixed_opener(u)
+    assert opener.startswith("אהלן יורם.")  # first token only, never "יורם חמש"
+    assert "יורם חמש" not in opener
+
+
+@pytest.mark.django_db
+def test_welcome_opens_with_fixed_opener():
+    """Welcome embeds the opener (json_script) and drops the basics form."""
     c = Client()
-    user = _signup(c, "basics1")
-    _basics(c, name="דנה כהן", role="teacher")
-    user.refresh_from_db()
-    assert user.first_name == "דנה"
-    assert user.email == "learner@example.com"
-    assert user.profile.display_name == "דנה כהן"
-    lp = LearnerProfile.objects.get(user=user)
-    assert lp.role_type == "teacher"
+    _signup(c, "opener1", name="יורם חמש")
+    body = c.get(reverse("welcome")).content.decode()
+    assert "opener-data" in body
+    assert "welcome/basics/" not in body
 
 
 @pytest.mark.django_db
 def test_welcome_page_renders_with_fallback_form():
     c = Client()
     _signup(c)
-    _basics(c)
     body = c.get(reverse("welcome")).content.decode()
     assert 'id="fallback"' in body
     assert "interests" in body
@@ -194,12 +196,10 @@ def test_interview_prompt_grounded_in_site_topics():
     assert "לבנות כלי AI משלך" in prompt  # the three concrete AI choices
     assert "איך AI עובד מבפנים" in prompt
     assert "PROFILE_JSON" in prompt
-    # Avi Bot persona + warm opening with the house joke (REQ-5.5.8)
     assert "Avi Bot" in prompt
-    assert "book-sharing" in prompt
-    assert "happy they joined" in prompt
-    # Explains the purpose: questions tailor content recommendations
-    assert "fit their wants and needs" in prompt
+    # The opener is now fixed/server-rendered; the prompt continues, not greets
+    assert "DO NOT greet again" in prompt
+    assert "role_type" in prompt  # role captured in the interview (REQ-7.2.2)
 
 
 @pytest.mark.django_db
@@ -208,7 +208,7 @@ def test_interview_prompt_opens_on_entry_course():
     u = User.objects.create_user("arrived", password="pass12345")
     prompt = interview_system_prompt(u, entry_course_title="קופיילוט למתחילים")
     assert "קופיילוט למתחילים" in prompt
-    assert "FIRST" in prompt
+    assert "keep that interest in mind" in prompt
 
 
 def test_parse_interview_reply_handles_bad_json():

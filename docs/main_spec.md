@@ -905,12 +905,12 @@ contributors; and the full regression is green with every epic's tests.
 
 | REQ-ID | Title | Expectation | Status |
 |---|---|---|---|
-| REQ-7.2.1 | Email mandatory + verified (QA-1) | Email/password signup requires an email; a verification link is sent and required (Google stays trusted). Closes the forgot-password hole. Revises REQ-1.1.3. | TODO |
-| REQ-7.2.2 | Conversational basics (QA-2) | The welcome basics (name / email-confirm / role: student·teacher·professor·industry-engineer·other) are collected **in the Avi Bot chat**, not a form. Revises REQ-5.5.7. | TODO |
-| REQ-7.2.3 | Fixed instant opener (QA-6) | The chat's first message is a hardcoded, instant, name-personalized greeting (verbatim copy in qa_session.md), not AI-generated. | TODO |
-| REQ-7.2.4 | Site intro + interests + remember (QA-3) | The chat introduces the site + the book joke, asks interests, and persists them (attributes + free-text description on the profile). | TODO |
-| REQ-7.2.5 | Finishable, name-only required (QA-4) | A "done" button ends onboarding anytime; the only hard requirement is the name (email enforced at signup). No nagging. | TODO |
-| REQ-7.2.6 | Enrich-later, not in entry (QA-5/tone) | Entry chat stays short; profile enrichment (pictures/hobbies) is offered for later, not required. Avi Bot persona throughout. | TODO |
+| REQ-7.2.1 | Email mandatory + verified (QA-1) | Email/password signup requires an email; a verification link is sent and required (Google stays trusted). Closes the forgot-password hole. Revises REQ-1.1.3. | DONE |
+| REQ-7.2.2 | Conversational basics (QA-2) | The welcome basics (name / email-confirm / role: student·teacher·professor·industry-engineer·other) are collected **in the Avi Bot chat**, not a form. Revises REQ-5.5.7. | DONE |
+| REQ-7.2.3 | Fixed instant opener (QA-6) | The chat's first message is a hardcoded, instant, name-personalized greeting (verbatim copy in qa_session.md), not AI-generated. | DONE |
+| REQ-7.2.4 | Site intro + interests + remember (QA-3) | The chat introduces the site + the book joke, asks interests, and persists them (attributes + free-text description on the profile). | DONE |
+| REQ-7.2.5 | Finishable, name-only required (QA-4) | A "done" button ends onboarding anytime; the only hard requirement is the name (email enforced at signup). No nagging. | DONE |
+| REQ-7.2.6 | Enrich-later, not in entry (QA-5/tone) | Entry chat stays short; profile enrichment (pictures/hobbies) is offered for later, not required. Avi Bot persona throughout. | DONE |
 
 ### 7.3 Matazim course intros (QA-13)
 

@@ -153,6 +153,14 @@
     <button class="btn btn-sm btn-light ms-3" onclick="acceptCookies()">אישור</button>
   </div>
 
+  {% if user.is_authenticated and not user.profile.email_verified and user.email %}
+  <!-- Email-not-verified nudge (REQ-7.2.1) -->
+  <div class="py-2 px-3 text-center small" style="background:var(--accent-warm,#f59e0b); color:#000">
+    📧 כדי לאבטח את החשבון, אמתו את האימייל שלך.
+    <a href="{% url 'resend_verification' %}" class="fw-semibold text-dark">שליחת קישור אימות מחדש</a>
+  </div>
+  {% endif %}
+
   {% if welcome_strip %}
   <!-- First-visit welcome strip (REQ-5.3.2) - orientation only, no register ask (DEC-34) -->
   <div id="welcome-strip" class="py-2 px-3" style="background:var(--bg-elevated, #1a1d24); border-bottom:1px solid rgba(255,255,255,.08);">

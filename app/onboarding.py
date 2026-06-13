@@ -96,6 +96,11 @@ def handle_social_signup(request, user, **kwargs):
     try:
         attach_attribution(user, request)
         mark_signup(request)
+        # Social signups are trusted (email verified by the provider) — REQ-7.2.1
+        profile = getattr(user, "profile", None)
+        if profile is not None and not profile.email_verified:
+            profile.email_verified = True
+            profile.save(update_fields=["email_verified"])
     except Exception:  # onboarding must never break a signup
         pass
 
@@ -193,51 +198,45 @@ def _catalog_summary():
 ROLE_TYPE_HE = {"student": "תלמיד/ה", "teacher": "מורה / איש חינוך", "other": ""}
 
 
-def interview_system_prompt(user, entry_course_title=""):
-    name = ""
+FIXED_OPENER = (
+    "אהלן {name}. איזה כיף שהצטרפת לאתר. זה אתר לשיתוף ספרים אבל מכיוון שעוד לא "
+    "מימשתי שיתוף ספרים יש פה הכל פרט לזה. הדרכות בנושאים טכנולוגיים, בינה מלאכותית "
+    "והובלת חדשנות. קהילת משתמשים ושיתוף ידע, נושאים שמעניינים אותי ובתקווה יעניינו "
+    "גם אותך. תוכל לספר לי איך הגעת לכאן ומה תהיה מעוניין ללמוד כאן?"
+)
+
+
+def first_name_of(user):
+    """First token of the captured name; falls back to first_name/username (QA-6)."""
     profile = getattr(user, "profile", None)
-    if profile and profile.display_name:
-        name = profile.display_name
-    name = name or user.first_name or user.username
-    learner = getattr(user, "learner_profile", None)
-    role_he = ROLE_TYPE_HE.get(learner.role_type, "") if learner else ""
-    role_line = (
-        f"They told us they are a {learner.role_type} ({role_he}) - weave that "
-        "into your questions and recommendation naturally. "
-        if role_he else ""
-    )
-    first_q = (
-        f'They arrived via the course "{entry_course_title}" - your first '
-        f"question confirms it: is that course their main focus, or part of a "
-        f"broader interest (name the relevant world)? "
-        if entry_course_title
-        else "Your first question presents the three worlds BY NAME (בינה "
-        "מלאכותית / מטצים למייקרים צעירים / הובלת חדשנות) and asks which "
-        "one(s) they came for. "
-    )
-    opening = (
-        f"Your VERY FIRST message is a warm, human welcome: greet {name} by "
-        "name, say you are genuinely happy they joined, drop the house joke "
-        "(babook is officially a book-sharing site - the only thing it doesn't "
-        "have yet is the book sharing 🙂), explain in one short sentence what "
-        "it DOES offer (video courses in three worlds: AI, young makers, and "
-        "innovation leadership), and that you hope the site gives them real "
-        "value. Then say in a few words WHY you are about to ask questions: "
-        "they are meant to fit their wants and needs, so we can recommend the "
-        "right content for them. THEN, in the same message, ask your first "
-        "question. Soft and polite, like a real human host - never robotic. "
-        f"Up to 75 words for this opening only. {first_q}"
+    name = (profile.display_name if profile and profile.display_name else "") or \
+        user.first_name or user.username
+    return name.split()[0] if name else user.username
+
+
+def fixed_opener(user):
+    """REQ-7.2.3 / QA-6: the hardcoded, instant, name-personalized greeting."""
+    return FIXED_OPENER.format(name=first_name_of(user))
+
+
+def interview_system_prompt(user, entry_course_title=""):
+    entry_line = (
+        f'They arrived via the course "{entry_course_title}" - keep that interest '
+        "in mind. " if entry_course_title else ""
     )
     return (
         "You are 'Avi Bot' - the personal AI stand-in of Avi Salmon, the creator "
-        "of babook.co.il, an Israeli video-training site. You welcome new "
-        "learners as if Avi himself is greeting them, in first person, warm "
-        "everyday Hebrew. Your ONLY job is a short intake interview to "
-        "personalize the learner's path.\n\n"
+        "of babook.co.il, an Israeli video-training site. You speak in first "
+        "person, warm everyday Hebrew, as if Avi himself is hosting. Your ONLY "
+        "job is a short intake interview to personalize the learner's path.\n\n"
         f"The site's actual offering (domain key = name: tracks):\n{_catalog_summary()}\n\n"
-        f"{role_line}{opening}"
-        "Then AT MOST 2 more questions, ONE at a time, grounded in the topics "
-        "above:\n"
+        f"{entry_line}"
+        "The learner has ALREADY been greeted with a fixed welcome and asked how "
+        "they arrived and what they want to learn - DO NOT greet again or repeat "
+        "the intro. Respond to their reply and continue the short interview.\n"
+        "Across AT MOST 3 short questions, ONE at a time, capture:\n"
+        "1) Their role: student / teacher / professor / industry engineer / "
+        "other (ask naturally if not clear from what they said).\n"
         "2) What they want from their chosen domain. NEVER say 'רמה 1/2/3' or "
         "'מתחיל/בינוני/מתקדם' - users don't know what levels mean. For AI, offer "
         "exactly these three plain choices: (א) ללמוד דברים מגניבים שאפשר לעשות "
@@ -258,6 +257,7 @@ def interview_system_prompt(user, entry_course_title=""):
         "then output on a separate final line exactly: "
         f'{PROFILE_MARKER} {{"interests": ["<domain keys from the list>"], '
         '"goal": "<short>", "experience_level": "beginner|intermediate|advanced", '
+        '"role_type": "student|teacher|professor|industry_engineer|other", '
         '"persona": "<short description>", "time_per_week": "<short>"}'
     )
 

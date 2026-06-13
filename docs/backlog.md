@@ -725,7 +725,7 @@ Claude. **Status:** IN PROGRESS — built in one autonomous pass (DEC-54).
 | Sprint | Scope | Status |
 |---|---|---|
 | SPR-7.1 | Quick wins (nav/hero/content/footer/login) — REQ-7.1.* | DONE |
-| SPR-7.2 | Onboarding rework (verified email + conversational Avi Bot) — REQ-7.2.* | TODO |
+| SPR-7.2 | Onboarding rework (verified email + conversational Avi Bot) — REQ-7.2.* | DONE |
 | SPR-7.3 | Matazim course intros — REQ-7.3.1 | TODO |
 | SPR-7.4 | Design Refresh (Khan style + themes + animated bg) — REQ-7.4.* | TODO |
 | SPR-7.5 | Content re-transcription — REQ-7.5.1 (long batch) | TODO |
@@ -750,12 +750,12 @@ Claude. **Status:** IN PROGRESS — built in one autonomous pass (DEC-54).
 
 | Feature ID | Title | REQ trace | Status |
 |---|---|---|---|
-| F-7.2.1 | Email mandatory + verification link (password path) | REQ-7.2.1 | TODO |
-| F-7.2.2 | Conversational basics (name/email/role) in chat | REQ-7.2.2 | TODO |
-| F-7.2.3 | Fixed instant name-personalized opener | REQ-7.2.3 | TODO |
-| F-7.2.4 | Site intro + interests + persist to profile | REQ-7.2.4 | TODO |
-| F-7.2.5 | Finishable anytime; name-only required | REQ-7.2.5 | TODO |
-| F-7.2.6 | Enrich-later + Avi Bot persona | REQ-7.2.6 | TODO |
+| F-7.2.1 | Email mandatory + verification link (password path) | REQ-7.2.1 | DONE |
+| F-7.2.2 | Conversational basics (name/email/role) in chat | REQ-7.2.2 | DONE |
+| F-7.2.3 | Fixed instant name-personalized opener | REQ-7.2.3 | DONE |
+| F-7.2.4 | Site intro + interests + persist to profile | REQ-7.2.4 | DONE |
+| F-7.2.5 | Finishable anytime; name-only required | REQ-7.2.5 | DONE |
+| F-7.2.6 | Enrich-later + Avi Bot persona | REQ-7.2.6 | DONE |
 
 #### SPR-7.3 — Matazim course intros
 

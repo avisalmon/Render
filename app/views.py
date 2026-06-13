@@ -144,25 +144,66 @@ def add_note(request):
 def register(request):
     from django.utils.http import url_has_allowed_host_and_scheme
 
+    from .email_verify import send_verification_email
     from .onboarding import FIRST_TOUCH_KEY, attach_attribution, mark_signup
     next_url = request.POST.get("next") or request.GET.get("next") or ""
     if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
         next_url = ""
     if request.method == "POST":
         form = UserCreationForm(request.POST)
-        if form.is_valid():
+        # Email is now mandatory at signup (REQ-7.2.1): closes the
+        # forgot-password hole for the username+password path.
+        email = request.POST.get("email", "").strip()
+        name = request.POST.get("name", "").strip()[:150]
+        email_ok = bool(email) and "@" in email
+        if form.is_valid() and email_ok:
             user = form.save()
+            user.email = email
+            if name:
+                user.first_name = name.split()[0][:30]
+            user.save(update_fields=["email", "first_name"])
+            if name:
+                user.profile.display_name = name
+                user.profile.save(update_fields=["display_name"])
             # First-touch attribution must survive login()'s session cycling
             attribution = dict(request.session.get(FIRST_TOUCH_KEY, {}))
             login(request, user, backend="django.contrib.auth.backends.ModelBackend")
             if attribution:
                 request.session[FIRST_TOUCH_KEY] = attribution
             attach_attribution(user, request)
+            send_verification_email(request, user)  # password path: needs verification
             mark_signup(request, next_url)
             return redirect("welcome")
+        if not email_ok:
+            form.add_error(None, "צריך כתובת אימייל תקינה")
     else:
         form = UserCreationForm()
     return render(request, "registration/register.html", {"form": form, "next": next_url})
+
+
+def verify_email(request):
+    """REQ-7.2.1: confirm an email-verification link."""
+    from .email_verify import verify_token
+    data = verify_token(request.GET.get("token", ""))
+    ok = False
+    if data:
+        from django.contrib.auth.models import User
+        u = User.objects.filter(pk=data.get("uid"), email=data.get("email")).first()
+        if u:
+            u.profile.email_verified = True
+            u.profile.save(update_fields=["email_verified"])
+            ok = True
+    return render(request, "registration/verify_email.html", {"ok": ok})
+
+
+@login_required
+def resend_verification(request):
+    from .email_verify import send_verification_email
+    if not request.user.profile.email_verified:
+        send_verification_email(request, request.user)
+    from django.contrib import messages as _m
+    _m.success(request, "שלחנו שוב מייל אימות 📧")
+    return redirect("profile")
 
 
 def logout_view(request):

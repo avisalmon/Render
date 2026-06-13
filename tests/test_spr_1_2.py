@@ -17,6 +17,8 @@ def test_register_valid_creates_user_and_redirects(client):
     """T-F-1.2.4-1: POST /register/ with valid data creates user and redirects."""
     response = client.post("/register/", {
         "username": "newuser",
+        "name": "משתמש חדש",  # name + email now required (REQ-7.2.1)
+        "email": "newuser@example.com",
         "password1": "StrongPass123!",
         "password2": "StrongPass123!",
     })

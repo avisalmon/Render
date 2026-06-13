@@ -28,6 +28,8 @@ class UserProfile(models.Model):
     open_to_collab = models.BooleanField(default=False)
     guidelines_accepted_at = models.DateTimeField(blank=True, null=True)
     leaderboard_opt_out = models.BooleanField(default=False)
+    # Email verification (REQ-7.2.1): password signups must verify; Google trusted.
+    email_verified = models.BooleanField(default=False)
 
     @property
     def public_name(self):
@@ -51,7 +53,10 @@ class LearnerProfile(models.Model):
     never routed into onboarding and keep the generic homepage.
     """
     LEVELS = [("beginner", "Beginner"), ("intermediate", "Intermediate"), ("advanced", "Advanced")]
-    ROLE_TYPES = [("student", "Student"), ("teacher", "Teacher"), ("other", "Other")]
+    ROLE_TYPES = [
+        ("student", "Student"), ("teacher", "Teacher"), ("professor", "Professor"),
+        ("industry_engineer", "Industry engineer"), ("other", "Other"),
+    ]
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="learner_profile")
     # Welcome basics (captured before the interview): who they are + contact
     role_type = models.CharField(max_length=20, choices=ROLE_TYPES, blank=True, default="")

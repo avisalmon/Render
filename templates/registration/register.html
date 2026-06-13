@@ -1,22 +1,42 @@
 {% extends "base.html" %}
-{% load i18n %}
 
-{% block title %}{% trans "Register" %} — babook{% endblock %}
+{% block title %}הרשמה - babook{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-md-5">
-    <h1 class="mb-4">{% trans "Register" %}</h1>
+    <h1 class="h3 mb-1">הרשמה ל-babook</h1>
+    <p class="text-muted small mb-3">חינם. אפשר גם <a href="/accounts/google/login/?process=login&next=/">להמשיך עם Google</a> בלחיצה.</p>
     <div class="card p-4">
       <form method="post">
         {% csrf_token %}
         {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-primary w-100">{% trans "Create account" %}</button>
+        {% if form.non_field_errors %}<div class="alert alert-danger py-2 small">{{ form.non_field_errors }}</div>{% endif %}
+
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">איך לקרוא לך?</label>
+          <input class="form-control" name="name" value="{{ request.POST.name }}" required autocomplete="name" placeholder="שם פרטי ומשפחה">
+        </div>
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">אימייל</label>
+          <input type="email" class="form-control" name="email" value="{{ request.POST.email }}" required autocomplete="email" dir="ltr">
+          <small class="text-muted">נשלח קישור אימות. נדרש כדי לאבטח את החשבון.</small>
+        </div>
+
+        {% for field in form %}
+        <div class="mb-2">
+          <label class="form-label small">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}<div class="text-danger small">{{ field.errors|striptags }}</div>{% endif %}
+          {% if field.help_text %}<small class="text-muted d-block">{{ field.help_text|safe }}</small>{% endif %}
+        </div>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-primary w-100 mt-2">צרו חשבון</button>
       </form>
     </div>
     <p class="text-center mt-3">
-      <a href="{% url 'login' %}">{% trans "Already have an account? Login" %}</a>
+      <a href="{% url 'login' %}">כבר יש לכם חשבון? התחברו</a>
     </p>
   </div>
 </div>

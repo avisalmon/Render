@@ -87,11 +87,10 @@ def welcome(request):
         for k, v in sorted(TRAINING_TAXONOMY.items(), key=lambda kv: kv[1]["order"])
     ]
     from .ai_chat import _is_stub_mode
+    from .onboarding import fixed_opener
     return render(request, "app/welcome.html", {
         "learner": profile,
-        "basics_needed": not profile.role_type,
-        "prefill_name": request.user.profile.display_name or request.user.first_name,
-        "prefill_email": request.user.email,
+        "opener": fixed_opener(request.user),
         "entry_course": entry_course,
         "domains": domains,
         "ai_available": not _is_stub_mode(),
@@ -172,6 +171,11 @@ def welcome_chat(request):
         return JsonResponse({"error": "bad json"}, status=400)
 
     history = request.session.get(INTERVIEW_KEY, [])
+    if not history:
+        # Seed the fixed opener (already shown to the user, REQ-7.2.3) so the AI
+        # has context and doesn't greet again.
+        from .onboarding import fixed_opener
+        history = [{"role": "assistant", "content": fixed_opener(request.user)}]
     user_turns = sum(1 for m in history if m["role"] == "user")
     if user_turns >= MAX_INTERVIEW_TURNS:
         return JsonResponse({"fallback": True})
@@ -202,6 +206,9 @@ def welcome_chat(request):
         profile.experience_level = level if level in ("beginner", "intermediate", "advanced") else ""
         profile.persona = str(extracted.get("persona", ""))[:200]
         profile.time_per_week = str(extracted.get("time_per_week", ""))[:50]
+        role = extracted.get("role_type", "")
+        if role in ("student", "teacher", "professor", "industry_engineer", "other"):
+            profile.role_type = role
         target = _finish_onboarding(request, profile, completed=True)
         return JsonResponse({"reply": visible, "done": True, "redirect": target})
 
