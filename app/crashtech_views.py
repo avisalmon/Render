@@ -504,10 +504,11 @@ def generate_certificates(request, hackathon):
     if request.method != "POST":
         return redirect("crashtech_manage", slug=hackathon.slug)
     ranking = final_ranking(hackathon)
+    has_winner = bool(ranking and ranking[0]["approved"] > 0)
     for i, row in enumerate(ranking):
-        if i == 0 and row["approved"] > 0:
+        if i == 0 and has_winner:
             ctype = "winner"
-        elif i == 1 and row["approved"] > 0:
+        elif i == 1 and has_winner:
             ctype = "runner_up"
         else:
             ctype = "participation"

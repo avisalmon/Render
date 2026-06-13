@@ -53,12 +53,15 @@ class Hackathon(models.Model):
 
     # --- lifecycle state machine (REQ-6.5.1) ---
     def advance(self):
-        """Move to the next lifecycle status; return False if already at glory."""
+        """Move to the next lifecycle status; return False if already at glory.
+        Kickoff (entering 'active') unlocks all secret challenges (REQ-6.5.10)."""
         idx = self.STATUS_ORDER.index(self.status)
         if idx >= len(self.STATUS_ORDER) - 1:
             return False
         self.status = self.STATUS_ORDER[idx + 1]
         self.save(update_fields=["status"])
+        if self.status == "active":
+            self.challenges.update(visible=True)
         return True
 
     @property
