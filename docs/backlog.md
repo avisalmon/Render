@@ -759,6 +759,7 @@ Claude. **Status:** IN PROGRESS — built in one autonomous pass (DEC-54).
 | F-7.2.7 | No username at signup (derive from email) | REQ-7.2.7 | DONE |
 | F-7.2.8 | Google-first register layout | REQ-7.2.8 | DONE |
 | F-7.2.9 | Visible verify journey: /welcome notice + resend confirmation page | REQ-7.2.9 | DONE |
+| F-7.2.10 | Self-service account deletion (frees email for re-signup) | REQ-7.2.10 | DONE |
 
 #### SPR-7.3 — Matazim course intros
 

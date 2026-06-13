@@ -916,6 +916,7 @@ contributors; and the full regression is green with every epic's tests.
 | REQ-7.2.7 | No username at signup | The register form collects name + email + password only; the username is **auto-derived from the email** (unique-ified). | DONE |
 | REQ-7.2.8 | Google-first register | The register page leads with **Google/GitHub** (preferred, prominent on top); the email/password form is the secondary option below a divider. | DONE |
 | REQ-7.2.9 | Soft-verify, visible journey | Email verification is **non-blocking**: signup logs the user in and routes to `/welcome/`, which shows an explicit "📧 sent a verification email to your address, click the link" notice for unverified accounts; the site-wide banner reminds until verified. Resend renders a clear **"verification sent"** confirmation page (not a silent redirect to profile). Clarifies the journey QA reported as confusing. | DONE |
+| REQ-7.2.10 | Self-service account deletion | The profile page offers **delete account** (`/account/delete/`): a confirmation page requiring the user to retype their email, then permanently deletes the user (cascades), logs out, and **frees the email for re-registration**. Profile now also renders Django messages so success toasts are visible. | DONE |
 
 ### 7.3 Matazim course intros (QA-13)
 

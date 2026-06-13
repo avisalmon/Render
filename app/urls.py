@@ -28,6 +28,7 @@ urlpatterns = [
     path("verify-email/", views.verify_email, name="verify_email"),
     path("resend-verification/", views.resend_verification, name="resend_verification"),
     path("profile/", views.profile, name="profile"),
+    path("account/delete/", views.delete_account, name="delete_account"),
     path("staff/copilot-dashboard/", views.CopilotDashboardView.as_view(), name="copilot_dashboard"),
     path("corporate/", views.corporate, name="corporate"),
 

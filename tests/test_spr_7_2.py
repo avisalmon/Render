@@ -113,3 +113,37 @@ def test_resend_shows_confirmation_page():
     assert "שלחנו לך מייל אימות" in body
     assert "rs@example.com" in body
     assert len(mail.outbox) == 1  # a fresh verification email went out
+
+
+# --- F-7.2.10: self-service account deletion ---
+
+@pytest.mark.django_db
+def test_delete_account_frees_email_for_resignup():
+    """Deleting an account removes the user and frees the email so the same
+    address can register again (REQ-7.2.10)."""
+    c = Client()
+    c.post("/register/", {"name": "מוחק", "email": "del@example.com",
+                          "password": "StrongPass123!"})
+    assert User.objects.filter(email="del@example.com").count() == 1
+
+    # wrong email confirmation does NOT delete
+    bad = c.post("/account/delete/", {"confirm_email": "nope@example.com"})
+    assert bad.status_code == 200
+    assert User.objects.filter(email="del@example.com").exists()
+
+    # matching email deletes and logs out
+    ok = c.post("/account/delete/", {"confirm_email": "del@example.com"})
+    assert ok.status_code == 302
+    assert not User.objects.filter(email="del@example.com").exists()
+
+    # the freed email can register again
+    again = Client().post("/register/", {"name": "שוב", "email": "del@example.com",
+                                         "password": "StrongPass123!"})
+    assert again.status_code == 302
+    assert User.objects.filter(email="del@example.com").count() == 1
+
+
+@pytest.mark.django_db
+def test_delete_account_requires_login():
+    resp = Client().get("/account/delete/")
+    assert resp.status_code == 302 and "/login" in resp.url

@@ -235,6 +235,30 @@ def logout_view(request):
 
 
 @login_required
+def delete_account(request):
+    """Self-service account deletion (REQ-7.2.10).
+
+    GET shows a confirmation page; POST with the matching email permanently
+    deletes the user (cascades profiles/notes/etc.) and frees the email so it
+    can be re-registered.
+    """
+    user = request.user
+    if request.method == "POST":
+        typed = request.POST.get("confirm_email", "").strip().lower()
+        if typed != (user.email or "").strip().lower():
+            return render(request, "registration/delete_account.html", {
+                "error": "האימייל לא תואם. הקלידו את כתובת האימייל של החשבון כדי לאשר.",
+                "email": user.email,
+            })
+        logout(request)
+        user.delete()  # cascades related rows; frees the email for re-signup
+        from django.contrib import messages as _m
+        _m.success(request, "החשבון נמחק. אפשר להירשם מחדש עם אותו אימייל. 👋")
+        return redirect("home")
+    return render(request, "registration/delete_account.html", {"email": user.email})
+
+
+@login_required
 def profile(request):
     user_profile, _ = UserProfile.objects.get_or_create(user=request.user)
     if request.method == "POST":
