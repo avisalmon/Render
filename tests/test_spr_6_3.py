@@ -1,5 +1,5 @@
 """
-EPIC-6.3 — Showcase (דוכן ההשוויץ): projects, stands, wall, brag feed,
+EPIC-6.3 — Showcase (דוכן השוויץ): projects, stands, wall, brag feed,
 reactions, comments, messaging, gamification, integration.
 """
 import pytest

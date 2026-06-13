@@ -38,6 +38,7 @@ urlpatterns = [
     path("community/notifications/", community_views.notifications_page, name="community_notifications"),
     path("community/members/", community_views.members_directory, name="community_members"),
     path("community/settings/", community_views.community_settings_save, name="community_settings"),
+    path("community/join/", community_views.community_go_public, name="community_go_public"),
     path("community/report/", community_views.report_content, name="community_report"),
     path("c/<str:username>/", community_views.public_profile, name="community_profile"),
     path("c/<str:username>/follow/", community_views.follow_toggle, name="community_follow"),
@@ -54,7 +55,7 @@ urlpatterns = [
     path("community/forum/thread/<int:thread_id>/draft/", forum_views.draft_answer, name="forum_draft"),
     path("community/forum/post/<int:post_id>/vote/", forum_views.vote_post, name="forum_vote"),
     path("community/forum/post/<int:post_id>/accept/", forum_views.accept_answer, name="forum_accept"),
-    # --- Showcase / דוכן ההשוויץ (EPIC-6.3) ---
+    # --- Showcase / דוכן השוויץ (EPIC-6.3) ---
     path("community/showcase/", showcase_views.showcase_wall, name="showcase_wall"),
     path("community/showcase/feed/", showcase_views.showcase_feed, name="showcase_feed"),
     path("community/showcase/new/", showcase_views.project_create, name="showcase_new"),

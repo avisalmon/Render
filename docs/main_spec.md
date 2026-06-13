@@ -724,11 +724,11 @@ searchable — the #1 lesson from research_4.
 | REQ-6.2.7 | AI assist | (a) On posting a question, AI suggests existing similar threads + relevant lessons before submit; (b) threads >10 replies get an AI summary box; (c) optional "Avi Bot draft answer" visible to staff for one-click post. Reuses REQ-1.6 infra. | DONE |
 | REQ-6.2.8 | Subscriptions | Follow a thread/category → notification on activity (REQ-6.1.6). | DONE |
 
-### 6.3 EPIC-6.3 — Showcase: דוכן ההשוויץ (exhibitions / bragging page)
+### 6.3 EPIC-6.3 — Showcase: דוכן השוויץ (exhibitions / bragging page)
 
 The skill trust-loop and the emotional core of the community: "תראו מה בניתי".
 Proven as AI-Ascent capability #14 (Exhibition/Portfolio, Sprints 26-30).
-**Naming (DEC-44):** the playful title stays — «דוכן ההשוויץ» — with a formal
+**Naming (DEC-44):** the playful title stays — «דוכן השוויץ» — with a formal
 subtitle: «גלריית הפרויקטים של קהילת babook». Two complementary surfaces
 (DEC-48): a **stable curated wall** (grid, featured, by stand) and a **flowing
 brag feed** (chronological pulse of new projects + reactions). Members organize
@@ -857,7 +857,7 @@ model — these wait until the community is demonstrably alive:
 | DEC-41 | Minors safety | **Student role: no DMs, reviewed publishing, moderated uploads** | matazim audience includes minors; non-negotiable |
 | DEC-42 | Monetary community economy | **Deferred** (marketplace/advisors/hiring in 6.9) | research_3: authority first; payments infra (Stripe) still deferred |
 | DEC-43 | Tech envelope | **Stay on Django/SQLite: polling/SSE, no websockets/Redis** | One deploy unit; the studio + chat patterns already proven on this stack |
-| DEC-44 | Showcase naming | **«דוכן ההשוויץ» + formal subtitle «גלריית הפרויקטים של קהילת babook»** | Avi: partially formal, partially humoristic; ratings + comments are core |
+| DEC-44 | Showcase naming | **«דוכן השוויץ» + formal subtitle «גלריית הפרויקטים של קהילת babook»** | Avi: partially formal, partially humoristic; ratings + comments are core |
 | DEC-45 | Anonymous access | **Read-public (forum/showcase/challenges/events) + soft register note; ALL interactions require login via the /join/ wall** | Avi confirmed; SEO + guest funnel without anonymous noise |
 | DEC-46 | Digest timing | **Gated: explore the weekly digest only after ~50 active members** | Avi: no point emailing an empty room; the feed carries the pulse first |
 | DEC-47 | Leaderboard | **Public with opt-out** (Claude's recommendation, AI-Ascent-proven); students appear by display name only (REQ-6.1.9) | Opt-in leaderboards stay empty — defaults drive participation; opt-out + minors naming rule keeps it safe |

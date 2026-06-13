@@ -1,5 +1,5 @@
 """
-EPIC-6.3 views: the showcase — דוכן ההשוויץ. Wall + brag feed + project
+EPIC-6.3 views: the showcase — דוכן השוויץ. Wall + brag feed + project
 pages + create/edit + reactions + comments. Read-public; every interaction
 requires login (REQ-6.1.11). Markdown + moderation reused from the forum.
 """

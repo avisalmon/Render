@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block title %}הזרם - דוכן ההשוויץ - babook{% endblock %}
+{% block title %}Feed - דוכן השוויץ - babook{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center py-4">
   <div class="col-lg-7">
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-      <h1 class="h3 mb-0"><i class="bi bi-activity me-1" style="color:var(--accent-primary)"></i> הזרם</h1>
+      <h1 class="h3 mb-0"><i class="bi bi-activity me-1" style="color:var(--accent-primary)"></i> Feed</h1>
       <div class="d-flex gap-2">
         <a href="{% url 'showcase_wall' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-grid"></i> הגלריה</a>
         <a href="{% url 'showcase_new' %}" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> השוויצו</a>
@@ -39,7 +39,7 @@
     </div>
     {% empty %}
     <div class="card-surface p-5 text-center text-muted">
-      הזרם עוד שקט. <a href="{% url 'showcase_new' %}">פרסמו את הפרויקט הראשון</a> 🚀
+      Feed עוד שקט. <a href="{% url 'showcase_new' %}">פרסמו את הפרויקט הראשון</a> 🚀
     </div>
     {% endfor %}
   </div>

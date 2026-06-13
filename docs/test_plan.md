@@ -223,7 +223,7 @@
 | T-F-6.1.4.1-2 | Guidelines next anti-open-redirect | integration | F-6.1.4.1 | external next -> /community/ | GREEN |
 
 
-## EPIC-6.3 — Showcase (דוכן ההשוויץ)
+## EPIC-6.3 — Showcase (דוכן השוויץ)
 
 **Sprint goal:** Projects across stands, wall + brag feed, reactions, comments, messaging, gamification, integration.
 **Test file:** `tests/test_spr_6_3.py`

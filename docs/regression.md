@@ -152,7 +152,7 @@
 | test_spr_6_1.py (15) | public/private profiles, settings save, points ledger + tier badges (idempotent + notify), follow toggle, notifications page + bell, guidelines accept-once, report queue, leaderboard opt-out, read-public pages, anonymous interactions routed to the /join/ wall |
 | test_spr_6_2.py (15) | ask->answer->accept (+15/badges/notifications), inline guidelines gate never loses a post, anonymous read/write-wall, upvote toggle + no self-vote, accept permissions, search/filters, staff pin/canonical, lesson-anchored asks (incl. query-string preservation through the wall), AI dedup/summary/draft (mocked), subscriptions notify, open-redirect guard |
 
-## EPIC-6.3 — Showcase / דוכן ההשוויץ (`tests/test_spr_6_3.py` 19)
+## EPIC-6.3 — Showcase / דוכן השוויץ (`tests/test_spr_6_3.py` 19)
 
 | Suite | Verifies |
 |---|---|

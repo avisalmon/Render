@@ -549,7 +549,7 @@ build starts with EPIC-6.1. Epics are sequenced; one big thing at a time.
 |---|---|---|---|
 | EPIC-6.1 | Community Foundation — profiles, reputation, badges, notifications, moderation, minors safety | §6.1 | DONE ✅ |
 | EPIC-6.2 | Forums & Q&A — accepted answers, tags, search, course-anchored threads, AI assist | §6.2 | DONE ✅ |
-| EPIC-6.3 | Showcase (דוכן ההשוויץ) — stands, wall + brag feed, reactions, comments, messaging, gamification | §6.3 | DONE ✅ |
+| EPIC-6.3 | Showcase (דוכן השוויץ) — stands, wall + brag feed, reactions, comments, messaging, gamification | §6.3 | DONE ✅ |
 | EPIC-6.4 | Feed & Tips — community home, composer, weekly digest, homepage hook | §6.4 | PROPOSED |
 | EPIC-6.5 | Challenges & Hackathons — briefs, submissions-as-showcases, judging, teams, school mode | §6.5 | PROPOSED |
 | EPIC-6.6 | Chat & Groups — channels, course groups, safe DMs, member directory | §6.6 | PROPOSED |
@@ -664,7 +664,7 @@ green, deployed.
 
 ---
 
-### EPIC-6.3 — Showcase (דוכן ההשוויץ)
+### EPIC-6.3 — Showcase (דוכן השוויץ)
 
 **Goal:** The bragging wall + flowing feed: members publish projects across
 **stands**, react (stars + emoji), comment, and message each other; gamified.

@@ -59,11 +59,11 @@ Every arrow is one click, and every object links back to a course.
    sidebar: המובילים החודש (leaderboard) · תגיות חמות · האתגר הפעיל
 ```
 
-### 4.2 Exhibition wall — דוכן ההשוויץ (`/community/showcase/`)
+### 4.2 Exhibition wall — דוכן השוויץ (`/community/showcase/`)
 
 ```
 ┌────────────────────────────────────────────────────────┐
-│ דוכן ההשוויץ 🏗️   [הכל | AI | מטצים | חדשנות]  [+ פרסמו] │
+│ דוכן השוויץ 🏗️   [הכל | AI | מטצים | חדשנות]  [+ פרסמו] │
 │ ── נבחרת השבוע ─────────────────────────────────────── │
 │ ┌────────┐ ┌────────┐ ┌────────┐                        │
 │ │ cover  │ │ cover  │ │ cover  │   ← featured row       │
@@ -159,7 +159,7 @@ Each epic ships alone, methodology-first (spec → backlog → tests → regress
 
 ## 8. Open questions — RESOLVED (Avi, 2026-06-12)
 
-1. **Naming** — keep «דוכן ההשוויץ», add the formal subtitle «גלריית
+1. **Naming** — keep «דוכן השוויץ», add the formal subtitle «גלריית
    הפרויקטים של קהילת babook»; ratings + comments are core (DEC-44).
 2. **Anonymous visibility** — read-public for forum/showcase/challenges/events,
    with a soft "הירשמו כדי להגיב ולדרג" note; every interaction (comment, rate,

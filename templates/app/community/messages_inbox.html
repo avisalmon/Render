@@ -23,7 +23,7 @@
       {% if t.unread %}<span class="badge bg-primary rounded-pill">{{ t.unread }}</span>{% endif %}
     </a>
     {% empty %}
-    <div class="card-surface p-4 text-center text-muted">אין הודעות עדיין. הכירו חברי קהילה ב<a href="{% url 'community_members' %}">דף החברים</a> או בדוכן ההשוויץ.</div>
+    <div class="card-surface p-4 text-center text-muted">אין הודעות עדיין. הכירו חברי קהילה ב<a href="{% url 'community_members' %}">דף החברים</a> או בדוכן השוויץ.</div>
     {% endfor %}
     {% endif %}
   </div>

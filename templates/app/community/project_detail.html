@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load course_tags %}
-{% block title %}{{ project.title }} - דוכן ההשוויץ{% endblock %}
+{% block title %}{{ project.title }} - דוכן השוויץ{% endblock %}
 
 {% block extra_head %}
 <meta property="og:title" content="{{ project.title }} - babook">
@@ -14,7 +14,7 @@
   <div class="col-lg-9">
     <nav aria-label="breadcrumb"><ol class="breadcrumb small">
       <li class="breadcrumb-item"><a href="{% url 'community' %}">קהילה</a></li>
-      <li class="breadcrumb-item"><a href="{% url 'showcase_wall' %}">דוכן ההשוויץ</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'showcase_wall' %}">דוכן השוויץ</a></li>
       <li class="breadcrumb-item active">{{ project.title|truncatechars:30 }}</li>
     </ol></nav>
 

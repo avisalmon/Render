@@ -44,6 +44,9 @@
       <a href="{% url 'showcase_project' p.pk %}" class="btn btn-sm btn-link text-muted text-decoration-none px-1">
         <i class="bi bi-chat"></i> {{ p.comments.count }}
       </a>
+      {% if p.author == user %}
+      <a href="{% url 'showcase_edit' p.pk %}" class="btn btn-sm btn-link text-muted text-decoration-none px-1" title="עריכה (גם הקטגוריה)" aria-label="עריכת הפרויקט"><i class="bi bi-pencil"></i></a>
+      {% endif %}
       {% if p.site_url %}
       <a href="{{ p.site_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-primary ms-auto"><i class="bi bi-box-arrow-up-right"></i> בקרו</a>
       {% else %}

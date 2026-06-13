@@ -239,7 +239,7 @@ class ThreadSubscription(models.Model):
 
 
 # ---------------------------------------------------------------------------
-# Showcase — דוכן ההשוויץ (EPIC-6.3). Stand definitions live in app/community.py.
+# Showcase — דוכן השוויץ (EPIC-6.3). Stand definitions live in app/community.py.
 # ---------------------------------------------------------------------------
 
 class ShowcaseProject(models.Model):

@@ -198,6 +198,19 @@ def community_settings_save(request):
 
 
 @interact_required
+def community_go_public(request):
+    """One-click "join the community": publish the member's profile (REQ-6.1.12).
+    Preserves other profile fields (unlike the full settings form)."""
+    if request.method == "POST":
+        p = request.user.profile
+        if not p.is_public:
+            p.is_public = True
+            p.save(update_fields=["is_public"])
+            messages.success(request, "הפרופיל שלך פורסם! ברוך/ה הבא/ה לקהילה 🎉")
+    return redirect("community_profile", username=request.user.username)
+
+
+@interact_required
 def report_content(request):
     """REQ-6.1.8: report button endpoint → staff queue."""
     if request.method != "POST":
