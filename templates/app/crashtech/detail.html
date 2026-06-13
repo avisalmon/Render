@@ -44,16 +44,47 @@
   </div>
   {% endif %}
 
+  {% if messages %}{% for m in messages %}<div class="alert alert-{{ m.tags|default:'info' }} py-2 small">{{ m }}</div>{% endfor %}{% endif %}
+
+  {% if my_team %}
+  <div class="alert alert-info py-2 small"><i class="bi bi-people-fill"></i> הצוות שלך: <strong>{{ my_team.name }}</strong> ({{ my_team.anon_label }})</div>
+  {% endif %}
+
   {% if h.challenges_visible %}
   <h2 class="h5 mb-2"><i class="bi bi-flag-fill" style="color:var(--accent-primary)"></i> אתגרים</h2>
   {% for ch in challenges %}
+  {% with sub=my_subs|get_item:ch.pk %}
   <div class="card-surface p-3 mb-2">
     <div class="d-flex justify-content-between align-items-start">
       <strong>{{ ch.title }}</strong>
       <span class="badge bg-light text-muted">{% if ch.scoring_mode == 'pass_fail' %}{{ ch.point_value }} נק'{% else %}בונוס ביצועים{% endif %}</span>
     </div>
     <div class="small mt-1">{{ ch.description|markdown }}</div>
+
+    {% if my_team %}
+      {% if sub %}
+      <div class="small mt-2">
+        סטטוס הגשה:
+        <span class="badge bg-{% if sub.status == 'approved' %}success{% elif sub.status == 'rejected' %}danger{% else %}secondary{% endif %}">{{ sub.get_status_display }}</span>
+        {% if sub.status == 'rejected' and sub.feedback_note %}<div class="text-danger mt-1">משוב: {{ sub.feedback_note }}</div>{% endif %}
+      </div>
+      {% endif %}
+      {% if h.accepts_submissions %}
+      <form method="post" action="{% url 'crashtech_submit' h.slug ch.pk %}" enctype="multipart/form-data" class="mt-2 border-top pt-2">
+        {% csrf_token %}
+        <div class="row g-2">
+          <div class="col-md-6"><input name="video_url" class="form-control form-control-sm" dir="ltr" placeholder="קישור YouTube (דמו ≤20 שניות)" value="{{ sub.video_url|default:'' }}"></div>
+          <div class="col-md-4"><input type="file" name="source_code" class="form-control form-control-sm" accept=".zip"></div>
+          <div class="col-md-2 d-flex gap-1">
+            <button class="btn btn-sm btn-primary w-100">{% if sub %}הגש מחדש{% else %}הגש{% endif %}</button>
+          </div>
+        </div>
+        <a href="{% url 'crashtech_qr' h.slug ch.pk %}" class="small d-inline-block mt-1"><i class="bi bi-qr-code"></i> העלאת וידאו מהטלפון (QR)</a>
+      </form>
+      {% endif %}
+    {% endif %}
   </div>
+  {% endwith %}
   {% empty %}<p class="text-muted">אין אתגרים פתוחים כרגע.</p>{% endfor %}
   {% else %}
   <div class="card-surface p-4 text-center text-muted">

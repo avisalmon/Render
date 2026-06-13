@@ -781,6 +781,15 @@ gate → certificates + a published Glory Page — with minors-safe defaults, te
 | F-6.5.2.4 | Hardware tracking: per-team status pending→shipped→received + inventory view | REQ-6.5.8 | DONE |
 | F-6.5.2.5 | Participant detail: repo/practice access + countdown-to-start component | REQ-6.5.9 | DONE |
 
+#### SPR-6.5.3 — Live core (kickoff, event hub, submission, deadline gate)
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-6.5.3.1 | Kickoff unlock + Event Main Page (challenges visible, team status, deadline countdown) | REQ-6.5.10 | DONE |
+| F-6.5.3.2 | `Submission` model + submit (video YouTube link + zip source code) → pending queue; one per team/challenge | REQ-6.5.11 | DONE |
+| F-6.5.3.3 | `QRToken` + per-team/challenge QR phone-upload of the demo video (token-bound, no login) | REQ-6.5.11 | DONE |
+| F-6.5.3.4 | Deadline gate: submissions hard-blocked before kickoff and after the deadline | REQ-6.5.16 | DONE |
+
 ---
 
 ## EPIC-7 — QA Hardening (from Avi's 2026-06-13 walkthrough)

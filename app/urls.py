@@ -93,6 +93,9 @@ urlpatterns = [
     path("crashtech/<slug:slug>/teams/", crashtech_views.teams, name="crashtech_teams"),
     path("crashtech/<slug:slug>/teams/<int:team_id>/", crashtech_views.team_edit, name="crashtech_team_edit"),
     path("crashtech/<slug:slug>/hardware/", crashtech_views.hardware_inventory, name="crashtech_hardware"),
+    path("crashtech/<slug:slug>/challenges/<int:challenge_id>/submit/", crashtech_views.submit_solution, name="crashtech_submit"),
+    path("crashtech/<slug:slug>/challenges/<int:challenge_id>/qr/", crashtech_views.challenge_qr, name="crashtech_qr"),
+    path("crashtech/u/<str:token>/", crashtech_views.qr_upload, name="crashtech_qr_upload"),
 
     # Apex section placeholders (coming soon)
     path("services/", views.coming_soon, {"section": "services"}, name="services"),

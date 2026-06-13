@@ -5,6 +5,8 @@ to existing users. Models live here and are re-exported from app/models.py so
 Django registers them under the `app` label. The lifecycle state machine on
 ``Hackathon`` is the spine — every CrashTech surface gates on ``status``.
 """
+import secrets
+
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
@@ -153,3 +155,66 @@ class Challenge(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Submission(models.Model):
+    """A team's submission to a challenge (REQ-6.5.11). Video demo (YouTube link
+    or QR-uploaded file) + source code zip. Resubmission resets to pending."""
+    STATUS = [("pending", "Pending"), ("approved", "Approved"), ("rejected", "Rejected")]
+    challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE, related_name="submissions")
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="submissions")
+    video_url = models.CharField(max_length=500, blank=True, default="")   # YouTube link
+    video_file = models.FileField(upload_to="crashtech/videos/", blank=True, null=True)  # QR upload
+    source_code = models.FileField(upload_to="crashtech/code/", blank=True, null=True)   # zip (DEC-56)
+    status = models.CharField(max_length=10, choices=STATUS, default="pending")
+    points_awarded = models.PositiveIntegerField(default=0)
+    bonus_points_awarded = models.PositiveIntegerField(default=0)
+    feedback_note = models.TextField(blank=True, default="")
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name="+")
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["submitted_at"]
+        unique_together = [("challenge", "team")]
+
+    def __str__(self):
+        return f"{self.team.name} → {self.challenge.title} ({self.status})"
+
+    @property
+    def has_video(self):
+        return bool(self.video_url or self.video_file)
+
+
+class QRToken(models.Model):
+    """Per-team, per-challenge token that authenticates a phone video upload
+    (REQ-6.5.11) — the QR encodes a tokenized URL so the upload binds to the
+    right team+challenge without the phone being logged in."""
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="qr_tokens")
+    challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE, related_name="qr_tokens")
+    token = models.CharField(max_length=64, unique=True)
+    expires_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [("team", "challenge")]
+
+    @property
+    def is_valid(self):
+        return timezone.now() <= self.expires_at
+
+    @classmethod
+    def get_or_refresh(cls, team, challenge, ttl_hours=6):
+        """Return a valid token for this team+challenge, refreshing if expired."""
+        tok, _ = cls.objects.get_or_create(
+            team=team, challenge=challenge,
+            defaults={"token": secrets.token_urlsafe(24),
+                      "expires_at": timezone.now() + timezone.timedelta(hours=ttl_hours)},
+        )
+        if not tok.is_valid:
+            tok.token = secrets.token_urlsafe(24)
+            tok.expires_at = timezone.now() + timezone.timedelta(hours=ttl_hours)
+            tok.save(update_fields=["token", "expires_at"])
+        return tok

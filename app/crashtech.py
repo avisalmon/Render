@@ -61,6 +61,13 @@ def can_manage(user, hackathon):
     return is_organizer(user, hackathon) or is_admin(user, hackathon)
 
 
+def team_of(user, hackathon):
+    """The team `user` belongs to in `hackathon`, or None."""
+    if not user or not getattr(user, "is_authenticated", False):
+        return None
+    return hackathon.teams.filter(members=user).first()
+
+
 def available_stock(hackathon):
     """Kits left = stock − teams already formed (each team consumes one kit)."""
     return max(0, hackathon.hardware_stock - hackathon.teams.count())

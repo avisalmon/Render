@@ -15,8 +15,9 @@ from .crashtech import (
     manager_required,
     organizer_required,
     roles_of,
+    team_of,
 )
-from .models import Challenge, Hackathon, Team
+from .models import Challenge, Hackathon, QRToken, Submission, Team
 
 
 def _aware(value):
@@ -305,14 +306,94 @@ def hardware_inventory(request, hackathon):
 
 
 def hackathon_detail(request, slug):
-    """Public hackathon page (placeholder hub; the live event page lands in
-    SPR-6.5.3). Visible once out of setup; organizer can always preview."""
+    """The hackathon hub / Event Main Page (REQ-6.5.10). Public read once out of
+    setup; for a team member during the live event it carries the submit forms
+    + their submission statuses. Organizer can always preview."""
     h = get_object_or_404(Hackathon, slug=slug)
     if h.status == "setup" and not can_configure(request.user, h):
         from django.http import Http404
         raise Http404
+    my_team = team_of(request.user, h)
+    challenges = list(h.challenges.filter(visible=True)) if h.challenges_visible else []
+    my_subs = {}
+    if my_team:
+        my_subs = {s.challenge_id: s for s in my_team.submissions.all()}
     return render(request, "app/crashtech/detail.html", {
         "h": h,
-        "challenges": h.challenges.filter(visible=True) if h.challenges_visible else [],
+        "challenges": challenges,
         "my_roles": roles_of(request.user, h),
+        "my_team": my_team,
+        "my_subs": my_subs,
     })
+
+
+def _submit_guard(request, hackathon, challenge_id):
+    """Shared checks for a submission: live + before deadline + caller is on a
+    team in this hackathon. Returns (team, challenge) or (None, error_message)."""
+    challenge = get_object_or_404(Challenge, pk=challenge_id, hackathon=hackathon)
+    if not hackathon.accepts_submissions:
+        return None, "ההגשות סגורות (לפני הזינוק או אחרי הדדליין)."
+    team = team_of(request.user, hackathon)
+    if team is None:
+        return None, "רק חברי צוות יכולים להגיש."
+    return team, challenge
+
+
+@login_required
+def submit_solution(request, slug, challenge_id):
+    """REQ-6.5.11/6.5.16: a team submits (video link + zip). Resubmission
+    updates the same row and resets it to pending (REQ-6.5.14 groundwork)."""
+    hackathon = get_object_or_404(Hackathon, slug=slug)
+    if request.method != "POST":
+        return redirect("crashtech_detail", slug=slug)
+    team, challenge = _submit_guard(request, hackathon, challenge_id)
+    if team is None:
+        messages.error(request, challenge)  # error message
+        return redirect("crashtech_detail", slug=slug)
+    sub, _ = Submission.objects.get_or_create(challenge=challenge, team=team)
+    video_url = (request.POST.get("video_url") or "").strip()
+    if video_url:
+        sub.video_url = video_url[:500]
+    if request.FILES.get("source_code"):
+        sub.source_code = request.FILES["source_code"]
+    sub.status = "pending"          # (re)submission enters the pending queue
+    sub.feedback_note = ""
+    sub.save()
+    messages.success(request, f"ההגשה ל«{challenge.title}» נקלטה וממתינה לשיפוט.")
+    return redirect("crashtech_detail", slug=slug)
+
+
+@login_required
+def challenge_qr(request, slug, challenge_id):
+    """REQ-6.5.11: show a QR that opens a phone upload form bound to this
+    team+challenge (token = auth, so the phone needn't be logged in)."""
+    hackathon = get_object_or_404(Hackathon, slug=slug)
+    challenge = get_object_or_404(Challenge, pk=challenge_id, hackathon=hackathon)
+    team = team_of(request.user, hackathon)
+    if team is None:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden("רק חברי צוות יכולים להעלות וידאו")
+    tok = QRToken.get_or_refresh(team, challenge)
+    upload_url = request.build_absolute_uri(f"/crashtech/u/{tok.token}/")
+    qr_img = f"https://api.qrserver.com/v1/create-qr-code/?size=240x240&data={upload_url}"
+    return render(request, "app/crashtech/qr.html", {
+        "h": hackathon, "challenge": challenge, "team": team,
+        "upload_url": upload_url, "qr_img": qr_img,
+    })
+
+
+def qr_upload(request, token):
+    """Tokenized phone upload of the demo video (no login). The token binds the
+    upload to the right team+challenge (REQ-6.5.11)."""
+    tok = get_object_or_404(QRToken, token=token)
+    if not tok.is_valid:
+        return render(request, "app/crashtech/qr_upload.html", {"expired": True})
+    if not tok.challenge.hackathon.accepts_submissions:
+        return render(request, "app/crashtech/qr_upload.html", {"closed": True, "tok": tok})
+    if request.method == "POST" and request.FILES.get("video"):
+        sub, _ = Submission.objects.get_or_create(challenge=tok.challenge, team=tok.team)
+        sub.video_file = request.FILES["video"]
+        sub.status = "pending"
+        sub.save()
+        return render(request, "app/crashtech/qr_upload.html", {"done": True, "tok": tok})
+    return render(request, "app/crashtech/qr_upload.html", {"tok": tok})
