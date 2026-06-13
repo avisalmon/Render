@@ -8,13 +8,15 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
 from .crashtech import (
+    available_stock,
     can_configure,
     can_create_hackathon,
     grant_role,
+    manager_required,
     organizer_required,
     roles_of,
 )
-from .models import Challenge, Hackathon
+from .models import Challenge, Hackathon, Team
 
 
 def _aware(value):
@@ -185,6 +187,121 @@ def judge_assign(request, hackathon):
     judges = User.objects.filter(crashtech_roles__hackathon=hackathon,
                                  crashtech_roles__role="judge").distinct()
     return render(request, "app/crashtech/judges.html", {"h": hackathon, "judges": judges})
+
+
+@manager_required
+def participants(request, hackathon):
+    """REQ-6.5.6: organizer/admin invite existing babook users as participants."""
+    if request.method == "POST":
+        username = (request.POST.get("username") or "").strip()
+        target = User.objects.filter(username=username).first()
+        if not target:
+            messages.error(request, f"לא נמצא משתמש «{username}».")
+        else:
+            grant_role(hackathon, target, "participant")
+            _email_invite(request, hackathon, target)
+            from .community import notify
+            notify(target, verb="crashtech_invite",
+                   text=f"הוזמנת להאקתון «{hackathon.name}»",
+                   url=f"/crashtech/{hackathon.slug}/")
+            messages.success(request, f"{target.username} הוזמן/ה כמשתתף/ת.")
+        return redirect("crashtech_participants", slug=hackathon.slug)
+    invited = User.objects.filter(crashtech_roles__hackathon=hackathon,
+                                  crashtech_roles__role="participant").distinct()
+    q = (request.GET.get("q") or "").strip()
+    matches = []
+    if q:
+        matches = User.objects.filter(username__icontains=q).select_related("profile")[:10]
+    return render(request, "app/crashtech/participants.html", {
+        "h": hackathon, "invited": invited, "matches": matches, "q": q,
+    })
+
+
+def _email_invite(request, hackathon, user):
+    if not user.email:
+        return
+    from django.conf import settings
+    from django.core.mail import send_mail
+    url = request.build_absolute_uri(f"/crashtech/{hackathon.slug}/")
+    send_mail(
+        f"הוזמנת להאקתון «{hackathon.name}»",
+        f"שלום,\n\nהוזמנת להשתתף בהאקתון «{hackathon.name}» ב-babook.\n"
+        f"פרטים והכנה: {url}\n\nבהצלחה!",
+        getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@babook.co.il"),
+        [user.email], fail_silently=True,
+    )
+
+
+@manager_required
+def teams(request, hackathon):
+    """REQ-6.5.7/8: form teams, bounded by hardware stock."""
+    if request.method == "POST":
+        name = (request.POST.get("name") or "").strip()
+        if not name:
+            messages.error(request, "שם הצוות חובה.")
+        elif available_stock(hackathon) <= 0:
+            messages.error(request, "אזל מלאי הערכות - אי אפשר ליצור צוותים נוספים.")
+        elif Team.objects.filter(hackathon=hackathon, name=name).exists():
+            messages.error(request, "כבר קיים צוות בשם הזה.")
+        else:
+            Team.objects.create(
+                hackathon=hackathon, name=name,
+                glory_consent=request.POST.get("glory_consent") == "on",
+                anon_ordinal=hackathon.teams.count() + 1,
+            )
+            messages.success(request, f"הצוות «{name}» נוצר.")
+        return redirect("crashtech_teams", slug=hackathon.slug)
+    return render(request, "app/crashtech/teams.html", {
+        "h": hackathon, "teams": hackathon.teams.prefetch_related("members__profile"),
+        "available": available_stock(hackathon),
+    })
+
+
+@manager_required
+def team_edit(request, hackathon, team_id):
+    """Add/remove members (size-bound), hardware status, consent, rename."""
+    team = get_object_or_404(Team, pk=team_id, hackathon=hackathon)
+    if request.method == "POST":
+        action = request.POST.get("action")
+        if action == "add_member":
+            target = User.objects.filter(username=(request.POST.get("username") or "").strip()).first()
+            if not target:
+                messages.error(request, "לא נמצא משתמש.")
+            elif team.members.count() >= hackathon.team_size:
+                messages.error(request, f"הצוות מלא (עד {hackathon.team_size} חברים).")
+            else:
+                team.members.add(target)
+                grant_role(hackathon, target, "participant")
+                messages.success(request, "חבר/ה נוסף/ה לצוות.")
+        elif action == "remove_member":
+            target = User.objects.filter(username=(request.POST.get("username") or "").strip()).first()
+            if target:
+                team.members.remove(target)
+        elif action == "hardware":
+            status = request.POST.get("hardware_status")
+            if status in dict(Team.HARDWARE):
+                team.hardware_status = status
+                team.save(update_fields=["hardware_status"])
+                messages.success(request, "סטטוס החומרה עודכן.")
+        elif action == "rename":
+            team.name = (request.POST.get("name") or team.name).strip()
+            team.save(update_fields=["name"])
+        elif action == "consent":
+            team.glory_consent = request.POST.get("glory_consent") == "on"
+            team.save(update_fields=["glory_consent"])
+        return redirect("crashtech_teams", slug=hackathon.slug)
+    return redirect("crashtech_teams", slug=hackathon.slug)
+
+
+@manager_required
+def hardware_inventory(request, hackathon):
+    """REQ-6.5.8: stock / shipped / received overview."""
+    teams_qs = hackathon.teams.all()
+    counts = {s: teams_qs.filter(hardware_status=s).count() for s, _ in Team.HARDWARE}
+    return render(request, "app/crashtech/hardware.html", {
+        "h": hackathon, "teams": teams_qs, "counts": counts,
+        "available": available_stock(hackathon),
+    })
 
 
 def hackathon_detail(request, slug):

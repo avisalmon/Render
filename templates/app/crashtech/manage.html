@@ -39,6 +39,14 @@
     <a href="{% url 'crashtech_detail' h.slug %}" class="btn btn-sm btn-link">תצוגת משתתף ←</a>
   </div>
 
+  <!-- Management surfaces -->
+  <div class="row g-2 mb-3">
+    <div class="col-6 col-md-3"><a href="{% url 'crashtech_participants' h.slug %}" class="card-surface d-block p-3 text-center text-decoration-none" style="color:var(--text-primary)"><i class="bi bi-people d-block mb-1" style="color:var(--accent-primary);font-size:1.3rem"></i><span class="small">משתתפים</span></a></div>
+    <div class="col-6 col-md-3"><a href="{% url 'crashtech_teams' h.slug %}" class="card-surface d-block p-3 text-center text-decoration-none" style="color:var(--text-primary)"><i class="bi bi-people-fill d-block mb-1" style="color:var(--accent-primary);font-size:1.3rem"></i><span class="small">צוותים</span></a></div>
+    <div class="col-6 col-md-3"><a href="{% url 'crashtech_hardware' h.slug %}" class="card-surface d-block p-3 text-center text-decoration-none" style="color:var(--text-primary)"><i class="bi bi-box-seam d-block mb-1" style="color:var(--accent-primary);font-size:1.3rem"></i><span class="small">מלאי חומרה</span></a></div>
+    <div class="col-6 col-md-3"><a href="{% url 'crashtech_judges' h.slug %}" class="card-surface d-block p-3 text-center text-decoration-none" style="color:var(--text-primary)"><i class="bi bi-gavel d-block mb-1" style="color:var(--accent-primary);font-size:1.3rem"></i><span class="small">שופטים</span></a></div>
+  </div>
+
   <div class="row g-3">
     <!-- Challenges -->
     <div class="col-lg-8">

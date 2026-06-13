@@ -61,6 +61,11 @@ def can_manage(user, hackathon):
     return is_organizer(user, hackathon) or is_admin(user, hackathon)
 
 
+def available_stock(hackathon):
+    """Kits left = stock − teams already formed (each team consumes one kit)."""
+    return max(0, hackathon.hardware_stock - hackathon.teams.count())
+
+
 def can_create_hackathon(user):
     """Only babook staff spin up new hackathons (the organizer is then granted)."""
     return bool(user and user.is_authenticated and user.is_staff)

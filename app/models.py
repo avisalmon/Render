@@ -923,4 +923,5 @@ from .crashtech_models import (  # noqa: E402,F401
     Challenge,
     Hackathon,
     HackRole,
+    Team,
 )

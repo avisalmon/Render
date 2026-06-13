@@ -101,6 +101,31 @@ class HackRole(models.Model):
         return f"{self.user.username}:{self.role}@{self.hackathon.slug}"
 
 
+class Team(models.Model):
+    """A hackathon team (REQ-6.5.7). Members are babook users; hardware status
+    tracks the physical kit; glory_consent is captured up-front (DEC-58)."""
+    HARDWARE = [("pending", "Pending"), ("shipped", "Shipped"), ("received", "Received")]
+    hackathon = models.ForeignKey(Hackathon, on_delete=models.CASCADE, related_name="teams")
+    name = models.CharField(max_length=120)
+    members = models.ManyToManyField(User, blank=True, related_name="crashtech_teams")
+    hardware_status = models.CharField(max_length=10, choices=HARDWARE, default="pending")
+    glory_consent = models.BooleanField(default=False)
+    # anonymized public label, assigned stably per hackathon (REQ-6.5.15)
+    anon_ordinal = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+        unique_together = [("hackathon", "name")]
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def anon_label(self):
+        return f"Team {self.anon_ordinal}" if self.anon_ordinal else "Team ?"
+
+
 class Challenge(models.Model):
     """A hackathon challenge (REQ-6.5.4). Secret (visible=False) until kickoff.
 

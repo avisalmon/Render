@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}מלאי חומרה - {{ h.name }}{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'crashtech_home' %}" style="color:var(--accent-primary)">CrashTech</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'crashtech_manage' h.slug %}" style="color:var(--accent-primary)">{{ h.name }}</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">מלאי חומרה</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="py-4">
+  <h1 class="h4 mb-3"><i class="bi bi-box-seam me-1"></i> מלאי חומרה</h1>
+  <div class="row g-2 mb-3">
+    <div class="col"><div class="card-surface p-3 text-center"><div class="h4 mb-0">{{ h.hardware_stock }}</div><div class="small text-muted">סה"כ מלאי</div></div></div>
+    <div class="col"><div class="card-surface p-3 text-center"><div class="h4 mb-0">{{ available }}</div><div class="small text-muted">פנוי</div></div></div>
+    <div class="col"><div class="card-surface p-3 text-center"><div class="h4 mb-0">{{ counts.shipped }}</div><div class="small text-muted">נשלח</div></div></div>
+    <div class="col"><div class="card-surface p-3 text-center"><div class="h4 mb-0">{{ counts.received }}</div><div class="small text-muted">התקבל</div></div></div>
+  </div>
+
+  <table class="table table-sm card-surface">
+    <thead><tr><th>צוות</th><th>סטטוס חומרה</th></tr></thead>
+    <tbody>
+      {% for t in teams %}
+      <tr><td>{{ t.name }}</td><td><span class="badge bg-{% if t.hardware_status == 'received' %}success{% elif t.hardware_status == 'shipped' %}info{% else %}secondary{% endif %}">{{ t.get_hardware_status_display }}</span></td></tr>
+      {% empty %}<tr><td colspan="2" class="text-muted text-center">אין צוותים.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  <a href="{% url 'crashtech_teams' h.slug %}" class="btn btn-sm btn-outline-primary">לניהול צוותים ←</a>
+</div>
+{% endblock %}

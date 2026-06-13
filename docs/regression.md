@@ -169,6 +169,7 @@
 | Suite | Verifies |
 |---|---|
 | test_spr_6_5_1.py (7) | lifecycle advances setup→readiness→active→closed→glory; challenges hidden until kickoff + submissions gated by deadline; per-hackathon multi-roles + organizer gating; staff-only hackathon creation (creator becomes organizer); organizer authors secret challenges (pass_fail + performance_creativity w/ bonus tiers); non-organizer blocked; organizer assigns judges |
+| test_spr_6_5_2.py (8) | invite grants participant role + emails; non-manager blocked; team creation blocked beyond hardware stock; team size bound enforced; glory consent captured up-front; hardware status pending→shipped→received; inventory view counts; countdown-to-start on detail during readiness |
 
 ## EPIC-7 — QA Hardening (`tests/test_spr_7_1..7_8.py`)
 

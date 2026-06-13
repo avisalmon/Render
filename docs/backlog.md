@@ -771,6 +771,16 @@ gate → certificates + a published Glory Page — with minors-safe defaults, te
 | F-6.5.1.4 | `Challenge` model + authoring CRUD (secret until kickoff; pass_fail / performance_creativity; point value, top-N, bonus tiers) | REQ-6.5.4 | DONE |
 | F-6.5.1.5 | Judge assignment view (organizer assigns judges from babook users) | REQ-6.5.5 | DONE |
 
+#### SPR-6.5.2 — Readiness (invites, teams, hardware, countdown)
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-6.5.2.1 | Invite participants: search babook users + invite (grant participant role, email + notify) | REQ-6.5.6 | DONE |
+| F-6.5.2.2 | `Team` model + formation (name, members, size bound; glory_consent captured up-front) | REQ-6.5.7, REQ-6.5.19 | DONE |
+| F-6.5.2.3 | Stock cap: team creation blocked beyond `hardware_stock`; available-stock helper | REQ-6.5.7, REQ-6.5.8 | DONE |
+| F-6.5.2.4 | Hardware tracking: per-team status pending→shipped→received + inventory view | REQ-6.5.8 | DONE |
+| F-6.5.2.5 | Participant detail: repo/practice access + countdown-to-start component | REQ-6.5.9 | DONE |
+
 ---
 
 ## EPIC-7 — QA Hardening (from Avi's 2026-06-13 walkthrough)
