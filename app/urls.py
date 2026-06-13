@@ -4,6 +4,7 @@ from django.urls import path
 from . import (
     community_views,
     course_api,
+    crashtech_views,
     forum_views,
     onboarding_views,
     showcase_views,
@@ -77,6 +78,17 @@ urlpatterns = [
     path("community/messages/", community_views.messages_inbox, name="messages_inbox"),
     path("community/messages/<str:username>/", community_views.message_thread, name="messages_thread"),
     path("community/messages/<str:username>/block/", community_views.message_block, name="messages_block"),
+
+    # --- CrashTech: hackathon platform (EPIC-6.5) ---
+    path("crashtech/", crashtech_views.crashtech_home, name="crashtech_home"),
+    path("crashtech/new/", crashtech_views.hackathon_create, name="crashtech_create"),
+    path("crashtech/<slug:slug>/", crashtech_views.hackathon_detail, name="crashtech_detail"),
+    path("crashtech/<slug:slug>/manage/", crashtech_views.hackathon_manage, name="crashtech_manage"),
+    path("crashtech/<slug:slug>/edit/", crashtech_views.hackathon_edit, name="crashtech_edit"),
+    path("crashtech/<slug:slug>/challenges/new/", crashtech_views.challenge_create, name="crashtech_challenge_new"),
+    path("crashtech/<slug:slug>/challenges/<int:challenge_id>/edit/", crashtech_views.challenge_edit, name="crashtech_challenge_edit"),
+    path("crashtech/<slug:slug>/challenges/<int:challenge_id>/delete/", crashtech_views.challenge_delete, name="crashtech_challenge_delete"),
+    path("crashtech/<slug:slug>/judges/", crashtech_views.judge_assign, name="crashtech_judges"),
 
     # Apex section placeholders (coming soon)
     path("services/", views.coming_soon, {"section": "services"}, name="services"),

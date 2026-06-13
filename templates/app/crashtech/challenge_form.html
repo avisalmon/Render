@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}{% if ch %}עריכת אתגר{% else %}אתגר חדש{% endif %} - {{ h.name }}{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'crashtech_home' %}" style="color:var(--accent-primary)">CrashTech</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'crashtech_manage' h.slug %}" style="color:var(--accent-primary)">{{ h.name }}</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">{% if ch %}עריכת אתגר{% else %}אתגר חדש{% endif %}</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+  <div class="col-lg-7">
+    <h1 class="h4 mb-3">{% if ch %}עריכת אתגר{% else %}אתגר חדש{% endif %}</h1>
+    <form method="post" class="card-surface p-4">
+      {% csrf_token %}
+      <label class="form-label">כותרת</label>
+      <input name="title" class="form-control mb-3" value="{{ ch.title|default:'' }}" required>
+      <label class="form-label">תיאור / בריף (Markdown)</label>
+      <textarea name="description" rows="5" class="form-control mb-3">{{ ch.description|default:'' }}</textarea>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label small">שיטת ניקוד</label>
+          <select name="scoring_mode" class="form-select" id="scoring-mode">
+            <option value="pass_fail" {% if ch.scoring_mode == 'pass_fail' %}selected{% endif %}>עבור / נכשל</option>
+            <option value="performance_creativity" {% if ch.scoring_mode == 'performance_creativity' %}selected{% endif %}>ביצועים / יצירתיות</option>
+          </select>
+        </div>
+        <div class="col-md-6"><label class="form-label small">ניקוד בסיס</label>
+          <input type="number" name="point_value" min="0" class="form-control" value="{{ ch.point_value|default:0 }}"></div>
+      </div>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6"><label class="form-label small">דירוג Top-N (ביצועים/יצירתיות)</label>
+          <input type="number" name="top_submission_count" min="0" class="form-control" value="{{ ch.top_submission_count|default:0 }}"></div>
+        <div class="col-md-6"><label class="form-label small">בונוס לפי דירוג (מופרד בפסיק)</label>
+          <input name="bonus_points_tiers" class="form-control" dir="ltr"
+                 value="{% for t in ch.bonus_points_tiers %}{{ t }}{% if not forloop.last %}, {% endif %}{% endfor %}" placeholder="50, 30, 10"></div>
+      </div>
+      <button class="btn btn-primary">{% if ch %}שמירה{% else %}הוספת אתגר{% endif %}</button>
+      <a href="{% url 'crashtech_manage' h.slug %}" class="btn btn-outline-secondary">ביטול</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

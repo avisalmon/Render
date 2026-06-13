@@ -761,6 +761,16 @@ feedback → organizer awards bonus tiers → anonymized live leaderboard → de
 gate → certificates + a published Glory Page — with minors-safe defaults, tests
 + full regression green, deployed + smoke-tested.
 
+#### SPR-6.5.1 — Foundations (models, lifecycle, organizer setup)
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-6.5.1.1 | `Hackathon` model + lifecycle state machine (status setup→readiness→active→closed→glory; advance/can-edit/is-live helpers) | REQ-6.5.1 | DONE |
+| F-6.5.1.2 | `HackRole` model + permission helpers (per-event organizer/admin/judge/participant; multi-role; organizer-only gating) | REQ-6.5.2 | DONE |
+| F-6.5.1.3 | Organizer setup: create/edit hackathon form + view (staff-gated creation; dates, team size, deadline, repo URL, hardware stock) | REQ-6.5.3 | DONE |
+| F-6.5.1.4 | `Challenge` model + authoring CRUD (secret until kickoff; pass_fail / performance_creativity; point value, top-N, bonus tiers) | REQ-6.5.4 | DONE |
+| F-6.5.1.5 | Judge assignment view (organizer assigns judges from babook users) | REQ-6.5.5 | DONE |
+
 ---
 
 ## EPIC-7 — QA Hardening (from Avi's 2026-06-13 walkthrough)

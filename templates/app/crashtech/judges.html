@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}שופטים - {{ h.name }}{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'crashtech_home' %}" style="color:var(--accent-primary)">CrashTech</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'crashtech_manage' h.slug %}" style="color:var(--accent-primary)">{{ h.name }}</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">שופטים</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+  <div class="col-lg-6">
+    <h1 class="h4 mb-3"><i class="bi bi-gavel me-1"></i> שופטים</h1>
+    {% if messages %}{% for m in messages %}<div class="alert alert-{{ m.tags|default:'info' }} py-2 small">{{ m }}</div>{% endfor %}{% endif %}
+
+    <form method="post" class="card-surface p-3 mb-3 d-flex gap-2">
+      {% csrf_token %}
+      <input name="username" class="form-control" placeholder="שם משתמש babook" required>
+      <button class="btn btn-primary">הוסף שופט</button>
+    </form>
+
+    {% for j in judges %}
+    <div class="card-surface p-3 mb-2 d-flex justify-content-between align-items-center">
+      <span>{{ j.profile.public_name|default:j.username }} <span class="text-muted small">@{{ j.username }}</span></span>
+      <form method="post">{% csrf_token %}
+        <input type="hidden" name="username" value="{{ j.username }}">
+        <input type="hidden" name="action" value="remove">
+        <button class="btn btn-sm btn-outline-danger py-0">הסר</button>
+      </form>
+    </div>
+    {% empty %}
+    <div class="card-surface p-4 text-center text-muted">לא הוקצו שופטים עדיין.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

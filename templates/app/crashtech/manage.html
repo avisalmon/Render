@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}ניהול {{ h.name }} - CrashTech{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'home' %}" style="color:var(--accent-primary)">בית</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'crashtech_home' %}" style="color:var(--accent-primary)">CrashTech</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">{{ h.name }}</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="py-4">
+  {% if messages %}{% for m in messages %}<div class="alert alert-{{ m.tags|default:'info' }} py-2 small">{{ m }}</div>{% endfor %}{% endif %}
+
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h1 class="h4 mb-0">{{ h.name }}</h1>
+    <span class="badge bg-secondary">שלב: {{ h.status_label }}</span>
+  </div>
+
+  <!-- Lifecycle stepper -->
+  <div class="card-surface p-3 mb-3">
+    <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+      {% for s in statuses %}
+      <span class="badge bg-{% if s == h.status %}primary{% else %}light text-muted{% endif %}">{{ forloop.counter }}. {{ s }}</span>
+      {% if not forloop.last %}<i class="bi bi-arrow-left text-muted"></i>{% endif %}
+      {% endfor %}
+    </div>
+    {% if not h.is_glory %}
+    <form method="post" class="d-inline">{% csrf_token %}
+      <input type="hidden" name="action" value="advance">
+      <button class="btn btn-sm btn-outline-primary"
+              onclick="return confirm('להעביר את האירוע לשלב הבא? פעולה זו משנה מה גלוי למשתתפים.')">
+        <i class="bi bi-fast-forward-fill"></i> העבר לשלב הבא
+      </button>
+    </form>
+    {% endif %}
+    {% if h.can_edit_setup %}<a href="{% url 'crashtech_edit' h.slug %}" class="btn btn-sm btn-outline-secondary">עריכת הגדרות</a>{% endif %}
+    <a href="{% url 'crashtech_detail' h.slug %}" class="btn btn-sm btn-link">תצוגת משתתף ←</a>
+  </div>
+
+  <div class="row g-3">
+    <!-- Challenges -->
+    <div class="col-lg-8">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="h6 mb-0"><i class="bi bi-flag-fill" style="color:var(--accent-primary)"></i> אתגרים <span class="text-muted small">(חבויים עד הזינוק)</span></h2>
+        {% if h.can_edit_setup %}<a href="{% url 'crashtech_challenge_new' h.slug %}" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> אתגר</a>{% endif %}
+      </div>
+      {% for ch in challenges %}
+      <div class="card-surface p-3 mb-2">
+        <div class="d-flex justify-content-between align-items-start gap-2">
+          <div>
+            <strong>{{ ch.title }}</strong>
+            <span class="badge bg-light text-muted ms-1">{% if ch.scoring_mode == 'pass_fail' %}עבור/נכשל · {{ ch.point_value }} נק'{% else %}ביצועים/יצירתיות · top {{ ch.top_submission_count }} · {{ ch.bonus_points_tiers }}{% endif %}</span>
+          </div>
+          <div class="d-flex gap-1">
+            <a href="{% url 'crashtech_challenge_edit' h.slug ch.pk %}" class="btn btn-sm btn-outline-secondary py-0">עריכה</a>
+            <form method="post" action="{% url 'crashtech_challenge_delete' h.slug ch.pk %}" class="d-inline">{% csrf_token %}
+              <button class="btn btn-sm btn-outline-danger py-0" onclick="return confirm('למחוק את האתגר?')">מחיקה</button>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="card-surface p-4 text-center text-muted">עדיין לא הוגדרו אתגרים.</div>
+      {% endfor %}
+    </div>
+
+    <!-- Judges -->
+    <div class="col-lg-4">
+      <div class="card-surface p-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h2 class="h6 mb-0"><i class="bi bi-gavel"></i> שופטים</h2>
+          <a href="{% url 'crashtech_judges' h.slug %}" class="small text-decoration-none">ניהול ←</a>
+        </div>
+        {% for j in judges %}
+        <div class="small py-1">{{ j.profile.public_name|default:j.username }}</div>
+        {% empty %}<p class="small text-muted mb-0">לא הוקצו שופטים.</p>{% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

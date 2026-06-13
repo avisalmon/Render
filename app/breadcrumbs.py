@@ -64,6 +64,11 @@ TRAILS = {
     "studio_lesson_new": [("אולפן", "studio_home"), ("עריכת קורס", None), ("שיעור חדש", None)],
     "studio_lesson_edit": [("אולפן", "studio_home"), ("עריכת קורס", None), ("עריכת שיעור", None)],
     "studio_job": [("אולפן", "studio_home"), ("עיבוד", None)],
+    # crashtech (EPIC-6.5)
+    "crashtech_home": [("CrashTech", "crashtech_home")],
+    "crashtech_create": [("CrashTech", "crashtech_home"), ("האקתון חדש", None)],
+    "crashtech_detail": [("CrashTech", "crashtech_home"), ("האקתון", None)],
+    "crashtech_manage": [("CrashTech", "crashtech_home"), ("ניהול", None)],
     # apex placeholders
     "services": [("שירותים", None)],
     "workshops": [("סדנאות", None)],

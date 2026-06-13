@@ -164,6 +164,12 @@
 |---|---|
 | test_spr_6_4.py (16) | post tip + listed, body capped at 2000, empty rejected, guest walled to /join/, מדריך badge at 10 tips, tip reaction toggle (+1 points/notify) + no self-react, feed aggregates tips/projects/threads, following-scope filters to followed authors, domain-scope filters by interests, build_feed reverse-chronological (DEC-40), composer «שתפו משהו» routes to forum/showcase, logged-in homepage «מהקהילה» strip (none for anon), digest opt-in defaults off + send_weekly_digest dormant below 50-member gate (DEC-46) |
 
+## EPIC-6.5 — CrashTech hackathon platform (`tests/test_spr_6_5_*.py`)
+
+| Suite | Verifies |
+|---|---|
+| test_spr_6_5_1.py (7) | lifecycle advances setup→readiness→active→closed→glory; challenges hidden until kickoff + submissions gated by deadline; per-hackathon multi-roles + organizer gating; staff-only hackathon creation (creator becomes organizer); organizer authors secret challenges (pass_fail + performance_creativity w/ bonus tiers); non-organizer blocked; organizer assigns judges |
+
 ## EPIC-7 — QA Hardening (`tests/test_spr_7_1..7_8.py`)
 
 | Suite | Verifies |

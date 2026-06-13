@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load course_tags %}
+{% block title %}{{ h.name }} - CrashTech{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'home' %}" style="color:var(--accent-primary)">בית</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'crashtech_home' %}" style="color:var(--accent-primary)">CrashTech</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">{{ h.name }}</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="py-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+    <h1 class="h3 mb-0"><i class="bi bi-cpu-fill me-2" style="color:var(--accent-primary)"></i>{{ h.name }}</h1>
+    <span class="badge bg-{% if h.status == 'active' %}success{% elif h.status == 'glory' %}warning{% else %}secondary{% endif %}">{{ h.status_label }}</span>
+  </div>
+  <p class="text-muted"><i class="bi bi-calendar-event"></i> מתחיל {{ h.start_at|date:"j בF Y, H:i" }} · דדליין הגשה {{ h.submission_deadline|date:"j בF, H:i" }}</p>
+
+  {% if 'organizer' in my_roles %}
+  <a href="{% url 'crashtech_manage' h.slug %}" class="btn btn-sm btn-outline-primary mb-3"><i class="bi bi-gear"></i> ניהול האירוע</a>
+  {% endif %}
+
+  {% if h.github_repo_url %}
+  <div class="card-surface p-3 mb-3">
+    <i class="bi bi-github me-1"></i> <strong>מאגר התחלה:</strong>
+    <a href="{{ h.github_repo_url }}" target="_blank" rel="noopener" dir="ltr">{{ h.github_repo_url }}</a>
+    <p class="small text-muted mb-0 mt-1">קוד דוגמה, מדריכים וערכת התחלה לתרגול לפני האירוע.</p>
+  </div>
+  {% endif %}
+
+  {% if h.challenges_visible %}
+  <h2 class="h5 mb-2"><i class="bi bi-flag-fill" style="color:var(--accent-primary)"></i> אתגרים</h2>
+  {% for ch in challenges %}
+  <div class="card-surface p-3 mb-2">
+    <div class="d-flex justify-content-between align-items-start">
+      <strong>{{ ch.title }}</strong>
+      <span class="badge bg-light text-muted">{% if ch.scoring_mode == 'pass_fail' %}{{ ch.point_value }} נק'{% else %}בונוס ביצועים{% endif %}</span>
+    </div>
+    <div class="small mt-1">{{ ch.description|markdown }}</div>
+  </div>
+  {% empty %}<p class="text-muted">אין אתגרים פתוחים כרגע.</p>{% endfor %}
+  {% else %}
+  <div class="card-surface p-4 text-center text-muted">
+    <i class="bi bi-lock-fill d-block mb-2" style="font-size:1.5rem"></i>
+    האתגרים סודיים ויפתחו עם הזינוק. עד אז - תתאמנו עם מאגר ההתחלה!
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

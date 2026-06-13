@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{% if h %}עריכת האקתון{% else %}האקתון חדש{% endif %} - CrashTech{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'home' %}" style="color:var(--accent-primary)">בית</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'crashtech_home' %}" style="color:var(--accent-primary)">CrashTech</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">{% if h %}{{ h.name }}{% else %}חדש{% endif %}</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+  <div class="col-lg-7">
+    <h1 class="h4 mb-3">{% if h %}עריכת האקתון{% else %}האקתון חדש{% endif %}</h1>
+    {% if messages %}{% for m in messages %}<div class="alert alert-danger py-2 small">{{ m }}</div>{% endfor %}{% endif %}
+    <form method="post" class="card-surface p-4">
+      {% csrf_token %}
+      <label class="form-label">שם האירוע</label>
+      <input name="name" class="form-control mb-3" value="{{ h.name|default:'' }}" required>
+      <div class="row g-3 mb-3">
+        <div class="col-md-4"><label class="form-label small">התחלה</label>
+          <input type="datetime-local" name="start_at" class="form-control" value="{{ h.start_at|date:'Y-m-d\TH:i' }}" required></div>
+        <div class="col-md-4"><label class="form-label small">סיום</label>
+          <input type="datetime-local" name="end_at" class="form-control" value="{{ h.end_at|date:'Y-m-d\TH:i' }}" required></div>
+        <div class="col-md-4"><label class="form-label small">דדליין הגשה</label>
+          <input type="datetime-local" name="submission_deadline" class="form-control" value="{{ h.submission_deadline|date:'Y-m-d\TH:i' }}"></div>
+      </div>
+      <div class="row g-3 mb-3">
+        <div class="col-md-4"><label class="form-label small">גודל צוות</label>
+          <input type="number" name="team_size" min="1" class="form-control" value="{{ h.team_size|default:3 }}"></div>
+        <div class="col-md-4"><label class="form-label small">מלאי ערכות חומרה</label>
+          <input type="number" name="hardware_stock" min="0" class="form-control" value="{{ h.hardware_stock|default:0 }}"></div>
+      </div>
+      <label class="form-label small">מאגר GitHub (קוד התחלה / מדריכים)</label>
+      <input name="github_repo_url" class="form-control mb-3" dir="ltr" value="{{ h.github_repo_url|default:'' }}"
+             placeholder="https://github.com/...">
+      <button class="btn btn-primary">{% if h %}שמירה{% else %}יצירת האקתון{% endif %}</button>
+      {% if h %}<a href="{% url 'crashtech_manage' h.slug %}" class="btn btn-outline-secondary">ביטול</a>{% endif %}
+    </form>
+  </div>
+</div>
+{% endblock %}
