@@ -17,3 +17,8 @@ staticfiles/
 
 # Exported video transcripts — local archive, not for the public repo
 data/course_transcripts/
+
+# SQLite WAL/SHM sidecar files
+*.sqlite3-wal
+*.sqlite3-shm
+data/db.sqlite3
