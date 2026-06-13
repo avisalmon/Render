@@ -915,6 +915,7 @@ contributors; and the full regression is green with every epic's tests.
 | REQ-7.2.6 | Enrich-later, not in entry (QA-5/tone) | Entry chat stays short; profile enrichment (pictures/hobbies) is offered for later, not required. Avi Bot persona throughout. | DONE |
 | REQ-7.2.7 | No username at signup | The register form collects name + email + password only; the username is **auto-derived from the email** (unique-ified). | DONE |
 | REQ-7.2.8 | Google-first register | The register page leads with **Google/GitHub** (preferred, prominent on top); the email/password form is the secondary option below a divider. | DONE |
+| REQ-7.2.9 | Soft-verify, visible journey | Email verification is **non-blocking**: signup logs the user in and routes to `/welcome/`, which shows an explicit "📧 sent a verification email to your address, click the link" notice for unverified accounts; the site-wide banner reminds until verified. Resend renders a clear **"verification sent"** confirmation page (not a silent redirect to profile). Clarifies the journey QA reported as confusing. | DONE |
 
 ### 7.3 Matazim course intros (QA-13)
 

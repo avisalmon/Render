@@ -756,6 +756,9 @@ Claude. **Status:** IN PROGRESS — built in one autonomous pass (DEC-54).
 | F-7.2.4 | Site intro + interests + persist to profile | REQ-7.2.4 | DONE |
 | F-7.2.5 | Finishable anytime; name-only required | REQ-7.2.5 | DONE |
 | F-7.2.6 | Enrich-later + Avi Bot persona | REQ-7.2.6 | DONE |
+| F-7.2.7 | No username at signup (derive from email) | REQ-7.2.7 | DONE |
+| F-7.2.8 | Google-first register layout | REQ-7.2.8 | DONE |
+| F-7.2.9 | Visible verify journey: /welcome notice + resend confirmation page | REQ-7.2.9 | DONE |
 
 #### SPR-7.3 — Matazim course intros
 

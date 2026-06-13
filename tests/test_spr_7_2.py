@@ -98,3 +98,18 @@ def test_verify_banner_hidden_for_social_account_users():
     c.force_login(u)
     body = c.get("/").content.decode()
     assert "אמתו את האימייל" not in body
+
+
+@pytest.mark.django_db
+def test_resend_shows_confirmation_page():
+    """Resend renders a clear 'we sent you a mail' page (not a silent redirect)."""
+    c = Client()
+    c.post("/register/", {"name": "דנה", "email": "rs@example.com",
+                          "password": "StrongPass123!"})
+    mail.outbox.clear()
+    resp = c.get("/resend-verification/")
+    assert resp.status_code == 200
+    body = resp.content.decode()
+    assert "שלחנו לך מייל אימות" in body
+    assert "rs@example.com" in body
+    assert len(mail.outbox) == 1  # a fresh verification email went out

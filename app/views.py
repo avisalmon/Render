@@ -220,11 +220,13 @@ def verify_email(request):
 @login_required
 def resend_verification(request):
     from .email_verify import send_verification_email
-    if not request.user.profile.email_verified:
-        send_verification_email(request, request.user)
-    from django.contrib import messages as _m
-    _m.success(request, "שלחנו שוב מייל אימות 📧")
-    return redirect("profile")
+    already = request.user.profile.email_verified
+    sent = False
+    if not already:
+        sent = send_verification_email(request, request.user)
+    return render(request, "registration/verification_sent.html", {
+        "already": already, "sent": sent, "email": request.user.email,
+    })
 
 
 def logout_view(request):

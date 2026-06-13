@@ -13,6 +13,14 @@
       </form>
     </div>
 
+    {% if user.email and not user.profile.email_verified %}
+    <!-- Post-signup: tell them to verify (REQ-7.2.1) -->
+    <div class="alert alert-warning py-2 small">
+      📧 שלחנו מייל אימות ל-<strong dir="ltr">{{ user.email }}</strong>. לחצו על הקישור שבמייל כדי לאמת את החשבון
+      (אפשר להמשיך בינתיים). לא הגיע? בדקו בספאם או <a href="{% url 'resend_verification' %}">שלחו שוב</a>.
+    </div>
+    {% endif %}
+
     {% if entry_course %}
     <div class="alert alert-info py-2 small">
       <i class="bi bi-bookmark-heart"></i> ראינו שהגעת בשביל «{{ entry_course.title }}» - ניקח את זה בחשבון.

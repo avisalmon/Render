@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}אימות אימייל - babook{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-5">
+  <div class="col-md-6 text-center">
+    {% if already %}
+      <i class="bi bi-check-circle-fill mb-3" style="font-size:3rem; color:var(--accent-success,#00875a)"></i>
+      <h1 class="h4">האימייל שלך כבר מאומת ✅</h1>
+      <a href="/" class="btn btn-primary mt-2">לעמוד הבית</a>
+    {% else %}
+      <i class="bi bi-envelope-check mb-3" style="font-size:3rem; color:var(--accent-primary)"></i>
+      <h1 class="h4">שלחנו לך מייל אימות 📧</h1>
+      <p class="text-muted">
+        הקישור נשלח ל-<strong dir="ltr">{{ email }}</strong>.<br>
+        לחצו על הקישור שבמייל כדי לאמת את החשבון. לא רואים אותו? בדקו בתיקיית הספאם.
+      </p>
+      {% if not sent %}
+      <div class="alert alert-warning small">לא הצלחנו לשלוח כרגע. ודאו שכתובת האימייל שבפרופיל נכונה ונסו שוב.</div>
+      {% endif %}
+      <a href="/" class="btn btn-primary mt-2">המשך לאתר</a>
+      <div class="mt-2"><a href="{% url 'resend_verification' %}" class="small">שלחו שוב</a></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
