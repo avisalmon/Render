@@ -299,9 +299,10 @@ class ShowcaseProject(models.Model):
 
     @property
     def screenshot_url(self):
-        """A live screenshot of the site for an auto-cover (REQ-6.3.16)."""
-        from urllib.parse import quote
-        return (f"https://s.wordpress.com/mshots/v1/{quote(self.site_url, safe='')}?w=640&h=400"
+        """A live screenshot of the site for an auto-cover (REQ-6.3.16). thum.io
+        renders synchronously + is loaded directly by the browser (fast, free,
+        no token cost); mShots was dropped after it started returning 403."""
+        return (f"https://image.thum.io/get/width/640/crop/400/noanimate/{self.site_url}"
                 if self.site_url else "")
 
     @property
