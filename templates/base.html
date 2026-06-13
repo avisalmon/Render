@@ -4,11 +4,11 @@
 <!DOCTYPE html>
 <html lang="{{ CURRENT_LANG }}" dir="{% if LANG_BIDI %}rtl{% else %}ltr{% endif %}">
 <head>
-  <!-- Theme: apply before paint to avoid flash (REQ-7.4.2). Default = dark
-       (unchanged) until Avi confirms the new light look; light via the toggle. -->
+  <!-- Theme: apply before paint to avoid flash (REQ-7.4.2). Default = LIGHT
+       (Khan-style refresh); dark available via the nav toggle. -->
   <script>
     (function(){var m=document.cookie.match(/(?:^|; )theme=(dark|light)/);
-      if(!m||m[1]==='dark'){document.documentElement.setAttribute('data-theme','dark');}})();
+      if(m&&m[1]==='dark'){document.documentElement.setAttribute('data-theme','dark');}})();
   </script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">

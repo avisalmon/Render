@@ -14,10 +14,10 @@ def test_theme_toggle_present():
 
 
 @pytest.mark.django_db
-def test_theme_default_dark_until_confirmed():
+def test_theme_default_light():
     body = Client().get("/").content.decode()
-    # The no-flash head script defaults to dark when there's no theme cookie
-    assert "data-theme" in body
+    # Light is the default (Khan refresh); dark only when the cookie says so
+    assert "Default = LIGHT" in body
     assert "theme=(dark|light)" in body
 
 
