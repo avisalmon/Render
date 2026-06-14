@@ -29,19 +29,21 @@
         <div class="col-md-3"><label class="form-label small">התחלה</label>
           <input type="datetime-local" name="start_at" class="form-control" value="{{ event.start_at|date:'Y-m-d\TH:i' }}" required></div>
         <div class="col-md-3"><label class="form-label small">סיום</label>
-          <input type="datetime-local" name="end_at" class="form-control" value="{{ event.end_at|date:'Y-m-d\TH:i' }}" required></div>
+          <input type="datetime-local" name="end_at" class="form-control" value="{{ event.end_at|date:'Y-m-d\TH:i' }}">
+          <div class="text-muted" style="font-size:.7rem">ריק = שעה אחרי ההתחלה</div></div>
       </div>
       <div class="form-check form-switch mb-2">
         <input class="form-check-input" type="checkbox" name="is_online" id="is-online" {% if event.is_online or not event %}checked{% endif %}>
         <label class="form-check-label" for="is-online">אונליין</label>
       </div>
-      <input name="online_url" class="form-control mb-2" dir="ltr" placeholder="קישור (Zoom/Meet)" value="{{ event.online_url|default:'' }}">
-      <input name="venue" class="form-control mb-3" placeholder="או מקום פיזי (כתובת)" value="{{ event.venue|default:'' }}">
+      <input name="online_url" id="fld-online" class="form-control mb-2" dir="ltr" placeholder="קישור (Zoom/Meet)" value="{{ event.online_url|default:'' }}">
+      <input name="venue" id="fld-venue" class="form-control mb-3" placeholder="מקום פיזי (כתובת)" value="{{ event.venue|default:'' }}">
       <div class="row g-3 mb-3">
         <div class="col-md-4"><label class="form-label small">קיבולת (0 = ללא הגבלה)</label>
           <input type="number" name="capacity" min="0" value="{{ event.capacity|default:0 }}" class="form-control"></div>
         <div class="col-md-4"><label class="form-label small">סדרה (אופציונלי)</label>
-          <input name="series" class="form-control" value="{{ event.series.title|default:'' }}" placeholder="שעת מומחה עם אבי"></div>
+          <input name="series" class="form-control" list="series-options" value="{{ event.series.title|default:'' }}" placeholder="שעת מומחה עם אבי">
+          <datalist id="series-options">{% for s in series_list %}<option value="{{ s.title }}">{% endfor %}</datalist></div>
         {% if event %}<div class="col-md-4"><label class="form-label small">מזהה הקלטה (Bunny)</label>
           <input name="recording_bunny_id" class="form-control" dir="ltr" value="{{ event.recording_bunny_id|default:'' }}"></div>{% endif %}
       </div>
@@ -52,4 +54,13 @@
     </form>
   </div>
 </div>
+<script>
+  // Show the online link or the venue field per the toggle (REQ-6.12.5)
+  (function(){
+    var t = document.getElementById('is-online'),
+        on = document.getElementById('fld-online'), ven = document.getElementById('fld-venue');
+    function sync(){ on.style.display = t.checked ? '' : 'none'; ven.style.display = t.checked ? 'none' : ''; }
+    if(t){ t.addEventListener('change', sync); sync(); }
+  })();
+</script>
 {% endblock %}

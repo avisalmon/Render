@@ -75,6 +75,8 @@ def tip_create(request):
     )
     if request.user.tips.count() >= TIPSTER_BADGE_AT:
         award_badge(request.user, "tipster")
+    from .community import ensure_public
+    ensure_public(request.user)
     from .analytics import flash_event
     flash_event(request, "tip_posted")
     messages.success(request, "הטיפ פורסם! תודה ששיתפת 💡")

@@ -184,6 +184,8 @@ def thread_new(request):
                     tags=tags, course=course, video=video,
                 )
                 ThreadSubscription.objects.get_or_create(user=request.user, thread=thread)
+                from .community import ensure_public
+                ensure_public(request.user)
                 from .analytics import flash_event
                 flash_event(request, "community_post")
                 return redirect("forum_thread", thread_id=thread.pk)

@@ -30,10 +30,10 @@
         <div class="col-md-6"><label class="form-label small">ניקוד בסיס</label>
           <input type="number" name="point_value" min="0" class="form-control" value="{{ ch.point_value|default:0 }}"></div>
       </div>
-      <div class="row g-3 mb-3">
+      <div class="row g-3 mb-3" id="perf-fields">
         <div class="col-md-6"><label class="form-label small">דירוג Top-N (ביצועים/יצירתיות)</label>
           <input type="number" name="top_submission_count" min="0" class="form-control" value="{{ ch.top_submission_count|default:0 }}"></div>
-        <div class="col-md-6"><label class="form-label small">בונוס לפי דירוג (מופרד בפסיק)</label>
+        <div class="col-md-6"><label class="form-label small">בונוס לפי דירוג (דירוג 1, 2, 3...)</label>
           <input name="bonus_points_tiers" class="form-control" dir="ltr"
                  value="{% for t in ch.bonus_points_tiers %}{{ t }}{% if not forloop.last %}, {% endif %}{% endfor %}" placeholder="50, 30, 10"></div>
       </div>
@@ -42,4 +42,12 @@
     </form>
   </div>
 </div>
+<script>
+  // Performance-only fields appear only for the performance/creativity mode (REQ-6.12.5)
+  (function(){
+    var sel = document.getElementById('scoring-mode'), perf = document.getElementById('perf-fields');
+    function sync(){ perf.style.display = sel.value === 'performance_creativity' ? '' : 'none'; }
+    if(sel && perf){ sel.addEventListener('change', sync); sync(); }
+  })();
+</script>
 {% endblock %}

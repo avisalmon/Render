@@ -917,13 +917,13 @@ UX review of Chapter 6 (forms / IA / flows). **3 sprints**, by tier.
 
 | Feature ID | Title | REQ trace | Status |
 |---|---|---|---|
-| F-6.12.2.1 | Showcase: media/links behind an optional disclosure | REQ-6.12.5 | TODO |
-| F-6.12.2.2 | Challenge form: hide performance-only fields for pass/fail | REQ-6.12.5 | TODO |
-| F-6.12.2.3 | Events: end_at default start+1h; online/venue toggle; series datalist; avatar label fix | REQ-6.12.5 | TODO |
-| F-6.12.2.4 | Event RSVP: cancel confirm; .ics post-RSVP; quick RSVP on list cards | REQ-6.12.6 | TODO |
-| F-6.12.2.5 | Chat: fetch-POST optimistic append; labeled promote actions | REQ-6.12.7 | TODO |
-| F-6.12.2.6 | Activation: auto-public on first post; /join/ intents for tip/showcase/chat | REQ-6.12.8 | TODO |
-| F-6.12.2.7 | Cleanup: showcase site_url auto-cover + tip link_url | REQ-6.12.10 | TODO |
+| F-6.12.2.1 | Showcase: media/links behind an optional disclosure | REQ-6.12.5 | DONE |
+| F-6.12.2.2 | Challenge form: hide performance-only fields for pass/fail | REQ-6.12.5 | DONE |
+| F-6.12.2.3 | Events: end_at default start+1h; online/venue toggle; series datalist; avatar label fix | REQ-6.12.5 | DONE |
+| F-6.12.2.4 | Event RSVP: cancel confirm; .ics post-RSVP; quick RSVP on list cards | REQ-6.12.6 | DONE |
+| F-6.12.2.5 | Chat: fetch-POST optimistic append; labeled promote actions | REQ-6.12.7 | DONE |
+| F-6.12.2.6 | Activation: auto-public on first post; /join/ intents for tip/showcase/chat | REQ-6.12.8 | DONE |
+| F-6.12.2.7 | Cleanup: showcase site_url auto-cover + tip link_url | REQ-6.12.10 | DONE |
 
 #### SPR-UX.3 — Information architecture (Tier 3)
 

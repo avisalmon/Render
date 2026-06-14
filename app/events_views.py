@@ -97,9 +97,14 @@ def event_create(request):
         start = _aware(request.POST.get("start_at"))
         end = _aware(request.POST.get("end_at"))
         title = (request.POST.get("title") or "").strip()
-        if not (title and start and end):
-            messages.error(request, "כותרת, התחלה וסיום הם שדות חובה.")
-            return render(request, "app/community/event_form.html", {})
+        if start and not end:
+            end = start + timezone.timedelta(hours=1)  # smart default (REQ-6.12.5)
+        if not (title and start):
+            messages.error(request, "כותרת ומועד התחלה הם שדות חובה.")
+            return render(request, "app/community/event_form.html", {"series_list": EventSeries.objects.all()})
+        if end <= start:
+            messages.error(request, "מועד הסיום חייב להיות אחרי ההתחלה.")
+            return render(request, "app/community/event_form.html", {"series_list": EventSeries.objects.all()})
         ev = CommunityEvent.objects.create(
             title=title, description=(request.POST.get("description") or "").strip(),
             event_type=request.POST.get("event_type") or "ama",
@@ -112,7 +117,7 @@ def event_create(request):
         )
         messages.success(request, "האירוע נוצר!")
         return redirect("event_detail", slug=ev.slug)
-    return render(request, "app/community/event_form.html", {})
+    return render(request, "app/community/event_form.html", {"series_list": EventSeries.objects.all()})
 
 
 def series_page(request, slug):
@@ -147,7 +152,7 @@ def event_edit(request, slug):
         event.save()
         messages.success(request, "האירוע עודכן.")
         return redirect("event_detail", slug=event.slug)
-    return render(request, "app/community/event_form.html", {"event": event})
+    return render(request, "app/community/event_form.html", {"event": event, "series_list": EventSeries.objects.all()})
 
 
 def event_checkin(request, slug):

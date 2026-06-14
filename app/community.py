@@ -187,6 +187,15 @@ def accept_guidelines(user):
         profile.save(update_fields=["guidelines_accepted_at"])
 
 
+def ensure_public(user):
+    """REQ-6.12.8: posting public content auto-publishes the member's profile,
+    so the 'join the community' banner stops lingering after they've posted."""
+    profile = getattr(user, "profile", None)
+    if profile is not None and not profile.is_public:
+        profile.is_public = True
+        profile.save(update_fields=["is_public"])
+
+
 RATE_LIMIT = 10  # community writes per hour per member (REQ-6.1.8)
 
 

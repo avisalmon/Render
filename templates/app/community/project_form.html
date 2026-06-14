@@ -42,18 +42,20 @@
         <textarea class="form-control" name="story" id="story-input" rows="7" placeholder="מה בניתם, איך, מה היה מאתגר, מה למדתם...">{% firstof form_story project.story '' %}</textarea>
         <div id="preview-box" class="card-surface p-3 mt-2 lesson-notes" style="display:none"></div>
       </div>
-      <div class="row g-2 mb-3">
-        <div class="col-12"><label class="form-label small">קישור לסרטון הדגמה (YouTube)</label>
-          <input class="form-control" name="video_url" value="{{ project.video_url|default:'' }}" dir="ltr" placeholder="https://youtube.com/watch?v=..."></div>
-        <div class="col-6"><label class="form-label small">קישור לקוד</label>
-          <input class="form-control" name="repo_url" value="{{ project.repo_url|default:'' }}" dir="ltr" placeholder="github.com/..."></div>
-        <div class="col-6"><label class="form-label small">קישור להדגמה חיה</label>
-          <input class="form-control" name="live_url" value="{{ project.live_url|default:'' }}" dir="ltr"></div>
-      </div>
-      <div class="mb-3">
-        <label class="form-label small">גלריית תמונות (עד 8)</label>
-        <input type="file" class="form-control" name="gallery" accept="image/*" multiple>
-      </div>
+      <!-- Optional media & links — collapsed so first publish is just title→story (REQ-6.12.5) -->
+      <details class="mb-3" {% if project.video_url or project.repo_url or project.live_url %}open{% endif %}>
+        <summary class="small text-muted" style="cursor:pointer">הוסיפו קישורים ומדיה (לא חובה) - סרטון, קוד, הדגמה חיה, גלריה</summary>
+        <div class="row g-2 mt-1">
+          <div class="col-12"><label class="form-label small">קישור לסרטון הדגמה (YouTube)</label>
+            <input class="form-control" name="video_url" value="{{ project.video_url|default:'' }}" dir="ltr" placeholder="https://youtube.com/watch?v=..."></div>
+          <div class="col-6"><label class="form-label small">קישור לקוד</label>
+            <input class="form-control" name="repo_url" value="{{ project.repo_url|default:'' }}" dir="ltr" placeholder="github.com/..."></div>
+          <div class="col-6"><label class="form-label small">קישור להדגמה חיה</label>
+            <input class="form-control" name="live_url" value="{{ project.live_url|default:'' }}" dir="ltr"></div>
+          <div class="col-12"><label class="form-label small">גלריית תמונות (עד 8)</label>
+            <input type="file" class="form-control" name="gallery" accept="image/*" multiple></div>
+        </div>
+      </details>
       <div class="mb-3">
         <label class="form-label small">תגיות (מופרדות בפסיק)</label>
         <input class="form-control" name="tags" value="{% for t in project.tags %}{{ t }}{% if not forloop.last %}, {% endif %}{% endfor %}" placeholder="python, arduino, משחק">

@@ -53,6 +53,14 @@ def join_wall(request):
         community_intent = "כדי לעקוב אחרי חברי קהילה צריך חשבון - חינם, 10 שניות."
     elif "/vote" in next_url:
         community_intent = "כדי להצביע לתשובות צריך חשבון - חינם, 10 שניות."
+    elif "/tips" in next_url:
+        community_intent = "כדי לשתף טיפ בקהילה צריך חשבון - חינם, 10 שניות."
+    elif "/showcase" in next_url:
+        community_intent = "כדי להשוויץ בפרויקט שלכם צריך חשבון - חינם, 10 שניות."
+    elif "/chat" in next_url:
+        community_intent = "כדי לכתוב בצ'אט הקהילה צריך חשבון - חינם, 10 שניות."
+    elif "/events" in next_url:
+        community_intent = "כדי להירשם לאירוע צריך חשבון - חינם, 10 שניות."
     elif "/community/" in next_url:
         community_intent = "כדי להשתתף בקהילה צריך חשבון - חינם, 10 שניות."
     return render(request, "registration/join.html", {

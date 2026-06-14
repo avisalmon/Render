@@ -64,10 +64,10 @@
     {% if channel.is_readonly %}
       <div class="alert alert-secondary py-2 small">הערוץ בארכיון - לקריאה בלבד.</div>
     {% elif user.is_authenticated %}
-      <form method="post" class="d-flex gap-2">
+      <form method="post" id="chat-form" class="d-flex gap-2">
         {% csrf_token %}
         {% if needs_guidelines %}<input type="hidden" name="accept_guidelines" value="1">{% endif %}
-        <input name="body" class="form-control" maxlength="2000" placeholder="כתבו הודעה...  (@שם כדי לתייג)" autocomplete="off" list="mention-names" required>
+        <input name="body" id="chat-body" class="form-control" maxlength="2000" placeholder="כתבו הודעה...  (@שם כדי לתייג)" autocomplete="off" list="mention-names" required>
         <button class="btn btn-primary">שליחה</button>
       </form>
       <datalist id="mention-names">{% for n in mention_names %}<option value="@{{ n }}">{% endfor %}</datalist>
@@ -85,7 +85,7 @@
   log.scrollTop = log.scrollHeight;
   var slug = log.dataset.channel;
   function poll(){
-    fetch('/community/chat/' + slug + '/messages/?after=' + log.dataset.last)
+    return fetch('/community/chat/' + slug + '/messages/?after=' + log.dataset.last)
       .then(function(r){ return r.ok ? r.json() : null; })
       .then(function(d){
         if(!d || !d.messages.length) return;
@@ -105,6 +105,18 @@
       });
   }
   setInterval(poll, 4000);
+  // Send via fetch + immediate poll, so your own message appears without a reload (REQ-6.12.7)
+  var form = document.getElementById('chat-form');
+  if(form){
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      var input = document.getElementById('chat-body');
+      if(!input.value.trim()) return;
+      fetch(form.action || location.pathname, {method:'POST', body:new FormData(form),
+            headers:{'X-Requested-With':'fetch'}})
+        .then(function(){ input.value=''; return poll(); });
+    });
+  }
 })();
 </script>
 {% endblock %}

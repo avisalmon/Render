@@ -306,6 +306,8 @@ def _save_project(request, project, course):
 def _on_publish(request, project):
     """Gamification + notifications on a first publish (REQ-6.3.13/6.3.14)."""
     award_points(request.user, "showcase_published", ref=f"project:{project.pk}")
+    from .community import ensure_public
+    ensure_public(request.user)
     from .analytics import flash_event
     flash_event(request, "project_published")
     first = award_badge(request.user, "builder")
