@@ -25,6 +25,8 @@
         <div class="small text-muted">{{ ch.messages.count }} הודעות</div>
       </a>
     </div>
+    {% empty %}
+    <div class="col-12"><div class="card-surface p-4 text-center text-muted">הערוצים בהכנה - חזרו בקרוב.</div></div>
     {% endfor %}
   </div>
 

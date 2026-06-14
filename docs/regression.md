@@ -203,6 +203,7 @@
 |---|---|
 | test_spr_ux_1.py (8) | feed-composer draft carries to forum + showcase; flash message shows exactly once after redirect (single global renderer in base.html, local copies removed); CrashTech participant self-creates a team; participant joins until full; unteamed participant sees guidance (no dead-end); chat @mention datalist present; promoted chat message is marked |
 | test_spr_ux_2.py (10) | event end_at smart-defaults to start+1h + rejects end<start; avatar label no longer says 2MB; first post auto-publishes profile; /join/ names tip/showcase/chat/events intents; showcase media behind a disclosure; challenge form toggles performance fields; event form end optional + online/venue toggle; quick RSVP on event cards; site_url property drives the auto-cover (not dead) |
+| test_spr_ux_3.py (5) | hub «אזורי הקהילה» strip links all 8 areas; CrashTech breadcrumb rooted under קהילה; CrashTech no longer a top-nav peer; private-DM icon is an envelope (distinct from community chat); events empty state offers a CTA |
 
 ## EPIC-7 — QA Hardening (`tests/test_spr_7_1..7_8.py`)
 

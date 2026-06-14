@@ -49,10 +49,12 @@ def test_topic_channels_seeded_on_home():
 
 @pytest.mark.django_db
 def test_chat_linked_from_hub_and_nav():
+    # Chat is reached from the community hub (one door for all 8 areas, REQ-6.12.9)
     body = Client().get("/community/").content.decode()
     assert "/community/chat/" in body
+    # the global nav exposes the single community door
     nav = Client().get("/").content.decode()
-    assert "/community/chat/" in nav
+    assert "/community/" in nav
 
 
 # --- F-6.6.1.2: channel view + polling API + search ---

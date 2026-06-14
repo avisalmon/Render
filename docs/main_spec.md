@@ -931,7 +931,7 @@ section makes the community **friendly and flowing**. Grouped REQs:
 | REQ-6.12.6 | Event RSVP polish | Cancel asks confirm; the .ics download is offered only after RSVP; event list cards get a one-click RSVP. | DONE |
 | REQ-6.12.7 | Chat send polish | Posting a message uses fetch + optimistic append (no full reload); the promote-to-forum/tip actions are labeled, not bare emoji. | DONE |
 | REQ-6.12.8 | Activation coupling | Posting any public content auto-publishes the profile (the "join the community" banner stops lingering); the `/join/` wall gains named intents for tip/showcase/chat. | DONE |
-| REQ-6.12.9 | Community IA: one door | `/community/` gets an «אזורי הקהילה» tile strip covering all 8 areas; CrashTech is folded under קהילה (nav + breadcrumb); the private-DM icon becomes an envelope (distinct from community chat); the «עולמות» dropdown drops unbuilt placeholders; chat/events/CrashTech empty states gain a CTA. | TODO |
+| REQ-6.12.9 | Community IA: one door | `/community/` gets an «אזורי הקהילה» tile strip covering all 8 areas; CrashTech is folded under קהילה (nav + breadcrumb); the private-DM icon becomes an envelope (distinct from community chat); the «עולמות» dropdown drops unbuilt placeholders; chat/events/CrashTech empty states gain a CTA. | DONE |
 | REQ-6.12.10 | Dead-code cleanup | Verify + fix the showcase auto-cover (`site_url` never set by the form) and the unused `tip_create` `link_url` field. | DONE |
 
 ---

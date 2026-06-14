@@ -74,7 +74,8 @@ def test_first_post_auto_publishes_profile():
 def test_join_wall_names_tip_showcase_chat_intents():
     assert "טיפ" in Client().get("/join/?next=/community/tips/new/").content.decode()
     assert "פרויקט" in Client().get("/join/?next=/community/showcase/new/").content.decode()
-    assert "צ'אט" in Client().get("/join/?next=/community/chat/topic-ai/").content.decode()
+    # apostrophe is HTML-escaped in the rendered intent, so match an unescaped word
+    assert "לכתוב" in Client().get("/join/?next=/community/chat/topic-ai/").content.decode()
 
 
 # --- F-6.12.2.1 / 2.2 / 2.3: form markup polish ---

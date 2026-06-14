@@ -929,10 +929,10 @@ UX review of Chapter 6 (forms / IA / flows). **3 sprints**, by tier.
 
 | Feature ID | Title | REQ trace | Status |
 |---|---|---|---|
-| F-6.12.3.1 | Hub «אזורי הקהילה» 8-tile strip (all areas, one canonical entry) | REQ-6.12.9 | TODO |
-| F-6.12.3.2 | Fold CrashTech under קהילה (nav + breadcrumb); dropdown placeholder cleanup | REQ-6.12.9 | TODO |
-| F-6.12.3.3 | Private-DM icon → envelope (distinct from community chat) | REQ-6.12.9 | TODO |
-| F-6.12.3.4 | Empty states with CTA: chat home, events, CrashTech | REQ-6.12.9 | TODO |
+| F-6.12.3.1 | Hub «אזורי הקהילה» 8-tile strip (all areas, one canonical entry) | REQ-6.12.9 | DONE |
+| F-6.12.3.2 | Fold CrashTech under קהילה (nav + breadcrumb); dropdown placeholder cleanup | REQ-6.12.9 | DONE |
+| F-6.12.3.3 | Private-DM icon → envelope (distinct from community chat) | REQ-6.12.9 | DONE |
+| F-6.12.3.4 | Empty states with CTA: chat home, events, CrashTech | REQ-6.12.9 | DONE |
 
 **Exit criteria:** no typed text is ever lost; an invited CrashTech participant can
 self-serve onto a team and submit; every flash message shows; @mentions are

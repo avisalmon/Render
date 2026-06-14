@@ -42,7 +42,10 @@
         {% endif %}
       </div>
     </div>
-    {% empty %}<div class="col-12"><div class="card-surface p-4 text-center text-muted">אין אירועים קרובים כרגע.</div></div>{% endfor %}
+    {% empty %}<div class="col-12"><div class="card-surface p-4 text-center text-muted">
+      אין אירועים קרובים כרגע.
+      {% if can_create %}<a href="{% url 'event_create' %}">צרו את הראשון ←</a>{% else %}רוצים מפגש בנושא מסוים? ספרו לנו ב<a href="{% url 'chat_home' %}">צ'אט הקהילה</a>.{% endif %}
+    </div></div>{% endfor %}
   </div>
 
   {% if past %}

@@ -38,7 +38,9 @@
       </a>
     </div>
     {% empty %}
-    <div class="col-12"><div class="card-surface p-4 text-center text-muted">עדיין אין האקתונים פעילים.</div></div>
+    <div class="col-12"><div class="card-surface p-4 text-center text-muted">
+      עדיין אין האקתונים פעילים. בינתיים אפשר להתכונן ב<a href="{% url 'community' %}">קהילה</a> ובערוצי ה<a href="{% url 'chat_home' %}">צ'אט</a>.
+    </div></div>
     {% endfor %}
   </div>
 </div>

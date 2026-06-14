@@ -56,9 +56,6 @@
           <li class="nav-item">
             <a class="nav-link" href="{% url 'community' %}"><i class="bi bi-people"></i> קהילה</a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'crashtech_home' %}"><i class="bi bi-cpu"></i> CrashTech</a>
-          </li>
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="worldsDropdown" role="button"
                data-bs-toggle="dropdown" aria-expanded="false">
@@ -68,8 +65,6 @@
               <li><a class="dropdown-item" href="{% url 'courses_catalog' %}"><i class="bi bi-mortarboard"></i> הדרכה</a></li>
               <li><a class="dropdown-item" href="{% url 'services' %}"><i class="bi bi-bag"></i> חנות שירותים</a></li>
               <li><a class="dropdown-item" href="{% url 'community' %}"><i class="bi bi-people"></i> קהילה</a></li>
-              <li><a class="dropdown-item" href="{% url 'chat_home' %}"><i class="bi bi-chat-dots"></i> צ'אט הקהילה</a></li>
-              <li><a class="dropdown-item" href="{% url 'events_page' %}"><i class="bi bi-calendar-event"></i> אירועים</a></li>
               <li><a class="dropdown-item" href="{% url 'workshops' %}"><i class="bi bi-easel2"></i> סדנאות והובלת חדשנות</a></li>
               <li><a class="dropdown-item" href="{% url 'nostalgia' %}"><i class="bi bi-clock-history"></i> נוסטלגיה</a></li>
               <li><a class="dropdown-item" href="{% url 'research' %}"><i class="bi bi-journal-bookmark"></i> מחקר ואקדמיה</a></li>
@@ -111,8 +106,8 @@
             <!-- Direct messages (REQ-6.3.12) — hidden for student accounts (DEC-41) -->
             {% if not user_is_student %}
             <li class="nav-item">
-              <a class="nav-link position-relative" href="{% url 'messages_inbox' %}" title="הודעות" aria-label="הודעות">
-                <i class="bi bi-chat-dots"></i>
+              <a class="nav-link position-relative" href="{% url 'messages_inbox' %}" title="הודעות אישיות" aria-label="הודעות אישיות">
+                <i class="bi bi-envelope"></i>
                 {% if unread_messages %}
                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.6rem">{{ unread_messages }}</span>
                 {% endif %}
