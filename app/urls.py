@@ -6,6 +6,7 @@ from . import (
     community_views,
     course_api,
     crashtech_views,
+    dashboard_views,
     events_views,
     forum_views,
     onboarding_views,
@@ -34,6 +35,12 @@ urlpatterns = [
     path("profile/", views.profile, name="profile"),
     path("account/delete/", views.delete_account, name="delete_account"),
     path("staff/copilot-dashboard/", views.CopilotDashboardView.as_view(), name="copilot_dashboard"),
+    # --- Admin / Management Control Dashboard (EPIC-8) — superuser only ---
+    path("admin-dashboard/", dashboard_views.admin_dashboard, name="admin_dashboard"),
+    path("admin-dashboard/refresh/<str:section>/", dashboard_views.refresh_section, name="dashboard_refresh"),
+    path("admin-dashboard/cost/manual/", dashboard_views.manual_cost, name="dashboard_manual_cost"),
+    path("admin-dashboard/alerts/config/", dashboard_views.alert_config, name="dashboard_alert_config"),
+    path("admin-dashboard/alerts/<int:pk>/dismiss/", dashboard_views.dismiss_alert, name="dashboard_dismiss_alert"),
     path("corporate/", views.corporate, name="corporate"),
 
     # --- Community (EPIC-6.1) ---

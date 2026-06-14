@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% load course_tags %}
+{% block title %}לוח בקרה ניהולי - babook{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="py-4">
+
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="h4 mb-0"><i class="bi bi-speedometer2 me-1" style="color:var(--accent-primary)"></i> לוח בקרה ניהולי</h1>
+    <div class="btn-group btn-group-sm" role="group" aria-label="טווח זמן">
+      {% for r in ranges %}
+        <a class="btn {% if r == range_key %}btn-primary{% else %}btn-outline-secondary{% endif %}"
+           href="?range={{ r }}">{% if r == 'today' %}היום{% elif r == 'all' %}הכל{% else %}{{ r }} ימים{% endif %}</a>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# --- Alerts banner (REQ-8.6.2) --- #}
+  <div id="alerts">
+  {% if alerts %}
+    {% for a in alerts %}
+      <div class="alert {% if a.level == 'critical' %}alert-danger{% else %}alert-warning{% endif %} d-flex justify-content-between align-items-center py-2">
+        <span><i class="bi bi-exclamation-triangle me-1"></i> <a href="#{{ a.section }}" class="alert-link">{{ a.message }}</a></span>
+        <form method="post" action="{% url 'dashboard_dismiss_alert' a.pk %}" class="m-0">{% csrf_token %}
+          <button class="btn btn-sm btn-outline-dark" type="submit">סגור</button>
+        </form>
+      </div>
+    {% endfor %}
+  {% endif %}
+  <div class="text-muted small mb-3">
+    <a href="{% url 'dashboard_alert_config' %}"><i class="bi bi-sliders"></i> הגדרות התראות</a>
+  </div>
+  </div>
+
+  {# ===================== USERS & TRAINING (REQ-8.2) ===================== #}
+  <section id="users_training" class="mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+      <h2 class="h5 mb-0"><i class="bi bi-people me-1"></i> משתמשים והדרכה</h2>
+      <div class="d-flex align-items-center gap-2">
+        <span class="small text-muted">{% if ut_at %}עודכן {{ ut_at|date:"d/m H:i" }}{% endif %}</span>
+        <form method="post" action="{% url 'dashboard_refresh' 'users_training' %}?range={{ range_key }}" class="m-0">{% csrf_token %}
+          <button class="btn btn-sm btn-outline-secondary" type="submit"><i class="bi bi-arrow-clockwise"></i></button>
+        </form>
+      </div>
+    </div>
+    <div class="row g-2 mb-2">
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ ut.users_total }}</div><div class="small text-muted">משתמשים ({{ ut.users_new }} חדשים)</div></div></div>
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ ut.dau }}/{{ ut.wau }}/{{ ut.mau }}</div><div class="small text-muted">פעילים יום/שבוע/חודש</div></div></div>
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ ut.enrollments }}</div><div class="small text-muted">הרשמות לקורסים</div></div></div>
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ ut.watch_hours }}</div><div class="small text-muted">שעות צפייה</div></div></div>
+    </div>
+    <div class="row g-2 mb-2">
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ ut.course_completion_pct }}%</div><div class="small text-muted">השלמת קורסים</div></div></div>
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ ut.certificates }}</div><div class="small text-muted">תעודות</div></div></div>
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ ut.quiz_pass_rate_pct }}%</div><div class="small text-muted">מענה נכון בחידונים</div></div></div>
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ ut.activation_rate_pct }}%</div><div class="small text-muted">שיעור הפעלה (Activation)</div></div></div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-md-7">
+        <div class="card-surface p-3">
+          <div class="small text-muted mb-2">הקורסים הפופולריים</div>
+          <table class="table table-sm mb-0">
+            <thead><tr><th>קורס</th><th class="text-center">הרשמות</th><th class="text-center">השלמות</th><th class="text-center">%</th></tr></thead>
+            <tbody>
+              {% for c in ut.popular_courses %}
+                <tr><td>{{ c.title }}</td><td class="text-center">{{ c.enrollments }}</td><td class="text-center">{{ c.completions }}</td><td class="text-center">{{ c.completion_pct }}%</td></tr>
+              {% empty %}
+                <tr><td colspan="4" class="text-muted">אין נתונים עדיין.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col-md-5">
+        <div class="card-surface p-3 mb-2">
+          <div class="small text-muted mb-2">משפך הפעלה</div>
+          <ul class="list-unstyled mb-1 small">
+            <li>נרשמו: <strong>{{ ut.funnel.registered }}</strong></li>
+            <li>התחילו אונבורדינג: <strong>{{ ut.funnel.onboarding_started }}</strong></li>
+            <li>השלימו אונבורדינג: <strong>{{ ut.funnel.onboarding_completed }}</strong></li>
+            <li>סיימו שיעור ראשון: <strong>{{ ut.funnel.first_lesson_completed }}</strong></li>
+          </ul>
+          <div class="text-muted" style="font-size:.75rem">{{ ut.funnel_note }}</div>
+        </div>
+        <div class="card-surface p-3">
+          <div class="small text-muted mb-2">משפך תאגידי</div>
+          <div class="small">לידים: <strong>{{ ut.leads_total }}</strong> ({{ ut.leads_new }} חדשים) · ניוזלטר: <strong>{{ ut.subs_confirmed }}</strong> מאושרים / {{ ut.subs_pending }} ממתינים</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-surface p-3 mt-3">
+      <div class="small text-muted mb-2">מגמות</div>
+      <div class="row">
+        <div class="col-md-4"><canvas data-trend="users_new" height="120"></canvas><div class="small text-center text-muted">משתמשים חדשים</div></div>
+        <div class="col-md-4"><canvas data-trend="active_contributors" height="120"></canvas><div class="small text-center text-muted">תורמים פעילים</div></div>
+        <div class="col-md-4"><canvas data-trend="watch_hours" height="120"></canvas><div class="small text-center text-muted">שעות צפייה</div></div>
+      </div>
+    </div>
+  </section>
+
+  {# ===================== COSTS (REQ-8.3) ===================== #}
+  <section id="costs" class="mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+      <h2 class="h5 mb-0"><i class="bi bi-cash-coin me-1"></i> עלויות שירותים ({{ costs.period }})</h2>
+      <form method="post" action="{% url 'dashboard_refresh' 'costs' %}?range={{ range_key }}" class="m-0">{% csrf_token %}
+        <button class="btn btn-sm btn-outline-secondary" type="submit"><i class="bi bi-arrow-clockwise"></i></button>
+      </form>
+    </div>
+    <div class="row g-2 mb-2">
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">${{ costs.total }}</div><div class="small text-muted">סה"כ החודש</div></div></div>
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{% if costs.delta >= 0 %}+{% endif %}${{ costs.delta }}</div><div class="small text-muted">מול חודש קודם (${{ costs.prev_total }})</div></div></div>
+    </div>
+    <div class="card-surface p-3">
+      <table class="table table-sm align-middle mb-0">
+        <thead><tr><th>שירות</th><th>עלות</th><th>מקור</th><th>הערה</th><th></th></tr></thead>
+        <tbody>
+          {% for r in costs.rows %}
+            <tr>
+              <td>{{ cost_labels|get_item:r.service|default:r.service }}</td>
+              <td>${{ r.amount_usd }}</td>
+              <td>
+                {% if r.source == 'live' %}<span class="badge bg-success">חי</span>
+                {% elif r.source == 'manual' %}<span class="badge bg-secondary">ידני</span>
+                {% else %}<span class="badge bg-info text-dark">הערכה</span>{% endif %}
+              </td>
+              <td class="small text-muted">{{ r.note }}</td>
+              <td class="text-end">
+                {% if r.deep_link %}<a class="btn btn-sm btn-outline-primary" href="{{ r.deep_link }}" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-left"></i></a>{% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="text-muted">לחצו רענון כדי לאסוף עלויות.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <details class="mt-2">
+      <summary class="small text-muted">הזנת עלות ידנית (לשירות ללא API)</summary>
+      <form method="post" action="{% url 'dashboard_manual_cost' %}" class="row g-2 mt-1">{% csrf_token %}
+        <input type="hidden" name="period" value="{{ period }}">
+        <div class="col-md-3">
+          <select name="service" class="form-select form-select-sm">
+            {% for slug, label in cost_labels.items %}<option value="{{ slug }}">{{ label }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2"><input class="form-control form-control-sm" type="number" step="0.01" name="amount" placeholder="USD"></div>
+        <div class="col-md-4"><input class="form-control form-control-sm" type="text" name="note" placeholder="הערה"></div>
+        <div class="col-md-2"><button class="btn btn-sm btn-primary w-100" type="submit">שמירה</button></div>
+      </form>
+    </details>
+  </section>
+
+  {# ===================== ENGAGEMENT (REQ-8.4) ===================== #}
+  <section id="engagement" class="mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+      <h2 class="h5 mb-0"><i class="bi bi-chat-heart me-1"></i> מעורבות קהילה</h2>
+      <div class="d-flex align-items-center gap-2">
+        <a class="small" href="{% url 'community_health' %}">תצוגת צוות</a>
+        <span class="small text-muted">{% if eng_at %}עודכן {{ eng_at|date:"d/m H:i" }}{% endif %}</span>
+        <form method="post" action="{% url 'dashboard_refresh' 'engagement' %}?range={{ range_key }}" class="m-0">{% csrf_token %}
+          <button class="btn btn-sm btn-outline-secondary" type="submit"><i class="bi bi-arrow-clockwise"></i></button>
+        </form>
+      </div>
+    </div>
+    <div class="row g-2 mb-2">
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ eng.active_contributors }}</div><div class="small text-muted">תורמים פעילים (שבוע)</div></div></div>
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ eng.engagement_rate_pct }}%</div><div class="small text-muted">שיעור מעורבות</div></div></div>
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ eng.q_unanswered_pct }}%</div><div class="small text-muted">שאלות ללא מענה</div></div></div>
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{% if eng.avg_ttfa %}{{ eng.avg_ttfa }}ש'{% else %}—{% endif %}</div><div class="small text-muted">זמן לתשובה ראשונה</div></div></div>
+    </div>
+    <div class="row g-2 mb-2">
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ eng.projects_total }}</div><div class="small text-muted">פרויקטים</div></div></div>
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ eng.tips_window }}</div><div class="small text-muted">טיפים</div></div></div>
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ eng.messages_window }}</div><div class="small text-muted">הודעות צ'אט</div></div></div>
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center {% if eng.open_reports %}border border-danger{% endif %}"><div class="h3 mb-0">{{ eng.open_reports }}</div><div class="small text-muted">דיווחים פתוחים · {{ eng.pending_projects }} ממתינים לאישור</div></div></div>
+    </div>
+  </section>
+
+  {# ===================== SYSTEM (REQ-8.5) ===================== #}
+  <section id="system" class="mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+      <h2 class="h5 mb-0"><i class="bi bi-hdd-network me-1"></i> בריאות המערכת</h2>
+      <form method="post" action="{% url 'dashboard_refresh' 'system' %}?range={{ range_key }}" class="m-0">{% csrf_token %}
+        <button class="btn btn-sm btn-outline-secondary" type="submit"><i class="bi bi-arrow-clockwise"></i></button>
+      </form>
+    </div>
+    <div class="row g-2">
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h5 mb-0">{{ sys.revision|default:"—" }}</div><div class="small text-muted">גרסה (commit)</div></div></div>
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h5 mb-0">{% if sys.db_bytes %}{{ sys.db_bytes|filesizeformat }}{% else %}—{% endif %}</div><div class="small text-muted">מסד נתונים</div></div></div>
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h5 mb-0">{% if sys.media_bytes %}{{ sys.media_bytes|filesizeformat }}{% else %}—{% endif %}</div><div class="small text-muted">מדיה</div></div></div>
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h5 mb-0">{% if sys.last_backup_at %}{{ sys.last_backup_at }}{% else %}לא ידוע{% endif %}</div><div class="small text-muted">גיבוי אחרון</div></div></div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  var trends = {{ trends_json|safe }};
+  document.querySelectorAll('canvas[data-trend]').forEach(function (cv) {
+    var key = cv.getAttribute('data-trend');
+    var series = trends[key] || [];
+    if (!series.length || typeof Chart === 'undefined') { return; }
+    new Chart(cv, {
+      type: 'line',
+      data: {
+        labels: series.map(function (p) { return p.t; }),
+        datasets: [{
+          data: series.map(function (p) { return p.v; }),
+          borderColor: '#4f8cff', tension: 0.3, fill: false, pointRadius: 2
+        }]
+      },
+      options: { plugins: { legend: { display: false } }, scales: { x: { display: false } } }
+    });
+  });
+})();
+</script>
+{% endblock %}

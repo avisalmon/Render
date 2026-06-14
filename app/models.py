@@ -937,6 +937,12 @@ from .crashtech_models import (  # noqa: E402,F401
     Submission,
     Team,
 )
+from .dashboard_models import (  # noqa: E402,F401
+    AlertEvent,
+    AlertRule,
+    CostRecord,
+    DashboardSnapshot,
+)
 from .events_models import (  # noqa: E402,F401
     CommunityEvent,
     EventPhoto,

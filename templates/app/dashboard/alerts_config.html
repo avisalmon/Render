@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}הגדרות התראות - babook{% endblock %}
+
+{% block content %}
+<div class="py-4">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h4 mb-0"><i class="bi bi-sliders me-1" style="color:var(--accent-primary)"></i> הגדרות התראות</h1>
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'admin_dashboard' %}"><i class="bi bi-arrow-right"></i> חזרה ללוח</a>
+  </div>
+  <p class="text-muted">התראה נשלחת אליכם (מנהל) כשערך חוצה את הסף. כבו כלל כדי להשתיק אותו.</p>
+
+  <form method="post">{% csrf_token %}
+    <div class="card-surface p-3">
+      <table class="table align-middle mb-0">
+        <thead><tr><th>מדד</th><th>סף</th><th>מקטע</th><th class="text-center">פעיל</th></tr></thead>
+        <tbody>
+          {% for rule in rules %}
+            <tr>
+              <td>{{ rule.label }}</td>
+              <td style="max-width:140px"><input class="form-control form-control-sm" type="number" step="0.1" name="threshold_{{ rule.key }}" value="{{ rule.threshold }}"></td>
+              <td class="small text-muted">{{ rule.section }}</td>
+              <td class="text-center"><input class="form-check-input" type="checkbox" name="enabled_{{ rule.key }}" {% if rule.enabled %}checked{% endif %}></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <button class="btn btn-primary mt-3" type="submit">שמירה</button>
+  </form>
+</div>
+{% endblock %}

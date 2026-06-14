@@ -214,3 +214,9 @@
 | test_spr_7_4 (3) | theme toggle present, default-dark head script, both themes in CSS |
 | test_spr_7_5 (2) | retranscribe updates notes; dry-run doesn't save (download+OpenAI mocked) |
 | test_spr_7_6 (2) | contact lead stored + emailed to admin; privacy/terms offer the form |
+
+## EPIC-8 — Admin / Management Control Dashboard (`tests/test_spr_8.py` 21)
+
+| Suite | Verifies |
+|---|---|
+| test_spr_8.py (21) | **SPR-8.1:** anonymous → /join/ wall, staff → 403, superuser → 200; ניהול nav link superuser-only; snapshot + cost-record models persist; `capture_dashboard_snapshot` creates all-section snapshots + cost rows; per-section refresh creates a fresh snapshot; range param accepted. **SPR-8.2:** users/training counts + watch-hours + popular-course ranking; activation + corporate funnels from local models. **SPR-8.3:** every cost adapter yields a CostRecord; OpenAI live from UsageLog; manual override preserved across adapter runs; manual-entry endpoint saves. **SPR-8.4:** engagement breadth + open-reports moderation pulse. **SPR-8.5:** system section reports db/storage/deps. **SPR-8.6:** threshold breach raises an alert + notifies superuser; dedup of active alerts; dismiss clears; thresholds admin-editable; config page superuser-only |

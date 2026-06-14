@@ -175,3 +175,33 @@ class LessonReflectionAdmin(admin.ModelAdmin):
     @admin.display(description="reflection")
     def short_text(self, obj):
         return (obj.user_text or "")[:80]
+
+
+# --- Admin dashboard (EPIC-8) ---
+
+from .models import AlertEvent, AlertRule, CostRecord, DashboardSnapshot  # noqa: E402
+
+
+@admin.register(DashboardSnapshot)
+class DashboardSnapshotAdmin(admin.ModelAdmin):
+    list_display = ("captured_at", "scope")
+    list_filter = ("scope",)
+    date_hierarchy = "captured_at"
+
+
+@admin.register(CostRecord)
+class CostRecordAdmin(admin.ModelAdmin):
+    list_display = ("service", "period", "amount_usd", "source", "fetched_at")
+    list_filter = ("source", "service", "period")
+
+
+@admin.register(AlertRule)
+class AlertRuleAdmin(admin.ModelAdmin):
+    list_display = ("key", "label", "threshold", "enabled", "section")
+    list_filter = ("enabled", "section")
+
+
+@admin.register(AlertEvent)
+class AlertEventAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "rule_key", "level", "message", "dismissed_at")
+    list_filter = ("level", "rule_key", "section")
