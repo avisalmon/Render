@@ -32,6 +32,8 @@ class UserProfile(models.Model):
     email_verified = models.BooleanField(default=False)
     # Weekly community digest opt-in (REQ-6.4.4) — dormant until ~50 active members.
     digest_opt_in = models.BooleanField(default=False)
+    # DM control (REQ-6.6.3 / DEC-61): default ON for adults, always off for students.
+    dms_enabled = models.BooleanField(default=True)
 
     @property
     def public_name(self):

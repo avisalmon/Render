@@ -31,6 +31,15 @@ def _msg_dict(m):
     }
 
 
+def course_channel(request, slug):
+    """REQ-6.6.2: open (creating on demand) a course's cohort channel."""
+    from .chat import channel_for_course
+    from .models import Course
+    course = get_object_or_404(Course, slug=slug)
+    ch = channel_for_course(course)
+    return redirect("channel_view", slug=ch.slug)
+
+
 def channel_view(request, slug):
     """Channel page: history (searchable) + post box. POST creates a message."""
     channel = get_object_or_404(Channel, slug=slug)
@@ -51,10 +60,15 @@ def channel_view(request, slug):
     if q:
         msgs = msgs.filter(body__icontains=q)
     msgs = list(msgs[:200])
+    presence = []
+    if channel.kind == "course" and channel.course_id:
+        from .chat import learners_now
+        presence = learners_now(channel.course)
     return render(request, "app/community/channel.html", {
         "channel": channel, "messages_list": msgs, "q": q,
         "needs_guidelines": request.user.is_authenticated and not guidelines_accepted(request.user),
         "last_id": msgs[-1].pk if msgs else 0,
+        "presence": presence,
     })
 
 

@@ -74,6 +74,10 @@
          style="background:var(--accent-primary);color:#fff;border:none;border-radius:10px;padding:.6rem 1.8rem;font-weight:600;">
         המשך ללמוד &rarr;
       </a>
+      <a href="{% url 'course_channel' course.slug %}" class="btn btn-sm mt-2 ms-2"
+         style="background:transparent;color:var(--accent-primary);border:1px solid var(--accent-primary);border-radius:10px;">
+        <i class="bi bi-chat-dots"></i> קבוצת הקורס
+      </a>
       {% else %}
       <form method="post" action="{% url 'courses_enroll' course.slug %}" class="d-inline">
         {% csrf_token %}
@@ -86,6 +90,10 @@
          class="btn btn-sm mt-2 ms-2"
          style="background:transparent;color:var(--accent-primary);border:1px solid var(--accent-primary);border-radius:10px;">
         צפה בשיעור חינמי
+      </a>
+      <a href="{% url 'course_channel' course.slug %}" class="btn btn-sm mt-2 ms-2"
+         style="background:transparent;color:var(--accent-primary);border:1px solid var(--accent-primary);border-radius:10px;">
+        <i class="bi bi-chat-dots"></i> קבוצת הקורס
       </a>
       {% endif %}
     </div>

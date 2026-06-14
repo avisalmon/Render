@@ -48,6 +48,7 @@ urlpatterns = [
     path("c/<str:username>/follow/", community_views.follow_toggle, name="community_follow"),
     # --- Chat & Groups (EPIC-6.6) ---
     path("community/chat/", chat_views.chat_home, name="chat_home"),
+    path("community/chat/course/<slug:slug>/", chat_views.course_channel, name="course_channel"),
     path("community/chat/<slug:slug>/", chat_views.channel_view, name="channel_view"),
     path("community/chat/<slug:slug>/messages/", chat_views.channel_messages_api, name="channel_messages"),
     # --- Tips & Feed (EPIC-6.4) ---

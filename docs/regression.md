@@ -180,6 +180,7 @@
 | Suite | Verifies |
 |---|---|
 | test_spr_6_6_1.py (8) | topic channels seeded per taxonomy domain + general; chat linked from hub + nav; channel view lists messages; polling API returns JSON + `?after=` newer-only; history search; anonymous read / post-walled to /join/; member posts; rate-limit caps flooding |
+| test_spr_6_6_2.py (4) | per-course cohort channel created on demand + linked from course page; "learning now" presence within 15-min window (stale excluded); directory filters by role/level/domain/collab; DM-control toggle honored by can_message (default ON adults) |
 
 ## EPIC-7 — QA Hardening (`tests/test_spr_7_1..7_8.py`)
 

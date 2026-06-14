@@ -71,6 +71,10 @@ def can_message(sender, recipient):
         return False, "אי אפשר לשלוח הודעה לעצמך"
     if is_student(sender) or is_student(recipient):
         return False, "הודעות אישיות אינן זמינות לחשבונות תלמיד/ה (מטעמי בטיחות)"
+    # DM control (REQ-6.6.3 / DEC-61): recipient may turn DMs off.
+    recipient_profile = getattr(recipient, "profile", None)
+    if recipient_profile is not None and not recipient_profile.dms_enabled:
+        return False, "החבר/ה הזה לא מקבל/ת הודעות אישיות"
     if MessageBlock.objects.filter(blocker=recipient, blocked=sender).exists():
         return False, "לא ניתן לשלוח הודעה לחבר/ה הזה"
     return True, ""

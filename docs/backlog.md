@@ -829,10 +829,10 @@ reconciled with shipped 6.1/6.3 work. **3 sprints.**
 
 | Feature ID | Title | REQ trace | Status |
 |---|---|---|---|
-| F-6.6.2.1 | Per-course members-channel (auto, on demand) reachable from the course page | REQ-6.6.2 | TODO |
-| F-6.6.2.2 | "למדו איתי" presence row — members active in the course in the last ~15 min (from `UserVideoProgress`) | REQ-6.6.2 | TODO |
-| F-6.6.2.3 | Directory filters (domain / level / role) + "פתוח לשיתופי פעולה" filter & badge | REQ-6.6.4 | TODO |
-| F-6.6.2.4 | DM control: `dms_enabled` profile toggle (default ON adults, off students) honored by `can_message` | REQ-6.6.3 | TODO |
+| F-6.6.2.1 | Per-course members-channel (auto, on demand) reachable from the course page | REQ-6.6.2 | DONE |
+| F-6.6.2.2 | "למדו איתי" presence row — members active in the course in the last ~15 min (from `UserVideoProgress`) | REQ-6.6.2 | DONE |
+| F-6.6.2.3 | Directory filters (domain / level / role) + "פתוח לשיתופי פעולה" filter & badge | REQ-6.6.4 | DONE |
+| F-6.6.2.4 | DM control: `dms_enabled` profile toggle (default ON adults, off students) honored by `can_message` | REQ-6.6.3 | DONE |
 
 #### SPR-6.6.3 — Capture, mentions, safety & live-hackathon channel
 

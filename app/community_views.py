@@ -183,6 +183,7 @@ def community_settings_save(request):
     profile.bio = request.POST.get("bio", "").strip()[:300]
     profile.open_to_collab = request.POST.get("open_to_collab") == "on"
     profile.leaderboard_opt_out = request.POST.get("leaderboard_opt_out") == "on"
+    profile.dms_enabled = request.POST.get("dms_enabled") == "on"
     avatar = request.FILES.get("avatar")
     if avatar:
         from .imaging import MAX_INPUT_BYTES, process_avatar
@@ -323,10 +324,31 @@ def message_block(request, username):
 
 
 def members_directory(request):
-    """Public members with profiles (seed of REQ-6.6.4; useful from day one)."""
-    profiles = (
+    """Public members directory with filters (REQ-6.6.4): domain interest,
+    experience level, role, and 'open to collaboration'."""
+    qs = (
         User.objects.filter(profile__is_public=True)
-        .select_related("profile", "reputation")
-        .order_by("-reputation__points")[:60]
+        .select_related("profile", "reputation", "learner_profile")
     )
-    return render(request, "app/community/members.html", {"members": profiles})
+    role = (request.GET.get("role") or "").strip()
+    level = (request.GET.get("level") or "").strip()
+    domain = (request.GET.get("domain") or "").strip()
+    collab = request.GET.get("collab") == "1"
+    if role:
+        qs = qs.filter(learner_profile__role_type=role)
+    if level:
+        qs = qs.filter(learner_profile__experience_level=level)
+    if domain:
+        qs = qs.filter(learner_profile__interests__icontains=domain)
+    if collab:
+        qs = qs.filter(profile__open_to_collab=True)
+    qs = qs.order_by("-reputation__points")[:80]
+    from .community import forum_categories
+    from .models import LearnerProfile
+    return render(request, "app/community/members.html", {
+        "members": qs,
+        "roles": LearnerProfile.ROLE_TYPES,
+        "levels": LearnerProfile.LEVELS,
+        "domains": forum_categories(),
+        "f": {"role": role, "level": level, "domain": domain, "collab": collab},
+    })

@@ -27,14 +27,23 @@
     {% if not is_enrolled %}
     <div class="mb-4">
         {% if user.is_authenticated %}
-        <form method="post" action="{% url 'courses_enroll' course.slug %}">
+        <form method="post" action="{% url 'courses_enroll' course.slug %}" class="d-inline">
             {% csrf_token %}
             <button type="submit" class="btn btn-primary px-4">הרשמה לקורס</button>
         </form>
         {% else %}
         <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-primary px-4">כניסה להרשמה</a>
         {% endif %}
+        <a href="{% url 'course_channel' course.slug %}" class="btn btn-outline-primary px-3 ms-2">
+            <i class="bi bi-chat-dots"></i> קבוצת הקורס
+        </a>
     </div>
+    {% endif %}
+
+    {% if is_enrolled %}
+    <a href="{% url 'course_channel' course.slug %}" class="btn btn-outline-primary btn-sm mb-3">
+        <i class="bi bi-chat-dots"></i> קבוצת הקורס
+    </a>
     {% endif %}
 
     {% if user.is_authenticated %}

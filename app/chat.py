@@ -45,6 +45,19 @@ def channel_for_hackathon(hackathon):
     return ch
 
 
+def learners_now(course, minutes=15):
+    """Members active in the course in the last `minutes` (REQ-6.6.2 presence)."""
+    from django.contrib.auth.models import User
+    from django.utils import timezone
+    cutoff = timezone.now() - timezone.timedelta(minutes=minutes)
+    return list(
+        User.objects.filter(
+            video_progress__video__course=course,
+            video_progress__updated_at__gte=cutoff,
+        ).select_related("profile").distinct()
+    )
+
+
 def can_post(user, channel):
     """(ok, reason) — gate a post. Reused by views before writing a message."""
     if channel.is_readonly:

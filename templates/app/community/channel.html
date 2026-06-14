@@ -22,6 +22,13 @@
 
     {% if messages %}{% for m in messages %}<div class="alert alert-{{ m.tags|default:'info' }} py-2 small">{{ m }}</div>{% endfor %}{% endif %}
 
+    {% if channel.kind == 'course' and presence %}
+    <div class="card-surface p-2 mb-2 small">
+      <i class="bi bi-broadcast text-success"></i> <strong>למדו איתי עכשיו:</strong>
+      {% for u in presence %}<span class="badge bg-light text-dark">{{ u.profile.public_name }}</span> {% endfor %}
+    </div>
+    {% endif %}
+
     <div id="chat-log" class="card-surface p-3 mb-2" style="height:55vh; overflow-y:auto;" data-channel="{{ channel.slug }}" data-last="{{ last_id }}">
       {% for m in messages_list %}
       <div class="chat-msg mb-2" data-id="{{ m.pk }}">

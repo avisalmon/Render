@@ -53,9 +53,13 @@
           <input class="form-check-input" type="checkbox" name="open_to_collab" id="cs-collab" {% if user.profile.open_to_collab %}checked{% endif %}>
           <label class="form-check-label" for="cs-collab">פתוח/ה לשיתופי פעולה</label>
         </div>
-        <div class="form-check form-switch mb-3">
+        <div class="form-check form-switch mb-2">
           <input class="form-check-input" type="checkbox" name="leaderboard_opt_out" id="cs-lb" {% if user.profile.leaderboard_opt_out %}checked{% endif %}>
           <label class="form-check-label" for="cs-lb">להסתיר אותי מלוח המובילים</label>
+        </div>
+        <div class="form-check form-switch mb-3">
+          <input class="form-check-input" type="checkbox" name="dms_enabled" id="cs-dms" {% if user.profile.dms_enabled %}checked{% endif %}>
+          <label class="form-check-label" for="cs-dms">לקבל הודעות אישיות מחברי קהילה</label>
         </div>
         <button class="btn btn-sm btn-primary">שמירה</button>
       </form>
