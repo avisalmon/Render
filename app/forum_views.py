@@ -195,7 +195,8 @@ def thread_new(request):
         "default_category": (course.domain if course else "general"),
         "needs_guidelines": not guidelines_accepted(request.user),
         "form_title": request.POST.get("title", ""),
-        "form_body": request.POST.get("body", ""),
+        # carry text typed in the feed composer (REQ-6.12.1)
+        "form_body": request.POST.get("body", "") or request.GET.get("draft", ""),
         "form_tags": request.POST.get("tags", ""),
     })
 

@@ -908,10 +908,10 @@ UX review of Chapter 6 (forms / IA / flows). **3 sprints**, by tier.
 
 | Feature ID | Title | REQ trace | Status |
 |---|---|---|---|
-| F-6.12.1.1 | Feed composer carries typed text to forum/showcase; equal CTAs + hints | REQ-6.12.1 | TODO |
-| F-6.12.1.2 | CrashTech self-service team create/join + "not on a team yet" state | REQ-6.12.2 | TODO |
-| F-6.12.1.3 | Global Django-messages block in base.html; remove local copies; styled report | REQ-6.12.3 | TODO |
-| F-6.12.1.4 | @mention datalist/hint + display-name→username match; mark promoted messages | REQ-6.12.4 | TODO |
+| F-6.12.1.1 | Feed composer carries typed text to forum/showcase; equal CTAs + hints | REQ-6.12.1 | DONE |
+| F-6.12.1.2 | CrashTech self-service team create/join + "not on a team yet" state | REQ-6.12.2 | DONE |
+| F-6.12.1.3 | Global Django-messages block in base.html; remove local copies; styled report | REQ-6.12.3 | DONE |
+| F-6.12.1.4 | @mention datalist/hint + display-name→username match; mark promoted messages | REQ-6.12.4 | DONE |
 
 #### SPR-UX.2 — Forms & flow polish (Tier 2)
 
@@ -1023,6 +1023,120 @@ Claude. **Status:** IN PROGRESS — built in one autonomous pass (DEC-54).
 
 ---
 
+## EPIC-8 — Admin / Management Control Dashboard
+
+**Goal:** One **superuser-only** cockpit at `/admin-dashboard/` answering, every day,
+"how is babook doing — people, money, and pulse?" — user & training stats, live
+API-fed cost tracking, full community engagement, and system vitals, with threshold
+alerts. **Spec:** [main_spec.md §Chapter 8](main_spec.md) (REQ-8.1–8.6, DEC-62–67).
+**Owner:** Avi + Claude.
+**Status:** SPECCED → TRACKED — backlog below fully covers Chapter 8; build not yet
+started. Stays in the Django/SQLite envelope (nightly snapshot + pluggable cost
+adapters; no new infra). External-data adapters reuse existing keys; only ACT-23–26
+add genuinely-missing creds/figures.
+
+Sprints in this epic (one group per spec section; built in order):
+- SPR-8.1 Dashboard Foundation & Access — TODO
+- SPR-8.2 Users & Training Statistics — TODO
+- SPR-8.3 Cost & Spend Tracking — TODO
+- SPR-8.4 Engagement & Community Health — TODO
+- SPR-8.5 System Health — TODO
+- SPR-8.6 Alerts — TODO
+
+#### SPR-8.1 — Dashboard Foundation & Access
+
+**Goal:** The substrate everything hangs on — admin-only shell, snapshot store,
+nightly capture, refresh, ranges/trends, resilient states.
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-8.1.1 | Superuser-only access gate (`@superuser_required` on every `/admin-dashboard/*` route) + nav entry shown only to superusers | REQ-8.1.2 | TODO |
+| F-8.1.2 | Dashboard hub shell: sectioned cockpit (Users & Training / Costs / Engagement / System) + summary cards; RTL + mobile; site design system | REQ-8.1.1 | TODO |
+| F-8.1.3 | `DashboardSnapshot` + `CostRecord` models + migration | REQ-8.1.3 | TODO |
+| F-8.1.4 | `capture_dashboard_snapshot` command (collects internal metrics + runs every cost adapter; idempotent; one adapter's failure never aborts the rest) | REQ-8.1.4 | TODO |
+| F-8.1.5 | Per-section "refresh now" (re-runs just that section) + visible "last updated" timestamp | REQ-8.1.5 | TODO |
+| F-8.1.6 | Time-range selector (today/7d/30d/90d/all) driving every section + trends (sparkline / delta) from snapshot history | REQ-8.1.6 | TODO |
+| F-8.1.7 | Resilient empty / "unavailable — reason" states for any missing source (no 500, no misleading zero) | REQ-8.1.7 | TODO |
+
+#### SPR-8.2 — Users & Training Statistics
+
+**Goal:** Who is here, who actually learns, and which courses win.
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-8.2.1 | User totals + growth over range; breakdown by `role_type` and auth provider | REQ-8.2.1 | TODO |
+| F-8.2.2 | Active users: DAU / WAU / MAU (logins + `UserVideoProgress` + community actions) + active-rate trend | REQ-8.2.2 | TODO |
+| F-8.2.3 | Training engagement: enrollments, lessons watched, watch-hours, completion rates, certificates, quiz pass rate, reflections | REQ-8.2.3 | TODO |
+| F-8.2.4 | Popular courses ranked (enrollment / completion / watch-time) + per-course completion %; deep-link per row | REQ-8.2.4 | TODO |
+| F-8.2.5 | Activation funnel (entry→first-lesson) with step conversions + activation rate (Plausible + local) | REQ-8.2.5 | TODO |
+| F-8.2.6 | Corporate / lead funnel: leads + newsletter (confirmed/pending); north-star inquiries front-and-center; deep links | REQ-8.2.6 | TODO |
+
+#### SPR-8.3 — Cost & Spend Tracking
+
+**Goal:** What every paid service costs — live where an API exists, estimate/manual
+otherwise — each with a deep link out. Adapters reuse existing keys (Bunny, OpenAI,
+Resend, Copilot); ACT-23–25 cover the rest.
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-8.3.1 | `CostAdapter` interface + registry (`name`/`fetch`/`deep_link`/`source`; declares live/estimate/manual; degrades gracefully without a key) | REQ-8.3.1 | TODO |
+| F-8.3.2 | Spend overview panel: month total + MoM trend + per-service breakdown with source badge, last-fetched, deep link | REQ-8.3.2 | TODO |
+| F-8.3.3 | OpenAI adapter (live): spend + tokens by model from `UsageLog` + cost-cap status; cross-check usage API where available | REQ-8.3.3 | TODO |
+| F-8.3.4 | Copilot adapter (live): assigned seats × $19 + pending + reclaimable (reuse REQ-1.5.8 data) | REQ-8.3.4 | TODO |
+| F-8.3.5 | Bunny adapter: storage + bandwidth via Bunny statistics API; estimate fallback; deep link | REQ-8.3.5 | TODO |
+| F-8.3.6 | Resend adapter: volume vs plan / overage via API; estimate fallback; deep link | REQ-8.3.6 | TODO |
+| F-8.3.7 | Render adapter: hosting + disk via Render API (ACT-23) or maintained manual figure; deep link | REQ-8.3.7 | TODO |
+| F-8.3.8 | Plausible adapter: plan cost (manual) + stats link (ACT-24); deep link | REQ-8.3.8 | TODO |
+| F-8.3.9 | Other-services adapters: domain registrar, Google Drive/rclone backups ($0), screenshot service | REQ-8.3.9 | TODO |
+| F-8.3.10 | Stripe + Green Invoice dormant placeholder (wired, inactive while billing DEFERRED) | REQ-8.3.10 | TODO |
+| F-8.3.11 | Manual cost entry/override per service per month → flows into totals + trends | REQ-8.3.11 | TODO |
+
+#### SPR-8.4 — Engagement & Community Health
+
+**Goal:** The pulse across every community surface — an admin-only superset of the
+staff community-health view.
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-8.4.1 | Engagement section absorbs REQ-6.8.2 metrics (weekly active contributors, unanswered rate, time-to-first-answer, projects/tips/RSVPs/week, report-queue size) | REQ-8.4.1 | TODO |
+| F-8.4.2 | Full engagement breadth + trends: threads/answers/accepted-rate, projects by stand, reactions, comments, tips, channel msgs, DMs, follows, badges, reputation leaders, events/RSVPs | REQ-8.4.2 | TODO |
+| F-8.4.3 | Overall engagement rate (contributors ÷ active users) + contribution mix, with trend | REQ-8.4.3 | TODO |
+| F-8.4.4 | Moderation pulse: open report queue + pending student-publish reviews + recent actions; deep links into staff queues | REQ-8.4.4 | TODO |
+| F-8.4.5 | Keep `/staff/community-health/` available to staff unchanged (dashboard section is the admin superset) | REQ-8.4.5 | TODO |
+
+#### SPR-8.5 — System Health
+
+**Goal:** The site's vital signs.
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-8.5.1 | Deploy status (commit/time/result + live revision) via GitHub Deployments / Render API | REQ-8.5.1 | TODO |
+| F-8.5.2 | Backup status: last successful backup time + stale/failed indicator (REQ-1.2.4) | REQ-8.5.2 | TODO |
+| F-8.5.3 | Database & storage: `db.sqlite3` size, disk usage, media footprint + headroom vs cap | REQ-8.5.3 | TODO |
+| F-8.5.4 | Service reachability: `/healthz` + per-dependency (OpenAI/Bunny/Resend) last-error signal from latest capture | REQ-8.5.4 | TODO |
+
+#### SPR-8.6 — Alerts
+
+**Goal:** Warn before a budget/queue/backup problem grows — reuse `notify()` + the
+cost-cap mechanism.
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-8.6.1 | Threshold alerts via `notify()` + email: spend (per-service + total), report-queue size, unanswered-question age, failed/stale backup (reuse REQ-1.6.8 cap mechanism) | REQ-8.6.1 | TODO |
+| F-8.6.2 | Alert surface: hub banner + "needs attention" panel; dismissible; triggering metric links to its section | REQ-8.6.2 | TODO |
+| F-8.6.3 | Alert config: env defaults + in-dashboard settings panel; opt-in per alert type (ACT-26) | REQ-8.6.3 | TODO |
+
+**Exit criteria (epic):** the superuser opens `/admin-dashboard/` and sees, in one
+place — user/training stats with popular courses ranked and the activation +
+corporate funnels; a costs panel with per-service spend (OpenAI + Copilot live, the
+rest via adapter or maintained figure) each deep-linking out; full community
+engagement (superset of the staff view, which still works); system vitals; and
+active threshold alerts — all loading instantly from the nightly snapshot with
+per-section refresh and trends. Staff and members cannot reach any dashboard route.
+Tests + full regression green; deployed + smoke-tested.
+
+---
+
 ## Status Summary (reconciled 2026-06-09)
 
 **Full regression: 356/356 passing (2026-06-12, incl. EPIC-3/4/5).** Per-sprint test counts: 1.1=19, 1.2=17,
@@ -1071,6 +1185,10 @@ real `REQ-2.x` ID.
 | ACT-20 | Set token-rate limits per tier (daily caps) | F-1.8.6 | OPEN (tune) |
 | ACT-21 | Set monthly cost cap amount (USD) | F-1.8.8 | DONE ($50) |
 | ACT-22 | Email addresses on babook.co.il (`privacy@`, `support@`, `noreply@`) | F-1.2.1, F-1.3.8 | noreply DONE; others OPEN |
+| ACT-23 | Render API token (read) — or confirm a manual hosting figure | F-8.3.7, F-8.5.1 | OPEN (non-blocking; manual fallback) |
+| ACT-24 | Plausible stats API key + plan cost — or confirm local-derived funnels + manual cost | F-8.2.5, F-8.3.8 | OPEN (non-blocking; fallback) |
+| ACT-25 | Monthly manual $ figures for API-less services (domain, plan costs) | F-8.3.9, F-8.3.11 | OPEN (non-blocking) |
+| ACT-26 | Confirm alert budget thresholds (spend, queue size, unanswered age) | F-8.6.1, F-8.6.3 | OPEN |
 
 ---
 

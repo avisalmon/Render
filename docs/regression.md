@@ -197,6 +197,12 @@
 |---|---|
 | test_spr_6_8_1.py (6) | flash_event helper roundtrip (queue + clear); tip post + event RSVP queue a Plausible event rendered on the next page; staff-only community-health dashboard (metrics) / non-staff blocked; home get-started checklist gains «הצטרפו לקהילה»; Avi Bot interview prompt mentions the community |
 
+## EPIC-6.12 — Community UX Polish (`tests/test_spr_ux_*.py`)
+
+| Suite | Verifies |
+|---|---|
+| test_spr_ux_1.py (8) | feed-composer draft carries to forum + showcase; flash message shows exactly once after redirect (single global renderer in base.html, local copies removed); CrashTech participant self-creates a team; participant joins until full; unteamed participant sees guidance (no dead-end); chat @mention datalist present; promoted chat message is marked |
+
 ## EPIC-7 — QA Hardening (`tests/test_spr_7_1..7_8.py`)
 
 | Suite | Verifies |

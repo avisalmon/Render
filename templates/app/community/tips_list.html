@@ -10,9 +10,6 @@
   </div>
   <p class="text-muted mb-3">רעיון קטן ששווה לשתף. טיפ אחד יכול לחסוך למישהו שעה.</p>
 
-  {% if messages %}{% for m in messages %}
-  <div class="alert alert-{{ m.tags|default:'info' }} py-2 small">{{ m }}</div>
-  {% endfor %}{% endif %}
 
   {% include "app/community/_guest_note.html" %}
 

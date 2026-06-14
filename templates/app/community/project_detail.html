@@ -26,7 +26,6 @@
       {% if project.status == 'pending' %}הפרויקט בבדיקה - יפורסם אחרי אישור צוות 🙂{% else %}טיוטה - רק את/ה רואה אותה. <a href="{% url 'showcase_edit' project.pk %}">המשך עריכה</a>{% endif %}
     </div>
     {% endif %}
-    {% if messages %}{% for m in messages %}<div class="alert alert-{{ m.tags|default:'info' }} py-2">{{ m }}</div>{% endfor %}{% endif %}
 
     {% if project.cover %}
     <img src="{{ project.cover.url }}" alt="{{ project.title }}" class="rounded mb-3" style="width:100%; max-height:420px; object-fit:cover;">

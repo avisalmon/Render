@@ -13,7 +13,6 @@
 <div class="row justify-content-center py-4">
   <div class="col-lg-7">
     <h1 class="h4 mb-3"><i class="bi bi-people me-1"></i> משתתפים</h1>
-    {% if messages %}{% for m in messages %}<div class="alert alert-{{ m.tags|default:'info' }} py-2 small">{{ m }}</div>{% endfor %}{% endif %}
 
     <form method="get" class="d-flex gap-2 mb-2">
       <input name="q" value="{{ q }}" class="form-control" placeholder="חיפוש משתמש babook לפי שם משתמש">

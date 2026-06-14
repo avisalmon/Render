@@ -209,6 +209,8 @@ def project_create(request):
         "course": course,
         "project": None,
         "needs_guidelines": not guidelines_accepted(request.user),
+        # carry text typed in the feed composer (REQ-6.12.1)
+        "form_story": request.GET.get("draft", ""),
     })
 
 

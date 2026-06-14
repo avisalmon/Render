@@ -339,12 +339,21 @@ def hackathon_detail(request, slug):
     my_subs = {}
     if my_team:
         my_subs = {s.challenge_id: s for s in my_team.submissions.all()}
+    my_roles = roles_of(request.user, h)
+    # Self-service team formation for an invited-but-unteamed participant (REQ-6.12.2)
+    open_teams = []
+    if my_roles and not my_team and h.can_edit_setup:
+        open_teams = [t for t in h.teams.prefetch_related("members")
+                      if t.members.count() < h.team_size]
     return render(request, "app/crashtech/detail.html", {
         "h": h,
         "challenges": challenges,
-        "my_roles": roles_of(request.user, h),
+        "my_roles": my_roles,
         "my_team": my_team,
         "my_subs": my_subs,
+        "open_teams": open_teams,
+        "can_form_team": bool(my_roles) and not my_team,
+        "stock_left": available_stock(h),
     })
 
 
@@ -591,3 +600,46 @@ def video_gallery(request, slug):
             .exclude(video_url="", video_file="")
             .select_related("team", "challenge"))
     return render(request, "app/crashtech/gallery.html", {"h": hackathon, "subs": subs})
+
+
+@login_required
+def participant_create_team(request, slug):
+    """REQ-6.12.2: a participant forms their own team (stock-guarded)."""
+    hackathon = get_object_or_404(Hackathon, slug=slug)
+    if not roles_of(request.user, hackathon):
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden("רק משתתפים מוזמנים יכולים ליצור צוות")
+    if request.method == "POST" and hackathon.can_edit_setup:
+        if team_of(request.user, hackathon):
+            messages.error(request, "אתם כבר בצוות.")
+        elif available_stock(hackathon) <= 0:
+            messages.error(request, "אזל מלאי הערכות - אי אפשר ליצור צוות חדש.")
+        else:
+            name = (request.POST.get("name") or "").strip()
+            if not name or Team.objects.filter(hackathon=hackathon, name=name).exists():
+                messages.error(request, "שם צוות חסר או תפוס.")
+            else:
+                team = Team.objects.create(hackathon=hackathon, name=name,
+                                           anon_ordinal=hackathon.teams.count() + 1)
+                team.members.add(request.user)
+                messages.success(request, f"הצוות «{name}» נוצר ואתם בפנים! 🎉")
+    return redirect("crashtech_detail", slug=slug)
+
+
+@login_required
+def participant_join_team(request, slug, team_id):
+    """REQ-6.12.2: a participant joins an existing team (size-guarded)."""
+    hackathon = get_object_or_404(Hackathon, slug=slug)
+    if not roles_of(request.user, hackathon):
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden("רק משתתפים מוזמנים יכולים להצטרף לצוות")
+    team = get_object_or_404(Team, pk=team_id, hackathon=hackathon)
+    if request.method == "POST" and hackathon.can_edit_setup:
+        if team_of(request.user, hackathon):
+            messages.error(request, "אתם כבר בצוות.")
+        elif team.members.count() >= hackathon.team_size:
+            messages.error(request, f"הצוות מלא (עד {hackathon.team_size} חברים).")
+        else:
+            team.members.add(request.user)
+            messages.success(request, f"הצטרפתם לצוות «{team.name}»! 🎉")
+    return redirect("crashtech_detail", slug=slug)

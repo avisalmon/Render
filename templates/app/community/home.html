@@ -9,9 +9,6 @@
   </div>
   <p class="text-muted mb-3">שואלים, עונים, משוויצים במה שבניתם - וגדלים ביחד.</p>
 
-  {% if messages %}{% for m in messages %}
-  <div class="alert alert-{{ m.tags|default:'info' }} py-2 small">{{ m }}</div>
-  {% endfor %}{% endif %}
 
   {% include "app/community/_guest_note.html" %}
 
@@ -36,20 +33,38 @@
         <form method="post" action="{% url 'tip_create' %}">
           {% csrf_token %}
           <input type="hidden" name="next" value="{% url 'community' %}">
-          <textarea name="body" class="form-control mb-2" rows="2" maxlength="2000"
-                    placeholder="טיפ קצר לקהילה... (למשל: ככה אני גורם ל-Copilot להסביר קוד)"></textarea>
+          <textarea name="body" id="composer-body" class="form-control mb-2" rows="2" maxlength="2000"
+                    placeholder="כתבו כאן... טיפ קצר, שאלה לקהילה, או רעיון לפרויקט"></textarea>
           <input type="text" name="tags" class="form-control form-control-sm mb-2"
                  placeholder="תגיות, מופרדות בפסיק (ai, copilot)">
           {% if not user.profile.guidelines_accepted_at %}
           <label class="small d-block mb-2"><input type="checkbox" name="accept_guidelines" value="1"> קראתי ואני מסכים/ה ל<a href="{% url 'community_guidelines' %}" target="_blank">כללי הקהילה</a></label>
           {% endif %}
-          <div class="d-flex gap-2 flex-wrap">
-            <button class="btn btn-primary btn-sm"><i class="bi bi-lightbulb"></i> פרסמו טיפ</button>
-            <a href="{% url 'forum_new' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-question-circle"></i> שאלו שאלה</a>
-            <a href="{% url 'showcase_new' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-easel2"></i> השוויצו בפרויקט</a>
+          <div class="row g-2 text-center">
+            <div class="col-4">
+              <button class="btn btn-outline-primary btn-sm w-100"><i class="bi bi-lightbulb"></i> טיפ</button>
+              <div class="text-muted" style="font-size:.7rem">רעיון קצר</div>
+            </div>
+            <div class="col-4">
+              <a href="{% url 'forum_new' %}" class="btn btn-outline-primary btn-sm w-100 js-composer-route" data-base="{% url 'forum_new' %}"><i class="bi bi-question-circle"></i> שאלה</a>
+              <div class="text-muted" style="font-size:.7rem">מקבל תשובות</div>
+            </div>
+            <div class="col-4">
+              <a href="{% url 'showcase_new' %}" class="btn btn-outline-primary btn-sm w-100 js-composer-route" data-base="{% url 'showcase_new' %}"><i class="bi bi-easel2"></i> פרויקט</a>
+              <div class="text-muted" style="font-size:.7rem">להשוויץ בו</div>
+            </div>
           </div>
         </form>
       </div>
+      <script>
+        // Carry the composer text to the forum/showcase form (REQ-6.12.1)
+        document.querySelectorAll('.js-composer-route').forEach(function(a){
+          a.addEventListener('click', function(e){
+            var t = document.getElementById('composer-body');
+            if(t && t.value.trim()){ e.currentTarget.href = a.dataset.base + '?draft=' + encodeURIComponent(t.value.trim()); }
+          });
+        });
+      </script>
       {% endif %}
 
       <!-- Scope filters (REQ-6.4.1) -->

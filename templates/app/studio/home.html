@@ -16,9 +16,6 @@
     </div>
   </div>
 
-  {% if messages %}{% for m in messages %}
-  <div class="alert alert-{{ m.tags|default:'info' }} py-2">{{ m }}</div>
-  {% endfor %}{% endif %}
 
   {% if jobs %}
   <h2 class="h6 text-muted mb-2">עבודות בתהליך</h2>

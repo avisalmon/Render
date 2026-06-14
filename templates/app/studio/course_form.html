@@ -10,7 +10,6 @@
 {% block content %}
 <div class="py-4" style="max-width:720px;margin:0 auto;">
   <h1 class="h4 mb-3">קורס חדש</h1>
-  {% if messages %}{% for m in messages %}<div class="alert alert-danger py-2">{{ m }}</div>{% endfor %}{% endif %}
   <form method="post" class="card-surface p-4">
     {% csrf_token %}
     <div class="mb-3">

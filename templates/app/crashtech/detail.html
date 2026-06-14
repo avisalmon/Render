@@ -46,7 +46,34 @@
   </div>
   {% endif %}
 
-  {% if messages %}{% for m in messages %}<div class="alert alert-{{ m.tags|default:'info' }} py-2 small">{{ m }}</div>{% endfor %}{% endif %}
+
+  {% if can_form_team %}
+  <!-- Self-service team formation for an invited participant (REQ-6.12.2) -->
+  <div class="card-surface p-3 mb-3" style="border-color:var(--accent-primary)">
+    <strong><i class="bi bi-people-fill" style="color:var(--accent-primary)"></i> עדיין לא שובצת לצוות</strong>
+    {% if h.can_edit_setup %}
+      <p class="small text-muted mb-2">צרו צוות חדש או הצטרפו לאחד קיים.</p>
+      <form method="post" action="{% url 'crashtech_team_create' h.slug %}" class="d-flex gap-2 mb-2 flex-wrap">
+        {% csrf_token %}
+        <input name="name" class="form-control form-control-sm" style="max-width:240px" placeholder="שם צוות חדש" required>
+        <button class="btn btn-sm btn-primary" {% if not stock_left %}disabled{% endif %}>צרו צוות</button>
+        {% if not stock_left %}<span class="small text-danger">אזל מלאי הערכות</span>{% endif %}
+      </form>
+      {% if open_teams %}
+      <div class="small mb-1">או הצטרפו לצוות:</div>
+      <div class="d-flex gap-1 flex-wrap">
+        {% for t in open_teams %}
+        <form method="post" action="{% url 'crashtech_team_join' h.slug t.pk %}" class="d-inline">{% csrf_token %}
+          <button class="btn btn-sm btn-outline-secondary py-0">{{ t.name }} ({{ t.members.count }}/{{ h.team_size }})</button>
+        </form>
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% else %}
+      <p class="small text-muted mb-0">פנו למארגן/ת כדי שישבצו אתכם לצוות.</p>
+    {% endif %}
+  </div>
+  {% endif %}
 
   {% if my_team %}
   <div class="alert alert-info py-2 small"><i class="bi bi-people-fill"></i> הצוות שלך: <strong>{{ my_team.name }}</strong> ({{ my_team.anon_label }})</div>

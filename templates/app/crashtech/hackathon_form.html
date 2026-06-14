@@ -13,7 +13,6 @@
 <div class="row justify-content-center py-4">
   <div class="col-lg-7">
     <h1 class="h4 mb-3">{% if h %}עריכת האקתון{% else %}האקתון חדש{% endif %}</h1>
-    {% if messages %}{% for m in messages %}<div class="alert alert-danger py-2 small">{{ m }}</div>{% endfor %}{% endif %}
     <form method="post" class="card-surface p-4">
       {% csrf_token %}
       <label class="form-label">שם האירוע</label>

@@ -72,11 +72,18 @@ def channel_view(request, slug):
     if channel.kind == "course" and channel.course_id:
         from .chat import learners_now
         presence = learners_now(channel.course)
+    # @mention autocomplete: recent posters here + community members (REQ-6.12.4)
+    from django.contrib.auth.models import User
+    names = {m.author.username for m in msgs}
+    names |= set(User.objects.order_by("-last_login", "-date_joined")
+                 .values_list("username", flat=True)[:50])
+    mention_names = sorted(names)
     return render(request, "app/community/channel.html", {
         "channel": channel, "messages_list": msgs, "q": q,
         "needs_guidelines": request.user.is_authenticated and not guidelines_accepted(request.user),
         "last_id": msgs[-1].pk if msgs else 0,
         "presence": presence,
+        "mention_names": mention_names,
     })
 
 
@@ -90,12 +97,17 @@ def promote_message(request, message_id):
     if request.user != msg.author and not request.user.is_staff:
         from django.http import HttpResponseForbidden
         return HttpResponseForbidden("רק כותב/ת ההודעה או צוות יכולים לקדם אותה")
+    if msg.promoted_to:
+        messages.info(request, "ההודעה כבר קודמה.")
+        return redirect("channel_view", slug=msg.channel.slug)
     target = request.POST.get("target", "forum")
     back = f"\n\n— מתוך הצ'אט «{msg.channel.title}» (/community/chat/{msg.channel.slug}/)"
     if target == "tip":
         from .models import Tip
         tip = Tip.objects.create(author=msg.author, body=(msg.body + back)[:2000],
                                  tags=[msg.channel.domain] if msg.channel.domain else [])
+        msg.promoted_to = "tip"
+        msg.save(update_fields=["promoted_to"])
         messages.success(request, "ההודעה הפכה לטיפ! 💡")
         return redirect("tip_detail", tip_id=tip.pk)
     from .models import ForumThread
@@ -104,6 +116,8 @@ def promote_message(request, message_id):
         category=msg.channel.domain or "general", kind="discussion",
         title=title, body=msg.body + back, author=msg.author,
         tags=[msg.channel.domain] if msg.channel.domain else [])
+    msg.promoted_to = "forum"
+    msg.save(update_fields=["promoted_to"])
     messages.success(request, "ההודעה הפכה לדיון בפורום! 📌")
     return redirect("forum_thread", thread_id=th.pk)
 

@@ -36,6 +36,7 @@ class ChannelMessage(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="channel_messages")
     body = models.TextField()
     is_hidden = models.BooleanField(default=False)  # moderation (REQ-6.6.6)
+    promoted_to = models.CharField(max_length=10, blank=True, default="")  # forum/tip (REQ-6.12.4)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

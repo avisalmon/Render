@@ -14,7 +14,6 @@
 <div class="row justify-content-center py-4">
   <div class="col-lg-9">
     {% include "app/community/_guest_note.html" %}
-    {% if messages %}{% for m in messages %}<div class="alert alert-{{ m.tags|default:'info' }} py-2">{{ m }}</div>{% endfor %}{% endif %}
 
     <!-- The question -->
     <div class="card-surface p-4 mb-3">

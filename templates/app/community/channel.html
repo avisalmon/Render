@@ -20,7 +20,6 @@
       </form>
     </div>
 
-    {% if messages %}{% for m in messages %}<div class="alert alert-{{ m.tags|default:'info' }} py-2 small">{{ m }}</div>{% endfor %}{% endif %}
 
     {% if channel.kind == 'course' and presence %}
     <div class="card-surface p-2 mb-2 small">
@@ -36,10 +35,12 @@
         <span class="small text-muted">· {{ m.created_at|date:"H:i" }}</span>
         {% if user.is_authenticated %}
         <span class="chat-actions small ms-1">
-          {% if user == m.author or user.is_staff %}
+          {% if m.promoted_to %}
+          <span class="badge bg-light text-muted">קודם ✓</span>
+          {% elif user == m.author or user.is_staff %}
           <form method="post" action="{% url 'promote_message' m.pk %}" class="d-inline">{% csrf_token %}
-            <button name="target" value="forum" class="btn btn-link btn-sm p-0 text-muted" title="לפורום">📌</button>
-            <button name="target" value="tip" class="btn btn-link btn-sm p-0 text-muted" title="לטיפ">💡</button>
+            <button name="target" value="forum" class="btn btn-link btn-sm p-0 text-muted" title="העבר לפורום">📌 לפורום</button>
+            <button name="target" value="tip" class="btn btn-link btn-sm p-0 text-muted" title="הפוך לטיפ">💡 לטיפ</button>
           </form>
           {% endif %}
           <form method="post" action="{% url 'report_message' m.pk %}" class="d-inline">{% csrf_token %}
@@ -66,9 +67,10 @@
       <form method="post" class="d-flex gap-2">
         {% csrf_token %}
         {% if needs_guidelines %}<input type="hidden" name="accept_guidelines" value="1">{% endif %}
-        <input name="body" class="form-control" maxlength="2000" placeholder="כתבו הודעה..." autocomplete="off" required>
+        <input name="body" class="form-control" maxlength="2000" placeholder="כתבו הודעה...  (@שם כדי לתייג)" autocomplete="off" list="mention-names" required>
         <button class="btn btn-primary">שליחה</button>
       </form>
+      <datalist id="mention-names">{% for n in mention_names %}<option value="@{{ n }}">{% endfor %}</datalist>
       {% if needs_guidelines %}<div class="small text-muted mt-1">בשליחה הראשונה אתם מאשרים את <a href="{% url 'community_guidelines' %}" target="_blank">כללי הקהילה</a>.</div>{% endif %}
     {% else %}
       <a href="/join/?next={{ request.path }}" class="btn btn-primary w-100">היכנסו כדי לכתוב</a>
