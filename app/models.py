@@ -919,6 +919,10 @@ class AuthoringJob(models.Model):
 # CrashTech — hardware hackathon platform (EPIC-6.5). Defined in a dedicated
 # module, re-exported here so Django registers them under the `app` label.
 # ---------------------------------------------------------------------------
+from .chat_models import (  # noqa: E402,F401
+    Channel,
+    ChannelMessage,
+)
 from .crashtech_models import (  # noqa: E402,F401
     Certificate,
     Challenge,

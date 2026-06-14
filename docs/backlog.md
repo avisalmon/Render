@@ -820,10 +820,10 @@ reconciled with shipped 6.1/6.3 work. **3 sprints.**
 
 | Feature ID | Title | REQ trace | Status |
 |---|---|---|---|
-| F-6.6.1.1 | `Channel` + `ChannelMessage` models; code-seeded topic channels (per taxonomy domain + כללי) | REQ-6.6.1 | TODO |
-| F-6.6.1.2 | Channel list + channel view (newest-at-bottom, post box) with JS polling refresh + searchable history | REQ-6.6.1 | TODO |
-| F-6.6.1.3 | Post pipeline: guidelines gate + moderation + rate-limit; read-public, login-to-post via /join/ wall (DEC-45) | REQ-6.6.1, REQ-6.6.6 | TODO |
-| F-6.6.1.4 | Surface channels on `/community/` hub + top nav | REQ-6.6.1 | TODO |
+| F-6.6.1.1 | `Channel` + `ChannelMessage` models; code-seeded topic channels (per taxonomy domain + כללי) | REQ-6.6.1 | DONE |
+| F-6.6.1.2 | Channel list + channel view (newest-at-bottom, post box) with JS polling refresh + searchable history | REQ-6.6.1 | DONE |
+| F-6.6.1.3 | Post pipeline: guidelines gate + moderation + rate-limit; read-public, login-to-post via /join/ wall (DEC-45) | REQ-6.6.1, REQ-6.6.6 | DONE |
+| F-6.6.1.4 | Surface channels on `/community/` hub + top nav | REQ-6.6.1 | DONE |
 
 #### SPR-6.6.2 — Groups, presence & collaborators
 

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}צ'אט הקהילה - babook{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'home' %}" style="color:var(--accent-primary)">בית</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'community' %}" style="color:var(--accent-primary)">קהילה</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">צ'אט</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="py-4">
+  <h1 class="h4 mb-1"><i class="bi bi-chat-dots-fill me-1" style="color:var(--accent-primary)"></i> צ'אט הקהילה</h1>
+  <p class="text-muted mb-4">שיחות חיות לפי נושא, קורס ואירוע. קוראים חופשי, נכנסים כדי לכתוב.</p>
+
+  {% include "app/community/_guest_note.html" %}
+
+  <h2 class="h6 text-muted mb-2">ערוצי נושא</h2>
+  <div class="row g-2 mb-4">
+    {% for ch in topic %}
+    <div class="col-md-4">
+      <a href="{% url 'channel_view' ch.slug %}" class="card-surface d-block p-3 text-decoration-none" style="color:var(--text-primary)">
+        <i class="bi {{ ch.icon }} me-1" style="color:var(--accent-primary)"></i> <strong>{{ ch.title }}</strong>
+        <div class="small text-muted">{{ ch.messages.count }} הודעות</div>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if hackathon %}
+  <h2 class="h6 text-muted mb-2">ערוצי אירוע (CrashTech)</h2>
+  <div class="row g-2 mb-4">
+    {% for ch in hackathon %}
+    <div class="col-md-4">
+      <a href="{% url 'channel_view' ch.slug %}" class="card-surface d-block p-3 text-decoration-none" style="color:var(--text-primary)">
+        <i class="bi {{ ch.icon }} me-1" style="color:var(--accent-primary)"></i> <strong>{{ ch.title }}</strong>
+        {% if ch.is_readonly %}<span class="badge bg-secondary">ארכיון</span>{% endif %}
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if course %}
+  <h2 class="h6 text-muted mb-2">קבוצות קורסים</h2>
+  <div class="row g-2">
+    {% for ch in course %}
+    <div class="col-md-4">
+      <a href="{% url 'channel_view' ch.slug %}" class="card-surface d-block p-3 text-decoration-none" style="color:var(--text-primary)">
+        <i class="bi {{ ch.icon }} me-1" style="color:var(--accent-primary)"></i> <strong>{{ ch.title }}</strong>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

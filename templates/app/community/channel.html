@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}{{ channel.title }} - צ'אט babook{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'community' %}" style="color:var(--accent-primary)">קהילה</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'chat_home' %}" style="color:var(--accent-primary)">צ'אט</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">{{ channel.title }}</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+  <div class="col-lg-8">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h1 class="h5 mb-0"><i class="bi {{ channel.icon }} me-1" style="color:var(--accent-primary)"></i> {{ channel.title }}</h1>
+      <form method="get" class="d-flex gap-1">
+        <input name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="חיפוש בהיסטוריה" style="max-width:200px">
+        <button class="btn btn-sm btn-outline-secondary">חיפוש</button>
+      </form>
+    </div>
+
+    {% if messages %}{% for m in messages %}<div class="alert alert-{{ m.tags|default:'info' }} py-2 small">{{ m }}</div>{% endfor %}{% endif %}
+
+    <div id="chat-log" class="card-surface p-3 mb-2" style="height:55vh; overflow-y:auto;" data-channel="{{ channel.slug }}" data-last="{{ last_id }}">
+      {% for m in messages_list %}
+      <div class="chat-msg mb-2" data-id="{{ m.pk }}">
+        <span class="small fw-semibold" style="color:var(--accent-primary)">{{ m.author.profile.public_name }}</span>
+        <span class="small text-muted">· {{ m.created_at|date:"H:i" }}</span>
+        <div>{{ m.body }}</div>
+      </div>
+      {% empty %}
+      <div class="text-muted text-center" id="chat-empty">עדיין אין הודעות. תהיו הראשונים!</div>
+      {% endfor %}
+    </div>
+
+    {% if channel.is_readonly %}
+      <div class="alert alert-secondary py-2 small">הערוץ בארכיון - לקריאה בלבד.</div>
+    {% elif user.is_authenticated %}
+      <form method="post" class="d-flex gap-2">
+        {% csrf_token %}
+        {% if needs_guidelines %}<input type="hidden" name="accept_guidelines" value="1">{% endif %}
+        <input name="body" class="form-control" maxlength="2000" placeholder="כתבו הודעה..." autocomplete="off" required>
+        <button class="btn btn-primary">שליחה</button>
+      </form>
+      {% if needs_guidelines %}<div class="small text-muted mt-1">בשליחה הראשונה אתם מאשרים את <a href="{% url 'community_guidelines' %}" target="_blank">כללי הקהילה</a>.</div>{% endif %}
+    {% else %}
+      <a href="/join/?next={{ request.path }}" class="btn btn-primary w-100">היכנסו כדי לכתוב</a>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+(function(){
+  var log = document.getElementById('chat-log');
+  if(!log) return;
+  log.scrollTop = log.scrollHeight;
+  var slug = log.dataset.channel;
+  function poll(){
+    fetch('/community/chat/' + slug + '/messages/?after=' + log.dataset.last)
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){
+        if(!d || !d.messages.length) return;
+        var empty = document.getElementById('chat-empty'); if(empty) empty.remove();
+        d.messages.forEach(function(m){
+          if(log.querySelector('[data-id="'+m.id+'"]')) return;
+          var el = document.createElement('div');
+          el.className = 'chat-msg mb-2'; el.setAttribute('data-id', m.id);
+          el.innerHTML = '<span class="small fw-semibold" style="color:var(--accent-primary)"></span> <span class="small text-muted"></span><div></div>';
+          el.children[0].textContent = m.author;
+          el.children[1].textContent = '· ' + m.at;
+          el.children[2].textContent = m.body;
+          log.appendChild(el);
+          log.dataset.last = m.id;
+        });
+        log.scrollTop = log.scrollHeight;
+      });
+  }
+  setInterval(poll, 4000);
+})();
+</script>
+{% endblock %}

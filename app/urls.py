@@ -2,6 +2,7 @@ from django.contrib.auth import views as auth_views
 from django.urls import path
 
 from . import (
+    chat_views,
     community_views,
     course_api,
     crashtech_views,
@@ -45,6 +46,10 @@ urlpatterns = [
     path("community/report/", community_views.report_content, name="community_report"),
     path("c/<str:username>/", community_views.public_profile, name="community_profile"),
     path("c/<str:username>/follow/", community_views.follow_toggle, name="community_follow"),
+    # --- Chat & Groups (EPIC-6.6) ---
+    path("community/chat/", chat_views.chat_home, name="chat_home"),
+    path("community/chat/<slug:slug>/", chat_views.channel_view, name="channel_view"),
+    path("community/chat/<slug:slug>/messages/", chat_views.channel_messages_api, name="channel_messages"),
     # --- Tips & Feed (EPIC-6.4) ---
     path("community/tips/", tips_views.tips_list, name="tips_list"),
     path("community/tips/new/", tips_views.tip_create, name="tip_create"),

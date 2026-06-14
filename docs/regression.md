@@ -175,6 +175,12 @@
 | test_spr_6_5_5.py (6) | organizer generates ranked certificates (winner/runner-up/participation, tie-break); public certificate view; non-organizer blocked; Glory Page hidden until published then public (winner revealed); team member post-event consent opt-out; anonymized public video gallery (consenting+approved only) |
 | test_spr_6_5_e2e.py (1) | **full lifecycle** — setup → judge assign → teams + hardware (+stock cap) → kickoff unlocks challenges → submit → blind judging + bonus → anonymized leaderboard → resubmit reopens → deadline hard-blocks → certificates (winner/runner-up) → published Glory Page (winner revealed). The cross-phase coherence guarantee |
 
+## EPIC-6.6 — Chat & Groups (`tests/test_spr_6_6_*.py`)
+
+| Suite | Verifies |
+|---|---|
+| test_spr_6_6_1.py (8) | topic channels seeded per taxonomy domain + general; chat linked from hub + nav; channel view lists messages; polling API returns JSON + `?after=` newer-only; history search; anonymous read / post-walled to /join/; member posts; rate-limit caps flooding |
+
 ## EPIC-7 — QA Hardening (`tests/test_spr_7_1..7_8.py`)
 
 | Suite | Verifies |
