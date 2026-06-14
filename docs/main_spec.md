@@ -915,6 +915,25 @@ and member directory operate with minors-safe defaults; an event has run end
 to end with RSVP and recording; the health dashboard reports weekly active
 contributors; and the full regression is green with every epic's tests.
 
+### 6.12 Community UX Polish (post-build fresh-eyes review)
+
+After Chapter 6 was built, a full UX audit (forms / IA / flows) found the
+skeleton strong but the experience scattered, with two broken paths. This
+section makes the community **friendly and flowing**. Grouped REQs:
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-6.12.1 | Composer continuity | Text typed in the «שתפו משהו» box carries to the forum/showcase form (no lost text); the three CTAs are visually equal with a one-line hint of what each does. | TODO |
+| REQ-6.12.2 | CrashTech self-service teams | Participants can create or join a team themselves (capacity + hardware-stock guarded); an invited-but-unteamed participant sees a clear "form/join a team" state, never a dead-end of challenge cards with no submit UI. | TODO |
+| REQ-6.12.3 | Global messages renderer | One Django-messages block in `base.html` so every redirect target shows its flash; remove the ~24 local copies; replace `alert()`/`prompt()` report flows with the styled pattern. | TODO |
+| REQ-6.12.4 | Mentions | @mention gains an affordance (hint/datalist) and matches the displayed name → username; a promoted chat message is marked so it isn't promoted twice. | TODO |
+| REQ-6.12.5 | Lean forms | Showcase media/links (video/repo/live/gallery) collapse behind an optional disclosure (first publish = title→story→publish); the challenge form hides performance-only fields for pass/fail; events default `end_at` to start+1h and toggle online-url/venue by `is_online` with a series datalist; the avatar size label matches the real 15MB limit. | TODO |
+| REQ-6.12.6 | Event RSVP polish | Cancel asks confirm; the .ics download is offered only after RSVP; event list cards get a one-click RSVP. | TODO |
+| REQ-6.12.7 | Chat send polish | Posting a message uses fetch + optimistic append (no full reload); the promote-to-forum/tip actions are labeled, not bare emoji. | TODO |
+| REQ-6.12.8 | Activation coupling | Posting any public content auto-publishes the profile (the "join the community" banner stops lingering); the `/join/` wall gains named intents for tip/showcase/chat. | TODO |
+| REQ-6.12.9 | Community IA: one door | `/community/` gets an «אזורי הקהילה» tile strip covering all 8 areas; CrashTech is folded under קהילה (nav + breadcrumb); the private-DM icon becomes an envelope (distinct from community chat); the «עולמות» dropdown drops unbuilt placeholders; chat/events/CrashTech empty states gain a CTA. | TODO |
+| REQ-6.12.10 | Dead-code cleanup | Verify + fix the showcase auto-cover (`site_url` never set by the form) and the unused `tip_create` `link_url` field. | TODO |
+
 ---
 
 ## Chapter 7 — QA Hardening

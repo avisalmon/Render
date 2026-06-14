@@ -899,6 +899,47 @@ physical meetup tracks check-ins + photos; staff see live community vitals; key
 actions emit Plausible events; onboarding nudges into the community — tests +
 full regression green, deployed + smoke-tested.
 
+### EPIC-6.12 — Community UX Polish
+
+**Spec:** [main_spec.md §6.12](main_spec.md). **Status:** IN PROGRESS — fresh-eyes
+UX review of Chapter 6 (forms / IA / flows). **3 sprints**, by tier.
+
+#### SPR-UX.1 — Broken paths (Tier 1)
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-6.12.1.1 | Feed composer carries typed text to forum/showcase; equal CTAs + hints | REQ-6.12.1 | TODO |
+| F-6.12.1.2 | CrashTech self-service team create/join + "not on a team yet" state | REQ-6.12.2 | TODO |
+| F-6.12.1.3 | Global Django-messages block in base.html; remove local copies; styled report | REQ-6.12.3 | TODO |
+| F-6.12.1.4 | @mention datalist/hint + display-name→username match; mark promoted messages | REQ-6.12.4 | TODO |
+
+#### SPR-UX.2 — Forms & flow polish (Tier 2)
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-6.12.2.1 | Showcase: media/links behind an optional disclosure | REQ-6.12.5 | TODO |
+| F-6.12.2.2 | Challenge form: hide performance-only fields for pass/fail | REQ-6.12.5 | TODO |
+| F-6.12.2.3 | Events: end_at default start+1h; online/venue toggle; series datalist; avatar label fix | REQ-6.12.5 | TODO |
+| F-6.12.2.4 | Event RSVP: cancel confirm; .ics post-RSVP; quick RSVP on list cards | REQ-6.12.6 | TODO |
+| F-6.12.2.5 | Chat: fetch-POST optimistic append; labeled promote actions | REQ-6.12.7 | TODO |
+| F-6.12.2.6 | Activation: auto-public on first post; /join/ intents for tip/showcase/chat | REQ-6.12.8 | TODO |
+| F-6.12.2.7 | Cleanup: showcase site_url auto-cover + tip link_url | REQ-6.12.10 | TODO |
+
+#### SPR-UX.3 — Information architecture (Tier 3)
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-6.12.3.1 | Hub «אזורי הקהילה» 8-tile strip (all areas, one canonical entry) | REQ-6.12.9 | TODO |
+| F-6.12.3.2 | Fold CrashTech under קהילה (nav + breadcrumb); dropdown placeholder cleanup | REQ-6.12.9 | TODO |
+| F-6.12.3.3 | Private-DM icon → envelope (distinct from community chat) | REQ-6.12.9 | TODO |
+| F-6.12.3.4 | Empty states with CTA: chat home, events, CrashTech | REQ-6.12.9 | TODO |
+
+**Exit criteria:** no typed text is ever lost; an invited CrashTech participant can
+self-serve onto a team and submit; every flash message shows; @mentions are
+discoverable; the heaviest forms ask only what's needed up-front; the community
+has one clear door with all 8 areas one click away — tests + full regression
+green, deployed + smoke-tested.
+
 ---
 
 ## EPIC-7 — QA Hardening (from Avi's 2026-06-13 walkthrough)
