@@ -553,7 +553,8 @@ build starts with EPIC-6.1. Epics are sequenced; one big thing at a time.
 | EPIC-6.4 | Feed & Tips — community home, composer, weekly digest, homepage hook | §6.4 | IN PROGRESS |
 | EPIC-6.5 | CrashTech — hardware hackathon platform (lifecycle, roles, teams, hardware logistics, secret timed challenges, blind judging, dual scoring, anonymized leaderboard, certificates, Glory Page) | §6.5 | DONE ✅ |
 | EPIC-6.6 | Chat & Groups — topic channels, course groups + presence, collaborator filters, DM control, knowledge capture, mentions/safety, live-hackathon channel | §6.6 | DONE ✅ |
-| EPIC-6.7 | Events & Meetups — RSVP, calendar, recordings, recurring series, physical meetups | §6.7 | PROPOSED |
+| EPIC-6.7 | Events & Meetups — RSVP, calendar, recordings, recurring series, physical meetups, feed/hub integration | §6.7 | IN PROGRESS |
+| EPIC-6.8 | Cross-cutting — Plausible community events, health dashboard, activation tie-in | §6.8 | IN PROGRESS |
 
 Deferred (spec §6.9): skill marketplace, advisor marketplace, hiring board,
 token wallet — wait for a demonstrably alive community + payments infra.
@@ -851,6 +852,52 @@ channel with a live "learning now" row; the directory filters by domain/level/
 role + collaboration; students chat in public rooms but never get DMs; an active
 CrashTech event has its own buzzing channel — all minors-safe, tests + full
 regression green, deployed + smoke-tested.
+
+### EPIC-6.7 — Events & Meetups
+
+**Spec:** [main_spec.md §6.7](main_spec.md). **Status:** IN PROGRESS — the
+belonging→conversion layer; reuses the community spine + Bunny (recordings) +
+notify (reminders). **2 sprints.**
+
+#### SPR-6.7.1 — Events core (model, RSVP, page, feed)
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-6.7.1.1 | `CommunityEvent` model (type, online/venue, start/end, capacity, host, links) | REQ-6.7.1 | TODO |
+| F-6.7.1.2 | Events page (upcoming/past) + event detail; read-public | REQ-6.7.3 | TODO |
+| F-6.7.1.3 | RSVP (login-gated) + capacity + waitlist auto-promote + notify | REQ-6.7.2 | TODO |
+| F-6.7.1.4 | `.ics` calendar download per event | REQ-6.7.2 | TODO |
+| F-6.7.1.5 | Feed + hub integration: upcoming events in build_feed + `/community/` | REQ-6.7.6 | TODO |
+
+#### SPR-6.7.2 — Series, recordings, meetups & reminders
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-6.7.2.1 | `EventSeries` + series page; events link to a series | REQ-6.7.4 | TODO |
+| F-6.7.2.2 | Past-event recording (Bunny embed) + linked threads/projects/hackathon | REQ-6.7.3 | TODO |
+| F-6.7.2.3 | Physical meetup: venue + attendance check-in + event photos → feed | REQ-6.7.5 | TODO |
+| F-6.7.2.4 | `send_event_reminders` command (24h/1h windows), idempotent | REQ-6.7.2 | TODO |
+| F-6.7.2.5 | «hackathon kickoff» event links to its CrashTech event | REQ-6.7.6 | TODO |
+
+### EPIC-6.8 — Cross-cutting: measurement & health
+
+**Spec:** [main_spec.md §6.8](main_spec.md). **Status:** IN PROGRESS — the
+chapter's closing measurement + activation layer. **1 sprint.**
+
+#### SPR-6.8.1 — Measurement & activation
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-6.8.1.1 | `flash_event` server→client Plausible bridge; wired into key community actions | REQ-6.8.1 | TODO |
+| F-6.8.1.2 | Staff community-health dashboard `/staff/community-health/` | REQ-6.8.2 | TODO |
+| F-6.8.1.3 | Activation tie-in: home checklist «הצטרפו לקהילה» + Avi Bot opener mentions community | REQ-6.8.3 | TODO |
+
+**Exit criteria (epics):** a member RSVPs to an upcoming event (gets an .ics + a
+reminder, or a waitlist seat that auto-promotes), the event shows in the feed +
+hub, past events show their recording, a recurring series lists its sessions, a
+physical meetup tracks check-ins + photos; staff see live community vitals; key
+actions emit Plausible events; onboarding nudges into the community — tests +
+full regression green, deployed + smoke-tested.
 
 ---
 
