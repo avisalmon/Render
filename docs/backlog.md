@@ -552,7 +552,7 @@ build starts with EPIC-6.1. Epics are sequenced; one big thing at a time.
 | EPIC-6.3 | Showcase (דוכן השוויץ) — stands, wall + brag feed, reactions, comments, messaging, gamification | §6.3 | DONE ✅ |
 | EPIC-6.4 | Feed & Tips — community home, composer, weekly digest, homepage hook | §6.4 | IN PROGRESS |
 | EPIC-6.5 | CrashTech — hardware hackathon platform (lifecycle, roles, teams, hardware logistics, secret timed challenges, blind judging, dual scoring, anonymized leaderboard, certificates, Glory Page) | §6.5 | DONE ✅ |
-| EPIC-6.6 | Chat & Groups — channels, course groups, safe DMs, member directory | §6.6 | PROPOSED |
+| EPIC-6.6 | Chat & Groups — topic channels, course groups + presence, collaborator filters, DM control, knowledge capture, mentions/safety, live-hackathon channel | §6.6 | IN PROGRESS |
 | EPIC-6.7 | Events & Meetups — RSVP, calendar, recordings, recurring series, physical meetups | §6.7 | PROPOSED |
 
 Deferred (spec §6.9): skill marketplace, advisor marketplace, hiring board,
@@ -808,6 +808,49 @@ gate → certificates + a published Glory Page — with minors-safe defaults, te
 | F-6.5.5.2 | `GloryPage` + `GloryPhoto` editor (highlights, photos, publish) + permanent public memorial (final rankings, highlights) | REQ-6.5.18 | DONE |
 | F-6.5.5.3 | Post-event consent opt-out for team members (toggles glory_consent) | REQ-6.5.19 | DONE |
 | F-6.5.5.4 | Public anonymized video gallery — approved demos from consenting teams only | REQ-6.5.20 | DONE |
+
+### EPIC-6.6 — Chat & Groups
+
+**Spec:** [main_spec.md §6.6](main_spec.md). **Status:** IN PROGRESS — the
+real-time layer, reusing the community spine (guidelines/moderation/rate-limit/
+notifications/RTL) so it feels native. Polling only (DEC-60). DMs + directory
+reconciled with shipped 6.1/6.3 work. **3 sprints.**
+
+#### SPR-6.6.1 — Channels core
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-6.6.1.1 | `Channel` + `ChannelMessage` models; code-seeded topic channels (per taxonomy domain + כללי) | REQ-6.6.1 | TODO |
+| F-6.6.1.2 | Channel list + channel view (newest-at-bottom, post box) with JS polling refresh + searchable history | REQ-6.6.1 | TODO |
+| F-6.6.1.3 | Post pipeline: guidelines gate + moderation + rate-limit; read-public, login-to-post via /join/ wall (DEC-45) | REQ-6.6.1, REQ-6.6.6 | TODO |
+| F-6.6.1.4 | Surface channels on `/community/` hub + top nav | REQ-6.6.1 | TODO |
+
+#### SPR-6.6.2 — Groups, presence & collaborators
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-6.6.2.1 | Per-course members-channel (auto, on demand) reachable from the course page | REQ-6.6.2 | TODO |
+| F-6.6.2.2 | "למדו איתי" presence row — members active in the course in the last ~15 min (from `UserVideoProgress`) | REQ-6.6.2 | TODO |
+| F-6.6.2.3 | Directory filters (domain / level / role) + "פתוח לשיתופי פעולה" filter & badge | REQ-6.6.4 | TODO |
+| F-6.6.2.4 | DM control: `dms_enabled` profile toggle (default ON adults, off students) honored by `can_message` | REQ-6.6.3 | TODO |
+
+#### SPR-6.6.3 — Capture, mentions, safety & live-hackathon channel
+
+| Feature ID | Title | REQ trace | Status |
+|---|---|---|---|
+| F-6.6.3.1 | Knowledge capture: promote a message → forum thread or tip (author/staff), pre-filled, linked back | REQ-6.6.5 | TODO |
+| F-6.6.3.2 | @mention → notification; per-channel unread indicator | REQ-6.6.6 | TODO |
+| F-6.6.3.3 | Per-message report → staff queue; message moderation (hide) | REQ-6.6.6 | TODO |
+| F-6.6.3.4 | Live-hackathon channel auto-linked to each active CrashTech event; read-only when closed | REQ-6.6.7 | TODO |
+| F-6.6.3.5 | Demo seed (a populated channel) + end-to-end chat test | REQ-6.6.1 | TODO |
+
+**Exit criteria (epic):** a member reads public topic channels anonymously, logs
+in to post (moderated + rate-limited), @mentions someone (who's notified), and
+promotes a great message into a forum thread/tip; each course has a cohort
+channel with a live "learning now" row; the directory filters by domain/level/
+role + collaboration; students chat in public rooms but never get DMs; an active
+CrashTech event has its own buzzing channel — all minors-safe, tests + full
+regression green, deployed + smoke-tested.
 
 ---
 

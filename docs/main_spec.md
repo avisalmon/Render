@@ -824,16 +824,22 @@ own dashboard is full detail; judging is blind (DEC-57).
 ### 6.6 EPIC-6.6 — Chat & Groups (real-time, after the durable layer)
 
 Deliberately AFTER forums/showcase (DEC-36): chat amplifies a live community,
-it cannot create one. Scoped to what SQLite/Render handles (polling/SSE, no
-websocket infra).
+it cannot create one. Scoped to what SQLite/Render handles (**polling**, no
+websocket infra — same pattern proven by the studio-job poller and AI chat).
+Every chat surface reuses the existing community spine — guidelines gate
+(REQ-6.1.7), AI moderation + rate-limit (REQ-6.1.8), minors safety (REQ-6.1.9),
+anonymous-read / login-to-post (DEC-45), notifications (REQ-6.1.6), Hebrew RTL
++ mobile (REQ-6.1.10) — so chat feels native to the site, not bolted on.
 
 | REQ-ID | Title | Expectation | Status |
 |---|---|---|---|
-| REQ-6.6.1 | Channels | Public channels per domain + per active challenge + כללי; message history persists and is searchable; lightweight polling (studio-job pattern) or SSE (chat-stream pattern, REQ-1.6.2). | TODO |
-| REQ-6.6.2 | Course groups | Each course gets an optional members-channel (cohort feel); a "למדו איתי" presence row shows others currently learning the course. | TODO |
-| REQ-6.6.3 | Direct messages | Member-to-member DMs, opt-in (default OFF), **disabled for `student` role members** (REQ-6.1.9); block + report built-in. | TODO |
-| REQ-6.6.4 | Find collaborators | `/community/members/` directory: filter by domain interest, level, role; "פתוח לשיתופי פעולה" flag on the profile (feature_skeleton 5.2). | TODO |
-| REQ-6.6.5 | Knowledge capture | A great chat answer can be promoted to a forum answer/tip in one click (staff or author) — chat never traps knowledge (anti-failure #1). | TODO |
+| REQ-6.6.1 | Channels | Persistent public **topic channels**: one per taxonomy domain (AI / מטצים / חדשנות) + «כללי», auto-created from code (DEC-49 pattern). A channel view streams messages newest-at-bottom with **JS polling** refresh; history persists and is **searchable**. Read-public; posting requires login → the `/join/` wall (DEC-45). Surfaced on `/community/` and the nav. | TODO |
+| REQ-6.6.2 | Course groups + presence | Each course has an optional **members-channel** (cohort feel), reachable from the course page. A "**למדו איתי**" presence row shows members active in that course recently (derived from `UserVideoProgress`, last ~15 min) — live cohort signal without heavy infra. | TODO |
+| REQ-6.6.3 | Direct messages (reconciled) | Member-to-member DMs + inbox + thread + block + report shipped in EPIC-6.3 (DEC-50). 6.6 adds the privacy **control**: a profile toggle «קבלת הודעות אישיות» — default **ON for adults** (consistent with the showcase "message the builder" flow, DEC-61), always **OFF for `student` role** (REQ-6.1.9). Honored by `can_message`. | TODO |
+| REQ-6.6.4 | Find collaborators | The `/community/members/` directory gains **filters** (domain interest, experience level, role) and a «**פתוח לשיתופי פעולה**» filter + badge (using `open_to_collab`); links to each member's public profile + (allowed) DM. | TODO |
+| REQ-6.6.5 | Knowledge capture | A valuable channel message can be **promoted in one click** (author or staff) into a forum thread (question/discussion) or a tip, pre-filled from the message — chat never traps knowledge (anti-failure #1). Links back to the source channel. | TODO |
+| REQ-6.6.6 | Channel safety & mentions | Every message runs the moderation + rate-limit pipeline; a **report** action per message → the existing staff queue; **@mention** a member → a notification (REQ-6.1.6). Students may participate in public topic channels (moderated, public, no private contact) but never get DMs or presence exposure beyond the public room (REQ-6.1.9). | TODO |
+| REQ-6.6.7 | Live hackathon channel | Each **active CrashTech hackathon** (EPIC-6.5) gets an auto-linked channel for live buzz during the event, retired to read-only when the event closes — ties the real-time layer to the flagship event. | TODO |
 
 ### 6.7 EPIC-6.7 — Events & Meetups
 
@@ -894,6 +900,8 @@ model — these wait until the community is demonstrably alive:
 | DEC-57 | Judging | **Blind to judges** (team identity hidden in the UI); organizer de-anonymized for bonus ranking | Avi 2026-06-13: reduces bias. NB: best-effort — code contents are not auto-anonymized |
 | DEC-58 | Glory consent | **Up-front at team setup + post-event opt-out** | Avi 2026-06-13: simple early signal, safe final say once teams see the published content |
 | DEC-59 | CrashTech defaults (doc §9) | **Unlimited resubmission; pending anonymized like approved; tie-break most-solved → earliest qualifying → most bonus; winners revealed on Glory, others anonymous unless consented** | Avi accepted the documented defaults |
+| DEC-60 | Chat tech + minors | **Polling (no websockets/SSE infra); students MAY join public topic channels (moderated, public, no private contact) but never DMs/presence beyond the public room** | Stays in the Django/SQLite envelope (DEC-43); public moderated chat is as safe as the forum, which already allows students |
+| DEC-61 | DM control | **DMs default ON for adults (opt-OUT via a profile toggle), always OFF for students** — supersedes the original 6.6.3 "opt-in default OFF" | The showcase "message the builder" flow (DEC-50) already shipped DMs ON; a default-OFF gate would silently break it. A clear opt-out gives control without regressions |
 
 ### 6.11 Acceptance criteria for Chapter 6
 
