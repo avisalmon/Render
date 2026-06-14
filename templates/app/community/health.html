@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}מדדי קהילה - babook{% endblock %}
+
+{% block content %}
+<div class="py-4">
+  <h1 class="h4 mb-1"><i class="bi bi-activity me-1" style="color:var(--accent-primary)"></i> מדדי קהילה</h1>
+  <p class="text-muted mb-4">סימני החיים של הקהילה (7 ימים אחרונים).</p>
+
+  <div class="row g-2 mb-3">
+    <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ m.active_contributors }}</div><div class="small text-muted">תורמים פעילים</div></div></div>
+    <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ m.projects_week }}</div><div class="small text-muted">פרויקטים השבוע</div></div></div>
+    <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ m.tips_week }}</div><div class="small text-muted">טיפים השבוע</div></div></div>
+    <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ m.messages_week }}</div><div class="small text-muted">הודעות צ'אט</div></div></div>
+  </div>
+  <div class="row g-2 mb-3">
+    <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ m.q_unanswered_pct }}%</div><div class="small text-muted">שאלות ללא מענה ({{ m.q_unanswered }}/{{ m.q_total }})</div></div></div>
+    <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{% if m.avg_ttfa %}{{ m.avg_ttfa }}ש'{% else %}—{% endif %}</div><div class="small text-muted">זמן עד תשובה ראשונה</div></div></div>
+    <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ m.rsvps_upcoming }}</div><div class="small text-muted">נרשמים לאירועים קרובים</div></div></div>
+    <div class="col-6 col-md-3"><div class="card-surface p-3 text-center {% if m.open_reports %}border border-danger{% endif %}"><div class="h3 mb-0">{{ m.open_reports }}</div><div class="small text-muted">דיווחים פתוחים</div></div></div>
+  </div>
+</div>
+{% endblock %}

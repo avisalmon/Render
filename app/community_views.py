@@ -352,3 +352,63 @@ def members_directory(request):
         "domains": forum_categories(),
         "f": {"role": role, "level": level, "domain": domain, "collab": collab},
     })
+
+
+def community_health(request):
+    """REQ-6.8.2: staff-only community vital signs dashboard."""
+    if not (request.user.is_authenticated and request.user.is_staff):
+        from django.http import HttpResponseForbidden
+        if not request.user.is_authenticated:
+            return redirect(f"/join/?next={request.path}")
+        return HttpResponseForbidden("פעולת צוות בלבד")
+    from datetime import timedelta
+
+    from .models import (
+        ChannelMessage,
+        CommunityEvent,
+        ContentReport,
+        EventRSVP,
+        ForumPost,
+        ForumThread,
+        ShowcaseProject,
+        Tip,
+    )
+    now = timezone.now()
+    week = now - timedelta(days=7)
+
+    # weekly active contributors (distinct authors across surfaces)
+    active = set()
+    active |= set(Tip.objects.filter(created_at__gte=week).values_list("author_id", flat=True))
+    active |= set(ForumThread.objects.filter(created_at__gte=week).values_list("author_id", flat=True))
+    active |= set(ForumPost.objects.filter(created_at__gte=week).values_list("author_id", flat=True))
+    active |= set(ShowcaseProject.objects.filter(published_at__gte=week).values_list("author_id", flat=True))
+    active |= set(ChannelMessage.objects.filter(created_at__gte=week).values_list("author_id", flat=True))
+    active.discard(None)
+
+    questions = ForumThread.objects.filter(kind="question", is_hidden=False)
+    q_total = questions.count()
+    q_unanswered = sum(1 for t in questions if not t.posts.exists())
+
+    # time-to-first-answer (avg hours, answered questions)
+    deltas = []
+    for t in questions.prefetch_related("posts"):
+        first = t.posts.order_by("created_at").first()
+        if first:
+            deltas.append((first.created_at - t.created_at).total_seconds() / 3600)
+    avg_ttfa = round(sum(deltas) / len(deltas), 1) if deltas else None
+
+    metrics = {
+        "active_contributors": len(active),
+        "q_total": q_total,
+        "q_unanswered": q_unanswered,
+        "q_unanswered_pct": round(100 * q_unanswered / q_total) if q_total else 0,
+        "avg_ttfa": avg_ttfa,
+        "projects_week": ShowcaseProject.objects.filter(published_at__gte=week).count(),
+        "tips_week": Tip.objects.filter(created_at__gte=week).count(),
+        "messages_week": ChannelMessage.objects.filter(created_at__gte=week).count(),
+        "rsvps_upcoming": EventRSVP.objects.filter(
+            status="going", event__end_at__gte=now).count(),
+        "events_upcoming": CommunityEvent.objects.filter(end_at__gte=now).count(),
+        "open_reports": ContentReport.objects.filter(status="open").count(),
+    }
+    return render(request, "app/community/health.html", {"m": metrics})

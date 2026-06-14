@@ -859,9 +859,9 @@ Also the natural bridge to the corporate funnel (sponsors, exposure).
 
 | REQ-ID | Title | Expectation | Status |
 |---|---|---|---|
-| REQ-6.8.1 | Community events (Plausible) | A server→client bridge (`flash_event`, mirroring the §5 entry-event pattern): community actions stash a Plausible event in the session, fired by `base.html` on the next page. Wired into `community_post`, `answer_accepted`, `project_published`, `tip_posted`, `event_rsvp` (+ existing `project_reaction`). | TODO |
-| REQ-6.8.2 | Health dashboard | Staff-only `/staff/community-health/`: weekly active contributors, unanswered-question rate + time-to-first-answer, projects/week, tips/week, RSVPs, open report-queue size — the community's vital signs at a glance. | TODO |
-| REQ-6.8.3 | Activation tie-in | Onboarding (Ch.5) gains a community beat: the home get-started checklist adds «הצטרפו לקהילה» (links to `/community/`), and the Avi Bot opener mentions the community. | TODO |
+| REQ-6.8.1 | Community events (Plausible) | A server→client bridge (`flash_event`, mirroring the §5 entry-event pattern): community actions stash a Plausible event in the session, fired by `base.html` on the next page. Wired into `community_post`, `answer_accepted`, `project_published`, `tip_posted`, `event_rsvp` (+ existing `project_reaction`). | DONE |
+| REQ-6.8.2 | Health dashboard | Staff-only `/staff/community-health/`: weekly active contributors, unanswered-question rate + time-to-first-answer, projects/week, tips/week, RSVPs, open report-queue size — the community's vital signs at a glance. | DONE |
+| REQ-6.8.3 | Activation tie-in | Onboarding (Ch.5) gains a community beat: the home get-started checklist adds «הצטרפו לקהילה» (links to `/community/`), and the Avi Bot opener mentions the community. | DONE |
 
 ### 6.9 Deferred (explicitly out of scope for Chapter 6)
 

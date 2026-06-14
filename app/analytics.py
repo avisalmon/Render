@@ -7,6 +7,13 @@ Mirrors the §5 entry-event pattern.
 _SESSION_KEY = "pending_plausible_events"
 
 
+def _mark_modified(session):
+    try:
+        session.modified = True
+    except (AttributeError, TypeError):
+        pass  # plain-dict sessions (tests) don't track modified
+
+
 def flash_event(request, name, props=None):
     """Queue a Plausible event to fire on the user's next page load."""
     if not hasattr(request, "session"):
@@ -14,7 +21,7 @@ def flash_event(request, name, props=None):
     events = request.session.get(_SESSION_KEY, [])
     events.append({"name": name, "props": props or {}})
     request.session[_SESSION_KEY] = events[-10:]  # cap
-    request.session.modified = True
+    _mark_modified(request.session)
 
 
 def pop_events(request):
@@ -23,5 +30,5 @@ def pop_events(request):
         return []
     events = request.session.pop(_SESSION_KEY, [])
     if events:
-        request.session.modified = True
+        _mark_modified(request.session)
     return events

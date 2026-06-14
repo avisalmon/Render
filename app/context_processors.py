@@ -34,6 +34,14 @@ def community_ctx(request):
     }
 
 
+def plausible_events_ctx(request):
+    """REQ-6.8.1: surface server-queued Plausible events for base.html to fire."""
+    import json
+
+    from .analytics import pop_events
+    return {"plausible_events_json": json.dumps(pop_events(request))}
+
+
 def breadcrumbs_ctx(request):
     """QA-16 / REQ-7.4.1: global 'you are here' trail + back button on every
     view. Detail pages may override the trail in-template; this supplies the

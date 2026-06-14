@@ -324,6 +324,18 @@
   </script>
   {% endif %}
 
+  {% if plausible_events_json and plausible_events_json != '[]' %}
+  <!-- Server-queued community events (REQ-6.8.1) -->
+  <script>
+    window.addEventListener('load', function () {
+      if (!window.plausible) return;
+      ({{ plausible_events_json|safe }}).forEach(function (e) {
+        plausible(e.name, e.props ? {props: e.props} : undefined);
+      });
+    });
+  </script>
+  {% endif %}
+
   {% block extra_js %}{% endblock %}
 </body>
 </html>

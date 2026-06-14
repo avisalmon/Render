@@ -122,6 +122,7 @@
         <h2 class="h6"><i class="bi bi-shield-check me-1"></i> כללי הקהילה</h2>
         <p class="small text-muted mb-2">מכבדים, עוזרים, בלי ספאם.</p>
         <a href="{% url 'community_guidelines' %}" class="small">לכללים המלאים ←</a>
+        {% if user.is_staff %}<a href="{% url 'community_health' %}" class="small d-block mt-2"><i class="bi bi-activity"></i> מדדי קהילה (צוות)</a>{% endif %}
       </div>
     </div>
   </div>

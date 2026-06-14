@@ -56,6 +56,7 @@
       <span>{% if checklist.quiz %}✅{% else %}⬜{% endif %} מעבר בוחן</span>
       <span>{% if checklist.reflected %}✅{% else %}⬜{% endif %} שיתוף רפלקציה</span>
       <span>{% if checklist.enrolled %}✅{% else %}⬜{% endif %} הרשמה לקורס</span>
+      <span>{% if checklist.community %}✅{% else %}⬜{% endif %} <a href="{% url 'community' %}">הצטרפו לקהילה</a></span>
     </div>
   </section>
   {% endif %}

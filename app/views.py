@@ -62,6 +62,8 @@ def home(request):
                     ).exists(),
                     "reflected": LessonReflection.objects.filter(user=request.user).exists(),
                     "enrolled": Enrollment.objects.filter(user=request.user).exists(),
+                    # Activation: join the community (REQ-6.8.3)
+                    "community": request.user.profile.is_public,
                 }
                 if all(checklist.values()):
                     checklist = None  # done — stop showing it

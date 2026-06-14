@@ -304,6 +304,8 @@ def _save_project(request, project, course):
 def _on_publish(request, project):
     """Gamification + notifications on a first publish (REQ-6.3.13/6.3.14)."""
     award_points(request.user, "showcase_published", ref=f"project:{project.pk}")
+    from .analytics import flash_event
+    flash_event(request, "project_published")
     first = award_badge(request.user, "builder")
     n = ShowcaseProject.objects.filter(author=request.user, status="published").count() + 1
     master = award_badge(request.user, "showcase_master") if n >= 5 else None

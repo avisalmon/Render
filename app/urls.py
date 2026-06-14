@@ -42,6 +42,7 @@ urlpatterns = [
     path("community/leaderboard/", community_views.leaderboard, name="community_leaderboard"),
     path("community/notifications/", community_views.notifications_page, name="community_notifications"),
     path("community/members/", community_views.members_directory, name="community_members"),
+    path("staff/community-health/", community_views.community_health, name="community_health"),
     path("community/settings/", community_views.community_settings_save, name="community_settings"),
     path("community/join/", community_views.community_go_public, name="community_go_public"),
     path("community/report/", community_views.report_content, name="community_report"),

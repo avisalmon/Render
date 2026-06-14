@@ -184,6 +184,8 @@ def thread_new(request):
                     tags=tags, course=course, video=video,
                 )
                 ThreadSubscription.objects.get_or_create(user=request.user, thread=thread)
+                from .analytics import flash_event
+                flash_event(request, "community_post")
                 return redirect("forum_thread", thread_id=thread.pk)
 
     return render(request, "app/community/thread_new.html", {
@@ -261,6 +263,8 @@ def accept_answer(request, post_id):
     post.save(update_fields=["is_accepted"])
     award_points(post.author, "accepted_answer", ref=f"post:{post.pk}")
     award_badge(post.author, "accepted_answer")
+    from .analytics import flash_event
+    flash_event(request, "answer_accepted")
     if post.author.forum_posts.filter(is_accepted=True).count() >= 10:
         award_badge(post.author, "mentor")
     notify(post.author, verb="accepted", actor=request.user,

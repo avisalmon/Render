@@ -554,7 +554,7 @@ build starts with EPIC-6.1. Epics are sequenced; one big thing at a time.
 | EPIC-6.5 | CrashTech — hardware hackathon platform (lifecycle, roles, teams, hardware logistics, secret timed challenges, blind judging, dual scoring, anonymized leaderboard, certificates, Glory Page) | §6.5 | DONE ✅ |
 | EPIC-6.6 | Chat & Groups — topic channels, course groups + presence, collaborator filters, DM control, knowledge capture, mentions/safety, live-hackathon channel | §6.6 | DONE ✅ |
 | EPIC-6.7 | Events & Meetups — RSVP, calendar, recordings, recurring series, physical meetups, feed/hub integration | §6.7 | DONE ✅ |
-| EPIC-6.8 | Cross-cutting — Plausible community events, health dashboard, activation tie-in | §6.8 | IN PROGRESS |
+| EPIC-6.8 | Cross-cutting — Plausible community events, health dashboard, activation tie-in | §6.8 | DONE ✅ |
 
 Deferred (spec §6.9): skill marketplace, advisor marketplace, hiring board,
 token wallet — wait for a demonstrably alive community + payments infra.
@@ -888,9 +888,9 @@ chapter's closing measurement + activation layer. **1 sprint.**
 
 | Feature ID | Title | REQ trace | Status |
 |---|---|---|---|
-| F-6.8.1.1 | `flash_event` server→client Plausible bridge; wired into key community actions | REQ-6.8.1 | TODO |
-| F-6.8.1.2 | Staff community-health dashboard `/staff/community-health/` | REQ-6.8.2 | TODO |
-| F-6.8.1.3 | Activation tie-in: home checklist «הצטרפו לקהילה» + Avi Bot opener mentions community | REQ-6.8.3 | TODO |
+| F-6.8.1.1 | `flash_event` server→client Plausible bridge; wired into key community actions | REQ-6.8.1 | DONE |
+| F-6.8.1.2 | Staff community-health dashboard `/staff/community-health/` | REQ-6.8.2 | DONE |
+| F-6.8.1.3 | Activation tie-in: home checklist «הצטרפו לקהילה» + Avi Bot opener mentions community | REQ-6.8.3 | DONE |
 
 **Exit criteria (epics):** a member RSVPs to an upcoming event (gets an .ics + a
 reminder, or a waitlist seat that auto-promotes), the event shows in the feed +
