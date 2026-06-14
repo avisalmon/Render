@@ -92,6 +92,23 @@ def _badge_items():
     return out
 
 
+def _event_items():
+    from django.utils import timezone
+
+    from .models import CommunityEvent
+    out = []
+    qs = (CommunityEvent.objects.filter(end_at__gte=timezone.now())
+          .select_related("host__profile")[:_PER_SOURCE])
+    for e in qs:
+        out.append({
+            "kind": "event", "timestamp": e.created_at,
+            "actor": e.host, "actor_name": _profile_name(e.host) if e.host else "babook",
+            "text": f"{e.title} · {e.start_at:%d/%m %H:%M}", "url": f"/community/events/{e.slug}/",
+            "icon": "bi-calendar-event-fill", "domains": [],
+        })
+    return out
+
+
 def build_feed(user, scope="all", limit=40):
     """Return the merged, newest-first activity list for `scope`.
 
@@ -104,7 +121,7 @@ def build_feed(user, scope="all", limit=40):
         scope = "all"
 
     items = (_tip_items() + _project_items() + _thread_items()
-             + _answer_items() + _badge_items())
+             + _answer_items() + _badge_items() + _event_items())
 
     if scope == "following":
         from .models import Follow

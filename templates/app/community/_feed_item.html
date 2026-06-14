@@ -10,6 +10,7 @@
         {% elif item.kind == 'thread' %}פתח/ה דיון
         {% elif item.kind == 'answer' %}קיבל/ה תשובה מקובלת
         {% elif item.kind == 'badge' %}זכה/תה בתג
+        {% elif item.kind == 'event' %}אירוע קרוב
         {% endif %}
         · {{ item.timestamp|date:"j בF, H:i" }}
       </div>

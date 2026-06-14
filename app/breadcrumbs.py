@@ -39,6 +39,10 @@ TRAILS = {
     "community_notifications": [("קהילה", "community"), ("התראות", None)],
     "community_members": [("קהילה", "community"), ("חברים", None)],
     "community_profile": [("קהילה", "community"), ("חברים", "community_members"), ("פרופיל", None)],
+    # events (EPIC-6.7)
+    "events_page": [("קהילה", "community"), ("אירועים", "events_page")],
+    "event_detail": [("קהילה", "community"), ("אירועים", "events_page"), ("אירוע", None)],
+    "event_create": [("קהילה", "community"), ("אירועים", "events_page"), ("חדש", None)],
     # chat (EPIC-6.6)
     "chat_home": [("קהילה", "community"), ("צ'אט", "chat_home")],
     "channel_view": [("קהילה", "community"), ("צ'אט", "chat_home"), ("ערוץ", None)],

@@ -937,3 +937,9 @@ from .crashtech_models import (  # noqa: E402,F401
     Submission,
     Team,
 )
+from .events_models import (  # noqa: E402,F401
+    CommunityEvent,
+    EventPhoto,
+    EventRSVP,
+    EventSeries,
+)

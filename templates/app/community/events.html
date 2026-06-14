@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}אירועים - קהילת babook{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'home' %}" style="color:var(--accent-primary)">בית</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'community' %}" style="color:var(--accent-primary)">קהילה</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">אירועים</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="py-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-1">
+    <h1 class="h4 mb-0"><i class="bi bi-calendar-event-fill me-1" style="color:var(--accent-primary)"></i> אירועים ומפגשים</h1>
+    {% if can_create %}<a href="{% url 'event_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> אירוע חדש</a>{% endif %}
+  </div>
+  <p class="text-muted mb-4">לייב-קודינג, AMA עם אבי, מפגשים פיזיים ועוד. נרשמים בקליק.</p>
+
+  {% include "app/community/_guest_note.html" %}
+
+  <h2 class="h6 text-muted mb-2">קרובים</h2>
+  <div class="row g-2 mb-4">
+    {% for e in upcoming %}
+    <div class="col-md-6">
+      <a href="{% url 'event_detail' e.slug %}" class="card-surface d-block p-3 text-decoration-none" style="color:var(--text-primary)">
+        <div class="d-flex justify-content-between align-items-start">
+          <strong>{{ e.title }}</strong>
+          <span class="badge bg-secondary">{{ e.get_event_type_display }}</span>
+        </div>
+        <div class="small text-muted mt-1">
+          <i class="bi bi-clock"></i> {{ e.start_at|date:"l j בF, H:i" }} ·
+          <i class="bi {% if e.is_online %}bi-camera-video{% else %}bi-geo-alt{% endif %}"></i> {{ e.location_label }}
+          {% if e.capacity %}· {{ e.going_count }}/{{ e.capacity }}{% endif %}
+        </div>
+      </a>
+    </div>
+    {% empty %}<div class="col-12"><div class="card-surface p-4 text-center text-muted">אין אירועים קרובים כרגע.</div></div>{% endfor %}
+  </div>
+
+  {% if past %}
+  <h2 class="h6 text-muted mb-2">היו</h2>
+  <div class="row g-2">
+    {% for e in past %}
+    <div class="col-md-6">
+      <a href="{% url 'event_detail' e.slug %}" class="card-surface d-block p-3 text-decoration-none" style="color:var(--text-primary)">
+        <strong>{{ e.title }}</strong>
+        <div class="small text-muted mt-1">{{ e.start_at|date:"j בF Y" }}{% if e.recording_bunny_id %} · <i class="bi bi-play-circle"></i> הקלטה{% endif %}</div>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

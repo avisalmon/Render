@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load course_tags %}
+{% block title %}{{ event.title }} - אירועים{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'community' %}" style="color:var(--accent-primary)">קהילה</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'events_page' %}" style="color:var(--accent-primary)">אירועים</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">{{ event.title }}</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+  <div class="col-lg-8">
+    {% if messages %}{% for m in messages %}<div class="alert alert-{{ m.tags|default:'info' }} py-2 small">{{ m }}</div>{% endfor %}{% endif %}
+
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+      <h1 class="h3 mb-0">{{ event.title }}</h1>
+      <span class="badge bg-secondary">{{ event.get_event_type_display }}</span>
+    </div>
+    <p class="text-muted">
+      <i class="bi bi-clock"></i> {{ event.start_at|date:"l, j בF Y, H:i" }}–{{ event.end_at|date:"H:i" }} ·
+      <i class="bi {% if event.is_online %}bi-camera-video{% else %}bi-geo-alt{% endif %}"></i> {{ event.location_label }}
+      {% if event.host %}· מארח/ת: {{ event.host.profile.public_name }}{% endif %}
+      {% if event.series %}· סדרה: {{ event.series.title }}{% endif %}
+    </p>
+
+    {% if event.is_past and event.recording_bunny_id %}
+    <div class="ratio ratio-16x9 mb-3">
+      <iframe src="https://iframe.mediadelivery.net/embed/{{ event.recording_bunny_id }}" loading="lazy" allowfullscreen style="border:0;border-radius:10px"></iframe>
+    </div>
+    {% endif %}
+
+    <div class="card-surface p-4 mb-3">{{ event.description|markdown }}</div>
+
+    <!-- RSVP -->
+    <div class="card-surface p-3 mb-3">
+      {% if event.is_past %}
+        <span class="text-muted">האירוע הסתיים.</span>
+      {% elif my_rsvp %}
+        {% if my_rsvp.status == 'going' %}
+          <span class="badge bg-success">רשומים ✓</span>
+          {% if event.is_online and event.online_url %}<a href="{{ event.online_url }}" target="_blank" class="btn btn-sm btn-primary ms-2">לקישור האירוע</a>{% endif %}
+        {% else %}
+          <span class="badge bg-warning text-dark">ברשימת המתנה</span>
+        {% endif %}
+        <a href="{% url 'event_ics' event.slug %}" class="btn btn-sm btn-outline-secondary ms-1"><i class="bi bi-calendar-plus"></i> הוסף ליומן</a>
+        <form method="post" action="{% url 'event_cancel' event.slug %}" class="d-inline">{% csrf_token %}
+          <button class="btn btn-sm btn-link text-danger">ביטול</button>
+        </form>
+      {% else %}
+        <form method="post" action="{% url 'event_rsvp' event.slug %}" class="d-inline">{% csrf_token %}
+          <button class="btn btn-primary">{% if event.is_full %}הצטרפו לרשימת המתנה{% else %}אני בא/ה!{% endif %}</button>
+        </form>
+        <a href="{% url 'event_ics' event.slug %}" class="btn btn-sm btn-outline-secondary ms-1"><i class="bi bi-calendar-plus"></i> הוסף ליומן</a>
+      {% endif %}
+      <div class="small text-muted mt-2">
+        {{ event.going_count }} רשומים{% if event.capacity %} / {{ event.capacity }} מקומות{% endif %}{% if waitlist_count %} · {{ waitlist_count }} בהמתנה{% endif %}
+      </div>
+    </div>
+
+    {% if event.hackathon %}
+    <a href="{% url 'crashtech_detail' event.hackathon.slug %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-cpu"></i> לעמוד ההאקתון</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

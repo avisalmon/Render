@@ -6,6 +6,7 @@ from . import (
     community_views,
     course_api,
     crashtech_views,
+    events_views,
     forum_views,
     onboarding_views,
     showcase_views,
@@ -46,6 +47,13 @@ urlpatterns = [
     path("community/report/", community_views.report_content, name="community_report"),
     path("c/<str:username>/", community_views.public_profile, name="community_profile"),
     path("c/<str:username>/follow/", community_views.follow_toggle, name="community_follow"),
+    # --- Events & Meetups (EPIC-6.7) ---
+    path("community/events/", events_views.events_page, name="events_page"),
+    path("community/events/new/", events_views.event_create, name="event_create"),
+    path("community/events/<slug:slug>/", events_views.event_detail, name="event_detail"),
+    path("community/events/<slug:slug>/rsvp/", events_views.event_rsvp, name="event_rsvp"),
+    path("community/events/<slug:slug>/cancel/", events_views.event_cancel, name="event_cancel"),
+    path("community/events/<slug:slug>/calendar.ics", events_views.event_ics, name="event_ics"),
     # --- Chat & Groups (EPIC-6.6) ---
     path("community/chat/", chat_views.chat_home, name="chat_home"),
     path("community/chat/course/<slug:slug>/", chat_views.course_channel, name="course_channel"),

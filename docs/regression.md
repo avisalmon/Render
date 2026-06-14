@@ -184,6 +184,12 @@
 | test_spr_6_6_3.py (7) | promote a message → forum thread / tip (author or staff only); @mention notifies; per-channel unread indicator; report message → staff queue + staff hide (hidden from view); CrashTech channel auto-created on kickoff + read-only on close |
 | test_spr_6_6_e2e.py (1) | **chat→knowledge flow** — anon read / post-walled, mention notifies, polling API shows the answer, promote into a durable forum thread linked back to the channel |
 
+## EPIC-6.7 — Events & Meetups (`tests/test_spr_6_7_*.py`)
+
+| Suite | Verifies |
+|---|---|
+| test_spr_6_7_1.py (8) | events page lists upcoming + past; event detail public; RSVP capacity → waitlist; cancel auto-promotes waitlist + notifies; RSVP login-walled; .ics download (valid VCALENDAR); upcoming event in build_feed + on hub; staff-only event creation |
+
 ## EPIC-7 — QA Hardening (`tests/test_spr_7_1..7_8.py`)
 
 | Suite | Verifies |

@@ -863,11 +863,11 @@ notify (reminders). **2 sprints.**
 
 | Feature ID | Title | REQ trace | Status |
 |---|---|---|---|
-| F-6.7.1.1 | `CommunityEvent` model (type, online/venue, start/end, capacity, host, links) | REQ-6.7.1 | TODO |
-| F-6.7.1.2 | Events page (upcoming/past) + event detail; read-public | REQ-6.7.3 | TODO |
-| F-6.7.1.3 | RSVP (login-gated) + capacity + waitlist auto-promote + notify | REQ-6.7.2 | TODO |
-| F-6.7.1.4 | `.ics` calendar download per event | REQ-6.7.2 | TODO |
-| F-6.7.1.5 | Feed + hub integration: upcoming events in build_feed + `/community/` | REQ-6.7.6 | TODO |
+| F-6.7.1.1 | `CommunityEvent` model (type, online/venue, start/end, capacity, host, links) | REQ-6.7.1 | DONE |
+| F-6.7.1.2 | Events page (upcoming/past) + event detail; read-public | REQ-6.7.3 | DONE |
+| F-6.7.1.3 | RSVP (login-gated) + capacity + waitlist auto-promote + notify | REQ-6.7.2 | DONE |
+| F-6.7.1.4 | `.ics` calendar download per event | REQ-6.7.2 | DONE |
+| F-6.7.1.5 | Feed + hub integration: upcoming events in build_feed + `/community/` | REQ-6.7.6 | DONE |
 
 #### SPR-6.7.2 — Series, recordings, meetups & reminders
 

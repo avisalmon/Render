@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}אירוע חדש - babook{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'community' %}" style="color:var(--accent-primary)">קהילה</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'events_page' %}" style="color:var(--accent-primary)">אירועים</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">חדש</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+  <div class="col-lg-7">
+    <h1 class="h4 mb-3">אירוע חדש</h1>
+    {% if messages %}{% for m in messages %}<div class="alert alert-danger py-2 small">{{ m }}</div>{% endfor %}{% endif %}
+    <form method="post" class="card-surface p-4">
+      {% csrf_token %}
+      <label class="form-label">כותרת</label>
+      <input name="title" class="form-control mb-3" required>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6"><label class="form-label small">סוג</label>
+          <select name="event_type" class="form-select">
+            <option value="ama">AMA</option>
+            <option value="live_coding">לייב-קודינג</option>
+            <option value="hackathon_kickoff">פתיחת האקתון</option>
+            <option value="meetup">מפגש</option>
+            <option value="conference">כנס</option>
+          </select></div>
+        <div class="col-md-3"><label class="form-label small">התחלה</label>
+          <input type="datetime-local" name="start_at" class="form-control" required></div>
+        <div class="col-md-3"><label class="form-label small">סיום</label>
+          <input type="datetime-local" name="end_at" class="form-control" required></div>
+      </div>
+      <div class="form-check form-switch mb-2">
+        <input class="form-check-input" type="checkbox" name="is_online" id="is-online" checked>
+        <label class="form-check-label" for="is-online">אונליין</label>
+      </div>
+      <input name="online_url" class="form-control mb-2" dir="ltr" placeholder="קישור (Zoom/Meet)">
+      <input name="venue" class="form-control mb-3" placeholder="או מקום פיזי (כתובת)">
+      <div class="row g-3 mb-3">
+        <div class="col-md-6"><label class="form-label small">קיבולת (0 = ללא הגבלה)</label>
+          <input type="number" name="capacity" min="0" value="0" class="form-control"></div>
+      </div>
+      <label class="form-label">תיאור (Markdown)</label>
+      <textarea name="description" rows="4" class="form-control mb-3"></textarea>
+      <button class="btn btn-primary">יצירת אירוע</button>
+      <a href="{% url 'events_page' %}" class="btn btn-outline-secondary">ביטול</a>
+    </form>
+  </div>
+</div>
+{% endblock %}
