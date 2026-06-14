@@ -924,6 +924,7 @@ class AuthoringJob(models.Model):
 from .chat_models import (  # noqa: E402,F401
     Channel,
     ChannelMessage,
+    ChannelRead,
 )
 from .crashtech_models import (  # noqa: E402,F401
     Certificate,

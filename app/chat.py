@@ -80,4 +80,48 @@ def post_message(user, channel, body):
         return None, reason
     if not moderation_ok(body, user=user):
         return None, "ההודעה סומנה על ידי מסנן התוכן. נסחו מחדש."
-    return ChannelMessage.objects.create(channel=channel, author=user, body=body), ""
+    msg = ChannelMessage.objects.create(channel=channel, author=user, body=body)
+    notify_mentions(msg)
+    return msg, ""
+
+
+_MENTION_RE = None
+
+
+def notify_mentions(message):
+    """@username in a message → a notification for that member (REQ-6.6.6)."""
+    import re
+
+    from django.contrib.auth.models import User
+
+    from .community import notify
+    global _MENTION_RE
+    if _MENTION_RE is None:
+        _MENTION_RE = re.compile(r"@([A-Za-z0-9_.\-]+)")
+    names = set(_MENTION_RE.findall(message.body or ""))
+    if not names:
+        return
+    for u in User.objects.filter(username__in=names).exclude(pk=message.author_id):
+        notify(u, verb="mention", actor=message.author,
+               text=f"{message.author.profile.public_name} הזכיר/ה אותך ב«{message.channel.title}»",
+               url=f"/community/chat/{message.channel.slug}/")
+
+
+def unread_count(user, channel):
+    """Messages newer than the user's last-seen marker (REQ-6.6.6)."""
+    if not user or not getattr(user, "is_authenticated", False):
+        return 0
+    from .models import ChannelRead
+    read = ChannelRead.objects.filter(user=user, channel=channel).first()
+    last_seen = read.last_seen_id if read else 0
+    return channel.messages.filter(is_hidden=False, pk__gt=last_seen).count()
+
+
+def mark_read(user, channel):
+    """Mark the channel read up to its latest message."""
+    if not user or not getattr(user, "is_authenticated", False):
+        return
+    from .models import ChannelRead
+    latest = channel.messages.order_by("-pk").values_list("pk", flat=True).first() or 0
+    ChannelRead.objects.update_or_create(
+        user=user, channel=channel, defaults={"last_seen_id": latest})

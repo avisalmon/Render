@@ -43,3 +43,13 @@ class ChannelMessage(models.Model):
 
     def __str__(self):
         return f"{self.author.username}: {self.body[:30]}"
+
+
+class ChannelRead(models.Model):
+    """Per-user read marker for unread indicators (REQ-6.6.6)."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="channel_reads")
+    channel = models.ForeignKey(Channel, on_delete=models.CASCADE, related_name="reads")
+    last_seen_id = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        unique_together = [("user", "channel")]

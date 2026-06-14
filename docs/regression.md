@@ -181,6 +181,8 @@
 |---|---|
 | test_spr_6_6_1.py (8) | topic channels seeded per taxonomy domain + general; chat linked from hub + nav; channel view lists messages; polling API returns JSON + `?after=` newer-only; history search; anonymous read / post-walled to /join/; member posts; rate-limit caps flooding |
 | test_spr_6_6_2.py (4) | per-course cohort channel created on demand + linked from course page; "learning now" presence within 15-min window (stale excluded); directory filters by role/level/domain/collab; DM-control toggle honored by can_message (default ON adults) |
+| test_spr_6_6_3.py (7) | promote a message → forum thread / tip (author or staff only); @mention notifies; per-channel unread indicator; report message → staff queue + staff hide (hidden from view); CrashTech channel auto-created on kickoff + read-only on close |
+| test_spr_6_6_e2e.py (1) | **chat→knowledge flow** — anon read / post-walled, mention notifies, polling API shows the answer, promote into a durable forum thread linked back to the channel |
 
 ## EPIC-7 — QA Hardening (`tests/test_spr_7_1..7_8.py`)
 

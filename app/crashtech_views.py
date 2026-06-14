@@ -121,6 +121,7 @@ def hackathon_manage(request, hackathon):
     if request.method == "POST" and request.POST.get("action") == "advance":
         if hackathon.advance():
             messages.success(request, f"האירוע עבר לשלב «{hackathon.status_label}».")
+            _sync_hackathon_channel(hackathon)
         return redirect("crashtech_manage", slug=hackathon.slug)
     judges = User.objects.filter(crashtech_roles__hackathon=hackathon,
                                  crashtech_roles__role="judge").distinct()
@@ -130,6 +131,15 @@ def hackathon_manage(request, hackathon):
         "judges": judges,
         "statuses": Hackathon.STATUS_ORDER,
     })
+
+
+def _sync_hackathon_channel(hackathon):
+    """REQ-6.6.7: a live event gets a buzz channel; it goes read-only on close."""
+    from .chat import channel_for_hackathon
+    if hackathon.status == "active":
+        channel_for_hackathon(hackathon)  # create on kickoff
+    if hackathon.status in ("closed", "glory"):
+        hackathon.channels.update(is_readonly=True)
 
 
 @organizer_required

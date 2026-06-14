@@ -37,7 +37,13 @@ class Command(BaseCommand):
     def handle(self, *args, **opts):
         from app.models import Hackathon
         if opts["if_empty"] and Hackathon.objects.filter(slug__startswith=DEMO_PREFIX).exists():
-            self.stdout.write("CrashTech demo already present — skipping.")
+            # Events already seeded — still (idempotently) ensure the chat seed,
+            # so a demo created before EPIC-6.6 gets its channel populated.
+            live = Hackathon.objects.filter(slug=f"{DEMO_PREFIX}-live").first()
+            judge = User.objects.filter(username="crashtech_demo_judge").first()
+            if live and judge:
+                self._seed_chat(live, judge)
+            self.stdout.write("CrashTech demo present — ensured chat seed.")
             return
 
         organizer = (User.objects.filter(is_superuser=True).first()
@@ -51,8 +57,33 @@ class Command(BaseCommand):
                                   name="CrashTech VLSI 2025 (הדגמה - תהילה)",
                                   slug=f"{DEMO_PREFIX}-glory", consent_all=True)
         self._finalize_glory(glory)
+        self._seed_chat(live, judge)
         self.stdout.write(self.style.SUCCESS(
             f"Seeded CrashTech demo: live=/crashtech/{live.slug}/ glory=/crashtech/{glory.slug}/"))
+
+    def _seed_chat(self, live, judge):
+        """Populate the live event's channel + a topic channel (REQ-6.6.7)."""
+        from app.chat import channel_for_hackathon, ensure_topic_channels
+        from app.models import Channel, ChannelMessage
+        ensure_topic_channels()
+        hack_ch = channel_for_hackathon(live)
+        speakers = list(User.objects.filter(username__startswith=f"demo_{live.slug}")[:3])
+        if not speakers:
+            return
+        lines = [
+            "מישהו הצליח את ה-UART echo מול ה-FPGA?",
+            "כן! צריך לוודא 9600 baud ו-3.3V. שלחתי דוגמה ב-repo.",
+            "תודה! עכשיו ה-OLED עובד 🎉",
+            "מי בא לקחת קפה? נשארו לנו 6 שעות 😅",
+        ]
+        for i, body in enumerate(lines):
+            if not ChannelMessage.objects.filter(channel=hack_ch, body=body).exists():
+                ChannelMessage.objects.create(channel=hack_ch, author=speakers[i % len(speakers)], body=body)
+        # a couple of topic-channel messages so the general room isn't empty
+        ai = Channel.objects.filter(kind="topic", domain="ai").first()
+        if ai and not ai.messages.exists():
+            ChannelMessage.objects.create(channel=ai, author=speakers[0],
+                                          body="טיפ: בקשו מ-Copilot להסביר את הקוד לפני שמאשרים.")
 
     # --- helpers ---
     def _demo_user(self, username, display, staff=False):

@@ -34,6 +34,25 @@
       <div class="chat-msg mb-2" data-id="{{ m.pk }}">
         <span class="small fw-semibold" style="color:var(--accent-primary)">{{ m.author.profile.public_name }}</span>
         <span class="small text-muted">· {{ m.created_at|date:"H:i" }}</span>
+        {% if user.is_authenticated %}
+        <span class="chat-actions small ms-1">
+          {% if user == m.author or user.is_staff %}
+          <form method="post" action="{% url 'promote_message' m.pk %}" class="d-inline">{% csrf_token %}
+            <button name="target" value="forum" class="btn btn-link btn-sm p-0 text-muted" title="לפורום">📌</button>
+            <button name="target" value="tip" class="btn btn-link btn-sm p-0 text-muted" title="לטיפ">💡</button>
+          </form>
+          {% endif %}
+          <form method="post" action="{% url 'report_message' m.pk %}" class="d-inline">{% csrf_token %}
+            <input type="hidden" name="reason" value="דווח מהצ'אט">
+            <button class="btn btn-link btn-sm p-0 text-muted" title="דיווח">⚐</button>
+          </form>
+          {% if user.is_staff %}
+          <form method="post" action="{% url 'hide_message' m.pk %}" class="d-inline">{% csrf_token %}
+            <button class="btn btn-link btn-sm p-0 text-danger" title="הסתרה">🗑</button>
+          </form>
+          {% endif %}
+        </span>
+        {% endif %}
         <div>{{ m.body }}</div>
       </div>
       {% empty %}

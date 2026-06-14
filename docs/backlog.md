@@ -552,7 +552,7 @@ build starts with EPIC-6.1. Epics are sequenced; one big thing at a time.
 | EPIC-6.3 | Showcase (דוכן השוויץ) — stands, wall + brag feed, reactions, comments, messaging, gamification | §6.3 | DONE ✅ |
 | EPIC-6.4 | Feed & Tips — community home, composer, weekly digest, homepage hook | §6.4 | IN PROGRESS |
 | EPIC-6.5 | CrashTech — hardware hackathon platform (lifecycle, roles, teams, hardware logistics, secret timed challenges, blind judging, dual scoring, anonymized leaderboard, certificates, Glory Page) | §6.5 | DONE ✅ |
-| EPIC-6.6 | Chat & Groups — topic channels, course groups + presence, collaborator filters, DM control, knowledge capture, mentions/safety, live-hackathon channel | §6.6 | IN PROGRESS |
+| EPIC-6.6 | Chat & Groups — topic channels, course groups + presence, collaborator filters, DM control, knowledge capture, mentions/safety, live-hackathon channel | §6.6 | DONE ✅ |
 | EPIC-6.7 | Events & Meetups — RSVP, calendar, recordings, recurring series, physical meetups | §6.7 | PROPOSED |
 
 Deferred (spec §6.9): skill marketplace, advisor marketplace, hiring board,
@@ -838,11 +838,11 @@ reconciled with shipped 6.1/6.3 work. **3 sprints.**
 
 | Feature ID | Title | REQ trace | Status |
 |---|---|---|---|
-| F-6.6.3.1 | Knowledge capture: promote a message → forum thread or tip (author/staff), pre-filled, linked back | REQ-6.6.5 | TODO |
-| F-6.6.3.2 | @mention → notification; per-channel unread indicator | REQ-6.6.6 | TODO |
-| F-6.6.3.3 | Per-message report → staff queue; message moderation (hide) | REQ-6.6.6 | TODO |
-| F-6.6.3.4 | Live-hackathon channel auto-linked to each active CrashTech event; read-only when closed | REQ-6.6.7 | TODO |
-| F-6.6.3.5 | Demo seed (a populated channel) + end-to-end chat test | REQ-6.6.1 | TODO |
+| F-6.6.3.1 | Knowledge capture: promote a message → forum thread or tip (author/staff), pre-filled, linked back | REQ-6.6.5 | DONE |
+| F-6.6.3.2 | @mention → notification; per-channel unread indicator | REQ-6.6.6 | DONE |
+| F-6.6.3.3 | Per-message report → staff queue; message moderation (hide) | REQ-6.6.6 | DONE |
+| F-6.6.3.4 | Live-hackathon channel auto-linked to each active CrashTech event; read-only when closed | REQ-6.6.7 | DONE |
+| F-6.6.3.5 | Demo seed (a populated channel) + end-to-end chat test | REQ-6.6.1 | DONE |
 
 **Exit criteria (epic):** a member reads public topic channels anonymously, logs
 in to post (moderated + rate-limited), @mentions someone (who's notified), and

@@ -51,6 +51,9 @@ urlpatterns = [
     path("community/chat/course/<slug:slug>/", chat_views.course_channel, name="course_channel"),
     path("community/chat/<slug:slug>/", chat_views.channel_view, name="channel_view"),
     path("community/chat/<slug:slug>/messages/", chat_views.channel_messages_api, name="channel_messages"),
+    path("community/chat/message/<int:message_id>/promote/", chat_views.promote_message, name="promote_message"),
+    path("community/chat/message/<int:message_id>/report/", chat_views.report_message, name="report_message"),
+    path("community/chat/message/<int:message_id>/hide/", chat_views.hide_message, name="hide_message"),
     # --- Tips & Feed (EPIC-6.4) ---
     path("community/tips/", tips_views.tips_list, name="tips_list"),
     path("community/tips/new/", tips_views.tip_create, name="tip_create"),

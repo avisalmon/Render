@@ -21,7 +21,7 @@
     {% for ch in topic %}
     <div class="col-md-4">
       <a href="{% url 'channel_view' ch.slug %}" class="card-surface d-block p-3 text-decoration-none" style="color:var(--text-primary)">
-        <i class="bi {{ ch.icon }} me-1" style="color:var(--accent-primary)"></i> <strong>{{ ch.title }}</strong>
+        <i class="bi {{ ch.icon }} me-1" style="color:var(--accent-primary)"></i> <strong>{{ ch.title }}</strong>{% if ch.unread %} <span class="badge bg-danger unread">{{ ch.unread }}</span>{% endif %}
         <div class="small text-muted">{{ ch.messages.count }} הודעות</div>
       </a>
     </div>
@@ -34,7 +34,7 @@
     {% for ch in hackathon %}
     <div class="col-md-4">
       <a href="{% url 'channel_view' ch.slug %}" class="card-surface d-block p-3 text-decoration-none" style="color:var(--text-primary)">
-        <i class="bi {{ ch.icon }} me-1" style="color:var(--accent-primary)"></i> <strong>{{ ch.title }}</strong>
+        <i class="bi {{ ch.icon }} me-1" style="color:var(--accent-primary)"></i> <strong>{{ ch.title }}</strong>{% if ch.unread %} <span class="badge bg-danger unread">{{ ch.unread }}</span>{% endif %}
         {% if ch.is_readonly %}<span class="badge bg-secondary">ארכיון</span>{% endif %}
       </a>
     </div>
@@ -48,7 +48,7 @@
     {% for ch in course %}
     <div class="col-md-4">
       <a href="{% url 'channel_view' ch.slug %}" class="card-surface d-block p-3 text-decoration-none" style="color:var(--text-primary)">
-        <i class="bi {{ ch.icon }} me-1" style="color:var(--accent-primary)"></i> <strong>{{ ch.title }}</strong>
+        <i class="bi {{ ch.icon }} me-1" style="color:var(--accent-primary)"></i> <strong>{{ ch.title }}</strong>{% if ch.unread %} <span class="badge bg-danger unread">{{ ch.unread }}</span>{% endif %}
       </a>
     </div>
     {% endfor %}
