@@ -553,7 +553,7 @@ build starts with EPIC-6.1. Epics are sequenced; one big thing at a time.
 | EPIC-6.4 | Feed & Tips — community home, composer, weekly digest, homepage hook | §6.4 | IN PROGRESS |
 | EPIC-6.5 | CrashTech — hardware hackathon platform (lifecycle, roles, teams, hardware logistics, secret timed challenges, blind judging, dual scoring, anonymized leaderboard, certificates, Glory Page) | §6.5 | DONE ✅ |
 | EPIC-6.6 | Chat & Groups — topic channels, course groups + presence, collaborator filters, DM control, knowledge capture, mentions/safety, live-hackathon channel | §6.6 | DONE ✅ |
-| EPIC-6.7 | Events & Meetups — RSVP, calendar, recordings, recurring series, physical meetups, feed/hub integration | §6.7 | IN PROGRESS |
+| EPIC-6.7 | Events & Meetups — RSVP, calendar, recordings, recurring series, physical meetups, feed/hub integration | §6.7 | DONE ✅ |
 | EPIC-6.8 | Cross-cutting — Plausible community events, health dashboard, activation tie-in | §6.8 | IN PROGRESS |
 
 Deferred (spec §6.9): skill marketplace, advisor marketplace, hiring board,
@@ -873,11 +873,11 @@ notify (reminders). **2 sprints.**
 
 | Feature ID | Title | REQ trace | Status |
 |---|---|---|---|
-| F-6.7.2.1 | `EventSeries` + series page; events link to a series | REQ-6.7.4 | TODO |
-| F-6.7.2.2 | Past-event recording (Bunny embed) + linked threads/projects/hackathon | REQ-6.7.3 | TODO |
-| F-6.7.2.3 | Physical meetup: venue + attendance check-in + event photos → feed | REQ-6.7.5 | TODO |
-| F-6.7.2.4 | `send_event_reminders` command (24h/1h windows), idempotent | REQ-6.7.2 | TODO |
-| F-6.7.2.5 | «hackathon kickoff» event links to its CrashTech event | REQ-6.7.6 | TODO |
+| F-6.7.2.1 | `EventSeries` + series page; events link to a series | REQ-6.7.4 | DONE |
+| F-6.7.2.2 | Past-event recording (Bunny embed) + linked threads/projects/hackathon | REQ-6.7.3 | DONE |
+| F-6.7.2.3 | Physical meetup: venue + attendance check-in + event photos → feed | REQ-6.7.5 | DONE |
+| F-6.7.2.4 | `send_event_reminders` command (24h/1h windows), idempotent | REQ-6.7.2 | DONE |
+| F-6.7.2.5 | «hackathon kickoff» event links to its CrashTech event | REQ-6.7.6 | DONE |
 
 ### EPIC-6.8 — Cross-cutting: measurement & health
 

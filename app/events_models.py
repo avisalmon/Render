@@ -50,6 +50,8 @@ class CommunityEvent(models.Model):
     course = models.ForeignKey("Course", on_delete=models.SET_NULL, null=True, blank=True,
                                related_name="events")
     recording_bunny_id = models.CharField(max_length=120, blank=True, default="")
+    reminded_24h = models.BooleanField(default=False)  # REQ-6.7.2 reminder bookkeeping
+    reminded_1h = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

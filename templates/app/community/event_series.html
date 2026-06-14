@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load course_tags %}
+{% block title %}{{ series.title }} - סדרת אירועים{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'community' %}" style="color:var(--accent-primary)">קהילה</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'events_page' %}" style="color:var(--accent-primary)">אירועים</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">{{ series.title }}</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="py-4">
+  <h1 class="h4 mb-1"><i class="bi bi-collection-play me-1" style="color:var(--accent-primary)"></i> {{ series.title }}</h1>
+  {% if series.description %}<div class="text-muted mb-3">{{ series.description|markdown }}</div>{% endif %}
+  <div class="row g-2">
+    {% for e in sessions %}
+    <div class="col-md-6">
+      <a href="{% url 'event_detail' e.slug %}" class="card-surface d-block p-3 text-decoration-none" style="color:var(--text-primary)">
+        <strong>{{ e.title }}</strong>
+        <div class="small text-muted mt-1">{{ e.start_at|date:"j בF Y, H:i" }}{% if e.is_past %} · היה{% if e.recording_bunny_id %} · הקלטה{% endif %}{% endif %}</div>
+      </a>
+    </div>
+    {% empty %}<div class="col-12"><div class="card-surface p-4 text-center text-muted">אין עדיין מפגשים בסדרה.</div></div>{% endfor %}
+  </div>
+</div>
+{% endblock %}

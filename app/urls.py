@@ -50,9 +50,13 @@ urlpatterns = [
     # --- Events & Meetups (EPIC-6.7) ---
     path("community/events/", events_views.events_page, name="events_page"),
     path("community/events/new/", events_views.event_create, name="event_create"),
+    path("community/events/series/<slug:slug>/", events_views.series_page, name="event_series"),
     path("community/events/<slug:slug>/", events_views.event_detail, name="event_detail"),
     path("community/events/<slug:slug>/rsvp/", events_views.event_rsvp, name="event_rsvp"),
     path("community/events/<slug:slug>/cancel/", events_views.event_cancel, name="event_cancel"),
+    path("community/events/<slug:slug>/edit/", events_views.event_edit, name="event_edit"),
+    path("community/events/<slug:slug>/checkin/", events_views.event_checkin, name="event_checkin"),
+    path("community/events/<slug:slug>/photo/", events_views.event_photo, name="event_photo"),
     path("community/events/<slug:slug>/calendar.ics", events_views.event_ics, name="event_ics"),
     # --- Chat & Groups (EPIC-6.6) ---
     path("community/chat/", chat_views.chat_home, name="chat_home"),

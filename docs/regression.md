@@ -189,6 +189,7 @@
 | Suite | Verifies |
 |---|---|
 | test_spr_6_7_1.py (8) | events page lists upcoming + past; event detail public; RSVP capacity → waitlist; cancel auto-promotes waitlist + notifies; RSVP login-walled; .ics download (valid VCALENDAR); upcoming event in build_feed + on hub; staff-only event creation |
+| test_spr_6_7_2.py (7) | series page lists sessions; staff edit sets recording (embeds on past detail); non-staff edit blocked; attendee check-in; event photo upload → appears in feed; reminders notify 'going' once (idempotent per window); hackathon-kickoff event links to its CrashTech page |
 
 ## EPIC-7 — QA Hardening (`tests/test_spr_7_1..7_8.py`)
 

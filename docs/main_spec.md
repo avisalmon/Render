@@ -849,10 +849,10 @@ Also the natural bridge to the corporate funnel (sponsors, exposure).
 | REQ-ID | Title | Expectation | Status |
 |---|---|---|---|
 | REQ-6.7.1 | Event model | `CommunityEvent`: title, description (markdown), type (live-coding / AMA / hackathon kickoff / meetup / כנס), online link **or** venue, start/end, capacity, host, optional series + linked hackathon/course; recording (Bunny embed) after the fact. Read-public (DEC-45). | DONE |
-| REQ-6.7.2 | Registration | RSVP (login-gated) + downloadable **.ics** calendar file + reminder notifications (24h, 1h); **waitlist** when at capacity, auto-promoted (and notified) when a seat frees. | TODO |
+| REQ-6.7.2 | Registration | RSVP (login-gated) + downloadable **.ics** calendar file + reminder notifications (24h, 1h); **waitlist** when at capacity, auto-promoted (and notified) when a seat frees. | DONE |
 | REQ-6.7.3 | Events page | `/community/events/`: upcoming + past; an event detail page; past events show the **recording** (Bunny embed) + linked threads/projects/hackathon. | DONE |
-| REQ-6.7.4 | Recurring formats | `EventSeries` (e.g. «שעת מומחה חודשית עם אבי») with a series page listing all its sessions; an event may belong to a series. | TODO |
-| REQ-6.7.5 | Physical meetups | Venue events (TLV/JLM/Haifa) with **attendance check-in** (a per-attendee code/toggle) and event **photos** that feed back into the community feed. | TODO |
+| REQ-6.7.4 | Recurring formats | `EventSeries` (e.g. «שעת מומחה חודשית עם אבי») with a series page listing all its sessions; an event may belong to a series. | DONE |
+| REQ-6.7.5 | Physical meetups | Venue events (TLV/JLM/Haifa) with **attendance check-in** (a per-attendee code/toggle) and event **photos** that feed back into the community feed. | DONE |
 | REQ-6.7.6 | Feed & hub integration | Upcoming events surface in the community feed (the slot REQ-6.4.1 reserved), on the `/community/` hub, and in notifications; an event of type «hackathon kickoff» links to its CrashTech event. | DONE |
 
 ### 6.8 Cross-cutting: measurement & health

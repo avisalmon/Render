@@ -109,6 +109,19 @@ def _event_items():
     return out
 
 
+def _event_photo_items():
+    from .models import EventPhoto
+    out = []
+    for p in EventPhoto.objects.select_related("event", "uploaded_by__profile")[:_PER_SOURCE]:
+        out.append({
+            "kind": "event_photo", "timestamp": p.created_at,
+            "actor": p.uploaded_by, "actor_name": _profile_name(p.uploaded_by) if p.uploaded_by else "babook",
+            "text": f"תמונה מ«{p.event.title}»", "url": f"/community/events/{p.event.slug}/",
+            "icon": "bi-camera-fill", "domains": [],
+        })
+    return out
+
+
 def build_feed(user, scope="all", limit=40):
     """Return the merged, newest-first activity list for `scope`.
 
@@ -121,7 +134,8 @@ def build_feed(user, scope="all", limit=40):
         scope = "all"
 
     items = (_tip_items() + _project_items() + _thread_items()
-             + _answer_items() + _badge_items() + _event_items())
+             + _answer_items() + _badge_items() + _event_items()
+             + _event_photo_items())
 
     if scope == "following":
         from .models import Follow

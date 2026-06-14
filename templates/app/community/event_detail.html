@@ -17,13 +17,16 @@
 
     <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
       <h1 class="h3 mb-0">{{ event.title }}</h1>
-      <span class="badge bg-secondary">{{ event.get_event_type_display }}</span>
+      <span class="d-flex gap-2 align-items-center">
+        <span class="badge bg-secondary">{{ event.get_event_type_display }}</span>
+        {% if user.is_staff %}<a href="{% url 'event_edit' event.slug %}" class="small">עריכה</a>{% endif %}
+      </span>
     </div>
     <p class="text-muted">
       <i class="bi bi-clock"></i> {{ event.start_at|date:"l, j בF Y, H:i" }}–{{ event.end_at|date:"H:i" }} ·
       <i class="bi {% if event.is_online %}bi-camera-video{% else %}bi-geo-alt{% endif %}"></i> {{ event.location_label }}
       {% if event.host %}· מארח/ת: {{ event.host.profile.public_name }}{% endif %}
-      {% if event.series %}· סדרה: {{ event.series.title }}{% endif %}
+      {% if event.series %}· סדרה: <a href="{% url 'event_series' event.series.slug %}">{{ event.series.title }}</a>{% endif %}
     </p>
 
     {% if event.is_past and event.recording_bunny_id %}
@@ -61,7 +64,36 @@
     </div>
 
     {% if event.hackathon %}
-    <a href="{% url 'crashtech_detail' event.hackathon.slug %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-cpu"></i> לעמוד ההאקתון</a>
+    <a href="{% url 'crashtech_detail' event.hackathon.slug %}" class="btn btn-outline-primary btn-sm mb-3"><i class="bi bi-cpu"></i> לעמוד ההאקתון</a>
+    {% endif %}
+
+    <!-- Physical meetup: check-in + photos (REQ-6.7.5) -->
+    {% if not event.is_online and my_rsvp %}
+    <form method="post" action="{% url 'event_checkin' event.slug %}" class="d-inline">{% csrf_token %}
+      <button class="btn btn-sm btn-outline-success mb-3" {% if my_rsvp.attended %}disabled{% endif %}>
+        <i class="bi bi-check2-circle"></i> {% if my_rsvp.attended %}נוכחות סומנה{% else %}סמן נוכחות{% endif %}
+      </button>
+    </form>
+    {% endif %}
+
+    {% if my_rsvp or user.is_staff %}
+    <form method="post" action="{% url 'event_photo' event.slug %}" enctype="multipart/form-data" class="card-surface p-3 mb-3">
+      {% csrf_token %}
+      <label class="form-label small"><i class="bi bi-camera"></i> שיתוף תמונה מהאירוע</label>
+      <div class="d-flex gap-2">
+        <input type="file" name="image" accept="image/*" class="form-control form-control-sm" required>
+        <button class="btn btn-sm btn-primary">העלאה</button>
+      </div>
+    </form>
+    {% endif %}
+
+    {% if event.photos.exists %}
+    <h2 class="h6 text-muted mb-2"><i class="bi bi-images"></i> תמונות מהאירוע</h2>
+    <div class="row g-2">
+      {% for p in event.photos.all %}
+      <div class="col-6 col-md-3"><img src="{{ p.image.url }}" class="img-fluid rounded" alt="{{ p.caption }}"></div>
+      {% endfor %}
+    </div>
     {% endif %}
   </div>
 </div>

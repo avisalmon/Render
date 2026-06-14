@@ -11,6 +11,7 @@
         {% elif item.kind == 'answer' %}קיבל/ה תשובה מקובלת
         {% elif item.kind == 'badge' %}זכה/תה בתג
         {% elif item.kind == 'event' %}אירוע קרוב
+        {% elif item.kind == 'event_photo' %}שיתף/ה תמונה מאירוע
         {% endif %}
         · {{ item.timestamp|date:"j בF, H:i" }}
       </div>
