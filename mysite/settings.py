@@ -214,6 +214,9 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@babook.co.il"
 # Where user contact / privacy / support enquiries are delivered (REQ-7.6.1).
 # ACT-Avi: set this env var to Avi's real inbox so nothing is lost.
 CONTACT_NOTIFY_EMAIL = os.environ.get("CONTACT_NOTIFY_EMAIL", DEFAULT_FROM_EMAIL)
+# Where the weekly "backup succeeded" email is delivered (REQ-1.2.4). Defaults to
+# the contact inbox; set BACKUP_NOTIFY_EMAIL to Avi's real inbox to receive them.
+BACKUP_NOTIFY_EMAIL = os.environ.get("BACKUP_NOTIFY_EMAIL", CONTACT_NOTIFY_EMAIL)
 
 LOGGING = {
     "version": 1,

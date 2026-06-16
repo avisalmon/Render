@@ -151,6 +151,7 @@ class Command(BaseCommand):
         deleted = _delete_old_objects(session, bucket, "db/db_backup_", retention_days)
         if deleted:
             self.stdout.write(f"  Deleted {deleted} old backup(s)")
+        return {"object": f"db/{backup_filename}", "size": backup_size}
 
     def _backup_media(self, session, bucket, dry_run):
         """Incrementally sync media files to GCS — only upload files that are new
@@ -193,6 +194,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             f"  Uploaded {len(to_upload)} media file(s); {skipped} unchanged skipped"
         ))
+        return {"uploaded": len(to_upload), "skipped": skipped, "found": len(files)}
 
     def _backup_video_catalog(self, tmpdir, session, bucket, dry_run):
         """Export Bunny video catalog (metadata for disaster recovery)."""
@@ -234,6 +236,7 @@ class Command(BaseCommand):
 
         _upload_file(session, bucket, catalog_path, "video_catalog.json")
         self.stdout.write(self.style.SUCCESS("  Video catalog uploaded"))
+        return {"courses": len(catalog["courses"]), "videos": video_count}
 
     def handle(self, *args, **options):
         dry_run = options["dry_run"]
@@ -251,23 +254,26 @@ class Command(BaseCommand):
             session = self._get_session()
             bucket = self._get_bucket()
 
+        summary = {}
         with tempfile.TemporaryDirectory() as tmpdir:
             # 1. Database backup
             self.stdout.write(self.style.MIGRATE_HEADING("=== Database backup ==="))
-            self._backup_database(db_path, tmpdir, session, bucket, dry_run, retention_days)
+            summary["db"] = self._backup_database(
+                db_path, tmpdir, session, bucket, dry_run, retention_days)
 
             # 2. Media files
             if not skip_media:
                 self.stdout.write(self.style.MIGRATE_HEADING("=== Media files ==="))
-                self._backup_media(session, bucket, dry_run)
+                summary["media"] = self._backup_media(session, bucket, dry_run)
 
             # 3. Video catalog
             if not skip_videos:
                 self.stdout.write(self.style.MIGRATE_HEADING("=== Video catalog ==="))
-                self._backup_video_catalog(tmpdir, session, bucket, dry_run)
+                summary["catalog"] = self._backup_video_catalog(tmpdir, session, bucket, dry_run)
 
             if not dry_run:
                 self._write_marker()
+                self._send_success_email(summary, bucket)
             self.stdout.write(self.style.SUCCESS("\nBackup complete."))
 
     def _write_marker(self):
@@ -279,3 +285,55 @@ class Command(BaseCommand):
                 fh.write(datetime.now(timezone.utc).isoformat())
         except OSError as exc:
             self.stdout.write(self.style.WARNING(f"  Could not write backup marker: {exc}"))
+
+    def _send_success_email(self, summary, bucket):
+        """Email a 'backup succeeded' summary with links to the bucket (REQ-1.2.4).
+
+        Recipient is BACKUP_NOTIFY_EMAIL (falls back to CONTACT_NOTIFY_EMAIL /
+        DEFAULT_FROM_EMAIL). Never raises — a mail hiccup must not fail a good
+        backup. Failures are already covered by the GitHub Actions run going red.
+        """
+        from django.core.mail import send_mail
+
+        recipient = (
+            getattr(settings, "BACKUP_NOTIFY_EMAIL", "")
+            or getattr(settings, "CONTACT_NOTIFY_EMAIL", "")
+            or getattr(settings, "DEFAULT_FROM_EMAIL", "")
+        )
+        if not recipient:
+            self.stdout.write("  No BACKUP_NOTIFY_EMAIL set — skipping success email")
+            return
+
+        console = f"https://console.cloud.google.com/storage/browser/{bucket}"
+        db = summary.get("db") or {}
+        media = summary.get("media") or {}
+        cat = summary.get("catalog") or {}
+        db_mb = (db.get("size", 0) or 0) / (1024 ** 2)
+        ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+        body = "\n".join([
+            f"The babook backup completed successfully at {ts}.",
+            "",
+            f"  Database:  {db.get('object', '(skipped)')}  ({db_mb:.1f} MB)",
+            f"  Media:     {media.get('uploaded', 0)} uploaded, {media.get('skipped', 0)} unchanged",
+            f"  Catalog:   {cat.get('courses', 0)} courses, {cat.get('videos', 0)} videos",
+            "",
+            "View / download the backups (sign in with the project's Google account):",
+            f"  All files:  {console}",
+            f"  Databases:  {console}/db",
+            "",
+            "Database backups older than 30 days are pruned automatically.",
+            "",
+            "— babook backup",
+        ])
+        try:
+            send_mail(
+                f"✅ babook backup succeeded — {ts}",
+                body,
+                getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@babook.co.il"),
+                [recipient],
+                fail_silently=False,
+            )
+            self.stdout.write(self.style.SUCCESS(f"  Success email sent to {recipient}"))
+        except Exception as exc:  # noqa: BLE001 — email must not fail a good backup
+            self.stdout.write(self.style.WARNING(f"  Could not send success email: {exc}"))

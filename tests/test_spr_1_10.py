@@ -3,6 +3,7 @@ SPR-1.10 — Database Backups
 Tests for the backup_db management command (dry-run + error handling).
 Run: pytest tests/test_spr_1_10.py -v
 """
+import base64
 import json
 import sqlite3
 from io import StringIO
@@ -120,3 +121,35 @@ class TestBackupDbCommand:
 
         mock_upload.assert_called_once()
         assert "Uploaded" in out.getvalue()
+
+    @patch("app.management.commands.backup_db._upload_file")
+    @patch("app.management.commands.backup_db._delete_old_objects")
+    @patch("app.management.commands.backup_db._get_gcs_session")
+    def test_success_email_sent(self, mock_session, mock_delete, mock_upload,
+                                real_db, mailoutbox, settings):
+        """A successful (non-dry) backup emails a summary with bucket links."""
+        fake_creds = base64.b64encode(json.dumps({
+            "type": "service_account", "project_id": "test", "private_key_id": "x",
+            "private_key": "x", "client_email": "test@test.iam.gserviceaccount.com",
+            "client_id": "123",
+        }).encode()).decode()
+        mock_session.return_value = MagicMock()
+        mock_upload.return_value = "db/db_backup_test.sqlite3"
+        mock_delete.return_value = 0
+        settings.BACKUP_NOTIFY_EMAIL = "owner@example.com"
+
+        with patch.dict("os.environ", {
+            "GCS_SERVICE_ACCOUNT": fake_creds, "GCS_BUCKET": "babook-backups-test",
+        }, clear=False):
+            call_command("backup_db", "--skip-media", "--skip-videos")
+
+        assert len(mailoutbox) == 1
+        msg = mailoutbox[0]
+        assert msg.to == ["owner@example.com"]
+        assert "succeeded" in msg.subject
+        assert "babook-backups-test" in msg.body  # console links carry the bucket
+
+    def test_dry_run_sends_no_email(self, real_db, mailoutbox):
+        """A dry run must not send any email."""
+        call_command("backup_db", "--dry-run")
+        assert mailoutbox == []
