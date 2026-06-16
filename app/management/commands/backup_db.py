@@ -153,7 +153,9 @@ class Command(BaseCommand):
             self.stdout.write(f"  Deleted {deleted} old backup(s)")
 
     def _backup_media(self, session, bucket, dry_run):
-        """Upload media files to GCS."""
+        """Incrementally sync media files to GCS — only upload files that are new
+        or whose size changed since the last backup (REQ-1.2.4). Unchanged
+        objects are left in place, so a weekly run only ships the delta."""
         media_root = Path(settings.MEDIA_ROOT)
         if not media_root.exists():
             self.stdout.write("  Media directory does not exist, skipping")
@@ -162,17 +164,35 @@ class Command(BaseCommand):
         files = [f for f in media_root.rglob("*") if f.is_file()]
         self.stdout.write(f"  Media files found: {len(files)}")
 
-        if dry_run:
-            self.stdout.write(self.style.SUCCESS(
-                f"  [DRY RUN] Would sync {len(files)} media files"
-            ))
-            return
+        # {object_name: size} already in the bucket, so we skip unchanged files
+        # instead of re-uploading everything every run.
+        existing = {}
+        if not dry_run:
+            for obj in _list_objects(session, bucket, "media/"):
+                existing[obj["name"]] = int(obj.get("size") or 0)
 
+        to_upload = []
         for f in files:
             rel = f.relative_to(media_root)
             object_name = f"media/{rel.as_posix()}"
+            if existing.get(object_name) == f.stat().st_size:
+                continue  # already backed up, unchanged
+            to_upload.append((f, object_name))
+
+        skipped = len(files) - len(to_upload)
+        self.stdout.write(f"  Media new or changed: {len(to_upload)} (skipping {skipped} unchanged)")
+
+        if dry_run:
+            self.stdout.write(self.style.SUCCESS(
+                "  [DRY RUN] Would sync only new/changed media (live run skips already-backed-up files)"
+            ))
+            return
+
+        for f, object_name in to_upload:
             _upload_file(session, bucket, f, object_name)
-        self.stdout.write(self.style.SUCCESS(f"  Uploaded {len(files)} media file(s)"))
+        self.stdout.write(self.style.SUCCESS(
+            f"  Uploaded {len(to_upload)} media file(s); {skipped} unchanged skipped"
+        ))
 
     def _backup_video_catalog(self, tmpdir, session, bucket, dry_run):
         """Export Bunny video catalog (metadata for disaster recovery)."""
@@ -185,13 +205,13 @@ class Command(BaseCommand):
             "courses": [],
         }
 
-        for course in Course.objects.prefetch_related("video_set").all():
+        for course in Course.objects.prefetch_related("videos").all():
             course_data = {
                 "title": course.title,
                 "slug": course.slug,
                 "videos": [],
             }
-            for video in course.video_set.order_by("lesson_order"):
+            for video in course.videos.order_by("lesson_order"):
                 course_data["videos"].append({
                     "title": video.title,
                     "bunny_video_id": video.bunny_video_id,

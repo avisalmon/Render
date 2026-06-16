@@ -151,6 +151,14 @@ BUNNY_STREAM_LIBRARY_ID = os.environ.get("BUNNY_STREAM_LIBRARY_ID", "")
 BUNNY_STREAM_CDN_HOSTNAME = os.environ.get("BUNNY_STREAM_CDN_HOSTNAME", "iframe.mediadelivery.net")
 BUNNY_STREAM_TOKEN_KEY = os.environ.get("BUNNY_STREAM_TOKEN_KEY", "")
 BUNNY_API_KEY = os.environ.get("BUNNY_API_KEY", "")
+# Account-level API key (bunny.net → Account → API) for billing/bandwidth stats
+# (REQ-8.3 live Bunny cost). Distinct from the Stream library key above.
+BUNNY_ACCOUNT_API_KEY = os.environ.get("BUNNY_ACCOUNT_API_KEY", "")
+# Blended delivery rate $/GB used to cost the real bandwidth pulled from Bunny.
+BUNNY_BANDWIDTH_USD_PER_GB = float(os.environ.get("BUNNY_BANDWIDTH_USD_PER_GB", "0.01"))
+# GCS Standard storage rate $/GB-month for backups cost (REQ-8.3). Reuses the
+# existing GCS_SERVICE_ACCOUNT/GCS_BUCKET env vars to read the real bucket size.
+GCS_STORAGE_USD_PER_GB = float(os.environ.get("GCS_STORAGE_USD_PER_GB", "0.020"))
 
 # ---------------------------------------------------------------------------
 # GitHub Copilot seat management (SPR-1.6)

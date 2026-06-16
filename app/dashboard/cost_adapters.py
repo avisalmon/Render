@@ -99,22 +99,55 @@ class BunnyCostAdapter(CostAdapter):
     deep_link = "https://dash.bunny.net/stream"
     default_source = "estimate"
 
-    def fetch(self, period):
-        # Storage estimate from stored video minutes; bandwidth needs the Bunny
-        # statistics API (existing BUNNY_API_KEY) — wired as live later.
+    def _stored_minutes(self):
         from ..models import Video
-
-        if not getattr(settings, "BUNNY_API_KEY", ""):
-            return Decimal("0"), "manual", "set a manual figure (no API key)", {}
         secs = sum(v.duration_seconds or 0 for v in Video.objects.all())
-        minutes = secs / 60.0
-        # ~$0.01/GB stored is dominated by bandwidth; show a conservative storage
-        # estimate and flag that bandwidth comes from the statistics API.
-        est = round(minutes * 0.0005, 2)
+        return secs / 60.0
+
+    def _bandwidth_gb(self, period):
+        """Real GB delivered this period from Bunny's account statistics API
+        (REQ-8.3 live). Returns (gb, None) or (None, reason) — never raises here;
+        safe_fetch + the caller handle fallback to the estimate."""
+        key = getattr(settings, "BUNNY_ACCOUNT_API_KEY", "")
+        if not key:
+            return None, "no BUNNY_ACCOUNT_API_KEY"
+        import json
+        import urllib.request
+
+        start, end = _month_bounds(period)
+        url = (f"https://api.bunny.net/statistics?dateFrom={start:%Y-%m-%d}"
+               f"&dateTo={end:%Y-%m-%d}")
+        req = urllib.request.Request(
+            url, headers={"AccessKey": key, "Accept": "application/json"})
+        with urllib.request.urlopen(req, timeout=15) as resp:  # noqa: S310
+            data = json.loads(resp.read().decode())
+        bytes_used = data.get("TotalBandwidthUsed") or 0
+        return bytes_used / (1024 ** 3), None
+
+    def fetch(self, period):
+        minutes = self._stored_minutes()
+        storage_cost = round(minutes * 0.0005, 2)  # conservative storage estimate
+        rate = getattr(settings, "BUNNY_BANDWIDTH_USD_PER_GB", 0.01)
+
+        try:
+            gb, reason = self._bandwidth_gb(period)
+        except Exception as exc:  # noqa: BLE001 — API hiccup falls back to estimate
+            gb, reason = None, f"stats API error: {exc}"
+
+        if gb is not None:
+            bw_cost = round(gb * rate, 2)
+            total = round(storage_cost + bw_cost, 2)
+            note = (f"{gb:,.1f} GB delivered × ${rate}/GB = ${bw_cost} "
+                    f"+ ~{minutes:,.0f} min stored")
+            return (Decimal(str(total)), "live", note, {
+                "bandwidth_gb": round(gb, 1), "bandwidth_cost": bw_cost,
+                "storage_cost": storage_cost, "stored_minutes": round(minutes),
+            })
+        # No account key / API down → keep the storage-only estimate.
         return (
-            Decimal(str(est)),
+            Decimal(str(storage_cost)),
             "estimate",
-            f"~{minutes:,.0f} min stored; bandwidth via statistics API (ACT pending)",
+            f"~{minutes:,.0f} min stored; live bandwidth needs BUNNY_ACCOUNT_API_KEY ({reason})",
             {"stored_minutes": round(minutes)},
         )
 
@@ -167,12 +200,55 @@ class DomainCostAdapter(CostAdapter):
 
 class BackupCostAdapter(CostAdapter):
     service = "backups"
-    label = "Backups (Google Drive)"
-    deep_link = "https://drive.google.com"
+    label = "Backups (Google Cloud Storage)"
+    deep_link = "https://console.cloud.google.com/storage/browser"
     default_source = "estimate"
+    GCS_FREE_GB = 5.0  # GCS "Always Free" Standard storage (US regions)
+
+    def _bucket_usage(self):
+        """(total_gb, object_count, error) — real backup-bucket size via the GCS
+        JSON API, reusing the backup command's auth. error is None on success."""
+        import base64
+        import json
+        import os
+
+        creds_b64 = os.environ.get("GCS_SERVICE_ACCOUNT", "")
+        bucket = os.environ.get("GCS_BUCKET", "")
+        if not (creds_b64 and bucket):
+            return None, 0, "no GCS_SERVICE_ACCOUNT / GCS_BUCKET"
+        from app.management.commands.backup_db import GCS_API, _get_gcs_session
+
+        session = _get_gcs_session(json.loads(base64.b64decode(creds_b64)))
+        total_bytes, count, token = 0, 0, None
+        while True:
+            params = {"fields": "items(size),nextPageToken", "maxResults": 1000}
+            if token:
+                params["pageToken"] = token
+            resp = session.get(f"{GCS_API}/b/{bucket}/o", params=params)
+            resp.raise_for_status()
+            data = resp.json()
+            for it in data.get("items", []):
+                total_bytes += int(it.get("size") or 0)
+                count += 1
+            token = data.get("nextPageToken")
+            if not token:
+                break
+        return total_bytes / (1024 ** 3), count, None
 
     def fetch(self, period):
-        return Decimal("0"), "estimate", "free tier (15GB)", {}
+        try:
+            gb, count, err = self._bucket_usage()
+        except Exception as exc:  # noqa: BLE001 — API hiccup degrades to estimate
+            gb, count, err = None, 0, f"GCS API error: {exc}"
+        if gb is None:
+            return (Decimal("0"), "estimate",
+                    f"{self.GCS_FREE_GB:g} GB-months free (GCS); live needs GCS creds ({err})", {})
+        rate = getattr(settings, "GCS_STORAGE_USD_PER_GB", 0.020)
+        cost = round(max(0.0, gb - self.GCS_FREE_GB) * rate, 2)
+        tail = f" → ${cost}" if cost else " (within free tier)"
+        return (Decimal(str(cost)), "live",
+                f"{gb:.2f} GB in {count} backups; first {self.GCS_FREE_GB:g} GB free{tail}",
+                {"storage_gb": round(gb, 2), "object_count": count})
 
 
 class ScreenshotCostAdapter(CostAdapter):
