@@ -266,4 +266,16 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.MIGRATE_HEADING("=== Video catalog ==="))
                 self._backup_video_catalog(tmpdir, session, bucket, dry_run)
 
+            if not dry_run:
+                self._write_marker()
             self.stdout.write(self.style.SUCCESS("\nBackup complete."))
+
+    def _write_marker(self):
+        """Record this successful backup so the dashboard's 'backup age' works
+        (read by app.dashboard.metrics._last_backup_marker)."""
+        marker = os.path.join(os.path.dirname(str(settings.MEDIA_ROOT)), ".last_backup")
+        try:
+            with open(marker, "w", encoding="utf-8") as fh:
+                fh.write(datetime.now(timezone.utc).isoformat())
+        except OSError as exc:
+            self.stdout.write(self.style.WARNING(f"  Could not write backup marker: {exc}"))

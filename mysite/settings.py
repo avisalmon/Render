@@ -160,6 +160,10 @@ BUNNY_BANDWIDTH_USD_PER_GB = float(os.environ.get("BUNNY_BANDWIDTH_USD_PER_GB", 
 # existing GCS_SERVICE_ACCOUNT/GCS_BUCKET env vars to read the real bucket size.
 GCS_STORAGE_USD_PER_GB = float(os.environ.get("GCS_STORAGE_USD_PER_GB", "0.020"))
 
+# Shared secret the weekly GitHub Actions cron sends in the X-Backup-Token
+# header to trigger an in-process backup (REQ-1.2.4). Empty = endpoint disabled.
+BACKUP_TRIGGER_TOKEN = os.environ.get("BACKUP_TRIGGER_TOKEN", "")
+
 # ---------------------------------------------------------------------------
 # GitHub Copilot seat management (SPR-1.6)
 # ---------------------------------------------------------------------------

@@ -5,11 +5,17 @@ Costs, Engagement and System, plus per-section refresh, manual cost entry,
 alert config and alert dismissal. All gated by :func:`superuser_required`.
 """
 
+import io
 import json
 
+from django.conf import settings
 from django.contrib import messages
+from django.core.management import call_command
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
+from django.utils.crypto import constant_time_compare
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from .dashboard.access import superuser_required
@@ -130,3 +136,28 @@ def dismiss_alert(request, pk):
 
     AlertEvent.objects.filter(pk=pk, dismissed_at__isnull=True).update(dismissed_at=timezone.now())
     return redirect("admin_dashboard")
+
+
+@csrf_exempt
+@require_POST
+def run_backup(request):
+    """Token-triggered full backup (REQ-1.2.4).
+
+    Called by the weekly GitHub Actions cron with the shared secret in the
+    ``X-Backup-Token`` header. Runs ``backup_db`` in-process (so it has the
+    SQLite persistent disk, which a separate Render cron container would not),
+    and returns the command log so a failed backup turns the Actions run red.
+    This is a machine endpoint, not a session/superuser route.
+    """
+    expected = getattr(settings, "BACKUP_TRIGGER_TOKEN", "")
+    provided = request.headers.get("X-Backup-Token", "")
+    if not expected or not constant_time_compare(provided, expected):
+        return JsonResponse({"ok": False, "error": "forbidden"}, status=403)
+
+    out = io.StringIO()
+    try:
+        call_command("backup_db", stdout=out, stderr=out)
+    except Exception as exc:  # noqa: BLE001 — surface failure to the caller
+        return JsonResponse(
+            {"ok": False, "error": str(exc), "log": out.getvalue()}, status=500)
+    return JsonResponse({"ok": True, "log": out.getvalue()})

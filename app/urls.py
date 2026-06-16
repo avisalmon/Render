@@ -41,6 +41,9 @@ urlpatterns = [
     path("admin-dashboard/cost/manual/", dashboard_views.manual_cost, name="dashboard_manual_cost"),
     path("admin-dashboard/alerts/config/", dashboard_views.alert_config, name="dashboard_alert_config"),
     path("admin-dashboard/alerts/<int:pk>/dismiss/", dashboard_views.dismiss_alert, name="dashboard_dismiss_alert"),
+    # Machine endpoint: weekly GitHub Actions cron POSTs here with X-Backup-Token
+    # to run an in-process backup (REQ-1.2.4).
+    path("internal/run-backup/", dashboard_views.run_backup, name="run_backup"),
     path("corporate/", views.corporate, name="corporate"),
 
     # --- Community (EPIC-6.1) ---

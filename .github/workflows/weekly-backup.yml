@@ -1,0 +1,29 @@
+name: Weekly DB backup
+
+# Triggers an in-process backup on the live Render service (REQ-1.2.4).
+# Runs weekly and on demand. The backup itself runs inside the web service
+# (it needs the SQLite persistent disk); this job only fires the request and
+# turns red if the backup fails.
+
+on:
+  schedule:
+    - cron: "0 3 * * 1" # Mondays 03:00 UTC
+  workflow_dispatch: {}
+
+jobs:
+  trigger-backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST run-backup
+        env:
+          BACKUP_URL: ${{ secrets.BACKUP_URL }}
+          BACKUP_TRIGGER_TOKEN: ${{ secrets.BACKUP_TRIGGER_TOKEN }}
+        run: |
+          code=$(curl -sS --max-time 180 -o /tmp/backup_out.json -w "%{http_code}" \
+            -X POST "$BACKUP_URL" \
+            -H "X-Backup-Token: $BACKUP_TRIGGER_TOKEN")
+          echo "HTTP $code"
+          echo "----- response -----"
+          cat /tmp/backup_out.json || true
+          echo
+          test "$code" = "200"

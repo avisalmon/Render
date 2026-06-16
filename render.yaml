@@ -5,7 +5,7 @@ services:
     plan: starter
     branch: main
     buildCommand: ./build.sh
-    startCommand: python manage.py migrate && (python manage.py createsuperuser --noinput || true) && (python manage.py seed_crashtech_demo --if-empty || true) && gunicorn mysite.wsgi:application --bind 0.0.0.0:$PORT
+    startCommand: python manage.py migrate && (python manage.py createsuperuser --noinput || true) && (python manage.py seed_crashtech_demo --if-empty || true) && gunicorn mysite.wsgi:application --bind 0.0.0.0:$PORT --timeout 120
     autoDeploy: true
     envVars:
       - key: PYTHON_VERSION
@@ -25,6 +25,8 @@ services:
       - key: DJANGO_SUPERUSER_EMAIL
         sync: false
       - key: DJANGO_SUPERUSER_PASSWORD
+        sync: false
+      - key: BACKUP_TRIGGER_TOKEN
         sync: false
     disk:
       name: mysite-disk
