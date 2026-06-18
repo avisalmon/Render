@@ -147,11 +147,26 @@ class Command(BaseCommand):
         _upload_file(session, bucket, backup_path, f"db/{backup_filename}")
         self.stdout.write(self.style.SUCCESS(f"  Uploaded db/{backup_filename}"))
 
-        # Retention
+        # Permanent monthly snapshot: keep exactly one per calendar month under a
+        # separate prefix that retention never touches (REQ-1.2.4). The first
+        # backup of each month creates it; later runs that month leave it alone.
+        ym = f"{timestamp[:4]}-{timestamp[4:6]}"
+        monthly_name = f"monthly/db_{ym}.sqlite3"
+        monthly_new = False
+        if _list_objects(session, bucket, monthly_name):
+            self.stdout.write(f"  Monthly snapshot already kept for {ym} ({monthly_name})")
+        else:
+            _upload_file(session, bucket, backup_path, monthly_name)
+            self.stdout.write(self.style.SUCCESS(
+                f"  Saved permanent monthly snapshot {monthly_name}"))
+            monthly_new = True
+
+        # Retention — only prunes the rolling db/db_backup_* objects, never monthly/.
         deleted = _delete_old_objects(session, bucket, "db/db_backup_", retention_days)
         if deleted:
-            self.stdout.write(f"  Deleted {deleted} old backup(s)")
-        return {"object": f"db/{backup_filename}", "size": backup_size}
+            self.stdout.write(f"  Deleted {deleted} old rolling backup(s)")
+        return {"object": f"db/{backup_filename}", "size": backup_size,
+                "monthly_name": monthly_name, "monthly_new": monthly_new}
 
     def _backup_media(self, session, bucket, dry_run):
         """Incrementally sync media files to GCS — only upload files that are new
@@ -311,21 +326,31 @@ class Command(BaseCommand):
         db_mb = (db.get("size", 0) or 0) / (1024 ** 2)
         ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
-        body = "\n".join([
+        monthly_name = db.get("monthly_name")
+        monthly_line = None
+        if monthly_name:
+            tag = "new this run" if db.get("monthly_new") else "already kept"
+            monthly_line = f"  Monthly:   {monthly_name}  (permanent, {tag})"
+
+        lines = [
             f"The babook backup completed successfully at {ts}.",
             "",
             f"  Database:  {db.get('object', '(skipped)')}  ({db_mb:.1f} MB)",
+            monthly_line,
             f"  Media:     {media.get('uploaded', 0)} uploaded, {media.get('skipped', 0)} unchanged",
             f"  Catalog:   {cat.get('courses', 0)} courses, {cat.get('videos', 0)} videos",
             "",
             "View / download the backups (sign in with the project's Google account):",
             f"  All files:  {console}",
             f"  Databases:  {console}/db",
+            f"  Monthly:    {console}/monthly",
             "",
-            "Database backups older than 30 days are pruned automatically.",
+            "Rolling backups older than 30 days are pruned automatically; the",
+            "monthly snapshot under monthly/ is kept permanently.",
             "",
             "— babook backup",
-        ])
+        ]
+        body = "\n".join(line for line in lines if line is not None)
         try:
             send_mail(
                 f"✅ babook backup succeeded — {ts}",

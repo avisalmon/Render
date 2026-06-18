@@ -32,6 +32,9 @@ def real_db(tmp_path, settings):
     return db_file
 
 
+_FAKE_CREDS = base64.b64encode(b"{}").decode()
+
+
 class TestBackupDbCommand:
     def test_dry_run_succeeds(self, real_db):
         """Dry run should complete without credentials."""
@@ -153,3 +156,41 @@ class TestBackupDbCommand:
         """A dry run must not send any email."""
         call_command("backup_db", "--dry-run")
         assert mailoutbox == []
+
+    @patch("app.management.commands.backup_db._upload_file")
+    @patch("app.management.commands.backup_db._delete_old_objects")
+    @patch("app.management.commands.backup_db._list_objects")
+    @patch("app.management.commands.backup_db._get_gcs_session")
+    def test_monthly_snapshot_created_when_absent(
+            self, mock_session, mock_list, mock_delete, mock_upload, real_db):
+        """First backup of a month also writes a permanent monthly/ snapshot."""
+        mock_session.return_value = MagicMock()
+        mock_list.return_value = []  # no monthly snapshot yet this month
+        mock_delete.return_value = 0
+        with patch.dict("os.environ", {
+            "GCS_SERVICE_ACCOUNT": _FAKE_CREDS, "GCS_BUCKET": "b",
+        }, clear=False):
+            out = StringIO()
+            call_command("backup_db", "--skip-media", "--skip-videos", stdout=out)
+        names = [c.args[3] for c in mock_upload.call_args_list]
+        assert any(n.startswith("db/db_backup_") for n in names)   # rolling
+        assert any(n.startswith("monthly/db_") for n in names)     # permanent
+        assert "monthly snapshot" in out.getvalue().lower()
+
+    @patch("app.management.commands.backup_db._upload_file")
+    @patch("app.management.commands.backup_db._delete_old_objects")
+    @patch("app.management.commands.backup_db._list_objects")
+    @patch("app.management.commands.backup_db._get_gcs_session")
+    def test_monthly_snapshot_not_recreated_when_present(
+            self, mock_session, mock_list, mock_delete, mock_upload, real_db):
+        """A later backup the same month must not overwrite the monthly snapshot."""
+        mock_session.return_value = MagicMock()
+        mock_list.return_value = [{"name": "monthly/db_2026-06.sqlite3"}]  # exists
+        mock_delete.return_value = 0
+        with patch.dict("os.environ", {
+            "GCS_SERVICE_ACCOUNT": _FAKE_CREDS, "GCS_BUCKET": "b",
+        }, clear=False):
+            call_command("backup_db", "--skip-media", "--skip-videos")
+        names = [c.args[3] for c in mock_upload.call_args_list]
+        assert any(n.startswith("db/db_backup_") for n in names)
+        assert not any(n.startswith("monthly/") for n in names)  # not re-created
