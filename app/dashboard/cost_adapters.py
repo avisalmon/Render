@@ -57,20 +57,52 @@ class OpenAICostAdapter(CostAdapter):
     service = "openai"
     label = "OpenAI"
     deep_link = "https://platform.openai.com/usage"
-    default_source = "live"
+    default_source = "estimate"
+
+    def _account_cost(self, admin_key, period):
+        """Real org-wide spend for the month via OpenAI's Costs API. Needs an
+        Admin key (sk-admin-…) with the api.usage.read scope. Returns USD float."""
+        import json
+        import urllib.request
+
+        start, end = _month_bounds(period)
+        url = ("https://api.openai.com/v1/organization/costs"
+               f"?start_time={int(start.timestamp())}&end_time={int(end.timestamp())}"
+               "&bucket_width=1d&limit=31")
+        req = urllib.request.Request(url, headers={"Authorization": f"Bearer {admin_key}"})
+        data = json.loads(urllib.request.urlopen(req, timeout=20).read())
+        total = 0.0
+        for bucket in data.get("data", []):
+            for res in bucket.get("results", []):
+                total += float((res.get("amount") or {}).get("value") or 0)
+        return round(total, 2)
 
     def fetch(self, period):
         from ..models import UsageLog
 
+        cap = getattr(settings, "OPENAI_MONTHLY_COST_CAP_USD", None)
+        cap_note = f" · cap ${cap:g}" if cap else ""
+
+        # Preferred: real account-wide spend (every key/tool on the org), live.
+        admin_key = getattr(settings, "OPENAI_ADMIN_KEY", "")
+        if admin_key:
+            try:
+                usd = self._account_cost(admin_key, period)
+                return (Decimal(str(usd)), "live",
+                        f"${usd:g} account spend this month{cap_note}",
+                        {"account_usd": usd, "cap": cap})
+            except Exception:  # noqa: BLE001 — fall back to app-only usage below
+                pass
+
+        # Fallback: only what the babook APP itself logged (UsageLog) — NOT the
+        # whole account. Other tools on the same key won't show here.
         start, end = _month_bounds(period)
         logs = UsageLog.objects.filter(created_at__gte=start, created_at__lt=end)
-        total = sum(lg.cost_usd for lg in logs)
+        total = round(sum(lg.cost_usd for lg in logs), 2)
         tokens = sum(lg.prompt_tokens + lg.completion_tokens for lg in logs)
-        cap = getattr(settings, "OPENAI_MONTHLY_COST_CAP_USD", None)
-        note = f"{tokens:,} tokens"
-        if cap:
-            note += f" · cap ${cap:g}"
-        return Decimal(str(round(total, 2))), "live", note, {"tokens": tokens, "cap": cap}
+        note = (f"app usage only: {tokens:,} tokens / ${total:g} — "
+                f"set OPENAI_ADMIN_KEY for full account spend{cap_note}")
+        return Decimal(str(total)), "estimate", note, {"tokens": tokens, "cap": cap, "app_only": True}
 
 
 class CopilotCostAdapter(CostAdapter):

@@ -183,6 +183,10 @@ COPILOT_INACTIVITY_RECLAIM_DAYS = 60
 # AI Chat / OpenAI (SPR-1.8)
 # ---------------------------------------------------------------------------
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+# Admin key (sk-admin-…) with the api.usage.read scope — lets the cost dashboard
+# pull real org-wide monthly spend via OpenAI's Costs API. The project key above
+# can't read billing. Optional: without it the dashboard shows app-only usage.
+OPENAI_ADMIN_KEY = os.environ.get("OPENAI_ADMIN_KEY", "")
 OPENAI_DEFAULT_MODEL = os.environ.get("OPENAI_DEFAULT_MODEL", "gpt-4o-mini")
 OPENAI_PREMIUM_MODEL = os.environ.get("OPENAI_PREMIUM_MODEL", "gpt-4o")
 OPENAI_DAILY_TOKEN_LIMITS = {

@@ -188,3 +188,45 @@ def run_dashboard_capture(request):
         return JsonResponse(
             {"ok": False, "error": str(exc), "log": out.getvalue()}, status=500)
     return JsonResponse({"ok": True, "log": out.getvalue()})
+
+
+@csrf_exempt
+@require_POST
+def test_alert_email(request):
+    """Token-triggered test of the alert-email path. Sends a sample alert to every
+    superuser's address (the same recipients real dashboard alerts use, e.g. the
+    domain-expiry warning) and returns who it went to — so we can confirm the
+    address and that Resend accepted it. Uses fail_silently=False so a delivery
+    error surfaces in the response instead of being swallowed."""
+    from django.contrib.auth.models import User
+    from django.core.mail import send_mail
+
+    expected = getattr(settings, "CAPTURE_TRIGGER_TOKEN", "") or getattr(
+        settings, "BACKUP_TRIGGER_TOKEN", "")
+    provided = request.headers.get("X-Capture-Token", "")
+    if not expected or not constant_time_compare(provided, expected):
+        return JsonResponse({"ok": False, "error": "forbidden"}, status=403)
+
+    recipients = sorted(
+        User.objects.filter(is_superuser=True).exclude(email="").values_list("email", flat=True))
+    if not recipients:
+        return JsonResponse({"ok": False, "error": "no superuser has an email set"})
+
+    body = (
+        "בדיקת מערכת ההתראות של babook.\n\n"
+        "כך תיראה התראת פג-תוקף דומיין:\n"
+        "Domain babook.co.il expires in 14 days — renew at https://domains.livedns.co.il\n\n"
+        "אם קיבלת את המייל הזה, נתיב ההתראות במייל תקין."
+    )
+    try:
+        sent = send_mail(
+            subject="[babook] בדיקת התראה — alert email test",
+            message=body,
+            from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@babook.co.il"),
+            recipient_list=recipients,
+            fail_silently=False,
+        )
+    except Exception as exc:  # noqa: BLE001 — report the real delivery error
+        return JsonResponse(
+            {"ok": False, "error": str(exc), "recipients": recipients}, status=500)
+    return JsonResponse({"ok": True, "sent_count": sent, "recipients": recipients})
