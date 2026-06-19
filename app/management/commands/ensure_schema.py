@@ -168,4 +168,38 @@ class Command(BaseCommand):
                     )
                     self.stdout.write(f"  ~ faked {mig_name}")
 
+        # ── Generic repair: rebuild any 'app' table that migrations recorded as
+        #    applied but whose DDL is missing (SQLite ghost-migration drift, e.g.
+        #    after a partial backup/restore). Run AFTER migrate in the deploy, so
+        #    genuinely-pending migrations have already created their tables and
+        #    only true ghosts remain to rebuild here — no "table already exists"
+        #    clash with migrate. Covers app_corporatelead, app_newslettersubscriber,
+        #    the dashboard tables, etc. without hand-written DDL per table.
+        from django.apps import apps
+
+        existing = set(connection.introspection.table_names())
+        remaining = [
+            m for m in apps.get_app_config("app").get_models()
+            if m._meta.managed and not m._meta.proxy and m._meta.db_table not in existing
+        ]
+        # Loop so FK dependencies between several missing tables resolve in order.
+        last_err = None
+        for _ in range(len(remaining) + 1):
+            if not remaining:
+                break
+            still = []
+            for model in remaining:
+                try:
+                    with connection.schema_editor() as se:
+                        se.create_model(model)
+                    self.stdout.write(f"  + table {model._meta.db_table} (rebuilt from model)")
+                except Exception as e:  # noqa: BLE001
+                    last_err = e
+                    still.append(model)
+            if len(still) == len(remaining):
+                for model in still:
+                    self.stderr.write(f"  ! could not rebuild {model._meta.db_table}: {last_err}")
+                break
+            remaining = still
+
         self.stdout.write(self.style.SUCCESS("ensure_schema complete."))
