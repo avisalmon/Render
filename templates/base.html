@@ -308,7 +308,10 @@
   <script>
     function acceptCookies() {
       localStorage.setItem('cookies_accepted', '1');
-      document.getElementById('cookie-banner').style.display = 'none';
+      // Remove (not just display:none) — the banner has Bootstrap's d-flex
+      // (display:flex !important), which an inline display:none can't override.
+      var cb = document.getElementById('cookie-banner');
+      if (cb) cb.remove();
       try {
         fetch('{% url "cookie_consent" %}', {
           method: 'POST',

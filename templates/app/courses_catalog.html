@@ -1,52 +1,112 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static i18n %}
+
 {% block title %}הדרכה - babook{% endblock %}
 {% block meta_description %}קורסי הדרכה מקוונים - מטצים (מובילים טכנולוגיים צעירים), בינה מלאכותית והובלת חדשנות. למד עם אבי סלמון.{% endblock %}
 
 {% block content %}
-<div class="py-4">
-  <h1 class="mb-1">הדרכה</h1>
-  <p class="text-muted mb-4">בחרו תחום כדי להתחיל.</p>
+<div class="catalog py-3" id="catalog">
 
-  <div class="row g-3">
-    {% for d in domains %}
-    <div class="col-12 col-md-6 col-lg-4">
-      <a href="{% url 'courses_domain' d.key %}" class="card-surface browse-card h-100 p-3">
-        <div class="d-flex align-items-start gap-3 mb-2">
-          <i class="bi {{ d.meta.icon }} browse-icon"></i>
-          <div>
-            <h2 class="h5 mb-0">
-              {{ d.meta.title }}
-              {% if d.course_count == 0 %}<span class="soon-badge">בקרוב</span>{% endif %}
-            </h2>
-            <div class="text-muted small">{{ d.meta.subtitle }}</div>
-          </div>
-        </div>
-        <div class="browse-hints">
-          {% for t in d.tracks %}
-          <span class="hint-chip">{{ t.meta.title }}{% if t.courses %} · {{ t.courses|length }}{% endif %}</span>
-          {% empty %}
-          <span class="hint-chip">בקרוב</span>
-          {% endfor %}
-        </div>
-      </a>
+  <!-- Header -->
+  <div class="catalog-head">
+    <div>
+      <h1 class="mb-1">הדרכה <span class="catalog-count">{{ total_courses }} קורסים</span></h1>
+      <p class="text-muted mb-0">וידאו עם הסברים מלאים, תרגול ובחנים — בחרו קורס והתחילו.</p>
     </div>
+    <div class="catalog-search-wrap">
+      <i class="bi bi-search"></i>
+      <input type="search" id="catalogSearch" class="catalog-search" placeholder="חיפוש קורס…" autocomplete="off" aria-label="חיפוש קורס">
+    </div>
+  </div>
+
+  <!-- Continue learning -->
+  {% if continue_courses %}
+  <section class="mb-4">
+    <h2 class="catalog-section-title"><i class="bi bi-play-circle-fill"></i> המשך ללמוד</h2>
+    <div class="course-grid">
+      {% for c in continue_courses %}{% include "app/_course_card.html" with c=c %}{% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Domain filter chips -->
+  <div class="catalog-chips" id="catalogChips">
+    <button class="catalog-chip is-active" data-domain="all">הכל</button>
+    {% for g in domain_groups %}
+    <button class="catalog-chip" data-domain="{{ g.key }}">{{ g.meta.title }} <span>{{ g.count }}</span></button>
     {% endfor %}
   </div>
 
-  {% if uncategorized %}
-  <div class="row g-3 mt-1">
-    <div class="col-12 col-md-6 col-lg-4">
-      <div class="card-surface p-3">
-        <h2 class="h6 mb-2">נוספים</h2>
-        <div class="browse-hints">
-          {% for course in uncategorized %}
-          <a href="{% url 'courses_detail' course.slug %}" class="hint-chip">{{ course.title }}</a>
-          {% endfor %}
-        </div>
+  <!-- Domain sections, sub-grouped by track -->
+  {% for g in domain_groups %}
+  <section class="catalog-domain" data-domain="{{ g.key }}" id="domain-{{ g.key }}">
+    <div class="catalog-domain-head dk-{{ g.key }}">
+      <i class="bi {{ g.meta.icon }}"></i>
+      <div>
+        <h2 class="h5 mb-0">{{ g.meta.title }}</h2>
+        {% if g.meta.subtitle %}<div class="text-muted small">{{ g.meta.subtitle }}</div>{% endif %}
       </div>
     </div>
-  </div>
-  {% endif %}
+    {% for t in g.tracks %}
+    <div class="catalog-track">
+      {% if t.meta.title %}
+      <div class="catalog-track-head dk-{{ g.key }}">
+        {% if g.key == 'ai' %}<span class="level-num">{{ t.key|slice:"-1:" }}</span>{% endif %}
+        <span class="catalog-track-title">{{ t.meta.title }}</span>
+        {% if t.meta.subtitle %}<span class="catalog-track-sub">{{ t.meta.subtitle }}</span>{% endif %}
+      </div>
+      {% endif %}
+      <div class="course-grid">
+        {% for c in t.courses %}{% include "app/_course_card.html" with c=c %}{% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </section>
+  {% endfor %}
+
+  <p class="text-muted text-center py-5" id="catalogEmpty" style="display:none">לא נמצאו קורסים שתואמים לחיפוש.</p>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  var search = document.getElementById('catalogSearch');
+  var chips  = document.getElementById('catalogChips');
+  var empty  = document.getElementById('catalogEmpty');
+  var domains = Array.prototype.slice.call(document.querySelectorAll('.catalog-domain'));
+  var activeDomain = 'all';
+
+  function apply() {
+    var q = (search.value || '').trim().toLowerCase();
+    var anyVisible = false;
+    domains.forEach(function (sec) {
+      var domainOk = (activeDomain === 'all' || sec.dataset.domain === activeDomain);
+      var domainShown = 0;
+      sec.querySelectorAll('.catalog-track').forEach(function (tr) {
+        var trShown = 0;
+        tr.querySelectorAll('.course-card').forEach(function (card) {
+          var match = domainOk && (!q || (card.dataset.title || '').toLowerCase().indexOf(q) !== -1);
+          card.style.display = match ? '' : 'none';
+          if (match) trShown++;
+        });
+        tr.style.display = trShown ? '' : 'none';   // hide empty track sub-sections
+        domainShown += trShown;
+      });
+      sec.style.display = domainShown ? '' : 'none';
+      if (domainShown) anyVisible = true;
+    });
+    empty.style.display = anyVisible ? 'none' : 'block';
+  }
+
+  if (search) search.addEventListener('input', apply);
+  if (chips) chips.addEventListener('click', function (e) {
+    var btn = e.target.closest('.catalog-chip');
+    if (!btn) return;
+    activeDomain = btn.dataset.domain;
+    chips.querySelectorAll('.catalog-chip').forEach(function (b) { b.classList.toggle('is-active', b === btn); });
+    apply();
+  });
+})();
+</script>
 {% endblock %}

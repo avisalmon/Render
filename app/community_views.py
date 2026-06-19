@@ -30,17 +30,57 @@ FEED_SCOPES = ("all", "following", "domain")
 
 
 def community_home(request):
-    """The community hub = the activity feed (REQ-6.4.1). Read-public,
-    chronological (DEC-40), with scope filters for logged-in members."""
+    """The community hub: area map + activity feed + social rail (REQ-6.4.1).
+    Read-public, chronological (DEC-40), with scope filters for members."""
+    from django.utils import timezone
+
     from .feed import build_feed
+    from .models import (Channel, CommunityEvent, ForumThread, ShowcaseProject,
+                         Tip, UserProfile)
+
     scope = request.GET.get("scope", "all")
     if scope not in FEED_SCOPES or not request.user.is_authenticated:
         scope = "all"
     feed = build_feed(request.user if request.user.is_authenticated else None, scope=scope)
+
+    now = timezone.now()
+    area_counts = {
+        "forum": ForumThread.objects.filter(kind="question", is_hidden=False).count(),
+        "showcase": ShowcaseProject.objects.filter(status="published", is_hidden=False).count(),
+        "tips": Tip.objects.filter(is_hidden=False).count(),
+        "chat": Channel.objects.count(),
+        "events": CommunityEvent.objects.filter(end_at__gte=now).count(),
+        "members": UserProfile.objects.filter(is_public=True).count(),
+    }
+    upcoming_events = list(
+        CommunityEvent.objects.filter(end_at__gte=now)
+        .select_related("host__profile").order_by("start_at")[:3])
+    for e in upcoming_events:
+        e.is_live_now = e.start_at <= now <= e.end_at
+
+    # Big highlight cards for the main column: showcase → coming event → top course
+    from django.db.models import Count
+
+    from app.models import Course
+    from app.views import POPULAR_COURSE_SLUGS
+
+    showcase_featured = (
+        ShowcaseProject.objects.filter(status="published", is_hidden=False)
+        .select_related("author__profile").order_by("-is_featured", "-created_at").first())
+    coming_event = upcoming_events[0] if upcoming_events else None
+    pop = (Course.objects.filter(slug__in=POPULAR_COURSE_SLUGS, is_published=True)
+           .annotate(n=Count("enrollments")).order_by("-n", "title").first())
+    popular_course = {"course": pop, "lessons": pop.videos.count()} if pop else None
+
     return render(request, "app/community/home.html", {
         "feed": feed,
         "scope": scope,
         "top_members": _leaderboard_rows(limit=5),
+        "area_counts": area_counts,
+        "upcoming_events": upcoming_events,
+        "showcase_featured": showcase_featured,
+        "coming_event": coming_event,
+        "popular_course": popular_course,
     })
 
 

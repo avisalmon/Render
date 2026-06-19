@@ -5,163 +5,340 @@
 
 {% block content %}
 
-  {% if user.is_authenticated and last_progress and last_progress.video.course %}
-  <div class="alert alert-primary d-flex align-items-center justify-content-between mb-4" role="alert">
-    <div>
-      <i class="bi bi-play-circle-fill me-2"></i>
-      <strong>המשך לצפות:</strong> {{ last_progress.video.course.title }} - {{ last_progress.video.title }}
-      {% if last_progress.last_position_seconds > 5 %}
-        <small class="text-muted ms-2">({{ last_progress.last_position_seconds|floatformat:0 }} שניות)</small>
+<div class="home-shell" id="homeShell" data-rail="open">
+
+  <!-- ===================== RIGHT RAIL — community pulse ===================== -->
+  <aside class="home-rail" id="homeRail" aria-label="קהילה">
+    <div class="home-rail-inner">
+      <div class="rail-head">
+        <h2 class="rail-title"><i class="bi bi-broadcast me-1"></i> מהקהילה</h2>
+        <button class="rail-icon-btn rail-collapse" id="railCollapse" title="כיווץ הסרגל" aria-label="כיווץ הסרגל">
+          <i class="bi bi-chevron-double-right"></i>
+        </button>
+        <button class="rail-icon-btn rail-close-mobile" id="railCloseMobile" title="סגירה" aria-label="סגירה">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      {% if not user.is_authenticated %}
+      <div class="rail-join">
+        <p class="mb-2 small">הצטרפו לקהילה — לשתף, לשאול ולהתעדכן.</p>
+        <a href="{% url 'register' %}" class="btn btn-sm btn-primary w-100">הרשמה חינם</a>
+      </div>
       {% endif %}
-    </div>
-    <a href="{% url 'courses_lesson' slug=last_progress.video.course.slug lesson_order=last_progress.video.lesson_order %}"
-       class="btn btn-primary btn-sm ms-3">
-      <i class="bi bi-arrow-left"></i> המשך
-    </a>
-  </div>
-  {% endif %}
 
-  {% if recommended %}
-  <!-- Personalized "start here" rail (REQ-5.6.3) -->
-  <section class="mb-4">
-    <h2 class="h5 mb-1">מומלץ עבורך <i class="bi bi-stars" style="color:var(--accent-primary)"></i></h2>
-    <p class="text-muted small mb-3">לפי תחומי העניין והרמה שבחרת. ההמלצות נשמרות ב<a href="{% url 'profile' %}" class="text-decoration-none">פרופיל שלך</a>.</p>
-    <div class="row g-3">
-      {% for r in recommended %}
-      <div class="col-12 col-md-4">
-        <a href="{{ r.url }}" class="card-surface feature-card d-block p-3 text-decoration-none" style="color:var(--text-primary)">
-          <div class="d-flex align-items-center gap-2 mb-1">
-            <i class="bi bi-mortarboard-fill" style="color:var(--accent-primary)"></i>
-            <strong>{{ r.course.title }}</strong>
-            {% if forloop.first %}<span class="badge bg-primary">התחל כאן</span>{% endif %}
-          </div>
-          <p class="text-muted small mb-0">{{ r.course.description|truncatechars:90 }}</p>
+      {% if rail_events %}
+      <section class="rail-section">
+        <div class="rail-section-head">
+          <span><i class="bi bi-calendar-event"></i> אירועים</span>
+          <a href="{% url 'events_page' %}">לכולם ←</a>
+        </div>
+        {% for e in rail_events %}
+        <a href="{% url 'event_detail' slug=e.slug %}" class="rail-item">
+          {% if e.is_live_now %}<span class="rail-live"><span class="rail-live-dot"></span> חי עכשיו</span>{% endif %}
+          <div class="rail-item-title">{{ e.title }}</div>
+          <div class="rail-item-meta">{{ e.start_at|date:"d/m H:i" }} · {{ e.location_label }}</div>
         </a>
-      </div>
-      {% endfor %}
-    </div>
-  </section>
-  {% endif %}
+        {% endfor %}
+      </section>
+      {% endif %}
 
-  {% if checklist %}
-  <!-- Get-started checklist (REQ-5.6.5) -->
-  <section id="starter-checklist" class="card-surface p-3 mb-4">
-    <div class="d-flex justify-content-between align-items-center">
-      <h2 class="h6 mb-0"><i class="bi bi-rocket-takeoff me-1"></i> צעדים ראשונים</h2>
-      <button class="btn btn-sm btn-link text-secondary p-0" aria-label="סגור"
-              onclick="document.cookie='checklist_dismissed=1;path=/;max-age=31536000';document.getElementById('starter-checklist').remove();">✕</button>
-    </div>
-    <div class="d-flex flex-wrap gap-3 mt-2 small">
-      <span>{% if checklist.watched %}✅{% else %}⬜{% endif %} צפייה בשיעור ראשון</span>
-      <span>{% if checklist.quiz %}✅{% else %}⬜{% endif %} מעבר בוחן</span>
-      <span>{% if checklist.reflected %}✅{% else %}⬜{% endif %} שיתוף רפלקציה</span>
-      <span>{% if checklist.enrolled %}✅{% else %}⬜{% endif %} הרשמה לקורס</span>
-      <span>{% if checklist.community %}✅{% else %}⬜{% endif %} <a href="{% url 'community' %}">הצטרפו לקהילה</a></span>
-    </div>
-  </section>
-  {% endif %}
-
-  {% if community_strip %}
-  <!-- "מהקהילה" hook (REQ-6.4.5): compact 3-card strip into the feed -->
-  <section class="mb-4">
-    <div class="d-flex justify-content-between align-items-center mb-2">
-      <h2 class="h6 mb-0"><i class="bi bi-people-fill me-1" style="color:var(--accent-primary)"></i> מהקהילה</h2>
-      <a href="{% url 'community' %}" class="small text-decoration-none">לפיד המלא ←</a>
-    </div>
-    <div class="row g-2">
-      {% for item in community_strip %}
-      <div class="col-md-4">
-        <a href="{{ item.url }}" class="card-surface d-block p-3 h-100 text-decoration-none" style="color:var(--text-primary)">
-          <div class="small text-muted mb-1"><i class="bi {{ item.icon }}" style="color:var(--accent-primary)"></i> {{ item.actor_name }}</div>
-          <div class="small">{{ item.text|truncatechars:80 }}</div>
+      {% if feed_items %}
+      <section class="rail-section">
+        <div class="rail-section-head">
+          <span><i class="bi bi-activity"></i> פעילות אחרונה</span>
+          <a href="{% url 'community' %}">לפיד המלא ←</a>
+        </div>
+        {% for item in feed_items %}
+        <a href="{{ item.url }}" class="rail-item">
+          <div class="rail-item-meta"><i class="bi {{ item.icon }}" style="color:var(--accent-primary)"></i> {{ item.actor_name }}</div>
+          <div class="rail-item-text">{{ item.text|truncatechars:80 }}</div>
         </a>
+        {% endfor %}
+      </section>
+      {% endif %}
+
+      {% if top_members %}
+      <section class="rail-section">
+        <div class="rail-section-head">
+          <span><i class="bi bi-trophy"></i> חברים מובילים</span>
+          <a href="{% url 'community_leaderboard' %}">דירוג ←</a>
+        </div>
+        {% for m in top_members %}
+        <a href="{% url 'community_profile' username=m.user.username %}" class="rail-member">
+          {% if m.user.profile.avatar %}
+            <img src="{{ m.user.profile.avatar.url }}" alt="" class="rail-avatar">
+          {% else %}
+            <span class="rail-avatar rail-avatar-ph"><i class="bi bi-person"></i></span>
+          {% endif %}
+          <span class="rail-member-name">{{ m.name }}</span>
+          <span class="rail-member-pts">{{ m.points }}</span>
+        </a>
+        {% endfor %}
+      </section>
+      {% endif %}
+
+      {% if not rail_events and not feed_items and not top_members %}
+      <div class="rail-empty small text-muted">
+        עוד אין פעילות קהילתית להצגה. <a href="{% url 'community' %}">היו הראשונים ←</a>
       </div>
-      {% endfor %}
+      {% endif %}
+
+      <a href="{% url 'community' %}" class="btn btn-sm btn-outline-primary w-100 mt-2">
+        <i class="bi bi-people me-1"></i> לכל הקהילה
+      </a>
     </div>
-  </section>
-  {% endif %}
+  </aside>
 
-  {% if show_intro %}
-  <!-- ============================ HERO (first day only, REQ-7.1.4) ============================ -->
-  <section class="hero-slim">
-    <h1 class="hero-brand">babook</h1>
-    <p class="hero-joke">
-      📚 אתר שיתוף הספרים #1 בישראל - חוץ מ<strong>שיתוף ספרים</strong> עצמו, שעדיין לא בנינו 🙂.
-      בינתיים יש כאן כל השאר 👇
-    </p>
-  </section>
-  {% endif %}
+  <!-- ===================== MAIN COLUMN ===================== -->
+  <div class="home-main">
 
-  <!-- ===================== THE WORLDS OF BABOOK ===================== -->
-  <section class="mt-3">
-    {% if show_intro %}
-    <h2 class="text-center mb-1">העולמות של babook</h2>
-    <p class="text-center text-muted mb-4">עולם אחד כבר באוויר. השאר בדרך - חלקם ברצינות גמורה, ואחד… פחות. 🙂</p>
+    {% if user.is_authenticated and last_progress and last_progress.video.course %}
+    <div class="alert alert-primary d-flex align-items-center justify-content-between mb-4" role="alert">
+      <div>
+        <i class="bi bi-play-circle-fill me-2"></i>
+        <strong>המשך לצפות:</strong> {{ last_progress.video.course.title }} - {{ last_progress.video.title }}
+        {% if last_progress.last_position_seconds > 5 %}
+          <small class="text-muted ms-2">({{ last_progress.last_position_seconds|floatformat:0 }} שניות)</small>
+        {% endif %}
+      </div>
+      <a href="{% url 'courses_lesson' slug=last_progress.video.course.slug lesson_order=last_progress.video.lesson_order %}"
+         class="btn btn-primary btn-sm ms-3">
+        <i class="bi bi-arrow-left"></i> המשך
+      </a>
+    </div>
     {% endif %}
 
-    <!-- Training - LIVE, featured full width -->
-    <div class="row g-3 mb-3">
-      <div class="col-12">
-        <a href="{% url 'courses_catalog' %}" class="card-surface apex-card">
-          <i class="bi bi-mortarboard-fill apex-icon"></i>
-          <div>
-            <h4 class="mb-1">הדרכה <span class="live-badge">פעיל</span></h4>
-            <p class="text-muted mb-0">קורסים אונליין - וידאו עם הסברים מלאים בפייתון, ארדואינו, תלת-מימד, AI ועוד. כבר באוויר.</p>
+    {% if recommended %}
+    <!-- Personalized "start here" rail (REQ-5.6.3) -->
+    <section class="mb-4">
+      <h2 class="h5 mb-1">מומלץ עבורך <i class="bi bi-stars" style="color:var(--accent-primary)"></i></h2>
+      <p class="text-muted small mb-3">לפי תחומי העניין והרמה שבחרת. ההמלצות נשמרות ב<a href="{% url 'profile' %}" class="text-decoration-none">פרופיל שלך</a>.</p>
+      <div class="row g-3">
+        {% for r in recommended %}
+        <div class="col-12 col-md-6">
+          <a href="{{ r.url }}" class="card-surface feature-card d-block p-3 text-decoration-none" style="color:var(--text-primary)">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <i class="bi bi-mortarboard-fill" style="color:var(--accent-primary)"></i>
+              <strong>{{ r.course.title }}</strong>
+              {% if forloop.first %}<span class="badge bg-primary">התחל כאן</span>{% endif %}
+            </div>
+            <p class="text-muted small mb-0">{{ r.course.description|truncatechars:90 }}</p>
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    {% if checklist %}
+    <!-- Get-started checklist (REQ-5.6.5) -->
+    <section id="starter-checklist" class="card-surface p-3 mb-4">
+      <div class="d-flex justify-content-between align-items-center">
+        <h2 class="h6 mb-0"><i class="bi bi-rocket-takeoff me-1"></i> צעדים ראשונים</h2>
+        <button class="btn btn-sm btn-link text-secondary p-0" aria-label="סגור"
+                onclick="document.cookie='checklist_dismissed=1;path=/;max-age=31536000';document.getElementById('starter-checklist').remove();">✕</button>
+      </div>
+      <div class="d-flex flex-wrap gap-3 mt-2 small">
+        <span>{% if checklist.watched %}✅{% else %}⬜{% endif %} צפייה בשיעור ראשון</span>
+        <span>{% if checklist.quiz %}✅{% else %}⬜{% endif %} מעבר בוחן</span>
+        <span>{% if checklist.reflected %}✅{% else %}⬜{% endif %} שיתוף רפלקציה</span>
+        <span>{% if checklist.enrolled %}✅{% else %}⬜{% endif %} הרשמה לקורס</span>
+        <span>{% if checklist.community %}✅{% else %}⬜{% endif %} <a href="{% url 'community' %}">הצטרפו לקהילה</a></span>
+      </div>
+    </section>
+    {% endif %}
+
+    {% if show_intro %}
+    <!-- HERO (first day only, REQ-7.1.4) -->
+    <section class="hero-slim">
+      <h1 class="hero-brand">babook</h1>
+      <p class="hero-joke">
+        📚 אתר שיתוף הספרים #1 בישראל - חוץ מ<strong>שיתוף ספרים</strong> עצמו, שעדיין לא בנינו 🙂.
+        בינתיים יש כאן כל השאר 👇
+      </p>
+    </section>
+    {% endif %}
+
+    <!-- TRAINING — the live product, the hero of the page -->
+    <section class="mt-2">
+      <a href="{% url 'courses_catalog' %}" class="training-hero">
+        <div class="training-hero-body">
+          <h3 class="training-hero-title">
+            <i class="bi bi-mortarboard-fill"></i> הדרכה <span class="live-badge">פעיל</span>
+          </h3>
+          <p class="training-hero-lead">
+            קורסי וידאו אונליין עם הסברים מלאים, תרגול ובחנים ותעודת סיום — ממתחילים ועד מתקדמים.
+          </p>
+          <ul class="training-hero-list">
+            <li><i class="bi bi-check-circle-fill"></i> פייתון, סקראץ' ופיתוח web</li>
+            <li><i class="bi bi-check-circle-fill"></i> ארדואינו, מיקרו-בקרים ו-FPGA</li>
+            <li><i class="bi bi-check-circle-fill"></i> תכנון והדפסת תלת-מימד</li>
+            <li><i class="bi bi-check-circle-fill"></i> בינה מלאכותית — בשלוש רמות</li>
+          </ul>
+          <div class="training-hero-foot">
+            <span class="btn btn-primary">לקטלוג הקורסים ←</span>
+            <span class="training-hero-meta">
+              <i class="bi bi-collection-play"></i>
+              {% if published_course_count %}{{ published_course_count }} קורסים · {% endif %}השיעור הראשון בכל קורס חינם
+            </span>
           </div>
-        </a>
-      </div>
-    </div>
+        </div>
+        <div class="training-hero-media" id="thMedia">
+          {% if training_videos %}
+          <script id="thVideos" type="application/json">[{% for v in training_videos %}"{% static v.path %}?v={{ v.ver }}"{% if not forloop.last %},{% endif %}{% endfor %}]</script>
+          <video class="thm-layer" muted playsinline preload="auto" poster="{% static 'img/training-hero.png' %}"></video>
+          <video class="thm-layer" muted playsinline preload="auto"></video>
+          {% else %}
+          <img src="{% static 'img/training-hero.png' %}" alt="הדרכה ב-babook" class="thm-fallback">
+          {% endif %}
+        </div>
+      </a>
+    </section>
 
-    <!-- The rest - placeholders -->
-    <div class="row g-3">
-      <div class="col-12 col-md-6 col-lg-4">
-        <a href="{% url 'services' %}" class="card-surface feature-card text-center">
-          <i class="bi bi-bag-fill feature-icon"></i>
-          <h5 class="mb-1">חנות שירותים <span class="soon-badge">בקרוב™</span></h5>
-          <p class="text-muted small mb-0">ייעוץ אישי, ליווי פרויקטים וסקירת קוד.</p>
-        </a>
-      </div>
-
-      <div class="col-12 col-md-6 col-lg-4">
-        <a href="{% url 'community' %}" class="card-surface feature-card text-center">
-          <i class="bi bi-people-fill feature-icon"></i>
-          <h5 class="mb-1">קהילה <span class="soon-badge">בקרוב™</span></h5>
-          <p class="text-muted small mb-0">פורומים, שיתופי ידע ומפגשים.</p>
-        </a>
-      </div>
-
-      <div class="col-12 col-md-6 col-lg-4">
-        <a href="{% url 'workshops' %}" class="card-surface feature-card text-center">
-          <i class="bi bi-easel2-fill feature-icon"></i>
-          <h5 class="mb-1">סדנאות והובלת חדשנות <span class="soon-badge">בקרוב™</span></h5>
-          <p class="text-muted small mb-0">סדנאות מעשיות וליווי חדשנות, לארגונים ולפרטיים.</p>
-        </a>
-      </div>
-
-      <div class="col-12 col-md-6 col-lg-4">
-        <div class="card-surface feature-card is-soon text-center">
-          <i class="bi bi-book-half feature-icon"></i>
-          <h5 class="mb-1">שיתוף ספרים <span class="soon-badge">לא באמת קיים</span></h5>
-          <p class="text-muted small mb-0">השם מבטיח. המציאות… פחות. 🙈</p>
+    <!-- The other worlds — clearly secondary -->
+    <section class="mt-4">
+      <h2 class="worlds-subhead">בקרוב ב-babook</h2>
+      <div class="row g-3">
+        <div class="col-12 col-md-6">
+          <a href="{% url 'services' %}" class="card-surface feature-card text-center">
+            <i class="bi bi-bag-fill feature-icon"></i>
+            <h5 class="mb-1">חנות שירותים <span class="soon-badge">בקרוב™</span></h5>
+            <p class="text-muted small mb-0">ייעוץ אישי, ליווי פרויקטים וסקירת קוד.</p>
+          </a>
+        </div>
+        <div class="col-12 col-md-6">
+          <a href="{% url 'community' %}" class="card-surface feature-card text-center">
+            <i class="bi bi-people-fill feature-icon"></i>
+            <h5 class="mb-1">קהילה <span class="soon-badge">בקרוב™</span></h5>
+            <p class="text-muted small mb-0">פורומים, שיתופי ידע ומפגשים.</p>
+          </a>
+        </div>
+        <div class="col-12 col-md-6">
+          <a href="{% url 'workshops' %}" class="card-surface feature-card text-center">
+            <i class="bi bi-easel2-fill feature-icon"></i>
+            <h5 class="mb-1">סדנאות והובלת חדשנות <span class="soon-badge">בקרוב™</span></h5>
+            <p class="text-muted small mb-0">סדנאות מעשיות וליווי חדשנות, לארגונים ולפרטיים.</p>
+          </a>
+        </div>
+        <div class="col-12 col-md-6">
+          <div class="card-surface feature-card is-soon text-center">
+            <i class="bi bi-book-half feature-icon"></i>
+            <h5 class="mb-1">שיתוף ספרים <span class="soon-badge">לא באמת קיים</span></h5>
+            <p class="text-muted small mb-0">השם מבטיח. המציאות… פחות. 🙈</p>
+          </div>
+        </div>
+        <div class="col-12 col-md-6">
+          <a href="{% url 'nostalgia' %}" class="card-surface feature-card text-center">
+            <i class="bi bi-clock-history feature-icon"></i>
+            <h5 class="mb-1">נוסטלגיה <span class="soon-badge">בקרוב™</span></h5>
+            <p class="text-muted small mb-0">ביוגרפיות, שחזור סרטים ותמונות, עצי משפחה.</p>
+          </a>
+        </div>
+        <div class="col-12 col-md-6">
+          <a href="{% url 'research' %}" class="card-surface feature-card text-center">
+            <i class="bi bi-journal-bookmark-fill feature-icon"></i>
+            <h5 class="mb-1">מחקר ואקדמיה <span class="soon-badge">בקרוב™</span></h5>
+            <p class="text-muted small mb-0">ליווי מחקר, כתיבה אקדמית וכלי AI לחוקרים.</p>
+          </a>
         </div>
       </div>
+    </section>
 
-      <div class="col-12 col-md-6 col-lg-4">
-        <a href="{% url 'nostalgia' %}" class="card-surface feature-card text-center">
-          <i class="bi bi-clock-history feature-icon"></i>
-          <h5 class="mb-1">נוסטלגיה <span class="soon-badge">בקרוב™</span></h5>
-          <p class="text-muted small mb-0">ביוגרפיות, שחזור סרטים ותמונות, עצי משפחה.</p>
-        </a>
-      </div>
+  </div>
+</div>
 
-      <div class="col-12 col-md-6 col-lg-4">
-        <a href="{% url 'research' %}" class="card-surface feature-card text-center">
-          <i class="bi bi-journal-bookmark-fill feature-icon"></i>
-          <h5 class="mb-1">מחקר ואקדמיה <span class="soon-badge">בקרוב™</span></h5>
-          <p class="text-muted small mb-0">ליווי מחקר, כתיבה אקדמית וכלי AI לחוקרים.</p>
-        </a>
-      </div>
-    </div>
-  </section>
+<!-- Collapsed-state re-open tab (desktop) -->
+<button class="rail-reopen" id="railReopen" title="פתח קהילה" aria-label="פתח את סרגל הקהילה">
+  <i class="bi bi-chevron-double-left"></i>
+  <span>קהילה</span>
+</button>
 
+<!-- Mobile drawer trigger + backdrop -->
+<button class="rail-fab" id="railFab" aria-label="פתח קהילה"><i class="bi bi-people-fill"></i></button>
+<div class="rail-backdrop" id="railBackdrop"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  var shell    = document.getElementById('homeShell');
+  var rail     = document.getElementById('homeRail');
+  var reopen   = document.getElementById('railReopen');
+  var collapse = document.getElementById('railCollapse');
+  var fab      = document.getElementById('railFab');
+  var backdrop = document.getElementById('railBackdrop');
+  var closeM   = document.getElementById('railCloseMobile');
+  var KEY      = 'home_rail_collapsed';
+
+  // The collapse button is position:fixed (so it never scrolls away); align it
+  // to the rail's leading edge on load + resize.
+  function positionCollapse() {
+    if (!collapse || !rail) return;
+    if (window.innerWidth < 992) { collapse.style.left = ''; return; }
+    collapse.style.left = (rail.getBoundingClientRect().left + 8) + 'px';
+  }
+  window.addEventListener('resize', positionCollapse);
+
+  // --- Desktop collapse/expand (persisted) ---
+  function setCollapsed(c) {
+    shell.setAttribute('data-rail', c ? 'collapsed' : 'open');
+    try { localStorage.setItem(KEY, c ? '1' : '0'); } catch (e) {}
+    if (!c) positionCollapse();
+  }
+  if (localStorage.getItem(KEY) === '1') shell.setAttribute('data-rail', 'collapsed');
+  if (collapse) collapse.addEventListener('click', function () { setCollapsed(true); });
+  if (reopen)   reopen.addEventListener('click',   function () { setCollapsed(false); });
+  positionCollapse();
+
+  // --- Mobile drawer (independent of the desktop collapsed state) ---
+  function openDrawer(o) {
+    shell.classList.toggle('rail-drawer-open', o);
+    document.body.classList.toggle('rail-no-scroll', o);
+  }
+  if (fab)      fab.addEventListener('click',      function () { openDrawer(true); });
+  if (backdrop) backdrop.addEventListener('click', function () { openDrawer(false); });
+  if (closeM)   closeM.addEventListener('click',   function () { openDrawer(false); });
+})();
+
+// --- Training hero: crossfade video loop (1s dissolve, N clips) ---
+(function () {
+  var media  = document.getElementById('thMedia');
+  var holder = document.getElementById('thVideos');
+  if (!media || !holder) return;
+  var list; try { list = JSON.parse(holder.textContent); } catch (e) { list = []; }
+  var layers = media.querySelectorAll('.thm-layer');
+  if (!list.length || layers.length < 2) return;
+
+  var FADE = 1.0;                       // seconds of dissolve overlap
+  var front = layers[0], back = layers[1];
+  var i = 0, fading = false;
+
+  function tick(e) {
+    if (e.target !== front || fading || !front.duration) return;
+    if (front.duration - front.currentTime <= FADE) {
+      fading = true;
+      try { back.currentTime = 0; } catch (err) {}
+      back.play().catch(function () {});
+      front.classList.remove('is-front');
+      back.classList.add('is-front');     // CSS opacity transition does the dissolve
+      setTimeout(function () {
+        front.pause();
+        var t = front; front = back; back = t;
+        i = (i + 1) % list.length;
+        back.src = list[(i + 1) % list.length]; back.load();  // preload the next
+        fading = false;
+      }, FADE * 1000);
+    }
+  }
+  layers[0].addEventListener('timeupdate', tick);
+  layers[1].addEventListener('timeupdate', tick);
+
+  front.classList.add('is-front');
+  front.src = list[0];
+  front.play().catch(function () {});
+  back.src = list[1 % list.length]; back.load();
+})();
+</script>
 {% endblock %}

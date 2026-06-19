@@ -1,121 +1,156 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}קהילת babook{% endblock %}
 
 {% block content %}
-<div class="py-4">
-  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-1">
-    <h1 class="mb-0"><i class="bi bi-people-fill me-2" style="color:var(--accent-primary)"></i>קהילת babook</h1>
-    <a href="{% url 'tips_list' %}" class="small text-decoration-none"><i class="bi bi-lightbulb"></i> כל הטיפים ←</a>
-  </div>
-  <p class="text-muted mb-3">שואלים, עונים, משוויצים במה שבניתם - וגדלים ביחד.</p>
+<div class="py-3 community">
 
+  <!-- Header -->
+  <h1 class="mb-1"><i class="bi bi-people-fill me-2" style="color:var(--accent-primary)"></i>קהילת babook</h1>
+  <p class="text-muted mb-3">שואלים, עונים, משוויצים במה שבניתם — וגדלים ביחד.</p>
 
   {% include "app/community/_guest_note.html" %}
 
-  <!-- One door to all community areas (REQ-6.12.9) -->
-  <div class="mb-4">
-    <div class="small text-muted mb-1">אזורי הקהילה</div>
-    <div class="d-flex gap-2 flex-wrap">
-      <a href="{% url 'community' %}" class="btn btn-sm btn-primary"><i class="bi bi-rss"></i> פיד</a>
-      <a href="{% url 'forum_home' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-question-circle"></i> פורום</a>
-      <a href="{% url 'showcase_wall' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-easel2"></i> דוכן השוויץ</a>
-      <a href="{% url 'tips_list' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-lightbulb"></i> טיפים</a>
-      <a href="{% url 'chat_home' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-chat-dots"></i> צ'אט</a>
-      <a href="{% url 'events_page' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-calendar-event"></i> אירועים</a>
-      <a href="{% url 'crashtech_home' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-cpu"></i> CrashTech</a>
-      <a href="{% url 'community_members' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-people"></i> חברים</a>
-    </div>
+  <!-- Community area tiles — the map (REQ-6.12.9) -->
+  <div class="comm-areas">
+    <a href="{% url 'showcase_wall' %}" class="comm-area ca-showcase">
+      <i class="bi bi-easel2"></i>
+      <span class="comm-area-label">דוכן השוויץ</span>
+      <span class="comm-area-sub">פרויקטים{% if area_counts.showcase %} · {{ area_counts.showcase }}{% endif %}</span>
+    </a>
+    <a href="{% url 'chat_home' %}" class="comm-area ca-chat">
+      <i class="bi bi-chat-dots"></i>
+      <span class="comm-area-label">צ'אט</span>
+      <span class="comm-area-sub">{% if area_counts.chat %}{{ area_counts.chat }} ערוצים{% else %}ערוצי שיחה{% endif %}</span>
+    </a>
+    <a href="{% url 'events_page' %}" class="comm-area ca-events">
+      <i class="bi bi-calendar-event"></i>
+      <span class="comm-area-label">אירועים</span>
+      <span class="comm-area-sub">{% if area_counts.events %}{{ area_counts.events }} קרובים{% else %}מפגשים ולייבים{% endif %}</span>
+    </a>
+    <a href="{% url 'community_members' %}" class="comm-area ca-members">
+      <i class="bi bi-people"></i>
+      <span class="comm-area-label">חברים</span>
+      <span class="comm-area-sub">{% if area_counts.members %}{{ area_counts.members }} חברים{% else %}מי כאן{% endif %}</span>
+    </a>
+    <a href="{% url 'crashtech_home' %}" class="comm-area ca-crashtech">
+      <i class="bi bi-cpu"></i>
+      <span class="comm-area-label">CrashTech</span>
+      <span class="comm-area-sub">האקאתונים</span>
+    </a>
+    <a href="{% url 'services' %}" class="comm-area ca-skill">
+      <i class="bi bi-bag"></i>
+      <span class="comm-area-label">Skill Store</span>
+      <span class="comm-area-sub">שירותים וייעוץ</span>
+    </a>
   </div>
-
-  {% if user.is_authenticated and not user.profile.is_public %}
-  <!-- One-click join the community (REQ-6.1.12) -->
-  <div class="card-surface p-3 mb-4 d-flex align-items-center justify-content-between flex-wrap gap-2"
-       style="border-color:var(--accent-primary)">
-    <span><i class="bi bi-stars" style="color:var(--accent-primary)"></i>
-      רוצים להיות חלק מהקהילה? פרסמו פרופיל ציבורי ותופיעו בין החברים.</span>
-    <form method="post" action="{% url 'community_go_public' %}">{% csrf_token %}
-      <button class="btn btn-primary"><i class="bi bi-people-fill"></i> הצטרפו לקהילה</button>
-    </form>
-  </div>
-  {% endif %}
 
   <div class="row g-4">
+    <!-- MAIN: big highlight cards (showcase → coming event → popular training) -->
     <div class="col-lg-8">
-      <!-- Composer (REQ-6.4.3): one box, three destinations -->
-      {% if user.is_authenticated %}
-      <div class="card-surface p-3 mb-3">
-        <div class="fw-semibold mb-2"><i class="bi bi-pencil-square me-1" style="color:var(--accent-primary)"></i> שתפו משהו</div>
-        <form method="post" action="{% url 'tip_create' %}">
-          {% csrf_token %}
-          <input type="hidden" name="next" value="{% url 'community' %}">
-          <textarea name="body" id="composer-body" class="form-control mb-2" rows="2" maxlength="2000"
-                    placeholder="כתבו כאן... טיפ קצר, שאלה לקהילה, או רעיון לפרויקט"></textarea>
-          <input type="text" name="tags" class="form-control form-control-sm mb-2"
-                 placeholder="תגיות, מופרדות בפסיק (ai, copilot)">
-          {% if not user.profile.guidelines_accepted_at %}
-          <label class="small d-block mb-2"><input type="checkbox" name="accept_guidelines" value="1"> קראתי ואני מסכים/ה ל<a href="{% url 'community_guidelines' %}" target="_blank">כללי הקהילה</a></label>
-          {% endif %}
-          <div class="row g-2 text-center">
-            <div class="col-4">
-              <button class="btn btn-outline-primary btn-sm w-100"><i class="bi bi-lightbulb"></i> טיפ</button>
-              <div class="text-muted" style="font-size:.7rem">רעיון קצר</div>
-            </div>
-            <div class="col-4">
-              <a href="{% url 'forum_new' %}" class="btn btn-outline-primary btn-sm w-100 js-composer-route" data-base="{% url 'forum_new' %}"><i class="bi bi-question-circle"></i> שאלה</a>
-              <div class="text-muted" style="font-size:.7rem">מקבל תשובות</div>
-            </div>
-            <div class="col-4">
-              <a href="{% url 'showcase_new' %}" class="btn btn-outline-primary btn-sm w-100 js-composer-route" data-base="{% url 'showcase_new' %}"><i class="bi bi-easel2"></i> פרויקט</a>
-              <div class="text-muted" style="font-size:.7rem">להשוויץ בו</div>
-            </div>
+      <div class="comm-bigcards">
+
+        <!-- 1) Showcase -->
+        {% if showcase_featured %}
+        <a href="{% url 'showcase_wall' %}" class="comm-bigcard">
+          <div class="comm-bigcard-media bc-showcase">
+            {% if showcase_featured.cover %}<img src="{{ showcase_featured.cover.url }}" alt="">{% else %}<i class="bi bi-easel2"></i>{% endif %}
           </div>
-        </form>
-      </div>
-      <script>
-        // Carry the composer text to the forum/showcase form (REQ-6.12.1)
-        document.querySelectorAll('.js-composer-route').forEach(function(a){
-          a.addEventListener('click', function(e){
-            var t = document.getElementById('composer-body');
-            if(t && t.value.trim()){ e.currentTarget.href = a.dataset.base + '?draft=' + encodeURIComponent(t.value.trim()); }
-          });
-        });
-      </script>
-      {% endif %}
+          <div class="comm-bigcard-body">
+            <span class="comm-bigcard-kicker kc-showcase"><i class="bi bi-easel2"></i> דוכן השוויץ</span>
+            <h3 class="comm-bigcard-title">{{ showcase_featured.title }}</h3>
+            <p class="comm-bigcard-text">{{ showcase_featured.tagline|default:showcase_featured.story|truncatechars:120 }}</p>
+            <span class="comm-bigcard-cta">לכל הפרויקטים ←</span>
+          </div>
+        </a>
+        {% else %}
+        <a href="{% url 'showcase_new' %}" class="comm-bigcard">
+          <div class="comm-bigcard-media bc-showcase"><i class="bi bi-easel2"></i></div>
+          <div class="comm-bigcard-body">
+            <span class="comm-bigcard-kicker kc-showcase"><i class="bi bi-easel2"></i> דוכן השוויץ</span>
+            <h3 class="comm-bigcard-title">הראו מה בניתם</h3>
+            <p class="comm-bigcard-text">עדיין אין פרויקטים — היו הראשונים לשתף משהו מגניב.</p>
+            <span class="comm-bigcard-cta">שיתוף פרויקט ←</span>
+          </div>
+        </a>
+        {% endif %}
 
-      <!-- Scope filters (REQ-6.4.1) -->
-      {% if user.is_authenticated %}
-      <div class="btn-group btn-group-sm mb-3" role="group">
-        <a href="{% url 'community' %}" class="btn {% if scope == 'all' %}btn-primary{% else %}btn-outline-secondary{% endif %}">הכל</a>
-        <a href="?scope=following" class="btn {% if scope == 'following' %}btn-primary{% else %}btn-outline-secondary{% endif %}">אני עוקב</a>
-        <a href="?scope=domain" class="btn {% if scope == 'domain' %}btn-primary{% else %}btn-outline-secondary{% endif %}">התחום שלי</a>
-      </div>
-      {% endif %}
+        <!-- 2) Coming event -->
+        {% if coming_event %}
+        <a href="{% url 'event_detail' slug=coming_event.slug %}" class="comm-bigcard">
+          <div class="comm-bigcard-media bc-event">
+            <i class="bi bi-calendar-event"></i>
+            <span class="bc-event-date">{{ coming_event.start_at|date:"d/m" }}</span>
+          </div>
+          <div class="comm-bigcard-body">
+            <span class="comm-bigcard-kicker kc-event">
+              {% if coming_event.is_live_now %}<span class="rail-live"><span class="rail-live-dot"></span> חי עכשיו</span>{% else %}<i class="bi bi-calendar-event"></i> האירוע הקרוב{% endif %}
+            </span>
+            <h3 class="comm-bigcard-title">{{ coming_event.title }}</h3>
+            <p class="comm-bigcard-text">{{ coming_event.start_at|date:"l · d/m H:i" }} · {{ coming_event.location_label }}</p>
+            <span class="comm-bigcard-cta">לפרטים והרשמה ←</span>
+          </div>
+        </a>
+        {% endif %}
 
-      <!-- The feed -->
-      {% for item in feed %}
-        {% include "app/community/_feed_item.html" %}
-      {% empty %}
-      <div class="card-surface p-4 text-center text-muted">
-        {% if scope == 'following' %}עדיין אין פעילות מאנשים שאתם עוקבים אחריהם. <a href="{% url 'community_members' %}">מצאו חברים ←</a>
-        {% elif scope == 'domain' %}אין עדיין פעילות בתחומים שלכם. נסו «הכל».
-        {% else %}עדיין שקט בקהילה. תהיו הראשונים - שתפו טיפ או <a href="{% url 'forum_new' %}">שאלו משהו</a> 🙂{% endif %}
+        <!-- 3) Most popular training -->
+        {% if popular_course %}
+        <a href="{% url 'courses_detail' popular_course.course.slug %}" class="comm-bigcard">
+          <div class="comm-bigcard-media bc-course">
+            {% if popular_course.course.thumbnail %}<img src="{% static popular_course.course.thumbnail %}" alt="">{% else %}<i class="bi bi-mortarboard-fill"></i>{% endif %}
+          </div>
+          <div class="comm-bigcard-body">
+            <span class="comm-bigcard-kicker kc-course"><i class="bi bi-star-fill"></i> ההדרכה הפופולרית</span>
+            <h3 class="comm-bigcard-title">{{ popular_course.course.title }}</h3>
+            <p class="comm-bigcard-text">{{ popular_course.lessons }} שיעורים · וידאו עם הסברים מלאים</p>
+            <span class="comm-bigcard-cta">לקורס ←</span>
+          </div>
+        </a>
+        {% endif %}
+
       </div>
-      {% endfor %}
     </div>
 
+    <!-- RAIL: social context -->
     <div class="col-lg-4">
+      {% if user.is_authenticated and not user.profile.is_public %}
+      <div class="comm-join card-surface p-3 mb-3">
+        <div class="small mb-2"><i class="bi bi-stars" style="color:var(--accent-primary)"></i> הצטרפו לקהילה — פרסמו פרופיל ציבורי ותופיעו בין החברים.</div>
+        <form method="post" action="{% url 'community_go_public' %}">{% csrf_token %}
+          <button class="btn btn-primary btn-sm w-100"><i class="bi bi-people-fill"></i> הצטרפו לקהילה</button>
+        </form>
+      </div>
+      {% endif %}
+
       <div class="card-surface p-3 mb-3">
         <div class="d-flex justify-content-between align-items-center mb-2">
-          <h2 class="h6 mb-0"><i class="bi bi-trophy me-1" style="color:var(--accent-cta,#f59e0b)"></i> המובילים</h2>
+          <h2 class="h6 mb-0"><i class="bi bi-trophy me-1" style="color:#f59e0b"></i> המובילים</h2>
           <a href="{% url 'community_leaderboard' %}" class="small text-decoration-none">הכל ←</a>
         </div>
         {% for row in top_members %}
         <div class="d-flex justify-content-between align-items-center py-1">
-          <span class="small">{{ forloop.counter }}. {% include "app/community/_author.html" with author=row.user %}</span>
+          <span class="small"><span class="rail-rank">{{ forloop.counter }}</span> {% include "app/community/_author.html" with author=row.user %}</span>
           <span class="badge bg-secondary">{{ row.points }}</span>
         </div>
         {% empty %}<p class="small text-muted mb-0">עוד אין נקודות - הראשונים שיענו יובילו.</p>{% endfor %}
       </div>
+
+      {% if upcoming_events %}
+      <div class="card-surface p-3 mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h2 class="h6 mb-0"><i class="bi bi-calendar-event me-1" style="color:var(--accent-primary)"></i> אירועים קרובים</h2>
+          <a href="{% url 'events_page' %}" class="small text-decoration-none">הכל ←</a>
+        </div>
+        {% for e in upcoming_events %}
+        <a href="{% url 'event_detail' slug=e.slug %}" class="comm-event">
+          {% if e.is_live_now %}<span class="rail-live"><span class="rail-live-dot"></span> חי עכשיו</span>{% endif %}
+          <div class="comm-event-title">{{ e.title }}</div>
+          <div class="comm-event-meta">{{ e.start_at|date:"d/m H:i" }} · {{ e.location_label }}</div>
+        </a>
+        {% endfor %}
+      </div>
+      {% endif %}
+
       <div class="card-surface p-3">
         <h2 class="h6"><i class="bi bi-shield-check me-1"></i> כללי הקהילה</h2>
         <p class="small text-muted mb-2">מכבדים, עוזרים, בלי ספאם.</p>

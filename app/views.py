@@ -74,12 +74,41 @@ def home(request):
     if request.user.is_authenticated:
         show_intro = (timezone.now() - request.user.date_joined) < timezone.timedelta(days=1)
 
-    # Logged-in homepage "מהקהילה" hook (REQ-6.4.5): a compact 3-card strip into
-    # the feed — discovery without cluttering the clean homepage.
-    community_strip = []
-    if request.user.is_authenticated:
-        from .feed import build_feed
-        community_strip = build_feed(request.user, scope="all", limit=3)
+    # --- Community rail (REQ-6.4.5 redesign): the home page's right-hand "pulse".
+    # All read-public, so it shows for anonymous visitors too (social proof).
+    from .feed import build_feed
+    feed_items = build_feed(
+        request.user if request.user.is_authenticated else None, scope="all", limit=5)
+
+    # Events: live-now (start ≤ now ≤ end) bubbles to the top, else next upcoming.
+    from .models import CommunityEvent
+    now = timezone.now()
+    rail_events = list(
+        CommunityEvent.objects.filter(end_at__gte=now)
+        .select_related("host__profile").order_by("start_at")[:3]
+    )
+    for e in rail_events:
+        e.is_live_now = e.start_at <= now <= e.end_at
+    rail_events.sort(key=lambda e: (not e.is_live_now, e.start_at))
+
+    # Top members by reputation (reuse the leaderboard helper).
+    from .community_views import _leaderboard_rows
+    top_members = _leaderboard_rows(limit=5)
+
+    published_course_count = Course.objects.filter(is_published=True).count()
+
+    # Training hero video loop: every .mp4 in static/video/training/ (sorted),
+    # crossfaded one into the next in the template. Add a clip = drop a file.
+    import os
+    vdir = os.path.join(settings.BASE_DIR, "static", "video", "training")
+    training_videos = []
+    if os.path.isdir(vdir):
+        for f in sorted(os.listdir(vdir)):
+            if f.lower().endswith(".mp4"):
+                # version by mtime so reordering/replacing a clip busts the
+                # browser cache (same URL + new content was showing a stale clip).
+                ver = int(os.path.getmtime(os.path.join(vdir, f)))
+                training_videos.append({"path": "video/training/" + f, "ver": ver})
 
     return render(request, "app/home.html", {
         "notes": notes,
@@ -87,7 +116,11 @@ def home(request):
         "recommended": recommended,
         "checklist": checklist,
         "show_intro": show_intro,
-        "community_strip": community_strip,
+        "feed_items": feed_items,
+        "rail_events": rail_events,
+        "top_members": top_members,
+        "published_course_count": published_course_count,
+        "training_videos": training_videos,
     })
 
 
@@ -684,14 +717,133 @@ def _get_frontier_video(all_videos, completed_ids):
     return all_videos[-1] if all_videos else None
 
 
+DIFFICULTY_HE = {"beginner": "מתחילים", "intermediate": "בינוני", "advanced": "מתקדם"}
+
+# Curated "most popular" highlights on the catalog (edit this set to change).
+POPULAR_COURSE_SLUGS = {
+    "tinkercad",
+    "micropython-thonny",
+    "exponential-organizations",
+    "ai-user-journey",
+}
+
+
+def _catalog_progress(user, course_ids):
+    """{course_id: {pct, done, total, started, completed}} for `user`, in a few
+    queries. A lesson counts as done once it has progress (required-quiz lessons
+    need quiz_passed) — same rule the profile page uses."""
+    from django.db.models import Count
+
+    from .models import Enrollment, LessonQuiz
+
+    total_by = {r["course_id"]: r["n"] for r in
+                Video.objects.filter(course_id__in=course_ids)
+                .values("course_id").annotate(n=Count("id"))}
+    required = set(
+        LessonQuiz.objects.filter(video__course_id__in=course_ids, requires_correct=True)
+        .values_list("video_id", flat=True)
+    ) | set(
+        Video.objects.filter(course_id__in=course_ids).exclude(reflection_prompt="")
+        .values_list("id", flat=True)
+    )
+    done_by = {}
+    for p in (UserVideoProgress.objects
+              .filter(user=user, video__course_id__in=course_ids)
+              .values("video_id", "video__course_id", "quiz_passed")):
+        if p["video_id"] in required and not p["quiz_passed"]:
+            continue
+        cid = p["video__course_id"]
+        done_by[cid] = done_by.get(cid, 0) + 1
+    completed_enroll = set(
+        Enrollment.objects.filter(user=user, course_id__in=course_ids, completed_at__isnull=False)
+        .values_list("course_id", flat=True)
+    )
+    out = {}
+    for cid in course_ids:
+        total = total_by.get(cid, 0)
+        done = min(done_by.get(cid, 0), total)
+        out[cid] = {
+            "pct": int(done / total * 100) if total else 0,
+            "done": done, "total": total,
+            "started": done > 0,
+            "completed": cid in completed_enroll or (total > 0 and done >= total),
+        }
+    return out
+
+
 def courses_catalog(request):
-    """Level 0 — list the training domains (big categories)."""
+    """Visual course catalog — real course cards grouped by domain, with the
+    learner's progress and a 'continue learning' row."""
+    from django.db.models import Count
     from .taxonomy import build_catalog
-    courses = Course.objects.filter(is_published=True).order_by("title")
-    domains, uncategorized = build_catalog(courses)
+
+    courses_qs = list(Course.objects.filter(is_published=True).order_by("title"))
+    domains, uncategorized = build_catalog(courses_qs)
+
+    lesson_counts = {r["course_id"]: r["n"] for r in
+                     Video.objects.filter(course__in=courses_qs)
+                     .values("course_id").annotate(n=Count("id"))}
+    course_ids = [c.pk for c in courses_qs]
+    progress = _catalog_progress(request.user, course_ids) if request.user.is_authenticated else {}
+
+    def entry(c):
+        return {
+            "course": c,
+            "lessons": lesson_counts.get(c.pk, 0),
+            "difficulty_he": DIFFICULTY_HE.get(c.difficulty, ""),
+            "progress": progress.get(c.pk),
+            "popular": c.slug in POPULAR_COURSE_SLUGS,
+        }
+
+    # Group each domain by its tracks (sub-sections) so levels read clearly —
+    # e.g. AI's רמה 1 / 2 / 3 are distinct rows, not one mixed grid.
+    domain_groups = []
+    shown = set()
+    for d in domains:
+        track_groups, domain_seen = [], set()
+        for t in d["tracks"]:
+            items = []
+            for c in t["courses"]:
+                if c.pk in domain_seen:   # de-dupe a cross-listed course within a domain
+                    continue
+                domain_seen.add(c.pk)
+                items.append(entry(c))
+            if items:
+                track_groups.append({"key": t["key"], "meta": t["meta"], "courses": items})
+        shown |= domain_seen
+        if track_groups:
+            domain_groups.append({"key": d["key"], "meta": d["meta"],
+                                  "count": len(domain_seen), "tracks": track_groups})
+    # "נוספים" = only courses not already shown in a domain (a cross-listed
+    # course like micropython-thonny lives in hardware, so don't repeat it here).
+    leftover = [entry(c) for c in uncategorized if c.pk not in shown]
+    if leftover:
+        domain_groups.append({
+            "key": "other",
+            "meta": {"title": "נוספים", "subtitle": "", "icon": "bi-collection"},
+            "count": len(leftover),
+            "tracks": [{"key": "other", "meta": {"title": "", "subtitle": ""}, "courses": leftover}]})
+
+    continue_courses = []
+    if request.user.is_authenticated:
+        cmap = {c.pk: c for c in courses_qs}
+        seen = set()
+        for cid in (UserVideoProgress.objects
+                    .filter(user=request.user, video__course__is_published=True)
+                    .order_by("-updated_at").values_list("video__course_id", flat=True)):
+            if cid in seen:
+                continue
+            seen.add(cid)
+            pr = progress.get(cid)
+            if pr and pr["started"] and not pr["completed"] and cid in cmap:
+                continue_courses.append(entry(cmap[cid]))
+            if len(continue_courses) >= 4:
+                break
+
     return render(request, "app/courses_catalog.html", {
-        "domains": domains,
-        "uncategorized": uncategorized,
+        "domain_groups": domain_groups,
+        "total_courses": len(courses_qs),
+        "continue_courses": continue_courses,
     })
 
 

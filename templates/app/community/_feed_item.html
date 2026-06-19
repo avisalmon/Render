@@ -1,21 +1,30 @@
 {% comment %}One activity-feed row (REQ-6.4.1). Expects `item` dict from app.feed.{% endcomment %}
-<a href="{{ item.url }}" class="card-surface d-block p-3 mb-2 text-decoration-none" style="color:var(--text-primary)">
-  <div class="d-flex align-items-start gap-2">
-    <i class="bi {{ item.icon }} mt-1" style="color:var(--accent-primary)"></i>
-    <div class="flex-grow-1">
-      <div class="small text-muted mb-1">
-        <strong style="color:var(--text-primary)">{{ item.actor_name }}</strong>
-        {% if item.kind == 'tip' %}שיתף/ה טיפ
-        {% elif item.kind == 'project' %}פרסם/ה פרויקט חדש
-        {% elif item.kind == 'thread' %}פתח/ה דיון
-        {% elif item.kind == 'answer' %}קיבל/ה תשובה מקובלת
-        {% elif item.kind == 'badge' %}זכה/תה בתג
-        {% elif item.kind == 'event' %}אירוע קרוב
-        {% elif item.kind == 'event_photo' %}שיתף/ה תמונה מאירוע
+<a href="{{ item.url }}" class="feed-item">
+  <span class="feed-avatar">
+    {% if item.actor and item.actor.profile.avatar %}
+      <img src="{{ item.actor.profile.avatar.url }}" alt="">
+    {% elif item.actor %}
+      <span class="feed-avatar-initial">{{ item.actor.profile.public_name|first }}</span>
+    {% else %}
+      <span class="feed-avatar-icon"><i class="bi {{ item.icon }}"></i></span>
+    {% endif %}
+  </span>
+  <span class="feed-body">
+    <span class="feed-meta">
+      <strong class="feed-actor">{{ item.actor_name }}</strong>
+      <span class="feed-chip feed-chip-{{ item.kind }}">
+        <i class="bi {{ item.icon }}"></i>
+        {% if item.kind == 'tip' %}טיפ
+        {% elif item.kind == 'project' %}פרויקט
+        {% elif item.kind == 'thread' %}שאלה
+        {% elif item.kind == 'answer' %}תשובה
+        {% elif item.kind == 'badge' %}הישג
+        {% elif item.kind == 'event' %}אירוע
+        {% elif item.kind == 'event_photo' %}תמונה
         {% endif %}
-        · {{ item.timestamp|date:"j בF, H:i" }}
-      </div>
-      <div>{{ item.text }}</div>
-    </div>
-  </div>
+      </span>
+      <span class="feed-time">{{ item.timestamp|date:"j בF, H:i" }}</span>
+    </span>
+    <span class="feed-text">{{ item.text }}</span>
+  </span>
 </a>
