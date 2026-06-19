@@ -132,6 +132,7 @@
               <td class="small text-muted">{{ r.note }}</td>
               <td class="text-end">
                 {% if r.deep_link %}<a class="btn btn-sm btn-outline-primary" href="{{ r.deep_link }}" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-left"></i></a>{% endif %}
+                {% if r.raw.registrar_url %}<a class="btn btn-sm btn-outline-warning ms-1" href="{{ r.raw.registrar_url }}" target="_blank" rel="noopener" title="חידוש דומיין"><i class="bi bi-arrow-clockwise"></i> חידוש</a>{% endif %}
               </td>
             </tr>
           {% empty %}

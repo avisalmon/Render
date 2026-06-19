@@ -16,10 +16,15 @@ from django.utils import timezone
 DEFAULT_RULES = {
     "spend_total": ("Total monthly spend (USD)", 100.0, "costs"),
     "free_tier_usage_pct": ("Free-tier usage (% of limit)", 80.0, "costs"),
+    "domain_expiry_days": ("Domain expiry (days left)", 14.0, "system"),
     "report_queue": ("Open moderation reports", 10.0, "engagement"),
     "unanswered_age_hours": ("Oldest unanswered question (hours)", 48.0, "engagement"),
     "backup_stale_hours": ("Backup age (hours)", 48.0, "system"),
 }
+
+# Rules where a LOW value is the problem (fire when value <= threshold), the
+# inverse of the default "fire when value >= threshold".
+LOWER_IS_WORSE = {"domain_expiry_days"}
 
 
 def ensure_default_rules():
@@ -85,14 +90,19 @@ def evaluate_alerts(spend_total=None, engagement=None, notify_admins=True):
     # Worst free-tier consumption across services that report a `free_tier_pct`
     # in their cost-adapter raw (GCS backups, Resend) — "how close to paying".
     free_worst_svc, free_worst_pct = None, 0.0
+    domain_days, domain_renew_url = None, ""
     for r in period_records:
         pct = (r.raw or {}).get("free_tier_pct")
         if pct is not None and float(pct) > free_worst_pct:
             free_worst_pct, free_worst_svc = float(pct), r.service
+        if r.service == "domain":
+            domain_days = (r.raw or {}).get("days_left")
+            domain_renew_url = (r.raw or {}).get("registrar_url") or ""
 
     measured = {
         "spend_total": float(spend_total),
         "free_tier_usage_pct": free_worst_pct,
+        "domain_expiry_days": float(domain_days) if domain_days is not None else None,
         "report_queue": float(engagement.get("open_reports", 0)),
         "unanswered_age_hours": _oldest_unanswered_age_hours(),
         "backup_stale_hours": _backup_age_hours(),
@@ -103,7 +113,12 @@ def evaluate_alerts(spend_total=None, engagement=None, notify_admins=True):
         value = measured.get(rule.key)
         if value is None:
             continue
-        if value < rule.threshold:
+        # Direction: most rules fire when value >= threshold; "lower is worse"
+        # rules (domain expiry) fire when value <= threshold.
+        if rule.key in LOWER_IS_WORSE:
+            if value > rule.threshold:
+                continue
+        elif value < rule.threshold:
             continue
         # dedupe: skip if an active alert for this rule already exists
         if AlertEvent.objects.filter(rule_key=rule.key, dismissed_at__isnull=True).exists():
@@ -113,6 +128,10 @@ def evaluate_alerts(spend_total=None, engagement=None, notify_admins=True):
         if rule.key == "free_tier_usage_pct" and free_worst_svc:
             message = (f"{free_worst_svc} is at {value:g}% of its free tier "
                        f"(≥ {rule.threshold:g}%) — approaching paid usage")
+        elif rule.key == "domain_expiry_days":
+            level = "critical" if value <= 3 else "warning"
+            renew = f" — renew at {domain_renew_url}" if domain_renew_url else ""
+            message = f"Domain babook.co.il expires in {value:g} days{renew}"
         event = AlertEvent.objects.create(
             rule_key=rule.key,
             section=rule.section,
