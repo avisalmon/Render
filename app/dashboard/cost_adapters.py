@@ -210,11 +210,95 @@ class PlausibleCostAdapter(CostAdapter):
 class DomainCostAdapter(CostAdapter):
     service = "domain"
     label = "Domain (babook.co.il)"
-    deep_link = ""
+    deep_link = "https://dash.cloudflare.com"  # DNS site (refined from WHOIS nameservers)
     default_source = "manual"
+    DOMAIN = "babook.co.il"
+    WHOIS_SERVER = "whois.isoc.org.il"  # ISOC-IL registry for .il
+    # Where each known DNS provider's records are managed.
+    DNS_DASHBOARDS = {
+        "cloudflare": ("Cloudflare", "https://dash.cloudflare.com"),
+        "googledomains": ("Google", "https://domains.google.com"),
+        "awsdns": ("AWS Route 53", "https://console.aws.amazon.com/route53/"),
+    }
+
+    def _whois(self):
+        import socket
+
+        s = socket.create_connection((self.WHOIS_SERVER, 43), timeout=12)
+        try:
+            s.settimeout(12)
+            s.sendall((self.DOMAIN + "\r\n").encode())
+            data = b""
+            while True:
+                try:
+                    chunk = s.recv(4096)
+                except socket.timeout:
+                    break
+                if not chunk:
+                    break
+                data += chunk
+        finally:
+            s.close()
+        return data.decode(errors="replace")
 
     def fetch(self, period):
-        return Decimal("0"), "manual", "annual registrar fee — set a manual figure", {}
+        import re
+        from datetime import datetime
+
+        try:
+            txt = self._whois()
+        except Exception as exc:  # noqa: BLE001 — WHOIS down → keep the manual note
+            return (Decimal("0"), "manual",
+                    f"annual registrar fee — set a manual figure (WHOIS unavailable: {exc})", {})
+
+        validity = registrar = registrar_url = ""
+        nameservers = []
+        for line in txt.splitlines():
+            l = line.strip()
+            if m := re.match(r"(?i)validity:\s*(.+)", l):
+                validity = m.group(1).strip()
+            elif m := re.match(r"(?i)registrar name:\s*(.+)", l):
+                registrar = m.group(1).strip()
+            elif m := re.match(r"(?i)registrar info:\s*(\S+)", l):
+                registrar_url = m.group(1).strip()
+            elif m := re.match(r"(?i)nserver:\s*(\S+)", l):
+                nameservers.append(m.group(1).strip().lower())
+
+        # Expiry date (WHOIS gives dd-mm-yyyy) + days remaining.
+        expiry_iso, days_left = validity, None
+        try:
+            d = datetime.strptime(validity, "%d-%m-%Y").date()
+            expiry_iso = d.isoformat()
+            days_left = (d - timezone.now().date()).days
+        except ValueError:
+            pass
+
+        # Identify the DNS provider from the nameservers → its management dashboard.
+        ns_blob = " ".join(nameservers)
+        dns_host, dns_link = None, None
+        for token, (name, url) in self.DNS_DASHBOARDS.items():
+            if token in ns_blob:
+                dns_host, dns_link = name, url
+                break
+        if dns_link:
+            self.deep_link = dns_link  # persisted by run_all_adapters
+
+        parts = []
+        if expiry_iso:
+            parts.append(f"expires {expiry_iso}"
+                         + (f" ({days_left} days left)" if days_left is not None else ""))
+        if dns_host:
+            parts.append(f"DNS at {dns_host}")
+        if registrar:
+            parts.append(f"renew at {registrar}"
+                         + (f" ({registrar_url})" if registrar_url else ""))
+        note = "; ".join(parts) or "annual registrar fee — set a manual figure"
+
+        return (Decimal("0"), "live", note, {
+            "expiry": expiry_iso, "days_left": days_left, "nameservers": nameservers,
+            "dns_host": dns_host, "dns_link": dns_link,
+            "registrar": registrar, "registrar_url": registrar_url,
+        })
 
 
 class BackupCostAdapter(CostAdapter):
