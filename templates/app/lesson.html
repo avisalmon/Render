@@ -254,6 +254,7 @@
   var videoOk      = {{ lesson_completed|lower }};  /* true unless a required quiz/reflection is pending */
   var quizRequired = {% if quiz %}{{ quiz.requires_correct|lower }}{% else %}false{% endif %};
   var quizOk       = {{ quiz_passed_db|lower }};
+  var quizAnsweredBefore = {{ quiz_answered_before|default_if_none:"false"|lower }};  /* real DB pass, not staff bypass */
   var reflectionRequired = {% if video.reflection_prompt %}true{% else %}false{% endif %};
   var reflectionDone     = {% if reflection or quiz_passed_db %}true{% else %}false{% endif %};
 
@@ -366,8 +367,9 @@
   var submitBtn = document.getElementById("quiz-submit");
   var feedback  = document.getElementById("quiz-feedback");
 
-  /* Show "already answered" if quiz was passed in a prior session */
-  if (quizOk && submitBtn) {
+  /* Show "already answered" only if the quiz was actually passed before
+     (real DB state — NOT the staff navigation bypass). */
+  if (quizAnsweredBefore && submitBtn) {
     radios.forEach(function (r) { r.disabled = true; });
     submitBtn.disabled = true;
     if (feedback) {

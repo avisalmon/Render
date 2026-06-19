@@ -1,0 +1,31 @@
+{
+  "course_slug": "fpga-processor-vga",
+  "note": "lesson_order -> source YouTube video id (3 playlists concatenated in order). Used by enrich_course to fetch original audio for transcription, bypassing Bunny token-auth playback.",
+  "playlists": [
+    "https://youtube.com/playlist?list=PLRse2hU88DNgZRhev17nusB7cU7K-xrIJ",
+    "https://youtube.com/playlist?list=PLRse2hU88DNjawol3y9CXfeIS-yACuPti",
+    "https://youtube.com/playlist?list=PLRse2hU88DNhZo275f0PIUTmG2-hAGpSX"
+  ],
+  "youtube_ids": {
+    "1": "CYH9K4F2hfU",
+    "2": "CbZIKSs5IyU",
+    "3": "Kvd1-NAR8PA",
+    "4": "h9Ajr3G_dCU",
+    "5": "uUFsH_ngzOk",
+    "6": "oAxFiGpPExI",
+    "7": "Y_CcrAwgXLs",
+    "8": "z4vdJJ2Om6E",
+    "9": "umkfwVWfY6c",
+    "10": "sw41G-whyLg",
+    "11": "k9QRUL47MLE",
+    "12": "XUwS3bIWrbw",
+    "13": "Bp6uXQlKHTo",
+    "14": "IucXPjsJFNg",
+    "15": "TsOxhTMcpBs",
+    "16": "JcJwFVQDrhI",
+    "17": "lCyBhgKyRKg",
+    "18": "ZVcmfs4NT88",
+    "19": "Q1xtlYwN6s4",
+    "20": "iQ0TCmCggVE"
+  }
+}

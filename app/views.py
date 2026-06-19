@@ -931,6 +931,9 @@ def courses_lesson(request, slug, lesson_order):
         "reflection": reflection,
         "lesson_completed": lesson_completed_ctx,
         "quiz_passed_db": quiz_passed_db_ctx,
+        # Real DB value (NOT staff-bypassed) — drives the "already answered" UI so
+        # staff don't see a false "you answered correctly before" on fresh quizzes.
+        "quiz_answered_before": quiz_passed_db,
         "existing_cert": existing_cert,
         "error_code": error_code,
         "materials": course.materials.all(),
@@ -1026,6 +1029,8 @@ def lesson_view(request, slug, lesson_order):
         "reflection": reflection,
         "lesson_completed": lesson_completed,
         "quiz_passed_db": quiz_passed_db or request.user.is_staff,
+        # Real DB value (NOT staff-bypassed) — drives the "already answered" UI.
+        "quiz_answered_before": quiz_passed_db,
         "existing_cert": existing_cert,
         "materials": course.materials.all(),
     })

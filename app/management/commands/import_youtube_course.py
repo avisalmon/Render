@@ -50,6 +50,14 @@ class Command(BaseCommand):
             help="Number of lessons (from lesson 1) to mark as free preview (default: 1)",
         )
         parser.add_argument(
+            "--order-offset",
+            type=int,
+            default=0,
+            dest="order_offset",
+            help="Add this to each playlist index so several playlists concatenate "
+            "into one course with continuous numbering (e.g. 0, then 10, then 15).",
+        )
+        parser.add_argument(
             "--dry-run",
             action="store_true",
             help="Fetch metadata only — no downloads, no uploads, no DB writes",
@@ -61,6 +69,7 @@ class Command(BaseCommand):
         slug = options["slug"] or slugify(title)
         description = options["description"]
         free_previews = options["free_previews"]
+        order_offset = options["order_offset"]
         dry_run = options["dry_run"]
 
         api_key = getattr(settings, "BUNNY_API_KEY", "")
@@ -68,19 +77,26 @@ class Command(BaseCommand):
         if not api_key or not library_id:
             raise CommandError("BUNNY_API_KEY or BUNNY_STREAM_LIBRARY_ID not set.")
 
-        # Set proxy for outbound requests (required on Intel network)
-        http_proxy = os.environ.get("HTTP_PROXY", "http://proxy-iil.intel.com:912")
-        self._proxies = {"http": http_proxy, "https": http_proxy}
+        # Only route through a proxy if one is actually configured. (On the Intel
+        # network HTTP_PROXY is set; off it, going direct is correct and the old
+        # hard-coded proxy fallback would break Bunny uploads.)
+        http_proxy = os.environ.get("HTTP_PROXY") or os.environ.get("HTTPS_PROXY")
+        self._proxies = {"http": http_proxy, "https": http_proxy} if http_proxy else None
 
         self.stdout.write(self.style.MIGRATE_HEADING("Fetching playlist metadata…"))
         videos = self._fetch_playlist_metadata(playlist_url)
         if not videos:
             raise CommandError("No videos found in playlist.")
 
+        # Absolute lesson number = playlist index + offset (lets several
+        # playlists concatenate into one continuously-numbered course).
+        for v in videos:
+            v["order"] = v["index"] + order_offset
+
         self.stdout.write(f"Found {len(videos)} videos:\n")
         for v in videos:
-            free_tag = " [FREE PREVIEW]" if v["index"] <= free_previews else ""
-            self.stdout.write(f"  {v['index']:>3}. {v['title']} ({v['duration_str']}){free_tag}")
+            free_tag = " [FREE PREVIEW]" if v["order"] <= free_previews else ""
+            self.stdout.write(f"  {v['order']:>3}. {v['title']} ({v['duration_str']}){free_tag}")
 
         if dry_run:
             self.stdout.write(self.style.WARNING("\nDry run — stopping here. No data written."))
@@ -98,7 +114,7 @@ class Command(BaseCommand):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             for video_meta in videos:
-                idx = video_meta["index"]
+                idx = video_meta["order"]
                 yt_id = video_meta["id"]
                 yt_title = video_meta["title"]
                 duration = video_meta["duration_seconds"]

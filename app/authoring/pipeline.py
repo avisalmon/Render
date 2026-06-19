@@ -164,6 +164,39 @@ def gen_notes(title, transcript, subject):
     return d
 
 
+def gen_quiz(title, transcript, subject):
+    """Generate one faithful Hebrew multiple-choice question for a lesson.
+
+    Returns {"question": str, "options": [{"text": str, "is_correct": bool}, ...],
+    "requires_correct": bool}. Non-gating by default (any answer unlocks Next) —
+    these are review drafts. Returns None if the model can't ground a question
+    in the transcript.
+    """
+    client = _client()
+    prompt = (
+        f"אתה כותב שאלת בדיקת הבנה אחת בעברית לשיעור בקורס בנושא: {subject}. "
+        f"כותרת השיעור: \"{title}\".\n"
+        "השאלה חייבת להיות מבוססת אך ורק על מה שנאמר בתמלול (גם אם התמלול באנגלית). "
+        "כתוב שאלה ברורה אחת עם 3 או 4 תשובות, כאשר בדיוק אחת נכונה. עברית בלבד. "
+        "אם אי אפשר לגזור שאלה עניינית מהתמלול, החזר {\"question\": \"\"}.\n"
+        'החזר JSON: {"question":"...","options":[{"text":"...","is_correct":true},'
+        '{"text":"...","is_correct":false}]}\n\n'
+        f"תמלול השיעור:\n{transcript}"
+    )
+    r = client.chat.completions.create(model="gpt-4o", messages=[{"role": "user", "content": prompt}],
+                                       response_format={"type": "json_object"}, temperature=0.4, max_tokens=1000)
+    d = _json.loads(r.choices[0].message.content)
+    q = _clean(d.get("question", "")).strip()
+    opts = d.get("options") or []
+    # Validate: a question, >=2 options, exactly one correct.
+    clean_opts = [{"text": _clean(o.get("text", "")).strip(),
+                   "is_correct": bool(o.get("is_correct"))}
+                  for o in opts if o.get("text")]
+    if not q or len(clean_opts) < 2 or sum(o["is_correct"] for o in clean_opts) != 1:
+        return None
+    return {"question": q, "options": clean_opts, "requires_correct": False}
+
+
 # --- orchestration ---
 
 def run_job(job_id):
