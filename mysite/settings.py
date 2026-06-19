@@ -164,6 +164,11 @@ GCS_STORAGE_USD_PER_GB = float(os.environ.get("GCS_STORAGE_USD_PER_GB", "0.020")
 # header to trigger an in-process backup (REQ-1.2.4). Empty = endpoint disabled.
 BACKUP_TRIGGER_TOKEN = os.environ.get("BACKUP_TRIGGER_TOKEN", "")
 
+# Shared secret the daily GitHub Actions cron sends in the X-Capture-Token header
+# to refresh all /admin-dashboard/ data in-process (REQ-8.1.4). Falls back to
+# BACKUP_TRIGGER_TOKEN so no new secret has to be provisioned.
+CAPTURE_TRIGGER_TOKEN = os.environ.get("CAPTURE_TRIGGER_TOKEN", "")
+
 # ---------------------------------------------------------------------------
 # GitHub Copilot seat management (SPR-1.6)
 # ---------------------------------------------------------------------------

@@ -1,0 +1,29 @@
+name: Daily dashboard capture
+
+# Refreshes ALL /admin-dashboard/ data daily (internal metrics + every cost
+# adapter + alert evaluation), so the cockpit is never stale or empty (REQ-8.1.4).
+# The capture runs inside the live web service (it needs the SQLite persistent
+# disk + live env keys); this job only fires the request and turns red if the
+# capture fails. Reuses the existing BACKUP_TRIGGER_TOKEN secret.
+
+on:
+  schedule:
+    - cron: "0 4 * * *" # daily 04:00 UTC
+  workflow_dispatch: {}
+
+jobs:
+  trigger-capture:
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST run-capture
+        env:
+          CAPTURE_TOKEN: ${{ secrets.BACKUP_TRIGGER_TOKEN }}
+        run: |
+          code=$(curl -sS --max-time 180 -o /tmp/capture_out.json -w "%{http_code}" \
+            -X POST "https://babook.co.il/internal/run-capture/" \
+            -H "X-Capture-Token: $CAPTURE_TOKEN")
+          echo "HTTP $code"
+          echo "----- response -----"
+          cat /tmp/capture_out.json || true
+          echo
+          test "$code" = "200"

@@ -44,6 +44,9 @@ urlpatterns = [
     # Machine endpoint: weekly GitHub Actions cron POSTs here with X-Backup-Token
     # to run an in-process backup (REQ-1.2.4).
     path("internal/run-backup/", dashboard_views.run_backup, name="run_backup"),
+    # Machine endpoint: daily GitHub Actions cron POSTs here with X-Capture-Token
+    # to refresh all dashboard data in-process (REQ-8.1.4).
+    path("internal/run-capture/", dashboard_views.run_dashboard_capture, name="run_dashboard_capture"),
     path("corporate/", views.corporate, name="corporate"),
 
     # --- Community (EPIC-6.1) ---

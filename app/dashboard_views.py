@@ -161,3 +161,30 @@ def run_backup(request):
         return JsonResponse(
             {"ok": False, "error": str(exc), "log": out.getvalue()}, status=500)
     return JsonResponse({"ok": True, "log": out.getvalue()})
+
+
+@csrf_exempt
+@require_POST
+def run_dashboard_capture(request):
+    """Token-triggered full dashboard capture (REQ-8.1.4).
+
+    Called by the daily GitHub Actions cron with the shared secret in the
+    ``X-Capture-Token`` header. Runs ``capture_dashboard_snapshot --scope all``
+    in-process (it needs the live DB + persistent disk a separate cron container
+    can't see), refreshing every metric, cost adapter and alert so the dashboard
+    is never stale/empty. Machine endpoint, not a session/superuser route.
+    Reuses BACKUP_TRIGGER_TOKEN unless a dedicated CAPTURE_TRIGGER_TOKEN is set.
+    """
+    expected = getattr(settings, "CAPTURE_TRIGGER_TOKEN", "") or getattr(
+        settings, "BACKUP_TRIGGER_TOKEN", "")
+    provided = request.headers.get("X-Capture-Token", "")
+    if not expected or not constant_time_compare(provided, expected):
+        return JsonResponse({"ok": False, "error": "forbidden"}, status=403)
+
+    out = io.StringIO()
+    try:
+        call_command("capture_dashboard_snapshot", scope="all", stdout=out, stderr=out)
+    except Exception as exc:  # noqa: BLE001 — surface failure to the caller
+        return JsonResponse(
+            {"ok": False, "error": str(exc), "log": out.getvalue()}, status=500)
+    return JsonResponse({"ok": True, "log": out.getvalue()})
