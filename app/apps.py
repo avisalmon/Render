@@ -186,3 +186,25 @@ class AppConfig(AppConfig):
             user_signed_up.connect(handle_social_signup, dispatch_uid="onboarding_signup")
         except ImportError:
             pass
+
+        # REQ-8.3: log outbound email sends so the Resend cost adapter can count
+        # real monthly usage vs the free tier. Only fires for the anymail (Resend)
+        # backend in prod; the dev console backend doesn't emit this signal.
+        try:
+            from anymail.signals import post_send
+
+            post_send.connect(_log_email_send, dispatch_uid="resend_usage_log")
+        except ImportError:
+            pass
+
+
+def _log_email_send(sender, message=None, status=None, **kwargs):
+    """anymail post_send handler — record one EmailSendLog row per send."""
+    try:
+        from .models import EmailSendLog
+
+        n = len(message.recipients()) if message is not None else 1
+        EmailSendLog.objects.create(recipients=max(1, n))
+    except Exception:
+        # Never let usage logging break an actual email send.
+        pass

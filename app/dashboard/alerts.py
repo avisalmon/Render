@@ -15,6 +15,7 @@ from django.utils import timezone
 # key -> (label, default threshold, section)
 DEFAULT_RULES = {
     "spend_total": ("Total monthly spend (USD)", 100.0, "costs"),
+    "free_tier_usage_pct": ("Free-tier usage (% of limit)", 80.0, "costs"),
     "report_queue": ("Open moderation reports", 10.0, "engagement"),
     "unanswered_age_hours": ("Oldest unanswered question (hours)", 48.0, "engagement"),
     "backup_stale_hours": ("Backup age (hours)", 48.0, "system"),
@@ -72,16 +73,26 @@ def evaluate_alerts(spend_total=None, engagement=None, notify_admins=True):
 
     ensure_default_rules()
 
+    period = timezone.now().strftime("%Y-%m")
+    period_records = list(CostRecord.objects.filter(period=period))
     if spend_total is None:
-        period = timezone.now().strftime("%Y-%m")
-        spend_total = float(sum(r.amount_usd for r in CostRecord.objects.filter(period=period)))
+        spend_total = float(sum(r.amount_usd for r in period_records))
     if engagement is None:
         from .metrics import collect_engagement
 
         engagement = collect_engagement(7)
 
+    # Worst free-tier consumption across services that report a `free_tier_pct`
+    # in their cost-adapter raw (GCS backups, Resend) — "how close to paying".
+    free_worst_svc, free_worst_pct = None, 0.0
+    for r in period_records:
+        pct = (r.raw or {}).get("free_tier_pct")
+        if pct is not None and float(pct) > free_worst_pct:
+            free_worst_pct, free_worst_svc = float(pct), r.service
+
     measured = {
         "spend_total": float(spend_total),
+        "free_tier_usage_pct": free_worst_pct,
         "report_queue": float(engagement.get("open_reports", 0)),
         "unanswered_age_hours": _oldest_unanswered_age_hours(),
         "backup_stale_hours": _backup_age_hours(),
@@ -99,6 +110,9 @@ def evaluate_alerts(spend_total=None, engagement=None, notify_admins=True):
             continue
         level = "critical" if value >= rule.threshold * 1.5 else "warning"
         message = f"{rule.label}: {value:g} ≥ {rule.threshold:g}"
+        if rule.key == "free_tier_usage_pct" and free_worst_svc:
+            message = (f"{free_worst_svc} is at {value:g}% of its free tier "
+                       f"(≥ {rule.threshold:g}%) — approaching paid usage")
         event = AlertEvent.objects.create(
             rule_key=rule.key,
             section=rule.section,

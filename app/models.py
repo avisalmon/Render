@@ -833,6 +833,22 @@ class CorporateLead(models.Model):
         return f"{self.name} @ {self.company}"
 
 
+class EmailSendLog(models.Model):
+    """One row per outbound email send, written by the anymail post_send signal
+    (app/apps.py). Lets the Resend cost adapter count real monthly usage against
+    the 3,000/mo free tier (Resend exposes no usage API). Lightweight: just a
+    timestamp + recipient count."""
+
+    sent_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    recipients = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        ordering = ["-sent_at"]
+
+    def __str__(self):
+        return f"{self.recipients} recipient(s) @ {self.sent_at:%Y-%m-%d %H:%M}"
+
+
 # ---------------------------------------------------------------------------
 # Newsletter (SPR-2.1.3)
 # ---------------------------------------------------------------------------

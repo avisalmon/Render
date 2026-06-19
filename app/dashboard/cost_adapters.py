@@ -157,12 +157,31 @@ class ResendCostAdapter(CostAdapter):
     label = "Resend (email)"
     deep_link = "https://resend.com/overview"
     default_source = "estimate"
+    FREE_LIMIT = 3000  # Resend free tier: 3,000 emails/month
 
     def fetch(self, period):
         if not getattr(settings, "RESEND_API_KEY", ""):
             return Decimal("0"), "manual", "set a manual figure (no API key)", {}
-        # Free tier covers 3k/mo; show $0 within tier, flag for live upgrade.
-        return Decimal("0"), "estimate", "within free tier (3k/mo)", {}
+        # Count real sends this month from our own log — EmailSendLog rows are
+        # written by the anymail post_send signal (app/apps.py). Resend has no
+        # public usage endpoint, so this is the reliable source; it counts from
+        # when tracking shipped (so an early month can read low).
+        from django.db.models import Sum
+
+        from ..models import EmailSendLog
+
+        start, end = _month_bounds(period)
+        sent = EmailSendLog.objects.filter(
+            sent_at__gte=start, sent_at__lt=end).aggregate(n=Sum("recipients"))["n"] or 0
+        pct = round(sent / self.FREE_LIMIT * 100, 1) if self.FREE_LIMIT else 0.0
+        over = max(0, sent - self.FREE_LIMIT)
+        if over:
+            note = f"{sent:,} / {self.FREE_LIMIT:,} emails — OVER free tier by {over:,}"
+        else:
+            note = (f"{sent:,} / {self.FREE_LIMIT:,} emails this month "
+                    f"({pct:g}% of free tier; {self.FREE_LIMIT - sent:,} left)")
+        return (Decimal("0"), "live", note,
+                {"emails_sent": sent, "free_limit": self.FREE_LIMIT, "free_tier_pct": pct})
 
 
 class RenderCostAdapter(CostAdapter):
@@ -245,10 +264,15 @@ class BackupCostAdapter(CostAdapter):
                     f"{self.GCS_FREE_GB:g} GB-months free (GCS); live needs GCS creds ({err})", {})
         rate = getattr(settings, "GCS_STORAGE_USD_PER_GB", 0.020)
         cost = round(max(0.0, gb - self.GCS_FREE_GB) * rate, 2)
-        tail = f" → ${cost}" if cost else " (within free tier)"
+        # How much of the free tier is used + how far from paying.
+        pct = round(gb / self.GCS_FREE_GB * 100, 1) if self.GCS_FREE_GB else 0.0
+        headroom = round(max(0.0, self.GCS_FREE_GB - gb), 2)
+        tail = f" → ${cost}" if cost else f" ({headroom:g} GB before paid)"
         return (Decimal(str(cost)), "live",
-                f"{gb:.2f} GB in {count} backups; first {self.GCS_FREE_GB:g} GB free{tail}",
-                {"storage_gb": round(gb, 2), "object_count": count})
+                f"{gb:.2f} GB in {count} objects; {pct:g}% of {self.GCS_FREE_GB:g} GB free tier{tail}",
+                {"storage_gb": round(gb, 2), "object_count": count,
+                 "free_limit_gb": self.GCS_FREE_GB, "free_tier_pct": pct,
+                 "free_tier_headroom_gb": headroom})
 
 
 class ScreenshotCostAdapter(CostAdapter):
