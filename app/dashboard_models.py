@@ -68,6 +68,10 @@ class CostRecord(models.Model):
     note = models.CharField(max_length=300, blank=True, default="")
     raw = models.JSONField(default=dict, blank=True)
     fetched_at = models.DateTimeField(default=timezone.now)
+    # True only when an admin typed a manual figure (set_manual_cost). Adapters
+    # never set this, so an adapter that returns source="manual" (e.g. domain,
+    # render) is still refreshed each capture — only a real override is frozen.
+    admin_set = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["service", "-period"]

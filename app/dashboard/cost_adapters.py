@@ -406,8 +406,8 @@ def run_all_adapters(period=None):
     period = period or current_period()
     for adapter in ADAPTERS:
         existing = CostRecord.objects.filter(service=adapter.service, period=period).first()
-        if existing and existing.source == "manual":
-            continue  # never clobber a manual override
+        if existing and existing.admin_set:
+            continue  # never clobber a figure the admin typed in
         amount, source, note, raw = adapter.safe_fetch(period)
         CostRecord.objects.update_or_create(
             service=adapter.service,
@@ -435,6 +435,7 @@ def set_manual_cost(service, period, amount, note=""):
         defaults={
             "amount_usd": Decimal(str(amount or 0)),
             "source": "manual",
+            "admin_set": True,
             "deep_link": label_link,
             "note": note or "manual entry",
             "fetched_at": timezone.now(),
