@@ -956,6 +956,8 @@ html[data-theme="dark"] .training-hero-media { background: rgba(255,255,255,.04)
 .stl-modal-title { font-weight: 600; margin-bottom: .6rem; }
 .stl-modal-canvas { width: 100%; height: min(60vh, 460px); border-radius: 10px; background: var(--bg-elevated); }
 img.stl-tile-canvas { object-fit: cover; background: var(--bg-elevated); }
+.stl-tile-icon { display: flex; align-items: center; justify-content: center;
+  background: var(--bg-elevated); color: var(--accent-primary); font-size: 2.2rem; }
 .stl-modal-frame { width: 100%; }
 .stl-modal-frame iframe { width: 100%; height: min(64vh, 420px); border: 0; border-radius: 10px; }
 /* Inline embedded Scratch player on the lesson */

@@ -474,21 +474,31 @@ class Course(models.Model):
     # What kind of proof-of-work the project gate expects, per lesson:
     #   image   - a screenshot (e.g. Tinkercad)
     #   stl     - an STL 3D model shown in an interactive viewer (e.g. Fusion 360)
-    #   scratch - a link to a shared Scratch project, embedded as a live player
+    #   scratch  - a link to a shared Scratch project, embedded as a live player
+    #   tinkercad - a link to a shared Tinkercad design, embedded as a live player
     # Only meaningful when requires_project.
     PROJECT_IMAGE = "image"
     PROJECT_STL = "stl"
     PROJECT_SCRATCH = "scratch"
+    PROJECT_TINKERCAD = "tinkercad"
+    PROJECT_YOUTUBE = "youtube"
     PROJECT_UPLOAD_CHOICES = [
         (PROJECT_IMAGE, "Image / screenshot"),
         (PROJECT_STL, "STL 3D model"),
         (PROJECT_SCRATCH, "Scratch project link"),
+        (PROJECT_TINKERCAD, "Tinkercad project link"),
+        (PROJECT_YOUTUBE, "YouTube video link"),
     ]
+    # Link-based project types that collect a per-lesson LessonModelSubmission and
+    # render an embedded player (vs the single-screenshot "image" type).
+    PROJECT_LINK_TYPES = (PROJECT_STL, PROJECT_SCRATCH, PROJECT_TINKERCAD, PROJECT_YOUTUBE)
     project_upload_type = models.CharField(
-        max_length=10, choices=PROJECT_UPLOAD_CHOICES, default=PROJECT_IMAGE)
-    # How many per-lesson projects (stl/scratch) are required for the certificate
-    # (alongside CERT_PROJECT_MIN_PCT% of lessons). Ignored for image courses.
+        max_length=12, choices=PROJECT_UPLOAD_CHOICES, default=PROJECT_IMAGE)
+    # How many per-lesson projects (stl/scratch/tinkercad) are required for the
+    # certificate. Ignored for image courses.
     project_min_count = models.PositiveIntegerField(default=1)
+    # % of lessons that must be completed for the certificate (100 = all lessons).
+    cert_min_pct = models.PositiveIntegerField(default=80)
     created_at = models.DateTimeField(auto_now_add=True)
     # Set whenever the course is changed in the Authoring Studio (i.e. directly on
     # the running instance). Lets the local<->prod sync warn before overwriting.
@@ -668,6 +678,10 @@ class LessonModelSubmission(models.Model):
     model_file = models.FileField(upload_to="lesson_models/", blank=True)
     # Scratch courses: the numeric project id parsed from any shared-project link.
     scratch_id = models.CharField(max_length=20, blank=True)
+    # Tinkercad courses: the alphanumeric thing id parsed from a shared link.
+    tinkercad_id = models.CharField(max_length=30, blank=True)
+    # YouTube courses: the 11-char video id parsed from a shared link.
+    youtube_id = models.CharField(max_length=20, blank=True)
     caption = models.CharField(max_length=200, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -696,6 +710,38 @@ class LessonModelSubmission(models.Model):
     @property
     def scratch_thumb_url(self):
         return f"https://cdn2.scratch.mit.edu/get_image/project/{self.scratch_id}_480x360.png"
+
+    # --- Tinkercad helpers (only set when tinkercad_id is present) ---
+    @property
+    def is_tinkercad(self):
+        return bool(self.tinkercad_id)
+
+    @property
+    def tinkercad_embed_url(self):
+        return f"https://www.tinkercad.com/embed/{self.tinkercad_id}?editbtn=1"
+
+    @property
+    def tinkercad_url(self):
+        return f"https://www.tinkercad.com/things/{self.tinkercad_id}"
+
+    # --- YouTube helpers (only set when youtube_id is present) ---
+    @property
+    def is_youtube(self):
+        return bool(self.youtube_id)
+
+    @property
+    def youtube_embed_url(self):
+        # Privacy-enhanced domain: recommended by YouTube and not blocked by most
+        # ad/tracker blockers (which often blank a plain youtube.com embed).
+        return f"https://www.youtube-nocookie.com/embed/{self.youtube_id}"
+
+    @property
+    def youtube_url(self):
+        return f"https://www.youtube.com/watch?v={self.youtube_id}"
+
+    @property
+    def youtube_thumb_url(self):
+        return f"https://img.youtube.com/vi/{self.youtube_id}/hqdefault.jpg"
 
 
 class CourseMaterial(models.Model):

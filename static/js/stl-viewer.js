@@ -97,7 +97,7 @@ export function initStlViewer(container, url, opts = {}) {
 // 3D viewer + an orbitable modal; Scratch tiles (data-scratch) show a thumbnail
 // and open the live embedded player in the modal.
 export function initGallery() {
-  const tiles = document.querySelectorAll('.stl-tile[data-stl], .stl-tile[data-scratch]');
+  const tiles = document.querySelectorAll('.stl-tile[data-stl], .stl-tile[data-embed]');
   if (!tiles.length) return;
 
   const modal = document.getElementById('stl-modal');
@@ -121,23 +121,29 @@ export function initGallery() {
     if (mCanvas) mCanvas.innerHTML = '';
     if (mFrame) mFrame.innerHTML = '';
 
-    if (ds.scratch) {
-      // Embedded Scratch player.
+    if (ds.embed) {
+      // Embedded player (Scratch / Tinkercad).
       if (mCanvas) mCanvas.style.display = 'none';
       if (mDl) mDl.style.display = 'none';
       if (mFrame) {
         mFrame.style.display = '';
         const f = document.createElement('iframe');
-        f.src = 'https://scratch.mit.edu/projects/' + ds.scratch + '/embed';
+        f.src = ds.embed;
         f.setAttribute('allowtransparency', 'true');
         f.setAttribute('allowfullscreen', 'true');
         f.setAttribute('frameborder', '0');
         f.setAttribute('scrolling', 'no');
+        // Send the origin to the embed host even when the page policy is stricter
+        // (Django defaults to Referrer-Policy: same-origin), else YouTube errors 153.
+        f.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+        f.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
         mFrame.appendChild(f);
       }
-      if (mOpen) {
+      if (mOpen && ds.open) {
         mOpen.style.display = '';
-        mOpen.setAttribute('href', ds.open || ('https://scratch.mit.edu/projects/' + ds.scratch + '/'));
+        mOpen.setAttribute('href', ds.open);
+      } else if (mOpen) {
+        mOpen.style.display = 'none';
       }
     } else {
       // 3D STL viewer.

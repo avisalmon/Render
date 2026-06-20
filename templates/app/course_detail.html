@@ -68,7 +68,7 @@
         {% if m.material_type == "file" %}
           <i class="bi bi-file-earmark-arrow-down" style="color:var(--accent-primary);flex-shrink:0"></i>
           <span class="flex-grow-1">{{ m.title }}</span>
-          <a href="{{ m.file.url }}" download class="btn btn-sm btn-outline-primary">הורדה</a>
+          {% if m.file %}<a href="{{ m.file.url }}" download class="btn btn-sm btn-outline-primary">הורדה</a>{% endif %}
         {% else %}
           <i class="bi bi-link-45deg" style="color:var(--accent-cta);flex-shrink:0"></i>
           <span class="flex-grow-1">{{ m.title }}</span>

@@ -166,15 +166,15 @@ def test_lesson_embeds_and_exhibition_everywhere():
     body = c.get(f"/courses/{course.slug}/lesson/1/").content.decode()
     assert "submit-scratch" in body
     assert "scratch.mit.edu/projects/111/embed" in body   # inline embed
-    assert 'data-scratch="222"' in body                    # sidebar tile for the other one
+    assert "scratch.mit.edu/projects/222/embed" in body    # sidebar tile for the other one
 
     # Course page exhibition.
     course_body = c.get(f"/courses/{course.slug}/").content.decode()
-    assert 'data-scratch="111"' in course_body
+    assert "scratch.mit.edu/projects/111/embed" in course_body
 
     # Certificate exhibition.
     c.post(f"/courses/{course.slug}/finish/")
     cert = CourseCertificate.objects.get(user=user, course=course)
     cert_body = c.get(f"/certificate/{cert.certificate_id}/").content.decode()
     assert cert_body.count("stl-tile") >= 2
-    assert 'data-scratch="111"' in cert_body and 'data-scratch="222"' in cert_body
+    assert "scratch.mit.edu/projects/111/embed" in cert_body and "scratch.mit.edu/projects/222/embed" in cert_body

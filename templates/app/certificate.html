@@ -110,7 +110,7 @@
         <span>השלמת {{ course_pct }}% מהשיעורים</span>
       </li>
       <li class="d-flex align-items-center gap-2">
-        {% if project_upload_type == 'stl' or project_upload_type == 'scratch' %}
+        {% if project_upload_type == 'stl' or project_upload_type == 'scratch' or project_upload_type == 'tinkercad' or project_upload_type == 'youtube' %}
           {% if exhibition %}<i class="bi bi-check-circle-fill" style="color:var(--accent-success)"></i>{% else %}<i class="bi bi-circle text-muted"></i>{% endif %}
           <span>העלית {{ exhibition|length }} פרויקטים לתערוכה</span>
         {% else %}

@@ -774,8 +774,7 @@ def courses_detail(request, slug):
 
     # stl/scratch courses: the learner's own exhibition, shown under the lesson list.
     my_models = []
-    if request.user.is_authenticated and course.project_upload_type in (
-        Course.PROJECT_STL, Course.PROJECT_SCRATCH):
+    if request.user.is_authenticated and course.project_upload_type in Course.PROJECT_LINK_TYPES:
         from .models import LessonModelSubmission
         my_models = list(
             LessonModelSubmission.objects.filter(
@@ -921,8 +920,7 @@ def courses_lesson(request, slug, lesson_order):
     course_pct = 0
     cert_ready = True
     # stl + scratch both collect a per-lesson submission (LessonModelSubmission).
-    needs_models = course.requires_project and course.project_upload_type in (
-        Course.PROJECT_STL, Course.PROJECT_SCRATCH)
+    needs_models = course.requires_project and course.project_upload_type in Course.PROJECT_LINK_TYPES
     if request.user.is_authenticated and needs_models:
         from .models import LessonModelSubmission
         my_models = list(
@@ -936,8 +934,8 @@ def courses_lesson(request, slug, lesson_order):
         course_pct = _catalog_progress(request.user, [course.id]).get(course.id, {}).get("pct", 0)
         if course.requires_project:
             if needs_models:
-                # Cert gate: >=80% lessons AND at least project_min_count submitted.
-                cert_ready = (course_pct >= CERT_PROJECT_MIN_PCT) and (
+                # Cert gate: >=cert_min_pct% lessons AND at least project_min_count submitted.
+                cert_ready = (course_pct >= course.cert_min_pct) and (
                     len(my_models) >= course.project_min_count)
             else:
                 from .models import CourseProjectSubmission
@@ -945,7 +943,7 @@ def courses_lesson(request, slug, lesson_order):
                     user=request.user, course=course
                 ).first()
                 has_artifact = bool(project_submission and project_submission.artifact)
-                cert_ready = (course_pct >= CERT_PROJECT_MIN_PCT) and has_artifact
+                cert_ready = (course_pct >= course.cert_min_pct) and has_artifact
 
     error_code = request.GET.get("error")
 
@@ -1007,7 +1005,7 @@ def courses_lesson(request, slug, lesson_order):
         "models_enough": len(my_models) >= course.project_min_count,
         "course_pct": course_pct,
         "cert_ready": cert_ready,
-        "cert_project_min_pct": CERT_PROJECT_MIN_PCT,
+        "cert_project_min_pct": course.cert_min_pct,
         "error_code": error_code,
         "materials": course.materials.all(),
     })
@@ -1489,6 +1487,130 @@ def lesson_submit_scratch(request, slug, lesson_order):
     return back("uploaded")
 
 
+def parse_tinkercad_id(text):
+    """Pull the Tinkercad thing id from a shared link (or a bare id). Handles
+    tinkercad.com/things/<id>[-slug][/edit] and tinkercad.com/embed/<id>."""
+    import re
+    if not text:
+        return None
+    text = text.strip()
+    m = re.search(r"tinkercad\.com/(?:things|embed)/([A-Za-z0-9]+)", text)
+    if m:
+        return m.group(1)
+    m = re.fullmatch(r"[A-Za-z0-9]{8,30}", text)   # a pasted bare id
+    return m.group(0) if m else None
+
+
+@login_required
+def lesson_submit_tinkercad(request, slug, lesson_order):
+    """POST /courses/<slug>/lesson/<order>/submit-tinkercad/ - optional per-lesson
+    Tinkercad project share for a Tinkercad-project course. One per user+lesson."""
+    from django.shortcuts import get_object_or_404
+
+    from .models import LessonModelSubmission
+
+    course = get_object_or_404(Course, slug=slug)
+    video = get_object_or_404(Video, course=course, lesson_order=lesson_order)
+
+    def back(err):
+        from django.urls import reverse
+        url = reverse("courses_lesson", kwargs={"slug": slug, "lesson_order": lesson_order})
+        return redirect(f"{url}?error={err}#lesson-model")
+
+    if request.method != "POST":
+        return redirect("courses_lesson", slug=slug, lesson_order=lesson_order)
+
+    tid = parse_tinkercad_id(request.POST.get("tinkercad_url", ""))
+    if not tid:
+        return back("badtinkercad")
+
+    Enrollment.objects.get_or_create(user=request.user, course=course)
+    sub, _ = LessonModelSubmission.objects.get_or_create(user=request.user, video=video)
+    sub.tinkercad_id = tid
+    sub.scratch_id = ""
+    sub.model_file = ""
+    sub.caption = (request.POST.get("caption", "") or "").strip()[:200]
+    sub.save()
+    return back("uploaded")
+
+
+def parse_youtube_id(text):
+    """Pull the 11-char YouTube video id from any YouTube link or a bare id.
+    Handles watch?v=, youtu.be/, /embed/, /shorts/, /v/ and extra params."""
+    import re
+    if not text:
+        return None
+    text = text.strip()
+    m = re.search(
+        r"(?:youtu\.be/|(?:youtube\.com|youtube-nocookie\.com)/(?:watch\?(?:\S*&)?v=|embed/|shorts/|live/|v/))([A-Za-z0-9_-]{11})",
+        text,
+    )
+    if m:
+        return m.group(1)
+    m = re.fullmatch(r"[A-Za-z0-9_-]{11}", text)   # a pasted bare id
+    return m.group(0) if m else None
+
+
+def youtube_is_embeddable(vid):
+    """Light sanity check on a YouTube id. Returns False ONLY when the video
+    definitely does not exist (oembed 404 - e.g. a typo/dead link); returns
+    True/None otherwise. We intentionally do NOT reject on 401/403 because
+    Unlisted videos (which we explicitly allow) return those yet embed fine."""
+    import urllib.error
+    import urllib.request
+    url = ("https://www.youtube.com/oembed?format=json&url="
+           "https://www.youtube.com/watch?v=" + vid)
+    req = urllib.request.Request(url, headers={"User-Agent": "babook/1.0 (+https://babook.co.il)"})
+    try:
+        with urllib.request.urlopen(req, timeout=6) as r:
+            return r.status == 200
+    except urllib.error.HTTPError as e:
+        return False if e.code == 404 else None   # only a missing video is a hard "no"
+    except Exception:
+        return None
+
+
+@login_required
+def lesson_submit_youtube(request, slug, lesson_order):
+    """POST /courses/<slug>/lesson/<order>/submit-youtube/ - per-lesson YouTube
+    video share: the learner uploads to their own YouTube and pastes the link;
+    we embed it (no hosting cost). One per user+lesson."""
+    from django.shortcuts import get_object_or_404
+
+    from .models import LessonModelSubmission
+
+    course = get_object_or_404(Course, slug=slug)
+    video = get_object_or_404(Video, course=course, lesson_order=lesson_order)
+
+    def back(err):
+        from django.urls import reverse
+        url = reverse("courses_lesson", kwargs={"slug": slug, "lesson_order": lesson_order})
+        return redirect(f"{url}?error={err}#lesson-model")
+
+    if request.method != "POST":
+        return redirect("courses_lesson", slug=slug, lesson_order=lesson_order)
+
+    vid = parse_youtube_id(request.POST.get("youtube_url", ""))
+    if not vid:
+        return back("badyoutube")
+
+    existing = LessonModelSubmission.objects.filter(user=request.user, video=video).first()
+    # Verify the video actually embeds, only for a new/changed link (re-saving the
+    # same link to edit the title is never blocked). Network hiccup (None) passes.
+    if (not existing or existing.youtube_id != vid) and youtube_is_embeddable(vid) is False:
+        return back("ytunavailable")
+
+    Enrollment.objects.get_or_create(user=request.user, course=course)
+    sub = existing or LessonModelSubmission(user=request.user, video=video)
+    sub.youtube_id = vid
+    sub.tinkercad_id = ""
+    sub.scratch_id = ""
+    sub.model_file = ""
+    sub.caption = (request.POST.get("caption", "") or "").strip()[:200]
+    sub.save()
+    return back("uploaded")
+
+
 @login_required
 def course_finish(request, slug):
     """POST /courses/<slug>/finish/ - validate the completion gate then issue the
@@ -1532,9 +1654,9 @@ def course_finish(request, slug):
     # Gate B (project courses only): >=80% lessons completed + a project upload
     if course.requires_project:
         pct = _catalog_progress(request.user, [course.id]).get(course.id, {}).get("pct", 0)
-        if pct < CERT_PROJECT_MIN_PCT:
+        if pct < course.cert_min_pct:
             return _final_lesson_redirect(course, "progress")
-        if course.project_upload_type in (Course.PROJECT_STL, Course.PROJECT_SCRATCH):
+        if course.project_upload_type in Course.PROJECT_LINK_TYPES:
             from .models import LessonModelSubmission
             n = LessonModelSubmission.objects.filter(
                 user=request.user, video__course=course
@@ -1572,7 +1694,7 @@ def certificate_view(request, cert_id):
     ).first()
     # stl/scratch courses: the learner's whole "exhibition" of projects, in lesson order.
     exhibition = []
-    if cert.course.project_upload_type in (cert.course.PROJECT_STL, cert.course.PROJECT_SCRATCH):
+    if cert.course.project_upload_type in cert.course.PROJECT_LINK_TYPES:
         from .models import LessonModelSubmission
         exhibition = list(
             LessonModelSubmission.objects.filter(
