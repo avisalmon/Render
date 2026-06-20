@@ -27,7 +27,12 @@ _CACHE_TTL = 60 * 60 * 24 * 7
 
 
 def _font(name, size):
-    return ImageFont.truetype(str(_FONT_DIR / name), size)
+    # Force BASIC layout so behaviour is identical across environments: some
+    # Pillow builds bundle libraqm (which does its own bidi) and others don't.
+    # With BASIC, Pillow never reorders, so our python-bidi pass is the only one
+    # applied — otherwise raqm + bidi double-reverse the Hebrew (reversed text).
+    return ImageFont.truetype(str(_FONT_DIR / name), size,
+                              layout_engine=ImageFont.Layout.BASIC)
 
 
 def _rtl(s):
