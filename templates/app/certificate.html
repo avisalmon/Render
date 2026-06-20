@@ -121,10 +121,10 @@
   <!-- Share your success -->
   <div class="card-surface p-4 mt-4 text-center" style="max-width:460px;width:100%">
     <h2 class="h6 mb-1">שתפו את ההישג</h2>
-    <p class="small text-muted mb-3">ספרו לחברים שסיימתם — קישור לתעודה.</p>
+    <p class="small text-muted mb-3">תמונת התעודה + קישור לאתר, בלחיצה אחת.</p>
 
     <button id="native-share" class="btn btn-primary mb-3" style="display:none">
-      <i class="bi bi-share me-1"></i> שיתוף
+      <i class="bi bi-share me-1"></i> שיתוף עם תמונת התעודה
     </button>
 
     <div class="d-flex gap-2 justify-content-center flex-wrap">
@@ -165,17 +165,34 @@
 
 {{ cert_url|json_script:"cert-url" }}
 {{ share_text|json_script:"share-text" }}
+{{ og_image|json_script:"cert-image" }}
 <script>
 (function () {
   var url = JSON.parse(document.getElementById('cert-url').textContent);
   var text = JSON.parse(document.getElementById('share-text').textContent);
+  var imgUrl = JSON.parse(document.getElementById('cert-image').textContent);
+  var caption = text + ' ' + url;   // the link travels inside the message text
 
-  // Native share (mobile) — covers Instagram, WhatsApp, everything installed.
+  // Native share (mobile) — share the certificate IMAGE + the link together, so
+  // WhatsApp/Instagram show a real picture of the diploma (not reliant on the
+  // link-preview crawler). Falls back to a plain link share if file-share isn't
+  // supported (most desktops).
   var nb = document.getElementById('native-share');
   if (navigator.share) {
     nb.style.display = '';
     nb.addEventListener('click', function () {
-      navigator.share({ title: 'תעודת סיום — babook', text: text, url: url }).catch(function () {});
+      fetch(imgUrl)
+        .then(function (r) { return r.blob(); })
+        .then(function (blob) {
+          var file = new File([blob], 'certificate.png', { type: 'image/png' });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            return navigator.share({ files: [file], text: caption });
+          }
+          return navigator.share({ title: 'תעודת סיום — babook', text: text, url: url });
+        })
+        .catch(function () {
+          navigator.share({ title: 'תעודת סיום — babook', text: text, url: url }).catch(function () {});
+        });
     });
   }
 
