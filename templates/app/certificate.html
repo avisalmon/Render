@@ -78,6 +78,7 @@
     </div>
   </div>
 
+  {% if is_owner %}
   <!-- Actions -->
   <div class="d-flex gap-3 mt-4 flex-wrap justify-content-center">
     <button onclick="window.print()" class="btn btn-outline-secondary">
@@ -161,8 +162,20 @@
     </a>
   </div>
 
+  {% else %}
+  <!-- Visitor view: clean certificate + an invite to take the course -->
+  <div class="card-surface p-4 mt-4 text-center" style="max-width:460px;width:100%">
+    <i class="bi bi-mortarboard-fill mb-2" style="font-size:1.8rem;color:var(--accent-primary)"></i>
+    <p class="mb-3">רוצה גם תעודה כזו? אפשר ללמוד את «{{ cert.course.title }}» ב-babook.</p>
+    <a href="{{ cta_url }}" class="btn btn-primary btn-lg">
+      כן, אני רוצה ללמוד את הקורס »
+    </a>
+  </div>
+  {% endif %}
+
 </div>
 
+{% if is_owner %}
 {{ cert_url|json_script:"cert-url" }}
 {{ share_text|json_script:"share-text" }}
 {{ og_image|json_script:"cert-image" }}
@@ -205,4 +218,5 @@
   });
 })();
 </script>
+{% endif %}
 {% endblock %}

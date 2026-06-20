@@ -1566,6 +1566,16 @@ def certificate_view(request, cert_id):
     from django.urls import reverse
     og_image = request.build_absolute_uri(
         reverse("certificate_image", kwargs={"cert_id": cert.certificate_id}))
+
+    # Only the person who earned it sees the full page (achievements, project,
+    # share tools). Everyone else — guest or another member — sees just the
+    # certificate plus a "take this course too" invite.
+    is_owner = request.user.is_authenticated and request.user.pk == cert.user_id
+    course_url = reverse("courses_detail", kwargs={"slug": cert.course.slug})
+    # Logged-in visitors hop straight to the course; logged-out go via login
+    # (which returns them to the course afterwards).
+    cta_url = course_url if request.user.is_authenticated else f"{reverse('login')}?next={course_url}"
+
     return render(request, "app/certificate.html", {
         "cert": cert,
         "submission": submission,
@@ -1574,6 +1584,8 @@ def certificate_view(request, cert_id):
         "og_image": og_image,
         "learner_name": name,
         "share_text": f"השלמתי את הקורס «{cert.course.title}» ב-babook וקיבלתי תעודה",
+        "is_owner": is_owner,
+        "cta_url": cta_url,
     })
 
 
