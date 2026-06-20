@@ -168,6 +168,7 @@ urlpatterns = [
     path("course/<slug:slug>/lesson/<int:lesson_order>/", views.lesson_view, name="lesson_view"),
     # Certificate
     path("certificate/<uuid:cert_id>/", views.certificate_view, name="certificate_view"),
+    path("certificate/<uuid:cert_id>/image.png", views.certificate_image, name="certificate_image"),
     # Video progress heartbeat (SPR-1.4)
     path("api/video-progress/", views.video_progress_heartbeat, name="video_progress"),
     path("api/lesson/<int:video_id>/reflect/", views.lesson_reflect, name="lesson_reflect"),

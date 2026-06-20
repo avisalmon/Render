@@ -1558,11 +1558,14 @@ def certificate_view(request, cert_id):
     ).first()
     pct = _catalog_progress(cert.user, [cert.course.id]).get(cert.course.id, {}).get("pct", 0)
     cert_url = request.build_absolute_uri()
-    og_image = request.build_absolute_uri(submission.image.url) if submission else ""
     # Read the name live from the profile on every view, so editing the profile
     # name is reflected on the diploma immediately (nothing is cached on the cert).
     profile = getattr(cert.user, "profile", None)
     name = (profile.public_name if profile else "") or cert.user.get_full_name() or cert.user.username
+    # Social-share preview image = a rendered PNG of the certificate itself.
+    from django.urls import reverse
+    og_image = request.build_absolute_uri(
+        reverse("certificate_image", kwargs={"cert_id": cert.certificate_id}))
     return render(request, "app/certificate.html", {
         "cert": cert,
         "submission": submission,
@@ -1572,6 +1575,25 @@ def certificate_view(request, cert_id):
         "learner_name": name,
         "share_text": f"השלמתי את הקורס «{cert.course.title}» ב-babook וקיבלתי תעודה",
     })
+
+
+def certificate_image(request, cert_id):
+    """GET /certificate/<uuid>/image.png — a rendered PNG of the certificate,
+    used as the og:image for social shares (WhatsApp / Facebook previews).
+    Public, cached, and regenerated when the learner's name changes."""
+    from django.shortcuts import get_object_or_404
+
+    from .cert_image import render_certificate_png
+    from .models import CourseCertificate
+
+    cert = get_object_or_404(CourseCertificate, certificate_id=cert_id)
+    profile = getattr(cert.user, "profile", None)
+    name = (profile.public_name if profile else "") or cert.user.get_full_name() or cert.user.username
+    png = render_certificate_png(
+        str(cert.certificate_id), name, cert.course.title, cert.issued_at)
+    resp = HttpResponse(png, content_type="image/png")
+    resp["Cache-Control"] = "public, max-age=86400"
+    return resp
 
 
 
