@@ -79,6 +79,18 @@ def _get_learner_profile(user):
     return profile
 
 
+def _save_name(user, name):
+    """Save a freshly-given name to the user (display + first name)."""
+    name = (name or "").strip()[:150]
+    if not name:
+        return
+    up = user.profile
+    up.display_name = name
+    up.save(update_fields=["display_name"])
+    user.first_name = name.split()[0][:30]
+    user.save(update_fields=["first_name"])
+
+
 @login_required
 def welcome(request):
     """The onboarding page. Step 1 captures the basics (name, email,
@@ -95,13 +107,14 @@ def welcome(request):
         for k, v in sorted(TRAINING_TAXONOMY.items(), key=lambda kv: kv[1]["order"])
     ]
     from .ai_chat import _is_stub_mode
-    from .onboarding import fixed_opener
+    from .onboarding import fixed_opener, has_real_name
     return render(request, "app/welcome.html", {
         "learner": profile,
         "opener": fixed_opener(request.user),
         "entry_course": entry_course,
         "domains": domains,
         "ai_available": not _is_stub_mode(),
+        "has_name": has_real_name(request.user),
         "next": request.session.get(ONBOARDING_NEXT_KEY, ""),
     })
 
@@ -186,7 +199,13 @@ def welcome_chat(request):
         history = [{"role": "assistant", "content": fixed_opener(request.user)}]
     user_turns = sum(1 for m in history if m["role"] == "user")
     if user_turns >= MAX_INTERVIEW_TURNS:
-        return JsonResponse({"fallback": True})
+        # Never yank the user into the static form mid-chat — keep it a chat and
+        # let them end it themselves via "דלג על השיחה". Gentle nudge only.
+        return JsonResponse({
+            "reply": "וואו, שיחה כיפית! 🙂 מתי שמתאים לך לחצ/י על «סיים את השיחה» ונצא לדרך. "
+                     "משהו נוסף שאוכל לעזור בו?",
+            "done": False,
+            "name_known": bool(request.user.profile.display_name)})
 
     message = (data.get("message") or "").strip()[:1000]
     if message:
@@ -202,10 +221,17 @@ def welcome_chat(request):
     result = call_openai(history or [{"role": "user", "content": "שלום"}],
                          system_prompt=system_prompt)
     visible, extracted = parse_interview_reply(result["content"])
+    # Early name capture: a leading "NAME: x" marker, saved the moment it's given.
+    from .onboarding import strip_name_marker
+    name, visible = strip_name_marker(visible)
+    if name and not request.user.profile.display_name:
+        _save_name(request.user, name)
     history.append({"role": "assistant", "content": result["content"]})
     request.session[INTERVIEW_KEY] = history
 
     if extracted:
+        if extracted.get("name") and not request.user.profile.display_name:
+            _save_name(request.user, str(extracted["name"]))
         profile.interests = [
             d for d in extracted.get("interests", []) if d in TRAINING_TAXONOMY
         ]
@@ -218,9 +244,11 @@ def welcome_chat(request):
         if role in ("student", "teacher", "professor", "industry_engineer", "other"):
             profile.role_type = role
         target = _finish_onboarding(request, profile, completed=True)
-        return JsonResponse({"reply": visible, "done": True, "redirect": target})
+        return JsonResponse({"reply": visible, "done": True, "redirect": target,
+                             "name_known": bool(request.user.profile.display_name)})
 
-    return JsonResponse({"reply": visible, "done": False})
+    return JsonResponse({"reply": visible, "done": False,
+                         "name_known": bool(request.user.profile.display_name)})
 
 
 @login_required
@@ -246,5 +274,9 @@ def welcome_skip(request):
     if request.method != "POST":
         return redirect("welcome")
     profile = _get_learner_profile(request.user)
+    # Last gentle nudge: if they offered a name on the way out, keep it.
+    name = request.POST.get("name", "").strip()
+    if name and not request.user.profile.display_name:
+        _save_name(request.user, name)
     target = _finish_onboarding(request, profile, completed=False)
     return redirect(target)

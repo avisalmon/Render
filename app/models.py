@@ -467,6 +467,10 @@ class Course(models.Model):
     track = models.CharField(max_length=40, blank=True, default="")
     thumbnail = models.CharField(max_length=200, blank=True)
     is_published = models.BooleanField(default=False)
+    # Hands-on courses: to earn the certificate the learner must finish >=80% of
+    # the lessons AND upload a screenshot of what they built (a CourseProjectSubmission).
+    # Off by default so theory courses keep the simple quiz-only completion gate.
+    requires_project = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     # Set whenever the course is changed in the Authoring Studio (i.e. directly on
     # the running instance). Lets the local<->prod sync warn before overwriting.
@@ -596,6 +600,27 @@ class CourseCertificate(models.Model):
 
     def __str__(self):
         return f"Cert {self.certificate_id}: {self.user.username} – {self.course.slug}"
+
+
+class CourseProjectSubmission(models.Model):
+    """A learner's proof-of-work for a hands-on course — a screenshot of what they
+    built. Required (together with >=80% of lessons) to earn the certificate of a
+    course whose `requires_project` flag is on. One submission per user+course;
+    re-uploading replaces the image."""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="project_submissions")
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="project_submissions")
+    image = models.ImageField(upload_to="project_submissions/")
+    caption = models.CharField(max_length=200, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [("user", "course")]
+        verbose_name = "הגשת פרויקט"
+        verbose_name_plural = "הגשות פרויקט"
+
+    def __str__(self):
+        return f"Submission: {self.user.username} – {self.course.slug}"
 
 
 class CourseMaterial(models.Model):

@@ -2,36 +2,74 @@
 {% load static %}
 {% block title %}תעודת סיום — {{ cert.course.title }} — babook{% endblock %}
 
+{% block extra_head %}
+  <!-- Rich preview when the certificate link is shared (Facebook / WhatsApp / etc.) -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="תעודת סיום — {{ cert.course.title }}">
+  <meta property="og:description" content="{{ learner_name }} השלים/ה את הקורס «{{ cert.course.title }}» ב-babook.">
+  <meta property="og:url" content="{{ cert_url }}">
+  {% if og_image %}
+  <meta property="og:image" content="{{ og_image }}">
+  <meta name="twitter:card" content="summary_large_image">
+  {% endif %}
+  <style>
+    /* Print ONLY the certificate card — hide the nav, footer, actions and extras. */
+    @media print {
+      body * { visibility: hidden !important; }
+      #certificate-printable, #certificate-printable * { visibility: visible !important; }
+      #certificate-printable { position: absolute; left: 0; right: 0; top: 0; margin: 0 auto; }
+      @page { margin: 1.2cm; }
+    }
+    .share-btn { width: 44px; height: 44px; display: inline-flex; align-items: center;
+      justify-content: center; border-radius: 50%; font-size: 1.15rem; text-decoration: none;
+      border: 1px solid var(--border); color: var(--text-primary); transition: border-color .15s, color .15s; }
+    .share-btn:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+  </style>
+{% endblock %}
+
 {% block content %}
 <div class="d-flex flex-column align-items-center py-5">
 
-  <!-- Certificate card -->
+  <!-- Certificate card (the only thing that prints) -->
   <div class="certificate-card" id="certificate-printable">
     <div class="certificate-border">
+      <span class="cert-corner cert-corner-tl"></span>
+      <span class="cert-corner cert-corner-tr"></span>
+      <span class="cert-corner cert-corner-bl"></span>
+      <span class="cert-corner cert-corner-br"></span>
 
       <div class="certificate-logo">
-        <span style="font-size:1.6rem;font-weight:900;letter-spacing:-.5px;">ba<span style="color:var(--accent-primary)">book</span></span>
+        <img src="{% static 'logo.svg' %}" alt="" width="38" height="38">
+        <span class="certificate-wordmark">ba<span>book</span></span>
       </div>
 
       <p class="certificate-label">תעודת סיום</p>
-
-      <p class="certificate-awarded-to">הוענקה ל</p>
-
-      <h2 class="certificate-name">
-        {{ cert.user.get_full_name|default:cert.user.username }}
-      </h2>
-
+      <p class="certificate-awarded-to">הוענקה בזאת ל</p>
+      <h2 class="certificate-name">{{ learner_name }}</h2>
       <p class="certificate-text">על סיום מוצלח של הקורס</p>
-
       <h3 class="certificate-course">{{ cert.course.title }}</h3>
 
       <div class="certificate-divider"></div>
 
-      <p class="certificate-date">{{ cert.issued_at|date:"j בF Y" }}</p>
+      <!-- Gold seal of achievement -->
+      <div class="certificate-seal" aria-hidden="true">
+        <span class="certificate-seal-ribbon"></span>
+        <span class="certificate-seal-ribbon certificate-seal-ribbon-2"></span>
+        <span class="certificate-seal-disc"><i class="bi bi-mortarboard-fill"></i></span>
+      </div>
 
-      <p class="certificate-id">
-        מזהה תעודה: <code>{{ cert.certificate_id }}</code>
-      </p>
+      <div class="certificate-footer">
+        <div class="certificate-sign">
+          <div class="certificate-sign-name">אבי סלמון</div>
+          <div class="certificate-sign-title">שמח לעזור ראשי</div>
+        </div>
+        <div class="certificate-issued">
+          <div class="certificate-date">{{ cert.issued_at|date:"j בF Y" }}</div>
+          <div class="certificate-sign-title">תאריך הענקה</div>
+        </div>
+      </div>
+
+      <p class="certificate-id">מזהה תעודה: <code>{{ cert.certificate_id }}</code></p>
 
     </div>
   </div>
@@ -39,7 +77,7 @@
   <!-- Actions -->
   <div class="d-flex gap-3 mt-4 flex-wrap justify-content-center">
     <button onclick="window.print()" class="btn btn-outline-secondary">
-      <i class="bi bi-printer me-1"></i> הדפסה
+      <i class="bi bi-printer me-1"></i> הדפסת התעודה
     </button>
     <a href="{% url 'courses_detail' cert.course.slug %}" class="btn btn-outline-primary">
       <i class="bi bi-arrow-right me-1"></i> חזרה לקורס
@@ -49,14 +87,101 @@
     </a>
   </div>
 
+  <!-- What you achieved -->
+  <div class="card-surface p-4 mt-4" style="max-width:460px;width:100%">
+    <h2 class="h6 mb-3 text-center">מה השגת בקורס הזה</h2>
+    <ul class="list-unstyled mb-0">
+      <li class="d-flex align-items-center gap-2 mb-2">
+        <i class="bi bi-check-circle-fill" style="color:var(--accent-success)"></i>
+        <span>השלמת {{ course_pct }}% מהשיעורים</span>
+      </li>
+      <li class="d-flex align-items-center gap-2">
+        {% if submission %}
+        <i class="bi bi-check-circle-fill" style="color:var(--accent-success)"></i>
+        {% else %}
+        <i class="bi bi-circle text-muted"></i>
+        {% endif %}
+        <span>העלית צילום של הפרויקט שבנית</span>
+      </li>
+    </ul>
+
+    {% if submission %}
+    <div class="text-center mt-3">
+      <img src="{{ submission.image.url }}" alt="הפרויקט שלי"
+           style="max-width:100%;border-radius:8px;border:1px solid var(--border)">
+      {% if submission.caption %}<p class="small text-muted mt-2 mb-0">{{ submission.caption }}</p>{% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Share your success -->
+  <div class="card-surface p-4 mt-4 text-center" style="max-width:460px;width:100%">
+    <h2 class="h6 mb-1">שתפו את ההישג</h2>
+    <p class="small text-muted mb-3">ספרו לחברים שסיימתם — קישור לתעודה.</p>
+
+    <button id="native-share" class="btn btn-primary mb-3" style="display:none">
+      <i class="bi bi-share me-1"></i> שיתוף
+    </button>
+
+    <div class="d-flex gap-2 justify-content-center flex-wrap">
+      <a class="share-btn" title="Facebook" target="_blank" rel="noopener"
+         href="https://www.facebook.com/sharer/sharer.php?u={{ cert_url|urlencode }}">
+        <i class="bi bi-facebook"></i></a>
+      <a class="share-btn" title="WhatsApp" target="_blank" rel="noopener"
+         href="https://wa.me/?text={{ share_text|urlencode }}%20{{ cert_url|urlencode }}">
+        <i class="bi bi-whatsapp"></i></a>
+      <a class="share-btn" title="X" target="_blank" rel="noopener"
+         href="https://twitter.com/intent/tweet?text={{ share_text|urlencode }}&url={{ cert_url|urlencode }}">
+        <i class="bi bi-twitter-x"></i></a>
+      <a class="share-btn" title="LinkedIn" target="_blank" rel="noopener"
+         href="https://www.linkedin.com/sharing/share-offsite/?url={{ cert_url|urlencode }}">
+        <i class="bi bi-linkedin"></i></a>
+      <a class="share-btn" title="Telegram" target="_blank" rel="noopener"
+         href="https://t.me/share/url?url={{ cert_url|urlencode }}&text={{ share_text|urlencode }}">
+        <i class="bi bi-telegram"></i></a>
+      <button class="share-btn" id="copy-link" title="העתקת קישור" type="button">
+        <i class="bi bi-link-45deg"></i></button>
+    </div>
+    <p class="small text-muted mt-2 mb-0" id="copy-note" style="display:none">הקישור הועתק</p>
+    <p class="small text-muted mt-2 mb-0">
+      לאינסטגרם: השתמשו בכפתור «שיתוף» מהנייד, או הורידו את התעודה (הדפסה ← שמירה כתמונה).
+    </p>
+  </div>
+
   <!-- The natural bragging moment (REQ-6.3.4) -->
-  <div class="card-surface p-3 mt-4 text-center">
+  <div class="card-surface p-3 mt-4 text-center" style="max-width:460px;width:100%">
     <i class="bi bi-easel2-fill mb-1" style="font-size:1.4rem; color:var(--accent-primary)"></i>
-    <p class="mb-2">בנית משהו בעקבות הקורס? זה הזמן להשוויץ בו בדוכן הקהילה 🚀</p>
+    <p class="mb-2">בנית משהו בעקבות הקורס? זה הזמן להשוויץ בו בדוכן הקהילה.</p>
     <a href="{% url 'showcase_new' %}?course={{ cert.course.slug }}" class="btn btn-primary">
       <i class="bi bi-megaphone me-1"></i> פרסמו מה בניתם
     </a>
   </div>
 
 </div>
+
+{{ cert_url|json_script:"cert-url" }}
+{{ share_text|json_script:"share-text" }}
+<script>
+(function () {
+  var url = JSON.parse(document.getElementById('cert-url').textContent);
+  var text = JSON.parse(document.getElementById('share-text').textContent);
+
+  // Native share (mobile) — covers Instagram, WhatsApp, everything installed.
+  var nb = document.getElementById('native-share');
+  if (navigator.share) {
+    nb.style.display = '';
+    nb.addEventListener('click', function () {
+      navigator.share({ title: 'תעודת סיום — babook', text: text, url: url }).catch(function () {});
+    });
+  }
+
+  // Copy link
+  var cb = document.getElementById('copy-link'), note = document.getElementById('copy-note');
+  cb.addEventListener('click', function () {
+    (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject())
+      .then(function () { note.style.display = ''; setTimeout(function () { note.style.display = 'none'; }, 2500); })
+      .catch(function () { window.prompt('העתיקו את הקישור:', url); });
+  });
+})();
+</script>
 {% endblock %}

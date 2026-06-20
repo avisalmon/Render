@@ -36,7 +36,7 @@ The foundation the project sits on. Must be in place before any feature work.
 | REQ-1.2.1 | Custom error pages | Branded 404, 500, 403 templates extending `base.html`. Visible in prod (DEBUG=False). | DONE |
 | REQ-1.2.2 | Email backend | Dev = console backend. Prod = **Resend** via env vars. Sender domain `babook.co.il` configured (SPF/DKIM). | DONE |
 | REQ-1.2.3 | Env & secrets | All secrets via env vars. `.env` for local (gitignored). `settings_local.py` pattern. Render env vars list maintained in `docs/procedures/env_vars.md`. No secret in repo. | DONE |
-| REQ-1.2.4 | Database backups | Nightly backup of `db.sqlite3` to cloud (GCS). Documented restore. Retention policy. | WIP — `backup_db` command DONE; nightly schedule + cloud target verify pending (ACT-3) |
+| REQ-1.2.4 | Database backups | Weekly backup of `db.sqlite3` + media + Bunny video catalog to GCS. Incremental media sync. 30-day rolling retention **plus a permanent monthly snapshot** (`monthly/db_YYYY-MM.sqlite3`, never pruned). Success email with bucket links. Documented + verified restore. | DONE — `backup_db` runs **in-process in the web service** (Render crons can't reach the SQLite disk, DEC-68), triggered **weekly by a GitHub Actions cron** that POSTs a token-protected `/internal/run-backup/` endpoint; verified on prod 2026-06-18 (rolling + monthly snapshot + email) |
 | REQ-1.2.5 | Logging | Django `LOGGING`: console + rotating file handler. App logs INFO, security WARNING. Procedure for tailing Render logs documented. | DONE |
 | REQ-1.2.6 | Security hardening | `SECURE_SSL_REDIRECT=True` in prod, HSTS, secure cookies, CSRF, `ALLOWED_HOSTS` correct, `DEBUG=False`. `manage.py check --deploy` clean. | DONE |
 | REQ-1.2.7 | Django admin | `/admin/` superusers only. Documented procedure for creating a superuser on Render. Default Django admin UI for now. | DONE |
@@ -50,7 +50,7 @@ The foundation the project sits on. Must be in place before any feature work.
 | REQ-1.2.15 | Health check | `GET /healthz` → 200 `{"status":"ok"}`. Configured as Render health check URL. | DONE |
 | REQ-1.2.16 | Testing infra | `pytest-django` configured. `tests/` per app. `pytest` exits 0 locally and in CI. | DONE |
 | REQ-1.2.17 | Code quality | `black` + `ruff` in `pyproject.toml`. **Pre-commit hook enabled** (auto-format on commit). | DONE |
-| REQ-1.2.18 | Backup & restore BKM | `docs/procedures/backup_restore.md`: how backups work, where they live, how to restore on Render and locally. Test-restore done once and recorded. | WIP — BKM file exists; one test-restore not yet recorded |
+| REQ-1.2.18 | Backup & restore BKM | `docs/procedures/backup_restore.md`: how backups work, where they live, how to restore on Render and locally. Test-restore done once and recorded. | WIP — restore **verified 2026-06-18** (downloaded latest GCS backup, `PRAGMA integrity_check` = ok, table/row counts confirmed); BKM doc still describes the old rclone/Drive/cron flow and needs a refresh to the GCS + endpoint mechanism (DEC-68) |
 | REQ-1.2.19 | Rollback BKM | `docs/procedures/rollback.md`: revert bad deploy on Render (manual redeploy of previous commit, env var revert, DB restore if needed). | DONE |
 
 ### 1.3 Video Infrastructure (Bunny Stream)
@@ -159,7 +159,8 @@ The foundation the project sits on. Must be in place before any feature work.
 | DEC-15 | AI Chat API | **Direct OpenAI API** (not Azure) | Simpler setup, no Azure subscription needed, direct access to latest models |
 | DEC-16 | Default chat model | **GPT-4o-mini** (premium: GPT-4o) | 4o-mini is 10x cheaper, fast enough for tutoring; 4o for premium users who need advanced reasoning |
 | DEC-17 | Tax entity | **עוסק פטור** (exempt dealer, no VAT) | Simplest start; no מע"מ collection/remit; issues קבלות not חשבוניות מס. Revisit if revenue exceeds cap (~120K ILS/yr) |
-| DEC-18 | Backup target (revised) | **Google Drive** via rclone | Already have account, 15GB free, built-in 30-day versioning, no extra repos/keys |
+| DEC-18 | Backup target (revised) | ~~**Google Drive** via rclone~~ → see DEC-68 | Superseded: the actual implementation backs up to **Google Cloud Storage** via the GCS JSON API (not Drive, not rclone) |
+| DEC-68 | Backup target + trigger (final) | **GCS** bucket `babook-backups-490715`, written by `backup_db` running **in-process in the web service**, triggered **weekly by a GitHub Actions cron** (`.github/workflows/weekly-backup.yml`, Mon 03:00 UTC + manual dispatch) that POSTs a token-protected `/internal/run-backup/` endpoint. 30-day rolling retention on `db/`; permanent `monthly/` snapshots. | A Render `cron_job` runs in a **separate container that cannot mount the web service's persistent disk**, so it can't read `db.sqlite3` — the old `nightly-backup` cron failed every night for ~4 weeks (`CommandError: Database not found`) and was **deleted via the Render API on 2026-06-18**. Running the backup in-process (triggered by an external cron) is the only way to reach the SQLite disk. GCS over Drive/rclone: service-account auth, no rclone daemon, direct JSON API |
 
 ### 1.9 Avi action items
 
@@ -167,7 +168,7 @@ The foundation the project sits on. Must be in place before any feature work.
 |---|---|---|
 | ACT-1 | Sign up Resend, give Copilot API key | REQ-1.1.3, REQ-1.2.2 |
 | ACT-2 | Add SPF/DKIM DNS records at babook.co.il registrar | REQ-1.2.2 |
-| ACT-3 | Set up rclone with Google Drive for DB backups | REQ-1.2.4 |
+| ~~ACT-3~~ | ~~Set up rclone with Google Drive for DB backups~~ — DONE differently: GCS + GitHub Actions → in-process endpoint (DEC-68), no rclone/Drive | REQ-1.2.4 |
 | ACT-4 | Approve AI-generated logo OR provide own | REQ-1.1.9 |
 | ACT-5 | Create Plausible account, share site ID | REQ-1.2.11 |
 | ACT-6 | Confirm Render persistent disk attached at `/var/data/` | REQ-1.1.5, REQ-1.2.4, REQ-1.5 |
@@ -1104,7 +1105,7 @@ other tool to know the site's people, spend, and health.
 | REQ-8.3.6 | Resend (email) | Email volume vs plan and any overage; from the Resend API where available, estimate from sent-mail counts otherwise; deep link. | DONE |
 | REQ-8.3.7 | Render (hosting) | Monthly hosting + persistent-disk cost; live from the Render API if exposed, else a maintained manual figure; deep link to the Render dashboard. | DONE |
 | REQ-8.3.8 | Plausible | Analytics subscription cost (manual/plan-based) + a link to the Plausible stats; deep link. | DONE |
-| REQ-8.3.9 | Other services | Adapters (live/estimate/manual as available) for: domain registrar (babook.co.il), Google Drive / rclone backups (free tier — $0 but shown), and the showcase screenshot service (REQ-6.3.17). | DONE |
+| REQ-8.3.9 | Other services | Adapters (live/estimate/manual as available) for: domain registrar (babook.co.il), **Google Cloud Storage backups (live bucket size; first 5 GB free)**, and the showcase screenshot service (REQ-6.3.17). | DONE |
 | REQ-8.3.10 | Billing placeholder | A dormant section for **Stripe + Green Invoice** (revenue + fees) wired but inactive while billing is DEFERRED (Ch 1.4), ready to light up when payments ship. | DONE |
 | REQ-8.3.11 | Manual cost entry | The admin can set/override a `manual` `CostRecord` per service per month (for anything with no usable API), and those values flow into totals and trends like any other source. | DONE |
 

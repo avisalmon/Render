@@ -1,5 +1,5 @@
 {% load static %}
-<a href="{% url 'courses_detail' c.course.slug %}" class="course-card{% if c.popular %} is-popular{% endif %}" data-title="{{ c.course.title }} {{ c.course.title_en }} {{ c.course.slug }}">
+<a href="{% url 'courses_detail' c.course.slug %}" class="course-card{% if c.popular %} is-popular{% endif %}" data-slug="{{ c.course.slug }}" data-title="{{ c.course.title }} {{ c.course.title_en }} {{ c.course.slug }}">
   <div class="course-thumb">
     {% if c.course.thumbnail %}
       <img src="{% static c.course.thumbnail %}" alt="{{ c.course.title }}" loading="lazy">

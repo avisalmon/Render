@@ -189,6 +189,9 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 OPENAI_ADMIN_KEY = os.environ.get("OPENAI_ADMIN_KEY", "")
 OPENAI_DEFAULT_MODEL = os.environ.get("OPENAI_DEFAULT_MODEL", "gpt-4o-mini")
 OPENAI_PREMIUM_MODEL = os.environ.get("OPENAI_PREMIUM_MODEL", "gpt-4o")
+# Tiny, cheap model for semantic search (catalog now; site-wide later). gpt-4o-mini
+# is already ~$0.15/1M input; swap to gpt-4.1-nano via env to spend even less.
+OPENAI_SEARCH_MODEL = os.environ.get("OPENAI_SEARCH_MODEL", "gpt-4o-mini")
 OPENAI_DAILY_TOKEN_LIMITS = {
     "member": int(os.environ.get("OPENAI_DAILY_TOKENS_MEMBER", "10000")),
     "base": int(os.environ.get("OPENAI_DAILY_TOKENS_BASE", "50000")),

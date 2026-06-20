@@ -25,7 +25,6 @@ TRAILS = {
     "course_detail": [("הדרכות", "courses_catalog"), ("קורס", None)],
     "lesson_view": [("הדרכות", "courses_catalog"), ("קורס", None), ("שיעור", None)],
     "corporate": [("לעסקים", "corporate")],
-    "pricing": [("מחירים ומסלולים", "pricing")],
     "chat_page": [("צ׳אט AI", "chat_page")],
     "certificate_view": [("תעודה", None)],
     # profile / account

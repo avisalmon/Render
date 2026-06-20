@@ -6,38 +6,47 @@
 <div class="row justify-content-center py-4">
   <div class="col-md-8 col-lg-6">
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h1 class="h4 mb-0"><i class="bi bi-stars me-1" style="color:var(--accent-primary)"></i> נבנה לך מסלול אישי</h1>
-      <form method="post" action="{% url 'welcome_skip' %}">{% csrf_token %}
-        <button class="btn btn-sm btn-outline-secondary">דלג, אחר כך</button>
-      </form>
-    </div>
+    <h1 class="h5 mb-3">רגע נכיר</h1>
+    <!-- skip is submitted by JS; the button lives right next to "send" below -->
+    <form method="post" action="{% url 'welcome_skip' %}" id="skip-form" class="d-none">{% csrf_token %}</form>
 
     {% if user.email and not user.profile.email_verified %}
-    <!-- Post-signup: tell them to verify (REQ-7.2.1) -->
     <div class="alert alert-warning py-2 small">
-      📧 שלחנו מייל אימות ל-<strong dir="ltr">{{ user.email }}</strong>. לחצו על הקישור שבמייל כדי לאמת את החשבון
-      (אפשר להמשיך בינתיים). לא הגיע? בדקו בספאם או <a href="{% url 'resend_verification' %}">שלחו שוב</a>.
+      שלחנו מייל אימות ל-<strong dir="ltr">{{ user.email }}</strong>. אפשר להמשיך בינתיים.
+      לא הגיע? בדקו בספאם או <a href="{% url 'resend_verification' %}">שלחו שוב</a>.
     </div>
     {% endif %}
 
     {% if entry_course %}
     <div class="alert alert-info py-2 small">
-      <i class="bi bi-bookmark-heart"></i> ראינו שהגעת בשביל «{{ entry_course.title }}» - ניקח את זה בחשבון.
+      <i class="bi bi-bookmark-heart"></i> ראינו שהגעת בשביל «{{ entry_course.title }}» — ניקח את זה בחשבון.
     </div>
     {% endif %}
 
+    <!-- Gentle name nudge — shown only when skipping without a name -->
+    <div id="name-prompt" class="card-surface p-3 mb-3" style="display:none; border-color:var(--accent-primary)">
+      <p class="small mb-2">רגע לפני שתלך/י — איך לפנות אליך? (שם בלבד)</p>
+      <form method="post" action="{% url 'welcome_skip' %}" class="d-flex gap-2 mb-2">{% csrf_token %}
+        <input name="name" id="skip-name-input" class="form-control form-control-sm" placeholder="השם שלך" maxlength="150" autocomplete="off">
+        <button class="btn btn-primary btn-sm">שמור וסיים</button>
+      </form>
+      <form method="post" action="{% url 'welcome_skip' %}" class="m-0">{% csrf_token %}
+        <button class="btn btn-link btn-sm text-secondary p-0">סיים בלי שם ←</button>
+      </form>
+    </div>
+
     {% if ai_available %}
-    <!-- AI interview (REQ-5.5.2). Falls back to the static form on any error. -->
-    <div id="interview" class="card-surface p-3 mb-3">
+    <!-- Friendly intro chat. Falls back to the static form on any error. -->
+    <div id="interview" class="card-surface p-3 mb-2">
       <div class="d-flex align-items-center gap-2 border-bottom pb-2 mb-2">
         <img src="/static/avi-bot.jpg" alt="Avi Bot" width="28" height="28" class="rounded-circle" style="object-fit:cover">
         <span class="small"><strong>Avi Bot</strong> <span class="text-muted">· אבי סלמון מארח אותך</span></span>
       </div>
-      <div id="chat-log" class="mb-3" style="min-height:180px; max-height:50vh; overflow-y:auto;"></div>
-      <div class="d-flex gap-2">
-        <input id="chat-input" class="form-control" placeholder="כתבו תשובה..." autocomplete="off">
-        <button id="chat-send" class="btn btn-primary"><i class="bi bi-send"></i></button>
+      <div id="chat-log" class="mb-3" style="min-height:160px; max-height:50vh; overflow-y:auto;"></div>
+      <div class="d-flex gap-2 flex-wrap align-items-center">
+        <input id="chat-input" class="form-control" style="flex:1 1 140px" placeholder="כתבו כאן..." autocomplete="off">
+        <button id="chat-send" class="btn btn-primary"><i class="bi bi-send"></i> שלח</button>
+        <button type="button" id="skip-btn" class="btn btn-outline-secondary">סיים את השיחה</button>
       </div>
     </div>
     {% endif %}
@@ -60,11 +69,11 @@
         <label class="form-label small fw-semibold">מה מתאים לך?</label>
         <div class="d-flex flex-column gap-2 mb-3">
           <input type="radio" class="btn-check" name="experience_level" value="beginner" id="lv-b" checked>
-          <label class="btn btn-outline-primary btn-sm text-start" for="lv-b">😎 ללמוד דברים מגניבים ולהשתמש בכלים קיימים</label>
+          <label class="btn btn-outline-primary btn-sm text-start" for="lv-b">ללמוד דברים מגניבים ולהשתמש בכלים קיימים</label>
           <input type="radio" class="btn-check" name="experience_level" value="intermediate" id="lv-i">
-          <label class="btn btn-outline-primary btn-sm text-start" for="lv-i">🛠️ לבנות בעצמי ולשלב את זה בעבודה שלי</label>
+          <label class="btn btn-outline-primary btn-sm text-start" for="lv-i">לבנות בעצמי ולשלב את זה בעבודה שלי</label>
           <input type="radio" class="btn-check" name="experience_level" value="advanced" id="lv-a">
-          <label class="btn btn-outline-primary btn-sm text-start" for="lv-a">🧠 להבין לעומק איך זה עובד מבפנים</label>
+          <label class="btn btn-outline-primary btn-sm text-start" for="lv-a">להבין לעומק איך זה עובד מבפנים</label>
         </div>
         <label class="form-label small fw-semibold">מה המטרה?</label>
         <select class="form-select mb-4" name="goal">
@@ -86,6 +95,20 @@
 if (window.plausible) { plausible('registered'); plausible('onboarding_started'); }
 
 (function () {
+  // --- Skip button: always available; gentle name nudge if no name yet ---
+  var hasName = {{ has_name|yesno:"true,false" }};
+  var skipBtn = document.getElementById('skip-btn');
+  var skipForm = document.getElementById('skip-form');
+  var namePrompt = document.getElementById('name-prompt');
+  if (skipBtn) skipBtn.addEventListener('click', function () {
+    if (hasName) { skipForm.submit(); return; }
+    namePrompt.style.display = '';
+    var ni = document.getElementById('skip-name-input');
+    if (ni) ni.focus();
+    namePrompt.scrollIntoView({behavior: 'smooth', block: 'center'});
+  });
+
+  // --- The chat ---
   var log = document.getElementById('chat-log');
   if (!log) return;  // static-only mode
   var input = document.getElementById('chat-input'), send = document.getElementById('chat-send');
@@ -94,13 +117,12 @@ if (window.plausible) { plausible('registered'); plausible('onboarding_started')
     var div = document.createElement('div');
     if (role === 'user') {
       div.className = 'mb-2 text-end';
-      div.innerHTML = '<span class="badge bg-primary" style="white-space:normal; text-align:start; font-weight:400; font-size:0.9rem;"></span>';
+      div.innerHTML = '<span class="badge bg-primary" style="white-space:pre-line; text-align:start; font-weight:400; font-size:0.92rem;"></span>';
       div.lastChild.textContent = text;
     } else {
-      // Avi Bot bubble: small avatar icon next to the message
       div.className = 'mb-2 d-flex align-items-start gap-2';
       div.innerHTML = '<img src="/static/avi-bot.jpg" alt="Avi Bot" width="28" height="28" class="rounded-circle flex-shrink-0" style="object-fit:cover">' +
-        '<span class="badge bg-secondary" style="white-space:normal; text-align:start; font-weight:400; font-size:0.9rem;"></span>';
+        '<span class="badge bg-secondary" style="white-space:pre-line; text-align:start; font-weight:400; font-size:0.92rem;"></span>';
       div.lastChild.textContent = text;
     }
     log.appendChild(div); log.scrollTop = log.scrollHeight;
@@ -117,22 +139,25 @@ if (window.plausible) { plausible('registered'); plausible('onboarding_started')
       headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
       body: JSON.stringify({message: message})
     }).then(function (r) { return r.json(); }).then(function (data) {
-      if (data.fallback || data.error) { showFallback(); return; }
+      if (data.fallback) { showFallback(); return; }   // only if the AI is truly unavailable
+      if (data.error) { add('assistant', 'אופס, רגע — נסו לשלוח שוב 🙂'); return; }
+      if (data.name_known) hasName = true;   // once we know the name, skip won't re-ask
       if (data.reply) add('assistant', data.reply);
       if (data.done) {
+        // The user asked to finish — take them into the site (REQ-5.6.4 honored:
+        // it's their explicit choice). Auto-redirect, with a manual fallback link.
         if (window.plausible) plausible('onboarding_completed');
-        // No auto-jump - the learner chooses when to continue (REQ-5.6.4)
         input.disabled = true; send.disabled = true;
+        var dest = data.redirect || '/';
         var div = document.createElement('div');
-        div.className = 'text-center mt-3';
-        var label = (data.redirect && data.redirect !== '/')
-          ? 'המשך לאן שהיית בדרך' : 'לעמוד הבית שלך - עם ההמלצות';
-        div.innerHTML = '<a class="btn btn-primary"></a>';
-        div.firstChild.href = data.redirect || '/';
-        div.firstChild.textContent = label + ' ←';
+        div.className = 'text-center mt-3 small text-muted';
+        div.innerHTML = 'נכנסים לאתר… <a></a>';
+        div.querySelector('a').href = dest;
+        div.querySelector('a').textContent = 'לחצו אם לא הועברתם';
         log.appendChild(div); log.scrollTop = log.scrollHeight;
+        setTimeout(function () { window.location.href = dest; }, 1400);
       }
-    }).catch(showFallback);
+    }).catch(function () { add('assistant', 'אופס, משהו השתבש לרגע — נסו לשלוח שוב 🙂'); });
   }
 
   send.addEventListener('click', function () {
@@ -145,7 +170,7 @@ if (window.plausible) { plausible('registered'); plausible('onboarding_started')
     if (e.key === 'Enter') { e.preventDefault(); send.click(); }
   });
 
-  // Fixed, instant opener (REQ-7.2.3) — no AI call, always identical.
+  // Short, instant opener — no AI call.
   var opener = JSON.parse(document.getElementById('opener-data').textContent);
   add('assistant', opener);
   input.focus();

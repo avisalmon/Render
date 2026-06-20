@@ -159,7 +159,9 @@ def test_text_only_lesson_has_no_player():
     Video.objects.create(course=course, lesson_order=1, title="Text lesson",
                          bunny_video_id="", is_free_preview=True,
                          notes_markdown="## Hello\nsome content")
+    user = User.objects.create_user("textviewer", password="pass12345")
     client = Client()
+    client.force_login(user)
     resp = client.get(reverse("courses_lesson", args=["textonly", 1]))
     assert resp.status_code == 200
     assert "lesson-player" not in resp.content.decode("utf-8", "ignore")

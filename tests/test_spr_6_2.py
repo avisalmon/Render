@@ -205,7 +205,7 @@ def test_lesson_page_links_to_community_and_shows_threads():
         category="ai", title="שאלה על השיעור הזה", body="x",
         author=author, course=course, video=video,
     )
-    body = Client().get("/courses/ask-course/lesson/1/").content.decode()
+    body = _client(_member("viewer")).get("/courses/ask-course/lesson/1/").content.decode()
     assert "שאלו את הקהילה" in body
     assert f"course={course.slug}" in body
     assert thread.title in body

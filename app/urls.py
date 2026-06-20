@@ -155,11 +155,13 @@ urlpatterns = [
     path("newsletter/confirm/<str:token>", views.newsletter_confirm, name="newsletter_confirm"),
     # Courses (plural — SPR-2.2)
     path("courses/", views.courses_catalog, name="courses_catalog"),
+    path("courses/search/", views.courses_search, name="courses_search"),
     path("courses/topic/<slug:domain>/", views.courses_domain, name="courses_domain"),
     path("courses/topic/<slug:domain>/<slug:track>/", views.courses_track, name="courses_track"),
     path("courses/<slug:slug>/", views.courses_detail, name="courses_detail"),
     path("courses/<slug:slug>/enroll/", views.courses_enroll, name="courses_enroll"),
     path("courses/<slug:slug>/finish/", views.course_finish, name="course_finish"),
+    path("courses/<slug:slug>/submit-project/", views.course_submit_project, name="course_submit_project"),
     path("courses/<slug:slug>/lesson/<int:lesson_order>/", views.courses_lesson, name="courses_lesson"),
     # Courses (singular — SPR-1.4/1.5 entitlement-gated)
     path("course/<slug:slug>/", views.course_detail_view, name="course_detail"),
@@ -171,9 +173,6 @@ urlpatterns = [
     path("api/lesson/<int:video_id>/reflect/", views.lesson_reflect, name="lesson_reflect"),
     # Legacy heartbeat alias (used by lesson.html prev/next)
     path("courses/<slug:slug>/heartbeat/", views.video_progress_heartbeat, name="video_heartbeat"),
-    # Pricing (SPR-1.5)
-    path("pricing/", views.pricing, name="pricing"),
-    path("pricing/choose/", views.choose_tier, name="choose_tier"),
     # AI Chat (SPR-1.8)
     path("chat/", views.chat_page, name="chat_page"),
     path("api/chat/", views.chat_api, name="chat_api"),

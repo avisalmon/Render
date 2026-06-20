@@ -99,7 +99,16 @@ def home(request):
 
     # Training hero video loop: every .mp4 in static/video/training/ (sorted),
     # crossfaded one into the next in the template. Add a clip = drop a file.
+    # Caption per clip is keyed by filename below; the overlay fades in sync
+    # with each crossfade (see home.html). Unmapped clips just show no caption.
     import os
+    training_captions = {
+        "01-hero.mp4": "לומדים על חומרה ובקרים — עולם מופלא של יצירה",
+        "02-hero.mp4": "הדפסה בתלת מימד",
+        "03-hero.mp4": "בינה מלאכותית בכל הרמות",
+        "04-hero.mp4": "נושאים טכנולוגיים (בתמונה המחשב הראשון בישראל)",
+        "05-hero.mp4": "בינה מלאכותית מהבפנוכו — איך זה עובד באמת",
+    }
     vdir = os.path.join(settings.BASE_DIR, "static", "video", "training")
     training_videos = []
     if os.path.isdir(vdir):
@@ -108,7 +117,11 @@ def home(request):
                 # version by mtime so reordering/replacing a clip busts the
                 # browser cache (same URL + new content was showing a stale clip).
                 ver = int(os.path.getmtime(os.path.join(vdir, f)))
-                training_videos.append({"path": "video/training/" + f, "ver": ver})
+                training_videos.append({
+                    "path": "video/training/" + f,
+                    "ver": ver,
+                    "caption": training_captions.get(f, ""),
+                })
 
     return render(request, "app/home.html", {
         "notes": notes,
@@ -847,6 +860,18 @@ def courses_catalog(request):
     })
 
 
+def courses_search(request):
+    """AI-powered catalog search. GET ?q=<query> -> JSON {slugs, mode}.
+
+    The catalog page calls this as the user types; the front-end then filters and
+    re-orders the already-rendered cards by the returned slugs (matching by
+    meaning, not substring). A tiny model + caching keep the cost near zero, and
+    it falls back to substring matching when AI is unavailable. This is the seed
+    of the planned site-wide AI search — see app/ai_search.py."""
+    from .ai_search import search_courses
+    return JsonResponse(search_courses(request.GET.get("q", "")))
+
+
 def courses_domain(request, domain):
     """Level 1 — list the tracks inside a domain."""
     from .taxonomy import TRAINING_TAXONOMY, build_catalog
@@ -884,7 +909,9 @@ def courses_detail(request, slug):
     is_enrolled = False
     completed_ids = {}
     if request.user.is_authenticated:
-        is_enrolled = Enrollment.objects.filter(user=request.user, course=course).exists()
+        # Entering a course = enrolled. No separate enroll step, no paywall.
+        enrollment, _ = Enrollment.objects.get_or_create(user=request.user, course=course)
+        is_enrolled = True
         total = videos.count()
         if total:
             done_qs = UserVideoProgress.objects.filter(
@@ -892,8 +919,7 @@ def courses_detail(request, slug):
             )
             completed_ids = {p.video_id: True for p in done_qs}
             progress_pct = int((len(completed_ids) / total) * 100)
-            enrollment = Enrollment.objects.filter(user=request.user, course=course).first()
-            is_complete = bool(enrollment and enrollment.completed_at)
+            is_complete = bool(enrollment.completed_at)
 
     # Projects built from this course (REQ-6.3.4)
     from .models import ShowcaseProject
@@ -950,16 +976,13 @@ def courses_lesson(request, slug, lesson_order):
     course = get_object_or_404(Course, slug=slug, is_published=True)
     video = get_object_or_404(Video, course=course, lesson_order=lesson_order)
 
-    # Access gate: non-preview videos require enrollment.
-    # Anonymous users get the context-aware wall, never a bare login/403
-    # (REQ-5.1.2 / REQ-5.4.1).
-    if not video.is_free_preview:
-        if not request.user.is_authenticated:
-            return redirect(
-                f"/join/?next=/courses/{slug}/lesson/{lesson_order}/&course={slug}"
-            )
-        if not Enrollment.objects.filter(user=request.user, course=course).exists():
-            return redirect("courses_detail", slug=slug)
+    # Open access: a login is the only gate. The moment a logged-in user opens a
+    # lesson they're auto-enrolled — no enroll step, no paywall, no preview tiers.
+    if not request.user.is_authenticated:
+        return redirect(
+            f"/join/?next=/courses/{slug}/lesson/{lesson_order}/&course={slug}"
+        )
+    Enrollment.objects.get_or_create(user=request.user, course=course)
 
     # Next / previous
     all_videos = list(course.videos.order_by("lesson_order"))
@@ -1021,21 +1044,26 @@ def courses_lesson(request, slug, lesson_order):
             if v_id not in required_ids or v_id in passed_ids
         }
 
-    # Enforce sequential access: redirect to frontier if this lesson is locked
+    # Everything is open — no sequential locking. Learners pick any lesson.
     locked_ids = {}
-    if request.user.is_authenticated and is_enrolled:
-        locked_ids = _get_locked_ids(all_videos, completed_ids)
-        if video.id in locked_ids:
-            frontier = _get_frontier_video(all_videos, completed_ids)
-            if frontier:
-                return redirect("courses_lesson", slug=slug, lesson_order=frontier.lesson_order)
 
     quiz = LessonQuiz.objects.filter(video=video).first()
     existing_cert = None
+    # Project-course certificate context (only needed on the final/summary lesson)
+    project_submission = None
+    course_pct = 0
+    cert_ready = True
     if video.is_final_lesson and request.user.is_authenticated:
         existing_cert = CourseCertificate.objects.filter(
             user=request.user, course=course
         ).first()
+        course_pct = _catalog_progress(request.user, [course.id]).get(course.id, {}).get("pct", 0)
+        if course.requires_project:
+            from .models import CourseProjectSubmission
+            project_submission = CourseProjectSubmission.objects.filter(
+                user=request.user, course=course
+            ).first()
+            cert_ready = (course_pct >= CERT_PROJECT_MIN_PCT) and bool(project_submission)
 
     error_code = request.GET.get("error")
 
@@ -1087,6 +1115,10 @@ def courses_lesson(request, slug, lesson_order):
         # staff don't see a false "you answered correctly before" on fresh quizzes.
         "quiz_answered_before": quiz_passed_db,
         "existing_cert": existing_cert,
+        "project_submission": project_submission,
+        "course_pct": course_pct,
+        "cert_ready": cert_ready,
+        "cert_project_min_pct": CERT_PROJECT_MIN_PCT,
         "error_code": error_code,
         "materials": course.materials.all(),
     })
@@ -1102,23 +1134,16 @@ def lesson_view(request, slug, lesson_order):
     from django.shortcuts import get_object_or_404
 
     from .bunny import get_embed_url
-    from .models import Entitlement
 
     course = get_object_or_404(Course, slug=slug)
     video = get_object_or_404(Video, course=course, lesson_order=lesson_order)
 
-    if not video.is_free_preview:
-        if not request.user.is_authenticated:
-            # Context-aware wall, never a bare login page (REQ-5.1.2)
-            return redirect(
-                f"/join/?next=/course/{slug}/lesson/{lesson_order}/&course={slug}"
-            )
-        try:
-            ent = request.user.entitlement
-            if not ent.has_video_access:
-                return HttpResponse(status=403)
-        except Entitlement.DoesNotExist:
-            return HttpResponse(status=403)
+    # Open access: login is the only gate; entering = auto-enrolled.
+    if not request.user.is_authenticated:
+        return redirect(
+            f"/join/?next=/course/{slug}/lesson/{lesson_order}/&course={slug}"
+        )
+    Enrollment.objects.get_or_create(user=request.user, course=course)
 
     last_position_seconds = 0
     quiz_passed_db = False
@@ -1311,7 +1336,9 @@ def course_detail_view(request, slug):
     is_enrolled = False
     completed_ids = {}
     if request.user.is_authenticated:
-        is_enrolled = Enrollment.objects.filter(user=request.user, course=course).exists()
+        # Entering a course = enrolled. No separate enroll step, no paywall.
+        Enrollment.objects.get_or_create(user=request.user, course=course)
+        is_enrolled = True
         total = videos.count()
         if total:
             done_qs = UserVideoProgress.objects.filter(
@@ -1329,38 +1356,6 @@ def course_detail_view(request, slug):
         "is_enrolled": is_enrolled,
         "completed_ids": completed_ids,
     })
-
-
-# ---------------------------------------------------------------------------
-# SPR-1.5 — Pricing + tier selection
-# ---------------------------------------------------------------------------
-
-def pricing(request):
-    """Render pricing page."""
-    from .models import Entitlement
-    current_tier = None
-    if request.user.is_authenticated:
-        try:
-            current_tier = request.user.entitlement.tier
-        except Entitlement.DoesNotExist:
-            current_tier = None
-    return render(request, "app/pricing.html", {"current_tier": current_tier})
-
-
-@login_required
-def choose_tier(request):
-    """POST /pricing/choose/ — set user entitlement tier."""
-    from .models import Entitlement
-    if request.method != "POST":
-        return redirect("pricing")
-    valid_tiers = {"free", "base", "master"}
-    tier = request.POST.get("tier", "free")
-    if tier not in valid_tiers:
-        tier = "free"
-    ent, _ = Entitlement.objects.get_or_create(user=request.user)
-    ent.tier = tier
-    ent.save(update_fields=["tier"])
-    return redirect("pricing")
 
 
 # ---------------------------------------------------------------------------
@@ -1448,13 +1443,57 @@ class AiUsageDashboardView(UserPassesTestMixin, TemplateView):
 # Finish course + certificate
 # ---------------------------------------------------------------------------
 
+CERT_PROJECT_MIN_PCT = 80   # project courses: lessons completed needed for the cert
+
+
+def _final_lesson_redirect(course, error):
+    """Send the learner back to the summary lesson with an error flag."""
+    from django.urls import reverse
+    final = course.videos.filter(is_final_lesson=True).order_by("lesson_order").first()
+    order = final.lesson_order if final else (
+        course.videos.order_by("-lesson_order").values_list("lesson_order", flat=True).first() or 1)
+    url = reverse("courses_lesson", kwargs={"slug": course.slug, "lesson_order": order})
+    return redirect(f"{url}?error={error}")
+
+
+@login_required
+def course_submit_project(request, slug):
+    """POST /courses/<slug>/submit-project/ — a learner uploads a screenshot of
+    what they built. Required (with >=80% lessons) for the certificate of a
+    project course. Re-uploading replaces the previous image."""
+    from django.shortcuts import get_object_or_404
+
+    from .models import CourseProjectSubmission
+
+    course = get_object_or_404(Course, slug=slug)
+    if request.method != "POST" or not request.user.is_authenticated:
+        return redirect("courses_detail", slug=slug)
+
+    image = request.FILES.get("image")
+    if not image:
+        return _final_lesson_redirect(course, "noimage")
+    if not (image.content_type or "").startswith("image/"):
+        return _final_lesson_redirect(course, "badimage")
+
+    Enrollment.objects.get_or_create(user=request.user, course=course)
+    sub, _ = CourseProjectSubmission.objects.get_or_create(
+        user=request.user, course=course)
+    sub.image = image
+    sub.caption = (request.POST.get("caption", "") or "").strip()[:200]
+    sub.save()
+    return _final_lesson_redirect(course, "uploaded")
+
+
 @login_required
 def course_finish(request, slug):
-    """POST /courses/<slug>/finish/ — validate quizzes then issue certificate."""
+    """POST /courses/<slug>/finish/ — validate the completion gate then issue the
+    certificate. Theory courses: all required quizzes passed. Project courses
+    (`requires_project`): >=80% of lessons completed AND a project screenshot
+    uploaded."""
     from django.shortcuts import get_object_or_404
     from django.urls import reverse
 
-    from .models import CourseCertificate, LessonQuiz
+    from .models import CourseCertificate, CourseProjectSubmission, LessonQuiz
 
     if request.method != "POST":
         return redirect("courses_detail", slug=slug)
@@ -1466,7 +1505,7 @@ def course_finish(request, slug):
 
     all_videos = list(course.videos.order_by("lesson_order"))
 
-    # Only gate: all requires_correct quizzes must be passed (no video-watching requirement)
+    # Gate A: all requires_correct quizzes must be passed
     quizzes_required = LessonQuiz.objects.filter(video__in=all_videos, requires_correct=True)
     if quizzes_required.exists():
         need_pass = {q.video_id for q in quizzes_required}
@@ -1485,6 +1524,16 @@ def course_finish(request, slug):
                     )
                     return redirect(f"{url}?error=quiz")
 
+    # Gate B (project courses only): >=80% lessons completed + a project upload
+    if course.requires_project:
+        pct = _catalog_progress(request.user, [course.id]).get(course.id, {}).get("pct", 0)
+        if pct < CERT_PROJECT_MIN_PCT:
+            return _final_lesson_redirect(course, "progress")
+        if not CourseProjectSubmission.objects.filter(
+            user=request.user, course=course
+        ).exists():
+            return _final_lesson_redirect(course, "project")
+
     # All gates passed — issue certificate
     if not enrollment.completed_at:
         enrollment.completed_at = timezone.now()
@@ -1501,10 +1550,28 @@ def certificate_view(request, cert_id):
     """GET /certificate/<uuid>/ — display a course completion certificate."""
     from django.shortcuts import get_object_or_404
 
-    from .models import CourseCertificate
+    from .models import CourseCertificate, CourseProjectSubmission
 
     cert = get_object_or_404(CourseCertificate, certificate_id=cert_id)
-    return render(request, "app/certificate.html", {"cert": cert})
+    submission = CourseProjectSubmission.objects.filter(
+        user=cert.user, course=cert.course
+    ).first()
+    pct = _catalog_progress(cert.user, [cert.course.id]).get(cert.course.id, {}).get("pct", 0)
+    cert_url = request.build_absolute_uri()
+    og_image = request.build_absolute_uri(submission.image.url) if submission else ""
+    # Read the name live from the profile on every view, so editing the profile
+    # name is reflected on the diploma immediately (nothing is cached on the cert).
+    profile = getattr(cert.user, "profile", None)
+    name = (profile.public_name if profile else "") or cert.user.get_full_name() or cert.user.username
+    return render(request, "app/certificate.html", {
+        "cert": cert,
+        "submission": submission,
+        "course_pct": pct,
+        "cert_url": cert_url,
+        "og_image": og_image,
+        "learner_name": name,
+        "share_text": f"השלמתי את הקורס «{cert.course.title}» ב-babook וקיבלתי תעודה",
+    })
 
 
 

@@ -159,12 +159,15 @@ def test_entry_event_fires_once():
 
 @pytest.mark.django_db
 def test_wall_and_lesson_events_present():
-    _course("evented")
+    course = _course("evented")
     c = Client()
     wall = c.get("/join/?course=evented").content.decode()
     assert "wall_shown" in wall
-    lesson = c.get("/courses/evented/lesson/1/").content.decode()
-    assert "free_lesson_watched" in lesson
+    # Login is the only gate now — the lesson opens for a logged-in user.
+    u = User.objects.create_user("evviewer", password="pass12345")
+    c.force_login(u)
+    resp = c.get("/courses/evented/lesson/1/")
+    assert resp.status_code == 200
 
 
 @pytest.mark.django_db

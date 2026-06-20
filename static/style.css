@@ -2,48 +2,48 @@
    Design System Tokens — SPR-2.0.1
    ========================================================================== */
 :root {
-  /* LIGHT theme — Khan-Academy-inspired default (REQ-7.4.1/7.4.2) */
-  --bg-primary: #f7f8fa;
+  /* LIGHT theme — calm editorial: warm paper, one restrained accent, flat */
+  --bg-primary: #f6f4ef;     /* warm off-white paper */
   --bg-surface: #ffffff;
-  --bg-elevated: #eef1f5;
-  --text-primary: #21242c;
-  --text-secondary: #5b6573;
-  --accent-primary: #1865f2;   /* friendly blue */
-  --accent-warm: #f59e0b;
-  --accent-success: #00875a;    /* trustworthy green */
-  --accent-cta: #00875a;
-  --border: #e3e6eb;
+  --bg-elevated: #eeeae1;
+  --text-primary: #1c1b18;   /* near-black ink */
+  --text-secondary: #6b675f; /* warm grey */
+  --accent-primary: #2f5d50; /* deep muted pine — the single accent */
+  --accent-warm: #a8622f;    /* muted clay, used sparingly */
+  --accent-success: #2f5d50;
+  --accent-cta: #2f5d50;
+  --border: #e4ded2;         /* warm hairline */
   --nav-bg: #ffffff;
-  --nav-text: #21242c;
-  --card-shadow: 0 1px 3px rgba(20,30,50,.08), 0 1px 2px rgba(20,30,50,.06);
-  --radius: 12px;
+  --nav-text: #1c1b18;
+  --card-shadow: none;       /* editorial = hairline borders, not shadows */
+  --radius: 8px;
 
   /* Spacing */
   --space-section: 4rem;
   --space-card: 1.5rem;
   --max-content-width: 1200px;
 
-  /* Typography */
-  --font-heading: 'Heebo', Arial, sans-serif;
+  /* Typography — serif display for character, sans for body */
+  --font-heading: 'Frank Ruhl Libre', 'Heebo', Georgia, serif;
   --font-body: 'Heebo', Arial, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 
-/* DARK theme (the previous look) — opt-in via the toggle (REQ-7.4.2) */
+/* DARK theme — warm-dark, same single accent */
 html[data-theme="dark"] {
-  --bg-primary: #0f1117;
-  --bg-surface: #1a1d27;
-  --bg-elevated: #252836;
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --accent-primary: #3b82f6;
-  --accent-warm: #f59e0b;
-  --accent-success: #10b981;
-  --accent-cta: #16a34a;
-  --border: #2d3149;
-  --nav-bg: #14161f;
-  --nav-text: #f1f5f9;
-  --card-shadow: 0 1px 3px rgba(0,0,0,.4);
+  --bg-primary: #15140f;
+  --bg-surface: #1d1c17;
+  --bg-elevated: #2a2822;
+  --text-primary: #f0ece3;
+  --text-secondary: #a8a297;
+  --accent-primary: #6fae9c;
+  --accent-warm: #cd8b5f;
+  --accent-success: #6fae9c;
+  --accent-cta: #6fae9c;
+  --border: #34322a;
+  --nav-bg: #1a1914;
+  --nav-text: #f0ece3;
+  --card-shadow: none;
 }
 
 /* --- Theme-aware overrides for Bootstrap dark utilities --- */
@@ -609,97 +609,123 @@ html[dir="rtl"] .whatsapp-sticky {
 /* ==========================================================================
    Course completion certificate
    ========================================================================== */
+/* A formal diploma — parchment + gold, fixed colors (theme-independent) so it
+   looks identical in light/dark and prints true. --cert-gold is the one accent. */
 .certificate-card {
-  width: min(700px, 100%);
-  background: var(--bg-surface);
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 0 0 1px var(--border), 0 8px 40px rgba(0,0,0,.4);
+  --cert-gold: #b8912e;
+  --cert-gold-lt: #e7c766;
+  --cert-ink: #2b261d;
+  --cert-ink-soft: #6a6151;
+  width: min(720px, 100%);
+  background: #fdfbf3;                         /* parchment */
+  background-image:
+    radial-gradient(circle at 50% -5%, rgba(184,145,46,.07), transparent 55%),
+    radial-gradient(circle at 50% 105%, rgba(184,145,46,.06), transparent 55%);
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 12px 50px rgba(0,0,0,.28);
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
 }
 
 .certificate-border {
-  border: 6px solid transparent;
-  background: linear-gradient(var(--bg-surface), var(--bg-surface)) padding-box,
-              linear-gradient(135deg, #d4af37, #f5e17a, #d4af37) border-box;
-  border-radius: 12px;
-  padding: 3rem 2.5rem;
+  position: relative;
+  border: 2px solid var(--cert-gold);
+  outline: 1px solid var(--cert-gold);
+  outline-offset: 5px;                          /* double-rule gold frame */
+  border-radius: 4px;
+  padding: 3.4rem 2.75rem 2.4rem;
   text-align: center;
+  color: var(--cert-ink);
 }
 
-.certificate-logo { margin-bottom: 1rem; opacity: .8; }
+/* gold corner flourishes */
+.cert-corner {
+  position: absolute; width: 26px; height: 26px;
+  border: 2px solid var(--cert-gold); pointer-events: none;
+}
+.cert-corner-tl { top: 10px; inset-inline-start: 10px; border-inline-end: 0; border-bottom: 0; }
+.cert-corner-tr { top: 10px; inset-inline-end: 10px; border-inline-start: 0; border-bottom: 0; }
+.cert-corner-bl { bottom: 10px; inset-inline-start: 10px; border-inline-end: 0; border-top: 0; }
+.cert-corner-br { bottom: 10px; inset-inline-end: 10px; border-inline-start: 0; border-top: 0; }
+
+.certificate-logo {
+  display: flex; align-items: center; justify-content: center; gap: .5rem;
+  margin-bottom: 1.1rem;
+}
+.certificate-wordmark { font-size: 1.5rem; font-weight: 900; letter-spacing: -.5px; color: var(--cert-ink); }
+.certificate-wordmark span { color: var(--cert-gold); }
 
 .certificate-label {
-  font-size: 1rem;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: #d4af37;
-  margin-bottom: 1.5rem;
-  font-weight: 600;
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  letter-spacing: .32em;
+  color: var(--cert-gold);
+  margin-bottom: 1.6rem;
+  font-weight: 700;
 }
 
-.certificate-awarded-to {
-  color: var(--text-secondary);
-  font-size: .9rem;
-  margin-bottom: .25rem;
-}
+.certificate-awarded-to { color: var(--cert-ink-soft); font-size: .92rem; margin-bottom: .35rem; }
 
 .certificate-name {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 1.25rem;
+  font-family: var(--font-heading);
+  font-size: 2.4rem; font-weight: 700; color: var(--cert-ink);
+  margin-bottom: 1.1rem; line-height: 1.1;
 }
 
-.certificate-text {
-  color: var(--text-secondary);
-  font-size: .9rem;
-  margin-bottom: .4rem;
-}
+.certificate-text { color: var(--cert-ink-soft); font-size: .92rem; margin-bottom: .45rem; }
 
 .certificate-course {
-  font-size: 1.4rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 1.5rem;
+  font-family: var(--font-heading);
+  font-size: 1.5rem; font-weight: 700; color: var(--cert-ink); margin-bottom: 1.25rem;
 }
 
 .certificate-divider {
-  width: 80px;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #d4af37, transparent);
-  margin: 0 auto 1.25rem;
+  position: relative;
+  width: 180px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cert-gold), transparent);
+  margin: 0 auto 1.4rem;
+}
+.certificate-divider::after {
+  content: "\2666";                              /* ◆ */
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  color: var(--cert-gold); font-size: .7rem; background: #fdfbf3; padding: 0 .4rem;
 }
 
+/* Gold seal of achievement with ribbon tails */
+.certificate-seal { position: relative; width: 92px; height: 92px; margin: .5rem auto 1.6rem; }
+.certificate-seal-disc {
+  position: absolute; inset: 0; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 35% 30%, var(--cert-gold-lt), var(--cert-gold) 62%, #8f6f17);
+  color: #fff5d6; font-size: 2.2rem; z-index: 2;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25),
+              inset 0 0 0 4px rgba(255,255,255,.3), inset 0 0 0 5px var(--cert-gold);
+}
+.certificate-seal-ribbon {
+  position: absolute; top: 58px; width: 18px; height: 40px; background: var(--cert-gold);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%); z-index: 1;
+}
+.certificate-seal-ribbon   { left: 28px; transform: rotate(10deg); }
+.certificate-seal-ribbon-2 { left: auto; right: 28px; transform: rotate(-10deg); background: #9f7c1c; }
+
+.certificate-footer {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  gap: 1rem; margin: 0 auto 1.4rem; max-width: 460px;
+}
+.certificate-sign, .certificate-issued { flex: 1; text-align: center; }
+.certificate-sign-name {
+  font-family: var(--font-heading); font-size: 1.5rem; color: var(--cert-ink);
+  font-style: italic; line-height: 1; padding-bottom: .35rem;
+  border-bottom: 1px solid var(--cert-gold);
+}
 .certificate-date {
-  color: var(--text-secondary);
-  font-size: .9rem;
-  margin-bottom: .5rem;
+  font-size: 1rem; color: var(--cert-ink); padding-bottom: .35rem;
+  border-bottom: 1px solid var(--cert-gold);
 }
+.certificate-sign-title { font-size: .72rem; color: var(--cert-ink-soft); margin-top: .35rem; letter-spacing: .04em; }
 
-.certificate-id {
-  font-size: .75rem;
-  color: var(--text-secondary);
-  opacity: .6;
-  margin: 0;
-}
-.certificate-id code {
-  font-size: .7rem;
-  letter-spacing: .03em;
-}
-
-/* Print: light background for physical printing */
-@media print {
-  body { background: #fff !important; color: #000 !important; }
-  .certificate-border {
-    background: #fff;
-    border: 6px solid #d4af37;
-    color: #000;
-  }
-  .certificate-label { color: #b8860b; }
-  .certificate-name, .certificate-course { color: #111; }
-  .certificate-awarded-to, .certificate-text, .certificate-date, .certificate-id { color: #444; }
-  nav, .lesson-sidebar, .d-flex.gap-3.mt-4 { display: none !important; }
-}
+.certificate-id { font-size: .72rem; color: var(--cert-ink-soft); opacity: .75; margin: 0; }
+.certificate-id code { font-size: .68rem; letter-spacing: .03em; color: var(--cert-ink-soft); }
 
 a { color: #2c6e49; }
 
@@ -874,9 +900,22 @@ html[data-theme="dark"] .training-hero-media { background: rgba(255,255,255,.04)
 .thm-layer { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1s ease; }
 .thm-layer.is-front { opacity: 1; }
 .thm-fallback { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Per-clip caption: fades in/out in sync with each crossfade (JS toggles .is-on) */
+.thm-caption {
+  position: absolute; right: 0; left: 0; bottom: 0; z-index: 2;
+  padding: 1.4rem 1.1rem .9rem;
+  font-weight: 700; font-size: 1.05rem; line-height: 1.35; color: #fff;
+  text-align: right; text-shadow: 0 1px 6px rgba(0,0,0,.6);
+  background: linear-gradient(to top, rgba(0,0,0,.62), rgba(0,0,0,0));
+  opacity: 0; transform: translateY(6px);
+  transition: opacity .5s ease, transform .5s ease;
+  pointer-events: none;
+}
+.thm-caption.is-on { opacity: 1; transform: translateY(0); }
 
 @media (max-width: 767px) {
   .training-hero { flex-direction: column; min-height: 0; }
+  .thm-caption { font-size: .92rem; padding: 1rem .9rem .7rem; }
   .training-hero-media { flex: 0 0 170px; order: -1; }   /* image on top on mobile */
   .training-hero-list { grid-template-columns: 1fr; }
   .training-hero-body { padding: 1.4rem 1.5rem; }
@@ -1137,3 +1176,69 @@ html[data-theme="dark"] .feed-chip-event { color: #5eead4; }
   .comm-bigcard { flex-direction: column; }
   .comm-bigcard-media { order: -1; flex: 0 0 130px; width: 100%; }
 }
+
+/* =====================================================================
+   Calm-editorial pass — de-AI the look (overrides; cascade wins)
+   Flat surfaces · one accent · quiet hovers · no decorative animation
+   ===================================================================== */
+
+/* Headings: editorial serif, tighter, more deliberate */
+h1, h2, h3, .hero-brand, .training-hero-title, .comm-bigcard-title,
+.course-title, .catalog-track-title { letter-spacing: -0.01em; }
+.h4, .h5, .h6, h4, h5, h6 { font-family: var(--font-heading); }
+
+/* Cards: hairline border, no drop shadow */
+.card-surface { box-shadow: none; }
+
+/* 1+2. Kill gradients & the aurora glow → flat fills */
+.hero { background: none; }
+.training-hero { background: var(--bg-surface); border-color: var(--border); }
+.training-hero:hover { box-shadow: none; }
+html[data-theme="dark"] .training-hero { background: var(--bg-surface); }
+.comm-bigcard .bc-showcase { background: var(--bg-elevated); color: var(--accent-primary); }
+.comm-bigcard .bc-event { background: var(--bg-elevated); color: var(--accent-primary); }
+.comm-bigcard .bc-event .bc-event-date { color: var(--text-primary); }
+.training-hero-media { background: var(--bg-elevated); }
+
+/* 4. Quiet, uniform hover — no lift, no glow; just a border + faint tint */
+.feature-card:hover, .apex-card:hover, .course-card:hover, .comm-area:hover,
+.comm-bigcard:hover, .browse-card:hover, .training-hero:hover {
+  transform: none; box-shadow: none; border-color: var(--accent-primary);
+}
+.feed-item:hover, .rail-item:hover, .comm-event:hover { box-shadow: none; }
+
+/* 5. Remove decorative animation + glassmorphism */
+.course-popular i { animation: none; }
+.course-popular { animation: none; background: var(--accent-warm); box-shadow: none; }
+.course-card.is-popular { box-shadow: none; border-color: var(--accent-warm); }
+.rail-live-dot { animation: none; }
+.course-badge { backdrop-filter: none; }
+.course-badge.is-prog { background: rgba(28,27,24,.72); }
+
+/* 6. Tighten the rainbow → one calm, consistent treatment */
+/* Feed type chips: a single muted label instead of 6 colors */
+.feed-chip { background: var(--bg-elevated) !important; color: var(--text-secondary) !important; }
+/* Area tiles: uniform ink icon, accent only on hover */
+.comm-area > i { color: var(--text-primary) !important; }
+.ca-forum:hover, .ca-showcase:hover, .ca-tips:hover, .ca-chat:hover,
+.ca-events:hover, .ca-members:hover, .ca-crashtech:hover, .ca-skill:hover {
+  border-color: var(--accent-primary) !important;
+}
+/* AI level badge: quiet ink circle, not a purple gradient */
+.level-num { background: var(--text-primary); box-shadow: none; }
+/* Domain accent bars → single accent */
+.catalog-domain-head.dk-matazim, .catalog-domain-head.dk-ai, .catalog-domain-head.dk-innovation,
+.catalog-track-head.dk-matazim, .catalog-track-head.dk-ai, .catalog-track-head.dk-innovation {
+  border-color: var(--accent-primary);
+}
+.dk-matazim i, .dk-ai i, .dk-innovation i { color: var(--accent-primary); }
+.kc-showcase, .kc-event, .kc-course { color: var(--accent-primary); }
+
+/* Badges: flat, restrained */
+.live-badge { background: transparent; border-color: var(--accent-primary); color: var(--accent-primary); }
+.soon-badge { background: var(--bg-elevated); }
+.catalog-count { background: var(--bg-elevated); color: var(--text-secondary); }
+.btn { border-radius: 6px; }
+
+/* AI catalog search — flat ranked results */
+.catalog-results-hint { font-size: 0.8rem; font-weight: 400; color: var(--text-secondary); margin-inline-start: 0.4rem; }

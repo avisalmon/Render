@@ -207,10 +207,10 @@ def test_enroll_idempotent(client, enrolled_user, published_course):
 # ---------------------------------------------------------------------------
 
 @pytest.mark.django_db
-def test_lesson_free_preview_anonymous(client, published_course):
-    """T-F-2.2.6-1: Anonymous user can access free-preview lesson."""
+def test_lesson_anonymous_redirected_to_login(client, published_course):
+    """Open-access model: login is the only gate — anonymous users are sent to it."""
     r = client.get(reverse("courses_lesson", args=["micropython-thonny", 1]))
-    assert r.status_code == 200
+    assert r.status_code == 302
 
 
 @pytest.mark.django_db
@@ -221,8 +221,9 @@ def test_lesson_paid_redirects_anonymous(client, published_course):
 
 
 @pytest.mark.django_db
-def test_lesson_shows_notes(client, published_course):
-    """T-F-2.2.6-3: Lesson page renders notes_markdown content."""
+def test_lesson_shows_notes(client, user, published_course):
+    """T-F-2.2.6-3: Lesson page renders notes_markdown content (login required)."""
+    client.force_login(user)
     r = client.get(reverse("courses_lesson", args=["micropython-thonny", 1]))
     content = r.content.decode("utf-8")
     # notes_markdown "### מבוא\nברוכים הבאים." should appear rendered
@@ -247,8 +248,9 @@ def test_lesson_enrolled_can_access_paid(client, enrolled_user, published_course
 
 
 @pytest.mark.django_db
-def test_lesson_has_next_prev(client, published_course):
-    """T-F-2.2.6-5: Lesson page includes next/prev navigation context."""
+def test_lesson_has_next_prev(client, user, published_course):
+    """T-F-2.2.6-5: Lesson page includes next/prev navigation context (login required)."""
+    client.force_login(user)
     r = client.get(reverse("courses_lesson", args=["micropython-thonny", 1]))
     assert r.status_code == 200
     assert r.context.get("next_video") is not None
@@ -308,8 +310,9 @@ def test_corporate_hook_on_detail(client, published_course):
 
 
 @pytest.mark.django_db
-def test_corporate_hook_on_lesson(client, published_course):
-    """T-F-2.2.9-2: Lesson page contains corporate funnel link."""
+def test_corporate_hook_on_lesson(client, user, published_course):
+    """T-F-2.2.9-2: Lesson page contains corporate funnel link (login required)."""
+    client.force_login(user)
     r = client.get(reverse("courses_lesson", args=["micropython-thonny", 1]))
     content = r.content.decode("utf-8")
     assert "/corporate/" in content

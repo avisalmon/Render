@@ -36,7 +36,7 @@ def test_wall_names_the_course_and_preserves_next():
 def test_wall_generic_without_course():
     resp = Client().get("/join/")
     assert resp.status_code == 200
-    assert "הרשמה חינם" in resp.content.decode()
+    assert "כניסה להמשך" in resp.content.decode()
 
 
 @pytest.mark.django_db
@@ -71,14 +71,16 @@ def test_anonymous_enroll_routes_to_wall():
     assert "course=enrollgate" in resp.url
 
 
-# --- free exploration stays open (REQ-5.3.1 / DEC-29, DEC-34) ---
+# --- login is the only gate: every lesson routes anonymous users to the wall ---
 
 @pytest.mark.django_db
-def test_anonymous_free_preview_still_opens():
-    """T-F-5.3.2-1: lesson 1 (free preview) renders for anonymous - no wall."""
+def test_anonymous_first_lesson_routes_to_wall():
+    """Open-access model with mandatory login: even lesson 1 sends anonymous users
+    to the wall (no preview tier anymore)."""
     _course("freely")
     resp = Client().get("/courses/freely/lesson/1/")
-    assert resp.status_code == 200
+    assert resp.status_code == 302
+    assert resp.url.startswith("/join/")
 
 
 @pytest.mark.django_db

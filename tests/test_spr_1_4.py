@@ -97,7 +97,9 @@ def test_lesson_page_renders_iframe():
         course=course, bunny_video_id="test-vid-123", title="Lesson 1",
         duration_seconds=300, lesson_order=1, is_free_preview=True,
     )
+    user = User.objects.create_user(username="iframeuser", password="testpass123")
     client = Client()
+    client.login(username="iframeuser", password="testpass123")
     with override_settings(BUNNY_STREAM_LIBRARY_ID="test-lib-999"):
         resp = client.get("/course/test-course/lesson/1/")
     assert resp.status_code == 200
@@ -118,7 +120,9 @@ def test_player_responsive_aspect_ratio():
         course=course, bunny_video_id="test-vid-456", title="Lesson 1",
         duration_seconds=300, lesson_order=1, is_free_preview=True,
     )
+    user = User.objects.create_user(username="aspectuser", password="testpass123")
     client = Client()
+    client.login(username="aspectuser", password="testpass123")
     with override_settings(BUNNY_STREAM_LIBRARY_ID="test-lib-999"):
         resp = client.get("/course/test-course-2/lesson/1/")
     content = resp.content.decode()
@@ -150,19 +154,19 @@ def test_generate_signed_url():
 
 @pytest.mark.spr14
 @pytest.mark.django_db
-def test_paid_video_without_entitlement_returns_403():
-    """T-F-1.4.4-2: Paid video (is_free_preview=False) returns 403 for user without entitlement."""
+def test_any_lesson_open_to_logged_in_user():
+    """Open-access model: every lesson is open to any logged-in user (no tiers, no paywall)."""
     from app.models import Course, Video
-    course = Course.objects.create(title="Paid Course", slug="paid-course", description="Paid")
+    course = Course.objects.create(title="Open Course", slug="open-course", description="Open")
     Video.objects.create(
-        course=course, bunny_video_id="paid-vid-789", title="Paid Lesson",
+        course=course, bunny_video_id="open-vid-789", title="Lesson",
         duration_seconds=600, lesson_order=1, is_free_preview=False,
     )
     user = User.objects.create_user(username="testuser", password="testpass123")
     client = Client()
     client.login(username="testuser", password="testpass123")
-    resp = client.get("/course/paid-course/lesson/1/")
-    assert resp.status_code == 403
+    resp = client.get("/course/open-course/lesson/1/")
+    assert resp.status_code == 200
 
 
 # ---------------------------------------------------------------------------
@@ -319,15 +323,17 @@ def test_course_complete_at_95_percent():
 
 @pytest.mark.spr14
 @pytest.mark.django_db
-def test_free_preview_accessible_to_anonymous():
-    """T-F-1.4.8-1: Free preview video returns 200 for anonymous user."""
+def test_lesson_accessible_to_logged_in_user():
+    """T-F-1.4.8-1: Any lesson returns 200 for a logged-in user (login is the only gate)."""
     from app.models import Course, Video
     course = Course.objects.create(title="Free Course", slug="free-course", description="Free")
     Video.objects.create(
         course=course, bunny_video_id="free-vid-1", title="Free Lesson",
         duration_seconds=300, lesson_order=1, is_free_preview=True,
     )
+    user = User.objects.create_user(username="freeuser2", password="testpass123")
     client = Client()
+    client.login(username="freeuser2", password="testpass123")
     resp = client.get("/course/free-course/lesson/1/")
     assert resp.status_code == 200
 

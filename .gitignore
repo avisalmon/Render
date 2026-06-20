@@ -22,3 +22,6 @@ data/course_transcripts/
 *.sqlite3-wal
 *.sqlite3-shm
 data/db.sqlite3
+
+# backup trigger artifact
+.last_backup

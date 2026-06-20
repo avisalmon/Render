@@ -12,6 +12,7 @@ from .models import (
     Course,
     CourseCertificate,
     CourseMaterial,
+    CourseProjectSubmission,
     DirectMessage,
     Enrollment,
     Entitlement,
@@ -154,6 +155,7 @@ admin.site.register(CorporateLead)
 admin.site.register(NewsletterSubscriber)
 admin.site.register(LessonQuiz)
 admin.site.register(CourseCertificate)
+admin.site.register(CourseProjectSubmission)
 
 
 @admin.register(AuthoringJob)

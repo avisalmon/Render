@@ -79,17 +79,10 @@
         <i class="bi bi-chat-dots"></i> קבוצת הקורס
       </a>
       {% else %}
-      <form method="post" action="{% url 'courses_enroll' course.slug %}" class="d-inline">
-        {% csrf_token %}
-        <button type="submit" class="btn mt-2"
-                style="background:var(--accent-cta);color:#fff;border:none;border-radius:10px;padding:.6rem 1.8rem;font-weight:700;font-size:1rem;">
-          הרשמה לקורס חינם &rarr;
-        </button>
-      </form>
       <a href="{% url 'courses_lesson' course.slug 1 %}"
-         class="btn btn-sm mt-2 ms-2"
-         style="background:transparent;color:var(--accent-primary);border:1px solid var(--accent-primary);border-radius:10px;">
-        צפה בשיעור חינמי
+         class="btn mt-2"
+         style="background:var(--accent-primary);color:#fff;border:none;border-radius:10px;padding:.6rem 1.8rem;font-weight:700;font-size:1rem;">
+        התחילו ללמוד &rarr;
       </a>
       <a href="{% url 'course_channel' course.slug %}" class="btn btn-sm mt-2 ms-2"
          style="background:transparent;color:var(--accent-primary);border:1px solid var(--accent-primary);border-radius:10px;">
@@ -126,35 +119,22 @@
          style="background:var(--bg-surface);border:1px solid var(--bg-elevated);">
 
       <!-- Status icon -->
-      {% if enrolled %}
-        {% if video.id in progress_map %}
-          {% if progress_map|get_item:video.id >= 95 %}
-          <span style="color:var(--accent-cta);font-size:1.1rem;">✅</span>
-          {% else %}
-          <span style="color:var(--accent-warm);font-size:1.1rem;">▶️</span>
-          {% endif %}
+      {% if video.id in progress_map %}
+        {% if progress_map|get_item:video.id >= 95 %}
+        <span style="color:var(--accent-cta);font-size:1.1rem;">✅</span>
         {% else %}
-        <span style="color:var(--text-secondary);font-size:1.1rem;">○</span>
+        <span style="color:var(--accent-warm);font-size:1.1rem;">▶️</span>
         {% endif %}
-      {% elif video.is_free_preview %}
-      <span style="color:var(--accent-cta);font-size:1.1rem;">▶</span>
       {% else %}
-      <span style="color:var(--text-secondary);font-size:1.1rem;">🔒</span>
+      <span style="color:var(--text-secondary);font-size:1.1rem;">○</span>
       {% endif %}
 
       <!-- Lesson info -->
       <div class="flex-grow-1">
-        {% if enrolled or video.is_free_preview %}
         <a href="{% url 'courses_lesson' course.slug video.lesson_order %}"
            style="text-decoration:none;color:var(--text-primary);font-weight:500;">
           {{ video.lesson_order }}. {{ video.title }}
         </a>
-        {% else %}
-        <span style="color:var(--text-secondary);">{{ video.lesson_order }}. {{ video.title }}</span>
-        {% endif %}
-        {% if video.is_free_preview %}
-        <span class="badge ms-2 small" style="background:var(--accent-cta)20;color:var(--accent-cta);border:1px solid var(--accent-cta)44;">חינמי</span>
-        {% endif %}
         {% if video.has_code_example %}
         <span class="badge ms-1 small" style="background:var(--accent-primary)20;color:var(--accent-primary);border:1px solid var(--accent-primary)44;">קוד</span>
         {% endif %}

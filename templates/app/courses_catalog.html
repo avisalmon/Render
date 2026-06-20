@@ -37,6 +37,15 @@
     {% endfor %}
   </div>
 
+  <!-- AI search results (flat, ranked by relevance) — shown only while searching -->
+  <section class="catalog-results" id="catalogResults" style="display:none">
+    <h2 class="catalog-section-title">
+      <i class="bi bi-search"></i> תוצאות חיפוש
+      <span class="catalog-results-hint" id="catalogResultsHint"></span>
+    </h2>
+    <div class="course-grid" id="catalogResultsGrid"></div>
+  </section>
+
   <!-- Domain sections, sub-grouped by track -->
   {% for g in domain_groups %}
   <section class="catalog-domain" data-domain="{{ g.key }}" id="domain-{{ g.key }}">
@@ -71,41 +80,80 @@
 {% block extra_js %}
 <script>
 (function () {
-  var search = document.getElementById('catalogSearch');
-  var chips  = document.getElementById('catalogChips');
-  var empty  = document.getElementById('catalogEmpty');
-  var domains = Array.prototype.slice.call(document.querySelectorAll('.catalog-domain'));
-  var activeDomain = 'all';
+  var search   = document.getElementById('catalogSearch');
+  var chips    = document.getElementById('catalogChips');
+  var empty    = document.getElementById('catalogEmpty');
+  var results  = document.getElementById('catalogResults');
+  var grid     = document.getElementById('catalogResultsGrid');
+  var hint     = document.getElementById('catalogResultsHint');
+  if (!search) return;
 
-  function apply() {
-    var q = (search.value || '').trim().toLowerCase();
-    var anyVisible = false;
-    domains.forEach(function (sec) {
-      var domainOk = (activeDomain === 'all' || sec.dataset.domain === activeDomain);
-      var domainShown = 0;
-      sec.querySelectorAll('.catalog-track').forEach(function (tr) {
-        var trShown = 0;
-        tr.querySelectorAll('.course-card').forEach(function (card) {
-          var match = domainOk && (!q || (card.dataset.title || '').toLowerCase().indexOf(q) !== -1);
-          card.style.display = match ? '' : 'none';
-          if (match) trShown++;
-        });
-        tr.style.display = trShown ? '' : 'none';   // hide empty track sub-sections
-        domainShown += trShown;
-      });
-      sec.style.display = domainShown ? '' : 'none';
-      if (domainShown) anyVisible = true;
-    });
-    empty.style.display = anyVisible ? 'none' : 'block';
+  var domains = Array.prototype.slice.call(document.querySelectorAll('.catalog-domain'));
+  // The chips + "continue learning" + every domain section get hidden in search mode.
+  var browseEls = [chips].concat(domains);
+  var continueSection = (function () {
+    var h = document.querySelector('.catalog-section-title');
+    return h ? h.closest('section') : null;
+  })();
+  if (continueSection && continueSection.id !== 'catalogResults') browseEls.push(continueSection);
+
+  // slug -> original card node, for cloning into the ranked results grid.
+  var cardBySlug = {};
+  document.querySelectorAll('.course-card[data-slug]').forEach(function (c) {
+    if (!cardBySlug[c.dataset.slug]) cardBySlug[c.dataset.slug] = c;
+  });
+
+  function showBrowse() {
+    browseEls.forEach(function (el) { if (el) el.style.display = ''; });
+    results.style.display = 'none';
+    empty.style.display = 'none';
   }
 
-  if (search) search.addEventListener('input', apply);
-  if (chips) chips.addEventListener('click', function (e) {
-    var btn = e.target.closest('.catalog-chip');
-    if (!btn) return;
-    activeDomain = btn.dataset.domain;
-    chips.querySelectorAll('.catalog-chip').forEach(function (b) { b.classList.toggle('is-active', b === btn); });
-    apply();
+  function showResults(slugs, mode) {
+    browseEls.forEach(function (el) { if (el) el.style.display = 'none'; });
+    grid.innerHTML = '';
+    slugs.forEach(function (slug) {
+      var card = cardBySlug[slug];
+      if (card) grid.appendChild(card.cloneNode(true));
+    });
+    results.style.display = '';
+    empty.style.display = slugs.length ? 'none' : 'block';
+    hint.textContent = mode === 'fallback' ? '· התאמה לפי טקסט' : '';
+  }
+
+  // Instant, offline substring match — immediate feedback before the AI replies.
+  function localSlugs(q) {
+    var out = [];
+    Object.keys(cardBySlug).forEach(function (slug) {
+      var t = (cardBySlug[slug].dataset.title || '').toLowerCase();
+      if (t.indexOf(q) !== -1) out.push(slug);
+    });
+    return out;
+  }
+
+  var timer = null, seq = 0;
+  function run() {
+    var q = (search.value || '').trim();
+    if (!q) { showBrowse(); return; }
+    // Immediate local feedback…
+    showResults(localSlugs(q.toLowerCase()), 'fallback');
+    hint.textContent = '· מחפש…';
+    // …then the AI search (debounced, latest-wins).
+    var mySeq = ++seq;
+    fetch('{% url "courses_search" %}?q=' + encodeURIComponent(q), {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    }).then(function (r) { return r.json(); }).then(function (data) {
+      if (mySeq !== seq) return;                 // a newer keystroke superseded this
+      if ((search.value || '').trim() !== q) return;
+      showResults(data.slugs || [], data.mode || 'ai');
+    }).catch(function () { /* keep the local results already shown */ });
+  }
+
+  search.addEventListener('input', function () {
+    clearTimeout(timer);
+    var q = (search.value || '').trim();
+    if (!q) { showBrowse(); return; }
+    timer = setTimeout(run, 320);
   });
 })();
 </script>
