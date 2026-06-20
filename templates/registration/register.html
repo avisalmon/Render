@@ -22,7 +22,7 @@
       <hr class="flex-grow-1"><span class="px-2 text-muted small">או עם אימייל</span><hr class="flex-grow-1">
     </div>
 
-    <!-- Secondary: email + password (no username — derived from email) -->
+    <!-- Secondary: email + password (no username - derived from email) -->
     <form method="post" class="card-surface p-3">
       {% csrf_token %}
       {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}

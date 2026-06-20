@@ -1,9 +1,9 @@
-"""CrashTech — hardware hackathon platform (EPIC-6.5).
+"""CrashTech - hardware hackathon platform (EPIC-6.5).
 
 babook is the host system: CrashTech owns no auth, it grants per-hackathon roles
 to existing users. Models live here and are re-exported from app/models.py so
 Django registers them under the `app` label. The lifecycle state machine on
-``Hackathon`` is the spine — every CrashTech surface gates on ``status``.
+``Hackathon`` is the spine - every CrashTech surface gates on ``status``.
 """
 import secrets
 import uuid as _uuid
@@ -194,7 +194,7 @@ class Submission(models.Model):
 
 class QRToken(models.Model):
     """Per-team, per-challenge token that authenticates a phone video upload
-    (REQ-6.5.11) — the QR encodes a tokenized URL so the upload binds to the
+    (REQ-6.5.11) - the QR encodes a tokenized URL so the upload binds to the
     right team+challenge without the phone being logged in."""
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="qr_tokens")
     challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE, related_name="qr_tokens")

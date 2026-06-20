@@ -1,7 +1,7 @@
 """Weekly community digest (REQ-6.4.4).
 
 Gated by DEC-46: the digest stays DORMANT until the community passes ~50 active
-members — until then the live feed alone carries the pulse and a weekly email
+members - until then the live feed alone carries the pulse and a weekly email
 would feel empty. Below the threshold this command sends nothing (and says so),
 so it is safe to wire to a scheduler now and have it "switch on" automatically
 once the community grows.
@@ -73,6 +73,6 @@ class Command(BaseCommand):
                     fail_silently=True,
                 )
                 sent += 1
-            except Exception:  # noqa: BLE001 — a digest must never crash the batch
+            except Exception:  # noqa: BLE001 - a digest must never crash the batch
                 pass
         self.stdout.write(f"Digest sent to {sent} member(s).")

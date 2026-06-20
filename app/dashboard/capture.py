@@ -20,7 +20,7 @@ SECTION_COLLECTORS = {
 
 def run_capture(scope="all", range_days=30, run_costs=True, run_alerts=True):
     """Collect ``scope`` into a snapshot. ``scope='all'`` captures every section
-    (one snapshot each) plus a combined ``all`` snapshot, and — when asked —
+    (one snapshot each) plus a combined ``all`` snapshot, and - when asked -
     runs the cost adapters and evaluates alerts. Returns a summary dict.
     """
     from ..models import DashboardSnapshot
@@ -59,7 +59,7 @@ def run_capture(scope="all", range_days=30, run_costs=True, run_alerts=True):
 
 
 def latest_metrics(scope, range_days=30):
-    """Latest snapshot metrics for ``scope`` — captures live on the fly if none
+    """Latest snapshot metrics for ``scope`` - captures live on the fly if none
     exists yet, so the dashboard is never empty (REQ-8.1.7)."""
     from ..models import DashboardSnapshot
 

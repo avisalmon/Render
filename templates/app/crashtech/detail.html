@@ -28,13 +28,13 @@
   <!-- Countdown to kickoff (REQ-6.5.9) -->
   <div class="card-surface p-3 mb-3 text-center" data-countdown="{{ h.start_at|date:'c' }}">
     <div class="small text-muted mb-1">הזינוק בעוד</div>
-    <div class="h3 mb-0 js-countdown" style="font-variant-numeric:tabular-nums">—</div>
+    <div class="h3 mb-0 js-countdown" style="font-variant-numeric:tabular-nums">-</div>
   </div>
   {% elif h.accepts_submissions %}
   <div class="card-surface p-3 mb-3 text-center" data-countdown="{{ h.submission_deadline|date:'c' }}"
        style="border-color:var(--accent-cta,#f59e0b)">
     <div class="small text-muted mb-1">זמן עד הדדליין</div>
-    <div class="h3 mb-0 js-countdown" style="font-variant-numeric:tabular-nums">—</div>
+    <div class="h3 mb-0 js-countdown" style="font-variant-numeric:tabular-nums">-</div>
   </div>
   {% endif %}
 

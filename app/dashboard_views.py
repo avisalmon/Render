@@ -1,4 +1,4 @@
-"""EPIC-8 — Admin / Management Control Dashboard views (superuser-only).
+"""EPIC-8 - Admin / Management Control Dashboard views (superuser-only).
 
 A single hub at ``/admin-dashboard/`` with sections for Users & Training,
 Costs, Engagement and System, plus per-section refresh, manual cost entry,
@@ -157,7 +157,7 @@ def run_backup(request):
     out = io.StringIO()
     try:
         call_command("backup_db", stdout=out, stderr=out)
-    except Exception as exc:  # noqa: BLE001 — surface failure to the caller
+    except Exception as exc:  # noqa: BLE001 - surface failure to the caller
         return JsonResponse(
             {"ok": False, "error": str(exc), "log": out.getvalue()}, status=500)
     return JsonResponse({"ok": True, "log": out.getvalue()})
@@ -184,7 +184,7 @@ def run_dashboard_capture(request):
     out = io.StringIO()
     try:
         call_command("capture_dashboard_snapshot", scope="all", stdout=out, stderr=out)
-    except Exception as exc:  # noqa: BLE001 — surface failure to the caller
+    except Exception as exc:  # noqa: BLE001 - surface failure to the caller
         return JsonResponse(
             {"ok": False, "error": str(exc), "log": out.getvalue()}, status=500)
     return JsonResponse({"ok": True, "log": out.getvalue()})
@@ -195,7 +195,7 @@ def run_dashboard_capture(request):
 def test_alert_email(request):
     """Token-triggered test of the alert-email path. Sends a sample alert to every
     superuser's address (the same recipients real dashboard alerts use, e.g. the
-    domain-expiry warning) and returns who it went to — so we can confirm the
+    domain-expiry warning) and returns who it went to - so we can confirm the
     address and that Resend accepted it. Uses fail_silently=False so a delivery
     error surfaces in the response instead of being swallowed."""
     from django.contrib.auth.models import User
@@ -215,18 +215,18 @@ def test_alert_email(request):
     body = (
         "בדיקת מערכת ההתראות של babook.\n\n"
         "כך תיראה התראת פג-תוקף דומיין:\n"
-        "Domain babook.co.il expires in 14 days — renew at https://domains.livedns.co.il\n\n"
+        "Domain babook.co.il expires in 14 days - renew at https://domains.livedns.co.il\n\n"
         "אם קיבלת את המייל הזה, נתיב ההתראות במייל תקין."
     )
     try:
         sent = send_mail(
-            subject="[babook] בדיקת התראה — alert email test",
+            subject="[babook] בדיקת התראה - alert email test",
             message=body,
             from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@babook.co.il"),
             recipient_list=recipients,
             fail_silently=False,
         )
-    except Exception as exc:  # noqa: BLE001 — report the real delivery error
+    except Exception as exc:  # noqa: BLE001 - report the real delivery error
         return JsonResponse(
             {"ok": False, "error": str(exc), "recipients": recipients}, status=500)
     return JsonResponse({"ok": True, "sent_count": sent, "recipients": recipients})

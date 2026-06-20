@@ -2,7 +2,7 @@
 Management command: load_course_from_manifest
 
 Reads data/course_materials/<slug>/course_manifest.json and upserts the Course
-and Video records into the database.  Idempotent — safe to run on every deploy.
+and Video records into the database.  Idempotent - safe to run on every deploy.
 
 Usage:
     python manage.py load_course_from_manifest                  # all manifests

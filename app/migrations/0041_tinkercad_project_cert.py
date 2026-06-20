@@ -2,7 +2,7 @@
 """Ship the Tinkercad content changes that were made on dev to every environment:
   1. Enable the project-screenshot certificate gate (requires_project) on the course.
   2. Remove the "how to share a project" lesson and close the numbering gap.
-Both steps are defensive/idempotent — they no-op if already applied (e.g. on dev,
+Both steps are defensive/idempotent - they no-op if already applied (e.g. on dev,
 where they were done by hand)."""
 from django.db import migrations
 

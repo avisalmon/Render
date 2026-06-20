@@ -66,7 +66,7 @@
       {% for tag in project.tags %}<a href="{% url 'showcase_wall' %}?tag={{ tag|urlencode }}" class="badge bg-dark text-decoration-none">#{{ tag }}</a>{% endfor %}
     </div>
 
-    <!-- Reactions bar — star is the primary signal (drives ranking), emoji are flavor -->
+    <!-- Reactions bar - star is the primary signal (drives ranking), emoji are flavor -->
     <div class="d-flex gap-2 mb-3 flex-wrap align-items-center" id="reactions" data-project="{{ project.pk }}">
       <button class="btn react-btn {% if 'star' in my_reactions %}btn-warning{% else %}btn-outline-warning{% endif %}"
               data-kind="star" {% if project.author == user %}disabled title="זה הפרויקט שלך"{% endif %}

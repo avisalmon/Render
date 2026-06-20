@@ -312,7 +312,7 @@ def thread_curate(request, thread_id):
 
 
 # ---------------------------------------------------------------------------
-# AI assist (REQ-6.2.7) — fails open / falls back to keyword matching
+# AI assist (REQ-6.2.7) - fails open / falls back to keyword matching
 # ---------------------------------------------------------------------------
 
 _STOPWORDS = {"איך", "מה", "למה", "האם", "עם", "של", "את", "אני", "לא", "יש", "זה", "על"}

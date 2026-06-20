@@ -161,7 +161,7 @@ class Command(BaseCommand):
                 f"  Saved permanent monthly snapshot {monthly_name}"))
             monthly_new = True
 
-        # Retention — only prunes the rolling db/db_backup_* objects, never monthly/.
+        # Retention - only prunes the rolling db/db_backup_* objects, never monthly/.
         deleted = _delete_old_objects(session, bucket, "db/db_backup_", retention_days)
         if deleted:
             self.stdout.write(f"  Deleted {deleted} old rolling backup(s)")
@@ -169,7 +169,7 @@ class Command(BaseCommand):
                 "monthly_name": monthly_name, "monthly_new": monthly_new}
 
     def _backup_media(self, session, bucket, dry_run):
-        """Incrementally sync media files to GCS — only upload files that are new
+        """Incrementally sync media files to GCS - only upload files that are new
         or whose size changed since the last backup (REQ-1.2.4). Unchanged
         objects are left in place, so a weekly run only ships the delta."""
         media_root = Path(settings.MEDIA_ROOT)
@@ -305,7 +305,7 @@ class Command(BaseCommand):
         """Email a 'backup succeeded' summary with links to the bucket (REQ-1.2.4).
 
         Recipient is BACKUP_NOTIFY_EMAIL (falls back to CONTACT_NOTIFY_EMAIL /
-        DEFAULT_FROM_EMAIL). Never raises — a mail hiccup must not fail a good
+        DEFAULT_FROM_EMAIL). Never raises - a mail hiccup must not fail a good
         backup. Failures are already covered by the GitHub Actions run going red.
         """
         from django.core.mail import send_mail
@@ -316,7 +316,7 @@ class Command(BaseCommand):
             or getattr(settings, "DEFAULT_FROM_EMAIL", "")
         )
         if not recipient:
-            self.stdout.write("  No BACKUP_NOTIFY_EMAIL set — skipping success email")
+            self.stdout.write("  No BACKUP_NOTIFY_EMAIL set - skipping success email")
             return
 
         console = f"https://console.cloud.google.com/storage/browser/{bucket}"
@@ -348,17 +348,17 @@ class Command(BaseCommand):
             "Rolling backups older than 30 days are pruned automatically; the",
             "monthly snapshot under monthly/ is kept permanently.",
             "",
-            "— babook backup",
+            "- babook backup",
         ]
         body = "\n".join(line for line in lines if line is not None)
         try:
             send_mail(
-                f"✅ babook backup succeeded — {ts}",
+                f"✅ babook backup succeeded - {ts}",
                 body,
                 getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@babook.co.il"),
                 [recipient],
                 fail_silently=False,
             )
             self.stdout.write(self.style.SUCCESS(f"  Success email sent to {recipient}"))
-        except Exception as exc:  # noqa: BLE001 — email must not fail a good backup
+        except Exception as exc:  # noqa: BLE001 - email must not fail a good backup
             self.stdout.write(self.style.WARNING(f"  Could not send success email: {exc}"))

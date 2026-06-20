@@ -19,13 +19,13 @@
 
     {% if entry_course %}
     <div class="alert alert-info py-2 small">
-      <i class="bi bi-bookmark-heart"></i> ראינו שהגעת בשביל «{{ entry_course.title }}» — ניקח את זה בחשבון.
+      <i class="bi bi-bookmark-heart"></i> ראינו שהגעת בשביל «{{ entry_course.title }}» - ניקח את זה בחשבון.
     </div>
     {% endif %}
 
-    <!-- Gentle name nudge — shown only when skipping without a name -->
+    <!-- Gentle name nudge - shown only when skipping without a name -->
     <div id="name-prompt" class="card-surface p-3 mb-3" style="display:none; border-color:var(--accent-primary)">
-      <p class="small mb-2">רגע לפני שתלך/י — איך לפנות אליך? (שם בלבד)</p>
+      <p class="small mb-2">רגע לפני שתלך/י - איך לפנות אליך? (שם בלבד)</p>
       <form method="post" action="{% url 'welcome_skip' %}" class="d-flex gap-2 mb-2">{% csrf_token %}
         <input name="name" id="skip-name-input" class="form-control form-control-sm" placeholder="השם שלך" maxlength="150" autocomplete="off">
         <button class="btn btn-primary btn-sm">שמור וסיים</button>
@@ -140,11 +140,11 @@ if (window.plausible) { plausible('registered'); plausible('onboarding_started')
       body: JSON.stringify({message: message})
     }).then(function (r) { return r.json(); }).then(function (data) {
       if (data.fallback) { showFallback(); return; }   // only if the AI is truly unavailable
-      if (data.error) { add('assistant', 'אופס, רגע — נסו לשלוח שוב 🙂'); return; }
+      if (data.error) { add('assistant', 'אופס, רגע - נסו לשלוח שוב 🙂'); return; }
       if (data.name_known) hasName = true;   // once we know the name, skip won't re-ask
       if (data.reply) add('assistant', data.reply);
       if (data.done) {
-        // The user asked to finish — take them into the site (REQ-5.6.4 honored:
+        // The user asked to finish - take them into the site (REQ-5.6.4 honored:
         // it's their explicit choice). Auto-redirect, with a manual fallback link.
         if (window.plausible) plausible('onboarding_completed');
         input.disabled = true; send.disabled = true;
@@ -157,7 +157,7 @@ if (window.plausible) { plausible('registered'); plausible('onboarding_started')
         log.appendChild(div); log.scrollTop = log.scrollHeight;
         setTimeout(function () { window.location.href = dest; }, 1400);
       }
-    }).catch(function () { add('assistant', 'אופס, משהו השתבש לרגע — נסו לשלוח שוב 🙂'); });
+    }).catch(function () { add('assistant', 'אופס, משהו השתבש לרגע - נסו לשלוח שוב 🙂'); });
   }
 
   send.addEventListener('click', function () {
@@ -170,7 +170,7 @@ if (window.plausible) { plausible('registered'); plausible('onboarding_started')
     if (e.key === 'Enter') { e.preventDefault(); send.click(); }
   });
 
-  // Short, instant opener — no AI call.
+  // Short, instant opener - no AI call.
   var opener = JSON.parse(document.getElementById('opener-data').textContent);
   add('assistant', opener);
   input.focus();

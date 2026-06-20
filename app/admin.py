@@ -19,6 +19,7 @@ from .models import (
     ForumPost,
     ForumThread,
     LearnerProfile,
+    LessonModelSubmission,
     LessonQuiz,
     LessonReflection,
     ModerationLog,
@@ -156,6 +157,7 @@ admin.site.register(NewsletterSubscriber)
 admin.site.register(LessonQuiz)
 admin.site.register(CourseCertificate)
 admin.site.register(CourseProjectSubmission)
+admin.site.register(LessonModelSubmission)
 
 
 @admin.register(AuthoringJob)

@@ -11,7 +11,7 @@
   <div class="catalog-head">
     <div>
       <h1 class="mb-1">הדרכה <span class="catalog-count">{{ total_courses }} קורסים</span></h1>
-      <p class="text-muted mb-0">וידאו עם הסברים מלאים, תרגול ובחנים — בחרו קורס והתחילו.</p>
+      <p class="text-muted mb-0">וידאו עם הסברים מלאים, תרגול ובחנים - בחרו קורס והתחילו.</p>
     </div>
     <div class="catalog-search-wrap">
       <i class="bi bi-search"></i>
@@ -37,7 +37,7 @@
     {% endfor %}
   </div>
 
-  <!-- AI search results (flat, ranked by relevance) — shown only while searching -->
+  <!-- AI search results (flat, ranked by relevance) - shown only while searching -->
   <section class="catalog-results" id="catalogResults" style="display:none">
     <h2 class="catalog-section-title">
       <i class="bi bi-search"></i> תוצאות חיפוש
@@ -121,7 +121,7 @@
     hint.textContent = mode === 'fallback' ? '· התאמה לפי טקסט' : '';
   }
 
-  // Instant, offline substring match — immediate feedback before the AI replies.
+  // Instant, offline substring match - immediate feedback before the AI replies.
   function localSlugs(q) {
     var out = [];
     Object.keys(cardBySlug).forEach(function (slug) {

@@ -7,7 +7,7 @@
             <h5>Sessions</h5>
             <ul class="list-group mb-3">
                 {% for s in sessions %}
-                <li class="list-group-item small">{{ s.context_type }} — {{ s.created_at|date:"M d" }}</li>
+                <li class="list-group-item small">{{ s.context_type }} - {{ s.created_at|date:"M d" }}</li>
                 {% empty %}
                 <li class="list-group-item text-muted small">No sessions yet</li>
                 {% endfor %}

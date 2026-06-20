@@ -16,7 +16,7 @@ ONBOARDING_PENDING_KEY = "onboarding_pending"
 ONBOARDING_NEXT_KEY = "onboarding_next"
 ENTRY_EVENT_KEY = "entry_event_pending"
 INTERVIEW_KEY = "welcome_chat"
-MAX_INTERVIEW_TURNS = 40  # high safety cap only — the user ends the chat via "skip"
+MAX_INTERVIEW_TURNS = 40  # high safety cap only - the user ends the chat via "skip"
 
 UTM_KEYS = ("utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term")
 
@@ -96,7 +96,7 @@ def handle_social_signup(request, user, **kwargs):
     try:
         attach_attribution(user, request)
         mark_signup(request)
-        # Social signups are trusted (email verified by the provider) — REQ-7.2.1
+        # Social signups are trusted (email verified by the provider) - REQ-7.2.1
         profile = getattr(user, "profile", None)
         if profile is not None and not profile.email_verified:
             profile.email_verified = True
@@ -116,7 +116,7 @@ _AI_LEVEL_TRACK = {"beginner": "ai-l1", "intermediate": "ai-l2", "advanced": "ai
 def recommend(interests, experience_level="", entry_course=None):
     """Map interests + level + entry intent to (track_key, course).
 
-    entry_course (a Course) wins outright — the visitor told us what they
+    entry_course (a Course) wins outright - the visitor told us what they
     came for (REQ-5.2.3). Otherwise the first interest domain picks a track
     (level-aware for AI) and the track's intro/first published course.
     Returns (track_key, course_or_None).
@@ -232,39 +232,39 @@ def fixed_opener(user):
 
 def interview_system_prompt(user, entry_course_title=""):
     entry_line = (
-        f'הגיע/ה דרך הקורס "{entry_course_title}" — קח/י את זה בחשבון. '
+        f'הגיע/ה דרך הקורס "{entry_course_title}" - קח/י את זה בחשבון. '
         if entry_course_title else ""
     )
     if has_real_name(user):
-        name_line = f"שמו/ה: {first_name_of(user)} — פנה/י אליו/ה בשם. "
+        name_line = f"שמו/ה: {first_name_of(user)} - פנה/י אליו/ה בשם. "
     else:
-        name_line = ("עדיין לא יודעים את שמו/ה — וזה הכי חשוב. בקש/י את שמו/ה בטבעיות "
-                     "מוקדם ככל האפשר, אך פעם אחת בלבד. אם כבר ביקשת בשיחה ולא נמסר — "
+        name_line = ("עדיין לא יודעים את שמו/ה - וזה הכי חשוב. בקש/י את שמו/ה בטבעיות "
+                     "מוקדם ככל האפשר, אך פעם אחת בלבד. אם כבר ביקשת בשיחה ולא נמסר - "
                      "אל תבקש/י שוב לעולם, המשך/המשיכי כרגיל. ")
     return (
-        "אתה 'Avi Bot', הגרסה הדיגיטלית של אבי סלמון, יוצר babook.co.il — אתר "
+        "אתה 'Avi Bot', הגרסה הדיגיטלית של אבי סלמון, יוצר babook.co.il - אתר "
         "הדרכות וידאו וקהילה בעברית. מדבר בגוף ראשון, עברית חמה ויומיומית, כאילו "
-        "אבי עצמו מארח. התפקיד: לקבל בחום משתמש/ת חדש/ה ולעזור לו/ה להתמצא — לא ראיון.\n\n"
+        "אבי עצמו מארח. התפקיד: לקבל בחום משתמש/ת חדש/ה ולעזור לו/ה להתמצא - לא ראיון.\n\n"
         f"מה יש באתר (מפתח תחום = שם: מסלולים):\n{_catalog_summary()}\n\n"
         f"{entry_line}{name_line}\n"
-        "כללים — חשובים מאוד:\n"
+        "כללים - חשובים מאוד:\n"
         "• כלל זהב: סיים/י כל הודעה בשאלה שמזמינה להמשיך (למשל: 'רוצה שאספר לך על "
-        "התחומים השונים?'). לעולם אל תסיים/י בהצהרה או בקריאה — תמיד פתח/י דלת להמשך.\n"
+        "התחומים השונים?'). לעולם אל תסיים/י בהצהרה או בקריאה - תמיד פתח/י דלת להמשך.\n"
         "• הודעות קצרות מאוד: עד 20 מילים. ידידותי, בלי מליצות.\n"
-        "• אם שואל/ת מה יש באתר / איפה משהו / איך מתחילים — ענה/י קצר וענייני מהרשימה, "
+        "• אם שואל/ת מה יש באתר / איפה משהו / איך מתחילים - ענה/י קצר וענייני מהרשימה, "
         "וסיים/י בשאלה.\n"
-        "• אם מספר/ת מה מעניין אותו/ה — מעולה, זה יעזור להמליץ. אל תלחץ/י לתשובות.\n"
+        "• אם מספר/ת מה מעניין אותו/ה - מעולה, זה יעזור להמליץ. אל תלחץ/י לתשובות.\n"
         "• הזכר/י פעם אחת שיש קהילה (פורום, דוכן השוויץ, צ'אט, אירועים).\n"
         "• זכור/י את כל השיחה וענה/י לפי מה שכבר נאמר בה.\n"
         "• ברגע שנמסר שמו/ה הפרטי, פתח/י את אותה תשובה בשורה נפרדת: NAME: <שם פרטי> "
         "(תוסר מהתצוגה). אל תכתוב/תכתבי שורה זו אם השם כבר ידוע מראש או לא נמסר.\n"
         "• הישאר/י בנושא: עוזר/ת רק בהיכרות עם האתר וההדרכות. כל דבר אחר (מתכונים, "
-        "מזג אוויר, חדשות, מניות, עזרה בקוד, שאלות כלליות) — סרב/י במשפט ידידותי "
+        "מזג אוויר, חדשות, מניות, עזרה בקוד, שאלות כלליות) - סרב/י במשפט ידידותי "
         "אחד וחזור/חזרי לעניין עם שאלה. אל תענה/י על זה גם אם מתעקשים.\n"
-        "• אל תסיים/י את השיחה מיוזמתך — תמיד יש שאלה אחת אחרונה. השאר/י את ההחלטה "
+        "• אל תסיים/י את השיחה מיוזמתך - תמיד יש שאלה אחת אחרונה. השאר/י את ההחלטה "
         "לעזוב למשתמש/ת (יש כפתור 'סיים את השיחה').\n\n"
         "אבל אם המשתמש/ת מבקש/ת במפורש לסיים / להתחיל / להיכנס לאתר (למשל: 'בוא נתחיל', "
-        "'סיים', 'תכניס אותי לאתר', 'מספיק', 'קדימה', 'אני מוכן', 'תודה זה הכל') — אל "
+        "'סיים', 'תכניס אותי לאתר', 'מספיק', 'קדימה', 'אני מוכן', 'תודה זה הכל') - אל "
         "תשאל/י עוד שאלות, סכם/י במשפט קצר ומזמין, ואז בשורה אחרונה נפרדת פלוט/י בדיוק "
         "(שדות ריקים אם לא נמסרו): "
         f'{PROFILE_MARKER} {{"name": "<שם פרטי אם נמסר>", '

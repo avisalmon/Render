@@ -3,12 +3,12 @@
 Each adapter knows how to report one service's spend for a month. It declares
 whether its number is ``live`` (provider API), ``estimate`` (computed on-site)
 or ``manual`` (admin-maintained), and degrades gracefully when its key is
-absent — a service with no usable billing API still appears (estimate/manual +
+absent - a service with no usable billing API still appears (estimate/manual +
 deep link) and can be upgraded to live later without touching the UI
 (REQ-8.3.1, DEC-63).
 
 ``run_all_adapters(period)`` runs every adapter and upserts a ``CostRecord``
-per (service, period) — but never overwrites a ``manual`` override the admin
+per (service, period) - but never overwrites a ``manual`` override the admin
 has set (REQ-8.3.11).
 """
 
@@ -91,16 +91,16 @@ class OpenAICostAdapter(CostAdapter):
                 return (Decimal(str(usd)), "live",
                         f"${usd:g} account spend this month{cap_note}",
                         {"account_usd": usd, "cap": cap})
-            except Exception:  # noqa: BLE001 — fall back to app-only usage below
+            except Exception:  # noqa: BLE001 - fall back to app-only usage below
                 pass
 
-        # Fallback: only what the babook APP itself logged (UsageLog) — NOT the
+        # Fallback: only what the babook APP itself logged (UsageLog) - NOT the
         # whole account. Other tools on the same key won't show here.
         start, end = _month_bounds(period)
         logs = UsageLog.objects.filter(created_at__gte=start, created_at__lt=end)
         total = round(sum(lg.cost_usd for lg in logs), 2)
         tokens = sum(lg.prompt_tokens + lg.completion_tokens for lg in logs)
-        note = (f"app usage only: {tokens:,} tokens / ${total:g} — "
+        note = (f"app usage only: {tokens:,} tokens / ${total:g} - "
                 f"set OPENAI_ADMIN_KEY for full account spend{cap_note}")
         return Decimal(str(total)), "estimate", note, {"tokens": tokens, "cap": cap, "app_only": True}
 
@@ -138,7 +138,7 @@ class BunnyCostAdapter(CostAdapter):
 
     def _bandwidth_gb(self, period):
         """Real GB delivered this period from Bunny's account statistics API
-        (REQ-8.3 live). Returns (gb, None) or (None, reason) — never raises here;
+        (REQ-8.3 live). Returns (gb, None) or (None, reason) - never raises here;
         safe_fetch + the caller handle fallback to the estimate."""
         key = getattr(settings, "BUNNY_ACCOUNT_API_KEY", "")
         if not key:
@@ -163,7 +163,7 @@ class BunnyCostAdapter(CostAdapter):
 
         try:
             gb, reason = self._bandwidth_gb(period)
-        except Exception as exc:  # noqa: BLE001 — API hiccup falls back to estimate
+        except Exception as exc:  # noqa: BLE001 - API hiccup falls back to estimate
             gb, reason = None, f"stats API error: {exc}"
 
         if gb is not None:
@@ -194,7 +194,7 @@ class ResendCostAdapter(CostAdapter):
     def fetch(self, period):
         if not getattr(settings, "RESEND_API_KEY", ""):
             return Decimal("0"), "manual", "set a manual figure (no API key)", {}
-        # Count real sends this month from our own log — EmailSendLog rows are
+        # Count real sends this month from our own log - EmailSendLog rows are
         # written by the anymail post_send signal (app/apps.py). Resend has no
         # public usage endpoint, so this is the reliable source; it counts from
         # when tracking shipped (so an early month can read low).
@@ -208,7 +208,7 @@ class ResendCostAdapter(CostAdapter):
         pct = round(sent / self.FREE_LIMIT * 100, 1) if self.FREE_LIMIT else 0.0
         over = max(0, sent - self.FREE_LIMIT)
         if over:
-            note = f"{sent:,} / {self.FREE_LIMIT:,} emails — OVER free tier by {over:,}"
+            note = f"{sent:,} / {self.FREE_LIMIT:,} emails - OVER free tier by {over:,}"
         else:
             note = (f"{sent:,} / {self.FREE_LIMIT:,} emails this month "
                     f"({pct:g}% of free tier; {self.FREE_LIMIT - sent:,} left)")
@@ -236,7 +236,7 @@ class PlausibleCostAdapter(CostAdapter):
     default_source = "manual"
 
     def fetch(self, period):
-        return Decimal("0"), "manual", "plan-based — set a manual figure (ACT-24/25)", {}
+        return Decimal("0"), "manual", "plan-based - set a manual figure (ACT-24/25)", {}
 
 
 class DomainCostAdapter(CostAdapter):
@@ -279,9 +279,9 @@ class DomainCostAdapter(CostAdapter):
 
         try:
             txt = self._whois()
-        except Exception as exc:  # noqa: BLE001 — WHOIS down → keep the manual note
+        except Exception as exc:  # noqa: BLE001 - WHOIS down → keep the manual note
             return (Decimal("0"), "manual",
-                    f"annual registrar fee — set a manual figure (WHOIS unavailable: {exc})", {})
+                    f"annual registrar fee - set a manual figure (WHOIS unavailable: {exc})", {})
 
         validity = registrar = registrar_url = ""
         nameservers = []
@@ -324,7 +324,7 @@ class DomainCostAdapter(CostAdapter):
         if registrar:
             parts.append(f"renew at {registrar}"
                          + (f" ({registrar_url})" if registrar_url else ""))
-        note = "; ".join(parts) or "annual registrar fee — set a manual figure"
+        note = "; ".join(parts) or "annual registrar fee - set a manual figure"
 
         return (Decimal("0"), "live", note, {
             "expiry": expiry_iso, "days_left": days_left, "nameservers": nameservers,
@@ -341,7 +341,7 @@ class BackupCostAdapter(CostAdapter):
     GCS_FREE_GB = 5.0  # GCS "Always Free" Standard storage (US regions)
 
     def _bucket_usage(self):
-        """(total_gb, object_count, error) — real backup-bucket size via the GCS
+        """(total_gb, object_count, error) - real backup-bucket size via the GCS
         JSON API, reusing the backup command's auth. error is None on success."""
         import base64
         import json
@@ -373,7 +373,7 @@ class BackupCostAdapter(CostAdapter):
     def fetch(self, period):
         try:
             gb, count, err = self._bucket_usage()
-        except Exception as exc:  # noqa: BLE001 — API hiccup degrades to estimate
+        except Exception as exc:  # noqa: BLE001 - API hiccup degrades to estimate
             gb, count, err = None, 0, f"GCS API error: {exc}"
         if gb is None:
             return (Decimal("0"), "estimate",
@@ -409,10 +409,10 @@ class StripeCostAdapter(CostAdapter):
 
     def fetch(self, period):
         # Dormant while billing is DEFERRED (Ch 1.4 / REQ-8.3.10).
-        return Decimal("0"), "estimate", "dormant — billing deferred", {"dormant": True}
+        return Decimal("0"), "estimate", "dormant - billing deferred", {"dormant": True}
 
 
-# Registry — adding a service is a one-line addition (REQ-8.3.1).
+# Registry - adding a service is a one-line addition (REQ-8.3.1).
 ADAPTERS = [
     OpenAICostAdapter(),
     CopilotCostAdapter(),

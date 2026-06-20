@@ -2,7 +2,7 @@
 Management command: enrich_course
 
 For each lesson (Video) in a course:
-  1. Fetch the audio — preferring the original YouTube source mapped in
+  1. Fetch the audio - preferring the original YouTube source mapped in
      data/course_materials/<slug>/sources.json (Bunny's CDN has token auth on
      direct play.mp4); falls back to Bunny play.mp4 if no source id is mapped.
   2. Transcribe the audio (chunked) with the strong OpenAI model, in --lang
@@ -10,7 +10,7 @@ For each lesson (Video) in a course:
   4. Generate a Hebrew multiple-choice quiz   (app.authoring.pipeline.gen_quiz)
   5. Save notes_markdown + summary_he on the Video, upsert its LessonQuiz
 
-SUPERVISED batch — real OpenAI cost + long runtime. Resumable: lessons that
+SUPERVISED batch - real OpenAI cost + long runtime. Resumable: lessons that
 already have notes are skipped unless --force is passed.
 
 Usage:
@@ -79,7 +79,7 @@ class Command(BaseCommand):
 
         for v in lessons:
             if v.notes_markdown and not opts["force"] and not opts["dry_run"]:
-                self.stdout.write(f"[{course.slug} #{v.lesson_order}] notes present — skipping (use --force)")
+                self.stdout.write(f"[{course.slug} #{v.lesson_order}] notes present - skipping (use --force)")
                 skipped += 1
                 continue
 
@@ -93,7 +93,7 @@ class Command(BaseCommand):
                         src = self._download_youtube_audio(yt_id, tmp)
                     else:
                         if not self._wait_encoded(v.bunny_video_id):
-                            self.stderr.write("  no YouTube source and not encoded on Bunny — skipping")
+                            self.stderr.write("  no YouTube source and not encoded on Bunny - skipping")
                             failed += 1
                             continue
                         self.stdout.write("  downloading from Bunny…")
@@ -103,7 +103,7 @@ class Command(BaseCommand):
 
                     transcript = self._transcribe(client, _ff(), src, tmp, dur, lang)
                     if not transcript:
-                        self.stderr.write("  empty transcript — skipping")
+                        self.stderr.write("  empty transcript - skipping")
                         failed += 1
                         continue
                     self.stdout.write(f"  transcript: {len(transcript)} chars")
@@ -144,7 +144,7 @@ class Command(BaseCommand):
             done += 1
 
         self.stdout.write(self.style.SUCCESS(
-            f"done — {done} processed, {skipped} skipped, {failed} failed. "
+            f"done - {done} processed, {skipped} skipped, {failed} failed. "
             "Review quality, then push_course_to_production when ready."))
 
     # ------------------------------------------------------------------

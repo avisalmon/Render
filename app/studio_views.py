@@ -33,7 +33,7 @@ def _domains_for_form():
 
 
 def _clean(s):
-    return (s or "").replace("—", ",").replace("–", "-")
+    return (s or "").replace("-", ",").replace("–", "-")
 
 
 @author_required

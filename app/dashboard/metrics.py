@@ -30,7 +30,7 @@ def _filt(qs, field, cutoff):
 
 
 # ---------------------------------------------------------------------------
-# REQ-8.2 — Users & Training
+# REQ-8.2 - Users & Training
 # ---------------------------------------------------------------------------
 
 
@@ -58,7 +58,7 @@ def collect_users_training(range_days=30):
 
     # role breakdown (LearnerProfile.role_type)
     role_rows = LearnerProfile.objects.values("role_type").annotate(n=Count("id")).order_by("-n")
-    m["by_role"] = {(r["role_type"] or "—"): r["n"] for r in role_rows}
+    m["by_role"] = {(r["role_type"] or "-"): r["n"] for r in role_rows}
 
     # auth-provider breakdown (allauth SocialAccount; rest = email/password)
     providers = {}
@@ -134,7 +134,7 @@ def collect_users_training(range_days=30):
         popular.append(
             {
                 "course_id": cid,
-                "title": course_titles.get(cid, "—"),
+                "title": course_titles.get(cid, "-"),
                 "enrollments": n,
                 "completions": comp,
                 "completion_pct": round(100 * comp / n) if n else 0,
@@ -143,7 +143,7 @@ def collect_users_training(range_days=30):
     popular.sort(key=lambda r: r["enrollments"], reverse=True)
     m["popular_courses"] = popular[:10]
 
-    # --- activation funnel (REQ-8.2.5) — locally derivable steps ---
+    # --- activation funnel (REQ-8.2.5) - locally derivable steps ---
     reg = _filt(User.objects, "date_joined", cutoff).count()
     profiles = LearnerProfile.objects.all()
     onboarding_started = _filt(profiles, "created_at", cutoff).count()
@@ -185,7 +185,7 @@ def collect_users_training(range_days=30):
 
 
 # ---------------------------------------------------------------------------
-# REQ-8.4 — Engagement & community health (superset of REQ-6.8.2)
+# REQ-8.4 - Engagement & community health (superset of REQ-6.8.2)
 # ---------------------------------------------------------------------------
 
 
@@ -211,7 +211,7 @@ def collect_engagement(range_days=7):
     cutoff = _since(range_days)
     m = {}
 
-    # weekly active contributors (distinct authors across surfaces) — fixed 7d
+    # weekly active contributors (distinct authors across surfaces) - fixed 7d
     week = now - timedelta(days=7)
     active = set()
     active |= set(Tip.objects.filter(created_at__gte=week).values_list("author_id", flat=True))
@@ -296,7 +296,7 @@ def collect_engagement(range_days=7):
 
 
 # ---------------------------------------------------------------------------
-# REQ-8.5 — System health
+# REQ-8.5 - System health
 # ---------------------------------------------------------------------------
 
 
@@ -305,7 +305,7 @@ def collect_system():
 
     m = {}
 
-    # deploy / revision — local git HEAD as a no-creds default (REQ-8.5.1)
+    # deploy / revision - local git HEAD as a no-creds default (REQ-8.5.1)
     m["revision"] = _git_head()
 
     # database & storage (REQ-8.5.3)
@@ -313,7 +313,7 @@ def collect_system():
     m["db_bytes"] = os.path.getsize(db_path) if db_path and os.path.exists(db_path) else None
     m["media_bytes"] = _dir_size(getattr(settings, "MEDIA_ROOT", None))
 
-    # backup status (REQ-8.5.2) — read a marker if the backup job writes one
+    # backup status (REQ-8.5.2) - read a marker if the backup job writes one
     m["last_backup_at"] = _last_backup_marker()
 
     # health + dependency key presence (REQ-8.5.4)

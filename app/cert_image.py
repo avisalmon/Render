@@ -1,7 +1,7 @@
 """Render a certificate as a PNG for social-share previews (og:image).
 
 The on-page diploma is HTML/CSS, which link crawlers (WhatsApp, Facebook) can't
-turn into a thumbnail — they need a real image URL. This draws a matching
+turn into a thumbnail - they need a real image URL. This draws a matching
 parchment-and-gold certificate with Pillow. Hebrew is reordered with python-bidi
 (Pillow here has no libraqm, so text is drawn in visual order). Fonts are the
 Heebo TTFs bundled under static/fonts/. Output is cached so repeated crawls are
@@ -30,7 +30,7 @@ def _font(name, size):
     # Force BASIC layout so behaviour is identical across environments: some
     # Pillow builds bundle libraqm (which does its own bidi) and others don't.
     # With BASIC, Pillow never reorders, so our python-bidi pass is the only one
-    # applied — otherwise raqm + bidi double-reverse the Hebrew (reversed text).
+    # applied - otherwise raqm + bidi double-reverse the Hebrew (reversed text).
     return ImageFont.truetype(str(_FONT_DIR / name), size,
                               layout_engine=ImageFont.Layout.BASIC)
 
@@ -77,7 +77,7 @@ def _render(name, course, date_str):
         d.line([(x, y), (x, y + dy * 34)], fill=GOLD, width=3)
 
     cx = W // 2
-    # Wordmark (Latin — no bidi)
+    # Wordmark (Latin - no bidi)
     wm = _font("Heebo_700Bold.ttf", 40)
     ba_w = wm.getlength("ba")
     book_w = wm.getlength("book")

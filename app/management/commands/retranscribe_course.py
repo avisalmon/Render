@@ -3,7 +3,7 @@ Re-transcribe a course's lessons with the strongest OpenAI model and
 regenerate high-quality faithful Hebrew notes (REQ-7.5.1 / QA-14), the
 proven «Co-Coding» method.
 
-SUPERVISED batch — real OpenAI cost + long runtime. Recommended flow:
+SUPERVISED batch - real OpenAI cost + long runtime. Recommended flow:
     python manage.py backup_db                         # back up first (ACT)
     python manage.py retranscribe_course python --dry-run   # preview 1 lesson
     python manage.py retranscribe_course python             # do the course
@@ -48,7 +48,7 @@ class Command(BaseCommand):
 
         client = _client()
         for v in lessons:
-            self.stdout.write(f"[{course.slug} #{v.lesson_order}] {v.title} — downloading ...")
+            self.stdout.write(f"[{course.slug} #{v.lesson_order}] {v.title} - downloading ...")
             with tempfile.TemporaryDirectory() as tmp:
                 src = os.path.join(tmp, "v.mp4")
                 try:
@@ -83,4 +83,4 @@ class Command(BaseCommand):
                 v.notes_markdown = notes
                 v.save(update_fields=["notes_markdown"])
                 self.stdout.write(self.style.SUCCESS(f"  updated ({len(notes)} chars)"))
-        self.stdout.write(self.style.SUCCESS("done — review quality, then push_course_to_production"))
+        self.stdout.write(self.style.SUCCESS("done - review quality, then push_course_to_production"))

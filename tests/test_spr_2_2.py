@@ -303,19 +303,19 @@ def test_sitemap_includes_courses(client, published_course):
 
 @pytest.mark.django_db
 def test_corporate_hook_on_detail(client, published_course):
-    """T-F-2.2.9-1: Course detail page contains corporate funnel link."""
+    """T-F-2.2.9-1: Course detail page contains the team-training email hook."""
     r = client.get(reverse("courses_detail", args=["micropython-thonny"]))
     content = r.content.decode("utf-8")
-    assert "/corporate/" in content
+    assert "mailto:avi.salmon@gmail.com" in content
 
 
 @pytest.mark.django_db
 def test_corporate_hook_on_lesson(client, user, published_course):
-    """T-F-2.2.9-2: Lesson page contains corporate funnel link (login required)."""
+    """T-F-2.2.9-2: Lesson page contains the team-training email hook (login required)."""
     client.force_login(user)
     r = client.get(reverse("courses_lesson", args=["micropython-thonny", 1]))
     content = r.content.decode("utf-8")
-    assert "/corporate/" in content
+    assert "mailto:avi.salmon@gmail.com" in content
 
 
 # ---------------------------------------------------------------------------

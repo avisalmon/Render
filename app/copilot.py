@@ -1,5 +1,5 @@
 """
-Copilot Seat Provisioning — GitHub API integration (STUBBED).
+Copilot Seat Provisioning - GitHub API integration (STUBBED).
 
 All GitHub API calls are stubs until GITHUB_PAT is configured.
 No real HTTP requests are made. No money is spent.

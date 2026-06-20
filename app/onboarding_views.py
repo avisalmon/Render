@@ -1,6 +1,6 @@
 """
 EPIC-5 views: the context-aware registration wall (/join/) and the
-post-signup onboarding flow (/welcome/ — AI interview + static fallback).
+post-signup onboarding flow (/welcome/ - AI interview + static fallback).
 """
 import json
 
@@ -30,7 +30,7 @@ def _safe_next(request, value):
 
 
 # ---------------------------------------------------------------------------
-# /join/ — the context-aware wall (REQ-5.4.1, REQ-5.1.2)
+# /join/ - the context-aware wall (REQ-5.4.1, REQ-5.1.2)
 # ---------------------------------------------------------------------------
 
 def join_wall(request):
@@ -71,7 +71,7 @@ def join_wall(request):
 
 
 # ---------------------------------------------------------------------------
-# /welcome/ — onboarding (REQ-5.5.*)
+# /welcome/ - onboarding (REQ-5.5.*)
 # ---------------------------------------------------------------------------
 
 def _get_learner_profile(user):
@@ -199,7 +199,7 @@ def welcome_chat(request):
         history = [{"role": "assistant", "content": fixed_opener(request.user)}]
     user_turns = sum(1 for m in history if m["role"] == "user")
     if user_turns >= MAX_INTERVIEW_TURNS:
-        # Never yank the user into the static form mid-chat — keep it a chat and
+        # Never yank the user into the static form mid-chat - keep it a chat and
         # let them end it themselves via "דלג על השיחה". Gentle nudge only.
         return JsonResponse({
             "reply": "וואו, שיחה כיפית! 🙂 מתי שמתאים לך לחצ/י על «סיים את השיחה» ונצא לדרך. "
@@ -269,7 +269,7 @@ def welcome_complete(request):
 
 @login_required
 def welcome_skip(request):
-    """Skip ('later') — resumable from the profile page (REQ-5.5.5).
+    """Skip ('later') - resumable from the profile page (REQ-5.5.5).
     Recommendations still seed from the entry intent (REQ-5.2.3)."""
     if request.method != "POST":
         return redirect("welcome")

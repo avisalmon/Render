@@ -2,16 +2,16 @@
 Course Management REST API  (SPR-2.3)
 ======================================
 Secure endpoints for pushing courses from local dev to production.
-No DRF required — plain Django JSON views.
+No DRF required - plain Django JSON views.
 
 Auth: every request must include  Authorization: Bearer <COURSE_MGMT_API_KEY>
       The key is set as a Render env var and in settings_local.py locally.
 
 Endpoints
 ---------
-GET  /api/v1/courses/          — list all courses (verification)
-POST /api/v1/courses/sync/     — upsert course + videos + materials (idempotent)
-POST /api/v1/media/upload/     — upload a file, returns its stored relative path
+GET  /api/v1/courses/          - list all courses (verification)
+POST /api/v1/courses/sync/     - upsert course + videos + materials (idempotent)
+POST /api/v1/media/upload/     - upload a file, returns its stored relative path
 """
 
 import base64
@@ -47,7 +47,7 @@ def _load_json_body(request):
 
 
 def require_api_key(view_fn):
-    """Decorator — reject requests that don't carry the correct Bearer token."""
+    """Decorator - reject requests that don't carry the correct Bearer token."""
     @wraps(view_fn)
     def _wrapper(request, *args, **kwargs):
         expected = getattr(settings, "COURSE_MGMT_API_KEY", "")
@@ -85,7 +85,7 @@ def list_courses(request):
 
 
 # ---------------------------------------------------------------------------
-# GET /api/v1/courses/<slug>/  — full course (for local<->prod pull)
+# GET /api/v1/courses/<slug>/  - full course (for local<->prod pull)
 # ---------------------------------------------------------------------------
 
 @require_api_key
@@ -302,8 +302,8 @@ def upload_media(request):
     Upload a single file to MEDIA_ROOT.
 
     multipart/form-data fields:
-      file      — the file itself
-      subdir    — destination subdirectory under MEDIA_ROOT (e.g. "course_materials")
+      file      - the file itself
+      subdir    - destination subdirectory under MEDIA_ROOT (e.g. "course_materials")
                   Defaults to "course_materials".
 
     Returns: { "status": "ok", "path": "course_materials/filename.pptx" }
@@ -314,7 +314,7 @@ def upload_media(request):
 
     subdir = request.POST.get("subdir", "course_materials").strip("/")
 
-    # Sanitise filename — keep only the basename, no path traversal
+    # Sanitise filename - keep only the basename, no path traversal
     safe_name = Path(uploaded.name).name
     if not safe_name:
         return JsonResponse({"error": "Invalid filename"}, status=400)

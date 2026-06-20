@@ -429,6 +429,11 @@ html[dir="rtl"] .whatsapp-sticky {
 
 /* Lesson notes markdown content */
 .lesson-notes { padding: var(--space-card); }
+/* Keep images in lesson notes within the page width */
+.lesson-notes img {
+  max-width: 100%; height: auto; display: block;
+  margin: .75rem 0; border-radius: 8px; border: 1px solid var(--border);
+}
 .lesson-notes pre {
     background: var(--bg-elevated);
     border-radius: 8px;
@@ -913,6 +918,68 @@ html[data-theme="dark"] .training-hero-media { background: rgba(255,255,255,.04)
 }
 .thm-caption.is-on { opacity: 1; transform: translateY(0); }
 
+/* ==========================================================================
+   STL gallery (the learner's 3D-model "exhibition") + enlarge modal
+   ========================================================================== */
+.stl-gallery { margin-top: 1rem; }
+.stl-gallery-title { font-weight: 600; font-size: .9rem; margin-bottom: .5rem; color: var(--text-secondary); }
+.stl-gallery-grid {
+  display: grid; gap: .6rem;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+}
+.stl-tile {
+  border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+  background: var(--bg-elevated); cursor: pointer; transition: border-color .15s, transform .15s;
+}
+.stl-tile:hover { border-color: var(--accent-primary); transform: translateY(-2px); }
+.stl-tile-canvas { width: 100%; height: 84px; display: block; }
+.stl-tile-label {
+  font-size: .7rem; line-height: 1.2; padding: .3rem .4rem; text-align: center;
+  color: var(--text-secondary); border-top: 1px solid var(--border);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* On the course page / certificate the tiles can be a touch larger */
+.stl-gallery--lg .stl-gallery-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.stl-gallery--lg .stl-tile-canvas { height: 140px; }
+.stl-gallery--lg .stl-tile-label { font-size: .8rem; }
+
+.stl-modal {
+  position: fixed; inset: 0; z-index: 1080;
+  display: flex; align-items: center; justify-content: center;
+}
+.stl-modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.6); }
+.stl-modal-box {
+  position: relative; z-index: 1; width: min(90vw, 640px);
+  background: var(--bg-surface); border: 1px solid var(--border); border-radius: 14px;
+  padding: 1.2rem; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.4);
+}
+.stl-modal-title { font-weight: 600; margin-bottom: .6rem; }
+.stl-modal-canvas { width: 100%; height: min(60vh, 460px); border-radius: 10px; background: var(--bg-elevated); }
+img.stl-tile-canvas { object-fit: cover; background: var(--bg-elevated); }
+.stl-modal-frame { width: 100%; }
+.stl-modal-frame iframe { width: 100%; height: min(64vh, 420px); border: 0; border-radius: 10px; }
+/* Inline embedded Scratch player on the lesson */
+.scratch-embed { position: relative; width: 100%; max-width: 485px; }
+.scratch-embed iframe { width: 100%; height: 402px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-elevated); }
+.stl-modal-close {
+  position: absolute; top: .4rem; inset-inline-end: .6rem; background: none; border: none;
+  font-size: 1.6rem; line-height: 1; color: var(--text-secondary); cursor: pointer;
+}
+.stl-modal-close:hover { color: var(--text-primary); }
+
+/* "You're certified" trophy badge (lesson top + course page) */
+.cert-trophy {
+  display: inline-flex; align-items: center; gap: .4rem;
+  font-size: .82rem; font-weight: 700; text-decoration: none;
+  padding: .25rem .7rem; border-radius: 999px;
+  color: #8a6d1a; background: rgba(245, 197, 24, .16);
+  border: 1px solid rgba(245, 197, 24, .5);
+}
+.cert-trophy:hover { background: rgba(245, 197, 24, .26); color: #6d560f; }
+.cert-trophy .bi { color: #e0a800; }
+html[data-theme="dark"] .cert-trophy { color: #f3d27a; }
+html[data-theme="dark"] .cert-trophy:hover { color: #ffe9a8; }
+
 @media (max-width: 767px) {
   .training-hero { flex-direction: column; min-height: 0; }
   .thm-caption { font-size: .92rem; padding: 1rem .9rem .7rem; }
@@ -1242,3 +1309,121 @@ html[data-theme="dark"] .training-hero { background: var(--bg-surface); }
 
 /* AI catalog search — flat ranked results */
 .catalog-results-hint { font-size: 0.8rem; font-weight: 400; color: var(--text-secondary); margin-inline-start: 0.4rem; }
+
+/* =====================================================================
+   Site drawer (global off-canvas nav) — calm-editorial
+   ===================================================================== */
+.site-drawer { background: var(--bg-surface); color: var(--text-primary); width: 280px; max-width: 85vw; }
+.site-drawer .offcanvas-header { border-bottom: 1px solid var(--border); }
+.site-drawer .offcanvas-title { font-family: var(--font-heading); color: var(--text-primary); }
+.site-drawer .btn-close { filter: var(--theme-light, none); }
+html[data-theme="dark"] .site-drawer .btn-close { filter: invert(1); }
+
+.site-drawer-nav a,
+.site-drawer-nav button {
+  display: flex; align-items: center; gap: .7rem;
+  padding: .7rem .6rem; margin: .1rem 0;
+  border-radius: 8px;
+  color: var(--text-primary); background: none; border: 0; width: 100%;
+  text-align: start; text-decoration: none; font-size: 1.02rem;
+  cursor: pointer; transition: background .12s, color .12s;
+}
+.site-drawer-nav a:hover,
+.site-drawer-nav button:hover { background: var(--bg-elevated); color: var(--accent-primary); }
+.site-drawer-nav a i,
+.site-drawer-nav button i { color: var(--accent-primary); width: 1.3rem; text-align: center; }
+.site-drawer-sep { border-color: var(--border); margin: .5rem 0; opacity: 1; }
+
+/* =====================================================================
+   Home "discover more" — image circles (members)
+   ===================================================================== */
+.home-circles {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 2.75rem; padding: .5rem 0;
+}
+.home-circle {
+  display: flex; flex-direction: column; align-items: center; gap: .7rem;
+  text-decoration: none; color: var(--text-primary);
+}
+.home-circle-img {
+  position: relative;
+  width: 140px; height: 140px; border-radius: 50%;
+  background-size: cover; background-position: center;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 0 2px var(--border);
+  transition: box-shadow .18s ease, transform .18s ease;
+}
+.home-circle-img i {
+  color: rgba(255, 255, 255, .9);
+  font-size: 2.7rem;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, .4);
+}
+.home-circle:hover .home-circle-img {
+  box-shadow: 0 0 0 3px var(--accent-primary);
+  transform: scale(1.04);
+}
+.home-circle-label {
+  font-family: var(--font-heading);
+  font-weight: 700; font-size: 1.08rem; color: var(--text-primary);
+}
+
+/* Nostalgia: 8mm film-strip cell (video with sprocket holes top & bottom) */
+.filmstrip {
+  position: relative; display: block;
+  background: #141210;
+  padding: 16px 9px;                 /* black sprocket bars top & bottom */
+  border-radius: 7px;
+  box-shadow: 0 0 0 2px var(--border);
+  transition: box-shadow .18s ease, transform .18s ease;
+}
+.filmstrip::before, .filmstrip::after {
+  content: ""; position: absolute; left: 9px; right: 9px; height: 7px;
+  background: repeating-linear-gradient(90deg,
+      #e8e2d2 0 7px, transparent 7px 15px);   /* the perforations */
+}
+.filmstrip::before { top: 4.5px; }
+.filmstrip::after  { bottom: 4.5px; }
+.filmstrip-video {
+  display: block; width: 168px; height: 112px;
+  object-fit: cover; border-radius: 2px; background: #000;
+}
+.home-filmcell:hover .filmstrip {
+  box-shadow: 0 0 0 3px var(--accent-primary);
+  transform: scale(1.04);
+}
+.home-circles { align-items: center; }
+
+/* Old-movie effect on the nostalgia clip: flicker + sepia + grain + vignette */
+.filmstrip-video {
+  filter: sepia(.34) saturate(.8) contrast(1.06) brightness(1.03);
+  animation: film-flicker .32s steps(1, end) infinite;
+}
+@keyframes film-flicker {
+  0%, 100% { opacity: 1; }
+  22% { opacity: .9; }
+  47% { opacity: 1; }
+  61% { opacity: .85; }
+  78% { opacity: .97; }
+  90% { opacity: .92; }
+}
+.filmstrip-fx {
+  position: absolute; inset: 16px 9px;        /* exactly over the video */
+  border-radius: 2px; pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 48%, rgba(0,0,0,.55) 100%);
+}
+.filmstrip-fx::after {
+  content: ""; position: absolute; inset: 0; border-radius: 2px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 120px 120px;
+  mix-blend-mode: overlay; opacity: .25;
+  animation: film-grain .42s steps(2, end) infinite;
+}
+@keyframes film-grain {
+  0% { background-position: 0 0; }
+  50% { background-position: -26px 14px; }
+  100% { background-position: 16px -22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .filmstrip-video { animation: none; }
+  .filmstrip-fx::after { animation: none; }
+}

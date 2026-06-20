@@ -1,5 +1,5 @@
 """
-EPIC-6.3 views: the showcase — דוכן השוויץ. Wall + brag feed + project
+EPIC-6.3 views: the showcase - דוכן השוויץ. Wall + brag feed + project
 pages + create/edit + reactions + comments. Read-public; every interaction
 requires login (REQ-6.1.11). Markdown + moderation reused from the forum.
 """
@@ -135,7 +135,7 @@ def showcase_wall(request, stand=None):
 
 
 def showcase_feed(request):
-    """REQ-6.3.11: the flowing brag feed — newest projects with live reactions."""
+    """REQ-6.3.11: the flowing brag feed - newest projects with live reactions."""
     projects = (
         _published().select_related("author__profile", "course")
         .order_by("-published_at")[:30]

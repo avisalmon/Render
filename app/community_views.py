@@ -165,7 +165,7 @@ def follow_toggle(request, username):
 
 def _leaderboard_rows(limit=20, since=None):
     """Leaderboard rows (DEC-47): public with opt-out; students by display
-    name only is inherent — we only ever show public_name."""
+    name only is inherent - we only ever show public_name."""
     if since is not None:
         qs = (
             ReputationEvent.objects.filter(created_at__gte=since)
@@ -214,7 +214,7 @@ def notifications_page(request):
 
 @interact_required
 def community_settings_save(request):
-    """F-6.1.1.4: the community block on /profile/ — go public, bio, avatar,
+    """F-6.1.1.4: the community block on /profile/ - go public, bio, avatar,
     collab + leaderboard flags."""
     if request.method != "POST":
         return redirect("profile")
@@ -276,7 +276,7 @@ def report_content(request):
 
 
 # ---------------------------------------------------------------------------
-# Direct messages (REQ-6.3.12) — opt-in, student-disabled, block/report
+# Direct messages (REQ-6.3.12) - opt-in, student-disabled, block/report
 # ---------------------------------------------------------------------------
 
 @interact_required

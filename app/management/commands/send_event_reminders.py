@@ -54,7 +54,7 @@ class Command(BaseCommand):
                         f"https://babook.co.il/community/events/{event.slug}/",
                         getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@babook.co.il"),
                         [r.user.email], fail_silently=True)
-                except Exception:  # noqa: BLE001 — a reminder must never crash the batch
+                except Exception:  # noqa: BLE001 - a reminder must never crash the batch
                     pass
             count += 1
         return count

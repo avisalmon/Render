@@ -173,7 +173,7 @@
       <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ eng.active_contributors }}</div><div class="small text-muted">תורמים פעילים (שבוע)</div></div></div>
       <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ eng.engagement_rate_pct }}%</div><div class="small text-muted">שיעור מעורבות</div></div></div>
       <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ eng.q_unanswered_pct }}%</div><div class="small text-muted">שאלות ללא מענה</div></div></div>
-      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{% if eng.avg_ttfa %}{{ eng.avg_ttfa }}ש'{% else %}—{% endif %}</div><div class="small text-muted">זמן לתשובה ראשונה</div></div></div>
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{% if eng.avg_ttfa %}{{ eng.avg_ttfa }}ש'{% else %}-{% endif %}</div><div class="small text-muted">זמן לתשובה ראשונה</div></div></div>
     </div>
     <div class="row g-2 mb-2">
       <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ eng.projects_total }}</div><div class="small text-muted">פרויקטים</div></div></div>
@@ -192,9 +192,9 @@
       </form>
     </div>
     <div class="row g-2">
-      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h5 mb-0">{{ sys.revision|default:"—" }}</div><div class="small text-muted">גרסה (commit)</div></div></div>
-      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h5 mb-0">{% if sys.db_bytes %}{{ sys.db_bytes|filesizeformat }}{% else %}—{% endif %}</div><div class="small text-muted">מסד נתונים</div></div></div>
-      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h5 mb-0">{% if sys.media_bytes %}{{ sys.media_bytes|filesizeformat }}{% else %}—{% endif %}</div><div class="small text-muted">מדיה</div></div></div>
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h5 mb-0">{{ sys.revision|default:"-" }}</div><div class="small text-muted">גרסה (commit)</div></div></div>
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h5 mb-0">{% if sys.db_bytes %}{{ sys.db_bytes|filesizeformat }}{% else %}-{% endif %}</div><div class="small text-muted">מסד נתונים</div></div></div>
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h5 mb-0">{% if sys.media_bytes %}{{ sys.media_bytes|filesizeformat }}{% else %}-{% endif %}</div><div class="small text-muted">מדיה</div></div></div>
       <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h5 mb-0">{% if sys.last_backup_at %}{{ sys.last_backup_at }}{% else %}לא ידוע{% endif %}</div><div class="small text-muted">גיבוי אחרון</div></div></div>
     </div>
   </section>

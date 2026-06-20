@@ -1,4 +1,4 @@
-"""CrashTech views — SPR-6.5.1 Foundations: organizer setup, challenge
+"""CrashTech views - SPR-6.5.1 Foundations: organizer setup, challenge
 authoring, judge assignment. Public/live surfaces arrive in later sprints."""
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -415,7 +415,7 @@ def challenge_qr(request, slug, challenge_id):
 @review_required
 def judge_queue(request, hackathon):
     """REQ-6.5.12: blind queue of submissions to review. Team identity is hidden
-    from judges (DEC-57) — only the anonymous label is shown."""
+    from judges (DEC-57) - only the anonymous label is shown."""
     challenge_id = request.GET.get("challenge")
     subs = (Submission.objects.filter(challenge__hackathon=hackathon)
             .select_related("challenge", "team").order_by("status", "submitted_at"))
@@ -461,7 +461,7 @@ def review_submission(request, hackathon, submission_id):
 
 @organizer_required
 def bonus_award(request, hackathon, challenge_id):
-    """REQ-6.5.13: organizer-only — rank the top-N of a performance/creativity
+    """REQ-6.5.13: organizer-only - rank the top-N of a performance/creativity
     challenge and award bonus points per tier."""
     challenge = get_object_or_404(Challenge, pk=challenge_id, hackathon=hackathon)
     subs = (Submission.objects.filter(challenge=challenge)
@@ -518,7 +518,7 @@ def qr_upload(request, token):
 
 @organizer_required
 def generate_certificates(request, hackathon):
-    """REQ-6.5.17: issue certificates — winner/runner-up for the top two by
+    """REQ-6.5.17: issue certificates - winner/runner-up for the top two by
     final ranking, participation for the rest. Idempotent per team."""
     if request.method != "POST":
         return redirect("crashtech_manage", slug=hackathon.slug)
@@ -591,7 +591,7 @@ def consent_toggle(request, slug):
 
 
 def video_gallery(request, slug):
-    """REQ-6.5.20: anonymized public gallery — approved demos from teams that
+    """REQ-6.5.20: anonymized public gallery - approved demos from teams that
     consented to publication only."""
     hackathon = get_object_or_404(Hackathon, slug=slug)
     subs = (Submission.objects.filter(

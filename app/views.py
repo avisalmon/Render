@@ -1,6 +1,5 @@
 import hashlib
 import re
-import urllib.parse
 
 from django.conf import settings
 from django.contrib.auth import login, logout
@@ -18,7 +17,6 @@ from django.views.generic import TemplateView
 
 from .models import (
     CopilotSeat,
-    CorporateLead,
     Course,
     Enrollment,
     NewsletterSubscriber,
@@ -66,7 +64,7 @@ def home(request):
                     "community": request.user.profile.is_public,
                 }
                 if all(checklist.values()):
-                    checklist = None  # done — stop showing it
+                    checklist = None  # done - stop showing it
 
     # Hero joke + worlds intro show only on the user's first day (REQ-7.1.4):
     # anonymous visitors (new) always; logged-in only within 24h of signup.
@@ -103,11 +101,11 @@ def home(request):
     # with each crossfade (see home.html). Unmapped clips just show no caption.
     import os
     training_captions = {
-        "01-hero.mp4": "לומדים על חומרה ובקרים — עולם מופלא של יצירה",
+        "01-hero.mp4": "לומדים על חומרה ובקרים - עולם מופלא של יצירה",
         "02-hero.mp4": "הדפסה בתלת מימד",
         "03-hero.mp4": "בינה מלאכותית בכל הרמות",
         "04-hero.mp4": "נושאים טכנולוגיים (בתמונה המחשב הראשון בישראל)",
-        "05-hero.mp4": "בינה מלאכותית מהבפנוכו — איך זה עובד באמת",
+        "05-hero.mp4": "בינה מלאכותית מהבפנוכו - איך זה עובד באמת",
     }
     vdir = os.path.join(settings.BASE_DIR, "static", "video", "training")
     training_videos = []
@@ -137,41 +135,41 @@ def home(request):
     })
 
 
-# Apex sections not yet built — rendered as friendly "coming soon" placeholders.
+# Apex sections not yet built - rendered as friendly "coming soon" placeholders.
 COMING_SOON_SECTIONS = {
     "community": {
         "title": "קהילה",
         "icon": "bi-people-fill",
         "tagline": "פורומים, שיתופי ידע ומפגשים.",
-        "blurb": "כאן תקום הקהילה של babook — מקום לשאול, לשתף ולהכיר אנשים שמדברים אותה שפה "
+        "blurb": "כאן תקום הקהילה של babook - מקום לשאול, לשתף ולהכיר אנשים שמדברים אותה שפה "
                  "(ואולי אפילו ישתפו ספר או שניים).",
     },
     "services": {
         "title": "חנות שירותים",
         "icon": "bi-bag-fill",
         "tagline": "ייעוץ אישי, ליווי פרויקטים וסקירת קוד.",
-        "blurb": "בקרוב תוכלו להזמין כאן שירותים מקצועיים — ייעוץ 1-על-1, ליווי פרויקטים "
+        "blurb": "בקרוב תוכלו להזמין כאן שירותים מקצועיים - ייעוץ 1-על-1, ליווי פרויקטים "
                  "וסקירות מומחה. ממוקד, מעשי, ובעברית.",
     },
     "workshops": {
         "title": "סדנאות והובלת חדשנות",
         "icon": "bi-easel2-fill",
-        "tagline": "סדנאות, הדרכות מעשיות והובלת תהליכי חדשנות — לארגונים ולפרטיים.",
-        "blurb": "סדנאות בהזמנה אישית ולארגונים, וליווי תהליכי חדשנות — אונליין או פרונטלי, "
-                 "בהתאמה לצוות שלכם. פרטים, נושאים ותאריכים — בקרוב.",
+        "tagline": "סדנאות, הדרכות מעשיות והובלת תהליכי חדשנות - לארגונים ולפרטיים.",
+        "blurb": "סדנאות בהזמנה אישית ולארגונים, וליווי תהליכי חדשנות - אונליין או פרונטלי, "
+                 "בהתאמה לצוות שלכם. פרטים, נושאים ותאריכים - בקרוב.",
     },
     "nostalgia": {
         "title": "נוסטלגיה",
         "icon": "bi-clock-history",
         "tagline": "ביוגרפיות, שחזור סרטים ותמונות, ועצי משפחה.",
-        "blurb": "פרויקטים אישיים לשימור זיכרונות — כתיבת ביוגרפיות, שחזור ושדרוג סרטים "
+        "blurb": "פרויקטים אישיים לשימור זיכרונות - כתיבת ביוגרפיות, שחזור ושדרוג סרטים "
                  "ותמונות ישנים, ובניית עצי משפחה, בעזרת כלים חכמים. בקרוב.",
     },
     "research": {
         "title": "מחקר ואקדמיה",
         "icon": "bi-journal-bookmark-fill",
         "tagline": "ליווי מחקר, כתיבה אקדמית וכלי AI לחוקרים.",
-        "blurb": "כלים, ליווי ותכנים לעולם המחקר והאקדמיה — מסקירת ספרות ועד כתיבה וניתוח, "
+        "blurb": "כלים, ליווי ותכנים לעולם המחקר והאקדמיה - מסקירת ספרות ועד כתיבה וניתוח, "
                  "בעזרת בינה מלאכותית. בקרוב.",
     },
 }
@@ -455,167 +453,9 @@ def _strip_html(text: str) -> str:
     return re.sub(r"<[^>]+>", "", text)
 
 
-def _build_whatsapp_url(number: str, message: str) -> str:
-    return f"https://wa.me/{number}?text={urllib.parse.quote(message)}"
-
-
-# ---------------------------------------------------------------------------
-# Corporate page
-# ---------------------------------------------------------------------------
-
-_WHATSAPP_HERO_MSG = "שלום אבי, אני מעוניין בהדרכת AI לצוות שלנו"
-_WHATSAPP_FOOTER_MSG = "שלום אבי, רוצה לשוחח על הדרכת AI לחברה שלנו"
-
-
-def _corporate_context():
-    number = getattr(settings, "WHATSAPP_NUMBER", "972500000000")
-    hero_url = _build_whatsapp_url(number, _WHATSAPP_HERO_MSG)
-    footer_url = _build_whatsapp_url(number, _WHATSAPP_FOOTER_MSG)
-
-    tiers = [
-        {
-            "key": "keynote",
-            "icon": "bi-lightning-charge",
-            "title": "הרצאה",
-            "duration": "90 דקות",
-            "audience": "כל הצוות",
-            "bullets": [
-                "סקירת כלי AI לפיתוח תוכנה",
-                "דגשים על Copilot ו-agents",
-                "דוגמאות חיות מהשטח",
-                "Q&A",
-            ],
-            "price": "₪9,000 + מע״מ",
-            "popular": False,
-            "whatsapp_url": _build_whatsapp_url(number, "שלום אבי, מעוניין בהרצאה על AI לצוות"),
-        },
-        {
-            "key": "workshop",
-            "icon": "bi-tools",
-            "title": "סדנה",
-            "duration": "יום שלם",
-            "audience": "עד 20 משתתפים",
-            "bullets": [
-                "עבודה מעשית עם Copilot",
-                "זרימות עבודה עם AI agents",
-                "אינטגרציה לפרויקטים קיימים",
-                "תרגולים בקוד אמיתי",
-            ],
-            "price": "₪15,000 + מע״מ",
-            "popular": False,
-            "whatsapp_url": _build_whatsapp_url(number, "שלום אבי, מעוניין בסדנת AI לצוות"),
-        },
-        {
-            "key": "bootcamp",
-            "icon": "bi-rocket-takeoff",
-            "title": "בוטקאמפ",
-            "duration": "3 ימים",
-            "audience": "עד 15 משתתפים",
-            "bullets": [
-                "שלושה ימים אינטנסיביים",
-                "מ-zero ל-Copilot מומחה",
-                "בנייה של pipeline AI עצמאי",
-                "מנטורינג ומעקב אחרי הפרויקט",
-            ],
-            "price": "₪35,000 + מע״מ",
-            "popular": True,
-            "whatsapp_url": _build_whatsapp_url(number, "שלום אבי, מעוניין בבוטקאמפ AI לצוות"),
-        },
-    ]
-
-    faqs = [
-        ("מה ההבדל בין סדנה לבוטקאמפ?",
-         "הסדנה היא יום אחד של עבודה מעשית מרוכזת. הבוטקאמפ הוא שלושה ימים עם מנטורינג ומעקב אחרי פרויקט אמיתי."),
-        ("האם אפשר להתאים את התוכן לצוות שלנו?",
-         "כן. לפני כל הדרכה יש שיחת היכרות קצרה כדי להתאים את הדוגמאות והתרגולים לטכנולוגיות שלכם."),
-        ("מה הדרישות המוקדמות להשתתפות?",
-         "ניסיון בסיסי בכתיבת קוד. אין צורך בניסיון קודם עם Copilot."),
-        ("האם ההדרכה מתקיימת פיזית או אונליין?",
-         "גמיש — אפשר פיזית אצלכם או מרחוק דרך Zoom. הפורמט המועדף עלי הוא פיזי."),
-        ("כמה מהר אפשר לקבוע?",
-         "בדרך כלל ניתן לקבוע תוך שבועיים. לתאריכים דחופים — שאלו אותי ישירות בוואטסאפ."),
-        ("האם יש מחירים מיוחדים לחברות סטארטאפ?",
-         "כן, לסטארטאפים בשלב מוקדם יש הנחה. ספרו לי יותר על הצוות ונמצא פתרון מתאים."),
-    ]
-
-    return {
-        "tiers": tiers,
-        "faqs": faqs,
-        "hero_whatsapp_url": hero_url,
-        "footer_whatsapp_url": footer_url,
-    }
-
-
-def corporate(request):
-    if request.method == "POST":
-        is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
-
-        # Honeypot
-        if request.POST.get("website"):
-            if is_ajax:
-                return JsonResponse({"status": "ok"})
-            return redirect("corporate")
-
-        # Rate limit: 3 per IP per hour
-        ip = _get_client_ip(request)
-        rate_key = f"corp_lead_rate_{_hash_ip(ip)}"
-        count = cache.get(rate_key, 0)
-        if count >= 3:
-            if is_ajax:
-                return JsonResponse({"error": "rate limited"}, status=429)
-            return redirect("corporate")
-
-        name = request.POST.get("name", "").strip()
-        company = request.POST.get("company", "").strip()
-        team_size = request.POST.get("team_size", "").strip()
-        training_type = request.POST.get("training_type", "").strip()
-
-        if not (name and company and team_size and training_type):
-            if is_ajax:
-                return JsonResponse({"error": "missing required fields"}, status=400)
-            return redirect("corporate")
-
-        raw_message = request.POST.get("message", "")
-        message = _strip_html(raw_message)[:1000]
-
-        CorporateLead.objects.create(
-            name=name,
-            company=company,
-            role=request.POST.get("role", "").strip(),
-            team_size=team_size,
-            training_type=training_type,
-            message=message,
-            utm_source=request.POST.get("utm_source", "").strip(),
-            utm_medium=request.POST.get("utm_medium", "").strip(),
-            utm_campaign=request.POST.get("utm_campaign", "").strip(),
-            utm_content=request.POST.get("utm_content", "").strip(),
-            referrer_url=request.META.get("HTTP_REFERER", "")[:500],
-            ip_hash=_hash_ip(ip),
-        )
-
-        # Increment rate limit counter (1-hour window)
-        cache.set(rate_key, count + 1, timeout=3600)
-
-        # Notify Avi at his real inbox (REQ-7.6.1) — lead is also stored in admin
-        from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@babook.co.il")
-        notify_to = getattr(settings, "CONTACT_NOTIFY_EMAIL", from_email)
-        send_mail(
-            subject=f"[babook] פנייה חדשה מ-{company}",
-            message=(
-                f"שם: {name}\nחברה: {company}\nסוג הדרכה: {training_type}\n"
-                f"גודל צוות: {team_size}\n\n{message}"
-            ),
-            from_email=from_email,
-            recipient_list=[notify_to],
-            fail_silently=True,
-        )
-
-        if is_ajax:
-            return JsonResponse({"status": "ok"})
-        return redirect("corporate")
-
-    ctx = _corporate_context()
-    return render(request, "app/corporate.html", ctx)
+# Corporate page removed - team-training contact is now a direct mailto link in
+# the lesson / course templates. The CorporateLead model is kept for the admin
+# dashboard's historical leads.
 
 
 # ---------------------------------------------------------------------------
@@ -678,7 +518,7 @@ def newsletter_signup(request):
             message=(
                 f"שלום,\n\nלחץ על הקישור הבא כדי לאשר את הרשמתך:\n"
                 f"/newsletter/confirm/{token}\n\n"
-                f"{confirm_url}\n\nאם לא נרשמת — תוכל להתעלם ממייל זה."
+                f"{confirm_url}\n\nאם לא נרשמת - תוכל להתעלם ממייל זה."
             ),
             from_email=from_email,
             recipient_list=[email_raw],
@@ -744,7 +584,7 @@ POPULAR_COURSE_SLUGS = {
 def _catalog_progress(user, course_ids):
     """{course_id: {pct, done, total, started, completed}} for `user`, in a few
     queries. A lesson counts as done once it has progress (required-quiz lessons
-    need quiz_passed) — same rule the profile page uses."""
+    need quiz_passed) - same rule the profile page uses."""
     from django.db.models import Count
 
     from .models import Enrollment, LessonQuiz
@@ -785,7 +625,7 @@ def _catalog_progress(user, course_ids):
 
 
 def courses_catalog(request):
-    """Visual course catalog — real course cards grouped by domain, with the
+    """Visual course catalog - real course cards grouped by domain, with the
     learner's progress and a 'continue learning' row."""
     from django.db.models import Count
     from .taxonomy import build_catalog
@@ -808,7 +648,7 @@ def courses_catalog(request):
             "popular": c.slug in POPULAR_COURSE_SLUGS,
         }
 
-    # Group each domain by its tracks (sub-sections) so levels read clearly —
+    # Group each domain by its tracks (sub-sections) so levels read clearly -
     # e.g. AI's רמה 1 / 2 / 3 are distinct rows, not one mixed grid.
     domain_groups = []
     shown = set()
@@ -867,13 +707,13 @@ def courses_search(request):
     re-orders the already-rendered cards by the returned slugs (matching by
     meaning, not substring). A tiny model + caching keep the cost near zero, and
     it falls back to substring matching when AI is unavailable. This is the seed
-    of the planned site-wide AI search — see app/ai_search.py."""
+    of the planned site-wide AI search - see app/ai_search.py."""
     from .ai_search import search_courses
     return JsonResponse(search_courses(request.GET.get("q", "")))
 
 
 def courses_domain(request, domain):
-    """Level 1 — list the tracks inside a domain."""
+    """Level 1 - list the tracks inside a domain."""
     from .taxonomy import TRAINING_TAXONOMY, build_catalog
     if domain not in TRAINING_TAXONOMY:
         raise Http404("Unknown domain")
@@ -886,7 +726,7 @@ def courses_domain(request, domain):
 
 
 def courses_track(request, domain, track):
-    """Level 2 (leaves) — the course cards inside a track."""
+    """Level 2 (leaves) - the course cards inside a track."""
     from .taxonomy import TRAINING_TAXONOMY, build_catalog
     if domain not in TRAINING_TAXONOMY or track not in TRAINING_TAXONOMY[domain]["tracks"]:
         raise Http404("Unknown track")
@@ -907,11 +747,16 @@ def courses_detail(request, slug):
     progress_pct = 0
     is_complete = False
     is_enrolled = False
+    existing_cert = None
     completed_ids = {}
     if request.user.is_authenticated:
         # Entering a course = enrolled. No separate enroll step, no paywall.
         enrollment, _ = Enrollment.objects.get_or_create(user=request.user, course=course)
         is_enrolled = True
+        from .models import CourseCertificate
+        existing_cert = CourseCertificate.objects.filter(
+            user=request.user, course=course
+        ).first()
         total = videos.count()
         if total:
             done_qs = UserVideoProgress.objects.filter(
@@ -927,14 +772,28 @@ def courses_detail(request, slug):
         course=course, status="published", is_hidden=False
     ).select_related("author__profile")[:6]
 
+    # stl/scratch courses: the learner's own exhibition, shown under the lesson list.
+    my_models = []
+    if request.user.is_authenticated and course.project_upload_type in (
+        Course.PROJECT_STL, Course.PROJECT_SCRATCH):
+        from .models import LessonModelSubmission
+        my_models = list(
+            LessonModelSubmission.objects.filter(
+                user=request.user, video__course=course
+            ).select_related("video")
+        )
+
     return render(request, "app/course_detail.html", {
         "course": course,
         "videos": videos,
         "progress_pct": progress_pct,
         "is_complete": is_complete,
         "is_enrolled": is_enrolled,
+        "existing_cert": existing_cert,
         "completed_ids": completed_ids,
         "course_projects": course_projects,
+        "project_upload_type": course.project_upload_type,
+        "my_models": my_models,
     })
 
 
@@ -977,7 +836,7 @@ def courses_lesson(request, slug, lesson_order):
     video = get_object_or_404(Video, course=course, lesson_order=lesson_order)
 
     # Open access: a login is the only gate. The moment a logged-in user opens a
-    # lesson they're auto-enrolled — no enroll step, no paywall, no preview tiers.
+    # lesson they're auto-enrolled - no enroll step, no paywall, no preview tiers.
     if not request.user.is_authenticated:
         return redirect(
             f"/join/?next=/courses/{slug}/lesson/{lesson_order}/&course={slug}"
@@ -1044,26 +903,49 @@ def courses_lesson(request, slug, lesson_order):
             if v_id not in required_ids or v_id in passed_ids
         }
 
-    # Everything is open — no sequential locking. Learners pick any lesson.
+    # Everything is open - no sequential locking. Learners pick any lesson.
     locked_ids = {}
 
     quiz = LessonQuiz.objects.filter(video=video).first()
+    # The learner's certificate for this course (if earned) - drives the trophy
+    # shown at the top of every lesson, not just the final one.
     existing_cert = None
-    # Project-course certificate context (only needed on the final/summary lesson)
-    project_submission = None
-    course_pct = 0
-    cert_ready = True
-    if video.is_final_lesson and request.user.is_authenticated:
+    if request.user.is_authenticated:
         existing_cert = CourseCertificate.objects.filter(
             user=request.user, course=course
         ).first()
+    # Project-course certificate context.
+    project_submission = None    # image courses (single course-level screenshot)
+    lesson_model = None          # stl/scratch: this lesson's submission (if any)
+    my_models = []               # stl/scratch: all of the user's submissions for the course
+    course_pct = 0
+    cert_ready = True
+    # stl + scratch both collect a per-lesson submission (LessonModelSubmission).
+    needs_models = course.requires_project and course.project_upload_type in (
+        Course.PROJECT_STL, Course.PROJECT_SCRATCH)
+    if request.user.is_authenticated and needs_models:
+        from .models import LessonModelSubmission
+        my_models = list(
+            LessonModelSubmission.objects.filter(
+                user=request.user, video__course=course
+            ).select_related("video")
+        )
+        if video.accepts_model:
+            lesson_model = next((m for m in my_models if m.video_id == video.id), None)
+    if video.is_final_lesson and request.user.is_authenticated:
         course_pct = _catalog_progress(request.user, [course.id]).get(course.id, {}).get("pct", 0)
         if course.requires_project:
-            from .models import CourseProjectSubmission
-            project_submission = CourseProjectSubmission.objects.filter(
-                user=request.user, course=course
-            ).first()
-            cert_ready = (course_pct >= CERT_PROJECT_MIN_PCT) and bool(project_submission)
+            if needs_models:
+                # Cert gate: >=80% lessons AND at least project_min_count submitted.
+                cert_ready = (course_pct >= CERT_PROJECT_MIN_PCT) and (
+                    len(my_models) >= course.project_min_count)
+            else:
+                from .models import CourseProjectSubmission
+                project_submission = CourseProjectSubmission.objects.filter(
+                    user=request.user, course=course
+                ).first()
+                has_artifact = bool(project_submission and project_submission.artifact)
+                cert_ready = (course_pct >= CERT_PROJECT_MIN_PCT) and has_artifact
 
     error_code = request.GET.get("error")
 
@@ -1111,11 +993,18 @@ def courses_lesson(request, slug, lesson_order):
         "reflection": reflection,
         "lesson_completed": lesson_completed_ctx,
         "quiz_passed_db": quiz_passed_db_ctx,
-        # Real DB value (NOT staff-bypassed) — drives the "already answered" UI so
+        # Real DB value (NOT staff-bypassed) - drives the "already answered" UI so
         # staff don't see a false "you answered correctly before" on fresh quizzes.
         "quiz_answered_before": quiz_passed_db,
         "existing_cert": existing_cert,
         "project_submission": project_submission,
+        "project_upload_type": course.project_upload_type,
+        "accepts_model": video.accepts_model,
+        "lesson_model": lesson_model,
+        "my_models": my_models,
+        "model_count": len(my_models),
+        "project_min_count": course.project_min_count,
+        "models_enough": len(my_models) >= course.project_min_count,
         "course_pct": course_pct,
         "cert_ready": cert_ready,
         "cert_project_min_pct": CERT_PROJECT_MIN_PCT,
@@ -1125,7 +1014,7 @@ def courses_lesson(request, slug, lesson_order):
 
 
 # ---------------------------------------------------------------------------
-# SPR-1.4 — lesson_view: entitlement-based gating (singular /course/ URL)
+# SPR-1.4 - lesson_view: entitlement-based gating (singular /course/ URL)
 # ---------------------------------------------------------------------------
 
 def lesson_view(request, slug, lesson_order):
@@ -1206,7 +1095,7 @@ def lesson_view(request, slug, lesson_order):
         "reflection": reflection,
         "lesson_completed": lesson_completed,
         "quiz_passed_db": quiz_passed_db or request.user.is_staff,
-        # Real DB value (NOT staff-bypassed) — drives the "already answered" UI.
+        # Real DB value (NOT staff-bypassed) - drives the "already answered" UI.
         "quiz_answered_before": quiz_passed_db,
         "existing_cert": existing_cert,
         "materials": course.materials.all(),
@@ -1214,7 +1103,7 @@ def lesson_view(request, slug, lesson_order):
 
 
 # ---------------------------------------------------------------------------
-# Lesson reflection — learner free-text + AI reply (experiential lessons)
+# Lesson reflection - learner free-text + AI reply (experiential lessons)
 # ---------------------------------------------------------------------------
 
 def _generate_reflection_reply(video, prompt, user_text):
@@ -1227,8 +1116,8 @@ def _generate_reflection_reply(video, prompt, user_text):
             f"הלומד סיים שיעור על הכלי: '{video.title}'. "
             f"שאלנו אותו: '{prompt or 'מה ניסית בשיעור הזה?'}'. הוא ענה בטקסט חופשי. "
             "הגב בעברית, ב-2 עד 4 משפטים, באופן אישי וספציפי למה שכתב: "
-            "אם התקשה או לא ניסה — עודד בעדינות ותן טיפ קונקרטי קטן איך להתחיל; "
-            "אם הצליח — שמח איתו והצע צעד הבא או רעיון לניסוי נוסף. "
+            "אם התקשה או לא ניסה - עודד בעדינות ותן טיפ קונקרטי קטן איך להתחיל; "
+            "אם הצליח - שמח איתו והצע צעד הבא או רעיון לניסוי נוסף. "
             "בלי לחזור על דבריו מילה במילה, בלי הקדמות, ובלי אימוג'ים מוגזמים."
         )
         r = client.chat.completions.create(
@@ -1239,13 +1128,13 @@ def _generate_reflection_reply(video, prompt, user_text):
         )
         return (r.choices[0].message.content or "").strip()
     except Exception:
-        return ("תודה ששיתפת! כל ניסיון — מוצלח או פחות — הוא חלק מהלמידה. "
+        return ("תודה ששיתפת! כל ניסיון - מוצלח או פחות - הוא חלק מהלמידה. "
                 "המשך לשיעור הבא ונסה עוד כלי. 🙂")
 
 
 @login_required
 def lesson_reflect(request, video_id):
-    """POST /api/lesson/<video_id>/reflect/ — save a reflection, return an AI reply, complete the lesson."""
+    """POST /api/lesson/<video_id>/reflect/ - save a reflection, return an AI reply, complete the lesson."""
     import json as _json
 
     from django.shortcuts import get_object_or_404
@@ -1278,7 +1167,7 @@ def lesson_reflect(request, video_id):
 
 
 # ---------------------------------------------------------------------------
-# SPR-1.4 — video progress heartbeat  POST /api/video-progress/
+# SPR-1.4 - video progress heartbeat  POST /api/video-progress/
 # ---------------------------------------------------------------------------
 
 @login_required
@@ -1321,7 +1210,7 @@ def video_progress_heartbeat(request):
 
 
 # ---------------------------------------------------------------------------
-# SPR-1.4 — course_detail_view: singular /course/<slug>/ URL
+# SPR-1.4 - course_detail_view: singular /course/<slug>/ URL
 # ---------------------------------------------------------------------------
 
 def course_detail_view(request, slug):
@@ -1359,19 +1248,19 @@ def course_detail_view(request, slug):
 
 
 # ---------------------------------------------------------------------------
-# SPR-1.8 — AI Chat views
+# SPR-1.8 - AI Chat views
 # ---------------------------------------------------------------------------
 
 @login_required
 def chat_page(request):
-    """GET /chat/ — chat UI."""
+    """GET /chat/ - chat UI."""
     from .models import ChatSession
     sessions = ChatSession.objects.filter(user=request.user).order_by("-last_activity_at")[:10]
     return render(request, "app/chat.html", {"sessions": sessions})
 
 
 def chat_api(request):
-    """POST /api/chat/ — process chat message."""
+    """POST /api/chat/ - process chat message."""
     if not request.user.is_authenticated:
         return JsonResponse({"error": "authentication required"}, status=401)
     import json as _json
@@ -1397,7 +1286,7 @@ def chat_api(request):
 
 @login_required
 def chat_sessions_api(request):
-    """GET/POST /api/chat/sessions/ — list or create chat sessions."""
+    """GET/POST /api/chat/sessions/ - list or create chat sessions."""
     import json as _json
 
     from .models import ChatSession
@@ -1419,7 +1308,7 @@ def chat_sessions_api(request):
 
 
 class AiUsageDashboardView(UserPassesTestMixin, TemplateView):
-    """GET /staff/ai-usage/ — AI cost and token dashboard for staff."""
+    """GET /staff/ai-usage/ - AI cost and token dashboard for staff."""
     template_name = "app/ai_usage_dashboard.html"
 
     def test_func(self):
@@ -1456,11 +1345,14 @@ def _final_lesson_redirect(course, error):
     return redirect(f"{url}?error={error}")
 
 
+STL_MAX_BYTES = 40 * 1024 * 1024   # STL meshes can be chunky; cap at 40 MB
+
+
 @login_required
 def course_submit_project(request, slug):
-    """POST /courses/<slug>/submit-project/ — a learner uploads a screenshot of
-    what they built. Required (with >=80% lessons) for the certificate of a
-    project course. Re-uploading replaces the previous image."""
+    """POST /courses/<slug>/submit-project/ - image courses (e.g. Tinkercad): a
+    learner uploads one screenshot of what they built. STL courses collect a model
+    per lesson instead (see lesson_submit_model)."""
     from django.shortcuts import get_object_or_404
 
     from .models import CourseProjectSubmission
@@ -1485,8 +1377,121 @@ def course_submit_project(request, slug):
 
 
 @login_required
+def lesson_submit_model(request, slug, lesson_order):
+    """POST /courses/<slug>/lesson/<order>/submit-model/ - optional per-lesson STL
+    upload for an STL-project course (e.g. Fusion 360). One model per user+lesson;
+    re-uploading replaces it. Redirects back to the same lesson."""
+    from django.shortcuts import get_object_or_404
+
+    from .models import LessonModelSubmission
+
+    course = get_object_or_404(Course, slug=slug)
+    video = get_object_or_404(Video, course=course, lesson_order=lesson_order)
+
+    def back(err):
+        from django.urls import reverse
+        url = reverse("courses_lesson", kwargs={"slug": slug, "lesson_order": lesson_order})
+        return redirect(f"{url}?error={err}#lesson-model")
+
+    if request.method != "POST":
+        return redirect("courses_lesson", slug=slug, lesson_order=lesson_order)
+
+    stl = request.FILES.get("model")
+    if not stl:
+        return back("nostl")
+    if not stl.name.lower().endswith(".stl"):
+        return back("badstl")
+    if stl.size > STL_MAX_BYTES:
+        return back("bigstl")
+
+    Enrollment.objects.get_or_create(user=request.user, course=course)
+    sub, _ = LessonModelSubmission.objects.get_or_create(user=request.user, video=video)
+    sub.model_file = stl
+    sub.scratch_id = ""
+    sub.caption = (request.POST.get("caption", "") or "").strip()[:200]
+    sub.save()
+    return back("uploaded")
+
+
+def parse_scratch_id(text):
+    """Pull the numeric project id out of any Scratch link or a bare id.
+    Handles scratch.mit.edu/projects/<id>[/editor|/fullscreen|/embed], query
+    strings, and a pasted bare number. Returns the id string or None."""
+    import re
+    if not text:
+        return None
+    text = text.strip()
+    m = re.search(r"projects/(\d+)", text)
+    if m:
+        return m.group(1)
+    m = re.search(r"\b(\d{4,})\b", text)   # bare id (Scratch ids are long numbers)
+    return m.group(1) if m else None
+
+
+def scratch_project_is_shared(pid):
+    """Ask the public Scratch API whether a project is shared (publicly visible).
+    Returns True (shared), False (definitely not shared / not found), or None
+    (couldn't tell - network/error; caller treats None as "don't block"). The
+    Scratch API returns 200 with metadata only for shared projects, 404 otherwise."""
+    import json
+    import urllib.error
+    import urllib.request
+    url = f"https://api.scratch.mit.edu/projects/{pid}"
+    req = urllib.request.Request(url, headers={"User-Agent": "babook/1.0 (+https://babook.co.il)"})
+    try:
+        with urllib.request.urlopen(req, timeout=6) as r:
+            if r.status != 200:
+                return None
+            data = json.loads(r.read().decode("utf-8"))
+            return bool(data.get("id"))
+    except urllib.error.HTTPError as e:
+        return False if e.code in (403, 404) else None
+    except Exception:
+        return None
+
+
+@login_required
+def lesson_submit_scratch(request, slug, lesson_order):
+    """POST /courses/<slug>/lesson/<order>/submit-scratch/ - optional per-lesson
+    Scratch project share for a Scratch-project course. The learner pastes any link
+    to their shared project; we parse the id and embed it. One per user+lesson."""
+    from django.shortcuts import get_object_or_404
+
+    from .models import LessonModelSubmission
+
+    course = get_object_or_404(Course, slug=slug)
+    video = get_object_or_404(Video, course=course, lesson_order=lesson_order)
+
+    def back(err):
+        from django.urls import reverse
+        url = reverse("courses_lesson", kwargs={"slug": slug, "lesson_order": lesson_order})
+        return redirect(f"{url}?error={err}#lesson-model")
+
+    if request.method != "POST":
+        return redirect("courses_lesson", slug=slug, lesson_order=lesson_order)
+
+    pid = parse_scratch_id(request.POST.get("scratch_url", ""))
+    if not pid:
+        return back("badscratch")
+
+    existing = LessonModelSubmission.objects.filter(user=request.user, video=video).first()
+    # Verify sharing only for a NEW/changed project (before creating anything). Re-saving
+    # the same link (e.g. just to add or edit the title) always updates it - never blocked.
+    if (not existing or existing.scratch_id != pid) and scratch_project_is_shared(pid) is False:
+        return back("notshared")
+
+    Enrollment.objects.get_or_create(user=request.user, course=course)
+    sub = existing or LessonModelSubmission(user=request.user, video=video)
+    sub.scratch_id = pid
+    sub.model_file = ""
+    sub.caption = (request.POST.get("caption", "") or "").strip()[:200]
+    sub.save()
+    return back("uploaded")
+
+
+@login_required
 def course_finish(request, slug):
-    """POST /courses/<slug>/finish/ — validate the completion gate then issue the
+    """POST /courses/<slug>/finish/ - validate the completion gate then issue the
     certificate. Theory courses: all required quizzes passed. Project courses
     (`requires_project`): >=80% of lessons completed AND a project screenshot
     uploaded."""
@@ -1529,12 +1534,21 @@ def course_finish(request, slug):
         pct = _catalog_progress(request.user, [course.id]).get(course.id, {}).get("pct", 0)
         if pct < CERT_PROJECT_MIN_PCT:
             return _final_lesson_redirect(course, "progress")
-        if not CourseProjectSubmission.objects.filter(
-            user=request.user, course=course
-        ).exists():
-            return _final_lesson_redirect(course, "project")
+        if course.project_upload_type in (Course.PROJECT_STL, Course.PROJECT_SCRATCH):
+            from .models import LessonModelSubmission
+            n = LessonModelSubmission.objects.filter(
+                user=request.user, video__course=course
+            ).count()
+            if n < course.project_min_count:
+                return _final_lesson_redirect(course, "project")
+        else:
+            sub = CourseProjectSubmission.objects.filter(
+                user=request.user, course=course
+            ).first()
+            if not (sub and sub.artifact):
+                return _final_lesson_redirect(course, "project")
 
-    # All gates passed — issue certificate
+    # All gates passed - issue certificate
     if not enrollment.completed_at:
         enrollment.completed_at = timezone.now()
         enrollment.save(update_fields=["completed_at"])
@@ -1547,7 +1561,7 @@ def course_finish(request, slug):
 
 
 def certificate_view(request, cert_id):
-    """GET /certificate/<uuid>/ — display a course completion certificate."""
+    """GET /certificate/<uuid>/ - display a course completion certificate."""
     from django.shortcuts import get_object_or_404
 
     from .models import CourseCertificate, CourseProjectSubmission
@@ -1556,6 +1570,15 @@ def certificate_view(request, cert_id):
     submission = CourseProjectSubmission.objects.filter(
         user=cert.user, course=cert.course
     ).first()
+    # stl/scratch courses: the learner's whole "exhibition" of projects, in lesson order.
+    exhibition = []
+    if cert.course.project_upload_type in (cert.course.PROJECT_STL, cert.course.PROJECT_SCRATCH):
+        from .models import LessonModelSubmission
+        exhibition = list(
+            LessonModelSubmission.objects.filter(
+                user=cert.user, video__course=cert.course
+            ).select_related("video")
+        )
     pct = _catalog_progress(cert.user, [cert.course.id]).get(cert.course.id, {}).get("pct", 0)
     cert_url = request.build_absolute_uri()
     # Read the name live from the profile on every view, so editing the profile
@@ -1568,7 +1591,7 @@ def certificate_view(request, cert_id):
         reverse("certificate_image", kwargs={"cert_id": cert.certificate_id}))
 
     # Only the person who earned it sees the full page (achievements, project,
-    # share tools). Everyone else — guest or another member — sees just the
+    # share tools). Everyone else - guest or another member - sees just the
     # certificate plus a "take this course too" invite.
     is_owner = request.user.is_authenticated and request.user.pk == cert.user_id
     course_url = reverse("courses_detail", kwargs={"slug": cert.course.slug})
@@ -1579,6 +1602,8 @@ def certificate_view(request, cert_id):
     return render(request, "app/certificate.html", {
         "cert": cert,
         "submission": submission,
+        "exhibition": exhibition,
+        "project_upload_type": cert.course.project_upload_type,
         "course_pct": pct,
         "cert_url": cert_url,
         "og_image": og_image,
@@ -1589,8 +1614,25 @@ def certificate_view(request, cert_id):
     })
 
 
+@login_required
+def lesson_model_download(request, pk):
+    """GET /model-submission/<pk>/download - owner-only download of one STL the
+    learner uploaded. Used by the certificate exhibition + galleries."""
+    from django.shortcuts import get_object_or_404
+
+    from .models import LessonModelSubmission
+
+    sub = get_object_or_404(LessonModelSubmission, pk=pk)
+    if request.user.pk != sub.user_id or not sub.model_file:
+        raise Http404()
+    resp = HttpResponse(sub.model_file.open("rb"), content_type="model/stl")
+    fname = f"{sub.video.course.slug}-lesson-{sub.video.lesson_order}.stl"
+    resp["Content-Disposition"] = f'attachment; filename="{fname}"'
+    return resp
+
+
 def certificate_image(request, cert_id):
-    """GET /certificate/<uuid>/image.png — a rendered PNG of the certificate,
+    """GET /certificate/<uuid>/image.png - a rendered PNG of the certificate,
     used as the og:image for social shares (WhatsApp / Facebook previews).
     Public, cached, and regenerated when the learner's name changes."""
     from django.shortcuts import get_object_or_404

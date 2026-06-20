@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}תעודת סיום — {{ cert.course.title }} — babook{% endblock %}
+{% block title %}תעודת סיום - {{ cert.course.title }} - babook{% endblock %}
 
 {% block extra_head %}
   <!-- Rich preview when the certificate link is shared (Facebook / WhatsApp / etc.) -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="תעודת סיום — {{ cert.course.title }}">
+  <meta property="og:title" content="תעודת סיום - {{ cert.course.title }}">
   <meta property="og:description" content="{{ learner_name }} השלים/ה את הקורס «{{ cert.course.title }}» ב-babook.">
   <meta property="og:url" content="{{ cert_url }}">
   {% if og_image %}
@@ -17,7 +17,7 @@
   <meta name="twitter:image" content="{{ og_image }}">
   {% endif %}
   <style>
-    /* Print ONLY the certificate card — hide the nav, footer, actions and extras. */
+    /* Print ONLY the certificate card - hide the nav, footer, actions and extras. */
     @media print {
       body * { visibility: hidden !important; }
       #certificate-printable, #certificate-printable * { visibility: visible !important; }
@@ -78,6 +78,15 @@
     </div>
   </div>
 
+  {% if exhibition %}
+  <!-- The exhibition: every project the learner built, visible to anyone with the link -->
+  <div class="card-surface p-4 mt-4 stl-gallery--lg" style="max-width:680px;width:100%">
+    <h2 class="h6 mb-1 text-center"><i class="bi bi-collection-fill me-1" style="color:var(--accent-primary)"></i> התערוכה שלי</h2>
+    <p class="small text-muted text-center mb-2">{{ exhibition|length }} פרויקטים שיצרת לאורך הקורס. לחצו על פריט כדי להגדיל.</p>
+    {% include "app/_stl_gallery.html" with models=exhibition can_download=is_owner %}
+  </div>
+  {% endif %}
+
   {% if is_owner %}
   <!-- Actions -->
   <div class="d-flex gap-3 mt-4 flex-wrap justify-content-center">
@@ -101,16 +110,17 @@
         <span>השלמת {{ course_pct }}% מהשיעורים</span>
       </li>
       <li class="d-flex align-items-center gap-2">
-        {% if submission %}
-        <i class="bi bi-check-circle-fill" style="color:var(--accent-success)"></i>
+        {% if project_upload_type == 'stl' or project_upload_type == 'scratch' %}
+          {% if exhibition %}<i class="bi bi-check-circle-fill" style="color:var(--accent-success)"></i>{% else %}<i class="bi bi-circle text-muted"></i>{% endif %}
+          <span>העלית {{ exhibition|length }} פרויקטים לתערוכה</span>
         {% else %}
-        <i class="bi bi-circle text-muted"></i>
+          {% if submission %}<i class="bi bi-check-circle-fill" style="color:var(--accent-success)"></i>{% else %}<i class="bi bi-circle text-muted"></i>{% endif %}
+          <span>העלית צילום של הפרויקט שבנית</span>
         {% endif %}
-        <span>העלית צילום של הפרויקט שבנית</span>
       </li>
     </ul>
 
-    {% if submission %}
+    {% if submission and submission.image %}
     <div class="text-center mt-3">
       <img src="{{ submission.image.url }}" alt="הפרויקט שלי"
            style="max-width:100%;border-radius:8px;border:1px solid var(--border)">
@@ -186,7 +196,7 @@
   var imgUrl = JSON.parse(document.getElementById('cert-image').textContent);
   var caption = text + ' ' + url;   // the link travels inside the message text
 
-  // Native share (mobile) — share the certificate IMAGE + the link together, so
+  // Native share (mobile) - share the certificate IMAGE + the link together, so
   // WhatsApp/Instagram show a real picture of the diploma (not reliant on the
   // link-preview crawler). Falls back to a plain link share if file-share isn't
   // supported (most desktops).
@@ -201,10 +211,10 @@
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             return navigator.share({ files: [file], text: caption });
           }
-          return navigator.share({ title: 'תעודת סיום — babook', text: text, url: url });
+          return navigator.share({ title: 'תעודת סיום - babook', text: text, url: url });
         })
         .catch(function () {
-          navigator.share({ title: 'תעודת סיום — babook', text: text, url: url }).catch(function () {});
+          navigator.share({ title: 'תעודת סיום - babook', text: text, url: url }).catch(function () {});
         });
     });
   }
@@ -217,6 +227,13 @@
       .catch(function () { window.prompt('העתיקו את הקישור:', url); });
   });
 })();
+</script>
+{% endif %}
+
+{% if exhibition %}
+<script type="module">
+  import { initGallery } from "{% static 'js/stl-viewer.js' %}";
+  initGallery();
 </script>
 {% endif %}
 {% endblock %}

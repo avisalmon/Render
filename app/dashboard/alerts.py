@@ -28,7 +28,7 @@ LOWER_IS_WORSE = {"domain_expiry_days"}
 
 
 def ensure_default_rules():
-    """Create any missing default rules (idempotent) — REQ-8.6.3."""
+    """Create any missing default rules (idempotent) - REQ-8.6.3."""
     from ..models import AlertRule
 
     for key, (label, threshold, section) in DEFAULT_RULES.items():
@@ -88,7 +88,7 @@ def evaluate_alerts(spend_total=None, engagement=None, notify_admins=True):
         engagement = collect_engagement(7)
 
     # Worst free-tier consumption across services that report a `free_tier_pct`
-    # in their cost-adapter raw (GCS backups, Resend) — "how close to paying".
+    # in their cost-adapter raw (GCS backups, Resend) - "how close to paying".
     free_worst_svc, free_worst_pct = None, 0.0
     domain_days, domain_renew_url = None, ""
     for r in period_records:
@@ -127,10 +127,10 @@ def evaluate_alerts(spend_total=None, engagement=None, notify_admins=True):
         message = f"{rule.label}: {value:g} ≥ {rule.threshold:g}"
         if rule.key == "free_tier_usage_pct" and free_worst_svc:
             message = (f"{free_worst_svc} is at {value:g}% of its free tier "
-                       f"(≥ {rule.threshold:g}%) — approaching paid usage")
+                       f"(≥ {rule.threshold:g}%) - approaching paid usage")
         elif rule.key == "domain_expiry_days":
             level = "critical" if value <= 3 else "warning"
-            renew = f" — renew at {domain_renew_url}" if domain_renew_url else ""
+            renew = f" - renew at {domain_renew_url}" if domain_renew_url else ""
             message = f"Domain babook.co.il expires in {value:g} days{renew}"
         event = AlertEvent.objects.create(
             rule_key=rule.key,

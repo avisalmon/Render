@@ -29,6 +29,14 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <!-- Site CSS -->
   <link rel="stylesheet" href="{% static 'style.css' %}">
+  <!-- Three.js import map (so STL 3D-viewer module scripts can `import ... from 'three'`).
+       Declares mappings only - nothing loads until a module actually imports three. -->
+  <script type="importmap">
+  { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  } }
+  </script>
   <!-- Favicon -->
   <link rel="icon" href="{% static 'favicon.svg' %}" type="image/svg+xml">
 
@@ -36,60 +44,31 @@
 </head>
 <body class="d-flex flex-column min-vh-100">
 
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+  <!-- Navbar - simplified: drawer toggle + brand + two icon links; user/auth at the end -->
+  <nav class="navbar navbar-dark bg-dark sticky-top">
     <div class="container">
-      <a class="navbar-brand d-flex align-items-center gap-2" href="/">
-        <img src="{% static 'logo.svg' %}" alt="babook logo" width="28" height="28">
-        <span>babook</span>
-      </a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain"
-              aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarMain">
-        <!-- Primary navigation links -->
-        <ul class="navbar-nav me-auto align-items-lg-center gap-1">
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'courses_catalog' %}"><i class="bi bi-mortarboard"></i> הדרכות</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'community' %}"><i class="bi bi-people"></i> קהילה</a>
-          </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="worldsDropdown" role="button"
-               data-bs-toggle="dropdown" aria-expanded="false">
-              <i class="bi bi-grid-3x3-gap"></i> עולמות
-            </a>
-            <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="worldsDropdown">
-              <li><a class="dropdown-item" href="{% url 'courses_catalog' %}"><i class="bi bi-mortarboard"></i> הדרכה</a></li>
-              <li><a class="dropdown-item" href="{% url 'services' %}"><i class="bi bi-bag"></i> חנות שירותים</a></li>
-              <li><a class="dropdown-item" href="{% url 'community' %}"><i class="bi bi-people"></i> קהילה</a></li>
-              <li><a class="dropdown-item" href="{% url 'workshops' %}"><i class="bi bi-easel2"></i> סדנאות והובלת חדשנות</a></li>
-              <li><a class="dropdown-item" href="{% url 'nostalgia' %}"><i class="bi bi-clock-history"></i> נוסטלגיה</a></li>
-              <li><a class="dropdown-item" href="{% url 'research' %}"><i class="bi bi-journal-bookmark"></i> מחקר ואקדמיה</a></li>
-            </ul>
-          </li>
-          {% if user.is_authenticated %}
-          {% if user.is_staff or user.profile.is_author %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'studio_home' %}"><i class="bi bi-easel2"></i> אולפן</a>
-          </li>
-          {% endif %}
-          {% if user.is_staff %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'copilot_dashboard' %}"><i class="bi bi-speedometer2"></i> לוח בקרה</a>
-          </li>
-          {% endif %}
-          {% if user.is_superuser %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'admin_dashboard' %}"><i class="bi bi-clipboard-data"></i> ניהול</a>
-          </li>
-          {% endif %}
-          {% endif %}
-        </ul>
-        <!-- User / auth links -->
-        <ul class="navbar-nav ms-auto align-items-lg-center gap-1">
+      <div class="d-flex align-items-center w-100">
+
+        <!-- Start (right in RTL): hamburger drawer + brand + primary icons -->
+        <div class="d-flex align-items-center gap-1">
+          <button class="btn nav-link px-2" type="button" data-bs-toggle="offcanvas"
+                  data-bs-target="#siteDrawer" aria-controls="siteDrawer" aria-label="תפריט">
+            <i class="bi bi-list" style="font-size:1.55rem"></i>
+          </button>
+          <a class="navbar-brand d-flex align-items-center gap-2 m-0 me-2" href="/">
+            <img src="{% static 'logo.svg' %}" alt="babook" width="28" height="28">
+            <span class="d-none d-sm-inline">babook</span>
+          </a>
+          <a class="nav-link px-2" href="{% url 'courses_catalog' %}" title="הדרכות" aria-label="הדרכות">
+            <i class="bi bi-mortarboard" style="font-size:1.3rem"></i>
+          </a>
+          <a class="nav-link px-2" href="{% url 'community' %}" title="קהילה" aria-label="קהילה">
+            <i class="bi bi-people" style="font-size:1.3rem"></i>
+          </a>
+        </div>
+
+        <!-- End (left in RTL): user / auth - kept as before -->
+        <ul class="navbar-nav flex-row align-items-center gap-1 ms-auto">
           {% if user.is_authenticated %}
             <!-- Community notifications bell (REQ-6.1.6) -->
             <li class="nav-item">
@@ -100,7 +79,7 @@
                 {% endif %}
               </a>
             </li>
-            <!-- Direct messages (REQ-6.3.12) — hidden for student accounts (DEC-41) -->
+            <!-- Direct messages (REQ-6.3.12) - hidden for student accounts (DEC-41) -->
             {% if not user_is_student %}
             <li class="nav-item">
               <a class="nav-link position-relative" href="{% url 'messages_inbox' %}" title="הודעות אישיות" aria-label="הודעות אישיות">
@@ -146,7 +125,7 @@
               <a class="nav-link" href="{% url 'register' %}"><i class="bi bi-person-plus"></i> הרשמה</a>
             </li>
           {% endif %}
-          {# Language toggle removed (REQ-7.1.1) — site is Hebrew/RTL only. #}
+          {# Language toggle removed (REQ-7.1.1) - site is Hebrew/RTL only. #}
           <!-- Theme toggle: light (default) / dark (REQ-7.4.2) -->
           <li class="nav-item">
             <button id="theme-toggle" class="btn btn-link nav-link px-1" title="מצב תצוגה" aria-label="החלפת מצב תצוגה">
@@ -158,6 +137,45 @@
     </div>
   </nav>
 
+  <!-- Site drawer (off-canvas, right-aligned, closed by default) -->
+  <div class="offcanvas offcanvas-start site-drawer" tabindex="-1" id="siteDrawer" aria-labelledby="siteDrawerLabel">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title d-flex align-items-center gap-2 m-0" id="siteDrawerLabel">
+        <img src="{% static 'logo.svg' %}" alt="" width="22" height="22"> babook
+      </h5>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="סגור"></button>
+    </div>
+    <div class="offcanvas-body">
+      <nav class="site-drawer-nav d-flex flex-column">
+        <a href="{% url 'courses_catalog' %}"><i class="bi bi-mortarboard"></i> הדרכות</a>
+        <a href="{% url 'community' %}"><i class="bi bi-people"></i> קהילות</a>
+        <a href="{% url 'showcase_wall' %}"><i class="bi bi-easel2"></i> דוכן השוויץ</a>
+        {% if user.is_authenticated %}
+        <hr class="site-drawer-sep">
+        <a href="{% url 'profile' %}"><i class="bi bi-person-circle"></i> פרופיל</a>
+        <a href="{% url 'profile' %}#settings"><i class="bi bi-gear"></i> הגדרות</a>
+        {% if user.is_staff or user.profile.is_author %}
+        <a href="{% url 'studio_home' %}"><i class="bi bi-easel2-fill"></i> אולפן</a>
+        {% endif %}
+        {% if user.is_staff %}
+        <a href="{% url 'copilot_dashboard' %}"><i class="bi bi-speedometer2"></i> לוח בקרה</a>
+        {% endif %}
+        {% if user.is_superuser %}
+        <a href="{% url 'admin_dashboard' %}"><i class="bi bi-clipboard-data"></i> ניהול</a>
+        {% endif %}
+        <hr class="site-drawer-sep">
+        <form method="post" action="{% url 'logout' %}" class="m-0">{% csrf_token %}
+          <button type="submit"><i class="bi bi-box-arrow-right"></i> יציאה</button>
+        </form>
+        {% else %}
+        <hr class="site-drawer-sep">
+        <a href="{% url 'login' %}"><i class="bi bi-box-arrow-in-right"></i> כניסה</a>
+        <a href="{% url 'register' %}"><i class="bi bi-person-plus"></i> הרשמה</a>
+        {% endif %}
+      </nav>
+    </div>
+  </div>
+
   <!-- Cookie banner -->
   <div id="cookie-banner" class="bg-secondary text-white py-2 px-3 d-flex align-items-center justify-content-between"
        style="display:none !important;">
@@ -168,7 +186,7 @@
   </div>
 
   {% if show_verify_banner %}
-  <!-- Email-not-verified nudge (REQ-7.2.1) — password accounts only, not Google/GitHub.
+  <!-- Email-not-verified nudge (REQ-7.2.1) - password accounts only, not Google/GitHub.
        Dismissible: the X hides it for a day (cookie), then it returns until verified. -->
   <div id="verify-banner" class="py-2 px-3 small" style="background:var(--accent-warm,#a8622f); color:#fff">
     <div class="container d-flex align-items-center justify-content-between gap-2">
@@ -187,7 +205,7 @@
   <div id="welcome-strip" class="py-2 px-3" style="background:var(--bg-elevated, #1a1d24); border-bottom:1px solid rgba(255,255,255,.08);">
     <div class="container d-flex align-items-center justify-content-between gap-2 flex-wrap">
       <span class="small">
-        ברוכים הבאים ל-babook — הדרכות AI, מייקרים וחדשנות.
+        ברוכים הבאים ל-babook - הדרכות AI, מייקרים וחדשנות.
         {% if welcome_strip.entry_course %}
           הגעת בשביל «{{ welcome_strip.entry_course.title }}»? כל השיעורים פתוחים.
         {% else %}
@@ -256,10 +274,15 @@
   <footer class="bg-dark text-secondary py-3 mt-auto">
     <div class="container text-center small">
       <!-- Connect with Avi (REQ-7.1.9) -->
-      <a href="{% url 'corporate' %}#corporate-lead-form" class="d-inline-flex align-items-center gap-2 text-decoration-none mb-2" style="color:var(--text-primary,#f1f5f9)">
-        <img src="/static/avi-cutout.png" onerror="this.src='/static/avi-bot.jpg'" alt="אבי סלמון" width="32" height="32" class="rounded-circle" style="object-fit:cover">
-        <span>רוצים להתחבר לאבי סלמון? דברו איתי ←</span>
-      </a>
+      <div class="d-inline-flex align-items-center gap-3 mb-2">
+        <img src="/static/avi-cutout.png" onerror="this.src='/static/avi-bot.jpg'" alt="אבי סלמון" width="28" height="28" class="rounded-circle" style="object-fit:cover">
+        <a href="mailto:avi.salmon@gmail.com" class="text-secondary" title="מייל לאבי סלמון" aria-label="מייל לאבי סלמון">
+          <i class="bi bi-envelope-fill" style="font-size:1.25rem"></i>
+        </a>
+        <a href="https://www.linkedin.com/in/avi-salmon-a32375/" target="_blank" rel="noopener" class="text-secondary" title="LinkedIn" aria-label="LinkedIn של אבי סלמון">
+          <i class="bi bi-linkedin" style="font-size:1.25rem"></i>
+        </a>
+      </div>
       <div>
         <a href="{% url 'privacy' %}" class="text-secondary me-3">מדיניות פרטיות</a>
         <a href="{% url 'terms' %}" class="text-secondary">תנאי שימוש</a>
@@ -267,6 +290,23 @@
       <div class="mt-1">&copy; 2026 babook</div>
     </div>
   </footer>
+
+  <!-- Shared STL "open bigger" modal (used by every STL gallery). Hidden until a tile is clicked. -->
+  <div id="stl-modal" class="stl-modal" style="display:none">
+    <div class="stl-modal-backdrop" data-stl-close></div>
+    <div class="stl-modal-box">
+      <button class="stl-modal-close" data-stl-close aria-label="סגור">&times;</button>
+      <div id="stl-modal-title" class="stl-modal-title"></div>
+      <div id="stl-modal-canvas" class="stl-modal-canvas"></div>
+      <div id="stl-modal-frame" class="stl-modal-frame" style="display:none"></div>
+      <a id="stl-modal-dl" href="#" class="btn btn-sm btn-outline-primary mt-2" style="display:none">
+        <i class="bi bi-download me-1"></i> הורדת קובץ ה-STL
+      </a>
+      <a id="stl-modal-open" href="#" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary mt-2" style="display:none">
+        <i class="bi bi-box-arrow-up-right me-1"></i> פתח ב-Scratch
+      </a>
+    </div>
+  </div>
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -308,11 +348,11 @@
     })();
   </script>
 
-  <!-- Cookie banner logic — acceptance also logged server-side (REQ-7.1.8) -->
+  <!-- Cookie banner logic - acceptance also logged server-side (REQ-7.1.8) -->
   <script>
     function acceptCookies() {
       localStorage.setItem('cookies_accepted', '1');
-      // Remove (not just display:none) — the banner has Bootstrap's d-flex
+      // Remove (not just display:none) - the banner has Bootstrap's d-flex
       // (display:flex !important), which an inline display:none can't override.
       var cb = document.getElementById('cookie-banner');
       if (cb) cb.remove();

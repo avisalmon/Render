@@ -1,4 +1,4 @@
-"""Chat & Groups (EPIC-6.6) — channels + messages.
+"""Chat & Groups (EPIC-6.6) - channels + messages.
 
 Polling-based real-time-feel (DEC-60), reusing the community spine. Re-exported
 from app/models.py so Django registers them under the `app` label.

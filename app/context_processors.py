@@ -16,7 +16,7 @@ def community_ctx(request):
     student = is_student(request.user)
     profile = getattr(request.user, "profile", None)
     # Show the verify-email nudge only for password accounts that haven't
-    # verified — never for Google/GitHub logins (provider already verified it).
+    # verified - never for Google/GitHub logins (provider already verified it).
     show_verify = False
     if profile and request.user.email and not profile.email_verified:
         has_social = request.user.socialaccount_set.exists()
@@ -28,7 +28,7 @@ def community_ctx(request):
         "unread_notifications": Notification.objects.filter(
             user=request.user, read_at__isnull=True
         ).count(),
-        # Students never get DMs (DEC-41) — hide the bell entirely for them
+        # Students never get DMs (DEC-41) - hide the bell entirely for them
         "unread_messages": 0 if student else DirectMessage.objects.filter(
             recipient=request.user, read_at__isnull=True
         ).count(),

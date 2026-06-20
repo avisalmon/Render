@@ -1,6 +1,6 @@
 """Seed Avi's real project sites into the community Showcase (דוכן השוויץ).
 
-Idempotent — keyed on live_url, so it's safe to run on every deploy. Cover
+Idempotent - keyed on live_url, so it's safe to run on every deploy. Cover
 images ship in the repo at data/showcase_seed/ and are copied into the cover
 ImageField (MEDIA) the first time. Owner = the first superuser.
 """
@@ -14,8 +14,8 @@ from django.utils import timezone
 
 SITES = [
     ("avi-home.png", "האתר האישי של אבי סלמון",
-     "דף הבית שלי — מנהיג טכנולוגי ומחנך", "https://avisalmon.github.io/homepage/"),
-    ("stocks.png", "STOKS — סורק מניות",
+     "דף הבית שלי - מנהיג טכנולוגי ומחנך", "https://avisalmon.github.io/homepage/"),
+    ("stocks.png", "STOKS - סורק מניות",
      "כלי לסריקת מניות לפי השקעות ערך", "https://avisalmon.github.io/STOKS/"),
     ("ieee.png", "IEEE Milestones",
      "אבני דרך היסטוריות בטכנולוגיה", "https://avisalmon.github.io/homepage/ieee-milestones.html"),
@@ -32,7 +32,7 @@ class Command(BaseCommand):
 
         author = get_user_model().objects.filter(is_superuser=True).order_by("id").first()
         if author is None:
-            self.stderr.write("no superuser to own the projects — skipping")
+            self.stderr.write("no superuser to own the projects - skipping")
             return
 
         src = Path(settings.BASE_DIR) / "data" / "showcase_seed"

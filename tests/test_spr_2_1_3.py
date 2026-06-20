@@ -60,17 +60,6 @@ def test_newsletter_signup_creates_lowercase_subscriber_and_sends_confirmation(c
     assert "/newsletter/confirm/" in mail.outbox[0].body
 
 
-def test_newsletter_component_renders_once_on_corporate_page(client):
-    """T-F-2.1.29/30-1: reusable newsletter CTA renders once with consent copy."""
-    html = _content(client.get("/corporate/?utm_source=linkedin&utm_campaign=launch"))
-    assert html.count("newsletter-signup-form") == 1
-    assert "טיפ AI שבועי" in html
-    assert 'name="email"' in html
-    assert 'name="source_page" value="/corporate/"' in html
-    assert "אפשר להסיר הרשמה בכל רגע" in html
-    assert "newsletter_signup" in html
-
-
 @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
 def test_newsletter_confirmation_token_sets_confirmed_at(client):
     """T-F-2.1.29-2: confirmation link marks the subscriber as confirmed."""
@@ -159,15 +148,6 @@ def test_newsletter_validation_and_csrf(client):
     assert missing_csrf.status_code == 403
 
 
-def test_newsletter_signup_tracking_uses_non_pii_props(client):
-    """T-F-2.1.32-1: signup captures UTM fields and Plausible event has no email prop."""
-    html = _content(client.get("/corporate/?utm_source=linkedin&utm_medium=social&utm_campaign=launch"))
-    for field in ["utm_source", "utm_medium", "utm_campaign", "utm_content"]:
-        assert f'name="{field}"' in html
-    assert "newsletter_signup" in html
-    assert "source_page" in html
-    assert "language" in html
-    assert "email:" not in html
 
 
 def test_purge_unconfirmed_newsletter_subscribers_command():

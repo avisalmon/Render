@@ -30,7 +30,7 @@ class UserProfile(models.Model):
     leaderboard_opt_out = models.BooleanField(default=False)
     # Email verification (REQ-7.2.1): password signups must verify; Google trusted.
     email_verified = models.BooleanField(default=False)
-    # Weekly community digest opt-in (REQ-6.4.4) — dormant until ~50 active members.
+    # Weekly community digest opt-in (REQ-6.4.4) - dormant until ~50 active members.
     digest_opt_in = models.BooleanField(default=False)
     # DM control (REQ-6.6.3 / DEC-61): default ON for adults, always off for students.
     dms_enabled = models.BooleanField(default=True)
@@ -93,7 +93,7 @@ class LearnerProfile(models.Model):
 
 
 # ---------------------------------------------------------------------------
-# Community foundation (EPIC-6.1) — reputation, badges, follow, notifications,
+# Community foundation (EPIC-6.1) - reputation, badges, follow, notifications,
 # moderation. Badge/point definitions live in app/community.py.
 # ---------------------------------------------------------------------------
 
@@ -107,7 +107,7 @@ class CommunityReputation(models.Model):
 
 
 class ReputationEvent(models.Model):
-    """Point ledger — lets the leaderboard compute monthly windows (REQ-6.1.3)."""
+    """Point ledger - lets the leaderboard compute monthly windows (REQ-6.1.3)."""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reputation_events")
     points = models.IntegerField()
     reason = models.CharField(max_length=50)
@@ -243,7 +243,7 @@ class ThreadSubscription(models.Model):
 
 
 # ---------------------------------------------------------------------------
-# Showcase — דוכן השוויץ (EPIC-6.3). Stand definitions live in app/community.py.
+# Showcase - דוכן השוויץ (EPIC-6.3). Stand definitions live in app/community.py.
 # ---------------------------------------------------------------------------
 
 class ShowcaseProject(models.Model):
@@ -298,7 +298,7 @@ class ShowcaseProject(models.Model):
 
     @property
     def favicon_url(self):
-        """The site's own icon (REQ-6.3.16) — always resolves."""
+        """The site's own icon (REQ-6.3.16) - always resolves."""
         return f"https://www.google.com/s2/favicons?domain={self.site_host}&sz=128" if self.site_host else ""
 
     @property
@@ -374,7 +374,7 @@ class MessageBlock(models.Model):
 
 
 class Tip(models.Model):
-    """Short-form community tip (REQ-6.4.2) — 10x easier to share than a project.
+    """Short-form community tip (REQ-6.4.2) - 10x easier to share than a project.
     Markdown body (≤2000 chars), optional tags + link; reactions award the
     author points and feed the activity stream."""
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="tips")
@@ -397,7 +397,7 @@ class Tip(models.Model):
 
 class TipReaction(models.Model):
     """A reaction on a tip (REQ-6.4.2). One per member per kind; mirrors
-    ProjectReaction. No 'star' here — tips use lightweight emoji only."""
+    ProjectReaction. No 'star' here - tips use lightweight emoji only."""
     KINDS = [("love", "❤️"), ("fire", "🔥"), ("clap", "👏"), ("bulb", "💡")]
     tip = models.ForeignKey(Tip, on_delete=models.CASCADE, related_name="reactions")
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="tip_reactions")
@@ -468,9 +468,27 @@ class Course(models.Model):
     thumbnail = models.CharField(max_length=200, blank=True)
     is_published = models.BooleanField(default=False)
     # Hands-on courses: to earn the certificate the learner must finish >=80% of
-    # the lessons AND upload a screenshot of what they built (a CourseProjectSubmission).
+    # the lessons AND upload proof-of-work (a CourseProjectSubmission).
     # Off by default so theory courses keep the simple quiz-only completion gate.
     requires_project = models.BooleanField(default=False)
+    # What kind of proof-of-work the project gate expects, per lesson:
+    #   image   - a screenshot (e.g. Tinkercad)
+    #   stl     - an STL 3D model shown in an interactive viewer (e.g. Fusion 360)
+    #   scratch - a link to a shared Scratch project, embedded as a live player
+    # Only meaningful when requires_project.
+    PROJECT_IMAGE = "image"
+    PROJECT_STL = "stl"
+    PROJECT_SCRATCH = "scratch"
+    PROJECT_UPLOAD_CHOICES = [
+        (PROJECT_IMAGE, "Image / screenshot"),
+        (PROJECT_STL, "STL 3D model"),
+        (PROJECT_SCRATCH, "Scratch project link"),
+    ]
+    project_upload_type = models.CharField(
+        max_length=10, choices=PROJECT_UPLOAD_CHOICES, default=PROJECT_IMAGE)
+    # How many per-lesson projects (stl/scratch) are required for the certificate
+    # (alongside CERT_PROJECT_MIN_PCT% of lessons). Ignored for image courses.
+    project_min_count = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     # Set whenever the course is changed in the Authoring Studio (i.e. directly on
     # the running instance). Lets the local<->prod sync warn before overwriting.
@@ -492,6 +510,10 @@ class Video(models.Model):
     lesson_order = models.PositiveIntegerField(default=1)
     is_free_preview = models.BooleanField(default=False)
     is_final_lesson = models.BooleanField(default=False)
+    # "This lesson teaches building something" - on STL-project courses it invites
+    # an optional 3D-model upload (see LessonModelSubmission). Default on; uncheck
+    # for pure-theory lessons. Ignored on non-STL courses.
+    accepts_model = models.BooleanField(default=True)
     notes_markdown = models.TextField(blank=True)
     summary_he = models.TextField(blank=True)
     # If set, the lesson ends with an AI "reflection" question (free-text) instead of a quiz.
@@ -603,14 +625,17 @@ class CourseCertificate(models.Model):
 
 
 class CourseProjectSubmission(models.Model):
-    """A learner's proof-of-work for a hands-on course — a screenshot of what they
-    built. Required (together with >=80% of lessons) to earn the certificate of a
-    course whose `requires_project` flag is on. One submission per user+course;
-    re-uploading replaces the image."""
+    """A learner's proof-of-work for a hands-on course - either a screenshot of what
+    they built (image courses) or an STL 3D model they designed (e.g. Fusion 360).
+    Required (together with >=80% of lessons) to earn the certificate of a course
+    whose `requires_project` flag is on. One submission per user+course; re-uploading
+    replaces the artifact. Which field is used depends on Course.project_upload_type."""
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="project_submissions")
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="project_submissions")
-    image = models.ImageField(upload_to="project_submissions/")
+    image = models.ImageField(upload_to="project_submissions/", blank=True, null=True)
+    # STL the learner designed (shown in a Three.js viewer on the lesson + certificate).
+    model_file = models.FileField(upload_to="project_models/", blank=True, null=True)
     caption = models.CharField(max_length=200, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -621,6 +646,56 @@ class CourseProjectSubmission(models.Model):
 
     def __str__(self):
         return f"Submission: {self.user.username} – {self.course.slug}"
+
+    @property
+    def artifact(self):
+        """The uploaded file regardless of type (STL takes precedence)."""
+        return self.model_file or self.image
+
+
+
+class LessonModelSubmission(models.Model):
+    """A project the learner submitted for a specific lesson of a project course.
+    Optional per lesson - a learner submits one whenever a lesson had them build
+    something. Either an STL file they designed (Fusion 360) OR a shared Scratch
+    project link (Scratch), depending on Course.project_upload_type. All of a
+    user's submissions for a course form the "exhibition" shown in the lesson
+    sidebar, the course page, and the certificate. One per user+lesson; re-submitting
+    replaces it."""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="model_submissions")
+    video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name="model_submissions")
+    model_file = models.FileField(upload_to="lesson_models/", blank=True)
+    # Scratch courses: the numeric project id parsed from any shared-project link.
+    scratch_id = models.CharField(max_length=20, blank=True)
+    caption = models.CharField(max_length=200, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [("user", "video")]
+        ordering = ["video__lesson_order"]
+        verbose_name = "הגשת פרויקט שיעור"
+        verbose_name_plural = "הגשות פרויקט שיעור"
+
+    def __str__(self):
+        return f"Submission: {self.user.username} – {self.video}"
+
+    # --- Scratch helpers (only set when scratch_id is present) ---
+    @property
+    def is_scratch(self):
+        return bool(self.scratch_id)
+
+    @property
+    def scratch_embed_url(self):
+        return f"https://scratch.mit.edu/projects/{self.scratch_id}/embed"
+
+    @property
+    def scratch_url(self):
+        return f"https://scratch.mit.edu/projects/{self.scratch_id}/"
+
+    @property
+    def scratch_thumb_url(self):
+        return f"https://cdn2.scratch.mit.edu/get_image/project/{self.scratch_id}_480x360.png"
 
 
 class CourseMaterial(models.Model):
@@ -646,7 +721,7 @@ class CourseMaterial(models.Model):
         verbose_name_plural = "חומרי לימוד"
 
     def __str__(self):
-        return f"{self.course.slug} — {self.title}"
+        return f"{self.course.slug} - {self.title}"
 
 
 # ---------------------------------------------------------------------------
@@ -959,7 +1034,7 @@ class AuthoringJob(models.Model):
 
 
 # ---------------------------------------------------------------------------
-# CrashTech — hardware hackathon platform (EPIC-6.5). Defined in a dedicated
+# CrashTech - hardware hackathon platform (EPIC-6.5). Defined in a dedicated
 # module, re-exported here so Django registers them under the `app` label.
 # ---------------------------------------------------------------------------
 from .chat_models import (  # noqa: E402,F401

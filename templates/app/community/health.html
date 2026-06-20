@@ -14,7 +14,7 @@
   </div>
   <div class="row g-2 mb-3">
     <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ m.q_unanswered_pct }}%</div><div class="small text-muted">שאלות ללא מענה ({{ m.q_unanswered }}/{{ m.q_total }})</div></div></div>
-    <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{% if m.avg_ttfa %}{{ m.avg_ttfa }}ש'{% else %}—{% endif %}</div><div class="small text-muted">זמן עד תשובה ראשונה</div></div></div>
+    <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{% if m.avg_ttfa %}{{ m.avg_ttfa }}ש'{% else %}-{% endif %}</div><div class="small text-muted">זמן עד תשובה ראשונה</div></div></div>
     <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ m.rsvps_upcoming }}</div><div class="small text-muted">נרשמים לאירועים קרובים</div></div></div>
     <div class="col-6 col-md-3"><div class="card-surface p-3 text-center {% if m.open_reports %}border border-danger{% endif %}"><div class="h3 mb-0">{{ m.open_reports }}</div><div class="small text-muted">דיווחים פתוחים</div></div></div>
   </div>

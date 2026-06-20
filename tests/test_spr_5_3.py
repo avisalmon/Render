@@ -55,10 +55,3 @@ def test_strip_has_no_register_ask():
     assert "הרשמה" not in strip and "/register" not in strip and "/join" not in strip
 
 
-@pytest.mark.django_db
-def test_corporate_team_path_cta():
-    """T-F-5.3.3-1 (DEC-35): corporate page offers the learner path for teams."""
-    resp = Client().get("/corporate/")
-    body = resp.content.decode()
-    assert "corporate_team_path" in body
-    assert "/courses/" in body

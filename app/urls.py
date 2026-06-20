@@ -35,7 +35,7 @@ urlpatterns = [
     path("profile/", views.profile, name="profile"),
     path("account/delete/", views.delete_account, name="delete_account"),
     path("staff/copilot-dashboard/", views.CopilotDashboardView.as_view(), name="copilot_dashboard"),
-    # --- Admin / Management Control Dashboard (EPIC-8) — superuser only ---
+    # --- Admin / Management Control Dashboard (EPIC-8) - superuser only ---
     path("admin-dashboard/", dashboard_views.admin_dashboard, name="admin_dashboard"),
     path("admin-dashboard/refresh/<str:section>/", dashboard_views.refresh_section, name="dashboard_refresh"),
     path("admin-dashboard/cost/manual/", dashboard_views.manual_cost, name="dashboard_manual_cost"),
@@ -49,7 +49,6 @@ urlpatterns = [
     path("internal/run-capture/", dashboard_views.run_dashboard_capture, name="run_dashboard_capture"),
     # Machine endpoint (token): send a test alert email to all superusers.
     path("internal/test-alert-email/", dashboard_views.test_alert_email, name="test_alert_email"),
-    path("corporate/", views.corporate, name="corporate"),
 
     # --- Community (EPIC-6.1) ---
     path("community/", community_views.community_home, name="community"),
@@ -153,7 +152,7 @@ urlpatterns = [
     path("research/", views.coming_soon, {"section": "research"}, name="research"),
     path("newsletter/signup/", views.newsletter_signup, name="newsletter_signup"),
     path("newsletter/confirm/<str:token>", views.newsletter_confirm, name="newsletter_confirm"),
-    # Courses (plural — SPR-2.2)
+    # Courses (plural - SPR-2.2)
     path("courses/", views.courses_catalog, name="courses_catalog"),
     path("courses/search/", views.courses_search, name="courses_search"),
     path("courses/topic/<slug:domain>/", views.courses_domain, name="courses_domain"),
@@ -162,13 +161,16 @@ urlpatterns = [
     path("courses/<slug:slug>/enroll/", views.courses_enroll, name="courses_enroll"),
     path("courses/<slug:slug>/finish/", views.course_finish, name="course_finish"),
     path("courses/<slug:slug>/submit-project/", views.course_submit_project, name="course_submit_project"),
+    path("courses/<slug:slug>/lesson/<int:lesson_order>/submit-model/", views.lesson_submit_model, name="lesson_submit_model"),
+    path("courses/<slug:slug>/lesson/<int:lesson_order>/submit-scratch/", views.lesson_submit_scratch, name="lesson_submit_scratch"),
     path("courses/<slug:slug>/lesson/<int:lesson_order>/", views.courses_lesson, name="courses_lesson"),
-    # Courses (singular — SPR-1.4/1.5 entitlement-gated)
+    # Courses (singular - SPR-1.4/1.5 entitlement-gated)
     path("course/<slug:slug>/", views.course_detail_view, name="course_detail"),
     path("course/<slug:slug>/lesson/<int:lesson_order>/", views.lesson_view, name="lesson_view"),
     # Certificate
     path("certificate/<uuid:cert_id>/", views.certificate_view, name="certificate_view"),
     path("certificate/<uuid:cert_id>/image.png", views.certificate_image, name="certificate_image"),
+    path("model-submission/<int:pk>/download", views.lesson_model_download, name="lesson_model_download"),
     # Video progress heartbeat (SPR-1.4)
     path("api/video-progress/", views.video_progress_heartbeat, name="video_progress"),
     path("api/lesson/<int:video_id>/reflect/", views.lesson_reflect, name="lesson_reflect"),

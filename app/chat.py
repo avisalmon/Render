@@ -1,4 +1,4 @@
-"""Chat helpers (EPIC-6.6) — channel seeding + the shared post pipeline.
+"""Chat helpers (EPIC-6.6) - channel seeding + the shared post pipeline.
 
 Topic channels are code-defined from the taxonomy (DEC-49 pattern), seeded
 idempotently. Posting reuses the community guidelines/moderation/rate-limit
@@ -59,7 +59,7 @@ def learners_now(course, minutes=15):
 
 
 def can_post(user, channel):
-    """(ok, reason) — gate a post. Reused by views before writing a message."""
+    """(ok, reason) - gate a post. Reused by views before writing a message."""
     if channel.is_readonly:
         return False, "הערוץ הזה נעול לכתיבה."
     if not guidelines_accepted(user):

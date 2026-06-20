@@ -1,5 +1,5 @@
 """
-Bunny Stream utilities — signed URL generation for token-authenticated playback.
+Bunny Stream utilities - signed URL generation for token-authenticated playback.
 """
 import hashlib
 import time

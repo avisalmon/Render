@@ -24,5 +24,5 @@ class Command(BaseCommand):
                 done += 1
                 self.stdout.write(self.style.SUCCESS(f"  saved {p.cover.name}"))
             else:
-                self.stderr.write("  no cover (service slow/failed) — keeps live fallback")
-        self.stdout.write(self.style.SUCCESS(f"done — {done} covers stored"))
+                self.stderr.write("  no cover (service slow/failed) - keeps live fallback")
+        self.stdout.write(self.style.SUCCESS(f"done - {done} covers stored"))

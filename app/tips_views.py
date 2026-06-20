@@ -1,4 +1,4 @@
-"""EPIC-6.4 — Tips (REQ-6.4.2). Short-form community posts with reactions.
+"""EPIC-6.4 - Tips (REQ-6.4.2). Short-form community posts with reactions.
 Read surfaces are public (REQ-6.1.11); posting/reacting require login and go
 through the same guidelines + rate-limit + moderation pipeline as the forum."""
 from django.contrib import messages

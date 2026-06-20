@@ -110,12 +110,6 @@ def test_footer_connect_with_avi():
     assert "רוצים להתחבר לאבי סלמון" in body
 
 
-@pytest.mark.django_db
-def test_contact_form_has_avi_photo():
-    body = Client().get("/corporate/").content.decode()
-    assert "avi-cutout.png" in body or "avi-headshot" in body
-
-
 # --- F-7.1.10: Google button starts OAuth directly ---
 
 @pytest.mark.django_db

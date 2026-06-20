@@ -19,6 +19,11 @@
 
 {% block content %}
 <div>
+    {% if existing_cert %}
+    <a href="{% url 'certificate_view' existing_cert.certificate_id %}" class="cert-trophy mb-2" title="קיבלת תעודה בקורס הזה - לצפייה">
+      <i class="bi bi-trophy-fill"></i> הוסמכת בקורס הזה - לתעודה
+    </a>
+    {% endif %}
     <h1>{{ course.title }}</h1>
     {% if course.description %}
     <p class="lead mb-4" style="color:var(--text-secondary)">{{ course.description }}</p>
@@ -103,6 +108,19 @@
         {% endfor %}
     </div>
 
+    {# The learner's project exhibition for this course (under the lesson list) #}
+    {% if my_models %}
+    <div class="mt-4 stl-gallery--lg">
+        <h2 class="h5 mb-1"><i class="bi bi-collection-fill" style="color:var(--accent-primary)"></i> התערוכה שלי</h2>
+        <p class="text-muted small mb-0">הפרויקטים שיצרת לאורך הקורס. לחצו על פריט כדי להגדיל.</p>
+        {% include "app/_stl_gallery.html" with models=my_models can_download=True %}
+    </div>
+    <script type="module">
+      import { initGallery } from "{% static 'js/stl-viewer.js' %}";
+      initGallery();
+    </script>
+    {% endif %}
+
     {% if course_projects %}
     <div class="mt-4">
         <div class="d-flex justify-content-between align-items-center mb-2">
@@ -116,7 +134,7 @@
     {% endif %}
 
     <div class="mt-4 p-3 card-surface">
-        <p>מחפשים הכשרה לצוות שלם? <a href="/corporate/">צרו קשר על הדרכות ארגוניות</a>.</p>
+        <p>מחפשים הכשרה לצוות שלם או ליווי אישי? <a href="mailto:avi.salmon@gmail.com?subject=הדרכת%20צוות%20%E2%80%93%20babook">שלחו לי מייל</a>.</p>
     </div>
 </div>
 {% endblock %}

@@ -1,7 +1,7 @@
 """Image processing helpers (REQ-6.1.13).
 
 Avatars are downscaled + recompressed server-side on upload, so members never
-hit a "too large" wall — any reasonable photo (incl. straight off a phone) is
+hit a "too large" wall - any reasonable photo (incl. straight off a phone) is
 accepted and stored as a small, web-friendly JPEG.
 """
 import io
@@ -22,7 +22,7 @@ def process_avatar(uploaded, max_px=AVATAR_MAX_PX, quality=AVATAR_QUALITY):
     try:
         img = Image.open(uploaded)
         img = ImageOps.exif_transpose(img)  # honor phone orientation
-    except Exception as exc:  # noqa: BLE001 — any decode failure = not an image
+    except Exception as exc:  # noqa: BLE001 - any decode failure = not an image
         raise ValueError("not an image") from exc
 
     # Flatten transparency (PNG/RGBA) onto white so the JPEG looks right.

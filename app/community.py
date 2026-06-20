@@ -14,12 +14,12 @@ from django.utils import timezone
 from .taxonomy import TRAINING_TAXONOMY
 
 # ---------------------------------------------------------------------------
-# Forum categories (REQ-6.2.1): taxonomy-mirrored + general. Code-defined —
+# Forum categories (REQ-6.2.1): taxonomy-mirrored + general. Code-defined -
 # a DB table would add nothing (DEC-43 spirit, same pattern as taxonomy.py).
 # ---------------------------------------------------------------------------
 
 def forum_categories():
-    """Ordered [(slug, {title, icon})] — the three domains + כללי."""
+    """Ordered [(slug, {title, icon})] - the three domains + כללי."""
     cats = [
         (k, {"title": v["title"], "icon": v["icon"]})
         for k, v in sorted(TRAINING_TAXONOMY.items(), key=lambda kv: kv[1]["order"])
@@ -87,9 +87,9 @@ def can_message(sender, recipient):
 POINTS = {
     "accepted_answer": 15,   # my answer was accepted
     "upvote_received": 2,    # someone upvoted my post
-    "showcase_published": 10,  # EPIC-6.3 — published a project
-    "showcase_star": 1,        # EPIC-6.3 — my project got a star
-    "showcase_featured": 15,   # EPIC-6.3 — my project was featured
+    "showcase_published": 10,  # EPIC-6.3 - published a project
+    "showcase_star": 1,        # EPIC-6.3 - my project got a star
+    "showcase_featured": 15,   # EPIC-6.3 - my project was featured
     "challenge_win": 25,       # EPIC-6.5
     "tip_reaction": 1,         # EPIC-6.4
 }
@@ -212,7 +212,7 @@ def rate_limit_ok(user):
 
 
 def moderation_ok(text, user=None):
-    """AI moderation reuse (REQ-1.6 infra). Fails open — moderation must
+    """AI moderation reuse (REQ-1.6 infra). Fails open - moderation must
     never block the community when the AI is down."""
     try:
         from .ai_chat import check_moderation

@@ -10,8 +10,8 @@ Usage:
     python manage.py push_course_to_production micropython-thonny --target https://babook.co.il --publish
 
 Environment variables:
-    COURSE_MGMT_API_KEY  — shared secret token (must match the server's env var)
-    COURSE_MGMT_TARGET   — default target URL (overridden by --target)
+    COURSE_MGMT_API_KEY  - shared secret token (must match the server's env var)
+    COURSE_MGMT_TARGET   - default target URL (overridden by --target)
 
 Steps performed:
     1. Load course + videos + materials from local DB
@@ -137,7 +137,7 @@ class Command(BaseCommand):
                 }
             videos_payload.append(entry)
 
-        # 3. Build materials payload — upload files first
+        # 3. Build materials payload - upload files first
         materials_payload = []
         for m in course.materials.order_by("order", "title"):
             entry = {
@@ -149,7 +149,7 @@ class Command(BaseCommand):
             if m.material_type == "file" and m.file:
                 local_path = Path(settings.MEDIA_ROOT) / str(m.file)
                 if not local_path.exists():
-                    self.stderr.write(f"  WARNING: local file not found: {local_path} — skipping upload")
+                    self.stderr.write(f"  WARNING: local file not found: {local_path} - skipping upload")
                     entry["file_path"] = str(m.file)
                 elif dry_run:
                     self.stdout.write(f"  [dry-run] Would upload: {local_path.name}")

@@ -77,11 +77,21 @@
           {% endif %}
         {% endfor %}
       </div>
+
+      {# The learner's own STL models for this course - small exhibition under the lesson list #}
+      {% if my_models %}
+      {% include "app/_stl_gallery.html" with models=my_models gallery_title="הפרויקטים שלי" can_download=True %}
+      {% endif %}
     </div>
   </aside>
 
   <!-- Main content -->
   <div class="lesson-main">
+    {% if existing_cert %}
+    <a href="{% url 'certificate_view' existing_cert.certificate_id %}" class="cert-trophy mb-2" title="קיבלת תעודה בקורס הזה - לצפייה">
+      <i class="bi bi-trophy-fill"></i> הוסמכת בקורס הזה
+    </a>
+    {% endif %}
     <h1 class="h4 mb-3">{{ video.title }}</h1>
 
     <!-- Error banner (redirected from course_finish / project upload) -->
@@ -105,10 +115,35 @@
       <i class="bi bi-exclamation-triangle-fill"></i>
       <span>הקובץ שהעלית אינו תמונה. נסו שוב עם צילום מסך (PNG/JPG).</span>
     </div>
+    {% elif error_code == "nostl" %}
+    <div class="alert alert-warning d-flex align-items-center gap-2 mb-3">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>כדי לקבל תעודה צריך להעלות קובץ STL של הדגם שעיצבת.</span>
+    </div>
+    {% elif error_code == "badstl" %}
+    <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>הקובץ צריך להיות בפורמט ‎.stl‎. נסו לייצא את הדגם מ-Fusion 360 כ-STL.</span>
+    </div>
+    {% elif error_code == "bigstl" %}
+    <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>קובץ ה-STL גדול מדי (עד 40MB). נסו לייצא ברזולוציה נמוכה יותר.</span>
+    </div>
+    {% elif error_code == "badscratch" %}
+    <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>לא זוהה מזהה פרויקט בקישור. הדביקו קישור לפרויקט משותף ב-Scratch (למשל scratch.mit.edu/projects/123456789/).</span>
+    </div>
+    {% elif error_code == "notshared" %}
+    <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>הפרויקט עדיין לא משותף ב-Scratch, אז אי אפשר להציג אותו. פתחו אותו ב-Scratch, לחצו «שיתוף», ואז הדביקו שוב את הקישור.</span>
+    </div>
     {% elif error_code == "uploaded" %}
     <div class="alert alert-success d-flex align-items-center gap-2 mb-3">
       <i class="bi bi-check-circle-fill"></i>
-      <span>צילום הפרויקט הועלה. אפשר לקבל תעודה!</span>
+      <span>הפרויקט הועלה. אפשר לקבל תעודה!</span>
     </div>
     {% endif %}
 
@@ -149,6 +184,120 @@
       </div>
       {% endif %}
     {% endif %}
+
+    <!-- Optional per-lesson Scratch share (right under the video, before the notes) -->
+    {% if course.project_upload_type == 'scratch' and accepts_model and user.is_authenticated %}
+    <div class="card-surface p-3 mt-3" id="lesson-model">
+      <h2 class="h6 mb-1"><i class="bi bi-puzzle-fill me-1" style="color:var(--accent-primary)"></i> שיתפתם פרויקט בשיעור הזה?</h2>
+      <p class="text-muted small mb-2">לא חובה - אבל אם בניתם פרויקט ב-Scratch, ודאו שהוא <strong>משותף</strong> והדביקו את הקישור. הוא יוטמע כאן ויצטרף לתערוכה שלכם (בסרגל, בעמוד הקורס ובתעודה).</p>
+      {% if lesson_model %}
+      {% if lesson_model.caption %}<p class="fw-semibold mb-1">{{ lesson_model.caption }}</p>{% endif %}
+      <div class="scratch-embed mb-2">
+        <iframe src="{{ lesson_model.scratch_embed_url }}" allowtransparency="true" frameborder="0" scrolling="no" allowfullscreen></iframe>
+      </div>
+      <p class="small mb-2"><i class="bi bi-check-circle-fill" style="color:var(--accent-success)"></i> שיתפת פרויקט לשיעור הזה. אפשר לעדכן את הכותרת או להדביק קישור אחר ולשמור שוב.</p>
+      {% endif %}
+      <form method="post" action="{% url 'lesson_submit_scratch' course.slug video.lesson_order %}" id="scratch-form">
+        {% csrf_token %}
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+          <input type="text" name="scratch_url" id="scratch-url" class="form-control form-control-sm"
+                 style="max-width:340px" dir="ltr" placeholder="https://scratch.mit.edu/projects/123456789/"
+                 value="{% if lesson_model %}{{ lesson_model.scratch_url }}{% endif %}">
+          <input type="text" name="caption" maxlength="200" class="form-control form-control-sm"
+                 style="max-width:200px" placeholder="כיתוב (לא חובה)" value="{{ lesson_model.caption|default:'' }}">
+          <button type="button" id="scratch-preview-btn" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-eye me-1"></i> תצוגה מקדימה
+          </button>
+          <button type="submit" id="scratch-submit" class="btn btn-sm btn-success">
+            <i class="bi bi-bookmark-check me-1"></i> שמור פרויקט
+          </button>
+        </div>
+        <p class="small text-muted mt-2 mb-0">
+          לא בטוחים איך לשתף? ראו <a href="{% url 'courses_lesson' course.slug 4 %}">שיעור 4 - איך לשתף פרויקט</a>.
+          כל קישור לפרויקט מתאים (גם <span dir="ltr">/editor</span> או <span dir="ltr">/fullscreen</span>).
+        </p>
+        <div id="scratch-preview" class="scratch-embed mt-3" style="display:none"></div>
+        <div id="scratch-error" class="small text-danger mt-2" style="display:none">
+          לא זוהה מזהה פרויקט בקישור. ודאו שזה קישור לפרויקט משותף ב-Scratch.
+        </div>
+      </form>
+    </div>
+    <script>
+    (function () {
+      var form = document.getElementById('scratch-form');
+      if (!form) return;
+      var input = document.getElementById('scratch-url');
+      var prevBtn = document.getElementById('scratch-preview-btn');
+      var preview = document.getElementById('scratch-preview');
+      var errBox = document.getElementById('scratch-error');
+      function parseId(t) {
+        if (!t) return null;
+        t = t.trim();
+        var m = t.match(/projects\/(\d+)/);
+        if (m) return m[1];
+        m = t.match(/\b(\d{4,})\b/);
+        return m ? m[1] : null;
+      }
+      function showPreview() {
+        var id = parseId(input.value);
+        if (!id) { errBox.style.display = ''; preview.style.display = 'none'; return; }
+        errBox.style.display = 'none';
+        preview.innerHTML = '<iframe src="https://scratch.mit.edu/projects/' + id +
+          '/embed" allowtransparency="true" frameborder="0" scrolling="no" allowfullscreen></iframe>';
+        preview.style.display = '';
+      }
+      prevBtn.addEventListener('click', showPreview);
+      // Block submit if the link has no recognizable id.
+      form.addEventListener('submit', function (e) {
+        if (!parseId(input.value)) { e.preventDefault(); errBox.style.display = ''; input.focus(); }
+      });
+    })();
+    </script>
+    {% endif %}{# /per-lesson Scratch share #}
+
+    <!-- Optional per-lesson STL upload (right under the video, before the notes) -->
+    {% if course.project_upload_type == 'stl' and accepts_model and user.is_authenticated %}
+    <div class="card-surface p-3 mt-3" id="lesson-model">
+      <h2 class="h6 mb-1"><i class="bi bi-badge-3d me-1" style="color:var(--accent-primary)"></i> בנית דגם בשיעור הזה?</h2>
+      <p class="text-muted small mb-2">לא חובה - אבל אם עיצבת משהו, העלו את קובץ ה-STL והוא יצטרף לתערוכה שלכם (בסרגל, בעמוד הקורס ובתעודה).</p>
+      {% if lesson_model %}
+      <p class="small mb-2"><i class="bi bi-check-circle-fill" style="color:var(--accent-success)"></i> כבר העלית דגם לשיעור הזה - הוא מופיע בתצוגת הדגמים. אפשר להחליף:</p>
+      {% endif %}
+      <form method="post" action="{% url 'lesson_submit_model' course.slug video.lesson_order %}"
+            enctype="multipart/form-data" id="stl-form">
+        {% csrf_token %}
+        <div id="stl-drop" tabindex="0"
+             style="border:2px dashed var(--border);border-radius:10px;padding:1.2rem 1rem;text-align:center;cursor:pointer;outline:none;transition:border-color .15s,background .15s">
+          <i class="bi bi-badge-3d" style="font-size:1.6rem;color:var(--accent-primary)"></i>
+          <p class="mb-1 mt-1 fw-semibold">בחרו קובץ STL של הדגם שעיצבתם</p>
+          <p class="small text-muted mb-0">
+            ב-Fusion 360: לחצן ימני על הגוף ← <span dir="ltr">Save As Mesh</span> / <span dir="ltr">Export → STL</span>.
+            גררו לכאן או לחצו לבחירה. עד 40MB.
+          </p>
+        </div>
+
+        <!-- Live 3D preview of the picked file -->
+        <div id="stl-preview" class="mt-3" style="display:none">
+          <div class="stl-viewer" id="stl-preview-canvas"
+               style="width:100%;height:260px;border-radius:10px;border:1px solid var(--border);background:var(--bg-elevated)"></div>
+          <p class="small text-muted mt-1"><i class="bi bi-arrows-move me-1"></i> גררו לסיבוב, גלגלת לזום.</p>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2 align-items-center mt-3">
+          <button type="button" id="stl-pick-btn" class="btn btn-sm btn-primary">
+            <i class="bi bi-folder2-open me-1"></i> בחר קובץ STL
+          </button>
+          <input type="file" name="model" id="stl-file" accept=".stl,model/stl" class="d-none">
+          <input type="text" name="caption" maxlength="200" class="form-control form-control-sm"
+                 style="max-width:240px" placeholder="כיתוב (לא חובה)"
+                 value="{{ lesson_model.caption|default:'' }}">
+          <button type="submit" id="stl-submit" class="btn btn-sm btn-success" style="display:none">
+            <i class="bi bi-upload me-1"></i> שמור דגם
+          </button>
+        </div>
+      </form>
+    </div>
+    {% endif %}{# /per-lesson STL upload #}
 
     <!-- Notes / lesson content -->
     {% if notes_html %}
@@ -209,11 +358,12 @@
     </div>
     {% endif %}
 
-    <!-- Project submission gate (hands-on courses, summary lesson only) -->
+
+    <!-- Certificate gate (final/summary lesson, project courses) -->
     {% if video.is_final_lesson and course.requires_project and user.is_authenticated and not existing_cert %}
     <div class="card-surface p-4 mt-4" id="project-gate">
       <h2 class="h5 mb-1"><i class="bi bi-trophy me-1" style="color:var(--accent-primary)"></i> קבלת תעודת סיום</h2>
-      <p class="text-muted small mb-3">שני תנאים לתעודה — להשלים את רוב הקורס, ולהראות מה בנית.</p>
+      <p class="text-muted small mb-3">שני תנאים לתעודה - להשלים את רוב הקורס, ולהראות מה בנית.</p>
 
       <!-- Checklist -->
       <ul class="list-unstyled mb-3">
@@ -228,24 +378,31 @@
           </span>
         </li>
         <li class="d-flex align-items-center gap-2">
-          {% if project_submission %}
-            <i class="bi bi-check-circle-fill" style="color:var(--accent-success)"></i>
+          {% if project_upload_type == 'stl' or project_upload_type == 'scratch' %}
+            {% if models_enough %}<i class="bi bi-check-circle-fill" style="color:var(--accent-success)"></i>{% else %}<i class="bi bi-circle text-muted"></i>{% endif %}
+            <span>העלאת לפחות {{ project_min_count }} פרויקטים <span class="text-muted">({{ model_count }} הועלו)</span></span>
           {% else %}
-            <i class="bi bi-circle text-muted"></i>
+            {% if project_submission %}<i class="bi bi-check-circle-fill" style="color:var(--accent-success)"></i>{% else %}<i class="bi bi-circle text-muted"></i>{% endif %}
+            <span>העלאת צילום מסך של מה שעיצבת</span>
           {% endif %}
-          <span>העלאת צילום מסך של מה שעיצבת</span>
         </li>
       </ul>
 
-      <!-- Upload: paste / drag / pick — no saving a file -->
+      {% if project_upload_type == 'stl' or project_upload_type == 'scratch' %}
+      <p class="small text-muted mb-0 border-top pt-3">
+        <i class="bi bi-info-circle me-1"></i>
+        את הפרויקטים מעלים בתוך כל שיעור (החלק שמתחת לסרטון). אחרי שהעליתם לפחות {{ project_min_count }} פרויקטים הם יוצגו בתעודה כתערוכה.
+      </p>
+      {% else %}
+      <!-- Image upload: paste / drag / pick -->
       <form method="post" action="{% url 'course_submit_project' course.slug %}"
             enctype="multipart/form-data" class="border-top pt-3" id="project-form">
         {% csrf_token %}
-        {% if project_submission %}
+        {% if project_submission and project_submission.image %}
         <div class="d-flex align-items-center gap-3 mb-3">
           <img src="{{ project_submission.image.url }}" alt="הפרויקט שלי"
                style="width:120px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">
-          <div class="small text-muted">הפרויקט שלך הועלה. אפשר להחליף — פשוט הדביקו תמונה חדשה.</div>
+          <div class="small text-muted">הפרויקט שלך הועלה. אפשר להחליף - פשוט הדביקו תמונה חדשה.</div>
         </div>
         {% endif %}
 
@@ -253,9 +410,9 @@
         <div id="paste-zone" tabindex="0"
              style="border:2px dashed var(--border);border-radius:10px;padding:1.4rem 1rem;text-align:center;cursor:pointer;outline:none;transition:border-color .15s,background .15s">
           <i class="bi bi-clipboard-plus" style="font-size:1.7rem;color:var(--accent-primary)"></i>
-          <p class="mb-1 mt-1 fw-semibold">הדביקו צילום מסך כאן — <kbd>Ctrl</kbd>+<kbd>V</kbd></p>
+          <p class="mb-1 mt-1 fw-semibold">הדביקו צילום מסך כאן - <kbd>Ctrl</kbd>+<kbd>V</kbd></p>
           <p class="small text-muted mb-0">
-            צלמו את העיצוב עם <kbd>Win</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> (כלי החיתוך) —
+            צלמו את העיצוב עם <kbd>Win</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> (כלי החיתוך) -
             התמונה נשמרת ללוח, ואז מדביקים כאן. אפשר גם לגרור תמונה או לבחור קובץ.
           </p>
         </div>
@@ -282,8 +439,10 @@
           </button>
         </div>
       </form>
+      {% endif %}{# /image upload #}
     </div>
 
+    {% if project_upload_type == 'image' %}
     <script>
     (function () {
       var form = document.getElementById('project-form');
@@ -359,7 +518,71 @@
       });
     })();
     </script>
-    {% endif %}
+    {% endif %}{# /image upload script #}
+    {% endif %}{# /certificate gate #}
+
+    {# STL upload + viewers: upload is a plain dependency-free script; the 3D preview + gallery load separately (best-effort). Also runs the gallery for Scratch courses. #}
+    {% if course.project_upload_type == 'stl' or course.project_upload_type == 'scratch' %}
+    <script>
+    (function () {
+      // --- Upload controls (always work, no three.js needed) ---
+      var pickBtn   = document.getElementById('stl-pick-btn');
+      var fileInput = document.getElementById('stl-file');
+      var drop      = document.getElementById('stl-drop');
+      var submitBtn = document.getElementById('stl-submit');
+      if (!fileInput) return;
+
+      function staged(file) {
+        if (!file || !/\.stl$/i.test(file.name)) return;
+        submitBtn.style.display = '';                       // reveal "save"
+        if (drop) drop.style.borderColor = 'var(--accent-primary)';
+        // Let the optional 3D-preview module render this file, if it loaded.
+        document.dispatchEvent(new CustomEvent('stl:file', { detail: file }));
+      }
+      if (pickBtn) pickBtn.addEventListener('click', function () { fileInput.click(); });
+      if (drop)    drop.addEventListener('click',    function () { fileInput.click(); });
+      fileInput.addEventListener('change', function () {
+        if (fileInput.files && fileInput.files[0]) staged(fileInput.files[0]);
+      });
+      if (drop) {
+        ['dragover', 'dragenter'].forEach(function (ev) {
+          drop.addEventListener(ev, function (e) { e.preventDefault(); drop.style.borderColor = 'var(--accent-primary)'; });
+        });
+        drop.addEventListener('dragleave', function () { drop.style.borderColor = 'var(--border)'; });
+        drop.addEventListener('drop', function (e) {
+          e.preventDefault();
+          var f = e.dataTransfer.files && e.dataTransfer.files[0];
+          if (f) {
+            try { var dt = new DataTransfer(); dt.items.add(f); fileInput.files = dt.files; } catch (err) {}
+            staged(f);
+          }
+        });
+      }
+    })();
+    </script>
+
+    <script type="module">
+      // Progressive enhancement: 3D preview + the sidebar "my models" gallery.
+      // Wrapped so a CDN/import failure never blocks the upload above.
+      try {
+        const { initStlViewer, initGallery } = await import("{% static 'js/stl-viewer.js' %}");
+        try { initGallery(); } catch (e) { console.warn('STL gallery init failed', e); }
+
+        const preview = document.getElementById('stl-preview');
+        const canvas  = document.getElementById('stl-preview-canvas');
+        let viewer = null;
+        document.addEventListener('stl:file', function (ev) {
+          try {
+            preview.style.display = '';
+            if (viewer) viewer.stop();
+            viewer = initStlViewer(canvas, URL.createObjectURL(ev.detail));
+          } catch (e) { console.warn('STL preview failed', e); }
+        });
+      } catch (e) {
+        console.warn('STL viewer module unavailable — upload still works without 3D preview', e);
+      }
+    </script>
+    {% endif %}{# /stl page scripts #}
 
     <!-- Bottom navigation -->
     <div class="d-flex justify-content-between align-items-center mt-4 gap-2">
@@ -404,11 +627,11 @@
   </div>
 </div>
 
-<!-- Corporate funnel hook -->
+<!-- Team-training hook -->
 <div class="container mt-4 mb-2 text-center">
   <small class="text-secondary">
-    מעניין להכשיר צוות שלם?
-    <a href="/corporate/" class="text-secondary text-decoration-underline">לחבילות ארגוניות</a>
+    מעניין להכשיר צוות שלם או רוצים הדרכה אישית?
+    <a href="mailto:avi.salmon@gmail.com?subject=הדרכת%20צוות%20%E2%80%93%20babook" class="text-secondary text-decoration-underline">שלחו לי מייל</a>
   </small>
 </div>
 
@@ -547,7 +770,7 @@
   var feedback  = document.getElementById("quiz-feedback");
 
   /* Show "already answered" only if the quiz was actually passed before
-     (real DB state — NOT the staff navigation bypass). */
+     (real DB state - NOT the staff navigation bypass). */
   if (quizAnsweredBefore && submitBtn) {
     radios.forEach(function (r) { r.disabled = true; });
     submitBtn.disabled = true;

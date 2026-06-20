@@ -68,7 +68,7 @@ def can_review(user, hackathon):
 
 def compute_leaderboard(hackathon, anonymized=True):
     """Per-team standings (REQ-6.5.15): approved points (+bonus) and a separate
-    pending indicator. DEC-40 spirit — pure sums, no engagement weighting.
+    pending indicator. DEC-40 spirit - pure sums, no engagement weighting.
     Returns rows sorted by approved desc, then pending desc, anonymized."""
     rows = []
     teams = hackathon.teams.prefetch_related("submissions__challenge")

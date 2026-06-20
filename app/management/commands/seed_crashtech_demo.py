@@ -3,7 +3,7 @@ without setting up a real event. Idempotent: with --if-empty it only seeds when
 no demo exists, so it is safe to run on every deploy.
 
 Content references Avi's real TechCrash2026 kit (Intel MAX 10 FPGA + ESP32:
-LEDs, OLED, ADXL345 accelerometer, 7-seg, UART) — repo github.com/avisalmon/TechCrash2026.
+LEDs, OLED, ADXL345 accelerometer, 7-seg, UART) - repo github.com/avisalmon/TechCrash2026.
 """
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
@@ -37,13 +37,13 @@ class Command(BaseCommand):
     def handle(self, *args, **opts):
         from app.models import Hackathon
         if opts["if_empty"] and Hackathon.objects.filter(slug__startswith=DEMO_PREFIX).exists():
-            # Events already seeded — still (idempotently) ensure the chat seed,
+            # Events already seeded - still (idempotently) ensure the chat seed,
             # so a demo created before EPIC-6.6 gets its channel populated.
             live = Hackathon.objects.filter(slug=f"{DEMO_PREFIX}-live").first()
             judge = User.objects.filter(username="crashtech_demo_judge").first()
             if live and judge:
                 self._seed_chat(live, judge)
-            self.stdout.write("CrashTech demo present — ensured chat seed.")
+            self.stdout.write("CrashTech demo present - ensured chat seed.")
             return
 
         organizer = (User.objects.filter(is_superuser=True).first()

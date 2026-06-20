@@ -42,9 +42,9 @@ class DefaultHebrewMiddleware:
 class OnboardingMiddleware:
     """EPIC-5: first-touch intent capture + new-user onboarding routing.
 
-    1. REQ-5.2.1 — records the anonymous visitor's first page request in the
+    1. REQ-5.2.1 - records the anonymous visitor's first page request in the
        session (entry path/type/course, referrer, utm). Never overwritten.
-    2. REQ-5.5.1 — a session flagged at signup ("onboarding_pending") routes
+    2. REQ-5.5.1 - a session flagged at signup ("onboarding_pending") routes
        the user's next page load to /welcome/, remembering where they were
        headed so onboarding can return them there. Only newly registered
        users are ever flagged; force_login / existing sessions are untouched.
@@ -79,7 +79,7 @@ class OnboardingMiddleware:
                 if request.path != "/" and ONBOARDING_NEXT_KEY not in request.session:
                     request.session[ONBOARDING_NEXT_KEY] = request.get_full_path()
                 return redirect("welcome")
-            # Profile gone or already onboarded — stop intercepting.
+            # Profile gone or already onboarded - stop intercepting.
             request.session.pop(ONBOARDING_PENDING_KEY, None)
 
         return self.get_response(request)

@@ -28,7 +28,7 @@ def _client():
 
 
 def _clean(text):
-    return (text or "").replace("—", ",").replace("–", "-")
+    return (text or "").replace("-", ",").replace("–", "-")
 
 
 # --- source ---
@@ -150,7 +150,7 @@ def gen_notes(title, transcript, subject):
     prompt = (
         f"אתה כותב סיכום שיעור בעברית לקורס בנושא: {subject}. כותרת הקטע: \"{title}\".\n"
         "כתוב סיכום שמשקף נאמנה את מה שהמרצה אומר בקטע (אם התמלול באנגלית, תרגם לעברית טבעית). "
-        "כתוב בעברית אנושית. אסור להשתמש בקו מפריד ארוך (—). קוד ופקודות בתוך בלוק ``` בלי המילה bash. "
+        "כתוב בעברית אנושית. אסור להשתמש בקו מפריד ארוך (-). קוד ופקודות בתוך בלוק ``` בלי המילה bash. "
         "כותרות ## ו-### ורשימות. עברית בלבד, Markdown.\n"
         'החזר JSON: {"title_he":"...","summary_he":"...","notes_markdown":"..."}\n\n'
         f"תמלול הקטע:\n{transcript}"
@@ -168,7 +168,7 @@ def gen_quiz(title, transcript, subject):
     """Generate one faithful Hebrew multiple-choice question for a lesson.
 
     Returns {"question": str, "options": [{"text": str, "is_correct": bool}, ...],
-    "requires_correct": bool}. Non-gating by default (any answer unlocks Next) —
+    "requires_correct": bool}. Non-gating by default (any answer unlocks Next) -
     these are review drafts. Returns None if the model can't ground a question
     in the transcript.
     """

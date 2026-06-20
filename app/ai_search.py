@@ -1,7 +1,7 @@
 """Cheap AI-powered semantic search over the course catalog.
 
 Given a free-text query, ask a tiny OpenAI model which published courses are
-relevant — matching by *meaning* (topic, synonym, tool, abbreviation), not by
+relevant - matching by *meaning* (topic, synonym, tool, abbreviation), not by
 coincidental substrings. Results are cached so repeat queries cost nothing, and
 the call always degrades gracefully to substring matching when the API key is
 absent or the request fails, so search never breaks.
@@ -20,7 +20,7 @@ from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
 
-_CACHE_TTL = 60 * 60 * 6   # 6h — the catalog changes rarely; saves repeat spend
+_CACHE_TTL = 60 * 60 * 6   # 6h - the catalog changes rarely; saves repeat spend
 _MAX_QUERY = 120
 
 
@@ -29,7 +29,7 @@ def _search_model():
 
 
 def course_search_doc(course):
-    """The compact metadata for one course — exactly what the model 'sees'."""
+    """The compact metadata for one course - exactly what the model 'sees'."""
     return {
         "slug": course.slug,
         "title": course.title,
@@ -51,7 +51,7 @@ _SYSTEM_PROMPT = (
     "You are the search engine for an online course catalog. The site is in "
     "Hebrew; queries may be Hebrew or English. You receive a JSON array of "
     "courses and a user query. Return the slugs of the courses that are genuinely "
-    "relevant to the query, ordered most-relevant first. Match by MEANING — topic, "
+    "relevant to the query, ordered most-relevant first. Match by MEANING - topic, "
     "synonyms, tools, abbreviations (e.g. 'ESP'/'ESP32' -> microcontroller/Arduino "
     "courses; '3D'/'הדפסת תלת מימד' -> 3D-printing courses; 'בינה' -> AI courses). "
     "Never match on a coincidental substring. If nothing is genuinely relevant, "

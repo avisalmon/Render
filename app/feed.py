@@ -1,7 +1,7 @@
 """Community activity feed (REQ-6.4.1).
 
 A pure-Python aggregator that merges the community's activity sources into one
-reverse-chronological stream. **No engagement-bait algorithm (DEC-40)** — items
+reverse-chronological stream. **No engagement-bait algorithm (DEC-40)** - items
 are ordered strictly newest-first. Scope filters narrow *which* items show, never
 *how* they rank.
 

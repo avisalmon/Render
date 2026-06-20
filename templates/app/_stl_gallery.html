@@ -1,0 +1,30 @@
+{# Reusable project exhibition: STL tiles (3D) or Scratch tiles (thumbnail) -> click to enlarge in the shared #stl-modal. Args: models, gallery_title, can_download. Host page must run initGallery() once. #}
+{% if models %}
+<div class="stl-gallery">
+  {% if gallery_title %}<div class="stl-gallery-title">{{ gallery_title }}</div>{% endif %}
+  <div class="stl-gallery-grid">
+    {% for m in models %}
+      {% if m.scratch_id %}
+      <div class="stl-tile" role="button" tabindex="0"
+           data-scratch="{{ m.scratch_id }}"
+           data-open="{{ m.scratch_url }}"
+           data-title="{% if m.caption %}{{ m.caption }}{% else %}{{ m.video.lesson_order }}. {{ m.video.title }}{% endif %}"
+           title="{{ m.caption|default:m.video.title }}">
+        <img class="stl-tile-canvas" src="{{ m.scratch_thumb_url }}" alt="{{ m.video.title }}"
+             loading="lazy" referrerpolicy="no-referrer">
+        <div class="stl-tile-label">{% if m.caption %}{{ m.caption }}{% else %}{{ m.video.lesson_order }}. {{ m.video.title }}{% endif %}</div>
+      </div>
+      {% else %}
+      <div class="stl-tile" role="button" tabindex="0"
+           data-stl="{{ m.model_file.url }}"
+           data-title="{% if m.caption %}{{ m.caption }}{% else %}{{ m.video.lesson_order }}. {{ m.video.title }}{% endif %}"
+           {% if can_download %}data-dl="{% url 'lesson_model_download' m.pk %}"{% endif %}
+           title="{{ m.caption|default:m.video.title }}">
+        <div class="stl-tile-canvas"></div>
+        <div class="stl-tile-label">{% if m.caption %}{{ m.caption }}{% else %}{{ m.video.lesson_order }}. {{ m.video.title }}{% endif %}</div>
+      </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>
+{% endif %}

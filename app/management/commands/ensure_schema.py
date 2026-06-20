@@ -1,12 +1,12 @@
 """
-ensure_schema — repair production schema when Django migrations were recorded
+ensure_schema - repair production schema when Django migrations were recorded
 as applied but the actual DDL was never executed (SQLite "ghost migration" issue).
 
 Also fake-applies any missing migration records so `migrate` doesn't try to
 re-run operations that ensure_schema already performed.
 
 Run via:  python manage.py ensure_schema
-Idempotent: safe to run on a healthy DB — skips columns/tables that already exist.
+Idempotent: safe to run on a healthy DB - skips columns/tables that already exist.
 """
 
 import datetime
@@ -40,9 +40,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         with connection.cursor() as c:
-            # Fresh install — django_migrations doesn't exist yet; let migrate handle everything
+            # Fresh install - django_migrations doesn't exist yet; let migrate handle everything
             if not _table_exists(c, "django_migrations"):
-                self.stdout.write("Fresh install — skipping ensure_schema.")
+                self.stdout.write("Fresh install - skipping ensure_schema.")
                 return
 
             # ── Migration 0010: app_course columns ────────────────────────────
@@ -172,7 +172,7 @@ class Command(BaseCommand):
         #    applied but whose DDL is missing (SQLite ghost-migration drift, e.g.
         #    after a partial backup/restore). Run AFTER migrate in the deploy, so
         #    genuinely-pending migrations have already created their tables and
-        #    only true ghosts remain to rebuild here — no "table already exists"
+        #    only true ghosts remain to rebuild here - no "table already exists"
         #    clash with migrate. Covers app_corporatelead, app_newslettersubscriber,
         #    the dashboard tables, etc. without hand-written DDL per table.
         from django.apps import apps

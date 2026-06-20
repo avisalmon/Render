@@ -60,7 +60,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--dry-run",
             action="store_true",
-            help="Fetch metadata only — no downloads, no uploads, no DB writes",
+            help="Fetch metadata only - no downloads, no uploads, no DB writes",
         )
 
     def handle(self, *args, **options):
@@ -99,7 +99,7 @@ class Command(BaseCommand):
             self.stdout.write(f"  {v['order']:>3}. {v['title']} ({v['duration_str']}){free_tag}")
 
         if dry_run:
-            self.stdout.write(self.style.WARNING("\nDry run — stopping here. No data written."))
+            self.stdout.write(self.style.WARNING("\nDry run - stopping here. No data written."))
             return
 
         # Create or get Course
@@ -110,7 +110,7 @@ class Command(BaseCommand):
         if created:
             self.stdout.write(self.style.SUCCESS(f"\nCreated Course: '{course.title}' (slug={slug})"))
         else:
-            self.stdout.write(self.style.WARNING(f"\nCourse already exists: '{course.title}' — adding/skipping videos."))
+            self.stdout.write(self.style.WARNING(f"\nCourse already exists: '{course.title}' - adding/skipping videos."))
 
         with tempfile.TemporaryDirectory() as tmpdir:
             for video_meta in videos:
@@ -124,19 +124,19 @@ class Command(BaseCommand):
 
                 # Skip if a Video record already exists for this course/order
                 if Video.objects.filter(course=course, lesson_order=idx).exists():
-                    self.stdout.write(self.style.WARNING(f"  Already imported (lesson {idx}) — skipping."))
+                    self.stdout.write(self.style.WARNING(f"  Already imported (lesson {idx}) - skipping."))
                     continue
 
                 # Download video
                 mp4_path = self._download_video(yt_id, tmpdir, idx)
                 if not mp4_path:
-                    self.stdout.write(self.style.ERROR("  Download failed — skipping."))
+                    self.stdout.write(self.style.ERROR("  Download failed - skipping."))
                     continue
 
                 # Upload to Bunny
                 bunny_guid = self._upload_to_bunny(mp4_path, yt_title, api_key, library_id)
                 if not bunny_guid:
-                    self.stdout.write(self.style.ERROR("  Bunny upload failed — skipping."))
+                    self.stdout.write(self.style.ERROR("  Bunny upload failed - skipping."))
                     os.remove(mp4_path)
                     continue
 
@@ -150,7 +150,7 @@ class Command(BaseCommand):
                     is_free_preview=is_free,
                 )
                 self.stdout.write(
-                    self.style.SUCCESS(f"  Done — bunny_guid={bunny_guid}, free_preview={is_free}")
+                    self.style.SUCCESS(f"  Done - bunny_guid={bunny_guid}, free_preview={is_free}")
                 )
 
                 # Clean up local MP4 immediately to save disk

@@ -1,4 +1,4 @@
-"""REQ-8.1.4 — nightly dashboard capture.
+"""REQ-8.1.4 - nightly dashboard capture.
 
 Collects all internal metrics, runs every cost adapter, and evaluates alert
 thresholds into a snapshot. Idempotent and resilient: one weak collector or

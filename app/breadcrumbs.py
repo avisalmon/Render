@@ -2,7 +2,7 @@
 
 A single source of truth mapping each URL name to its place in the site
 hierarchy, so every view renders a consistent "you are here" trail + back
-button at the top — instead of the old per-template, mostly-missing approach.
+button at the top - instead of the old per-template, mostly-missing approach.
 
 Each trail is the chain of ancestor sections for that page, top-first, as
 (label, url_name) tuples. The context processor prepends "בית" (home) and
@@ -24,7 +24,6 @@ TRAILS = {
     "courses_lesson": [("הדרכות", "courses_catalog"), ("קורס", None), ("שיעור", None)],
     "course_detail": [("הדרכות", "courses_catalog"), ("קורס", None)],
     "lesson_view": [("הדרכות", "courses_catalog"), ("קורס", None), ("שיעור", None)],
-    "corporate": [("לעסקים", "corporate")],
     "chat_page": [("צ׳אט AI", "chat_page")],
     "certificate_view": [("תעודה", None)],
     # profile / account
@@ -70,7 +69,7 @@ TRAILS = {
     "studio_lesson_new": [("אולפן", "studio_home"), ("עריכת קורס", None), ("שיעור חדש", None)],
     "studio_lesson_edit": [("אולפן", "studio_home"), ("עריכת קורס", None), ("עריכת שיעור", None)],
     "studio_job": [("אולפן", "studio_home"), ("עיבוד", None)],
-    # crashtech (EPIC-6.5) — folded under קהילה (REQ-6.12.9)
+    # crashtech (EPIC-6.5) - folded under קהילה (REQ-6.12.9)
     "crashtech_home": [("קהילה", "community"), ("CrashTech", "crashtech_home")],
     "crashtech_create": [("קהילה", "community"), ("CrashTech", "crashtech_home"), ("האקתון חדש", None)],
     "crashtech_detail": [("קהילה", "community"), ("CrashTech", "crashtech_home"), ("האקתון", None)],

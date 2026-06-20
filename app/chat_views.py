@@ -101,7 +101,7 @@ def promote_message(request, message_id):
         messages.info(request, "ההודעה כבר קודמה.")
         return redirect("channel_view", slug=msg.channel.slug)
     target = request.POST.get("target", "forum")
-    back = f"\n\n— מתוך הצ'אט «{msg.channel.title}» (/community/chat/{msg.channel.slug}/)"
+    back = f"\n\n- מתוך הצ'אט «{msg.channel.title}» (/community/chat/{msg.channel.slug}/)"
     if target == "tip":
         from .models import Tip
         tip = Tip.objects.create(author=msg.author, body=(msg.body + back)[:2000],

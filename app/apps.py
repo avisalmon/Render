@@ -8,7 +8,7 @@ def _repair_schema(db_path: str) -> None:
     Patch missing columns / tables from migrations 0010-0013 that were ghost-applied
     on the production DB (recorded in django_migrations but DDL never ran).
 
-    Uses raw sqlite3 — intentionally bypasses Django's connection/transaction_mode
+    Uses raw sqlite3 - intentionally bypasses Django's connection/transaction_mode
     so it works even before Django's DB layer is fully initialised.
 
     Fully idempotent.  Silently no-ops on any error (build phase, fresh install, etc.).
@@ -163,7 +163,7 @@ def _repair_schema(db_path: str) -> None:
         conn.close()
 
     except Exception:
-        # Build phase (persistent disk not mounted), fresh install, already patched — all fine.
+        # Build phase (persistent disk not mounted), fresh install, already patched - all fine.
         pass
 
 
@@ -199,7 +199,7 @@ class AppConfig(AppConfig):
 
 
 def _log_email_send(sender, message=None, status=None, **kwargs):
-    """anymail post_send handler — record one EmailSendLog row per send."""
+    """anymail post_send handler - record one EmailSendLog row per send."""
     try:
         from .models import EmailSendLog
 

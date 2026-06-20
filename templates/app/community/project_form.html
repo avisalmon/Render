@@ -42,7 +42,7 @@
         <textarea class="form-control" name="story" id="story-input" rows="7" placeholder="מה בניתם, איך, מה היה מאתגר, מה למדתם...">{% firstof form_story project.story '' %}</textarea>
         <div id="preview-box" class="card-surface p-3 mt-2 lesson-notes" style="display:none"></div>
       </div>
-      <!-- Optional media & links — collapsed so first publish is just title→story (REQ-6.12.5) -->
+      <!-- Optional media & links - collapsed so first publish is just title→story (REQ-6.12.5) -->
       <details class="mb-3" {% if project.video_url or project.repo_url or project.live_url %}open{% endif %}>
         <summary class="small text-muted" style="cursor:pointer">הוסיפו קישורים ומדיה (לא חובה) - סרטון, קוד, הדגמה חיה, גלריה</summary>
         <div class="row g-2 mt-1">

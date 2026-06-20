@@ -1,5 +1,5 @@
 """
-AI Chat service layer — OpenAI integration (STUBBED for testing).
+AI Chat service layer - OpenAI integration (STUBBED for testing).
 
 All OpenAI API calls go through this module. When OPENAI_API_KEY is empty,
 calls return stub responses. No money is spent.
