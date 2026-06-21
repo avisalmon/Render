@@ -499,6 +499,9 @@ class Course(models.Model):
     project_min_count = models.PositiveIntegerField(default=1)
     # % of lessons that must be completed for the certificate (100 = all lessons).
     cert_min_pct = models.PositiveIntegerField(default=80)
+    # Non-project courses can still gate the certificate on lesson completion:
+    # if True, the cert requires cert_min_pct% of lessons done (no upload needed).
+    requires_completion = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     # Set whenever the course is changed in the Authoring Studio (i.e. directly on
     # the running instance). Lets the local<->prod sync warn before overwriting.

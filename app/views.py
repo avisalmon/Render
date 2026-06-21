@@ -944,6 +944,9 @@ def courses_lesson(request, slug, lesson_order):
                 ).first()
                 has_artifact = bool(project_submission and project_submission.artifact)
                 cert_ready = (course_pct >= course.cert_min_pct) and has_artifact
+        elif course.requires_completion:
+            # Non-project course gated on lesson completion only.
+            cert_ready = course_pct >= course.cert_min_pct
 
     error_code = request.GET.get("error")
 
@@ -1669,6 +1672,11 @@ def course_finish(request, slug):
             ).first()
             if not (sub and sub.artifact):
                 return _final_lesson_redirect(course, "project")
+    elif course.requires_completion:
+        # Gate C (non-project completion-gated courses): >=cert_min_pct% lessons.
+        pct = _catalog_progress(request.user, [course.id]).get(course.id, {}).get("pct", 0)
+        if pct < course.cert_min_pct:
+            return _final_lesson_redirect(course, "progress")
 
     # All gates passed - issue certificate
     if not enrollment.completed_at:

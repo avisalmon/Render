@@ -518,11 +518,15 @@
     {% endif %}
 
 
-    <!-- Certificate gate (final/summary lesson, project courses) -->
-    {% if video.is_final_lesson and course.requires_project and user.is_authenticated and not existing_cert %}
+    <!-- Certificate gate (final/summary lesson: project courses or completion-gated) -->
+    {% if video.is_final_lesson and user.is_authenticated and not existing_cert and course.requires_project or video.is_final_lesson and user.is_authenticated and not existing_cert and course.requires_completion %}
     <div class="card-surface p-4 mt-4" id="project-gate">
       <h2 class="h5 mb-1"><i class="bi bi-trophy me-1" style="color:var(--accent-primary)"></i> קבלת תעודת סיום</h2>
+      {% if course.requires_project %}
       <p class="text-muted small mb-3">שני תנאים לתעודה - להשלים את רוב הקורס, ולהראות מה בנית.</p>
+      {% else %}
+      <p class="text-muted small mb-3">כדי לקבל תעודה צריך להשלים {{ cert_project_min_pct }}% מהשיעורים.</p>
+      {% endif %}
 
       <!-- Checklist -->
       <ul class="list-unstyled mb-3">
@@ -536,6 +540,7 @@
             <span class="text-muted">({{ course_pct }}% הושלמו)</span>
           </span>
         </li>
+        {% if course.requires_project %}
         <li class="d-flex align-items-center gap-2">
           {% if project_upload_type == 'stl' or project_upload_type == 'scratch' or project_upload_type == 'tinkercad' or project_upload_type == 'youtube' %}
             {% if models_enough %}<i class="bi bi-check-circle-fill" style="color:var(--accent-success)"></i>{% else %}<i class="bi bi-circle text-muted"></i>{% endif %}
@@ -545,9 +550,12 @@
             <span>העלאת צילום מסך של מה שעיצבת</span>
           {% endif %}
         </li>
+        {% endif %}
       </ul>
 
-      {% if project_upload_type == 'stl' or project_upload_type == 'scratch' or project_upload_type == 'tinkercad' or project_upload_type == 'youtube' %}
+      {% if not course.requires_project %}
+      {# completion-only course: no upload, just the lesson-completion requirement above #}
+      {% elif project_upload_type == 'stl' or project_upload_type == 'scratch' or project_upload_type == 'tinkercad' or project_upload_type == 'youtube' %}
       <p class="small text-muted mb-0 border-top pt-3">
         <i class="bi bi-info-circle me-1"></i>
         את הפרויקטים מעלים בתוך כל שיעור (החלק שמתחת לסרטון). אחרי שהעליתם לפחות {{ project_min_count }} פרויקטים הם יוצגו בתעודה כתערוכה.
