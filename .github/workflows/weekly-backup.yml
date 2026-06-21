@@ -16,11 +16,10 @@ jobs:
     steps:
       - name: POST run-backup
         env:
-          BACKUP_URL: ${{ secrets.BACKUP_URL }}
           BACKUP_TRIGGER_TOKEN: ${{ secrets.BACKUP_TRIGGER_TOKEN }}
         run: |
           code=$(curl -sS --max-time 180 -o /tmp/backup_out.json -w "%{http_code}" \
-            -X POST "$BACKUP_URL" \
+            -X POST "https://babook.co.il/internal/run-backup/" \
             -H "X-Backup-Token: $BACKUP_TRIGGER_TOKEN")
           echo "HTTP $code"
           echo "----- response -----"

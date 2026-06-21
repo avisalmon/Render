@@ -47,8 +47,6 @@ urlpatterns = [
     # Machine endpoint: daily GitHub Actions cron POSTs here with X-Capture-Token
     # to refresh all dashboard data in-process (REQ-8.1.4).
     path("internal/run-capture/", dashboard_views.run_dashboard_capture, name="run_dashboard_capture"),
-    # Temporary one-time data purge (token-guarded; dry-run unless confirm=PURGE).
-    path("internal/run-purge/", dashboard_views.run_purge, name="run_purge"),
     # Machine endpoint (token): send a test alert email to all superusers.
     path("internal/test-alert-email/", dashboard_views.test_alert_email, name="test_alert_email"),
 
