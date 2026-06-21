@@ -192,6 +192,31 @@ def run_dashboard_capture(request):
 
 @csrf_exempt
 @require_POST
+def run_purge(request):
+    """Token-triggered one-time data purge. Runs purge_demo_data: DRY-RUN by
+    default; only deletes when POST body has confirm=PURGE. Guarded by the same
+    BACKUP_TRIGGER_TOKEN. Temporary endpoint - removed after the one-time cleanup.
+    """
+    expected = getattr(settings, "BACKUP_TRIGGER_TOKEN", "")
+    provided = request.headers.get("X-Backup-Token", "")
+    if not expected or not constant_time_compare(provided, expected):
+        return JsonResponse({"ok": False, "error": "forbidden"}, status=403)
+
+    confirm = request.POST.get("confirm") == "PURGE"
+    out = io.StringIO()
+    try:
+        if confirm:
+            call_command("purge_demo_data", yes=True, stdout=out, stderr=out)
+        else:
+            call_command("purge_demo_data", stdout=out, stderr=out)
+    except Exception as exc:  # noqa: BLE001 - surface failure to the caller
+        return JsonResponse(
+            {"ok": False, "error": str(exc), "log": out.getvalue()}, status=500)
+    return JsonResponse({"ok": True, "dry_run": not confirm, "log": out.getvalue()})
+
+
+@csrf_exempt
+@require_POST
 def test_alert_email(request):
     """Token-triggered test of the alert-email path. Sends a sample alert to every
     superuser's address (the same recipients real dashboard alerts use, e.g. the
