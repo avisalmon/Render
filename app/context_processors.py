@@ -11,10 +11,16 @@ def community_ctx(request):
     """EPIC-6.1: unread-notification count for the nav bell (REQ-6.1.6)."""
     if not hasattr(request, "user") or not request.user.is_authenticated:
         return {"unread_notifications": 0}
+    from .classroom_models import ClassMembership, TeacherClass
     from .community import is_student
     from .models import DirectMessage, Notification
     student = is_student(request.user)
     profile = getattr(request.user, "profile", None)
+    # Top-nav "my classes" shortcut: only for people who own or belong to a class.
+    show_my_classes = (
+        TeacherClass.objects.filter(owner=request.user).exists()
+        or ClassMembership.objects.filter(student=request.user, status="active").exists()
+    )
     # Show the verify-email nudge only for password accounts that haven't
     # verified - never for Google/GitHub logins (provider already verified it).
     show_verify = False
@@ -34,6 +40,7 @@ def community_ctx(request):
         ).count(),
         "user_is_student": student,
         "show_verify_banner": show_verify,
+        "show_my_classes": show_my_classes,
     }
 
 

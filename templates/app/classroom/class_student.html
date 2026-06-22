@@ -28,11 +28,22 @@
       <div class="cls-course-pct">{{ c.pct }}%</div>
     </div>
     <div class="cls-bar"><span style="width:{{ c.pct }}%"></span></div>
-    <div class="cls-small text-muted">{{ c.done }} מתוך {{ c.total }} שיעורים</div>
+    <div class="cls-small text-muted mb-2">{{ c.done }} מתוך {{ c.total }} שיעורים</div>
 
-    {% if c.projects %}
-    {% include "app/_stl_gallery.html" with models=c.projects gallery_title="תוצרים" can_download=False %}
-    {% endif %}
+    <ul class="cls-lessons">
+      {% for l in c.lessons %}
+      <li class="cls-lesson {% if l.done %}is-done{% endif %}">
+        <div class="cls-lesson-row">
+          <i class="bi {% if l.done %}bi-check-circle-fill{% else %}bi-circle{% endif %}"></i>
+          <span class="cls-lesson-title">{{ l.video.lesson_order }}. {{ l.video.title }}</span>
+          {% if l.submissions %}<span class="cls-lesson-tag">הגשה</span>{% endif %}
+        </div>
+        {% if l.submissions %}
+        {% include "app/_stl_gallery.html" with models=l.submissions can_download=False %}
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
   </section>
   {% endfor %}
   {% else %}

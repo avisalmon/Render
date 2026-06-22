@@ -26,7 +26,7 @@ from .classroom_models import (
     ClassMessage,
     TeacherClass,
 )
-from .models import Course, CourseCertificate, LessonModelSubmission, UserVideoProgress
+from .models import Course, CourseCertificate, LessonModelSubmission, UserVideoProgress, Video
 
 
 def _display_name(user):
@@ -55,42 +55,71 @@ def _owned_class(request, pk):
 
 
 def _student_courses(student):
-    """Per-course learning summary for a student across every course they touched:
-    progress, completion, certificate and submitted projects. Teacher-only data."""
-    from .views import _catalog_progress
+    """Per-course learning summary for a student, with a lesson-by-lesson breakdown
+    (done state + that lesson's upload) for the teacher's detailed view. The same
+    'done' rule the catalog/profile use: a lesson counts once it has progress, and
+    quiz/reflection lessons also need quiz_passed. Teacher-only data."""
+    from .models import Enrollment, LessonQuiz
 
     course_ids = set(
         UserVideoProgress.objects.filter(user=student).values_list("video__course_id", flat=True))
-    from .models import Enrollment
     course_ids |= set(Enrollment.objects.filter(user=student).values_list("course_id", flat=True))
     course_ids = [c for c in course_ids if c]
     if not course_ids:
         return []
 
-    prog = _catalog_progress(student, course_ids)
     courses = {c.id: c for c in Course.objects.filter(id__in=course_ids)}
+    videos = list(Video.objects.filter(course_id__in=course_ids).order_by("lesson_order"))
+    required = set(
+        LessonQuiz.objects.filter(video__course_id__in=course_ids, requires_correct=True)
+        .values_list("video_id", flat=True)
+    ) | set(
+        Video.objects.filter(course_id__in=course_ids).exclude(reflection_prompt="")
+        .values_list("id", flat=True)
+    )
+    prog = {p.video_id: p for p in
+            UserVideoProgress.objects.filter(user=student, video__course_id__in=course_ids)}
+    subs = {s.video_id: s for s in
+            LessonModelSubmission.objects.filter(user=student, video__course_id__in=course_ids)
+            .select_related("video")}
     certs = {cc.course_id: cc
              for cc in CourseCertificate.objects.filter(user=student, course_id__in=course_ids)}
-    proj_by_course = {}
-    for m in (LessonModelSubmission.objects
-              .filter(user=student, video__course_id__in=course_ids)
-              .select_related("video", "video__course")):
-        proj_by_course.setdefault(m.video.course_id, []).append(m)
+    completed_courses = set(
+        Enrollment.objects.filter(user=student, course_id__in=course_ids, completed_at__isnull=False)
+        .values_list("course_id", flat=True))
+
+    def _done(video):
+        p = prog.get(video.id)
+        if not p:
+            return False
+        return p.quiz_passed if video.id in required else True
+
+    by_course = {}
+    for v in videos:
+        by_course.setdefault(v.course_id, []).append(v)
 
     out = []
     for cid in course_ids:
         course = courses.get(cid)
         if not course:
             continue
-        p = prog.get(cid, {})
+        lessons = [{
+            "video": v,
+            "done": _done(v),
+            # 0/1-item list so the template can reuse the project gallery partial.
+            "submissions": [subs[v.id]] if v.id in subs else [],
+        } for v in by_course.get(cid, [])]
+        total = len(lessons)
+        done = sum(1 for ll in lessons if ll["done"])
         out.append({
             "course": course,
-            "pct": p.get("pct", 0),
-            "done": p.get("done", 0),
-            "total": p.get("total", 0),
-            "completed": p.get("completed", False),
+            "pct": round(done / total * 100) if total else 0,
+            "done": done,
+            "total": total,
+            "completed": cid in completed_courses,
             "certificate": certs.get(cid),
-            "projects": proj_by_course.get(cid, []),
+            "projects": [ll["submissions"][0] for ll in lessons if ll["submissions"]],
+            "lessons": lessons,
         })
     out.sort(key=lambda x: x["pct"], reverse=True)
     return out
@@ -460,33 +489,45 @@ def class_qr(request, pk):
 # ---------------------------------------------------------------------------
 
 def class_directory(request):
-    """Public list of all classes. Browse-only: no student data, no self-join.
-    The only action is to request to join (which the teacher approves)."""
+    """Public page to FIND a class by search - not a full list, so people don't
+    just wander into random classes. Matches load via class_search as you type."""
+    return render(request, "app/classroom/class_directory.html")
+
+
+def class_search(request):
+    """JSON: classes matching the query (by class name or teacher), with the
+    searcher's per-class state so the right action shows. No student data exposed."""
     from django.db.models import Count, Q
 
-    # One query: prefetch the owner profile and annotate the active member count
-    # (the public, anonymous directory must not fan out into N+1 queries).
-    classes = list(
-        TeacherClass.objects.select_related("owner", "owner__profile")
-        .annotate(active_count=Count("memberships", filter=Q(memberships__status="active"))))
-    # Per-class state for the current user, so the template can show the right action.
-    my_member_ids, my_request_ids, my_owned_ids = set(), set(), set()
-    if request.user.is_authenticated:
-        my_member_ids = set(
-            ClassMembership.objects.filter(student=request.user, status="active")
-            .values_list("klass_id", flat=True))
-        my_request_ids = set(
-            ClassJoinRequest.objects.filter(student=request.user, status="pending")
-            .values_list("klass_id", flat=True))
-        my_owned_ids = set(c.id for c in classes if c.owner_id == request.user.id)
-    rows = [{
-        "klass": c,
-        "member_count": c.active_count,
-        "is_member": c.id in my_member_ids,
-        "is_owner": c.id in my_owned_ids,
-        "requested": c.id in my_request_ids,
-    } for c in classes]
-    return render(request, "app/classroom/class_directory.html", {"rows": rows})
+    q = (request.GET.get("q") or "").strip()
+    results = []
+    if q:
+        qs = (TeacherClass.objects
+              .select_related("owner", "owner__profile")
+              .annotate(active_count=Count("memberships", filter=Q(memberships__status="active")))
+              .filter(Q(name__icontains=q)
+                      | Q(owner__first_name__icontains=q)
+                      | Q(owner__profile__display_name__icontains=q))[:12])
+        member_ids, request_ids = set(), set()
+        if request.user.is_authenticated:
+            member_ids = set(
+                ClassMembership.objects.filter(student=request.user, status="active")
+                .values_list("klass_id", flat=True))
+            request_ids = set(
+                ClassJoinRequest.objects.filter(student=request.user, status="pending")
+                .values_list("klass_id", flat=True))
+        for c in qs:
+            results.append({
+                "id": c.id,
+                "name": c.name,
+                "teacher": _display_name(c.owner),
+                "member_count": c.active_count,
+                "is_open": c.is_open,
+                "is_owner": request.user.is_authenticated and c.owner_id == request.user.id,
+                "is_member": c.id in member_ids,
+                "requested": c.id in request_ids,
+            })
+    return JsonResponse({"results": results})
 
 
 @login_required

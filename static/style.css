@@ -1008,7 +1008,7 @@ html[data-theme="dark"] .cert-trophy:hover { color: #ffe9a8; }
   color: var(--text-secondary); pointer-events: none;
 }
 .catalog-search {
-  width: 100%; padding: .55rem .9rem .55rem 2.2rem;
+  width: 100%; padding: .55rem .9rem; padding-inline-start: 2.2rem;
   background: var(--bg-surface); border: 1px solid var(--border);
   border-radius: 999px; color: var(--text-primary); font-size: .95rem;
 }
@@ -1473,7 +1473,9 @@ html[data-theme="dark"] .site-drawer .btn-close { filter: invert(1); }
 .cls-small { font-size: .82rem; }
 .cls-section-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
 
+.cls-search-wrap { max-width: 520px; margin-bottom: 1rem; }
 .cls-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
+#classResults:not(:empty) { margin-bottom: .8rem; }
 .cls-card { display: flex; flex-direction: column; gap: .35rem; }
 .cls-card-name { font-weight: 700; }
 .cls-card-meta { font-size: .85rem; color: var(--text-secondary); }
@@ -1517,6 +1519,18 @@ html[data-theme="dark"] .site-drawer .btn-close { filter: invert(1); }
 
 .cls-controls { display: flex; align-items: center; gap: 1rem; }
 .cls-controls form { margin: 0; }
+
+.cls-lessons { list-style: none; padding: 0; margin: .2rem 0 0; }
+.cls-lesson { padding: .45rem 0; border-top: 1px solid var(--border); }
+.cls-lesson:first-child { border-top: 0; }
+.cls-lesson-row { display: flex; align-items: center; gap: .5rem; }
+.cls-lesson-row .bi-check-circle-fill { color: #1a7f37; }
+.cls-lesson-row .bi-circle { color: var(--text-secondary); }
+.cls-lesson-title { flex: 1 1 auto; min-width: 0; font-size: .92rem; }
+.cls-lesson.is-done .cls-lesson-title { font-weight: 600; }
+.cls-lesson-tag { font-size: .72rem; font-weight: 700; color: var(--accent-primary);
+  border: 1px solid var(--accent-primary); border-radius: 999px; padding: 0 .45rem; flex-shrink: 0; }
+.cls-lesson .stl-gallery { margin: .5rem 0 .2rem; }
 
 .cls-course-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .cls-course-pct { font-weight: 700; color: var(--accent-primary); }

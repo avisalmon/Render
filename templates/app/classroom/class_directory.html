@@ -1,47 +1,81 @@
 {% extends "base.html" %}
-{% block title %}כל הכיתות - babook{% endblock %}
-{% block meta_description %}עיון בכל הכיתות הפתוחות ב-babook. בקשו הצטרפות והמורה יאשר.{% endblock %}
+{% block title %}חיפוש כיתה - babook{% endblock %}
+{% block meta_description %}חפשו כיתה ב-babook ושלחו בקשת הצטרפות למורה.{% endblock %}
 
 {% block content %}
 <div class="py-3 classes">
 
-  <h1 class="mb-1">כל הכיתות</h1>
-  <p class="text-muted mb-3">עיון בכל הכיתות. כדי להצטרף שולחים בקשה למורה, והמורה מאשר.</p>
+  <h1 class="mb-1">חיפוש כיתה</h1>
+  <p class="text-muted mb-3">חפשו כיתה לפי שם הכיתה או שם המורה/מדריך, ושלחו בקשת הצטרפות.</p>
 
-  {% if rows %}
-  <div class="cls-grid">
-    {% for r in rows %}
-    <div class="card-surface cls-card">
-      <div class="cls-card-name">{{ r.klass.name }}</div>
-      <div class="cls-card-meta">מורה: {{ r.klass.owner.profile.public_name }} · {{ r.member_count }} תלמידים</div>
-      {% if r.klass.description %}
-      <div class="cls-dir-desc">{{ r.klass.description }}</div>
-      {% endif %}
-      <div class="cls-card-actions">
-        {% if r.is_owner %}
-        <a href="{% url 'class_manage' r.klass.id %}" class="btn btn-sm btn-outline-secondary">ניהול</a>
-        {% elif r.is_member %}
-        <a href="{% url 'classroom' r.klass.id %}" class="btn btn-sm btn-primary">לכיתה</a>
-        {% elif r.requested %}
-        <button class="btn btn-sm btn-outline-secondary" disabled>הבקשה נשלחה</button>
-        {% elif not r.klass.is_open %}
-        <button class="btn btn-sm btn-outline-secondary" disabled>סגורה להצטרפות</button>
-        {% elif user.is_authenticated %}
-        <form method="post" action="{% url 'class_request_join' r.klass.id %}">{% csrf_token %}
-          <button class="btn btn-sm btn-primary">בקשת הצטרפות</button>
-        </form>
-        {% else %}
-        <a href="{% url 'join_wall' %}?next={% url 'class_directory' %}" class="btn btn-sm btn-primary">בקשת הצטרפות</a>
-        {% endif %}
-      </div>
-    </div>
-    {% endfor %}
+  <div class="catalog-search-wrap cls-search-wrap">
+    <i class="bi bi-search"></i>
+    <input type="search" id="classSearch" class="catalog-search" placeholder="חיפוש כיתה…"
+           autocomplete="off" aria-label="חיפוש כיתה">
   </div>
-  {% else %}
-  <div class="card-surface cls-empty">
-    <p class="mb-0 text-muted">עדיין אין כיתות.</p>
-  </div>
-  {% endif %}
+
+  <div id="classResults" class="cls-grid"></div>
+  <p id="classHint" class="text-muted cls-small">התחילו להקליד כדי למצוא כיתה.</p>
 
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  var isAuth = {{ user.is_authenticated|yesno:"true,false" }};
+  var wallUrl = "{% url 'join_wall' %}?next={% url 'class_directory' %}";
+  var csrfHtml = '{% csrf_token %}';
+  var search = document.getElementById('classSearch');
+  var box = document.getElementById('classResults');
+  var hint = document.getElementById('classHint');
+  var timer = null, seq = 0;
+
+  function setHint(text) { hint.style.display = ''; hint.textContent = text; }
+
+  search.addEventListener('input', function () {
+    clearTimeout(timer);
+    var q = search.value.trim();
+    if (!q) { box.innerHTML = ''; setHint('התחילו להקליד כדי למצוא כיתה.'); return; }
+    var mySeq = ++seq;
+    timer = setTimeout(function () {
+      fetch("{% url 'class_search' %}?q=" + encodeURIComponent(q))
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (mySeq !== seq) { return; }   // a newer keystroke superseded this
+          box.innerHTML = '';
+          if (!data.results.length) { setHint('לא נמצאו כיתות.'); return; }
+          hint.style.display = 'none';
+          data.results.forEach(function (c) {
+            var action;
+            if (c.is_owner) {
+              action = '<a class="btn btn-sm btn-outline-secondary" href="/class/' + c.id + '/manage/">ניהול</a>';
+            } else if (c.is_member) {
+              action = '<a class="btn btn-sm btn-primary" href="/class/' + c.id + '/">לכיתה</a>';
+            } else if (c.requested) {
+              action = '<button class="btn btn-sm btn-outline-secondary" disabled>הבקשה נשלחה</button>';
+            } else if (!c.is_open) {
+              action = '<button class="btn btn-sm btn-outline-secondary" disabled>סגורה להצטרפות</button>';
+            } else if (isAuth) {
+              action = '<form method="post" action="/class/' + c.id + '/request-join/">' + csrfHtml +
+                '<button class="btn btn-sm btn-primary">בקשת הצטרפות</button></form>';
+            } else {
+              action = '<a class="btn btn-sm btn-primary" href="' + wallUrl + '">בקשת הצטרפות</a>';
+            }
+            var card = document.createElement('div');
+            card.className = 'card-surface cls-card';
+            card.innerHTML = '<div class="cls-card-name"></div>' +
+              '<div class="cls-card-meta"></div>' +
+              '<div class="cls-card-actions">' + action + '</div>';
+            // textContent for user-supplied strings (class name / teacher) - no HTML injection.
+            card.querySelector('.cls-card-name').textContent = c.name;
+            card.querySelector('.cls-card-meta').textContent =
+              'מורה: ' + c.teacher + ' · ' + c.member_count + ' תלמידים';
+            box.appendChild(card);
+          });
+        });
+    }, 180);
+  });
+})();
+</script>
 {% endblock %}

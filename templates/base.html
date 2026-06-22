@@ -65,6 +65,11 @@
           <a class="nav-link px-2" href="{% url 'community' %}" title="קהילה" aria-label="קהילה">
             <i class="bi bi-people" style="font-size:1.3rem"></i>
           </a>
+          {% if show_my_classes %}
+          <a class="nav-link px-2" href="{% url 'my_classes' %}" title="הכיתות שלי" aria-label="הכיתות שלי">
+            <i class="bi bi-easel" style="font-size:1.3rem"></i>
+          </a>
+          {% endif %}
         </div>
 
         <!-- End (left in RTL): user / auth - kept as before -->

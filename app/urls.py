@@ -38,6 +38,7 @@ urlpatterns = [
     # --- Teachers & Classes / Classrooms (Chapter 9) ---
     path("classes/", classroom_views.my_classes, name="my_classes"),
     path("classes/all/", classroom_views.class_directory, name="class_directory"),
+    path("classes/search/", classroom_views.class_search, name="class_search"),
     path("classes/become-teacher/", classroom_views.become_teacher, name="become_teacher"),
     path("classes/new/", classroom_views.class_create, name="class_create"),
     path("class/<int:pk>/request-join/", classroom_views.class_request_join, name="class_request_join"),

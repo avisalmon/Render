@@ -11,7 +11,7 @@ from app.classroom_models import (
     ClassMessage,
     TeacherClass,
 )
-from app.models import Course, LessonModelSubmission, Notification, Video
+from app.models import Course, LessonModelSubmission, Notification, UserVideoProgress, Video
 
 pytestmark = pytest.mark.django_db
 
@@ -224,6 +224,49 @@ def test_owner_pages_render():
     assert tc.get(f"/class/{klass.id}/").status_code == 200
 
 
+def test_class_student_shows_per_lesson_detail_and_uploads():
+    teacher = _teacher()
+    klass = _class(teacher)
+    student = _student("lsdetail")
+    ClassMembership.objects.create(klass=klass, student=student, status="active")
+    course = Course.objects.create(title="Build", slug="ls-build", is_published=True,
+                                   project_upload_type="scratch")
+    v1 = Video.objects.create(course=course, lesson_order=1, title="Lesson One")
+    Video.objects.create(course=course, lesson_order=2, title="Lesson Two")
+    UserVideoProgress.objects.create(user=student, video=v1, percent_watched=100)
+    LessonModelSubmission.objects.create(user=student, video=v1, scratch_id="555000111")
+
+    tc = Client(); tc.force_login(teacher)
+    body = tc.get(f"/class/{klass.id}/student/{student.id}/").content.decode()
+    # Every lesson is listed, done or not.
+    assert "Lesson One" in body
+    assert "Lesson Two" in body
+    assert "cls-lesson" in body
+    # The lesson with an upload is tagged and the upload shows inline.
+    assert "הגשה" in body
+    assert "555000111" in body
+
+
+def test_top_nav_my_classes_only_for_involved_users():
+    # A user with no class involvement does not get the top-nav shortcut.
+    plain = _student("nav_plain")
+    pc = Client(); pc.force_login(plain)
+    assert 'aria-label="הכיתות שלי"' not in pc.get("/courses/").content.decode()
+
+    # An owner sees it.
+    teacher = _teacher("nav_teacher")
+    _class(teacher)
+    oc = Client(); oc.force_login(teacher)
+    assert 'aria-label="הכיתות שלי"' in oc.get("/courses/").content.decode()
+
+    # A member sees it.
+    klass = _class(_teacher("nav_owner2"), "NavClass")
+    member = _student("nav_member")
+    ClassMembership.objects.create(klass=klass, student=member, status="active")
+    mc = Client(); mc.force_login(member)
+    assert 'aria-label="הכיתות שלי"' in mc.get("/courses/").content.decode()
+
+
 def test_user_search_matches_from_first_letter():
     teacher = _teacher()
     klass = _class(teacher)
@@ -268,24 +311,40 @@ def test_qr_owner_only():
 
 # --- public directory + request-to-join + approval ---------------------------
 
-def test_directory_public_and_hides_student_data():
+def test_directory_does_not_list_classes_upfront():
+    # The directory is a search page, not a full list (so people don't wander in).
+    teacher = _teacher()
+    _class(teacher, "Astronomy")
+    body = Client().get("/classes/all/").content.decode()
+    assert "Astronomy" not in body          # nothing listed before you search
+    assert 'id="classSearch"' in body       # just the search box
+
+
+def test_class_search_finds_by_name_and_hides_student_data():
     teacher = _teacher()
     klass = _class(teacher, "Astronomy")
     student = _student("d1")
     ClassMembership.objects.create(klass=klass, student=student, status="active")
-    # Anonymous can browse the directory.
-    body = Client().get("/classes/all/").content.decode()
-    assert "Astronomy" in body
-    assert teacher.profile.public_name in body
-    # No student identity / progress leaks into the public directory.
-    assert student.username not in body
-    assert "cls-bar" not in body  # the progress-bar element never appears here
+    # Anonymous can search; matches come back with teacher + count, no student data.
+    data = Client().get("/classes/search/?q=astro").json()
+    names = [c["name"] for c in data["results"]]
+    assert "Astronomy" in names
+    row = next(c for c in data["results"] if c["name"] == "Astronomy")
+    assert row["teacher"] == teacher.profile.public_name
+    assert row["member_count"] == 1
+    # No student identity leaks in the payload.
+    assert student.username not in Client().get("/classes/search/?q=astro").content.decode()
 
 
-def test_anonymous_request_button_points_to_wall():
-    klass = _class(_teacher())
+def test_class_search_empty_query_returns_nothing():
+    _class(_teacher(), "Astronomy")
+    assert Client().get("/classes/search/?q=").json()["results"] == []
+
+
+def test_anonymous_directory_carries_wall_link():
+    _class(_teacher())
     body = Client().get("/classes/all/").content.decode()
-    assert "/join/?next=/classes/all/" in body
+    assert "/join/?next=/classes/all/" in body  # used by the JS for anonymous requests
 
 
 def test_request_to_join_notifies_teacher_in_system_and_email():
@@ -305,14 +364,15 @@ def test_request_to_join_notifies_teacher_in_system_and_email():
     assert f"/class/request/{req.id}/approve/" in mail.outbox[0].body
 
 
-def test_directory_shows_request_sent_state():
+def test_class_search_reflects_request_sent_state():
     teacher = _teacher()
     klass = _class(teacher, "Biology")
     student = _student("d3")
     ClassJoinRequest.objects.create(klass=klass, student=student, status="pending")
     sc = Client(); sc.force_login(student)
-    body = sc.get("/classes/all/").content.decode()
-    assert "הבקשה נשלחה" in body
+    row = next(c for c in sc.get("/classes/search/?q=biolog").json()["results"]
+               if c["id"] == klass.id)
+    assert row["requested"] is True
 
 
 def test_approve_is_owner_only():
@@ -407,15 +467,16 @@ def test_request_join_blocked_when_class_closed():
     assert len(mail.outbox) == 0
 
 
-def test_directory_shows_closed_state():
+def test_class_search_reflects_closed_state():
     teacher = _teacher()
     klass = _class(teacher, "ClosedClub")
     klass.is_open = False
     klass.save()
     student = _student("f2")
     sc = Client(); sc.force_login(student)
-    body = sc.get("/classes/all/").content.decode()
-    assert "סגורה להצטרפות" in body
+    row = next(c for c in sc.get("/classes/search/?q=closedclub").json()["results"]
+               if c["id"] == klass.id)
+    assert row["is_open"] is False
 
 
 def test_repeated_request_does_not_respam_teacher():
