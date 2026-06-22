@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}אישור בקשת הצטרפות - {{ req.klass.name }}{% endblock %}
+
+{% block content %}
+<div class="py-3 classes">
+  <h1 class="mb-1">בקשת הצטרפות</h1>
+  <p class="text-muted mb-3">כיתה: {{ req.klass.name }}</p>
+
+  <div class="card-surface" style="max-width:520px">
+    <p class="mb-3"><strong>{{ student_name }}</strong> ביקש להצטרף לכיתה.</p>
+    {% if was_removed %}
+    <p class="cls-warn">לתשומת לבכם: תלמיד זה הוסר מהכיתה בעבר.</p>
+    {% endif %}
+    <div class="d-flex gap-2">
+      <form method="post" action="{% url 'class_request_approve' req.id %}">{% csrf_token %}
+        <button class="btn btn-primary">אישור והוספה לכיתה</button>
+      </form>
+      <form method="post" action="{% url 'class_request_decline' req.id %}">{% csrf_token %}
+        <button class="btn btn-outline-secondary">דחייה</button>
+      </form>
+      <a href="{% url 'class_manage' req.klass.id %}" class="btn btn-link">לניהול הכיתה</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

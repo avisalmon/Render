@@ -678,6 +678,7 @@ def courses_catalog(request):
             "tracks": [{"key": "other", "meta": {"title": "", "subtitle": ""}, "courses": leftover}]})
 
     continue_courses = []
+    my_certificates = []
     if request.user.is_authenticated:
         cmap = {c.pk: c for c in courses_qs}
         seen = set()
@@ -693,10 +694,18 @@ def courses_catalog(request):
             if len(continue_courses) >= 4:
                 break
 
+        # Trophies: courses the learner has been certified in.
+        from .models import CourseCertificate
+        my_certificates = list(
+            CourseCertificate.objects.filter(user=request.user)
+            .select_related("course").order_by("-issued_at")
+        )
+
     return render(request, "app/courses_catalog.html", {
         "domain_groups": domain_groups,
         "total_courses": len(courses_qs),
         "continue_courses": continue_courses,
+        "my_certificates": my_certificates,
     })
 
 

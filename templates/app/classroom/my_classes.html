@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}הכיתות שלי - babook{% endblock %}
+
+{% block content %}
+<div class="py-3 classes">
+
+  <div class="cls-section-head">
+    <h1 class="mb-1">הכיתות שלי</h1>
+    <a href="{% url 'class_directory' %}" class="btn btn-sm btn-outline-secondary">עיון בכל הכיתות</a>
+  </div>
+  <p class="text-muted mb-3">פתחו כיתה, הזמינו תלמידים בקישור או בקוד QR, ועקבו אחרי ההתקדמות שלהם.</p>
+
+  {% if invites %}
+  <section class="card-surface mb-3">
+    <h2 class="cls-h2">הזמנות שמחכות לך</h2>
+    {% for inv in invites %}
+    <div class="cls-invite">
+      <div>
+        <strong>{{ inv.klass.name }}</strong>
+        <span class="text-muted">הוזמנת על ידי {{ inv.inviter.profile.public_name }}</span>
+      </div>
+      <div class="cls-invite-actions">
+        <form method="post" action="{% url 'invite_respond' inv.id %}">{% csrf_token %}
+          <input type="hidden" name="action" value="accept">
+          <button class="btn btn-sm btn-primary">הצטרפות</button>
+        </form>
+        <form method="post" action="{% url 'invite_respond' inv.id %}">{% csrf_token %}
+          <input type="hidden" name="action" value="decline">
+          <button class="btn btn-sm btn-outline-secondary">דחייה</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  <section class="mb-4">
+    <div class="cls-section-head">
+      <h2 class="cls-h2">כיתות שאני מלמד</h2>
+      {% if is_teacher %}
+      <a href="{% url 'class_create' %}" class="btn btn-sm btn-primary">פתיחת כיתה</a>
+      {% endif %}
+    </div>
+
+    {% if not is_teacher %}
+    <div class="card-surface cls-empty">
+      <p class="mb-2">רוצים ללמד? פתחו מרחב מורה והקימו כיתה משלכם.</p>
+      <form method="post" action="{% url 'become_teacher' %}">{% csrf_token %}
+        <button class="btn btn-primary">הפכו למורה</button>
+      </form>
+    </div>
+    {% elif owned %}
+    <div class="cls-grid">
+      {% for k in owned %}
+      <div class="card-surface cls-card">
+        <div class="cls-card-name">{{ k.name }}</div>
+        <div class="cls-card-meta">{{ k.member_count }} תלמידים{% if not k.is_open %} · סגורה להצטרפות{% endif %}</div>
+        <div class="cls-card-actions">
+          <a href="{% url 'class_manage' k.id %}" class="btn btn-sm btn-primary">ניהול</a>
+          <a href="{% url 'classroom' k.id %}" class="btn btn-sm btn-outline-secondary">לכיתה</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="card-surface cls-empty">
+      <p class="mb-0 text-muted">עדיין אין כיתות. לחצו "פתיחת כיתה" כדי להתחיל.</p>
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="mb-4">
+    <h2 class="cls-h2">כיתות שאני חבר בהן</h2>
+    {% if member_of %}
+    <div class="cls-grid">
+      {% for k in member_of %}
+      <div class="card-surface cls-card">
+        <div class="cls-card-name">{{ k.name }}</div>
+        <div class="cls-card-meta">מורה: {{ k.owner.profile.public_name }}</div>
+        <div class="cls-card-actions">
+          <a href="{% url 'classroom' k.id %}" class="btn btn-sm btn-primary">לכיתה</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="card-surface cls-empty">
+      <p class="mb-0 text-muted">עדיין לא הצטרפת לכיתה. קישור או קוד QR ממורה יכניס אותך לכאן.</p>
+    </div>
+    {% endif %}
+  </section>
+
+</div>
+{% endblock %}

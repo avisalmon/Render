@@ -1139,6 +1139,47 @@ Tests + full regression green; deployed + smoke-tested.
 
 ---
 
+## EPIC-9 — Teachers & Classes (Classrooms)
+
+Spec: main_spec.md Chapter 9. Approved by Avi 2026-06-21 ("add it to the backlog
+and run it"). Any member can become a teacher, open a class, and invite people by
+link, QR, or in-system invite. Teacher follows each student's progress and
+deliverables; the class gets a shared space for discussions, teacher messages, and
+a project gallery. Privacy by role: progress and achievements are teacher-only;
+only projects and discussions are shared with classmates. Built in dev for review;
+not deployed until Avi says so.
+
+### SPR-9.1 — Classrooms MVP
+
+| ID | Item | REQ | Status |
+|---|---|---|---|
+| F-9.1 | `is_teacher` flag + one-click become-a-teacher | REQ-9.1 | DONE (dev) |
+| F-9.2 | Create class, generate unguessable join code | REQ-9.2 | DONE (dev) |
+| F-9.3 | Shareable join link + QR image + WhatsApp/copy | REQ-9.3 | DONE (dev) |
+| F-9.4 | Join via link/QR: logged-in instant, logged-out via /join/ then auto-join | REQ-9.4 | DONE (dev) |
+| F-9.5 | Invite existing members in-system: search + notification/message + accept/decline | REQ-9.5 | DONE (dev) |
+| F-9.6 | Teacher roster + per-student progress, deliverables, achievements | REQ-9.6 | DONE (dev) |
+| F-9.7 | Classroom space: discussions, teacher messages, project gallery | REQ-9.7 | DONE (dev) |
+| F-9.8 | Per-student project share opt-out (default shared) | REQ-9.8 | DONE (dev) |
+| F-9.9 | Privacy boundary: progress/achievements teacher-only (tested) | REQ-9.9 | DONE (dev) |
+| F-9.10 | Leave / remove / open-close / rotate code / delete | REQ-9.10 | DONE (dev) |
+| F-9.11 | RTL + mobile + anonymous join via wall | REQ-9.11 | DONE (dev) |
+| F-9.12 | Demo seed command + classes viewable end-to-end on dev | REQ-9.3 acc. | DONE (dev) |
+
+### SPR-9.2 — Public directory + request-to-join (teacher approval)
+
+| ID | Item | REQ | Status |
+|---|---|---|---|
+| F-9.13 | Public class directory at /classes/all/ (no student data); browse-only | REQ-9.12 | DONE (dev) |
+| F-9.14 | Request to join from directory; logged-out via /join/ first | REQ-9.13 | DONE (dev) |
+| F-9.15 | Teacher notified in-system + email with approval link | REQ-9.13 | DONE (dev) |
+| F-9.16 | Owner-only approve (POST/confirm page) -> student becomes active | REQ-9.13/9.14 | DONE (dev) |
+| F-9.17 | Student notified in-system + email with class link on approval | REQ-9.13 | DONE (dev) |
+| F-9.18 | Decline path; directory reflects request-sent / member state | REQ-9.13 | DONE (dev) |
+| F-9.19 | Emails plain Hebrew, fail_silently; no state change on bare GET | REQ-9.14 | DONE (dev) |
+
+---
+
 ## Status Summary (reconciled 2026-06-09)
 
 **Full regression: 356/356 passing (2026-06-12, incl. EPIC-3/4/5).** Per-sprint test counts: 1.1=19, 1.2=17,

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ student_name }} - {{ klass.name }}{% endblock %}
+
+{% block content %}
+<div class="py-3 classes">
+
+  <div class="cls-section-head">
+    <div>
+      <h1 class="mb-1">{{ student_name }}</h1>
+      <p class="text-muted mb-0">התקדמות ותוצרים בכיתה {{ klass.name }}</p>
+    </div>
+    <a href="{% url 'class_manage' klass.id %}" class="btn btn-outline-secondary">חזרה לכיתה</a>
+  </div>
+
+  {% if courses %}
+  {% for c in courses %}
+  <section class="card-surface mb-3">
+    <div class="cls-course-head">
+      <div>
+        <strong>{{ c.course.title }}</strong>
+        {% if c.certificate %}
+        <a href="{% url 'certificate_view' c.certificate.certificate_id %}" class="cls-badge">הוסמך</a>
+        {% elif c.completed %}
+        <span class="cls-badge cls-badge-soft">הושלם</span>
+        {% endif %}
+      </div>
+      <div class="cls-course-pct">{{ c.pct }}%</div>
+    </div>
+    <div class="cls-bar"><span style="width:{{ c.pct }}%"></span></div>
+    <div class="cls-small text-muted">{{ c.done }} מתוך {{ c.total }} שיעורים</div>
+
+    {% if c.projects %}
+    {% include "app/_stl_gallery.html" with models=c.projects gallery_title="תוצרים" can_download=False %}
+    {% endif %}
+  </section>
+  {% endfor %}
+  {% else %}
+  <div class="card-surface">
+    <p class="mb-0 text-muted">התלמיד עדיין לא התחיל קורסים.</p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="module">
+  import { initGallery } from "{% static 'js/stl-viewer.js' %}";
+  initGallery();
+</script>
+{% endblock %}

@@ -1185,6 +1185,96 @@ Chapter 8 is **DONE** when, in production:
 
 ---
 
+## Chapter 9 — Teachers & Classes (Classrooms)
+
+> **Status: BUILT IN DEV (2026-06-21), not deployed.** Approved by Avi ("add it
+> to the backlog and run it"). REQ-9.1–9.11 implemented and tested in dev;
+> REQ-9.12–9.14 (public class directory + request-to-join with teacher approval,
+> notified in-system and by email both ways) added on Avi's follow-up and built
+> in dev. Production deploy awaits Avi's explicit word.
+
+### 9.0 Vision
+
+Let any member turn babook from a solo-learning site into something they can
+**teach with**: a parent, a school teacher, a youth-group leader, or a course
+graduate opens a **class**, invites people by a link / QR / in-system message,
+and then follows their students' learning while the class gets a shared space to
+discuss and show what they built. Teaching is self-serve (no admin approval), so
+the platform grows by its own users bringing their groups in.
+
+**Design laws**
+- **Self-serve**: becoming a teacher is one click; no gatekeeping.
+- **Frictionless join**: a link or QR is enough; logged-in users join in one tap,
+  logged-out users land on the existing `/join/` wall and are dropped into the
+  class right after signing in (reuses REQ-5.4 return-to-intent).
+- **Privacy by role**: a student's *progress / achievements / "contentment"* is
+  visible to the **teacher only**. Only **projects** and **discussions** are
+  shared with classmates — and a student can opt a project out (default: shared).
+- **No new walled garden**: a class reuses existing objects (courses, lessons,
+  `LessonModelSubmission`/showcase projects, community chat/threads, certificates,
+  `UserVideoProgress`) — it's a *lens + space over* them, not a parallel system.
+
+### 9.1 Data model (proposed)
+
+- **`TeacherProfile`** (or a `is_teacher` flag on `UserProfile`) — marks a member
+  who has opted into teaching. Created on first "become a teacher" click.
+- **`Class`** — `owner` (teacher, FK User), `name`, `slug`, `description`,
+  `join_code` (random, unguessable; powers link + QR), `is_open` (accepting
+  members), `created_at`, optional `course` focus + `capacity`.
+- **`ClassMembership`** — `klass` (FK), `student` (FK User), `status`
+  (invited / requested / active / removed), `joined_at`,
+  `share_projects` (bool, default **True** = opt-out model).
+- **`ClassInvite`** (in-system invitations) — `klass`, `inviter`, `invitee`
+  (FK User), `status` (pending / accepted / declined), `created_at`. Surfaces as
+  a notification + a "request to join the class" message to the invitee.
+- **`ClassJoinRequest`** (student-initiated, teacher-approved) — `klass`,
+  `student` (FK User), `status` (pending / approved / declined), optional
+  `message`, `created_at`, `decided_at`. Created from the public class directory;
+  the teacher is notified in-system and by email and approves or declines.
+- Classroom discussions/messages use a per-class **`ClassMessage`** model
+  (discussion posts; teacher posts are flagged as announcements).
+- As built: the class model is **`TeacherClass`** and the `is_teacher` flag lives
+  on `UserProfile`.
+
+### 9.2 Requirements
+
+| REQ-ID | Title | Expectation (acceptance) | Status |
+|---|---|---|---|
+| REQ-9.1 | Become a teacher | Any logged-in member can become a teacher in one click. Flips `is_teacher`; unlocks the teacher UI. No admin approval. | DONE (dev) |
+| REQ-9.2 | Create a class | A teacher creates a class (name + optional description). Generates an unguessable `join_code`. Lands on the class management page. | DONE (dev) |
+| REQ-9.3 | Invite by link + QR | The class page shows a **shareable join link** (`/class/join/<join_code>/`) and a **QR code** of it, with copy + "share to WhatsApp" buttons, to send to anyone. | DONE (dev) |
+| REQ-9.4 | Join via link/QR | Opening the join link: if **logged in** → joins immediately (membership `active`) and lands in the classroom; if **logged out** → routed through `/join/` (login/register), then auto-joined and returned to the classroom (reuses REQ-5.4 return-to-intent). | DONE (dev) |
+| REQ-9.5 | Invite existing members in-system | A teacher can **search system users** and send a join invitation. The invitee gets an in-app **notification**; accepting makes them `active`, declining closes it. | DONE (dev) |
+| REQ-9.6 | Teacher roster + student insight | For each `active` student the teacher sees their **course progress, deliverables/projects, achievements/certificates** across courses the student has taken. Teacher-only. | DONE (dev) |
+| REQ-9.7 | Classroom space | A shared class page every member can see/join, containing: **(a) discussions**, **(b) teacher messages/announcements**, **(c) the class project gallery** (members' shared projects). | DONE (dev) |
+| REQ-9.8 | Project sharing opt-out | Each student's projects are shared to the class **by default**; a per-membership toggle lets a student **opt out** (`share_projects=False`) so their projects are hidden from classmates (still visible to the teacher). | DONE (dev) |
+| REQ-9.9 | Privacy boundary | Classmates see **only** shared projects + discussions. A student's **progress, achievements, and contentment are never shown to other students** — teacher-only. Enforced in views + covered by tests. | DONE (dev) |
+| REQ-9.10 | Leave / manage / close | Students can leave a class; the teacher can remove a member, close/reopen joining, rotate the join code, and delete the class. | DONE (dev) |
+| REQ-9.11 | RTL + mobile + anon | All class surfaces are Hebrew-first RTL, work ≥360px, and the join link works for logged-out visitors via the existing wall. | DONE (dev) |
+| REQ-9.12 | Public class directory | Everyone (incl. logged-out) can browse a directory of all classes at `/classes/all/` — name, teacher, member count, description. **No student data shown.** Visitors cannot enter or self-join; the only action is "request to join". | DONE (dev) |
+| REQ-9.13 | Request to join + teacher approval | From the directory a member sends a **join request** (logged-out users go through `/join/` first). The teacher is notified **in-system (notification) and by email with a link**. The teacher approves or declines; on **approval** the student becomes `active` and is notified **in-system and by email with a link to the class**. State is reflected in the directory (request sent / member). | DONE (dev) |
+| REQ-9.14 | Email both ways, safely | Emails are plain Hebrew text, sent via the existing Resend/console backend with `fail_silently=True` so a mail hiccup never breaks the flow. Approval is **owner-only** (the site superuser keeps the admin override used everywhere in Classrooms) and never mutates state on a bare GET (the email link lands on a confirm page; approval is a POST). A closed class (`is_open=False`) rejects new requests, and a pending request never re-spams the teacher. | DONE (dev) |
+
+### 9.3 Acceptance (chapter)
+
+1. A member becomes a teacher, creates a class, and gets a working link + QR.
+2. A logged-in user opens the link and is in the class instantly; a logged-out
+   user signs in and lands in the class afterwards.
+3. A teacher finds an existing user, invites them in-system, and the user accepts
+   from their notifications.
+4. The teacher sees each student's progress + deliverables; classmates do **not**.
+5. The classroom shows discussions, teacher messages, and the shared project
+   gallery; a student who opts out is hidden from classmates but not the teacher.
+6. Demo: a few seeded teachers + classes + students, viewable end-to-end on dev.
+7. Full regression green; privacy boundaries covered by tests.
+8. The public directory lists all classes with no student data; a logged-out
+   visitor is sent to sign in, then can request to join.
+9. A join request reaches the teacher in-system and by email; the teacher
+   approves from a link; the student is then notified in-system and by email and
+   can enter the class. Only the owner can approve; approval is a POST.
+
+---
+
 ## Reference
 
 - **Stack**: Django 5.2, Gunicorn, WhiteNoise, SQLite (Render disk), django-allauth (Google + GitHub OAuth), Bunny Stream (video), Stripe + Green Invoice (billing), Resend (email), Plausible (analytics), GitHub Copilot Business (seat provisioning via GitHub REST API), OpenAI API (AI chat, GPT-4o-mini / GPT-4o, gpt-4o-transcribe), yt-dlp + ffmpeg (authoring pipeline)

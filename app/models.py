@@ -21,6 +21,8 @@ class UserProfile(models.Model):
     github_username = models.CharField(max_length=100, blank=True, default="")
     # Authoring Studio: may create/edit courses. Staff are implicitly authors.
     is_author = models.BooleanField(default=False)
+    # Classrooms (Chapter 9): opted into teaching - can open and run classes.
+    is_teacher = models.BooleanField(default=False)
     # Community (EPIC-6.1): public member identity. Private by default.
     is_public = models.BooleanField(default=False)
     bio = models.CharField(max_length=300, blank=True, default="")
@@ -1113,4 +1115,11 @@ from .events_models import (  # noqa: E402,F401
     EventPhoto,
     EventRSVP,
     EventSeries,
+)
+from .classroom_models import (  # noqa: E402,F401
+    ClassInvite,
+    ClassJoinRequest,
+    ClassMembership,
+    ClassMessage,
+    TeacherClass,
 )

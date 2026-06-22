@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ klass.name }} - מרחב הכיתה{% endblock %}
+
+{% block content %}
+<div class="py-3 classes">
+
+  <div class="cls-section-head">
+    <div>
+      <h1 class="mb-1">{{ klass.name }}</h1>
+      <p class="text-muted mb-0">מורה: {{ klass.owner.profile.public_name }} · {{ klass.member_count }} תלמידים</p>
+    </div>
+    {% if is_owner %}
+    <a href="{% url 'class_manage' klass.id %}" class="btn btn-outline-secondary">ניהול הכיתה</a>
+    {% endif %}
+  </div>
+
+  {% if klass.description %}
+  <div class="card-surface mb-3 cls-desc">{{ klass.description|linebreaksbr }}</div>
+  {% endif %}
+
+  <div class="cls-room-grid">
+
+    <!-- Discussion + teacher messages -->
+    <section class="card-surface">
+      <h2 class="cls-h2">דיונים והודעות</h2>
+
+      <div class="cls-stream">
+        {% for m in msgs %}
+        <div class="cls-msg {% if m.is_announcement %}cls-msg-teacher{% endif %}">
+          <div class="cls-msg-head">
+            <strong>{{ m.author.profile.public_name }}</strong>
+            {% if m.is_announcement %}<span class="cls-tag">מורה</span>{% endif %}
+            <span class="cls-msg-date">{{ m.created_at|date:"d/m H:i" }}</span>
+          </div>
+          <div class="cls-msg-body">{{ m.body|linebreaksbr }}</div>
+        </div>
+        {% empty %}
+        <p class="text-muted">אין עדיין הודעות. כתבו את הראשונה.</p>
+        {% endfor %}
+      </div>
+
+      <form method="post" action="{% url 'class_post' klass.id %}" class="cls-post">
+        {% csrf_token %}
+        <textarea name="body" rows="2" class="form-control" required
+                  placeholder="{% if is_owner %}הודעה לכיתה...{% else %}כתבו לכיתה...{% endif %}"></textarea>
+        <button class="btn btn-primary">שליחה</button>
+      </form>
+    </section>
+
+    <!-- Project gallery -->
+    <section class="card-surface">
+      <h2 class="cls-h2">פרויקטים של הכיתה</h2>
+      {% if galleries %}
+      {% for g in galleries %}
+      <div class="cls-gallery-block">
+        <div class="cls-gallery-name">{{ g.name }}</div>
+        {% include "app/_stl_gallery.html" with models=g.models can_download=False %}
+      </div>
+      {% endfor %}
+      {% else %}
+      <p class="text-muted mb-0">עדיין אין פרויקטים משותפים בכיתה.</p>
+      {% endif %}
+    </section>
+
+  </div>
+
+  <!-- Member controls -->
+  {% if membership %}
+  <section class="cls-controls mt-3">
+    <form method="post" action="{% url 'class_toggle_share' klass.id %}">{% csrf_token %}
+      <button class="btn btn-sm btn-outline-secondary">
+        {% if membership.share_projects %}הסתרת הפרויקטים שלי מהכיתה{% else %}שיתוף הפרויקטים שלי בכיתה{% endif %}
+      </button>
+    </form>
+    <form method="post" action="{% url 'class_leave' klass.id %}"
+          onsubmit="return confirm('לצאת מהכיתה?')">
+      {% csrf_token %}
+      <button class="btn btn-sm btn-link text-danger">יציאה מהכיתה</button>
+    </form>
+  </section>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="module">
+  import { initGallery } from "{% static 'js/stl-viewer.js' %}";
+  initGallery();
+</script>
+{% endblock %}

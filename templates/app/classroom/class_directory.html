@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}כל הכיתות - babook{% endblock %}
+{% block meta_description %}עיון בכל הכיתות הפתוחות ב-babook. בקשו הצטרפות והמורה יאשר.{% endblock %}
+
+{% block content %}
+<div class="py-3 classes">
+
+  <h1 class="mb-1">כל הכיתות</h1>
+  <p class="text-muted mb-3">עיון בכל הכיתות. כדי להצטרף שולחים בקשה למורה, והמורה מאשר.</p>
+
+  {% if rows %}
+  <div class="cls-grid">
+    {% for r in rows %}
+    <div class="card-surface cls-card">
+      <div class="cls-card-name">{{ r.klass.name }}</div>
+      <div class="cls-card-meta">מורה: {{ r.klass.owner.profile.public_name }} · {{ r.member_count }} תלמידים</div>
+      {% if r.klass.description %}
+      <div class="cls-dir-desc">{{ r.klass.description }}</div>
+      {% endif %}
+      <div class="cls-card-actions">
+        {% if r.is_owner %}
+        <a href="{% url 'class_manage' r.klass.id %}" class="btn btn-sm btn-outline-secondary">ניהול</a>
+        {% elif r.is_member %}
+        <a href="{% url 'classroom' r.klass.id %}" class="btn btn-sm btn-primary">לכיתה</a>
+        {% elif r.requested %}
+        <button class="btn btn-sm btn-outline-secondary" disabled>הבקשה נשלחה</button>
+        {% elif not r.klass.is_open %}
+        <button class="btn btn-sm btn-outline-secondary" disabled>סגורה להצטרפות</button>
+        {% elif user.is_authenticated %}
+        <form method="post" action="{% url 'class_request_join' r.klass.id %}">{% csrf_token %}
+          <button class="btn btn-sm btn-primary">בקשת הצטרפות</button>
+        </form>
+        {% else %}
+        <a href="{% url 'join_wall' %}?next={% url 'class_directory' %}" class="btn btn-sm btn-primary">בקשת הצטרפות</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card-surface cls-empty">
+    <p class="mb-0 text-muted">עדיין אין כיתות.</p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

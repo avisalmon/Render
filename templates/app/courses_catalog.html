@@ -19,14 +19,40 @@
     </div>
   </div>
 
-  <!-- Continue learning -->
-  {% if continue_courses %}
-  <section class="mb-4">
-    <h2 class="catalog-section-title"><i class="bi bi-play-circle-fill"></i> המשך ללמוד</h2>
-    <div class="course-grid">
-      {% for c in continue_courses %}{% include "app/_course_card.html" with c=c %}{% endfor %}
-    </div>
-  </section>
+  <!-- Continue learning (right) + achievements (left), side by side -->
+  {% if continue_courses or my_certificates %}
+  <div class="resume-split mb-3">
+    {% if continue_courses %}
+    <section class="resume-col">
+      <h2 class="catalog-section-title"><i class="bi bi-play-circle-fill"></i> המשך ללמוד</h2>
+      <div class="hcard-list">
+        {% for c in continue_courses %}
+        <a href="{% url 'courses_detail' c.course.slug %}" class="hcard">
+          <span class="hcard-title">{{ c.course.title }}</span>
+          <span class="hcard-progress">
+            <span class="hcard-bar"><span style="width:{{ c.progress.pct }}%"></span></span>
+            <span class="hcard-pct">{{ c.progress.pct }}%</span>
+          </span>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    {% if my_certificates %}
+    <section class="resume-col">
+      <h2 class="catalog-section-title"><i class="bi bi-trophy-fill"></i> ההישגים שלי</h2>
+      <div class="hcard-list">
+        {% for cert in my_certificates %}
+        <a href="{% url 'certificate_view' cert.certificate_id %}" class="hcard hcard--trophy">
+          <span class="hcard-title">{{ cert.course.title }}</span>
+          <span class="hcard-meta">הוסמכת · {{ cert.issued_at|date:"d/m/Y" }}</span>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+  </div>
   {% endif %}
 
   <!-- Domain filter chips -->
@@ -89,13 +115,29 @@
   if (!search) return;
 
   var domains = Array.prototype.slice.call(document.querySelectorAll('.catalog-domain'));
-  // The chips + "continue learning" + every domain section get hidden in search mode.
-  var browseEls = [chips].concat(domains);
-  var continueSection = (function () {
-    var h = document.querySelector('.catalog-section-title');
-    return h ? h.closest('section') : null;
-  })();
-  if (continueSection && continueSection.id !== 'catalogResults') browseEls.push(continueSection);
+  // The chips + status/achievements split + every domain section hide in search mode.
+  var resumeSplit = document.querySelector('.resume-split');
+  var browseEls = [chips, resumeSplit].concat(domains);
+
+  // Domain chip filter (independent of search).
+  var currentDomain = 'all';
+  function applyDomainFilter() {
+    domains.forEach(function (d) {
+      d.style.display = (currentDomain === 'all' || d.dataset.domain === currentDomain) ? '' : 'none';
+    });
+  }
+  if (chips) {
+    chips.addEventListener('click', function (e) {
+      var btn = e.target.closest('.catalog-chip');
+      if (!btn) return;
+      Array.prototype.forEach.call(chips.querySelectorAll('.catalog-chip'),
+        function (c) { c.classList.remove('is-active'); });
+      btn.classList.add('is-active');
+      currentDomain = btn.dataset.domain || 'all';
+      if (search.value) search.value = '';   // a chip exits search mode
+      showBrowse();
+    });
+  }
 
   // slug -> original card node, for cloning into the ranked results grid.
   var cardBySlug = {};
@@ -107,6 +149,7 @@
     browseEls.forEach(function (el) { if (el) el.style.display = ''; });
     results.style.display = 'none';
     empty.style.display = 'none';
+    applyDomainFilter();   // keep the active chip's filter when leaving search
   }
 
   function showResults(slugs, mode) {

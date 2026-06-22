@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}{{ klass.name }} - ניהול כיתה{% endblock %}
+
+{% block content %}
+<div class="py-3 classes">
+
+  <div class="cls-section-head">
+    <div>
+      <h1 class="mb-1">{{ klass.name }}</h1>
+      <p class="text-muted mb-0">{{ klass.member_count }} תלמידים{% if not klass.is_open %} · סגורה להצטרפות{% endif %}</p>
+    </div>
+    <a href="{% url 'classroom' klass.id %}" class="btn btn-outline-secondary">למרחב הכיתה</a>
+  </div>
+
+  <div class="cls-manage-grid">
+
+    <!-- Invite by link / QR -->
+    <section class="card-surface">
+      <h2 class="cls-h2">הזמנה בקישור או QR</h2>
+      <p class="text-muted cls-small">שלחו את הקישור או את קוד ה-QR. מי שלוחץ ומחובר מצטרף מיד; מי שלא, נרשם קודם ואז מצטרף.</p>
+
+      <div class="cls-link-row">
+        <input id="joinLink" class="form-control" value="{{ join_url }}" readonly>
+        <button class="btn btn-outline-secondary" type="button" id="copyLink">העתקה</button>
+      </div>
+      <div class="cls-share-row">
+        <a class="btn btn-sm btn-success" target="_blank" rel="noopener"
+           href="https://wa.me/?text={{ wa_text|urlencode }}">
+          <i class="bi bi-whatsapp"></i> שליחה בוואטסאפ</a>
+      </div>
+
+      <div class="cls-qr">
+        <img id="qrImg" src="{% url 'class_qr' klass.id %}" alt="QR code" width="180" height="180">
+        <div class="cls-qr-actions">
+          <a class="btn btn-sm btn-outline-secondary" href="{% url 'class_qr' klass.id %}"
+             download="class-qr.png">הורדה</a>
+          <button class="btn btn-sm btn-outline-secondary" type="button" id="copyQr">העתקה</button>
+        </div>
+      </div>
+
+      <form method="post" action="{% url 'class_rotate_code' klass.id %}" class="cls-small"
+            onsubmit="return confirm('הקישור והקוד הישנים יבוטלו. להמשיך?')">
+        {% csrf_token %}
+        <button class="btn btn-link p-0">יצירת קישור חדש (מבטל את הישן)</button>
+      </form>
+    </section>
+
+    <!-- Invite existing members -->
+    <section class="card-surface">
+      <h2 class="cls-h2">הזמנת חברים מהמערכת</h2>
+      <p class="text-muted cls-small">חפשו לפי שם או שם משתמש ושלחו הזמנה. התלמיד יקבל הודעה ויאשר.</p>
+
+      <input id="userSearch" class="form-control" placeholder="חיפוש משתמש..." autocomplete="off">
+      <div id="searchResults" class="cls-results"></div>
+
+      {% if pending %}
+      <h3 class="cls-h3">הזמנות שנשלחו</h3>
+      <ul class="cls-pending">
+        {% for inv in pending %}
+        <li>{{ inv.invitee.profile.public_name }} <span class="text-muted">ממתין</span></li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </section>
+
+  </div>
+
+  <!-- Join requests (students who asked to join) -->
+  {% if join_requests %}
+  <section class="card-surface mt-3" id="requests">
+    <h2 class="cls-h2">בקשות הצטרפות</h2>
+    <ul class="cls-requests">
+      {% for jr in join_requests %}
+      <li>
+        <span>{{ jr.student.profile.public_name }}{% if jr.message %} <span class="text-muted">- {{ jr.message }}</span>{% endif %}</span>
+        <span class="cls-req-actions">
+          <form method="post" action="{% url 'class_request_approve' jr.id %}">{% csrf_token %}
+            <button class="btn btn-sm btn-primary">אישור</button>
+          </form>
+          <form method="post" action="{% url 'class_request_decline' jr.id %}">{% csrf_token %}
+            <button class="btn btn-sm btn-outline-secondary">דחייה</button>
+          </form>
+        </span>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  <!-- Roster -->
+  <section class="card-surface mt-3">
+    <h2 class="cls-h2">תלמידים והתקדמות</h2>
+    {% if roster %}
+    <div class="cls-table-wrap">
+      <table class="cls-table">
+        <thead>
+          <tr><th>תלמיד</th><th>קורסים</th><th>תעודות</th><th>פרויקטים</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for r in roster %}
+          <tr>
+            <td>{{ r.name }}</td>
+            <td>{{ r.courses_count }}</td>
+            <td>{{ r.certs_count }}</td>
+            <td>{{ r.projects_count }}</td>
+            <td class="cls-row-actions">
+              <a href="{% url 'class_student' klass.id r.student.id %}" class="btn btn-sm btn-outline-secondary">צפייה</a>
+              <form method="post" action="{% url 'class_remove' klass.id r.student.id %}"
+                    onsubmit="return confirm('להסיר את {{ r.name }} מהכיתה?')">
+                {% csrf_token %}
+                <button class="btn btn-sm btn-link text-danger p-0">הסרה</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted mb-0">עדיין אין תלמידים. שתפו את הקישור או הזמינו חברים.</p>
+    {% endif %}
+  </section>
+
+  <!-- Class controls -->
+  <section class="cls-controls mt-3">
+    <form method="post" action="{% url 'class_toggle_open' klass.id %}">{% csrf_token %}
+      <button class="btn btn-sm btn-outline-secondary">
+        {% if klass.is_open %}סגירת הכיתה להצטרפות{% else %}פתיחת הכיתה להצטרפות{% endif %}
+      </button>
+    </form>
+    <form method="post" action="{% url 'class_delete' klass.id %}"
+          onsubmit="return confirm('למחוק את הכיתה לצמיתות? הפעולה אינה הפיכה.')">
+      {% csrf_token %}
+      <button class="btn btn-sm btn-link text-danger">מחיקת הכיתה</button>
+    </form>
+  </section>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  var link = document.getElementById('joinLink');
+  document.getElementById('copyLink').addEventListener('click', function () {
+    link.select();
+    navigator.clipboard.writeText(link.value).then(function () {
+      var b = document.getElementById('copyLink');
+      b.textContent = 'הועתק';
+      setTimeout(function () { b.textContent = 'העתקה'; }, 1500);
+    });
+  });
+
+  // Copy the QR image itself to the clipboard (falls back to opening it).
+  var copyQr = document.getElementById('copyQr');
+  copyQr.addEventListener('click', function () {
+    var src = document.getElementById('qrImg').src;
+    function done() { copyQr.textContent = 'הועתק'; setTimeout(function () { copyQr.textContent = 'העתקה'; }, 1500); }
+    if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+      fetch(src).then(function (r) { return r.blob(); }).then(function (blob) {
+        return navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      }).then(done).catch(function () { window.open(src, '_blank'); });
+    } else {
+      window.open(src, '_blank');
+    }
+  });
+
+  var search = document.getElementById('userSearch');
+  var box = document.getElementById('searchResults');
+  var timer = null, searchSeq = 0;
+  search.addEventListener('input', function () {
+    clearTimeout(timer);
+    var q = search.value.trim();
+    if (!q) { box.innerHTML = ''; return; }
+    var mySeq = ++searchSeq;
+    timer = setTimeout(function () {
+      fetch('{% url "class_user_search" klass.id %}?q=' + encodeURIComponent(q))
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (mySeq !== searchSeq) { return; }  // a newer keystroke superseded this
+          box.innerHTML = '';
+          if (!data.results.length) { box.innerHTML = '<div class="cls-result text-muted">לא נמצאו משתמשים</div>'; return; }
+          data.results.forEach(function (u) {
+            var row = document.createElement('form');
+            row.method = 'post';
+            row.action = '{% url "class_invite" klass.id %}';
+            row.className = 'cls-result';
+            row.innerHTML = '{% csrf_token %}' +
+              '<span>' + u.name + ' <span class="text-muted">@' + u.username + '</span></span>' +
+              '<input type="hidden" name="user_id" value="' + u.id + '">' +
+              '<button class="btn btn-sm btn-primary">הזמנה</button>';
+            box.appendChild(row);
+          });
+        });
+    }, 180);
+  });
+})();
+</script>
+{% endblock %}

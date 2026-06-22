@@ -63,6 +63,10 @@ def join_wall(request):
         community_intent = "כדי להירשם לאירוע צריך חשבון - חינם, 10 שניות."
     elif "/community/" in next_url:
         community_intent = "כדי להשתתף בקהילה צריך חשבון - חינם, 10 שניות."
+    elif "/class/join/" in next_url:
+        community_intent = "כדי להצטרף לכיתה צריך חשבון - חינם, 10 שניות."
+    elif "/classes/" in next_url or "/class/" in next_url:
+        community_intent = "כדי לבקש להצטרף לכיתה צריך חשבון - חינם, 10 שניות."
     return render(request, "registration/join.html", {
         "course": course,
         "next": next_url,

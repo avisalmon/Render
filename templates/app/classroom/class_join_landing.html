@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}הצטרפו לכיתה {{ klass.name }} - babook{% endblock %}
+{% block meta_description %}הוזמנתם לכיתה {{ klass.name }} של {{ teacher_name }} ב-babook. הצטרפו ולמדו יחד.{% endblock %}
+
+{% block extra_head %}
+  <!-- Rich preview when the join link is shared (WhatsApp / Facebook / etc.) -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="הצטרפו לכיתה {{ klass.name }}">
+  <meta property="og:description" content="{{ teacher_name }} מזמין/ה אתכם להצטרף לכיתה ב-babook וללמוד יחד.">
+  <meta property="og:url" content="{{ page_url }}">
+  <meta property="og:image" content="{{ og_image }}">
+  <meta property="og:image:type" content="image/png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="{{ og_image }}">
+{% endblock %}
+
+{% block content %}
+<div class="py-3 classes">
+  <div class="card-surface cls-join-landing">
+    <div class="cls-join-kicker">הזמנה לכיתה</div>
+    <h1 class="mb-1">{{ klass.name }}</h1>
+    <p class="text-muted mb-2">מורה: {{ teacher_name }} · {{ klass.member_count }} תלמידים</p>
+    {% if klass.description %}
+    <p class="cls-join-desc">{{ klass.description }}</p>
+    {% endif %}
+    <a href="{{ join_next }}" class="btn btn-primary btn-lg">היכנסו והצטרפו לכיתה</a>
+    <p class="text-muted cls-small mt-2">חשבון חינמי, פתיחה בלחיצה אחת. אחרי הכניסה תצורפו לכיתה אוטומטית.</p>
+  </div>
+</div>
+{% endblock %}
