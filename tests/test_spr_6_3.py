@@ -77,6 +77,7 @@ def test_publish_project_awards_points_and_badge():
     resp = c.post(reverse("showcase_new"), {
         "title": "בוט וואטסאפ", "tagline": "עונה לבד", "stand": "ai",
         "story": "בניתי עם Claude", "action": "publish",
+        "video_url": "https://youtu.be/dQw4w9WgXcQ",
     })
     assert resp.status_code == 302
     p = ShowcaseProject.objects.get()
@@ -102,7 +103,8 @@ def test_student_work_goes_to_review_queue():
     """T-F-6.3.1.6-1 (REQ-6.3.7, DEC-41): student publish -> pending, not public."""
     student = _member("kid", student=True)
     c = _client(student)
-    c.post(reverse("showcase_new"), {"title": "המשחק שלי", "stand": "games", "action": "publish"})
+    c.post(reverse("showcase_new"), {"title": "המשחק שלי", "stand": "games", "action": "publish",
+                                     "video_url": "https://youtu.be/dQw4w9WgXcQ"})
     p = ShowcaseProject.objects.get()
     assert p.status == "pending"
     assert Client().get(reverse("showcase_wall")).content.decode().count("המשחק שלי") == 0
@@ -114,7 +116,8 @@ def test_showcase_master_badge_at_five():
     for i in range(4):
         _project(u, title=f"p{i}")
     c = _client(u)
-    c.post(reverse("showcase_new"), {"title": "החמישי", "stand": "ai", "action": "publish"})
+    c.post(reverse("showcase_new"), {"title": "החמישי", "stand": "ai", "action": "publish",
+                                     "video_url": "https://youtu.be/dQw4w9WgXcQ"})
     assert u.badges.filter(slug="showcase_master").exists()
 
 
@@ -292,5 +295,81 @@ def test_follower_notified_on_publish():
     author, follower = _member("followed"), _member("follower2")
     Follow.objects.create(follower=follower, followed=author)
     c = _client(author)
-    c.post(reverse("showcase_new"), {"title": "חדש לעוקבים", "stand": "ai", "action": "publish"})
+    c.post(reverse("showcase_new"), {"title": "חדש לעוקבים", "stand": "ai", "action": "publish",
+                                     "video_url": "https://youtu.be/dQw4w9WgXcQ"})
     assert Notification.objects.filter(user=follower, verb="project").exists()
+
+
+# --- card + publish + delete improvements (2026-06 round) ---
+
+@pytest.mark.django_db
+def test_publish_requires_demo_video_or_gallery():
+    u = _member("nomedia")
+    resp = _client(u).post(reverse("showcase_new"),
+                           {"title": "ריק", "stand": "ai", "story": "סיפור", "action": "publish"})
+    assert resp.status_code == 200  # re-rendered with an error
+    assert not ShowcaseProject.objects.filter(title="ריק").exists()
+
+
+@pytest.mark.django_db
+def test_publish_ok_with_live_url():
+    u = _member("withsite")
+    _client(u).post(reverse("showcase_new"),
+                    {"title": "אתר", "stand": "web", "action": "publish",
+                     "live_url": "https://example.com"})
+    assert ShowcaseProject.objects.get(title="אתר").status == "published"
+
+
+@pytest.mark.django_db
+def test_owner_can_delete_project():
+    u = _member("deleter")
+    p = _project(u, title="למחוק")
+    resp = _client(u).post(reverse("showcase_delete", args=[p.pk]))
+    assert resp.status_code == 302
+    assert not ShowcaseProject.objects.filter(pk=p.pk).exists()
+
+
+@pytest.mark.django_db
+def test_edit_page_has_standalone_delete_form():
+    u = _member("editor1")
+    p = _project(u, title="עריכה")
+    body = _client(u).get(reverse("showcase_edit", args=[p.pk])).content.decode()
+    assert reverse("showcase_delete", args=[p.pk]) in body
+
+
+@pytest.mark.django_db
+def test_card_link_priority_and_icons():
+    u = _member("iconz")
+    _project(u, title="הכל", repo_url="https://github.com/me/proj",
+             video_url="https://youtu.be/dQw4w9WgXcQ", live_url="https://example.com")
+    body = Client().get(reverse("showcase_wall")).content.decode()
+    assert "bi-github" in body          # github source icon
+    assert "bi-youtube" in body         # youtube icon
+    assert 'href="https://example.com"' in body  # main media -> live site (priority)
+    # No old labels on the card.
+    assert "אתר חי" not in body
+    assert "בקרו" not in body
+
+
+@pytest.mark.django_db
+def test_card_gallery_icon_when_no_site():
+    from django.core.files.uploadedfile import SimpleUploadedFile
+
+    from app.models import ProjectImage
+    u = _member("galleryonly")
+    p = _project(u, title="גלריה")
+    ProjectImage.objects.create(
+        project=p,
+        image=SimpleUploadedFile("g.jpg", b"\xff\xd8\xff\xe0" + b"0" * 200, content_type="image/jpeg"))
+    body = Client().get(reverse("showcase_wall")).content.decode()
+    assert "bi-images" in body
+    assert reverse("showcase_project", args=[p.pk]) + "#gallery" in body
+
+
+@pytest.mark.django_db
+def test_showcase_youtube_and_github_props():
+    u = _member("props")
+    p = _project(u, title="yt", video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+    assert p.youtube_id == "dQw4w9WgXcQ"
+    assert "dQw4w9WgXcQ" in p.video_thumb_url
+    assert _project(u, title="gh", repo_url="https://github.com/me/x").is_github

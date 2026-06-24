@@ -35,8 +35,7 @@ def community_home(request):
     from django.utils import timezone
 
     from .feed import build_feed
-    from .models import (Channel, CommunityEvent, ForumThread, ShowcaseProject,
-                         Tip, UserProfile)
+    from .models import Channel, CommunityEvent, ForumThread, ShowcaseProject, Tip, UserProfile
 
     scope = request.GET.get("scope", "all")
     if scope not in FEED_SCOPES or not request.user.is_authenticated:
@@ -100,6 +99,30 @@ def guidelines(request):
     })
 
 
+def _member_courses(user):
+    """Courses the member is enrolled in, with completion %% - for the public
+    profile when they choose to show their full learning (visibility='all')."""
+    from .models import Course, CourseCertificate, Enrollment
+    from .views import _catalog_progress
+    course_ids = list(Enrollment.objects.filter(user=user).values_list("course_id", flat=True))
+    if not course_ids:
+        return []
+    prog = _catalog_progress(user, course_ids)
+    courses = {c.id: c for c in Course.objects.filter(id__in=course_ids)}
+    certs = set(CourseCertificate.objects.filter(user=user, course_id__in=course_ids)
+                .values_list("course_id", flat=True))
+    out = []
+    for cid in course_ids:
+        course = courses.get(cid)
+        if not course:
+            continue
+        p = prog.get(cid, {})
+        out.append({"course": course, "pct": p.get("pct", 0),
+                    "completed": p.get("completed", False), "has_cert": cid in certs})
+    out.sort(key=lambda x: x["pct"], reverse=True)
+    return out
+
+
 def public_profile(request, username):
     """REQ-6.1.1: opt-in public member profile at /c/<username>/."""
     user = get_object_or_404(User, username=username)
@@ -112,8 +135,20 @@ def public_profile(request, username):
     badges = BadgeAward.objects.filter(user=user).order_by("-awarded_at")
     accepted_count = user.forum_posts.filter(is_accepted=True).count()
     threads = ForumThread.objects.filter(author=user, is_hidden=False)[:5]
-    from .models import CourseCertificate
-    certificates = CourseCertificate.objects.filter(user=user).select_related("course")
+
+    # Learning visibility is the member's own choice (certs only / all / none).
+    from .models import CourseCertificate, TeacherClass
+    visibility = profile.courses_visibility if profile else "certs"
+    certificates = (
+        CourseCertificate.objects.none() if visibility == "none"
+        else CourseCertificate.objects.filter(user=user).select_related("course"))
+    member_courses = _member_courses(user) if visibility == "all" else []
+
+    # A teacher is recognized publicly only once they have signed (active) students.
+    taught_class_count = (
+        TeacherClass.objects.filter(owner=user, memberships__status="active")
+        .distinct().count())
+
     is_following = (
         request.user.is_authenticated
         and Follow.objects.filter(follower=request.user, followed=user).exists()
@@ -137,6 +172,10 @@ def public_profile(request, username):
         "recent_threads": threads,
         "projects": projects,
         "certificates": certificates,
+        "member_courses": member_courses,
+        "courses_visibility": visibility,
+        "is_recognized_teacher": taught_class_count > 0,
+        "taught_class_count": taught_class_count,
         "follower_count": user.followers.count(),
         "is_following": is_following,
         "is_owner": request.user == user,
@@ -224,6 +263,9 @@ def community_settings_save(request):
     profile.open_to_collab = request.POST.get("open_to_collab") == "on"
     profile.leaderboard_opt_out = request.POST.get("leaderboard_opt_out") == "on"
     profile.dms_enabled = request.POST.get("dms_enabled") == "on"
+    cv = request.POST.get("courses_visibility")
+    if cv in {"certs", "all", "none"}:
+        profile.courses_visibility = cv
     avatar = request.FILES.get("avatar")
     if avatar:
         from .imaging import MAX_INPUT_BYTES, process_avatar

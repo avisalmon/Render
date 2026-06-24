@@ -26,10 +26,11 @@ def community_ctx(request):
     show_verify = False
     if profile and request.user.email and not profile.email_verified:
         has_social = request.user.socialaccount_set.exists()
-        # Dismissible: hidden for a day after the user closes it (cookie), then
-        # it reappears until the email is verified.
+        # Shown at most once a day: a "seen" cookie (set when it renders) and the
+        # manual-dismiss cookie both last 24h, after which it returns until verified.
         dismissed = request.COOKIES.get("verify_banner_dismissed") == "1"
-        show_verify = not has_social and not dismissed
+        seen_today = request.COOKIES.get("verify_banner_seen") == "1"
+        show_verify = not has_social and not dismissed and not seen_today
     return {
         "unread_notifications": Notification.objects.filter(
             user=request.user, read_at__isnull=True

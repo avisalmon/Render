@@ -124,7 +124,13 @@ STORAGES = {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        # Prod: hashed + compressed (long-cache, cache-busting via manifest).
+        # Dev (DEBUG): plain storage so edits to static/ are served live, unhashed,
+        # with no collectstatic step or stale-manifest surprises.
+        "BACKEND": (
+            "django.contrib.staticfiles.storage.StaticFilesStorage" if DEBUG
+            else "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        ),
     },
 }
 

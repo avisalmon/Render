@@ -34,6 +34,8 @@ urlpatterns = [
     path("verify-email/", views.verify_email, name="verify_email"),
     path("resend-verification/", views.resend_verification, name="resend_verification"),
     path("profile/", views.profile, name="profile"),
+    path("search/", views.global_search, name="global_search"),
+    path("search/json/", views.global_search_json, name="global_search_json"),
     path("account/delete/", views.delete_account, name="delete_account"),
     # --- Teachers & Classes / Classrooms (Chapter 9) ---
     path("classes/", classroom_views.my_classes, name="my_classes"),
@@ -51,6 +53,7 @@ urlpatterns = [
     path("class/<int:pk>/qr.png", classroom_views.class_qr, name="class_qr"),
     path("class/<int:pk>/search-users/", classroom_views.class_user_search, name="class_user_search"),
     path("class/<int:pk>/invite/", classroom_views.class_invite, name="class_invite"),
+    path("class/invite/<int:invite_id>/resend/", classroom_views.class_invite_resend, name="class_invite_resend"),
     path("class/<int:pk>/post/", classroom_views.class_post, name="class_post"),
     path("class/<int:pk>/toggle-share/", classroom_views.class_toggle_share, name="class_toggle_share"),
     path("class/<int:pk>/leave/", classroom_views.class_leave, name="class_leave"),

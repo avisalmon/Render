@@ -60,9 +60,11 @@ def test_avatar_label_no_longer_says_2mb():
 # --- F-6.12.2.6: activation — auto-public on first post ---
 
 @pytest.mark.django_db
-def test_first_post_auto_publishes_profile():
+def test_new_member_public_by_default_and_stays_public_on_post():
+    # Profiles are public by default now (opt-out from settings); posting keeps
+    # the member visible in the community.
     u = _member("poster")
-    assert u.profile.is_public is False
+    assert u.profile.is_public is True
     _client(u).post("/community/tips/new/", {"body": "הטיפ הראשון שלי"})
     u.profile.refresh_from_db()
     assert u.profile.is_public is True

@@ -141,6 +141,23 @@ def _join_url(request, klass):
     return request.build_absolute_uri(reverse("class_join", args=[klass.join_code]))
 
 
+def _send_class_invite(request, klass, invitee, inviter):
+    """Invite an existing member in-system AND by email. The link is the class
+    join link, so pressing it auto-joins them straight into the class."""
+    from .community import notify
+    path = reverse("class_join", args=[klass.join_code])
+    join_url = request.build_absolute_uri(path)
+    teacher_name = _display_name(inviter)
+    notify(invitee, "class_invite",
+           f"{teacher_name} הזמין אותך לכיתה \"{klass.name}\". לחצו כדי להצטרף.",
+           url=path, actor=inviter)
+    _send_mail_safe(
+        f"הזמנה לכיתה {klass.name}",
+        f"{teacher_name} הזמין אותך להצטרף לכיתה \"{klass.name}\" ב-babook.\n\n"
+        f"להצטרפות מיידית (לחיצה אחת) היכנסו לקישור:\n{join_url}\n",
+        invitee.email)
+
+
 # ---------------------------------------------------------------------------
 # Teacher onboarding + class list
 # ---------------------------------------------------------------------------
@@ -328,13 +345,22 @@ def class_invite(request, pk):
     ClassInvite.objects.update_or_create(
         klass=klass, invitee=invitee,
         defaults={"inviter": request.user, "status": "pending"})
-    teacher_name = request.user.profile.public_name if hasattr(request.user, "profile") else request.user.username
-    from .community import notify
-    notify(invitee, "class_invite",
-           f"{teacher_name} הזמין אותך להצטרף לכיתה \"{klass.name}\".",
-           url=reverse("my_classes"), actor=request.user)
-    messages.success(request, "ההזמנה נשלחה.")
+    _send_class_invite(request, klass, invitee, request.user)
+    messages.success(request, "ההזמנה נשלחה (במערכת ובמייל).")
     return redirect("class_manage", pk=klass.pk)
+
+
+@login_required
+@require_POST
+def class_invite_resend(request, invite_id):
+    """Owner resends a pending invite as an email + in-system reminder."""
+    invite = get_object_or_404(ClassInvite, pk=invite_id)
+    if invite.klass.owner_id != request.user.id and not request.user.is_superuser:
+        raise Http404
+    if invite.status == "pending":
+        _send_class_invite(request, invite.klass, invite.invitee, request.user)
+        messages.success(request, "תזכורת נשלחה.")
+    return redirect("class_manage", pk=invite.klass.pk)
 
 
 @login_required

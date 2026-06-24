@@ -23,8 +23,9 @@ class UserProfile(models.Model):
     is_author = models.BooleanField(default=False)
     # Classrooms (Chapter 9): opted into teaching - can open and run classes.
     is_teacher = models.BooleanField(default=False)
-    # Community (EPIC-6.1): public member identity. Private by default.
-    is_public = models.BooleanField(default=False)
+    # Community (EPIC-6.1): public member identity. Public by default; users can
+    # opt out anytime from the profile settings ("פרופיל ציבורי" toggle).
+    is_public = models.BooleanField(default=True)
     bio = models.CharField(max_length=300, blank=True, default="")
     avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
     open_to_collab = models.BooleanField(default=False)
@@ -36,6 +37,15 @@ class UserProfile(models.Model):
     digest_opt_in = models.BooleanField(default=False)
     # DM control (REQ-6.6.3 / DEC-61): default ON for adults, always off for students.
     dms_enabled = models.BooleanField(default=True)
+    # What others see on the public profile about my learning (Chapter 9 follow-up):
+    # certificates only (default), everything (courses + progress), or nothing.
+    COURSES_VISIBILITY = [
+        ("certs", "תעודות בלבד"),
+        ("all", "כל הקורסים וההתקדמות"),
+        ("none", "להסתיר"),
+    ]
+    courses_visibility = models.CharField(
+        max_length=5, choices=COURSES_VISIBILITY, default="certs")
 
     @property
     def public_name(self):
@@ -310,6 +320,24 @@ class ShowcaseProject(models.Model):
         no token cost); mShots was dropped after it started returning 403."""
         return (f"https://image.thum.io/get/width/640/crop/400/noanimate/{self.site_url}"
                 if self.site_url else "")
+
+    @property
+    def youtube_id(self):
+        import re
+        m = re.search(
+            r"(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/embed/|youtube\.com/shorts/)([\w-]{11})",
+            self.video_url or "")
+        return m.group(1) if m else ""
+
+    @property
+    def video_thumb_url(self):
+        """YouTube thumbnail for the card cover when there's a video but no image."""
+        return f"https://i.ytimg.com/vi/{self.youtube_id}/hqdefault.jpg" if self.youtube_id else ""
+
+    @property
+    def is_github(self):
+        """The repo link is a GitHub source (vs a hosted github.io site)."""
+        return "github.com" in (self.repo_url or "")
 
     @property
     def is_live(self):
@@ -1093,6 +1121,13 @@ from .chat_models import (  # noqa: E402,F401
     ChannelMessage,
     ChannelRead,
 )
+from .classroom_models import (  # noqa: E402,F401
+    ClassInvite,
+    ClassJoinRequest,
+    ClassMembership,
+    ClassMessage,
+    TeacherClass,
+)
 from .crashtech_models import (  # noqa: E402,F401
     Certificate,
     Challenge,
@@ -1115,11 +1150,4 @@ from .events_models import (  # noqa: E402,F401
     EventPhoto,
     EventRSVP,
     EventSeries,
-)
-from .classroom_models import (  # noqa: E402,F401
-    ClassInvite,
-    ClassJoinRequest,
-    ClassMembership,
-    ClassMessage,
-    TeacherClass,
 )

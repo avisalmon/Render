@@ -50,7 +50,7 @@
       <div class="d-flex align-items-center w-100">
 
         <!-- Start (right in RTL): hamburger drawer + brand + primary icons -->
-        <div class="d-flex align-items-center gap-1">
+        <div class="d-flex align-items-center gap-1 nav-side">
           <button class="btn nav-link px-2" type="button" data-bs-toggle="offcanvas"
                   data-bs-target="#siteDrawer" aria-controls="siteDrawer" aria-label="תפריט">
             <i class="bi bi-list" style="font-size:1.55rem"></i>
@@ -72,8 +72,16 @@
           {% endif %}
         </div>
 
+        <!-- Site-wide live search, inline in the menu -->
+        <form class="nav-search" id="navSearch" role="search" action="{% url 'global_search' %}" method="get" autocomplete="off">
+          <i class="bi bi-search nav-search-icon"></i>
+          <input type="search" name="q" id="navSearchInput" class="nav-search-input"
+                 placeholder="חיפוש הדרכות, אנשים, פרויקטים…" aria-label="חיפוש באתר">
+          <div class="nav-search-panel" id="navSearchPanel" hidden></div>
+        </form>
+
         <!-- End (left in RTL): user / auth - kept as before -->
-        <ul class="navbar-nav flex-row align-items-center gap-1 ms-auto">
+        <ul class="navbar-nav flex-row align-items-center gap-1 nav-side justify-content-end">
           {% if user.is_authenticated %}
             <!-- Community notifications bell (REQ-6.1.6) -->
             <li class="nav-item">
@@ -152,6 +160,7 @@
     </div>
     <div class="offcanvas-body">
       <nav class="site-drawer-nav d-flex flex-column">
+        <a href="{% url 'global_search' %}"><i class="bi bi-search"></i> חיפוש</a>
         <a href="{% url 'courses_catalog' %}"><i class="bi bi-mortarboard"></i> הדרכות</a>
         <a href="{% url 'community' %}"><i class="bi bi-people"></i> קהילות</a>
         <a href="{% url 'showcase_wall' %}"><i class="bi bi-easel2"></i> דוכן השוויץ</a>
@@ -205,6 +214,8 @@
               onclick="document.cookie='verify_banner_dismissed=1;path=/;max-age=86400';document.getElementById('verify-banner').remove();"></button>
     </div>
   </div>
+  {# Mark as seen so it shows at most once a day (returns after 24h until verified). #}
+  <script>document.cookie='verify_banner_seen=1;path=/;max-age=86400';</script>
   {% endif %}
 
   {% if welcome_strip %}
@@ -335,6 +346,62 @@
         btn.className = 'btn btn-sm js-star ' + (d.on ? 'btn-warning' : 'btn-outline-warning');
       });
     });
+  </script>
+
+  <!-- Inline navbar site search: live dropdown; Enter opens the full results page -->
+  <script>
+  (function () {
+    var form = document.getElementById('navSearch');
+    if (!form) return;
+    var input = document.getElementById('navSearchInput');
+    var panel = document.getElementById('navSearchPanel');
+    var timer = null, seq = 0;
+
+    function hide() { panel.hidden = true; panel.innerHTML = ''; }
+
+    function show(groups, q) {
+      if (!q) { hide(); return; }
+      if (!groups.length) {
+        panel.innerHTML = '<div class="nav-search-empty">לא נמצאו תוצאות</div>';
+        panel.hidden = false; return;
+      }
+      var html = '';
+      groups.forEach(function (g) {
+        html += '<div class="nav-search-group"><i class="bi ' + g.icon + '"></i> ' + g.label + '</div>';
+        g.items.forEach(function (it) {
+          var a = document.createElement('a');
+          a.className = 'nav-search-item'; a.href = it.url;
+          var t = document.createElement('span'); t.className = 'nss-t'; t.textContent = it.title;
+          a.appendChild(t);
+          if (it.sub) { var s = document.createElement('span'); s.className = 'nss-s'; s.textContent = it.sub; a.appendChild(s); }
+          html += a.outerHTML;
+        });
+      });
+      var all = document.createElement('a');
+      all.className = 'nav-search-all'; all.href = '{% url "global_search" %}?q=' + encodeURIComponent(q);
+      all.textContent = 'כל התוצאות עבור "' + q + '"';
+      panel.innerHTML = html + all.outerHTML;
+      panel.hidden = false;
+    }
+
+    input.addEventListener('input', function () {
+      clearTimeout(timer);
+      var q = input.value.trim();
+      if (!q) { hide(); return; }
+      var mySeq = ++seq;
+      timer = setTimeout(function () {
+        fetch('{% url "global_search_json" %}?q=' + encodeURIComponent(q))
+          .then(function (r) { return r.json(); })
+          .then(function (d) { if (mySeq === seq) show(d.groups, q); })
+          .catch(function () {});
+      }, 180);
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!form.contains(e.target)) hide();
+    });
+    input.addEventListener('keydown', function (e) { if (e.key === 'Escape') hide(); });
+  })();
   </script>
 
   <!-- Theme toggle logic (REQ-7.4.2) -->

@@ -1,0 +1,20 @@
+{# Site-wide search results, grouped. Args: groups, q. #}
+{% if not q %}
+<p class="text-muted">התחילו להקליד כדי לחפש.</p>
+{% elif not groups %}
+<p class="text-muted">לא נמצאו תוצאות עבור "{{ q }}".</p>
+{% else %}
+{% for g in groups %}
+<section class="gs-group">
+  <h2 class="gs-group-title"><i class="bi {{ g.icon }}"></i> {{ g.label }}</h2>
+  <div class="gs-list">
+    {% for it in g.items %}
+    <a class="gs-item" href="{{ it.url }}">
+      <span class="gs-item-title">{{ it.title }}</span>
+      <span class="gs-item-sub">{{ it.sub }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+{% endif %}

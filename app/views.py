@@ -34,7 +34,6 @@ def home(request):
     # Pass last-watched lesson so template can show a "Continue watching" card
     last_progress = None
     recommended = []
-    checklist = None
     if request.user.is_authenticated:
         last_progress = (
             UserVideoProgress.objects
@@ -48,23 +47,9 @@ def home(request):
         # onboarding, then it lives on the profile page - homepage stays clean.
         learner = getattr(request.user, "learner_profile", None)
         if learner is not None and not learner.needs_onboarding:
-            from .models import LessonReflection
             from .onboarding import RECS_ONCE_KEY, build_recommendations
             if request.session.pop(RECS_ONCE_KEY, False):
                 recommended = build_recommendations(learner)
-            if request.COOKIES.get("checklist_dismissed") != "1":
-                checklist = {
-                    "watched": UserVideoProgress.objects.filter(user=request.user).exists(),
-                    "quiz": UserVideoProgress.objects.filter(
-                        user=request.user, quiz_passed=True
-                    ).exists(),
-                    "reflected": LessonReflection.objects.filter(user=request.user).exists(),
-                    "enrolled": Enrollment.objects.filter(user=request.user).exists(),
-                    # Activation: join the community (REQ-6.8.3)
-                    "community": request.user.profile.is_public,
-                }
-                if all(checklist.values()):
-                    checklist = None  # done - stop showing it
 
     # Hero joke + worlds intro show only on the user's first day (REQ-7.1.4):
     # anonymous visitors (new) always; logged-in only within 24h of signup.
@@ -125,7 +110,6 @@ def home(request):
         "notes": notes,
         "last_progress": last_progress,
         "recommended": recommended,
-        "checklist": checklist,
         "show_intro": show_intro,
         "feed_items": feed_items,
         "rail_events": rail_events,
@@ -373,13 +357,72 @@ def profile(request):
         from .onboarding import build_recommendations
         recommended = build_recommendations(learner)
 
+    rep = getattr(request.user, "reputation", None)
     return render(request, "app/profile.html", {
         "user_profile": user_profile,
         "copilot_status": copilot_status,
         "certificates": certificates,
         "my_courses": my_courses,
         "recommended": recommended,
+        "points": rep.points if rep else 0,
     })
+
+
+def _search_all(q):
+    """Site-wide search across courses, people, showcase projects and the forum.
+    Substring match (no token cost), each group capped. Returns groups for the
+    template / JSON. Only public people and published/visible content appear."""
+    from django.db.models import Q
+    from django.urls import reverse
+
+    from .models import Course, ForumThread, ShowcaseProject, UserProfile
+    q = (q or "").strip()
+    groups = []
+    if not q:
+        return groups
+
+    courses = list(Course.objects.filter(is_published=True)
+                   .filter(Q(title__icontains=q) | Q(description__icontains=q))[:8])
+    if courses:
+        groups.append({"label": "הדרכות", "icon": "bi-mortarboard", "items": [
+            {"title": c.title, "sub": (c.description or "")[:70],
+             "url": reverse("courses_detail", args=[c.slug])} for c in courses]})
+
+    people = list(UserProfile.objects.filter(is_public=True)
+                  .filter(Q(display_name__icontains=q) | Q(user__username__icontains=q)
+                          | Q(user__first_name__icontains=q))
+                  .select_related("user")[:8])
+    if people:
+        groups.append({"label": "אנשים", "icon": "bi-people", "items": [
+            {"title": p.public_name, "sub": "@" + p.user.username,
+             "url": reverse("community_profile", args=[p.user.username])} for p in people]})
+
+    projects = list(ShowcaseProject.objects.filter(status="published", is_hidden=False)
+                    .filter(Q(title__icontains=q) | Q(tagline__icontains=q))
+                    .select_related("author__profile")[:8])
+    if projects:
+        groups.append({"label": "פרויקטים", "icon": "bi-easel2", "items": [
+            {"title": pr.title, "sub": pr.author.profile.public_name,
+             "url": reverse("showcase_project", args=[pr.pk])} for pr in projects]})
+
+    threads = list(ForumThread.objects.filter(is_hidden=False)
+                   .filter(Q(title__icontains=q) | Q(body__icontains=q))[:8])
+    if threads:
+        groups.append({"label": "קהילה", "icon": "bi-chat-left-text", "items": [
+            {"title": t.title, "sub": "", "url": reverse("forum_thread", args=[t.pk])}
+            for t in threads]})
+    return groups
+
+
+def global_search(request):
+    """The site-wide search page (also deep-linkable via ?q=)."""
+    q = (request.GET.get("q") or "").strip()
+    return render(request, "app/search.html", {"q": q, "groups": _search_all(q)})
+
+
+def global_search_json(request):
+    """Live results for the search-as-you-type box."""
+    return JsonResponse({"groups": _search_all(request.GET.get("q", ""))})
 
 
 class CopilotDashboardView(UserPassesTestMixin, TemplateView):
@@ -628,6 +671,7 @@ def courses_catalog(request):
     """Visual course catalog - real course cards grouped by domain, with the
     learner's progress and a 'continue learning' row."""
     from django.db.models import Count
+
     from .taxonomy import build_catalog
 
     courses_qs = list(Course.objects.filter(is_published=True).order_by("title"))

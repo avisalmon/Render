@@ -83,14 +83,8 @@ def test_health_dashboard_staff_only():
 
 
 # --- F-6.8.1.3: activation tie-in ---
-
-@pytest.mark.django_db
-def test_home_checklist_has_community_item():
-    from app.models import LearnerProfile
-    u = _member("newbie")
-    LearnerProfile.objects.create(user=u, onboarding_completed_at=timezone.now())
-    body = _client(u).get("/").content.decode()
-    assert "הצטרפו לקהילה" in body and "/community/" in body
+# (The home "first steps" checklist was removed by request - the homepage stays
+# clean; the community is surfaced via the nav and the community strip instead.)
 
 
 def test_avi_bot_interview_prompt_mentions_community():

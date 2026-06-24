@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}חיפוש - babook{% endblock %}
+
+{% block content %}
+<div class="py-3 gsearch">
+  <h1 class="mb-3">חיפוש</h1>
+
+  <div class="catalog-search-wrap cls-search-wrap">
+    <i class="bi bi-search"></i>
+    <input type="search" id="gsInput" class="catalog-search" placeholder="חיפוש הדרכות, אנשים, פרויקטים…"
+           autocomplete="off" autofocus value="{{ q }}" aria-label="חיפוש">
+  </div>
+
+  <div id="gsResults">
+    {% include "app/_search_results.html" with groups=groups q=q %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  var input = document.getElementById('gsInput');
+  var box = document.getElementById('gsResults');
+  var timer = null, seq = 0;
+
+  function render(groups, q) {
+    if (!q) { box.innerHTML = '<p class="text-muted">התחילו להקליד כדי לחפש.</p>'; return; }
+    if (!groups.length) { box.innerHTML = '<p class="text-muted">לא נמצאו תוצאות עבור "' + q + '".</p>'; return; }
+    var html = '';
+    groups.forEach(function (g) {
+      html += '<section class="gs-group"><h2 class="gs-group-title"><i class="bi ' + g.icon + '"></i> ' + g.label + '</h2><div class="gs-list">';
+      g.items.forEach(function (it) {
+        var a = document.createElement('a');
+        a.className = 'gs-item'; a.href = it.url;
+        var t = document.createElement('span'); t.className = 'gs-item-title'; t.textContent = it.title;
+        var s = document.createElement('span'); s.className = 'gs-item-sub'; s.textContent = it.sub || '';
+        a.appendChild(t); a.appendChild(s);
+        html += a.outerHTML;
+      });
+      html += '</div></section>';
+    });
+    box.innerHTML = html;
+  }
+
+  input.addEventListener('input', function () {
+    clearTimeout(timer);
+    var q = input.value.trim();
+    if (!q) { render([], ''); return; }
+    var mySeq = ++seq;
+    timer = setTimeout(function () {
+      fetch('{% url "global_search_json" %}?q=' + encodeURIComponent(q))
+        .then(function (r) { return r.json(); })
+        .then(function (data) { if (mySeq === seq) render(data.groups, q); });
+    }, 180);
+  });
+})();
+</script>
+{% endblock %}

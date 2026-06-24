@@ -261,6 +261,22 @@ def _save_project(request, project, course):
                 "stands": showcase_stands(), "course": course, "project": project,
                 "needs_guidelines": False, "form_title": title, "form_story": story,
             })
+        # A published project must have something to show: a live site, a video,
+        # or an image gallery (REQ-6.3: no empty publishes).
+        live_url = request.POST.get("live_url", "").strip()
+        repo_url = request.POST.get("repo_url", "").strip()
+        video_url = request.POST.get("video_url", "").strip()
+        has_demo = bool(live_url) or any(h in repo_url for h in ShowcaseProject._LIVE_HOSTS)
+        has_gallery = bool(request.FILES.getlist("gallery")) or (
+            project is not None and project.pk and project.images.exists())
+        if not (has_demo or video_url or has_gallery):
+            messages.error(
+                request,
+                "כדי לפרסם צריך לפחות אחד מאלה: קישור לאתר חי, סרטון יוטיוב, או גלריית תמונות.")
+            return render(request, "app/community/project_form.html", {
+                "stands": showcase_stands(), "course": course, "project": project,
+                "needs_guidelines": False, "form_title": title, "form_story": story,
+            })
 
     is_new = project is None
     if is_new:

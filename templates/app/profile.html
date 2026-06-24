@@ -1,142 +1,142 @@
 {% extends "base.html" %}
-{% load i18n %}
-
-{% block title %}{% trans "Profile" %} - babook{% endblock %}
+{% block title %}הפרופיל שלי - babook{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-6">
-    <h1 class="mb-4">{% trans "Profile" %}</h1>
-    <form method="post" class="card p-4 mb-4">
-      {% csrf_token %}
-      <div class="mb-3">
-        <label class="form-label">{% trans "Display name" %}</label>
-        <input type="text" class="form-control" name="display_name" value="{{ user_profile.display_name }}">
-      </div>
-      <div class="mb-3">
-        <label class="form-label">{% trans "Username" %}</label>
-        <input type="text" class="form-control" value="{{ request.user.username }}" disabled>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">{% trans "Role" %}</label>
-        <input type="text" class="form-control" value="{{ user_profile.role }}" disabled>
-      </div>
-      <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
-    </form>
+<div class="row justify-content-center py-4">
+  <div class="col-md-10 col-lg-9">
 
-    <!-- Community settings (EPIC-6.1, F-6.1.1.4) -->
-    <div class="card p-4 mb-4" id="settings">
-      <h2 class="h6 mb-3"><i class="bi bi-people-fill me-1" style="color:var(--accent-primary)"></i> הקהילה שלי</h2>
-      <p class="small text-muted">כאן אפשר להוסיף תמונה, כמה מילים עליכם ותחומי עניין - מתי שבא לכם (REQ-7.1.7).</p>
+    <!-- Identity band -->
+    <div class="card-surface profile-head">
+      {% if user.profile.avatar %}
+        <img class="profile-avatar" src="{{ user.profile.avatar.url }}" alt="">
+      {% else %}
+        <span class="profile-avatar profile-avatar-ph">{{ user.profile.public_name|first }}</span>
+      {% endif %}
+      <div class="profile-id">
+        <h1 class="profile-name">{{ user.profile.public_name }}</h1>
+        <div class="profile-chips">
+          {% if user.profile.is_teacher %}<span class="profile-chip profile-chip-teacher">מורה</span>{% endif %}
+          {% if user.profile.is_public %}<span class="profile-chip">פרופיל ציבורי</span>{% else %}<span class="profile-chip">פרופיל פרטי</span>{% endif %}
+        </div>
+        {% if user.profile.bio %}<p class="profile-bio">{{ user.profile.bio }}</p>{% endif %}
+        <div class="profile-stats">
+          <span class="profile-stat"><strong>{{ points }}</strong> נקודות</span>
+          <span class="profile-stat"><strong>{{ certificates|length }}</strong> תעודות</span>
+          <span class="profile-stat"><strong>{{ my_courses|length }}</strong> קורסים</span>
+        </div>
+      </div>
+      <div class="profile-actions">
+        <a href="#settings" class="btn btn-sm btn-outline-secondary">הגדרות</a>
+        <a href="{% url 'my_classes' %}" class="btn btn-sm btn-outline-secondary">הכיתות שלי</a>
+        {% if user.profile.is_public %}<a href="/c/{{ user.username }}/" class="btn btn-sm btn-link">תצוגה ציבורית</a>{% endif %}
+      </div>
+    </div>
+
+    <!-- Recommendations -->
+    {% if recommended %}
+    <section class="mb-3" id="recommended">
+      <h2 class="profile-section-title">מומלץ עבורך</h2>
+      <div class="hcard-list">
+        {% for r in recommended %}
+        <a href="{{ r.url }}" class="hcard">
+          <span class="hcard-title">{{ r.course.title }}</span>
+          {% if forloop.first %}<span class="profile-chip profile-chip-teacher">התחל כאן</span>{% endif %}
+        </a>
+        {% endfor %}
+      </div>
+      <p class="text-muted small mt-1"><a href="{% url 'welcome' %}" class="text-decoration-none">עדכון העדפות</a></p>
+    </section>
+    {% endif %}
+
+    <!-- Achievements -->
+    {% if certificates %}
+    <section class="card-surface mb-3">
+      <h2 class="profile-section-title">הישגים</h2>
+      <div class="profile-certs">
+        {% for cert in certificates %}
+        <a href="{% url 'certificate_view' cert.certificate_id %}" class="profile-cert" target="_blank">
+          <i class="bi bi-trophy-fill"></i>
+          <span class="profile-cert-title">{{ cert.course.title }}</span>
+          <span class="profile-cert-date">{{ cert.issued_at|date:"d/m/Y" }}</span>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- My courses -->
+    <section class="card-surface mb-3">
+      <h2 class="profile-section-title">הקורסים שלי</h2>
+      {% if my_courses %}
+      <div class="hcard-list">
+        {% for mc in my_courses %}
+        <a href="{% url 'courses_detail' mc.course.slug %}" class="hcard">
+          <span class="hcard-title">{{ mc.course.title }}{% if mc.completed %} · הושלם{% endif %}</span>
+          <span class="hcard-progress">
+            <span class="hcard-bar"><span style="width:{{ mc.pct }}%"></span></span>
+            <span class="hcard-pct">{{ mc.pct }}%</span>
+          </span>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-muted mb-0">עוד לא נרשמת לקורסים. <a href="{% url 'courses_catalog' %}">לכל ההדרכות</a></p>
+      {% endif %}
+    </section>
+
+    <!-- Settings -->
+    <section class="card-surface mb-3" id="settings">
+      <h2 class="profile-section-title">הגדרות</h2>
+
+      <form method="post" class="mb-3">
+        {% csrf_token %}
+        <label class="form-label small">שם תצוגה</label>
+        <div class="d-flex gap-2">
+          <input type="text" class="form-control form-control-sm" name="display_name" value="{{ user_profile.display_name }}">
+          <button type="submit" class="btn btn-sm btn-primary flex-shrink-0">שמירה</button>
+        </div>
+      </form>
+
       <form method="post" action="{% url 'community_settings' %}" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="form-check form-switch mb-2">
           <input class="form-check-input" type="checkbox" name="is_public" id="cs-public" {% if user.profile.is_public %}checked{% endif %}>
-          <label class="form-check-label" for="cs-public">פרופיל ציבורי
-            {% if user.profile.is_public %}<a href="/c/{{ user.username }}/" class="small ms-1">(צפייה)</a>{% endif %}
-          </label>
+          <label class="form-check-label small" for="cs-public">פרופיל ציבורי</label>
         </div>
         <div class="mb-2">
           <label class="form-label small">כמה מילים עליי</label>
-          <input class="form-control" name="bio" maxlength="300" value="{{ user.profile.bio }}" placeholder="מי אני ומה אני בונה...">
+          <input class="form-control form-control-sm" name="bio" maxlength="300" value="{{ user.profile.bio }}" placeholder="מי אני ומה אני בונה...">
         </div>
         <div class="mb-2">
-          <label class="form-label small">תמונת פרופיל (כל גודל - נכווץ אוטומטית)</label>
-          <input type="file" class="form-control" name="avatar" accept="image/*">
+          <label class="form-label small">תמונת פרופיל</label>
+          <input type="file" class="form-control form-control-sm" name="avatar" accept="image/*">
+        </div>
+        <div class="mb-2">
+          <label class="form-label small">מה אחרים רואים על הלמידה שלי</label>
+          <select class="form-select form-select-sm" name="courses_visibility">
+            <option value="certs" {% if user.profile.courses_visibility == 'certs' %}selected{% endif %}>תעודות בלבד</option>
+            <option value="all" {% if user.profile.courses_visibility == 'all' %}selected{% endif %}>כל הקורסים וההתקדמות</option>
+            <option value="none" {% if user.profile.courses_visibility == 'none' %}selected{% endif %}>להסתיר</option>
+          </select>
         </div>
         <div class="form-check form-switch mb-2">
           <input class="form-check-input" type="checkbox" name="open_to_collab" id="cs-collab" {% if user.profile.open_to_collab %}checked{% endif %}>
-          <label class="form-check-label" for="cs-collab">פתוח/ה לשיתופי פעולה</label>
+          <label class="form-check-label small" for="cs-collab">פתוח/ה לשיתופי פעולה</label>
         </div>
         <div class="form-check form-switch mb-2">
           <input class="form-check-input" type="checkbox" name="leaderboard_opt_out" id="cs-lb" {% if user.profile.leaderboard_opt_out %}checked{% endif %}>
-          <label class="form-check-label" for="cs-lb">להסתיר אותי מלוח המובילים</label>
+          <label class="form-check-label small" for="cs-lb">להסתיר אותי מלוח המובילים</label>
         </div>
         <div class="form-check form-switch mb-3">
           <input class="form-check-input" type="checkbox" name="dms_enabled" id="cs-dms" {% if user.profile.dms_enabled %}checked{% endif %}>
-          <label class="form-check-label" for="cs-dms">לקבל הודעות אישיות מחברי קהילה</label>
+          <label class="form-check-label small" for="cs-dms">לקבל הודעות אישיות מחברי קהילה</label>
         </div>
-        <button class="btn btn-sm btn-primary">שמירה</button>
+        <button class="btn btn-sm btn-primary">שמירת הגדרות</button>
       </form>
-    </div>
+    </section>
 
-    {% if recommended %}
-    <!-- Personalized recommendations live here permanently (REQ-5.6.3) -->
-    <h2 class="mb-2 h5" id="recommended">מומלץ עבורך <i class="bi bi-stars" style="color:var(--accent-primary)"></i></h2>
-    <p class="text-muted small mb-3">לפי תחומי העניין והרמה שבחרת. <a href="{% url 'welcome' %}" class="text-decoration-none">עדכון העדפות</a></p>
-    <div class="mb-4">
-      {% for r in recommended %}
-      <a href="{{ r.url }}" class="card-surface d-block p-3 mb-2 text-decoration-none" style="color:var(--text-primary)">
-        <div class="d-flex align-items-center gap-2">
-          <i class="bi bi-mortarboard-fill" style="color:var(--accent-primary)"></i>
-          <strong>{{ r.course.title }}</strong>
-          {% if forloop.first %}<span class="badge bg-primary">התחל כאן</span>{% endif %}
-        </div>
-        <p class="text-muted small mb-0 mt-1">{{ r.course.description|truncatechars:90 }}</p>
-      </a>
-      {% endfor %}
-    </div>
-    {% else %}
-    <!-- Onboarding is resumable from here (REQ-5.5.5) -->
-    <p class="mb-4">
-      <a href="{% url 'welcome' %}" class="btn btn-sm btn-outline-primary">
-        <i class="bi bi-stars"></i> התאמה אישית של מסלול הלמידה
-      </a>
-    </p>
-    {% endif %}
-
-    {% if certificates %}
-    <h2 class="mb-3 h5">
-      <i class="bi bi-award-fill me-2" style="color:var(--accent-cta,#f59e0b)"></i>תעודות סיום
-    </h2>
-    <div class="d-flex flex-column gap-2 mb-4">
-      {% for cert in certificates %}
-      <div class="card p-3 d-flex flex-row align-items-center gap-3">
-        <i class="bi bi-award fs-3" style="color:var(--accent-cta,#f59e0b);flex-shrink:0"></i>
-        <div class="flex-grow-1">
-          <div class="fw-semibold">{{ cert.course.title }}</div>
-          <small class="text-muted">{{ cert.issued_at|date:"j בF Y" }}</small>
-        </div>
-        <a href="{% url 'certificate_view' cert.certificate_id %}"
-           class="btn btn-outline-secondary btn-sm" target="_blank">
-          <i class="bi bi-eye me-1"></i>צפה
-        </a>
-      </div>
-      {% endfor %}
-    </div>
-    {% endif %}
-
-    <h2 class="mb-3 h5">
-      <i class="bi bi-mortarboard-fill me-2" style="color:var(--accent-primary)"></i>הקורסים שלי
-    </h2>
-    {% if my_courses %}
-    <div class="d-flex flex-column gap-2 mb-4">
-      {% for mc in my_courses %}
-      <a href="{% url 'courses_detail' mc.course.slug %}"
-         class="card-surface p-3 text-decoration-none d-block" style="color:var(--text-primary)">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <span class="fw-semibold">{{ mc.course.title }}</span>
-          <span class="small text-muted">{{ mc.pct }}%{% if mc.completed %} · הושלם ✓{% endif %}</span>
-        </div>
-        <div class="progress" style="height:8px; background:var(--bg-elevated);">
-          <div class="progress-bar" role="progressbar"
-               style="width: {{ mc.pct }}%; background:var(--accent-primary);"
-               aria-valuenow="{{ mc.pct }}" aria-valuemin="0" aria-valuemax="100"></div>
-        </div>
-      </a>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="card-surface p-3 mb-4 text-center text-muted">
-      עוד לא נרשמת לקורסים. <a href="{% url 'courses_catalog' %}">לכל ההדרכות ←</a>
-    </div>
-    {% endif %}
-
-    <hr class="my-4">
     <div class="text-muted small">
-      <a href="{% url 'delete_account' %}" class="text-danger">
-        <i class="bi bi-trash me-1"></i>מחיקת חשבון
-      </a>
+      <a href="{% url 'delete_account' %}" class="text-danger"><i class="bi bi-trash me-1"></i>מחיקת חשבון</a>
       <span class="ms-1">- מוחק את החשבון לצמיתות ומשחרר את האימייל להרשמה מחדש.</span>
     </div>
 

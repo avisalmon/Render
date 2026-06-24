@@ -21,6 +21,8 @@
 {% block content %}
 <div class="row justify-content-center py-4">
   <div class="col-lg-9">
+    <a href="{% url 'showcase_wall' %}" class="btn btn-sm btn-link px-0 mb-2 text-decoration-none">
+      <i class="bi bi-arrow-right"></i> חזרה לדוכן השוויץ</a>
     {% if not project.is_live %}
     <div class="alert alert-warning py-2 small">
       {% if project.status == 'pending' %}הפרויקט בבדיקה - יפורסם אחרי אישור צוות 🙂{% else %}טיוטה - רק את/ה רואה אותה. <a href="{% url 'showcase_edit' project.pk %}">המשך עריכה</a>{% endif %}
@@ -37,7 +39,6 @@
         {% if project.favicon_url %}<img src="{{ project.favicon_url }}" alt="" width="48" height="48" class="mb-2">{% endif %}
         <div class="text-muted">{{ project.site_host }}</div>
       </div>
-      <span class="position-absolute top-0 end-0 m-2 badge bg-dark bg-opacity-75"><i class="bi bi-box-arrow-up-right"></i> בקרו באתר החי</span>
     </a>
     {% endif %}
 
@@ -108,7 +109,7 @@
     </div>
 
     {% if gallery %}
-    <div class="row g-2 mb-4">
+    <div class="row g-2 mb-4" id="gallery">
       {% for img in gallery %}
       <div class="col-6 col-md-4"><a href="{{ img.image.url }}" target="_blank"><img src="{{ img.image.url }}" class="rounded" style="width:100%; height:140px; object-fit:cover;" alt="גלריה"></a></div>
       {% endfor %}
@@ -116,7 +117,7 @@
     {% endif %}
 
     <!-- Comments -->
-    <h2 class="h5 mb-2"><i class="bi bi-chat-square-text"></i> תגובות ({{ comments|length }})</h2>
+    <h2 class="h5 mb-2" id="comments"><i class="bi bi-chat-square-text"></i> תגובות ({{ comments|length }})</h2>
     {% for c in comments %}
     <div class="card-surface p-3 mb-2">
       <div class="lesson-notes">{{ c.html|safe }}</div>

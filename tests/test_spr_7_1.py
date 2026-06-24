@@ -81,9 +81,10 @@ def test_chat_link_removed_from_nav():
 
 @pytest.mark.django_db
 def test_profile_has_enrich_hint():
+    # The profile lets you enrich it any time (bio / avatar) from the settings block.
     u = _user("hintuser")
     body = _client(u).get("/profile/").content.decode()
-    assert "מתי שבא לכם" in body
+    assert "כמה מילים עליי" in body and 'name="avatar"' in body
 
 
 # --- F-7.1.8: cookie consent logged server-side ---

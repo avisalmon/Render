@@ -568,3 +568,57 @@ def test_approve_is_idempotent():
     assert ClassMembership.objects.filter(klass=klass, student=student, status="active").count() == 1
     assert Notification.objects.filter(user=student, verb="class_request_approved").count() == 1
     assert len(mail.outbox) == 0
+
+
+# --- invite: notification + email, auto-join link, resend ---------------------
+
+def test_invite_sends_notification_and_email_with_join_link():
+    teacher = _teacher()
+    klass = _class(teacher)
+    invitee = _student("inv1")
+    mail.outbox.clear()
+    tc = Client(); tc.force_login(teacher)
+    tc.post(f"/class/{klass.id}/invite/", {"user_id": invitee.id})
+    # In-system notification whose link is the auto-join link.
+    n = Notification.objects.get(user=invitee, verb="class_invite")
+    assert f"/class/join/{klass.join_code}/" in n.url
+    # And an email carrying the same join link.
+    assert len(mail.outbox) == 1
+    assert klass.join_code in mail.outbox[0].body
+
+
+def test_invite_link_auto_joins_into_class():
+    teacher = _teacher()
+    klass = _class(teacher)
+    invitee = _student("inv2")
+    ClassInvite.objects.create(klass=klass, inviter=teacher, invitee=invitee, status="pending")
+    ic = Client(); ic.force_login(invitee)
+    r = ic.get(f"/class/join/{klass.join_code}/")
+    assert r.status_code == 302 and f"/class/{klass.id}/" in r.url
+    assert ClassMembership.objects.filter(klass=klass, student=invitee, status="active").exists()
+    assert ClassInvite.objects.get(klass=klass, invitee=invitee).status == "accepted"
+
+
+def test_resend_invite_emails_again_owner_only():
+    teacher = _teacher()
+    klass = _class(teacher)
+    invitee = _student("inv3")
+    inv = ClassInvite.objects.create(klass=klass, inviter=teacher, invitee=invitee, status="pending")
+    mail.outbox.clear()
+    tc = Client(); tc.force_login(teacher)
+    assert tc.post(f"/class/invite/{inv.id}/resend/").status_code == 302
+    assert len(mail.outbox) == 1
+    # A non-owner cannot resend.
+    other = _student("inv4")
+    oc = Client(); oc.force_login(other)
+    assert oc.post(f"/class/invite/{inv.id}/resend/").status_code == 404
+
+
+def test_manage_pending_invite_has_resend_button():
+    teacher = _teacher()
+    klass = _class(teacher)
+    invitee = _student("inv5")
+    inv = ClassInvite.objects.create(klass=klass, inviter=teacher, invitee=invitee, status="pending")
+    tc = Client(); tc.force_login(teacher)
+    body = tc.get(f"/class/{klass.id}/manage/").content.decode()
+    assert f"/class/invite/{inv.id}/resend/" in body

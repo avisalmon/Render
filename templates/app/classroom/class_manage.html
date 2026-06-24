@@ -57,7 +57,12 @@
       <h3 class="cls-h3">הזמנות שנשלחו</h3>
       <ul class="cls-pending">
         {% for inv in pending %}
-        <li>{{ inv.invitee.profile.public_name }} <span class="text-muted">ממתין</span></li>
+        <li class="cls-pending-row">
+          <span>{{ inv.invitee.profile.public_name }} <span class="text-muted">ממתין</span></span>
+          <form method="post" action="{% url 'class_invite_resend' inv.id %}">{% csrf_token %}
+            <button class="btn btn-sm btn-link p-0" title="שליחת תזכורת במייל">שליחת תזכורת</button>
+          </form>
+        </li>
         {% endfor %}
       </ul>
       {% endif %}

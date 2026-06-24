@@ -1,9 +1,8 @@
-{# Project card. Cover → live site (web/app projects) or detail; feedback inline. #}
+{# Project card. Main media links by priority: live site > youtube > gallery; else detail. #}
 <div class="card-surface overflow-hidden h-100 d-flex flex-column" style="color:var(--text-primary)">
-  {# Cover: uploaded image, else live-site screenshot (favicon fallback), else stand icon #}
-  <a href="{% if p.site_url %}{{ p.site_url }}{% else %}{% url 'showcase_project' p.pk %}{% endif %}"
-     {% if p.site_url %}target="_blank" rel="noopener"{% endif %} class="d-block position-relative"
-     title="{% if p.site_url %}פתיחת האתר{% else %}{{ p.title }}{% endif %}">
+  <a href="{% if p.site_url %}{{ p.site_url }}{% elif p.video_url %}{{ p.video_url }}{% elif p.images.exists %}{% url 'showcase_project' p.pk %}#gallery{% else %}{% url 'showcase_project' p.pk %}{% endif %}"
+     {% if p.site_url or p.video_url %}target="_blank" rel="noopener"{% endif %}
+     class="d-block position-relative" title="{{ p.title }}">
     <div style="aspect-ratio:16/10; background:var(--bg-elevated); overflow:hidden; display:flex; align-items:center; justify-content:center;">
       {% if p.cover %}
         <img src="{{ p.cover.url }}" alt="{{ p.title }}" style="width:100%; height:100%; object-fit:cover;">
@@ -15,42 +14,40 @@
           {% if p.favicon_url %}<img src="{{ p.favicon_url }}" alt="" width="40" height="40">{% endif %}
           <small class="text-muted">{{ p.site_host }}</small>
         </span>
+      {% elif p.video_thumb_url %}
+        <img src="{{ p.video_thumb_url }}" alt="{{ p.title }}" loading="lazy"
+             style="width:100%; height:100%; object-fit:cover;">
+      {% elif p.images.first %}
+        <img src="{{ p.images.first.image.url }}" alt="{{ p.title }}" loading="lazy"
+             style="width:100%; height:100%; object-fit:cover;">
       {% else %}
         <i class="bi {{ p.stand_meta.icon }}" style="font-size:2.5rem; color:var(--accent-primary); opacity:.5"></i>
-      {% endif %}
-      {% if p.site_url %}
-      <span class="position-absolute top-0 end-0 m-2 badge bg-dark bg-opacity-75"><i class="bi bi-box-arrow-up-right"></i> אתר חי</span>
       {% endif %}
     </div>
   </a>
 
   <div class="p-3 d-flex flex-column flex-grow-1">
-    <div class="d-flex justify-content-between align-items-start gap-2">
-      <a href="{% url 'showcase_project' p.pk %}" class="text-decoration-none" style="color:var(--text-primary)"><strong>{{ p.title }}</strong></a>
-      {% if p.favicon_url and not p.cover %}<img src="{{ p.favicon_url }}" alt="" width="18" height="18" class="flex-shrink-0">{% endif %}
-    </div>
+    <a href="{% url 'showcase_project' p.pk %}" class="text-decoration-none" style="color:var(--text-primary)"><strong>{{ p.title }}</strong></a>
     {% if p.tagline %}<p class="small text-muted mb-2">{{ p.tagline|truncatechars:70 }}</p>{% endif %}
     <div class="small text-muted d-flex align-items-center gap-1 flex-wrap mb-2">
       {% include "app/community/_author.html" with author=p.author %}
       <span class="badge" style="background:var(--bg-elevated)"><i class="bi {{ p.stand_meta.icon }}"></i> {{ p.stand_meta.title }}</span>
     </div>
 
-    {# Feedback + actions, right on the card (no need to open the project) #}
-    <div class="d-flex align-items-center gap-2 mt-auto pt-2 border-top">
+    {# Feedback + link icons, right on the card #}
+    <div class="d-flex align-items-center gap-1 mt-auto pt-2 border-top">
       <button class="btn btn-sm btn-outline-warning js-star" data-id="{{ p.pk }}" aria-label="כוכב"
               {% if p.author == user %}disabled title="הפרויקט שלך"{% endif %}>
         <i class="bi bi-star-fill"></i> <span class="js-star-count">{{ p.star_count }}</span>
       </button>
-      <a href="{% url 'showcase_project' p.pk %}" class="btn btn-sm btn-link text-muted text-decoration-none px-1">
+      <a href="{% url 'showcase_project' p.pk %}#comments" class="btn btn-sm btn-link text-muted text-decoration-none px-1" aria-label="תגובות">
         <i class="bi bi-chat"></i> {{ p.comments.count }}
       </a>
+      {% if p.is_github %}<a href="{{ p.repo_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-link text-muted px-1" title="קוד ב-GitHub" aria-label="GitHub"><i class="bi bi-github"></i></a>{% endif %}
+      {% if p.video_url %}<a href="{{ p.video_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-link text-muted px-1" title="סרטון" aria-label="YouTube"><i class="bi bi-youtube"></i></a>{% endif %}
+      {% if p.images.exists %}<a href="{% url 'showcase_project' p.pk %}#gallery" class="btn btn-sm btn-link text-muted px-1" title="גלריית תמונות" aria-label="גלריה"><i class="bi bi-images"></i></a>{% endif %}
       {% if p.author == user %}
-      <a href="{% url 'showcase_edit' p.pk %}" class="btn btn-sm btn-link text-muted text-decoration-none px-1" title="עריכה (גם הקטגוריה)" aria-label="עריכת הפרויקט"><i class="bi bi-pencil"></i></a>
-      {% endif %}
-      {% if p.site_url %}
-      <a href="{{ p.site_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-primary ms-auto"><i class="bi bi-box-arrow-up-right"></i> בקרו</a>
-      {% else %}
-      <a href="{% url 'showcase_project' p.pk %}" class="btn btn-sm btn-outline-secondary ms-auto">פרטים</a>
+      <a href="{% url 'showcase_edit' p.pk %}" class="btn btn-sm btn-link text-muted px-1 ms-auto" title="עריכה" aria-label="עריכה"><i class="bi bi-pencil"></i></a>
       {% endif %}
     </div>
   </div>

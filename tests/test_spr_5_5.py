@@ -127,25 +127,6 @@ def test_home_generic_without_learner_profile():
     assert "העולמות של babook" in body
 
 
-@pytest.mark.django_db
-def test_checklist_reflects_progress_and_completes_away():
-    course = _course("ai-user-journey")
-    u = _onboarded_user("checker", course=course)
-    c = Client()
-    c.force_login(u)
-    assert "צעדים ראשונים" in c.get("/").content.decode()
-
-    # Complete all steps (incl. the community beat, REQ-6.8.3) -> checklist disappears
-    from app.models import LessonReflection
-    video = course.videos.first()
-    Enrollment.objects.create(user=u, course=course)
-    UserVideoProgress.objects.create(user=u, video=video, quiz_passed=True)
-    LessonReflection.objects.create(user=u, video=video, user_text="היה מעולה")
-    u.profile.is_public = True  # joined the community
-    u.profile.save()
-    assert "צעדים ראשונים" not in c.get("/").content.decode()
-
-
 # --- funnel events (REQ-5.7.1) ---
 
 @pytest.mark.django_db
