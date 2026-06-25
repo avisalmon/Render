@@ -23,8 +23,8 @@
   </div>
   {% endif %}
 
-  <!-- Stand tabs -->
-  <div class="d-flex gap-2 mb-3 flex-wrap small">
+  <!-- Stand tabs (mobile: one swipeable scroll strip — see .showcase-stands) -->
+  <div class="d-flex gap-2 mb-3 flex-wrap small showcase-stands">
     <a href="{% url 'showcase_wall' %}" class="btn btn-sm {% if not active_stand %}btn-primary{% else %}btn-outline-secondary{% endif %}">הכל</a>
     {% for s in stands %}
     <a href="{% url 'showcase_stand' s.slug %}" class="btn btn-sm {% if active_stand == s.slug %}btn-primary{% else %}btn-outline-secondary{% endif %}">

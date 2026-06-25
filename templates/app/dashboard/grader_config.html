@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}בודק ההגשות (AI) - babook{% endblock %}
+
+{% block content %}
+<div class="py-4">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h4 mb-0"><i class="bi bi-robot me-1" style="color:var(--accent-primary)"></i> בודק ההגשות (AI)</h1>
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'admin_dashboard' %}"><i class="bi bi-arrow-right"></i> חזרה ללוח</a>
+  </div>
+  <p class="text-muted">
+    בודק אוטומטית אם צילום-המסך שהתלמיד העלה אכן מתאים למשימת הקורס (ייעוץ בלבד -
+    מוצג לצוות, לא חוסם את ההגשה). העלות נספרת בלוח העלויות וכפופה לתקרה החודשית.
+    אם זה מתייקר - אפשר להחליף כאן את המודל לזול יותר או לכבות לגמרי.
+  </p>
+
+  <form method="post">{% csrf_token %}
+    <div class="card-surface p-3" style="max-width:560px">
+      <div class="form-check form-switch mb-3">
+        <input class="form-check-input" type="checkbox" role="switch" id="enabled"
+               name="enabled" {% if cfg.enabled %}checked{% endif %}>
+        <label class="form-check-label" for="enabled">בודק פעיל</label>
+      </div>
+
+      <label class="form-label fw-semibold">מודל</label>
+      <select class="form-select mb-1" name="model">
+        {% for value, label in model_choices %}
+          <option value="{{ value }}" {% if cfg.model == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <div class="small text-muted mb-3">
+        עלות משוערת לבדיקה (תמונה אחת):
+        <span class="d-block">· GPT-4o · איכות הכי טובה: ~$0.001–0.002</span>
+        <span class="d-block">· GPT-4o-mini · הזול ביותר (עם detail=low): ~$0.0005</span>
+      </div>
+
+      <label class="form-label fw-semibold">רזולוציית תמונה</label>
+      <select class="form-select mb-1" name="image_detail">
+        {% for value, label in detail_choices %}
+          <option value="{{ value }}" {% if cfg.image_detail == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <div class="small text-muted">
+        High = קורא טקסט/פרטים דקים (יקר יותר). Low = הזול ביותר, מספיק לבדיקת מבנה.
+      </div>
+
+      {% if cfg.updated_at %}
+        <div class="small text-muted mt-3">עודכן לאחרונה: {{ cfg.updated_at }}</div>
+      {% endif %}
+    </div>
+    <button class="btn btn-primary mt-3" type="submit">שמירה</button>
+  </form>
+</div>
+{% endblock %}

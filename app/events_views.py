@@ -183,6 +183,10 @@ def event_photo(request, slug):
         except ValueError:
             messages.error(request, "קובץ תמונה לא נתמך.")
             return redirect("event_detail", slug=slug)
+        from .safety import image_is_safe
+        if not image_is_safe(content, user=request.user, label="event")[0]:
+            messages.error(request, "התמונה נחסמה על ידי מסנן התוכן.")
+            return redirect("event_detail", slug=slug)
         from .models import EventPhoto
         photo = EventPhoto.objects.create(
             event=event, uploaded_by=request.user,

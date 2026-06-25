@@ -129,6 +129,32 @@ def alert_config(request):
 
 
 @superuser_required
+def grader_config(request):
+    """View/edit the project-correctness grader: on/off + which model + image
+    detail. The model switch lets you trade quality for cost without a deploy."""
+    from .models import AIGraderConfig
+
+    cfg = AIGraderConfig.load()
+    if request.method == "POST":
+        cfg.enabled = bool(request.POST.get("enabled"))
+        model = request.POST.get("model", "")
+        detail = request.POST.get("image_detail", "")
+        if model in dict(AIGraderConfig.MODEL_CHOICES):
+            cfg.model = model
+        if detail in dict(AIGraderConfig.DETAIL_CHOICES):
+            cfg.image_detail = detail
+        cfg.save()
+        messages.success(request, "הגדרות הבודק נשמרו.")
+        return redirect("dashboard_grader_config")
+    ctx = {
+        "cfg": cfg,
+        "model_choices": AIGraderConfig.MODEL_CHOICES,
+        "detail_choices": AIGraderConfig.DETAIL_CHOICES,
+    }
+    return render(request, "app/dashboard/grader_config.html", ctx)
+
+
+@superuser_required
 @require_POST
 def dismiss_alert(request, pk):
     """Dismiss an active alert (REQ-8.6.2)."""

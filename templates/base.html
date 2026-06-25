@@ -59,17 +59,23 @@
             <img src="{% static 'logo.svg' %}" alt="babook" width="28" height="28">
             <span class="d-none d-sm-inline">babook</span>
           </a>
-          <a class="nav-link px-2" href="{% url 'courses_catalog' %}" title="הדרכות" aria-label="הדרכות">
+          {# Primary section icons — live in the drawer on mobile, so hide them from the bar there (DEC: mobile audit P0-1) #}
+          <a class="nav-link px-2 d-none d-md-inline-flex" href="{% url 'courses_catalog' %}" title="הדרכות" aria-label="הדרכות">
             <i class="bi bi-mortarboard" style="font-size:1.3rem"></i>
           </a>
-          <a class="nav-link px-2" href="{% url 'community' %}" title="קהילה" aria-label="קהילה">
+          <a class="nav-link px-2 d-none d-md-inline-flex" href="{% url 'community' %}" title="קהילה" aria-label="קהילה">
             <i class="bi bi-people" style="font-size:1.3rem"></i>
           </a>
           {% if show_my_classes %}
-          <a class="nav-link px-2" href="{% url 'my_classes' %}" title="הכיתות שלי" aria-label="הכיתות שלי">
+          <a class="nav-link px-2 d-none d-md-inline-flex" href="{% url 'my_classes' %}" title="הכיתות שלי" aria-label="הכיתות שלי">
             <i class="bi bi-easel" style="font-size:1.3rem"></i>
           </a>
           {% endif %}
+          {# Mobile-only: search opens a full-width row under the bar (the inline box is hidden on mobile) #}
+          <button class="btn nav-link px-2 d-md-none" type="button" id="navSearchToggle"
+                  aria-label="חיפוש" aria-expanded="false">
+            <i class="bi bi-search" style="font-size:1.25rem"></i>
+          </button>
         </div>
 
         <!-- Site-wide live search, inline in the menu -->
@@ -104,14 +110,15 @@
             </li>
             {% endif %}
             {% if user.learner_profile and not user.learner_profile.needs_onboarding %}
-            <!-- Always-reachable personal recommendations (REQ-5.6.3 / REQ-7.1.3) -->
-            <li class="nav-item">
+            <!-- Always-reachable personal recommendations (REQ-5.6.3 / REQ-7.1.3).
+                 Text+icon hidden on mobile to declutter the bar (audit P0-1) — still reachable from the profile. -->
+            <li class="nav-item d-none d-md-block">
               <a class="nav-link d-flex align-items-center gap-1" href="{% url 'profile' %}#recommended" title="מומלץ עבורך">
                 <i class="bi bi-stars" style="color:var(--accent-primary)"></i><span>מומלץ עבורך</span>
               </a>
             </li>
             {% endif %}
-            <!-- User: name + avatar circle (REQ-7.1.2) -->
+            <!-- User: name + avatar circle (REQ-7.1.2). Name hidden on mobile (audit P0-1) — avatar only. -->
             <li class="nav-item">
               <a class="nav-link d-flex align-items-center gap-2" href="{% url 'profile' %}">
                 {% if user.profile.avatar %}
@@ -119,10 +126,11 @@
                 {% else %}
                   <i class="bi bi-person-circle"></i>
                 {% endif %}
-                {{ user.profile.public_name }}
+                <span class="d-none d-md-inline">{{ user.profile.public_name }}</span>
               </a>
             </li>
-            <li class="nav-item">
+            <!-- Logout: lives in the drawer on mobile, so hide it from the bar there (audit P0-1) -->
+            <li class="nav-item d-none d-md-block">
               <form method="post" action="{% url 'logout' %}" class="m-0">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-link nav-link px-0">
@@ -165,6 +173,7 @@
         <a href="{% url 'community' %}"><i class="bi bi-people"></i> קהילות</a>
         <a href="{% url 'showcase_wall' %}"><i class="bi bi-easel2"></i> דוכן השוויץ</a>
         <a href="{% url 'class_directory' %}"><i class="bi bi-easel"></i> כל הכיתות</a>
+        <a href="{% url 'blog' %}"><i class="bi bi-newspaper"></i> הבלוג של אבי סלמון</a>
         {% if user.is_authenticated %}
         <hr class="site-drawer-sep">
         <a href="{% url 'profile' %}"><i class="bi bi-person-circle"></i> פרופיל</a>
@@ -193,12 +202,12 @@
   </div>
 
   <!-- Cookie banner -->
-  <div id="cookie-banner" class="bg-secondary text-white py-2 px-3 d-flex align-items-center justify-content-between"
+  <div id="cookie-banner" class="bg-secondary text-white py-2 px-3 d-flex align-items-center justify-content-between gap-2"
        style="display:none !important;">
-    <span>אנחנו משתמשים בעוגיות לשיפור חוויתכם.
+    <span>אנחנו משתמשים בעוגיות<span class="d-none d-sm-inline"> לשיפור חוויתכם</span>.
       <a href="{% url 'privacy' %}" class="text-white text-decoration-underline">מדיניות פרטיות</a>
     </span>
-    <button class="btn btn-sm btn-light ms-3" onclick="acceptCookies()">אישור</button>
+    <button class="btn btn-sm btn-light flex-shrink-0" onclick="acceptCookies()">אישור</button>
   </div>
 
   {% if show_verify_banner %}
@@ -223,12 +232,12 @@
   <div id="welcome-strip" class="py-2 px-3" style="background:var(--bg-elevated, #1a1d24); border-bottom:1px solid rgba(255,255,255,.08);">
     <div class="container d-flex align-items-center justify-content-between gap-2 flex-wrap">
       <span class="small">
-        ברוכים הבאים ל-babook - הדרכות AI, מייקרים וחדשנות.
+        ברוכים הבאים ל-babook<span class="d-none d-sm-inline"> - הדרכות AI, מייקרים וחדשנות.
         {% if welcome_strip.entry_course %}
           הגעת בשביל «{{ welcome_strip.entry_course.title }}»? כל השיעורים פתוחים.
         {% else %}
           כל הקורסים פתוחים במלואם.
-        {% endif %}
+        {% endif %}</span>
       </span>
       <span class="d-flex align-items-center gap-2">
         {% if welcome_strip.entry_course %}
@@ -401,6 +410,19 @@
       if (!form.contains(e.target)) hide();
     });
     input.addEventListener('keydown', function (e) { if (e.key === 'Escape') hide(); });
+
+    // Mobile: the search box is pulled out of the bar; a toggle reveals it as a
+    // full-width row underneath (audit P0-1).
+    var toggle = document.getElementById('navSearchToggle');
+    if (toggle) {
+      toggle.addEventListener('click', function () {
+        var nav = document.querySelector('.navbar');
+        var open = nav.classList.toggle('nav-search-open');
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (open) { setTimeout(function () { input.focus(); }, 50); }
+        else { hide(); }
+      });
+    }
   })();
   </script>
 
@@ -467,6 +489,48 @@
     });
   </script>
   {% endif %}
+
+  <!-- Hebrew-labeled file inputs (audit P2-8): replace the browser's English
+       "Choose File / No file chosen" with a styled Hebrew button + filename.
+       Progressive enhancement — the real <input> stays in the form, just hidden. -->
+  <script>
+  (function () {
+    document.querySelectorAll('input[type="file"]').forEach(function (inp) {
+      if (inp.dataset.heFile) return;
+      // Skip inputs that already have a custom widget around them (the codebase
+      // hides those with .d-none and supplies its own Hebrew trigger button).
+      if (inp.classList.contains('d-none') || inp.dataset.noHeFile) return;
+      inp.dataset.heFile = '1';
+
+      var wrap = document.createElement('div');
+      wrap.className = 'he-file';
+      inp.parentNode.insertBefore(wrap, inp);
+      wrap.appendChild(inp);
+      inp.classList.add('he-file-input', 'he-file-hidden');
+
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-sm btn-outline-secondary';
+      btn.innerHTML = '<i class="bi bi-upload"></i> בחירת קובץ';
+
+      var name = document.createElement('span');
+      name.className = 'he-file-name';
+      name.textContent = 'לא נבחר קובץ';
+
+      wrap.appendChild(btn);
+      wrap.appendChild(name);
+
+      btn.addEventListener('click', function () { inp.click(); });
+      inp.addEventListener('change', function () {
+        if (inp.files && inp.files.length) {
+          name.textContent = inp.files.length > 1 ? inp.files.length + ' קבצים נבחרו' : inp.files[0].name;
+        } else {
+          name.textContent = 'לא נבחר קובץ';
+        }
+      });
+    });
+  })();
+  </script>
 
   {% block extra_js %}{% endblock %}
 </body>

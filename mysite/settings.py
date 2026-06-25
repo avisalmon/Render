@@ -207,6 +207,17 @@ OPENAI_MONTHLY_COST_CAP_USD = float(os.environ.get("OPENAI_MONTHLY_COST_CAP_USD"
 CHAT_SESSION_TIMEOUT_MINUTES = 30
 
 # ---------------------------------------------------------------------------
+# Content safety (app/safety.py) - kill-switches, default on. Both fail OPEN.
+# ---------------------------------------------------------------------------
+# Image uploads run through OpenAI's FREE omni-moderation endpoint (sexual /
+# violence / hate / self-harm). Set to "0" to disable (e.g. to debug uploads).
+IMAGE_MODERATION_ENABLED = os.environ.get("IMAGE_MODERATION_ENABLED", "1") != "0"
+# Chat/upload text runs through a cheap relevance classifier for the categories
+# the free moderation API misses (political, off-topic). Costs a few tokens of
+# OPENAI_SEARCH_MODEL per *unique* message (cached). Set "0" to disable.
+CONTENT_RELEVANCE_ENABLED = os.environ.get("CONTENT_RELEVANCE_ENABLED", "1") != "0"
+
+# ---------------------------------------------------------------------------
 # Course Management API (SPR-2.3)
 # ---------------------------------------------------------------------------
 # Set this to a strong random secret on production (Render env var).

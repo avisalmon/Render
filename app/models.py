@@ -589,6 +589,24 @@ class UserVideoProgress(models.Model):
         return f"{self.user.username} – {self.video}"
 
 
+class StudentCode(models.Model):
+    """A student's saved code for an in-lesson runnable Python cell. The code runs
+    in the browser (Pyodide/WebAssembly); only the text is stored here, so it can
+    be reloaded on return and seen by the teacher as a deliverable."""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="code_cells")
+    video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name="code_cells")
+    cell_key = models.CharField(max_length=40)  # which runnable block on the lesson
+    code = models.TextField(blank=True, default="")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = [("user", "video", "cell_key")]
+
+    def __str__(self):
+        return f"{self.user.username} – {self.video} [{self.cell_key}]"
+
+
 class Enrollment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="enrollments")
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="enrollments")
@@ -681,6 +699,15 @@ class CourseProjectSubmission(models.Model):
     model_file = models.FileField(upload_to="project_models/", blank=True, null=True)
     caption = models.CharField(max_length=200, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    # AI correctness grade (advisory - shown to staff, never auto-blocks). Set
+    # once per uploaded image by app/grading.py; null = not graded yet.
+    grade_ok = models.BooleanField(null=True, blank=True)
+    grade_score = models.PositiveSmallIntegerField(null=True, blank=True)
+    grade_reason = models.CharField(max_length=300, blank=True, default="")
+    graded_model = models.CharField(max_length=20, blank=True, default="")
+    graded_hash = models.CharField(max_length=64, blank=True, default="")  # file hash → skip re-grade
+    graded_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         unique_together = [("user", "course")]
@@ -938,7 +965,12 @@ class ChatMessage(models.Model):
 
 class UsageLog(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="usage_logs")
-    session = models.ForeignKey(ChatSession, on_delete=models.CASCADE, related_name="usage_logs")
+    # Nullable: non-chat AI features (the project grader) log spend here too, so
+    # it shows in the cost dashboard and counts toward the monthly cap.
+    session = models.ForeignKey(
+        ChatSession, on_delete=models.CASCADE, related_name="usage_logs",
+        null=True, blank=True,
+    )
     model = models.CharField(max_length=50)
     prompt_tokens = models.PositiveIntegerField(default=0)
     completion_tokens = models.PositiveIntegerField(default=0)
@@ -1110,6 +1142,132 @@ class AuthoringJob(models.Model):
             self.append_log(log)
         if save:
             self.save()
+
+
+class AIGraderConfig(models.Model):
+    """Singleton runtime config for the project-correctness grader, editable in
+    the management panel so the model can be swapped (downgraded for cost, or
+    the whole grader turned off) without a deploy. See app/grading.py."""
+
+    MODEL_CHOICES = [
+        ("gpt-4o", "GPT-4o · best quality"),
+        ("gpt-4o-mini", "GPT-4o-mini · cheapest"),
+    ]
+    DETAIL_CHOICES = [
+        ("high", "High · read fine detail"),
+        ("low", "Low · cheapest"),
+        ("auto", "Auto"),
+    ]
+
+    enabled = models.BooleanField(default=True)
+    model = models.CharField(max_length=20, choices=MODEL_CHOICES, default="gpt-4o")
+    image_detail = models.CharField(max_length=5, choices=DETAIL_CHOICES, default="high")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "AI grader config"
+        verbose_name_plural = "AI grader config"
+
+    def __str__(self):
+        state = "on" if self.enabled else "off"
+        return f"Grader[{state} · {self.model}/{self.image_detail}]"
+
+    @classmethod
+    def load(cls):
+        """Get (or create) the single config row."""
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+
+# ---------------------------------------------------------------------------
+# Avi Salmon Blog - personal blog (single trusted author)
+# ---------------------------------------------------------------------------
+
+class BlogPost(models.Model):
+    """A personal blog post ("Avi Salmon Blog").
+
+    All rich content lives in `body` (markdown), which carries:
+      - text, headings, links, lists, blockquotes, tables;
+      - inline images - either plain markdown `![alt](url)` or the gallery
+        shortcode `[[img:key]]` resolved at render time from `images`;
+      - fenced code, including ```python-run cells that become live in-browser
+        Python emulators (Pyodide + CodeMirror, reusing static/js/py-runner.js);
+      - raw HTML pass-through for any other JS emulator / embed (YouTube,
+        Scratch, p5.js, CodePen, custom <iframe>/<script> widgets). Safe here
+        because the blog has a single trusted author (no public submissions).
+
+    Top-level fields cover the post's "chrome": title, subtitle, cover image,
+    excerpt (cards + meta description), tags, and publish state.
+    """
+
+    STATUS = [("draft", "טיוטה"), ("published", "פורסם")]
+
+    author = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="blog_posts")
+    title = models.CharField(max_length=200)
+    subtitle = models.CharField(max_length=300, blank=True, default="")
+    slug = models.SlugField(max_length=220, unique=True, blank=True, allow_unicode=True)
+    excerpt = models.TextField(blank=True, default="")  # card summary + <meta description>
+    cover = models.ImageField(upload_to="blog/", blank=True, null=True)
+    body = models.TextField(blank=True, default="")  # markdown (+ ```python-run + raw HTML)
+    tags = models.JSONField(default=list, blank=True)
+    status = models.CharField(max_length=12, choices=STATUS, default="draft")
+    is_featured = models.BooleanField(default=False)  # pin to the top of the index
+    view_count = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    published_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        ordering = ["-published_at", "-created_at"]
+
+    def __str__(self):
+        return self.title
+
+    def save(self, *args, **kwargs):
+        # Auto-slug from the title (Hebrew kept via allow_unicode); de-duplicate.
+        if not self.slug:
+            from django.utils.text import slugify
+            base = slugify(self.title, allow_unicode=True) or "post"
+            slug = base[:220]
+            i = 1
+            while BlogPost.objects.exclude(pk=self.pk).filter(slug=slug).exists():
+                i += 1
+                slug = f"{base[:210]}-{i}"
+            self.slug = slug
+        # First time it goes live, stamp the publish date.
+        if self.status == "published" and self.published_at is None:
+            self.published_at = timezone.now()
+        super().save(*args, **kwargs)
+
+    @property
+    def is_published(self):
+        return self.status == "published"
+
+    @property
+    def reading_minutes(self):
+        """Rough read-time for the card/meta (~200 words/min, min 1)."""
+        words = len((self.body or "").split())
+        return max(1, round(words / 200))
+
+
+class BlogImage(models.Model):
+    """An image uploaded for a post. Shown in the post gallery and/or dropped
+    into the body via the `[[img:key]]` shortcode, so you never hand-type a
+    /media/ URL."""
+
+    post = models.ForeignKey(BlogPost, on_delete=models.CASCADE, related_name="images")
+    image = models.ImageField(upload_to="blog/gallery/")
+    key = models.SlugField(max_length=60, blank=True, default="")  # handle for [[img:key]]
+    caption = models.CharField(max_length=300, blank=True, default="")
+    alt = models.CharField(max_length=300, blank=True, default="")
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return f"{self.post.slug} – {self.key or self.image.name}"
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}{{ post.title }} | Avi Salmon Blog{% endblock %}
+{% block meta_description %}{{ post.excerpt|default:post.subtitle|default:post.title }}{% endblock %}
+
+{% block extra_head %}
+<!-- Open Graph (link previews when shared) -->
+<meta property="og:type" content="article">
+<meta property="og:title" content="{{ post.title }}">
+<meta property="og:description" content="{{ post.excerpt|default:post.subtitle }}">
+{% if post.cover %}<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ post.cover.url }}">{% endif %}
+{% endblock %}
+
+{% block content %}
+<article class="blog-wrap blog-post">
+
+  <a href="{% url 'blog' %}" class="blog-back"><i class="bi bi-arrow-right"></i> כל הפוסטים</a>
+
+  {% if post.status != 'published' %}
+  <div class="alert alert-warning py-2 small">טיוטה - גלוי רק לצוות עד הפרסום.</div>
+  {% endif %}
+
+  <header class="blog-post-head">
+    <div class="blog-card-meta">
+      {{ post.published_at|default:post.created_at|date:"j בF Y" }} · {{ post.reading_minutes }} דק׳ קריאה
+      {% if post.author %} · {{ post.author.profile.public_name|default:post.author.username }}{% endif %}
+    </div>
+    <h1 class="blog-post-title">{{ post.title }}</h1>
+    {% if post.subtitle %}<p class="blog-post-sub">{{ post.subtitle }}</p>{% endif %}
+    {% if post.tags %}
+    <div class="blog-tags">{% for t in post.tags %}<span class="blog-tag">{{ t }}</span>{% endfor %}</div>
+    {% endif %}
+  </header>
+
+  {% if post.cover %}
+  <figure class="blog-cover">
+    <img src="{{ post.cover.url }}" alt="{{ post.title }}" loading="lazy">
+  </figure>
+  {% endif %}
+
+  <!-- Rendered markdown body: text, links, images, ```python-run cells, embeds -->
+  <div class="lesson-notes blog-body">
+    {{ body_html|safe }}
+  </div>
+
+  <!-- Gallery: any uploaded image WITHOUT a [[img:key]] handle shows here -->
+  {% with gallery=post.images.all %}
+  {% if gallery %}
+  <div class="blog-gallery">
+    {% for im in gallery %}
+    {% if not im.key %}
+    <figure class="blog-figure">
+      <img src="{{ im.image.url }}" alt="{{ im.alt|default:im.caption }}" loading="lazy">
+      {% if im.caption %}<figcaption>{{ im.caption }}</figcaption>{% endif %}
+    </figure>
+    {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endwith %}
+
+  {% if related %}
+  <section class="blog-related">
+    <h2 class="worlds-subhead">עוד מהבלוג</h2>
+    <div class="blog-grid">
+      {% for r in related %}
+      <a href="{% url 'blog_post' r.slug %}" class="blog-card card-surface">
+        {% if r.cover %}
+        <span class="blog-card-cover" style="background-image:url('{{ r.cover.url }}')"></span>
+        {% else %}
+        <span class="blog-card-cover blog-card-cover--blank"><i class="bi bi-newspaper"></i></span>
+        {% endif %}
+        <span class="blog-card-body">
+          <span class="blog-card-meta">{{ r.published_at|default:r.created_at|date:"j בF Y" }} · {{ r.reading_minutes }} דק׳</span>
+          <h3 class="blog-card-title">{{ r.title }}</h3>
+          {% if r.subtitle %}<p class="blog-card-sub">{{ r.subtitle }}</p>{% endif %}
+        </span>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+</article>
+{% endblock %}
+
+{% block extra_js %}
+{# Runnable Python cells (```python-run) -> live in-browser emulator (Pyodide).
+   No saveUrl: blog readers run code, nothing is persisted. #}
+<script type="module">
+  import { initPyRunners } from "{% static 'js/py-runner.js' %}";
+  initPyRunners({});
+</script>
+{% endblock %}

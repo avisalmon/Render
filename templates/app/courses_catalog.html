@@ -75,13 +75,17 @@
   <!-- Domain sections, sub-grouped by track -->
   {% for g in domain_groups %}
   <section class="catalog-domain" data-domain="{{ g.key }}" id="domain-{{ g.key }}">
-    <div class="catalog-domain-head dk-{{ g.key }}">
+    <div class="catalog-domain-head dk-{{ g.key }}" role="button" tabindex="0"
+         aria-expanded="true" aria-controls="domain-body-{{ g.key }}">
       <i class="bi {{ g.meta.icon }}"></i>
-      <div>
+      <div class="catalog-domain-head-text">
         <h2 class="h5 mb-0">{{ g.meta.title }}</h2>
         {% if g.meta.subtitle %}<div class="text-muted small">{{ g.meta.subtitle }}</div>{% endif %}
       </div>
+      <span class="catalog-domain-count">{{ g.count }}</span>
+      <i class="bi bi-chevron-down catalog-domain-chev" aria-hidden="true"></i>
     </div>
+    <div class="catalog-domain-body" id="domain-body-{{ g.key }}">
     {% for t in g.tracks %}
     <div class="catalog-track">
       {% if t.meta.title %}
@@ -96,6 +100,7 @@
       </div>
     </div>
     {% endfor %}
+    </div>
   </section>
   {% endfor %}
 
@@ -118,6 +123,35 @@
   // The chips + status/achievements split + every domain section hide in search mode.
   var resumeSplit = document.querySelector('.resume-split');
   var browseEls = [chips, resumeSplit].concat(domains);
+
+  // Collapsible domains — click/Enter on the band folds its courses; the
+  // collapsed state is remembered per domain in localStorage.
+  var COLLAPSE_KEY = 'catalogCollapsed';
+  var collapsed = {};
+  try { collapsed = JSON.parse(localStorage.getItem(COLLAPSE_KEY) || '{}') || {}; } catch (e) {}
+  function persistCollapsed() {
+    try { localStorage.setItem(COLLAPSE_KEY, JSON.stringify(collapsed)); } catch (e) {}
+  }
+  domains.forEach(function (sec) {
+    var key = sec.dataset.domain;
+    var head = sec.querySelector('.catalog-domain-head');
+    if (!head) return;
+    function apply(isCol) {
+      sec.classList.toggle('is-collapsed', isCol);
+      head.setAttribute('aria-expanded', String(!isCol));
+    }
+    apply(!!collapsed[key]);
+    function toggle() {
+      var isCol = !sec.classList.contains('is-collapsed');
+      apply(isCol);
+      collapsed[key] = isCol;
+      persistCollapsed();
+    }
+    head.addEventListener('click', toggle);
+    head.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+    });
+  });
 
   // Domain chip filter (independent of search).
   var currentDomain = 'all';

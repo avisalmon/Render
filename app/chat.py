@@ -80,6 +80,11 @@ def post_message(user, channel, body):
         return None, reason
     if not moderation_ok(body, user=user):
         return None, "ההודעה סומנה על ידי מסנן התוכן. נסחו מחדש."
+    # Keep chat on-topic: block political / off-topic / abusive chatter that the
+    # free safety filter doesn't cover (e.g. recipes, ads). Fails open.
+    from .safety import text_relevance_ok
+    if not text_relevance_ok(body, context_label=f"community chat: {channel.title}", user=user)[0]:
+        return None, "ההודעה לא קשורה לנושא הערוץ או חורגת מכללי הקהילה. נסחו מחדש."
     msg = ChannelMessage.objects.create(channel=channel, author=user, body=body)
     notify_mentions(msg)
     return msg, ""

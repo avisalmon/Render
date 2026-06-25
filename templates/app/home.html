@@ -123,6 +123,10 @@
           </span>
           <span class="home-circle-label">נוסטלגיה <span class="soon-badge">בקרוב</span></span>
         </a>
+        <a href="{% url 'blog' %}" class="home-circle">
+          <span class="home-circle-img" style="background-image:url('{% static 'img/home/blog.jpg' %}'), url('{% static 'img/home/blog.svg' %}'); background-color:#3b9bf0"></span>
+          <span class="home-circle-label">Avi Salmon Blog{% if not blog_has_posts %} <span class="soon-badge">בקרוב</span>{% endif %}</span>
+        </a>
       </div>
     </section>
     {% endif %}

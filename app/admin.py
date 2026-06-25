@@ -1,8 +1,11 @@
 from django.contrib import admin
 
 from .models import (
+    AIGraderConfig,
     AuthoringJob,
     BadgeAward,
+    BlogImage,
+    BlogPost,
     ChatMessage,
     ChatSession,
     CommunityReputation,
@@ -114,6 +117,43 @@ admin.site.register(ProjectComment)
 admin.site.register(DirectMessage)
 
 
+# --- Avi Salmon Blog (personal blog) ---
+
+class BlogImageInline(admin.TabularInline):
+    model = BlogImage
+    extra = 1
+    fields = ("image", "key", "alt", "caption", "order")
+
+
+@admin.register(BlogPost)
+class BlogPostAdmin(admin.ModelAdmin):
+    """Author + publish the personal blog. Body is markdown (text, links,
+    images, ```python-run runnable cells, and raw-HTML embeds)."""
+    list_display = ("title", "status", "is_featured", "published_at", "view_count")
+    list_filter = ("status", "is_featured")
+    search_fields = ("title", "subtitle", "excerpt", "body")
+    prepopulated_fields = {"slug": ("title",)}
+    readonly_fields = ("view_count", "created_at", "updated_at")
+    inlines = [BlogImageInline]
+    actions = ["publish_posts"]
+    fieldsets = (
+        (None, {"fields": ("title", "subtitle", "slug", "author")}),
+        ("Card & SEO", {"fields": ("cover", "excerpt", "tags")}),
+        ("Content", {"fields": ("body",)}),
+        ("Publishing", {"fields": ("status", "is_featured", "published_at")}),
+        ("Meta", {"fields": ("view_count", "created_at", "updated_at")}),
+    )
+
+    @admin.action(description="Publish selected posts")
+    def publish_posts(self, request, queryset):
+        from django.utils import timezone
+        for p in queryset.exclude(status="published"):
+            p.status = "published"
+            if not p.published_at:
+                p.published_at = timezone.now()
+            p.save()
+
+
 @admin.register(LearnerProfile)
 class LearnerProfileAdmin(admin.ModelAdmin):
     """The admin's full view of everything onboarding captured (REQ-5.6.1)."""
@@ -156,8 +196,27 @@ admin.site.register(CorporateLead)
 admin.site.register(NewsletterSubscriber)
 admin.site.register(LessonQuiz)
 admin.site.register(CourseCertificate)
-admin.site.register(CourseProjectSubmission)
+@admin.register(CourseProjectSubmission)
+class CourseProjectSubmissionAdmin(admin.ModelAdmin):
+    """Proof-of-work submissions + the AI correctness verdict (advisory)."""
+    list_display = ("user", "course", "grade_ok", "grade_score", "graded_model",
+                    "short_reason", "created_at")
+    list_filter = ("grade_ok", "graded_model", "course")
+    search_fields = ("user__username", "course__slug", "grade_reason")
+    readonly_fields = ("grade_ok", "grade_score", "grade_reason", "graded_model",
+                       "graded_hash", "graded_at")
+
+    @admin.display(description="AI reason")
+    def short_reason(self, obj):
+        return (obj.grade_reason or "")[:80]
+
+
 admin.site.register(LessonModelSubmission)
+
+
+@admin.register(AIGraderConfig)
+class AIGraderConfigAdmin(admin.ModelAdmin):
+    list_display = ("__str__", "enabled", "model", "image_detail", "updated_at")
 
 
 @admin.register(AuthoringJob)

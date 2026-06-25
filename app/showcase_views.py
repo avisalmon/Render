@@ -278,6 +278,22 @@ def _save_project(request, project, course):
                 "needs_guidelines": False, "form_title": title, "form_story": story,
             })
 
+    # Image safety: every uploaded picture (cover + gallery) runs through the
+    # free moderation gate before anything is saved. Any flagged image rejects
+    # the whole submission (the form is re-rendered with the text preserved).
+    from .safety import image_is_safe
+    _to_check = []
+    if request.FILES.get("cover"):
+        _to_check.append(("showcase-cover", request.FILES["cover"]))
+    _to_check += [("showcase-gallery", f) for f in request.FILES.getlist("gallery")[:8]]
+    for label, f in _to_check:
+        if not image_is_safe(f, user=request.user, label=label)[0]:
+            messages.error(request, "אחת התמונות נחסמה על ידי מסנן התוכן. החליפו אותה ונסו שוב.")
+            return render(request, "app/community/project_form.html", {
+                "stands": showcase_stands(), "course": course, "project": project,
+                "needs_guidelines": False, "form_title": title, "form_story": story,
+            })
+
     is_new = project is None
     if is_new:
         project = ShowcaseProject(author=request.user)

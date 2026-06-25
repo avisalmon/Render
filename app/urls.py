@@ -68,6 +68,7 @@ urlpatterns = [
     path("admin-dashboard/refresh/<str:section>/", dashboard_views.refresh_section, name="dashboard_refresh"),
     path("admin-dashboard/cost/manual/", dashboard_views.manual_cost, name="dashboard_manual_cost"),
     path("admin-dashboard/alerts/config/", dashboard_views.alert_config, name="dashboard_alert_config"),
+    path("admin-dashboard/grader/config/", dashboard_views.grader_config, name="dashboard_grader_config"),
     path("admin-dashboard/alerts/<int:pk>/dismiss/", dashboard_views.dismiss_alert, name="dashboard_dismiss_alert"),
     # Machine endpoint: weekly GitHub Actions cron POSTs here with X-Backup-Token
     # to run an in-process backup (REQ-1.2.4).
@@ -178,6 +179,9 @@ urlpatterns = [
     path("workshops/", views.coming_soon, {"section": "workshops"}, name="workshops"),
     path("nostalgia/", views.coming_soon, {"section": "nostalgia"}, name="nostalgia"),
     path("research/", views.coming_soon, {"section": "research"}, name="research"),
+    # Avi Salmon Blog (personal). <str:> (not <slug:>) so unicode/Hebrew slugs match.
+    path("blog/", views.blog_index, name="blog"),
+    path("blog/<str:slug>/", views.blog_post, name="blog_post"),
     path("newsletter/signup/", views.newsletter_signup, name="newsletter_signup"),
     path("newsletter/confirm/<str:token>", views.newsletter_confirm, name="newsletter_confirm"),
     # Courses (plural - SPR-2.2)
@@ -193,6 +197,7 @@ urlpatterns = [
     path("courses/<slug:slug>/lesson/<int:lesson_order>/submit-scratch/", views.lesson_submit_scratch, name="lesson_submit_scratch"),
     path("courses/<slug:slug>/lesson/<int:lesson_order>/submit-tinkercad/", views.lesson_submit_tinkercad, name="lesson_submit_tinkercad"),
     path("courses/<slug:slug>/lesson/<int:lesson_order>/submit-youtube/", views.lesson_submit_youtube, name="lesson_submit_youtube"),
+    path("courses/<slug:slug>/lesson/<int:lesson_order>/code/save/", views.lesson_code_save, name="lesson_code_save"),
     path("courses/<slug:slug>/lesson/<int:lesson_order>/", views.courses_lesson, name="courses_lesson"),
     # Courses (singular - SPR-1.4/1.5 entitlement-gated)
     path("course/<slug:slug>/", views.course_detail_view, name="course_detail"),

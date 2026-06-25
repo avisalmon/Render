@@ -104,10 +104,10 @@
         <tbody>
           {% for r in roster %}
           <tr>
-            <td>{{ r.name }}</td>
-            <td>{{ r.courses_count }}</td>
-            <td>{{ r.certs_count }}</td>
-            <td>{{ r.projects_count }}</td>
+            <td class="cls-cell-name">{{ r.name }}</td>
+            <td data-label="קורסים">{{ r.courses_count }}</td>
+            <td data-label="תעודות">{{ r.certs_count }}</td>
+            <td data-label="פרויקטים">{{ r.projects_count }}</td>
             <td class="cls-row-actions">
               <a href="{% url 'class_student' klass.id r.student.id %}" class="btn btn-sm btn-outline-secondary">צפייה</a>
               <form method="post" action="{% url 'class_remove' klass.id r.student.id %}"

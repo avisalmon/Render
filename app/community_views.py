@@ -278,6 +278,10 @@ def community_settings_save(request):
         except ValueError:
             messages.error(request, "קובץ התמונה לא נתמך. נסו JPG או PNG.")
             return redirect("profile")
+        from .safety import image_is_safe
+        if not image_is_safe(content, user=request.user, label="avatar")[0]:
+            messages.error(request, "התמונה נחסמה על ידי מסנן התוכן. בחרו תמונה אחרת.")
+            return redirect("profile")
         profile.avatar.save(f"avatar_{request.user.pk}.jpg", content, save=False)
     profile.save()
     messages.success(request, "הגדרות הקהילה נשמרו")

@@ -555,8 +555,10 @@ def glory_edit(request, hackathon):
             glory.published_at = timezone.now()
         glory.published = publish
         glory.save()
+        from .safety import image_is_safe
         for img in request.FILES.getlist("photos"):
-            glory.photos.create(image=img)
+            if image_is_safe(img, user=request.user, label="glory")[0]:
+                glory.photos.create(image=img)
         messages.success(request, "עמוד התהילה נשמר.")
         return redirect("crashtech_glory", slug=hackathon.slug)
     return render(request, "app/crashtech/glory_edit.html", {"h": hackathon, "glory": glory})

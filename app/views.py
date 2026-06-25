@@ -80,6 +80,10 @@ def home(request):
 
     published_course_count = Course.objects.filter(is_published=True).count()
 
+    # Drop the blog circle's "בקרוב" badge once the first post is live.
+    from .models import BlogPost
+    blog_has_posts = BlogPost.objects.filter(status="published").exists()
+
     # Training hero video loop: every .mp4 in static/video/training/ (sorted),
     # crossfaded one into the next in the template. Add a clip = drop a file.
     # Caption per clip is keyed by filename below; the overlay fades in sync
@@ -116,6 +120,7 @@ def home(request):
         "top_members": top_members,
         "published_course_count": published_course_count,
         "training_videos": training_videos,
+        "blog_has_posts": blog_has_posts,
     })
 
 
@@ -167,12 +172,69 @@ def coming_soon(request, section):
     return render(request, "app/coming_soon.html", {"section": ctx, "section_key": section})
 
 
+# --- Avi Salmon Blog (personal blog) -------------------------------------
+
+def _blog_can_see_drafts(request):
+    """Drafts are visible only to staff (so the author can preview before publishing)."""
+    return request.user.is_authenticated and request.user.is_staff
+
+
+def blog_index(request):
+    """Public list of published posts (staff also see drafts)."""
+    from .models import BlogPost
+    posts = BlogPost.objects.select_related("author")
+    if not _blog_can_see_drafts(request):
+        posts = posts.filter(status="published")
+    posts = list(posts.order_by("-is_featured", "-published_at", "-created_at"))
+    featured = next((p for p in posts if p.is_featured), None)
+    rest = [p for p in posts if p is not featured]
+    return render(request, "app/blog/index.html", {
+        "posts": rest,
+        "featured": featured,
+        "can_see_drafts": _blog_can_see_drafts(request),
+    })
+
+
+def blog_post(request, slug):
+    """A single post: rendered markdown body + gallery, with runnable cells."""
+    from django.db.models import F
+    from django.shortcuts import get_object_or_404
+
+    from .blog import render_body
+    from .models import BlogPost
+
+    post = get_object_or_404(BlogPost.objects.select_related("author"), slug=slug)
+    if post.status != "published" and not _blog_can_see_drafts(request):
+        raise Http404("Post not found")
+
+    body_html = render_body(post)
+
+    # Lightweight view counter (don't count the author's own staff previews).
+    if not _blog_can_see_drafts(request):
+        BlogPost.objects.filter(pk=post.pk).update(view_count=F("view_count") + 1)
+
+    related = list(
+        BlogPost.objects.filter(status="published")
+        .exclude(pk=post.pk)
+        .order_by("-published_at", "-created_at")[:3]
+    )
+    return render(request, "app/blog/post.html", {
+        "post": post,
+        "body_html": body_html,
+        "related": related,
+    })
+
+
 @login_required
 def add_note(request):
     if request.method == "POST":
         title = request.POST.get("title", "").strip()
         body = request.POST.get("body", "").strip()
         image = request.FILES.get("image")
+        if image:
+            from .safety import image_is_safe
+            if not image_is_safe(image, user=request.user, label="note")[0]:
+                image = None  # drop a flagged/non-image; the note itself still saves
         if title:
             Note.objects.create(user=request.user, title=title, body=body, image=image)
     return redirect("home")
@@ -1028,6 +1090,14 @@ def courses_lesson(request, slug, lesson_order):
         and UserVideoProgress.objects.filter(user=request.user).count() <= 1
     )
 
+    # In-lesson runnable Python cells: the student's saved code (runs in-browser
+    # via Pyodide; we just store/reload the text). cell_key -> code.
+    saved_code = {}
+    if request.user.is_authenticated:
+        from .models import StudentCode
+        saved_code = {sc.cell_key: sc.code
+                      for sc in StudentCode.objects.filter(user=request.user, video=video)}
+
     return render(request, "app/lesson.html", {
         "course": course,
         "video": video,
@@ -1037,6 +1107,7 @@ def courses_lesson(request, slug, lesson_order):
         "next_video": next_video,
         "last_position_seconds": last_position_seconds,
         "notes_html": notes_html,
+        "saved_code": saved_code,
         "completed_ids": completed_ids,
         "locked_ids": locked_ids_ctx,
         "fire_free_lesson": fire_free_lesson,
@@ -1065,6 +1136,25 @@ def courses_lesson(request, slug, lesson_order):
         "error_code": error_code,
         "materials": course.materials.all(),
     })
+
+
+@login_required
+def lesson_code_save(request, slug, lesson_order):
+    """Save a student's in-lesson runnable Python cell (text only; it runs in the
+    browser). Upsert per (student, lesson, cell)."""
+    from django.shortcuts import get_object_or_404
+
+    from .models import StudentCode
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "method"}, status=405)
+    video = get_object_or_404(Video, course__slug=slug, lesson_order=lesson_order)
+    cell_key = (request.POST.get("cell_key") or "").strip()[:40]
+    if not cell_key:
+        return JsonResponse({"ok": False, "error": "cell"}, status=400)
+    StudentCode.objects.update_or_create(
+        user=request.user, video=video, cell_key=cell_key,
+        defaults={"code": (request.POST.get("code") or "")[:50000]})
+    return JsonResponse({"ok": True})
 
 
 # ---------------------------------------------------------------------------
@@ -1134,6 +1224,14 @@ def lesson_view(request, slug, lesson_order):
     requires_interaction = bool(video.reflection_prompt) or (quiz and quiz.requires_correct)
     lesson_completed = (not requires_interaction) or quiz_passed_db or request.user.is_staff
 
+    # In-lesson runnable Python cells: the student's saved code (runs in-browser
+    # via Pyodide; we just store/reload the text). cell_key -> code.
+    saved_code = {}
+    if request.user.is_authenticated:
+        from .models import StudentCode
+        saved_code = {sc.cell_key: sc.code
+                      for sc in StudentCode.objects.filter(user=request.user, video=video)}
+
     return render(request, "app/lesson.html", {
         "course": course,
         "video": video,
@@ -1143,6 +1241,7 @@ def lesson_view(request, slug, lesson_order):
         "next_video": next_video,
         "last_position_seconds": last_position_seconds,
         "notes_html": notes_html,
+        "saved_code": saved_code,
         "completed_ids": completed_ids,
         "is_enrolled": is_enrolled,
         "quiz": quiz,
@@ -1420,6 +1519,9 @@ def course_submit_project(request, slug):
         return _final_lesson_redirect(course, "noimage")
     if not (image.content_type or "").startswith("image/"):
         return _final_lesson_redirect(course, "badimage")
+    from .safety import image_is_safe
+    if not image_is_safe(image, user=request.user, label="project-submission")[0]:
+        return _final_lesson_redirect(course, "badimage")
 
     Enrollment.objects.get_or_create(user=request.user, course=course)
     sub, _ = CourseProjectSubmission.objects.get_or_create(
@@ -1427,6 +1529,9 @@ def course_submit_project(request, slug):
     sub.image = image
     sub.caption = (request.POST.get("caption", "") or "").strip()[:200]
     sub.save()
+    # Advisory AI correctness grade (gated/cost-capped/fail-open in grading.py).
+    from .grading import grade_course_submission, task_text_for_course
+    grade_course_submission(sub, task_text_for_course(course))
     return _final_lesson_redirect(course, "uploaded")
 
 
@@ -1457,6 +1562,11 @@ def lesson_submit_model(request, slug, lesson_order):
         return back("badstl")
     if stl.size > STL_MAX_BYTES:
         return back("bigstl")
+    # Confirm it is actually a real STL mesh, not just a .stl-named file.
+    from .safety import validate_stl
+    ok, reason = validate_stl(stl)
+    if not ok:
+        return back(reason or "badstl")
 
     Enrollment.objects.get_or_create(user=request.user, course=course)
     sub, _ = LessonModelSubmission.objects.get_or_create(user=request.user, video=video)
