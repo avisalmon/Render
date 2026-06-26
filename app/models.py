@@ -1218,7 +1218,11 @@ class BlogPost(models.Model):
     body = models.TextField(blank=True, default="")  # markdown (+ ```python-run + raw HTML)
     tags = models.JSONField(default=list, blank=True)
     status = models.CharField(max_length=12, choices=STATUS, default="draft")
-    is_featured = models.BooleanField(default=False)  # pin to the top of the index
+    is_featured = models.BooleanField(default=False)  # show this post full-width on the index
+    # Orders the full-width posts among themselves (1, 2, 3 ...). 0 = unordered,
+    # sorts after the numbered ones. The index lays out one full-width post, then
+    # two normal cards, then full-width again, repeating.
+    feature_order = models.PositiveIntegerField(default=0)
     view_count = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

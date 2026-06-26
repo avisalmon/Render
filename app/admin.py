@@ -129,8 +129,9 @@ class BlogImageInline(admin.TabularInline):
 class BlogPostAdmin(admin.ModelAdmin):
     """Author + publish the personal blog. Body is markdown (text, links,
     images, ```python-run runnable cells, and raw-HTML embeds)."""
-    list_display = ("title", "status", "is_featured", "published_at", "view_count")
+    list_display = ("title", "status", "is_featured", "feature_order", "published_at", "view_count")
     list_filter = ("status", "is_featured")
+    list_editable = ("is_featured", "feature_order")
     search_fields = ("title", "subtitle", "excerpt", "body")
     prepopulated_fields = {"slug": ("title",)}
     readonly_fields = ("view_count", "created_at", "updated_at")
@@ -140,7 +141,9 @@ class BlogPostAdmin(admin.ModelAdmin):
         (None, {"fields": ("title", "subtitle", "slug", "author")}),
         ("Card & SEO", {"fields": ("cover", "excerpt", "tags")}),
         ("Content", {"fields": ("body",)}),
-        ("Publishing", {"fields": ("status", "is_featured", "published_at")}),
+        # is_featured = show full-width on the index; feature_order = its position
+        # among the full-width posts (1, 2, 3 ...).
+        ("Publishing", {"fields": ("status", "is_featured", "feature_order", "published_at")}),
         ("Meta", {"fields": ("view_count", "created_at", "updated_at")}),
     )
 

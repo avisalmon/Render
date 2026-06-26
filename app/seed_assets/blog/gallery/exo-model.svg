@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 520" width="840" height="520" role="img" aria-label="מודל הארגון האקספוננציאלי">
+  <rect width="840" height="520" rx="14" fill="#faf8f3" stroke="#e4ded2"/>
+
+  <text x="420" y="44" text-anchor="middle" font-family="'Frank Ruhl Libre',Georgia,serif"
+        font-weight="700" font-size="24" fill="#1c1b18">מודל הארגון האקספוננציאלי</text>
+
+  <!-- MTP pill -->
+  <rect x="250" y="66" width="340" height="52" rx="26" fill="#2f5d50"/>
+  <text x="420" y="91" text-anchor="middle" font-family="'Heebo',sans-serif" font-weight="700"
+        font-size="17" fill="#f3efe6">MTP: מטרה גדולה שמשנה מציאות</text>
+  <line x1="420" y1="118" x2="420" y2="146" stroke="#9a958a" stroke-width="2"/>
+  <line x1="235" y1="146" x2="605" y2="146" stroke="#9a958a" stroke-width="2"/>
+  <line x1="235" y1="146" x2="235" y2="168" stroke="#9a958a" stroke-width="2"/>
+  <line x1="605" y1="146" x2="605" y2="168" stroke="#9a958a" stroke-width="2"/>
+
+  <!-- Right column: IDEAS (internal) -->
+  <rect x="438" y="168" width="334" height="312" rx="10" fill="#e8f0ec" stroke="#2f5d50" stroke-opacity="0.35"/>
+  <text x="605" y="198" text-anchor="middle" font-family="'Heebo',sans-serif" font-weight="700" font-size="18" fill="#16302a">IDEAS · פנימי: סדר ויציבות</text>
+  <g font-family="'Heebo',sans-serif" font-size="16" fill="#1c1b18">
+    <text x="752" y="232" text-anchor="end">I ממשקים (Interfaces)</text>
+    <text x="752" y="262" text-anchor="end">D לוחות מחוונים (Dashboards)</text>
+    <text x="752" y="292" text-anchor="end">E ניסוי והתנסות (Experimentation)</text>
+    <text x="752" y="322" text-anchor="end">A אוטונומיה (Autonomy)</text>
+    <text x="752" y="352" text-anchor="end">S טכנולוגיות חברתיות (Social)</text>
+  </g>
+
+  <!-- Left column: SCALE (external) -->
+  <rect x="68" y="168" width="334" height="312" rx="10" fill="#d8e7e0" stroke="#2f5d50" stroke-opacity="0.4"/>
+  <text x="235" y="198" text-anchor="middle" font-family="'Heebo',sans-serif" font-weight="700" font-size="18" fill="#16302a">SCALE · חיצוני: צמיחה ויצירתיות</text>
+  <g font-family="'Heebo',sans-serif" font-size="16" fill="#1c1b18">
+    <text x="382" y="232" text-anchor="end">S כוח אדם לפי דרישה (Staff-on-demand)</text>
+    <text x="382" y="262" text-anchor="end">C קהילה והמון (Community)</text>
+    <text x="382" y="292" text-anchor="end">A אלגוריתמים (Algorithms)</text>
+    <text x="382" y="322" text-anchor="end">L נכסים ממונפים (Leveraged)</text>
+    <text x="382" y="352" text-anchor="end">E מעורבות (Engagement)</text>
+  </g>
+
+  <text x="420" y="502" text-anchor="middle" font-family="'Heebo',sans-serif" font-size="14" fill="#9a958a">מטרה אחת גדולה, ועשרה מאפיינים בשתי קבוצות</text>
+</svg>

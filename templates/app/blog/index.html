@@ -7,7 +7,6 @@
 {% block content %}
 <div class="blog-wrap">
 
-  <!-- Blog header -->
   <header class="blog-header text-center">
     <span class="blog-kicker"><i class="bi bi-newspaper"></i> הבלוג</span>
     <h1 class="blog-masthead">Avi Salmon Blog</h1>
@@ -19,45 +18,39 @@
     {% endif %}
   </header>
 
-  {% if featured %}
-  <!-- Featured / pinned post -->
-  <a href="{% url 'blog_post' featured.slug %}" class="blog-featured card-surface">
-    {% if featured.cover %}
-    <span class="blog-featured-cover" style="background-image:url('{{ featured.cover.url }}')"></span>
-    {% endif %}
-    <span class="blog-featured-body">
-      <span class="blog-pill"><i class="bi bi-star-fill"></i> נבחר</span>
-      <span class="blog-card-meta">{{ featured.published_at|default:featured.created_at|date:"j בF Y" }} · {{ featured.reading_minutes }} דק׳ קריאה{% if featured.status != 'published' %} · <span class="text-warning">טיוטה</span>{% endif %}</span>
-      <h2 class="blog-featured-title">{{ featured.title }}</h2>
-      {% if featured.subtitle %}<p class="blog-featured-sub">{{ featured.subtitle }}</p>{% endif %}
-      {% if featured.excerpt %}<p class="blog-card-excerpt">{{ featured.excerpt }}</p>{% endif %}
-    </span>
-  </a>
-  {% endif %}
-
-  {% if posts %}
-  <div class="blog-grid">
-    {% for post in posts %}
-    <a href="{% url 'blog_post' post.slug %}" class="blog-card card-surface">
-      {% if post.cover %}
-      <span class="blog-card-cover" style="background-image:url('{{ post.cover.url }}')"></span>
+  {% if rows %}
+  <div class="blog-rows">
+    {% for row in rows %}
+      {% if row.kind == 'wide' %}
+        {% with post=row.post %}
+        <a href="{% url 'blog_post' post.slug %}" class="blog-item blog-item-wide card-surface">
+          <span class="blog-card-meta">{{ post.published_at|default:post.created_at|date:"j בF Y" }} · {{ post.reading_minutes }} דק׳ קריאה{% if post.status != 'published' %} · <span class="text-warning">טיוטה</span>{% endif %}</span>
+          <h2 class="blog-item-title">{{ post.title }}</h2>
+          {% if post.subtitle %}<p class="blog-item-sub">{{ post.subtitle }}</p>{% endif %}
+          {% if post.excerpt %}<p class="blog-item-excerpt">{{ post.excerpt }}</p>{% endif %}
+          {% if post.tags %}
+          <span class="blog-tags">{% for t in post.tags %}<span class="blog-tag">{{ t }}</span>{% endfor %}</span>
+          {% endif %}
+        </a>
+        {% endwith %}
       {% else %}
-      <span class="blog-card-cover blog-card-cover--blank"><i class="bi bi-newspaper"></i></span>
+        <div class="blog-grid blog-pair">
+          {% for post in row.posts %}
+          <a href="{% url 'blog_post' post.slug %}" class="blog-item card-surface">
+            <span class="blog-card-meta">{{ post.published_at|default:post.created_at|date:"j בF Y" }} · {{ post.reading_minutes }} דק׳{% if post.status != 'published' %} · <span class="text-warning">טיוטה</span>{% endif %}</span>
+            <h3 class="blog-item-title">{{ post.title }}</h3>
+            {% if post.subtitle %}<p class="blog-item-sub">{{ post.subtitle }}</p>{% endif %}
+            {% if post.excerpt %}<p class="blog-item-excerpt">{{ post.excerpt }}</p>{% endif %}
+            {% if post.tags %}
+            <span class="blog-tags">{% for t in post.tags %}<span class="blog-tag">{{ t }}</span>{% endfor %}</span>
+            {% endif %}
+          </a>
+          {% endfor %}
+        </div>
       {% endif %}
-      <span class="blog-card-body">
-        <span class="blog-card-meta">{{ post.published_at|default:post.created_at|date:"j בF Y" }} · {{ post.reading_minutes }} דק׳{% if post.status != 'published' %} · <span class="text-warning">טיוטה</span>{% endif %}</span>
-        <h3 class="blog-card-title">{{ post.title }}</h3>
-        {% if post.subtitle %}<p class="blog-card-sub">{{ post.subtitle }}</p>{% endif %}
-        {% if post.excerpt %}<p class="blog-card-excerpt">{{ post.excerpt }}</p>{% endif %}
-        {% if post.tags %}
-        <span class="blog-tags">{% for t in post.tags %}<span class="blog-tag">{{ t }}</span>{% endfor %}</span>
-        {% endif %}
-      </span>
-    </a>
     {% endfor %}
   </div>
-  {% elif not featured %}
-  <!-- Empty state (no posts yet) -->
+  {% else %}
   <div class="blog-empty card-surface text-center">
     <i class="bi bi-feather" style="font-size:2.5rem; color:var(--accent-primary)"></i>
     <h2 class="mt-2">הפוסט הראשון בדרך</h2>

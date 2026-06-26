@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 470" width="840" height="470" role="img" aria-label="עולם טוב מול עולם פראי">
+  <rect width="840" height="470" rx="14" fill="#faf8f3" stroke="#e4ded2"/>
+
+  <text x="420" y="44" text-anchor="middle" font-family="'Frank Ruhl Libre',Georgia,serif"
+        font-weight="700" font-size="24" fill="#1c1b18">מתי עומק מנצח, ומתי רוחב עוזר</text>
+
+  <!-- Right card: KIND -->
+  <rect x="438" y="74" width="334" height="320" rx="12" fill="#e8f0ec" stroke="#2f5d50" stroke-opacity="0.35"/>
+  <text x="605" y="108" text-anchor="middle" font-family="'Heebo',sans-serif" font-weight="700" font-size="19" fill="#16302a">עולם "טוב"</text>
+  <g font-family="'Heebo',sans-serif" font-size="15.5" fill="#1c1b18">
+    <text x="752" y="146" text-anchor="end">כללים יציבים</text>
+    <text x="752" y="174" text-anchor="end">משוב מהיר וברור</text>
+    <text x="752" y="202" text-anchor="end">שחמט, גולף, מוזיקה קלאסית, ניתוחים</text>
+  </g>
+  <rect x="470" y="300" width="270" height="62" rx="10" fill="#2f5d50"/>
+  <text x="605" y="330" text-anchor="middle" font-family="'Heebo',sans-serif" font-weight="700" font-size="17" fill="#f3efe6">כאן עומק מוקדם מנצח</text>
+  <text x="605" y="352" text-anchor="middle" font-family="'Heebo',sans-serif" font-size="13" fill="#cfe3db">אימון מכוון, התמחות</text>
+
+  <!-- Left card: WICKED -->
+  <rect x="68" y="74" width="334" height="320" rx="12" fill="#f1e4dd" stroke="#a23b2f" stroke-opacity="0.35"/>
+  <text x="235" y="108" text-anchor="middle" font-family="'Heebo',sans-serif" font-weight="700" font-size="19" fill="#7a2c22">עולם "פראי"</text>
+  <g font-family="'Heebo',sans-serif" font-size="15.5" fill="#1c1b18">
+    <text x="382" y="146" text-anchor="end">כללים משתנים ועמומים</text>
+    <text x="382" y="174" text-anchor="end">משוב מאוחר ולפעמים מטעה</text>
+    <text x="382" y="202" text-anchor="end">חדשנות, מנהיגות, תחזיות, עבודת ידע</text>
+  </g>
+  <rect x="100" y="300" width="270" height="62" rx="10" fill="#a23b2f"/>
+  <text x="235" y="330" text-anchor="middle" font-family="'Heebo',sans-serif" font-weight="700" font-size="17" fill="#fbf2ee">כאן רוחב עוזר</text>
+  <text x="235" y="352" text-anchor="middle" font-family="'Heebo',sans-serif" font-size="13" fill="#f1d3c9">חיבור בין תחומים, קשרים</text>
+
+  <text x="420" y="430" text-anchor="middle" font-family="'Heebo',sans-serif" font-size="14" fill="#6b675f">ההבחנה הזאת מיישבת את רוב הסתירות במחקר</text>
+  <text x="420" y="452" text-anchor="middle" font-family="'Heebo',sans-serif" font-size="12" fill="#9a958a">לפי Hogarth: סביבות למידה "טובות" מול "פראיות"</text>
+</svg>

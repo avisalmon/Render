@@ -180,17 +180,35 @@ def _blog_can_see_drafts(request):
 
 
 def blog_index(request):
-    """Public list of published posts (staff also see drafts)."""
+    """Public list of posts in a magazine layout: one full-width post, then two
+    normal cards, then full-width again, repeating. Full-width posts are the
+    is_featured ones, ordered by feature_order; the rest are newest-first."""
     from .models import BlogPost
-    posts = BlogPost.objects.select_related("author")
+    qs = BlogPost.objects.select_related("author")
     if not _blog_can_see_drafts(request):
-        posts = posts.filter(status="published")
-    posts = list(posts.order_by("-is_featured", "-published_at", "-created_at"))
-    featured = next((p for p in posts if p.is_featured), None)
-    rest = [p for p in posts if p is not featured]
+        qs = qs.filter(status="published")
+    posts = list(qs)
+
+    def when(p):
+        return p.published_at or p.created_at
+
+    # Numbered full-width posts first (1, 2, ...); any unnumbered ones after.
+    wide = sorted((p for p in posts if p.is_featured),
+                  key=lambda p: (p.feature_order or 10_000, when(p)))
+    regular = sorted((p for p in posts if not p.is_featured), key=when, reverse=True)
+
+    rows, wi, ri = [], 0, 0
+    while wi < len(wide) or ri < len(regular):
+        if wi < len(wide):
+            rows.append({"kind": "wide", "post": wide[wi]})
+            wi += 1
+        pair = regular[ri:ri + 2]
+        ri += len(pair)
+        if pair:
+            rows.append({"kind": "pair", "posts": pair})
+
     return render(request, "app/blog/index.html", {
-        "posts": rest,
-        "featured": featured,
+        "rows": rows,
         "can_see_drafts": _blog_can_see_drafts(request),
     })
 

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="WEIZAC - המחשב הראשון של ישראל">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#16302a"/>
+      <stop offset="0.55" stop-color="#2f5d50"/>
+      <stop offset="1" stop-color="#10201c"/>
+    </linearGradient>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="320" fill="url(#fade)"/>
+
+  <!-- Faint motif: punched paper tape + vacuum-tube rack -->
+  <g stroke="#bfe3d8" stroke-opacity="0.18" stroke-width="3" fill="none">
+    <rect x="96" y="392" width="320" height="64" rx="6"/>
+    <line x1="96" y1="424" x2="416" y2="424"/>
+  </g>
+  <g fill="#bfe3d8" fill-opacity="0.22">
+    <circle cx="132" cy="408" r="5"/><circle cx="164" cy="440" r="5"/><circle cx="196" cy="408" r="5"/>
+    <circle cx="228" cy="408" r="5"/><circle cx="260" cy="440" r="5"/><circle cx="292" cy="408" r="5"/>
+    <circle cx="324" cy="440" r="5"/><circle cx="356" cy="408" r="5"/><circle cx="388" cy="440" r="5"/>
+  </g>
+  <g stroke="#bfe3d8" stroke-opacity="0.16" stroke-width="3">
+    <line x1="820" y1="392" x2="820" y2="470"/><line x1="852" y1="384" x2="852" y2="470"/>
+    <line x1="884" y1="398" x2="884" y2="470"/><line x1="916" y1="380" x2="916" y2="470"/>
+    <line x1="948" y1="396" x2="948" y2="470"/><line x1="980" y1="386" x2="980" y2="470"/>
+    <line x1="1012" y1="400" x2="1012" y2="470"/><line x1="1044" y1="388" x2="1044" y2="470"/>
+  </g>
+
+  <text x="600" y="200" text-anchor="middle" font-family="'Heebo','Segoe UI',sans-serif"
+        font-size="26" letter-spacing="6" fill="#bfe3d8" fill-opacity="0.85">AVI SALMON BLOG</text>
+
+  <text x="600" y="318" text-anchor="middle" font-family="'Frank Ruhl Libre',Georgia,serif"
+        font-weight="700" font-size="120" letter-spacing="8" fill="#f3efe6">WEIZAC</text>
+
+  <text x="600" y="388" text-anchor="middle" font-family="'Heebo','Segoe UI',sans-serif"
+        font-size="33" fill="#dfeae4" fill-opacity="0.92">המחשב הראשון של ישראל, ועכשיו גם סימולטור</text>
+
+  <rect x="500" y="426" width="200" height="3" rx="1.5" fill="#bfe3d8" fill-opacity="0.6"/>
+</svg>

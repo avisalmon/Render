@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="רוחב או עומק">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#16302a"/>
+      <stop offset="0.55" stop-color="#2f5d50"/>
+      <stop offset="1" stop-color="#10201c"/>
+    </linearGradient>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="320" fill="url(#fade)"/>
+
+  <!-- Branching motif: one root fanning out into many (breadth) -->
+  <g stroke="#bfe3d8" stroke-opacity="0.20" stroke-width="2.5" fill="none">
+    <path d="M160 520 L 250 430"/>
+    <path d="M250 430 L 200 330"/><path d="M250 430 L 300 340"/><path d="M250 430 L 360 410"/>
+    <path d="M200 330 L 160 250"/><path d="M200 330 L 240 250"/>
+    <path d="M300 340 L 300 250"/><path d="M300 340 L 350 270"/>
+    <path d="M1040 520 L 950 430"/>
+    <path d="M950 430 L 1000 330"/><path d="M950 430 L 900 340"/><path d="M950 430 L 840 410"/>
+    <path d="M1000 330 L 1040 250"/><path d="M900 340 L 880 255"/>
+  </g>
+  <g fill="#bfe3d8" fill-opacity="0.45">
+    <circle cx="160" cy="520" r="7"/><circle cx="160" cy="250" r="6"/><circle cx="240" cy="250" r="6"/>
+    <circle cx="300" cy="250" r="6"/><circle cx="350" cy="270" r="6"/><circle cx="360" cy="410" r="6"/>
+    <circle cx="1040" cy="520" r="7"/><circle cx="1040" cy="250" r="6"/><circle cx="880" cy="255" r="6"/>
+    <circle cx="840" cy="410" r="6"/>
+  </g>
+
+  <text x="600" y="200" text-anchor="middle" font-family="'Heebo','Segoe UI',sans-serif"
+        font-size="26" letter-spacing="6" fill="#bfe3d8" fill-opacity="0.85">AVI SALMON BLOG</text>
+
+  <text x="600" y="322" text-anchor="middle" font-family="'Frank Ruhl Libre',Georgia,serif"
+        font-weight="700" font-size="96" fill="#f3efe6">רוחב או עומק?</text>
+
+  <text x="600" y="392" text-anchor="middle" font-family="'Heebo','Segoe UI',sans-serif"
+        font-size="34" fill="#dfeae4" fill-opacity="0.92">מה המחקר באמת אומר על הצלחה</text>
+
+  <rect x="500" y="430" width="200" height="3" rx="1.5" fill="#bfe3d8" fill-opacity="0.6"/>
+</svg>

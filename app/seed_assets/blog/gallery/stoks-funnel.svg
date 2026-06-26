@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 560" width="840" height="560" role="img" aria-label="שישה שלבי הסינון של STOKS">
+  <rect width="840" height="560" rx="14" fill="#faf8f3" stroke="#e4ded2"/>
+
+  <text x="420" y="44" text-anchor="middle" font-family="'Frank Ruhl Libre',Georgia,serif"
+        font-weight="700" font-size="24" fill="#1c1b18">משישה שלבים, מהרבה מניות לרשימה קצרה</text>
+
+  <text x="420" y="74" text-anchor="middle" font-family="'Heebo',sans-serif" font-size="15" fill="#9a958a">הרבה מניות נכנסות למעלה</text>
+
+  <!-- Funnel bars, narrowing as they go down -->
+  <g font-family="'Heebo',sans-serif" font-size="17">
+    <rect x="60"  y="92"  width="720" height="50" rx="8" fill="#e8f0ec" stroke="#2f5d50" stroke-opacity="0.35"/>
+    <text x="420" y="123" text-anchor="middle" fill="#1c1b18">1. מסננים קשיחים: מחיר/רווח, חוב, תזרים</text>
+
+    <rect x="110" y="158" width="620" height="50" rx="8" fill="#d8e7e0" stroke="#2f5d50" stroke-opacity="0.4"/>
+    <text x="420" y="189" text-anchor="middle" fill="#1c1b18">2. ציון איכות, מ-0 עד 100</text>
+
+    <rect x="160" y="224" width="520" height="50" rx="8" fill="#c5dcd2" stroke="#2f5d50" stroke-opacity="0.45"/>
+    <text x="420" y="255" text-anchor="middle" fill="#1c1b18">3. תיקון מחזוריות</text>
+
+    <rect x="205" y="290" width="430" height="50" rx="8" fill="#a9cabd" stroke="#2f5d50" stroke-opacity="0.5"/>
+    <text x="420" y="321" text-anchor="middle" fill="#16302a">4. הערכת שווי: EPV ו-DCF זהיר</text>
+
+    <rect x="245" y="356" width="350" height="50" rx="8" fill="#85b4a3" stroke="#2f5d50" stroke-opacity="0.55"/>
+    <text x="420" y="387" text-anchor="middle" fill="#10201c">5. זיהוי מלכודות ערך</text>
+
+    <rect x="285" y="422" width="270" height="54" rx="8" fill="#2f5d50"/>
+    <text x="420" y="455" text-anchor="middle" fill="#f3efe6" font-weight="700">6. סיגנל: Buy / Watch</text>
+  </g>
+
+  <text x="420" y="510" text-anchor="middle" font-family="'Heebo',sans-serif" font-size="15" fill="#9a958a">רשימת מועמדים קצרה ומדורגת יוצאת למטה</text>
+  <text x="420" y="535" text-anchor="middle" font-family="'Heebo',sans-serif" font-size="13" fill="#a23b2f">כלי לימוד ומחקר, לא ייעוץ השקעות</text>
+</svg>

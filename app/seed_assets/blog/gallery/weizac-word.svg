@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 360" width="840" height="360" role="img" aria-label="מבנה מילה של WEIZAC">
+  <rect width="840" height="360" rx="14" fill="#faf8f3" stroke="#e4ded2"/>
+
+  <text x="420" y="44" text-anchor="middle" font-family="'Frank Ruhl Libre',Georgia,serif"
+        font-weight="700" font-size="23" fill="#1c1b18">מילה אחת, 40 ביט, שתי פקודות</text>
+
+  <!-- Full 40-bit word: two 20-bit instructions -->
+  <g font-family="'Heebo',sans-serif">
+    <rect x="60"  y="74" width="360" height="58" rx="8" fill="#d8e7e0" stroke="#2f5d50" stroke-opacity="0.4"/>
+    <rect x="420" y="74" width="360" height="58" rx="8" fill="#e8f0ec" stroke="#2f5d50" stroke-opacity="0.4"/>
+    <text x="240" y="100" text-anchor="middle" font-size="16" fill="#16302a">פקודה (20 ביט)</text>
+    <text x="600" y="100" text-anchor="middle" font-size="16" fill="#16302a">פקודה (20 ביט)</text>
+    <text x="240" y="122" text-anchor="middle" font-size="13" fill="#6b675f">חצי שמאלי</text>
+    <text x="600" y="122" text-anchor="middle" font-size="13" fill="#6b675f">חצי ימני</text>
+  </g>
+
+  <!-- Zoom-in arrows -->
+  <g stroke="#9a958a" stroke-width="2" fill="none">
+    <line x1="420" y1="138" x2="250" y2="196"/>
+    <line x1="780" y1="138" x2="590" y2="196"/>
+  </g>
+  <text x="420" y="178" text-anchor="middle" font-family="'Heebo',sans-serif" font-size="14" fill="#9a958a">כל פקודה מורכבת מ:</text>
+
+  <!-- One instruction broken into opcode + address -->
+  <g font-family="'Heebo',sans-serif">
+    <rect x="250" y="206" width="150" height="62" rx="8" fill="#85b4a3" stroke="#2f5d50" stroke-opacity="0.5"/>
+    <rect x="400" y="206" width="340" height="62" rx="8" fill="#c5dcd2" stroke="#2f5d50" stroke-opacity="0.5"/>
+    <text x="325" y="232" text-anchor="middle" font-size="16" fill="#10201c" font-weight="700">אופקוד</text>
+    <text x="325" y="254" text-anchor="middle" font-size="14" fill="#16302a">8 ביט</text>
+    <text x="570" y="232" text-anchor="middle" font-size="16" fill="#16302a" font-weight="700">כתובת בזיכרון</text>
+    <text x="570" y="254" text-anchor="middle" font-size="14" fill="#16302a">12 ביט</text>
+  </g>
+
+  <text x="420" y="312" text-anchor="middle" font-family="'Heebo',sans-serif" font-size="15" fill="#6b675f">שני אוגרים בלבד, AC ו-MQ, וזיכרון על תוף מגנטי</text>
+  <text x="420" y="338" text-anchor="middle" font-family="'Heebo',sans-serif" font-size="13" fill="#9a958a">21 פקודות בסך הכול</text>
+</svg>

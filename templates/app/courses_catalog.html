@@ -13,6 +13,14 @@
       <h1 class="mb-1">הדרכה <span class="catalog-count">{{ total_courses }} קורסים</span></h1>
       <p class="text-muted mb-0">וידאו עם הסברים מלאים, תרגול ובחנים - בחרו קורס והתחילו.</p>
     </div>
+  </div>
+
+  <!-- Floating toolbar: view toggle + search, stays under the navbar on scroll -->
+  <div class="catalog-toolbar">
+    <div class="view-toggle" id="viewToggle" role="group" aria-label="תצוגה">
+      <button type="button" class="view-btn is-active" data-view="cards" title="תצוגת כרטיסים" aria-label="תצוגת כרטיסים"><i class="bi bi-grid-3x3-gap-fill"></i></button>
+      <button type="button" class="view-btn" data-view="list" title="תצוגת רשימה" aria-label="תצוגת רשימה"><i class="bi bi-list-ul"></i></button>
+    </div>
     <div class="catalog-search-wrap">
       <i class="bi bi-search"></i>
       <input type="search" id="catalogSearch" class="catalog-search" placeholder="חיפוש קורס…" autocomplete="off" aria-label="חיפוש קורס">
@@ -75,9 +83,8 @@
   <!-- Domain sections, sub-grouped by track -->
   {% for g in domain_groups %}
   <section class="catalog-domain" data-domain="{{ g.key }}" id="domain-{{ g.key }}">
-    <div class="catalog-domain-head dk-{{ g.key }}" role="button" tabindex="0"
+    <div class="catalog-domain-head" role="button" tabindex="0"
          aria-expanded="true" aria-controls="domain-body-{{ g.key }}">
-      <i class="bi {{ g.meta.icon }}"></i>
       <div class="catalog-domain-head-text">
         <h2 class="h5 mb-0">{{ g.meta.title }}</h2>
         {% if g.meta.subtitle %}<div class="text-muted small">{{ g.meta.subtitle }}</div>{% endif %}
@@ -118,6 +125,38 @@
   var grid     = document.getElementById('catalogResultsGrid');
   var hint     = document.getElementById('catalogResultsHint');
   if (!search) return;
+
+  // Keep the floating toolbar docked right under the sticky navbar.
+  (function () {
+    var nav = document.querySelector('.navbar');
+    function setTop() {
+      var h = nav ? nav.offsetHeight : 56;
+      document.documentElement.style.setProperty('--cat-toolbar-top', h + 'px');
+    }
+    setTop();
+    window.addEventListener('resize', setTop);
+  })();
+
+  // View toggle: cards vs list (remembered per browser).
+  (function () {
+    var catalog = document.getElementById('catalog');
+    var vt = document.getElementById('viewToggle');
+    if (!catalog || !vt) return;
+    function applyView(v) {
+      catalog.classList.toggle('is-list', v === 'list');
+      vt.querySelectorAll('.view-btn').forEach(function (b) {
+        b.classList.toggle('is-active', b.dataset.view === v);
+      });
+    }
+    var saved = 'cards';
+    try { saved = localStorage.getItem('catalogView') || 'cards'; } catch (e) {}
+    applyView(saved);
+    vt.addEventListener('click', function (e) {
+      var btn = e.target.closest('.view-btn'); if (!btn) return;
+      applyView(btn.dataset.view);
+      try { localStorage.setItem('catalogView', btn.dataset.view); } catch (e) {}
+    });
+  })();
 
   var domains = Array.prototype.slice.call(document.querySelectorAll('.catalog-domain'));
   // The chips + status/achievements split + every domain section hide in search mode.

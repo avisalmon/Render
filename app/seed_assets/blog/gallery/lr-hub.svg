@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 540" width="840" height="540" role="img" aria-label="LR מחבר את כל בעלי העניין במחקר">
+  <rect width="840" height="540" rx="14" fill="#faf8f3" stroke="#e4ded2"/>
+
+  <text x="420" y="42" text-anchor="middle" font-family="'Frank Ruhl Libre',Georgia,serif"
+        font-weight="700" font-size="23" fill="#1c1b18">LR מחבר את כל מי שמעורב במחקר</text>
+
+  <!-- Spokes -->
+  <g stroke="#9fc3b6" stroke-width="2.5">
+    <line x1="420" y1="300" x2="420" y2="118"/>
+    <line x1="420" y1="300" x2="650" y2="196"/>
+    <line x1="420" y1="300" x2="650" y2="404"/>
+    <line x1="420" y1="300" x2="420" y2="486"/>
+    <line x1="420" y1="300" x2="190" y2="404"/>
+    <line x1="420" y1="300" x2="190" y2="196"/>
+  </g>
+
+  <!-- Outer nodes -->
+  <g font-family="'Heebo',sans-serif" font-size="16" fill="#16302a">
+    <g><rect x="332" y="92" width="176" height="46" rx="23" fill="#e8f0ec" stroke="#2f5d50" stroke-opacity="0.4"/><text x="420" y="120" text-anchor="middle">חוקרים</text></g>
+    <g><rect x="562" y="173" width="200" height="46" rx="23" fill="#e8f0ec" stroke="#2f5d50" stroke-opacity="0.4"/><text x="662" y="201" text-anchor="middle">משתתפים ומתנדבים</text></g>
+    <g><rect x="562" y="381" width="200" height="46" rx="23" fill="#e8f0ec" stroke="#2f5d50" stroke-opacity="0.4"/><text x="662" y="409" text-anchor="middle">מממנים והמון</text></g>
+    <g><rect x="320" y="463" width="200" height="46" rx="23" fill="#e8f0ec" stroke="#2f5d50" stroke-opacity="0.4"/><text x="420" y="491" text-anchor="middle">מעבדות וציוד</text></g>
+    <g><rect x="78" y="381" width="200" height="46" rx="23" fill="#e8f0ec" stroke="#2f5d50" stroke-opacity="0.4"/><text x="178" y="409" text-anchor="middle">תעשייה ו-R&amp;D</text></g>
+    <g><rect x="78" y="173" width="200" height="46" rx="23" fill="#e8f0ec" stroke="#2f5d50" stroke-opacity="0.4"/><text x="178" y="201" text-anchor="middle">קהילה ורעיונות</text></g>
+  </g>
+
+  <!-- Center hub -->
+  <circle cx="420" cy="300" r="72" fill="#2f5d50"/>
+  <text x="420" y="294" text-anchor="middle" font-family="'Frank Ruhl Libre',Georgia,serif" font-weight="700" font-size="26" fill="#f3efe6">LR</text>
+  <text x="420" y="318" text-anchor="middle" font-family="'Heebo',sans-serif" font-size="13" fill="#cfe3db">מחקר בלי גבולות</text>
+</svg>
