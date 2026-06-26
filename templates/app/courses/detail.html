@@ -76,7 +76,7 @@
       </a>
       <a href="{% url 'course_channel' course.slug %}" class="btn btn-sm mt-2 ms-2"
          style="background:transparent;color:var(--accent-primary);border:1px solid var(--accent-primary);border-radius:10px;">
-        <i class="bi bi-chat-dots"></i> קבוצת הקורס
+        <i class="bi bi-chat-dots"></i> קבוצת ההדרכה
       </a>
       {% else %}
       <a href="{% url 'courses_lesson' course.slug 1 %}"
@@ -86,7 +86,7 @@
       </a>
       <a href="{% url 'course_channel' course.slug %}" class="btn btn-sm mt-2 ms-2"
          style="background:transparent;color:var(--accent-primary);border:1px solid var(--accent-primary);border-radius:10px;">
-        <i class="bi bi-chat-dots"></i> קבוצת הקורס
+        <i class="bi bi-chat-dots"></i> קבוצת ההדרכה
       </a>
       {% endif %}
     </div>
@@ -112,7 +112,7 @@
   </div>
 
   <!-- Lessons list -->
-  <h2 class="mb-4 fw-bold" style="color:var(--text-primary)">תוכן הקורס</h2>
+  <h2 class="mb-4 fw-bold" style="color:var(--text-primary)">תוכן ההדרכה</h2>
   <div class="d-flex flex-column gap-2">
     {% for video in videos %}
     <div class="d-flex align-items-center gap-3 p-3 rounded-3"
@@ -180,8 +180,8 @@
   <!-- Corporate hook (F-2.2.9) -->
   <div class="mt-5 p-4 rounded-3 text-center"
        style="background:var(--bg-elevated);border:1px solid var(--accent-primary)33;">
-    <p class="mb-1 fw-semibold" style="color:var(--text-primary)">רוצה להכשיר את הצוות בקורסים כאלה?</p>
-    <p class="small mb-3" style="color:var(--text-secondary)">רישוי ארגוני עם דיווח התקדמות, קורסים מותאמים ותמיכה.</p>
+    <p class="mb-1 fw-semibold" style="color:var(--text-primary)">רוצה להכשיר את הצוות בהדרכות כאלה?</p>
+    <p class="small mb-3" style="color:var(--text-secondary)">רישוי ארגוני עם דיווח התקדמות, הדרכות מותאמות ותמיכה.</p>
     <a href="mailto:avi.salmon@gmail.com?subject=הדרכת%20צוות%20%E2%80%93%20babook" class="btn btn-sm"
        style="background:var(--accent-warm);color:#000;border:none;border-radius:8px;font-weight:600;">
       שלחו לי מייל

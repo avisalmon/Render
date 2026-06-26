@@ -93,8 +93,8 @@
   <!-- Main content -->
   <div class="lesson-main">
     {% if existing_cert %}
-    <a href="{% url 'certificate_view' existing_cert.certificate_id %}" class="cert-trophy mb-2" title="קיבלת תעודה בקורס הזה - לצפייה">
-      <i class="bi bi-trophy-fill"></i> הוסמכת בקורס הזה
+    <a href="{% url 'certificate_view' existing_cert.certificate_id %}" class="cert-trophy mb-2" title="קיבלת תעודה בהדרכה הזו - לצפייה">
+      <i class="bi bi-trophy-fill"></i> הוסמכת בהדרכה הזו
     </a>
     {% endif %}
     <h1 class="h4 mb-3">{{ video.title }}</h1>
@@ -221,7 +221,7 @@
     {% if course.project_upload_type == 'scratch' and accepts_model and user.is_authenticated %}
     <div class="card-surface p-3 mt-3" id="lesson-model">
       <h2 class="h6 mb-1"><i class="bi bi-puzzle-fill me-1" style="color:var(--accent-primary)"></i> שיתפתם פרויקט בשיעור הזה?</h2>
-      <p class="text-muted small mb-2">לא חובה - אבל אם בניתם פרויקט ב-Scratch, ודאו שהוא <strong>משותף</strong> והדביקו את הקישור. הוא יוטמע כאן ויצטרף לתערוכה שלכם (בסרגל, בעמוד הקורס ובתעודה).</p>
+      <p class="text-muted small mb-2">לא חובה - אבל אם בניתם פרויקט ב-Scratch, ודאו שהוא <strong>משותף</strong> והדביקו את הקישור. הוא יוטמע כאן ויצטרף לתערוכה שלכם (בסרגל, בעמוד ההדרכה ובתעודה).</p>
       {% if lesson_model %}
       {% if lesson_model.caption %}<p class="fw-semibold mb-1">{{ lesson_model.caption }}</p>{% endif %}
       <div class="scratch-embed mb-2">
@@ -430,7 +430,7 @@
     {% if course.project_upload_type == 'stl' and accepts_model and user.is_authenticated %}
     <div class="card-surface p-3 mt-3" id="lesson-model">
       <h2 class="h6 mb-1"><i class="bi bi-badge-3d me-1" style="color:var(--accent-primary)"></i> בנית דגם בשיעור הזה?</h2>
-      <p class="text-muted small mb-2">לא חובה - אבל אם עיצבת משהו, העלו את קובץ ה-STL והוא יצטרף לתערוכה שלכם (בסרגל, בעמוד הקורס ובתעודה).</p>
+      <p class="text-muted small mb-2">לא חובה - אבל אם עיצבת משהו, העלו את קובץ ה-STL והוא יצטרף לתערוכה שלכם (בסרגל, בעמוד ההדרכה ובתעודה).</p>
       {% if lesson_model %}
       <p class="small mb-2"><i class="bi bi-check-circle-fill" style="color:var(--accent-success)"></i> כבר העלית דגם לשיעור הזה - הוא מופיע בתצוגת הדגמים. אפשר להחליף:</p>
       {% endif %}
@@ -551,7 +551,7 @@
     <div class="card-surface p-4 mt-4" id="project-gate">
       <h2 class="h5 mb-1"><i class="bi bi-trophy me-1" style="color:var(--accent-primary)"></i> קבלת תעודת סיום</h2>
       {% if course.requires_project %}
-      <p class="text-muted small mb-3">שני תנאים לתעודה - להשלים את רוב הקורס, ולהראות מה בנית.</p>
+      <p class="text-muted small mb-3">שני תנאים לתעודה - להשלים את רוב ההדרכה, ולהראות מה בנית.</p>
       {% else %}
       <p class="text-muted small mb-3">כדי לקבל תעודה צריך להשלים {{ cert_project_min_pct }}% מהשיעורים.</p>
       {% endif %}
@@ -813,14 +813,14 @@
           <form id="finish-course-form" method="post" action="{% url 'course_finish' course.slug %}">
             {% csrf_token %}
             <button id="finish-btn" type="submit" class="btn btn-success btn-lg{% if not cert_ready %} d-none{% endif %}">
-              <i class="bi bi-award-fill me-1"></i> סיים קורס וקבל תעודה
+              <i class="bi bi-award-fill me-1"></i> סיים הדרכה וקבל תעודה
             </button>
           </form>
           {% endif %}
         {% else %}
         <a href="/login/?next={% url 'courses_lesson' course.slug video.lesson_order %}"
            class="btn btn-success btn-lg">
-          <i class="bi bi-award-fill me-1"></i> התחבר כדי לסיים את הקורס
+          <i class="bi bi-award-fill me-1"></i> התחבר כדי לסיים את ההדרכה
         </a>
         {% endif %}
       {% endif %}

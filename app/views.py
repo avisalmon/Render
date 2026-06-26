@@ -1483,7 +1483,7 @@ def _generate_reflection_reply(video, prompt, user_text):
         from openai import OpenAI
         client = OpenAI(api_key=settings.OPENAI_API_KEY)
         sys_prompt = (
-            "אתה מנטור AI חם, מעודד ותכליתי בקורס בעברית שמלמד אנשים לנסות כלי בינה מלאכותית. "
+            "אתה מנטור AI חם, מעודד ותכליתי בהדרכה בעברית שמלמד אנשים לנסות כלי בינה מלאכותית. "
             f"הלומד סיים שיעור על הכלי: '{video.title}'. "
             f"שאלנו אותו: '{prompt or 'מה ניסית בשיעור הזה?'}'. הוא ענה בטקסט חופשי. "
             "הגב בעברית, ב-2 עד 4 משפטים, באופן אישי וספציפי למה שכתב: "
@@ -2136,7 +2136,7 @@ def certificate_view(request, cert_id):
         "cert_url": cert_url,
         "og_image": og_image,
         "learner_name": name,
-        "share_text": f"השלמתי את הקורס «{cert.course.title}» ב-babook וקיבלתי תעודה",
+        "share_text": f"השלמתי את ההדרכה «{cert.course.title}» ב-babook וקיבלתי תעודה",
         "is_owner": is_owner,
         "cta_url": cta_url,
     })

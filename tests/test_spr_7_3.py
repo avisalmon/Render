@@ -24,16 +24,16 @@ def test_intro_inserted_as_lesson_1_and_shifts():
         call_command("add_course_intros", "--only", "python")
 
     vids = list(course.videos.order_by("lesson_order"))
-    assert vids[0].lesson_order == 1 and vids[0].title == "מבוא לקורס"
+    assert vids[0].lesson_order == 1 and vids[0].title == "מבוא להדרכה"
     assert vids[0].bunny_video_id == "guid-123"
     assert vids[0].is_free_preview is True
-    assert [v.title for v in vids] == ["מבוא לקורס", "ישן 1", "ישן 2"]
+    assert [v.title for v in vids] == ["מבוא להדרכה", "ישן 1", "ישן 2"]
 
 
 @pytest.mark.django_db
 def test_intro_insert_is_idempotent():
     course = Course.objects.create(slug="python", title="פייתון", is_published=True)
-    Video.objects.create(course=course, lesson_order=1, title="מבוא לקורס", bunny_video_id="g")
+    Video.objects.create(course=course, lesson_order=1, title="מבוא להדרכה", bunny_video_id="g")
     Video.objects.create(course=course, lesson_order=2, title="שיעור")
     with patch("app.authoring.pipeline.download_youtube") as dl:
         call_command("add_course_intros", "--only", "python")

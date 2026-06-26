@@ -1,14 +1,14 @@
 {% extends "base.html" %}
-{% block title %}קורסים - BaBook{% endblock %}
-{% block meta_description %}למד אוטומציה ובינה מלאכותית עם קורסים מקצועיים. Python, MicroPython, GitHub Copilot ועוד.{% endblock %}
+{% block title %}הדרכות - BaBook{% endblock %}
+{% block meta_description %}למד אוטומציה ובינה מלאכותית עם הדרכות מקצועיות. Python, MicroPython, GitHub Copilot ועוד.{% endblock %}
 
 {% block content %}
 <div class="container py-5">
 
   <!-- Page header -->
   <div class="mb-5 text-center">
-    <h1 class="fw-bold" style="color:var(--text-primary)">קורסים</h1>
-    <p class="mt-2" style="color:var(--text-secondary)">למד בקצב שלך. לכל קורס סרטונים, קוד, ותרגול מעשי.</p>
+    <h1 class="fw-bold" style="color:var(--text-primary)">הדרכות</h1>
+    <p class="mt-2" style="color:var(--text-secondary)">למד בקצב שלך. לכל הדרכה סרטונים, קוד, ותרגול מעשי.</p>
   </div>
 
   <!-- Category filter pills -->
@@ -74,7 +74,7 @@
           <a href="{% url 'courses_detail' course.slug %}"
              class="btn btn-sm mt-3"
              style="background:var(--accent-primary);color:#fff;border:none;border-radius:8px;">
-            לקורס &rarr;
+            להדרכה &rarr;
           </a>
         </div>
       </div>
@@ -85,7 +85,7 @@
 
   {% else %}
   <div class="text-center py-5" style="color:var(--text-secondary)">
-    <p class="fs-5">אין קורסים זמינים עדיין. בקרוב!</p>
+    <p class="fs-5">אין הדרכות זמינות עדיין. בקרוב!</p>
   </div>
   {% endif %}
   <!-- Corporate hook -->

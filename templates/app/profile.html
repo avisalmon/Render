@@ -22,7 +22,7 @@
         <div class="profile-stats">
           <span class="profile-stat"><strong>{{ points }}</strong> נקודות</span>
           <span class="profile-stat"><strong>{{ certificates|length }}</strong> תעודות</span>
-          <span class="profile-stat"><strong>{{ my_courses|length }}</strong> קורסים</span>
+          <span class="profile-stat"><strong>{{ my_courses|length }}</strong> הדרכות</span>
         </div>
       </div>
       <div class="profile-actions">
@@ -66,7 +66,7 @@
 
     <!-- My courses -->
     <section class="card-surface mb-3">
-      <h2 class="profile-section-title">הקורסים שלי</h2>
+      <h2 class="profile-section-title">ההדרכות שלי</h2>
       {% if my_courses %}
       <div class="hcard-list">
         {% for mc in my_courses %}
@@ -80,7 +80,7 @@
         {% endfor %}
       </div>
       {% else %}
-      <p class="text-muted mb-0">עוד לא נרשמת לקורסים. <a href="{% url 'courses_catalog' %}">לכל ההדרכות</a></p>
+      <p class="text-muted mb-0">עוד לא נרשמת להדרכות. <a href="{% url 'courses_catalog' %}">לכל ההדרכות</a></p>
       {% endif %}
     </section>
 
@@ -115,7 +115,7 @@
           <label class="form-label small">מה אחרים רואים על הלמידה שלי</label>
           <select class="form-select form-select-sm" name="courses_visibility">
             <option value="certs" {% if user.profile.courses_visibility == 'certs' %}selected{% endif %}>תעודות בלבד</option>
-            <option value="all" {% if user.profile.courses_visibility == 'all' %}selected{% endif %}>כל הקורסים וההתקדמות</option>
+            <option value="all" {% if user.profile.courses_visibility == 'all' %}selected{% endif %}>כל ההדרכות וההתקדמות</option>
             <option value="none" {% if user.profile.courses_visibility == 'none' %}selected{% endif %}>להסתיר</option>
           </select>
         </div>

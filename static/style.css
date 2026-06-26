@@ -149,12 +149,41 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: 0.35rem;
 }
 .hero-joke {
-  max-width: 720px;
+  max-width: none;
   margin: 0 auto;
-  font-size: 0.98rem;
+  font-size: clamp(1.05rem, 1.5vw, 1.2rem);
+  font-weight: 500;
   color: var(--text-secondary);
-  line-height: 1.5;
+  line-height: 1.55;
 }
+
+/* "Continue watching" — a slim, content-width link pill (no button) */
+.continue-watching {
+  display: flex;
+  align-self: flex-start;          /* stay narrow inside the home flex column */
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  gap: .5rem;
+  padding: .35rem .85rem;
+  border-radius: 999px;
+  background: var(--bg-elevated);                                          /* fallback */
+  background: color-mix(in srgb, var(--accent-primary) 10%, var(--bg-surface));
+  border: 1px solid color-mix(in srgb, var(--accent-primary) 30%, var(--border));
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: .9rem;
+  line-height: 1.3;
+  transition: background .15s ease, border-color .15s ease;
+}
+.continue-watching:hover {
+  background: color-mix(in srgb, var(--accent-primary) 18%, var(--bg-surface));
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+}
+.continue-watching .cw-ico { color: var(--accent-primary); font-size: 1.15rem; flex: 0 0 auto; }
+.continue-watching .cw-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.continue-watching .cw-time { color: var(--text-secondary); flex: 0 0 auto; }
 
 /* Feature cards (the "what's actually here" grid) */
 .feature-card {
@@ -1036,8 +1065,23 @@ img.stl-tile-canvas { object-fit: cover; background: var(--bg-elevated); }
 html[data-theme="dark"] .cert-trophy { color: #f3d27a; }
 html[data-theme="dark"] .cert-trophy:hover { color: #ffe9a8; }
 
+/* Home: on desktop, fill exactly one screen — the training card grows to
+   absorb the leftover vertical space so the page reads as one gapless view
+   (no scroll, no dead gap above the footer). Where :has() is unsupported it
+   simply falls back to the natural, already-fitting layout. */
+@media (min-width: 992px) {
+  main:has(> .home-main) { display: flex; flex-direction: column; }
+  .home-main { display: flex; flex-direction: column; flex: 1 1 auto; }
+  .home-train { display: flex; flex: 1 1 auto; }
+  .home-train > .training-hero { flex: 1 1 auto; }
+  /* Keep the tagline on a single line on desktop. */
+  .hero-joke { white-space: nowrap; }
+}
+
 @media (max-width: 767px) {
   .training-hero { flex-direction: column; min-height: 0; }
+  /* Mobile: drop the tagline entirely (it's a desktop attention-grabber). */
+  .hero-slim { display: none; }
   .thm-caption { font-size: .92rem; padding: 1rem .9rem .7rem; }
   .training-hero-media { flex: 0 0 170px; order: -1; }   /* image on top on mobile */
   .training-hero-list { grid-template-columns: 1fr; }

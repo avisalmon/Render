@@ -52,11 +52,11 @@
     <div class="row g-2 mb-2">
       <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ ut.users_total }}</div><div class="small text-muted">משתמשים ({{ ut.users_new }} חדשים)</div></div></div>
       <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ ut.dau }}/{{ ut.wau }}/{{ ut.mau }}</div><div class="small text-muted">פעילים יום/שבוע/חודש</div></div></div>
-      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ ut.enrollments }}</div><div class="small text-muted">הרשמות לקורסים</div></div></div>
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ ut.enrollments }}</div><div class="small text-muted">הרשמות להדרכות</div></div></div>
       <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ ut.watch_hours }}</div><div class="small text-muted">שעות צפייה</div></div></div>
     </div>
     <div class="row g-2 mb-2">
-      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ ut.course_completion_pct }}%</div><div class="small text-muted">השלמת קורסים</div></div></div>
+      <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ ut.course_completion_pct }}%</div><div class="small text-muted">השלמת הדרכות</div></div></div>
       <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ ut.certificates }}</div><div class="small text-muted">תעודות</div></div></div>
       <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ ut.quiz_pass_rate_pct }}%</div><div class="small text-muted">מענה נכון בחידונים</div></div></div>
       <div class="col-6 col-md-3"><div class="card-surface p-3 text-center"><div class="h3 mb-0">{{ ut.activation_rate_pct }}%</div><div class="small text-muted">שיעור הפעלה (Activation)</div></div></div>
@@ -65,9 +65,9 @@
     <div class="row g-3">
       <div class="col-md-7">
         <div class="card-surface p-3">
-          <div class="small text-muted mb-2">הקורסים הפופולריים</div>
+          <div class="small text-muted mb-2">ההדרכות הפופולריות</div>
           <table class="table table-sm mb-0">
-            <thead><tr><th>קורס</th><th class="text-center">הרשמות</th><th class="text-center">השלמות</th><th class="text-center">%</th></tr></thead>
+            <thead><tr><th>הדרכה</th><th class="text-center">הרשמות</th><th class="text-center">השלמות</th><th class="text-center">%</th></tr></thead>
             <tbody>
               {% for c in ut.popular_courses %}
                 <tr><td>{{ c.title }}</td><td class="text-center">{{ c.enrollments }}</td><td class="text-center">{{ c.completions }}</td><td class="text-center">{{ c.completion_pct }}%</td></tr>

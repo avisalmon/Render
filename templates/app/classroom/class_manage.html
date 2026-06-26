@@ -99,13 +99,13 @@
     <div class="cls-table-wrap">
       <table class="cls-table">
         <thead>
-          <tr><th>תלמיד</th><th>קורסים</th><th>תעודות</th><th>פרויקטים</th><th></th></tr>
+          <tr><th>תלמיד</th><th>הדרכות</th><th>תעודות</th><th>פרויקטים</th><th></th></tr>
         </thead>
         <tbody>
           {% for r in roster %}
           <tr>
             <td class="cls-cell-name">{{ r.name }}</td>
-            <td data-label="קורסים">{{ r.courses_count }}</td>
+            <td data-label="הדרכות">{{ r.courses_count }}</td>
             <td data-label="תעודות">{{ r.certs_count }}</td>
             <td data-label="פרויקטים">{{ r.projects_count }}</td>
             <td class="cls-row-actions">

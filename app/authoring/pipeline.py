@@ -148,7 +148,7 @@ def bunny_upload(guid, mp4):
 def gen_notes(title, transcript, subject):
     client = _client()
     prompt = (
-        f"אתה כותב סיכום שיעור בעברית לקורס בנושא: {subject}. כותרת הקטע: \"{title}\".\n"
+        f"אתה כותב סיכום שיעור בעברית להדרכה בנושא: {subject}. כותרת הקטע: \"{title}\".\n"
         "כתוב סיכום שמשקף נאמנה את מה שהמרצה אומר בקטע (אם התמלול באנגלית, תרגם לעברית טבעית). "
         "כתוב בעברית אנושית. אסור להשתמש בקו מפריד ארוך (-). קוד ופקודות בתוך בלוק ``` בלי המילה bash. "
         "כותרות ## ו-### ורשימות. עברית בלבד, Markdown.\n"
@@ -174,7 +174,7 @@ def gen_quiz(title, transcript, subject):
     """
     client = _client()
     prompt = (
-        f"אתה כותב שאלת בדיקת הבנה אחת בעברית לשיעור בקורס בנושא: {subject}. "
+        f"אתה כותב שאלת בדיקת הבנה אחת בעברית לשיעור בהדרכה בנושא: {subject}. "
         f"כותרת השיעור: \"{title}\".\n"
         "השאלה חייבת להיות מבוססת אך ורק על מה שנאמר בתמלול (גם אם התמלול באנגלית). "
         "כתוב שאלה ברורה אחת עם 3 או 4 תשובות, כאשר בדיוק אחת נכונה. עברית בלבד. "
@@ -269,7 +269,7 @@ def run_job(job_id):
             except OSError:
                 pass
 
-        job.mark(status="done", progress=100, step="הקורס מוכן לעריכה",
+        job.mark(status="done", progress=100, step="ההדרכה מוכנה לעריכה",
                  log=f"created course {slug} with {n} lessons")
     except Exception as e:  # noqa: BLE001
         job.mark(status="error", step="שגיאה", log=f"ERROR {type(e).__name__}: {e}")

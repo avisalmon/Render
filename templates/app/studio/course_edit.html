@@ -30,7 +30,7 @@
     <!-- Metadata -->
     <div class="col-lg-5">
       <div class="card-surface p-4">
-        <h2 class="h6 mb-3">פרטי הקורס</h2>
+        <h2 class="h6 mb-3">פרטי ההדרכה</h2>
         <form method="post">
           {% csrf_token %}
           <div class="mb-2"><label class="form-label small">כותרת</label>
@@ -83,7 +83,7 @@
           </form>
         </li>
         {% empty %}
-        <li class="text-muted text-center py-4 card-surface">אין שיעורים. הוסף שיעור חדש או צור קורס מסרטון.</li>
+        <li class="text-muted text-center py-4 card-surface">אין שיעורים. הוסף שיעור חדש או צור הדרכה מסרטון.</li>
         {% endfor %}
       </ul>
     </div>

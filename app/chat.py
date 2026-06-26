@@ -29,7 +29,7 @@ def channel_for_course(course):
     ch, _ = Channel.objects.get_or_create(
         course=course, kind="course",
         defaults={"slug": f"course-{course.slug}"[:120],
-                  "title": f"קבוצת הקורס · {course.title}", "icon": "bi-mortarboard"},
+                  "title": f"קבוצת ההדרכה · {course.title}", "icon": "bi-mortarboard"},
     )
     return ch
 

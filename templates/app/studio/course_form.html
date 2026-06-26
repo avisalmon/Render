@@ -1,19 +1,19 @@
 {% extends "base.html" %}
-{% block title %}קורס חדש - אולפן{% endblock %}
+{% block title %}הדרכה חדשה - אולפן{% endblock %}
 {% block breadcrumb %}
 <ol class="breadcrumb small mb-0">
   <li class="breadcrumb-item"><a href="{% url 'home' %}" style="color:var(--accent-primary)">בית</a></li>
   <li class="breadcrumb-item"><a href="{% url 'studio_home' %}" style="color:var(--accent-primary)">אולפן</a></li>
-  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">קורס חדש</li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">הדרכה חדשה</li>
 </ol>
 {% endblock %}
 {% block content %}
 <div class="py-4" style="max-width:720px;margin:0 auto;">
-  <h1 class="h4 mb-3">קורס חדש</h1>
+  <h1 class="h4 mb-3">הדרכה חדשה</h1>
   <form method="post" class="card-surface p-4">
     {% csrf_token %}
     <div class="mb-3">
-      <label class="form-label">כותרת הקורס *</label>
+      <label class="form-label">כותרת ההדרכה *</label>
       <input class="form-control" name="title" required>
     </div>
     <div class="mb-3">
@@ -44,7 +44,7 @@
         <input class="form-control" name="thumbnail" placeholder="course_thumbnails/slug.png">
       </div>
     </div>
-    <button class="btn btn-primary mt-4">צור קורס</button>
+    <button class="btn btn-primary mt-4">צור הדרכה</button>
   </form>
 </div>
 {{ domains|json_script:"domains-data" }}

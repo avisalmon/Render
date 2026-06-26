@@ -232,7 +232,7 @@ def fixed_opener(user):
 
 def interview_system_prompt(user, entry_course_title=""):
     entry_line = (
-        f'הגיע/ה דרך הקורס "{entry_course_title}" - קח/י את זה בחשבון. '
+        f'הגיע/ה דרך ההדרכה "{entry_course_title}" - קח/י את זה בחשבון. '
         if entry_course_title else ""
     )
     if has_real_name(user):

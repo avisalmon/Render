@@ -6,7 +6,7 @@
   <!-- Rich preview when the certificate link is shared (Facebook / WhatsApp / etc.) -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="תעודת סיום - {{ cert.course.title }}">
-  <meta property="og:description" content="{{ learner_name }} השלים/ה את הקורס «{{ cert.course.title }}» ב-babook.">
+  <meta property="og:description" content="{{ learner_name }} השלים/ה את ההדרכה «{{ cert.course.title }}» ב-babook.">
   <meta property="og:url" content="{{ cert_url }}">
   {% if og_image %}
   <meta property="og:image" content="{{ og_image }}">
@@ -50,7 +50,7 @@
       <p class="certificate-label">תעודת סיום</p>
       <p class="certificate-awarded-to">הוענקה בזאת ל</p>
       <h2 class="certificate-name">{{ learner_name }}</h2>
-      <p class="certificate-text">על סיום מוצלח של הקורס</p>
+      <p class="certificate-text">על סיום מוצלח של ההדרכה</p>
       <h3 class="certificate-course">{{ cert.course.title }}</h3>
 
       <div class="certificate-divider"></div>
@@ -82,7 +82,7 @@
   <!-- The exhibition: every project the learner built, visible to anyone with the link -->
   <div class="card-surface p-4 mt-4 stl-gallery--lg" style="max-width:680px;width:100%">
     <h2 class="h6 mb-1 text-center"><i class="bi bi-collection-fill me-1" style="color:var(--accent-primary)"></i> התערוכה שלי</h2>
-    <p class="small text-muted text-center mb-2">{{ exhibition|length }} פרויקטים שיצרת לאורך הקורס. לחצו על פריט כדי להגדיל.</p>
+    <p class="small text-muted text-center mb-2">{{ exhibition|length }} פרויקטים שיצרת לאורך ההדרכה. לחצו על פריט כדי להגדיל.</p>
     {% include "app/_stl_gallery.html" with models=exhibition can_download=is_owner %}
   </div>
   {% endif %}
@@ -94,16 +94,16 @@
       <i class="bi bi-printer me-1"></i> הדפסת התעודה
     </button>
     <a href="{% url 'courses_detail' cert.course.slug %}" class="btn btn-outline-primary">
-      <i class="bi bi-arrow-right me-1"></i> חזרה לקורס
+      <i class="bi bi-arrow-right me-1"></i> חזרה להדרכה
     </a>
     <a href="{% url 'courses_catalog' %}" class="btn btn-primary">
-      <i class="bi bi-collection-play me-1"></i> קורסים נוספים
+      <i class="bi bi-collection-play me-1"></i> הדרכות נוספות
     </a>
   </div>
 
   <!-- What you achieved -->
   <div class="card-surface p-4 mt-4" style="max-width:460px;width:100%">
-    <h2 class="h6 mb-3 text-center">מה השגת בקורס הזה</h2>
+    <h2 class="h6 mb-3 text-center">מה השגת בהדרכה הזו</h2>
     <ul class="list-unstyled mb-0">
       <li class="d-flex align-items-center gap-2 mb-2">
         <i class="bi bi-check-circle-fill" style="color:var(--accent-success)"></i>
@@ -168,7 +168,7 @@
   <!-- The natural bragging moment (REQ-6.3.4) -->
   <div class="card-surface p-3 mt-4 text-center" style="max-width:460px;width:100%">
     <i class="bi bi-easel2-fill mb-1" style="font-size:1.4rem; color:var(--accent-primary)"></i>
-    <p class="mb-2">בנית משהו בעקבות הקורס? זה הזמן להשוויץ בו בדוכן הקהילה.</p>
+    <p class="mb-2">בנית משהו בעקבות ההדרכה? זה הזמן להשוויץ בו בדוכן הקהילה.</p>
     <a href="{% url 'showcase_new' %}?course={{ cert.course.slug }}" class="btn btn-primary">
       <i class="bi bi-megaphone me-1"></i> פרסמו מה בניתם
     </a>
@@ -180,7 +180,7 @@
     <i class="bi bi-mortarboard-fill mb-2" style="font-size:1.8rem;color:var(--accent-primary)"></i>
     <p class="mb-3">רוצה גם תעודה כזו? אפשר ללמוד את «{{ cert.course.title }}» ב-babook.</p>
     <a href="{{ cta_url }}" class="btn btn-primary btn-lg">
-      כן, אני רוצה ללמוד את הקורס »
+      כן, אני רוצה ללמוד את ההדרכה »
     </a>
   </div>
   {% endif %}

@@ -41,7 +41,7 @@ class UserProfile(models.Model):
     # certificates only (default), everything (courses + progress), or nothing.
     COURSES_VISIBILITY = [
         ("certs", "תעודות בלבד"),
-        ("all", "כל הקורסים וההתקדמות"),
+        ("all", "כל ההדרכות וההתקדמות"),
         ("none", "להסתיר"),
     ]
     courses_visibility = models.CharField(

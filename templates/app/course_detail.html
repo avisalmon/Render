@@ -20,8 +20,8 @@
 {% block content %}
 <div>
     {% if existing_cert %}
-    <a href="{% url 'certificate_view' existing_cert.certificate_id %}" class="cert-trophy mb-2" title="קיבלת תעודה בקורס הזה - לצפייה">
-      <i class="bi bi-trophy-fill"></i> הוסמכת בקורס הזה - לתעודה
+    <a href="{% url 'certificate_view' existing_cert.certificate_id %}" class="cert-trophy mb-2" title="קיבלת תעודה בהדרכה הזו - לצפייה">
+      <i class="bi bi-trophy-fill"></i> הוסמכת בהדרכה הזו - לתעודה
     </a>
     {% endif %}
     <h1>{{ course.title }}</h1>
@@ -33,14 +33,14 @@
     <div class="mb-4">
         <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-primary px-4">התחברו והתחילו ללמוד</a>
         <a href="{% url 'course_channel' course.slug %}" class="btn btn-outline-primary px-3 ms-2">
-            <i class="bi bi-chat-dots"></i> קבוצת הקורס
+            <i class="bi bi-chat-dots"></i> קבוצת ההדרכה
         </a>
     </div>
     {% endif %}
 
     {% if is_enrolled %}
     <a href="{% url 'course_channel' course.slug %}" class="btn btn-outline-primary btn-sm mb-3">
-        <i class="bi bi-chat-dots"></i> קבוצת הקורס
+        <i class="bi bi-chat-dots"></i> קבוצת ההדרכה
     </a>
     {% endif %}
 
@@ -112,7 +112,7 @@
     {% if my_models %}
     <div class="mt-4 stl-gallery--lg">
         <h2 class="h5 mb-1"><i class="bi bi-collection-fill" style="color:var(--accent-primary)"></i> התערוכה שלי</h2>
-        <p class="text-muted small mb-0">הפרויקטים שיצרת לאורך הקורס. לחצו על פריט כדי להגדיל.</p>
+        <p class="text-muted small mb-0">הפרויקטים שיצרת לאורך ההדרכה. לחצו על פריט כדי להגדיל.</p>
         {% include "app/_stl_gallery.html" with models=my_models can_download=True %}
     </div>
     <script type="module">
@@ -124,7 +124,7 @@
     {% if course_projects %}
     <div class="mt-4">
         <div class="d-flex justify-content-between align-items-center mb-2">
-            <h2 class="h5 mb-0"><i class="bi bi-easel2-fill" style="color:var(--accent-primary)"></i> נבנה בעקבות הקורס</h2>
+            <h2 class="h5 mb-0"><i class="bi bi-easel2-fill" style="color:var(--accent-primary)"></i> נבנה בעקבות ההדרכה</h2>
             <a href="{% url 'showcase_new' %}?course={{ course.slug }}" class="btn btn-sm btn-outline-primary">השוויצו במה שבניתם</a>
         </div>
         <div class="row g-3">

@@ -236,12 +236,12 @@
         {% if welcome_strip.entry_course %}
           הגעת בשביל «{{ welcome_strip.entry_course.title }}»? כל השיעורים פתוחים.
         {% else %}
-          כל הקורסים פתוחים במלואם.
+          כל ההדרכות פתוחות במלואן.
         {% endif %}</span>
       </span>
       <span class="d-flex align-items-center gap-2">
         {% if welcome_strip.entry_course %}
-          <a class="btn btn-sm btn-primary" href="/courses/{{ welcome_strip.entry_course.slug }}/">לקורס</a>
+          <a class="btn btn-sm btn-primary" href="/courses/{{ welcome_strip.entry_course.slug }}/">להדרכה</a>
         {% else %}
           <a class="btn btn-sm btn-outline-light" href="{% url 'courses_catalog' %}">לקטלוג</a>
         {% endif %}

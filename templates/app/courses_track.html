@@ -29,7 +29,7 @@
           <h2 class="h5 mb-2">{{ course.title }}</h2>
           <p class="small flex-grow-1 mb-3" style="color:var(--text-secondary)">{{ course.description|truncatewords:28 }}</p>
           <a href="{% url 'courses_detail' course.slug %}" class="btn btn-primary mt-auto">
-            <i class="bi bi-play-circle"></i> לקורס
+            <i class="bi bi-play-circle"></i> להדרכה
           </a>
         </div>
       </article>
@@ -37,7 +37,7 @@
     {% endfor %}
   </div>
   {% else %}
-  <p class="text-muted">אין עדיין קורסים במסלול זה - בקרוב.</p>
+  <p class="text-muted">אין עדיין הדרכות במסלול זה - בקרוב.</p>
   {% endif %}
 </div>
 {% endblock %}

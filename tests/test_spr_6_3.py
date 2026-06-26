@@ -287,7 +287,7 @@ def test_project_on_profile_and_course():
     assert p.title in prof
     # course page
     cp = Client().get(f"/courses/{course.slug}/").content.decode()
-    assert p.title in cp and "נבנה בעקבות הקורס" in cp
+    assert p.title in cp and "נבנה בעקבות ההדרכה" in cp
 
 
 @pytest.mark.django_db

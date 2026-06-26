@@ -18,14 +18,14 @@
     </section>
 
     <!-- TRAINING - the live product, the hero of the page -->
-    <section class="mt-2">
+    <section class="mt-2 home-train">
       <a href="{% url 'courses_catalog' %}" class="training-hero">
         <div class="training-hero-body">
           <h3 class="training-hero-title">
             <i class="bi bi-mortarboard-fill"></i> הדרכה
           </h3>
           <p class="training-hero-lead">
-            קורסי וידאו אונליין עם הסברים מלאים, תרגול ובחנים ותעודת סיום - ממתחילים ועד מתקדמים.
+            הדרכות וידאו אונליין עם הסברים מלאים, תרגול ובחנים ותעודת סיום - ממתחילים ועד מתקדמים.
           </p>
           <ul class="training-hero-list">
             <li><i class="bi bi-check-circle-fill"></i> פייתון, סקראץ' ופיתוח web</li>
@@ -34,7 +34,7 @@
             <li><i class="bi bi-check-circle-fill"></i> בינה מלאכותית - בשלוש רמות</li>
           </ul>
           <div class="training-hero-foot">
-            <span class="btn btn-primary">לכל הקורסים</span>
+            <span class="btn btn-primary">לכל ההדרכות</span>
           </div>
         </div>
         <div class="training-hero-media" id="thMedia">
@@ -65,19 +65,14 @@
     {# === Personalized content - always BELOW the main section === #}
 
     {% if user.is_authenticated and last_progress and last_progress.video.course %}
-    <div class="alert alert-primary d-flex align-items-center justify-content-between mt-4 mb-0" role="alert">
-      <div>
-        <i class="bi bi-play-circle-fill me-2"></i>
-        <strong>המשך לצפות:</strong> {{ last_progress.video.course.title }} - {{ last_progress.video.title }}
-        {% if last_progress.last_position_seconds > 5 %}
-          <small class="text-muted ms-2">({{ last_progress.last_position_seconds|floatformat:0 }} שניות)</small>
-        {% endif %}
-      </div>
-      <a href="{% url 'courses_lesson' slug=last_progress.video.course.slug lesson_order=last_progress.video.lesson_order %}"
-         class="btn btn-primary btn-sm ms-3">
-        <i class="bi bi-arrow-left"></i> המשך
-      </a>
-    </div>
+    <a href="{% url 'courses_lesson' slug=last_progress.video.course.slug lesson_order=last_progress.video.lesson_order %}"
+       class="continue-watching mt-3">
+      <i class="bi bi-play-circle-fill cw-ico"></i>
+      <span class="cw-text"><strong>המשך לצפות:</strong> {{ last_progress.video.course.title }} - {{ last_progress.video.title }}</span>
+      {% if last_progress.last_position_seconds > 5 %}
+      <small class="cw-time">({{ last_progress.last_position_seconds|floatformat:0 }} שניות)</small>
+      {% endif %}
+    </a>
     {% endif %}
 
     {% if recommended %}
@@ -98,6 +93,33 @@
           </a>
         </div>
         {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    {% if user.is_authenticated %}
+    <!-- Discover more — image circles (members only). Swap the images at
+         static/img/home/*.png for real photos when ready. -->
+    <section class="mt-5">
+      <div class="home-circles">
+        <a href="{% url 'community' %}" class="home-circle">
+          <span class="home-circle-img" style="background-image:url('{% static 'img/home/community.svg' %}')"></span>
+          <span class="home-circle-label">קהילה</span>
+        </a>
+        <a href="{% url 'nostalgia' %}" class="home-circle home-filmcell">
+          <span class="filmstrip">
+            <video class="filmstrip-video" autoplay muted loop playsinline
+                   poster="{% static 'img/home/nostalgia-poster.jpg' %}">
+              <source src="{% static 'video/nostalgia.mp4' %}" type="video/mp4">
+            </video>
+            <span class="filmstrip-fx" aria-hidden="true"></span>
+          </span>
+          <span class="home-circle-label">נוסטלגיה <span class="soon-badge">בקרוב</span></span>
+        </a>
+        <a href="{% url 'blog' %}" class="home-circle">
+          <span class="home-circle-img" style="background-image:url('{% static 'img/home/blog.jpg' %}'), url('{% static 'img/home/blog.svg' %}'); background-color:#3b9bf0"></span>
+          <span class="home-circle-label">Avi Salmon Blog{% if not blog_has_posts %} <span class="soon-badge">בקרוב</span>{% endif %}</span>
+        </a>
       </div>
     </section>
     {% endif %}

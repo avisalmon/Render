@@ -62,7 +62,7 @@
         <div class="browse-hints">
           {% for c in t.courses %}<span class="hint-chip">{{ c.title }}</span>{% endfor %}
         </div>
-        <div class="small text-primary mt-2">{{ t.courses|length }} קורסים ←</div>
+        <div class="small text-primary mt-2">{{ t.courses|length }} הדרכות ←</div>
       </a>
       {% else %}
       <div class="card-surface browse-card is-soon h-100 p-3">
@@ -73,7 +73,7 @@
             <div class="text-muted small">{{ t.meta.subtitle }}</div>
           </div>
         </div>
-        <p class="small text-muted mb-0">אין עדיין קורסים.</p>
+        <p class="small text-muted mb-0">אין עדיין הדרכות.</p>
       </div>
       {% endif %}
     </div>

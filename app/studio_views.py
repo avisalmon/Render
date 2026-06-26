@@ -48,7 +48,7 @@ def course_create(request):
     if request.method == "POST":
         title = _clean(request.POST.get("title", "").strip())
         if not title:
-            messages.error(request, "צריך כותרת לקורס")
+            messages.error(request, "צריך כותרת להדרכה")
             return redirect("studio_course_create")
         slug = request.POST.get("slug", "").strip() or slugify(title)
         base, k = slug, 2
@@ -64,7 +64,7 @@ def course_create(request):
             thumbnail=request.POST.get("thumbnail", "").strip(),
             is_published=False,
         )
-        messages.success(request, "הקורס נוצר. אפשר להוסיף שיעורים.")
+        messages.success(request, "ההדרכה נוצרה. אפשר להוסיף שיעורים.")
         return redirect("studio_course_edit", slug=course.slug)
     return render(request, "app/studio/course_form.html",
                   {"course": None, "domains": _domains_for_form()})
@@ -83,7 +83,7 @@ def course_edit(request, slug):
         course.is_published = request.POST.get("is_published") == "on"
         course.studio_edited_at = timezone.now()
         course.save()
-        messages.success(request, "הקורס נשמר.")
+        messages.success(request, "ההדרכה נשמרה.")
         return redirect("studio_course_edit", slug=course.slug)
     return render(request, "app/studio/course_edit.html", {
         "course": course,
@@ -97,7 +97,7 @@ def course_edit(request, slug):
 def course_delete(request, slug):
     course = get_object_or_404(Course, slug=slug)
     course.delete()
-    messages.success(request, "הקורס נמחק.")
+    messages.success(request, "ההדרכה נמחקה.")
     return redirect("studio_home")
 
 

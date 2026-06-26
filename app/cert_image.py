@@ -88,7 +88,7 @@ def _render(name, course, date_str):
     _draw_center(d, cx, 150, "תעודת סיום", _font("Heebo_700Bold.ttf", 52), GOLD)
     _draw_center(d, cx, 238, "הוענקה בזאת ל", _font("Heebo_400Regular.ttf", 26), INK_SOFT)
     _draw_center(d, cx, 282, name, _fit_font(name, "Heebo_700Bold.ttf", 64, 34, 1000), INK)
-    _draw_center(d, cx, 384, "על סיום מוצלח של הקורס", _font("Heebo_400Regular.ttf", 26), INK_SOFT)
+    _draw_center(d, cx, 384, "על סיום מוצלח של ההדרכה", _font("Heebo_400Regular.ttf", 26), INK_SOFT)
     _draw_center(d, cx, 424, course, _fit_font(course, "Heebo_700Bold.ttf", 40, 24, 1000), INK)
 
     # Gold seal with a star

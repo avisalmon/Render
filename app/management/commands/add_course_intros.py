@@ -26,7 +26,7 @@ INTROS = {
     "django": "0_bt63WLOHw",
     "video-editing": "uK6P2lTUWwc",
 }
-INTRO_TITLE = "מבוא לקורס"
+INTRO_TITLE = "מבוא להדרכה"
 
 
 class Command(BaseCommand):
@@ -76,7 +76,7 @@ class Command(BaseCommand):
                 Video.objects.create(
                     course=course, lesson_order=1, title=INTRO_TITLE,
                     bunny_video_id=guid, duration_seconds=dur, is_free_preview=True,
-                    summary_he="סרטון פתיחה והיכרות עם הקורס.",
+                    summary_he="סרטון פתיחה והיכרות עם ההדרכה.",
                 )
             self.stdout.write(self.style.SUCCESS(
                 f"[{slug}] intro inserted as lesson 1 ({course.videos.count()} lessons)"

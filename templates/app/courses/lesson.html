@@ -112,7 +112,7 @@
       <!-- Lesson list -->
       <div class="p-3 rounded-3 mb-3"
            style="background:var(--bg-surface);border:1px solid var(--bg-elevated);max-height:420px;overflow-y:auto;">
-        <p class="fw-semibold small mb-2" style="color:var(--text-secondary)">תוכן הקורס</p>
+        <p class="fw-semibold small mb-2" style="color:var(--text-secondary)">תוכן ההדרכה</p>
         {% for v in videos %}
         <a href="{% url 'courses_lesson' course.slug v.lesson_order %}"
            style="text-decoration:none;"
