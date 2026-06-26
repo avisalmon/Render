@@ -42,11 +42,10 @@ class Command(BaseCommand):
                         copied += 1
         self.stdout.write(f"blog assets ensured ({copied} copied)")
 
-        # 2) Seed posts only when the blog is empty.
-        if BlogPost.objects.exists():
-            self.stdout.write("blog already has posts; skipping content seed")
-            return
-
+        # 2) Create any missing posts (matched by slug). Existing posts are left
+        #    untouched, so edits made in prod are never overwritten; only posts
+        #    that do not exist yet are added. To add a new post to prod, add it
+        #    to blog_posts.json (+ its assets) and deploy.
         path = os.path.join(seed, "blog_posts.json")
         if not os.path.exists(path):
             self.stdout.write("no blog_posts.json; nothing to seed")
@@ -59,6 +58,8 @@ class Command(BaseCommand):
 
         created = 0
         for d in data:
+            if BlogPost.objects.filter(slug=d["slug"]).exists():
+                continue
             post = BlogPost(
                 title=d["title"],
                 subtitle=d.get("subtitle", ""),
