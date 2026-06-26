@@ -5,14 +5,17 @@
 {% block extra_head %}
   <!-- Rich preview when the certificate link is shared (Facebook / WhatsApp / etc.) -->
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="babook">
   <meta property="og:title" content="תעודת סיום - {{ cert.course.title }}">
   <meta property="og:description" content="{{ learner_name }} השלים/ה את ההדרכה «{{ cert.course.title }}» ב-babook.">
   <meta property="og:url" content="{{ cert_url }}">
   {% if og_image %}
   <meta property="og:image" content="{{ og_image }}">
+  <meta property="og:image:secure_url" content="{{ og_image }}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:type" content="image/png">
+  <meta property="og:image:alt" content="תעודת סיום - {{ cert.course.title }}">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="{{ og_image }}">
   {% endif %}
