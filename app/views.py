@@ -179,6 +179,22 @@ def _blog_can_see_drafts(request):
     return request.user.is_authenticated and request.user.is_staff
 
 
+def _blog_mark_read(request, post):
+    """Record that the reader opened this post and return the set of slugs they
+    have read. Logged-in readers are tracked in BlogRead; anonymous readers in
+    the session. Used to recommend a post they have not read yet."""
+    if request.user.is_authenticated:
+        from .models import BlogRead
+        BlogRead.objects.update_or_create(user=request.user, post=post)
+        return set(BlogRead.objects.filter(user=request.user)
+                   .values_list("post__slug", flat=True))
+    read = request.session.get("blog_read", [])
+    if post.slug not in read:
+        read.append(post.slug)
+        request.session["blog_read"] = read[-100:]  # cap the session list
+    return set(read)
+
+
 def blog_index(request):
     """Public list of posts in a magazine layout: one full-width post, then two
     normal cards, then full-width again, repeating. Full-width posts are the
@@ -231,16 +247,97 @@ def blog_post(request, slug):
     if not _blog_can_see_drafts(request):
         BlogPost.objects.filter(pk=post.pk).update(view_count=F("view_count") + 1)
 
-    related = list(
+    # Track the read, then recommend posts the reader has not seen yet.
+    read_slugs = _blog_mark_read(request, post)
+    recommended = list(
         BlogPost.objects.filter(status="published")
-        .exclude(pk=post.pk)
-        .order_by("-published_at", "-created_at")[:3]
+        .exclude(slug__in=read_slugs)
+        .order_by("-is_featured", "-published_at", "-created_at")[:2]
     )
+    if not recommended:
+        # They have read everything; fall back to other recent posts.
+        recommended = list(
+            BlogPost.objects.filter(status="published")
+            .exclude(pk=post.pk)
+            .order_by("-published_at", "-created_at")[:2]
+        )
     return render(request, "app/blog/post.html", {
         "post": post,
         "body_html": body_html,
-        "related": related,
+        "recommended": recommended,
     })
+
+
+def blog_comment(request, slug):
+    """A reader's private message to Avi about a post: stored and emailed to
+    avi.salmon@gmail.com (the commenter's address is set as reply-to)."""
+    from django.contrib import messages
+    from django.core.mail import EmailMessage
+    from django.shortcuts import get_object_or_404, redirect
+    from django.urls import reverse
+
+    from .models import BlogComment, BlogPost
+
+    AVI_EMAIL = "avi.salmon@gmail.com"
+
+    post = get_object_or_404(BlogPost, slug=slug)
+    target = reverse("blog_post", args=[slug])
+    if request.method != "POST":
+        return redirect(target)
+
+    # Honeypot: bots fill hidden fields; pretend success and drop it.
+    if request.POST.get("website"):
+        messages.success(request, "תודה! ההודעה נשלחה לאבי.")
+        return redirect(target + "#comment")
+
+    body = (request.POST.get("body") or "").strip()
+    name = (request.POST.get("name") or "").strip()[:120]
+    email = (request.POST.get("email") or "").strip()[:254]
+    if request.user.is_authenticated:
+        name = name or request.user.profile.public_name
+        email = email or request.user.email
+
+    if not body:
+        messages.error(request, "כדאי לכתוב משהו לפני השליחה.")
+        return redirect(target + "#comment")
+
+    # Light rate limit: 5 messages per IP per hour.
+    ip = _get_client_ip(request)
+    rate_key = f"blog_comment_rate_{_hash_ip(ip)}"
+    if cache.get(rate_key, 0) >= 5:
+        messages.error(request, "נשלחו יותר מדי הודעות. נסו שוב מאוחר יותר.")
+        return redirect(target + "#comment")
+    cache.set(rate_key, cache.get(rate_key, 0) + 1, 3600)
+
+    comment = BlogComment.objects.create(
+        post=post,
+        user=request.user if request.user.is_authenticated else None,
+        name=name, email=email, body=body[:5000],
+    )
+
+    lines = [
+        f"פוסט: {post.title}",
+        f"קישור: {request.build_absolute_uri(target)}",
+        f"מאת: {name or 'אנונימי'}" + (f" <{email}>" if email else ""),
+        "",
+        body[:5000],
+    ]
+    try:
+        msg = EmailMessage(
+            subject=f"תגובה חדשה לבלוג: {post.title}",
+            body="\n".join(lines),
+            from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@babook.co.il"),
+            to=[AVI_EMAIL],
+            reply_to=[email] if email else None,
+        )
+        msg.send(fail_silently=True)
+        comment.emailed = True
+        comment.save(update_fields=["emailed"])
+    except Exception:
+        pass  # the comment is stored regardless; never break the request
+
+    messages.success(request, "תודה! ההודעה נשלחה לאבי.")
+    return redirect(target + "#comment")
 
 
 @login_required

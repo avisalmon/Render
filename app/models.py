@@ -1280,6 +1280,42 @@ class BlogImage(models.Model):
         return f"{self.post.slug} – {self.key or self.image.name}"
 
 
+class BlogRead(models.Model):
+    """Tracks that a logged-in reader has opened a post, so the post footer can
+    recommend something they have not read yet (anon readers are tracked in the
+    session instead)."""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blog_reads")
+    post = models.ForeignKey(BlogPost, on_delete=models.CASCADE, related_name="reads")
+    read_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = [("user", "post")]
+
+    def __str__(self):
+        return f"{self.user.username} read {self.post.slug}"
+
+
+class BlogComment(models.Model):
+    """A reader's message to Avi about a post. Private (not shown publicly): it is
+    stored here and emailed straight to avi.salmon@gmail.com."""
+
+    post = models.ForeignKey(BlogPost, on_delete=models.CASCADE, related_name="comments")
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                             related_name="blog_comments")
+    name = models.CharField(max_length=120, blank=True, default="")
+    email = models.EmailField(blank=True, default="")
+    body = models.TextField()
+    emailed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"comment on {self.post.slug} by {self.name or 'anon'}"
+
+
 # ---------------------------------------------------------------------------
 # CrashTech - hardware hackathon platform (EPIC-6.5). Defined in a dedicated
 # module, re-exported here so Django registers them under the `app` label.

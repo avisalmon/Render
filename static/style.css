@@ -1224,6 +1224,39 @@ html[data-theme="dark"] .cert-trophy:hover { color: #ffe9a8; }
   .hcard-bar { width: 52px; }
   .hcard-meta { display: none; }
 }
+
+/* Catalog two-column: training-status sidebar (right ~30%) + courses (left ~70%).
+   No sidebar (anon / no progress) -> .catalog-layout stays block, courses full width. */
+.catalog-layout.has-status {
+  display: grid;
+  grid-template-columns: 30% minmax(0, 1fr);   /* RTL: first column = right = status */
+  gap: 1.5rem;
+  align-items: start;
+}
+.catalog-status {
+  align-self: start;
+  display: flex; flex-direction: column; gap: 1.4rem;
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  padding: 1.1rem 1rem 1.2rem;
+  position: sticky;
+  top: calc(var(--cat-toolbar-top, 56px) + 58px);
+  max-height: calc(100vh - var(--cat-toolbar-top, 56px) - 76px);
+  overflow-y: auto;
+}
+.catalog-status .catalog-section-title { font-size: 1rem; margin-bottom: .7rem; }
+.catalog-status .hcard { background: var(--bg-surface); }
+.catalog-status .hcard-bar { width: 56px; }   /* tighter bar in the narrow band */
+.status-block { min-width: 0; }
+
+@media (max-width: 820px) {
+  .catalog-layout.has-status { grid-template-columns: 1fr; }   /* stack on narrow screens */
+  .catalog-status {
+    position: static; max-height: none; overflow: visible; order: 2;   /* courses first, status below */
+  }
+  .catalog-main { order: 1; }
+}
+
 /* Categories are uniform light-gray collapsible bands - no per-domain colour or
    icon, just a clear foldable header. */
 .catalog-domain { margin-bottom: 2.25rem; }
@@ -2024,6 +2057,36 @@ footer .d-inline-flex > a {
 .blog-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin: 2rem 0; }
 .blog-gallery .blog-figure { margin: 0; }
 .blog-related { margin-top: 3rem; border-top: 1px solid var(--border); padding-top: 1.5rem; }
+
+/* Post footer: recommendation + actions + message-to-Avi */
+.blog-foot {
+  margin-top: 3rem; border-top: 1px solid var(--border); padding-top: 1.8rem;
+  display: flex; flex-direction: column; gap: 2rem;
+}
+.blog-foot-title {
+  font-family: var(--font-heading); font-weight: 800; font-size: 1.3rem; margin: 0 0 .9rem;
+}
+.blog-foot-title i { color: var(--accent-primary); }
+
+.blog-rec-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
+.blog-rec-item {
+  display: flex; flex-direction: column; gap: .25rem; padding: 1rem 1.1rem;
+  text-decoration: none; color: inherit;
+  transition: box-shadow .18s ease, transform .18s ease;
+}
+.blog-rec-item:hover { box-shadow: 0 6px 18px rgba(0,0,0,.10); transform: translateY(-2px); }
+.blog-rec-title { font-family: var(--font-heading); font-weight: 700; font-size: 1.12rem; }
+.blog-rec-sub { color: var(--text-secondary); font-size: .9rem; }
+
+.blog-foot-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
+
+.blog-comment-note { color: var(--text-secondary); font-size: .92rem; margin: -.4rem 0 .9rem; }
+.blog-comment-form { display: flex; flex-direction: column; gap: .7rem; max-width: 640px; }
+.blog-comment-row { display: flex; gap: .7rem; flex-wrap: wrap; }
+.blog-comment-row .form-control { flex: 1 1 200px; }
+.blog-comment-submit { display: flex; }
+/* Honeypot: kept in the DOM for bots, hidden from people */
+.hp-field { position: absolute !important; left: -9999px !important; width: 1px; height: 1px; opacity: 0; }
 
 @media (max-width: 640px) {
   .blog-wide { grid-template-columns: 1fr; }

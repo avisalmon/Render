@@ -11,7 +11,6 @@
 
     <!-- The book-sharing line - always on top, above the training card -->
     <section class="hero-slim">
-      <h1 class="hero-brand">babook</h1>
       <p class="hero-joke">
         אתר שיתוף הספרים #1 בישראל - חוץ מ<strong>שיתוף ספרים</strong> עצמו, שעדיין לא בנינו.
         בינתיים יש כאן כל השאר.
@@ -99,34 +98,6 @@
           </a>
         </div>
         {% endfor %}
-      </div>
-    </section>
-    {% endif %}
-
-    {% if user.is_authenticated %}
-    <!-- Discover more — image circles (members only). Swap the images at
-         static/img/home/*.png for real photos when ready. -->
-    <section class="mt-5">
-      <h2 class="worlds-subhead">עוד ב-babook</h2>
-      <div class="home-circles">
-        <a href="{% url 'community' %}" class="home-circle">
-          <span class="home-circle-img" style="background-image:url('{% static 'img/home/community.svg' %}')"></span>
-          <span class="home-circle-label">קהילה</span>
-        </a>
-        <a href="{% url 'nostalgia' %}" class="home-circle home-filmcell">
-          <span class="filmstrip">
-            <video class="filmstrip-video" autoplay muted loop playsinline
-                   poster="{% static 'img/home/nostalgia-poster.jpg' %}">
-              <source src="{% static 'video/nostalgia.mp4' %}" type="video/mp4">
-            </video>
-            <span class="filmstrip-fx" aria-hidden="true"></span>
-          </span>
-          <span class="home-circle-label">נוסטלגיה <span class="soon-badge">בקרוב</span></span>
-        </a>
-        <a href="{% url 'blog' %}" class="home-circle">
-          <span class="home-circle-img" style="background-image:url('{% static 'img/home/blog.jpg' %}'), url('{% static 'img/home/blog.svg' %}'); background-color:#3b9bf0"></span>
-          <span class="home-circle-label">Avi Salmon Blog{% if not blog_has_posts %} <span class="soon-badge">בקרוב</span>{% endif %}</span>
-        </a>
       </div>
     </section>
     {% endif %}

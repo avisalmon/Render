@@ -4,8 +4,10 @@ from .models import (
     AIGraderConfig,
     AuthoringJob,
     BadgeAward,
+    BlogComment,
     BlogImage,
     BlogPost,
+    BlogRead,
     ChatMessage,
     ChatSession,
     CommunityReputation,
@@ -155,6 +157,18 @@ class BlogPostAdmin(admin.ModelAdmin):
             if not p.published_at:
                 p.published_at = timezone.now()
             p.save()
+
+
+@admin.register(BlogComment)
+class BlogCommentAdmin(admin.ModelAdmin):
+    """Readers' private messages to Avi about a post (also emailed)."""
+    list_display = ("created_at", "post", "name", "email", "emailed")
+    list_filter = ("emailed",)
+    search_fields = ("name", "email", "body", "post__title")
+    readonly_fields = ("post", "user", "name", "email", "body", "emailed", "created_at")
+
+
+admin.site.register(BlogRead)
 
 
 @admin.register(LearnerProfile)

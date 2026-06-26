@@ -60,36 +60,82 @@
   {% endif %}
   {% endwith %}
 
-  {% if related %}
-  <section class="blog-related">
-    <h2 class="worlds-subhead">עוד מהבלוג</h2>
-    <div class="blog-grid">
-      {% for r in related %}
-      <a href="{% url 'blog_post' r.slug %}" class="blog-card card-surface">
-        {% if r.cover %}
-        <span class="blog-card-cover" style="background-image:url('{{ r.cover.url }}')"></span>
-        {% else %}
-        <span class="blog-card-cover blog-card-cover--blank"><i class="bi bi-newspaper"></i></span>
-        {% endif %}
-        <span class="blog-card-body">
-          <span class="blog-card-meta">{{ r.published_at|default:r.created_at|date:"j בF Y" }} · {{ r.reading_minutes }} דק׳</span>
-          <h3 class="blog-card-title">{{ r.title }}</h3>
-          {% if r.subtitle %}<p class="blog-card-sub">{{ r.subtitle }}</p>{% endif %}
-        </span>
-      </a>
-      {% endfor %}
+  <!-- Post footer: a recommendation you haven't read, actions, and a note to Avi -->
+  <footer class="blog-foot">
+
+    {% if recommended %}
+    <section class="blog-rec">
+      <h2 class="blog-foot-title"><i class="bi bi-stars"></i> אולי תרצו לקרוא גם</h2>
+      <div class="blog-rec-list">
+        {% for r in recommended %}
+        <a href="{% url 'blog_post' r.slug %}" class="blog-rec-item card-surface">
+          <span class="blog-card-meta">{{ r.published_at|default:r.created_at|date:"j בF Y" }} · {{ r.reading_minutes }} דק׳ קריאה</span>
+          <span class="blog-rec-title">{{ r.title }}</span>
+          {% if r.subtitle %}<span class="blog-rec-sub">{{ r.subtitle }}</span>{% endif %}
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    <div class="blog-foot-actions">
+      <a class="btn btn-outline-secondary" href="{% url 'blog' %}"><i class="bi bi-arrow-right"></i> חזרה לבלוג</a>
+      <button type="button" class="btn btn-outline-secondary" id="blogShare"
+              data-title="{{ post.title }}" data-url="{{ request.build_absolute_uri }}">
+        <i class="bi bi-share"></i> שיתוף
+      </button>
     </div>
-  </section>
-  {% endif %}
+
+    <section class="blog-comment" id="comment">
+      <h2 class="blog-foot-title"><i class="bi bi-pencil-square"></i> מה חשבתם? כתבו לאבי</h2>
+      <p class="blog-comment-note">כתבו לי מה חשבתם על הפוסט. ההודעה נשלחת ישירות לאבי במייל ולא מוצגת בפומבי.</p>
+      <form method="post" action="{% url 'blog_comment' post.slug %}" class="blog-comment-form">
+        {% csrf_token %}
+        <input type="text" name="website" class="hp-field" tabindex="-1" autocomplete="off" aria-hidden="true">
+        {% if not user.is_authenticated %}
+        <div class="blog-comment-row">
+          <input type="text" name="name" class="form-control" placeholder="השם שלכם (לא חובה)" maxlength="120">
+          <input type="email" name="email" class="form-control" placeholder="אימייל למענה (לא חובה)" maxlength="254">
+        </div>
+        {% endif %}
+        <textarea name="body" class="form-control" rows="4" required
+                  placeholder="מה חשבתם על הפוסט? אשמח לשמוע."></textarea>
+        <div class="blog-comment-submit">
+          <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> שליחה לאבי</button>
+        </div>
+      </form>
+    </section>
+
+  </footer>
 
 </article>
 {% endblock %}
 
 {% block extra_js %}
-{# Runnable Python cells (```python-run) -> live in-browser emulator (Pyodide).
-   No saveUrl: blog readers run code, nothing is persisted. #}
+{# python-run cells become a live in-browser Pyodide emulator; no saveUrl, nothing persisted. #}
 <script type="module">
   import { initPyRunners } from "{% static 'js/py-runner.js' %}";
   initPyRunners({});
+</script>
+<script>
+// Share: native share sheet where available, else copy the link.
+(function () {
+  var btn = document.getElementById('blogShare');
+  if (!btn) return;
+  btn.addEventListener('click', function () {
+    var url = btn.dataset.url, title = btn.dataset.title || document.title;
+    if (navigator.share) {
+      navigator.share({ title: title, url: url }).catch(function () {});
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(function () {
+        var html = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check2"></i> הקישור הועתק';
+        setTimeout(function () { btn.innerHTML = html; }, 1800);
+      }).catch(function () { window.prompt('העתיקו את הקישור:', url); });
+    } else {
+      window.prompt('העתיקו את הקישור:', url);
+    }
+  });
+})();
 </script>
 {% endblock %}

@@ -181,6 +181,7 @@ urlpatterns = [
     path("research/", views.coming_soon, {"section": "research"}, name="research"),
     # Avi Salmon Blog (personal). <str:> (not <slug:>) so unicode/Hebrew slugs match.
     path("blog/", views.blog_index, name="blog"),
+    path("blog/<str:slug>/comment/", views.blog_comment, name="blog_comment"),
     path("blog/<str:slug>/", views.blog_post, name="blog_post"),
     path("newsletter/signup/", views.newsletter_signup, name="newsletter_signup"),
     path("newsletter/confirm/<str:token>", views.newsletter_confirm, name="newsletter_confirm"),
