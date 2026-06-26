@@ -437,7 +437,7 @@ def _search_all(q):
     from django.db.models import Q
     from django.urls import reverse
 
-    from .models import Course, ForumThread, ShowcaseProject, UserProfile
+    from .models import BlogPost, Course, ForumThread, ShowcaseProject, UserProfile
     q = (q or "").strip()
     groups = []
     if not q:
@@ -449,6 +449,17 @@ def _search_all(q):
         groups.append({"label": "הדרכות", "icon": "bi-mortarboard", "items": [
             {"title": c.title, "sub": (c.description or "")[:70],
              "url": reverse("courses_detail", args=[c.slug])} for c in courses]})
+
+    # Blog posts (Avi Salmon Blog). icontains on the JSON tags column is the
+    # SQLite-safe form (see [[jsonfield-sqlite-contains]]).
+    posts = list(BlogPost.objects.filter(status="published")
+                 .filter(Q(title__icontains=q) | Q(subtitle__icontains=q)
+                         | Q(excerpt__icontains=q) | Q(body__icontains=q)
+                         | Q(tags__icontains=q))[:8])
+    if posts:
+        groups.append({"label": "בלוג", "icon": "bi-newspaper", "items": [
+            {"title": p.title, "sub": (p.subtitle or p.excerpt or "")[:70],
+             "url": reverse("blog_post", args=[p.slug])} for p in posts]})
 
     people = list(UserProfile.objects.filter(is_public=True)
                   .filter(Q(display_name__icontains=q) | Q(user__username__icontains=q)
@@ -673,6 +684,30 @@ def _get_frontier_video(all_videos, completed_ids):
         if v.id not in completed_ids:
             return v
     return all_videos[-1] if all_videos else None
+
+
+def _practice_block(all_videos, user):
+    """Sequential practice gate: a lesson with >=1 ```python-run cell must have at
+    least half (rounded up) of its cells passed before the lessons after it open.
+    Returns (locked_ids, blocker_video) - blocker is the first practice lesson whose
+    gate isn't met yet (it gates everything that follows), or None."""
+    if not user.is_authenticated:
+        return {}, None
+    from .models import StudentCode
+    passed_by = {}
+    for sc in StudentCode.objects.filter(user=user, video__in=all_videos, passed=True):
+        passed_by[sc.video_id] = passed_by.get(sc.video_id, 0) + 1
+    locked, blocker = {}, None
+    for v in all_videos:
+        if blocker is not None:
+            locked[v.id] = True
+            continue
+        if not v.practice_required:
+            continue   # only required-practice lessons gate progression
+        total = (v.notes_markdown or "").count("```python-run")
+        if total and min(passed_by.get(v.id, 0), total) < (total + 1) // 2:
+            blocker = v
+    return locked, blocker
 
 
 DIFFICULTY_HE = {"beginner": "מתחילים", "intermediate": "בינוני", "advanced": "מתקדם"}
@@ -1017,8 +1052,14 @@ def courses_lesson(request, slug, lesson_order):
             if v_id not in required_ids or v_id in passed_ids
         }
 
-    # Everything is open - no sequential locking. Learners pick any lesson.
-    locked_ids = {}
+    # Sequential practice gate: a practice lesson (>=1 runnable cell) must be at
+    # least half solved before the lessons after it open. Staff bypass (below).
+    locked_ids, practice_blocker = _practice_block(all_videos, request.user)
+    if not request.user.is_staff and locked_ids.get(video.id) and practice_blocker:
+        from django.urls import reverse
+        return redirect(
+            reverse("courses_lesson", args=[course.slug, practice_blocker.lesson_order])
+            + "?gate=1")
 
     quiz = LessonQuiz.objects.filter(video=video).first()
     # The learner's certificate for this course (if earned) - drives the trophy
@@ -1092,11 +1133,20 @@ def courses_lesson(request, slug, lesson_order):
 
     # In-lesson runnable Python cells: the student's saved code (runs in-browser
     # via Pyodide; we just store/reload the text). cell_key -> code.
-    saved_code = {}
+    saved_code, passed_cells = {}, []
     if request.user.is_authenticated:
         from .models import StudentCode
-        saved_code = {sc.cell_key: sc.code
-                      for sc in StudentCode.objects.filter(user=request.user, video=video)}
+        for sc in StudentCode.objects.filter(user=request.user, video=video):
+            saved_code[sc.cell_key] = sc.code
+            if sc.passed:
+                passed_cells.append(sc.cell_key)
+
+    # This lesson's practice gate (drives the "next lesson" button + the banner).
+    # Only lessons flagged practice_required block; elsewhere practice is optional.
+    practice_total = (video.notes_markdown or "").count("```python-run")
+    practice_need = (practice_total + 1) // 2 if (video.practice_required and practice_total) else 0
+    practice_passed = min(len(passed_cells), practice_total)
+    practice_gate_ok = is_staff or (not video.practice_required) or (practice_passed >= practice_need)
 
     return render(request, "app/lesson.html", {
         "course": course,
@@ -1108,6 +1158,11 @@ def courses_lesson(request, slug, lesson_order):
         "last_position_seconds": last_position_seconds,
         "notes_html": notes_html,
         "saved_code": saved_code,
+        "passed_cells": passed_cells,
+        "practice_total": practice_total,
+        "practice_need": practice_need,
+        "practice_passed": practice_passed,
+        "practice_gate_ok": practice_gate_ok,
         "completed_ids": completed_ids,
         "locked_ids": locked_ids_ctx,
         "fire_free_lesson": fire_free_lesson,
@@ -1151,10 +1206,55 @@ def lesson_code_save(request, slug, lesson_order):
     cell_key = (request.POST.get("cell_key") or "").strip()[:40]
     if not cell_key:
         return JsonResponse({"ok": False, "error": "cell"}, status=400)
+    defaults = {"code": (request.POST.get("code") or "")[:50000]}
+    # "passed" is sent only when the cell's check succeeds; once earned it stays.
+    if request.POST.get("passed") in ("1", "true"):
+        defaults["passed"] = True
     StudentCode.objects.update_or_create(
-        user=request.user, video=video, cell_key=cell_key,
-        defaults={"code": (request.POST.get("code") or "")[:50000]})
+        user=request.user, video=video, cell_key=cell_key, defaults=defaults)
     return JsonResponse({"ok": True})
+
+
+@login_required
+def lesson_code_coach(request, slug, lesson_order):
+    """LLM judge + coach for a runnable cell: reads the student's code + a sample
+    run's output against the mission spec (a hidden ```coach block in the lesson,
+    so it can't be tampered with) and returns pass/fail + a Hebrew teaching comment.
+    On pass it records StudentCode.passed (server-authoritative). If the grader is
+    off / over budget / unavailable it returns available=False so the client falls
+    back to the deterministic check."""
+    import re
+
+    from django.shortcuts import get_object_or_404
+
+    from .grading import coach_code
+    from .models import StudentCode
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "method"}, status=405)
+    video = get_object_or_404(Video, course__slug=slug, lesson_order=lesson_order)
+    cell_key = (request.POST.get("cell_key") or "").strip()[:40]
+    code = (request.POST.get("code") or "")[:50000]
+    output = (request.POST.get("output") or "")[:5000]
+    # hint_only: a deterministic check already failed; just coach (don't judge/record).
+    hint_only = request.POST.get("hint_only") in ("1", "true")
+    # The spec lives server-side: the i-th ```coach block in the lesson notes.
+    specs = re.findall(r"```coach\n(.*?)```", video.notes_markdown or "", re.S)
+    try:
+        idx = int(cell_key[2:]) if cell_key.startswith("py") else 0
+    except ValueError:
+        idx = 0
+    if idx >= len(specs):
+        return JsonResponse({"ok": True, "available": False})  # no LLM spec for this cell
+    verdict = coach_code(request.user, specs[idx].strip(), code, output, hint_only=hint_only)
+    if verdict is None:
+        return JsonResponse({"ok": True, "available": False})  # grader off / over budget
+    # The LLM judges + records a pass only for open-ended cells (no deterministic check).
+    if not hint_only and verdict["passed"] and cell_key:
+        StudentCode.objects.update_or_create(
+            user=request.user, video=video, cell_key=cell_key,
+            defaults={"code": code, "passed": True})
+    return JsonResponse({"ok": True, "available": True,
+                         "passed": verdict["passed"], "comment": verdict["comment"]})
 
 
 # ---------------------------------------------------------------------------
@@ -1226,11 +1326,13 @@ def lesson_view(request, slug, lesson_order):
 
     # In-lesson runnable Python cells: the student's saved code (runs in-browser
     # via Pyodide; we just store/reload the text). cell_key -> code.
-    saved_code = {}
+    saved_code, passed_cells = {}, []
     if request.user.is_authenticated:
         from .models import StudentCode
-        saved_code = {sc.cell_key: sc.code
-                      for sc in StudentCode.objects.filter(user=request.user, video=video)}
+        for sc in StudentCode.objects.filter(user=request.user, video=video):
+            saved_code[sc.cell_key] = sc.code
+            if sc.passed:
+                passed_cells.append(sc.cell_key)
 
     return render(request, "app/lesson.html", {
         "course": course,
@@ -1242,6 +1344,7 @@ def lesson_view(request, slug, lesson_order):
         "last_position_seconds": last_position_seconds,
         "notes_html": notes_html,
         "saved_code": saved_code,
+        "passed_cells": passed_cells,
         "completed_ids": completed_ids,
         "is_enrolled": is_enrolled,
         "quiz": quiz,
@@ -1840,6 +1943,23 @@ def course_finish(request, slug):
         pct = _catalog_progress(request.user, [course.id]).get(course.id, {}).get("pct", 0)
         if pct < course.cert_min_pct:
             return _final_lesson_redirect(course, "progress")
+
+    # Gate D: each required-practice lesson needs at least half its runnable cells
+    # passed (e.g. the exercise lessons).
+    from .models import StudentCode
+    req_lessons = [v for v in all_videos if v.practice_required]
+    if req_lessons:
+        passed_by = {}
+        for sc in StudentCode.objects.filter(
+            user=request.user, video__in=req_lessons, passed=True
+        ):
+            passed_by[sc.video_id] = passed_by.get(sc.video_id, 0) + 1
+        for v in req_lessons:
+            total = (v.notes_markdown or "").count("```python-run")
+            if total and min(passed_by.get(v.id, 0), total) < (total + 1) // 2:
+                url = reverse(
+                    "courses_lesson", kwargs={"slug": slug, "lesson_order": v.lesson_order})
+                return redirect(f"{url}?error=practice")
 
     # All gates passed - issue certificate
     if not enrollment.completed_at:

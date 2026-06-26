@@ -105,3 +105,59 @@ def _log_cost(user, result):
         )
     except Exception:
         logger.exception("Grader UsageLog write failed")
+
+
+def coach_code(user, spec, code, output, hint_only=False):
+    """LLM coach for an in-lesson code mission. With hint_only=False it also judges
+    (returns {"passed": bool, "comment": ...}); with hint_only=True the answer is
+    already known wrong (a deterministic check failed) and it returns only a short
+    Hebrew teaching hint. Returns None to fall back (grader off / over the monthly
+    cost cap / any error - fails open)."""
+    try:
+        from .models import AIGraderConfig
+        if not AIGraderConfig.load().enabled:
+            return None
+        from .ai_chat import call_openai, check_cost_cap
+        under, _ = check_cost_cap()
+        if not under:
+            return None
+        if hint_only:
+            system = (
+                "You are a warm Python tutor for a Hebrew-speaking beginner. The "
+                "student's solution is INCORRECT - it failed the automated tests. "
+                "Reply with ONLY a JSON object and nothing else: {\"comment\": \"...\"}. "
+                "The comment is ONE short sentence IN HEBREW hinting at what to check or "
+                "fix (e.g. a boundary, an edge case, a wrong return value) WITHOUT giving "
+                "away the full solution."
+            )
+        else:
+            system = (
+                "You are a warm, encouraging Python tutor for a Hebrew-speaking beginner. "
+                "Grade the student's solution against the SPECIFICATION by reasoning about "
+                "the code's logic for ALL inputs (not only the sample output). "
+                "Reply with ONLY a JSON object and nothing else: "
+                '{"pass": true or false, "comment": "..."}. '
+                "The comment is 1-2 short sentences IN HEBREW: if it passes, praise briefly; "
+                "if not, point out specifically what to fix (e.g. a wrong boundary) without "
+                "giving away the full solution."
+            )
+        user_msg = (
+            f"SPECIFICATION:\n{spec}\n\n"
+            f"STUDENT CODE:\n```python\n{code[:4000]}\n```\n\n"
+            f"SAMPLE RUN OUTPUT:\n{(output or '(none)')[:1200]}\n\nGrade it."
+        )
+        # Code coaching is text-only; gpt-4o-mini is plenty and ~15x cheaper than 4o.
+        res = call_openai([{"role": "user", "content": user_msg}],
+                          model="gpt-4o-mini", system_prompt=system)
+        _log_cost(user, res)
+        import json
+        import re
+        m = re.search(r"\{.*\}", res.get("content") or "", re.S)
+        if not m:
+            return None
+        data = json.loads(m.group(0))
+        return {"passed": bool(data.get("pass")),
+                "comment": str(data.get("comment") or "").strip()[:600]}
+    except Exception:
+        logger.exception("coach_code failed open")
+        return None

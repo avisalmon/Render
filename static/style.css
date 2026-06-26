@@ -485,10 +485,19 @@ html[dir="rtl"] .whatsapp-sticky {
 @media (prefers-reduced-motion: reduce) {
   .pyrun-point, .pyrun-run.pyrun-cta { animation: none; }
 }
-.pyrun-out { margin: 0; padding: .85rem var(--space-card); background: #1a1d24; color: #e6e6e6;
+/* .pyrun .pyrun-out (two classes) outranks ".lesson-notes pre", which would
+   otherwise force a light background and make the light output text invisible. */
+.pyrun .pyrun-out { margin: 0; padding: .85rem var(--space-card); background: #1a1d24; color: #e6e6e6;
   font-family: var(--font-mono); font-size: .88rem; line-height: 1.5; white-space: pre-wrap;
   word-break: break-word; border-top: 1px solid var(--border); max-height: 340px; overflow: auto;
   direction: ltr; text-align: left; }
+/* Check result tint (3 classes -> still outranks .lesson-notes pre) */
+.pyrun .pyrun-out.pyrun-ok { background: #0f2e1a; color: #9be7b4; font-family: inherit;
+  font-size: .95rem; font-weight: 600; text-align: center; direction: rtl; }
+.pyrun .pyrun-out.pyrun-fail { background: #2e1416; color: #f3b0b0; font-family: inherit;
+  font-size: .92rem; text-align: center; direction: rtl; }
+.pyrun-badge { font-size: .78rem; font-weight: 700; color: #1a7f37;
+  background: rgba(26,127,55,.14); border-radius: 999px; padding: .12rem .6rem; }
 .lesson-notes table {
     border-collapse: collapse;
     width: 100%;
@@ -1933,6 +1942,11 @@ footer .d-inline-flex > a {
 /* Article body typography (reuses .lesson-notes; tuned for long-form reading) */
 .blog-body { font-size: 1.08rem; line-height: 1.75; }
 .blog-body > :first-child { margin-top: 0; }
+.blog-body .blog-note {
+  font-size: .82rem; line-height: 1.55; color: var(--text-secondary);
+  font-style: italic; margin: 0 0 1.6rem; padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
 .blog-body h2 { font-family: var(--font-heading); font-weight: 800; font-size: 1.55rem; margin: 2rem 0 .8rem; }
 .blog-body h3 { font-family: var(--font-heading); font-weight: 700; font-size: 1.25rem; margin: 1.6rem 0 .6rem; }
 .blog-body p { margin: 0 0 1.1rem; }

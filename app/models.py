@@ -557,6 +557,10 @@ class Video(models.Model):
     # an optional 3D-model upload (see LessonModelSubmission). Default on; uncheck
     # for pure-theory lessons. Ignored on non-STL courses.
     accepts_model = models.BooleanField(default=True)
+    # If True, passing at least half this lesson's runnable practice cells
+    # (```python-run) is required to advance to later lessons AND to earn the
+    # course certificate. Most practice lessons leave this False (optional practice).
+    practice_required = models.BooleanField(default=False)
     notes_markdown = models.TextField(blank=True)
     summary_he = models.TextField(blank=True)
     # If set, the lesson ends with an AI "reflection" question (free-text) instead of a quiz.
@@ -598,6 +602,8 @@ class StudentCode(models.Model):
     video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name="code_cells")
     cell_key = models.CharField(max_length=40)  # which runnable block on the lesson
     code = models.TextField(blank=True, default="")
+    # True once the student's code passed the cell's hidden check (the mission).
+    passed = models.BooleanField(default=False)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

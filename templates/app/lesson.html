@@ -110,6 +110,11 @@
       <i class="bi bi-exclamation-triangle-fill"></i>
       <span>צריך להשלים לפחות {{ cert_project_min_pct }}% מהשיעורים כדי לקבל תעודה.</span>
     </div>
+    {% elif error_code == "practice" %}
+    <div class="alert alert-warning d-flex align-items-center gap-2 mb-3">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>כדי לקבל תעודה צריך לפתור לפחות חצי מהתרגילים בשיעור הזה.</span>
+    </div>
     {% elif error_code == "project" or error_code == "noimage" %}
     <div class="alert alert-warning d-flex align-items-center gap-2 mb-3">
       <i class="bi bi-exclamation-triangle-fill"></i>
@@ -184,6 +189,13 @@
       </a>
       {% endif %}
     </div>
+
+    {% if request.GET.gate and practice_total %}
+    <div class="alert alert-warning d-flex align-items-center gap-2" role="alert">
+      <i class="bi bi-lock-fill"></i>
+      <span>כדי להמשיך לשיעורים הבאים, פתרו לפחות {{ practice_need }} מתוך {{ practice_total }} מהתרגילים בשיעור הזה.</span>
+    </div>
+    {% endif %}
 
     <!-- Video player -->
     {% if video.bunny_video_id %}
@@ -467,13 +479,17 @@
 
     {# In-lesson runnable Python cells (```python-run blocks) - Pyodide + auto-save #}
     {{ saved_code|default_if_none:""|json_script:"py-saved-code" }}
+    {{ passed_cells|default_if_none:""|json_script:"py-passed-cells" }}
     <script type="module">
       import { initPyRunners } from "{% static 'js/py-runner.js' %}";
       const el = document.getElementById('py-saved-code');
+      const pel = document.getElementById('py-passed-cells');
       initPyRunners({
         saveUrl: "{% url 'lesson_code_save' course.slug video.lesson_order %}",
+        coachUrl: "{% url 'lesson_code_coach' course.slug video.lesson_order %}",
         csrf: "{{ csrf_token }}",
         saved: el ? JSON.parse(el.textContent || '{}') : {},
+        passed: pel ? JSON.parse(pel.textContent || '[]') : [],
       });
     </script>
 
@@ -773,6 +789,12 @@
       {% else %}<span></span>{% endif %}
 
       {% if not video.is_final_lesson and next_video %}
+      {% if practice_total and not practice_gate_ok %}
+      <span id="practice-gate-note" class="text-muted small d-inline-flex align-items-center gap-1">
+        <i class="bi bi-lock-fill"></i>
+        פתרו לפחות {{ practice_need }} מתוך {{ practice_total }} תרגילים כדי להמשיך
+      </span>
+      {% endif %}
       <a id="next-lesson-btn"
          href="{% url 'courses_lesson' course.slug next_video.lesson_order %}"
          class="btn btn-primary d-none">
@@ -842,10 +864,19 @@
     });
   }
 
+  /* Practice gate: a practice lesson must be at least half solved to advance.
+     (Don't use |default - Django's default fires on False too, which would
+     wrongly unlock the gate.) */
+  var practiceRequired = {{ practice_need|default:0 }};
+  var practiceGateOk   = {% if practice_total and not practice_gate_ok %}false{% else %}true{% endif %};
+  var pcSeed = document.getElementById("py-passed-cells");
+  var practicePassed = new Set(pcSeed ? JSON.parse(pcSeed.textContent || "[]") : []);
+
   function tryShowNext() {
     if (!videoOk) return;
     if (quizRequired && !quizOk) return;
     if (reflectionRequired && !reflectionDone) return;
+    if (!practiceGateOk) return;
     ["next-lesson-btn", "next-lesson-btn-top"].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.classList.remove("d-none");
@@ -857,6 +888,17 @@
     }
   }
   tryShowNext();
+
+  /* Reveal the next button the moment the practice gate is met (no reload). */
+  document.addEventListener("pyrun:pass", function (e) {
+    if (e.detail && e.detail.cellKey) practicePassed.add(e.detail.cellKey);
+    if (!practiceGateOk && practicePassed.size >= practiceRequired) {
+      practiceGateOk = true;
+      var note = document.getElementById("practice-gate-note");
+      if (note) note.style.display = "none";
+      tryShowNext();
+    }
+  });
 
   /* Mark lesson as visited immediately - no watching requirement */
   sendProgress(pos || 0, 100, false);

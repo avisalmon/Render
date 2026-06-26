@@ -198,6 +198,7 @@ urlpatterns = [
     path("courses/<slug:slug>/lesson/<int:lesson_order>/submit-tinkercad/", views.lesson_submit_tinkercad, name="lesson_submit_tinkercad"),
     path("courses/<slug:slug>/lesson/<int:lesson_order>/submit-youtube/", views.lesson_submit_youtube, name="lesson_submit_youtube"),
     path("courses/<slug:slug>/lesson/<int:lesson_order>/code/save/", views.lesson_code_save, name="lesson_code_save"),
+    path("courses/<slug:slug>/lesson/<int:lesson_order>/code/coach/", views.lesson_code_coach, name="lesson_code_coach"),
     path("courses/<slug:slug>/lesson/<int:lesson_order>/", views.courses_lesson, name="courses_lesson"),
     # Courses (singular - SPR-1.4/1.5 entitlement-gated)
     path("course/<slug:slug>/", views.course_detail_view, name="course_detail"),
