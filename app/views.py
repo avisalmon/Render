@@ -1945,9 +1945,9 @@ def course_finish(request, slug):
             return _final_lesson_redirect(course, "progress")
 
     # Gate D: each required-practice lesson needs at least half its runnable cells
-    # passed (e.g. the exercise lessons).
+    # passed (e.g. the exercise lessons). Admins (staff) bypass the practice gate.
     from .models import StudentCode
-    req_lessons = [v for v in all_videos if v.practice_required]
+    req_lessons = [] if request.user.is_staff else [v for v in all_videos if v.practice_required]
     if req_lessons:
         passed_by = {}
         for sc in StudentCode.objects.filter(
