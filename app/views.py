@@ -1201,6 +1201,13 @@ def courses_lesson(request, slug, lesson_order):
         )
         if video.accepts_model:
             lesson_model = next((m for m in my_models if m.video_id == video.id), None)
+    # Manual-review courses: the final lesson shows the review status (pending /
+    # rejected-with-note / approved) instead of an instant certificate.
+    course_review_obj = None
+    if video.is_final_lesson and request.user.is_authenticated and course.requires_review:
+        from .models import CourseCompletionReview
+        course_review_obj = CourseCompletionReview.objects.filter(
+            user=request.user, course=course).first()
     if video.is_final_lesson and request.user.is_authenticated:
         course_pct = _catalog_progress(request.user, [course.id]).get(course.id, {}).get("pct", 0)
         if course.requires_project:
@@ -1295,6 +1302,18 @@ def courses_lesson(request, slug, lesson_order):
         "project_submission": project_submission,
         "project_upload_type": course.project_upload_type,
         "accepts_model": video.accepts_model,
+        # On a 3D-design Tinkercad course the summary (final) lesson ALSO offers an
+        # optional STL upload alongside the required shared-project link; both land
+        # on the same per-lesson submission row. Gated on the "3d" track so it does
+        # NOT appear on circuit courses (e.g. arduino-tinkercad), where there is no
+        # 3D solid to export as STL - they share the project link only.
+        "tinkercad_stl_optional": (
+            course.project_upload_type == Course.PROJECT_TINKERCAD
+            and course.track == "3d"
+            and video.is_final_lesson
+            and video.accepts_model
+            and request.user.is_authenticated
+        ),
         "lesson_model": lesson_model,
         "my_models": my_models,
         "model_count": len(my_models),
@@ -1302,6 +1321,7 @@ def courses_lesson(request, slug, lesson_order):
         "models_enough": len(my_models) >= course.project_min_count,
         "course_pct": course_pct,
         "cert_ready": cert_ready,
+        "course_review": course_review_obj,
         "cert_project_min_pct": course.cert_min_pct,
         "error_code": error_code,
         "materials": course.materials.all(),
@@ -1885,10 +1905,36 @@ def parse_tinkercad_id(text):
     return m.group(0) if m else None
 
 
+def tinkercad_is_shared(tid):
+    """Check whether a Tinkercad thing is publicly shared (so it embeds for
+    everyone, not just its owner). Returns True (shared / will embed), False
+    (definitely not shared - private or nonexistent), or None (couldn't tell -
+    network/error; caller treats None as "don't block"). Tinkercad is a SPA: a
+    missing or private thing 200-redirects to /404?next=..., while a shared
+    thing stays on /embed/<id>. We check the embed URL because that is exactly
+    what we render, so "it doesn't 404" means "it will show for other learners"."""
+    import urllib.error
+    import urllib.request
+    url = f"https://www.tinkercad.com/embed/{tid}"
+    req = urllib.request.Request(url, headers={"User-Agent": "babook/1.0 (+https://babook.co.il)"})
+    try:
+        with urllib.request.urlopen(req, timeout=6) as r:   # follows redirects
+            final = r.geturl() or ""
+            return False if "/404" in final else True
+    except urllib.error.HTTPError as e:
+        return False if e.code == 404 else None
+    except Exception:
+        return None
+
+
 @login_required
 def lesson_submit_tinkercad(request, slug, lesson_order):
     """POST /courses/<slug>/lesson/<order>/submit-tinkercad/ - optional per-lesson
-    Tinkercad project share for a Tinkercad-project course. One per user+lesson."""
+    Tinkercad project share for a Tinkercad-project course. One per user+lesson.
+
+    Keeps any STL already uploaded for this lesson (the summary lesson lets a
+    learner submit both a shared Tinkercad link AND an optional STL on one row),
+    so we never wipe model_file here - only the other link types."""
     from django.shortcuts import get_object_or_404
 
     from .models import LessonModelSubmission
@@ -1908,11 +1954,18 @@ def lesson_submit_tinkercad(request, slug, lesson_order):
     if not tid:
         return back("badtinkercad")
 
+    existing = LessonModelSubmission.objects.filter(user=request.user, video=video).first()
+    # Verify the project is actually shared (so it embeds for everyone) only for a
+    # new/changed link - re-saving the same id to edit the caption is never blocked.
+    # A network hiccup (None) does NOT block - same fail-open policy as Scratch/YouTube.
+    if (not existing or existing.tinkercad_id != tid) and tinkercad_is_shared(tid) is False:
+        return back("tcnotshared")
+
     Enrollment.objects.get_or_create(user=request.user, course=course)
-    sub, _ = LessonModelSubmission.objects.get_or_create(user=request.user, video=video)
+    sub = existing or LessonModelSubmission(user=request.user, video=video)
     sub.tinkercad_id = tid
     sub.scratch_id = ""
-    sub.model_file = ""
+    sub.youtube_id = ""
     sub.caption = (request.POST.get("caption", "") or "").strip()[:200]
     sub.save()
     return back("uploaded")
@@ -1986,12 +2039,26 @@ def lesson_submit_youtube(request, slug, lesson_order):
 
     Enrollment.objects.get_or_create(user=request.user, course=course)
     sub = existing or LessonModelSubmission(user=request.user, video=video)
+    video_changed = (not existing) or (existing.youtube_id != vid)
     sub.youtube_id = vid
     sub.tinkercad_id = ""
     sub.scratch_id = ""
     sub.model_file = ""
     sub.caption = (request.POST.get("caption", "") or "").strip()[:200]
     sub.save()
+
+    # Review courses: swapping the actual video after it was approved must re-open
+    # the review (an unreviewed video can never stay attached to the certificate).
+    # A caption-only edit (same id) does not. Re-submitting a rejected one is done
+    # via the Finish button, so we only act on an already-approved review here.
+    if course.requires_review and video_changed:
+        from .models import CourseCompletionReview
+        from .review import submit_for_review
+        appr = CourseCompletionReview.objects.filter(
+            user=request.user, course=course,
+            status=CourseCompletionReview.APPROVED).exists()
+        if appr:
+            submit_for_review(request.user, course, request=request)
     return back("uploaded")
 
 
@@ -2076,6 +2143,19 @@ def course_finish(request, slug):
                     "courses_lesson", kwargs={"slug": slug, "lesson_order": v.lesson_order})
                 return redirect(f"{url}?error=practice")
 
+    # Manual-review courses: don't auto-issue. Send the project to a reviewer
+    # (admin or the learner's class teacher) and show the "pending review" state.
+    # The certificate is issued only on approval (see app/review.py). If a review
+    # was already approved we fall through and link the existing certificate.
+    if course.requires_review:
+        from .models import CourseCompletionReview
+        from .review import submit_for_review
+        existing = CourseCompletionReview.objects.filter(
+            user=request.user, course=course).first()
+        if not (existing and existing.is_approved):
+            submit_for_review(request.user, course, request=request)
+            return _final_lesson_redirect(course, "review_pending")
+
     # All gates passed - issue certificate
     if not enrollment.completed_at:
         enrollment.completed_at = timezone.now()
@@ -2086,6 +2166,59 @@ def course_finish(request, slug):
         course=course,
     )
     return redirect("certificate_view", cert_id=cert.certificate_id)
+
+
+@login_required
+def course_review(request, slug, user_id):
+    """GET  /courses/<slug>/review/<user_id>/ - reviewer watches the learner's
+    submitted project and approves or rejects it.
+    POST same URL with action=approve|reject (+ message) - decide it.
+
+    Allowed to staff and to the teacher of an active class the learner is in."""
+    from django.contrib import messages
+    from django.contrib.auth.models import User
+    from django.shortcuts import get_object_or_404
+
+    from .models import CourseCompletionReview, LessonModelSubmission
+    from .review import approve, can_review, reject
+
+    course = get_object_or_404(Course, slug=slug)
+    learner = get_object_or_404(User, pk=user_id)
+    if not can_review(request.user, learner, course):
+        raise Http404
+
+    review = CourseCompletionReview.objects.filter(user=learner, course=course).first()
+    submissions = list(
+        LessonModelSubmission.objects.filter(user=learner, video__course=course)
+        .select_related("video")
+    )
+
+    if request.method == "POST":
+        if review is None:
+            messages.info(request, "אין פרויקט לבדיקה.")
+            return redirect("courses_detail", slug=slug)
+        action = request.POST.get("action")
+        if action == "approve":
+            approve(review, request.user, request=request)
+            messages.success(request, "הפרויקט אושר והתעודה הונפקה.")
+        elif action == "reject":
+            msg = (request.POST.get("message", "") or "").strip()
+            if not msg:
+                messages.error(request, "כדי לדחות צריך לכתוב מה לתקן.")
+                return redirect("course_review", slug=slug, user_id=user_id)
+            reject(review, request.user, msg, request=request)
+            messages.success(request, "ההערה נשלחה ללומד/ת.")
+        return redirect("course_review", slug=slug, user_id=user_id)
+
+    profile = getattr(learner, "profile", None)
+    learner_name = (profile.public_name if profile else "") or learner.get_full_name() or learner.username
+    return render(request, "app/course_review.html", {
+        "course": course,
+        "learner": learner,
+        "learner_name": learner_name,
+        "review": review,
+        "submissions": submissions,
+    })
 
 
 def certificate_view(request, cert_id):
@@ -2102,7 +2235,8 @@ def certificate_view(request, cert_id):
     exhibition = []
     if cert.course.project_upload_type in cert.course.PROJECT_LINK_TYPES:
         from .models import LessonModelSubmission
-        exhibition = list(
+        from .review import visible_submissions
+        exhibition = visible_submissions(
             LessonModelSubmission.objects.filter(
                 user=cert.user, video__course=cert.course
             ).select_related("video")

@@ -398,11 +398,14 @@ def classroom(request, pk):
     msgs = list(klass.messages.select_related("author").all())
 
     # Project gallery: shared projects of active members, grouped by student.
+    # Review-gated projects (e.g. YouTube courses) stay out of the shared gallery
+    # until approved - classmates never see another student's pending video.
+    from .review import visible_submissions
     galleries = []
     for m in klass.active_memberships():
         if not m.share_projects:
             continue
-        projects = list(
+        projects = visible_submissions(
             LessonModelSubmission.objects.filter(user=m.student)
             .select_related("video", "video__course"))
         if projects:

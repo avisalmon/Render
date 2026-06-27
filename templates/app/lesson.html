@@ -155,6 +155,11 @@
       <i class="bi bi-exclamation-triangle-fill"></i>
       <span>לא זוהה מזהה פרויקט בקישור. הדביקו קישור לפרויקט משותף ב-Tinkercad (למשל tinkercad.com/things/…).</span>
     </div>
+    {% elif error_code == "tcnotshared" %}
+    <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>הפרויקט עדיין לא משותף ב-Tinkercad, אז אי אפשר להציג אותו. פתחו אותו ב-Tinkercad, לחצו <span dir="ltr">Share → Change visibility to share</span>, ואז הדביקו שוב את הקישור.</span>
+    </div>
     {% elif error_code == "badyoutube" %}
     <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
       <i class="bi bi-exclamation-triangle-fill"></i>
@@ -169,6 +174,11 @@
     <div class="alert alert-success d-flex align-items-center gap-2 mb-3">
       <i class="bi bi-check-circle-fill"></i>
       <span>הפרויקט הועלה. אפשר לקבל תעודה!</span>
+    </div>
+    {% elif error_code == "review_pending" %}
+    <div class="alert alert-info d-flex align-items-center gap-2 mb-3">
+      <i class="bi bi-hourglass-split"></i>
+      <span>הסרטון נשלח לבדיקה. נעדכן אותך במייל ובהתראה כשהמורה או הצוות יאשרו - ורק אז תונפק התעודה.</span>
     </div>
     {% endif %}
 
@@ -290,9 +300,14 @@
     <!-- Optional per-lesson Tinkercad share (right under the video, before the notes) -->
     {% if course.project_upload_type == 'tinkercad' and accepts_model and user.is_authenticated %}
     <div class="card-surface p-3 mt-3" id="lesson-model">
+      {% if video.is_final_lesson %}
+      <h2 class="h6 mb-1"><i class="bi bi-cpu-fill me-1" style="color:var(--accent-primary)"></i> שתפו את הפרויקט המסכם שלכם</h2>
+      <p class="text-muted small mb-2">זהו השלב המסכם: שתפו ב-Tinkercad את העיצוב שבניתם. ודאו שהוא <strong>משותף</strong> (Share → Change visibility to share) והדביקו את הקישור - הוא יוטמע כאן ויצטרף לתעודה שלכם. <strong>הגשת פרויקט אחד לפחות נדרשת לקבלת התעודה.</strong></p>
+      {% else %}
       <h2 class="h6 mb-1"><i class="bi bi-cpu-fill me-1" style="color:var(--accent-primary)"></i> שיתפתם פרויקט בשיעור הזה?</h2>
       <p class="text-muted small mb-2">לא חובה - אם בניתם פרויקט ב-Tinkercad, ודאו שהוא <strong>משותף</strong> (Change visibility to share) והדביקו את הקישור. הוא יוטמע כאן ויצטרף לתערוכה שלכם.</p>
-      {% if lesson_model %}
+      {% endif %}
+      {% if lesson_model and lesson_model.tinkercad_id %}
       {% if lesson_model.caption %}<p class="fw-semibold mb-1">{{ lesson_model.caption }}</p>{% endif %}
       <div class="scratch-embed mb-2">
         <iframe src="{{ lesson_model.tinkercad_embed_url }}" allowtransparency="true" frameborder="0" scrolling="no" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
@@ -304,7 +319,7 @@
         <div class="d-flex flex-wrap gap-2 align-items-center">
           <input type="text" name="tinkercad_url" id="tinkercad-url" class="form-control form-control-sm"
                  style="max-width:340px" dir="ltr" placeholder="https://www.tinkercad.com/things/..."
-                 value="{% if lesson_model %}{{ lesson_model.tinkercad_url }}{% endif %}">
+                 value="{% if lesson_model.tinkercad_id %}{{ lesson_model.tinkercad_url }}{% endif %}">
           <input type="text" name="caption" maxlength="200" class="form-control form-control-sm"
                  style="max-width:200px" placeholder="כיתוב (לא חובה)" value="{{ lesson_model.caption|default:'' }}">
           <button type="button" id="tinkercad-preview-btn" class="btn btn-sm btn-outline-primary">
@@ -426,12 +441,19 @@
     </script>
     {% endif %}{# /per-lesson YouTube share #}
 
-    <!-- Optional per-lesson STL upload (right under the video, before the notes) -->
-    {% if course.project_upload_type == 'stl' and accepts_model and user.is_authenticated %}
-    <div class="card-surface p-3 mt-3" id="lesson-model">
+    <!-- Optional per-lesson STL upload (right under the video, before the notes).
+         Shown on STL courses (Fusion 360) AND on a Tinkercad course's summary
+         lesson, where it sits next to the required shared-project link. -->
+    {% if course.project_upload_type == 'stl' and accepts_model and user.is_authenticated or tinkercad_stl_optional %}
+    <div class="card-surface p-3 mt-3" id="{% if tinkercad_stl_optional %}lesson-model-stl{% else %}lesson-model{% endif %}">
+      {% if tinkercad_stl_optional %}
+      <h2 class="h6 mb-1"><i class="bi bi-badge-3d me-1" style="color:var(--accent-primary)"></i> רוצים לצרף גם קובץ STL? (לא חובה)</h2>
+      <p class="text-muted small mb-2">בנוסף לשיתוף הפרויקט למעלה, אפשר לייצא את העיצוב מ-Tinkercad כקובץ STL ולהעלות אותו כאן - הוא יוצג בתלת-מימד לצד הפרויקט ובתעודה. זה אופציונלי לגמרי.</p>
+      {% else %}
       <h2 class="h6 mb-1"><i class="bi bi-badge-3d me-1" style="color:var(--accent-primary)"></i> בנית דגם בשיעור הזה?</h2>
       <p class="text-muted small mb-2">לא חובה - אבל אם עיצבת משהו, העלו את קובץ ה-STL והוא יצטרף לתערוכה שלכם (בסרגל, בעמוד ההדרכה ובתעודה).</p>
-      {% if lesson_model %}
+      {% endif %}
+      {% if lesson_model and lesson_model.model_file %}
       <p class="small mb-2"><i class="bi bi-check-circle-fill" style="color:var(--accent-success)"></i> כבר העלית דגם לשיעור הזה - הוא מופיע בתצוגת הדגמים. אפשר להחליף:</p>
       {% endif %}
       <form method="post" action="{% url 'lesson_submit_model' course.slug video.lesson_order %}"
@@ -442,7 +464,11 @@
           <i class="bi bi-badge-3d" style="font-size:1.6rem;color:var(--accent-primary)"></i>
           <p class="mb-1 mt-1 fw-semibold">בחרו קובץ STL של הדגם שעיצבתם</p>
           <p class="small text-muted mb-0">
+            {% if tinkercad_stl_optional %}
+            ב-Tinkercad: <span dir="ltr">Export</span> ← בחרו <span dir="ltr">.STL</span>.
+            {% else %}
             ב-Fusion 360: לחצן ימני על הגוף ← <span dir="ltr">Save As Mesh</span> / <span dir="ltr">Export → STL</span>.
+            {% endif %}
             גררו לכאן או לחצו לבחירה. עד 40MB.
           </p>
         </div>
@@ -550,7 +576,21 @@
     {% if video.is_final_lesson and user.is_authenticated and not existing_cert and course.requires_project or video.is_final_lesson and user.is_authenticated and not existing_cert and course.requires_completion %}
     <div class="card-surface p-4 mt-4" id="project-gate">
       <h2 class="h5 mb-1"><i class="bi bi-trophy me-1" style="color:var(--accent-primary)"></i> קבלת תעודת סיום</h2>
-      {% if course.requires_project %}
+      {% if course.requires_review %}
+      <p class="text-muted small mb-3">בהדרכה הזו התעודה ניתנת אחרי בדיקה: משלימים את השיעורים, מעלים סרטון של הפרויקט, ושולחים לאישור המורה או הצוות. התעודה תונפק רק אחרי האישור.</p>
+        {% if course_review and course_review.is_pending %}
+        <div class="alert alert-info d-flex align-items-center gap-2 mb-3">
+          <i class="bi bi-hourglass-split"></i>
+          <span>הסרטון שלך <strong>ממתין לבדיקה</strong>. נעדכן אותך במייל ובהתראה כשיאושר.</span>
+        </div>
+        {% elif course_review and course_review.is_rejected %}
+        <div class="alert alert-warning mb-3">
+          <div class="d-flex align-items-center gap-2 mb-1"><i class="bi bi-arrow-counterclockwise"></i> <strong>הבודק/ת ביקש/ה תיקון</strong></div>
+          {% if course_review.note %}<p class="mb-2" style="white-space:pre-line">{{ course_review.note }}</p>{% endif %}
+          <p class="mb-0 small">עדכנו את הסרטון בשיעור הרלוונטי, ואז לחצו «שלח שוב לבדיקה».</p>
+        </div>
+        {% endif %}
+      {% elif course.requires_project %}
       <p class="text-muted small mb-3">שני תנאים לתעודה - להשלים את רוב ההדרכה, ולהראות מה בנית.</p>
       {% else %}
       <p class="text-muted small mb-3">כדי לקבל תעודה צריך להשלים {{ cert_project_min_pct }}% מהשיעורים.</p>
@@ -809,11 +849,19 @@
              class="btn btn-success btn-lg">
             <i class="bi bi-award-fill me-1"></i> הצג תעודת סיום
           </a>
+          {% elif course.requires_review and course_review and course_review.is_pending %}
+          <span class="text-muted small d-inline-flex align-items-center gap-1">
+            <i class="bi bi-hourglass-split"></i> הסרטון ממתין לבדיקה
+          </span>
           {% else %}
           <form id="finish-course-form" method="post" action="{% url 'course_finish' course.slug %}">
             {% csrf_token %}
             <button id="finish-btn" type="submit" class="btn btn-success btn-lg{% if not cert_ready %} d-none{% endif %}">
+              {% if course.requires_review %}
+              <i class="bi bi-send me-1"></i> {% if course_review and course_review.is_rejected %}שלח שוב לבדיקה{% else %}שלח לבדיקה{% endif %}
+              {% else %}
               <i class="bi bi-award-fill me-1"></i> סיים הדרכה וקבל תעודה
+              {% endif %}
             </button>
           </form>
           {% endif %}

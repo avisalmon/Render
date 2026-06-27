@@ -193,6 +193,7 @@ urlpatterns = [
     path("courses/<slug:slug>/", views.courses_detail, name="courses_detail"),
     path("courses/<slug:slug>/enroll/", views.courses_enroll, name="courses_enroll"),
     path("courses/<slug:slug>/finish/", views.course_finish, name="course_finish"),
+    path("courses/<slug:slug>/review/<int:user_id>/", views.course_review, name="course_review"),
     path("courses/<slug:slug>/submit-project/", views.course_submit_project, name="course_submit_project"),
     path("courses/<slug:slug>/lesson/<int:lesson_order>/submit-model/", views.lesson_submit_model, name="lesson_submit_model"),
     path("courses/<slug:slug>/lesson/<int:lesson_order>/submit-scratch/", views.lesson_submit_scratch, name="lesson_submit_scratch"),

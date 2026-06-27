@@ -1,4 +1,8 @@
-{# Reusable project exhibition: STL (3D), Scratch (thumbnail) or Tinkercad (icon) tiles -> click to enlarge in the shared #stl-modal. Args: models, gallery_title, can_download. Host page must run initGallery() once. #}
+{# Reusable project exhibition: STL (3D), Scratch (thumbnail), Tinkercad (icon) or
+   YouTube tiles -> click to enlarge in the shared #stl-modal. Args: models,
+   gallery_title, can_download. Host page must run initGallery() once.
+   Each field is checked independently so one submission row can show more than
+   one tile (e.g. the Tinkercad summary lesson: a shared project AND an STL). #}
 {% if models %}
 <div class="stl-gallery">
   {% if gallery_title %}<div class="stl-gallery-title">{{ gallery_title }}</div>{% endif %}
@@ -13,7 +17,8 @@
              loading="lazy" referrerpolicy="no-referrer">
         <div class="stl-tile-label">{% if m.caption %}{{ m.caption }}{% else %}{{ m.video.lesson_order }}. {{ m.video.title }}{% endif %}</div>
       </div>
-      {% elif m.tinkercad_id %}
+      {% endif %}
+      {% if m.tinkercad_id %}
       <div class="stl-tile" role="button" tabindex="0"
            data-embed="{{ m.tinkercad_embed_url }}" data-open="{{ m.tinkercad_url }}"
            data-title="{% if m.caption %}{{ m.caption }}{% else %}{{ m.video.lesson_order }}. {{ m.video.title }}{% endif %}"
@@ -21,7 +26,8 @@
         <div class="stl-tile-canvas stl-tile-icon"><i class="bi bi-cpu"></i></div>
         <div class="stl-tile-label">{% if m.caption %}{{ m.caption }}{% else %}{{ m.video.lesson_order }}. {{ m.video.title }}{% endif %}</div>
       </div>
-      {% elif m.youtube_id %}
+      {% endif %}
+      {% if m.youtube_id %}
       <div class="stl-tile" role="button" tabindex="0"
            data-embed="{{ m.youtube_embed_url }}" data-open="{{ m.youtube_url }}"
            data-title="{% if m.caption %}{{ m.caption }}{% else %}{{ m.video.lesson_order }}. {{ m.video.title }}{% endif %}"
@@ -30,14 +36,15 @@
              loading="lazy" referrerpolicy="no-referrer">
         <div class="stl-tile-label">{% if m.caption %}{{ m.caption }}{% else %}{{ m.video.lesson_order }}. {{ m.video.title }}{% endif %}</div>
       </div>
-      {% else %}
+      {% endif %}
+      {% if m.model_file %}
       <div class="stl-tile" role="button" tabindex="0"
            data-stl="{{ m.model_file.url }}"
-           data-title="{% if m.caption %}{{ m.caption }}{% else %}{{ m.video.lesson_order }}. {{ m.video.title }}{% endif %}"
+           data-title="{% if m.caption %}{{ m.caption }}{% else %}{{ m.video.lesson_order }}. {{ m.video.title }}{% endif %}{% if m.tinkercad_id %} (STL){% endif %}"
            {% if can_download %}data-dl="{% url 'lesson_model_download' m.pk %}"{% endif %}
            title="{{ m.caption|default:m.video.title }}">
         <div class="stl-tile-canvas"></div>
-        <div class="stl-tile-label">{% if m.caption %}{{ m.caption }}{% else %}{{ m.video.lesson_order }}. {{ m.video.title }}{% endif %}</div>
+        <div class="stl-tile-label">{% if m.caption %}{{ m.caption }}{% else %}{{ m.video.lesson_order }}. {{ m.video.title }}{% endif %}{% if m.tinkercad_id %} · STL{% endif %}</div>
       </div>
       {% endif %}
     {% endfor %}

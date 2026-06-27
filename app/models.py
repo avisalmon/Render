@@ -532,6 +532,12 @@ class Course(models.Model):
     # Non-project courses can still gate the certificate on lesson completion:
     # if True, the cert requires cert_min_pct% of lessons done (no upload needed).
     requires_completion = models.BooleanField(default=False)
+    # Manual review gate (e.g. the YouTube-proof courses): when True, finishing the
+    # course does NOT auto-issue the certificate. Instead the learner's project is
+    # sent to a reviewer (admin and/or the learner's class teacher), and the
+    # certificate is issued only on approval. Until then the project is hidden from
+    # all public/cross-user views. See CourseCompletionReview.
+    requires_review = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     # Set whenever the course is changed in the Authoring Studio (i.e. directly on
     # the running instance). Lets the local<->prod sync warn before overwriting.
@@ -689,6 +695,56 @@ class CourseCertificate(models.Model):
 
     def __str__(self):
         return f"Cert {self.certificate_id}: {self.user.username} – {self.course.slug}"
+
+
+class CourseCompletionReview(models.Model):
+    """A learner's request to be certified for a `requires_review` course (e.g. the
+    YouTube-proof courses). The learner finishes the lessons + uploads their video,
+    then submits for review; a reviewer (admin or the learner's class teacher)
+    watches the video and approves or rejects with a message. The certificate is
+    issued only on approval, and the project stays hidden from every public/cross-
+    user view until then. One row per user+course; resubmitting reopens the row."""
+
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    STATUS_CHOICES = [
+        (PENDING, "ממתין לבדיקה"),
+        (APPROVED, "אושר"),
+        (REJECTED, "נדחה"),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="completion_reviews")
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="completion_reviews")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=PENDING)
+    # Reviewer's note to the learner - the "what to change" message on a rejection.
+    note = models.TextField(blank=True, default="")
+    reviewer = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="reviews_handled")
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = [("user", "course")]
+        ordering = ["-updated_at"]
+        verbose_name = "בדיקת פרויקט לתעודה"
+        verbose_name_plural = "בדיקות פרויקט לתעודה"
+
+    def __str__(self):
+        return f"Review {self.user.username} – {self.course.slug} [{self.status}]"
+
+    @property
+    def is_pending(self):
+        return self.status == self.PENDING
+
+    @property
+    def is_approved(self):
+        return self.status == self.APPROVED
+
+    @property
+    def is_rejected(self):
+        return self.status == self.REJECTED
 
 
 class CourseProjectSubmission(models.Model):

@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}בדיקת פרויקט - {{ learner_name }} - {{ course.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4" dir="rtl" style="max-width:760px">
+  <a href="{% url 'courses_detail' course.slug %}" class="text-muted small text-decoration-none">
+    <i class="bi bi-arrow-right"></i> {{ course.title }}
+  </a>
+  <h1 class="h4 mt-2 mb-1"><i class="bi bi-clipboard-check me-1" style="color:var(--accent-primary)"></i> בדיקת פרויקט לתעודה</h1>
+  <p class="text-muted mb-3">לומד/ת: <strong>{{ learner_name }}</strong></p>
+
+  {% if messages %}
+    {% for m in messages %}
+    <div class="alert alert-{{ m.tags|default:'info' }} py-2">{{ m }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Current status -->
+  <div class="card-surface p-3 mb-3">
+    {% if review and review.is_approved %}
+      <span class="badge bg-success">אושר</span>
+      <span class="text-muted small">אושר ב-{{ review.reviewed_at|date:"d/m/Y H:i" }}{% if review.reviewer %} על ידי {{ review.reviewer.username }}{% endif %}.</span>
+    {% elif review and review.is_rejected %}
+      <span class="badge bg-danger">נדחה</span>
+      <span class="text-muted small">נשלחה הערה ללומד/ת. ממתינים להגשה מחודשת.</span>
+      {% if review.note %}<p class="mb-0 mt-2 small"><strong>ההערה ששלחת:</strong> {{ review.note }}</p>{% endif %}
+    {% elif review and review.is_pending %}
+      <span class="badge bg-warning text-dark">ממתין לבדיקה</span>
+      <span class="text-muted small">הוגש ב-{{ review.submitted_at|date:"d/m/Y H:i" }}.</span>
+    {% else %}
+      <span class="text-muted">הלומד/ת עדיין לא שלח/ה את הפרויקט לבדיקה.</span>
+    {% endif %}
+  </div>
+
+  <!-- The submitted video(s) -->
+  {% if submissions %}
+  <div class="card-surface p-3 mb-3">
+    <h2 class="h6 mb-2">הסרטון שהוגש</h2>
+    {% for m in submissions %}
+      {% if m.youtube_id %}
+      <p class="small text-muted mb-1">{% if m.caption %}{{ m.caption }} · {% endif %}שיעור {{ m.video.lesson_order }}: {{ m.video.title }}</p>
+      <div class="scratch-embed mb-3">
+        <iframe src="{{ m.youtube_embed_url }}" title="video" frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+      </div>
+      <p class="small mb-3"><a href="{{ m.youtube_url }}" target="_blank" rel="noopener">פתיחה ב-YouTube <i class="bi bi-box-arrow-up-left"></i></a></p>
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="alert alert-warning">אין סרטון מוגש עדיין.</div>
+  {% endif %}
+
+  <!-- Decision -->
+  {% if review and submissions and not review.is_approved %}
+  <div class="card-surface p-3">
+    <h2 class="h6 mb-2">החלטה</h2>
+    <div class="d-flex flex-column gap-3">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="approve">
+        <button type="submit" class="btn btn-success">
+          <i class="bi bi-check-circle me-1"></i> אישור והנפקת תעודה
+        </button>
+        <span class="text-muted small ms-2">התעודה תונפק והסרטון יוצג בפרופיל ובתעודה.</span>
+      </form>
+
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="reject">
+        <label class="form-label small mb-1">דחייה עם הערה - מה צריך לתקן ולהעלות מחדש:</label>
+        <textarea name="message" class="form-control mb-2" rows="3" maxlength="2000"
+                  placeholder="כתבו ללומד/ת מה לשנות בסרטון..."></textarea>
+        <button type="submit" class="btn btn-outline-danger">
+          <i class="bi bi-arrow-counterclockwise me-1"></i> שלח הערה לתיקון
+        </button>
+      </form>
+    </div>
+  </div>
+  {% elif review and review.is_approved %}
+  <div class="card-surface p-3">
+    <p class="mb-0 text-muted">הפרויקט כבר אושר. אפשר לראות את התעודה מהפרופיל של הלומד/ת.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
