@@ -127,7 +127,7 @@ def course_detail(request, slug):
             "slug": c.slug, "title": c.title, "title_en": c.title_en or "",
             "description": c.description or "", "domain": c.domain, "track": c.track,
             "difficulty": c.difficulty, "thumbnail": str(c.thumbnail) if c.thumbnail else "",
-            "is_published": c.is_published,
+            "is_published": c.is_published, "issues_certificate": c.issues_certificate,
             "studio_edited_at": c.studio_edited_at.isoformat() if c.studio_edited_at else None,
         },
         "videos": videos,
