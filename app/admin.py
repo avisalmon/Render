@@ -231,6 +231,19 @@ class CourseProjectSubmissionAdmin(admin.ModelAdmin):
 admin.site.register(LessonModelSubmission)
 
 
+from .models import StudentCode  # noqa: E402
+
+
+@admin.register(StudentCode)
+class StudentCodeAdmin(admin.ModelAdmin):
+    """Admin view of learners' in-lesson practice code (runs in-browser)."""
+    list_display = ("user", "video", "cell_key", "passed", "updated_at")
+    list_filter = ("passed", "updated_at", "video__course")
+    search_fields = ("user__username", "code", "cell_key")
+    readonly_fields = ("user", "video", "cell_key", "code", "passed", "updated_at")
+    date_hierarchy = "updated_at"
+
+
 @admin.register(AIGraderConfig)
 class AIGraderConfigAdmin(admin.ModelAdmin):
     list_display = ("__str__", "enabled", "model", "image_detail", "updated_at")

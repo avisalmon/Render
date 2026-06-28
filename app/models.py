@@ -46,6 +46,11 @@ class UserProfile(models.Model):
     ]
     courses_visibility = models.CharField(
         max_length=5, choices=COURSES_VISIBILITY, default="certs")
+    # Whether anyone visiting this member's public profile may see the artifacts
+    # and reflections they shared in lessons (the "דוכן השוויץ" booth + the
+    # profile's reflections list). Public by default (like is_public); opt out
+    # from the profile settings. Staff always see them regardless.
+    reflections_public = models.BooleanField(default=True)
 
     @property
     def public_name(self):
@@ -529,6 +534,10 @@ class Course(models.Model):
     project_min_count = models.PositiveIntegerField(default=1)
     # % of lessons that must be completed for the certificate (100 = all lessons).
     cert_min_pct = models.PositiveIntegerField(default=80)
+    # Some courses are a pure experience with no credential (e.g. the AI user
+    # journey): finishing just ends with a reflection, no "finish & get cert"
+    # button and no certificate. Set False to disable the certificate entirely.
+    issues_certificate = models.BooleanField(default=True)
     # Non-project courses can still gate the certificate on lesson completion:
     # if True, the cert requires cert_min_pct% of lessons done (no upload needed).
     requires_completion = models.BooleanField(default=False)

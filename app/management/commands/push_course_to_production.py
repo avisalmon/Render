@@ -174,6 +174,7 @@ class Command(BaseCommand):
                 "thumbnail":    thumbnail_rel,
                 "domain":       course.domain,
                 "track":        course.track,
+                "issues_certificate": course.issues_certificate,
             },
             "videos":    videos_payload,
             "materials": materials_payload,

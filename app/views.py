@@ -1127,6 +1127,11 @@ def courses_lesson(request, slug, lesson_order):
         notes_html = markdown.markdown(video.notes_markdown or "", extensions=["fenced_code", "tables", "nl2br"])
     except Exception:
         notes_html = "<p>" + (video.notes_markdown or "").replace("\n", "<br>") + "</p>"
+    # Lesson-body links open in a new tab so the learner isn't pulled out of the
+    # lesson (tools, blog, etc.). Only touch anchors that lack an explicit target.
+    import re as _re_links
+    notes_html = _re_links.sub(
+        r'<a (?![^>]*\btarget=)', '<a target="_blank" rel="noopener noreferrer" ', notes_html)
 
     from app.bunny import get_embed_url
     embed_url = get_embed_url(video.bunny_video_id)
@@ -2077,6 +2082,10 @@ def course_finish(request, slug):
         return redirect("courses_detail", slug=slug)
 
     course = get_object_or_404(Course, slug=slug)
+    # No-credential courses never issue a certificate (no finish button is shown,
+    # but guard the endpoint too).
+    if not course.issues_certificate:
+        return redirect("courses_detail", slug=slug)
     enrollment = Enrollment.objects.filter(user=request.user, course=course).first()
     if not enrollment:
         return redirect("courses_detail", slug=slug)

@@ -842,7 +842,13 @@
       </a>
       {% endif %}
 
-      {% if video.is_final_lesson %}
+      {% if video.is_final_lesson and not course.issues_certificate %}
+        {# No-credential course (e.g. the AI user journey): the reflection above is
+           the closer. No finish button, no certificate. #}
+        <span class="text-muted small d-inline-flex align-items-center gap-1">
+          <i class="bi bi-flag-checkered"></i> הגעת לסוף המסע. כל הכבוד!
+        </span>
+      {% elif video.is_final_lesson %}
         {% if user.is_authenticated %}
           {% if existing_cert %}
           <a href="{% url 'certificate_view' existing_cert.certificate_id %}"

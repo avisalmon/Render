@@ -91,6 +91,7 @@ urlpatterns = [
     path("community/report/", community_views.report_content, name="community_report"),
     path("c/<str:username>/", community_views.public_profile, name="community_profile"),
     path("c/<str:username>/follow/", community_views.follow_toggle, name="community_follow"),
+    path("c/<str:username>/activity/", community_views.user_activity, name="user_activity"),
     # --- Events & Meetups (EPIC-6.7) ---
     path("community/events/", events_views.events_page, name="events_page"),
     path("community/events/new/", events_views.event_create, name="event_create"),

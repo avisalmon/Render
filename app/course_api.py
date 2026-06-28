@@ -202,6 +202,9 @@ def sync_course(request):
         course_defaults["domain"] = course_data["domain"]
     if "track" in course_data:
         course_defaults["track"] = course_data["track"]
+    # No-credential courses (e.g. the AI user journey): only set if sent.
+    if "issues_certificate" in course_data:
+        course_defaults["issues_certificate"] = course_data["issues_certificate"]
     course, created = Course.objects.update_or_create(
         slug=slug,
         defaults=course_defaults,

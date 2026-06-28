@@ -163,6 +163,17 @@ def public_profile(request, username):
         request.user.is_authenticated and request.user != user
         and not is_student(request.user) and not is_student(user)
     )
+
+    # Reflections + shared links the member added in lessons. Staff and the owner
+    # always see them; everyone else only if the member left them public.
+    from .showcase import user_reflections
+    is_admin_view = request.user.is_staff and request.user != user
+    can_see_reflections = (
+        request.user == user or request.user.is_staff
+        or (profile and profile.reflections_public)
+    )
+    reflections = user_reflections(user) if can_see_reflections else []
+
     return render(request, "app/community/public_profile.html", {
         "member": user,
         "member_profile": profile,
@@ -180,6 +191,75 @@ def public_profile(request, username):
         "is_following": is_following,
         "is_owner": request.user == user,
         "can_message": can_message,
+        "reflections": reflections,
+        "is_admin_view": is_admin_view,
+        "reflections_public": bool(profile and profile.reflections_public),
+    })
+
+
+def user_activity(request, username):
+    """Admin-only oversight: the full record of everything a learner did inside
+    lessons - reflections + shared links, practice code, project submissions, and
+    lesson completions - in one chronological timeline. Staff only."""
+    if not request.user.is_staff:
+        raise Http404()
+    user = get_object_or_404(User, username=username)
+    from .models import (CourseProjectSubmission, LessonModelSubmission,
+                         LessonReflection, StudentCode, UserVideoProgress)
+    from .showcase import extract_links
+
+    events = []
+    for r in (LessonReflection.objects.filter(user=user)
+              .select_related("video", "video__course")):
+        events.append({
+            "kind": "reflection", "icon": "bi-chat-heart-fill", "label": "רפלקציה ושיתוף",
+            "course": r.video.course.title, "slug": r.video.course.slug,
+            "order": r.video.lesson_order, "lesson": r.video.title,
+            "text": r.user_text, "links": extract_links(r.user_text),
+            "extra": r.ai_reply, "at": r.created_at,
+        })
+    for sc in (StudentCode.objects.filter(user=user)
+               .select_related("video", "video__course")):
+        events.append({
+            "kind": "code", "icon": "bi-code-slash",
+            "label": "תרגול קוד" + (" · עבר" if sc.passed else ""),
+            "course": sc.video.course.title, "slug": sc.video.course.slug,
+            "order": sc.video.lesson_order, "lesson": sc.video.title,
+            "text": sc.code, "links": [], "extra": f"תא: {sc.cell_key}", "at": sc.updated_at,
+        })
+    for m in (LessonModelSubmission.objects.filter(user=user)
+              .select_related("video", "video__course")):
+        link = (m.scratch_url if m.scratch_id else m.tinkercad_url if m.tinkercad_id
+                else m.youtube_url if m.youtube_id else (m.model_file.url if m.model_file else ""))
+        events.append({
+            "kind": "submission", "icon": "bi-box-seam", "label": "הגשת פרויקט לשיעור",
+            "course": m.video.course.title, "slug": m.video.course.slug,
+            "order": m.video.lesson_order, "lesson": m.video.title,
+            "text": m.caption, "links": [link] if link else [], "extra": "", "at": m.created_at,
+        })
+    for p in (CourseProjectSubmission.objects.filter(user=user)
+              .select_related("course")):
+        art = p.artifact
+        events.append({
+            "kind": "submission", "icon": "bi-trophy", "label": "הגשת פרויקט להדרכה",
+            "course": p.course.title, "slug": p.course.slug, "order": None, "lesson": "",
+            "text": p.caption, "links": [art.url] if art else [],
+            "extra": (p.grade_reason or "")[:120], "at": p.created_at,
+        })
+    for prog in (UserVideoProgress.objects.filter(user=user, completed_at__isnull=False)
+                 .select_related("video", "video__course")):
+        events.append({
+            "kind": "complete", "icon": "bi-check-circle-fill", "label": "סיום שיעור",
+            "course": prog.video.course.title, "slug": prog.video.course.slug,
+            "order": prog.video.lesson_order, "lesson": prog.video.title,
+            "text": "", "links": [], "extra": "", "at": prog.completed_at,
+        })
+
+    events.sort(key=lambda e: e["at"], reverse=True)
+    return render(request, "app/community/user_activity.html", {
+        "member": user,
+        "member_profile": getattr(user, "profile", None),
+        "events": events,
     })
 
 
@@ -266,6 +346,7 @@ def community_settings_save(request):
     cv = request.POST.get("courses_visibility")
     if cv in {"certs", "all", "none"}:
         profile.courses_visibility = cv
+    profile.reflections_public = request.POST.get("reflections_public") == "on"
     avatar = request.FILES.get("avatar")
     if avatar:
         from .imaging import MAX_INPUT_BYTES, process_avatar

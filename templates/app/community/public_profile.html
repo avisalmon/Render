@@ -43,6 +43,11 @@
         {% elif not user.is_authenticated %}
         <a class="btn btn-sm btn-primary" href="/join/?next={{ request.path|urlencode }}">עקבו</a>
         {% endif %}
+        {% if user.is_staff and not is_owner %}
+        <a href="{% url 'user_activity' member.username %}" class="btn btn-sm btn-outline-danger mt-1">
+          <i class="bi bi-shield-lock"></i> כל הפעילות (מנהל)
+        </a>
+        {% endif %}
       </div>
     </div>
 
@@ -92,6 +97,31 @@
             <span class="hcard-pct">{{ mc.pct }}%</span>
           </span>
         </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- Reflections + shared artifacts (the learner's lesson shares) -->
+    {% if reflections %}
+    <section class="card-surface mb-3">
+      <h2 class="profile-section-title">
+        תוצרים ושיתופים
+        {% if is_admin_view %}<span class="badge bg-secondary ms-1">תצוגת מנהל</span>{% endif %}
+        {% if is_owner and not reflections_public %}<span class="badge bg-warning text-dark ms-1">פרטי - רק את/ה והמנהלים רואים</span>{% endif %}
+      </h2>
+      <div class="reflection-feed">
+        {% for r in reflections %}
+        <div class="reflection-feed-item">
+          <div class="reflection-feed-head">
+            <a href="{% url 'courses_lesson' r.course_slug r.lesson_order %}" class="reflection-feed-lesson">{{ r.course_title }} · {{ r.lesson_order }}. {{ r.lesson_title }}</a>
+            <span class="reflection-feed-date">{{ r.created_at|date:"d/m/Y" }}</span>
+          </div>
+          {% if r.text %}<div class="reflection-feed-text">{{ r.text }}</div>{% endif %}
+          {% for link in r.links %}
+          <a href="{{ link }}" target="_blank" rel="noopener nofollow ugc" class="reflection-feed-link"><i class="bi bi-box-arrow-up-left"></i> {{ link }}</a>
+          {% endfor %}
+        </div>
         {% endfor %}
       </div>
     </section>

@@ -124,6 +124,10 @@
           <label class="form-check-label small" for="cs-collab">פתוח/ה לשיתופי פעולה</label>
         </div>
         <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" name="reflections_public" id="cs-refl" {% if user.profile.reflections_public %}checked{% endif %}>
+          <label class="form-check-label small" for="cs-refl">לאפשר לכל מי שמבקר בפרופיל שלי לראות את התוצרים והשיתופים שלי</label>
+        </div>
+        <div class="form-check form-switch mb-2">
           <input class="form-check-input" type="checkbox" name="leaderboard_opt_out" id="cs-lb" {% if user.profile.leaderboard_opt_out %}checked{% endif %}>
           <label class="form-check-label small" for="cs-lb">להסתיר אותי מלוח המובילים</label>
         </div>

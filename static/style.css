@@ -1024,6 +1024,39 @@ html[data-theme="dark"] .training-hero-media { background: rgba(255,255,255,.04)
 /* On the course page / certificate the tiles can be a touch larger */
 .stl-gallery--lg .stl-gallery-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 .stl-gallery--lg .stl-tile-canvas { height: 140px; }
+
+/* Member profile: the learner's reflections + shared links feed */
+.reflection-feed { display: flex; flex-direction: column; gap: .7rem; }
+.reflection-feed-item { border: 1px solid var(--border); border-radius: 10px; padding: .65rem .8rem; background: var(--bg-elevated); }
+.reflection-feed-head { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; flex-wrap: wrap; margin-bottom: .3rem; }
+.reflection-feed-lesson { font-size: .82rem; font-weight: 600; text-decoration: none; color: var(--accent-primary); }
+.reflection-feed-date { font-size: .72rem; color: var(--text-secondary); }
+.reflection-feed-text { font-size: .88rem; line-height: 1.5; color: var(--text-primary); margin-bottom: .35rem; overflow-wrap: anywhere; }
+.reflection-feed-link { display: inline-flex; align-items: center; gap: .3rem; font-size: .8rem; text-decoration: none; color: var(--accent-cta); overflow-wrap: anywhere; }
+.reflection-feed-link:hover { text-decoration: underline; }
+
+/* Admin-only per-user lesson activity timeline (/c/<user>/activity/) */
+.activity-feed { display: flex; flex-direction: column; gap: .6rem; }
+.activity-item {
+  border: 1px solid var(--border); border-inline-start-width: 3px; border-radius: 10px;
+  padding: .6rem .8rem; background: var(--bg-elevated);
+}
+.activity-reflection { border-inline-start-color: var(--accent-primary); }
+.activity-code { border-inline-start-color: #8b5cf6; }
+.activity-submission { border-inline-start-color: var(--accent-cta); }
+.activity-complete { border-inline-start-color: #22c55e; }
+.activity-head { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; flex-wrap: wrap; }
+.activity-label { font-weight: 700; font-size: .82rem; }
+.activity-date { font-size: .72rem; color: var(--text-secondary); }
+.activity-lesson { font-size: .8rem; margin: .15rem 0 .3rem; }
+.activity-lesson a { text-decoration: none; color: var(--accent-primary); }
+.activity-text {
+  font-size: .86rem; line-height: 1.5; color: var(--text-primary); white-space: pre-wrap;
+  overflow-wrap: anywhere; background: var(--bg-surface); border-radius: 8px; padding: .4rem .55rem; margin-bottom: .3rem;
+}
+.activity-link { display: inline-flex; align-items: center; gap: .3rem; font-size: .8rem; text-decoration: none; color: var(--accent-cta); overflow-wrap: anywhere; }
+.activity-link:hover { text-decoration: underline; }
+.activity-extra { font-size: .76rem; color: var(--text-secondary); margin-top: .25rem; }
 .stl-gallery--lg .stl-tile-label { font-size: .8rem; }
 
 .stl-modal {
