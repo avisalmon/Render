@@ -506,7 +506,10 @@ def profile(request):
                 LessonQuiz.objects.filter(
                     video__course=course, requires_correct=True
                 ).values_list("video_id", flat=True)
-            ) | {v.id for v in vids if v.reflection_prompt}
+            )
+            # No-certificate courses don't gate completion on reflections.
+            if course.issues_certificate:
+                required_ids |= {v.id for v in vids if v.reflection_prompt}
             progs = {
                 p.video_id: p for p in UserVideoProgress.objects.filter(
                     user=request.user, video__course=course
@@ -847,11 +850,17 @@ def _catalog_progress(user, course_ids):
     total_by = {r["course_id"]: r["n"] for r in
                 Video.objects.filter(course_id__in=course_ids)
                 .values("course_id").annotate(n=Count("id"))}
+    # No-certificate courses don't gate completion on reflections (done on view).
+    no_cert_ids = set(
+        Course.objects.filter(id__in=course_ids, issues_certificate=False)
+        .values_list("id", flat=True)
+    )
     required = set(
         LessonQuiz.objects.filter(video__course_id__in=course_ids, requires_correct=True)
         .values_list("video_id", flat=True)
     ) | set(
         Video.objects.filter(course_id__in=course_ids).exclude(reflection_prompt="")
+        .exclude(course_id__in=no_cert_ids)
         .values_list("id", flat=True)
     )
     done_by = {}
@@ -1143,13 +1152,20 @@ def courses_lesson(request, slug, lesson_order):
 
     from .models import CourseCertificate, LessonQuiz
 
-    # A lesson requires an interaction if it has a required quiz OR a reflection prompt.
+    # A lesson requires an interaction if it has a required quiz OR a reflection
+    # prompt. Exception: no-certificate courses (issues_certificate=False) treat
+    # the reflection as OPTIONAL, so a lesson counts as done on view - same as a
+    # video lesson in other courses.
     required_quiz_ids = set(
         LessonQuiz.objects.filter(
             video__course=course, requires_correct=True
         ).values_list("video_id", flat=True)
     )
-    reflection_video_ids = {v.id for v in all_videos if v.reflection_prompt}
+    reflections_optional = not course.issues_certificate
+    reflection_video_ids = (
+        set() if reflections_optional
+        else {v.id for v in all_videos if v.reflection_prompt}
+    )
     required_ids = required_quiz_ids | reflection_video_ids
 
     completed_ids = {}
@@ -1298,6 +1314,7 @@ def courses_lesson(request, slug, lesson_order):
         "is_enrolled": is_enrolled,
         "quiz": quiz,
         "reflection": reflection,
+        "reflections_optional": reflections_optional,
         "lesson_completed": lesson_completed_ctx,
         "quiz_passed_db": quiz_passed_db_ctx,
         # Real DB value (NOT staff-bypassed) - drives the "already answered" UI so
@@ -1460,8 +1477,11 @@ def lesson_view(request, slug, lesson_order):
     reflection = None
     if request.user.is_authenticated and video.reflection_prompt:
         reflection = video.reflections.filter(user=request.user).first()
-    # Done if it's not a gated lesson, or the quiz/reflection was completed
-    requires_interaction = bool(video.reflection_prompt) or (quiz and quiz.requires_correct)
+    # Done if it's not a gated lesson, or the quiz/reflection was completed.
+    # No-certificate courses treat the reflection as optional (done on view).
+    reflections_optional = not course.issues_certificate
+    requires_interaction = (bool(video.reflection_prompt) and not reflections_optional) \
+        or (quiz and quiz.requires_correct)
     lesson_completed = (not requires_interaction) or quiz_passed_db or request.user.is_staff
 
     # In-lesson runnable Python cells: the student's saved code (runs in-browser
@@ -1489,6 +1509,7 @@ def lesson_view(request, slug, lesson_order):
         "is_enrolled": is_enrolled,
         "quiz": quiz,
         "reflection": reflection,
+        "reflections_optional": reflections_optional,
         "lesson_completed": lesson_completed,
         "quiz_passed_db": quiz_passed_db or request.user.is_staff,
         # Real DB value (NOT staff-bypassed) - drives the "already answered" UI.
