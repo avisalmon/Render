@@ -888,6 +888,214 @@ def _catalog_progress(user, course_ids):
     return out
 
 
+def _course_visibility(user):
+    """Staff (admins) also see unpublished draft courses; everyone else sees
+    only published ones.  Spread as **kwargs into a Course filter / get_object_or_404."""
+    if getattr(user, "is_staff", False) or getattr(user, "is_superuser", False):
+        return {}
+    return {"is_published": True}
+
+
+def _content_is_ltr(text):
+    """True when lesson content has no Hebrew letters, so an English lesson reads
+    left-to-right inside the otherwise-RTL Hebrew page."""
+    return not any("֐" <= ch <= "׿" for ch in (text or ""))
+
+
+def _lesson_explain_history(user, video):
+    """Prior 'Explain more' tutor messages for this (user, lesson), to prefill the chat."""
+    if not getattr(user, "is_authenticated", False):
+        return []
+    from .models import ChatSession
+    s = ChatSession.objects.filter(user=user, video=video, context_type="lesson_tutor").first()
+    if not s:
+        return []
+    return list(s.messages.order_by("created_at").values("role", "content"))
+
+
+def lesson_explain(request, slug, lesson_order):
+    """POST {question} -> per-lesson AI tutor reply as JSON {content} or {error}."""
+    import json
+
+    from django.shortcuts import get_object_or_404
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=405)
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Please log in to use the tutor."}, status=403)
+
+    course = get_object_or_404(Course, slug=slug, **_course_visibility(request.user))
+    video = get_object_or_404(Video, course=course, lesson_order=lesson_order)
+
+    try:
+        question = (json.loads(request.body or "{}").get("question") or "").strip()
+    except Exception:
+        question = ""
+    if not question:
+        return JsonResponse({"error": "Please type a question."}, status=400)
+
+    from .ai_chat import handle_lesson_explain
+    resp, status = handle_lesson_explain(request.user, video, question)
+    return JsonResponse(resp, status=status)
+
+
+def _lesson_notebook_submission(user, video):
+    """The learner's latest graded notebook for this lesson, or None."""
+    if not getattr(user, "is_authenticated", False):
+        return None
+    from .models import NotebookSubmission
+    return NotebookSubmission.objects.filter(user=user, video=video).first()
+
+
+def lesson_notebook_submit(request, slug, lesson_order):
+    """POST a .ipynb file -> AI grade + feedback as JSON. Grade > 75 passes and
+    counts toward the certificate."""
+    from django.shortcuts import get_object_or_404
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=405)
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Please log in."}, status=403)
+
+    course = get_object_or_404(Course, slug=slug, **_course_visibility(request.user))
+    video = get_object_or_404(Video, course=course, lesson_order=lesson_order)
+
+    f = request.FILES.get("notebook")
+    if not f:
+        return JsonResponse({"error": "Please choose your .ipynb file."}, status=400)
+    if not f.name.lower().endswith(".ipynb"):
+        return JsonResponse({"error": "Please upload a Jupyter notebook (.ipynb)."}, status=400)
+    if f.size > 8 * 1024 * 1024:
+        return JsonResponse({"error": "That notebook is too large (max 8 MB)."}, status=400)
+
+    data = f.read()
+    from .ai_chat import grade_notebook
+    result, status = grade_notebook(request.user, video, data)
+    if status != 200:
+        return JsonResponse(result, status=status)
+
+    grade = int(result.get("grade", 0))
+    passed = grade >= 75
+    Enrollment.objects.get_or_create(user=request.user, course=course)
+    from .models import NotebookSubmission
+    sub, created = NotebookSubmission.objects.get_or_create(user=request.user, video=video)
+    # Keep only the BEST attempt per lesson: unlimited re-uploads, but the stored
+    # reference notebook + grade are overwritten only when this upload beats the
+    # previous best. A worse upload leaves the better one in place.
+    is_best = created or grade > sub.grade
+    if is_best:
+        try:
+            f.seek(0)
+            if sub.notebook_file:
+                sub.notebook_file.delete(save=False)   # drop the previous reference file
+            sub.notebook_file.save(f.name[:120], f, save=False)
+        except Exception:
+            pass
+        sub.filename = f.name[:200]
+        sub.grade = grade
+        sub.passed = passed
+        sub.feedback = result.get("feedback", "")
+        sub.recommendation = result.get("recommendation", "")
+        sub.graded_model = result.get("model", "")
+        sub.save()
+
+    passed_count = NotebookSubmission.objects.filter(
+        user=request.user, video__course=course, passed=True).count()
+    return JsonResponse({
+        "grade": grade,                 # this upload's grade
+        "passed": passed,               # this upload
+        "is_best": is_best,             # did it become the new best?
+        "best_grade": sub.grade,        # best on record (what counts for the certificate)
+        "feedback": result.get("feedback", ""),
+        "recommendation": result.get("recommendation", ""),
+        "passed_count": passed_count,
+        "required": course.notebook_min_pass_count if course.requires_notebooks else 0,
+    })
+
+
+def lesson_notebook_view(request, slug, lesson_order):
+    """Read-only rendered view of the learner's saved (best) notebook. Never runs it -
+    it just displays the cells, code, and any saved output like a notebook viewer."""
+    import json
+
+    import markdown as _md
+    from django.shortcuts import get_object_or_404, render
+    if not request.user.is_authenticated:
+        return redirect(f"/join/?next=/course/{slug}/lesson/{lesson_order}/")
+    course = get_object_or_404(Course, slug=slug, **_course_visibility(request.user))
+    video = get_object_or_404(Video, course=course, lesson_order=lesson_order)
+    from .models import NotebookSubmission
+    sub = NotebookSubmission.objects.filter(user=request.user, video=video).first()
+
+    cells = []
+    if sub and sub.notebook_file:
+        try:
+            sub.notebook_file.open("rb")
+            raw = sub.notebook_file.read()
+            sub.notebook_file.close()
+            nb = json.loads(raw.decode("utf-8", "ignore"))
+        except Exception:
+            nb = {"cells": []}
+        for c in nb.get("cells", []):
+            s = c.get("source", "")
+            s = "".join(s) if isinstance(s, list) else (s or "")
+            if c.get("cell_type") == "markdown":
+                cells.append({"kind": "md",
+                              "html": _md.markdown(s, extensions=["fenced_code", "tables", "nl2br"])})
+            elif c.get("cell_type") == "code":
+                outs = []
+                for o in c.get("outputs", []):
+                    ot = o.get("output_type")
+                    if ot == "stream":
+                        t = o.get("text", "")
+                    elif ot in ("execute_result", "display_data"):
+                        t = (o.get("data", {}) or {}).get("text/plain", "")
+                    elif ot == "error":
+                        t = "{}: {}".format(o.get("ename", ""), o.get("evalue", ""))
+                    else:
+                        t = ""
+                    if isinstance(t, list):
+                        t = "".join(t)
+                    if t:
+                        outs.append(t)
+                cells.append({"kind": "code", "code": s, "outputs": outs})
+    return render(request, "app/notebook_view.html",
+                  {"course": course, "video": video, "sub": sub, "cells": cells})
+
+
+def _catalog_top_courses(user, by_slug):
+    """Ordered high-interest course slugs (max 4) for the featured row: the interview's
+    recommended course, then last-watched courses, then interest-domain courses, filled
+    out with the popular defaults (Tinkercad + AI journey first) for new/unknown users."""
+    ordered = []
+
+    def add(slug):
+        if slug and slug in by_slug and slug not in ordered:
+            ordered.append(slug)
+
+    if user.is_authenticated:
+        from .models import LearnerProfile
+        prof = (LearnerProfile.objects
+                .filter(user=user).select_related("recommended_course").first())
+        if prof and prof.recommended_course_id and prof.recommended_course:
+            add(prof.recommended_course.slug)
+        for slug in (UserVideoProgress.objects.filter(user=user)
+                     .order_by("-updated_at").values_list("video__course__slug", flat=True)):
+            if len(ordered) >= 4:
+                break
+            add(slug)
+        if len(ordered) < 4 and prof and prof.interests:
+            for slug in (Course.objects.filter(domain__in=prof.interests, is_published=True)
+                         .order_by("title").values_list("slug", flat=True)):
+                if len(ordered) >= 4:
+                    break
+                add(slug)
+    # New / unknown interest: fall back to the popular defaults.
+    for slug in ("tinkercad", "ai-user-journey", "micropython-thonny", "exponential-organizations"):
+        if len(ordered) >= 4:
+            break
+        add(slug)
+    return ordered[:4]
+
+
 def courses_catalog(request):
     """Visual course catalog - real course cards grouped by domain, with the
     learner's progress and a 'continue learning' row."""
@@ -895,7 +1103,7 @@ def courses_catalog(request):
 
     from .taxonomy import build_catalog
 
-    courses_qs = list(Course.objects.filter(is_published=True).order_by("title"))
+    courses_qs = list(Course.objects.filter(**_course_visibility(request.user)).order_by("title"))
     domains, uncategorized = build_catalog(courses_qs)
 
     lesson_counts = {r["course_id"]: r["n"] for r in
@@ -911,6 +1119,7 @@ def courses_catalog(request):
             "difficulty_he": DIFFICULTY_HE.get(c.difficulty, ""),
             "progress": progress.get(c.pk),
             "popular": c.slug in POPULAR_COURSE_SLUGS,
+            "draft": not c.is_published,
         }
 
     # Group each domain by its tracks (sub-sections) so levels read clearly -
@@ -966,11 +1175,15 @@ def courses_catalog(request):
             .select_related("course").order_by("-issued_at")
         )
 
+    by_slug = {c.slug: c for c in courses_qs}
+    top_courses = [entry(by_slug[s]) for s in _catalog_top_courses(request.user, by_slug)]
+
     return render(request, "app/courses_catalog.html", {
         "domain_groups": domain_groups,
         "total_courses": len(courses_qs),
         "continue_courses": continue_courses,
         "my_certificates": my_certificates,
+        "top_courses": top_courses,
     })
 
 
@@ -991,7 +1204,7 @@ def courses_domain(request, domain):
     from .taxonomy import TRAINING_TAXONOMY, build_catalog
     if domain not in TRAINING_TAXONOMY:
         raise Http404("Unknown domain")
-    courses = Course.objects.filter(is_published=True).order_by("title")
+    courses = Course.objects.filter(**_course_visibility(request.user)).order_by("title")
     domains, _ = build_catalog(courses)
     d = next((x for x in domains if x["key"] == domain), None)
     if d is None:
@@ -1004,7 +1217,7 @@ def courses_track(request, domain, track):
     from .taxonomy import TRAINING_TAXONOMY, build_catalog
     if domain not in TRAINING_TAXONOMY or track not in TRAINING_TAXONOMY[domain]["tracks"]:
         raise Http404("Unknown track")
-    courses = Course.objects.filter(is_published=True).order_by("title")
+    courses = Course.objects.filter(**_course_visibility(request.user)).order_by("title")
     domains, _ = build_catalog(courses)
     d = next((x for x in domains if x["key"] == domain), None)
     t = next((tr for tr in d["tracks"] if tr["key"] == track), None) if d else None
@@ -1015,7 +1228,7 @@ def courses_track(request, domain, track):
 
 def courses_detail(request, slug):
     from django.shortcuts import get_object_or_404
-    course = get_object_or_404(Course, slug=slug, is_published=True)
+    course = get_object_or_404(Course, slug=slug, **_course_visibility(request.user))
     videos = course.videos.order_by("lesson_order")
 
     progress_pct = 0
@@ -1078,7 +1291,7 @@ def courses_enroll(request, slug):
     if request.method != "POST":
         return redirect("courses_detail", slug=slug)
 
-    course = get_object_or_404(Course, slug=slug, is_published=True)
+    course = get_object_or_404(Course, slug=slug, **_course_visibility(request.user))
     Enrollment.objects.get_or_create(user=request.user, course=course)
     first_lesson = course.videos.order_by("lesson_order").first()
     if first_lesson:
@@ -1105,7 +1318,7 @@ def _check_course_completion(user, course):
 def courses_lesson(request, slug, lesson_order):
     import markdown
     from django.shortcuts import get_object_or_404
-    course = get_object_or_404(Course, slug=slug, is_published=True)
+    course = get_object_or_404(Course, slug=slug, **_course_visibility(request.user))
     video = get_object_or_404(Video, course=course, lesson_order=lesson_order)
 
     # Open access: a login is the only gate. The moment a logged-in user opens a
@@ -1300,6 +1513,10 @@ def courses_lesson(request, slug, lesson_order):
         "next_video": next_video,
         "last_position_seconds": last_position_seconds,
         "notes_html": notes_html,
+        "notes_ltr": _content_is_ltr((video.title or "") + (video.notes_markdown or "")),
+        "notebook_name": (video.github_file or "").rstrip("/").rsplit("/", 1)[-1],
+        "explain_messages": _lesson_explain_history(request.user, video),
+        "notebook_submission": _lesson_notebook_submission(request.user, video),
         "saved_code": saved_code,
         "passed_cells": passed_cells,
         "practice_total": practice_total,
@@ -1503,6 +1720,10 @@ def lesson_view(request, slug, lesson_order):
         "next_video": next_video,
         "last_position_seconds": last_position_seconds,
         "notes_html": notes_html,
+        "notes_ltr": _content_is_ltr((video.title or "") + (video.notes_markdown or "")),
+        "notebook_name": (video.github_file or "").rstrip("/").rsplit("/", 1)[-1],
+        "explain_messages": _lesson_explain_history(request.user, video),
+        "notebook_submission": _lesson_notebook_submission(request.user, video),
         "saved_code": saved_code,
         "passed_cells": passed_cells,
         "completed_ids": completed_ids,
@@ -2172,6 +2393,14 @@ def course_finish(request, slug):
                 url = reverse(
                     "courses_lesson", kwargs={"slug": slug, "lesson_order": v.lesson_order})
                 return redirect(f"{url}?error=practice")
+
+    # Gate E (notebook courses): enough Jupyter notebooks passed (AI grade > 75).
+    if course.requires_notebooks:
+        from .models import NotebookSubmission
+        passed_nb = NotebookSubmission.objects.filter(
+            user=request.user, video__course=course, passed=True).count()
+        if passed_nb < course.notebook_min_pass_count:
+            return _final_lesson_redirect(course, "notebooks")
 
     # Manual-review courses: don't auto-issue. Send the project to a reviewer
     # (admin or the learner's class teacher) and show the "pending review" state.

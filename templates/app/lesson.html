@@ -5,8 +5,9 @@
 {% block content %}
 <div class="lesson-layout">
 
-  <!-- Sidebar: lesson list (right side in RTL) -->
-  <aside class="lesson-sidebar">
+  <!-- Sidebar: lesson list (right side in RTL) - toggles between list and chat -->
+  <aside class="lesson-sidebar" id="lesson-sidebar">
+    <div class="lesson-sidebar-fixed" id="lesson-sidebar-fixed">
     <div class="lesson-sidebar-inner">
       <a href="{% url 'courses_detail' course.slug %}" class="lesson-sidebar-course-title">
         {{ course.title }}
@@ -39,20 +40,6 @@
         {% endfor %}
       </div>
       {% endif %}
-
-      <!-- Community: ask about this lesson (REQ-6.2.5) -->
-      <div class="mb-3" style="border-bottom:1px solid var(--bg-elevated);padding-bottom:.75rem;">
-        <p class="small fw-semibold mb-2" style="color:var(--text-secondary)">קהילה</p>
-        <a href="{% url 'forum_new' %}?course={{ course.slug }}&lesson={{ video.lesson_order }}"
-           class="btn btn-sm btn-outline-primary w-100 mb-2">
-          <i class="bi bi-chat-square-text"></i> שאלו את הקהילה
-        </a>
-        {% for t in lesson_threads %}
-        <a href="{% url 'forum_thread' t.pk %}" class="d-block small text-decoration-none mb-1" style="color:var(--text-primary)">
-          {% if t.accepted_post %}✅{% else %}❓{% endif %} {{ t.title|truncatechars:48 }}
-        </a>
-        {% endfor %}
-      </div>
 
       <div class="lesson-list">
         {% for v in all_videos %}
@@ -88,7 +75,217 @@
       {% include "app/_stl_gallery.html" with models=my_models gallery_title="הפרויקטים שלי" can_download=True %}
       {% endif %}
     </div>
+
+    <!-- Opens the chat: the sidebar flips from the lesson list to a full chat -->
+    <button type="button" class="sb-ask-btn" id="sb-ask-open">
+      <i class="bi bi-stars"></i> Ask about this lesson
+    </button>
+
+    <!-- Explain-more AI tutor: fills the sidebar when opened -->
+    <div class="lesson-explain">
+        <div class="lesson-explain-head">
+          <span><i class="bi bi-stars"></i> Explain more</span>
+          <button type="button" class="sb-back-btn" id="sb-ask-close" title="Back to lessons" aria-label="Back to lessons"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="lesson-explain-msgs" id="explain-msgs"></div>
+        {{ explain_messages|json_script:"explain-history" }}
+        <form id="explain-form" class="lesson-explain-form">
+          <textarea id="explain-input" rows="2" placeholder="Ask about this lesson..."></textarea>
+          <button type="submit" id="explain-send" class="btn btn-sm btn-primary">Ask</button>
+        </form>
+      </div>
+    </div>
+      <script>
+      (function () {
+        var form = document.getElementById('explain-form');
+        if (!form) return;
+        var input = document.getElementById('explain-input');
+        var msgs = document.getElementById('explain-msgs');
+        var send = document.getElementById('explain-send');
+        var url = "{% url 'lesson_explain' course.slug video.lesson_order %}";
+        var csrf = "{{ csrf_token }}";
+
+        // ---- toggle: the "Ask" button flips the sidebar to a full chat; X goes back ----
+        var sidebar = document.getElementById('lesson-sidebar');
+        var openBtn = document.getElementById('sb-ask-open');
+        var closeBtn = document.getElementById('sb-ask-close');
+        if (openBtn) openBtn.addEventListener('click', function () {
+          sidebar.classList.add('chat-open'); setTimeout(function () { input.focus(); }, 40);
+        });
+        if (closeBtn) closeBtn.addEventListener('click', function () {
+          sidebar.classList.remove('chat-open');
+        });
+
+        // ---- safe markdown-lite renderer: code blocks, inline code, bold, lists ----
+        // Every piece of model text is placed via textContent, so nothing is ever
+        // interpreted as HTML (no XSS).
+        function inline(parent, text) {
+          var segs = String(text).split('`');
+          for (var i = 0; i < segs.length; i++) {
+            if (i % 2 === 1) {
+              var ic = document.createElement('code'); ic.className = 'lx-icode';
+              ic.textContent = segs[i]; parent.appendChild(ic);
+            } else {
+              var bs = segs[i].split('**');
+              for (var j = 0; j < bs.length; j++) {
+                if (j % 2 === 1) { var b = document.createElement('strong'); b.textContent = bs[j]; parent.appendChild(b); }
+                else if (bs[j]) { parent.appendChild(document.createTextNode(bs[j])); }
+              }
+            }
+          }
+        }
+        function block(container, text) {
+          text.split(/\n\s*\n/).forEach(function (blk) {
+            var lines = blk.split('\n').filter(function (l) { return l.trim().length; });
+            if (!lines.length) return;
+            var bullets = lines.every(function (l) { return /^\s*[-*]\s+/.test(l); });
+            var ordered = lines.every(function (l) { return /^\s*\d+\.\s+/.test(l); });
+            if (bullets || ordered) {
+              var list = document.createElement(ordered ? 'ol' : 'ul'); list.className = 'lx-list';
+              lines.forEach(function (l) {
+                var li = document.createElement('li');
+                inline(li, l.replace(/^\s*(?:[-*]|\d+\.)\s+/, ''));
+                list.appendChild(li);
+              });
+              container.appendChild(list);
+            } else {
+              var p = document.createElement('p'); p.className = 'lx-p';
+              lines.forEach(function (l, idx) {
+                if (idx) p.appendChild(document.createElement('br'));
+                var h = l.match(/^#{1,6}\s+(.*)$/);
+                if (h) { var s = document.createElement('strong'); s.textContent = h[1]; p.appendChild(s); }
+                else { inline(p, l); }
+              });
+              container.appendChild(p);
+            }
+          });
+        }
+        function renderMarkdown(container, text) {
+          var parts = String(text).split('```');
+          for (var i = 0; i < parts.length; i++) {
+            if (i % 2 === 1) {
+              var code = parts[i], nl = code.indexOf('\n');
+              if (nl >= 0 && /^[A-Za-z0-9_+\-.#]*$/.test(code.slice(0, nl).trim())) code = code.slice(nl + 1);
+              code = code.replace(/\n$/, '');
+              var pre = document.createElement('pre'); pre.className = 'lx-code';
+              var c = document.createElement('code'); c.textContent = code;
+              pre.appendChild(c); container.appendChild(pre);
+            } else if (parts[i]) {
+              block(container, parts[i]);
+            }
+          }
+        }
+
+        function addMsg(role, text) {
+          var empty = msgs.querySelector('.lx-empty'); if (empty) empty.remove();
+          var d = document.createElement('div');
+          d.className = 'lx-msg lx-' + role; d.setAttribute('dir', 'auto');
+          if (role === 'assistant') { d.classList.add('lx-rich'); renderMarkdown(d, text); }
+          else { d.textContent = text; }
+          msgs.appendChild(d); return d;
+        }
+        function showEmpty() {
+          var e = document.createElement('div'); e.className = 'lx-empty';
+          e.textContent = 'Ask anything about this lesson and I will explain it more.';
+          msgs.appendChild(e);
+        }
+        // Bring an element's TOP to the top of the scroll area, so the reader starts
+        // at the beginning of an answer and scrolls down as they read.
+        function showStart(el) { msgs.scrollTop = Math.max(0, el.offsetTop - 8); }
+
+        // Load the saved thread (data is embedded safely via json_script).
+        var hist = [];
+        try { hist = JSON.parse(document.getElementById('explain-history').textContent || '[]'); } catch (e) {}
+        if (hist.length) { hist.forEach(function (m) { addMsg(m.role, m.content); }); msgs.scrollTop = msgs.scrollHeight; }
+        else { showEmpty(); }
+
+        form.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var q = (input.value || '').trim(); if (!q) return;
+          var userEl = addMsg('user', q); input.value = ''; send.disabled = true;
+          showStart(userEl);
+          var typing = addMsg('assistant', '…'); typing.classList.add('lx-typing');
+          fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+            body: JSON.stringify({ question: q })
+          })
+          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+          .then(function (res) {
+            typing.remove();
+            addMsg('assistant', (res.ok && res.j.content) ? res.j.content : (res.j.error || 'Sorry, something went wrong.'));
+            showStart(userEl);   // show the question and the start of the answer
+          })
+          .catch(function () { typing.remove(); addMsg('assistant', 'Network error. Please try again.'); })
+          .finally(function () { send.disabled = false; input.focus(); });
+        });
+        input.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); }
+        });
+      })();
+      </script>
   </aside>
+
+  <!-- Drag this divider to widen the sidebar at the expense of the lesson text -->
+  <div class="lesson-resizer" id="lesson-resizer" title="Drag to resize"></div>
+  <script>
+  (function () {
+    var sidebar = document.querySelector('.lesson-sidebar');   // in-flow column spacer
+    var fixed = document.getElementById('lesson-sidebar-fixed'); // the pinned panel
+    var rez = document.getElementById('lesson-resizer');
+    if (!sidebar || !fixed) return;
+    var KEY = 'lessonSidebarW';
+    var isDesktop = function () { return window.matchMedia('(min-width: 768px)').matches; };
+    var saved = parseInt(localStorage.getItem(KEY) || '', 10);
+    if (isDesktop() && saved && saved >= 240 && saved <= 820) sidebar.style.width = saved + 'px';
+    var rtl = (getComputedStyle(document.body).direction === 'rtl');
+
+    function navHeight() {
+      var nav = document.querySelector('.navbar.sticky-top') || document.querySelector('.navbar');
+      return nav ? Math.round(nav.getBoundingClientRect().height) : 56;
+    }
+    // Pin the panel to the viewport over its reserved column, so it never scrolls
+    // away and the chat header (with the X) stays put no matter how far you scroll.
+    function placeFixed() {
+      if (!isDesktop()) {
+        fixed.style.position = ''; fixed.style.top = ''; fixed.style.bottom = '';
+        fixed.style.left = ''; fixed.style.width = ''; fixed.style.height = '';
+        return;
+      }
+      var r = sidebar.getBoundingClientRect();
+      fixed.style.position = 'fixed';
+      fixed.style.top = (navHeight() + 8) + 'px';
+      fixed.style.bottom = '12px';
+      fixed.style.left = Math.round(r.left) + 'px';
+      fixed.style.width = Math.round(r.width) + 'px';
+      fixed.style.height = 'auto';
+    }
+    placeFixed();
+    window.addEventListener('resize', placeFixed);
+    window.addEventListener('load', placeFixed);   // re-place once fonts/logo settle
+
+    if (rez) {
+      var dragging = false, startX = 0, startW = 0;
+      rez.addEventListener('mousedown', function (e) {
+        if (!isDesktop()) return;
+        dragging = true; startX = e.clientX; startW = sidebar.getBoundingClientRect().width;
+        rez.classList.add('dragging'); document.body.style.userSelect = 'none';
+        e.preventDefault();
+      });
+      window.addEventListener('mousemove', function (e) {
+        if (!dragging) return;
+        var delta = rtl ? (startX - e.clientX) : (e.clientX - startX);
+        sidebar.style.width = Math.max(240, Math.min(820, startW + delta)) + 'px';
+        placeFixed();
+      });
+      window.addEventListener('mouseup', function () {
+        if (!dragging) return;
+        dragging = false; rez.classList.remove('dragging'); document.body.style.userSelect = '';
+        localStorage.setItem(KEY, String(Math.round(sidebar.getBoundingClientRect().width)));
+      });
+    }
+  })();
+  </script>
 
   <!-- Main content -->
   <div class="lesson-main">
@@ -97,7 +294,19 @@
       <i class="bi bi-trophy-fill"></i> הוסמכת בהדרכה הזו
     </a>
     {% endif %}
-    <h1 class="h4 mb-3">{{ video.title }}</h1>
+    <h1 class="h4 mb-3"{% if notes_ltr %} dir="ltr" style="text-align:left"{% endif %}>{{ video.title }}</h1>
+
+    {% if "http" in video.github_file %}
+    <div class="card-surface mb-3 d-flex align-items-center gap-2 p-3"
+         {% if notes_ltr %}dir="ltr" style="text-align:left;border-left:4px solid var(--accent-primary)"{% else %}style="border-right:4px solid var(--accent-primary)"{% endif %}>
+      <i class="bi bi-journal-code" style="font-size:1.3rem;color:var(--accent-primary);flex-shrink:0"></i>
+      <div class="small">
+        This lesson uses the notebook
+        <a href="{{ video.github_file }}" target="_blank" rel="noopener"><code>{{ notebook_name }}</code></a>.
+        Open it next to this page and run the cells as you read.
+      </div>
+    </div>
+    {% endif %}
 
     <!-- Error banner (redirected from course_finish / project upload) -->
     {% if error_code == "quiz" %}
@@ -498,9 +707,82 @@
 
     <!-- Notes / lesson content -->
     {% if notes_html %}
-    <div class="lesson-notes card-surface mt-3">
+    <div class="lesson-notes card-surface mt-3"{% if notes_ltr %} dir="ltr" style="text-align:left"{% endif %}>
       {{ notes_html|safe }}
     </div>
+    {% endif %}
+
+    <!-- KaTeX: render $$...$$ math inside the lesson notes -->
+    <link rel="stylesheet" href="{% static 'katex/katex.min.css' %}">
+    <script defer src="{% static 'katex/katex.min.js' %}"></script>
+    <script defer src="{% static 'katex/katex-auto-render.min.js' %}"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      if (!window.renderMathInElement) return;
+      document.querySelectorAll('.lesson-notes').forEach(function (el) {
+        renderMathInElement(el, { delimiters: [{ left: '$$', right: '$$', display: true }], throwOnError: false });
+      });
+    });
+    </script>
+
+    {% if "http" in video.github_file %}
+    <div class="card-surface mt-4 p-3 nb-check"{% if notes_ltr %} dir="ltr" style="text-align:left"{% endif %}>
+      <h5 class="mb-1"><i class="bi bi-journal-check" style="color:var(--accent-primary)"></i> Check your notebook</h5>
+      <p class="small mb-2" style="color:var(--text-secondary)">
+        Upload your completed <code>{{ notebook_name }}</code> to get feedback and a grade.
+        A grade of 75 or above counts toward your certificate.
+      </p>
+      <form id="nb-form" class="d-flex align-items-center gap-2 flex-wrap">
+        <input type="file" id="nb-file" accept=".ipynb" class="form-control form-control-sm" style="max-width:320px">
+        <button type="submit" id="nb-submit" class="btn btn-sm btn-primary">Check my notebook</button>
+      </form>
+      <div id="nb-result" class="mt-3">
+        {% if notebook_submission %}
+        <div class="nb-grade {% if notebook_submission.passed %}nb-pass{% else %}nb-fail{% endif %}">
+          Your best: {{ notebook_submission.grade }}/100 {% if notebook_submission.passed %}(passed - counts toward your certificate){% else %}(needs 75+){% endif %}
+        </div>
+        {% if notebook_submission.feedback %}<p class="small mt-2 mb-1"><strong>Feedback:</strong> {{ notebook_submission.feedback }}</p>{% endif %}
+        {% if notebook_submission.recommendation %}<p class="small mb-1"><strong>Recommendation:</strong> {{ notebook_submission.recommendation }}</p>{% endif %}
+        <a class="small" href="{% url 'lesson_notebook_view' course.slug video.lesson_order %}">View your saved notebook</a>
+        {% endif %}
+      </div>
+    </div>
+    <script>
+    (function () {
+      var form = document.getElementById('nb-form');
+      if (!form) return;
+      var file = document.getElementById('nb-file');
+      var btn = document.getElementById('nb-submit');
+      var out = document.getElementById('nb-result');
+      var url = "{% url 'lesson_notebook_submit' course.slug video.lesson_order %}";
+      var viewUrl = "{% url 'lesson_notebook_view' course.slug video.lesson_order %}";
+      var csrf = "{{ csrf_token }}";
+      function esc(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (!file.files.length) { out.innerHTML = '<div class="small text-danger">Choose your .ipynb file first.</div>'; return; }
+        var fd = new FormData(); fd.append('notebook', file.files[0]);
+        var label = btn.textContent; btn.disabled = true; btn.textContent = 'Checking...';
+        out.innerHTML = '<div class="small" style="color:var(--text-secondary)">Grading your notebook, this can take a few seconds...</div>';
+        fetch(url, { method: 'POST', headers: { 'X-CSRFToken': csrf }, body: fd })
+          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+          .then(function (res) {
+            if (!res.ok) { out.innerHTML = '<div class="small text-danger">' + esc(res.j.error || 'Something went wrong.') + '</div>'; return; }
+            var j = res.j, cls = (j.grade >= 75) ? 'nb-pass' : 'nb-fail', lbl = (j.grade >= 75) ? '(passed)' : '(needs 75+)';
+            var html = '<div class="nb-grade ' + cls + '">This upload: ' + j.grade + '/100 ' + lbl + '</div>';
+            if (j.is_best) html += '<p class="small mt-1 mb-1" style="color:#16a34a">New best - saved as your reference for this lesson.</p>';
+            else html += '<p class="small mt-1 mb-1" style="color:var(--text-secondary)">Your saved best of ' + j.best_grade + '/100 is kept.</p>';
+            if (j.feedback) html += '<p class="small mb-1"><strong>Feedback:</strong> ' + esc(j.feedback) + '</p>';
+            if (j.recommendation) html += '<p class="small mb-1"><strong>Recommendation:</strong> ' + esc(j.recommendation) + '</p>';
+            if (j.required) html += '<p class="small mb-1" style="color:var(--text-secondary)">Best ' + j.best_grade + '/100. Passed notebooks: ' + j.passed_count + ' / ' + j.required + ' for the certificate.</p>';
+            html += '<a class="small" href="' + viewUrl + '">View your saved notebook</a>';
+            out.innerHTML = html;
+          })
+          .catch(function () { out.innerHTML = '<div class="small text-danger">Network error. Please try again.</div>'; })
+          .finally(function () { btn.disabled = false; btn.textContent = label; });
+      });
+    })();
+    </script>
     {% endif %}
 
     {# In-lesson runnable Python cells (```python-run blocks) - Pyodide + auto-save #}

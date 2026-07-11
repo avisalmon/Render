@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Your notebook - {{ video.title }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:900px" dir="ltr">
+  <a href="{% url 'lesson_view' course.slug video.lesson_order %}" class="small text-decoration-none">&larr; Back to the lesson</a>
+  <h1 class="h4 mt-2 mb-1">Your notebook</h1>
+  <p class="text-secondary mb-3">{{ video.title }}</p>
+
+  {% if sub %}
+    <p class="mb-3">
+      <span class="nb-grade {% if sub.passed %}nb-pass{% else %}nb-fail{% endif %}">Best grade: {{ sub.grade }}/100</span>
+      {% if sub.passed %}<span class="small ms-2" style="color:#16a34a">passed - counts toward your certificate</span>{% endif %}
+      {% if sub.filename %}<span class="text-secondary small ms-2">({{ sub.filename }})</span>{% endif %}
+    </p>
+
+    <div class="nbv card-surface p-3">
+      {% for cell in cells %}
+        {% if cell.kind == "md" %}
+          <div class="nbv-md">{{ cell.html|safe }}</div>
+        {% else %}
+          <div class="nbv-code"><pre><code>{{ cell.code }}</code></pre></div>
+          {% for out in cell.outputs %}
+            <div class="nbv-out"><pre>{{ out }}</pre></div>
+          {% endfor %}
+        {% endif %}
+      {% empty %}
+        <p class="text-secondary">This notebook has no cells to show.</p>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-secondary">You have not uploaded a notebook for this lesson yet. Go back to the
+      lesson and use "Check my notebook" to upload one.</p>
+  {% endif %}
+</div>
+{% endblock %}

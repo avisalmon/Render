@@ -6,7 +6,7 @@
     {% else %}
       <div class="course-thumb-ph"><i class="bi bi-mortarboard-fill"></i></div>
     {% endif %}
-    {% if c.popular %}<span class="course-popular"><i class="bi bi-star-fill"></i> פופולרי</span>{% endif %}
+    {% if c.draft %}<span class="course-badge is-draft"><i class="bi bi-pencil-square"></i> טיוטה</span>{% endif %}
     {% if c.progress.completed %}
       <span class="course-badge is-done"><i class="bi bi-check-lg"></i> הושלם</span>
     {% elif c.progress.started %}
@@ -15,10 +15,12 @@
   </div>
   <div class="course-body">
     <h3 class="course-title">{{ c.course.title }}</h3>
+    <div class="course-author">אבי סלמון</div>
     <div class="course-meta">
-      <span><i class="bi bi-collection-play"></i> {{ c.lessons }} שיעורים</span>
-      {% if c.difficulty_he %}<span class="course-diff">{{ c.difficulty_he }}</span>{% endif %}
+      <span>{{ c.lessons }} שיעורים</span>
+      {% if c.difficulty_he %}<span class="course-meta-dot">·</span><span>{{ c.difficulty_he }}</span>{% endif %}
     </div>
+    {% if c.popular %}<span class="course-bestseller">פופולרי</span>{% endif %}
     {% if c.progress.started and not c.progress.completed %}
     <div class="course-progress">
       <div class="course-progress-bar" style="width:{{ c.progress.pct }}%"></div>

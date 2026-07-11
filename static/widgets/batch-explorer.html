@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Batches and Epochs</title>
+<style>
+  :root { --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; --box:#f5f8ff; --grid:#eef2f7; --bg:#fff; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; }
+  body { font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink); background:var(--bg); padding:12px 14px; }
+  .wrap { max-width:720px; margin:0 auto; }
+  h2 { font-size:1.05rem; margin:0 0 2px; }
+  .sub { color:var(--muted); font-size:.84rem; margin:0 0 10px; }
+  .controls { display:flex; flex-wrap:wrap; gap:14px; align-items:flex-end; margin-bottom:10px; }
+  .grp { display:flex; flex-direction:column; gap:3px; }
+  .grp > span { font-size:.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+  .stepper { display:flex; align-items:center; gap:6px; }
+  .stepper button { width:24px; height:24px; border:1px solid var(--line); background:#f9fafb; border-radius:6px; cursor:pointer; }
+  .stepper button:disabled { opacity:.4; cursor:default; }
+  .stepper .v { min-width:22px; text-align:center; font-weight:600; }
+  .toggle, .epoch { border:1px solid var(--line); background:#f9fafb; padding:6px 11px; border-radius:7px; cursor:pointer; font-size:.82rem; }
+  .toggle.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .readout { font-family:ui-monospace,Consolas,monospace; font-size:.86rem; margin:4px 0 8px; color:var(--ink); }
+  .batches { display:flex; flex-wrap:wrap; gap:8px; }
+  .batch { border:1px solid var(--line); background:var(--box); border-radius:9px; padding:6px 7px 8px; }
+  .btag { font-size:.66rem; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px; text-align:center; }
+  .chips { display:flex; flex-wrap:wrap; gap:4px; max-width:180px; }
+  .chip { min-width:22px; height:22px; padding:0 5px; display:flex; align-items:center; justify-content:center;
+          background:#fff; border:1px solid var(--accent); color:var(--accent); border-radius:6px; font-size:.72rem; font-weight:600; }
+  .note { font-size:.8rem; color:var(--muted); margin-top:10px; line-height:1.45; }
+  .note b { color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2>Batches and epochs</h2>
+  <p class="sub">A DataLoader splits the dataset into small batches. One pass through all the batches is one epoch. With shuffling on, the order is reshuffled each epoch.</p>
+
+  <div class="controls">
+    <div class="grp"><span>Dataset size</span>
+      <div class="stepper" data-k="n"><button data-d="-4">-</button><span class="v" id="nV"></span><button data-d="4">+</button></div>
+    </div>
+    <div class="grp"><span>Batch size</span>
+      <div class="stepper" data-k="b"><button data-d="-1">-</button><span class="v" id="bV"></span><button data-d="1">+</button></div>
+    </div>
+    <button class="toggle on" id="shuf">shuffle: on</button>
+    <button class="epoch" id="next">next epoch &#8635;</button>
+  </div>
+
+  <div class="readout" id="readout"></div>
+  <div class="batches" id="batches"></div>
+
+  <p class="note">Smaller batches mean <b>more batches per epoch</b> and more weight updates per pass. Training runs for several epochs; each <b>next epoch</b> reshuffles the data (when shuffle is on) so the network never sees the same order twice.</p>
+</div>
+
+<script>
+(function () {
+  var state = { n: 20, b: 4, shuffle: true, epoch: 1, order: [] };
+
+  function rebuild() {
+    var a = [];
+    for (var i = 1; i <= state.n; i++) a.push(i);
+    if (state.shuffle) shuffle(a);
+    state.order = a;
+  }
+  // deterministic-ish shuffle seeded by epoch (no Math.random needed)
+  function shuffle(a) {
+    var s = state.epoch * 2654435761 % 2147483647;
+    for (var i = a.length - 1; i > 0; i--) {
+      s = (s * 1103515245 + 12345) % 2147483648;
+      var j = s % (i + 1);
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+  }
+
+  function draw() {
+    document.getElementById('nV').textContent = state.n;
+    document.getElementById('bV').textContent = state.b;
+    var shuf = document.getElementById('shuf');
+    shuf.classList.toggle('on', state.shuffle);
+    shuf.textContent = 'shuffle: ' + (state.shuffle ? 'on' : 'off');
+    document.querySelector('.stepper[data-k="b"] button[data-d="-1"]').disabled = state.b <= 1;
+    document.querySelector('.stepper[data-k="b"] button[data-d="1"]').disabled = state.b >= state.n;
+
+    var nBatches = Math.ceil(state.n / state.b);
+    document.getElementById('readout').textContent =
+      state.n + ' items, batch size ' + state.b + '  ->  ' + nBatches + ' batches per epoch   (epoch ' + state.epoch + ')';
+
+    var host = document.getElementById('batches'); host.innerHTML = '';
+    for (var k = 0; k < nBatches; k++) {
+      var box = document.createElement('div'); box.className = 'batch';
+      var tag = document.createElement('div'); tag.className = 'btag'; tag.textContent = 'batch ' + (k + 1);
+      var chips = document.createElement('div'); chips.className = 'chips';
+      var slice = state.order.slice(k * state.b, (k + 1) * state.b);
+      slice.forEach(function (v) {
+        var c = document.createElement('div'); c.className = 'chip'; c.textContent = v; chips.appendChild(c);
+      });
+      box.appendChild(tag); box.appendChild(chips); host.appendChild(box);
+    }
+  }
+
+  document.addEventListener('click', function (e) {
+    var d = e.target.getAttribute('data-d');
+    if (d) {
+      var k = e.target.parentNode.getAttribute('data-k');
+      if (k === 'n') { state.n = Math.max(8, Math.min(40, state.n + (+d))); if (state.b > state.n) state.b = state.n; }
+      else if (k === 'b') { state.b = Math.max(1, Math.min(state.n, state.b + (+d))); }
+      rebuild(); draw(); return;
+    }
+    if (e.target.id === 'shuf') { state.shuffle = !state.shuffle; rebuild(); draw(); return; }
+    if (e.target.id === 'next') { state.epoch++; rebuild(); draw(); return; }
+  });
+
+  rebuild(); draw();
+})();
+</script>
+</body>
+</html>

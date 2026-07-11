@@ -17,7 +17,7 @@ from pathlib import Path
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
-from app.models import Course, Video
+from app.models import Course, CourseMaterial, Video
 
 BASE_DIR = Path(settings.BASE_DIR)
 MATERIALS_ROOT = BASE_DIR / "data" / "course_materials"
@@ -65,6 +65,16 @@ class Command(BaseCommand):
             "is_published": data.get("is_published", False),
             "category": data.get("category", ""),
         }
+        # Optional taxonomy placement (domain/track) - only set when provided,
+        # so we never clobber an existing value with a blank.
+        for opt in ("domain", "track"):
+            if data.get(opt):
+                course_defaults[opt] = data[opt]
+        # Notebook-graded certificate gate (only set when provided).
+        if "requires_notebooks" in data:
+            course_defaults["requires_notebooks"] = bool(data["requires_notebooks"])
+        if data.get("notebook_min_pass_count") is not None:
+            course_defaults["notebook_min_pass_count"] = int(data["notebook_min_pass_count"])
 
         course, course_created = Course.objects.update_or_create(
             slug=slug,
@@ -73,15 +83,33 @@ class Command(BaseCommand):
         action = "created" if course_created else "updated"
         self.stdout.write(f"  Course {action}: {course.title} ({slug})")
 
+        # --- Course-level materials (links / downloadable files) ---
+        for m in data.get("materials", []):
+            CourseMaterial.objects.update_or_create(
+                course=course,
+                title=m["title"],
+                defaults={
+                    "material_type": m.get("material_type", "link"),
+                    "url": m.get("url", ""),
+                    "order": m.get("order", 0),
+                },
+            )
+        if data.get("materials"):
+            self.stdout.write(f"    Materials: {len(data['materials'])} upserted")
+
         # --- Video records ---
         created_count = 0
         updated_count = 0
 
         for lesson in data.get("lessons", []):
-            bunny_id = lesson.get("bunny_video_id")
-            if not bunny_id:
+            bunny_id = lesson.get("bunny_video_id") or ""
+            notes = lesson.get("notes_markdown", "")
+            # Skip only genuinely empty placeholder lessons.  A text-only lesson
+            # (notes but no video) is valid and should be created with an empty
+            # bunny_video_id.
+            if not bunny_id and not notes:
                 self.stdout.write(
-                    self.style.WARNING(f"    L{lesson['lesson_order']:02d}: no bunny_video_id, skipping")
+                    self.style.WARNING(f"    L{lesson['lesson_order']:02d}: no video and no notes, skipping")
                 )
                 continue
 
@@ -90,7 +118,7 @@ class Command(BaseCommand):
                 "title": lesson.get("title_he") or lesson.get("youtube_title", ""),
                 "duration_seconds": lesson.get("duration_seconds") or 0,
                 "is_free_preview": lesson.get("is_free_preview", False),
-                "notes_markdown": lesson.get("notes_markdown", ""),
+                "notes_markdown": notes,
                 "title_en": lesson.get("title_en", ""),
                 "summary_he": lesson.get("summary_he", ""),
                 "has_code_example": lesson.get("has_code_example", False),

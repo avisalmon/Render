@@ -19,6 +19,12 @@
 
 {% block content %}
 <div>
+    {% if not course.is_published %}
+    <div class="alert" style="background:#fef3c7;border:1px solid #b45309;color:#7c2d12;border-radius:8px;padding:.6rem .9rem;margin-bottom:1rem">
+      <i class="bi bi-pencil-square"></i> טיוטה - הדרכה זו עדיין לא פורסמה ומוצגת לך כמנהל בלבד.
+      <a href="/studio/course/{{ course.slug }}/" style="color:#7c2d12;text-decoration:underline">עריכה בסטודיו</a>
+    </div>
+    {% endif %}
     {% if existing_cert %}
     <a href="{% url 'certificate_view' existing_cert.certificate_id %}" class="cert-trophy mb-2" title="קיבלת תעודה בהדרכה הזו - לצפייה">
       <i class="bi bi-trophy-fill"></i> הוסמכת בהדרכה הזו - לתעודה

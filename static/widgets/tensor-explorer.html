@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tensor Explorer</title>
+<style>
+  :root { --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; --bg:#ffffff; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; }
+  body {
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    color: var(--ink); background: var(--bg); padding: 14px 16px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  h2 { font-size: 1.05rem; margin: 0 0 2px; }
+  .sub { color: var(--muted); font-size: .85rem; margin: 0 0 12px; }
+
+  .controls { display:flex; flex-wrap:wrap; gap:14px; align-items:flex-end; margin-bottom:10px; }
+  .group { display:flex; flex-direction:column; gap:4px; }
+  .group > span { font-size:.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+  .rank-btns { display:flex; gap:6px; }
+  .rank-btns button {
+    border:1px solid var(--line); background:#f9fafb; color:var(--ink);
+    padding:6px 10px; border-radius:8px; cursor:pointer; font-size:.82rem;
+  }
+  .rank-btns button.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .stepper { display:flex; align-items:center; gap:6px; }
+  .stepper button {
+    width:26px; height:26px; border:1px solid var(--line); background:#f9fafb;
+    border-radius:6px; cursor:pointer; font-size:1rem; line-height:1; color:var(--ink);
+  }
+  .stepper button:disabled { opacity:.35; cursor:not-allowed; }
+  .stepper .val { min-width:18px; text-align:center; font-variant-numeric:tabular-nums; font-weight:600; }
+  .axis-name { font-size:.72rem; color:var(--muted); }
+  .axis-name b { color:var(--accent); }
+
+  .readout {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size:.95rem; margin: 4px 0 10px; color:var(--ink);
+  }
+  .readout .count { color:var(--muted); }
+
+  .scene { perspective: 900px; height: 320px; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .world { position: relative; transform-style: preserve-3d; transform: rotateX(-24deg) rotateY(-34deg); transition: transform .25s ease; }
+  .cube { position:absolute; top:0; left:0; transform-style: preserve-3d; }
+  .face { position:absolute; width:var(--c); height:var(--c); border:1px solid rgba(0,0,0,.25); }
+
+  .legend { font-size:.78rem; color:var(--muted); margin-top:6px; min-height:1.1em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2>Tensor explorer</h2>
+  <p class="sub">Pick the number of dimensions and the size of each axis. Watch the shape change.</p>
+
+  <div class="controls">
+    <div class="group">
+      <span>Dimensions</span>
+      <div class="rank-btns" id="rankBtns">
+        <button data-rank="1">1D vector</button>
+        <button data-rank="2">2D matrix</button>
+        <button data-rank="3">3D tensor</button>
+      </div>
+    </div>
+    <div class="group" id="axisControls"></div>
+  </div>
+
+  <div class="readout" id="readout"></div>
+  <div class="scene"><div class="world" id="world"></div></div>
+  <div class="legend" id="legend"></div>
+</div>
+
+<script>
+(function () {
+  var CUBE = 30;     // px
+  var GAP  = 36;     // px between cube centers
+  // Axes map to the course convention (batch, seq, dim).
+  // rank 1 -> (dim), rank 2 -> (seq, dim), rank 3 -> (batch, seq, dim).
+  var AXES = [
+    { key: "batch", label: "batch", hue: 210 },
+    { key: "seq",   label: "seq",   hue: 160 },
+    { key: "dim",   label: "dim",   hue: 280 },
+  ];
+  var state = { rank: 3, batch: 2, seq: 3, dim: 4 };
+  var MAXP = 5, MIN = 1;
+
+  var world = document.getElementById("world");
+  var readout = document.getElementById("readout");
+  var legend = document.getElementById("legend");
+  var axisControls = document.getElementById("axisControls");
+  var rankBtns = document.getElementById("rankBtns");
+
+  function activeAxes() {
+    // last `rank` axes are active: rank1 -> dim, rank2 -> seq,dim, rank3 -> all
+    return AXES.slice(AXES.length - state.rank);
+  }
+
+  function sizes() {
+    // returns {B,S,D} with inactive axes collapsed to 1
+    var act = activeAxes().map(function (a) { return a.key; });
+    return {
+      B: act.indexOf("batch") >= 0 ? state.batch : 1,
+      S: act.indexOf("seq") >= 0 ? state.seq : 1,
+      D: act.indexOf("dim") >= 0 ? state.dim : 1,
+    };
+  }
+
+  function buildFace(t, bg) {
+    var f = document.createElement("div");
+    f.className = "face";
+    f.style.transform = t;
+    f.style.background = bg;
+    return f;
+  }
+
+  function makeCube(x, y, z, hue) {
+    var c = document.createElement("div");
+    c.className = "cube";
+    c.style.setProperty("--c", CUBE + "px");
+    var h = CUBE / 2;
+    var front = "hsl(" + hue + ",65%,58%)";
+    var side  = "hsl(" + hue + ",55%,44%)";
+    var top   = "hsl(" + hue + ",70%,70%)";
+    c.appendChild(buildFace("translateZ(" + h + "px)", front));
+    c.appendChild(buildFace("rotateY(180deg) translateZ(" + h + "px)", side));
+    c.appendChild(buildFace("rotateY(90deg) translateZ(" + h + "px)", side));
+    c.appendChild(buildFace("rotateY(-90deg) translateZ(" + h + "px)", side));
+    c.appendChild(buildFace("rotateX(90deg) translateZ(" + h + "px)", top));
+    c.appendChild(buildFace("rotateX(-90deg) translateZ(" + h + "px)", side));
+    c.style.transform = "translate3d(" + x + "px," + y + "px," + z + "px)";
+    return c;
+  }
+
+  function render() {
+    var s = sizes();
+    var B = s.B, S = s.S, D = s.D;
+
+    // center the block around the world origin
+    var offX = (D - 1) * GAP / 2;
+    var offY = (S - 1) * GAP / 2;
+    var offZ = (B - 1) * GAP / 2;
+
+    world.innerHTML = "";
+    for (var b = 0; b < B; b++) {
+      var hue = 210 + b * 46;                 // each batch layer a different hue
+      for (var sIdx = 0; sIdx < S; sIdx++) {
+        for (var d = 0; d < D; d++) {
+          var x = d * GAP - offX;
+          var y = sIdx * GAP - offY;
+          var z = -(b * GAP) + offZ;
+          world.appendChild(makeCube(x, y, z, hue));
+        }
+      }
+    }
+
+    // readout: shape in active-axis order
+    var act = activeAxes();
+    var shapeVals = act.map(function (a) { return state[a.key]; });
+    var total = shapeVals.reduce(function (p, n) { return p * n; }, 1);
+    var names = act.map(function (a) { return a.label; }).join(", ");
+    readout.innerHTML = "shape = (" + shapeVals.join(", ") + ")"
+      + "  <span class=\"count\">over (" + names + ")  =  " + total + " numbers</span>";
+
+    var labels = { 1: "A 1D tensor is a vector: a single row of numbers.",
+                   2: "A 2D tensor is a matrix: rows and columns.",
+                   3: "A 3D tensor is a block: a batch of matrices. This is our (batch, seq, dim)." };
+    legend.textContent = labels[state.rank];
+  }
+
+  function renderAxisControls() {
+    axisControls.innerHTML = "";
+    activeAxes().forEach(function (a) {
+      var g = document.createElement("div");
+      g.className = "group";
+      var span = document.createElement("span");
+      span.innerHTML = a.label;
+      var step = document.createElement("div");
+      step.className = "stepper";
+      var minus = document.createElement("button"); minus.textContent = "−";
+      var val = document.createElement("span"); val.className = "val"; val.textContent = state[a.key];
+      var plus = document.createElement("button"); plus.textContent = "+";
+      minus.disabled = state[a.key] <= MIN;
+      plus.disabled = state[a.key] >= MAXP;
+      minus.onclick = function () { if (state[a.key] > MIN) { state[a.key]--; renderAxisControls(); render(); } };
+      plus.onclick = function () { if (state[a.key] < MAXP) { state[a.key]++; renderAxisControls(); render(); } };
+      step.appendChild(minus); step.appendChild(val); step.appendChild(plus);
+      g.appendChild(span); g.appendChild(step);
+      axisControls.appendChild(g);
+    });
+  }
+
+  function setRank(r) {
+    state.rank = r;
+    Array.prototype.forEach.call(rankBtns.children, function (btn) {
+      btn.classList.toggle("active", Number(btn.dataset.rank) === r);
+    });
+    renderAxisControls();
+    render();
+  }
+
+  Array.prototype.forEach.call(rankBtns.children, function (btn) {
+    btn.onclick = function () { setRank(Number(btn.dataset.rank)); };
+  });
+
+  setRank(3);
+})();
+</script>
+</body>
+</html>

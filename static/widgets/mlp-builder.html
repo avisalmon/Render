@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build an MLP</title>
+<style>
+  :root { --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; --hid:#7c3aed; --out:#059669; --grid:#eef2f7; --bg:#fff; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; }
+  body { font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink); background:var(--bg); padding:12px 14px; }
+  .wrap { max-width:760px; margin:0 auto; }
+  h2 { font-size:1.05rem; margin:0 0 2px; }
+  .sub { color:var(--muted); font-size:.84rem; margin:0 0 10px; }
+  .controls { display:flex; flex-wrap:wrap; gap:14px; align-items:flex-end; margin-bottom:10px; }
+  .grp { display:flex; flex-direction:column; gap:3px; }
+  .grp > span { font-size:.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+  .hiddens { display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; }
+  .hcol { display:flex; flex-direction:column; gap:3px; align-items:center; }
+  .hcol .rm { font-size:.66rem; color:var(--neg,#dc2626); background:none; border:none; cursor:pointer; padding:0; }
+  .stepper { display:flex; align-items:center; gap:6px; }
+  .stepper button { width:24px; height:24px; border:1px solid var(--line); background:#f9fafb; border-radius:6px; cursor:pointer; }
+  .stepper button:disabled { opacity:.4; cursor:default; }
+  .stepper .v { min-width:22px; text-align:center; font-weight:600; }
+  .add { border:1px dashed var(--line); background:#f9fafb; padding:6px 10px; border-radius:7px; cursor:pointer; font-size:.8rem; color:var(--muted); }
+  .add:disabled { opacity:.4; cursor:default; }
+  svg { width:100%; height:210px; display:block; background:#fff; border:1px solid var(--line); border-radius:8px; }
+  .flow { font-family:ui-monospace,Consolas,monospace; font-size:.9rem; margin:10px 0 2px; color:var(--ink); }
+  .flow .b { color:var(--muted); }
+  .params { margin-top:8px; border:1px solid var(--line); border-radius:8px; overflow:hidden; font-size:.85rem; }
+  .params .row { display:flex; justify-content:space-between; padding:5px 10px; border-bottom:1px solid var(--grid); }
+  .params .row:last-child { border-bottom:none; }
+  .params .row.act { color:var(--muted); font-style:italic; }
+  .params .row.total { font-weight:700; background:#f9fafb; }
+  .params .calc { font-family:ui-monospace,Consolas,monospace; color:var(--muted); }
+  .note { font-size:.8rem; color:var(--muted); margin-top:8px; line-height:1.45; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2>Build an MLP</h2>
+  <p class="sub">Set the layer sizes and watch the shapes flow from input to output, and the parameter count update. An MLP is just Linear, activation, Linear.</p>
+
+  <div class="controls">
+    <div class="grp"><span>Input size</span>
+      <div class="stepper" data-k="input"><button data-d="-1">-</button><span class="v" id="inV"></span><button data-d="1">+</button></div>
+    </div>
+    <div class="grp"><span>Hidden layers</span>
+      <div class="hiddens" id="hiddens"></div>
+    </div>
+    <button class="add" id="add">+ hidden layer</button>
+    <div class="grp"><span>Output size</span>
+      <div class="stepper" data-k="output"><button data-d="-1">-</button><span class="v" id="outV"></span><button data-d="1">+</button></div>
+    </div>
+  </div>
+
+  <svg id="net" viewBox="0 0 680 240" preserveAspectRatio="xMidYMid meet"></svg>
+
+  <div class="flow" id="flow"></div>
+  <div class="params" id="params"></div>
+  <p class="note">Each <b>Linear(in, out)</b> holds <b>in x out</b> weights plus <b>out</b> biases. The activation between layers changes neither the shape nor the parameter count. Training later adjusts every one of these numbers.</p>
+</div>
+
+<script>
+(function () {
+  var NS = "http://www.w3.org/2000/svg";
+  var state = { input: 8, hiddens: [16], output: 3 };
+  var CAP = 7, MAXH = 3;
+
+  function sizes() { return [state.input].concat(state.hiddens, [state.output]); }
+  function el(t, a) { var e = document.createElementNS(NS, t); for (var k in a) e.setAttribute(k, a[k]); return e; }
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+  function drawNet() {
+    var svg = document.getElementById('net');
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var S = sizes(), W = 680, H = 240, top = 34, bot = 206, cy = (top + bot) / 2;
+    var n = S.length, xL = 60, xR = 620;
+    function colX(i) { return n === 1 ? (xL + xR) / 2 : xL + (xR - xL) * i / (n - 1); }
+    function color(i) { return i === 0 ? 'var(--accent)' : (i === n - 1 ? 'var(--out)' : 'var(--hid)'); }
+    function dots(i) {
+      var sz = S[i], shown = Math.min(sz, CAP), ys = [], span = bot - top;
+      var gap = shown > 1 ? span / (shown - 1) : 0;
+      for (var j = 0; j < shown; j++) ys.push(shown === 1 ? cy : top + j * gap);
+      return { ys: ys, more: sz > CAP };
+    }
+    var cols = [];
+    for (var i = 0; i < n; i++) cols.push(dots(i));
+    // edges between consecutive columns
+    for (var i = 0; i < n - 1; i++) {
+      var a = cols[i].ys, b = cols[i + 1].ys, x1 = colX(i), x2 = colX(i + 1);
+      for (var p = 0; p < a.length; p++) for (var q = 0; q < b.length; q++)
+        svg.appendChild(el('line', { x1: x1, y1: a[p], x2: x2, y2: b[q], stroke: '#c7d2fe', 'stroke-width': 0.6, 'stroke-opacity': 0.55 }));
+    }
+    // nodes + labels
+    for (var i = 0; i < n; i++) {
+      var x = colX(i), c = color(i), col = cols[i];
+      for (var j = 0; j < col.ys.length; j++)
+        svg.appendChild(el('circle', { cx: x, cy: col.ys[j], r: 7, fill: '#fff', stroke: c, 'stroke-width': 1.8 }));
+      if (col.more) {
+        var d = el('text', { x: x, y: bot + 4, 'text-anchor': 'middle', 'font-size': 13, fill: c }); d.textContent = '⋮'; svg.appendChild(d);
+      }
+      var role = i === 0 ? 'input' : (i === n - 1 ? 'output' : 'hidden');
+      var lab = el('text', { x: x, y: 22, 'text-anchor': 'middle', 'font-size': 11, fill: c, 'font-weight': 600 });
+      lab.textContent = S[i]; svg.appendChild(lab);
+      var rl = el('text', { x: x, y: H - 8, 'text-anchor': 'middle', 'font-size': 9.5, fill: 'var(--muted)' });
+      rl.textContent = role; svg.appendChild(rl);
+    }
+    // activation markers between columns
+    for (var i = 0; i < n - 1; i++) {
+      var mx = (colX(i) + colX(i + 1)) / 2;
+      if (i < n - 2) {
+        var t = el('text', { x: mx, y: cy - 84, 'text-anchor': 'middle', 'font-size': 9, fill: 'var(--hid)' });
+        t.textContent = 'ReLU'; svg.appendChild(t);
+      }
+    }
+  }
+
+  function drawInfo() {
+    var S = sizes();
+    var flow = document.getElementById('flow');
+    var parts = S.map(function (s) { return '(<span class="b">B</span>, ' + s + ')'; });
+    flow.innerHTML = 'shape:  ' + parts.join('  →  ');
+
+    var pdiv = document.getElementById('params'), rows = '', total = 0;
+    for (var i = 0; i < S.length - 1; i++) {
+      var a = S[i], b = S[i + 1], p = a * b + b; total += p;
+      rows += '<div class="row"><span>Linear(' + a + ', ' + b + ')</span>' +
+        '<span class="calc">' + a + '×' + b + ' + ' + b + ' = ' + p + '</span></div>';
+      if (i < S.length - 2) rows += '<div class="row act"><span>ReLU</span><span class="calc">0</span></div>';
+    }
+    rows += '<div class="row total"><span>Total</span><span>' + total + ' parameters</span></div>';
+    pdiv.innerHTML = rows;
+  }
+
+  function draw() { renderControls(); drawNet(); drawInfo(); }
+
+  function renderControls() {
+    document.getElementById('inV').textContent = state.input;
+    document.getElementById('outV').textContent = state.output;
+    var host = document.getElementById('hiddens'); host.innerHTML = '';
+    state.hiddens.forEach(function (h, idx) {
+      var col = document.createElement('div'); col.className = 'hcol';
+      var st = document.createElement('div'); st.className = 'stepper'; st.setAttribute('data-h', idx);
+      st.innerHTML = '<button data-d="-1">-</button><span class="v">' + h + '</span><button data-d="1">+</button>';
+      var rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = 'remove'; rm.setAttribute('data-rm', idx);
+      rm.disabled = state.hiddens.length <= 1;
+      col.appendChild(st); col.appendChild(rm); host.appendChild(col);
+    });
+    document.getElementById('add').disabled = state.hiddens.length >= MAXH;
+  }
+
+  document.addEventListener('click', function (e) {
+    var d = e.target.getAttribute('data-d');
+    if (d) {
+      var st = e.target.parentNode, k = st.getAttribute('data-k'), hi = st.getAttribute('data-h');
+      if (k === 'input') state.input = clamp(state.input + (+d), 1, 64);
+      else if (k === 'output') state.output = clamp(state.output + (+d), 1, 32);
+      else if (hi !== null) state.hiddens[+hi] = clamp(state.hiddens[+hi] + (+d), 1, 64);
+      draw(); return;
+    }
+    if (e.target.id === 'add' && state.hiddens.length < MAXH) { state.hiddens.push(8); draw(); return; }
+    var rm = e.target.getAttribute('data-rm');
+    if (rm !== null && state.hiddens.length > 1) { state.hiddens.splice(+rm, 1); draw(); return; }
+  });
+
+  draw();
+})();
+</script>
+</body>
+</html>

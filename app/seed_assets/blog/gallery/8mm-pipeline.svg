@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 950" width="760" height="950" role="img" aria-label="מרוץ השליחים: תשעה שלבי השחזור, בסדר קבוע">
+  <rect width="760" height="950" rx="16" fill="#faf7f1" stroke="#e8e0d2"/>
+
+  <text x="380" y="44" text-anchor="middle" font-family="'Frank Ruhl Libre',Georgia,serif"
+        font-weight="700" font-size="24" fill="#2a2118">מרוץ השליחים: תשעה שלבים, בסדר קבוע</text>
+  <text x="380" y="74" text-anchor="middle" font-family="'Heebo',sans-serif" font-size="15" fill="#9a8f7d">כל שלב מרפא מחלה אחת ומעביר תמונה בריאה יותר הלאה</text>
+
+  <!-- start -->
+  <rect x="120" y="92" width="520" height="44" rx="22" fill="#efe1c6" stroke="#cf9a4f" stroke-opacity="0.5"/>
+  <text x="380" y="120" text-anchor="middle" font-family="'Heebo',sans-serif" font-size="16" fill="#6b4a1f">רצועה גולמית: מרצדת, שרוטה ודהויה</text>
+
+  <!-- arrows and stage boxes -->
+  <g fill="#c98a3c">
+    <path d="M373,140 l14,0 l-7,8 z"/>
+    <path d="M373,215 l14,0 l-7,8 z"/>
+    <path d="M373,293 l14,0 l-7,8 z"/>
+    <path d="M373,371 l14,0 l-7,8 z"/>
+    <path d="M373,449 l14,0 l-7,8 z"/>
+    <path d="M373,527 l14,0 l-7,8 z"/>
+    <path d="M373,605 l14,0 l-7,8 z"/>
+    <path d="M373,683 l14,0 l-7,8 z"/>
+    <path d="M373,761 l14,0 l-7,8 z"/>
+    <path d="M373,839 l14,0 l-7,8 z"/>
+  </g>
+
+  <g font-family="'Heebo',sans-serif" font-size="18" fill="#2a2118">
+    <g><rect x="100" y="150" width="560" height="58" rx="10" fill="#f1e6d0" stroke="#cf9a4f"/><text x="380" y="186" text-anchor="middle">1. ייצוב: לעצור את הרעד והקפיצות</text></g>
+    <g><rect x="100" y="228" width="560" height="58" rx="10" fill="#f1e6d0" stroke="#cf9a4f"/><text x="380" y="264" text-anchor="middle">2. ריצוד: לעצור את פעימות החשיפה</text></g>
+    <g><rect x="100" y="306" width="560" height="58" rx="10" fill="#f1e6d0" stroke="#cf9a4f"/><text x="380" y="342" text-anchor="middle">3. אבק ושריטות: לנקות את הפילם</text></g>
+    <g><rect x="100" y="384" width="560" height="58" rx="10" fill="#f1e6d0" stroke="#cf9a4f"/><text x="380" y="420" text-anchor="middle">4. הפחתת רעש: להמיס את הגרגר</text></g>
+    <g><rect x="100" y="462" width="560" height="58" rx="10" fill="#f1e6d0" stroke="#cf9a4f"/><text x="380" y="498" text-anchor="middle">5. אור: להרים את הצעיף האפור מהצללים</text></g>
+    <g><rect x="100" y="540" width="560" height="58" rx="10" fill="#f1e6d0" stroke="#cf9a4f"/><text x="380" y="576" text-anchor="middle">6. חידוד: להחזיר חדות, בזהירות</text></g>
+    <g><rect x="100" y="618" width="560" height="58" rx="10" fill="#f1e6d0" stroke="#cf9a4f"/><text x="380" y="654" text-anchor="middle">7. צבע: לבטל דהייה ולחמם את הגוון</text></g>
+    <g><rect x="100" y="696" width="560" height="58" rx="10" fill="#f1e6d0" stroke="#cf9a4f"/><text x="380" y="732" text-anchor="middle">8. החלקת תנועה: מ-18 ל-36 פריימים בשנייה</text></g>
+    <g><rect x="100" y="774" width="560" height="58" rx="10" fill="#f1e6d0" stroke="#cf9a4f"/><text x="380" y="810" text-anchor="middle">9. גרגר: להחזיר מרקם פילם עדין</text></g>
+  </g>
+
+  <!-- end -->
+  <rect x="120" y="856" width="520" height="48" rx="24" fill="#a86a24"/>
+  <text x="380" y="886" text-anchor="middle" font-family="'Heebo',sans-serif" font-weight="700" font-size="17" fill="#fdf6ea">סרטון נקי, חלק וצבעוני</text>
+
+  <text x="380" y="932" text-anchor="middle" font-family="'Heebo',sans-serif" font-size="13" fill="#9a8f7d">הסדר לא מקרי: כל מעבר מכין את הקרקע לשלב הבא</text>
+</svg>

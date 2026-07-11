@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Softmax Explorer</title>
+<style>
+  :root { --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; --win:#059669; --grid:#eef2f7; --bg:#fff; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; }
+  body { font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink); background:var(--bg); padding:12px 14px; }
+  .wrap { max-width:640px; margin:0 auto; }
+  h2 { font-size:1.05rem; margin:0 0 2px; }
+  .sub { color:var(--muted); font-size:.84rem; margin:0 0 10px; }
+  .stage { display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start; }
+  .controls { flex:1 1 220px; min-width:210px; }
+  .sl { display:flex; align-items:center; gap:8px; margin:6px 0; font-size:.86rem; }
+  .sl label { width:26px; color:var(--muted); font-family:ui-monospace,Consolas,monospace; }
+  .sl input { flex:1; }
+  .sl .val { width:40px; text-align:right; font-family:ui-monospace,Consolas,monospace; }
+  .temp { margin-top:10px; padding-top:8px; border-top:1px solid var(--grid); }
+  .plot { flex:1 1 300px; min-width:280px; }
+  svg { width:100%; height:220px; display:block; background:#fff; border:1px solid var(--line); border-radius:8px; }
+  .readout { font-family:ui-monospace,Consolas,monospace; font-size:.82rem; color:var(--muted); margin-top:6px; }
+  .note { font-size:.8rem; color:var(--muted); margin-top:8px; line-height:1.45; }
+  .note b { color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2>Softmax explorer</h2>
+  <p class="sub">Drag the three scores and the temperature. Softmax turns any scores into probabilities that add up to 1.</p>
+
+  <div class="stage">
+    <div class="controls">
+      <div class="sl"><label>z1</label><input type="range" id="z0" min="-5" max="5" step="0.1" value="2.0"><span class="val" id="z0v"></span></div>
+      <div class="sl"><label>z2</label><input type="range" id="z1" min="-5" max="5" step="0.1" value="1.0"><span class="val" id="z1v"></span></div>
+      <div class="sl"><label>z3</label><input type="range" id="z2" min="-5" max="5" step="0.1" value="0.1"><span class="val" id="z2v"></span></div>
+      <div class="temp">
+        <div class="sl"><label>T</label><input type="range" id="temp" min="0.2" max="3" step="0.1" value="1.0"><span class="val" id="tempv"></span></div>
+        <div class="readout">temperature: below 1 sharpens, above 1 flattens</div>
+      </div>
+    </div>
+    <div class="plot">
+      <svg id="svg" viewBox="0 0 360 220" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="readout" id="sum"></div>
+    </div>
+  </div>
+
+  <p class="note">Softmax exponentiates each score and divides by the total, so a slightly higher score becomes a lot more probable. Raising one score <b>steals</b> probability from the others; <b>temperature</b> sharpens or flattens the whole distribution. The same softmax powers the training loss, attention, and word sampling.</p>
+</div>
+
+<script>
+(function () {
+  var NS = "http://www.w3.org/2000/svg";
+  function el(t, a) { var e = document.createElementNS(NS, t); for (var k in a) e.setAttribute(k, a[k]); return e; }
+
+  function softmax(z, T) {
+    var s = z.map(function (v) { return v / T; });
+    var m = Math.max.apply(null, s);
+    var ex = s.map(function (v) { return Math.exp(v - m); });
+    var tot = ex.reduce(function (a, b) { return a + b; }, 0);
+    return ex.map(function (v) { return v / tot; });
+  }
+
+  function draw() {
+    var z = [parseFloat(z0.value), parseFloat(z1.value), parseFloat(z2.value)];
+    var T = parseFloat(temp.value);
+    z0v.textContent = z[0].toFixed(1); z1v.textContent = z[1].toFixed(1);
+    z2v.textContent = z[2].toFixed(1); tempv.textContent = T.toFixed(1);
+    var p = softmax(z, T);
+    var win = p.indexOf(Math.max.apply(null, p));
+
+    var svg = document.getElementById('svg');
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var W = 360, H = 220, ml = 34, mr = 12, mt = 14, mb = 34, plotH = H - mt - mb;
+    // y gridlines at 0, .25, .5, .75, 1
+    for (var g = 0; g <= 1.0001; g += 0.25) {
+      var y = mt + plotH * (1 - g);
+      svg.appendChild(el('line', { x1: ml, y1: y, x2: W - mr, y2: y, stroke: 'var(--grid)', 'stroke-width': 1 }));
+      var t = el('text', { x: ml - 5, y: y + 3, 'text-anchor': 'end', 'font-size': 9, fill: 'var(--muted)' });
+      t.textContent = g.toFixed(2); svg.appendChild(t);
+    }
+    var labels = ['z1', 'z2', 'z3'];
+    var bw = (W - ml - mr) / 3, inner = bw * 0.5;
+    for (var i = 0; i < 3; i++) {
+      var cx = ml + bw * i + bw / 2;
+      var bh = plotH * p[i];
+      svg.appendChild(el('rect', { x: cx - inner / 2, y: mt + plotH - bh, width: inner, height: Math.max(0, bh),
+        rx: 3, fill: i === win ? 'var(--win)' : 'var(--accent)' }));
+      var pv = el('text', { x: cx, y: mt + plotH - bh - 5, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 600,
+        fill: i === win ? 'var(--win)' : 'var(--accent)' });
+      pv.textContent = p[i].toFixed(3); svg.appendChild(pv);
+      var lab = el('text', { x: cx, y: H - 18, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--muted)' });
+      lab.textContent = labels[i]; svg.appendChild(lab);
+      var sc = el('text', { x: cx, y: H - 6, 'text-anchor': 'middle', 'font-size': 9, fill: 'var(--muted)' });
+      sc.textContent = 'score ' + z[i].toFixed(1); svg.appendChild(sc);
+    }
+    document.getElementById('sum').textContent =
+      'probabilities: [' + p.map(function (v) { return v.toFixed(3); }).join(', ') + ']   sum = ' +
+      p.reduce(function (a, b) { return a + b; }, 0).toFixed(3);
+  }
+
+  var z0 = document.getElementById('z0'), z1 = document.getElementById('z1'),
+      z2 = document.getElementById('z2'), temp = document.getElementById('temp');
+  [z0, z1, z2, temp].forEach(function (s) { s.addEventListener('input', draw); });
+  draw();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gradient Descent Explorer</title>
+<style>
+  :root { --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; --ball:#dc2626; --path:#f59e0b; --grid:#eef2f7; --bg:#fff; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; }
+  body { font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink); background:var(--bg); padding:12px 14px; }
+  .wrap { max-width:640px; margin:0 auto; }
+  h2 { font-size:1.05rem; margin:0 0 2px; }
+  .sub { color:var(--muted); font-size:.84rem; margin:0 0 10px; }
+  .controls { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:8px; }
+  .sl { display:flex; align-items:center; gap:8px; font-size:.85rem; flex:1 1 220px; min-width:200px; }
+  .sl input { flex:1; }
+  .sl .val { width:38px; text-align:right; font-family:ui-monospace,Consolas,monospace; }
+  .btns { display:flex; gap:6px; }
+  .btns button { border:1px solid var(--line); background:#f9fafb; color:var(--ink); padding:6px 11px; border-radius:7px; cursor:pointer; font-size:.82rem; }
+  .btns button.run { background:var(--accent); border-color:var(--accent); color:#fff; }
+  svg { width:100%; height:230px; display:block; background:#fff; border:1px solid var(--line); border-radius:8px; }
+  .readout { font-family:ui-monospace,Consolas,monospace; font-size:.82rem; color:var(--ink); margin-top:6px; }
+  .note { font-size:.8rem; margin-top:6px; line-height:1.45; }
+  .note b { color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2>Gradient descent</h2>
+  <p class="sub">The loss is a bowl and the weight is a position on it. Each step moves downhill by learning rate times the gradient: w &larr; w - lr &middot; g. Watch the learning rate decide what happens.</p>
+
+  <div class="controls">
+    <div class="sl">learning rate<input type="range" id="lr" min="0.05" max="2.2" step="0.05" value="0.9"><span class="val" id="lrv"></span></div>
+    <div class="btns">
+      <button id="step">step</button>
+      <button id="run" class="run">run</button>
+      <button id="reset">reset</button>
+      <button id="rand">new start</button>
+    </div>
+  </div>
+
+  <svg id="svg" viewBox="0 0 480 230" preserveAspectRatio="xMidYMid meet"></svg>
+  <div class="readout" id="readout"></div>
+  <p class="note" id="note"></p>
+</div>
+
+<script>
+(function () {
+  var NS = "http://www.w3.org/2000/svg";
+  function el(t, a) { var e = document.createElementNS(NS, t); for (var k in a) e.setAttribute(k, a[k]); return e; }
+  function L(w) { return 0.5 * w * w; }   // the bowl
+  function grad(w) { return w; }          // dL/dw
+
+  var WMIN = -3.4, WMAX = 3.4, LMAX = 6;
+  var start = 2.8, w = start, steps = 0, hist = [start], timer = null;
+
+  var W = 480, H = 230, ml = 34, mr = 12, mt = 12, mb = 26;
+  function sx(x) { return ml + (x - WMIN) / (WMAX - WMIN) * (W - ml - mr); }
+  function sy(y) { return mt + (1 - Math.min(y, LMAX) / LMAX) * (H - mt - mb); }
+
+  function draw() {
+    var svg = document.getElementById('svg');
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    // gridlines
+    for (var gy = 0; gy <= LMAX; gy += 2) svg.appendChild(el('line', { x1: ml, y1: sy(gy), x2: W - mr, y2: sy(gy), stroke: 'var(--grid)', 'stroke-width': 1 }));
+    svg.appendChild(el('line', { x1: sx(0), y1: mt, x2: sx(0), y2: H - mb, stroke: '#e5e7eb', 'stroke-width': 1 }));
+    // bowl
+    var pts = [];
+    for (var i = 0; i <= 120; i++) { var x = WMIN + (WMAX - WMIN) * i / 120; pts.push(sx(x) + ',' + sy(L(x))); }
+    svg.appendChild(el('polyline', { points: pts.join(' '), fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2 }));
+    // descent path
+    for (var k = 0; k < hist.length; k++) {
+      var wx = hist[k], cx = sx(wx), cy = sy(L(wx));
+      if (k > 0) {
+        var px = sx(hist[k - 1]), py = sy(L(hist[k - 1]));
+        svg.appendChild(el('line', { x1: px, y1: py, x2: cx, y2: cy, stroke: 'var(--path)', 'stroke-width': 1.4, 'stroke-opacity': 0.7 }));
+      }
+      if (k < hist.length - 1) svg.appendChild(el('circle', { cx: cx, cy: cy, r: 3, fill: 'var(--path)' }));
+    }
+    // current ball (clamp for display if diverging)
+    var cw = Math.max(WMIN, Math.min(WMAX, w));
+    svg.appendChild(el('circle', { cx: sx(cw), cy: sy(L(cw)), r: 6, fill: 'var(--ball)' }));
+    // labels
+    var xl = el('text', { x: W - mr, y: H - 8, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--muted)' }); xl.textContent = 'weight w'; svg.appendChild(xl);
+    var yl = el('text', { x: ml + 2, y: mt + 8, 'font-size': 10, fill: 'var(--muted)' }); yl.textContent = 'loss'; svg.appendChild(yl);
+
+    var lr = parseFloat(document.getElementById('lr').value);
+    document.getElementById('readout').textContent =
+      'step ' + steps + '   w = ' + w.toFixed(3) + '   loss = ' + L(w).toFixed(3) + '   gradient = ' + grad(w).toFixed(3);
+    var n = document.getElementById('note'), msg;
+    if (lr < 0.3) msg = '<b>Tiny steps:</b> it heads to the bottom, but slowly.';
+    else if (lr < 0.95) msg = '<b>Good range:</b> a steady march down to the minimum.';
+    else if (lr <= 1.05) msg = '<b>Near ideal for this bowl:</b> almost one jump to the bottom.';
+    else if (lr < 1.95) msg = '<b>Overshooting:</b> it zig-zags across the valley but still settles.';
+    else if (lr <= 2.05) msg = '<b>On the edge:</b> it bounces side to side without settling.';
+    else msg = '<b>Too big:</b> each step overshoots more than the last and the loss blows up.';
+    if (Math.abs(w) > 100) msg = '<b>Diverged:</b> the learning rate was too large and the loss exploded. Lower it and reset.';
+    n.innerHTML = msg;
+  }
+
+  function step() {
+    var lr = parseFloat(document.getElementById('lr').value);
+    w = w - lr * grad(w);
+    steps++;
+    hist.push(w);
+    if (hist.length > 40) hist.shift();
+    if (Math.abs(w) > 1e4 || Math.abs(w) < 1e-4 || steps > 80) stopRun();
+    draw();
+  }
+  function stopRun() { if (timer) { clearInterval(timer); timer = null; document.getElementById('run').textContent = 'run'; } }
+  function toggleRun() {
+    if (timer) { stopRun(); return; }
+    document.getElementById('run').textContent = 'pause';
+    timer = setInterval(step, 350);
+  }
+  function reset() { stopRun(); w = start; steps = 0; hist = [start]; draw(); }
+  function rnd() { stopRun(); start = Math.round((Math.random() * 5 - 2.5) * 100) / 100; if (Math.abs(start) < 1) start += 2; reset(); }
+
+  document.getElementById('lr').addEventListener('input', function () { document.getElementById('lrv').textContent = parseFloat(this.value).toFixed(2); draw(); });
+  document.getElementById('step').addEventListener('click', step);
+  document.getElementById('run').addEventListener('click', toggleRun);
+  document.getElementById('reset').addEventListener('click', reset);
+  document.getElementById('rand').addEventListener('click', rnd);
+
+  document.getElementById('lrv').textContent = '0.90';
+  draw();
+})();
+</script>
+</body>
+</html>

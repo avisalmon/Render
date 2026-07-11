@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adding an Activation</title>
+<style>
+  :root { --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; --pos:#2563eb; --neg:#dc2626; --grid:#eef2f7; --bg:#fff; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; }
+  body { font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink); background:var(--bg); padding:12px 14px; }
+  .wrap { max-width:760px; margin:0 auto; }
+  h2 { font-size:1.05rem; margin:0 0 2px; }
+  .sub { color:var(--muted); font-size:.84rem; margin:0 0 10px; }
+  .controls { display:flex; flex-wrap:wrap; gap:14px; align-items:flex-end; margin-bottom:8px; }
+  .grp { display:flex; flex-direction:column; gap:3px; }
+  .grp > span { font-size:.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+  .btns { display:flex; gap:5px; flex-wrap:wrap; }
+  .btns button { border:1px solid var(--line); background:#f9fafb; color:var(--ink); padding:5px 9px; border-radius:7px; cursor:pointer; font-size:.8rem; }
+  .btns button.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .stepper { display:flex; align-items:center; gap:6px; }
+  .stepper button { width:24px; height:24px; border:1px solid var(--line); background:#f9fafb; border-radius:6px; cursor:pointer; }
+  .stepper .v { min-width:14px; text-align:center; font-weight:600; }
+  .rnd { border:1px solid var(--line); background:#f9fafb; padding:6px 10px; border-radius:7px; cursor:pointer; font-size:.82rem; }
+  .stage { display:flex; gap:12px; flex-wrap:wrap; align-items:flex-start; }
+  .panel { flex:1 1 300px; min-width:260px; }
+  .ptitle { font-size:.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; margin:2px 0 3px; }
+  svg { width:100%; height:190px; display:block; background:#fff; border:1px solid var(--line); border-radius:8px; }
+  .node { fill:#eef2ff; stroke:var(--accent); stroke-width:1.5; }
+  .nlabel { font-size:10px; fill:var(--ink); text-anchor:middle; dominant-baseline:middle; }
+  .note { font-size:.8rem; color:var(--muted); margin-top:8px; line-height:1.45; }
+  .note b { color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2>Adding an activation</h2>
+  <p class="sub">The same little network (1 input, a hidden layer, 1 output). With no activation its output is always a straight line. Add an activation and it can bend into curves.</p>
+
+  <div class="controls">
+    <div class="grp"><span>Activation</span>
+      <div class="btns" id="acts">
+        <button data-a="none">None</button>
+        <button data-a="relu" class="active">ReLU</button>
+        <button data-a="tanh">Tanh</button>
+        <button data-a="sigmoid">Sigmoid</button>
+        <button data-a="gelu">GELU</button>
+      </div>
+    </div>
+    <div class="grp"><span>Hidden neurons</span>
+      <div class="stepper" id="hid"><button data-d="-1">-</button><span class="v" id="hidV"></span><button data-d="1">+</button></div>
+    </div>
+    <button class="rnd" id="rnd">Randomize</button>
+  </div>
+
+  <div class="stage">
+    <div class="panel">
+      <div class="ptitle">The network</div>
+      <svg id="net" viewBox="0 0 300 240" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+    <div class="panel">
+      <div class="ptitle">Its output as x sweeps: y(x)</div>
+      <svg id="plot" viewBox="0 0 320 240" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+  </div>
+
+  <p class="note" id="note"></p>
+</div>
+
+<script>
+(function () {
+  var NS = "http://www.w3.org/2000/svg";
+  var state = { act: 'relu', H: 4, w: [], b: [], v: [], c: 0 };
+  var seed = 3;
+  function rr(a, b) { seed++; return Math.round((a + (b - a) * ((Math.sin(seed * 12.9898) * 43758.5453 % 1 + 1) % 1)) * 100) / 100; }
+
+  var ACT = {
+    none:    function (z) { return z; },
+    relu:    function (z) { return Math.max(0, z); },
+    tanh:    function (z) { return Math.tanh(z); },
+    sigmoid: function (z) { return 1 / (1 + Math.exp(-z)); },
+    gelu:    function (z) { return 0.5 * z * (1 + Math.tanh(0.7978845608 * (z + 0.044715 * z * z * z))); }
+  };
+
+  function randomize() {
+    state.w = []; state.b = []; state.v = [];
+    for (var i = 0; i < state.H; i++) { state.w.push(rr(-2.5, 2.5)); state.b.push(rr(-2.5, 2.5)); state.v.push(rr(-1.5, 1.5)); }
+    state.c = rr(-0.5, 0.5);
+  }
+  function yOf(x) {
+    var act = ACT[state.act], s = state.c;
+    for (var i = 0; i < state.H; i++) s += state.v[i] * act(state.w[i] * x + state.b[i]);
+    return s;
+  }
+
+  function el(t, a) { var e = document.createElementNS(NS, t); for (var k in a) e.setAttribute(k, a[k]); return e; }
+
+  function drawNet() {
+    var svg = document.getElementById('net');
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var xL = 45, xM = 150, xR = 255, r = 15, top = 30, bot = 210;
+    var hy = [];
+    if (state.H === 1) hy = [(top + bot) / 2];
+    else { var st = (bot - top) / (state.H - 1); for (var i = 0; i < state.H; i++) hy.push(top + i * st); }
+    var iy = 120, oy = 120;
+    function edge(x1, y1, x2, y2, w) {
+      svg.appendChild(el('line', { x1: x1, y1: y1, x2: x2, y2: y2, stroke: w >= 0 ? 'var(--pos)' : 'var(--neg)',
+        'stroke-width': Math.max(0.6, Math.min(4, Math.abs(w) * 1.6)), 'stroke-opacity': 0.5 }));
+    }
+    for (var i = 0; i < state.H; i++) { edge(xL, iy, xM, hy[i], state.w[i]); edge(xM, hy[i], xR, oy, state.v[i]); }
+    function node(cx, cy, label) {
+      svg.appendChild(el('circle', { cx: cx, cy: cy, r: r, class: 'node' }));
+      var t = el('text', { x: cx, y: cy, class: 'nlabel' }); t.textContent = label; svg.appendChild(t);
+    }
+    node(xL, iy, 'x');
+    for (var j = 0; j < state.H; j++) node(xM, hy[j], state.act === 'none' ? 'lin' : state.act.slice(0, 4));
+    node(xR, oy, 'y');
+    var cap = el('text', { x: xM, y: 224, 'text-anchor': 'middle', 'font-size': 9, fill: 'var(--muted)' });
+    cap.textContent = 'hidden: ' + (state.act === 'none' ? 'no activation' : state.act);
+    svg.appendChild(cap);
+  }
+
+  function drawPlot() {
+    var svg = document.getElementById('plot');
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var W = 320, H = 240, ml = 34, mr = 12, mt = 12, mb = 24, XMIN = -4, XMAX = 4;
+    var ys = [], N = 160;
+    for (var i = 0; i <= N; i++) ys.push(yOf(XMIN + (XMAX - XMIN) * i / N));
+    var lo = Math.min.apply(null, ys), hi = Math.max.apply(null, ys);
+    if (hi - lo < 1e-6) { hi += 1; lo -= 1; }
+    var pad = (hi - lo) * 0.12; lo -= pad; hi += pad;
+    function sx(x) { return ml + (x - XMIN) / (XMAX - XMIN) * (W - ml - mr); }
+    function sy(y) { return mt + (hi - y) / (hi - lo) * (H - mt - mb); }
+    for (var gx = XMIN; gx <= XMAX; gx += 2) svg.appendChild(el('line', { x1: sx(gx), y1: mt, x2: sx(gx), y2: H - mb, stroke: 'var(--grid)', 'stroke-width': 1 }));
+    if (lo <= 0 && hi >= 0) svg.appendChild(el('line', { x1: ml, y1: sy(0), x2: W - mr, y2: sy(0), stroke: '#cbd5e1', 'stroke-width': 1 }));
+    svg.appendChild(el('line', { x1: sx(0), y1: mt, x2: sx(0), y2: H - mb, stroke: '#cbd5e1', 'stroke-width': 1 }));
+    var pts = [];
+    for (var k = 0; k <= N; k++) pts.push(sx(XMIN + (XMAX - XMIN) * k / N) + ',' + sy(ys[k]));
+    svg.appendChild(el('polyline', { points: pts.join(' '), fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2.4 }));
+    var tx = el('text', { x: W - mr, y: H - 8, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--muted)' }); tx.textContent = 'x'; svg.appendChild(tx);
+  }
+
+  function updateNote() {
+    document.getElementById('hidV').textContent = state.H;
+    document.querySelector('#hid button[data-d="-1"]').disabled = state.H <= 1;
+    document.querySelector('#hid button[data-d="1"]').disabled = state.H >= 6;
+    var n = document.getElementById('note');
+    if (state.act === 'none')
+      n.innerHTML = '<b>No activation:</b> the output is a straight line, no matter how many hidden neurons you add. That is why stacking linear layers alone is not enough.';
+    else
+      n.innerHTML = '<b>' + state.act + ':</b> the output can bend. Each hidden neuron adds one kink, so more neurons let the same network fit more complex shapes. Hit Randomize a few times.';
+  }
+
+  function draw() { drawNet(); drawPlot(); updateNote(); }
+
+  document.getElementById('acts').addEventListener('click', function (e) {
+    var a = e.target.getAttribute('data-a'); if (!a) return;
+    state.act = a;
+    Array.prototype.forEach.call(this.children, function (b) { b.classList.toggle('active', b.getAttribute('data-a') === a); });
+    draw();
+  });
+  document.getElementById('hid').addEventListener('click', function (e) {
+    var d = e.target.getAttribute('data-d'); if (!d) return;
+    state.H = Math.max(1, Math.min(6, state.H + (+d))); randomize(); draw();
+  });
+  document.getElementById('rnd').addEventListener('click', function () { randomize(); draw(); });
+
+  randomize(); draw();
+})();
+</script>
+</body>
+</html>

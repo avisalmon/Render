@@ -547,6 +547,10 @@ class Course(models.Model):
     # certificate is issued only on approval. Until then the project is hidden from
     # all public/cross-user views. See CourseCompletionReview.
     requires_review = models.BooleanField(default=False)
+    # Notebook-graded courses: to earn the certificate the learner must upload and
+    # pass (AI grade > 75) at least notebook_min_pass_count Jupyter notebooks.
+    requires_notebooks = models.BooleanField(default=False)
+    notebook_min_pass_count = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     # Set whenever the course is changed in the Authoring Studio (i.e. directly on
     # the running instance). Lets the local<->prod sync warn before overwriting.
@@ -795,6 +799,30 @@ class CourseProjectSubmission(models.Model):
 
 
 
+class NotebookSubmission(models.Model):
+    """A Jupyter notebook the learner uploaded for a lesson, graded by AI (0-100).
+    One per user+lesson; re-uploading replaces it.  `passed` means grade > 75."""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notebook_submissions")
+    video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name="notebook_submissions")
+    notebook_file = models.FileField(upload_to="lesson_notebooks/", blank=True)
+    filename = models.CharField(max_length=200, blank=True)
+    grade = models.PositiveSmallIntegerField(default=0)   # 0-100
+    passed = models.BooleanField(default=False)           # grade > 75
+    feedback = models.TextField(blank=True)
+    recommendation = models.TextField(blank=True)
+    graded_model = models.CharField(max_length=30, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = [("user", "video")]
+        ordering = ["-updated_at"]
+
+    def __str__(self):
+        return f"Notebook: {self.user.username} - {self.video} ({self.grade})"
+
+
 class LessonModelSubmission(models.Model):
     """A project the learner submitted for a specific lesson of a project course.
     Optional per lesson - a learner submits one whenever a lesson had them build
@@ -985,6 +1013,7 @@ class SeatEvent(models.Model):
 
 CONTEXT_TYPE_CHOICES = [
     ("course_tutor", "Course Tutor"),
+    ("lesson_tutor", "Lesson Tutor"),
     ("code_helper", "Code Helper"),
     ("general_assistant", "General Assistant"),
 ]
@@ -1002,6 +1031,10 @@ class SystemPrompt(models.Model):
 class ChatSession(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="chat_sessions")
     course = models.ForeignKey(Course, on_delete=models.SET_NULL, blank=True, null=True)
+    # Set for per-lesson "Explain more" tutor sessions; null for general/course chats.
+    video = models.ForeignKey(
+        "Video", on_delete=models.CASCADE, blank=True, null=True, related_name="chat_sessions"
+    )
     context_type = models.CharField(
         max_length=30, choices=CONTEXT_TYPE_CHOICES, default="general_assistant"
     )

@@ -206,6 +206,9 @@ urlpatterns = [
     # Courses (singular - SPR-1.4/1.5 entitlement-gated)
     path("course/<slug:slug>/", views.course_detail_view, name="course_detail"),
     path("course/<slug:slug>/lesson/<int:lesson_order>/", views.lesson_view, name="lesson_view"),
+    path("course/<slug:slug>/lesson/<int:lesson_order>/explain/", views.lesson_explain, name="lesson_explain"),
+    path("course/<slug:slug>/lesson/<int:lesson_order>/notebook/", views.lesson_notebook_submit, name="lesson_notebook_submit"),
+    path("course/<slug:slug>/lesson/<int:lesson_order>/notebook/view/", views.lesson_notebook_view, name="lesson_notebook_view"),
     # Certificate
     path("certificate/<uuid:cert_id>/", views.certificate_view, name="certificate_view"),
     path("certificate/<uuid:cert_id>/image.png", views.certificate_image, name="certificate_image"),

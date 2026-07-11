@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cross-entropy Explorer</title>
+<style>
+  :root { --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; --true:#059669; --bad:#dc2626; --grid:#eef2f7; --bg:#fff; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; }
+  body { font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink); background:var(--bg); padding:12px 14px; }
+  .wrap { max-width:680px; margin:0 auto; }
+  h2 { font-size:1.05rem; margin:0 0 2px; }
+  .sub { color:var(--muted); font-size:.84rem; margin:0 0 10px; }
+  .controls { display:flex; flex-wrap:wrap; gap:14px; align-items:flex-end; margin-bottom:10px; }
+  .sliders { flex:1 1 230px; min-width:210px; }
+  .sl { display:flex; align-items:center; gap:8px; margin:5px 0; font-size:.84rem; }
+  .sl label { width:52px; color:var(--muted); font-family:ui-monospace,Consolas,monospace; }
+  .sl input { flex:1; }
+  .sl .val { width:36px; text-align:right; font-family:ui-monospace,Consolas,monospace; }
+  .grp { display:flex; flex-direction:column; gap:3px; }
+  .grp > span { font-size:.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+  .btns { display:flex; gap:5px; }
+  .btns button { border:1px solid var(--line); background:#f9fafb; color:var(--ink); padding:5px 11px; border-radius:7px; cursor:pointer; font-size:.82rem; }
+  .btns button.active { background:var(--true); border-color:var(--true); color:#fff; }
+  .stage { display:flex; gap:14px; flex-wrap:wrap; align-items:flex-start; }
+  .panel { flex:1 1 260px; min-width:250px; }
+  .ptitle { font-size:.74rem; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; margin:2px 0 3px; }
+  svg { width:100%; height:180px; display:block; background:#fff; border:1px solid var(--line); border-radius:8px; }
+  .loss { font-size:1.15rem; font-weight:700; margin-top:6px; }
+  .loss span { font-family:ui-monospace,Consolas,monospace; }
+  .note { font-size:.8rem; color:var(--muted); margin-top:8px; line-height:1.45; }
+  .note b { color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2>Cross-entropy explorer</h2>
+  <p class="sub">Cross-entropy looks only at the probability the model gave the TRUE class. loss = -log(that probability).</p>
+
+  <div class="controls">
+    <div class="sliders">
+      <div class="sl"><label>logit 0</label><input type="range" id="z0" min="-5" max="5" step="0.1" value="2.0"><span class="val" id="z0v"></span></div>
+      <div class="sl"><label>logit 1</label><input type="range" id="z1" min="-5" max="5" step="0.1" value="0.5"><span class="val" id="z1v"></span></div>
+      <div class="sl"><label>logit 2</label><input type="range" id="z2" min="-5" max="5" step="0.1" value="0.1"><span class="val" id="z2v"></span></div>
+    </div>
+    <div class="grp"><span>True class</span>
+      <div class="btns" id="truth">
+        <button data-t="0" class="active">0</button>
+        <button data-t="1">1</button>
+        <button data-t="2">2</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="panel">
+      <div class="ptitle">softmax probabilities (true class in green)</div>
+      <svg id="bars" viewBox="0 0 320 190" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+    <div class="panel">
+      <div class="ptitle">loss = -log(p) for the true class</div>
+      <svg id="curve" viewBox="0 0 320 190" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+  </div>
+  <div class="loss" id="lossOut"></div>
+  <p class="note" id="note"></p>
+</div>
+
+<script>
+(function () {
+  var NS = "http://www.w3.org/2000/svg";
+  function el(t, a) { var e = document.createElementNS(NS, t); for (var k in a) e.setAttribute(k, a[k]); return e; }
+  var trueClass = 0;
+
+  function softmax(z) {
+    var m = Math.max.apply(null, z);
+    var ex = z.map(function (v) { return Math.exp(v - m); });
+    var s = ex.reduce(function (a, b) { return a + b; }, 0);
+    return ex.map(function (v) { return v / s; });
+  }
+
+  function draw() {
+    var z = [parseFloat(z0.value), parseFloat(z1.value), parseFloat(z2.value)];
+    z0v.textContent = z[0].toFixed(1); z1v.textContent = z[1].toFixed(1); z2v.textContent = z[2].toFixed(1);
+    var p = softmax(z);
+    var pt = p[trueClass];
+    var loss = -Math.log(Math.max(pt, 1e-9));
+
+    // bars
+    var bs = document.getElementById('bars');
+    while (bs.firstChild) bs.removeChild(bs.firstChild);
+    var W = 320, H = 190, ml = 30, mr = 10, mt = 12, mb = 26, ph = H - mt - mb;
+    for (var g = 0; g <= 1.0001; g += 0.5) {
+      var y = mt + ph * (1 - g);
+      bs.appendChild(el('line', { x1: ml, y1: y, x2: W - mr, y2: y, stroke: 'var(--grid)', 'stroke-width': 1 }));
+      var tg = el('text', { x: ml - 4, y: y + 3, 'text-anchor': 'end', 'font-size': 9, fill: 'var(--muted)' }); tg.textContent = g.toFixed(1); bs.appendChild(tg);
+    }
+    var bw = (W - ml - mr) / 3;
+    for (var i = 0; i < 3; i++) {
+      var cx = ml + bw * i + bw / 2, bh = ph * p[i], isT = i === trueClass;
+      bs.appendChild(el('rect', { x: cx - bw * 0.28, y: mt + ph - bh, width: bw * 0.56, height: Math.max(0, bh), rx: 3,
+        fill: isT ? 'var(--true)' : '#c7d2fe' }));
+      var pv = el('text', { x: cx, y: mt + ph - bh - 4, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 600, fill: isT ? 'var(--true)' : 'var(--accent)' });
+      pv.textContent = p[i].toFixed(2); bs.appendChild(pv);
+      var lb = el('text', { x: cx, y: H - 14, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--muted)' }); lb.textContent = 'class ' + i; bs.appendChild(lb);
+      if (isT) { var tt = el('text', { x: cx, y: H - 3, 'text-anchor': 'middle', 'font-size': 8.5, fill: 'var(--true)' }); tt.textContent = 'true'; bs.appendChild(tt); }
+    }
+
+    // loss curve L = -ln(p)
+    var cs = document.getElementById('curve');
+    while (cs.firstChild) cs.removeChild(cs.firstChild);
+    var LMAX = 4.2, cml = 30, cmr = 12, cmt = 12, cmb = 24, cpw = W - cml - cmr, cph = H - cmt - cmb;
+    function sx(pp) { return cml + pp * cpw; }
+    function sy(L) { return cmt + (1 - Math.min(L, LMAX) / LMAX) * cph; }
+    for (var gy = 0; gy <= LMAX; gy += 1) {
+      cs.appendChild(el('line', { x1: cml, y1: sy(gy), x2: W - cmr, y2: sy(gy), stroke: 'var(--grid)', 'stroke-width': 1 }));
+      var t2 = el('text', { x: cml - 4, y: sy(gy) + 3, 'text-anchor': 'end', 'font-size': 9, fill: 'var(--muted)' }); t2.textContent = gy; cs.appendChild(t2);
+    }
+    var pts = [];
+    for (var k = 1; k <= 100; k++) { var pp = k / 100; pts.push(sx(pp) + ',' + sy(-Math.log(pp))); }
+    cs.appendChild(el('polyline', { points: pts.join(' '), fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2 }));
+    // current point
+    var px = sx(pt), py = sy(loss);
+    cs.appendChild(el('line', { x1: px, y1: cmt, x2: px, y2: H - cmb, stroke: 'var(--true)', 'stroke-width': 1, 'stroke-dasharray': '3 3' }));
+    cs.appendChild(el('circle', { cx: px, cy: py, r: 4.5, fill: 'var(--true)' }));
+    var xl = el('text', { x: (W) / 2, y: H - 6, 'text-anchor': 'middle', 'font-size': 9, fill: 'var(--muted)' }); xl.textContent = 'p(true class) ->'; cs.appendChild(xl);
+
+    document.getElementById('lossOut').innerHTML =
+      'p(true class) = <span>' + pt.toFixed(3) + '</span>  ->  cross-entropy loss = <span style="color:' +
+      (loss < 0.4 ? 'var(--true)' : (loss > 1.5 ? 'var(--bad)' : 'var(--ink)')) + '">' + loss.toFixed(3) + '</span>';
+    document.getElementById('note').innerHTML = pt > 0.8
+      ? '<b>Confident and correct:</b> most probability is on the true class, so the loss is near 0.'
+      : (pt < 0.2
+        ? '<b>The true class was starved:</b> little probability on the right answer, so -log blows the loss up. Confident-and-wrong is the most expensive case.'
+        : 'Move probability onto the <b>true</b> (green) class to drive the loss down, or onto a wrong class to push it up.');
+  }
+
+  var z0 = document.getElementById('z0'), z1 = document.getElementById('z1'), z2 = document.getElementById('z2');
+  [z0, z1, z2].forEach(function (s) { s.addEventListener('input', draw); });
+  document.getElementById('truth').addEventListener('click', function (e) {
+    var t = e.target.getAttribute('data-t'); if (t === null) return;
+    trueClass = +t;
+    Array.prototype.forEach.call(this.children, function (b) { b.classList.toggle('active', b.getAttribute('data-t') === t); });
+    draw();
+  });
+  draw();
+})();
+</script>
+</body>
+</html>

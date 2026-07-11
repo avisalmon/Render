@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linear Layer Explorer</title>
+<style>
+  :root { --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; --bg:#fff;
+          --pos:#2563eb; --neg:#dc2626; --hl:#f59e0b; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; }
+  body { font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink); background:var(--bg); padding:12px 14px; }
+  .wrap { max-width: 820px; margin:0 auto; }
+  h2 { font-size:1.05rem; margin:0 0 2px; }
+  .sub { color:var(--muted); font-size:.84rem; margin:0 0 10px; }
+
+  .controls { display:flex; flex-wrap:wrap; gap:14px; align-items:flex-end; margin-bottom:8px; }
+  .grp { display:flex; flex-direction:column; gap:3px; }
+  .grp > span { font-size:.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+  .stepper { display:flex; align-items:center; gap:6px; }
+  .stepper button, .rnd { border:1px solid var(--line); background:#f9fafb; color:var(--ink); border-radius:6px; cursor:pointer; }
+  .stepper button { width:26px; height:26px; font-size:1rem; line-height:1; }
+  .stepper button:disabled { opacity:.35; cursor:not-allowed; }
+  .stepper .v { min-width:16px; text-align:center; font-weight:600; }
+  .rnd { padding:6px 10px; font-size:.82rem; }
+
+  .stage { display:flex; gap:12px; flex-wrap:wrap; align-items:flex-start; }
+  .panel { flex:1 1 320px; min-width:280px; }
+  .panel-title { font-size:.78rem; color:var(--muted); margin:2px 0 4px; text-transform:uppercase; letter-spacing:.03em; }
+  svg { width:100%; height:auto; display:block; }
+  .node { fill:#eef2ff; stroke:var(--accent); stroke-width:1.5; }
+  .node.bias { fill:#f3f4f6; stroke:var(--muted); }
+  .node.hl { fill:#fff7ed; stroke:var(--hl); stroke-width:2.5; }
+  .nlabel { font-size:11px; fill:var(--ink); text-anchor:middle; dominant-baseline:middle; }
+  .nval { font-size:9px; fill:var(--muted); text-anchor:middle; }
+  .edge { stroke-linecap:round; cursor:pointer; }
+  .edge.hl { stroke:var(--hl) !important; }
+
+  .eq { display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-family:ui-monospace,Consolas,monospace; }
+  .op { font-size:1.2rem; color:var(--muted); }
+  .vec, .mat { display:inline-grid; gap:3px; padding:5px; border:1px solid var(--line); border-radius:8px; }
+  .cell { min-width:34px; text-align:center; padding:3px 4px; border-radius:5px; font-size:.8rem; }
+  .cell.w { cursor:pointer; background:#f8fafc; }
+  .cell.w.pos { color:var(--pos); }
+  .cell.w.neg { color:var(--neg); }
+  .cell.w.hl, .cell.hl { background:#fff7ed; outline:1.5px solid var(--hl); }
+  .cell.y { background:#ecfdf5; font-weight:600; }
+  .lab { font-size:.7rem; color:var(--muted); text-align:center; margin-bottom:2px; }
+  .sliders { margin-top:10px; }
+  .sliders .row { display:flex; align-items:center; gap:8px; margin:3px 0; font-size:.8rem; }
+  .sliders input[type=range] { flex:1; }
+  .note { font-size:.8rem; color:var(--muted); margin-top:10px; line-height:1.45; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2>Linear layer explorer</h2>
+  <p class="sub">The drawing on the left and the matrix on the right are the same thing. Hover a line or a matrix cell to see the match.</p>
+
+  <div class="controls">
+    <div class="grp"><span>Inputs (in)</span>
+      <div class="stepper" id="inCtl"><button data-d="-1">-</button><span class="v" id="inV"></span><button data-d="1">+</button></div>
+    </div>
+    <div class="grp"><span>Outputs (out)</span>
+      <div class="stepper" id="outCtl"><button data-d="-1">-</button><span class="v" id="outV"></span><button data-d="1">+</button></div>
+    </div>
+    <button class="rnd" id="rnd">Randomize weights</button>
+  </div>
+
+  <div class="stage">
+    <div class="panel">
+      <div class="panel-title">The neural-network drawing</div>
+      <svg id="svg" viewBox="0 0 360 320" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+    <div class="panel">
+      <div class="panel-title">The same thing: y = W x + b</div>
+      <div class="eq" id="eq"></div>
+      <div class="sliders" id="sliders"></div>
+    </div>
+  </div>
+
+  <p class="note" id="note"></p>
+</div>
+
+<script>
+(function () {
+  var SVGNS = "http://www.w3.org/2000/svg";
+  var state = { n: 3, m: 2, W: [], b: [], x: [] };
+
+  function rnd(a, b) { return Math.round((a + (b - a) * (0.3 + 0.7 * ((Math.sin(seed++) + 1) / 2))) * 10) / 10; }
+  var seed = 7;
+  function randomize() {
+    state.W = []; state.b = [];
+    for (var i = 0; i < state.m; i++) {
+      var row = [];
+      for (var j = 0; j < state.n; j++) row.push(rnd(-1.5, 1.5));
+      state.W.push(row);
+      state.b.push(rnd(-1, 1));
+    }
+  }
+  function ensureX() {
+    while (state.x.length < state.n) state.x.push(1.0);
+    state.x.length = state.n;
+  }
+  function y(i) {
+    var s = state.b[i];
+    for (var j = 0; j < state.n; j++) s += state.W[i][j] * state.x[j];
+    return Math.round(s * 100) / 100;
+  }
+
+  var svg = document.getElementById('svg');
+  var eq = document.getElementById('eq');
+  var sliders = document.getElementById('sliders');
+
+  function ys(k, total, top, bot) {
+    // vertical positions for k nodes between top and bot
+    if (k === 1) return [(top + bot) / 2];
+    var out = [], step = (bot - top) / (k - 1);
+    for (var i = 0; i < k; i++) out.push(top + i * step);
+    return out;
+  }
+
+  function hl(i, j, on) {
+    // highlight edge (i,j), W cell (i,j), input node j, output node i
+    document.querySelectorAll('[data-edge="' + i + '_' + j + '"]').forEach(function (e) { e.classList.toggle('hl', on); });
+    document.querySelectorAll('[data-w="' + i + '_' + j + '"]').forEach(function (e) { e.classList.toggle('hl', on); });
+    document.querySelectorAll('[data-innode="' + j + '"]').forEach(function (e) { e.classList.toggle('hl', on); });
+    document.querySelectorAll('[data-outnode="' + i + '"]').forEach(function (e) { e.classList.toggle('hl', on); });
+  }
+  function hlRow(i, on) {
+    for (var j = 0; j < state.n; j++) hl(i, j, on);
+    document.querySelectorAll('[data-outnode="' + i + '"]').forEach(function (e) { e.classList.toggle('hl', on); });
+  }
+
+  function drawDiagram() {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var W = 360, H = 320, xL = 70, xR = 290, r = 16;
+    var inY = ys(state.n, H, 40, H - 70);
+    var outY = ys(state.m, H, 60, H - 90);
+    var biasY = H - 30;
+    // edges first (under nodes)
+    function line(x1, y1, x2, y2, w, edgeId) {
+      var l = document.createElementNS(SVGNS, 'line');
+      l.setAttribute('x1', x1); l.setAttribute('y1', y1); l.setAttribute('x2', x2); l.setAttribute('y2', y2);
+      l.setAttribute('class', 'edge');
+      l.setAttribute('stroke', w >= 0 ? 'var(--pos)' : 'var(--neg)');
+      l.setAttribute('stroke-width', Math.max(0.7, Math.min(6, Math.abs(w) * 2.2)));
+      l.setAttribute('stroke-opacity', 0.55);
+      if (edgeId) { l.setAttribute('data-edge', edgeId);
+        var m = edgeId.split('_'); l.addEventListener('mouseenter', function(){hl(+m[0],+m[1],true);}); l.addEventListener('mouseleave', function(){hl(+m[0],+m[1],false);}); }
+      svg.appendChild(l);
+    }
+    for (var i = 0; i < state.m; i++) {
+      for (var j = 0; j < state.n; j++) line(xL, inY[j], xR, outY[i], state.W[i][j], i + '_' + j);
+      // bias edge (dashed)
+      var bl = document.createElementNS(SVGNS, 'line');
+      bl.setAttribute('x1', xL); bl.setAttribute('y1', biasY); bl.setAttribute('x2', xR); bl.setAttribute('y2', outY[i]);
+      bl.setAttribute('stroke', 'var(--muted)'); bl.setAttribute('stroke-width', 1); bl.setAttribute('stroke-dasharray', '3 3'); bl.setAttribute('stroke-opacity', .4);
+      svg.appendChild(bl);
+    }
+    function node(cx, cy, label, val, cls, attr) {
+      var c = document.createElementNS(SVGNS, 'circle');
+      c.setAttribute('cx', cx); c.setAttribute('cy', cy); c.setAttribute('r', r);
+      c.setAttribute('class', 'node ' + (cls || ''));
+      if (attr) c.setAttribute(attr[0], attr[1]);
+      svg.appendChild(c);
+      var t = document.createElementNS(SVGNS, 'text');
+      t.setAttribute('x', cx); t.setAttribute('y', cy - 1); t.setAttribute('class', 'nlabel'); t.textContent = label;
+      svg.appendChild(t);
+      if (val !== null) {
+        var v = document.createElementNS(SVGNS, 'text');
+        v.setAttribute('x', cx); v.setAttribute('y', cy + 9); v.setAttribute('class', 'nval'); v.textContent = val;
+        svg.appendChild(v);
+      }
+    }
+    for (var j = 0; j < state.n; j++) node(xL, inY[j], 'x' + (j + 1), state.x[j], '', ['data-innode', j]);
+    node(xL, biasY, '1', null, 'bias', null);
+    for (var i2 = 0; i2 < state.m; i2++) {
+      (function (i) {
+        node(xR, outY[i], 'y' + (i + 1), y(i), '', ['data-outnode', i]);
+      })(i2);
+    }
+    // hover output node -> highlight its row
+    svg.querySelectorAll('[data-outnode]').forEach(function (el) {
+      var i = +el.getAttribute('data-outnode');
+      el.addEventListener('mouseenter', function () { hlRow(i, true); });
+      el.addEventListener('mouseleave', function () { hlRow(i, false); });
+    });
+  }
+
+  function vec(items, cls, kind) {
+    var d = document.createElementNS ? document.createElement('div') : null;
+    d.className = 'vec';
+    d.style.gridTemplateColumns = '1fr';
+    items.forEach(function (it, idx) {
+      var c = document.createElement('div');
+      c.className = 'cell ' + (cls || '');
+      c.textContent = it;
+      if (kind === 'x') c.setAttribute('data-innode', idx);
+      if (kind === 'y') c.setAttribute('data-outnode', idx);
+      d.appendChild(c);
+    });
+    return d;
+  }
+  function labeled(label, node) {
+    var box = document.createElement('div');
+    var l = document.createElement('div'); l.className = 'lab'; l.textContent = label;
+    box.appendChild(l); box.appendChild(node); return box;
+  }
+  function op(sym) { var s = document.createElement('span'); s.className = 'op'; s.textContent = sym; return s; }
+
+  function drawMatrix() {
+    eq.innerHTML = '';
+    // y
+    var yv = vec(Array.from({ length: state.m }, function (_, i) { return y(i); }), 'y', 'y');
+    eq.appendChild(labeled('y', yv));
+    eq.appendChild(op('='));
+    // W
+    var Wm = document.createElement('div'); Wm.className = 'mat';
+    Wm.style.gridTemplateColumns = 'repeat(' + state.n + ', 1fr)';
+    for (var i = 0; i < state.m; i++) for (var j = 0; j < state.n; j++) {
+      (function (i, j) {
+        var c = document.createElement('div');
+        var w = state.W[i][j];
+        c.className = 'cell w ' + (w >= 0 ? 'pos' : 'neg');
+        c.textContent = w.toFixed(1);
+        c.setAttribute('data-w', i + '_' + j);
+        c.addEventListener('mouseenter', function () { hl(i, j, true); });
+        c.addEventListener('mouseleave', function () { hl(i, j, false); });
+        Wm.appendChild(c);
+      })(i, j);
+    }
+    eq.appendChild(labeled('W', Wm));
+    // x
+    var xv = vec(state.x.map(function (v) { return v.toFixed(1); }), '', 'x');
+    eq.appendChild(labeled('x', xv));
+    eq.appendChild(op('+'));
+    // b
+    var bv = vec(state.b.map(function (v) { return v.toFixed(1); }), '', null);
+    eq.appendChild(labeled('b', bv));
+  }
+
+  function drawSliders() {
+    sliders.innerHTML = '<div class="lab" style="text-align:left">Drag the inputs x and watch y change</div>';
+    for (var j = 0; j < state.n; j++) {
+      (function (j) {
+        var row = document.createElement('div'); row.className = 'row';
+        var lab = document.createElement('span'); lab.textContent = 'x' + (j + 1);
+        lab.setAttribute('data-innode', j);
+        var s = document.createElement('input'); s.type = 'range'; s.min = -2; s.max = 2; s.step = 0.5; s.value = state.x[j];
+        var val = document.createElement('span'); val.style.minWidth = '28px'; val.textContent = state.x[j].toFixed(1);
+        s.addEventListener('input', function () { state.x[j] = parseFloat(s.value); val.textContent = state.x[j].toFixed(1); refreshValues(); });
+        row.appendChild(lab); row.appendChild(s); row.appendChild(val);
+        sliders.appendChild(row);
+      })(j);
+    }
+  }
+
+  function refreshValues() {
+    // update only the numbers that depend on x (y in svg + y/x cells in matrix)
+    drawDiagram(); drawMatrix();
+  }
+
+  function full() { ensureX(); drawDiagram(); drawMatrix(); drawSliders(); updateSteppers(); }
+
+  function updateSteppers() {
+    document.getElementById('inV').textContent = state.n;
+    document.getElementById('outV').textContent = state.m;
+    document.querySelector('#inCtl button[data-d="-1"]').disabled = state.n <= 1;
+    document.querySelector('#inCtl button[data-d="1"]').disabled = state.n >= 5;
+    document.querySelector('#outCtl button[data-d="-1"]').disabled = state.m <= 1;
+    document.querySelector('#outCtl button[data-d="1"]').disabled = state.m >= 4;
+    document.getElementById('note').innerHTML =
+      'Each line in the drawing is one number in W: the line from x<sub>' + 'j' + '</sub> to y<sub>i</sub> is W[i][j]. '
+      + 'Computing y<sub>i</sub> means multiplying each input by its line and adding them up, plus the bias b<sub>i</sub>. '
+      + 'That is exactly a matrix (' + state.m + '&times;' + state.n + ') times the vector x plus b.';
+  }
+
+  document.getElementById('inCtl').addEventListener('click', function (e) {
+    var d = e.target.getAttribute('data-d'); if (!d) return;
+    state.n = Math.max(1, Math.min(5, state.n + (+d))); randomize(); ensureX(); full();
+  });
+  document.getElementById('outCtl').addEventListener('click', function (e) {
+    var d = e.target.getAttribute('data-d'); if (!d) return;
+    state.m = Math.max(1, Math.min(4, state.m + (+d))); randomize(); full();
+  });
+  document.getElementById('rnd').addEventListener('click', function () { randomize(); full(); });
+
+  randomize(); full();
+})();
+</script>
+</body>
+</html>

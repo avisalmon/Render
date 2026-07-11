@@ -435,3 +435,256 @@ def _estimate_cost(model, prompt_tokens, completion_tokens):
     }
     r = rates.get(model, rates["gpt-4o-mini"])
     return prompt_tokens * r["prompt"] + completion_tokens * r["completion"]
+
+
+def _lesson_tutor_system_prompt(video):
+    """System prompt for the per-lesson 'Explain more' tutor: the lesson content
+    plus instructions to stay focused and explain it further."""
+    notes = (video.notes_markdown or "")[:6000]
+    course = video.course
+    return (
+        "You are a patient, encouraging tutor sitting next to a single lesson of an "
+        "online course. The student is reading this lesson and wants you to explain it "
+        "further: go deeper, give small examples, or talk it through. Stay focused on "
+        "THIS lesson and the course's subject. Be concise and clear, build on the "
+        "lesson's own wording, and prefer short concrete examples. If the student asks "
+        "something unrelated, gently steer back to the lesson. Answer in the student's "
+        "language (the lesson itself is in English). Do not invent course facts beyond "
+        "the lesson; if something is outside it, say so briefly.\n\n"
+        f"Course: {course.title}\n"
+        f"Lesson: {video.title}\n\n"
+        "Lesson content (markdown):\n-----\n"
+        f"{notes}\n-----"
+    )
+
+
+def handle_lesson_explain(user, video, message_text):
+    """Per-lesson 'Explain more' tutor.  Keeps ONE persistent ChatSession per
+    (user, lesson) so the whole thread is resent every turn and reads like an
+    ongoing consultation.  Returns (response_dict, status_code)."""
+    message_text = (message_text or "").strip()
+    if not message_text:
+        return {"error": "Empty question."}, 400
+
+    under_cap, _ = check_cost_cap()
+    if not under_cap:
+        return {"error": "Monthly AI budget reached. The tutor is temporarily disabled."}, 429
+
+    # Staff (course authors) bypass the per-tier daily token limit while building.
+    if not getattr(user, "is_staff", False):
+        allowed, reason = check_rate_limit(user)
+        if not allowed:
+            return {"error": reason}, 429
+
+    is_safe, _ = check_moderation(message_text, user=user)
+    if not is_safe:
+        return {"error": "Your message was flagged by our content filter. Please rephrase."}, 400
+
+    from .safety import text_relevance_ok
+    ctx = f"AI tutor for lesson '{video.title}' in course {video.course.slug}"
+    if not text_relevance_ok(message_text, context_label=ctx, user=user)[0]:
+        return {"error": "Let's keep this about the lesson. Please rephrase your question."}, 400
+
+    session, _ = ChatSession.objects.get_or_create(
+        user=user, video=video, context_type="lesson_tutor",
+        defaults={"course": video.course},
+    )
+
+    user_msg = ChatMessage.objects.create(session=session, role="user", content=message_text, tokens_used=0)
+
+    # Resend the whole thread (capped) so the tutor remembers the discussion.
+    history = list(session.messages.order_by("created_at").values("role", "content"))
+    messages = [{"role": m["role"], "content": m["content"]} for m in history][-40:]
+
+    result = call_openai(
+        messages, model=settings.OPENAI_DEFAULT_MODEL,
+        system_prompt=_lesson_tutor_system_prompt(video),
+    )
+
+    # A failed real API call returns 0 tokens.  Don't persist the turn, so the
+    # student can retry cleanly instead of seeing an error stuck in the thread.
+    if not _is_stub_mode() and result["prompt_tokens"] == 0 and result["completion_tokens"] == 0:
+        user_msg.delete()
+        return {"error": "The tutor is unavailable right now. Please try again in a moment."}, 503
+
+    ChatMessage.objects.create(
+        session=session, role="assistant",
+        content=result["content"], tokens_used=result["completion_tokens"],
+    )
+    UsageLog.objects.create(
+        user=user, session=session, model=result["model"],
+        prompt_tokens=result["prompt_tokens"], completion_tokens=result["completion_tokens"],
+        cost_usd=_estimate_cost(result["model"], result["prompt_tokens"], result["completion_tokens"]),
+    )
+    return {"content": result["content"]}, 200
+
+
+def _cell_src(cell):
+    s = cell.get("source", "")
+    return "".join(s) if isinstance(s, list) else (s or "")
+
+
+def _cell_outputs(cell):
+    """Text (stream / execute_result / error) outputs of a code cell; images skipped."""
+    outs = []
+    for o in cell.get("outputs", []):
+        ot = o.get("output_type")
+        if ot == "stream":
+            t = o.get("text", "")
+        elif ot in ("execute_result", "display_data"):
+            t = (o.get("data", {}) or {}).get("text/plain", "")
+        elif ot == "error":
+            t = "ERROR: {}: {}".format(o.get("ename", ""), o.get("evalue", ""))
+        else:
+            t = ""
+        if isinstance(t, list):
+            t = "".join(t)
+        if t:
+            outs.append(t)
+    return "\n".join(outs).strip()
+
+
+def _split_answer(src):
+    """Split an exercise cell into (provided, student_answer): everything AFTER a
+    'YOUR CODE HERE' marker line is the student's own work.  Without a marker,
+    non-comment lines are treated as the answer.  This keeps provided setup lines
+    from being counted as the student's work."""
+    lines = src.splitlines()
+    marker = None
+    for i, ln in enumerate(lines):
+        if "your code here" in ln.lower():
+            marker = i
+            break
+    if marker is not None:
+        provided = "\n".join(lines[:marker]).strip()
+        student = "\n".join(lines[marker + 1:]).strip()
+    else:
+        provided = "\n".join(ln for ln in lines if ln.strip().startswith("#")).strip()
+        student = "\n".join(ln for ln in lines if ln.strip() and not ln.strip().startswith("#")).strip()
+    return provided, student
+
+
+def _extract_exercise_cells(nb, limit=12000):
+    """Return (text, n_exercises, n_attempted) for ONLY the student's task cells:
+    code cells tagged 'exercise' (or, when untagged, placeholder cells before a
+    Solutions header).  Cells tagged 'solution' are always excluded.  Each cell's
+    ANSWER (code after 'YOUR CODE HERE') is separated from the provided setup, so the
+    grader judges only the student's own work."""
+    cells = nb.get("cells", [])
+    picked = []
+    for c in cells:
+        if c.get("cell_type") != "code":
+            continue
+        tags = (c.get("metadata", {}) or {}).get("tags", []) or []
+        if "solution" in tags:
+            continue
+        if "exercise" in tags:
+            picked.append(c)
+    if not picked:
+        # Fallback for untagged notebooks: placeholder cells before a Solutions
+        # header.  Match the "## Solutions" HEADER, not prose that merely mentions it.
+        sol_at = None
+        for i, c in enumerate(cells):
+            if c.get("cell_type") == "markdown" and _cell_src(c).strip().lower().startswith("## solution"):
+                sol_at = i
+                break
+        for i, c in enumerate(cells):
+            if c.get("cell_type") != "code" or (sol_at is not None and i > sol_at):
+                continue
+            low = _cell_src(c).lower()
+            if "your code here" in low or "# todo" in low or "your answer" in low:
+                picked.append(c)
+    parts, attempted = [], 0
+    for n, c in enumerate(picked, 1):
+        provided, student = _split_answer(_cell_src(c))
+        out = _cell_outputs(c)
+        if student or out:
+            attempted += 1
+        block = "EXERCISE {}:\n[task/provided]\n{}\n[student answer]\n{}".format(
+            n, provided or "(none)", student or "(EMPTY - not attempted)")
+        if out:
+            block += "\n[output]\n" + out
+        parts.append(block)
+    return "\n\n".join(parts)[:limit], len(picked), attempted
+
+
+def grade_notebook(user, video, notebook_bytes):
+    """Grade an uploaded .ipynb against its lesson with a cheap model.  Reads the
+    code and its saved outputs (never executes anything).  Returns
+    (result_dict, status_code); result = {grade, feedback, recommendation, model}."""
+    import json
+
+    under_cap, _ = check_cost_cap()
+    if not under_cap:
+        return {"error": "Monthly AI budget reached. Grading is temporarily disabled."}, 429
+    if not getattr(user, "is_staff", False):
+        allowed, reason = check_rate_limit(user)
+        if not allowed:
+            return {"error": reason}, 429
+
+    try:
+        nb = json.loads(notebook_bytes.decode("utf-8", "ignore"))
+    except Exception:
+        return {"error": "That file is not a valid Jupyter notebook (.ipynb)."}, 400
+    extracted, n_ex, n_attempted = _extract_exercise_cells(nb)
+    if n_ex == 0:
+        return {"error": "No exercises found in this notebook. Make sure you uploaded the "
+                         "right lesson's notebook (the one with the tasks to complete)."}, 400
+
+    model = settings.OPENAI_DEFAULT_MODEL
+    # Deterministic: nothing attempted -> 0, without spending a model call.
+    if n_attempted == 0:
+        return {"grade": 0, "model": "rule",
+                "feedback": "None of the {} exercises are done yet - every task cell is still "
+                            "empty.".format(n_ex),
+                "recommendation": "Write your answer under each 'YOUR CODE HERE' line, run the "
+                                  "cells, then upload again."}, 200
+
+    if _is_stub_mode():
+        return {"grade": 80, "model": model,
+                "feedback": "[Stub] Grades only the student's answers. Set OPENAI_API_KEY for real grading.",
+                "recommendation": "[Stub] Enable the API key."}, 200
+
+    system = (
+        "You grade a student's answers to a lesson's exercises. For each exercise you get the "
+        "[task/provided] (given to the student, NOT their work), the [student answer] (their "
+        "own code), and any [output]. Grade ONLY the [student answer] parts. An answer shown "
+        "as '(EMPTY - not attempted)' scores 0 for that exercise. The overall grade is the "
+        "percentage of exercises the student both attempted AND got correct. Be specific and "
+        "constructive. Respond ONLY as JSON: "
+        '{"grade": <int 0-100>, "feedback": "<what is right, what is missing or wrong>", '
+        '"recommendation": "<concrete next steps>"}.'
+    )
+    user_msg = (
+        f"LESSON: {video.title}\n\n{(video.notes_markdown or '')[:2500]}\n\n"
+        f"There are {n_ex} exercises; the student attempted {n_attempted}.\n\n"
+        f"EXERCISES:\n{extracted}"
+    )
+    try:
+        import openai
+
+        client = openai.OpenAI(api_key=settings.OPENAI_API_KEY, max_retries=1)
+        resp = client.chat.completions.create(
+            model=model, temperature=0, max_tokens=500,
+            response_format={"type": "json_object"},
+            messages=[{"role": "system", "content": system},
+                      {"role": "user", "content": user_msg}],
+        )
+        data = json.loads(resp.choices[0].message.content or "{}")
+        u = resp.usage
+        UsageLog.objects.create(
+            user=user, session=None, model=model,
+            prompt_tokens=u.prompt_tokens, completion_tokens=u.completion_tokens,
+            cost_usd=_estimate_cost(model, u.prompt_tokens, u.completion_tokens),
+        )
+        g = data.get("grade")
+        g = int(g) if isinstance(g, (int, float)) else 0
+        return {
+            "grade": max(0, min(100, g)),
+            "feedback": str(data.get("feedback", ""))[:2000],
+            "recommendation": str(data.get("recommendation", ""))[:2000],
+            "model": model,
+        }, 200
+    except Exception as e:
+        logger.error("Notebook grader error: %s", e)
+        return {"error": "The grader is unavailable right now. Please try again in a moment."}, 503

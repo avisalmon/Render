@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Activation Explorer</title>
+<style>
+  :root { --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; --bg:#fff; --grid:#eef2f7; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; }
+  body { font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink); background:var(--bg); padding:12px 14px; }
+  .wrap { max-width:640px; margin:0 auto; }
+  h2 { font-size:1.05rem; margin:0 0 2px; }
+  .sub { color:var(--muted); font-size:.84rem; margin:0 0 10px; }
+  .btns { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+  .btns button { border:1px solid var(--line); background:#f9fafb; color:var(--ink); padding:6px 12px; border-radius:8px; cursor:pointer; font-size:.85rem; }
+  .btns button.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+  svg { width:100%; height:200px; display:block; background:#fff; border:1px solid var(--line); border-radius:8px; }
+  .readout { font-family:ui-monospace,Consolas,monospace; font-size:.9rem; margin:8px 0 4px; }
+  .formula { color:var(--muted); }
+  .sl { display:flex; align-items:center; gap:10px; margin-top:6px; font-size:.85rem; }
+  .sl input { flex:1; }
+  .note { font-size:.8rem; color:var(--muted); margin-top:8px; line-height:1.45; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2>Activation explorer</h2>
+  <p class="sub">Pick an activation and drag the input x to see what it does to a single number, and the shape of its curve.</p>
+
+  <div class="btns" id="btns">
+    <button data-fn="relu" class="active">ReLU</button>
+    <button data-fn="sigmoid">Sigmoid</button>
+    <button data-fn="tanh">Tanh</button>
+    <button data-fn="gelu">GELU</button>
+  </div>
+
+  <svg id="svg" viewBox="0 0 380 260" preserveAspectRatio="xMidYMid meet"></svg>
+
+  <div class="readout" id="readout"></div>
+  <div class="sl">x = <input type="range" id="x" min="-5" max="5" step="0.1" value="1.2"><span id="xval" style="min-width:38px"></span></div>
+  <p class="note" id="note"></p>
+</div>
+
+<script>
+(function () {
+  var SVGNS = "http://www.w3.org/2000/svg";
+  var svg = document.getElementById('svg');
+  var W = 380, H = 260, ml = 40, mr = 16, mt = 16, mb = 30;
+  var XMIN = -5, XMAX = 5;
+
+  var FNS = {
+    relu:    { f: function (x) { return Math.max(0, x); }, y: [-1, 5.4], formula: "relu(x) = max(0, x)" },
+    sigmoid: { f: function (x) { return 1 / (1 + Math.exp(-x)); }, y: [-0.2, 1.2], formula: "sigmoid(x) = 1 / (1 + e^-x)" },
+    tanh:    { f: function (x) { return Math.tanh(x); }, y: [-1.2, 1.2], formula: "tanh(x)" },
+    gelu:    { f: function (x) { return 0.5 * x * (1 + Math.tanh(Math.sqrt(2 / Math.PI) * (x + 0.044715 * x * x * x))); }, y: [-1, 5.4], formula: "gelu(x): a smooth ReLU (used by the transformer)" }
+  };
+  var cur = 'relu';
+
+  function sx(x) { return ml + (x - XMIN) / (XMAX - XMIN) * (W - ml - mr); }
+  function sy(y, yr) { return mt + (yr[1] - y) / (yr[1] - yr[0]) * (H - mt - mb); }
+
+  function el(tag, attrs) { var e = document.createElementNS(SVGNS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); return e; }
+
+  function draw() {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var fn = FNS[cur], yr = fn.y;
+    // grid + axes
+    for (var gx = XMIN; gx <= XMAX; gx++) svg.appendChild(el('line', { x1: sx(gx), y1: mt, x2: sx(gx), y2: H - mb, stroke: 'var(--grid)', 'stroke-width': 1 }));
+    // y=0 axis (if in range)
+    if (yr[0] <= 0 && yr[1] >= 0) svg.appendChild(el('line', { x1: ml, y1: sy(0, yr), x2: W - mr, y2: sy(0, yr), stroke: '#cbd5e1', 'stroke-width': 1.2 }));
+    // x=0 axis
+    svg.appendChild(el('line', { x1: sx(0), y1: mt, x2: sx(0), y2: H - mb, stroke: '#cbd5e1', 'stroke-width': 1.2 }));
+    // curve
+    var pts = [];
+    for (var i = 0; i <= 200; i++) { var x = XMIN + (XMAX - XMIN) * i / 200; pts.push(sx(x) + ',' + sy(fn.f(x), yr)); }
+    svg.appendChild(el('polyline', { points: pts.join(' '), fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2.4 }));
+    // current point
+    var xv = parseFloat(document.getElementById('x').value), yv = fn.f(xv);
+    var cx = sx(xv), cy = sy(Math.max(yr[0], Math.min(yr[1], yv)), yr);
+    svg.appendChild(el('line', { x1: cx, y1: H - mb, x2: cx, y2: cy, stroke: 'var(--muted)', 'stroke-width': 1, 'stroke-dasharray': '3 3' }));
+    svg.appendChild(el('line', { x1: ml, y1: cy, x2: cx, y2: cy, stroke: 'var(--muted)', 'stroke-width': 1, 'stroke-dasharray': '3 3' }));
+    svg.appendChild(el('circle', { cx: cx, cy: cy, r: 5, fill: 'var(--accent)' }));
+    // axis labels
+    var tx = el('text', { x: W - mr, y: sy(0, yr) - 4, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--muted)' }); tx.textContent = 'x'; svg.appendChild(tx);
+    document.getElementById('readout').innerHTML = '<b>' + cur + '(' + xv.toFixed(1) + ')</b> = ' + yv.toFixed(3) +
+      '  <span class="formula">' + fn.formula + '</span>';
+    document.getElementById('xval').textContent = xv.toFixed(1);
+  }
+
+  document.getElementById('btns').addEventListener('click', function (e) {
+    var fn = e.target.getAttribute('data-fn'); if (!fn) return;
+    cur = fn;
+    Array.prototype.forEach.call(this.children, function (b) { b.classList.toggle('active', b.getAttribute('data-fn') === fn); });
+    draw();
+  });
+  document.getElementById('x').addEventListener('input', draw);
+  document.getElementById('note').textContent =
+    'ReLU zeros out negatives; sigmoid squashes into (0,1); tanh into (-1,1); GELU is a smooth ReLU. ' +
+    'An activation runs on each number on its own, so it never changes the tensor shape.';
+  draw();
+})();
+</script>
+</body>
+</html>

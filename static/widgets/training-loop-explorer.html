@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Training Loop</title>
+<style>
+  :root { --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; --on:#059669; --loss:#ea580c; --bg:#fff; --card:#f7f9fc; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; }
+  body { font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink); background:var(--bg); padding:12px 14px; }
+  .wrap { max-width:720px; margin:0 auto; }
+  h2 { font-size:1.05rem; margin:0 0 2px; }
+  .sub { color:var(--muted); font-size:.84rem; margin:0 0 10px; }
+  .counters { font-family:ui-monospace,Consolas,monospace; font-size:.9rem; margin-bottom:8px; }
+  .counters b { color:var(--accent); }
+  .flow { display:flex; align-items:stretch; gap:6px; flex-wrap:wrap; }
+  .card { flex:1 1 120px; min-width:110px; border:1.5px solid var(--line); background:var(--card); border-radius:9px; padding:8px 9px; transition:all .12s; }
+  .card .n { font-size:.66rem; color:var(--muted); }
+  .card .t { font-weight:600; font-size:.9rem; margin-top:2px; }
+  .card.active { border-color:var(--on); background:#ecfdf5; box-shadow:0 0 0 2px rgba(5,150,105,.15); }
+  .arrow { align-self:center; color:var(--muted); font-size:1rem; }
+  .desc { min-height:20px; font-size:.85rem; color:var(--ink); margin:10px 0 6px; }
+  .lossrow { display:flex; align-items:center; gap:10px; font-size:.82rem; }
+  .lossrow .lab { color:var(--muted); width:120px; }
+  .bar { flex:1; height:12px; background:#f1f5f9; border-radius:6px; overflow:hidden; }
+  .bar > i { display:block; height:100%; background:var(--loss); width:100%; transition:width .2s; }
+  .lossval { font-family:ui-monospace,Consolas,monospace; width:52px; text-align:right; color:var(--loss); }
+  .controls { display:flex; gap:6px; margin-top:10px; }
+  .controls button { border:1px solid var(--line); background:#f9fafb; color:var(--ink); padding:6px 12px; border-radius:7px; cursor:pointer; font-size:.83rem; }
+  .controls button.run { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .note { font-size:.8rem; color:var(--muted); margin-top:8px; line-height:1.45; }
+  .note b { color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2>The training loop</h2>
+  <p class="sub">The same four steps run on every batch. All the batches make one epoch; you do several epochs. Press run.</p>
+
+  <div class="counters">epoch <b id="ep"></b> / 3 &nbsp;&middot;&nbsp; batch <b id="ba"></b> / 6 &nbsp;&middot;&nbsp; weight updates: <b id="up"></b></div>
+
+  <div class="flow" id="flow"></div>
+
+  <div class="desc" id="desc"></div>
+  <div class="lossrow"><span class="lab">loss (illustrative)</span><span class="bar"><i id="barfill"></i></span><span class="lossval" id="lossval"></span></div>
+
+  <div class="controls">
+    <button id="run" class="run">run</button>
+    <button id="step">step</button>
+    <button id="reset">reset</button>
+  </div>
+  <p class="note"><b>Note:</b> a real MNIST epoch is about 938 batches, not 6, so a real run makes hundreds of updates per epoch. The loss shown here is just an illustrative trend; every update nudges the weights and the loss drifts down.</p>
+</div>
+
+<script>
+(function () {
+  var STEPS = [
+    { t: 'next batch', d: 'Grab the next batch of images and labels from the DataLoader.' },
+    { t: 'forward + loss', d: 'Run the batch through the model and score it with cross-entropy.' },
+    { t: 'backward', d: 'loss.backward() fills every weight’s gradient by backpropagation.' },
+    { t: 'step', d: 'optimizer.step() nudges every weight downhill; zero_grad clears for next time.' }
+  ];
+  var EPOCHS = 3, BATCHES = 6;
+  var active = 0, epoch = 1, batch = 1, updates = 0, done = false, timer = null;
+
+  var flow = document.getElementById('flow');
+  STEPS.forEach(function (s, i) {
+    if (i > 0) { var a = document.createElement('div'); a.className = 'arrow'; a.textContent = '→'; flow.appendChild(a); }
+    var c = document.createElement('div'); c.className = 'card'; c.id = 'card' + i;
+    c.innerHTML = '<div class="n">step ' + (i + 1) + '</div><div class="t">' + s.t + '</div>';
+    flow.appendChild(c);
+  });
+
+  function lossAt(u) { return 0.05 + 2.25 * Math.exp(-0.12 * u); }
+
+  function render() {
+    for (var i = 0; i < 4; i++) document.getElementById('card' + i).classList.toggle('active', i === active && !done);
+    document.getElementById('ep').textContent = epoch;
+    document.getElementById('ba').textContent = batch;
+    document.getElementById('up').textContent = updates;
+    document.getElementById('desc').textContent = done ? 'Training complete. Every weight was nudged ' + updates + ' times.' : (STEPS[active].t + ': ' + STEPS[active].d);
+    var L = lossAt(updates);
+    document.getElementById('lossval').textContent = L.toFixed(3);
+    document.getElementById('barfill').style.width = Math.max(2, (L / 2.3) * 100) + '%';
+  }
+
+  function tick() {
+    if (done) { stop(); return; }
+    active++;
+    if (active > 3) {                 // finished all four steps -> one batch done
+      active = 0; updates++; batch++;
+      if (batch > BATCHES) { batch = 1; epoch++; }
+      if (epoch > EPOCHS) { done = true; epoch = EPOCHS; batch = BATCHES; stop(); }
+    }
+    render();
+  }
+  function stop() { if (timer) { clearInterval(timer); timer = null; } document.getElementById('run').textContent = 'run'; }
+  function run() { if (timer) { stop(); return; } if (done) reset(); document.getElementById('run').textContent = 'pause'; timer = setInterval(tick, 550); }
+  function reset() { stop(); active = 0; epoch = 1; batch = 1; updates = 0; done = false; render(); }
+
+  document.getElementById('run').addEventListener('click', run);
+  document.getElementById('step').addEventListener('click', function () { if (done) reset(); else tick(); });
+  document.getElementById('reset').addEventListener('click', reset);
+  render();
+})();
+</script>
+</body>
+</html>
