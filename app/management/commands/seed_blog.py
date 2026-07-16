@@ -5,8 +5,10 @@ Runs on deploy (see render.yaml). Two idempotent steps:
 1. Copy the committed blog media assets (covers, inline diagrams, the research
    PDF) from app/seed_assets/blog/ onto MEDIA_ROOT, because media/ lives on the
    persistent disk and is not in git.
-2. Create the posts from app/seed_assets/blog_posts.json - but ONLY if the blog
-   has no posts yet, so later edits made in prod (admin) are never clobbered.
+2. Sync posts from app/seed_assets/blog_posts.json: create missing slugs, leave
+   existing ones untouched so prod-admin edits are never clobbered, EXCEPT posts
+   flagged "managed": true, whose content is refreshed from JSON on every deploy
+   (dev/JSON is the source of truth for them).
 """
 import json
 import os
@@ -42,10 +44,14 @@ class Command(BaseCommand):
                         copied += 1
         self.stdout.write(f"blog assets ensured ({copied} copied)")
 
-        # 2) Create any missing posts (matched by slug). Existing posts are left
-        #    untouched, so edits made in prod are never overwritten; only posts
-        #    that do not exist yet are added. To add a new post to prod, add it
-        #    to blog_posts.json (+ its assets) and deploy.
+        # 2) Sync posts from blog_posts.json.
+        #    - Missing slug: created.
+        #    - Existing slug WITHOUT "managed": true: left untouched, so edits
+        #      made in prod admin are never overwritten (the original design).
+        #    - Existing slug WITH "managed": true: content fields are refreshed
+        #      from JSON on every deploy (dev/JSON is the source of truth for it),
+        #      while view_count and created_at are preserved. Mark a post managed
+        #      when you want to keep editing it in dev and push those edits live.
         path = os.path.join(seed, "blog_posts.json")
         if not os.path.exists(path):
             self.stdout.write("no blog_posts.json; nothing to seed")
@@ -57,26 +63,31 @@ class Command(BaseCommand):
                   or User.objects.order_by("id").first())
 
         created = 0
+        updated = 0
         for d in data:
-            if BlogPost.objects.filter(slug=d["slug"]).exists():
-                continue
-            post = BlogPost(
-                title=d["title"],
-                subtitle=d.get("subtitle", ""),
-                slug=d["slug"],
-                excerpt=d.get("excerpt", ""),
-                body=d.get("body", ""),
-                tags=d.get("tags", []),
-                cover=(d.get("cover") or None),
-                status=d.get("status", "draft"),
-                is_featured=d.get("is_featured", False),
-                feature_order=d.get("feature_order", 0),
-                author=author,
-            )
+            existing = BlogPost.objects.filter(slug=d["slug"]).first()
+            if existing and not d.get("managed"):
+                continue  # never clobber a post edited in prod
+
+            post = existing or BlogPost(slug=d["slug"], author=author)
+            post.title = d["title"]
+            post.subtitle = d.get("subtitle", "")
+            post.excerpt = d.get("excerpt", "")
+            post.body = d.get("body", "")
+            post.tags = d.get("tags", [])
+            post.cover = (d.get("cover") or None)
+            post.status = d.get("status", "draft")
+            post.is_featured = d.get("is_featured", False)
+            post.feature_order = d.get("feature_order", 0)
             pub = d.get("published_at")
             if pub:
                 post.published_at = parse_datetime(pub)
+            if not post.author_id:
+                post.author = author
             post.save()
+
+            # Rebuild the gallery from JSON (safe: images are re-copied in step 1).
+            post.images.all().delete()
             for im in d.get("images", []):
                 BlogImage.objects.create(
                     post=post,
@@ -86,5 +97,9 @@ class Command(BaseCommand):
                     caption=im.get("caption", ""),
                     order=im.get("order", 0),
                 )
-            created += 1
-        self.stdout.write(f"seeded {created} blog posts")
+
+            if existing:
+                updated += 1
+            else:
+                created += 1
+        self.stdout.write(f"seeded {created} blog posts, updated {updated} managed")
