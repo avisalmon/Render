@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Embedding Space Explorer</title>
+<style>
+  :root { --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; --res:#dc2626; --grid:#eef2f7; --bg:#fff;
+          --people:#2563eb; --geo:#059669; --animal:#b45309; --fruit:#7c3aed; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; }
+  body { font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink); background:var(--bg); padding:12px 14px; }
+  .wrap { max-width:680px; margin:0 auto; }
+  h2 { font-size:1.05rem; margin:0 0 2px; }
+  .sub { color:var(--muted); font-size:.84rem; margin:0 0 10px; }
+  svg { width:100%; height:340px; display:block; background:#fff; border:1px solid var(--line); border-radius:8px; }
+  .controls { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:10px 0 4px; font-size:.9rem; }
+  .controls select { border:1px solid var(--line); border-radius:6px; padding:3px 6px; font-size:.85rem; background:#fff; }
+  .controls .op { font-weight:700; color:var(--muted); }
+  .presets { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
+  .presets button { border:1px solid var(--line); background:#f9fafb; border-radius:7px; padding:4px 9px; cursor:pointer; font-size:.8rem; }
+  .presets button:hover { border-color:var(--accent); }
+  .result { font-size:1rem; margin-top:4px; }
+  .result b { color:var(--res); }
+  .result .eq { font-family:ui-monospace,Consolas,monospace; }
+  .note { font-size:.8rem; color:var(--muted); margin-top:8px; line-height:1.45; }
+  .note b { color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2>Words as points in space</h2>
+  <p class="sub">Similar words sit close together. And the arrow between two words is a direction of meaning you can reuse: A minus B plus C lands near a new word.</p>
+
+  <div class="presets" id="presets">
+    <button data-a="king" data-b="man" data-c="woman">king − man + woman</button>
+    <button data-a="Paris" data-b="France" data-c="Italy">Paris − France + Italy</button>
+    <button data-a="Tokyo" data-b="Japan" data-c="France">Tokyo − Japan + France</button>
+    <button data-clear="1">clear</button>
+  </div>
+  <div class="controls">
+    <select id="selA"></select><span class="op">−</span>
+    <select id="selB"></select><span class="op">+</span>
+    <select id="selC"></select>
+  </div>
+
+  <svg id="svg" viewBox="0 0 560 340" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <marker id="arrA" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--muted)"/></marker>
+      <marker id="arrR" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--res)"/></marker>
+    </defs>
+  </svg>
+
+  <div class="result" id="result"></div>
+  <p class="note"><b>Left to right there is a gender direction; the same arrow moves man to woman and king to queen.</b> That is why king − man + woman lands on queen. The countries have their own "capital of" direction. Real embeddings do this in hundreds of dimensions and across millions of words; this is a hand-placed 2D sketch so the geometry is easy to see.</p>
+</div>
+
+<script>
+(function () {
+  var NS = "http://www.w3.org/2000/svg";
+  function el(t, a, txt) { var e = document.createElementNS(NS, t); for (var k in a) e.setAttribute(k, a[k]); if (txt != null) e.textContent = txt; return e; }
+
+  // Hand-placed 2D coordinates. Gender (left->right) and royalty (down->up) form a
+  // consistent lattice so analogies land exactly; countries form a second lattice.
+  var W = [
+    { w: "man",   x: 2.0, y: 1.4, g: "people" }, { w: "woman", x: 3.6, y: 1.6, g: "people" },
+    { w: "king",  x: 2.2, y: 3.2, g: "people" }, { w: "queen", x: 3.8, y: 3.4, g: "people" },
+    { w: "boy",   x: 1.9, y: 0.3, g: "people" }, { w: "girl",  x: 3.5, y: 0.5, g: "people" },
+    { w: "France", x: 5.6, y: 1.0, g: "geo" }, { w: "Paris", x: 5.6, y: 2.1, g: "geo" },
+    { w: "Italy",  x: 7.1, y: 1.0, g: "geo" }, { w: "Rome",  x: 7.1, y: 2.1, g: "geo" },
+    { w: "Japan",  x: 8.6, y: 1.0, g: "geo" }, { w: "Tokyo", x: 8.6, y: 2.1, g: "geo" },
+    { w: "cat", x: 7.1, y: 5.3, g: "animal" }, { w: "dog", x: 7.7, y: 5.7, g: "animal" },
+    { w: "lion", x: 8.3, y: 6.1, g: "animal" }, { w: "puppy", x: 7.3, y: 4.9, g: "animal" },
+    { w: "apple", x: 0.7, y: 5.7, g: "fruit" }, { w: "banana", x: 1.1, y: 6.2, g: "fruit" }, { w: "grape", x: 0.5, y: 6.5, g: "fruit" }
+  ];
+  var byW = {}; W.forEach(function (d) { byW[d.w] = d; });
+
+  var XMIN = 0, XMAX = 9.4, YMIN = -0.3, YMAX = 7;
+  var svg = document.getElementById('svg'), Wd = 560, Hd = 340, ml = 14, mr = 14, mt = 14, mb = 14;
+  function sx(x) { return ml + (x - XMIN) / (XMAX - XMIN) * (Wd - ml - mr); }
+  function sy(y) { return Hd - (mb + (y - YMIN) / (YMAX - YMIN) * (Hd - mt - mb)); }
+
+  ["selA", "selB", "selC"].forEach(function (id) {
+    var s = document.getElementById(id);
+    W.forEach(function (d) { var o = document.createElement('option'); o.value = d.w; o.textContent = d.w; s.appendChild(o); });
+  });
+  document.getElementById('selA').value = "king";
+  document.getElementById('selB').value = "man";
+  document.getElementById('selC').value = "woman";
+
+  function nearest(x, y, exclude) {
+    var best = null, bd = 1e9;
+    W.forEach(function (d) {
+      if (exclude.indexOf(d.w) !== -1) return;
+      var dd = (d.x - x) * (d.x - x) + (d.y - y) * (d.y - y);
+      if (dd < bd) { bd = dd; best = d; }
+    });
+    return { d: best, dist: Math.sqrt(bd) };
+  }
+
+  function draw() {
+    for (var i = svg.childNodes.length - 1; i >= 0; i--) if (svg.childNodes[i].nodeName !== 'defs') svg.removeChild(svg.childNodes[i]);
+    var A = byW[document.getElementById('selA').value],
+        B = byW[document.getElementById('selB').value],
+        C = byW[document.getElementById('selC').value];
+    var haveAnalogy = A && B && C;
+    var rx, ry, near;
+    if (haveAnalogy) {
+      rx = A.x - B.x + C.x; ry = A.y - B.y + C.y;
+      near = nearest(rx, ry, [A.w, B.w, C.w]);
+      // arrow B -> A (the direction), and the parallel arrow C -> result
+      svg.appendChild(el('line', { x1: sx(B.x), y1: sy(B.y), x2: sx(A.x), y2: sy(A.y), stroke: 'var(--muted)', 'stroke-width': 1.6, 'stroke-dasharray': '4 3', 'marker-end': 'url(#arrA)' }));
+      svg.appendChild(el('line', { x1: sx(C.x), y1: sy(C.y), x2: sx(rx), y2: sy(ry), stroke: 'var(--res)', 'stroke-width': 1.8, 'stroke-dasharray': '4 3', 'marker-end': 'url(#arrR)' }));
+      svg.appendChild(el('circle', { cx: sx(rx), cy: sy(ry), r: 6, fill: 'none', stroke: 'var(--res)', 'stroke-width': 2 }));
+    }
+    // points
+    W.forEach(function (d) {
+      var hot = haveAnalogy && (d === A || d === B || d === C);
+      var isAns = haveAnalogy && near.d && d === near.d;
+      svg.appendChild(el('circle', { cx: sx(d.x), cy: sy(d.y), r: isAns ? 6 : 4.5, fill: isAns ? 'var(--res)' : ('var(--' + d.g + ')'), 'fill-opacity': (haveAnalogy && !hot && !isAns) ? 0.35 : 1 }));
+      var t = el('text', { x: sx(d.x) + 7, y: sy(d.y) + 4, 'font-size': isAns ? 12 : 11, 'font-weight': (hot || isAns) ? 700 : 500,
+        fill: isAns ? 'var(--res)' : 'var(--ink)', 'fill-opacity': (haveAnalogy && !hot && !isAns) ? 0.4 : 1 }, d.w);
+      svg.appendChild(t);
+    });
+    var out = document.getElementById('result');
+    if (haveAnalogy) out.innerHTML = '<span class="eq">' + A.w + ' − ' + B.w + ' + ' + C.w + '</span>  ≈  <b>' + (near.d ? near.d.w : '?') + '</b>';
+    else out.textContent = 'Pick three words, or a preset, to see the analogy.';
+  }
+
+  document.getElementById('presets').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.clear) { document.getElementById('selA').value = ''; }
+    else { document.getElementById('selA').value = b.dataset.a; document.getElementById('selB').value = b.dataset.b; document.getElementById('selC').value = b.dataset.c; }
+    // guard: selects have no empty option, so 'clear' just redraws neighbors view
+    if (b.dataset.clear) { draw2clear(); return; }
+    draw();
+  });
+  function draw2clear() {
+    for (var i = svg.childNodes.length - 1; i >= 0; i--) if (svg.childNodes[i].nodeName !== 'defs') svg.removeChild(svg.childNodes[i]);
+    W.forEach(function (d) {
+      svg.appendChild(el('circle', { cx: sx(d.x), cy: sy(d.y), r: 4.5, fill: 'var(--' + d.g + ')' }));
+      svg.appendChild(el('text', { x: sx(d.x) + 7, y: sy(d.y) + 4, 'font-size': 11, 'font-weight': 500, fill: 'var(--ink)' }, d.w));
+    });
+    document.getElementById('result').textContent = 'Notice the clusters: people, places, animals, fruit each group together.';
+  }
+  ["selA", "selB", "selC"].forEach(function (id) { document.getElementById(id).addEventListener('change', draw); });
+  draw();
+})();
+</script>
+</body>
+</html>

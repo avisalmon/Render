@@ -1,7 +1,8 @@
 # Transformers from Scratch: The TinyStories Academy - Course Plan
 
-Status: planning. Nothing built yet. We build lesson by lesson, and Avi validates each
-lesson as a student before we move on.
+Status: in progress. Foundations (Module 1, lessons 1-13) are built, plus the Module 2
+opener, Lesson 14 ("See the Whole Transformer"). We build lesson by lesson, and Avi
+validates each lesson as a student before we move on. Section 8 has the live tracker.
 
 This is the single source of truth for the plan. We will keep it updated as we go.
 
@@ -97,6 +98,9 @@ title carries its module so the list reads as grouped. One concept per lesson, o
 per lesson. The course grows as long as it needs to be genuinely good; it is not capped at a
 fixed count. (Revised 2026-07-02: added a neural-network foundations arc, lessons 3-6, and
 moved Embeddings to 7 so the foundations sit together and Embeddings leads into attention.)
+(Revised 2026-07-12: inserted Lesson 14 "See the Whole Transformer", a recommended-watch
+transformer overview from 3Blue1Brown, as the Module 2 opener; Module 2 onward renumbered
++1, so the capstone is now lesson 36.)
 
 ### Getting Started
 1. Setup and how this course works - clone the repo, create the env venv, install deps,
@@ -126,40 +130,44 @@ moved Embeddings to 7 so the foundations sit together and Embeddings leads into 
 13. Embeddings - turning token ids into vectors; the bridge from plain neural nets to sequence models
 
 ### Module 2 - Attention
-14. Attention intuition - why attention
-15. Dot-product attention - Q, K, V, scores, softmax, weighted sum
-16. Scaled attention - why divide by sqrt(d_k)
-17. Causal masking - the autoregressive constraint
-18. Multi-head attention - parallel heads, split and concat
+14. See the Whole Transformer - recommended watch (3Blue1Brown): a short LLM overview, then
+    the transformer, attention, and how models store facts (Deep Learning chapters 5-7). All
+    four videos embedded in the lesson. No notebook, no assignment: a big-picture pause before
+    we build attention piece by piece
+15. Attention intuition - why attention
+16. Dot-product attention - Q, K, V, scores, softmax, weighted sum
+17. Scaled attention - why divide by sqrt(d_k)
+18. Causal masking - the autoregressive constraint
+19. Multi-head attention - parallel heads, split and concat
 
 ### Module 3 - The Transformer Block
-19. Layer normalization
-20. Feed-forward network - the MLP and GELU
-21. Residual connections - skip connections and gradient flow
-22. The full transformer block - pre-norm assembly
+20. Layer normalization
+21. Feed-forward network - the MLP and GELU
+22. Residual connections - skip connections and gradient flow
+23. The full transformer block - pre-norm assembly
 
 ### Module 4 - Tokenization
-23. Why tokenize - characters vs words vs subwords
-24. BPE from scratch - byte-pair merges by hand
-25. Train your tokenizer - train BPE on TinyStories, encode and decode
+24. Why tokenize - characters vs words vs subwords
+25. BPE from scratch - byte-pair merges by hand
+26. Train your tokenizer - train BPE on TinyStories, encode and decode
 
 ### Module 5 - Building GPT
-26. Config and positional embeddings
-27. The GPT model - stacking blocks, the LM head, weight tying
-28. Putting it together - forward pass, parameter count, sanity checks
+27. Config and positional embeddings
+28. The GPT model - stacking blocks, the LM head, weight tying
+29. Putting it together - forward pass, parameter count, sanity checks
 
 ### Module 6 - Training
-29. Dataset and dataloader - stories into training batches (reuses the DataLoader idea from Module 1)
-30. Loss and the training loop - next-token cross-entropy and AdamW (reuses Module 1's training loop)
-31. Full training run - train the model on CPU end to end, checkpointing
-32. Tips and troubleshooting - LR warmup and decay, overfitting, reading the loss
+30. Dataset and dataloader - stories into training batches (reuses the DataLoader idea from Module 1)
+31. Loss and the training loop - next-token cross-entropy and AdamW (reuses Module 1's training loop)
+32. Full training run - train the model on CPU end to end, checkpointing
+33. Tips and troubleshooting - LR warmup and decay, overfitting, reading the loss
 
 ### Module 7 - Generation
-33. Sampling strategies - greedy, temperature, top-k, nucleus (top-p), repetition penalty
-34. Generation in practice - prompt the model, write stories, save outputs
+34. Sampling strategies - greedy, temperature, top-k, nucleus (top-p), repetition penalty
+35. Generation in practice - prompt the model, write stories, save outputs
 
 ### Capstone
-35. Capstone - share a story your own trained model generated (reflection). Completing
+36. Capstone - share a story your own trained model generated (reflection). Completing
     this plus the lessons issues the certificate.
 
 ### Bonus (optional, built last if wanted)
@@ -229,33 +237,35 @@ Legend: [ ] not started, [~] in progress, [x] done.
 | 11 | Recommended watch (3B1B, no notebook) | [x] | n/a | [ ] |
 | 12 | The training loop (train MLP on MNIST) | [x] | [x] | [ ] |
 | 13 | Embeddings | [x] | [x] | [ ] |
-| 14 | Attention intuition | [ ] | [ ] | [ ] |
-| 15 | Dot-product attention | [ ] | [ ] | [ ] |
-| 16 | Scaled attention | [ ] | [ ] | [ ] |
-| 17 | Causal masking | [ ] | [ ] | [ ] |
-| 18 | Multi-head attention | [ ] | [ ] | [ ] |
-| 19 | Layer normalization | [ ] | [ ] | [ ] |
-| 20 | Feed-forward network | [ ] | [ ] | [ ] |
-| 21 | Residual connections | [ ] | [ ] | [ ] |
-| 22 | The full transformer block | [ ] | [ ] | [ ] |
-| 23 | Why tokenize | [ ] | [ ] | [ ] |
-| 24 | BPE from scratch | [ ] | [ ] | [ ] |
-| 25 | Train your tokenizer | [ ] | [ ] | [ ] |
-| 26 | Config and positional embeddings | [ ] | [ ] | [ ] |
-| 27 | The GPT model | [ ] | [ ] | [ ] |
-| 28 | Putting it together | [ ] | [ ] | [ ] |
-| 29 | Dataset and dataloader (stories) | [ ] | [ ] | [ ] |
-| 30 | Loss and the training loop (GPT) | [ ] | [ ] | [ ] |
-| 31 | Full training run | [ ] | [ ] | [ ] |
-| 32 | Tips and troubleshooting | [ ] | [ ] | [ ] |
-| 33 | Sampling strategies | [ ] | [ ] | [ ] |
-| 34 | Generation in practice | [ ] | [ ] | [ ] |
-| 35 | Capstone | [ ] | [ ] | [ ] |
+| 14 | See the Whole Transformer (3B1B, recommended watch, no notebook) | [x] | n/a | [ ] |
+| 15 | Attention intuition | [x] | [x] | [ ] |
+| 16 | Dot-product attention | [ ] | [ ] | [ ] |
+| 17 | Scaled attention | [ ] | [ ] | [ ] |
+| 18 | Causal masking | [ ] | [ ] | [ ] |
+| 19 | Multi-head attention | [ ] | [ ] | [ ] |
+| 20 | Layer normalization | [ ] | [ ] | [ ] |
+| 21 | Feed-forward network | [ ] | [ ] | [ ] |
+| 22 | Residual connections | [ ] | [ ] | [ ] |
+| 23 | The full transformer block | [ ] | [ ] | [ ] |
+| 24 | Why tokenize | [ ] | [ ] | [ ] |
+| 25 | BPE from scratch | [ ] | [ ] | [ ] |
+| 26 | Train your tokenizer | [ ] | [ ] | [ ] |
+| 27 | Config and positional embeddings | [ ] | [ ] | [ ] |
+| 28 | The GPT model | [ ] | [ ] | [ ] |
+| 29 | Putting it together | [ ] | [ ] | [ ] |
+| 30 | Dataset and dataloader (stories) | [ ] | [ ] | [ ] |
+| 31 | Loss and the training loop (GPT) | [ ] | [ ] | [ ] |
+| 32 | Full training run | [ ] | [ ] | [ ] |
+| 33 | Tips and troubleshooting | [ ] | [ ] | [ ] |
+| 34 | Sampling strategies | [ ] | [ ] | [ ] |
+| 35 | Generation in practice | [ ] | [ ] | [ ] |
+| 36 | Capstone | [ ] | [ ] | [ ] |
 | B1 | Attention visualization (bonus) | [ ] | [ ] | [ ] |
 | B2 | Scaling and experiments (bonus) | [ ] | [ ] | [ ] |
 
-Note: Lessons 5 and 11 are text-only (no notebook, no assignment): 5 is theory (TensorFlow Playground)
-and 11 is a recommended-watch page (3Blue1Brown videos). The training material is split across lessons
-8-12 (Datasets, Loss, Backprop, Recommended watch, Training loop) using formal MNIST via torchvision.
-The foundations arc (1-12) is complete and the dev lesson list is contiguous 1-13. Next is Module 2
-(Attention), starting at lesson 14.
+Note: Lessons 5, 11, and 14 are text-only (no notebook, no assignment): 5 is theory (TensorFlow
+Playground), 11 is a recommended-watch page (3Blue1Brown neural-network videos), and 14 is a
+recommended-watch page (3Blue1Brown transformer videos, chapters 5-7). The training material is split
+across lessons 8-12 (Datasets, Loss, Backprop, Recommended watch, Training loop) using formal MNIST via
+torchvision. The foundations arc (1-13) is complete and the dev lesson list is contiguous 1-14. Next is
+Module 2 (Attention) proper, starting at lesson 15 (Attention intuition).
