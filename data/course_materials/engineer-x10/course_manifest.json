@@ -27,7 +27,7 @@
   "lessons": [
     {
       "lesson_order": 1,
-      "bunny_video_id": "",
+      "bunny_video_id": "7a2f83a5-735b-459c-ae3c-9db5ce26b3b8",
       "title_he": "פתיחה: מהנדס x10 וההתנגדויות ל-AI",
       "title_en": "Opening: the 10X engineer and the objections",
       "is_free_preview": true,
@@ -39,7 +39,7 @@
     },
     {
       "lesson_order": 2,
-      "bunny_video_id": "",
+      "bunny_video_id": "b80bd9ee-5867-42aa-be18-8f1577490136",
       "title_he": "שלוש הרמות של AI",
       "title_en": "The three levels of AI",
       "is_free_preview": false,
@@ -51,7 +51,7 @@
     },
     {
       "lesson_order": 3,
-      "bunny_video_id": "",
+      "bunny_video_id": "702ee844-c5f7-4002-86fc-f57b0aa4d8c2",
       "title_he": "Level 1 בפועל: הכלים שעשו עבורך",
       "title_en": "Level 1 in practice",
       "is_free_preview": false,
@@ -63,7 +63,7 @@
     },
     {
       "lesson_order": 4,
-      "bunny_video_id": "",
+      "bunny_video_id": "eafdbbe9-83e0-4866-8124-f474f70cace6",
       "title_he": "יסודות אנושיים ש-AI מעצים",
       "title_en": "Human foundations AI amplifies",
       "is_free_preview": false,
@@ -75,7 +75,7 @@
     },
     {
       "lesson_order": 5,
-      "bunny_video_id": "",
+      "bunny_video_id": "bca25693-c3cd-4efe-a807-5da46954f6b9",
       "title_he": "Level 2 כמהנדס חומרה: לבנות מעבד עם AI",
       "title_en": "Level 2 as a hardware engineer",
       "is_free_preview": false,
@@ -87,7 +87,7 @@
     },
     {
       "lesson_order": 6,
-      "bunny_video_id": "",
+      "bunny_video_id": "897574d0-056e-415f-ab19-b55f4de82a19",
       "title_he": "Level 2 בעבודה: מחקר ותיקון באגים עם Claude",
       "title_en": "Level 2 at work: research and debugging",
       "is_free_preview": false,
@@ -99,7 +99,7 @@
     },
     {
       "lesson_order": 7,
-      "bunny_video_id": "",
+      "bunny_video_id": "5497a7fa-38c1-4009-9f10-eaec3602eb53",
       "title_he": "הכלי המרכזי: VS Code, Copilot וסוכנים אוטונומיים",
       "title_en": "The core tool: VS Code, Copilot, and agents",
       "is_free_preview": false,
@@ -111,7 +111,7 @@
     },
     {
       "lesson_order": 8,
-      "bunny_video_id": "",
+      "bunny_video_id": "f870cfda-242f-445c-af33-ceebcabc265f",
       "title_he": "מי מצליח ולמה: שעות טיסה, ניהול וסטוריטלינג",
       "title_en": "Who succeeds and why",
       "is_free_preview": false,
@@ -123,7 +123,7 @@
     },
     {
       "lesson_order": 9,
-      "bunny_video_id": "",
+      "bunny_video_id": "09b087a2-8785-49ad-8eaf-25876e97a4b6",
       "title_he": "פרדיגמות נשברות: זמן, ידע ו-System 1/2",
       "title_en": "Broken paradigms",
       "is_free_preview": false,
@@ -135,7 +135,7 @@
     },
     {
       "lesson_order": 10,
-      "bunny_video_id": "",
+      "bunny_video_id": "c6e9198c-3cc0-4caa-95d0-ddf137d388a1",
       "title_he": "כשמנהלים חווים: דשבורד ודמו ניתוח ווייפרים",
       "title_en": "When managers experience it",
       "is_free_preview": false,
@@ -147,7 +147,7 @@
     },
     {
       "lesson_order": 11,
-      "bunny_video_id": "",
+      "bunny_video_id": "4b9df9b6-eb92-4ab4-9eb9-a35f5d8c9baf",
       "title_he": "אקדמיה והמהנדס ה-T-shaped",
       "title_en": "Academia and the T-shaped engineer",
       "is_free_preview": false,
@@ -159,7 +159,7 @@
     },
     {
       "lesson_order": 12,
-      "bunny_video_id": "",
+      "bunny_video_id": "277ec4ba-910e-45fd-9197-13b7fe0e7f77",
       "title_he": "כלכלת הטוקנים",
       "title_en": "The token economy",
       "is_free_preview": false,
@@ -171,7 +171,7 @@
     },
     {
       "lesson_order": 13,
-      "bunny_video_id": "",
+      "bunny_video_id": "6f2a113c-b63c-4b9f-8995-30786e5e756e",
       "title_he": "Level 3 ו-Physical AI",
       "title_en": "Level 3 and Physical AI",
       "is_free_preview": false,
@@ -183,7 +183,7 @@
     },
     {
       "lesson_order": 14,
-      "bunny_video_id": "",
+      "bunny_video_id": "391759cf-b34d-4ea1-839f-ee3b6d076b71",
       "title_he": "קריאה לפעולה: אונבורדינג ל-Co-Coding",
       "title_en": "Call to action: onboard to Co-Coding",
       "is_free_preview": false,
@@ -195,11 +195,11 @@
     },
     {
       "lesson_order": 15,
-      "bunny_video_id": "",
+      "bunny_video_id": "042abba0-7730-4932-99cc-2ae1b94feda9",
       "title_he": "דמו חי: לבנות כלי ב-Level 1",
       "title_en": "Live demo: build a tool at Level 1",
       "is_free_preview": false,
-      "duration_seconds": 380,
+      "duration_seconds": 653,
       "summary_he": "דמו חי: לבנות כלי ב-Level 1",
       "notes_markdown": "הדגמה חיה של בניית כלי קטן, כדי להרגיש איך זה לעבוד ככה. ההקשר: אבי ראה את חיים שפירא מראה טריק מתמטי, שאם מצמצמים את ה-6 ב-16 חלקי 64 מקבלים תוצאה נכונה במקרה, ורצה סקריפט שמוצא עוד מספרים כאלה כדי לעבוד על הבן שלו.\n\n<iframe src=\"https://www.youtube.com/embed/eQdYIxiAw4E?start=4765&end=5145&rel=0\" title=\"מהנדס x10\" style=\"width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" allowfullscreen loading=\"lazy\"></iframe>\n\n### עיקרי הדברים\n- הפרומפט: לבנות סקריפט ב-HTML, בלי סרוור, שמייצר הרבה דוגמאות כאלה, עם אנימציה כיפית לילדים.\n- ההבדל בין טיק טוק לשיחה: קודם מבקשים שיבין את הרעיון בלי לעשות כלום, ורק אז מתקדמים.\n- בשלבים הראשונים פשוט לשחק ככה. קורקינט, קטנוע, אופניים, לא F16. אחר כך, כשמתחילים לעבוד מתודולוגית עם תיעוד, סקילים ושיטה, מגיעים ל-Art of Code Coding.\n- עוד כלים חינמיים באתר של אבי ב-GitHub: home page אישי, Stock Scanner ועוד.\n\n### לקחת איתכם\nאין סיבה שלא יהיה לכם כלי כזה כבר השבוע. פשוט תתחילו לשחק.\n",
       "has_code_example": false,
