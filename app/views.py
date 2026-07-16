@@ -1643,7 +1643,7 @@ def lesson_view(request, slug, lesson_order):
 
     from .bunny import get_embed_url
 
-    course = get_object_or_404(Course, slug=slug)
+    course = get_object_or_404(Course, slug=slug, **_course_visibility(request.user))
     video = get_object_or_404(Video, course=course, lesson_order=lesson_order)
 
     # Open access: login is the only gate; entering = auto-enrolled.
@@ -1856,7 +1856,7 @@ def course_detail_view(request, slug):
     """Course detail for /course/<slug>/ (singular)."""
     from django.shortcuts import get_object_or_404
 
-    course = get_object_or_404(Course, slug=slug)
+    course = get_object_or_404(Course, slug=slug, **_course_visibility(request.user))
     videos = course.videos.order_by("lesson_order")
 
     progress_pct = 0
