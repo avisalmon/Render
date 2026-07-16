@@ -5,11 +5,12 @@ services:
     plan: starter
     branch: main
     buildCommand: ./build.sh
-    # load_course_from_manifest is scoped to transformers-from-scratch on purpose:
+    # load_course_from_manifest is scoped to explicit slugs on purpose:
     # a bare (all-manifests) run would also re-seed micropython-thonny and overwrite
     # any edits made to that live course in prod. Add slugs here only for courses
-    # whose manifest is the source of truth.
-    startCommand: python manage.py migrate && (python manage.py ensure_schema || true) && (python manage.py createsuperuser --noinput || true) && (python manage.py seed_blog || true) && (python manage.py load_course_from_manifest transformers-from-scratch || true) && gunicorn mysite.wsgi:application --bind 0.0.0.0:$PORT --timeout 120
+    # whose manifest is the source of truth. engineer-x10 (מהנדס x10) is the Level 2
+    # course; it supersedes the DB-only co-coding-copilot, which hide_courses retires.
+    startCommand: python manage.py migrate && (python manage.py ensure_schema || true) && (python manage.py createsuperuser --noinput || true) && (python manage.py seed_blog || true) && (python manage.py load_course_from_manifest transformers-from-scratch engineer-x10 || true) && (python manage.py hide_courses co-coding-copilot || true) && gunicorn mysite.wsgi:application --bind 0.0.0.0:$PORT --timeout 120
     autoDeploy: true
     envVars:
       - key: PYTHON_VERSION
