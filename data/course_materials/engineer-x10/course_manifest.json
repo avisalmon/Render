@@ -1,0 +1,209 @@
+{
+  "course_slug": "engineer-x10",
+  "course_title": "מהנדס x10: להיות מהנדס פי עשרה עם AI",
+  "course_description": "הרצאה של אבי סלמון על עבודה אמיתית עם AI בהנדסה. שלוש רמות של AI, עם דגש על רמה 2 (Co-Coding): להישאר בעל המקצוע ולהפוך את ה-AI למכפיל כוח. סיפורים מהשטח, פרדיגמות שנשברות, ומבט על Level 3 ו-Physical AI. מבוסס על ההרצאה The 10X Engineer.",
+  "course_repo_url": "",
+  "thumbnail": "",
+  "category": "foundations",
+  "domain": "ai",
+  "track": "ai-l2",
+  "difficulty": "intermediate",
+  "is_published": false,
+  "issues_certificate": false,
+  "materials": [
+    {
+      "title": "מצפן לחינוך AI, המסמך המלא (PDF)",
+      "material_type": "link",
+      "url": "/media/blog/artifacts/ai-education-compass.pdf",
+      "order": 1
+    },
+    {
+      "title": "בלוג: מצפן למדיניות חינוך לבינה מלאכותית",
+      "material_type": "link",
+      "url": "/blog/ai-education-compass/",
+      "order": 2
+    }
+  ],
+  "lessons": [
+    {
+      "lesson_order": 1,
+      "bunny_video_id": "",
+      "title_he": "פתיחה: מהנדס x10 וההתנגדויות ל-AI",
+      "title_en": "Opening: the 10X engineer and the objections",
+      "is_free_preview": true,
+      "duration_seconds": 366,
+      "summary_he": "פתיחה: מהנדס x10 וההתנגדויות ל-AI",
+      "notes_markdown": "אבי סלמון, מוביל חדשנות במרכזי הפיתוח ומהנדס חומרה מתוך בחירה, פותח את ההרצאה The 10X Engineer. כל מה שמסופר כאן מגיע מהאצבעות ומהחוויה היומיומית, לא מהתאוריה.\n\n<iframe src=\"https://www.youtube.com/embed/eQdYIxiAw4E?start=0&end=366&rel=0\" title=\"מהנדס x10\" style=\"width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" allowfullscreen loading=\"lazy\"></iframe>\n\n### עיקרי הדברים\n- ההרצאה מיועדת גם למי שבטוח שזה לא רלוונטי אליו: ייצור, חומרה, ניהול פרוגרמות והנדסת מכונות, לא רק אנשי תוכנה.\n- ההתנגדויות הנפוצות: אני מהנדס חומרה ולא תוכנה, יש לנו כבר Office Copilot, ה-AI טועה, זה באז, וזה יקר.\n- מחקר של MIT ובדיקה על 500 חברות הראו שיפור ממוצע צנוע, ולכן קל לפטור את הנושא. אבי טוען שזה בדיוק מה שמפספס את העיקר.\n- העלות, פעם 16 דולר למהנדס והיום יותר, קטנה מול ROI גבוה מאוד.\n- התופעה החוזרת: מהנדסים שהתנגדו מתקשרים פתאום בעשר בלילה ואומרים אתה לא מבין מה עשיתי.\n\n### לקחת איתכם\nאל תפסלו לפני שניסיתם. גם אם התחום שלכם רחוק מתוכנה, יש כאן משהו בשבילכם.\n\n### המסמך הכתוב\nההרצאה הזו היא הליווי המדובר למסמך שאבי כתב יחד עם עמיתים, מצפן למדיניות חינוך לבינה מלאכותית, שמפרט את אותן שלוש רמות. אפשר לקרוא את [פוסט הבלוג](/blog/ai-education-compass/) ואת [המסמך המלא (PDF)](/media/blog/artifacts/ai-education-compass.pdf).\n",
+      "has_code_example": false,
+      "github_file": ""
+    },
+    {
+      "lesson_order": 2,
+      "bunny_video_id": "",
+      "title_he": "שלוש הרמות של AI",
+      "title_en": "The three levels of AI",
+      "is_free_preview": false,
+      "duration_seconds": 270,
+      "summary_he": "שלוש הרמות של AI",
+      "notes_markdown": "כדי לעשות סדר, אבי מחלק את העבודה עם AI לשלוש רמות. ההבחנה הזו היא הבסיס לכל ההרצאה.\n\n<iframe src=\"https://www.youtube.com/embed/eQdYIxiAw4E?start=366&end=636&rel=0\" title=\"מהנדס x10\" style=\"width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" allowfullscreen loading=\"lazy\"></iframe>\n\n### עיקרי הדברים\n- רמה 1, User Level: כלים מצוינים שמישהו בנה עבורכם, כמו ChatGPT ו-Office Copilot. התוצר לא באמת שלכם, וכל אחד יכול ללחוץ על אותו כפתור, כך שאין בידול.\n- רמה 2, הרמה המעשית (Co-Coding): אתם נשארים בעלי המקצוע, וה-AI עובד אצלכם כמו צוות. אתם נותנים דרישות ומבקרים את התוצר, והתוצר שלכם.\n- רמה 3, AI אמיתי: לאמן מודלים, רשתות נוירונים וטרנספורמרים.\n- Vibe Coding (רמה 1) הוא כשאתם לא יודעים מה נכתב. Co-Coding (רמה 2) הוא כשאתם בעלי המקצוע ששולטים בתוכן.\n- המסה הקריטית של הערך, לרוב האנשים, נמצאת ברמה 2.\n\n### לקחת איתכם\nלכולכם יש מה לחפש ברמה 2. שם קורה הקסם עבור בעלי מקצוע.\n\nשלוש הרמות האלה הן גם לב המסמך [מצפן לחינוך AI](/blog/ai-education-compass/), שמופיע בחומרי ההדרכה.\n",
+      "has_code_example": false,
+      "github_file": ""
+    },
+    {
+      "lesson_order": 3,
+      "bunny_video_id": "",
+      "title_he": "Level 1 בפועל: הכלים שעשו עבורך",
+      "title_en": "Level 1 in practice",
+      "is_free_preview": false,
+      "duration_seconds": 276,
+      "summary_he": "Level 1 בפועל: הכלים שעשו עבורך",
+      "notes_markdown": "כמה דוגמאות לרמה 1, רק כדי להרגיש מה אפשר לעשות היום בקלות. אבי מדגיש שהוא לא גיק של AI.\n\n<iframe src=\"https://www.youtube.com/embed/eQdYIxiAw4E?start=636&end=912&rel=0\" title=\"מהנדס x10\" style=\"width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" allowfullscreen loading=\"lazy\"></iframe>\n\n### עיקרי הדברים\n- Deep Research ב-ChatGPT: עובד כ-20 עד 25 דקות, סורק מאות מקורות ומחזיר סקירה עמוקה.\n- NotebookLM: זורקים PDF ומבקשים פודקאסט, ואפשר גם לעצור באמצע ולפטפט עם הפודקאסט.\n- יצירת תמונות ווידאו: הנפשה של תמונות, כמו יום הולדת של אבא או המכונית מגיל 19. לא תמיד מושלם, אבל מרשים.\n\n### לקחת איתכם\nרמה 1 פותחת המון, אבל תזכרו שאלה כלים שמישהו אחר בנה עבורכם.\n",
+      "has_code_example": false,
+      "github_file": ""
+    },
+    {
+      "lesson_order": 4,
+      "bunny_video_id": "",
+      "title_he": "יסודות אנושיים ש-AI מעצים",
+      "title_en": "Human foundations AI amplifies",
+      "is_free_preview": false,
+      "duration_seconds": 363,
+      "summary_he": "יסודות אנושיים ש-AI מעצים",
+      "notes_markdown": "יש כמה יסודות אנושיים שמקבלים עוצמה יתרה בכל שלוש הרמות. אבי דווקא זהיר לגבי AI, ודואג שנישאר אנושיים.\n\n<iframe src=\"https://www.youtube.com/embed/eQdYIxiAw4E?start=912&end=1275&rel=0\" title=\"מהנדס x10\" style=\"width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" allowfullscreen loading=\"lazy\"></iframe>\n\n### עיקרי הדברים\n- דו שיח ושאילת שאלות: ל-AI יש את כל התשובות, ולכן מה שחשוב הוא לדעת לשאול. זה לא prompt engineering, זה עשיית הנדסה בעזרת פרומפט.\n- חשיבה ביקורתית ושיחה סוקרטית: ל-AI יש רצון לרצות אתכם, ולכן אסור להאמין לכל דבר. צריך לבדוק, לשמור על אתיקה ולזהות טעויות.\n- השריר של ללמוד לבד: בהאקתון CrashTech, מעל 60 מהנדסים, שבוע, אפס טוטוריאל, רק 25% הצליחו.\n- לא היה הבדל בין חומרה לתוכנה או בין צעירים לוותיקים. ההבדל היחיד: ניתוח סנטימנט הראה קורלציה מלאה בין גישה שלילית לחוסר הצלחה.\n- לשמור על האנושיות: לפעמים כדאי לצייר עם היד, כדי לראות את האור והצל בעצמכם.\n\n### לקחת איתכם\nהשריר של אל תגלה לי, אני אפתור לבד, הוא שריר שצריך לאמן.\n",
+      "has_code_example": false,
+      "github_file": ""
+    },
+    {
+      "lesson_order": 5,
+      "bunny_video_id": "",
+      "title_he": "Level 2 כמהנדס חומרה: לבנות מעבד עם AI",
+      "title_en": "Level 2 as a hardware engineer",
+      "is_free_preview": false,
+      "duration_seconds": 552,
+      "summary_he": "Level 2 כמהנדס חומרה: לבנות מעבד עם AI",
+      "notes_markdown": "אבי מספר את סיפור רמה 2 מהזווית שלו, כמהנדס חומרה שבונה צ'יפים. חלק מהמושגים אולי זרים, ובהמשך הוא יתרגם לעולם שלכם.\n\n<iframe src=\"https://www.youtube.com/embed/eQdYIxiAw4E?start=1275&end=1827&rel=0\" title=\"מהנדס x10\" style=\"width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" allowfullscreen loading=\"lazy\"></iframe>\n\n### עיקרי הדברים\n- כלים שבנה לעצמו: מציג ויזואלי של trace בין קוביות, וכלי תמלול פרטי עם API, במקום לחכות חודשים לקבוצת תוכנה.\n- פרויקט Nand2Tetris על FPGA אמיתי: בניית מחשב קטן, משער NAND ומעלה.\n- בקר מסך: מה שלקח לו חודש לפתח, ולסטודנטים שעה וחצי הסבר ועוד שבוע, ה-AI עשה תוך דקות. אבל היה צריך אותו כמהנדס שידע להנחות ולדבג, כמו הזזה של שלושה פיקסלים וסדר ביטים.\n- מעבד RISC-V מלא: זיכרון, שכבות תוכנה, אסמבלר ואפילו קומפיילר C, בשבועיים.\n- כמה זמן לקח לך? שבועיים. למה כל כך הרבה? כאן הופכים מבעל מקצוע יחיד לראש צוות שמקבל עובדים.\n\n### לקחת איתכם\nה-AI מאיץ אתכם, אבל בלי המהנדס שמנחה ומבקר, זה פשוט לא קורה.\n",
+      "has_code_example": false,
+      "github_file": ""
+    },
+    {
+      "lesson_order": 6,
+      "bunny_video_id": "",
+      "title_he": "Level 2 בעבודה: מחקר ותיקון באגים עם Claude",
+      "title_en": "Level 2 at work: research and debugging",
+      "is_free_preview": false,
+      "duration_seconds": 183,
+      "summary_he": "Level 2 בעבודה: מחקר ותיקון באגים עם Claude",
+      "notes_markdown": "שתי דוגמאות מהעבודה האמיתית, לא מפרויקט אקדמי.\n\n<iframe src=\"https://www.youtube.com/embed/eQdYIxiAw4E?start=1827&end=2010&rel=0\" title=\"מהנדס x10\" style=\"width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" allowfullscreen loading=\"lazy\"></iframe>\n\n### עיקרי הדברים\n- אקסלרטור ל-floating point: חברה עם פרופסור עבדה שישה שבועות על מחקר ולא הביאה תוצאה מדויקת. אבי בנה מערך ניסויים אוטומטי אוברנייט וקיבל את התשובה תוך יום.\n- תיקון באג עם Claude: בוקר טוב קלוד, יש לו סקיל לקרוא מיילים, לפתוח את ה-HSD, לקרוא את הטיקט, למצוא את הבעיה בקוד, לכתוב טסט שמשחזר, ולהציג גלים.\n- סגירת באג תוך שעתיים, במקום יומיים בתהליך הרגיל.\n\n### לקחת איתכם\nזו כבר לא הדגמה, זו שגרת עבודה יומיומית ברמה 2.\n",
+      "has_code_example": false,
+      "github_file": ""
+    },
+    {
+      "lesson_order": 7,
+      "bunny_video_id": "",
+      "title_he": "הכלי המרכזי: VS Code, Copilot וסוכנים אוטונומיים",
+      "title_en": "The core tool: VS Code, Copilot, and agents",
+      "is_free_preview": false,
+      "duration_seconds": 362,
+      "summary_he": "הכלי המרכזי: VS Code, Copilot וסוכנים אוטונומיים",
+      "notes_markdown": "מה שהפך את רמה 2 לנגישה: סביבת עבודה אינטגרטיבית עם GitHub Copilot, והאזהרה החשובה לגבי אוטומציה מלאה.\n\n<iframe src=\"https://www.youtube.com/embed/eQdYIxiAw4E?start=2010&end=2372&rel=0\" title=\"מהנדס x10\" style=\"width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" allowfullscreen loading=\"lazy\"></iframe>\n\n### עיקרי הדברים\n- VS Code הוא עורך חינמי עם צ'אט. הקסם: הצ'אט רואה את כל הפרויקט, והוא Agent שיכול לכתוב, למחוק וליצור קבצים, ואתם מדברים איתו.\n- בשנה האחרונה המודלים הפכו חזקים מאוד. זה התחיל ב-Sonnet 3.7 והמשיך ל-Sonnet 4, ופתאום עושים דיזיין שלם ככה.\n- הקומדיה של הטוקנים שנגמרים: אתה עוצר באמצע, וכל הקומה נעצרת יחד.\n- ניסויים בסוכנים אוטונומיים: מנהל בשם Claudius Maximus, עובדים, ספרינטים ו-1:1, עד שהמנהל התחיל לנזוף בסוכנים והוסיפו סוכן HR.\n- אזהרה: אל תיגעו בסוכנים אוטונומיים לפני 200 שעות טיסה. זה כמו לטוס F16 לפני שלמדתם לנהוג, ושורף כספים בלי בקרה.\n\n### לקחת איתכם\nהתחילו מהעבודה המשותפת (Co-Coding) עם Copilot. לאוטומציה מלאה מגיעים הרבה אחר כך.\n",
+      "has_code_example": false,
+      "github_file": ""
+    },
+    {
+      "lesson_order": 8,
+      "bunny_video_id": "",
+      "title_he": "מי מצליח ולמה: שעות טיסה, ניהול וסטוריטלינג",
+      "title_en": "Who succeeds and why",
+      "is_free_preview": false,
+      "duration_seconds": 272,
+      "summary_he": "מי מצליח ולמה: שעות טיסה, ניהול וסטוריטלינג",
+      "notes_markdown": "מדוע חלק מהמהנדסים רוקדים עם ה-AI, וחלק, מצוינים לא פחות, נתקעים.\n\n<iframe src=\"https://www.youtube.com/embed/eQdYIxiAw4E?start=2372&end=2644&rel=0\" title=\"מהנדס x10\" style=\"width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" allowfullscreen loading=\"lazy\"></iframe>\n\n### עיקרי הדברים\n- יש מהנדסים שהופכים ל-100X, ויש מצוינים שזה מתברדק להם. עדיין לא לגמרי מבינים למה, וזה שווה מחקר.\n- שעות טיסה: פשוט צריך לרוץ על זה. לכן אבי ממליץ לעשות דברים לא חשובים, אתר אינטרנט לעצמכם, משחק רטרו, הדפסת תלת מימד. זה מה שמאמן.\n- סקילים של ניהול: לחלק עבודה, לעבוד מסודר, לעשות ולידציה. אינדיבידואלים לא רגילים לחשוב ככה, מנהלים כן.\n- Storytelling: לנסח פרומפט כמו שמדברים עם בן אדם אינטליגנטי, למשל לספר מה קרה בישיבה ומה דעתכם. זה game changer.\n- הפחד המשתק: מהנדסים מצוינים חוששים שלא יצליחו. הם כן יצליחו, אבל צריך לעבור את הפחד עם אונבורדינג.\n\n### לקחת איתכם\nשעות טיסה, ראש של מנהל, ויכולת סטוריטלינג. זה מה שמפריד בין מי שמצליח למי שנתקע.\n",
+      "has_code_example": false,
+      "github_file": ""
+    },
+    {
+      "lesson_order": 9,
+      "bunny_video_id": "",
+      "title_he": "פרדיגמות נשברות: זמן, ידע ו-System 1/2",
+      "title_en": "Broken paradigms",
+      "is_free_preview": false,
+      "duration_seconds": 328,
+      "summary_he": "פרדיגמות נשברות: זמן, ידע ו-System 1/2",
+      "notes_markdown": "כמה תפיסות מוכרות שנשברות כשעובדים ברמה 2.\n\n<iframe src=\"https://www.youtube.com/embed/eQdYIxiAw4E?start=2644&end=2972&rel=0\" title=\"מהנדס x10\" style=\"width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" allowfullscreen loading=\"lazy\"></iframe>\n\n### עיקרי הדברים\n- קבועי זמן: מרבעונים ל-עד הפסקת הקפה. מדברים ב-work weeks וברעיונות, ובונים פיילוט מהר.\n- פערי ידע: המשפט אני לא יודע לעשות את זה הופך ללא רלוונטי. מקורות הידע נרחבים, וה-AI מלווה ומלמד אתכם תוך כדי, כמו הורדת סקיל במטריקס.\n- Head count: אפשר לעשות הרבה יותר עם אותם אנשים. השאיפה היא לעשות יותר, לא לפטר.\n- System 1 מול System 2 (קנמן): המוח עובד שגרתי ב-System 1, ועובר ל-System 2 בבעיה חדשה. היום ה-AI עושה את System 1, ואנחנו נמצאים הרבה יותר ב-System 2, שזה שריר שצריך לאמן.\n\n### לקחת איתכם\nבשיעור הבא הפרדיגמה החשובה מכולן: מנהלים מבינים רק כשהם חווים בעצמם.\n",
+      "has_code_example": false,
+      "github_file": ""
+    },
+    {
+      "lesson_order": 10,
+      "bunny_video_id": "",
+      "title_he": "כשמנהלים חווים: דשבורד ודמו ניתוח ווייפרים",
+      "title_en": "When managers experience it",
+      "is_free_preview": false,
+      "duration_seconds": 310,
+      "summary_he": "כשמנהלים חווים: דשבורד ודמו ניתוח ווייפרים",
+      "notes_markdown": "הפרדיגמה המשמעותית ביותר: שום דבר לא באמת קורה עד שמנהלים חווים את החוויה בעצמם.\n\n<iframe src=\"https://www.youtube.com/embed/eQdYIxiAw4E?start=2972&end=3282&rel=0\" title=\"מהנדס x10\" style=\"width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" allowfullscreen loading=\"lazy\"></iframe>\n\n### עיקרי הדברים\n- מנהלים יודעים על AI ודוחפים אותו, אבל לא מבינים עד שהם עצמם עושים אונבורדינג ויושבים עד שלוש בלילה.\n- דשבורד חודשי שמראה לכל מנהל כמה הוא אונבורד וכמה דולרים צרך. איפה שמנהל נדלק, כל העץ מתחתיו בוער באדום. איפה שלא, הכל לבן.\n- דמו ניתוח ווייפרים: אורחי שולח נתונים, אבי מבקש מ-Claude ניתוח ויזואלי וזיהוי root cause.\n- אבי ברמה 1 בתחום הזה, אבל אילו הבין, היה חוזר ואומר לא בחנת את הקורלציה בין המכונות, ומשפר את התוצר.\n\n### לקחת איתכם\nעבודה שהייתה לוקחת שבועות קורית תוך דקות, כשיש לכם יכולות רמה 2.\n",
+      "has_code_example": false,
+      "github_file": ""
+    },
+    {
+      "lesson_order": 11,
+      "bunny_video_id": "",
+      "title_he": "אקדמיה והמהנדס ה-T-shaped",
+      "title_en": "Academia and the T-shaped engineer",
+      "is_free_preview": false,
+      "duration_seconds": 378,
+      "summary_he": "אקדמיה והמהנדס ה-T-shaped",
+      "notes_markdown": "מה המשמעות לאקדמיה ולהכשרה, ואיזה מהנדס אנחנו רוצים לגדל.\n\n<iframe src=\"https://www.youtube.com/embed/eQdYIxiAw4E?start=3282&end=3660&rel=0\" title=\"מהנדס x10\" style=\"width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" allowfullscreen loading=\"lazy\"></iframe>\n\n### עיקרי הדברים\n- שאלה כנה מהאקדמיה על הרלוונטיות שלה ואיך להכשיר אחרת.\n- רוצים מהנדסים רחבים, לא ממוקדים רק בדבר אחד. גם מהנדס מכונות שיכיר קצת חומרים, וכן הלאה. הקטע We are all different ממונטי פייתון.\n- האקתון בטכניון: התנאי היה מי שעשה קורס תכנות חומרה בעצבעות, כדי לא לדחוף אנשים לרמה 1. הסטודנטים אמרו שהמשימות שרק כותבים בהן פרומפט לא מעניינות, המעניינות הן משימות ביצועים.\n- סטודנט הגיע למקום 15 מתוך 50 עם פרומפטים בלבד, אבל אמר: לא היה לי סיכוי לעבור את מקום 15, כי מעליו רק מי שמבין מה קורה בתוך המכונות.\n- המשל: הרצפה עלתה אבל התקרה נשארה, וצפוף למעלה. כולם עולים עם הרצפה, אבל כדי להיות בתקרה צריך להישאר מי שאתם, מי שמבין ומבקר.\n\n### לקחת איתכם\nהיו T-shaped: מומחים בדבר אחד, עם ראייה רחבה סביבו.\n",
+      "has_code_example": false,
+      "github_file": ""
+    },
+    {
+      "lesson_order": 12,
+      "bunny_video_id": "",
+      "title_he": "כלכלת הטוקנים",
+      "title_en": "The token economy",
+      "is_free_preview": false,
+      "duration_seconds": 367,
+      "summary_he": "כלכלת הטוקנים",
+      "notes_markdown": "הטוקנים הם המטבע החדש, וזה לא בדיחה.\n\n<iframe src=\"https://www.youtube.com/embed/eQdYIxiAw4E?start=3660&end=4027&rel=0\" title=\"מהנדס x10\" style=\"width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" allowfullscreen loading=\"lazy\"></iframe>\n\n### עיקרי הדברים\n- מועמדים כבר שואלים מה מדיניות הטוקנים שלכם, כמו ששאלו פעם על רכב ותנאים.\n- 2024: אל תשתמשו בטוקנים, צריך הצדקה. 2025: נתנו דוגמיות ואמרו תשרפו טוקנים. עכשיו: תשתמשו, אבל תביאו ערך.\n- היום מקבלים בערך 200 דולר. אם הגעתם לשרוף אותם בערך, כל הכבוד, ואפשר עוד באישור מנהל.\n- השורה הלא נעימה: חלק יקבלו tons of tokens, וחלק will be exchanged for tokens. אבי רוצה שכולכם תהיו בצד השמאלי של המשפט.\n\n### לקחת איתכם\nתראו את ה-ROI. אין בעיה להראות אותו, אתם פשוט עושים דברים מדהימים.\n",
+      "has_code_example": false,
+      "github_file": ""
+    },
+    {
+      "lesson_order": 13,
+      "bunny_video_id": "",
+      "title_he": "Level 3 ו-Physical AI",
+      "title_en": "Level 3 and Physical AI",
+      "is_free_preview": false,
+      "duration_seconds": 281,
+      "summary_he": "Level 3 ו-Physical AI",
+      "notes_markdown": "מבט קצר על רמה 3 ועל הגבול הבא, Physical AI.\n\n<iframe src=\"https://www.youtube.com/embed/eQdYIxiAw4E?start=4027&end=4308&rel=0\" title=\"מהנדס x10\" style=\"width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" allowfullscreen loading=\"lazy\"></iframe>\n\n### עיקרי הדברים\n- רמה 3 היא AI אמיתי: טרנספורמרים, רשתות נוירונים ואימון מודלים. כ-10 עד 15% מכם, מיוזמתכם, צריכים להיות שם.\n- למפעל זה לא LLM וצ'אט, אלא רשת שרצה על מכונה ומזהה בזמן אמת אנומליה של ויברציות.\n- Physical AI: ה-AI של היום למד את העולם דרך טקסט, כל האינטרנט, ולכן מצטיין בטקסט. אבל כוס נופלת והמים נשפכים לא נמצא בטקסט, אלא בווידאו ובעולם האמיתי.\n- זה המרוץ החם: NVIDIA, אנתרופיק ו-World Models. הרבה במפעל הוא פיזי: טמפרטורה, לחות, תנודות וויברציות.\n\n### לקחת איתכם\nרמה 3 ו-Physical AI רלוונטיים מאוד למפעל, אבל המסה הקריטית לכולם היא עדיין רמה 2.\n",
+      "has_code_example": false,
+      "github_file": ""
+    },
+    {
+      "lesson_order": 14,
+      "bunny_video_id": "",
+      "title_he": "קריאה לפעולה: אונבורדינג ל-Co-Coding",
+      "title_en": "Call to action: onboard to Co-Coding",
+      "is_free_preview": false,
+      "duration_seconds": 184,
+      "summary_he": "קריאה לפעולה: אונבורדינג ל-Co-Coding",
+      "notes_markdown": "מה לעשות כבר השבוע.\n\n<iframe src=\"https://www.youtube.com/embed/eQdYIxiAw4E?start=4308&end=4492&rel=0\" title=\"מהנדס x10\" style=\"width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" allowfullscreen loading=\"lazy\"></iframe>\n\n### עיקרי הדברים\n- לעשות Onboarding ל-VS Code עם GitHub Copilot. זה הצעד המעשי.\n- אבי מפנה לאתר הדרכות שבנה, עם הסבר איך מתקינים ומפעילים, וקורסים.\n- אחרי הקורס הראשון נפתח קורס בשם Art of Code Coding.\n- הכלל: שעות טיסה. אין צורך במורה כדי להתחיל, פשוט להריץ את זה.\n\n### לקחת איתכם\nהשבוע, אונבורדינג. זה כל מה שצריך כדי להתחיל.\n",
+      "has_code_example": false,
+      "github_file": ""
+    },
+    {
+      "lesson_order": 15,
+      "bunny_video_id": "",
+      "title_he": "דמו חי: לבנות כלי ב-Level 1",
+      "title_en": "Live demo: build a tool at Level 1",
+      "is_free_preview": false,
+      "duration_seconds": 380,
+      "summary_he": "דמו חי: לבנות כלי ב-Level 1",
+      "notes_markdown": "הדגמה חיה של בניית כלי קטן, כדי להרגיש איך זה לעבוד ככה. ההקשר: אבי ראה את חיים שפירא מראה טריק מתמטי, שאם מצמצמים את ה-6 ב-16 חלקי 64 מקבלים תוצאה נכונה במקרה, ורצה סקריפט שמוצא עוד מספרים כאלה כדי לעבוד על הבן שלו.\n\n<iframe src=\"https://www.youtube.com/embed/eQdYIxiAw4E?start=4765&end=5145&rel=0\" title=\"מהנדס x10\" style=\"width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" allowfullscreen loading=\"lazy\"></iframe>\n\n### עיקרי הדברים\n- הפרומפט: לבנות סקריפט ב-HTML, בלי סרוור, שמייצר הרבה דוגמאות כאלה, עם אנימציה כיפית לילדים.\n- ההבדל בין טיק טוק לשיחה: קודם מבקשים שיבין את הרעיון בלי לעשות כלום, ורק אז מתקדמים.\n- בשלבים הראשונים פשוט לשחק ככה. קורקינט, קטנוע, אופניים, לא F16. אחר כך, כשמתחילים לעבוד מתודולוגית עם תיעוד, סקילים ושיטה, מגיעים ל-Art of Code Coding.\n- עוד כלים חינמיים באתר של אבי ב-GitHub: home page אישי, Stock Scanner ועוד.\n\n### לקחת איתכם\nאין סיבה שלא יהיה לכם כלי כזה כבר השבוע. פשוט תתחילו לשחק.\n",
+      "has_code_example": false,
+      "github_file": ""
+    }
+  ]
+}

@@ -70,6 +70,10 @@ class Command(BaseCommand):
         for opt in ("domain", "track"):
             if data.get(opt):
                 course_defaults[opt] = data[opt]
+        # Whether finishing the course issues a certificate (only set when
+        # provided, so we never flip an existing course's value with a default).
+        if "issues_certificate" in data:
+            course_defaults["issues_certificate"] = bool(data["issues_certificate"])
         # Notebook-graded certificate gate (only set when provided).
         if "requires_notebooks" in data:
             course_defaults["requires_notebooks"] = bool(data["requires_notebooks"])
