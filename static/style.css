@@ -151,10 +151,11 @@ h1, h2, h3, h4, h5, h6 {
 .hero-joke {
   max-width: none;
   margin: 0 auto;
-  font-size: clamp(1.05rem, 1.5vw, 1.2rem);
-  font-weight: 500;
-  color: var(--text-secondary);
-  line-height: 1.55;
+  font-family: "Suez One", var(--font-heading), serif;   /* playful display font */
+  font-size: clamp(1.35rem, 2.9vw, 2.25rem);
+  font-weight: 400;
+  color: var(--text-primary);
+  line-height: 1.28;
 }
 
 /* "Continue watching" — a slim, content-width link pill (no button) */
@@ -1104,9 +1105,11 @@ html[data-theme="dark"] .training-hero {
   display: grid; grid-template-columns: 1fr 1fr; gap: .45rem 1rem;
 }
 .training-hero-list li { font-size: .92rem; font-weight: 500; display: flex; align-items: center; gap: .45rem; }
-.training-hero-list i { color: var(--accent-primary); font-size: .9rem; flex: 0 0 auto; }
-.training-hero-foot { margin-top: auto; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.training-hero-list li::before { content: "–"; color: var(--text-secondary); flex: 0 0 auto; }   /* plain dash marker */
+.training-hero-foot { margin-top: auto; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; width: 100%; }
 .training-hero-meta { font-size: .82rem; color: var(--text-secondary); }
+/* "התחל כאן": one wide, obvious call to action */
+.training-hero-cta { width: 100%; justify-content: center; font-size: 1.2rem; font-weight: 700; padding: .85rem 1.5rem; gap: .5rem; }
 .training-hero-media { flex: 0 0 42%; background: #fff; position: relative; overflow: hidden; }
 html[data-theme="dark"] .training-hero-media { background: rgba(255,255,255,.04); }
 .thm-layer { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1s ease; }
@@ -1229,10 +1232,11 @@ html[data-theme="dark"] .cert-trophy:hover { color: #ffe9a8; }
 @media (min-width: 992px) {
   main:has(> .home-main) { display: flex; flex-direction: column; }
   .home-main { display: flex; flex-direction: column; flex: 1 1 auto; }
-  .home-train { display: flex; flex: 1 1 auto; }
-  .home-train > .training-hero { flex: 1 1 auto; }
-  /* Keep the tagline on a single line on desktop. */
-  .hero-joke { white-space: nowrap; }
+  /* Training box: a wide banner, at most a third of its width tall. */
+  .home-train > .training-hero { aspect-ratio: 3 / 1; }
+  /* Logged in: make it shorter so the blog and other sections below are visible. */
+  .home-main.is-auth .home-train > .training-hero { aspect-ratio: 4.5 / 1; }
+  .hero-joke { white-space: normal; }
 }
 
 @media (max-width: 767px) {

@@ -1156,8 +1156,11 @@ def courses_catalog(request):
     if request.user.is_authenticated:
         cmap = {c.pk: c for c in courses_qs}
         seen = set()
+        # Every course the learner started but has not finished, most recent first.
+        # Visibility follows the catalog (cid in cmap), so staff also see their
+        # in-progress drafts. No cap - show them all.
         for cid in (UserVideoProgress.objects
-                    .filter(user=request.user, video__course__is_published=True)
+                    .filter(user=request.user)
                     .order_by("-updated_at").values_list("video__course_id", flat=True)):
             if cid in seen:
                 continue
@@ -1165,8 +1168,6 @@ def courses_catalog(request):
             pr = progress.get(cid)
             if pr and pr["started"] and not pr["completed"] and cid in cmap:
                 continue_courses.append(entry(cmap[cid]))
-            if len(continue_courses) >= 4:
-                break
 
         # Trophies: courses the learner has been certified in.
         from .models import CourseCertificate

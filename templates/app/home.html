@@ -5,7 +5,7 @@
 
 {% block content %}
 
-<div class="home-main">
+<div class="home-main{% if user.is_authenticated %} is-auth{% endif %}">
 
     {# === MAIN SECTION - always pinned to the top of the page === #}
 
@@ -21,20 +21,18 @@
     <section class="mt-2 home-train">
       <a href="{% url 'courses_catalog' %}" class="training-hero">
         <div class="training-hero-body">
-          <h3 class="training-hero-title">
-            <i class="bi bi-mortarboard-fill"></i> הדרכה
-          </h3>
+          <h3 class="training-hero-title">הדרכות</h3>
           <p class="training-hero-lead">
             הדרכות וידאו אונליין עם הסברים מלאים, תרגול ובחנים ותעודת סיום - ממתחילים ועד מתקדמים.
           </p>
           <ul class="training-hero-list">
-            <li><i class="bi bi-check-circle-fill"></i> פייתון, סקראץ' ופיתוח web</li>
-            <li><i class="bi bi-check-circle-fill"></i> ארדואינו, מיקרו-בקרים ו-FPGA</li>
-            <li><i class="bi bi-check-circle-fill"></i> תכנון והדפסת תלת-מימד</li>
-            <li><i class="bi bi-check-circle-fill"></i> בינה מלאכותית - בשלוש רמות</li>
+            <li>פייתון, סקראץ' ופיתוח web</li>
+            <li>ארדואינו, מיקרו-בקרים ו-FPGA</li>
+            <li>תכנון והדפסת תלת-מימד</li>
+            <li>בינה מלאכותית - בשלוש רמות</li>
           </ul>
           <div class="training-hero-foot">
-            <span class="btn btn-primary">לכל ההדרכות</span>
+            <span class="btn btn-primary training-hero-cta">התחל כאן</span>
           </div>
         </div>
         <div class="training-hero-media" id="thMedia">
@@ -51,16 +49,6 @@
       </a>
     </section>
 
-    {% if not user.is_authenticated %}
-    <!-- Guest CTA - right below the main training card -->
-    <div class="guest-cta card-surface mt-3 p-3 d-flex flex-wrap justify-content-center align-items-center gap-3 text-center">
-      <span>הכול פתוח וחינם - הצטרפו כדי לשמור התקדמות ולקבל תעודות.</span>
-      <span class="d-flex gap-2">
-        <a href="{% url 'register' %}" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i> הרשמה</a>
-        <a href="{% url 'login' %}" class="btn btn-outline-primary"><i class="bi bi-box-arrow-in-right me-1"></i> כניסה</a>
-      </span>
-    </div>
-    {% endif %}
 
     {# === Personalized content - always BELOW the main section === #}
 

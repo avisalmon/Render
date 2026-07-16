@@ -2,6 +2,16 @@
 {% load static course_tags %}
 {% block title %}{{ video.title }} - {{ course.title }} - babook{% endblock %}
 
+{# Real navigation tree on the lesson page: בית / הדרכות / course / lesson #}
+{% block breadcrumb %}
+<ol class="breadcrumb small mb-0">
+  <li class="breadcrumb-item"><a href="{% url 'home' %}" style="color:var(--accent-primary)">בית</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'courses_catalog' %}" style="color:var(--accent-primary)">הדרכות</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'courses_detail' course.slug %}" style="color:var(--accent-primary)">{{ course.title }}</a></li>
+  <li class="breadcrumb-item active" aria-current="page" style="color:var(--text-secondary)">{{ video.title }}</li>
+</ol>
+{% endblock %}
+
 {% block content %}
 <div class="lesson-layout">
 
@@ -246,6 +256,16 @@
     }
     // Pin the panel to the viewport over its reserved column, so it never scrolls
     // away and the chat header (with the X) stays put no matter how far you scroll.
+    // How far down the top chrome currently reaches: the sticky navbar plus the
+    // non-sticky breadcrumb bar while it is still on screen. This keeps the pinned
+    // panel from starting under the navigation.
+    function topChrome() {
+      var nav = document.querySelector('.navbar.sticky-top') || document.querySelector('.navbar');
+      var navB = nav ? nav.getBoundingClientRect().bottom : 56;
+      var crumb = document.querySelector('.bb-crumbbar');
+      var crumbB = crumb ? crumb.getBoundingClientRect().bottom : navB;
+      return Math.round(Math.max(navB, crumbB));
+    }
     function placeFixed() {
       if (!isDesktop()) {
         fixed.style.position = ''; fixed.style.top = ''; fixed.style.bottom = '';
@@ -254,15 +274,36 @@
       }
       var r = sidebar.getBoundingClientRect();
       fixed.style.position = 'fixed';
-      fixed.style.top = (navHeight() + 8) + 'px';
+      fixed.style.top = (topChrome() + 8) + 'px';
       fixed.style.bottom = '12px';
       fixed.style.left = Math.round(r.left) + 'px';
       fixed.style.width = Math.round(r.width) + 'px';
       fixed.style.height = 'auto';
     }
+    function updateTop() {   // cheap: only the top changes as the breadcrumb scrolls away
+      if (isDesktop() && fixed.style.position === 'fixed') fixed.style.top = (topChrome() + 8) + 'px';
+    }
+    // Auto-scroll the lesson list so the current lesson is always in view
+    // (centered), even far down a long list. Scrolls only the list's own
+    // scroll container, never the page.
+    function scrollActiveIntoView() {
+      var active = document.querySelector('.lesson-list-item--active');
+      if (!active) return;
+      var sc = active.parentElement;
+      while (sc && sc !== document.body) {
+        var oy = getComputedStyle(sc).overflowY;
+        if ((oy === 'auto' || oy === 'scroll') && sc.scrollHeight > sc.clientHeight + 2) break;
+        sc = sc.parentElement;
+      }
+      if (!sc || sc === document.body) return;
+      var ar = active.getBoundingClientRect(), sr = sc.getBoundingClientRect();
+      sc.scrollTop += (ar.top - sr.top) - (sr.height / 2) + (ar.height / 2);
+    }
     placeFixed();
+    scrollActiveIntoView();
     window.addEventListener('resize', placeFixed);
-    window.addEventListener('load', placeFixed);   // re-place once fonts/logo settle
+    window.addEventListener('scroll', updateTop, { passive: true });
+    window.addEventListener('load', function () { placeFixed(); scrollActiveIntoView(); });   // re-place + center once settled
 
     if (rez) {
       var dragging = false, startX = 0, startW = 0;
