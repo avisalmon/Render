@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>חיישן התאוצה של הטלפון</title>
+<style>
+  :root{
+    --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --bg:#fff; --panel:#f9fafb;
+    --accent:#2563eb; --ok:#059669; --rec:#dc2626; --grid:#eef2f7;
+    --x:#2563eb; --y:#059669; --z:#b45309;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,"Noto Sans Hebrew",sans-serif;
+       color:var(--ink); background:var(--bg); padding:12px 14px; line-height:1.5;}
+  .wrap{max-width:680px; margin:0 auto;}
+  h2{font-size:1.08rem; margin:0 0 2px;}
+  .sub{color:var(--muted); font-size:.86rem; margin:0 0 12px;}
+  .panel{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px; margin:10px 0;}
+  .panel h3{font-size:.92rem; margin:0 0 8px; display:flex; align-items:center; gap:6px;}
+  .step{display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px;
+        border-radius:50%; background:var(--accent); color:#fff; font-size:.72rem; font-weight:700; flex:none;}
+  textarea{width:100%; border:1px solid var(--line); border-radius:8px; padding:8px; font:inherit;
+           resize:vertical; min-height:56px; background:#fff;}
+  button{font:inherit; cursor:pointer; border-radius:8px; border:1px solid var(--line);
+         padding:8px 14px; background:#fff; color:var(--ink);}
+  button:hover{border-color:var(--accent);}
+  button:disabled{opacity:.45; cursor:not-allowed;}
+  .btn-primary{background:var(--accent); color:#fff; border-color:var(--accent); font-weight:600;}
+  .btn-rec{background:var(--rec); color:#fff; border-color:var(--rec); font-weight:600;}
+  .row{display:flex; flex-wrap:wrap; gap:8px; align-items:center;}
+  .status{font-size:.82rem; color:var(--muted); margin-top:8px; min-height:1.2em;}
+  .status.ok{color:var(--ok);} .status.err{color:var(--rec);}
+  .locked{background:#fff; border:1px dashed var(--ok); border-radius:8px; padding:8px; font-size:.9rem; margin-top:8px;}
+  .readout{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:6px 0 10px; text-align:center;}
+  .readout .cell{background:#fff; border:1px solid var(--line); border-radius:8px; padding:6px 2px;}
+  .readout .lab{font-size:.72rem; color:var(--muted);}
+  .readout .val{font-size:1.05rem; font-weight:700; font-variant-numeric:tabular-nums; direction:ltr;}
+  .readout .mag .val{color:var(--rec);}
+  canvas{width:100%; height:220px; display:block; background:#fff; border:1px solid var(--line); border-radius:8px;}
+  .legend{display:flex; gap:12px; font-size:.78rem; color:var(--muted); margin:6px 2px 0; flex-wrap:wrap;}
+  .legend span{display:inline-flex; align-items:center; gap:4px;}
+  .dot{width:10px; height:3px; border-radius:2px; display:inline-block;}
+  .stats{display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin:10px 0; text-align:center;}
+  .stats .cell{background:#fff; border:1px solid var(--line); border-radius:8px; padding:8px 2px;}
+  .stats .lab{font-size:.72rem; color:var(--muted);}
+  .stats .val{font-size:1.02rem; font-weight:700; direction:ltr; font-variant-numeric:tabular-nums;}
+  .hint{font-size:.8rem; color:var(--muted); margin-top:10px; line-height:1.5;}
+  .hint b{color:var(--ink);}
+  .pair{background:#eef2ff;border:1px solid #c7d2fe;color:#3730a3;border-radius:8px;padding:8px 10px;font-size:.85rem;margin:0 0 10px;}
+  .hidden{display:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2>חיישן התאוצה של הטלפון</h2>
+  <p class="sub">הטלפון שבידך הוא מד תאוצה. נחזה, נמדוד, ונקרא גרף אחד אמיתי מהתנועה שלו.</p>
+
+  <div id="pairBanner" class="pair hidden">מחובר למחשב. בסיום המדידה, הגרף והמספרים יופיעו גם על מסך המחשב.</div>
+
+  <!-- 1 · חיזוי -->
+  <div class="panel">
+    <h3><span class="step">1</span> חוֹזים</h3>
+    <p style="margin:0 0 8px; font-size:.9rem;">לפני שמפעילים חיישן: כשהטלפון מונח ללא תנועה, איזה מספר לדעתך יראה גודל התאוצה? וכשמחליקים אותו במדרון, הוא יגדל או יקטן?</p>
+    <textarea id="pred" placeholder="כתבו כאן את החיזוי שלכם..."></textarea>
+    <div class="row" style="margin-top:8px;">
+      <button id="lockBtn" class="btn-primary">נעילת חיזוי</button>
+    </div>
+    <div id="lockedBox" class="locked hidden"></div>
+  </div>
+
+  <!-- 2 · מדידה -->
+  <div class="panel">
+    <h3><span class="step">2</span> מוֹדדים</h3>
+    <div class="row">
+      <button id="enableBtn" class="btn-primary">אפשר חיישן תנועה</button>
+      <button id="recBtn" class="btn-rec" disabled>התחל הקלטה</button>
+      <button id="demoBtn">טען נתוני דוגמה</button>
+    </div>
+    <div id="status" class="status">לחצו "אפשר חיישן תנועה" כדי להתחיל. באייפון תופיע בקשת הרשאה. אין חיישן? "טען נתוני דוגמה" מראה איך הכלי עובד.</div>
+
+    <div class="readout" id="readout" aria-hidden="true">
+      <div class="cell"><div class="lab">X</div><div class="val" id="vx">-</div></div>
+      <div class="cell"><div class="lab">Y</div><div class="val" id="vy">-</div></div>
+      <div class="cell"><div class="lab">Z</div><div class="val" id="vz">-</div></div>
+      <div class="cell mag"><div class="lab">גודל |a|</div><div class="val" id="vm">-</div></div>
+    </div>
+
+    <canvas id="live" width="640" height="220"></canvas>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--x)"></i>X</span>
+      <span><i class="dot" style="background:var(--y)"></i>Y</span>
+      <span><i class="dot" style="background:var(--z)"></i>Z</span>
+      <span><i class="dot" style="background:var(--rec)"></i>גודל |a|</span>
+      <span>יחידות: m/s²</span>
+    </div>
+  </div>
+
+  <!-- 3 · הגרף שהקלטתם -->
+  <div class="panel hidden" id="resultPanel">
+    <h3><span class="step">3</span> מנַסחים: הגרף שמדדתם</h3>
+    <canvas id="rec" width="640" height="220"></canvas>
+    <div class="stats">
+      <div class="cell"><div class="lab">משך (s)</div><div class="val" id="sDur">-</div></div>
+      <div class="cell"><div class="lab">שיא |a| (m/s²)</div><div class="val" id="sPeak">-</div></div>
+      <div class="cell"><div class="lab">ממוצע |a| (m/s²)</div><div class="val" id="sMean">-</div></div>
+    </div>
+    <div class="row">
+      <button id="csvBtn">הורדת CSV</button>
+      <button id="clearBtn">מדידה חדשה</button>
+      <button id="sendAgain" class="btn-primary hidden">שלח שוב למחשב</button>
+    </div>
+    <div class="status" id="sendStatus"></div>
+  </div>
+
+  <p class="hint"><b>מה רואים:</b> כשהטלפון במנוחה, גודל התאוצה קרוב ל-9.8 m/s². זה כוח הכובד שהחיישן חש כל הזמן, גם בלי תנועה. ברגע שמזיזים או מחליקים את הטלפון, הגרף זז. זה בדיוק ההבדל בין "מה שמרגישים" ל"מה שהחיישן מודד". שמרו את החיזוי שכתבתם והשוו אותו לגרף.</p>
+  <p class="hint" id="secHint"></p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+
+  // ---- pairing (PC lesson <-> this phone) ----
+  var qp = new URLSearchParams(location.search);
+  var PAIR_CODE = qp.get("code") || "";
+  var LAB_KEY = qp.get("lab") || "motion";
+  var lastStats = null;
+  if(PAIR_CODE){
+    $("pairBanner").classList.remove("hidden");
+  }
+
+  // ---- state ----
+  var listening = false;      // devicemotion handler attached
+  var recording = false;      // capturing a trial into buffer
+  var mode = "gravity";       // which acceleration field we read
+  var live = [];              // rolling {t,x,y,z,m} for the live chart
+  var buf = [];               // recorded trial samples
+  var t0 = 0;                 // recording start time (ms, from first sample)
+  var lastTs = 0;             // last event timestamp for elapsed calc
+  var raf = 0;
+
+  var LIVE_WINDOW_MS = 8000;  // show the last 8 seconds live
+
+  // ---- 1 · prediction lock ----
+  $("lockBtn").addEventListener("click", function(){
+    var txt = $("pred").value.trim();
+    if(!txt){ $("pred").focus(); return; }
+    $("pred").disabled = true;
+    $("lockBtn").disabled = true;
+    var box = $("lockedBox");
+    box.textContent = "חיזוי נעול: " + txt;
+    box.classList.remove("hidden");
+  });
+
+  // ---- 2 · enable sensor ----
+  $("enableBtn").addEventListener("click", function(){
+    if(typeof DeviceMotionEvent === "undefined"){
+      setStatus("המכשיר או הדפדפן לא חושף חיישן תנועה. נסו לפתוח בטלפון, או להפעיל אמולציית חיישנים ב-DevTools.", "err");
+      return;
+    }
+    // iOS 13+ requires an explicit permission request from a user gesture.
+    if(typeof DeviceMotionEvent.requestPermission === "function"){
+      DeviceMotionEvent.requestPermission().then(function(res){
+        if(res === "granted"){ startListening(); }
+        else { setStatus("ההרשאה נדחתה. בלי הרשאה לא ניתן לקרוא את החיישן.", "err"); }
+      }).catch(function(){
+        setStatus("לא ניתן לבקש הרשאה. ודאו שהעמוד נטען דרך HTTPS.", "err");
+      });
+    } else {
+      startListening();
+    }
+  });
+
+  function startListening(){
+    if(listening) return;
+    listening = true;
+    $("enableBtn").disabled = true;
+    $("recBtn").disabled = false;
+    $("readout").setAttribute("aria-hidden","false");
+    setStatus("החיישן פעיל. הזיזו את הטלפון וראו את הגרף. מוכנים? התחילו הקלטה.", "ok");
+    window.addEventListener("devicemotion", onMotion, true);
+    // If nothing arrives within ~1.5s, most likely a non-secure context.
+    setTimeout(function(){
+      if(live.length === 0){
+        $("secHint").innerHTML = "<b>לא מגיעים נתונים?</b> באייפון ובדפדפנים מודרניים חיישני תנועה עובדים רק בעמוד מאובטח (HTTPS). בסביבת פיתוח אפשר לבדוק עם אמולציית חיישנים ב-Chrome DevTools (Sensors), או דרך מנהרת HTTPS.";
+      }
+    }, 1500);
+  }
+
+  function onMotion(e){
+    var a = e.acceleration;
+    // Prefer linear acceleration (gravity removed) when the device provides it.
+    if(a && a.x !== null && a.x !== undefined){
+      mode = "linear";
+    } else {
+      a = e.accelerationIncludingGravity;
+      mode = "gravity";
+    }
+    if(!a || a.x === null || a.x === undefined) return;
+    var x = a.x, y = a.y, z = a.z;
+    var m = Math.sqrt(x*x + y*y + z*z);
+    var now = e.timeStamp || performance.now();
+    lastTs = now;
+    live.push({t:now, x:x, y:y, z:z, m:m});
+    // trim live buffer to the visible window
+    var cut = now - LIVE_WINDOW_MS;
+    while(live.length && live[0].t < cut) live.shift();
+    if(recording){
+      if(t0 === 0) t0 = now;
+      buf.push({t:(now - t0)/1000, x:x, y:y, z:z, m:m});
+    }
+    // numeric readout
+    $("vx").textContent = x.toFixed(2);
+    $("vy").textContent = y.toFixed(2);
+    $("vz").textContent = z.toFixed(2);
+    $("vm").textContent = m.toFixed(2);
+    if(!raf) raf = requestAnimationFrame(drawLiveLoop);
+  }
+
+  function drawLiveLoop(){
+    raf = 0;
+    drawChart($("live"), live, {live:true});
+  }
+
+  // ---- record / stop ----
+  $("recBtn").addEventListener("click", function(){
+    if(!recording){
+      recording = true; buf = []; t0 = 0;
+      $("recBtn").textContent = "עצור הקלטה";
+      $("resultPanel").classList.add("hidden");
+      setStatus("מקליט... בצעו את הניסוי, ואז עצרו.", "ok");
+    } else {
+      recording = false;
+      $("recBtn").textContent = "התחל הקלטה";
+      finishTrial();
+    }
+  });
+
+  function finishTrial(){
+    if(buf.length < 2){
+      setStatus("ההקלטה קצרה מדי. נסו שוב ותנו לתנועה כמה שניות.", "err");
+      return;
+    }
+    var dur = buf[buf.length-1].t - buf[0].t;
+    var peak = 0, sum = 0;
+    for(var i=0;i<buf.length;i++){ if(buf[i].m>peak) peak=buf[i].m; sum+=buf[i].m; }
+    var mean = sum / buf.length;
+    $("sDur").textContent = dur.toFixed(2);
+    $("sPeak").textContent = peak.toFixed(2);
+    $("sMean").textContent = mean.toFixed(2);
+    $("resultPanel").classList.remove("hidden");
+    drawChart($("rec"), buf, {live:false});
+    setStatus("נעצר. הגרף שלכם למטה. השוו אותו לחיזוי.", "ok");
+    lastStats = {dur:dur, peak:peak, mean:mean};
+    if(PAIR_CODE){ $("sendAgain").classList.remove("hidden"); submitToPC(); }
+  }
+
+  // ---- send capture back to the paired PC lesson ----
+  function downsample(arr, maxN){
+    if(arr.length <= maxN) return arr.slice();
+    var k = Math.ceil(arr.length / maxN), out = [];
+    for(var i=0;i<arr.length;i+=k) out.push(arr[i]);
+    if(out[out.length-1] !== arr[arr.length-1]) out.push(arr[arr.length-1]);
+    return out;
+  }
+  function submitToPC(){
+    if(!PAIR_CODE || !lastStats) return;
+    var series = downsample(buf, 300).map(function(p){
+      return {t:+p.t.toFixed(3), x:+p.x.toFixed(3), y:+p.y.toFixed(3), z:+p.z.toFixed(3), m:+p.m.toFixed(3)};
+    });
+    var payload = {
+      lab: LAB_KEY,
+      prediction: ($("pred").value || "").trim(),
+      summary: {dur:+lastStats.dur.toFixed(3), peak:+lastStats.peak.toFixed(3), mean:+lastStats.mean.toFixed(3), n: buf.length},
+      series: series
+    };
+    var ss = $("sendStatus");
+    ss.textContent = "שולח למחשב..."; ss.className = "status";
+    fetch(location.origin + "/lab/submit/" + encodeURIComponent(PAIR_CODE) + "/", {
+      method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(payload)
+    }).then(function(r){
+      if(r.ok){ ss.textContent = "נשלח למחשב. הגרף שלכם מופיע שם."; ss.className = "status ok"; }
+      else { ss.textContent = "שליחה נכשלה (קוד לא תקין או שפג תוקפו)."; ss.className = "status err"; }
+    }).catch(function(){
+      ss.textContent = "שליחה נכשלה. בדקו את חיבור הרשת."; ss.className = "status err";
+    });
+  }
+  $("sendAgain").addEventListener("click", submitToPC);
+
+  $("clearBtn").addEventListener("click", function(){
+    buf = [];
+    $("resultPanel").classList.add("hidden");
+    setStatus("מוכן להקלטה חדשה.", "ok");
+  });
+
+  // ---- sample data (for review on any device / phones without a sensor) ----
+  // Deterministic synthetic trace: phone at rest (gravity ~9.8), then a slide
+  // down an incline, then rest again. Clearly labelled as NOT a real measurement.
+  $("demoBtn").addEventListener("click", function(){
+    buf = [];
+    var dt = 0.02, T = 4.0;
+    for(var t=0; t<=T+1e-9; t+=dt){
+      var az = 9.81, ax = 0.0;
+      if(t > 1.2 && t < 2.8){
+        var p = (t - 1.2) / 1.6;                 // 0..1 across the slide
+        ax = 2.6 * Math.sin(Math.PI * p);        // smooth push along the incline
+        az = 9.81 - 0.9 * Math.sin(Math.PI * p); // slight dip as it accelerates
+      }
+      ax += 0.05 * Math.sin(t * 22.0);           // small realistic wobble (deterministic)
+      var ay = 0.04 * Math.sin(t * 17.0);
+      var m = Math.sqrt(ax*ax + ay*ay + az*az);
+      buf.push({t: +t.toFixed(3), x: ax, y: ay, z: az, m: m});
+    }
+    recording = false;
+    $("recBtn").textContent = "התחל הקלטה";
+    finishTrial();
+    setStatus("נטענו נתוני דוגמה (לא מדידה אמיתית). כך ייראה גרף של החלקה במדרון.", "ok");
+  });
+
+  // ---- CSV export ----
+  $("csvBtn").addEventListener("click", function(){
+    var rows = ["t_s,ax,ay,az,mag"];
+    for(var i=0;i<buf.length;i++){
+      var p = buf[i];
+      rows.push([p.t.toFixed(4), p.x.toFixed(4), p.y.toFixed(4), p.z.toFixed(4), p.m.toFixed(4)].join(","));
+    }
+    var blob = new Blob([rows.join("\n")], {type:"text/csv"});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = "pocket-physics-motion.csv";
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  });
+
+  // ---- chart (self-contained canvas plotter) ----
+  function drawChart(canvas, data, opts){
+    var dpr = window.devicePixelRatio || 1;
+    var cssW = canvas.clientWidth || 640, cssH = canvas.clientHeight || 220;
+    if(canvas.width !== Math.round(cssW*dpr) || canvas.height !== Math.round(cssH*dpr)){
+      canvas.width = Math.round(cssW*dpr); canvas.height = Math.round(cssH*dpr);
+    }
+    var ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,cssW,cssH);
+    var padL=38, padR=8, padT=10, padB=20;
+    var w = cssW-padL-padR, h = cssH-padT-padB;
+
+    if(!data.length){
+      ctx.fillStyle="#9ca3af"; ctx.font="13px system-ui"; ctx.textAlign="center";
+      ctx.fillText("אין נתונים עדיין", cssW/2, cssH/2);
+      return;
+    }
+
+    // x-domain (time), y-domain (auto, symmetric-ish around data)
+    var tMin = data[0].t, tMax = data[data.length-1].t;
+    if(opts.live){ // live buffer uses raw ms timestamps
+      tMin = data[0].t; tMax = data[data.length-1].t;
+    }
+    if(tMax - tMin < 1e-6) tMax = tMin + 1;
+    var yMin=Infinity, yMax=-Infinity;
+    for(var i=0;i<data.length;i++){
+      var d=data[i];
+      yMin=Math.min(yMin,d.x,d.y,d.z,d.m);
+      yMax=Math.max(yMax,d.x,d.y,d.z,d.m);
+    }
+    if(yMax-yMin < 1e-6){ yMax=yMin+1; }
+    var padY=(yMax-yMin)*0.1; yMin-=padY; yMax+=padY;
+
+    function X(t){ return padL + (t - tMin)/(tMax - tMin) * w; }
+    function Y(v){ return padT + (yMax - v)/(yMax - yMin) * h; }
+
+    // grid + axes
+    ctx.strokeStyle="#eef2f7"; ctx.lineWidth=1;
+    ctx.fillStyle="#9ca3af"; ctx.font="10px system-ui";
+    var ticks=4;
+    for(var g=0; g<=ticks; g++){
+      var vy = yMin + (yMax-yMin)*g/ticks;
+      var py = Y(vy);
+      ctx.beginPath(); ctx.moveTo(padL,py); ctx.lineTo(padL+w,py); ctx.stroke();
+      ctx.textAlign="right"; ctx.textBaseline="middle";
+      ctx.fillText(vy.toFixed(1), padL-4, py);
+    }
+    // zero line
+    if(yMin < 0 && yMax > 0){
+      ctx.strokeStyle="#cbd5e1"; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(padL,Y(0)); ctx.lineTo(padL+w,Y(0)); ctx.stroke();
+    }
+
+    var series=[["x","var(--x)","#2563eb"],["y","var(--y)","#059669"],["z","var(--z)","#b45309"],["m","rec","#dc2626"]];
+    for(var s=0;s<series.length;s++){
+      var key=series[s][0], color=series[s][2];
+      ctx.strokeStyle=color; ctx.lineWidth = key==="m"?2:1.3;
+      ctx.beginPath();
+      for(var j=0;j<data.length;j++){
+        var px=X(data[j].t), pyv=Y(data[j][key]);
+        if(j===0) ctx.moveTo(px,pyv); else ctx.lineTo(px,pyv);
+      }
+      ctx.stroke();
+    }
+    // x label
+    ctx.fillStyle="#9ca3af"; ctx.textAlign="center"; ctx.textBaseline="alphabetic";
+    ctx.fillText(opts.live ? "זמן (8 שניות אחרונות)" : "זמן (s)", padL+w/2, cssH-4);
+  }
+
+  function setStatus(msg, kind){
+    var el=$("status");
+    el.textContent=msg;
+    el.className="status" + (kind?(" "+kind):"");
+  }
+
+  // initial paint
+  drawChart($("live"), [], {live:true});
+})();
+</script>
+</body>
+</html>

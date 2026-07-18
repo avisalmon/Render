@@ -1415,6 +1415,31 @@ class BlogComment(models.Model):
 
 
 # ---------------------------------------------------------------------------
+# Pocket-physics lab handoff: pair a PC lesson with a phone that does the
+# measurement. The PC shows a QR carrying `code`; the phone opens the widget,
+# measures, and POSTs its capture here; the PC polls and renders it. Sync is
+# via this row (shared DB), so no phone-to-PC connection is needed.
+# ---------------------------------------------------------------------------
+class LabSession(models.Model):
+    code = models.CharField(max_length=32, unique=True, db_index=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="lab_sessions")
+    video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name="lab_sessions")
+    lab_key = models.CharField(max_length=40, blank=True, default="")
+    data = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        # One reusable pairing per learner per lesson.
+        constraints = [
+            models.UniqueConstraint(fields=["user", "video"], name="uniq_labsession_user_video"),
+        ]
+
+    def __str__(self):
+        return f"lab {self.code} u={self.user_id} v={self.video_id}"
+
+
+# ---------------------------------------------------------------------------
 # CrashTech - hardware hackathon platform (EPIC-6.5). Defined in a dedicated
 # module, re-exported here so Django registers them under the `app` label.
 # ---------------------------------------------------------------------------

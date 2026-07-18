@@ -1,0 +1,160 @@
+{% load static %}<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מעבדה: מדידה בטלפון</title>
+<style>
+  :root{--ink:#1f2937;--muted:#6b7280;--line:#e5e7eb;--bg:#fff;--panel:#f9fafb;
+        --accent:#2563eb;--ok:#059669;--rec:#dc2626;--x:#2563eb;--y:#059669;--z:#b45309;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,"Noto Sans Hebrew",sans-serif;
+       color:var(--ink);background:var(--bg);padding:8px;line-height:1.5;}
+  .grid{display:grid;grid-template-columns:minmax(220px,300px) 1fr;gap:16px;align-items:start;}
+  @media(max-width:640px){.grid{grid-template-columns:1fr;}}
+  .col{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;}
+  h3{font-size:.98rem;margin:0 0 8px;display:flex;align-items:center;gap:6px;}
+  .step{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;
+        border-radius:50%;background:var(--accent);color:#fff;font-size:.72rem;font-weight:700;flex:none;}
+  p{color:var(--muted);font-size:.86rem;margin:6px 0;}
+  #qr{display:inline-block;margin:10px auto;padding:10px;background:#fff;border-radius:10px;border:1px solid var(--line);}
+  .qrwrap{text-align:center;}
+  .open{display:inline-block;margin-top:10px;background:#fff;color:var(--accent);text-decoration:none;
+        border:1px solid var(--accent);border-radius:9px;padding:8px 14px;font-weight:600;font-size:.85rem;}
+  .status{font-size:.82rem;color:var(--muted);margin-top:10px;text-align:center;}
+  .status.live{color:var(--ok);font-weight:600;}
+  .empty{color:#9ca3af;font-size:.9rem;background:#fff;border:1px dashed var(--line);border-radius:10px;
+         padding:26px 14px;text-align:center;}
+  .pred{background:#fff;border:1px solid var(--line);border-right:3px solid var(--accent);border-radius:8px;
+        padding:8px 10px;font-size:.88rem;margin-bottom:10px;}
+  .pred b{color:var(--ink);}
+  canvas{width:100%;height:240px;display:block;background:#fff;border:1px solid var(--line);border-radius:8px;}
+  .legend{display:flex;gap:12px;font-size:.78rem;color:var(--muted);margin:6px 2px;flex-wrap:wrap;}
+  .legend span{display:inline-flex;align-items:center;gap:4px;}
+  .dot{width:10px;height:3px;border-radius:2px;display:inline-block;}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px;text-align:center;}
+  .stats .cell{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 2px;}
+  .stats .lab{font-size:.72rem;color:var(--muted);}
+  .stats .val{font-size:1.02rem;font-weight:700;direction:ltr;font-variant-numeric:tabular-nums;}
+  .hidden{display:none;}
+</style>
+</head>
+<body>
+<div class="grid">
+  <div class="col qrwrap">
+    <h3><span class="step">1</span> פתחו את המעבדה בטלפון</h3>
+    <p>סרקו את הקוד עם מצלמת הטלפון. המעבדה תיפתח מחוברת לעמוד הזה.</p>
+    <div id="qr"></div>
+    <br>
+    <a class="open" href="{{ phone_url }}" target="_blank" rel="noopener">או פתחו במכשיר הזה</a>
+    <div class="status" id="status">ממתין למדידה מהטלפון...</div>
+  </div>
+  <div class="col">
+    <h3><span class="step">2</span> המדידה שלכם, כאן על המסך</h3>
+    <div id="empty" class="empty">מדדו בטלפון ולחצו "שלח למחשב". הגרף, החיזוי והמספרים יופיעו כאן בזמן אמת.</div>
+    <div id="result" class="hidden">
+      <div class="pred" id="predBox"></div>
+      <canvas id="chart" width="640" height="240"></canvas>
+      <div class="legend">
+        <span><i class="dot" style="background:var(--x)"></i>X</span>
+        <span><i class="dot" style="background:var(--y)"></i>Y</span>
+        <span><i class="dot" style="background:var(--z)"></i>Z</span>
+        <span><i class="dot" style="background:var(--rec)"></i>גודל |a|</span>
+        <span>m/s²</span>
+      </div>
+      <div class="stats" id="stats"></div>
+    </div>
+  </div>
+</div>
+
+<script src="{% static 'js/qrcode.min.js' %}"></script>
+<script>
+(function(){
+  "use strict";
+  var PHONE_URL = "{{ phone_url|escapejs }}";
+  var POLL_URL = "{{ poll_url|escapejs }}";
+  var $ = function(id){ return document.getElementById(id); };
+
+  // QR of the phone widget URL (carries the pairing code).
+  try {
+    new QRCode($("qr"), { text: PHONE_URL, width: 240, height: 240,
+      colorDark: "#111827", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+  } catch(e){ $("qr").textContent = "לא ניתן ליצור QR"; }
+
+  var lastUpdated = null;
+
+  function poll(){
+    fetch(POLL_URL, {credentials:"same-origin", headers:{"Accept":"application/json"}})
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(j){
+        if(j && j.data && j.updated !== lastUpdated){
+          lastUpdated = j.updated;
+          render(j.data);
+        }
+      })
+      .catch(function(){ /* transient, keep polling */ });
+  }
+
+  function render(d){
+    $("empty").classList.add("hidden");
+    $("result").classList.remove("hidden");
+    var st = $("status"); st.textContent = "התקבלה מדידה מהטלפון"; st.className = "status live";
+    // prediction
+    var pred = (d.prediction || "").trim();
+    $("predBox").innerHTML = pred ? ("<b>החיזוי שלך:</b> " + escapeHtml(pred))
+                                  : "<b>החיזוי שלך:</b> (לא נכתב חיזוי)";
+    // stats
+    var s = d.summary || {};
+    $("stats").innerHTML =
+      cell("משך (s)", s.dur) + cell("שיא |a| (m/s²)", s.peak) + cell("ממוצע |a| (m/s²)", s.mean);
+    // graph
+    drawChart($("chart"), d.series || []);
+  }
+
+  function cell(lab, v){
+    var txt = (typeof v === "number") ? v.toFixed(2) : "-";
+    return '<div class="cell"><div class="lab">'+lab+'</div><div class="val">'+txt+'</div></div>';
+  }
+
+  function escapeHtml(s){
+    return s.replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+
+  function drawChart(canvas, data){
+    var dpr = window.devicePixelRatio || 1;
+    var cssW = canvas.clientWidth || 640, cssH = canvas.clientHeight || 240;
+    canvas.width = Math.round(cssW*dpr); canvas.height = Math.round(cssH*dpr);
+    var ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,cssW,cssH);
+    var padL=38,padR=8,padT=10,padB=20, w=cssW-padL-padR, h=cssH-padT-padB;
+    if(!data.length){ ctx.fillStyle="#9ca3af"; ctx.font="13px system-ui"; ctx.textAlign="center";
+      ctx.fillText("אין נתונים", cssW/2, cssH/2); return; }
+    var tMin=data[0].t, tMax=data[data.length-1].t; if(tMax-tMin<1e-6) tMax=tMin+1;
+    var yMin=Infinity,yMax=-Infinity;
+    data.forEach(function(d){ yMin=Math.min(yMin,d.x,d.y,d.z,d.m); yMax=Math.max(yMax,d.x,d.y,d.z,d.m); });
+    if(yMax-yMin<1e-6) yMax=yMin+1;
+    var py2=(yMax-yMin)*0.1; yMin-=py2; yMax+=py2;
+    function X(t){ return padL+(t-tMin)/(tMax-tMin)*w; }
+    function Y(v){ return padT+(yMax-v)/(yMax-yMin)*h; }
+    ctx.strokeStyle="#eef2f7"; ctx.lineWidth=1; ctx.fillStyle="#9ca3af"; ctx.font="10px system-ui";
+    for(var g=0; g<=4; g++){ var vy=yMin+(yMax-yMin)*g/4, pyv=Y(vy);
+      ctx.beginPath(); ctx.moveTo(padL,pyv); ctx.lineTo(padL+w,pyv); ctx.stroke();
+      ctx.textAlign="right"; ctx.textBaseline="middle"; ctx.fillText(vy.toFixed(1), padL-4, pyv); }
+    if(yMin<0 && yMax>0){ ctx.strokeStyle="#cbd5e1"; ctx.beginPath(); ctx.moveTo(padL,Y(0)); ctx.lineTo(padL+w,Y(0)); ctx.stroke(); }
+    var series=[["x","#2563eb"],["y","#059669"],["z","#b45309"],["m","#dc2626"]];
+    series.forEach(function(sp){ var key=sp[0]; ctx.strokeStyle=sp[1]; ctx.lineWidth=key==="m"?2:1.3; ctx.beginPath();
+      data.forEach(function(d,i){ var px=X(d.t),pv=Y(d[key]); if(i===0) ctx.moveTo(px,pv); else ctx.lineTo(px,pv); });
+      ctx.stroke(); });
+    ctx.fillStyle="#9ca3af"; ctx.textAlign="center"; ctx.textBaseline="alphabetic"; ctx.fillText("זמן (s)", padL+w/2, cssH-4);
+  }
+
+  poll();
+  setInterval(poll, 2000);
+})();
+</script>
+</body>
+</html>

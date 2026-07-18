@@ -10,6 +10,7 @@ from . import (
     dashboard_views,
     events_views,
     forum_views,
+    lab,
     onboarding_views,
     showcase_views,
     studio_views,
@@ -203,6 +204,10 @@ urlpatterns = [
     path("courses/<slug:slug>/lesson/<int:lesson_order>/code/save/", views.lesson_code_save, name="lesson_code_save"),
     path("courses/<slug:slug>/lesson/<int:lesson_order>/code/coach/", views.lesson_code_coach, name="lesson_code_coach"),
     path("courses/<slug:slug>/lesson/<int:lesson_order>/", views.courses_lesson, name="courses_lesson"),
+    # Pocket-physics lab handoff (PC lesson <-> phone measurement)
+    path("lab/panel/<slug:slug>/<int:order>/", lab.lab_panel, name="lab_panel"),
+    path("lab/poll/<slug:slug>/<int:order>/", lab.lab_poll, name="lab_poll"),
+    path("lab/submit/<str:code>/", lab.lab_submit, name="lab_submit"),
     # Courses (singular - SPR-1.4/1.5 entitlement-gated)
     path("course/<slug:slug>/", views.course_detail_view, name="course_detail"),
     path("course/<slug:slug>/lesson/<int:lesson_order>/", views.lesson_view, name="lesson_view"),

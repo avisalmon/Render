@@ -25,3 +25,4 @@ data/db.sqlite3
 
 # backup trigger artifact
 .last_backup
+data/lab_public_base.txt
