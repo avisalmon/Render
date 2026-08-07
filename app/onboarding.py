@@ -16,12 +16,19 @@ ONBOARDING_PENDING_KEY = "onboarding_pending"
 ONBOARDING_NEXT_KEY = "onboarding_next"
 ENTRY_EVENT_KEY = "entry_event_pending"
 INTERVIEW_KEY = "welcome_chat"
-INTERVIEW_TURNS_KEY = "welcome_chat_turns"  # how many answers this visitor owes us
-# The welcome chat is a handshake, not an interview: one answer if we already
-# know the name, two if we have to ask for it. Then the site opens by itself.
-TURNS_NAME_KNOWN = 1
-TURNS_NAME_UNKNOWN = 2
-MAX_INTERVIEW_TURNS = TURNS_NAME_UNKNOWN  # hard cap - nobody can get stuck here
+INTERVIEW_STAGE_KEY = "welcome_chat_stage"
+INTERVIEW_TRIES_KEY = "welcome_chat_name_tries"
+
+# The welcome chat has two things to get and then it is over: the visitor's
+# name, and one general question about what interests them. Stage 1 keeps
+# asking for the name; stage 2 asks the one question. The site opens by itself
+# after the answer to it - the visitor never has to end the chat.
+STAGE_NAME = "name"
+STAGE_GENERAL = "general"
+# The name is worth asking for more than once, but not forever: after this many
+# answers without one, we stop asking and let them in as they are.
+MAX_NAME_TRIES = 5
+MAX_INTERVIEW_TURNS = MAX_NAME_TRIES + 1  # hard cap - nobody can get stuck here
 
 UTM_KEYS = ("utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term")
 
@@ -247,9 +254,26 @@ _PROFILE_SHAPE = (
 )
 
 
-def interview_system_prompt(user, entry_course_title="", final=False):
-    """The welcome-chat prompt. `final` marks the last message before the site
-    opens: sign off and emit the profile instead of asking anything else."""
+_SIGN_OFF = (
+    "זו ההודעה האחרונה שלך. מיד אחריה הדפדפן מעביר את המשתמש/ת לאתר.\n"
+    "• כתוב/כתבי משפט אחד קצר וחם שסוגר את ההיכרות ומזמין להיכנס. עד 20 מילים.\n"
+    "• בלי שאלות. בלי 'רוצה ש...'. בלי הצעות להמשיך לדבר.\n"
+    "• ואז, בשורה אחרונה נפרדת, פלוט/י בדיוק (שדות ריקים אם לא נמסרו):\n"
+)
+
+_THE_QUESTION = "מה מעניין אותו/ה ללמוד כאן"
+
+
+def interview_system_prompt(user, entry_course_title="", stage=STAGE_NAME,
+                            last_name_try=False):
+    """The welcome-chat prompt, one branch per stage.
+
+    STAGE_NAME - we are still waiting for a name. The reply either welcomes the
+    name we just got and moves on to the one question, or asks for the name
+    again. `last_name_try` means we have asked enough: take a name if one came,
+    otherwise sign off and let them in as they are.
+    STAGE_GENERAL - they just answered the one question, so this is goodbye.
+    """
     entry_line = (
         f'הגיע/ה דרך ההדרכה "{entry_course_title}" - קח/י את זה בחשבון. '
         if entry_course_title else ""
@@ -257,46 +281,49 @@ def interview_system_prompt(user, entry_course_title="", final=False):
     if has_real_name(user):
         name_line = f"שמו/ה: {first_name_of(user)} - פנה/י אליו/ה בשם. "
     else:
-        name_line = ("עדיין לא יודעים את שמו/ה. אם נמסר שם בהודעה האחרונה - פתח/י את "
-                     "התשובה בשורה נפרדת: NAME: <שם פרטי> (תוסר מהתצוגה). אם לא נמסר "
-                     "שם - אל תבקש/י שוב לעולם, פשוט המשך/המשיכי. ")
+        name_line = "עדיין לא יודעים את שמו/ה. "
     base = (
         "אתה 'Avi Bot', הגרסה הדיגיטלית של אבי סלמון, יוצר babook.co.il - אתר "
         "הדרכות וידאו וקהילה בעברית. מדבר בגוף ראשון, עברית חמה ויומיומית, כאילו "
         "אבי עצמו מארח.\n\n"
-        "זו לא שיחה ולא ראיון - זו לחיצת יד קצרה בכניסה לאתר. המשתמש/ת עונה "
-        "תשובה אחת או שתיים ואז נכנס/ת לאתר אוטומטית. אל תנסה/י להאריך, אל "
-        "תציע/י סיורים ואל תסביר/י על האתר - יש זמן לזה בפנים.\n\n"
+        "זו לא שיחה ולא ראיון - זו היכרות קצרה בכניסה לאתר, ויש בה שני דברים "
+        "בלבד: השם שלו/ה, ושאלה אחת על מה מעניין אותו/ה. אל תוסיף/י שאלות "
+        "משלך, אל תציע/י סיורים ואל תסביר/י על האתר - יש זמן לזה בפנים.\n\n"
         f"מה יש באתר (מפתח תחום = שם: מסלולים):\n{_catalog_summary()}\n\n"
         f"{entry_line}{name_line}\n"
     )
-    if final:
-        return base + (
-            "זו ההודעה האחרונה שלך. מיד אחריה הדפדפן מעביר את המשתמש/ת לאתר.\n"
-            "• כתוב/כתבי משפט אחד קצר וחם שסוגר את ההיכרות ומזמין להיכנס. "
-            "עד 20 מילים.\n"
-            "• בלי שאלות. בלי 'רוצה ש...'. בלי הצעות להמשיך לדבר.\n"
-            "• ואז, בשורה אחרונה נפרדת, פלוט/י בדיוק (שדות ריקים אם לא נמסרו):\n"
+    if stage == STAGE_GENERAL:
+        # They answered the one question. Nothing left to ask.
+        return base + _SIGN_OFF + _PROFILE_SHAPE
+
+    # Stage 1: the name. The reply has to cover both branches, because whether
+    # a name arrived is only decided by what you write on the NAME: line.
+    if last_name_try:
+        no_name_branch = (
+            "• אם לא נמסר שם: אל תבקש/י שוב, ויתרנו על זה. " + _SIGN_OFF.replace(
+                "זו ההודעה האחרונה שלך.", "זו ההודעה האחרונה שלך במקרה הזה."
+            )
             + _PROFILE_SHAPE
         )
+    else:
+        no_name_branch = (
+            "• אם לא נמסר שם: אם שאל/ה משהו - ענה/י במשפט קצרצר אחד מהרשימה "
+            "למעלה. ואז בקש/י את השם שוב, בניסוח אחר מקודם, בקלילות ובלי "
+            "ללחוץ. שאלה אחת, עד 20 מילים, ותמיד על השם - לא על שום דבר אחר."
+        )
     return base + (
-        "המשימה שלך בהודעה הזו, ורק היא: לשאול שאלה אחת קצרה - מה מעניין "
-        "אותו/ה ללמוד כאן.\n"
-        "• עד 20 מילים סך הכל: חצי משפט של 'נעים מאוד' ואז השאלה.\n"
-        "• בלי רשימות, בלי פירוט התחומים, בלי הצעות נוספות.\n"
-        "• אם המשתמש/ת שאל/ה משהו - ענה/י במשפט קצרצר אחד מהרשימה למעלה, "
-        "ואז השאלה.\n"
+        "המשימה שלך עכשיו: להשיג את השם הפרטי.\n"
+        f"• אם נמסר שם בהודעה האחרונה: פתח/י בשורה נפרדת NAME: <שם פרטי> "
+        "(תוסר מהתצוגה), ואז חצי משפט של 'נעים מאוד' ומיד השאלה האחת: "
+        f"{_THE_QUESTION}. עד 20 מילים.\n"
+        + no_name_branch + "\n"
         "• הישאר/י בנושא: רק האתר וההדרכות. כל דבר אחר - סירוב ידידותי במשפט "
-        "אחד ואז השאלה.\n"
-        "• אם המשתמש/ת מבקש/ת להיכנס כבר לאתר ('קדימה', 'מספיק', 'תכניס אותי') - "
-        "אל תשאל/י כלום, משפט קצר אחד ואז בשורה אחרונה נפרדת:\n"
+        "אחד ואז חזרה לשאלה שלך.\n"
+        "• רק אם המשתמש/ת מבקש/ת במפורש להיכנס כבר לאתר ('קדימה', 'מספיק', "
+        "'תכניס אותי', 'לא רוצה לענות') - אל תתעקש/י, משפט קצר אחד ואז בשורה "
+        "אחרונה נפרדת:\n"
         + _PROFILE_SHAPE
     )
-
-
-def interview_turns_needed(user):
-    """How many answers we ask of this visitor before the site opens."""
-    return TURNS_NAME_KNOWN if has_real_name(user) else TURNS_NAME_UNKNOWN
 
 
 NAME_MARKER = "NAME:"

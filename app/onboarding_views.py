@@ -13,12 +13,15 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from .models import Course, LearnerProfile
 from .onboarding import (
     INTERVIEW_KEY,
-    INTERVIEW_TURNS_KEY,
+    INTERVIEW_STAGE_KEY,
+    INTERVIEW_TRIES_KEY,
+    MAX_NAME_TRIES,
     ONBOARDING_NEXT_KEY,
     ONBOARDING_PENDING_KEY,
-    TURNS_NAME_UNKNOWN,
+    STAGE_GENERAL,
+    STAGE_NAME,
+    has_real_name,
     interview_system_prompt,
-    interview_turns_needed,
     parse_interview_reply,
     recommend,
 )
@@ -118,7 +121,8 @@ def welcome(request):
     # Drop the server-side history with it, or the visitor would answer the
     # opener and land straight in the site on what looks like their first word.
     request.session.pop(INTERVIEW_KEY, None)
-    request.session.pop(INTERVIEW_TURNS_KEY, None)
+    request.session.pop(INTERVIEW_STAGE_KEY, None)
+    request.session.pop(INTERVIEW_TRIES_KEY, None)
     return render(request, "app/welcome.html", {
         "learner": profile,
         "opener": fixed_opener(request.user),
@@ -175,7 +179,8 @@ def _finish_onboarding(request, profile, completed):
     next_url = _safe_next(request, request.session.pop(ONBOARDING_NEXT_KEY, ""))
     request.session.pop(ONBOARDING_PENDING_KEY, None)
     request.session.pop(INTERVIEW_KEY, None)
-    request.session.pop(INTERVIEW_TURNS_KEY, None)
+    request.session.pop(INTERVIEW_STAGE_KEY, None)
+    request.session.pop(INTERVIEW_TRIES_KEY, None)
     if completed:
         # The homepage shows the recommendation rail ONCE right after
         # onboarding; afterwards it lives on the profile page (REQ-5.6.3).
@@ -209,10 +214,11 @@ def _apply_extracted(profile, user, extracted):
 def welcome_chat(request):
     """One welcome-chat turn (REQ-5.5.2/5.5.3). History lives in the session.
 
-    The chat is a fixed-length handshake, not an open interview: one answer if
-    we already know the name, two if we had to ask for it. The *view* decides
-    when it is over - never the model - so nobody can get stuck in here. The
-    last turn finishes onboarding and returns the redirect target.
+    Two stages and then it is over: get the name, then ask the one general
+    question. The *view* decides when it ends, never the model - the visitor
+    never has to end the chat themselves, and cannot be held in it either.
+    The name is worth re-asking, so stage 1 gets up to MAX_NAME_TRIES answers
+    before we give up and let them in as they are.
     """
     if request.method != "POST":
         return JsonResponse({"error": "method not allowed"}, status=405)
@@ -230,48 +236,62 @@ def welcome_chat(request):
         # has context and doesn't greet again.
         from .onboarding import fixed_opener
         history = [{"role": "assistant", "content": fixed_opener(request.user)}]
-    # Locked in on the first turn: the name may be captured mid-chat, but that
-    # must not change how many answers we still owe.
-    needed = request.session.get(INTERVIEW_TURNS_KEY)
-    if not needed:
-        needed = interview_turns_needed(request.user)
-        request.session[INTERVIEW_TURNS_KEY] = needed
+    # Signup may already have given us a name, in which case the opener asked
+    # the one question and we are past stage 1 before we start.
+    stage = request.session.get(INTERVIEW_STAGE_KEY) or (
+        STAGE_GENERAL if has_real_name(request.user) else STAGE_NAME
+    )
+    tries = request.session.get(INTERVIEW_TRIES_KEY, 0)
 
     message = (data.get("message") or "").strip()[:1000]
     if message:
         history.append({"role": "user", "content": message})
-    answered = sum(1 for m in history if m["role"] == "user")
-    is_last = answered >= needed
+        if stage == STAGE_NAME:
+            tries += 1
+    last_name_try = stage == STAGE_NAME and tries >= MAX_NAME_TRIES
 
     profile = _get_learner_profile(request.user)
     entry_title = ""
     if profile.source_course:
         c = Course.objects.filter(slug=profile.source_course).first()
         entry_title = c.title if c else ""
-    system_prompt = interview_system_prompt(request.user, entry_title, final=is_last)
+    system_prompt = interview_system_prompt(
+        request.user, entry_title, stage=stage, last_name_try=last_name_try
+    )
 
     result = call_openai(history or [{"role": "user", "content": "שלום"}],
                          system_prompt=system_prompt)
     visible, extracted = parse_interview_reply(result["content"])
-    # Early name capture: a leading "NAME: x" marker, saved the moment it's given.
+    # Name capture: the model's "NAME: x" marker, with the answer itself as a
+    # backstop for when it forgets to write one.
     from .onboarding import guess_name_from_answer, strip_name_marker
     name, visible = strip_name_marker(visible)
-    if not name and answered == 1 and needed == TURNS_NAME_UNKNOWN:
-        # The model drops the marker often enough that we can't rely on it:
-        # this turn was the answer to "what is your name?", so read it directly.
+    if not name and stage == STAGE_NAME:
         name = guess_name_from_answer(message)
     if name and not request.user.profile.display_name:
         _save_name(request.user, name)
     history.append({"role": "assistant", "content": result["content"]})
     request.session[INTERVIEW_KEY] = history
+    request.session[INTERVIEW_TRIES_KEY] = tries
 
-    # Done when the model volunteered a profile (the user asked to get going)
-    # or when the last scripted answer is in - whichever comes first.
-    if extracted or is_last:
+    if stage == STAGE_NAME and has_real_name(request.user):
+        # Got it - the reply that carried the name also asked the one
+        # question, so the next answer is the last one.
+        stage = STAGE_GENERAL
+        done = False
+    else:
+        # Stage 2 always ends here; stage 1 only when we have run out of asks.
+        done = stage == STAGE_GENERAL or last_name_try
+    request.session[INTERVIEW_STAGE_KEY] = stage
+
+    # An explicit "just let me in" is honored at any point - the skip link
+    # next to the box does the same thing in one click.
+    if extracted or done:
         _apply_extracted(profile, request.user, extracted or {})
         # If the model gave us no goal, keep the raw answer - it is the only
-        # thing the visitor actually told us about themselves.
-        if not profile.goal and message:
+        # thing the visitor actually told us about themselves. Only if it says
+        # something, though: a dodger's "לא" is worse than a blank field.
+        if not profile.goal and len(message.split()) > 2:
             profile.goal = message[:200]
         target = _finish_onboarding(request, profile, completed=True)
         return JsonResponse({"reply": visible, "done": True, "redirect": target,

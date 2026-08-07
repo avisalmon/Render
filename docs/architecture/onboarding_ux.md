@@ -95,11 +95,22 @@ that interest.
 **Revised 2026-08-07.** This started life as an open-ended AI interview and it was
 the single biggest complaint about the first visit: people did not realize they
 had to *end* the chat themselves, so they sat in it answering questions until
-they gave up. It is now a fixed-length handshake with exactly two goals - the
-visitor's name, and one question about what interests them - and the site opens
-by itself the moment they are answered. **The view decides when the chat is over,
-never the model** (`interview_turns_needed`): one answer if signup already gave
-us a name, two if it did not. Hard cap, no way to overshoot it.
+they gave up. It now has exactly two things to get - the visitor's name, and one
+question about what interests them - and the site opens by itself once it has
+them. **The view decides when the chat is over, never the model.**
+
+Two stages, tracked in the session:
+
+| Stage | What it wants | Ends when |
+|---|---|---|
+| `STAGE_NAME` | the first name | a name is captured (then the same reply asks the one question), **or** `MAX_NAME_TRIES` = 5 answers have gone by without one, in which case they get in as they are |
+| `STAGE_GENERAL` | one answer about what interests them | immediately - that answer is the last thing we ask for |
+
+So a cooperative visitor answers twice (once if signup already gave us a name),
+someone who dodges a couple of times still ends up asked and answered, and the
+worst case is bounded at six answers. The name is worth re-asking for, which is
+why stage 1 does not give up on the first miss. An explicit "just let me in" is
+always honored, since the skip link does the same thing in one click anyway.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -109,6 +120,8 @@ us a name, two if it did not. Hard cap, no way to overshoot it.
 │ ─────────────────────────────────────────────────────── │
 │  🎓  אהלן וברוכים הבאים ל-babook! 👋                      │
 │      איך קוראים לך?                                      │
+│                                   מה יש באתר?  ◂         │
+│  🎓  תלת-מימד, AI, חדשנות ומדע. ואיך קוראים לך?           │
 │                                            יוסי  ◂       │
 │  🎓  נעים מאוד יוסי! מה מעניין אותך ללמוד כאן?            │
 │                                        רובוטיקה  ◂       │
@@ -159,7 +172,7 @@ Static fallback (skip / AI down) — three taps, same output:
 
 | Risk | Mitigation in spec |
 |---|---|
-| Welcome chat feels long or breaks | Fixed 1-2 turns decided server-side, never by the model (§4.3, revised 2026-08-07 after real complaints of being stuck); cheap model (REQ-5.5.6); static fallback (REQ-5.5.4); always skippable in one click (REQ-5.5.5). |
+| Welcome chat feels long or breaks | Two stages decided server-side, never by the model, bounded at six answers and normally two (§4.3, revised 2026-08-07 after real complaints of being stuck); cheap model (REQ-5.5.6); static fallback (REQ-5.5.4); always skippable in one click (REQ-5.5.5). |
 | Wall annoys low-intent browsers | Value-first (DEC-29): wall only at a genuinely gated action; soft nudges before that (REQ-5.3.3). |
 | OAuth round-trip drops the `next` | Explicit end-to-end `?next=` preservation requirement (REQ-5.4.2 / DEC-33) with a test. |
 | Over-engineering recommendations | Deterministic taxonomy mapper, no ML (DEC-32) — explainable and testable. |

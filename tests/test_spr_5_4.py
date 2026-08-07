@@ -14,8 +14,7 @@ from django.urls import reverse
 from app.models import Course, LearnerProfile, Video
 from app.onboarding import (
     MAX_INTERVIEW_TURNS,
-    TURNS_NAME_KNOWN,
-    TURNS_NAME_UNKNOWN,
+    MAX_NAME_TRIES,
     parse_interview_reply,
 )
 
@@ -192,8 +191,8 @@ def test_known_name_finishes_after_one_answer():
 
 @pytest.mark.django_db
 def test_anonymous_name_flow_takes_exactly_two_answers():
-    """No name yet: answer 1 is the name (kept), answer 2 ends it. The model
-    is never allowed to stretch it further."""
+    """No name yet: answer 1 is the name (kept), answer 2 is the one question
+    and ends it. The model is never allowed to stretch it further."""
     _intro_course()
     c = Client()
     user = User.objects.create_user("noname", password="pass12345")
@@ -209,6 +208,55 @@ def test_anonymous_name_flow_takes_exactly_two_answers():
     assert second["done"] is True
     assert second["redirect"] == "/"
     assert LearnerProfile.objects.get(user=user).onboarding_completed_at is not None
+
+
+@pytest.mark.django_db
+def test_the_name_is_asked_again_until_it_is_given():
+    """A visitor who dodges the name question keeps being asked - the chat is
+    not over until we have a name AND an answer to the one question."""
+    _intro_course()
+    c = Client()
+    user = User.objects.create_user("dodger", password="pass12345")
+    c.force_login(user)
+    # Three dodges, three re-asks, still going.
+    for msg in ("מה יש באתר?", "כמה זה עולה?", "ומי אתה בכלל?"):
+        assert _turn(c, msg, "תשובה קצרה. ואיך קוראים לך?")["done"] is False
+    # Name on the fourth answer -> the reply carries the one question.
+    got = _turn(c, "יוסי", "NAME: יוסי\nנעים מאוד! מה מעניין אותך ללמוד כאן?")
+    assert got["done"] is False
+    assert got["name_known"] is True
+    # Only the answer to that question ends it.
+    assert _turn(c, "רובוטיקה", "יאללה, נכנסים!")["done"] is True
+
+
+@pytest.mark.django_db
+def test_five_dodges_and_we_let_them_in_anyway():
+    """The name is worth asking for, but not forever: after MAX_NAME_TRIES
+    answers without one, the visitor gets in as they are."""
+    _intro_course()
+    c = Client()
+    user = User.objects.create_user("stonewall", password="pass12345")
+    c.force_login(user)
+    for i in range(MAX_NAME_TRIES - 1):
+        assert _turn(c, f"לא עונה {i}", "ואיך קוראים לך?")["done"] is False
+    last = _turn(c, "לא רוצה", "אין בעיה, תיכנס/י ותהנה/י!")
+    assert last["done"] is True
+    assert last["redirect"] == "/"
+    user.refresh_from_db()
+    assert user.first_name == ""  # in without a name, as asked
+    assert LearnerProfile.objects.get(user=user).onboarding_completed_at is not None
+
+
+@pytest.mark.django_db
+def test_explicit_let_me_in_is_honored_mid_chat():
+    """Asking to get in is not a dodge to out-wait - it ends the chat."""
+    _intro_course()
+    c = Client()
+    user = User.objects.create_user("impatient", password="pass12345")
+    c.force_login(user)
+    data = _turn(c, "תכניס אותי לאתר כבר",
+                 'סבבה! PROFILE_JSON: {"interests": ["ai"]}')
+    assert data["done"] is True
 
 
 @pytest.mark.django_db
@@ -237,14 +285,24 @@ def test_guess_name_ignores_everything_that_is_not_a_name():
 
 
 @pytest.mark.django_db
-def test_last_turn_asks_the_model_to_sign_off():
-    """The final turn switches the prompt: no more questions, emit the profile."""
-    from app.onboarding import interview_system_prompt
-    u = User.objects.create_user("signoff", password="pass12345")
-    final = interview_system_prompt(u, final=True)
-    assert "ההודעה האחרונה" in final
-    assert "בלי שאלות" in final
-    assert "PROFILE_JSON" in final
+def test_prompt_branches_per_stage():
+    """Stage 1 chases the name; stage 2 is goodbye. The last name try tells
+    the model to stop asking rather than let it decide."""
+    from app.onboarding import STAGE_GENERAL, STAGE_NAME, interview_system_prompt
+    u = User.objects.create_user("stages", password="pass12345")
+
+    asking = interview_system_prompt(u, stage=STAGE_NAME)
+    assert "להשיג את השם" in asking
+    assert "בקש/י את השם שוב" in asking  # re-ask, do not give up yet
+
+    giving_up = interview_system_prompt(u, stage=STAGE_NAME, last_name_try=True)
+    assert "אל תבקש/י שוב" in giving_up
+    assert "PROFILE_JSON" in giving_up
+
+    goodbye = interview_system_prompt(u, stage=STAGE_GENERAL)
+    assert "ההודעה האחרונה" in goodbye
+    assert "בלי שאלות" in goodbye
+    assert "PROFILE_JSON" in goodbye
 
 
 @pytest.mark.django_db
@@ -257,6 +315,19 @@ def test_free_text_answer_is_kept_as_the_goal():
     data = _turn(c, "אני רוצה לבנות רובוט לבית הספר", "יאללה, נכנסים!")
     assert data["done"] is True
     assert LearnerProfile.objects.get(user=user).goal == "אני רוצה לבנות רובוט לבית הספר"
+
+
+@pytest.mark.django_db
+def test_a_dodged_answer_is_not_stored_as_a_goal():
+    """A blank goal beats "לא" sitting in the profile as if it meant something."""
+    _intro_course()
+    c = Client()
+    user = User.objects.create_user("nogoal", password="pass12345")
+    c.force_login(user)
+    for _ in range(MAX_NAME_TRIES - 1):
+        _turn(c, "לא", "ואיך קוראים לך?")
+    assert _turn(c, "לא", "אין בעיה, תיכנס/י!")["done"] is True
+    assert LearnerProfile.objects.get(user=user).goal == ""
 
 
 @pytest.mark.django_db
@@ -273,11 +344,11 @@ def test_reloading_welcome_restarts_the_handshake():
     assert again["done"] is True
 
 
-def test_turn_budget_is_a_handshake_not_an_interview():
-    """Regression guard on the numbers themselves (users got stuck at 40)."""
-    assert TURNS_NAME_KNOWN == 1
-    assert TURNS_NAME_UNKNOWN == 2
-    assert MAX_INTERVIEW_TURNS == TURNS_NAME_UNKNOWN
+def test_turn_budget_is_bounded():
+    """Regression guard on the numbers themselves (users got stuck at 40):
+    at most 5 asks for the name plus the one question."""
+    assert MAX_NAME_TRIES == 5
+    assert MAX_INTERVIEW_TURNS == MAX_NAME_TRIES + 1
 
 
 @pytest.mark.django_db
