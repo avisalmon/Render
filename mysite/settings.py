@@ -306,6 +306,13 @@ SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"
+# Do not mail addresses we have no account for. allauth's enumeration guard
+# otherwise answers every login/reset attempt with an "unknown account" email,
+# so a bot posting random addresses makes us mail strangers on demand - that
+# burned the whole Resend daily quota (~700 such emails in a week, Jul 2026).
+# The redirects are unchanged, so enumeration is still prevented; only the
+# outbound mail to non-existent accounts stops.
+ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS = False
 
 # Local overrides — not committed, not deployed
 try:
