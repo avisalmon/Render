@@ -13,8 +13,9 @@ from django.urls import reverse
 
 from app.models import Course, LearnerProfile, Video
 from app.onboarding import (
-    INTERVIEW_KEY,
     MAX_INTERVIEW_TURNS,
+    TURNS_NAME_KNOWN,
+    TURNS_NAME_UNKNOWN,
     parse_interview_reply,
 )
 
@@ -63,8 +64,10 @@ def test_fixed_opener_uses_first_name():
     u.profile.display_name = "יורם חמש"
     u.profile.save()
     opener = fixed_opener(u)
-    assert opener.startswith("אהלן יורם.")  # first token only, never "יורם חמש"
+    assert opener.startswith("אהלן יורם!")  # first token only, never "יורם חמש"
     assert "יורם חמש" not in opener
+    # The name is known, so the one question we get is the real one.
+    assert "מה מעניין" in opener
 
 
 @pytest.mark.django_db
@@ -161,42 +164,136 @@ def test_interview_extracts_profile_and_finishes():
     assert lp.onboarding_completed_at is not None
 
 
+def _fake_reply(content):
+    return {"content": content, "prompt_tokens": 10, "completion_tokens": 20, "model": "x"}
+
+
+def _turn(c, message, reply):
+    with patch("app.ai_chat._is_stub_mode", return_value=False), \
+         patch("app.ai_chat.call_openai", return_value=_fake_reply(reply)):
+        return c.post(reverse("welcome_chat"),
+                      data=json.dumps({"message": message}),
+                      content_type="application/json").json()
+
+
 @pytest.mark.django_db
-def test_interview_turn_budget_forces_fallback():
-    """T-F-5.4.3-2 (REQ-5.5.6): after MAX turns the interview yields to the form."""
+def test_known_name_finishes_after_one_answer():
+    """The name came from signup, so a single answer opens the site - the
+    visitor never has to find a button to end the chat."""
+    _intro_course()
     c = Client()
-    _signup(c, "chatty")
-    session = c.session
-    session[INTERVIEW_KEY] = [
-        {"role": "user", "content": f"t{i}"} for i in range(MAX_INTERVIEW_TURNS)
-    ]
-    session.save()
-    with patch("app.ai_chat._is_stub_mode", return_value=False):
-        resp = c.post(reverse("welcome_chat"),
-                      data=json.dumps({"message": "עוד"}),
-                      content_type="application/json")
-    assert resp.json() == {"fallback": True}
+    user = _signup(c, "quick", name="דנה כהן")
+    data = _turn(c, "מעניין אותי AI", "כיף שהגעת! PROFILE_JSON: {\"interests\": [\"ai\"]}")
+    assert data["done"] is True
+    assert data["redirect"] == "/"
+    lp = LearnerProfile.objects.get(user=user)
+    assert lp.onboarding_completed_at is not None
+
+
+@pytest.mark.django_db
+def test_anonymous_name_flow_takes_exactly_two_answers():
+    """No name yet: answer 1 is the name (kept), answer 2 ends it. The model
+    is never allowed to stretch it further."""
+    _intro_course()
+    c = Client()
+    user = User.objects.create_user("noname", password="pass12345")
+    c.force_login(user)
+    first = _turn(c, "דנה", "NAME: דנה\nנעים מאוד! מה מעניין אותך ללמוד כאן?")
+    assert first["done"] is False
+    assert first["name_known"] is True
+    assert "NAME:" not in first["reply"]
+    user.refresh_from_db()
+    assert user.first_name == "דנה"
+    # Second answer ends it even though the model kept the chat going.
+    second = _turn(c, "רובוטיקה", "מגניב! ועוד שאלה קטנה - כמה זמן יש לך בשבוע?")
+    assert second["done"] is True
+    assert second["redirect"] == "/"
+    assert LearnerProfile.objects.get(user=user).onboarding_completed_at is not None
+
+
+@pytest.mark.django_db
+def test_name_survives_a_model_that_forgets_the_marker():
+    """The NAME: marker is the model's job and it drops it regularly. The
+    answer to "what is your name?" is read directly as a backstop."""
+    c = Client()
+    user = User.objects.create_user("markerless", password="pass12345")
+    c.force_login(user)
+    data = _turn(c, "יוסי", "נעים מאוד יוסי! מה מעניין אותך ללמוד כאן?")
+    assert data["name_known"] is True
+    user.refresh_from_db()
+    assert user.first_name == "יוסי"
+
+
+def test_guess_name_ignores_everything_that_is_not_a_name():
+    from app.onboarding import guess_name_from_answer
+    assert guess_name_from_answer("יוסי") == "יוסי"
+    assert guess_name_from_answer("אני דנה") == "דנה"
+    assert guess_name_from_answer("קוראים לי דנה כהן") == "דנה כהן"
+    assert guess_name_from_answer("מה יש באתר הזה?") == ""
+    assert guess_name_from_answer("לא") == ""
+    assert guess_name_from_answer("קדימה") == ""
+    assert guess_name_from_answer("אני רוצה ללמוד רובוטיקה ובינה מלאכותית") == ""
+    assert guess_name_from_answer("") == ""
+
+
+@pytest.mark.django_db
+def test_last_turn_asks_the_model_to_sign_off():
+    """The final turn switches the prompt: no more questions, emit the profile."""
+    from app.onboarding import interview_system_prompt
+    u = User.objects.create_user("signoff", password="pass12345")
+    final = interview_system_prompt(u, final=True)
+    assert "ההודעה האחרונה" in final
+    assert "בלי שאלות" in final
+    assert "PROFILE_JSON" in final
+
+
+@pytest.mark.django_db
+def test_free_text_answer_is_kept_as_the_goal():
+    """Even when the model returns no profile, the one thing the visitor told
+    us survives - otherwise the two questions bought us nothing."""
+    _intro_course()
+    c = Client()
+    user = _signup(c, "goalie", name="נועה לוי")
+    data = _turn(c, "אני רוצה לבנות רובוט לבית הספר", "יאללה, נכנסים!")
+    assert data["done"] is True
+    assert LearnerProfile.objects.get(user=user).goal == "אני רוצה לבנות רובוט לבית הספר"
+
+
+@pytest.mark.django_db
+def test_reloading_welcome_restarts_the_handshake():
+    """The chat log is client-side, so a reload shows the opener again - the
+    server-side history has to go with it or the next word ends the chat."""
+    c = Client()
+    user = User.objects.create_user("reloader", password="pass12345")
+    c.force_login(user)
+    assert _turn(c, "יוסי", "נעים מאוד! מה מעניין אותך?")["done"] is False
+    c.get(reverse("welcome"))  # reload
+    # The name stuck, so the reloaded opener asks the one real question.
+    again = _turn(c, "רובוטיקה", "יאללה, נכנסים!")
+    assert again["done"] is True
+
+
+def test_turn_budget_is_a_handshake_not_an_interview():
+    """Regression guard on the numbers themselves (users got stuck at 40)."""
+    assert TURNS_NAME_KNOWN == 1
+    assert TURNS_NAME_UNKNOWN == 2
+    assert MAX_INTERVIEW_TURNS == TURNS_NAME_UNKNOWN
 
 
 @pytest.mark.django_db
 def test_interview_prompt_grounded_in_site_topics():
-    """T-F-5.4.3-3 (REQ-5.5.2): the interviewer knows the actual catalog,
-    asks domain-contextual level questions, and stays on topic."""
+    """T-F-5.4.3-3 (REQ-5.5.2): the interviewer knows the actual catalog and
+    stays on topic, while asking exactly one question."""
     from app.onboarding import interview_system_prompt
     u = User.objects.create_user("grounded", password="pass12345")
     prompt = interview_system_prompt(u)
-    # Knows the three worlds by name + their real tracks
+    # Knows the worlds by name + their real tracks
     for topic in ["מטצים", "בינה מלאכותית", "הובלת חדשנות", "תלת-מימד", "תכנות ותוכנה"]:
         assert topic in prompt
-    # Level question is plain-language (no level jargon), scope is guarded
-    assert "STAY ON TOPIC" in prompt
-    assert "NEVER say" in prompt  # no 'רמה 1/2/3' jargon to the user
-    assert "לבנות כלי AI משלך" in prompt  # the three concrete AI choices
-    assert "איך AI עובד מבפנים" in prompt
+    assert "שאלה אחת" in prompt      # one question, not an interview
+    assert "הישאר/י בנושא" in prompt  # scope guard
     assert "PROFILE_JSON" in prompt
     assert "Avi Bot" in prompt
-    # The opener is now fixed/server-rendered; the prompt continues, not greets
-    assert "DO NOT greet again" in prompt
     assert "role_type" in prompt  # role captured in the interview (REQ-7.2.2)
 
 
@@ -206,7 +303,7 @@ def test_interview_prompt_opens_on_entry_course():
     u = User.objects.create_user("arrived", password="pass12345")
     prompt = interview_system_prompt(u, entry_course_title="קופיילוט למתחילים")
     assert "קופיילוט למתחילים" in prompt
-    assert "keep that interest in mind" in prompt
+    assert "קח/י את זה בחשבון" in prompt
 
 
 def test_parse_interview_reply_handles_bad_json():

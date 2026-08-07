@@ -16,7 +16,12 @@ ONBOARDING_PENDING_KEY = "onboarding_pending"
 ONBOARDING_NEXT_KEY = "onboarding_next"
 ENTRY_EVENT_KEY = "entry_event_pending"
 INTERVIEW_KEY = "welcome_chat"
-MAX_INTERVIEW_TURNS = 40  # high safety cap only - the user ends the chat via "skip"
+INTERVIEW_TURNS_KEY = "welcome_chat_turns"  # how many answers this visitor owes us
+# The welcome chat is a handshake, not an interview: one answer if we already
+# know the name, two if we have to ask for it. Then the site opens by itself.
+TURNS_NAME_KNOWN = 1
+TURNS_NAME_UNKNOWN = 2
+MAX_INTERVIEW_TURNS = TURNS_NAME_UNKNOWN  # hard cap - nobody can get stuck here
 
 UTM_KEYS = ("utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term")
 
@@ -198,13 +203,15 @@ def _catalog_summary():
 ROLE_TYPE_HE = {"student": "תלמיד/ה", "teacher": "מורה / איש חינוך", "other": ""}
 
 
+# The name is already known, so the one question we get to ask is the real one.
 OPENER_NAMED = (
     "אהלן {name}! 👋 ברוכים הבאים ל-babook.\n"
-    "רוצה שאספר לך בקצרה מה יש כאן בשבילך? 🙂"
+    "רק שאלה אחת ונכנסים: מה מעניין אותך ללמוד כאן? 🙂"
 )
+# No name yet - ask for it, and only for it.
 OPENER_ANON = (
     "אהלן וברוכים הבאים ל-babook! 👋\n"
-    "איך קוראים לך? ואשמח לספר לך בקצרה מה יש כאן בשבילך 🙂"
+    "איך קוראים לך?"
 )
 
 
@@ -230,7 +237,19 @@ def fixed_opener(user):
     return OPENER_ANON
 
 
-def interview_system_prompt(user, entry_course_title=""):
+_PROFILE_SHAPE = (
+    f'{PROFILE_MARKER} {{"name": "<שם פרטי אם נמסר>", '
+    '"interests": ["<מפתחות תחום מהרשימה אם הוזכרו>"], '
+    '"experience_level": "beginner|intermediate|advanced|", '
+    '"goal": "<קצר אם הוזכר>", '
+    '"role_type": "student|teacher|professor|industry_engineer|other|", '
+    '"persona": "", "time_per_week": ""}'
+)
+
+
+def interview_system_prompt(user, entry_course_title="", final=False):
+    """The welcome-chat prompt. `final` marks the last message before the site
+    opens: sign off and emit the profile instead of asking anything else."""
     entry_line = (
         f'הגיע/ה דרך ההדרכה "{entry_course_title}" - קח/י את זה בחשבון. '
         if entry_course_title else ""
@@ -238,42 +257,46 @@ def interview_system_prompt(user, entry_course_title=""):
     if has_real_name(user):
         name_line = f"שמו/ה: {first_name_of(user)} - פנה/י אליו/ה בשם. "
     else:
-        name_line = ("עדיין לא יודעים את שמו/ה - וזה הכי חשוב. בקש/י את שמו/ה בטבעיות "
-                     "מוקדם ככל האפשר, אך פעם אחת בלבד. אם כבר ביקשת בשיחה ולא נמסר - "
-                     "אל תבקש/י שוב לעולם, המשך/המשיכי כרגיל. ")
-    return (
+        name_line = ("עדיין לא יודעים את שמו/ה. אם נמסר שם בהודעה האחרונה - פתח/י את "
+                     "התשובה בשורה נפרדת: NAME: <שם פרטי> (תוסר מהתצוגה). אם לא נמסר "
+                     "שם - אל תבקש/י שוב לעולם, פשוט המשך/המשיכי. ")
+    base = (
         "אתה 'Avi Bot', הגרסה הדיגיטלית של אבי סלמון, יוצר babook.co.il - אתר "
         "הדרכות וידאו וקהילה בעברית. מדבר בגוף ראשון, עברית חמה ויומיומית, כאילו "
-        "אבי עצמו מארח. התפקיד: לקבל בחום משתמש/ת חדש/ה ולעזור לו/ה להתמצא - לא ראיון.\n\n"
+        "אבי עצמו מארח.\n\n"
+        "זו לא שיחה ולא ראיון - זו לחיצת יד קצרה בכניסה לאתר. המשתמש/ת עונה "
+        "תשובה אחת או שתיים ואז נכנס/ת לאתר אוטומטית. אל תנסה/י להאריך, אל "
+        "תציע/י סיורים ואל תסביר/י על האתר - יש זמן לזה בפנים.\n\n"
         f"מה יש באתר (מפתח תחום = שם: מסלולים):\n{_catalog_summary()}\n\n"
         f"{entry_line}{name_line}\n"
-        "כללים - חשובים מאוד:\n"
-        "• כלל זהב: סיים/י כל הודעה בשאלה שמזמינה להמשיך (למשל: 'רוצה שאספר לך על "
-        "התחומים השונים?'). לעולם אל תסיים/י בהצהרה או בקריאה - תמיד פתח/י דלת להמשך.\n"
-        "• הודעות קצרות מאוד: עד 20 מילים. ידידותי, בלי מליצות.\n"
-        "• אם שואל/ת מה יש באתר / איפה משהו / איך מתחילים - ענה/י קצר וענייני מהרשימה, "
-        "וסיים/י בשאלה.\n"
-        "• אם מספר/ת מה מעניין אותו/ה - מעולה, זה יעזור להמליץ. אל תלחץ/י לתשובות.\n"
-        "• הזכר/י פעם אחת שיש קהילה (פורום, דוכן השוויץ, צ'אט, אירועים).\n"
-        "• זכור/י את כל השיחה וענה/י לפי מה שכבר נאמר בה.\n"
-        "• ברגע שנמסר שמו/ה הפרטי, פתח/י את אותה תשובה בשורה נפרדת: NAME: <שם פרטי> "
-        "(תוסר מהתצוגה). אל תכתוב/תכתבי שורה זו אם השם כבר ידוע מראש או לא נמסר.\n"
-        "• הישאר/י בנושא: עוזר/ת רק בהיכרות עם האתר וההדרכות. כל דבר אחר (מתכונים, "
-        "מזג אוויר, חדשות, מניות, עזרה בקוד, שאלות כלליות) - סרב/י במשפט ידידותי "
-        "אחד וחזור/חזרי לעניין עם שאלה. אל תענה/י על זה גם אם מתעקשים.\n"
-        "• אל תסיים/י את השיחה מיוזמתך - תמיד יש שאלה אחת אחרונה. השאר/י את ההחלטה "
-        "לעזוב למשתמש/ת (יש כפתור 'סיים את השיחה').\n\n"
-        "אבל אם המשתמש/ת מבקש/ת במפורש לסיים / להתחיל / להיכנס לאתר (למשל: 'בוא נתחיל', "
-        "'סיים', 'תכניס אותי לאתר', 'מספיק', 'קדימה', 'אני מוכן', 'תודה זה הכל') - אל "
-        "תשאל/י עוד שאלות, סכם/י במשפט קצר ומזמין, ואז בשורה אחרונה נפרדת פלוט/י בדיוק "
-        "(שדות ריקים אם לא נמסרו): "
-        f'{PROFILE_MARKER} {{"name": "<שם פרטי אם נמסר>", '
-        '"interests": ["<מפתחות תחום מהרשימה אם הוזכרו>"], '
-        '"experience_level": "beginner|intermediate|advanced|", '
-        '"goal": "<קצר אם הוזכר>", '
-        '"role_type": "student|teacher|professor|industry_engineer|other|", '
-        '"persona": "", "time_per_week": ""}'
     )
+    if final:
+        return base + (
+            "זו ההודעה האחרונה שלך. מיד אחריה הדפדפן מעביר את המשתמש/ת לאתר.\n"
+            "• כתוב/כתבי משפט אחד קצר וחם שסוגר את ההיכרות ומזמין להיכנס. "
+            "עד 20 מילים.\n"
+            "• בלי שאלות. בלי 'רוצה ש...'. בלי הצעות להמשיך לדבר.\n"
+            "• ואז, בשורה אחרונה נפרדת, פלוט/י בדיוק (שדות ריקים אם לא נמסרו):\n"
+            + _PROFILE_SHAPE
+        )
+    return base + (
+        "המשימה שלך בהודעה הזו, ורק היא: לשאול שאלה אחת קצרה - מה מעניין "
+        "אותו/ה ללמוד כאן.\n"
+        "• עד 20 מילים סך הכל: חצי משפט של 'נעים מאוד' ואז השאלה.\n"
+        "• בלי רשימות, בלי פירוט התחומים, בלי הצעות נוספות.\n"
+        "• אם המשתמש/ת שאל/ה משהו - ענה/י במשפט קצרצר אחד מהרשימה למעלה, "
+        "ואז השאלה.\n"
+        "• הישאר/י בנושא: רק האתר וההדרכות. כל דבר אחר - סירוב ידידותי במשפט "
+        "אחד ואז השאלה.\n"
+        "• אם המשתמש/ת מבקש/ת להיכנס כבר לאתר ('קדימה', 'מספיק', 'תכניס אותי') - "
+        "אל תשאל/י כלום, משפט קצר אחד ואז בשורה אחרונה נפרדת:\n"
+        + _PROFILE_SHAPE
+    )
+
+
+def interview_turns_needed(user):
+    """How many answers we ask of this visitor before the site opens."""
+    return TURNS_NAME_KNOWN if has_real_name(user) else TURNS_NAME_UNKNOWN
 
 
 NAME_MARKER = "NAME:"
@@ -287,6 +310,38 @@ def strip_name_marker(visible):
         name = lines[0].split(":", 1)[1].strip()
         return name[:150], "\n".join(lines[1:]).strip()
     return "", visible
+
+
+# Openers people put in front of their name, stripped before we keep it.
+_NAME_PREFIXES = ("קוראים לי", "השם שלי", "שמי", "אני", "היי", "שלום", "אהלן")
+# Answers that are clearly not a name - "no", "why", "skip me in".
+_NOT_A_NAME = {
+    "לא", "כן", "מה", "למה", "אולי", "לא רוצה", "לא חשוב", "דלג", "תדלג",
+    "קדימה", "מספיק", "בוא נתחיל", "בואו נתחיל", "אין", "סוד", "אנונימי",
+}
+
+
+def guess_name_from_answer(message):
+    """Backstop for the name question: the model is supposed to emit a NAME:
+    marker, but it forgets. A short, plain, question-free answer to "what is
+    your name?" is a name - anything longer we leave alone rather than saving
+    a sentence as someone's name."""
+    text = (message or "").strip().strip(".!,")
+    if not text or "?" in text or any(ch.isdigit() for ch in text):
+        return ""
+    if len(text) > 40 or text.lower() in _NOT_A_NAME:
+        return ""
+    words = text.split()
+    if words[0] in _NAME_PREFIXES:
+        words = words[1:]
+    elif len(words) > 1 and " ".join(words[:2]) in _NAME_PREFIXES:
+        words = words[2:]
+    if not (1 <= len(words) <= 2):
+        return ""
+    name = " ".join(words).strip(".!,")
+    if not name or name.lower() in _NOT_A_NAME:
+        return ""
+    return name[:150]
 
 
 def parse_interview_reply(content):

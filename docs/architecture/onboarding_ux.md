@@ -87,27 +87,43 @@ Replaces the generic login redirect. Names what they wanted.
         after submit → lands on lesson 2 (?next=)
 ```
 
-### 4.3 AI onboarding interview (`/welcome/`, once, post-signup)
+### 4.3 The welcome handshake (`/welcome/`, once, post-signup)
 
 Reuses the existing chat UI/infra (REQ-1.6). Greets by name; if door B/C, opens on
-that interest. "דלג" always present.
+that interest.
+
+**Revised 2026-08-07.** This started life as an open-ended AI interview and it was
+the single biggest complaint about the first visit: people did not realize they
+had to *end* the chat themselves, so they sat in it answering questions until
+they gave up. It is now a fixed-length handshake with exactly two goals - the
+visitor's name, and one question about what interests them - and the site opens
+by itself the moment they are answered. **The view decides when the chat is over,
+never the model** (`interview_turns_needed`): one answer if signup already gave
+us a name, two if it did not. Hard cap, no way to overshoot it.
 
 ```
-┌──────────────────────────────────────────────  דלג ›  ┐
-│  🎓  היי אבי! כמה שאלות קצרות ונבנה לך מסלול אישי.       │
-│                                                         │
-│  ראיתי שהגעת בשביל «סוכני קוד». זה המוקד שלך,            │
-│  או שמעניין אותך המסלול הרחב של AI?                      │
-│                                   [ רק זה ]  [ הרחב ]    │
-│                                                         │
-│  …מה המטרה שלך?  (עבודה / סקרנות / פרויקט / קריירה)      │
-│  …מה הרמה שלך?   (מתחיל / יודע קצת / מנוסה)              │
-│  …כמה זמן בשבוע? (שעה / 2-3 / יותר)                      │
-│                                                         │
-│  ▸ בונה לך מסלול: «AI למתחילים» — שיעור ראשון מוכן.      │
-│  [ קחו אותי לשיעור הראשון → ]                            │
+┌─────────────────────────────────────────────────────────┐
+│  רגע נכיר                                                │
+│  שתי שאלות קצרות ואתם בפנים.                             │
+│  אין צורך לסיים את השיחה, נכניס אתכם לאתר לבד.           │
+│ ─────────────────────────────────────────────────────── │
+│  🎓  אהלן וברוכים הבאים ל-babook! 👋                      │
+│      איך קוראים לך?                                      │
+│                                            יוסי  ◂       │
+│  🎓  נעים מאוד יוסי! מה מעניין אותך ללמוד כאן?            │
+│                                        רובוטיקה  ◂       │
+│  🎓  יאללה, נכנסים!                                       │
+│      נכנסים לאתר…  (לחצו אם לא הועברתם)                   │
+│                                                          │
+│  [ כתבו כאן... ] [ שלח ]                                  │
+│            דלג ותכניס אותי לאתר ←                         │
 └─────────────────────────────────────────────────────────┘
 ```
+
+The name is captured two ways because one is not reliable: the model is asked to
+emit a `NAME:` marker line, and if it forgets, `guess_name_from_answer` reads a
+short question-free answer to "what is your name?" directly. The skip link is a
+plain one-click escape hatch - it never asks a second question on the way out.
 
 Static fallback (skip / AI down) — three taps, same output:
 
@@ -143,7 +159,7 @@ Static fallback (skip / AI down) — three taps, same output:
 
 | Risk | Mitigation in spec |
 |---|---|
-| AI interview feels long or breaks | Bounded turns + cheap model (REQ-5.5.6); static fallback (REQ-5.5.4); always skippable (REQ-5.5.5). |
+| Welcome chat feels long or breaks | Fixed 1-2 turns decided server-side, never by the model (§4.3, revised 2026-08-07 after real complaints of being stuck); cheap model (REQ-5.5.6); static fallback (REQ-5.5.4); always skippable in one click (REQ-5.5.5). |
 | Wall annoys low-intent browsers | Value-first (DEC-29): wall only at a genuinely gated action; soft nudges before that (REQ-5.3.3). |
 | OAuth round-trip drops the `next` | Explicit end-to-end `?next=` preservation requirement (REQ-5.4.2 / DEC-33) with a test. |
 | Over-engineering recommendations | Deterministic taxonomy mapper, no ML (DEC-32) — explainable and testable. |

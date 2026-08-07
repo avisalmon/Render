@@ -87,7 +87,13 @@ def test_health_dashboard_staff_only():
 # clean; the community is surfaced via the nav and the community strip instead.)
 
 
-def test_avi_bot_interview_prompt_mentions_community():
+@pytest.mark.django_db
+def test_avi_bot_welcome_chat_is_a_handshake_not_a_tour():
+    """The welcome chat used to pitch the community and offer a tour, which is
+    exactly what made people feel stuck in it. It is now a fixed handshake -
+    name + one question - and the community is surfaced inside the site
+    (nav + community strip) instead."""
     from app.onboarding import interview_system_prompt
-    prompt = interview_system_prompt("יוסי")
-    assert "קהיל" in prompt  # the Avi Bot conversation surfaces the community
+    prompt = interview_system_prompt(_member("yossi"))
+    assert "שאלה אחת" in prompt
+    assert "אל תציע/י סיורים" in prompt

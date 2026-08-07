@@ -13,10 +13,12 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from .models import Course, LearnerProfile
 from .onboarding import (
     INTERVIEW_KEY,
-    MAX_INTERVIEW_TURNS,
+    INTERVIEW_TURNS_KEY,
     ONBOARDING_NEXT_KEY,
     ONBOARDING_PENDING_KEY,
+    TURNS_NAME_UNKNOWN,
     interview_system_prompt,
+    interview_turns_needed,
     parse_interview_reply,
     recommend,
 )
@@ -112,6 +114,11 @@ def welcome(request):
     ]
     from .ai_chat import _is_stub_mode
     from .onboarding import fixed_opener, has_real_name
+    # The chat log is client-side only, so a reload shows the opener again.
+    # Drop the server-side history with it, or the visitor would answer the
+    # opener and land straight in the site on what looks like their first word.
+    request.session.pop(INTERVIEW_KEY, None)
+    request.session.pop(INTERVIEW_TURNS_KEY, None)
     return render(request, "app/welcome.html", {
         "learner": profile,
         "opener": fixed_opener(request.user),
@@ -168,6 +175,7 @@ def _finish_onboarding(request, profile, completed):
     next_url = _safe_next(request, request.session.pop(ONBOARDING_NEXT_KEY, ""))
     request.session.pop(ONBOARDING_PENDING_KEY, None)
     request.session.pop(INTERVIEW_KEY, None)
+    request.session.pop(INTERVIEW_TURNS_KEY, None)
     if completed:
         # The homepage shows the recommendation rail ONCE right after
         # onboarding; afterwards it lives on the profile page (REQ-5.6.3).
@@ -180,11 +188,32 @@ def _finish_onboarding(request, profile, completed):
     return "/"
 
 
+def _apply_extracted(profile, user, extracted):
+    """Write whatever the interviewer managed to learn onto the profile."""
+    if extracted.get("name") and not user.profile.display_name:
+        _save_name(user, str(extracted["name"]))
+    profile.interests = [
+        d for d in extracted.get("interests", []) if d in TRAINING_TAXONOMY
+    ]
+    profile.goal = str(extracted.get("goal", ""))[:200]
+    level = extracted.get("experience_level", "")
+    profile.experience_level = level if level in ("beginner", "intermediate", "advanced") else ""
+    profile.persona = str(extracted.get("persona", ""))[:200]
+    profile.time_per_week = str(extracted.get("time_per_week", ""))[:50]
+    role = extracted.get("role_type", "")
+    if role in ("student", "teacher", "professor", "industry_engineer", "other"):
+        profile.role_type = role
+
+
 @login_required
 def welcome_chat(request):
-    """One AI interview turn (REQ-5.5.2/5.5.3). History lives in the session.
-    Returns {reply, done, redirect} or {fallback: true} when AI is unavailable
-    or the turn budget is exhausted (REQ-5.5.4/5.5.6)."""
+    """One welcome-chat turn (REQ-5.5.2/5.5.3). History lives in the session.
+
+    The chat is a fixed-length handshake, not an open interview: one answer if
+    we already know the name, two if we had to ask for it. The *view* decides
+    when it is over - never the model - so nobody can get stuck in here. The
+    last turn finishes onboarding and returns the redirect target.
+    """
     if request.method != "POST":
         return JsonResponse({"error": "method not allowed"}, status=405)
     from .ai_chat import _is_stub_mode, call_openai
@@ -201,52 +230,49 @@ def welcome_chat(request):
         # has context and doesn't greet again.
         from .onboarding import fixed_opener
         history = [{"role": "assistant", "content": fixed_opener(request.user)}]
-    user_turns = sum(1 for m in history if m["role"] == "user")
-    if user_turns >= MAX_INTERVIEW_TURNS:
-        # Never yank the user into the static form mid-chat - keep it a chat and
-        # let them end it themselves via "דלג על השיחה". Gentle nudge only.
-        return JsonResponse({
-            "reply": "וואו, שיחה כיפית! 🙂 מתי שמתאים לך לחצ/י על «סיים את השיחה» ונצא לדרך. "
-                     "משהו נוסף שאוכל לעזור בו?",
-            "done": False,
-            "name_known": bool(request.user.profile.display_name)})
+    # Locked in on the first turn: the name may be captured mid-chat, but that
+    # must not change how many answers we still owe.
+    needed = request.session.get(INTERVIEW_TURNS_KEY)
+    if not needed:
+        needed = interview_turns_needed(request.user)
+        request.session[INTERVIEW_TURNS_KEY] = needed
 
     message = (data.get("message") or "").strip()[:1000]
     if message:
         history.append({"role": "user", "content": message})
+    answered = sum(1 for m in history if m["role"] == "user")
+    is_last = answered >= needed
 
     profile = _get_learner_profile(request.user)
     entry_title = ""
     if profile.source_course:
         c = Course.objects.filter(slug=profile.source_course).first()
         entry_title = c.title if c else ""
-    system_prompt = interview_system_prompt(request.user, entry_title)
+    system_prompt = interview_system_prompt(request.user, entry_title, final=is_last)
 
     result = call_openai(history or [{"role": "user", "content": "שלום"}],
                          system_prompt=system_prompt)
     visible, extracted = parse_interview_reply(result["content"])
     # Early name capture: a leading "NAME: x" marker, saved the moment it's given.
-    from .onboarding import strip_name_marker
+    from .onboarding import guess_name_from_answer, strip_name_marker
     name, visible = strip_name_marker(visible)
+    if not name and answered == 1 and needed == TURNS_NAME_UNKNOWN:
+        # The model drops the marker often enough that we can't rely on it:
+        # this turn was the answer to "what is your name?", so read it directly.
+        name = guess_name_from_answer(message)
     if name and not request.user.profile.display_name:
         _save_name(request.user, name)
     history.append({"role": "assistant", "content": result["content"]})
     request.session[INTERVIEW_KEY] = history
 
-    if extracted:
-        if extracted.get("name") and not request.user.profile.display_name:
-            _save_name(request.user, str(extracted["name"]))
-        profile.interests = [
-            d for d in extracted.get("interests", []) if d in TRAINING_TAXONOMY
-        ]
-        profile.goal = str(extracted.get("goal", ""))[:200]
-        level = extracted.get("experience_level", "")
-        profile.experience_level = level if level in ("beginner", "intermediate", "advanced") else ""
-        profile.persona = str(extracted.get("persona", ""))[:200]
-        profile.time_per_week = str(extracted.get("time_per_week", ""))[:50]
-        role = extracted.get("role_type", "")
-        if role in ("student", "teacher", "professor", "industry_engineer", "other"):
-            profile.role_type = role
+    # Done when the model volunteered a profile (the user asked to get going)
+    # or when the last scripted answer is in - whichever comes first.
+    if extracted or is_last:
+        _apply_extracted(profile, request.user, extracted or {})
+        # If the model gave us no goal, keep the raw answer - it is the only
+        # thing the visitor actually told us about themselves.
+        if not profile.goal and message:
+            profile.goal = message[:200]
         target = _finish_onboarding(request, profile, completed=True)
         return JsonResponse({"reply": visible, "done": True, "redirect": target,
                              "name_known": bool(request.user.profile.display_name)})
@@ -273,14 +299,11 @@ def welcome_complete(request):
 
 @login_required
 def welcome_skip(request):
-    """Skip ('later') - resumable from the profile page (REQ-5.5.5).
-    Recommendations still seed from the entry intent (REQ-5.2.3)."""
+    """Skip ('later') - one click straight into the site, never a second ask.
+    Resumable from the profile page (REQ-5.5.5); recommendations still seed
+    from the entry intent (REQ-5.2.3)."""
     if request.method != "POST":
         return redirect("welcome")
     profile = _get_learner_profile(request.user)
-    # Last gentle nudge: if they offered a name on the way out, keep it.
-    name = request.POST.get("name", "").strip()
-    if name and not request.user.profile.display_name:
-        _save_name(request.user, name)
     target = _finish_onboarding(request, profile, completed=False)
     return redirect(target)

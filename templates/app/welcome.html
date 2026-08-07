@@ -6,8 +6,12 @@
 <div class="row justify-content-center py-4">
   <div class="col-md-8 col-lg-6">
 
-    <h1 class="h5 mb-3">רגע נכיר</h1>
-    <!-- skip is submitted by JS; the button lives right next to "send" below -->
+    <h1 class="h5 mb-1">רגע נכיר</h1>
+    <p class="text-muted small mb-3">
+      {% if has_name %}שאלה אחת{% else %}שתי שאלות קצרות{% endif %} ואתם בפנים.
+      אין צורך לסיים את השיחה, נכניס אתכם לאתר לבד.
+    </p>
+    <!-- skip is submitted by JS; the button sits under the chat box below -->
     <form method="post" action="{% url 'welcome_skip' %}" id="skip-form" class="d-none">{% csrf_token %}</form>
 
     {% if user.email and not user.profile.email_verified %}
@@ -23,18 +27,6 @@
     </div>
     {% endif %}
 
-    <!-- Gentle name nudge - shown only when skipping without a name -->
-    <div id="name-prompt" class="card-surface p-3 mb-3" style="display:none; border-color:var(--accent-primary)">
-      <p class="small mb-2">רגע לפני שתלך/י - איך לפנות אליך? (שם בלבד)</p>
-      <form method="post" action="{% url 'welcome_skip' %}" class="d-flex gap-2 mb-2">{% csrf_token %}
-        <input name="name" id="skip-name-input" class="form-control form-control-sm" placeholder="השם שלך" maxlength="150" autocomplete="off">
-        <button class="btn btn-primary btn-sm">שמור וסיים</button>
-      </form>
-      <form method="post" action="{% url 'welcome_skip' %}" class="m-0">{% csrf_token %}
-        <button class="btn btn-link btn-sm text-secondary p-0">סיים בלי שם ←</button>
-      </form>
-    </div>
-
     {% if ai_available %}
     <!-- Friendly intro chat. Falls back to the static form on any error. -->
     <div id="interview" class="card-surface p-3 mb-2">
@@ -46,7 +38,9 @@
       <div class="d-flex gap-2 flex-wrap align-items-center">
         <input id="chat-input" class="form-control" style="flex:1 1 140px" placeholder="כתבו כאן..." autocomplete="off">
         <button id="chat-send" class="btn btn-primary"><i class="bi bi-send"></i> שלח</button>
-        <button type="button" id="skip-btn" class="btn btn-outline-secondary">סיים את השיחה</button>
+      </div>
+      <div class="text-center mt-2">
+        <button type="button" id="skip-btn" class="btn btn-link btn-sm text-secondary p-0">דלג ותכניס אותי לאתר ←</button>
       </div>
     </div>
     {% endif %}
@@ -95,18 +89,10 @@
 if (window.plausible) { plausible('registered'); plausible('onboarding_started'); }
 
 (function () {
-  // --- Skip button: always available; gentle name nudge if no name yet ---
-  var hasName = {{ has_name|yesno:"true,false" }};
+  // --- Escape hatch: one click straight into the site, never a second ask ---
   var skipBtn = document.getElementById('skip-btn');
   var skipForm = document.getElementById('skip-form');
-  var namePrompt = document.getElementById('name-prompt');
-  if (skipBtn) skipBtn.addEventListener('click', function () {
-    if (hasName) { skipForm.submit(); return; }
-    namePrompt.style.display = '';
-    var ni = document.getElementById('skip-name-input');
-    if (ni) ni.focus();
-    namePrompt.scrollIntoView({behavior: 'smooth', block: 'center'});
-  });
+  if (skipBtn) skipBtn.addEventListener('click', function () { skipForm.submit(); });
 
   // --- The chat ---
   var log = document.getElementById('chat-log');
@@ -133,34 +119,52 @@ if (window.plausible) { plausible('registered'); plausible('onboarding_started')
     document.getElementById('fallback').style.display = '';
   }
 
+  var busy = false, typing = null;
+  function clearTyping() { if (typing) { typing.remove(); typing = null; } }
+  function setBusy(state) {
+    busy = state;
+    input.disabled = state; send.disabled = state;
+    if (state) {
+      typing = document.createElement('div');
+      typing.className = 'mb-2 small text-muted';
+      typing.textContent = 'Avi Bot כותב…';
+      log.appendChild(typing); log.scrollTop = log.scrollHeight;
+    } else {
+      clearTyping();
+      input.focus();
+    }
+  }
+
   function turn(message) {
+    setBusy(true);
     fetch('{% url "welcome_chat" %}', {
       method: 'POST',
       headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
       body: JSON.stringify({message: message})
     }).then(function (r) { return r.json(); }).then(function (data) {
-      if (data.fallback) { showFallback(); return; }   // only if the AI is truly unavailable
-      if (data.error) { add('assistant', 'אופס, רגע - נסו לשלוח שוב 🙂'); return; }
-      if (data.name_known) hasName = true;   // once we know the name, skip won't re-ask
+      clearTyping();
+      if (data.fallback) { setBusy(false); showFallback(); return; }   // only if the AI is truly unavailable
+      if (data.error) { setBusy(false); add('assistant', 'אופס, רגע - נסו לשלוח שוב 🙂'); return; }
       if (data.reply) add('assistant', data.reply);
-      if (data.done) {
-        // The user asked to finish - take them into the site (REQ-5.6.4 honored:
-        // it's their explicit choice). Auto-redirect, with a manual fallback link.
-        if (window.plausible) plausible('onboarding_completed');
-        input.disabled = true; send.disabled = true;
-        var dest = data.redirect || '/';
-        var div = document.createElement('div');
-        div.className = 'text-center mt-3 small text-muted';
-        div.innerHTML = 'נכנסים לאתר… <a></a>';
-        div.querySelector('a').href = dest;
-        div.querySelector('a').textContent = 'לחצו אם לא הועברתם';
-        log.appendChild(div); log.scrollTop = log.scrollHeight;
-        setTimeout(function () { window.location.href = dest; }, 1400);
-      }
-    }).catch(function () { add('assistant', 'אופס, משהו השתבש לרגע - נסו לשלוח שוב 🙂'); });
+      if (!data.done) { setBusy(false); return; }
+      // Handshake over - the site opens by itself, no button to find.
+      if (window.plausible) plausible('onboarding_completed');
+      var dest = data.redirect || '/';
+      var div = document.createElement('div');
+      div.className = 'text-center mt-3 small text-muted';
+      div.innerHTML = 'נכנסים לאתר… <a></a>';
+      div.querySelector('a').href = dest;
+      div.querySelector('a').textContent = 'לחצו אם לא הועברתם';
+      log.appendChild(div); log.scrollTop = log.scrollHeight;
+      setTimeout(function () { window.location.href = dest; }, 1600);
+    }).catch(function () {
+      setBusy(false);
+      add('assistant', 'אופס, משהו השתבש לרגע - נסו לשלוח שוב 🙂');
+    });
   }
 
   send.addEventListener('click', function () {
+    if (busy) return;
     var msg = input.value.trim();
     if (!msg) return;
     add('user', msg); input.value = '';
