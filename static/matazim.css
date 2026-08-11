@@ -1,0 +1,327 @@
+/* ==========================================================================
+   מט״צים program space — scoped theme (REQ-10.33 … REQ-10.36)
+   ==========================================================================
+
+   A *theme*, not a fork. This file only remaps the design-system tokens that
+   style.css already defines, inside `.matazim-theme`. babook keeps its layout,
+   components, RTL handling and mobile work; only colour and mark change.
+
+   Palette read from the live matazim.co.il CSS on 2026-08-08:
+     #00d4a4  mint/teal   (--a_primary)
+     #585ba8  indigo      (--a_bg_primary)
+     #e6e7f6  lavender    (--a_bg_light)
+     #D9534F  red         (--a_secondary)
+
+   CONTRAST RULE (REQ-10.34) — the one thing not to get wrong here.
+   Measured against WCAG AA (4.5:1 for body text):
+     teal on white ........ 1.92:1   FAIL  -> never text on a light surface
+     teal on indigo ....... 2.6:1    FAIL  -> never text on the nav
+     indigo on white ...... 6.04:1   PASS  -> this is the text accent
+     near-black on teal ... 8.97:1   PASS  -> this is how teal is used
+   So: teal is a *background* (buttons, badges, fills, rules) carrying dark
+   text, and the logo. Indigo carries text. The audience is teenagers on
+   phones; readability wins over faithfulness to the source site.
+
+   Deliberately NOT imported (REQ-10.35): the source site's Acme font, which has
+   no Hebrew glyphs, so every Hebrew word on matazim.co.il already renders in a
+   browser fallback. And W3.CSS, which babook does not need.
+*/
+
+.matazim-theme {
+  /* The brand values, kept raw so components can reach them directly. */
+  --mz-teal: #00d4a4;
+  --mz-teal-deep: #008063;   /* darkened teal, 4.9:1 on white — safe for text */
+  --mz-indigo: #585ba8;
+  --mz-indigo-deep: #3f4180;
+  --mz-lavender: #e6e7f6;
+  --mz-red: #d9534f;
+
+  /* Remap babook's tokens. Text-bearing accents get indigo, never teal. */
+  --accent-primary: var(--mz-indigo);
+  --accent-success: var(--mz-teal-deep);
+  --accent-warm: var(--mz-red);
+  --bg-elevated: var(--mz-lavender);
+  --border: #d3d5ec;
+  /* --accent-cta is only ever used as a *background* in style.css, which is the
+     safe use of teal, so it is the one token that gets the raw brand value. */
+  --accent-cta: var(--mz-teal);
+}
+
+html[data-theme="dark"] .matazim-theme {
+  /* On dark surfaces teal is legible and is the brand's natural home. */
+  --accent-primary: var(--mz-teal);
+  --accent-success: var(--mz-teal);
+  --accent-cta: var(--mz-teal);
+  --bg-elevated: #23233a;
+  --border: #3a3a58;
+}
+
+/* --- The CTA button ------------------------------------------------------
+   babook has no custom button component (it uses Bootstrap's .btn-*), so this
+   is a real one. Teal *background* with dark ink is the contrast-correct way to
+   use the brand colour: 8.97:1, comfortably past AA. White text on teal would
+   be 2.1:1 and is exactly the mistake this rule exists to prevent. */
+
+.matazim-theme .mz-btn {
+  background: var(--mz-teal);
+  border: 1px solid var(--mz-teal);
+  color: #14231f;
+  font-weight: 700;
+}
+
+.matazim-theme .mz-btn:hover,
+.matazim-theme .mz-btn:focus {
+  background: #00b88f;
+  border-color: #00b88f;
+  color: #14231f;
+}
+
+.matazim-theme .mz-badge { color: #14231f; }
+
+/* --- Program header ------------------------------------------------------ */
+
+.mz-header {
+  background: var(--mz-indigo);
+  border-radius: var(--radius);
+  padding: 1.5rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.mz-header .mz-logo { height: 46px; width: auto; }
+
+.mz-header .mz-tagline {
+  color: var(--mz-teal);          /* on indigo: display size only, never body */
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0.5rem 0 0;
+}
+
+.mz-nav { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: 1rem; }
+
+.mz-nav a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: .95rem;
+  padding: .35rem .8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .28);
+}
+
+.mz-nav a:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+
+.mz-nav a.active { background: var(--mz-teal); color: #14231f; border-color: var(--mz-teal); }
+
+/* --- The five-stage track (REQ-10.4) -------------------------------------
+   Numbered, because in RTL a plain row of equal boxes gives the reader no
+   reliable cue about which way the path runs. The counter and the connector
+   line do that job; colour only says done / here / ahead. */
+
+.mz-track {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  counter-reset: mzstep;
+}
+
+.mz-step {
+  position: relative;
+  flex: 1 1 150px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: .9rem .9rem .9rem 2.6rem;
+  background: var(--bg-surface);
+  counter-increment: mzstep;
+}
+
+/* The step number, in the inline-start corner (right in RTL). */
+.mz-step::before {
+  content: counter(mzstep);
+  position: absolute;
+  inset-inline-start: .7rem;
+  top: .7rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: .8rem;
+  font-weight: 700;
+  background: var(--bg-elevated);
+  color: var(--mz-indigo);
+}
+
+.mz-step { padding-inline-start: 2.6rem; padding-inline-end: .9rem; }
+
+.mz-step .mz-step-label { font-weight: 700; color: var(--mz-indigo); }
+
+.mz-step.done { border-color: var(--mz-teal); }
+.mz-step.done::before { background: var(--mz-teal); color: #14231f; content: "✓"; }
+
+.mz-step.current { border-color: var(--mz-indigo); background: var(--mz-lavender); }
+.mz-step.current::before { background: var(--mz-indigo); color: #fff; }
+
+html[data-theme="dark"] .mz-step.current { background: #23233a; }
+html[data-theme="dark"] .mz-step .mz-step-label { color: var(--mz-teal); }
+
+.mz-step .mz-step-text { font-size: .9rem; color: var(--text-secondary); margin: .35rem 0 0; }
+
+.mz-step .mz-step-here {
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--mz-indigo);
+  margin: .3rem 0 0;
+}
+
+html[data-theme="dark"] .mz-step .mz-step-here { color: var(--mz-teal); }
+
+/* --- Badge --------------------------------------------------------------- */
+
+.mz-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  background: var(--mz-teal);
+  border-radius: 999px;
+  padding: .2rem .7rem;
+  font-size: .82rem;
+  font-weight: 700;
+}
+
+/* --- Next step: the one thing that must be unmissable (REQ-10.14) -------- */
+
+/* Laid out as a row so the call to action sits beside the text instead of
+   leaving a large empty field to its side on a wide screen. */
+.mz-next {
+  border: 2px solid var(--mz-teal);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.25rem;
+  background: var(--bg-surface);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.mz-next .mz-next-body { flex: 1 1 18rem; min-width: 0; }
+.mz-next .mz-next-cta { flex: 0 0 auto; }
+
+@media (max-width: 575.98px) {
+  .mz-next .mz-next-cta,
+  .mz-next .mz-next-cta .btn { width: 100%; }
+}
+
+.mz-next .mz-next-kicker {
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: var(--mz-teal-deep);
+  text-transform: none;
+}
+
+html[data-theme="dark"] .mz-next .mz-next-kicker { color: var(--mz-teal); }
+
+.mz-next .mz-next-label { font-size: 1.3rem; font-weight: 700; margin: .2rem 0; }
+
+/* --- Stat row ------------------------------------------------------------ */
+
+.mz-stats { display: flex; flex-wrap: wrap; gap: .6rem; }
+
+.mz-stat {
+  flex: 1 1 110px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: .8rem;
+  text-align: center;
+  background: var(--bg-surface);
+}
+
+.mz-stat .n { font-size: 1.7rem; font-weight: 700; color: var(--mz-indigo); line-height: 1; }
+
+html[data-theme="dark"] .mz-stat .n { color: var(--mz-teal); }
+
+.mz-stat .k { font-size: .8rem; color: var(--text-secondary); }
+
+/* --- Compact facts line, for scanning a roster -------------------------- */
+
+.mz-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem .9rem;
+  font-size: .88rem;
+  color: var(--text-secondary);
+}
+
+.mz-facts strong { color: var(--mz-indigo); font-size: 1.05rem; }
+
+html[data-theme="dark"] .mz-facts strong { color: var(--mz-teal); }
+
+/* --- Hero, on the public landing ---------------------------------------- */
+
+.mz-hero-title {
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0 0 .5rem;
+}
+
+.mz-hero-lead { font-size: 1.1rem; color: var(--text-secondary); max-width: 46ch; }
+
+/* --- Progress bars reuse Bootstrap, just recoloured --------------------- */
+
+.matazim-theme .progress-bar { background-color: var(--mz-teal-deep); }
+
+html[data-theme="dark"] .matazim-theme .progress-bar { background-color: var(--mz-teal); }
+
+/* --- Leader picker ------------------------------------------------------ */
+
+.mz-picker { position: relative; }
+
+.mz-picker-results {
+  position: absolute;
+  z-index: 20;
+  inset-inline: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .12);
+}
+
+.mz-picker-result {
+  display: block;
+  width: 100%;
+  text-align: start;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  padding: .5rem .7rem;
+  font-size: .9rem;
+  color: var(--text-primary);
+}
+
+.mz-picker-result:last-child { border-bottom: 0; }
+.mz-picker-result:hover,
+.mz-picker-result:focus { background: var(--mz-lavender); }
+
+html[data-theme="dark"] .mz-picker-result:hover,
+html[data-theme="dark"] .mz-picker-result:focus { background: #23233a; }
+
+.mz-picker-result .u { color: var(--text-secondary); font-size: .8rem; }
+.mz-picker-result .leads { color: var(--mz-teal-deep); font-size: .78rem; }
+
+html[data-theme="dark"] .mz-picker-result .leads { color: var(--mz-teal); }
+
+.mz-picker-chosen { font-weight: 700; color: var(--mz-indigo); }
+
+html[data-theme="dark"] .mz-picker-chosen { color: var(--mz-teal); }
+
+@media (max-width: 575.98px) {
+  .mz-header { padding: 1.1rem .9rem; }
+  .mz-header .mz-logo { height: 36px; }
+  .mz-step { flex-basis: 100%; }
+}

@@ -1,0 +1,32 @@
+{% extends "app/matazim/_shell.html" %}
+
+{# REQ-10.3 — public. Every school is clickable, but the page behind it shows
+   numbers only unless you lead it or run the program. A leader's own school is
+   marked so she can get to her roster from here in one click. #}
+
+{% block mz_content %}
+
+<h1 class="h3 mb-1">בתי הספר המשתתפים</h1>
+<p class="text-secondary">בתי הספר שבהם פועלת התוכנית השנה. אפשר להיכנס לכל אחד ולראות את המספרים.</p>
+
+<div class="row g-3 mt-2">
+  {% for s in schools %}
+  <div class="col-md-6 col-lg-4">
+    <a href="{% url 'matazim_school' s.pk %}"
+       class="d-block p-3 border rounded h-100 text-decoration-none
+              {% if s.pk in my_school_ids %}border-2{% endif %}">
+      <div class="d-flex justify-content-between align-items-start gap-2">
+        <div class="fw-bold">{{ s.name }}</div>
+        {% if s.pk in my_school_ids %}
+          <span class="mz-badge">{% if is_staff %}ניהול{% else %}בית הספר שלי{% endif %}</span>
+        {% endif %}
+      </div>
+      {% if s.city %}<div class="small text-secondary">{{ s.city }}</div>{% endif %}
+    </a>
+  </div>
+  {% empty %}
+  <div class="col-12"><p class="text-secondary">רשימת בתי הספר תתעדכן בקרוב.</p></div>
+  {% endfor %}
+</div>
+
+{% endblock %}

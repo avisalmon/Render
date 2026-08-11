@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import re
 
 from django.conf import settings
@@ -26,6 +27,8 @@ from .models import (
     UserVideoProgress,
     Video,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def home(request):
@@ -370,6 +373,28 @@ def _username_from_email(email):
     return username
 
 
+def _register_verify_mail_allowed(request):
+    """True while this IP is still under its verification-mail budget.
+
+    Counts sends, not signups: registration itself is never blocked, so a
+    throttled bot still gets an account (junk we can clean) but cannot make us
+    mail hundreds of strangers.
+    """
+    from django.conf import settings
+    ip = _hash_ip(_get_client_ip(request))
+    budgets = (
+        (f"regmail_h_{ip}", getattr(settings, "REGISTER_VERIFY_MAIL_PER_IP_HOUR", 20), 3600),
+        (f"regmail_d_{ip}", getattr(settings, "REGISTER_VERIFY_MAIL_PER_IP_DAY", 50), 86400),
+    )
+    for key, cap, ttl in budgets:
+        if cache.get(key, 0) >= cap:
+            logger.warning("register: verification mail throttled for ip hash %s", ip[:12])
+            return False
+    for key, cap, ttl in budgets:
+        cache.set(key, cache.get(key, 0) + 1, ttl)
+    return True
+
+
 def register(request):
     from django.contrib.auth.models import User
     from django.contrib.auth.password_validation import validate_password
@@ -410,7 +435,13 @@ def register(request):
             if attribution:
                 request.session[FIRST_TOUCH_KEY] = attribution
             attach_attribution(user, request)
-            send_verification_email(request, user)
+            # The account is always created; only the *email* is throttled.
+            # A signup burst from one IP is a bot spraying addresses, and this
+            # form used to mail every one of them on demand - the same hole we
+            # closed in allauth, through a different door. A real classroom
+            # signing up together stays well under the limits.
+            if _register_verify_mail_allowed(request):
+                send_verification_email(request, user)
             mark_signup(request, next_url)
             return redirect("welcome")
     return render(request, "registration/register.html",
@@ -432,15 +463,35 @@ def verify_email(request):
     return render(request, "registration/verify_email.html", {"ok": ok})
 
 
+RESEND_VERIFY_COOLDOWN = 120   # seconds between sends
+RESEND_VERIFY_PER_DAY = 5
+
+
 @login_required
 def resend_verification(request):
+    """Re-send the verification link. POST only, and throttled.
+
+    This used to send on a plain GET, from a link in the banner on every page:
+    a refresh, a mistaken click, or a browser prefetching the link was another
+    email to the same address. Both halves of that are fixed here - the send
+    needs a deliberate POST, and it is rate limited per user either way.
+    """
     from .email_verify import send_verification_email
     already = request.user.profile.email_verified
     sent = False
-    if not already:
-        sent = send_verification_email(request, request.user)
+    throttled = False
+    if request.method == "POST" and not already:
+        cooldown_key = f"resend_verify_wait_{request.user.pk}"
+        day_key = f"resend_verify_day_{request.user.pk}"
+        if cache.get(cooldown_key) or cache.get(day_key, 0) >= RESEND_VERIFY_PER_DAY:
+            throttled = True
+        else:
+            sent = send_verification_email(request, request.user)
+            cache.set(cooldown_key, 1, RESEND_VERIFY_COOLDOWN)
+            cache.set(day_key, cache.get(day_key, 0) + 1, 86400)
     return render(request, "registration/verification_sent.html", {
-        "already": already, "sent": sent, "email": request.user.email,
+        "already": already, "sent": sent, "throttled": throttled,
+        "email": request.user.email,
     })
 
 

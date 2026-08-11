@@ -232,13 +232,23 @@ if RESEND_API_KEY:
     # Use django-anymail's Resend backend (the package actually pinned in
     # requirements.txt). The previous "django_resend.EmailBackend" referenced a
     # package that is NOT installed, so prod email sending would have crashed.
-    EMAIL_BACKEND = "anymail.backends.resend.EmailBackend"
+    MAIL_GUARD_INNER_BACKEND = "anymail.backends.resend.EmailBackend"
     ANYMAIL = {
         "RESEND_API_KEY": RESEND_API_KEY,
         "REQUESTS_TIMEOUT": 30,
     }
 else:
-    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+    MAIL_GUARD_INNER_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# Everything outbound goes through the guard: it logs what we send (so the
+# Render log can name whatever is burning the Resend quota) and caps how often
+# one address can be mailed in a day, which is what a send-loop looks like.
+# Set MAIL_PER_RECIPIENT_DAILY_CAP=0 to disable the cap and keep the logging.
+EMAIL_BACKEND = "app.mail_guard.GuardedEmailBackend"
+MAIL_PER_RECIPIENT_DAILY_CAP = int(os.environ.get("MAIL_PER_RECIPIENT_DAILY_CAP", "10"))
+# Verification mail sent from /register/ is capped per client IP: a signup
+# burst from one address is a bot spraying, not a class registering.
+REGISTER_VERIFY_MAIL_PER_IP_HOUR = int(os.environ.get("REGISTER_VERIFY_MAIL_PER_IP_HOUR", "20"))
+REGISTER_VERIFY_MAIL_PER_IP_DAY = int(os.environ.get("REGISTER_VERIFY_MAIL_PER_IP_DAY", "50"))
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@babook.co.il")
 # Where user contact / privacy / support enquiries are delivered (REQ-7.6.1).
 # ACT-Avi: set this env var to Avi's real inbox so nothing is lost.
@@ -319,3 +329,9 @@ try:
     from .settings_local import *  # noqa: F401 F403
 except ImportError:
     pass
+
+# Re-wrap last, so the guard is outermost no matter what set EMAIL_BACKEND -
+# this block, or a local override file that assigns a backend directly.
+if EMAIL_BACKEND != "app.mail_guard.GuardedEmailBackend":
+    MAIL_GUARD_INNER_BACKEND = EMAIL_BACKEND
+    EMAIL_BACKEND = "app.mail_guard.GuardedEmailBackend"

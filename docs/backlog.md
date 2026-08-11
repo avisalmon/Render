@@ -1180,6 +1180,258 @@ not deployed until Avi says so.
 
 ---
 
+## EPIC-10 — מט״צים (Young Technology Leaders)
+
+Spec: main_spec.md Chapter 10. **Not yet approved to build.** Written 2026-08-08
+from Litala Aviv's brief (רשת החינוך עתיד, 2026-08-03) and the scoping
+conversation with Avi the same day.
+
+A selective program: 20 to 40 teenagers per cohort learn technology on babook,
+are certified by hand as מובילי טכנולוגיה צעירים, and then teach groups of
+younger kids from YouTube playlists. `/matazim` manages the מט״צים as people
+(application, entrance test, certification, community, recognition, reporting)
+and **does not teach**. The kids get links, never accounts, and are never
+tracked (DEC-72). Certification is a **status, not a permission** (DEC-69): it
+unlocks nothing on babook, it makes activity count.
+
+Sprints follow spec §10.6 phasing. Each is demoable to Litala on its own.
+
+### SPR-10.1 — Program space: shell, spine, branding
+
+> **BUILT IN DEV 2026-08-08, not deployed.** 16 new tests in
+> `tests/test_spr_10_1.py`, all passing; ruff clean; full suite shows **no new
+> failures** against a clean-HEAD worktree baseline (27 failing in tree vs 28 at
+> baseline, and the tree's set is a strict subset — all pre-existing).
+> Verified in dev end to end with screenshots at 1280px and 390px, zero
+> horizontal overflow. Production deploy awaits Avi's explicit word.
+
+| ID | Item | REQ | Status |
+|---|---|---|---|
+| F-10.1 | `Program` + `School` + `ProgramMembership` models & migrations (`app/matazim_models.py`, migration 0096) | REQ-10.2 | DONE (dev) |
+| F-10.2 | `/matazim` shell: own nav/header, member gate, main-nav entry for members | REQ-10.1 | DONE (dev) |
+| F-10.3 | Public pages: דף הבית, המסלול השנתי, בתי הספר המשתתפים (logged-out, RTL, ≥360px) | REQ-10.3 | DONE (dev) |
+| F-10.4 | Five-stage track view driven by `ProgramMembership.status` | REQ-10.1 | DONE (dev) |
+| F-10.5 | אזור אישי: where I am, what I finished, next step | REQ-10.14 | DONE (dev) — "what I taught" needs the teaching log (F-10.34), deliberately absent rather than stubbed |
+| F-10.6 | Scoped theme: body class remaps CSS vars to the matazim palette; branding on `Program` | REQ-10.33 | DONE (dev) |
+| F-10.7 | Logo asset + contrast pass (teal accent-only, indigo for body text on light) | REQ-10.34 | DONE (dev) |
+| F-10.8 | Confirm no Acme / no W3.CSS imported; hero asset within budget | REQ-10.35/10.36 | DONE (dev) — neither imported; no hero photo used at all |
+| F-10.9 | Seed command: one program, a few schools, a demo cohort | §10.9 acc. | DONE (dev) — `seed_matazim [--demo] [--user X]`, also seeds real babook progress so the derived record is demonstrably live |
+
+**Notes from the build**, worth carrying into SPR-10.2:
+
+- **The course engine already knows about מט״צים.** `Course.domain` has had a
+  `matazim` value all along, with **11 published courses** already tagged
+  (`tinkercad`, `arduino-tinkercad`, `fusion360`, `scratch`, `python`, …). The
+  program's track is those courses; nothing new had to be tagged or created.
+- **STL upload and an interactive 3D viewer already exist**:
+  `Course.PROJECT_STL`, `LessonModelSubmission`, `templates/app/_stl_gallery.html`.
+  That is a large part of F-10.13/F-10.14 already built. Check it before writing
+  a second viewer.
+- **`_catalog_progress` in `app/views.py` is the progress helper**; the program
+  space calls it rather than recomputing, which is what keeps REQ-10.13 honest.
+- Django gotcha hit twice during this sprint: `{# … #}` is **single-line only**;
+  a multi-line one renders as page text. Use `{% comment %}` inside blocks. And
+  Django ≥4.1 caches templates even with `DEBUG=True`, so `runserver --noreload`
+  serves stale templates forever — always run the dev server with autoreload.
+
+### SPR-10.1b — Schools, leaders, and the two consoles
+
+> **BUILT IN DEV 2026-08-08, not deployed.** Pulled forward from SPR-10.3 at
+> Avi's request ("who can open a school?"). Settles DEC-77/78/79. 27 tests in
+> `tests/test_spr_10_1.py` all passing; ruff clean; **no new failures** in the
+> full suite. Verified end to end in the running dev app: a leader endorsed a
+> candidate (status unchanged), an admin certified from the queue, the audit row
+> was written, and `is_teacher`/`is_staff` were untouched.
+
+| ID | Item | REQ | Status |
+|---|---|---|---|
+| F-10.46 | `Program.staff` + `School.leaders` M2M as the only two authorities; `ProgramMembership.role` removed (migration 0097) | DEC-79 | DONE (dev) |
+| F-10.47 | Permission helpers `is_program_staff` / `schools_led` / `can_view_school`, checked in views not templates | REQ-10.17 | DONE (dev) |
+| F-10.48 | ניהול התוכנית console at `/matazim/admin/`, staff-only (404 for leaders and members) | REQ-10.16 | DONE (dev) |
+| F-10.49 | Open a school + assign/remove leaders, staff-only | REQ-10.18a | DONE (dev) |
+| F-10.50 | School console at `/matazim/school/<id>/`, the same page for leader and staff | REQ-10.18d | DONE (dev) |
+| F-10.51 | Roster with each member's **derived** babook training | REQ-10.15 | DONE (dev) |
+| F-10.52 | `school_join_status`: member picks, leader confirms or declines | REQ-10.18b | DONE (dev) |
+| F-10.53 | ~~Endorse / withdraw endorsement~~ | REQ-10.18c | **REMOVED** — DEC-78 was superseded by DEC-83 the same day; fields dropped in migration 0098 rather than left dangling |
+| F-10.54 | ~~Certify + revoke, staff-only, from the admin queue~~ | REQ-10.7 | **SUPERSEDED** by F-10.65/F-10.66/F-10.67 |
+| F-10.65 | **Level 1**: school owner accepts (or rejects) an applicant; records grantor + note; `applied → in_training` | REQ-10.19 | DONE (dev) |
+| F-10.66 | **Level 2**: school owner certifies as מט״צ, note required, records grantor; refused if level 1 was never granted | REQ-10.19a/10.19b | DONE (dev) |
+| F-10.67 | Revoke: staff-only, note required, original grant preserved | REQ-10.19c | DONE (dev) |
+| F-10.68 | Admin console becomes oversight: recent certifications with grantor + reason, and revoke | REQ-10.19d | DONE (dev) |
+| F-10.55 | `ProgramStatusLog` append-only audit of every status change | REQ-10.8 | DONE (dev) |
+| F-10.56 | Console links in the program nav come from the same helpers that authorise, so the nav can never offer a page the view refuses | REQ-10.17 | DONE (dev) |
+| F-10.57 | Tests: cross-school scoping both directions, leader-cannot-certify by direct POST, leader-cannot-open-school, leader-cannot-recruit-peers, no-note-no-grant, revoke keeps history | REQ-10.17 acc. | DONE (dev) |
+| F-10.58 | Person picker: staff-only user search (name/username/email), **never returns an email**; assign by pick, with the typed field as the no-JS fallback | REQ-10.18a | DONE (dev) |
+| F-10.59 | Public school view: aggregate figures for anyone, roster and controls gated on `can_manage` | REQ-10.17a | DONE (dev) |
+| F-10.60 | Every write endpoint re-checks `can_view_school` independently, so widening the view widened no action | REQ-10.17b | DONE (dev) |
+| F-10.61 | Staff act as the teacher in any school (roster + confirm + endorse) | REQ-10.17c | DONE (dev) |
+| F-10.62 | Schools list links into each school; a leader's own is marked | REQ-10.17d | DONE (dev) |
+| F-10.63 | מט״צים in the babook top nav and side drawer for everyone; highlighted for members | REQ-10.17e | DONE (dev) |
+| F-10.64 | Regression guard: renders every מט״צים page and fails if a template-comment delimiter appears in the output | — | DONE (dev) |
+
+**Superseded by this sprint**: F-10.37 (staff dashboard), F-10.38 and F-10.39
+(school-leader scoping and its test) are DONE. F-10.31 (derived record) is done
+for the roster too. What remains in SPR-10.3 is the teaching log, the playlist
+library, and the photo-consent flow.
+
+### SPR-10.2 — Application, entrance test, certification
+
+| ID | Item | REQ | Status |
+|---|---|---|---|
+| F-10.10 | `ProgramApplication` + apply form (three questions) | REQ-10.4 | DONE (dev) |
+| F-10.69 | `School.join_code` + `is_open`; per-school invite link and QR, migration 0099 (added non-unique → backfilled → made unique, since a column default gives every row the same code) | REQ-10.4a | DONE (dev) |
+| F-10.70 | Logged-out landing page with OG tags → `/join/` wall → return-to-intent back to the same link | REQ-10.4b | DONE (dev) |
+| F-10.71 | Arriving via the link auto-confirms the school; the open form leaves it pending for the leader | REQ-10.4a/10.4c | DONE (dev) |
+| F-10.72 | Teacher's link panel: copy, WhatsApp, QR; rotate is staff-only | REQ-10.4a/10.4d | DONE (dev) |
+| F-10.73 | Closed school takes no applications; an existing member is sent to their area rather than applying twice | REQ-10.4d | DONE (dev) |
+| F-10.74 | Help page "איך זה עובד" for students and school leaders, public, linked from nav / apply form / home | REQ-10.20a | DONE (dev) |
+
+**UX pass over the whole flow (2026-08-08)**, before building further on top.
+Every page captured as every role at 1280px and 390px and reviewed. Zero
+horizontal overflow anywhere. Fixed:
+
+| ID | Item | Status |
+|---|---|---|
+| F-10.75 | **Bug**: the invite-link field had no `dir="ltr"`, so bidi dragged the URL's slash to the wrong end and a teacher saw a mangled link they would not trust | DONE (dev) |
+| F-10.76 | Track steps are numbered with a ✓/number/here marker — a row of equal boxes gave an RTL reader no cue which way the path ran | DONE (dev) |
+| F-10.77 | The "next step" card lays out as a row, so the CTA sits beside the text instead of leaving a large empty field on a wide screen | DONE (dev) |
+| F-10.78 | Personal area groups courses (in progress → finished → *untouched, folded away*) instead of eleven identical 0/N cards, which read as a wall of failure to a new member. Empty progress bars are no longer drawn at all | DONE (dev) |
+| F-10.79 | Roster cards use one compact facts line instead of three stat tiles per member, so a teacher can compare twelve people at a glance; adds "עוד לא התחיל ללמוד" where that is the real state | DONE (dev) |
+| F-10.80 | Home page leads with what the program is *for* rather than repeating the name the logo already says, with the counters moved below and the CTA promoted | DONE (dev) |
+| F-10.11 | Entrance test as a babook הדרכה ("מבחן הכניסה למט״צים") ending in the upload | REQ-10.23 | TODO |
+| F-10.12 | Offline target generator command: parametric templates → STL + params + drawing, committed | REQ-10.25 | TODO |
+| F-10.13 | Target assignment per applicant per attempt; 3D viewer (vendored three.js) + dimensioned drawing | REQ-10.24 | TODO |
+| F-10.14 | STL upload with size cap, through the existing upload/safety path | REQ-10.26 | TODO |
+| F-10.15 | Mesh measurement: bbox, genus, cut volume, centroid offset, surface distance | REQ-10.26 | TODO |
+| F-10.16 | Per-feature tolerances in config (±3mm outer, exact holes, ±30% hole size, ±5mm position, 2mm mean) | REQ-10.26 | TODO |
+| F-10.17 | Watertightness fallback: never fail an applicant on a mesh defect | REQ-10.26 | TODO |
+| F-10.18 | Accept / not-yet verdict. **No machine rejection path exists** | REQ-10.27 | TODO |
+| F-10.19 | Unlimited retries, fresh target each attempt, attempt history recorded | REQ-10.28 | TODO |
+| F-10.20 | Hebrew per-dimension feedback + side-by-side 3D with mismatch highlighted | REQ-10.29 | TODO |
+| F-10.21 | Three-sentence "what did you build" step (reuses lesson-reflection machinery) | REQ-10.30 | TODO |
+| F-10.22 | Shape-fingerprint duplicate detection across applicants | REQ-10.31 | TODO |
+| F-10.23 | Commitment view for staff: lessons done, attempts, days spread | REQ-10.32 | TODO |
+| F-10.24 | Staff decision screen: accept to `in_training` / reject, applicant notified | REQ-10.6 | TODO |
+| F-10.25 | Certify button, **program staff only**, required note, `certified_at`/`certified_by` | REQ-10.7 | TODO |
+| F-10.26 | `ProgramStatusLog` append-only audit of every transition | REQ-10.8 | TODO |
+| F-10.27 | `alumnus` / `revoked` transitions; history and certificate survive | REQ-10.9 | TODO |
+| F-10.28 | תעודת מוביל טכנולוגיה צעיר via the existing certificate mechanism + verify page | REQ-10.10 | TODO |
+| F-10.29 | Badge on public profile, class pages, and the public class directory | REQ-10.22 | TODO |
+| F-10.30 | Tests: non-staff cannot certify by any route incl. direct POST | REQ-10.7 acc. | TODO |
+
+### SPR-10.3 — Record, playlists, dashboards
+
+| ID | Item | REQ | Status |
+|---|---|---|---|
+| F-10.31 | Derived training record: הדרכות, lesson progress, certificates, computed live | REQ-10.13/10.15 | TODO |
+| F-10.32 | Retroactive credit verified: pre-certification activity counts, no backfill job | REQ-10.12 | TODO |
+| F-10.33 | Curated YouTube playlist library, by topic and age, copy-ready share links | REQ-10.11c | TODO |
+| F-10.34 | Teaching activity log: date, topic, rough headcount, optional photo, a sentence | REQ-10.15b | TODO |
+| F-10.35 | **Test asserting no child identity is requestable or storable anywhere in the flow** | DEC-72 | TODO |
+| F-10.36 | Photo consent confirmation on session-log upload; photos through the safety layer | REQ-10.15c | TODO |
+| F-10.37 | Staff dashboard: every מט״צ, derived training + declared teaching, filter by school/status | REQ-10.16 | TODO |
+| F-10.38 | School-leader scoping enforced in views, not templates | REQ-10.17 | TODO |
+| F-10.39 | Test: a school leader cannot see another school's members by any route | REQ-10.17 acc. | TODO |
+| F-10.40 | Confirm babook permissions unchanged: no new teacher tier, `is_teacher` untouched | REQ-10.11 | TODO |
+
+### SPR-10.4 — Community and logistics
+
+| ID | Item | REQ | Status |
+|---|---|---|---|
+| F-10.41 | `ProgramPost` cohort feed: announcements, projects, new certifications, upcoming events | REQ-10.18 | TODO |
+| F-10.42 | קהילת מט״צים directory, respecting `is_public` / `courses_visibility` / `reflections_public` | REQ-10.19 | TODO |
+| F-10.43 | `ProgramEvent` (ימי שיא): staff create dated events, surfaced in feed + personal area | REQ-10.20 | TODO |
+| F-10.44 | Project submission + school-leader approval, reusing the `CourseCompletionReview` pattern | REQ-10.21 | TODO |
+| F-10.45 | Safety/moderation layer applied to feed posts and uploads | REQ-10.18 | TODO |
+
+### EPIC-10 blocking items (Avi / Litala)
+
+| ID | Item | Blocks | Status |
+|---|---|---|---|
+| ACT-27 | Confirm cohort size, start date, participating schools | SPR-10.1 | OPEN |
+| ACT-29 | Does עתיד have pedagogy content, or does "how to teach" need writing? | program, not build | OPEN |
+| ACT-30 | Is the credential annual and renewed, or granted once? | F-10.27 | OPEN |
+| ACT-31 | Build the curated YouTube playlist library (content task) | F-10.33 | OPEN |
+| ACT-32 | Litala's three sketch images from the 2026-08-03 mail | SPR-10.1 | OPEN |
+| ACT-33 | How school leaders get accounts; is "בחירת מוביל" chosen or assigned? | F-10.38, F-10.44 | OPEN |
+| ACT-34 | What blanket photo consent does עתיד hold for school activities? | F-10.36 | OPEN |
+| ACT-36 | Agree the entrance-test templates and dimension ranges | F-10.12 | OPEN |
+| — | **Litala's sign-off on the core change**: the site reflects training rather than hosting it | all | OPEN |
+
+---
+
+## EPIC-11 — 3D Design Practice (auto-checked STL exercises)
+
+> **Status: IDEA, not scheduled. No spec chapter yet.** Raised by Avi on
+> 2026-08-08 while designing the מט״צים entrance test (Chapter 10, DEC-74). The
+> entrance test needed a way to verify that an applicant really built a given 3D
+> object in Tinkercad, and the mechanism that came out of it is a **general
+> teaching tool**, not a one-off gate. Park it here and build it properly when
+> the Tinkercad course is written.
+
+**What it is.** A lesson shows the learner a target object in 3D (rotatable) plus
+a dimensioned drawing. The learner models it in Tinkercad, exports an STL, and
+uploads it. The site measures how close they got and tells them, specifically:
+"הגובה שלך 43 מ"מ במקום 40", "החור קטן מדי", with their model and the target
+shown side by side and the mismatch highlighted.
+
+**Why it generalizes.** This is the same pattern as the Python practice cells
+(EPIC-3 / lesson 16): a **deterministic checker is the authoritative pass/fail**,
+and the friendly explanation sits on top of it. There the artifact was code, here
+it is geometry. The lesson-level plumbing (a practice block inside a lesson, a
+gate that unlocks later lessons once enough are solved) already exists and should
+be reused rather than reinvented.
+
+**The mechanism (settled during the Chapter 10 design):**
+
+- Targets are **procedurally generated from parametric templates** (cube with a
+  hole, stepped block, plate with two holes, L-bracket) with randomised
+  whole-millimetre dimensions, so no two learners get the same object and no
+  model downloaded from the internet can match one.
+- Targets are **pre-generated offline** by a management command and committed
+  (STL + parameter JSON + rendered drawing), so the web process never needs a
+  boolean/CAD engine. Production only reads a target and compares.
+- Comparison needs **no feature recognition**, only numpy over a triangle list:
+  - bounding box (sorted) → outer dimensions, exactly tessellation-proof
+  - Euler number → genus → number of through-holes, exact
+  - bbox volume minus mesh volume → the volume that was cut away, i.e. hole size
+  - centroid vs bbox centre → how far the hole drifted, and in which direction
+  - mean point-to-surface distance after PCA alignment + best-of-24 axis rotations
+    → overall shape match, the catch-all
+- **Tolerances are per-feature, not global.** Tinkercad dimensions are typed, so
+  outer sizes can be tight; hole position is drag-placed, so it needs slack.
+- Mesh similarity fingerprints (PCA-normalised shape descriptor) detect two
+  learners submitting the same file.
+- If a mesh is not watertight the genus check is undefined; fall back to the
+  shape-distance comparison rather than failing the learner on a defect they
+  cannot see.
+
+**Items (all IDEA, nothing scheduled):**
+
+| ID | Item | REQ | Status |
+|---|---|---|---|
+| F-11.1 | Parametric target templates + offline generator command (STL, params, drawing) | TBD | IDEA |
+| F-11.2 | STL upload block inside a lesson (size cap, reuses the safety/upload path) | TBD | IDEA |
+| F-11.3 | Mesh comparison engine: bbox, genus, cut volume, centroid offset, surface distance | TBD | IDEA |
+| F-11.4 | Per-feature tolerance config, authored per exercise | TBD | IDEA |
+| F-11.5 | Feedback screen: Hebrew per-dimension explanation of what is off and by how much | TBD | IDEA |
+| F-11.6 | three.js STL viewer, target and submission side by side, mismatch highlighted, mobile-safe and vendored for the strict WhiteNoise manifest | TBD | IDEA |
+| F-11.7 | Unlimited retries with a recorded attempt history | TBD | IDEA |
+| F-11.8 | Duplicate-submission fingerprinting across learners | TBD | IDEA |
+| F-11.9 | Practice gate: unlock later lessons once N exercises are solved (reuse the Python-cell gate) | TBD | IDEA |
+
+**Open questions for when this is picked up:** which mesh library (trimesh is
+richer but pulls numpy/scipy, numpy-stl is lighter if we compute the descriptors
+ourselves); whether the dimensioned drawing is generated as SVG at target-build
+time; and whether the same block should accept STEP or OBJ as well as STL.
+
+**Dependency note.** The מט״צים entrance test (Chapter 10) is the first consumer
+and will build a narrow version of F-11.1 to F-11.5 and F-11.7 to F-11.8. When
+this epic is picked up, generalise that code into a lesson block rather than
+writing a second implementation.
+
+---
+
 ## Status Summary (reconciled 2026-06-09)
 
 **Full regression: 356/356 passing (2026-06-12, incl. EPIC-3/4/5).** Per-sprint test counts: 1.1=19, 1.2=17,

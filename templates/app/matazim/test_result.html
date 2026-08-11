@@ -1,0 +1,79 @@
+{% extends "app/matazim/_shell.html" %}
+{% load static %}
+
+{% comment %}
+  The verdict (REQ-10.27, REQ-10.29).
+
+  Two rules this page exists to honour:
+
+  * the outcome is **accepted** or **not yet**, never rejected. Every rejection
+    decision in this program is made by a human;
+  * a miss names the actual problem and the actual number, because "your height
+    is 43 instead of 40" sends somebody back into Tinkercad and "incorrect"
+    sends them away.
+
+  Which is why the retry button is the most prominent thing on a miss, and the
+  drawing stays on screen right next to the feedback.
+{% endcomment %}
+
+{% block mz_content %}
+
+{% if attempt.passed %}
+<div class="mz-next mb-4">
+  <div class="mz-next-body">
+    <div class="mz-next-kicker">מבחן הכניסה</div>
+    <div class="mz-next-label">{{ headline }}</div>
+    <div class="text-secondary">
+      עברתם. עכשיו המוביל של בית הספר
+      {% if membership.school %}ב{{ membership.school.name }}{% endif %}
+      יאשר אתכם לתוכנית.
+    </div>
+  </div>
+  <div class="mz-next-cta">
+    <a href="{% url 'matazim_me' %}" class="btn mz-btn btn-lg">לאזור האישי</a>
+  </div>
+</div>
+{% else %}
+<h1 class="h4 mb-1">{{ headline }}</h1>
+<p class="text-secondary">ניסיון {{ attempt.number }} · {{ target.title }}</p>
+
+<div class="row g-4 mt-1">
+  <div class="col-lg-6">
+    <div class="p-3 border rounded">
+      <div class="fw-bold mb-2">מה צריך לתקן</div>
+      <ul class="mb-0">
+        {% for issue in attempt.issues %}<li class="mb-1">{{ issue.text }}</li>{% endfor %}
+      </ul>
+    </div>
+
+    <form method="post" action="{% url 'matazim_test_retry' %}" class="mt-3">
+      {% csrf_token %}
+      <button class="btn mz-btn btn-lg">לנסות שוב עם דגם חדש</button>
+    </form>
+    <p class="text-secondary small mt-2">
+      אין הגבלה על מספר הניסיונות. מי שחוזר ומנסה שוב מראה בדיוק את מה שאנחנו
+      מחפשים.
+    </p>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="text-secondary small mb-1">השרטוט שקיבלתם</div>
+    <img src="{% static 'matazim/targets/' %}{{ attempt.target_id }}.svg"
+         alt="שרטוט הדגם" class="img-fluid border rounded bg-white">
+  </div>
+</div>
+{% endif %}
+
+<details class="mt-4">
+  <summary class="text-secondary small">מה נמדד בדגם שלכם</summary>
+  <div class="mz-facts mt-2">
+    {% if attempt.measured.dims %}
+    <span><strong>{{ attempt.measured.dims.2|floatformat:0 }}×{{ attempt.measured.dims.1|floatformat:0 }}×{{ attempt.measured.dims.0|floatformat:0 }}</strong> מ״מ</span>
+    {% endif %}
+    <span><strong>{{ attempt.measured.genus|default:0 }}</strong> חורים</span>
+    <span><strong>{{ attempt.measured.shells|default:1 }}</strong> גופים</span>
+    <span><strong>{{ attempt.measured.triangles|default:0 }}</strong> משולשים</span>
+  </div>
+</details>
+
+{% endblock %}

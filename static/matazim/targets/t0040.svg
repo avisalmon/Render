@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 520" width="520" height="520" font-family="Heebo, Arial, sans-serif">
+<rect width="520" height="520" fill="#ffffff"/>
+<polygon points="46.0,247.9 449.8,247.9 449.8,46.0 46.0,46.0" fill="#e6e7f6" stroke="#1c1b18" stroke-width="2"/>
+<circle cx="191.4" cy="146.9" r="40.4" fill="#ffffff" stroke="#1c1b18" stroke-width="2"/>
+<text x="191.4" y="101.6" fill="#585ba8" font-size="13" text-anchor="middle">⌀10</text>
+<circle cx="304.4" cy="146.9" r="40.4" fill="#ffffff" stroke="#1c1b18" stroke-width="2"/>
+<text x="304.4" y="101.6" fill="#585ba8" font-size="13" text-anchor="middle">⌀10</text>
+<line x1="46.0" y1="269.9" x2="449.8" y2="269.9" stroke="#585ba8" stroke-width="1.4"/><line x1="46.0" y1="265.9" x2="46.0" y2="273.9" stroke="#585ba8" stroke-width="1.4"/><line x1="449.8" y1="265.9" x2="449.8" y2="273.9" stroke="#585ba8" stroke-width="1.4"/><text x="247.9" y="284.9" fill="#585ba8" font-size="14" text-anchor="middle">50</text>
+<line x1="471.8" y1="247.9" x2="471.8" y2="46.0" stroke="#585ba8" stroke-width="1.4"/><line x1="467.8" y1="247.9" x2="475.8" y2="247.9" stroke="#585ba8" stroke-width="1.4"/><line x1="467.8" y1="46.0" x2="475.8" y2="46.0" stroke="#585ba8" stroke-width="1.4"/><text x="477.8" y="146.9" fill="#585ba8" font-size="14">25</text>
+<line x1="191.4" y1="293.9" x2="304.4" y2="293.9" stroke="#585ba8" stroke-width="1.4"/><line x1="191.4" y1="289.9" x2="191.4" y2="297.9" stroke="#585ba8" stroke-width="1.4"/><line x1="304.4" y1="289.9" x2="304.4" y2="297.9" stroke="#585ba8" stroke-width="1.4"/><text x="247.9" y="308.9" fill="#585ba8" font-size="14" text-anchor="middle">14</text>
+<rect x="46.0" y="333.9" width="403.8" height="80.8" fill="#e6e7f6" stroke="#1c1b18" stroke-width="2"/>
+<line x1="471.8" y1="333.9" x2="471.8" y2="414.6" stroke="#585ba8" stroke-width="1.4"/><line x1="467.8" y1="333.9" x2="475.8" y2="333.9" stroke="#585ba8" stroke-width="1.4"/><line x1="467.8" y1="414.6" x2="475.8" y2="414.6" stroke="#585ba8" stroke-width="1.4"/><text x="477.8" y="374.3" fill="#585ba8" font-size="14">10</text>
+<text x="46.0" y="434.6" fill="#6b675f" font-size="12">מבט צד · גובה 10 מ"מ</text>
+<text x="46.0" y="30" fill="#6b675f" font-size="12">מבט על · כל המידות במ"מ</text>
+</svg>

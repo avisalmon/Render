@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% load static %}
+
+{# Chapter 10 / REQ-10.1 + REQ-10.33: the program shell.
+
+   It extends the site base rather than replacing it, so /matazim inherits
+   babook's layout, RTL, drawer, search and mobile work for free. All that
+   changes is the `matazim-theme` scope (which remaps the design tokens) and
+   this header. Branding values come from the `Program` record, never
+   hardcoded — REQ-10.2. #}
+
+{% block title %}{{ program.name }} · babook{% endblock %}
+{% block meta_description %}{{ program.tagline }}{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'matazim.css' %}?v=1">
+{% endblock %}
+
+{% block content %}
+<div class="matazim-theme">
+
+  <header class="mz-header">
+    <a href="{% url 'matazim_home' %}" class="d-inline-block">
+      {% if program.logo %}
+        <img src="{{ program.logo.url }}" alt="{{ program.name }}" class="mz-logo">
+      {% else %}
+        <img src="{% static 'matazim/logo.png' %}" alt="{{ program.name }}" class="mz-logo">
+      {% endif %}
+    </a>
+    <p class="mz-tagline">{{ program.tagline }}</p>
+
+    <nav class="mz-nav" aria-label="{{ program.name }}">
+      <a href="{% url 'matazim_home' %}" {% if section == 'home' %}class="active"{% endif %}>דף הבית</a>
+      <a href="{% url 'matazim_track' %}" {% if section == 'track' %}class="active"{% endif %}>המסלול השנתי</a>
+      <a href="{% url 'matazim_schools' %}" {% if section == 'schools' %}class="active"{% endif %}>בתי הספר</a>
+      <a href="{% url 'matazim_help' %}" {% if section == 'help' %}class="active"{% endif %}>איך זה עובד</a>
+      {% if membership %}
+        <a href="{% url 'matazim_me' %}" {% if section == 'me' %}class="active"{% endif %}>אזור אישי</a>
+      {% endif %}
+      {% if membership.status == "applied" %}
+        <a href="{% url 'matazim_test' %}" {% if section == 'test' %}class="active"{% endif %}>מבחן הכניסה</a>
+      {% endif %}
+      {% comment %}
+        Console links come from shell_ctx, which computes them with the same
+        helpers the views authorise with. The nav can never offer a page the
+        view would refuse.
+      {% endcomment %}
+      {% if not is_staff %}
+        {% for s in my_schools %}
+          <a href="{% url 'matazim_school' s.pk %}" {% if school and school.pk == s.pk %}class="active"{% endif %}>{{ s.name }}</a>
+        {% endfor %}
+      {% endif %}
+      {% if is_staff %}
+        <a href="{% url 'matazim_admin' %}" {% if section == 'admin' %}class="active"{% endif %}>ניהול התוכנית</a>
+      {% endif %}
+    </nav>
+  </header>
+
+  {% block mz_content %}{% endblock %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Leader picker: search-as-you-type over babook members, staff-only endpoint.
+// Debounced, aborts the in-flight request, and closes on outside click / Esc.
+(function () {
+  document.querySelectorAll('.mz-picker').forEach(function (root) {
+    var url = root.dataset.searchUrl;
+    var input = root.querySelector('.mz-picker-input');
+    var list = root.querySelector('.mz-picker-results');
+    var value = root.querySelector('.mz-picker-value');
+    var chosen = root.querySelector('.mz-picker-chosen');
+    var timer = null, ctrl = null;
+
+    function close() { list.hidden = true; list.innerHTML = ''; }
+
+    function pick(u) {
+      value.value = u.id;
+      input.value = '';
+      chosen.hidden = false;
+      chosen.textContent = 'נבחר: ' + u.name + ' (' + u.username + ')';
+      close();
+    }
+
+    function render(results) {
+      list.innerHTML = '';
+      if (!results.length) {
+        list.innerHTML = '<div class="mz-picker-result text-secondary">לא נמצאו משתמשים</div>';
+        list.hidden = false;
+        return;
+      }
+      results.forEach(function (u) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'mz-picker-result';
+        var leads = u.leads && u.leads.length
+          ? '<div class="leads">כבר מוביל: ' + u.leads.join(', ') + '</div>' : '';
+        b.innerHTML = '<div>' + u.name + '</div><div class="u">' + u.username + '</div>' + leads;
+        b.addEventListener('click', function () { pick(u); });
+        list.appendChild(b);
+      });
+      list.hidden = false;
+    }
+
+    input.addEventListener('input', function () {
+      value.value = '';
+      chosen.hidden = true;
+      var q = input.value.trim();
+      clearTimeout(timer);
+      if (q.length < 2) { close(); return; }
+      timer = setTimeout(function () {
+        if (ctrl) ctrl.abort();
+        ctrl = new AbortController();
+        fetch(url + '?q=' + encodeURIComponent(q), { signal: ctrl.signal })
+          .then(function (r) { return r.ok ? r.json() : { results: [] }; })
+          .then(function (d) { render(d.results || []); })
+          .catch(function () { /* aborted or offline: leave the list as-is */ });
+      }, 180);
+    });
+
+    input.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+    document.addEventListener('click', function (e) { if (!root.contains(e.target)) close(); });
+  });
+
+  // Copy the school's invite link.
+  var copy = document.getElementById('mzCopyJoin');
+  if (copy) {
+    copy.addEventListener('click', function () {
+      var f = document.getElementById('mzJoinUrl');
+      f.select();
+      navigator.clipboard.writeText(f.value).then(function () {
+        copy.textContent = 'הועתק';
+        setTimeout(function () { copy.textContent = 'להעתיק'; }, 1500);
+      });
+    });
+  }
+})();
+</script>
+{% endblock %}

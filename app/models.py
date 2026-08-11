@@ -1478,3 +1478,8 @@ from .events_models import (  # noqa: E402,F401
     EventRSVP,
     EventSeries,
 )
+from .matazim_models import (  # noqa: E402,F401
+    Program,
+    ProgramMembership,
+    School,
+)

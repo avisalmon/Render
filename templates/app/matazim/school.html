@@ -1,0 +1,229 @@
+{% extends "app/matazim/_shell.html" %}
+
+{# The school page - REQ-10.16 / REQ-10.17.
+
+   Two levels of detail on one page:
+
+   * ANYONE gets the numbers. How many מט״צים, how many certified, how much has
+     been learned. No name, no status, no per-person progress.
+   * The school's LEADER and PROGRAM STAFF additionally get the roster and the
+     controls, gated on `can_manage`.
+
+   The certify button is absent for everybody here, staff included. It lives
+   only in ניהול התוכנית, so a recommendation and a grant never come from the
+   same screen. #}
+
+{% block mz_content %}
+
+<div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+  <h1 class="h3 mb-0">{{ school.name }}</h1>
+  {% if school.city %}<span class="text-secondary">{{ school.city }}</span>{% endif %}
+</div>
+<p class="text-secondary">
+  {% if is_staff %}תצוגת צוות התוכנית.
+  {% elif can_manage %}המט״צים שאתם מובילים.
+  {% else %}בית ספר משתתף בתוכנית מט״צים.{% endif %}
+</p>
+
+{% if messages %}
+  {% for m in messages %}
+    <div class="alert alert-{{ m.tags|default:'info' }} py-2">{{ m }}</div>
+  {% endfor %}
+{% endif %}
+
+{# Aggregate figures - the part everyone sees #}
+<div class="mz-stats mt-3 mb-2">
+  <div class="mz-stat">
+    <div class="n">{{ stats.members }}</div><div class="k">מט״צים</div>
+  </div>
+  <div class="mz-stat">
+    <div class="n">{{ stats.certified }}</div><div class="k">מוסמכים</div>
+  </div>
+  <div class="mz-stat">
+    <div class="n">{{ stats.courses_completed }}</div><div class="k">הדרכות שהושלמו</div>
+  </div>
+  <div class="mz-stat">
+    <div class="n">{{ stats.certificates }}</div><div class="k">תעודות</div>
+  </div>
+</div>
+
+{% if not can_manage %}
+  <p class="text-secondary small">
+    <i class="bi bi-lock"></i>
+    שמות המט״צים וההתקדמות האישית שלהם גלויים למוביל בית הספר ולצוות התוכנית בלבד.
+  </p>
+{% endif %}
+
+{% if can_manage %}
+
+{# --- The teacher's own door: link + QR, to hand out in class ------------ #}
+<div class="p-3 border rounded mt-4">
+  <h2 class="h6 mb-1">קישור ההצטרפות של בית הספר</h2>
+  <p class="text-secondary small mb-2">
+    מי שנרשם דרך הקישור הזה משויך אוטומטית ל{{ school.name }}. עובד גם למי שכבר
+    יש לו חשבון ב־babook וגם למי שנרשם בפעם הראשונה.
+  </p>
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    {# dir=ltr: without it bidi drags the URL's slash to the wrong end. #}
+    <input type="text" class="form-control form-control-sm" id="mzJoinUrl" readonly
+           dir="ltr" style="max-width:26rem" value="{{ join_url }}">
+    <button class="btn btn-sm btn-outline-primary" type="button" id="mzCopyJoin">להעתיק</button>
+    <a class="btn btn-sm btn-outline-success"
+       href="https://wa.me/?text={{ join_url|urlencode }}" target="_blank" rel="noopener">
+      <i class="bi bi-whatsapp"></i> וואטסאפ
+    </a>
+    <button class="btn btn-sm btn-outline-secondary" type="button"
+            data-bs-toggle="collapse" data-bs-target="#mzQr">QR</button>
+    {% if is_staff %}
+    <form method="post" action="{% url 'matazim_rotate_code' school.pk %}" class="d-inline">
+      {% csrf_token %}
+      <button class="btn btn-sm btn-link text-secondary"
+              title="הקישור הישן יפסיק לעבוד">ליצור קישור חדש</button>
+    </form>
+    {% endif %}
+  </div>
+  <div class="collapse mt-2" id="mzQr">
+    <img src="{% url 'matazim_school_qr' school.pk %}" alt="QR" width="180" height="180">
+  </div>
+</div>
+
+{# --- Pending joins: the member picked this school, the leader confirms --- #}
+{% if pending %}
+<h2 class="h5 mt-4 mb-2">בקשות הצטרפות</h2>
+<p class="text-secondary small">בחרו בבית הספר שלכם. אישור שלכם מכניס אותם לרשימה.</p>
+<div class="row g-3">
+  {% for r in pending %}
+  <div class="col-md-6">
+    <div class="p-3 border rounded h-100">
+      <div class="fw-bold">{{ r.m.user.profile.public_name }}</div>
+      <div class="small text-secondary">{{ r.m.get_status_display }}</div>
+      <form method="post" action="{% url 'matazim_confirm_member' r.m.pk %}" class="mt-2 d-flex gap-2">
+        {% csrf_token %}
+        <button class="btn btn-sm mz-btn">לאשר</button>
+        <button class="btn btn-sm btn-outline-secondary" name="decline" value="1">לדחות</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{# --- The roster ------------------------------------------------------- #}
+<h2 class="h5 mt-4 mb-2">המט״צים בבית הספר</h2>
+<div class="row g-3">
+  {% for r in rows %}
+  <div class="col-lg-6">
+    <div class="p-3 border rounded h-100">
+      <div class="d-flex justify-content-between align-items-start gap-2">
+        <div>
+          <div class="fw-bold">{{ r.m.user.profile.public_name }}</div>
+          <div class="small text-secondary">{{ r.m.get_status_display }}</div>
+        </div>
+        {% if r.m.is_certified %}
+          <span class="mz-badge"><i class="bi bi-patch-check-fill"></i> מוסמך</span>
+        {% elif r.m.is_accepted %}
+          <span class="badge rounded-pill text-bg-light border">התקבל לתוכנית</span>
+        {% endif %}
+      </div>
+
+      {% comment %}
+        Derived from babook, live: the leader sees real learning, not a form.
+        One line rather than three tiles, because a teacher scanning twelve
+        members wants to compare them at a glance and three big zeros per card
+        made that impossible.
+      {% endcomment %}
+      <div class="mz-facts mt-2">
+        <span><strong>{{ r.record.completed }}</strong> הושלמו</span>
+        <span><strong>{{ r.record.started }}</strong> התחיל</span>
+        <span><strong>{{ r.record.certificates }}</strong> תעודות</span>
+      </div>
+
+      {% if r.record.in_progress %}
+      <div class="small mt-2">
+        <span class="text-secondary">עכשיו:</span>
+        {{ r.record.in_progress.0.course.title }}
+        <span class="text-secondary">({{ r.record.in_progress.0.p.done }}/{{ r.record.in_progress.0.p.total }})</span>
+      </div>
+      {% elif not r.record.started %}
+      <div class="small text-secondary mt-2">עוד לא התחיל ללמוד</div>
+      {% endif %}
+
+      {# The two grants (DEC-83). Both are the school owner's to give. #}
+      {% if r.m.can_be_accepted %}
+      <form method="post" action="{% url 'matazim_accept' r.m.pk %}" class="mt-2">
+        {% csrf_token %}
+        <div class="small fw-bold mb-1">שלב 1 · קבלה לתוכנית</div>
+        <input type="text" name="note" class="form-control form-control-sm mb-2"
+               placeholder="הערה (לא חובה)" maxlength="300">
+        <div class="d-flex gap-2">
+          <button class="btn btn-sm mz-btn">לקבל לתוכנית</button>
+          <button class="btn btn-sm btn-outline-secondary" name="reject" value="1">לא התקבל</button>
+        </div>
+        <div class="small text-secondary mt-1">
+          מבחן הכניסה עוד לא נבנה, אז בינתיים ההחלטה שלכם.
+        </div>
+      </form>
+      {% elif r.m.can_be_certified %}
+      <form method="post" action="{% url 'matazim_certify' r.m.pk %}" class="mt-2">
+        {% csrf_token %}
+        <div class="small fw-bold mb-1">שלב 2 · הסמכה כמט״צ</div>
+        <div class="d-flex gap-2">
+          <input type="text" name="note" class="form-control form-control-sm"
+                 placeholder="נימוק להסמכה (חובה)" required maxlength="300">
+          <button class="btn btn-sm mz-btn text-nowrap">להסמיך</button>
+        </div>
+      </form>
+      {% elif r.m.is_certified %}
+      <div class="small text-secondary mt-2">
+        הוסמך ע״י {{ r.m.certified_by.profile.public_name|default:"—" }}
+        {% if r.m.certified_at %} · {{ r.m.certified_at|date:"j.n.Y" }}{% endif %}
+        {% if r.m.certification_note %}<br>"{{ r.m.certification_note }}"{% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12">
+    <p class="text-secondary">עוד אין מט״צים מאושרים בבית הספר.</p>
+  </div>
+  {% endfor %}
+</div>
+
+{# --- Leader assignment: staff only ------------------------------------ #}
+{% if is_staff %}
+<h2 class="h5 mt-5 mb-2">מובילי בית הספר</h2>
+<div class="d-flex flex-wrap gap-2 mb-2">
+  {% for l in school.leaders.all %}
+    <form method="post" action="{% url 'matazim_leader_assign' school.pk %}" class="d-inline">
+      {% csrf_token %}
+      <span class="badge rounded-pill text-bg-light border">
+        {{ l.profile.public_name }}
+        <button class="btn btn-link btn-sm p-0 ms-1 align-baseline"
+                name="remove" value="{{ l.pk }}" title="להסיר">×</button>
+      </span>
+    </form>
+  {% empty %}
+    <span class="text-secondary">עוד לא הוקצה מוביל.</span>
+  {% endfor %}
+</div>
+<form method="post" action="{% url 'matazim_leader_assign' school.pk %}" class="row g-2 align-items-end">
+  {% csrf_token %}
+  <div class="col-sm-7">
+    {% include "app/matazim/_leader_picker.html" with picker_id="mzLeaderSearch" %}
+  </div>
+  <div class="col-sm-3">
+    <button class="btn btn-sm mz-btn w-100">להקצות</button>
+  </div>
+  <div class="col-12">
+    <details class="small text-secondary">
+      <summary>או להקליד שם משתמש / אימייל במדויק</summary>
+      <input name="identifier" class="form-control form-control-sm mt-2"
+             placeholder="username או email">
+    </details>
+  </div>
+</form>
+{% endif %}
+
+{% endif %}{# can_manage #}
+
+{% endblock %}

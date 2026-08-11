@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load static %}
+
+{# What a logged-out teenager sees when they open their teacher's invite link.
+
+   A landing page rather than an immediate bounce to the sign-in wall, for two
+   reasons: the link gets pasted into WhatsApp groups and wants a preview card,
+   and a kid who lands on a bare login form has no idea what they are signing
+   into. From here the existing /join/ wall handles new-vs-existing users, and
+   REQ-5.4 return-to-intent brings them straight back here afterwards. #}
+
+{% block title %}{{ school.name }} · {{ program.name }}{% endblock %}
+{% block meta_description %}{{ program.tagline }} · הצטרפות דרך {{ school.name }}{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'matazim.css' %}?v=3">
+  <meta property="og:title" content="{{ program.name }} · {{ school.name }}">
+  <meta property="og:description" content="{{ program.tagline }}">
+  <meta property="og:url" content="{{ page_url }}">
+  <meta property="og:type" content="website">
+{% endblock %}
+
+{% block content %}
+<div class="matazim-theme">
+  <header class="mz-header">
+    <img src="{% static 'matazim/logo.png' %}" alt="{{ program.name }}" class="mz-logo">
+    <p class="mz-tagline">{{ program.tagline }}</p>
+  </header>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <h1 class="h3 mb-2">הוזמנתם להצטרף</h1>
+      <p class="lead mb-1">{{ school.name }}{% if school.city %} · {{ school.city }}{% endif %}</p>
+      <p class="text-secondary">{{ program.description|truncatechars:260 }}</p>
+
+      <a href="{{ join_next }}" class="btn mz-btn btn-lg mt-3">להתחיל</a>
+      <p class="text-secondary small mt-2">
+        יש לכם כבר חשבון ב־babook? הכניסה תחזיר אתכם בדיוק לכאן.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

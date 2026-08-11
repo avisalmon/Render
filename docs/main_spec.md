@@ -1275,6 +1275,396 @@ the platform grows by its own users bringing their groups in.
 
 ---
 
+## Chapter 10 — מט״צים (Young Technology Leaders)
+
+> **Status: SPR-10.1 BUILT IN DEV (2026-08-08), not deployed. Rest is spec.**
+> Sources: Litala Aviv's (ראש תחום חינוך חברתי, רשת החינוך עתיד) site brief of
+> 2026-08-03, and the scoping conversation with Avi on 2026-08-08.
+> REQ-10.1–10.4, 10.13, 10.14 and 10.33–10.36 are implemented and tested in dev
+> (`tests/test_spr_10_1.py`, 16 tests). Everything else is TODO. Production
+> deploy awaits Avi's explicit word.
+>
+> **Still open with Litala before further build**: her sign-off on the core
+> change, that the site *reflects* training rather than hosting it.
+
+### 10.0 Vision
+
+**מט״צים = מובילי טכנולוגיה צעירים.** A selective program run with רשת החינוך
+עתיד: roughly **20 to 40 teenagers per cohort**, each of whom learns technology
+and then **teaches a group of 10 to 20 younger kids**. The program's own funnel
+is five stages:
+
+**מתמיינים → לומדים → יוצרים → מדריכים → משפיעים**
+
+`/matazim` manages the מט״צים **as people**: recruitment, application,
+acceptance, certification, community, recognition, and reporting.
+
+**It does not teach.** The מט״צים themselves learn on **babook**, through the
+existing course engine, fully tracked. `/matazim` watches that activity and
+credits it.
+
+**The kids are outside the system entirely.** A מט״צ teaches their group from
+**YouTube playlists**. The kids get a link. They do not sign up, they are not
+members, they are not modelled, and neither they nor their learning is tracked
+in any form (DEC-72). **We track מט״צים and nothing else.**
+
+Being a מט״צ is **high status**. It is granted by hand, by program staff, and
+it is meant to be scarce.
+
+**Design laws**
+
+- **Status, not permission.** Certification unlocks nothing on babook. Any
+  member can already become a teacher and open a class (REQ-9.1). What
+  certification does is make the activity **count**. Consequence: babook needs
+  zero permission changes for this chapter.
+- **Reads learning state, never writes it.** Every training figure shown in
+  `/matazim` is a live query over `Enrollment`, `UserVideoProgress`,
+  `CourseCertificate`, `TeacherClass`, `ClassMembership`. Nothing is copied,
+  mirrored, or cached into program tables.
+- **Retroactive credit.** On the day someone is certified, everything they have
+  already done on babook counts, with no backfill step.
+- **Granted by hand.** Only program staff (Avi, Litala) flip the switch.
+  Selectivity is the product, not an obstacle to it.
+- **One tracked population.** Only the מט״צים are tracked. Their teaching is
+  recorded as **their own** declared activity, never as data about the children
+  they teach. Nothing in this chapter creates, stores, or infers a record about
+  a child.
+- **Visible outside the walls.** The badge appears on public babook surfaces,
+  not only inside `/matazim`. Status that only members can see is not status.
+- **Program, not Matazim.** Build one generic program-space abstraction and
+  instantiate מט״צים as its first program. A second program (another network,
+  another cohort) must not require new code.
+
+### 10.1 Data model (proposed)
+
+Owned by the program space (the only things it writes):
+
+- **`Program`** — `slug` (`matazim`), `name`, `description`, branding fields,
+  `is_active`. First and only instance for now.
+- **`School`** — `name`, `city`, contact. Referenced by memberships.
+- **`ProgramMembership`** — `user`, `program`, `school`, `school_join_status`,
+  `cohort_year`, `status`, `endorsed_at/by/note`, `certified_at`,
+  `certified_by`, `certification_note`. **Cohort members only**: the adults who
+  run the program never get one.
+  - `status`: `applied` (מתמיינים) / `in_training` (לומדים) /
+    `project_submitted` (יוצרים) / `certified` (מדריכים) / `alumnus` /
+    `rejected` / `revoked`. Litala's five-stage funnel **is** this field.
+  - `school_join_status`: `pending` / `confirmed`. The member picks the school,
+    its leader confirms them onto the roster (DEC-77).
+
+**Roles are two M2M relations, and there is no third** (as built, 2026-08-08):
+
+- **`Program.staff`** — the matazim admins (Avi, Litala). The only authority
+  that may open a school, assign a leader, or grant the מט״צ status. Site
+  superusers count as staff, matching the admin override used across Classrooms.
+- **`School.leaders`** — the teachers. **A leader's scope is exactly the schools
+  they appear in**, which makes REQ-10.17 a property of the data rather than a
+  rule to remember. M2M so a coordinator can cover several schools.
+
+Deliberately *not* a `role` field on the membership: two sources of truth for a
+permission is how cross-school leakage happens.
+- **`ProgramApplication`** — `membership`, answers, assessment score
+  (placeholder until the entrance tool exists), `decided_at`, `decided_by`.
+- **`ProgramStatusLog`** — audit of every status transition: who, when, from,
+  to, note. Append-only.
+- **`ProgramEvent`** (ימי שיא) — `program`, `title`, `description`, `starts_at`,
+  `location`, target schools.
+- **`ProgramPost`** — the cohort feed: `program`, `author`, `body`,
+  `is_announcement`, `created_at`. Same shape as `ClassMessage`.
+- **Project submissions** reuse `CourseCompletionReview` when the project is a
+  course deliverable; a standalone `ProgramSubmission` with the same shape
+  (link, files, reviewer, status, note) covers projects that are not.
+
+**Derived, never stored**: הדרכות taken and completed (`Enrollment`,
+`CourseCertificate`), classes opened (`TeacherClass.owner`), kids taught
+(`ClassMembership` where `status='active'`), and those kids' own learning
+(`Enrollment` over that set of users).
+
+### 10.2 Requirements
+
+**Program space and identity**
+
+| REQ-ID | Title | Expectation (acceptance) | Status |
+|---|---|---|---|
+| REQ-10.1 | Program space at `/matazim` | The space has its own shell (nav, header, branding) inheriting the site base. Public pages open to anyone; member pages require an active `ProgramMembership`. A member of the program gets a "מט״צים" entry in the main site nav. Hebrew RTL, works ≥360px. | TODO |
+| REQ-10.2 | Generic program, first instance | The space is driven by a `Program` record. Adding a second program requires data, not code. Nothing hardcodes the string `matazim` outside the seed. | TODO |
+| REQ-10.3 | Public pages | דף הבית (what the program is), המסלול השנתי (the five stages as a visual path), בתי הספר המשתתפים. Visible logged out. Doubles as recruitment material for the next cohort. | TODO |
+
+**Acceptance and certification**
+
+| REQ-ID | Title | Expectation (acceptance) | Status |
+|---|---|---|---|
+| REQ-10.4 | Apply to the program | Creates a `ProgramMembership` at `applied` plus a `ProgramApplication`. **Three questions only** (grade, why, what have you built): the application is not what assesses them, the entrance test is, so every extra field is only a teenager who does not finish the form. | DONE (dev) |
+| REQ-10.4a | The school's invite link | Each school carries an unguessable, rotatable `join_code` powering a link and a QR, which its teacher hands out. Someone arriving through it is attached to that school with **no confirmation step**: the teacher gave them the link, so the assignment is already their decision (DEC-84). Same shape as the Chapter 9 class join code, reused rather than reinvented. | DONE (dev) |
+| REQ-10.4b | New and existing users, one link | A logged-out visitor gets a **landing page** naming the school (not a bounce to a bare login form — the link gets pasted into WhatsApp groups), then goes through the existing `/join/` wall, and REQ-5.4 return-to-intent drops them back on the same page, freshly registered or freshly logged in. No new-vs-existing branching is written anywhere in Chapter 10. | DONE (dev) |
+| REQ-10.4c | The open door | Applying without a link means choosing a school from the list; its leader then confirms them onto the roster (DEC-77). Both doors end at `applied`, so getting in is still level 1 and still the owner's to grant. | DONE (dev) |
+| REQ-10.4d | Link hygiene | A closed school (`is_open=False`) accepts no applications. Rotating the code is **staff-only**, since it invalidates every copy of the old link already in the world. An existing member following a link is sent to their personal area rather than applying twice. | DONE (dev) |
+| REQ-10.5 | Assessment as a pluggable slot | The track treats "assessment" as a step type with a pluggable implementation, so the dedicated entrance tool (DEC-74, to be designed) drops into the existing slot later with no rework. Until it exists, the application carries a manual staff score. | TODO |
+| REQ-10.6 | Staff decision on an application | Program staff move an application to `in_training` or `rejected` from a staff screen. The applicant is notified in-system and by email. | TODO |
+| REQ-10.7 | Certify as מט״צ, one button | **Only `program_staff`** can set a membership to `certified`. One button, required note. Records `certified_at` and `certified_by`. There is no self-serve path and no automatic promotion, ever. | TODO |
+| REQ-10.8 | Every grant is audited | Each status transition writes a `ProgramStatusLog` row (who, when, from, to, note). Append-only, shown on the member's staff screen. A status that confers prestige must be traceable. | TODO |
+| REQ-10.9 | Lifecycle after certification | A membership can move to `alumnus` (cohort ended) or `revoked` (withdrawn by staff, note required). Both stop counting as a **current** מט״צ while keeping the history and the issued certificate. | TODO |
+| REQ-10.10 | Certificate | Certification issues **תעודת מוביל טכנולוגיה צעיר** through the existing `CourseCertificate`-style mechanism, with a public verification page like every other certificate on the site. | TODO |
+
+**Reflection: the mirror over babook**
+
+| REQ-ID | Title | Expectation (acceptance) | Status |
+|---|---|---|---|
+| REQ-10.11 | Certification unlocks nothing on babook | A certified מט״צ uses babook with exactly the same permissions as any other member. No new teacher tier, no gating, no changes to `is_teacher`. Teaching happens off-platform (REQ-10.11b), so certification needs to unlock nothing at all. The Chapter 9 classrooms remain open to anyone who wants them, but they are not the expected path here. | TODO |
+| REQ-10.11b | Teaching runs on YouTube | The kids a מט״צ teaches receive **YouTube playlist links**. They do not sign up, are not members, and appear nowhere in the data model. Removes the entire minors-signup, consent, and moderation burden that a few hundred child accounts would have created. | TODO |
+| REQ-10.11c | Curated playlist library | `/matazim` lists the YouTube playlists a מט״צ may hand to their group, curated by program staff and grouped by topic and age, each with a copy-ready share link. Staff keep control of what is taught without approving anything case by case. | TODO |
+| REQ-10.12 | Retroactive credit | On certification, everything the member has already done on babook counts immediately: every הדרכה taken, every lesson completed, every certificate earned. No backfill job, because nothing is copied. | TODO |
+| REQ-10.13 | Derived only | Every training figure in `/matazim` is computed live from babook models. The program space never writes learning state. Enforced by review and covered by tests. | TODO |
+| REQ-10.14 | אזור אישי | The member's personal area answers four things at a glance: where I am on the track, what I have finished, what my next step is, and what I have taught so far. **This page is the only daily reason to open `/matazim` and gets disproportionate design effort.** | TODO |
+| REQ-10.15 | The tracked record | Per מט״צ, two things and only two: (1) **derived** from babook, the הדרכות they took and completed, lesson progress, and certificates; (2) **declared** by them, their teaching activity log (REQ-10.15b). No third level. The children are not measured (DEC-72). | TODO |
+| REQ-10.15b | Teaching activity log | A מט״צ records their own sessions: date, which playlist or topic, roughly how many kids attended, an optional photo, and a sentence on how it went. **No child names, no child identities, no per-child anything.** This is the מדריכים/משפיעים evidence and it is the מט״צ's own record of their own work, not data about children. | TODO |
+| REQ-10.15c | Photo consent | If a session log carries a photo of a group of children, the upload flow states the consent requirement and the מט״צ confirms the school's consent is in place. Photos pass the existing safety/moderation layer. See ACT-34. | TODO |
+| REQ-10.16 | Staff dashboard | One page listing every מט״צ in the cohort with their derived training record and their declared teaching activity, filterable by school and status. At 20 to 40 members: no pagination, no aggregation jobs, no caching. | TODO |
+| REQ-10.17 | School leader scoping | A leader sees the **roster** for their own school only. Cross-school leakage is a blocking defect. Enforced in the views, not the templates. Amended by DEC-80: the *page* is open to anyone, so the boundary is the people on it, not the URL. Covered by tests asserting both directions. | DONE (dev) |
+| REQ-10.17a | Public school view | Any visitor, logged out included, may open any school and see aggregate figures only: מט״צים count, certified count, הדרכות completed, certificates. **No name, no status, no per-person progress, no controls.** Computed with aggregate queries, so the page stays cheap and cannot be walked person by person. | DONE (dev) |
+| REQ-10.17b | Viewing widens nothing | Opening the view to everyone must not open any action. `confirm`, `endorse` and `leader/` each re-check `can_view_school` independently and 404 for an outsider. Covered by a test that asserts the page is 200 while all three POSTs are 404. | DONE (dev) |
+| REQ-10.17c | Staff act as the teacher | Program staff get the roster and the same confirm/endorse controls as the school's own leader, in every school. Certification remains absent from school pages for everyone. | DONE (dev) |
+| REQ-10.17d | Schools list links in | Every card on בתי הספר המשתתפים links to its school page; a leader's own school is marked so she reaches her roster in one click. | DONE (dev) |
+| REQ-10.17e | Site-wide entry | מט״צים appears in the babook top nav and the side drawer **for everyone**, not only members (DEC-82). Members get the nav entry highlighted. | DONE (dev) |
+| REQ-10.18a | Opening a school is staff-only | Only `Program.staff` may create a school or assign/remove its leaders. A leader attempting either gets a 404. | DONE (dev) |
+| REQ-10.18b | Member picks, leader confirms | A member names their school; the membership sits at `school_join_status=pending` and counts only once a leader of **that** school confirms it. Another school's leader cannot confirm or decline it. Closes ACT-33 and matches Litala's "שהתלמיד יבחר את המוביל שלו". | DONE (dev) |
+| REQ-10.18c | ~~Leaders endorse, never certify~~ | **Superseded by REQ-10.19 (DEC-83).** | REMOVED |
+| REQ-10.19 | Level 1: accepted into the program | The school owner accepts an applicant (or rejects them), recording who granted it, when, and an optional note. Moves `applied → in_training`. This is the gate the entrance test (§10.7) will feed; until it is built the owner decides on their own judgement and the UI says so. | DONE (dev) |
+| REQ-10.19a | Level 2: certified as a מט״צ | The school owner grants the מט״צ status, **note required**, recording the grantor. Available only once level 1 has been granted: certifying an applicant who was never accepted is refused. | DONE (dev) |
+| REQ-10.19b | Grants are school-scoped | Both grants check the **member's own school**, so an owner posting another school's membership id directly gets a 404 and nothing changes. | DONE (dev) |
+| REQ-10.19c | Revocation stays with program staff | The grants moved to the schools; undoing one did not. Revoke is staff-only, requires a note, and never erases the original grant, so the record of who gave it survives (REQ-10.9). | DONE (dev) |
+| REQ-10.19d | The console is oversight, not a queue | ניהול התוכנית shows recent certifications across all schools with who granted each and why, plus revoke. Staff no longer gate the grant, so what they need is visibility over it. | DONE (dev) |
+| REQ-10.18d | One school page, two audiences | The leader console and the staff view of a school are the **same page**. The difference is which schools you can reach, enforced in the view. The certify control is absent from it for everybody, staff included, so the recommendation and the grant always sit in different hands. | DONE (dev) |
+
+**Community, events, projects**
+
+| REQ-ID | Title | Expectation (acceptance) | Status |
+|---|---|---|---|
+| REQ-10.18 | Cohort feed, not a forum | One feed carrying staff announcements, members' shared projects, new certifications, and upcoming ימי שיא. Explicitly **not** a threaded forum (DEC-73). Reuses the `ClassMessage` shape and the existing safety/moderation layer. | TODO |
+| REQ-10.19 | קהילת מט״צים directory | A cohort "who's who": name, school, badge, and what each member built. Respects the existing `is_public`, `courses_visibility`, and `reflections_public` settings. | TODO |
+| REQ-10.20 | ימי שיא | Staff create dated events (title, description, when, where, which schools). Members see upcoming events in the personal area and the feed. | TODO |
+| REQ-10.20a | Help page, both audiences | A public "איך זה עובד" page at `/matazim/help/`, written for **a 14-year-old and for a teacher who has never seen the site**: what is expected, and what to do at each step. Students first, since there are more of them and they arrive more confused. The teacher half doubles as onboarding for a newly assigned school leader, because nobody is going to train forty teachers one at a time. Reachable from the program nav, the application form, and the home page. | DONE (dev) |
+| REQ-10.21 | Project submission and approval | A member submits their יוצרים-stage project; a school leader or staff approves it or returns it with a note. Reuses the `CourseCompletionReview` pattern; a project attached to a `requires_review` course reuses that flow directly rather than duplicating it. | TODO |
+
+**Recognition**
+
+| REQ-ID | Title | Expectation (acceptance) | Status |
+|---|---|---|---|
+| REQ-10.22 | Badge visible outside `/matazim` | The מט״צ badge appears on the public member profile, next to the teacher's name on their class pages, and in the public class directory (REQ-9.12). A kid joining a class sees "המדריך שלך: מט״צ מוסמך" linking to the program page. This is what turns a database field into something teenagers want, and it feeds next year's recruitment. | TODO |
+
+### 10.3 Decisions
+
+| DEC | Decision |
+|---|---|
+| DEC-69 | **Certification is a status, not a permission.** It grants recognition and makes activity count; it unlocks no capability on babook. Rationale: anyone can already teach (REQ-9.1), so babook needs no permission work. |
+| DEC-70 | **Credit is retroactive and all-time.** Activity before certification counts. Simpler, more generous, and free given DEC-71. |
+| DEC-71 | **`/matazim` reads learning state and never writes it.** No second learning engine, no mirrored tables. |
+| DEC-72 | **The kids are outside the system entirely** (Avi, 2026-08-08). They receive YouTube playlist links, do not sign up, are not members, are not modelled, and are never tracked. **Only מט״צים are tracked.** Rationale: a few hundred child accounts would have brought signup friction an 11-year-old cannot clear, plus consent and moderation duties out of proportion to the program. Cost, accepted knowingly: the "what did their kids learn" number is no longer derived, so a מט״צ's teaching is evidenced by their own declared session log (REQ-10.15b) instead. |
+| DEC-72b | **Superseded by DEC-72.** The earlier design had each מט״צ run a Chapter 9 class on babook, which made teaching automatically evidenced and gave a three-level rollup. Recorded here because it is the natural fallback if the program later wants per-child data: see ACT-35 for the lighter revival (class code + first name, no email, no account). |
+| DEC-73 | **Feed, not forum.** At 20 to 40 teenagers who already share a WhatsApp group, a dedicated forum dies empty and an empty forum makes the site feel abandoned. Community comes from the work being visible. Revisit only if members ask for threads. |
+| DEC-74 | **RESOLVED 2026-08-08, see §10.7.** The entrance test is a Tinkercad **replication task**: the system shows a generated 3D object with its dimensions, the applicant models it and uploads an STL, the system measures how close they got. It is a **commitment test, not a skill or creativity test**, and it has no machine-issued rejection. |
+| DEC-75 | **Both levels are Chapter 9 classes.** Staff teach the cohort as a class; each מט״צ teaches their group as a class. No teaching subsystem is built. |
+| DEC-76 | **Build `Program` generically.** מט״צים is instance one. |
+| DEC-77 | **Member picks the school, its leader confirms** (Avi, 2026-08-08). Closes ACT-33. |
+| DEC-78 | ~~A school leader endorses, never certifies.~~ **SUPERSEDED by DEC-83 the same day.** Kept on the record because it was a deliberate choice before it was reversed, and because the endorsement machinery built under it was removed rather than left dangling. Its other half stands: opening a school and assigning its leader are still staff-only. |
+| DEC-79 | **Roles are `Program.staff` and `School.leaders`, and nothing else** (as built). No `role` field on the membership: a leader's scope *is* the set of schools they appear in, so REQ-10.17 becomes a property of the data rather than a rule someone has to remember in every query. Adults running the program hold no `ProgramMembership` at all. |
+| DEC-80 | **A school page is public; its people are not** (Avi, 2026-08-08). Anyone, logged out included, may open any school and see its numbers: how many מט״צים, how many certified, how much has been learned. Names, statuses and per-person progress stay with that school's leader and program staff. This **moves** the REQ-10.17 boundary from the page to the people on it, and it deliberately does not widen any write action: every POST re-checks `can_view_school` on its own. |
+| DEC-81 | **Program staff can act as the teacher in any school** (Avi, 2026-08-08). Litala gets the roster and the same confirm/endorse controls as the school's own leader, everywhere. She still cannot certify from a school page: that lives only in ניהול התוכנית. |
+| DEC-82 | **The מט״צים entry is in the main nav and the drawer for everyone** (Avi, 2026-08-08), not members-only, because the space is public and doubles as recruitment. Members get it highlighted. |
+| DEC-84 | **Each school gets its own invite link** (Avi, 2026-08-08). A teacher generates a link + QR for their school and hands it out; a teen arriving through it is attached to that school immediately, with no confirmation step, because handing out the link *is* the approval. It reuses the Chapter 9 join-code mechanism wholesale, including the logged-out landing page and the `/join/` wall with return-to-intent, so "cope with new and existing users" needed no new code at all. Rotation is staff-only, since it invalidates every copy already in circulation. |
+| DEC-83 | **Two levels of certification, both granted by the school owner** (Avi, 2026-08-08). **Supersedes DEC-78.** Level 1 = **accepted into the program**, which is the gate the entrance test (§10.7) feeds. Level 2 = **certified as a מט״צ**. Both are the owner's to give, to their own school's members only, each with a recorded grantor and note. What stays with program staff: opening schools, assigning leaders, and **revoking** a grant. Consequence, accepted knowingly: the badge is now as scarce as each school owner chooses to make it, rather than centrally rationed. Revocation and the audit log (REQ-10.8) are the counterweight, so a grant is always attributable and always reversible. The endorsement built under DEC-78 was removed, not left as dead machinery. |
+
+### 10.4 Open questions (for Litala) and actions
+
+| ID | Item |
+|---|---|
+| ACT-27 | Confirm cohort size, start date, and the list of participating schools. |
+| ACT-28 | ~~**Minors at volume.** 200 to 800 child accounts vs an email-verification signup an 11-year-old cannot clear.~~ **CLOSED 2026-08-08 by DEC-72**: the kids never get accounts. |
+| ACT-29 | **The missing course.** The track teaches a מט״צ technology, not how to teach. Ask whether רשת עתיד already has pedagogy content or whether it needs writing. This is the difference between the program working and a lot of frustrated kids. |
+| ACT-30 | Is the credential annual and renewed, or granted once for good? Determines whether `alumnus` is automatic at cohort end. |
+| ACT-31 | Build the curated **YouTube playlist library** for the kids (REQ-10.11c): which playlists, grouped by topic and age. Content task for Litala and Avi, not a build task. Most of the source video already exists, since the babook courses were built from YouTube in the first place. |
+| ACT-32 | Litala's mail of 2026-08-03 carries three inline images (`image011`–`image013`) that are almost certainly her sketch of the site. The Gmail API returned filenames only. Get the files before finalising the page structure. |
+| ACT-33 | ~~Is "בחירת מוביל" a free choice by the student or an assignment by staff?~~ **CLOSED 2026-08-08 by DEC-77**: the member picks, the leader confirms. Still open, and smaller: how do school leaders get their accounts in the first place (staff assigns by email/username today, so they must already be babook members). |
+| ACT-34 | Confirm with Litala what blanket parental consent רשת עתיד already holds for photographing children in school activities, for REQ-10.15c. |
+| ACT-35 | **Parked, not dropped.** If the program later wants per-child data: a class code plus a first name, no email, no password, not a real account. Gives attendance and progress with almost none of the consent burden that killed full signup. Revisit only on Litala's request. |
+| ACT-36 | Decide the entrance-test target templates and their dimension ranges with Litala and Avi (§10.7). Starting set: cube with one through-hole, stepped block, plate with two holes. |
+
+### 10.5 Litala's page list, mapped
+
+| # | Page in her brief | Where it lives |
+|---|---|---|
+| 1 | דף הבית והסבר על תכנית מט״צים | `/matazim`, public (REQ-10.3) |
+| 2 | המסלול השנתי | `/matazim`, public preview + personal status when logged in |
+| 3 | מבחן הכניסה | `/matazim`, application flow (REQ-10.4/10.5) |
+| 4 | הקורסים שלי | **babook**, the existing course engine. Reflected as progress in the personal area |
+| 5 | הגשת תוצרים | `/matazim` (REQ-10.21) |
+| 6 | ימי שיא | `/matazim` (REQ-10.20) |
+| 7 | בתי הספר המשתתפים | `/matazim`, public |
+| 8 | קהילת מט״צים | `/matazim` feed + directory (REQ-10.18/10.19) |
+| 9 | אזור אישי | `/matazim` (REQ-10.14), linking out to "הכיתות שלי" on babook |
+
+### 10.6 Phasing
+
+1. **Shell and spine.** `/matazim` public pages in the matazim branding (§10.8),
+   the five-stage track, and the אזור אישי reading real babook progress.
+   Demoable to Litala on its own, and it is the thing she is actually asking for
+   when she says נקי, פשוט וברור.
+2. **Acceptance and certification.** Application, the entrance test (§10.7),
+   staff decision, the certify button, the audit log, the certificate, and the
+   badge on babook.
+3. **Record and dashboards.** The teaching activity log, the playlist library,
+   the staff dashboard, and school-leader scoping with its privacy tests.
+4. **Community and logistics.** Feed, directory, ימי שיא, project submission
+   and approval.
+
+Phase 2 is the largest, because the entrance test carries the mesh work. If it
+needs to ship sooner, the test can launch with a staff-scored manual submission
+(REQ-10.5's fallback) and gain the automated measurement afterwards.
+
+### 10.7 מבחן הכניסה — the Tinkercad replication test
+
+Resolves DEC-74. Fills the assessment slot reserved by REQ-10.5.
+
+**What it measures.** Not creativity, not talent, not precision. **Whether this
+kid is serious enough to enter the journey.** If they took the Tinkercad
+training, built the object they were shown, and submitted something recognisably
+correct, that is the whole signal we need. Everything below follows from that
+single sentence, and any rule that would fail a dedicated applicant is wrong.
+
+**The task.** The system shows the applicant a target object: a rotatable 3D
+view plus a dimensioned drawing. Something simple, a **cube with one through-hole**
+being the reference difficulty. They model it in Tinkercad, export an STL, and
+upload it. The system measures how close they got and tells them.
+
+**Why a shown object beats a written brief.** Because the system generated the
+target, it holds the ground truth. Verifying the submission stops being "detect
+whether this was copied", which cannot be won (an STL carries no provenance, and
+comparing against the whole internet is not practical), and becomes "measure the
+difference between two meshes", which has an exact answer.
+
+**Targets are generated, per applicant, per attempt.**
+
+- Parametric templates (cube with a hole; stepped block; plate with two holes)
+  with randomised whole-millimetre dimensions, snapped to multiples of 2 or 5 so
+  a beginner can type them straight into Tinkercad.
+- A handful of templates × several randomised parameters is thousands of
+  distinct objects. Two applicants sitting next to each other never get the same
+  one, and **no model downloaded from the internet can match one**, which is
+  what removes the cheating problem instead of policing it.
+- Targets are **pre-generated offline** by a management command and committed
+  (STL + parameter JSON + rendered drawing). The web process never needs a
+  boolean/CAD engine; it only reads a target and compares.
+
+**The comparison needs no feature recognition**, only numpy over a triangle list:
+
+| Measure | How | Catches |
+|---|---|---|
+| Outer dimensions | bounding box, sorted so orientation is irrelevant. Exactly tessellation-proof | wrong size |
+| Number of through-holes | Euler number → genus. Exact | the hole they were asked for |
+| Hole size | bbox volume minus mesh volume, i.e. the volume cut away | hole too big or small |
+| Hole position | mesh centroid vs bbox centre | a drifted hole, and in which direction |
+| Overall shape | mean point-to-surface distance after PCA alignment and best-of-24 axis rotations | anything the four specific numbers missed |
+
+**Tolerances are per-feature, and deliberately generous.** Tinkercad dimensions
+are **typed**, so outer sizes are usually exact; hole position is **drag-placed**,
+so it needs real slack. Calibrated for commitment, not precision:
+
+| What | Accept |
+|---|---|
+| Outer dimensions | ±3mm |
+| Number of holes | exact |
+| Hole size | ±30% |
+| Hole position | ±5mm |
+| Overall shape distance | mean under 2mm |
+
+The bar is "you clearly built the thing I showed you". It cannot be cleared by
+accident or with an unrelated file, and it will not fail an honest attempt.
+
+**Tessellation note.** Tinkercad facets curves, so an exported hole is a polygon
+prism about 1.6% smaller than a true cylinder. This is why the table compares the
+**cut volume** rather than total volume, and why bounding box, genus, and surface
+distance carry the verdict: all three are tessellation-proof. The 1.6% bias is a
+constant, accounted for once when the reference is generated.
+
+**Watertightness fallback.** Genus is undefined on a non-watertight mesh.
+Tinkercad exports normally are watertight, but if one is not, fall back to the
+shape-distance comparison. Never fail an applicant over a mesh defect they cannot
+see or fix.
+
+| REQ-ID | Title | Expectation (acceptance) | Status |
+|---|---|---|---|
+| REQ-10.23 | The test is a הדרכה, not a hurdle | The whole entrance test is a short babook course ("מבחן הכניסה למט״צים") whose final lesson is the upload. Someone who never passes has still learned Tinkercad and still earns that course's certificate. Failing is not rejection by a website. | TODO |
+| REQ-10.24 | Generated target, shown in 3D | Each applicant is assigned a generated target and sees it as a rotatable 3D view plus a dimensioned drawing. three.js STL viewer, vendored for the strict WhiteNoise manifest, works on mobile ≥360px. | TODO |
+| REQ-10.25 | Offline target generation | A management command generates the target set (STL + params + drawing) and commits it. No boolean/CAD engine in the web process. Targets are reviewable by Avi and Litala before any applicant sees one. | TODO |
+| REQ-10.26 | Upload and measure | STL upload with a size cap, then the five measures above against the assigned target, with per-feature tolerances held in config rather than code. | TODO |
+| REQ-10.27 | **No machine rejection** | The automated verdict is **accepted** or **not yet**. Never "rejected". The application window closes on a date; whoever finished by then enters the pile staff read. Every rejection decision in this program is made by a human (REQ-10.6). | TODO |
+| REQ-10.28 | Unlimited retries, and retries are a positive signal | Unlimited attempts, a fresh target each time. Attempt count and history are shown to staff **as evidence of commitment, not as a blemish**: an applicant who missed, read the feedback, and came back has demonstrated more of what the program selects for than one who passed first time. | TODO |
+| REQ-10.29 | Specific Hebrew feedback | On a miss, name the actual problem and the actual number ("הגובה שלך 43 מ\"מ במקום 40", "החור קטן מדי"), with their model and the target side by side and the mismatch highlighted. The feedback is a nudge back into Tinkercad, not a rejection notice. | TODO |
+| REQ-10.30 | Explain your build | Three sentences: what you made, what was hard, what you would change. A direct commitment signal, and explaining your own work is the seed of teaching. Reuses the existing lesson-reflection machinery and the safety layer. Read by a human only after the automated gate. | TODO |
+| REQ-10.31 | Duplicate detection, kept cheap | A PCA-normalised shape fingerprint per submission, compared against all previous ones, flags two applicants sharing a file. Linear scan, milliseconds at this scale. Nothing more elaborate: the randomised target already makes downloaded models useless. | TODO |
+| REQ-10.32 | The commitment view | The staff screen shows lessons completed, attempts, and the days over which they were made ("השלים 6/6 שיעורים · 3 ניסיונות על פני 5 ימים · עבר"). Comes free from `Enrollment` / `UserVideoProgress`, and is a richer signal of seriousness than the pass bit alone. | TODO |
+
+**Generalises beyond this program.** The show-a-target / upload-an-STL / measure-
+the-difference loop is a **teaching mechanism**, not a one-off gate, and is the
+geometric twin of the deterministic Python practice cells. Parked as
+**EPIC-11** in the backlog for the Tinkercad course. Whatever gets built here
+should be generalised into a lesson block then, not reimplemented.
+
+### 10.8 Branding
+
+The program space carries the identity of the existing **matazim.co.il**, read
+from that site's live CSS on 2026-08-08.
+
+| Token | Value | Use |
+|---|---|---|
+| `--a_primary` | `#00d4a4` | the brand mint/teal |
+| `--a_bg_primary` | `#585ba8` | indigo: navbar, cards |
+| `--a_bg_light` | `#e6e7f6` | pale lavender panels |
+| `--a_secondary` | `#D9534F` | red accent |
+| `--a_bg_dark` | `#444` | |
+| max width | `1200px` | |
+
+**Logo**: wordmark מטצים drawn as PCB traces with vias and pads, solid `#00d4a4`
+on transparent (`logo_full.png` on the source site). **Tagline**: "מטצים –
+מובילים טכנולוגיים צעירים". Source-site title: "האקדמיה למטצים".
+
+| REQ-ID | Title | Expectation (acceptance) | Status |
+|---|---|---|---|
+| REQ-10.33 | Scoped theme, not a fork | `/matazim` sets a body class that remaps babook's own CSS variables to the tokens above and swaps in the logo. babook keeps its layout, components, RTL and mobile work; only colour and mark change. Branding values live on the `Program` record (REQ-10.2), not hardcoded. | TODO |
+| REQ-10.34 | Contrast floor | `#00d4a4` measures roughly 2.6:1 on the indigo and 1.9:1 on white, both below the WCAG AA 4.5:1 body-text floor. **Teal is an accent only**: fills, borders, badges, the logo. Body text on light surfaces uses the indigo `#585ba8` or a darkened teal. The audience is teenagers on phones, so readability wins over faithfulness to the source site. | TODO |
+| REQ-10.35 | Do not import the source typography | The source site loads Acme, which has **no Hebrew glyphs**, so every Hebrew word on matazim.co.il already renders in a browser fallback. Importing it costs a request and changes nothing. Keep babook's Hebrew typography. Likewise do not bring in W3.CSS. | TODO |
+| REQ-10.36 | Hero asset budget | The source hero `tech_bg.jpg` is 3.6MB as a fixed full-page background. Either recompress it hard or use an indigo-to-teal treatment instead. babook is mobile-first and this is a phone audience. | TODO |
+
+### 10.9 Acceptance (chapter)
+
+1. A visitor reads what מט״צים is, sees the annual track and the participating
+   schools, logged out, on a phone.
+2. A member applies, is assigned a generated target, sees it in 3D with its
+   dimensions, uploads a deliberately wrong STL and gets a specific Hebrew
+   explanation of what is off, then uploads a correct one and is accepted. At no
+   point does the machine say "rejected".
+3. Staff see that applicant's lessons completed, attempt count, and the days
+   they spread over, and accept them into `in_training`. The member is notified.
+4. Staff press one button and the member becomes `certified`. A non-staff user
+   cannot reach that button by any route, including a direct POST.
+5. The certified member's badge shows on their public babook profile and beside
+   their name in the public class directory.
+6. The member's אזור אישי immediately shows every הדרכה they have taken,
+   including everything done **before** certification, plus their teaching log.
+7. The member copies a YouTube playlist link from the curated library and logs a
+   session: date, topic, roughly how many kids, a sentence. **No child name is
+   requested, stored, or storable anywhere in the flow.**
+8. The staff dashboard shows derived training plus declared teaching for the
+   whole cohort. A school leader sees only their own school, proven by a test
+   that asserts another school's members are absent.
+9. Revoking a certification removes the badge and drops the member out of the
+   current-cohort counts while the history and the issued certificate survive.
+10. `/matazim` renders in the matazim palette with the logo, and no teal body
+    text sits on a light background.
+11. Full regression green; the school-scoping boundary covered by tests.
+
+---
+
 ## Reference
 
 - **Stack**: Django 5.2, Gunicorn, WhiteNoise, SQLite (Render disk), django-allauth (Google + GitHub OAuth), Bunny Stream (video), Stripe + Green Invoice (billing), Resend (email), Plausible (analytics), GitHub Copilot Business (seat provisioning via GitHub REST API), OpenAI API (AI chat, GPT-4o-mini / GPT-4o, gpt-4o-transcribe), yt-dlp + ffmpeg (authoring pipeline)

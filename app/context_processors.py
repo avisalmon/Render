@@ -21,6 +21,10 @@ def community_ctx(request):
         TeacherClass.objects.filter(owner=request.user).exists()
         or ClassMembership.objects.filter(student=request.user, status="active").exists()
     )
+    # Chapter 10 / REQ-10.1: the מט״צים entry appears only for program members.
+    # /matazim itself stays publicly reachable; this is just the nav shortcut.
+    from .matazim_models import ProgramMembership
+    show_matazim = ProgramMembership.objects.filter(user=request.user).exists()
     # Show the verify-email nudge only for password accounts that haven't
     # verified - never for Google/GitHub logins (provider already verified it).
     show_verify = False
@@ -42,6 +46,7 @@ def community_ctx(request):
         "user_is_student": student,
         "show_verify_banner": show_verify,
         "show_my_classes": show_my_classes,
+        "show_matazim": show_matazim,
     }
 
 

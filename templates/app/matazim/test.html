@@ -1,0 +1,83 @@
+{% extends "app/matazim/_shell.html" %}
+{% load static %}
+
+{% comment %}
+  מבחן הכניסה (§10.7).
+
+  Avi walked this as a student and finished the Tinkercad course without ever
+  being told a test existed. So this page opens by saying what the test is and
+  what it is for, before showing anything to build: an applicant should never
+  have to work out the rules from the interface.
+
+  The framing matters as much as the mechanism. It measures whether they are
+  serious, not how talented they are; retries are unlimited; and the words
+  "failed" and "rejected" appear nowhere.
+{% endcomment %}
+
+{% block mz_content %}
+
+<h1 class="h3 mb-1">מבחן הכניסה</h1>
+<p class="text-secondary">משימת בנייה בטינקרקאד. זה השלב שפותח את הכניסה לתוכנית.</p>
+
+<div class="mz-next mb-4">
+  <div class="mz-next-body">
+    <div class="mz-next-kicker">מה בודקים כאן</div>
+    <div>
+      לא כמה אתם מוכשרים ולא כמה אתם יודעים.
+      <strong>בודקים אם אתם רציניים.</strong>
+      תבנו את הדגם שמופיע כאן, תעלו אותו, והמערכת תשווה למידות.
+      אפשר לנסות שוב כמה פעמים שרוצים, ואין פה «נכשלתם» - יש רק «עוד לא».
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <h2 class="h5 mb-2">{{ target.title }} · השרטוט</h2>
+    <img src="{% static 'matazim/targets/' %}{{ attempt.target_id }}.svg"
+         alt="שרטוט הדגם" class="img-fluid border rounded bg-white">
+    <ul class="mt-3">
+      {% for line in target.brief %}<li>{{ line }}</li>{% endfor %}
+    </ul>
+  </div>
+
+  <div class="col-lg-6">
+    <h2 class="h5 mb-2">להעלות את הדגם</h2>
+    <ol class="text-secondary">
+      <li>בנו את הדגם בטינקרקאד לפי המידות שבשרטוט.</li>
+      <li>סמנו הכל ולחצו <strong>Group</strong>, כדי שיהיה גוף אחד.</li>
+      <li>Export → <strong>STL</strong>.</li>
+      <li>העלו את הקובץ כאן.</li>
+    </ol>
+
+    <form method="post" enctype="multipart/form-data" class="mt-3">
+      {% csrf_token %}
+      <label class="form-label" for="mzModel">קובץ STL</label>
+      <input type="file" name="model" id="mzModel" accept=".stl"
+             class="form-control mb-3" required>
+      <button class="btn mz-btn btn-lg">לבדוק את הדגם שלי</button>
+      <div class="form-text">עד 20MB. הבדיקה מיידית.</div>
+    </form>
+
+    <p class="text-secondary small mt-3">
+      זה ניסיון מספר {{ attempt.number }}. אם לא יסתדר, תקבלו משוב מפורט
+      ודגם חדש לנסות עליו.
+    </p>
+  </div>
+</div>
+
+{% if history %}
+<h2 class="h6 text-secondary mt-5 mb-2">ניסיונות קודמים</h2>
+<div class="d-flex flex-wrap gap-2">
+  {% for a in history %}
+    <a href="{% url 'matazim_test_result' a.pk %}"
+       class="badge rounded-pill border text-decoration-none
+              {% if a.passed %}text-bg-success{% else %}text-bg-light{% endif %}">
+      ניסיון {{ a.number }} · {{ a.submitted_at|date:"j.n" }}
+      {% if a.passed %}· עבר{% endif %}
+    </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}

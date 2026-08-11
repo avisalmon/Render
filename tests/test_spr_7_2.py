@@ -102,12 +102,22 @@ def test_verify_banner_hidden_for_social_account_users():
 
 @pytest.mark.django_db
 def test_resend_shows_confirmation_page():
-    """Resend renders a clear 'we sent you a mail' page (not a silent redirect)."""
+    """Resend renders a clear 'we sent you a mail' page (not a silent redirect).
+
+    Sending now needs a POST: as a GET this was mailing on every click of the
+    banner link that sits on every page, and on every browser prefetch of it.
+    """
     c = Client()
     c.post("/register/", {"name": "דנה", "email": "rs@example.com",
                           "password": "StrongPass123!"})
     mail.outbox.clear()
-    resp = c.get("/resend-verification/")
+
+    resp = c.get("/resend-verification/")          # the page itself sends nothing
+    assert resp.status_code == 200
+    assert "rs@example.com" in resp.content.decode()
+    assert mail.outbox == []
+
+    resp = c.post("/resend-verification/")         # the button does
     assert resp.status_code == 200
     body = resp.content.decode()
     assert "שלחנו לך מייל אימות" in body

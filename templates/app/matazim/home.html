@@ -1,0 +1,72 @@
+{% extends "app/matazim/_shell.html" %}
+
+{# REQ-10.3 — public. Explains the program and doubles as recruitment material
+   for the next cohort, which is why it works logged out. #}
+
+{% block mz_content %}
+
+{% comment %}
+  The h1 used to repeat the program name that the logo already says two inches
+  above it, and the first thing a newcomer met was a row of counters they had
+  no way to interpret. Lead with what the program is *for*, then the way in,
+  then the numbers.
+{% endcomment %}
+<div class="row g-4">
+  <div class="col-lg-7">
+    <h1 class="mz-hero-title">קודם לומדים טכנולוגיה. אחר כך מלמדים אותה.</h1>
+    <p class="mz-hero-lead">{{ program.description|linebreaksbr }}</p>
+
+    {% if membership %}
+      <a href="{% url 'matazim_me' %}" class="btn mz-btn btn-lg mt-2">לאזור האישי שלי</a>
+      {% if membership.is_certified %}
+        <span class="mz-badge ms-2"><i class="bi bi-patch-check-fill"></i> מט״צ מוסמך</span>
+      {% endif %}
+    {% else %}
+      <a href="{% url 'matazim_apply' %}" class="btn mz-btn btn-lg mt-2">להירשם לתוכנית</a>
+      <p class="text-secondary mt-3 mb-0">
+        קיבלתם קישור מהמורה? פשוט פתחו אותו, והשיוך לבית הספר ייעשה לבד.
+        <a href="{% url 'matazim_help' %}">מה מצפים ממט״צ?</a>
+      </p>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-5">
+    <div class="mz-stats">
+      <div class="mz-stat">
+        <div class="n">{{ course_count }}</div>
+        <div class="k">הדרכות בתוכנית</div>
+      </div>
+      <div class="mz-stat">
+        <div class="n">{{ school_count }}</div>
+        <div class="k">בתי ספר</div>
+      </div>
+      <div class="mz-stat">
+        <div class="n">{{ program.current_cohort_year }}</div>
+        <div class="k">מחזור</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2 class="h5 mt-5 mb-3">איך זה עובד</h2>
+<ol class="mz-track">
+  {% for s in stages %}
+  <li class="mz-step">
+    <div class="mz-step-label">{{ s.label }}</div>
+    <p class="mz-step-text">{{ s.text }}</p>
+  </li>
+  {% endfor %}
+</ol>
+<p class="mt-3"><a href="{% url 'matazim_help' %}">מה בדיוק מצפים ממט״צ?</a></p>
+
+{% if schools %}
+<h2 class="h5 mt-5 mb-3">בתי הספר המשתתפים</h2>
+<div class="d-flex flex-wrap gap-2">
+  {% for s in schools %}
+    <span class="badge rounded-pill text-bg-light border">{{ s.name }}{% if s.city %} · {{ s.city }}{% endif %}</span>
+  {% endfor %}
+</div>
+<a href="{% url 'matazim_schools' %}" class="d-inline-block mt-3">כל בתי הספר</a>
+{% endif %}
+
+{% endblock %}

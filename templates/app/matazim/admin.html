@@ -1,0 +1,171 @@
+{% extends "app/matazim/_shell.html" %}
+
+{# ניהול התוכנית - the matazim admin console. Program staff only (REQ-10.7).
+
+   Two jobs live here and nowhere else: opening schools with a leader, and
+   revoking a grant. Both are staff-only by decision, not by omission. The
+   grants themselves are made by the school owners (DEC-83). #}
+
+{% block mz_content %}
+
+<h1 class="h3 mb-1">ניהול התוכנית</h1>
+<p class="text-secondary">בתי הספר, המובילים, וההסמכות.</p>
+
+{% if messages %}
+  {% for m in messages %}
+    <div class="alert alert-{{ m.tags|default:'info' }} py-2">{{ m }}</div>
+  {% endfor %}
+{% endif %}
+
+{% comment %}
+  Oversight, not a queue. Since DEC-83 the grants are made in the schools by
+  their owners, so what belongs here is visibility over what was given and by
+  whom, and the power to take it back. Revocation is the one grant-related
+  action that stays with program staff.
+{% endcomment %}
+<h2 class="h5 mt-4 mb-2">הסמכות אחרונות</h2>
+{% if recent_certifications %}
+  <p class="text-secondary small">
+    ההסמכות ניתנות ע״י מובילי בתי הספר. כאן רואים מי הסמיך את מי, ואפשר לבטל.
+  </p>
+  <div class="row g-3">
+    {% for m in recent_certifications %}
+    <div class="col-md-6">
+      <div class="p-3 border rounded h-100">
+        <div class="d-flex justify-content-between align-items-start gap-2">
+          <div class="fw-bold">{{ m.user.profile.public_name }}</div>
+          <span class="mz-badge"><i class="bi bi-patch-check-fill"></i> מוסמך</span>
+        </div>
+        <div class="small text-secondary">
+          {{ m.school.name|default:"ללא בית ספר" }}
+          {% if m.certified_at %} · {{ m.certified_at|date:"j.n.Y" }}{% endif %}
+        </div>
+        <div class="small mt-1">
+          הסמיך: {{ m.certified_by.profile.public_name|default:"—" }}
+          {% if m.certification_note %} · "{{ m.certification_note }}"{% endif %}
+        </div>
+        <details class="mt-2">
+          <summary class="small text-secondary">לבטל הסמכה</summary>
+          <form method="post" action="{% url 'matazim_revoke' m.pk %}" class="mt-2">
+            {% csrf_token %}
+            <input type="text" name="note" class="form-control form-control-sm mb-2"
+                   placeholder="נימוק לביטול (חובה)" required maxlength="300">
+            <button class="btn btn-sm btn-outline-danger">לבטל</button>
+          </form>
+        </details>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="text-secondary">עוד לא ניתנו הסמכות.</p>
+{% endif %}
+
+{# --- Schools ---------------------------------------------------------- #}
+<h2 class="h5 mt-5 mb-2">בתי הספר</h2>
+<div class="row g-3">
+  {% for row in school_rows %}
+  <div class="col-md-6">
+    <div class="p-3 border rounded h-100">
+      <div class="d-flex justify-content-between align-items-start gap-2">
+        <a href="{% url 'matazim_school' row.school.pk %}" class="fw-bold text-decoration-none">
+          {{ row.school.name }}
+        </a>
+        {% if row.pending_join %}
+          <span class="badge rounded-pill text-bg-warning">{{ row.pending_join }} ממתינים</span>
+        {% endif %}
+      </div>
+      {% if row.school.city %}<div class="small text-secondary">{{ row.school.city }}</div>{% endif %}
+      <div class="small mt-2">
+        מובילים:
+        {% for l in row.leaders %}
+          <span class="badge rounded-pill text-bg-light border">{{ l.profile.public_name }}</span>
+        {% empty %}
+          <span class="text-secondary">עוד לא הוקצה מוביל</span>
+        {% endfor %}
+      </div>
+      <div class="small text-secondary mt-1">
+        {{ row.total }} מט״צים · {{ row.certified }} מוסמכים
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12"><p class="text-secondary">עוד לא נפתחו בתי ספר.</p></div>
+  {% endfor %}
+</div>
+
+{% comment %}
+  Find anyone on babook and hand them a school, without ever touching the
+  Django admin. The school picker is here rather than on the school page
+  because this is the natural order of the job: you know who the teacher is,
+  and you are deciding where to put them.
+{% endcomment %}
+<h2 class="h6 mt-4 mb-2">להקצות מוביל לבית ספר</h2>
+<form method="post" id="mzAssignForm" class="row g-2 align-items-end"
+      data-action-tpl="{% url 'matazim_leader_assign' 0 %}">
+  {% csrf_token %}
+  <div class="col-sm-6">
+    {% include "app/matazim/_leader_picker.html" with picker_id="mzAssignSearch" %}
+  </div>
+  <div class="col-sm-4">
+    <label class="form-label small mb-1" for="mzAssignSchool">בית ספר</label>
+    <select id="mzAssignSchool" name="school_id" class="form-select form-select-sm" required>
+      <option value="">לבחור…</option>
+      {% for row in school_rows %}
+        <option value="{{ row.school.pk }}">
+          {{ row.school.name }}{% if not row.leaders %} (ללא מוביל){% endif %}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-sm-2">
+    <button class="btn btn-sm mz-btn w-100">להקצות</button>
+  </div>
+</form>
+
+<h2 class="h6 mt-4 mb-2">לפתוח בית ספר</h2>
+<form method="post" action="{% url 'matazim_school_create' %}" class="row g-2 align-items-end">
+  {% csrf_token %}
+  <div class="col-sm-5">
+    <label class="form-label small mb-1" for="mzSchoolName">שם בית הספר</label>
+    <input id="mzSchoolName" name="name" class="form-control form-control-sm" required maxlength="150">
+  </div>
+  <div class="col-sm-4">
+    <label class="form-label small mb-1" for="mzSchoolCity">עיר</label>
+    <input id="mzSchoolCity" name="city" class="form-control form-control-sm" maxlength="100">
+  </div>
+  <div class="col-sm-3">
+    <button class="btn btn-sm mz-btn w-100">לפתוח</button>
+  </div>
+</form>
+
+{% if unassigned %}
+<h2 class="h6 mt-5 mb-2">מט״צים בלי בית ספר</h2>
+<div class="d-flex flex-wrap gap-2">
+  {% for m in unassigned %}
+    <span class="badge rounded-pill text-bg-light border">
+      {{ m.user.profile.public_name }} · {{ m.get_status_display }}
+    </span>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+// The school id is only known once she picks one, so point the form at the
+// right URL on submit. Keeps the endpoint per-school (and therefore
+// per-school authorised) instead of taking the school from the body.
+(function () {
+  var f = document.getElementById('mzAssignForm');
+  if (!f) return;
+  f.addEventListener('submit', function (e) {
+    var sel = document.getElementById('mzAssignSchool');
+    if (!sel.value) { e.preventDefault(); return; }
+    f.action = f.dataset.actionTpl.replace(/\/0\//, '/' + sel.value + '/');
+  });
+})();
+</script>
+{% endblock %}

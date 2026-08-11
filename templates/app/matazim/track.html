@@ -1,0 +1,57 @@
+{% extends "app/matazim/_shell.html" %}
+
+{# REQ-10.3 + REQ-10.4 — המסלול השנתי.
+
+   Public, because it is the best recruitment page the program has. A member
+   additionally sees their own position on the path: `membership.track_steps()`
+   marks each stage done / current / ahead. #}
+
+{% block mz_content %}
+
+<h1 class="h3 mb-1">המסלול השנתי</h1>
+<p class="text-secondary">
+  {% if membership %}
+    איפה אתם נמצאים עכשיו, ומה עוד לפניכם.
+  {% else %}
+    חמישה שלבים, משנה אחת. כך נראית הדרך למט״צ.
+  {% endif %}
+</p>
+
+<ol class="mz-track mt-4">
+  {% for step in steps %}
+  <li class="mz-step {% if step.done %}done{% endif %} {% if step.current %}current{% endif %}">
+    <div class="mz-step-label">{{ step.label }}</div>
+    {% if step.current %}<p class="mz-step-text">כאן אתם נמצאים</p>{% endif %}
+  </li>
+  {% endfor %}
+</ol>
+
+{% if membership %}
+  <p class="mt-3">
+    הסטטוס שלכם: <strong>{{ membership.get_status_display }}</strong>
+    {% if membership.school %} · {{ membership.school.name }}{% endif %}
+    · מחזור {{ membership.cohort_year }}
+  </p>
+  <a href="{% url 'matazim_me' %}" class="btn mz-btn">לאזור האישי</a>
+{% endif %}
+
+<h2 class="h5 mt-5 mb-3">ההדרכות שבמסלול</h2>
+<p class="text-secondary">
+  הלמידה עצמה מתרחשת ב־babook, עם מעקב התקדמות ותעודות. המסלול כאן רק מראה איפה אתם.
+</p>
+<div class="row g-3">
+  {% for c in courses %}
+  <div class="col-md-6 col-lg-4">
+    <a href="{% url 'courses_detail' c.slug %}" class="d-block h-100 p-3 border rounded text-decoration-none">
+      <div class="fw-bold">{{ c.title }}</div>
+      {% if c.description %}
+        <div class="small text-secondary mt-1">{{ c.description|truncatechars:90 }}</div>
+      {% endif %}
+    </a>
+  </div>
+  {% empty %}
+  <div class="col-12"><p class="text-secondary">עוד לא הוגדרו הדרכות למסלול.</p></div>
+  {% endfor %}
+</div>
+
+{% endblock %}

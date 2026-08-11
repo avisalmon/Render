@@ -1,0 +1,126 @@
+{% extends "app/matazim/_shell.html" %}
+
+{# REQ-10.14 — אזור אישי.
+
+   The only daily reason to open /matazim, so it answers the questions in order
+   of how much they matter and lets nothing else compete:
+     1. what is my next step   (the loudest thing on the page)
+     2. where am I on the track
+     3. what have I finished
+
+   Every training number here is derived live from babook (REQ-10.13). Nothing
+   on this page is stored, which is also why activity from before certification
+   shows up with no backfill (REQ-10.12).
+
+   The fourth question, "what have I taught", needs the teaching activity log
+   (REQ-10.15b) and lands in SPR-10.3. It is deliberately absent rather than
+   stubbed. #}
+
+{% block mz_content %}
+
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+  <h1 class="h3 mb-0">שלום {{ user.profile.public_name|default:user.username }}</h1>
+  {% if membership.is_certified %}
+    <span class="mz-badge"><i class="bi bi-patch-check-fill"></i> מט״צ מוסמך</span>
+  {% else %}
+    <span class="badge rounded-pill text-bg-light border">{{ membership.get_status_display }}</span>
+  {% endif %}
+  {% if membership.school %}
+    <span class="text-secondary small">{{ membership.school.name }}</span>
+  {% endif %}
+</div>
+
+{% if next_step %}
+<div class="mz-next mb-4">
+  <div class="mz-next-body">
+    <div class="mz-next-kicker">המשימה הבאה שלי</div>
+    <div class="mz-next-label">{{ next_step.label }}</div>
+    <div class="text-secondary">{{ next_step.hint }}</div>
+  </div>
+  {% if next_step.url %}
+    <div class="mz-next-cta"><a href="{{ next_step.url }}" class="btn mz-btn btn-lg">קדימה</a></div>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if membership.status == "applied" %}
+<div class="p-3 border rounded mb-4">
+  <div class="fw-bold mb-1">איך נכנסים לתוכנית</div>
+  <ol class="mb-2">
+    <li>ללמוד טינקרקאד בהדרכה שבאתר.</li>
+    <li>לעשות את <a href="{% url 'matazim_test' %}">מבחן הכניסה</a>: תקבלו דגם
+        תלת־מימדי עם מידות, ותבנו אותו. אפשר לנסות שוב בלי הגבלה.</li>
+    <li>המוביל של בית הספר מאשר אתכם.</li>
+  </ol>
+  <a href="{% url 'matazim_test' %}">למבחן הכניסה</a> ·
+  <a href="{% url 'matazim_help' %}">מה מצפים ממט״צ?</a>
+</div>
+{% endif %}
+
+<h2 class="h6 text-secondary mb-2">איפה אני במסלול</h2>
+<ol class="mz-track mb-4">
+  {% for step in steps %}
+  <li class="mz-step {% if step.done %}done{% endif %} {% if step.current %}current{% endif %}">
+    <div class="mz-step-label">{{ step.label }}</div>
+    {% if step.current %}<p class="mz-step-here">כאן אתם</p>{% endif %}
+  </li>
+  {% endfor %}
+</ol>
+
+<h2 class="h6 text-secondary mb-2">מה השלמתי</h2>
+<div class="mz-stats mb-3">
+  <div class="mz-stat">
+    <div class="n">{{ record.completed }}</div>
+    <div class="k">הדרכות שהושלמו</div>
+  </div>
+  <div class="mz-stat">
+    <div class="n">{{ record.started }}</div>
+    <div class="k">הדרכות שהתחלתי</div>
+  </div>
+  <div class="mz-stat">
+    <div class="n">{{ record.certificates }}</div>
+    <div class="k">תעודות</div>
+  </div>
+  <div class="mz-stat">
+    <div class="n">{{ record.total_courses }}</div>
+    <div class="k">סה״כ במסלול</div>
+  </div>
+</div>
+
+{% comment %}
+  Grouped rather than listed flat. A new member has eleven courses at 0/N, and
+  showing them as eleven identical cards reads as a wall of things not done.
+  What they are in the middle of comes first, what they finished second, and
+  everything untouched is folded away until they go looking for it.
+{% endcomment %}
+
+{% if record.in_progress %}
+<h3 class="h6 mt-3 mb-2">ממשיכים מכאן</h3>
+<div class="row g-3">
+  {% for row in record.in_progress %}{% include "app/matazim/_course_row.html" %}{% endfor %}
+</div>
+{% endif %}
+
+{% if record.done_rows %}
+<h3 class="h6 mt-4 mb-2">סיימתם</h3>
+<div class="row g-3">
+  {% for row in record.done_rows %}{% include "app/matazim/_course_row.html" %}{% endfor %}
+</div>
+{% endif %}
+
+{% if record.not_started %}
+<details class="mt-4"{% if not record.in_progress and not record.done_rows %} open{% endif %}>
+  <summary class="h6 d-inline">
+    עוד לא התחלתם ({{ record.not_started|length }})
+  </summary>
+  <div class="row g-3 mt-1">
+    {% for row in record.not_started %}{% include "app/matazim/_course_row.html" %}{% endfor %}
+  </div>
+</details>
+{% endif %}
+
+{% if not record.rows %}
+<p class="text-secondary">עוד לא הוגדרו הדרכות למסלול.</p>
+{% endif %}
+
+{% endblock %}

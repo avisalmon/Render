@@ -1,0 +1,27 @@
+{% comment %}
+  One course in the personal area. Expects `row` = {course, p, has_cert}.
+  Extracted so the three groups (in progress / done / not started) stay
+  identical without three copies drifting apart.
+{% endcomment %}
+<div class="col-md-6">
+  <a href="{% url 'courses_detail' row.course.slug %}"
+     class="d-block p-3 border rounded h-100 text-decoration-none">
+    <div class="d-flex justify-content-between align-items-start gap-2">
+      <span class="fw-bold">{{ row.course.title }}</span>
+      {% if row.has_cert %}
+        <i class="bi bi-patch-check-fill" title="תעודה"></i>
+      {% endif %}
+    </div>
+    {% if row.p.started %}
+    <div class="progress mt-2" style="height:6px" role="progressbar"
+         aria-valuenow="{{ row.p.pct }}" aria-valuemin="0" aria-valuemax="100"
+         aria-label="{{ row.course.title }}">
+      <div class="progress-bar" style="width: {{ row.p.pct }}%"></div>
+    </div>
+    {% endif %}
+    <div class="small text-secondary mt-1">
+      {{ row.p.done }} / {{ row.p.total }} שיעורים
+      {% if row.p.completed %} · הושלם{% endif %}
+    </div>
+  </a>
+</div>

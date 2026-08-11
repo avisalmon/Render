@@ -17,7 +17,10 @@
     {% if user.email and not user.profile.email_verified %}
     <div class="alert alert-warning py-2 small">
       שלחנו מייל אימות ל-<strong dir="ltr">{{ user.email }}</strong>. אפשר להמשיך בינתיים.
-      לא הגיע? בדקו בספאם או <a href="{% url 'resend_verification' %}">שלחו שוב</a>.
+      לא הגיע? בדקו בספאם או
+      <form method="post" action="{% url 'resend_verification' %}" class="d-inline">{% csrf_token %}
+        <button class="btn btn-link btn-sm p-0 align-baseline">שלחו שוב</button>
+      </form>.
     </div>
     {% endif %}
 

@@ -71,6 +71,11 @@
             <i class="bi bi-easel" style="font-size:1.3rem"></i>
           </a>
           {% endif %}
+          {# מט״צים is public, so this entry is for everyone; members get it highlighted. #}
+          <a class="nav-link px-2 d-none d-md-inline-flex{% if show_matazim %} nav-link-active{% endif %}"
+             href="{% url 'matazim_home' %}" title="מט״צים" aria-label="מט״צים">
+            <i class="bi bi-cpu" style="font-size:1.3rem"></i>
+          </a>
           {# Mobile-only: search opens a full-width row under the bar (the inline box is hidden on mobile) #}
           <button class="btn nav-link px-2 d-md-none" type="button" id="navSearchToggle"
                   aria-label="חיפוש" aria-expanded="false">
@@ -173,6 +178,7 @@
         <a href="{% url 'community' %}"><i class="bi bi-people"></i> קהילות</a>
         <a href="{% url 'showcase_wall' %}"><i class="bi bi-easel2"></i> דוכן השוויץ</a>
         <a href="{% url 'class_directory' %}"><i class="bi bi-easel"></i> כל הכיתות</a>
+        <a href="{% url 'matazim_home' %}"><i class="bi bi-cpu"></i> מט״צים</a>
         <a href="{% url 'blog' %}"><i class="bi bi-newspaper"></i> הבלוג של אבי סלמון</a>
         {% if user.is_authenticated %}
         <hr class="site-drawer-sep">
@@ -215,10 +221,15 @@
        Dismissible: the X hides it for a day (cookie), then it returns until verified. -->
   <div id="verify-banner" class="py-2 px-3 small" style="background:var(--accent-warm,#a8622f); color:#fff">
     <div class="container d-flex align-items-center justify-content-between gap-2">
-      <span class="flex-grow-1 text-center">
+      <!-- div, not span: a <form> is flow content and cannot sit inside phrasing.
+           POST, not a link: a plain GET here sent an email on every click,
+           refresh, or browser link-prefetch. -->
+      <div class="flex-grow-1 text-center">
         כדי לאבטח את החשבון, אמתו את האימייל שלך.
-        <a href="{% url 'resend_verification' %}" class="fw-semibold text-white text-decoration-underline">שליחת קישור אימות מחדש</a>
-      </span>
+        <form method="post" action="{% url 'resend_verification' %}" class="d-inline">{% csrf_token %}
+          <button class="btn btn-link p-0 align-baseline fw-semibold text-white text-decoration-underline">שליחת קישור אימות מחדש</button>
+        </form>
+      </div>
       <button type="button" class="btn-close flex-shrink-0" aria-label="סגור"
               onclick="document.cookie='verify_banner_dismissed=1;path=/;max-age=86400';document.getElementById('verify-banner').remove();"></button>
     </div>

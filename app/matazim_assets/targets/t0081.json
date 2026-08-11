@@ -1,0 +1,31 @@
+{
+  "shape": "stepped_block",
+  "title": "בלוק מדורג",
+  "width": 50,
+  "depth": 40,
+  "height": 25,
+  "step_width": 25,
+  "step_depth": 20,
+  "holes": [],
+  "hole_count": 0,
+  "seed": 81,
+  "reference": {
+    "dims": [
+      25.0,
+      40,
+      50
+    ],
+    "volume": 37499.99999999999,
+    "area": 8500.0,
+    "cut_volume": 12500.000000000007,
+    "genus": 0,
+    "shells": 1,
+    "bbox_volume": 50000.0
+  },
+  "id": "t0081",
+  "brief": [
+    "מידות חיצוניות: 50 × 40 × 25 מ\"מ",
+    "מדרגה בפינה: 25 × 20 מ\"מ",
+    "הכל גוף אחד סגור"
+  ]
+}

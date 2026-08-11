@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 520" width="520" height="520" font-family="Heebo, Arial, sans-serif">
+<rect width="520" height="520" fill="#ffffff"/>
+<polygon points="46.0,265.5 265.5,265.5 265.5,183.2 183.2,183.2 183.2,46.0 46.0,46.0" fill="#e6e7f6" stroke="#1c1b18" stroke-width="2"/>
+<line x1="46.0" y1="287.5" x2="265.5" y2="287.5" stroke="#585ba8" stroke-width="1.4"/><line x1="46.0" y1="283.5" x2="46.0" y2="291.5" stroke="#585ba8" stroke-width="1.4"/><line x1="265.5" y1="283.5" x2="265.5" y2="291.5" stroke="#585ba8" stroke-width="1.4"/><text x="155.7" y="302.5" fill="#585ba8" font-size="14" text-anchor="middle">40</text>
+<line x1="287.5" y1="265.5" x2="287.5" y2="46.0" stroke="#585ba8" stroke-width="1.4"/><line x1="283.5" y1="265.5" x2="291.5" y2="265.5" stroke="#585ba8" stroke-width="1.4"/><line x1="283.5" y1="46.0" x2="291.5" y2="46.0" stroke="#585ba8" stroke-width="1.4"/><text x="293.5" y="155.7" fill="#585ba8" font-size="14">40</text>
+<text x="114.6" y="175.2" fill="#585ba8" font-size="13" text-anchor="middle">25</text>
+<text x="189.2" y="224.3" fill="#585ba8" font-size="13">15</text>
+<rect x="46.0" y="327.5" width="219.5" height="109.7" fill="#e6e7f6" stroke="#1c1b18" stroke-width="2"/>
+<line x1="287.5" y1="327.5" x2="287.5" y2="437.2" stroke="#585ba8" stroke-width="1.4"/><line x1="283.5" y1="327.5" x2="291.5" y2="327.5" stroke="#585ba8" stroke-width="1.4"/><line x1="283.5" y1="437.2" x2="291.5" y2="437.2" stroke="#585ba8" stroke-width="1.4"/><text x="293.5" y="382.4" fill="#585ba8" font-size="14">20</text>
+<text x="46.0" y="457.2" fill="#6b675f" font-size="12">מבט צד · גובה 20 מ"מ</text>
+<text x="46.0" y="30" fill="#6b675f" font-size="12">מבט על · כל המידות במ"מ</text>
+</svg>

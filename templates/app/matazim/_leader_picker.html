@@ -1,0 +1,31 @@
+{% comment %}
+  Leader picker — program staff only.
+
+  The point of this component: staff must be able to find any babook member
+  *without* the Django admin. Before it existed you had to already know a
+  person's exact username to make them a school leader, and the only place to
+  look one up was /admin/, which program staff have no business being in.
+
+  Search-as-you-type over name / username / email, but the results **never show
+  an email**, so this cannot become an export of the site's address list. It
+  matches on email so a teacher can hand over their address; it just does not
+  echo it back.
+
+  Degrades to the plain typed field with JS off — `user_id` is preferred by the
+  view, `identifier` is the fallback.
+
+  Expects: `school` (optional; when absent the caller supplies its own school
+  <select> in `{{ picker_extra }}` position via the `school_select` block).
+{% endcomment %}
+
+<div class="mz-picker" data-search-url="{% url 'matazim_user_search' %}">
+  <label class="form-label small mb-1" for="{{ picker_id|default:'mzLeaderSearch' }}">
+    {{ picker_label|default:"לחפש אדם (שם, שם משתמש או אימייל)" }}
+  </label>
+  <input type="search" id="{{ picker_id|default:'mzLeaderSearch' }}"
+         class="form-control form-control-sm mz-picker-input"
+         placeholder="להתחיל להקליד…" autocomplete="off">
+  <div class="mz-picker-results" hidden></div>
+  <input type="hidden" name="user_id" class="mz-picker-value">
+  <div class="mz-picker-chosen small mt-1" hidden></div>
+</div>

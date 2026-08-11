@@ -11,6 +11,7 @@ from . import (
     events_views,
     forum_views,
     lab,
+    matazim_views,
     onboarding_views,
     showcase_views,
     studio_views,
@@ -244,6 +245,44 @@ urlpatterns = [
     path("studio/course/<slug:slug>/lesson/new/", studio_views.lesson_edit, name="studio_lesson_new"),
     path("studio/course/<slug:slug>/lesson/<int:order>/", studio_views.lesson_edit, name="studio_lesson_edit"),
     path("studio/course/<slug:slug>/lesson/<int:order>/delete/", studio_views.lesson_delete, name="studio_lesson_delete"),
+
+    # --- מט״צים program space (Chapter 10 / SPR-10.1) ---
+    path("matazim/", matazim_views.matazim_home, name="matazim_home"),
+    path("matazim/track/", matazim_views.matazim_track, name="matazim_track"),
+    path("matazim/schools/", matazim_views.matazim_schools, name="matazim_schools"),
+    path("matazim/help/", matazim_views.matazim_help, name="matazim_help"),
+    path("matazim/me/", matazim_views.matazim_me, name="matazim_me"),
+    # Consoles: staff-only admin, and the per-school view shared by leaders + staff
+    path("matazim/admin/", matazim_views.matazim_admin, name="matazim_admin"),
+    path("matazim/school/<int:school_id>/", matazim_views.matazim_school, name="matazim_school"),
+    path("matazim/school/new/", matazim_views.matazim_school_create,
+         name="matazim_school_create"),
+    path("matazim/users/search/", matazim_views.matazim_user_search,
+         name="matazim_user_search"),
+    # Applying: the school's own invite link, and the open form.
+    path("matazim/join/<str:code>/", matazim_views.matazim_join, name="matazim_join"),
+    path("matazim/apply/", matazim_views.matazim_apply, name="matazim_apply"),
+    # מבחן הכניסה (§10.7)
+    path("matazim/test/", matazim_views.matazim_test, name="matazim_test"),
+    path("matazim/test/retry/", matazim_views.matazim_test_retry, name="matazim_test_retry"),
+    path("matazim/test/<int:attempt_id>/", matazim_views.matazim_test_result,
+         name="matazim_test_result"),
+    path("matazim/school/<int:school_id>/qr/", matazim_views.matazim_school_qr,
+         name="matazim_school_qr"),
+    path("matazim/school/<int:school_id>/rotate/", matazim_views.matazim_rotate_code,
+         name="matazim_rotate_code"),
+    path("matazim/school/<int:school_id>/leader/", matazim_views.matazim_leader_assign,
+         name="matazim_leader_assign"),
+    path("matazim/member/<int:membership_id>/confirm/", matazim_views.matazim_confirm_member,
+         name="matazim_confirm_member"),
+    # The two grants (DEC-83): both made by the school owner, program staff too.
+    path("matazim/member/<int:membership_id>/accept/", matazim_views.matazim_accept,
+         name="matazim_accept"),
+    path("matazim/member/<int:membership_id>/certify/", matazim_views.matazim_certify,
+         name="matazim_certify"),
+    # Undoing a grant stays with program staff.
+    path("matazim/member/<int:membership_id>/revoke/", matazim_views.matazim_revoke,
+         name="matazim_revoke"),
 
     path("api/v1/courses/", course_api.list_courses, name="api_courses_list"),
     path("api/v1/courses/sync/", course_api.sync_course, name="api_courses_sync"),

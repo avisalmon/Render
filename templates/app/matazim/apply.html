@@ -1,0 +1,71 @@
+{% extends "app/matazim/_shell.html" %}
+
+{# REQ-10.4 — the application form, reached two ways.
+
+   via_link=True   they came through their school's invite link, so the school
+                   is already settled and is shown, not chosen.
+   via_link=False  the open door: they pick a school and its leader confirms.
+
+   Three questions and no more. Every extra field is a teenager who does not
+   finish the form, and the application is not what assesses them: the entrance
+   test does that. This is here so the school owner knows who they are. #}
+
+{% block mz_content %}
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+
+    <h1 class="h3 mb-1">הרשמה לתוכנית</h1>
+    {% if via_link %}
+      <p class="text-secondary">
+        אתם נרשמים דרך <strong>{{ school.name }}</strong>{% if school.city %} · {{ school.city }}{% endif %}.
+      </p>
+    {% else %}
+      <p class="text-secondary">כמה שאלות קצרות, ובוחרים את בית הספר שלכם.</p>
+    {% endif %}
+
+    <p class="text-secondary small">
+      <a href="{% url 'matazim_help' %}">מה מצפים ממט״צ?</a>
+    </p>
+
+    <form method="post" class="mt-3">
+      {% csrf_token %}
+
+      {% if not via_link %}
+      <div class="mb-3">
+        <label class="form-label" for="mzSchool">בית הספר שלי</label>
+        <select id="mzSchool" name="school_id" class="form-select" required>
+          <option value="">לבחור…</option>
+          {% for s in schools %}
+            <option value="{{ s.pk }}">{{ s.name }}{% if s.city %} · {{ s.city }}{% endif %}</option>
+          {% endfor %}
+        </select>
+        <div class="form-text">המוביל של בית הספר יאשר אתכם.</div>
+      </div>
+      {% endif %}
+
+      <div class="mb-3">
+        <label class="form-label" for="mzGrade">באיזו כיתה אתם?</label>
+        <input id="mzGrade" name="grade" class="form-control" maxlength="40"
+               placeholder="למשל: ט'2">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="mzWhy">למה אתם רוצים להיות מט״צים?</label>
+        <textarea id="mzWhy" name="motivation" class="form-control" rows="3"
+                  placeholder="כמה משפטים משלכם"></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="mzBuilt">מה כבר בניתם או למדתם?</label>
+        <textarea id="mzBuilt" name="built_before" class="form-control" rows="3"
+                  placeholder="גם 'עוד כלום' זו תשובה טובה"></textarea>
+      </div>
+
+      <button class="btn mz-btn btn-lg">להירשם</button>
+    </form>
+
+  </div>
+</div>
+
+{% endblock %}
