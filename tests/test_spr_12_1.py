@@ -574,6 +574,53 @@ def test_filters_by_camera_and_day(client):
 
 
 @pytest.mark.django_db
+def test_both_filter_controls_can_actually_be_submitted(client):
+    """REQ-11.6.6 — the server-side filtering being correct is not enough. The
+    date input originally had no submit trigger at all, so choosing a date did
+    nothing and the filter looked broken while the query was fine."""
+    _viewer()
+    client.login(username="owner", password="p")
+    html = client.get(HOME).content.decode()
+    form = html.split("<form method=\"get\"", 1)[1].split("</form>", 1)[0]
+
+    assert 'name="day"' in form and 'name="camera"' in form
+    # A submit button, so the form works even where `change` does not fire.
+    assert 'type="submit"' in form
+    # And both controls submit on change for the one-tap path.
+    assert form.count("this.form.submit()") == 2
+
+
+@pytest.mark.django_db
+def test_day_filter_covers_the_whole_local_day_across_a_dst_start(client):
+    """REQ-11.5.5 / REQ-11.6.6 — Israel starts DST on 2026-03-27, making that
+    local day 23 hours long. This pins the behaviour so a later refactor toward
+    naive arithmetic or a UTC-based day boundary cannot quietly lose the last
+    hour of events on the two days a year the clocks move."""
+    _viewer()
+    _post(client, EVENTS, {"events": [
+        _event(1, ts="2026-03-27T00:30:00+02:00", camera="JustAfterMidnight"),
+        _event(2, ts="2026-03-27T23:30:00+03:00", camera="LateThatNight"),
+        _event(3, ts="2026-03-28T00:30:00+03:00", camera="NextDay"),
+    ]})
+    client.login(username="owner", password="p")
+    rows = _event_list(client.get(HOME, {"day": "2026-03-27"}).content.decode())
+
+    assert "JustAfterMidnight" in rows
+    assert "LateThatNight" in rows
+    assert "NextDay" not in rows
+
+
+@pytest.mark.django_db
+def test_an_unparseable_day_shows_everything_rather_than_erroring(client):
+    _viewer()
+    _post(client, EVENTS, {"events": [_event(1, camera="Main enterance")]})
+    client.login(username="owner", password="p")
+    resp = client.get(HOME, {"day": "not-a-date"})
+    assert resp.status_code == 200
+    assert "Main enterance" in _event_list(resp.content.decode())
+
+
+@pytest.mark.django_db
 def test_snapshot_file_is_unreachable_without_permission(client, settings):
     """DoD 17 / REQ-11.7.2."""
     _post(client, EVENTS, {"events": [

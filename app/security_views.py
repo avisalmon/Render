@@ -15,7 +15,7 @@ superusers are not automatically people who may look inside Avi's house.
 """
 
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 from django.conf import settings
@@ -184,10 +184,18 @@ def _filtered(request):
     day = (request.GET.get("day") or "").strip()
     if day:
         try:
-            start = datetime.strptime(day, "%Y-%m-%d").replace(tzinfo=_tz())
-            qs = qs.filter(ts__gte=start, ts__lt=start + timedelta(days=1))
+            chosen = datetime.strptime(day, "%Y-%m-%d").date()
         except ValueError:
-            pass
+            return qs.order_by("-ts", "-event_id")
+        # Both midnights are built independently in Israel local time, so the
+        # span is right on the days DST moves the clocks (that day is 23 hours,
+        # not 24). Adding timedelta to the start is equivalent here, since
+        # ZoneInfo arithmetic is wall-clock, but only if you know that; this
+        # spelling does not depend on the reader knowing it.
+        tz = _tz()
+        start = datetime.combine(chosen, time.min, tzinfo=tz)
+        end = datetime.combine(chosen + timedelta(days=1), time.min, tzinfo=tz)
+        qs = qs.filter(ts__gte=start, ts__lt=end)
     return qs.order_by("-ts", "-event_id")
 
 

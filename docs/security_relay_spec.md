@@ -316,7 +316,10 @@ which is the line that actually matters.
 
 If enabled:
 
-- Cap **200 KB** per event; larger → `413`.
+- Cap **200 KB** per event. **An unusable snapshot must never cost the event:**
+  oversized, invalid base64 or a full disk → store the event *without* it and
+  return a warning. Do **not** answer `413` — a 4xx is permanent to the sender
+  (§8.3), so the batch would be dropped and real events lost.
 - Store as **files on the persistent disk** under `/var/data/security/`, not as
   database blobs.
 - Delete the file when §7.5 removes the row.

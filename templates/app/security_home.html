@@ -38,9 +38,16 @@ Order of importance on the screen, deliberately:
     <i class="bi bi-arrow-clockwise"></i> יש אירועים חדשים · רענון
   </a>
 
+  {% comment %}
+    Both controls submit on change, and the button is a real fallback rather
+    than decoration: date inputs fire `change` inconsistently across mobile
+    browsers (and not at all with JS off), which is exactly how this filter
+    silently did nothing the first time round.
+  {% endcomment %}
   <form method="get" class="row g-2 mb-3">
     <div class="col-6">
-      <input type="date" name="day" value="{{ day }}" class="form-control form-control-sm">
+      <input type="date" name="day" value="{{ day }}" class="form-control form-control-sm"
+             onchange="this.form.submit()">
     </div>
     <div class="col-6">
       <select name="camera" class="form-select form-select-sm" onchange="this.form.submit()">
@@ -50,11 +57,12 @@ Order of importance on the screen, deliberately:
         {% endfor %}
       </select>
     </div>
-    {% if day or camera %}
-    <div class="col-12">
+    <div class="col-12 d-flex align-items-center gap-3">
+      <button type="submit" class="btn btn-sm btn-outline-secondary">סינון</button>
+      {% if day or camera %}
       <a href="{% url 'security_home' %}" class="btn btn-sm btn-link px-0">ניקוי סינון</a>
+      {% endif %}
     </div>
-    {% endif %}
   </form>
 
   <div class="sec-list">
