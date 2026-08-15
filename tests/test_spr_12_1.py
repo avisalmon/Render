@@ -93,10 +93,14 @@ def _viewer(email=OWNER, username="owner"):
 
 
 def _event_list(html):
-    """Just the rendered rows. The camera filter <select> also names every
-    camera, alphabetically, so a bare `in` check against the whole page proves
-    nothing about the list itself."""
-    return html.split('class="sec-list"', 1)[1]
+    """Just the rendered rows.
+
+    Bounded at both ends deliberately. The camera filter <select> above names
+    every camera alphabetically, and the <style> block below mentions every
+    class by name - so an unbounded slice makes "not in" assertions pass or
+    fail for reasons that have nothing to do with the rows.
+    """
+    return html.split('class="sec-list"', 1)[1].split('class="sec-viewer"', 1)[0]
 
 
 # =========================================================================== auth
@@ -660,6 +664,166 @@ def test_snapshots_open_in_a_zoomable_viewer(client):
     # Zoom controls, stepping, and a way out.
     for act in ("in", "out", "reset", "prev", "next", "close"):
         assert f'data-act="{act}"' in html
+
+
+# =========================================================================== armed
+@pytest.mark.django_db
+def test_armed_true_paints_the_row_red(client):
+    """REQ-11.10 — the alarm was fully set and the house empty, so whatever the
+    camera saw is worth a look regardless of who it turned out to be."""
+    _viewer()
+    _post(client, EVENTS, {"events": [
+        _event(1, camera="Main enterance", alarm_state="AWAY", armed=True)
+    ]})
+    client.login(username="owner", password="p")
+    html = client.get(HOME).content.decode()
+
+    assert SecurityEvent.objects.get(event_id=1).armed is True
+    assert "sec-armed" in _event_list(html)
+    css = html.split("<style>", 1)[1].split("</style>", 1)[0]
+    assert ".sec-armed {" in css
+
+
+@pytest.mark.django_db
+def test_armed_is_a_separate_channel_from_severity(client):
+    """Their §10 — severity colours the text, armed colours the row. A quiet
+    `info` sighting of a known face still has to stand out if it happened to an
+    empty, armed house."""
+    _viewer()
+    _post(client, EVENTS, {"events": [
+        _event(1, severity="info", names=["Avi"], alarm_state="AWAY", armed=True)
+    ]})
+    client.login(username="owner", password="p")
+    row = re.search(r'<div class="(sec-row[^"]*)"', _event_list(
+        client.get(HOME).content.decode())).group(1)
+
+    assert "sec-sev-info" in row      # severity untouched
+    assert "sec-armed" in row         # and still red
+
+
+@pytest.mark.django_db
+def test_severity_never_paints_the_row_background(client):
+    """The row background carries exactly one meaning: armed. A severity tint
+    would put "critical" and "the panel was unreachable" into the same visual
+    channel as "the house was armed and empty", which is the confusion their
+    §10 asks us not to create."""
+    _viewer()
+    client.login(username="owner", password="p")
+    css = client.get(HOME).content.decode().split("<style>", 1)[1].split("</style>", 1)[0]
+
+    for rule in re.findall(r"\.sec-sev-\w+\s*\{[^}]*\}", css):
+        assert "background" not in rule, f"severity must not tint the row: {rule}"
+    # Armed is the only thing that does.
+    assert "background" in re.search(r"\.sec-armed\s*\{[^}]*\}", css).group(0)
+
+
+@pytest.mark.django_db
+def test_home_partial_arm_is_never_red(client):
+    """Their must-not #1 — HOME is the partial arm with somebody inside. Paint
+    that red and every evening goes red, and the signal stops meaning anything."""
+    _viewer()
+    _post(client, EVENTS, {"events": [
+        _event(1, camera="Kitchen view", alarm_state="HOME", armed=False)
+    ]})
+    client.login(username="owner", password="p")
+
+    assert SecurityEvent.objects.get(event_id=1).armed is False
+    assert "sec-armed" not in _event_list(client.get(HOME).content.decode())
+
+
+@pytest.mark.django_db
+def test_an_unreachable_panel_is_never_red(client):
+    """Their must-not #2 — alarm_state "" means the cloud-only panel could not
+    be reached, not that the house was disarmed. "We could not tell" must never
+    wear the same colour as "armed"."""
+    _viewer()
+    _post(client, EVENTS, {"events": [
+        _event(1, camera="Back gate", alarm_state="", armed=False)
+    ]})
+    client.login(username="owner", password="p")
+
+    stored = SecurityEvent.objects.get(event_id=1)
+    assert stored.alarm_state == "" and stored.armed is False
+    assert "sec-armed" not in _event_list(client.get(HOME).content.decode())
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("state", ["AWAY", "EXIT", "ENTRY_DELAY", "DISARM", "HOME", ""])
+def test_armed_is_never_derived_from_alarm_state(client, state):
+    """Their must-not #3, and the whole point of the two-field design: the
+    string is Visonic's vocabulary, the boolean is the decision. babook sending
+    itself red because it recognised a word would break the moment the house
+    changed what that word meant."""
+    _viewer()
+    _post(client, EVENTS, {"events": [_event(1, alarm_state=state)]})   # no `armed` key
+
+    assert SecurityEvent.objects.get(event_id=1).armed is False
+    client.login(username="owner", password="p")
+    assert "sec-armed" not in _event_list(client.get(HOME).content.decode())
+
+
+@pytest.mark.django_db
+def test_missing_alarm_fields_default_to_blank_and_false(client):
+    """Older events predate the fields, and the two sides roll out in either
+    order (REQ-11.5.4)."""
+    _viewer()
+    _post(client, EVENTS, {"events": [_event(1)]})
+
+    stored = SecurityEvent.objects.get(event_id=1)
+    assert stored.alarm_state == ""
+    assert stored.armed is False
+
+
+@pytest.mark.django_db
+def test_an_unknown_panel_state_is_stored_not_rejected(client):
+    """The house may add a state before babook has heard of it."""
+    _viewer()
+    resp = _post(client, EVENTS, {"events": [
+        _event(1, alarm_state="SOME_NEW_VISONIC_MODE", armed=True)
+    ]})
+    assert resp.json()["accepted"] == 1
+    stored = SecurityEvent.objects.get(event_id=1)
+    assert stored.alarm_state == "SOME_NEW_VISONIC"   # truncated to the column, not rejected
+    assert stored.armed is True
+
+
+@pytest.mark.django_db
+def test_a_repush_without_the_fields_does_not_clear_them(client):
+    """Same reasoning as drive_url: an absent key on a retry means "no news",
+    not "set it back to false"."""
+    _viewer()
+    _post(client, EVENTS, {"events": [_event(1, alarm_state="AWAY", armed=True)]})
+    _post(client, EVENTS, {"events": [_event(1)]})
+
+    stored = SecurityEvent.objects.get(event_id=1)
+    assert stored.armed is True
+    assert stored.alarm_state == "AWAY"
+
+
+@pytest.mark.django_db
+def test_armed_can_be_corrected_to_false_by_an_explicit_push(client):
+    """Explicit `armed: false` is a real value the house means, so it must be
+    written even though it is falsy."""
+    _viewer()
+    _post(client, EVENTS, {"events": [_event(1, alarm_state="AWAY", armed=True)]})
+    _post(client, EVENTS, {"events": [_event(1, alarm_state="DISARM", armed=False)]})
+
+    stored = SecurityEvent.objects.get(event_id=1)
+    assert stored.armed is False
+    assert stored.alarm_state == "DISARM"
+
+
+@pytest.mark.django_db
+def test_armed_is_not_signalled_by_colour_alone(client):
+    """Red is invisible to a red-green colour-blind reader, and this is the row
+    that most needs noticing, so it says so in words too."""
+    _viewer()
+    _post(client, EVENTS, {"events": [_event(1, alarm_state="AWAY", armed=True)]})
+    client.login(username="owner", password="p")
+    rows = _event_list(client.get(HOME).content.decode())
+
+    assert "הבית היה דרוך" in rows
+    assert 'title="alarm_state: AWAY"' in rows   # raw state kept for debugging
 
 
 @pytest.mark.django_db

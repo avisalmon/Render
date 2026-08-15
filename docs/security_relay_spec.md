@@ -218,6 +218,50 @@ the house.**
 - `kind` is an **open string**. Phase 1 uses `snapshot` and `resync`. Pass
   through any value; babook does not need to understand them.
 
+
+#### 7.2.1 `delete_incident` — deleting from the phone
+
+The only command that destroys anything, so the rule below matters more than
+the payload.
+
+```json
+{ "kind": "delete_incident", "params": { "event_ids": [14096, 14097] } }
+```
+
+**A request is not a deletion. Do not remove the row when the button is
+pressed.** Mark it *pending* and leave it exactly where it is. The sequence is:
+
+```
+phone -> babook   Delete pressed  ->  command queued, row marked "deleting..."
+house  -> babook   GET /commands   ->  collects it (within ~10 s)
+house              deletes locally, deletes the Drive file, acks the command
+house  -> babook   POST /deletions ->  NOW the row goes (§7.5)
+```
+
+If babook removed its own row on the press, and the house were offline or never
+picked the command up, the two would silently disagree — babook showing an
+incident as gone while it still exists at the house, which is the one thing a
+projection must never do. Leaving it pending is also self-healing: an offline
+house simply collects the request later.
+
+This keeps the property from §4.2 intact. babook still never deletes on its own
+authority; it *asks*, and the house — which is the source of truth — decides and
+reports back.
+
+**Please add a confirmation dialog.** This destroys the video, and nothing on
+babook can undo it.
+
+**Optional, cheap, and worth it:** also return any pending commands in the body
+of `POST /api/v1/security/events`. When events are flowing the house then picks
+a command up immediately instead of waiting for its next poll; the poll stays as
+the guaranteed floor on latency for quiet periods.
+
+**Why polling at all:** the house is behind CGNAT, so babook cannot open a
+connection to it — not "should not", *cannot*, there is no route. Every
+instruction has to be collected by the house. One `GET /commands` every ten
+seconds is ~8,600 requests a day of a few hundred bytes each, which is less
+traffic than a single snapshot upload.
+
 ### 7.3 `POST /api/v1/security/commands/{id}/ack`
 
 ```json

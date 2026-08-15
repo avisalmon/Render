@@ -67,7 +67,14 @@ Order of importance on the screen, deliberately:
 
   <div class="sec-list">
     {% for r in rows %}
-    <div class="sec-row sec-sev-{{ r.severity_class }}">
+    {% comment %}
+      REQ-11.10: the red row is driven by `armed` and nothing else. It is not
+      derived from alarm_state here or anywhere - HOME is a partial arm with
+      somebody inside, and "" means the panel was unreachable rather than
+      disarmed, so guessing would either turn every evening red or paint "we
+      could not tell" as "armed".
+    {% endcomment %}
+    <div class="sec-row sec-sev-{{ r.severity_class }}{% if r.armed %} sec-armed{% endif %}">
       {% comment %}
         The href stays a real link to the image: with JS off, or if the viewer
         script ever throws, tapping a thumbnail must still show the picture.
@@ -100,6 +107,17 @@ Order of importance on the screen, deliberately:
             {{ r.type }}: {{ r.who }}
             {% if r.severity_class == "warning" %}<i class="bi bi-exclamation-triangle-fill sec-ic-warn"></i>{% endif %}
             {% if r.severity_class == "critical" %}<i class="bi bi-exclamation-octagon-fill sec-ic-crit"></i>{% endif %}
+            {% comment %}
+              Colour alone should not carry meaning: red is invisible to a red-green
+              colour-blind reader, and this row is the one that most needs to be
+              noticed. The chip says the same thing in words, with the raw panel
+              state on hover for debugging.
+            {% endcomment %}
+            {% if r.armed %}
+            <span class="sec-armed-chip" title="alarm_state: {{ r.alarm_state|default:"?" }}">
+              <i class="bi bi-shield-lock-fill"></i> הבית היה דרוך
+            </span>
+            {% endif %}
           </div>
         </div>
 
@@ -219,10 +237,29 @@ Order of importance on the screen, deliberately:
   .sec-who { font-size: .95rem; }
   .sec-sev-warning .sec-who { color: var(--sec-warn); font-weight: 600; }
   .sec-sev-critical .sec-who { color: var(--sec-crit); font-weight: 700; }
-  .sec-sev-warning { background: rgba(255,193,7,.07); border-color: rgba(178,106,0,.35); }
-  .sec-sev-critical { background: rgba(220,53,69,.08); border-color: rgba(179,38,30,.4); }
+  {% comment %}
+    Severity deliberately has NO row background. The two signals travel on
+    separate channels - severity colours the text, armed colours the row - so
+    the background means exactly one thing. A critical row used to carry a
+    faint red tint, which put it in the same visual channel as an armed row and
+    made "we could not reach the panel" look like a weaker version of "the
+    house was armed and empty". That is the confusion relay_api.md §10 asks us
+    not to create.
+  {% endcomment %}
   .sec-ic-warn { color: var(--sec-warn); }
   .sec-ic-crit { color: var(--sec-crit); }
+
+  /* Armed: the alarm was fully set and the house empty, so whatever the camera
+     saw deserves a second look no matter who it turned out to be. Deliberately
+     a different channel from severity - severity colours the text, armed
+     colours the row - so a quiet `info` sighting of a known face still stands
+     out when it happened to an empty, armed house. Declared after the severity
+     rules so it wins the background on a row that is both. */
+  .sec-armed { background: rgba(220,53,69,.18); border-color: rgba(179,38,30,.6); }
+  .sec-armed-chip { display: inline-flex; align-items: center; gap: .25rem;
+                    font-size: .75rem; font-weight: 600; white-space: nowrap;
+                    color: #fff; background: var(--sec-crit);
+                    border-radius: 999px; padding: .1rem .5rem; margin-inline-start: .35rem; }
   .sec-watch { flex: none; font-size: .9rem; text-decoration: none; white-space: nowrap;
                padding: .35rem .6rem; border-radius: 8px; background: rgba(13,110,253,.1); }
 

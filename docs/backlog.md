@@ -1464,6 +1464,21 @@ a source of truth. Drop this database entirely and the house rebuilds it.
 | F-12.11 | View audit log (who opened the page, when) | REQ-11.2.4 | DONE ✅ |
 | F-12.12 | `render.yaml` env vars with `sync: false` | REQ-11.8.4 | DONE ✅ |
 
+### SPR-12.2 — the armed row (DONE ✅)
+
+Added to the contract by the home system on 2026-08-15 and built the same day.
+
+| ID | Item | REQ | Status |
+|---|---|---|---|
+| F-12.13 | `alarm_state` + `armed` fields, additive migration, both optional | REQ-11.10.3 | DONE ✅ |
+| F-12.14 | Red row background driven by `armed`, separate channel from severity | REQ-11.10.1 | DONE ✅ |
+| F-12.15 | Never derive `armed` from `alarm_state`; HOME, `""` and unknown states covered by tests | REQ-11.10.2 | DONE ✅ |
+| F-12.16 | "הבית היה דרוך" chip so the state is not signalled by colour alone | REQ-11.10.4 | DONE ✅ |
+
+**Blocked on the house, not on babook:** the watchlist is empty and the panel is
+cloud-only, so nothing goes red until the alarm is actually set to AWAY. The
+security team offered a synthetic `armed: true` event to prove the path.
+
 ### Standing agenda with the home-system team
 
 Two places babook is deliberately a superset of their document, both written up

@@ -1857,7 +1857,43 @@ decided silently.
    agree and no code change was needed. Whole-body 413 still applies to the §7.1
    limits: over 200 events, or over 10 MB.
 
-### 11.10 Definition of done
+### 11.10 The armed row (REQ-11.10)
+
+Added to the contract by the home system on 2026-08-15, and built the same day.
+Two optional event fields, both defaulting to absent-means-nothing:
+
+| Field | Meaning |
+|---|---|
+| `alarm_state` | Burglar-panel state at that moment: `DISARM`/`AWAY`/`HOME`/`ENTRY_DELAY`/`EXIT`, or `""` when the panel was unreachable. **Display and debugging only.** |
+| `armed` | Boolean. True only when the alarm was fully set **and the house empty**. **This is the one to render on.** |
+
+- **REQ-11.10.1** — When `armed` is true the whole row gets a red background.
+  This is a **separate channel from severity**: severity colours the text, armed
+  colours the row. A quiet `info` sighting of a known face still has to stand
+  out when it happened to an empty, armed house, because at that point *anything*
+  the cameras saw is worth a second look regardless of who it turned out to be.
+- **REQ-11.10.2 — Never derive `armed` from `alarm_state`.** The string is
+  Visonic's vocabulary; the boolean is the decision, already made at the house.
+  Keeping it that way means babook never has to learn that vocabulary, and what
+  counts as "armed" can change over there without another contract revision.
+  Three specific ways deriving it would go wrong, each covered by a test:
+  1. `HOME` is the **partial** arm, with somebody inside. Treat it as red and
+     every evening goes red, and the signal stops meaning anything.
+  2. `alarm_state: ""` means the cloud-only panel was **unreachable**, not
+     disarmed. This will happen regularly. "We could not tell" must never wear
+     the same colour as "armed".
+  3. Any state babook has not heard of is stored and displayed, never
+     interpreted.
+- **REQ-11.10.3** — Both fields are optional. Missing means `""` and `false`, so
+  older events and either rollout order are fine (REQ-11.5.4). An absent key on
+  a re-push means "no news" and leaves the stored value alone; an explicit
+  `armed: false` is a real correction and is written.
+- **REQ-11.10.4 — Not colour alone.** Red is invisible to a red-green
+  colour-blind reader, and this is the row that most needs noticing, so an armed
+  row also carries a "הבית היה דרוך" chip, with the raw `alarm_state` on hover
+  for debugging.
+
+### 11.11 Definition of done
 
 Their 15 acceptance items, plus babook's own. All covered by
 `tests/test_spr_12_1.py`.

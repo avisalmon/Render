@@ -118,6 +118,11 @@ def _row(event):
         "has_snapshot": bool(event.snapshot_path),
         "drive_url": event.drive_url or "",
         "incident_key": event.incident_key or "",
+        # Passed straight through from the house. `armed` is the only thing the
+        # red row keys off; `alarm_state` is shown for context and debugging and
+        # is never used to decide anything (REQ-11.9).
+        "armed": event.armed,
+        "alarm_state": event.alarm_state or "",
     }
 
 

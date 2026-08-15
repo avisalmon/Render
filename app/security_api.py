@@ -253,6 +253,27 @@ def _clean_event(raw):
 _ENRICHABLE = ("incident_key", "drive_url", "drive_file_id")
 
 
+def _apply_alarm(defaults, raw):
+    """Copy the burglar-panel fields across, verbatim and only when sent.
+
+    Membership is tested with `in`, not truthiness: `armed: false` and
+    `alarm_state: ""` are real values the house sends deliberately, and an
+    absent key on a re-push must leave whatever we already hold rather than
+    silently clearing it.
+
+    Note what this function does NOT do: it never looks at `alarm_state` to
+    decide `armed`. The string is Visonic's vocabulary and the boolean is the
+    decision, already made at the house (relay_api.md §10). Deriving it here
+    would mean babook had to know that HOME is a partial arm with somebody
+    inside, and that "" means the cloud-only panel was unreachable rather than
+    disarmed - and would go wrong the moment either of those changed.
+    """
+    if "alarm_state" in raw:
+        defaults["alarm_state"] = str(raw.get("alarm_state") or "")[:16]
+    if "armed" in raw:
+        defaults["armed"] = bool(raw.get("armed"))
+
+
 # ---------------------------------------------------------------------------
 # POST /api/v1/security/events   (REQ-11.4.1)
 # ---------------------------------------------------------------------------
@@ -288,6 +309,7 @@ def push_events(request):
         for field in _ENRICHABLE:
             if raw.get(field) is not None:
                 defaults[field] = str(raw[field])[:500]
+        _apply_alarm(defaults, raw)
 
         snapshot = raw.get("snapshot_b64")
         if snapshot:

@@ -42,6 +42,17 @@ class SecurityEvent(models.Model):
     unidentified = models.IntegerField(default=0)
     incident_key = models.CharField(max_length=64, blank=True, null=True, db_index=True)
 
+    # Burglar-panel state at that moment. Display and debugging only.
+    # DISARM / AWAY / HOME / ENTRY_DELAY / EXIT, or "" when the panel was
+    # unreachable - which is not the same as disarmed, and the panel is
+    # cloud-only so it happens regularly.
+    alarm_state = models.CharField(max_length=16, blank=True, default="")
+    # THE field to render on. True only when the alarm was fully set and the
+    # house empty. The house decides this; babook must never compute it from
+    # alarm_state, so that what counts as "armed" can change over there without
+    # a contract revision here (relay_api.md §10).
+    armed = models.BooleanField(default=False)
+
     # A link, never a file. babook stores no video in any form (REQ-11.1.1).
     drive_url = models.URLField(max_length=500, blank=True, null=True)
     drive_file_id = models.CharField(max_length=128, blank=True, null=True)
