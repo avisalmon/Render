@@ -68,8 +68,18 @@ Order of importance on the screen, deliberately:
   <div class="sec-list">
     {% for r in rows %}
     <div class="sec-row sec-{{ r.severity_class }}">
+      {% comment %}
+        The href stays a real link to the image: with JS off, or if the viewer
+        script ever throws, tapping a thumbnail must still show the picture.
+        The lightbox is an enhancement on top, not the only way in.
+      {% endcomment %}
       {% if snapshots_on and r.has_snapshot %}
-      <a href="{% url 'security_snapshot' r.event_id %}" target="_blank" rel="noopener" class="sec-thumb">
+      <a href="{% url 'security_snapshot' r.event_id %}" target="_blank" rel="noopener"
+         class="sec-thumb js-snap"
+         data-full="{% url 'security_snapshot' r.event_id %}"
+         data-caption="[{{ r.date }}] {{ r.time }} · {{ r.camera }} · {{ r.type }}: {{ r.who }}"
+         data-drive="{{ r.drive_url }}"
+         aria-label="הגדלת תמונה מ{{ r.camera }}">
         <img src="{% url 'security_snapshot' r.event_id %}" alt="" loading="lazy">
       </a>
       {% else %}
@@ -100,6 +110,48 @@ Order of importance on the screen, deliberately:
     {% empty %}
     <p class="text-muted text-center py-5 m-0">אין אירועים להצגה.</p>
     {% endfor %}
+  </div>
+
+  {% comment %}
+    Snapshot viewer (REQ-11.6.4). Hand-rolled and self-contained rather than a
+    lightbox library: the site's production static files run through WhiteNoise's
+    manifest storage, which fails the build on any asset reference it cannot
+    resolve, so a vendored dependency is a build risk this does not need.
+  {% endcomment %}
+  <div class="sec-viewer" id="sec-viewer" role="dialog" aria-modal="true"
+       aria-label="תצוגת תמונה" hidden>
+    <div class="sec-viewer-bar">
+      <button type="button" class="sec-vbtn" data-act="out" aria-label="הקטנה">
+        <i class="bi bi-zoom-out"></i>
+      </button>
+      <span class="sec-vzoom" id="sec-vzoom">100%</span>
+      <button type="button" class="sec-vbtn" data-act="in" aria-label="הגדלה">
+        <i class="bi bi-zoom-in"></i>
+      </button>
+      <button type="button" class="sec-vbtn" data-act="reset" aria-label="איפוס תצוגה">
+        <i class="bi bi-arrows-angle-contract"></i>
+      </button>
+      <a class="sec-vbtn" id="sec-vopen" href="#" target="_blank" rel="noopener"
+         aria-label="פתיחת המקור">
+        <i class="bi bi-box-arrow-up-right"></i>
+      </a>
+      <button type="button" class="sec-vbtn sec-vclose" data-act="close" aria-label="סגירה">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div class="sec-viewer-stage" id="sec-stage">
+      <img id="sec-vimg" alt="" draggable="false">
+    </div>
+
+    <button type="button" class="sec-vnav sec-vprev" data-act="prev" aria-label="הקודם">
+      <i class="bi bi-chevron-right"></i>
+    </button>
+    <button type="button" class="sec-vnav sec-vnext" data-act="next" aria-label="הבא">
+      <i class="bi bi-chevron-left"></i>
+    </button>
+
+    <div class="sec-viewer-caption" id="sec-vcap" dir="ltr"></div>
   </div>
 
   {% if page_obj.has_other_pages %}
@@ -154,6 +206,48 @@ Order of importance on the screen, deliberately:
   .sec-ic-warn { color: var(--sec-warn); }
   .sec-ic-crit { color: var(--sec-crit); }
   .sec-watch { flex: none; font-size: .85rem; text-decoration: none; white-space: nowrap; }
+  .sec-thumb.js-snap { cursor: zoom-in; }
+
+  /* ---- snapshot viewer ---- */
+  .sec-viewer { position: fixed; inset: 0; z-index: 2000; background: #000;
+                display: flex; align-items: center; justify-content: center; }
+  .sec-viewer[hidden] { display: none; }
+  .sec-viewer-stage { position: absolute; inset: 0; overflow: hidden;
+                      display: flex; align-items: center; justify-content: center;
+                      touch-action: none; cursor: grab; }
+  .sec-viewer-stage.is-panning { cursor: grabbing; }
+  /* Absolutely centred so the pan offset in the transform is plain screen
+     pixels rather than something relative to a flex box that moves as it
+     scales. */
+  .sec-viewer-stage img { position: absolute; top: 50%; left: 50%;
+                          max-width: 100%; max-height: 100%;
+                          transform-origin: center center; user-select: none;
+                          -webkit-user-drag: none; }
+
+  .sec-viewer-bar { position: absolute; top: 0; inset-inline: 0; z-index: 2;
+                    display: flex; align-items: center; gap: .25rem; padding: .5rem;
+                    background: linear-gradient(rgba(0,0,0,.75), transparent); }
+  .sec-vbtn { background: rgba(255,255,255,.12); color: #fff; border: 0;
+              border-radius: 8px; width: 40px; height: 40px; font-size: 1rem;
+              display: inline-flex; align-items: center; justify-content: center;
+              text-decoration: none; }
+  .sec-vbtn:hover, .sec-vbtn:focus-visible { background: rgba(255,255,255,.25); color: #fff; }
+  .sec-vclose { margin-inline-start: auto; }
+  .sec-vzoom { color: #fff; font-size: .8rem; min-width: 3.2rem; text-align: center;
+               font-variant-numeric: tabular-nums; }
+
+  .sec-vnav { position: absolute; top: 50%; transform: translateY(-50%); z-index: 2;
+              background: rgba(255,255,255,.12); color: #fff; border: 0;
+              border-radius: 999px; width: 44px; height: 44px; font-size: 1.2rem; }
+  .sec-vprev { inset-inline-start: .5rem; }
+  .sec-vnext { inset-inline-end: .5rem; }
+  .sec-vnav[disabled] { opacity: .25; }
+
+  .sec-viewer-caption { position: absolute; bottom: 0; inset-inline: 0; z-index: 2;
+                        color: #fff; font-size: .85rem; padding: .75rem;
+                        background: linear-gradient(transparent, rgba(0,0,0,.8));
+                        text-align: center; }
+  @media (max-width: 480px) { .sec-vnav { width: 38px; height: 38px; } }
 </style>
 
 <script>
@@ -184,6 +278,171 @@ Order of importance on the screen, deliberately:
       .catch(function () { /* offline is not an error worth shouting about */ });
   }
   setInterval(tick, 30000);
+})();
+
+// Snapshot viewer: open, zoom, pan, step between snapshots (REQ-11.6.4).
+(function () {
+  var viewer = document.getElementById('sec-viewer');
+  var stage = document.getElementById('sec-stage');
+  var img = document.getElementById('sec-vimg');
+  var cap = document.getElementById('sec-vcap');
+  var zoomLabel = document.getElementById('sec-vzoom');
+  var openOriginal = document.getElementById('sec-vopen');
+  var prevBtn = viewer.querySelector('[data-act="prev"]');
+  var nextBtn = viewer.querySelector('[data-act="next"]');
+  var thumbs = Array.prototype.slice.call(document.querySelectorAll('.js-snap'));
+  if (!thumbs.length) return;
+
+  var MIN = 1, MAX = 8;
+  var index = 0, scale = 1, tx = 0, ty = 0;
+  var lastFocus = null;
+  var pointers = new Map();
+  var pinchStart = 0, scaleStart = 1, panFrom = null;
+
+  function apply() {
+    // Keep the image inside the stage: pan is only meaningful over the
+    // overflow, so clamp to it rather than letting the picture drift away.
+    var box = stage.getBoundingClientRect();
+    var w = img.clientWidth * scale, h = img.clientHeight * scale;
+    var maxX = Math.max(0, (w - box.width) / 2);
+    var maxY = Math.max(0, (h - box.height) / 2);
+    tx = Math.min(maxX, Math.max(-maxX, tx));
+    ty = Math.min(maxY, Math.max(-maxY, ty));
+    img.style.transform = 'translate(-50%, -50%) translate(' + tx + 'px, ' + ty + 'px) scale(' + scale + ')';
+    zoomLabel.textContent = Math.round(scale * 100) + '%';
+    stage.style.cursor = scale > 1 ? 'grab' : 'zoom-in';
+  }
+
+  function setScale(next, originX, originY) {
+    var clamped = Math.min(MAX, Math.max(MIN, next));
+    if (clamped === scale) return;
+    if (originX !== undefined) {
+      // Zoom about the point under the fingers, not the centre, so the detail
+      // you are looking at stays under them.
+      var box = stage.getBoundingClientRect();
+      var dx = originX - (box.left + box.width / 2) - tx;
+      var dy = originY - (box.top + box.height / 2) - ty;
+      var ratio = clamped / scale;
+      tx -= dx * (ratio - 1);
+      ty -= dy * (ratio - 1);
+    }
+    scale = clamped;
+    if (scale === 1) { tx = 0; ty = 0; }
+    apply();
+  }
+
+  function show(i) {
+    index = (i + thumbs.length) % thumbs.length;
+    var t = thumbs[index];
+    img.src = t.dataset.full;
+    img.alt = t.dataset.caption || '';
+    cap.textContent = t.dataset.caption || '';
+    openOriginal.href = t.dataset.full;
+    scale = 1; tx = 0; ty = 0; apply();
+    var single = thumbs.length < 2;
+    prevBtn.disabled = single;
+    nextBtn.disabled = single;
+    prevBtn.hidden = single;
+    nextBtn.hidden = single;
+  }
+
+  function open(i, trigger) {
+    lastFocus = trigger || document.activeElement;
+    viewer.hidden = false;
+    document.body.style.overflow = 'hidden';
+    show(i);
+    viewer.querySelector('.sec-vclose').focus();
+  }
+
+  function close() {
+    viewer.hidden = true;
+    document.body.style.overflow = '';
+    img.removeAttribute('src');
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+
+  thumbs.forEach(function (t, i) {
+    t.addEventListener('click', function (e) {
+      e.preventDefault();
+      open(i, t);
+    });
+  });
+
+  viewer.addEventListener('click', function (e) {
+    var act = e.target.closest('[data-act]');
+    if (!act) return;
+    var kind = act.dataset.act;
+    if (kind === 'close') close();
+    else if (kind === 'in') setScale(scale * 1.5);
+    else if (kind === 'out') setScale(scale / 1.5);
+    else if (kind === 'reset') { scale = 1; tx = 0; ty = 0; apply(); }
+    else if (kind === 'prev') show(index - 1);
+    else if (kind === 'next') show(index + 1);
+  });
+
+  // Tapping the backdrop closes, but only when not zoomed in: at 3x a stray
+  // tap while panning should not throw you out of the picture.
+  stage.addEventListener('click', function (e) {
+    if (e.target === stage && scale === 1) close();
+  });
+
+  stage.addEventListener('dblclick', function (e) {
+    setScale(scale > 1 ? 1 : 2.5, e.clientX, e.clientY);
+  });
+
+  stage.addEventListener('wheel', function (e) {
+    e.preventDefault();
+    setScale(scale * (e.deltaY < 0 ? 1.15 : 1 / 1.15), e.clientX, e.clientY);
+  }, { passive: false });
+
+  stage.addEventListener('pointerdown', function (e) {
+    pointers.set(e.pointerId, e);
+    stage.setPointerCapture(e.pointerId);
+    if (pointers.size === 2) {
+      var pts = Array.from(pointers.values());
+      pinchStart = Math.hypot(pts[0].clientX - pts[1].clientX, pts[0].clientY - pts[1].clientY);
+      scaleStart = scale;
+    } else if (scale > 1) {
+      panFrom = { x: e.clientX, y: e.clientY, tx: tx, ty: ty };
+      stage.classList.add('is-panning');
+    }
+  });
+
+  stage.addEventListener('pointermove', function (e) {
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, e);
+    if (pointers.size === 2 && pinchStart) {
+      var pts = Array.from(pointers.values());
+      var dist = Math.hypot(pts[0].clientX - pts[1].clientX, pts[0].clientY - pts[1].clientY);
+      setScale(scaleStart * (dist / pinchStart),
+               (pts[0].clientX + pts[1].clientX) / 2,
+               (pts[0].clientY + pts[1].clientY) / 2);
+    } else if (panFrom) {
+      tx = panFrom.tx + (e.clientX - panFrom.x);
+      ty = panFrom.ty + (e.clientY - panFrom.y);
+      apply();
+    }
+  });
+
+  function endPointer(e) {
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) pinchStart = 0;
+    if (!pointers.size) { panFrom = null; stage.classList.remove('is-panning'); }
+  }
+  stage.addEventListener('pointerup', endPointer);
+  stage.addEventListener('pointercancel', endPointer);
+
+  document.addEventListener('keydown', function (e) {
+    if (viewer.hidden) return;
+    if (e.key === 'Escape') close();
+    else if (e.key === 'ArrowLeft') show(index + 1);   // RTL page: left is onward
+    else if (e.key === 'ArrowRight') show(index - 1);
+    else if (e.key === '+' || e.key === '=') setScale(scale * 1.5);
+    else if (e.key === '-') setScale(scale / 1.5);
+    else if (e.key === '0') { scale = 1; tx = 0; ty = 0; apply(); }
+  });
+
+  window.addEventListener('resize', apply);
 })();
 </script>
 {% endblock %}

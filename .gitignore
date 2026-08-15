@@ -18,6 +18,12 @@ staticfiles/
 # Exported video transcripts — local archive, not for the public repo
 data/course_transcripts/
 
+# Home security snapshots (Chapter 11). In production these live on the Render
+# disk at /var/data/security/, well outside the repo — but PERSISTENT_ROOT
+# defaults to BASE_DIR, so running the relay locally drops real pictures of the
+# inside of the house right here. They must never be committable.
+security/
+
 # SQLite WAL/SHM sidecar files
 *.sqlite3-wal
 *.sqlite3-shm

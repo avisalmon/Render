@@ -10,6 +10,7 @@ stops being able to tell Avi what is happening at his front door.
 import base64
 import json
 import os
+import re
 from datetime import timedelta
 
 import pytest
@@ -641,6 +642,77 @@ def test_snapshot_file_is_unreachable_without_permission(client, settings):
 
 
 @pytest.mark.django_db
+def test_snapshots_open_in_a_zoomable_viewer(client):
+    """REQ-11.6.4 — a thumbnail is 64px wide; seeing who was at the door means
+    being able to enlarge it."""
+    _viewer()
+    _post(client, EVENTS, {"events": [
+        _event(1, camera="Main enterance",
+               snapshot_b64=base64.b64encode(TINY_JPEG).decode())
+    ]})
+    client.login(username="owner", password="p")
+    html = client.get(HOME).content.decode()
+
+    assert 'id="sec-viewer"' in html
+    assert 'class="sec-thumb js-snap"' in html
+    assert 'data-full="/home/snapshot/1.jpg"' in html
+    assert "Main enterance" in html.split('data-caption="', 1)[1].split('"', 1)[0]
+    # Zoom controls, stepping, and a way out.
+    for act in ("in", "out", "reset", "prev", "next", "close"):
+        assert f'data-act="{act}"' in html
+
+
+@pytest.mark.django_db
+def test_the_thumbnail_still_works_without_javascript(client):
+    """The lightbox is an enhancement. With JS off, or if the viewer script
+    throws, tapping a thumbnail must still show the picture."""
+    _viewer()
+    _post(client, EVENTS, {"events": [
+        _event(1, snapshot_b64=base64.b64encode(TINY_JPEG).decode())
+    ]})
+    client.login(username="owner", password="p")
+    html = client.get(HOME).content.decode()
+
+    anchor = re.search(r"<a[^>]*js-snap[^>]*>", html, re.S).group(0)
+    assert 'href="/home/snapshot/1.jpg"' in anchor
+
+
+@pytest.mark.django_db
+def test_snapshot_is_privately_cacheable_but_never_shared(client):
+    """Cacheable in the owner's own browser so zooming does not refetch, but
+    `private` so no proxy or CDN ever holds a picture of the house."""
+    _viewer()
+    _post(client, EVENTS, {"events": [
+        _event(1, snapshot_b64=base64.b64encode(TINY_JPEG).decode())
+    ]})
+    client.login(username="owner", password="p")
+    resp = client.get("/home/snapshot/1.jpg")
+
+    assert resp["Cache-Control"] == "private, max-age=300"
+    assert "public" not in resp["Cache-Control"]
+    assert resp["X-Robots-Tag"].startswith("noindex")
+
+
+def test_the_page_template_pulls_in_no_external_assets():
+    """The production static pipeline is WhiteNoise manifest storage, which
+    fails the build on any asset reference it cannot resolve. The snapshot
+    viewer is hand-rolled for that reason, so this template must stay free of
+    third-party assets. Asserted against the template rather than the rendered
+    page, because base.html loads Bootstrap from a CDN and that is the site's
+    pre-existing choice, not this page's."""
+    from pathlib import Path
+    template = (
+        Path(__file__).resolve().parents[1]
+        / "templates" / "app" / "security_home.html"
+    ).read_text(encoding="utf-8")
+
+    assert "<script src=" not in template
+    assert "<link " not in template
+    for host in ("cdn.", "unpkg", "googleapis", "jsdelivr", "cdnjs"):
+        assert host not in template
+
+
+@pytest.mark.django_db
 def test_the_feed_poll_is_gated_too(client):
     """REQ-11.2.2 — the gate covers the page, its JSON and its files."""
     assert client.get("/home/feed.json").status_code == 404
@@ -691,6 +763,17 @@ def test_render_yaml_declares_the_secrets_without_syncing_them():
         after = text.split(key, 1)[1].split("- key:", 1)[0]
         assert "sync: false" in after
     assert TOKEN not in text
+
+
+def test_snapshots_can_never_be_committed_to_the_repo():
+    """REQ-11.7.2 — in production snapshots live on the Render disk at
+    /var/data/security/, safely outside the repo. But PERSISTENT_ROOT defaults
+    to BASE_DIR, so running the relay locally writes real pictures of the inside
+    of the house into the working tree, one `git add -A` from being published."""
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[1]
+    ignored = root.joinpath(".gitignore").read_text(encoding="utf-8").splitlines()
+    assert "security/" in [line.strip() for line in ignored]
 
 
 def test_upload_limit_allows_the_contract_batch_size(settings):

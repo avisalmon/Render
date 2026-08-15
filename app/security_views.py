@@ -266,4 +266,9 @@ def security_snapshot(request, event_id):
     path = os.path.join(settings.SECURITY_SNAPSHOT_DIR, event.snapshot_path)
     if not os.path.exists(path):
         raise Http404
-    return _no_index(FileResponse(open(path, "rb"), content_type="image/jpeg"))
+    response = _no_index(FileResponse(open(path, "rb"), content_type="image/jpeg"))
+    # `private` so no shared cache ever holds a picture of the house, but still
+    # cacheable in the viewer's own browser: the zoom viewer re-reads the same
+    # URL as the thumbnail, and no-store would refetch it on every open.
+    response["Cache-Control"] = "private, max-age=300"
+    return response
