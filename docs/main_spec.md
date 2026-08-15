@@ -1665,6 +1665,220 @@ on transparent (`logo_full.png` on the source site). **Tagline**: "מטצים �
 
 ---
 
+## Chapter 11 — Home Security Relay (`/home`)
+
+**Status:** built 2026-08-15 (EPIC-12). Contract version `v1`.
+
+### 11.0 What this is, and what owns the truth
+
+A private home security system runs on a PC at Avi's house: 7 Hikvision cameras,
+an NVR, GPU person-detection and face recognition. The house sits behind
+carrier-grade NAT, so **nothing can connect inward**. The house therefore dials
+out to babook and pushes its event log here. babook becomes the window onto that
+system from anywhere.
+
+> **babook is a projection, never a source of truth.** If this database were
+> dropped entirely the home system could rebuild it. Nothing here is
+> authoritative and nothing here may ever be the only copy of anything.
+
+**The interface contract is owned by the home-system repository**
+(`C:\Projects\Security\docs\relay_api.md`). A hand-off copy lives at
+[docs/security_relay_spec.md](security_relay_spec.md). **If this chapter and the
+home system's copy ever disagree, the home system's copy is right.** This chapter
+records how babook implements it and the few places babook deliberately went
+further; those are listed in §11.9 and are the standing agenda for the two teams.
+
+### 11.1 Hard boundaries (REQ-11.1)
+
+These are prohibitions, not preferences. Each is enforced by a test.
+
+- **REQ-11.1.1 — No video.** Never stored, never proxied, never streamed, not
+  even briefly. `drive_url` is rendered as a plain outbound link and nothing
+  else. Google Drive enforces its own access control on that link.
+- **REQ-11.1.2 — No route to the house.** babook holds no camera credentials, no
+  NVR address, and initiates nothing toward the house. The only channel to the
+  house is the command queue it collects on its own poll (§11.4.2).
+- **REQ-11.1.3 — No independent deletion.** babook never expires a row on its own
+  schedule. Rows die only when the house says so (§11.4.5).
+- **REQ-11.1.4 — No recomputation.** Severity, names and incident grouping arrive
+  already decided by the house. babook displays them. Deriving them again is
+  forbidden; styling them differently is fine.
+- **REQ-11.1.5 — No write API for humans.** The page is read-only. The only
+  writer is the house token.
+
+### 11.2 Access model (REQ-11.2)
+
+| Actor | Authenticates by | May |
+|---|---|---|
+| The house (one machine) | static bearer token | write everything, read the command queue |
+| Owner + delegated viewers | existing Google login | read the page only |
+| Everyone else, logged in or not | — | nothing; `/home` returns **404** |
+
+- **REQ-11.2.1** — The owner is `SECURITY_OWNER_EMAIL`. Additional viewers come
+  from `SECURITY_VIEWER_EMAILS`, a comma-separated list. Empty list, which is the
+  default, reproduces the home system's "exactly one human" rule precisely.
+  Matching is case-insensitive and checked against both `User.email` and the
+  addresses allauth has confirmed for that account.
+- **REQ-11.2.2** — Everyone else gets **404, never 403**, including anonymous
+  visitors: a login redirect would confirm the page exists. This covers the page,
+  its JSON feed and its snapshot files.
+- **REQ-11.2.3 — No discovery surface.** No nav entry except for permitted
+  viewers, no sitemap entry, no `robots.txt` mention (naming it there would
+  advertise it), no AI-search indexing, no breadcrumb, no appearance in any feed,
+  listing or search result. The page sends `X-Robots-Tag: noindex, nofollow`.
+- **REQ-11.2.4** — Every page view by a permitted viewer is recorded, so it is
+  possible to answer "who looked at my house, and when".
+
+### 11.3 Machine authentication (REQ-11.3)
+
+- **REQ-11.3.1** — `Authorization: Bearer <SECURITY_RELAY_TOKEN>` on every API
+  request. Token from a Render env var with `sync: false`, never in git.
+- **REQ-11.3.2** — Compared with `hmac.compare_digest`. A `==` comparison leaks
+  the token's length and prefix through timing.
+- **REQ-11.3.3** — Missing or wrong token → **401** with no hint as to which.
+  Token not configured on the server → 503.
+- **REQ-11.3.4** — CSRF-exempt (machine calls, not browser forms), HTTPS only.
+  `SECURE_SSL_REDIRECT` already forces this in production.
+
+### 11.4 The API (REQ-11.4)
+
+Base path `/api/v1/security/`, JSON in and out, UTF-8. Mirrors §5 of the home
+system's contract.
+
+- **REQ-11.4.1 — `POST events`.** Batch push, up to 200 events and 10 MB.
+  Idempotent upsert on `event_id`. Returns
+  `{"accepted": <created>, "updated": <updated>, "rejected": [...]}`.
+- **REQ-11.4.2 — `GET commands`.** Unacknowledged commands, oldest first, max 20.
+  Idle returns `200 {"commands": []}`, never 204, never an error. `kind` is an
+  open string passed through without interpretation.
+- **REQ-11.4.3 — `POST commands/{id}/ack`.** Idempotent: unknown or already-acked
+  ids return 200, because the house retries acks whose response it never saw.
+- **REQ-11.4.4 — `POST state`.** Overwrites one row, not a log. Its real purpose
+  is detecting silence (§11.6.1).
+- **REQ-11.4.5 — `POST deletions`.** Removes rows and their snapshot files.
+  Unknown ids are not an error.
+
+### 11.5 Contract rules babook must not get wrong (REQ-11.5)
+
+These are the six places two teams normally drift. Each maps to a test.
+
+- **REQ-11.5.1 — Idempotent upsert on `event_id`.** The same event *will* arrive
+  more than once; the house retries and flushes queues. Re-posting updates, never
+  duplicates, never errors.
+- **REQ-11.5.2 — Partial success.** 40 events with 2 malformed stores 38, lists 2
+  in `rejected`, returns 200. Rejecting the batch would make the house retry all
+  40 forever and the good 38 would never land.
+- **REQ-11.5.3 — Bad input is 4xx, never 5xx.** The house treats 5xx as "retry
+  forever" and 4xx as "this will never work, drop it". A malformed event answered
+  with 500 blocks the queue behind it indefinitely.
+- **REQ-11.5.4 — Unknown fields are ignored, not rejected**, so the two sides
+  deploy independently and neither blocks the other's release.
+- **REQ-11.5.5 — Time is explicit.** Timestamps carry a UTC offset. Stored as
+  given, displayed in Israel local time. A naive timestamp would silently shift
+  by an hour twice a year and the log would be quietly wrong.
+- **REQ-11.5.6 — Order by `ts`, not arrival.** Events arrive late and out of
+  order after the house reconnects. Gaps in `event_id` are normal.
+
+### 11.6 The page (REQ-11.6)
+
+One page, phone first, at `/home`.
+
+- **REQ-11.6.1 — Silence is the headline.** A green banner when the last `/state`
+  is fresh; **red and prominent** past `SECURITY_STALE_MINUTES` (default 15):
+  *"אין קשר כבר 34 דקות"*. This is the single most important thing the page can
+  tell you, and it is exactly the case where nothing arrives to announce itself:
+  an absent event stream looks identical to a quiet afternoon.
+- **REQ-11.6.2 — Event rows** newest first, in the home system's own format so
+  the two read alike: `[dd/mm/yy] hh:mm · Camera · person: Avi`, 24-hour, no
+  seconds.
+- **REQ-11.6.3 — Severity styling**: `info` neutral, `warning` amber, `critical`
+  red. Unknown values render neutral rather than failing (REQ-11.5.4).
+- **REQ-11.6.4 — Snapshot thumbnail** per row when present, served only to
+  permitted viewers from an authenticated view.
+- **REQ-11.6.5 — ▶ Watch** appears only when `drive_url` is set, as a plain link.
+- **REQ-11.6.6 — Filters** by day and by camera; paginated.
+- **REQ-11.6.7 — Refresh by polling** a small JSON endpoint every ~30s.
+  Deliberately not WebSockets: `render.yaml` starts `gunicorn mysite.wsgi`, which
+  is WSGI, so long-lived connections are unavailable. The deployment is not being
+  migrated to ASGI for this module; polling is entirely adequate.
+
+### 11.7 Snapshots (REQ-11.7)
+
+Enabled, per the owner's decision, with limits.
+
+- **REQ-11.7.1** — 200 KB cap per event.
+- **REQ-11.7.2** — Stored as files under `PERSISTENT_ROOT/security/`, **never
+  under `MEDIA_ROOT`**, which `mysite/urls.py` serves publicly with no auth.
+- **REQ-11.7.3** — The file is deleted when the row is deleted (§11.4.5).
+- **REQ-11.7.4 — Disk budget.** The Render disk is 1 GB and shared with the
+  site's own SQLite database. This module is the first thing here that grows
+  continuously. Past `SECURITY_SNAPSHOT_BUDGET_MB` (default 300) babook stops
+  writing new snapshot files and keeps storing the events; the page shows the
+  condition. Events are never lost to a full disk.
+- **REQ-11.7.5** — `SECURITY_SNAPSHOTS_ENABLED=0` turns imagery off entirely
+  without a code change.
+
+### 11.8 Storage and operations (REQ-11.8)
+
+- **REQ-11.8.1** — Rows in the existing SQLite database. `event_id` unique and
+  indexed, `ts` indexed; the query patterns are newest-first, by-day, by-camera
+  and upsert-by-event-id.
+- **REQ-11.8.2** — Migrations additive only. The two sides deploy independently.
+- **REQ-11.8.3** — `DATA_UPLOAD_MAX_MEMORY_SIZE` is raised to 11 MB site-wide,
+  because Django's 2.5 MB default would reject the contract's legitimate 10 MB
+  batch before any view ran.
+- **REQ-11.8.4** — Env vars in `render.yaml` with `sync: false`:
+  `SECURITY_RELAY_TOKEN`, `SECURITY_OWNER_EMAIL`, `SECURITY_VIEWER_EMAILS`.
+- **REQ-11.8.5** — Rate: 50–500 events/day, bursts to 200 on reconnect, one
+  `/commands` poll every 5–15s forever. Latency is not critical. babook may be
+  down for hours; the house queues and re-sends and nothing is lost.
+
+### 11.9 Where babook went beyond the contract
+
+Two deliberate divergences, both raised with the home-system team rather than
+decided silently. Until they are settled, the home system's document is
+authoritative and babook's behaviour here is the superset.
+
+1. **Multiple viewers.** Their §16.3 asks whether a second human will ever read
+   the page, noting it is far cheaper to allow for now than to retrofit. The
+   owner's answer is yes: family and delegated viewers. babook implements an
+   allow-list that is empty by default, so with no viewers configured the
+   behaviour is byte-identical to their one-user rule.
+2. **Oversized snapshots do not fail the batch.** Their §9 says a snapshot over
+   200 KB returns `413`, while their §8.2 requires partial success and their §8.3
+   makes any 4xx mean "drop this forever". Taken together, one 210 KB JPEG would
+   cause the house to permanently discard the other 199 good events in the batch.
+   babook instead **stores the event, drops the oversized snapshot**, and reports
+   it in a `warnings` array (which their §8.4 lets them ignore safely). Whole-body
+   413 still applies to the §7.1 limits: over 200 events, or over 10 MB.
+
+### 11.10 Definition of done
+
+Their 15 acceptance items, plus babook's own. All covered by
+`tests/test_spr_12_1.py`.
+
+1. Five endpoints exist and require the bearer token.
+2. Idempotency: the same batch twice gives one set of rows, `updated` reflects
+   the second call.
+3. Partial success: 3 events with 1 malformed stores 2, lists 1, returns 200.
+4. Bad input returns 4xx, never 5xx.
+5. Unknown extra fields are ignored, not rejected.
+6. Wrong or missing token → 401, compared in constant time.
+7. `GET commands` with nothing pending → `200 {"commands": []}`.
+8. Ack of an unknown id → 200.
+9. `POST deletions` removes rows and snapshot files; unknown ids are not errors.
+10. `/home` requires login; a non-owner account gets 404; so does anonymous.
+11. The no-contact banner appears past the stale threshold.
+12. Events display ordered by `ts`, not arrival order.
+13. ▶ Watch renders only when `drive_url` is present, as a plain link.
+14. No video is stored, proxied or streamed anywhere in the module.
+15. Env vars present in `render.yaml` with `sync: false`.
+16. A delegated viewer sees the page; removing them from the list restores 404.
+17. Snapshots are unreachable without permission and are not under `MEDIA_ROOT`.
+18. Over-limit batches (>200 events, >10 MB) return 413.
+
+---
+
 ## Reference
 
 - **Stack**: Django 5.2, Gunicorn, WhiteNoise, SQLite (Render disk), django-allauth (Google + GitHub OAuth), Bunny Stream (video), Stripe + Green Invoice (billing), Resend (email), Plausible (analytics), GitHub Copilot Business (seat provisioning via GitHub REST API), OpenAI API (AI chat, GPT-4o-mini / GPT-4o, gpt-4o-transcribe), yt-dlp + ffmpeg (authoring pipeline)

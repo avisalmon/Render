@@ -194,6 +194,10 @@
         {% if user.is_superuser %}
         <a href="{% url 'admin_dashboard' %}"><i class="bi bi-clipboard-data"></i> ניהול</a>
         {% endif %}
+        {# Chapter 11: security allow-list only. Not is_staff, not is_superuser. #}
+        {% if show_home_security %}
+        <a href="{% url 'security_home' %}"><i class="bi bi-house-lock"></i> הבית</a>
+        {% endif %}
         <hr class="site-drawer-sep">
         <form method="post" action="{% url 'logout' %}" class="m-0">{% csrf_token %}
           <button type="submit"><i class="bi bi-box-arrow-right"></i> יציאה</button>

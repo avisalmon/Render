@@ -1483,3 +1483,9 @@ from .matazim_models import (  # noqa: E402,F401
     ProgramMembership,
     School,
 )
+from .security_models import (  # noqa: E402,F401
+    SecurityCommand,
+    SecurityEvent,
+    SecurityState,
+    SecurityViewLog,
+)

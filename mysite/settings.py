@@ -176,6 +176,50 @@ BACKUP_TRIGGER_TOKEN = os.environ.get("BACKUP_TRIGGER_TOKEN", "")
 CAPTURE_TRIGGER_TOKEN = os.environ.get("CAPTURE_TRIGGER_TOKEN", "")
 
 # ---------------------------------------------------------------------------
+# Home Security Relay (Chapter 11 / EPIC-12)
+# ---------------------------------------------------------------------------
+# The house pushes its event log here over a static bearer token; /home shows it
+# to a very small allow-list of people. Every default below is the closed one:
+# with nothing configured the API answers 503 and the page 404s.
+
+# Machine token for the house. Render env var, sync: false, never in git.
+SECURITY_RELAY_TOKEN = os.environ.get("SECURITY_RELAY_TOKEN", "")
+
+# Who may read /home. The owner, plus an optional delegated list (REQ-11.2.1).
+# Leave SECURITY_VIEWER_EMAILS empty and this is exactly the home system's
+# "exactly one human" rule.
+SECURITY_OWNER_EMAIL = os.environ.get("SECURITY_OWNER_EMAIL", "").strip().lower()
+SECURITY_VIEWER_EMAILS = [
+    e.strip().lower()
+    for e in os.environ.get("SECURITY_VIEWER_EMAILS", "").split(",")
+    if e.strip()
+]
+
+# Snapshots: small JPEG per event (REQ-11.7). Files on the persistent disk,
+# deliberately NOT under MEDIA_ROOT, which is served publicly with no auth.
+SECURITY_SNAPSHOTS_ENABLED = os.environ.get("SECURITY_SNAPSHOTS_ENABLED", "1") != "0"
+SECURITY_SNAPSHOT_MAX_BYTES = int(os.environ.get("SECURITY_SNAPSHOT_MAX_BYTES", "204800"))
+SECURITY_SNAPSHOT_DIR = PERSISTENT_ROOT / "security"
+# The Render disk is 1 GB and shared with the site's own SQLite database. This
+# module is the first thing here that grows continuously, so the budget is not
+# optional. Past it, snapshots stop being written and events keep landing.
+SECURITY_SNAPSHOT_BUDGET_MB = int(os.environ.get("SECURITY_SNAPSHOT_BUDGET_MB", "300"))
+
+# How stale the last /state may get before /home shouts about it (REQ-11.6.1).
+SECURITY_STALE_MINUTES = int(os.environ.get("SECURITY_STALE_MINUTES", "15"))
+# The house is in Israel; TIME_ZONE above is UTC, so display converts.
+SECURITY_DISPLAY_TZ = os.environ.get("SECURITY_DISPLAY_TZ", "Asia/Jerusalem")
+
+# Contract limits (relay_api.md §5.1). Over either → 413.
+SECURITY_MAX_EVENTS_PER_REQUEST = 200
+SECURITY_MAX_BODY_BYTES = 10 * 1024 * 1024
+
+# Django's 2.5 MB default would reject the contract's legitimate 10 MB batch
+# before any view ran, and the house would read that as "drop it forever"
+# (REQ-11.8.3). Raised just enough to let a full snapshot batch through.
+DATA_UPLOAD_MAX_MEMORY_SIZE = 11 * 1024 * 1024
+
+# ---------------------------------------------------------------------------
 # GitHub Copilot seat management (SPR-1.6)
 # ---------------------------------------------------------------------------
 GITHUB_ORG = os.environ.get("GITHUB_ORG", "")

@@ -35,7 +35,13 @@ def community_ctx(request):
         dismissed = request.COOKIES.get("verify_banner_dismissed") == "1"
         seen_today = request.COOKIES.get("verify_banner_seen") == "1"
         show_verify = not has_social and not dismissed and not seen_today
+    # Chapter 11 / REQ-11.2.3: the הבית entry exists only for people on the
+    # security allow-list. Everyone else gets 404 on /home and must never see a
+    # link hinting the page is there at all.
+    from .security_views import can_view as can_view_security
+    show_home_security = can_view_security(request.user)
     return {
+        "show_home_security": show_home_security,
         "unread_notifications": Notification.objects.filter(
             user=request.user, read_at__isnull=True
         ).count(),

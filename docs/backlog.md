@@ -1432,6 +1432,64 @@ writing a second implementation.
 
 ---
 
+## EPIC-12 — Home Security Relay (`/home`)
+
+> **Status: DONE ✅ — built 2026-08-15.** Spec: Chapter 11. Contract `v1`, owned
+> by the home-system repo (`C:\Projects\Security\docs\relay_api.md`), hand-off
+> copy at `docs/security_relay_spec.md`. Tests: `tests/test_spr_12_1.py`.
+
+**What it is.** A private window onto Avi's home security system. The house is
+behind carrier-grade NAT so nothing can reach in; the house dials out and pushes
+its event log to babook, which stores it and shows it on one hidden page. **No
+video ever touches babook** — clips live in the owner's Google Drive and babook
+holds only a link.
+
+**The property that makes it safe to build fast:** babook is a projection, never
+a source of truth. Drop this database entirely and the house rebuilds it.
+
+### SPR-12.1 — the relay and the page (DONE ✅)
+
+| ID | Item | REQ | Status |
+|---|---|---|---|
+| F-12.1 | `SecurityEvent` / `SecurityCommand` / `SecurityState` models, `event_id` unique + `ts` indexed | REQ-11.8.1 | DONE ✅ |
+| F-12.2 | Bearer-token auth, constant-time compare, CSRF-exempt, 401 without a hint | REQ-11.3 | DONE ✅ |
+| F-12.3 | `POST events` — batch upsert, partial success, 200/10 MB limits | REQ-11.4.1 | DONE ✅ |
+| F-12.4 | `GET commands` + `POST commands/{id}/ack`, both idempotent | REQ-11.4.2/3 | DONE ✅ |
+| F-12.5 | `POST state` singleton + `POST deletions` (rows and snapshot files) | REQ-11.4.4/5 | DONE ✅ |
+| F-12.6 | `/home` page: status banner, event rows, severity styling, filters, pagination | REQ-11.6 | DONE ✅ |
+| F-12.7 | Access gate: owner + delegated viewers, 404 for everyone else including anonymous | REQ-11.2 | DONE ✅ |
+| F-12.8 | Snapshots: 200 KB cap, off-MEDIA_ROOT storage, authed serving, disk budget | REQ-11.7 | DONE ✅ |
+| F-12.9 | 30s JSON poll for new rows (no WebSocket — the deployment is WSGI) | REQ-11.6.7 | DONE ✅ |
+| F-12.10 | Nav entry visible only to permitted viewers; no sitemap, robots or search surface | REQ-11.2.3 | DONE ✅ |
+| F-12.11 | View audit log (who opened the page, when) | REQ-11.2.4 | DONE ✅ |
+| F-12.12 | `render.yaml` env vars with `sync: false` | REQ-11.8.4 | DONE ✅ |
+
+### Standing agenda with the home-system team
+
+Two places babook is deliberately a superset of their document, both written up
+in Chapter 11 §11.9 rather than decided silently:
+
+1. **Multiple viewers** — their §16.3 asked; the owner's answer is family plus
+   delegated viewers. The allow-list is empty by default, so an unconfigured
+   babook behaves exactly like their one-user rule.
+2. **Oversized snapshots do not fail the batch** — their §9 says 413, but their
+   §8.2 (partial success) and §8.3 (4xx means drop forever) together would make
+   one 210 KB JPEG cost the other 199 good events in the batch. babook stores the
+   event, drops the snapshot, and reports it in a `warnings` array.
+
+### Deliberately not built (their §15)
+
+Video hosting or transcoding; any direct connection to the house, cameras or NVR;
+babook-side retention or clean-up jobs; recomputing severity, incidents or faces;
+push notifications; any human write path. Each is a plausible good idea that
+would be wrong here.
+
+**Blocked on Avi:** set `SECURITY_RELAY_TOKEN` and `SECURITY_OWNER_EMAIL` in the
+Render dashboard. Until the token is set the API answers 503 and the page 404s,
+which is the correct closed default.
+
+---
+
 ## Status Summary (reconciled 2026-06-09)
 
 **Full regression: 356/356 passing (2026-06-12, incl. EPIC-3/4/5).** Per-sprint test counts: 1.1=19, 1.2=17,

@@ -33,6 +33,16 @@ services:
         sync: false
       - key: BACKUP_TRIGGER_TOKEN
         sync: false
+      # Chapter 11 - Home Security Relay. Secrets, never in git (REQ-11.8.4).
+      # Unset means the API answers 503 and /home 404s, which is the right
+      # closed default.
+      - key: SECURITY_RELAY_TOKEN
+        sync: false
+      - key: SECURITY_OWNER_EMAIL
+        sync: false
+      # Optional comma-separated delegated viewers. Empty = owner only.
+      - key: SECURITY_VIEWER_EMAILS
+        sync: false
     disk:
       name: mysite-disk
       mountPath: /var/data

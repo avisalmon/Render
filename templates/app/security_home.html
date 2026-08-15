@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% comment %}
+Home Security Relay - the one page (Chapter 11 / REQ-11.6).
+Phone first: this is mostly read on a phone, standing somewhere else.
+
+Order of importance on the screen, deliberately:
+  1. Is the system still talking to me?   <- the banner, red when it is not
+  2. What happened, newest first
+  3. Everything else
+{% endcomment %}
+{% block title %}הבית{% endblock %}
+
+{% block content %}
+<div class="container py-3 sec-home" style="max-width: 720px;">
+
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h4 m-0"><i class="bi bi-house-lock"></i> הבית</h1>
+    <span class="text-muted small">{{ page_obj.paginator.count }} אירועים</span>
+  </div>
+
+  {# REQ-11.6.1 - silence is the headline, not a footnote #}
+  <div id="sec-banner"
+       class="sec-banner {% if status.stale %}sec-banner-bad{% else %}sec-banner-ok{% endif %} mb-3">
+    <div class="sec-banner-line">
+      <span class="sec-dot"></span>
+      <strong id="sec-headline">{{ status.headline }}</strong>
+    </div>
+    {% if status.known %}
+    <div class="sec-banner-sub" id="sec-sub">
+      {{ status.cameras_online }}/{{ status.cameras_total }} מצלמות מחוברות
+      {% if status.disk_free_gb %} · {{ status.disk_free_gb|floatformat:0 }} ג'יגה פנויים{% endif %}
+      {% if status.notes %} · {{ status.notes }}{% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <a href="{% url 'security_home' %}" id="sec-new-pill" class="sec-new-pill d-none">
+    <i class="bi bi-arrow-clockwise"></i> יש אירועים חדשים · רענון
+  </a>
+
+  <form method="get" class="row g-2 mb-3">
+    <div class="col-6">
+      <input type="date" name="day" value="{{ day }}" class="form-control form-control-sm">
+    </div>
+    <div class="col-6">
+      <select name="camera" class="form-select form-select-sm" onchange="this.form.submit()">
+        <option value="">כל המצלמות</option>
+        {% for c in cameras %}
+        <option value="{{ c }}" {% if c == camera %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% if day or camera %}
+    <div class="col-12">
+      <a href="{% url 'security_home' %}" class="btn btn-sm btn-link px-0">ניקוי סינון</a>
+    </div>
+    {% endif %}
+  </form>
+
+  <div class="sec-list">
+    {% for r in rows %}
+    <div class="sec-row sec-{{ r.severity_class }}">
+      {% if snapshots_on and r.has_snapshot %}
+      <a href="{% url 'security_snapshot' r.event_id %}" target="_blank" rel="noopener" class="sec-thumb">
+        <img src="{% url 'security_snapshot' r.event_id %}" alt="" loading="lazy">
+      </a>
+      {% else %}
+      <span class="sec-thumb sec-thumb-empty"><i class="bi bi-camera-video"></i></span>
+      {% endif %}
+
+      <div class="sec-body">
+        <div class="sec-meta" dir="ltr">
+          [{{ r.date }}] {{ r.time }} · {{ r.camera }}
+        </div>
+        <div class="sec-who">
+          {{ r.type }}: {{ r.who }}
+          {% if r.severity_class == "warning" %}<i class="bi bi-exclamation-triangle-fill sec-ic-warn"></i>{% endif %}
+          {% if r.severity_class == "critical" %}<i class="bi bi-exclamation-octagon-fill sec-ic-crit"></i>{% endif %}
+        </div>
+      </div>
+
+      {% comment %}
+        REQ-11.6.5 / REQ-11.1.1 - a plain outbound link. babook never holds,
+        proxies or streams the video; Drive enforces its own access control.
+      {% endcomment %}
+      {% if r.drive_url %}
+      <a class="sec-watch" href="{{ r.drive_url }}" target="_blank" rel="noopener">
+        <i class="bi bi-play-fill"></i> צפייה
+      </a>
+      {% endif %}
+    </div>
+    {% empty %}
+    <p class="text-muted text-center py-5 m-0">אין אירועים להצגה.</p>
+    {% endfor %}
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <nav class="d-flex justify-content-between align-items-center mt-3">
+    {% if page_obj.has_previous %}
+      <a class="btn btn-sm btn-outline-secondary"
+         href="?page={{ page_obj.previous_page_number }}&day={{ day }}&camera={{ camera }}">חדש יותר</a>
+    {% else %}<span></span>{% endif %}
+    <span class="small text-muted">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a class="btn btn-sm btn-outline-secondary"
+         href="?page={{ page_obj.next_page_number }}&day={{ day }}&camera={{ camera }}">ישן יותר</a>
+    {% else %}<span></span>{% endif %}
+  </nav>
+  {% endif %}
+</div>
+
+<style>
+  .sec-home { --sec-warn: #b26a00; --sec-crit: #b3261e; }
+  .sec-banner { border-radius: 12px; padding: .75rem 1rem; border: 1px solid transparent; }
+  .sec-banner-ok  { background: #e9f7ec; border-color: #bfe3c8; color: #14532d; }
+  .sec-banner-bad { background: #fdecea; border-color: #f3b6b1; color: #7f1d1d; }
+  .sec-banner-line { display: flex; align-items: center; gap: .5rem; }
+  .sec-dot { width: .6rem; height: .6rem; border-radius: 50%; background: currentColor; flex: none; }
+  .sec-banner-bad .sec-dot { animation: secpulse 1.4s ease-in-out infinite; }
+  @keyframes secpulse { 50% { opacity: .25; } }
+  @media (prefers-reduced-motion: reduce) { .sec-banner-bad .sec-dot { animation: none; } }
+  .sec-banner-sub { font-size: .85rem; opacity: .85; margin-top: .2rem; }
+
+  .sec-new-pill { display: block; text-align: center; margin-bottom: .75rem; padding: .5rem;
+                  border-radius: 999px; background: #0d6efd; color: #fff; text-decoration: none;
+                  font-size: .9rem; }
+
+  /* The row is LTR inside an RTL site on purpose: its format is the home
+     system's own (`[dd/mm/yy] hh:mm - Camera - person: Avi`), camera names are
+     English, and the two UIs are meant to read alike. Hebrew inside a row
+     (לא מזוהה) still shapes correctly - bidi handles the run. */
+  .sec-row { display: flex; align-items: center; gap: .75rem; padding: .6rem .25rem;
+             border-bottom: 1px solid rgba(0,0,0,.08);
+             direction: ltr; text-align: left; }
+  .sec-thumb { flex: none; width: 64px; height: 48px; border-radius: 8px; overflow: hidden;
+               background: #f1f3f5; display: flex; align-items: center; justify-content: center; }
+  .sec-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .sec-thumb-empty { color: #adb5bd; }
+  .sec-body { flex: 1 1 auto; min-width: 0; }
+  .sec-meta { font-size: .8rem; color: #6c757d; font-variant-numeric: tabular-nums; }
+  .sec-who { font-size: .95rem; }
+  .sec-warning .sec-who { color: var(--sec-warn); font-weight: 600; }
+  .sec-critical .sec-who { color: var(--sec-crit); font-weight: 700; }
+  .sec-warning { background: rgba(255,193,7,.07); }
+  .sec-critical { background: rgba(220,53,69,.08); }
+  .sec-ic-warn { color: var(--sec-warn); }
+  .sec-ic-crit { color: var(--sec-crit); }
+  .sec-watch { flex: none; font-size: .85rem; text-decoration: none; white-space: nowrap; }
+</style>
+
+<script>
+// REQ-11.6.7 - a 30s poll, not a socket: the deployment is gunicorn on WSGI.
+// The banner is refreshed in place because staleness is the thing worth
+// knowing live; new rows only raise a pill, so nothing shifts under a thumb
+// that is mid-tap.
+(function () {
+  var seen = {{ newest_event_id }};
+  var banner = document.getElementById('sec-banner');
+  var headline = document.getElementById('sec-headline');
+  var sub = document.getElementById('sec-sub');
+  var pill = document.getElementById('sec-new-pill');
+
+  function tick() {
+    fetch('{% url "security_feed" %}', { headers: { 'X-Requested-With': 'fetch' } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!d) return;
+        headline.textContent = d.status.headline;
+        banner.classList.toggle('sec-banner-bad', !!d.status.stale);
+        banner.classList.toggle('sec-banner-ok', !d.status.stale);
+        if (sub && d.status.known) {
+          sub.textContent = d.status.cameras_online + '/' + d.status.cameras_total + ' מצלמות מחוברות';
+        }
+        if (d.newest_event_id > seen) pill.classList.remove('d-none');
+      })
+      .catch(function () { /* offline is not an error worth shouting about */ });
+  }
+  setInterval(tick, 30000);
+})();
+</script>
+{% endblock %}

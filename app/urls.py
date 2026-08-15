@@ -13,6 +13,8 @@ from . import (
     lab,
     matazim_views,
     onboarding_views,
+    security_api,
+    security_views,
     showcase_views,
     studio_views,
     tips_views,
@@ -288,4 +290,20 @@ urlpatterns = [
     path("api/v1/courses/sync/", course_api.sync_course, name="api_courses_sync"),
     path("api/v1/courses/<slug:slug>/", course_api.course_detail, name="api_courses_detail"),
     path("api/v1/media/upload/", course_api.upload_media, name="api_media_upload"),
+
+    # Chapter 11 - Home Security Relay. The page is deliberately absent from the
+    # sitemap, robots.txt and site search: everyone but the allow-list gets 404
+    # and should never learn it exists.
+    path("home/", security_views.security_home, name="security_home"),
+    path("home/feed.json", security_views.security_feed, name="security_feed"),
+    path("home/snapshot/<int:event_id>.jpg", security_views.security_snapshot,
+         name="security_snapshot"),
+
+    # Machine endpoints. The house is the only writer (REQ-11.4).
+    path("api/v1/security/events", security_api.push_events, name="security_api_events"),
+    path("api/v1/security/commands", security_api.get_commands, name="security_api_commands"),
+    path("api/v1/security/commands/<int:command_id>/ack", security_api.ack_command,
+         name="security_api_command_ack"),
+    path("api/v1/security/state", security_api.push_state, name="security_api_state"),
+    path("api/v1/security/deletions", security_api.push_deletions, name="security_api_deletions"),
 ]
