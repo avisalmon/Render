@@ -15,6 +15,7 @@ from datetime import timedelta
 
 import pytest
 from django.contrib.auth.models import User
+from django.test import Client
 from django.utils import timezone
 
 from app.security_models import (
@@ -151,12 +152,18 @@ def test_events_are_stored_and_upsert_is_idempotent(client):
     update, not duplicate and not error."""
     batch = {"events": [_event(1), _event(2)]}
 
+    def counts(resp):
+        # Field-wise rather than whole-dict: the body also carries `commands`
+        # (their §7.2.1 freebie), and this test is about the upsert.
+        body = resp.json()
+        return body["accepted"], body["updated"], body["rejected"]
+
     first = _post(client, EVENTS, batch)
     assert first.status_code == 200
-    assert first.json() == {"accepted": 2, "updated": 0, "rejected": []}
+    assert counts(first) == (2, 0, [])
 
     second = _post(client, EVENTS, batch)
-    assert second.json() == {"accepted": 0, "updated": 2, "rejected": []}
+    assert counts(second) == (0, 2, [])
     assert SecurityEvent.objects.count() == 2
 
 
@@ -664,6 +671,160 @@ def test_snapshots_open_in_a_zoomable_viewer(client):
     # Zoom controls, stepping, and a way out.
     for act in ("in", "out", "reset", "prev", "next", "close"):
         assert f'data-act="{act}"' in html
+
+
+# =========================================================================== delete
+@pytest.mark.django_db
+def test_pressing_delete_queues_a_command_and_removes_nothing(client):
+    """REQ-11.12 / their §7.2.1 — THE rule. If babook dropped the row on the
+    press and the house never collected the command, babook would show an
+    incident as gone while it still existed at the house. That silent
+    disagreement is the one thing a projection must never create."""
+    _viewer()
+    _post(client, EVENTS, {"events": [_event(1, camera="Main enterance")]})
+    client.login(username="owner", password="p")
+
+    resp = client.post("/home/1/delete/")
+    assert resp.status_code == 302
+
+    # The row is still here, and still visible.
+    event = SecurityEvent.objects.get(event_id=1)
+    assert event.delete_requested_at is not None
+    assert "Main enterance" in _event_list(client.get(HOME).content.decode())
+
+    # And the house has something to collect.
+    command = SecurityCommand.objects.get(kind="delete_incident")
+    assert command.params == {"event_ids": [1]}
+
+
+@pytest.mark.django_db
+def test_delete_takes_the_whole_incident(client):
+    """One person walking past three cameras is one incident, and leaving two
+    thirds of it behind is not what anybody means by "delete this"."""
+    _viewer()
+    _post(client, EVENTS, {"events": [
+        _event(1, incident_key="inc-9"), _event(2, incident_key="inc-9"),
+        _event(3, incident_key="inc-OTHER"),
+    ]})
+    client.login(username="owner", password="p")
+    client.post("/home/1/delete/")
+
+    assert SecurityCommand.objects.get(kind="delete_incident").params == {"event_ids": [1, 2]}
+    assert SecurityEvent.objects.get(event_id=3).delete_requested_at is None
+
+
+@pytest.mark.django_db
+def test_the_row_only_goes_when_the_house_says_so(client):
+    """The full sequence: press, queue, collect, then and only then /deletions."""
+    _viewer()
+    _post(client, EVENTS, {"events": [_event(1)]})
+    client.login(username="owner", password="p")
+    client.post("/home/1/delete/")
+
+    command = _get(client, COMMANDS).json()["commands"][0]
+    assert command["kind"] == "delete_incident"
+    assert SecurityEvent.objects.filter(event_id=1).exists()      # still here
+
+    _post(client, f"{COMMANDS}/{command['id']}/ack", {"status": "done"})
+    assert SecurityEvent.objects.filter(event_id=1).exists()      # STILL here
+
+    _post(client, DELETIONS, {"event_ids": [1]})
+    assert not SecurityEvent.objects.filter(event_id=1).exists()  # now it goes
+
+
+@pytest.mark.django_db
+def test_a_pending_row_shows_it_and_cannot_be_asked_twice(client):
+    _viewer()
+    _post(client, EVENTS, {"events": [_event(1)]})
+    client.login(username="owner", password="p")
+    client.post("/home/1/delete/")
+    rows = _event_list(client.get(HOME).content.decode())
+
+    assert "נמחק..." in rows
+    assert "sec-deleting" in rows
+    assert "security_request_delete" not in rows   # the button is gone
+
+
+@pytest.mark.django_db
+def test_a_failed_delete_releases_the_row(client):
+    """A delete the house could not carry out must not leave the row stuck
+    saying "deleting..." forever, with no way to ask again."""
+    _viewer()
+    _post(client, EVENTS, {"events": [_event(1)]})
+    client.login(username="owner", password="p")
+    client.post("/home/1/delete/")
+    command = SecurityCommand.objects.get(kind="delete_incident")
+
+    _post(client, f"{COMMANDS}/{command.pk}/ack", {"status": "failed", "detail": "drive 500"})
+    assert SecurityEvent.objects.get(event_id=1).delete_requested_at is None
+
+
+@pytest.mark.django_db
+def test_a_successful_ack_does_not_clear_the_pending_mark(client):
+    """Only /deletions proves the footage is actually gone at the house."""
+    _viewer()
+    _post(client, EVENTS, {"events": [_event(1)]})
+    client.login(username="owner", password="p")
+    client.post("/home/1/delete/")
+    command = SecurityCommand.objects.get(kind="delete_incident")
+
+    _post(client, f"{COMMANDS}/{command.pk}/ack", {"status": "done"})
+    assert SecurityEvent.objects.get(event_id=1).delete_requested_at is not None
+
+
+@pytest.mark.django_db
+def test_delete_is_gated_and_needs_a_post(client):
+    """The only human write path on the page, so it gets the same 404 as
+    everything else plus CSRF and method protection."""
+    _post(client, EVENTS, {"events": [_event(1)]})
+
+    assert client.post("/home/1/delete/").status_code == 404      # anonymous
+    User.objects.create_user("nosy", password="p", email="nosy@example.com", is_staff=True)
+    client.login(username="nosy", password="p")
+    assert client.post("/home/1/delete/").status_code == 404      # not on the list
+
+    _viewer()
+    client.login(username="owner", password="p")
+    assert client.get("/home/1/delete/").status_code == 405       # GET cannot destroy
+    assert SecurityCommand.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_delete_requires_a_csrf_token(client):
+    """It is a browser form, so unlike the machine API it is not CSRF-exempt."""
+    _viewer()
+    _post(client, EVENTS, {"events": [_event(1)]})
+    csrf_client = Client(enforce_csrf_checks=True)
+    csrf_client.login(username="owner", password="p")
+
+    assert csrf_client.post("/home/1/delete/").status_code == 403
+    assert SecurityCommand.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_the_delete_button_asks_before_destroying(client):
+    """Their §7.2.1 asks for a confirmation: this destroys the video and
+    nothing on babook can undo it."""
+    _viewer()
+    _post(client, EVENTS, {"events": [_event(1)]})
+    client.login(username="owner", password="p")
+    rows = _event_list(client.get(HOME).content.decode())
+
+    assert "onsubmit=\"return confirm(" in rows
+    assert "csrfmiddlewaretoken" in rows
+
+
+@pytest.mark.django_db
+def test_events_response_carries_pending_commands(client):
+    """Their §7.2.1 freebie — the house acts on a queued delete immediately
+    instead of waiting for its next poll, while the poll stays the floor."""
+    SecurityCommand.objects.create(kind="delete_incident", params={"event_ids": [1]})
+    body = _post(client, EVENTS, {"events": [_event(1)]}).json()
+
+    assert [c["kind"] for c in body["commands"]] == ["delete_incident"]
+    # Idle stays quiet rather than growing a noisy key.
+    SecurityCommand.objects.all().update(acked_at=timezone.now())
+    assert _post(client, EVENTS, {"events": [_event(2)]}).json()["commands"] == []
 
 
 # =========================================================================== armed

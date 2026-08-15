@@ -61,6 +61,14 @@ class SecurityEvent(models.Model):
     # under MEDIA_ROOT - that path is served publicly with no auth (REQ-11.7.2).
     snapshot_path = models.CharField(max_length=255, blank=True)
 
+    # Set when the owner presses Delete. A request is NOT a deletion: the row
+    # stays exactly where it is, marked pending, until the house collects the
+    # command, destroys the footage at its end, and calls /deletions. Removing
+    # it here on the press would let babook show an incident as gone while it
+    # still existed at the house, which is the one thing a projection must
+    # never do (relay_api.md §5.2.1).
+    delete_requested_at = models.DateTimeField(null=True, blank=True)
+
     # babook's own receipt time, for debugging clock skew against `ts`.
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

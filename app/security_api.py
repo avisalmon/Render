@@ -337,6 +337,11 @@ def push_events(request):
         # Not in the contract. Their §8.4 lets the house ignore it safely, and
         # it beats silently discarding an oversized snapshot.
         body["warnings"] = warnings
+    # Their §7.2.1 freebie: hand back anything queued so the house acts on it
+    # now rather than on its next poll. The 10s poll stays the guaranteed floor
+    # for quiet periods; this just shortens the wait while events are flowing,
+    # which is exactly when a delete is most likely to have just been pressed.
+    body["commands"] = _pending_commands()
     return JsonResponse(body)
 
 
@@ -344,28 +349,30 @@ def push_events(request):
 # GET /api/v1/security/commands   (REQ-11.4.2)
 # ---------------------------------------------------------------------------
 
+def _pending_commands(limit=20):
+    """Unacknowledged commands, oldest first, marked delivered as they go out."""
+    pending = list(SecurityCommand.objects.filter(acked_at__isnull=True).order_by("id")[:limit])
+    undelivered = [c.pk for c in pending if c.delivered_at is None]
+    if undelivered:
+        SecurityCommand.objects.filter(pk__in=undelivered).update(delivered_at=timezone.now())
+    return [
+        {
+            "id": c.pk,
+            "kind": c.kind,
+            "params": c.params or {},
+            "created_at": c.created_at.isoformat(),
+        }
+        for c in pending
+    ]
+
+
 @csrf_exempt
 @require_GET
 @require_relay_token
 def get_commands(request):
     """The only channel toward the house. Idle is 200 with an empty list, never
     204 and never an error - the house polls this every 5-15 seconds forever."""
-    pending = list(SecurityCommand.objects.filter(acked_at__isnull=True).order_by("id")[:20])
-    now = timezone.now()
-    undelivered = [c.pk for c in pending if c.delivered_at is None]
-    if undelivered:
-        SecurityCommand.objects.filter(pk__in=undelivered).update(delivered_at=now)
-    return JsonResponse({
-        "commands": [
-            {
-                "id": c.pk,
-                "kind": c.kind,
-                "params": c.params or {},
-                "created_at": c.created_at.isoformat(),
-            }
-            for c in pending
-        ]
-    })
+    return JsonResponse({"commands": _pending_commands()})
 
 
 # ---------------------------------------------------------------------------
@@ -390,6 +397,16 @@ def ack_command(request, command_id):
         command.ack_status = status
         command.ack_detail = detail
         command.save(update_fields=["acked_at", "ack_status", "ack_detail"])
+
+        # A delete the house could not carry out must not leave the row stuck
+        # saying "deleting..." forever. Clearing the mark puts the incident
+        # back in the owner's hands so they can ask again. A successful delete
+        # is NOT cleared here: the row keeps saying pending until /deletions
+        # actually removes it, which is the only thing that proves the footage
+        # is gone at the house (relay_api.md §5.2.1).
+        if command.kind == "delete_incident" and status == "failed":
+            ids = (command.params or {}).get("event_ids") or []
+            SecurityEvent.objects.filter(event_id__in=ids).update(delete_requested_at=None)
     return JsonResponse({"ok": True, "id": command_id})
 
 

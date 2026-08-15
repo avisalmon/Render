@@ -74,7 +74,7 @@ Order of importance on the screen, deliberately:
       disarmed, so guessing would either turn every evening red or paint "we
       could not tell" as "armed".
     {% endcomment %}
-    <div class="sec-row sec-sev-{{ r.severity_class }}{% if r.armed %} sec-armed{% endif %}">
+    <div class="sec-row sec-sev-{{ r.severity_class }}{% if r.armed %} sec-armed{% endif %}{% if r.delete_pending %} sec-deleting{% endif %}">
       {% comment %}
         The href stays a real link to the image: with JS off, or if the viewer
         script ever throws, tapping a thumbnail must still show the picture.
@@ -129,6 +129,29 @@ Order of importance on the screen, deliberately:
         <a class="sec-watch" href="{{ r.drive_url }}" target="_blank" rel="noopener">
           <i class="bi bi-play-fill"></i> צפייה
         </a>
+        {% endif %}
+
+        {% comment %}
+          REQ-11.12: this asks the house to destroy the incident, it does not
+          delete anything here. Once pressed the row stays put wearing the
+          pending chip until the house reports the footage actually gone.
+          The confirm() is required by their §7.2.1 - this destroys the video
+          and nothing on babook can undo it.
+        {% endcomment %}
+        {% if r.delete_pending %}
+        <span class="sec-pending" title="ממתין לאישור מהבית">
+          <i class="bi bi-hourglass-split"></i> נמחק...
+        </span>
+        {% else %}
+        <form method="post" action="{% url 'security_request_delete' r.event_id %}"
+              class="m-0"
+              onsubmit="return confirm('למחוק את האירוע הזה? הפעולה מוחקת את הווידאו בבית ובדרייב ואי אפשר לבטל אותה.');">
+          {% csrf_token %}
+          <input type="hidden" name="back" value="{{ request.GET.urlencode }}">
+          <button type="submit" class="sec-del" aria-label="מחיקת האירוע">
+            <i class="bi bi-trash3"></i>
+          </button>
+        </form>
         {% endif %}
       </div>
     </div>
@@ -256,6 +279,15 @@ Order of importance on the screen, deliberately:
      out when it happened to an empty, armed house. Declared after the severity
      rules so it wins the background on a row that is both. */
   .sec-armed { background: rgba(220,53,69,.18); border-color: rgba(179,38,30,.6); }
+  /* Asked for, not yet done. The row is dimmed rather than removed, because
+     until the house reports back the footage still exists over there. */
+  .sec-deleting { opacity: .55; }
+  .sec-pending { flex: none; display: inline-flex; align-items: center; gap: .25rem;
+                 font-size: .8rem; color: #6c757d; white-space: nowrap; }
+  .sec-del { flex: none; border: 0; background: none; color: #adb5bd;
+             font-size: 1rem; padding: .35rem .5rem; border-radius: 8px; line-height: 1; }
+  .sec-del:hover, .sec-del:focus-visible { color: var(--sec-crit); background: rgba(220,53,69,.1); }
+
   .sec-armed-chip { display: inline-flex; align-items: center; gap: .25rem;
                     font-size: .75rem; font-weight: 600; white-space: nowrap;
                     color: #fff; background: var(--sec-crit);

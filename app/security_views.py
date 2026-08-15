@@ -22,10 +22,17 @@ from django.conf import settings
 from django.core.paginator import Paginator
 from django.db.models.functions import Lower
 from django.http import FileResponse, Http404, JsonResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
-from .security_models import SecurityEvent, SecurityState, SecurityViewLog
+from .security_models import (
+    SecurityCommand,
+    SecurityEvent,
+    SecurityState,
+    SecurityViewLog,
+)
 
 PAGE_SIZE = 50
 
@@ -123,6 +130,9 @@ def _row(event):
         # is never used to decide anything (REQ-11.9).
         "armed": event.armed,
         "alarm_state": event.alarm_state or "",
+        # Asked for, not yet carried out. The row stays until the house says
+        # the footage is actually gone (REQ-11.12).
+        "delete_pending": event.delete_requested_at is not None,
     }
 
 
@@ -255,6 +265,41 @@ def security_feed(request):
 # ---------------------------------------------------------------------------
 # GET /home/snapshot/<event_id>.jpg  (REQ-11.7.2)
 # ---------------------------------------------------------------------------
+
+@require_POST
+def security_request_delete(request, event_id):
+    """Ask the house to destroy an incident. Deletes nothing here (REQ-11.12).
+
+    The row is marked pending and stays exactly where it is. The house collects
+    the command on its next poll, deletes the footage locally and in Drive,
+    and calls /deletions - and only then does the row go. Removing it on the
+    press would let babook show an incident as gone while it still existed at
+    the house, which is precisely the disagreement a projection must never
+    create. It is also self-healing: an offline house just collects the request
+    whenever it comes back.
+    """
+    _gate(request)
+    event = SecurityEvent.objects.filter(event_id=event_id).first()
+    if not event:
+        raise Http404
+
+    # Delete the whole incident, not one frame of it. One person walking past
+    # three cameras is one incident, and leaving two thirds of it behind is not
+    # what anybody means by "delete this".
+    if event.incident_key:
+        targets = SecurityEvent.objects.filter(incident_key=event.incident_key)
+    else:
+        targets = SecurityEvent.objects.filter(event_id=event.event_id)
+    ids = sorted(targets.values_list("event_id", flat=True))
+
+    SecurityCommand.objects.create(kind="delete_incident", params={"event_ids": ids})
+    targets.update(delete_requested_at=timezone.now())
+    SecurityViewLog.objects.create(
+        email=(request.user.email or "")[:254],
+        path=f"/home delete-request {ids}"[:120],
+    )
+    return redirect(f"{reverse('security_home')}?{request.POST.get('back', '')}")
+
 
 def security_snapshot(request, event_id):
     """Served through an authenticated view on purpose.

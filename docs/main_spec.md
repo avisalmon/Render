@@ -1703,8 +1703,11 @@ These are prohibitions, not preferences. Each is enforced by a test.
 - **REQ-11.1.4 — No recomputation.** Severity, names and incident grouping arrive
   already decided by the house. babook displays them. Deriving them again is
   forbidden; styling them differently is fine.
-- **REQ-11.1.5 — No write API for humans.** The page is read-only. The only
-  writer is the house token.
+- **REQ-11.1.5 — Humans get exactly one write path, and it writes nothing to the
+  log.** Amended 2026-08-15: the page was read-only until the home system added
+  `delete_incident`. The owner may now *ask* for an incident to be destroyed
+  (§11.12), which queues a command; it does not modify or remove any event. The
+  only writer to the event log itself is still the house token.
 
 ### 11.2 Access model (REQ-11.2)
 
@@ -1919,6 +1922,41 @@ Their 15 acceptance items, plus babook's own. All covered by
 18. Over-limit batches (>200 events, >10 MB) return 413.
 
 ---
+
+### 11.12 Deleting an incident (REQ-11.12)
+
+Added to the contract by the home system on 2026-08-15 and built the same day.
+It is the only thing on this page that destroys anything, and the only human
+write path in the module.
+
+- **REQ-11.12.1 — A request is not a deletion.** Pressing Delete queues a
+  `delete_incident` command and marks the row *pending*. **The row does not
+  move.** The sequence is: press → command queued → the house collects it
+  within ~10s → the house deletes locally and in Drive → the house acks → the
+  house calls `/deletions` → **only then** does the row go.
+- **REQ-11.12.2 — Why, and it is the whole reason.** If babook removed its own
+  row on the press and the house were offline or never collected the command,
+  the two would silently disagree: babook showing an incident as gone while it
+  still existed at the house. That is exactly the failure a projection must
+  never produce. Leaving it pending is also self-healing, since an offline house
+  simply collects the request when it returns.
+- **REQ-11.12.3 — The whole incident, not one frame.** One person walking past
+  three cameras is one incident; the command carries every `event_id` sharing
+  that `incident_key`.
+- **REQ-11.12.4 — Confirmation required.** This destroys the video and nothing
+  on babook can undo it.
+- **REQ-11.12.5 — A failed ack releases the row.** If the house acks
+  `delete_incident` with `failed`, the pending mark is cleared so the owner can
+  ask again rather than staring at a row stuck on "deleting..." forever. A
+  *successful* ack does **not** clear it: only `/deletions` proves the footage
+  is actually gone.
+- **REQ-11.12.6 — Same gate, plus browser protections.** 404 for anyone not on
+  the allow-list, POST only, and CSRF-protected. It is a browser form, so unlike
+  the machine API it is deliberately **not** CSRF-exempt.
+- **REQ-11.12.7 — Commands ride along with `/events`.** The response to
+  `POST /events` also carries any pending commands, so the house acts on a
+  queued delete immediately instead of waiting for its next poll. The 10s poll
+  remains the guaranteed floor for quiet periods.
 
 ## Reference
 

@@ -1479,6 +1479,24 @@ Added to the contract by the home system on 2026-08-15 and built the same day.
 cloud-only, so nothing goes red until the alarm is actually set to AWAY. The
 security team offered a synthetic `armed: true` event to prove the path.
 
+### SPR-12.3 — deleting an incident from the phone (DONE ✅)
+
+| ID | Item | REQ | Status |
+|---|---|---|---|
+| F-12.17 | Delete button queues a `delete_incident` command and removes nothing | REQ-11.12.1 | DONE ✅ |
+| F-12.18 | Row marked pending and left in place until `/deletions` arrives | REQ-11.12.2 | DONE ✅ |
+| F-12.19 | The whole incident goes, every `event_id` sharing the `incident_key` | REQ-11.12.3 | DONE ✅ |
+| F-12.20 | Confirmation dialog before a destructive, unundoable action | REQ-11.12.4 | DONE ✅ |
+| F-12.21 | A `failed` ack releases the row; a `done` ack does not | REQ-11.12.5 | DONE ✅ |
+| F-12.22 | Allow-list gate, POST only, CSRF-protected (not exempt, it is a browser form) | REQ-11.12.6 | DONE ✅ |
+| F-12.23 | Pending commands returned in the `POST /events` body so the house acts at once | REQ-11.12.7 | DONE ✅ |
+
+**Note for the record:** this is the first human write path in the module and it
+reverses the original "the page is read-only to humans" rule, which came from
+their own §15. REQ-11.1.5 is amended rather than deleted, because the underlying
+property still holds: the owner *asks*, the house decides, and the event log
+still has exactly one writer.
+
 ### Standing agenda with the home-system team
 
 Two places babook is deliberately a superset of their document, both written up

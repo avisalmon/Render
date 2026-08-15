@@ -298,6 +298,9 @@ urlpatterns = [
     path("home/feed.json", security_views.security_feed, name="security_feed"),
     path("home/snapshot/<int:event_id>.jpg", security_views.security_snapshot,
          name="security_snapshot"),
+    # Queues a delete_incident command. Deletes nothing itself (REQ-11.12).
+    path("home/<int:event_id>/delete/", security_views.security_request_delete,
+         name="security_request_delete"),
 
     # Machine endpoints. The house is the only writer (REQ-11.4).
     path("api/v1/security/events", security_api.push_events, name="security_api_events"),
