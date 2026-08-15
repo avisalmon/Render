@@ -168,7 +168,9 @@ The primary endpoint. The house pushes one or more events.
       "incident_key": "inc-14090",
       "drive_url": null,
       "drive_file_id": null,
-      "snapshot_b64": null
+      "snapshot_b64": null,
+      "alarm_state": "AWAY",
+      "armed": true
     }
   ]
 }
@@ -188,6 +190,9 @@ The primary endpoint. The house pushes one or more events.
 | `drive_url` | — | string or null |
 | `drive_file_id` | — | string or null, needed for deletion |
 | `snapshot_b64` | — | base64 JPEG, only if §9 enabled |
+| `alarm_state` | — | burglar-panel state at that moment: `DISARM`/`AWAY`/`HOME`/`ENTRY_DELAY`/`EXIT`, or `""` when unknown |
+| `armed` | — | boolean. **This is the one to render on.** True only when the house was armed *and empty* |
+
 
 **Response `200`**
 
@@ -362,6 +367,24 @@ One page. One user. Phone first — it will mostly be read on a phone.
    `[dd/mm/yy] hh:mm · Camera · person: Avi`
    24-hour clock, no seconds.
 3. **Severity styling**: `info` neutral · `warning` amber · `critical` red.
+3a. **Armed background (new).** When `armed` is `true`, give the whole row a
+   **red background** — distinct from the severity text colour in 3, which
+   stays as it is. `armed` means the burglar alarm was fully set and the house
+   was empty, so *anything* the cameras saw is worth a second look regardless of
+   who it turned out to be.
+
+   **Render on `armed`, not on `alarm_state`.** The string is there for display
+   and debugging; the boolean is the decision, already made by the house. That
+   way babook never has to learn Visonic's vocabulary, and what counts as
+   "armed" can change without a contract revision.
+
+   Three things it must NOT do:
+   - `HOME` is the **partial** arm with somebody inside. `armed` is already
+     `false` for it — do not treat it as red, or every evening goes red.
+   - `alarm_state: ""` means the panel was **unreachable**, not disarmed. The
+     panel is cloud-only, so this will happen. `armed` is `false`; never paint
+     "we could not tell" the same colour as "armed".
+   - Do not derive `armed` yourself from `alarm_state`.
 4. **Snapshot thumbnail** per row when present (§9).
 5. **▶ Watch** when `drive_url` is set. A plain link — it opens Google Drive,
    which enforces its own access control, so it works only in the owner's
