@@ -214,13 +214,13 @@ Order of importance on the screen, deliberately:
   .sec-viewer[hidden] { display: none; }
   .sec-viewer-stage { position: absolute; inset: 0; overflow: hidden;
                       display: flex; align-items: center; justify-content: center;
-                      touch-action: none; cursor: grab; }
+                      touch-action: none; cursor: default; }
   .sec-viewer-stage.is-panning { cursor: grabbing; }
-  /* Absolutely centred so the pan offset in the transform is plain screen
-     pixels rather than something relative to a flex box that moves as it
-     scales. */
-  .sec-viewer-stage img { position: absolute; top: 50%; left: 50%;
-                          max-width: 100%; max-height: 100%;
+  /* Fills the stage and letterboxes, so a small snapshot is shown as large as
+     it will go rather than stranded in the middle of a black field. The pan
+     offset in the transform is then plain screen pixels. */
+  .sec-viewer-stage img { position: absolute; inset: 0;
+                          width: 100%; height: 100%; object-fit: contain;
                           transform-origin: center center; user-select: none;
                           -webkit-user-drag: none; }
 
@@ -297,20 +297,53 @@ Order of importance on the screen, deliberately:
   var index = 0, scale = 1, tx = 0, ty = 0;
   var lastFocus = null;
   var pointers = new Map();
-  var pinchStart = 0, scaleStart = 1, panFrom = null;
+  var pinchStart = 0, scaleStart = 1, panFrom = null, dragged = false;
+
+  // The <img> box fills the stage and letterboxes, so the element's rectangle
+  // is NOT where the picture is. Everything below works off the drawn picture
+  // instead, which is what the eye and the pointer are actually aiming at.
+  function baseSize() {
+    var box = stage.getBoundingClientRect();
+    var nw = img.naturalWidth, nh = img.naturalHeight;
+    if (!nw || !nh) return { w: box.width, h: box.height };
+    var fit = Math.min(box.width / nw, box.height / nh);
+    return { w: nw * fit, h: nh * fit };
+  }
+
+  function pictureRect() {
+    var box = stage.getBoundingClientRect();
+    var base = baseSize();
+    var w = base.w * scale, h = base.h * scale;
+    return {
+      left: box.left + (box.width - w) / 2 + tx,
+      top: box.top + (box.height - h) / 2 + ty,
+      right: box.left + (box.width + w) / 2 + tx,
+      bottom: box.top + (box.height + h) / 2 + ty
+    };
+  }
+
+  function overPicture(x, y) {
+    var r = pictureRect();
+    return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+  }
 
   function apply() {
-    // Keep the image inside the stage: pan is only meaningful over the
-    // overflow, so clamp to it rather than letting the picture drift away.
+    // Pan is only meaningful over the overflow, so clamp to it rather than
+    // letting the picture drift off into the black.
     var box = stage.getBoundingClientRect();
-    var w = img.clientWidth * scale, h = img.clientHeight * scale;
-    var maxX = Math.max(0, (w - box.width) / 2);
-    var maxY = Math.max(0, (h - box.height) / 2);
+    var base = baseSize();
+    var maxX = Math.max(0, (base.w * scale - box.width) / 2);
+    var maxY = Math.max(0, (base.h * scale - box.height) / 2);
     tx = Math.min(maxX, Math.max(-maxX, tx));
     ty = Math.min(maxY, Math.max(-maxY, ty));
-    img.style.transform = 'translate(-50%, -50%) translate(' + tx + 'px, ' + ty + 'px) scale(' + scale + ')';
+    img.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + scale + ')';
     zoomLabel.textContent = Math.round(scale * 100) + '%';
-    stage.style.cursor = scale > 1 ? 'grab' : 'zoom-in';
+  }
+
+  function cursorFor(x, y) {
+    if (panFrom) return 'grabbing';
+    if (!overPicture(x, y)) return 'default';   // margin: a click here closes
+    return scale > 1 ? 'grab' : 'zoom-in';
   }
 
   function setScale(next, originX, originY) {
@@ -339,6 +372,9 @@ Order of importance on the screen, deliberately:
     cap.textContent = t.dataset.caption || '';
     openOriginal.href = t.dataset.full;
     scale = 1; tx = 0; ty = 0; apply();
+    // naturalWidth is 0 until the file arrives, and every hit test and clamp
+    // is derived from it, so re-measure once it is actually there.
+    img.addEventListener('load', apply, { once: true });
     var single = thumbs.length < 2;
     prevBtn.disabled = single;
     nextBtn.disabled = single;
@@ -380,13 +416,21 @@ Order of importance on the screen, deliberately:
     else if (kind === 'next') show(index + 1);
   });
 
-  // Tapping the backdrop closes, but only when not zoomed in: at 3x a stray
-  // tap while panning should not throw you out of the picture.
+  // Click ON the picture zooms; click in the margin around it closes. This is
+  // the whole point of pictureRect(): the <img> element covers the entire
+  // stage, so asking whether the click hit the element would treat the black
+  // margin as picture and dismissing would be impossible - while the previous
+  // version had it the other way round and a click anywhere near the photo
+  // closed the viewer instead of zooming, which is exactly what it looked
+  // like: "I click the image and it just goes back to the list."
   stage.addEventListener('click', function (e) {
-    if (e.target === stage && scale === 1) close();
+    if (dragged) return;                       // that was a pan, not a click
+    if (!overPicture(e.clientX, e.clientY)) { close(); return; }
+    setScale(scale > 1 ? 1 : 2.5, e.clientX, e.clientY);
   });
 
   stage.addEventListener('dblclick', function (e) {
+    if (!overPicture(e.clientX, e.clientY)) return;
     setScale(scale > 1 ? 1 : 2.5, e.clientX, e.clientY);
   });
 
@@ -398,6 +442,7 @@ Order of importance on the screen, deliberately:
   stage.addEventListener('pointerdown', function (e) {
     pointers.set(e.pointerId, e);
     stage.setPointerCapture(e.pointerId);
+    dragged = false;
     if (pointers.size === 2) {
       var pts = Array.from(pointers.values());
       pinchStart = Math.hypot(pts[0].clientX - pts[1].clientX, pts[0].clientY - pts[1].clientY);
@@ -409,15 +454,22 @@ Order of importance on the screen, deliberately:
   });
 
   stage.addEventListener('pointermove', function (e) {
-    if (!pointers.has(e.pointerId)) return;
+    if (!pointers.has(e.pointerId)) {
+      stage.style.cursor = cursorFor(e.clientX, e.clientY);
+      return;
+    }
     pointers.set(e.pointerId, e);
     if (pointers.size === 2 && pinchStart) {
+      dragged = true;
       var pts = Array.from(pointers.values());
       var dist = Math.hypot(pts[0].clientX - pts[1].clientX, pts[0].clientY - pts[1].clientY);
       setScale(scaleStart * (dist / pinchStart),
                (pts[0].clientX + pts[1].clientX) / 2,
                (pts[0].clientY + pts[1].clientY) / 2);
     } else if (panFrom) {
+      // A few pixels of travel is a shaky finger, not a drag. Without this a
+      // pan that ends over the margin would be read as a click and close.
+      if (Math.hypot(e.clientX - panFrom.x, e.clientY - panFrom.y) > 5) dragged = true;
       tx = panFrom.tx + (e.clientX - panFrom.x);
       ty = panFrom.ty + (e.clientY - panFrom.y);
       apply();
@@ -428,6 +480,7 @@ Order of importance on the screen, deliberately:
     pointers.delete(e.pointerId);
     if (pointers.size < 2) pinchStart = 0;
     if (!pointers.size) { panFrom = null; stage.classList.remove('is-panning'); }
+    stage.style.cursor = cursorFor(e.clientX, e.clientY);
   }
   stage.addEventListener('pointerup', endPointer);
   stage.addEventListener('pointercancel', endPointer);
