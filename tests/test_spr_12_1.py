@@ -663,6 +663,65 @@ def test_snapshots_open_in_a_zoomable_viewer(client):
 
 
 @pytest.mark.django_db
+def test_severity_class_cannot_collide_with_a_layout_class(client):
+    """The row carries the severity as a class. When that was `sec-{severity}`,
+    an `info` event produced `sec-info` on the row - the same name as the
+    layout wrapper inside it - so the wrapper's flex rules landed on the row
+    and quietly broke the layout of every ordinary event while warning and
+    critical rows looked fine. Namespacing severity keeps the two apart."""
+    _viewer()
+    _post(client, EVENTS, {"events": [
+        _event(1, severity="info"), _event(2, severity="warning"),
+        _event(3, severity="critical"),
+    ]})
+    client.login(username="owner", password="p")
+    html = client.get(HOME).content.decode()
+
+    row_classes = set()
+    for row in re.findall(r'<div class="(sec-row[^"]*)"', html):
+        row_classes.update(row.split())
+
+    # Every class the rows carry, other than sec-row itself, must be namespaced
+    # and must not be a class used by anything nested inside a row.
+    inner = {"sec-facts", "sec-body", "sec-thumb", "sec-meta", "sec-who", "sec-watch"}
+    assert not (row_classes & inner), f"row class collides with an inner class: {row_classes & inner}"
+    for severity in ("info", "warning", "critical"):
+        assert f"sec-sev-{severity}" in row_classes
+
+
+@pytest.mark.django_db
+def test_rows_are_mobile_first_picture_then_facts(client):
+    """REQ-11.6 — this is mostly read on a phone, where a 64px thumbnail tells
+    you nothing about who is at the door. The picture leads at full width with
+    the facts beneath it, and the compact side-by-side row returns on wider
+    screens where scanning many rows matters more."""
+    _viewer()
+    _post(client, EVENTS, {"events": [
+        _event(1, snapshot_b64=base64.b64encode(TINY_JPEG).decode())
+    ]})
+    client.login(username="owner", password="p")
+    html = client.get(HOME).content.decode()
+    css = html.split("<style>", 1)[1].split("</style>", 1)[0]
+
+    # Facts and the Watch link travel together, so one markup serves both.
+    assert 'class="sec-facts"' in html
+
+    base_rules = css.split("@media (min-width: 576px)", 1)[0]
+    wide_rules = css.split("@media (min-width: 576px)", 1)[1]
+
+    # Default (phone): stacked, picture full width.
+    assert "flex-direction: column" in base_rules
+    assert "width: 100%" in base_rules
+    # Wide: back to a row with the small fixed thumbnail.
+    assert "flex-direction: row" in wide_rules
+    assert "width: 64px" in wide_rules
+
+    # Never crop a security frame: cropping can hide the person it caught.
+    assert "object-fit: contain" in base_rules
+    assert "object-fit: cover" not in css
+
+
+@pytest.mark.django_db
 def test_the_thumbnail_still_works_without_javascript(client):
     """The lightbox is an enhancement. With JS off, or if the viewer script
     throws, tapping a thumbnail must still show the picture."""

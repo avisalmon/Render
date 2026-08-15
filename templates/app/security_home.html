@@ -67,7 +67,7 @@ Order of importance on the screen, deliberately:
 
   <div class="sec-list">
     {% for r in rows %}
-    <div class="sec-row sec-{{ r.severity_class }}">
+    <div class="sec-row sec-sev-{{ r.severity_class }}">
       {% comment %}
         The href stays a real link to the image: with JS off, or if the viewer
         script ever throws, tapping a thumbnail must still show the picture.
@@ -86,26 +86,33 @@ Order of importance on the screen, deliberately:
       <span class="sec-thumb sec-thumb-empty"><i class="bi bi-camera-video"></i></span>
       {% endif %}
 
-      <div class="sec-body">
-        <div class="sec-meta" dir="ltr">
-          [{{ r.date }}] {{ r.time }} · {{ r.camera }}
-        </div>
-        <div class="sec-who">
-          {{ r.type }}: {{ r.who }}
-          {% if r.severity_class == "warning" %}<i class="bi bi-exclamation-triangle-fill sec-ic-warn"></i>{% endif %}
-          {% if r.severity_class == "critical" %}<i class="bi bi-exclamation-octagon-fill sec-ic-crit"></i>{% endif %}
-        </div>
-      </div>
-
       {% comment %}
-        REQ-11.6.5 / REQ-11.1.1 - a plain outbound link. babook never holds,
-        proxies or streams the video; Drive enforces its own access control.
+        The facts and the Watch link travel together in .sec-facts, so the same
+        markup gives both layouts: on a phone this sits under the picture, on a
+        wider screen it sits beside it.
       {% endcomment %}
-      {% if r.drive_url %}
-      <a class="sec-watch" href="{{ r.drive_url }}" target="_blank" rel="noopener">
-        <i class="bi bi-play-fill"></i> צפייה
-      </a>
-      {% endif %}
+      <div class="sec-facts">
+        <div class="sec-body">
+          <div class="sec-meta" dir="ltr">
+            [{{ r.date }}] {{ r.time }} · {{ r.camera }}
+          </div>
+          <div class="sec-who">
+            {{ r.type }}: {{ r.who }}
+            {% if r.severity_class == "warning" %}<i class="bi bi-exclamation-triangle-fill sec-ic-warn"></i>{% endif %}
+            {% if r.severity_class == "critical" %}<i class="bi bi-exclamation-octagon-fill sec-ic-crit"></i>{% endif %}
+          </div>
+        </div>
+
+        {% comment %}
+          REQ-11.6.5 / REQ-11.1.1 - a plain outbound link. babook never holds,
+          proxies or streams the video; Drive enforces its own access control.
+        {% endcomment %}
+        {% if r.drive_url %}
+        <a class="sec-watch" href="{{ r.drive_url }}" target="_blank" rel="noopener">
+          <i class="bi bi-play-fill"></i> צפייה
+        </a>
+        {% endif %}
+      </div>
     </div>
     {% empty %}
     <p class="text-muted text-center py-5 m-0">אין אירועים להצגה.</p>
@@ -189,23 +196,47 @@ Order of importance on the screen, deliberately:
      system's own (`[dd/mm/yy] hh:mm - Camera - person: Avi`), camera names are
      English, and the two UIs are meant to read alike. Hebrew inside a row
      (לא מזוהה) still shapes correctly - bidi handles the run. */
-  .sec-row { display: flex; align-items: center; gap: .75rem; padding: .6rem .25rem;
-             border-bottom: 1px solid rgba(0,0,0,.08);
+  /* Mobile first, because this is mostly read on a phone: the picture leads at
+     full width and the facts sit underneath it. A 64px thumbnail tells you
+     nothing about who is at the door. The compact side-by-side row comes back
+     at >=576px, where a wide screen makes scanning many rows the better use of
+     the space. */
+  .sec-row { display: flex; flex-direction: column; align-items: stretch; gap: .5rem;
+             padding: .6rem; margin-bottom: .75rem; border-radius: 12px;
+             border: 1px solid rgba(0,0,0,.08);
              direction: ltr; text-align: left; }
-  .sec-thumb { flex: none; width: 64px; height: 48px; border-radius: 8px; overflow: hidden;
-               background: #f1f3f5; display: flex; align-items: center; justify-content: center; }
-  .sec-thumb img { width: 100%; height: 100%; object-fit: cover; }
-  .sec-thumb-empty { color: #adb5bd; }
+  .sec-thumb { display: block; width: 100%; aspect-ratio: 16 / 9;
+               border-radius: 10px; overflow: hidden; background: #e9ecef; }
+  /* `contain`, never `cover`: this is a security log, so cropping could hide
+     the very person the frame was captured for. */
+  .sec-thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  /* A big empty placeholder would be noise on a phone; text-only rows just
+     show their text. */
+  .sec-thumb-empty { display: none; }
+  .sec-facts { display: flex; align-items: center; gap: .75rem; }
   .sec-body { flex: 1 1 auto; min-width: 0; }
   .sec-meta { font-size: .8rem; color: #6c757d; font-variant-numeric: tabular-nums; }
   .sec-who { font-size: .95rem; }
-  .sec-warning .sec-who { color: var(--sec-warn); font-weight: 600; }
-  .sec-critical .sec-who { color: var(--sec-crit); font-weight: 700; }
-  .sec-warning { background: rgba(255,193,7,.07); }
-  .sec-critical { background: rgba(220,53,69,.08); }
+  .sec-sev-warning .sec-who { color: var(--sec-warn); font-weight: 600; }
+  .sec-sev-critical .sec-who { color: var(--sec-crit); font-weight: 700; }
+  .sec-sev-warning { background: rgba(255,193,7,.07); border-color: rgba(178,106,0,.35); }
+  .sec-sev-critical { background: rgba(220,53,69,.08); border-color: rgba(179,38,30,.4); }
   .sec-ic-warn { color: var(--sec-warn); }
   .sec-ic-crit { color: var(--sec-crit); }
-  .sec-watch { flex: none; font-size: .85rem; text-decoration: none; white-space: nowrap; }
+  .sec-watch { flex: none; font-size: .9rem; text-decoration: none; white-space: nowrap;
+               padding: .35rem .6rem; border-radius: 8px; background: rgba(13,110,253,.1); }
+
+  @media (min-width: 576px) {
+    .sec-row { flex-direction: row; align-items: center; gap: .75rem;
+               padding: .6rem .25rem; margin-bottom: 0;
+               border: 0; border-bottom: 1px solid rgba(0,0,0,.08); border-radius: 0; }
+    .sec-thumb { flex: none; width: 64px; height: 48px; aspect-ratio: auto;
+                 border-radius: 8px; }
+    .sec-thumb-empty { display: flex; align-items: center; justify-content: center;
+                       color: #adb5bd; background: #f1f3f5; }
+    .sec-facts { flex: 1 1 auto; }
+    .sec-watch { font-size: .85rem; padding: 0; background: none; }
+  }
   .sec-thumb.js-snap { cursor: zoom-in; }
 
   /* ---- snapshot viewer ---- */
