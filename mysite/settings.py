@@ -185,6 +185,12 @@ CAPTURE_TRIGGER_TOKEN = os.environ.get("CAPTURE_TRIGGER_TOKEN", "")
 # Machine token for the house. Render env var, sync: false, never in git.
 SECURITY_RELAY_TOKEN = os.environ.get("SECURITY_RELAY_TOKEN", "")
 
+# CSRF middleware runs before any view, so without this a POST to /home/... is
+# rejected with 403 while every other probe of a non-existent URL gets 404 -
+# which confirms the page exists (REQ-11.2.2). Only the /home prefix is
+# special-cased; the rest of the site keeps Django's standard CSRF page.
+CSRF_FAILURE_VIEW = "app.security_views.csrf_failure"
+
 # Who may read /home. The owner, plus an optional delegated list (REQ-11.2.1).
 # Leave SECURITY_VIEWER_EMAILS empty and this is exactly the home system's
 # "exactly one human" rule.

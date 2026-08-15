@@ -797,8 +797,24 @@ def test_delete_requires_a_csrf_token(client):
     csrf_client = Client(enforce_csrf_checks=True)
     csrf_client.login(username="owner", password="p")
 
-    assert csrf_client.post("/home/1/delete/").status_code == 403
+    assert csrf_client.post("/home/1/delete/").status_code == 404
     assert SecurityCommand.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_a_csrf_rejection_under_home_looks_like_a_404_not_a_403(client):
+    """REQ-11.2.2 — CsrfViewMiddleware answers before the view's 404 gate, so
+    without special handling a probe would get 403 here and 404 everywhere
+    else, which is all an attacker needs to learn the page exists."""
+    anon = Client(enforce_csrf_checks=True)
+
+    assert anon.post("/home/1/delete/").status_code == 404
+    assert anon.post("/home/").status_code == 404
+    # A wrong guess at a URL that really does not exist looks identical.
+    assert anon.post("/home/1/purge/").status_code == 404
+
+    # The rest of the site keeps Django's normal CSRF behaviour.
+    assert anon.post("/accounts/login/", {"login": "x", "password": "y"}).status_code == 403
 
 
 @pytest.mark.django_db

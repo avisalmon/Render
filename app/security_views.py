@@ -86,6 +86,23 @@ def _gate(request):
         raise Http404
 
 
+def csrf_failure(request, reason="", template_name="403_csrf.html"):
+    """Keep /home invisible even when CSRF is what rejects the request.
+
+    CsrfViewMiddleware runs *before* the view, so a POST to /home/<id>/delete/
+    without a token is answered 403 before the 404 gate in this module ever
+    executes - and a 403 where every other probe gets a 404 is exactly the
+    confirmation REQ-11.2.2 exists to deny. Anywhere else on the site Django's
+    own CSRF page is the right answer, so only this prefix is special-cased.
+    """
+    from django.views.csrf import csrf_failure as django_csrf_failure
+    from django.views.defaults import page_not_found
+
+    if request.path == "/home" or request.path.startswith("/home/"):
+        return page_not_found(request, Http404())
+    return django_csrf_failure(request, reason, template_name)
+
+
 def _no_index(response):
     response["X-Robots-Tag"] = "noindex, nofollow, noarchive"
     response["Cache-Control"] = "no-store"
