@@ -1836,21 +1836,26 @@ Enabled, per the owner's decision, with limits.
 ### 11.9 Where babook went beyond the contract
 
 Two deliberate divergences, both raised with the home-system team rather than
-decided silently. Until they are settled, the home system's document is
-authoritative and babook's behaviour here is the superset.
+decided silently.
 
-1. **Multiple viewers.** Their §16.3 asks whether a second human will ever read
-   the page, noting it is far cheaper to allow for now than to retrofit. The
-   owner's answer is yes: family and delegated viewers. babook implements an
-   allow-list that is empty by default, so with no viewers configured the
-   behaviour is byte-identical to their one-user rule.
-2. **Oversized snapshots do not fail the batch.** Their §9 says a snapshot over
-   200 KB returns `413`, while their §8.2 requires partial success and their §8.3
-   makes any 4xx mean "drop this forever". Taken together, one 210 KB JPEG would
-   cause the house to permanently discard the other 199 good events in the batch.
-   babook instead **stores the event, drops the oversized snapshot**, and reports
-   it in a `warnings` array (which their §8.4 lets them ignore safely). Whole-body
-   413 still applies to the §7.1 limits: over 200 events, or over 10 MB.
+1. **Multiple viewers — still open on their side, and harmless.** Their §16.3
+   asks whether a second human will ever read the page, noting it is far cheaper
+   to allow for now than to retrofit. The owner's answer is yes: family and
+   delegated viewers. babook implements an allow-list that is empty by default,
+   so with no viewers configured the behaviour is byte-identical to their
+   one-user rule. Their §2 still reads "exactly one human". **This never crosses
+   the wire** — the house neither knows nor cares how many people read the page —
+   so it is a documentation difference, not an integration risk.
+2. **Oversized snapshots do not fail the batch — RESOLVED 2026-08-15, their
+   document now matches.** Their §9 originally said a snapshot over 200 KB
+   returns `413`, while their §8.2 requires partial success and their §8.3 makes
+   any 4xx mean "drop this forever". Taken together, one 210 KB JPEG would have
+   caused the house to permanently discard the other 199 good events in the
+   batch. babook instead **stores the event, drops the oversized snapshot**, and
+   reports it in a `warnings` array (which their §8.4 lets them ignore safely).
+   The home system corrected its §7 to require exactly this, so both sides now
+   agree and no code change was needed. Whole-body 413 still applies to the §7.1
+   limits: over 200 events, or over 10 MB.
 
 ### 11.10 Definition of done
 
