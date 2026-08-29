@@ -2,7 +2,26 @@
 
 **From:** the babook side
 **To:** the home system, which owns the contract
-**Status:** proposal only. Nothing here is decided, and nothing has been built.
+**Status: ANSWERED 2026-08-29 — partially accepted. Kept for the reasoning, not
+as a plan.**
+
+- **Accepted:** §1 and §2, the durability argument and the one-immutable-file-per-
+  event shape. The house will write the event record into Drive beside the clip.
+  Landed in the contract as `relay_api.md` §12 and in the home system's spec as
+  §5.8, to be built as their Sprint S5. **babook implements nothing.**
+- **Accepted outright:** §4, the credential rule. babook never holds Drive write
+  or delete access, in this version or any later one.
+- **Accepted, answering §7:** thirty days is a privacy policy, not a storage one;
+  the record dies with the clip; starring happens from the phone as a command
+  kind, not in the Drive UI.
+- **Not accepted:** §3, §5 and §6, the read path. Drive cannot order or range-query
+  on `appProperties`, so the page's filters become dozens of calls and the page
+  goes down whenever Google does; and the §8 cache reinstates the second copy of
+  the log with fewer rules and outside the contract, which is worst exactly where
+  this system is currently strongest, on deletion. Reasoning in their spec §5.11.
+- **Consequence:** `POST /events`, `/state` and `/deletions` all stay. So do
+  babook's event models and the whole of §8 of the contract.
+
 **Date:** 2026-08-15 · Against `v1` as implemented and deployed today.
 
 ---

@@ -577,3 +577,82 @@ The interface contract is owned by the home-system repository and mirrored here.
 If this document and the home system's `docs/relay_api.md` ever disagree, **the
 home system's copy is authoritative** — it is generated from the code that
 sends the data.
+
+---
+
+## 18. Drive event records — what the house adds, and what we do about it
+
+**Added 2026-08-29, mirroring `relay_api.md` §12. Nothing in this section is work
+for this codebase.**
+
+The house **now writes** (shipped 2026-08-29) one immutable JSON file per event to the Google Drive folder
+that already holds the clips, in a folder per local day, with the `v1` event
+object as its body and the record written last so that a record which exists is
+always complete. It stamps `event_id`, `incident_key` and `kind` on every file it
+uploads as Drive `appProperties`.
+
+The reason is durability. Today the clips in Drive carry no indication of when
+they happened, on which camera, or who was in them, so losing the house PC would
+leave the footage of a break-in unlabelled, with the only index living here on a
+1 GB starter disk and there on the machine that was lost.
+
+**What babook does: nothing.** We keep receiving the push at §7, keep our own
+copy of the event log, and read nothing from Drive. Models, endpoints, page and
+delete path are all unchanged, and the contract stays at `v1`.
+
+**Why this now matters more than it did.** The house also shipped T1e
+(`c7585a7`): once the 720p copy is safely in Drive, the local 4K is deleted. For
+those incidents the Drive file is **the only copy of the footage that exists**.
+Two consequences for this codebase, neither of them new work: the ▶ צפייה link is
+no longer a convenience but the only route to the video from anywhere except the
+house itself, and the credential rule below stops being hygiene.
+
+**The one rule this binds us to: babook must never hold Drive write or delete
+credentials.** We hold none today, which is safety by absence rather than by
+policy. If a future version has this codebase read from Drive, it gets a service
+account with that one folder shared to it read-only, never the `drive.readonly`
+scope, and deletion keeps going through the command queue: we ask, the house
+decides and acts, the house reports back. This site has a login page on the open
+internet and the house does not; a compromise here must not become the ability to
+destroy the footage of a break-in.
+
+### 18.1 What "in sync" means, and the one thing it turned up for us
+
+The record's `event` object is not a new format. Contract §12.1 defines it as the
+return value of the **same function** that builds the `POST /events` body, so a
+record is the wire object with the snapshot pulled out into a sibling file, and a
+rebuild (§12.7) replays into our §7 endpoint unmodified rather than being
+translated into it.
+
+That has one consequence for this codebase, and it is worth knowing even though it
+is not work:
+
+**Our required-field check treats `""` as missing.** `REQUIRED_EVENT_FIELDS` is
+`event_id, ts, channel, camera, type, severity`, and `raw.get(f) in (None, "")`
+rejects an event whose `type` is an empty string with a `400`, which the house
+treats as permanent and drops. The house's payload builder does not guarantee
+those are non-empty: `type` is `event.type or ""` and `camera` falls back to the
+channel string. It has never fired, because their store always sets both.
+
+It matters now only because a Drive record that we would reject is an event that
+survives the house, survives Drive, and then vanishes at the last step of a
+restore. **The house has taken the guarantee** (contract §12.2): no record is
+written unless all five are non-empty, and the exception is logged rather than
+swallowed.
+
+**Do not relax the check here to compensate.** Accepting empty strings would put
+rows with `camera: ""` on the page, belonging to no camera and adding a blank
+entry to the filter. The writer guarantees the field; the reader keeps refusing
+what it cannot render.
+
+### 18.1 On our `v2` proposal
+
+`docs/security_relay_v2_proposal.md` was answered on 2026-08-29 and **partially
+accepted**. The durability half is taken and is this section. The read path, and
+with it dropping `POST /events`, `/state`, `/deletions` and our event models, is
+**not** taken: Drive cannot order or range-query on `appProperties`, so the
+page's filters would become dozens of calls and the page would be unavailable
+whenever Google is; and the cache proposed to solve that reinstates the second
+copy of the log with fewer rules and outside the contract, which lands hardest on
+deletion, where a removal would be discoverable only by scanning. Full reasoning
+is in the home system's spec §5.11.

@@ -1510,6 +1510,33 @@ in Chapter 11 §11.9 rather than decided silently:
    one 210 KB JPEG cost the other 199 good events in the batch. babook stores the
    event, drops the snapshot, and reports it in a `warnings` array.
 
+### SPR-12.4 — the `v2` proposal, answered (NO BUILD)
+
+`docs/security_relay_v2_proposal.md` asked the home system to make Google Drive
+the single source of truth and delete most of this module. Answered 2026-08-29,
+**partially accepted**, and the accepted half is entirely their work.
+
+| Their side | babook |
+|---|---|
+| Writes one immutable JSON record per event into Drive beside the clip, day folder, record written last. Their spec §5.8. **Shipped 2026-08-29** (`5951719`), live. | Nothing. Keeps the `v1` push, its own copy of the log, and reads no Drive. |
+| Contract gains `relay_api.md` §12, additive. Version stays `v1`. | Hand-off copy gains the mirror at `docs/security_relay_spec.md` §18. |
+| Retention answered as **privacy, not storage**; the record dies with the clip. | Unchanged: babook still never expires a row on its own schedule. |
+
+**The rule this binds us to, permanently:** babook never holds Drive write or
+delete credentials. It holds none today, which is safety by absence. Deletion
+keeps going through the command queue. A compromise of a public Django site must
+not become the ability to destroy the footage of a break-in.
+
+**Not accepted:** the read path, and with it dropping `POST /events`, `/state`,
+`/deletions` and the event models. Drive cannot order or range-query on
+`appProperties`, so the page filters become dozens of calls and the page dies
+whenever Google does; and the cache proposed to fix that puts the second copy of
+the log back with fewer rules and outside the contract. Full reasoning in their
+spec §5.11.
+
+**Restore point:** tag `home-relay-v1` in both repos marks the working state as
+of this decision.
+
 ### Deliberately not built (their §15)
 
 Video hosting or transcoding; any direct connection to the house, cameras or NVR;
