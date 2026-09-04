@@ -418,18 +418,36 @@ def test_deletions_remove_rows_and_snapshot_files(client, settings):
 
 def test_babook_never_expires_anything_on_its_own():
     """REQ-11.1.3 — retention lives at the house. Nothing in this codebase may
-    decide a row has aged out; the only delete path is the one the house drives."""
+    decide a row has aged out.
+
+    AMENDED 2026-09-04, and the amendment is the point. This asserted that
+    `.delete()` appeared exactly once in the API, which was a structural proxy
+    for the rule while there was one delete path. SPR-12.6 added the guarded
+    reset, so there are now two: retention's explicit ids, and the purge the
+    owner confirms after the house declares it holds nothing. The count is
+    obsolete; the rule is not, so the test now asserts the rule.
+
+    What must stay true: the page itself deletes nothing, every delete in the
+    API lives in a named house-driven path, and no delete decides anything from
+    a row's age. That last one is REQ-11.1.3 proper - `purge_events` takes an
+    explicit id boundary handed to it by a declaration, never a duration."""
     import inspect
 
     from app import security_api, security_views
 
-    # The page and its helpers hold no delete path at all.
+    # The page and its helpers hold no delete path at all: the reset view
+    # delegates to the API rather than reaching for the ORM itself.
     assert ".delete()" not in inspect.getsource(security_views)
 
-    # In the API, deleting is reachable only from the endpoint the house calls.
+    # Every delete in the API belongs to one of the two house-driven paths.
+    named = (inspect.getsource(security_api.push_deletions)
+             + inspect.getsource(security_api.purge_events))
     api_source = inspect.getsource(security_api)
-    assert api_source.count(".delete()") == 1
-    assert ".delete()" in inspect.getsource(security_api.push_deletions)
+    assert api_source.count(".delete()") == named.count(".delete()")
+
+    # And nothing anywhere near them expires a row by age.
+    for word in ("timedelta", "days=", "older_than", "auto_now"):
+        assert word not in named, f"{word} in a delete path is retention by age"
 
 
 # =========================================================================== the page

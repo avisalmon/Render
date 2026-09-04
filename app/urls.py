@@ -299,6 +299,8 @@ urlpatterns = [
     path("home/snapshot/<int:event_id>.jpg", security_views.security_snapshot,
          name="security_snapshot"),
     # Queues a delete_incident command. Deletes nothing itself (REQ-11.12).
+    path("home/reset/", security_views.security_reset_purge,
+         name="security_reset_purge"),
     path("home/<int:event_id>/delete/", security_views.security_request_delete,
          name="security_request_delete"),
 

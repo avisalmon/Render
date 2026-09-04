@@ -36,7 +36,13 @@ from django.utils.dateparse import parse_datetime
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
-from .security_models import SecurityCommand, SecurityEvent, SecurityHighWater, SecurityState
+from .security_models import (
+    SecurityCommand,
+    SecurityEvent,
+    SecurityHighWater,
+    SecurityResetDeclaration,
+    SecurityState,
+)
 
 REQUIRED_EVENT_FIELDS = ("event_id", "ts", "channel", "camera", "type", "severity")
 
@@ -354,6 +360,54 @@ def push_events(request):
 
 
 # ---------------------------------------------------------------------------
+# The purge itself, in one place
+# ---------------------------------------------------------------------------
+
+def purge_events(up_to_event_id=None):
+    """Delete the event log, raising the id floor first. Returns a summary.
+
+    ONE implementation, called by both the management command and the button on
+    the page. Two copies of this would be two chances to forget the ordering
+    below, and the bug that started all of this was a second delete path that
+    did not do what the first one did.
+
+    THE ORDER IS THE POINT. `SecurityHighWater` is raised from the rows before
+    they go: `event_id` is the natural key, so a rebuilt house restarting its
+    counter at 1 would silently update historical rows instead of creating new
+    ones. Purge first and the number goes with them.
+
+    `up_to_event_id` bounds the damage to one generation. The house resumes
+    writing immediately after a reset, from the same sequence, so anything above
+    the boundary is the fresh log and must survive.
+    """
+    from django.db.models import Max
+
+    rows = SecurityEvent.objects.all()
+    if up_to_event_id is not None:
+        rows = rows.filter(event_id__lte=up_to_event_id)
+
+    highest = rows.aggregate(m=Max("event_id"))["m"] or 0
+    SecurityHighWater.note([highest, SecurityHighWater.current()])
+
+    files = 0
+    for path in rows.exclude(snapshot_path="").values_list(
+            "snapshot_path", flat=True).iterator():
+        delete_snapshot_file(path)
+        files += 1
+
+    deleted = rows.delete()[0]
+    _snapshot_bytes_used(force=True)
+
+    # Anything still queued refers to rows that now exist at neither end. A
+    # `delete_incident` collected for a purged row would be acked failed, which
+    # is noise rather than safety.
+    commands = SecurityCommand.objects.filter(acked_at__isnull=True).delete()[0]
+
+    return {"deleted": deleted, "snapshot_files": files,
+            "commands": commands, "high_water": SecurityHighWater.current()}
+
+
+# ---------------------------------------------------------------------------
 # GET /api/v1/security/high-water
 # ---------------------------------------------------------------------------
 
@@ -501,6 +555,56 @@ def push_deletions(request):
     payload, error = _read_json(request)
     if error:
         return error
+
+    # The reset declaration: "I hold nothing." NOT permission to delete.
+    #
+    # §5.5 takes explicit ids, which is right for retention and useless when the
+    # house has lost the ids themselves - which is exactly what happened on
+    # 2026-09-04, when a raw DELETE emptied its table and told nobody. So the
+    # house may instead declare emptiness, and we record it and show the owner.
+    #
+    # A request is not a deletion, the same rule as `delete_incident` pointed
+    # the other way: there the owner asks and the house decides, here the house
+    # declares and the owner decides. Deleting on receipt would mean one
+    # malformed request could empty the log, and this whole incident began with
+    # a delete path nobody had to confirm.
+    if payload.get("all"):
+        try:
+            house_count = int(payload.get("house_event_count"))
+        except (TypeError, ValueError):
+            return _err("bad_request",
+                        "'house_event_count' is required with 'all'", 400)
+        if house_count != 0:
+            # "Drop everything" from a house that says it still holds rows is
+            # incoherent, and the incoherent version is the dangerous one.
+            return _err("bad_request",
+                        "'all' requires 'house_event_count' to be 0", 400)
+
+        from django.db.models import Max
+        ours = SecurityEvent.objects.count()
+        boundary = SecurityEvent.objects.aggregate(m=Max("event_id"))["m"] or 0
+
+        pending = SecurityResetDeclaration.pending()
+        if pending:
+            # Re-declaring is not an error: the house polls and retries. Move
+            # the boundary up rather than stacking banners.
+            pending.our_event_count = ours
+            pending.boundary_event_id = max(pending.boundary_event_id, boundary)
+            pending.save(update_fields=["our_event_count", "boundary_event_id"])
+            declaration = pending
+        else:
+            declaration = SecurityResetDeclaration.objects.create(
+                house_event_count=house_count, our_event_count=ours,
+                boundary_event_id=boundary)
+
+        return JsonResponse({
+            "deleted": 0,
+            "declaration_id": declaration.pk,
+            "awaiting_owner": True,
+            "our_event_count": ours,
+            "detail": ("recorded; the owner will be shown this and must "
+                       "confirm. nothing has been deleted."),
+        })
 
     ids = payload.get("event_ids")
     if not isinstance(ids, list):

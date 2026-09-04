@@ -44,6 +44,36 @@ Order of importance on the screen, deliberately:
     browsers (and not at all with JS off), which is exactly how this filter
     silently did nothing the first time round.
   {% endcomment %}
+  {% comment %}
+    The house has declared it holds nothing (relay_api.md §5.5, `all` form). It
+    deleted NOTHING on arrival, deliberately: a request is not a deletion, the
+    same rule as the delete button pointed the other way. There the owner asks
+    and the house decides; here the house declares and the owner decides, so an
+    auto-purge cannot be triggered by one malformed request. The rows below are
+    already gone at the source, so what is shown is history with nothing behind
+    it.
+  {% endcomment %}
+  {% if reset_declaration %}
+  <div class="sec-orphan mb-3">
+    <div class="sec-orphan-head">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      המערכת בבית מדווחת שאין אצלה אף אירוע
+    </div>
+    <p class="sec-orphan-body">
+      {{ reset_declaration.our_event_count }} השורות כאן כבר נמחקו בבית, והן
+      נשארות רק כאן. אפשר לנקות אותן. פעולה זו אינה הפיכה, ואירועים חדשים
+      שהתקבלו מאז הדיווח יישארו.
+    </p>
+    <form method="post" action="{% url 'security_reset_purge' %}"
+          onsubmit="return confirm('למחוק {{ reset_declaration.our_event_count }} אירועים? אי אפשר לבטל.');">
+      {% csrf_token %}
+      <button type="submit" class="sec-orphan-go">
+        <i class="bi bi-trash3"></i> ניקוי היומן
+      </button>
+    </form>
+  </div>
+  {% endif %}
+
   <form method="get" class="row g-2 mb-3">
     <div class="col-6">
       <input type="date" name="day" value="{{ day }}" class="form-control form-control-sm"
@@ -227,6 +257,18 @@ Order of importance on the screen, deliberately:
   .sec-banner-bad .sec-dot { animation: secpulse 1.4s ease-in-out infinite; }
   @keyframes secpulse { 50% { opacity: .25; } }
   @media (prefers-reduced-motion: reduce) { .sec-banner-bad .sec-dot { animation: none; } }
+  /* The orphaned-log notice. Deliberately not styled like the staleness
+     banner: that one says "the system may be down", this one says "these rows
+     are history". Different facts, different channels (§10). */
+  .sec-orphan { border-radius: 12px; padding: .85rem 1rem;
+                background: #fff8e6; border: 1px solid #f0d089; color: #6b4a05; }
+  .sec-orphan-head { display: flex; align-items: center; gap: .5rem;
+                     font-weight: 600; }
+  .sec-orphan-body { font-size: .9rem; margin: .4rem 0 .7rem; }
+  .sec-orphan-go { border: 1px solid #b3382c; background: #fff; color: #b3382c;
+                   border-radius: 999px; padding: .35rem .9rem; font-size: .9rem;
+                   display: inline-flex; align-items: center; gap: .35rem; }
+  .sec-orphan-go:hover { background: #b3382c; color: #fff; }
   .sec-banner-sub { font-size: .85rem; opacity: .85; margin-top: .2rem; }
 
   .sec-new-pill { display: block; text-align: center; margin-bottom: .75rem; padding: .5rem;

@@ -209,3 +209,49 @@ class SecurityHighWater(models.Model):
 
     def __str__(self):
         return f"high water {self.last_event_id}"
+
+
+class SecurityResetDeclaration(models.Model):
+    """The house saying "I hold nothing" - which is not permission to delete.
+
+    Same rule as `delete_incident`, pointed the other way. There the owner asks
+    and the house decides; here the house declares and the owner decides. The
+    house is behind CGNAT and cannot be asked to confirm anything interactively,
+    and a projection that one malformed request can empty is worse than one that
+    needs a human. There is exactly one human, already authenticated and already
+    on the page, so the friction costs almost nothing and buys everything.
+
+    Written after the clear-out of 2026-09-04, where the house emptied its own
+    table with a raw DELETE that notified nobody. That failure was silence, not
+    deletion - and an auto-purge on this side would have reproduced it here.
+
+    `boundary_event_id` is why this is a row and not a flag. The house is not
+    going dormant: it resumes writing immediately, from the same id sequence. So
+    the purge must remove the dead generation and leave the new one alone, and
+    the boundary is the largest id we held at the moment of the declaration.
+    """
+
+    declared_at = models.DateTimeField(auto_now_add=True)
+    # What the house says it holds. Anything other than 0 makes "drop
+    # everything" incoherent, and is refused.
+    house_event_count = models.BigIntegerField(default=0)
+    # What we held when it arrived, for the banner and for the record.
+    our_event_count = models.BigIntegerField(default=0)
+    # Purge nothing above this. Rows arriving afterwards are the fresh log.
+    boundary_event_id = models.BigIntegerField(default=0)
+
+    acted_at = models.DateTimeField(null=True, blank=True)
+    acted_by = models.CharField(max_length=254, blank=True)
+    deleted_count = models.BigIntegerField(default=0)
+
+    class Meta:
+        ordering = ["-declared_at"]
+
+    @classmethod
+    def pending(cls):
+        """The declaration awaiting a human, if there is one."""
+        return cls.objects.filter(acted_at__isnull=True).first()
+
+    def __str__(self):
+        state = "acted" if self.acted_at else "pending"
+        return f"reset declaration {self.pk} ({state})"

@@ -30,6 +30,7 @@ from django.views.decorators.http import require_POST
 from .security_models import (
     SecurityCommand,
     SecurityEvent,
+    SecurityResetDeclaration,
     SecurityState,
     SecurityViewLog,
 )
@@ -255,6 +256,8 @@ def security_home(request):
         "camera": request.GET.get("camera") or "",
         "day": request.GET.get("day") or "",
         "newest_event_id": newest or 0,
+        # The house says it holds nothing. We show it and wait; we do not act.
+        "reset_declaration": SecurityResetDeclaration.pending(),
         "snapshots_on": getattr(settings, "SECURITY_SNAPSHOTS_ENABLED", True),
     }
     return _no_index(render(request, "app/security_home.html", context))
@@ -316,6 +319,47 @@ def security_request_delete(request, event_id):
         path=f"/home delete-request {ids}"[:120],
     )
     return redirect(f"{reverse('security_home')}?{request.POST.get('back', '')}")
+
+
+# ---------------------------------------------------------------------------
+# POST /home/reset/  - the owner acts on the house's declaration
+# ---------------------------------------------------------------------------
+
+@require_POST
+def security_reset_purge(request):
+    """The one human tap that empties the log, after the house declared it holds
+    nothing (relay_api.md §5.5, the `all` form).
+
+    The declaration arrives over the machine API and deletes nothing. This is
+    where the deletion happens, and it needs a person because the alternative is
+    a projection any single malformed request can empty. There is exactly one
+    person who can reach this page, they are already authenticated and already
+    looking at the rows in question, so the friction costs almost nothing.
+
+    Bounded by `boundary_event_id`. The house does not go dormant after a reset;
+    it resumes writing immediately from the same id sequence, so events that
+    arrived after the declaration are the fresh log and must survive.
+    """
+    _gate(request)
+    declaration = SecurityResetDeclaration.pending()
+    if not declaration:
+        # Nothing outstanding: either it was already acted on, or somebody
+        # replayed the form. Not an error, just nothing to do.
+        return redirect(reverse("security_home"))
+
+    from .security_api import purge_events
+    summary = purge_events(up_to_event_id=declaration.boundary_event_id)
+
+    declaration.acted_at = timezone.now()
+    declaration.acted_by = (request.user.email or "")[:254]
+    declaration.deleted_count = summary["deleted"]
+    declaration.save(update_fields=["acted_at", "acted_by", "deleted_count"])
+
+    SecurityViewLog.objects.create(
+        email=(request.user.email or "")[:254],
+        path=f"/home reset-purge {summary['deleted']} rows"[:120],
+    )
+    return redirect(reverse("security_home"))
 
 
 def security_snapshot(request, event_id):
