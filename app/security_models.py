@@ -12,6 +12,8 @@ authoritative, so nothing here needs to be defended as if it were.
                    collects them on its next poll.
   SecurityState    a single row (pk=1), overwritten every ~5 minutes. Its real
                    job is detecting silence - see REQ-11.6.1.
+  SecurityHighWater  the largest event_id ever seen, kept apart from the events
+                   so it survives them being purged. One integer, not a log.
 """
 
 from django.db import models
@@ -152,3 +154,58 @@ class SecurityViewLog(models.Model):
 
     def __str__(self):
         return f"{self.email} {self.viewed_at:%Y-%m-%d %H:%M}"
+
+
+class SecurityHighWater(models.Model):
+    """The largest `event_id` babook has ever seen. One row, pk=1.
+
+    Not a log, and deliberately not derived from SecurityEvent: it has to
+    survive a truncation, which is the one moment it matters. `max(event_id)`
+    over an empty table is null, and null is exactly the answer that would let
+    a rebuilt house start numbering from 1 again.
+
+    WHY BABOOK HOLDS THIS AT ALL, given it is nobody's source of truth.
+    `event_id` is the natural key, so a rebuilt house that restarts its counter
+    would silently *update* historical rows instead of creating new ones. The
+    house guards against that with a floor (their D7), derived from the record
+    filenames in Drive - and the owner is emptying Drive, which leaves the
+    number living only on the one disk that whole design assumes can fail.
+
+    This is the independent second copy. It carries one integer: no name, no
+    time, no camera, nothing that reads as a record of anybody. It cannot be
+    mistaken for a log because it is not one.
+
+    Safe as a hint in both directions, which is what keeps babook from becoming
+    authoritative by the back door: too low and the house ignores it, because
+    its floor only ever rises; too high and the house skips some ids, and
+    relay_api.md §6.2 already says a gap in `event_id` is normal and means
+    nothing.
+    """
+
+    last_event_id = models.BigIntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    @classmethod
+    def note(cls, event_ids):
+        """Raise the mark to cover `event_ids`. Never lowers it."""
+        highest = 0
+        for value in event_ids:
+            try:
+                highest = max(highest, int(value))
+            except (TypeError, ValueError):
+                continue
+        if not highest:
+            return None
+        row, _ = cls.objects.get_or_create(pk=1, defaults={"last_event_id": highest})
+        if highest > row.last_event_id:
+            row.last_event_id = highest
+            row.save(update_fields=["last_event_id", "updated_at"])
+        return row
+
+    @classmethod
+    def current(cls):
+        row = cls.objects.filter(pk=1).first()
+        return row.last_event_id if row else 0
+
+    def __str__(self):
+        return f"high water {self.last_event_id}"

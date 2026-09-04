@@ -307,6 +307,8 @@ urlpatterns = [
     path("api/v1/security/commands", security_api.get_commands, name="security_api_commands"),
     path("api/v1/security/commands/<int:command_id>/ack", security_api.ack_command,
          name="security_api_command_ack"),
+    path("api/v1/security/high-water", security_api.get_high_water,
+         name="security_api_high_water"),
     path("api/v1/security/state", security_api.push_state, name="security_api_state"),
     path("api/v1/security/deletions", security_api.push_deletions, name="security_api_deletions"),
 ]

@@ -36,7 +36,7 @@ from django.utils.dateparse import parse_datetime
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
-from .security_models import SecurityCommand, SecurityEvent, SecurityState
+from .security_models import SecurityCommand, SecurityEvent, SecurityHighWater, SecurityState
 
 REQUIRED_EVENT_FIELDS = ("event_id", "ts", "channel", "camera", "type", "severity")
 
@@ -332,6 +332,14 @@ def push_events(request):
         else:
             updated += 1
 
+    # Raise the id high-water mark before anything can remove these rows.
+    # Derived from the batch rather than from the table, because the table is
+    # exactly what a purge empties and `max(event_id)` of nothing is null - the
+    # one answer that would let a rebuilt house start counting from 1 and
+    # silently upsert onto historical rows.
+    SecurityHighWater.note(
+        e.get("event_id") for e in events if isinstance(e, dict))
+
     body = {"accepted": accepted, "updated": updated, "rejected": rejected}
     if warnings:
         # Not in the contract. Their §8.4 lets the house ignore it safely, and
@@ -343,6 +351,35 @@ def push_events(request):
     # which is exactly when a delete is most likely to have just been pressed.
     body["commands"] = _pending_commands()
     return JsonResponse(body)
+
+
+# ---------------------------------------------------------------------------
+# GET /api/v1/security/high-water
+# ---------------------------------------------------------------------------
+
+@csrf_exempt
+@require_GET
+@require_relay_token
+def get_high_water(request):
+    """The largest `event_id` we have ever seen. A hint, never an instruction.
+
+    The house needs this after a rebuild. `event_id` is the natural key, so a
+    fresh store that restarts its counter at 1 would silently *update* our
+    historical rows instead of creating new ones - the same shape of failure as
+    the clear-all that told nobody: not deletion, silence.
+
+    Their own floor (D7) is derived from the Drive record filenames, which the
+    owner is emptying, so this is the independent second copy. It is one
+    integer. No name, no time, no camera, nothing that reads as a record of a
+    person, and it survives a purge of the events because it is not stored with
+    them.
+
+    Safe to consume in both directions, which is what stops babook becoming
+    authoritative by the back door: too low and their floor ignores it, since it
+    only ever rises; too high and they skip some ids, and §6.2 already says a
+    gap in `event_id` is normal and means nothing.
+    """
+    return JsonResponse({"high_water_event_id": SecurityHighWater.current()})
 
 
 # ---------------------------------------------------------------------------
