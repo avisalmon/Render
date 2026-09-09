@@ -41,6 +41,9 @@ urlpatterns = [
     path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="django.contrib.sitemaps.views.sitemap"),
     path("privacy/", privacy, name="privacy"),
     path("terms/", terms, name="terms"),
+    # מט״צים is its own product (docs/matazim/spec.md). It is mounted before
+    # app.urls so its prefix is unambiguously its own.
+    path("matazim/", include("matazim.urls", namespace="matazim")),
     path("", include("app.urls")),
 ]
 

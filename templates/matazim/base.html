@@ -1,0 +1,77 @@
+{% load static %}<!doctype html>
+{% comment %}
+  מט״צים — the standalone base.
+
+  It extends nothing. babook's base.html, drawer, search, footer and design
+  tokens are deliberately absent (RULE-2), and no link here leaves /matazim/
+  (RULE-1). A visitor should have no way of telling what runs underneath.
+
+  Traces: REQ-M.1 (autonomous shell), REQ-M.5b (nav differs with state).
+{% endcomment %}
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}מט״צים · מנהיגות טכנולוגית צעירה{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}תכנית מט״צים של רשת החינוך עתיד: תלמידי כיתות ט' לומדים טכנולוגיה, יוצרים, מדריכים ומשפיעים.{% endblock %}">
+
+  <link rel="icon" href="{% static 'matazim/logo.png' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="{% static 'matazim/matazim.css' %}?v=1">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<header class="mz-header">
+  <div class="mz-container mz-header-inner">
+
+    <a class="mz-brand" href="{% url 'matazim:home' %}">
+      <img src="{% static 'matazim/logo.png' %}" alt="מט״צים">
+      <span class="mz-brand-tag">מנהיגות טכנולוגית צעירה</span>
+    </a>
+
+    <button class="mz-nav-toggle" type="button" aria-label="תפריט" aria-expanded="false"
+            aria-controls="mzNav" onclick="var n=document.getElementById('mzNav');var o=n.classList.toggle('is-open');this.setAttribute('aria-expanded',o)">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+
+    {% comment %}
+      REQ-M.5b — the logged-out menu, in Litala's order. The member menu is a
+      different set and arrives with the sprint that needs it.
+    {% endcomment %}
+    <nav class="mz-nav" id="mzNav" aria-label="ניווט ראשי">
+      <a href="{% url 'matazim:home' %}" {% if section == 'home' %}class="is-active"{% endif %}>דף הבית</a>
+      <a href="{% url 'matazim:home' %}">אודות התכנית</a>
+      <a href="{% url 'matazim:home' %}">המסלול השנתי</a>
+      <a href="{% url 'matazim:home' %}">הקורסים</a>
+      <a href="{% url 'matazim:home' %}">מבחן הכניסה</a>
+      <a href="{% url 'matazim:home' %}">בתי הספר</a>
+      <a href="{% url 'matazim:home' %}">קהילת מט״צים</a>
+      <a href="{% url 'matazim:home' %}">ימי שיא</a>
+    </nav>
+
+    <div class="mz-header-action">
+      <a class="mz-btn mz-btn-primary" href="{% url 'matazim:home' %}">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        התחברות
+      </a>
+    </div>
+
+  </div>
+</header>
+
+<main>
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="mz-footer">
+  <div class="mz-container mz-footer-inner">
+    <span>מט״צים · מנהיגות טכנולוגית צעירה</span>
+    <span>תכנית של רשת החינוך עתיד בשיתוף Intel</span>
+  </div>
+</footer>
+
+</body>
+</html>

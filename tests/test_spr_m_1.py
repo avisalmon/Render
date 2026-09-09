@@ -1,0 +1,260 @@
+"""SPR-M.1 — The front door.
+
+The מט״צים space becomes its own product: its own Django app, its own base
+template, its own design, its own menu, and no route back to babook in either
+direction. This sprint is design-first, so the home page is Litala's screen 1
+with every value hardcoded. There is no data layer here yet.
+
+Traces: REQ-M.1, REQ-M.3, REQ-M.5, REQ-M.5b, REQ-M.5c, REQ-M.5d, REQ-M.5f,
+and the four separation rules in docs/matazim/spec.md section 2.3.
+"""
+
+import re
+from pathlib import Path
+
+import pytest
+from django.conf import settings
+from django.urls import reverse
+
+pytestmark = pytest.mark.sprm1
+
+ROOT = Path(settings.BASE_DIR)
+MZ_TEMPLATES = ROOT / "templates" / "matazim"
+MZ_APP = ROOT / "matazim"
+
+
+def _templates():
+    return sorted(MZ_TEMPLATES.rglob("*.html")) if MZ_TEMPLATES.exists() else []
+
+
+def _py(pkg: Path):
+    return sorted(pkg.rglob("*.py")) if pkg.exists() else []
+
+
+# ---------------------------------------------------------------- F-M.1.1
+
+
+def test_babook_home_has_no_matazim_link(client, db):
+    """T-F-M.1.1-1: babook must not advertise מט״צים anywhere in its chrome."""
+    html = client.get("/").content.decode()
+    assert "/matazim" not in html
+
+
+def test_show_matazim_context_processor_is_gone():
+    """T-F-M.1.1-2: the per-request membership query on every page load is removed."""
+    from app import context_processors
+
+    src = Path(context_processors.__file__).read_text(encoding="utf-8")
+    assert "show_matazim" not in src
+
+
+def test_old_presentation_files_are_deleted():
+    """T-F-M.1.1-3: the embedded version's front end no longer exists."""
+    for gone in (
+        ROOT / "app" / "matazim_views.py",
+        ROOT / "templates" / "app" / "matazim",
+        ROOT / "static" / "matazim.css",
+        ROOT / "tests" / "test_spr_10_1.py",
+    ):
+        assert not gone.exists(), f"{gone} should have been removed by the sever"
+
+
+def test_data_layer_and_entrance_engine_survive():
+    """T-F-M.1.1-4: the sever removes presentation only. Nothing is destroyed."""
+    from app import matazim_check, matazim_geometry, matazim_models, matazim_targets
+
+    assert matazim_models.Program is not None
+    assert all(m is not None for m in (matazim_geometry, matazim_check, matazim_targets))
+    assert (ROOT / "app" / "management" / "commands" / "seed_matazim.py").exists()
+
+
+def test_babook_still_serves(client, db):
+    """T-F-M.1.1-5: RULE-4 in practice. Removing the hooks broke nothing."""
+    assert client.get("/").status_code == 200
+
+
+# ---------------------------------------------------------------- F-M.1.2
+
+
+def test_matazim_is_an_installed_app():
+    """T-F-M.1.2-1."""
+    assert "matazim" in settings.INSTALLED_APPS
+
+
+def test_home_responds(client, db):
+    """T-F-M.1.2-2."""
+    assert client.get("/matazim/").status_code == 200
+
+
+def test_home_reverses_under_its_own_namespace():
+    """T-F-M.1.2-3: מט״צים owns its URL names, so they can never collide."""
+    assert reverse("matazim:home") == "/matazim/"
+
+
+# ---------------------------------------------------------------- F-M.1.3
+
+
+def test_stylesheet_defines_the_design_tokens():
+    """T-F-M.1.3-1: teal is identity, purple is action, per spec 3.2."""
+    css = (ROOT / "static" / "matazim" / "matazim.css").read_text(encoding="utf-8")
+    for token in (
+        "--mz-teal",
+        "--mz-purple",
+        "--mz-blue",
+        "--mz-ink",
+        "--mz-page",
+        "--mz-card",
+    ):
+        assert token in css, f"missing design token {token}"
+
+
+def test_page_uses_rubik_and_never_babook_css(client, db):
+    """T-F-M.1.3-2: a different typeface is half of reading as a different product."""
+    html = client.get("/matazim/").content.decode()
+    assert "Rubik" in html
+    assert "matazim/matazim.css" in html
+    assert not re.search(r"static/style\.css|/static/style\.css", html)
+
+
+# ---------------------------------------------------------------- F-M.1.4
+
+
+def test_page_carries_none_of_babook_chrome(client, db):
+    """T-F-M.1.4-1: RULE-2, checked through the rendered page rather than the source."""
+    html = client.get("/matazim/").content.decode()
+    for marker in ("babook", "site-drawer", "nav-link px-2", "bi-cpu"):
+        assert marker not in html, f"babook chrome leaked into מט״צים: {marker}"
+
+
+def test_logged_out_nav_matches_the_prototype(client, db):
+    """T-F-M.1.4-2: Litala's screen 1 menu, and it belongs to this app alone."""
+    html = client.get("/matazim/").content.decode()
+    items = [
+        "דף הבית",
+        "אודות התכנית",
+        "המסלול השנתי",
+        "הקורסים",
+        "מבחן הכניסה",
+        "בתי הספר",
+        "קהילת מט״צים",
+        "ימי שיא",
+    ]
+    positions = [html.find(item) for item in items]
+    assert all(p != -1 for p in positions), "a nav item is missing"
+    assert positions == sorted(positions), "nav items are out of the prototype's order"
+
+
+def test_document_is_hebrew_and_rtl(client, db):
+    """T-F-M.1.4-3."""
+    html = client.get("/matazim/").content.decode()
+    assert 'lang="he"' in html
+    assert 'dir="rtl"' in html
+
+
+def test_header_carries_wordmark_and_sign_in(client, db):
+    """T-F-M.1.4-4."""
+    html = client.get("/matazim/").content.decode()
+    assert "matazim/logo.png" in html
+    assert "התחברות" in html
+
+
+# ---------------------------------------------------------------- F-M.1.5
+
+
+def test_hero_renders(client, db):
+    """T-F-M.1.5-1."""
+    html = client.get("/matazim/").content.decode()
+    assert "מט״צים" in html
+    assert "מנהיגות טכנולוגית צעירה" in html
+    assert "רשת החינוך עתיד" in html
+    assert "Intel" in html
+
+
+def test_two_front_doors_and_the_public_test(client, db):
+    """T-F-M.1.5-2: REQ-M.5c and REQ-M.5d, both drawn on screen 1."""
+    html = client.get("/matazim/").content.decode()
+    assert "כניסת תלמידים" in html
+    assert "כניסת מובילים" in html
+    assert "מבחן הכניסה" in html
+
+
+def test_how_it_works_shows_four_stages_in_order(client, db):
+    """T-F-M.1.5-3: the public path is four stages; מתמיינים is the entrance test."""
+    html = client.get("/matazim/").content.decode()
+    start = html.find("איך זה עובד")
+    assert start != -1
+    section = html[start:]
+    positions = [section.find(s) for s in ("לומדים", "יוצרים", "מדריכים", "משפיעים")]
+    assert all(p != -1 for p in positions)
+    assert positions == sorted(positions)
+
+
+def test_stats_band_renders_five_figures(client, db):
+    """T-F-M.1.5-4: REQ-M.5f. Hardcoded this sprint, computed later."""
+    html = client.get("/matazim/").content.decode()
+    for label in ("תלמידים", "בתי ספר", "תוצרים שהוגשו", "מובילים", "ימי שיא"):
+        assert label in html
+
+
+def test_showcase_names_schools_and_no_students(client, db):
+    """T-F-M.1.5-5: REQ-M.30a. Minors' work is attributed to a school, never a name."""
+    html = client.get("/matazim/").content.decode()
+    assert "תוצרים נבחרים" in html
+    assert html.count("mz-project-card") == 6
+    assert "תיכון עתיד" in html
+
+
+def test_photographs_degrade_to_a_gradient(client, db):
+    """T-F-M.1.5-6: a photo that has not been supplied must not show a broken image."""
+    html = client.get("/matazim/").content.decode()
+    assert "<img" not in html.split("mz-hero-media")[1].split("</section>")[0]
+    assert "mz-photo" in html
+
+
+# ---------------------------------------------------------------- F-M.1.6
+
+
+def test_rule_1_no_outbound_links():
+    """T-F-M.1.6-1: no מט״צים template may link anywhere outside its own prefix."""
+    offenders = []
+    for tpl in _templates():
+        src = tpl.read_text(encoding="utf-8")
+        for name in re.findall(r"{%\s*url\s+['\"]([^'\"]+)['\"]", src):
+            if not name.startswith("matazim:"):
+                offenders.append(f"{tpl.name}: {{% url '{name}' %}}")
+        for href in re.findall(r'href="(/[^"]*)"', src):
+            if not href.startswith("/matazim/"):
+                offenders.append(f"{tpl.name}: href={href}")
+    assert not offenders, "RULE-1 broken: " + "; ".join(offenders)
+
+
+def test_rule_2_no_shared_chrome():
+    """T-F-M.1.6-2: no מט״צים template stands on a babook template."""
+    assert _templates(), "no מט״צים templates found"
+    for tpl in _templates():
+        src = tpl.read_text(encoding="utf-8")
+        for tag in re.findall(r"{%\s*(?:extends|include)\s+['\"]([^'\"]+)['\"]", src):
+            assert tag.startswith("matazim/"), f"{tpl.name} reaches into {tag}"
+
+
+def test_rule_3_writes_nothing_to_learning_state():
+    """T-F-M.1.6-3: מט״צים reads learning state and never writes it."""
+    writes = re.compile(
+        r"(Enrollment|UserVideoProgress|CourseCertificate|TeacherClass|ClassMembership)"
+        r"\.objects\.(create|update|get_or_create|update_or_create|bulk_create)"
+    )
+    for src_file in _py(MZ_APP):
+        assert not writes.search(
+            src_file.read_text(encoding="utf-8")
+        ), f"RULE-3 broken in {src_file.name}"
+
+
+def test_rule_4_babook_never_imports_matazim():
+    """T-F-M.1.6-4: the dependency arrow points one way only."""
+    bad = re.compile(r"^\s*(from\s+matazim|import\s+matazim)", re.M)
+    offenders = [
+        f.relative_to(ROOT).as_posix()
+        for f in _py(ROOT / "app")
+        if bad.search(f.read_text(encoding="utf-8"))
+    ]
+    assert not offenders, "RULE-4 broken: " + ", ".join(offenders)

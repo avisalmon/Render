@@ -222,3 +222,14 @@
 | Suite | Verifies |
 |---|---|
 | test_spr_8.py (21) | **SPR-8.1:** anonymous → /join/ wall, staff → 403, superuser → 200; ניהול nav link superuser-only; snapshot + cost-record models persist; `capture_dashboard_snapshot` creates all-section snapshots + cost rows; per-section refresh creates a fresh snapshot; range param accepted. **SPR-8.2:** users/training counts + watch-hours + popular-course ranking; activation + corporate funnels from local models. **SPR-8.3:** every cost adapter yields a CostRecord; OpenAI live from UsageLog; manual override preserved across adapter runs; manual-entry endpoint saves. **SPR-8.4:** engagement breadth + open-reports moderation pulse. **SPR-8.5:** system section reports db/storage/deps. **SPR-8.6:** threshold breach raises an alert + notifies superuser; dedup of active alerts; dismiss clears; thresholds admin-editable; config page superuser-only |
+
+## מט״צים — autonomous space (`tests/test_spr_m_1.py` 24)
+
+Spec and backlog for this product live in [docs/matazim/](matazim/), not in
+main_spec.md. Chapter 10's `tests/test_spr_10_1.py` was retired with the
+embedded version it tested; the entrance-test engine it shared is still covered
+by `tests/test_spr_10_2.py`, which is untouched.
+
+| Suite | Verifies |
+|---|---|
+| test_spr_m_1.py (24) | **SPR-M.1 the front door.** Sever: babook renders no `/matazim` link, `show_matazim` context processor gone, old views/templates/css/tests deleted, data layer and entrance engine intact, babook still serves. App: `matazim` installed, `/matazim/` → 200, `matazim:home` namespaced. Design: tokens defined, Rubik loaded, babook's `style.css` never loaded. Shell: no babook chrome markers, the eight logged-out nav items in Litala's order, `lang=he dir=rtl`, wordmark + התחברות. Home: hero copy, two front doors + public entrance test, four stages in order, five stat figures, six projects each naming a school and no student, photographs degrade to a gradient. Guards: RULE-1 no outbound links, RULE-2 no shared chrome, RULE-3 no writes to learning state, RULE-4 `app/` never imports `matazim` |

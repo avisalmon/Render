@@ -1,0 +1,145 @@
+{% extends "matazim/base.html" %}
+{% load static %}
+
+{% comment %}
+  REQ-M.5 — דף הבית, open to anyone, built to Litala's screen 1
+  (docs/matazim/prototype/image011.png). SPR-M.1 is a design pass: every value
+  comes from matazim/views.py by hand, and the counters go live under REQ-M.5f.
+{% endcomment %}
+
+{% block content %}
+
+{# ------------------------------------------------------------------ hero #}
+<section class="mz-hero">
+  <span class="mz-blob mz-blob-a"></span>
+  <span class="mz-blob mz-blob-b"></span>
+  <svg class="mz-arc" width="120" height="180" viewBox="0 0 120 180" fill="none" aria-hidden="true">
+    <path d="M110 4C40 34 6 92 14 176" stroke="#6b4cd6" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="2 12"/>
+  </svg>
+
+  <div class="mz-container mz-hero-inner">
+    <div>
+      <h1 class="mz-hero-title">מט״צים</h1>
+      <p class="mz-hero-sub">מנהיגות טכנולוגית צעירה</p>
+      <p class="mz-hero-text">
+        תכנית של רשת החינוך עתיד בשיתוף Intel המפתחת תלמידי כיתות ט' כמובילים
+        טכנולוגיים צעירים. לומדים, יוצרים, מדריכים ומשפיעים על הסביבה והקהילה.
+      </p>
+
+      {# REQ-M.5c two front doors, REQ-M.5d the test is public #}
+      <div class="mz-hero-cta">
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:home' %}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          כניסת תלמידים
+        </a>
+        <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:home' %}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          כניסת מובילים
+        </a>
+        <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:home' %}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#6b4cd6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12"/></svg>
+          מבחן הכניסה
+        </a>
+      </div>
+    </div>
+
+    {% comment %}
+      The photograph is referenced by a plain path rather than the static tag:
+      a picture that has not been supplied yet must degrade to the .mz-photo
+      gradient rather than break the static manifest at build time.
+    {% endcomment %}
+    <div class="mz-hero-media mz-photo"
+         style="background-image:url('/static/matazim/img/hero.png')"
+         role="img" aria-label="תלמידי מט״צים סביב מדפסת תלת-ממד ומחשב נייד"></div>
+  </div>
+</section>
+
+{# ------------------------------------------------------- how it works #}
+<div class="mz-container">
+  <section class="mz-how" aria-labelledby="mzHow">
+    <h2 id="mzHow">איך זה עובד?</h2>
+
+    {% comment %}
+      Four stages, not five: מתמיינים is the entrance test, which has its own
+      call to action above. Spec Q12.
+    {% endcomment %}
+    <div class="mz-stages">
+      {% for stage in stages %}
+        {% if not forloop.first %}
+          <svg class="mz-stage-sep" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18 9 12l6-6"/></svg>
+        {% endif %}
+        <div class="mz-stage">
+          <span class="mz-stage-icon" data-tone="{{ stage.tone }}" aria-hidden="true">
+            {% if stage.key == 'learn' %}
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            {% elif stage.key == 'create' %}
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12"/></svg>
+            {% elif stage.key == 'teach' %}
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            {% else %}
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
+            {% endif %}
+          </span>
+          <span>
+            <span class="mz-stage-title">{{ stage.title }}</span>
+            <span class="mz-stage-text">{{ stage.text }}</span>
+          </span>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# ----------------------------------------------------------- stats #}
+  {% comment %}
+    REQ-M.5f — aggregate only, and computed rather than typed once the data
+    exists. Hardcoded for this design pass.
+  {% endcomment %}
+  <section class="mz-stats" aria-label="מספרים">
+    {% for stat in stats %}
+      <div class="mz-stat">
+        <span aria-hidden="true">
+          {% if stat.icon == 'cap' %}
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg>
+          {% elif stat.icon == 'school' %}
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V8l7-5 7 5v13"/><path d="M10 21v-6h4v6"/></svg>
+          {% elif stat.icon == 'code' %}
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg>
+          {% elif stat.icon == 'people' %}
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+          {% else %}
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          {% endif %}
+        </span>
+        <span>
+          <span class="mz-stat-value">{{ stat.value }}</span>
+          <span class="mz-stat-label">{{ stat.label }}</span>
+        </span>
+      </div>
+    {% endfor %}
+  </section>
+
+  {# --------------------------------------------------------- showcase #}
+  {% comment %}
+    REQ-M.30a — a school is named, a student never is. Publishing becomes
+    opt-in plus a staff decision under REQ-M.5e; these six are placeholders.
+  {% endcomment %}
+  <div class="mz-section-head">
+    <h2>תוצרים נבחרים</h2>
+    <a href="{% url 'matazim:home' %}">לכל התוצרים ›</a>
+  </div>
+
+  <section class="mz-projects" aria-label="תוצרים נבחרים">
+    {% for project in projects %}
+      <article class="mz-project-card">
+        <div class="mz-project-thumb mz-photo"
+             style="background-image:url('/static/matazim/img/projects/{{ project.photo }}')"></div>
+        <div class="mz-project-body">
+          <div class="mz-project-title">{{ project.title }}</div>
+          <div class="mz-project-school">{{ project.school }}</div>
+        </div>
+      </article>
+    {% endfor %}
+  </section>
+</div>
+
+{% endblock %}
