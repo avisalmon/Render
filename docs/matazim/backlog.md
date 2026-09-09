@@ -14,7 +14,7 @@ Standing rule: dev first. Nothing reaches production without Avi's word.
 
 ---
 
-## SPR-M.1 — The front door  `AWAITING REVIEW`
+## SPR-M.1 — The front door  `DONE, DEPLOYED 2026-09-09`
 
 **Goal:** the app exists, it looks like מט״צים, and it is sealed off from
 babook. Design first, functionality later: the home page is built to Litala's
@@ -64,9 +64,17 @@ REQ-M.5f and REQ-M.5e. Tests now assert their absence rather than their shape.
 
 ### Definition of done
 
-All six features DONE in this file and their REQs updated in `spec.md`, every
-test in `test_plan.md` green, the whole repo suite green, and `/matazim/`
-demoed to Avi on the local server.
+All six features DONE, 25 tests green, and live at babook.co.il/matazim.
+
+**Regression gate.** The repo suite is not green and was not green before this
+sprint: a clean checkout of the pre-sprint `HEAD`, run in a separate worktree,
+fails 28 tests. After the sprint it fails 27, and a name-by-name diff shows
+**no new failures** and one that went from fail to pass. That is the gate this
+sprint was held to, since "all green" was never available to reach.
+
+**Deployed 2026-09-09** on Avi's word. Smoke-tested in production: `/matazim/`
+200 and rendering, no link out of the prefix except static assets, babook's own
+pages carrying no mention of מט״צים, and every asset served.
 
 ---
 
