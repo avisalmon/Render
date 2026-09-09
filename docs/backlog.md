@@ -1182,6 +1182,9 @@ not deployed until Avi says so.
 
 ## EPIC-10 — מט״צים (Young Technology Leaders)
 
+> **SUPERSEDED 2026-09-09.** מט״צים became its own autonomous space. The live
+> backlog is `docs/matazim/backlog.md`. Nothing new is added below.
+
 Spec: main_spec.md Chapter 10. **Not yet approved to build.** Written 2026-08-08
 from Litala Aviv's brief (רשת החינוך עתיד, 2026-08-03) and the scoping
 conversation with Avi the same day.

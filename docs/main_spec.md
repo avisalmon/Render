@@ -1277,6 +1277,11 @@ the platform grows by its own users bringing their groups in.
 
 ## Chapter 10 — מט״צים (Young Technology Leaders)
 
+> **SUPERSEDED 2026-09-09.** מט״צים is now an autonomous space with its own
+> spec at `docs/matazim/spec.md`. This chapter is kept as history: it describes
+> מט״צים as a section *inside* babook, which is exactly the decision that was
+> reversed. Nothing new is added below.
+
 > **Status: SPR-10.1 BUILT IN DEV (2026-08-08), not deployed. Rest is spec.**
 > Sources: Litala Aviv's (ראש תחום חינוך חברתי, רשת החינוך עתיד) site brief of
 > 2026-08-03, and the scoping conversation with Avi on 2026-08-08.
