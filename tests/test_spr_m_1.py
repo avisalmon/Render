@@ -151,11 +151,18 @@ def test_document_is_hebrew_and_rtl(client, db):
     assert 'dir="rtl"' in html
 
 
-def test_header_carries_wordmark_and_sign_in(client, db):
-    """T-F-M.1.4-4."""
+def test_shell_chrome_renders(client, db):
+    """T-F-M.1.4-4: wordmark and sign-in in the header, partners in the footer.
+
+    The partners belong at the foot of the page rather than in the hero: the
+    hero says what the program does, the footer says who stands behind it.
+    """
     html = client.get("/matazim/").content.decode()
     assert "matazim/logo.png" in html
     assert "התחברות" in html
+    assert "שותפים מרכזיים לעשייה" in html
+    assert "רשת עתיד" in html
+    assert "חמ״ד" in html
 
 
 # ---------------------------------------------------------------- F-M.1.5
@@ -164,19 +171,18 @@ def test_header_carries_wordmark_and_sign_in(client, db):
 def test_hero_renders(client, db):
     """T-F-M.1.5-1.
 
-    The copy is Avi's, corrected twice on 2026-09-09: a joint program of רשת
-    עתיד and חמ״ד with volunteers from Intel rather than Intel the company,
-    middle school rather than ninth grade, and the מט״צ goes on to teach in the
-    high school once certified.
+    The copy is Avi's, settled 2026-09-09: an educational program run with
+    Intel volunteers, middle school rather than ninth grade, and the מט״צ goes
+    on to teach in the high school once certified. The partner organisations
+    moved out of the hero and into the footer, checked separately.
     """
     html = client.get("/matazim/").content.decode()
+    hero = html.split('class="mz-hero-text"')[1].split("</p>")[0]
     assert "מט״צים" in html
     assert "מנהיגות טכנולוגית צעירה" in html
-    assert "רשת עתיד" in html
-    assert "חמ״ד" in html
-    assert "מתנדבים מאינטל" in html
-    assert "חטיבת הביניים" in html
-    assert "בתיכון" in html
+    assert "מתנדבי אינטל" in hero
+    assert "חטיבת הביניים" in hero
+    assert "בתיכון" in hero
 
 
 def test_two_front_doors_and_the_public_test(client, db):
