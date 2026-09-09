@@ -57,6 +57,26 @@
 
 {# ------------------------------------------------------- how it works #}
 <div class="mz-container">
+  {% comment %}
+    שותפים מרכזיים לעשייה. Avi asked for this to carry real weight rather than
+    sit as a line of small print in the footer, so it is a section of its own
+    with the partners' own marks. Logos are their SVGs, taken from their own
+    sites, drawn at a single optical height so neither dominates the other.
+  {% endcomment %}
+  <section class="mz-partners" aria-labelledby="mzPartners">
+    <h2 id="mzPartners">שותפים מרכזיים לעשייה</h2>
+    <div class="mz-partner-row">
+      {% comment %}
+        No caption under either mark: both logos already carry their own name,
+        and a repeated label only breaks the row's baseline. The name lives in
+        the alt text, where a screen reader needs it.
+      {% endcomment %}
+      <img class="mz-logo-wide" src="{% static 'matazim/img/partners/atid.svg' %}" alt="רשת עתיד">
+      <img class="mz-logo-tall" src="{% static 'matazim/img/partners/hemed_logo.png' %}" alt="חמ״ד, חינוך בונה עם">
+      <span class="mz-partner-more">וגופים נוספים נפלאים</span>
+    </div>
+  </section>
+
   <section class="mz-how" aria-labelledby="mzHow">
     <h2 id="mzHow">איך זה עובד?</h2>
 

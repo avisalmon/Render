@@ -152,17 +152,10 @@ def test_document_is_hebrew_and_rtl(client, db):
 
 
 def test_shell_chrome_renders(client, db):
-    """T-F-M.1.4-4: wordmark and sign-in in the header, partners in the footer.
-
-    The partners belong at the foot of the page rather than in the hero: the
-    hero says what the program does, the footer says who stands behind it.
-    """
+    """T-F-M.1.4-4: the wordmark and the sign-in action live in the header."""
     html = client.get("/matazim/").content.decode()
     assert "matazim/logo.png" in html
     assert "התחברות" in html
-    assert "שותפים מרכזיים לעשייה" in html
-    assert "רשת עתיד" in html
-    assert "חמ״ד" in html
 
 
 # ---------------------------------------------------------------- F-M.1.5
@@ -234,6 +227,21 @@ def test_photographs_degrade_to_a_gradient(client, db):
     html = client.get("/matazim/").content.decode()
     assert "<img" not in html.split("mz-hero-media")[1].split("</section>")[0]
     assert "mz-photo" in html
+
+
+def test_partners_section_carries_weight(client, db):
+    """T-F-M.1.5-7: REQ-M.5g.
+
+    Avi's instruction: the partners are not small print. They get a section of
+    their own, high on the page, with their own marks. Position is part of the
+    requirement, so the test checks the order rather than only the presence.
+    """
+    html = client.get("/matazim/").content.decode()
+    assert "שותפים מרכזיים לעשייה" in html
+    assert "partners/atid.svg" in html
+    assert "partners/hemed_logo.png" in html
+    assert "וגופים נוספים נפלאים" in html
+    assert html.index("שותפים מרכזיים לעשייה") < html.index("איך זה עובד")
 
 
 # ---------------------------------------------------------------- F-M.1.6

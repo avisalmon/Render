@@ -210,6 +210,7 @@ counts of kids taught. All live queries over the shared tables.
 | REQ-M.5c | Two front doors | The public home offers כניסת תלמידים and כניסת מובילים as separate calls to action, and each lands the person where their role belongs. One auth underneath, two doors on the street. | WIP |
 | REQ-M.5d | The entrance test is public | מבחן הכניסה is a hero CTA and a nav item, reachable with no account. Signing up happens around the test, not before it. | WIP |
 | REQ-M.5e | Public showcase | תוצרים נבחרים on the home page: selected member projects with a photo, a title and a school, and no student named. Publishing any project requires the member's opt-in **and** a staff decision, and either can be withdrawn. **Held: the section is off the page until real projects and real consent exist, and a test asserts its absence.** | HELD |
+| REQ-M.5g | Partners carry weight | שותפים מרכזיים לעשייה is a section of the page, directly under the hero and above איך זה עובד, showing the partners' own marks rather than a line of small print in the footer. Each mark is drawn at its own optical size, and no caption repeats a name the logo already carries. Room is kept for the partners not yet named. | DONE |
 | REQ-M.5f | Public counters | The stats band (students, schools, projects, leaders, ימי שיא) is aggregate only and computed, never typed in by hand. **Held: the band is off the page until something computes it, and a test asserts its absence.** | HELD |
 
 ### 5.2 Identity and access

@@ -251,7 +251,7 @@ img { max-width: 100%; height: auto; display: block; }
   border-radius: var(--mz-radius);
   box-shadow: var(--mz-shadow);
   padding: 26px 28px 30px;
-  margin-block: 8px 64px;
+  margin-block: 0 64px;
 }
 .mz-how h2 { text-align: center; font-size: 1.2rem; margin-bottom: 22px; }
 .mz-stages {
@@ -309,6 +309,44 @@ img { max-width: 100%; height: auto; display: block; }
 .mz-stat svg { flex: none; opacity: .85; }
 .mz-stat-value { font-size: 1.55rem; font-weight: 700; line-height: 1.1; }
 .mz-stat-label { font-size: .85rem; opacity: .9; }
+
+/* ---------------------------------------------------------------- partners */
+
+/* Avi's instruction: the partners carry real weight, they are not small print.
+ * So this is a section, not a footer line, and the logos are drawn at a single
+ * optical height so neither organisation dominates the other. */
+.mz-partners {
+  background: var(--mz-card);
+  border-radius: var(--mz-radius);
+  box-shadow: var(--mz-shadow);
+  padding: 28px 28px 32px;
+  margin-block: 8px 28px;
+  text-align: center;
+}
+.mz-partners h2 {
+  font-size: 1.2rem;
+  margin-bottom: 28px;
+}
+.mz-partner-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 28px 56px;
+}
+/* Sized by optical weight rather than by a single number: a wide wordmark and
+ * a near-square mark set to the same pixel height do not read as equals. */
+.mz-partner-row img { width: auto; object-fit: contain; }
+.mz-logo-wide { height: 58px; max-width: 220px; }
+.mz-logo-tall { height: 96px; max-width: 200px; }
+.mz-partner-more {
+  padding: 14px 22px;
+  border: 2px dashed var(--mz-line);
+  border-radius: var(--mz-radius-sm);
+  color: var(--mz-muted);
+  line-height: 1.4;
+  max-width: 220px;
+}
 
 /* ---------------------------------------------------------------- showcase */
 
@@ -394,6 +432,9 @@ img { max-width: 100%; height: auto; display: block; }
   .mz-arc, .mz-blob { display: none; }
   .mz-hero-media { min-height: 240px; border-radius: 120px 0 0 120px; }
   .mz-how { padding: 20px 18px 24px; }
+  .mz-partner-row { gap: 22px 30px; }
+  .mz-logo-wide { height: 46px; }
+  .mz-logo-tall { height: 74px; }
 }
 
 @media (max-width: 560px) {
