@@ -251,7 +251,7 @@ img { max-width: 100%; height: auto; display: block; }
   border-radius: var(--mz-radius);
   box-shadow: var(--mz-shadow);
   padding: 26px 28px 30px;
-  margin-block: 8px 28px;
+  margin-block: 8px 64px;
 }
 .mz-how h2 { text-align: center; font-size: 1.2rem; margin-bottom: 22px; }
 .mz-stages {

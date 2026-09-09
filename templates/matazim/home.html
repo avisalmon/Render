@@ -22,8 +22,9 @@
       <h1 class="mz-hero-title">מט״צים</h1>
       <p class="mz-hero-sub">מנהיגות טכנולוגית צעירה</p>
       <p class="mz-hero-text">
-        תכנית של רשת החינוך עתיד בשיתוף Intel המפתחת תלמידי כיתות ט' כמובילים
-        טכנולוגיים צעירים. לומדים, יוצרים, מדריכים ומשפיעים על הסביבה והקהילה.
+תוכנית משותפת של רשת עתיד, חמ״ד בשיתוף מתנדבים מאינטל, המפתחת תלמידי
+        כיתות חטיבת הביניים כמובילים טכנולוגיים צעירים. לאחר הסמכה למט״צים
+        מדריכים בתיכון. לומדים, יוצרים, מדריכים ומשפיעים על הקהילה.
       </p>
 
       {# REQ-M.5c two front doors, REQ-M.5d the test is public #}
@@ -89,57 +90,6 @@
     </div>
   </section>
 
-  {# ----------------------------------------------------------- stats #}
-  {% comment %}
-    REQ-M.5f — aggregate only, and computed rather than typed once the data
-    exists. Hardcoded for this design pass.
-  {% endcomment %}
-  <section class="mz-stats" aria-label="מספרים">
-    {% for stat in stats %}
-      <div class="mz-stat">
-        <span aria-hidden="true">
-          {% if stat.icon == 'cap' %}
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg>
-          {% elif stat.icon == 'school' %}
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V8l7-5 7 5v13"/><path d="M10 21v-6h4v6"/></svg>
-          {% elif stat.icon == 'code' %}
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg>
-          {% elif stat.icon == 'people' %}
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
-          {% else %}
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-          {% endif %}
-        </span>
-        <span>
-          <span class="mz-stat-value">{{ stat.value }}</span>
-          <span class="mz-stat-label">{{ stat.label }}</span>
-        </span>
-      </div>
-    {% endfor %}
-  </section>
-
-  {# --------------------------------------------------------- showcase #}
-  {% comment %}
-    REQ-M.30a — a school is named, a student never is. Publishing becomes
-    opt-in plus a staff decision under REQ-M.5e; these six are placeholders.
-  {% endcomment %}
-  <div class="mz-section-head">
-    <h2>תוצרים נבחרים</h2>
-    <a href="{% url 'matazim:home' %}">לכל התוצרים ›</a>
-  </div>
-
-  <section class="mz-projects" aria-label="תוצרים נבחרים">
-    {% for project in projects %}
-      <article class="mz-project-card">
-        <div class="mz-project-thumb mz-photo"
-             style="background-image:url('/static/matazim/img/projects/{{ project.photo }}')"></div>
-        <div class="mz-project-body">
-          <div class="mz-project-title">{{ project.title }}</div>
-          <div class="mz-project-school">{{ project.school }}</div>
-        </div>
-      </article>
-    {% endfor %}
-  </section>
 </div>
 
 {% endblock %}

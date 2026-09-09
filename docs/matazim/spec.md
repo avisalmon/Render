@@ -209,8 +209,8 @@ counts of kids taught. All live queries over the shared tables.
 | REQ-M.5b | Nav changes with state | Logged out: אודות התכנית, המסלול השנתי, הקורסים, מבחן הכניסה, בתי הספר, קהילת מט״צים, ימי שיא. Logged in: המסלול **שלי**, הקורסים, הגשות ותוצרים, ימי שיא, בתי הספר, קהילת מט״צים, plus notifications and the member menu. Same site, two navs. | WIP |
 | REQ-M.5c | Two front doors | The public home offers כניסת תלמידים and כניסת מובילים as separate calls to action, and each lands the person where their role belongs. One auth underneath, two doors on the street. | WIP |
 | REQ-M.5d | The entrance test is public | מבחן הכניסה is a hero CTA and a nav item, reachable with no account. Signing up happens around the test, not before it. | WIP |
-| REQ-M.5e | Public showcase | תוצרים נבחרים on the home page: selected member projects with a photo, a title and a school, and no student named. Publishing any project requires the member's opt-in **and** a staff decision, and either can be withdrawn. | TODO |
-| REQ-M.5f | Public counters | The stats band (students, schools, projects, leaders, ימי שיא) is aggregate only and computed, never typed in by hand. | WIP |
+| REQ-M.5e | Public showcase | תוצרים נבחרים on the home page: selected member projects with a photo, a title and a school, and no student named. Publishing any project requires the member's opt-in **and** a staff decision, and either can be withdrawn. **Held: the section is off the page until real projects and real consent exist, and a test asserts its absence.** | HELD |
+| REQ-M.5f | Public counters | The stats band (students, schools, projects, leaders, ימי שיא) is aggregate only and computed, never typed in by hand. **Held: the band is off the page until something computes it, and a test asserts its absence.** | HELD |
 
 ### 5.2 Identity and access
 

@@ -49,11 +49,17 @@ all stay exactly where they are. Dropping the production tables waits on ACT-M.2
 **Out of scope, deliberately:** login, the member nav, any real data, the other
 eight sections, 404 and 500 pages, and the two logged-in screens.
 
+**Cut during the sprint (Avi, 2026-09-09):** the prototype's stats band and its
+תוצרים נבחרים showcase. Both were invented, and a public page does not carry
+invented figures or invented children's work. The components stay in the design
+system; the sections return when there is data and consent behind them, under
+REQ-M.5f and REQ-M.5e. Tests now assert their absence rather than their shape.
+
 ### ACT items
 
 | ACT-ID | What Avi does | Blocks | Status |
 |---|---|---|---|
-| ACT-M.1 | Photographs. The hero is **in** (`static/matazim/img/hero.png`, supplied 2026-09-09). Still open: the six project thumbnails at `static/matazim/img/projects/p1.png` to `p6.png` | Final look of the showcase strip. It degrades to a gradient without them | PARTIAL |
+| ACT-M.1 | Hero photograph, supplied 2026-09-09 (`static/matazim/img/hero.png`). The project thumbnails are no longer needed: the showcase came off the page | Nothing | CLOSED |
 | ACT-M.2 | Confirm whether any real person applied on the production tables | The table-drop, which is **not** in this sprint | OPEN |
 
 ### Definition of done

@@ -162,12 +162,21 @@ def test_header_carries_wordmark_and_sign_in(client, db):
 
 
 def test_hero_renders(client, db):
-    """T-F-M.1.5-1."""
+    """T-F-M.1.5-1.
+
+    The copy is Avi's, corrected twice on 2026-09-09: a joint program of רשת
+    עתיד and חמ״ד with volunteers from Intel rather than Intel the company,
+    middle school rather than ninth grade, and the מט״צ goes on to teach in the
+    high school once certified.
+    """
     html = client.get("/matazim/").content.decode()
     assert "מט״צים" in html
     assert "מנהיגות טכנולוגית צעירה" in html
-    assert "רשת החינוך עתיד" in html
-    assert "Intel" in html
+    assert "רשת עתיד" in html
+    assert "חמ״ד" in html
+    assert "מתנדבים מאינטל" in html
+    assert "חטיבת הביניים" in html
+    assert "בתיכון" in html
 
 
 def test_two_front_doors_and_the_public_test(client, db):
@@ -189,19 +198,29 @@ def test_how_it_works_shows_four_stages_in_order(client, db):
     assert positions == sorted(positions)
 
 
-def test_stats_band_renders_five_figures(client, db):
-    """T-F-M.1.5-4: REQ-M.5f. Hardcoded this sprint, computed later."""
+def test_page_carries_no_invented_figures(client, db):
+    """T-F-M.1.5-4: the counters stay off the page until something computes them.
+
+    The prototype shows 1,250 students and 28 schools. Nobody counted those, so
+    publishing them would be a claim we cannot stand behind. REQ-M.5f brings the
+    band back when it reads from real rows.
+    """
     html = client.get("/matazim/").content.decode()
-    for label in ("תלמידים", "בתי ספר", "תוצרים שהוגשו", "מובילים", "ימי שיא"):
-        assert label in html
+    assert "mz-stats" not in html
+    for invented in ("1,250", "4,300", "תוצרים שהוגשו", "בתי ספר"):
+        assert invented not in html
 
 
-def test_showcase_names_schools_and_no_students(client, db):
-    """T-F-M.1.5-5: REQ-M.30a. Minors' work is attributed to a school, never a name."""
+def test_page_shows_no_invented_student_work(client, db):
+    """T-F-M.1.5-5: no showcase until real projects exist and consent is real.
+
+    REQ-M.5e makes publishing a member's work opt-in plus a staff decision, and
+    REQ-M.11 (Q11) has not settled who consents for a minor. Until then the
+    public page shows no children's projects at all, invented ones included.
+    """
     html = client.get("/matazim/").content.decode()
-    assert "תוצרים נבחרים" in html
-    assert html.count("mz-project-card") == 6
-    assert "תיכון עתיד" in html
+    assert "mz-project-card" not in html
+    assert "תוצרים נבחרים" not in html
 
 
 def test_photographs_degrade_to_a_gradient(client, db):
