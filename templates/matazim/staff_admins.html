@@ -26,14 +26,30 @@
       אפשר להוסיף רק מי שכבר פתח חשבון באתר. אנחנו לא פותחים חשבון חדש מכאן, כדי
       שטעות הקלדה לא תיצור חשבון עם ההרשאה הגבוהה במערכת.
     </p>
-    <form method="post">
+
+    {% comment %}
+      REQ-M.71 — search by name or by email. A native datalist cannot do this:
+      browsers filter options by their value, so typing a Hebrew name would
+      never match an option whose value is an address.
+    {% endcomment %}
+    <form method="post" id="mzGrantForm">
       {% csrf_token %}
       <input type="hidden" name="action" value="grant">
-      <label class="mz-field">
-        <span>אימייל</span>
-        <input type="email" name="email" required placeholder="name@example.com">
-      </label>
-      <button type="submit" class="mz-btn mz-btn-primary">הוספה כמנהל/ת</button>
+      <input type="hidden" name="email" id="mzChosenEmail">
+
+      <div class="mz-picker">
+        <label class="mz-field">
+          <span>חיפוש לפי שם או אימייל</span>
+          <input type="text" id="mzUserSearch" autocomplete="off" spellcheck="false"
+                 placeholder="למשל: נעמ" aria-controls="mzResults" aria-expanded="false">
+        </label>
+        <ul class="mz-picker-results" id="mzResults" role="listbox" hidden></ul>
+      </div>
+
+      <p class="mz-chosen" id="mzChosen" hidden></p>
+      <button type="submit" class="mz-btn mz-btn-primary" id="mzGrantBtn" disabled>
+        הוספה כמנהל/ת
+      </button>
     </form>
   </section>
 
@@ -43,8 +59,16 @@
       {% for row in rows %}
         <li>
           <span class="mz-training-title">
-            {{ row.user.profile.display_name|default:row.user.email }}
-            <span class="mz-muted">{{ row.user.email }}</span>
+            {% comment %}
+              Only show the address twice over if there is a name to show it
+              beside. Otherwise the row reads "x@y.com x@y.com".
+            {% endcomment %}
+            {% if row.user.profile.display_name %}
+              {{ row.user.profile.display_name }}
+              <span class="mz-muted">{{ row.user.email }}</span>
+            {% else %}
+              {{ row.user.email }}
+            {% endif %}
           </span>
           {% if row.source == "root" %}
             <span class="mz-tag mz-tag-done">מנהל/ת האתר</span>
@@ -67,4 +91,86 @@
     </p>
   </section>
 </div>
+
+<script>
+(function () {
+  const box = document.getElementById("mzUserSearch");
+  const list = document.getElementById("mzResults");
+  const chosen = document.getElementById("mzChosen");
+  const hidden = document.getElementById("mzChosenEmail");
+  const submit = document.getElementById("mzGrantBtn");
+  if (!box) return;
+
+  const URL_BASE = "{% url 'matazim:staff_user_search' %}";
+  let timer = null;
+  let controller = null;
+
+  function clearChoice() {
+    hidden.value = "";
+    chosen.hidden = true;
+    submit.disabled = true;
+  }
+
+  function choose(person) {
+    hidden.value = person.email;
+    box.value = person.name ? person.name + " · " + person.email : person.email;
+    chosen.textContent = person.is_admin
+      ? person.email + " כבר מנהל/ת. אפשר להוסיף שוב, זה לא ישנה כלום."
+      : "נבחר: " + person.email;
+    chosen.hidden = false;
+    submit.disabled = false;
+    list.hidden = true;
+    box.setAttribute("aria-expanded", "false");
+  }
+
+  function render(results) {
+    list.innerHTML = "";
+    if (!results.length) {
+      list.hidden = true;
+      box.setAttribute("aria-expanded", "false");
+      return;
+    }
+    for (const person of results) {
+      const item = document.createElement("li");
+      item.setAttribute("role", "option");
+      item.tabIndex = 0;
+      item.innerHTML =
+        '<span class="mz-picker-name"></span><span class="mz-picker-email"></span>';
+      item.querySelector(".mz-picker-name").textContent = person.name || person.email;
+      item.querySelector(".mz-picker-email").textContent =
+        person.is_admin ? person.email + " · כבר מנהל/ת" : person.email;
+      item.addEventListener("click", function () { choose(person); });
+      item.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); choose(person); }
+      });
+      list.appendChild(item);
+    }
+    list.hidden = false;
+    box.setAttribute("aria-expanded", "true");
+  }
+
+  box.addEventListener("input", function () {
+    clearChoice();
+    clearTimeout(timer);
+    const q = box.value.trim();
+    // Matches the server: under two characters there is nothing to look for,
+    // and it keeps a keystroke from becoming a request.
+    if (q.length < 2) { render([]); return; }
+    timer = setTimeout(async function () {
+      if (controller) controller.abort();
+      controller = new AbortController();
+      try {
+        const res = await fetch(URL_BASE + "?q=" + encodeURIComponent(q),
+                                { signal: controller.signal });
+        const data = await res.json();
+        render(data.results || []);
+      } catch (e) { /* aborted or offline: leave the last list alone */ }
+    }, 200);
+  });
+
+  document.addEventListener("click", function (e) {
+    if (!list.contains(e.target) && e.target !== box) { list.hidden = true; }
+  });
+})();
+</script>
 {% endblock %}

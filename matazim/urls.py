@@ -30,6 +30,7 @@ urlpatterns = [
     # Staff curate the bank (REQ-M.55).
     path("staff/", entrance_views.staff_home, name="staff_home"),
     path("staff/admins/", entrance_views.staff_admins, name="staff_admins"),
+    path("staff/users/search/", entrance_views.staff_user_search, name="staff_user_search"),
     path("staff/targets/", entrance_views.staff_targets, name="staff_targets"),
     path(
         "staff/targets/<str:target_id>/toggle/",

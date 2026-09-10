@@ -487,3 +487,109 @@ def test_an_anonymous_visitor_meets_our_login_not_a_refusal(client, db):
         response = client.get(reverse(name))
         assert response.status_code == 302
         assert response.url.startswith(reverse("matazim:login"))
+
+
+# ---------------------------------------------------------------- F-M.6.10
+
+
+def _search(client, q):
+    from django.urls import reverse
+
+    return client.get(reverse("matazim:staff_user_search"), {"q": q}).json()["results"]
+
+
+def test_the_picker_finds_someone_by_part_of_their_name(client, db):
+    """T-F-M.6.10-1: REQ-M.71. Avi: typing נעמ should find נעמי.
+
+    This is why a native datalist could not be used: browsers filter options by
+    their value, so a Hebrew name would never match an option whose value is an
+    email address.
+    """
+    from app.models import UserProfile
+
+    naomi = make_user("n.levi@example.com")
+    UserProfile.objects.update_or_create(user=naomi, defaults={"display_name": "נעמי לוי"})
+    make_user("someone.else@example.com")
+
+    _client_as(client, "chief6@example.com", admin=True)
+    found = _search(client, "נעמ")
+
+    assert [row["email"] for row in found] == ["n.levi@example.com"]
+    assert found[0]["name"] == "נעמי לוי"
+
+
+def test_the_picker_finds_someone_by_part_of_their_email(client, db):
+    """T-F-M.6.10-2: a fragment of an address finds its owner."""
+    make_user("dvora.cohen@example.com")
+    make_user("nothing@example.com")
+
+    _client_as(client, "chief7@example.com", admin=True)
+    assert [row["email"] for row in _search(client, "dvora")] == ["dvora.cohen@example.com"]
+
+
+def test_the_picker_says_who_is_already_an_admin(client, db):
+    """T-F-M.6.10-3: offering someone as if they were not is a small lie."""
+    from matazim.models import MemberProfile
+
+    existing = make_user("already@example.com")
+    MemberProfile.objects.update_or_create(user=existing, defaults={"is_admin": True})
+
+    _client_as(client, "chief8@example.com", admin=True)
+    found = _search(client, "already")
+    assert found[0]["is_admin"] is True
+
+
+def test_the_picker_cannot_be_used_to_walk_the_user_table(client, db):
+    """T-F-M.6.10-4: it searches every account, and many belong to minors.
+
+    Under two characters there is nothing to look for, and an empty box must not
+    return the platform.
+    """
+    for i in range(5):
+        make_user(f"person{i}@example.com")
+
+    _client_as(client, "chief9@example.com", admin=True)
+    assert _search(client, "") == []
+    assert _search(client, "a") == []
+
+
+def test_the_picker_is_admin_only(client, db):
+    """T-F-M.6.10-5: a member must not be able to enumerate anyone."""
+    from django.urls import reverse
+
+    make_user("hidden@example.com")
+
+    assert client.get(reverse("matazim:staff_user_search"), {"q": "hidden"}).status_code in (
+        302,
+        403,
+    )
+
+    _client_as(client, "plain2@example.com")
+    assert client.get(reverse("matazim:staff_user_search"), {"q": "hidden"}).status_code in (
+        302,
+        403,
+    )
+
+
+def test_the_picker_returns_a_page_not_the_platform(client, db):
+    """T-F-M.6.10-6: capped, so a broad query stays a list and not a dump."""
+    for i in range(15):
+        make_user(f"wide{i}@example.com")
+
+    _client_as(client, "chief10@example.com", admin=True)
+    assert len(_search(client, "wide")) == 10
+
+
+def test_someone_with_no_name_is_not_listed_twice(client, db):
+    """T-F-M.6.10-7: caught by looking at the page, not by a unit.
+
+    Without a display name the row rendered the email beside itself:
+    "x@y.com x@y.com".
+    """
+    from django.urls import reverse
+
+    _client_as(client, "chief11@example.com", admin=True, root=True)
+    html = client.get(reverse("matazim:staff_admins")).content.decode()
+    rows = html.split("mz-training-title")
+    mine = next(part for part in rows if "chief11@example.com" in part)
+    assert mine.count("chief11@example.com") == 1

@@ -320,3 +320,55 @@ def staff_admins(request):
             is_admin_now=is_admin(request.user),
         ),
     )
+
+
+@login_required(login_url=LOGIN_URL)
+def staff_user_search(request):
+    """REQ-M.71 — live search for the admin picker, by name or by email.
+
+    Nobody should have to remember an exact address to grant a role. A native
+    `datalist` cannot do this: browsers filter options by their value, so typing
+    a Hebrew name would never match an option whose value is an email.
+
+    Two safeguards, because this searches every account on the platform and many
+    of them belong to minors. It refuses queries under two characters, so it
+    cannot be walked from an empty box, and it caps what it returns.
+    """
+    from django.contrib.auth.models import User
+    from django.db.models import Q
+    from django.http import JsonResponse
+
+    from .models import MemberProfile
+
+    if not _is_staff(request.user):
+        raise PermissionDenied
+
+    query = (request.GET.get("q") or "").strip()
+    if len(query) < 2:
+        return JsonResponse({"results": []})
+
+    people = (
+        User.objects.filter(
+            Q(email__icontains=query)
+            | Q(username__icontains=query)
+            | Q(profile__display_name__icontains=query)
+        )
+        .select_related("profile")
+        .order_by("email")[:10]
+    )
+    already = set(MemberProfile.objects.filter(is_admin=True).values_list("user_id", flat=True))
+
+    return JsonResponse(
+        {
+            "results": [
+                {
+                    "email": person.email or person.username,
+                    "name": getattr(person.profile, "display_name", "") or "",
+                    # Shown rather than filtered out: offering someone as if
+                    # they were not already an admin is a small lie.
+                    "is_admin": person.pk in already,
+                }
+                for person in people
+            ]
+        }
+    )

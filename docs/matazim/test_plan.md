@@ -179,6 +179,13 @@ Tests in `tests/test_spr_m_6.py`, marker `sprm6`. All GREEN.
 | T-F-M.6.9-2 | A missing page inside the walls stays inside them | F-M.6.9 |
 | T-F-M.6.9-3 | babook's own errors are left alone | F-M.6.9 |
 | T-F-M.6.9-4 | An anonymous visitor meets our login, not a refusal | F-M.6.9 |
+| T-F-M.6.10-1 | The picker finds someone by part of their name | F-M.6.10 |
+| T-F-M.6.10-2 | The picker finds someone by part of their email | F-M.6.10 |
+| T-F-M.6.10-3 | The picker says who is already an admin | F-M.6.10 |
+| T-F-M.6.10-4 | The picker cannot be used to walk the user table | F-M.6.10 |
+| T-F-M.6.10-5 | The picker is admin only | F-M.6.10 |
+| T-F-M.6.10-6 | The picker returns a page, not the platform | F-M.6.10 |
+| T-F-M.6.10-7 | Someone with no name is not listed twice | F-M.6.10 |
 
 Status values: `PLANNED` → `RED` → `GREEN`.
 

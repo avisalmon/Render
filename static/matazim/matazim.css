@@ -799,6 +799,48 @@ img { max-width: 100%; height: auto; display: block; }
 }
 .mz-nav-staff:hover { border-color: var(--mz-purple); }
 
+/* ---------------------------------------------------------------- picker */
+
+.mz-picker { position: relative; }
+.mz-picker-results {
+  position: absolute;
+  z-index: 20;
+  inset-inline: 0;
+  top: 100%;
+  margin: -8px 0 0;
+  padding: 4px;
+  list-style: none;
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--mz-card);
+  border: 1px solid var(--mz-line);
+  border-radius: var(--mz-radius-sm);
+  box-shadow: var(--mz-shadow-lift);
+}
+.mz-picker-results li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  /* A thumb, not a pointer: the phone guard holds this to 36px. */
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.mz-picker-results li:hover,
+.mz-picker-results li:focus { background: var(--mz-purple-soft); outline: none; }
+.mz-picker-name { color: var(--mz-ink); font-weight: 500; font-size: .92rem; }
+.mz-picker-email { color: var(--mz-muted); font-size: .8rem; }
+
+.mz-chosen {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-radius: var(--mz-radius-sm);
+  background: var(--mz-teal-soft);
+  color: #0a6b58;
+  font-size: .9rem;
+}
+.mz-btn:disabled { opacity: .45; cursor: not-allowed; }
+
 /* ---------------------------------------------------------------- steps */
 
 .mz-two-up { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }

@@ -328,6 +328,7 @@ becomes a filtered queryset.
 | F-M.6.7 | מט״צים in Django admin, so adminship can be granted without a deploy | REQ-M.68 | DONE |
 | F-M.6.8 | One ניהול door, and granting adminship from inside מט״צים | REQ-M.69, REQ-M.70 | DONE |
 | F-M.6.9 | Error pages that stay inside the walls | REQ-M.2 | DONE |
+| F-M.6.10 | The admin picker searches by name or email as you type | REQ-M.71 | DONE |
 
 ### Scope notes
 
