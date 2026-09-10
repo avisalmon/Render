@@ -138,6 +138,10 @@ that bind the build:
 - Progress appears as a ring on a card, a bar for the overall figure, and a
   donut in a sidebar. All three exist; use each where the screens use it.
 - Avatars default to initials. A photo is opt-in, never the default for a minor.
+- **A phone is the default screen, not an afterthought.** Every page works at
+  390px with nothing wider than the viewport, and every tappable thing is at
+  least 36px tall. `tests/test_matazim_mobile.py` drives a real browser and
+  fails when that stops being true, because a one-off look does not hold.
 
 ## 4. Data model
 

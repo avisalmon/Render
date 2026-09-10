@@ -83,8 +83,14 @@ fifteen-minute suite before every push is the wrong shape. Two gates now.
 **The fast gate — every push.** About 45 seconds.
 
 ```
-pytest -m "smoke or <this sprint's marker>" -q
+pytest -m "smoke or sprmobile or <this sprint's marker>" -q
 ```
+
+`sprmobile` drives a real browser at 390px over every public page and fails on
+horizontal overflow or a tap target under 36px. Avi, 2026-09-10: everything we
+build has to work on a phone, and a one-off look does not keep that true a week
+later. It adds about 30 seconds and it has already caught two dead-end links
+that no amount of reading the template would have shown.
 
 `tests/test_smoke.py` is deliberately shallow: every key page still serves, the
 health check answers, the two products stay sealed from each other, and gated

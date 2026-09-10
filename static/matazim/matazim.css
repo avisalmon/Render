@@ -395,7 +395,14 @@ img { max-width: 100%; height: auto; display: block; }
   pointer-events: none;
 }
 .mz-door-why { font-size: .8rem; color: var(--mz-muted); }
-.mz-door-why a { font-weight: 500; text-decoration: underline; }
+/* This link is the only way forward from a locked door, so it gets a real hit
+   area rather than the 15px a bare inline link gives a thumb. */
+.mz-door-why a {
+  display: inline-block;
+  padding: 9px 6px;
+  font-weight: 500;
+  text-decoration: underline;
+}
 
 /* ---------------------------------------------------------------- welcome */
 
@@ -454,7 +461,15 @@ img { max-width: 100%; height: auto; display: block; }
 }
 .mz-auth-card h1 { font-size: 1.5rem; margin-bottom: 4px; }
 .mz-auth-sub { margin: 0 0 22px; color: var(--mz-muted); }
-.mz-auth-alt { margin: 18px 0 0; font-size: .9rem; text-align: center; }
+.mz-auth-alt { margin: 12px 0 0; font-size: .9rem; text-align: center; }
+/* The only way to the other screen, so it gets a thumb-sized hit area rather
+   than the 17px a bare inline link gives it. */
+.mz-auth-alt a {
+  display: inline-block;
+  padding: 10px 8px;
+  font-weight: 500;
+  text-decoration: underline;
+}
 
 .mz-field { display: block; margin-bottom: 16px; }
 .mz-field > span {
