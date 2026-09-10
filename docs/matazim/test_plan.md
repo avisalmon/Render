@@ -34,7 +34,7 @@ rather than kept in a suite of their own.
 | T-F-M.1.5-7 | The partners section sits above איך זה עובד and shows both marks | integration | F-M.1.5 | GREEN |
 | T-F-M.1.6-1 | RULE-1: no מט״צים template links outside `/matazim/` | unit | F-M.1.6 | GREEN |
 | T-F-M.1.6-2 | RULE-2: no מט״צים template extends or includes babook chrome | unit | F-M.1.6 | GREEN |
-| T-F-M.1.6-3 | RULE-3: מט״צים writes nothing to learning state | unit | F-M.1.6 | GREEN |
+| T-F-M.1.6-3 | RULE-3: one version of the truth, no parallel record of learning | unit | F-M.1.6 | GREEN |
 | T-F-M.1.6-4 | RULE-4: nothing in `app/` imports the `matazim` package | unit | F-M.1.6 | GREEN |
 
 ---
@@ -75,6 +75,35 @@ Tests in `tests/test_spr_m_2.py`, marker `sprm2`.
 | T-F-M.2.9-2 | Our handoff sends them to the provider with a return address in the prefix | integration | F-M.2.9 | GREEN |
 | T-F-M.2.9-3 | Coming back stamps entry and carries the welcome, exactly like a password sign-in | integration | F-M.2.9 | GREEN |
 | T-F-M.2.9-4 | Someone who cancelled at Google is returned to our login, not to an error | integration | F-M.2.9 | GREEN |
+
+---
+
+## SPR-M.3 — מבחן הכניסה
+
+Tests in `tests/test_spr_m_3.py`, marker `sprm3`.
+
+| Test ID | Description | Type | Feature | Status |
+|---|---|---|---|---|
+| T-F-M.3.1-1 | Register lands on the main view, not the personal area | integration | F-M.3.1 | GREEN |
+| T-F-M.3.1-2 | Coming back from Google lands on the main view too | integration | F-M.3.1 | GREEN |
+| T-F-M.3.2-1 | The bank seeds one row per generated target and is idempotent | unit | F-M.3.2 | GREEN |
+| T-F-M.3.2-2 | A target carries its shape and its brief, and starts active | unit | F-M.3.2 | GREEN |
+| T-F-M.3.3-1 | The curation screen is staff only | integration | F-M.3.3 | GREEN |
+| T-F-M.3.3-2 | It lists every target with its drawing and its model | integration | F-M.3.3 | GREEN |
+| T-F-M.3.3-3 | Retiring a target takes it out of circulation, and it can be restored | integration | F-M.3.3 | GREEN |
+| T-F-M.3.4-1 | The lesson list shows the nine lessons of the shared course, in our chrome | integration | F-M.3.4 | GREEN |
+| T-F-M.3.4-2 | babook's course is not modified by anything we do | unit | F-M.3.4 | GREEN |
+| T-F-M.3.5-1 | A lesson renders the player and never the transcript or the summary | integration | F-M.3.5 | GREEN |
+| T-F-M.3.5-2 | Watching writes progress through the shared tables | integration | F-M.3.5 | GREEN |
+| T-F-M.3.6-1 | Reaching the task assigns a target, and returning keeps the same one | integration | F-M.3.6 | GREEN |
+| T-F-M.3.6-2 | The task page shows the drawing, the 3D view and the brief, and has no video | integration | F-M.3.6 | GREEN |
+| T-F-M.3.6-3 | A retired target is never assigned to anyone new | unit | F-M.3.6 | GREEN |
+| T-F-M.3.7-1 | Uploading a matching model records an attempt that passed | integration | F-M.3.7 | GREEN |
+| T-F-M.3.7-2 | Uploading a wrong model records an attempt that did not pass, with issues | integration | F-M.3.7 | GREEN |
+| T-F-M.3.7-3 | A file that is not an STL is refused kindly, not with a stack trace | integration | F-M.3.7 | GREEN |
+| T-F-M.3.8-1 | A miss says עוד לא, never נדחה, and names an actual number | integration | F-M.3.8 | GREEN |
+| T-F-M.3.8-2 | A retry draws a fresh target, and the earlier attempt survives | integration | F-M.3.8 | GREEN |
+| T-F-M.3.9-1 | Passing stamps the profile and opens כניסת תלמידים on the home page | integration | F-M.3.9 | GREEN |
 
 Status values: `PLANNED` → `RED` → `GREEN`.
 

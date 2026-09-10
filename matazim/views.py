@@ -197,7 +197,10 @@ def register(request):
                 )
             auth_login(request, user, backend="django.contrib.auth.backends.ModelBackend")
             _carry_welcome_across_sign_in(request, user)
-            return redirect("matazim:profile")
+            # REQ-M.46 - the main view, not the personal area. Someone who has
+            # just signed in wants to see the program, not a form about
+            # themselves, and the personal area is one click away in the header.
+            return redirect("matazim:home")
 
     return render(
         request,
@@ -230,7 +233,7 @@ def auth_done(request):
         return redirect("matazim:login")
     _stamp_entry(request.user)
     _carry_welcome_across_sign_in(request, request.user)
-    return redirect("matazim:profile")
+    return redirect("matazim:home")
 
 
 def _carry_welcome_across_sign_in(request, user):

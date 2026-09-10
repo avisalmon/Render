@@ -7,7 +7,7 @@ templates/matazim/ may only reverse names in this namespace.
 
 from django.urls import path
 
-from . import views
+from . import entrance_views, views
 
 app_name = "matazim"
 
@@ -16,6 +16,17 @@ urlpatterns = [
     # מבחן הכניסה is public: the link gets pasted around, and signing up
     # happens around the test rather than before it (REQ-M.5d).
     path("test/", views.entrance_test, name="entrance_test"),
+    path("test/lessons/", entrance_views.test_lessons, name="test_lessons"),
+    path("test/lesson/<int:order>/", entrance_views.test_lesson, name="test_lesson"),
+    path("test/task/", entrance_views.test_task, name="test_task"),
+    path("test/retry/", entrance_views.test_retry, name="test_retry"),
+    # Staff curate the bank (REQ-M.55).
+    path("staff/targets/", entrance_views.staff_targets, name="staff_targets"),
+    path(
+        "staff/targets/<str:target_id>/toggle/",
+        entrance_views.staff_target_toggle,
+        name="staff_target_toggle",
+    ),
     # The threshold. Our screens, babook's accounts (REQ-M.6, REQ-M.7).
     path("login/", views.login, name="login"),
     path("logout/", views.logout, name="logout"),

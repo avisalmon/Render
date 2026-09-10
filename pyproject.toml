@@ -18,6 +18,7 @@ markers = [
     "spr214: SPR-2.1.4 Corporate Page Polish & Compliance sprint tests",
     "sprm1: SPR-M.1 מט״צים front door sprint tests",
     "sprm2: SPR-M.2 מט״צים identity and first-contact sprint tests",
+    "sprm3: SPR-M.3 מט״צים entrance test sprint tests",
     "smoke: the fast gate, run on every push (see tests/test_smoke.py)",
 ]
 

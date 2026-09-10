@@ -270,16 +270,29 @@ def test_rule_2_no_shared_chrome():
             assert tag.startswith("matazim/"), f"{tpl.name} reaches into {tag}"
 
 
-def test_rule_3_writes_nothing_to_learning_state():
-    """T-F-M.1.6-3: מט״צים reads learning state and never writes it."""
-    writes = re.compile(
-        r"(Enrollment|UserVideoProgress|CourseCertificate|TeacherClass|ClassMembership)"
+def test_rule_3_keeps_one_version_of_the_truth():
+    """T-F-M.1.6-3: no parallel record of what anyone has learned.
+
+    Amended 2026-09-10. This first forbade every write, and threw at the first
+    lesson we rendered: you cannot watch a lesson without an enrolment, and
+    babook's own lesson view creates one with this exact one-liner in six
+    places. The danger was never enrolment, it was divergence. So what is banned
+    is fabricating progress, issuing a certificate by hand, and keeping a second
+    table of our own.
+    """
+    forbidden = re.compile(
+        r"(UserVideoProgress|CourseCertificate|TeacherClass|ClassMembership)"
         r"\.objects\.(create|update|get_or_create|update_or_create|bulk_create)"
     )
     for src_file in _py(MZ_APP):
-        assert not writes.search(
+        assert not forbidden.search(
             src_file.read_text(encoding="utf-8")
-        ), f"RULE-3 broken in {src_file.name}"
+        ), f"RULE-3 broken in {src_file.name}: learning state written directly"
+
+    # And no model of our own that shadows learning state.
+    models_src = (MZ_APP / "models.py").read_text(encoding="utf-8")
+    for shadow in ("class Enrollment", "class Progress", "class Certificate"):
+        assert shadow not in models_src, f"RULE-3 broken: {shadow} duplicates babook"
 
 
 def test_rule_4_babook_never_imports_matazim():

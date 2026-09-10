@@ -159,11 +159,84 @@ acknowledgement now moves onto the profile at sign-in. Covered by T-F-M.2.4-5.
 
 ---
 
-## Carried into the next sprint
 
-| Item | Why | Traces |
-|---|---|---|
-| Signing in lands on דף הבית, from every door | Avi, 2026-09-10, found in the demo. Password login already does; register and Google drop you on the personal area instead | REQ-M.46 |
+---
+
+## SPR-M.3 — מבחן הכניסה  `DONE`
+
+**Goal:** a stranger can walk in, learn Tinkercad, build the object we show
+them, upload it, and have the student door open. The gate stops being a
+promise on a placeholder page and becomes the thing the product is for.
+
+**Why this is smaller than it looks.** The hard half already exists and is under
+test: 120 generated targets, each with a dimensioned Hebrew drawing, an STL, a
+written brief and a server-side answer key; the geometry engine that measures a
+submission; `check()` returning Hebrew issues with real numbers in them; and
+babook's `stl-viewer.js`, an ES module we can reuse rather than rebuild. What is
+missing is screens and wiring.
+
+**Decisions taken into this sprint (Avi, 2026-09-10):**
+
+- The gate **selects and onboards at once**, and confirming the applicant has a
+  computer is part of the point rather than a side effect.
+- Use the **existing** `tinkercad` course lessons. Video and assignment only, no
+  transcript.
+- The final task is **added by us, not to their course**. babook's `tinkercad`
+  course is live and must not grow a מט״צים assignment.
+- Staff can see the whole bank and **retire** targets that are too hard.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.3.1 | Every door lands on the main view | REQ-M.46 | DONE |
+| F-M.3.2 | The bank as data: `EntranceTarget`, seeded from the generated files | REQ-M.55 | DONE |
+| F-M.3.3 | Staff curation: every target with its drawing and 3D, retire and restore | REQ-M.55 | DONE |
+| F-M.3.4 | The course inside the walls: lesson list and lesson page, our chrome | REQ-M.47 | DONE |
+| F-M.3.5 | Video and assignment only, no transcript, progress written once | REQ-M.48, REQ-M.49 | DONE |
+| F-M.3.6 | The final task: drawing, 3D view and brief, with a target assigned and kept | REQ-M.50, REQ-M.51 | DONE |
+| F-M.3.7 | Upload and measure, recorded as an attempt | REQ-M.52 | DONE |
+| F-M.3.8 | The verdict: עבר or עוד לא, with the real numbers and a way back | REQ-M.53 | DONE |
+| F-M.3.9 | Passing opens כניסת תלמידים | REQ-M.54 | DONE |
+
+### Scope notes
+
+**Read-only over babook's course.** We render `Course`/`Video` rows and write
+`Enrollment`/`UserVideoProgress` through the shared path. We do not add a lesson,
+change a project type, or touch that course in any way.
+
+**Staff, for now, means `is_staff` or superuser.** `Program.staff` does not
+exist yet. When it does, this becomes a one-line change and the screen does not
+move.
+
+**Retiring is reversible and never destructive.** A retired target stops being
+assigned; attempts already measured against it keep working, because the
+geometry lives in the files and the row only carries the decision.
+
+**Out of scope, deliberately:** the three-sentence reflection, duplicate
+detection across submissions, the staff commitment view, the application form
+itself, `Membership` and `School`.
+
+### ACT items
+
+| ACT-ID | What Avi does | Blocks | Status |
+|---|---|---|---|
+| ACT-M.4 | Walk the bank and retire whatever is too hard for a 14-year-old | Nothing. The screen ships with everything active | OPEN |
+| ACT-M.5 | Decide whether the drawings get regenerated in the current palette, or stay in the old matazim.co.il colours | Cosmetic only | OPEN |
+
+### Definition of done
+
+Nine features DONE, 20 tests green, the fast gate green at 85 tests, and the
+journey walked in a browser.
+
+**What the guard caught.** RULE-3 said מט״צים "never writes learning state", and
+the test threw the moment we rendered a lesson: you cannot watch one without an
+enrolment, and babook's own lesson view creates one with the identical
+one-liner in six places. The rule was too blunt and contradicted REQ-M.14. It
+now says what it always meant, that there is **one version of the truth about
+learning**: no parallel table, no fabricated progress, no certificate issued by
+hand. Enrolling someone in a course they are actually taking is the shared path,
+not a breach of it. Spec §2.3 records the amendment and why.
+
+---
 
 ## Candidates for the sprint after this one
 

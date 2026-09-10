@@ -74,9 +74,18 @@ surface, the course reading experience, and every model this space writes.
   media, and external links excepted).
 - **RULE-2: no shared chrome.** No template under `templates/matazim/` extends
   `templates/base.html` or includes a babook partial.
-- **RULE-3: no writes to learning state.** מט״צים reads `Enrollment`,
-  `CourseCertificate`, `TeacherClass` and friends. It never writes them. The
-  only rows it owns are its own tables.
+- **RULE-3: one version of the truth about learning.** מט״צים keeps **no
+  parallel record** of what anyone has learned: no progress table of its own, no
+  mirrored enrolment, no cached completion. It never writes `UserVideoProgress`
+  or issues a `CourseCertificate` by hand, because both sit behind real logic
+  (watch thresholds, review gates) and a second way to set them is a second
+  truth. Enrolling someone in a course they are actually taking is allowed and
+  goes through the same one-liner babook's own lesson view uses.
+
+  *Amended 2026-09-10.* The rule first read "never writes them", which the guard
+  test correctly threw at the first lesson we rendered: you cannot watch a
+  lesson without an enrolment, so the original wording made REQ-M.13 impossible
+  and contradicted REQ-M.14. The danger was never enrolment, it was divergence.
 - **RULE-4: babook does not depend on מט״צים.** Removing the `matazim` app from
   `INSTALLED_APPS` leaves babook fully working. The dependency arrow points one
   way, and a test asserts no import from `app/` into `matazim/` in reverse.
@@ -170,6 +179,14 @@ Owned by the `matazim` app (the only rows it writes):
     is a placeholder, and becomes **derived** from `EntranceAttempt` the moment
     REQ-M.17 lands. Read it through a method, never the column, so that swap is
     invisible to every caller.
+- **`EntranceTarget`** — one row per object in the bank, mirroring a generated
+  file on disk: `target_id`, shape, the brief, and whether staff have retired
+  it. The geometry stays in the files; this row exists so a human can take an
+  object out of circulation without deleting anything (REQ-M.55).
+- **`EntranceAttempt`** — `member`, the target assigned, attempt number, the
+  uploaded model, what we measured, the issues raised, passed, submitted at.
+  Append-only in spirit: a later attempt is a new row, so the history that shows
+  commitment survives.
 - **`Event`** (ימי שיא) — title, date, location, target schools.
 - **`Notification`** — the bell, the mail icon, and the משוב חדש card on screen
   3 all need somewhere to come from.
@@ -235,7 +252,7 @@ counts of kids taught. All live queries over the shared tables.
 | REQ-M.9 | School invite link | Each school carries a rotatable `join_code` powering a link and a QR that its teacher hands out. A logged-out visitor gets a landing page naming the school, not a bare login form: the link gets pasted into WhatsApp groups. Arriving this way attaches them to that school with no confirmation step. | TODO |
 | REQ-M.10 | The open door | Applying without a link means choosing a school from the list; its leader then confirms them onto the roster. Both doors end at `applied`. | TODO |
 | REQ-M.11 | Member pages gated | Anything past the public front requires an active `Membership`. A logged-in babook user with no membership sees the public front and the application, nothing else. | TODO |
-| REQ-M.46 | Signing in lands you on the main view | Every door ends in the same place: דף הבית, not the personal area. Someone who just signed in wants to see the program, not a form about themselves, and the personal area is one click away in the header whenever they want it. Today password login lands correctly while register and Google do not, which is the sort of inconsistency nobody notices until they use all three. | TODO |
+| REQ-M.46 | Signing in lands you on the main view | Every door ends in the same place: דף הבית, not the personal area. Someone who just signed in wants to see the program, not a form about themselves, and the personal area is one click away in the header whenever they want it. Today password login lands correctly while register and Google do not, which is the sort of inconsistency nobody notices until they use all three. | DONE |
 | REQ-M.45 | Google is a door here too | המשך עם Google sits on the login and register screens, as it does on the wider platform, because for a 14-year-old it is the difference between joining and giving up on a password field. The link the page renders stays inside `/matazim/`: it goes to our own URL, which hands off to the provider and brings them back into the prefix. RULE-1 is not bent for it, and the visitor never lands on a babook page. | DONE |
 | REQ-M.35 | Entry through this door is recorded | A visitor who arrives at a `/matazim` URL is marked as having come in through מט״צים, and signing in through this app's own button stamps it on their מט״צים profile. It answers "did this person find us here, or are they a babook member who wandered over", which is the only way to read the funnel later. | DONE |
 | REQ-M.36 | The joining doors wait for the test | כניסת תלמידים is inactive until the visitor has passed the entrance test, and says why rather than simply refusing. **כניסת מובילים is not gated**: the test measures a teenager's commitment, and a teacher confirming students onto a roster has no reason to model a 3D object (Avi, 2026-09-10). | DONE |
@@ -259,6 +276,26 @@ Everything a person meets before they are anyone here.
 | REQ-M.42 | One identity, a מט״צים view of it | A profile page at a `/matazim/` URL showing only what matters here. Name and the rest of the personal details are the **shared** babook profile, edited here and changed everywhere, because a person has one identity and one name. | DONE |
 | REQ-M.43 | Where I stand in the program | The profile shows the school the member belongs to and whether they are already a certified מט״צ. Until `Membership` exists these read as "not yet assigned" rather than being hidden, so the shape of the page is honest about what is coming. | WIP |
 | REQ-M.44 | Everything I have learned, anywhere | The profile lists every הדרכה the person has done or is doing **anywhere on babook**, completed and in progress, read live from `Enrollment`, `UserVideoProgress` and `CourseCertificate` and never copied (RULE-3). Learning done before מט״צים existed counts, with no backfill step. | DONE |
+
+### 5.2c מבחן הכניסה
+
+The gate, and the first thing anyone actually does here. It selects and it
+onboards at once: passing it means you finished a course, produced a real file,
+and therefore have a computer to do it on. **The practical requirement is part
+of the point, not a side effect** (Avi, 2026-09-10), so the page says so up
+front rather than letting a kid discover it at lesson four on a phone.
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-M.47 | The course, inside the walls | The nine lessons of babook's `tinkercad` course render in the מט״צים shell. **Read-only**: we never add a lesson to that course or change its project type, because it is live and its own learners would see it, and because מט״צים does not write babook's content. Same lessons, our chrome, their course untouched. | DONE |
+| REQ-M.48 | Video and assignment, nothing else | A lesson shows the player and what to do. The transcript and the written summary are not rendered here. Avi, 2026-09-10: this is a doing course, and a wall of text between a teenager and the task is a reason to stop. | DONE |
+| REQ-M.49 | Progress written once | Watching writes to `Enrollment` and `UserVideoProgress` through the shared code path, so it counts everywhere and needs no backfill. No parallel progress table (RULE-3). | DONE |
+| REQ-M.50 | The final task is ours | A tenth step with no video: a formal dimensioned drawing, a rotatable 3D view of the same object, and the brief in words for anyone who cannot read a drawing. Owned by מט״צים, so the program can change what it asks for without touching a babook course. | DONE |
+| REQ-M.51 | One target, assigned and kept | A member is assigned a target the first time they reach the task, and that is the one they are measured against. Shopping for an easier object is not possible. A retry draws a fresh target, which is what makes a downloaded model useless: nothing on the internet matches an object we invented. | DONE |
+| REQ-M.52 | Upload and measure | STL upload with a size cap, measured against the assigned target on the five tessellation-proof measures. Tolerances live in config and are deliberately generous: the bar is "you clearly built the thing we showed you", never "you were precise". | DONE |
+| REQ-M.53 | No machine rejection | The automatic verdict is **עבר** or **עוד לא**, never נדחה. A miss names the actual number ("הגובה שלך 43 במקום 40") and offers the way back into Tinkercad. Retries are unlimited and are read as commitment, not as a blemish. Every rejection in this program is made by a person. | DONE |
+| REQ-M.54 | Passing opens the door | A pass stamps `entrance_test_passed_at` and כניסת תלמידים unlocks. The course certificate is theirs either way, so someone who never passes has still learned Tinkercad and has something to show for it. | DONE |
+| REQ-M.55 | Staff curate the bank | Program staff see all targets, each with its drawing and its 3D view, and can retire any that are too hard. A retired target is never assigned again, and retiring one never breaks an attempt already measured against it. Litala and Avi decide what a 14-year-old should be asked to build; the generator only proposes. | DONE |
 
 ### 5.3 Learning inside the walls
 

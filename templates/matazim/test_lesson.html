@@ -1,0 +1,65 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.48 — the player and what to do, and deliberately nothing else.
+
+  `notes_markdown` and `summary_he` exist on this lesson and are not rendered.
+  This is a doing course: a wall of text between a teenager and Tinkercad is a
+  reason to stop reading, so the only thing on the page is the video and the
+  way forward.
+{% endcomment %}
+
+{% block title %}{{ lesson.title }} · מבחן הכניסה · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+
+  <div class="mz-page-head">
+    <p class="mz-eyebrow">מבחן הכניסה · שיעור {{ lesson.lesson_order }}</p>
+    <h1>{{ lesson.title }}</h1>
+  </div>
+
+  <div class="mz-lesson-grid">
+    <section class="mz-panel">
+      <div class="mz-player" data-bunny-id="{{ lesson.bunny_video_id }}">
+        {% if embed_url %}
+          <iframe src="{{ embed_url }}?autoplay=false" loading="lazy"
+                  allow="accelerometer; gyroscope; encrypted-media; picture-in-picture"
+                  allowfullscreen title="{{ lesson.title }}"></iframe>
+        {% else %}
+          <div class="mz-player-empty">
+            <p class="mz-muted">הסרטון ייטען כאן.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="mz-page-actions">
+        {% if next_order %}
+          <a class="mz-btn mz-btn-primary" href="{% url 'matazim:test_lesson' next_order %}">לשיעור הבא</a>
+        {% else %}
+          <a class="mz-btn mz-btn-primary" href="{% url 'matazim:test_task' %}">למשימה</a>
+        {% endif %}
+        <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:test_lessons' %}">כל השיעורים</a>
+      </div>
+    </section>
+
+    <aside class="mz-panel">
+      <h2>השיעורים</h2>
+      <ol class="mz-lesson-rail">
+        {% for row in lessons %}
+          <li {% if row.lesson_order == lesson.lesson_order %}class="is-current"{% endif %}>
+            <a href="{% url 'matazim:test_lesson' row.lesson_order %}">
+              <span class="mz-lesson-n">{{ row.lesson_order }}</span>{{ row.title }}
+            </a>
+          </li>
+        {% endfor %}
+        <li class="mz-rail-task">
+          <a href="{% url 'matazim:test_task' %}">
+            <span class="mz-lesson-n">★</span>המשימה
+          </a>
+        </li>
+      </ol>
+    </aside>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,118 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.50, M.51, M.52, M.53 — the final step, and the only one with no video.
+
+  The object is shown twice on purpose: a formal dimensioned drawing to build
+  from, and the same object in 3D to turn around and understand. The written
+  brief is there for anyone who cannot read a drawing, and for a screen reader.
+
+  The target was assigned once and is kept. A retry draws a different object,
+  which is what makes a model downloaded from the internet useless: nothing out
+  there matches something we invented.
+{% endcomment %}
+
+{% block title %}המשימה · מבחן הכניסה · מט״צים{% endblock %}
+
+{% block extra_head %}
+  {% comment %}
+    The same importmap babook declares, because the viewer we reuse is an ES
+    module that imports bare "three". Reusing static/js/stl-viewer.js rather than
+    building a second three.js viewer is the same call the charter makes about
+    the course engine.
+  {% endcomment %}
+  <script type="importmap">
+  { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  } }
+  </script>
+{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+
+  {% if no_targets %}
+    <div class="mz-page-head"><h1>המשימה</h1></div>
+    <section class="mz-panel">
+      <p class="mz-muted">אין כרגע משימות זמינות. חזרו אלינו בקרוב.</p>
+    </section>
+
+  {% else %}
+    <div class="mz-page-head">
+      <p class="mz-eyebrow">מבחן הכניסה · המשימה{% if attempt.number > 1 %} · ניסיון {{ attempt.number }}{% endif %}</p>
+      <h1>בנו את האובייקט הזה</h1>
+      <p>בנו אותו בטינקרקאד, ייצאו STL, והעלו לכאן. אין צורך בדיוק מושלם.</p>
+    </div>
+
+    {% if result %}
+      <section class="mz-verdict {% if result.passed %}is-pass{% else %}is-notyet{% endif %}">
+        <h2>{{ result.headline }}</h2>
+        {% if result.passed %}
+          <p>המשימה אושרה, וכניסת התלמידים נפתחה עבורכם.</p>
+          <div class="mz-page-actions">
+            <a class="mz-btn mz-btn-primary" href="{% url 'matazim:home' %}">לדף הבית</a>
+          </div>
+        {% else %}
+          <ul class="mz-issues">
+            {% for issue in result.issues %}<li>{{ issue.text }}</li>{% endfor %}
+          </ul>
+          <p class="mz-muted">
+            תקנו בטינקרקאד והעלו שוב, או קחו משימה חדשה. ניסיון נוסף הוא סימן טוב.
+          </p>
+          <div class="mz-page-actions">
+            <form method="post" action="{% url 'matazim:test_retry' %}" class="mz-inline-form">
+              {% csrf_token %}
+              <button type="submit" class="mz-btn mz-btn-ghost">משימה חדשה</button>
+            </form>
+          </div>
+        {% endif %}
+      </section>
+    {% endif %}
+
+    <div class="mz-task-grid">
+      <section class="mz-panel">
+        <h2>השרטוט</h2>
+        <img class="mz-drawing" src="{{ target.drawing_url }}"
+             alt="שרטוט המשימה: {{ target.title }}">
+      </section>
+
+      <section class="mz-panel">
+        <h2>מודל תלת-ממדי</h2>
+        <div class="mz-stl" id="mzTargetModel" data-stl="{{ target.model_url }}"></div>
+        <p class="mz-muted mz-stl-hint">אפשר לסובב עם העכבר או האצבע.</p>
+      </section>
+
+      <section class="mz-panel mz-panel-wide">
+        <h2>המידות</h2>
+        <ul class="mz-brief">
+          {% for line in target.brief %}<li>{{ line }}</li>{% endfor %}
+        </ul>
+      </section>
+
+      {% if not result.passed %}
+        <section class="mz-panel mz-panel-wide">
+          <h2>העלאת המודל</h2>
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <label class="mz-field">
+              <span>קובץ STL מטינקרקאד</span>
+              <input type="file" name="model_file" accept=".stl" required>
+              <small>בטינקרקאד: Export ואז STL.</small>
+            </label>
+            <button type="submit" class="mz-btn mz-btn-primary">שליחה לבדיקה</button>
+          </form>
+        </section>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+
+{% if target %}
+<script type="module">
+  import { initStlViewer } from "{{ STATIC_URL|default:'/static/' }}js/stl-viewer.js";
+  const box = document.getElementById("mzTargetModel");
+  if (box) { initStlViewer(box, box.dataset.stl, { color: 0x0fc49b }); }
+</script>
+{% endif %}
+{% endblock %}

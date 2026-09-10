@@ -53,3 +53,76 @@ class MemberProfile(models.Model):
 
     def has_accepted_welcome(self):
         return self.welcome_accepted_at is not None
+
+
+class EntranceTarget(models.Model):
+    """One object in the entrance-test bank.
+
+    The geometry lives in files that a management command generated offline:
+    an STL, a dimensioned drawing, and an answer key the web process never
+    exposes. This row exists so a **person** can take an object out of
+    circulation without anything being deleted (REQ-M.55). Litala and Avi decide
+    what a 14-year-old should be asked to build; the generator only proposes.
+    """
+
+    target_id = models.CharField(max_length=16, unique=True, db_index=True)
+    shape = models.CharField(max_length=40)
+    title = models.CharField(max_length=120, blank=True, default="")
+    brief = models.TextField(blank=True, default="")
+
+    is_retired = models.BooleanField(default=False, verbose_name="הוצא משימוש")
+    retired_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    retired_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["target_id"]
+        verbose_name = "משימת מבחן כניסה"
+        verbose_name_plural = "משימות מבחן כניסה"
+
+    def __str__(self):
+        return f"{self.target_id} · {self.title}"
+
+    @property
+    def drawing_url(self):
+        return f"/static/matazim/targets/{self.target_id}.svg"
+
+    @property
+    def model_url(self):
+        return f"/static/matazim/targets/{self.target_id}.stl"
+
+
+class EntranceAttempt(models.Model):
+    """One go at the entrance test.
+
+    A retry is a new row rather than an edit, because the history is the point:
+    someone who missed, read the feedback and came back has shown more of what
+    this program selects for than someone who passed first time (REQ-M.53).
+    """
+
+    member = models.ForeignKey("MemberProfile", on_delete=models.CASCADE, related_name="attempts")
+    target_id = models.CharField(max_length=16)
+    number = models.PositiveIntegerField(default=1)
+
+    model_file = models.FileField(upload_to="matazim_entrance/", blank=True, null=True)
+    measured = models.JSONField(default=dict, blank=True)
+    issues = models.JSONField(default=list, blank=True)
+    passed = models.BooleanField(default=False)
+
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["number"]
+        unique_together = [("member", "number")]
+        verbose_name = "ניסיון מבחן כניסה"
+        verbose_name_plural = "ניסיונות מבחן כניסה"
+
+    def __str__(self):
+        return f"{self.member.user.email} · ניסיון {self.number} · {self.target_id}"
+
+    @property
+    def is_open(self):
+        """Waiting for an upload. There is at most one of these per member."""
+        return self.submitted_at is None

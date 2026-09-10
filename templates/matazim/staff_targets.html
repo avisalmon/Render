@@ -1,0 +1,73 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.55 — the whole bank, so a person can decide what a 14-year-old should be
+  asked to build. Each object gets its drawing and its 3D view, because a
+  drawing alone is not enough to judge difficulty.
+
+  Retiring is reversible and never destructive: it stops the object being handed
+  out, and attempts already measured against it keep working, because the
+  geometry lives in the files and the row only carries the decision.
+{% endcomment %}
+
+{% block title %}משימות מבחן הכניסה · מט״צים{% endblock %}
+
+{% block extra_head %}
+  <script type="importmap">
+  { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  } }
+  </script>
+{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>משימות מבחן הכניסה</h1>
+    <p>{{ active }} פעילות מתוך {{ targets|length }}. משימה שמוצאת משימוש לא תחולק יותר, ואפשר להחזיר אותה בכל רגע.</p>
+  </div>
+
+  <div class="mz-target-grid">
+    {% for target in targets %}
+      <article class="mz-target-card{% if target.is_retired %} is-retired{% endif %}">
+        <header>
+          <span class="mz-target-id">{{ target.target_id }}</span>
+          <span class="mz-target-title">{{ target.title }}</span>
+        </header>
+
+        <img class="mz-target-drawing" src="{{ target.drawing_url }}" loading="lazy"
+             alt="שרטוט {{ target.target_id }}">
+
+        <div class="mz-target-model mz-stl" data-stl="{{ target.model_url }}"></div>
+
+        <p class="mz-target-brief">{{ target.brief|linebreaksbr }}</p>
+
+        <form method="post" action="{% url 'matazim:staff_target_toggle' target.target_id %}">
+          {% csrf_token %}
+          {% if target.is_retired %}
+            <button type="submit" class="mz-btn mz-btn-ghost mz-btn-block">החזרה לשימוש</button>
+          {% else %}
+            <button type="submit" class="mz-btn mz-btn-ghost mz-btn-block">הוצאה משימוש</button>
+          {% endif %}
+        </form>
+      </article>
+    {% endfor %}
+  </div>
+</div>
+
+<script type="module">
+  import { initStlViewer } from "{{ STATIC_URL|default:'/static/' }}js/stl-viewer.js";
+  // 120 live WebGL contexts would exhaust the browser, so each model is drawn
+  // only when it scrolls into view, and only once.
+  const io = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      const box = entry.target;
+      io.unobserve(box);
+      initStlViewer(box, box.dataset.stl, { color: 0x0fc49b });
+    }
+  }, { rootMargin: "300px" });
+  document.querySelectorAll(".mz-target-model").forEach((box) => io.observe(box));
+</script>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.47 — babook's tinkercad lessons, rendered in our chrome and read-only.
+  We never add a lesson to that course or change it: it is live, and its own
+  learners are not ours.
+{% endcomment %}
+
+{% block title %}מבחן הכניסה · השיעורים · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>מבחן הכניסה</h1>
+    <p>לומדים טינקרקאד, ואז בונים את המשימה. לוקח בערך שעה.</p>
+  </div>
+
+  {% if lessons %}
+    <ol class="mz-lessons">
+      {% for lesson in lessons %}
+        <li>
+          <a href="{% url 'matazim:test_lesson' lesson.lesson_order %}">
+            <span class="mz-lesson-n">{{ lesson.lesson_order }}</span>
+            <span class="mz-lesson-title">{{ lesson.title }}</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18 9 12l6-6"/></svg>
+          </a>
+        </li>
+      {% endfor %}
+    </ol>
+
+    <section class="mz-panel mz-panel-soft">
+      <h2>ואז המשימה</h2>
+      <p>
+        אחרי השיעורים תקבלו אובייקט משלכם לבנות: שרטוט עם מידות ומודל תלת-ממדי
+        שאפשר לסובב. בונים אותו בטינקרקאד, מייצאים STL ומעלים לכאן.
+      </p>
+      <div class="mz-page-actions">
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:test_task' %}">למשימה</a>
+      </div>
+    </section>
+  {% else %}
+    <section class="mz-panel">
+      <p class="mz-muted">השיעורים ייפתחו כאן בקרוב.</p>
+    </section>
+  {% endif %}
+</div>
+{% endblock %}
