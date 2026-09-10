@@ -293,36 +293,72 @@ and the endpoint rejects them. A button that is only invisible is still a URL.
 
 ---
 
-## Next: the roles
+# EPIC-M-ROLES — who sees whom
 
-**The model architecture is settled** (Avi, 2026-09-10, spec §4). Four models,
-four roles, and one function that answers every scope question:
+**The model is settled** (spec §4, agreed 2026-09-10). Four roles, four
+different things, and one function that answers every scope question:
 
 ```
 MemberProfile.is_admin   ADMIN     assigns leaders, sees everyone
 Leader (row per user)    LEADER    their own students, nothing else
-StudyClass → Leader                the leader's groups
-Student → User, Leader   STUDENT   themselves
+StudyClass → Leader                name, school_name. A leader runs classes anywhere.
+Student → User, Leader?  STUDENT   themselves. leader is NULL until someone takes them.
 ```
 
-Two tables an earlier draft had are gone. `Program` was a concept with one
-instance; `School` became `Leader.school_name`, a label rather than a join. What
-that buys is the permission model collapsing to a single queryset, so a leader
-cannot reach another leader's students because **the query cannot get there**,
-not because a view remembered to check.
+The reason to get the relations right first: permissions stop being checks
+scattered through views and become a single queryset. A leader cannot reach
+another leader's students because **the query cannot get there**.
 
-Sprint shape, to be written out when we start it:
+Three sprints. The first has no screens at all, and that is the point.
 
-1. **The four models, the access module, and tests that prove the scoping.**
-   No screens. This is the sprint that makes the rest trivial.
-2. **The leader's roster:** their students, their classes, progress read live
-   through `user__matazim_student__leader`.
-3. **The admin master view:** every leader, every student, the funnel, grouped
-   by `school_name` for Litala's school report.
+## SPR-M.6 — The roles, and nothing else  `PLANNED`
 
-Blocked on **Q10**, which decides the screens rather than the models: forty
-students is a list, twelve hundred needs filtering, paging and bulk actions on
-every one of them.
+**Goal:** the four models, the access module, the seed, and tests that prove a
+leader cannot reach another leader's students. No screens. Everything after this
+becomes a filtered queryset.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.6.1 | `Leader`, `StudyClass`, `Student`, and `is_admin` on the profile | spec §4.2 | TODO |
+| F-M.6.2 | `matazim/access.py`: one function, four roles, stated precedence | REQ-M.22, spec §4.4 | TODO |
+| F-M.6.3 | Seeding adminship from a named list, never self-served | REQ-M.68 | TODO |
+| F-M.6.4 | A student with no leader is a normal state everywhere it is read | REQ-M.65 | TODO |
+| F-M.6.5 | Deactivating a leader destroys nothing | REQ-M.67 | TODO |
+| F-M.6.6 | The tests that make the rest trivial: no leader reaches another's students | REQ-M.22 | TODO |
+
+### Scope notes
+
+**F-M.6.6 is the feature, not the paperwork.** The whole architecture rests on
+one claim, that scope is a property of the data. A test that builds two leaders
+with students each and asserts neither queryset ever contains the other's is
+what turns that claim into something we know.
+
+**Progress crosses the boundary in this sprint too**, because it is one join and
+proving it now is cheaper than discovering later that the relation names do not
+line up: `Enrollment.objects.filter(user__matazim_student__leader=me)`.
+
+**No screens.** Not the roster, not the admin view, not the leader door. The
+existing `is_site_staff` helper switches to `is_admin` and that is the only
+visible change.
+
+### ACT items
+
+| ACT-ID | What Avi does | Blocks | Status |
+|---|---|---|---|
+| ACT-M.6 | The email addresses for נעמי and אביב | Seeding admins in production, not the build | OPEN |
+
+## SPR-M.7 — The leader's students  `NOT PLANNED`
+
+Their roster, their classes, each student's stage and progress read live. The
+first screen that consumes the access module.
+
+## SPR-M.8 — The admin's view  `NOT PLANNED`
+
+Every leader, every student, the funnel, grouped by `school_name` for the
+school-level report Litala's brief asks for. Assigning and deactivating leaders.
+
+**Both blocked on Q10** for their shape, not their existence: forty students is
+a list, twelve hundred needs filtering, paging and bulk actions on every screen.
 
 ## Also still open
 
