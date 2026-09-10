@@ -170,15 +170,15 @@ MemberProfile     OneToOne → User                      built
   is_admin                                  ADMIN. Assigns leaders.
 
 Leader            OneToOne → User
-  school_name, city, contact                school as a label, not a table
-  join_code                                 the link they hand out
+  contact, join_code                        the link they hand out
   is_active, assigned_by, assigned_at
 
 StudyClass        FK → Leader
-  name, year, is_active
+  name, school_name, year, is_active
   (`class` is a reserved word, hence the name)
+  Gains attributes as the program needs them.
 
-Student           FK → User, FK → Leader
+Student           FK → User, FK → Leader  (NULL until someone takes them)
   status            מתמיינים → לומדים → יוצרים → מדריכים → משפיעים
   cohort_year
   classes           M2M → StudyClass
@@ -189,6 +189,20 @@ EntranceTarget, EntranceAttempt                        built
 later: Application, Submission, Practicum, StudyStage, Milestone,
        Notification, Event, Post, StatusLog
 ```
+
+**School sits on the class, not the leader** (Avi, 2026-09-10). A leader running
+classes at two schools works without a second leader record, and the label lands
+where the students actually sit. בתי הספר המשתתפים is then the distinct set of
+`StudyClass.school_name`, and a student's school is their class's.
+
+**A student can exist before any leader has them.** `Student.leader` is nullable
+on purpose: someone registers, passes the entrance test, and is nobody's yet.
+From there it goes either way, and both happen: they ask to join a leader
+(REQ-M.10), or a leader invites them through their link (REQ-M.9).
+
+**Role precedence is admin, then leader, then student.** One person can hold
+more than one, and the access function's ordering decides it rather than leaving
+it to accident.
 
 `MemberProfile` and `Student` are deliberately separate. The profile is about a
 person meeting this site once: they came through this door, they were told it is
@@ -318,6 +332,8 @@ silently reloads the page you are on reads as broken.
 | REQ-M.9 | The leader's invite link | Each **leader** carries a rotatable `join_code` powering a link and a QR they hand out. A logged-out visitor gets a landing page naming the leader and their school, not a bare login form: the link gets pasted into WhatsApp groups. Arriving this way attaches the student to that leader with no confirmation step, because the leader gave them the link and the assignment is already their decision. | TODO |
 | REQ-M.10 | The open door | Applying without a link means choosing a leader from the list of participating schools; that leader then confirms them onto the roster. Both doors end at `applied`. | TODO |
 | REQ-M.11 | Member pages gated | Anything past the public front requires a `Student` row. A logged-in babook user without one sees the public front and the application, nothing else. | TODO |
+| REQ-M.65 | Nobody's yet | A student with no leader is a normal state, not an error. They see their own progress, their entrance test, and one clear way forward: ask to join a leader, or wait for the invite link they were promised. The page never reads as though something has gone wrong, because nothing has. | TODO |
+| REQ-M.66 | The leader door for someone who is not a leader | כניסת מובילים does not offer a registration form. Leader access is granted by the program team, so the page says that and offers a way to ask. A door labelled for one role must not quietly behave like the other. | TODO |
 | REQ-M.46 | Signing in lands you on the main view | Every door ends in the same place: דף הבית, not the personal area. Someone who just signed in wants to see the program, not a form about themselves, and the personal area is one click away in the header whenever they want it. Today password login lands correctly while register and Google do not, which is the sort of inconsistency nobody notices until they use all three. | DONE |
 | REQ-M.45 | Google is a door here too | המשך עם Google sits on the login and register screens, as it does on the wider platform, because for a 14-year-old it is the difference between joining and giving up on a password field. The link the page renders stays inside `/matazim/`: it goes to our own URL, which hands off to the provider and brings them back into the prefix. RULE-1 is not bent for it, and the visitor never lands on a babook page. | DONE |
 | REQ-M.35 | Entry through this door is recorded | A visitor who arrives at a `/matazim` URL is marked as having come in through מט״צים, and signing in through this app's own button stamps it on their מט״צים profile. It answers "did this person find us here, or are they a babook member who wandered over", which is the only way to read the funnel later. | DONE |
@@ -400,7 +416,9 @@ front rather than letting a kid discover it at lesson four on a phone.
 | REQ-M.22 | Scope is the data | A leader sees exactly their own students, and this is a property of the `Student.leader` FK rather than a rule anyone remembers: the query cannot reach anyone else's. Admins see everyone. One function answers this for every screen (§4.4). | TODO |
 | REQ-M.23 | Roster | Leaders confirm students onto their roster, sort them into classes, and see each one's stage and training progress. Nothing about any child they teach, ever (REQ-M.29). | TODO |
 | REQ-M.24 | Cohort view and reporting | Admins see the funnel by stage and by leader, grouped by `school_name` for the school-level report Litala's brief asks for, and can export it. This is her screen. | TODO |
-| REQ-M.25 | Leader management | Assign a leader, record their school, rotate their join code, deactivate them. Admins only, and it is the thing an admin exists to do. | TODO |
+| REQ-M.25 | Leader management | Assign a leader, rotate their join code, deactivate them. Admins only, and it is the thing an admin exists to do. | TODO |
+| REQ-M.67 | Deactivating a leader destroys nothing | A deactivated leader stops appearing in the join list, stops taking new students, and loses the leader view. Their existing students keep pointing at them, so no roster is lost and no history disappears; an admin moves them deliberately. Same principle as retiring a target. | TODO |
+| REQ-M.68 | Who is an admin | Adminship is granted here and seeded in production, not self-served: there is no screen that makes someone an admin, because the first one could never use it. A management command sets it from a list of emails, and the list is short and named. | TODO |
 
 ### 5.6 Community and recognition
 
