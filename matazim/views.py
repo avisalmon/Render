@@ -64,8 +64,16 @@ def student_door_is_open(request):
 
 
 def is_site_staff(user):
-    """Site staff. `Program.staff` will replace this; the call sites will not move."""
-    return user.is_authenticated and (user.is_staff or user.is_superuser)
+    """Adminship, now that the role is real.
+
+    This was `is_staff or is_superuser` while מט״צים had no roles of its own.
+    It now asks the access module, which is the single place the question is
+    answered (spec §4.4). The call sites did not move, which was the point of
+    routing them through one helper in the first place.
+    """
+    from .access import is_admin
+
+    return is_admin(user)
 
 
 def shell(request, section, **extra):

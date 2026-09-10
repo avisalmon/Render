@@ -25,8 +25,12 @@ PASSWORD = "sprm5-pass-8823"
 def make_user(email="tal@example.com", staff=False):
     user = User.objects.create_user(username=email, email=email, password=PASSWORD)
     if staff:
-        user.is_staff = True
-        user.save(update_fields=["is_staff"])
+    # "Staff" became מט״צים adminship in SPR-M.6: is_staff was a stand-in while
+    # this app had no roles of its own. Granting the real thing, not the
+    # stand-in, so the test exercises the rule that actually ships.
+        from matazim.models import MemberProfile
+
+        MemberProfile.objects.update_or_create(user=user, defaults={"is_admin": True})
     from app.models import UserProfile
 
     UserProfile.objects.update_or_create(user=user, defaults={"display_name": "טל"})

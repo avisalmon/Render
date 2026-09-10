@@ -39,6 +39,16 @@ class MemberProfile(models.Model):
         null=True, blank=True, verbose_name="עבר את מבחן הכניסה"
     )
 
+    # REQ-M.68 — adminship is granted here and seeded in production, never
+    # self-served: there is no screen that makes someone an admin, because the
+    # first one could never have used it. `manage.py matazim_admins` sets it.
+    #
+    # This is a boolean and not the "role column" the spec forbids. That rule is
+    # about a role having exactly one source: a role field on Student would
+    # compete with the leader FK and the two could disagree. Nothing competes
+    # with this one.
+    is_admin = models.BooleanField(default=False, verbose_name="מנהל/ת התוכנית")
+
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -126,3 +136,137 @@ class EntranceAttempt(models.Model):
     def is_open(self):
         """Waiting for an upload. There is at most one of these per member."""
         return self.submitted_at is None
+
+
+def current_year():
+    from django.utils import timezone
+
+    return timezone.now().year
+
+
+def new_join_code():
+    """Unguessable and short enough to read off a WhatsApp message."""
+    import secrets
+
+    return secrets.token_urlsafe(9)
+
+
+class Leader(models.Model):
+    """מוביל. A teacher who runs classes and carries students.
+
+    This row *is* the role: having one makes you a leader, and there is no role
+    column anywhere to disagree with it. Scope follows from `Student.leader`, so
+    a leader cannot reach anyone else's students because the query cannot get
+    there (spec §4.4).
+
+    Adminship, not leadership, is what assigns these. Nobody makes themselves a
+    leader (REQ-M.25).
+    """
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="matazim_leader")
+    contact = models.CharField(max_length=200, blank=True, default="")
+
+    join_code = models.CharField(
+        max_length=32,
+        unique=True,
+        default=new_join_code,
+        db_index=True,
+        verbose_name="קוד הצטרפות",
+    )
+
+    # REQ-M.67 — deactivating destroys nothing. They leave the join list, take
+    # no new students and lose the leader view, but every Student row keeps
+    # pointing at them so no roster is lost. An admin moves people deliberately.
+    is_active = models.BooleanField(default=True, verbose_name="פעיל")
+
+    assigned_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    assigned_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "מוביל"
+        verbose_name_plural = "מובילים"
+
+    def __str__(self):
+        return self.user.email or self.user.username
+
+
+class StudyClass(models.Model):
+    """כיתה. A leader's group of students at one school.
+
+    `class` is a reserved word, hence the name.
+
+    **School lives here, not on the leader** (Avi, 2026-09-10). A leader running
+    classes at two schools works without a second leader record, and the label
+    lands where the students actually sit. בתי הספר המשתתפים is the distinct set
+    of `school_name`.
+    """
+
+    leader = models.ForeignKey(Leader, on_delete=models.CASCADE, related_name="classes")
+    name = models.CharField(max_length=80, verbose_name="שם הכיתה")
+    school_name = models.CharField(max_length=150, blank=True, default="", verbose_name="בית ספר")
+    year = models.PositiveIntegerField(default=current_year)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["school_name", "name"]
+        verbose_name = "כיתה"
+        verbose_name_plural = "כיתות"
+
+    def __str__(self):
+        return f"{self.name} · {self.school_name}" if self.school_name else self.name
+
+
+class Student(models.Model):
+    """מט״צ. One row per person per cohort.
+
+    `leader` is nullable on purpose (REQ-M.65): someone registers, passes the
+    entrance test, and is nobody's yet. That is a normal state, not an error.
+    From there it goes either way, and both happen: they ask to join a leader,
+    or a leader invites them through their link.
+    """
+
+    APPLIED = "applied"
+    IN_TRAINING = "in_training"
+    PROJECT_SUBMITTED = "project_submitted"
+    CERTIFIED = "certified"
+    ALUMNUS = "alumnus"
+    REJECTED = "rejected"
+    REVOKED = "revoked"
+    STATUS_CHOICES = [
+        (APPLIED, "מתמיינים"),
+        (IN_TRAINING, "לומדים"),
+        (PROJECT_SUBMITTED, "יוצרים"),
+        (CERTIFIED, "מדריכים"),
+        (ALUMNUS, "משפיעים"),
+        (REJECTED, "לא התקבל"),
+        (REVOKED, "הוסר"),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="matazim_student")
+    leader = models.ForeignKey(
+        Leader, on_delete=models.SET_NULL, null=True, blank=True, related_name="students"
+    )
+    classes = models.ManyToManyField(StudyClass, blank=True, related_name="students")
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=APPLIED, db_index=True)
+    cohort_year = models.PositiveIntegerField(default=current_year)
+
+    joined_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = [("user", "cohort_year")]
+        ordering = ["-cohort_year", "user__email"]
+        verbose_name = "מט״צ"
+        verbose_name_plural = "מט״צים"
+
+    def __str__(self):
+        return f"{self.user.email or self.user.username} · {self.cohort_year}"
+
+    @property
+    def school_names(self):
+        """Where this student actually sits. Derived from their classes."""
+        return sorted({c.school_name for c in self.classes.all() if c.school_name})

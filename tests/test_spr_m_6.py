@@ -1,0 +1,273 @@
+"""SPR-M.6 — The roles, and nothing else.
+
+Four models, one access module, and the tests that make everything after this
+trivial. No screens on purpose: once scope is a property of the data, a roster
+is a filtered queryset rather than permission logic.
+
+The architecture rests on a single claim, that **a leader cannot reach another
+leader's students because the query cannot get there**. Believing that is not
+the same as knowing it, so most of this file builds two leaders with students
+each and checks that neither queryset ever contains the other's.
+
+Traces: REQ-M.22, M.65, M.67, M.68, spec §4.
+"""
+
+import pytest
+from django.contrib.auth.models import User
+
+pytestmark = pytest.mark.sprm6
+
+
+def make_user(email):
+    return User.objects.create_user(username=email, email=email, password="sprm6-pass")
+
+
+def make_leader(email, active=True):
+    from matazim.models import Leader
+
+    return Leader.objects.create(user=make_user(email), is_active=active)
+
+
+def make_student(email, leader=None, year=2026):
+    from matazim.models import Student
+
+    return Student.objects.create(user=make_user(email), leader=leader, cohort_year=year)
+
+
+# ---------------------------------------------------------------- F-M.6.1
+
+
+def test_the_four_models_exist_with_the_agreed_shape(db):
+    """T-F-M.6.1-1: spec §4.2."""
+    from matazim.models import Leader, MemberProfile, Student, StudyClass
+
+    leader = make_leader("lead@example.com")
+    assert leader.is_active is True
+    assert leader.join_code, "a leader needs a link to hand out"
+
+    klass = StudyClass.objects.create(leader=leader, name="ט1", school_name="תיכון עתיד רמלה")
+    assert klass.leader == leader
+
+    student = make_student("kid@example.com", leader=leader)
+    student.classes.add(klass)
+    assert list(klass.students.all()) == [student]
+    assert list(leader.students.all()) == [student]
+
+    profile = MemberProfile.objects.create(user=make_user("nobody@example.com"))
+    assert profile.is_admin is False, "adminship is granted, never a default"
+
+
+def test_a_student_can_exist_before_any_leader_has_them(db):
+    """T-F-M.6.1-2: REQ-M.65. `leader` is nullable on purpose.
+
+    Someone registers, passes the entrance test, and is nobody's yet. From there
+    it goes either way: they ask to join a leader, or a leader invites them.
+    """
+    student = make_student("orphan@example.com", leader=None)
+    assert student.leader is None
+    assert student.pk
+
+
+def test_a_leader_can_run_classes_at_more_than_one_school(db):
+    """T-F-M.6.1-3: Avi, 2026-09-10. School belongs to the class, not the leader."""
+    from matazim.models import StudyClass
+
+    leader = make_leader("roams@example.com")
+    StudyClass.objects.create(leader=leader, name="ט1", school_name="עתיד רמלה")
+    StudyClass.objects.create(leader=leader, name="ט2", school_name="עתיד לוד")
+
+    schools = set(leader.classes.values_list("school_name", flat=True))
+    assert schools == {"עתיד רמלה", "עתיד לוד"}
+
+
+def test_one_person_one_row_per_cohort(db):
+    """T-F-M.6.1-4: a person can be in two cohorts, not in one twice."""
+    from django.db import IntegrityError
+
+    from matazim.models import Student
+
+    user = make_user("twice@example.com")
+    Student.objects.create(user=user, cohort_year=2026)
+    Student.objects.create(user=user, cohort_year=2027)
+
+    with pytest.raises(IntegrityError):
+        Student.objects.create(user=user, cohort_year=2026)
+
+
+# ---------------------------------------------------------------- F-M.6.2
+
+
+def test_a_leader_cannot_reach_another_leaders_students(db):
+    """T-F-M.6.2-1: REQ-M.22, and the claim the whole architecture rests on.
+
+    Not "the view remembered to check". The query cannot get there.
+    """
+    from matazim.access import visible_students
+
+    noa = make_leader("noa@example.com")
+    dan = make_leader("dan@example.com")
+    hers = make_student("hers@example.com", leader=noa)
+    his = make_student("his@example.com", leader=dan)
+
+    assert set(visible_students(noa.user)) == {hers}
+    assert set(visible_students(dan.user)) == {his}
+    assert his not in visible_students(noa.user)
+    assert hers not in visible_students(dan.user)
+
+
+def test_a_student_sees_only_themselves(db):
+    """T-F-M.6.2-2."""
+    from matazim.access import visible_students
+
+    leader = make_leader("lead2@example.com")
+    me = make_student("me@example.com", leader=leader)
+    make_student("peer@example.com", leader=leader)
+
+    assert set(visible_students(me.user)) == {me}
+
+
+def test_an_admin_sees_everyone_including_the_unclaimed(db):
+    """T-F-M.6.2-3: REQ-M.65. Someone with no leader must not fall out of view."""
+    from matazim.access import visible_students
+    from matazim.models import MemberProfile
+
+    boss = make_user("boss@example.com")
+    MemberProfile.objects.create(user=boss, is_admin=True)
+
+    leader = make_leader("lead3@example.com")
+    claimed = make_student("claimed@example.com", leader=leader)
+    unclaimed = make_student("unclaimed@example.com", leader=None)
+
+    assert set(visible_students(boss)) == {claimed, unclaimed}
+
+
+def test_a_superuser_sees_everyone(db):
+    """T-F-M.6.2-4."""
+    from matazim.access import visible_students
+
+    root = make_user("root@example.com")
+    root.is_superuser = True
+    root.save(update_fields=["is_superuser"])
+    student = make_student("someone@example.com")
+
+    assert set(visible_students(root)) == {student}
+
+
+def test_a_stranger_sees_nothing(db):
+    """T-F-M.6.2-5: no role is not the same as a small role."""
+    from matazim.access import visible_students
+
+    make_student("member@example.com")
+    assert not visible_students(make_user("stranger@example.com")).exists()
+
+
+def test_role_precedence_is_admin_then_leader_then_student(db):
+    """T-F-M.6.2-6: spec §4.2. One person can hold more than one.
+
+    Written down rather than left to the accident of `if` ordering.
+    """
+    from matazim.access import role_of, visible_students
+    from matazim.models import Leader, MemberProfile, Student
+
+    user = make_user("all-three@example.com")
+    Leader.objects.create(user=user)
+    Student.objects.create(user=user, cohort_year=2026)
+    MemberProfile.objects.create(user=user, is_admin=True)
+
+    other = make_student("elsewhere@example.com", leader=make_leader("other@example.com"))
+
+    assert role_of(user) == "admin"
+    assert other in visible_students(user), "admin scope must win over leader scope"
+
+
+def test_progress_crosses_the_boundary_in_one_join(db):
+    """T-F-M.6.2-7: spec §4.5, proved now rather than discovered later.
+
+    This query is why learning stays in babook's tables. Had we built our own
+    progress model it would not exist, and we would be reconciling two sets of
+    numbers forever.
+    """
+    from app.models import Course, Enrollment
+
+    leader = make_leader("teach@example.com")
+    mine = make_student("mine@example.com", leader=leader)
+    theirs = make_student("theirs@example.com", leader=make_leader("elsewhere2@example.com"))
+
+    course = Course.objects.create(slug="c1", title="הדרכה")
+    Enrollment.objects.create(user=mine.user, course=course)
+    Enrollment.objects.create(user=theirs.user, course=course)
+
+    rows = Enrollment.objects.filter(user__matazim_student__leader=leader)
+    assert [row.user for row in rows] == [mine.user]
+
+
+# ---------------------------------------------------------------- F-M.6.3
+
+
+def test_adminship_is_seeded_from_a_named_list(db):
+    """T-F-M.6.3-1: REQ-M.68. Never self-served: the first admin could not use a screen."""
+    from django.core.management import call_command
+
+    from matazim.access import is_admin
+
+    naomi = make_user("naomi@example.com")
+    aviv = make_user("aviv@example.com")
+
+    call_command("matazim_admins", grant=["naomi@example.com", "aviv@example.com"])
+    assert is_admin(naomi) and is_admin(aviv)
+
+    # Idempotent: it runs on every deploy.
+    call_command("matazim_admins", grant=["naomi@example.com"])
+    assert is_admin(naomi)
+
+
+def test_adminship_can_be_taken_away(db):
+    """T-F-M.6.3-2: granting without revoking is a one-way door."""
+    from django.core.management import call_command
+
+    from matazim.access import is_admin
+
+    user = make_user("temp@example.com")
+    call_command("matazim_admins", grant=["temp@example.com"])
+    assert is_admin(user)
+
+    call_command("matazim_admins", revoke=["temp@example.com"])
+    user.refresh_from_db()
+    assert not is_admin(user)
+
+
+def test_an_unknown_email_is_reported_not_invented(db):
+    """T-F-M.6.3-3: a typo must not silently create an account with admin rights."""
+    from django.core.management import call_command
+
+    call_command("matazim_admins", grant=["nobody-here@example.com"])
+    assert not User.objects.filter(email="nobody-here@example.com").exists()
+
+
+# ---------------------------------------------------------------- F-M.6.5
+
+
+def test_deactivating_a_leader_destroys_nothing(db):
+    """T-F-M.6.5-1: REQ-M.67. Same principle as retiring an entrance target."""
+    from matazim.access import leader_of, visible_students
+
+    leader = make_leader("leaving@example.com")
+    student = make_student("kept@example.com", leader=leader)
+
+    leader.is_active = False
+    leader.save(update_fields=["is_active"])
+
+    student.refresh_from_db()
+    assert student.leader == leader, "the roster must survive"
+    assert leader_of(leader.user) is None, "but they lose the leader view"
+    assert not visible_students(leader.user).exists()
+
+
+def test_an_inactive_leader_is_not_offered_to_join(db):
+    """T-F-M.6.5-2: they stop taking new students."""
+    from matazim.access import joinable_leaders
+
+    active = make_leader("open@example.com")
+    make_leader("closed@example.com", active=False)
+
+    assert set(joinable_leaders()) == {active}

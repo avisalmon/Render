@@ -142,6 +142,31 @@ Tests in `tests/test_spr_m_5.py`, marker `sprm5`. All GREEN.
 | T-F-M.5.3-1 | Only staff are offered the replay control | F-M.5.3 |
 | T-F-M.5.3-2 | A member posting to it directly is refused | F-M.5.3 |
 
+---
+
+## SPR-M.6 — The roles, and nothing else
+
+Tests in `tests/test_spr_m_6.py`, marker `sprm6`. All GREEN.
+
+| Test ID | Description | Feature |
+|---|---|---|
+| T-F-M.6.1-1 | The four models exist with the agreed shape, and `is_admin` defaults false | F-M.6.1 |
+| T-F-M.6.1-2 | A student can exist before any leader has them | F-M.6.1 |
+| T-F-M.6.1-3 | A leader can run classes at more than one school | F-M.6.1 |
+| T-F-M.6.1-4 | One person, one row per cohort, two cohorts allowed | F-M.6.1 |
+| T-F-M.6.2-1 | **A leader cannot reach another leader's students** | F-M.6.2 |
+| T-F-M.6.2-2 | A student sees only themselves | F-M.6.2 |
+| T-F-M.6.2-3 | An admin sees everyone, including students nobody has claimed | F-M.6.2 |
+| T-F-M.6.2-4 | A superuser sees everyone | F-M.6.2 |
+| T-F-M.6.2-5 | A stranger sees nothing | F-M.6.2 |
+| T-F-M.6.2-6 | Role precedence is admin, then leader, then student | F-M.6.2 |
+| T-F-M.6.2-7 | Progress crosses the boundary in one join | F-M.6.2 |
+| T-F-M.6.3-1 | Adminship is seeded from a named list, and seeding twice is safe | F-M.6.3 |
+| T-F-M.6.3-2 | Adminship can be taken away | F-M.6.3 |
+| T-F-M.6.3-3 | An unknown email is reported, never invented | F-M.6.3 |
+| T-F-M.6.5-1 | Deactivating a leader destroys nothing | F-M.6.5 |
+| T-F-M.6.5-2 | An inactive leader is not offered to join | F-M.6.5 |
+
 Status values: `PLANNED` → `RED` → `GREEN`.
 
 SPR-M.1 ran red on 2026-09-09 (18 failing, 6 already true) and went green the

@@ -171,8 +171,10 @@ def test_retry(request):
 
 
 def _is_staff(user):
-    """`Program.staff` does not exist yet. When it does this is a one-line change."""
-    return user.is_authenticated and (user.is_staff or user.is_superuser)
+    """One line, as promised when this was written."""
+    from .access import is_admin
+
+    return is_admin(user)
 
 
 @login_required(login_url=LOGIN_URL)

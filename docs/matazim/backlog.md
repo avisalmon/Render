@@ -311,7 +311,7 @@ another leader's students because **the query cannot get there**.
 
 Three sprints. The first has no screens at all, and that is the point.
 
-## SPR-M.6 — The roles, and nothing else  `PLANNED`
+## SPR-M.6 — The roles, and nothing else  `DONE`
 
 **Goal:** the four models, the access module, the seed, and tests that prove a
 leader cannot reach another leader's students. No screens. Everything after this
@@ -319,12 +319,12 @@ becomes a filtered queryset.
 
 | F-ID | Feature | Traces | Status |
 |---|---|---|---|
-| F-M.6.1 | `Leader`, `StudyClass`, `Student`, and `is_admin` on the profile | spec §4.2 | TODO |
-| F-M.6.2 | `matazim/access.py`: one function, four roles, stated precedence | REQ-M.22, spec §4.4 | TODO |
-| F-M.6.3 | Seeding adminship from a named list, never self-served | REQ-M.68 | TODO |
-| F-M.6.4 | A student with no leader is a normal state everywhere it is read | REQ-M.65 | TODO |
-| F-M.6.5 | Deactivating a leader destroys nothing | REQ-M.67 | TODO |
-| F-M.6.6 | The tests that make the rest trivial: no leader reaches another's students | REQ-M.22 | TODO |
+| F-M.6.1 | `Leader`, `StudyClass`, `Student`, and `is_admin` on the profile | spec §4.2 | DONE |
+| F-M.6.2 | `matazim/access.py`: one function, four roles, stated precedence | REQ-M.22, spec §4.4 | DONE |
+| F-M.6.3 | Seeding adminship from a named list, never self-served | REQ-M.68 | DONE |
+| F-M.6.4 | A student with no leader is a normal state everywhere it is read | REQ-M.65 | DONE |
+| F-M.6.5 | Deactivating a leader destroys nothing | REQ-M.67 | DONE |
+| F-M.6.6 | The tests that make the rest trivial: no leader reaches another's students | REQ-M.22 | DONE |
 
 ### Scope notes
 
@@ -345,7 +345,7 @@ visible change.
 
 | ACT-ID | What Avi does | Blocks | Status |
 |---|---|---|---|
-| ACT-M.6 | The email addresses for נעמי and אביב | Seeding admins in production, not the build | OPEN |
+| ACT-M.6 | Set `MATAZIM_ADMINS` in Render to the emails for נעמי, אביב and yourself, comma separated. The deploy reads it every time, so adding an admin is a setting rather than a release | Admins existing in production. The build is done | OPEN |
 
 ## SPR-M.7 — The leader's students  `NOT PLANNED`
 

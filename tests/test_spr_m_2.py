@@ -331,14 +331,17 @@ def test_the_replay_control_brings_the_welcome_back(client, db):
     This originally replayed the welcome as an ordinary member. It is a testing
     tool rather than a feature, so it is staff only now, and the user here is
     staff for that reason and not by accident.
+
+    Narrowed again in SPR-M.6: "staff" became מט״צים adminship, so this grants
+    the real role rather than the `is_staff` stand-in it used while this app had
+    no roles of its own.
     """
     from django.utils import timezone
 
     from matazim.models import MemberProfile
 
     user = sign_in(client)
-    user.is_staff = True
-    user.save(update_fields=["is_staff"])
+    MemberProfile.objects.update_or_create(user=user, defaults={"is_admin": True})
     MemberProfile.objects.update_or_create(
         user=user, defaults={"welcome_accepted_at": timezone.now()}
     )
