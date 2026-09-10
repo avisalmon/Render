@@ -159,3 +159,31 @@ def test_no_section_invents_content(client, db):
         html = client.get(reverse(name)).content.decode()
         body = html.split("<main>")[1].split("</main>")[0]
         assert not re.search(r"\b\d{2,}\+", body), f"{name} shows an invented figure"
+
+
+# ---------------------------------------------------------------- F-M.4.7
+
+
+def test_the_entrance_test_page_does_not_say_it_is_closed(client, db):
+    """T-F-M.4.7-1: REQ-M.61.
+
+    Found by Avi reading the live page. SPR-M.3 built the test and this page
+    went on saying עוד לא פתוח for half a day, which is worse than an unfinished
+    page: it turns away the people the gate exists to let in.
+    """
+    html = client.get(reverse("matazim:entrance_test")).content.decode()
+    assert "עוד לא פתוח" not in html
+    assert "בבנייה" not in html
+    assert reverse("matazim:test_lessons") in html
+
+
+def test_the_entrance_test_page_says_a_computer_is_needed(client, db):
+    """T-F-M.4.7-2: REQ-M.61.
+
+    Confirming the applicant has a computer is part of what this gate is for,
+    so a kid should learn it on the first screen rather than at lesson four on
+    a phone.
+    """
+    html = client.get(reverse("matazim:entrance_test")).content.decode()
+    assert "מחשב" in html
+    assert "טלפון" in html

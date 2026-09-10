@@ -1,10 +1,16 @@
 {% extends "matazim/base.html" %}
 
 {% comment %}
-  REQ-M.38 — מבחן הכניסה has a home before it has a test.
+  REQ-M.38, REQ-M.61 — the front door of the entrance test.
 
-  It explains what is coming and why, and it does not fake a pass. The Tinkercad
-  task, the automatic geometry check and the leader's review are REQ-M.17.
+  It stopped being a placeholder when SPR-M.3 built the test, and this page went
+  on saying "coming soon" for half a day. Now it does the job the journey design
+  gave it: say what you will do, what you need, what happens when it does not
+  come out right, and what passing opens. Then get out of the way.
+
+  Saying "you need a computer" here is deliberate. Confirming the applicant has
+  one is part of what this gate is for (Avi, 2026-09-10), so a kid should learn
+  it on the first screen rather than at lesson four on a phone.
 {% endcomment %}
 
 {% block title %}מבחן הכניסה · מט״צים{% endblock %}
@@ -13,32 +19,63 @@
 <div class="mz-container mz-page">
   <div class="mz-page-head">
     <h1>מבחן הכניסה</h1>
-    <p>הצעד הראשון בדרך להיות מט״צ.</p>
+    <p>הצעד הראשון בדרך להיות מט״צ. אפשר להתחיל עכשיו.</p>
   </div>
 
   <section class="mz-panel">
-    <h2>מה זה המבחן הזה?</h2>
-    <p>
-      במבחן הכניסה תקבלו דגם תלת-ממדי ותתבקשו לשחזר אותו בעצמכם בטינקרקאד
-      ולהעלות את התוצאה. המערכת תשווה בין הדגם שלכם למקור, והמוביל בבית הספר
-      יעבור על ההגשה.
-    </p>
-    <p>
-      <strong>המבחן בודק התמדה, לא ידע מוקדם.</strong>
-      אף אחד לא נפסל על ידי המערכת. אם משהו לא יצא מדויק, פשוט מנסים שוב, ואנחנו
-      רואים בניסיון חוזר סימן טוב.
-    </p>
+    <h2>מה עושים</h2>
+    <ol class="mz-steps">
+      <li>
+        <span class="mz-step-n">1</span>
+        <span><strong>לומדים טינקרקאד</strong> בקורס קצר של תשעה שיעורים קצרים.</span>
+      </li>
+      <li>
+        <span class="mz-step-n">2</span>
+        <span><strong>מקבלים אובייקט לבנות.</strong> כל אחד מקבל אובייקט משלו, עם שרטוט ומודל תלת-ממדי שאפשר לסובב.</span>
+      </li>
+      <li>
+        <span class="mz-step-n">3</span>
+        <span><strong>בונים ומעלים.</strong> מייצאים STL מטינקרקאד ומעלים לכאן, והמערכת בודקת מיד.</span>
+      </li>
+    </ol>
+
+    <div class="mz-page-actions">
+      <a class="mz-btn mz-btn-primary" href="{% url 'matazim:test_lessons' %}">מתחילים</a>
+      <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:track' %}">מה קורה אחר כך</a>
+    </div>
   </section>
 
+  <div class="mz-two-up">
+    <section class="mz-panel">
+      <h2>מה צריך</h2>
+      <ul class="mz-needs">
+        <li><strong>מחשב.</strong> טינקרקאד רצה בדפדפן ולא עובדת מהטלפון.</li>
+        <li><strong>חשבון טינקרקאד</strong>, חינם. אם אתם מתחת לגיל 13, המורה או ההורים פותחים אותו איתכם.</li>
+        <li><strong>בערך שעה</strong>, ולא חייבים ברצף.</li>
+      </ul>
+      <p class="mz-muted">אם אין מחשב בבית, שווה לדבר עם המוביל בבית הספר.</p>
+    </section>
+
+    <section class="mz-panel">
+      <h2>ואם זה לא יוצא?</h2>
+      <p>
+        <strong>המבחן בודק התמדה, לא ידע מוקדם.</strong> אף אחד לא נפסל על ידי
+        המערכת. אם משהו לא יצא מדויק תקבלו בדיוק מה לתקן, ואפשר לנסות שוב בלי
+        הגבלה, עם אובייקט חדש בכל פעם.
+      </p>
+      <p>
+        ניסיון חוזר הוא סימן טוב אצלנו, לא כתם. מי שפספס, קרא את ההערות וחזר,
+        הראה בדיוק את מה שהתוכנית מחפשת.
+      </p>
+    </section>
+  </div>
+
   <section class="mz-panel mz-panel-soft">
-    <h2>עוד לא פתוח</h2>
+    <h2>ומה זה פותח</h2>
     <p>
-      המבחן נמצא כרגע בבנייה ויפתח בקרוב. בינתיים אפשר להתרשם מהתוכנית ולפתוח
-      חשבון, וכשהמבחן ייפתח נוכל לעדכן אתכם.
+      מי שעובר נפתחת לו כניסת התלמידים והוא יכול להירשם לתוכנית. את הקורס עצמו
+      אתם לוקחים איתכם בכל מקרה: גם מי שלא ימשיך יצא מכאן יודע לתכנן בתלת-ממד.
     </p>
-    <div class="mz-page-actions">
-      <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:home' %}">חזרה לדף הבית</a>
-    </div>
   </section>
 </div>
 {% endblock %}

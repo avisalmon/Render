@@ -256,6 +256,7 @@ showcase in SPR-M.1.
 | F-M.4.4 | הקורסים, honest about what is open today | REQ-M.59 | DONE |
 | F-M.4.5 | בתי הספר, קהילת מט״צים and ימי שיא, each saying what is coming | REQ-M.60 | DONE |
 | F-M.4.6 | The nav points at all of it, and nothing points at itself | REQ-M.56 | DONE |
+| F-M.4.7 | מבחן הכניסה stops saying it is closed, and says what you need | REQ-M.61 | DONE |
 
 ### Scope notes
 
@@ -266,9 +267,14 @@ leaves מתמיינים out because the entrance test has its own call to action
 **Out of scope:** `School`, `Post`, `Event` and everything they would carry.
 Three of these pages exist to hold the shape until those arrive.
 
+**Caught by Avi reading the live page.** SPR-M.3 built the entrance test and its
+own front door went on saying עוד לא פתוח for half a day. Worse than an
+unfinished page: it turns away the people the gate exists to let in. The page
+now does the job the journey design gave it, and two tests hold it to that.
+
 ### Definition of done
 
-Six features DONE, the sprint's tests green, the fast gate green, every menu
+Seven features DONE, the sprint's tests green, the fast gate green, every menu
 item clicked once in a browser, and nothing anywhere pointing at the page it is
 already on.
 

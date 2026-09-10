@@ -761,6 +761,30 @@ img { max-width: 100%; height: auto; display: block; }
   font-weight: 500;
 }
 
+/* ---------------------------------------------------------------- steps */
+
+.mz-two-up { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+.mz-two-up .mz-panel { margin-bottom: 20px; }
+
+.mz-steps { list-style: none; margin: 0 0 4px; padding: 0; display: grid; gap: 14px; }
+.mz-steps li { display: flex; align-items: flex-start; gap: 14px; }
+.mz-step-n {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--mz-purple);
+  color: #fff;
+  font-size: .85rem;
+  font-weight: 500;
+}
+.mz-steps strong { color: var(--mz-ink); }
+
+.mz-needs { margin: 0 0 10px; padding-inline-start: 20px; display: grid; gap: 8px; }
+.mz-needs strong { color: var(--mz-ink); }
+
 /* ---------------------------------------------------------------- footer */
 
 .mz-footer {
@@ -812,6 +836,7 @@ img { max-width: 100%; height: auto; display: block; }
   .mz-profile-grid { grid-template-columns: 1fr; }
   .mz-lesson-grid { grid-template-columns: 1fr; }
   .mz-task-grid { grid-template-columns: 1fr; }
+  .mz-two-up { grid-template-columns: 1fr; }
   .mz-welcome-card { padding: 26px 20px 24px; }
   .mz-partner-row { gap: 22px 30px; }
   .mz-logo-wide { height: 46px; }
