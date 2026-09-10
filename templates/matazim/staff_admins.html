@@ -1,0 +1,70 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.70 — granting adminship from inside מט״צים.
+
+  Not self-service: you must already be an admin to open this page. What
+  REQ-M.68 forbids is a screen that hands the role to someone who has none,
+  which is why the bootstrap stays with the deploy and with Django's admin.
+{% endcomment %}
+
+{% block title %}מנהלי התוכנית · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>מנהלי התוכנית</h1>
+    <p>מנהל רואה את כל המט״צים, את כל המובילים ואת כל ההתקדמות, וממנה מובילים.</p>
+  </div>
+
+  {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
+  {% if notice %}<div class="mz-alert mz-alert-ok" role="status">{{ notice }}</div>{% endif %}
+
+  <section class="mz-panel">
+    <h2>הוספת מנהל</h2>
+    <p class="mz-muted">
+      אפשר להוסיף רק מי שכבר פתח חשבון באתר. אנחנו לא פותחים חשבון חדש מכאן, כדי
+      שטעות הקלדה לא תיצור חשבון עם ההרשאה הגבוהה במערכת.
+    </p>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="grant">
+      <label class="mz-field">
+        <span>אימייל</span>
+        <input type="email" name="email" required placeholder="name@example.com">
+      </label>
+      <button type="submit" class="mz-btn mz-btn-primary">הוספה כמנהל/ת</button>
+    </form>
+  </section>
+
+  <section class="mz-panel">
+    <h2>מי מנהל כרגע <span class="mz-count">{{ rows|length }}</span></h2>
+    <ul class="mz-training">
+      {% for row in rows %}
+        <li>
+          <span class="mz-training-title">
+            {{ row.user.profile.display_name|default:row.user.email }}
+            <span class="mz-muted">{{ row.user.email }}</span>
+          </span>
+          {% if row.source == "root" %}
+            <span class="mz-tag mz-tag-done">מנהל/ת האתר</span>
+          {% elif row.user == me %}
+            <span class="mz-tag mz-tag-idle">זה אתם</span>
+          {% else %}
+            <form method="post" class="mz-inline-form">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="revoke">
+              <input type="hidden" name="email" value="{{ row.user.email }}">
+              <button type="submit" class="mz-linkbtn">הסרת הרשאה</button>
+            </form>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+    <p class="mz-muted">
+      מנהלי האתר מופיעים כאן תמיד: יש להם את כל ההרשאות בין אם סומנו כמנהלי
+      התוכנית ובין אם לא, ואי אפשר להסיר אותם מכאן.
+    </p>
+  </section>
+</div>
+{% endblock %}

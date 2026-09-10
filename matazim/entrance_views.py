@@ -220,3 +220,101 @@ def staff_target_toggle(request, target_id):
         target.retired_at = timezone.now() if target.is_retired else None
         target.save(update_fields=["is_retired", "retired_by", "retired_at"])
     return redirect("matazim:staff_targets")
+
+
+# --- The staff area ---------------------------------------------------------
+
+
+def staff_home(request):
+    """REQ-M.69 — one door, so the nav does not grow an item per tool."""
+    if not _is_staff(request.user):
+        raise PermissionDenied
+
+    from .models import EntranceTarget, Leader, MemberProfile, Student
+
+    return render(
+        request,
+        "matazim/staff_home.html",
+        shell(
+            request,
+            "staff",
+            counts={
+                "targets": EntranceTarget.objects.filter(is_retired=False).count(),
+                "retired": EntranceTarget.objects.filter(is_retired=True).count(),
+                "admins": MemberProfile.objects.filter(is_admin=True).count(),
+                "leaders": Leader.objects.filter(is_active=True).count(),
+                "students": Student.objects.count(),
+            },
+        ),
+    )
+
+
+def staff_admins(request):
+    """REQ-M.70 — grant and revoke adminship by email.
+
+    Not self-service: you must already be an admin to open this. What REQ-M.68
+    forbids is a screen that hands the role to someone who has none, which is
+    why the bootstrap stays with the deploy and Django's admin.
+    """
+    from django.contrib.auth.models import User
+
+    from .access import is_admin
+    from .models import MemberProfile
+
+    if not _is_staff(request.user):
+        raise PermissionDenied
+
+    error = ""
+    notice = ""
+
+    if request.method == "POST":
+        email = (request.POST.get("email") or "").strip().lower()
+        action = request.POST.get("action")
+
+        user = User.objects.filter(email__iexact=email).first()
+        if user is None:
+            # Never created. A typo must not conjure an account holding the
+            # highest role in the system.
+            error = f"לא נמצא חשבון עם האימייל {email}. אפשר להוסיף רק מי שכבר נרשם לאתר."
+        elif action == "revoke" and user == request.user:
+            # The likeliest way to lose every admin is by accident.
+            error = "אי אפשר להסיר את ההרשאה מעצמכם."
+        else:
+            grant = action != "revoke"
+            MemberProfile.objects.update_or_create(user=user, defaults={"is_admin": grant})
+            notice = (
+                f"{email} הוגדר/ה כמנהל/ת התוכנית." if grant else f"הרשאת הניהול הוסרה מ־{email}."
+            )
+
+    # Superusers hold every admin power whether or not the flag is set, so a
+    # page about who has power has to show them. Listing only the flag would
+    # let a site owner read this and conclude they were not on it.
+    rows = []
+    seen = set()
+    for user in User.objects.filter(is_superuser=True).order_by("email"):
+        rows.append({"user": user, "source": "root", "can_revoke": False})
+        seen.add(user.pk)
+    for profile in (
+        MemberProfile.objects.filter(is_admin=True)
+        .select_related("user", "user__profile")
+        .order_by("user__email")
+    ):
+        if profile.user_id in seen:
+            continue
+        rows.append(
+            {"user": profile.user, "source": "granted", "can_revoke": profile.user != request.user}
+        )
+
+    return render(
+        request,
+        "matazim/staff_admins.html",
+        shell(
+            request,
+            "staff",
+            rows=rows,
+            error=error,
+            notice=notice,
+            me=request.user,
+            is_admin_now=is_admin(request.user),
+        ),
+    )

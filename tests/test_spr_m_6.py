@@ -39,7 +39,7 @@ def make_student(email, leader=None, year=2026):
 
 def test_the_four_models_exist_with_the_agreed_shape(db):
     """T-F-M.6.1-1: spec §4.2."""
-    from matazim.models import Leader, MemberProfile, Student, StudyClass
+    from matazim.models import MemberProfile, StudyClass
 
     leader = make_leader("lead@example.com")
     assert leader.is_active is True
@@ -306,3 +306,130 @@ def test_an_admin_can_find_the_students_nobody_has_taken(db):
     waiting = make_student("waiting@example.com", leader=None)
 
     assert set(unclaimed_students()) == {waiting}
+
+
+# ---------------------------------------------------------------- F-M.6.8
+
+
+def _client_as(client, email, admin=False, root=False):
+    from matazim.models import MemberProfile
+
+    user = make_user(email)
+    if root:
+        user.is_superuser = True
+        user.save(update_fields=["is_superuser"])
+    if admin:
+        MemberProfile.objects.update_or_create(user=user, defaults={"is_admin": True})
+    client.force_login(user)
+    return user
+
+
+def test_the_staff_area_has_one_door_and_it_is_admin_only(client, db):
+    """T-F-M.6.8-1: REQ-M.69. The nav does not grow an item per tool."""
+    from django.urls import reverse
+
+    assert client.get(reverse("matazim:staff_home")).status_code in (302, 403)
+
+    _client_as(client, "plain@example.com")
+    assert client.get(reverse("matazim:staff_home")).status_code in (302, 403)
+
+    client.logout()
+    _client_as(client, "chief@example.com", admin=True)
+    html = client.get(reverse("matazim:staff_home")).content.decode()
+    assert reverse("matazim:staff_targets") in html
+    assert reverse("matazim:staff_admins") in html
+
+
+def test_only_admins_see_the_staff_door_in_the_nav(client, db):
+    """T-F-M.6.8-2."""
+    from django.urls import reverse
+
+    _client_as(client, "member3@example.com")
+    assert reverse("matazim:staff_home") not in client.get(reverse("matazim:home")).content.decode()
+
+    client.logout()
+    _client_as(client, "chief2@example.com", admin=True)
+    assert reverse("matazim:staff_home") in client.get(reverse("matazim:home")).content.decode()
+
+
+def test_an_admin_can_grant_adminship_by_email(client, db):
+    """T-F-M.6.8-3: REQ-M.70."""
+    from django.urls import reverse
+
+    from matazim.access import is_admin
+
+    _client_as(client, "chief3@example.com", admin=True)
+    newcomer = make_user("newcomer@example.com")
+
+    client.post(
+        reverse("matazim:staff_admins"),
+        {"action": "grant", "email": "newcomer@example.com"},
+    )
+    assert is_admin(newcomer)
+
+
+def test_granting_never_creates_an_account(client, db):
+    """T-F-M.6.8-4: a typo must not conjure the highest role in the system."""
+    from django.urls import reverse
+
+    _client_as(client, "chief4@example.com", admin=True)
+    response = client.post(
+        reverse("matazim:staff_admins"),
+        {"action": "grant", "email": "typo@example.com"},
+    )
+    assert response.status_code == 200
+    assert not User.objects.filter(email="typo@example.com").exists()
+
+
+def test_an_admin_cannot_revoke_themselves(client, db):
+    """T-F-M.6.8-5: the likeliest way to lose every admin is by accident."""
+    from django.urls import reverse
+
+    from matazim.access import is_admin
+
+    me = _client_as(client, "careful@example.com", admin=True)
+    client.post(
+        reverse("matazim:staff_admins"),
+        {"action": "revoke", "email": "careful@example.com"},
+    )
+    me.refresh_from_db()
+    assert is_admin(me), "revoking yourself is how a program loses every admin"
+
+
+def test_an_admin_can_revoke_someone_else(client, db):
+    """T-F-M.6.8-6: granting without revoking is a one-way door."""
+    from django.urls import reverse
+
+    from matazim.access import is_admin
+    from matazim.models import MemberProfile
+
+    _client_as(client, "chief5@example.com", admin=True)
+    other = make_user("other-admin@example.com")
+    MemberProfile.objects.update_or_create(user=other, defaults={"is_admin": True})
+
+    client.post(
+        reverse("matazim:staff_admins"),
+        {"action": "revoke", "email": "other-admin@example.com"},
+    )
+    other.refresh_from_db()
+    assert not is_admin(other)
+
+
+def test_a_site_owner_appears_on_the_list_of_who_has_power(client, db):
+    """T-F-M.6.8-7: Avi, 2026-09-10, "I am the big chief admin of everything".
+
+    A superuser holds every admin power whether or not the flag is set. Listing
+    only the flag would let the site owner read this page and conclude they were
+    not on it, which is the page lying about the thing it exists to show.
+    """
+    from django.urls import reverse
+
+    root = _client_as(client, "salmon@example.com", root=True)
+    html = client.get(reverse("matazim:staff_admins")).content.decode()
+
+    assert "salmon@example.com" in html
+    assert "מנהל/ת האתר" in html
+    # And nobody offers to remove them, because nothing here could.
+    body = html.split("salmon@example.com")[1][:400]
+    assert "הסרת הרשאה" not in body
+    assert root.is_superuser

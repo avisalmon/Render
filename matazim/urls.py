@@ -28,6 +28,8 @@ urlpatterns = [
     path("test/task/", entrance_views.test_task, name="test_task"),
     path("test/retry/", entrance_views.test_retry, name="test_retry"),
     # Staff curate the bank (REQ-M.55).
+    path("staff/", entrance_views.staff_home, name="staff_home"),
+    path("staff/admins/", entrance_views.staff_admins, name="staff_admins"),
     path("staff/targets/", entrance_views.staff_targets, name="staff_targets"),
     path(
         "staff/targets/<str:target_id>/toggle/",

@@ -1,0 +1,53 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.69 — one door to the staff area, so the nav does not grow an item per
+  tool. Everything behind it refuses non-admins on its own; hiding a link has
+  never been access control.
+{% endcomment %}
+
+{% block title %}ניהול · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>ניהול</h1>
+    <p>הכלים של צוות התוכנית.</p>
+  </div>
+
+  <div class="mz-two-up">
+    <section class="mz-panel">
+      <h2>משימות מבחן הכניסה</h2>
+      <p>
+        {{ counts.targets }} משימות פעילות{% if counts.retired %}, {{ counts.retired }} הוצאו משימוש{% endif %}.
+        כל משימה עם שרטוט ומודל תלת-ממדי, ואפשר להוציא משימוש כל מה שקשה מדי.
+      </p>
+      <div class="mz-page-actions">
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:staff_targets' %}">לבנק המשימות</a>
+      </div>
+    </section>
+
+    <section class="mz-panel">
+      <h2>מנהלי התוכנית</h2>
+      <p>
+        {{ counts.admins }} מנהלים כרגע. מנהל רואה את כל המט״צים, את כל המובילים
+        ואת כל ההתקדמות, וממנה מובילים.
+      </p>
+      <div class="mz-page-actions">
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:staff_admins' %}">לניהול ההרשאות</a>
+      </div>
+    </section>
+  </div>
+
+  <section class="mz-panel mz-panel-soft">
+    <h2>מה יש במערכת</h2>
+    <dl class="mz-facts">
+      <div><dt>מובילים פעילים</dt><dd>{{ counts.leaders }}</dd></div>
+      <div><dt>מט״צים</dt><dd>{{ counts.students }}</dd></div>
+    </dl>
+    <p class="mz-muted">
+      מסכי המובילים והמט״צים ייבנו בספרינטים הבאים. המספרים כאן אמיתיים.
+    </p>
+  </section>
+</div>
+{% endblock %}

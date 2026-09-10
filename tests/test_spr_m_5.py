@@ -25,9 +25,9 @@ PASSWORD = "sprm5-pass-8823"
 def make_user(email="tal@example.com", staff=False):
     user = User.objects.create_user(username=email, email=email, password=PASSWORD)
     if staff:
-    # "Staff" became מט״צים adminship in SPR-M.6: is_staff was a stand-in while
-    # this app had no roles of its own. Granting the real thing, not the
-    # stand-in, so the test exercises the rule that actually ships.
+        # "Staff" became מט״צים adminship in SPR-M.6: is_staff was a stand-in while
+        # this app had no roles of its own. Granting the real thing, not the
+        # stand-in, so the test exercises the rule that actually ships.
         from matazim.models import MemberProfile
 
         MemberProfile.objects.update_or_create(user=user, defaults={"is_admin": True})
@@ -56,20 +56,28 @@ def sign_in(client, email="tal@example.com", staff=False, passed=False):
 
 
 def test_staff_see_a_door_to_the_bank(client, db):
-    """T-F-M.5.1-1: REQ-M.62. A screen with no link is a screen nobody uses."""
+    """T-F-M.5.1-1: REQ-M.62. A screen with no link is a screen nobody uses.
+
+    Narrowed by REQ-M.69 in SPR-M.6: the nav now carries one ניהול door rather
+    than an item per tool, so what this checks is that staff can *get* to the
+    bank, which is the requirement. The bank is one click further in.
+    """
     sign_in(client, "boss@example.com", staff=True)
     html = client.get(reverse("matazim:home")).content.decode()
-    assert reverse("matazim:staff_targets") in html
+    assert reverse("matazim:staff_home") in html
+
+    staff_area = client.get(reverse("matazim:staff_home")).content.decode()
+    assert reverse("matazim:staff_targets") in staff_area
 
 
 def test_members_and_visitors_never_see_it(client, db):
     """T-F-M.5.1-2: it is a staff tool, not a section of the site."""
     anon = client.get(reverse("matazim:home")).content.decode()
-    assert reverse("matazim:staff_targets") not in anon
+    assert reverse("matazim:staff_home") not in anon
 
     sign_in(client, "member@example.com")
     member = client.get(reverse("matazim:home")).content.decode()
-    assert reverse("matazim:staff_targets") not in member
+    assert reverse("matazim:staff_home") not in member
 
 
 # ---------------------------------------------------------------- F-M.5.2

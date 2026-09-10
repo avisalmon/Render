@@ -166,6 +166,15 @@ Tests in `tests/test_spr_m_6.py`, marker `sprm6`. All GREEN.
 | T-F-M.6.3-3 | An unknown email is reported, never invented | F-M.6.3 |
 | T-F-M.6.5-1 | Deactivating a leader destroys nothing | F-M.6.5 |
 | T-F-M.6.5-2 | An inactive leader is not offered to join | F-M.6.5 |
+| T-F-M.6.7-1 | Adminship can be granted from Django admin | F-M.6.7 |
+| T-F-M.6.7-2 | An admin can find the students nobody has taken | F-M.6.7 |
+| T-F-M.6.8-1 | The staff area has one door and it is admin only | F-M.6.8 |
+| T-F-M.6.8-2 | Only admins see the staff door in the nav | F-M.6.8 |
+| T-F-M.6.8-3 | An admin can grant adminship by email | F-M.6.8 |
+| T-F-M.6.8-4 | Granting never creates an account | F-M.6.8 |
+| T-F-M.6.8-5 | An admin cannot revoke themselves | F-M.6.8 |
+| T-F-M.6.8-6 | An admin can revoke someone else | F-M.6.8 |
+| T-F-M.6.8-7 | A site owner appears on the list of who has power | F-M.6.8 |
 
 Status values: `PLANNED` → `RED` → `GREEN`.
 
