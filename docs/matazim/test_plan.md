@@ -175,6 +175,10 @@ Tests in `tests/test_spr_m_6.py`, marker `sprm6`. All GREEN.
 | T-F-M.6.8-5 | An admin cannot revoke themselves | F-M.6.8 |
 | T-F-M.6.8-6 | An admin can revoke someone else | F-M.6.8 |
 | T-F-M.6.8-7 | A site owner appears on the list of who has power | F-M.6.8 |
+| T-F-M.6.9-1 | A refusal inside the walls stays inside them | F-M.6.9 |
+| T-F-M.6.9-2 | A missing page inside the walls stays inside them | F-M.6.9 |
+| T-F-M.6.9-3 | babook's own errors are left alone | F-M.6.9 |
+| T-F-M.6.9-4 | An anonymous visitor meets our login, not a refusal | F-M.6.9 |
 
 Status values: `PLANNED` → `RED` → `GREEN`.
 

@@ -296,7 +296,7 @@ group; twelve hundred means a leader has forty-five and needs to split them.
 | REQ-ID | Title | Expectation | Status |
 |---|---|---|---|
 | REQ-M.1 | Autonomous shell | `templates/matazim/base.html` stands alone: own header, nav, footer, fonts, colour, favicon and page title. It never extends or includes a babook template. Hebrew RTL, works from 360px up. | DONE |
-| REQ-M.2 | Own error pages | 404 and 500 raised under `/matazim/` render in the מט״צים shell, not the babook one. | TODO |
+| REQ-M.2 | Own error pages | 403, 404 and 500 raised under `/matazim/` render in the מט״צים shell, not the babook one, and babook's own errors are untouched. Django's handlers are project-wide, so this dispatches on the path. Found live: a 403 was serving babook's page with its title and drawer, because the guard tests read templates and successful pages and an error page is neither. | DONE |
 | REQ-M.3 | Sealed both ways | No template under `templates/matazim/` links outside the prefix; no babook template, nav, drawer, search result, sitemap entry or context processor mentions מט״צים. Enforced by tests, not by care. | DONE |
 | REQ-M.4 | ~~Driven by data~~ | **Retired 2026-09-10** with the `Program` table. It existed so a second network would be data rather than code; there is no second network, and inventing one cost a table, a foreign key on everything, and a concept on every screen. See spec §4.8. | DROPPED |
 | REQ-M.5 | The nine sections | The information architecture is Litala's, from the brief: דף הבית, המסלול השנתי, מבחן הכניסה, הקורסים שלי, הגשת תוצרים, ימי שיא, בתי הספר המשתתפים, קהילת מט״צים, אזור אישי. The first two and בתי הספר המשתתפים are open logged out and double as recruitment material; the rest are member surfaces. | DONE |

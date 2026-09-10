@@ -1,0 +1,17 @@
+{% extends "matazim/base.html" %}
+{% comment %} REQ-M.2 — a missing page, without leaving the walls. {% endcomment %}
+{% block title %}הדף לא נמצא · מט״צים{% endblock %}
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>לא מצאנו את הדף הזה</h1>
+    <p>יכול להיות שהקישור ישן, או שיש שם טעות קטנה.</p>
+  </div>
+  <section class="mz-panel">
+    <div class="mz-page-actions">
+      <a class="mz-btn mz-btn-primary" href="{% url 'matazim:home' %}">חזרה לדף הבית</a>
+      <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:track' %}">למסלול השנתי</a>
+    </div>
+  </section>
+</div>
+{% endblock %}

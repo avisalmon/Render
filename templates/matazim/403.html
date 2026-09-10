@@ -1,0 +1,20 @@
+{% extends "matazim/base.html" %}
+{% comment %} REQ-M.2 — a refusal, in our own voice and our own chrome. {% endcomment %}
+{% block title %}אין הרשאה · מט״צים{% endblock %}
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>הדף הזה סגור</h1>
+    <p>אין לכם הרשאה לראות אותו, וזה בסדר גמור.</p>
+  </div>
+  <section class="mz-panel">
+    <p>
+      חלק מהמסכים כאן שמורים לצוות התוכנית או למובילים. אם לדעתכם זו טעות, דברו
+      עם המוביל שלכם בבית הספר.
+    </p>
+    <div class="mz-page-actions">
+      <a class="mz-btn mz-btn-primary" href="{% url 'matazim:home' %}">חזרה לדף הבית</a>
+    </div>
+  </section>
+</div>
+{% endblock %}

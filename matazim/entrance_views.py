@@ -225,6 +225,7 @@ def staff_target_toggle(request, target_id):
 # --- The staff area ---------------------------------------------------------
 
 
+@login_required(login_url=LOGIN_URL)
 def staff_home(request):
     """REQ-M.69 — one door, so the nav does not grow an item per tool."""
     if not _is_staff(request.user):
@@ -249,6 +250,7 @@ def staff_home(request):
     )
 
 
+@login_required(login_url=LOGIN_URL)
 def staff_admins(request):
     """REQ-M.70 — grant and revoke adminship by email.
 

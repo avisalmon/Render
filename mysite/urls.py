@@ -53,3 +53,13 @@ urlpatterns = [
 urlpatterns += [
     re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
 ]
+
+# REQ-M.2 — error pages stay inside the walls.
+#
+# Django's handlers are project-wide, so a 403 raised inside /matazim/ used to
+# render babook's page: its title, its drawer, its nav. A straight RULE-2 break,
+# and it was live. These dispatch on the path and leave babook's own errors
+# exactly as they were.
+handler403 = "matazim.errors.permission_denied"
+handler404 = "matazim.errors.page_not_found"
+handler500 = "matazim.errors.server_error"

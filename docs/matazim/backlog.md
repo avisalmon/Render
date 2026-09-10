@@ -327,8 +327,16 @@ becomes a filtered queryset.
 | F-M.6.6 | The tests that make the rest trivial: no leader reaches another's students | REQ-M.22 | DONE |
 | F-M.6.7 | מט״צים in Django admin, so adminship can be granted without a deploy | REQ-M.68 | DONE |
 | F-M.6.8 | One ניהול door, and granting adminship from inside מט״צים | REQ-M.69, REQ-M.70 | DONE |
+| F-M.6.9 | Error pages that stay inside the walls | REQ-M.2 | DONE |
 
 ### Scope notes
+
+**Found while deploying, not while planning.** Checking what a non-admin
+actually gets served showed a 403 inside `/matazim/` rendering babook's page,
+title and drawer included. A live RULE-2 break that four sprints of guard tests
+had not caught, because they read templates under `templates/matazim/` and pages
+we request successfully, and an error page is neither. REQ-M.2 had been sitting
+at TODO since SPR-M.1 and this is exactly what it was for.
 
 **F-M.6.6 is the feature, not the paperwork.** The whole architecture rests on
 one claim, that scope is a property of the data. A test that builds two leaders

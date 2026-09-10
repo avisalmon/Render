@@ -433,3 +433,57 @@ def test_a_site_owner_appears_on_the_list_of_who_has_power(client, db):
     body = html.split("salmon@example.com")[1][:400]
     assert "הסרת הרשאה" not in body
     assert root.is_superuser
+
+
+# ---------------------------------------------------------------- F-M.6.9
+
+
+def test_a_refusal_inside_the_walls_stays_inside_them(client, db):
+    """T-F-M.6.9-1: REQ-M.2, found live in production.
+
+    A 403 raised anywhere under /matazim/ rendered babook's page: its title, its
+    drawer, its nav. The guard tests never saw it because they read templates
+    under templates/matazim/ and pages we request successfully. An error page is
+    neither, which is a reminder that a rule is only as good as the surface it
+    is checked on.
+    """
+    from django.urls import reverse
+
+    _client_as(client, "nosy@example.com")
+    response = client.get(reverse("matazim:staff_admins"))
+
+    assert response.status_code == 403
+    html = response.content.decode()
+    for leak in ("babook", "site-drawer", "nav-link px-2"):
+        assert leak not in html, f"babook chrome leaked into a מט״צים error page: {leak}"
+    assert "מט״צים" in html
+
+
+def test_a_missing_page_inside_the_walls_stays_inside_them(client, db):
+    """T-F-M.6.9-2: REQ-M.2, the 404 half."""
+    response = client.get("/matazim/no-such-page/")
+    assert response.status_code == 404
+    html = response.content.decode()
+    assert "babook" not in html
+    assert "מט״צים" in html
+
+
+def test_babooks_own_errors_are_left_alone(client, db):
+    """T-F-M.6.9-3: RULE-4 in the other direction.
+
+    We changed a project-wide setting, so the thing to prove is that we changed
+    it only for ourselves.
+    """
+    response = client.get("/no-such-babook-page/")
+    assert response.status_code == 404
+    assert "מט״צים" not in response.content.decode()
+
+
+def test_an_anonymous_visitor_meets_our_login_not_a_refusal(client, db):
+    """T-F-M.6.9-4: a stranger has not done anything wrong yet."""
+    from django.urls import reverse
+
+    for name in ("matazim:staff_home", "matazim:staff_admins"):
+        response = client.get(reverse(name))
+        assert response.status_code == 302
+        assert response.url.startswith(reverse("matazim:login"))

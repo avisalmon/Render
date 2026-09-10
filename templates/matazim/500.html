@@ -1,0 +1,22 @@
+{% extends "matazim/base.html" %}
+{% comment %}
+  REQ-M.2 — something broke on our side.
+
+  No database work on this page: an error page that queries can fail while
+  rendering the failure, which is the worst possible moment for a second bug.
+{% endcomment %}
+{% block title %}תקלה · מט״צים{% endblock %}
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>משהו השתבש אצלנו</h1>
+    <p>לא אצלכם. כבר יודעים על זה.</p>
+  </div>
+  <section class="mz-panel">
+    <p>שווה לנסות שוב עוד רגע. אם זה חוזר, ספרו למוביל שלכם.</p>
+    <div class="mz-page-actions">
+      <a class="mz-btn mz-btn-primary" href="{% url 'matazim:home' %}">חזרה לדף הבית</a>
+    </div>
+  </section>
+</div>
+{% endblock %}
