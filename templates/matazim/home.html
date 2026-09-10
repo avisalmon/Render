@@ -27,17 +27,38 @@
         יוצרים, מדריכים ומשפיעים על הקהילה.
       </p>
 
-      {# REQ-M.5c two front doors, REQ-M.5d the test is public #}
+      {% comment %}
+        REQ-M.5c two doors, REQ-M.36 only one of them waits.
+
+        כניסת תלמידים is shut until the entrance test is passed, and it says so
+        rather than simply refusing, with the test one click away. כניסת מובילים
+        is never gated: the test measures a teenager's commitment, and a teacher
+        confirming students onto a roster has no reason to model a 3D object.
+      {% endcomment %}
       <div class="mz-hero-cta">
-        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:home' %}">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          כניסת תלמידים
-        </a>
-        <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:home' %}">
+        {% if student_door_open %}
+          <a class="mz-btn mz-btn-primary" href="{% url 'matazim:register' %}">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            כניסת תלמידים
+          </a>
+        {% else %}
+          <span class="mz-door mz-door-locked">
+            <span class="mz-btn mz-btn-primary is-disabled" aria-disabled="true">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              כניסת תלמידים
+            </span>
+            <span class="mz-door-why">
+              נפתח אחרי <a href="{% url 'matazim:entrance_test' %}">מבחן הכניסה</a>
+            </span>
+          </span>
+        {% endif %}
+
+        <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:register' %}">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           כניסת מובילים
         </a>
-        <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:home' %}">
+
+        <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:entrance_test' %}">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#6b4cd6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12"/></svg>
           מבחן הכניסה
         </a>

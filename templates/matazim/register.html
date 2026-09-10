@@ -1,0 +1,43 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.6 — three fields and no more. The application is not what assesses
+  anyone, the entrance test is, so every extra field here is only a teenager
+  who does not finish the form.
+{% endcomment %}
+
+{% block title %}פתיחת חשבון · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-auth">
+  <div class="mz-auth-card">
+    <h1>פתיחת חשבון</h1>
+    <p class="mz-auth-sub">שלושה פרטים, וזהו.</p>
+
+    {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <label class="mz-field">
+        <span>שם מלא</span>
+        <input type="text" name="name" value="{{ name }}" autocomplete="name" required autofocus>
+      </label>
+      <label class="mz-field">
+        <span>אימייל</span>
+        <input type="email" name="email" value="{{ email }}" autocomplete="email" required>
+      </label>
+      <label class="mz-field">
+        <span>סיסמה</span>
+        <input type="password" name="password" autocomplete="new-password" required minlength="8">
+        <small>לפחות 8 תווים.</small>
+      </label>
+      <button type="submit" class="mz-btn mz-btn-primary mz-btn-block">פתיחת חשבון</button>
+    </form>
+
+    <p class="mz-auth-alt">
+      כבר יש לכם חשבון?
+      <a href="{% url 'matazim:login' %}">התחברו</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

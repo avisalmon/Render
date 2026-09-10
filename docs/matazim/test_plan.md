@@ -37,7 +37,45 @@ rather than kept in a suite of their own.
 | T-F-M.1.6-3 | RULE-3: מט״צים writes nothing to learning state | unit | F-M.1.6 | GREEN |
 | T-F-M.1.6-4 | RULE-4: nothing in `app/` imports the `matazim` package | unit | F-M.1.6 | GREEN |
 
+---
+
+## SPR-M.2 — Who you are here
+
+Tests in `tests/test_spr_m_2.py`, marker `sprm2`.
+
+| Test ID | Description | Type | Feature | Status |
+|---|---|---|---|---|
+| T-F-M.2.1-1 | `MemberProfile` is one row per user, with sane defaults | unit | F-M.2.1 | GREEN |
+| T-F-M.2.1-2 | Passing the test is read through a method, so it can become derived later | unit | F-M.2.1 | GREEN |
+| T-F-M.2.2-1 | The login page serves in the מט״צים shell with no babook chrome | integration | F-M.2.2 | GREEN |
+| T-F-M.2.2-2 | Correct credentials sign in and land inside `/matazim/` | integration | F-M.2.2 | GREEN |
+| T-F-M.2.2-3 | Wrong credentials say so and stay on the מט״צים page | integration | F-M.2.2 | GREEN |
+| T-F-M.2.2-4 | Logging out returns to the מט״צים home | integration | F-M.2.2 | GREEN |
+| T-F-M.2.2-5 | An account made on babook signs in here with no linking step | integration | F-M.2.2 | GREEN |
+| T-F-M.2.3-1 | The register page serves in the מט״צים shell | integration | F-M.2.3 | GREEN |
+| T-F-M.2.3-2 | Registering creates the user, signs them in, and stamps entry through this door | integration | F-M.2.3 | GREEN |
+| T-F-M.2.3-3 | An email already in use is refused without leaking whose it is | integration | F-M.2.3 | GREEN |
+| T-F-M.2.4-1 | A first visit shows the welcome and says the word prototype | integration | F-M.2.4 | GREEN |
+| T-F-M.2.4-2 | A visitor who is not signed in can dismiss it, and it stays dismissed | integration | F-M.2.4 | GREEN |
+| T-F-M.2.4-3 | A signed-in acceptance is stored with a timestamp | integration | F-M.2.4 | GREEN |
+| T-F-M.2.4-4 | Someone who accepted never sees it again | integration | F-M.2.4 | GREEN |
+| T-F-M.2.4-5 | An acknowledgement made before signing in is carried onto the profile | integration | F-M.2.4 | GREEN |
+| T-F-M.2.5-1 | The profile needs a login, and sends you to the מט״צים login, never babook's | integration | F-M.2.5 | GREEN |
+| T-F-M.2.5-2 | The name is the shared one, and editing it here changes it everywhere | integration | F-M.2.5 | GREEN |
+| T-F-M.2.5-3 | School and מט״צ standing read as not yet assigned rather than being hidden | integration | F-M.2.5 | GREEN |
+| T-F-M.2.5-4 | Every הדרכה anywhere on babook is listed, done and in progress, read live | integration | F-M.2.5 | GREEN |
+| T-F-M.2.6-1 | The replay control clears the flag and the welcome returns | integration | F-M.2.6 | GREEN |
+| T-F-M.2.7-1 | Without a passed test the student door is inactive and says why | integration | F-M.2.7 | GREEN |
+| T-F-M.2.7-2 | The leader door is never gated | integration | F-M.2.7 | GREEN |
+| T-F-M.2.7-3 | The header login is never gated | integration | F-M.2.7 | GREEN |
+| T-F-M.2.7-4 | Passing the test opens the student door | integration | F-M.2.7 | GREEN |
+| T-F-M.2.8-1 | The entrance test page serves with no account | integration | F-M.2.8 | GREEN |
+| T-F-M.2.8-2 | The inactive student door points at the entrance test | integration | F-M.2.8 | GREEN |
+
 Status values: `PLANNED` → `RED` → `GREEN`.
 
 SPR-M.1 ran red on 2026-09-09 (18 failing, 6 already true) and went green the
-same day. Registered in `docs/regression.md`.
+same day. SPR-M.2 ran red on 2026-09-10 (24 failing, 1 already true) and went
+green the same day, 26 tests including one the plan did not have: walking the
+flow in a browser showed the welcome asking a second time after registering,
+which no unit would have caught. Both registered in `docs/regression.md`.

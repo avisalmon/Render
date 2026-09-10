@@ -1,0 +1,40 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.6, REQ-M.7 — our screen over babook's accounts.
+
+  Someone who already has an account on the wider platform signs in here with
+  it and it simply works: no second password, no linking step, and no mention
+  anywhere that the account is shared.
+{% endcomment %}
+
+{% block title %}התחברות · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-auth">
+  <div class="mz-auth-card">
+    <h1>התחברות</h1>
+    <p class="mz-auth-sub">שמחים לראות אתכם שוב.</p>
+
+    {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <label class="mz-field">
+        <span>אימייל</span>
+        <input type="email" name="email" value="{{ email }}" autocomplete="email" required autofocus>
+      </label>
+      <label class="mz-field">
+        <span>סיסמה</span>
+        <input type="password" name="password" autocomplete="current-password" required>
+      </label>
+      <button type="submit" class="mz-btn mz-btn-primary mz-btn-block">כניסה</button>
+    </form>
+
+    <p class="mz-auth-alt">
+      עוד אין לכם חשבון?
+      <a href="{% url 'matazim:register' %}">פתחו חשבון חדש</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

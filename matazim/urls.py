@@ -13,4 +13,15 @@ app_name = "matazim"
 
 urlpatterns = [
     path("", views.home, name="home"),
+    # מבחן הכניסה is public: the link gets pasted around, and signing up
+    # happens around the test rather than before it (REQ-M.5d).
+    path("test/", views.entrance_test, name="entrance_test"),
+    # The threshold. Our screens, babook's accounts (REQ-M.6, REQ-M.7).
+    path("login/", views.login, name="login"),
+    path("logout/", views.logout, name="logout"),
+    path("register/", views.register, name="register"),
+    # First contact (REQ-M.39 to M.41).
+    path("welcome/accept/", views.welcome_accept, name="welcome_accept"),
+    path("profile/", views.profile, name="profile"),
+    path("profile/replay-welcome/", views.profile_reset_welcome, name="profile_reset_welcome"),
 ]

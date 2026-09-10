@@ -158,6 +158,18 @@ Owned by the `matazim` app (the only rows it writes):
 - **`Milestone`** — one node on the member's path: type (entrance test,
   acceptance, course, deliverable, יום שיא, פרקטיקום), order, target date,
   status, and a link to whatever it points at. Explained below.
+- **`MemberProfile`** — one row per `User` who has met מט״צים, holding only what
+  this space is entitled to know: `entered_via_matazim`, `first_seen_at`,
+  `welcome_accepted_at`, and `entrance_test_passed_at`. It is a **companion to**
+  babook's `UserProfile`, never a replacement: name, avatar and everything about
+  identity stay in the shared profile and are edited through it, so a person has
+  one name across both products. This is what keeps RULE-3 true while still
+  meeting "use the same profile model": the shared facts stay shared, and only
+  מט״צים's own flags are מט״צים's.
+  - `entrance_test_passed_at` is provisional. It is a stored flag while the test
+    is a placeholder, and becomes **derived** from `EntranceAttempt` the moment
+    REQ-M.17 lands. Read it through a method, never the column, so that swap is
+    invisible to every caller.
 - **`Event`** (ימי שיא) — title, date, location, target schools.
 - **`Notification`** — the bell, the mail icon, and the משוב חדש card on screen
   3 all need somewhere to come from.
@@ -217,12 +229,34 @@ counts of kids taught. All live queries over the shared tables.
 
 | REQ-ID | Title | Expectation | Status |
 |---|---|---|---|
-| REQ-M.6 | Own threshold | Register, log in, and log out at `/matazim/` URLs, in the מט״צים shell, writing to the shared `User` table. The word babook appears nowhere on these screens. | TODO |
-| REQ-M.7 | Existing account, same door | Someone who already has a babook account signs in with it here and it just works. No second password, no linking step, no visible mention that the account is shared. | TODO |
+| REQ-M.6 | Own threshold | Register, log in, and log out at `/matazim/` URLs, in the מט״צים shell, writing to the shared `User` table. The word babook appears nowhere on these screens. | DONE |
+| REQ-M.7 | Existing account, same door | Someone who already has a babook account signs in with it here and it just works. No second password, no linking step, no visible mention that the account is shared. | DONE |
 | REQ-M.8 | Return to intent | Hitting a member page while logged out lands on the מט״צים threshold and returns to the intended page afterwards, newly registered or freshly logged in. One link works for new and existing users alike; no branching is written anywhere. | TODO |
 | REQ-M.9 | School invite link | Each school carries a rotatable `join_code` powering a link and a QR that its teacher hands out. A logged-out visitor gets a landing page naming the school, not a bare login form: the link gets pasted into WhatsApp groups. Arriving this way attaches them to that school with no confirmation step. | TODO |
 | REQ-M.10 | The open door | Applying without a link means choosing a school from the list; its leader then confirms them onto the roster. Both doors end at `applied`. | TODO |
 | REQ-M.11 | Member pages gated | Anything past the public front requires an active `Membership`. A logged-in babook user with no membership sees the public front and the application, nothing else. | TODO |
+| REQ-M.35 | Entry through this door is recorded | A visitor who arrives at a `/matazim` URL is marked as having come in through מט״צים, and signing in through this app's own button stamps it on their מט״צים profile. It answers "did this person find us here, or are they a babook member who wandered over", which is the only way to read the funnel later. | DONE |
+| REQ-M.36 | The joining doors wait for the test | כניסת תלמידים is inactive until the visitor has passed the entrance test, and says why rather than simply refusing. **כניסת מובילים is not gated**: the test measures a teenager's commitment, and a teacher confirming students onto a roster has no reason to model a 3D object (Avi, 2026-09-10). | DONE |
+| REQ-M.37 | The returning-user door is never gated | התחברות in the header always works. Without it the gate locks out everyone who already passed and came back, because we only learn that they passed after they sign in. The hero doors are for joining; the header is for returning. | DONE |
+| REQ-M.38 | The entrance test has a home | מבחן הכניסה is a real page at its own URL, reachable with no account, and it is what the gated door points at. This sprint it is a placeholder that explains what is coming; the Tinkercad task itself is REQ-M.17. | DONE |
+
+### 5.2a First contact
+
+Everything a person meets before they are anyone here.
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-M.39 | Welcome, once | On a first visit the space greets the visitor and states plainly that this is a **prototype**: not an official Intel site, experimental, and carrying no obligation on anyone who uses it. Dismissing it is an explicit acknowledgement, not a stray click on the background. | DONE |
+| REQ-M.40 | The acknowledgement is kept | For a signed-in person the acceptance is stored with a timestamp on their מט״צים profile, so we can show who was told and when. A visitor who is not signed in still sees it, and their dismissal survives the visit; it simply cannot be attributed to anyone. | DONE |
+| REQ-M.41 | Replay the first time | The profile carries a control that clears the flag so the first-time experience can be walked through again from scratch. Built for testing, and it stays while the site is a prototype. | DONE |
+
+### 5.2b The profile inside the walls
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-M.42 | One identity, a מט״צים view of it | A profile page at a `/matazim/` URL showing only what matters here. Name and the rest of the personal details are the **shared** babook profile, edited here and changed everywhere, because a person has one identity and one name. | DONE |
+| REQ-M.43 | Where I stand in the program | The profile shows the school the member belongs to and whether they are already a certified מט״צ. Until `Membership` exists these read as "not yet assigned" rather than being hidden, so the shape of the page is honest about what is coming. | WIP |
+| REQ-M.44 | Everything I have learned, anywhere | The profile lists every הדרכה the person has done or is doing **anywhere on babook**, completed and in progress, read live from `Enrollment`, `UserVideoProgress` and `CourseCertificate` and never copied (RULE-3). Learning done before מט״צים existed counts, with no backfill step. | DONE |
 
 ### 5.3 Learning inside the walls
 

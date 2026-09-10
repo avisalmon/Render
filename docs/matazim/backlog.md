@@ -76,9 +76,83 @@ sprint was held to, since "all green" was never available to reach.
 200 and rendering, no link out of the prefix except static assets, babook's own
 pages carrying no mention of מט״צים, and every asset served.
 
+
 ---
 
-## Candidates for the next sprint
+## SPR-M.2 — Who you are here  `DONE`
+
+**Goal:** a person can come in, be recognised, and see themselves. Login,
+profile, the first-time welcome, and the gate that holds the joining door shut
+until the entrance test is passed.
+
+This is where מט״צים grows its first table. SPR-M.1 had no models on purpose;
+"who am I in this program" cannot be answered without one.
+
+**Decisions taken into this sprint (Avi, 2026-09-10):**
+
+- The test gates **כניסת תלמידים only**. כניסת מובילים stays open, because the
+  test measures a teenager's commitment and a teacher confirming a roster has no
+  reason to model a 3D object.
+- **התחברות in the header is never gated.** Otherwise the gate locks out
+  everyone who already passed and came back, since we only learn they passed
+  after they sign in. Hero doors are for joining, the header is for returning.
+- מט״צים's flags live in **its own table**, 1:1 to `User`. Name, avatar and
+  training stay in babook's shared `UserProfile` and are read and edited there.
+  Same identity, same data models, and RULE-3 stays true.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.2.1 | `MemberProfile`, the app's first model and migration | REQ-M.35, spec 4 | DONE |
+| F-M.2.2 | Own threshold: login and logout at `/matazim/` URLs, מט״צים screens over the shared `User` | REQ-M.6, REQ-M.7 | DONE |
+| F-M.2.3 | Register here, and be stamped as having entered through this door | REQ-M.6, REQ-M.35 | DONE |
+| F-M.2.4 | Welcome and prototype disclaimer, shown once, acknowledged explicitly | REQ-M.39, REQ-M.40 | DONE |
+| F-M.2.5 | Profile view: shared personal details, program standing, and every הדרכה read live | REQ-M.42, M.43, M.44 | DONE |
+| F-M.2.6 | Replay control: clear the flag and meet the site as a stranger again | REQ-M.41 | DONE |
+| F-M.2.7 | The gate: student door waits for the test, leader door and header login do not | REQ-M.36, REQ-M.37 | DONE |
+| F-M.2.8 | מבחן הכניסה placeholder page at its own URL | REQ-M.38 | DONE |
+
+### Scope notes
+
+**The profile is a view over two records.** Shared identity from babook's
+`UserProfile`, מט״צים's own flags from `MemberProfile`, program standing from
+`Membership` once it exists. Editing the name edits the shared profile, because
+a person has one name.
+
+**School and מט״צ status read "not yet assigned"** this sprint. `Membership`
+does not exist yet, and showing an honest placeholder beats hiding the row and
+redesigning the page later.
+
+**The welcome for a visitor who is not signed in.** They still see it, and the
+dismissal survives the visit through the session. It simply cannot be attributed
+to anyone, which is the point of storing it on the profile for people who are.
+
+**The test placeholder** says what the test will be and why it exists. It does
+not fake a pass. How a passed test is recorded for someone who has not yet
+registered is REQ-M.17's problem, not this sprint's.
+
+**Out of scope, deliberately:** `Membership`, `School`, the application form,
+the school invite link and QR, the member nav, and the entrance test itself.
+
+### ACT items
+
+| ACT-ID | What Avi does | Blocks | Status |
+|---|---|---|---|
+| ACT-M.3 | Confirm the disclaimer wording is what he wants standing on a live public page | The exact copy in F-M.2.4, not the build | OPEN |
+
+### Definition of done
+
+Eight features DONE, 26 tests green, no new failures against the pre-sprint
+baseline, and the flow walked end to end in a real browser.
+
+**What the flow-walk caught that the tests did not.** Dismissing the welcome as
+a stranger and then registering showed it a second time, because the new profile
+carried no acceptance and the session's was thrown away. Nobody should be told
+the same thing twice, and REQ-M.40 is supposed to keep that timestamp, so the
+acknowledgement now moves onto the profile at sign-in. Covered by T-F-M.2.4-5.
+
+---
+
+## Candidates for the sprint after this one
 
 Not planned, not committed, just the obvious neighbours. We pick one when
 SPR-M.1 closes.

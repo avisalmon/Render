@@ -1,0 +1,44 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.38 — מבחן הכניסה has a home before it has a test.
+
+  It explains what is coming and why, and it does not fake a pass. The Tinkercad
+  task, the automatic geometry check and the leader's review are REQ-M.17.
+{% endcomment %}
+
+{% block title %}מבחן הכניסה · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>מבחן הכניסה</h1>
+    <p>הצעד הראשון בדרך להיות מט״צ.</p>
+  </div>
+
+  <section class="mz-panel">
+    <h2>מה זה המבחן הזה?</h2>
+    <p>
+      במבחן הכניסה תקבלו דגם תלת-ממדי ותתבקשו לשחזר אותו בעצמכם בטינקרקאד
+      ולהעלות את התוצאה. המערכת תשווה בין הדגם שלכם למקור, והמוביל בבית הספר
+      יעבור על ההגשה.
+    </p>
+    <p>
+      <strong>המבחן בודק התמדה, לא ידע מוקדם.</strong>
+      אף אחד לא נפסל על ידי המערכת. אם משהו לא יצא מדויק, פשוט מנסים שוב, ואנחנו
+      רואים בניסיון חוזר סימן טוב.
+    </p>
+  </section>
+
+  <section class="mz-panel mz-panel-soft">
+    <h2>עוד לא פתוח</h2>
+    <p>
+      המבחן נמצא כרגע בבנייה ויפתח בקרוב. בינתיים אפשר להתרשם מהתוכנית ולפתוח
+      חשבון, וכשהמבחן ייפתח נוכל לעדכן אתכם.
+    </p>
+    <div class="mz-page-actions">
+      <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:home' %}">חזרה לדף הבית</a>
+    </div>
+  </section>
+</div>
+{% endblock %}

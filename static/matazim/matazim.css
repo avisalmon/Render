@@ -384,6 +384,196 @@ img { max-width: 100%; height: auto; display: block; }
 }
 .mz-project-school { color: var(--mz-muted); font-size: .74rem; }
 
+/* ---------------------------------------------------------------- gate */
+
+/* REQ-M.36 — a shut door that says why. A lock with no way forward is a dead
+ * end, so the reason sits under the button with the test one click away. */
+.mz-door { display: inline-flex; flex-direction: column; gap: 6px; }
+.mz-btn.is-disabled {
+  opacity: .45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.mz-door-why { font-size: .8rem; color: var(--mz-muted); }
+.mz-door-why a { font-weight: 500; text-decoration: underline; }
+
+/* ---------------------------------------------------------------- welcome */
+
+.mz-welcome {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(23, 34, 59, .55);
+  backdrop-filter: blur(3px);
+}
+.mz-welcome-card {
+  width: min(560px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--mz-card);
+  border-radius: var(--mz-radius);
+  box-shadow: var(--mz-shadow-lift);
+  padding: 32px 30px 30px;
+  text-align: center;
+}
+.mz-welcome-mark {
+  width: 68px;
+  height: 68px;
+  margin: 0 auto 16px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--mz-purple-soft);
+  color: var(--mz-purple);
+}
+.mz-welcome-card h2 { font-size: 1.35rem; }
+.mz-welcome-note {
+  margin: 20px 0 24px;
+  padding: 16px 18px;
+  border-radius: var(--mz-radius-sm);
+  background: var(--mz-teal-soft);
+  border: 1px solid rgba(15, 196, 155, .35);
+  color: var(--mz-ink);
+  font-size: .92rem;
+  line-height: 1.6;
+  text-align: start;
+}
+
+/* ---------------------------------------------------------------- auth */
+
+.mz-auth { display: grid; place-items: center; padding-block: 56px 72px; }
+.mz-auth-card {
+  width: min(430px, 100%);
+  background: var(--mz-card);
+  border-radius: var(--mz-radius);
+  box-shadow: var(--mz-shadow);
+  padding: 32px 30px;
+}
+.mz-auth-card h1 { font-size: 1.5rem; margin-bottom: 4px; }
+.mz-auth-sub { margin: 0 0 22px; color: var(--mz-muted); }
+.mz-auth-alt { margin: 18px 0 0; font-size: .9rem; text-align: center; }
+
+.mz-field { display: block; margin-bottom: 16px; }
+.mz-field > span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--mz-ink);
+  font-size: .9rem;
+  font-weight: 500;
+}
+.mz-field input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--mz-line);
+  border-radius: var(--mz-radius-sm);
+  background: #fff;
+  font: inherit;
+  color: var(--mz-ink);
+}
+.mz-field input:focus {
+  outline: none;
+  border-color: var(--mz-purple);
+  box-shadow: 0 0 0 3px var(--mz-purple-soft);
+}
+.mz-field input:disabled { background: var(--mz-page); color: var(--mz-muted); }
+.mz-field small { display: block; margin-top: 5px; color: var(--mz-muted); font-size: .78rem; }
+.mz-btn-block { width: 100%; justify-content: center; margin-top: 6px; }
+
+.mz-alert {
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border-radius: var(--mz-radius-sm);
+  background: #fdecec;
+  border: 1px solid #f5c2c2;
+  color: #8a1f1f;
+  font-size: .9rem;
+}
+.mz-alert-ok { background: var(--mz-teal-soft); border-color: rgba(15,196,155,.4); color: #0a6b58; }
+
+/* ---------------------------------------------------------------- pages */
+
+.mz-page { padding-block: 40px 72px; }
+.mz-page-head { margin-bottom: 22px; }
+.mz-page-head h1 { font-size: 1.9rem; margin-bottom: 4px; }
+.mz-page-head p { margin: 0; color: var(--mz-muted); }
+.mz-page-actions { margin-top: 18px; }
+
+.mz-panel {
+  background: var(--mz-card);
+  border-radius: var(--mz-radius);
+  box-shadow: var(--mz-shadow);
+  padding: 24px 26px 26px;
+  margin-bottom: 20px;
+}
+.mz-panel h2 { font-size: 1.1rem; margin-bottom: 14px; }
+.mz-panel h3 {
+  margin: 18px 0 8px;
+  font-size: .85rem;
+  font-weight: 500;
+  color: var(--mz-muted);
+}
+.mz-panel-soft { background: var(--mz-purple-soft); box-shadow: none; }
+
+.mz-profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+.mz-profile-grid .mz-panel { margin-bottom: 0; }
+.mz-panel-wide { grid-column: 1 / -1; }
+
+.mz-facts { margin: 0; display: grid; gap: 12px; }
+.mz-facts > div { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; }
+.mz-facts dt { color: var(--mz-muted); font-size: .9rem; }
+.mz-facts dd { margin: 0; color: var(--mz-ink); font-weight: 500; }
+.mz-muted { color: var(--mz-muted); font-weight: 400; }
+
+.mz-count {
+  display: inline-block;
+  margin-inline-start: 6px;
+  padding: 1px 9px;
+  border-radius: 20px;
+  background: var(--mz-page);
+  color: var(--mz-muted);
+  font-size: .8rem;
+  font-weight: 400;
+}
+
+.mz-training { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.mz-training li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 11px 14px;
+  border: 1px solid var(--mz-line);
+  border-radius: var(--mz-radius-sm);
+}
+.mz-training-title { color: var(--mz-ink); font-weight: 500; }
+
+/* Status is always a word plus a colour, never a colour alone (spec 3.2). */
+.mz-tag {
+  flex: none;
+  padding: 3px 11px;
+  border-radius: 20px;
+  font-size: .78rem;
+  font-weight: 500;
+}
+.mz-tag-done { background: var(--mz-teal-soft); color: #0a6b58; }
+.mz-tag-doing { background: #e6efff; color: #1d4ed8; }
+.mz-tag-idle { background: var(--mz-page); color: var(--mz-muted); }
+
+.mz-inline-form { display: inline; }
+.mz-linkbtn {
+  background: none;
+  border: 0;
+  padding: 6px 4px;
+  font: inherit;
+  font-size: .9rem;
+  color: var(--mz-muted);
+  cursor: pointer;
+}
+.mz-linkbtn:hover { color: var(--mz-ink); text-decoration: underline; }
+
 /* ---------------------------------------------------------------- footer */
 
 .mz-footer {
@@ -432,6 +622,8 @@ img { max-width: 100%; height: auto; display: block; }
   .mz-arc, .mz-blob { display: none; }
   .mz-hero-media { min-height: 240px; border-radius: 120px 0 0 120px; }
   .mz-how { padding: 20px 18px 24px; }
+  .mz-profile-grid { grid-template-columns: 1fr; }
+  .mz-welcome-card { padding: 26px 20px 24px; }
   .mz-partner-row { gap: 22px 30px; }
   .mz-logo-wide { height: 46px; }
   .mz-logo-tall { height: 74px; }

@@ -1,0 +1,127 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.42 to M.44 — one identity, shown the way מט״צים needs it.
+
+  The name is the shared one: edited here, changed everywhere, because a person
+  has one name. Program standing reads "not yet assigned" rather than hiding,
+  since Membership does not exist yet and an honest placeholder beats a page
+  that has to be redesigned when it arrives. The training list is a live query
+  over the course engine and is never copied into our tables (RULE-3).
+{% endcomment %}
+
+{% block title %}האזור האישי · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>האזור האישי</h1>
+    <p>הפרטים שלכם, המעמד בתוכנית, וכל ההדרכות שעברתם.</p>
+  </div>
+
+  {% if saved %}<div class="mz-alert mz-alert-ok" role="status">הפרטים נשמרו.</div>{% endif %}
+
+  <div class="mz-profile-grid">
+
+    <section class="mz-panel">
+      <h2>הפרטים שלי</h2>
+      <form method="post">
+        {% csrf_token %}
+        <label class="mz-field">
+          <span>שם מלא</span>
+          <input type="text" name="display_name" value="{{ user_profile.display_name }}" required>
+        </label>
+        <label class="mz-field">
+          <span>אימייל</span>
+          <input type="email" value="{{ user.email }}" disabled>
+          <small>האימייל משמש להתחברות ולא ניתן לשינוי כאן.</small>
+        </label>
+        <button type="submit" class="mz-btn mz-btn-primary">שמירה</button>
+      </form>
+    </section>
+
+    <section class="mz-panel">
+      <h2>המעמד שלי בתוכנית</h2>
+      <dl class="mz-facts">
+        <div>
+          <dt>בית ספר</dt>
+          <dd class="mz-muted">טרם שויך</dd>
+        </div>
+        <div>
+          <dt>מט״צ מוסמך</dt>
+          <dd class="mz-muted">טרם</dd>
+        </div>
+        <div>
+          <dt>מבחן הכניסה</dt>
+          <dd>
+            {% if member.entrance_test_passed_at %}
+              <span class="mz-tag mz-tag-done">עבר</span>
+            {% else %}
+              <span class="mz-tag mz-tag-idle">טרם</span>
+            {% endif %}
+          </dd>
+        </div>
+        <div>
+          <dt>הגעה לתוכנית</dt>
+          <dd>
+            {% if member.entered_via_matazim %}
+              נכנסתם דרך אתר מט״צים
+            {% else %}
+              <span class="mz-muted">חשבון קיים</span>
+            {% endif %}
+          </dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="mz-panel mz-panel-wide">
+      <h2>ההדרכות שלי <span class="mz-count">{{ training.total }}</span></h2>
+
+      {% if training.doing %}
+        <h3>בתהליך</h3>
+        <ul class="mz-training">
+          {% for row in training.doing %}
+            <li>
+              <span class="mz-training-title">{{ row.course.title }}</span>
+              <span class="mz-tag mz-tag-doing">בתהליך</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+
+      {% if training.done %}
+        <h3>הושלמו</h3>
+        <ul class="mz-training">
+          {% for row in training.done %}
+            <li>
+              <span class="mz-training-title">{{ row.course.title }}</span>
+              {% if row.certified %}
+                <span class="mz-tag mz-tag-done">תעודה</span>
+              {% else %}
+                <span class="mz-tag mz-tag-done">הושלם</span>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+
+      {% if not training.total %}
+        <p class="mz-muted">עוד לא התחלתם הדרכה. כל מה שתלמדו יופיע כאן.</p>
+      {% endif %}
+    </section>
+
+    <section class="mz-panel mz-panel-wide mz-panel-soft">
+      <h2>כלים לבדיקה</h2>
+      <p class="mz-muted">
+        האתר נמצא בשלב אב טיפוס. אפשר לאפס את הודעת הפתיחה כדי לראות שוב את
+        חוויית הכניסה הראשונה.
+      </p>
+      <form method="post" action="{% url 'matazim:profile_reset_welcome' %}">
+        {% csrf_token %}
+        <button type="submit" class="mz-btn mz-btn-ghost">איפוס הודעת הפתיחה</button>
+      </form>
+    </section>
+
+  </div>
+</div>
+{% endblock %}

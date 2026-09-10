@@ -1,0 +1,35 @@
+{% comment %}
+  REQ-M.39, REQ-M.40 — the prototype notice.
+
+  It is shown once, and dismissing it is a deliberate act: the OK is a real
+  form post, not a click on the backdrop, because what is being acknowledged is
+  that this site carries no obligation on anyone. For a signed-in person the
+  acceptance is stored with a timestamp; a visitor who is not signed in still
+  sees it and their dismissal survives the visit through the session.
+{% endcomment %}
+<div class="mz-welcome" role="dialog" aria-modal="true" aria-labelledby="mzWelcomeTitle">
+  <div class="mz-welcome-card">
+    <div class="mz-welcome-mark" aria-hidden="true">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12"/></svg>
+    </div>
+
+    <h2 id="mzWelcomeTitle">ברוכים הבאים לתוכנית מט״צים</h2>
+
+    <p>
+      שמחים שאתם כאן. זהו המרחב של מובילי הטכנולוגיה הצעירים: כאן לומדים,
+      יוצרים, מדריכים ומשפיעים על הקהילה.
+    </p>
+
+    <div class="mz-welcome-note">
+      <strong>שימו לב: האתר הזה הוא אב טיפוס.</strong>
+      זהו אתר ניסיוני, שאינו אתר רשמי של אינטל ואינו מייצג אותה. אין בשימוש
+      באתר או במידע שבו כל התחייבות או מחויבות מצד אף גורם.
+    </div>
+
+    <form method="post" action="{% url 'matazim:welcome_accept' %}">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.path }}">
+      <button type="submit" class="mz-btn mz-btn-primary">הבנתי, אפשר להמשיך</button>
+    </form>
+  </div>
+</div>

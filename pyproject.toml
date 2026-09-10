@@ -17,6 +17,7 @@ markers = [
     "spr213: SPR-2.1.3 Newsletter Capture MVP sprint tests",
     "spr214: SPR-2.1.4 Corporate Page Polish & Compliance sprint tests",
     "sprm1: SPR-M.1 מט״צים front door sprint tests",
+    "sprm2: SPR-M.2 מט״צים identity and first-contact sprint tests",
 ]
 
 [tool.black]

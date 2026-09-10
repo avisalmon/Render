@@ -46,21 +46,39 @@
       <a href="{% url 'matazim:home' %}">אודות התכנית</a>
       <a href="{% url 'matazim:home' %}">המסלול השנתי</a>
       <a href="{% url 'matazim:home' %}">הקורסים</a>
-      <a href="{% url 'matazim:home' %}">מבחן הכניסה</a>
+      <a href="{% url 'matazim:entrance_test' %}" {% if section == 'test' %}class="is-active"{% endif %}>מבחן הכניסה</a>
       <a href="{% url 'matazim:home' %}">בתי הספר</a>
       <a href="{% url 'matazim:home' %}">קהילת מט״צים</a>
       <a href="{% url 'matazim:home' %}">ימי שיא</a>
     </nav>
 
+    {% comment %}
+      REQ-M.37 — this door is never gated. The hero buttons are for joining and
+      the test holds those; this is how someone who already belongs gets back
+      in, and without it the gate would lock out every returning member.
+    {% endcomment %}
     <div class="mz-header-action">
-      <a class="mz-btn mz-btn-primary" href="{% url 'matazim:home' %}">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        התחברות
-      </a>
+      {% if user.is_authenticated %}
+        <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:profile' %}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          האזור האישי
+        </a>
+        <form method="post" action="{% url 'matazim:logout' %}" class="mz-inline-form">
+          {% csrf_token %}
+          <button type="submit" class="mz-linkbtn">יציאה</button>
+        </form>
+      {% else %}
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:login' %}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          התחברות
+        </a>
+      {% endif %}
     </div>
 
   </div>
 </header>
+
+{% if welcome_pending %}{% include "matazim/_welcome.html" %}{% endif %}
 
 <main>
   {% block content %}{% endblock %}
