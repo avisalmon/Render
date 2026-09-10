@@ -159,6 +159,12 @@ acknowledgement now moves onto the profile at sign-in. Covered by T-F-M.2.4-5.
 
 ---
 
+## Carried into the next sprint
+
+| Item | Why | Traces |
+|---|---|---|
+| Signing in lands on דף הבית, from every door | Avi, 2026-09-10, found in the demo. Password login already does; register and Google drop you on the personal area instead | REQ-M.46 |
+
 ## Candidates for the sprint after this one
 
 Not planned, not committed, just the obvious neighbours. We pick one when

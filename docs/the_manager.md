@@ -29,6 +29,7 @@
 | [docs/dashboard.html](dashboard.html) | Live progress visualization (updated every sprint) |
 | [docs/test_plan.md](test_plan.md) | Test plan per sprint, mapped to features |
 | [docs/regression.md](regression.md) | Cumulative regression suite (which tests must always pass) |
+| [docs/regression_baseline.txt](regression_baseline.txt) | The tests already failing, so a new failure can be told from an old one |
 | [docs/research/](research/) | Research phases 1-4, competitive landscape, scope reference |
 | [docs/procedures/](procedures/) | BKMs (CI/CD, backup, rollback, env vars, etc.) |
 
@@ -74,10 +75,39 @@ Every sprint follows these 10 steps in order. No exceptions.
 - After all features green: run the **whole sprint test set** — confirm green.
 - **ACT items:** If a feature needs Avi input (credentials, photo, DNS, etc.), pause on that feature, tell Avi exactly what to do, wait, then continue.
 
-### Step 5 — Full Regression
+### Step 5 — Regression, in two tiers
 
-- Run **entire regression suite** (`pytest`) — not just the sprint's tests.
-- Must be **all green**. If anything broke, fix before proceeding. Never move forward with red tests.
+Changed 2026-09-10 (Avi): everything goes to production for him to look at, so a
+fifteen-minute suite before every push is the wrong shape. Two gates now.
+
+**The fast gate — every push.** About 45 seconds.
+
+```
+pytest -m "smoke or <this sprint's marker>" -q
+```
+
+`tests/test_smoke.py` is deliberately shallow: every key page still serves, the
+health check answers, the two products stay sealed from each other, and gated
+pages still ask for the right login. It is not a substitute for the full run. It
+is what stops an obviously broken deploy while the full run happens on its own
+schedule.
+
+**The full gate — once a day, and before any version.**
+
+```
+pytest -q --tb=no -p no:randomly
+```
+
+**The suite is not green and has not been for a long time**, so "all tests pass"
+is a rule nobody can follow. The real gate is **no new failures** against
+[`docs/regression_baseline.txt`](regression_baseline.txt), which lists what was
+already failing. Diff your run against it; anything new is yours to fix.
+
+**Never diff against a run that was executing while you edited files.** It will
+lie to you, in both directions. If the tree moved during a run, throw the run
+away. To get a true baseline, use a separate worktree:
+`git worktree add <tmp> <ref> --detach`, run there, remove it after.
+
 - Update `requirements.txt` if any new packages were added during the sprint.
 
 ### Step 6 — Sprint Review & Demo

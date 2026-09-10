@@ -1,0 +1,47 @@
+# Known-failing tests, as of 2026-09-10
+
+The suite is not green and has not been for a long time. That makes
+"all tests must pass" a rule nobody can follow, so the gate is instead:
+**no new failures against this list.**
+
+How to use it:
+
+    pytest -q --tb=no -p no:randomly > /tmp/run.txt
+    grep -a '^FAILED' /tmp/run.txt | sed 's/ - .*//' | sort > /tmp/now.txt
+    comm -13 docs/regression_baseline.txt /tmp/now.txt   # anything here is yours
+
+Fix what you added. Shrinking this list is welcome and is its own task;
+growing it silently is not. Regenerate the list when you do fix some, and
+say so in the commit.
+
+Captured from a clean checkout of 3d1403d, before the מט״צים sprints,
+run in a separate worktree so nothing was moving underneath it.
+
+FAILED tests/test_dashboard_backups.py::test_backup_live_storage_costed
+FAILED tests/test_dashboard_backups.py::test_backup_within_free_tier_is_zero
+FAILED tests/test_spr_1_1.py::test_media_upload_saves_to_media_root
+FAILED tests/test_spr_1_1.py::test_static_css_served
+FAILED tests/test_spr_1_4.py::test_any_lesson_open_to_logged_in_user
+FAILED tests/test_spr_1_4.py::test_course_complete_at_95_percent
+FAILED tests/test_spr_1_4.py::test_course_detail_shows_progress
+FAILED tests/test_spr_1_4.py::test_lesson_accessible_to_logged_in_user
+FAILED tests/test_spr_1_4.py::test_lesson_page_includes_last_position
+FAILED tests/test_spr_1_4.py::test_lesson_page_renders_iframe
+FAILED tests/test_spr_1_4.py::test_non_preview_redirects_anonymous_to_login
+FAILED tests/test_spr_1_4.py::test_player_responsive_aspect_ratio
+FAILED tests/test_spr_1_7.py::TestCodeQuality::test_ruff_check_passes
+FAILED tests/test_spr_2_0_1.py::test_css_color_values_match_spec
+FAILED tests/test_spr_5_5.py::test_home_generic_without_learner_profile
+FAILED tests/test_spr_6_2.py::test_lesson_page_links_to_community_and_shows_threads
+FAILED tests/test_spr_6_4.py::test_composer_present_for_member
+FAILED tests/test_spr_6_4.py::test_feed_aggregates_all_sources
+FAILED tests/test_spr_6_4.py::test_feed_domain_scope_uses_interests
+FAILED tests/test_spr_6_4.py::test_feed_following_scope_filters_to_followed
+FAILED tests/test_spr_6_4.py::test_homepage_shows_community_strip_when_logged_in
+FAILED tests/test_spr_6_5_e2e.py::test_full_crashtech_lifecycle
+FAILED tests/test_spr_7_1.py::test_footer_connect_with_avi
+FAILED tests/test_spr_7_1.py::test_hero_shows_for_new_user_hidden_for_old
+FAILED tests/test_spr_7_4.py::test_both_themes_defined_in_css
+FAILED tests/test_spr_8.py::test_openai_adapter_live_from_usagelog
+FAILED tests/test_spr_ux_3.py::test_crashtech_not_a_top_level_nav_peer
+FAILED tests/test_spr_ux_3.py::test_hub_areas_strip_links_all_eight_areas
