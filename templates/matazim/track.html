@@ -26,7 +26,14 @@
           <p class="mz-path-lead">{{ stage.text }}</p>
           <p>{{ stage.detail }}</p>
           {% if stage.key == 'apply' %}
-            <a class="mz-btn mz-btn-primary" href="{% url 'matazim:entrance_test' %}">למבחן הכניסה</a>
+            {% if test_passed %}
+        <span class="mz-btn mz-btn-done" aria-disabled="true">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          עברתם את מבחן הכניסה
+        </span>
+      {% else %}
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:entrance_test' %}">למבחן הכניסה</a>
+            {% endif %}
           {% endif %}
         </div>
       </li>

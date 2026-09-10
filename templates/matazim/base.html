@@ -46,10 +46,23 @@
       <a href="{% url 'matazim:about' %}" {% if section == 'about' %}class="is-active"{% endif %}>אודות התכנית</a>
       <a href="{% url 'matazim:track' %}" {% if section == 'track' %}class="is-active"{% endif %}>המסלול השנתי</a>
       <a href="{% url 'matazim:courses' %}" {% if section == 'courses' %}class="is-active"{% endif %}>הקורסים</a>
-      <a href="{% url 'matazim:entrance_test' %}" {% if section == 'test' %}class="is-active"{% endif %}>מבחן הכניסה</a>
+      {% comment %}
+        REQ-M.63 — a passed test is marked rather than offered again. Nobody
+        should be invited twice to something they finished.
+      {% endcomment %}
+      <a href="{% url 'matazim:entrance_test' %}" class="{% if section == 'test' %}is-active {% endif %}{% if test_passed %}mz-nav-done{% endif %}">
+        מבחן הכניסה{% if test_passed %} <span class="mz-check" aria-label="עברת">✓</span>{% endif %}
+      </a>
       <a href="{% url 'matazim:schools' %}" {% if section == 'schools' %}class="is-active"{% endif %}>בתי הספר</a>
       <a href="{% url 'matazim:community' %}" {% if section == 'community' %}class="is-active"{% endif %}>קהילת מט״צים</a>
       <a href="{% url 'matazim:events' %}" {% if section == 'events' %}class="is-active"{% endif %}>ימי שיא</a>
+      {% if is_site_staff %}
+        {% comment %}
+          REQ-M.62 — the target bank had no door at all: you had to know the URL.
+          Staff only, and the page refuses everyone else on its own.
+        {% endcomment %}
+        <a href="{% url 'matazim:staff_targets' %}" class="mz-nav-staff{% if section == 'staff' %} is-active{% endif %}">ניהול המשימות</a>
+      {% endif %}
     </nav>
 
     {% comment %}

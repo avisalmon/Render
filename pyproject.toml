@@ -20,6 +20,7 @@ markers = [
     "sprm2: SPR-M.2 מט״צים identity and first-contact sprint tests",
     "sprm3: SPR-M.3 מט״צים entrance test sprint tests",
     "sprm4: SPR-M.4 מט״צים public sections sprint tests",
+    "sprm5: SPR-M.5 מט״צים small corrections sprint tests",
     "smoke: the fast gate, run on every push (see tests/test_smoke.py)",
 ]
 

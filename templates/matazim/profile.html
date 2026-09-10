@@ -110,6 +110,11 @@
       {% endif %}
     </section>
 
+    {% if is_site_staff %}
+    {% comment %}
+      REQ-M.64 — a testing tool, not a feature. A member has no reason to reset
+      a notice they already acknowledged, and the endpoint refuses them too.
+    {% endcomment %}
     <section class="mz-panel mz-panel-wide mz-panel-soft">
       <h2>כלים לבדיקה</h2>
       <p class="mz-muted">
@@ -121,6 +126,7 @@
         <button type="submit" class="mz-btn mz-btn-ghost">איפוס הודעת הפתיחה</button>
       </form>
     </section>
+    {% endif %}
 
   </div>
 </div>

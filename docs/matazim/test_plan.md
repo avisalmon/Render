@@ -64,7 +64,7 @@ Tests in `tests/test_spr_m_2.py`, marker `sprm2`.
 | T-F-M.2.5-2 | The name is the shared one, and editing it here changes it everywhere | integration | F-M.2.5 | GREEN |
 | T-F-M.2.5-3 | School and מט״צ standing read as not yet assigned rather than being hidden | integration | F-M.2.5 | GREEN |
 | T-F-M.2.5-4 | Every הדרכה anywhere on babook is listed, done and in progress, read live | integration | F-M.2.5 | GREEN |
-| T-F-M.2.6-1 | The replay control clears the flag and the welcome returns | integration | F-M.2.6 | GREEN |
+| T-F-M.2.6-1 | The replay control clears the flag and the welcome returns (staff only since REQ-M.64) | integration | F-M.2.6 | GREEN |
 | T-F-M.2.7-1 | Without a passed test the student door is inactive and says why | integration | F-M.2.7 | GREEN |
 | T-F-M.2.7-2 | The leader door is never gated | integration | F-M.2.7 | GREEN |
 | T-F-M.2.7-3 | The header login is never gated | integration | F-M.2.7 | GREEN |
@@ -124,6 +124,23 @@ Tests in `tests/test_spr_m_4.py`, marker `sprm4`. All GREEN.
 | T-F-M.4.4-1 | הקורסים offers what is open and says the rest is not | F-M.4.4 |
 | T-F-M.4.5-1 | A section with no data behind it says what is coming | F-M.4.5 |
 | T-F-M.4.5-2 | No section invents a figure | F-M.4.5 |
+
+---
+
+## SPR-M.5 — Small things that were wrong
+
+Tests in `tests/test_spr_m_5.py`, marker `sprm5`. All GREEN.
+
+| Test ID | Description | Feature |
+|---|---|---|
+| T-F-M.5.1-1 | Staff see a door to the target bank | F-M.5.1 |
+| T-F-M.5.1-2 | Members and visitors never see it | F-M.5.1 |
+| T-F-M.5.2-1 | A passed test is marked in the nav | F-M.5.2 |
+| T-F-M.5.2-2 | Someone who has not passed is not marked | F-M.5.2 |
+| T-F-M.5.2-3 | No front page still offers the test to someone who passed | F-M.5.2 |
+| T-F-M.5.2-4 | The profile shows the pass | F-M.5.2 |
+| T-F-M.5.3-1 | Only staff are offered the replay control | F-M.5.3 |
+| T-F-M.5.3-2 | A member posting to it directly is refused | F-M.5.3 |
 
 Status values: `PLANNED` → `RED` → `GREEN`.
 

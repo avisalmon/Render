@@ -63,12 +63,24 @@ def student_door_is_open(request):
     return member_profile(request.user).has_passed_entrance_test()
 
 
+def is_site_staff(user):
+    """Site staff. `Program.staff` will replace this; the call sites will not move."""
+    return user.is_authenticated and (user.is_staff or user.is_superuser)
+
+
 def shell(request, section, **extra):
     """Context every מט״צים page needs, so base.html never guesses."""
+    member = member_profile(request.user)
     ctx = {
         "section": section,
         "welcome_pending": welcome_is_pending(request),
-        "member": member_profile(request.user),
+        "member": member,
+        # REQ-M.63 — once someone has passed, every invitation to take the test
+        # carries a done mark instead of asking again. Nobody should be invited
+        # twice to something they finished.
+        "test_passed": bool(member and member.has_passed_entrance_test()),
+        # REQ-M.62 — the bank gets a door, and only staff see it.
+        "is_site_staff": is_site_staff(request.user),
     }
     ctx.update(extra)
     return ctx
@@ -250,7 +262,15 @@ def welcome_accept(request):
 @require_POST
 @login_required(login_url="/matazim/login/")
 def profile_reset_welcome(request):
-    """REQ-M.41 — meet the site as a stranger again, as often as you like."""
+    """REQ-M.41, REQ-M.64 — replay the first-time experience. Staff only.
+
+    A testing tool rather than a feature: a member has no reason to reset a
+    notice they already acknowledged. The panel is hidden for them, and this
+    refuses them too, because hiding a button is not access control.
+    """
+    if not is_site_staff(request.user):
+        return redirect("matazim:profile")
+
     MemberProfile.objects.update_or_create(
         user=request.user, defaults={"welcome_accepted_at": None}
     )

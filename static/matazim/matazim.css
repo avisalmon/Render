@@ -761,6 +761,29 @@ img { max-width: 100%; height: auto; display: block; }
   font-weight: 500;
 }
 
+/* ---------------------------------------------------------------- done */
+
+/* A finished step is stated, not offered. Teal because that is the identity
+   colour and the colour completion carries everywhere else in the system. */
+.mz-btn-done {
+  background: var(--mz-teal-soft);
+  color: #0a6b58;
+  border-color: rgba(15, 196, 155, .45);
+  cursor: default;
+}
+.mz-btn-done:hover { transform: none; box-shadow: none; }
+
+.mz-nav-done { color: var(--mz-ink) !important; }
+.mz-check { color: var(--mz-teal); font-weight: 700; }
+
+.mz-nav-staff {
+  padding-inline: 10px !important;
+  border: 1px dashed var(--mz-line);
+  border-radius: var(--mz-radius-sm);
+  color: var(--mz-purple) !important;
+}
+.mz-nav-staff:hover { border-color: var(--mz-purple); }
+
 /* ---------------------------------------------------------------- steps */
 
 .mz-two-up { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }

@@ -278,6 +278,19 @@ Seven features DONE, the sprint's tests green, the fast gate green, every menu
 item clicked once in a browser, and nothing anywhere pointing at the page it is
 already on.
 
+## SPR-M.5 — Small things that were wrong  `DONE`
+
+Three from Avi, 2026-09-10, all found by using the site rather than reading it.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.5.1 | The bank gets a door, and only staff see it | REQ-M.62 | DONE |
+| F-M.5.2 | A passed test carries a done mark everywhere it is offered | REQ-M.63 | DONE |
+| F-M.5.3 | איפוס is staff only, hidden and refused | REQ-M.64 | DONE |
+
+**Hidden is not refused.** F-M.5.3 does both: the panel disappears for members,
+and the endpoint rejects them. A button that is only invisible is still a URL.
+
 ## Candidates for the sprint after this one
 
 Not planned, not committed, just the obvious neighbours. We pick one when

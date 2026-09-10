@@ -326,12 +326,19 @@ def test_every_training_anywhere_on_babook_is_listed(client, db):
 
 
 def test_the_replay_control_brings_the_welcome_back(client, db):
-    """T-F-M.2.6-1: REQ-M.41. Built so the first-time experience can be re-run."""
+    """T-F-M.2.6-1: REQ-M.41, narrowed by REQ-M.64 on 2026-09-10.
+
+    This originally replayed the welcome as an ordinary member. It is a testing
+    tool rather than a feature, so it is staff only now, and the user here is
+    staff for that reason and not by accident.
+    """
     from django.utils import timezone
 
     from matazim.models import MemberProfile
 
     user = sign_in(client)
+    user.is_staff = True
+    user.save(update_fields=["is_staff"])
     MemberProfile.objects.update_or_create(
         user=user, defaults={"welcome_accepted_at": timezone.now()}
     )

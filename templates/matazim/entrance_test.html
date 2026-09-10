@@ -19,7 +19,11 @@
 <div class="mz-container mz-page">
   <div class="mz-page-head">
     <h1>מבחן הכניסה</h1>
-    <p>הצעד הראשון בדרך להיות מט״צ. אפשר להתחיל עכשיו.</p>
+    {% if test_passed %}
+      <p>עברתם. השלב הבא הוא ההרשמה לתוכנית.</p>
+    {% else %}
+      <p>הצעד הראשון בדרך להיות מט״צ. אפשר להתחיל עכשיו.</p>
+    {% endif %}
   </div>
 
   <section class="mz-panel">
@@ -40,7 +44,15 @@
     </ol>
 
     <div class="mz-page-actions">
-      <a class="mz-btn mz-btn-primary" href="{% url 'matazim:test_lessons' %}">מתחילים</a>
+      {% if test_passed %}
+        <span class="mz-btn mz-btn-done" aria-disabled="true">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          עברתם את מבחן הכניסה
+        </span>
+        <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:test_lessons' %}">לחזור על השיעורים</a>
+      {% else %}
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:test_lessons' %}">מתחילים</a>
+      {% endif %}
       <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:track' %}">מה קורה אחר כך</a>
     </div>
   </section>

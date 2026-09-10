@@ -48,9 +48,20 @@
 
   <section class="mz-panel mz-panel-soft">
     <h2>איך מתחילים</h2>
-    <p>מתחילים ממבחן הכניסה. הוא קורס קצר שמסתיים במשימה, ואפשר להתחיל עכשיו.</p>
+    {% if test_passed %}
+      <p>כבר עברתם את מבחן הכניסה. השלב הבא הוא ההרשמה לתוכנית.</p>
+    {% else %}
+      <p>מתחילים ממבחן הכניסה. הוא קורס קצר שמסתיים במשימה, ואפשר להתחיל עכשיו.</p>
+    {% endif %}
     <div class="mz-page-actions">
-      <a class="mz-btn mz-btn-primary" href="{% url 'matazim:entrance_test' %}">למבחן הכניסה</a>
+      {% if test_passed %}
+        <span class="mz-btn mz-btn-done" aria-disabled="true">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          עברתם את מבחן הכניסה
+        </span>
+      {% else %}
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:entrance_test' %}">למבחן הכניסה</a>
+      {% endif %}
       <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:track' %}">למסלול השנתי</a>
     </div>
   </section>
