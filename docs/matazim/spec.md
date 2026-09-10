@@ -418,7 +418,7 @@ front rather than letting a kid discover it at lesson four on a phone.
 | REQ-M.24 | Cohort view and reporting | Admins see the funnel by stage and by leader, grouped by `school_name` for the school-level report Litala's brief asks for, and can export it. This is her screen. | TODO |
 | REQ-M.25 | Leader management | Assign a leader, rotate their join code, deactivate them. Admins only, and it is the thing an admin exists to do. | TODO |
 | REQ-M.67 | Deactivating a leader destroys nothing | A deactivated leader stops appearing in the join list, stops taking new students, and loses the leader view. Their existing students keep pointing at them, so no roster is lost and no history disappears; an admin moves them deliberately. Same principle as retiring a target. | DONE |
-| REQ-M.68 | Who is an admin | Adminship is granted here and seeded in production, not self-served: there is no screen that makes someone an admin, because the first one could never use it. A management command sets it from a list of emails, and the list is short and named. | DONE |
+| REQ-M.68 | Who is an admin | Adminship is granted here and seeded in production, not self-served: there is no screen that makes someone an admin, because the first one could never use it. Two ways in, and both need someone who already has the keys: `manage.py matazim_admins` reads `MATAZIM_ADMINS` on every deploy, and Django's admin, which only a site superuser can reach, allows flipping it by hand. Django's admin is babook's plumbing and is not a מט״צים surface, so nothing is bent by it being the escape hatch. | DONE |
 
 ### 5.6 Community and recognition
 

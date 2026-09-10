@@ -271,3 +271,38 @@ def test_an_inactive_leader_is_not_offered_to_join(db):
     make_leader("closed@example.com", active=False)
 
     assert set(joinable_leaders()) == {active}
+
+
+# ---------------------------------------------------------------- F-M.6.7
+
+
+def test_adminship_can_be_granted_from_django_admin(db):
+    """T-F-M.6.7-1: REQ-M.68's second path.
+
+    Avi asked whether he could assign admins in production through the admin,
+    and nothing of מט״צים was registered there at all. The command reading
+    MATAZIM_ADMINS covers the deploy; this covers the day someone needs adding
+    without one.
+    """
+    from django.contrib import admin
+
+    from matazim.models import Leader, MemberProfile, Student, StudyClass
+
+    for model in (MemberProfile, Leader, StudyClass, Student):
+        assert model in admin.site._registry, f"{model.__name__} is not in Django admin"
+
+    profile_admin = admin.site._registry[MemberProfile]
+    assert (
+        "is_admin" in profile_admin.list_editable
+    ), "the whole point is flipping it from the list without a deploy"
+
+
+def test_an_admin_can_find_the_students_nobody_has_taken(db):
+    """T-F-M.6.7-2: REQ-M.65. A queue, not an error state."""
+    from matazim.access import unclaimed_students
+
+    leader = make_leader("has-some@example.com")
+    make_student("taken@example.com", leader=leader)
+    waiting = make_student("waiting@example.com", leader=None)
+
+    assert set(unclaimed_students()) == {waiting}

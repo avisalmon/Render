@@ -325,6 +325,7 @@ becomes a filtered queryset.
 | F-M.6.4 | A student with no leader is a normal state everywhere it is read | REQ-M.65 | DONE |
 | F-M.6.5 | Deactivating a leader destroys nothing | REQ-M.67 | DONE |
 | F-M.6.6 | The tests that make the rest trivial: no leader reaches another's students | REQ-M.22 | DONE |
+| F-M.6.7 | מט״צים in Django admin, so adminship can be granted without a deploy | REQ-M.68 | DONE |
 
 ### Scope notes
 
@@ -345,7 +346,7 @@ visible change.
 
 | ACT-ID | What Avi does | Blocks | Status |
 |---|---|---|---|
-| ACT-M.6 | Set `MATAZIM_ADMINS` in Render to the emails for נעמי, אביב and yourself, comma separated. The deploy reads it every time, so adding an admin is a setting rather than a release | Admins existing in production. The build is done | OPEN |
+| ACT-M.6 | Grant adminship to נעמי, אביב and yourself. Either at babook.co.il/admin/ under פרופילי מט״צים, ticking מנהל/ת התוכנית, or by setting `MATAZIM_ADMINS` in Render so every deploy re-applies it | Admins existing in production. The build is done | OPEN |
 
 ## SPR-M.7 — The leader's students  `NOT PLANNED`
 
