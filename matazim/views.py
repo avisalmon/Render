@@ -17,6 +17,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -203,6 +204,33 @@ def register(request):
         "matazim/register.html",
         shell(request, "register", error=error, name=name, email=email),
     )
+
+
+def google_start(request):
+    """REQ-M.45 — hand off to Google without the page ever linking out.
+
+    A direct link to the provider would be an href outside /matazim/ and would
+    break RULE-1. Linking to our own URL instead keeps the seal intact, and the
+    return address we name brings them back inside the prefix, so they go from
+    our screen to Google's and back to ours without touching a babook page.
+    """
+    target = reverse("matazim:auth_done")
+    return redirect(f"{reverse('google_login')}?process=login&next={target}")
+
+
+def auth_done(request):
+    """Where the provider drops them. The same bookkeeping as a password login.
+
+    How someone got in should not change what we record about them, so entry is
+    stamped and a welcome accepted as a stranger is carried over here too.
+    Someone who abandoned the consent screen arrives unauthenticated; that is a
+    change of mind, not an error, so they get the login page back.
+    """
+    if not request.user.is_authenticated:
+        return redirect("matazim:login")
+    _stamp_entry(request.user)
+    _carry_welcome_across_sign_in(request, request.user)
+    return redirect("matazim:profile")
 
 
 def _carry_welcome_across_sign_in(request, user):

@@ -71,6 +71,10 @@ Tests in `tests/test_spr_m_2.py`, marker `sprm2`.
 | T-F-M.2.7-4 | Passing the test opens the student door | integration | F-M.2.7 | GREEN |
 | T-F-M.2.8-1 | The entrance test page serves with no account | integration | F-M.2.8 | GREEN |
 | T-F-M.2.8-2 | The inactive student door points at the entrance test | integration | F-M.2.8 | GREEN |
+| T-F-M.2.9-1 | Login and register offer Google, and the link stays inside `/matazim/` | integration | F-M.2.9 | GREEN |
+| T-F-M.2.9-2 | Our handoff sends them to the provider with a return address in the prefix | integration | F-M.2.9 | GREEN |
+| T-F-M.2.9-3 | Coming back stamps entry and carries the welcome, exactly like a password sign-in | integration | F-M.2.9 | GREEN |
+| T-F-M.2.9-4 | Someone who cancelled at Google is returned to our login, not to an error | integration | F-M.2.9 | GREEN |
 
 Status values: `PLANNED` → `RED` → `GREEN`.
 

@@ -482,6 +482,32 @@ img { max-width: 100%; height: auto; display: block; }
 .mz-field small { display: block; margin-top: 5px; color: var(--mz-muted); font-size: .78rem; }
 .mz-btn-block { width: 100%; justify-content: center; margin-top: 6px; }
 
+/* Google's mark carries its own colours, so the button stays neutral around it
+ * rather than tinting it with ours. */
+.mz-btn-google {
+  background: var(--mz-card);
+  color: var(--mz-ink);
+  border-color: var(--mz-line);
+  margin-top: 0;
+}
+.mz-btn-google:hover { border-color: var(--mz-purple); color: var(--mz-ink); }
+
+.mz-or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  color: var(--mz-muted);
+  font-size: .82rem;
+}
+.mz-or::before,
+.mz-or::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--mz-line);
+}
+
 .mz-alert {
   margin-bottom: 18px;
   padding: 12px 14px;

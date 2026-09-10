@@ -20,6 +20,10 @@ urlpatterns = [
     path("login/", views.login, name="login"),
     path("logout/", views.logout, name="logout"),
     path("register/", views.register, name="register"),
+    # Google, handed off and returned without the page ever linking out of the
+    # prefix (REQ-M.45).
+    path("auth/google/", views.google_start, name="google_start"),
+    path("auth/done/", views.auth_done, name="auth_done"),
     # First contact (REQ-M.39 to M.41).
     path("welcome/accept/", views.welcome_accept, name="welcome_accept"),
     path("profile/", views.profile, name="profile"),

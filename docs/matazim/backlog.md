@@ -110,6 +110,7 @@ This is where מט״צים grows its first table. SPR-M.1 had no models on purpo
 | F-M.2.6 | Replay control: clear the flag and meet the site as a stranger again | REQ-M.41 | DONE |
 | F-M.2.7 | The gate: student door waits for the test, leader door and header login do not | REQ-M.36, REQ-M.37 | DONE |
 | F-M.2.8 | מבחן הכניסה placeholder page at its own URL | REQ-M.38 | DONE |
+| F-M.2.9 | Google sign-in, handed off and returned without leaving the prefix | REQ-M.45 | DONE |
 
 ### Scope notes
 
@@ -129,6 +130,12 @@ to anyone, which is the point of storing it on the profile for people who are.
 **The test placeholder** says what the test will be and why it exists. It does
 not fake a pass. How a passed test is recorded for someone who has not yet
 registered is REQ-M.17's problem, not this sprint's.
+
+**Google without breaking the seal.** A direct link to the provider would leave
+`/matazim/` and break RULE-1, so the page links to our own URL, which hands off
+to the provider and names a return address back inside the prefix. Coming back
+runs the same stamping and welcome-carry as a password sign-in, because how
+someone got in should not change what we record about them.
 
 **Out of scope, deliberately:** `Membership`, `School`, the application form,
 the school invite link and QR, the member nav, and the entrance test itself.

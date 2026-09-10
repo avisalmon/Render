@@ -231,6 +231,53 @@ def test_an_acknowledgement_made_before_signing_in_is_carried_over(client, db):
     assert "mz-welcome" not in client.get(reverse("matazim:home")).content.decode()
 
 
+# ---------------------------------------------------------------- F-M.2.9
+
+
+def test_google_is_offered_without_leaving_the_prefix(client, db):
+    """T-F-M.2.9-1: REQ-M.45, and RULE-1 is not bent to get it.
+
+    For a 14-year-old a Google button is the difference between joining and
+    giving up on a password field. But a direct link to the provider would be
+    an href out of /matazim/, so the page links to our own handoff instead.
+    """
+    for page in ("matazim:login", "matazim:register"):
+        html = client.get(reverse(page)).content.decode()
+        assert "Google" in html
+        assert reverse("matazim:google_start") in html
+        assert "/accounts/" not in html
+
+
+def test_the_handoff_names_a_return_address_inside_the_prefix(client, db):
+    """T-F-M.2.9-2."""
+    resp = client.get(reverse("matazim:google_start"))
+    assert resp.status_code == 302
+    assert resp.url.startswith("/accounts/google/login/")
+    assert reverse("matazim:auth_done") in resp.url
+
+
+def test_coming_back_stamps_entry_and_carries_the_welcome(client, db):
+    """T-F-M.2.9-3: how someone got in must not change what we record."""
+    from matazim.models import MemberProfile
+
+    client.post(reverse("matazim:welcome_accept"))
+    user = sign_in(client, "viagoogle@example.com")
+    resp = client.get(reverse("matazim:auth_done"))
+    assert resp.status_code == 302
+    assert resp.url.startswith("/matazim/")
+
+    profile = MemberProfile.objects.get(user=user)
+    assert profile.entered_via_matazim is True
+    assert profile.welcome_accepted_at is not None
+
+
+def test_cancelling_at_google_returns_you_to_our_login(client, db):
+    """T-F-M.2.9-4: an abandoned consent screen is not an error page."""
+    resp = client.get(reverse("matazim:auth_done"))
+    assert resp.status_code == 302
+    assert resp.url.startswith(reverse("matazim:login"))
+
+
 # ---------------------------------------------------------------- F-M.2.5
 
 
