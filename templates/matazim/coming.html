@@ -1,0 +1,28 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.60 — a section Litala's brief names that has no data behind it yet.
+
+  A dead link reads as broken software, and inventing content would be the
+  stats-band mistake again. So the page says plainly what will live here and
+  why it is not open, in our own voice.
+{% endcomment %}
+
+{% block title %}{{ page.title }} · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>{{ page.title }}</h1>
+    <p>{{ page.lead }}</p>
+  </div>
+
+  <section class="mz-panel">
+    <p class="mz-coming-tag">בקרוב</p>
+    <p>{{ page.body }}</p>
+    <div class="mz-page-actions">
+      <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:track' %}">בינתיים, המסלול השנתי</a>
+    </div>
+  </section>
+</div>
+{% endblock %}

@@ -703,6 +703,64 @@ img { max-width: 100%; height: auto; display: block; }
 .mz-target-model { aspect-ratio: 4 / 3; margin-top: 8px; border-radius: 8px; background: var(--mz-page); }
 .mz-target-brief { margin: 10px 0; color: var(--mz-muted); font-size: .78rem; line-height: 1.5; }
 
+/* ---------------------------------------------------------------- the path */
+
+.mz-path { list-style: none; margin: 0 0 24px; padding: 0; display: grid; gap: 0; }
+.mz-path-step {
+  position: relative;
+  display: flex;
+  gap: 20px;
+  padding-bottom: 26px;
+}
+/* The line that makes it a path rather than five cards. It stops at the last
+   step, because a journey that trails off is a different promise. */
+.mz-path-step:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: 46px;
+  bottom: 0;
+  inset-inline-start: 22px;
+  width: 2px;
+  background: var(--mz-line);
+}
+.mz-path-mark {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 700;
+}
+.mz-path-mark[data-tone="teal"] { background: var(--mz-teal); }
+.mz-path-mark[data-tone="purple"] { background: var(--mz-purple); }
+.mz-path-mark[data-tone="blue"] { background: var(--mz-blue); }
+.mz-path-body {
+  flex: 1;
+  background: var(--mz-card);
+  border-radius: var(--mz-radius);
+  box-shadow: var(--mz-shadow);
+  padding: 20px 22px 22px;
+}
+.mz-path-body h2 { font-size: 1.15rem; margin-bottom: 2px; }
+.mz-path-lead { margin: 0 0 10px; color: var(--mz-purple); font-weight: 500; }
+.mz-path-body p:last-of-type { margin-bottom: 0; }
+.mz-path-body .mz-btn { margin-top: 16px; }
+
+.mz-coming-tag {
+  display: inline-block;
+  margin: 0 0 12px;
+  padding: 3px 12px;
+  border-radius: 20px;
+  background: var(--mz-purple-soft);
+  color: var(--mz-purple);
+  font-size: .8rem;
+  font-weight: 500;
+}
+
 /* ---------------------------------------------------------------- footer */
 
 .mz-footer {

@@ -23,6 +23,7 @@ from django.views.decorators.http import require_POST
 
 from app.models import CourseCertificate, Enrollment, UserProfile
 
+from .content import public_stages
 from .models import MemberProfile
 
 # Anonymous visitors have no row to write to, so their acknowledgement of the
@@ -30,36 +31,6 @@ from .models import MemberProfile
 # which is exactly why REQ-M.40 stores it on the profile for people who signed
 # in. What it must not do is nag them on every page.
 WELCOME_SESSION_KEY = "mz_welcome_accepted"
-
-# --- Placeholder content, still hand-written --------------------------------
-
-STAGES = [
-    {
-        "key": "learn",
-        "title": "לומדים",
-        "text": "רוכשים ידע טכנולוגי בקורסים מקוונים",
-        "tone": "teal",
-    },
-    {
-        "key": "create",
-        "title": "יוצרים",
-        "text": "מפתחים פרויקטים טכנולוגיים",
-        "tone": "purple",
-    },
-    {
-        "key": "teach",
-        "title": "מדריכים",
-        "text": "מעבירים פעילות לתלמידים צעירים",
-        "tone": "blue",
-    },
-    {
-        "key": "impact",
-        "title": "משפיעים",
-        "text": "יוצרים שינוי ומשפיעים בבית הספר ובקהילה",
-        "tone": "teal",
-    },
-]
-
 
 # --- Shared helpers ---------------------------------------------------------
 
@@ -114,7 +85,7 @@ def home(request):
         shell(
             request,
             "home",
-            stages=STAGES,
+            stages=public_stages(),
             student_door_open=student_door_is_open(request),
         ),
     )
@@ -338,3 +309,67 @@ def profile(request):
             saved=saved,
         ),
     )
+
+
+# --- The rest of the front ---------------------------------------------------
+#
+# Litala's nine sections. SPR-M.1 built דף הבית and left the other eight
+# pointing back at it, which reads as broken rather than unfinished: a menu item
+# that silently reloads the page you are on is worse than one that is missing.
+#
+# The rule here is the one the stats band and the showcase established. Where
+# the data exists we show it. Where it does not we say what is coming, in our
+# own voice, and we invent nothing.
+
+
+def about(request):
+    """REQ-M.57 — what this is, who it is for, who runs it."""
+    from .content import FUNNEL
+
+    return render(request, "matazim/about.html", shell(request, "about", funnel=FUNNEL))
+
+
+def track(request):
+    """REQ-M.58 — the five stages as a path.
+
+    All five here, including מתמיינים. The home page teaser sells the journey
+    and leaves the selection stage out because the entrance test has its own
+    call to action there; this page is the journey itself.
+    """
+    from .content import FUNNEL
+
+    return render(request, "matazim/track.html", shell(request, "track", funnel=FUNNEL))
+
+
+def courses(request):
+    """REQ-M.59 — the training path, honest about what is open today.
+
+    Listing a track nobody can start yet would be the stats-band mistake again.
+    What is real today is the entrance test, so that is what the page offers.
+    """
+    return render(request, "matazim/courses.html", shell(request, "courses"))
+
+
+def _coming(request, key, section):
+    from .content import COMING
+
+    return render(
+        request,
+        "matazim/coming.html",
+        shell(request, section, page=COMING[key]),
+    )
+
+
+def schools(request):
+    """REQ-M.60 — no `School` model yet, so the page says so."""
+    return _coming(request, "schools", "schools")
+
+
+def community(request):
+    """REQ-M.60 — no `Post` model yet."""
+    return _coming(request, "community", "community")
+
+
+def events(request):
+    """REQ-M.60 — no `Event` model yet."""
+    return _coming(request, "events", "events")

@@ -13,6 +13,13 @@ app_name = "matazim"
 
 urlpatterns = [
     path("", views.home, name="home"),
+    # Litala's nine sections. Nothing here points at the page it is already on.
+    path("about/", views.about, name="about"),
+    path("track/", views.track, name="track"),
+    path("courses/", views.courses, name="courses"),
+    path("schools/", views.schools, name="schools"),
+    path("community/", views.community, name="community"),
+    path("events/", views.events, name="events"),
     # מבחן הכניסה is public: the link gets pasted around, and signing up
     # happens around the test rather than before it (REQ-M.5d).
     path("test/", views.entrance_test, name="entrance_test"),

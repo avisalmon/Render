@@ -1,0 +1,45 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.58 — the five stages as a path.
+
+  All five here, including מתמיינים. The home page teaser leaves the selection
+  stage out because the entrance test has its own call to action there; this
+  page is the journey itself, so it starts where the journey starts.
+{% endcomment %}
+
+{% block title %}המסלול השנתי · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>המסלול השנתי</h1>
+    <p>חמישה שלבים, משנה אחת. כל שלב נפתח כשמסיימים את הקודם.</p>
+  </div>
+
+  <ol class="mz-path">
+    {% for stage in funnel %}
+      <li class="mz-path-step">
+        <span class="mz-path-mark" data-tone="{{ stage.tone }}">{{ forloop.counter }}</span>
+        <div class="mz-path-body">
+          <h2>{{ stage.title }}</h2>
+          <p class="mz-path-lead">{{ stage.text }}</p>
+          <p>{{ stage.detail }}</p>
+          {% if stage.key == 'apply' %}
+            <a class="mz-btn mz-btn-primary" href="{% url 'matazim:entrance_test' %}">למבחן הכניסה</a>
+          {% endif %}
+        </div>
+      </li>
+    {% endfor %}
+  </ol>
+
+  <section class="mz-panel mz-panel-soft">
+    <h2>וכמה זמן זה לוקח?</h2>
+    <p>
+      המסלול נפרס על שנת לימודים. אין לוח זמנים קשיח: לומדים בקצב שלכם, והמוביל
+      בבית הספר מלווה ומאשר את התוצרים. מי שנתקע לא נופל מהתוכנית, פשוט מנסה
+      שוב.
+    </p>
+  </section>
+</div>
+{% endblock %}

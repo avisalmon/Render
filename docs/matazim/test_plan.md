@@ -105,6 +105,26 @@ Tests in `tests/test_spr_m_3.py`, marker `sprm3`.
 | T-F-M.3.8-2 | A retry draws a fresh target, and the earlier attempt survives | integration | F-M.3.8 | GREEN |
 | T-F-M.3.9-1 | Passing stamps the profile and opens כניסת תלמידים on the home page | integration | F-M.3.9 | GREEN |
 
+---
+
+## SPR-M.4 — The rest of the front
+
+Tests in `tests/test_spr_m_4.py`, marker `sprm4`. All GREEN.
+
+| Test ID | Description | Feature |
+|---|---|---|
+| T-F-M.4.6-1 | Every section serves logged out | F-M.4.6 |
+| T-F-M.4.6-2 | Nothing in the nav points at the page it is already on | F-M.4.6 |
+| T-F-M.4.6-3 | The current section is marked, exactly once | F-M.4.6 |
+| T-F-M.4.1-1 | The five stages live in one place, and the teaser is four of them | F-M.4.1 |
+| T-F-M.4.1-2 | Every stage says what actually happens in it | F-M.4.1 |
+| T-F-M.4.2-1 | אודות names who it is for and who runs it | F-M.4.2 |
+| T-F-M.4.3-1 | המסלול השנתי shows all five stages, in order | F-M.4.3 |
+| T-F-M.4.3-2 | The path starts at the entrance test and links to it | F-M.4.3 |
+| T-F-M.4.4-1 | הקורסים offers what is open and says the rest is not | F-M.4.4 |
+| T-F-M.4.5-1 | A section with no data behind it says what is coming | F-M.4.5 |
+| T-F-M.4.5-2 | No section invents a figure | F-M.4.5 |
+
 Status values: `PLANNED` → `RED` → `GREEN`.
 
 SPR-M.1 ran red on 2026-09-09 (18 failing, 6 already true) and went green the

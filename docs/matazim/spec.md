@@ -233,7 +233,7 @@ counts of kids taught. All live queries over the shared tables.
 | REQ-M.2 | Own error pages | 404 and 500 raised under `/matazim/` render in the מט״צים shell, not the babook one. | TODO |
 | REQ-M.3 | Sealed both ways | No template under `templates/matazim/` links outside the prefix; no babook template, nav, drawer, search result, sitemap entry or context processor mentions מט״צים. Enforced by tests, not by care. | DONE |
 | REQ-M.4 | Driven by data | Branding, cohort year and copy come from the `Program` record. Adding a second program is data, not code. Nothing hardcodes the string `matazim` outside the seed. | TODO |
-| REQ-M.5 | The nine sections | The information architecture is Litala's, from the brief: דף הבית, המסלול השנתי, מבחן הכניסה, הקורסים שלי, הגשת תוצרים, ימי שיא, בתי הספר המשתתפים, קהילת מט״צים, אזור אישי. The first two and בתי הספר המשתתפים are open logged out and double as recruitment material; the rest are member surfaces. | WIP |
+| REQ-M.5 | The nine sections | The information architecture is Litala's, from the brief: דף הבית, המסלול השנתי, מבחן הכניסה, הקורסים שלי, הגשת תוצרים, ימי שיא, בתי הספר המשתתפים, קהילת מט״צים, אזור אישי. The first two and בתי הספר המשתתפים are open logged out and double as recruitment material; the rest are member surfaces. | DONE |
 | REQ-M.5a | Where am I, always | Her central emphasis, quoted: every member sees immediately where they are, what they have completed, and what their next task is. This is the acceptance test for the home screen and the personal area, not a nice-to-have. | TODO |
 | REQ-M.5b | Nav changes with state | Logged out: אודות התכנית, המסלול השנתי, הקורסים, מבחן הכניסה, בתי הספר, קהילת מט״צים, ימי שיא. Logged in: המסלול **שלי**, הקורסים, הגשות ותוצרים, ימי שיא, בתי הספר, קהילת מט״צים, plus notifications and the member menu. Same site, two navs. | WIP |
 | REQ-M.5c | Two front doors | The public home offers כניסת תלמידים and כניסת מובילים as separate calls to action, and each lands the person where their role belongs. One auth underneath, two doors on the street. | WIP |
@@ -241,6 +241,20 @@ counts of kids taught. All live queries over the shared tables.
 | REQ-M.5e | Public showcase | תוצרים נבחרים on the home page: selected member projects with a photo, a title and a school, and no student named. Publishing any project requires the member's opt-in **and** a staff decision, and either can be withdrawn. **Held: the section is off the page until real projects and real consent exist, and a test asserts its absence.** | HELD |
 | REQ-M.5g | Partners carry weight | שותפים מרכזיים לעשייה is a section of the page, directly under the hero and above איך זה עובד, showing the partners' own marks rather than a line of small print in the footer. Each mark is drawn at its own optical size, and no caption repeats a name the logo already carries. Room is kept for the partners not yet named. | DONE |
 | REQ-M.5f | Public counters | The stats band (students, schools, projects, leaders, ימי שיא) is aggregate only and computed, never typed in by hand. **Held: the band is off the page until something computes it, and a test asserts its absence.** | HELD |
+
+### 5.1a The rest of the front
+
+Litala's nine sections, finished. SPR-M.1 built דף הבית and left the other eight
+pointing back at it, which is worse than a missing link: a menu item that
+silently reloads the page you are on reads as broken.
+
+| REQ-ID | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-M.56 | No dead nav | Every item in the menu goes somewhere that says something true. Nothing points at the page it is already on, and nothing pretends a section exists when it does not. | DONE |
+| REQ-M.57 | אודות התכנית | What מט״צים is, who it is for, who runs it, and what a member actually does. Open logged out. This is the page a parent reads. | DONE |
+| REQ-M.58 | המסלול השנתי | The **five** stages as a path, with what happens at each and roughly when. מתמיינים is included here even though the home page shows four: the teaser sells the journey, this page is the journey. | DONE |
+| REQ-M.59 | הקורסים | The training path. Honest about what is open: מבחן הכניסה is real and reachable today, the rest of the track opens as the cohort moves, and the page says so rather than listing courses nobody can start. | DONE |
+| REQ-M.60 | The sections that need data say so | בתי הספר, קהילת מט״צים and ימי שיא have no `School`, `Post` or `Event` behind them yet. Each gets a real page in our voice explaining what will live there, rather than a dead link or invented content. | DONE |
 
 ### 5.2 Identity and access
 

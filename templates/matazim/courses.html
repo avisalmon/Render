@@ -1,0 +1,41 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.59 — honest about what is open. Listing a track nobody can start yet
+  would be the stats-band mistake again, so the page offers what is real today.
+{% endcomment %}
+
+{% block title %}הקורסים · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>הקורסים</h1>
+    <p>מסלול ההדרכות של התוכנית.</p>
+  </div>
+
+  <section class="mz-panel">
+    <h2>פתוח עכשיו</h2>
+    <p>
+      <strong>מבחן הכניסה</strong> הוא קורס טינקרקאד קצר שמסתיים במשימה: מקבלים
+      אובייקט לבנות, בונים אותו, ומעלים לבדיקה. אפשר להתחיל אותו כבר עכשיו, ומי
+      שמסיים אותו מקבל תעודה גם אם לא ימשיך בתוכנית.
+    </p>
+    <div class="mz-page-actions">
+      <a class="mz-btn mz-btn-primary" href="{% url 'matazim:entrance_test' %}">להתחיל</a>
+    </div>
+  </section>
+
+  <section class="mz-panel mz-panel-soft">
+    <h2>נפתח בהמשך</h2>
+    <p>
+      שאר מסלול ההדרכות נפתח לפי התקדמות המחזור: תלת-ממד מתקדם, תכנות,
+      אלקטרוניקה, וקורסי הדרכה למי שמגיע לשלב המדריכים. לא נפרסם כאן רשימה של
+      קורסים שאי אפשר להתחיל, אז מה שמופיע כאן הוא מה שבאמת פתוח.
+    </p>
+    <div class="mz-page-actions">
+      <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:track' %}">מה מחכה בהמשך</a>
+    </div>
+  </section>
+</div>
+{% endblock %}

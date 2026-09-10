@@ -238,6 +238,40 @@ not a breach of it. Spec §2.3 records the amendment and why.
 
 ---
 
+## SPR-M.4 — The rest of the front  `DONE`
+
+**Goal:** finish Litala's nine sections. Six of eight menu items currently
+reload the home page, which reads as broken rather than unfinished.
+
+**The rule for this sprint:** every page says something true. Where the data
+exists we show it; where it does not we say what is coming, in our own voice.
+No invented content, the same call we made about the stats band and the
+showcase in SPR-M.1.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.4.1 | The five stages as shared data, not copy repeated per page | REQ-M.58 | DONE |
+| F-M.4.2 | אודות התכנית | REQ-M.57 | DONE |
+| F-M.4.3 | המסלול השנתי, the five stages as a path | REQ-M.58 | DONE |
+| F-M.4.4 | הקורסים, honest about what is open today | REQ-M.59 | DONE |
+| F-M.4.5 | בתי הספר, קהילת מט״צים and ימי שיא, each saying what is coming | REQ-M.60 | DONE |
+| F-M.4.6 | The nav points at all of it, and nothing points at itself | REQ-M.56 | DONE |
+
+### Scope notes
+
+**Five stages here, four on the home page.** The teaser sells the journey and
+leaves מתמיינים out because the entrance test has its own call to action
+(spec Q12). המסלול השנתי is the journey itself, so it shows all five.
+
+**Out of scope:** `School`, `Post`, `Event` and everything they would carry.
+Three of these pages exist to hold the shape until those arrive.
+
+### Definition of done
+
+Six features DONE, the sprint's tests green, the fast gate green, every menu
+item clicked once in a browser, and nothing anywhere pointing at the page it is
+already on.
+
 ## Candidates for the sprint after this one
 
 Not planned, not committed, just the obvious neighbours. We pick one when
