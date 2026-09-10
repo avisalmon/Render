@@ -203,9 +203,9 @@ missing is screens and wiring.
 `Enrollment`/`UserVideoProgress` through the shared path. We do not add a lesson,
 change a project type, or touch that course in any way.
 
-**Staff, for now, means `is_staff` or superuser.** `Program.staff` does not
-exist yet. When it does, this becomes a one-line change and the screen does not
-move.
+**Staff, for now, means `is_staff` or superuser.** *(Superseded 2026-09-10:
+`Program` was dropped and adminship became `MemberProfile.is_admin`. Still a
+one-line change, still the same screen. Spec §4.)*
 
 **Retiring is reversible and never destructive.** A retired target stops being
 assigned; attempts already measured against it keep working, because the
@@ -291,12 +291,41 @@ Three from Avi, 2026-09-10, all found by using the site rather than reading it.
 **Hidden is not refused.** F-M.5.3 does both: the panel disappears for members,
 and the endpoint rejects them. A button that is only invisible is still a URL.
 
-## Candidates for the sprint after this one
+---
 
-Not planned, not committed, just the obvious neighbours. We pick one when
-SPR-M.1 closes.
+## Next: the roles
 
-- The rest of the public front: המסלול השנתי, בתי הספר המשתתפים, אודות התכנית.
-- The threshold: מט״צים-branded register and log in over the shared `User`.
-- The member shell: logged-in nav, and המסלול שלי as a static design pass.
-- Retire the production tables, once ACT-M.2 is answered.
+**The model architecture is settled** (Avi, 2026-09-10, spec §4). Four models,
+four roles, and one function that answers every scope question:
+
+```
+MemberProfile.is_admin   ADMIN     assigns leaders, sees everyone
+Leader (row per user)    LEADER    their own students, nothing else
+StudyClass → Leader                the leader's groups
+Student → User, Leader   STUDENT   themselves
+```
+
+Two tables an earlier draft had are gone. `Program` was a concept with one
+instance; `School` became `Leader.school_name`, a label rather than a join. What
+that buys is the permission model collapsing to a single queryset, so a leader
+cannot reach another leader's students because **the query cannot get there**,
+not because a view remembered to check.
+
+Sprint shape, to be written out when we start it:
+
+1. **The four models, the access module, and tests that prove the scoping.**
+   No screens. This is the sprint that makes the rest trivial.
+2. **The leader's roster:** their students, their classes, progress read live
+   through `user__matazim_student__leader`.
+3. **The admin master view:** every leader, every student, the funnel, grouped
+   by `school_name` for Litala's school report.
+
+Blocked on **Q10**, which decides the screens rather than the models: forty
+students is a list, twelve hundred needs filtering, paging and bulk actions on
+every one of them.
+
+## Also still open
+
+- Retire the old production tables, once ACT-M.2 is answered.
+- The entrance-exam gap: REQ-M.17 says a leader reviews the attempt and decides,
+  but what shipped passes automatically with no human in the loop.

@@ -119,7 +119,7 @@ kids. Five stages:
 | A member gets a "מט״צים" entry in the main site nav | No entry. The babook nav does not mention it. |
 | The מט״צ learns "on babook, through the existing course engine" | The מט״צ learns **inside מט״צים**, through the same engine, rendered by our own screens. |
 | Apply through the babook `/join/` wall | Own register, login and join screens over the shared `User` table. |
-| One generic `Program` abstraction, מט״צים as its first instance | Still true and still worth keeping: a second network must be data, not code. |
+| One generic `Program` abstraction, מט״צים as its first instance | **Dropped 2026-09-10.** There is one program and no second network in sight, so `Program` was a table doing nothing. It becomes a table on the day a second one exists. |
 
 ## 3.2 The design system
 
@@ -145,87 +145,135 @@ that bind the build:
 
 ## 4. Data model
 
-Owned by the `matazim` app (the only rows it writes):
+Settled with Avi on 2026-09-10, after two rounds of cutting. An earlier draft
+had `Program` and `School` as tables. Both were doing work a field can do, for a
+single program with no second network in sight, so both are gone.
 
-- **`Program`** — `slug`, `name`, branding, `current_cohort_year`, `is_active`.
-  The space is driven by this record; a second network is a second row.
-- **`School`** — `name`, `city`, contact, `join_code` (unguessable, rotatable),
-  `is_open`.
-- **`Membership`** — `user`, `program`, `school`, `school_join_status`
-  (`pending`/`confirmed`), `cohort_year`, `status`, plus accepted/certified
-  who-and-when-and-note. Cohort members only; the adults who run the program
-  never get one.
-  - `status`: `applied` (מתמיינים) / `in_training` (לומדים) /
-    `project_submitted` (יוצרים) / `certified` (מדריכים) / `alumnus` /
-    `rejected` / `revoked`. Litala's five-stage funnel **is** this field.
-- **`Application`** — three answers only (grade, why, what have you built).
-- **`EntranceAttempt`** — target, uploaded model, measurements, issues, passed.
-- **`StatusLog`** — append-only audit of every transition.
-- **`Submission`** — the deliverable, its reviewer, status, and written feedback.
-- **`Practicum`** — what the מט״צ is teaching, to which group, when, and how far
-  through. Declared by them. Holds no row about any child.
-- **`Stage`** — the course groupings drawn on screen 2: יסודות הטכנולוגיה,
-  תלת-ממד, קורסי בחירה, הדרכה ומיומנויות, פרקטיקום. Ordered, with an advance
-  rule (screen 2 shows "השלימו עוד 2 קורסים כדי לעבור לשלב הבא"), and each stage
-  points at shared `Course` rows rather than owning content.
-- **`Milestone`** — one node on the member's path: type (entrance test,
-  acceptance, course, deliverable, יום שיא, פרקטיקום), order, target date,
-  status, and a link to whatever it points at. Explained below.
-- **`MemberProfile`** — one row per `User` who has met מט״צים, holding only what
-  this space is entitled to know: `entered_via_matazim`, `first_seen_at`,
-  `welcome_accepted_at`, and `entrance_test_passed_at`. It is a **companion to**
-  babook's `UserProfile`, never a replacement: name, avatar and everything about
-  identity stay in the shared profile and are edited through it, so a person has
-  one name across both products. This is what keeps RULE-3 true while still
-  meeting "use the same profile model": the shared facts stay shared, and only
-  מט״צים's own flags are מט״צים's.
-  - `entrance_test_passed_at` is provisional. It is a stored flag while the test
-    is a placeholder, and becomes **derived** from `EntranceAttempt` the moment
-    REQ-M.17 lands. Read it through a method, never the column, so that swap is
-    invisible to every caller.
-- **`EntranceTarget`** — one row per object in the bank, mirroring a generated
-  file on disk: `target_id`, shape, the brief, and whether staff have retired
-  it. The geometry stays in the files; this row exists so a human can take an
-  object out of circulation without deleting anything (REQ-M.55).
-- **`EntranceAttempt`** — `member`, the target assigned, attempt number, the
-  uploaded model, what we measured, the issues raised, passed, submitted at.
-  Append-only in spirit: a later attempt is a new row, so the history that shows
-  commitment survives.
-- **`Event`** (ימי שיא) — title, date, location, target schools.
-- **`Notification`** — the bell, the mail icon, and the משוב חדש card on screen
-  3 all need somewhere to come from.
-- Later: **`Post`** (cohort feed).
+**מט״צים owns people and program state. babook owns learning. `User` is the
+pivot between them, and nothing is copied across.**
 
-### 4.1 The track is milestones, not a status field
+### 4.1 What babook owns, and מט״צים only reads
 
-The single biggest thing the prototype changes. Chapter 10 modelled the funnel
-as a five-value `status` on the membership. Screen 3 draws something else: a
-path of roughly fourteen **typed, dated, individually-statused nodes**, with the
-current one badged המשימה הנוכחית, and it is the centre of the whole product.
+`Course`, `Video`, `Enrollment`, `UserVideoProgress`, `CourseCertificate`,
+`TeacherClass`, `ClassMembership`.
 
-`Membership.status` survives as the coarse stage, because staff and reporting
-think in מתמיינים through משפיעים. But it becomes **derived from the
-milestones**, not the source of truth. Milestone statuses are their own set,
-drawn with a word and a colour and never a colour alone: הושלם, בתהליך, דורש
-תיקון, ממתין לבדיקה, טרם התחיל.
+מט״צים adds no progress model, no completion model and no certificate model.
+That is RULE-3: one version of the truth about learning. Enrolling someone goes
+through the same one-liner babook's own lesson view uses.
+
+### 4.2 What מט״צים owns
+
+```
+MemberProfile     OneToOne → User                      built
+  entered_via_matazim, first_seen_at,
+  welcome_accepted_at, entrance_test_passed_at
+  is_admin                                  ADMIN. Assigns leaders.
+
+Leader            OneToOne → User
+  school_name, city, contact                school as a label, not a table
+  join_code                                 the link they hand out
+  is_active, assigned_by, assigned_at
+
+StudyClass        FK → Leader
+  name, year, is_active
+  (`class` is a reserved word, hence the name)
+
+Student           FK → User, FK → Leader
+  status            מתמיינים → לומדים → יוצרים → מדריכים → משפיעים
+  cohort_year
+  classes           M2M → StudyClass
+  unique(user, cohort_year)
+
+EntranceTarget, EntranceAttempt                        built
+
+later: Application, Submission, Practicum, StudyStage, Milestone,
+       Notification, Event, Post, StatusLog
+```
+
+`MemberProfile` and `Student` are deliberately separate. The profile is about a
+person meeting this site once: they came through this door, they were told it is
+a prototype, they proved they can model in Tinkercad. The `Student` row is about
+being in a cohort, and a person can be in more than one. Passing the entrance
+test belongs to the person, not to the year.
+
+### 4.3 Four roles, four different things
+
+| Role | How it is known | Sees |
+|---|---|---|
+| Root | `User.is_superuser` | Everything, plus the prototype tools |
+| Admin | `MemberProfile.is_admin` | Every student, every leader, all progress |
+| Leader | Having a `Leader` row | Their own students, and nothing else |
+| Student | Having a `Student` row | Themselves |
+
+**No role column, and `is_admin` is not one.** The rule that matters is that a
+role must have exactly one source. A `role` field on `Student` would compete
+with the `leader` FK and the two could disagree, which is how one leader ends up
+seeing another's students. `is_admin` competes with nothing: it is the only
+place adminship is recorded.
+
+### 4.4 The whole permission model
+
+```python
+def visible_students(user):
+    if user.is_superuser or is_admin(user):
+        return Student.objects.all()
+    if leader := Leader.objects.filter(user=user).first():
+        return Student.objects.filter(leader=leader)
+    return Student.objects.filter(user=user)
+```
+
+A leader cannot see another leader's students because **the query cannot reach
+them**, not because a view remembered to check. Every screen asks this one
+question and then works with what comes back.
+
+### 4.5 Progress crosses the boundary in one join
+
+```python
+Enrollment.objects.filter(user__matazim_student__leader=me)
+```
+
+`Student` points at `User`, `User` has `Enrollment`. The same join serves one
+student, one leader's roster, or the whole program, with a different filter.
+This query is the reason learning stays in babook's tables: had we built our own
+progress model, it would not exist and we would be reconciling two sets of
+numbers forever.
+
+### 4.6 Derived, never stored
+
+הדרכות taken and completed, classes opened, kids taught, and every figure on
+every dashboard. All live queries over the shared tables.
+
+### 4.7 The track is milestones, not a status field
+
+Litala's screen 3 draws a path of roughly fourteen typed, dated,
+individually-statused nodes, with the current one badged המשימה הנוכחית, and it
+is the centre of the whole product.
+
+`Student.status` survives as the coarse stage, because reporting thinks in
+מתמיינים through משפיעים. But it becomes **derived from the milestones**, not the
+source of truth. Milestone statuses are their own set, drawn with a word and a
+colour and never a colour alone: הושלם, בתהליך, דורש תיקון, ממתין לבדיקה, טרם
+התחיל.
 
 A milestone never duplicates learning state. A course milestone reads its
-percentage live from `Enrollment` and `UserVideoProgress` (RULE-3); it stores
-only its place in the path and its target date.
+percentage live from `Enrollment` and `UserVideoProgress`; it stores only its
+place in the path and its target date.
 
-`Membership` also carries **`mentor`**, a nullable FK to the `User` who reviews
-this member's work, chosen by the member (REQ-M.31). It is deliberately not the
-same thing as `school`: the school says where you are, the mentor says who reads
-your submissions, and a school with two teachers needs both.
+### 4.8 What is deliberately not modelled
 
-**Roles are exactly two M2M relations and there is no third**: `Program.staff`
-(the program admins, who alone may open a school, assign a leader, or grant the
-status) and `School.leaders` (the teachers, whose scope is exactly the schools
-they appear in). A `role` field on the membership is deliberately not added:
-two sources of truth for one permission is how cross-school leakage happens.
+**No `Program` table.** There is one program. A second network becomes a table
+and a migration on the day one exists, and not before. This retires REQ-M.4.
 
-**Derived, never stored**: הדרכות taken and completed, classes opened, and
-counts of kids taught. All live queries over the shared tables.
+**No `School` table.** `Leader.school_name` carries the label, so per-school
+reporting is a grouping rather than a join. The cost is honest and recorded: a
+typo makes a second school, and two leaders at one school can drift apart. If
+Litala's school-level reports matter enough, a `School` table is about ten lines
+and one FK, and promoting the field is one migration.
+
+**No group inside a group.** `StudyClass` belongs to a leader and that is the
+only nesting. Whether classes are needed at all is Q10's decision: forty
+students across the network means a leader has one or two and school *is* the
+group; twelve hundred means a leader has forty-five and needs to split them.
 
 ## 5. Requirements
 
@@ -236,7 +284,7 @@ counts of kids taught. All live queries over the shared tables.
 | REQ-M.1 | Autonomous shell | `templates/matazim/base.html` stands alone: own header, nav, footer, fonts, colour, favicon and page title. It never extends or includes a babook template. Hebrew RTL, works from 360px up. | DONE |
 | REQ-M.2 | Own error pages | 404 and 500 raised under `/matazim/` render in the מט״צים shell, not the babook one. | TODO |
 | REQ-M.3 | Sealed both ways | No template under `templates/matazim/` links outside the prefix; no babook template, nav, drawer, search result, sitemap entry or context processor mentions מט״צים. Enforced by tests, not by care. | DONE |
-| REQ-M.4 | Driven by data | Branding, cohort year and copy come from the `Program` record. Adding a second program is data, not code. Nothing hardcodes the string `matazim` outside the seed. | TODO |
+| REQ-M.4 | ~~Driven by data~~ | **Retired 2026-09-10** with the `Program` table. It existed so a second network would be data rather than code; there is no second network, and inventing one cost a table, a foreign key on everything, and a concept on every screen. See spec §4.8. | DROPPED |
 | REQ-M.5 | The nine sections | The information architecture is Litala's, from the brief: דף הבית, המסלול השנתי, מבחן הכניסה, הקורסים שלי, הגשת תוצרים, ימי שיא, בתי הספר המשתתפים, קהילת מט״צים, אזור אישי. The first two and בתי הספר המשתתפים are open logged out and double as recruitment material; the rest are member surfaces. | DONE |
 | REQ-M.5a | Where am I, always | Her central emphasis, quoted: every member sees immediately where they are, what they have completed, and what their next task is. This is the acceptance test for the home screen and the personal area, not a nice-to-have. | TODO |
 | REQ-M.5b | Nav changes with state | Logged out: אודות התכנית, המסלול השנתי, הקורסים, מבחן הכניסה, בתי הספר, קהילת מט״צים, ימי שיא. Logged in: המסלול **שלי**, הקורסים, הגשות ותוצרים, ימי שיא, בתי הספר, קהילת מט״צים, plus notifications and the member menu. Same site, two navs. | WIP |
@@ -258,7 +306,7 @@ silently reloads the page you are on reads as broken.
 | REQ-M.57 | אודות התכנית | What מט״צים is, who it is for, who runs it, and what a member actually does. Open logged out. This is the page a parent reads. | DONE |
 | REQ-M.58 | המסלול השנתי | The **five** stages as a path, with what happens at each and roughly when. מתמיינים is included here even though the home page shows four: the teaser sells the journey, this page is the journey. | DONE |
 | REQ-M.59 | הקורסים | The training path. Honest about what is open: מבחן הכניסה is real and reachable today, the rest of the track opens as the cohort moves, and the page says so rather than listing courses nobody can start. | DONE |
-| REQ-M.60 | The sections that need data say so | בתי הספר, קהילת מט״צים and ימי שיא have no `School`, `Post` or `Event` behind them yet. Each gets a real page in our voice explaining what will live there, rather than a dead link or invented content. | DONE |
+| REQ-M.60 | The sections that need data say so | בתי הספר, קהילת מט״צים and ימי שיא have no `Leader`, `Post` or `Event` behind them yet. Each gets a real page in our voice explaining what will live there, rather than a dead link or invented content. | DONE |
 
 ### 5.2 Identity and access
 
@@ -267,9 +315,9 @@ silently reloads the page you are on reads as broken.
 | REQ-M.6 | Own threshold | Register, log in, and log out at `/matazim/` URLs, in the מט״צים shell, writing to the shared `User` table. The word babook appears nowhere on these screens. | DONE |
 | REQ-M.7 | Existing account, same door | Someone who already has a babook account signs in with it here and it just works. No second password, no linking step, no visible mention that the account is shared. | DONE |
 | REQ-M.8 | Return to intent | Hitting a member page while logged out lands on the מט״צים threshold and returns to the intended page afterwards, newly registered or freshly logged in. One link works for new and existing users alike; no branching is written anywhere. | TODO |
-| REQ-M.9 | School invite link | Each school carries a rotatable `join_code` powering a link and a QR that its teacher hands out. A logged-out visitor gets a landing page naming the school, not a bare login form: the link gets pasted into WhatsApp groups. Arriving this way attaches them to that school with no confirmation step. | TODO |
-| REQ-M.10 | The open door | Applying without a link means choosing a school from the list; its leader then confirms them onto the roster. Both doors end at `applied`. | TODO |
-| REQ-M.11 | Member pages gated | Anything past the public front requires an active `Membership`. A logged-in babook user with no membership sees the public front and the application, nothing else. | TODO |
+| REQ-M.9 | The leader's invite link | Each **leader** carries a rotatable `join_code` powering a link and a QR they hand out. A logged-out visitor gets a landing page naming the leader and their school, not a bare login form: the link gets pasted into WhatsApp groups. Arriving this way attaches the student to that leader with no confirmation step, because the leader gave them the link and the assignment is already their decision. | TODO |
+| REQ-M.10 | The open door | Applying without a link means choosing a leader from the list of participating schools; that leader then confirms them onto the roster. Both doors end at `applied`. | TODO |
+| REQ-M.11 | Member pages gated | Anything past the public front requires a `Student` row. A logged-in babook user without one sees the public front and the application, nothing else. | TODO |
 | REQ-M.46 | Signing in lands you on the main view | Every door ends in the same place: דף הבית, not the personal area. Someone who just signed in wants to see the program, not a form about themselves, and the personal area is one click away in the header whenever they want it. Today password login lands correctly while register and Google do not, which is the sort of inconsistency nobody notices until they use all three. | DONE |
 | REQ-M.45 | Google is a door here too | המשך עם Google sits on the login and register screens, as it does on the wider platform, because for a 14-year-old it is the difference between joining and giving up on a password field. The link the page renders stays inside `/matazim/`: it goes to our own URL, which hands off to the provider and brings them back into the prefix. RULE-1 is not bent for it, and the visitor never lands on a babook page. | DONE |
 | REQ-M.35 | Entry through this door is recorded | A visitor who arrives at a `/matazim` URL is marked as having come in through מט״צים, and signing in through this app's own button stamps it on their מט״צים profile. It answers "did this person find us here, or are they a babook member who wandered over", which is the only way to read the funnel later. | DONE |
@@ -296,7 +344,7 @@ Everything a person meets before they are anyone here.
 | REQ-ID | Title | Expectation | Status |
 |---|---|---|---|
 | REQ-M.42 | One identity, a מט״צים view of it | A profile page at a `/matazim/` URL showing only what matters here. Name and the rest of the personal details are the **shared** babook profile, edited here and changed everywhere, because a person has one identity and one name. | DONE |
-| REQ-M.43 | Where I stand in the program | The profile shows the school the member belongs to and whether they are already a certified מט״צ. Until `Membership` exists these read as "not yet assigned" rather than being hidden, so the shape of the page is honest about what is coming. | WIP |
+| REQ-M.43 | Where I stand in the program | The profile shows the student's leader and that leader's school, and whether they are already a certified מט״צ. Until `Membership` exists these read as "not yet assigned" rather than being hidden, so the shape of the page is honest about what is coming. | WIP |
 | REQ-M.44 | Everything I have learned, anywhere | The profile lists every הדרכה the person has done or is doing **anywhere on babook**, completed and in progress, read live from `Enrollment`, `UserVideoProgress` and `CourseCertificate` and never copied (RULE-3). Learning done before מט״צים existed counts, with no backfill step. | DONE |
 
 ### 5.2c מבחן הכניסה
@@ -317,7 +365,7 @@ front rather than letting a kid discover it at lesson four on a phone.
 | REQ-M.52 | Upload and measure | STL upload with a size cap, measured against the assigned target on the five tessellation-proof measures. Tolerances live in config and are deliberately generous: the bar is "you clearly built the thing we showed you", never "you were precise". | DONE |
 | REQ-M.53 | No machine rejection | The automatic verdict is **עבר** or **עוד לא**, never נדחה. A miss names the actual number ("הגובה שלך 43 במקום 40") and offers the way back into Tinkercad. Retries are unlimited and are read as commitment, not as a blemish. Every rejection in this program is made by a person. | DONE |
 | REQ-M.54 | Passing opens the door | A pass stamps `entrance_test_passed_at` and כניסת תלמידים unlocks. The course certificate is theirs either way, so someone who never passes has still learned Tinkercad and has something to show for it. | DONE |
-| REQ-M.55 | Staff curate the bank | Program staff see all targets, each with its drawing and its 3D view, and can retire any that are too hard. A retired target is never assigned again, and retiring one never breaks an attempt already measured against it. Litala and Avi decide what a 14-year-old should be asked to build; the generator only proposes. | DONE |
+| REQ-M.55 | Staff curate the bank | Admins see all targets, each with its drawing and its 3D view, and can retire any that are too hard. A retired target is never assigned again, and retiring one never breaks an attempt already measured against it. Litala and Avi decide what a 14-year-old should be asked to build; the generator only proposes. | DONE |
 
 ### 5.3 Learning inside the walls
 
@@ -334,32 +382,32 @@ front rather than letting a kid discover it at lesson four on a phone.
 
 | REQ-ID | Title | Expectation | Status |
 |---|---|---|---|
-| REQ-M.16 | Apply | Three questions only (grade, why, what have you built). The application is not what assesses them, the entrance test is, so every extra field is only a teenager who does not finish the form. Creates a `Membership` at `applied` plus an `Application`. | TODO |
+| REQ-M.16 | Apply | Three questions only (grade, why, what have you built). The application is not what assesses them, the entrance test is, so every extra field is only a teenager who does not finish the form. Creates a `Student` row at `applied` plus an `Application`. | TODO |
 | REQ-M.17 | Entrance test | A Tinkercad replication task measuring commitment, not skill: the candidate reproduces a given model and uploads it, and the geometry is checked automatically. Retryable, and there is no machine rejection, only "not yet". The automatic check is advice, not a verdict: a school leader reviews the attempt (בדיקת מבחן הכניסה in the brief) and decides. | TODO |
-| REQ-M.18 | Acceptance by hand | Program staff move `applied` to `in_training`. Selectivity is the product, not an obstacle to it. | TODO |
+| REQ-M.18 | Acceptance by hand | Admins move `applied` to `in_training`. Selectivity is the product, not an obstacle to it. | TODO |
 | REQ-M.19 | Submissions and feedback | The יוצרים stage: the member uploads a deliverable, their מוביל sees it, approves or returns it, and **writes feedback the member can read**. The feedback is the interaction that matters here, not the approve flag. | TODO |
 | REQ-M.20 | Certification and certificate | Only program staff grant מדריך status, and doing so produces a printable certificate. It unlocks nothing technical and credits everything already done, retroactively. | TODO |
 | REQ-M.21 | Every transition logged | `StatusLog` records who, when, from, to, and note. Append-only. Revocation is a transition like any other. | TODO |
-| REQ-M.31 | The member chooses their מוביל | From the brief: a student picks the leader who will review their work. This is a relation on the membership, separate from the school roster: the school says where you are, the mentor says who reads your submissions. A leader can be swapped, and the change is logged. | TODO |
+| REQ-M.31 | The student chooses their מוביל | From the brief: a student picks the leader who will review their work. With `School` gone this is one relation rather than two, `Student.leader`, which is both who sees them and who reads their submissions. Simpler, and it still answers Litala's ask exactly. A leader can be swapped, and the change is logged. | TODO |
 | REQ-M.32 | פרקטיקום | The מדריכים stage, the actual teaching, is visible to the member, to their מוביל, and to program staff: what they are running, when, and how far through. It is both a course stage (there are courses that prepare for it) and a tracked activity. Recorded as the מט״צ's own declared activity, never as data about the children (REQ-M.29). | TODO |
 | REQ-M.33 | Notifications | A bell and a message icon in the member header, and the events that feed them: feedback received, a submission approved or returned, a deadline approaching, a יום שיא announced, a stage unlocked. A new piece of feedback surfaces on המסלול שלי without the member going looking for it. | TODO |
 | REQ-M.34 | Deadlines and the calendar | Milestones and events carry dates, the personal area shows what is close, and לוח הזמנים shows the whole year. | TODO |
 
-### 5.5 Staff and school leaders
+### 5.5 Admins and leaders
 
 | REQ-ID | Title | Expectation | Status |
 |---|---|---|---|
-| REQ-M.22 | Scope is the data | A school leader sees exactly the schools they lead, and this is a property of the M2M, not a rule to remember. Program staff see the whole cohort. | TODO |
-| REQ-M.23 | Roster | Leaders confirm members onto their school roster, see each member's stage and training progress, and nothing about any child. | TODO |
-| REQ-M.24 | Cohort view and reporting | Program staff see the funnel by stage and by school, and can export it. This is Litala's screen. | TODO |
-| REQ-M.25 | School management | Open a school, assign a leader, rotate a join code, close registration. Staff only. | TODO |
+| REQ-M.22 | Scope is the data | A leader sees exactly their own students, and this is a property of the `Student.leader` FK rather than a rule anyone remembers: the query cannot reach anyone else's. Admins see everyone. One function answers this for every screen (§4.4). | TODO |
+| REQ-M.23 | Roster | Leaders confirm students onto their roster, sort them into classes, and see each one's stage and training progress. Nothing about any child they teach, ever (REQ-M.29). | TODO |
+| REQ-M.24 | Cohort view and reporting | Admins see the funnel by stage and by leader, grouped by `school_name` for the school-level report Litala's brief asks for, and can export it. This is her screen. | TODO |
+| REQ-M.25 | Leader management | Assign a leader, record their school, rotate their join code, deactivate them. Admins only, and it is the thing an admin exists to do. | TODO |
 
 ### 5.6 Community and recognition
 
 | REQ-ID | Title | Expectation | Status |
 |---|---|---|---|
 | REQ-M.26 | Cohort feed | Announcements and posts, inside the walls. | TODO |
-| REQ-M.27 | ימי שיא | Program events with dates, locations and target schools. | TODO |
+| REQ-M.27 | ימי שיא | Program events with dates, locations, and which leaders or classes they are for. | TODO |
 | REQ-M.28 | The status is visible | Certification shows inside מט״צים and on anything printed or presented. Whether it also shows on public babook surfaces is Q4 below, still open. | TODO |
 
 ### 5.7 Privacy (non-negotiable)
@@ -367,7 +415,7 @@ front rather than letting a kid discover it at lesson four on a phone.
 | REQ-ID | Title | Expectation | Status |
 |---|---|---|---|
 | REQ-M.29 | One tracked population | Nothing in this product creates, stores, or infers a record about a child. The kids a מט״צ teaches are not users, not members, not rows. Teaching is recorded as the מט״צ's own declared activity. | TODO |
-| REQ-M.30 | Minors' data stays minimal | The people in this system are teenagers in כיתה ט'. We hold what the program needs to run and nothing more, and it is not exposed outside the school leader and program staff scopes. | TODO |
+| REQ-M.30 | Minors' data stays minimal | The people in this system are teenagers in כיתה ט'. We hold what the program needs to run and nothing more, and it is not exposed outside their own leader and the admins. | TODO |
 | REQ-M.30a | Nothing about a minor is public by default | The public gallery names a school, never a student. A photo avatar is opt-in; initials are the default. Publishing a project takes the member's consent and a staff decision, and either can be withdrawn later. | WIP |
 
 ## 6. Open questions
