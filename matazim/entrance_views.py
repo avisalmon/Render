@@ -233,6 +233,7 @@ def staff_home(request):
         raise PermissionDenied
 
     from .models import EntranceTarget, Leader, MemberProfile, Student
+    from .retention import FAILED_ATTEMPT_DAYS, overdue_count
 
     return render(
         request,
@@ -247,6 +248,9 @@ def staff_home(request):
                 "leaders": Leader.objects.filter(is_active=True).count(),
                 "students": Student.objects.count(),
             },
+            # REQ-M.87 — standing, so nobody has to remember to go looking.
+            overdue=overdue_count(),
+            retention_days=FAILED_ATTEMPT_DAYS,
         ),
     )
 
@@ -442,3 +446,46 @@ def staff_consent(request, profile_id):
         )
 
     return redirect("matazim:staff_home")
+
+
+@login_required(login_url=LOGIN_URL)
+def staff_retention(request):
+    """REQ-M.87 — what is due for deletion, and the person who approves it.
+
+    SPR-M.10 built the purge and wrote "deleted after 365 days" on a public page
+    without connecting the two: nothing scheduled the command, so the policy
+    stated a period the system would never enforce on its own. Avi asked whether
+    there was a manual approvals process, which is what found it.
+
+    The answer chosen is that there is one, deliberately, rather than a timer.
+    Deletion is the one action here where an unattended bug is irreversible, and
+    this product already puts a person in front of every consequential decision:
+    certification (REQ-M.78), retiring a target (REQ-M.55). The machine proposes
+    and refuses; a person decides, and the decision has a name on it.
+
+    Opening the page deletes nothing. A review screen that acts on being opened
+    is not a review screen.
+    """
+    from .access import is_admin
+    from .retention import FAILED_ATTEMPT_DAYS, approve_purge, due_attempts, summary
+
+    if not is_admin(request.user):
+        raise PermissionDenied
+
+    notice = ""
+    if request.method == "POST" and request.POST.get("action") == "purge":
+        removed = approve_purge(request.user)
+        notice = f"{removed} רשומות נמחקו, יחד עם הקבצים שלהן."
+
+    return render(
+        request,
+        "matazim/staff_retention.html",
+        shell(
+            request,
+            "staff",
+            due=due_attempts(),
+            days=FAILED_ATTEMPT_DAYS,
+            info=summary(),
+            notice=notice,
+        ),
+    )

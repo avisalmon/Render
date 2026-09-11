@@ -53,9 +53,56 @@ def purge_failed_attempts(*, apply=False, days=FAILED_ATTEMPT_DAYS):
     return removed
 
 
+def due_attempts(days=FAILED_ATTEMPT_DAYS):
+    """The rows a person is being asked to approve the deletion of.
+
+    REQ-M.87 — the screen shows whose data this is, not merely how much of it.
+    Approving a number is not reviewing anything, and an admin who cannot see
+    the names is rubber-stamping with extra steps.
+    """
+    cutoff = timezone.now() - timedelta(days=days)
+    return (
+        EntranceAttempt.objects.filter(passed=False, created_at__lt=cutoff)
+        .select_related("member__user", "member__user__profile")
+        .order_by("created_at")
+    )
+
+
+def overdue_count(days=FAILED_ATTEMPT_DAYS):
+    """One number, for the standing badge in the staff area.
+
+    The counterweight to putting a human in front of deletion: a job that needs
+    a person is a job that does not run while the person is busy, which is how
+    "we have a retention policy" quietly becomes "we kept everything".
+    """
+    return due_attempts(days).count()
+
+
+def approve_purge(user, days=FAILED_ATTEMPT_DAYS):
+    """Delete what is due, and record who said so.
+
+    Row by row rather than a queryset delete, because the `post_delete`
+    receiver on `EntranceAttempt` is what takes the uploaded file off the disk.
+    A bulk delete would leave every file behind, which is a slow leak of exactly
+    the data this exists to stop holding.
+    """
+    from .models import RetentionRun
+
+    removed = 0
+    for attempt in due_attempts(days).iterator():
+        attempt.delete()
+        removed += 1
+
+    RetentionRun.objects.create(ran_by=user, deleted_count=removed)
+    return removed
+
+
 def summary():
     """What the policy promises, in one place, so a screen can state it."""
+    from .models import RetentionRun
+
     return {
         "failed_attempt_days": FAILED_ATTEMPT_DAYS,
-        "pending": purge_failed_attempts(apply=False),
+        "pending": overdue_count(),
+        "last_run": RetentionRun.objects.first(),
     }

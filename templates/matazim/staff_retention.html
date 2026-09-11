@@ -1,0 +1,85 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.87 — retention behind a review, not on a timer.
+
+  The names are on the page on purpose. Approving a number is not reviewing
+  anything, and an admin who cannot see whose data is about to go is
+  rubber-stamping with extra steps.
+
+  Opening this page deletes nothing. A review screen that acts on being opened
+  is not a review screen.
+{% endcomment %}
+
+{% block title %}ניקוי מידע ישן · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>ניקוי מידע ישן</h1>
+    <p>
+      ניסיונות במבחן הכניסה שלא עברו, מעל {{ days }} ימים. נמחקים רק אחרי
+      שמישהו מצוות התוכנית מאשר, ולא לבד.
+    </p>
+  </div>
+
+  {% if notice %}<div class="mz-alert mz-alert-ok" role="status">{{ notice }}</div>{% endif %}
+
+  <section class="mz-panel">
+    <h2>מה מחכה למחיקה <span class="mz-count">{{ info.pending }}</span></h2>
+
+    {% if due %}
+      <ul class="mz-training">
+        {% for a in due %}
+          <li>
+            <span class="mz-training-title">
+              {{ a.member.user.profile.display_name|default:a.member.user.email }}
+              <span class="mz-muted">ניסיון {{ a.number }} · {{ a.target_id }}</span>
+            </span>
+            <span class="mz-role">
+              <span class="mz-muted">{{ a.created_at|date:"j.n.Y" }}</span>
+              {% if a.model_file %}<span class="mz-tag mz-tag-idle">כולל קובץ</span>{% endif %}
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+
+      <p class="mz-muted">
+        המחיקה כוללת את הקבצים שהועלו. אי אפשר לבטל אותה. ניסיון שעבר אף פעם
+        לא נמחק, כי הוא ההוכחה שמאחורי ההסמכה.
+      </p>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="purge">
+        <button type="submit" class="mz-btn mz-btn-primary">
+          אישור מחיקה של {{ info.pending }} רשומות
+        </button>
+      </form>
+    {% else %}
+      <p class="mz-muted">אין מה למחוק כרגע.</p>
+    {% endif %}
+  </section>
+
+  <section class="mz-panel">
+    <h2>ההיסטוריה</h2>
+    {% comment %}
+      A retention process nobody can see the history of is indistinguishable
+      from one that has never run.
+    {% endcomment %}
+    {% if info.last_run %}
+      <p>
+        ניקוי אחרון: {{ info.last_run.ran_at|date:"j.n.Y" }},
+        {{ info.last_run.deleted_count }} רשומות,
+        על ידי
+        {{ info.last_run.ran_by.profile.display_name|default:info.last_run.ran_by.email }}.
+      </p>
+    {% else %}
+      <p class="mz-muted">עוד לא בוצע ניקוי.</p>
+    {% endif %}
+  </section>
+
+  <p class="mz-page-actions">
+    <a class="mz-linkbtn" href="{% url 'matazim:staff_home' %}">חזרה לניהול</a>
+  </p>
+</div>
+{% endblock %}

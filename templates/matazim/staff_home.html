@@ -48,6 +48,29 @@
         <a class="mz-btn mz-btn-primary" href="{% url 'matazim:staff_admins' %}">לניהול ההרשאות</a>
       </div>
     </section>
+
+    {% comment %}
+      REQ-M.87 — the counterweight to putting a person in front of deletion.
+      A job that needs a human is a job that does not run while the human is
+      busy, which is how "we have a retention policy" quietly becomes "we kept
+      everything". So the number stands here rather than waiting to be asked
+      for, and only shouts when something is actually overdue.
+    {% endcomment %}
+    <section class="mz-panel">
+      <h2>
+        ניקוי מידע ישן
+        {% if overdue %}<span class="mz-tag mz-tag-fix">{{ overdue }} ממתינים</span>{% endif %}
+      </h2>
+      <p>
+        ניסיונות במבחן הכניסה שלא עברו נמחקים אחרי {{ retention_days }} ימים,
+        יחד עם הקבצים. המחיקה קורית רק אחרי שמישהו כאן מאשר אותה.
+      </p>
+      <div class="mz-page-actions">
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:staff_retention' %}">
+          {% if overdue %}לאישור המחיקה{% else %}למסך הניקוי{% endif %}
+        </a>
+      </div>
+    </section>
   </div>
 
   <section class="mz-panel mz-panel-soft">

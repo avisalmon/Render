@@ -360,3 +360,40 @@ def _delete_upload_with_attempt(sender, instance, **kwargs):
     """
     if instance.model_file:
         instance.model_file.delete(save=False)
+
+
+class RetentionRun(models.Model):
+    """One approved deletion, and who approved it.
+
+    REQ-M.87. Retention here runs behind a review rather than on a timer,
+    because deletion is the one action in this product where an unattended bug
+    is irreversible. The same shape as certification (REQ-M.78) and retiring a
+    target (REQ-M.55): the machine proposes, a person decides, and the decision
+    has a name on it.
+
+    This row is also the answer to "does the retention policy actually run".
+    Without it, a process that has never once executed looks exactly like one
+    that runs perfectly, and the privacy page would be making a promise nobody
+    could check.
+    """
+
+    ran_at = models.DateTimeField(auto_now_add=True, verbose_name="בוצע בתאריך")
+    ran_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name="אושר על ידי",
+    )
+    deleted_count = models.PositiveIntegerField(default=0, verbose_name="רשומות שנמחקו")
+    kind = models.CharField(max_length=40, default="failed_attempts")
+
+    class Meta:
+        ordering = ["-ran_at"]
+        verbose_name = "ניקוי מידע ישן"
+        verbose_name_plural = "ניקויי מידע ישן"
+
+    def __str__(self):
+        who = self.ran_by.email if self.ran_by else "אוטומטי"
+        return f"{self.ran_at:%Y-%m-%d} · {self.deleted_count} · {who}"

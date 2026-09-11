@@ -667,7 +667,48 @@ of existing members locks out the people already doing the entrance test. The
 plan is to ask at the next sign-in and block joining a leader rather than block
 the account, so nobody loses work they have already done.
 
-## SPR-M.11 — The admin's view  `NOT PLANNED`
+## SPR-M.11 — Retention with a person in front of it  `DONE`
+
+Avi, 2026-09-11: "What is this retention? Is there a manual approvals process?"
+
+The question found a hole in what SPR-M.10 had just shipped. `purge_matazim_attempts`
+deletes only when a human types `--apply`, and **nothing scheduled it**: not
+`render.yaml`, not a workflow. So the privacy page stated a 365-day period that
+the system would never enforce on its own. The machinery existed, the promise
+was published, and the two had never been connected.
+
+Nothing was at risk yet, since the oldest possible attempt was a month old. But
+a public page should not claim something the system will not do.
+
+**The fork, and why this side of it.** Automate it and the promise becomes true
+without anyone remembering, at the cost of an unattended irreversible delete.
+Put a person in front of it and the delete is reviewed, at the cost of a job
+that does not run while the person is busy. Avi had no preference, so this took
+the shape the rest of the product already has: the machine refuses or proposes,
+a person decides, and the decision carries a name. Certification works this way
+(REQ-M.78), retiring a target works this way (REQ-M.55), deactivating a leader
+destroys nothing (REQ-M.67). Deletion is the one action here that cannot be
+undone, which is the strongest case for a pair of eyes rather than the weakest.
+
+The cost of that choice is paid for explicitly: the staff area carries a
+standing count of what is overdue, and shouts only when something is. Otherwise
+"we have a retention policy" quietly becomes "we kept everything".
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.11.1 | A review screen listing what is due, and whose it is | REQ-M.87 | DONE |
+| F-M.11.2 | Approving is what deletes; opening the page never does | REQ-M.87 | DONE |
+| F-M.11.3 | `RetentionRun` records who approved, when, and how many | REQ-M.87 | DONE |
+| F-M.11.4 | A standing overdue count in the staff area | REQ-M.87 | DONE |
+| F-M.11.5 | The privacy page describes the review rather than implying a timer | REQ-M.86 | DONE |
+
+One test in this sprint passed for the wrong reason before being tightened. It
+checked that the privacy page mentions צוות התוכנית anywhere, and the page
+happens to say that in the section about uploaded files, so it agreed with
+itself without ever reading the retention paragraph. It is now scoped to that
+paragraph by id.
+
+## SPR-M.12 — The admin's view  `NOT PLANNED`
 
 
 Every leader, every student, the funnel, grouped by `school_name` for the
