@@ -20,6 +20,7 @@ a demo where everyone is halfway through tells you nothing about how the screen
 handles the ones who have not started and the ones who are finished.
 """
 
+import os
 import random
 
 from django.contrib.auth.models import User
@@ -28,6 +29,11 @@ from django.db import transaction
 from django.utils import timezone
 
 DOMAIN = "demo.invalid"
+
+# Set this in Render to conjure the demo world on the next deploy, and set it to
+# "purge" to take it away again. Absent means absent: a fabricated cohort should
+# never appear because nobody said no.
+ENV_FLAG = "MATAZIM_DEMO_WORLD"
 PASSWORD = "matazim-demo-2026"
 
 MANAGER = ("נעמי דמו", "naomi")
@@ -65,10 +71,28 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--purge", action="store_true", help="delete the demo world")
+        parser.add_argument(
+            "--if-enabled",
+            action="store_true",
+            help=f"do nothing unless ${ENV_FLAG} is set (how the deploy calls it)",
+        )
 
     def handle(self, *args, **options):
         if options["purge"]:
             return self._purge()
+
+        if options["if_enabled"]:
+            # Called on every deploy, and silent unless somebody has deliberately
+            # asked for a demo world. Gated rather than unconditional because
+            # these are fabricated people sitting in the same database as real
+            # ones: creating them should be a decision, and an undecided default
+            # is not a decision.
+            flag = os.environ.get(ENV_FLAG, "").strip().lower()
+            if flag in ("", "0", "false", "no"):
+                return
+            if flag in ("purge", "off", "remove"):
+                return self._purge()
+
         self._seed()
 
     # ------------------------------------------------------------------ purge

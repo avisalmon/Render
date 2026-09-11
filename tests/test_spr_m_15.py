@@ -181,3 +181,56 @@ def test_a_school_is_named_once_however_many_classes(client, db):
 
     row = re.search(r'class="mz-roster-row".*?</li>', html, re.S).group(0)
     assert row.count("עתיד רמלה") == 1, "the school is named more than once on the line"
+
+
+def test_the_demo_world_does_not_appear_unless_somebody_asks(db, monkeypatch):
+    """T-F-M.15.4-1: the switch is off by default, and off means off.
+
+    These are fabricated people in the same database as real ones. Creating them
+    has to be a decision, and an undecided default is not a decision. The deploy
+    calls this on every boot, so a wrong default here would quietly populate
+    production with imaginary teenagers.
+    """
+    from io import StringIO
+
+    from django.contrib.auth.models import User
+    from django.core.management import call_command
+
+    monkeypatch.delenv("MATAZIM_DEMO_WORLD", raising=False)
+    call_command("seed_matazim_demo", "--if-enabled", stdout=StringIO())
+    assert not User.objects.filter(email__iendswith="@demo.invalid").exists()
+
+
+def test_the_switch_can_also_take_it_away(db, monkeypatch):
+    """T-F-M.15.4-2: one setting both ways, so removing it needs no shell access."""
+    from io import StringIO
+
+    from django.contrib.auth.models import User
+    from django.core.management import call_command
+
+    monkeypatch.setenv("MATAZIM_DEMO_WORLD", "1")
+    call_command("seed_matazim_demo", "--if-enabled", stdout=StringIO())
+    assert User.objects.filter(email__iendswith="@demo.invalid").exists()
+
+    monkeypatch.setenv("MATAZIM_DEMO_WORLD", "purge")
+    call_command("seed_matazim_demo", "--if-enabled", stdout=StringIO())
+    assert not User.objects.filter(email__iendswith="@demo.invalid").exists()
+
+
+def test_the_purge_cannot_reach_a_real_account(db):
+    """T-F-M.15.4-3: it selects by a domain no real person can hold.
+
+    Not by a name, and not by a flag somebody might forget to set. `.invalid` is
+    reserved by RFC 2606, so no real address can end in it.
+    """
+    from io import StringIO
+
+    from django.contrib.auth.models import User
+    from django.core.management import call_command
+
+    real = make_user("naomi@babook.co.il", "נעמי אמיתית")
+    call_command("seed_matazim_demo", stdout=StringIO())
+    call_command("seed_matazim_demo", "--purge", stdout=StringIO())
+
+    assert User.objects.filter(pk=real.pk).exists(), "the purge reached a real account"
+    assert not User.objects.filter(email__iendswith="@demo.invalid").exists()
