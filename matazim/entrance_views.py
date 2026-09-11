@@ -14,7 +14,8 @@ makes about the course engine.
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.shortcuts import redirect, render
+from django.http import Http404
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -372,3 +373,40 @@ def staff_user_search(request):
             ]
         }
     )
+
+
+@login_required(login_url=LOGIN_URL)
+def attempt_file(request, attempt_id):
+    """Hand back a teenager's uploaded model, to the people entitled to it.
+
+    REQ-M.80, spec §4.10 finding P2. These files used to sit in `MEDIA_ROOT`
+    under the name the member's own file had, and `/media/` is served with no
+    authentication whatsoever. They now live outside it, so this view is the
+    only way to one, and this is where the question gets asked.
+
+    Three people may open it: the member, because it is their own work; their
+    leader, because REQ-M.17 has a leader reviewing the attempt; and an admin.
+    Anyone else gets a 404 rather than a 403, because confirming that attempt
+    number 91 exists is itself something a stranger has no business learning.
+    """
+    from django.http import FileResponse
+
+    from .access import is_admin, leader_of
+    from .models import EntranceAttempt, Student
+
+    attempt = get_object_or_404(EntranceAttempt, pk=attempt_id)
+    if not attempt.model_file:
+        raise Http404("no file on this attempt")
+
+    owner_id = attempt.member.user_id
+    allowed = owner_id == request.user.id or is_admin(request.user)
+
+    if not allowed and (mine := leader_of(request.user)):
+        # The same boundary join every other leader screen uses: their students,
+        # and the query cannot reach anyone else's (REQ-M.22).
+        allowed = Student.objects.filter(user_id=owner_id, leader=mine).exists()
+
+    if not allowed:
+        raise Http404("not yours")
+
+    return FileResponse(attempt.model_file.open("rb"), as_attachment=True)

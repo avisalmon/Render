@@ -43,6 +43,10 @@ PAGES = [
     "/matazim/login/",
     "/matazim/register/",
     "/matazim/leaders/",
+    # The legal pages are read on a phone by someone deciding whether to sign
+    # up, which makes them exactly the wrong place for a sideways scroll.
+    "/matazim/privacy/",
+    "/matazim/terms/",
 ]
 
 # The smallest comfortable touch target. Anything shorter is a link a thumb

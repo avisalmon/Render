@@ -32,3 +32,7 @@ data/db.sqlite3
 # backup trigger artifact
 .last_backup
 data/lab_public_base.txt
+
+# מט״צים entrance-test uploads. Minors' own work, kept outside MEDIA_ROOT
+# (spec §4.10 P2). In dev PERSISTENT_ROOT is the repo, so this lands here.
+matazim_private/

@@ -72,6 +72,17 @@ surface, the course reading experience, and every model this space writes.
 - **RULE-1: no outbound links.** A test asserts that no template under
   `templates/matazim/` renders an `href` to a non-`/matazim/` app URL (static,
   media, and external links excepted).
+
+  **One narrow exception, added 2026-09-11: the legal pages may name the
+  operator and give a working contact address.** A privacy policy has to say
+  who actually holds the data and how to reach them, and `privacy@babook.co.il`
+  is the inbox that exists. Inventing a מט״צים-branded address that nobody
+  reads would be a dead contact on the one page where the contact is the point,
+  and concealing the operator to preserve a branding illusion is not a thing a
+  privacy policy is allowed to do. So RULE-1 keeps its grip on *navigation*, a
+  member still cannot click their way out of `/matazim/`, and gives way on
+  *disclosure*, only on `privacy.html` and `terms.html`. The guard enforces
+  exactly that distinction rather than searching for a word.
 - **RULE-2: no shared chrome.** No template under `templates/matazim/` extends
   `templates/base.html` or includes a babook partial.
 - **RULE-3: one version of the truth about learning.** מט״צים keeps **no
@@ -289,7 +300,7 @@ only nesting. Whether classes are needed at all is Q14's decision: forty
 students across the network means a leader has one or two and school *is* the
 group; twelve hundred means a leader has forty-five and needs to split them.
 
-### 4.5 Two kinds of leader, and what to call them in English
+### 4.9 Two kinds of leader, and what to call them in English
 
 Hebrew keeps these apart without effort and English does not, which has already
 cost us clarity in this document.
@@ -304,6 +315,137 @@ mataz." Note that *young leader* and *mataz* are the same thing, so a sentence
 with both "leader" and "young leader" in it is a sentence about two different
 people and is worth rewriting. The Hebrew interface is unaffected: it says
 מוביל and מט״צ and always did.
+
+### 4.10 Privacy, consent, and the law
+
+Written 2026-09-11 at Avi's request, after auditing what this product actually
+holds and who can actually reach it. Two of the findings below are live defects,
+not policy gaps.
+
+**None of this is legal advice.** It is the common practice and the plain reading
+of the obligations, written so a lawyer can be handed something concrete rather
+than a blank page. The parts that turn on judgement are marked.
+
+#### Who the data subjects are
+
+Ninth-graders. Thirteen to fifteen years old. That single fact governs
+everything else: the appetite for risk is not the same as for an adult
+professional learning Django on babook, and the consent of a fourteen-year-old
+is not, on its own, the consent the law is looking for.
+
+#### What we hold about them
+
+| Data | Where | Why we have it |
+|---|---|---|
+| Email, display name | `User`, `app.UserProfile` | The account. Email is the login. |
+| Entrance test pass, timestamp | `MemberProfile` | The first gate. |
+| Uploaded 3D model, measurements, issues | `EntranceAttempt` | Scoring the entrance test. **Their own work product.** |
+| Which leader, which classes, school name | `Student`, `StudyClass` | The program's structure. |
+| Stage, certification, who granted it | `Student` | The funnel. |
+| Every lesson watched, quiz answer, certificate | babook's tables | The learning itself (RULE-3). |
+
+#### The legal frame
+
+Israeli law, since these are Israeli minors in Israeli schools.
+
+- **חוק הגנת הפרטיות, התשמ״א-1981**, as amended by **תיקון 13**, in force since
+  August 2025. The amendment sharpened data-subject rights, added breach
+  notification, and attached real administrative fines. It also narrowed database
+  *registration*, and on the current reading this database does not require it:
+  registration now bites mainly on public bodies, data brokers, and sensitive
+  data at large scale.
+- **§11, חובת יידוע.** The duty to tell a person, *at the point of collection*,
+  whether they are obliged to give the data, what it will be used for, and to
+  whom it will be handed. This is the clearest single obligation we are failing
+  today, and it is failing at the exact screen where a fourteen-year-old types
+  their email.
+- **תקנות הגנת הפרטיות (אבטחת מידע), התשע״ז-2017.** Security duties scaled to
+  the database. Our headcount is small, so the basic level is the plain reading,
+  but the regulations care about the *nature* of the data too, and data about
+  minors is handled cautiously by the Privacy Protection Authority. Treating this
+  as the medium level costs us very little and is the defensible choice.
+- **A DPO (ממונה על הגנת הפרטיות) is not required** at this scale on the current
+  reading. Worth revisiting if the program ever reaches the numbers Litala's
+  prototype claimed.
+- Schools bring their own layer (חוזר מנכ״ל on pupils' data), which is a reason
+  to record consent rather than assume the school has handled it.
+
+#### The separation paradox
+
+RULE-1 forbids any outbound link from `templates/matazim/` to babook. Babook has
+a privacy policy, terms, and a cookie banner. **A מט״צים member cannot reach any
+of them**, and would not be covered by them if they could: babook's policy
+describes a person learning on their own, and says nothing about a teacher being
+shown a named minor's progress.
+
+So the separation contract, which exists for good reasons, manufactured a
+compliance gap. מט״צים needs its own legal surface, inside the walls, written
+for this product. That is not a workaround for RULE-1, it is RULE-1 working
+correctly: an autonomous product carries its own terms.
+
+#### Cookies: a notice, not a banner
+
+מט״צים sets exactly two cookies, `sessionid` and `csrftoken`, both strictly
+necessary to log in and to submit a form safely. There is **no analytics, no
+tag manager, and no third-party script anywhere under `/matazim/`** (checked,
+2026-09-11), which is a genuinely better starting position than most sites.
+
+Strictly necessary cookies require **disclosure, not opt-in**. So the right
+answer here is a clear cookie section in the policy and no consent banner.
+Building a banner that asks permission for cookies we would set regardless is
+both dishonest and worse for a teenager on a phone. The day anything analytic or
+third-party is added to this product, that judgement flips and a real consent
+gate is owed.
+
+#### Need to know, by role
+
+Scope is already a property of the data (§4.4), which is most of the work. What
+follows is the *narrowing* question: not "can they reach it" but "should they".
+
+| Role | Sees | Judgement |
+|---|---|---|
+| student | Themselves | Correct. |
+| leader | Their own students: name, email, track progress, entrance status, stage | Justified. A teacher who cannot identify their own pupil cannot teach them. Email is the identifier we have. |
+| leader | Any student who is not theirs | Impossible by construction. Correct. |
+| admin | Every student, every leader | Justified for running the program and for support, and it is three named people. |
+| root | Everything on the platform, via Django admin | Unavoidable, and the reason adminship is granted as `MemberProfile.is_admin` and never as `is_superuser`. |
+| anyone | A leader's name and school, from an invite link | Acceptable. It is what makes the invite legible, and it is adult staff data. |
+
+The one thing a leader does **not** get, and must never get, is anything about
+the children their mataz teaches (REQ-M.29). That population does not exist in
+this system.
+
+#### Reuse babook's infrastructure
+
+Avi, 2026-09-11, mid-sprint. The charter already says babook is the engine room,
+and that applies to privacy machinery as much as to the course engine. What it
+does **not** extend to is babook's privacy *pages*: RULE-1 means a member cannot
+reach them, and they describe someone learning alone rather than a teacher being
+shown a named minor's progress. Shared plumbing, separate promises.
+
+| Need | Reused from babook | Rather than |
+|---|---|---|
+| Account deletion | `app.views.delete_account` (REQ-7.2.10). `User.delete()` cascades into `MemberProfile`, `Student` and `EntranceAttempt`. | A second deletion path that would drift from the first |
+| Retention jobs | The `purge_*` management-command pattern already established by `purge_security_events` and `purge_unconfirmed_newsletter` | Inventing a scheduler |
+| Contact for requests | `privacy@babook.co.il`, the inbox that exists | A מט״צים address nobody reads |
+| Accounts, sessions, CSRF | Django's, through babook's settings | Anything of our own |
+
+Reuse found a defect on its first reading, which is the argument for it. Django
+has not deleted files on row deletion since 1.3, so `delete_account` removed
+every row belonging to a member and left their uploaded model on the disk: the
+one artefact that is unmistakably theirs. A `post_delete` receiver on
+`EntranceAttempt` now closes it.
+
+#### Findings from the audit
+
+| # | Finding | Severity |
+|---|---|---|
+| P1 | `/matazim/leader/<id>/qr.png` has no authentication and no authorization. The id is a sequential integer, so the endpoint can be walked to harvest **every leader's join code**, and a join code is a bearer credential: REQ-M.9 attaches the holder to that leader with no confirmation. | **High** |
+| P2 | Minors' entrance-test uploads are written to `MEDIA_ROOT` and served from `/media/` with no authentication, under the uploaded file's own name. School work is routinely named after the pupil, so this publishes a minor's name and their work to anyone who guesses the path. | **High** |
+| P3 | No privacy policy, no terms, and no cookie notice anywhere under `/matazim/`, and RULE-1 forbids linking to babook's. §11 יידוע is not met at the point of collection. | **High** |
+| P4 | No parental consent anywhere, for a programme of fourteen-year-olds. Open as Q11 since day one. | Medium |
+| P5 | No retention limit and no deletion or export path. Nothing in the product can answer "show me what you hold about me" or "delete it". | Medium |
+| P6 | No record of a certification being revoked or a roster being read. Granting is recorded (REQ-M.78); nothing else is. | Low |
 
 ## 5. Requirements
 
@@ -461,6 +603,14 @@ front rather than letting a kid discover it at lesson four on a phone.
 | REQ-M.29 | One tracked population | Nothing in this product creates, stores, or infers a record about a child. The kids a מט״צ teaches are not users, not members, not rows. Teaching is recorded as the מט״צ's own declared activity. | TODO |
 | REQ-M.30 | Minors' data stays minimal | The people in this system are teenagers in כיתה ט'. We hold what the program needs to run and nothing more, and it is not exposed outside their own leader and the admins. | TODO |
 | REQ-M.30a | Nothing about a minor is public by default | The public gallery names a school, never a student. A photo avatar is opt-in; initials are the default. Publishing a project takes the member's consent and a staff decision, and either can be withdrawn later. | WIP |
+| REQ-M.79 | An invite link is not public | The QR endpoint authenticates and authorises like every other leader screen: the leader themselves, or an admin. A sequential integer id must not be walkable into a harvest of join codes, because a join code attaches its holder to that leader with no confirmation (REQ-M.9). Finding P1. | DONE |
+| REQ-M.80 | A minor's work is not served from a public directory | Entrance-test uploads leave `MEDIA_ROOT` and are served only through a view that checks who is asking: the member themselves, their leader, or an admin. Stored under an unguessable name, never the name of the file a teenager chose, because school work is routinely named after the pupil. Finding P2. | DONE |
+| REQ-M.81 | מט״צים carries its own terms | A privacy policy and terms of use, inside the walls, in our own shell, written for this product and these people. Not a link to babook's, which RULE-1 forbids and which does not describe this processing anyway. Reachable from the footer of every page and from the registration screen. Finding P3. | DONE |
+| REQ-M.82 | Told before they type | §11 חובת יידוע, met where it is owed: at the point of collection. The registration screen says plainly what we collect, what it is for, and **that their leader will see their name, their progress and their status**. That last clause is the one a teenager would actually want to know and the one a generic policy always buries. Finding P3. | DONE |
+| REQ-M.83 | Cookies disclosed, not negotiated | The policy names the two cookies this product sets and says both are strictly necessary. No consent banner, because there is nothing here to consent to: no analytics, no third-party script, nothing that would be set for our benefit rather than the member's. If that ever changes, this requirement inverts and a real gate is owed before the script ships. Finding P3. | DONE |
+| REQ-M.84 | A parent says yes | Registration asks for year of birth, and anyone under 18 gives a parent's or guardian's name, email and affirmative consent, recorded with a timestamp. A school that has collected consent on paper is recorded the same way by an admin, rather than assumed. Nobody joins a leader without it. Finding P4, closes Q11. | TODO |
+| REQ-M.85 | See it, take it, or have it deleted | Inside the profile: everything we hold about this person on one screen, an export of it, and a deletion request that reaches an admin. Deletion removes the מט״צים record and the uploaded work; the babook account is the member's own and is not silently destroyed from here. Finding P5. | TODO |
+| REQ-M.86 | Nothing is kept forever | A stated retention period for each kind of data, and a command that enforces it rather than a sentence that promises it. Entrance attempts that never passed, and the files attached to them, are the shortest-lived thing here: they are a failed audition, not a record worth keeping for years. Finding P5. | TODO |
 
 ## 6. Open questions
 
@@ -472,7 +622,6 @@ front rather than letting a kid discover it at lesson four on a phone.
 | Q8 | "פתיחת תכנים ומשימות" by program staff: do they get an authoring surface inside מט״צים, or do they author in babook's studio and only publish here? | An authoring UI inside the walls is a large piece of work. Authoring in the studio is free but means Avi and Litala cross into babook, which members never do. |
 | Q9 | Terminology: her brief says תלמידים and מובילים, our docs say מט״צים and מובילי בית ספר. | Cosmetic but pervasive; settle before SPR-M.2 writes the copy. |
 | Q14 | **Is a class load-bearing?** At forty across the network a leader has one or two students per school and `school_name` *is* the group, so nobody needs to create a class. At twelve hundred a leader carries about forty-five and has to split them. | Decides whether class creation belongs in a leader's first run. Defaulted rather than blocked: a class is offered and never required, which is correct in the small world and merely incomplete in the large one. Revisit the day any single leader passes about twenty students. |
-| Q11 | The public gallery publishes minors' work. Who consents, and does a parent sign anything? | Blocks REQ-M.5e. My default in the spec is opt-in by the member plus a staff decision, both withdrawable, but consent for a ninth-grader may need a parent. |
 | Q12 | The public path shows four stages (לומדים, יוצרים, מדריכים, משפיעים) while the program has five, with מתמיינים first. Deliberate? | Cosmetic if deliberate, confusing if not. My reading is deliberate: מתמיינים is the entrance test, which has its own CTA. |
 
 **Closed:** Q1 start clean, new Django app (2026-09-09). Q2 מט״צים-branded auth
@@ -485,6 +634,9 @@ Build for the larger number wherever it is cheap and reversible (search, paging,
 and an admin who lands on counts rather than on a list of every student), all of
 which reads correctly at forty and is the only usable option at twelve hundred.
 The two real questions inside it are now Q13 and Q14.
+Q11 minors' consent (2026-09-11): a parent or guardian consents for anyone under
+18, recorded with a timestamp, and a school's paper consent is recorded by an
+admin rather than assumed. Written as REQ-M.84.
 Q13 who grants certification (2026-09-11): **the leader does**, not Avi and Naomi.
 A leader certifies their own student by hand, gated on the entrance test and the
 two Scratch certificates (REQ-M.76 to REQ-M.78). This is the answer that scales:

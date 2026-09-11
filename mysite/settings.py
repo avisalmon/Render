@@ -81,6 +81,13 @@ WSGI_APPLICATION = "mysite.wsgi.application"
 PERSISTENT_ROOT = Path(os.environ.get("PERSISTENT_ROOT", BASE_DIR))
 DATA_DIR = PERSISTENT_ROOT / "data"
 MEDIA_DIR = PERSISTENT_ROOT / "media"
+
+# מט״צים entrance-test uploads (spec §4.10, finding P2). A teenager's model is
+# their own work and carries their name more often than not, because school work
+# is named after the pupil. MEDIA_ROOT is served with no authentication at all,
+# so these live outside it and are handed out only by a view that checks who is
+# asking (REQ-M.80).
+MATAZIM_PRIVATE_DIR = PERSISTENT_ROOT / "matazim_private"
 try:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     MEDIA_DIR.mkdir(parents=True, exist_ok=True)

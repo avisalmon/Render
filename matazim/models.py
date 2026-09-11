@@ -13,6 +13,9 @@ stay shared, and only our own flags are ours. See docs/matazim/spec.md §4.
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.dispatch import receiver
+
+from .storage import entrance_upload_path, private_storage
 
 
 class MemberProfile(models.Model):
@@ -115,7 +118,15 @@ class EntranceAttempt(models.Model):
     target_id = models.CharField(max_length=16)
     number = models.PositiveIntegerField(default=1)
 
-    model_file = models.FileField(upload_to="matazim_entrance/", blank=True, null=True)
+    # Not under MEDIA_ROOT, and not under the name the teenager chose. Both
+    # halves matter: /media/ is served with no authentication at all, and school
+    # work is named after the pupil roughly always (spec §4.10 P2, REQ-M.80).
+    model_file = models.FileField(
+        upload_to=entrance_upload_path,
+        storage=private_storage,
+        blank=True,
+        null=True,
+    )
     measured = models.JSONField(default=dict, blank=True)
     issues = models.JSONField(default=list, blank=True)
     passed = models.BooleanField(default=False)
@@ -298,3 +309,23 @@ class Student(models.Model):
     def school_names(self):
         """Where this student actually sits. Derived from their classes."""
         return sorted({c.school_name for c in self.classes.all() if c.school_name})
+
+
+@receiver(models.signals.post_delete, sender=EntranceAttempt)
+def _delete_upload_with_attempt(sender, instance, **kwargs):
+    """When the row goes, the file goes.
+
+    Found by taking Avi's advice to reuse babook's infrastructure rather than
+    build a parallel one. babook already has self-service account deletion
+    (`app.views.delete_account`, REQ-7.2.10), and `User.delete()` cascades
+    cleanly into `MemberProfile`, `Student` and `EntranceAttempt`. So מט״צים
+    needs no deletion machinery of its own, which is the right answer.
+
+    But Django has not deleted files on row deletion since 1.3. Without this,
+    a teenager who asked for their account to be deleted would have every row
+    removed and their uploaded model left sitting on the disk, which is the one
+    piece of it that is unmistakably theirs. Reuse is correct; reuse without
+    reading what it does is how that happens.
+    """
+    if instance.model_file:
+        instance.model_file.delete(save=False)

@@ -441,3 +441,19 @@ def community(request):
 def events(request):
     """REQ-M.60 — no `Event` model yet."""
     return _coming(request, "events", "events")
+
+
+def privacy(request):
+    """REQ-M.81, REQ-M.83 — our own policy, inside the walls.
+
+    Not a link to babook's. RULE-1 forbids the link, and babook's policy
+    describes someone learning alone: it says nothing about a teacher being
+    shown a named minor's progress, which is the most consequential thing that
+    happens to data in this product.
+    """
+    return render(request, "matazim/privacy.html", shell(request, "legal"))
+
+
+def terms(request):
+    """REQ-M.81 — deliberately short. The audience is fourteen."""
+    return render(request, "matazim/terms.html", shell(request, "legal"))

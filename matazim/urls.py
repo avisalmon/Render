@@ -66,6 +66,13 @@ urlpatterns = [
     path("leader/<int:leader_id>/qr.png", joining_views.leader_qr, name="leader_qr"),
     path("staff/leaders/", joining_views.staff_leaders, name="staff_leaders"),
     path("staff/leaders/<int:leader_id>/", joining_views.staff_leader, name="staff_leader"),
+    # What we do with a fourteen-year-old's data, said where they can reach it
+    # (REQ-M.81). RULE-1 means these cannot be links to babook's.
+    path("privacy/", views.privacy, name="privacy"),
+    path("terms/", views.terms, name="terms"),
+    # A minor's uploaded work, handed out only to people entitled to it
+    # (REQ-M.80). It is no longer under the public /media/ tree.
+    path("attempt/<int:attempt_id>/file/", entrance_views.attempt_file, name="attempt_file"),
     path("profile/", views.profile, name="profile"),
     path("profile/replay-welcome/", views.profile_reset_welcome, name="profile_reset_welcome"),
 ]

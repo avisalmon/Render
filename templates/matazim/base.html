@@ -16,10 +16,13 @@
   <meta name="description" content="{% block meta_description %}תוכנית מט״צים: תלמידי חטיבת הביניים לומדים טכנולוגיה, יוצרים, מדריכים ומשפיעים על הקהילה, בשיתוף מתנדבי אינטל.{% endblock %}">
 
   <link rel="icon" href="{% static 'matazim/logo.png' %}">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap">
-  <link rel="stylesheet" href="{% static 'matazim/matazim.css' %}?v=1">
+  {% comment %}
+    No Google Fonts link. It sent every visitor's IP to Google on every page
+    load, before they had agreed to anything, on a site whose visitors are
+    fourteen. Rubik is served from our own disk instead: see the @font-face
+    block at the top of matazim.css (spec §4.10, REQ-M.83).
+  {% endcomment %}
+  <link rel="stylesheet" href="{% static 'matazim/matazim.css' %}?v=2">
   {% block extra_head %}{% endblock %}
 </head>
 <body>
@@ -126,6 +129,15 @@
 <footer class="mz-footer">
   <div class="mz-container mz-footer-inner">
     <span>מט״צים · מנהיגות טכנולוגית צעירה</span>
+    {% comment %}
+      REQ-M.81 — on every page, because a policy you have to know the URL for is
+      a policy nobody reads. These stay inside /matazim/: RULE-1 forbids linking
+      to babook's, and babook's would not describe this processing anyway.
+    {% endcomment %}
+    <span class="mz-footer-legal">
+      <a href="{% url 'matazim:privacy' %}">פרטיות</a>
+      <a href="{% url 'matazim:terms' %}">תנאי שימוש</a>
+    </span>
   </div>
 </footer>
 

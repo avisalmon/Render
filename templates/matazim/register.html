@@ -43,6 +43,22 @@
         <input type="password" name="password" autocomplete="new-password" required minlength="8">
         <small>לפחות 8 תווים.</small>
       </label>
+      {% comment %}
+        REQ-M.82 — §11 חובת יידוע is owed at the point of collection, and this
+        is the point of collection: the screen where a fourteen-year-old types
+        their email. A policy linked from a footer does not discharge it.
+
+        The clause named here is the one a teenager would actually care about
+        and the one a generic notice always buries, which is that their leader
+        will see them. Everything else is one tap away.
+      {% endcomment %}
+      <p class="mz-consent">
+        כשאתם נרשמים אנחנו שומרים את השם והאימייל שלכם, ואת ההתקדמות שלכם
+        בתוכנית. <strong>המוביל/ה שלכם וצוות התוכנית יראו את ההתקדמות הזאת.</strong>
+        מוביל/ה אחר/ת לא. הפירוט המלא נמצא ב<a href="{% url 'matazim:privacy' %}">עמוד הפרטיות</a>,
+        וכדאי לקרוא גם את <a href="{% url 'matazim:terms' %}">תנאי השימוש</a>.
+      </p>
+
       <button type="submit" class="mz-btn mz-btn-primary mz-btn-block">פתיחת חשבון</button>
     </form>
 

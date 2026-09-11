@@ -1,0 +1,122 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.81, REQ-M.82, REQ-M.83 — מט״צים carries its own terms.
+
+  Not a copy of babook's and not a link to it. RULE-1 forbids the link, and
+  babook's policy describes a person learning alone: it says nothing about a
+  teacher being shown a named minor's progress, which is the single most
+  important thing that happens to data here.
+
+  Written for a fourteen-year-old to actually read. Short sentences, no
+  defined-term apparatus, and the clause they would care about (their leader
+  sees them) placed where it cannot be missed rather than buried in section 7.
+{% endcomment %}
+
+{% block title %}פרטיות · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page mz-legal">
+  <div class="mz-page-head">
+    <h1>מה אנחנו יודעים עליכם</h1>
+    <p>וגם: מי עוד רואה את זה, כמה זמן זה נשמר, ומה אתם יכולים לעשות בקשר לזה.</p>
+  </div>
+
+  <p class="mz-muted">עודכן: ספטמבר 2026</p>
+
+  <section class="mz-panel">
+    <h2>הדבר הכי חשוב בעמוד הזה</h2>
+    <p>
+      <strong>המוביל/ה שלכם רואה אתכם.</strong> ברגע שאתם מצטרפים למוביל/ה,
+      הוא או היא רואים את השם שלכם, את כתובת האימייל שלכם, את ההתקדמות שלכם
+      בקורסים, אם עברתם את מבחן הכניסה, ובאיזה שלב אתם בתוכנית. גם צוות התוכנית
+      רואה את זה.
+    </p>
+    <p>
+      זה לא באג. ככה התוכנית עובדת: מי שמלמד אתכם צריך לדעת איפה אתם עומדים.
+      אבל מגיע לכם לדעת את זה לפני שאתם נרשמים ולא אחרי.
+    </p>
+    <p>
+      <strong>מוביל/ה אחר/ת לא רואה אתכם.</strong> לא חלקית, לא בטעות. המערכת
+      בנויה כך שהשאילתה של מוביל/ה אחר/ת פשוט לא מגיעה אליכם.
+    </p>
+  </section>
+
+  <section class="mz-panel">
+    <h2>מה אנחנו אוספים</h2>
+    <ul class="mz-needs">
+      <li><span class="mz-check">·</span><span><strong>אימייל ושם.</strong> זה החשבון שלכם. האימייל הוא גם איך שנכנסים.</span></li>
+      <li><span class="mz-check">·</span><span><strong>מבחן הכניסה.</strong> הקובץ שהעליתם, המדידות שהמערכת עשתה עליו, ואם עברתם.</span></li>
+      <li><span class="mz-check">·</span><span><strong>הלמידה.</strong> אילו שיעורים ראיתם, מה עניתם בבחנים, ואילו תעודות קיבלתם.</span></li>
+      <li><span class="mz-check">·</span><span><strong>המקום שלכם בתוכנית.</strong> מי המוביל/ה שלכם, באיזו כיתה אתם, ובאיזה בית ספר.</span></li>
+    </ul>
+    <p class="mz-muted">
+      אנחנו לא אוספים תעודת זהות, כתובת, טלפון או תמונה. אם מתישהו נצטרך משהו
+      כזה, נבקש אותו ונסביר למה.
+    </p>
+  </section>
+
+  <section class="mz-panel">
+    <h2>הקובץ שהעליתם למבחן הכניסה</h2>
+    <p>
+      הוא שלכם. הוא נשמר במקום סגור, לא בתיקייה ציבורית, ולא בשם שנתתם לו: אנחנו
+      מחליפים את שם הקובץ בשם אקראי, כי עבודות של תלמידים נקראות לא פעם על שם
+      התלמיד. אפשר להגיע אליו רק דרך דף שבודק מי מבקש. רואים אותו: אתם,
+      המוביל/ה שלכם, וצוות התוכנית.
+    </p>
+  </section>
+
+  <section class="mz-panel">
+    <h2>עוגיות</h2>
+    <p>
+      שתיים, ושתיהן הכרחיות כדי שהאתר יעבוד:
+    </p>
+    <ul class="mz-needs">
+      <li><span class="mz-check">·</span><span><code>sessionid</code> — כדי שתישארו מחוברים בין עמוד לעמוד.</span></li>
+      <li><span class="mz-check">·</span><span><code>csrftoken</code> — כדי שטופס שאתם שולחים באמת יגיע מכם.</span></li>
+    </ul>
+    <p>
+      <strong>אין כאן גוגל אנליטיקס, אין פיקסל של פייסבוק, ואין שום סקריפט של
+      חברה אחרת.</strong> בגלל זה גם אין באנר שמבקש מכם לאשר עוגיות: אין כאן שום
+      עוגייה שנועדה לנו ולא לכם, ולכן אין על מה לבקש אישור. אם זה ישתנה אי פעם,
+      נבקש אישור לפני שזה יעלה לאוויר ולא אחרי.
+    </p>
+  </section>
+
+  <section class="mz-panel">
+    <h2>כמה זמן</h2>
+    <p>
+      כל עוד אתם בתוכנית, ואחר כך עוד תקופה סבירה כדי שנוכל לאשר שההסמכה שלכם
+      אמיתית אם מישהו ישאל. ניסיון במבחן כניסה שלא עבר, והקובץ שלו, נמחקים
+      מוקדם יותר מהשאר: זה אודישן שלא הצליח, לא רשומה ששווה לשמור שנים.
+    </p>
+  </section>
+
+  <section class="mz-panel">
+    <h2>מה אתם יכולים לבקש</h2>
+    <p>
+      לראות כל מה שיש לנו עליכם, לקבל את זה כקובץ, לתקן משהו שגוי, או לבקש
+      שנמחק. כותבים ל־<a href="mailto:privacy@babook.co.il">privacy@babook.co.il</a>
+      ונחזור אליכם. מסכים בתוך האתר שיעשו את זה לבד נמצאים בבנייה.
+    </p>
+    <p class="mz-muted">
+      אם אתם מתחת לגיל 18, הורה או אפוטרופוס יכולים לבקש את זה בשמכם.
+    </p>
+  </section>
+
+  <section class="mz-panel">
+    <h2>מי אחראי</h2>
+    <p>
+      מט״צים היא תוכנית שרצה על התשתית של babook. השאלות מגיעות לאותה כתובת:
+      <a href="mailto:privacy@babook.co.il">privacy@babook.co.il</a>.
+    </p>
+    <p class="mz-muted">
+      אנחנו פועלים לפי חוק הגנת הפרטיות, התשמ״א־1981 והתקנות שמכוחו.
+    </p>
+  </section>
+
+  <p class="mz-page-actions">
+    <a class="mz-linkbtn" href="{% url 'matazim:terms' %}">תנאי השימוש</a>
+  </p>
+</div>
+{% endblock %}

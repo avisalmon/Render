@@ -1,3 +1,67 @@
+/* ---------------------------------------------------------------- fonts
+ *
+ * Rubik, served from our own disk rather than from fonts.googleapis.com.
+ *
+ * A Google Fonts <link> sends every visitor's IP address to Google on every
+ * page load, before they have agreed to anything and with nothing on screen
+ * saying so. On a site whose visitors are fourteen, and whose privacy policy
+ * says there is no third party here, that was both a leak and a sentence that
+ * was not quite true (spec §4.10). Self-hosting removes the request entirely,
+ * which is a better answer than disclosing it.
+ *
+ * Hebrew and Latin subsets only. The Arabic and Cyrillic faces Google serves
+ * are 120KB this product has no use for.
+ */
+
+@font-face {
+  font-family: 'Rubik';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('fonts/rubik-hebrew-400.woff2') format('woff2');
+  unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;
+}
+@font-face {
+  font-family: 'Rubik';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('fonts/rubik-latin-400.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Rubik';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('fonts/rubik-hebrew-500.woff2') format('woff2');
+  unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;
+}
+@font-face {
+  font-family: 'Rubik';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('fonts/rubik-latin-500.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Rubik';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('fonts/rubik-hebrew-700.woff2') format('woff2');
+  unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;
+}
+@font-face {
+  font-family: 'Rubik';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('fonts/rubik-latin-700.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 /* מט״צים — design system
  *
  * Standalone. This file never loads alongside babook's style.css and never
@@ -1173,4 +1237,66 @@ a.mz-training-title:hover { color: var(--mz-purple); }
   min-height: 44px;
   display: inline-flex;
   align-items: center;
+}
+
+/* -------------------------------------------------- legal (SPR-M.9)
+ *
+ * The policy is meant to be read by a fourteen-year-old on a phone, so the
+ * measure is narrower than the rest of the product and the type is not small.
+ * A privacy policy set in 12px grey is a privacy policy that has decided in
+ * advance that nobody will read it.
+ */
+
+.mz-legal { max-width: 720px; }
+.mz-legal p { line-height: 1.75; }
+.mz-legal code {
+  background: var(--mz-page);
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: .92em;
+}
+
+/* REQ-M.82 — said at the point of collection, so it sits with the form and not
+ * in the footer. Bordered rather than greyed: this is the opposite of small
+ * print and should not look like it. */
+.mz-consent {
+  margin: 4px 0 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--mz-line);
+  border-inline-start: 3px solid var(--mz-teal);
+  border-radius: 10px;
+  background: var(--mz-card);
+  font-size: .92rem;
+  line-height: 1.65;
+  color: var(--mz-body);
+}
+
+.mz-footer-legal {
+  display: inline-flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-inline-start: auto;
+}
+.mz-footer-legal a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 8px;
+}
+
+/* An inline link inside a sentence cannot be a 44px block without wrecking the
+ * paragraph, but it still has to be hittable with a thumb. Vertical padding on
+ * an inline element grows the hit box without touching the line height, which
+ * is exactly the trade wanted here. Caught by the phone guard on the consent
+ * notice and the privacy policy, both at 18px. */
+.mz-legal p a:not(.mz-linkbtn),
+.mz-legal li a:not(.mz-linkbtn),
+.mz-consent a:not(.mz-linkbtn) {
+  display: inline;
+  /* Vertical only. Horizontal padding on an inline link detaches it from what
+   * it abuts, and in Hebrew that is constant: a prefix letter glued to the
+   * front (ב + עמוד) and a full stop at the end both ended up floating. */
+  padding: 9px 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }

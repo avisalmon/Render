@@ -247,11 +247,27 @@ def leader_confirm(request, student_id):
     return redirect("matazim:leader_home")
 
 
+@login_required(login_url=LOGIN_URL)
 def leader_qr(request, leader_id):
-    """The invite as an image, because it gets printed and stuck on a wall."""
+    """The invite as an image, because it gets printed and stuck on a wall.
+
+    REQ-M.79, spec §4.10 finding P1. This had no authentication and no
+    authorization at all, and `leader_id` is a sequential integer, so the
+    endpoint could be walked to harvest every leader's join code.
+
+    That is worse than it sounds. A join code is not a convenience, it is a
+    bearer credential: REQ-M.9 attaches whoever holds it to that leader **with
+    no confirmation**, deliberately, because the leader handed the link out. An
+    open endpoint here was therefore an unauthenticated write to somebody else's
+    roster, not merely a leak.
+    """
     import qrcode
 
     leader = get_object_or_404(Leader, pk=leader_id)
+
+    mine = leader_of(request.user)
+    if not is_admin(request.user) and (mine is None or mine.pk != leader.pk):
+        raise PermissionDenied
     url = request.build_absolute_uri(f"/matazim/join/{leader.join_code}/")
     image = qrcode.make(url, box_size=8, border=2)
     buffer = io.BytesIO()

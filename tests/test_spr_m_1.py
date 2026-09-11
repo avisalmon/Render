@@ -109,11 +109,23 @@ def test_stylesheet_defines_the_design_tokens():
 
 
 def test_page_uses_rubik_and_never_babook_css(client, db):
-    """T-F-M.1.3-2: a different typeface is half of reading as a different product."""
+    """T-F-M.1.3-2: a different typeface is half of reading as a different product.
+
+    Rubik used to be findable in the markup, because the page carried a Google
+    Fonts <link>. SPR-M.9 removed it: that link sent every visitor's IP to
+    Google on every page load, on a site whose visitors are fourteen. The
+    typeface is still Rubik, so this now asks the stylesheet, which is where
+    the answer moved to.
+    """
+    from pathlib import Path
+
     html = client.get("/matazim/").content.decode()
-    assert "Rubik" in html
     assert "matazim/matazim.css" in html
     assert not re.search(r"static/style\.css|/static/style\.css", html)
+
+    css = Path("static/matazim/matazim.css").read_text(encoding="utf-8")
+    assert "Rubik" in css
+    assert "fonts.googleapis.com" not in html and "fonts.gstatic.com" not in html
 
 
 # ---------------------------------------------------------------- F-M.1.4

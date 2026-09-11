@@ -547,7 +547,106 @@ incidentally the first coverage that function has ever had.
   because they cost nothing at this size and are the only thing that makes the
   screen survive the larger number.
 
-## SPR-M.9 — The admin's view  `NOT PLANNED`
+## SPR-M.9 — Close the holes, then say what we do  `DONE`
+
+Avi, 2026-09-11: act as a privacy expert, put the legal and privacy aspects in
+the spec, plan sprints, and do it. The audit is spec §4.10; this sprint is the
+half of it that cannot wait.
+
+Ordered by what is actually dangerous, not by what is easiest to write. Two of
+these are live defects and one is a fourteen-year-old being asked for their
+email with nothing on the screen telling them where it goes.
+
+**The QR endpoint is the sharpest.** `/matazim/leader/<id>/qr.png` has no
+authentication and no authorization, and the id is a sequential integer. Walk it
+and you have every leader's join code. A join code is not a convenience, it is a
+bearer credential: REQ-M.9 says an invite link attaches its holder to that
+leader **with no confirmation**, deliberately, because the leader handed the
+link out. So this is not an information leak, it is an unauthenticated write to
+somebody else's roster. It is unexploited today only because production has no
+leaders yet, which is luck rather than design.
+
+**The uploads are the most embarrassing.** A teenager's entrance-test model is
+written straight into `MEDIA_ROOT` under the name of the file they chose, and
+`/media/` is served with no authentication at all. `settings.py` even says so in
+a comment. School work is named after the pupil roughly always.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.9.1 | The QR endpoint authenticates and authorises like every other leader screen | REQ-M.79 | DONE |
+| F-M.9.2 | Uploads leave `MEDIA_ROOT`, get unguessable names, and are served through a view that checks | REQ-M.80 | DONE |
+| F-M.9.3 | Privacy policy and terms, ours, inside the walls, linked from every footer | REQ-M.81 | DONE |
+| F-M.9.4 | The registration screen says what happens to the data, including that a leader will see it | REQ-M.82 | DONE |
+| F-M.9.5 | Cookies disclosed in the policy; no banner, and a test that keeps it that way | REQ-M.83 | DONE |
+
+### What the audit found once it could see rendered pages
+
+Two things beyond the planned five, both found by doing the work rather than by
+reading the code.
+
+**Google Fonts was leaking every visitor to Google.** `base.html` carried a
+`<link>` to `fonts.googleapis.com`, which sends the visitor's IP to Google on
+every page load, before they have agreed to anything, on a site whose visitors
+are fourteen. It also made the privacy policy's "no third parties here" not
+quite true, which is a bad property for a sentence in a legal document. Rubik is
+now served from our own disk, Hebrew and Latin subsets only, and the guard
+checks every fetching tag rather than only scripts.
+
+**RULE-1 had to give way an inch, and the shape of the inch mattered.** A
+privacy policy must name who holds the data and give a contact that works, and
+`privacy@babook.co.il` is the inbox that exists. Inventing a מט״צים-branded
+address would put a dead contact on the one page where the contact is the point.
+So the rule keeps its grip on navigation and yields on disclosure, only on the
+two legal pages, and the guard now asserts that distinction instead of grepping
+for the word "babook" (which is what would have pushed someone into inventing
+the dead address).
+
+Also: the phone guard caught two of my own inline links at 18px, and the fix for
+those caught a second bug. Horizontal padding on an inline link detaches it from
+what it abuts, and in Hebrew that is constant: a prefix letter glued to the
+front (ב + עמוד) and a full stop at the end both ended up floating.
+
+**Deliberately not in this sprint:** a cookie consent banner. מט״צים sets two
+cookies, `sessionid` and `csrftoken`, both strictly necessary, and loads no
+analytics and no third-party script. Strictly necessary cookies are disclosed,
+not consented to. A banner asking permission for cookies we set regardless is
+consent theatre, and it lands on a teenager's phone where it costs real screen.
+F-M.9.5 therefore ships a **test that fails if a third-party script ever appears
+under `/matazim/`**, because that is the day the judgement flips and a real gate
+becomes owed.
+
+## SPR-M.10 — Consent, rights, and an end date  `PLANNED`
+
+The half that is policy becoming machinery. Slower work, and none of it is a
+live hole, which is why it is second.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.10.1 | Year of birth at registration, and a parent's consent recorded for anyone under 18 | REQ-M.84 | TODO |
+| F-M.10.2 | An admin records a school's paper consent, rather than it being assumed | REQ-M.84 | TODO |
+| F-M.10.3 | Everything we hold about you, on one screen in your own profile | REQ-M.85 | TODO |
+| F-M.10.4 | Export it. Deletion **reuses** `app.views.delete_account`, reached from our own screen | REQ-M.85 | TODO |
+| F-M.10.5 | Retention periods, as a `purge_matazim_attempts` command in babook's existing `purge_*` pattern | REQ-M.86 | TODO |
+
+**Reuse, per Avi mid-SPR-M.9.** F-M.10.4 shrank from "build deletion" to "reach
+the deletion that exists": `User.delete()` already cascades into every מט״צים
+table, so a second path would only be a second thing to keep in step. F-M.10.5
+follows `purge_security_events` rather than inventing a scheduler. What is not
+reused is the *pages*: RULE-1 means a member cannot reach babook's, and they
+describe a different kind of processing. Shared plumbing, separate promises.
+
+One thing the reuse already caught, fixed in SPR-M.9 rather than deferred:
+`delete_account` removed every row and left the uploaded model on the disk,
+because Django stopped deleting files on row deletion in 1.3.
+
+The judgement call in F-M.10.1 is what to do with someone who is already
+registered when consent arrives as a requirement. Retrofitting a gate in front
+of existing members locks out the people already doing the entrance test. The
+plan is to ask at the next sign-in and block joining a leader rather than block
+the account, so nobody loses work they have already done.
+
+## SPR-M.11 — The admin's view  `NOT PLANNED`
+
 
 Every leader, every student, the funnel, grouped by `school_name` for the
 school-level report Litala's brief asks for.

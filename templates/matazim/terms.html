@@ -1,0 +1,77 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.81 — terms of use, ours.
+
+  Deliberately short. Terms nobody reads protect nobody, and the audience here
+  is fourteen. What is actually worth saying: what the program is, what we
+  expect of a member, what we promise back, and that this is a prototype.
+{% endcomment %}
+
+{% block title %}תנאי שימוש · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page mz-legal">
+  <div class="mz-page-head">
+    <h1>תנאי שימוש</h1>
+    <p>קצר בכוונה. תנאים שאף אחד לא קורא לא מגנים על אף אחד.</p>
+  </div>
+
+  <p class="mz-muted">עודכן: ספטמבר 2026</p>
+
+  <section class="mz-panel">
+    <h2>מה זה</h2>
+    <p>
+      מט״צים היא תוכנית להכשרת מדריכים צעירים. נרשמים, עוברים מבחן כניסה,
+      מצטרפים למוביל/ה, לומדים, ואם המוביל/ה מחליט/ה שאתם מוכנים, מקבלים הסמכה
+      כמט״צ.
+    </p>
+    <p>
+      <strong>זו גרסת אב־טיפוס.</strong> דברים ישתנו, ולפעמים יישברו. אם משהו
+      נראה שבור, זה כנראה באמת שבור, ואפשר לכתוב לנו.
+    </p>
+  </section>
+
+  <section class="mz-panel">
+    <h2>החשבון שלכם</h2>
+    <ul class="mz-needs">
+      <li><span class="mz-check">·</span><span>חשבון אחד לאדם אחד. אל תשתפו סיסמה, גם לא עם חבר/ה.</span></li>
+      <li><span class="mz-check">·</span><span>מה שאתם מעלים צריך להיות שלכם. עבודה שהעתקתם ממישהו אחר היא לא הסמכה, היא רק בזבוז של זמן.</span></li>
+      <li><span class="mz-check">·</span><span>קישור הצטרפות של מוביל/ה הוא לא שלכם להפיץ הלאה.</span></li>
+    </ul>
+  </section>
+
+  <section class="mz-panel">
+    <h2>ההסמכה</h2>
+    <p>
+      כדי להיות מט״צ צריך שלושה דברים: לעבור את מבחן הכניסה, לקבל תעודה בשני
+      קורסי הסקראץ׳, ושהמוביל/ה שלכם יאשר/תאשר. השניים הראשונים נבדקים
+      אוטומטית ואי אפשר לעקוף אותם. השלישי הוא החלטה של בן אדם שלימד אתכם.
+    </p>
+    <p class="mz-muted">
+      הסמכה אפשר גם לבטל, אם התברר שהיא ניתנה בטעות.
+    </p>
+  </section>
+
+  <section class="mz-panel">
+    <h2>מה אנחנו מבטיחים</h2>
+    <ul class="mz-needs">
+      <li><span class="mz-check">·</span><span>לא נמכור את המידע שלכם ולא נעביר אותו למפרסמים.</span></li>
+      <li><span class="mz-check">·</span><span>מוביל/ה אחר/ת לא יראה אתכם.</span></li>
+      <li><span class="mz-check">·</span><span>אם נשנה משהו מהותי באיך שאנחנו מטפלים במידע שלכם, נגיד לכם.</span></li>
+    </ul>
+  </section>
+
+  <section class="mz-panel">
+    <h2>אם אתם מתחת לגיל 18</h2>
+    <p>
+      רוב המשתתפים בתוכנית הם. ההרשמה נעשית בידיעת ההורים או בית הספר, והורה
+      או אפוטרופוס יכולים לפנות אלינו בכל שאלה או בקשה בשמכם.
+    </p>
+  </section>
+
+  <p class="mz-page-actions">
+    <a class="mz-linkbtn" href="{% url 'matazim:privacy' %}">מה אנחנו יודעים עליכם</a>
+  </p>
+</div>
+{% endblock %}
