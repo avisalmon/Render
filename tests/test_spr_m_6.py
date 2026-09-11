@@ -54,7 +54,7 @@ def test_the_four_models_exist_with_the_agreed_shape(db):
     assert list(leader.students.all()) == [student]
 
     profile = MemberProfile.objects.create(user=make_user("nobody@example.com"))
-    assert profile.is_admin is False, "adminship is granted, never a default"
+    assert profile.is_program_manager is False, "adminship is granted, never a default"
 
 
 def test_a_student_can_exist_before_any_leader_has_them(db):
@@ -132,7 +132,7 @@ def test_an_admin_sees_everyone_including_the_unclaimed(db):
     from matazim.models import MemberProfile
 
     boss = make_user("boss@example.com")
-    MemberProfile.objects.create(user=boss, is_admin=True)
+    MemberProfile.objects.create(user=boss, is_program_manager=True)
 
     leader = make_leader("lead3@example.com")
     claimed = make_student("claimed@example.com", leader=leader)
@@ -161,8 +161,8 @@ def test_a_stranger_sees_nothing(db):
     assert not visible_students(make_user("stranger@example.com")).exists()
 
 
-def test_role_precedence_is_admin_then_leader_then_student(db):
-    """T-F-M.6.2-6: spec §4.2. One person can hold more than one.
+def test_role_precedence_is_manager_then_leader_then_student(db):
+    """T-F-M.6.2-6: spec §4.3. One person can hold more than one.
 
     Written down rather than left to the accident of `if` ordering.
     """
@@ -172,12 +172,12 @@ def test_role_precedence_is_admin_then_leader_then_student(db):
     user = make_user("all-three@example.com")
     Leader.objects.create(user=user)
     Student.objects.create(user=user, cohort_year=2026)
-    MemberProfile.objects.create(user=user, is_admin=True)
+    MemberProfile.objects.create(user=user, is_program_manager=True)
 
     other = make_student("elsewhere@example.com", leader=make_leader("other@example.com"))
 
-    assert role_of(user) == "admin"
-    assert other in visible_students(user), "admin scope must win over leader scope"
+    assert role_of(user) == "program_manager"
+    assert other in visible_students(user), "program-manager scope must win over leader scope"
 
 
 def test_progress_crosses_the_boundary_in_one_join(db):
@@ -208,32 +208,32 @@ def test_adminship_is_seeded_from_a_named_list(db):
     """T-F-M.6.3-1: REQ-M.68. Never self-served: the first admin could not use a screen."""
     from django.core.management import call_command
 
-    from matazim.access import is_admin
+    from matazim.access import is_program_manager
 
     naomi = make_user("naomi@example.com")
     aviv = make_user("aviv@example.com")
 
     call_command("matazim_admins", grant=["naomi@example.com", "aviv@example.com"])
-    assert is_admin(naomi) and is_admin(aviv)
+    assert is_program_manager(naomi) and is_program_manager(aviv)
 
     # Idempotent: it runs on every deploy.
     call_command("matazim_admins", grant=["naomi@example.com"])
-    assert is_admin(naomi)
+    assert is_program_manager(naomi)
 
 
 def test_adminship_can_be_taken_away(db):
     """T-F-M.6.3-2: granting without revoking is a one-way door."""
     from django.core.management import call_command
 
-    from matazim.access import is_admin
+    from matazim.access import is_program_manager
 
     user = make_user("temp@example.com")
     call_command("matazim_admins", grant=["temp@example.com"])
-    assert is_admin(user)
+    assert is_program_manager(user)
 
     call_command("matazim_admins", revoke=["temp@example.com"])
     user.refresh_from_db()
-    assert not is_admin(user)
+    assert not is_program_manager(user)
 
 
 def test_an_unknown_email_is_reported_not_invented(db):
@@ -293,7 +293,7 @@ def test_adminship_can_be_granted_from_django_admin(db):
 
     profile_admin = admin.site._registry[MemberProfile]
     assert (
-        "is_admin" in profile_admin.list_editable
+        "is_program_manager" in profile_admin.list_editable
     ), "the whole point is flipping it from the list without a deploy"
 
 
@@ -319,7 +319,7 @@ def _client_as(client, email, admin=False, root=False):
         user.is_superuser = True
         user.save(update_fields=["is_superuser"])
     if admin:
-        MemberProfile.objects.update_or_create(user=user, defaults={"is_admin": True})
+        MemberProfile.objects.update_or_create(user=user, defaults={"is_program_manager": True})
     client.force_login(user)
     return user
 
@@ -356,7 +356,7 @@ def test_an_admin_can_grant_adminship_by_email(client, db):
     """T-F-M.6.8-3: REQ-M.70."""
     from django.urls import reverse
 
-    from matazim.access import is_admin
+    from matazim.access import is_program_manager
 
     _client_as(client, "chief3@example.com", admin=True)
     newcomer = make_user("newcomer@example.com")
@@ -365,7 +365,7 @@ def test_an_admin_can_grant_adminship_by_email(client, db):
         reverse("matazim:staff_admins"),
         {"action": "grant", "email": "newcomer@example.com"},
     )
-    assert is_admin(newcomer)
+    assert is_program_manager(newcomer)
 
 
 def test_granting_never_creates_an_account(client, db):
@@ -385,7 +385,7 @@ def test_an_admin_cannot_revoke_themselves(client, db):
     """T-F-M.6.8-5: the likeliest way to lose every admin is by accident."""
     from django.urls import reverse
 
-    from matazim.access import is_admin
+    from matazim.access import is_program_manager
 
     me = _client_as(client, "careful@example.com", admin=True)
     client.post(
@@ -393,26 +393,26 @@ def test_an_admin_cannot_revoke_themselves(client, db):
         {"action": "revoke", "email": "careful@example.com"},
     )
     me.refresh_from_db()
-    assert is_admin(me), "revoking yourself is how a program loses every admin"
+    assert is_program_manager(me), "revoking yourself is how a program loses every admin"
 
 
 def test_an_admin_can_revoke_someone_else(client, db):
     """T-F-M.6.8-6: granting without revoking is a one-way door."""
     from django.urls import reverse
 
-    from matazim.access import is_admin
+    from matazim.access import is_program_manager
     from matazim.models import MemberProfile
 
     _client_as(client, "chief5@example.com", admin=True)
     other = make_user("other-admin@example.com")
-    MemberProfile.objects.update_or_create(user=other, defaults={"is_admin": True})
+    MemberProfile.objects.update_or_create(user=other, defaults={"is_program_manager": True})
 
     client.post(
         reverse("matazim:staff_admins"),
         {"action": "revoke", "email": "other-admin@example.com"},
     )
     other.refresh_from_db()
-    assert not is_admin(other)
+    assert not is_program_manager(other)
 
 
 def test_a_site_owner_appears_on_the_list_of_who_has_power(client, db):
@@ -428,7 +428,7 @@ def test_a_site_owner_appears_on_the_list_of_who_has_power(client, db):
     html = client.get(reverse("matazim:staff_admins")).content.decode()
 
     assert "salmon@example.com" in html
-    assert "מנהל/ת האתר" in html
+    assert "מנהל/ת מערכת" in html
     # And nobody offers to remove them, because nothing here could.
     body = html.split("salmon@example.com")[1][:400]
     assert "הסרת הרשאה" not in body
@@ -532,11 +532,11 @@ def test_the_picker_says_who_is_already_an_admin(client, db):
     from matazim.models import MemberProfile
 
     existing = make_user("already@example.com")
-    MemberProfile.objects.update_or_create(user=existing, defaults={"is_admin": True})
+    MemberProfile.objects.update_or_create(user=existing, defaults={"is_program_manager": True})
 
     _client_as(client, "chief8@example.com", admin=True)
     found = _search(client, "already")
-    assert found[0]["is_admin"] is True
+    assert found[0]["is_program_manager"] is True
 
 
 def test_the_picker_cannot_be_used_to_walk_the_user_table(client, db):
@@ -595,7 +595,7 @@ def test_someone_with_no_name_is_not_listed_twice(client, db):
     assert mine.count("chief11@example.com") == 1
 
 
-def test_the_page_says_which_kind_of_admin_each_person_is(client, db):
+def test_the_page_says_which_kind_of_manager_each_person_is(client, db):
     """T-F-M.6.10-8: Avi asked whether Naomi ended up a site admin or a program one.
 
     The page could not answer that: a site owner got a tag and a granted admin
@@ -607,14 +607,16 @@ def test_the_page_says_which_kind_of_admin_each_person_is(client, db):
     from matazim.models import MemberProfile
 
     granted = make_user("naomi.real@example.com")
-    MemberProfile.objects.update_or_create(user=granted, defaults={"is_admin": True})
+    MemberProfile.objects.update_or_create(user=granted, defaults={"is_program_manager": True})
 
     _client_as(client, "root2@example.com", root=True)
     html = client.get(reverse("matazim:staff_admins")).content.decode()
 
-    assert "מנהל/ת האתר" in html
+    assert "מנהל/ת מערכת" in html
     assert "מנהל/ת התוכנית" in html
 
     row = html.split("naomi.real@example.com")[1][:600]
     assert "מנהל/ת התוכנית" in row
-    assert "מנהל/ת האתר" not in row, "a granted admin must not read as a site owner"
+    assert (
+        "מנהל/ת מערכת" not in row
+    ), "a granted program manager must not read as the platform owner"

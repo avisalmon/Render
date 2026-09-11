@@ -60,7 +60,7 @@ def _everything_about(user):
                 if profile.entrance_test_passed_at
                 else None
             ),
-            "is_admin": profile.is_admin,
+            "is_program_manager": profile.is_program_manager,
             "birth_year": profile.birth_year,
             "guardian_name": profile.guardian_name,
             "guardian_email": profile.guardian_email,

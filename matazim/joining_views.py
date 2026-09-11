@@ -26,7 +26,7 @@ from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from .access import is_admin, leader_of
+from .access import is_program_manager, leader_of
 from .consent import consent_blocker, needs_guardian_consent
 from .models import Leader, Student
 from .views import member_profile, shell
@@ -280,7 +280,7 @@ def leader_qr(request, leader_id):
     leader = get_object_or_404(Leader, pk=leader_id)
 
     mine = leader_of(request.user)
-    if not is_admin(request.user) and (mine is None or mine.pk != leader.pk):
+    if not is_program_manager(request.user) and (mine is None or mine.pk != leader.pk):
         raise PermissionDenied
     url = request.build_absolute_uri(f"/matazim/join/{leader.join_code}/")
     image = qrcode.make(url, box_size=8, border=2)
@@ -295,7 +295,7 @@ def leader_qr(request, leader_id):
 @login_required(login_url=LOGIN_URL)
 def staff_leaders(request):
     """REQ-M.25 — assigning a leader, the thing an admin exists to do."""
-    if not is_admin(request.user):
+    if not is_program_manager(request.user):
         raise PermissionDenied
 
     error = ""
@@ -332,7 +332,7 @@ def staff_leaders(request):
 @login_required(login_url=LOGIN_URL)
 def staff_leader(request, leader_id):
     """One leader: their link, their QR, and the two switches an admin has."""
-    if not is_admin(request.user):
+    if not is_program_manager(request.user):
         raise PermissionDenied
 
     leader = get_object_or_404(Leader, pk=leader_id)

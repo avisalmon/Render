@@ -30,7 +30,7 @@ def make_user(email="tal@example.com", staff=False):
         # stand-in, so the test exercises the rule that actually ships.
         from matazim.models import MemberProfile
 
-        MemberProfile.objects.update_or_create(user=user, defaults={"is_admin": True})
+        MemberProfile.objects.update_or_create(user=user, defaults={"is_program_manager": True})
     from app.models import UserProfile
 
     UserProfile.objects.update_or_create(user=user, defaults={"display_name": "טל"})

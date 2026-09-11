@@ -173,9 +173,9 @@ def test_retry(request):
 
 def _is_staff(user):
     """One line, as promised when this was written."""
-    from .access import is_admin
+    from .access import is_program_manager
 
-    return is_admin(user)
+    return is_program_manager(user)
 
 
 @login_required(login_url=LOGIN_URL)
@@ -244,7 +244,7 @@ def staff_home(request):
             counts={
                 "targets": EntranceTarget.objects.filter(is_retired=False).count(),
                 "retired": EntranceTarget.objects.filter(is_retired=True).count(),
-                "admins": MemberProfile.objects.filter(is_admin=True).count(),
+                "admins": MemberProfile.objects.filter(is_program_manager=True).count(),
                 "leaders": Leader.objects.filter(is_active=True).count(),
                 "students": Student.objects.count(),
             },
@@ -265,7 +265,7 @@ def staff_admins(request):
     """
     from django.contrib.auth.models import User
 
-    from .access import is_admin
+    from .access import is_program_manager
     from .models import MemberProfile
 
     if not _is_staff(request.user):
@@ -288,7 +288,9 @@ def staff_admins(request):
             error = "אי אפשר להסיר את ההרשאה מעצמכם."
         else:
             grant = action != "revoke"
-            MemberProfile.objects.update_or_create(user=user, defaults={"is_admin": grant})
+            MemberProfile.objects.update_or_create(
+                user=user, defaults={"is_program_manager": grant}
+            )
             notice = (
                 f"{email} הוגדר/ה כמנהל/ת התוכנית." if grant else f"הרשאת הניהול הוסרה מ־{email}."
             )
@@ -302,7 +304,7 @@ def staff_admins(request):
         rows.append({"user": user, "source": "root", "can_revoke": False})
         seen.add(user.pk)
     for profile in (
-        MemberProfile.objects.filter(is_admin=True)
+        MemberProfile.objects.filter(is_program_manager=True)
         .select_related("user", "user__profile")
         .order_by("user__email")
     ):
@@ -322,7 +324,7 @@ def staff_admins(request):
             error=error,
             notice=notice,
             me=request.user,
-            is_admin_now=is_admin(request.user),
+            is_admin_now=is_program_manager(request.user),
         ),
     )
 
@@ -361,7 +363,9 @@ def staff_user_search(request):
         .select_related("profile")
         .order_by("email")[:10]
     )
-    already = set(MemberProfile.objects.filter(is_admin=True).values_list("user_id", flat=True))
+    already = set(
+        MemberProfile.objects.filter(is_program_manager=True).values_list("user_id", flat=True)
+    )
 
     return JsonResponse(
         {
@@ -371,7 +375,7 @@ def staff_user_search(request):
                     "name": getattr(person.profile, "display_name", "") or "",
                     # Shown rather than filtered out: offering someone as if
                     # they were not already an admin is a small lie.
-                    "is_admin": person.pk in already,
+                    "is_program_manager": person.pk in already,
                 }
                 for person in people
             ]
@@ -395,7 +399,7 @@ def attempt_file(request, attempt_id):
     """
     from django.http import FileResponse
 
-    from .access import is_admin, leader_of
+    from .access import is_program_manager, leader_of
     from .models import EntranceAttempt, Student
 
     attempt = get_object_or_404(EntranceAttempt, pk=attempt_id)
@@ -403,7 +407,7 @@ def attempt_file(request, attempt_id):
         raise Http404("no file on this attempt")
 
     owner_id = attempt.member.user_id
-    allowed = owner_id == request.user.id or is_admin(request.user)
+    allowed = owner_id == request.user.id or is_program_manager(request.user)
 
     if not allowed and (mine := leader_of(request.user)):
         # The same boundary join every other leader screen uses: their students,
@@ -428,11 +432,11 @@ def staff_consent(request, profile_id):
     spoken to is not consent, it is a leader being helpful, and the two look
     identical a year later if anyone can do it.
     """
-    from .access import is_admin
+    from .access import is_program_manager
     from .consent import record_guardian_consent
     from .models import MemberProfile
 
-    if not is_admin(request.user):
+    if not is_program_manager(request.user):
         raise PermissionDenied
 
     profile = get_object_or_404(MemberProfile, pk=profile_id)
@@ -466,10 +470,10 @@ def staff_retention(request):
     Opening the page deletes nothing. A review screen that acts on being opened
     is not a review screen.
     """
-    from .access import is_admin
+    from .access import is_program_manager
     from .retention import FAILED_ATTEMPT_DAYS, approve_purge, due_attempts, summary
 
-    if not is_admin(request.user):
+    if not is_program_manager(request.user):
         raise PermissionDenied
 
     notice = ""

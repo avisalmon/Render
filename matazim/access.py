@@ -10,34 +10,40 @@ cannot get there. If someone later writes a view that forgets to check, there is
 nothing to forget: the queryset never contained the other students in the first
 place.
 
-Four roles, four different things, one source each (spec §4.3):
+Five roles, one source each (spec §4.3, settled with Avi 2026-09-11):
 
-    root     User.is_superuser         everything, plus the prototype tools
-    admin    MemberProfile.is_admin    every student, every leader
-    leader   having a Leader row       their own students, nothing else
-    student  having a Student row      themselves
+    root             User.is_superuser                     everything, every app
+    program manager  MemberProfile.is_program_manager      their leaders, and those leaders' students
+    leader           having an approved Leader row         their own students, nothing else
+    student          having a Student row                  themselves
+    visitor          none of the above                     the public pages
 
-Precedence is admin, then leader, then student. A person can hold more than one,
-and this ordering is what decides, so it is stated here rather than left as an
-accident of `if` order.
+Precedence is program manager, then leader, then student. A person can hold more
+than one, and this ordering is what decides, so it is stated here rather than
+left as an accident of `if` order.
+
+**The word "admin" is retired.** It pointed at root in conversation and at the
+program manager on screen, and that ambiguity produced one wrong grant of
+superuser before it was caught. If you are reading this because you typed
+`is_admin` and it did not exist: you want `is_program_manager`.
 """
 
 from .models import Leader, MemberProfile, Student
 
 ROOT = "root"
-ADMIN = "admin"
+PROGRAM_MANAGER = "program_manager"
 LEADER = "leader"
 STUDENT = "student"
 VISITOR = "visitor"
 
 
-def is_admin(user):
-    """Superusers count as admins. Adminship is seeded, never self-served."""
+def is_program_manager(user):
+    """Superusers count too. The role is seeded, never self-served (REQ-M.68)."""
     if not getattr(user, "is_authenticated", False):
         return False
     if user.is_superuser:
         return True
-    return MemberProfile.objects.filter(user=user, is_admin=True).exists()
+    return MemberProfile.objects.filter(user=user, is_program_manager=True).exists()
 
 
 def leader_of(user):
@@ -57,8 +63,8 @@ def role_of(user):
         return VISITOR
     if user.is_superuser:
         return ROOT
-    if is_admin(user):
-        return ADMIN
+    if is_program_manager(user):
+        return PROGRAM_MANAGER
     if leader_of(user):
         return LEADER
     if Student.objects.filter(user=user).exists():
@@ -72,7 +78,7 @@ def visible_students(user):
     Always a queryset, never a list and never None, so callers can filter,
     count and paginate without asking what they were given.
     """
-    if is_admin(user):
+    if is_program_manager(user):
         # Includes students nobody has claimed yet (REQ-M.65). Someone with no
         # leader must not quietly fall out of the only view that covers everyone.
         return Student.objects.all()
@@ -87,8 +93,8 @@ def visible_students(user):
 
 
 def visible_leaders(user):
-    """Leaders this person may see. Admins see all; a leader sees themselves."""
-    if is_admin(user):
+    """Leaders this person may see. A program manager sees all; a leader sees themselves."""
+    if is_program_manager(user):
         return Leader.objects.all()
     if leader := leader_of(user):
         return Leader.objects.filter(pk=leader.pk)
@@ -105,10 +111,10 @@ def joinable_leaders():
 
 
 def unclaimed_students():
-    """Students nobody has taken yet. An admin's queue, not an error state."""
+    """Students nobody has taken yet. A program manager's queue, not an error state."""
     return Student.objects.filter(leader__isnull=True)
 
 
 def can_manage_leaders(user):
-    """Assigning and deactivating leaders is the thing an admin exists to do."""
-    return is_admin(user)
+    """Assigning and deactivating leaders is what the role exists to do."""
+    return is_program_manager(user)

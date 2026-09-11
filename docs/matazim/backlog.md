@@ -720,7 +720,7 @@ and named by the vocabulary. Building the screens first would mean renaming and
 re-scoping a half-finished feature, which is how a leader ends up seeing the
 wrong institution's students.
 
-## SPR-M.12 — Say what we mean  `PLANNED`
+## SPR-M.12 — Say what we mean  `DONE`
 
 **Goal:** the code calls things what Avi calls them. No behaviour changes at
 all, so that if anything breaks it is unambiguous what caused it.
@@ -732,10 +732,24 @@ that already shipped.
 
 | F-ID | Feature | Traces | Status |
 |---|---|---|---|
-| F-M.12.1 | `access.py`: `ADMIN` → `PROGRAM_MANAGER`, `is_admin()` → `is_program_manager()` | §4.3 | TODO |
-| F-M.12.2 | `MemberProfile.is_admin` → `is_program_manager`, with a `RenameField` migration | §4.3 | TODO |
-| F-M.12.3 | Root's label becomes מנהל/ת מערכת; "site admin" retired everywhere | §4.3 | TODO |
-| F-M.12.4 | `matazim_admins` command reads **both** env var names | §4.3 | TODO |
+| F-M.12.1 | `access.py`: `ADMIN` → `PROGRAM_MANAGER`, `is_admin()` → `is_program_manager()` | §4.3 | DONE |
+| F-M.12.2 | `MemberProfile.is_admin` → `is_program_manager`, with a `RenameField` migration | §4.3 | DONE |
+| F-M.12.3 | Root's label becomes מנהל/ת מערכת; "site admin" retired everywhere | §4.3 | DONE |
+| F-M.12.4 | `matazim_admins` command reads **both** env var names | §4.3 | DONE |
+
+**What it touched:** 29 call sites across six modules, 30 references in nine
+test files, the Django admin registration, the people picker, and two labels.
+The Hebrew needed almost nothing, because the screen has said מנהל/ת התוכנית
+since SPR-M.6. Only root's label moved, from מנהל/ת האתר to מנהל/ת מערכת.
+
+**The migration was written by hand.** `makemigrations` asks interactively
+whether a removed field and an added field are the same field, and answering
+wrong, or letting `--no-input` answer, produces a `RemoveField` plus an
+`AddField`. That pair is not a rename: it drops the column and creates a new one
+with the default, which in production would silently strip נעמי of the role on
+the next deploy and leave nobody able to grant it back except through Django
+admin. A `RenameField` carries the data across, and `makemigrations --check`
+confirms Django agrees nothing is outstanding.
 
 **The one real hazard is F-M.12.4.** `matazim_admins --from-env` runs on every
 deploy and is what keeps נעמי in her role in production. Rename the variable

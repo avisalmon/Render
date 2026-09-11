@@ -42,15 +42,20 @@ class MemberProfile(models.Model):
         null=True, blank=True, verbose_name="עבר את מבחן הכניסה"
     )
 
-    # REQ-M.68 — adminship is granted here and seeded in production, never
-    # self-served: there is no screen that makes someone an admin, because the
-    # first one could never have used it. `manage.py matazim_admins` sets it.
+    # REQ-M.68 — granted here and seeded in production, never self-served:
+    # there is no screen that makes the first one, because they could never have
+    # used it. `manage.py matazim_admins` sets it.
+    #
+    # Renamed from `is_admin` on 2026-09-11 (spec §4.3). "admin" pointed at root
+    # in conversation and at the program manager on screen, an ambiguity that
+    # had already produced one wrong grant of superuser. The Hebrew was right
+    # all along; only the English was lying.
     #
     # This is a boolean and not the "role column" the spec forbids. That rule is
     # about a role having exactly one source: a role field on Student would
     # compete with the leader FK and the two could disagree. Nothing competes
     # with this one.
-    is_admin = models.BooleanField(default=False, verbose_name="מנהל/ת התוכנית")
+    is_program_manager = models.BooleanField(default=False, verbose_name="מנהל/ת התוכנית")
 
     # REQ-M.84 — the programme is ninth-graders, so a parent consents.
     #

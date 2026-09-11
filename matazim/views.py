@@ -71,9 +71,9 @@ def is_site_staff(user):
     answered (spec §4.4). The call sites did not move, which was the point of
     routing them through one helper in the first place.
     """
-    from .access import is_admin
+    from .access import is_program_manager
 
-    return is_admin(user)
+    return is_program_manager(user)
 
 
 def _pending_invite(request):

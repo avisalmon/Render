@@ -20,7 +20,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from .access import is_admin, leader_of, visible_students
+from .access import is_program_manager, leader_of, visible_students
 from .certification import certify, eligibility, eligibility_for_many, may_certify, revoke
 from .content import REQUIRED_COURSE_SLUGS
 from .models import Student, StudyClass
@@ -43,7 +43,7 @@ def _leader_or_403(request):
     leader who is away must not leave their students unreachable.
     """
     leader = leader_of(request.user)
-    if leader is None and not is_admin(request.user):
+    if leader is None and not is_program_manager(request.user):
         raise PermissionDenied
     return leader
 
@@ -170,7 +170,7 @@ def _student_action(request, leader, person):
         # cannot file a student into another leader's class because the class
         # is not in the set they are allowed to name (REQ-M.22).
         allowed = StudyClass.objects.filter(pk__in=wanted)
-        if not is_admin(request.user):
+        if not is_program_manager(request.user):
             allowed = allowed.filter(leader=leader)
         person.classes.set(allowed)
     return redirect("matazim:student", student_id=person.pk)

@@ -405,7 +405,7 @@ def test_an_admin_can_certify_too(client, db):
     student = eligible_student(leader)
 
     boss = make_user("chief@example.com", "אבי")
-    MemberProfile.objects.update_or_create(user=boss, defaults={"is_admin": True})
+    MemberProfile.objects.update_or_create(user=boss, defaults={"is_program_manager": True})
     client.force_login(boss)
     client.post(reverse("matazim:certify", args=[student.pk]), {"action": "certify"})
 

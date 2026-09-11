@@ -41,7 +41,7 @@ def make_admin(email="chief@example.com"):
     from matazim.models import MemberProfile
 
     user = make_user(email, "אבי")
-    MemberProfile.objects.update_or_create(user=user, defaults={"is_admin": True})
+    MemberProfile.objects.update_or_create(user=user, defaults={"is_program_manager": True})
     return user
 
 

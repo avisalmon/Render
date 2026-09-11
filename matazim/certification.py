@@ -40,7 +40,7 @@ from django.utils import timezone
 
 from app.models import CourseCertificate
 
-from .access import is_admin, leader_of
+from .access import is_program_manager, leader_of
 from .content import REQUIRED_COURSE_SLUGS
 from .models import MemberProfile, Student
 
@@ -135,7 +135,7 @@ def may_certify(user, student):
     This answers *who*, never *whether*. `eligibility` answers whether, and
     `certify` insists on both.
     """
-    if is_admin(user):
+    if is_program_manager(user):
         return True
     leader = leader_of(user)
     return bool(leader and student.leader_id == leader.pk)

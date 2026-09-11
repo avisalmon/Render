@@ -24,7 +24,7 @@
   function choose(person) {
     hidden.value = person.email;
     box.value = person.name ? person.name + " · " + person.email : person.email;
-    chosen.textContent = person.is_admin
+    chosen.textContent = person.is_program_manager
       ? person.email + " כבר מנהל/ת. אפשר להוסיף שוב, זה לא ישנה כלום."
       : "נבחר: " + person.email;
     chosen.hidden = false;
@@ -48,7 +48,7 @@
         '<span class="mz-picker-name"></span><span class="mz-picker-email"></span>';
       item.querySelector(".mz-picker-name").textContent = person.name || person.email;
       item.querySelector(".mz-picker-email").textContent =
-        person.is_admin ? person.email + " · כבר מנהל/ת" : person.email;
+        person.is_program_manager ? person.email + " · כבר מנהל/ת" : person.email;
       item.addEventListener("click", function () { choose(person); });
       item.addEventListener("keydown", function (e) {
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); choose(person); }

@@ -18,15 +18,21 @@ from .models import EntranceAttempt, EntranceTarget, Leader, MemberProfile, Stud
 
 @admin.register(MemberProfile)
 class MemberProfileAdmin(admin.ModelAdmin):
-    """Where adminship is granted by hand.
+    """Where the program-manager role is granted by hand.
 
-    `is_admin` is editable straight from the list, because the whole reason this
-    is registered is to flip it for three named people without a deploy.
+    `is_program_manager` is editable straight from the list, because the whole
+    reason this is registered is to flip it for a named person without a deploy.
     """
 
-    list_display = ("email", "is_admin", "entered_via_matazim", "passed_test", "first_seen_at")
-    list_editable = ("is_admin",)
-    list_filter = ("is_admin", "entered_via_matazim")
+    list_display = (
+        "email",
+        "is_program_manager",
+        "entered_via_matazim",
+        "passed_test",
+        "first_seen_at",
+    )
+    list_editable = ("is_program_manager",)
+    list_filter = ("is_program_manager", "entered_via_matazim")
     search_fields = ("user__email", "user__username", "user__profile__display_name")
     readonly_fields = ("first_seen_at", "updated_at")
     autocomplete_fields = ("user",)

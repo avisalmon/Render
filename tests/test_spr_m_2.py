@@ -363,7 +363,7 @@ def test_the_replay_control_brings_the_welcome_back(client, db):
     from matazim.models import MemberProfile
 
     user = sign_in(client)
-    MemberProfile.objects.update_or_create(user=user, defaults={"is_admin": True})
+    MemberProfile.objects.update_or_create(user=user, defaults={"is_program_manager": True})
     MemberProfile.objects.update_or_create(
         user=user, defaults={"welcome_accepted_at": timezone.now()}
     )
