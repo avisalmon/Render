@@ -121,6 +121,7 @@ class Command(BaseCommand):
     @transaction.atomic
     def _seed(self):
         from app.models import Course, CourseCertificate, UserVideoProgress
+        from matazim.history import record_arrival, set_status
         from matazim.models import Leader, LeaderInvite, MemberProfile, Student, StudyClass
 
         random.seed(4417)  # the same world every time, so screenshots compare
@@ -196,19 +197,31 @@ class Command(BaseCommand):
             leader, classes = leaders[i % len(leaders)]
             student, _ = Student.objects.get_or_create(user=user, cohort_year=year)
 
+            # REQ-M.21 — through the same door the product uses, so demo
+            # students have a history like real ones and the seeder cannot
+            # drift from the transitions it is imitating.
             if state == "waiting":
                 # Asked, not yet accepted (REQ-M.10). The leader's queue.
                 student.leader = None
                 student.pending_leader = leader
-                student.status = Student.APPLIED
+                student.save()
+                record_arrival(student, by=user, note="בקשה להצטרף")
             else:
                 student.leader = leader
                 student.pending_leader = None
-                student.status = Student.CERTIFIED if state == "certified" else Student.IN_TRAINING
+                student.save()
+                record_arrival(student, by=user, note="הצטרפות")
+                set_status(student, Student.IN_TRAINING, by=leader.user, note="אישור מוביל/ה")
                 if state == "certified":
                     student.certified_at = now
                     student.certified_by = leader.user
-            student.save()
+                    set_status(
+                        student,
+                        Student.CERTIFIED,
+                        by=leader.user,
+                        note="הסמכה",
+                        extra_fields=("certified_at", "certified_by"),
+                    )
             if student.leader:
                 student.classes.set([random.choice(classes)])
 

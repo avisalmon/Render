@@ -28,6 +28,7 @@ from django.views.decorators.http import require_POST
 
 from .access import is_program_manager, leader_of, visible_leaders
 from .consent import consent_blocker, needs_guardian_consent
+from .history import record_arrival, set_status
 from .models import Leader, Student
 from .views import member_profile, shell
 
@@ -97,6 +98,10 @@ def join(request, code):
             already = Student.objects.create(
                 user=request.user, leader=leader, status=Student.IN_TRAINING
             )
+            # REQ-M.21 — the first line of their history. A Student starts at
+            # מתמיינים by default, so without this the record would begin at
+            # whatever happened second.
+            record_arrival(already, by=request.user, note="הצטרפות בקישור")
         else:
             already.leader = leader
             already.pending_leader = None
@@ -104,8 +109,8 @@ def join(request, code):
             # candidate and starts being a learner. Nothing advanced this
             # before, so every student sat at מתמיינים forever and the roster's
             # status column answered nothing.
-            already.status = Student.IN_TRAINING
-            already.save(update_fields=["leader", "pending_leader", "status", "updated_at"])
+            already.save(update_fields=["leader", "pending_leader", "updated_at"])
+            set_status(already, Student.IN_TRAINING, by=request.user, note="הצטרפות בקישור")
         request.session.pop(INVITE_KEY, None)
         return redirect("matazim:joined")
 
@@ -173,8 +178,8 @@ def apply(request):
             student = existing or Student(user=request.user)
             # Asking, not being accepted. The leader says yes (REQ-M.10).
             student.pending_leader = leader
-            student.status = Student.APPLIED
             student.save()
+            set_status(student, Student.APPLIED, by=request.user, note="בקשה להצטרף")
             return redirect("matazim:joined")
 
     return render(
@@ -252,8 +257,8 @@ def leader_confirm(request, student_id):
         student.pending_leader = None
         # Same moment, the other way in. מתמיינים is the selection stage, and
         # this person has just been accepted out of it.
-        student.status = Student.IN_TRAINING
-        student.save(update_fields=["leader", "pending_leader", "status", "updated_at"])
+        student.save(update_fields=["leader", "pending_leader", "updated_at"])
+        set_status(student, Student.IN_TRAINING, by=request.user, note="אישור מוביל/ה")
     else:
         student.pending_leader = None
         student.save(update_fields=["pending_leader", "updated_at"])

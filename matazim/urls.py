@@ -8,6 +8,7 @@ templates/matazim/ may only reverse names in this namespace.
 from django.urls import path
 
 from . import (
+    cohort_views,
     entrance_views,
     invite_views,
     joining_views,
@@ -65,6 +66,9 @@ urlpatterns = [
     # SPR-M.14 — the three doors a leader can come through (REQ-M.90 to M.93).
     path("leaders/join/<str:token>/", invite_views.invite_landing, name="invite_landing"),
     path("staff/team/", invite_views.leaders, name="pm_leaders"),
+    # REQ-M.24 — the cohort, and the school report Litala's brief asks for.
+    path("staff/cohort/", cohort_views.cohort, name="cohort"),
+    path("staff/cohort/export.csv", cohort_views.cohort_export, name="cohort_export"),
     path("staff/team/invite/<int:invite_id>/qr.png", invite_views.invite_qr, name="invite_qr"),
     path(
         "staff/team/candidate/<int:leader_id>/reject/",

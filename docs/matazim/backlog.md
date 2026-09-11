@@ -958,7 +958,86 @@ as well as legal prose.
 That is a bigger piece of work and this screen can link out to the course in
 babook's own player meanwhile, which is honest about where the learning lives.
 
-## SPR-M.17 — The student detail page, for a leader  `NOT PLANNED`
+## SPR-M.17 — The cohort, and the school report  `DONE`
+
+REQ-M.24, the last screen the spec names for the program manager, and the one it
+calls Litala's: the funnel by stage and by leader, grouped by school, with an
+export.
+
+**The judgement call is what "export it" means.** Read literally it could be a
+spreadsheet of named teenagers, which is also the version somebody would ask for
+first. It is the wrong one. Spec §4.10 exists because this product holds data
+about minors, and a CSV of their names is the one artefact that leaves the
+system entirely: it lands in a download folder, gets mailed to a colleague, and
+outlives every access rule we wrote. A school-level report does not need it. So
+**the export is aggregate**: counts by stage, by leader, by school, and no
+individual is named in it. The named detail stays behind the screens that check
+who is asking, which is exactly where SPR-M.9 put the uploads and for the same
+reason.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.17.1 | The funnel: how many at each of the five stages, in her world | REQ-M.24, REQ-M.88 | DONE |
+| F-M.17.2 | By leader: who has how many, and how far along | REQ-M.24 | DONE |
+| F-M.17.3 | By school, which is what Litala's brief actually asks for | REQ-M.24 | DONE |
+| F-M.17.4 | Export, aggregate only, no minor named | REQ-M.24, §4.10 | DONE |
+| F-M.17.5 | Root sees across worlds; a program manager sees one | REQ-M.88 | DONE |
+
+### Two things the counting turned out to need
+
+**A leader with nobody is the row she most needs to see**, and a report built by
+grouping students drops them entirely. The by-leader breakdown is therefore
+built from the leaders and joined to counts, not grouped from students.
+
+**A student in no class has to land somewhere.** School lives on the class, and
+a class is offered and never required (Q14), so grouping through classes loses
+anybody in none. They are counted under a named bucket rather than dropped,
+because a school report that silently undercounts the programme is worse than
+one that admits an unfiled group. A test asserts the school totals still sum to
+the funnel total.
+
+Seen live on the dev demo, the report showed 13 where 14 students exist. That
+was not an error: one belongs to a leader owned by a different program manager,
+so tenancy excluded them exactly as SPR-M.13 intended. Worth recording because
+an off-by-one in an aggregate is the shape a real leak would also take, and this
+is what it looks like when the mechanism is working.
+
+**The risk is arithmetic that disagrees with the screens.** A funnel is a lot of
+counting, and a count computed here rather than read from the same place as the
+roster is a third opinion about the same teenagers. It reads through
+`access.visible_students` and the SPR-M.8 modules, and a test compares a total
+on this page against the roster it came from.
+
+## SPR-M.18 — Every transition logged  `DONE`
+
+REQ-M.21, and it was the last thing on the buildable list that genuinely did not
+exist.
+
+Five places set `Student.status`, and exactly one recorded who had done it:
+certification, because REQ-M.78 made that transition's author part of the
+record. The other four were anonymous. Every other table in this product answers
+"what is true now"; this one answers "who decided, and when", which for a system
+holding data about minors is the difference between answering a parent's
+question and having to say we do not know.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.18.1 | `StatusLog`, append-only, and `history.set_status` as the one door | REQ-M.21 | DONE |
+| F-M.18.2 | Every existing transition routed through it, including the seeder | REQ-M.21 | DONE |
+| F-M.18.3 | A guard that fails if anything assigns `.status` outside `history.py` | REQ-M.21 | DONE |
+| F-M.18.4 | The history shown on the student's page | REQ-M.21 | DONE |
+
+**The single door is the whole design.** `set_status` writes the field and the
+log in one call, which is the only arrangement where the two cannot disagree,
+and that holds exactly as long as nothing goes round it. So the guard is the
+load-bearing test, the same shape as RULE-3: the rule is only real while
+something checks.
+
+The guard caught the demo seeder immediately. Rather than exempt it, the seeder
+now goes through the same door, so demo students carry a real history and the
+fixture cannot drift from the transitions it is imitating.
+
+## SPR-M.19 — The student detail page, for a leader  `NOT PLANNED`
 
 Hangs off F-M.15.3. Avi: "we will define it later."
 

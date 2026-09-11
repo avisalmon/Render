@@ -1366,3 +1366,41 @@ a.mz-training-title:hover { color: var(--mz-purple); }
   box-shadow: 0 0 0 4px var(--mz-purple-soft);
 }
 .mz-journey-step.is-current .mz-journey-name { color: var(--mz-ink); }
+
+/* The funnel (SPR-M.17). A row is a label, a bar, and a number: the bar is
+ * proportioned against the cohort total so the stages compare to each other,
+ * and the number is always beside it because a bar alone is not a figure. */
+.mz-funnel { list-style: none; margin: 0; padding: 0; }
+.mz-funnel-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+}
+.mz-funnel-label { flex: 0 0 96px; color: var(--mz-body); font-weight: 500; }
+.mz-funnel-row .mz-bar { flex: 1; height: 10px; }
+.mz-funnel-count { flex: 0 0 40px; text-align: end; font-weight: 600; color: var(--mz-ink); }
+
+@media (max-width: 640px) {
+  .mz-funnel-label { flex: 0 0 80px; font-size: .93rem; }
+}
+
+/* The status history (SPR-M.18). Date, what changed, who: three columns that
+ * stack on a phone, because an audit trail squeezed into a narrow screen is
+ * the classic place a table starts scrolling sideways. */
+.mz-history { list-style: none; margin: 0; padding: 0; }
+.mz-history li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: baseline;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--mz-line);
+}
+.mz-history li:last-child { border-bottom: 0; }
+.mz-history-when { flex: 0 0 76px; color: var(--mz-muted); font-size: .88rem; }
+.mz-history-what { flex: 1 1 200px; color: var(--mz-body); }
+
+@media (max-width: 640px) {
+  .mz-history-when { flex: 0 0 100%; }
+}

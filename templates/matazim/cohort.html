@@ -1,0 +1,113 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.24 — the cohort, and the school report.
+
+  Three cuts of one number: by stage, by leader, by school. The funnel first
+  because it is the shape of the programme; the school breakdown last because
+  it is the one Litala's brief asks for and the one that gets exported.
+
+  Every figure here came from `access.visible_students`, so nothing on this page
+  can cross a world (REQ-M.88).
+{% endcomment %}
+
+{% block title %}הקבוצה · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>הקבוצה</h1>
+    <p>כמה מט״צים יש, איפה הם עומדים, ואצל מי.</p>
+  </div>
+
+  <section class="mz-panel">
+    <h2>לפי שלב <span class="mz-count">{{ funnel_total }}</span></h2>
+    {% if funnel_total %}
+      <ul class="mz-funnel">
+        {% for row in funnel %}
+          <li class="mz-funnel-row">
+            <span class="mz-funnel-label">{{ row.label }}</span>
+            <span class="mz-bar">
+              {% comment %}
+                Width against the total, so the bars compare to each other and
+                not each to itself. A bar that is always full says nothing.
+              {% endcomment %}
+              <span class="mz-bar-fill"
+                    style="width: {% widthratio row.count funnel_total 100 %}%"></span>
+            </span>
+            <span class="mz-funnel-count">{{ row.count }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="mz-muted">עוד אין מט״צים בתוכנית שלכם.</p>
+    {% endif %}
+  </section>
+
+  <section class="mz-panel">
+    <h2>לפי מוביל/ה <span class="mz-count">{{ by_leader|length }}</span></h2>
+    {% if by_leader %}
+      <ul class="mz-roster">
+        {% for row in by_leader %}
+          <li class="mz-roster-row">
+            <a class="mz-roster-who" href="{% url 'matazim:staff_leader' row.leader.pk %}">
+              <span class="mz-roster-name">{{ row.name }}</span>
+              <span class="mz-muted">
+                {% for school in row.schools %}{{ school }}{% if not forloop.last %} · {% endif %}{% empty %}עוד לא פתח/ה כיתה{% endfor %}
+              </span>
+            </a>
+            <span class="mz-role">
+              <span class="mz-muted">{{ row.total }} מט״צים</span>
+              {% if row.certified %}
+                <span class="mz-tag mz-tag-done">{{ row.certified }} מוסמכים</span>
+              {% endif %}
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="mz-muted">עוד אין מובילים.</p>
+    {% endif %}
+  </section>
+
+  <section class="mz-panel">
+    <h2>לפי בית ספר <span class="mz-count">{{ by_school|length }}</span></h2>
+    {% if by_school %}
+      <ul class="mz-training">
+        {% for row in by_school %}
+          <li>
+            <span class="mz-training-title">{{ row.school }}</span>
+            <span class="mz-role">
+              <span class="mz-muted">{{ row.total }} מט״צים</span>
+              {% if row.certified %}
+                <span class="mz-tag mz-tag-done">{{ row.certified }} מוסמכים</span>
+              {% endif %}
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="mz-muted">אין עדיין נתונים לפי בית ספר.</p>
+    {% endif %}
+  </section>
+
+  <section class="mz-panel">
+    <h2>ייצוא</h2>
+    {% comment %}
+      §4.10 — aggregate on purpose, and the page says so rather than leaving
+      somebody to discover it and assume the export is broken.
+    {% endcomment %}
+    <p class="mz-muted">
+      הדוח יורד כקובץ לאקסל: מספרים לפי שלב, לפי מוביל/ה ולפי בית ספר.
+      <strong>שמות של מט״צים לא נכללים בו.</strong> קובץ שיוצא מהמערכת מגיע
+      לתיקיית הורדות ונשלח הלאה, ואין סיבה שיהיו בו שמות של קטינים כדי לענות
+      על השאלות שהדוח הזה עונה עליהן.
+    </p>
+    <a class="mz-btn mz-btn-primary" href="{% url 'matazim:cohort_export' %}">הורדת הדוח</a>
+  </section>
+
+  <p class="mz-page-actions">
+    <a class="mz-linkbtn" href="{% url 'matazim:pm_leaders' %}">חזרה למובילים</a>
+  </p>
+</div>
+{% endblock %}

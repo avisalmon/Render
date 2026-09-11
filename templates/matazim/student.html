@@ -126,6 +126,32 @@
     </p>
   </section>
 
+  {% comment %}
+    REQ-M.21 — the record of who moved this student and when. Read most often
+    when somebody is asked a question about a teenager they cannot answer from
+    memory, which is exactly when "we do not know" is the wrong answer.
+  {% endcomment %}
+  {% if history %}
+    <section class="mz-panel">
+      <h2>היסטוריה</h2>
+      <ul class="mz-history">
+        {% for entry in history %}
+          <li>
+            <span class="mz-history-when">{{ entry.at|date:"j.n.Y" }}</span>
+            <span class="mz-history-what">
+              {% if entry.from_status %}<span class="mz-muted">{{ entry.get_from_status_display }}</span> ←{% endif %}
+              <strong>{{ entry.get_to_status_display }}</strong>
+              {% if entry.note %}<span class="mz-muted">{{ entry.note }}</span>{% endif %}
+            </span>
+            <span class="mz-muted">
+              {% if entry.changed_by %}{{ entry.changed_by.profile.display_name|default:entry.changed_by.email }}{% endif %}
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
   {% if my_classes %}
     <section class="mz-panel">
       <h2>כיתות</h2>

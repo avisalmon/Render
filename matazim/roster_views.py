@@ -157,6 +157,10 @@ def student(request, student_id):
             ],
             outstanding=outstanding,
             can_certify=may_certify(request.user, person),
+            # REQ-M.21 — who moved this student, and when. A log nobody can see
+            # answers nobody's question, and the person most likely to be asked
+            # is whoever is looking at this page.
+            history=person.history.select_related("changed_by", "changed_by__profile")[:20],
             my_classes=StudyClass.objects.filter(leader=leader) if leader else [],
             chosen=set(person.classes.values_list("pk", flat=True)),
         ),

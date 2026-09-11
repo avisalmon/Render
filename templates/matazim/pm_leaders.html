@@ -25,6 +25,15 @@
   {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
   {% if notice %}<div class="mz-alert mz-alert-ok" role="status">{{ notice }}</div>{% endif %}
 
+  {% comment %}
+    REQ-M.24 — the cohort report, one click from the screen she is already on.
+    Fourth time this product has learned that a screen you must know the URL for
+    is a screen nobody uses (REQ-M.62, REQ-M.89, the roster, and now this).
+  {% endcomment %}
+  <p class="mz-page-actions">
+    <a class="mz-linkbtn" href="{% url 'matazim:cohort' %}">הקבוצה: מספרים לפי שלב, מוביל/ה ובית ספר</a>
+  </p>
+
   {% if candidates %}
     <section class="mz-panel">
       <h2>מחכים לאישור שלכם <span class="mz-tag mz-tag-fix">{{ candidates|length }}</span></h2>

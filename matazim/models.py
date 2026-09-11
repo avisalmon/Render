@@ -323,6 +323,20 @@ class StudyClass(models.Model):
         return f"{self.name} · {self.school_name}" if self.school_name else self.name
 
 
+# The five public stages plus the two ways out, defined once because both
+# `Student.status` and `StatusLog` describe the same vocabulary and a second
+# copy is a second thing to keep in step.
+STATUS_CHOICES = [
+    ("applied", "מתמיינים"),
+    ("in_training", "לומדים"),
+    ("project_submitted", "יוצרים"),
+    ("certified", "מדריכים"),
+    ("alumnus", "משפיעים"),
+    ("rejected", "לא התקבל"),
+    ("revoked", "הוסר"),
+]
+
+
 class Student(models.Model):
     """מט״צ. One row per person per cohort.
 
@@ -339,15 +353,7 @@ class Student(models.Model):
     ALUMNUS = "alumnus"
     REJECTED = "rejected"
     REVOKED = "revoked"
-    STATUS_CHOICES = [
-        (APPLIED, "מתמיינים"),
-        (IN_TRAINING, "לומדים"),
-        (PROJECT_SUBMITTED, "יוצרים"),
-        (CERTIFIED, "מדריכים"),
-        (ALUMNUS, "משפיעים"),
-        (REJECTED, "לא התקבל"),
-        (REVOKED, "הוסר"),
-    ]
+    STATUS_CHOICES = STATUS_CHOICES
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="matazim_student")
     leader = models.ForeignKey(
@@ -528,3 +534,50 @@ class LeaderInvite(models.Model):
     @property
     def is_live(self):
         return self.revoked_at is None and not self.is_spent
+
+
+class StatusLog(models.Model):
+    """Every change to a student's stage, and who made it (REQ-M.21).
+
+    Append-only. Nothing in this product updates or deletes one of these rows,
+    and a guard test asserts no code path tries.
+
+    Why it exists at all. Every other record here answers "what is true now";
+    this one answers "who decided, and when". For a system holding data about
+    minors that is not bookkeeping, it is the difference between being able to
+    answer a parent's question and having to say we do not know. Certification
+    already records its own author (REQ-M.78) because it is the most
+    consequential transition, and this generalises that to all of them rather
+    than leaving four other transitions anonymous.
+
+    `note` is deliberately free text and deliberately optional. A reason nobody
+    can be bothered to type is a reason that gets typed badly.
+    """
+
+    student = models.ForeignKey("Student", on_delete=models.CASCADE, related_name="history")
+    # The same choices `Student.status` carries, so `get_to_status_display()`
+    # resolves to Hebrew. Without them the field is a bare CharField, that
+    # method does not exist, and the history renders raw keys: a teenager's
+    # record reading "in_training ← certified" to a Hebrew-speaking teacher.
+    from_status = models.CharField(
+        max_length=20, blank=True, default="", choices=STATUS_CHOICES, verbose_name="משלב"
+    )
+    to_status = models.CharField(max_length=20, choices=STATUS_CHOICES, verbose_name="לשלב")
+    changed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name="על ידי",
+    )
+    note = models.CharField(max_length=200, blank=True, default="", verbose_name="הערה")
+    at = models.DateTimeField(auto_now_add=True, verbose_name="מתי")
+
+    class Meta:
+        ordering = ["-at"]
+        verbose_name = "שינוי שלב"
+        verbose_name_plural = "שינויי שלב"
+
+    def __str__(self):
+        return f"{self.student_id}: {self.from_status or '—'} → {self.to_status}"

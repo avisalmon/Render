@@ -42,6 +42,7 @@ from app.models import CourseCertificate
 
 from .access import is_program_manager, leader_of
 from .content import REQUIRED_COURSE_SLUGS
+from .history import set_status
 from .models import MemberProfile, Student
 
 
@@ -154,10 +155,17 @@ def certify(user, student):
         # what matters is that no path through the app can get past it.
         return False
 
-    student.status = Student.CERTIFIED
     student.certified_at = timezone.now()
     student.certified_by = user
-    student.save(update_fields=["status", "certified_at", "certified_by", "updated_at"])
+    # REQ-M.21 — through the one door, so the transition and its record are a
+    # single write. The certified_* columns ride along in the same save.
+    set_status(
+        student,
+        Student.CERTIFIED,
+        by=user,
+        note="הסמכה",
+        extra_fields=("certified_at", "certified_by"),
+    )
     return True
 
 
@@ -171,8 +179,13 @@ def revoke(user, student):
     if not may_certify(user, student):
         raise PermissionError("not this person's student")
 
-    student.status = Student.IN_TRAINING
     student.certified_at = None
     student.certified_by = None
-    student.save(update_fields=["status", "certified_at", "certified_by", "updated_at"])
+    set_status(
+        student,
+        Student.IN_TRAINING,
+        by=user,
+        note="ביטול הסמכה",
+        extra_fields=("certified_at", "certified_by"),
+    )
     return True

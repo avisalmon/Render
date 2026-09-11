@@ -177,7 +177,7 @@ LEADER_PAGES = [
 ]
 
 # SPR-M.14 and M.15: the program manager reads these on a phone too.
-MANAGER_PAGES = ["/matazim/staff/team/"]
+MANAGER_PAGES = ["/matazim/staff/team/", "/matazim/staff/cohort/"]
 
 LEADER_EMAIL = "phone-leader@example.com"
 LEADER_PASSWORD = "phone-guard-9912"
