@@ -79,6 +79,21 @@ def notify(event) -> int:
     """
     if not _configured():
         return 0
+    # REQ-11.6.10: disarmed is SILENT, never blind. The event has already been
+    # stored by the time this runs — what stops here is only the phone.
+    #
+    # An UNKNOWN mode (a house too old to report one, or a heartbeat that has
+    # not arrived) counts as armed. Assuming disarmed on a missing field is how
+    # an alert disappears with nobody deciding.
+    try:
+        from app.security_views import DISARMED
+        from app.security_models import SecurityState
+        mode = (getattr(SecurityState.current(), "mode", "") or "").strip().upper()
+        if mode == DISARMED:
+            log.debug("house is disarmed — not notifying")
+            return 0
+    except Exception:
+        log.exception("could not read the armed state — notifying anyway")
     # Imported here so the module can be loaded (and tested) without the app
     # registry being ready.
     from app.security_models import SecurityPushSubscription

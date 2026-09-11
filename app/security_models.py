@@ -127,6 +127,11 @@ class SecurityState(models.Model):
     cameras_total = models.IntegerField(default=0)
     last_event_ts = models.DateTimeField(null=True, blank=True)
     disk_free_gb = models.FloatField(null=True, blank=True)
+    # REQ-11.6.10: what the HOUSE says it is - DISARM / HOME / NIGHT / AWAY /
+    # VACATION, or "" from a house too old to report it. Empty means UNKNOWN and
+    # never "disarmed": guessing disarmed would show a reassuring page for a
+    # house nobody can actually ask, and would silence the phone by accident.
+    mode = models.CharField(max_length=16, blank=True, default="")
     notes = models.TextField(blank=True)
     received_at = models.DateTimeField(auto_now=True)
 

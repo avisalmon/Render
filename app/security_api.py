@@ -555,6 +555,7 @@ def push_state(request):
             "ok": bool(payload.get("ok", True)),
             "cameras_online": _int("cameras_online"),
             "cameras_total": _int("cameras_total"),
+            "mode": str(payload.get("mode") or "")[:16].strip().upper(),
             "last_event_ts": _parse_ts(payload.get("last_event_ts")),
             "disk_free_gb": disk_free,
             "notes": str(payload.get("notes") or "")[:2000],

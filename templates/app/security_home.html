@@ -45,6 +45,33 @@ Order of importance on the screen, deliberately:
     decoration either: this is awareness while the page is open, and a user who
     mistakes it for the alarm finds out from silence.
   {% endcomment %}
+  {% comment %}
+    REQ-11.6.10 - arm / disarm the NOTIFICATIONS. Not the burglar panel: this is
+    the house's own state, and babook can only ASK. The label shows what the
+    house last reported, never what was last pressed, because a page claiming a
+    house is armed before it is would be the worst lie here.
+  {% endcomment %}
+  <div class="sec-alerts" id="sec-arm-box">
+    <div class="d-flex align-items-center justify-content-between gap-2">
+      <div>
+        <strong id="sec-arm-state">
+          {% if not arming.known %}מצב לא ידוע
+          {% elif arming.armed %}חמוש - התראות פעילות
+          {% else %}מנוטרל - אין התראות{% endif %}
+        </strong>
+        <div id="sec-arm-pending" class="sec-alerts-note mb-0 {% if not arming.pending %}d-none{% endif %}">
+          נשלחה בקשה, ממתין לאישור מהבית...
+        </div>
+      </div>
+      <button type="button" id="sec-arm" class="btn btn-sm {% if arming.armed %}btn-outline-light{% else %}btn-success{% endif %}">
+        <span id="sec-arm-label">{% if arming.armed %}נטרול{% else %}חימוש{% endif %}</span>
+      </button>
+    </div>
+    <p class="sec-alerts-note mb-0">
+      מנוטרל = שקט מוחלט בטלפון. המצלמות ממשיכות להקליט כרגיל.
+    </p>
+  </div>
+
   <div class="sec-alerts">
     <div class="form-check form-switch m-0">
       <input class="form-check-input" type="checkbox" role="switch" id="sec-alerts">
@@ -459,6 +486,7 @@ Order of importance on the screen, deliberately:
         if (sub && d.status.known) {
           sub.textContent = d.status.cameras_online + '/' + d.status.cameras_total + ' מצלמות מחוברות';
         }
+        if (d.arming) paintArming(d.arming);
         if (d.newest_event_id > seen) {
           pill.classList.remove('d-none');
           alertOnEvent(d);
@@ -550,6 +578,47 @@ Order of importance on the screen, deliberately:
     if (alerts.checked) schedule();   /* remembered from last time */
   }
   schedule();
+
+  /* REQ-11.6.10 - arm / disarm. The page ASKS; the house decides and reports
+     back on its next heartbeat, so the label only changes when the house says
+     so. Until then the pending note is what distinguishes "asked" from
+     "nothing happened". */
+  var armBtn = document.getElementById('sec-arm');
+  var armState = document.getElementById('sec-arm-state');
+  var armLabel = document.getElementById('sec-arm-label');
+  var armPending = document.getElementById('sec-arm-pending');
+  var armed = {{ arming.armed|yesno:"true,false" }};
+
+  function paintArming(a) {
+    if (!a || !armState) return;
+    armed = a.armed;
+    armState.textContent = !a.known ? 'מצב לא ידוע'
+                         : a.armed ? 'חמוש - התראות פעילות'
+                                   : 'מנוטרל - אין התראות';
+    armLabel.textContent = a.armed ? 'נטרול' : 'חימוש';
+    armBtn.classList.toggle('btn-success', !a.armed);
+    armBtn.classList.toggle('btn-outline-light', !!a.armed);
+    armPending.classList.toggle('d-none', !a.pending);
+  }
+
+  if (armBtn) {
+    armBtn.addEventListener('click', function () {
+      armBtn.disabled = true;
+      var url = armed ? '{% url "security_disarm" %}' : '{% url "security_arm" %}';
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf() },
+        body: JSON.stringify(armed ? {} : { mode: 'AWAY' })
+      }).then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          if (d && d.arming) paintArming(d.arming);
+          /* Deliberately NOT flipping the label here: the house has not acted
+             yet. The pending note is the honest state. */
+        })
+        .catch(function () {})
+        .then(function () { armBtn.disabled = false; });
+    });
+  }
 
   /* REQ-11.6.9 - Web Push: told with the browser closed.
 

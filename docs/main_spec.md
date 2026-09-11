@@ -1862,6 +1862,32 @@ One page, phone first, at `/home`.
     key or a slow network must not fail it — the relay would retry forever and
     the log would stop moving. Failures are recorded and swallowed.
 
+- **REQ-11.6.10 — Arm and disarm the notifications, from the page.** Measured on
+  a real week: the notification of REQ-11.6.9 would have fired **15-25 times a
+  day**, and **117 of 168 incidents were somebody the house recognises** walking
+  in their own door. A phone in another timezone buzzing twenty times a day gets
+  switched off, and then the one that matters is off too.
+
+  - **Armed** → every person detected is announced. **Disarmed** → none at all.
+  - **Disarmed is silent, never blind.** Events are still received, stored and
+    shown. Only the phone goes quiet. A system that stopped *recording* because
+    nobody wanted disturbing would have nothing to show for the night somebody
+    came.
+  - **babook cannot arm anything — it can only ask.** Pressing the button queues
+    an `arm`/`disarm` command (§5.2) which the house collects on its next poll.
+    The page shows what the house last **reported**, never what was last pressed,
+    and says "waiting for the house" in between. A projection that displays its
+    own request as fact is how two systems come to disagree about whether a
+    house is guarded.
+  - **This is not the burglar panel.** It is the house's own state (W1), local to
+    `seccore` and independent of Visonic since AL3.
+  - **Unknown counts as ARMED.** A house too old to report a mode, or a heartbeat
+    that has not arrived, must not be read as disarmed — that is how an alert
+    disappears with nobody deciding.
+  - **Day and night differ, and the house decides that**, not this page: by day
+    an event is announced on detection, by night it waits for the
+    full-resolution check (~30 s). See the house spec §3.34.
+
 ### 11.7 Snapshots (REQ-11.7)
 
 Enabled, per the owner's decision, with limits.

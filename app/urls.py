@@ -269,6 +269,8 @@ urlpatterns = [
     # REQ-11.6.9 - the service worker must come from the ROOT: one under
     # /static/ can only control /static/ and would never receive a push.
     path("sw.js", security_views.security_service_worker, name="security_sw"),
+    path("home/arm/", security_views.security_arm, name="security_arm"),
+    path("home/disarm/", security_views.security_disarm, name="security_disarm"),
     path("home/push/subscribe/", security_views.security_push_subscribe,
          name="security_push_subscribe"),
     path("home/push/unsubscribe/", security_views.security_push_unsubscribe,

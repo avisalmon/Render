@@ -253,6 +253,7 @@ def security_home(request):
         # REQ-11.6.9: the browser needs this to subscribe. Public by design -
         # only the private half is a credential.
         "vapid_public_key": getattr(settings, "VAPID_PUBLIC_KEY", ""),
+        "arming": arming_status(),
         "rows": [_row(e) for e in page.object_list],
         "page_obj": page,
         "cameras": list(
@@ -291,6 +292,7 @@ def security_feed(request):
         "newest_severity": (newest or {}).get("severity") or "",
         "newest_camera": (newest or {}).get("camera") or "",
         "total": SecurityEvent.objects.count(),
+        "arming": arming_status(),
     }))
 
 
@@ -489,3 +491,74 @@ def security_push_unsubscribe(request):
     from . import security_push
     security_push.forget_subscription((body.get("endpoint") or "").strip())
     return _no_index(JsonResponse({"ok": True}))
+
+
+# ---------------------------------------------------------------------------
+# Arm / disarm the notifications (REQ-11.6.10)
+# ---------------------------------------------------------------------------
+
+#: What the house understands. babook does not invent modes - an unknown one
+#: would be acked `failed` and left pending for ever, so it is refused here where
+#: the owner is still looking at the screen.
+ARM_MODES = ("AWAY", "HOME", "NIGHT", "VACATION")
+
+#: Anything that is not DISARM guards something (house spec W1). Empty is
+#: UNKNOWN and deliberately counts as armed: a page that cannot tell must not
+#: imply silence.
+DISARMED = "DISARM"
+
+
+def arming_status():
+    """What the HOUSE says it is, plus any request not yet collected.
+
+    The mode comes from the house's own heartbeat and never from the last button
+    press. babook cannot arm anything — it can only ask — and a projection that
+    displays its own request as fact is how two systems come to disagree about
+    whether a house is guarded (house spec §6.1).
+    """
+    state = SecurityState.current()
+    mode = (getattr(state, "mode", "") or "").strip().upper()
+    pending = (SecurityCommand.objects
+               .filter(kind__in=("arm", "disarm"), acked_at__isnull=True)
+               .order_by("-created_at").values_list("kind", flat=True).first())
+    return {
+        "mode": mode,
+        "known": bool(mode),
+        # Unknown counts as armed: see DISARMED above.
+        "armed": mode != DISARMED,
+        "pending": pending or "",
+    }
+
+
+def _queue(kind, params=None):
+    SecurityCommand.objects.create(kind=kind, params=params or {})
+
+
+@require_POST
+def security_arm(request):
+    """Ask the house to arm. It applies this on its next poll (§5.2)."""
+    _gate(request)
+    try:
+        body = json.loads(request.body or b"{}")
+    except ValueError:
+        body = {}
+    mode = str(body.get("mode") or "AWAY").strip().upper()
+    if mode not in ARM_MODES:
+        return JsonResponse({"ok": False,
+                             "error": f"mode must be one of {', '.join(ARM_MODES)}"},
+                            status=400)
+    _queue("arm", {"mode": mode, "by": (request.user.email or "web")[:60]})
+    SecurityViewLog.objects.create(
+        email=(request.user.email or "")[:254], path="/home/arm")
+    return _no_index(JsonResponse({"ok": True, "requested": mode,
+                                   "arming": arming_status()}))
+
+
+@require_POST
+def security_disarm(request):
+    """Ask the house to disarm — the phone goes quiet, the cameras do not."""
+    _gate(request)
+    _queue("disarm", {"by": (request.user.email or "web")[:60]})
+    SecurityViewLog.objects.create(
+        email=(request.user.email or "")[:254], path="/home/disarm")
+    return _no_index(JsonResponse({"ok": True, "arming": arming_status()}))
