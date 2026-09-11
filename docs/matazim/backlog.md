@@ -451,24 +451,51 @@ would quietly tell a leader that a kid has finished four lessons while the kid's
 own screen says three. F-M.8.1 is therefore built with a test that pins the two
 readers against each other, not merely a test that the new one returns numbers.
 
-### What the track even is
+### What the track is
 
-There is no set of courses that constitutes מט״צים training today. `/matazim/courses/`
-honestly says so. A roster cannot show progress through a track that does not
-exist, so F-M.8.2 names one, as a list of slugs in `matazim/content.py`: no
-migration, no field on babook's `Course`, and RULE-4 stays intact because babook
-still knows nothing about us. Avi names the courses; until he does, a short
-placeholder list drives the screens and the page says the track is provisional.
+Answered by Avi on 2026-09-11, so this is no longer a placeholder. The required
+core is exactly two babook courses, `scratch` and `scratch-advanced`, both of
+which exist today, are published, and issue certificates. Together with the
+entrance test they are the whole automatic half of becoming a mataz.
+
+It lives as a slug list in `matazim/content.py`: no migration, no field on
+babook's `Course`, and RULE-4 holds because babook still knows nothing about us.
+Anything beyond those two is encouraged and shown, but never a substitute.
+
+### Becoming a mataz
+
+The sprint grew by one screen, and it is the important one. A roster without it
+is a report; with it, it is where a leader does their job.
+
+Three conditions (REQ-M.76). The entrance test, the two Scratch certificates,
+and the leader's own approval. The first two מט״צים only **reads**: a
+`CourseCertificate` row is babook's fact, issued by babook's Finish button, and
+nothing here re-derives what a certificate means.
+
+The two halves pull in opposite directions on purpose, and this is the part to
+get right. The automatic check is **binding**: a leader cannot certify someone
+who has not met it, the action is absent rather than discouraged, and the server
+refuses the post independently of what the page rendered (REQ-M.77). The human
+check is **the decision**: meeting the prerequisites earns the right to be
+considered and never the status itself, and nobody is promoted automatically on
+a certificate count (REQ-M.78). Note this is the exact inverse of the entrance
+test, where the machine advises and never rejects. Here the machine only ever
+refuses, and only a person can grant.
+
+An ineligible student is an explained state, not a missing button: the screen
+says which of the three is outstanding and links to it.
 
 | F-ID | Feature | Traces | Status |
 |---|---|---|---|
 | F-M.8.1 | `matazim/progress.py`: progress for many students in a fixed number of queries, pinned to babook's rule by a test | REQ-M.74, REQ-M.14 | TODO |
-| F-M.8.2 | The track is a named list of courses | REQ-M.23 | TODO |
+| F-M.8.2 | The track: `scratch` + `scratch-advanced`, named in `content.py` | REQ-M.23, REQ-M.76 | TODO |
 | F-M.8.3 | The roster: every student the leader has, with stage, track progress and class | REQ-M.23, REQ-M.22 | TODO |
 | F-M.8.4 | Classes: create, rename, put students in them. Offered, never required | REQ-M.23, Q14 | TODO |
 | F-M.8.5 | One student, seen by their leader: stage, lesson-level progress, entrance attempt | REQ-M.23 | TODO |
 | F-M.8.6 | Search and paging on the roster from the first commit | REQ-M.23 | TODO |
 | F-M.8.7 | The whole thing on a phone | REQ-M.75 | TODO |
+| F-M.8.8 | Eligibility: the three conditions, computed and never stored | REQ-M.76 | TODO |
+| F-M.8.9 | A leader certifies a mataz, and the gate refuses on the server | REQ-M.77, REQ-M.78 | TODO |
 
 ### Rules this sprint is under
 

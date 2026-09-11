@@ -289,6 +289,22 @@ only nesting. Whether classes are needed at all is Q14's decision: forty
 students across the network means a leader has one or two and school *is* the
 group; twelve hundred means a leader has forty-five and needs to split them.
 
+### 4.5 Two kinds of leader, and what to call them in English
+
+Hebrew keeps these apart without effort and English does not, which has already
+cost us clarity in this document.
+
+| In the product | In English, here and in code | Who |
+|---|---|---|
+| מוביל / מובילה | **leader** | The adult. Has classes, has students, approves and certifies. |
+| מט״צ (plural מט״צים) | **mataz** (plural **matazim**) | The teenager. A certified mataz is what the whole program produces. |
+
+Avi, 2026-09-11: "קשה לומר מט״צ באנגלית, so I will now refer to young leader as
+mataz." Note that *young leader* and *mataz* are the same thing, so a sentence
+with both "leader" and "young leader" in it is a sentence about two different
+people and is worth rewriting. The Hebrew interface is unaffected: it says
+מוביל and מט״צ and always did.
+
 ## 5. Requirements
 
 ### 5.1 The space itself
@@ -399,6 +415,9 @@ front rather than letting a kid discover it at lesson four on a phone.
 | REQ-M.14 | Progress written once | Watching and completing writes to `UserVideoProgress`, `Enrollment` and `CourseCertificate` exactly as babook does, through the same code path. No parallel progress table, no divergence. | TODO |
 | REQ-M.74 | Progress read once, too | REQ-M.14 keeps writing honest; this keeps reading honest. A roster shows many students at once, which is the inverse shape of babook's own screens and the exact place a second, subtly different definition of "done" gets invented. The cohort reader answers with the same rule babook's `_catalog_progress` uses, and a test asserts the two agree for the same person on the same course. If they ever disagree, one of them is lying to a leader about a teenager. | TODO |
 | REQ-M.75 | Everything works on a phone | Avi, 2026-09-10: "make sure everything we develop is adaptive to phone." This is a standing rule over every screen in this product, not a task in one sprint. No horizontal overflow at 390px and no tap target under 24px, enforced by a real browser on every page rather than by looking once. A phone is the default screen for a ninth-grader, so a break here is not a degraded experience, it is the experience. | DONE |
+| REQ-M.76 | What makes a מט״צ | Three things, and all three are required. One: the entrance test is passed (`MemberProfile.entrance_test_passed_at`). Two: babook has issued a `CourseCertificate` for **both** `scratch` and `scratch-advanced`. Three: their leader has approved them by hand. The first two are facts babook already owns and מט״צים only reads, so nothing here re-implements what a certificate means (RULE-3). A student may complete any number of further courses and that is encouraged, but nothing substitutes for the two. | TODO |
+| REQ-M.77 | The gate is a gate, not advice | A leader **cannot** certify a student who has not met the two automatic prerequisites. The action is absent, not merely discouraged, and the server refuses it independently of what the page offered, because a button that is only hidden is a button that gets posted anyway. The screen states which of the three is outstanding and links to it, so an ineligible student is an explained state rather than a missing button. | TODO |
+| REQ-M.78 | The judgment is human | Meeting the prerequisites earns a student the right to be considered, never the status itself. The leader who has taught them decides, and the system never promotes anyone automatically on the strength of a certificate count. This is the opposite of the entrance test, where the machine's check is advice and there is no machine rejection; here the machine's check is binding and only the machine's *refusal* is final. Certification records who granted it and when, and is revocable by the same hand. | TODO |
 | REQ-M.15 | Reads, never writes program state onto learning | Training figures shown anywhere in מט״צים are live queries. Nothing is copied, mirrored, or cached into program tables. | TODO |
 
 ### 5.4 The funnel
@@ -452,7 +471,6 @@ front rather than letting a kid discover it at lesson four on a phone.
 | Q6 | Production already has the old tables and, possibly, real rows. Confirm nobody has applied before we drop them. | Blocks the retirement migration in SPR-M.1. |
 | Q8 | "פתיחת תכנים ומשימות" by program staff: do they get an authoring surface inside מט״צים, or do they author in babook's studio and only publish here? | An authoring UI inside the walls is a large piece of work. Authoring in the studio is free but means Avi and Litala cross into babook, which members never do. |
 | Q9 | Terminology: her brief says תלמידים and מובילים, our docs say מט״צים and מובילי בית ספר. | Cosmetic but pervasive; settle before SPR-M.2 writes the copy. |
-| Q13 | **Who grants certification.** Spec §5 has it granted by hand, by Avi and Naomi. | The one part of Q10 that was real. Hand-granting works for forty people and is physically impossible for twelve hundred, where the authority has to move down to leaders. This is a policy and a permission change, not a screen. Not blocking SPR-M.8 or M.9: it is one requirement to rewrite, and until it is rewritten hand-granting stands. |
 | Q14 | **Is a class load-bearing?** At forty across the network a leader has one or two students per school and `school_name` *is* the group, so nobody needs to create a class. At twelve hundred a leader carries about forty-five and has to split them. | Decides whether class creation belongs in a leader's first run. Defaulted rather than blocked: a class is offered and never required, which is correct in the small world and merely incomplete in the large one. Revisit the day any single leader passes about twenty students. |
 | Q11 | The public gallery publishes minors' work. Who consents, and does a parent sign anything? | Blocks REQ-M.5e. My default in the spec is opt-in by the member plus a staff decision, both withdrawable, but consent for a ninth-grader may need a parent. |
 | Q12 | The public path shows four stages (לומדים, יוצרים, מדריכים, משפיעים) while the program has five, with מתמיינים first. Deliberate? | Cosmetic if deliberate, confusing if not. My reading is deliberate: מתמיינים is the entrance test, which has its own CTA. |
@@ -466,7 +484,12 @@ so nothing about the schema or the roster screens hangs on the cohort size.
 Build for the larger number wherever it is cheap and reversible (search, paging,
 and an admin who lands on counts rather than on a list of every student), all of
 which reads correctly at forty and is the only usable option at twelve hundred.
-The two real questions inside it are now Q13 and Q14. The 1,250 / 120 / 28
+The two real questions inside it are now Q13 and Q14.
+Q13 who grants certification (2026-09-11): **the leader does**, not Avi and Naomi.
+A leader certifies their own student by hand, gated on the entrance test and the
+two Scratch certificates (REQ-M.76 to REQ-M.78). This is the answer that scales:
+the people doing the granting grow with the cohort, because they are the same
+people doing the teaching. The 1,250 / 120 / 28
 figures came from Litala's prototype stats band, which Avi had stripped off the
 home page as invented numbers.
 
