@@ -75,15 +75,66 @@ Every sprint follows these 10 steps in order. No exceptions.
 - After all features green: run the **whole sprint test set** — confirm green.
 - **ACT items:** If a feature needs Avi input (credentials, photo, DNS, etc.), pause on that feature, tell Avi exactly what to do, wait, then continue.
 
+### Step 4a — The screen contract: render it, in every state
+
+Added 2026-09-11, after a run of eleven מט״צים sprints in which **every screen
+that was rendered turned out to have a defect no test had caught**, without a
+single exception. A badge 1018px wide. A class-name collision that silently
+wrapped a new screen in another page's card styling. "Continue" said to somebody
+at 0 of 19. Raw database keys in a teenager's audit trail. A school name printed
+twice. Course slugs in Hebrew prose.
+
+Avi asked whether more process would have prevented them: a functional test, a
+design review, a UX review on every feature. Two thirds of that is already
+happening and was not the gap.
+
+**A functional test would not have caught any of them.** Nothing was wrong in
+the markup. The wrongness only existed once a browser had applied the stylesheet
+to the data, which a test reading a template cannot see.
+
+**A review by the person who wrote it is the same eyes twice.** It did work here
+(everything above was found that way) but it is not repeatable and it does not
+survive a tired afternoon.
+
+**The actual pattern is narrower and fixable: every defect lived in a state
+nobody had rendered.** Zero progress. Two classes in one school. No class at
+all. A history with one line. The happy path was tested *and* looked at; the
+other states were tested and never seen.
+
+So the rule is a catalogue, not a ceremony:
+
+1. **`tests/test_screen_contract.py` lists every screen by state.** Adding a
+   screen means adding it there. Adding a state a screen can be in means adding
+   that too. A screen missing from the catalogue is a screen nobody is looking
+   at.
+2. It **renders in a real browser** and asserts the properties that only exist
+   after layout: no database key or slug reaching the reader, no label
+   stretching to banner width, nothing listed twice, no page reading as a fault
+   when it is in a normal empty state.
+3. **`tests/test_matazim_mobile.py` covers the same screens by width.** Between
+   them: every screen, every state, two widths.
+4. **A new guard must be proved against the bug it is named for.** Reintroduce
+   the defect, watch it fail, restore. A check that has never failed is
+   decoration, and this is how you find out which one you wrote. (Doing exactly
+   this immediately caught that the first verification was wrong, not the check.)
+5. **Still look at it once.** The catalogue checks what can be stated; a person
+   still has to see whether the screen is worth using. But now the looking is
+   the last five per cent rather than the only line of defence.
+
+One discipline the machinery cannot enforce, so it is written here instead:
+**before naming a new CSS component, grep the stylesheet for the name.**
+`.mz-path-body` had belonged to another page since SPR-M.4, and reusing it cost
+an hour of chasing a phantom border.
+
 ### Step 5 — Regression, in two tiers
 
 Changed 2026-09-10 (Avi): everything goes to production for him to look at, so a
 fifteen-minute suite before every push is the wrong shape. Two gates now.
 
-**The fast gate — every push.** About 45 seconds.
+**The fast gate — every push.** A few minutes now: `screens` and `sprmobile` drive a real browser, and that is the point of them (Step 4a). A gate that only reads templates is a gate that passes every defect this project has actually shipped.
 
 ```
-pytest -m "smoke or sprmobile or <this sprint's marker>" -q
+pytest -m "smoke or sprmobile or screens or <this sprint's marker>" -q
 ```
 
 `sprmobile` drives a real browser at 390px over every public page and fails on
@@ -243,6 +294,8 @@ A sprint is `DONE` only if **all** are true:
 - [ ] `requirements.txt` current
 
 ---
+- [ ] Every new or changed screen is in `tests/test_screen_contract.py`, **with each state it can be in**, and the contract is green (Step 4a).
+- [ ] Each screen has been looked at once, rendered, in at least its empty state and its full one.
 
 ## Definition of Done — Epic
 
