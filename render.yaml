@@ -40,6 +40,14 @@ services:
         sync: false
       - key: SECURITY_OWNER_EMAIL
         sync: false
+      # Web Push (REQ-11.6.9). Generate with scripts/gen_vapid.py. The PRIVATE
+      # key is a credential - anything holding it can push to every subscribed
+      # phone - so both are sync: false and neither is ever in git. Leaving them
+      # empty is the closed default: /home simply does not offer the button.
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
       # Optional comma-separated delegated viewers. Empty = owner only.
       - key: SECURITY_VIEWER_EMAILS
         sync: false

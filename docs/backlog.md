@@ -1466,6 +1466,8 @@ a source of truth. Drop this database entirely and the house rebuilds it.
 | F-12.10 | Nav entry visible only to permitted viewers; no sitemap, robots or search surface | REQ-11.2.3 | DONE ✅ |
 | F-12.11 | View audit log (who opened the page, when) | REQ-11.2.4 | DONE ✅ |
 | F-12.12 | `render.yaml` env vars with `sync: false` | REQ-11.8.4 | DONE ✅ |
+| F-12.13 | Sound + vibration on a new event while the page is open, opt-in by a tap, poll tightens to 10s | REQ-11.6.8 | DONE ✅ |
+| F-12.14 | Web Push: service worker at `/sw.js`, per-device subscriptions, one notification per batch, dead subscriptions pruned on 404/410 | REQ-11.6.9 | DONE ✅ |
 
 ### SPR-12.2 — the armed row (DONE ✅)
 

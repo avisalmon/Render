@@ -17,3 +17,6 @@ google-auth>=2.20,<3
 black>=24.0,<26
 ruff>=0.4,<1
 pre-commit>=3.7,<5
+# Web Push (REQ-11.6.9): browser notifications that arrive with the browser
+# closed. VAPID keys live in env vars, never in the repo.
+pywebpush>=2.0

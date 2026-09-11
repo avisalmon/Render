@@ -23,6 +23,7 @@ import base64
 import binascii
 import hmac
 import json
+import logging
 import os
 import time
 from functools import wraps
@@ -36,6 +37,7 @@ from django.utils.dateparse import parse_datetime
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
+from . import security_push
 from .security_models import (
     SecurityCommand,
     SecurityEvent,
@@ -43,6 +45,8 @@ from .security_models import (
     SecurityResetDeclaration,
     SecurityState,
 )
+
+logger = logging.getLogger(__name__)
 
 REQUIRED_EVENT_FIELDS = ("event_id", "ts", "channel", "camera", "type", "severity")
 
@@ -356,6 +360,26 @@ def push_events(request):
     # for quiet periods; this just shortens the wait while events are flowing,
     # which is exactly when a delete is most likely to have just been pressed.
     body["commands"] = _pending_commands()
+
+    # REQ-11.6.9: tell the phone, with the browser closed. ONE notification for
+    # the batch, not one per row - the house drains its queue in batches and a
+    # reconnect after an outage can carry dozens, which would be dozens of
+    # buzzes for one walk past the gate. The newest is the one worth announcing.
+    #
+    # Wrapped, and best-effort inside as well: the house retries a failed push
+    # forever, so a dead push service must never fail THIS request or the event
+    # log stops moving and nothing says why.
+    try:
+        newest_id = max((e.get("event_id") for e in events
+                         if isinstance(e, dict) and e.get("event_id")),
+                        default=None)
+        if newest_id is not None:
+            newest = SecurityEvent.objects.filter(event_id=newest_id).first()
+            if newest is not None:
+                security_push.notify(newest)
+    except Exception:  # noqa: BLE001 - notifications never break the relay
+        logger.exception("web push failed for this batch (continuing)")
+
     return JsonResponse(body)
 
 

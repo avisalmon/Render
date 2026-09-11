@@ -14,6 +14,7 @@ Note the models are deliberately NOT registered in the Django admin: site
 superusers are not automatically people who may look inside Avi's house.
 """
 
+import json
 import os
 from datetime import datetime, time, timedelta
 from zoneinfo import ZoneInfo
@@ -21,13 +22,14 @@ from zoneinfo import ZoneInfo
 from django.conf import settings
 from django.core.paginator import Paginator
 from django.db.models.functions import Lower
-from django.http import FileResponse, Http404, JsonResponse
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from .security_models import (
+    SecurityPushSubscription,
     SecurityCommand,
     SecurityEvent,
     SecurityResetDeclaration,
@@ -248,6 +250,9 @@ def security_home(request):
 
     context = {
         "status": _status(),
+        # REQ-11.6.9: the browser needs this to subscribe. Public by design -
+        # only the private half is a credential.
+        "vapid_public_key": getattr(settings, "VAPID_PUBLIC_KEY", ""),
         "rows": [_row(e) for e in page.object_list],
         "page_obj": page,
         "cameras": list(
@@ -274,10 +279,17 @@ def security_feed(request):
     long-lived connections are not available, and nothing here needs them.
     """
     _gate(request)
-    newest = SecurityEvent.objects.order_by("-event_id").values_list("event_id", flat=True).first()
+    # REQ-11.6.8: the page can now make a noise on a new event, so the poll has
+    # to carry enough for it to decide WHETHER to - severity, so "critical only"
+    # is offerable rather than beeping at everything, and the camera, because a
+    # tone that cannot say where just sends you to the app anyway.
+    newest = (SecurityEvent.objects.order_by("-event_id")
+              .values("event_id", "severity", "camera").first())
     return _no_index(JsonResponse({
         "status": _status(),
-        "newest_event_id": newest or 0,
+        "newest_event_id": (newest or {}).get("event_id") or 0,
+        "newest_severity": (newest or {}).get("severity") or "",
+        "newest_camera": (newest or {}).get("camera") or "",
         "total": SecurityEvent.objects.count(),
     }))
 
@@ -383,3 +395,97 @@ def security_snapshot(request, event_id):
     # URL as the thumbnail, and no-store would refetch it on every open.
     response["Cache-Control"] = "private, max-age=300"
     return response
+
+
+# ---------------------------------------------------------------------------
+# Web Push (REQ-11.6.9)
+# ---------------------------------------------------------------------------
+
+SERVICE_WORKER = """/* babook security notifications (REQ-11.6.9).
+
+   Served from the ROOT on purpose: a worker under /static/ can only control
+   /static/, so it would never receive a push for this site. */
+
+self.addEventListener('push', function (event) {
+  var d = {};
+  try { d = event.data ? event.data.json() : {}; } catch (e) {}
+  var title = d.title || 'babook';
+  event.waitUntil(self.registration.showNotification(title, {
+    body: d.body || '',
+    tag: 'sec-' + (d.event_id || ''),   /* replace, never stack up */
+    renotify: true,
+    vibrate: [260, 120, 260],
+    data: { url: d.url || '/home/' },
+    dir: 'rtl', lang: 'he'
+  }));
+});
+
+self.addEventListener('notificationclick', function (event) {
+  event.notification.close();
+  var url = (event.notification.data && event.notification.data.url) || '/home/';
+  /* Focus a tab that is already open rather than piling up new ones. */
+  event.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true })
+    .then(function (list) {
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].url.indexOf(url) !== -1 && 'focus' in list[i]) return list[i].focus();
+      }
+      if (clients.openWindow) return clients.openWindow(url);
+    }));
+});
+
+self.addEventListener('install', function () { self.skipWaiting(); });
+self.addEventListener('activate', function (e) { e.waitUntil(self.clients.claim()); });
+"""
+
+
+def security_service_worker(request):
+    """Serve the push service worker from the site root.
+
+    Deliberately NOT behind the viewer gate: the browser fetches this before any
+    session is involved, and it holds nothing private — only the code that draws
+    a notification from a payload the push service delivers.
+    """
+    resp = HttpResponse(SERVICE_WORKER, content_type="application/javascript")
+    resp["Cache-Control"] = "no-cache"
+    resp["Service-Worker-Allowed"] = "/"
+    return resp
+
+
+@require_POST
+def security_push_subscribe(request):
+    """Remember one browser so it can be pushed to (REQ-11.6.9)."""
+    _gate(request)
+    try:
+        body = json.loads(request.body or b"{}")
+    except ValueError:
+        return JsonResponse({"ok": False, "error": "bad json"}, status=400)
+    endpoint = (body.get("endpoint") or "").strip()
+    keys = body.get("keys") or {}
+    if not endpoint or not keys.get("p256dh") or not keys.get("auth"):
+        return JsonResponse({"ok": False, "error": "incomplete"}, status=400)
+    # update_or_create on the endpoint: a browser re-registers its worker on most
+    # visits and hands back the SAME endpoint, and a second row would mean every
+    # notification arriving twice.
+    SecurityPushSubscription.objects.update_or_create(
+        endpoint=endpoint,
+        defaults={"email": (request.user.email or "")[:254],
+                  "p256dh": keys["p256dh"], "auth": keys["auth"],
+                  "last_error": ""},
+    )
+    return _no_index(JsonResponse({"ok": True}))
+
+
+@require_POST
+def security_push_unsubscribe(request):
+    """Forget one browser. Idempotent — a device that is already gone is fine."""
+    _gate(request)
+    try:
+        body = json.loads(request.body or b"{}")
+    except ValueError:
+        return JsonResponse({"ok": False, "error": "bad json"}, status=400)
+    # Delegated to `security_push` rather than done here: this module is
+    # required to contain no delete at all (REQ-11.1.3, asserted by
+    # test_spr_12_1), and that guard is worth more than the convenience.
+    from . import security_push
+    security_push.forget_subscription((body.get("endpoint") or "").strip())
+    return _no_index(JsonResponse({"ok": True}))

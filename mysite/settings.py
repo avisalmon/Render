@@ -202,6 +202,19 @@ SECURITY_VIEWER_EMAILS = [
     if e.strip()
 ]
 
+# Web Push (REQ-11.6.9). The PRIVATE key is the credential that lets anyone push
+# to these devices, so it lives in a Render env var with sync: false and never in
+# git. Generate a pair with `python scripts/gen_vapid.py`.
+#
+# Empty keys are the correct closed default: /home simply does not offer the
+# button, the relay keeps accepting events exactly as before, and nothing warns
+# about a feature nobody asked for.
+VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", "").strip()
+VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY", "").strip()
+VAPID_CONTACT_EMAIL = (os.environ.get("VAPID_CONTACT_EMAIL", "").strip()
+                       or (f"mailto:{SECURITY_OWNER_EMAIL}"
+                           if SECURITY_OWNER_EMAIL else ""))
+
 # Snapshots: small JPEG per event (REQ-11.7). Files on the persistent disk,
 # deliberately NOT under MEDIA_ROOT, which is served publicly with no auth.
 SECURITY_SNAPSHOTS_ENABLED = os.environ.get("SECURITY_SNAPSHOTS_ENABLED", "1") != "0"

@@ -266,6 +266,14 @@ urlpatterns = [
          name="security_request_delete"),
 
     # Machine endpoints. The house is the only writer (REQ-11.4).
+    # REQ-11.6.9 - the service worker must come from the ROOT: one under
+    # /static/ can only control /static/ and would never receive a push.
+    path("sw.js", security_views.security_service_worker, name="security_sw"),
+    path("home/push/subscribe/", security_views.security_push_subscribe,
+         name="security_push_subscribe"),
+    path("home/push/unsubscribe/", security_views.security_push_unsubscribe,
+         name="security_push_unsubscribe"),
+
     path("api/v1/security/events", security_api.push_events, name="security_api_events"),
     path("api/v1/security/commands", security_api.get_commands, name="security_api_commands"),
     path("api/v1/security/commands/<int:command_id>/ack", security_api.ack_command,

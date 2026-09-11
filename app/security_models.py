@@ -255,3 +255,38 @@ class SecurityResetDeclaration(models.Model):
     def __str__(self):
         state = "acted" if self.acted_at else "pending"
         return f"reset declaration {self.pk} ({state})"
+
+
+class SecurityPushSubscription(models.Model):
+    """One browser that has agreed to receive Web Push notifications (REQ-11.6.9).
+
+    Per *device*, not per person: the same owner on a phone and a laptop is two
+    rows, because a push endpoint identifies a browser installation.
+
+    The endpoint is unique. A browser re-registers its service worker on most
+    visits and hands back the same endpoint, and storing it twice would send
+    every notification twice.
+
+    Rows are deleted when the push service answers 404 or 410 — that means the
+    browser is gone for good, and a subscription kept past it is one that can
+    never work again.
+    """
+
+    email = models.CharField(max_length=254, db_index=True)
+    endpoint = models.URLField(max_length=500, unique=True)
+    p256dh = models.CharField(max_length=255)
+    auth = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_sent_at = models.DateTimeField(null=True, blank=True)
+    last_error = models.TextField(blank=True, default="")
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"{self.email} <{self.endpoint[:40]}...>"
+
+    def as_subscription_info(self):
+        """The shape `pywebpush` expects."""
+        return {"endpoint": self.endpoint,
+                "keys": {"p256dh": self.p256dh, "auth": self.auth}}

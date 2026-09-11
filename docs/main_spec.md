@@ -1810,6 +1810,58 @@ One page, phone first, at `/home`.
   is WSGI, so long-lived connections are unavailable. The deployment is not being
   migrated to ASGI for this module; polling is entirely adequate.
 
+- **REQ-11.6.8 — The page can make a noise.** The owner is abroad and has no
+  phone app; a browser tab is the only thing that will reach him. When **alerts
+  are switched on**, a new event plays a short tone and vibrates the phone.
+
+  Four things this must be honest about, because it is easy to mistake for an
+  alarm and it is not one:
+
+  - **Opt-in, by a tap.** Browsers refuse to play audio until the user has
+    interacted with the page, so the toggle is not a preference — it is the
+    gesture that makes sound possible at all. The choice is remembered per
+    device.
+  - **Foreground only.** Mobile browsers throttle or freeze a backgrounded tab,
+    so this works while the page is open and the screen is on, and stops when it
+    is not. It is *awareness while looking*, not a dead-man's alarm.
+  - **Polling, not push.** The deployment is gunicorn on WSGI (REQ-11.6.7), so
+    there is no socket. The poll tightens to 10 s while alerts are on and stays
+    at 30 s otherwise.
+  - **It is a projection.** §6.1 of the house spec holds: an alarm that depends
+    on babook is not an alarm, because babook cannot know the house has gone
+    silent any better than the house can tell it. This is a convenience for a
+    traveller, and the native path (EPIC W) is still the alarm.
+
+  The tone is synthesised with Web Audio rather than shipped as a file: no extra
+  request, nothing to 404, and it works on a hotel connection that is barely
+  there.
+
+- **REQ-11.6.9 — Web Push, so the phone is told with the browser closed.**
+  REQ-11.6.8 only works while the page is open and focused; mobile browsers
+  freeze background tabs, so as a way of *being told* it is close to useless. A
+  **service worker** plus the Web Push API fixes exactly that: the operating
+  system delivers the notification with the browser shut and the screen off.
+
+  The owner has no phone app and travels within days, so this is the only path
+  that reaches him without an app store.
+
+  - **Android is the target.** Chrome delivers these properly. iOS needs the site
+    added to the Home Screen first (16.4+) — documented, but not the case being
+    built for.
+  - **VAPID keys live in environment variables**, never in the repo: the private
+    key is the credential that lets anyone push to these subscriptions.
+  - **Subscriptions are per device and are removed on rejection.** A push service
+    answering `404` or `410` means that browser is gone for good, and a
+    subscription kept past that is a row that will never work again.
+  - **It is still not an alarm.** A notification cannot bypass Do Not Disturb or
+    take over the screen, so a silenced phone stays silent. §6.7 of the house
+    spec chose native Kotlin for exactly that reason and still does. This is a
+    traveller's tap on the shoulder.
+  - **Sending must never break receiving.** The push goes out on the same request
+    that accepts the house's events (§11.5), and a dead push service, an expired
+    key or a slow network must not fail it — the relay would retry forever and
+    the log would stop moving. Failures are recorded and swallowed.
+
 ### 11.7 Snapshots (REQ-11.7)
 
 Enabled, per the owner's decision, with limits.

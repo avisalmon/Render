@@ -39,6 +39,47 @@ Order of importance on the screen, deliberately:
   </a>
 
   {% comment %}
+    REQ-11.6.8 - the page can make a noise. The switch is not a preference, it
+    is the tap browsers require before they will ever play audio, so it starts
+    OFF and cannot be pre-checked server-side. The note under it is not
+    decoration either: this is awareness while the page is open, and a user who
+    mistakes it for the alarm finds out from silence.
+  {% endcomment %}
+  <div class="sec-alerts">
+    <div class="form-check form-switch m-0">
+      <input class="form-check-input" type="checkbox" role="switch" id="sec-alerts">
+      <label class="form-check-label" for="sec-alerts">
+        <i class="bi bi-bell"></i> התראה קולית ורטט על אירוע חדש
+      </label>
+    </div>
+    <div class="form-check form-switch m-0 mt-1">
+      <input class="form-check-input" type="checkbox" role="switch" id="sec-alerts-critical">
+      <label class="form-check-label" for="sec-alerts-critical">רק אירועים קריטיים</label>
+    </div>
+    <p id="sec-alerts-note" class="sec-alerts-note mb-0">
+      עובד רק כשהדף פתוח והמסך דולק. זו לא אזעקה - זו התראה בזמן צפייה.
+    </p>
+
+    {% comment %}
+      REQ-11.6.9 - the half that works with the browser closed. Separate button
+      rather than a switch: it asks the operating system for permission, which
+      can only be granted once and cannot be un-asked, so it should look like a
+      decision rather than a toggle.
+    {% endcomment %}
+    {% if vapid_public_key %}
+    <div class="mt-2 pt-2 border-top border-secondary-subtle">
+      <button type="button" id="sec-push-btn" class="btn btn-sm btn-outline-light">
+        <i class="bi bi-phone"></i> <span id="sec-push-label">קבלת התראות גם כשהדפדפן סגור</span>
+      </button>
+      <p id="sec-push-note" class="sec-alerts-note mb-0">
+        התראה מגיעה גם כשהמסך כבוי. לא עוקפת מצב "נא לא להפריע".
+      </p>
+    </div>
+    <script>window.SEC_VAPID_KEY = "{{ vapid_public_key }}";</script>
+    {% endif %}
+  </div>
+
+  {% comment %}
     Both controls submit on change, and the button is a real fallback rather
     than decoration: date inputs fire `change` inconsistently across mobile
     browsers (and not at all with JS off), which is exactly how this filter
@@ -271,6 +312,9 @@ Order of importance on the screen, deliberately:
   .sec-orphan-go:hover { background: #b3382c; color: #fff; }
   .sec-banner-sub { font-size: .85rem; opacity: .85; margin-top: .2rem; }
 
+  .sec-alerts { margin-bottom: .75rem; padding: .6rem .75rem; border-radius: .5rem;
+                background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.10); }
+  .sec-alerts-note { margin-top: .4rem; font-size: .78rem; opacity: .65; line-height: 1.35; }
   .sec-new-pill { display: block; text-align: center; margin-bottom: .75rem; padding: .5rem;
                   border-radius: 999px; background: #0d6efd; color: #fff; text-decoration: none;
                   font-size: .9rem; }
@@ -415,11 +459,188 @@ Order of importance on the screen, deliberately:
         if (sub && d.status.known) {
           sub.textContent = d.status.cameras_online + '/' + d.status.cameras_total + ' מצלמות מחוברות';
         }
-        if (d.newest_event_id > seen) pill.classList.remove('d-none');
+        if (d.newest_event_id > seen) {
+          pill.classList.remove('d-none');
+          alertOnEvent(d);
+          seen = d.newest_event_id;   // announce each event once, not forever
+        }
       })
       .catch(function () { /* offline is not an error worth shouting about */ });
   }
-  setInterval(tick, 30000);
+
+  /* REQ-11.6.8 - sound and vibration while the page is open.
+
+     Opt-in by a tap, because that tap is what unblocks audio at all: browsers
+     refuse to play until the user has interacted with the page, so a switch
+     that defaulted to on would look armed and make no sound.
+
+     The tone is synthesised rather than fetched - nothing to 404, and no second
+     request on a hotel connection that is barely there. */
+  var alerts = document.getElementById('sec-alerts');
+  var criticalOnly = document.getElementById('sec-alerts-critical');
+  var audio = null;
+  var timer = null;
+
+  function remember() {
+    try {
+      localStorage.setItem('secAlerts', alerts.checked ? '1' : '0');
+      localStorage.setItem('secAlertsCritical', criticalOnly.checked ? '1' : '0');
+    } catch (e) { /* private mode: the session still works, it just forgets */ }
+  }
+
+  function beep() {
+    if (!audio) return;
+    try {
+      var now = audio.currentTime;
+      [0, 0.42].forEach(function (at) {            /* two short rising notes */
+        var osc = audio.createOscillator(), gain = audio.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, now + at);
+        osc.frequency.exponentialRampToValueAtTime(1320, now + at + 0.18);
+        gain.gain.setValueAtTime(0.0001, now + at);
+        gain.gain.exponentialRampToValueAtTime(0.35, now + at + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + at + 0.32);
+        osc.connect(gain); gain.connect(audio.destination);
+        osc.start(now + at); osc.stop(now + at + 0.34);
+      });
+    } catch (e) { /* a browser that will not make noise must not break the page */ }
+  }
+
+  function alertOnEvent(d) {
+    if (!alerts || !alerts.checked) return;
+    if (criticalOnly.checked && d.newest_severity !== 'critical') return;
+    beep();
+    try { if (navigator.vibrate) navigator.vibrate([260, 120, 260]); } catch (e) {}
+    try {
+      document.title = '⚠ ' + (d.newest_camera || 'אירוע') + ' - babook';
+    } catch (e) {}
+  }
+
+  /* 30s is fine for a banner and too slow for an alert, so the poll tightens
+     only while alerts are on - the trade is visible rather than buried. */
+  function schedule() {
+    if (timer) clearInterval(timer);
+    timer = setInterval(tick, (alerts && alerts.checked) ? 10000 : 30000);
+  }
+
+  if (alerts) {
+    try {
+      alerts.checked = localStorage.getItem('secAlerts') === '1';
+      criticalOnly.checked = localStorage.getItem('secAlertsCritical') === '1';
+    } catch (e) {}
+    alerts.addEventListener('change', function () {
+      if (alerts.checked) {
+        /* This runs inside the tap, which is the only moment an AudioContext
+           may be created unmuted. Resume too: mobile browsers suspend it when
+           the page is backgrounded and it does not wake by itself. */
+        try {
+          audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+          if (audio.state === 'suspended') audio.resume();
+        } catch (e) { audio = null; }
+        beep();                       /* prove it works now, not at 3am */
+        try { if (navigator.vibrate) navigator.vibrate(120); } catch (e) {}
+      }
+      remember();
+      schedule();
+    });
+    criticalOnly.addEventListener('change', remember);
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden && audio && audio.state === 'suspended') audio.resume();
+    });
+    if (alerts.checked) schedule();   /* remembered from last time */
+  }
+  schedule();
+
+  /* REQ-11.6.9 - Web Push: told with the browser closed.
+
+     The service worker comes from /sw.js (root scope - one under /static/ could
+     only control /static/ and would never receive a push). Permission is asked
+     inside the click, because browsers only grant it from a user gesture. */
+  var pushBtn = document.getElementById('sec-push-btn');
+  var pushLabel = document.getElementById('sec-push-label');
+  var pushNote = document.getElementById('sec-push-note');
+
+  function csrf() {
+    var m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? m[1] : '';
+  }
+
+  function b64ToUint8(base64) {
+    var pad = '='.repeat((4 - base64.length % 4) % 4);
+    var raw = atob((base64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+    return Uint8Array.from(raw, function (c) { return c.charCodeAt(0); });
+  }
+
+  function post(url, body) {
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf() },
+      body: JSON.stringify(body)
+    });
+  }
+
+  function showSubscribed(on) {
+    if (!pushLabel) return;
+    pushLabel.textContent = on ? 'התראות פעילות · לביטול לחצו' :
+                                 'קבלת התראות גם כשהדפדפן סגור';
+    pushBtn.classList.toggle('btn-success', on);
+    pushBtn.classList.toggle('btn-outline-light', !on);
+  }
+
+  function say(msg) { if (pushNote) pushNote.textContent = msg; }
+
+  if (pushBtn && window.SEC_VAPID_KEY) {
+    var supported = ('serviceWorker' in navigator) && ('PushManager' in window);
+    if (!supported) {
+      pushBtn.disabled = true;
+      say('הדפדפן הזה לא תומך בהתראות רקע. באייפון צריך קודם להוסיף למסך הבית.');
+    } else {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        return reg.pushManager.getSubscription();
+      }).then(function (sub) { showSubscribed(!!sub); })
+        .catch(function () { /* nothing registered yet is not an error */ });
+
+      pushBtn.addEventListener('click', function () {
+        pushBtn.disabled = true;
+        navigator.serviceWorker.register('/sw.js').then(function (reg) {
+          return reg.pushManager.getSubscription().then(function (existing) {
+            if (existing) {                      /* already on: turn it off */
+              var ep = existing.endpoint;
+              return existing.unsubscribe().then(function () {
+                return post('{% url "security_push_unsubscribe" %}', { endpoint: ep });
+              }).then(function () {
+                showSubscribed(false);
+                say('ההתראות בוטלו במכשיר הזה.');
+              });
+            }
+            return Notification.requestPermission().then(function (perm) {
+              if (perm !== 'granted') {
+                say('ההרשאה נדחתה. אפשר לשנות בהגדרות האתר בדפדפן.');
+                return;
+              }
+              return reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: b64ToUint8(window.SEC_VAPID_KEY)
+              }).then(function (s) {
+                var j = s.toJSON();
+                return post('{% url "security_push_subscribe" %}',
+                            { endpoint: j.endpoint, keys: j.keys });
+              }).then(function (r) {
+                if (r && r.ok) {
+                  showSubscribed(true);
+                  say('פעיל. התראה תגיע גם כשהמסך כבוי.');
+                } else {
+                  say('לא הצלחנו לשמור את המנוי. נסו שוב.');
+                }
+              });
+            });
+          });
+        }).catch(function () {
+          say('משהו נכשל בהרשמה להתראות. נסו שוב מאוחר יותר.');
+        }).then(function () { pushBtn.disabled = false; });
+      });
+    }
+  }
 })();
 
 // Snapshot viewer: open, zoom, pan, step between snapshots (REQ-11.6.4).
