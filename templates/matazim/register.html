@@ -12,7 +12,7 @@
 <div class="mz-container mz-auth">
   <div class="mz-auth-card">
     <h1>פתיחת חשבון</h1>
-    <p class="mz-auth-sub">שלושה פרטים, וזהו.</p>
+    <p class="mz-auth-sub">קצר. שנת הלידה קובעת אם צריך גם אישור של הורה.</p>
 
     {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
 
@@ -44,6 +44,41 @@
         <small>לפחות 8 תווים.</small>
       </label>
       {% comment %}
+        REQ-M.84 — the year decides whether a parent is needed, so it is asked
+        first and the parent's fields reveal themselves underneath it. Only the
+        year: the question is "is this a minor", and a full date of birth would
+        be more data about a child for no extra ability to decide anything.
+      {% endcomment %}
+      <label class="mz-field">
+        <span>שנת לידה</span>
+        <input type="number" name="birth_year" inputmode="numeric"
+               min="{{ this_year|add:"-100" }}" max="{{ this_year }}"
+               value="{{ posted.birth_year|default:'' }}"
+               placeholder="למשל: {{ this_year|add:"-14" }}" required
+               oninput="mzGuardian(this.value)">
+      </label>
+
+      <div id="mzGuardianBlock" hidden>
+        <p class="mz-muted">
+          מתחת לגיל 18 צריך אישור של הורה או אפוטרופוס. זה הכלל, וזה גם מה
+          שמאפשר לנו להראות את ההתקדמות שלכם למוביל/ה.
+        </p>
+        <label class="mz-field">
+          <span>שם ההורה או האפוטרופוס</span>
+          <input type="text" name="guardian_name" value="{{ posted.guardian_name|default:'' }}">
+        </label>
+        <label class="mz-field">
+          <span>אימייל של ההורה</span>
+          <input type="email" name="guardian_email" value="{{ posted.guardian_email|default:'' }}">
+        </label>
+        <label class="mz-choice">
+          <input type="checkbox" name="guardian_consent"
+                 {% if posted.guardian_consent %}checked{% endif %}>
+          <span class="mz-choice-name">ההורה או האפוטרופוס שלי יודע/ת ומאשר/ת את ההרשמה</span>
+        </label>
+      </div>
+
+      {% comment %}
         REQ-M.82 — §11 חובת יידוע is owed at the point of collection, and this
         is the point of collection: the screen where a fourteen-year-old types
         their email. A policy linked from a footer does not discharge it.
@@ -68,4 +103,16 @@
     </p>
   </div>
 </div>
+
+<script>
+  // REQ-M.84 — the parent's fields appear only when the year says they matter,
+  // so a leader of thirty-four is not asked for their mother's email. The
+  // server decides for real; this only keeps the form from being a wall.
+  function mzGuardian(value) {
+    var year = parseInt(value, 10);
+    var need = !year || ({{ this_year }} - year) < 18;
+    document.getElementById('mzGuardianBlock').hidden = !need;
+  }
+  mzGuardian(document.querySelector('input[name=birth_year]').value);
+</script>
 {% endblock %}

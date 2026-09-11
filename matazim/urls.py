@@ -7,7 +7,7 @@ templates/matazim/ may only reverse names in this namespace.
 
 from django.urls import path
 
-from . import entrance_views, joining_views, roster_views, views
+from . import entrance_views, joining_views, rights_views, roster_views, views
 
 app_name = "matazim"
 
@@ -68,6 +68,13 @@ urlpatterns = [
     path("staff/leaders/<int:leader_id>/", joining_views.staff_leader, name="staff_leader"),
     # What we do with a fourteen-year-old's data, said where they can reach it
     # (REQ-M.81). RULE-1 means these cannot be links to babook's.
+    # REQ-M.85 — see it, take it, or have it deleted. Deletion reuses the
+    # mechanism babook's delete_account relies on, behind our own door.
+    path("me/data/", rights_views.my_data, name="my_data"),
+    path("me/data/export/", rights_views.my_data_export, name="my_data_export"),
+    path("me/delete/", rights_views.delete_me, name="delete_me"),
+    # REQ-M.84 — an admin records a school's paper consent.
+    path("staff/consent/<int:profile_id>/", entrance_views.staff_consent, name="staff_consent"),
     path("privacy/", views.privacy, name="privacy"),
     path("terms/", views.terms, name="terms"),
     # A minor's uploaded work, handed out only to people entitled to it

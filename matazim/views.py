@@ -110,6 +110,12 @@ def _leader_of(user):
     return leader_of(user)
 
 
+def _consent_blocker(member):
+    from .consent import consent_blocker
+
+    return consent_blocker(member) if member else None
+
+
 def shell(request, section, **extra):
     """Context every מט״צים page needs, so base.html never guesses."""
     member = member_profile(request.user)
@@ -128,6 +134,9 @@ def shell(request, section, **extra):
         "invite": _pending_invite(request),
         "is_leader": _leader_of(request.user),
         "student_has_leader": _has_leader(request.user),
+        # REQ-M.84 — why they cannot join yet, in words, on whatever page they
+        # are looking at. None when nothing is in the way.
+        "consent_blocker": _consent_blocker(member),
     }
     ctx.update(extra)
     return ctx
@@ -200,7 +209,18 @@ def logout(request):
 
 
 def register(request):
-    """REQ-M.6 — three fields, because every extra one is a teenager who stops."""
+    """REQ-M.6, REQ-M.84 — still short, and now it asks how old they are.
+
+    REQ-M.6 says every extra field is a teenager who stops, and that is still
+    true, so the year of birth is the only field always shown. The parent's
+    details appear underneath it and only when the year says they are needed,
+    which for this programme is almost always but should still be the page's
+    decision rather than a wall of inputs for a thirty-year-old leader.
+
+    Only the year, never a full date. The question is "is this a minor", and a
+    year answers it; a date would be more data about a child for no extra
+    ability to decide anything.
+    """
     if request.user.is_authenticated:
         return redirect("matazim:home")
 
@@ -211,9 +231,23 @@ def register(request):
         name = (request.POST.get("name") or "").strip()
         email = (request.POST.get("email") or "").strip().lower()
         password = request.POST.get("password") or ""
+        birth_year = (request.POST.get("birth_year") or "").strip()
+        guardian_name = (request.POST.get("guardian_name") or "").strip()
+        guardian_email = (request.POST.get("guardian_email") or "").strip()
+        guardian_ok = request.POST.get("guardian_consent") == "on"
+
+        year = int(birth_year) if birth_year.isdigit() else None
+        this_year = timezone.now().year
+        if year is not None and not (this_year - 100 <= year <= this_year):
+            year = None
+        minor = year is None or (this_year - year) < 18
 
         if not name or not email or len(password) < 8:
             error = "צריך שם, אימייל וסיסמה באורך 8 תווים לפחות."
+        elif year is None:
+            error = "צריך שנת לידה. זה מה שקובע אם צריך אישור של הורה."
+        elif minor and not (guardian_ok and guardian_name and guardian_email):
+            error = "מי שמתחת לגיל 18 צריך שם, אימייל ואישור של הורה או אפוטרופוס."
         elif User.objects.filter(email__iexact=email).exists():
             # Deliberately not "this account already exists": that tells a
             # stranger who is registered here, and these are minors.
@@ -222,9 +256,16 @@ def register(request):
             with transaction.atomic():
                 user = User.objects.create_user(username=email, email=email, password=password)
                 UserProfile.objects.update_or_create(user=user, defaults={"display_name": name})
-                MemberProfile.objects.update_or_create(
-                    user=user, defaults={"entered_via_matazim": True}
-                )
+                member_fields = {"entered_via_matazim": True, "birth_year": year}
+                if minor:
+                    # REQ-M.84 — recorded_by stays null, because this consent
+                    # was given here rather than collected by a school on paper.
+                    member_fields.update(
+                        guardian_name=guardian_name,
+                        guardian_email=guardian_email,
+                        guardian_consent_at=timezone.now(),
+                    )
+                MemberProfile.objects.update_or_create(user=user, defaults=member_fields)
             auth_login(request, user, backend="django.contrib.auth.backends.ModelBackend")
             _carry_welcome_across_sign_in(request, user)
             # REQ-M.46 - the main view, not the personal area. Someone who has
@@ -235,7 +276,15 @@ def register(request):
     return render(
         request,
         "matazim/register.html",
-        shell(request, "register", error=error, name=name, email=email),
+        shell(
+            request,
+            "register",
+            error=error,
+            name=name,
+            email=email,
+            posted=request.POST if request.method == "POST" else None,
+            this_year=timezone.now().year,
+        ),
     )
 
 
@@ -444,14 +493,25 @@ def events(request):
 
 
 def privacy(request):
-    """REQ-M.81, REQ-M.83 — our own policy, inside the walls.
+    """REQ-M.81, REQ-M.83, REQ-M.86 — our own policy, inside the walls.
+
+    The retention period is read out of `matazim.retention` rather than typed
+    into the page, so the number a member reads and the number the purge job
+    enforces cannot drift apart. A policy that promises one figure while a cron
+    applies another is worse than no figure at all.
 
     Not a link to babook's. RULE-1 forbids the link, and babook's policy
     describes someone learning alone: it says nothing about a teacher being
     shown a named minor's progress, which is the most consequential thing that
     happens to data in this product.
     """
-    return render(request, "matazim/privacy.html", shell(request, "legal"))
+    from .retention import FAILED_ATTEMPT_DAYS
+
+    return render(
+        request,
+        "matazim/privacy.html",
+        shell(request, "legal", failed_attempt_days=FAILED_ATTEMPT_DAYS),
+    )
 
 
 def terms(request):

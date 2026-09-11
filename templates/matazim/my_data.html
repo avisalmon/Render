@@ -1,0 +1,115 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.85 — everything we hold about one person, on one screen.
+
+  The right to know is worth nothing if exercising it means writing an email and
+  waiting. This is the same answer the export gives, rendered.
+{% endcomment %}
+
+{% block title %}המידע שלי · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page mz-legal">
+  <div class="mz-page-head">
+    <h1>המידע שלי</h1>
+    <p>כל מה שיש לנו עליכם. אפשר להוריד את זה, ואפשר לבקש שנמחק.</p>
+  </div>
+
+  <p class="mz-page-actions">
+    <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:my_data_export' %}">הורדה כקובץ</a>
+    <a class="mz-linkbtn" href="{% url 'matazim:privacy' %}">מדיניות הפרטיות</a>
+  </p>
+
+  <section class="mz-panel">
+    <h2>החשבון</h2>
+    <dl class="mz-facts">
+      <div><dt>שם</dt><dd>{{ data.account.name }}</dd></div>
+      <div><dt>אימייל</dt><dd>{{ data.account.email }}</dd></div>
+      <div><dt>נפתח</dt><dd>{{ data.account.joined|slice:":10" }}</dd></div>
+      {% if data.matazim_profile.birth_year %}
+        <div><dt>שנת לידה</dt><dd>{{ data.matazim_profile.birth_year }}</dd></div>
+      {% endif %}
+    </dl>
+  </section>
+
+  {% if minor %}
+    <section class="mz-panel">
+      <h2>אישור הורה</h2>
+      {% if consented %}
+        <p>
+          <span class="mz-tag mz-tag-done">התקבל</span>
+          {% if data.matazim_profile.guardian_name %}
+            {{ data.matazim_profile.guardian_name }}
+          {% endif %}
+        </p>
+      {% else %}
+        <p class="mz-muted">
+          עוד לא התקבל. אפשר להתחבר, ללמוד ולעשות את מבחן הכניסה בלי זה. כדי
+          להצטרף למוביל/ה צריך אותו, כי מהרגע הזה המוביל/ה רואה את ההתקדמות שלכם.
+        </p>
+      {% endif %}
+    </section>
+  {% endif %}
+
+  <section class="mz-panel">
+    <h2>מבחן הכניסה</h2>
+    {% if attempts %}
+      <ul class="mz-training">
+        {% for a in attempts %}
+          <li>
+            <span class="mz-training-title">
+              ניסיון {{ a.number }} · {{ a.target_id }}
+            </span>
+            <span class="mz-role">
+              {% if a.passed %}
+                <span class="mz-tag mz-tag-done">עבר</span>
+              {% else %}
+                <span class="mz-tag mz-tag-idle">לא עבר</span>
+              {% endif %}
+              {% if a.model_file %}
+                <a class="mz-linkbtn" href="{% url 'matazim:attempt_file' a.pk %}">הקובץ שלי</a>
+              {% endif %}
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="mz-muted">עוד לא ניגשתם.</p>
+    {% endif %}
+  </section>
+
+  <section class="mz-panel">
+    <h2>בתוכנית</h2>
+    {% if data.program %}
+      <ul class="mz-training">
+        {% for row in data.program %}
+          <li>
+            <span class="mz-training-title">{{ row.cohort_year }} · {{ row.status }}</span>
+            {% if row.leader %}<span class="mz-muted">המוביל/ה: {{ row.leader }}</span>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="mz-muted">עוד לא הצטרפתם למוביל/ה.</p>
+    {% endif %}
+  </section>
+
+  <section class="mz-panel">
+    <h2>הלמידה</h2>
+    <p class="mz-muted">
+      {{ data.learning|length }} הדרכות שהתחלתם, {{ data.certificates|length }} תעודות.
+      הפירוט המלא נמצא בקובץ.
+    </p>
+  </section>
+
+  <section class="mz-panel">
+    <h2>מחיקת החשבון</h2>
+    <p class="mz-muted">
+      מוחק את החשבון ואת כל מה שרשום בעמוד הזה, כולל הקבצים שהעליתם. אי אפשר
+      לבטל את זה.
+    </p>
+    <a class="mz-linkbtn" href="{% url 'matazim:delete_me' %}">מחיקת החשבון שלי</a>
+  </section>
+</div>
+{% endblock %}

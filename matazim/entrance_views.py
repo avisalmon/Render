@@ -410,3 +410,35 @@ def attempt_file(request, attempt_id):
         raise Http404("not yours")
 
     return FileResponse(attempt.model_file.open("rb"), as_attachment=True)
+
+
+@login_required(login_url=LOGIN_URL)
+def staff_consent(request, profile_id):
+    """REQ-M.84 — record consent a school collected on paper.
+
+    Schools run their own consent process on paper, through חוזר מנכ״ל and a
+    form in a folder. Assuming they did it is how nobody actually has it, so an
+    admin records that it happened, and the record keeps who said so.
+
+    Admin only, deliberately. A leader vouching for a parent they have not
+    spoken to is not consent, it is a leader being helpful, and the two look
+    identical a year later if anyone can do it.
+    """
+    from .access import is_admin
+    from .consent import record_guardian_consent
+    from .models import MemberProfile
+
+    if not is_admin(request.user):
+        raise PermissionDenied
+
+    profile = get_object_or_404(MemberProfile, pk=profile_id)
+
+    if request.method == "POST" and request.POST.get("action") == "record":
+        record_guardian_consent(
+            profile,
+            name=(request.POST.get("guardian_name") or "").strip() or "נרשם על ידי צוות התוכנית",
+            email=(request.POST.get("guardian_email") or "").strip(),
+            recorded_by=request.user,
+        )
+
+    return redirect("matazim:staff_home")

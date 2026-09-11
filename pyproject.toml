@@ -25,6 +25,7 @@ markers = [
     "sprm7: SPR-M.7 מט״צים joining and leaders sprint tests",
     "sprm8: SPR-M.8 מט״צים the leader's students, and what makes a mataz",
     "sprm9: SPR-M.9 מט״צים privacy: the holes, and the terms",
+    "sprm10: SPR-M.10 מט״צים consent, rights, and an end date",
     "sprmobile: real-browser phone checks for מט״צים (tests/test_matazim_mobile.py)",
     "smoke: the fast gate, run on every push (see tests/test_smoke.py)",
 ]

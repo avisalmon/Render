@@ -1,0 +1,45 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.85 — the same mechanism babook's delete_account uses, behind our own
+  door, because RULE-1 means a member cannot be sent to babook's screen.
+
+  Confirm by typing the address, borrowed from there for the reason it exists
+  there: this is irreversible and a stray double-tap must not do it.
+{% endcomment %}
+
+{% block title %}מחיקת החשבון · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page mz-legal">
+  <div class="mz-page-head">
+    <h1>מחיקת החשבון</h1>
+  </div>
+
+  {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
+
+  <section class="mz-panel">
+    <p>
+      זה מוחק את החשבון, את ההתקדמות שלכם, את הניסיונות במבחן הכניסה ואת הקבצים
+      שהעליתם. <strong>אי אפשר לבטל.</strong> אם תרצו לחזור, תצטרכו להתחיל מחדש.
+    </p>
+    <p class="mz-muted">
+      אם רק רציתם לראות מה יש לנו עליכם, אפשר
+      <a href="{% url 'matazim:my_data' %}">לראות ולהוריד את הכל</a> בלי למחוק כלום.
+    </p>
+
+    <form method="post">
+      {% csrf_token %}
+      <label class="mz-field">
+        <span>הקלידו את האימייל של החשבון כדי לאשר: {{ email }}</span>
+        <input type="email" name="confirm_email" autocomplete="off" required>
+      </label>
+      <button type="submit" class="mz-btn mz-btn-primary">מחיקה סופית</button>
+    </form>
+  </section>
+
+  <p class="mz-page-actions">
+    <a class="mz-linkbtn" href="{% url 'matazim:my_data' %}">חזרה</a>
+  </p>
+</div>
+{% endblock %}

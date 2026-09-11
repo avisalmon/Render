@@ -615,18 +615,18 @@ F-M.9.5 therefore ships a **test that fails if a third-party script ever appears
 under `/matazim/`**, because that is the day the judgement flips and a real gate
 becomes owed.
 
-## SPR-M.10 — Consent, rights, and an end date  `PLANNED`
+## SPR-M.10 — Consent, rights, and an end date  `DONE`
 
 The half that is policy becoming machinery. Slower work, and none of it is a
 live hole, which is why it is second.
 
 | F-ID | Feature | Traces | Status |
 |---|---|---|---|
-| F-M.10.1 | Year of birth at registration, and a parent's consent recorded for anyone under 18 | REQ-M.84 | TODO |
-| F-M.10.2 | An admin records a school's paper consent, rather than it being assumed | REQ-M.84 | TODO |
-| F-M.10.3 | Everything we hold about you, on one screen in your own profile | REQ-M.85 | TODO |
-| F-M.10.4 | Export it. Deletion **reuses** `app.views.delete_account`, reached from our own screen | REQ-M.85 | TODO |
-| F-M.10.5 | Retention periods, as a `purge_matazim_attempts` command in babook's existing `purge_*` pattern | REQ-M.86 | TODO |
+| F-M.10.1 | Year of birth at registration, and a parent's consent recorded for anyone under 18 | REQ-M.84 | DONE |
+| F-M.10.2 | An admin records a school's paper consent, rather than it being assumed | REQ-M.84 | DONE |
+| F-M.10.3 | Everything we hold about you, on one screen in your own profile | REQ-M.85 | DONE |
+| F-M.10.4 | Export it. Deletion **reuses** `app.views.delete_account`, reached from our own screen | REQ-M.85 | DONE |
+| F-M.10.5 | Retention periods, as a `purge_matazim_attempts` command in babook's existing `purge_*` pattern | REQ-M.86 | DONE |
 
 **Reuse, per Avi mid-SPR-M.9.** F-M.10.4 shrank from "build deletion" to "reach
 the deletion that exists": `User.delete()` already cascades into every מט״צים
@@ -638,6 +638,28 @@ describe a different kind of processing. Shared plumbing, separate promises.
 One thing the reuse already caught, fixed in SPR-M.9 rather than deferred:
 `delete_account` removed every row and left the uploaded model on the disk,
 because Django stopped deleting files on row deletion in 1.3.
+
+### What the retrofit actually cost
+
+The gate landed exactly where it was predicted to, which is the useful part.
+Seven tests across SPR-M.2, M.3, M.7 and M.8 went red the moment consent
+existed, because every one of their fixtures builds a member with no birth year
+and then joins them to a leader. That is not the tests being wrong, it is the
+tests encoding a world where this rule did not exist, and the red was the proof
+that the gate bites rather than decorating.
+
+They were updated rather than relaxed: the registration POSTs now send the
+fields the form actually requires, and the joining fixtures now build the person
+those tests were always about, a fourteen-year-old whose parent has said yes.
+The gate itself is tested on its own in `test_spr_m_10.py`, so nothing is
+checking consent by accident.
+
+Two things found by looking rather than by testing. The registration page still
+promised "שלושה פרטים, וזהו" while asking for up to seven, which is a small lie
+on the one screen where trust is being asked for. And the new copy said קורסים
+where מט״צים's own body copy says הדרכות; the product turns out to use both
+deliberately, הקורסים as Litala's section name and הדרכות in prose, which is
+defensible and is now written down in Q9 instead of being folklore.
 
 The judgement call in F-M.10.1 is what to do with someone who is already
 registered when consent arrives as a requirement. Retrofitting a gate in front

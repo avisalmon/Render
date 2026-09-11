@@ -150,7 +150,18 @@ def test_registering_stamps_entry_through_this_door(client, db):
 
     resp = client.post(
         reverse("matazim:register"),
-        {"name": "יובל כהן", "email": "yuval@example.com", "password": PASSWORD},
+        {
+            "name": "יובל כהן",
+            "email": "yuval@example.com",
+            "password": PASSWORD,
+            # REQ-M.84 — registration now asks how old they are, and a
+            # ninth-grader needs a parent. These fields are required, so a
+            # POST without them is refused rather than ignored.
+            "birth_year": "2012",
+            "guardian_name": "רונית כהן",
+            "guardian_email": "parent@example.com",
+            "guardian_consent": "on",
+        },
     )
     assert resp.status_code == 302
     user = User.objects.get(email="yuval@example.com")
@@ -224,7 +235,18 @@ def test_an_acknowledgement_made_before_signing_in_is_carried_over(client, db):
     client.post(reverse("matazim:welcome_accept"))
     client.post(
         reverse("matazim:register"),
-        {"name": "רון", "email": "ron@example.com", "password": PASSWORD},
+        {
+            "name": "רון",
+            "email": "ron@example.com",
+            "password": PASSWORD,
+            # REQ-M.84 — registration now asks how old they are, and a
+            # ninth-grader needs a parent. These fields are required, so a
+            # POST without them is refused rather than ignored.
+            "birth_year": "2012",
+            "guardian_name": "רונית כהן",
+            "guardian_email": "parent@example.com",
+            "guardian_consent": "on",
+        },
     )
     user = User.objects.get(email="ron@example.com")
     assert MemberProfile.objects.get(user=user).welcome_accepted_at is not None

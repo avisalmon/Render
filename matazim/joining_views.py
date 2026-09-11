@@ -27,6 +27,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from .access import is_admin, leader_of
+from .consent import consent_blocker, needs_guardian_consent
 from .models import Leader, Student
 from .views import member_profile, shell
 
@@ -87,6 +88,11 @@ def join(request, code):
             return redirect(f"{LOGIN_URL}?next={request.path}")
         if not passed:
             return redirect("matazim:entrance_test")
+        if needs_guardian_consent(member_profile(request.user)):
+            # REQ-M.84 — this is the moment their data starts being shown to
+            # another person, which is the moment consent is owed. Not earlier:
+            # signing in and doing the test are disclosed to nobody.
+            return redirect("matazim:profile")
         if already is None:
             already = Student.objects.create(
                 user=request.user, leader=leader, status=Student.IN_TRAINING
@@ -113,6 +119,11 @@ def join(request, code):
             schools=leader.classes.values_list("school_name", flat=True).distinct(),
             passed=passed,
             student=already,
+            consent_blocker=(
+                consent_blocker(member_profile(request.user))
+                if request.user.is_authenticated
+                else None
+            ),
         ),
     )
 
@@ -140,6 +151,9 @@ def apply(request):
     """
     if not has_passed(request.user):
         return redirect("matazim:entrance_test")
+    if needs_guardian_consent(member_profile(request.user)):
+        # REQ-M.84 — both doors, or neither.
+        return redirect("matazim:profile")
 
     existing = student_of(request.user)
     if existing and (existing.leader or existing.pending_leader):

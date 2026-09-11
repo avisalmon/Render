@@ -147,6 +147,35 @@
     </section>
     {% endif %}
 
+    {% comment %}
+      REQ-M.84 — a blocked teenager who cannot see why will decide the site is
+      broken, which is the same failure REQ-M.77 exists to prevent on the
+      certification screen. So the block is explained where they are, not only
+      at the door that refuses them.
+    {% endcomment %}
+    {% if consent_blocker %}
+      <section class="mz-panel">
+        <h2>אישור הורה</h2>
+        <p>{{ consent_blocker }}</p>
+        <p class="mz-muted">
+          אפשר להמשיך ללמוד ולעשות את מבחן הכניסה בלי זה. האישור נדרש רק כדי
+          להצטרף למוביל/ה, כי מהרגע הזה המוביל/ה רואה את ההתקדמות שלכם. אם
+          בית הספר שלכם כבר אסף אישור על נייר, כתבו לנו ונרשום את זה.
+        </p>
+      </section>
+    {% endif %}
+
+    {% comment %}
+      REQ-M.85 — a right nobody can find is not a right.
+    {% endcomment %}
+    <section class="mz-panel">
+      <h2>המידע שלי</h2>
+      <p class="mz-muted">
+        כל מה שיש לנו עליכם, להורדה או למחיקה.
+      </p>
+      <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:my_data' %}">המידע שלי</a>
+    </section>
+
   </div>
 </div>
 {% endblock %}

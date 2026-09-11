@@ -53,7 +53,14 @@ def make_student(leader=None, email="kid@example.com", name="יובל", passed=T
     user = make_user(email, name)
     MemberProfile.objects.update_or_create(
         user=user,
-        defaults={"entrance_test_passed_at": timezone.now() if passed else None},
+        defaults={
+            "entrance_test_passed_at": timezone.now() if passed else None,
+            # REQ-M.84, added in SPR-M.10: joining a leader needs a parent's
+            # consent. These tests are about rosters and certification, so the
+            # fixture supplies it; the gate itself is tested in test_spr_m_10.
+            "birth_year": 2012,
+            "guardian_consent_at": timezone.now(),
+        },
     )
     return Student.objects.create(user=user, leader=leader)
 

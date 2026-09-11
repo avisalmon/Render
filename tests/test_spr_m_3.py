@@ -69,7 +69,18 @@ def test_register_lands_on_the_main_view(client, db):
     """
     resp = client.post(
         reverse("matazim:register"),
-        {"name": "רותם", "email": "rotem@example.com", "password": PASSWORD},
+        {
+            "name": "רותם",
+            "email": "rotem@example.com",
+            "password": PASSWORD,
+            # REQ-M.84 — registration now asks how old they are, and a
+            # ninth-grader needs a parent. These fields are required, so a
+            # POST without them is refused rather than ignored.
+            "birth_year": "2012",
+            "guardian_name": "רונית כהן",
+            "guardian_email": "parent@example.com",
+            "guardian_consent": "on",
+        },
     )
     assert resp.status_code == 302
     assert resp.url == reverse("matazim:home")

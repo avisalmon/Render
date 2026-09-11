@@ -75,8 +75,8 @@ surface, the course reading experience, and every model this space writes.
 
   **One narrow exception, added 2026-09-11: the legal pages may name the
   operator and give a working contact address.** A privacy policy has to say
-  who actually holds the data and how to reach them, and `privacy@babook.co.il`
-  is the inbox that exists. Inventing a מט״צים-branded address that nobody
+  who actually holds the data and how to reach them, and `avi.salmon@gmail.com`
+  is the inbox that is actually read. Inventing a מט״צים-branded address that nobody
   reads would be a dead contact on the one page where the contact is the point,
   and concealing the operator to preserve a branding illusion is not a thing a
   privacy policy is allowed to do. So RULE-1 keeps its grip on *navigation*, a
@@ -427,7 +427,7 @@ shown a named minor's progress. Shared plumbing, separate promises.
 |---|---|---|
 | Account deletion | `app.views.delete_account` (REQ-7.2.10). `User.delete()` cascades into `MemberProfile`, `Student` and `EntranceAttempt`. | A second deletion path that would drift from the first |
 | Retention jobs | The `purge_*` management-command pattern already established by `purge_security_events` and `purge_unconfirmed_newsletter` | Inventing a scheduler |
-| Contact for requests | `privacy@babook.co.il`, the inbox that exists | A מט״צים address nobody reads |
+| Contact for requests | `avi.salmon@gmail.com` (Avi, 2026-09-11), the inbox that is actually read | A role address nobody monitors |
 | Accounts, sessions, CSRF | Django's, through babook's settings | Anything of our own |
 
 Reuse found a defect on its first reading, which is the argument for it. Django
@@ -608,9 +608,9 @@ front rather than letting a kid discover it at lesson four on a phone.
 | REQ-M.81 | מט״צים carries its own terms | A privacy policy and terms of use, inside the walls, in our own shell, written for this product and these people. Not a link to babook's, which RULE-1 forbids and which does not describe this processing anyway. Reachable from the footer of every page and from the registration screen. Finding P3. | DONE |
 | REQ-M.82 | Told before they type | §11 חובת יידוע, met where it is owed: at the point of collection. The registration screen says plainly what we collect, what it is for, and **that their leader will see their name, their progress and their status**. That last clause is the one a teenager would actually want to know and the one a generic policy always buries. Finding P3. | DONE |
 | REQ-M.83 | Cookies disclosed, not negotiated | The policy names the two cookies this product sets and says both are strictly necessary. No consent banner, because there is nothing here to consent to: no analytics, no third-party script, nothing that would be set for our benefit rather than the member's. If that ever changes, this requirement inverts and a real gate is owed before the script ships. Finding P3. | DONE |
-| REQ-M.84 | A parent says yes | Registration asks for year of birth, and anyone under 18 gives a parent's or guardian's name, email and affirmative consent, recorded with a timestamp. A school that has collected consent on paper is recorded the same way by an admin, rather than assumed. Nobody joins a leader without it. Finding P4, closes Q11. | TODO |
-| REQ-M.85 | See it, take it, or have it deleted | Inside the profile: everything we hold about this person on one screen, an export of it, and a deletion request that reaches an admin. Deletion removes the מט״צים record and the uploaded work; the babook account is the member's own and is not silently destroyed from here. Finding P5. | TODO |
-| REQ-M.86 | Nothing is kept forever | A stated retention period for each kind of data, and a command that enforces it rather than a sentence that promises it. Entrance attempts that never passed, and the files attached to them, are the shortest-lived thing here: they are a failed audition, not a record worth keeping for years. Finding P5. | TODO |
+| REQ-M.84 | A parent says yes | Registration asks for year of birth, and anyone under 18 gives a parent's or guardian's name, email and affirmative consent, recorded with a timestamp. A school that has collected consent on paper is recorded the same way by an admin, rather than assumed. Nobody joins a leader without it. Finding P4, closes Q11. | DONE |
+| REQ-M.85 | See it, take it, or have it deleted | Inside the profile: everything we hold about this person on one screen, an export of it, and a deletion request that reaches an admin. Deletion removes the מט״צים record and the uploaded work; the babook account is the member's own and is not silently destroyed from here. Finding P5. | DONE |
+| REQ-M.86 | Nothing is kept forever | A stated retention period for each kind of data, and a command that enforces it rather than a sentence that promises it. Entrance attempts that never passed, and the files attached to them, are the shortest-lived thing here: they are a failed audition, not a record worth keeping for years. Finding P5. | DONE |
 
 ## 6. Open questions
 
@@ -620,7 +620,7 @@ front rather than letting a kid discover it at lesson four on a phone.
 | Q5 | Litala's sign-off on the core change. Note her brief asks for **הקורסים שלי** as a site section, so she expects the site to *hold* the learning, not merely reflect it. The autonomy decision now gives her exactly that, which likely closes this rather than blocking it. Confirm with her. | Was blocking everything past the entrance funnel. Probably resolved. |
 | Q6 | Production already has the old tables and, possibly, real rows. Confirm nobody has applied before we drop them. | Blocks the retirement migration in SPR-M.1. |
 | Q8 | "פתיחת תכנים ומשימות" by program staff: do they get an authoring surface inside מט״צים, or do they author in babook's studio and only publish here? | An authoring UI inside the walls is a large piece of work. Authoring in the studio is free but means Avi and Litala cross into babook, which members never do. |
-| Q9 | Terminology: her brief says תלמידים and מובילים, our docs say מט״צים and מובילי בית ספר. | Cosmetic but pervasive; settle before SPR-M.2 writes the copy. |
+| Q9 | Terminology: her brief says תלמידים and מובילים, our docs say מט״צים and מובילי בית ספר. **Also קורסים vs הדרכות**, noted 2026-09-11: babook's standing brand rule is הדרכות and never קורסים, but Litala's information architecture names the section הקורסים שלי and REQ-M.5 and REQ-M.59 encode that. The product currently does both, and not at random: **הקורסים is the section name, הדרכות is the body copy**. That is defensible, and it is also exactly the kind of split that decays into randomness once four people are writing screens. | Cosmetic but pervasive. The section-name-versus-body-copy split needs to be either written down as the rule or collapsed into one word. |
 | Q14 | **Is a class load-bearing?** At forty across the network a leader has one or two students per school and `school_name` *is* the group, so nobody needs to create a class. At twelve hundred a leader carries about forty-five and has to split them. | Decides whether class creation belongs in a leader's first run. Defaulted rather than blocked: a class is offered and never required, which is correct in the small world and merely incomplete in the large one. Revisit the day any single leader passes about twenty students. |
 | Q12 | The public path shows four stages (לומדים, יוצרים, מדריכים, משפיעים) while the program has five, with מתמיינים first. Deliberate? | Cosmetic if deliberate, confusing if not. My reading is deliberate: מתמיינים is the entrance test, which has its own CTA. |
 

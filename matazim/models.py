@@ -52,6 +52,37 @@ class MemberProfile(models.Model):
     # with this one.
     is_admin = models.BooleanField(default=False, verbose_name="מנהל/ת התוכנית")
 
+    # REQ-M.84 — the programme is ninth-graders, so a parent consents.
+    #
+    # Only the year, never a full date of birth. The question this has to answer
+    # is "is this person a minor", and a year answers it. A date would be more
+    # data about a child for no extra ability to decide anything, which is the
+    # definition of collecting too much.
+    #
+    # A blank year does not mean adult, it means we have to ask. Everyone who
+    # registered before this shipped has one, and reading blank as adult would
+    # silently exempt the entire existing population.
+    birth_year = models.PositiveIntegerField(null=True, blank=True, verbose_name="שנת לידה")
+
+    guardian_name = models.CharField(
+        max_length=120, blank=True, default="", verbose_name="הורה/אפוטרופוס"
+    )
+    guardian_email = models.EmailField(blank=True, default="", verbose_name="אימייל של ההורה")
+    guardian_consent_at = models.DateTimeField(
+        null=True, blank=True, verbose_name="הסכמת הורה התקבלה"
+    )
+    # Set when an admin records consent a school collected on paper, left null
+    # when the consent was given here at registration. Which of the two it was
+    # is a question somebody will eventually ask.
+    guardian_consent_recorded_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name="ההסכמה נרשמה על ידי",
+    )
+
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

@@ -49,6 +49,9 @@ PAGES = [
     "/matazim/terms/",
 ]
 
+# REQ-M.85 — the rights screens, which a member reaches on a phone or not at all.
+MEMBER_PAGES = ["/matazim/profile/", "/matazim/me/data/", "/matazim/me/delete/"]
+
 # The smallest comfortable touch target. Anything shorter is a link a thumb
 # misses, and on a phone that is a dead end rather than a nuisance.
 MIN_TAP_PX = 36
@@ -266,3 +269,22 @@ def test_the_leader_screens_are_tappable(phone_page, live_server, db):
         if small:
             broken.append(f"{path}: {small}")
     assert not broken, f"targets under {MIN_TAP_PX}px:\n" + "\n".join(broken)
+
+
+def test_the_rights_screens_fit_a_phone(phone_page, live_server, db):
+    """REQ-M.75 over REQ-M.85. A right that is unusable on a phone is a right a
+    fourteen-year-old does not have."""
+    _a_leader_with_a_student()
+    _sign_in(phone_page, live_server)
+
+    broken = []
+    for path in MEMBER_PAGES:
+        phone_page.goto(live_server.url + path, wait_until="domcontentloaded")
+        phone_page.wait_for_timeout(250)
+        result = phone_page.evaluate(OVERFLOW_JS)
+        if result["overflow"]:
+            broken.append(f"{path}: {result['scrollW']} > {result['innerW']} {result['offenders']}")
+        small = phone_page.evaluate(TAP_JS, MIN_TAP_PX)
+        if small:
+            broken.append(f"{path}: targets {small}")
+    assert not broken, "the rights screens break on a phone:\n" + "\n".join(broken)

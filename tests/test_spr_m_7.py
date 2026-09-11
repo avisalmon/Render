@@ -57,6 +57,14 @@ def sign_in(client, email="kid@example.com", name="יובל", passed=True):
         defaults={
             "welcome_accepted_at": timezone.now(),
             "entrance_test_passed_at": timezone.now() if passed else None,
+            # REQ-M.84, added in SPR-M.10. A ninth-grader cannot join a leader
+            # without a parent's consent, so the fixture now builds the person
+            # these tests were always about: a fourteen-year-old whose parent
+            # has said yes. Consent is tested on its own in test_spr_m_10.
+            "birth_year": 2012,
+            "guardian_name": "רונית כהן",
+            "guardian_email": "parent@example.com",
+            "guardian_consent_at": timezone.now(),
         },
     )
     client.force_login(user)
