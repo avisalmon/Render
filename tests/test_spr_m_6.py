@@ -18,6 +18,23 @@ from django.contrib.auth.models import User
 pytestmark = pytest.mark.sprm6
 
 
+def _one_world():
+    """REQ-M.88 — these suites describe a single institution.
+
+    Leaders here belong to whichever program manager the test created, and the
+    fixtures run in whatever order the test found readable. So a leader adopts
+    the existing manager if there is one, and a manager adopts any leader made
+    before it existed. Between them, order stops mattering.
+    """
+    from matazim.models import Leader, MemberProfile
+
+    profile = MemberProfile.objects.filter(is_program_manager=True).first()
+    owner = profile.user if profile else None
+    if owner:
+        Leader.objects.filter(program_manager__isnull=True).update(program_manager=owner)
+    return owner
+
+
 def make_user(email):
     return User.objects.create_user(username=email, email=email, password="sprm6-pass")
 
@@ -25,7 +42,10 @@ def make_user(email):
 def make_leader(email, active=True):
     from matazim.models import Leader
 
-    return Leader.objects.create(user=make_user(email), is_active=active)
+    leader = Leader.objects.create(
+        user=make_user(email), is_active=active, program_manager=_one_world()
+    )
+    return leader
 
 
 def make_student(email, leader=None, year=2026):
@@ -133,6 +153,7 @@ def test_an_admin_sees_everyone_including_the_unclaimed(db):
 
     boss = make_user("boss@example.com")
     MemberProfile.objects.create(user=boss, is_program_manager=True)
+    _one_world()
 
     leader = make_leader("lead3@example.com")
     claimed = make_student("claimed@example.com", leader=leader)
@@ -173,6 +194,7 @@ def test_role_precedence_is_manager_then_leader_then_student(db):
     Leader.objects.create(user=user)
     Student.objects.create(user=user, cohort_year=2026)
     MemberProfile.objects.create(user=user, is_program_manager=True)
+    _one_world()
 
     other = make_student("elsewhere@example.com", leader=make_leader("other@example.com"))
 

@@ -226,6 +226,26 @@ class Leader(models.Model):
     # pointing at them so no roster is lost. An admin moves people deliberately.
     is_active = models.BooleanField(default=True, verbose_name="פעיל")
 
+    # REQ-M.88 — who owns this leader, and therefore which world they are in.
+    #
+    # This one FK is what makes two institutions two products rather than one
+    # shared list. It is the leader rule moved up a floor: a program manager
+    # cannot reach another's leaders for the same reason a leader cannot reach
+    # another's students, which is that the queryset never contained them.
+    #
+    # Nullable, and null means orphaned rather than shared. A leader whose
+    # program manager was deleted is visible to root alone until somebody
+    # reassigns them, which is the safe direction to fail in: invisible is
+    # recoverable, visible-to-everyone is not.
+    program_manager = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="matazim_leaders",
+        verbose_name="מנהל/ת התוכנית",
+    )
+
     assigned_by = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
     )

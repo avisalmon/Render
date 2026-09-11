@@ -31,6 +31,23 @@ PASSWORD = "sprm8-pass-4417"
 # --------------------------------------------------------------- fixtures
 
 
+def _one_world():
+    """REQ-M.88 — these suites describe a single institution.
+
+    Leaders here belong to whichever program manager the test created, and the
+    fixtures run in whatever order the test found readable. So a leader adopts
+    the existing manager if there is one, and a manager adopts any leader made
+    before it existed. Between them, order stops mattering.
+    """
+    from matazim.models import Leader, MemberProfile
+
+    profile = MemberProfile.objects.filter(is_program_manager=True).first()
+    owner = profile.user if profile else None
+    if owner:
+        Leader.objects.filter(program_manager__isnull=True).update(program_manager=owner)
+    return owner
+
+
 def make_user(email, name=""):
     from app.models import UserProfile
 
@@ -42,7 +59,7 @@ def make_user(email, name=""):
 def make_leader(email="noa@example.com", name="נעה מורה", school="עתיד רמלה"):
     from matazim.models import Leader, StudyClass
 
-    leader = Leader.objects.create(user=make_user(email, name))
+    leader = Leader.objects.create(user=make_user(email, name), program_manager=_one_world())
     StudyClass.objects.create(leader=leader, name="ט1", school_name=school)
     return leader
 
@@ -406,6 +423,7 @@ def test_an_admin_can_certify_too(client, db):
 
     boss = make_user("chief@example.com", "אבי")
     MemberProfile.objects.update_or_create(user=boss, defaults={"is_program_manager": True})
+    _one_world()
     client.force_login(boss)
     client.post(reverse("matazim:certify", args=[student.pk]), {"action": "certify"})
 

@@ -293,10 +293,16 @@ def visible_students(user):
     if user.is_superuser:
         return Student.objects.all()
     if is_program_manager(user):
-        # Their world, reached through the leaders they own. A program manager
-        # seeing another institution's teenagers is the exact thing tenancy
-        # exists to prevent.
-        return Student.objects.filter(leader__program_manager=user)
+        # Their world, reached through the leaders they own, plus the students
+        # nobody has claimed yet. That second clause is the Q15 seam: an
+        # unclaimed student has no leader and therefore no world, and dropping
+        # them would make a teenager who passed the entrance test invisible to
+        # the only person who could help. With one program manager that is the
+        # worse failure; with two, it costs one manager seeing a name bound for
+        # the other's institution.
+        return Student.objects.filter(
+            Q(leader__program_manager=user) | Q(leader__isnull=True)
+        )
     if leader := leader_of(user):
         return Student.objects.filter(leader=leader)
     return Student.objects.filter(user=user)
@@ -732,7 +738,7 @@ front rather than letting a kid discover it at lesson four on a phone.
 | Q8 | "פתיחת תכנים ומשימות" by program staff: do they get an authoring surface inside מט״צים, or do they author in babook's studio and only publish here? | An authoring UI inside the walls is a large piece of work. Authoring in the studio is free but means Avi and Litala cross into babook, which members never do. |
 | Q9 | Terminology: her brief says תלמידים and מובילים, our docs say מט״צים and מובילי בית ספר. **Also קורסים vs הדרכות**, noted 2026-09-11: babook's standing brand rule is הדרכות and never קורסים, but Litala's information architecture names the section הקורסים שלי and REQ-M.5 and REQ-M.59 encode that. The product currently does both, and not at random: **הקורסים is the section name, הדרכות is the body copy**. That is defensible, and it is also exactly the kind of split that decays into randomness once four people are writing screens. | Cosmetic but pervasive. The section-name-versus-body-copy split needs to be either written down as the rule or collapsed into one word. |
 | Q14 | **Is a class load-bearing?** At forty across the network a leader has one or two students per school and `school_name` *is* the group, so nobody needs to create a class. At twelve hundred a leader carries about forty-five and has to split them. | Decides whether class creation belongs in a leader's first run. Defaulted rather than blocked: a class is offered and never required, which is correct in the small world and merely incomplete in the large one. Revisit the day any single leader passes about twenty students. |
-| Q15 | **Which world does an uninvited student land in?** `joinable_leaders()` lists every active leader on the platform, so under tenancy the open door would show one institution's staff to another's applicants. Someone arriving by invite is already inside a world; someone arriving cold has not declared one. | Blocks nothing today, because production has one program manager. Blocks the second one. Options: the open door lists nobody and joining is invite-only, or a student picks an institution first, or the door is per-program-manager at its own URL. |
+| Q15 | **Which world does an uninvited student land in?** Two places feel it. `joinable_leaders()` lists every active leader on the platform, so the open door would show one institution's staff to another's applicants. And `visible_students` currently folds unclaimed students into every program manager's view, because the alternative makes a teenager invisible to the only person who could help them. Someone arriving by invite is already inside a world; someone arriving cold has not declared one. | Blocks nothing today, because production has one program manager. Blocks the second one. Options: the open door lists nobody and joining is invite-only, or a student picks an institution first, or the door is per-program-manager at its own URL. |
 | Q12 | The public path shows four stages (לומדים, יוצרים, מדריכים, משפיעים) while the program has five, with מתמיינים first. Deliberate? | Cosmetic if deliberate, confusing if not. My reading is deliberate: מתמיינים is the entrance test, which has its own CTA. |
 
 **Closed:** Q1 start clean, new Django app (2026-09-09). Q2 מט״צים-branded auth

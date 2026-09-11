@@ -26,7 +26,7 @@ from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from .access import is_program_manager, leader_of
+from .access import is_program_manager, leader_of, visible_leaders
 from .consent import consent_blocker, needs_guardian_consent
 from .models import Leader, Student
 from .views import member_profile, shell
@@ -277,11 +277,11 @@ def leader_qr(request, leader_id):
     """
     import qrcode
 
-    leader = get_object_or_404(Leader, pk=leader_id)
-
-    mine = leader_of(request.user)
-    if not is_program_manager(request.user) and (mine is None or mine.pk != leader.pk):
-        raise PermissionDenied
+    # REQ-M.79 for authorisation, REQ-M.88 for which world. Taken out of the
+    # scoped queryset rather than fetched and then checked: a program manager
+    # asking for another institution's leader gets a 404 from the query, not a
+    # permission check somebody has to remember to write.
+    leader = get_object_or_404(visible_leaders(request.user), pk=leader_id)
     url = request.build_absolute_uri(f"/matazim/join/{leader.join_code}/")
     image = qrcode.make(url, box_size=8, border=2)
     buffer = io.BytesIO()
@@ -322,7 +322,8 @@ def staff_leaders(request):
         shell(
             request,
             "staff",
-            leaders=Leader.objects.all().select_related("user", "user__profile"),
+            # REQ-M.88 — her leaders, not every leader on the platform.
+            leaders=visible_leaders(request.user).select_related("user", "user__profile"),
             error=error,
             notice=notice,
         ),
@@ -335,7 +336,9 @@ def staff_leader(request, leader_id):
     if not is_program_manager(request.user):
         raise PermissionDenied
 
-    leader = get_object_or_404(Leader, pk=leader_id)
+    # REQ-M.88 — scoped, so every write on this page (rotate, deactivate,
+    # activate) is scoped too, without each one needing its own check.
+    leader = get_object_or_404(visible_leaders(request.user), pk=leader_id)
     notice = ""
 
     if request.method == "POST":

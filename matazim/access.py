@@ -28,6 +28,8 @@ superuser before it was caught. If you are reading this because you typed
 `is_admin` and it did not exist: you want `is_program_manager`.
 """
 
+from django.db.models import Q
+
 from .models import Leader, MemberProfile, Student
 
 ROOT = "root"
@@ -38,7 +40,13 @@ VISITOR = "visitor"
 
 
 def is_program_manager(user):
-    """Superusers count too. The role is seeded, never self-served (REQ-M.68)."""
+    """Does this person hold the role at all?
+
+    Superusers count, so that root can use every screen a program manager can.
+    Note this answers *whether*, never *whose*: scope comes from
+    `visible_leaders` and `visible_students`, which treat root and a program
+    manager differently on purpose (REQ-M.88).
+    """
     if not getattr(user, "is_authenticated", False):
         return False
     if user.is_superuser:
@@ -78,24 +86,49 @@ def visible_students(user):
     Always a queryset, never a list and never None, so callers can filter,
     count and paginate without asking what they were given.
     """
-    if is_program_manager(user):
-        # Includes students nobody has claimed yet (REQ-M.65). Someone with no
-        # leader must not quietly fall out of the only view that covers everyone.
+    if not getattr(user, "is_authenticated", False):
+        return Student.objects.none()
+
+    # REQ-M.88 — root is the only role that crosses worlds.
+    if user.is_superuser:
         return Student.objects.all()
+
+    if is_program_manager(user):
+        # Their world, reached through the leaders they own. A program manager
+        # seeing another institution's teenagers is the exact thing tenancy
+        # exists to prevent, so this is a join and not an `.all()`.
+        #
+        # Plus the unclaimed, and that `Q` is the seam where Q15 will be
+        # answered. A student who has passed the entrance test and joined
+        # nobody has no leader, so no world, and a pure ownership join drops
+        # them. Dropping them is the worse failure of the two available today:
+        # with one program manager in production it would make a teenager
+        # invisible to the only person who could help, and nothing else in the
+        # product surfaces them. Including them costs, once a second program
+        # manager exists, one manager seeing a name that will end up in the
+        # other's institution. When Q15 is answered this line changes and the
+        # test on it changes with it.
+        return Student.objects.filter(Q(leader__program_manager=user) | Q(leader__isnull=True))
 
     if leader := leader_of(user):
         return Student.objects.filter(leader=leader)
 
-    if getattr(user, "is_authenticated", False):
-        return Student.objects.filter(user=user)
-
-    return Student.objects.none()
+    return Student.objects.filter(user=user)
 
 
 def visible_leaders(user):
-    """Leaders this person may see. A program manager sees all; a leader sees themselves."""
-    if is_program_manager(user):
+    """Leaders this person may see (REQ-M.88).
+
+    Root crosses every world. A program manager sees the leaders they own, and
+    another program manager's are not hidden but unreachable. A leader sees
+    themselves, which is what lets one function answer for every screen.
+    """
+    if not getattr(user, "is_authenticated", False):
+        return Leader.objects.none()
+    if user.is_superuser:
         return Leader.objects.all()
+    if is_program_manager(user):
+        return Leader.objects.filter(program_manager=user)
     if leader := leader_of(user):
         return Leader.objects.filter(pk=leader.pk)
     return Leader.objects.none()
@@ -106,12 +139,27 @@ def joinable_leaders():
 
     Deactivated leaders are gone from here and take no new students, while
     keeping every student they already have.
+
+    **Not scoped by world, and that is Q15 rather than an oversight.** A student
+    arriving by invite is already inside a world; a student arriving cold has
+    not declared one, so there is nothing yet to scope by. With one program
+    manager in production this shows exactly the right list. With two it would
+    show one institution's staff to the other's applicants, and the answer is a
+    product decision (invite-only, pick an institution first, or a door per
+    program manager) rather than a filter somebody can add here.
     """
     return Leader.objects.filter(is_active=True)
 
 
 def unclaimed_students():
-    """Students nobody has taken yet. A program manager's queue, not an error state."""
+    """Students nobody has taken yet. A program manager's queue, not an error state.
+
+    Deliberately not scoped by world, because an unclaimed student has no leader
+    and therefore belongs to no world yet. That is Q15: someone who arrives
+    without an invite has not declared which institution they are joining. Until
+    that is answered, this is the one place a program manager can see beyond
+    their own leaders, and it shows only people who belong to nobody.
+    """
     return Student.objects.filter(leader__isnull=True)
 
 

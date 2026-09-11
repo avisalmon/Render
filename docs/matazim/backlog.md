@@ -757,22 +757,43 @@ without setting the new one in Render and the next deploy silently stops
 granting it. So the command accepts the old name and the new one for now, and
 the old one is dropped only once Render is confirmed updated.
 
-## SPR-M.13 — The worlds do not touch  `PLANNED`
+## SPR-M.13 — The worlds do not touch  `DONE`
 
 **Goal:** `Leader.program_manager`, and every query in the product learning
 about it. Still no new screens.
 
 | F-ID | Feature | Traces | Status |
 |---|---|---|---|
-| F-M.13.1 | `Leader.program_manager`, backfilled to נעמי for every existing row | REQ-M.88 | TODO |
-| F-M.13.2 | `visible_leaders` and `visible_students` scope by ownership; root crosses worlds | REQ-M.88 | TODO |
-| F-M.13.3 | Every existing screen re-checked against the narrowed scope | REQ-M.88 | TODO |
-| F-M.13.4 | A guard test: two program managers, and neither can reach the other's anything | REQ-M.88 | TODO |
+| F-M.13.1 | `Leader.program_manager`, backfilled to נעמי for every existing row | REQ-M.88 | DONE |
+| F-M.13.2 | `visible_leaders` and `visible_students` scope by ownership; root crosses worlds | REQ-M.88 | DONE |
+| F-M.13.3 | Every existing screen re-checked against the narrowed scope | REQ-M.88 | DONE |
+| F-M.13.4 | A guard test: two program managers, and neither can reach the other's anything | REQ-M.88 | DONE |
 
 **F-M.13.4 is the point of the sprint.** Everything else is mechanical. A test
 that builds two complete worlds and asserts that every screen, every queryset
 and every POST refuses to cross between them is what makes tenancy true rather
 than intended, and it is the test that will still be earning its keep in a year.
+
+**Four real leaks, found by the guard rather than by reading.** Every one was a
+screen building its own queryset instead of asking the access module: the leader
+list, the single-leader page and its writes, the QR endpoint, and the class
+filing form, which let a program manager file a student into any class on the
+platform. All four now go through `visible_leaders`, so the scope arrives with
+the object rather than being checked afterwards.
+
+**One semantic conflict, resolved the conservative way round.** A pure ownership
+join drops students nobody has claimed yet, because an unclaimed student has no
+leader and therefore no world. Nothing in the product surfaces them separately,
+so dropping them would make a teenager who passed the entrance test invisible to
+the only person who could help. That is the worse failure with one program
+manager, so they stay in view and the `Q` object is marked as the line Q15 will
+change.
+
+**The RULE-3 guard caught the demo seeder** on the day it was written, for
+writing `UserVideoProgress` directly. It was right to: the rule exists to stop
+product code inventing a second way to record learning. The answer was a named
+exemption with the reason attached, not a looser pattern, since fabricating
+progress is the seeder's entire job and it never runs for a real user.
 
 **Q15 is open and this sprint does not close it.** The open door lists every
 active leader on the platform, which under tenancy would show one institution's

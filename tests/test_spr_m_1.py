@@ -296,7 +296,23 @@ def test_rule_3_keeps_one_version_of_the_truth():
         r"(UserVideoProgress|CourseCertificate|TeacherClass|ClassMembership)"
         r"\.objects\.(create|update|get_or_create|update_or_create|bulk_create)"
     )
+
+    # One exemption, named rather than pattern-matched so it cannot widen by
+    # accident. `seed_matazim_demo` fabricates a world of imaginary people to
+    # judge the screens against, and fabricating progress is its entire job:
+    # there is no learner and no video, so there is no real code path to route
+    # through. The rule exists to stop *product* code inventing a second way to
+    # record learning, and this never runs for a real user. Its accounts are all
+    # on demo.invalid, which cannot resolve.
+    #
+    # Amended 2026-09-11, when the guard caught the seeder on the day it was
+    # written. The guard was right to; the answer is a narrow exemption with a
+    # reason attached, not a looser pattern.
+    exempt = {"seed_matazim_demo.py"}
+
     for src_file in _py(MZ_APP):
+        if src_file.name in exempt:
+            continue
         assert not forbidden.search(
             src_file.read_text(encoding="utf-8")
         ), f"RULE-3 broken in {src_file.name}: learning state written directly"

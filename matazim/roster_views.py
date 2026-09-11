@@ -20,7 +20,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from .access import is_program_manager, leader_of, visible_students
+from .access import is_program_manager, leader_of, visible_leaders, visible_students
 from .certification import certify, eligibility, eligibility_for_many, may_certify, revoke
 from .content import REQUIRED_COURSE_SLUGS
 from .models import Student, StudyClass
@@ -166,12 +166,12 @@ def student(request, student_id):
 def _student_action(request, leader, person):
     if request.POST.get("action") == "set_classes":
         wanted = [int(v) for v in request.POST.getlist("classes") if v.isdigit()]
-        # Scoped through the queryset, not filtered after the fact: a leader
-        # cannot file a student into another leader's class because the class
-        # is not in the set they are allowed to name (REQ-M.22).
-        allowed = StudyClass.objects.filter(pk__in=wanted)
-        if not is_program_manager(request.user):
-            allowed = allowed.filter(leader=leader)
+        # Scoped through the queryset, not filtered after the fact: nobody can
+        # file a student into a class they are not allowed to name (REQ-M.22),
+        # and a program manager is limited to their own world (REQ-M.88). The
+        # earlier version let a program manager name *any* class on the
+        # platform, which was a write that crossed worlds.
+        allowed = StudyClass.objects.filter(pk__in=wanted, leader__in=visible_leaders(request.user))
         person.classes.set(allowed)
     return redirect("matazim:student", student_id=person.pk)
 
