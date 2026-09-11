@@ -358,7 +358,7 @@ visible change.
 |---|---|---|---|
 | ACT-M.6 | Grant adminship to נעמי and אביב at babook.co.il/matazim/staff/admins/. You hold every power already as site owner, so you do not need granting. Either at babook.co.il/admin/ under פרופילי מט״צים, ticking מנהל/ת התוכנית, or by setting `MATAZIM_ADMINS` in Render so every deploy re-applies it | Admins existing in production. The build is done | OPEN |
 
-## SPR-M.7 — How anyone becomes anyone  `DONE`
+## SPR-M.7 — How anyone becomes anyone  `DONE` — deployed 2026-09-11 (`d121299`)
 
 **Goal:** the roles stop being unpopulatable. Today nothing in the app creates a
 `Leader` or a `Student` at all, Django admin is the only way in, and passing the
