@@ -148,3 +148,117 @@ def test_the_menu_opens_on_a_phone(phone_page, live_server):
     phone_page.click(".mz-nav-toggle")
     phone_page.wait_for_timeout(250)
     assert nav.is_visible(), "the menu button did not open the menu"
+
+
+# --------------------------------------------------------------- SPR-M.8
+#
+# Everything above is reachable logged out. The leader's screens are not, and
+# they are the ones a leader actually lives in: the roster is read standing in
+# a classroom, on a phone, which is exactly where a table quietly becomes a
+# sideways scroll. So this signs in for real and walks them.
+
+LEADER_PAGES = [
+    "/matazim/leader/",
+    "/matazim/leader/students/",
+    "/matazim/leader/classes/",
+]
+
+LEADER_EMAIL = "phone-leader@example.com"
+LEADER_PASSWORD = "phone-guard-9912"
+
+
+def _a_leader_with_a_student():
+    """A roster with somebody on it. An empty screen cannot overflow."""
+    from django.contrib.auth.models import User
+    from django.utils import timezone
+
+    from app.models import UserProfile
+    from matazim.models import Leader, MemberProfile, Student, StudyClass
+
+    teacher = User.objects.create_user(
+        username=LEADER_EMAIL, email=LEADER_EMAIL, password=LEADER_PASSWORD
+    )
+    UserProfile.objects.update_or_create(user=teacher, defaults={"display_name": "נעה מורה"})
+    leader = Leader.objects.create(user=teacher)
+    StudyClass.objects.create(leader=leader, name="ט1", school_name="עתיד רמלה")
+
+    kid = User.objects.create_user(
+        username="phone-kid@example.com", email="phone-kid@example.com", password="x-4417-y"
+    )
+    UserProfile.objects.update_or_create(
+        user=kid, defaults={"display_name": "יובל בן ארצי לוינשטיין"}
+    )
+    MemberProfile.objects.update_or_create(
+        user=kid, defaults={"entrance_test_passed_at": timezone.now()}
+    )
+    Student.objects.create(user=kid, leader=leader)
+    return leader
+
+
+def _sign_in(page, live_server):
+    """Through the real form, because the real form is what a leader uses.
+
+    Two details here were found the hard way, and both made the guard pass
+    while looking at the wrong page.
+
+    The welcome notice is dismissed first. It covers the page until
+    acknowledged, and it carries its own submit button which sits *before* the
+    login form in the DOM, so a bare `button[type=submit]` clicks the welcome
+    and never touches the login. The click is then scoped to the login form for
+    the same reason.
+
+    And the landing is asserted rather than assumed. A guard that fails to sign
+    in still passes every check, because the login page it gets bounced back to
+    fits a phone perfectly well.
+    """
+    page.goto(live_server.url + "/matazim/login/", wait_until="domcontentloaded")
+    page.wait_for_timeout(250)
+
+    welcome = page.locator(".mz-welcome button[type=submit]")
+    if welcome.count():
+        welcome.click()
+        page.wait_for_timeout(400)
+
+    page.fill('input[name="email"]', LEADER_EMAIL)
+    page.fill('input[name="password"]', LEADER_PASSWORD)
+    page.click('form:has(input[name="password"]) button[type="submit"]')
+    page.wait_for_timeout(600)
+
+    assert (
+        "/login/" not in page.url
+    ), f"the guard never signed in, so it would have checked the login page: {page.url}"
+
+
+def test_the_leader_screens_fit_a_phone(phone_page, live_server, db):
+    """REQ-M.75 over the screens a leader spends their time in.
+
+    A roster is a table in spirit, and a table is the classic way a page starts
+    scrolling sideways. Worth checking with a long name on it, because the
+    longest name in the class is what finds the bug.
+    """
+    _a_leader_with_a_student()
+    _sign_in(phone_page, live_server)
+
+    broken = []
+    for path in LEADER_PAGES:
+        phone_page.goto(live_server.url + path, wait_until="domcontentloaded")
+        phone_page.wait_for_timeout(250)
+        result = phone_page.evaluate(OVERFLOW_JS)
+        if result["overflow"]:
+            broken.append(f"{path}: {result['scrollW']} > {result['innerW']} {result['offenders']}")
+    assert not broken, "leader pages scroll sideways at 390px:\n" + "\n".join(broken)
+
+
+def test_the_leader_screens_are_tappable(phone_page, live_server, db):
+    """REQ-M.75. The roster is one long column of links, so every one counts."""
+    _a_leader_with_a_student()
+    _sign_in(phone_page, live_server)
+
+    broken = []
+    for path in LEADER_PAGES:
+        phone_page.goto(live_server.url + path, wait_until="domcontentloaded")
+        phone_page.wait_for_timeout(250)
+        small = phone_page.evaluate(TAP_JS, MIN_TAP_PX)
+        if small:
+            broken.append(f"{path}: {small}")
+    assert not broken, f"targets under {MIN_TAP_PX}px:\n" + "\n".join(broken)

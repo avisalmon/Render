@@ -267,6 +267,21 @@ class Student(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=APPLIED, db_index=True)
     cohort_year = models.PositiveIntegerField(default=current_year)
 
+    # REQ-M.78 — certification is an act by a person, so the record says which
+    # person and when. Without that, "certified" is a status that appeared from
+    # nowhere and nobody can be asked about it. Both are cleared on revoke, so
+    # they always describe the certification that is currently in force rather
+    # than the last one that ever was.
+    certified_at = models.DateTimeField(null=True, blank=True, verbose_name="הוסמך בתאריך")
+    certified_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="matazim_certified",
+        verbose_name="הוסמך על ידי",
+    )
+
     joined_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

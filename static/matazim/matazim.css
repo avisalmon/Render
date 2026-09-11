@@ -605,13 +605,20 @@ img { max-width: 100%; height: auto; display: block; }
 
 .mz-inline-form { display: inline; }
 .mz-linkbtn {
+  /* Reads as a quiet link and is tapped like a button. The phone guard caught
+   * this at 29px across the leader screens: a secondary action is still an
+   * action, and on the classes screen it was the only way back. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   background: none;
   border: 0;
-  padding: 6px 4px;
+  padding: 6px 8px;
   font: inherit;
   font-size: .9rem;
   color: var(--mz-muted);
   cursor: pointer;
+  text-decoration: none;
 }
 .mz-linkbtn:hover { color: var(--mz-ink); text-decoration: underline; }
 
@@ -1020,4 +1027,150 @@ img { max-width: 100%; height: auto; display: block; }
 @media (prefers-reduced-motion: reduce) {
   .mz-btn, .mz-project-card { transition: none; }
   .mz-btn:hover, .mz-project-card:hover { transform: none; }
+}
+
+/* ---------------------------------------------------- roster (SPR-M.8)
+ *
+ * A leader opens this to answer one question: who needs me today. So a row is
+ * name, then distance travelled, then whether anything is in the way. Three
+ * things, in that order, and nothing else competing for the eye.
+ *
+ * On a phone the row stacks rather than scrolling sideways. A roster that
+ * scrolls horizontally is a roster a leader stops opening, and the phone is
+ * the screen this is actually read on (REQ-M.75).
+ */
+
+.mz-roster-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+.mz-roster-tools .mz-field { flex: 1 1 200px; margin: 0; }
+.mz-roster-tools select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--mz-line);
+  border-radius: 10px;
+  background: var(--mz-card);
+  color: var(--mz-ink);
+  font: inherit;
+}
+
+.mz-roster { list-style: none; margin: 0; padding: 0; }
+
+.mz-roster-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 4px;
+  border-bottom: 1px solid var(--mz-line);
+}
+.mz-roster-row:last-child { border-bottom: 0; }
+
+.mz-roster-who {
+  flex: 1 1 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  /* The whole name block is the tap target, not just the text baseline: a
+   * 15px inline link is a link a thumb misses, which this product has already
+   * shipped once. */
+  min-height: 44px;
+  justify-content: center;
+  text-decoration: none;
+  color: inherit;
+}
+.mz-roster-who:hover .mz-roster-name { color: var(--mz-purple); }
+.mz-roster-name { font-weight: 600; color: var(--mz-ink); }
+
+.mz-roster-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 1 180px;
+}
+
+/* The bar is never the only carrier of meaning: the fraction is beside it, so
+ * it reads the same to someone who cannot separate the colours. */
+.mz-bar {
+  flex: 1;
+  height: 8px;
+  min-width: 60px;
+  background: var(--mz-line);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.mz-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--mz-teal);
+  border-radius: 999px;
+}
+
+.mz-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding-top: 14px;
+}
+
+/* The three conditions, as a list that reads the same whether or not they are
+ * met. A tick that appears and a bullet that stays put, never a row that
+ * vanishes: a leader learns where to look and the page stops moving. */
+.mz-needs { list-style: none; margin: 0 0 18px; padding: 0; }
+.mz-needs li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+}
+.mz-needs code {
+  background: var(--mz-page);
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 0.92em;
+}
+.mz-check {
+  flex: 0 0 22px;
+  height: 22px;
+  line-height: 22px;
+  text-align: center;
+  border-radius: 999px;
+  background: var(--mz-page);
+  color: var(--mz-muted);
+  font-weight: 700;
+}
+.mz-needs li .mz-check:not(:empty) { color: var(--mz-done); }
+
+@media (max-width: 640px) {
+  .mz-roster-row { align-items: flex-start; }
+  .mz-roster-progress { flex: 1 1 100%; }
+  .mz-roster-tools { flex-direction: column; align-items: stretch; }
+}
+
+/* The phone guard found these three the first time it was pointed at a signed
+ * in page. Every one of them is a link a leader taps in a classroom, and every
+ * one was under the 36px floor. Worth noting that none of them were new bugs:
+ * the guard had simply never had a logged-in page to look at before. */
+
+/* A name in a list is a link to that person, so the row is the target and not
+ * the text baseline inside it. */
+a.mz-training-title {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  text-decoration: none;
+}
+a.mz-training-title:hover { color: var(--mz-purple); }
+
+/* יציאה sits in the header on every signed-in page, and measured 35.6px. */
+.mz-header-action .mz-linkbtn,
+.mz-header-action button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
 }

@@ -1,0 +1,150 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.23, REQ-M.76, REQ-M.77, REQ-M.78 — one person, and the decision about
+  them.
+
+  The whole page is arranged around the three conditions, because that is the
+  question a leader actually has. Two of them the system answers and the leader
+  cannot change; the third is theirs alone.
+
+  REQ-M.77 is why the outstanding conditions are listed even when the button is
+  gone. A leader looking at a missing button has to guess why, and a leader who
+  is guessing asks the teenager. Saying it plainly costs one list.
+
+  REQ-M.29: nothing here records anything about a child this mataz teaches.
+{% endcomment %}
+
+{% block title %}{{ person.user.profile.display_name|default:person.user.email }} · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>{{ person.user.profile.display_name|default:person.user.email }}</h1>
+    <p class="mz-muted">{{ person.user.email }}</p>
+  </div>
+
+  <p class="mz-page-actions">
+    <a class="mz-linkbtn" href="{% url 'matazim:roster' %}">חזרה לרשימה</a>
+  </p>
+
+  <section class="mz-panel">
+    <h2>הסמכה למט״צ</h2>
+
+    {% if person.status == "certified" %}
+      <p class="mz-verdict">
+        <span class="mz-tag mz-tag-done">מט״צ מוסמך</span>
+        הוסמך/ה ב־{{ person.certified_at|date:"j.n.Y" }}
+        {% if person.certified_by %}
+          על ידי {{ person.certified_by.profile.display_name|default:person.certified_by.email }}
+        {% endif %}
+      </p>
+    {% endif %}
+
+    {% comment %}
+      The three conditions, always all three, in the order a student does them.
+      Shown whether or not they are met, so the page reads the same way every
+      time and a leader learns where to look.
+    {% endcomment %}
+    <ul class="mz-needs">
+      <li>
+        <span class="mz-check">{% if eligibility.entrance_test_passed %}✓{% else %}·{% endif %}</span>
+        <span>
+          מבחן הכניסה
+          {% if not eligibility.entrance_test_passed %}
+            <span class="mz-muted">עוד לא עבר/ה</span>
+          {% endif %}
+        </span>
+      </li>
+      {% for course in courses %}
+        <li>
+          <span class="mz-check">{% if course.certified %}✓{% else %}·{% endif %}</span>
+          <span>
+            תעודה ב{{ course.progress.title|default:course.slug }}
+            {% if course.certified %}
+              <span class="mz-muted">הושלם</span>
+            {% elif course.progress %}
+              <span class="mz-muted">{{ course.progress.done }}/{{ course.progress.total }} שיעורים, עוד אין תעודה</span>
+            {% else %}
+              <span class="mz-muted">עוד לא התחיל/ה</span>
+            {% endif %}
+          </span>
+        </li>
+      {% endfor %}
+      <li>
+        <span class="mz-check">{% if person.status == "certified" %}✓{% else %}·{% endif %}</span>
+        <span>אישור שלכם</span>
+      </li>
+    </ul>
+
+    {% if can_certify %}
+      {% if person.status == "certified" %}
+        <form method="post" action="{% url 'matazim:certify' person.pk %}">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="revoke">
+          <button type="submit" class="mz-linkbtn">ביטול ההסמכה</button>
+        </form>
+      {% elif eligibility.is_eligible %}
+        {% comment %}
+          REQ-M.78 — the wording matters. The system is not asking whether the
+          conditions are met, it already knows they are. It is asking the leader
+          to decide, which is a different question.
+        {% endcomment %}
+        <p class="mz-muted">
+          כל התנאים האוטומטיים מולאו. ההחלטה עכשיו שלכם: אתם מכירים אותו/ה
+          ולימדתם אותו/ה.
+        </p>
+        <form method="post" action="{% url 'matazim:certify' person.pk %}">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="certify">
+          <button type="submit" class="mz-btn mz-btn-primary">הסמכה למט״צ</button>
+        </form>
+      {% else %}
+        <p class="mz-muted">
+          אי אפשר להסמיך עדיין. חסר: {{ outstanding|join:", " }}.
+          כשהכול יושלם הכפתור יופיע כאן.
+        </p>
+      {% endif %}
+    {% endif %}
+  </section>
+
+  <section class="mz-panel">
+    <h2>התקדמות בקורסי החובה</h2>
+    <ul class="mz-training">
+      {% for course in courses %}
+        <li>
+          <span class="mz-training-title">{{ course.progress.title|default:course.slug }}</span>
+          <span class="mz-roster-progress">
+            <span class="mz-bar"><span class="mz-bar-fill" style="width: {{ course.progress.pct|default:0 }}%"></span></span>
+            <span class="mz-muted">{{ course.progress.done|default:0 }}/{{ course.progress.total|default:0 }}</span>
+          </span>
+        </li>
+      {% endfor %}
+    </ul>
+    <p class="mz-muted">
+      אפשר וכדאי ללמוד עוד קורסים. הם לא מחליפים את שני אלה.
+    </p>
+  </section>
+
+  {% if my_classes %}
+    <section class="mz-panel">
+      <h2>כיתות</h2>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="set_classes">
+        <div class="mz-choices">
+          {% for c in my_classes %}
+            <label class="mz-choice">
+              <input type="checkbox" name="classes" value="{{ c.pk }}"
+                     {% if c.pk in chosen %}checked{% endif %}>
+              <span class="mz-choice-name">{{ c.name }}</span>
+              {% if c.school_name %}<span class="mz-choice-meta">{{ c.school_name }}</span>{% endif %}
+            </label>
+          {% endfor %}
+        </div>
+        <button type="submit" class="mz-btn mz-btn-secondary">שמירה</button>
+      </form>
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

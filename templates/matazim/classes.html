@@ -1,0 +1,66 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.23, and Q14 defaulted: a class is offered and never required.
+
+  School is an attribute of the class, not a level above it, because a leader
+  may have classes in several schools (Avi, 2026-09-10). There is no group
+  inside a group here and there should not be one.
+{% endcomment %}
+
+{% block title %}הכיתות שלי · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>הכיתות שלי</h1>
+    <p>דרך לסדר את המט״צים שלכם. אפשר גם בלי, ואף אחד לא חייב להיות בכיתה.</p>
+  </div>
+
+  {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
+
+  <section class="mz-panel">
+    <h2>כיתה חדשה</h2>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add">
+      <label class="mz-field">
+        <span>שם הכיתה</span>
+        <input type="text" name="name" placeholder="למשל: ט1" required>
+      </label>
+      <label class="mz-field">
+        <span>בית ספר</span>
+        <input type="text" name="school_name" placeholder="למשל: עתיד רמלה">
+      </label>
+      <button type="submit" class="mz-btn mz-btn-primary">פתיחת כיתה</button>
+    </form>
+  </section>
+
+  <section class="mz-panel">
+    <h2>הכיתות שלי <span class="mz-count">{{ classes|length }}</span></h2>
+    {% if classes %}
+      <ul class="mz-training">
+        {% for c in classes %}
+          <li>
+            <span class="mz-training-title">
+              {{ c.name }}
+              {% if c.school_name %}<span class="mz-muted">{{ c.school_name }}</span>{% endif %}
+            </span>
+            <span class="mz-role">
+              <a class="mz-linkbtn" href="{% url 'matazim:roster' %}?class={{ c.pk }}">
+                {{ c.students.count }} מט״צים
+              </a>
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="mz-muted">עוד אין כיתות. אפשר לפתוח אחת למעלה, או להמשיך בלי.</p>
+    {% endif %}
+  </section>
+
+  <p class="mz-page-actions">
+    <a class="mz-linkbtn" href="{% url 'matazim:roster' %}">חזרה לרשימת המט״צים</a>
+  </p>
+</div>
+{% endblock %}

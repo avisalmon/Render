@@ -62,14 +62,29 @@
         <ul class="mz-training">
           {% for student in mine %}
             <li>
-              <span class="mz-training-title">{{ student.user.profile.display_name|default:student.user.email }}</span>
+              <a class="mz-training-title" href="{% url 'matazim:student' student.pk %}">
+                {{ student.user.profile.display_name|default:student.user.email }}
+              </a>
               <span class="mz-tag mz-tag-doing">{{ student.get_status_display }}</span>
             </li>
           {% endfor %}
         </ul>
-        <p class="mz-muted">מסך ההתקדמות המלא ייבנה בשלב הבא.</p>
+        <p class="mz-page-actions">
+          <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:roster' %}">
+            הרשימה המלאה, עם התקדמות והסמכה
+          </a>
+        </p>
       {% else %}
         <p class="mz-muted">עוד אין מט״צים משויכים אליכם. שלחו את הקישור ונתחיל.</p>
+        {% comment %}
+          The entry stays even with nobody on the roster. A leader on their
+          first day is precisely who needs to learn that the screen exists,
+          and a link that appears only once it has content is a link nobody
+          finds the day it starts mattering.
+        {% endcomment %}
+        <p class="mz-page-actions">
+          <a class="mz-linkbtn" href="{% url 'matazim:roster' %}">רשימת המט״צים</a>
+        </p>
       {% endif %}
     </section>
   </div>

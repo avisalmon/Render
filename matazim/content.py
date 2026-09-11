@@ -108,3 +108,20 @@ COMING = {
         ),
     },
 }
+
+
+# --------------------------------------------------------------------------
+# What a student has to finish to become a מט״צ (REQ-M.76).
+#
+# Avi, 2026-09-11: the entrance test, then both Scratch courses certified in
+# babook, then the leader's own approval. These two slugs are the whole
+# automatic half.
+#
+# They are slugs rather than a field on babook's `Course` deliberately. A field
+# would be babook carrying knowledge about מט״צים, which RULE-4 forbids, and it
+# would need a migration every time the program changes its mind. Babook still
+# knows nothing about us; we simply name two of its courses.
+#
+# A course listed here and missing from the database is a configuration
+# mistake, not a crash: the reader reports zero of zero and the screens say so.
+REQUIRED_COURSE_SLUGS = ("scratch", "scratch-advanced")

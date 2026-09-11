@@ -426,7 +426,7 @@ page, which is a strange way to ask someone to return to their own desk; they
 now have a nav entry, and nobody else sees it. And the staff area had no link to
 the leaders screen, the same mistake as the target bank having no door.
 
-## SPR-M.8 — The leader's students  `PLANNED`
+## SPR-M.8 — The leader's students  `DONE`
 
 **Goal:** a leader opens their page and sees who they have, where each person
 is, and what to do next. SPR-M.7 gave them a desk with an invite link and a
@@ -487,15 +487,52 @@ says which of the three is outstanding and links to it.
 
 | F-ID | Feature | Traces | Status |
 |---|---|---|---|
-| F-M.8.1 | `matazim/progress.py`: progress for many students in a fixed number of queries, pinned to babook's rule by a test | REQ-M.74, REQ-M.14 | TODO |
-| F-M.8.2 | The track: `scratch` + `scratch-advanced`, named in `content.py` | REQ-M.23, REQ-M.76 | TODO |
-| F-M.8.3 | The roster: every student the leader has, with stage, track progress and class | REQ-M.23, REQ-M.22 | TODO |
-| F-M.8.4 | Classes: create, rename, put students in them. Offered, never required | REQ-M.23, Q14 | TODO |
-| F-M.8.5 | One student, seen by their leader: stage, lesson-level progress, entrance attempt | REQ-M.23 | TODO |
-| F-M.8.6 | Search and paging on the roster from the first commit | REQ-M.23 | TODO |
-| F-M.8.7 | The whole thing on a phone | REQ-M.75 | TODO |
-| F-M.8.8 | Eligibility: the three conditions, computed and never stored | REQ-M.76 | TODO |
-| F-M.8.9 | A leader certifies a mataz, and the gate refuses on the server | REQ-M.77, REQ-M.78 | TODO |
+| F-M.8.1 | `matazim/progress.py`: progress for many students in a fixed number of queries, pinned to babook's rule by a test | REQ-M.74, REQ-M.14 | DONE |
+| F-M.8.2 | The track: `scratch` + `scratch-advanced`, named in `content.py` | REQ-M.23, REQ-M.76 | DONE |
+| F-M.8.3 | The roster: every student the leader has, with stage, track progress and class | REQ-M.23, REQ-M.22 | DONE |
+| F-M.8.4 | Classes: create, rename, put students in them. Offered, never required | REQ-M.23, Q14 | DONE |
+| F-M.8.5 | One student, seen by their leader: the three conditions, per-course progress, classes | REQ-M.23 | DONE |
+| F-M.8.6 | Search and paging on the roster from the first commit | REQ-M.23 | DONE |
+| F-M.8.7 | The whole thing on a phone | REQ-M.75 | DONE |
+| F-M.8.8 | Eligibility: the three conditions, computed and never stored | REQ-M.76 | DONE |
+| F-M.8.9 | A leader certifies a mataz, and the gate refuses on the server | REQ-M.77, REQ-M.78 | DONE |
+
+### What shipped, and what it cost
+
+Three things the tests were green for and a browser found anyway, which is now
+the third sprint running where that has been true.
+
+**The phone guard was passing on the wrong page.** It had only ever walked
+pages reachable logged out, so pointing it at the leader's screens meant
+signing in, and the sign-in silently failed: the welcome notice carries its own
+submit button and sits *before* the login form in the DOM, so a bare
+`button[type=submit]` dismissed the welcome and never touched the login. Every
+check then passed against the login page, which fits a phone perfectly well.
+The guard now asserts where it landed, because a guard that cannot tell you it
+failed is worse than no guard.
+
+**Three tap targets under the floor**, found the moment the guard could
+actually see a signed-in page. None of them were new: `.mz-linkbtn` was 29px
+everywhere, and יציאה in the header measured 35.6px on every signed-in page in
+the product. The guard had simply never had a signed-in page to look at.
+
+**Every student sat at מתמיינים forever.** Nothing in the app ever advanced
+`Student.status`, so a roster showing four people in four different states
+showed one word four times, and the word was wrong: מתמיינים is the selection
+stage and these are people a leader has already accepted. Now being taken on,
+by either route, makes someone לומדים.
+
+**Course slugs were leaking into Hebrew sentences.** `scratch-advanced` is an
+identifier, not something to put in front of a reader, and the "what is
+missing" line was built out of them. The title now travels with the progress
+numbers, because every screen that shows progress also has to name the course.
+
+One deliberate non-change: `app.views._catalog_progress` was left alone. It has
+seven call sites across babook including certificate verification and no test
+coverage of its own, so refactoring it to share a rule with the new reader
+would have put babook's catalog and certificates at risk to remove a
+twenty-line duplication. The pin test is the cheaper guarantee, and it is
+incidentally the first coverage that function has ever had.
 
 ### Rules this sprint is under
 

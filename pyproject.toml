@@ -23,6 +23,7 @@ markers = [
     "sprm5: SPR-M.5 מט״צים small corrections sprint tests",
     "sprm6: SPR-M.6 מט״צים roles and access sprint tests",
     "sprm7: SPR-M.7 מט״צים joining and leaders sprint tests",
+    "sprm8: SPR-M.8 מט״צים the leader's students, and what makes a mataz",
     "sprmobile: real-browser phone checks for מט״צים (tests/test_matazim_mobile.py)",
     "smoke: the fast gate, run on every push (see tests/test_smoke.py)",
 ]

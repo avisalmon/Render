@@ -88,11 +88,18 @@ def join(request, code):
         if not passed:
             return redirect("matazim:entrance_test")
         if already is None:
-            already = Student.objects.create(user=request.user, leader=leader)
+            already = Student.objects.create(
+                user=request.user, leader=leader, status=Student.IN_TRAINING
+            )
         else:
             already.leader = leader
             already.pending_leader = None
-            already.save(update_fields=["leader", "pending_leader", "updated_at"])
+            # Being taken on by a leader is the moment someone stops being a
+            # candidate and starts being a learner. Nothing advanced this
+            # before, so every student sat at מתמיינים forever and the roster's
+            # status column answered nothing.
+            already.status = Student.IN_TRAINING
+            already.save(update_fields=["leader", "pending_leader", "status", "updated_at"])
         request.session.pop(INVITE_KEY, None)
         return redirect("matazim:joined")
 
@@ -229,7 +236,10 @@ def leader_confirm(request, student_id):
     if request.POST.get("action") == "confirm":
         student.leader = leader
         student.pending_leader = None
-        student.save(update_fields=["leader", "pending_leader", "updated_at"])
+        # Same moment, the other way in. מתמיינים is the selection stage, and
+        # this person has just been accepted out of it.
+        student.status = Student.IN_TRAINING
+        student.save(update_fields=["leader", "pending_leader", "status", "updated_at"])
     else:
         student.pending_leader = None
         student.save(update_fields=["pending_leader", "updated_at"])

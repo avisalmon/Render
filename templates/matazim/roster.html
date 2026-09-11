@@ -1,0 +1,135 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.23 — the roster.
+
+  A leader opens this to answer one question: who needs me today. So the order
+  of what a row shows is deliberate. The name, then how far through the two
+  required courses they are, then whether anything is standing between them and
+  being certified. The certify action itself lives on the person's own page,
+  because it is a decision about a teenager and not a line item to clear.
+
+  Every row here came out of visible_students, so there is nothing on this page
+  a leader is not entitled to (REQ-M.22).
+{% endcomment %}
+
+{% block title %}המט״צים שלי · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>המט״צים שלי</h1>
+    <p>מי אצלכם, איפה כל אחד עומד, ומה חסר כדי להסמיך.</p>
+  </div>
+
+  {% if waiting %}
+    <div class="mz-alert" role="status">
+      {{ waiting }} מחכים לאישור שלכם.
+      <a href="{% url 'matazim:leader_home' %}">לאישור ההצטרפות</a>
+    </div>
+  {% endif %}
+
+  <section class="mz-panel">
+    {% comment %}
+      Search and the class filter ship now rather than later. At this size they
+      are barely used; they are what keeps the screen usable if the program
+      grows, and they cost nothing to carry.
+    {% endcomment %}
+    <form method="get" class="mz-roster-tools">
+      <label class="mz-field">
+        <span>חיפוש</span>
+        <input type="search" name="q" value="{{ query }}" placeholder="שם, אימייל או כיתה">
+      </label>
+      {% if classes %}
+        <label class="mz-field">
+          <span>כיתה</span>
+          <select name="class">
+            <option value="">כל הכיתות</option>
+            {% for c in classes %}
+              <option value="{{ c.pk }}" {% if in_class == c.pk|stringformat:"s" %}selected{% endif %}>
+                {{ c.name }}{% if c.school_name %} · {{ c.school_name }}{% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </label>
+      {% endif %}
+      <button type="submit" class="mz-btn mz-btn-secondary">סינון</button>
+      {% if query or in_class %}
+        <a class="mz-linkbtn" href="{% url 'matazim:roster' %}">ניקוי</a>
+      {% endif %}
+    </form>
+  </section>
+
+  <section class="mz-panel">
+    <h2>
+      {% if query or in_class %}תוצאות{% else %}כל המט״צים{% endif %}
+      <span class="mz-count">{{ page.paginator.count }}</span>
+    </h2>
+
+    {% if rows %}
+      <ul class="mz-roster">
+        {% for row in rows %}
+          <li class="mz-roster-row">
+            <a class="mz-roster-who" href="{% url 'matazim:student' row.student.pk %}">
+              <span class="mz-roster-name">
+                {{ row.student.user.profile.display_name|default:row.student.user.email }}
+              </span>
+              {% if row.student.classes.all %}
+                <span class="mz-muted">
+                  {% for c in row.student.classes.all %}{{ c.name }}{% if c.school_name %} · {{ c.school_name }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}
+                </span>
+              {% endif %}
+            </a>
+
+            <span class="mz-roster-progress" title="התקדמות בשני קורסי הסקראץ׳">
+              <span class="mz-bar"><span class="mz-bar-fill" style="width: {{ row.progress.pct }}%"></span></span>
+              <span class="mz-muted">{{ row.progress.done }}/{{ row.progress.total }}</span>
+            </span>
+
+            <span class="mz-role">
+              {% if row.student.status == "certified" %}
+                <span class="mz-tag mz-tag-done">מט״צ מוסמך</span>
+              {% elif row.eligibility.is_eligible %}
+                <span class="mz-tag mz-tag-doing">מוכן להסמכה</span>
+              {% else %}
+                <span class="mz-tag mz-tag-idle">{{ row.student.get_status_display }}</span>
+              {% endif %}
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+
+      {% if page.has_other_pages %}
+        <nav class="mz-pager">
+          {% if page.has_previous %}
+            <a class="mz-linkbtn" href="?page={{ page.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if in_class %}&class={{ in_class }}{% endif %}">הקודם</a>
+          {% endif %}
+          <span class="mz-muted">עמוד {{ page.number }} מתוך {{ page.paginator.num_pages }}</span>
+          {% if page.has_next %}
+            <a class="mz-linkbtn" href="?page={{ page.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if in_class %}&class={{ in_class }}{% endif %}">הבא</a>
+          {% endif %}
+        </nav>
+      {% endif %}
+
+    {% elif query or in_class %}
+      <p class="mz-muted">אין מט״צ שמתאים לחיפוש הזה.</p>
+    {% else %}
+      <p class="mz-muted">
+        עוד אין מט״צים אצלכם. שלחו את הקישור שלכם ונתחיל.
+        <a href="{% url 'matazim:leader_home' %}">הקישור וקוד ה־QR</a>
+      </p>
+    {% endif %}
+  </section>
+
+  {% if classes %}
+    <p class="mz-page-actions">
+      <a class="mz-linkbtn" href="{% url 'matazim:classes' %}">ניהול הכיתות שלי</a>
+    </p>
+  {% else %}
+    <p class="mz-page-actions">
+      <a class="mz-linkbtn" href="{% url 'matazim:classes' %}">פתיחת כיתה</a>
+      <span class="mz-muted">כיתות הן דרך לסדר, לא חובה. אפשר לעבוד גם בלי.</span>
+    </p>
+  {% endif %}
+</div>
+{% endblock %}
