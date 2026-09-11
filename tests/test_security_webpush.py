@@ -222,3 +222,78 @@ def test_only_the_newest_event_of_a_batch_is_announced(client, owner):
                     content_type="application/json",
                     HTTP_AUTHORIZATION=f"Bearer {TOKEN}")
     assert sent.call_count == 1
+
+
+# --------------------------------------------------------------------------- #
+# The house says whether to announce (REQ-11.6.13)
+# --------------------------------------------------------------------------- #
+#
+# W1c on the house side. The arming gate used to sit on the MIRRORING path and
+# return early, so a disarmed house sent babook nothing at all — no event, no
+# row, no snapshot — and the page showed a gap for exactly the hours the owner
+# chose not to be disturbed. Both specs say "disarmed is silent, never blind".
+#
+# The decision was never wrong, only its placement. It now travels WITH the event
+# as `announce`, because only the house can make it: babook cannot know whether
+# the full-resolution check has run, and cannot wait for something it cannot see.
+#
+# babook still keeps its OWN arming gate. Two independent reasons to stay quiet
+# is the right number for something that wakes a phone at 3am, and an older house
+# that sends no flag must keep working exactly as before.
+
+@pytest.fixture
+def owner_sub():
+    """One subscribed browser, and a house that is ARMED — so the only thing
+    that can silence these tests is the flag under test."""
+    from app.security_models import SecurityState
+    SecurityState.objects.update_or_create(
+        pk=1, defaults={"ok": True, "cameras_online": 8, "cameras_total": 8,
+                        "mode": "AWAY"})
+    return _sub()
+
+
+def _post(client, settings, extra=None):
+    import json
+
+    from django.utils import timezone
+    ev = {"event_id": 4100, "ts": timezone.now().isoformat(), "channel": "2",
+          "camera": "Gate", "type": "person", "severity": "critical"}
+    ev.update(extra or {})
+    return client.post(reverse("security_api_events"),
+                       data=json.dumps({"events": [ev]}),
+                       content_type="application/json",
+                       HTTP_AUTHORIZATION=f"Bearer {TOKEN}")
+
+
+def test_announce_false_keeps_the_phone_quiet(client, owner_sub, settings):
+    from unittest.mock import patch
+    with patch("app.security_push.webpush") as sent:
+        _post(client, settings, {"announce": False})
+    assert sent.call_count == 0
+
+
+def test_announce_false_still_stores_the_event(client, owner_sub, settings):
+    """**The whole point.** Silent, never blind."""
+    from unittest.mock import patch
+
+    from app.security_models import SecurityEvent
+    with patch("app.security_push.webpush"):
+        _post(client, settings, {"announce": False})
+    assert SecurityEvent.objects.filter(event_id=4100).exists()
+
+
+def test_announce_true_rings(client, owner_sub, settings):
+    from unittest.mock import patch
+    with patch("app.security_push.webpush") as sent:
+        _post(client, settings, {"announce": True})
+    assert sent.call_count == 1
+
+
+def test_an_older_house_that_sends_no_flag_still_rings(client, owner_sub, settings):
+    """Absence is 'not stated', never 'do not announce'. A house running the
+    build from before W1c must not go silently quiet — that is how an alert
+    disappears with nobody deciding."""
+    from unittest.mock import patch
+    with patch("app.security_push.webpush") as sent:
+        _post(client, settings)
+    assert sent.call_count == 1

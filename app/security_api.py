@@ -374,8 +374,22 @@ def push_events(request):
                          if isinstance(e, dict) and e.get("event_id")),
                         default=None)
         if newest_id is not None:
+            # REQ-11.6.13: the HOUSE decides whether this one is worth a buzz,
+            # and says so per event. Only it can: the day/night accuracy rule
+            # (house spec 3.34) waits for a full-resolution check babook cannot
+            # see, and a projection cannot wait for something it cannot observe.
+            #
+            # ABSENT MEANS "NOT STATED", NEVER "STAY QUIET". A house running the
+            # build from before W1c sends no flag, and reading that as silence is
+            # how an alert disappears with nobody deciding.
+            announce = True
+            for e in events:
+                if isinstance(e, dict) and e.get("event_id") == newest_id:
+                    if "announce" in e:
+                        announce = bool(e.get("announce"))
+                    break
             newest = SecurityEvent.objects.filter(event_id=newest_id).first()
-            if newest is not None:
+            if newest is not None and announce:
                 security_push.notify(newest)
     except Exception:  # noqa: BLE001 - notifications never break the relay
         logger.exception("web push failed for this batch (continuing)")

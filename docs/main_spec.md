@@ -1935,6 +1935,28 @@ One page, phone first, at `/home`.
     real black overlay. The rule is "match the ground you are on", not "never
     use white".
 
+- **REQ-11.6.13 — The house says whether to announce; babook keeps the row
+  either way.** Found by reading on 2026-09-11, one day after REQ-11.6.10
+  shipped. The house's arming gate had been wired into its *mirroring* path and
+  returned early, so **a disarmed house sent babook nothing at all** — no event,
+  no row, no snapshot — and this page would have shown a gap for exactly the
+  hours the owner chose not to be disturbed. That is the direct opposite of
+  REQ-11.6.10's own words, *"disarmed is silent, never blind."*
+
+  - Every event now arrives, always. What the house's gate produces is a per-event
+    **`announce: true|false`**, carried in the relay payload with an
+    `announce_reason` beside it.
+  - **Only the house can make that call.** The day/night rule waits on a
+    full-resolution check (house spec §3.34) that babook cannot see, and a
+    projection must not wait for something it cannot observe.
+  - **An absent flag means "not stated", never "stay quiet".** A house running a
+    build from before this sends none, and reading absence as silence is how an
+    alert disappears with nobody deciding — the same rule as the unknown arming
+    mode in REQ-11.6.10.
+  - babook **keeps its own arming gate as well.** Two independent reasons to stay
+    quiet is the right number for something that wakes a phone at 3am, and
+    neither depends on the other being correct.
+
 ### 11.7 Snapshots (REQ-11.7)
 
 Enabled, per the owner's decision, with limits.
