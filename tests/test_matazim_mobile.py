@@ -170,6 +170,9 @@ LEADER_PAGES = [
     "/matazim/leader/classes/",
 ]
 
+# SPR-M.14 and M.15: the program manager reads these on a phone too.
+MANAGER_PAGES = ["/matazim/staff/team/"]
+
 LEADER_EMAIL = "phone-leader@example.com"
 LEADER_PASSWORD = "phone-guard-9912"
 
@@ -186,7 +189,9 @@ def _a_leader_with_a_student():
         username=LEADER_EMAIL, email=LEADER_EMAIL, password=LEADER_PASSWORD
     )
     UserProfile.objects.update_or_create(user=teacher, defaults={"display_name": "נעה מורה"})
-    leader = Leader.objects.create(user=teacher)
+    # REQ-M.93 — an unapproved row is a candidate and reaches nothing, so a
+    # guard built on one would be walking login redirects rather than screens.
+    leader = Leader.objects.create(user=teacher, approved_at=timezone.now())
     StudyClass.objects.create(leader=leader, name="ט1", school_name="עתיד רמלה")
 
     kid = User.objects.create_user(
@@ -288,3 +293,43 @@ def test_the_rights_screens_fit_a_phone(phone_page, live_server, db):
         if small:
             broken.append(f"{path}: targets {small}")
     assert not broken, "the rights screens break on a phone:\n" + "\n".join(broken)
+
+
+def test_the_program_manager_screens_fit_a_phone(phone_page, live_server, db):
+    """REQ-M.75 over REQ-M.89 and M.94. Her leader list is the screen she opens
+    most, and she opens it standing up as often as sitting down."""
+    from django.contrib.auth.models import User
+
+    from app.models import UserProfile
+    from matazim.models import MemberProfile
+
+    email = "phone-pm@example.com"
+    boss = User.objects.create_user(username=email, email=email, password=LEADER_PASSWORD)
+    UserProfile.objects.update_or_create(user=boss, defaults={"display_name": "נעמי"})
+    MemberProfile.objects.update_or_create(user=boss, defaults={"is_program_manager": True})
+    _a_leader_with_a_student()
+
+    page = phone_page
+    page.goto(live_server.url + "/matazim/login/", wait_until="domcontentloaded")
+    page.wait_for_timeout(250)
+    w = page.locator(".mz-welcome button[type=submit]")
+    if w.count():
+        w.click()
+        page.wait_for_timeout(350)
+    page.fill('input[name="email"]', email)
+    page.fill('input[name="password"]', LEADER_PASSWORD)
+    page.click('form:has(input[name="password"]) button[type="submit"]')
+    page.wait_for_timeout(600)
+    assert "/login/" not in page.url, page.url
+
+    broken = []
+    for path in MANAGER_PAGES:
+        page.goto(live_server.url + path, wait_until="domcontentloaded")
+        page.wait_for_timeout(300)
+        result = page.evaluate(OVERFLOW_JS)
+        if result["overflow"]:
+            broken.append(f"{path}: {result['scrollW']} > {result['innerW']} {result['offenders']}")
+        small = page.evaluate(TAP_JS, MIN_TAP_PX)
+        if small:
+            broken.append(f"{path}: targets {small}")
+    assert not broken, "the program manager screens break on a phone:\n" + "\n".join(broken)

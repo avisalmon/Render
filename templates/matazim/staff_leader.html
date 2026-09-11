@@ -53,5 +53,52 @@
       </p>
     </section>
   </div>
+
+  {% comment %}
+    REQ-M.95 — the leader's students, not merely how many. A count tells you
+    there are three; it does not tell you which three, which is the only reason
+    to open this page.
+
+    The row markup is the roster's, on purpose. A second roster template would
+    drift until two screens disagreed about the same teenager and both looked
+    fine on their own.
+  {% endcomment %}
+  <section class="mz-panel">
+    <h2>המט״צים של {{ leader.user.profile.display_name|default:leader.user.email }}
+      <span class="mz-count">{{ rows|length }}</span></h2>
+    {% if rows %}
+      <ul class="mz-roster">
+        {% for row in rows %}
+          <li class="mz-roster-row">
+            <a class="mz-roster-who" href="{% url 'matazim:student' row.student.pk %}">
+              <span class="mz-roster-name">
+                {{ row.student.user.profile.display_name|default:row.student.user.email }}
+              </span>
+              {% if row.student.classes.all %}
+                <span class="mz-muted">
+                  {% for c in row.student.classes.all %}{{ c.name }}{% if c.school_name %} · {{ c.school_name }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}
+                </span>
+              {% endif %}
+            </a>
+            <span class="mz-roster-progress">
+              <span class="mz-bar"><span class="mz-bar-fill" style="width: {{ row.progress.pct }}%"></span></span>
+              <span class="mz-muted">{{ row.progress.done }}/{{ row.progress.total }}</span>
+            </span>
+            <span class="mz-role">
+              {% if row.student.status == "certified" %}
+                <span class="mz-tag mz-tag-done">מט״צ מוסמך</span>
+              {% elif row.eligibility.is_eligible %}
+                <span class="mz-tag mz-tag-doing">מוכן להסמכה</span>
+              {% else %}
+                <span class="mz-tag mz-tag-idle">{{ row.student.get_status_display }}</span>
+              {% endif %}
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="mz-muted">עוד אין מט״צים אצל המוביל/ה הזה.</p>
+    {% endif %}
+  </section>
 </div>
 {% endblock %}

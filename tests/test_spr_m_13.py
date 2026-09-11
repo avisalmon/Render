@@ -47,6 +47,10 @@ def make_world(tag, *, students=2):
     leader = Leader.objects.create(
         user=make_user(f"leader-{tag}@example.com", f"מוביל {tag}"),
         program_manager=manager,
+        # REQ-M.93, added in SPR-M.14 after this file was written: an unapproved
+        # row is a candidate and grants nothing. These worlds are meant to be
+        # fully built, so the leader is a real one.
+        approved_at=timezone.now(),
     )
     klass = StudyClass.objects.create(leader=leader, name="ט1", school_name=f"בית ספר {tag}")
 
@@ -139,7 +143,9 @@ def test_an_orphaned_leader_belongs_to_nobody_but_root(db):
     from matazim.models import Leader
 
     north = make_world("north")
-    orphan = Leader.objects.create(user=make_user("orphan@example.com"))
+    orphan = Leader.objects.create(
+        user=make_user("orphan@example.com"), approved_at=timezone.now()
+    )
     root = User.objects.create_superuser("root@example.com", "root@example.com", PASSWORD)
 
     assert orphan not in set(visible_leaders(north["manager"]))

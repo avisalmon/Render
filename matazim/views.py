@@ -193,6 +193,12 @@ def login(request):
             auth_login(request, user, backend="django.contrib.auth.backends.ModelBackend")
             _stamp_entry(user)
             _carry_welcome_across_sign_in(request, user)
+            # Same as registration: an invitation tapped before signing in must
+            # not be lost by signing in (REQ-M.91, M.92).
+            from .invite_views import claim_leader_invite
+
+            if claim_leader_invite(request, user):
+                return redirect("matazim:leader_entrance")
             return redirect(request.POST.get("next") or "matazim:home")
 
     return render(
@@ -268,6 +274,14 @@ def register(request):
                 MemberProfile.objects.update_or_create(user=user, defaults=member_fields)
             auth_login(request, user, backend="django.contrib.auth.backends.ModelBackend")
             _carry_welcome_across_sign_in(request, user)
+            # REQ-M.91, M.92 — somebody who arrived through a leader invitation
+            # had to make an account on the way. The invitation has to survive
+            # that, or they land on the home page as an ordinary visitor with no
+            # idea what happened to the link they were sent.
+            from .invite_views import claim_leader_invite
+
+            if claim_leader_invite(request, user):
+                return redirect("matazim:leader_entrance")
             # REQ-M.46 - the main view, not the personal area. Someone who has
             # just signed in wants to see the program, not a form about
             # themselves, and the personal area is one click away in the header.

@@ -1,0 +1,27 @@
+{% extends "matazim/base.html" %}
+{% comment %}
+  REQ-M.91 — a spent or cancelled invitation says so, rather than offering a
+  form that would fail. A personal invite may be forwarded, which is tolerated;
+  a second use is not, and the second person deserves to know why.
+{% endcomment %}
+{% block title %}ההזמנה אינה בתוקף · מט״צים{% endblock %}
+{% block content %}
+<div class="mz-container mz-page mz-legal">
+  <div class="mz-page-head">
+    <h1>ההזמנה כבר לא בתוקף</h1>
+  </div>
+  <section class="mz-panel">
+    {% if reason == "spent" %}
+      <p>ההזמנה הזאת אישית, ומישהו כבר השתמש בה. כל הזמנה אישית תקפה לפעם אחת.</p>
+    {% else %}
+      <p>הקישור לא מוכר, או שההזמנה בוטלה.</p>
+    {% endif %}
+    <p class="mz-muted">
+      אם אתם אמורים להיות מוביל/ה בתוכנית, בקשו ממנהל/ת התוכנית הזמנה חדשה.
+    </p>
+    <p class="mz-page-actions">
+      <a class="mz-linkbtn" href="{% url 'matazim:home' %}">לדף הבית</a>
+    </p>
+  </section>
+</div>
+{% endblock %}

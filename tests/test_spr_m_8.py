@@ -39,12 +39,21 @@ def _one_world():
     the existing manager if there is one, and a manager adopts any leader made
     before it existed. Between them, order stops mattering.
     """
+    from django.utils import timezone
+
     from matazim.models import Leader, MemberProfile
 
     profile = MemberProfile.objects.filter(is_program_manager=True).first()
     owner = profile.user if profile else None
     if owner:
         Leader.objects.filter(program_manager__isnull=True).update(program_manager=owner)
+    # REQ-M.93, added in SPR-M.14: an unapproved Leader row is a candidate and
+    # `leader_of` refuses to return it. These suites predate candidates and mean
+    # "a leader", so anything unapproved here is approved. The candidate state
+    # itself is tested on its own in test_spr_m_14.
+    Leader.objects.filter(approved_at__isnull=True).update(
+        approved_at=timezone.now(), approved_by=owner
+    )
     return owner
 
 
@@ -59,7 +68,11 @@ def make_user(email, name=""):
 def make_leader(email="noa@example.com", name="נעה מורה", school="עתיד רמלה"):
     from matazim.models import Leader, StudyClass
 
-    leader = Leader.objects.create(user=make_user(email, name), program_manager=_one_world())
+    leader = Leader.objects.create(
+        user=make_user(email, name),
+        program_manager=_one_world(),
+        approved_at=timezone.now(),
+    )
     StudyClass.objects.create(leader=leader, name="ט1", school_name=school)
     return leader
 

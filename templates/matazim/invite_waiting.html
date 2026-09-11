@@ -1,0 +1,26 @@
+{% extends "matazim/base.html" %}
+{% comment %}
+  REQ-M.93 — a candidate is somebody waiting on a person, and the page says so
+  plainly. A link is not access, and pretending otherwise until a screen refuses
+  them would be worse than telling them now.
+{% endcomment %}
+{% block title %}ממתינים לאישור · מט״צים{% endblock %}
+{% block content %}
+<div class="mz-container mz-page mz-legal">
+  <div class="mz-page-head">
+    <h1>נרשמתם. עכשיו מחכים לאישור</h1>
+  </div>
+  <section class="mz-panel">
+    <p>
+      הבקשה שלכם להיות מוביל/ה נשלחה למנהל/ת התוכנית. גישה לאזור המובילים
+      נפתחת רק אחרי אישור של בן אדם, ולא אוטומטית לפי הקישור שהגעתם איתו.
+    </p>
+    <p class="mz-muted">
+      בינתיים החשבון שלכם פעיל ואפשר להסתובב באתר. ברגע שתאושרו תקבלו מייל.
+    </p>
+    <p class="mz-page-actions">
+      <a class="mz-linkbtn" href="{% url 'matazim:home' %}">לדף הבית</a>
+    </p>
+  </section>
+</div>
+{% endblock %}

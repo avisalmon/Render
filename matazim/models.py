@@ -223,8 +223,26 @@ class Leader(models.Model):
 
     # REQ-M.67 — deactivating destroys nothing. They leave the join list, take
     # no new students and lose the leader view, but every Student row keeps
-    # pointing at them so no roster is lost. An admin moves people deliberately.
+    # pointing at them so no roster is lost. A program manager moves people
+    # deliberately.
     is_active = models.BooleanField(default=True, verbose_name="פעיל")
+
+    # REQ-M.93 — a candidate is a row that exists and grants nothing.
+    #
+    # Somebody who signed up through an open invite has a Leader row and is not
+    # a leader. `leader_of()` refuses to return an unapproved row, which is what
+    # stops them having a roster, an invite link and a view of named minors
+    # before any person said yes. Distinct from `is_active`: unapproved means
+    # never yet a leader, inactive means was one and has stopped.
+    approved_at = models.DateTimeField(null=True, blank=True, verbose_name="אושר/ה בתאריך")
+    approved_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name="אושר/ה על ידי",
+    )
 
     # REQ-M.88 — who owns this leader, and therefore which world they are in.
     #
@@ -257,6 +275,25 @@ class Leader(models.Model):
 
     def __str__(self):
         return self.user.email or self.user.username
+
+    @property
+    def school_names(self):
+        """Where this leader teaches, each school named once.
+
+        A leader with two classes in one school was rendering "עתיד רמלה ·
+        עתיד רמלה", because the list was built by looping classes. Mirrors
+        `Student.school_names`, which had already solved this.
+        """
+        return sorted({c.school_name for c in self.classes.all() if c.school_name})
+
+    @property
+    def is_approved(self):
+        """REQ-M.93 — approval is an act by a person, and this is its record.
+
+        Read by `access.leader_of`, which is what makes an unapproved row grant
+        nothing at all rather than merely look different on a screen.
+        """
+        return self.approved_at is not None
 
 
 class StudyClass(models.Model):
@@ -422,3 +459,72 @@ class RetentionRun(models.Model):
     def __str__(self):
         who = self.ran_by.email if self.ran_by else "אוטומטי"
         return f"{self.ran_at:%Y-%m-%d} · {self.deleted_count} · {who}"
+
+
+def new_invite_token():
+    """Unguessable. This one is a credential to *become staff*, so it is longer
+    than a leader's join code: that one attaches a teenager to a teacher, this
+    one can end in somebody seeing named minors."""
+    import secrets
+
+    return secrets.token_urlsafe(24)
+
+
+class LeaderInvite(models.Model):
+    """An invitation to become a leader, in one of two shapes (REQ-M.91, M.92).
+
+    **Personal.** Named to a person by the program manager, and single-use. She
+    may get the name wrong: it is a label, not a check, and the real name
+    arrives when they register and set it themselves. It may be forwarded, which
+    is tolerated, but the first registration spends it and the link dies.
+
+    **Open.** Nobody named, reusable, handed to a staff room. Precisely because
+    anyone holding it could use it, it confers nothing: whoever registers
+    through it becomes a candidate and waits for a person to approve them
+    (REQ-M.93).
+
+    Both belong to the program manager who made them, which is how someone
+    arriving through a link lands in the right world (REQ-M.88).
+    """
+
+    PERSONAL = "personal"
+    OPEN = "open"
+    KIND_CHOICES = [(PERSONAL, "אישית"), (OPEN, "פתוחה")]
+
+    program_manager = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="matazim_invites"
+    )
+    kind = models.CharField(max_length=12, choices=KIND_CHOICES, default=PERSONAL)
+    token = models.CharField(max_length=64, unique=True, default=new_invite_token, db_index=True)
+
+    # A label, never a check. Blank on an open invite, because nobody is named.
+    label = models.CharField(max_length=120, blank=True, default="", verbose_name="עבור")
+    email = models.EmailField(blank=True, default="", verbose_name="אימייל")
+
+    # Personal invites only. An open invite is reusable by design, which is
+    # exactly why it cannot make anyone a leader.
+    used_at = models.DateTimeField(null=True, blank=True)
+    used_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "הזמנת מוביל/ה"
+        verbose_name_plural = "הזמנות מובילים"
+
+    def __str__(self):
+        return f"{self.get_kind_display()} · {self.label or 'ללא שם'}"
+
+    @property
+    def is_spent(self):
+        """A personal invite dies on first use. An open one never does."""
+        return self.kind == self.PERSONAL and self.used_at is not None
+
+    @property
+    def is_live(self):
+        return self.revoked_at is None and not self.is_spent

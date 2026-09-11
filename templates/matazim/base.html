@@ -69,6 +69,14 @@
       {% endif %}
       {% if is_site_staff %}
         {% comment %}
+          REQ-M.89 — leader management is the thing the program manager's role
+          exists to do, so it is a named entry she sees on every page rather
+          than a tool one click inside ניהול. REQ-M.62 already taught us that a
+          screen you have to know the URL for is a screen nobody uses; this is
+          the same lesson applied to the screen she opens most.
+        {% endcomment %}
+        <a href="{% url 'matazim:pm_leaders' %}" class="mz-nav-staff{% if section == 'staff' %} is-active{% endif %}">המובילים שלי</a>
+        {% comment %}
           REQ-M.62 — the target bank had no door at all: you had to know the URL.
           Staff only, and the page refuses everyone else on its own.
         {% endcomment %}

@@ -1300,3 +1300,8 @@ a.mz-training-title:hover { color: var(--mz-purple); }
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
+/* The program manager's leader screen (SPR-M.14). */
+.mz-or-line { border: 0; border-top: 1px solid var(--mz-line); margin: 20px 0; }
+.mz-invite-row { display: block; }
+.mz-invite-row .mz-copy { margin: 8px 0; }

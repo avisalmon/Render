@@ -1,0 +1,188 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.89, M.90, M.91, M.92, M.93, M.94 — the screen the program manager lives
+  in.
+
+  The order is deliberate. Candidates first, because they are the only thing on
+  this page waiting on her. Then her leaders. Then the ways to add more, which
+  she uses far less often than she reads the list.
+
+  Candidates sit in the same page rather than on a screen of their own, because
+  a separate screen for "people waiting on you" is a screen nobody remembers to
+  visit, and the waiting is the whole point.
+{% endcomment %}
+
+{% block title %}המובילים שלי · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>המובילים שלי</h1>
+    <p>מי מוביל אצלכם, מי מחכה לאישור, ואיך מוסיפים עוד.</p>
+  </div>
+
+  {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
+  {% if notice %}<div class="mz-alert mz-alert-ok" role="status">{{ notice }}</div>{% endif %}
+
+  {% if candidates %}
+    <section class="mz-panel">
+      <h2>מחכים לאישור שלכם <span class="mz-tag mz-tag-fix">{{ candidates|length }}</span></h2>
+      <p class="mz-muted">
+        נרשמו דרך הזמנה. עדיין אין להם גישה לשום דבר: הקישור מזמין, האישור שלכם
+        הוא מה שנותן הרשאה.
+      </p>
+      <ul class="mz-training">
+        {% for c in candidates %}
+          <li>
+            <span class="mz-training-title">
+              {{ c.user.profile.display_name|default:c.user.email }}
+              <span class="mz-muted">{{ c.user.email }}</span>
+            </span>
+            <span class="mz-role">
+              <form method="post" class="mz-inline-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="approve">
+                <input type="hidden" name="email" value="{{ c.user.email }}">
+                <button type="submit" class="mz-btn mz-btn-primary">אישור כמוביל/ה</button>
+              </form>
+              <form method="post" action="{% url 'matazim:reject_candidate' c.pk %}"
+                    class="mz-inline-form">
+                {% csrf_token %}
+                <button type="submit" class="mz-linkbtn">לא מתאים</button>
+              </form>
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  <section class="mz-panel">
+    <h2>המובילים <span class="mz-count">{{ leaders|length }}</span></h2>
+    {% if leaders %}
+      {% comment %}
+        REQ-M.94 — one line each, light enough to scan. The counts answer "who
+        needs me" without opening anything; the detail lives one click in.
+      {% endcomment %}
+      <ul class="mz-roster">
+        {% for row in leaders %}
+          <li class="mz-roster-row">
+            <a class="mz-roster-who" href="{% url 'matazim:staff_leader' row.pk %}">
+              <span class="mz-roster-name">
+                {{ row.user.profile.display_name|default:row.user.email }}
+              </span>
+              <span class="mz-muted">
+                {% for school in row.school_names %}{{ school }}{% if not forloop.last %} · {% endif %}{% empty %}עוד לא פתח/ה כיתה{% endfor %}
+              </span>
+            </a>
+            <span class="mz-role">
+              <span class="mz-muted">{{ row.students.count }} מט״צים</span>
+              {% if not row.is_active %}
+                <span class="mz-tag mz-tag-idle">לא פעיל/ה</span>
+              {% endif %}
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="mz-muted">עוד אין מובילים. אפשר להוסיף למטה.</p>
+    {% endif %}
+  </section>
+
+  <div class="mz-two-up">
+    <section class="mz-panel">
+      <h2>מי שכבר רשום באתר</h2>
+      <p class="mz-muted">
+        חיפוש לפי שם או אימייל. לוחצים, ומאשרים. נשלח אליהם מייל שהם מובילים.
+      </p>
+      <form method="post" id="mzGrantForm">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="approve">
+        <input type="hidden" name="email" id="mzChosenEmail">
+        <div class="mz-picker">
+          <label class="mz-field">
+            <span>חיפוש</span>
+            <input type="text" id="mzUserSearch" autocomplete="off" spellcheck="false"
+                   placeholder="למשל: רונ" aria-controls="mzResults" aria-expanded="false">
+          </label>
+          <ul class="mz-picker-results" id="mzResults" role="listbox" hidden></ul>
+        </div>
+        <p class="mz-chosen" id="mzChosen" hidden></p>
+        <button type="submit" class="mz-btn mz-btn-primary" id="mzGrantBtn" disabled>
+          אישור כמוביל/ה
+        </button>
+      </form>
+    </section>
+
+    <section class="mz-panel">
+      <h2>מי שעוד לא רשום</h2>
+      <p class="mz-muted">
+        הזמנה אישית: קישור, קוד QR, ואפשר גם לשלוח במייל. תקפה לפעם אחת בלבד.
+      </p>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="invite_personal">
+        <label class="mz-field">
+          <span>עבור מי</span>
+          <input type="text" name="label" placeholder="למשל: רונית מעתיד רמלה" required>
+        </label>
+        <label class="mz-field">
+          <span>אימייל (לא חובה)</span>
+          <input type="email" name="email" placeholder="לשליחה ישירה">
+        </label>
+        <button type="submit" class="mz-btn mz-btn-secondary">יצירת הזמנה אישית</button>
+      </form>
+
+      <hr class="mz-or-line">
+      <p class="mz-muted">
+        הזמנה פתוחה: קישור אחד לחדר מורים שלם. כל מי שנרשם דרכו מגיע לרשימת
+        הממתינים, ולא הופך אוטומטית למוביל/ה.
+      </p>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="invite_open">
+        <label class="mz-field">
+          <span>שם לזיהוי (לא חובה)</span>
+          <input type="text" name="label" placeholder="למשל: חדר מורים אורט לוד">
+        </label>
+        <button type="submit" class="mz-btn mz-btn-secondary">יצירת הזמנה פתוחה</button>
+      </form>
+    </section>
+  </div>
+
+  {% if invites %}
+    <section class="mz-panel">
+      <h2>הזמנות פתוחות <span class="mz-count">{{ invites|length }}</span></h2>
+      <ul class="mz-training">
+        {% for inv in invites %}
+          <li class="mz-invite-row">
+            <span class="mz-training-title">
+              {{ inv.label|default:"ללא שם" }}
+              <span class="mz-tag {% if inv.kind == 'open' %}mz-tag-doing{% else %}mz-tag-idle{% endif %}">
+                {{ inv.get_kind_display }}
+              </span>
+              {% if inv.sent_at %}<span class="mz-muted">נשלחה ב־{{ inv.sent_at|date:"j.n" }}</span>{% endif %}
+            </span>
+            <input class="mz-copy" type="text" readonly onclick="this.select()"
+                   value="{{ request.scheme }}://{{ request.get_host }}/matazim/leaders/join/{{ inv.token }}/">
+            <span class="mz-role">
+              <a class="mz-linkbtn" href="{% url 'matazim:invite_qr' inv.pk %}" target="_blank">קוד QR</a>
+              <form method="post" class="mz-inline-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="revoke_invite">
+                <input type="hidden" name="invite" value="{{ inv.pk }}">
+                <button type="submit" class="mz-linkbtn">ביטול</button>
+              </form>
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+</div>
+
+<script>
+{% include "matazim/_picker.js" %}
+</script>
+{% endblock %}

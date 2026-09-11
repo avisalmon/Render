@@ -7,7 +7,7 @@ templates/matazim/ may only reverse names in this namespace.
 
 from django.urls import path
 
-from . import entrance_views, joining_views, rights_views, roster_views, views
+from . import entrance_views, invite_views, joining_views, rights_views, roster_views, views
 
 app_name = "matazim"
 
@@ -54,6 +54,15 @@ urlpatterns = [
     path("joined/", joining_views.joined, name="joined"),
     path("apply/", joining_views.apply, name="apply"),
     path("leaders/", joining_views.leader_entrance, name="leader_entrance"),
+    # SPR-M.14 — the three doors a leader can come through (REQ-M.90 to M.93).
+    path("leaders/join/<str:token>/", invite_views.invite_landing, name="invite_landing"),
+    path("staff/team/", invite_views.leaders, name="pm_leaders"),
+    path("staff/team/invite/<int:invite_id>/qr.png", invite_views.invite_qr, name="invite_qr"),
+    path(
+        "staff/team/candidate/<int:leader_id>/reject/",
+        invite_views.reject_candidate,
+        name="reject_candidate",
+    ),
     path("leader/", joining_views.leader_home, name="leader_home"),
     path("leader/confirm/<int:student_id>/", joining_views.leader_confirm, name="leader_confirm"),
     # The desk, once someone is standing at it (SPR-M.8).

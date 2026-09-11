@@ -97,7 +97,7 @@ class Command(BaseCommand):
     @transaction.atomic
     def _seed(self):
         from app.models import Course, CourseCertificate, UserVideoProgress
-        from matazim.models import Leader, MemberProfile, Student, StudyClass
+        from matazim.models import Leader, LeaderInvite, MemberProfile, Student, StudyClass
 
         random.seed(4417)  # the same world every time, so screenshots compare
         now = timezone.now()
@@ -132,7 +132,17 @@ class Command(BaseCommand):
             MemberProfile.objects.update_or_create(
                 user=user, defaults={"birth_year": year - 38, "welcome_accepted_at": now}
             )
-            leader, _ = Leader.objects.get_or_create(user=user, defaults={"assigned_by": manager})
+            leader, _ = Leader.objects.get_or_create(
+                user=user,
+                defaults={
+                    "assigned_by": manager,
+                    # REQ-M.88 and M.93 — owned by her, and actually approved.
+                    # An unapproved leader is a candidate and reaches nothing.
+                    "program_manager": manager,
+                    "approved_at": now,
+                    "approved_by": manager,
+                },
+            )
             classes = [
                 StudyClass.objects.get_or_create(
                     leader=leader, name=cn, defaults={"school_name": school}
@@ -212,9 +222,30 @@ class Command(BaseCommand):
                     )
                 CourseCertificate.objects.get_or_create(user=user, course=course)
 
+        # One candidate and two live invitations, so the states Avi described are
+        # visible on her screen rather than only described in a spec.
+        hopeful = self._user("דנה מועמדת", "dana")
+        MemberProfile.objects.update_or_create(
+            user=hopeful, defaults={"birth_year": year - 35, "welcome_accepted_at": now}
+        )
+        Leader.objects.get_or_create(
+            user=hopeful, defaults={"program_manager": manager, "is_active": True}
+        )
+        LeaderInvite.objects.get_or_create(
+            program_manager=manager,
+            kind=LeaderInvite.OPEN,
+            defaults={"label": "חדר מורים אורט לוד"},
+        )
+        LeaderInvite.objects.get_or_create(
+            program_manager=manager,
+            kind=LeaderInvite.PERSONAL,
+            label="שירה מהראל מודיעין",
+        )
+
         self.stdout.write(
             self.style.SUCCESS(
-                f"seeded 1 program manager, {len(LEADERS)} leaders, {len(STUDENTS)} students"
+                f"seeded 1 program manager, {len(LEADERS)} leaders, 1 candidate, "
+                f"{len(STUDENTS)} students, 2 invites"
             )
         )
         self.stdout.write("")

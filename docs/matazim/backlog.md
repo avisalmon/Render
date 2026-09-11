@@ -800,18 +800,33 @@ active leader on the platform, which under tenancy would show one institution's
 staff to another's applicants. Production has one program manager, so nothing is
 wrong today; the second one breaks it. Flagged, not fixed.
 
-## SPR-M.14 — How a leader gets made  `PLANNED`
+## SPR-M.14 — How a leader gets made  `DONE`
 
 **Goal:** the three doors, all ending at a person pressing approve.
 
 | F-ID | Feature | Traces | Status |
 |---|---|---|---|
-| F-M.14.1 | A standing leader-management entry, not buried in ניהול | REQ-M.89 | TODO |
-| F-M.14.2 | Search, click, approve, for someone who already has an account | REQ-M.90 | TODO |
-| F-M.14.3 | That approval sends them an email: you are a leader, under whom, what next | REQ-M.90 | TODO |
-| F-M.14.4 | `LeaderInvite`: personal, single-use, link + QR + optional email | REQ-M.91 | TODO |
-| F-M.14.5 | Open invite: reusable, produces candidates and never leaders | REQ-M.92 | TODO |
-| F-M.14.6 | Candidates wait in the list; approval is always a human press | REQ-M.93 | TODO |
+| F-M.14.1 | A standing leader-management entry, not buried in ניהול | REQ-M.89 | DONE |
+| F-M.14.2 | Search, click, approve, for someone who already has an account | REQ-M.90 | DONE |
+| F-M.14.3 | That approval sends them an email: you are a leader, under whom, what next | REQ-M.90 | DONE |
+| F-M.14.4 | `LeaderInvite`: personal, single-use, link + QR + optional email | REQ-M.91 | DONE |
+| F-M.14.5 | Open invite: reusable, produces candidates and never leaders | REQ-M.92 | DONE |
+| F-M.14.6 | Candidates wait in the list; approval is always a human press | REQ-M.93 | DONE |
+
+**What it cost, and what it caught.**
+
+The unapproved row was the trap, and it was real: adding the candidate state
+turned every existing leader into a candidate until the backfill went in, and
+sixteen tests across four suites went red because their fixtures created leaders
+that had never been approved. That red was the filter working. `leader_of`
+refuses an unapproved row, which is what stops somebody who followed a link off
+a noticeboard from having a roster and a view of named minors before anyone said
+yes.
+
+A name collision cost an hour of confusion: `shell()` already binds `invite` to
+a *student* invite (REQ-M.72) and `base.html` reads `invite.user` off it, so
+passing a `LeaderInvite` under the same key broke every page that rendered one.
+The leader invitation is `leader_invite` now.
 
 **The trap here is the unapproved row.** A candidate is a `Leader` row that is
 not yet approved, so `leader_of()` must refuse to return it. Miss that and a
@@ -823,16 +838,30 @@ The mail cap was raised from 10 to 20 per recipient per day (Avi, 2026-09-11) to
 leave room for re-sending an invitation. The screen still has to say an invite
 was already sent rather than pretend every click worked.
 
-## SPR-M.15 — Her leaders, and one of them in full  `PLANNED`
+## SPR-M.15 — Her leaders, and one of them in full  `DONE`
 
 **Goal:** the two views she actually lives in.
 
 | F-ID | Feature | Traces | Status |
 |---|---|---|---|
-| F-M.15.1 | The leader list: one line each, name, school, students, certified, waiting | REQ-M.94 | TODO |
-| F-M.15.2 | Candidates in the same list, marked, not on a screen she must remember | REQ-M.94 | TODO |
-| F-M.15.3 | One leader in full: details, statistics, and their students underneath | REQ-M.95 | TODO |
-| F-M.15.4 | Seeded demo world, so the views can be judged on real-looking data | — | TODO |
+| F-M.15.1 | The leader list: one line each, name, school, students, certified, waiting | REQ-M.94 | DONE |
+| F-M.15.2 | Candidates in the same list, marked, not on a screen she must remember | REQ-M.94 | DONE |
+| F-M.15.3 | One leader in full: details, statistics, and their students underneath | REQ-M.95 | DONE |
+| F-M.15.4 | Seeded demo world, so the views can be judged on real-looking data | — | DONE |
+
+**Found by looking at the demo, not by a test.** A leader with two classes in
+one school rendered "עתיד רמלה · עתיד רמלה", because the line was built by
+looping classes rather than schools. On a list meant to be scanned, a repeated
+word reads as two different things. `Leader.school_names` now mirrors
+`Student.school_names`, which had already solved exactly this.
+
+And a pre-existing coin flip was removed from the gate while passing through:
+`test_a_miss_says_not_yet_and_never_rejected` uploaded a *different target's*
+model to force a miss, but the bank is drawn from at random and two targets can
+be close enough that the substitute measures as a pass, at which point the test
+was asserting an encouragement message against a success page. It now uploads a
+1mm tetrahedron, which cannot match anything, and asserts the attempt actually
+failed before reading the words.
 
 **F-M.15.3 reuses rather than rebuilds.** SPR-M.8 already has a roster with
 search, paging, track progress and the three certification conditions. The

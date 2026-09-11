@@ -57,12 +57,29 @@ def is_program_manager(user):
 def leader_of(user):
     """The Leader row for this person, or None.
 
+    Two filters, and both are load-bearing.
+
     An inactive leader is not a leader: REQ-M.67 says deactivating takes away
-    the view without touching the roster, and this one filter is what does it.
+    the view without touching the roster.
+
+    An **unapproved** leader was never one. REQ-M.93 says signing up through an
+    open invite makes a candidate, not a leader, and this is where that is true
+    rather than merely displayed. Miss this filter and somebody who followed a
+    link that was pinned to a staff-room noticeboard has a roster, an invite
+    code of their own, and a view of named minors, before any person said yes.
+    That is the same class of mistake as the unauthenticated QR endpoint in
+    SPR-M.9, arriving by a different road.
     """
     if not getattr(user, "is_authenticated", False):
         return None
-    return Leader.objects.filter(user=user, is_active=True).first()
+    return Leader.objects.filter(user=user, is_active=True, approved_at__isnull=False).first()
+
+
+def candidate_of(user):
+    """Their unapproved row, if they are waiting on somebody (REQ-M.93)."""
+    if not getattr(user, "is_authenticated", False):
+        return None
+    return Leader.objects.filter(user=user, approved_at__isnull=True).first()
 
 
 def role_of(user):

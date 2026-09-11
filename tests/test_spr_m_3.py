@@ -30,9 +30,9 @@ PASSWORD = "sprm3-pass-4417"
 def make_user(email="dana@example.com", name="דנה כהן", staff=False):
     user = User.objects.create_user(username=email, email=email, password=PASSWORD)
     if staff:
-    # "Staff" became מט״צים adminship in SPR-M.6: is_staff was a stand-in while
-    # this app had no roles of its own. Granting the real thing, not the
-    # stand-in, so the test exercises the rule that actually ships.
+        # "Staff" became מט״צים adminship in SPR-M.6: is_staff was a stand-in while
+        # this app had no roles of its own. Granting the real thing, not the
+        # stand-in, so the test exercises the rule that actually ships.
         from matazim.models import MemberProfile
 
         MemberProfile.objects.update_or_create(user=user, defaults={"is_program_manager": True})
@@ -364,16 +364,35 @@ def test_a_miss_says_not_yet_and_never_rejected(client, db):
     user = sign_in(client)
     client.get(reverse("matazim:test_task"))
     attempt = EntranceAttempt.objects.get(member__user=user)
-    wrong = "t0005" if attempt.target_id != "t0005" else "t0000"
+
+    # A deliberately unmistakable miss rather than another target's model.
+    # Substituting a different target used to be the way this was written, and
+    # it made the test a coin flip: the bank is drawn from at random, and two
+    # targets can be close enough that the substitute measures as a pass, at
+    # which point the assertion below is checking a success message. A 1mm
+    # tetrahedron cannot match anything in the bank.
+    tiny = b"""solid tiny
+facet normal 0 0 1
+outer loop
+vertex 0 0 0
+vertex 1 0 0
+vertex 0 1 0
+endloop
+endfacet
+endsolid tiny
+"""
 
     resp = client.post(
         reverse("matazim:test_task"),
-        {"model_file": SimpleUploadedFile("mine.stl", target_stl(wrong))},
+        {"model_file": SimpleUploadedFile("mine.stl", tiny)},
         follow=True,
     )
+    attempt.refresh_from_db()
+    assert not attempt.passed, "the fixture was meant to be an obvious miss"
+
     html = resp.content.decode()
-    assert "נדחה" not in html
-    assert "עוד לא" in html or "כמעט" in html or "מתקרב" in html
+    assert "נדחה" not in html, "REQ-M.53: there is no machine rejection, only not yet"
+    assert "עוד" in html or "כמעט" in html or "מתקרב" in html
 
 
 def test_a_retry_draws_a_fresh_target_and_keeps_the_history(client, db):

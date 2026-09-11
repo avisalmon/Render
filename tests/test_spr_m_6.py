@@ -14,6 +14,7 @@ Traces: REQ-M.22, M.65, M.67, M.68, spec §4.
 
 import pytest
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 pytestmark = pytest.mark.sprm6
 
@@ -26,12 +27,21 @@ def _one_world():
     the existing manager if there is one, and a manager adopts any leader made
     before it existed. Between them, order stops mattering.
     """
+    from django.utils import timezone
+
     from matazim.models import Leader, MemberProfile
 
     profile = MemberProfile.objects.filter(is_program_manager=True).first()
     owner = profile.user if profile else None
     if owner:
         Leader.objects.filter(program_manager__isnull=True).update(program_manager=owner)
+    # REQ-M.93, added in SPR-M.14: an unapproved Leader row is a candidate and
+    # `leader_of` refuses to return it. These suites predate candidates and mean
+    # "a leader", so anything unapproved here is approved. The candidate state
+    # itself is tested on its own in test_spr_m_14.
+    Leader.objects.filter(approved_at__isnull=True).update(
+        approved_at=timezone.now(), approved_by=owner
+    )
     return owner
 
 
@@ -43,7 +53,10 @@ def make_leader(email, active=True):
     from matazim.models import Leader
 
     leader = Leader.objects.create(
-        user=make_user(email), is_active=active, program_manager=_one_world()
+        user=make_user(email),
+        is_active=active,
+        program_manager=_one_world(),
+        approved_at=timezone.now(),
     )
     return leader
 

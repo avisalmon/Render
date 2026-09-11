@@ -371,5 +371,40 @@ def staff_leader(request, leader_id):
             join_url=request.build_absolute_uri(f"/matazim/join/{leader.join_code}/"),
             students=Student.objects.filter(leader=leader).count(),
             waiting=Student.objects.filter(pending_leader=leader).count(),
+            # REQ-M.95 — Avi, looking at the demo: opening a leader should show
+            # their students, not only a count. A number says there are three;
+            # it does not say which three, which is the only question worth
+            # opening the page for.
+            #
+            # The same two readers the roster uses, so this page and the
+            # leader's own cannot come to disagree about the same teenager.
+            rows=_students_of(leader),
         ),
     )
+
+
+def _students_of(leader):
+    """That leader's students, with the progress and eligibility a row shows.
+
+    Deliberately the same shape the roster builds (`roster_views.roster`), so
+    the template can reuse the roster row rather than growing a second one.
+    """
+    from .certification import eligibility_for_many
+    from .content import REQUIRED_COURSE_SLUGS
+    from .progress import cohort_progress, track_summary
+
+    people = list(
+        Student.objects.filter(leader=leader)
+        .select_related("user", "user__profile")
+        .prefetch_related("classes")
+    )
+    progress = cohort_progress(people, REQUIRED_COURSE_SLUGS)
+    states = eligibility_for_many(people)
+    return [
+        {
+            "student": person,
+            "progress": track_summary(progress.get(person.user_id, {})),
+            "eligibility": states.get(person.user_id),
+        }
+        for person in people
+    ]

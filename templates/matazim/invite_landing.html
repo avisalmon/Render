@@ -1,0 +1,42 @@
+{% extends "matazim/base.html" %}
+{% comment %}
+  REQ-M.91, M.92 — where a leader invitation lands someone with no account.
+
+  Reachable logged out for the same reason the student invite is: the link
+  arrives by WhatsApp or on a printed sheet, and a bare login form would tell
+  them nothing about where they had ended up or who had asked them.
+{% endcomment %}
+{% block title %}הזמנה להיות מוביל/ה · מט״צים{% endblock %}
+{% block content %}
+<div class="mz-container mz-page mz-legal">
+  <div class="mz-page-head">
+    <h1>הוזמנת להיות מוביל/ה</h1>
+    {% if leader_invite.label %}
+      <p>ההזמנה נשלחה עבור <strong>{{ leader_invite.label }}</strong>.</p>
+    {% endif %}
+  </div>
+
+  <section class="mz-panel">
+    <p>
+      מט״צים היא תוכנית שבה תלמידי חטיבת ביניים לומדים טכנולוגיה והופכים
+      למדריכים צעירים. מוביל/ה מלווה קבוצת תלמידים, רואה את ההתקדמות שלהם,
+      ומחליט/ה מי מוכן להסמכה.
+    </p>
+    <p class="mz-muted">
+      {% comment %}
+        Said before they sign up, not after. They are about to be given sight of
+        named minors' progress, and REQ-M.82 is the principle: tell people what
+        a role means at the point they take it.
+      {% endcomment %}
+      בתפקיד הזה תראו שמות של תלמידים ואת ההתקדמות שלהם. הגישה ניתנת רק אחרי
+      שמנהל/ת התוכנית מאשר/ת אתכם, גם אם הגעתם עם קישור.
+    </p>
+
+    <p class="mz-page-actions">
+      <a class="mz-btn mz-btn-primary" href="{% url 'matazim:register' %}">פתיחת חשבון</a>
+      <a class="mz-linkbtn" href="{% url 'matazim:login' %}">כבר יש לי חשבון</a>
+    </p>
+    <p class="mz-muted">ההזמנה נשמרת, גם אם תפתחו חשבון קודם.</p>
+  </section>
+</div>
+{% endblock %}
