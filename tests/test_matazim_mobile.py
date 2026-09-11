@@ -50,7 +50,13 @@ PAGES = [
 ]
 
 # REQ-M.85 — the rights screens, which a member reaches on a phone or not at all.
-MEMBER_PAGES = ["/matazim/profile/", "/matazim/me/data/", "/matazim/me/delete/"]
+MEMBER_PAGES = [
+    "/matazim/profile/",
+    "/matazim/me/data/",
+    "/matazim/me/delete/",
+    # REQ-M.12 — the screen a member actually lives in, read on a phone.
+    "/matazim/my-path/",
+]
 
 # The smallest comfortable touch target. Anything shorter is a link a thumb
 # misses, and on a phone that is a dead end rather than a nuisance.

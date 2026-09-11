@@ -59,6 +59,14 @@
       <a href="{% url 'matazim:schools' %}" {% if section == 'schools' %}class="is-active"{% endif %}>בתי הספר</a>
       <a href="{% url 'matazim:community' %}" {% if section == 'community' %}class="is-active"{% endif %}>קהילת מט״צים</a>
       <a href="{% url 'matazim:events' %}" {% if section == 'events' %}class="is-active"{% endif %}>ימי שיא</a>
+      {% if user.is_authenticated %}
+        {% comment %}
+          REQ-M.12, REQ-M.5b — the member's own screen, on every page. A screen
+          you have to know the URL for is a screen nobody uses, which this
+          product has now learned three times.
+        {% endcomment %}
+        <a href="{% url 'matazim:my_path' %}" {% if section == 'path' %}class="is-active"{% endif %}>המסלול שלי</a>
+      {% endif %}
       {% if is_leader %}
         {% comment %}
           A leader needs a way back to their own area. Without it the only route

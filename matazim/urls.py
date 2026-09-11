@@ -7,7 +7,15 @@ templates/matazim/ may only reverse names in this namespace.
 
 from django.urls import path
 
-from . import entrance_views, invite_views, joining_views, rights_views, roster_views, views
+from . import (
+    entrance_views,
+    invite_views,
+    joining_views,
+    path_views,
+    rights_views,
+    roster_views,
+    views,
+)
 
 app_name = "matazim"
 
@@ -91,6 +99,8 @@ urlpatterns = [
     # A minor's uploaded work, handed out only to people entitled to it
     # (REQ-M.80). It is no longer under the public /media/ tree.
     path("attempt/<int:attempt_id>/file/", entrance_views.attempt_file, name="attempt_file"),
+    # REQ-M.12 — the member's own screen, and the only role that had none.
+    path("my-path/", path_views.my_path, name="my_path"),
     path("profile/", views.profile, name="profile"),
     path("profile/replay-welcome/", views.profile_reset_welcome, name="profile_reset_welcome"),
 ]

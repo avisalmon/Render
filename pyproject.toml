@@ -31,6 +31,7 @@ markers = [
     "sprm13: SPR-M.13 מט״צים tenancy, the worlds do not touch",
     "sprm14: SPR-M.14 מט״צים how a leader gets made",
     "sprm15: SPR-M.15 מט״צים her leaders, and one of them in full",
+    "sprm16: SPR-M.16 מט״צים המסלול שלי, the member's own screen",
     "sprmobile: real-browser phone checks for מט״צים (tests/test_matazim_mobile.py)",
     "smoke: the fast gate, run on every push (see tests/test_smoke.py)",
 ]

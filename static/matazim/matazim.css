@@ -1291,7 +1291,11 @@ a.mz-training-title:hover { color: var(--mz-purple); }
  * notice and the privacy policy, both at 18px. */
 .mz-legal p a:not(.mz-linkbtn),
 .mz-legal li a:not(.mz-linkbtn),
-.mz-consent a:not(.mz-linkbtn) {
+.mz-consent a:not(.mz-linkbtn),
+/* The conditions list carries inline links too ("למבחן"), and the guard caught
+ * one at 19px on המסלול שלי. Same rule, one more place: this is the third time
+ * an inline link has been the thing a thumb misses. */
+.mz-needs a:not(.mz-linkbtn):not(.mz-btn) {
   display: inline;
   /* Vertical only. Horizontal padding on an inline link detaches it from what
    * it abuts, and in Hebrew that is constant: a prefix letter glued to the
@@ -1305,3 +1309,49 @@ a.mz-training-title:hover { color: var(--mz-purple); }
 .mz-or-line { border: 0; border-top: 1px solid var(--mz-line); margin: 20px 0; }
 .mz-invite-row { display: block; }
 .mz-invite-row .mz-copy { margin: 8px 0; }
+
+/* ------------------------------------------------- המסלול שלי (SPR-M.16)
+ *
+ * The member's own screen. The next step is given the most weight on the page
+ * because it is the only thing that asks anything of the reader; everything
+ * else is context for it.
+ */
+
+.mz-next { border-inline-start: 4px solid var(--mz-purple); }
+.mz-next h2 { margin: 2px 0 6px; }
+
+.mz-path { list-style: none; margin: 0; padding: 0; }
+.mz-path-stage {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  align-items: flex-start;
+  position: relative;
+}
+/* The line joining the stages, so it reads as a path and not as a list. */
+.mz-path-stage:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 6px;
+  top: 26px;
+  bottom: -6px;
+  width: 2px;
+  background: var(--mz-line);
+}
+.mz-path-dot {
+  flex: 0 0 14px;
+  height: 14px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: var(--mz-line);
+  z-index: 1;
+}
+.mz-path-body { display: flex; flex-direction: column; gap: 2px; }
+.mz-path-name { font-weight: 600; color: var(--mz-body); }
+
+/* The current stage is marked by weight and a ring, never by colour alone. */
+.mz-path-stage.is-current .mz-path-dot {
+  background: var(--mz-purple);
+  box-shadow: 0 0 0 4px var(--mz-purple-soft);
+}
+.mz-path-stage.is-current .mz-path-name { color: var(--mz-ink); }

@@ -1,0 +1,151 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.12 — המסלול שלי. REQ-M.5a is the acceptance test, in Litala's words:
+  every member sees immediately where they are, what they have completed, and
+  what their next task is.
+
+  The order on the page is that sentence, in that order. Where you are, what is
+  next, then the detail. A member opens this to decide what to do in the next
+  twenty minutes, not to audit themselves.
+{% endcomment %}
+
+{% block title %}המסלול שלי · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>המסלול שלי</h1>
+    <p>איפה אתם, מה כבר עשיתם, ומה הצעד הבא.</p>
+  </div>
+
+  {% comment %}
+    The next step first, because it is the only thing on this page that asks
+    anything of the reader. Everything below it is context for this.
+  {% endcomment %}
+  <section class="mz-panel mz-next">
+    <span class="mz-eyebrow">המשימה הנוכחית</span>
+    <h2>{{ next_step.text }}</h2>
+    <p class="mz-muted">{{ next_step.why }}</p>
+    {% if next_step.where %}
+      <p class="mz-page-actions">
+        <a class="mz-btn mz-btn-primary" href="{% url next_step.where %}">קדימה</a>
+      </p>
+    {% endif %}
+  </section>
+
+  <section class="mz-panel">
+    <h2>המסלול</h2>
+    {% comment %}
+      All five stages, with the current one marked rather than the rest hidden.
+      A teenager should be able to see where this goes, not only the next step:
+      the whole point of the programme is that it ends somewhere.
+    {% endcomment %}
+    <ol class="mz-path">
+      {% for stage in stages %}
+        <li class="mz-path-stage{% if stage.is_current %} is-current{% endif %}">
+          <span class="mz-path-dot"></span>
+          <span class="mz-path-body">
+            <span class="mz-path-name">{{ stage.title }}</span>
+            <span class="mz-muted">{{ stage.text }}</span>
+            {% if stage.is_current %}<span class="mz-tag mz-tag-doing">כאן אתם</span>{% endif %}
+          </span>
+        </li>
+      {% endfor %}
+    </ol>
+  </section>
+
+  <section class="mz-panel">
+    <h2>
+      ההדרכות שלי
+      <span class="mz-count">{{ summary.done }}/{{ summary.total }}</span>
+    </h2>
+    <ul class="mz-training">
+      {% for course in courses %}
+        <li>
+          <span class="mz-training-title">
+            {{ course.progress.title|default:course.slug }}
+            {% if course.certified %}<span class="mz-tag mz-tag-done">יש תעודה</span>{% endif %}
+          </span>
+          <span class="mz-roster-progress">
+            <span class="mz-bar"><span class="mz-bar-fill" style="width: {{ course.progress.pct|default:0 }}%"></span></span>
+            <span class="mz-muted">{{ course.progress.done|default:0 }}/{{ course.progress.total|default:0 }}</span>
+          </span>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="mz-panel">
+    <h2>כדי להיות מט״צ מוסמך</h2>
+    {% if student.status == "certified" %}
+      <p class="mz-verdict">
+        <span class="mz-tag mz-tag-done">מט״צ מוסמך</span>
+        הוסמכתם ב־{{ student.certified_at|date:"j.n.Y" }}. מזל טוב.
+      </p>
+    {% endif %}
+
+    {% comment %}
+      REQ-M.76, the same three conditions the leader sees, arranged for somebody
+      who can act on them rather than somebody judging them. Always all three,
+      so the page reads the same way every time.
+    {% endcomment %}
+    <ul class="mz-needs">
+      <li>
+        <span class="mz-check">{% if eligibility.entrance_test_passed %}✓{% else %}·{% endif %}</span>
+        <span>
+          מבחן הכניסה
+          {% if not eligibility.entrance_test_passed %}
+            <a href="{% url 'matazim:entrance_test' %}">למבחן</a>
+          {% endif %}
+        </span>
+      </li>
+      {% for course in courses %}
+        <li>
+          <span class="mz-check">{% if course.certified %}✓{% else %}·{% endif %}</span>
+          <span>
+            תעודה ב{{ course.progress.title|default:course.slug }}
+            {% if not course.certified and course.progress %}
+              <span class="mz-muted">{{ course.progress.done }}/{{ course.progress.total }} שיעורים</span>
+            {% endif %}
+          </span>
+        </li>
+      {% endfor %}
+      <li>
+        <span class="mz-check">{% if student.status == "certified" %}✓{% else %}·{% endif %}</span>
+        <span>
+          אישור של המוביל/ה
+          {% if eligibility.is_eligible and student.status != "certified" %}
+            <span class="mz-muted">אתם מוכנים. ההחלטה אצלם.</span>
+          {% endif %}
+        </span>
+      </li>
+    </ul>
+  </section>
+
+  <section class="mz-panel">
+    <h2>המוביל/ה שלי</h2>
+    {% if leader %}
+      <p>
+        <strong>{{ leader_name }}</strong>
+        {% for school in leader.school_names %}<span class="mz-muted">{{ school }}</span>{% endfor %}
+      </p>
+      <p class="mz-muted">
+        המוביל/ה שלכם רואה את ההתקדמות שלכם, כדי ללוות אתכם ולהחליט מתי אתם
+        מוכנים להסמכה. <a href="{% url 'matazim:privacy' %}">מה עוד נראה להם</a>.
+      </p>
+    {% elif pending_name %}
+      <p>ביקשתם להצטרף ל<strong>{{ pending_name }}</strong>, ומחכים לאישור.</p>
+    {% else %}
+      {% comment %}
+        REQ-M.65 — no leader is a normal state, and the page reads as a
+        beginning rather than as something that went wrong.
+      {% endcomment %}
+      <p class="mz-muted">עוד לא הצטרפתם למוביל/ה. זה השלב הבא, ואפשר לעשות אותו עכשיו.</p>
+      <p class="mz-page-actions">
+        <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:apply' %}">בחירת מוביל/ה</a>
+      </p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

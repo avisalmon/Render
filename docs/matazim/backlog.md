@@ -14,6 +14,13 @@ Standing rule: dev first. Nothing reaches production without Avi's word.
 
 ---
 
+> **A note on vocabulary, 2026-09-11.** Sprints before SPR-M.12 say "admin" and
+> "adminship". Those records are left as written, because they describe what was
+> decided under the words in use at the time. Everywhere in the product and from
+> here on, that role is the **program manager** (מנהל/ת התוכנית), and "admin"
+> and "site admin" are retired: see spec §4.3 for why, which is that they
+> pointed at two different people depending on who was speaking.
+
 ## SPR-M.1 — The front door  `DONE, DEPLOYED 2026-09-09`
 
 **Goal:** the app exists, it looks like מט״צים, and it is sealed off from
@@ -356,7 +363,7 @@ visible change.
 
 | ACT-ID | What Avi does | Blocks | Status |
 |---|---|---|---|
-| ACT-M.6 | Grant adminship to נעמי and אביב at babook.co.il/matazim/staff/admins/. You hold every power already as site owner, so you do not need granting. Either at babook.co.il/admin/ under פרופילי מט״צים, ticking מנהל/ת התוכנית, or by setting `MATAZIM_ADMINS` in Render so every deploy re-applies it | Admins existing in production. The build is done | OPEN |
+| ACT-M.6 | Grant the program-manager role to נעמי (אביב dropped 2026-09-11: "we focus on נעמי only") at babook.co.il/matazim/staff/admins/. You hold every power already as site owner, so you do not need granting. Either at babook.co.il/admin/ under פרופילי מט״צים, ticking מנהל/ת התוכנית, or by setting `MATAZIM_ADMINS` in Render so every deploy re-applies it | Admins existing in production. The build is done | OPEN |
 
 ## SPR-M.7 — How anyone becomes anyone  `DONE` — deployed 2026-09-11 (`d121299`)
 
@@ -876,7 +883,82 @@ and removable in one command: they would otherwise sit beside real teenagers in
 a database that now carries consent records and a retention process. babook's
 `purge_demo_data` is the pattern.
 
-## SPR-M.16 — The student detail page  `NOT PLANNED`
+## SPR-M.16 — המסלול שלי  `DONE`
+
+**The only role in this system with no screen of its own.** Count them: a leader
+has five screens, the program manager now has seven, and the fourteen-year-old
+the whole thing exists for has four, two of which are privacy plumbing built in
+SPR-M.10. A student who passes the entrance test and joins a leader still has
+nowhere that says where they are and what to do next. Their leader can see their
+progress through both Scratch courses. They cannot see it themselves.
+
+REQ-M.12 calls this screen "the product". REQ-M.5a is its acceptance test, in
+Litala's words: *every member sees immediately where they are, what they have
+completed, and what their next task is.*
+
+### What it can honestly show, and what it cannot
+
+The requirement as written promised five cards, three of which name things that
+have no model: the next submission due (REQ-M.19), the next יום שיא (REQ-M.27),
+and any new feedback. Those are deferred rather than faked. **An empty card that
+will never fill is worse than no card**, because it teaches the reader that the
+screen does not know things.
+
+What is real today is more than enough for the screen to do its job: the path,
+the required track lesson by lesson, the three certification conditions seen
+from the member's own side, and who their leader is.
+
+### The idea that shapes it
+
+The leader's screen and the member's screen answer the same question from
+opposite ends, and they must never disagree. So this reads through
+`matazim.progress` and `matazim.certification`, the same two modules SPR-M.8
+built, rather than computing anything of its own. A member being told they have
+finished four lessons while their leader is told three is the failure that
+matters here, and the only reliable defence is one source.
+
+The certification conditions are the interesting half. The leader's version of
+that panel is a decision aid. The member's version is the answer to "what do I
+have to do", which is the same three facts arranged for somebody who can act on
+them rather than somebody judging them.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.16.1 | המסלול שלי: the five stages as a path, the current one marked | REQ-M.12, REQ-M.5a | DONE |
+| F-M.16.2 | Where they stand: what is done, what is next, in one line each | REQ-M.5a | DONE |
+| F-M.16.3 | The required track, lesson by lesson, read from the shared reader | REQ-M.12, REQ-M.74 | DONE |
+| F-M.16.4 | The three conditions, from the member's side: what *they* must do | REQ-M.76 | DONE |
+| F-M.16.5 | Their leader, and the way forward when they have none | REQ-M.43, REQ-M.65 | DONE |
+| F-M.16.6 | A standing entry, and the phone | REQ-M.5b, REQ-M.75 | DONE |
+
+### What it turned out to need
+
+**A member without a `Student` row still has learning.** Somebody who registered
+and watched three Scratch lessons but has not joined a leader has real progress,
+and `cohort_progress` is keyed by user rather than by student row, so the screen
+asks about them with a lightweight stand-in rather than growing a second reader
+with a different signature. Showing them nothing until they join would have been
+the easy version and the wrong one.
+
+**The next step is one sentence, not a list.** Ordered the way the programme is
+ordered, so the answer is always the earliest thing still open. A teenager given
+five things to do does none of them.
+
+**Ready is not certified, and the page must not blur them.** What it can
+honestly say is that the part they control is finished and the decision is now
+somebody else's. The test for this initially failed on the section heading
+"כדי להיות מט״צ מוסמך", which is the page correctly naming the goal: the
+assertion was scoped to the badge rather than the phrase.
+
+The phone guard caught an inline link at 19px, which is the third time an inline
+link has been the thing a thumb misses. The rule now covers the conditions list
+as well as legal prose.
+
+**Not in this sprint:** lessons rendering inside the מט״צים shell (REQ-M.13).
+That is a bigger piece of work and this screen can link out to the course in
+babook's own player meanwhile, which is honest about where the learning lives.
+
+## SPR-M.17 — The student detail page, for a leader  `NOT PLANNED`
 
 Hangs off F-M.15.3. Avi: "we will define it later."
 
