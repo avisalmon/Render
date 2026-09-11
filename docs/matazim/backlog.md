@@ -426,18 +426,72 @@ page, which is a strange way to ask someone to return to their own desk; they
 now have a nav entry, and nobody else sees it. And the staff area had no link to
 the leaders screen, the same mistake as the target bank having no door.
 
-## SPR-M.8 — The leader's students  `NOT PLANNED`
+## SPR-M.8 — The leader's students  `PLANNED`
 
-Their roster, their classes, each student's stage and progress read live. The
-first screen that consumes the access module.
+**Goal:** a leader opens their page and sees who they have, where each person
+is, and what to do next. SPR-M.7 gave them a desk with an invite link and a
+confirm queue; the desk is still empty the moment the queue is cleared.
+
+**Why now:** this is the first screen that consumes `access.visible_students`,
+and the first that reads babook's learning data instead of writing our own.
+Both of those are contracts, and a contract is only real once something depends
+on it.
+
+### The thing that can go wrong
+
+A roster is the inverse shape of every babook screen. Babook asks *one user,
+many courses*; a roster asks *many users, one track*. `app/views._catalog_progress`
+answers the first shape and cannot answer the second without being called once
+per student, which is a query per teenager on every page load.
+
+So the reader gets rewritten for the cohort shape, and the moment it is
+rewritten there are two definitions of "done" in the codebase. That is exactly
+the divergence RULE-3 exists to prevent, and it would not announce itself: it
+would quietly tell a leader that a kid has finished four lessons while the kid's
+own screen says three. F-M.8.1 is therefore built with a test that pins the two
+readers against each other, not merely a test that the new one returns numbers.
+
+### What the track even is
+
+There is no set of courses that constitutes מט״צים training today. `/matazim/courses/`
+honestly says so. A roster cannot show progress through a track that does not
+exist, so F-M.8.2 names one, as a list of slugs in `matazim/content.py`: no
+migration, no field on babook's `Course`, and RULE-4 stays intact because babook
+still knows nothing about us. Avi names the courses; until he does, a short
+placeholder list drives the screens and the page says the track is provisional.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.8.1 | `matazim/progress.py`: progress for many students in a fixed number of queries, pinned to babook's rule by a test | REQ-M.74, REQ-M.14 | TODO |
+| F-M.8.2 | The track is a named list of courses | REQ-M.23 | TODO |
+| F-M.8.3 | The roster: every student the leader has, with stage, track progress and class | REQ-M.23, REQ-M.22 | TODO |
+| F-M.8.4 | Classes: create, rename, put students in them. Offered, never required | REQ-M.23, Q14 | TODO |
+| F-M.8.5 | One student, seen by their leader: stage, lesson-level progress, entrance attempt | REQ-M.23 | TODO |
+| F-M.8.6 | Search and paging on the roster from the first commit | REQ-M.23 | TODO |
+| F-M.8.7 | The whole thing on a phone | REQ-M.75 | TODO |
+
+### Rules this sprint is under
+
+- **REQ-M.29.** A roster records the מט״צ and nothing about any child they
+  teach. Teaching is the מט״צ's own declared activity, never a row about a kid.
+- **REQ-M.22.** No screen here asks "may I". Every one of them starts from
+  `visible_students(request.user)` and a leader's queryset cannot reach anyone
+  else's student, so there is nothing to forget.
+- **Q14 defaulted.** A class is offered and never required. A leader with six
+  students should never have to invent a filing system to see them.
+- Search and paging ship in the first commit rather than "when we need them",
+  because they cost nothing at this size and are the only thing that makes the
+  screen survive the larger number.
 
 ## SPR-M.9 — The admin's view  `NOT PLANNED`
 
 Every leader, every student, the funnel, grouped by `school_name` for the
 school-level report Litala's brief asks for.
 
-**Both blocked on Q10** for their shape, not their existence: forty students is
-a list, twelve hundred needs filtering, paging and bulk actions on every screen.
+Shape decided ahead of time (closing Q10): the admin lands on **counts**, by
+leader and by school, and drills down. Not a list of every student, which is a
+usable landing page for forty people and a useless one for twelve hundred.
+Unclaimed students are a queue on this screen, not an error state (REQ-M.65).
 
 ## Also still open
 
