@@ -1,0 +1,36 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.66 — this door used to hand people the student registration form. A door
+  labelled for one role must not quietly behave like the other.
+{% endcomment %}
+
+{% block title %}כניסת מובילים · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>כניסת מובילים</h1>
+    <p>האזור של המובילים בבתי הספר.</p>
+  </div>
+
+  <section class="mz-panel">
+    <h2>איך נהיים מוביל/ה</h2>
+    <p>
+      הרשאת מוביל ניתנת על ידי צוות התוכנית, ולא נפתחת מכאן. אם אתם מלווים
+      מט״צים בבית ספר ועדיין אין לכם גישה, דברו עם <strong>מנהלי התוכנית</strong>
+      והם ימנו אתכם.
+    </p>
+    <p class="mz-muted">
+      כבר מונית/ם? התחברו עם אותו אימייל שמסרתם לצוות, והדף הזה ייקח אתכם ישר
+      לאזור שלכם.
+    </p>
+    <div class="mz-page-actions">
+      {% if not user.is_authenticated %}
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:login' %}?next={% url 'matazim:leader_entrance' %}">התחברות</a>
+      {% endif %}
+      <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:about' %}">על התוכנית</a>
+    </div>
+  </section>
+</div>
+{% endblock %}

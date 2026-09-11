@@ -251,6 +251,19 @@ class Student(models.Model):
     )
     classes = models.ManyToManyField(StudyClass, blank=True, related_name="students")
 
+    # Asking is not the same as being accepted (REQ-M.10). `leader` is who has
+    # them; `pending_leader` is who they asked and are waiting on. An invite
+    # link sets `leader` directly, because the leader handed out the link and
+    # the choice is already theirs (REQ-M.9).
+    pending_leader = models.ForeignKey(
+        Leader,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="requests",
+        verbose_name="ממתין לאישור של",
+    )
+
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=APPLIED, db_index=True)
     cohort_year = models.PositiveIntegerField(default=current_year)
 

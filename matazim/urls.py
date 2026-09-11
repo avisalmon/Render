@@ -7,7 +7,7 @@ templates/matazim/ may only reverse names in this namespace.
 
 from django.urls import path
 
-from . import entrance_views, views
+from . import entrance_views, joining_views, views
 
 app_name = "matazim"
 
@@ -47,6 +47,16 @@ urlpatterns = [
     path("auth/done/", views.auth_done, name="auth_done"),
     # First contact (REQ-M.39 to M.41).
     path("welcome/accept/", views.welcome_accept, name="welcome_accept"),
+    # Becoming someone: the invite link, the open door, and the leader's page.
+    path("join/<str:code>/", joining_views.join, name="join"),
+    path("joined/", joining_views.joined, name="joined"),
+    path("apply/", joining_views.apply, name="apply"),
+    path("leaders/", joining_views.leader_entrance, name="leader_entrance"),
+    path("leader/", joining_views.leader_home, name="leader_home"),
+    path("leader/confirm/<int:student_id>/", joining_views.leader_confirm, name="leader_confirm"),
+    path("leader/<int:leader_id>/qr.png", joining_views.leader_qr, name="leader_qr"),
+    path("staff/leaders/", joining_views.staff_leaders, name="staff_leaders"),
+    path("staff/leaders/<int:leader_id>/", joining_views.staff_leader, name="staff_leader"),
     path("profile/", views.profile, name="profile"),
     path("profile/replay-welcome/", views.profile_reset_welcome, name="profile_reset_welcome"),
 ]

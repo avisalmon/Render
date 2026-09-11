@@ -1,0 +1,48 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.5a — where am I, what next. A state, not a flash message that scrolls
+  away: someone who just applied comes back tomorrow wanting to know what is
+  happening, and this is the page that answers.
+{% endcomment %}
+
+{% block title %}הצטרפתם · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  {% if student.leader %}
+    <div class="mz-page-head">
+      <h1>אתם בפנים</h1>
+      <p>ברוכים הבאים למט״צים.</p>
+    </div>
+    <section class="mz-panel">
+      <p>
+        המוביל/ה שלכם:
+        <strong>{{ student.leader.user.profile.display_name|default:student.leader.user.email }}</strong>.
+        מכאן ממשיכים ללמוד, לבנות תוצרים, ובהמשך להדריך.
+      </p>
+      <div class="mz-page-actions">
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:courses' %}">להדרכות</a>
+        <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:profile' %}">לאזור האישי</a>
+      </div>
+    </section>
+
+  {% elif student.pending_leader %}
+    <div class="mz-page-head">
+      <h1>הבקשה נשלחה</h1>
+      <p>עכשיו מחכים לאישור.</p>
+    </div>
+    <section class="mz-panel">
+      <p>
+        ביקשתם להצטרף ל<strong>{{ student.pending_leader.user.profile.display_name|default:student.pending_leader.user.email }}</strong>.
+        ברגע שהם יאשרו אתכם תוכלו להתחיל. בינתיים אפשר להתחיל ללמוד, וכל מה
+        שתלמדו נשמר ונספר לכם.
+      </p>
+      <div class="mz-page-actions">
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:courses' %}">להדרכות</a>
+        <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:profile' %}">לאזור האישי</a>
+      </div>
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

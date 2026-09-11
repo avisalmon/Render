@@ -43,13 +43,32 @@
     <section class="mz-panel">
       <h2>המעמד שלי בתוכנית</h2>
       <dl class="mz-facts">
+        {% comment %}
+          REQ-M.43 — this read "not yet assigned" for every field while there
+          was no data behind it. There is now.
+        {% endcomment %}
         <div>
-          <dt>בית ספר</dt>
-          <dd class="mz-muted">טרם שויך</dd>
+          <dt>המוביל/ה שלי</dt>
+          <dd>
+            {% if student.leader %}
+              {{ student.leader.user.profile.display_name|default:student.leader.user.email }}
+            {% elif student.pending_leader %}
+              <span class="mz-tag mz-tag-doing">ממתין לאישור</span>
+              {{ student.pending_leader.user.profile.display_name|default:student.pending_leader.user.email }}
+            {% else %}
+              <span class="mz-muted">טרם שויך</span>
+            {% endif %}
+          </dd>
         </div>
         <div>
-          <dt>מט״צ מוסמך</dt>
-          <dd class="mz-muted">טרם</dd>
+          <dt>בית ספר</dt>
+          <dd>
+            {% for klass in student.leader.classes.all %}{% if klass.school_name %}{{ klass.school_name }}{% if not forloop.last %} · {% endif %}{% endif %}{% empty %}<span class="mz-muted">טרם שויך</span>{% endfor %}
+          </dd>
+        </div>
+        <div>
+          <dt>שלב בתוכנית</dt>
+          <dd>{% if student %}{{ student.get_status_display }}{% else %}<span class="mz-muted">טרם הצטרפתם</span>{% endif %}</dd>
         </div>
         <div>
           <dt>מבחן הכניסה</dt>

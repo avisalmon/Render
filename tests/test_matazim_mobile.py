@@ -42,6 +42,7 @@ PAGES = [
     "/matazim/events/",
     "/matazim/login/",
     "/matazim/register/",
+    "/matazim/leaders/",
 ]
 
 # The smallest comfortable touch target. Anything shorter is a link a thumb

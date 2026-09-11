@@ -37,7 +37,12 @@
       {% endcomment %}
       <div class="mz-hero-cta">
         {% if student_door_open %}
-          <a class="mz-btn mz-btn-primary" href="{% url 'matazim:register' %}">
+          {% comment %}
+            It used to point at the registration form they had already filled
+            in. Now it goes where there is something left to do: the invite if
+            one is waiting, otherwise the application.
+          {% endcomment %}
+          <a class="mz-btn mz-btn-primary" href="{% if invite %}{% url 'matazim:join' invite.join_code %}{% else %}{% url 'matazim:apply' %}{% endif %}">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             כניסת תלמידים
           </a>

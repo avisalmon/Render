@@ -358,15 +358,83 @@ visible change.
 |---|---|---|---|
 | ACT-M.6 | Grant adminship to נעמי and אביב at babook.co.il/matazim/staff/admins/. You hold every power already as site owner, so you do not need granting. Either at babook.co.il/admin/ under פרופילי מט״צים, ticking מנהל/ת התוכנית, or by setting `MATAZIM_ADMINS` in Render so every deploy re-applies it | Admins existing in production. The build is done | OPEN |
 
-## SPR-M.7 — The leader's students  `NOT PLANNED`
+## SPR-M.7 — How anyone becomes anyone  `DONE`
+
+**Goal:** the roles stop being unpopulatable. Today nothing in the app creates a
+`Leader` or a `Student` at all, Django admin is the only way in, and passing the
+entrance test unlocks a door that sends you to a registration form you already
+filled in.
+
+**Avi's brief: the UX is the feature.** Four different people walk four
+different paths through this, and each one has to know where they are and what
+happens next at every step. No dead ends, and nothing silently dropped.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.7.1 | `Student.pending_leader`, so asking and being accepted are different things | REQ-M.10 | DONE |
+| F-M.7.2 | Admin assigns a leader, and manages their link | REQ-M.25 | DONE |
+| F-M.7.3 | The leader's invite link and QR, and the landing page it opens | REQ-M.9 | DONE |
+| F-M.7.4 | Apply: three questions, and the row that finally makes someone a student | REQ-M.16 | DONE |
+| F-M.7.5 | The open door: pick a leader, and wait to be confirmed | REQ-M.10 | DONE |
+| F-M.7.6 | A leader has somewhere to stand, and can confirm people | REQ-M.73 | DONE |
+| F-M.7.7 | The invite survives registering and the entrance test | REQ-M.72 | DONE |
+| F-M.7.8 | Every door leads somewhere true, including כניסת מובילים | REQ-M.66 | DONE |
+
+### The four journeys, which are the actual specification
+
+**A student with a link**, the common case. Tap the WhatsApp link, see who is
+inviting you and to which school, and then whichever of these is true: open an
+account, or take the entrance test, or join in one tap. The leader's name is on
+screen at every one of those steps, so the invite never feels lost.
+
+**A student without a link.** Pass the test, and כניסת תלמידים opens onto the
+application rather than a form they already filled in. Three questions, choose a
+leader, and then a page that says plainly they are waiting to be confirmed and
+by whom.
+
+**An admin.** ניהול, מובילים, pick a person with the search we already built,
+and they are a leader. Their link and QR are on their page, rotatable, and they
+can be deactivated without anything being destroyed.
+
+**A leader.** כניסת מובילים lands on their own page: the link to hand out, and
+the people waiting for them to say yes.
+
+### Scope notes
+
+**Asking is not being accepted.** `Student.leader` is who has them;
+`pending_leader` is who they asked. An invite link sets `leader` directly,
+because the leader handed out the link and the choice is already theirs
+(REQ-M.9). The open door sets `pending_leader` and waits (REQ-M.10).
+
+**The invite is kept in the session**, not in a column. A WhatsApp link survives
+being tapped again, which is the real recovery path, and a column would need a
+migration to hold something that lives for twenty minutes. The leader's name is
+shown throughout so nobody has to trust that it is still there.
+
+**Out of scope:** the roster with progress, the admin master view, and the
+funnel. F-M.7.6 builds only what makes confirmation possible, because without it
+the open door has no exit.
+
+### Definition of done
+
+Eight features, 20 tests, the fast gate green, the phone guard green, and all
+four journeys walked end to end in a real browser.
+
+**Two things the walkthrough caught that the tests did not.** A leader could
+reach their own area only through the כניסת מובילים door on the public home
+page, which is a strange way to ask someone to return to their own desk; they
+now have a nav entry, and nobody else sees it. And the staff area had no link to
+the leaders screen, the same mistake as the target bank having no door.
+
+## SPR-M.8 — The leader's students  `NOT PLANNED`
 
 Their roster, their classes, each student's stage and progress read live. The
 first screen that consumes the access module.
 
-## SPR-M.8 — The admin's view  `NOT PLANNED`
+## SPR-M.9 — The admin's view  `NOT PLANNED`
 
 Every leader, every student, the funnel, grouped by `school_name` for the
-school-level report Litala's brief asks for. Assigning and deactivating leaders.
+school-level report Litala's brief asks for.
 
 **Both blocked on Q10** for their shape, not their existence: forty students is
 a list, twelve hundred needs filtering, paging and bulk actions on every screen.

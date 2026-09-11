@@ -1,0 +1,57 @@
+{% extends "matazim/base.html" %}
+
+{% comment %} REQ-M.9, REQ-M.67 — one leader: their link, and the two switches. {% endcomment %}
+
+{% block title %}{{ leader.user.profile.display_name|default:leader.user.email }} · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <p class="mz-eyebrow"><a href="{% url 'matazim:staff_leaders' %}">מובילים</a></p>
+    <h1>{{ leader.user.profile.display_name|default:leader.user.email }}</h1>
+    <p>{{ leader.user.email }}</p>
+  </div>
+
+  {% if notice %}<div class="mz-alert mz-alert-ok" role="status">{{ notice }}</div>{% endif %}
+
+  <div class="mz-two-up">
+    <section class="mz-panel">
+      <h2>קישור ההצטרפות</h2>
+      <input class="mz-copy" type="text" value="{{ join_url }}" readonly onclick="this.select()">
+      <img class="mz-qr" src="{% url 'matazim:leader_qr' leader.pk %}" alt="קוד QR">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="rotate">
+        <button type="submit" class="mz-btn mz-btn-ghost">החלפת הקישור</button>
+      </form>
+      <p class="mz-muted">החלפה מבטלת את הקישור הקודם. שימושי אם הוא הודלף.</p>
+    </section>
+
+    <section class="mz-panel">
+      <h2>מצב</h2>
+      <dl class="mz-facts">
+        <div><dt>מט״צים משויכים</dt><dd>{{ students }}</dd></div>
+        <div><dt>ממתינים לאישור</dt><dd>{{ waiting }}</dd></div>
+        <div>
+          <dt>סטטוס</dt>
+          <dd>{% if leader.is_active %}<span class="mz-tag mz-tag-done">פעיל/ה</span>{% else %}<span class="mz-tag mz-tag-idle">לא פעיל/ה</span>{% endif %}</dd>
+        </div>
+      </dl>
+      <form method="post">
+        {% csrf_token %}
+        {% if leader.is_active %}
+          <input type="hidden" name="action" value="deactivate">
+          <button type="submit" class="mz-btn mz-btn-ghost">הוצאה משימוש</button>
+        {% else %}
+          <input type="hidden" name="action" value="activate">
+          <button type="submit" class="mz-btn mz-btn-primary">החזרה לפעילות</button>
+        {% endif %}
+      </form>
+      <p class="mz-muted">
+        הוצאה משימוש לא מוחקת כלום: המוביל/ה יורדים מרשימת ההצטרפות ולא מקבלים
+        מט״צים חדשים, וכל מי שכבר משויך נשאר.
+      </p>
+    </section>
+  </div>
+</div>
+{% endblock %}

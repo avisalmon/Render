@@ -56,6 +56,14 @@
       <a href="{% url 'matazim:schools' %}" {% if section == 'schools' %}class="is-active"{% endif %}>בתי הספר</a>
       <a href="{% url 'matazim:community' %}" {% if section == 'community' %}class="is-active"{% endif %}>קהילת מט״צים</a>
       <a href="{% url 'matazim:events' %}" {% if section == 'events' %}class="is-active"{% endif %}>ימי שיא</a>
+      {% if is_leader %}
+        {% comment %}
+          A leader needs a way back to their own area. Without it the only route
+          was the כניסת מובילים door on the home page, which is a strange way to
+          ask someone to return to their desk.
+        {% endcomment %}
+        <a href="{% url 'matazim:leader_home' %}" class="mz-nav-staff{% if section == 'leader' %} is-active{% endif %}">האזור שלי</a>
+      {% endif %}
       {% if is_site_staff %}
         {% comment %}
           REQ-M.62 — the target bank had no door at all: you had to know the URL.
@@ -92,6 +100,24 @@
 </header>
 
 {% if welcome_pending %}{% include "matazim/_welcome.html" %}{% endif %}
+
+{% if invite and not student_has_leader %}
+  {% comment %}
+    REQ-M.72 — someone tapped an invite and is not eligible yet. Saying so on
+    every page they are sent to is what keeps being early from feeling like
+    being lost, and losing an invite quietly is how a teenager ends up in the
+    program attached to nobody.
+  {% endcomment %}
+  <div class="mz-invite-bar">
+    <div class="mz-container">
+      <span>
+        <strong>{{ invite.user.profile.display_name|default:invite.user.email }}</strong>
+        מזמין/ה אתכם למט״צים. ההזמנה שמורה.
+      </span>
+      <a href="{% url 'matazim:join' invite.join_code %}">להזמנה</a>
+    </div>
+  </div>
+{% endif %}
 
 <main>
   {% block content %}{% endblock %}

@@ -1,0 +1,77 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.73 — a leader has somewhere to stand.
+
+  Two things only: the link they hand out, and the people waiting on them.
+  Without the second, the open door has no exit, because nobody can accept
+  anyone. The roster with progress is a later sprint.
+{% endcomment %}
+
+{% block title %}האזור שלי · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>האזור של המוביל/ה</h1>
+    <p>הקישור שלכם, והמט״צים שמחכים לאישור.</p>
+  </div>
+
+  {% if waiting %}
+    <section class="mz-panel">
+      <h2>מחכים לאישור שלכם <span class="mz-count">{{ waiting|length }}</span></h2>
+      <ul class="mz-training">
+        {% for student in waiting %}
+          <li>
+            <span class="mz-training-title">
+              {{ student.user.profile.display_name|default:student.user.email }}
+              <span class="mz-muted">{{ student.user.email }}</span>
+            </span>
+            <span class="mz-role">
+              <form method="post" action="{% url 'matazim:leader_confirm' student.pk %}" class="mz-inline-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="confirm">
+                <button type="submit" class="mz-btn mz-btn-primary">אישור</button>
+              </form>
+              <form method="post" action="{% url 'matazim:leader_confirm' student.pk %}" class="mz-inline-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="decline">
+                <button type="submit" class="mz-linkbtn">לא שלי</button>
+              </form>
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  <div class="mz-two-up">
+    <section class="mz-panel">
+      <h2>הקישור שלכם</h2>
+      <p class="mz-muted">
+        שלחו אותו לתלמידים בוואטסאפ, או תלו את הקוד בכיתה. מי שמגיע דרכו מצטרף
+        אליכם ישירות, בלי שתצטרכו לאשר.
+      </p>
+      <input class="mz-copy" type="text" value="{{ join_url }}" readonly onclick="this.select()">
+      <img class="mz-qr" src="{% url 'matazim:leader_qr' leader.pk %}" alt="קוד QR להצטרפות">
+    </section>
+
+    <section class="mz-panel">
+      <h2>המט״צים שלי <span class="mz-count">{{ mine|length }}</span></h2>
+      {% if mine %}
+        <ul class="mz-training">
+          {% for student in mine %}
+            <li>
+              <span class="mz-training-title">{{ student.user.profile.display_name|default:student.user.email }}</span>
+              <span class="mz-tag mz-tag-doing">{{ student.get_status_display }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+        <p class="mz-muted">מסך ההתקדמות המלא ייבנה בשלב הבא.</p>
+      {% else %}
+        <p class="mz-muted">עוד אין מט״צים משויכים אליכם. שלחו את הקישור ונתחיל.</p>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

@@ -76,6 +76,40 @@ def is_site_staff(user):
     return is_admin(user)
 
 
+def _pending_invite(request):
+    from .joining_views import pending_invite
+
+    return pending_invite(request)
+
+
+def _student_of(user):
+    from .models import Student
+
+    if not getattr(user, "is_authenticated", False):
+        return None
+    return (
+        Student.objects.filter(user=user)
+        .select_related("leader__user", "pending_leader__user")
+        .order_by("-cohort_year")
+        .first()
+    )
+
+
+def _has_leader(user):
+    """Once they are in, the invite bar has nothing left to say."""
+    from .models import Student
+
+    if not getattr(user, "is_authenticated", False):
+        return False
+    return Student.objects.filter(user=user, leader__isnull=False).exists()
+
+
+def _leader_of(user):
+    from .access import leader_of
+
+    return leader_of(user)
+
+
 def shell(request, section, **extra):
     """Context every מט״צים page needs, so base.html never guesses."""
     member = member_profile(request.user)
@@ -89,6 +123,11 @@ def shell(request, section, **extra):
         "test_passed": bool(member and member.has_passed_entrance_test()),
         # REQ-M.62 — the bank gets a door, and only staff see it.
         "is_site_staff": is_site_staff(request.user),
+        # REQ-M.72 — an invite is named on every page between tapping the link
+        # and being eligible to use it, so it never feels lost.
+        "invite": _pending_invite(request),
+        "is_leader": _leader_of(request.user),
+        "student_has_leader": _has_leader(request.user),
     }
     ctx.update(extra)
     return ctx
@@ -333,6 +372,7 @@ def profile(request):
             request,
             "profile",
             user_profile=user_profile,
+            student=_student_of(request.user),
             training=training_record(request.user),
             saved=saved,
         ),

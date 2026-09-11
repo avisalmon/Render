@@ -799,6 +799,85 @@ img { max-width: 100%; height: auto; display: block; }
 }
 .mz-nav-staff:hover { border-color: var(--mz-purple); }
 
+/* ---------------------------------------------------------------- joining */
+
+/* The invite bar. Sits above everything because its whole job is to say "your
+   invite is still here" to someone who is in the middle of something else. */
+.mz-invite-bar {
+  background: var(--mz-purple-soft);
+  border-bottom: 1px solid rgba(107, 76, 214, .25);
+  padding: 10px 0;
+  font-size: .9rem;
+  color: var(--mz-ink);
+}
+.mz-invite-bar .mz-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.mz-invite-bar a { font-weight: 500; text-decoration: underline; padding: 6px 4px; }
+
+/* Choosing a leader. Radio buttons rather than a select, because a select hides
+   the school name and the school is how a kid recognises their own teacher. */
+.mz-choices { display: grid; gap: 10px; margin-bottom: 18px; }
+.mz-choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--mz-line);
+  border-radius: var(--mz-radius-sm);
+  cursor: pointer;
+}
+.mz-choice:hover { border-color: var(--mz-purple); }
+.mz-choice:has(input:checked) {
+  border-color: var(--mz-purple);
+  background: var(--mz-purple-soft);
+}
+.mz-choice input { width: 20px; height: 20px; accent-color: var(--mz-purple); flex: none; }
+.mz-choice-name { display: block; color: var(--mz-ink); font-weight: 500; }
+.mz-choice-meta { display: block; color: var(--mz-muted); font-size: .82rem; }
+
+.mz-field textarea {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--mz-line);
+  border-radius: var(--mz-radius-sm);
+  background: #fff;
+  font: inherit;
+  color: var(--mz-ink);
+  resize: vertical;
+}
+.mz-field textarea:focus {
+  outline: none;
+  border-color: var(--mz-purple);
+  box-shadow: 0 0 0 3px var(--mz-purple-soft);
+}
+
+/* The link a leader hands out. Wide, selectable, and obviously a thing to copy. */
+.mz-copy {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--mz-line);
+  border-radius: var(--mz-radius-sm);
+  background: var(--mz-page);
+  font-family: monospace;
+  font-size: .85rem;
+  color: var(--mz-ink);
+  direction: ltr;
+  text-align: left;
+}
+.mz-qr {
+  width: 180px;
+  height: 180px;
+  margin: 14px 0;
+  border: 1px solid var(--mz-line);
+  border-radius: var(--mz-radius-sm);
+  background: #fff;
+}
+
 /* ---------------------------------------------------------------- roles */
 
 .mz-role { display: inline-flex; align-items: center; gap: 10px; flex: none; }

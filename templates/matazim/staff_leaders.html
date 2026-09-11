@@ -1,0 +1,69 @@
+{% extends "matazim/base.html" %}
+
+{% comment %} REQ-M.25 — assigning a leader is the thing an admin exists to do. {% endcomment %}
+
+{% block title %}מובילים · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>מובילים</h1>
+    <p>מי מלווה מט״צים, ובאיזה בית ספר.</p>
+  </div>
+
+  {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
+  {% if notice %}<div class="mz-alert mz-alert-ok" role="status">{{ notice }}</div>{% endif %}
+
+  <section class="mz-panel">
+    <h2>מינוי מוביל/ה</h2>
+    <p class="mz-muted">
+      אפשר למנות רק מי שכבר פתח חשבון באתר. אחרי המינוי הם מקבלים קישור הצטרפות
+      משלהם להעביר לתלמידים.
+    </p>
+    <form method="post" id="mzGrantForm">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add">
+      <input type="hidden" name="email" id="mzChosenEmail">
+      <div class="mz-picker">
+        <label class="mz-field">
+          <span>חיפוש לפי שם או אימייל</span>
+          <input type="text" id="mzUserSearch" autocomplete="off" spellcheck="false"
+                 placeholder="למשל: רונ" aria-controls="mzResults" aria-expanded="false">
+        </label>
+        <ul class="mz-picker-results" id="mzResults" role="listbox" hidden></ul>
+      </div>
+      <p class="mz-chosen" id="mzChosen" hidden></p>
+      <button type="submit" class="mz-btn mz-btn-primary" id="mzGrantBtn" disabled>מינוי כמוביל/ה</button>
+    </form>
+  </section>
+
+  <section class="mz-panel">
+    <h2>המובילים <span class="mz-count">{{ leaders|length }}</span></h2>
+    {% if leaders %}
+      <ul class="mz-training">
+        {% for row in leaders %}
+          <li>
+            <span class="mz-training-title">
+              <a href="{% url 'matazim:staff_leader' row.pk %}">{{ row.user.profile.display_name|default:row.user.email }}</a>
+              <span class="mz-muted">
+                {% for klass in row.classes.all %}{% if klass.school_name %}{{ klass.school_name }}{% if not forloop.last %} · {% endif %}{% endif %}{% empty %}טרם שויך בית ספר{% endfor %}
+              </span>
+            </span>
+            {% if row.is_active %}
+              <span class="mz-tag mz-tag-done">פעיל/ה</span>
+            {% else %}
+              <span class="mz-tag mz-tag-idle">לא פעיל/ה</span>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="mz-muted">עוד לא מונו מובילים. בלי מוביל אחד לפחות אף תלמיד לא יכול להצטרף.</p>
+    {% endif %}
+  </section>
+</div>
+
+<script>
+{% include "matazim/_picker.js" %}
+</script>
+{% endblock %}

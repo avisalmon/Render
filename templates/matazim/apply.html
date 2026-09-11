@@ -1,0 +1,72 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.16, REQ-M.10 — three questions and a leader.
+
+  The application is not what assesses anyone, the entrance test is, so every
+  extra field here is only a teenager who does not finish the form.
+{% endcomment %}
+
+{% block title %}הצטרפות לתוכנית · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>הצטרפות לתוכנית</h1>
+    <p>עברתם את מבחן הכניסה. נשארו שלוש שאלות ובחירת מוביל.</p>
+  </div>
+
+  {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+
+    <section class="mz-panel">
+      <h2>קצת עליכם</h2>
+      <label class="mz-field">
+        <span>באיזו כיתה אתם?</span>
+        <input type="text" name="grade" value="{{ posted.grade|default:'' }}" required placeholder="למשל: ט2">
+      </label>
+      <label class="mz-field">
+        <span>מה מושך אתכם לתוכנית?</span>
+        <textarea name="motivation" rows="3" required>{{ posted.motivation|default:'' }}</textarea>
+      </label>
+      <label class="mz-field">
+        <span>מה כבר בניתם? <span class="mz-muted">לא חובה</span></span>
+        <textarea name="built_before" rows="2">{{ posted.built_before|default:'' }}</textarea>
+        <small>אם עוד לא בניתם כלום, זה בסדר גמור. בשביל זה התוכנית.</small>
+      </label>
+    </section>
+
+    <section class="mz-panel">
+      <h2>מי המוביל/ה שלכם</h2>
+      <p class="mz-muted">
+        בדרך כלל זה המורה שלכם בבית הספר. הוא/היא יאשרו אתכם, ויראו את ההתקדמות
+        והתוצרים שלכם.
+      </p>
+
+      {% if leaders %}
+        <div class="mz-choices">
+          {% for option in leaders %}
+            <label class="mz-choice">
+              <input type="radio" name="leader" value="{{ option.pk }}" required>
+              <span>
+                <span class="mz-choice-name">{{ option.user.profile.display_name|default:option.user.email }}</span>
+                <span class="mz-choice-meta">
+                  {% for klass in option.classes.all %}{% if klass.school_name %}{{ klass.school_name }}{% if not forloop.last %} · {% endif %}{% endif %}{% empty %}טרם שויך בית ספר{% endfor %}
+                </span>
+              </span>
+            </label>
+          {% endfor %}
+        </div>
+        <button type="submit" class="mz-btn mz-btn-primary">שליחת הבקשה</button>
+      {% else %}
+        <p>
+          עוד אין מובילים פעילים במערכת. אם קיבלתם קישור הצטרפות מהמורה, פתחו
+          אותו ותצורפו ישירות.
+        </p>
+      {% endif %}
+    </section>
+  </form>
+</div>
+{% endblock %}

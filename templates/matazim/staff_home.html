@@ -28,6 +28,17 @@
     </section>
 
     <section class="mz-panel">
+      <h2>מובילים</h2>
+      <p>
+        {{ counts.leaders }} מובילים פעילים. מוביל מלווה מט״צים בבית ספר, מאשר
+        אותם ומקבל קישור הצטרפות משלו.
+      </p>
+      <div class="mz-page-actions">
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:staff_leaders' %}">לניהול המובילים</a>
+      </div>
+    </section>
+
+    <section class="mz-panel">
       <h2>מנהלי התוכנית</h2>
       <p>
         {{ counts.admins }} מנהלים כרגע. מנהל רואה את כל המט״צים, את כל המובילים
