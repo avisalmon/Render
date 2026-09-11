@@ -63,7 +63,7 @@ Order of importance on the screen, deliberately:
           נשלחה בקשה, ממתין לאישור מהבית...
         </div>
       </div>
-      <button type="button" id="sec-arm" class="btn btn-sm {% if arming.armed %}btn-outline-light{% else %}btn-success{% endif %}">
+      <button type="button" id="sec-arm" class="btn btn-sm {% if arming.armed %}sec-btn{% else %}btn-success{% endif %}">
         <span id="sec-arm-label">{% if arming.armed %}נטרול{% else %}חימוש{% endif %}</span>
       </button>
     </div>
@@ -107,7 +107,7 @@ Order of importance on the screen, deliberately:
     {% endcomment %}
     {% if vapid_public_key %}
     <div class="mt-2 pt-2 border-top border-secondary-subtle">
-      <button type="button" id="sec-push-btn" class="btn btn-sm btn-outline-light">
+      <button type="button" id="sec-push-btn" class="btn btn-sm sec-btn">
         <i class="bi bi-phone"></i> <span id="sec-push-label">קבלת התראות גם כשהדפדפן סגור</span>
       </button>
       <p id="sec-push-note" class="sec-alerts-note mb-0">
@@ -351,8 +351,19 @@ Order of importance on the screen, deliberately:
   .sec-orphan-go:hover { background: #b3382c; color: #fff; }
   .sec-banner-sub { font-size: .85rem; opacity: .85; margin-top: .2rem; }
 
+  /* REQ-11.6.12 - neutral grey, not white. This block was authored against a
+     dark mock-up and the site renders light, so a white wash on a cream page
+     made the whole control invisible. Grey at low alpha darkens a light ground
+     and lightens a dark one, so it reads either way. */
   .sec-alerts { margin-bottom: .75rem; padding: .6rem .75rem; border-radius: .5rem;
-                background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.10); }
+                background: rgba(128,128,128,.10); border: 1px solid rgba(128,128,128,.28); }
+
+  /* The outline button, drawn in the page's own text colour rather than a fixed
+     white. Bootstrap's outline-light variant is meant for DARK backgrounds: here
+     it drew white-on-cream, and the owner reported the control as missing. */
+  .sec-btn { border: 1px solid currentColor; background: transparent;
+             color: inherit; font-weight: 500; }
+  .sec-btn:hover { background: rgba(128,128,128,.18); color: inherit; }
   .sec-alerts-note { margin-top: .4rem; font-size: .78rem; opacity: .65; line-height: 1.35; }
   .sec-new-pill { display: block; text-align: center; margin-bottom: .75rem; padding: .5rem;
                   border-radius: 999px; background: #0d6efd; color: #fff; text-decoration: none;
@@ -652,7 +663,7 @@ Order of importance on the screen, deliberately:
                                    : 'מנוטרל - אין התראות';
     armLabel.textContent = a.armed ? 'נטרול' : 'חימוש';
     armBtn.classList.toggle('btn-success', !a.armed);
-    armBtn.classList.toggle('btn-outline-light', !!a.armed);
+    armBtn.classList.toggle('sec-btn', !!a.armed);
     armPending.classList.toggle('d-none', !a.pending);
   }
 
@@ -708,7 +719,7 @@ Order of importance on the screen, deliberately:
     pushLabel.textContent = on ? 'התראות פעילות · לביטול לחצו' :
                                  'קבלת התראות גם כשהדפדפן סגור';
     pushBtn.classList.toggle('btn-success', on);
-    pushBtn.classList.toggle('btn-outline-light', !on);
+    pushBtn.classList.toggle('sec-btn', !on);
   }
 
   function say(msg) { if (pushNote) pushNote.textContent = msg; }

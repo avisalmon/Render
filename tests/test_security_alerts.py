@@ -17,15 +17,12 @@ page has to say so rather than imply otherwise.
 """
 from __future__ import annotations
 
-from datetime import timedelta
-
 import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
 
 from app.security_models import SecurityEvent
-
 
 OWNER = "owner@example.com"
 
@@ -220,3 +217,52 @@ def test_the_service_worker_admits_what_it_cannot_do(client):
     where the guarantee stops, so nobody relies on it by accident."""
     from app.security_views import SERVICE_WORKER
     assert "cannot" in SERVICE_WORKER.lower() or "once" in SERVICE_WORKER.lower()
+
+
+# --------------------------------------------------------------------------- #
+# It has to be VISIBLE (REQ-11.6.12)
+# --------------------------------------------------------------------------- #
+#
+# The owner, looking straight at the control: *"I don't see a disarm button."*
+# It was there. It was `btn-outline-light` — white text, white border — on a
+# cream page, and the surrounding box was filled with `rgba(255,255,255,.04)`.
+# The whole block had been written for a dark background and the site renders
+# light.
+#
+# **Every test above passed while this was broken**, because they all assert that
+# an element EXISTS. Existence is not visibility, and a control the owner cannot
+# find is one he does not have. These tests exist so that specific gap has a
+# guard rather than a memory.
+
+def test_the_arm_button_is_not_white_on_white(client):
+    """`btn-outline-light` is Bootstrap's button for DARK backgrounds. On this
+    page it renders an invisible control."""
+    _login(client)
+    html = client.get(reverse("security_home")).content.decode()
+    i = html.find('id="sec-arm"')
+    assert "btn-outline-light" not in html[i - 200:i + 200]
+
+
+def test_the_push_button_is_not_white_on_white(client):
+    _login(client)
+    html = client.get(reverse("security_home")).content.decode()
+    i = html.find('id="sec-push-btn"')
+    assert "btn-outline-light" not in html[i - 200:i + 200]
+
+
+def test_the_script_does_not_paint_it_invisible_again(client):
+    """The JS re-applies a class every time the house reports its mode, so a fix
+    in the markup alone would be undone on the first poll."""
+    _login(client)
+    html = client.get(reverse("security_home")).content.decode()
+    assert "btn-outline-light" not in html
+
+
+def test_the_panels_are_visible_on_a_light_background(client):
+    """A near-white fill on a near-white page is a box nobody sees. Whatever the
+    theme, the control has to read as a control."""
+    _login(client)
+    html = client.get(reverse("security_home")).content.decode()
+    i = html.find(".sec-alerts {")
+    block = html[i:i + 300]
+    assert "rgba(255,255,255,.04)" not in block

@@ -1470,6 +1470,7 @@ a source of truth. Drop this database entirely and the house rebuilds it.
 | F-12.14 | Web Push: service worker at `/sw.js`, per-device subscriptions, one notification per batch, dead subscriptions pruned on 404/410 | REQ-11.6.9 | DONE ✅ |
 | F-12.15 | Arm/disarm the notifications from the page; house reports its mode, babook only asks; disarmed is silent but still records | REQ-11.6.10 | DONE ✅ |
 | F-12.16 | Alert repeats every 4 s until STOP is pressed; push made persistent (`requireInteraction`) with the one long pattern Android permits; the ceiling documented rather than implied | REQ-11.6.11 | DONE ✅ |
+| F-12.17 | The arm and push controls were invisible: white-on-cream from a dark mock-up. Grey panels, `currentColor` buttons, and a test that scans the whole page because the poll repaints the class | REQ-11.6.12 | DONE ✅ |
 
 ### SPR-12.2 — the armed row (DONE ✅)
 

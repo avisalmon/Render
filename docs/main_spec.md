@@ -1914,6 +1914,27 @@ One page, phone first, at `/home`.
     That is how every alarm muted "just for now" ends up off for good. Asserted
     by a test.
 
+- **REQ-11.6.12 — A control the owner cannot see is one he does not have.** The
+  arm/disarm button shipped and the owner reported it missing. It was there: drawn
+  with Bootstrap's outline-*light* variant — white text, white border — on a cream
+  page, inside a panel filled with `rgba(255,255,255,.04)`. The whole block had
+  been authored against a dark mock-up; babook renders light.
+
+  - **Every test passed while it was broken.** They asserted the element
+    *exists*, and it did. Existence is not visibility. This is the same family of
+    failure as §3.12 and the "report absence as loudly as presence" rule: the
+    system knew, and nobody could see it.
+  - Panels use a **neutral grey wash** (`rgba(128,128,128,…)`), which darkens a
+    light ground and lightens a dark one, so it reads under either theme.
+  - Outline buttons use **`currentColor`**, inheriting the page's own text colour
+    rather than assuming one.
+  - **The fix must cover the script, not just the markup.** The poll re-applies a
+    class on every tick, so a template-only fix is undone within 10 seconds.
+    Asserted by a test that scans the whole rendered page, not just the button.
+  - White-on-dark is still correct inside the snapshot viewer, which sits on a
+    real black overlay. The rule is "match the ground you are on", not "never
+    use white".
+
 ### 11.7 Snapshots (REQ-11.7)
 
 Enabled, per the owner's decision, with limits.
