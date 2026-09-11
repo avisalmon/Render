@@ -416,7 +416,18 @@ self.addEventListener('push', function (event) {
     body: d.body || '',
     tag: 'sec-' + (d.event_id || ''),   /* replace, never stack up */
     renotify: true,
-    vibrate: [260, 120, 260],
+    /* REQ-11.6.11 - the owner asked for a buzz that does not stop until he
+       stops it. A BACKGROUND PUSH CANNOT DO THAT, and this is the honest half:
+       Android plays a notification's pattern exactly ONCE and Chrome will not
+       loop it - deliberately, so a website cannot hold a phone hostage. Only
+       the open page can nag (see security_home.html), and only the native app
+       can truly alarm (house spec 6.7).
+
+       So the single pass it does get is made long rather than polite: about
+       eight seconds of on-off, which outlasts a pocket. Many Android builds
+       override even this from the channel settings, and no page can help it. */
+    vibrate: [500, 200, 500, 200, 500, 200, 800, 300, 800, 300, 800, 300, 1000],
+    requireInteraction: true,   /* stays on screen until it is touched */
     data: { url: d.url || '/home/' },
     dir: 'rtl', lang: 'he'
   }));

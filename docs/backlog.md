@@ -1469,6 +1469,7 @@ a source of truth. Drop this database entirely and the house rebuilds it.
 | F-12.13 | Sound + vibration on a new event while the page is open, opt-in by a tap, poll tightens to 10s | REQ-11.6.8 | DONE ✅ |
 | F-12.14 | Web Push: service worker at `/sw.js`, per-device subscriptions, one notification per batch, dead subscriptions pruned on 404/410 | REQ-11.6.9 | DONE ✅ |
 | F-12.15 | Arm/disarm the notifications from the page; house reports its mode, babook only asks; disarmed is silent but still records | REQ-11.6.10 | DONE ✅ |
+| F-12.16 | Alert repeats every 4 s until STOP is pressed; push made persistent (`requireInteraction`) with the one long pattern Android permits; the ceiling documented rather than implied | REQ-11.6.11 | DONE ✅ |
 
 ### SPR-12.2 — the armed row (DONE ✅)
 

@@ -1888,6 +1888,32 @@ One page, phone first, at `/home`.
     an event is announced on detection, by night it waits for the
     full-resolution check (~30 s). See the house spec §3.34.
 
+- **REQ-11.6.11 — The alert repeats until a human stops it.** The owner, abroad:
+  *"I want it to vibrate even constantly until I stop it."* One beep is a
+  notification; what was asked for is an **alarm** — something that does not go
+  away because he was looking the other way when it fired.
+
+  The feature is therefore deliberately **two different things**, because the
+  platform makes them different:
+
+  - **Tab open** → the tone and vibration re-fire every 4 s, indefinitely, and
+    only the STOP button ends it. Not capped at some polite number of repeats: a
+    cap is a silence nobody chose, arriving exactly in the case the nagging
+    exists for — the one where the owner did not answer.
+  - **Tab closed** → **a background push cannot do this, and this spec says so
+    rather than letting it be discovered at 3am.** Android plays a notification's
+    vibration pattern exactly **once** and Chrome will not loop it, deliberately,
+    so that a web page cannot hold a phone hostage. What is possible is done: the
+    single pass is ~8 s of on-off rather than a polite tap, and
+    `requireInteraction` keeps the notification on screen until it is touched.
+    Many Android builds override even the pattern from channel settings.
+  - **Only the native app can truly alarm** (house spec §6.7). That remains the
+    answer, and this is a traveller's stopgap that admits its own ceiling.
+  - **Stopping silences the event, never the feature.** The STOP button must not
+    clear the alerts switch — the next person through the gate has to ring too.
+    That is how every alarm muted "just for now" ends up off for good. Asserted
+    by a test.
+
 ### 11.7 Snapshots (REQ-11.7)
 
 Enabled, per the owner's decision, with limits.

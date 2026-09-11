@@ -83,8 +83,20 @@ Order of importance on the screen, deliberately:
       <input class="form-check-input" type="checkbox" role="switch" id="sec-alerts-critical">
       <label class="form-check-label" for="sec-alerts-critical">רק אירועים קריטיים</label>
     </div>
+    {% comment %}
+      REQ-11.6.11 - one beep is a notification; the owner asked for an alarm.
+      While the tab is open the tone and the vibration REPEAT until this button
+      is pressed. It is hidden while nothing is ringing, because a permanent
+      STOP on a quiet page is one the eye stops seeing.
+    {% endcomment %}
+    <button type="button" id="sec-stop" class="btn btn-sm btn-danger mt-2 d-none">
+      <i class="bi bi-bell-slash"></i> עצור את ההתראה
+    </button>
+
     <p id="sec-alerts-note" class="sec-alerts-note mb-0">
       עובד רק כשהדף פתוח והמסך דולק. זו לא אזעקה - זו התראה בזמן צפייה.
+      ההתראה חוזרת עד שעוצרים אותה; כשהדפדפן סגור הטלפון רוטט פעם אחת בלבד -
+      אנדרואיד לא מרשה יותר מזה.
     </p>
 
     {% comment %}
@@ -534,14 +546,57 @@ Order of importance on the screen, deliberately:
     } catch (e) { /* a browser that will not make noise must not break the page */ }
   }
 
+  /* REQ-11.6.11 - it repeats until a human stops it.
+
+     The owner, abroad: "I want it to vibrate even constantly until I stop it."
+     A single beep is missed by anyone who happened to be looking elsewhere, so
+     while the tab is open this re-fires every few seconds, indefinitely, and
+     only the STOP button ends it.
+
+     Deliberately NOT capped at some polite number of repeats: a cap is a
+     silence nobody chose, arriving exactly when the owner did not answer -
+     which is the case the nagging exists for. The battery cost is his to spend
+     and the button is right there.
+
+     The background half cannot do this at all (see the service worker) - that
+     is a platform limit, not a decision, and the note under the switch says so
+     rather than letting him find out at 3am. */
+  var nagTimer = null;
+  var stopBtn = document.getElementById('sec-stop');
+
+  function buzz() {
+    beep();
+    try { if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 800]); } catch (e) {}
+  }
+
+  function startNagging(d) {
+    stopNagging();                       /* a newer event replaces the old ring */
+    buzz();
+    nagTimer = setInterval(buzz, 4000);
+    if (stopBtn) stopBtn.classList.remove('d-none');
+    try {
+      document.title = '⚠ ' + (d && d.newest_camera || 'אירוע') + ' - babook';
+    } catch (e) {}
+  }
+
+  function stopNagging() {
+    if (nagTimer) { clearInterval(nagTimer); nagTimer = null; }
+    if (stopBtn) stopBtn.classList.add('d-none');
+    try { if (navigator.vibrate) navigator.vibrate(0); } catch (e) {}
+    /* Note what this does NOT do: it does not clear the alerts switch. Silencing
+       THIS event must never silence the next person through the gate - that is
+       how every alarm muted "just for now" ends up off for good. */
+  }
+
+  if (stopBtn) stopBtn.addEventListener('click', function () {
+    stopNagging();
+    try { document.title = 'babook'; } catch (e) {}
+  });
+
   function alertOnEvent(d) {
     if (!alerts || !alerts.checked) return;
     if (criticalOnly.checked && d.newest_severity !== 'critical') return;
-    beep();
-    try { if (navigator.vibrate) navigator.vibrate([260, 120, 260]); } catch (e) {}
-    try {
-      document.title = '⚠ ' + (d.newest_camera || 'אירוע') + ' - babook';
-    } catch (e) {}
+    startNagging(d);
   }
 
   /* 30s is fine for a banner and too slow for an alert, so the poll tightens
