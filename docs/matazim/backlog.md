@@ -708,7 +708,115 @@ happens to say that in the section about uploaded files, so it agreed with
 itself without ever reading the retention paragraph. It is now scoped to that
 paragraph by id.
 
-## SPR-M.12 — The admin's view  `NOT PLANNED`
+## The program manager epic
+
+Settled with Avi across 2026-09-11. Four sprints, ordered so that each one is
+demoable on its own and nothing is built on vocabulary or scope that is about to
+change underneath it.
+
+The order is not negotiable in one respect: **the rename comes first and the
+tenancy comes second**, because every screen in the epic is scoped by tenancy
+and named by the vocabulary. Building the screens first would mean renaming and
+re-scoping a half-finished feature, which is how a leader ends up seeing the
+wrong institution's students.
+
+## SPR-M.12 — Say what we mean  `PLANNED`
+
+**Goal:** the code calls things what Avi calls them. No behaviour changes at
+all, so that if anything breaks it is unambiguous what caused it.
+
+"admin" pointed at root in conversation and at נעמי on screen, and that
+ambiguity already produced one wrong grant of superuser. The Hebrew has said
+מנהל/ת התוכנית since SPR-M.6, so this mostly aligns the English to the Hebrew
+that already shipped.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.12.1 | `access.py`: `ADMIN` → `PROGRAM_MANAGER`, `is_admin()` → `is_program_manager()` | §4.3 | TODO |
+| F-M.12.2 | `MemberProfile.is_admin` → `is_program_manager`, with a `RenameField` migration | §4.3 | TODO |
+| F-M.12.3 | Root's label becomes מנהל/ת מערכת; "site admin" retired everywhere | §4.3 | TODO |
+| F-M.12.4 | `matazim_admins` command reads **both** env var names | §4.3 | TODO |
+
+**The one real hazard is F-M.12.4.** `matazim_admins --from-env` runs on every
+deploy and is what keeps נעמי in her role in production. Rename the variable
+without setting the new one in Render and the next deploy silently stops
+granting it. So the command accepts the old name and the new one for now, and
+the old one is dropped only once Render is confirmed updated.
+
+## SPR-M.13 — The worlds do not touch  `PLANNED`
+
+**Goal:** `Leader.program_manager`, and every query in the product learning
+about it. Still no new screens.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.13.1 | `Leader.program_manager`, backfilled to נעמי for every existing row | REQ-M.88 | TODO |
+| F-M.13.2 | `visible_leaders` and `visible_students` scope by ownership; root crosses worlds | REQ-M.88 | TODO |
+| F-M.13.3 | Every existing screen re-checked against the narrowed scope | REQ-M.88 | TODO |
+| F-M.13.4 | A guard test: two program managers, and neither can reach the other's anything | REQ-M.88 | TODO |
+
+**F-M.13.4 is the point of the sprint.** Everything else is mechanical. A test
+that builds two complete worlds and asserts that every screen, every queryset
+and every POST refuses to cross between them is what makes tenancy true rather
+than intended, and it is the test that will still be earning its keep in a year.
+
+**Q15 is open and this sprint does not close it.** The open door lists every
+active leader on the platform, which under tenancy would show one institution's
+staff to another's applicants. Production has one program manager, so nothing is
+wrong today; the second one breaks it. Flagged, not fixed.
+
+## SPR-M.14 — How a leader gets made  `PLANNED`
+
+**Goal:** the three doors, all ending at a person pressing approve.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.14.1 | A standing leader-management entry, not buried in ניהול | REQ-M.89 | TODO |
+| F-M.14.2 | Search, click, approve, for someone who already has an account | REQ-M.90 | TODO |
+| F-M.14.3 | That approval sends them an email: you are a leader, under whom, what next | REQ-M.90 | TODO |
+| F-M.14.4 | `LeaderInvite`: personal, single-use, link + QR + optional email | REQ-M.91 | TODO |
+| F-M.14.5 | Open invite: reusable, produces candidates and never leaders | REQ-M.92 | TODO |
+| F-M.14.6 | Candidates wait in the list; approval is always a human press | REQ-M.93 | TODO |
+
+**The trap here is the unapproved row.** A candidate is a `Leader` row that is
+not yet approved, so `leader_of()` must refuse to return it. Miss that and a
+candidate has a roster, an invite link and a view of named minors before anyone
+said yes — which is the same class of mistake as the QR endpoint in SPR-M.9,
+arriving by a different road.
+
+The mail cap was raised from 10 to 20 per recipient per day (Avi, 2026-09-11) to
+leave room for re-sending an invitation. The screen still has to say an invite
+was already sent rather than pretend every click worked.
+
+## SPR-M.15 — Her leaders, and one of them in full  `PLANNED`
+
+**Goal:** the two views she actually lives in.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.15.1 | The leader list: one line each, name, school, students, certified, waiting | REQ-M.94 | TODO |
+| F-M.15.2 | Candidates in the same list, marked, not on a screen she must remember | REQ-M.94 | TODO |
+| F-M.15.3 | One leader in full: details, statistics, and their students underneath | REQ-M.95 | TODO |
+| F-M.15.4 | Seeded demo world, so the views can be judged on real-looking data | — | TODO |
+
+**F-M.15.3 reuses rather than rebuilds.** SPR-M.8 already has a roster with
+search, paging, track progress and the three certification conditions. The
+program manager's view of a leader's students is that screen read through a
+wider scope, not a second one, because a duplicate roster is a thing that
+drifts.
+
+**On F-M.15.4 and fake users.** Avi wants a demo world to judge the views by,
+eventually in production via the Render API. Local seeding comes first and needs
+no key. When it does reach production, the accounts must be unmistakably demo
+and removable in one command: they would otherwise sit beside real teenagers in
+a database that now carries consent records and a retention process. babook's
+`purge_demo_data` is the pattern.
+
+## SPR-M.16 — The student detail page  `NOT PLANNED`
+
+Hangs off F-M.15.3. Avi: "we will define it later."
+
+
 
 
 Every leader, every student, the funnel, grouped by `school_name` for the

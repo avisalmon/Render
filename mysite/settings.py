@@ -315,7 +315,10 @@ else:
 # one address can be mailed in a day, which is what a send-loop looks like.
 # Set MAIL_PER_RECIPIENT_DAILY_CAP=0 to disable the cap and keep the logging.
 EMAIL_BACKEND = "app.mail_guard.GuardedEmailBackend"
-MAIL_PER_RECIPIENT_DAILY_CAP = int(os.environ.get("MAIL_PER_RECIPIENT_DAILY_CAP", "10"))
+# Raised from 10 to 20 (Avi, 2026-09-11). The cap exists to stop a loop, not to
+# ration legitimate mail, and מט״צים now sends invitations a site admin may
+# reasonably re-send a few times to the same teacher.
+MAIL_PER_RECIPIENT_DAILY_CAP = int(os.environ.get("MAIL_PER_RECIPIENT_DAILY_CAP", "20"))
 # Verification mail sent from /register/ is capped per client IP: a signup
 # burst from one address is a bot spraying, not a class registering.
 REGISTER_VERIFY_MAIL_PER_IP_HOUR = int(os.environ.get("REGISTER_VERIFY_MAIL_PER_IP_HOUR", "20"))

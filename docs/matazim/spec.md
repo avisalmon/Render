@@ -221,35 +221,136 @@ a prototype, they proved they can model in Tinkercad. The `Student` row is about
 being in a cohort, and a person can be in more than one. Passing the entrance
 test belongs to the person, not to the year.
 
-### 4.3 Four roles, four different things
+### 4.3 Five roles, and what each of them is allowed to be confused with
 
-| Role | How it is known | Sees |
-|---|---|---|
-| Root | `User.is_superuser` | Everything, plus the prototype tools |
-| Admin | `MemberProfile.is_admin` | Every student, every leader, all progress |
-| Leader | Having a `Leader` row | Their own students, and nothing else |
-| Student | Having a `Student` row | Themselves |
+Settled with Avi on 2026-09-11, after "admin" turned out to point at two
+different people depending on who was speaking. The words below are the only
+ones we use, in conversation and in code.
 
-**No role column, and `is_admin` is not one.** The rule that matters is that a
-role must have exactly one source. A `role` field on `Student` would compete
-with the `leader` FK and the two could disagree, which is how one leader ends up
-seeing another's students. `is_admin` competes with nothing: it is the only
-place adminship is recorded.
+| We say | Hebrew on screen | How it is known | Sees |
+|---|---|---|---|
+| **root** | מנהל/ת מערכת | `User.is_superuser` | Everything, every app, every program. Cuts across tenancy. |
+| **program manager** | מנהל/ת התוכנית | `MemberProfile.is_program_manager` | Their own leaders, and those leaders' students. One program, one world. |
+| **leader** | מוביל/ה | Having an approved `Leader` row | Their own students, and nothing else. |
+| **candidate** | מועמד/ת למוביל | A `Leader` row not yet approved | Nothing yet. They are waiting on a person. |
+| **student** | מט״צ | Having a `Student` row | Themselves. |
+| **visitor** | — | None of the above | The public pages. |
 
-### 4.4 The whole permission model
+**Two words are retired**, because both caused real confusion and one of them
+nearly caused a wrong grant of superuser:
+
+- **"admin"** on its own. Avi runs several applications, so an unqualified
+  "admin" reads as root. It is always **program manager** now.
+- **"site admin"**. Avi used it for נעמי; the screen used it for Avi. It pointed
+  at two different people depending on who was speaking.
+
+**No role column, and `is_program_manager` is not one.** A role must have
+exactly one source. A `role` field on `Student` would compete with the `leader`
+FK and the two could disagree, which is how one leader ends up seeing another's
+students. `is_program_manager` competes with nothing.
+
+### 4.4 Tenancy: the worlds do not touch
+
+Avi, 2026-09-11: several institutions will adopt this platform. A chain of
+schools here, a different organisation there. **Each has its own program
+manager, its own leaders, its own students, and they are separate worlds that
+happen to share a database, a course engine and a login screen.**
+
+This is the leader rule moved up one floor. A leader cannot reach another
+leader's students; a program manager cannot reach another program manager's
+leaders. Same mechanism, because it is the only one that holds: scope is a
+property of the data, not a check somebody remembers to write.
+
+```
+root ──────────── sees across every world
+ └── program manager ── owns leaders        (Leader.program_manager)
+      └── leader ────── owns students       (Student.leader)
+           └── student ─ owns themselves
+```
+
+**Ownership is by person, not by an organisation record.** `Leader.program_manager`
+is a foreign key to a `User` and there is no `Organisation` table, consistent
+with dropping `Program` and `School` in §4.8. The known cost, recorded here so
+nobody rediscovers it in a panic: an institution therefore has exactly **one**
+program manager, and if she leaves, her leaders need reassigning by root. The
+day two people must share one world, that is when the organisation record earns
+its place, and not before.
+
+### 4.4a The whole permission model
 
 ```python
+def visible_leaders(user):
+    if user.is_superuser:
+        return Leader.objects.all()                      # root crosses worlds
+    if is_program_manager(user):
+        return Leader.objects.filter(program_manager=user)
+    if leader := leader_of(user):
+        return Leader.objects.filter(pk=leader.pk)
+    return Leader.objects.none()
+
+
 def visible_students(user):
-    if user.is_superuser or is_admin(user):
+    if user.is_superuser:
         return Student.objects.all()
-    if leader := Leader.objects.filter(user=user).first():
+    if is_program_manager(user):
+        # Their world, reached through the leaders they own. A program manager
+        # seeing another institution's teenagers is the exact thing tenancy
+        # exists to prevent.
+        return Student.objects.filter(leader__program_manager=user)
+    if leader := leader_of(user):
         return Student.objects.filter(leader=leader)
     return Student.objects.filter(user=user)
 ```
 
-A leader cannot see another leader's students because **the query cannot reach
-them**, not because a view remembered to check. Every screen asks this one
-question and then works with what comes back.
+Every screen asks one of these two questions and then works with what comes
+back. Nobody is refused by a check; they are refused by a queryset that never
+contained the row.
+
+**The open door needs scoping too.** `joinable_leaders()` currently lists every
+active leader on the platform, which under tenancy would show one institution's
+staff to another institution's applicants. A student reaching the open door
+without an invite has not yet declared which world they are in, and that is an
+unsolved question rather than an oversight (Q15).
+
+### 4.4b How someone becomes a leader
+
+Three doors, described by Avi on 2026-09-11. All three end at the same place: a
+**person presses approve**. Nothing here makes a leader automatically, because a
+leader can see named minors' progress and that is not a role to hand out on the
+strength of holding a URL.
+
+```
+LeaderInvite   FK → program_manager    kind (personal | open)
+                                       token, label, email
+                                       used_at, used_by, revoked_at
+                                       expires_at
+```
+
+**1. They already have an account.** The program manager searches by name, email
+or a fragment of either, clicks the person, and approves. They receive an email
+saying they have been made a leader, by whom, and what to do next.
+
+**2. They do not.** She generates a **personal invite**: one token yielding a
+link, a QR and an optional email if she has an address. Two properties Avi was
+specific about:
+
+- **The label is a label.** She names who it is for, and she may get it wrong.
+  The real name arrives when they register and set it themselves. Nothing
+  validates the label and nothing depends on it.
+- **Single use.** It may be forwarded, and that is tolerated, but the moment
+  anyone registers through it the token is spent and the link is dead.
+
+**3. A whole team at once.** An **open invite** is the same three artefacts with
+no person attached, handed to a staff room. It is reusable by design, and this
+is exactly why it cannot confer leadership: anyone holding it would be a leader.
+Whoever uses it becomes a **candidate**, appearing in her list as "invited,
+signed up, waiting on you", and she presses approve exactly as she would for
+someone she found by search.
+
+So `Leader` gains two fields: `program_manager` (who owns them) and an approval
+marker distinguishing a candidate from a leader. An unapproved `Leader` row
+grants nothing at all: `leader_of()` must not return it, or a candidate would
+have a roster before anyone said yes.
 
 ### 4.5 Progress crosses the boundary in one join
 
@@ -408,7 +509,7 @@ follows is the *narrowing* question: not "can they reach it" but "should they".
 | leader | Their own students: name, email, track progress, entrance status, stage | Justified. A teacher who cannot identify their own pupil cannot teach them. Email is the identifier we have. |
 | leader | Any student who is not theirs | Impossible by construction. Correct. |
 | admin | Every student, every leader | Justified for running the program and for support, and it is three named people. |
-| root | Everything on the platform, via Django admin | Unavoidable, and the reason adminship is granted as `MemberProfile.is_admin` and never as `is_superuser`. |
+| root | Everything on the platform, via Django admin | Unavoidable, and the reason the role is granted as `MemberProfile.is_program_manager` and never as `is_superuser`. |
 | anyone | A leader's name and school, from an invite link | Acceptable. It is what makes the invite legible, and it is adult staff data. |
 
 The one thing a leader does **not** get, and must never get, is anything about
@@ -500,9 +601,9 @@ silently reloads the page you are on reads as broken.
 | REQ-M.36 | The joining doors wait for the test | כניסת תלמידים is inactive until the visitor has passed the entrance test, and says why rather than simply refusing. **כניסת מובילים is not gated**: the test measures a teenager's commitment, and a teacher confirming students onto a roster has no reason to model a 3D object (Avi, 2026-09-10). | DONE |
 | REQ-M.37 | The returning-user door is never gated | התחברות in the header always works. Without it the gate locks out everyone who already passed and came back, because we only learn that they passed after they sign in. The hero doors are for joining; the header is for returning. | DONE |
 | REQ-M.38 | The entrance test has a home | מבחן הכניסה is a real page at its own URL, reachable with no account, and it is what the gated door points at. | DONE |
-| REQ-M.69 | One door to the staff area | Admin tools live behind a single ניהול entry rather than accumulating one nav item each. Inside it, the target bank and the admin list, and whatever comes next. Only admins see the door, and every page behind it refuses everyone else on its own. | DONE |
-| REQ-M.71 | Finding a person, not typing their address | The admin picker searches as you type, on **name or email**, so typing נעמ finds נעמי and a fragment of an address finds its owner. Nobody should have to remember an exact email to grant a role. It never matches on fewer than two characters and never returns everyone, so it cannot be used to walk the user table, and it says who is already an admin instead of offering them as if they were not. | DONE |
-| REQ-M.70 | Adding an admin is a screen, not a deploy | An existing admin can grant and revoke adminship from inside מט״צים, by email. Every row says **which kind**: מנהל/ת התוכנית is מט״צים only and is what this screen grants, מנהל/ת האתר is the whole platform and is neither granted nor removed here. A page about who holds power has to answer what kind of power, or it cannot be read without reading the code. It never creates an account: a typo must not conjure one holding the highest role. Nobody can revoke themselves, because the likeliest way to lose every admin is by accident. This does not weaken REQ-M.68: the rule is that adminship is never **self**-served, and a screen you must already be an admin to open is not self-service. | DONE |
+| REQ-M.69 | One door to the staff area | Program-manager tools live behind a single ניהול entry rather than accumulating one nav item each. Inside it, the target bank and the admin list, and whatever comes next. Only admins see the door, and every page behind it refuses everyone else on its own. | DONE |
+| REQ-M.71 | Finding a person, not typing their address | The people picker searches as you type, on **name or email**, so typing נעמ finds נעמי and a fragment of an address finds its owner. Nobody should have to remember an exact email to grant a role. It never matches on fewer than two characters and never returns everyone, so it cannot be used to walk the user table, and it says who is already an admin instead of offering them as if they were not. | DONE |
+| REQ-M.70 | Adding a program manager is a screen, not a deploy | An existing program manager can grant and revoke the role from inside מט״צים, by email. Every row says **which kind**: מנהל/ת התוכנית is מט״צים only and is what this screen grants, מנהל/ת מערכת is the whole platform and is neither granted nor removed here. A page about who holds power has to answer what kind of power, or it cannot be read without reading the code. It never creates an account: a typo must not conjure one holding the highest role. Nobody can revoke themselves, because the likeliest way to lose every admin is by accident. This does not weaken REQ-M.68: the rule is that the role is never **self**-served, and a screen you must already be an admin to open is not self-service. | DONE |
 | REQ-M.62 | Staff reach the bank from the site | The target bank has a door. *(Narrowed by REQ-M.69: the header carries one ניהול entry and the bank sits one click inside it.)* An entry only admins see. A screen you have to know the URL for is a screen nobody uses, and it is the same class of mistake as a page that says it is closed. Members and visitors never see the entry, and the page itself still refuses them. | DONE |
 | REQ-M.63 | A passed test says so, everywhere | Once someone has passed, every invitation to take the test carries a done mark instead of pretending they have not started: the nav, the hero, and every call to action on the public pages. The profile shows עבר. Nobody should be invited twice to something they finished. | DONE |
 | REQ-M.64 | The replay control is for staff only | איפוס הודעת הפתיחה exists so the first-time experience can be tested. It is a tool, not a feature, and a member has no reason to reset a notice they already acknowledged. Staff only, hidden **and** refused, because hiding a button is not access control. | DONE |
@@ -544,7 +645,7 @@ front rather than letting a kid discover it at lesson four on a phone.
 | REQ-M.52 | Upload and measure | STL upload with a size cap, measured against the assigned target on the five tessellation-proof measures. Tolerances live in config and are deliberately generous: the bar is "you clearly built the thing we showed you", never "you were precise". | DONE |
 | REQ-M.53 | No machine rejection | The automatic verdict is **עבר** or **עוד לא**, never נדחה. A miss names the actual number ("הגובה שלך 43 במקום 40") and offers the way back into Tinkercad. Retries are unlimited and are read as commitment, not as a blemish. Every rejection in this program is made by a person. | DONE |
 | REQ-M.54 | Passing opens the door | A pass stamps `entrance_test_passed_at` and כניסת תלמידים unlocks. The course certificate is theirs either way, so someone who never passes has still learned Tinkercad and has something to show for it. | DONE |
-| REQ-M.55 | Staff curate the bank | Admins see all targets, each with its drawing and its 3D view, and can retire any that are too hard. A retired target is never assigned again, and retiring one never breaks an attempt already measured against it. Litala and Avi decide what a 14-year-old should be asked to build; the generator only proposes. | DONE |
+| REQ-M.55 | Staff curate the bank | Program managers see all targets, each with its drawing and its 3D view, and can retire any that are too hard. A retired target is never assigned again, and retiring one never breaks an attempt already measured against it. Litala and Avi decide what a 14-year-old should be asked to build; the generator only proposes. | DONE |
 
 ### 5.3 Learning inside the walls
 
@@ -568,7 +669,7 @@ front rather than letting a kid discover it at lesson four on a phone.
 |---|---|---|---|
 | REQ-M.16 | Apply | Three questions only (grade, why, what have you built). The application is not what assesses them, the entrance test is, so every extra field is only a teenager who does not finish the form. Creates a `Student` row at `applied` plus an `Application`. | DONE |
 | REQ-M.17 | Entrance test | A Tinkercad replication task measuring commitment, not skill: the candidate reproduces a given model and uploads it, and the geometry is checked automatically. Retryable, and there is no machine rejection, only "not yet". The automatic check is advice, not a verdict: a school leader reviews the attempt (בדיקת מבחן הכניסה in the brief) and decides. | TODO |
-| REQ-M.18 | Acceptance by hand | Admins move `applied` to `in_training`. Selectivity is the product, not an obstacle to it. | TODO |
+| REQ-M.18 | Acceptance by hand | The program manager moves `applied` to `in_training`. Selectivity is the product, not an obstacle to it. | TODO |
 | REQ-M.19 | Submissions and feedback | The יוצרים stage: the member uploads a deliverable, their מוביל sees it, approves or returns it, and **writes feedback the member can read**. The feedback is the interaction that matters here, not the approve flag. | TODO |
 | REQ-M.20 | Certification and certificate | Only program staff grant מדריך status, and doing so produces a printable certificate. It unlocks nothing technical and credits everything already done, retroactively. | TODO |
 | REQ-M.21 | Every transition logged | `StatusLog` records who, when, from, to, and note. Append-only. Revocation is a transition like any other. | TODO |
@@ -577,16 +678,24 @@ front rather than letting a kid discover it at lesson four on a phone.
 | REQ-M.33 | Notifications | A bell and a message icon in the member header, and the events that feed them: feedback received, a submission approved or returned, a deadline approaching, a יום שיא announced, a stage unlocked. A new piece of feedback surfaces on המסלול שלי without the member going looking for it. | TODO |
 | REQ-M.34 | Deadlines and the calendar | Milestones and events carry dates, the personal area shows what is close, and לוח הזמנים shows the whole year. | TODO |
 
-### 5.5 Admins and leaders
+### 5.5 Program managers and leaders
 
 | REQ-ID | Title | Expectation | Status |
 |---|---|---|---|
-| REQ-M.22 | Scope is the data | A leader sees exactly their own students, and this is a property of the `Student.leader` FK rather than a rule anyone remembers: the query cannot reach anyone else's. Admins see everyone. One function answers this for every screen (§4.4). | DONE |
+| REQ-M.22 | Scope is the data | A leader sees exactly their own students, and this is a property of the `Student.leader` FK rather than a rule anyone remembers: the query cannot reach anyone else's. **Amended 2026-09-11 by REQ-M.88:** a program manager does *not* see everyone, only their own leaders and those leaders' students. Root crosses every world. Two functions answer this for every screen (§4.4a). | DONE |
 | REQ-M.23 | Roster | Leaders confirm students onto their roster, sort them into classes, and see each one's stage and training progress. Nothing about any child they teach, ever (REQ-M.29). | DONE |
-| REQ-M.24 | Cohort view and reporting | Admins see the funnel by stage and by leader, grouped by `school_name` for the school-level report Litala's brief asks for, and can export it. This is her screen. | TODO |
-| REQ-M.25 | Leader management | Assign a leader, rotate their join code, deactivate them. Admins only, and it is the thing an admin exists to do. | DONE |
+| REQ-M.24 | Cohort view and reporting | A program manager sees the funnel by stage and by leader **within their own world** (REQ-M.88), grouped by `school_name` for the school-level report Litala's brief asks for, and can export it. Root sees it across worlds. | TODO |
+| REQ-M.25 | Leader management | Assign a leader, rotate their join code, deactivate them. Program managers only, and it is the thing the role exists to do. **Widened by REQ-M.90 to M.93:** assigning is now three doors (search, personal invite, open invite) and every one of them ends at a person pressing approve. | DONE |
 | REQ-M.67 | Deactivating a leader destroys nothing | A deactivated leader stops appearing in the join list, stops taking new students, and loses the leader view. Their existing students keep pointing at them, so no roster is lost and no history disappears; an admin moves them deliberately. Same principle as retiring a target. | DONE |
-| REQ-M.68 | Who is an admin | Adminship is granted here and seeded in production, not self-served: there is no screen that makes someone an admin, because the first one could never use it. Two ways in, and both need someone who already has the keys: `manage.py matazim_admins` reads `MATAZIM_ADMINS` on every deploy, and Django's admin, which only a site superuser can reach, allows flipping it by hand. Django's admin is babook's plumbing and is not a מט״צים surface, so nothing is bent by it being the escape hatch. | DONE |
+| REQ-M.88 | A leader belongs to a program manager | `Leader.program_manager` is who owns them, and it is what makes two institutions two worlds rather than one shared list. A program manager sees their own leaders and those leaders' students; another program manager's are not merely hidden but unreachable, because the queryset never contained them. Root crosses every world. Supersedes the old "admins see everyone". | TODO |
+| REQ-M.89 | The program manager has a standing door | Leader management is a named entry she sees on every page, not a tool buried one click inside ניהול. It is the thing her role exists to do, and REQ-M.62 already taught us that a screen you must know the URL for is a screen nobody uses. | TODO |
+| REQ-M.90 | Assigning someone who already has an account | Free-text search over name, email, or a fragment of either. She clicks a person and approves them, and that approval is the whole act: no form, no second step. They are emailed that they are now a leader, under whom, and where to go next. A role granted in silence is a role nobody knows they have. | TODO |
+| REQ-M.91 | A personal invite for someone with no account | One token, three artefacts: a link, a QR, and an optional email if she has an address. She labels it with who it is for, and **the label is a label**: she may be wrong, and the real name arrives when they register. **Single use** — it may be forwarded, which is tolerated, but the first registration spends it and the link dies. | TODO |
+| REQ-M.92 | An open invite for a whole staff room | The same three artefacts with nobody named, reusable by design. Precisely because anyone holding it could use it, it confers nothing: whoever registers through it becomes a **candidate**. | TODO |
+| REQ-M.93 | Approval is always a person | A candidate has no students, no roster and no leader view. They wait in the program manager's list marked as waiting, and she presses approve, the same act as approving someone found by search. Same shape as REQ-M.78 and REQ-M.87: the machine proposes and refuses, a person grants. An unapproved `Leader` row must grant nothing, or a candidate has a roster before anyone said yes. | TODO |
+| REQ-M.94 | The leader list reads in one line | Her leaders, one line each, light enough to scan: name, school, how many students, how many certified, and whether anything is waiting on her. Enough to answer "who needs me today" without opening anything. Candidates sit in the same list, marked, because a separate screen for them is a screen she forgets to visit. | TODO |
+| REQ-M.95 | One leader, in full | That leader's details and statistics, and their students listed underneath. Not a second roster: the leader's own roster screen from SPR-M.8, read through the program manager's scope, because a duplicate is a thing that drifts. A student detail page hangs off it, defined later. | TODO |
+| REQ-M.68 | Who is an admin | Program-manager rights are granted here and seeded in production, never self-served: there is no screen that makes someone an admin, because the first one could never use it. Two ways in, and both need someone who already has the keys: `manage.py matazim_admins` reads `MATAZIM_ADMINS` on every deploy, and Django's admin, which only a site superuser can reach, allows flipping it by hand. Django's admin is babook's plumbing and is not a מט״צים surface, so nothing is bent by it being the escape hatch. | DONE |
 
 ### 5.6 Community and recognition
 
@@ -601,7 +710,7 @@ front rather than letting a kid discover it at lesson four on a phone.
 | REQ-ID | Title | Expectation | Status |
 |---|---|---|---|
 | REQ-M.29 | One tracked population | Nothing in this product creates, stores, or infers a record about a child. The kids a מט״צ teaches are not users, not members, not rows. Teaching is recorded as the מט״צ's own declared activity. | TODO |
-| REQ-M.30 | Minors' data stays minimal | The people in this system are teenagers in כיתה ט'. We hold what the program needs to run and nothing more, and it is not exposed outside their own leader and the admins. | TODO |
+| REQ-M.30 | Minors' data stays minimal | The people in this system are teenagers in כיתה ט'. We hold what the program needs to run and nothing more, and it is not exposed outside their own leader and their own program manager. | TODO |
 | REQ-M.30a | Nothing about a minor is public by default | The public gallery names a school, never a student. A photo avatar is opt-in; initials are the default. Publishing a project takes the member's consent and a staff decision, and either can be withdrawn later. | WIP |
 | REQ-M.79 | An invite link is not public | The QR endpoint authenticates and authorises like every other leader screen: the leader themselves, or an admin. A sequential integer id must not be walkable into a harvest of join codes, because a join code attaches its holder to that leader with no confirmation (REQ-M.9). Finding P1. | DONE |
 | REQ-M.80 | A minor's work is not served from a public directory | Entrance-test uploads leave `MEDIA_ROOT` and are served only through a view that checks who is asking: the member themselves, their leader, or an admin. Stored under an unguessable name, never the name of the file a teenager chose, because school work is routinely named after the pupil. Finding P2. | DONE |
@@ -623,6 +732,7 @@ front rather than letting a kid discover it at lesson four on a phone.
 | Q8 | "פתיחת תכנים ומשימות" by program staff: do they get an authoring surface inside מט״צים, or do they author in babook's studio and only publish here? | An authoring UI inside the walls is a large piece of work. Authoring in the studio is free but means Avi and Litala cross into babook, which members never do. |
 | Q9 | Terminology: her brief says תלמידים and מובילים, our docs say מט״צים and מובילי בית ספר. **Also קורסים vs הדרכות**, noted 2026-09-11: babook's standing brand rule is הדרכות and never קורסים, but Litala's information architecture names the section הקורסים שלי and REQ-M.5 and REQ-M.59 encode that. The product currently does both, and not at random: **הקורסים is the section name, הדרכות is the body copy**. That is defensible, and it is also exactly the kind of split that decays into randomness once four people are writing screens. | Cosmetic but pervasive. The section-name-versus-body-copy split needs to be either written down as the rule or collapsed into one word. |
 | Q14 | **Is a class load-bearing?** At forty across the network a leader has one or two students per school and `school_name` *is* the group, so nobody needs to create a class. At twelve hundred a leader carries about forty-five and has to split them. | Decides whether class creation belongs in a leader's first run. Defaulted rather than blocked: a class is offered and never required, which is correct in the small world and merely incomplete in the large one. Revisit the day any single leader passes about twenty students. |
+| Q15 | **Which world does an uninvited student land in?** `joinable_leaders()` lists every active leader on the platform, so under tenancy the open door would show one institution's staff to another's applicants. Someone arriving by invite is already inside a world; someone arriving cold has not declared one. | Blocks nothing today, because production has one program manager. Blocks the second one. Options: the open door lists nobody and joining is invite-only, or a student picks an institution first, or the door is per-program-manager at its own URL. |
 | Q12 | The public path shows four stages (לומדים, יוצרים, מדריכים, משפיעים) while the program has five, with מתמיינים first. Deliberate? | Cosmetic if deliberate, confusing if not. My reading is deliberate: מתמיינים is the entrance test, which has its own CTA. |
 
 **Closed:** Q1 start clean, new Django app (2026-09-09). Q2 מט״צים-branded auth
