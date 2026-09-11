@@ -799,6 +799,14 @@ img { max-width: 100%; height: auto; display: block; }
 }
 .mz-nav-staff:hover { border-color: var(--mz-purple); }
 
+/* ---------------------------------------------------------------- roles */
+
+.mz-role { display: inline-flex; align-items: center; gap: 10px; flex: none; }
+.mz-role-key { margin-top: 16px; }
+.mz-role-key dt { min-width: 130px; }
+.mz-role-key dd { margin: 0; font-size: .84rem; text-align: start; }
+.mz-role-key > div { align-items: flex-start; gap: 14px; }
+
 /* ---------------------------------------------------------------- picker */
 
 .mz-picker { position: relative; }

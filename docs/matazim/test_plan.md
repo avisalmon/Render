@@ -186,6 +186,7 @@ Tests in `tests/test_spr_m_6.py`, marker `sprm6`. All GREEN.
 | T-F-M.6.10-5 | The picker is admin only | F-M.6.10 |
 | T-F-M.6.10-6 | The picker returns a page, not the platform | F-M.6.10 |
 | T-F-M.6.10-7 | Someone with no name is not listed twice | F-M.6.10 |
+| T-F-M.6.10-8 | The page says which kind of admin each person is | F-M.6.10 |
 
 Status values: `PLANNED` → `RED` → `GREEN`.
 

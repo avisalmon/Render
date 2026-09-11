@@ -593,3 +593,28 @@ def test_someone_with_no_name_is_not_listed_twice(client, db):
     rows = html.split("mz-training-title")
     mine = next(part for part in rows if "chief11@example.com" in part)
     assert mine.count("chief11@example.com") == 1
+
+
+def test_the_page_says_which_kind_of_admin_each_person_is(client, db):
+    """T-F-M.6.10-8: Avi asked whether Naomi ended up a site admin or a program one.
+
+    The page could not answer that: a site owner got a tag and a granted admin
+    got none, only a revoke link. A page about who has power should say what
+    kind of power, since that is the question it exists for.
+    """
+    from django.urls import reverse
+
+    from matazim.models import MemberProfile
+
+    granted = make_user("naomi.real@example.com")
+    MemberProfile.objects.update_or_create(user=granted, defaults={"is_admin": True})
+
+    _client_as(client, "root2@example.com", root=True)
+    html = client.get(reverse("matazim:staff_admins")).content.decode()
+
+    assert "מנהל/ת האתר" in html
+    assert "מנהל/ת התוכנית" in html
+
+    row = html.split("naomi.real@example.com")[1][:600]
+    assert "מנהל/ת התוכנית" in row
+    assert "מנהל/ת האתר" not in row, "a granted admin must not read as a site owner"

@@ -70,25 +70,43 @@
               {{ row.user.email }}
             {% endif %}
           </span>
-          {% if row.source == "root" %}
-            <span class="mz-tag mz-tag-done">מנהל/ת האתר</span>
-          {% elif row.user == me %}
-            <span class="mz-tag mz-tag-idle">זה אתם</span>
-          {% else %}
-            <form method="post" class="mz-inline-form">
-              {% csrf_token %}
-              <input type="hidden" name="action" value="revoke">
-              <input type="hidden" name="email" value="{{ row.user.email }}">
-              <button type="submit" class="mz-linkbtn">הסרת הרשאה</button>
-            </form>
-          {% endif %}
+          {% comment %}
+            The tag always says which kind, then the action. Before this, a
+            granted admin had no label at all, only a revoke link, so the page
+            could not answer "is this person a site admin or a program admin"
+            without reading the code. That is the exact question it exists for.
+          {% endcomment %}
+          <span class="mz-role">
+            {% if row.source == "root" %}
+              <span class="mz-tag mz-tag-done">מנהל/ת האתר</span>
+            {% else %}
+              <span class="mz-tag mz-tag-doing">מנהל/ת התוכנית</span>
+            {% endif %}
+
+            {% if row.user == me %}
+              <span class="mz-tag mz-tag-idle">זה אתם</span>
+            {% elif row.can_revoke %}
+              <form method="post" class="mz-inline-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="revoke">
+                <input type="hidden" name="email" value="{{ row.user.email }}">
+                <button type="submit" class="mz-linkbtn">הסרת הרשאה</button>
+              </form>
+            {% endif %}
+          </span>
         </li>
       {% endfor %}
     </ul>
-    <p class="mz-muted">
-      מנהלי האתר מופיעים כאן תמיד: יש להם את כל ההרשאות בין אם סומנו כמנהלי
-      התוכנית ובין אם לא, ואי אפשר להסיר אותם מכאן.
-    </p>
+    <dl class="mz-facts mz-role-key">
+      <div>
+        <dt><span class="mz-tag mz-tag-doing">מנהל/ת התוכנית</span></dt>
+        <dd class="mz-muted">רואה את כל המט״צים, המובילים וההתקדמות בתוך מט״צים בלבד. זו ההרשאה שניתנת מכאן.</dd>
+      </div>
+      <div>
+        <dt><span class="mz-tag mz-tag-done">מנהל/ת האתר</span></dt>
+        <dd class="mz-muted">הרשאת על לכל האתר, לא רק למט״צים. לא ניתנת מכאן ואי אפשר להסיר אותה מכאן.</dd>
+      </div>
+    </dl>
   </section>
 </div>
 
