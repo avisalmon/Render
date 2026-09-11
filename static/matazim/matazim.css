@@ -1315,13 +1315,19 @@ a.mz-training-title:hover { color: var(--mz-purple); }
  * The member's own screen. The next step is given the most weight on the page
  * because it is the only thing that asks anything of the reader; everything
  * else is context for it.
+ *
+ * Named mz-journey- and not mz-path-, which is taken: the public המסלול השנתי
+ * page has used .mz-path and .mz-path-body since SPR-M.4, and reusing those
+ * names silently wrapped every stage in that page's card styling. Two screens
+ * about a path, one set of class names, and the newer one inherited a look it
+ * never asked for.
  */
 
 .mz-next { border-inline-start: 4px solid var(--mz-purple); }
 .mz-next h2 { margin: 2px 0 6px; }
 
-.mz-path { list-style: none; margin: 0; padding: 0; }
-.mz-path-stage {
+.mz-journey { list-style: none; margin: 0; padding: 0; }
+.mz-journey-step {
   display: flex;
   gap: 12px;
   padding: 10px 0;
@@ -1329,7 +1335,7 @@ a.mz-training-title:hover { color: var(--mz-purple); }
   position: relative;
 }
 /* The line joining the stages, so it reads as a path and not as a list. */
-.mz-path-stage:not(:last-child)::before {
+.mz-journey-step:not(:last-child)::before {
   content: "";
   position: absolute;
   inset-inline-start: 6px;
@@ -1338,7 +1344,7 @@ a.mz-training-title:hover { color: var(--mz-purple); }
   width: 2px;
   background: var(--mz-line);
 }
-.mz-path-dot {
+.mz-journey-dot {
   flex: 0 0 14px;
   height: 14px;
   margin-top: 5px;
@@ -1346,12 +1352,17 @@ a.mz-training-title:hover { color: var(--mz-purple); }
   background: var(--mz-line);
   z-index: 1;
 }
-.mz-path-body { display: flex; flex-direction: column; gap: 2px; }
-.mz-path-name { font-weight: 600; color: var(--mz-body); }
+.mz-journey-body { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; }
+.mz-journey-name { font-weight: 600; color: var(--mz-body); }
+/* `.mz-tag` sets `flex: none`, which governs the main axis. In a *column*
+ * flex container the cross axis is horizontal and still stretches, so the
+ * "כאן אתם" badge rendered 1018px wide: a pill the width of the page, which
+ * reads as a banner rather than a label. */
+.mz-journey-body > .mz-tag { align-self: flex-start; margin-top: 4px; }
 
 /* The current stage is marked by weight and a ring, never by colour alone. */
-.mz-path-stage.is-current .mz-path-dot {
+.mz-journey-step.is-current .mz-journey-dot {
   background: var(--mz-purple);
   box-shadow: 0 0 0 4px var(--mz-purple-soft);
 }
-.mz-path-stage.is-current .mz-path-name { color: var(--mz-ink); }
+.mz-journey-step.is-current .mz-journey-name { color: var(--mz-ink); }

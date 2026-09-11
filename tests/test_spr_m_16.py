@@ -18,10 +18,14 @@ those tests compare the two screens rather than checking either one is plausible
 Traces: REQ-M.5a, M.12, M.43, M.65, M.74, M.76.
 """
 
+import os
+
 import pytest
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils import timezone
+
+os.environ.setdefault("DJANGO_ALLOW_ASYNC_UNSAFE", "1")
 
 pytestmark = pytest.mark.sprm16
 
@@ -355,3 +359,139 @@ def test_a_visitor_with_an_account_but_no_program_still_gets_a_useful_page(clien
     response = client.get(reverse("matazim:my_path"))
     assert response.status_code == 200
     assert reverse("matazim:entrance_test") in response.content.decode()
+
+
+def test_the_here_you_are_badge_is_a_label_not_a_banner(live_server, db):
+    """T-F-M.16.1-3: found by rendering it and measuring.
+
+    `.mz-tag` sets `flex: none`, which governs the main axis only. Inside a
+    column flex container the cross axis is horizontal and still stretches, so
+    the badge rendered as a pill the full width of the page. A test that reads
+    the template cannot see this; only a browser can, so this measures.
+    """
+    playwright = pytest.importorskip("playwright.sync_api")
+
+    make_track()
+    user, _ = make_member(leader=make_leader())
+
+    from django.contrib.auth import SESSION_KEY, get_user_model  # noqa: F401
+
+    with playwright.sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_context(viewport={"width": 1280, "height": 900}).new_page()
+        page.goto(f"{live_server.url}/matazim/login/", wait_until="domcontentloaded")
+        page.wait_for_timeout(250)
+        welcome = page.locator(".mz-welcome button[type=submit]")
+        if welcome.count():
+            welcome.click()
+            page.wait_for_timeout(300)
+        page.fill('input[name="email"]', user.email)
+        page.fill('input[name="password"]', PASSWORD)
+        page.click('form:has(input[name="password"]) button[type="submit"]')
+        page.wait_for_timeout(600)
+        page.goto(f"{live_server.url}/matazim/my-path/", wait_until="domcontentloaded")
+        page.wait_for_timeout(400)
+
+        width = page.evaluate(
+            "() => { const t = document.querySelector('.mz-journey-body > .mz-tag');"
+            " return t ? Math.round(t.getBoundingClientRect().width) : -1; }"
+        )
+        browser.close()
+
+    assert width > 0, "the current-stage badge is missing"
+    assert width < 200, f"the badge is {width}px wide: it is stretching, not hugging its text"
+
+
+def test_the_screen_does_not_grow_a_query_per_lesson(django_assert_num_queries, db, client):
+    """T-F-M.16.3-3: REQ-M.74's motivation, applied to the member's own page.
+
+    The roster was rewritten so it would not cost a query per teenager. This
+    page has the mirror risk: a query per course, or worse per lesson, because
+    it renders a track lesson by lesson. Measured against a two-course track and
+    then asserted to be unchanged, rather than pinned to a number that any
+    unrelated refactor would break.
+    """
+    from django.db import connection
+    from django.test.utils import CaptureQueriesContext
+
+    scratch, advanced = make_track()
+    user, _ = make_member(leader=make_leader())
+    watch(user, scratch, 6)
+    watch(user, advanced, 3)
+    client.force_login(user)
+
+    with CaptureQueriesContext(connection) as first:
+        client.get(reverse("matazim:my_path"))
+
+    # Triple the lessons. The page shows the same two courses, so the cost of
+    # rendering it must not move.
+    from app.models import Video
+
+    for course in (scratch, advanced):
+        for n in range(12):
+            Video.objects.create(course=course, title=f"extra {n}", lesson_order=100 + n)
+    watch(user, scratch, 18)
+
+    with django_assert_num_queries(len(first)):
+        client.get(reverse("matazim:my_path"))
+
+
+def test_it_does_not_say_continue_to_someone_who_has_not_started(client, db):
+    """T-F-M.16.2-3: found by reading the rendered page.
+
+    A member at 0/19 was told "להמשיך" — continue. It is a small wrongness, and
+    small wrongnesses are how a screen stops feeling like it is looking at you.
+    """
+    make_track()
+    user, _ = make_member(leader=make_leader())
+    client.force_login(user)
+
+    html = client.get(reverse("matazim:my_path")).content.decode()
+    assert "להתחיל" in html
+    assert "להמשיך" not in html
+
+
+def test_it_does_say_continue_to_someone_who_has(client, db):
+    """T-F-M.16.2-4: and the other half, so the fix is not just a word swap."""
+    scratch, _advanced = make_track()
+    user, _ = make_member(leader=make_leader())
+    watch(user, scratch, 3)
+    client.force_login(user)
+
+    html = client.get(reverse("matazim:my_path")).content.decode()
+    assert "להמשיך" in html
+
+
+# ---------------------------------- REQ-M.17, resolved rather than carried
+
+
+def test_a_leader_can_open_the_attempt_that_let_their_student_in(client, db):
+    """T-REQ-M.17-1: the human judgement, where it can actually happen.
+
+    REQ-M.17 used to say a school leader reviews the entrance attempt and
+    decides. That reviewer could not exist: REQ-M.36 requires the test to be
+    passed *before* anyone can join a leader, so at review time the candidate
+    has no leader. The gate is the automatic check, which never rejects.
+
+    What is real is this: once a student joins, their leader can open the
+    attempt and see how it measured, and is under no obligation to keep them or
+    certify them. The judgement moved downstream rather than disappearing, so
+    this pins the part that actually exists.
+    """
+    from django.core.files.uploadedfile import SimpleUploadedFile
+
+    from matazim.models import EntranceAttempt, MemberProfile
+
+    make_track()
+    leader = make_leader()
+    user, _student = make_member(leader=leader)
+
+    profile = MemberProfile.objects.get(user=user)
+    attempt = EntranceAttempt.objects.create(
+        member=profile, target_id="t0000", number=1, passed=True, submitted_at=timezone.now()
+    )
+    attempt.model_file = SimpleUploadedFile("mine.stl", b"solid x\nendsolid x\n")
+    attempt.save()
+
+    client.force_login(leader.user)
+    assert client.get(reverse("matazim:attempt_file", args=[attempt.pk])).status_code == 200

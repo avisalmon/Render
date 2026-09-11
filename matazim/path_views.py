@@ -91,11 +91,18 @@ def _next_step(profile, student, state, per_course):
             row = per_course.get(slug) or {}
             title = row.get("title", slug)
             done, total = row.get("done", 0), row.get("total", 0)
+            # "Continue" to somebody who has not started is the kind of small
+            # wrongness that makes a screen feel like it is not looking at you.
+            started = done > 0
             return {
-                "text": f"להמשיך ב{title}",
+                "text": f"{'להמשיך' if started else 'להתחיל'} ב{title}",
                 "where": None,
                 "course": slug,
-                "why": f"{done} מתוך {total} שיעורים. בסוף הקורס מקבלים תעודה.",
+                "why": (
+                    f"{done} מתוך {total} שיעורים. בסוף הקורס מקבלים תעודה."
+                    if started
+                    else f"{total} שיעורים, ובסוף מקבלים תעודה."
+                ),
             }
 
     if student.status != Student.CERTIFIED:

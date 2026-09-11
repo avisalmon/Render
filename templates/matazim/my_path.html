@@ -41,12 +41,12 @@
       A teenager should be able to see where this goes, not only the next step:
       the whole point of the programme is that it ends somewhere.
     {% endcomment %}
-    <ol class="mz-path">
+    <ol class="mz-journey">
       {% for stage in stages %}
-        <li class="mz-path-stage{% if stage.is_current %} is-current{% endif %}">
-          <span class="mz-path-dot"></span>
-          <span class="mz-path-body">
-            <span class="mz-path-name">{{ stage.title }}</span>
+        <li class="mz-journey-step{% if stage.is_current %} is-current{% endif %}">
+          <span class="mz-journey-dot"></span>
+          <span class="mz-journey-body">
+            <span class="mz-journey-name">{{ stage.title }}</span>
             <span class="mz-muted">{{ stage.text }}</span>
             {% if stage.is_current %}<span class="mz-tag mz-tag-doing">כאן אתם</span>{% endif %}
           </span>

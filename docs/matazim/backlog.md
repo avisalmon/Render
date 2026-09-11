@@ -976,5 +976,10 @@ Unclaimed students are a queue on this screen, not an error state (REQ-M.65).
 ## Also still open
 
 - Retire the old production tables, once ACT-M.2 is answered.
-- The entrance-exam gap: REQ-M.17 says a leader reviews the attempt and decides,
-  but what shipped passes automatically with no human in the loop.
+- ~~The entrance-exam gap: REQ-M.17 says a leader reviews the attempt and
+  decides, but what shipped passes automatically.~~ **Resolved 2026-09-11, and
+  it was not a gap.** REQ-M.17 named a reviewer who cannot exist: REQ-M.36
+  requires the test to be passed *before* anyone can join a leader, so at review
+  time the candidate has no leader. Carried as a known deviation for four
+  sprints when it was a contradiction. The requirement now says what is true and
+  what is actually enforced.
