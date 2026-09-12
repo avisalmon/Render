@@ -15,6 +15,7 @@ from . import (
     joining_views,
     learn_views,
     path_views,
+    request_views,
     rights_views,
     roster_views,
     views,
@@ -100,6 +101,12 @@ urlpatterns = [
     path("me/delete/", rights_views.delete_me, name="delete_me"),
     # REQ-M.84 — an admin records a school's paper consent.
     path("staff/consent/<int:profile_id>/", entrance_views.staff_consent, name="staff_consent"),
+    # §4.11 — the improvement loop. Behind the program-manager role and root,
+    # and every view refuses everyone else on its own (REQ-M.102).
+    path("requests/new/", request_views.new_request, name="new_request"),
+    path("requests/", request_views.my_requests, name="my_requests"),
+    path("requests/queue/", request_views.request_queue, name="request_queue"),
+    path("requests/<int:request_id>/decide/", request_views.decide_request, name="decide_request"),
     path("privacy/", views.privacy, name="privacy"),
     path("terms/", views.terms, name="terms"),
     # A minor's uploaded work, handed out only to people entitled to it

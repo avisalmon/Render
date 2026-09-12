@@ -717,3 +717,102 @@ class Application(models.Model):
 
     def __str__(self):
         return f"{self.student_id} → {self.asked_id or '-'} ({self.created_at:%Y-%m-%d})"
+
+
+class Request(models.Model):
+    """REQ-M.105 — what the person who runs the programme actually asked for.
+
+    Every review in this project has ended on the same sentence: it checks the
+    product against itself and cannot say what a real person tried to do and
+    could not. This is the row that answers it.
+
+    **The text is hers and is never edited** (REQ-M.112). An assessment, a
+    status and a sprint reference are added around it, and nothing rewrites it.
+    Not politeness: the exact words are the evidence, and a paraphrase of a
+    complaint is a complaint that has already been answered.
+
+    **`from_screen` is the cheapest useful field here.** "The roster is
+    confusing" and "the roster is confusing, sent from the roster with two
+    classes in one school" are different reports, and the second one is the
+    only one anybody can act on.
+
+    **Approving does not start anything** (REQ-M.110). This is a queue with a
+    human at both ends: she writes, Avi approves, and a sprint happens when Avi
+    says so in conversation. Nothing on this model schedules, signals or
+    triggers work, and `tests/test_spr_m_25.py` fails if that changes.
+    """
+
+    NEW = "new"
+    APPROVED = "approved"
+    DECLINED = "declined"
+    DONE = "done"
+    STATUS_CHOICES = [
+        (NEW, "חדשה"),
+        (APPROVED, "אושרה"),
+        (DECLINED, "לא מתאימה כרגע"),
+        (DONE, "בוצעה"),
+    ]
+
+    IDEA = "idea"
+    PROBLEM = "problem"
+    COPY = "copy"
+    QUESTION = "question"
+    KIND_CHOICES = [
+        (IDEA, "רעיון לשיפור"),
+        (PROBLEM, "משהו לא עובד או מבלבל"),
+        (COPY, "נוסח או מילה"),
+        (QUESTION, "שאלה"),
+    ]
+
+    author = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="matazim_requests", verbose_name="נכתב על ידי"
+    )
+    # The role as it was when they wrote, because roles change and a request
+    # read a year later should still say who was speaking.
+    author_role = models.CharField(max_length=40, blank=True, default="")
+
+    body = models.TextField(verbose_name="הבקשה")
+    kind = models.CharField(
+        max_length=20, choices=KIND_CHOICES, default=IDEA, verbose_name="סוג"
+    )
+    from_screen = models.CharField(
+        max_length=300, blank=True, default="", verbose_name="נשלח מהמסך"
+    )
+
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default=NEW, db_index=True, verbose_name="מצב"
+    )
+    # REQ-M.108 — one press, with a name and a time on it (§4.7).
+    decided_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+        verbose_name="הוכרע על ידי",
+    )
+    decided_at = models.DateTimeField(null=True, blank=True, verbose_name="הוכרע בתאריך")
+
+    # REQ-M.109 — advisory, machine-written, and it decides nothing.
+    assessment = models.TextField(blank=True, default="", verbose_name="הערכה")
+    assessed_at = models.DateTimeField(null=True, blank=True)
+
+    # REQ-M.111 — what actually happened, and where to read it.
+    sprint = models.CharField(max_length=40, blank=True, default="", verbose_name="ספרינט")
+    outcome = models.TextField(blank=True, default="", verbose_name="מה נעשה")
+    done_at = models.DateTimeField(null=True, blank=True)
+    summary_sent_at = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "בקשה"
+        verbose_name_plural = "בקשות"
+
+    def __str__(self):
+        return f"{self.get_status_display()} · {self.body[:48]}"
+
+    @property
+    def is_open(self):
+        return self.status in (self.NEW, self.APPROVED)
+
+    @property
+    def waiting_on_avi(self):
+        return self.status == self.NEW

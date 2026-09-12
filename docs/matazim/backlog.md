@@ -1472,6 +1472,122 @@ crawler, judged by me. It cannot say where a real fourteen-year-old gives up, or
 what נעמי tries that has no screen at all. Item 3 of the earlier review is
 still the only thing that answers that.
 
+## SPR-M.25 — The improvement loop  `DONE`
+
+Avi, 2026-09-12: נעמי gets a way to say anything about the app from wherever she
+is standing in it. It lands in a log. He reads it and approves with one press.
+When he says so, a sprint is built from what is approved, and when it ships a
+summary goes to both of them. "A customer auto improve process. Just small
+guard of me in the middle."
+
+This is the answer to the sentence every review in this project has ended on:
+each one checks the product against itself, and none of them can say what a
+real person tried to do and could not.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.25.1 | The `Request` model, with the screen it was sent from | REQ-M.105, M.112 | DONE |
+| F-M.25.2 | The lamp, on every screen the owning roles use | REQ-M.106 | DONE |
+| F-M.25.3 | The form, three fields and a warning about names | REQ-M.105, M.113 | DONE |
+| F-M.25.4 | Her log: what she asked, and what happened to it | REQ-M.107, M.111 | DONE |
+| F-M.25.5 | Avi's screen: read, assessment, approve or decline in one press | REQ-M.108 | DONE |
+| F-M.25.6 | The assessment, through the site's existing model path | REQ-M.109 | DONE |
+| F-M.25.7 | The summary mail when a sprint ships a request | REQ-M.111 | DONE |
+| F-M.25.8 | A guard that the queue cannot start work | REQ-M.110 | DONE |
+
+### What building it turned up  `DONE 2026-09-12`
+
+**The assessment took three versions of the prompt, tested against three real
+requests each time.** This is the part worth reading, because the first two
+versions would both have shipped looking fine.
+
+Version one said **"good idea" to all three**, including one that REQ-M.24
+already covers and one that is plainly out of scope. An assessment that agrees
+with everything is worse than none, because it looks like a second opinion.
+
+Version two added a scope boundary and the line "most requests are out of
+scope". It then said **"out of scope" to all three**, including the good one. A
+small model handed a strong steer repeats the steer.
+
+Version three works: it must **name the closest requirement ids before giving a
+verdict**. Grounding the judgement in something specific fixed the accuracy, and
+it also made the output checkable — Avi reads "כבר קיים · REQ-M.24" and can
+verify that in a second, instead of taking a verdict on faith. It also needed
+the requirement **bodies**, not just the titles: asked about exporting the
+cohort report it said out of scope, while REQ-M.24 [DONE] says "and can export
+it" in text the model had never been shown, because "export" is in the body and
+the title is only "Cohort view and reporting". And it runs on `gpt-4o` rather
+than the site default, because matching a Hebrew sentence against a hundred and
+twenty English summaries is past what the mini model does reliably. On the three
+test requests the final version answers: לצמצם citing REQ-M.33 and M.19 (she
+asked for email, notifications are already specified and unbuilt), כבר קיים
+citing REQ-M.24, and מחוץ לתחום.
+
+**The safety guard needed rewriting too.** REQ-M.110's source check first
+grepped for words like "schedule" and failed on the docstring that explains the
+rule. It parses with `ast` now and looks at imports and calls, which is what the
+requirement is actually about. Verified by adding a `threading.Thread` on
+purpose: it names both the import and the call.
+
+**Two existing guards caught me**, which is the first time this has happened on
+the sprint after they were written. The class-name check found `mz-alert-bad`,
+which does not exist in the stylesheet, and the comment check found a
+multi-line `{# #}` — my fourth this session. I found the second one seven
+minutes into a browser run when the smoke grep would have found it in a fifth
+of a second, so the order is now written down in the_manager.md: smoke, then
+the sprint marker, then screens.
+
+### The four properties this is built around
+
+**The log is the customer voice; the backlog stays the plan of record.** Her
+words are stored verbatim and never edited by me. A sprint that takes a request
+writes the sprint and feature id onto the row. It must not become a second plan:
+this file says what is being built, and this codebase has paid twice in one week
+for two copies of one truth — RULE-3, and the two `is_member` calculations in
+SPR-M.24 that had נעמי carrying a pupil's menu on exactly one page.
+
+**The queue cannot start work.** Approving marks a row ready and summons
+nobody. Nothing here triggers a sprint, schedules anything, or sends me a task.
+The trigger is Avi in conversation, every time. Written as REQ-M.110 rather than
+left as a habit, because a self-executing queue is a different product with a
+different risk profile and the difference is invisible from the screens. It gets
+a test, because a property nothing checks is a property that erodes.
+
+**The assessment advises and never decides.** Each row carries a written view:
+good idea, duplicate of something already asked or already specified, out of
+scope, and what it would touch. Generated through `app.ai_chat.call_openai`, the
+same path the rest of the site already uses, with the requirement titles and the
+open requests as context. Labelled as machine-written, because it will sometimes
+be wrong, and Avi's press is the decision. Fail-open like the content-safety
+code: no model, no assessment, request still saved.
+
+**The loop closes where it started.** She sees received, approved, done in
+sprint N, and what was built. A request log whose requester cannot see the end
+of it is a suggestion box.
+
+### Decisions taken up front
+
+**Scoped to the role, not to נעמי.** Avi said "only we", and today that is
+exactly the two of them because she is the only program manager. But the product
+is built for many institutions, so this is gated on the program-manager role
+with each manager seeing their own requests and root seeing all — the same
+scoping as every other staff screen (§4.4). The second institution then works
+without a rewrite.
+
+**A lamp rather than a nav item.** The value is that it is there at the moment
+she notices something. A menu entry she has to go and find is one she uses once,
+and SPR-M.24 just finished cutting her menu down to six items.
+
+**Avi's own requests arrive approved.** Asking him to approve his own request is
+a ceremony with no reader.
+
+**Two smaller ones.** The summary mail goes to root and to the requester's own
+account address under the standing 20-per-day cap, which means נעמי's demo
+account at `@demo.invalid` can never receive it, correctly. And the form says
+not to name a student: free text about a programme is one sentence away from
+free text about a child, and that would otherwise be a new category of personal
+data sitting outside everything §4.10 describes.
+
 ## Also still open
 
 - Retire the old production tables, once ACT-M.2 is answered.

@@ -1,0 +1,89 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.108 — Avi's screen. He reads what she wrote, reads the assessment
+  beside it, and presses once.
+
+  Two things shape this page. The request comes first and largest, because her
+  words are the thing being decided and the assessment is a note in the margin
+  (REQ-M.112). And the waiting group is the whole page when something is
+  waiting: a queue screen that opens on a list of already-handled work is a
+  screen that hides its own job.
+{% endcomment %}
+
+{% block title %}בקשות · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>בקשות</h1>
+    <p>
+      מה נעמי ביקשה, מה ההערכה, ומה מחכה להחלטה שלך.
+      {% if groups.waiting %}
+        {% comment %}
+          Hebrew counts one thing in the singular: "1 מחכות לך" is wrong in a
+          way that a reader notices and a template that says {{ n }} does not.
+        {% endcomment %}
+        {% if groups.waiting|length == 1 %}
+          <strong>בקשה אחת מחכה לך.</strong>
+        {% else %}
+          <strong>{{ groups.waiting|length }} בקשות מחכות לך.</strong>
+        {% endif %}
+      {% endif %}
+    </p>
+  </div>
+
+  {% if not total %}
+    <section class="mz-panel">
+      <h2>עוד אין בקשות</h2>
+      <p class="mz-muted">
+        כשנעמי תלחץ על המנורה ותכתוב משהו, זה יופיע כאן עם הערכה, ותוכל לאשר
+        בלחיצה אחת.
+      </p>
+    </section>
+  {% endif %}
+
+  {% if groups.waiting %}
+    <section class="mz-panel mz-panel-wide">
+      <h2>מחכות להחלטה <span class="mz-count">{{ groups.waiting|length }}</span></h2>
+      {% for entry in groups.waiting %}
+        {% include "matazim/_request_card.html" with entry=entry decidable=True %}
+      {% endfor %}
+    </section>
+  {% endif %}
+
+  {% if groups.approved %}
+    <section class="mz-panel mz-panel-wide">
+      <h2>אושרו וממתינות לספרינט <span class="mz-count">{{ groups.approved|length }}</span></h2>
+      <p class="mz-muted">
+        {% comment %}
+          REQ-M.110 — said out loud on the screen, because "approved" reads
+          like "started" and here it deliberately is not.
+        {% endcomment %}
+        אישור לא מפעיל כלום. הספרינט קורה כשאתה אומר לי בצ׳אט.
+      </p>
+      {% for entry in groups.approved %}
+        {% include "matazim/_request_card.html" with entry=entry decidable=False %}
+      {% endfor %}
+    </section>
+  {% endif %}
+
+  {% if groups.done %}
+    <section class="mz-panel mz-panel-wide">
+      <h2>בוצעו <span class="mz-count">{{ groups.done|length }}</span></h2>
+      {% for entry in groups.done %}
+        {% include "matazim/_request_card.html" with entry=entry decidable=False %}
+      {% endfor %}
+    </section>
+  {% endif %}
+
+  {% if groups.declined %}
+    <section class="mz-panel mz-panel-wide">
+      <h2>לא מתאימות כרגע <span class="mz-count">{{ groups.declined|length }}</span></h2>
+      {% for entry in groups.declined %}
+        {% include "matazim/_request_card.html" with entry=entry decidable=False %}
+      {% endfor %}
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

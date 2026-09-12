@@ -115,6 +115,16 @@
           {# Her main report, which was a grey one-line link on one screen. #}
           <a href="{% url 'matazim:cohort' %}" {% if section == 'cohort' %}class="is-active"{% endif %}>המחזור</a>
           <a href="{% url 'matazim:staff_home' %}" class="mz-nav-staff{% if section == 'staff' %} is-active{% endif %}">ניהול</a>
+          {% comment %}
+            §4.11 — Avi asked for the menu option as well as the lamp. Root
+            goes to the queue, where the decisions are; a program manager goes
+            to her own log, where the answers are.
+          {% endcomment %}
+          {% if user.is_superuser %}
+            <a href="{% url 'matazim:request_queue' %}" class="mz-nav-staff{% if section == 'requests' %} is-active{% endif %}">בקשות{% if requests_waiting %} <span class="mz-count">{{ requests_waiting }}</span>{% endif %}</a>
+          {% else %}
+            <a href="{% url 'matazim:my_requests' %}" class="mz-nav-staff{% if section == 'requests' %} is-active{% endif %}">הבקשות שלי</a>
+          {% endif %}
           {% if not is_member and not is_leader %}
             <a href="{% url 'matazim:community' %}" {% if section == 'community' %}class="is-active"{% endif %}>קהילת מט״צים</a>
             <a href="{% url 'matazim:events' %}" {% if section == 'events' %}class="is-active"{% endif %}>ימי שיא</a>
@@ -178,6 +188,33 @@
 <main>
   {% block content %}{% endblock %}
 </main>
+
+{% if can_request %}
+  {% comment %}
+    REQ-M.106 — the lamp.
+
+    Deliberately not a nav item. The value is that it is there at the moment
+    she notices something; a menu entry she has to go and find is one she uses
+    once, and SPR-M.24 just cut her menu to six items on purpose.
+
+    It carries the current path so the request records the screen she was
+    looking at, which is the single most useful field on the row later. Built
+    from `request.path` rather than the Referer header, which is missing often
+    enough to fail exactly when it matters.
+  {% endcomment %}
+  <a class="mz-lamp" href="{% url 'matazim:new_request' %}?from={{ request.path|urlencode }}"
+     title="בקשה או משוב על המערכת" aria-label="בקשה או משוב על המערכת">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M4 15h9a3 3 0 0 0 3-3 4 4 0 0 0-4-4H8a4 4 0 0 0-4 4z"/>
+      <path d="M16 11.5c2.5-.6 4-1.3 4-2.2"/>
+      <path d="M7 15v1.6a1.4 1.4 0 0 0 1.4 1.4h1.2A1.4 1.4 0 0 0 11 16.6V15"/>
+      <path d="M18.5 6.2c.6-.5 1-1.1 1.2-1.9M20.5 9.3c.8.1 1.5.1 2.1 0"/>
+    </svg>
+    <span class="mz-lamp-text">בקשה</span>
+    {% if requests_waiting %}<span class="mz-lamp-count">{{ requests_waiting }}</span>{% endif %}
+  </a>
+{% endif %}
 
 <footer class="mz-footer">
   <div class="mz-container mz-footer-inner">

@@ -85,7 +85,13 @@ def _courses():
 
 
 def build_world(
-    *, students="mixed", classes="one", waiting=False, second_leader=False, candidate=False
+    *,
+    students="mixed",
+    classes="one",
+    waiting=False,
+    second_leader=False,
+    candidate=False,
+    requests=False,
 ):
     """One institution, dialled to the state under test.
 
@@ -126,6 +132,14 @@ def build_world(
     manager = _user("pm@example.com", "נעמי")
     MemberProfile.objects.update_or_create(user=manager, defaults={"is_program_manager": True})
 
+    # Avi. Root crosses every world (§4.4), and his is the only press that
+    # decides a request (REQ-M.108), so the approval screen cannot be rendered
+    # as anybody else.
+    root = _user("root@example.com", "אבי")
+    root.is_superuser = True
+    root.is_staff = True
+    root.save(update_fields=["is_superuser", "is_staff"])
+
     leader = Leader.objects.create(
         user=_user("leader@example.com", "נעה מורה"),
         program_manager=manager,
@@ -153,6 +167,52 @@ def build_world(
             user=_user("candidate@example.com", "מורה ממתינה"),
             program_manager=manager,
             approved_at=None,
+        )
+
+    # §4.11 — the improvement loop, in the states its screens are read in: one
+    # waiting on Avi, one he approved, one already shipped with an outcome she
+    # can read. An empty queue is not the queue screen.
+    if requests:
+        from matazim.models import Request
+
+        Request.objects.create(
+            author=manager,
+            author_role="program_manager",
+            body="במסך המט״צים שלי אני לא מצליחה להבין מי מחכה לאישור שלי ומי כבר אושר.",
+            kind=Request.PROBLEM,
+            from_screen="/matazim/leader/students/",
+            assessment=(
+                "רעיון טוב\n"
+                "הרוסטר לא מבדיל בין מחכה לאישור לבין מאושר.\n"
+                "נוגע ברוסטר ובמסך המוביל."
+            ),
+            assessed_at=now,
+        )
+        Request.objects.create(
+            author=manager,
+            author_role="program_manager",
+            body="אפשר להוסיף ייצוא לאקסל של המחזור?",
+            kind=Request.IDEA,
+            from_screen="/matazim/staff/cohort/",
+            status=Request.APPROVED,
+            decided_at=now,
+            assessment=(
+                "כבר קיים\n"
+                "REQ-M.24 כבר מגדיר ייצוא CSV מהמסך הזה.\n"
+                "כדאי לבדוק אם הכפתור פשוט לא נראה."
+            ),
+            assessed_at=now,
+        )
+        Request.objects.create(
+            author=manager,
+            author_role="program_manager",
+            body="הכיתות מוצגות פעמיים כשיש שתי כיתות באותו בית ספר.",
+            kind=Request.PROBLEM,
+            status=Request.DONE,
+            decided_at=now,
+            sprint="SPR-M.20",
+            outcome="שם בית הספר מוצג פעם אחת, והכיתות מתחתיו.",
+            done_at=now,
         )
 
     rooms = []
@@ -270,6 +330,7 @@ def build_world(
 
     return {
         "manager": manager,
+        "root": root,
         "leader": leader,
         "other_leader": other,
         "candidate": pending_leader_row,
@@ -399,6 +460,26 @@ SCREENS = [
         "candidate@example.com",
         dict(students="none", candidate=True),
     ),
+    # SPR-M.25 — the improvement loop.
+    (
+        "requests/queue",
+        "/matazim/requests/queue/",
+        "root@example.com",
+        dict(students="none", requests=True),
+    ),
+    (
+        "requests/queue-empty",
+        "/matazim/requests/queue/",
+        "root@example.com",
+        dict(students="none"),
+    ),
+    (
+        "requests/mine",
+        "/matazim/requests/",
+        "pm@example.com",
+        dict(students="none", requests=True),
+    ),
+    ("requests/new", "/matazim/requests/new/", "pm@example.com", dict(students="none")),
     (
         "public/verify",
         lambda w: f"/matazim/verify/{w['students']['done@example.com'].certificate.public_id}/",

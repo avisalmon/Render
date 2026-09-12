@@ -1693,3 +1693,123 @@ a.mz-training-title:hover { color: var(--mz-purple); }
   color: var(--mz-muted);
 }
 .mz-footer-nav a:hover { color: var(--mz-ink); }
+
+
+/* ------------------------------------------------ the improvement loop (4.11) */
+
+/* The lamp (REQ-M.106). Fixed to the corner so it is there at the moment
+   somebody notices something, which is the whole point of it not being a nav
+   item. `inset-inline-start` rather than `left`, so it sits in the near corner
+   in RTL and would follow the writing direction if this were ever mirrored. */
+.mz-lamp {
+  position: fixed;
+  inset-block-end: 18px;
+  inset-inline-start: 18px;
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  /* REQ-M.75 — a thumb target, not a decoration. */
+  min-height: 48px;
+  padding: 0 18px 0 14px;
+  border-radius: 999px;
+  background: var(--mz-purple);
+  color: #fff;
+  font-weight: 500;
+  box-shadow: var(--mz-shadow-lift);
+  transition: transform .15s ease, background-color .15s ease;
+}
+.mz-lamp:hover { background: var(--mz-purple-deep); color: #fff; transform: translateY(-2px); }
+.mz-lamp:focus-visible { outline: 3px solid var(--mz-ink); outline-offset: 3px; }
+
+.mz-lamp-text { font-size: .92rem; }
+
+/* The lamp floats, so something has to give it room or it sits on top of the
+   last thing on the page. Only when the lamp is actually present, which is
+   only for the roles that have it. */
+body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
+
+/* How many are waiting on Avi. Only he ever sees this (see `_requests_waiting`):
+   a count of somebody else's queue is a nag. */
+.mz-lamp-count {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--mz-purple);
+  font-size: .78rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* On a phone the label goes and the lamp becomes a circle, because a pill in
+   the corner of a 390px screen covers content somebody is trying to read. */
+@media (max-width: 640px) {
+  .mz-lamp { padding: 0; width: 52px; height: 52px; justify-content: center; }
+  .mz-lamp-text { display: none; }
+  .mz-lamp-count {
+    position: absolute;
+    inset-block-start: -4px;
+    inset-inline-end: -4px;
+    border: 2px solid var(--mz-page);
+  }
+}
+
+/* One request, on Avi's queue and on her own log. A card rather than a row:
+   the body is prose, and prose in a flex row is what produced the 1018px badge
+   and the 53px overflow on the team screen. */
+.mz-req {
+  border: 1px solid var(--mz-line);
+  border-radius: var(--mz-radius-sm);
+  padding: 16px 18px;
+  margin-bottom: 14px;
+  background: var(--mz-page);
+}
+.mz-req:last-child { margin-bottom: 0; }
+
+.mz-req-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  font-size: .85rem;
+}
+
+/* Her words, and they are the largest thing on the card (REQ-M.112). */
+.mz-req-body {
+  margin: 0 0 10px;
+  color: var(--mz-ink);
+  font-size: 1.02rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.mz-req-where { font-size: .82rem; margin: 0 0 10px; }
+.mz-req-where span { display: inline-block; }
+
+/* The assessment: a note in the margin, visibly secondary to what she wrote,
+   and labelled as machine-written because it is sometimes wrong (REQ-M.109). */
+.mz-req-note {
+  border-inline-start: 3px solid var(--mz-line);
+  padding: 2px 12px;
+  margin: 0 0 12px;
+}
+.mz-req-note p {
+  margin: 2px 0 0;
+  font-size: .9rem;
+  color: var(--mz-body);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.mz-req-note-label {
+  font-size: .76rem;
+  color: var(--mz-muted);
+  letter-spacing: .02em;
+}
+
+.mz-req-act { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }

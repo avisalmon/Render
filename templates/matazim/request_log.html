@@ -1,0 +1,50 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.107, REQ-M.111 — what she asked for and what happened to it.
+
+  This screen is the difference between feedback and a suggestion box. A
+  requester who cannot see the end of their own request stops filing them, and
+  then the whole loop is a form nobody uses.
+{% endcomment %}
+
+{% block title %}הבקשות שלי · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>הבקשות שלי</h1>
+    <p>מה ביקשתם, מה אושר, ומה כבר נבנה.</p>
+  </div>
+
+  <p class="mz-page-actions">
+    <a class="mz-btn mz-btn-primary" href="{% url 'matazim:new_request' %}">בקשה חדשה</a>
+    {% if can_decide %}
+      <a class="mz-linkbtn" href="{% url 'matazim:request_queue' %}">כל הבקשות, לאישור</a>
+    {% endif %}
+  </p>
+
+  {% if not rows %}
+    <section class="mz-panel">
+      <h2>עוד לא ביקשתם כלום</h2>
+      <p class="mz-muted">
+        בכל מסך יש מנורה קטנה למטה. לוחצים עליה ברגע שמשהו מבלבל או חסר, וזה
+        מגיע לאבי עם המסך שהייתם בו.
+      </p>
+    </section>
+  {% else %}
+    {% if waiting %}
+      {% if waiting == 1 %}
+        <p class="mz-muted">בקשה אחת מחכה להחלטה של אבי.</p>
+      {% else %}
+        <p class="mz-muted">{{ waiting }} בקשות מחכות להחלטה של אבי.</p>
+      {% endif %}
+    {% endif %}
+    <section class="mz-panel mz-panel-wide">
+      {% for entry in rows %}
+        {% include "matazim/_request_card.html" with entry=entry decidable=False %}
+      {% endfor %}
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

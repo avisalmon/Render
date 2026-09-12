@@ -202,6 +202,29 @@ Sweeping the remaining twenty-two screens into the catalogue produced a clean
     answer on exactly one page. RULE-3 already says this about learning; it
     applies to roles, to permissions, and to anything else a screen asks.
 
+#### What SPR-M.25 added
+
+16. **Run the static gate before the browser gate, every time.** I wrote a
+    multi-line `{# #}` for the fourth time this session and found it seven
+    minutes into a browser run, when the smoke-gate grep added in SPR-M.23
+    would have found it in a fifth of a second. The order is: `-m smoke` first,
+    then the sprint marker, then screens. Cheapest check first is not a style
+    preference, it is most of the feedback loop.
+17. **A prompt is a thing to test, not to write.** The assessment on each
+    request went through three versions against the same three real requests.
+    The first said "good idea" to all three, including one the spec already
+    covered and one plainly out of scope. Adding "most requests are out of
+    scope" flipped it to saying that about everything, including the good one:
+    a small model handed a strong steer repeats the steer. What worked was
+    making it cite the closest requirement ids **before** giving a verdict, so
+    the judgement has to be grounded in something, and then the answer became
+    checkable by Avi in a second rather than something to take on faith.
+18. **Context has to contain the answer.** With requirement *titles* only, the
+    model said the cohort export was out of scope. REQ-M.24 says "and can
+    export it" and is DONE, but "export" is in the body while the title is
+    "Cohort view and reporting". Before blaming a model, check that what it
+    needed was in what it was given.
+
 And one that belongs in the fast gate rather than the contract: **an undefined
 CSS variable is a silent failure.** `var(--mz-accent)` in a rule is not an
 error, the declaration is simply dropped and the element keeps what it

@@ -1,0 +1,73 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.105 — the form behind the lamp. Two fields and a sentence, because
+  every extra field here is a person who notices something and does not tell
+  anybody.
+{% endcomment %}
+
+{% block title %}בקשה חדשה · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>מה לשנות?</h1>
+    <p>
+      כל דבר: משהו מבלבל, משהו חסר, מילה שלא מתאימה, רעיון. אבי קורא הכל.
+    </p>
+  </div>
+
+  {% comment %}
+    The same shape login and register use. There is no error variant in the
+    stylesheet, and inventing one here would make this screen the odd one.
+  {% endcomment %}
+  {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
+
+  <section class="mz-panel">
+    <form method="post">
+      {% csrf_token %}
+      {% comment %}
+        Carried in the form rather than read from the Referer header, which is
+        missing often enough to make the field unreliable exactly when it
+        matters. This is the most useful field in the row later.
+      {% endcomment %}
+      <input type="hidden" name="from_screen" value="{{ from_screen }}">
+
+      <label class="mz-field">
+        <span>מה זה</span>
+        <select name="kind">
+          {% for value, label in kinds %}
+            <option value="{{ value }}" {% if posted.kind == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label class="mz-field">
+        <span>הבקשה</span>
+        <textarea name="body" rows="7" required
+                  placeholder="לדוגמה: במסך המט״צים שלי אני לא מצליחה להבין מי מחכה לאישור שלי ומי כבר אושר.">{{ posted.body|default:"" }}</textarea>
+        {% comment %}
+          REQ-M.113 — free text about a programme is one sentence away from free
+          text about a child, and that would put a new category of personal data
+          outside everything §4.10 describes.
+        {% endcomment %}
+        <small>
+          בלי שמות של תלמידים. אם צריך להצביע על מישהו ספציפי, כתבו "מט״צ אחד
+          בכיתה ט2" ואבי ימצא אותו.
+        </small>
+      </label>
+
+      {% if from_screen %}
+        <p class="mz-muted">
+          הבקשה תישמר עם המסך שהיית בו: <span dir="ltr">{{ from_screen }}</span>
+        </p>
+      {% endif %}
+
+      <div class="mz-page-actions">
+        <button type="submit" class="mz-btn mz-btn-primary">שליחה</button>
+        <a class="mz-linkbtn" href="{% url 'matazim:my_requests' %}">הבקשות שלי</a>
+      </div>
+    </form>
+  </section>
+</div>
+{% endblock %}

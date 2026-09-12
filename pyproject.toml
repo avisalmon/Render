@@ -39,6 +39,7 @@ markers = [
     "sprm21: SPR-M.21 מט״צים every screen through the contract",
     "sprm23: SPR-M.23 מט״צים what the coherence pass found",
     "sprm24: SPR-M.24 מט״צים every role's own journey, and need-to-know",
+    "sprm25: SPR-M.25 מט״צים the improvement loop",
     "screens: the screen contract - every מט״צים screen, in every state, rendered",
     "sprmobile: real-browser phone checks for מט״צים (tests/test_matazim_mobile.py)",
     "smoke: the fast gate, run on every push (see tests/test_smoke.py)",

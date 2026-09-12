@@ -1,0 +1,97 @@
+{% comment %}
+  One request. Shared by Avi's queue and נעמי's own log, so the two can never
+  drift into describing the same row differently.
+
+  `decidable` decides whether the two buttons appear. The view decides whether
+  the person may press them (REQ-M.108): hiding a button is not access control,
+  which this product has written down once already.
+{% endcomment %}
+
+<article class="mz-req">
+  <header class="mz-req-head">
+    <span class="mz-tag mz-tag-idle">{{ entry.row.get_kind_display }}</span>
+    {% if entry.row.status == "new" %}
+      <span class="mz-tag mz-tag-fix">מחכה להחלטה</span>
+    {% elif entry.row.status == "approved" %}
+      <span class="mz-tag mz-tag-doing">אושרה</span>
+    {% elif entry.row.status == "done" %}
+      <span class="mz-tag mz-tag-done">בוצעה{% if entry.row.sprint %} · {{ entry.row.sprint }}{% endif %}</span>
+    {% else %}
+      <span class="mz-tag mz-tag-idle">לא מתאימה כרגע</span>
+    {% endif %}
+    <span class="mz-muted">
+      {{ entry.row.author.profile.display_name|default:entry.row.author.email }}
+      · {{ entry.row.created_at|date:"j.n.y" }}
+    </span>
+  </header>
+
+  {% comment %}
+    REQ-M.112 — her words, verbatim and first. `linebreaksbr` and nothing else:
+    no truncation on this screen, because a decision made on the first line of
+    a request is a decision made on a headline.
+  {% endcomment %}
+  <p class="mz-req-body">{{ entry.row.body|linebreaksbr }}</p>
+
+  {% if entry.row.from_screen %}
+    <p class="mz-muted mz-req-where">
+      נשלח מהמסך <span dir="ltr">{{ entry.row.from_screen }}</span>
+    </p>
+  {% endif %}
+
+  {% if entry.row.assessment %}
+    {% comment %}
+      REQ-M.109 — beside her words, never instead of them, and labelled. It is
+      sometimes wrong and it decides nothing.
+    {% endcomment %}
+    <div class="mz-req-note">
+      <span class="mz-req-note-label">
+        הערכה אוטומטית
+        {% if entry.verdict %}<strong>· {{ entry.verdict }}</strong>{% endif %}
+      </span>
+      <p>{{ entry.reasoning|default:entry.row.assessment|linebreaksbr }}</p>
+    </div>
+  {% elif decidable %}
+    <div class="mz-req-note">
+      <span class="mz-req-note-label">אין הערכה</span>
+      <p class="mz-muted">
+        הבקשה נשמרה בלי הערכה, כנראה כי המודל לא היה זמין באותו רגע.
+      </p>
+      <form method="post" action="{% url 'matazim:decide_request' entry.row.pk %}"
+            class="mz-inline-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="assess">
+        <button type="submit" class="mz-linkbtn">לנסות שוב</button>
+      </form>
+    </div>
+  {% endif %}
+
+  {% if entry.row.outcome %}
+    <div class="mz-req-note">
+      <span class="mz-req-note-label">מה נעשה</span>
+      <p>{{ entry.row.outcome|linebreaksbr }}</p>
+    </div>
+  {% endif %}
+
+  {% if decidable %}
+    <div class="mz-req-act">
+      <form method="post" action="{% url 'matazim:decide_request' entry.row.pk %}"
+            class="mz-inline-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="approve">
+        <button type="submit" class="mz-btn mz-btn-primary">אישור</button>
+      </form>
+      <form method="post" action="{% url 'matazim:decide_request' entry.row.pk %}"
+            class="mz-inline-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="decline">
+        <button type="submit" class="mz-linkbtn">לא כרגע</button>
+      </form>
+    </div>
+  {% elif entry.row.decided_by %}
+    <p class="mz-muted mz-req-where">
+      {{ entry.row.get_status_display }} על ידי
+      {{ entry.row.decided_by.profile.display_name|default:entry.row.decided_by.email }}
+      · {{ entry.row.decided_at|date:"j.n.y" }}
+    </p>
+  {% endif %}
+</article>
