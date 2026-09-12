@@ -91,7 +91,7 @@ class Command(BaseCommand):
                     f"#{row.pk} was declined. Approve it on the queue screen first: "
                     "closing a request nobody approved would make the gate decorative."
                 )
-            row.status = Request.DONE
+            row.status = Request.DONE  # not-a-student-status: Request, no StatusLog
             row.sprint = options["sprint"] or row.sprint
             row.outcome = options["outcome"]
             row.done_at = timezone.now()

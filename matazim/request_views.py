@@ -183,9 +183,9 @@ def decide_request(request, request_id):
     row = get_object_or_404(Request, pk=request_id)
     action = request.POST.get("action")
     if action == "approve":
-        row.status = Request.APPROVED
+        row.status = Request.APPROVED  # not-a-student-status: Request, no StatusLog
     elif action == "decline":
-        row.status = Request.DECLINED
+        row.status = Request.DECLINED  # not-a-student-status: Request, no StatusLog
     elif action == "assess":
         # Re-run the assessment by hand, for a row that arrived while the model
         # was unreachable.

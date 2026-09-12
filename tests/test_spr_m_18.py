@@ -236,19 +236,37 @@ def test_the_single_door_stays_single():
     arrangement where they cannot disagree. That holds exactly as long as
     nothing goes round it, so this fails if any module outside `history.py`
     assigns to `.status` again.
+
+    **The rule is about a student's stage**, which is what REQ-M.21 governs and
+    what `StatusLog` records. SPR-M.25 added `Request.status`, which is a
+    feedback row's state: it has no history table, its record is `decided_by`
+    and `decided_at`, and routing it through `set_status` would write a
+    `StatusLog` row pointing at a student who does not exist.
+
+    Rather than exempt those modules by name, which would let a real student
+    transition hide inside them later, a line may opt out only by saying which
+    model it is assigning and why, in a trailing comment. The guard still fires
+    on every new `.status =` in this product; silencing it costs a sentence and
+    leaves that sentence in the diff for somebody to argue with.
     """
     import re
     from pathlib import Path
 
     assigns = re.compile(r"(?<![\w.])\w+\.status\s*=(?!=)")
+    allowed = re.compile(r"#\s*not-a-student-status:\s*\S+")
     offenders = []
     for src in Path("matazim").rglob("*.py"):
         if src.name == "history.py" or "migrations" in src.parts:
             continue
         for n, line in enumerate(src.read_text(encoding="utf-8").splitlines(), 1):
-            if assigns.search(line):
+            if assigns.search(line) and not allowed.search(line):
                 offenders.append(f"{src.name}:{n} {line.strip()[:60]}")
-    assert not offenders, "a transition goes round history.set_status:\n" + "\n".join(offenders)
+    assert not offenders, (
+        "a transition goes round history.set_status:\n"
+        + "\n".join(offenders)
+        + "\n\nIf this is not a student's stage, say so on the line: "
+        "`# not-a-student-status: <model>, <why>`"
+    )
 
 
 def test_the_history_is_on_the_student_page(client, db):
