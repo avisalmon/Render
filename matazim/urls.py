@@ -12,6 +12,7 @@ from . import (
     entrance_views,
     invite_views,
     joining_views,
+    learn_views,
     path_views,
     rights_views,
     roster_views,
@@ -105,6 +106,9 @@ urlpatterns = [
     path("attempt/<int:attempt_id>/file/", entrance_views.attempt_file, name="attempt_file"),
     # REQ-M.12 — the member's own screen, and the only role that had none.
     path("my-path/", path_views.my_path, name="my_path"),
+    # REQ-M.13 — the required track, rendered inside our own walls.
+    path("learn/<slug:slug>/", learn_views.learn_course, name="learn_course"),
+    path("learn/<slug:slug>/<int:order>/", learn_views.learn_lesson, name="learn_lesson"),
     path("profile/", views.profile, name="profile"),
     path("profile/replay-welcome/", views.profile_reset_welcome, name="profile_reset_welcome"),
 ]

@@ -206,6 +206,11 @@ SCREENS = [
     ),
     ("pm/cohort", "/matazim/staff/cohort/", "pm@example.com", dict(students="mixed")),
     ("pm/cohort-empty", "/matazim/staff/cohort/", "pm@example.com", dict(students="none")),
+    # SPR-M.19: the track, which a member reads more than any staff screen.
+    ("learn/course-fresh", "/matazim/learn/scratch/", "fresh@example.com", dict(students="mixed")),
+    ("learn/course-part", "/matazim/learn/scratch/", "mid@example.com", dict(students="mixed")),
+    ("learn/course-done", "/matazim/learn/scratch/", "done@example.com", dict(students="mixed")),
+    ("learn/lesson", "/matazim/learn/scratch/1/", "mid@example.com", dict(students="mixed")),
 ]
 
 
@@ -313,3 +318,45 @@ def test_screen_contract(browser, live_server, db, label, path, who, world):
         assert not complaints, f"{label} ({path}):\n  " + "\n  ".join(complaints)
     finally:
         context.close()
+
+
+def test_every_class_a_template_uses_actually_exists():
+    """A class in the markup that the stylesheet has never heard of.
+
+    This is the honest half of a problem I could not automate. Three times a new
+    screen reused a class the stylesheet had already given to another component
+    and silently inherited its look: `.mz-path-body`, `.mz-lessons`, and one
+    before them. I tried to detect that statically and could not make it precise
+    without flagging legitimate cases, and a guard that cries wolf is a guard
+    that gets suppressed. So the collision rule stays a written discipline
+    (the_manager.md, Step 4a: grep the stylesheet before naming a component).
+
+    What *is* precise is the mirror image, and it is worth having: a class that
+    appears in a template and nowhere in the stylesheet is a typo or a leftover,
+    and it fails silently for ever because unstyled markup still renders.
+    """
+    import re
+    from pathlib import Path
+
+    css = Path("static/matazim/matazim.css").read_text(encoding="utf-8")
+    defined = set(re.findall(r"\.(mz-[a-z0-9-]+)", css))
+
+    # State hooks: classes that carry meaning rather than style. `mz-door-locked`
+    # has no CSS and never needed any, because the locked look comes from
+    # `.mz-btn.is-disabled`; what it does is let six tests assert the door is
+    # shut. That is a legitimate thing for a class to be, so the allowlist names
+    # them rather than the check pretending they are mistakes.
+    STATE_ONLY = {"mz-door-locked", "mz-nav-done", "mz-tag-fix", "mz-tag-late"}
+
+    unknown = {}
+    for template in sorted(Path("templates/matazim").glob("*.html")):
+        text = template.read_text(encoding="utf-8")
+        for attr in re.findall(r'class="([^"]*)"', text):
+            for name in attr.split():
+                if not name.startswith("mz-") or "{" in name:
+                    continue
+                if name not in defined and name not in STATE_ONLY:
+                    unknown.setdefault(name, template.name)
+
+    listing = "\n  ".join(f"{name}  ({where})" for name, where in sorted(unknown.items()))
+    assert not unknown, f"markup uses classes the stylesheet does not define:\n  {listing}"

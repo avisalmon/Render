@@ -29,7 +29,10 @@
     <p class="mz-muted">{{ next_step.why }}</p>
     {% if next_step.where %}
       <p class="mz-page-actions">
-        <a class="mz-btn mz-btn-primary" href="{% url next_step.where %}">קדימה</a>
+        <a class="mz-btn mz-btn-primary"
+           href="{% if next_step.where_args %}{% url next_step.where next_step.where_args.0 %}{% else %}{% url next_step.where %}{% endif %}">
+          קדימה
+        </a>
       </p>
     {% endif %}
   </section>
@@ -63,10 +66,10 @@
     <ul class="mz-training">
       {% for course in courses %}
         <li>
-          <span class="mz-training-title">
+          <a class="mz-training-title" href="{% url 'matazim:learn_course' course.slug %}">
             {{ course.progress.title|default:course.slug }}
             {% if course.certified %}<span class="mz-tag mz-tag-done">יש תעודה</span>{% endif %}
-          </span>
+          </a>
           <span class="mz-roster-progress">
             <span class="mz-bar"><span class="mz-bar-fill" style="width: {{ course.progress.pct|default:0 }}%"></span></span>
             <span class="mz-muted">{{ course.progress.done|default:0 }}/{{ course.progress.total|default:0 }}</span>

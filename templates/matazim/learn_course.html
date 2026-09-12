@@ -1,0 +1,50 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.13 — one required course, lesson by lesson, inside our own walls.
+
+  Every lesson is listed rather than offering a single "start", because
+  somebody halfway through wants lesson seven and should not have to count.
+{% endcomment %}
+
+{% block title %}{{ course.title }} · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>{{ course.title }}</h1>
+    <p>{{ progress.done|default:0 }} מתוך {{ progress.total|default:0 }} שיעורים. בסוף מקבלים תעודה.</p>
+  </div>
+
+  {% if resume %}
+    <p class="mz-page-actions">
+      <a class="mz-btn mz-btn-primary" href="{% url 'matazim:learn_lesson' course.slug resume.lesson_order %}">
+        {% if progress.done %}להמשיך משיעור {{ resume.lesson_order }}{% else %}להתחיל{% endif %}
+      </a>
+    </p>
+  {% else %}
+    <p class="mz-page-actions">
+      <span class="mz-tag mz-tag-done">סיימתם את כל השיעורים</span>
+    </p>
+  {% endif %}
+
+  <section class="mz-panel">
+    <h2>השיעורים <span class="mz-count">{{ lessons|length }}</span></h2>
+    <ol class="mz-track-list">
+      {% for row in lessons %}
+        <li class="mz-track-row{% if row.done %} is-done{% endif %}">
+          <a href="{% url 'matazim:learn_lesson' course.slug row.video.lesson_order %}">
+            <span class="mz-track-n">{{ row.video.lesson_order }}</span>
+            <span class="mz-track-title">{{ row.video.title }}</span>
+            {% if row.done %}<span class="mz-check">✓</span>{% endif %}
+          </a>
+        </li>
+      {% endfor %}
+    </ol>
+  </section>
+
+  <p class="mz-page-actions">
+    <a class="mz-linkbtn" href="{% url 'matazim:my_path' %}">חזרה למסלול שלי</a>
+  </p>
+</div>
+{% endblock %}

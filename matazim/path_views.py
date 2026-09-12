@@ -96,7 +96,11 @@ def _next_step(profile, student, state, per_course):
             started = done > 0
             return {
                 "text": f"{'להמשיך' if started else 'להתחיל'} ב{title}",
-                "where": None,
+                # REQ-M.13 — somewhere to actually go. This was None, so the
+                # card told a member what to do next and rendered no button:
+                # the screen the spec calls the product was a dead end.
+                "where": "matazim:learn_course",
+                "where_args": [slug],
                 "course": slug,
                 "why": (
                     f"{done} מתוך {total} שיעורים. בסוף הקורס מקבלים תעודה."

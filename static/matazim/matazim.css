@@ -1404,3 +1404,37 @@ a.mz-training-title:hover { color: var(--mz-purple); }
 @media (max-width: 640px) {
   .mz-history-when { flex: 0 0 100%; }
 }
+
+/* The track's lessons (SPR-M.19). A numbered run with a tick, so somebody
+ * halfway through can find lesson seven rather than counting from the top.
+ *
+ * Named mz-track-, not mz-lesson-, which has belonged to the entrance-test
+ * lesson list since SPR-M.3. Reusing it gave every row that block's border
+ * and radius on top of this one's, and it is the third time this project has
+ * collided a class name (.mz-path-body was the second). Written discipline
+ * did not stop it, so there is now a test instead. */
+.mz-track-list { list-style: none; margin: 0; padding: 0; counter-reset: none; }
+.mz-track-row a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--mz-line);
+  text-decoration: none;
+  color: var(--mz-ink);
+}
+.mz-track-row:last-child a { border-bottom: 0; }
+.mz-track-row a:hover .mz-track-title { color: var(--mz-purple); }
+.mz-track-row .mz-track-n {
+  flex: 0 0 28px;
+  height: 28px;
+  line-height: 28px;
+  text-align: center;
+  border-radius: 50%;
+  background: var(--mz-page);
+  color: var(--mz-muted);
+  font-size: .85rem;
+}
+.mz-track-row.is-done .mz-track-n { background: var(--mz-teal-soft); color: var(--mz-teal-deep); }
+.mz-track-row .mz-track-title { flex: 1; }

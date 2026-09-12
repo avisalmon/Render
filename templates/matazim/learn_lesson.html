@@ -1,0 +1,95 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.13, REQ-M.14 — a lesson in our chrome, and the heartbeat that makes
+  watching it count.
+
+  The renderer this grew from had an iframe and nothing else, so watching
+  recorded nothing: a member could finish every lesson inside our walls and
+  stay at 0/19, with their leader's roster agreeing because both read the same
+  empty table. The script below posts to babook's own endpoint, which is what
+  REQ-M.14 means by "through the same code path". It is not an outbound link:
+  RULE-1 governs navigation, and nobody leaves /matazim/.
+{% endcomment %}
+
+{% block title %}{{ lesson.title }} · {{ course.title }} · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <span class="mz-eyebrow">{{ course.title }}</span>
+    <h1>{{ lesson.title }}</h1>
+  </div>
+
+  <section class="mz-panel">
+    {% if embed_url %}
+      <div class="mz-player">
+        <iframe src="{{ embed_url }}?autoplay=false" loading="lazy"
+                allow="accelerometer; gyroscope; encrypted-media; picture-in-picture"
+                allowfullscreen></iframe>
+      </div>
+    {% else %}
+      <p class="mz-player-empty">השיעור הזה עדיין בלי וידאו.</p>
+    {% endif %}
+
+    {% if lesson.notes_markdown %}
+      <p class="mz-muted">{{ lesson.notes_markdown|truncatewords:60 }}</p>
+    {% endif %}
+
+    <div class="mz-page-actions">
+      {% if prev_order %}
+        <a class="mz-linkbtn" href="{% url 'matazim:learn_lesson' course.slug prev_order %}">הקודם</a>
+      {% endif %}
+      <button type="button" class="mz-btn mz-btn-primary" id="mzDone">סיימתי את השיעור</button>
+      {% if next_order %}
+        <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:learn_lesson' course.slug next_order %}">לשיעור הבא</a>
+      {% endif %}
+      <a class="mz-linkbtn" href="{% url 'matazim:learn_course' course.slug %}">כל השיעורים</a>
+    </div>
+    <p class="mz-muted" id="mzDoneNote" hidden>נרשם. אפשר להמשיך.</p>
+  </section>
+</div>
+
+{% comment %}
+  REQ-M.14 — the endpoint below is the shared engine's own, so there is one
+  record of what anybody has watched. A second table here would be the
+  divergence RULE-3 exists to prevent, and it would be invisible: the member and
+  their leader would each read a different truth and both would look correct.
+
+  This reasoning lives in a template comment rather than a JS one because a JS
+  comment ships. The RULE-1 guard caught exactly that: naming the parent product
+  in source a visitor can view is the thing RULE-2 forbids, however small.
+{% endcomment %}
+<script>
+  (function () {
+    var button = document.getElementById('mzDone');
+    if (!button) return;
+    button.addEventListener('click', function () {
+      button.disabled = true;
+      fetch('/api/video-progress/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || ''
+        },
+        body: JSON.stringify({
+          video_id: {{ lesson.pk }},
+          position: {{ lesson.duration_seconds|default:0 }},
+          percent: 100
+        })
+      }).then(function (r) {
+        document.getElementById('mzDoneNote').hidden = false;
+        if (r.ok) {
+          {% if next_order %}
+          window.location = "{% url 'matazim:learn_lesson' course.slug next_order %}";
+          {% else %}
+          window.location = "{% url 'matazim:learn_course' course.slug %}";
+          {% endif %}
+        } else {
+          button.disabled = false;
+        }
+      }).catch(function () { button.disabled = false; });
+    });
+  })();
+</script>
+{% endblock %}

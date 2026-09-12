@@ -1037,7 +1037,78 @@ The guard caught the demo seeder immediately. Rather than exempt it, the seeder
 now goes through the same door, so demo students carry a real history and the
 fixture cannot drift from the transitions it is imitating.
 
-## SPR-M.19 — The student detail page, for a leader  `NOT PLANNED`
+## SPR-M.19 — The member can actually learn  `DONE`
+
+REQ-M.13 and REQ-M.14, and it closes a dead end that shipped yesterday.
+
+**המסלול שלי tells a member "להתחיל בסקראץ׳ 1" and gives them no way to start
+it.** The next-step card renders a button only when it has a destination, and a
+course step has none. The screen the spec calls "the product" is a dead end,
+which is the exact failure this product fights everywhere else. It shipped
+because the screen was rendered and the copy read without anyone asking what
+happens when you click.
+
+There is nowhere legal to send them either. RULE-1 forbids linking out of
+`/matazim/`, and REQ-M.13, which says lessons render inside our shell, was TODO.
+So today a member can see they are 0/19 with no route to lesson one.
+
+**And a second gap underneath it, found while planning.** The in-shell lesson
+renderer built in SPR-M.3 records *no progress at all*: there is no heartbeat in
+the template, only an iframe. Generalising it as it stands would let somebody
+watch all nineteen lessons inside our walls and stay at 0/19 for ever, with
+their leader's roster agreeing. REQ-M.14 is explicit that watching writes
+through babook's own path, and this is where that becomes true rather than
+stated.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.19.1 | The lesson renderer generalised from one hardcoded slug to the track | REQ-M.13 | DONE |
+| F-M.19.2 | Watching reports to babook's existing heartbeat, not a second path | REQ-M.14 | DONE |
+| F-M.19.3 | The next step on המסלול שלי actually goes somewhere | REQ-M.12, REQ-M.5a | DONE |
+| F-M.19.4 | The track list links lesson by lesson | REQ-M.12 | DONE |
+| F-M.19.5 | Scoped to the track: not a general reader for every babook course | REQ-M.47 | DONE |
+
+**F-M.19.5 is the restraint.** It would be one line to let this render *any*
+course, and that would quietly turn מט״צים into a second front end for the whole
+of babook, with no owner and no design. It renders the courses the programme
+requires, and refuses the rest.
+
+### What it cost, and the same mistake twice more
+
+**The RULE-1 guard caught the word "babook" in a JavaScript comment.** A JS
+comment ships; a Django `{% comment %}` does not. Naming the parent product in
+source a visitor can view is exactly what RULE-2 forbids, however small, and the
+reasoning is now in a template comment where it stays with the code and off the
+wire.
+
+**The phone guard was measuring a 404.** Its fixture had no courses, so
+`/matazim/learn/scratch/` answered 404 and the guard cheerfully checked the
+error page's layout. That is the identical failure to the silent sign-in in
+SPR-M.8, repeated within an hour of writing it into the_manager.md. It now
+asserts the response status. The first attempt at *that* assertion checked the
+page title for "404" and passed with the courses removed, because מט״צים's error
+page is branded and says no such thing: proving a guard against the case it
+exists for is the only way to find that out.
+
+**And a third class-name collision.** `.mz-lessons`, `.mz-lesson-n` and
+`.mz-lesson-title` have belonged to the entrance-test lesson list since SPR-M.3,
+so every row of the new track list quietly wore that component's border and
+radius on top of its own. Renamed to `mz-track-*`.
+
+Three collisions now, and the written discipline did not stop the third. An
+attempt to automate it did not survive contact: any rule loose enough to catch a
+collision also flagged legitimate cases like `.mz-field` declaring `display` in
+two places, and a guard that cries wolf gets suppressed. What replaced it is the
+precise mirror image, `test_every_class_a_template_uses_actually_exists`, which
+found a real orphan on its first run.
+
+**On RULE-1 and the heartbeat.** Posting to babook's `/api/video-progress/` from
+a מט״צים page is not an outbound link: RULE-1 governs navigation, and a member
+never leaves the walls. It is the shared engine the charter describes, and
+REQ-M.14 requires exactly this rather than a second way of recording the same
+fact.
+
+## SPR-M.20 — The student detail page, for a leader  `NOT PLANNED`
 
 Hangs off F-M.15.3. Avi: "we will define it later."
 

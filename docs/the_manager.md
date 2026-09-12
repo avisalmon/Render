@@ -131,23 +131,47 @@ an hour of chasing a phantom border.
 Changed 2026-09-10 (Avi): everything goes to production for him to look at, so a
 fifteen-minute suite before every push is the wrong shape. Two gates now.
 
-**The fast gate — every push.** A few minutes now: `screens` and `sprmobile` drive a real browser, and that is the point of them (Step 4a). A gate that only reads templates is a gate that passes every defect this project has actually shipped.
+**The mini gate — every push.** About 90 seconds.
 
 ```
-pytest -m "smoke or sprmobile or screens or <this sprint's marker>" -q
+pytest -m "smoke or <this sprint's marker>" -q
 ```
 
-`sprmobile` drives a real browser at 390px over every public page and fails on
-horizontal overflow or a tap target under 36px. Avi, 2026-09-10: everything we
-build has to work on a phone, and a one-off look does not keep that true a week
-later. It adds about 30 seconds and it has already caught two dead-end links
-that no amount of reading the template would have shown.
+`smoke` is the seal: key pages serve and the two products stay sealed from each
+other in both directions. The sprint marker is the work just done. Nothing else.
 
-`tests/test_smoke.py` is deliberately shallow: every key page still serves, the
-health check answers, the two products stay sealed from each other, and gated
-pages still ask for the right login. It is not a substitute for the full run. It
-is what stops an obviously broken deploy while the full run happens on its own
-schedule.
+**When the sprint touched a template or the stylesheet**, add only the screens it
+changed, which is seconds rather than minutes:
+
+```
+pytest -m screens -k "<the new entries>" -q
+```
+
+**The full regression — once a day, when Avi says.** About fifteen minutes.
+
+```
+pytest -m "smoke or screens or sprmobile or sprm1 or sprm2 or ... " -q
+```
+
+**Corrected 2026-09-12, because this had drifted.** The agreement (Avi,
+2026-09-10) was a mini regression per push and a full one once a day on his
+word, precisely because everything goes to production for him to look at. What
+was actually happening was the whole matazim suite after every sprint: fifteen
+minutes, serially, several times an evening. That is not caution, it is waste,
+and it slows the loop it was meant to protect.
+
+The measured parts, so the next person can weigh them rather than guess:
+
+| Part | Tests | Time |
+|---|---|---|
+| `smoke` | 10 | 34s |
+| one sprint marker | ~12 | 60s |
+| `screens`, all of it | 18 | 227s |
+| `screens`, one sprint's entries | ~4 | 77s |
+| `sprmobile` | 7 | 85s |
+
+Roughly 60 seconds of that is fixed: Django's startup and the browser launch.
+`--reuse-db` was measured and saves nothing here, so do not bother.
 
 **The full gate — once a day, and before any version.**
 

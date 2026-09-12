@@ -56,6 +56,9 @@ MEMBER_PAGES = [
     "/matazim/me/delete/",
     # REQ-M.12 — the screen a member actually lives in, read on a phone.
     "/matazim/my-path/",
+    # REQ-M.13 — and the lessons themselves, which is where they spend the time.
+    "/matazim/learn/scratch/",
+    "/matazim/learn/scratch/1/",
 ]
 
 # The smallest comfortable touch target. Anything shorter is a link a thumb
@@ -200,6 +203,21 @@ def _a_leader_with_a_student():
     leader = Leader.objects.create(user=teacher, approved_at=timezone.now())
     StudyClass.objects.create(leader=leader, name="ט1", school_name="עתיד רמלה")
 
+    # SPR-M.19 — the track has to exist, or /matazim/learn/scratch/ is a 404 and
+    # the guard measures an error page. This is the same mistake the silent
+    # sign-in failure was, made again within an hour of writing it into
+    # the_manager.md Step 4a: a guard that cannot tell you it is looking at the
+    # wrong page is worse than no guard.
+    from app.models import Course, Video
+
+    for slug, title, count in (
+        ("scratch", "סקראץ׳ למתחילים", 6),
+        ("scratch-advanced", "סקראץ׳ מתקדם", 4),
+    ):
+        course = Course.objects.create(slug=slug, title=title, is_published=True)
+        for i in range(count):
+            Video.objects.create(course=course, title=f"שיעור {i + 1}", lesson_order=i + 1)
+
     kid = User.objects.create_user(
         username="phone-kid@example.com", email="phone-kid@example.com", password="x-4417-y"
     )
@@ -290,8 +308,14 @@ def test_the_rights_screens_fit_a_phone(phone_page, live_server, db):
 
     broken = []
     for path in MEMBER_PAGES:
-        phone_page.goto(live_server.url + path, wait_until="domcontentloaded")
+        # The status, not the title. The first attempt at this checked the title
+        # for "404" and passed even with the courses removed, because מט״צים's
+        # error page is branded and says nothing of the sort. Proving a guard
+        # against the case it is for is the only way to find that out.
+        response = phone_page.goto(live_server.url + path, wait_until="domcontentloaded")
+        assert response is None or response.ok, f"{path} answered {response.status}, not a screen"
         phone_page.wait_for_timeout(250)
+
         result = phone_page.evaluate(OVERFLOW_JS)
         if result["overflow"]:
             broken.append(f"{path}: {result['scrollW']} > {result['innerW']} {result['offenders']}")
