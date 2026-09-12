@@ -597,7 +597,10 @@ Order of importance on the screen, deliberately:
     try { if (navigator.vibrate) navigator.vibrate([700, 250, 700, 250, 700, 250, 1200]); } catch (e) {}
   }
 
+  var lastEventId = 0;
+
   function startNagging(d) {
+    lastEventId = (d && d.newest_event_id) || lastEventId;
     stopNagging();                       /* a newer event replaces the old ring */
     buzz();
     nagTimer = setInterval(buzz, 15000);   /* the owner's cadence: relentless, not frantic */
@@ -619,6 +622,17 @@ Order of importance on the screen, deliberately:
   if (stopBtn) stopBtn.addEventListener('click', function () {
     stopNagging();
     try { document.title = 'babook'; } catch (e) {}
+    /* REQ-11.6.16 - and tell the HOUSE, which is the thing actually re-sending
+       the push every 15s (house §3.34c). Silencing the tab while the phone keeps
+       buzzing would be the most annoying possible half-fix. Best-effort: the
+       sound has already stopped, and a failed dismissal must not undo that. */
+    try {
+      fetch('{% url "security_dismiss_alert" %}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf() },
+        body: JSON.stringify(lastEventId ? { event_id: lastEventId } : {})
+      }).catch(function () {});
+    } catch (e) {}
   });
 
   function alertOnEvent(d) {

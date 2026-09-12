@@ -237,3 +237,37 @@ def test_an_unknown_house_state_still_pushes(client, owner, settings):
                     content_type="application/json",
                     HTTP_AUTHORIZATION=f"Bearer {TOKEN}")
     assert sent.call_count == 1
+
+
+# ---- the dismiss button (REQ-11.6.16) --------------------------------------- #
+#
+# The owner: *"I need a button to dismiss this alert, period."*
+#
+# The house re-announces an unacknowledged alert every 15s (house §3.34c),
+# because a push notification buzzes ONCE and no web page can loop it. This is
+# the other end of that: the button queues an ordinary `dismiss_alert` command,
+# the house collects it within 10s and stops.
+
+def test_dismissing_queues_a_command(client, owner):
+    resp = client.post(reverse("security_dismiss_alert"),
+                       data=json.dumps({"event_id": 55}),
+                       content_type="application/json")
+    assert resp.status_code == 200
+    cmd = SecurityCommand.objects.get()
+    assert cmd.kind == "dismiss_alert"
+    assert cmd.params["event_id"] == 55
+
+
+def test_a_stranger_cannot_dismiss(client):
+    """404, never 403 (REQ-11.2.2). Silencing someone else's alarm is exactly
+    the thing an intruder would want."""
+    assert client.post(reverse("security_dismiss_alert"), data="{}",
+                       content_type="application/json").status_code == 404
+    assert SecurityCommand.objects.count() == 0
+
+
+def test_dismissing_without_an_id_is_still_accepted(client, owner):
+    """The page may not know which event is ringing — it only knows the phone
+    is. An empty dismissal means "whatever is live", which the house resolves."""
+    assert client.post(reverse("security_dismiss_alert"), data="{}",
+                       content_type="application/json").status_code == 200

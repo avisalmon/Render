@@ -566,6 +566,38 @@ def security_arm(request):
 
 
 @require_POST
+def security_dismiss_alert(request):
+    """Stop the phone ringing about the event that is ringing (REQ-11.6.16).
+
+    The owner: *"I need a button to dismiss this alert, period."* The house
+    re-announces an unacknowledged alert every 15 s (house spec §3.34c), because
+    a push notification buzzes ONCE and no web page can loop it. This is how that
+    stops.
+
+    **Dismissing is not disarming.** It silences this alarm; the house stays
+    armed and the next person through the gate rings again. An alert whose only
+    off switch also turns off the system is one that gets used exactly once.
+
+    An absent `event_id` is fine: the page knows the phone is ringing without
+    necessarily knowing which row did it, and the house resolves "whatever is
+    live" — it is the one that knows.
+    """
+    _gate(request)
+    try:
+        body = json.loads(request.body or b"{}")
+    except ValueError:
+        body = {}
+    params = {"by": (request.user.email or "web")[:60]}
+    if body.get("event_id") is not None:
+        try:
+            params["event_id"] = int(body["event_id"])
+        except (TypeError, ValueError):
+            pass
+    _queue("dismiss_alert", params)
+    return _no_index(JsonResponse({"ok": True}))
+
+
+@require_POST
 def security_disarm(request):
     """Ask the house to disarm — the phone goes quiet, the cameras do not."""
     _gate(request)

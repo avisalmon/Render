@@ -1987,6 +1987,27 @@ One page, phone first, at `/home`.
     than spinning for ever. Silence read as "still working" is the failure this
     page already inflicted on its owner once.
 
+- **REQ-11.6.16 — A button that stops the phone, without disarming the house.**
+  The owner: *"I need a button to dismiss this alert, period."*
+
+  The house re-announces an unacknowledged alert every 15 s (house spec §3.34c),
+  because a push notification buzzes **once** and no web page can loop it. This
+  is the other end of that loop.
+
+  - DISMISS queues an ordinary `dismiss_alert` command; the house collects it
+    within 10 s and stops. No new endpoint — §5.2's existing channel.
+  - **Dismissing is not disarming.** The house stays armed and the next person
+    through the gate rings again. An alert whose only off switch also turns the
+    system off is one that gets used exactly once.
+  - **A stranger gets 404, never 403** (REQ-11.2.2). Silencing someone else's
+    alarm is precisely what an intruder would want.
+  - An **absent `event_id` is accepted**: the page knows the phone is ringing
+    without necessarily knowing which row did it, and the house resolves
+    "whatever is live" — it is the one that knows.
+  - The button stops the tab's own siren **and** tells the house. Silencing the
+    tab while the phone kept buzzing would be the most annoying possible
+    half-fix.
+
 ### 11.7 Snapshots (REQ-11.7)
 
 Enabled, per the owner's decision, with limits.
