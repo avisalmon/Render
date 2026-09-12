@@ -16,7 +16,20 @@
 <div class="mz-container mz-page">
   <div class="mz-page-head">
     <h1>האזור האישי</h1>
-    <p>הפרטים שלכם, המעמד בתוכנית, וכל ההדרכות שעברתם.</p>
+    {% comment %}
+      REQ-M.100 — the subtitle promises what the page actually shows this
+      reader. It used to promise "your standing in the programme and every
+      course you have taken" to a teacher who is shown neither.
+    {% endcomment %}
+    {% if is_member %}
+      <p>הפרטים שלכם, המעמד בתוכנית, וכל ההדרכות שעברתם.</p>
+    {% elif candidate %}
+      <p>הפרטים שלכם ומה מצב ההרשאה שלכם.</p>
+    {% elif leader %}
+      <p>הפרטים שלכם והאזור שלכם כמוביל/ה.</p>
+    {% else %}
+      <p>הפרטים שלכם והכלים שלכם.</p>
+    {% endif %}
   </div>
 
   {% if saved %}<div class="mz-alert mz-alert-ok" role="status">הפרטים נשמרו.</div>{% endif %}
@@ -40,6 +53,13 @@
       </form>
     </section>
 
+    {% comment %}
+      REQ-M.100, REQ-M.102 — from here down, a learner's panels. A leader was
+      being told her own leader was unassigned and that she had not joined the
+      programme; a candidate waiting for approval saw the same, plus a
+      parental-consent notice written for a fourteen-year-old's parent.
+    {% endcomment %}
+    {% if is_member %}
     <section class="mz-panel">
       <h2>המעמד שלי בתוכנית</h2>
       <dl class="mz-facts">
@@ -129,6 +149,46 @@
       {% endif %}
     </section>
 
+    {% endif %}{# is_member #}
+
+    {% comment %}
+      REQ-M.99 — a candidate registered through an open invite and REQ-M.93
+      makes that a real state. Nothing in the product said so: כניסת מובילים
+      told them to sign in while they were signed in, and this page showed them
+      a pupil's journey. From their side the invitation appeared to do nothing.
+    {% endcomment %}
+    {% if candidate %}
+      <section class="mz-panel">
+        <h2>ההרשאה שלכם ממתינה לאישור</h2>
+        <p>
+          נרשמתם דרך הזמנה של צוות התוכנית, וההרשמה נקלטה. כרגע אתם ממתינים
+          לאישור של
+          {% if candidate.program_manager %}<strong>{{ candidate.program_manager.profile.display_name|default:"מנהל/ת התוכנית" }}</strong>{% else %}מנהלי התוכנית{% endif %}.
+        </p>
+        <p class="mz-muted">
+          לא צריך לעשות שום דבר נוסף. ברגע שתאושרו, האזור של המובילים ייפתח
+          כאן ותוכלו לראות את המט״צים שלכם ולאשר מי שמבקש להצטרף.
+        </p>
+      </section>
+    {% endif %}
+
+    {% comment %}
+      REQ-M.100 — a leader's own standing, on the screen every role lands on.
+    {% endcomment %}
+    {% if leader %}
+      <section class="mz-panel">
+        <h2>האזור שלי כמוביל/ה</h2>
+        <dl class="mz-facts">
+          <div><dt>המט״צים שלי</dt><dd>{{ leader_students }}</dd></div>
+          <div><dt>מחכים לאישור שלי</dt><dd>{{ leader_waiting }}</dd></div>
+        </dl>
+        <div class="mz-page-actions">
+          <a class="mz-btn mz-btn-primary" href="{% url 'matazim:leader_home' %}">לאזור שלי</a>
+          <a class="mz-linkbtn" href="{% url 'matazim:roster' %}">הרשימה המלאה</a>
+        </div>
+      </section>
+    {% endif %}
+
     {% if is_site_staff %}
     {% comment %}
       REQ-M.64 — a testing tool, not a feature. A member has no reason to reset
@@ -153,7 +213,7 @@
       certification screen. So the block is explained where they are, not only
       at the door that refuses them.
     {% endcomment %}
-    {% if consent_blocker %}
+    {% if consent_blocker and is_member %}
       <section class="mz-panel">
         <h2>אישור הורה</h2>
         <p>{{ consent_blocker }}</p>
@@ -168,11 +228,13 @@
     {% comment %}
       REQ-M.85 — a right nobody can find is not a right.
     {% endcomment %}
+    {% if is_member %}
     <section class="mz-panel">
       <h2>המסלול שלי</h2>
       <p class="mz-muted">איפה אתם בתוכנית, מה השלמתם, ומה הצעד הבא.</p>
       <a class="mz-btn mz-btn-primary" href="{% url 'matazim:my_path' %}">למסלול שלי</a>
     </section>
+    {% endif %}
 
     <section class="mz-panel">
       <h2>המידע שלי</h2>

@@ -219,7 +219,19 @@ def leader_entrance(request):
     """
     if leader_of(request.user):
         return redirect("matazim:leader_home")
-    return render(request, "matazim/leader_entrance.html", shell(request, "leader"))
+
+    # REQ-M.99 — a candidate is a real state (REQ-M.93) and this page did not
+    # know it existed. It told them "already invited? sign in with the email
+    # you gave the team and this page will take you straight to your area",
+    # while they were signed in with that email, and then took them nowhere.
+    # From their side the invitation appeared to have done nothing at all.
+    from .access import candidate_of
+
+    return render(
+        request,
+        "matazim/leader_entrance.html",
+        shell(request, "leader", candidate=candidate_of(request.user)),
+    )
 
 
 @login_required(login_url=LOGIN_URL)

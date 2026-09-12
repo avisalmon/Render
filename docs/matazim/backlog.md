@@ -1360,6 +1360,118 @@ return-to-intent becomes an open redirect straight out of the walls (RULE-1).
 spec against itself and against the code. Item 3 is still the one that finds the
 things neither of those can.
 
+## SPR-M.24 — Every role's own journey  `DONE`
+
+Avi, 2026-09-12: walk each role through every view it sees and check five
+things — was it intuitive to find, is it self-explanatory, is the information
+that role needs there or one clear click away, is it designed well, and do all
+the pages that role needs exist. Then, mid-review: "hide everything this role
+does not need to see. Make everything on a need-to-know basis."
+
+Answered mechanically rather than by opinion. A crawler signs in as each of
+**nine** roles, starts at their entry point, and follows only the links that
+role can actually see; anything a role may open but never reach by clicking is a
+screen findable only by knowing the URL. Then every screen rendered at 390px
+and looked at. Full write-up in the review file; the short version follows.
+
+### Three things were already broken and are fixed
+
+**The phone guard's overflow check could not fail.** It has claimed since
+SPR-M.7 that nothing is wider than the screen at 390px. It compared
+`scrollWidth` against `window.innerWidth` inside a mobile-emulated context, and
+Chromium grows the layout viewport to fit content that does not fit: on the
+program manager's team screen `innerWidth` became **501** in a 390px window, so
+the comparison was 501 against 501. The page really was 500px wide, so נעמי had
+to scroll sideways to reach the reject button, and the guard called it fine.
+Now measured against `clientWidth`. Verified by putting the defect back.
+
+**Roster rows could not wrap.** `.mz-training li` is a flex row with no
+`flex-wrap` and its actions are `flex: none`, so any row with wide actions
+pushes the page over. The candidate row carries an approve button *and* a reject
+link and was the widest row in the product.
+
+**The phone fixture had no candidate leader**, which is why the two above
+survived together: the widest row only exists while somebody is waiting, so it
+never rendered. Fifth time this session a defect turned out to live in a state
+no fixture creates.
+
+### What the review found
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.24.1 | A candidate leader gets a screen that knows they are waiting | REQ-M.99 | DONE |
+| F-M.24.2 | האזור האישי belongs to whoever is reading it | REQ-M.100 | DONE |
+| F-M.24.3 | The menu is the role's menu | REQ-M.101, M.5b | DONE |
+| F-M.24.4 | Need-to-know as a property of every screen | REQ-M.102 | DONE |
+| F-M.24.5 | The teachers' door gets a link | REQ-M.103 | DONE |
+| F-M.24.6 | The entrance task stops depending on the teaching content | REQ-M.104 | DONE |
+| F-M.24.7 | The review is kept as a test, not left as a pass | Step 4a | DONE |
+
+### What building it turned up  `DONE 2026-09-12`
+
+**The review is now `tests/test_role_journeys.py`.** It checks both directions
+for nine roles: that each can click its way to everything it needs, and that
+its menu carries nothing it has no use for. It earned its place within minutes
+of being written, twice.
+
+First, **trimming the menu orphaned the public sections.** I moved them "behind
+אודות התכנית" on the assumption that אודות links them. It does not, so בתי הספר
+and המסלול השנתי became unreachable for every signed-in role. The audit caught
+it on the first run after the change; without it this would have shipped as a
+quieter version of the same bug the review was written to find. They live in the
+footer now, which is on every page.
+
+Second, and worse, **the profile view had a second copy of "is this a member".**
+`shell()` lets a view's context win, so the weaker copy — which forgot about
+staff — silently overrode the correct answer, and נעמי carried a pupil's menu on
+האזור האישי while carrying the right one on every other page. Exactly the shape
+RULE-3 exists to prevent for learning, and it turns out roles need the same
+rule. There is one `_is_member` now.
+
+Also restored during the sprint: **hiding מבחן הכניסה once passed was wrong.**
+REQ-M.63 says a passed test is *marked*, not hidden, and hiding it also made the
+whole test chain unreachable for anyone who had passed. Marked with a ✓ and kept.
+
+One thing deliberately not done: a leader can still open `/matazim/learn/scratch/`
+by typing it. Nothing about anyone else is exposed there, and blocking a teacher
+from reading the material their students are learning would be need-to-know
+applied past the point of sense. What changed is that it is no longer *offered*
+to them, which was the actual defect.
+
+**The candidate leader is the worst-served role in the product**, and it is the
+one a real teacher meets first. REQ-M.93 creates the state on purpose and
+nothing acknowledges it exists. כניסת מובילים tells them "already invited? sign
+in with the email you gave the team, and this page will take you straight to
+your area" — they are signed in, with that email, and it takes them nowhere.
+Their profile then shows them, an adult teacher, a **parental-consent panel**,
+tells them their leader is not assigned yet, that they have not joined the
+programme, that they have not sat the entrance test, and offers them a button
+into the pupil journey. From their side, registering through the invitation
+appears to have done nothing.
+
+An approved leader with four students sees the same profile. That is the
+clearest need-to-know failure here: not a permission breach, but a product that
+does not know who is reading it.
+
+**The menu never changes for a role.** Eight marketing items on every page for
+everybody, forever. A student mid-programme reads nine of which two are theirs;
+a leader and a program manager both carry המסלול שלי, a pupil's screen, when
+§4.9 is explicit that a leader is not a mataz. REQ-M.5b has promised two navs
+since SPR-M.1 and is still WIP.
+
+**One robustness finding worth more than it looks.** The entrance-test task
+button lives inside `{% if lessons %}`, and those lessons are babook's
+`tinkercad` course. Unpublish that course and the gate to the whole programme
+becomes unreachable while the task itself still works. Nothing in the deploy
+guarantees it: not in `load_course_from_manifest`, only read by `seed_matazim`.
+
+### What this review could not do
+
+It checked the product against itself: nine synthetic roles, walked by a
+crawler, judged by me. It cannot say where a real fourteen-year-old gives up, or
+what נעמי tries that has no screen at all. Item 3 of the earlier review is
+still the only thing that answers that.
+
 ## Also still open
 
 - Retire the old production tables, once ACT-M.2 is answered.

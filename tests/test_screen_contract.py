@@ -84,7 +84,9 @@ def _courses():
     return made
 
 
-def build_world(*, students="mixed", classes="one", waiting=False, second_leader=False):
+def build_world(
+    *, students="mixed", classes="one", waiting=False, second_leader=False, candidate=False
+):
     """One institution, dialled to the state under test.
 
     `students`: none | mixed  — an empty roster is its own screen.
@@ -140,6 +142,17 @@ def build_world(*, students="mixed", classes="one", waiting=False, second_leader
             user=_user("leader2@example.com", "דנה כהן"),
             program_manager=manager,
             approved_at=now,
+        )
+
+    # REQ-M.93, REQ-M.99 — somebody who registered through an open invite and
+    # is waiting for a person to approve them. The worst-served role in the
+    # product until SPR-M.24, and it had never been rendered by anything.
+    pending_leader_row = None
+    if candidate:
+        pending_leader_row = Leader.objects.create(
+            user=_user("candidate@example.com", "מורה ממתינה"),
+            program_manager=manager,
+            approved_at=None,
         )
 
     rooms = []
@@ -259,6 +272,7 @@ def build_world(*, students="mixed", classes="one", waiting=False, second_leader
         "manager": manager,
         "leader": leader,
         "other_leader": other,
+        "candidate": pending_leader_row,
         "students": people,
         "unattached": unattached,
     }
@@ -365,6 +379,25 @@ SCREENS = [
         "/matazim/leader/",
         "leader@example.com",
         dict(students="mixed", waiting=True),
+    ),
+    # SPR-M.24 — האזור האישי is one screen for four different people, so it is
+    # four entries. It was rendering a parental-consent panel to teachers.
+    ("profile/member", "/matazim/profile/", "mid@example.com", dict(students="mixed")),
+    ("profile/leader", "/matazim/profile/", "leader@example.com", dict(students="mixed")),
+    (
+        "profile/candidate",
+        "/matazim/profile/",
+        "candidate@example.com",
+        dict(students="none", candidate=True),
+    ),
+    ("profile/pm", "/matazim/profile/", "pm@example.com", dict(students="mixed")),
+    # The teachers' door, as the two people who actually read it.
+    ("door/visitor", "/matazim/leaders/", None, dict(students="none")),
+    (
+        "door/candidate",
+        "/matazim/leaders/",
+        "candidate@example.com",
+        dict(students="none", candidate=True),
     ),
     (
         "public/verify",

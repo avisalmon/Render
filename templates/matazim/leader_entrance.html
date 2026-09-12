@@ -14,6 +14,32 @@
     <p>האזור של המובילים בבתי הספר.</p>
   </div>
 
+  {% if candidate %}
+    {% comment %}
+      REQ-M.99 — they registered through an open invite (REQ-M.92) and are
+      waiting for a person to approve them (REQ-M.93). This page did not know
+      that state existed: it told them "already appointed? sign in with the
+      email you gave the team and this page will take you straight to your
+      area", while they were signed in with exactly that email, and then took
+      them nowhere. From their side the invitation had done nothing at all.
+    {% endcomment %}
+    <section class="mz-panel">
+      <h2>ההרשמה נקלטה. ההרשאה ממתינה לאישור</h2>
+      <p>
+        נרשמתם דרך הזמנה של צוות התוכנית. כרגע אתם ממתינים לאישור של
+        {% if candidate.program_manager %}<strong>{{ candidate.program_manager.profile.display_name|default:"מנהל/ת התוכנית" }}</strong>{% else %}מנהלי התוכנית{% endif %},
+        ואין שום דבר נוסף שצריך לעשות מכאן.
+      </p>
+      <p class="mz-muted">
+        ברגע שתאושרו, הדף הזה ייפתח לאזור של המובילים: שם תראו את המט״צים שלכם,
+        תוכלו לאשר מי שמבקש להצטרף, ותקבלו קישור הצטרפות משלכם לחלק לתלמידים.
+        אם זה לוקח יותר מכמה ימים, שווה להזכיר לצוות.
+      </p>
+      <div class="mz-page-actions">
+        <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:about' %}">על התוכנית</a>
+      </div>
+    </section>
+  {% else %}
   <section class="mz-panel">
     <h2>איך נהיים מוביל/ה</h2>
     <p>
@@ -32,5 +58,6 @@
       <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:about' %}">על התוכנית</a>
     </div>
   </section>
+  {% endif %}
 </div>
 {% endblock %}

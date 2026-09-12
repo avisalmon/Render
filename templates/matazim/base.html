@@ -45,50 +45,87 @@
       different set and arrives with the sprint that needs it.
     {% endcomment %}
     <nav class="mz-nav" id="mzNav" aria-label="ניווט ראשי">
-      <a href="{% url 'matazim:home' %}" {% if section == 'home' %}class="is-active"{% endif %}>דף הבית</a>
-      <a href="{% url 'matazim:about' %}" {% if section == 'about' %}class="is-active"{% endif %}>אודות התכנית</a>
-      <a href="{% url 'matazim:track' %}" {% if section == 'track' %}class="is-active"{% endif %}>המסלול השנתי</a>
-      <a href="{% url 'matazim:courses' %}" {% if section == 'courses' %}class="is-active"{% endif %}>הקורסים</a>
       {% comment %}
-        REQ-M.63 — a passed test is marked rather than offered again. Nobody
-        should be invited twice to something they finished.
+        REQ-M.101, REQ-M.102, completing REQ-M.5b.
+
+        One menu used to serve everybody: eight recruitment items on every page,
+        forever, for every role. A student mid-programme read nine items of
+        which two were theirs. A leader and a program manager both carried
+        המסלול שלי, which is a pupil's screen, when §4.9 is explicit that a
+        leader is not a מט״צ.
+
+        So each role gets its own working set. The public sections are not
+        deleted for members, because a programme whose own pages become
+        unreadable to the people in it would be a worse mistake; they move
+        behind אודות התכנית, which is where somebody goes when they want to
+        read about the programme rather than get on with it.
       {% endcomment %}
-      <a href="{% url 'matazim:entrance_test' %}" class="{% if section == 'test' %}is-active {% endif %}{% if test_passed %}mz-nav-done{% endif %}">
-        מבחן הכניסה{% if test_passed %} <span class="mz-check" aria-label="עברת">✓</span>{% endif %}
-      </a>
-      <a href="{% url 'matazim:schools' %}" {% if section == 'schools' %}class="is-active"{% endif %}>בתי הספר</a>
-      <a href="{% url 'matazim:community' %}" {% if section == 'community' %}class="is-active"{% endif %}>קהילת מט״צים</a>
-      <a href="{% url 'matazim:events' %}" {% if section == 'events' %}class="is-active"{% endif %}>ימי שיא</a>
-      {% if user.is_authenticated %}
+
+      {% if not user.is_authenticated %}
+        {# The recruitment menu, in Litala's order. This reader is deciding. #}
+        <a href="{% url 'matazim:home' %}" {% if section == 'home' %}class="is-active"{% endif %}>דף הבית</a>
+        <a href="{% url 'matazim:about' %}" {% if section == 'about' %}class="is-active"{% endif %}>אודות התכנית</a>
+        <a href="{% url 'matazim:track' %}" {% if section == 'track' %}class="is-active"{% endif %}>המסלול השנתי</a>
+        <a href="{% url 'matazim:courses' %}" {% if section == 'courses' %}class="is-active"{% endif %}>הקורסים</a>
+        <a href="{% url 'matazim:entrance_test' %}" {% if section == 'test' %}class="is-active"{% endif %}>מבחן הכניסה</a>
+        <a href="{% url 'matazim:schools' %}" {% if section == 'schools' %}class="is-active"{% endif %}>בתי הספר</a>
+        <a href="{% url 'matazim:community' %}" {% if section == 'community' %}class="is-active"{% endif %}>קהילת מט״צים</a>
+        <a href="{% url 'matazim:events' %}" {% if section == 'events' %}class="is-active"{% endif %}>ימי שיא</a>
         {% comment %}
-          REQ-M.12, REQ-M.5b — the member's own screen, on every page. A screen
-          you have to know the URL for is a screen nobody uses, which this
-          product has now learned three times.
+          REQ-M.103 — the teachers' door was linked from no page in the
+          product, so a teacher had to be sent a URL.
         {% endcomment %}
-        <a href="{% url 'matazim:my_path' %}" {% if section == 'path' %}class="is-active"{% endif %}>המסלול שלי</a>
-      {% endif %}
-      {% if is_leader %}
+        <a href="{% url 'matazim:leader_entrance' %}" class="mz-nav-quiet{% if section == 'leader' %} is-active{% endif %}">כניסת מובילים</a>
+      {% else %}
+
+        {% if is_member %}
+          {# What a member came here to do. #}
+          <a href="{% url 'matazim:my_path' %}" {% if section == 'path' %}class="is-active"{% endif %}>המסלול שלי</a>
+          <a href="{% url 'matazim:courses' %}" {% if section == 'courses' %}class="is-active"{% endif %}>הקורסים</a>
+          {% comment %}
+            REQ-M.63 — marked when it is behind them, never hidden. Hiding it
+            once passed also made the whole test chain unreachable for them,
+            which the reachability audit caught immediately.
+          {% endcomment %}
+          <a href="{% url 'matazim:entrance_test' %}" class="{% if section == 'test' %}is-active {% endif %}{% if test_passed %}mz-nav-done{% endif %}">
+            מבחן הכניסה{% if test_passed %} <span class="mz-check" aria-label="עברת">✓</span>{% endif %}
+          </a>
+          {# Programme sections for the people in it, not recruitment copy. #}
+          <a href="{% url 'matazim:community' %}" {% if section == 'community' %}class="is-active"{% endif %}>קהילת מט״צים</a>
+          <a href="{% url 'matazim:events' %}" {% if section == 'events' %}class="is-active"{% endif %}>ימי שיא</a>
+        {% endif %}
+
+        {% if is_leader %}
+          <a href="{% url 'matazim:leader_home' %}" class="mz-nav-staff{% if section == 'leader' %} is-active{% endif %}">האזור שלי</a>
+          <a href="{% url 'matazim:roster' %}" {% if section == 'roster' %}class="is-active"{% endif %}>המט״צים שלי</a>
+          <a href="{% url 'matazim:classes' %}" {% if section == 'classes' %}class="is-active"{% endif %}>הכיתות שלי</a>
+          {% if not is_member %}
+            <a href="{% url 'matazim:community' %}" {% if section == 'community' %}class="is-active"{% endif %}>קהילת מט״צים</a>
+            <a href="{% url 'matazim:events' %}" {% if section == 'events' %}class="is-active"{% endif %}>ימי שיא</a>
+          {% endif %}
+        {% endif %}
+
+        {% if is_candidate %}
+          {# REQ-M.99 — they are waiting, and the one screen that says so. #}
+          <a href="{% url 'matazim:leader_entrance' %}" class="mz-nav-staff{% if section == 'leader' %} is-active{% endif %}">ההרשאה שלי</a>
+        {% endif %}
+
+        {% if is_site_staff %}
+          <a href="{% url 'matazim:pm_leaders' %}" class="mz-nav-staff{% if section == 'staff' %} is-active{% endif %}">המובילים שלי</a>
+          {# Her main report, which was a grey one-line link on one screen. #}
+          <a href="{% url 'matazim:cohort' %}" {% if section == 'cohort' %}class="is-active"{% endif %}>המחזור</a>
+          <a href="{% url 'matazim:staff_home' %}" class="mz-nav-staff{% if section == 'staff' %} is-active{% endif %}">ניהול</a>
+          {% if not is_member and not is_leader %}
+            <a href="{% url 'matazim:community' %}" {% if section == 'community' %}class="is-active"{% endif %}>קהילת מט״צים</a>
+            <a href="{% url 'matazim:events' %}" {% if section == 'events' %}class="is-active"{% endif %}>ימי שיא</a>
+          {% endif %}
+        {% endif %}
+
         {% comment %}
-          A leader needs a way back to their own area. Without it the only route
-          was the כניסת מובילים door on the home page, which is a strange way to
-          ask someone to return to their desk.
+          The programme's own pages, one step away rather than eight items
+          across the top of every screen.
         {% endcomment %}
-        <a href="{% url 'matazim:leader_home' %}" class="mz-nav-staff{% if section == 'leader' %} is-active{% endif %}">האזור שלי</a>
-      {% endif %}
-      {% if is_site_staff %}
-        {% comment %}
-          REQ-M.89 — leader management is the thing the program manager's role
-          exists to do, so it is a named entry she sees on every page rather
-          than a tool one click inside ניהול. REQ-M.62 already taught us that a
-          screen you have to know the URL for is a screen nobody uses; this is
-          the same lesson applied to the screen she opens most.
-        {% endcomment %}
-        <a href="{% url 'matazim:pm_leaders' %}" class="mz-nav-staff{% if section == 'staff' %} is-active{% endif %}">המובילים שלי</a>
-        {% comment %}
-          REQ-M.62 — the target bank had no door at all: you had to know the URL.
-          Staff only, and the page refuses everyone else on its own.
-        {% endcomment %}
-        <a href="{% url 'matazim:staff_home' %}" class="mz-nav-staff{% if section == 'staff' %} is-active{% endif %}">ניהול</a>
+        <a href="{% url 'matazim:about' %}" class="mz-nav-quiet{% if section == 'about' %} is-active{% endif %}">אודות התכנית</a>
       {% endif %}
     </nav>
 
@@ -150,6 +187,23 @@
       a policy nobody reads. These stay inside /matazim/: RULE-1 forbids linking
       to babook's, and babook's would not describe this processing anyway.
     {% endcomment %}
+    {% comment %}
+      REQ-M.101 — the sections that left the working menu have to stay
+      reachable from somewhere, and the footer is on every page. Trimming the
+      menu without this orphaned בתי הספר and המסלול השנתי for every signed-in
+      role, which the reachability audit caught on the first run after the
+      change. "Available rather than offered" is only true while it is still
+      available.
+    {% endcomment %}
+    <span class="mz-footer-nav">
+      <a href="{% url 'matazim:about' %}">אודות התכנית</a>
+      <a href="{% url 'matazim:track' %}">המסלול השנתי</a>
+      <a href="{% url 'matazim:courses' %}">הקורסים</a>
+      <a href="{% url 'matazim:schools' %}">בתי הספר</a>
+      <a href="{% url 'matazim:community' %}">קהילת מט״צים</a>
+      <a href="{% url 'matazim:events' %}">ימי שיא</a>
+      <a href="{% url 'matazim:leader_entrance' %}">כניסת מובילים</a>
+    </span>
     <span class="mz-footer-legal">
       <a href="{% url 'matazim:privacy' %}">פרטיות</a>
       <a href="{% url 'matazim:terms' %}">תנאי שימוש</a>

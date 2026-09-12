@@ -676,8 +676,21 @@ img { max-width: 100%; height: auto; display: block; }
   padding: 11px 14px;
   border: 1px solid var(--mz-line);
   border-radius: var(--mz-radius-sm);
+  /* The actions on the right are `flex: none` because they must not be
+     squashed, which means the row itself has to be allowed to wrap or it
+     pushes the page wider than the phone. The program manager's candidate row
+     carries a full button and a reject link and was 53px over, with "לא מתאים"
+     hanging outside its own card. */
+  flex-wrap: wrap;
 }
-.mz-training-title { color: var(--mz-ink); font-weight: 500; }
+/* And the name must be allowed to give way first: a flex item will not shrink
+   below its content unless told it may. */
+.mz-training-title {
+  color: var(--mz-ink);
+  font-weight: 500;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 
 /* Status is always a word plus a colour, never a colour alone (spec 3.2). */
 .mz-tag {
@@ -1651,3 +1664,32 @@ a.mz-training-title:hover { color: var(--mz-purple); }
   color: var(--mz-ink);
   max-width: 220px;
 }
+
+
+/* A nav item that is available rather than being offered (REQ-M.101).
+   כניסת מובילים for a visitor and אודות התכנית for a member are both things
+   somebody may want and neither is what they came to do, so they read one step
+   quieter than the working items without becoming hard to find. */
+.mz-nav-quiet { color: var(--mz-muted); }
+.mz-nav-quiet:hover { color: var(--mz-ink); }
+.mz-nav-quiet.is-active { color: var(--mz-ink); }
+
+
+/* The public sections, available from every page without being offered on
+   every page (REQ-M.101). Wraps, because seven links do not fit a phone in a
+   row and the footer must not push the page sideways (REQ-M.75). */
+.mz-footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  justify-content: center;
+}
+.mz-footer-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 4px 2px;
+  font-size: .86rem;
+  color: var(--mz-muted);
+}
+.mz-footer-nav a:hover { color: var(--mz-ink); }

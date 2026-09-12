@@ -176,6 +176,32 @@ Sweeping the remaining twenty-two screens into the catalogue produced a clean
     is rendered; a four-line grep in the smoke gate catches them everywhere.
     Ask of every new render-time check whether it could have been a static one.
 
+#### What SPR-M.24 added
+
+12. **A guard that cannot fail is also a claim.** The phone guard has asserted
+    since SPR-M.7 that nothing is wider than the screen at 390px. It compared
+    `scrollWidth` against `window.innerWidth` inside a mobile-emulated context,
+    and Chromium grows the layout viewport to fit content that does not fit: on
+    the program manager's team screen `innerWidth` became 501 in a 390px window,
+    so the comparison was 501 against 501. The page really was 500px wide. When
+    a check has never failed, ask whether it *can*, and prove it by breaking the
+    thing on purpose. Measure against `clientWidth`.
+13. **Reachability is a property worth testing, not just reviewing.** Sign in as
+    each role, start at their entry point, follow only the links that role can
+    see. `tests/test_role_journeys.py` caught two of my own regressions within
+    minutes of being written, one of which was a quieter version of the bug the
+    review existed to find.
+14. **Need-to-know is about what a role is *shown*, not only what it may
+    reach.** Those are different failures: reaching another institution's data
+    is a breach, and being shown a panel written for somebody else is a product
+    that does not know who is reading it. An adult teacher was shown a
+    parental-consent notice. Check the second one by rendering as each role.
+15. **Two copies of the same question is the same bug as two copies of the same
+    data.** The profile view computed its own "is this a member", and because
+    `shell()` lets a view's context win, the weaker copy overrode the right
+    answer on exactly one page. RULE-3 already says this about learning; it
+    applies to roles, to permissions, and to anything else a screen asks.
+
 And one that belongs in the fast gate rather than the contract: **an undefined
 CSS variable is a silent failure.** `var(--mz-accent)` in a rule is not an
 error, the declaration is simply dropped and the element keeps what it

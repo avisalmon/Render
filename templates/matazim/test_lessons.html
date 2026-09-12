@@ -28,20 +28,42 @@
       {% endfor %}
     </ol>
 
-    <section class="mz-panel mz-panel-soft">
-      <h2>ואז המשימה</h2>
-      <p>
-        אחרי השיעורים תקבלו אובייקט משלכם לבנות: שרטוט עם מידות ומודל תלת-ממדי
-        שאפשר לסובב. בונים אותו בטינקרקאד, מייצאים STL ומעלים לכאן.
-      </p>
-      <div class="mz-page-actions">
-        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:test_task' %}">למשימה</a>
-      </div>
-    </section>
   {% else %}
+    {% comment %}
+      REQ-M.104 — the teaching is missing, the test is not.
+
+      The lessons are babook's `tinkercad` course, which this product reads and
+      must never write (REQ-M.47), and nothing in the deploy guarantees it: it
+      is not in `load_course_from_manifest`'s slug list. While the way to the
+      task sat inside the block above, unpublishing that one course made the
+      gate to the whole programme (REQ-M.36) unreachable, although the task
+      itself worked perfectly. And it said "coming soon", so nobody would have
+      reported it as broken.
+    {% endcomment %}
     <section class="mz-panel">
-      <p class="mz-muted">השיעורים ייפתחו כאן בקרוב.</p>
+      <h2>השיעורים לא זמינים כרגע</h2>
+      <p>
+        חומר הלימוד של טינקרקאד לא נטען. זה לא חוסם אתכם: אפשר לעשות את המשימה
+        עצמה, ואם אתם צריכים ללמוד טינקרקאד קודם, יש מדריכים חינמיים באתר של
+        טינקרקאד.
+      </p>
     </section>
   {% endif %}
+
+  {% comment %}
+    Outside the lessons block on purpose (REQ-M.104). The task is the test; the
+    lessons are help with it.
+  {% endcomment %}
+  <section class="mz-panel mz-panel-soft">
+    <h2>{% if lessons %}ואז המשימה{% else %}המשימה{% endif %}</h2>
+    <p>
+      {% if lessons %}אחרי השיעורים תקבלו{% else %}תקבלו{% endif %}
+      אובייקט משלכם לבנות: שרטוט עם מידות ומודל תלת-ממדי
+      שאפשר לסובב. בונים אותו בטינקרקאד, מייצאים STL ומעלים לכאן.
+    </p>
+    <div class="mz-page-actions">
+      <a class="mz-btn mz-btn-primary" href="{% url 'matazim:test_task' %}">למשימה</a>
+    </div>
+  </section>
 </div>
 {% endblock %}

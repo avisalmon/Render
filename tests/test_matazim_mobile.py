@@ -69,20 +69,30 @@ CERT_PAGES = ["/matazim/my-certificate/"]
 # misses, and on a phone that is a dead end rather than a nuisance.
 MIN_TAP_PX = 36
 
+# Measured against `clientWidth`, never `innerWidth`.
+#
+# This check could not fail for its entire life. Under the mobile-emulated
+# context this file uses (`is_mobile=True`), Chromium grows the layout viewport
+# to fit content that does not fit: on the program manager's team screen
+# `innerWidth` became 501 while the window was 390, so `scrollWidth >
+# innerWidth` compared 501 against 501 and said the page was fine. The same page
+# in a plain 390px window is 500px wide, which is real sideways scrolling on a
+# real phone. `clientWidth` stays at the window and is the honest denominator.
 OVERFLOW_JS = """() => {
     const doc = document.documentElement;
+    const limit = doc.clientWidth;
     const wide = [];
     document.querySelectorAll('body *').forEach(el => {
         const r = el.getBoundingClientRect();
-        if (r.width > window.innerWidth + 1 && r.height > 0) {
+        if (r.width > limit + 1 && r.height > 0) {
             wide.push(el.tagName.toLowerCase() + '.' +
                 String(el.className || '').split(' ')[0] + ' w=' + Math.round(r.width));
         }
     });
     return {
-        overflow: doc.scrollWidth > window.innerWidth + 1,
+        overflow: doc.scrollWidth > limit + 1,
         scrollW: doc.scrollWidth,
-        innerW: window.innerWidth,
+        innerW: limit,
         offenders: [...new Set(wide)].slice(0, 5),
     };
 }"""
@@ -206,6 +216,22 @@ def _a_leader_with_a_student():
     # guard built on one would be walking login redirects rather than screens.
     leader = Leader.objects.create(user=teacher, approved_at=timezone.now())
     StudyClass.objects.create(leader=leader, name="ט1", school_name="עתיד רמלה")
+
+    # And a candidate, because the row that carries the approve button *and* the
+    # reject link is the widest row in this product and only exists while
+    # somebody is waiting. Without one, the program manager's team screen was
+    # measured empty and passed: it is 53px wider than a phone with a candidate
+    # on it, with "לא מתאים" hanging outside its own card. Fifth time this
+    # session that a real defect turned out to live in a state no fixture
+    # creates, which is the whole argument for putting the state here.
+    waiting = User.objects.create_user(
+        username="candidate@example.com", email="candidate@example.com",
+        password=LEADER_PASSWORD,
+    )
+    UserProfile.objects.update_or_create(
+        user=waiting, defaults={"display_name": "מורה ממתינה"}
+    )
+    Leader.objects.create(user=waiting, approved_at=None)
 
     # SPR-M.19 — the track has to exist, or /matazim/learn/scratch/ is a 404 and
     # the guard measures an error page. This is the same mistake the silent
@@ -342,6 +368,12 @@ def test_the_program_manager_screens_fit_a_phone(phone_page, live_server, db):
     UserProfile.objects.update_or_create(user=boss, defaults={"display_name": "נעמי"})
     MemberProfile.objects.update_or_create(user=boss, defaults={"is_program_manager": True})
     _a_leader_with_a_student()
+
+    # REQ-M.88 — her screens show her own people, so the fixture's leader and
+    # candidate have to be hers or this measures an empty page and passes.
+    from matazim.models import Leader
+
+    Leader.objects.update(program_manager=boss)
 
     page = phone_page
     page.goto(live_server.url + "/matazim/login/", wait_until="domcontentloaded")

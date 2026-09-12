@@ -24,7 +24,7 @@ from django.views.decorators.http import require_POST
 from app.models import CourseCertificate, Enrollment, UserProfile
 
 from .content import public_stages
-from .models import MemberProfile
+from .models import MemberProfile, Student
 
 # Anonymous visitors have no row to write to, so their acknowledgement of the
 # prototype notice lives in the session. It cannot be attributed to anyone,
@@ -116,6 +116,31 @@ def _consent_blocker(member):
     return consent_blocker(member) if member else None
 
 
+def _is_member(user):
+    """Somebody the programme holds as a learner.
+
+    Not "is signed in": a leader and a program manager sign in too, and showing
+    them a pupil's menu and a pupil's panels was the defect REQ-M.100 and
+    REQ-M.101 exist to fix. Anyone with no role at all counts as a member,
+    because that is what a person who just registered is.
+    """
+    from .access import candidate_of, leader_of
+
+    if not getattr(user, "is_authenticated", False):
+        return False
+    if Student.objects.filter(user=user).exists():
+        return True
+    return not (leader_of(user) or candidate_of(user) or is_site_staff(user))
+
+
+def _is_candidate(user):
+    from .access import candidate_of, leader_of
+
+    if not getattr(user, "is_authenticated", False):
+        return False
+    return bool(not leader_of(user) and candidate_of(user))
+
+
 def shell(request, section, **extra):
     """Context every מט״צים page needs, so base.html never guesses."""
     member = member_profile(request.user)
@@ -140,6 +165,12 @@ def shell(request, section, **extra):
         "invite": _pending_invite(request),
         "is_leader": _leader_of(request.user),
         "student_has_leader": _has_leader(request.user),
+        # REQ-M.101, REQ-M.102 — the menu is the role's menu, so base.html has
+        # to know which role is reading. `is_member` is deliberately narrow: a
+        # leader is not a pupil (§4.9), and carrying המסלול שלי into a
+        # teacher's menu is how that distinction got lost.
+        "is_member": _is_member(request.user),
+        "is_candidate": _is_candidate(request.user),
         # REQ-M.84 — why they cannot join yet, in words, on whatever page they
         # are looking at. None when nothing is in the way.
         "consent_blocker": _consent_blocker(member),
@@ -179,7 +210,7 @@ def entrance_test(request):
 
 
 def safe_next(request):
-    """REQ-M.8 — where to go after signing in, if it is somewhere we allow.
+    r"""REQ-M.8 — where to go after signing in, if it is somewhere we allow.
 
     The destination arrives from outside, so it is untrusted. Two things are
     being refused here, not one:
@@ -470,6 +501,28 @@ def profile(request):
             user_profile.save(update_fields=["display_name"])
             saved = True
 
+    # REQ-M.100, REQ-M.102 — the screen asks who is reading it.
+    #
+    # One template was serving four different people. A leader with four
+    # students was told her own leader was unassigned, that she had not joined
+    # the programme and had not sat the entrance test, and was shown a consent
+    # panel written for a fourteen-year-old's parent. A candidate waiting for
+    # approval saw the same. Not a permission breach: a product that did not
+    # know who was in front of it.
+    from .access import candidate_of, leader_of
+
+    leader = leader_of(request.user)
+    candidate = None if leader else candidate_of(request.user)
+    student = _student_of(request.user)
+
+    # `_is_member` and nothing else. This view had its own second calculation
+    # of the same question, and because `shell()` lets a view's context win, the
+    # weaker copy silently overrode the right answer: it forgot about staff, so
+    # נעמי was a "member" on this page and carried a pupil's menu here while
+    # carrying the correct one everywhere else. One version of the truth, which
+    # is the rule this codebase already has for learning (RULE-3) and evidently
+    # needs for roles too.
+
     return render(
         request,
         "matazim/profile.html",
@@ -477,7 +530,16 @@ def profile(request):
             request,
             "profile",
             user_profile=user_profile,
-            student=_student_of(request.user),
+            student=student,
+            leader=leader,
+            candidate=candidate,
+            is_member=_is_member(request.user),
+            leader_students=(
+                Student.objects.filter(leader=leader).count() if leader else 0
+            ),
+            leader_waiting=(
+                Student.objects.filter(pending_leader=leader).count() if leader else 0
+            ),
             training=training_record(request.user),
             saved=saved,
         ),
