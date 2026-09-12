@@ -220,6 +220,21 @@ Order of importance on the screen, deliberately:
           <div class="sec-meta" dir="ltr">
             [{{ r.date }}] {{ r.time }} · {{ r.camera }}
           </div>
+          {% comment %}
+            REQ-11.13 - the whole incident, not just the first sighting. The
+            house decides this (spec §5.13) and re-sends it as the incident
+            grows, so this line climbs while something is still happening.
+
+            Shown only when it is genuinely a group: "1 camera · 1 detection"
+            would be noise on a row that already says which camera and when.
+          {% endcomment %}
+          {% if r.incident %}
+          <div class="sec-incident-summary" dir="ltr" data-event="{{ r.event_id }}">
+            <i class="bi bi-collection-play"></i>
+            {{ r.incident.camera_count }} מצלמות ·
+            {{ r.incident.count }} זיהויים{% if r.incident.span %} · {{ r.incident.span }}{% endif %}
+          </div>
+          {% endif %}
           <div class="sec-who">
             {{ r.type }}: {{ r.who }}
             {% if r.severity_class == "warning" %}<i class="bi bi-exclamation-triangle-fill sec-ic-warn"></i>{% endif %}
@@ -371,6 +386,8 @@ Order of importance on the screen, deliberately:
   .sec-btn { border: 1px solid currentColor; background: transparent;
              color: inherit; font-weight: 500; }
   .sec-btn:hover { background: rgba(128,128,128,.18); color: inherit; }
+  .sec-incident-summary { font-size: .78rem; opacity: .75; margin-top: .15rem; }
+  .sec-incident-summary .bi { opacity: .8; }
   .sec-alerts-note { margin-top: .4rem; font-size: .78rem; opacity: .65; line-height: 1.35; }
   .sec-new-pill { display: block; text-align: center; margin-bottom: .75rem; padding: .5rem;
                   border-radius: 999px; background: #0d6efd; color: #fff; text-decoration: none;

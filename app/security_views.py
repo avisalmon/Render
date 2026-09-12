@@ -120,6 +120,31 @@ def _tz():
     return ZoneInfo(getattr(settings, "SECURITY_DISPLAY_TZ", "Asia/Jerusalem"))
 
 
+def _incident_of(event):
+    """The incident summary for one row, or None (REQ-11.13).
+
+    Comes from the house, which re-pushes the head as the incident grows (spec
+    §5.13). babook never computes it: it only ever sees the head, never the
+    detections underneath.
+
+    **None for anything that is not genuinely a group.** A NULL count means "does
+    not group"; a count of 1 is one detection, and dressing it up as an incident
+    adds a line of noise to a row that already says which camera and when.
+    """
+    count = getattr(event, "incident_count", None)
+    if not count or count < 2:
+        return None
+    cams = list(getattr(event, "incident_cameras", None) or [])
+    first, last = (getattr(event, "incident_first_ts", None),
+                   getattr(event, "incident_last_ts", None))
+    span = ""
+    if first and last:
+        span = "%s-%s" % (first.astimezone(_tz()).strftime("%H:%M"),
+                          last.astimezone(_tz()).strftime("%H:%M"))
+    return {"count": count, "cameras": cams, "camera_count": len(cams),
+            "span": span}
+
+
 def _row(event):
     """One event in the home system's own row format, so the two UIs read alike:
     `[dd/mm/yy] hh:mm - Camera - person: Avi`, 24-hour, no seconds."""
@@ -142,6 +167,10 @@ def _row(event):
         "severity_class": (
             event.severity if event.severity in ("info", "warning", "critical") else "info"
         ),
+        # REQ-11.13: what the whole incident was, not just this first sighting.
+        # Only when it is genuinely more than one detection — "1 camera · 1
+        # detection" is noise on a row that already says which camera and when.
+        "incident": _incident_of(event),
         "has_snapshot": bool(event.snapshot_path),
         "drive_url": event.drive_url or "",
         "incident_key": event.incident_key or "",
@@ -297,6 +326,10 @@ def security_feed(request):
         "total": SecurityEvent.objects.count(),
         "arming": arming_status(),
         "alert": alert_status(),
+        # REQ-11.13: the live half of the owner's ask — *"just send it update so
+        # I can monitor it constantly"*. The newest incident's shape travels on
+        # the poll, so its row grows WHILE it is happening.
+        "newest_incident": _newest_incident(),
     }))
 
 
@@ -521,6 +554,18 @@ ARM_MODES = ("AWAY", "HOME", "NIGHT", "VACATION")
 #: UNKNOWN and deliberately counts as armed: a page that cannot tell must not
 #: imply silence.
 DISARMED = "DISARM"
+
+
+def _newest_incident():
+    """The newest event's incident summary, for the polling page."""
+    newest = SecurityEvent.objects.order_by("-event_id").first()
+    if newest is None:
+        return {"count": 0, "cameras": []}
+    summary = _incident_of(newest)
+    if summary is None:
+        return {"count": (newest.incident_count or 0),
+                "cameras": list(newest.incident_cameras or [])}
+    return summary
 
 
 def alert_status():

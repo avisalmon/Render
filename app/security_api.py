@@ -263,6 +263,35 @@ def _clean_event(raw):
 _ENRICHABLE = ("incident_key", "drive_url", "drive_file_id")
 
 
+def _apply_incident(defaults, raw):
+    """Copy the incident summary across, and only when it is sent (REQ-11.13).
+
+    The house re-pushes an incident's head as it grows (spec §5.13), so these
+    climb over several pushes into one row. Membership is tested with `in` for
+    the same reason `_apply_alarm` does it: a later bare push — the scene link
+    arriving, say — must leave what the row already knows rather than wiping it.
+
+    babook never computes any of this. It only ever sees the head, never the
+    detections underneath, so there is nothing here it *could* recompute
+    (REQ-11.1.4).
+    """
+    if "incident_count" in raw:
+        try:
+            defaults["incident_count"] = int(raw["incident_count"])
+        except (TypeError, ValueError):
+            pass
+    if "incident_cameras" in raw:
+        cams = raw.get("incident_cameras") or []
+        if isinstance(cams, list):
+            defaults["incident_cameras"] = [str(c)[:32] for c in cams][:16]
+    for field, key in (("incident_first_ts", "incident_first_ts"),
+                       ("incident_last_ts", "incident_last_ts")):
+        if key in raw and raw.get(key):
+            parsed = _parse_ts(raw.get(key))
+            if parsed is not None:
+                defaults[field] = parsed
+
+
 def _apply_alarm(defaults, raw):
     """Copy the burglar-panel fields across, verbatim and only when sent.
 
@@ -320,6 +349,7 @@ def push_events(request):
             if raw.get(field) is not None:
                 defaults[field] = str(raw[field])[:500]
         _apply_alarm(defaults, raw)
+        _apply_incident(defaults, raw)
 
         snapshot = raw.get("snapshot_b64")
         if snapshot:

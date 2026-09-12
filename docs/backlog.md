@@ -1476,6 +1476,7 @@ a source of truth. Drop this database entirely and the house rebuilds it.
 | F-12.20 | A wait you can watch: live seconds counter, spinner, 2 s poll while pending, and an out-loud give-up at 60 s | REQ-11.6.15 | DONE ✅ |
 | F-12.21 | DISMISS stops the tab's siren AND queues `dismiss_alert` so the house stops re-pushing; dismissing never disarms | REQ-11.6.16 | DONE ✅ |
 | F-12.22 | A live alert is babook's state, not a tab's: the STOP button survives a refresh, renders server-side, clears instantly on dismiss and expires with the house | REQ-11.6.17 | DONE ✅ |
+| F-12.23 | One row per incident: store and render the house's summary (count, cameras, span), grow it live on the poll, absent≠zero, no expander because only the head is mirrored | REQ-11.13 | DONE ✅ |
 
 ### SPR-12.2 — the armed row (DONE ✅)
 

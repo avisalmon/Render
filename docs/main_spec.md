@@ -2032,6 +2032,32 @@ One page, phone first, at `/home`.
     with no state row there is nothing to update, and inventing one would publish
     fabricated health numbers that nothing measured.
 
+- **REQ-11.13 — One row per incident, carrying what the whole incident was.** The
+  owner: *"I want the whole single events to be replaced with the holistic
+  event... every line is an edited video of all the cameras that participated"*,
+  with live updates while it is still happening.
+
+  The house (spec §5.13) sends the summary with every push of an incident head —
+  count, cameras, first and last timestamp — and **re-pushes that head as the
+  incident grows**. So babook keeps one row and updates it in place.
+
+  - **babook never computes any of it** (REQ-11.1.4). It only ever receives the
+    head, never the detections underneath, so there is nothing here it *could*
+    recompute.
+  - **The row grows live.** The summary travels on the 10 s poll as
+    `newest_incident`, so the line climbs without a reload — the owner's *"real
+    real-time events"* half.
+  - **Absent is not zero.** An event that does not group sends no incident fields
+    and renders plain. `incident_count: 0` would assert "an incident containing
+    nothing", and this page would draw it.
+  - **A count of 1 renders nothing extra.** *"1 camera · 1 detection"* is noise on
+    a row that already says which camera and when.
+  - **A bare re-push never wipes it.** The scene link arrives later carrying no
+    incident fields; §12.8's rule holds — absent means unchanged.
+  - **There is no per-angle expander, by design.** Only the head is mirrored, which
+    is what avoids storing ~200 rows per walk that babook would then have to hide
+    and may not delete (REQ-11.1.3). **The edited movie is the angles.**
+
 ### 11.7 Snapshots (REQ-11.7)
 
 Enabled, per the owner's decision, with limits.

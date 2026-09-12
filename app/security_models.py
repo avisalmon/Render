@@ -44,6 +44,18 @@ class SecurityEvent(models.Model):
     unidentified = models.IntegerField(default=0)
     incident_key = models.CharField(max_length=64, blank=True, null=True, db_index=True)
 
+    # REQ-11.13: the incident's shape, decided by the house (spec §5.13) and
+    # re-sent on every push of the head as it grows. babook displays it and
+    # never recomputes it (REQ-11.1.4) — it cannot, since it only ever sees the
+    # head and not the detections underneath.
+    #
+    # NULL means "this does not group", NOT "an incident of nothing". An event
+    # that sends no incident fields must not render as one.
+    incident_count = models.IntegerField(null=True, blank=True)
+    incident_cameras = models.JSONField(default=list, blank=True)
+    incident_first_ts = models.DateTimeField(null=True, blank=True)
+    incident_last_ts = models.DateTimeField(null=True, blank=True)
+
     # Burglar-panel state at that moment. Display and debugging only.
     # DISARM / AWAY / HOME / ENTRY_DELAY / EXIT, or "" when the panel was
     # unreachable - which is not the same as disarmed, and the panel is
