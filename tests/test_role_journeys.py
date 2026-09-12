@@ -131,9 +131,12 @@ NEEDS = {
     "candidate@example.com": ["leader_entrance", "profile", "my_data", "privacy", "terms"],
     "leader@example.com": ["leader_home", "roster", "classes", "profile", "my_data",
                            "privacy", "terms", "community", "events"],
-    "pm@example.com": ["pm_leaders", "cohort", "staff_home", "staff_admins",
+    # REQ-M.114 — appointing a program manager is root's, so `staff_admins` is
+    # no longer among her needs. This test caught that the moment the rule
+    # changed, which is the whole reason the review was kept as a test.
+    "pm@example.com": ["pm_leaders", "cohort", "staff_home",
                        "staff_retention", "staff_targets", "staff_leaders", "profile"],
-    "root@example.com": ["pm_leaders", "cohort", "staff_home", "profile"],
+    "root@example.com": ["pm_leaders", "cohort", "staff_home", "staff_admins", "profile"],
 }
 
 
