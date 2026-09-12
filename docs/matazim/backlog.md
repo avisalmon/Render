@@ -1108,7 +1108,74 @@ never leaves the walls. It is the shared engine the charter describes, and
 REQ-M.14 requires exactly this rather than a second way of recording the same
 fact.
 
-## SPR-M.20 — The student detail page, for a leader  `NOT PLANNED`
+## SPR-M.20 — The certificate  `DONE`
+
+REQ-M.20 and REQ-M.28, and the same shape of gap as the dead end SPR-M.19 just
+closed: the system says you have achieved something and hands you nothing.
+
+A leader certifies a student, `Student.status` flips, and the member's screen
+says "הוסמכתם ב־11.9.2026. מזל טוב." That is the whole payoff of the programme,
+as a sentence on a page nobody else can see. REQ-M.20 says certifying *produces
+a printable certificate*, and nothing does.
+
+It matters more than it sounds. A מט״צ certification is the thing a
+fourteen-year-old shows a parent, a school puts in a file, and somebody attaches
+to an application two years later. A status flag you can only see by logging in
+is not that.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.20.1 | A certificate exists as a record, with a stable public id | REQ-M.20 | DONE |
+| F-M.20.2 | A page worth printing, in מט״צים's own design | REQ-M.20 | DONE |
+| F-M.20.3 | Verifiable by that id, so a school can check one is real | REQ-M.20 | DONE |
+| F-M.20.4 | Reachable from המסלול שלי and from the leader's view of a student | REQ-M.28 | DONE |
+| F-M.20.5 | Revoking certification invalidates it, and says so | REQ-M.78 | DONE |
+
+**The privacy judgement, and it is the interesting one.** A verification page has
+to be readable by somebody with no account: that is the entire point, since a
+school checking a certificate is not a member. But the person on it is a minor,
+and §4.10 governs. So the public view shows the least that still verifies: the
+name on the certificate, the date, and that it is valid. No email, no school, no
+progress, no leader, and nothing that lets the id be walked to find other
+children. The id is a UUID for exactly that reason.
+
+**F-M.20.5 is the one that is easy to forget.** Certification is revocable
+(REQ-M.78), so a certificate is not a permanent fact but a current one. A
+printed copy will outlive a revocation, which is unavoidable, but the verifiable
+one must tell the truth at the moment it is asked.
+
+### Three found by looking, and one invariant that had already broken
+
+**The demo's certified students had no certificate**, because the seeder set the
+status through `set_status` rather than `certify()`, and `certify()` is what
+issues one. So the screen 404d for somebody who *was* a certified מט״צ. That is
+precisely the state a real member must never reach, and there is now a guard:
+nothing outside `certification.py` may write `Student.CERTIFIED`. It was proved
+by reintroducing the bug and watching it fail.
+
+**The printed verification URL was reordered by RTL.** A left-to-right URL in a
+right-to-left paragraph has its trailing slash moved to the front, so the line
+read `/http://…/verify/054be…`. On a page whose entire purpose is to be printed
+and typed back in, that is a dead link rather than a nit. `dir="ltr"` isolates
+it.
+
+**The prototype welcome modal blocked the verification page.** A school checking
+a certificate had to dismiss a notice about joining the programme before it
+could read the answer. REQ-M.39 is for somebody arriving at the product; a
+verifier is joining nothing. Only visible by loading the page as a stranger.
+
+**And a bug the tests caught that production would not have.** The name on a
+certificate was read through `user.profile`, which babook's post-save signal
+populates blank, so an in-memory User can carry a cached empty name while the
+row has the real one: the certificate would have been issued to an email
+address. The name is queried now.
+
+**Reuse, per Avi.** babook renders course certificates already, with a print
+stylesheet and a UUID-addressed verify page. The *pattern* is worth copying and
+the page is not: a מט״צ certification says something different from "you
+finished a course", and RULE-1 means it cannot be babook's page anyway.
+
+## SPR-M.21 — The student detail page, for a leader  `NOT PLANNED`
 
 Hangs off F-M.15.3. Avi: "we will define it later."
 

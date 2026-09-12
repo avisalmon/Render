@@ -177,6 +177,7 @@ class Command(BaseCommand):
             leaders.append((leader, classes))
 
         # The teenagers, spread across every state the product has.
+        to_certify = []
         for i, (name, part_scratch, part_adv, certs, state) in enumerate(STUDENTS):
             user = self._user(name, f"kid{i + 1}")
             MemberProfile.objects.update_or_create(
@@ -213,15 +214,13 @@ class Command(BaseCommand):
                 record_arrival(student, by=user, note="הצטרפות")
                 set_status(student, Student.IN_TRAINING, by=leader.user, note="אישור מוביל/ה")
                 if state == "certified":
-                    student.certified_at = now
-                    student.certified_by = leader.user
-                    set_status(
-                        student,
-                        Student.CERTIFIED,
-                        by=leader.user,
-                        note="הסמכה",
-                        extra_fields=("certified_at", "certified_by"),
-                    )
+                    # Through certify(), not set_status. certify() is what
+                    # issues the certificate, and going round it produced demo
+                    # students who were CERTIFIED with nothing to show: exactly
+                    # the state a real member must never be able to reach.
+                    # The course certificates are written below, so this runs
+                    # after them.
+                    to_certify.append((leader.user, student))
             if student.leader:
                 student.classes.set([random.choice(classes)])
 
@@ -258,6 +257,13 @@ class Command(BaseCommand):
                         },
                     )
                 CourseCertificate.objects.get_or_create(user=user, course=course)
+
+        # Now that every course certificate exists, the eligibility gate will
+        # pass and certify() can do its real job, certificate included.
+        from matazim.certification import certify
+
+        for awarder, student in to_certify:
+            certify(awarder, student)
 
         # One candidate and two live invitations, so the states Avi described are
         # visible on her screen rather than only described in a spec.

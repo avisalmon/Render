@@ -86,6 +86,9 @@
         <span class="mz-tag mz-tag-done">מט״צ מוסמך</span>
         הוסמכתם ב־{{ student.certified_at|date:"j.n.Y" }}. מזל טוב.
       </p>
+      <p class="mz-page-actions">
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:my_certificate' %}">התעודה שלי</a>
+      </p>
     {% endif %}
 
     {% comment %}

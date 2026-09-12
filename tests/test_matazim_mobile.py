@@ -61,6 +61,10 @@ MEMBER_PAGES = [
     "/matazim/learn/scratch/1/",
 ]
 
+# REQ-M.20 — the certificate, checked separately because it is the one screen
+# here meant to leave the browser, and its print rules must not break the view.
+CERT_PAGES = ["/matazim/my-certificate/"]
+
 # The smallest comfortable touch target. Anything shorter is a link a thumb
 # misses, and on a phone that is a dead end rather than a nuisance.
 MIN_TAP_PX = 36

@@ -39,6 +39,12 @@
           על ידי {{ person.certified_by.profile.display_name|default:person.certified_by.email }}
         {% endif %}
       </p>
+      {% if person.certificate %}
+        <p class="mz-muted">
+          <a href="{% url 'matazim:verify' person.certificate.public_id %}">התעודה שלהם</a>
+          — הקישור הזה נגיש גם למי שאין לו חשבון, למשל בית ספר שרוצה לאמת.
+        </p>
+      {% endif %}
     {% endif %}
 
     {% comment %}

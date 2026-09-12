@@ -1,0 +1,64 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.20 — the certificate itself, built to print.
+
+  "Printable" is not "a page you could screenshot". The print rules below drop
+  the nav, the footer and the page background so what comes out of a printer is
+  a certificate rather than a browser window with a menu bar across the top.
+{% endcomment %}
+
+{% block title %}תעודת מט״צ · {{ certificate.name_on_certificate }}{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <p class="mz-page-actions mz-no-print">
+    <button type="button" class="mz-btn mz-btn-primary" onclick="window.print()">הדפסה</button>
+    <a class="mz-linkbtn" href="{% url 'matazim:my_path' %}">חזרה למסלול שלי</a>
+  </p>
+
+  <div class="mz-cert-sheet">
+    <div class="mz-cert-mark">מט״צים</div>
+    <p class="mz-cert-kicker">מנהיגות טכנולוגית צעירה</p>
+
+    <p class="mz-cert-lead">תעודת מט״צ מוסמך/ת</p>
+    <h1 class="mz-cert-name">{{ certificate.name_on_certificate }}</h1>
+
+    <p class="mz-cert-body">
+      השלים/ה את מסלול ההכשרה של תוכנית מט״צים: מבחן הכניסה, שתי הדרכות הסקראץ׳
+      עם תעודה בכל אחת, ואישור אישי של המוביל/ה שליווה/תה אותו/ה לאורך הדרך.
+    </p>
+
+    <dl class="mz-cert-facts">
+      <div>
+        <dt>תאריך ההסמכה</dt>
+        <dd>{{ certificate.awarded_at|date:"j בF Y" }}</dd>
+      </div>
+      {% if certificate.awarded_by_name %}
+        <div>
+          <dt>הוסמך/ה על ידי</dt>
+          <dd>{{ certificate.awarded_by_name }}</dd>
+        </div>
+      {% endif %}
+    </dl>
+
+    {% comment %}
+      The id printed on the paper, so whoever holds it can check it is real
+      years later without needing an account.
+    {% endcomment %}
+    {% comment %}
+      `dir="ltr"` is not decoration. A left-to-right URL dropped into a
+      right-to-left paragraph gets reordered by the bidi algorithm, and the
+      trailing slash jumps to the front: the printed line read
+      "/http://…/verify/054be…" and anybody typing it off the paper would get it
+      wrong. Isolating the direction is the fix; on a page whose whole purpose
+      is to be printed and read back, it is the difference between a working
+      certificate and a dead link.
+    {% endcomment %}
+    <p class="mz-cert-verify">
+      לאימות התעודה:
+      <span dir="ltr">{{ request.scheme }}://{{ request.get_host }}{% url 'matazim:verify' certificate.public_id %}</span>
+    </p>
+  </div>
+</div>
+{% endblock %}

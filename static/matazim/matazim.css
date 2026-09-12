@@ -1438,3 +1438,72 @@ a.mz-training-title:hover { color: var(--mz-purple); }
 }
 .mz-track-row.is-done .mz-track-n { background: var(--mz-teal-soft); color: var(--mz-teal-deep); }
 .mz-track-row .mz-track-title { flex: 1; }
+
+/* ------------------------------------------------ the certificate (SPR-M.20)
+ *
+ * The payoff of the programme, and the one page here meant to leave the screen.
+ * "Printable" is not "a page you could screenshot": the print rules drop the
+ * nav, the footer and the page ground so what comes out of a printer is a
+ * certificate rather than a browser window with a menu across the top.
+ */
+
+.mz-cert-sheet {
+  background: var(--mz-card);
+  border: 2px solid var(--mz-teal);
+  border-radius: var(--mz-radius);
+  padding: 48px 40px 36px;
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.mz-cert-mark {
+  font-weight: 700;
+  font-size: 1.4rem;
+  color: var(--mz-teal-deep);
+  letter-spacing: .02em;
+}
+.mz-cert-kicker { margin: 2px 0 28px; color: var(--mz-muted); font-size: .9rem; }
+.mz-cert-lead { margin: 0 0 6px; color: var(--mz-body); }
+.mz-cert-name {
+  margin: 0 0 20px;
+  font-size: 2.1rem;
+  color: var(--mz-ink);
+}
+.mz-cert-body { margin: 0 auto 26px; max-width: 34rem; line-height: 1.8; color: var(--mz-body); }
+
+.mz-cert-facts {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  flex-wrap: wrap;
+  margin: 0 0 26px;
+}
+.mz-cert-facts dt { color: var(--mz-muted); font-size: .82rem; }
+.mz-cert-facts dd { margin: 2px 0 0; font-weight: 600; color: var(--mz-ink); }
+
+/* Small, and on the paper on purpose: whoever holds the printed copy can check
+ * it years later without needing an account. */
+.mz-cert-verify {
+  margin: 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--mz-line);
+  color: var(--mz-muted);
+  font-size: .74rem;
+  word-break: break-all;
+}
+
+@media print {
+  .mz-header,
+  .mz-footer,
+  .mz-no-print,
+  .mz-invite-bar,
+  .mz-welcome { display: none !important; }
+  body { background: #fff; }
+  .mz-page { padding: 0; }
+  .mz-cert-sheet {
+    border-width: 3px;
+    box-shadow: none;
+    max-width: none;
+    page-break-inside: avoid;
+  }
+}

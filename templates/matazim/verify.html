@@ -1,0 +1,50 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.20 — public verification, and deliberately thin.
+
+  §4.10: the reader is a stranger and the person named is a minor. A name, a
+  date and a verdict answer the only question being asked. Their school, their
+  leader, their email and their progress are none of a stranger's business, and
+  a page that grows those fields quietly turns a verification into a profile.
+
+  Withdrawn is a different answer from not found. Saying nothing would let a
+  revoked certificate pass as merely unverifiable.
+{% endcomment %}
+
+{% block title %}אימות תעודת מט״צ{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page mz-legal">
+  <div class="mz-page-head">
+    <h1>אימות תעודה</h1>
+  </div>
+
+  <section class="mz-panel">
+    {% if not certificate %}
+      <p><strong>התעודה לא נמצאה.</strong></p>
+      <p class="mz-muted">ייתכן שהקישור הועתק חלקית. כדאי לבדוק את המספר המלא.</p>
+    {% elif certificate.is_valid %}
+      <p class="mz-verdict">
+        <span class="mz-tag mz-tag-done">תקפה</span>
+      </p>
+      <dl class="mz-facts">
+        <div><dt>שם</dt><dd>{{ certificate.name_on_certificate }}</dd></div>
+        <div><dt>תאריך ההסמכה</dt><dd>{{ certificate.awarded_at|date:"j בF Y" }}</dd></div>
+      </dl>
+      <p class="mz-muted">
+        התעודה הזאת הונפקה על ידי תוכנית מט״צים ומאשרת שהנושא/ת השלים/ה את מסלול
+        ההכשרה במלואו.
+      </p>
+    {% else %}
+      <p class="mz-verdict">
+        <span class="mz-tag mz-tag-idle">אינה בתוקף</span>
+      </p>
+      <p>ההסמכה הזאת בוטלה, ולכן התעודה אינה בתוקף.</p>
+      <p class="mz-muted">
+        עותק מודפס עשוי להיות ישן יותר מהביטול. הדף הזה מציג את המצב הנוכחי.
+      </p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

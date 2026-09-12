@@ -1,0 +1,19 @@
+{% extends "matazim/base.html" %}
+{% comment %}
+  Not an error state. Somebody who is not certified yet is mid-programme, and
+  the path screen already says exactly what is outstanding (REQ-M.77).
+{% endcomment %}
+{% block title %}תעודת מט״צ · מט״צים{% endblock %}
+{% block content %}
+<div class="mz-container mz-page mz-legal">
+  <div class="mz-page-head">
+    <h1>עוד אין תעודה</h1>
+  </div>
+  <section class="mz-panel">
+    <p>התעודה נוצרת ברגע שהמוביל/ה מסמיך/ה אתכם.</p>
+    <p class="mz-page-actions">
+      <a class="mz-btn mz-btn-primary" href="{% url 'matazim:my_path' %}">מה חסר לי</a>
+    </p>
+  </section>
+</div>
+{% endblock %}

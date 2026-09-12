@@ -8,6 +8,7 @@ templates/matazim/ may only reverse names in this namespace.
 from django.urls import path
 
 from . import (
+    certificate_views,
     cohort_views,
     entrance_views,
     invite_views,
@@ -106,6 +107,10 @@ urlpatterns = [
     path("attempt/<int:attempt_id>/file/", entrance_views.attempt_file, name="attempt_file"),
     # REQ-M.12 — the member's own screen, and the only role that had none.
     path("my-path/", path_views.my_path, name="my_path"),
+    # REQ-M.20 — what a certified מט״צ can actually show somebody. `verify` is
+    # public on purpose: a school checking one has no account.
+    path("my-certificate/", certificate_views.my_certificate, name="my_certificate"),
+    path("verify/<uuid:public_id>/", certificate_views.verify, name="verify"),
     # REQ-M.13 — the required track, rendered inside our own walls.
     path("learn/<slug:slug>/", learn_views.learn_course, name="learn_course"),
     path("learn/<slug:slug>/<int:order>/", learn_views.learn_lesson, name="learn_lesson"),

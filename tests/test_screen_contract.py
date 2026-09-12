@@ -211,6 +211,9 @@ SCREENS = [
     ("learn/course-part", "/matazim/learn/scratch/", "mid@example.com", dict(students="mixed")),
     ("learn/course-done", "/matazim/learn/scratch/", "done@example.com", dict(students="mixed")),
     ("learn/lesson", "/matazim/learn/scratch/1/", "mid@example.com", dict(students="mixed")),
+    # SPR-M.20: the payoff, and the state where somebody has not earned it yet.
+    ("cert/have", "/matazim/my-certificate/", "done@example.com", dict(students="mixed")),
+    ("cert/none", "/matazim/my-certificate/", "mid@example.com", dict(students="mixed")),
 ]
 
 
@@ -284,6 +287,9 @@ def _open(browser, live_server, email, path):
     page.wait_for_timeout(500)
     assert "/login/" not in page.url, f"could not sign in as {email}"
 
+    # Not asserting a 200: `cert/none` answers 404 on purpose, because there is
+    # no certificate to show. It is still a screen with copy and a way forward,
+    # and it still has to hold the contract.
     page.goto(live_server.url + path, wait_until="domcontentloaded")
     page.wait_for_timeout(350)
     return context, page

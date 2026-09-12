@@ -581,3 +581,59 @@ class StatusLog(models.Model):
 
     def __str__(self):
         return f"{self.student_id}: {self.from_status or '—'} → {self.to_status}"
+
+
+class MatazCertificate(models.Model):
+    """What a certified מט״צ actually gets (REQ-M.20).
+
+    Before this, being certified was a status flag: the payoff of the whole
+    programme was a sentence on a page nobody else could see. A certification is
+    the thing a fourteen-year-old shows a parent, a school puts in a file, and
+    somebody attaches to an application two years later, and none of that works
+    if it only exists behind a login.
+
+    **The name is captured, not looked up.** A certificate says who it was
+    awarded to on the day. Reading it live would mean somebody correcting their
+    display name in 2029 silently rewrote a document a school is holding a
+    printed copy of.
+
+    **One per student, never reissued.** Revoking and re-certifying keeps the
+    same `public_id`, because printed copies carry it and reissuing would
+    invalidate paper that is still perfectly true.
+
+    **`public_id` is a UUID, and that is a privacy decision rather than a
+    style.** The verification page is readable by strangers by design, since a
+    school checking one is not a member. A sequential id there would be an
+    invitation to enumerate every certified child in the programme, which is the
+    mistake the QR endpoint made in SPR-M.9 (spec §4.10, finding P1).
+    """
+
+    import uuid as _uuid_module
+
+    student = models.OneToOneField("Student", on_delete=models.CASCADE, related_name="certificate")
+    public_id = models.UUIDField(default=_uuid_module.uuid4, unique=True, db_index=True)
+
+    name_on_certificate = models.CharField(max_length=200, verbose_name="השם על התעודה")
+    awarded_by_name = models.CharField(
+        max_length=200, blank=True, default="", verbose_name="הוסמך על ידי"
+    )
+    awarded_at = models.DateTimeField(verbose_name="תאריך ההסמכה")
+
+    # A certificate is a *current* fact, not a permanent one: certification is
+    # revocable (REQ-M.78). A printed copy outlives a revocation, which cannot
+    # be helped, but the page somebody checks against must say what is true when
+    # they ask rather than what was true when it was printed.
+    revoked_at = models.DateTimeField(null=True, blank=True, verbose_name="בוטלה בתאריך")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "תעודת מט״צ"
+        verbose_name_plural = "תעודות מט״צ"
+
+    def __str__(self):
+        return f"{self.name_on_certificate} · {self.public_id}"
+
+    @property
+    def is_valid(self):
+        return self.revoked_at is None

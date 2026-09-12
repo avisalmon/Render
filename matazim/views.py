@@ -121,7 +121,13 @@ def shell(request, section, **extra):
     member = member_profile(request.user)
     ctx = {
         "section": section,
-        "welcome_pending": welcome_is_pending(request),
+        # REQ-M.39 introduces the programme to somebody arriving at it. The
+        # certificate verification page has a different reader entirely: a
+        # school that typed a URL off a printed page to answer one question, and
+        # is joining nothing. Blocking them with a prototype notice they have to
+        # dismiss is the wrong first move, and it was only visible by loading
+        # that page as a stranger.
+        "welcome_pending": welcome_is_pending(request) and section != "verify",
         "member": member,
         # REQ-M.63 — once someone has passed, every invitation to take the test
         # carries a done mark instead of asking again. Nobody should be invited

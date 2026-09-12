@@ -43,7 +43,7 @@ from app.models import CourseCertificate
 from .access import is_program_manager, leader_of
 from .content import REQUIRED_COURSE_SLUGS
 from .history import set_status
-from .models import MemberProfile, Student
+from .models import MatazCertificate, MemberProfile, Student
 
 
 @dataclass
@@ -166,7 +166,50 @@ def certify(user, student):
         note="הסמכה",
         extra_fields=("certified_at", "certified_by"),
     )
+    _issue_certificate(student, user)
     return True
+
+
+def _display_name(user):
+    """Whatever a person is actually called, read from the database."""
+    from app.models import UserProfile
+
+    if user is None:
+        return ""
+    name = UserProfile.objects.filter(user=user).values_list("display_name", flat=True).first()
+    return (name or "").strip() or (user.email or user.username or "")
+
+
+def _issue_certificate(student, by):
+    """REQ-M.20 — certifying produces one, and re-certifying revives it.
+
+    The same row and the same `public_id` come back rather than a new
+    certificate being issued, because printed copies carry that id and reissuing
+    would invalidate paper that is still perfectly true.
+
+    The name is captured here rather than read at display time: a certificate
+    says who it was awarded to on the day.
+    """
+    # Queried rather than read off `user.profile`. babook creates a blank
+    # UserProfile in a post_save signal, so an in-memory User can carry a cached
+    # profile with an empty name while the row has the real one, and the
+    # certificate would be issued to an email address. The same signal caused a
+    # silently dropped display_name once before.
+    name = _display_name(student.user)
+    awarder = _display_name(by)
+
+    certificate, created = MatazCertificate.objects.get_or_create(
+        student=student,
+        defaults={
+            "name_on_certificate": name,
+            "awarded_by_name": awarder,
+            "awarded_at": student.certified_at or timezone.now(),
+        },
+    )
+    if not created and certificate.revoked_at is not None:
+        certificate.revoked_at = None
+        certificate.save(update_fields=["revoked_at"])
+    return certificate
 
 
 def revoke(user, student):
@@ -187,5 +230,12 @@ def revoke(user, student):
         by=user,
         note="ביטול הסמכה",
         extra_fields=("certified_at", "certified_by"),
+    )
+    # REQ-M.78, REQ-M.20 — the certificate is invalidated, never deleted. A
+    # printed copy is out there carrying this id, and somebody checking it
+    # deserves "withdrawn" rather than "not found", which would let a revoked
+    # certificate pass as merely unverifiable.
+    MatazCertificate.objects.filter(student=student, revoked_at__isnull=True).update(
+        revoked_at=timezone.now()
     )
     return True
