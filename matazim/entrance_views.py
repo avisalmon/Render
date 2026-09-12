@@ -232,8 +232,17 @@ def staff_home(request):
     if not _is_staff(request.user):
         raise PermissionDenied
 
-    from .models import EntranceTarget, Leader, MemberProfile, Student
+    from .access import visible_leaders, visible_students
+    from .models import EntranceTarget, MemberProfile, Student
     from .retention import FAILED_ATTEMPT_DAYS, overdue_count
+
+    # Counted through the scope functions rather than off the bare managers.
+    # `Student.objects.count()` and every active `Leader` are the whole
+    # installation, so a program manager's own dashboard was reporting other
+    # institutions' people back to them, which is exactly what §4.4 says must
+    # not happen. Root still crosses everything, because these functions say so.
+    mine = visible_students(request.user)
+    leaders = visible_leaders(request.user).filter(is_active=True)
 
     return render(
         request,
@@ -245,8 +254,12 @@ def staff_home(request):
                 "targets": EntranceTarget.objects.filter(is_retired=False).count(),
                 "retired": EntranceTarget.objects.filter(is_retired=True).count(),
                 "admins": MemberProfile.objects.filter(is_program_manager=True).count(),
-                "leaders": Leader.objects.filter(is_active=True).count(),
-                "students": Student.objects.count(),
+                "leaders": leaders.count(),
+                # Two different facts that were being reported as one. Everybody
+                # in the programme is not a מט״צ: that is what the certificate
+                # means (§4.9), and a student in training has not earned it yet.
+                "students": mine.count(),
+                "certified": mine.filter(status=Student.CERTIFIED).count(),
             },
             # REQ-M.87 — standing, so nobody has to remember to go looking.
             overdue=overdue_count(),

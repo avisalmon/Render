@@ -94,10 +94,24 @@ def build_world(*, students="mixed", classes="one"):
     """
     from app.models import CourseCertificate, UserVideoProgress
     from matazim.history import record_arrival, set_status
-    from matazim.models import Leader, MemberProfile, Student, StudyClass
+    from matazim.models import EntranceTarget, Leader, MemberProfile, Student, StudyClass
 
     courses = _courses()
     now = timezone.now()
+
+    # Real ids from the shipped bank, so the drawing and the model on the task
+    # screen resolve to files that exist. Without these rows both the task and
+    # the staff bank render their empty state, and this catalogue spent a sprint
+    # claiming to cover two screens it had never once drawn.
+    # Titles that match what t0000 and t0001 actually draw, so a screenshot of
+    # the bank is not quietly lying about its own contents.
+    for i, (shape, title) in enumerate(
+        [("plate", "לוח עם שני חורים"), ("box", "תיבה עם חור")]
+    ):
+        EntranceTarget.objects.get_or_create(
+            target_id=f"t{i:04d}",
+            defaults={"shape": shape, "title": title, "brief": "בנו את הצורה לפי השרטוט."},
+        )
 
     manager = _user("pm@example.com", "נעמי")
     MemberProfile.objects.update_or_create(user=manager, defaults={"is_program_manager": True})
@@ -116,6 +130,21 @@ def build_world(*, students="mixed", classes="one"):
             StudyClass.objects.create(leader=leader, name=n, school_name="עתיד רמלה")
             for n in ("ט1", "ט3")
         ]
+
+    # Passed the test, belongs to nobody yet. This is the state the programme
+    # actually starts in and the only one in which /matazim/apply/ has anything
+    # to say: everyone else it redirects, which is how the apply entry in this
+    # catalogue spent a sprint measuring the profile page instead.
+    unattached = _user("unattached@example.com", "איתי ברק")
+    MemberProfile.objects.update_or_create(
+        user=unattached,
+        defaults={
+            "entrance_test_passed_at": now,
+            "birth_year": now.year - 14,
+            "guardian_consent_at": now,
+            "welcome_accepted_at": now,
+        },
+    )
 
     people = {}
     if students == "mixed":
@@ -173,7 +202,12 @@ def build_world(*, students="mixed", classes="one"):
                 CourseCertificate.objects.get_or_create(user=user, course=courses[slug])
             people[email] = student
 
-    return {"manager": manager, "leader": leader, "students": people}
+    return {
+        "manager": manager,
+        "leader": leader,
+        "students": people,
+        "unattached": unattached,
+    }
 
 
 # --------------------------------------------------------- the catalogue
@@ -214,6 +248,37 @@ SCREENS = [
     # SPR-M.20: the payoff, and the state where somebody has not earned it yet.
     ("cert/have", "/matazim/my-certificate/", "done@example.com", dict(students="mixed")),
     ("cert/none", "/matazim/my-certificate/", "mid@example.com", dict(students="mixed")),
+
+    # SPR-M.21 — the twenty-two that had never been through here. Public ones
+    # render as nobody, because a stranger is who they are built for.
+    ("public/home", "/matazim/", None, dict(students="mixed")),
+    ("public/about", "/matazim/about/", None, dict(students="none")),
+    ("public/track", "/matazim/track/", None, dict(students="none")),
+    ("public/courses", "/matazim/courses/", None, dict(students="none")),
+    ("public/schools", "/matazim/schools/", None, dict(students="none")),
+    ("public/community", "/matazim/community/", None, dict(students="none")),
+    ("public/events", "/matazim/events/", None, dict(students="none")),
+    ("public/login", "/matazim/login/", None, dict(students="none")),
+    ("public/register", "/matazim/register/", None, dict(students="none")),
+    ("public/privacy", "/matazim/privacy/", None, dict(students="none")),
+    ("public/terms", "/matazim/terms/", None, dict(students="none")),
+    ("public/leader-door", "/matazim/leaders/", None, dict(students="none")),
+    ("public/test", "/matazim/test/", None, dict(students="none")),
+    ("public/test-lessons", "/matazim/test/lessons/", None, dict(students="none")),
+
+    # A member's own surfaces, in the states they are actually reached in.
+    ("member/apply", "/matazim/apply/", "unattached@example.com", dict(students="mixed")),
+    ("member/joined", "/matazim/joined/", "fresh@example.com", dict(students="mixed")),
+    ("member/my-data", "/matazim/me/data/", "mid@example.com", dict(students="mixed")),
+    ("member/delete", "/matazim/me/delete/", "mid@example.com", dict(students="mixed")),
+    ("member/test-task", "/matazim/test/task/", "fresh@example.com", dict(students="mixed")),
+
+    # The program manager's remaining screens.
+    ("pm/staff-home", "/matazim/staff/", "pm@example.com", dict(students="mixed")),
+    ("pm/admins", "/matazim/staff/admins/", "pm@example.com", dict(students="mixed")),
+    ("pm/leaders-old", "/matazim/staff/leaders/", "pm@example.com", dict(students="mixed")),
+    ("pm/retention", "/matazim/staff/retention/", "pm@example.com", dict(students="mixed")),
+    ("pm/targets", "/matazim/staff/targets/", "pm@example.com", dict(students="none")),
 ]
 
 
@@ -260,6 +325,63 @@ REPEATED_JS = """() => {
 }"""
 
 
+# Text a person cannot comfortably read is a defect the same way a broken link
+# is, and it is invisible to every other check here: the page looks designed.
+# The muted grey used for most of the explanatory copy in this product measured
+# 3.08:1 on white, under the 4.5:1 WCAG AA asks for body text, and it was
+# carrying the account-deletion control the law requires us to offer.
+#
+# Deliberately narrow, because a loose version of this rule produces noise and
+# noise gets switched off: only elements with their own text, only where the
+# background resolves to a flat colour, and the real AA thresholds (3:1 once
+# text is large, which is what "large" is for).
+CONTRAST_JS = """() => {
+    const srgb = (c) => { c /= 255; return c <= 0.04045 ? c / 12.92
+                                                        : Math.pow((c + 0.055) / 1.055, 2.4); };
+    const lum = ([r, g, b]) => 0.2126 * srgb(r) + 0.7152 * srgb(g) + 0.0722 * srgb(b);
+    const parse = (s) => (s.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+    const ratio = (a, b) => {
+        const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+        return (hi + 0.05) / (lo + 0.05);
+    };
+
+    const bad = [];
+    document.querySelectorAll('body *').forEach((el) => {
+        const own = [...el.childNodes]
+            .filter((n) => n.nodeType === 3 && n.textContent.trim())
+            .map((n) => n.textContent.trim()).join(' ');
+        if (!own) return;
+
+        const cs = getComputedStyle(el);
+        if (cs.visibility === 'hidden' || cs.display === 'none' || +cs.opacity === 0) return;
+        if (!el.getClientRects().length) return;
+
+        // Anything painted over an image or a gradient cannot be measured this
+        // way, and guessing would be worse than not checking.
+        let node = el, bg = null;
+        while (node && node !== document.documentElement) {
+            const s = getComputedStyle(node);
+            if (s.backgroundImage && s.backgroundImage !== 'none') return;
+            const c = parse(s.backgroundColor);
+            if (c.length === 3 && !/rgba\(.*,\s*0\)/.test(s.backgroundColor)) { bg = c; break; }
+            node = node.parentElement;
+        }
+        if (!bg) return;
+
+        const size = parseFloat(cs.fontSize);
+        const weight = parseInt(cs.fontWeight, 10) || 400;
+        const large = size >= 24 || (size >= 18.66 && weight >= 700);
+        const need = large ? 3 : 4.5;
+
+        const got = ratio(parse(cs.color), bg);
+        if (got + 0.005 < need) {
+            bad.push(`${got.toFixed(2)}:1 (needs ${need}) ${cs.fontSize} "${own.slice(0, 32)}"`);
+        }
+    });
+    return [...new Set(bad)];
+}"""
+
+
 @pytest.fixture(scope="module")
 def browser():
     playwright = pytest.importorskip("playwright.sync_api")
@@ -273,8 +395,29 @@ def browser():
 
 
 def _open(browser, live_server, email, path):
+    """Open a screen as somebody, or as nobody.
+
+    `email=None` renders anonymously, which more than half these screens are
+    built for: the public front, the legal pages, the entrance test and the
+    certificate verification all have strangers as their audience, and a
+    contract that only ever signs in would never see what they actually show.
+    """
     context = browser.new_context(viewport=DESKTOP)
     page = context.new_page()
+
+    if email is None:
+        page.goto(live_server.url + path, wait_until="domcontentloaded")
+        page.wait_for_timeout(350)
+        # The welcome notice covers a public page until acknowledged, which is
+        # correct behaviour and not something to work around in the product. It
+        # is dismissed so the contract reads the screen underneath it.
+        welcome = page.locator(".mz-welcome button[type=submit]")
+        if welcome.count():
+            welcome.click()
+            page.wait_for_timeout(350)
+        _assert_landed(page, path)
+        return context, page
+
     page.goto(f"{live_server.url}/matazim/login/", wait_until="domcontentloaded")
     page.wait_for_timeout(200)
     welcome = page.locator(".mz-welcome button[type=submit]")
@@ -292,7 +435,29 @@ def _open(browser, live_server, email, path):
     # and it still has to hold the contract.
     page.goto(live_server.url + path, wait_until="domcontentloaded")
     page.wait_for_timeout(350)
+    _assert_landed(page, path)
     return context, page
+
+
+def _assert_landed(page, path):
+    """The contract must be looking at the screen it asked for.
+
+    This is the third time a guard in this project has quietly measured the
+    wrong page: the phone guard walked login redirects after a silent sign-in,
+    then measured a 404 when its fixture had no courses, and then this contract
+    asked for /matazim/apply/ and got the profile, because the member it signed
+    in as already had a pending leader and `apply` redirects. Every one of them
+    passed while checking nothing.
+
+    A redirect is not a failure of the product here, it is a failure of the
+    entry: the persona or the state is wrong, and naming the real destination is
+    the fix. So this fails loudly rather than letting the run stay green.
+    """
+    landed = page.url.split("?")[0]
+    assert landed.endswith(path), (
+        f"asked for {path} and landed on {landed}: this entry is measuring a "
+        "different screen, so either the persona or the state is wrong"
+    )
 
 
 @pytest.mark.parametrize("label,path,who,world", SCREENS, ids=[s[0] for s in SCREENS])
@@ -309,12 +474,37 @@ def test_screen_contract(browser, live_server, db, label, path, who, world):
         complaints = []
 
         text = page.evaluate(VISIBLE_TEXT_JS)
+
+        # A screen that renders nothing passes every check below it, because
+        # there is no raw key, no alarm word and no stretched label on an empty
+        # page. The contract has to insist there is something to read first.
+        heading = page.locator("h1, h2").first
+        assert heading.count() and heading.inner_text().strip(), (
+            f"{label} ({path}): the screen has no heading, so it does not say what it is"
+        )
+        assert len(text.strip()) > 120, (
+            f"{label} ({path}): only {len(text.strip())} characters of visible text, "
+            "which is not a screen"
+        )
+
+        # Template syntax that reached the reader. `{# ... #}` is single-line
+        # only, so a multi-line comment written that way is not a comment at
+        # all: it renders, in English, in the middle of a Hebrew screen. That
+        # happened on the entrance-test upload panel and every other check here
+        # passed over it, because it is not a slug and not an alarm word.
+        for token in ("{#", "#}", "{%", "%}", "{{", "}}"):
+            if token in text:
+                complaints.append(f"unrendered template syntax reached the reader: {token!r}")
+
         for key in RAW_KEYS:
             if key in text:
                 complaints.append(f"a database key or slug reached the reader: {key!r}")
         for word in ALARM_WORDS:
             if re.search(rf"(?<![\w/]){re.escape(word)}(?![\w/])", text):
                 complaints.append(f"reads as a fault rather than a state: {word!r}")
+
+        for entry in page.evaluate(CONTRAST_JS):
+            complaints.append(f"text under the readable contrast line: {entry}")
 
         for entry in page.evaluate(STRETCHED_JS):
             complaints.append(f"a label is stretching to banner width: {entry}")

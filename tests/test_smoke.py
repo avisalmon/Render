@@ -60,3 +60,27 @@ def test_a_member_page_asks_for_our_login(client, db):
     response = client.get(reverse("matazim:profile"))
     assert response.status_code == 302
     assert response.url.startswith("/matazim/login/")
+
+
+def test_every_css_variable_is_defined():
+    """An undefined custom property fails silently, which is the worst kind.
+
+    `var(--mz-accent)` in a rule is not an error: the declaration is simply
+    dropped and the element keeps whatever it inherited, so a wrong colour or a
+    missing border looks like a design choice rather than a typo. Two invented
+    token names got into the stylesheet this way and were only caught by reading
+    the paint by eye. This is a grep, it costs nothing, and it runs every push.
+    """
+    import re
+    from pathlib import Path
+
+    css = Path("static/matazim/matazim.css").read_text(encoding="utf-8")
+
+    # A definition is `--name:` at the start of a declaration; a use is inside
+    # `var()`. Fallbacks (`var(--a, #fff)`) still require --a to exist to be
+    # anything other than luck, so they are checked the same way.
+    defined = set(re.findall(r"(--mz-[\w-]+)\s*:", css))
+    used = set(re.findall(r"var\(\s*(--mz-[\w-]+)", css))
+
+    missing = sorted(used - defined)
+    assert not missing, f"used in a rule but never defined, so the rule is dead: {missing}"

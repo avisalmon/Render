@@ -80,6 +80,11 @@
   /* identity */
   --mz-teal: #0fc49b;
   --mz-teal-deep: #0aa082;
+  /* Teal that carries meaning as text rather than as identity. The brand teal
+     is 2.24:1 on white, so every ✓, every lesson number and every step marker
+     painted with it was under the line. Identity keeps --mz-teal; anything a
+     person has to read uses this. */
+  --mz-teal-text: #077460;
   --mz-teal-soft: #e3f8f2;
 
   /* action */
@@ -94,7 +99,12 @@
   /* text and surfaces */
   --mz-ink: #17223b;
   --mz-body: #56607a;
-  --mz-muted: #8a93a8;
+  /* Measured, not chosen: #8a93a8 was 3.08:1 on white and 2.88:1 on the page
+     ground, under the 4.5:1 AA asks for body text. Most of the explanatory copy
+     in this product is muted, including the account-deletion control the law
+     requires us to offer, so this was most of the writing on the site sitting
+     below the line. #667085 is 4.97:1 on white and 4.65:1 on the page. */
+  --mz-muted: #5f6878;
   --mz-page: #f6f7fb;
   --mz-card: #ffffff;
   --mz-line: #e7eaf3;
@@ -129,7 +139,17 @@ body {
   font-family: var(--mz-font);
   font-size: 16px;
   line-height: 1.65;
+  /* Short screens are common here: "you're in", the empty roster, the
+     certificate that does not exist yet. Without this the footer stops
+     halfway down a phone and the rest of the screen is dead grey, which
+     reads as a page that failed to finish loading. */
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
 }
+
+body > main { flex: 1 0 auto; }
 
 h1, h2, h3, h4 {
   margin: 0 0 .5em;
@@ -263,7 +283,11 @@ img { max-width: 100%; height: auto; display: block; }
 }
 .mz-hero-title {
   margin: 0;
-  color: var(--mz-teal);
+  /* The one place brand and contrast argue. At 67px this only has to clear
+     3:1, and the brand teal was 2.09:1 even against that. This is the smallest
+     step that meets the standard; a deeper teal would be safer still and is a
+     call for Avi, not for this file. */
+  color: var(--mz-teal-deep);
   font-size: clamp(2.6rem, 6vw, 4.2rem);
   font-weight: 700;
   letter-spacing: -.01em;
@@ -821,7 +845,8 @@ img { max-width: 100%; height: auto; display: block; }
   color: #fff;
   font-weight: 700;
 }
-.mz-path-mark[data-tone="teal"] { background: var(--mz-teal); }
+/* White sits on this one, so the background is what has to be dark enough. */
+.mz-path-mark[data-tone="teal"] { background: var(--mz-teal-text); }
 .mz-path-mark[data-tone="purple"] { background: var(--mz-purple); }
 .mz-path-mark[data-tone="blue"] { background: var(--mz-blue); }
 .mz-path-body {
@@ -860,7 +885,7 @@ img { max-width: 100%; height: auto; display: block; }
 .mz-btn-done:hover { transform: none; box-shadow: none; }
 
 .mz-nav-done { color: var(--mz-ink) !important; }
-.mz-check { color: var(--mz-teal); font-weight: 700; }
+.mz-check { color: var(--mz-teal-text); font-weight: 700; }
 
 .mz-nav-staff {
   padding-inline: 10px !important;
@@ -1208,7 +1233,9 @@ img { max-width: 100%; height: auto; display: block; }
   color: var(--mz-muted);
   font-weight: 700;
 }
-.mz-needs li .mz-check:not(:empty) { color: var(--mz-done); }
+/* --mz-done is a background colour that happens to be green; as text on the
+   page grey it measured 2.37:1, and this ✓ is the whole message. */
+.mz-needs li .mz-check:not(:empty) { color: var(--mz-teal-text); }
 
 @media (max-width: 640px) {
   .mz-roster-row { align-items: flex-start; }
@@ -1289,9 +1316,14 @@ a.mz-training-title:hover { color: var(--mz-purple); }
  * an inline element grows the hit box without touching the line height, which
  * is exactly the trade wanted here. Caught by the phone guard on the consent
  * notice and the privacy policy, both at 18px. */
-.mz-legal p a:not(.mz-linkbtn),
-.mz-legal li a:not(.mz-linkbtn),
-.mz-consent a:not(.mz-linkbtn),
+/* `.mz-btn` is excluded for the same reason `.mz-linkbtn` is, and it was
+ * missed here while the `.mz-needs` line below got it right: a real button
+ * inside a legal page was being underlined and forced back to `display:
+ * inline`, which fights the inline-flex it needs to be a button at all.
+ * "הורדה כקובץ" on המידע שלי was wearing that. */
+.mz-legal p a:not(.mz-linkbtn):not(.mz-btn),
+.mz-legal li a:not(.mz-linkbtn):not(.mz-btn),
+.mz-consent a:not(.mz-linkbtn):not(.mz-btn),
 /* The conditions list carries inline links too ("למבחן"), and the guard caught
  * one at 19px on המסלול שלי. Same rule, one more place: this is the third time
  * an inline link has been the thing a thumb misses. */
@@ -1436,7 +1468,7 @@ a.mz-training-title:hover { color: var(--mz-purple); }
   color: var(--mz-muted);
   font-size: .85rem;
 }
-.mz-track-row.is-done .mz-track-n { background: var(--mz-teal-soft); color: var(--mz-teal-deep); }
+.mz-track-row.is-done .mz-track-n { background: var(--mz-teal-soft); color: var(--mz-teal-text); }
 .mz-track-row .mz-track-title { flex: 1; }
 
 /* ------------------------------------------------ the certificate (SPR-M.20)
@@ -1506,4 +1538,55 @@ a.mz-training-title:hover { color: var(--mz-purple); }
     max-width: none;
     page-break-inside: avoid;
   }
+}
+
+
+/* A file picker that speaks Hebrew (REQ-M.53).
+   The native widget renders "Choose File / No file chosen" in the browser's
+   own language, which on the entrance-test screen was the only English on the
+   page and sat on the one control a candidate must use. The real input is kept
+   in place and made transparent over the top of this, rather than hidden, so it
+   stays focusable, keyboard reachable and still subject to `required`. */
+.mz-file {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  border: 1px solid var(--mz-line);
+  border-radius: 12px;
+  padding: 8px 10px;
+  background: #fff;
+}
+
+.mz-file-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 9px;
+  background: var(--mz-page);
+  border: 1px solid var(--mz-line);
+  font-weight: 600;
+  color: var(--mz-ink);
+}
+
+.mz-file-name {
+  color: var(--mz-muted);
+  overflow-wrap: anywhere;
+}
+
+.mz-file input[type="file"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.mz-file:focus-within {
+  border-color: var(--mz-purple);
+  box-shadow: 0 0 0 3px rgba(107, 76, 214, 0.18);
 }

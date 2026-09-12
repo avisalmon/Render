@@ -36,6 +36,7 @@ markers = [
     "sprm18: SPR-M.18 מט״צים every transition logged",
     "sprm19: SPR-M.19 מט״צים the member can actually learn",
     "sprm20: SPR-M.20 מט״צים the certificate, and the status made visible",
+    "sprm21: SPR-M.21 מט״צים every screen through the contract",
     "screens: the screen contract - every מט״צים screen, in every state, rendered",
     "sprmobile: real-browser phone checks for מט״צים (tests/test_matazim_mobile.py)",
     "smoke: the fast gate, run on every push (see tests/test_smoke.py)",

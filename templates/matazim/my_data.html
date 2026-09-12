@@ -74,6 +74,8 @@
           </li>
         {% endfor %}
       </ul>
+    {% elif passed_at %}
+      <p class="mz-muted">עברתם את מבחן הכניסה.</p>
     {% else %}
       <p class="mz-muted">עוד לא ניגשתם.</p>
     {% endif %}

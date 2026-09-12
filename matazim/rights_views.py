@@ -23,6 +23,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 
+from .certification import _display_name
 from .consent import age_now, has_guardian_consent, is_minor
 from .models import EntranceAttempt, Student
 from .views import member_profile, shell
@@ -88,7 +89,11 @@ def _everything_about(user):
             {
                 "cohort_year": student.cohort_year,
                 "status": student.get_status_display(),
-                "leader": (student.leader.user.email if student.leader else None),
+                # The leader by the name they are called, not by their inbox.
+                # This said `leader@example.com` on a screen a 14-year-old reads
+                # and in a file they download, which is both wrong and a
+                # disclosure of a member of staff's address to a minor.
+                "leader": (_display_name(student.leader.user) if student.leader else None),
                 "classes": [
                     {"name": c.name, "school": c.school_name} for c in student.classes.all()
                 ],
@@ -101,14 +106,27 @@ def _everything_about(user):
     # The learning itself is babook's, and RULE-3 says there is one version of
     # it. Named here rather than copied, so the export is honest about where it
     # lives without this file inventing a second account of it.
-    from app.models import CourseCertificate, Enrollment
+    from app.models import Course, CourseCertificate, Enrollment
 
-    for e in Enrollment.objects.filter(user=user).select_related("course"):
+    # Counted from what somebody actually watched as well as from what they
+    # enrolled in. Reading `Enrollment` alone made this page say "0 courses
+    # started, 1 certificate", which cannot be true and which a person asking
+    # what we hold about them is entitled not to be told.
+    enrolments = {
+        e.course_id: e for e in Enrollment.objects.filter(user=user).select_related("course")
+    }
+    watched = dict(
+        Course.objects.filter(videos__user_progress__user=user)
+        .distinct()
+        .values_list("id", "slug")
+    )
+    for course_id in dict.fromkeys(list(enrolments) + list(watched)):
+        e = enrolments.get(course_id)
         out["learning"].append(
             {
-                "course": e.course.slug,
-                "enrolled": e.enrolled_at.isoformat() if e.enrolled_at else None,
-                "completed": e.completed_at.isoformat() if e.completed_at else None,
+                "course": e.course.slug if e else watched[course_id],
+                "enrolled": (e.enrolled_at.isoformat() if e and e.enrolled_at else None),
+                "completed": (e.completed_at.isoformat() if e and e.completed_at else None),
             }
         )
     out["certificates"] = [
@@ -132,6 +150,10 @@ def my_data(request):
             attempts=(
                 EntranceAttempt.objects.filter(member=profile).order_by("number") if profile else []
             ),
+            # The attempt rows are the detail; the profile field is the fact.
+            # Showing "you have not sat it yet" to somebody the rest of the site
+            # treats as having passed is the two of them disagreeing in public.
+            passed_at=getattr(profile, "entrance_test_passed_at", None),
             age=age_now(profile),
             minor=is_minor(profile),
             consented=has_guardian_consent(profile),

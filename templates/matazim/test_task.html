@@ -97,10 +97,31 @@
             {% csrf_token %}
             <label class="mz-field">
               <span>קובץ STL מטינקרקאד</span>
-              <input type="file" name="model_file" accept=".stl" required>
+              {% comment %}
+                The native control is the only English on this screen, and it
+                sits on the one button a 14-year-old has to press. The input
+                stays in the page and stays focusable, so `required` still
+                validates and the keyboard still reaches it; it is only made
+                transparent and laid over a control that speaks Hebrew.
+              {% endcomment %}
+              <span class="mz-file">
+                <span class="mz-file-btn">בחירת קובץ</span>
+                <span class="mz-file-name" data-empty="לא נבחר קובץ">לא נבחר קובץ</span>
+                <input type="file" name="model_file" accept=".stl" required>
+              </span>
               <small>בטינקרקאד: Export ואז STL.</small>
             </label>
             <button type="submit" class="mz-btn mz-btn-primary">שליחה לבדיקה</button>
+            <script>
+              document.querySelectorAll(".mz-file input[type=file]").forEach(function (input) {
+                var label = input.closest(".mz-file").querySelector(".mz-file-name");
+                input.addEventListener("change", function () {
+                  label.textContent = input.files.length
+                    ? input.files[0].name
+                    : label.dataset.empty;
+                });
+              });
+            </script>
           </form>
         </section>
       {% endif %}

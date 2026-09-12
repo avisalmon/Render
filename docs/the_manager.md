@@ -126,6 +126,39 @@ One discipline the machinery cannot enforce, so it is written here instead:
 `.mz-path-body` had belonged to another page since SPR-M.4, and reusing it cost
 an hour of chasing a phantom border.
 
+#### What SPR-M.21 added, and why
+
+Sweeping the remaining twenty-two screens into the catalogue produced a clean
+44-pass on the first run, which was false. Three things had to change.
+
+6. **A screen entry must assert the screen it landed on.** `member/apply` was
+   signed in as somebody who already had a leader, so `apply` redirected and the
+   entry measured the profile page instead — the fourth guard in this project to
+   pass while looking at something else. A redirect here is never a product
+   failure, it is a wrong persona or a wrong state in the entry, so the contract
+   fails loudly rather than silently substituting a different screen. Related:
+   an entry whose fixture is empty covers only the empty state and quietly
+   claims the whole screen (`member/test-task` had no targets), so **the world
+   must contain the thing the screen is for.**
+7. **Unrendered template syntax is a complaint.** `{# … #}` is single-line only
+   in Django; a multi-line comment written that way renders, in English, in the
+   middle of a Hebrew screen. It is not a slug and not an alarm word, so every
+   other check passed over it.
+8. **Contrast is measured, not eyeballed.** WCAG AA, on every screen, with the
+   real thresholds. This found fifteen pieces of text under the line, including
+   the grey carrying most of the explanatory copy in the product (3.08:1), the ✓
+   that means "you passed" (2.37:1) and the front page's own headline (2.09:1
+   against the 3:1 large-text rule). None of it looked broken; that is the
+   point. It is scoped narrowly — own text only, flat backgrounds only — because
+   a loose accessibility rule produces noise, and noise gets switched off.
+
+And one that belongs in the fast gate rather than the contract: **an undefined
+CSS variable is a silent failure.** `var(--mz-accent)` in a rule is not an
+error, the declaration is simply dropped and the element keeps what it
+inherited, so a typo looks like a design choice. Two got in during this sprint
+and were caught by reading the paint. `tests/test_smoke.py` now greps for it in
+a tenth of a second, on every push.
+
 ### Step 5 — Regression, in two tiers
 
 Changed 2026-09-10 (Avi): everything goes to production for him to look at, so a
@@ -320,6 +353,7 @@ A sprint is `DONE` only if **all** are true:
 ---
 - [ ] Every new or changed screen is in `tests/test_screen_contract.py`, **with each state it can be in**, and the contract is green (Step 4a).
 - [ ] Each screen has been looked at once, rendered, in at least its empty state and its full one.
+- [ ] Every new contract entry has been confirmed to land on the screen it names, with a fixture that contains what that screen is for (Step 4a.6).
 
 ## Definition of Done — Epic
 

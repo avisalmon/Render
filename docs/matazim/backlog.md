@@ -1175,7 +1175,90 @@ stylesheet and a UUID-addressed verify page. The *pattern* is worth copying and
 the page is not: a מט״צ certification says something different from "you
 finished a course", and RULE-1 means it cannot be babook's page anyway.
 
-## SPR-M.21 — The student detail page, for a leader  `NOT PLANNED`
+## SPR-M.21 — Every screen through the contract  `DONE`
+
+A consolidation sprint rather than a feature one, and the number is the argument
+for it: **41 screens exist and 21 were in the contract.** Twenty-two had never
+been rendered by it.
+
+Given the record — thirteen sprints, and every screen actually rendered had a
+defect no test had caught — twenty-two unrendered screens is not a clean slate.
+It is a backlog of defects nobody has looked at. Some are covered by the phone
+guard for layout, but nothing had checked them for the content faults that kept
+recurring: raw database keys, labels stretched to banner width, text repeated
+because a list looped the wrong thing, copy that is wrong in the empty state.
+
+The buildable feature work had also run out. Four small requirements remain that
+need no decision from Avi; the rest are blocked on defining what submissions,
+events and notifications are. So this is a natural stopping point rather than an
+interruption.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.21.1 | The contract renders anonymously, for the public screens | §4.10 | DONE |
+| F-M.21.2 | All 22 uncovered screens added, in the states they can be in | Step 4a | DONE |
+| F-M.21.3 | Whatever that finds, fixed | — | DONE |
+| F-M.21.4 | The contract asserts the screen it landed on | Step 4a | DONE |
+| F-M.21.5 | Contrast measured on every screen, against WCAG AA | §4.10 | DONE |
+
+### What it found  `DONE 2026-09-12`
+
+**The first finding was the contract itself.** All 44 entries passed on the
+first run. That was not a clean sweep: `member/apply` was signed in as a member
+who already had a leader, so `apply` redirected and the entry spent its life
+measuring the profile page. Correct product behaviour, broken test, and the
+**fourth** time in this project a guard has passed while looking at the wrong
+page. `_assert_landed` now fails the run when a screen redirects, and with it
+turned on exactly one of the 44 was lying. Two entries were also only rendering
+their empty state (`member/test-task` and `pm/targets` had no targets in the
+fixture), which is the same fault in a quieter form: the entry claims a screen
+and covers a corner of it.
+
+Then, from actually rendering them:
+
+| Found | Where | Why no test saw it |
+|---|---|---|
+| Footer floated mid-screen with dead grey below | every short page | nothing measured page height |
+| `{# … #}` rendered as visible English | the entrance-test upload panel | Django's `{# #}` is single-line only; mine was not |
+| The file picker said "Choose File / No file chosen" | the entrance test | the browser's own widget, in the browser's own language |
+| Two CSS variables that were never defined | the new picker | an undefined `var()` drops the declaration silently |
+| `leader@example.com` where a name belongs | המידע שלי, and the downloaded file | a staff address disclosed to a minor |
+| "0 הדרכות שהתחלתם, 1 תעודות" | המידע שלי | counted `Enrollment` only, so watching did not count |
+| "עוד לא ניגשתם" to somebody who had passed | המידע שלי | read the attempt rows, not the profile field |
+| A button underlined and forced back to `display: inline` | המידע שלי | `.mz-legal p a:not(.mz-linkbtn)` forgot `:not(.mz-btn)` |
+| **Another institution's children in נעמי's counts** | ניהול | `Student.objects.count()`, unscoped |
+| All four learners called מט״צים | ניהול | one had earned it (§4.9) |
+| "מסכי המובילים ... ייבנו בספרינטים הבאים" | ניהול | shipped scaffolding; those screens exist now |
+| **15 pieces of text under WCAG AA contrast** | across the product | nothing had ever measured it |
+
+The contrast finding is the largest. The muted grey carrying most of the
+explanatory copy in this product measured **3.08:1** against a 4.5:1 standard,
+and it was carrying the account-deletion control the law requires us to offer.
+The ✓ that means "you passed" was **2.37:1**. The hero headline on the public
+front page was **2.09:1** against a 3:1 standard for text that size.
+
+**Three checks were added to the contract, not just three fixes**, because each
+of these was invisible to it: where the page landed, unrendered template syntax
+in visible text, and measured contrast. A fourth went into the smoke gate: a
+grep for `var(--x)` with no definition, which costs nothing and runs on every
+push.
+
+**The hero colour is the one open question.** `--mz-teal` is the brand, and at
+67px it only has to clear 3:1; it was at 2.09:1. It now uses `--mz-teal-deep`,
+which is 3.08:1 — the smallest change that meets the standard. A deeper teal
+would be more comfortable and is Avi's call, not mine.
+
+**What this is not.** It is me checking my own work again, which has twice been
+said here to be unrepeatable. The difference is that the contract makes it
+mechanical rather than a matter of my attention: the screens are enumerated, the
+properties are asserted, and a screen missing from the list is now visible as a
+gap rather than invisible as an oversight.
+
+**The validation this still does not replace** is somebody real using the
+product. Production has zero leaders and zero students; every screen has been
+judged by me, against data I invented, in states I chose.
+
+## SPR-M.22 — The student detail page, for a leader  `NOT PLANNED`
 
 Hangs off F-M.15.3. Avi: "we will define it later."
 
