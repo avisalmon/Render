@@ -86,8 +86,8 @@ def notify(event) -> int:
     # not arrived) counts as armed. Assuming disarmed on a missing field is how
     # an alert disappears with nobody deciding.
     try:
-        from app.security_views import DISARMED
         from app.security_models import SecurityState
+        from app.security_views import DISARMED
         mode = (getattr(SecurityState.current(), "mode", "") or "").strip().upper()
         if mode == DISARMED:
             log.debug("house is disarmed — not notifying")

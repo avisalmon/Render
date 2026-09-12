@@ -286,14 +286,14 @@ class DomainCostAdapter(CostAdapter):
         validity = registrar = registrar_url = ""
         nameservers = []
         for line in txt.splitlines():
-            l = line.strip()
-            if m := re.match(r"(?i)validity:\s*(.+)", l):
+            entry = line.strip()
+            if m := re.match(r"(?i)validity:\s*(.+)", entry):
                 validity = m.group(1).strip()
-            elif m := re.match(r"(?i)registrar name:\s*(.+)", l):
+            elif m := re.match(r"(?i)registrar name:\s*(.+)", entry):
                 registrar = m.group(1).strip()
-            elif m := re.match(r"(?i)registrar info:\s*(\S+)", l):
+            elif m := re.match(r"(?i)registrar info:\s*(\S+)", entry):
                 registrar_url = m.group(1).strip()
-            elif m := re.match(r"(?i)nserver:\s*(\S+)", l):
+            elif m := re.match(r"(?i)nserver:\s*(\S+)", entry):
                 nameservers.append(m.group(1).strip().lower())
 
         # Expiry date (WHOIS gives dd-mm-yyyy) + days remaining.

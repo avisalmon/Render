@@ -204,8 +204,13 @@ def user_activity(request, username):
     if not request.user.is_staff:
         raise Http404()
     user = get_object_or_404(User, username=username)
-    from .models import (CourseProjectSubmission, LessonModelSubmission,
-                         LessonReflection, StudentCode, UserVideoProgress)
+    from .models import (
+        CourseProjectSubmission,
+        LessonModelSubmission,
+        LessonReflection,
+        StudentCode,
+        UserVideoProgress,
+    )
     from .showcase import extract_links
 
     events = []

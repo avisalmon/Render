@@ -22,9 +22,22 @@ def test_theme_default_light():
 
 
 def test_both_themes_defined_in_css():
+    """Both themes exist and both paint the chrome.
+
+    The first assertion here used to be `"Khan-Academy-inspired default" in
+    css`, which checked a *comment*. The June redesign rewrote that comment and
+    the test has failed ever since, while the thing it was standing in for —
+    light tokens on `:root`, dark tokens under `[data-theme="dark"]` — was fine
+    the whole time. Asserting prose tests whoever last edited a comment.
+    """
     with open("static/style.css", encoding="utf-8") as f:
         css = f.read()
-    # Light tokens in :root (Khan default) + dark under [data-theme="dark"]
-    assert "Khan-Academy-inspired default" in css
-    assert 'html[data-theme="dark"]' in css
-    assert "--nav-bg" in css  # theme-aware navbar/footer
+
+    assert ":root" in css, "no light theme"
+    assert 'html[data-theme="dark"]' in css, "no dark theme"
+    # Theme-aware navbar and footer: without these the chrome keeps one theme's
+    # colours while the page switches, which is worse than not switching.
+    assert "--nav-bg" in css
+    assert css.index(":root") < css.index('html[data-theme="dark"]'), (
+        "the dark block must come after the light one, or it cannot override it"
+    )

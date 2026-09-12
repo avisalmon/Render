@@ -29,9 +29,9 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from .security_models import (
-    SecurityPushSubscription,
     SecurityCommand,
     SecurityEvent,
+    SecurityPushSubscription,
     SecurityResetDeclaration,
     SecurityState,
     SecurityViewLog,

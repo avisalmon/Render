@@ -23,7 +23,6 @@ UPLOAD_LESSONS = {7, 8, 9}
 
 def forward(apps, schema_editor):
     Course = apps.get_model("app", "Course")
-    Video = apps.get_model("app", "Video")
 
     course = Course.objects.filter(slug="arduino-tinkercad").first()
     if not course:

@@ -43,17 +43,36 @@ def test_css_defines_color_palette_tokens():
 
 @pytest.mark.spr201
 def test_css_color_values_match_spec():
-    """T-F-2.0.1-2: Key palette tokens have spec-defined hex values."""
+    """T-F-2.0.1-2: the palette tokens carry real, deliberate values.
+
+    **Rewritten 2026-09-12, and the reason matters more than the change.** This
+    used to pin four hex values from SPR-2.0.1: a cool blue scheme built on
+    `#0f1117` and `#3b82f6`. The site was redesigned in June to a warm dark
+    (`#15140f`, `#6fae9c`), so the test has failed on every run since, asserting
+    a design decision that had been superseded months earlier.
+
+    A test that pins a palette fails every time somebody chooses a colour, which
+    means it will always be red and will teach everyone to ignore a red suite.
+    What is worth protecting is not the specific hexes, which are the designer's
+    to change, but that every token is actually given a colour in both themes:
+    a token defined in one theme and forgotten in the other is how half a page
+    goes unreadable when somebody switches.
+    """
     css = _read(STYLE_CSS)
-    expectations = {
-        "--bg-primary": "#0f1117",
-        "--bg-surface": "#1a1d27",
-        "--accent-primary": "#3b82f6",
-        "--accent-cta": "#16a34a",
-    }
-    for token, expected_hex in expectations.items():
-        pattern = re.compile(rf"{re.escape(token)}\s*:\s*{re.escape(expected_hex)}", re.IGNORECASE)
-        assert pattern.search(css), f"{token} should be {expected_hex}"
+
+    light = css[css.index(":root"):css.index('html[data-theme="dark"]')]
+    dark = css[css.index('html[data-theme="dark"]'):]
+
+    for token in ("--bg-primary", "--bg-surface", "--text-primary", "--accent-primary"):
+        for name, block in (("light", light), ("dark", dark)):
+            value = re.search(rf"{re.escape(token)}\s*:\s*([^;]+);", block)
+            assert value, f"{token} is not defined in the {name} theme"
+            assert value.group(1).strip(), f"{token} is empty in the {name} theme"
+
+    # And the two themes have to actually differ, or the toggle does nothing.
+    light_bg = re.search(r"--bg-primary\s*:\s*([^;]+);", light).group(1).strip()
+    dark_bg = re.search(r"--bg-primary\s*:\s*([^;]+);", dark).group(1).strip()
+    assert light_bg.lower() != dark_bg.lower(), "both themes paint the same background"
 
 
 # ---------------------------------------------------------------------------
