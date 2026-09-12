@@ -372,7 +372,17 @@ def test_the_staff_area_has_one_door_and_it_is_admin_only(client, db):
     _client_as(client, "chief@example.com", admin=True)
     html = client.get(reverse("matazim:staff_home")).content.decode()
     assert reverse("matazim:staff_targets") in html
-    assert reverse("matazim:staff_admins") in html
+    # REQ-M.114, 2026-09-12: granting the program-manager role is root's alone
+    # now, so a program manager does not see that door. She keeps the rest of
+    # ניהול. This used to assert the opposite, under REQ-M.70's older rule that
+    # anyone holding the role could hand it out.
+    assert reverse("matazim:staff_admins") not in html
+
+    client.logout()
+    _client_as(client, "owner@example.com", root=True)
+    assert reverse("matazim:staff_admins") in client.get(
+        reverse("matazim:staff_home")
+    ).content.decode()
 
 
 def test_only_admins_see_the_staff_door_in_the_nav(client, db):
@@ -388,12 +398,17 @@ def test_only_admins_see_the_staff_door_in_the_nav(client, db):
 
 
 def test_an_admin_can_grant_adminship_by_email(client, db):
-    """T-F-M.6.8-3: REQ-M.70."""
+    """T-F-M.6.8-3: REQ-M.70, narrowed by REQ-M.114.
+
+    The actor is root. Under REQ-M.70 this was any program manager, which meant
+    the role could replicate itself across institutions; REQ-M.114 narrowed it
+    and `tests/test_spr_m_25.py` holds the negative case.
+    """
     from django.urls import reverse
 
     from matazim.access import is_program_manager
 
-    _client_as(client, "chief3@example.com", admin=True)
+    _client_as(client, "chief3@example.com", root=True)
     newcomer = make_user("newcomer@example.com")
 
     client.post(
@@ -407,7 +422,7 @@ def test_granting_never_creates_an_account(client, db):
     """T-F-M.6.8-4: a typo must not conjure the highest role in the system."""
     from django.urls import reverse
 
-    _client_as(client, "chief4@example.com", admin=True)
+    _client_as(client, "chief4@example.com", root=True)  # REQ-M.114
     response = client.post(
         reverse("matazim:staff_admins"),
         {"action": "grant", "email": "typo@example.com"},
@@ -422,7 +437,10 @@ def test_an_admin_cannot_revoke_themselves(client, db):
 
     from matazim.access import is_program_manager
 
-    me = _client_as(client, "careful@example.com", admin=True)
+    # REQ-M.114. As a program manager this now gets a 403, so the assertion
+    # below held without the guard it is named for ever running: a test passing
+    # for the wrong reason is a test that is not there.
+    me = _client_as(client, "careful@example.com", admin=True, root=True)
     client.post(
         reverse("matazim:staff_admins"),
         {"action": "revoke", "email": "careful@example.com"},
@@ -438,7 +456,7 @@ def test_an_admin_can_revoke_someone_else(client, db):
     from matazim.access import is_program_manager
     from matazim.models import MemberProfile
 
-    _client_as(client, "chief5@example.com", admin=True)
+    _client_as(client, "chief5@example.com", root=True)  # REQ-M.114
     other = make_user("other-admin@example.com")
     MemberProfile.objects.update_or_create(user=other, defaults={"is_program_manager": True})
 
