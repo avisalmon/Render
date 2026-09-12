@@ -456,3 +456,80 @@ def test_she_can_see_what_happened_to_her_request(client, db):
 
     assert "הוספנו תג לכל שורה." in html
     assert "SPR-M.26" in html
+
+
+# ------------------------------------------- REQ-M.114: only root appoints
+
+
+def test_a_program_manager_cannot_appoint_another_program_manager(client, db):
+    """T-REQ-M.114-1: the role must not be able to replicate itself.
+
+    Found while wiring the improvement loop: the screen that grants the highest
+    role in the product was gated on `is_program_manager`, so anybody holding
+    it could hand it out, including to somebody in another institution's world.
+    §4.4 would not have caught that, because tenancy scopes leaders and
+    students rather than roles.
+    """
+    from django.urls import reverse
+
+    from matazim.models import MemberProfile
+
+    naomi = _manager()
+    outsider = _user("outsider@example.com", "זר")
+
+    client.force_login(naomi)
+    assert client.get(reverse("matazim:staff_admins")).status_code == 403
+
+    response = client.post(
+        reverse("matazim:staff_admins"),
+        {"action": "grant", "email": outsider.email},
+    )
+    assert response.status_code == 403
+    assert not MemberProfile.objects.filter(
+        user=outsider, is_program_manager=True
+    ).exists(), "a program manager appointed another one"
+
+
+def test_root_can_appoint_by_searching_rather_than_by_typing(client, db):
+    """T-REQ-M.114-2: REQ-M.71.
+
+    Avi's ask: the same user-search method as assigning a leader. Nobody should
+    have to remember an exact address to grant a role, and the search endpoint
+    already existed for exactly this picker.
+    """
+    from django.urls import reverse
+
+    from matazim.models import MemberProfile
+
+    _user("noa.cohen@example.com", "נעה כהן")
+    client.force_login(_root())
+
+    # The picker is on the screen, and the search finds her by Hebrew name.
+    html = client.get(reverse("matazim:staff_admins")).content.decode()
+    assert 'class="mz-picker"' in html
+
+    found = client.get(reverse("matazim:staff_user_search"), {"q": "נעה"}).json()
+    assert any("noa.cohen@example.com" == r.get("email") for r in found["results"]), found
+
+    client.post(
+        reverse("matazim:staff_admins"),
+        {"action": "grant", "email": "noa.cohen@example.com"},
+    )
+    assert MemberProfile.objects.filter(
+        user__email="noa.cohen@example.com", is_program_manager=True
+    ).exists()
+
+
+def test_the_door_to_it_is_hidden_from_a_program_manager(client, db):
+    """T-REQ-M.114-3: a card whose button returns 403 reads as a fault."""
+    from django.urls import reverse
+
+    client.force_login(_manager())
+    assert reverse("matazim:staff_admins") not in client.get(
+        reverse("matazim:staff_home")
+    ).content.decode()
+
+    client.force_login(_root())
+    assert reverse("matazim:staff_admins") in client.get(
+        reverse("matazim:staff_home")
+    ).content.decode()

@@ -23,6 +23,24 @@ from django.utils import timezone
 logger = logging.getLogger(__name__)
 
 
+def _site_url():
+    """Where to send her to read the log.
+
+    Every other mail in this product builds links with
+    `request.build_absolute_uri`, which is right and is not available here:
+    this is sent from a management command, at the end of a sprint, with no
+    request in sight. So it is read from `ALLOWED_HOSTS`, which the deploy
+    already sets, rather than written as a literal in this file that would
+    quietly be wrong the day the domain changes.
+    """
+    for host in getattr(settings, "ALLOWED_HOSTS", []):
+        host = host.strip().lstrip("*.")
+        if host and host not in ("127.0.0.1", "localhost", "testserver"):
+            scheme = "http" if host.endswith(".test") else "https"
+            return f"{scheme}://{host}"
+    return "http://localhost:8000"
+
+
 def _display_name(user):
     from app.models import UserProfile
 
@@ -68,7 +86,7 @@ def send_request_summary(row, *, site_url=None):
     """
     from django.contrib.auth.models import User
 
-    site_url = (site_url or getattr(settings, "SITE_URL", "") or "https://babook.co.il").rstrip("/")
+    site_url = (site_url or _site_url()).rstrip("/")
 
     recipients = []
     for user in [row.author] + list(User.objects.filter(is_superuser=True)):

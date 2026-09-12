@@ -1588,6 +1588,33 @@ not to name a student: free text about a programme is one sentence away from
 free text about a child, and that would otherwise be a new category of personal
 data sitting outside everything §4.10 describes.
 
+## SPR-M.26 — Retention for request rows  `PLANNED`
+
+Caught while checking whether SPR-M.25 was ready to push, and worth recording
+as a near miss: REQ-M.113 says feedback rows fall under REQ-M.86 like
+everything else, "a stated retention period, enforced by a command". Only the
+first half shipped, the warning on the form that stops a student's name arriving
+in the first place. `matazim/retention.py` still covers failed entrance attempts
+and nothing else, so no period is stated or enforced for `Request` rows.
+
+I had marked REQ-M.113 DONE. That is precisely the fault the SPR-M.23 coherence
+pass existed to find, made two sprints after finding it, which says something
+about how easily a requirement gets marked done on the strength of its most
+visible half.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.26.1 | A stated retention period for request rows | REQ-M.113, M.86 | TODO |
+| F-M.26.2 | The retention screen counts them, and a person approves the purge | REQ-M.87 | TODO |
+
+**Needs a number from Avi.** A request and its outcome are the record of why
+the product changed, which argues for keeping them a long time; they are also
+free text written by a member of staff, which argues for not keeping them
+forever. My suggestion is to keep the request and what was built indefinitely
+because they are product history, and to hold the retention rule over
+*declined* rows and anything never acted on, at the same 365 days as everything
+else. That is a decision, not a default, which is why it is not in this sprint.
+
 ## Also still open
 
 - Retire the old production tables, once ACT-M.2 is answered.

@@ -270,18 +270,29 @@ def staff_home(request):
 
 @login_required(login_url=LOGIN_URL)
 def staff_admins(request):
-    """REQ-M.70 — grant and revoke adminship by email.
+    """REQ-M.70, REQ-M.114 — grant and revoke the program-manager role. Root only.
 
-    Not self-service: you must already be an admin to open this. What REQ-M.68
-    forbids is a screen that hands the role to someone who has none, which is
-    why the bootstrap stays with the deploy and Django's admin.
+    **Narrowed to root on 2026-09-12**, and the reason is worth keeping. This
+    was gated on `_is_staff`, which is `is_program_manager`, so the screen that
+    hands out the highest role in the product was open to everybody who already
+    held it. The role could replicate itself: נעמי could appoint a peer, or
+    appoint somebody in another institution's world, and nothing in §4.4 would
+    have stopped it because tenancy scopes leaders and students, not roles.
+
+    Avi asked for "a view just for me to assign program managers", which is the
+    same answer arrived at from the product side rather than the security side.
+    Both agree, so this is now `is_superuser` and nothing else.
+
+    The search picker stays where it is (REQ-M.71): nobody should have to
+    remember an exact address to grant a role. `staff_user_search` keeps its
+    program-manager gate, because two other screens use it to find leaders.
     """
     from django.contrib.auth.models import User
 
     from .access import is_program_manager
     from .models import MemberProfile
 
-    if not _is_staff(request.user):
+    if not request.user.is_superuser:
         raise PermissionDenied
 
     error = ""

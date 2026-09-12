@@ -38,16 +38,24 @@
       </div>
     </section>
 
+    {% comment %}
+      REQ-M.114 — root only, and the door goes with it. A program manager
+      seeing a card whose button returns 403 is worse than not seeing the card:
+      it reads as a fault rather than as a boundary. The page behind it refuses
+      her on its own regardless, because hiding a button is not access control.
+    {% endcomment %}
+    {% if user.is_superuser %}
     <section class="mz-panel">
       <h2>מנהלי התוכנית</h2>
       <p>
-        {{ counts.admins }} מנהלים כרגע. מנהל רואה את כל המט״צים, את כל המובילים
-        ואת כל ההתקדמות, וממנה מובילים.
+        {{ counts.admins }} מנהלים כרגע. מנהל/ת התוכנית רואה את המובילים שלה
+        ואת המט״צים שלהם, וממנה מובילים. את ההרשאה הזאת רק אתה מחלק.
       </p>
       <div class="mz-page-actions">
-        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:staff_admins' %}">לניהול ההרשאות</a>
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:staff_admins' %}">מינוי מנהל/ת תוכנית</a>
       </div>
     </section>
+    {% endif %}
 
     {% comment %}
       REQ-M.87 — the counterweight to putting a person in front of deletion.
