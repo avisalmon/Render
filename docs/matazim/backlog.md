@@ -1273,6 +1273,63 @@ leader and by school, and drills down. Not a list of every student, which is a
 usable landing page for forty people and a useless one for twelve hundred.
 Unclaimed students are a queue on this screen, not an error state (REQ-M.65).
 
+## SPR-M.23 — What the coherence pass found  `PLANNED`
+
+Item 2 of the review: read the spec end to end after roughly eight mid-flight
+amendments and make it tell the truth. The structure was sound — 107
+requirements, no duplicate ids, no gaps in the numbering, no reference to a
+requirement or section that does not exist — so the corrections were all about
+meaning rather than bookkeeping.
+
+**Five corrected in the spec, no code needed.**
+
+1. **REQ-M.18 named the wrong person.** It said the program manager moves
+   `applied` to `in_training`, which contradicts REQ-M.10 (the leader confirms)
+   and contradicts the code, which has done it the leader's way since SPR-M.6.
+   It sat TODO while the work was shipped by somebody else. Now says the leader,
+   and is DONE.
+2. **REQ-M.31 was two requirements wearing one number.** "A student picks their
+   leader" shipped with the open door. "A leader can be swapped, and the change
+   is logged" never did. One status cannot be true for both, so the swap is
+   REQ-M.98 now.
+3. **REQ-M.43 waited on a table that was deliberately killed.** "Until
+   `Membership` exists" could never be satisfied: `Membership` was dropped in
+   §4.8 on purpose.
+4. **REQ-M.62, M.68 and M.69 still said "admin"** where §4.3 renamed the role to
+   program manager. Django's own admin keeps the word, because that is what it
+   is called.
+5. **REQ-M.16 was marked DONE and is not.** See below; this one has a product
+   behind it.
+
+**Three that need building.**
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.23.1 | The application is stored and shown to the leader deciding | REQ-M.16 | TODO |
+| F-M.23.2 | Return to intent, with the destination treated as untrusted | REQ-M.8 | TODO |
+| F-M.23.3 | A student can be moved to another leader, and it is logged | REQ-M.98 | TODO |
+
+**F-M.23.1 is the one that matters.** REQ-M.16 says applying creates a `Student`
+row "plus an `Application`". There is no such table in either app. The form
+still asks a fourteen-year-old for their grade, why they want to join, and what
+they have built; it requires the first two, validates them, and then discards
+all three. The leader being asked to accept that person sees a name and an
+email. So we make a child write why they want in, throw the answer away, and
+then have somebody decide about them with nothing to read. It is a broken
+promise and a decision taken blind, and it is the clearest example yet of the
+pattern this whole review keeps finding: the screen renders, the test passes,
+and nobody had followed the data to the end.
+
+**F-M.23.2 is smaller but has a trap in it.** The login view already honours
+`request.POST.get("next")` and no template has ever sent it, so the line cannot
+fire and the feature reads as done in the code. Whoever builds it must treat the
+destination as untrusted and follow it only inside `/matazim/`, or
+return-to-intent becomes an open redirect straight out of the walls (RULE-1).
+
+**What this pass did not do** is check the spec against a person. It checks the
+spec against itself and against the code. Item 3 is still the one that finds the
+things neither of those can.
+
 ## Also still open
 
 - Retire the old production tables, once ACT-M.2 is answered.
