@@ -266,3 +266,77 @@ def test_the_panels_are_visible_on_a_light_background(client):
     i = html.find(".sec-alerts {")
     block = html[i:i + 300]
     assert "rgba(255,255,255,.04)" not in block
+
+
+# --------------------------------------------------------------------------- #
+# Loud enough to matter, and visibly in progress (REQ-11.6.14 / REQ-11.6.15)
+# --------------------------------------------------------------------------- #
+#
+# The owner, after walking in front of his own camera while armed: *"the alarm
+# was very, very weak... if I was away I wouldn't notice it."* And on arming:
+# *"there are a lot of seconds that it's as if nothing is happening, and I can't
+# be sure that something is in progress."*
+#
+# Both are the same failure in different clothes — **the system knew and the
+# human could not tell.** The house had armed within ten seconds; it reported its
+# state every three hundred. The alert did fire; it sounded like a notification
+# chime because that is what it was.
+
+@pytest.fixture
+def owner(client):
+    user = get_user_model().objects.create_user(
+        username="owner2", email=OWNER, password="x")
+    client.force_login(user)
+    return user
+
+
+def _state(mode="DISARM"):
+    from app.security_models import SecurityState
+    return SecurityState.objects.update_or_create(
+        pk=1, defaults={"ok": True, "cameras_online": 8, "cameras_total": 8,
+                        "mode": mode})[0]
+
+
+def test_the_alert_sound_is_a_siren_not_a_chime(client):
+    """Two gentle sine notes is a message arriving. This has to be the sound of
+    something being wrong."""
+    _login(client)
+    html = client.get(reverse("security_home")).content.decode()
+    assert "sawtooth" in html or "square" in html
+
+
+def test_the_alert_repeats_on_the_owners_cadence(client):
+    """15s: slow enough to think between bursts, relentless enough not to be
+    slept through. 4s was frantic."""
+    _login(client)
+    html = client.get(reverse("security_home")).content.decode()
+    assert "15000" in html
+
+
+def test_dismiss_is_the_only_thing_that_stops_it(client):
+    _login(client)
+    html = client.get(reverse("security_home")).content.decode()
+    assert 'id="sec-stop"' in html
+
+
+def test_the_pending_arm_shows_a_live_counter(client, owner):
+    """"Waiting for the house" with no clock is indistinguishable from a page
+    that has stopped trying."""
+    _state("DISARM")
+    html = client.get(reverse("security_home")).content.decode()
+    assert "sec-arm-elapsed" in html
+
+
+def test_the_page_polls_faster_while_a_request_is_in_flight(client, owner):
+    """Ten seconds of silence after a tap is what made the owner press twice."""
+    _state("DISARM")
+    html = client.get(reverse("security_home")).content.decode()
+    assert "2000" in html
+
+
+def test_the_page_gives_up_out_loud(client, owner):
+    """If the house never answers, say so. Silence is read as 'still working'
+    for ever, and this page has already taught the owner that lesson once."""
+    _state("DISARM")
+    html = client.get(reverse("security_home")).content.decode()
+    assert "לא הגיב" in html or "אין תשובה" in html

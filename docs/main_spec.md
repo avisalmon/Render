@@ -1957,6 +1957,36 @@ One page, phone first, at `/home`.
     quiet is the right number for something that wakes a phone at 3am, and
     neither depends on the other being correct.
 
+- **REQ-11.6.14 — An alert has to sound like an alarm.** The owner, having walked
+  past his own camera while armed: *"the alarm was very, very weak... if I was
+  away I wouldn't notice it."* He was right, and the cause was literal: two soft
+  sine notes is the sound of a message arriving, not of something being wrong.
+
+  - **Sawtooth, two tones alternating**, at roughly four times the gain, for a
+    second and a half — a siren's shape rather than a chime's.
+  - **Repeats every 15 s** until dismissed. Not 4 s, which is too frantic to
+    think through, and not once, which is missable.
+  - Vibration bursts lengthen to match.
+  - **DISMISS is the only thing that stops it**, and stopping silences *this
+    event*, never the feature (REQ-11.6.11).
+
+- **REQ-11.6.15 — A wait you can watch.** The owner: *"there are a lot of seconds
+  that it's as if nothing is happening, and I can't be sure that something is in
+  progress."*
+
+  The house was never slow — it collects a command within 10 s and applied it
+  immediately. It **reported** its state only every 300 s (house spec §3.34b), so
+  babook could not know for up to five minutes. Every arm in the log was applied
+  two or three times, because a system that has done what it was asked and does
+  not say so is, from outside, indistinguishable from one that ignored you.
+
+  - The house now reports **the moment it applies a command** (house W1d).
+  - While a request is in flight the page **counts the seconds out loud**, spins,
+    disables the button, and polls every **2 s** instead of 10.
+  - After **60 s** it says the house has not answered and suggests why, rather
+    than spinning for ever. Silence read as "still working" is the failure this
+    page already inflicted on its owner once.
+
 ### 11.7 Snapshots (REQ-11.7)
 
 Enabled, per the owner's decision, with limits.

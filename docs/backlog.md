@@ -1472,6 +1472,8 @@ a source of truth. Drop this database entirely and the house rebuilds it.
 | F-12.16 | Alert repeats every 4 s until STOP is pressed; push made persistent (`requireInteraction`) with the one long pattern Android permits; the ceiling documented rather than implied | REQ-11.6.11 | DONE ✅ |
 | F-12.17 | The arm and push controls were invisible: white-on-cream from a dark mock-up. Grey panels, `currentColor` buttons, and a test that scans the whole page because the poll repaints the class | REQ-11.6.12 | DONE ✅ |
 | F-12.18 | Honour the house's per-event `announce` flag; an absent flag still rings; babook keeps its own arming gate as a second, independent reason to stay quiet | REQ-11.6.13 | DONE ✅ |
+| F-12.19 | A siren instead of a chime: sawtooth, two tones, 4x gain, repeating every 15 s until dismissed | REQ-11.6.14 | DONE ✅ |
+| F-12.20 | A wait you can watch: live seconds counter, spinner, 2 s poll while pending, and an out-loud give-up at 60 s | REQ-11.6.15 | DONE ✅ |
 
 ### SPR-12.2 — the armed row (DONE ✅)
 

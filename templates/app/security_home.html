@@ -59,8 +59,15 @@ Order of importance on the screen, deliberately:
           {% elif arming.armed %}חמוש - התראות פעילות
           {% else %}מנוטרל - אין התראות{% endif %}
         </strong>
+        {% comment %}
+          REQ-11.6.15 - the owner: "there are a lot of seconds that it's as if
+          nothing is happening, and I can't be sure that something is in
+          progress." A wait with no clock on it is indistinguishable from a page
+          that has given up, so the seconds are counted out loud.
+        {% endcomment %}
         <div id="sec-arm-pending" class="sec-alerts-note mb-0 {% if not arming.pending %}d-none{% endif %}">
-          נשלחה בקשה, ממתין לאישור מהבית...
+          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          ממתין לאישור מהבית... <span id="sec-arm-elapsed">0</span> שניות
         </div>
       </div>
       <button type="button" id="sec-arm" class="btn btn-sm {% if arming.armed %}sec-btn{% else %}btn-success{% endif %}">
@@ -539,21 +546,31 @@ Order of importance on the screen, deliberately:
     } catch (e) { /* private mode: the session still works, it just forgets */ }
   }
 
+  /* REQ-11.6.14 - a siren, not a chime.
+
+     The owner, having walked past his own camera while armed: "the alarm was
+     very, very weak... if I was away I wouldn't notice it." He was right - two
+     soft sine notes is the sound of a message arriving, not of something being
+     wrong.
+
+     Sawtooth rather than sine (harsh, carries), two tones alternating the way a
+     real siren does, four times louder, and a full second and a half of it. */
   function beep() {
     if (!audio) return;
     try {
       var now = audio.currentTime;
-      [0, 0.42].forEach(function (at) {            /* two short rising notes */
+      for (var i = 0; i < 5; i++) {
+        var at = now + i * 0.3;
         var osc = audio.createOscillator(), gain = audio.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, now + at);
-        osc.frequency.exponentialRampToValueAtTime(1320, now + at + 0.18);
-        gain.gain.setValueAtTime(0.0001, now + at);
-        gain.gain.exponentialRampToValueAtTime(0.35, now + at + 0.03);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + at + 0.32);
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(i % 2 ? 640 : 980, at);
+        gain.gain.setValueAtTime(0.0001, at);
+        gain.gain.exponentialRampToValueAtTime(0.9, at + 0.02);
+        gain.gain.setValueAtTime(0.9, at + 0.24);
+        gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.29);
         osc.connect(gain); gain.connect(audio.destination);
-        osc.start(now + at); osc.stop(now + at + 0.34);
-      });
+        osc.start(at); osc.stop(at + 0.3);
+      }
     } catch (e) { /* a browser that will not make noise must not break the page */ }
   }
 
@@ -577,13 +594,13 @@ Order of importance on the screen, deliberately:
 
   function buzz() {
     beep();
-    try { if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 800]); } catch (e) {}
+    try { if (navigator.vibrate) navigator.vibrate([700, 250, 700, 250, 700, 250, 1200]); } catch (e) {}
   }
 
   function startNagging(d) {
     stopNagging();                       /* a newer event replaces the old ring */
     buzz();
-    nagTimer = setInterval(buzz, 4000);
+    nagTimer = setInterval(buzz, 15000);   /* the owner's cadence: relentless, not frantic */
     if (stopBtn) stopBtn.classList.remove('d-none');
     try {
       document.title = '⚠ ' + (d && d.newest_camera || 'אירוע') + ' - babook';
@@ -614,7 +631,11 @@ Order of importance on the screen, deliberately:
      only while alerts are on - the trade is visible rather than buried. */
   function schedule() {
     if (timer) clearInterval(timer);
-    timer = setInterval(tick, (alerts && alerts.checked) ? 10000 : 30000);
+    /* 2s while a command is in flight: this is the window the owner is actually
+       staring at the screen, and the one where 10s of nothing made him press
+       the button a second time. */
+    var every = pendingSince ? 2000 : ((alerts && alerts.checked) ? 10000 : 30000);
+    timer = setInterval(tick, every);
   }
 
   if (alerts) {
@@ -665,6 +686,48 @@ Order of importance on the screen, deliberately:
     armBtn.classList.toggle('btn-success', !a.armed);
     armBtn.classList.toggle('sec-btn', !!a.armed);
     armPending.classList.toggle('d-none', !a.pending);
+    trackPending(!!a.pending);
+  }
+
+  /* REQ-11.6.15 - a wait you can watch.
+
+     The house applies a command within 10s but used to report its state only
+     every 300s, so the owner watched "request sent" for up to five minutes and
+     pressed again - which is why every arm in the log was applied two or three
+     times. The house now reports the moment it acts (W1d); this is the other
+     half, so that even a slow one LOOKS like it is happening.
+
+     While a request is in flight the page counts the seconds out loud, spins,
+     and polls every 2s instead of 10. After 60s it says the house has not
+     answered rather than spinning for ever - silence read as "still working" is
+     the exact failure this page has already inflicted on its owner once. */
+  var pendingSince = 0;
+  var pendingTimer = null;
+  var elapsedEl = document.getElementById('sec-arm-elapsed');
+
+  function trackPending(on) {
+    if (on && !pendingSince) {
+      pendingSince = Date.now();
+      if (pendingTimer) clearInterval(pendingTimer);
+      pendingTimer = setInterval(paintElapsed, 1000);
+      paintElapsed();
+      schedule();                       /* tighten the poll to 2s */
+    } else if (!on && pendingSince) {
+      pendingSince = 0;
+      if (pendingTimer) { clearInterval(pendingTimer); pendingTimer = null; }
+      if (armBtn) armBtn.disabled = false;
+      schedule();                       /* back to the normal cadence */
+    }
+  }
+
+  function paintElapsed() {
+    if (!pendingSince || !elapsedEl) return;
+    var secs = Math.round((Date.now() - pendingSince) / 1000);
+    elapsedEl.textContent = secs;
+    if (secs >= 60 && armPending) {
+      armPending.innerHTML = '⚠ הבית לא הגיב כבר ' + secs +
+        ' שניות. ייתכן שהמחשב כבוי או מנותק - הבקשה עדיין ממתינה.';
+    }
   }
 
   if (armBtn) {
