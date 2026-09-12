@@ -145,9 +145,21 @@
           <li>
             <span class="mz-history-when">{{ entry.at|date:"j.n.Y" }}</span>
             <span class="mz-history-what">
-              {% if entry.from_status %}<span class="mz-muted">{{ entry.get_from_status_display }}</span> ←{% endif %}
-              <strong>{{ entry.get_to_status_display }}</strong>
-              {% if entry.note %}<span class="mz-muted">{{ entry.note }}</span>{% endif %}
+              {% if entry.to_leader %}
+                {% comment %}
+                  REQ-M.98 — a move, not a stage change. Rendering it as
+                  "לומדים ← לומדים" would read as a fault.
+                {% endcomment %}
+                <strong>העברה</strong>
+                <span class="mz-muted">
+                  {% if entry.from_leader %}{{ entry.from_leader.user.profile.display_name|default:"מוביל/ה קודם" }} →{% endif %}
+                  {{ entry.to_leader.user.profile.display_name|default:entry.to_leader.user.email }}
+                </span>
+              {% else %}
+                {% if entry.from_status %}<span class="mz-muted">{{ entry.get_from_status_display }}</span> ←{% endif %}
+                <strong>{{ entry.get_to_status_display }}</strong>
+                {% if entry.note %}<span class="mz-muted">{{ entry.note }}</span>{% endif %}
+              {% endif %}
             </span>
             <span class="mz-muted">
               {% if entry.changed_by %}{{ entry.changed_by.profile.display_name|default:entry.changed_by.email }}{% endif %}

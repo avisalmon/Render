@@ -94,6 +94,7 @@
         וכדאי לקרוא גם את <a href="{% url 'matazim:terms' %}">תנאי השימוש</a>.
       </p>
 
+      {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
       <button type="submit" class="mz-btn mz-btn-primary mz-btn-block">פתיחת חשבון</button>
     </form>
 

@@ -571,6 +571,28 @@ class StatusLog(models.Model):
         related_name="+",
         verbose_name="על ידי",
     )
+    # REQ-M.98 — a move between leaders is a thing that happened to this person
+    # and belongs in the same timeline as everything else. A teacher leaves, a
+    # child changes school, a pairing does not work; none of that is a status
+    # change, and until now none of it was recorded anywhere. Nullable because
+    # almost every row is a status transition with no move in it.
+    from_leader = models.ForeignKey(
+        "Leader",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name="ממוביל/ה",
+    )
+    to_leader = models.ForeignKey(
+        "Leader",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name="למוביל/ה",
+    )
+
     note = models.CharField(max_length=200, blank=True, default="", verbose_name="הערה")
     at = models.DateTimeField(auto_now_add=True, verbose_name="מתי")
 
@@ -637,3 +659,61 @@ class MatazCertificate(models.Model):
     @property
     def is_valid(self):
         return self.revoked_at is None
+
+
+class Application(models.Model):
+    """REQ-M.16 — what somebody wrote when they asked to join.
+
+    This existed in the spec and not in the database. The apply form asked a
+    fourteen-year-old for their grade, why they want to join, and what they have
+    built; it required the first two, validated them, and then dropped all
+    three. The leader being asked to accept that person saw a name and an email.
+    So we made a child write why they wanted in, threw the answer away, and then
+    had somebody decide about them with nothing to read. Found 2026-09-12 by
+    signing a fake person up through the real forms and then searching every
+    text column in the database for the sentence they had typed.
+
+    **A row per asking, not per person.** Somebody can be turned down and apply
+    again, to the same leader or a different one, and the second answer is not a
+    correction of the first. Same reasoning as `StatusLog` (§4.7): the history is
+    the point, and an overwriting row would quietly lose the thing a leader most
+    wants to see, which is whether this person has asked before.
+
+    **It is a minor's free text**, so it is covered by everything §4.10 says:
+    it appears in their own data export (REQ-M.85), it dies with their account
+    through the same cascade as everything else, and it is readable only by the
+    leader who was asked, the program manager who owns that leader, and root.
+    """
+
+    student = models.ForeignKey(
+        Student, on_delete=models.CASCADE, related_name="applications"
+    )
+    # Who was asked. Kept beside the answers because `Student.pending_leader` is
+    # cleared the moment somebody accepts or declines, and then nothing would
+    # say who this was written for.
+    asked = models.ForeignKey(
+        Leader,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="applications",
+        verbose_name="הבקשה הופנתה אל",
+    )
+
+    grade = models.CharField(max_length=40, blank=True, default="", verbose_name="כיתה")
+    motivation = models.TextField(blank=True, default="", verbose_name="מה מושך אותם לתוכנית")
+    # Explicitly optional on the form, and the form says so. Somebody who has
+    # built nothing yet is exactly who this programme is for.
+    built_before = models.TextField(
+        blank=True, default="", verbose_name="מה כבר בנו"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "בקשת הצטרפות"
+        verbose_name_plural = "בקשות הצטרפות"
+
+    def __str__(self):
+        return f"{self.student_id} → {self.asked_id or '-'} ({self.created_at:%Y-%m-%d})"

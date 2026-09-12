@@ -1273,7 +1273,7 @@ leader and by school, and drills down. Not a list of every student, which is a
 usable landing page for forty people and a useless one for twelve hundred.
 Unclaimed students are a queue on this screen, not an error state (REQ-M.65).
 
-## SPR-M.23 — What the coherence pass found  `PLANNED`
+## SPR-M.23 — What the coherence pass found  `DONE`
 
 Item 2 of the review: read the spec end to end after roughly eight mid-flight
 amendments and make it tell the truth. The structure was sound — 107
@@ -1305,9 +1305,39 @@ meaning rather than bookkeeping.
 
 | F-ID | Feature | Traces | Status |
 |---|---|---|---|
-| F-M.23.1 | The application is stored and shown to the leader deciding | REQ-M.16 | TODO |
-| F-M.23.2 | Return to intent, with the destination treated as untrusted | REQ-M.8 | TODO |
-| F-M.23.3 | A student can be moved to another leader, and it is logged | REQ-M.98 | TODO |
+| F-M.23.1 | The application is stored and shown to the leader deciding | REQ-M.16 | DONE |
+| F-M.23.2 | Return to intent, with the destination treated as untrusted | REQ-M.8 | DONE |
+| F-M.23.3 | A student can be moved to another leader, and it is logged | REQ-M.98 | DONE |
+| F-M.23.4 | The contract can reach a screen that needs an id | Step 4a | DONE |
+
+### What building it turned up  `DONE 2026-09-12`
+
+**The catalogue could not name a detail screen at all.** Every path in
+`SCREENS` was a plain string, so any screen whose URL carries a database id was
+structurally impossible to add: the student detail page a leader reads, the
+leader detail page a program manager reads, the public certificate
+verification. SPR-M.21 reported that 41 screens were catalogued and all of them
+passed. It was 41 **static** screens, and the detail pages had never been
+rendered by anything. Paths may be callables over the world now, and the
+catalogue is 50 entries.
+
+Two things that found, both the same shape as the `member/apply` defect:
+
+- **The certified student in the fixture had no certificate.** The world set
+  the status directly, so `student.certificate` did not exist and the public
+  verify page could not be catalogued. It goes through `certify()` now. This is
+  the same mistake the demo seeder made, which is twice.
+- **The move control rendered nowhere.** The world has one leader, so there was
+  nobody to move a student to and the control was correctly hidden — an entry
+  covering the screen without ever drawing the thing just built. There is a
+  `second_leader` state now.
+
+And one from reading the paint rather than the tests: the new file picker used
+two CSS variables that do not exist. `var(--mz-accent)` is not an error, the
+declaration is simply dropped, so a wrong colour reads as a design choice. The
+smoke-gate grep added in SPR-M.21 caught it in a tenth of a second, which is
+the first time one of these guards has paid for itself on the sprint after it
+was written.
 
 **F-M.23.1 is the one that matters.** REQ-M.16 says applying creates a `Student`
 row "plus an `Application`". There is no such table in either app. The form

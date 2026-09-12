@@ -39,6 +39,11 @@
       <label class="mz-field">
         <span>סיסמה</span>
         <input type="password" name="password" autocomplete="current-password" required>
+        {% comment %}
+          REQ-M.8 — already checked by `safe_next`, so this is a /matazim/
+          path or nothing at all.
+        {% endcomment %}
+        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
       </label>
       <button type="submit" class="mz-btn mz-btn-primary mz-btn-block">כניסה</button>
     </form>

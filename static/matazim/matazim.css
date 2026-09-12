@@ -1590,3 +1590,64 @@ a.mz-training-title:hover { color: var(--mz-purple); }
   border-color: var(--mz-purple);
   box-shadow: 0 0 0 3px rgba(107, 76, 214, 0.18);
 }
+
+
+/* A request to join, with what the person wrote (REQ-M.16).
+   A card rather than a row, because the answers are prose and prose in a
+   flex row is what produced the 1018px badge and the stretched labels. */
+.mz-requests { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+
+.mz-request {
+  border: 1px solid var(--mz-line);
+  border-radius: var(--mz-radius-sm);
+  padding: 16px 18px;
+  background: var(--mz-page);
+}
+
+.mz-request-who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.mz-request-who strong { color: var(--mz-ink); }
+
+.mz-answers { margin: 0 0 14px; }
+.mz-answers dt {
+  font-size: .82rem;
+  color: var(--mz-muted);
+  margin-top: 10px;
+}
+.mz-answers dd {
+  margin: 2px 0 0;
+  color: var(--mz-body);
+  /* Their own words, so they are allowed to be long and must stay readable. */
+  overflow-wrap: anywhere;
+}
+
+.mz-request-act { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+
+/* Moving a student to another leader (REQ-M.98). Sits inside a roster row, so
+   it has to stay small and must not stretch: `flex: none` on the main axis is
+   not enough on its own, which is what produced the 1018px badge. */
+.mz-move {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  align-self: center;
+}
+.mz-move-label { font-size: .8rem; color: var(--mz-muted); }
+.mz-move select {
+  font: inherit;
+  font-size: .85rem;
+  padding: 6px 8px;
+  min-height: 44px;
+  border: 1px solid var(--mz-line);
+  border-radius: 9px;
+  background: var(--mz-card);
+  color: var(--mz-ink);
+  max-width: 220px;
+}

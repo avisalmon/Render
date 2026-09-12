@@ -84,7 +84,7 @@ def _courses():
     return made
 
 
-def build_world(*, students="mixed", classes="one"):
+def build_world(*, students="mixed", classes="one", waiting=False, second_leader=False):
     """One institution, dialled to the state under test.
 
     `students`: none | mixed  — an empty roster is its own screen.
@@ -93,8 +93,16 @@ def build_world(*, students="mixed", classes="one"):
                 in a fixture, because nobody writes that case by hand.
     """
     from app.models import CourseCertificate, UserVideoProgress
+    from matazim.certification import certify
     from matazim.history import record_arrival, set_status
-    from matazim.models import EntranceTarget, Leader, MemberProfile, Student, StudyClass
+    from matazim.models import (
+        Application,
+        EntranceTarget,
+        Leader,
+        MemberProfile,
+        Student,
+        StudyClass,
+    )
 
     courses = _courses()
     now = timezone.now()
@@ -121,6 +129,18 @@ def build_world(*, students="mixed", classes="one"):
         program_manager=manager,
         approved_at=now,
     )
+
+    # A second leader under the same manager, which is what makes moving a
+    # student possible at all (REQ-M.98). Without one the move control is
+    # correctly hidden, and an entry rendering this screen would cover it
+    # without ever drawing the thing that was just built.
+    other = None
+    if second_leader:
+        other = Leader.objects.create(
+            user=_user("leader2@example.com", "דנה כהן"),
+            program_manager=manager,
+            approved_at=now,
+        )
 
     rooms = []
     if classes == "one":
@@ -183,7 +203,7 @@ def build_world(*, students="mixed", classes="one"):
             )
             student = Student.objects.create(user=user, leader=leader)
             record_arrival(student, by=user, note="הצטרפות")
-            set_status(student, status, by=leader.user, note="אישור מוביל/ה")
+            set_status(student, Student.IN_TRAINING, by=leader.user, note="אישור מוביל/ה")
             if rooms:
                 student.classes.set(rooms)
 
@@ -200,11 +220,45 @@ def build_world(*, students="mixed", classes="one"):
                     )
             for slug in certs:
                 CourseCertificate.objects.get_or_create(user=user, course=courses[slug])
+
+            if status == "certified":
+                # Through the real door, not by setting the field. A student
+                # marked certified with no `MatazCertificate` is not a state
+                # that can occur in the product, and faking it here is how the
+                # demo seeder ended up showing certified people with no
+                # certificate to show.
+                certify(leader.user, student)
+
             people[email] = student
+
+    if waiting:
+        # Somebody who has asked and not been answered, with what they wrote.
+        # REQ-M.16's screen has no other state worth rendering: an empty
+        # approval panel is not the panel.
+        asker = _user("asker@example.com", "רוני אלון")
+        MemberProfile.objects.update_or_create(
+            user=asker,
+            defaults={
+                "entrance_test_passed_at": now,
+                "birth_year": now.year - 14,
+                "guardian_consent_at": now,
+                "welcome_accepted_at": now,
+            },
+        )
+        pending = Student.objects.create(user=asker, pending_leader=leader)
+        record_arrival(pending, by=asker, note="בקשה להצטרף")
+        Application.objects.create(
+            student=pending,
+            asked=leader,
+            grade="ט2",
+            motivation="אני רוצה לבנות רובוטים ולהדריך ילדים בבית הספר שלי",
+            built_before="מנורה עם ארדואינו ומשחק בסקראץ׳",
+        )
 
     return {
         "manager": manager,
         "leader": leader,
+        "other_leader": other,
         "students": people,
         "unattached": unattached,
     }
@@ -279,6 +333,45 @@ SCREENS = [
     ("pm/leaders-old", "/matazim/staff/leaders/", "pm@example.com", dict(students="mixed")),
     ("pm/retention", "/matazim/staff/retention/", "pm@example.com", dict(students="mixed")),
     ("pm/targets", "/matazim/staff/targets/", "pm@example.com", dict(students="none")),
+
+    # SPR-M.23 — the detail screens, which no catalogue entry could name until
+    # the paths here were allowed to be built from the world.
+    (
+        "leader/student-mid",
+        lambda w: f"/matazim/leader/students/{w['students']['mid@example.com'].pk}/",
+        "leader@example.com",
+        dict(students="mixed"),
+    ),
+    (
+        "leader/student-certified",
+        lambda w: f"/matazim/leader/students/{w['students']['done@example.com'].pk}/",
+        "leader@example.com",
+        dict(students="mixed"),
+    ),
+    (
+        "pm/leader-detail",
+        lambda w: f"/matazim/staff/leaders/{w['leader'].pk}/",
+        "pm@example.com",
+        dict(students="mixed"),
+    ),
+    (
+        "pm/leader-detail-movable",
+        lambda w: f"/matazim/staff/leaders/{w['leader'].pk}/",
+        "pm@example.com",
+        dict(students="mixed", second_leader=True),
+    ),
+    (
+        "leader/waiting",
+        "/matazim/leader/",
+        "leader@example.com",
+        dict(students="mixed", waiting=True),
+    ),
+    (
+        "public/verify",
+        lambda w: f"/matazim/verify/{w['students']['done@example.com'].certificate.public_id}/",
+        None,
+        dict(students="mixed"),
+    ),
 ]
 
 
@@ -335,7 +428,7 @@ REPEATED_JS = """() => {
 # noise gets switched off: only elements with their own text, only where the
 # background resolves to a flat colour, and the real AA thresholds (3:1 once
 # text is large, which is what "large" is for).
-CONTRAST_JS = """() => {
+CONTRAST_JS = r"""() => {
     const srgb = (c) => { c /= 255; return c <= 0.04045 ? c / 12.92
                                                         : Math.pow((c + 0.055) / 1.055, 2.4); };
     const lum = ([r, g, b]) => 0.2126 * srgb(r) + 0.7152 * srgb(g) + 0.0722 * srgb(b);
@@ -467,8 +560,17 @@ def test_screen_contract(browser, live_server, db, label, path, who, world):
     One test per screen-state rather than one per property, because a failure
     should name the screen you broke, which is the thing you are about to go
     and look at.
+
+    `path` may be a callable taking the world, because the paths here were
+    plain strings until SPR-M.23 and that quietly excluded **every screen with
+    a database id in its URL**: the student detail page a leader reads, the
+    leader detail page a program manager reads, the public certificate
+    verification. SPR-M.21 claimed 41 screens were catalogued. It was 41 static
+    screens, and the detail pages had never been rendered by anything.
     """
-    build_world(**world)
+    world_objects = build_world(**world)
+    if callable(path):
+        path = path(world_objects)
     context, page = _open(browser, live_server, who, path)
     try:
         complaints = []

@@ -1166,8 +1166,10 @@
       {% endif %}
 
       {% if video.is_final_lesson and not course.issues_certificate %}
-        {# No-credential course (e.g. the AI user journey): the reflection above is
-           the closer. No finish button, no certificate. #}
+        {% comment %}
+          No-credential course (e.g. the AI user journey): the reflection above
+          is the closer. No finish button, no certificate.
+        {% endcomment %}
         <span class="text-muted small d-inline-flex align-items-center gap-1">
           <i class="bi bi-flag-checkered"></i> הגעת לסוף המסע. כל הכבוד!
         </span>

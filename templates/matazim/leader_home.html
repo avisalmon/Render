@@ -20,25 +20,56 @@
   {% if waiting %}
     <section class="mz-panel">
       <h2>מחכים לאישור שלכם <span class="mz-count">{{ waiting|length }}</span></h2>
-      <ul class="mz-training">
-        {% for student in waiting %}
-          <li>
-            <span class="mz-training-title">
-              {{ student.user.profile.display_name|default:student.user.email }}
-              <span class="mz-muted">{{ student.user.email }}</span>
-            </span>
-            <span class="mz-role">
-              <form method="post" action="{% url 'matazim:leader_confirm' student.pk %}" class="mz-inline-form">
+      {% comment %}
+        REQ-M.16. This was a name, an email and two buttons: a decision taken
+        with nothing to read. What they wrote is the reason the form asks, so it
+        sits on the screen where the leader says yes.
+      {% endcomment %}
+      <ul class="mz-requests">
+        {% for row in waiting %}
+          <li class="mz-request">
+            <div class="mz-request-who">
+              <strong>{{ row.student.user.profile.display_name|default:row.student.user.email }}</strong>
+              {% if row.application.grade %}
+                <span class="mz-tag mz-tag-idle">כיתה {{ row.application.grade }}</span>
+              {% endif %}
+              {% if row.asked_before %}
+                <span class="mz-tag mz-tag-fix">ביקשו כבר {{ row.asked_before }} פעמים</span>
+              {% endif %}
+              <span class="mz-muted" dir="ltr">{{ row.student.user.email }}</span>
+            </div>
+
+            {% if row.application %}
+              <dl class="mz-answers">
+                {% if row.application.motivation %}
+                  <dt>מה מושך אותם לתוכנית</dt>
+                  <dd>{{ row.application.motivation }}</dd>
+                {% endif %}
+                {% if row.application.built_before %}
+                  <dt>מה כבר בנו</dt>
+                  <dd>{{ row.application.built_before }}</dd>
+                {% endif %}
+              </dl>
+            {% else %}
+              {% comment %}
+                Everyone who applied before REQ-M.16 shipped. Saying so is
+                better than an empty panel that looks like a fault.
+              {% endcomment %}
+              <p class="mz-muted">הבקשה הזו נשלחה לפני שהשאלות נשמרו, ולכן אין כאן טקסט.</p>
+            {% endif %}
+
+            <div class="mz-request-act">
+              <form method="post" action="{% url 'matazim:leader_confirm' row.student.pk %}" class="mz-inline-form">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="confirm">
                 <button type="submit" class="mz-btn mz-btn-primary">אישור</button>
               </form>
-              <form method="post" action="{% url 'matazim:leader_confirm' student.pk %}" class="mz-inline-form">
+              <form method="post" action="{% url 'matazim:leader_confirm' row.student.pk %}" class="mz-inline-form">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="decline">
                 <button type="submit" class="mz-linkbtn">לא שלי</button>
               </form>
-            </span>
+            </div>
           </li>
         {% endfor %}
       </ul>

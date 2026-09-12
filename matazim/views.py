@@ -178,6 +178,33 @@ def entrance_test(request):
 # --- The threshold ----------------------------------------------------------
 
 
+def safe_next(request):
+    """REQ-M.8 — where to go after signing in, if it is somewhere we allow.
+
+    The destination arrives from outside, so it is untrusted. Two things are
+    being refused here, not one:
+
+    An **open redirect**: `?next=https://elsewhere/` would turn our own login
+    screen into a way of bouncing somebody to an attacker's page with our
+    domain in the referrer. `//host` and `https:/\host` are the same attack
+    wearing a different hat, which is why this insists on a single leading
+    slash rather than merely checking the scheme.
+
+    And a **way out of the walls**: RULE-1 says nothing here navigates to
+    babook, and return-to-intent would be a hole straight through that rule if
+    `/courses/` were an acceptable answer. So it must be inside `/matazim/`.
+
+    Anything else is not an error worth a message; it is simply ignored and the
+    person lands on the home page, which is where they were going anyway.
+    """
+    candidate = (request.POST.get("next") or request.GET.get("next") or "").strip()
+    if not candidate.startswith("/") or candidate.startswith("//"):
+        return ""
+    if "\\" in candidate or not candidate.startswith("/matazim/"):
+        return ""
+    return candidate
+
+
 def login(request):
     """REQ-M.6, REQ-M.7 — our screen, babook's accounts, no linking step."""
     if request.user.is_authenticated:
@@ -205,12 +232,15 @@ def login(request):
 
             if claim_leader_invite(request, user):
                 return redirect("matazim:leader_entrance")
-            return redirect(request.POST.get("next") or "matazim:home")
+            return redirect(safe_next(request) or "matazim:home")
 
     return render(
         request,
         "matazim/login.html",
-        shell(request, "login", error=error, email=email),
+        # Carried onto the form, which is the half that was missing: the view
+        # has honoured `next` for sprints and no template ever sent it, so the
+        # line could never fire.
+        shell(request, "login", error=error, email=email, next=safe_next(request)),
     )
 
 
@@ -288,6 +318,11 @@ def register(request):
 
             if claim_leader_invite(request, user):
                 return redirect("matazim:leader_entrance")
+            # REQ-M.8 — one link works for new and existing users alike, which
+            # is the whole point of the requirement: somebody who tapped a
+            # member page and had no account yet gets taken there too.
+            if destination := safe_next(request):
+                return redirect(destination)
             # REQ-M.46 - the main view, not the personal area. Someone who has
             # just signed in wants to see the program, not a form about
             # themselves, and the personal area is one click away in the header.
@@ -304,6 +339,7 @@ def register(request):
             email=email,
             posted=request.POST if request.method == "POST" else None,
             this_year=timezone.now().year,
+            next=safe_next(request),
         ),
     )
 

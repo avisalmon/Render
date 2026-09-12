@@ -28,8 +28,8 @@ from django.views.decorators.http import require_POST
 
 from .access import is_program_manager, leader_of, visible_leaders
 from .consent import consent_blocker, needs_guardian_consent
-from .history import record_arrival, set_status
-from .models import Leader, Student
+from .history import record_arrival, record_leader_change, set_status
+from .models import Application, Leader, Student
 from .views import member_profile, shell
 
 LOGIN_URL = "/matazim/login/"
@@ -179,6 +179,18 @@ def apply(request):
             # Asking, not being accepted. The leader says yes (REQ-M.10).
             student.pending_leader = leader
             student.save()
+            # REQ-M.16 — keep what they wrote. This is the whole reason the
+            # three questions are on the form: the leader deciding has to be
+            # able to read them. Written after the Student row exists and
+            # before the status moves, so an application without an applicant
+            # is not a state that can occur.
+            Application.objects.create(
+                student=student,
+                asked=leader,
+                grade=grade,
+                motivation=motivation,
+                built_before=(request.POST.get("built") or "").strip(),
+            )
             set_status(student, Student.APPLIED, by=request.user, note="בקשה להצטרף")
             return redirect("matazim:joined")
 
@@ -230,12 +242,54 @@ def leader_home(request):
             "leader",
             leader=leader,
             join_url=request.build_absolute_uri(f"/matazim/join/{leader.join_code}/"),
-            waiting=Student.objects.filter(pending_leader=leader).select_related(
-                "user", "user__profile"
-            ),
+            waiting=_waiting_on(leader),
             mine=Student.objects.filter(leader=leader).select_related("user", "user__profile"),
         ),
     )
+
+
+def _name_of(leader):
+    """A leader by the name they are called. Same reason as REQ-M.85's fix:
+    a notice that says `noa@example.com` is a notice about a database row."""
+    from .certification import _display_name
+
+    return _display_name(leader.user) if leader else ""
+
+
+def _name_of_student(student):
+    from .certification import _display_name
+
+    return _display_name(student.user)
+
+
+def _waiting_on(leader):
+    """The people asking this leader, each with what they actually wrote.
+
+    REQ-M.16. Approving used to be a name, an email and two buttons, which is a
+    decision taken blind. The answers travel with the person here so the leader
+    reads them on the screen where they say yes, rather than on a screen they
+    would have to think to go and find.
+
+    `applications` is ordered newest first, so the first one addressed to this
+    leader is the live request; earlier ones are how we can say "has asked
+    before", which is the thing a leader most wants to know and the reason this
+    keeps a row per asking rather than overwriting one.
+    """
+    rows = []
+    for student in (
+        Student.objects.filter(pending_leader=leader)
+        .select_related("user", "user__profile")
+        .prefetch_related("applications")
+    ):
+        theirs = [a for a in student.applications.all() if a.asked_id == leader.pk]
+        rows.append(
+            {
+                "student": student,
+                "application": theirs[0] if theirs else None,
+                "asked_before": max(len(theirs) - 1, 0),
+            }
+        )
+    return rows
 
 
 @require_POST
@@ -364,6 +418,30 @@ def staff_leader(request, leader_id):
             leader.is_active = True
             leader.save(update_fields=["is_active"])
             notice = "המוביל/ה חזר/ה לפעילות."
+        elif action == "move":
+            # REQ-M.98 — a teacher leaves, a child changes school, a pairing
+            # does not work. Both ends are read through the manager's own scope,
+            # so a student cannot be moved out of her world or into it: the
+            # student must belong to this leader, and the destination must be a
+            # leader she owns. Root's scope is everything, which is correct.
+            student = Student.objects.filter(
+                pk=request.POST.get("student"), leader=leader
+            ).first()
+            target = visible_leaders(request.user).filter(
+                pk=request.POST.get("to"), is_active=True
+            ).first()
+            if student is None or target is None:
+                notice = "לא הצלחנו להעביר. בדקו שהמט״צ והמוביל/ה עדיין קיימים."
+            elif target.pk == leader.pk:
+                notice = "המט״צ כבר משויך למוביל/ה הזה."
+            else:
+                record_leader_change(
+                    student,
+                    target,
+                    by=request.user,
+                    note=f"הועבר/ה מ{_name_of(leader)} ל{_name_of(target)}",
+                )
+                notice = f"{_name_of_student(student)} הועבר/ה ל{_name_of(target)}."
 
     return render(
         request,
@@ -376,6 +454,12 @@ def staff_leader(request, leader_id):
             join_url=request.build_absolute_uri(f"/matazim/join/{leader.join_code}/"),
             students=Student.objects.filter(leader=leader).count(),
             waiting=Student.objects.filter(pending_leader=leader).count(),
+            # REQ-M.98 — somewhere to move somebody to. Her other active
+            # leaders, never the one whose page this is.
+            move_targets=visible_leaders(request.user)
+            .filter(is_active=True)
+            .exclude(pk=leader.pk)
+            .select_related("user", "user__profile"),
             # REQ-M.95 — Avi, looking at the demo: opening a leader should show
             # their students, not only a count. A number says there are three;
             # it does not say which three, which is the only question worth

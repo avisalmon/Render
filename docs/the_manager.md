@@ -152,6 +152,30 @@ Sweeping the remaining twenty-two screens into the catalogue produced a clean
    point. It is scoped narrowly — own text only, flat backgrounds only — because
    a loose accessibility rule produces noise, and noise gets switched off.
 
+#### What SPR-M.23 added
+
+9. **A catalogue of static paths cannot see a detail screen.** Every path in
+   `SCREENS` was a plain string, which structurally excluded every screen whose
+   URL carries a database id: the student detail page a leader reads, the leader
+   detail page a program manager reads, the public certificate verification.
+   SPR-M.21 reported 41 screens catalogued and green; it was 41 **static**
+   screens. Paths may be callables over the world now. The lesson generalises:
+   when a catalogue reports full coverage, ask what shape of thing it cannot
+   express, because that is where the uncovered work is hiding.
+10. **A fixture that fakes a state teaches the screen to lie.** The world set a
+    student's status to certified directly, so they had no `MatazCertificate`
+    and the verify page could not be reached at all. That is the second time
+    this exact shortcut has been taken, the demo seeder being the first. Build
+    the state through the door the product uses, or the screen you render is
+    not the screen that ships.
+11. **A static fault deserves a static check.** Two of the wrapped `{# #}`
+    comments this sprint sat in branches no fixture visits, so rendering could
+    never have found them, and two more were in babook, one at the top of a
+    reusable gallery partial putting an English paragraph about function
+    arguments onto lesson pages. The contract catches these only where a state
+    is rendered; a four-line grep in the smoke gate catches them everywhere.
+    Ask of every new render-time check whether it could have been a static one.
+
 And one that belongs in the fast gate rather than the contract: **an undefined
 CSS variable is a silent failure.** `var(--mz-accent)` in a rule is not an
 error, the declaration is simply dropped and the element keeps what it

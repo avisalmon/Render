@@ -84,3 +84,35 @@ def test_every_css_variable_is_defined():
 
     missing = sorted(used - defined)
     assert not missing, f"used in a rule but never defined, so the rule is dead: {missing}"
+
+
+def test_no_template_comment_spans_a_line():
+    """Django's `{# #}` is single-line only, so a wrapped one is not a comment.
+
+    The half after the newline renders, as developer prose, in the middle of a
+    page. The screen contract catches this only where a screen is rendered in
+    the state that reaches the comment, and two of these were sitting in
+    branches no fixture visits: a fallback for applications made before the
+    table existed, and a history entry for a move. Two more were in babook, one
+    of them at the top of a reusable gallery partial, which put an English
+    paragraph about function arguments onto lesson pages.
+
+    It is a static fault, so this is a static check, and it covers both products
+    because the mistake is not specific to either.
+    """
+    import re
+    from pathlib import Path
+
+    bad = []
+    for path in sorted(Path("templates").rglob("*.html")):
+        text = path.read_text(encoding="utf-8")
+        for match in re.finditer(r"\{#", text):
+            rest = text[match.start():]
+            end = rest.find("#}")
+            if end == -1 or "\n" in rest[:end]:
+                bad.append(f"{path}:{text[:match.start()].count(chr(10)) + 1}")
+
+    assert not bad, (
+        "a `{# #}` comment runs past its line, so the rest of it renders as "
+        "text; use `{% comment %}`:\n  " + "\n  ".join(bad)
+    )

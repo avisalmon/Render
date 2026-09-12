@@ -92,6 +92,26 @@
               {% else %}
                 <span class="mz-tag mz-tag-idle">{{ row.student.get_status_display }}</span>
               {% endif %}
+              {% if move_targets %}
+                {% comment %}
+                  REQ-M.98. Deliberately plain and deliberately not a
+                  confirmation dialog: this is reversible by doing it again, it
+                  is logged either way, and a teacher leaving mid-year is
+                  ordinary rather than dangerous.
+                {% endcomment %}
+                <form method="post" class="mz-move">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="move">
+                  <input type="hidden" name="student" value="{{ row.student.pk }}">
+                  <label class="mz-move-label" for="to-{{ row.student.pk }}">העברה אל</label>
+                  <select name="to" id="to-{{ row.student.pk }}">
+                    {% for target in move_targets %}
+                      <option value="{{ target.pk }}">{{ target.user.profile.display_name|default:target.user.email }}</option>
+                    {% endfor %}
+                  </select>
+                  <button type="submit" class="mz-linkbtn">העברה</button>
+                </form>
+              {% endif %}
             </span>
           </li>
         {% endfor %}

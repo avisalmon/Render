@@ -62,3 +62,33 @@ def record_arrival(student, *, by=None, note=""):
         changed_by=by,
         note=note,
     )
+
+
+def record_leader_change(student, to_leader, *, by=None, note=""):
+    """REQ-M.98 — move a student to another leader, and say so in the timeline.
+
+    Field and log in one place, for the same reason `set_status` exists: doing
+    this by hand in Django's admin writes the field and no log, and §4.7 says
+    that is the one thing which must not happen. The status is deliberately
+    untouched — somebody who was לומדים under one leader is still לומדים under
+    the next, and moving them is not progress or regress.
+
+    Returns `None` when nothing moved, so a double-submitted form does not put
+    two identical lines in a history meant to be read by a person.
+    """
+    previous = student.leader
+    if previous is not None and to_leader is not None and previous.pk == to_leader.pk:
+        return None
+
+    student.leader = to_leader
+    student.save(update_fields=["leader", "updated_at"])
+
+    return StatusLog.objects.create(
+        student=student,
+        from_status=student.status or "",
+        to_status=student.status or "",
+        from_leader=previous,
+        to_leader=to_leader,
+        changed_by=by,
+        note=note,
+    )

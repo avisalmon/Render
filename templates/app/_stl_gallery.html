@@ -1,8 +1,10 @@
-{# Reusable project exhibition: STL (3D), Scratch (thumbnail), Tinkercad (icon) or
-   YouTube tiles -> click to enlarge in the shared #stl-modal. Args: models,
-   gallery_title, can_download. Host page must run initGallery() once.
-   Each field is checked independently so one submission row can show more than
-   one tile (e.g. the Tinkercad summary lesson: a shared project AND an STL). #}
+{% comment %}
+  Reusable project exhibition: STL (3D), Scratch (thumbnail), Tinkercad (icon)
+  or YouTube tiles -> click to enlarge in the shared #stl-modal. Args: models,
+  gallery_title, can_download. Host page must run initGallery() once.
+  Each field is checked independently so one submission row can show more than
+  one tile (e.g. the Tinkercad summary lesson: a shared project AND an STL).
+{% endcomment %}
 {% if models %}
 <div class="stl-gallery">
   {% if gallery_title %}<div class="stl-gallery-title">{{ gallery_title }}</div>{% endif %}

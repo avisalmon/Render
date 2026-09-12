@@ -84,7 +84,11 @@ def _everything_about(user):
             for a in EntranceAttempt.objects.filter(member=profile).order_by("number")
         ]
 
-    for student in Student.objects.filter(user=user).select_related("leader__user"):
+    for student in (
+        Student.objects.filter(user=user)
+        .select_related("leader__user")
+        .prefetch_related("applications__asked__user")
+    ):
         out["program"].append(
             {
                 "cohort_year": student.cohort_year,
@@ -100,6 +104,20 @@ def _everything_about(user):
                 "certified_at": (
                     student.certified_at.isoformat() if student.certified_at else None
                 ),
+                # REQ-M.85, REQ-M.16 — their own words about themselves are
+                # among the most personal things we hold, so they belong in the
+                # answer to "what do you have about me" rather than being
+                # visible only to staff.
+                "applications": [
+                    {
+                        "asked": _display_name(a.asked.user) if a.asked else None,
+                        "grade": a.grade,
+                        "motivation": a.motivation,
+                        "built_before": a.built_before,
+                        "sent": a.created_at.isoformat() if a.created_at else None,
+                    }
+                    for a in student.applications.all()
+                ],
             }
         )
 
