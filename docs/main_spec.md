@@ -2008,6 +2008,30 @@ One page, phone first, at `/home`.
     tab while the phone kept buzzing would be the most annoying possible
     half-fix.
 
+- **REQ-11.6.17 — The off switch must outlive the tab.** Reported live, minutes
+  after REQ-11.6.16 shipped: *"At the beginning I see a button to stop the alert.
+  But when I refresh the screen, this button disappears, and now I can't turn off
+  the alert, which is very nagging."*
+
+  The STOP button was drawn by the page's own nagging loop, so a reload forgot
+  it — while the **house**, which is the thing actually re-pushing every 15 s,
+  did not. **The owner was locked out of his own off switch by pressing F5.**
+
+  - "An alert is live" is **state babook holds** (`alert_event_id`,
+    `alert_since`), not something a tab remembers. Any page, any device, any
+    time: if it is ringing, the button is there.
+  - **Server-rendered**, so a freshly loaded page already has it rather than
+    waiting for the first poll, and the poll keeps it in step afterwards.
+  - **Dismissing clears babook's copy immediately**, not in the ~10 s the house
+    takes to collect the command — the owner pressed the button and the page must
+    stop offering it now.
+  - **Expires after `ALERT_MAX_SECONDS` (1200)**, matching the house's own
+    give-up (house spec §3.34c). A STOP button for an alarm that already stopped
+    teaches the owner that the button does nothing.
+  - The alert is marked with `filter().update()` and **not** `update_or_create`:
+    with no state row there is nothing to update, and inventing one would publish
+    fabricated health numbers that nothing measured.
+
 ### 11.7 Snapshots (REQ-11.7)
 
 Enabled, per the owner's decision, with limits.

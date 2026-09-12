@@ -271,3 +271,79 @@ def test_dismissing_without_an_id_is_still_accepted(client, owner):
     is. An empty dismissal means "whatever is live", which the house resolves."""
     assert client.post(reverse("security_dismiss_alert"), data="{}",
                        content_type="application/json").status_code == 200
+
+
+# ---- the off switch must outlive the tab (REQ-11.6.17) ---------------------- #
+#
+# Reported live: *"At the beginning I see a button to stop the alert. But when I
+# refresh the screen, this button disappears, and now I can't turn off the
+# alert, which is very nagging."*
+#
+# The button was drawn by the page's own nagging loop, so a reload forgot it —
+# while the HOUSE, which is the thing actually re-pushing every 15 s, did not.
+# **The owner was locked out of his own off switch by pressing F5.**
+#
+# So "an alert is live" is now state babook holds, not something a tab remembers.
+# Any page, any device, any time — if it is ringing, the button is there.
+
+def test_an_announced_event_marks_the_alert_live(client):
+    _state("AWAY")          # the house has reported at least once, as it always has
+    client.post(reverse("security_api_events"),
+                data=json.dumps({"events": [{
+                    "event_id": 900, "ts": timezone.now().isoformat(),
+                    "channel": "2", "camera": "Gate", "type": "person",
+                    "severity": "critical", "announce": True}]}),
+                content_type="application/json",
+                HTTP_AUTHORIZATION=f"Bearer {TOKEN}")
+    assert SecurityState.current().alert_event_id == 900
+
+
+def test_a_quiet_event_does_not(client):
+    _state("AWAY")
+    client.post(reverse("security_api_events"),
+                data=json.dumps({"events": [{
+                    "event_id": 901, "ts": timezone.now().isoformat(),
+                    "channel": "2", "camera": "Gate", "type": "person",
+                    "announce": False}]}),
+                content_type="application/json",
+                HTTP_AUTHORIZATION=f"Bearer {TOKEN}")
+    assert not SecurityState.current().alert_event_id
+
+
+def test_the_feed_says_an_alert_is_live(client, owner):
+    _state("AWAY")
+    SecurityState.objects.filter(pk=1).update(
+        alert_event_id=900, alert_since=timezone.now())
+    assert client.get(reverse("security_feed")).json()["alert"]["active"] is True
+
+
+def test_a_fresh_page_shows_the_stop_button_when_one_is_live(client, owner):
+    """**The bug.** F5 must not remove the only way to stop it."""
+    _state("AWAY")
+    SecurityState.objects.filter(pk=1).update(
+        alert_event_id=900, alert_since=timezone.now())
+    html = client.get(reverse("security_home")).content.decode()
+    i = html.find('id="sec-stop"')
+    assert "d-none" not in html[i - 200:i + 60]
+
+
+def test_dismissing_clears_it(client, owner):
+    _state("AWAY")
+    SecurityState.objects.filter(pk=1).update(
+        alert_event_id=900, alert_since=timezone.now())
+    client.post(reverse("security_dismiss_alert"),
+                data=json.dumps({"event_id": 900}),
+                content_type="application/json")
+    assert not SecurityState.current().alert_event_id
+
+
+def test_a_live_alert_expires_on_its_own(client, owner):
+    """The house gives up after 20 minutes (§3.34c). babook must not keep
+    offering a STOP button for an alarm that stopped by itself — a button that
+    does nothing teaches the owner the button does nothing."""
+    from datetime import timedelta
+    _state("AWAY")
+    SecurityState.objects.filter(pk=1).update(
+        alert_event_id=900,
+        alert_since=timezone.now() - timedelta(minutes=25))
+    assert client.get(reverse("security_feed")).json()["alert"]["active"] is False

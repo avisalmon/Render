@@ -391,6 +391,18 @@ def push_events(request):
             newest = SecurityEvent.objects.filter(event_id=newest_id).first()
             if newest is not None and announce:
                 security_push.notify(newest)
+                # REQ-11.6.17: remember that something is RINGING, so the STOP
+                # button survives a page refresh. The house keeps re-pushing
+                # every 15s (house §3.34c) and a tab that forgets leaves the
+                # owner with no way to stop it.
+                # filter().update() and not update_or_create(): if the house
+                # has never reported state there is no row, and inventing one
+                # would publish fabricated health numbers (8/8 cameras, ok) that
+                # nothing measured. The house always reports state, so the only
+                # case this skips is a babook that has never been contacted —
+                # where there is no page worth ringing about yet either.
+                SecurityState.objects.filter(pk=1).update(
+                    alert_event_id=newest_id, alert_since=timezone.now())
     except Exception:  # noqa: BLE001 - notifications never break the relay
         logger.exception("web push failed for this batch (continuing)")
 

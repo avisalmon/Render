@@ -253,6 +253,9 @@ def security_home(request):
         # REQ-11.6.9: the browser needs this to subscribe. Public by design -
         # only the private half is a credential.
         "vapid_public_key": getattr(settings, "VAPID_PUBLIC_KEY", ""),
+        # REQ-11.6.17: so a FRESHLY LOADED page already shows the STOP button
+        # when something is ringing, rather than waiting for the first poll.
+        "alert": alert_status(),
         "arming": arming_status(),
         "rows": [_row(e) for e in page.object_list],
         "page_obj": page,
@@ -293,6 +296,7 @@ def security_feed(request):
         "newest_camera": (newest or {}).get("camera") or "",
         "total": SecurityEvent.objects.count(),
         "arming": arming_status(),
+        "alert": alert_status(),
     }))
 
 
@@ -519,6 +523,30 @@ ARM_MODES = ("AWAY", "HOME", "NIGHT", "VACATION")
 DISARMED = "DISARM"
 
 
+def alert_status():
+    """Is something ringing right now? (REQ-11.6.17)
+
+    Held by babook rather than by a browser tab, because the owner reported what
+    happens otherwise: the STOP button was drawn by the page's own nagging loop,
+    so **a refresh removed the only way to stop an alarm the house was still
+    re-pushing every 15 s.** An off switch a reload can destroy is not one.
+
+    Expires on its own after the same 20 minutes the house gives up at, so babook
+    never offers a STOP button for an alarm that has already stopped — a button
+    that does nothing teaches the owner that the button does nothing.
+    """
+    from .security_models import ALERT_MAX_SECONDS
+    state = SecurityState.current()
+    eid = getattr(state, "alert_event_id", None)
+    since = getattr(state, "alert_since", None)
+    if not eid or not since:
+        return {"active": False, "event_id": 0}
+    age = (timezone.now() - since).total_seconds()
+    if age >= ALERT_MAX_SECONDS:
+        return {"active": False, "event_id": 0}
+    return {"active": True, "event_id": int(eid), "age_s": int(age)}
+
+
 def arming_status():
     """What the HOUSE says it is, plus any request not yet collected.
 
@@ -594,6 +622,11 @@ def security_dismiss_alert(request):
         except (TypeError, ValueError):
             pass
     _queue("dismiss_alert", params)
+    # Cleared here as well as at the house: the owner pressed the button and the
+    # page must stop offering it NOW, not in ten seconds when the house gets
+    # round to collecting the command.
+    SecurityState.objects.filter(pk=1).update(alert_event_id=None,
+                                              alert_since=None)
     return _no_index(JsonResponse({"ok": True}))
 
 

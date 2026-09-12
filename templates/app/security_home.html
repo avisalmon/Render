@@ -96,7 +96,7 @@ Order of importance on the screen, deliberately:
       is pressed. It is hidden while nothing is ringing, because a permanent
       STOP on a quiet page is one the eye stops seeing.
     {% endcomment %}
-    <button type="button" id="sec-stop" class="btn btn-sm btn-danger mt-2 d-none">
+    <button type="button" id="sec-stop" class="btn btn-sm btn-danger mt-2 {% if not alert.active %}d-none{% endif %}">
       <i class="bi bi-bell-slash"></i> עצור את ההתראה
     </button>
 
@@ -517,6 +517,13 @@ Order of importance on the screen, deliberately:
           sub.textContent = d.status.cameras_online + '/' + d.status.cameras_total + ' מצלמות מחוברות';
         }
         if (d.arming) paintArming(d.arming);
+        /* REQ-11.6.17 - the STOP button follows the HOUSE, not this tab. A
+           refresh used to lose it while the house kept re-pushing every 15s,
+           which left the owner with no way to stop his own alarm. */
+        if (d.alert && stopBtn) {
+          stopBtn.classList.toggle('d-none', !d.alert.active);
+          if (d.alert.active) lastEventId = d.alert.event_id || lastEventId;
+        }
         if (d.newest_event_id > seen) {
           pill.classList.remove('d-none');
           alertOnEvent(d);

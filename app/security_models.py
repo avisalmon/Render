@@ -113,6 +113,13 @@ class SecurityCommand(models.Model):
         return f"cmd {self.pk} {self.kind}"
 
 
+#: Must match the house's REANNOUNCE_MAX_SECONDS (spec §3.34c). After this the
+#: house has given up on its own, and babook must stop offering a STOP button for
+#: an alarm that is no longer ringing — a button that does nothing teaches the
+#: owner that the button does nothing.
+ALERT_MAX_SECONDS = 1200
+
+
 class SecurityState(models.Model):
     """Health of the house. Exactly one row, pk=1, overwritten in place.
 
@@ -123,6 +130,14 @@ class SecurityState(models.Model):
     """
 
     ok = models.BooleanField(default=True)
+    # REQ-11.6.17: which event is currently RINGING, and since when. Held here
+    # rather than in a browser tab because the owner reported the exact failure
+    # that causes: the STOP button was drawn by the page's own nagging loop, so
+    # refreshing the page removed the only way to stop an alarm the HOUSE was
+    # still re-pushing every 15s. An off switch that a reload can destroy is not
+    # an off switch.
+    alert_event_id = models.IntegerField(null=True, blank=True)
+    alert_since = models.DateTimeField(null=True, blank=True)
     cameras_online = models.IntegerField(default=0)
     cameras_total = models.IntegerField(default=0)
     last_event_ts = models.DateTimeField(null=True, blank=True)
