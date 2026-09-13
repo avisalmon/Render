@@ -30,11 +30,55 @@ babook's look and nav, and only `family`-group members can see it.
 
 ## Sprint 2 — Itinerary `DONE, DEPLOYED 2026-09-13`
 
-Day-by-day plan, per spec §4.1. Seeded from
+Day-by-day plan, per spec §4.1. Imported once from
 [`trip-data/usa-2026.json`](trip-data/usa-2026.json) via `manage.py seed_ustrip`
-(wired into `render.yaml`'s startCommand, runs on every deploy, idempotent).
+(wired into `render.yaml`'s startCommand, so it runs on every deploy — but
+is a no-op once the trip already has data; see the Sprint 5.1 bug below).
 13 day-rows / 84 items seeded and verified in dev. Any `family` member can
 view and (since Sprint 5) add/edit items in-app.
+
+**Two bugs found and fixed 2026-09-13 (Sprint 5.1):**
+
+1. The JSON's `flights` and `rental_car` blocks were harvested but never
+   modeled — `seed_ustrip` silently ignored them, so that data sat in a
+   text file nobody could see in the app. Fixed: new `Flight`/`RentalCar`
+   models, seeded, shown on Home under "Trip essentials". `route_summary`
+   seeded onto `Trip` too, shown under the trip dates.
+2. **More serious:** `seed_ustrip` wholesale-deleted and recreated the
+   entire itinerary from the static JSON on *every* deploy (it's wired into
+   `render.yaml`'s startCommand, which runs on every push). Combined with
+   Sprint 5's in-app "add item"/edit, the next unrelated deploy would have
+   silently erased anything a family member added. Fixed: the command is
+   now a one-time import — once a trip has any days/flights, it leaves them
+   alone; the database is the source of truth from there on, not the JSON.
+   Same treatment for the rental car's `confirmed` flag and, once
+   confirmed, its other fields too (a real booking's details shouldn't keep
+   getting overwritten by the original researched-proposal numbers).
+   `tests/test_ustrip_seed.py` calls the real command twice to guard both
+   bugs concretely, not just via fixtures.
+
+The JSON's `lodging` array is deliberately still not its own model — it's
+the same information as each day's `sleeping` field, grouped by
+night-block instead of by day; a second model would just be two copies of
+the same fact free to disagree.
+
+## Sprint 6 — Every item can be deleted, edited, reordered `DONE, NOT YET DEPLOYED`
+
+**Goal:** close the delete/reorder gap Sprint 5 explicitly left open. Avi's
+framing: this isn't a nice-to-have — the reference source is just HTML/text,
+and everything imported from it has to become a real object the family can
+play with, not a read-mostly display. No creator lock anywhere here, same
+philosophy as itinerary edit in Sprint 5.
+
+| Item | Status |
+|---|---|
+| Itinerary items: delete, move up/down within the day | DONE |
+| Packing items: edit text, delete, move up/down within the list | DONE |
+| Packing lists: delete (cascades its items) | DONE |
+| Journal posts: edit caption/location, delete | DONE — replacing the photo itself isn't built; re-post if it was wrong |
+| Flights: edit (own small page, like itinerary item edit) | DONE — no delete; there are exactly two (outbound/return) and deleting one serves no purpose |
+| Rental car: edit every field including `confirmed` (own small page) | DONE — no delete, same reasoning as flights |
+| Tests: one delete+reorder path per list type, edit+delete for journal/flight/rental car | DONE — `tests/test_ustrip_features.py`, 12 tests total now |
 
 ## Sprint 3 — Packing & task lists `DONE, NOT YET DEPLOYED`
 

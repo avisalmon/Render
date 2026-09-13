@@ -1,0 +1,72 @@
+{% extends "ustrip/base.html" %}
+{% block title %}Edit rental car — ustrip{% endblock %}
+{% block nav %}{% endblock %}
+
+{% block header %}
+<div class="header with-back">
+  <div class="back"><a href="{% url 'ustrip:home' %}">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+  </a></div>
+  <div class="title serif" style="font-size:19px;margin:0;">Edit rental car</div>
+</div>
+{% endblock %}
+
+{% block content %}
+<form id="edit-form" class="auth-form">
+  <label class="field">
+    <span>Pickup date</span>
+    <input type="date" name="pickup_date" value="{{ rental_car.pickup_date|date:'Y-m-d' }}">
+  </label>
+  <label class="field">
+    <span>Pickup location</span>
+    <input type="text" name="pickup_location" value="{{ rental_car.pickup_location }}">
+  </label>
+  <label class="field">
+    <span>Drop-off date</span>
+    <input type="date" name="dropoff_date" value="{{ rental_car.dropoff_date|date:'Y-m-d' }}">
+  </label>
+  <label class="field">
+    <span>Drop-off location</span>
+    <input type="text" name="dropoff_location" value="{{ rental_car.dropoff_location }}">
+  </label>
+  <label class="field">
+    <span>Vehicle class</span>
+    <input type="text" name="vehicle_class" value="{{ rental_car.vehicle_class }}">
+  </label>
+  <label class="field">
+    <span>Note</span>
+    <textarea name="note" rows="2">{{ rental_car.note }}</textarea>
+  </label>
+  <label class="field field-checkbox">
+    <input type="checkbox" name="confirmed" {% if rental_car.confirmed %}checked{% endif %}>
+    <span>Actually booked (not just researched)</span>
+  </label>
+  <button type="submit" class="btn btn-primary">Save</button>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const form = document.getElementById("edit-form");
+  const rentalCarId = {{ rental_car.id }};
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    ustrip.request(`/ustrip/api/rental-car/${rentalCarId}/edit/`, {
+      json: {
+        pickup_date: form.pickup_date.value,
+        pickup_location: form.pickup_location.value.trim(),
+        dropoff_date: form.dropoff_date.value,
+        dropoff_location: form.dropoff_location.value.trim(),
+        vehicle_class: form.vehicle_class.value.trim(),
+        note: form.note.value.trim(),
+        confirmed: form.confirmed.checked,
+      },
+    })
+      .then(() => { window.location.href = "{% url 'ustrip:home' %}"; })
+      .catch((err) => alert(err.message));
+  });
+})();
+</script>
+{% endblock %}

@@ -25,17 +25,21 @@
 <p class="section-label">Feed</p>
 <div class="feed" id="journal-feed">
   {% for post in posts %}
-    <div class="post">
+    <div class="post" data-post-id="{{ post.id }}">
       {% if post.photo %}
         <img class="photo" src="{{ post.photo.url }}" alt="">
       {% endif %}
       <div class="postbody">
-        {% if post.caption %}<p class="caption">{{ post.caption }}</p>{% endif %}
+        <p class="caption">{{ post.caption }}</p>
         <div class="meta">
           <div class="mavatar" style="{% avatar_style post.author %}">{{ post.author|avatar_initials }}</div>
           <div class="mtext">
             <div class="mname">{{ post.author.first_name|default:post.author.get_username }}</div>
-            {% if post.location %}<div class="mloc">{{ post.location }}</div>{% endif %}
+            <div class="mloc">{{ post.location }}</div>
+          </div>
+          <div class="row-actions">
+            <button type="button" class="mini-btn" data-edit title="Edit">&#9998;</button>
+            <button type="button" class="mini-btn mini-btn-danger" data-delete title="Delete">&times;</button>
           </div>
         </div>
       </div>
@@ -63,19 +67,54 @@
           '<div class="post">' + photoHtml +
           '<div class="postbody"><p class="caption"></p><div class="meta">' +
           '<div class="mavatar"></div><div class="mtext"><div class="mname"></div><div class="mloc"></div></div>' +
-          '</div></div></div>'
+          '<div class="row-actions">' +
+          '<button type="button" class="mini-btn" data-edit title="Edit">✎</button>' +
+          '<button type="button" class="mini-btn mini-btn-danger" data-delete title="Delete">×</button>' +
+          '</div></div></div></div>'
         );
+        node.dataset.postId = post.id;
         node.querySelector(".mavatar").setAttribute("style", post.author.avatar_style);
         node.querySelector(".mavatar").textContent = post.author.initials;
         node.querySelector(".mname").textContent = post.author.name;
-        const captionEl = node.querySelector(".caption");
-        if (post.caption) { captionEl.textContent = post.caption; } else { captionEl.remove(); }
-        const locEl = node.querySelector(".mloc");
-        if (post.location) { locEl.textContent = post.location; } else { locEl.remove(); }
+        node.querySelector(".caption").textContent = post.caption;
+        node.querySelector(".mloc").textContent = post.location;
         feed.prepend(node);
         form.reset();
       })
       .catch((err) => alert(err.message));
+  });
+
+  feed.addEventListener("click", function (e) {
+    const post = e.target.closest("[data-post-id]");
+    if (!post) return;
+    const postId = post.dataset.postId;
+
+    if (e.target.closest("[data-edit]")) {
+      const captionEl = post.querySelector(".caption");
+      const locEl = post.querySelector(".mloc");
+      const caption = prompt("Edit caption", captionEl.textContent);
+      if (caption === null) return;
+      const location = prompt("Edit location", locEl.textContent) || "";
+      ustrip.request(`/ustrip/api/journal/posts/${postId}/edit/`, { json: { caption: caption.trim(), location: location.trim() } })
+        .then((data) => {
+          captionEl.textContent = data.caption;
+          locEl.textContent = data.location;
+        })
+        .catch((err) => alert(err.message));
+      return;
+    }
+
+    if (e.target.closest("[data-delete]")) {
+      if (!confirm("Delete this post?")) return;
+      ustrip.request(`/ustrip/api/journal/posts/${postId}/delete/`)
+        .then(() => {
+          post.remove();
+          if (!feed.querySelector("[data-post-id]")) {
+            feed.appendChild(ustrip.el('<div class="empty" id="journal-empty">No photos yet — the first one posted here starts the diary.</div>'));
+          }
+        })
+        .catch((err) => alert(err.message));
+    }
   });
 })();
 </script>

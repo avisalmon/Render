@@ -1,0 +1,52 @@
+{% extends "ustrip/base.html" %}
+{% block title %}Edit flight — ustrip{% endblock %}
+{% block nav %}{% endblock %}
+
+{% block header %}
+<div class="header with-back">
+  <div class="back"><a href="{% url 'ustrip:home' %}">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+  </a></div>
+  <div class="title serif" style="font-size:19px;margin:0;">Edit {{ flight.get_direction_display|lower }} flight</div>
+</div>
+{% endblock %}
+
+{% block content %}
+<form id="edit-form" class="auth-form">
+  <label class="field">
+    <span>Flight number</span>
+    <input type="text" name="flight_number" value="{{ flight.flight_number }}" placeholder="e.g. UA85">
+  </label>
+  <label class="field">
+    <span>Departure</span>
+    <input type="text" name="departure_label" value="{{ flight.departure_label }}" placeholder="e.g. EWR 15:25 2026-10-01">
+  </label>
+  <label class="field">
+    <span>Arrival</span>
+    <input type="text" name="arrival_label" value="{{ flight.arrival_label }}" placeholder="e.g. Newark (EWR) ~15:50">
+  </label>
+  <button type="submit" class="btn btn-primary">Save</button>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const form = document.getElementById("edit-form");
+  const flightId = {{ flight.id }};
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    ustrip.request(`/ustrip/api/flights/${flightId}/edit/`, {
+      json: {
+        flight_number: form.flight_number.value.trim(),
+        departure_label: form.departure_label.value.trim(),
+        arrival_label: form.arrival_label.value.trim(),
+      },
+    })
+      .then(() => { window.location.href = "{% url 'ustrip:home' %}"; })
+      .catch((err) => alert(err.message));
+  });
+})();
+</script>
+{% endblock %}

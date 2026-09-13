@@ -26,7 +26,12 @@
       <div class="tbody">
         <p class="tdesc">{{ item.description }}</p>
         {% if item.tag == 'optional' %}<span class="tag optional">OPTIONAL</span>{% endif %}
-        <a class="edit-link" href="{% url 'ustrip:itinerary_item_edit' item.id %}">Edit</a>
+        <div class="row-actions">
+          <a class="edit-link" href="{% url 'ustrip:itinerary_item_edit' item.id %}">Edit</a>
+          <button type="button" class="mini-btn" data-move="up" title="Move earlier">&uarr;</button>
+          <button type="button" class="mini-btn" data-move="down" title="Move later">&darr;</button>
+          <button type="button" class="mini-btn mini-btn-danger" data-delete title="Delete">&times;</button>
+        </div>
       </div>
     </div>
   {% empty %}
@@ -66,7 +71,12 @@
         if (empty) empty.remove();
         const node = ustrip.el(
           '<div class="titem"><div class="ttime"></div><div class="tdot"></div>' +
-          '<div class="tbody"><p class="tdesc"></p><a class="edit-link"></a></div></div>'
+          '<div class="tbody"><p class="tdesc"></p><div class="row-actions">' +
+          '<a class="edit-link"></a>' +
+          '<button type="button" class="mini-btn" data-move="up" title="Move earlier">↑</button>' +
+          '<button type="button" class="mini-btn" data-move="down" title="Move later">↓</button>' +
+          '<button type="button" class="mini-btn mini-btn-danger" data-delete title="Delete">×</button>' +
+          '</div></div></div>'
         );
         node.dataset.itemId = item.id;
         node.querySelector(".ttime").textContent = item.time_label || "—";
@@ -78,6 +88,32 @@
         form.reset();
       })
       .catch((err) => alert(err.message));
+  });
+
+  timeline.addEventListener("click", function (e) {
+    const row = e.target.closest("[data-item-id]");
+    if (!row) return;
+    const itemId = row.dataset.itemId;
+
+    const moveBtn = e.target.closest("[data-move]");
+    if (moveBtn) {
+      ustrip.request(`/ustrip/api/itinerary/items/${itemId}/move/`, { json: { direction: moveBtn.dataset.move } })
+        .then((data) => { if (data.moved) window.location.reload(); })
+        .catch((err) => alert(err.message));
+      return;
+    }
+
+    if (e.target.closest("[data-delete]")) {
+      if (!confirm("Delete this item?")) return;
+      ustrip.request(`/ustrip/api/itinerary/items/${itemId}/delete/`)
+        .then(() => {
+          row.remove();
+          if (!timeline.querySelector("[data-item-id]")) {
+            timeline.appendChild(ustrip.el('<div class="empty" id="timeline-empty">Nothing planned for this day yet.</div>'));
+          }
+        })
+        .catch((err) => alert(err.message));
+    }
   });
 })();
 </script>

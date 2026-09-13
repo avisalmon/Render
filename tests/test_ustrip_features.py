@@ -11,7 +11,7 @@ import json as json_module
 import pytest
 from django.contrib.auth.models import Group, User
 
-from ustrip.models import ChecklistGroup, ChecklistItem, ItineraryDay, ItineraryItem, JournalPost, Trip
+from ustrip.models import ChecklistGroup, ChecklistItem, Flight, ItineraryDay, ItineraryItem, JournalPost, RentalCar, Trip
 
 LOGIN = "/ustrip/login/"
 LOGOUT = "/ustrip/logout/"
@@ -158,3 +158,83 @@ def test_family_member_can_add_and_edit_an_itinerary_item(client, member, trip):
     item.refresh_from_db()
     assert item.description == "Land at EWR (updated)"
     assert item.time_label == "15:50"
+
+
+# --- Every item: delete, and reorder ("prioritize") ----------------------
+
+@pytest.mark.django_db
+def test_family_member_can_reorder_and_delete_itinerary_items(client, member, trip):
+    day = ItineraryDay.objects.create(trip=trip, order=0, label="1", date_label="Fri Sep 18", title="Arrival")
+    first = ItineraryItem.objects.create(day=day, order=0, description="First")
+    second = ItineraryItem.objects.create(day=day, order=1, description="Second")
+    client.force_login(member)
+
+    response = _post_json(client, f"/ustrip/api/itinerary/items/{second.id}/move/", {"direction": "up"})
+    assert response.json()["moved"] is True
+    first.refresh_from_db()
+    second.refresh_from_db()
+    assert second.order < first.order  # second is now first in the list
+
+    response = client.post(f"/ustrip/api/itinerary/items/{first.id}/delete/")
+    assert response.status_code == 200
+    assert not ItineraryItem.objects.filter(pk=first.id).exists()
+    assert ItineraryItem.objects.filter(pk=second.id).exists()
+
+
+@pytest.mark.django_db
+def test_family_member_can_edit_reorder_and_delete_a_packing_item_and_delete_the_list(client, member, trip):
+    group = ChecklistGroup.objects.create(trip=trip, name="Packing — Kid")
+    first = ChecklistItem.objects.create(group=group, text="Socks", order=0)
+    second = ChecklistItem.objects.create(group=group, text="Shoes", order=1)
+    client.force_login(member)
+
+    response = _post_json(client, f"/ustrip/api/packing/items/{first.id}/edit/", {"text": "Warm socks"})
+    assert response.json()["text"] == "Warm socks"
+
+    response = _post_json(client, f"/ustrip/api/packing/items/{second.id}/move/", {"direction": "up"})
+    assert response.json()["moved"] is True
+
+    response = client.post(f"/ustrip/api/packing/items/{first.id}/delete/")
+    assert response.status_code == 200
+    assert not ChecklistItem.objects.filter(pk=first.id).exists()
+
+    response = client.post(f"/ustrip/api/packing/groups/{group.id}/delete/")
+    assert response.status_code == 200
+    assert not ChecklistGroup.objects.filter(pk=group.id).exists()
+    assert not ChecklistItem.objects.filter(pk=second.id).exists()  # cascades
+
+
+@pytest.mark.django_db
+def test_family_member_can_edit_and_delete_a_journal_post(client, member, trip):
+    post = JournalPost.objects.create(trip=trip, author=member, caption="Original", location="NYC")
+    client.force_login(member)
+
+    response = _post_json(client, f"/ustrip/api/journal/posts/{post.id}/edit/", {"caption": "Updated", "location": "DC"})
+    assert response.json()["caption"] == "Updated"
+    assert response.json()["location"] == "DC"
+
+    response = client.post(f"/ustrip/api/journal/posts/{post.id}/delete/")
+    assert response.status_code == 200
+    assert not JournalPost.objects.filter(pk=post.id).exists()
+
+
+@pytest.mark.django_db
+def test_family_member_can_edit_a_flight_and_the_rental_car(client, member, trip):
+    flight = Flight.objects.create(trip=trip, direction=Flight.OUTBOUND, flight_number="UA85", order=0)
+    rental_car = RentalCar.objects.create(trip=trip, pickup_location="Manhattan")
+    client.force_login(member)
+
+    response = _post_json(
+        client, f"/ustrip/api/flights/{flight.id}/edit/",
+        {"flight_number": "UA86", "departure_label": "2026-09-18", "arrival_label": "EWR 16:00"},
+    )
+    assert response.json()["flight_number"] == "UA86"
+
+    response = _post_json(
+        client, f"/ustrip/api/rental-car/{rental_car.id}/edit/",
+        {"pickup_location": "JFK Airport", "confirmed": True},
+    )
+    assert response.json()["confirmed"] is True
+    rental_car.refresh_from_db()
+    assert rental_car.pickup_location == "JFK Airport"
+    assert rental_car.confirmed is True

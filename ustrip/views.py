@@ -8,6 +8,7 @@ to the "amazing UX" bar for something used one-handed mid-trip.
 """
 
 import json
+from datetime import date
 
 from django.contrib.auth import get_user_model, login as auth_login
 from django.contrib.auth.views import LoginView, LogoutView
@@ -19,7 +20,9 @@ from django.views.decorators.http import require_POST
 
 from .access import FAMILY_GROUP, family_required, family_required_api
 from .forms import UstripSignupForm
-from .models import ChecklistGroup, ChecklistItem, ItineraryDay, ItineraryItem, JournalPost, Trip
+from .models import (
+    ChecklistGroup, ChecklistItem, Flight, ItineraryDay, ItineraryItem, JournalPost, RentalCar, Trip,
+)
 from .templatetags.ustrip_extras import avatar_initials, avatar_style
 
 
@@ -84,6 +87,8 @@ def home(request):
         context["day_count"] = trip.days.count()
         context["checklist_count"] = trip.checklists.count()
         context["journal_count"] = trip.journal_posts.count()
+        context["flights"] = trip.flights.all()
+        context["rental_car"] = getattr(trip, "rental_car", None)
     return render(request, "ustrip/home.html", context)
 
 
@@ -105,6 +110,20 @@ def itinerary_item_edit(request, item_id):
     """Spec §4.1: any family member can edit — no creator-only lock."""
     item = get_object_or_404(ItineraryItem, pk=item_id)
     return render(request, "ustrip/itinerary_item_edit.html", {"trip": item.day.trip, "item": item, "active_tab": "itinerary"})
+
+
+@family_required
+def flight_edit(request, flight_id):
+    flight = get_object_or_404(Flight, pk=flight_id)
+    return render(request, "ustrip/flight_edit.html", {"trip": flight.trip, "flight": flight, "active_tab": "home"})
+
+
+@family_required
+def rental_car_edit(request, rental_car_id):
+    rental_car = get_object_or_404(RentalCar, pk=rental_car_id)
+    return render(
+        request, "ustrip/rental_car_edit.html", {"trip": rental_car.trip, "rental_car": rental_car, "active_tab": "home"}
+    )
 
 
 @family_required
@@ -168,6 +187,47 @@ def _itinerary_item_json(item):
         "tag": item.tag,
         "edit_url": reverse("ustrip:itinerary_item_edit", args=[item.id]),
     }
+
+
+def _flight_json(flight):
+    return {
+        "id": flight.id,
+        "direction": flight.direction,
+        "direction_display": flight.get_direction_display(),
+        "flight_number": flight.flight_number,
+        "departure_label": flight.departure_label,
+        "arrival_label": flight.arrival_label,
+    }
+
+
+def _rental_car_json(rc):
+    return {
+        "id": rc.id,
+        "pickup_date": rc.pickup_date.isoformat() if rc.pickup_date else "",
+        "pickup_location": rc.pickup_location,
+        "dropoff_date": rc.dropoff_date.isoformat() if rc.dropoff_date else "",
+        "dropoff_location": rc.dropoff_location,
+        "vehicle_class": rc.vehicle_class,
+        "note": rc.note,
+        "confirmed": rc.confirmed,
+    }
+
+
+def _move(item, siblings, direction):
+    """Swap `order` with the previous/next sibling — the whole reorder
+    ("prioritize") mechanism. `siblings` must already be ordered by `order`.
+    No creator lock, same as edit/delete — any family member can reorder
+    anything (spec §4.1's "no creator-only lock" extended to every list)."""
+    ordered = list(siblings)
+    idx = ordered.index(item)
+    swap_idx = idx - 1 if direction == "up" else idx + 1
+    if not (0 <= swap_idx < len(ordered)):
+        return False
+    other = ordered[swap_idx]
+    item.order, other.order = other.order, item.order
+    item.save(update_fields=["order"])
+    other.save(update_fields=["order"])
+    return True
 
 
 @family_required_api
@@ -251,3 +311,119 @@ def api_itinerary_edit_item(request, item_id):
     item.description = description
     item.save()
     return JsonResponse(_itinerary_item_json(item))
+
+
+@family_required_api
+@require_POST
+def api_itinerary_delete_item(request, item_id):
+    item = get_object_or_404(ItineraryItem, pk=item_id)
+    item.delete()
+    return JsonResponse({"deleted": True})
+
+
+@family_required_api
+@require_POST
+def api_itinerary_move_item(request, item_id):
+    item = get_object_or_404(ItineraryItem, pk=item_id)
+    direction = _json_body(request).get("direction")
+    if direction not in ("up", "down"):
+        return JsonResponse({"error": "direction must be up or down"}, status=400)
+    moved = _move(item, item.day.items.order_by("order", "id"), direction)
+    return JsonResponse({"moved": moved})
+
+
+@family_required_api
+@require_POST
+def api_packing_edit_item(request, item_id):
+    trip = _current_trip()
+    item = get_object_or_404(ChecklistItem, pk=item_id, group__trip=trip)
+    text = _json_body(request).get("text", "").strip()
+    if not text:
+        return JsonResponse({"error": "text required"}, status=400)
+    item.text = text
+    item.save(update_fields=["text"])
+    return JsonResponse(_item_json(item))
+
+
+@family_required_api
+@require_POST
+def api_packing_delete_item(request, item_id):
+    trip = _current_trip()
+    item = get_object_or_404(ChecklistItem, pk=item_id, group__trip=trip)
+    item.delete()
+    return JsonResponse({"deleted": True})
+
+
+@family_required_api
+@require_POST
+def api_packing_move_item(request, item_id):
+    trip = _current_trip()
+    item = get_object_or_404(ChecklistItem, pk=item_id, group__trip=trip)
+    direction = _json_body(request).get("direction")
+    if direction not in ("up", "down"):
+        return JsonResponse({"error": "direction must be up or down"}, status=400)
+    moved = _move(item, item.group.items.order_by("order", "id"), direction)
+    return JsonResponse({"moved": moved})
+
+
+@family_required_api
+@require_POST
+def api_packing_delete_group(request, group_id):
+    trip = _current_trip()
+    group = get_object_or_404(ChecklistGroup, pk=group_id, trip=trip)
+    group.delete()
+    return JsonResponse({"deleted": True})
+
+
+@family_required_api
+@require_POST
+def api_journal_edit_post(request, post_id):
+    """Caption/location only — replacing the photo isn't built (spec sprint
+    note: post again if the photo was wrong; not worth the extra upload UI
+    for a five-person diary)."""
+    trip = _current_trip()
+    post = get_object_or_404(JournalPost, pk=post_id, trip=trip)
+    body = _json_body(request)
+    post.caption = body.get("caption", "").strip()
+    post.location = body.get("location", "").strip()
+    post.save(update_fields=["caption", "location"])
+    return JsonResponse(_post_json(post))
+
+
+@family_required_api
+@require_POST
+def api_journal_delete_post(request, post_id):
+    trip = _current_trip()
+    post = get_object_or_404(JournalPost, pk=post_id, trip=trip)
+    post.delete()
+    return JsonResponse({"deleted": True})
+
+
+@family_required_api
+@require_POST
+def api_flight_edit(request, flight_id):
+    trip = _current_trip()
+    flight = get_object_or_404(Flight, pk=flight_id, trip=trip)
+    body = _json_body(request)
+    flight.flight_number = body.get("flight_number", "").strip()
+    flight.departure_label = body.get("departure_label", "").strip()
+    flight.arrival_label = body.get("arrival_label", "").strip()
+    flight.save()
+    return JsonResponse(_flight_json(flight))
+
+
+@family_required_api
+@require_POST
+def api_rental_car_edit(request, rental_car_id):
+    trip = _current_trip()
+    rc = get_object_or_404(RentalCar, pk=rental_car_id, trip=trip)
+    body = _json_body(request)
+    rc.pickup_date = date.fromisoformat(body["pickup_date"]) if body.get("pickup_date") else None
+    rc.pickup_location = body.get("pickup_location", "").strip()
+    rc.dropoff_date = date.fromisoformat(body["dropoff_date"]) if body.get("dropoff_date") else None
+    rc.dropoff_location = body.get("dropoff_location", "").strip()
+    rc.vehicle_class = body.get("vehicle_class", "").strip()
+    rc.note = body.get("note", "").strip()
+    rc.confirmed = bool(body.get("confirmed"))
+    rc.save()
+    return JsonResponse(_rental_car_json(rc))

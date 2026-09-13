@@ -21,6 +21,7 @@
           <div class="clname">{{ group.name }}</div>
           <div class="clcount">{{ group.items.all|length }} item{{ group.items.all|length|pluralize }}</div>
         </div>
+        <button type="button" class="mini-btn mini-btn-danger" data-delete-group title="Delete list">&times;</button>
       </div>
       <div class="items">
         {% for item in group.items.all %}
@@ -29,6 +30,12 @@
               {% if item.done %}<svg viewBox="0 0 24 24"><path d="M5 12l5 5L19 7"/></svg>{% endif %}
             </button>
             <span class="itxt {% if item.done %}done{% endif %}">{{ item.text }}</span>
+            <div class="row-actions row-actions-inline">
+              <button type="button" class="mini-btn" data-move="up" title="Move up">&uarr;</button>
+              <button type="button" class="mini-btn" data-move="down" title="Move down">&darr;</button>
+              <button type="button" class="mini-btn" data-edit title="Edit">&#9998;</button>
+              <button type="button" class="mini-btn mini-btn-danger" data-delete title="Delete">&times;</button>
+            </div>
           </div>
         {% endfor %}
         <form class="add-item-row" data-add-item data-group-id="{{ group.id }}">
@@ -57,17 +64,69 @@
 (function () {
   const list = document.getElementById("packing-list");
 
+  function itemRowHtml() {
+    return (
+      '<div class="item"><button type="button" class="box" data-toggle></button><span class="itxt"></span>' +
+      '<div class="row-actions row-actions-inline">' +
+      '<button type="button" class="mini-btn" data-move="up" title="Move up">↑</button>' +
+      '<button type="button" class="mini-btn" data-move="down" title="Move down">↓</button>' +
+      '<button type="button" class="mini-btn" data-edit title="Edit">✎</button>' +
+      '<button type="button" class="mini-btn mini-btn-danger" data-delete title="Delete">×</button>' +
+      '</div></div>'
+    );
+  }
+
   list.addEventListener("click", function (e) {
-    const btn = e.target.closest("[data-toggle]");
-    if (!btn) return;
-    const row = btn.closest("[data-item-id]");
-    ustrip.request(`/ustrip/api/packing/items/${row.dataset.itemId}/toggle/`)
-      .then((data) => {
-        btn.classList.toggle("done", data.done);
-        btn.innerHTML = data.done ? '<svg viewBox="0 0 24 24"><path d="M5 12l5 5L19 7"/></svg>' : "";
-        row.querySelector(".itxt").classList.toggle("done", data.done);
-      })
-      .catch((err) => alert(err.message));
+    const deleteGroupBtn = e.target.closest("[data-delete-group]");
+    if (deleteGroupBtn) {
+      const card = deleteGroupBtn.closest("[data-group-id]");
+      if (!confirm("Delete this whole list and its items?")) return;
+      ustrip.request(`/ustrip/api/packing/groups/${card.dataset.groupId}/delete/`)
+        .then(() => card.remove())
+        .catch((err) => alert(err.message));
+      return;
+    }
+
+    const row = e.target.closest("[data-item-id]");
+    if (!row) return;
+    const itemId = row.dataset.itemId;
+
+    if (e.target.closest("[data-toggle]")) {
+      const btn = e.target.closest("[data-toggle]");
+      ustrip.request(`/ustrip/api/packing/items/${itemId}/toggle/`)
+        .then((data) => {
+          btn.classList.toggle("done", data.done);
+          btn.innerHTML = data.done ? '<svg viewBox="0 0 24 24"><path d="M5 12l5 5L19 7"/></svg>' : "";
+          row.querySelector(".itxt").classList.toggle("done", data.done);
+        })
+        .catch((err) => alert(err.message));
+      return;
+    }
+
+    if (e.target.closest("[data-edit]")) {
+      const span = row.querySelector(".itxt");
+      const text = prompt("Edit item", span.textContent);
+      if (text === null || !text.trim()) return;
+      ustrip.request(`/ustrip/api/packing/items/${itemId}/edit/`, { json: { text: text.trim() } })
+        .then((item) => { span.textContent = item.text; })
+        .catch((err) => alert(err.message));
+      return;
+    }
+
+    const moveBtn = e.target.closest("[data-move]");
+    if (moveBtn) {
+      ustrip.request(`/ustrip/api/packing/items/${itemId}/move/`, { json: { direction: moveBtn.dataset.move } })
+        .then((data) => { if (data.moved) window.location.reload(); })
+        .catch((err) => alert(err.message));
+      return;
+    }
+
+    if (e.target.closest("[data-delete]")) {
+      if (!confirm("Delete this item?")) return;
+      ustrip.request(`/ustrip/api/packing/items/${itemId}/delete/`)
+        .then(() => row.remove())
+        .catch((err) => alert(err.message));
+    }
   });
 
   list.addEventListener("submit", function (e) {
@@ -79,9 +138,7 @@
     if (!text) return;
     ustrip.request("/ustrip/api/packing/items/", { json: { group_id: form.dataset.groupId, text: text } })
       .then((item) => {
-        const row = ustrip.el(
-          '<div class="item"><button type="button" class="box" data-toggle></button><span class="itxt"></span></div>'
-        );
+        const row = ustrip.el(itemRowHtml());
         row.dataset.itemId = item.id;
         row.querySelector(".itxt").textContent = item.text;
         form.parentElement.insertBefore(row, form);

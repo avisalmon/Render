@@ -76,7 +76,8 @@ body.ustrip {
 
 .ustrip .hero { padding: 20px; margin-top: 10px; }
 .ustrip .hero-title { font-size: 26px; font-weight: 700; margin: 0 0 4px; }
-.ustrip .hero-dates { color: var(--ink-soft); font-size: 14px; margin: 0 0 16px; }
+.ustrip .hero-dates { color: var(--ink-soft); font-size: 14px; margin: 0 0 4px; }
+.ustrip .hero-route { color: var(--ink-soft); font-size: 12.5px; margin: 0 0 16px; }
 .ustrip .avatars { display: flex; }
 .ustrip .avatar { width: 34px; height: 34px; border-radius: 999px; display: flex; align-items: center;
   justify-content: center; font-size: 11px; font-weight: 700; color: var(--white-text);
@@ -92,6 +93,18 @@ body.ustrip {
 .ustrip .next-icon svg { width: 22px; height: 22px; }
 .ustrip .next-title { font-weight: 600; font-size: 15px; margin: 0 0 2px; }
 .ustrip .next-sub { font-size: 13px; color: var(--ink-soft); margin: 0; }
+
+.ustrip .essentials-card { padding: 6px 18px; }
+.ustrip .essential-row { display: flex; align-items: flex-start; gap: 14px; padding: 14px 0; }
+.ustrip .essential-row + .essential-row { border-top: 1px solid var(--line); }
+.ustrip .essential-icon { width: 36px; height: 36px; border-radius: 10px; background: var(--rust-soft);
+  color: var(--rust); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ustrip .essential-icon svg { width: 18px; height: 18px; }
+.ustrip .essential-body { flex: 1; min-width: 0; }
+.ustrip .essential-title { font-weight: 600; font-size: 14px; margin: 0 0 2px; }
+.ustrip .essential-sub { font-size: 12.5px; color: var(--ink-soft); margin: 0; }
+.ustrip .pending-pill { font-size: 10px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
+  color: var(--rust); border: 1px dashed var(--rust); padding: 1px 6px; border-radius: 99px; }
 
 .ustrip .tiles { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
 .ustrip .tile { padding: 14px 10px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
@@ -166,12 +179,14 @@ body.ustrip {
 .ustrip .photo { width: 100%; height: 180px; object-fit: cover; display: block; background: var(--rust-soft); }
 .ustrip .postbody { padding: 13px 15px 15px; }
 .ustrip .caption { font-size: 13.5px; line-height: 1.45; margin: 0 0 8px; }
+.ustrip .caption:empty { display: none; }
 .ustrip .meta { display: flex; align-items: center; gap: 9px; }
 .ustrip .mavatar { width: 26px; height: 26px; border-radius: 999px; display: flex; align-items: center;
   justify-content: center; font-size: 10px; font-weight: 700; color: var(--white-text); flex-shrink: 0; }
 .ustrip .mtext { flex: 1; min-width: 0; }
 .ustrip .mname { font-size: 12px; font-weight: 600; }
 .ustrip .mloc { font-size: 11px; color: var(--ink-soft); }
+.ustrip .mloc:empty { display: none; }
 
 .ustrip .empty { padding: 40px 10px; text-align: center; color: var(--ink-soft); font-size: 14px; }
 
@@ -199,10 +214,22 @@ body.ustrip {
 }
 .ustrip .field input:focus, .ustrip .field textarea:focus { outline: none; border-color: var(--rust); }
 .ustrip .field-error { color: var(--rust); font-size: 12.5px; margin: -2px 0 0; }
+.ustrip .field-checkbox { flex-direction: row; align-items: center; gap: 10px; }
+.ustrip .field-checkbox input { width: 18px; height: 18px; flex-shrink: 0; }
 
 .ustrip .edit-link { display: inline-block; margin-top: 6px; font-size: 11.5px; font-weight: 600;
-  color: var(--ink-soft); }
+  color: var(--ink-soft); flex-shrink: 0; }
 .ustrip .edit-link:hover { color: var(--rust); }
+
+/* Every item can be edited/deleted/reordered (spec sprint note): a small
+   row of icon-buttons reused on itinerary, packing, and journal rows. */
+.ustrip .row-actions { display: flex; align-items: center; gap: 4px; margin-top: 6px; }
+.ustrip .row-actions-inline { margin-top: 0; margin-left: auto; }
+.ustrip .mini-btn { width: 26px; height: 26px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--card); color: var(--ink-soft); font-size: 13px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ustrip .mini-btn:hover { border-color: var(--rust); color: var(--rust); }
+.ustrip .mini-btn-danger:hover { border-color: var(--rust); color: var(--rust); background: var(--rust-soft); }
 
 .ustrip .add-item-row { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
 .ustrip .add-item-row input { flex: 1; font: inherit; font-size: 13.5px; color: var(--ink); background: none;

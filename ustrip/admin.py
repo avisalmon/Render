@@ -5,7 +5,18 @@ nothing new is built here for it."""
 
 from django.contrib import admin
 
-from .models import ChecklistGroup, ChecklistItem, ItineraryDay, ItineraryItem, JournalPost, Trip
+from .models import ChecklistGroup, ChecklistItem, Flight, ItineraryDay, ItineraryItem, JournalPost, RentalCar, Trip
+
+
+class FlightInline(admin.TabularInline):
+    model = Flight
+    extra = 0
+
+
+class RentalCarInline(admin.StackedInline):
+    model = RentalCar
+    extra = 0
+    max_num = 1
 
 
 class ItineraryItemInline(admin.TabularInline):
@@ -35,7 +46,12 @@ class JournalPostAdmin(admin.ModelAdmin):
     list_filter = ["trip"]
 
 
-admin.site.register(Trip)
+class TripAdmin(admin.ModelAdmin):
+    list_display = ["name", "start_date", "end_date"]
+    inlines = [FlightInline, RentalCarInline]
+
+
+admin.site.register(Trip, TripAdmin)
 admin.site.register(ItineraryDay, ItineraryDayAdmin)
 admin.site.register(ChecklistGroup, ChecklistGroupAdmin)
 admin.site.register(JournalPost, JournalPostAdmin)

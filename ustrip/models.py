@@ -15,12 +15,56 @@ class Trip(models.Model):
     name = models.CharField(max_length=120)
     start_date = models.DateField()
     end_date = models.DateField()
+    route_summary = models.CharField(
+        max_length=300, blank=True, help_text='e.g. "NYC → Finger Lakes → Niagara Falls → ... → home"'
+    )
 
     class Meta:
         ordering = ["start_date"]
 
     def __str__(self):
         return self.name
+
+
+class Flight(models.Model):
+    """Spec §0 — harvested into trip-data/usa-2026.json's `flights` block but
+    never modeled until now (sat there as inert JSON, not a real object)."""
+
+    OUTBOUND = "outbound"
+    RETURN = "return"
+    DIRECTION_CHOICES = [(OUTBOUND, "Outbound"), (RETURN, "Return")]
+
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name="flights")
+    direction = models.CharField(max_length=10, choices=DIRECTION_CHOICES)
+    flight_number = models.CharField(max_length=20, blank=True)
+    departure_label = models.CharField(max_length=120, blank=True, help_text='Free text, e.g. "EWR 15:25 2026-10-01"')
+    arrival_label = models.CharField(max_length=120, blank=True, help_text='Free text, e.g. "Newark (EWR) ~15:50"')
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return f"{self.get_direction_display()} {self.flight_number}".strip()
+
+
+class RentalCar(models.Model):
+    """Spec §0 — same story as `Flight`. `confirmed` matters on its own: as
+    harvested this was a researched proposal, not a booking (spec sprint
+    note 2026-09-13) — Avi flips it once it's actually reserved. Reseeding
+    never resets it (see seed_ustrip.py)."""
+
+    trip = models.OneToOneField(Trip, on_delete=models.CASCADE, related_name="rental_car")
+    pickup_date = models.DateField(null=True, blank=True)
+    pickup_location = models.CharField(max_length=200, blank=True)
+    dropoff_date = models.DateField(null=True, blank=True)
+    dropoff_location = models.CharField(max_length=200, blank=True)
+    vehicle_class = models.CharField(max_length=200, blank=True)
+    note = models.TextField(blank=True)
+    confirmed = models.BooleanField(default=False, help_text="Actually booked, not just researched.")
+
+    def __str__(self):
+        return f"Rental car — {self.trip}"
 
 
 class ItineraryDay(models.Model):
