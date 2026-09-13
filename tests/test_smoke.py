@@ -143,3 +143,53 @@ def test_matazim_says_hadrachot():
         "מט״צים says הדרכות, never קורסים, in anything a reader sees:\n  "
         + "\n  ".join(offenders)
     )
+
+
+def test_the_matazim_track_has_nothing_it_cannot_render(db):
+    """The trainings are babook's; the experience is מט״צים's (Avi, 2026-09-13).
+
+    That holds only while מט״צים can render everything the completion rule
+    depends on. It reads babook's content flags: a lesson needs `quiz_passed`
+    if it carries a quiz marked `requires_correct`, or a reflection prompt on a
+    course that issues certificates. מט״צים's lesson page renders the video and
+    nothing else — no quiz, no reflection, no practice cell.
+
+    Today the three courses in the track have neither, so a member who watches
+    is credited and can be certified. The trap is that a babook author adding a
+    quiz to `scratch` is a completely ordinary thing to do, and the day it
+    happens every מט״צים member silently stops being able to finish the course
+    while the screen shows them nothing to answer. Silent, because the progress
+    bar simply stops moving.
+
+    So this fails the moment the track gains something the player cannot show.
+    The fix then is to render it in מט״צים's own chrome, not to relax the rule:
+    the completion rule is babook's and RULE-3 says there is one of it.
+    """
+    from app.models import Course, LessonQuiz, Video
+
+    from matazim.content import REQUIRED_COURSE_SLUGS
+
+    blocked = []
+    for slug in REQUIRED_COURSE_SLUGS:
+        course = Course.objects.filter(slug=slug).first()
+        if course is None:
+            continue
+
+        gating = LessonQuiz.objects.filter(video__course=course, requires_correct=True)
+        for quiz in gating.select_related("video"):
+            blocked.append(f"{slug}: lesson {quiz.video.lesson_order} has a gating quiz")
+
+        if getattr(course, "issues_certificate", False):
+            with_prompt = (
+                Video.objects.filter(course=course)
+                .exclude(reflection_prompt="")
+                .exclude(reflection_prompt=None)
+            )
+            for video in with_prompt:
+                blocked.append(f"{slug}: lesson {video.lesson_order} has a reflection prompt")
+
+    assert not blocked, (
+        "the מט״צים track now contains something its own lesson page cannot "
+        "render, so members will stop completing it with nothing on screen to "
+        "do about it:\n  " + "\n  ".join(blocked)
+    )
