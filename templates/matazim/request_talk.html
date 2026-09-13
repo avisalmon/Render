@@ -1,0 +1,101 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.115, REQ-M.116 — proposing a change, as a conversation.
+
+  The send button is above the fold and on the screen from the first turn. It
+  is not at the bottom of the thread where she has to scroll past an argument
+  to reach it, and it is never disabled: REQ-M.116 says the assistant may
+  disagree with her on the way out but may never stand between her and the
+  button.
+{% endcomment %}
+
+{% block title %}בקשה · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page mz-page-narrow">
+  <div class="mz-page-head">
+    <h1>הבקשה שלך</h1>
+    <p>
+      אפשר להמשיך לדבר על זה, ואפשר לשלוח לאבי בכל רגע. מה שכתבת נשמר כמו
+      שכתבת אותו.
+    </p>
+  </div>
+
+  <div class="mz-talk-actions">
+    <form method="post" action="{% url 'matazim:send_request' draft.pk %}">
+      {% csrf_token %}
+      <button type="submit" class="mz-btn mz-btn-primary">סיים שיחה ושלח בקשה</button>
+    </form>
+    <form method="post" action="{% url 'matazim:discard_request' draft.pk %}">
+      {% csrf_token %}
+      <button type="submit" class="mz-linkbtn">מחיקת הטיוטה</button>
+    </form>
+  </div>
+
+  <section class="mz-panel mz-panel-wide">
+    <ol class="mz-talk">
+      {% for message in messages %}
+        <li class="mz-turn {% if message.is_hers %}is-hers{% else %}is-assistant{% endif %}">
+          <span class="mz-turn-who">
+            {% if message.is_hers %}
+              {{ draft.author.profile.display_name|default:"את/ה" }}
+            {% else %}
+              {# REQ-M.117 — labelled, so nobody reads it back as hers later. #}
+              העוזר
+            {% endif %}
+          </span>
+          <p>{{ message.body|linebreaksbr }}</p>
+        </li>
+      {% endfor %}
+    </ol>
+
+    {% if model_quiet %}
+      {% comment %}
+        The model was unreachable for every turn so far. Said plainly, because
+        silence otherwise reads as the assistant ignoring her, and REQ-M.116
+        means this changes nothing about her ability to send.
+      {% endcomment %}
+      <p class="mz-muted">
+        העוזר לא זמין כרגע, אז אין תשובה כאן. זה לא מונע כלום: אפשר להוסיף עוד
+        פרטים ואפשר לשלוח את הבקשה לאבי עכשיו.
+      </p>
+    {% endif %}
+
+    {% if proposal %}
+      {% comment %}
+        REQ-M.119 — an offer, shown as a control rather than buried in prose.
+        Adopting is her act: the wording becomes a turn of hers because she
+        chose it, and what she wrote first stays in the transcript above.
+      {% endcomment %}
+      <div class="mz-proposal">
+        <span class="mz-req-note-label">נוסח מוצע</span>
+        <p>{{ proposal }}</p>
+        <form method="post" action="{% url 'matazim:adopt_wording' draft.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="mz-btn mz-btn-secondary">לאמץ את הנוסח הזה</button>
+        </form>
+        <small class="mz-muted">
+          לא חייבים. מה שכתבתם נשמר בכל מקרה, וגם אם תאמצו — הניסוח המקורי
+          נשאר בשיחה.
+        </small>
+      </div>
+    {% endif %}
+
+    <form method="post" class="mz-talk-form">
+      {% csrf_token %}
+      <label class="mz-field">
+        <span>להוסיף משהו</span>
+        <textarea name="body" rows="3"
+                  placeholder="אפשר לענות, להוסיף פרט, או לחלוק על מה שנאמר."></textarea>
+        <small>בלי שמות של תלמידים.</small>
+      </label>
+      <button type="submit" class="mz-btn mz-btn-secondary">שליחה בשיחה</button>
+    </form>
+  </section>
+
+  <p class="mz-page-actions">
+    <a class="mz-linkbtn" href="{% url 'matazim:my_requests' %}">הבקשות שלי</a>
+  </p>
+</div>
+{% endblock %}

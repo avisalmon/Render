@@ -221,3 +221,195 @@ def verdict_of(text):
             if known in cleaned:
                 return known
     return ""
+
+
+# --------------------------------------------------------------- the chat
+
+DISCUSS_SYSTEM = """את/ה עוזר/ת לנעמי, שמנהלת את תוכנית מט״צים, לנסח בקשה לשינוי
+באתר. אתה מדבר איתה, לא איתה על אבי: אבי הוא זה שיחליט בסוף.
+
+מה מט״צים הוא: אתר לתוכנית מנהיגות טכנולוגית לתלמידי חטיבת ביניים. תלמידים
+נרשמים, עוברים מבחן כניסה בתלת-ממד, לומדים קורסים קיימים, מצטרפים למוביל/ה
+בבית ספר, ומוסמכים בסוף. נעמי מנהלת את המובילים ורואה דוחות.
+
+מה מט״צים אינו: רשת חברתית, צ׳אט או וידאו בין תלמידים; מערכת ניהול בית ספר,
+נוכחות או ציונים; אפליקציה לנייד; תשלומים; כתיבה או עריכה של תוכן הקורסים.
+
+התפקיד שלך בשיחה הזאת, לפי סדר חשיבות:
+1. אם מה שהיא מבקשת כבר קיים — לומר לה את זה מיד, עם המזהה, ואיפה זה במסך.
+   זה הדבר הכי מועיל שאתה יכול לעשות: היא תקבל את מה שרצתה עכשיו במקום בעוד
+   שבועיים.
+2. אם זה לא ברור מספיק כדי לבנות — לשאול שאלה אחת ממוקדת. לא שלוש.
+3. אם זה ברור וחדש — לומר את זה בקצרה, ולציין מה זה נוגע.
+
+כללים:
+- תשובה קצרה. שתיים עד ארבע שורות. היא עסוקה.
+- שאלה אחת לכל היותר בכל תשובה.
+- לעולם אל תבקש ממנה לנסח מחדש לפני ששולחים. היא יכולה לשלוח בכל רגע, וזה בסדר.
+- אל תבטיח שמשהו ייבנה ואל תיתן תאריכים. אתה לא מחליט.
+- אל תמציא מזהי דרישות שלא ברשימה.
+- עברית פשוטה, בלי התנצלויות ובלי מחמאות.
+
+אם הבקשה יכולה להיות מנוסחת חד יותר, מותר לך להציע ניסוח. לא לתקן אותה, להציע.
+מסיימים את התשובה בשורה נפרדת בפורמט הזה בדיוק:
+
+נוסח מוצע: <משפט אחד או שניים, מנוסח כבקשה>
+
+ההצעה היא הצעה. היא בוחרת אם לאמץ אותה, והמילים שלה נשארות בכל מקרה. אל תציע
+ניסוח אם מה שהיא כתבה כבר ברור, ואל תציע יותר מהצעה אחת בתשובה."""
+
+RECOMMEND_SYSTEM = """את/ה כותב/ת לאבי המלצה על בקשה שנעמי שלחה, אחרי שיחה איתה.
+
+אבי מחליט. אתה ממליץ. הוא רוצה לדעת מה היית עושה, לא רק לאיזו קטגוריה זה שייך.
+
+ענה/י בדיוק בשלוש שורות:
+שורה 1 — עד שלושה מזהי REQ-M.x מהרשימה שהכי קרובים, מופרדים בפסיק, או: אין.
+שורה 2 — אחת מהמילים: לבנות / לצמצם ואז לבנות / לא עכשיו / כבר קיים / מחוץ לתחום
+שורה 3 — משפט אחד: מה הייתי עושה ולמה. אם "כבר קיים" — איפה זה נמצא היום.
+
+בסס/י את ההמלצה על כל השיחה, לא רק על המשפט הראשון שלה. אם במהלך השיחה היא
+חידדה מה היא צריכה, ההמלצה היא על מה שהיא חידדה."""
+
+RECOMMENDATIONS = ("לבנות", "לצמצם ואז לבנות", "לא עכשיו", "כבר קיים", "מחוץ לתחום")
+
+
+def _conversation_lines(request_row):
+    return [
+        f"{'נעמי' if m.is_hers else 'העוזר'}: {m.body.strip()}"
+        for m in request_row.messages.all()
+    ]
+
+
+def discuss(request_row):
+    """REQ-M.115 — the assistant's next turn. Never raises, never blocks sending.
+
+    Returns the reply text, or "" when there is no model to ask. An empty reply
+    is not an error state for her: REQ-M.116 says the conversation may never
+    stand between her and the button, and that includes the conversation being
+    unavailable.
+    """
+    from app.ai_chat import call_openai
+
+    if not getattr(settings, "OPENAI_API_KEY", ""):
+        return ""
+
+    context = [
+        "הדרישות שכבר מוגדרות במוצר (מזהה [מצב] כותרת: תיאור):",
+        *(_requirement_titles() or ["לא נטענו"]),
+        "",
+        "בקשות שכבר נרשמו:",
+        *(_open_requests(exclude_pk=request_row.pk) or ["אין"]),
+        "",
+        f"המסך שממנו היא פתחה את השיחה: {request_row.from_screen or 'לא נרשם'}",
+        "",
+        "השיחה עד כה:",
+        *_conversation_lines(request_row),
+    ]
+
+    try:
+        result = call_openai(
+            [{"role": "user", "content": "\n".join(context)}],
+            model=MODEL,
+            system_prompt=DISCUSS_SYSTEM,
+        )
+        return ((result or {}).get("content") or "").strip()
+    except Exception as exc:  # pragma: no cover - depends on a live API
+        logger.warning("matazim: discussion turn failed for %s: %s", request_row.pk, exc)
+        return ""
+
+
+def recommend(request_row, *, save=True):
+    """REQ-M.118 — what I would do, for Avi, built from the whole conversation.
+
+    Avi: "when approving, I want to see your recommendation." A verdict
+    classifies and a recommendation commits, so this says what to do rather
+    than what kind of thing it is. It still decides nothing: it cannot approve,
+    cannot decline, and cannot touch what she wrote.
+    """
+    from app.ai_chat import call_openai
+
+    if not getattr(settings, "OPENAI_API_KEY", ""):
+        return ""
+
+    context = [
+        "הדרישות שכבר מוגדרות במוצר (מזהה [מצב] כותרת: תיאור):",
+        *(_requirement_titles() or ["לא נטענו"]),
+        "",
+        "בקשות שכבר נרשמו:",
+        *(_open_requests(exclude_pk=request_row.pk) or ["אין"]),
+        "",
+        f"נשלח מהמסך: {request_row.from_screen or 'לא נרשם'}",
+        "",
+        "השיחה המלאה:",
+        *(_conversation_lines(request_row) or [request_row.body.strip()]),
+    ]
+
+    try:
+        result = call_openai(
+            [{"role": "user", "content": "\n".join(context)}],
+            model=MODEL,
+            system_prompt=RECOMMEND_SYSTEM,
+        )
+        text = ((result or {}).get("content") or "").strip()
+    except Exception as exc:  # pragma: no cover - depends on a live API
+        logger.warning("matazim: recommendation failed for %s: %s", request_row.pk, exc)
+        return ""
+
+    if text and save:
+        request_row.recommendation = text
+        request_row.assessed_at = timezone.now()
+        request_row.save(update_fields=["recommendation", "assessed_at"])
+    return text
+
+
+def split_recommendation(text):
+    """Requirement ids, the call, and the reasoning: three things, three places."""
+    if not text:
+        return "", "", ""
+    lines = [line.strip() for line in text.strip().splitlines() if line.strip()]
+    refs = lines[0] if lines else ""
+    call = ""
+    rest = []
+    for line in lines[1:]:
+        cleaned = line.strip(" .:-—")
+        if not call and cleaned in RECOMMENDATIONS:
+            call = cleaned
+            continue
+        rest.append(line)
+    if refs.strip(" .:-—") in RECOMMENDATIONS and not call:
+        call, refs = refs.strip(" .:-—"), ""
+    return refs, call, "\n".join(rest).strip()
+
+
+PROPOSED = "נוסח מוצע:"
+
+
+def proposed_wording(text):
+    """REQ-M.119 — the phrasing the assistant offered, if it offered one.
+
+    Avi, 2026-09-13: "Her words stays. The chat can propose new wording." Those
+    two sit together only if the proposal is an offer she accepts rather than an
+    edit applied to her. So this pulls the suggestion out for a button, and
+    adopting it is her act: the text becomes a turn of hers, because she chose
+    it, and what she originally wrote stays in the transcript where anybody can
+    still read it.
+    """
+    if not text or PROPOSED not in text:
+        return ""
+    tail = text.split(PROPOSED, 1)[1]
+    # One line: the prompt asks for the proposal last and on its own line, and
+    # taking the rest of the message would swallow anything said after it.
+    return tail.strip().splitlines()[0].strip() if tail.strip() else ""
+
+
+def without_proposal(text):
+    """The assistant's message with the proposal line removed.
+
+    The screen shows the proposal as a control rather than as prose, so leaving
+    it in the body prints it twice.
+    """
+    if not text or PROPOSED not in text:
+        return (text or "").strip()
+    head, tail = text.split(PROPOSED, 1)
+    rest = tail.strip().splitlines()[1:]
+    return "\n".join([head.strip(), *rest]).strip()

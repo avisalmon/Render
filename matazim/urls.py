@@ -10,6 +10,7 @@ from django.urls import path
 from . import (
     certificate_views,
     cohort_views,
+    conversation_views,
     entrance_views,
     invite_views,
     joining_views,
@@ -102,8 +103,17 @@ urlpatterns = [
     # REQ-M.84 — an admin records a school's paper consent.
     path("staff/consent/<int:profile_id>/", entrance_views.staff_consent, name="staff_consent"),
     # §4.11 — the improvement loop. Behind the program-manager role and root,
-    # and every view refuses everyone else on its own (REQ-M.102).
-    path("requests/new/", request_views.new_request, name="new_request"),
+    # and every view refuses everyone else on its own (REQ-M.102). Proposing a
+    # change is a conversation (REQ-M.115), so `new_request` opens one.
+    path("requests/new/", conversation_views.start, name="new_request"),
+    path("requests/<int:request_id>/talk/", conversation_views.talk, name="talk"),
+    path("requests/<int:request_id>/adopt/", conversation_views.adopt, name="adopt_wording"),
+    path("requests/<int:request_id>/send/", conversation_views.send, name="send_request"),
+    path(
+        "requests/<int:request_id>/discard/",
+        conversation_views.discard,
+        name="discard_request",
+    ),
     path("requests/", request_views.my_requests, name="my_requests"),
     path("requests/queue/", request_views.request_queue, name="request_queue"),
     path("requests/<int:request_id>/decide/", request_views.decide_request, name="decide_request"),

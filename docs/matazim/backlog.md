@@ -1615,6 +1615,78 @@ because they are product history, and to hold the retention rule over
 *declined* rows and anything never acted on, at the same 365 days as everything
 else. That is a decision, not a default, which is why it is not in this sprint.
 
+## SPR-M.27 — Proposing a change is a conversation  `DONE`
+
+Avi, 2026-09-13, the evening SPR-M.25 shipped: "I want the experience of
+proposing an improvement to be like a chat, so she will write what she wants,
+you will comment and suggest and discuss, and there will be a button סיים שיחה
+ושלח בקשה when she just want to submit. For me, when approving, I want to see
+your recommendation."
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.27.1 | `RequestMessage`, and a request that can be a draft | REQ-M.115, M.117 | DONE |
+| F-M.27.2 | The conversation screen, one turn at a time | REQ-M.115 | DONE |
+| F-M.27.3 | סיים שיחה ושלח בקשה, live from the first moment | REQ-M.116 | DONE |
+| F-M.27.4 | A recommendation for Avi, built from the whole conversation | REQ-M.118 | DONE |
+| F-M.27.5 | The transcript on the approval card, her words first | REQ-M.117, M.112 | DONE |
+| F-M.27.6 | A proposed wording she can adopt or ignore | REQ-M.119 | DONE |
+| F-M.27.7 | The mini gate never calls OpenAI; the full regression may | — | DONE |
+
+### What building it turned up  `DONE 2026-09-13`
+
+**The suite was making real OpenAI calls on every run.** Found while running
+the SPR-M.25 tests: `matazim.assess` reads `settings.OPENAI_API_KEY` and the
+developer machine has a real one, so the gate that runs after every change was
+paying for chat completions and depending on somebody else's uptime. Avi's
+rule, given the same evening: "In full regression you can call real openai. But
+not regular mini regression." The key is blanked unless `MATAZIM_LIVE_AI=1`,
+which the daily full run sets. Blanking is not avoidance: every caller here
+fails open when there is no model, so the quiet run exercises the path that has
+to work anyway.
+
+**Avi's amendment sharpened the design.** "Her words stays. The chat can
+propose new wording." Those two only hold together if a proposal is an offer
+rather than an edit: the assistant may end a turn with a suggested phrasing, it
+renders as a control rather than as prose, and nothing changes until she presses
+it. Adopting stores the text as a turn of **hers**, because she chose it, and
+her original stays as the opening line of the conversation. Both are on the
+card, and anybody reading it later can see which is which.
+
+**The rule most likely to rot got the strongest test.** REQ-M.116 says the
+conversation may never stand between her and the button, which is exactly the
+kind of rule that dies quietly to one reasonable-looking clarifying question.
+`test_she_can_send_before_the_assistant_says_anything` was verified by adding
+such a gate on purpose and watching it fail.
+
+### The three decisions this rests on
+
+**The conversation never gates the request.** The send button is there before
+the assistant has said anything and stays there after any number of turns. This
+is the one that could quietly go wrong: an assistant that asks one more
+clarifying question before letting somebody complain is a suggestion box with
+extra steps, and she would use it once. It gets its own test.
+
+**Her words stay verbatim.** REQ-M.112 does not bend for this. Every message she
+writes is stored exactly as typed and the request body is hers, not a summary of
+her. What the conversation adds is context around it, and the assistant's turns
+are labelled as the assistant's so nobody reads them back as hers a year later.
+
+**A draft is not a request.** A conversation she starts and abandons is not
+work anybody owes her an answer on. Drafts stay out of Avi's queue entirely and
+appear on her own log only as drafts she can resume or discard.
+
+### Why a conversation is worth the build
+
+Roughly half of what anyone asks for in a product this age either already
+exists or is three sentences from being buildable. SPR-M.25's own assessments
+showed both shapes on the first three test requests: one was already covered by
+REQ-M.24, and one proposed a specific mechanism (an email) for a need that was
+already specified more broadly as notifications. A form collects those as
+requests and spends a sprint discovering it. A conversation finds out while she
+is still typing, and she gets the answer to the first kind immediately rather
+than in a fortnight.
+
 ## Also still open
 
 - Retire the old production tables, once ACT-M.2 is answered.

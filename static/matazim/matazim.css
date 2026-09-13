@@ -1813,3 +1813,103 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
 }
 
 .mz-req-act { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+
+/* ------------------------------------- the conversation (REQ-M.115 to M.118) */
+
+/* The send button lives above the thread, not below it (REQ-M.116). She must
+   never have to scroll past an argument to reach the way out of it. */
+.mz-talk-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.mz-talk { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 12px; }
+
+.mz-turn {
+  border-radius: var(--mz-radius-sm);
+  padding: 12px 14px;
+  max-width: 44rem;
+}
+/* Hers reads as the page's own voice; the assistant's is visibly a guest, so
+   nobody reads a machine's sentence back as something she said. */
+.mz-turn.is-hers { background: var(--mz-purple-soft); }
+.mz-turn.is-assistant { background: var(--mz-page); border: 1px solid var(--mz-line); }
+
+.mz-turn-who {
+  display: block;
+  font-size: .76rem;
+  color: var(--mz-muted);
+  margin-bottom: 4px;
+}
+.mz-turn p {
+  margin: 0;
+  color: var(--mz-ink);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.mz-talk-form { margin-top: 4px; }
+
+/* Avi's recommendation, above the assessment because it is what he asked for
+   and because a recommendation commits where a verdict only classifies. */
+.mz-req-rec {
+  border-inline-start: 3px solid var(--mz-purple);
+  padding: 4px 12px;
+  margin: 0 0 12px;
+}
+.mz-req-call {
+  display: inline-block;
+  margin: 2px 0 4px;
+  color: var(--mz-ink);
+  font-size: 1.02rem;
+}
+.mz-req-rec p {
+  margin: 2px 0 0;
+  color: var(--mz-body);
+  font-size: .92rem;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.mz-req-refs { font-size: .8rem; }
+
+.mz-req-talk { margin: 0 0 12px; }
+.mz-req-talk summary {
+  cursor: pointer;
+  font-size: .82rem;
+  color: var(--mz-muted);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.mz-req-talk .mz-turn { margin-bottom: 8px; }
+
+.mz-page-narrow { max-width: 52rem; }
+
+
+/* A suggested wording (REQ-M.119). Visibly an offer sitting beside the
+   conversation, not a correction applied to what she wrote. */
+.mz-proposal {
+  border: 1px dashed var(--mz-purple);
+  border-radius: var(--mz-radius-sm);
+  padding: 12px 14px;
+  margin: 0 0 16px;
+  background: var(--mz-card);
+}
+.mz-proposal p {
+  margin: 4px 0 10px;
+  color: var(--mz-ink);
+  overflow-wrap: anywhere;
+}
+.mz-proposal small { display: block; margin-top: 8px; font-size: .8rem; }
+
+.mz-req-note-body {
+  margin: 4px 0 0;
+  font-size: .9rem;
+  color: var(--mz-body);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}

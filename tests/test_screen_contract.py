@@ -172,8 +172,34 @@ def build_world(
     # §4.11 — the improvement loop, in the states its screens are read in: one
     # waiting on Avi, one he approved, one already shipped with an outcome she
     # can read. An empty queue is not the queue screen.
+    draft = None
     if requests:
-        from matazim.models import Request
+        from matazim.models import Request, RequestMessage
+
+        # REQ-M.117 — a conversation she has not sent. The state the talk screen
+        # is read in, and one that appears on no other screen in the product.
+        draft = Request.objects.create(
+            author=manager,
+            author_role="program_manager",
+            body="אני רוצה שיישלח מייל כשמט״צ מסיים את שני הקורסים.",
+            kind=Request.IDEA,
+            from_screen="/matazim/staff/cohort/",
+            status=Request.DRAFT,
+        )
+        RequestMessage.objects.create(
+            request=draft,
+            who=RequestMessage.HER,
+            body="אני רוצה שיישלח מייל כשמט״צ מסיים את שני הקורסים.",
+        )
+        RequestMessage.objects.create(
+            request=draft,
+            who=RequestMessage.ASSISTANT,
+            body=(
+                "REQ-M.33 כבר מגדיר התראות, והוא עדיין לא נבנה.\n"
+                "השאלה היא אם מספיק מייל, או שצריך גם סימון במסך.\n"
+                "נוסח מוצע: התראה למנהלת התוכנית כשמט״צ משלים את שני הקורסים."
+            ),
+        )
 
         Request.objects.create(
             author=manager,
@@ -200,6 +226,15 @@ def build_world(
                 "כבר קיים\n"
                 "REQ-M.24 כבר מגדיר ייצוא CSV מהמסך הזה.\n"
                 "כדאי לבדוק אם הכפתור פשוט לא נראה."
+            ),
+            # REQ-M.118 — the thing Avi actually asked to see on this screen.
+            # Without it here the catalogue renders his card without its
+            # headline feature, which is the same trap as a fixture with no
+            # candidate leader in it.
+            recommendation=(
+                "REQ-M.24\n"
+                "כבר קיים\n"
+                "הייתי מראה לה איפה הכפתור במקום לבנות אחד שני."
             ),
             assessed_at=now,
         )
@@ -334,6 +369,7 @@ def build_world(
         "leader": leader,
         "other_leader": other,
         "candidate": pending_leader_row,
+        "draft": draft,
         "students": people,
         "unattached": unattached,
     }
@@ -480,6 +516,12 @@ SCREENS = [
         dict(students="none", requests=True),
     ),
     ("requests/new", "/matazim/requests/new/", "pm@example.com", dict(students="none")),
+    (
+        "requests/talk",
+        lambda w: f"/matazim/requests/{w['draft'].pk}/talk/",
+        "pm@example.com",
+        dict(students="none", requests=True),
+    ),
     (
         "public/verify",
         lambda w: f"/matazim/verify/{w['students']['done@example.com'].certificate.public_id}/",

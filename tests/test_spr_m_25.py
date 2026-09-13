@@ -95,8 +95,16 @@ def test_she_can_file_a_request_and_it_remembers_the_screen(client, db):
     row = Request.objects.get()
     assert row.author == naomi
     assert row.from_screen == "/matazim/leader/students/"
-    assert row.status == Request.NEW, "a manager's request waits for Avi"
     assert row.author_role, "nothing records who was speaking"
+
+    # REQ-M.115, M.117 — writing opens a conversation. It is a draft until she
+    # presses send, and a draft is not a request: it is out of Avi's queue.
+    assert row.status == Request.DRAFT
+    assert response.url == reverse("matazim:talk", args=[row.pk])
+
+    client.post(reverse("matazim:send_request", args=[row.pk]))
+    row.refresh_from_db()
+    assert row.status == Request.NEW, "a manager's request waits for Avi"
 
 
 def test_her_words_are_stored_exactly(client, db):
@@ -131,6 +139,9 @@ def test_avis_own_request_arrives_approved(client, db):
     )
 
     row = Request.objects.get()
+    client.post(reverse("matazim:send_request", args=[row.pk]))
+
+    row.refresh_from_db()
     assert row.status == Request.APPROVED
     assert row.decided_by == avi
     assert row.decided_at is not None

@@ -38,7 +38,51 @@
     </p>
   {% endif %}
 
-  {% if entry.row.assessment %}
+  {% if entry.call or entry.why %}
+    {% comment %}
+      REQ-M.118 — Avi: "when approving, I want to see your recommendation."
+      First, above the assessment, because a verdict classifies and a
+      recommendation commits, and the second is what he asked for. Still
+      machine-written, still deciding nothing: his press is the decision.
+    {% endcomment %}
+    <div class="mz-req-rec">
+      <span class="mz-req-note-label">ההמלצה שלי</span>
+      {% if entry.call %}<strong class="mz-req-call">{{ entry.call }}</strong>{% endif %}
+      {% if entry.why %}<p>{{ entry.why|linebreaksbr }}</p>{% endif %}
+      {% if entry.refs %}<p class="mz-muted mz-req-refs" dir="ltr">{{ entry.refs }}</p>{% endif %}
+    </div>
+  {% endif %}
+
+  {% if entry.transcript %}
+    {% comment %}
+      REQ-M.117 — the conversation behind the request, collapsed. Her words are
+      already above; this is the working out, for when he wants it.
+    {% endcomment %}
+    <details class="mz-req-talk">
+      <summary>השיחה ({{ entry.transcript|length }} הודעות)</summary>
+      {% for message in entry.transcript %}
+        <div class="mz-turn {% if message.is_hers %}is-hers{% else %}is-assistant{% endif %}">
+          <span class="mz-turn-who">
+            {% if message.is_hers %}{{ entry.row.author.profile.display_name|default:"המבקש/ת" }}{% else %}העוזר{% endif %}
+          </span>
+          <p>{{ message.body|linebreaksbr }}</p>
+        </div>
+      {% endfor %}
+    </details>
+  {% endif %}
+
+  {% if entry.row.assessment and entry.call %}
+    {% comment %}
+      REQ-M.109 with M.118 — when there is a recommendation the assessment
+      mostly repeats it: same verdict, same requirement ids, one screen apart.
+      Kept, because it is the earlier and independent reading, but folded away
+      so Avi reads one opinion rather than the same one twice.
+    {% endcomment %}
+    <details class="mz-req-talk">
+      <summary>ההערכה האוטומטית</summary>
+      <p class="mz-req-note-body">{{ entry.reasoning|default:entry.row.assessment|linebreaksbr }}</p>
+    </details>
+  {% elif entry.row.assessment %}
     {% comment %}
       REQ-M.109 — beside her words, never instead of them, and labelled. It is
       sometimes wrong and it decides nothing.

@@ -189,7 +189,7 @@
   {% block content %}{% endblock %}
 </main>
 
-{% if can_request %}
+{% if can_request and section != "requests" %}
   {% comment %}
     REQ-M.106 — the lamp.
 
@@ -201,6 +201,10 @@
     looking at, which is the single most useful field on the row later. Built
     from `request.path` rather than the Referer header, which is missing often
     enough to fail exactly when it matters.
+
+    Not shown on the request screens themselves: there it floats over the
+    textarea she is typing into, and it invites starting a second conversation
+    while she is in the middle of one.
   {% endcomment %}
   <a class="mz-lamp" href="{% url 'matazim:new_request' %}?from={{ request.path|urlencode }}"
      title="בקשה או משוב על המערכת" aria-label="בקשה או משוב על המערכת">

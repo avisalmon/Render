@@ -225,6 +225,32 @@ Sweeping the remaining twenty-two screens into the catalogue produced a clean
     "Cohort view and reporting". Before blaming a model, check that what it
     needed was in what it was given.
 
+#### What SPR-M.27 added
+
+19. **The mini gate must never call a paid API; the full regression may.** The
+    suite was making real OpenAI calls on every run, because `matazim.assess`
+    reads `settings.OPENAI_API_KEY` and this machine has a real one. On the gate
+    that runs after every change that is slow, it costs money each time, and it
+    makes a green suite depend on somebody else's uptime. Avi's rule: live calls
+    on the daily full regression only. `conftest.py` blanks the key unless
+    `MATAZIM_LIVE_AI=1`, so the full run is:
+
+        MATAZIM_LIVE_AI=1 pytest -q
+
+    Blanking is not avoidance — every caller fails open when there is no model,
+    so the quiet run exercises the path that has to work anyway.
+20. **When a rule is the kind that dies to one reasonable-looking change, test
+    it against that change.** REQ-M.116 says the conversation may never stand
+    between her and the send button. The natural way to break it is one polite
+    clarifying question, which nobody would flag in review. So the test was
+    verified by adding exactly that gate and watching it fail.
+21. **An offer is not an edit.** "Her words stay" and "the chat may propose new
+    wording" only hold together if adopting is her act: the proposal renders as
+    a control, nothing changes until she presses it, and the adopted text is
+    stored as a turn of *hers* with the original still in the thread. If I had
+    applied the rewording automatically, both requirements would still have read
+    as satisfied in the spec and one of them would have been false.
+
 And one that belongs in the fast gate rather than the contract: **an undefined
 CSS variable is a silent failure.** `var(--mz-accent)` in a rule is not an
 error, the declaration is simply dropped and the element keeps what it

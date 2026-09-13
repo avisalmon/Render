@@ -53,7 +53,7 @@ def _display_name(user):
 def _body(row, site_url):
     asked_by = _display_name(row.author)
     lines = [
-        f"שלום,",
+        "שלום,",
         "",
         f"בקשה שנרשמה במט״צים טופלה{f' בספרינט {row.sprint}' if row.sprint else ''}.",
         "",

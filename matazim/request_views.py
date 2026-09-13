@@ -21,8 +21,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from .access import is_program_manager, role_of
-from .assess import assess, split_assessment
+from .access import is_program_manager
+from .assess import assess, split_assessment, split_recommendation, without_proposal
 from .models import Request
 from .views import shell
 
@@ -63,60 +63,39 @@ def may_decide(user):
 
 
 def _entry(row):
-    """One row, with its assessment split into a verdict and the reasoning."""
+    """One row, with everything the card needs already taken apart.
+
+    Done here rather than in the template because splitting text is not a
+    template's job, and because Avi's card and her log render from the same
+    partial: if the two pulled the pieces apart differently they would
+    eventually describe the same request differently.
+    """
     verdict, reasoning = split_assessment(row.assessment)
-    return {"row": row, "verdict": verdict, "reasoning": reasoning}
+    refs, call, why = split_recommendation(row.recommendation)
+    return {
+        "row": row,
+        "verdict": verdict,
+        "reasoning": reasoning,
+        "refs": refs,
+        "call": call,
+        "why": why,
+        # REQ-M.117 — the conversation, for when he wants the working out. A
+        # suggested wording she adopted is already in the thread as a turn of
+        # hers, so the assistant's copy of it would read as her saying it twice.
+        "transcript": [
+            {
+                "is_hers": turn.is_hers,
+                "body": turn.body if turn.is_hers else without_proposal(turn.body),
+            }
+            for turn in row.messages.all()
+        ],
+    }
 
 
-@login_required(login_url=LOGIN_URL)
-def new_request(request):
-    """REQ-M.105 — three questions, and it remembers where she was."""
-    if not may_use_requests(request.user):
-        raise PermissionDenied
-
-    error = ""
-    # Where she was standing when she pressed the lamp. Sent by the lamp itself
-    # rather than read from the Referer header, which is missing often enough
-    # to make the field unreliable exactly when it matters.
-    from_screen = (request.POST.get("from_screen") or request.GET.get("from") or "").strip()[:300]
-
-    if request.method == "POST":
-        body = (request.POST.get("body") or "").strip()
-        kind = request.POST.get("kind") or Request.IDEA
-        if len(body) < 5:
-            error = "כתבו משפט או שניים על מה שצריך לשנות."
-        elif kind not in dict(Request.KIND_CHOICES):
-            error = "בחרו סוג מהרשימה."
-        else:
-            row = Request.objects.create(
-                author=request.user,
-                author_role=role_of(request.user),
-                body=body,
-                kind=kind,
-                from_screen=from_screen,
-                # REQ-M.108 — Avi's own requests arrive approved. Asking him to
-                # approve his own is a ceremony with no reader.
-                status=Request.APPROVED if request.user.is_superuser else Request.NEW,
-                decided_by=request.user if request.user.is_superuser else None,
-                decided_at=timezone.now() if request.user.is_superuser else None,
-            )
-            # REQ-M.109 — advisory, and fail-open: if the model is unreachable
-            # the request is already saved and the assessment stays empty.
-            assess(row)
-            return redirect("matazim:my_requests")
-
-    return render(
-        request,
-        "matazim/request_new.html",
-        shell(
-            request,
-            "requests",
-            error=error,
-            from_screen=from_screen,
-            kinds=Request.KIND_CHOICES,
-            posted=request.POST if request.method == "POST" else None,
-        ),
-    )
+# `new_request` lived here until REQ-M.115 turned proposing a change into a
+# conversation. It is `conversation_views.start` now: the URL name is unchanged
+# so nothing that links to it had to move, and the form it renders is the first
+# turn rather than the whole request.
 
 
 @login_required(login_url=LOGIN_URL)
@@ -125,7 +104,11 @@ def my_requests(request):
     if not may_use_requests(request.user):
         raise PermissionDenied
 
-    rows = list(visible_requests(request.user).select_related("author", "decided_by"))
+    rows = list(
+        visible_requests(request.user)
+        .select_related("author", "decided_by")
+        .prefetch_related("messages")
+    )
     return render(
         request,
         "matazim/request_log.html",
@@ -145,7 +128,13 @@ def request_queue(request):
     if not may_decide(request.user):
         raise PermissionDenied
 
-    rows = list(Request.objects.all().select_related("author", "decided_by"))
+    # REQ-M.117 — a draft she has not sent is not a request, and an abandoned
+    # conversation is not work anybody owes her an answer on.
+    rows = list(
+        Request.objects.exclude(status=Request.DRAFT)
+        .select_related("author", "decided_by")
+        .prefetch_related("messages")
+    )
     groups = {
         "waiting": [r for r in rows if r.status == Request.NEW],
         "approved": [r for r in rows if r.status == Request.APPROVED],

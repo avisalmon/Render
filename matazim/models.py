@@ -742,11 +742,16 @@ class Request(models.Model):
     triggers work, and `tests/test_spr_m_25.py` fails if that changes.
     """
 
+    # REQ-M.117 — a conversation she started and has not sent. Not a request:
+    # it is out of Avi's queue entirely, and an abandoned one is not a backlog
+    # item that somebody owes her an answer on.
+    DRAFT = "draft"
     NEW = "new"
     APPROVED = "approved"
     DECLINED = "declined"
     DONE = "done"
     STATUS_CHOICES = [
+        (DRAFT, "טיוטה"),
         (NEW, "חדשה"),
         (APPROVED, "אושרה"),
         (DECLINED, "לא מתאימה כרגע"),
@@ -809,10 +814,57 @@ class Request(models.Model):
     def __str__(self):
         return f"{self.get_status_display()} · {self.body[:48]}"
 
+    # REQ-M.118 — what I would do, as opposed to what kind of thing this is.
+    # Kept beside `assessment` rather than replacing it: a verdict classifies
+    # and a recommendation commits, and Avi asked to see the second one.
+    recommendation = models.TextField(blank=True, default="", verbose_name="המלצה")
+
     @property
     def is_open(self):
         return self.status in (self.NEW, self.APPROVED)
 
     @property
+    def is_draft(self):
+        return self.status == self.DRAFT
+
+    @property
     def waiting_on_avi(self):
         return self.status == self.NEW
+
+
+class RequestMessage(models.Model):
+    """REQ-M.115, REQ-M.117 — one turn of the conversation behind a request.
+
+    Avi asked for proposing a change to feel like a chat rather than a form,
+    because roughly half of what anybody asks for either already exists or is
+    three sentences from being buildable, and a conversation finds that out
+    while she is still typing rather than a fortnight later.
+
+    **Whose words these are is part of the row.** Her turns are stored exactly
+    as typed (REQ-M.112) and the assistant's are marked as the assistant's, so
+    that a year from now nobody reads a machine's paraphrase back as something
+    she said.
+    """
+
+    HER = "person"
+    ASSISTANT = "assistant"
+    WHO_CHOICES = [(HER, "המבקש/ת"), (ASSISTANT, "העוזר")]
+
+    request = models.ForeignKey(
+        "Request", on_delete=models.CASCADE, related_name="messages"
+    )
+    who = models.CharField(max_length=20, choices=WHO_CHOICES, verbose_name="מי")
+    body = models.TextField(verbose_name="תוכן")
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["created_at", "pk"]
+        verbose_name = "הודעה בשיחה"
+        verbose_name_plural = "הודעות בשיחה"
+
+    def __str__(self):
+        return f"{self.get_who_display()}: {self.body[:40]}"
+
+    @property
+    def is_hers(self):
+        return self.who == self.HER
