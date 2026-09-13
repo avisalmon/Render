@@ -116,3 +116,30 @@ def test_no_template_comment_spans_a_line():
         "a `{# #}` comment runs past its line, so the rest of it renders as "
         "text; use `{% comment %}`:\n  " + "\n  ".join(bad)
     )
+
+
+def test_matazim_says_hadrachot():
+    """Avi, 2026-09-13: מט״צים says הדרכות, not קורסים.
+
+    Decided after the request assistant nearly had the opposite baked into its
+    prompt. The rule is babook's brand term and מט״צים was using both: 14 uses
+    of הדרכות against 6 of קורסים, including the nav item every member read on
+    every page. Copy drifts back the moment nobody is looking, and a product
+    that calls one thing two names teaches its own assistant to as well.
+
+    UI text only. URLs, view names and model slugs stay `course`, which is
+    babook's vocabulary for its own tables and is not something a reader sees.
+    """
+    import re
+    from pathlib import Path
+
+    offenders = []
+    for template in sorted(Path("templates/matazim").rglob("*.html")):
+        for n, line in enumerate(template.read_text(encoding="utf-8").splitlines(), 1):
+            if re.search(r"קורס", line):
+                offenders.append(f"{template.name}:{n} {line.strip()[:70]}")
+
+    assert not offenders, (
+        "מט״צים says הדרכות, never קורסים, in anything a reader sees:\n  "
+        + "\n  ".join(offenders)
+    )

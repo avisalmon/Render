@@ -1732,7 +1732,18 @@ requests and spends a sprint discovering it. A conversation finds out while she
 is still typing, and she gets the answer to the first kind immediately rather
 than in a fortnight.
 
-## Open: מט״צים calls the same thing two names
+## Decided: מט״צים says הדרכות  `DONE 2026-09-13`
+
+Avi, one word: "הדרכות". Swept through every template a reader sees — the nav
+item on every page, the section title, and five sentences that called the
+entrance test a קורס. URLs, view names and model slugs stay `course`, because
+that is babook's vocabulary for its own tables and nobody reads it.
+
+Guarded in the smoke gate, because copy drifts back the moment nobody is
+looking, and told to the request assistant, which can now say it because it is
+finally true.
+
+## Was open: מט״צים calls the same thing two names
 
 Found 2026-09-13, while building the context for the request conversation. I was
 about to teach the assistant "the site says הדרכות, never קורסים", which is the

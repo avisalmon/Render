@@ -66,7 +66,7 @@
         <a href="{% url 'matazim:home' %}" {% if section == 'home' %}class="is-active"{% endif %}>דף הבית</a>
         <a href="{% url 'matazim:about' %}" {% if section == 'about' %}class="is-active"{% endif %}>אודות התכנית</a>
         <a href="{% url 'matazim:track' %}" {% if section == 'track' %}class="is-active"{% endif %}>המסלול השנתי</a>
-        <a href="{% url 'matazim:courses' %}" {% if section == 'courses' %}class="is-active"{% endif %}>הקורסים</a>
+        <a href="{% url 'matazim:courses' %}" {% if section == 'courses' %}class="is-active"{% endif %}>ההדרכות</a>
         <a href="{% url 'matazim:entrance_test' %}" {% if section == 'test' %}class="is-active"{% endif %}>מבחן הכניסה</a>
         <a href="{% url 'matazim:schools' %}" {% if section == 'schools' %}class="is-active"{% endif %}>בתי הספר</a>
         <a href="{% url 'matazim:community' %}" {% if section == 'community' %}class="is-active"{% endif %}>קהילת מט״צים</a>
@@ -81,7 +81,7 @@
         {% if is_member %}
           {# What a member came here to do. #}
           <a href="{% url 'matazim:my_path' %}" {% if section == 'path' %}class="is-active"{% endif %}>המסלול שלי</a>
-          <a href="{% url 'matazim:courses' %}" {% if section == 'courses' %}class="is-active"{% endif %}>הקורסים</a>
+          <a href="{% url 'matazim:courses' %}" {% if section == 'courses' %}class="is-active"{% endif %}>ההדרכות</a>
           {% comment %}
             REQ-M.63 — marked when it is behind them, never hidden. Hiding it
             once passed also made the whole test chain unreachable for them,
@@ -239,7 +239,7 @@
     <span class="mz-footer-nav">
       <a href="{% url 'matazim:about' %}">אודות התכנית</a>
       <a href="{% url 'matazim:track' %}">המסלול השנתי</a>
-      <a href="{% url 'matazim:courses' %}">הקורסים</a>
+      <a href="{% url 'matazim:courses' %}">ההדרכות</a>
       <a href="{% url 'matazim:schools' %}">בתי הספר</a>
       <a href="{% url 'matazim:community' %}">קהילת מט״צים</a>
       <a href="{% url 'matazim:events' %}">ימי שיא</a>
