@@ -1,0 +1,30 @@
+{% extends "ustrip/base.html" %}
+{% load ustrip_extras %}
+{% block title %}Journal — ustrip{% endblock %}
+
+{% block content %}
+<p class="title serif">Journal</p>
+<p class="subtitle">Shared photo diary</p>
+
+<div class="feed">
+  {% for post in posts %}
+    <div class="post">
+      {% if post.photo %}
+        <img class="photo" src="{{ post.photo.url }}" alt="">
+      {% endif %}
+      <div class="postbody">
+        {% if post.caption %}<p class="caption">{{ post.caption }}</p>{% endif %}
+        <div class="meta">
+          <div class="mavatar" style="{% avatar_style post.author %}">{{ post.author|avatar_initials }}</div>
+          <div class="mtext">
+            <div class="mname">{{ post.author.first_name|default:post.author.get_username }}</div>
+            {% if post.location %}<div class="mloc">{{ post.location }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="empty">No photos yet — the first one posted here starts the diary.</div>
+  {% endfor %}
+</div>
+{% endblock %}

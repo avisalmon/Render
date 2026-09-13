@@ -1,0 +1,44 @@
+{% extends "ustrip/base.html" %}
+{% load ustrip_extras %}
+{% block title %}Packing & Tasks — ustrip{% endblock %}
+
+{% block content %}
+<p class="title serif">Packing &amp; Tasks</p>
+<p class="subtitle">{{ trip.name|default:"" }}</p>
+
+<div class="list">
+  {% for group in groups %}
+    <div class="clcard">
+      <div class="clhead">
+        {% if group.assigned_to %}
+          <div class="clavatar" style="{% avatar_style group.assigned_to %}">{{ group.assigned_to|avatar_initials }}</div>
+        {% else %}
+          <div class="clicon">
+            <svg class="icon" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M7.5 9.5l1.6 1.6L11.5 8M7.5 15.5l1.6 1.6l2.4-3.1M14 9.5h4M14 15.5h4"/></svg>
+          </div>
+        {% endif %}
+        <div class="clbody">
+          <div class="clname">{{ group.name }}</div>
+          <div class="clcount">{{ group.items.all|length }} item{{ group.items.all|length|pluralize }}</div>
+        </div>
+      </div>
+      {% with items=group.items.all %}
+        {% if items %}
+          <div class="items">
+            {% for item in items %}
+              <div class="item">
+                <div class="box {% if item.done %}done{% endif %}">
+                  {% if item.done %}<svg viewBox="0 0 24 24"><path d="M5 12l5 5L19 7"/></svg>{% endif %}
+                </div>
+                <span class="itxt {% if item.done %}done{% endif %}">{{ item.text }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+    </div>
+  {% empty %}
+    <div class="empty">No packing lists yet — add one from the admin.</div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "ustrip/base.html" %}
+{% block title %}Itinerary — ustrip{% endblock %}
+
+{% block content %}
+<p class="title serif">Itinerary</p>
+<p class="subtitle">{% if trip %}{{ trip.name }} &middot; {{ days|length }} days{% else %}No trip yet{% endif %}</p>
+
+<div class="daylist">
+  {% for day in days %}
+    <a class="dayrow" href="{% url 'ustrip:itinerary_day' day.id %}">
+      <div class="daystamp">{{ day.label }}</div>
+      <div class="daybody">
+        <div class="daytitle-row"><span class="daytitle">{{ day.title }}</span></div>
+        <div class="daymeta">{{ day.date_label }}{% if day.sleeping %} &middot; Sleeping: {{ day.sleeping }}{% endif %}</div>
+      </div>
+      <svg class="icon chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+    </a>
+  {% empty %}
+    <div class="empty">No itinerary yet.</div>
+  {% endfor %}
+</div>
+{% endblock %}

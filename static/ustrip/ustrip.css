@@ -1,0 +1,182 @@
+/* ustrip — travel-journal / postcard design (docs/ustrip/spec.md §0a, §3).
+   Own tokens, own fonts, no babook chrome. Phone-first: this is written for
+   a single-column ~390-480px reading width and then just centers on a wider
+   viewport rather than reflowing into a desktop layout — spec §0a says PC
+   only needs to still work, not be the design target. */
+
+:root {
+  --cream: oklch(97% 0.014 75);
+  --card: oklch(99% 0.007 75);
+  --ink: oklch(30% 0.07 255);
+  --ink-soft: oklch(46% 0.035 255);
+  --rust: oklch(58% 0.15 45);
+  --rust-soft: oklch(93% 0.035 45);
+  --line: oklch(89% 0.018 75);
+  --white-text: oklch(99% 0.005 75);
+}
+
+* { box-sizing: border-box; }
+
+body.ustrip {
+  margin: 0;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: 'Work Sans', system-ui, sans-serif;
+}
+
+.ustrip a { color: var(--rust); text-decoration: none; }
+.ustrip a:hover { color: var(--ink); }
+
+.ustrip .serif { font-family: 'Source Serif 4', Georgia, serif; }
+
+.ustrip .app {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.ustrip .header {
+  padding: 26px 20px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ustrip .header.with-back { gap: 12px; justify-content: flex-start; }
+.ustrip .wordmark { font-weight: 700; font-size: 22px; }
+.ustrip .stamp {
+  width: 36px; height: 36px; border: 1.5px dashed var(--rust); border-radius: 999px;
+  display: flex; align-items: center; justify-content: center; color: var(--rust); flex-shrink: 0;
+}
+.ustrip .stamp svg { width: 14px; height: 14px; }
+.ustrip .back { width: 26px; height: 26px; color: var(--ink-soft); flex-shrink: 0; }
+.ustrip .back a { color: inherit; display: flex; }
+
+.ustrip .title { font-weight: 700; font-size: 24px; margin: 0 0 4px; }
+.ustrip .subtitle { font-size: 13px; color: var(--ink-soft); margin: 0 0 14px; }
+
+.ustrip .content { flex: 1; padding: 6px 20px 110px; }
+
+.ustrip .navbar {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  max-width: 480px; margin: 0 auto;
+  height: 78px; background: var(--card); border-top: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: space-around; padding-bottom: 12px;
+}
+.ustrip .navitem { display: flex; flex-direction: column; align-items: center; gap: 4px;
+  font-size: 11px; color: var(--ink-soft); font-weight: 500; }
+.ustrip .navitem.active { color: var(--rust); }
+.ustrip .navitem svg { width: 22px; height: 22px; }
+.ustrip .icon { stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+.ustrip .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(60,45,20,.08); }
+
+.ustrip .hero { padding: 20px; margin-top: 10px; }
+.ustrip .hero-title { font-size: 26px; font-weight: 700; margin: 0 0 4px; }
+.ustrip .hero-dates { color: var(--ink-soft); font-size: 14px; margin: 0 0 16px; }
+.ustrip .avatars { display: flex; }
+.ustrip .avatar { width: 34px; height: 34px; border-radius: 999px; display: flex; align-items: center;
+  justify-content: center; font-size: 11px; font-weight: 700; color: var(--white-text);
+  border: 2px solid var(--card); margin-left: -8px; }
+.ustrip .avatar:first-child { margin-left: 0; }
+
+.ustrip .section-label { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--ink-soft); margin: 22px 0 10px; }
+
+.ustrip .next-card { padding: 16px 18px; display: flex; align-items: center; gap: 14px; }
+.ustrip .next-icon { width: 44px; height: 44px; border-radius: 12px; background: var(--rust-soft);
+  color: var(--rust); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ustrip .next-icon svg { width: 22px; height: 22px; }
+.ustrip .next-title { font-weight: 600; font-size: 15px; margin: 0 0 2px; }
+.ustrip .next-sub { font-size: 13px; color: var(--ink-soft); margin: 0; }
+
+.ustrip .tiles { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+.ustrip .tile { padding: 14px 10px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.ustrip .tile-icon { width: 32px; height: 32px; border-radius: 9px; background: var(--rust-soft);
+  color: var(--rust); display: flex; align-items: center; justify-content: center; }
+.ustrip .tile-icon svg { width: 17px; height: 17px; }
+.ustrip .tile-title { font-size: 13px; font-weight: 600; }
+.ustrip .tile-sub { font-size: 11px; color: var(--ink-soft); }
+
+.ustrip .daylist, .ustrip .list, .ustrip .feed { display: flex; flex-direction: column; gap: 10px; }
+.ustrip .dayrow { display: flex; align-items: center; gap: 14px; padding: 13px 14px; border-radius: 14px;
+  border: 1px solid var(--line); background: var(--card); }
+.ustrip .dayrow.selected { background: var(--rust-soft); border-color: var(--rust); }
+.ustrip .daystamp { width: 42px; height: 42px; flex-shrink: 0; border-radius: 999px;
+  border: 1.5px dashed var(--ink-soft); display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 14px; color: var(--ink-soft); }
+.ustrip .dayrow.selected .daystamp { border-color: var(--rust); color: var(--rust); border-style: solid; }
+.ustrip .daybody { flex: 1; min-width: 0; }
+.ustrip .daytitle-row { display: flex; align-items: center; gap: 8px; }
+.ustrip .daytitle { font-weight: 600; font-size: 14.5px; }
+.ustrip .todaypill { font-size: 10px; font-weight: 700; letter-spacing: .04em; color: var(--white-text);
+  background: var(--rust); padding: 2px 7px; border-radius: 99px; }
+.ustrip .daymeta { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+.ustrip .chev { width: 18px; height: 18px; color: var(--ink-soft); flex-shrink: 0; }
+.ustrip .dayrow.selected .chev { color: var(--rust); }
+
+.ustrip .banner { margin: 16px 0 4px; padding: 10px 14px; background: var(--rust-soft); color: var(--rust);
+  border-radius: 12px; display: flex; align-items: center; gap: 9px; font-size: 12.5px; font-weight: 600; }
+.ustrip .banner svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+.ustrip .timeline { position: relative; padding-left: 2px; margin-top: 14px; }
+.ustrip .titem { display: flex; gap: 14px; position: relative; padding-bottom: 22px; }
+.ustrip .titem:before { content: ""; position: absolute; left: 29px; top: 26px; bottom: 0; width: 1px; background: var(--line); }
+.ustrip .titem:last-child:before { display: none; }
+.ustrip .ttime { width: 58px; flex-shrink: 0; font-size: 11.5px; font-weight: 600; color: var(--ink-soft);
+  padding-top: 2px; text-align: right; }
+.ustrip .tdot { width: 9px; height: 9px; border-radius: 99px; background: var(--ink); margin-top: 6px;
+  flex-shrink: 0; position: relative; z-index: 1; box-shadow: 0 0 0 4px var(--cream); }
+.ustrip .titem.optional .tdot { background: transparent; border: 1.5px dashed var(--rust); }
+.ustrip .tbody { flex: 1; }
+.ustrip .tdesc { font-size: 14px; line-height: 1.45; margin: 0; }
+.ustrip .tag { display: inline-block; margin-top: 6px; font-size: 10px; font-weight: 700; letter-spacing: .04em;
+  padding: 2px 8px; border-radius: 99px; }
+.ustrip .tag.optional { color: var(--rust); border: 1px dashed var(--rust); }
+
+.ustrip .clcard { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+.ustrip .clhead { display: flex; align-items: center; gap: 12px; }
+.ustrip .clavatar { width: 32px; height: 32px; border-radius: 999px; display: flex; align-items: center;
+  justify-content: center; font-size: 11px; font-weight: 700; color: var(--white-text); flex-shrink: 0; }
+.ustrip .clgroup { display: flex; }
+.ustrip .clgroup .clavatar { margin-left: -9px; border: 2px solid var(--card); }
+.ustrip .clgroup .clavatar:first-child { margin-left: 0; }
+.ustrip .clicon { width: 32px; height: 32px; border-radius: 999px; background: var(--rust-soft); color: var(--rust);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ustrip .clicon svg { width: 16px; height: 16px; }
+.ustrip .clbody { flex: 1; min-width: 0; }
+.ustrip .clname { font-weight: 600; font-size: 14.5px; }
+.ustrip .clcount { font-size: 12px; color: var(--ink-soft); }
+.ustrip .items { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: 11px; }
+.ustrip .item { display: flex; align-items: center; gap: 11px; }
+.ustrip .box { width: 20px; height: 20px; border-radius: 999px; border: 1.5px dashed var(--ink-soft); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; background: none; padding: 0; cursor: pointer; }
+.ustrip .box.done { border-style: solid; border-color: var(--rust); background: var(--rust); }
+.ustrip .box svg { width: 11px; height: 11px; stroke: var(--white-text); stroke-width: 2.4; fill: none;
+  stroke-linecap: round; stroke-linejoin: round; }
+.ustrip .itxt { font-size: 13.5px; }
+.ustrip .itxt.done { color: var(--ink-soft); text-decoration: line-through; text-decoration-color: var(--line); }
+
+.ustrip .post { background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+  box-shadow: 0 3px 12px rgba(60,45,20,.09); margin-bottom: 12px; }
+.ustrip .photo { width: 100%; height: 180px; object-fit: cover; display: block; background: var(--rust-soft); }
+.ustrip .postbody { padding: 13px 15px 15px; }
+.ustrip .caption { font-size: 13.5px; line-height: 1.45; margin: 0 0 8px; }
+.ustrip .meta { display: flex; align-items: center; gap: 9px; }
+.ustrip .mavatar { width: 26px; height: 26px; border-radius: 999px; display: flex; align-items: center;
+  justify-content: center; font-size: 10px; font-weight: 700; color: var(--white-text); flex-shrink: 0; }
+.ustrip .mtext { flex: 1; min-width: 0; }
+.ustrip .mname { font-size: 12px; font-weight: 600; }
+.ustrip .mloc { font-size: 11px; color: var(--ink-soft); }
+
+.ustrip .empty { padding: 40px 10px; text-align: center; color: var(--ink-soft); font-size: 14px; }
+
+/* Access-denied / error shells reuse the same header + a centered message —
+   no nav, since there is nothing to navigate to. */
+.ustrip .plain-message { padding: 60px 24px; text-align: center; }
+.ustrip .plain-message h1 { font-size: 20px; margin: 0 0 10px; }
+.ustrip .plain-message p { font-size: 14px; color: var(--ink-soft); margin: 0; }

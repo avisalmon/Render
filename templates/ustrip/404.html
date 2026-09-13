@@ -1,0 +1,9 @@
+{% extends "ustrip/base.html" %}
+{% block title %}Not found — ustrip{% endblock %}
+{% block nav %}{% endblock %}
+{% block content %}
+<div class="plain-message">
+  <h1 class="serif">Page not found</h1>
+  <p>There's nothing here. <a href="{% url 'ustrip:home' %}">Back to ustrip</a>.</p>
+</div>
+{% endblock %}

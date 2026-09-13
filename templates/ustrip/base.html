@@ -1,0 +1,47 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}ustrip{% endblock %}</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Work+Sans:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="{% static 'ustrip/ustrip.css' %}">
+</head>
+<body class="ustrip">
+  <div class="app">
+    {% block header %}
+    <div class="header">
+      <div class="wordmark serif">ustrip</div>
+      <div class="stamp">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg>
+      </div>
+    </div>
+    {% endblock %}
+
+    <div class="content">
+      {% block content %}{% endblock %}
+    </div>
+
+    {% block nav %}
+    <div class="navbar">
+      <a class="navitem {% if active_tab == 'home' %}active{% endif %}" href="{% url 'ustrip:home' %}">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4.5h4V19a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg>
+        Home
+      </a>
+      <a class="navitem {% if active_tab == 'itinerary' %}active{% endif %}" href="{% url 'ustrip:itinerary_list' %}">
+        <svg class="icon" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="15" rx="2.2"/><path d="M8 3.5v4M16 3.5v4M3.5 10h17"/></svg>
+        Itinerary
+      </a>
+      <a class="navitem {% if active_tab == 'packing' %}active{% endif %}" href="{% url 'ustrip:packing' %}">
+        <svg class="icon" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M7.5 9.5l1.6 1.6L11.5 8M7.5 15.5l1.6 1.6l2.4-3.1M14 9.5h4M14 15.5h4"/></svg>
+        Packing
+      </a>
+      <a class="navitem {% if active_tab == 'journal' %}active{% endif %}" href="{% url 'ustrip:journal' %}">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M4 8.5a1.5 1.5 0 0 1 1.5-1.5h1.7l1-1.6h7.6l1 1.6h1.7A1.5 1.5 0 0 1 20 8.5V18a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18z"/><circle cx="12" cy="13" r="3.4"/></svg>
+        Journal
+      </a>
+    </div>
+    {% endblock %}
+  </div>
+</body>
+</html>

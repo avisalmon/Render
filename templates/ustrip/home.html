@@ -1,0 +1,53 @@
+{% extends "ustrip/base.html" %}
+{% load ustrip_extras %}
+{% block title %}ustrip — {{ trip.name|default:"Home" }}{% endblock %}
+
+{% block content %}
+{% if trip %}
+  <div class="card hero">
+    <p class="hero-title serif">{{ trip.name }}</p>
+    <p class="hero-dates">{{ trip.start_date|date:"M j" }} &ndash; {{ trip.end_date|date:"M j" }} &middot; {{ day_count }} days</p>
+    {% if family_members %}
+      <div class="avatars">
+        {% for member in family_members %}
+          <div class="avatar" style="{% avatar_style member %}">{{ member|avatar_initials }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+
+  {% if next_item %}
+    <p class="section-label">Next up</p>
+    <a class="card next-card" href="{% url 'ustrip:itinerary_day' upcoming_day.id %}">
+      <div class="next-icon">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-10.5A6.5 6.5 0 0 1 18.5 10.5C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10.3" r="2.1"/></svg>
+      </div>
+      <div>
+        <p class="next-title">{{ next_item.description|truncatechars:60 }}</p>
+        <p class="next-sub">Day {{ upcoming_day.label }} &middot; {{ upcoming_day.title }}</p>
+      </div>
+    </a>
+  {% endif %}
+
+  <p class="section-label">Around the trip</p>
+  <div class="tiles">
+    <a class="card tile" href="{% url 'ustrip:itinerary_list' %}">
+      <div class="tile-icon"><svg class="icon" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="15" rx="2.2"/><path d="M8 3.5v4M16 3.5v4M3.5 10h17"/></svg></div>
+      <div class="tile-title">Itinerary</div>
+      <div class="tile-sub">{{ day_count }} days planned</div>
+    </a>
+    <a class="card tile" href="{% url 'ustrip:packing' %}">
+      <div class="tile-icon"><svg class="icon" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M7.5 9.5l1.6 1.6L11.5 8M7.5 15.5l1.6 1.6l2.4-3.1M14 9.5h4M14 15.5h4"/></svg></div>
+      <div class="tile-title">Packing</div>
+      <div class="tile-sub">{{ checklist_count }} list{{ checklist_count|pluralize }}</div>
+    </a>
+    <a class="card tile" href="{% url 'ustrip:journal' %}">
+      <div class="tile-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M4 8.5a1.5 1.5 0 0 1 1.5-1.5h1.7l1-1.6h7.6l1 1.6h1.7A1.5 1.5 0 0 1 20 8.5V18a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18z"/><circle cx="12" cy="13" r="3.4"/></svg></div>
+      <div class="tile-title">Journal</div>
+      <div class="tile-sub">{{ journal_count }} photo{{ journal_count|pluralize }}</div>
+    </a>
+  </div>
+{% else %}
+  <div class="empty">No trip yet. Add one from the admin, or run <code>manage.py seed_ustrip</code>.</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "ustrip/base.html" %}
+{% block title %}Day {{ day.label }} — {{ day.title }}{% endblock %}
+
+{% block header %}
+<div class="header with-back">
+  <div class="back"><a href="{% url 'ustrip:itinerary_list' %}">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+  </a></div>
+  <div class="title serif" style="font-size:19px;margin:0;">Day {{ day.label }} &mdash; {{ day.title }}</div>
+</div>
+{% endblock %}
+
+{% block content %}
+{% if day.sleeping %}
+  <div class="banner">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-10.5A6.5 6.5 0 0 1 18.5 10.5C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10.3" r="2.1"/></svg>
+    Sleeping: {{ day.sleeping }}
+  </div>
+{% endif %}
+
+<div class="timeline">
+  {% for item in day.items.all %}
+    <div class="titem {% if item.tag == 'optional' %}optional{% endif %}">
+      <div class="ttime">{{ item.time_label|default:"—" }}</div>
+      <div class="tdot"></div>
+      <div class="tbody">
+        <p class="tdesc">{{ item.description }}</p>
+        {% if item.tag == 'optional' %}<span class="tag optional">OPTIONAL</span>{% endif %}
+      </div>
+    </div>
+  {% empty %}
+    <div class="empty">Nothing planned for this day yet.</div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,190 @@
+{
+  "_source": "https://avisalmon.github.io/arhab/ (pages/daily-plan.html, pages/car-rental.html), harvested 2026-09-13",
+  "_note": "Structured for future ustrip seeding. 'tag' on each item is 'plan' (in the family's ground-truth doc) or 'optional' (candidate idea, not decided).",
+  "trip": {
+    "name": "USA Trip 2026",
+    "start_date": "2026-09-18",
+    "end_date": "2026-10-02",
+    "duration_days": 15,
+    "family": ["Avi", "Nirit", "Yotam", "Rotem", "Noam"],
+    "route_summary": "NYC → Finger Lakes → Niagara Falls (Canada side) → Lancaster/Amish → Washington DC → Philadelphia → Atlantic City → New Jersey → home",
+    "flights": {
+      "outbound": {"flight": "UA85", "date": "2026-09-18", "arrival": "Newark (EWR) ~15:50"},
+      "return": {"flight": "UA84", "departs": "EWR 15:25 2026-10-01", "arrives": "Tel Aviv (TLV) 08:55 2026-10-02"}
+    },
+    "rental_car": {
+      "pickup": {"date": "2026-09-22", "location": "Manhattan West Side, near W 40th St"},
+      "dropoff": {"date": "2026-10-01", "location": "Newark Airport (EWR) Rental Car Center"},
+      "class_needed": "Premium SUV, 7-8 seats (Suburban / Yukon XL / Expedition MAX or similar) — sized for 5 adults + 5 suitcases",
+      "note": "One overnight in Canada (Niagara Falls, Ontario) — needs cross-border coverage"
+    }
+  },
+  "lodging": [
+    {"nights": "1-4", "dates": "2026-09-18/2026-09-22", "place": "Manhattan, NYC", "staying": "Delta Hotels Times Square (4 nights)"},
+    {"nights": "5", "dates": "2026-09-22", "place": "Geneva, NY (Finger Lakes)", "staying": "1 night"},
+    {"nights": "6", "dates": "2026-09-23", "place": "Niagara Falls, Canadian side", "staying": "1 night"},
+    {"nights": "7", "dates": "2026-09-24", "place": "Lancaster, PA", "staying": "1 night"},
+    {"nights": "8-9", "dates": "2026-09-25/2026-09-26", "place": "Washington, DC", "staying": "2 nights"},
+    {"nights": "10-11", "dates": "2026-09-27/2026-09-28", "place": "Atlantic City, NJ", "staying": "2 nights"},
+    {"nights": "12-13", "dates": "2026-09-29/2026-09-30", "place": "New Jersey (Meadowlands/Secaucus area)", "staying": "2 nights"},
+    {"nights": "14", "dates": "2026-10-01", "place": "In flight — EWR → TLV (UA84)", "staying": "—"},
+    {"nights": "15", "dates": "2026-10-02", "place": "Arrive Tel Aviv 8:55", "staying": "Trip ends"}
+  ],
+  "days": [
+    {
+      "day": 1, "date": "2026-09-18", "title": "Arrival, NYC", "sleeping": "Delta Hotels Times Square",
+      "items": [
+        {"time": "15:50", "tag": "plan", "desc": "Land Newark Liberty (EWR), UA85."},
+        {"time": null, "tag": "plan", "desc": "Transfer to Manhattan: taxi/Uber ~$100-130, or NJ Transit train to Penn Station ~30-40 min ~$18/person (~$90 for 5)."},
+        {"time": null, "tag": "plan", "desc": "Check in: Delta Hotels Times Square."},
+        {"time": "20:00", "tag": "plan", "desc": "Times Square (7 min walk) → Broadway → Radio City Music Hall → Rockefeller Center → back through Times Square once lit."},
+        {"time": null, "tag": "optional", "desc": "Central Perk coffeehouse — 7th Ave & 47th St."},
+        {"time": "Evening", "tag": "plan", "desc": "Dinner in Hell's Kitchen."},
+        {"time": null, "tag": "optional", "desc": "Sunset sail around Manhattan (Classic Harbor Line / Manhattan by Sail)."}
+      ]
+    },
+    {
+      "day": 2, "date": "2026-09-19", "title": "Central Park, 5th Ave, Broadway", "sleeping": "Delta Hotels Times Square",
+      "items": [
+        {"time": "8:30", "tag": "plan", "desc": "Breakfast."},
+        {"time": "Morning", "tag": "plan", "desc": "Central Park: Columbus Circle → The Mall → Bethesda Terrace & Fountain → the lake → Bow Bridge → Strawberry Fields."},
+        {"time": "12:30", "tag": "plan", "desc": "Down Fifth Avenue: Apple Fifth Avenue, LEGO Store, St. Patrick's Cathedral, Rockefeller Center."},
+        {"time": null, "tag": "optional", "desc": "Nintendo New York — same stretch of Fifth Ave."},
+        {"time": "15:30", "tag": "plan", "desc": "Top of the Rock observation deck — reserve ahead, ~$42."},
+        {"time": "18:30", "tag": "plan", "desc": "Grand Central Terminal — historic hall, painted ceiling."},
+        {"time": "Evening", "tag": "plan", "desc": "Broadway musical, Theater District. Same-day rush/lottery tickets exist for most shows (~50% off)."}
+      ]
+    },
+    {
+      "day": 3, "date": "2026-09-20", "title": "Downtown & Brooklyn", "sleeping": "Delta Hotels Times Square",
+      "note": "Open decision: could swap for Packers @ Jets game (MetLife Stadium, Jets home opener) instead — see nyc-proposals.md.",
+      "items": [
+        {"time": "1:00pm", "tag": "optional", "desc": "Instead of the day below: Packers @ Jets, MetLife Stadium, Jets' home opener."},
+        {"time": "9:00", "tag": "plan", "desc": "Subway to 9/11 Memorial & Museum and the Oculus → Wall Street → Charging Bull."},
+        {"time": null, "tag": "optional", "desc": "Mercer Labs — immersive art/tech museum (21 Dey St)."},
+        {"time": null, "tag": "plan", "desc": "Walk south to Battery Park."},
+        {"time": null, "tag": "plan", "desc": "Free Staten Island Ferry (passes Statue of Liberty, ~25 min) or Statue of Liberty & Ellis Island ferry (~$26, book ahead)."},
+        {"time": "13:00", "tag": "plan", "desc": "NYC Ferry, Battery Park/Pier 11 → DUMBO, Brooklyn (~$4/person). Lunch at Time Out Market. Brooklyn Bridge Park, Manhattan Bridge photo spot."},
+        {"time": "17:15-19:15", "tag": "plan", "desc": "Walk Brooklyn Bridge back to Manhattan for golden hour/lights (~1.8km, easy grade)."},
+        {"time": "Evening", "tag": "plan", "desc": "Dinner in Chinatown or SoHo."},
+        {"time": null, "tag": "optional", "desc": "Meow Parlour cat café — Lower East Side."},
+        {"time": null, "tag": "optional", "desc": "Feast of San Gennaro — Little Italy, runs Sep 17-27."}
+      ]
+    },
+    {
+      "day": 4, "date": "2026-09-21", "title": "Hudson Yards, High Line, West Village", "sleeping": "Delta Hotels Times Square",
+      "items": [
+        {"time": "9:00", "tag": "plan", "desc": "Hudson Yards (15 min walk) — the Vessel, riverfront skyscrapers. If Top of the Rock skipped, consider Edge observation deck (~1.5 hrs)."},
+        {"time": null, "tag": "optional", "desc": "City Climb at Edge — extreme, ~$185/person (verify)."},
+        {"time": null, "tag": "optional", "desc": "Intrepid Sea, Air & Space Museum — high priority per family list."},
+        {"time": null, "tag": "optional", "desc": "B&H Photo — must-do per list; closed Saturdays, today (Monday) works."},
+        {"time": null, "tag": "plan", "desc": "Walk the High Line south (~2km) through gardens, art, views."},
+        {"time": "Lunch", "tag": "plan", "desc": "Chelsea Market, or rooftop food at Pier 57."},
+        {"time": null, "tag": "plan", "desc": "Little Island floating park; through Meatpacking District cobblestones."},
+        {"time": null, "tag": "optional", "desc": "Whitney Museum — lower priority than MoMA."},
+        {"time": "15:00", "tag": "plan", "desc": "Greenwich Village: flagship Harry Potter Store near Flatiron, \"Friends\" building photo op on Bedford St, Bleecker St, Washington Square Park."},
+        {"time": null, "tag": "optional", "desc": "National Museum of Mathematics (MoMath) — Flatiron District."},
+        {"time": null, "tag": "plan", "desc": "SoHo — cast-iron architecture, shopping."},
+        {"time": null, "tag": "optional", "desc": "MoMA instead of part of this day."},
+        {"time": "Evening", "tag": "optional", "desc": "Jazz club — Village Vanguard or Smalls."}
+      ]
+    },
+    {
+      "day": 5, "date": "2026-09-22", "title": "Finger Lakes", "sleeping": "Geneva, NY",
+      "items": [
+        {"time": "Morning", "tag": "plan", "desc": "Pick up rental car — West Side Manhattan, near W 40th St."},
+        {"time": null, "tag": "plan", "desc": "Drive ~4-4.5 hrs / ~400km. Stretch stop (~2 hrs in) around Stroudsburg/Delaware Water Gap or Binghamton."},
+        {"time": "14:00", "tag": "plan", "desc": "Watkins Glen State Park — Gorge Trail past 19 waterfalls (1.6 mi, ~2 hrs incl. photos). Hiking shoes; keep parking receipt (valid at other Finger Lakes parks). Shuttle weekends only after Sep 8."},
+        {"time": "~16:00", "tag": "plan", "desc": "Drive along Seneca Lake, Route 14 (~25 min with scenic stops)."}
+      ]
+    },
+    {
+      "day": 6, "date": "2026-09-23", "title": "Niagara Falls", "sleeping": "Canadian side",
+      "items": [
+        {"time": null, "tag": "plan", "desc": "Drive ~2.5 hrs to Niagara Falls."},
+        {"time": null, "tag": "plan", "desc": "Niagara Falls State Park (US side) — bring a change of socks/shoes, you will get soaked."},
+        {"time": null, "tag": "plan", "desc": "Cave of the Winds — $23/person, includes poncho; buy at park, timed elevator entry."},
+        {"time": "9:00-17:00", "tag": "plan", "desc": "Maid of the Mist boat to base of falls — $30.25/person, boats every 15 min; buy a few days ahead to skip the line."},
+        {"time": null, "tag": "plan", "desc": "Cross Rainbow Bridge to Canadian side, check in."},
+        {"time": "Evening", "tag": "plan", "desc": "Niagara Parkway — view of all three falls; Clifton Hill lights/attractions; falls illuminated + fireworks. Bring Canadian dollars."}
+      ]
+    },
+    {
+      "day": 7, "date": "2026-09-24", "title": "Pennsylvania", "sleeping": "Lancaster, PA",
+      "items": [
+        {"time": "9:00", "tag": "plan", "desc": "Drive Niagara → Lancaster County (~6-6.5 hrs); stretch stop after ~3.5 hrs."},
+        {"time": "13:00", "tag": "plan", "desc": "Leonard Harrison State Park — overlook of Pine Creek Gorge (\"PA Grand Canyon\"). Skip steep Turkey Path; short flat overlook walk. Free entry/parking."},
+        {"time": "14:00", "tag": "plan", "desc": "Lunch in Wellsboro — 19th-century small-town feel, gaslit Main Street. Timeless Destination (Italian/American) or Harland's Family Style Restaurant."},
+        {"time": "15:00", "tag": "plan", "desc": "Drive to Lancaster, arrive ~18:30."}
+      ]
+    },
+    {
+      "day": 8, "date": "2026-09-25", "title": "Amish Country → Washington DC", "sleeping": "Washington, DC (1 of 2)",
+      "items": [
+        {"time": "9:30-12:30", "tag": "plan", "desc": "The Amish Farm and House bus + farm tour — classic ~$28.95/person (~2-3 hrs), premium incl. 1805 farmhouse ~$36.95/person (~3-4 hrs). Arrive 30 min early; some vendors cash-only. Tours depart 11:00/13:00/15:00."},
+        {"time": null, "tag": "plan", "desc": "Considered and dropped: Amish Experience VIP Tour (private, up to 14 people, ~3.5 hrs, ~$100 more/family) — only runs at 17:00."},
+        {"time": null, "tag": "plan", "desc": "Drive between farms/villages of Birds in Hand, Intercourse, Ronks, Strasburg — horse-drawn buggies alongside the road."},
+        {"time": "Midday", "tag": "plan", "desc": "Shopping at Tanger Outlets Lancaster."},
+        {"time": "17:00", "tag": "plan", "desc": "Drive Lancaster → Washington DC (~120 mi, 2.5-3 hrs)."},
+        {"time": "20:30", "tag": "plan", "desc": "Check in; dinner in Georgetown; evening walk past illuminated monuments."}
+      ]
+    },
+    {
+      "day": 9, "date": "2026-09-26", "title": "Washington DC & museums", "sleeping": "Washington, DC (2 of 2)",
+      "note": "Not driving a private car around the National Mall on a Saturday — parking scarce/expensive; leave car at hotel, use Metro or taxis.",
+      "items": [
+        {"time": "10:00", "tag": "plan", "desc": "Capitol Hill."},
+        {"time": "11:00", "tag": "plan", "desc": "National Museum of Natural History (~2 hrs) — no advance booking, security-line order; arrive early."},
+        {"time": "13:00", "tag": "plan", "desc": "Lunch."},
+        {"time": "14:00", "tag": "plan", "desc": "National Air and Space Museum (~2.25 hrs) — 5 tickets already reserved."},
+        {"time": "16:30", "tag": "plan", "desc": "View of the White House; family photo. National Mall: Washington Monument → WWII Memorial → Reflecting Pool → Vietnam & Korean War Memorials → finish at illuminated Lincoln Memorial."},
+        {"time": null, "tag": "plan", "desc": "Free entry to Smithsonian museums — reserve free timed ticket in advance where required."},
+        {"time": null, "tag": "optional", "desc": "International Spy Museum (paid)."}
+      ]
+    },
+    {
+      "day": 10, "date": "2026-09-27", "title": "Philadelphia", "sleeping": "Atlantic City, NJ (1 of 2)",
+      "items": [
+        {"time": null, "tag": "plan", "desc": "Drive DC → Philadelphia (~2.5-3 hrs)."},
+        {"time": "12:00", "tag": "plan", "desc": "Liberty Bell, Independence Hall, Congress Hall / President's House (Independence National Historical Park)."},
+        {"time": "Lunch", "tag": "plan", "desc": "Reading Terminal Market."},
+        {"time": null, "tag": "plan", "desc": "Franklin Court, Elfreth's Alley, Old City."},
+        {"time": null, "tag": "plan", "desc": "The \"Rocky Steps\" at the Philadelphia Museum of Art."},
+        {"time": "17:00", "tag": "plan", "desc": "Drive to Atlantic City (~1.5 hrs) → check in, boardwalk, casino."}
+      ]
+    },
+    {
+      "day": 11, "date": "2026-09-28", "title": "Atlantic City", "sleeping": "Atlantic City, NJ (2 of 2)",
+      "items": [
+        {"time": "Day", "tag": "plan", "desc": "Beach, pool, shopping at Tanger Outlets Atlantic City (no sales tax on clothes/shoes in NJ)."},
+        {"time": "Evening", "tag": "plan", "desc": "A show."}
+      ]
+    },
+    {
+      "day": "12-13", "date": "2026-09-29/2026-09-30", "title": "New Jersey", "sleeping": "New Jersey (2 nights)",
+      "items": [
+        {"time": null, "tag": "plan", "desc": "Drive to New Jersey (~2-2.5 hrs)."},
+        {"time": null, "tag": "plan", "desc": "The Mills at Jersey Gardens — huge indoor outlet mall near Newark."},
+        {"time": null, "tag": "plan", "desc": "American Dream — indoor water park, ice skating, Nickelodeon Universe rollercoasters."},
+        {"time": null, "tag": "plan", "desc": "Six Flags Great Adventure — rollercoasters."},
+        {"time": null, "tag": "plan", "desc": "Woodbury Common Premium Outlets."},
+        {"time": null, "tag": "plan", "desc": "Optional quick trip into Manhattan (20-30 min by train/bus)."},
+        {"time": null, "tag": "plan", "desc": "Target / Kohl's in Secaucus; evening at Harmon Meadow complex."},
+        {"time": null, "tag": "plan", "desc": "Laundry; pick up melatonin."}
+      ]
+    },
+    {
+      "day": "14-15", "date": "2026-10-01/2026-10-02", "title": "Flight home", "sleeping": "In flight / arrive Tel Aviv",
+      "items": [
+        {"time": "11:30", "tag": "plan", "desc": "Arrive Newark Airport Rental Car Center (Waze: \"Newark Airport Rental Car Center\" / Station P3). Fuel up 5-10km before airport — airport/agency refueling pricier."},
+        {"time": null, "tag": "plan", "desc": "Return car at Terminal A Parking Garage, then AirTrain (or shuttle) to Terminal A if departing from B/C."},
+        {"time": "15:25", "tag": "plan", "desc": "Depart EWR, UA84."},
+        {"time": "8:55", "tag": "plan", "desc": "Land Tel Aviv (TLV), Fri Oct 2."}
+      ]
+    }
+  ],
+  "rejected_ideas": [
+    "Coney Island", "Statue of Liberty crown/pedestal", "classical concert", "Adorama",
+    "Museum of Ice Cream", "SPYSCAPE", "RiseNY", "generic VR/immersive gaming", "NBA"
+  ]
+}
