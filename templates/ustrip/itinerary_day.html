@@ -18,18 +18,67 @@
   </div>
 {% endif %}
 
-<div class="timeline">
+<div class="timeline" id="timeline">
   {% for item in day.items.all %}
-    <div class="titem {% if item.tag == 'optional' %}optional{% endif %}">
+    <div class="titem {% if item.tag == 'optional' %}optional{% endif %}" data-item-id="{{ item.id }}">
       <div class="ttime">{{ item.time_label|default:"—" }}</div>
       <div class="tdot"></div>
       <div class="tbody">
         <p class="tdesc">{{ item.description }}</p>
         {% if item.tag == 'optional' %}<span class="tag optional">OPTIONAL</span>{% endif %}
+        <a class="edit-link" href="{% url 'ustrip:itinerary_item_edit' item.id %}">Edit</a>
       </div>
     </div>
   {% empty %}
-    <div class="empty">Nothing planned for this day yet.</div>
+    <div class="empty" id="timeline-empty">Nothing planned for this day yet.</div>
   {% endfor %}
 </div>
+
+<p class="section-label">Add to this day</p>
+<form id="add-item-form" class="auth-form">
+  <label class="field">
+    <span>Time (optional)</span>
+    <input type="text" name="time_label" placeholder="e.g. 15:50 or Evening">
+  </label>
+  <label class="field">
+    <span>Description</span>
+    <textarea name="description" rows="2" required placeholder="What's the plan?"></textarea>
+  </label>
+  <button type="submit" class="btn btn-secondary">Add item</button>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const form = document.getElementById("add-item-form");
+  const timeline = document.getElementById("timeline");
+  const dayId = {{ day.id }};
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const timeLabel = form.time_label.value.trim();
+    const description = form.description.value.trim();
+    if (!description) return;
+    ustrip.request(`/ustrip/api/itinerary/${dayId}/items/`, { json: { time_label: timeLabel, description: description } })
+      .then((item) => {
+        const empty = document.getElementById("timeline-empty");
+        if (empty) empty.remove();
+        const node = ustrip.el(
+          '<div class="titem"><div class="ttime"></div><div class="tdot"></div>' +
+          '<div class="tbody"><p class="tdesc"></p><a class="edit-link"></a></div></div>'
+        );
+        node.dataset.itemId = item.id;
+        node.querySelector(".ttime").textContent = item.time_label || "—";
+        node.querySelector(".tdesc").textContent = item.description;
+        const editLink = node.querySelector(".edit-link");
+        editLink.href = item.edit_url;
+        editLink.textContent = "Edit";
+        timeline.appendChild(node);
+        form.reset();
+      })
+      .catch((err) => alert(err.message));
+  });
+})();
+</script>
 {% endblock %}

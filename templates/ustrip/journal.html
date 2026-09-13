@@ -6,7 +6,24 @@
 <p class="title serif">Journal</p>
 <p class="subtitle">Shared photo diary</p>
 
-<div class="feed">
+<form id="journal-form" class="auth-form" enctype="multipart/form-data">
+  <label class="field">
+    <span>Photo (optional)</span>
+    <input type="file" name="photo" accept="image/*">
+  </label>
+  <label class="field">
+    <span>Caption</span>
+    <textarea name="caption" rows="2" placeholder="What's happening?"></textarea>
+  </label>
+  <label class="field">
+    <span>Location (optional)</span>
+    <input type="text" name="location" placeholder="e.g. Niagara Falls">
+  </label>
+  <button type="submit" class="btn btn-primary">Post</button>
+</form>
+
+<p class="section-label">Feed</p>
+<div class="feed" id="journal-feed">
   {% for post in posts %}
     <div class="post">
       {% if post.photo %}
@@ -24,7 +41,42 @@
       </div>
     </div>
   {% empty %}
-    <div class="empty">No photos yet — the first one posted here starts the diary.</div>
+    <div class="empty" id="journal-empty">No photos yet — the first one posted here starts the diary.</div>
   {% endfor %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const form = document.getElementById("journal-form");
+  const feed = document.getElementById("journal-feed");
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    ustrip.request("/ustrip/api/journal/posts/", { formData: new FormData(form) })
+      .then((post) => {
+        const empty = document.getElementById("journal-empty");
+        if (empty) empty.remove();
+        const photoHtml = post.photo_url ? `<img class="photo" src="${post.photo_url}" alt="">` : "";
+        const node = ustrip.el(
+          '<div class="post">' + photoHtml +
+          '<div class="postbody"><p class="caption"></p><div class="meta">' +
+          '<div class="mavatar"></div><div class="mtext"><div class="mname"></div><div class="mloc"></div></div>' +
+          '</div></div></div>'
+        );
+        node.querySelector(".mavatar").setAttribute("style", post.author.avatar_style);
+        node.querySelector(".mavatar").textContent = post.author.initials;
+        node.querySelector(".mname").textContent = post.author.name;
+        const captionEl = node.querySelector(".caption");
+        if (post.caption) { captionEl.textContent = post.caption; } else { captionEl.remove(); }
+        const locEl = node.querySelector(".mloc");
+        if (post.location) { locEl.textContent = post.location; } else { locEl.remove(); }
+        feed.prepend(node);
+        form.reset();
+      })
+      .catch((err) => alert(err.message));
+  });
+})();
+</script>
 {% endblock %}

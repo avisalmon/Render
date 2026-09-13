@@ -1,0 +1,23 @@
+{% extends "ustrip/base.html" %}
+{% block title %}Sign in — ustrip{% endblock %}
+{% block nav %}{% endblock %}
+
+{% block content %}
+<p class="title serif">Sign in</p>
+<p class="subtitle">Use the account you already have, or <a href="{% url 'ustrip:signup' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}">sign up</a>.</p>
+
+<form method="post" class="auth-form">
+  {% csrf_token %}
+  {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
+  {% if form.non_field_errors %}<p class="field-error">{{ form.non_field_errors.0 }}</p>{% endif %}
+  <label class="field">
+    <span>Username</span>
+    {{ form.username }}
+  </label>
+  <label class="field">
+    <span>Password</span>
+    {{ form.password }}
+  </label>
+  <button type="submit" class="btn btn-primary">Sign in</button>
+</form>
+{% endblock %}

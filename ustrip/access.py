@@ -9,6 +9,7 @@ created by a migration (0002) so it always exists.
 
 from functools import wraps
 
+from django.http import JsonResponse
 from django.shortcuts import render
 
 FAMILY_GROUP = "family"
@@ -31,6 +32,20 @@ def family_required(view_func):
     def wrapped(request, *args, **kwargs):
         if not is_family(request.user):
             return render(request, "ustrip/access_denied.html", status=403)
+        return view_func(request, *args, **kwargs)
+
+    return wrapped
+
+
+def family_required_api(view_func):
+    """Same rule as `family_required`, for the JSON endpoints under
+    `/ustrip/api/` — a plain 403 body instead of the HTML access-denied
+    page, since these are called from fetch(), not navigated to."""
+
+    @wraps(view_func)
+    def wrapped(request, *args, **kwargs):
+        if not is_family(request.user):
+            return JsonResponse({"error": "forbidden"}, status=403)
         return view_func(request, *args, **kwargs)
 
     return wrapped

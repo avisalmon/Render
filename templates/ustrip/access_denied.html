@@ -9,8 +9,8 @@
   {% else %}
     <p>This trip planner is private to Avi's family. Sign in with your account, or create one, then ask Avi to add you.</p>
     <div class="auth-actions">
-      <a class="btn btn-primary" href="{% url 'login' %}?next={{ request.path }}">Sign in</a>
-      <a class="btn btn-secondary" href="{% url 'register' %}?next={{ request.path }}">Sign up</a>
+      <a class="btn btn-primary" href="{% url 'ustrip:login' %}?next={{ request.path }}">Sign in</a>
+      <a class="btn btn-secondary" href="{% url 'ustrip:signup' %}?next={{ request.path }}">Sign up</a>
     </div>
   {% endif %}
 </div>

@@ -34,21 +34,36 @@ Day-by-day plan, per spec §4.1. Seeded from
 [`trip-data/usa-2026.json`](trip-data/usa-2026.json) via `manage.py seed_ustrip`
 (wired into `render.yaml`'s startCommand, runs on every deploy, idempotent).
 13 day-rows / 84 items seeded and verified in dev. Any `family` member can
-view; in-app editing is not built yet (see Sprint 3 note) — for now, edit via
-`/admin/`.
+view and (since Sprint 5) add/edit items in-app.
 
-## Sprint 3 — Packing & task lists `MODELS DONE, UI READ-ONLY`
+## Sprint 3 — Packing & task lists `DONE, NOT YET DEPLOYED`
 
 `ChecklistGroup`/`ChecklistItem` models, admin registration, and a display
-page exist and are deployed. **Deliberately not seeded with fake data** —
-spec §4.2 is genuinely empty until the family uses it, and inventing sample
-packing lists would look like real content. Not yet built: in-app add/check
-UI (spec §4.2 assumes any member can tick items from their phone) — today
-that means using `/admin/` instead. That gap is real scope left for a
-follow-up sprint, not silently dropped.
+page exist. **Deliberately not seeded with fake data** — spec §4.2 is
+genuinely empty until the family uses it. Since Sprint 5: any `family`
+member can add a list, add an item, and tap to check/uncheck it in-app —
+no more admin-only editing.
 
-## Sprint 4 — Photos / journal `MODELS DONE, UI READ-ONLY`
+## Sprint 4 — Photos / journal `DONE, NOT YET DEPLOYED`
 
 Same shape as Sprint 3: `JournalPost` model, admin registration, display
-page — deployed, empty, no fabricated sample posts. In-app photo upload from
-a phone is the follow-up sprint; posting today means `/admin/`.
+page — empty, no fabricated sample posts. Since Sprint 5: any `family`
+member can post a caption + optional photo in-app.
+
+## Sprint 5 — Own auth, in-app editing skeleton, menu `DONE, NOT YET DEPLOYED`
+
+**Goal:** close the three gaps Sprints 1-4 left open — babook-branded
+auth pages, admin-only editing on packing/journal, and no way to sign out
+without leaving ustrip.
+
+| Item | Status |
+|---|---|
+| Own `/ustrip/login/`, `/ustrip/signup/`, `/ustrip/logout/` — same shared `User` accounts (spec §2.1), own styling, no babook branding anywhere in the flow | DONE — replaces the Sprint-1 links out to babook's `/login/`/`/register/` |
+| Signup skips email verification (unlike babook's public `app.views.register`) — account works immediately, `family` grant still comes from Avi | DONE — `ustrip/forms.py` |
+| Account menu in the header (a `<details>` disclosure, no JS needed for the menu itself) — shows who's signed in, Sign out button | DONE |
+| Every write (add/edit/toggle) goes through a JSON API at `/ustrip/api/...`, not a form POST to the page — spec §0b | DONE — plain `JsonResponse` views (`family_required_api`), `static/ustrip/ustrip.js` fetch helper, pages patch their own DOM from the response |
+| Packing: add a list, add an item, tap to toggle done — instantly, no reload | DONE |
+| Journal: post a caption + optional photo from the phone — new post appears without a reload | DONE |
+| Itinerary: add an item to a day, edit an existing item — no creator lock (spec §4.1) | DONE — add is instant; edit is still its own page (submits via fetch, then navigates back) |
+| Tests: signup/login/logout, the API's own 403 (JSON, not the HTML page) for a non-member, and one add+edit path per feature | DONE — `tests/test_ustrip_features.py`, 8 passing |
+| Not in this sprint: delete/reorder on any list, editing someone else's journal post, "today" highlighting on the itinerary (the CSS exists, the date math doesn't yet), inline (non-page) itinerary edit | Open — candidates for Sprint 6 |

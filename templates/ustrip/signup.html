@@ -1,0 +1,35 @@
+{% extends "ustrip/base.html" %}
+{% block title %}Sign up — ustrip{% endblock %}
+{% block nav %}{% endblock %}
+
+{% block content %}
+<p class="title serif">Sign up</p>
+<p class="subtitle">Create an account, then ask Avi to add you to the family list. Already have one? <a href="{% url 'ustrip:login' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}">Sign in</a>.</p>
+
+<form method="post" class="auth-form">
+  {% csrf_token %}
+  {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
+  {% if form.non_field_errors %}<p class="field-error">{{ form.non_field_errors.0 }}</p>{% endif %}
+  <label class="field">
+    <span>Username</span>
+    {{ form.username }}
+    {% if form.username.errors %}<p class="field-error">{{ form.username.errors.0 }}</p>{% endif %}
+  </label>
+  <label class="field">
+    <span>Email</span>
+    {{ form.email }}
+    {% if form.email.errors %}<p class="field-error">{{ form.email.errors.0 }}</p>{% endif %}
+  </label>
+  <label class="field">
+    <span>Password</span>
+    {{ form.password1 }}
+    {% if form.password1.errors %}<p class="field-error">{{ form.password1.errors.0 }}</p>{% endif %}
+  </label>
+  <label class="field">
+    <span>Confirm password</span>
+    {{ form.password2 }}
+    {% if form.password2.errors %}<p class="field-error">{{ form.password2.errors.0 }}</p>{% endif %}
+  </label>
+  <button type="submit" class="btn btn-primary">Sign up</button>
+</form>
+{% endblock %}

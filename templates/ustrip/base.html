@@ -1,4 +1,4 @@
-{% load static %}<!doctype html>
+{% load static ustrip_extras %}<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -7,14 +7,27 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Work+Sans:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="{% static 'ustrip/ustrip.css' %}">
 </head>
-<body class="ustrip">
+<body class="ustrip" data-csrf="{{ csrf_token }}">
   <div class="app">
     {% block header %}
     <div class="header">
       <div class="wordmark serif">ustrip</div>
-      <div class="stamp">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg>
-      </div>
+      {% if user.is_authenticated %}
+        <details class="menu">
+          <summary class="menu-btn" style="{% avatar_style user %}">{{ user|avatar_initials }}</summary>
+          <div class="menu-panel">
+            <div class="menu-name">{{ user.first_name|default:user.get_username }}</div>
+            <form method="post" action="{% url 'ustrip:logout' %}">
+              {% csrf_token %}
+              <button type="submit" class="menu-item">Sign out</button>
+            </form>
+          </div>
+        </details>
+      {% else %}
+        <div class="stamp">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg>
+        </div>
+      {% endif %}
     </div>
     {% endblock %}
 
@@ -43,5 +56,7 @@
     </div>
     {% endblock %}
   </div>
+  <script src="{% static 'ustrip/ustrip.js' %}"></script>
+  {% block scripts %}{% endblock %}
 </body>
 </html>

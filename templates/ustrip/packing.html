@@ -6,9 +6,9 @@
 <p class="title serif">Packing &amp; Tasks</p>
 <p class="subtitle">{{ trip.name|default:"" }}</p>
 
-<div class="list">
+<div class="list" id="packing-list">
   {% for group in groups %}
-    <div class="clcard">
+    <div class="clcard" data-group-id="{{ group.id }}">
       <div class="clhead">
         {% if group.assigned_to %}
           <div class="clavatar" style="{% avatar_style group.assigned_to %}">{{ group.assigned_to|avatar_initials }}</div>
@@ -22,23 +22,84 @@
           <div class="clcount">{{ group.items.all|length }} item{{ group.items.all|length|pluralize }}</div>
         </div>
       </div>
-      {% with items=group.items.all %}
-        {% if items %}
-          <div class="items">
-            {% for item in items %}
-              <div class="item">
-                <div class="box {% if item.done %}done{% endif %}">
-                  {% if item.done %}<svg viewBox="0 0 24 24"><path d="M5 12l5 5L19 7"/></svg>{% endif %}
-                </div>
-                <span class="itxt {% if item.done %}done{% endif %}">{{ item.text }}</span>
-              </div>
-            {% endfor %}
+      <div class="items">
+        {% for item in group.items.all %}
+          <div class="item" data-item-id="{{ item.id }}">
+            <button type="button" class="box {% if item.done %}done{% endif %}" data-toggle>
+              {% if item.done %}<svg viewBox="0 0 24 24"><path d="M5 12l5 5L19 7"/></svg>{% endif %}
+            </button>
+            <span class="itxt {% if item.done %}done{% endif %}">{{ item.text }}</span>
           </div>
-        {% endif %}
-      {% endwith %}
+        {% endfor %}
+        <form class="add-item-row" data-add-item data-group-id="{{ group.id }}">
+          <input type="text" name="text" placeholder="Add an item" required>
+          <button type="submit" class="add-btn">+</button>
+        </form>
+      </div>
     </div>
   {% empty %}
-    <div class="empty">No packing lists yet — add one from the admin.</div>
+    <div class="empty">No packing lists yet — add one below.</div>
   {% endfor %}
 </div>
+
+<p class="section-label">New list</p>
+<form id="add-group-form" class="auth-form">
+  <label class="field">
+    <span>List name</span>
+    <input type="text" name="name" placeholder="e.g. Packing — Mom" required>
+  </label>
+  <button type="submit" class="btn btn-secondary">Add list</button>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const list = document.getElementById("packing-list");
+
+  list.addEventListener("click", function (e) {
+    const btn = e.target.closest("[data-toggle]");
+    if (!btn) return;
+    const row = btn.closest("[data-item-id]");
+    ustrip.request(`/ustrip/api/packing/items/${row.dataset.itemId}/toggle/`)
+      .then((data) => {
+        btn.classList.toggle("done", data.done);
+        btn.innerHTML = data.done ? '<svg viewBox="0 0 24 24"><path d="M5 12l5 5L19 7"/></svg>' : "";
+        row.querySelector(".itxt").classList.toggle("done", data.done);
+      })
+      .catch((err) => alert(err.message));
+  });
+
+  list.addEventListener("submit", function (e) {
+    const form = e.target.closest("[data-add-item]");
+    if (!form) return;
+    e.preventDefault();
+    const input = form.querySelector('input[name="text"]');
+    const text = input.value.trim();
+    if (!text) return;
+    ustrip.request("/ustrip/api/packing/items/", { json: { group_id: form.dataset.groupId, text: text } })
+      .then((item) => {
+        const row = ustrip.el(
+          '<div class="item"><button type="button" class="box" data-toggle></button><span class="itxt"></span></div>'
+        );
+        row.dataset.itemId = item.id;
+        row.querySelector(".itxt").textContent = item.text;
+        form.parentElement.insertBefore(row, form);
+        input.value = "";
+      })
+      .catch((err) => alert(err.message));
+  });
+
+  const addGroupForm = document.getElementById("add-group-form");
+  addGroupForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const input = addGroupForm.querySelector('input[name="name"]');
+    const name = input.value.trim();
+    if (!name) return;
+    ustrip.request("/ustrip/api/packing/groups/", { json: { name: name } })
+      .then(() => window.location.reload())
+      .catch((err) => alert(err.message));
+  });
+})();
+</script>
 {% endblock %}

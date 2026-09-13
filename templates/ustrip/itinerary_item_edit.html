@@ -1,0 +1,46 @@
+{% extends "ustrip/base.html" %}
+{% block title %}Edit — ustrip{% endblock %}
+{% block nav %}{% endblock %}
+
+{% block header %}
+<div class="header with-back">
+  <div class="back"><a href="{% url 'ustrip:itinerary_day' item.day_id %}">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+  </a></div>
+  <div class="title serif" style="font-size:19px;margin:0;">Edit item</div>
+</div>
+{% endblock %}
+
+{% block content %}
+<form id="edit-form" class="auth-form">
+  <label class="field">
+    <span>Time (optional)</span>
+    <input type="text" name="time_label" value="{{ item.time_label }}" placeholder="e.g. 15:50 or Evening">
+  </label>
+  <label class="field">
+    <span>Description</span>
+    <textarea name="description" rows="3" required>{{ item.description }}</textarea>
+  </label>
+  <button type="submit" class="btn btn-primary">Save</button>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const form = document.getElementById("edit-form");
+  const itemId = {{ item.id }};
+  const backUrl = "{% url 'ustrip:itinerary_day' item.day_id %}";
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const timeLabel = form.time_label.value.trim();
+    const description = form.description.value.trim();
+    if (!description) return;
+    ustrip.request(`/ustrip/api/itinerary/items/${itemId}/`, { json: { time_label: timeLabel, description: description } })
+      .then(() => { window.location.href = backUrl; })
+      .catch((err) => alert(err.message));
+  });
+})();
+</script>
+{% endblock %}

@@ -13,6 +13,28 @@ locked out at a desktop), but PC is the fit-it-in case, not the design
 target — same relationship matazim has to RTL/mobile, just phone instead of
 desktop as the default assumption.
 
+## 0b. Language and design principle
+
+**English**, unconditionally — unlike babook and מטצ״ים, ustrip has no
+Hebrew/RTL mode and none is planned; the family's trip content (place names,
+the source planning doc) is English and the app matches it.
+
+**Model-based, data-driven, always.** Every screen renders what's actually
+in the database — no hardcoded family members, dates, counts, or sample
+content baked into a template. A tile shows a count because it queried one;
+an avatar's color/initials derive from the `User` row (spec §1 already does
+this for family members); an empty state is empty because the query came
+back empty, not because a placeholder was left in. The three nav
+destinations (Itinerary/Packing/Journal) are the one exception — those are
+fixed product structure, not data.
+
+**Writes go through a JSON API, not a form POST to the page.** Every
+add/edit/toggle action (packing item, journal post, itinerary line) is a
+`fetch()` call to `/ustrip/api/...`, and the page updates the DOM from the
+JSON response — no full-page reload for something used one-handed mid-trip.
+Plain `JsonResponse` views, the same convention `app/views.py` already uses
+elsewhere in the repo; no DRF or other new dependency for a five-person app.
+
 ## 0. The trip
 
 The family: **Avi and Nirit** (parents), **Yotam, Rotem, and Noam** (kids).
