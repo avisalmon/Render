@@ -123,6 +123,23 @@ def _next_step(profile, student, state, per_course):
     }
 
 
+def _work_state(student, which):
+    """Whether work is sitting with the leader, or an answer is sitting unread.
+
+    Two booleans rather than a count, because the panel is a signpost: the
+    numbers live on the screen it points at, and repeating them here would be
+    two places to keep in step.
+    """
+    if student is None:
+        return False
+    from .models import Submission
+
+    rows = Submission.objects.filter(student=student)
+    if which == "waiting":
+        return rows.filter(status=Submission.WAITING).exists()
+    return rows.exclude(status=Submission.WAITING).exists()
+
+
 def _leader_name(leader):
     if leader is None:
         return ""
@@ -183,6 +200,10 @@ def my_path(request):
             eligibility=state,
             next_step=_next_step(profile, student, state, per_course),
             leader=student.leader if student else None,
+            # REQ-M.19 — what the panel should say, which depends on whether
+            # anything is waiting on somebody else or on them.
+            work_waiting=_work_state(student, "waiting"),
+            work_answered=_work_state(student, "answered"),
             leader_name=_leader_name(student.leader) if student else "",
             pending_name=_leader_name(student.pending_leader) if student else "",
         ),

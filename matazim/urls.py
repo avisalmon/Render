@@ -19,6 +19,7 @@ from . import (
     request_views,
     rights_views,
     roster_views,
+    submission_views,
     views,
 )
 
@@ -124,6 +125,11 @@ urlpatterns = [
     path("attempt/<int:attempt_id>/file/", entrance_views.attempt_file, name="attempt_file"),
     # REQ-M.12 — the member's own screen, and the only role that had none.
     path("my-path/", path_views.my_path, name="my_path"),
+    # REQ-M.19 — יוצרים: work handed in, and the feedback that is the point.
+    path("my-work/", submission_views.my_work, name="my_work"),
+    path("work/<int:submission_id>/", submission_views.review, name="review"),
+    path("work/<int:submission_id>/file/", submission_views.work_file, name="work_file"),
+    path("work/<int:submission_id>/say/", submission_views.say_more, name="say_more"),
     # REQ-M.20 — what a certified מט״צ can actually show somebody. `verify` is
     # public on purpose: a school checking one has no account.
     path("my-certificate/", certificate_views.my_certificate, name="my_certificate"),

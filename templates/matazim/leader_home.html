@@ -17,6 +17,33 @@
     <p>הקישור שלכם, והמט״צים שמחכים לאישור.</p>
   </div>
 
+  {% if work_waiting %}
+    {% comment %}
+      REQ-M.124 — first on the screen, above the joining requests. Somebody is
+      waiting on a sentence from this person, and nothing else in the product
+      will tell them.
+    {% endcomment %}
+    <section class="mz-panel">
+      <h2>עבודות שמחכות לך <span class="mz-count">{{ work_waiting|length }}</span></h2>
+      <ul class="mz-training">
+        {% for submission in work_waiting %}
+          <li>
+            <span class="mz-training-title">
+              {{ submission.title }}
+              <span class="mz-muted">
+                {{ submission.student.user.profile.display_name|default:submission.student.user.email }}
+                · {{ submission.created_at|date:"j.n" }}
+              </span>
+            </span>
+            <span class="mz-role">
+              <a class="mz-btn mz-btn-primary" href="{% url 'matazim:review' submission.pk %}">לקרוא ולהגיב</a>
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
   {% if waiting %}
     <section class="mz-panel">
       <h2>מחכים לאישור שלכם <span class="mz-count">{{ waiting|length }}</span></h2>

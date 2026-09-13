@@ -52,3 +52,15 @@ def entrance_upload_path(instance, filename):
     """
     suffix = Path(filename).suffix.lower()[:10]
     return f"entrance/{uuid.uuid4().hex}{suffix}"
+
+
+def submission_upload_path(instance, filename):
+    """REQ-M.122 — the same treatment as an entrance attempt, for the same reason.
+
+    A separate folder rather than a shared one, so that the retention rules can
+    differ later without a migration: a failed audition and a piece of work a
+    leader gave feedback on are not the same kind of record, and REQ-M.86 will
+    eventually want to say so.
+    """
+    suffix = Path(filename).suffix.lower()[:10]
+    return f"submissions/{uuid.uuid4().hex}{suffix}"

@@ -255,6 +255,12 @@ def leader_home(request):
             leader=leader,
             join_url=request.build_absolute_uri(f"/matazim/join/{leader.join_code}/"),
             waiting=_waiting_on(leader),
+            # REQ-M.124 — work sitting on this leader's desk. A queue nobody is
+            # told about is a queue that grows, and the member is waiting on a
+            # person: nothing else in the product will tell that person.
+            work_waiting=list(
+                _work_waiting(leader).select_related("student__user", "student__user__profile")
+            ),
             mine=Student.objects.filter(leader=leader).select_related("user", "user__profile"),
         ),
     )
@@ -272,6 +278,12 @@ def _name_of_student(student):
     from .certification import _display_name
 
     return _display_name(student.user)
+
+
+def _work_waiting(leader):
+    from .submission_views import waiting_for
+
+    return waiting_for(leader)
 
 
 def _waiting_on(leader):

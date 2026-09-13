@@ -92,6 +92,7 @@ def build_world(
     second_leader=False,
     candidate=False,
     requests=False,
+    work=False,
 ):
     """One institution, dialled to the state under test.
 
@@ -173,6 +174,7 @@ def build_world(
     # waiting on Avi, one he approved, one already shipped with an outcome she
     # can read. An empty queue is not the queue screen.
     draft = None
+    first_work = None
     if requests:
         from matazim.models import Request, RequestMessage
 
@@ -363,8 +365,45 @@ def build_world(
             built_before="מנורה עם ארדואינו ומשחק בסקראץ׳",
         )
 
+    # REQ-M.19 — יוצרים, in the three states the screens are read in: waiting on
+    # a leader, sent back with words, and answered. An empty screen is not the
+    # screen, and the feedback is the whole point of this stage.
+    if work and students == "mixed":
+        from matazim.models import Feedback, Submission
+
+        mid = people["mid@example.com"]
+        waiting_row = Submission.objects.create(
+            student=mid, leader=leader,
+            title="משחק המבוך שבניתי בסקראץ׳",
+            about="בניתי מבוך עם שלושה שלבים. הכי קשה היה לגרום לדמות לא לעבור דרך הקירות.",
+            link="https://scratch.mit.edu/projects/123456",
+        )
+        returned_row = Submission.objects.create(
+            student=mid, leader=leader,
+            title="מנורה עם ארדואינו",
+            about="מנורה שנדלקת כשחשוך.",
+            link="https://scratch.mit.edu/projects/99",
+            status=Submission.RETURNED,
+            decided_at=now,
+        )
+        Feedback.objects.create(
+            submission=returned_row, author=leader.user,
+            body="הרעיון מצוין והחיווט נכון. החיישן קרוב מדי לנורה, אז הוא מודד את עצמו — תזיזי אותו ותגישי שוב.",
+            outcome=Submission.RETURNED,
+        )
+        Submission.objects.create(
+            student=mid, leader=leader,
+            title="הצגה על בטיחות ברשת",
+            about="מצגת שהעברתי לכיתה ז.",
+            link="https://scratch.mit.edu/projects/7",
+            status=Submission.APPROVED,
+            decided_at=now,
+        )
+        first_work = waiting_row
+
     return {
         "manager": manager,
+        "work": first_work if work and students == "mixed" else None,
         "root": root,
         "leader": leader,
         "other_leader": other,
@@ -516,6 +555,16 @@ SCREENS = [
         dict(students="none", requests=True),
     ),
     ("requests/new", "/matazim/requests/new/", "pm@example.com", dict(students="none")),
+    # SPR-M.28 — יוצרים.
+    ("work/mine", "/matazim/my-work/", "mid@example.com", dict(students="mixed", work=True)),
+    ("work/none", "/matazim/my-work/", "fresh@example.com", dict(students="mixed")),
+    (
+        "work/review",
+        lambda w: f"/matazim/work/{w['work'].pk}/",
+        "leader@example.com",
+        dict(students="mixed", work=True),
+    ),
+    ("leader/work-waiting", "/matazim/leader/", "leader@example.com", dict(students="mixed", work=True)),
     (
         "requests/talk",
         lambda w: f"/matazim/requests/{w['draft'].pk}/talk/",

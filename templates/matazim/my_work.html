@@ -1,0 +1,147 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.19, REQ-M.123 — handing work in, and reading what came back.
+
+  One screen, not two. What a member wants after submitting is not a receipt,
+  it is the answer, and putting those on separate screens is how somebody never
+  finds the feedback at all. So the thread comes first and the form is below
+  it: on the second visit the answer is what they came for.
+{% endcomment %}
+
+{% block title %}העבודות שלי · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page mz-page-narrow">
+  <div class="mz-page-head">
+    <h1>העבודות שלי</h1>
+    <p>
+      מה שהגשתם, ומה שהמוביל/ה כתב/ה עליו.
+      {% if student.leader %}
+        המוביל/ה שלכם:
+        {{ student.leader.user.profile.display_name|default:"המוביל/ה שלכם" }}.
+      {% endif %}
+    </p>
+  </div>
+
+  {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
+
+  {% for submission in submissions %}
+    <section class="mz-panel mz-work">
+      <header class="mz-work-head">
+        <h2>{{ submission.title }}</h2>
+        {% if submission.status == "waiting" %}
+          <span class="mz-tag mz-tag-doing">מחכה למוביל/ה</span>
+        {% elif submission.status == "returned" %}
+          <span class="mz-tag mz-tag-fix">הוחזר לתיקון</span>
+        {% else %}
+          <span class="mz-tag mz-tag-done">אושר</span>
+        {% endif %}
+        <span class="mz-muted">{{ submission.created_at|date:"j.n.y" }}</span>
+      </header>
+
+      {% if submission.about %}<p class="mz-work-about">{{ submission.about|linebreaksbr }}</p>{% endif %}
+
+      <p class="mz-work-links">
+        {% if submission.work_file %}
+          {% comment %}
+            REQ-M.122 — through a view that asks who is looking, never a public
+            media URL.
+          {% endcomment %}
+          <a class="mz-linkbtn" href="{% url 'matazim:work_file' submission.pk %}">הקובץ שהגשתי</a>
+        {% endif %}
+        {% if submission.link %}
+          <a class="mz-linkbtn" href="{{ submission.link }}"
+             target="_blank" rel="noopener noreferrer">הקישור שהגשתי</a>
+        {% endif %}
+      </p>
+
+      {% if submission.answers %}
+        <p class="mz-muted">גרסה חדשה אחרי "{{ submission.answers.title }}".</p>
+      {% endif %}
+
+      {% comment %}
+        REQ-M.123 — in full, attributed and dated. This is the thing the member
+        came back to read, so it is not truncated and not behind a click.
+      {% endcomment %}
+      {% for note in submission.feedback.all %}
+        <div class="mz-feedback">
+          <span class="mz-req-note-label">
+            {{ note.author.profile.display_name|default:"המוביל/ה" }}
+            · {{ note.created_at|date:"j.n.y" }}
+          </span>
+          <p>{{ note.body|linebreaksbr }}</p>
+        </div>
+      {% empty %}
+        {% if submission.status == "waiting" %}
+          <p class="mz-muted">עוד לא נכתב משוב. זה מחכה אצל המוביל/ה שלכם.</p>
+        {% endif %}
+      {% endfor %}
+    </section>
+  {% endfor %}
+
+  <section class="mz-panel">
+    <h2>{% if submissions %}להגיש עוד עבודה{% else %}להגיש עבודה{% endif %}</h2>
+    {% if not student.leader %}
+      <p class="mz-muted">
+        עוד אין לכם מוביל/ה, אז אין למי להגיש. ברגע שתצטרפו למוביל/ה זה ייפתח כאן.
+      </p>
+    {% else %}
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {% if returned %}
+          <label class="mz-field">
+            <span>זו גרסה חדשה של</span>
+            <select name="answers">
+              <option value="">לא, זו עבודה חדשה</option>
+              {% for row in returned %}
+                <option value="{{ row.pk }}">{{ row.title }}</option>
+              {% endfor %}
+            </select>
+          </label>
+        {% endif %}
+
+        <label class="mz-field">
+          <span>מה זה</span>
+          <input type="text" name="title" maxlength="160" required
+                 value="{{ posted.title|default:'' }}"
+                 placeholder="למשל: משחק המבוך שבניתי בסקראץ׳">
+        </label>
+
+        <label class="mz-field">
+          <span>כמה מילים על זה</span>
+          <textarea name="about" rows="3"
+                    placeholder="מה בניתם, מה היה קשה, ומה אתם רוצים שיסתכלו עליו.">{{ posted.about|default:'' }}</textarea>
+        </label>
+
+        <label class="mz-field">
+          <span>קישור</span>
+          <input type="url" name="link" dir="ltr" value="{{ posted.link|default:'' }}"
+                 placeholder="https://scratch.mit.edu/projects/...">
+        </label>
+
+        <label class="mz-field">
+          <span>או קובץ</span>
+          <span class="mz-file">
+            <span class="mz-file-btn">בחירת קובץ</span>
+            <span class="mz-file-name" data-empty="לא נבחר קובץ">לא נבחר קובץ</span>
+            <input type="file" name="work_file">
+          </span>
+          <small>צריך קישור או קובץ. אפשר גם וגם.</small>
+        </label>
+
+        <button type="submit" class="mz-btn mz-btn-primary">הגשה</button>
+      </form>
+      <script>
+        document.querySelectorAll(".mz-file input[type=file]").forEach(function (input) {
+          var label = input.closest(".mz-file").querySelector(".mz-file-name");
+          input.addEventListener("change", function () {
+            label.textContent = input.files.length ? input.files[0].name : label.dataset.empty;
+          });
+        });
+      </script>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

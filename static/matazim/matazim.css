@@ -1913,3 +1913,42 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
   white-space: pre-line;
   overflow-wrap: anywhere;
 }
+
+
+/* ---------------------------------------- יוצרים: work and feedback (REQ-M.19) */
+
+.mz-work { margin-bottom: 18px; }
+.mz-work-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.mz-work-head h2 { margin: 0; }
+
+.mz-work-about {
+  margin: 0 0 10px;
+  color: var(--mz-body);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.mz-work-links { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 12px; }
+.mz-work-links span { overflow-wrap: anywhere; }
+
+/* The feedback itself. Given the accent border rather than muted grey, because
+   it is the thing the member came back to read (REQ-M.123) and the rest of the
+   card is context for it. */
+.mz-feedback {
+  border-inline-start: 3px solid var(--mz-teal-text);
+  padding: 4px 12px;
+  margin: 0 0 12px;
+}
+.mz-feedback p {
+  margin: 2px 0 0;
+  color: var(--mz-ink);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.mz-work-address { font-size: .82rem; margin: -4px 0 12px; overflow-wrap: anywhere; }

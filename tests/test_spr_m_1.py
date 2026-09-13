@@ -139,13 +139,19 @@ def test_page_carries_none_of_babook_chrome(client, db):
 
 
 def test_logged_out_nav_matches_the_prototype(client, db):
-    """T-F-M.1.4-2: Litala's screen 1 menu, and it belongs to this app alone."""
+    """T-F-M.1.4-2: Litala's screen 1 menu, and it belongs to this app alone.
+
+    One label changed on 2026-09-13 and the order did not: Avi settled that
+    מט״צים says הדרכות, not קורסים, after the product was found using both and
+    the request assistant nearly had the wrong one written into its prompt. The
+    prototype's order is still the thing this test is protecting.
+    """
     html = client.get("/matazim/").content.decode()
     items = [
         "דף הבית",
         "אודות התכנית",
         "המסלול השנתי",
-        "הקורסים",
+        "ההדרכות",
         "מבחן הכניסה",
         "בתי הספר",
         "קהילת מט״צים",

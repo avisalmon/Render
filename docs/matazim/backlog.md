@@ -1761,6 +1761,73 @@ Needs a decision from Avi, and it is a small one with a visible result: either
 as its own voice and the four stray הדרכות get changed. Either way the assistant
 can then be told the truth.
 
+## SPR-M.28 — יוצרים: submissions and the feedback that matters  `DONE`
+
+Avi, 2026-09-13, choosing the order: the five stages of the programme are
+מתמיינים, לומדים, יוצרים, מדריכים, משפיעים, and two of them exist. This is the
+third.
+
+**Why this one first.** A leader can currently accept a student, look at a
+roster and certify them. That is administration, not mentoring. The spec has
+said the important part since it was written: *"the feedback is the interaction
+that matters here, not the approve flag."* Until a member can put work in front
+of their מוביל and read what they said about it, נעמי's leaders have nothing to
+do between accepting somebody and certifying them, and מט״צים is a completion
+tracker with a 3D test on the front.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.28.1 | `Submission` and `Feedback`, with the file kept privately | REQ-M.19, M.122 | DONE |
+| F-M.28.2 | The member hands work in, and sees what came back | REQ-M.19, M.123 | DONE |
+| F-M.28.3 | The leader reads it, returns it with words, or approves it | REQ-M.19, M.123 | DONE |
+| F-M.28.4 | Work waiting on a leader is counted where they stand | REQ-M.124 | DONE |
+| F-M.28.5 | A returned submission can be answered with a new version | REQ-M.125 | DONE |
+| F-M.28.6 | Submitting moves the student to יוצרים, logged | REQ-M.74 | DONE |
+
+### What building it turned up  `DONE 2026-09-13`
+
+**The leader could not open the work.** The first version of the review screen
+showed a member's project link as dead text, on the theory that RULE-1 forbids
+outbound links. It does not: the rule governs this product's own navigation and
+its test excepts external links for exactly this case. So a leader was being
+asked to copy and paste a URL in order to do the thing the screen exists for.
+Clickable now, with `rel="noopener noreferrer"` because the address was typed
+by a fourteen-year-old, and the address stays visible underneath so nobody is
+asked to click something they cannot read. Found by rendering the screen, which
+is now four sprints in a row.
+
+**Handing in another project would have un-certified a מט״צ.** The obvious way
+to write the stage move is unconditionally, and a certified member showing
+their leader a new project would have gone back to יוצרים. It moves forward
+only from מתמיינים or לומדים.
+
+**The terminology decision reached further than the templates.** Renaming
+הקורסים to ההדרכות in the nav broke `test_logged_out_nav_matches_the_prototype`,
+which had been asserting Litala's original labels since SPR-M.1. Updated rather
+than loosened: the order is what that test is really protecting, and it still
+checks it.
+
+### Decisions taken up front
+
+**A return with no words is refused.** "Returned" on its own tells a
+fourteen-year-old they failed and not what to change, which is the exact
+opposite of what this stage is for. Approving may carry words and does not have
+to, because "well done" is optional and "here is what to fix" is not.
+
+**The file is a minor's work and is kept like one.** Outside `MEDIA_ROOT`, under
+a random name, reachable only through a view that asks who is looking — the same
+path the entrance test uses, for the same reason it was moved there: §4.10 P2
+found those files sitting in public `/media/` under names like `יובל כהן
+מודל.stl`. Reusing that machinery rather than writing a second one.
+
+**It does not gate certification.** Certification is the entrance test, two
+הדרכות, and a leader's approval, and Avi settled that definition. יוצרים is the
+stage after, so a submission moves the student's stage and leaves the
+certification rule alone.
+
+**Each version is its own row.** A resubmission that overwrote the first would
+destroy the very thing the feedback was about.
+
 ## Also still open
 
 - Retire the old production tables, once ACT-M.2 is answered.

@@ -15,7 +15,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.dispatch import receiver
 
-from .storage import entrance_upload_path, private_storage
+from .storage import entrance_upload_path, private_storage, submission_upload_path
 
 
 class MemberProfile(models.Model):
@@ -868,3 +868,115 @@ class RequestMessage(models.Model):
     @property
     def is_hers(self):
         return self.who == self.HER
+
+
+class Submission(models.Model):
+    """REQ-M.19 — the יוצרים stage: a member puts work in front of their leader.
+
+    **The feedback is the point, not the flag.** The spec has said so since it
+    was written, and it is why this model exists at all: before it, a leader
+    could accept a student, read a roster and certify them, which is
+    administration. A programme about mentorship needs the place where somebody
+    looks at a teenager's work and tells them something about it.
+
+    **Each attempt is its own row** (REQ-M.125). A resubmission that overwrote
+    the first would destroy the thing the feedback was about, and a member
+    reading "you should change the base" wants the version that had the base.
+
+    **The file is a minor's work** (REQ-M.122). Outside `MEDIA_ROOT`, random
+    name, reachable only through a view that asks who is looking — the same
+    machinery the entrance test uses, because §4.10 P2 already found these
+    sitting in public `/media/` under names like `יובל כהן מודל.stl`.
+    """
+
+    WAITING = "waiting"
+    RETURNED = "returned"
+    APPROVED = "approved"
+    STATUS_CHOICES = [
+        (WAITING, "מחכה למוביל/ה"),
+        (RETURNED, "הוחזר לתיקון"),
+        (APPROVED, "אושר"),
+    ]
+
+    student = models.ForeignKey(
+        Student, on_delete=models.CASCADE, related_name="submissions"
+    )
+    # Who it was handed to. Kept beside the row because `Student.leader` can
+    # change (REQ-M.98), and a year from now "who gave this feedback" has to
+    # still answer correctly.
+    leader = models.ForeignKey(
+        Leader, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="submissions", verbose_name="הוגש ל",
+    )
+
+    title = models.CharField(max_length=160, verbose_name="מה זה")
+    about = models.TextField(blank=True, default="", verbose_name="כמה מילים על זה")
+    # A file, a link, or both. A Scratch project is a link and an STL is a file,
+    # and this stage has to hold either without asking a teenager to care which
+    # kind of thing the product prefers.
+    work_file = models.FileField(
+        upload_to=submission_upload_path,
+        storage=private_storage,
+        blank=True,
+        null=True,
+        verbose_name="קובץ",
+    )
+    link = models.URLField(blank=True, default="", verbose_name="קישור")
+
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default=WAITING, db_index=True
+    )
+    # REQ-M.125 — a new version answers a returned one, and both are kept.
+    answers = models.ForeignKey(
+        "self", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="revisions", verbose_name="תשובה להגשה",
+    )
+
+    decided_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    decided_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "הגשה"
+        verbose_name_plural = "הגשות"
+
+    def __str__(self):
+        return f"{self.title} · {self.get_status_display()}"
+
+    @property
+    def is_waiting(self):
+        return self.status == self.WAITING
+
+
+class Feedback(models.Model):
+    """REQ-M.123 — what the leader said, written to be read.
+
+    Its own table rather than a field on the submission, because a leader may
+    say more than one thing and because the thing a member comes back to read
+    is the words, dated and attributed. A row here is never edited or deleted:
+    the same reasoning as `StatusLog` (§4.7), except that this one is read by a
+    fourteen-year-old rather than by an auditor.
+    """
+
+    submission = models.ForeignKey(
+        Submission, on_delete=models.CASCADE, related_name="feedback"
+    )
+    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="+")
+    body = models.TextField(verbose_name="מה נכתב")
+    # What the leader did in the same act, so the member reads the words and
+    # the decision together rather than inferring one from the other.
+    outcome = models.CharField(
+        max_length=20, choices=Submission.STATUS_CHOICES, blank=True, default=""
+    )
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["created_at", "pk"]
+        verbose_name = "משוב"
+        verbose_name_plural = "משובים"
+
+    def __str__(self):
+        return f"{self.body[:40]}"

@@ -129,6 +129,27 @@
     </ul>
   </section>
 
+  {% if leader %}
+    {% comment %}
+      REQ-M.19 — the way into יוצרים. Only once somebody has a leader, because
+      there is nobody to hand work to before that, and a button that leads to
+      "you have no leader" is a button that teaches people not to press.
+    {% endcomment %}
+    <section class="mz-panel">
+      <h2>העבודות שלי</h2>
+      <p class="mz-muted">
+        {% if work_waiting %}
+          הגשתם עבודה ואתם מחכים לתשובה.
+        {% elif work_answered %}
+          המוביל/ה כתב/ה לכם משוב.
+        {% else %}
+          כשבניתם משהו שאתם רוצים שהמוביל/ה יראה — אפשר להגיש אותו כאן.
+        {% endif %}
+      </p>
+      <a class="mz-btn mz-btn-primary" href="{% url 'matazim:my_work' %}">לעבודות שלי</a>
+    </section>
+  {% endif %}
+
   <section class="mz-panel">
     <h2>המוביל/ה שלי</h2>
     {% if leader %}

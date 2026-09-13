@@ -1,0 +1,117 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.19, REQ-M.123 — a leader reads the work, then says something about it.
+
+  The writing box is not optional furniture at the bottom. It sits with the two
+  buttons, because the decision and the words are one act: a leader who returns
+  work without saying why has told a fourteen-year-old they failed and not what
+  to change, and the view refuses that rather than merely discouraging it.
+{% endcomment %}
+
+{% block title %}עבודה להערכה · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page mz-page-narrow">
+  <div class="mz-page-head">
+    <h1>{{ submission.title }}</h1>
+    <p>
+      {{ submission.student.user.profile.display_name|default:submission.student.user.email }}
+      · {{ submission.created_at|date:"j.n.y" }}
+      {% if submission.status == "waiting" %}
+        <span class="mz-tag mz-tag-doing">מחכה לך</span>
+      {% elif submission.status == "returned" %}
+        <span class="mz-tag mz-tag-fix">הוחזר לתיקון</span>
+      {% else %}
+        <span class="mz-tag mz-tag-done">אושר</span>
+      {% endif %}
+    </p>
+  </div>
+
+  {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
+
+  <section class="mz-panel">
+    <h2>העבודה</h2>
+    {% if submission.about %}
+      <p class="mz-work-about">{{ submission.about|linebreaksbr }}</p>
+    {% else %}
+      <p class="mz-muted">לא נכתבו מילים על העבודה.</p>
+    {% endif %}
+
+    <p class="mz-work-links">
+      {% if submission.work_file %}
+        <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:work_file' submission.pk %}">הורדת הקובץ</a>
+      {% endif %}
+      {% if submission.link %}
+        {% comment %}
+          Clickable, and RULE-1 permits it: the rule governs this product's own
+          navigation, and its test excepts external links for exactly this
+          case. A leader who cannot open the work cannot review it, and the
+          first version of this screen showed the address as dead text, which
+          left them to copy and paste a URL to do their job.
+
+          `rel="noopener noreferrer"` because the address was typed by a
+          fourteen-year-old and goes wherever they said. The address stays
+          visible underneath, so nobody is asked to click something they cannot
+          read.
+        {% endcomment %}
+        <a class="mz-btn mz-btn-ghost" href="{{ submission.link }}"
+           target="_blank" rel="noopener noreferrer">פתיחת העבודה</a>
+      {% endif %}
+    </p>
+
+    {% if submission.link %}
+      <p class="mz-muted mz-work-address" dir="ltr">{{ submission.link }}</p>
+    {% endif %}
+
+    {% if submission.answers %}
+      <p class="mz-muted">
+        גרסה חדשה אחרי
+        <a class="mz-linkbtn" href="{% url 'matazim:review' submission.answers.pk %}">{{ submission.answers.title }}</a>
+      </p>
+    {% endif %}
+  </section>
+
+  {% if feedback %}
+    <section class="mz-panel">
+      <h2>מה נכתב עד כה</h2>
+      {% for note in feedback %}
+        <div class="mz-feedback">
+          <span class="mz-req-note-label">
+            {{ note.author.profile.display_name|default:"מוביל/ה" }}
+            · {{ note.created_at|date:"j.n.y" }}
+          </span>
+          <p>{{ note.body|linebreaksbr }}</p>
+        </div>
+      {% endfor %}
+    </section>
+  {% endif %}
+
+  {% if may_decide %}
+    <section class="mz-panel">
+      <h2>{% if submission.status == "waiting" %}התשובה שלך{% else %}להוסיף משוב{% endif %}</h2>
+      <form method="post">
+        {% csrf_token %}
+        <label class="mz-field">
+          <span>מה לכתוב למט״צ</span>
+          <textarea name="body" rows="5"
+                    placeholder="מה טוב, ומה לשנות. זה מה שהוא יקרא.">{{ posted.body|default:'' }}</textarea>
+          <small>
+            להחזרה לתיקון חייבים לכתוב מה לשנות. לאישור אפשר גם בלי, אבל מילה
+            טובה נקראת.
+          </small>
+        </label>
+        <div class="mz-req-act">
+          <button type="submit" name="action" value="approve" class="mz-btn mz-btn-primary">אישור העבודה</button>
+          <button type="submit" name="action" value="return" class="mz-btn mz-btn-secondary">החזרה לתיקון</button>
+        </div>
+      </form>
+    </section>
+  {% endif %}
+
+  <p class="mz-page-actions">
+    <a class="mz-linkbtn" href="{% url 'matazim:leader_home' %}">לאזור שלי</a>
+    <a class="mz-linkbtn" href="{% url 'matazim:student' submission.student.pk %}">לכרטיס של המט״צ</a>
+  </p>
+</div>
+{% endblock %}
