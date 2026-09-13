@@ -1632,6 +1632,51 @@ your recommendation."
 | F-M.27.5 | The transcript on the approval card, her words first | REQ-M.117, M.112 | DONE |
 | F-M.27.6 | A proposed wording she can adopt or ignore | REQ-M.119 | DONE |
 | F-M.27.7 | The mini gate never calls OpenAI; the full regression may | — | DONE |
+| F-M.27.8 | The prompt carries the rules, the design and every screen | REQ-M.120 | DONE |
+| F-M.27.9 | A scripted model, so the loop can be tested without a key | REQ-M.121 | DONE |
+
+### The prompt, and how it is built  `DONE 2026-09-13`
+
+Avi: "How do you plan to build the prompt for this chat so it will know the spec
+and the design of the site?" The honest answer at the time was that it knew the
+spec and not the design: 129 requirements and nothing about the shape of the
+product, so the model would have discussed a sidebar that does not exist or a
+link to babook that RULE-1 forbids.
+
+It now carries, in about 51,000 characters:
+
+- **§2.3, §3.2, §4.3 and §4.4 verbatim** — the four rules, the design system,
+  the roles, and tenancy.
+- **Every screen that exists**, read from the URL resolver. 44 of them.
+- The requirement list, the open requests, the screen she opened from, and the
+  conversation.
+
+**Everything derived, nothing hand-copied.** A paragraph pasted into a prompt
+string is a second copy of the truth that drifts the first time somebody edits
+the spec, and a screen added next month has to reach the model without anybody
+remembering that a prompt exists.
+
+**Verified live rather than assumed.** Asked for a link to the main site, the
+model refuses and names RULE-1. Asked for a sidebar, it says there is none today
+and asks where she would want one. Neither answer was possible before.
+
+**And it caught a false rule on the way in.** I was about to tell the assistant
+"the site says הדרכות, never קורסים" and checked first: מט״צים says הדרכות 14
+times and קורסים 6, including the nav item every member reads. That is logged
+for Avi rather than papered over in a prompt.
+
+### The scripted model  `DONE 2026-09-13`
+
+Avi: "you can actually imitate it as if you are your AI. You can get the prompt
+and say what you would have responded." `matazim/model_script.py` holds replies
+written by hand after reading the real assembled prompt, each naming the fact it
+depends on, so that if that fact stops reaching the model the fixture is a lie
+and the comment says where to look.
+
+A fixture written against an imagined prompt tests a parser. One written against
+the real prompt tests whether the model was given enough to answer, which is the
+part that is actually hard. It runs only under `MATAZIM_SCRIPTED_AI=1`, never in
+production, and says in the log that the words are not a model's.
 
 ### What building it turned up  `DONE 2026-09-13`
 
@@ -1686,6 +1731,24 @@ already specified more broadly as notifications. A form collects those as
 requests and spends a sprint discovering it. A conversation finds out while she
 is still typing, and she gets the answer to the first kind immediately rather
 than in a fortnight.
+
+## Open: מט״צים calls the same thing two names
+
+Found 2026-09-13, while building the context for the request conversation. I was
+about to teach the assistant "the site says הדרכות, never קורסים", which is the
+brand rule for babook, and checked first. מט״צים does not follow it: its own
+templates say **הדרכות 14 times and קורסים 6**, and the nav item every member
+reads on every page says **הקורסים**. The spec is split the same way, 7 against 4.
+
+So the rule went out of the prompt rather than into it. An assistant that
+corrects her vocabulary to something the screen beside her contradicts is worse
+than one that says nothing, and a prompt is the wrong place to fix a product's
+copy anyway.
+
+Needs a decision from Avi, and it is a small one with a visible result: either
+מט״צים adopts הדרכות like the rest of the site, or it keeps קורסים deliberately
+as its own voice and the four stray הדרכות get changed. Either way the assistant
+can then be told the truth.
 
 ## Also still open
 

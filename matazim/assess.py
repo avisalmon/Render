@@ -81,6 +81,44 @@ VERDICTS = ("רעיון טוב", "לצמצם", "כבר קיים", "כבר התב
 MODEL = "gpt-4o"
 
 
+def _ask(system, user, *, why):
+    """The one place this module talks to a model.
+
+    Two implementations behind it. In production it is `app.ai_chat.call_openai`
+    on `MODEL`. With `MATAZIM_SCRIPTED_AI=1` it is `matazim.model_script`, a set
+    of replies **written by hand after reading the real assembled prompt**.
+
+    Avi's idea, 2026-09-13: since the app cannot call me directly, I can read
+    the prompt it would send and write what the model should say, and that pair
+    becomes a fixture. It buys two things a live key cannot. The whole loop gets
+    tested against realistic content rather than strings invented to satisfy a
+    parser, deterministically and for nothing. And somebody can walk the
+    conversation on a dev machine with no key at all.
+
+    What it must never be is a quiet fallback. Scripted replies are authored by
+    me, not produced by a model, and a screen that presented them as a model's
+    opinion would be lying about where the words came from. So it is opt-in by
+    environment, off everywhere unless somebody asks for it, and it says so in
+    the log every time it answers.
+    """
+    import os
+
+    if os.environ.get("MATAZIM_SCRIPTED_AI", "").strip() in ("1", "true", "yes"):
+        from .model_script import scripted_reply
+
+        reply = scripted_reply(system, user, why=why)
+        logger.info("matazim: scripted reply used for %s (not a real model)", why)
+        return reply
+
+    if not getattr(settings, "OPENAI_API_KEY", ""):
+        return ""
+
+    from app.ai_chat import call_openai
+
+    result = call_openai([{"role": "user", "content": user}], model=MODEL, system_prompt=system)
+    return ((result or {}).get("content") or "").strip()
+
+
 def _requirement_titles(limit=200, body_chars=320):
     """What the product already promises, with enough of each to be matchable.
 
@@ -147,22 +185,8 @@ def assess(request_row, *, save=True):
     somebody's words. Losing the second to protect the first would be the wrong
     trade in every case.
     """
-    from app.ai_chat import call_openai
-
-    if not getattr(settings, "OPENAI_API_KEY", ""):
-        # Stub mode returns a placeholder string; storing it would put a
-        # sentence about configuration on Avi's approval screen dressed as an
-        # opinion about נעמי's idea.
-        logger.info("matazim: no OPENAI_API_KEY, request %s left unassessed", request_row.pk)
-        return ""
-
     try:
-        result = call_openai(
-            [{"role": "user", "content": _prompt_for(request_row)}],
-            model=MODEL,
-            system_prompt=SYSTEM,
-        )
-        text = (result or {}).get("content", "").strip()
+        text = _ask(SYSTEM, _prompt_for(request_row), why="assess")
     except Exception as exc:  # pragma: no cover - depends on a live API
         logger.warning("matazim: assessment failed for request %s: %s", request_row.pk, exc)
         return ""
@@ -248,6 +272,11 @@ DISCUSS_SYSTEM = """את/ה עוזר/ת לנעמי, שמנהלת את תוכני
 - לעולם אל תבקש ממנה לנסח מחדש לפני ששולחים. היא יכולה לשלוח בכל רגע, וזה בסדר.
 - אל תבטיח שמשהו ייבנה ואל תיתן תאריכים. אתה לא מחליט.
 - אל תמציא מזהי דרישות שלא ברשימה.
+- קיבלת את רשימת כל המסכים שקיימים. אם היא מדברת על משהו שאין לו מסך, אמור/י
+  את זה במקום להמשיך כאילו הוא קיים.
+- קיבלת את הכללים של המוצר. אל תציע קישור החוצה מהאזור של מט״צים (RULE-1),
+  ואל תציע לשנות את תוכן ההדרכות עצמן — הן שייכות למערכת אחרת (RULE-3).
+- כשאת/ה מציע/ה ניסוח, השתמש/י במילים שמופיעות במסכים עצמם.
 - עברית פשוטה, בלי התנצלויות ובלי מחמאות.
 
 אם הבקשה יכולה להיות מנוסחת חד יותר, מותר לך להציע ניסוח. לא לתקן אותה, להציע.
@@ -263,7 +292,8 @@ RECOMMEND_SYSTEM = """את/ה כותב/ת לאבי המלצה על בקשה שנ
 אבי מחליט. אתה ממליץ. הוא רוצה לדעת מה היית עושה, לא רק לאיזו קטגוריה זה שייך.
 
 ענה/י בדיוק בשלוש שורות:
-שורה 1 — עד שלושה מזהי REQ-M.x מהרשימה שהכי קרובים, מופרדים בפסיק, או: אין.
+שורה 1 — עד שלושה מזהים שהכי קרובים, מופרדים בפסיק, או: אין.
+מזהה הוא REQ-M.x מהרשימה, או RULE-1 עד RULE-4 אם הבקשה נוגעת באחד הכללים.
 שורה 2 — אחת מהמילים: לבנות / לצמצם ואז לבנות / לא עכשיו / כבר קיים / מחוץ לתחום
 שורה 3 — משפט אחד: מה הייתי עושה ולמה. אם "כבר קיים" — איפה זה נמצא היום.
 
@@ -288,34 +318,35 @@ def discuss(request_row):
     stand between her and the button, and that includes the conversation being
     unavailable.
     """
-    from app.ai_chat import call_openai
-
-    if not getattr(settings, "OPENAI_API_KEY", ""):
-        return ""
-
-    context = [
-        "הדרישות שכבר מוגדרות במוצר (מזהה [מצב] כותרת: תיאור):",
-        *(_requirement_titles() or ["לא נטענו"]),
-        "",
-        "בקשות שכבר נרשמו:",
-        *(_open_requests(exclude_pk=request_row.pk) or ["אין"]),
-        "",
-        f"המסך שממנו היא פתחה את השיחה: {request_row.from_screen or 'לא נרשם'}",
-        "",
-        "השיחה עד כה:",
-        *_conversation_lines(request_row),
-    ]
-
     try:
-        result = call_openai(
-            [{"role": "user", "content": "\n".join(context)}],
-            model=MODEL,
-            system_prompt=DISCUSS_SYSTEM,
-        )
-        return ((result or {}).get("content") or "").strip()
+        return _ask(DISCUSS_SYSTEM, discussion_prompt(request_row), why="discuss")
     except Exception as exc:  # pragma: no cover - depends on a live API
         logger.warning("matazim: discussion turn failed for %s: %s", request_row.pk, exc)
         return ""
+
+
+def discussion_prompt(request_row):
+    """Exactly what the model is asked during a conversation.
+
+    A named function rather than a local, because the scripted mode and the
+    tests both need the real thing: a fixture written against an imagined
+    prompt proves nothing about the prompt that actually ships.
+    """
+    return "\n".join(
+        [
+            *_product_context(),
+            "הדרישות שכבר מוגדרות במוצר (מזהה [מצב] כותרת: תיאור):",
+            *(_requirement_titles() or ["לא נטענו"]),
+            "",
+            "בקשות שכבר נרשמו:",
+            *(_open_requests(exclude_pk=request_row.pk) or ["אין"]),
+            "",
+            f"המסך שממנו היא פתחה את השיחה: {request_row.from_screen or 'לא נרשם'}",
+            "",
+            "השיחה עד כה:",
+            *_conversation_lines(request_row),
+        ]
+    )
 
 
 def recommend(request_row, *, save=True):
@@ -326,31 +357,8 @@ def recommend(request_row, *, save=True):
     than what kind of thing it is. It still decides nothing: it cannot approve,
     cannot decline, and cannot touch what she wrote.
     """
-    from app.ai_chat import call_openai
-
-    if not getattr(settings, "OPENAI_API_KEY", ""):
-        return ""
-
-    context = [
-        "הדרישות שכבר מוגדרות במוצר (מזהה [מצב] כותרת: תיאור):",
-        *(_requirement_titles() or ["לא נטענו"]),
-        "",
-        "בקשות שכבר נרשמו:",
-        *(_open_requests(exclude_pk=request_row.pk) or ["אין"]),
-        "",
-        f"נשלח מהמסך: {request_row.from_screen or 'לא נרשם'}",
-        "",
-        "השיחה המלאה:",
-        *(_conversation_lines(request_row) or [request_row.body.strip()]),
-    ]
-
     try:
-        result = call_openai(
-            [{"role": "user", "content": "\n".join(context)}],
-            model=MODEL,
-            system_prompt=RECOMMEND_SYSTEM,
-        )
-        text = ((result or {}).get("content") or "").strip()
+        text = _ask(RECOMMEND_SYSTEM, recommendation_prompt(request_row), why="recommend")
     except Exception as exc:  # pragma: no cover - depends on a live API
         logger.warning("matazim: recommendation failed for %s: %s", request_row.pk, exc)
         return ""
@@ -360,6 +368,25 @@ def recommend(request_row, *, save=True):
         request_row.assessed_at = timezone.now()
         request_row.save(update_fields=["recommendation", "assessed_at"])
     return text
+
+
+def recommendation_prompt(request_row):
+    """Exactly what the model is asked when writing Avi's recommendation."""
+    return "\n".join(
+        [
+            *_product_context(),
+            "הדרישות שכבר מוגדרות במוצר (מזהה [מצב] כותרת: תיאור):",
+            *(_requirement_titles() or ["לא נטענו"]),
+            "",
+            "בקשות שכבר נרשמו:",
+            *(_open_requests(exclude_pk=request_row.pk) or ["אין"]),
+            "",
+            f"נשלח מהמסך: {request_row.from_screen or 'לא נרשם'}",
+            "",
+            "השיחה המלאה:",
+            *(_conversation_lines(request_row) or [request_row.body.strip()]),
+        ]
+    )
 
 
 def split_recommendation(text):
@@ -413,3 +440,96 @@ def without_proposal(text):
     head, tail = text.split(PROPOSED, 1)
     rest = tail.strip().splitlines()[1:]
     return "\n".join([head.strip(), *rest]).strip()
+
+
+# ------------------------------------------- what the product actually is
+#
+# Avi, 2026-09-13: "How do you plan to build the prompt for this chat so it
+# will know the spec and the design of the site?"
+#
+# The requirement list alone tells a model what was promised and nothing about
+# the shape of the thing. Without the rest it will happily discuss a sidebar
+# this product does not have, a link to babook that RULE-1 forbids, or a word
+# the brand does not use.
+#
+# **Everything here is derived, never hand-copied.** A paragraph pasted into a
+# prompt string is a second copy of the truth that drifts the first time
+# somebody edits the spec, and this codebase has paid for a second copy twice
+# in one week. So the rules come out of the spec by heading, and the screen
+# list comes out of the URL resolver, which is the routing table itself.
+
+SPEC_SECTIONS = (
+    ("### 2.3", "הכללים שמפרידים בין מט״צים לבין שאר האתר"),
+    ("### 3.2", "מערכת העיצוב והשפה"),
+    ("### 4.3", "התפקידים"),
+    ("### 4.4 ", "הפרדה בין מוסדות"),
+)
+
+
+def _spec_section(heading):
+    """One section of the spec, verbatim, by heading."""
+    try:
+        text = SPEC.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+    try:
+        start = text.index(heading)
+    except ValueError:
+        return ""
+    nxt = text.find("\n### ", start + len(heading))
+    end = nxt if nxt != -1 else len(text)
+    return text[start:end].strip()
+
+
+def _screens():
+    """Every screen this product has, from the routing table.
+
+    Read from the resolver rather than listed by hand: a screen added next
+    month appears here without anybody remembering to update a prompt, and a
+    screen removed stops being discussable the same day.
+    """
+    from django.urls import get_resolver
+
+    try:
+        resolver = get_resolver()
+        matazim = resolver.namespace_dict.get("matazim")
+        if not matazim:
+            return []
+        patterns = matazim[1].url_patterns
+    except Exception:  # pragma: no cover - defensive, never worth a failed turn
+        return []
+
+    out = []
+    for pattern in patterns:
+        name = getattr(pattern, "name", None)
+        if not name:
+            continue
+        route = str(getattr(pattern, "pattern", ""))
+        # Endpoints that are not screens: images, downloads, POST-only actions.
+        if route.endswith((".png", ".csv")) or name in {
+            "logout", "welcome_accept", "profile_reset_welcome", "leader_confirm",
+            "certify", "staff_target_toggle", "reject_candidate", "decide_request",
+            "send_request", "discard_request", "adopt_wording", "my_data_export",
+            "attempt_file", "google_start", "auth_done", "staff_user_search",
+            "staff_consent", "test_retry",
+        }:
+            continue
+        out.append(f"/matazim/{route}  ({name})")
+    return out
+
+
+def _product_context():
+    """The spec and the shape of the site, for a model that has to discuss it."""
+    lines = ["מה שכבר קיים במוצר, לפי המסמכים:", ""]
+    for heading, label in SPEC_SECTIONS:
+        section = _spec_section(heading)
+        if section:
+            lines.extend([f"--- {label} ---", section, ""])
+
+    screens = _screens()
+    if screens:
+        lines.append("--- כל המסכים שקיימים היום ---")
+        lines.append("אם היא מדברת על מסך שלא ברשימה הזאת, הוא לא קיים.")
+        lines.extend(screens)
+        lines.append("")
+    return lines

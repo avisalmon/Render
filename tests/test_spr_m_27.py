@@ -361,3 +361,118 @@ def test_adopting_nothing_changes_nothing(client, db):
     draft.refresh_from_db()
     assert draft.body == "הרשימה מבלבלת"
     assert draft.messages.count() == 1
+
+
+# ------------------------------------------- F-M.27.8: the scripted model
+
+
+@pytest.fixture
+def scripted(monkeypatch):
+    """Replies written by hand against the real prompt (matazim/model_script.py).
+
+    Avi's idea: the app cannot call me, so I read the prompt it would send and
+    wrote what the model should answer. These tests are the reason that is
+    worth doing — they exercise the whole loop against realistic content rather
+    than against strings invented to satisfy a parser, deterministically and
+    without a key.
+    """
+    monkeypatch.setenv("MATAZIM_SCRIPTED_AI", "1")
+
+
+def test_the_prompt_carries_the_rules_and_the_screens(db):
+    """T-F-M.27.8-1: REQ-M.115.
+
+    Avi: "How do you plan to build the prompt so it will know the spec and the
+    design of the site?" This is the answer, checked rather than asserted: the
+    four spec sections and the routing table are in the prompt, all derived, so
+    the day somebody adds a screen or changes RULE-1 the model is told without
+    anybody remembering to update a string.
+    """
+    from matazim.assess import discussion_prompt
+    from matazim.models import Request, RequestMessage
+
+    naomi = _manager()
+    row = Request.objects.create(
+        author=naomi, body="שאלה", kind=Request.IDEA,
+        from_screen="/matazim/my-path/", status=Request.DRAFT,
+    )
+    RequestMessage.objects.create(request=row, who=RequestMessage.HER, body="שאלה")
+
+    prompt = discussion_prompt(row)
+
+    assert "RULE-1" in prompt, "the model could propose a link out of the walls"
+    assert "/matazim/leader/students/" in prompt, "it does not know what screens exist"
+    assert "REQ-M.24" in prompt, "the requirement list is missing"
+    assert "/matazim/my-path/" in prompt, "it does not know where she was standing"
+    assert len(prompt) > 20000, "the context collapsed to something too thin to answer from"
+
+
+def test_a_conversation_about_a_link_out_of_the_walls(client, db, scripted):
+    """T-F-M.27.8-2: RULE-1, through the whole loop.
+
+    The case that proves the design context earns its place: without §2.3 in
+    the prompt there is nothing to tell the model that this one is forbidden.
+    """
+    from matazim.models import RequestMessage
+
+    client.force_login(_manager())
+    draft = _start(client, body="אפשר להוסיף קישור לקורסים באתר הראשי?")
+
+    reply = draft.messages.filter(who=RequestMessage.ASSISTANT).first()
+    assert reply is not None, "the scripted model said nothing"
+    assert "RULE-1" in reply.body
+    assert "/matazim/courses/" in reply.body, "refused without saying what does exist"
+
+
+def test_a_conversation_about_something_that_already_exists(client, db, scripted):
+    """T-F-M.27.8-3: REQ-M.115.
+
+    The whole argument for a conversation: she gets the answer now instead of
+    waiting a fortnight to be told it was already there.
+    """
+    from matazim.models import RequestMessage
+
+    client.force_login(_manager())
+    draft = _start(client, body="אפשר לייצא את המחזור לאקסל?")
+
+    reply = draft.messages.filter(who=RequestMessage.ASSISTANT).first()
+    assert "REQ-M.24" in reply.body
+    assert "כבר קיים" in reply.body
+
+
+def test_the_recommendation_never_contradicts_the_conversation(client, db, scripted):
+    """T-F-M.27.8-4: REQ-M.118.
+
+    If a turn named REQ-M.33, the recommendation on the same card must not then
+    say there is no related requirement. Two opinions one paragraph apart is
+    how Avi learns to stop reading both.
+    """
+    from matazim.assess import split_recommendation
+
+    client.force_login(_manager())
+    draft = _start(client, body="אני רוצה שיישלח מייל כשמט״צ מסיים את שתי ההדרכות")
+    client.post(reverse("matazim:send_request", args=[draft.pk]))
+
+    draft.refresh_from_db()
+    refs, call, why = split_recommendation(draft.recommendation)
+
+    assert "REQ-M.33" in refs, f"the conversation cited REQ-M.33 and the recommendation says {refs!r}"
+    assert call, "no recommendation was made"
+    assert why
+
+
+def test_a_scripted_reply_is_never_used_unless_asked_for(client, db):
+    """T-F-M.27.8-5: the fixtures are mine, not a model's.
+
+    A screen presenting hand-written text as a model's opinion would be lying
+    about where the words came from, so this stays off unless the environment
+    asks for it. No `scripted` fixture here on purpose.
+    """
+    from matazim.models import RequestMessage
+
+    client.force_login(_manager())
+    draft = _start(client, body="אפשר לייצא את המחזור לאקסל?")
+
+    assert not draft.messages.filter(who=RequestMessage.ASSISTANT).exists(), (
+        "a scripted reply appeared without MATAZIM_SCRIPTED_AI being set"
+    )
