@@ -29,6 +29,7 @@ own pages do.
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 
 from app.bunny import get_embed_url
 from app.models import Course, Enrollment, Video
@@ -117,6 +118,23 @@ def learn_lesson(request, slug, order):
     lessons = list(Video.objects.filter(course=course).order_by("lesson_order"))
     orders = [row.lesson_order for row in lessons]
 
+    # REQ-M.126 — the trainings are babook's, the experience is מט״צים's.
+    #
+    # Until now this page rendered a video and nothing else, while 18 of the 19
+    # `scratch` lessons carry written notes and all 19 carry a summary. A מט״צ
+    # was getting materially less of the same lesson than a babook learner,
+    # inside the product that is supposed to be the better experience.
+    #
+    # Everything below is read from babook's own rows and written back through
+    # babook's own endpoints (REQ-M.14, RULE-3). What belongs to מט״צים is the
+    # page around it.
+    from app.lesson_notes import render_lesson_notes
+    from app.models import LessonQuiz, LessonReflection, UserVideoProgress
+
+    quiz = LessonQuiz.objects.filter(video=lesson).first()
+    progress = UserVideoProgress.objects.filter(user=request.user, video=lesson).first()
+    reflection = LessonReflection.objects.filter(user=request.user, video=lesson).first()
+
     return render(
         request,
         "matazim/learn_lesson.html",
@@ -129,5 +147,17 @@ def learn_lesson(request, slug, order):
             embed_url=get_embed_url(lesson.bunny_video_id) if lesson.bunny_video_id else None,
             next_order=order + 1 if (order + 1) in orders else None,
             prev_order=order - 1 if (order - 1) in orders else None,
+            # The written lesson, which is most of it.
+            notes_html=render_lesson_notes(lesson.notes_markdown),
+            summary=(lesson.summary_he or "").strip(),
+            # Rendered only when the lesson actually has one. The completion
+            # rule gates on these, so a lesson that carries one and does not
+            # show it is a member who cannot finish and is not told why.
+            quiz=quiz,
+            quiz_passed=bool(progress and progress.quiz_passed),
+            reflection_prompt=(lesson.reflection_prompt or "").strip(),
+            reflection=reflection,
+            # Resolved here, so the template holds no babook url name (RULE-1).
+            reflect_url=reverse("lesson_reflect", args=[lesson.pk]),
         ),
     )

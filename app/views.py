@@ -1368,7 +1368,6 @@ def _check_course_completion(user, course):
 
 
 def courses_lesson(request, slug, lesson_order):
-    import markdown
     from django.shortcuts import get_object_or_404
     course = get_object_or_404(Course, slug=slug, **_course_visibility(request.user))
     video = get_object_or_404(Video, course=course, lesson_order=lesson_order)
@@ -1396,16 +1395,11 @@ def courses_lesson(request, slug, lesson_order):
             last_position_seconds = prog.last_position_seconds
             quiz_passed_db = prog.quiz_passed
 
-    # Render notes_markdown to HTML (safe subset only)
-    try:
-        notes_html = markdown.markdown(video.notes_markdown or "", extensions=["fenced_code", "tables", "nl2br"])
-    except Exception:
-        notes_html = "<p>" + (video.notes_markdown or "").replace("\n", "<br>") + "</p>"
-    # Lesson-body links open in a new tab so the learner isn't pulled out of the
-    # lesson (tools, blog, etc.). Only touch anchors that lack an explicit target.
-    import re as _re_links
-    notes_html = _re_links.sub(
-        r'<a (?![^>]*\btarget=)', '<a target="_blank" rel="noopener noreferrer" ', notes_html)
+    # Rendered in one place, because מט״צים shows the same notes in its own
+    # chrome (REQ-M.126) and two copies of this would drift apart.
+    from app.lesson_notes import render_lesson_notes
+
+    notes_html = render_lesson_notes(video.notes_markdown)
 
     from app.bunny import get_embed_url
     embed_url = get_embed_url(video.bunny_video_id)

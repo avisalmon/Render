@@ -32,9 +32,7 @@
       <p class="mz-player-empty">השיעור הזה עדיין בלי וידאו.</p>
     {% endif %}
 
-    {% if lesson.notes_markdown %}
-      <p class="mz-muted">{{ lesson.notes_markdown|truncatewords:60 }}</p>
-    {% endif %}
+    {% if summary %}<p class="mz-lesson-summary">{{ summary }}</p>{% endif %}
 
     <div class="mz-page-actions">
       {% if prev_order %}
@@ -48,6 +46,77 @@
     </div>
     <p class="mz-muted" id="mzDoneNote" hidden>נרשם. אפשר להמשיך.</p>
   </section>
+
+  {% if notes_html %}
+    {% comment %}
+      REQ-M.126 — the written lesson, which is most of it.
+
+      This page used to render `notes_markdown|truncatewords:60` into a grey
+      paragraph: raw markdown, hashes and asterisks included, cut off after
+      sixty words. Eighteen of the nineteen סקראץ׳ lessons carry notes, so a
+      מט״צ was getting a fragment of the lesson rendered as source code while a
+      babook learner read the whole thing.
+
+      Rendered through `app.lesson_notes`, the same function babook's own
+      lesson page uses, so improving one improves both (RULE-3).
+    {% endcomment %}
+    <section class="mz-panel mz-panel-wide">
+      <h2>השיעור</h2>
+      <div class="mz-notes">{{ notes_html|safe }}</div>
+    </section>
+  {% endif %}
+
+  {% if quiz %}
+    {% comment %}
+      REQ-M.126 — a lesson that carries a quiz and does not show it is a member
+      who cannot finish and is never told why: the completion rule gates on
+      `quiz_passed`, and the progress bar simply stops moving. The answer is
+      written through babook's own `/api/video-progress/`, the same endpoint the
+      heartbeat uses (REQ-M.14), rather than a second write of our own.
+    {% endcomment %}
+    <section class="mz-panel" id="mzQuiz"
+             data-video="{{ lesson.pk }}"
+             data-required="{{ quiz.requires_correct|yesno:'1,0' }}">
+      <h2>שאלה לסיום</h2>
+      {% if quiz_passed %}
+        <p class="mz-muted">כבר עניתם על השאלה הזאת.</p>
+      {% endif %}
+      <p class="mz-quiz-question">{{ quiz.question }}</p>
+      <ul class="mz-quiz">
+        {% for option in quiz.options_json %}
+          <li>
+            <label>
+              <input type="radio" name="mz_quiz" value="{{ forloop.counter0 }}"
+                     data-correct="{{ option.is_correct|yesno:'1,0' }}">
+              <span>{{ option.text }}</span>
+            </label>
+          </li>
+        {% endfor %}
+      </ul>
+      <button type="button" class="mz-btn mz-btn-primary" id="mzQuizSend">בדיקה</button>
+      <p class="mz-quiz-feedback" id="mzQuizFeedback" hidden></p>
+    </section>
+  {% endif %}
+
+  {% if reflection_prompt %}
+    {% comment %}
+      The address comes from the view rather than `{% url %}`, because RULE-1's
+      test forbids a babook url name in a מט״צים template and it is right to:
+      that rule is about navigation, and this is an API the page posts to, the
+      same treatment `/api/video-progress/` already gets below.
+    {% endcomment %}
+    <section class="mz-panel" id="mzReflect" data-url="{{ reflect_url }}">
+      <h2>מחשבה לסיום</h2>
+      <p>{{ reflection_prompt }}</p>
+      <label class="mz-field">
+        <span>מה אתם חושבים</span>
+        <textarea id="mzReflectText" rows="4"
+                  placeholder="כמה משפטים משלכם.">{{ reflection.user_text|default:'' }}</textarea>
+      </label>
+      <button type="button" class="mz-btn mz-btn-secondary" id="mzReflectSend">שליחה</button>
+      <p class="mz-muted" id="mzReflectNote" hidden>נשמר.</p>
+    </section>
+  {% endif %}
 </div>
 
 {% comment %}
@@ -92,4 +161,78 @@
     });
   })();
 </script>
+<script>
+  /* REQ-M.126 — the quiz and the reflection, written through the shared
+     engine's own endpoints. There is no second table here: the quiz pass rides
+     the same `/api/video-progress/` call the heartbeat uses, because
+     `quiz_passed` is a field on that row. RULE-3: one record of what anybody
+     has done.
+
+     A script comment is served to the reader, so it says "the shared engine"
+     rather than naming the other product, which is what the RULE-1 guard
+     caught when this was first written. */
+  (function () {
+    function token() {
+      return (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+    }
+
+    var quiz = document.getElementById('mzQuiz');
+    if (quiz) {
+      var send = document.getElementById('mzQuizSend');
+      var note = document.getElementById('mzQuizFeedback');
+      send.addEventListener('click', function () {
+        var picked = quiz.querySelector('input[name="mz_quiz"]:checked');
+        if (!picked) {
+          note.hidden = false;
+          note.textContent = 'צריך לבחור תשובה.';
+          return;
+        }
+        var right = picked.dataset.correct === '1';
+        var mustBeRight = quiz.dataset.required === '1';
+        var passed = right || !mustBeRight;
+
+        note.hidden = false;
+        note.textContent = right
+          ? 'נכון.'
+          : (mustBeRight ? 'לא מדויק. אפשר לנסות שוב.' : 'נרשם. התשובה הנכונה היא אחרת, שווה להסתכל שוב.');
+        note.classList.toggle('is-right', right);
+
+        if (!passed) return;
+        send.disabled = true;
+        fetch('/api/video-progress/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': token() },
+          body: JSON.stringify({
+            video_id: parseInt(quiz.dataset.video, 10),
+            position: 0,
+            percent: 100,
+            quiz_passed: true
+          })
+        }).catch(function () { send.disabled = false; });
+      });
+    }
+
+    var reflect = document.getElementById('mzReflect');
+    if (reflect) {
+      var button = document.getElementById('mzReflectSend');
+      var box = document.getElementById('mzReflectText');
+      var saved = document.getElementById('mzReflectNote');
+      button.addEventListener('click', function () {
+        var text = (box.value || '').trim();
+        if (!text) return;
+        button.disabled = true;
+        fetch(reflect.dataset.url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': token() },
+          body: JSON.stringify({ text: text })
+        }).then(function () {
+          saved.hidden = false;
+        }).catch(function () {
+          button.disabled = false;
+        });
+      });
+    }
+  })();
+</script>
+
 {% endblock %}

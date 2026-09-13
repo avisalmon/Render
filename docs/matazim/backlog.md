@@ -1828,6 +1828,58 @@ certification rule alone.
 **Each version is its own row.** A resubmission that overwrote the first would
 destroy the very thing the feedback was about.
 
+## SPR-M.29 — The written lesson, in our own chrome  `DONE`
+
+Avi, 2026-09-13: "I want the trainings based on babook infrastructure but the
+views are matazim dedicated. It's a matazim experience."
+
+The structure already held — one record of progress, no way out of the walls —
+but the experience did not, and checking rather than assuming found a live
+defect rather than a latent one.
+
+**The lesson page rendered `notes_markdown|truncatewords:60` into a grey
+paragraph.** Raw markdown, hashes and asterisks included, cut off after sixty
+words. Eighteen of the nineteen סקראץ׳ lessons carry written notes and all
+nineteen carry a summary, so a מט״צ was reading a fragment of the lesson
+rendered as source code while a learner on the other product read the whole
+thing — inside the product that is supposed to be the better experience.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.29.1 | The notes rendered properly, in מט״צים's typography | REQ-M.126 | DONE |
+| F-M.29.2 | The quiz, when a lesson has one | REQ-M.126, M.14 | DONE |
+| F-M.29.3 | The reflection, when a lesson has one | REQ-M.126 | DONE |
+| F-M.29.4 | One rendering of notes, shared with the other product | RULE-3 | DONE |
+
+### What it rests on
+
+**One rendering, not two.** The alternative was eight lines copied out of the
+other product's view. `app/lesson_notes.py` now holds it and both call it, so a
+lesson's notes look the same wherever they are read and an improvement reaches
+both. This codebase has paid for a second copy of one truth twice in a week.
+
+**The quiz writes through the shared endpoint.** `quiz_passed` is a field on the
+progress row, so an answer rides the same `/api/video-progress/` call the
+heartbeat uses. A second write of our own would be exactly the divergence RULE-3
+exists to prevent, and it would be invisible: the member and their leader would
+each read a different truth and both would look correct.
+
+**Content may link out; the page may not.** RULE-1 governs this product's own
+navigation. A link inside a lesson's notes is content somebody wrote, and it
+opens in its own tab so a learner does not lose their place.
+
+### Two things caught while building
+
+**A script comment is served to the reader.** The RULE-1 guard failed because a
+`<script>` comment explaining where the write goes named the other product.
+Django comments are not rendered; script comments are. Reworded to "the shared
+engine".
+
+**The contract's fixture had no lesson in it.** Every lesson row was a bare
+video, so the catalogue rendered a lesson page with none of the lesson on it and
+called the screen covered. The first lesson now carries notes, a summary, a quiz
+and a reflection prompt, and lesson 2 stays bare so both states are drawn.
+
 ## Also still open
 
 - Retire the old production tables, once ACT-M.2 is answered.

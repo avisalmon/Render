@@ -70,7 +70,14 @@ def _user(email, name):
 
 
 def _courses():
-    from app.models import Course, Video
+    """The track, with a first lesson that carries what a real one carries.
+
+    REQ-M.126. Eighteen of the nineteen production סקראץ׳ lessons have written
+    notes, a summary, and in time a quiz; a fixture of bare video rows renders
+    a lesson page with none of the lesson on it, which is exactly the state
+    this catalogue spent a sprint calling covered.
+    """
+    from app.models import Course, LessonQuiz, Video
 
     made = {}
     for slug, title, n in (
@@ -79,8 +86,37 @@ def _courses():
     ):
         course = Course.objects.create(slug=slug, title=title, is_published=True)
         for i in range(n):
-            Video.objects.create(course=course, title=f"{title} {i}", lesson_order=i + 1)
+            Video.objects.create(
+                course=course,
+                title=f"שיעור {i + 1}",
+                lesson_order=i + 1,
+                bunny_video_id="abc123",
+            )
         made[slug] = course
+
+    first = Video.objects.get(course=made["scratch"], lesson_order=1)
+    first.title = "התקנה והגדרה"
+    first.summary_he = "מתקינים את סקראץ׳, נרשמים, ופותחים את הפרויקט הראשון."
+    first.notes_markdown = (
+        "## התקנה והגדרה\n\n"
+        "ברוכים הבאים לשיעור הראשון. נלמד **שלושה דברים**:\n\n"
+        "- להתקין את הסביבה\n"
+        "- לפתוח פרויקט\n"
+        "- לשמור אותו\n\n"
+        "### איך מגיעים\n\n"
+        "אפשר להיכנס לכתובת `scratch.mit.edu` או לחפש בגוגל.\n"
+    )
+    first.reflection_prompt = "מה הכי הפתיע אתכם בסביבה החדשה?"
+    first.save()
+    LessonQuiz.objects.create(
+        video=first,
+        question="איפה שומרים פרויקט בסקראץ׳?",
+        options_json=[
+            {"text": "בתפריט File ואז Save now", "is_correct": True},
+            {"text": "זה נשמר לבד כל הזמן", "is_correct": False},
+        ],
+        requires_correct=True,
+    )
     return made
 
 
@@ -449,6 +485,10 @@ SCREENS = [
     ("learn/course-part", "/matazim/learn/scratch/", "mid@example.com", dict(students="mixed")),
     ("learn/course-done", "/matazim/learn/scratch/", "done@example.com", dict(students="mixed")),
     ("learn/lesson", "/matazim/learn/scratch/1/", "mid@example.com", dict(students="mixed")),
+    # REQ-M.126 — a lesson with nothing on it but a video is not the lesson
+    # screen. Lesson 2 is the bare one; lesson 1 carries notes, a quiz and a
+    # reflection, which is what a production lesson looks like.
+    ("learn/lesson-bare", "/matazim/learn/scratch/2/", "mid@example.com", dict(students="mixed")),
     # SPR-M.20: the payoff, and the state where somebody has not earned it yet.
     ("cert/have", "/matazim/my-certificate/", "done@example.com", dict(students="mixed")),
     ("cert/none", "/matazim/my-certificate/", "mid@example.com", dict(students="mixed")),

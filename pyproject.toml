@@ -42,6 +42,7 @@ markers = [
     "sprm25: SPR-M.25 מט״צים the improvement loop",
     "sprm27: SPR-M.27 מט״צים proposing a change is a conversation",
     "sprm28: SPR-M.28 מט״צים submissions and feedback (יוצרים)",
+    "sprm29: SPR-M.29 מט״צים the written lesson in our own chrome",
     "screens: the screen contract - every מט״צים screen, in every state, rendered",
     "sprmobile: real-browser phone checks for מט״צים (tests/test_matazim_mobile.py)",
     "smoke: the fast gate, run on every push (see tests/test_smoke.py)",

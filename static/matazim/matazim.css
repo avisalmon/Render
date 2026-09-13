@@ -1952,3 +1952,69 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
 }
 
 .mz-work-address { font-size: .82rem; margin: -4px 0 12px; overflow-wrap: anywhere; }
+
+
+/* ------------------------------------------- the written lesson (REQ-M.126) */
+
+.mz-lesson-summary { color: var(--mz-body); margin: 0 0 4px; }
+
+/* babook's markdown, in מט״צים's voice. The content is theirs; the typography
+   is ours, which is the whole of what "a מט״צים experience" means here. */
+.mz-notes { color: var(--mz-body); line-height: 1.75; overflow-wrap: anywhere; }
+.mz-notes h1,
+.mz-notes h2,
+.mz-notes h3 { color: var(--mz-ink); line-height: 1.3; margin: 22px 0 8px; }
+.mz-notes h1 { font-size: 1.5rem; }
+.mz-notes h2 { font-size: 1.25rem; }
+.mz-notes h3 { font-size: 1.05rem; }
+.mz-notes p { margin: 0 0 12px; }
+.mz-notes ul,
+.mz-notes ol { margin: 0 0 14px; padding-inline-start: 22px; }
+.mz-notes li { margin-bottom: 6px; }
+.mz-notes strong { color: var(--mz-ink); }
+.mz-notes a { text-decoration: underline; text-underline-offset: 3px; }
+.mz-notes img { border-radius: var(--mz-radius-sm); margin: 8px 0; }
+
+/* Code is read left to right even on a Hebrew page, and it has to be able to
+   scroll inside itself rather than widening the page (REQ-M.75). */
+.mz-notes pre {
+  direction: ltr;
+  text-align: left;
+  background: var(--mz-ink);
+  color: #f2f4f8;
+  padding: 14px 16px;
+  border-radius: var(--mz-radius-sm);
+  overflow-x: auto;
+  font-size: .88rem;
+}
+.mz-notes code {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-size: .9em;
+}
+.mz-notes :not(pre) > code {
+  background: var(--mz-page);
+  border: 1px solid var(--mz-line);
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+.mz-notes table { width: 100%; border-collapse: collapse; margin: 0 0 14px; display: block; overflow-x: auto; }
+.mz-notes th,
+.mz-notes td { border: 1px solid var(--mz-line); padding: 7px 10px; text-align: start; }
+
+.mz-quiz-question { color: var(--mz-ink); font-weight: 500; }
+.mz-quiz { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 8px; }
+.mz-quiz label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--mz-line);
+  border-radius: var(--mz-radius-sm);
+  background: var(--mz-card);
+  cursor: pointer;
+}
+.mz-quiz label:hover { border-color: var(--mz-purple); }
+.mz-quiz-feedback { margin: 10px 0 0; color: var(--mz-body); }
+.mz-quiz-feedback.is-right { color: var(--mz-teal-text); font-weight: 500; }
