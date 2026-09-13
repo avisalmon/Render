@@ -141,6 +141,14 @@ def _is_candidate(user):
     return bool(not leader_of(user) and candidate_of(user))
 
 
+def _unread_notices(user):
+    if not getattr(user, "is_authenticated", False):
+        return 0
+    from .notify import unread_count
+
+    return unread_count(user)
+
+
 def _can_request(user):
     """§4.11 — the program-manager role and root see the lamp."""
     from .access import is_program_manager
@@ -194,6 +202,8 @@ def shell(request, section, **extra):
         "is_candidate": _is_candidate(request.user),
         # REQ-M.106, REQ-M.102 — the lamp, for the roles that own the
         # improvement loop and for nobody else.
+        # REQ-M.33 — the bell, for every signed-in role.
+        "unread_notices": _unread_notices(request.user),
         "can_request": _can_request(request.user),
         "requests_waiting": _requests_waiting(request.user),
         # REQ-M.84 — why they cannot join yet, in words, on whatever page they

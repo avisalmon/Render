@@ -980,3 +980,63 @@ class Feedback(models.Model):
 
     def __str__(self):
         return f"{self.body[:40]}"
+
+
+class Notification(models.Model):
+    """REQ-M.33 — something happened, and the person it happened to is told.
+
+    **A pointer, not a record.** The truth is the submission, the feedback, the
+    roster row; this says where to look. That is what makes it safe to delete
+    one or expire the lot, and it is the difference between a bell and a second
+    inbox nobody keeps in step with the first.
+
+    **Ours rather than the shared engine's** (REQ-M.127). That table feeds the
+    other product's bell in the other product's chrome, so a מט״צים event
+    landing there would put this product inside theirs, which is the mirror
+    image of what RULE-1 forbids. The cost is that somebody using both has two
+    bells, which for a ninth-grader in this programme is close to theoretical.
+
+    **Never the only telling** (REQ-M.128). Everything here also appears on the
+    screen it belongs to, because bells are dismissed by accident constantly and
+    a product where that loses information is broken.
+    """
+
+    FEEDBACK = "feedback"
+    WORK_APPROVED = "work_approved"
+    WORK_RETURNED = "work_returned"
+    WORK_WAITING = "work_waiting"
+    JOINED = "joined"
+    CERTIFIED = "certified"
+    KIND_CHOICES = [
+        (FEEDBACK, "משוב חדש"),
+        (WORK_APPROVED, "עבודה אושרה"),
+        (WORK_RETURNED, "עבודה הוחזרה"),
+        (WORK_WAITING, "עבודה מחכה לך"),
+        (JOINED, "צירוף למוביל/ה"),
+        (CERTIFIED, "הסמכה"),
+    ]
+
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="matazim_notifications"
+    )
+    kind = models.CharField(max_length=30, choices=KIND_CHOICES)
+    text = models.CharField(max_length=300, verbose_name="מה קרה")
+    # Always a path inside /matazim/. Checked when one is raised rather than
+    # trusted, because a notification that navigates out of the walls would
+    # break RULE-1 from the one place nobody thinks to look.
+    url = models.CharField(max_length=300, blank=True, default="")
+
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "התראה"
+        verbose_name_plural = "התראות"
+
+    def __str__(self):
+        return f"{self.get_kind_display()} · {self.text[:40]}"
+
+    @property
+    def is_unread(self):
+        return self.read_at is None

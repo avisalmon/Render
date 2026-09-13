@@ -15,6 +15,7 @@ from . import (
     invite_views,
     joining_views,
     learn_views,
+    notice_views,
     path_views,
     request_views,
     rights_views,
@@ -124,6 +125,9 @@ urlpatterns = [
     # (REQ-M.80). It is no longer under the public /media/ tree.
     path("attempt/<int:attempt_id>/file/", entrance_views.attempt_file, name="attempt_file"),
     # REQ-M.12 — the member's own screen, and the only role that had none.
+    # REQ-M.33 — the bell.
+    path("notices/", notice_views.notices, name="notices"),
+    path("notices/clear/", notice_views.clear_notices, name="clear_notices"),
     path("my-path/", path_views.my_path, name="my_path"),
     # REQ-M.19 — יוצרים: work handed in, and the feedback that is the point.
     path("my-work/", submission_views.my_work, name="my_work"),

@@ -24,12 +24,13 @@ from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from .access import is_program_manager, leader_of, visible_leaders
 from .consent import consent_blocker, needs_guardian_consent
 from .history import record_arrival, record_leader_change, set_status
-from .models import Application, Leader, Student
+from .models import Application, Leader, Notification, Student
 from .views import member_profile, shell
 
 LOGIN_URL = "/matazim/login/"
@@ -337,6 +338,16 @@ def leader_confirm(request, student_id):
         # this person has just been accepted out of it.
         student.save(update_fields=["leader", "pending_leader", "updated_at"])
         set_status(student, Student.IN_TRAINING, by=request.user, note="אישור מוביל/ה")
+        # REQ-M.33 — somebody has been waiting to hear this.
+        from .notify import notify
+
+        notify(
+            student.user,
+            Notification.JOINED,
+            f"{_name_of(leader)} אישר/ה אתכם. אתם בתוכנית.",
+            url=reverse("matazim:my_path"),
+            actor=request.user,
+        )
     else:
         student.pending_leader = None
         student.save(update_fields=["pending_leader", "updated_at"])

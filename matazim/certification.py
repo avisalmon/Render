@@ -167,6 +167,20 @@ def certify(user, student):
         extra_fields=("certified_at", "certified_by"),
     )
     _issue_certificate(student, user)
+
+    # REQ-M.33 — the best news this product has to give anybody.
+    from django.urls import reverse
+
+    from .models import Notification
+    from .notify import notify
+
+    notify(
+        student.user,
+        Notification.CERTIFIED,
+        "הוסמכתם כמט״צ. התעודה מחכה לכם.",
+        url=reverse("matazim:my_certificate"),
+        actor=user,
+    )
     return True
 
 

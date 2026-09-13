@@ -405,7 +405,7 @@ def build_world(
     # a leader, sent back with words, and answered. An empty screen is not the
     # screen, and the feedback is the whole point of this stage.
     if work and students == "mixed":
-        from matazim.models import Feedback, Submission
+        from matazim.models import Feedback, Notification, Submission
 
         mid = people["mid@example.com"]
         waiting_row = Submission.objects.create(
@@ -435,6 +435,24 @@ def build_world(
             status=Submission.APPROVED,
             decided_at=now,
         )
+        # REQ-M.33 — the bell reads these, and an empty one is a different
+        # screen. Raised through `notify` rather than created directly, so the
+        # fixture cannot drift from what the product actually writes.
+        from matazim.notify import notify
+
+        notify(
+            mid.user,
+            Notification.WORK_RETURNED,
+            "מנורה עם ארדואינו: הוחזר לתיקון עם משוב",
+            url="/matazim/my-work/",
+        )
+        notify(
+            mid.user,
+            Notification.WORK_APPROVED,
+            "הצגה על בטיחות ברשת: אושר",
+            url="/matazim/my-work/",
+        )
+
         first_work = waiting_row
 
     return {
@@ -598,6 +616,10 @@ SCREENS = [
     # SPR-M.28 — יוצרים.
     ("work/mine", "/matazim/my-work/", "mid@example.com", dict(students="mixed", work=True)),
     ("work/none", "/matazim/my-work/", "fresh@example.com", dict(students="mixed")),
+    # REQ-M.33 — the bell, full and empty. An empty bell is its own screen and
+    # is the one most people see first.
+    ("notices/some", "/matazim/notices/", "mid@example.com", dict(students="mixed", work=True)),
+    ("notices/none", "/matazim/notices/", "fresh@example.com", dict(students="mixed")),
     (
         "work/review",
         lambda w: f"/matazim/work/{w['work'].pk}/",

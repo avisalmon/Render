@@ -1,0 +1,54 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.33 — what happened, newest first.
+
+  Every row links to the thing itself, because that is the only reason the row
+  exists: a notification is a pointer, and a pointer you cannot follow is a
+  worse version of an email.
+
+  REQ-M.128 is worth remembering while reading this screen: nothing here is
+  only here. Feedback is on העבודות שלי, waiting work is on the leader's own
+  page, a new leader is on המסלול שלי. Somebody who never opens this screen
+  misses nothing.
+{% endcomment %}
+
+{% block title %}התראות · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page mz-page-narrow">
+  <div class="mz-page-head">
+    <h1>מה חדש</h1>
+    <p>
+      כל מה שקרה לאחרונה. הכל נמצא גם במסך שאליו זה שייך, אז אי אפשר לפספס
+      משהו רק כי לא נכנסתם לכאן.
+    </p>
+  </div>
+
+  {% if notices %}
+    <ul class="mz-notices">
+      {% for notice in notices %}
+        <li class="mz-notice{% if notice.pk in was_unread %} is-new{% endif %}">
+          <div class="mz-notice-body">
+            <p>{{ notice.text }}</p>
+            <span class="mz-notice-when">
+              {{ notice.created_at|date:"j.n.y H:i" }}
+              {% if notice.pk in was_unread %} · חדש{% endif %}
+            </span>
+          </div>
+          {% if notice.url %}
+            <a class="mz-linkbtn" href="{{ notice.url }}">לפתוח</a>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <section class="mz-panel">
+      <h2>עוד לא קרה כלום</h2>
+      <p class="mz-muted">
+        כשמישהו יכתוב לכם משוב, יאשר עבודה או יצרף אתכם — זה יופיע כאן.
+      </p>
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

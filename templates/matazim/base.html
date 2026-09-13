@@ -146,6 +146,21 @@
     {% endcomment %}
     <div class="mz-header-action">
       {% if user.is_authenticated %}
+        {% comment %}
+          REQ-M.33 — the bell. Beside the personal area rather than in the nav,
+          because it is a state rather than a place: it says whether anything
+          has happened, and the nav says where things are.
+        {% endcomment %}
+        <a class="mz-bell{% if unread_notices %} has-unread{% endif %}"
+           href="{% url 'matazim:notices' %}"
+           title="התראות" aria-label="התראות{% if unread_notices %}, {{ unread_notices }} חדשות{% endif %}">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.7 21a2 2 0 0 1-3.4 0"/>
+          </svg>
+          {% if unread_notices %}<span class="mz-bell-count">{{ unread_notices }}</span>{% endif %}
+        </a>
         <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:profile' %}">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           האזור האישי

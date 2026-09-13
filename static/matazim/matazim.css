@@ -2018,3 +2018,55 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
 .mz-quiz label:hover { border-color: var(--mz-purple); }
 .mz-quiz-feedback { margin: 10px 0 0; color: var(--mz-body); }
 .mz-quiz-feedback.is-right { color: var(--mz-teal-text); font-weight: 500; }
+
+
+/* ------------------------------------------------------ the bell (REQ-M.33) */
+
+.mz-bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* REQ-M.75 — a thumb target, not an icon somebody has to aim at. */
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  color: var(--mz-body);
+  flex: none;
+}
+.mz-bell:hover { background: var(--mz-page); color: var(--mz-ink); }
+.mz-bell.has-unread { color: var(--mz-purple); }
+
+.mz-bell-count {
+  position: absolute;
+  inset-block-start: 2px;
+  inset-inline-end: 2px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--mz-purple);
+  color: #fff;
+  font-size: .68rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mz-notices { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.mz-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--mz-line);
+  border-radius: var(--mz-radius-sm);
+  background: var(--mz-card);
+}
+/* What was new when the page opened. It is marked read on opening, so without
+   this the list gives no sign of which ones the reader had not seen. */
+.mz-notice.is-new { border-inline-start: 3px solid var(--mz-purple); }
+.mz-notice-body { flex: 1 1 auto; min-width: 0; }
+.mz-notice-body p { margin: 0; color: var(--mz-ink); overflow-wrap: anywhere; }
+.mz-notice-when { font-size: .78rem; color: var(--mz-muted); }

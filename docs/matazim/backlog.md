@@ -1880,6 +1880,64 @@ video, so the catalogue rendered a lesson page with none of the lesson on it and
 called the screen covered. The first lesson now carries notes, a summary, a quiz
 and a reflection prompt, and lesson 2 stays bare so both states are drawn.
 
+## SPR-M.30 — The bell  `DONE`
+
+REQ-M.33, and built now rather than earlier on purpose. Before SPR-M.28 the only
+events in this product were joining and being certified, and a bell for two
+lifetime events is furniture. Now a leader writes feedback, returns work and
+approves it, so there is finally something worth ringing about.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.30.1 | `Notification`, ours, and a `notify()` that every event goes through | REQ-M.33, M.127 | DONE |
+| F-M.30.2 | The bell in the header, with a count, for every signed-in role | REQ-M.33 | DONE |
+| F-M.30.3 | The list, and reading one takes you to the thing itself | REQ-M.33 | DONE |
+| F-M.30.4 | The events that exist today, wired at their source | REQ-M.33 | DONE |
+| F-M.30.5 | Nothing is discoverable only through a bell | REQ-M.128 | DONE |
+
+### What building it turned up  `DONE 2026-09-13`
+
+**A bell tells people about their own actions unless you stop it.** The obvious
+implementation notifies whoever the row belongs to, which is right for the
+member and wrong for the leader answering their own queue: a leader who writes
+feedback would have been told that feedback was written. `notify()` takes an
+`actor` and refuses when it matches the recipient, in one place rather than at
+each of the five call sites.
+
+**RULE-1 has a blind spot and this is it.** The guard reads templates, and a
+notification is not a template — nothing else in this product would ever look
+at its `url`. A notification that navigated to `/courses/` would have walked a
+member out of the walls from the one place nobody thinks to check. `notify()`
+refuses a url outside `/matazim/` and logs it, and the test was verified by
+removing the check and watching it fail.
+
+**Marking read on open, not per row.** A bell whose count only clears when you
+click each line is a bell people stop opening. Nothing is lost by it, because
+REQ-M.128 means everything there is also on the screen it belongs to — but the
+list still shows which were new when it opened, or it would give the reader no
+way to tell.
+
+### Three decisions
+
+**A notification is a pointer, not a record.** The truth is the submission and
+the feedback; this only says where to look. That is what makes it safe to
+delete one, expire them, or lose the lot, and it is the difference between a
+bell and a second inbox nobody maintains.
+
+**מט״צים's bell is מט״צים's.** The shared engine has a `Notification` table and
+we do not write to it. Not a RULE-3 question, because notifications are not
+learning, but a separation one: that table feeds the other product's bell in
+the other product's chrome, and a מט״צים event landing there puts this product
+inside theirs — the mirror of what RULE-1 forbids. The cost is real and is
+named rather than hidden: somebody using both products has two bells. For a
+ninth-grader in this programme that is close to theoretical.
+
+**Nothing is discoverable only through the bell.** Every event that raises one
+also shows on the screen it belongs to. A bell is dismissed by accident
+constantly, and a product where that loses information is a broken product. This
+one gets a test, because it is the kind of rule that decays the first time
+somebody adds an event in a hurry.
+
 ## Also still open
 
 - Retire the old production tables, once ACT-M.2 is answered.

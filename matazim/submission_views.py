@@ -17,12 +17,14 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from .access import is_program_manager, leader_of, visible_students
 from .history import set_status
-from .models import Feedback, Student, Submission
+from .models import Feedback, Notification, Student, Submission
+from .notify import notify
 from .views import shell
 
 LOGIN_URL = "/matazim/login/"
@@ -109,6 +111,17 @@ def my_work(request, submission_id=None):
                 work_file=upload,
                 answers=answered,
             )
+            # REQ-M.33 — the leader is told work arrived. It is also standing
+            # on their own screen (REQ-M.124), because a bell is dismissed by
+            # accident and this must not be the only telling.
+            if student.leader:
+                notify(
+                    student.leader.user,
+                    Notification.WORK_WAITING,
+                    f"{title}: עבודה חדשה מחכה לך",
+                    url=reverse("matazim:review", args=[submission.pk]),
+                    actor=request.user,
+                )
             # REQ-M.74 — the stage moves, and the move is logged like every
             # other one. Only forwards: somebody already certified does not go
             # back to יוצרים because they handed in another project.
@@ -186,6 +199,20 @@ def review(request, submission_id):
                     body=said,
                     outcome=outcome,
                 )
+            # REQ-M.33 — the member is told, on the screen and in the bell.
+            # `actor` keeps the leader from being told about their own answer.
+            notify(
+                submission.student.user,
+                Notification.WORK_RETURNED if outcome == Submission.RETURNED
+                else Notification.WORK_APPROVED,
+                (
+                    f"{submission.title}: הוחזר לתיקון עם משוב"
+                    if outcome == Submission.RETURNED
+                    else f"{submission.title}: אושר"
+                ),
+                url=reverse("matazim:my_work"),
+                actor=request.user,
+            )
             return redirect("matazim:review", submission_id=submission.pk)
 
     return render(
@@ -238,4 +265,11 @@ def say_more(request, submission_id):
     said = (request.POST.get("body") or "").strip()
     if said:
         Feedback.objects.create(submission=submission, author=request.user, body=said)
+        notify(
+            submission.student.user,
+            Notification.FEEDBACK,
+            f"{submission.title}: המוביל/ה כתב/ה לך",
+            url=reverse("matazim:my_work"),
+            actor=request.user,
+        )
     return redirect("matazim:review", submission_id=submission.pk)
