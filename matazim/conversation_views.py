@@ -195,8 +195,9 @@ def send(request, request_id):
     # REQ-M.108 — Avi's own arrive approved; asking him to approve his own
     # request is a ceremony with no reader.
     is_root = request.user.is_superuser
-    # not-a-student-status: Request, no StatusLog
-    draft.status = Request.APPROVED if is_root else Request.NEW
+    draft.status = (  # not-a-student-status: Request, no StatusLog
+        Request.APPROVED if is_root else Request.NEW
+    )
     draft.decided_by = request.user if is_root else None
     draft.decided_at = timezone.now() if is_root else None
     draft.save(update_fields=["status", "decided_by", "decided_at"])

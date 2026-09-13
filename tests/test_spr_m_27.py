@@ -52,6 +52,23 @@ def _root(email="avi@example.com"):
     return user
 
 
+@pytest.fixture
+def no_model(monkeypatch, settings):
+    """No assistant answers, whichever way the suite is being run.
+
+    Five tests here used to assume the model was absent, which is true on the
+    mini gate and false on the daily full regression, where Avi allows live
+    calls. They passed for a fortnight of mini runs and failed the moment the
+    run that matters was done properly.
+
+    A test about what happens when nothing answers has to *make* nothing
+    answer. Depending on how the suite happens to be invoked is the same class
+    of mistake as a guard that measures the wrong page.
+    """
+    monkeypatch.delenv("MATAZIM_SCRIPTED_AI", raising=False)
+    settings.OPENAI_API_KEY = ""
+
+
 def _start(client, body="הרשימה מבלבלת אותי", screen="/matazim/leader/students/"):
     from matazim.models import Request
 
@@ -65,7 +82,7 @@ def _start(client, body="הרשימה מבלבלת אותי", screen="/matazim/l
 # ------------------------------------------- F-M.27.1/2: it is a conversation
 
 
-def test_writing_opens_a_conversation_rather_than_filing_a_form(client, db):
+def test_writing_opens_a_conversation_rather_than_filing_a_form(client, db, no_model):
     """T-F-M.27.1-1: REQ-M.115, REQ-M.117."""
     from matazim.models import Request, RequestMessage
 
@@ -99,7 +116,7 @@ def test_she_can_keep_talking_and_every_word_is_hers(client, db):
     assert hers == ["הרשימה מבלבלת אותי", said.strip()]
 
 
-def test_an_empty_turn_adds_nothing(client, db):
+def test_an_empty_turn_adds_nothing(client, db, no_model):
     """T-F-M.27.1-3: a stray submit must not put a blank line in a transcript."""
     client.force_login(_manager())
     draft = _start(client)
@@ -127,7 +144,7 @@ def test_the_conversation_is_private_to_the_person_having_it(client, db):
 # ------------------------------------------- F-M.27.3: it never blocks her
 
 
-def test_she_can_send_before_the_assistant_says_anything(client, db):
+def test_she_can_send_before_the_assistant_says_anything(client, db, no_model):
     """T-F-M.27.3-1: REQ-M.116, and the rule this sprint could most easily break.
 
     One message, no reply, straight to send. An assistant that wants one more
@@ -351,7 +368,7 @@ def test_a_proposal_is_printed_once(client, db):
     assert "שאלה אחת." in html, "the rest of the answer was thrown away with the proposal"
 
 
-def test_adopting_nothing_changes_nothing(client, db):
+def test_adopting_nothing_changes_nothing(client, db, no_model):
     """T-F-M.27.6-4: a stray post when no proposal is on the table."""
     client.force_login(_manager())
     draft = _start(client, body="הרשימה מבלבלת")
@@ -461,7 +478,7 @@ def test_the_recommendation_never_contradicts_the_conversation(client, db, scrip
     assert why
 
 
-def test_a_scripted_reply_is_never_used_unless_asked_for(client, db):
+def test_a_scripted_reply_is_never_used_unless_asked_for(client, db, no_model):
     """T-F-M.27.8-5: the fixtures are mine, not a model's.
 
     A screen presenting hand-written text as a model's opinion would be lying
