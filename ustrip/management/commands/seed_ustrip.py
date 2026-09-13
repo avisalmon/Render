@@ -86,6 +86,7 @@ class Command(BaseCommand):
                     date_label=_date_label(day["date"]),
                     title=day["title"],
                     sleeping=day.get("sleeping", ""),
+                    note=day.get("note", ""),
                 )
                 for item_order, item in enumerate(day["items"]):
                     ItineraryItem.objects.create(

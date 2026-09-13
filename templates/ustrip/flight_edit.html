@@ -37,7 +37,8 @@
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
-    ustrip.request(`/ustrip/api/flights/${flightId}/edit/`, {
+    ustrip.request(`/ustrip/api/flights/${flightId}/`, {
+      method: "PATCH",
       json: {
         flight_number: form.flight_number.value.trim(),
         departure_label: form.departure_label.value.trim(),

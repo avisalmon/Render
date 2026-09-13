@@ -1,9 +1,9 @@
-"""ustrip — own auth (login/signup/logout) and the JSON API behind the
-in-app editing skeleton for itinerary/packing/journal (docs/ustrip/spec.md
-§3, §4, §0b). Sprint note 2026-09-13: ustrip now has its own signup, no
-email verification, and every write goes through /ustrip/api/... instead of
-a form POST to the page — spec §0b, the pages update themselves from the
-JSON response rather than reloading.
+"""ustrip — own auth (login/signup/logout) and the DRF REST API behind the
+in-app editing (docs/ustrip/spec.md §3, §4; building_an_app.md Rule 6).
+Sprint note 2026-09-13: ustrip now has its own signup, no email
+verification, and a full CRUD API on Django REST Framework at
+/ustrip/api/... — replacing an earlier hand-rolled JsonResponse layer that
+predates Rule 6.
 """
 
 import json as json_module
@@ -91,94 +91,47 @@ def _post_json(client, url, data):
     return client.post(url, json_module.dumps(data), content_type="application/json")
 
 
-# --- API: not family, no dice — even though it's JSON, not a page ---------
+def _patch_json(client, url, data):
+    return client.patch(url, json_module.dumps(data), content_type="application/json")
+
+
+# --- API: not family, no dice — DRF's own 403, same rule as the pages -----
 
 @pytest.mark.django_db
 def test_api_rejects_a_non_member_with_json_403_not_the_html_page(client, trip):
     outsider = User.objects.create_user("outsider", password="x")
     client.force_login(outsider)
-    response = _post_json(client, "/ustrip/api/packing/groups/", {"name": "Nope"})
+    response = _post_json(client, "/ustrip/api/checklist-groups/", {"trip": trip.id, "name": "Nope"})
     assert response.status_code == 403
     assert response["Content-Type"] == "application/json"
+    assert response.json()["detail"] == "You must be a family member to do this."
 
 
-# --- Packing: add a list, add an item, toggle it -----------------------
+@pytest.mark.django_db
+def test_api_rejects_an_anonymous_request_too(client, trip):
+    response = _post_json(client, "/ustrip/api/checklist-groups/", {"trip": trip.id, "name": "Nope"})
+    assert response.status_code in (401, 403)
+
+
+# --- Packing: full CRUD + reorder, on both the group and its items --------
 
 @pytest.mark.django_db
 def test_family_member_can_add_a_checklist_and_item_and_toggle_it(client, member, trip):
     client.force_login(member)
-    response = _post_json(client, "/ustrip/api/packing/groups/", {"name": "Packing — Kid"})
+    response = _post_json(client, "/ustrip/api/checklist-groups/", {"trip": trip.id, "name": "Packing — Kid"})
     assert response.status_code == 201
     group = ChecklistGroup.objects.get(trip=trip, name="Packing — Kid")
 
-    response = _post_json(client, "/ustrip/api/packing/items/", {"group_id": group.id, "text": "Toothbrush"})
+    response = _post_json(client, "/ustrip/api/checklist-items/", {"group": group.id, "text": "Toothbrush"})
     assert response.status_code == 201
     item = ChecklistItem.objects.get(group=group, text="Toothbrush")
     assert item.done is False
 
-    response = client.post(f"/ustrip/api/packing/items/{item.id}/toggle/")
+    response = client.post(f"/ustrip/api/checklist-items/{item.id}/toggle/")
     assert response.json()["done"] is True
     item.refresh_from_db()
     assert item.done is True
     assert item.done_by_id == member.id
-
-
-# --- Journal: create a post, with and without a photo -------------------
-
-@pytest.mark.django_db
-def test_family_member_can_post_to_the_journal(client, member, trip):
-    client.force_login(member)
-    response = client.post(
-        "/ustrip/api/journal/posts/", {"caption": "Made it to Niagara!", "location": "Niagara Falls"}
-    )
-    assert response.status_code == 201
-    post = JournalPost.objects.get(trip=trip)
-    assert post.author_id == member.id
-    assert post.caption == "Made it to Niagara!"
-    assert response.json()["author"]["name"] == member.get_username()
-
-
-# --- Itinerary: add an item to a day, then edit it -----------------------
-
-@pytest.mark.django_db
-def test_family_member_can_add_and_edit_an_itinerary_item(client, member, trip):
-    day = ItineraryDay.objects.create(trip=trip, order=0, label="1", date_label="Fri Sep 18", title="Arrival")
-    client.force_login(member)
-
-    response = _post_json(client, f"/ustrip/api/itinerary/{day.id}/items/", {"time_label": "16:00", "description": "Land at EWR"})
-    assert response.status_code == 201
-    item = ItineraryItem.objects.get(day=day)
-    assert item.description == "Land at EWR"
-    assert response.json()["edit_url"] == f"/ustrip/itinerary/item/{item.id}/edit/"
-
-    response = _post_json(
-        client, f"/ustrip/api/itinerary/items/{item.id}/", {"time_label": "15:50", "description": "Land at EWR (updated)"}
-    )
-    assert response.status_code == 200
-    item.refresh_from_db()
-    assert item.description == "Land at EWR (updated)"
-    assert item.time_label == "15:50"
-
-
-# --- Every item: delete, and reorder ("prioritize") ----------------------
-
-@pytest.mark.django_db
-def test_family_member_can_reorder_and_delete_itinerary_items(client, member, trip):
-    day = ItineraryDay.objects.create(trip=trip, order=0, label="1", date_label="Fri Sep 18", title="Arrival")
-    first = ItineraryItem.objects.create(day=day, order=0, description="First")
-    second = ItineraryItem.objects.create(day=day, order=1, description="Second")
-    client.force_login(member)
-
-    response = _post_json(client, f"/ustrip/api/itinerary/items/{second.id}/move/", {"direction": "up"})
-    assert response.json()["moved"] is True
-    first.refresh_from_db()
-    second.refresh_from_db()
-    assert second.order < first.order  # second is now first in the list
-
-    response = client.post(f"/ustrip/api/itinerary/items/{first.id}/delete/")
-    assert response.status_code == 200
-    assert not ItineraryItem.objects.filter(pk=first.id).exists()
-    assert ItineraryItem.objects.filter(pk=second.id).exists()
 
 
 @pytest.mark.django_db
@@ -188,20 +141,35 @@ def test_family_member_can_edit_reorder_and_delete_a_packing_item_and_delete_the
     second = ChecklistItem.objects.create(group=group, text="Shoes", order=1)
     client.force_login(member)
 
-    response = _post_json(client, f"/ustrip/api/packing/items/{first.id}/edit/", {"text": "Warm socks"})
+    response = _patch_json(client, f"/ustrip/api/checklist-items/{first.id}/", {"text": "Warm socks"})
     assert response.json()["text"] == "Warm socks"
 
-    response = _post_json(client, f"/ustrip/api/packing/items/{second.id}/move/", {"direction": "up"})
+    response = _post_json(client, f"/ustrip/api/checklist-items/{second.id}/move/", {"direction": "up"})
     assert response.json()["moved"] is True
 
-    response = client.post(f"/ustrip/api/packing/items/{first.id}/delete/")
-    assert response.status_code == 200
+    response = client.delete(f"/ustrip/api/checklist-items/{first.id}/")
+    assert response.status_code == 204
     assert not ChecklistItem.objects.filter(pk=first.id).exists()
 
-    response = client.post(f"/ustrip/api/packing/groups/{group.id}/delete/")
-    assert response.status_code == 200
+    response = client.delete(f"/ustrip/api/checklist-groups/{group.id}/")
+    assert response.status_code == 204
     assert not ChecklistGroup.objects.filter(pk=group.id).exists()
     assert not ChecklistItem.objects.filter(pk=second.id).exists()  # cascades
+
+
+# --- Journal: create (multipart-shaped), edit, delete ---------------------
+
+@pytest.mark.django_db
+def test_family_member_can_post_to_the_journal(client, member, trip):
+    client.force_login(member)
+    response = client.post(
+        "/ustrip/api/journal-posts/", {"trip": trip.id, "caption": "Made it to Niagara!", "location": "Niagara Falls"}
+    )
+    assert response.status_code == 201
+    post = JournalPost.objects.get(trip=trip)
+    assert post.author_id == member.id
+    assert post.caption == "Made it to Niagara!"
+    assert response.json()["author_info"]["name"] == member.get_username()
 
 
 @pytest.mark.django_db
@@ -209,14 +177,68 @@ def test_family_member_can_edit_and_delete_a_journal_post(client, member, trip):
     post = JournalPost.objects.create(trip=trip, author=member, caption="Original", location="NYC")
     client.force_login(member)
 
-    response = _post_json(client, f"/ustrip/api/journal/posts/{post.id}/edit/", {"caption": "Updated", "location": "DC"})
+    response = _patch_json(client, f"/ustrip/api/journal-posts/{post.id}/", {"caption": "Updated", "location": "DC"})
     assert response.json()["caption"] == "Updated"
     assert response.json()["location"] == "DC"
 
-    response = client.post(f"/ustrip/api/journal/posts/{post.id}/delete/")
-    assert response.status_code == 200
+    response = client.delete(f"/ustrip/api/journal-posts/{post.id}/")
+    assert response.status_code == 204
     assert not JournalPost.objects.filter(pk=post.id).exists()
 
+
+@pytest.mark.django_db
+def test_journal_post_author_cannot_be_client_supplied(client, member, trip):
+    """Rule 6 note in serializers.py: author is read-only, set from
+    request.user server-side — a client sending a different author is
+    silently ignored, not trusted."""
+    someone_else = User.objects.create_user("someone_else", password="x")
+    client.force_login(member)
+    response = client.post("/ustrip/api/journal-posts/", {"trip": trip.id, "author": someone_else.id, "caption": "Hi"})
+    assert response.status_code == 201
+    assert JournalPost.objects.get(trip=trip).author_id == member.id
+
+
+# --- Itinerary: add, edit, delete, reorder --------------------------------
+
+@pytest.mark.django_db
+def test_family_member_can_add_and_edit_an_itinerary_item(client, member, trip):
+    day = ItineraryDay.objects.create(trip=trip, order=0, label="1", date_label="Fri Sep 18", title="Arrival")
+    client.force_login(member)
+
+    response = _post_json(client, "/ustrip/api/itinerary-items/", {"day": day.id, "time_label": "16:00", "description": "Land at EWR"})
+    assert response.status_code == 201
+    item = ItineraryItem.objects.get(day=day)
+    assert item.description == "Land at EWR"
+
+    response = _patch_json(
+        client, f"/ustrip/api/itinerary-items/{item.id}/", {"time_label": "15:50", "description": "Land at EWR (updated)"}
+    )
+    assert response.status_code == 200
+    item.refresh_from_db()
+    assert item.description == "Land at EWR (updated)"
+    assert item.time_label == "15:50"
+
+
+@pytest.mark.django_db
+def test_family_member_can_reorder_and_delete_itinerary_items(client, member, trip):
+    day = ItineraryDay.objects.create(trip=trip, order=0, label="1", date_label="Fri Sep 18", title="Arrival")
+    first = ItineraryItem.objects.create(day=day, order=0, description="First")
+    second = ItineraryItem.objects.create(day=day, order=1, description="Second")
+    client.force_login(member)
+
+    response = _post_json(client, f"/ustrip/api/itinerary-items/{second.id}/move/", {"direction": "up"})
+    assert response.json()["moved"] is True
+    first.refresh_from_db()
+    second.refresh_from_db()
+    assert second.order < first.order  # second is now first in the list
+
+    response = client.delete(f"/ustrip/api/itinerary-items/{first.id}/")
+    assert response.status_code == 204
+    assert not ItineraryItem.objects.filter(pk=first.id).exists()
+    assert ItineraryItem.objects.filter(pk=second.id).exists()
+
+
+# --- Flight / rental car: full CRUD exists; the UI only exposes edit ------
 
 @pytest.mark.django_db
 def test_family_member_can_edit_a_flight_and_the_rental_car(client, member, trip):
@@ -224,17 +246,28 @@ def test_family_member_can_edit_a_flight_and_the_rental_car(client, member, trip
     rental_car = RentalCar.objects.create(trip=trip, pickup_location="Manhattan")
     client.force_login(member)
 
-    response = _post_json(
-        client, f"/ustrip/api/flights/{flight.id}/edit/",
+    response = _patch_json(
+        client, f"/ustrip/api/flights/{flight.id}/",
         {"flight_number": "UA86", "departure_label": "2026-09-18", "arrival_label": "EWR 16:00"},
     )
     assert response.json()["flight_number"] == "UA86"
 
-    response = _post_json(
-        client, f"/ustrip/api/rental-car/{rental_car.id}/edit/",
+    response = _patch_json(
+        client, f"/ustrip/api/rental-cars/{rental_car.id}/",
         {"pickup_location": "JFK Airport", "confirmed": True},
     )
     assert response.json()["confirmed"] is True
     rental_car.refresh_from_db()
     assert rental_car.pickup_location == "JFK Airport"
     assert rental_car.confirmed is True
+
+
+@pytest.mark.django_db
+def test_the_api_is_real_crud_even_though_the_ui_never_deletes_a_flight(client, member, trip):
+    """Rule 6: the API is full CRUD infrastructure, not just the handful of
+    verbs a particular screen happens to use."""
+    flight = Flight.objects.create(trip=trip, direction=Flight.RETURN, flight_number="UA84", order=1)
+    client.force_login(member)
+    response = client.delete(f"/ustrip/api/flights/{flight.id}/")
+    assert response.status_code == 204
+    assert not Flight.objects.filter(pk=flight.id).exists()

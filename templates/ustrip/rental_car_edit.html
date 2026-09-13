@@ -53,11 +53,12 @@
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
-    ustrip.request(`/ustrip/api/rental-car/${rentalCarId}/edit/`, {
+    ustrip.request(`/ustrip/api/rental-cars/${rentalCarId}/`, {
+      method: "PATCH",
       json: {
-        pickup_date: form.pickup_date.value,
+        pickup_date: form.pickup_date.value || null,
         pickup_location: form.pickup_location.value.trim(),
-        dropoff_date: form.dropoff_date.value,
+        dropoff_date: form.dropoff_date.value || null,
         dropoff_location: form.dropoff_location.value.trim(),
         vehicle_class: form.vehicle_class.value.trim(),
         note: form.note.value.trim(),

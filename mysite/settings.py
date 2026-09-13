@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.github",
+    "rest_framework",
     "app",
     "matazim",
     "ustrip",
@@ -367,6 +368,21 @@ LOGGING = {
 
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
+
+# Django REST Framework (docs/building_an_app.md Rule 6: every app gets a
+# full, documented CRUD API on DRF). Session auth only — this site has no
+# API clients outside the browser session; the browsable API (default
+# renderer) is the "documented" part, no separate schema generator needed
+# for a five-person app. Deny by default; each app's viewsets set their own
+# permission (e.g. ustrip's IsFamilyMember).
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+}
 
 # django-allauth
 SITE_ID = 1

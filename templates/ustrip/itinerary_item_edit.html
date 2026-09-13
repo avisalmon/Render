@@ -37,7 +37,7 @@
     const timeLabel = form.time_label.value.trim();
     const description = form.description.value.trim();
     if (!description) return;
-    ustrip.request(`/ustrip/api/itinerary/items/${itemId}/`, { json: { time_label: timeLabel, description: description } })
+    ustrip.request(`/ustrip/api/itinerary-items/${itemId}/`, { method: "PATCH", json: { time_label: timeLabel, description: description } })
       .then(() => { window.location.href = backUrl; })
       .catch((err) => alert(err.message));
   });

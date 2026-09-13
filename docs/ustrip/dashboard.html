@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ustrip — Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --cream: oklch(97% 0.014 75);
+    --card: oklch(99% 0.007 75);
+    --ink: oklch(30% 0.07 255);
+    --ink-soft: oklch(46% 0.035 255);
+    --rust: oklch(58% 0.15 45);
+    --rust-soft: oklch(93% 0.035 45);
+    --line: oklch(89% 0.018 75);
+    --white-text: oklch(99% 0.005 75);
+    --done: oklch(55% 0.13 155);
+    --done-soft: oklch(93% 0.045 155);
+    --open: oklch(65% 0.14 75);
+    --open-soft: oklch(93% 0.05 75);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 28px 20px 60px; background: var(--cream); color: var(--ink);
+    font-family: 'Work Sans', system-ui, sans-serif;
+  }
+  .serif { font-family: 'Source Serif 4', Georgia, serif; }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  h1 { font-size: 26px; margin: 0 0 4px; }
+  .sub { color: var(--ink-soft); font-size: 13.5px; margin: 0 0 24px; }
+  .sub b { color: var(--ink); }
+
+  .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 28px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+  .stat .n { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stat .l { font-size: 11.5px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .sprint { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin-bottom: 12px; }
+  .sprint-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .sprint-title { font-weight: 700; font-size: 15px; }
+  .sprint-title span { color: var(--ink-soft); font-weight: 500; }
+  .pill { font-size: 10.5px; font-weight: 700; letter-spacing: 0.03em; padding: 3px 9px; border-radius: 99px; white-space: nowrap; }
+  .pill.deployed { background: var(--done-soft); color: var(--done); }
+  .pill.dev { background: var(--rust-soft); color: var(--rust); }
+  .sprint-desc { font-size: 13px; color: var(--ink-soft); margin: 6px 0 0; line-height: 1.5; }
+
+  .section-label { font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--ink-soft); margin: 28px 0 10px; }
+  .open-item { display: flex; gap: 10px; align-items: flex-start; background: var(--open-soft); color: var(--ink);
+    border-radius: 12px; padding: 12px 14px; font-size: 13px; line-height: 1.5; margin-bottom: 8px; }
+  .open-item b { color: var(--open); }
+
+  .rule-row { display: flex; align-items: center; gap: 10px; font-size: 13px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+  .rule-row:last-child { border-bottom: none; }
+  .rule-check { width: 18px; height: 18px; border-radius: 999px; background: var(--done-soft); color: var(--done);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .rule-check svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2.4; }
+
+  footer { margin-top: 34px; padding-top: 14px; border-top: 1.5px dashed var(--line); font-size: 12px; color: var(--ink-soft); }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Work+Sans:wght@400;500;600;700&display=swap">
+</head>
+<body>
+<div class="wrap">
+  <h1 class="serif">ustrip — Dashboard</h1>
+  <p class="sub">Manually updated at the end of each sprint (spec §6: informal process, no live capture script — see <b>docs/dashboard.html</b> for the main site's heavier version). Last updated <b>2026-09-13</b>, after Sprint 7.</p>
+
+  <div class="stat-row">
+    <div class="stat"><div class="n">7 / 7</div><div class="l">Sprints done</div></div>
+    <div class="stat"><div class="n">6 / 7</div><div class="l">Deployed</div></div>
+    <div class="stat"><div class="n">29</div><div class="l">Tests passing</div></div>
+    <div class="stat"><div class="n">6 / 6</div><div class="l">Methodology rules aligned</div></div>
+  </div>
+
+  <div class="section-label">Sprints</div>
+
+  <div class="sprint">
+    <div class="sprint-head"><div class="sprint-title">Sprint 1 <span>— The front door</span></div><span class="pill deployed">Deployed</span></div>
+    <p class="sprint-desc">App exists at /ustrip/, sealed off from babook's nav, family-group access gate, superuser bypass.</p>
+  </div>
+  <div class="sprint">
+    <div class="sprint-head"><div class="sprint-title">Sprint 2 <span>— Itinerary</span></div><span class="pill deployed">Deployed</span></div>
+    <p class="sprint-desc">13 days / 84 items imported from the harvested trip plan.</p>
+  </div>
+  <div class="sprint">
+    <div class="sprint-head"><div class="sprint-title">Sprint 3 <span>— Packing &amp; tasks</span></div><span class="pill deployed">Deployed</span></div>
+    <p class="sprint-desc">Checklists, per-person or shared, no fabricated sample data.</p>
+  </div>
+  <div class="sprint">
+    <div class="sprint-head"><div class="sprint-title">Sprint 4 <span>— Photos / journal</span></div><span class="pill deployed">Deployed</span></div>
+    <p class="sprint-desc">Reverse-chronological shared diary, no likes or comments by design.</p>
+  </div>
+  <div class="sprint">
+    <div class="sprint-head"><div class="sprint-title">Sprint 5 <span>— Own auth, in-app editing, menu</span></div><span class="pill deployed">Deployed</span></div>
+    <p class="sprint-desc">ustrip's own login/signup/logout; add/edit goes through fetch() instead of full-page reloads.</p>
+  </div>
+  <div class="sprint">
+    <div class="sprint-head"><div class="sprint-title">Sprint 5.1 <span>— Two data bugs, fixed</span></div><span class="pill deployed">Deployed</span></div>
+    <p class="sprint-desc">Flight/RentalCar modeled instead of sitting as JSON text; seed_ustrip stopped wiping in-app edits on every deploy.</p>
+  </div>
+  <div class="sprint">
+    <div class="sprint-head"><div class="sprint-title">Sprint 6 <span>— Delete, edit, reorder everywhere</span></div><span class="pill deployed">Deployed</span></div>
+    <p class="sprint-desc">Every item type: delete, edit, and move up/down — no creator lock.</p>
+  </div>
+  <div class="sprint">
+    <div class="sprint-head"><div class="sprint-title">Sprint 7 <span>— Full DRF CRUD API</span></div><span class="pill dev">In dev</span></div>
+    <p class="sprint-desc">Replaced the hand-rolled JSON views with a Django REST Framework API — one ModelViewSet per model, full CRUD, browsable-API documentation. Closes the last methodology gap.</p>
+  </div>
+
+  <div class="section-label">Open items</div>
+  <div class="open-item"><b>Family access:</b> Avi still needs to add Nirit and the kids to the <code>family</code> group in <code>/admin/</code> — the app is live but locked for everyone except Avi (superuser) until then.</div>
+  <div class="open-item"><b>"Today" awareness:</b> Home's "Next up" card always shows Day 1; the itinerary has no real date field yet to compare against today, so the <code>todaypill</code> styling sits unused.</div>
+  <div class="open-item"><b>JournalPost.author cascade:</b> deleting a family member's account deletes their journal posts with it (CASCADE), unlike packing's SET_NULL. Flagged for a yes/no, not yet decided.</div>
+
+  <div class="section-label">building_an_app.md alignment</div>
+  <div class="rule-row"><span class="rule-check"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L19 7"/></svg></span>Rule 1 — database models only, no perpetual JSON (fixed in Sprint 5.1)</div>
+  <div class="rule-row"><span class="rule-check"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L19 7"/></svg></span>Rule 2 — full encapsulation, no shared-User changes</div>
+  <div class="rule-row"><span class="rule-check"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L19 7"/></svg></span>Rule 3 — own base template/menu, no link out</div>
+  <div class="rule-row"><span class="rule-check"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L19 7"/></svg></span>Rule 4 — own docs/: spec, backlog, data model, <b>and now this dashboard</b></div>
+  <div class="rule-row"><span class="rule-check"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L19 7"/></svg></span>Rule 5 — migrate/deploy scoped to ustrip only</div>
+  <div class="rule-row"><span class="rule-check"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L19 7"/></svg></span>Rule 6 — full documented DRF CRUD API (Sprint 7)</div>
+
+  <footer>Mirrors <code>docs/ustrip/backlog.md</code>. ustrip · a babook.co.il app.</footer>
+</div>
+</body>
+</html>

@@ -17,6 +17,12 @@
     Sleeping: {{ day.sleeping }}
   </div>
 {% endif %}
+{% if day.note %}
+  <div class="banner">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M12 9v4M12 16.5h.01"/><circle cx="12" cy="12" r="9"/></svg>
+    {{ day.note }}
+  </div>
+{% endif %}
 
 <div class="timeline" id="timeline">
   {% for item in day.items.all %}
@@ -65,7 +71,7 @@
     const timeLabel = form.time_label.value.trim();
     const description = form.description.value.trim();
     if (!description) return;
-    ustrip.request(`/ustrip/api/itinerary/${dayId}/items/`, { json: { time_label: timeLabel, description: description } })
+    ustrip.request("/ustrip/api/itinerary-items/", { json: { day: dayId, time_label: timeLabel, description: description } })
       .then((item) => {
         const empty = document.getElementById("timeline-empty");
         if (empty) empty.remove();
@@ -82,7 +88,7 @@
         node.querySelector(".ttime").textContent = item.time_label || "—";
         node.querySelector(".tdesc").textContent = item.description;
         const editLink = node.querySelector(".edit-link");
-        editLink.href = item.edit_url;
+        editLink.href = `/ustrip/itinerary/item/${item.id}/edit/`;
         editLink.textContent = "Edit";
         timeline.appendChild(node);
         form.reset();
@@ -97,7 +103,7 @@
 
     const moveBtn = e.target.closest("[data-move]");
     if (moveBtn) {
-      ustrip.request(`/ustrip/api/itinerary/items/${itemId}/move/`, { json: { direction: moveBtn.dataset.move } })
+      ustrip.request(`/ustrip/api/itinerary-items/${itemId}/move/`, { json: { direction: moveBtn.dataset.move } })
         .then((data) => { if (data.moved) window.location.reload(); })
         .catch((err) => alert(err.message));
       return;
@@ -105,7 +111,7 @@
 
     if (e.target.closest("[data-delete]")) {
       if (!confirm("Delete this item?")) return;
-      ustrip.request(`/ustrip/api/itinerary/items/${itemId}/delete/`)
+      ustrip.request(`/ustrip/api/itinerary-items/${itemId}/`, { method: "DELETE" })
         .then(() => {
           row.remove();
           if (!timeline.querySelector("[data-item-id]")) {

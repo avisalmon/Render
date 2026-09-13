@@ -1,7 +1,7 @@
 """seed_ustrip against the real docs/ustrip/trip-data/usa-2026.json (not a
 fixture) — the only place this file's structure is actually parsed.
 
-Two bugs found and fixed here, both 2026-09-13:
+Bugs found and fixed here, all 2026-09-13:
 1. `flights` and `rental_car` had been sitting in that JSON since Sprint 2
    but were never modeled or seeded (spec §0b: every screen should be
    data-driven, not text nobody reads into a model).
@@ -11,13 +11,19 @@ Two bugs found and fixed here, both 2026-09-13:
    "add to this day" button the next time anything got deployed. The
    database, once seeded, must be the source of truth — JSON is a one-time
    import only.
+3. Two days' `note` field ("open decision" on Day 3, a driving/parking
+   heads-up on Day 9) were present in the JSON but had no model field and
+   were never read by this command — silently dropped on every import.
+   Found by explicitly diffing every JSON key against what's modeled,
+   after "did you fill all data?" turned out not to have an obviously-yes
+   answer without checking.
 """
 
 import pytest
 from django.contrib.auth.models import Group, User
 from django.core.management import call_command
 
-from ustrip.models import Flight, ItineraryItem, RentalCar, Trip
+from ustrip.models import Flight, ItineraryDay, ItineraryItem, RentalCar, Trip
 
 
 @pytest.fixture
@@ -75,6 +81,22 @@ def test_reseeding_never_wipes_an_itinerary_item_a_family_member_added():
 
     assert trip.days.count() == day_count_before
     assert ItineraryItem.objects.filter(day=day, description="Added by a family member").exists()
+
+
+@pytest.mark.django_db
+def test_seed_imports_day_level_notes():
+    call_command("seed_ustrip")
+    trip = Trip.objects.get(name="USA Trip 2026")
+
+    day3 = ItineraryDay.objects.get(trip=trip, label="3")
+    assert day3.note.startswith("Open decision")
+
+    day9 = ItineraryDay.objects.get(trip=trip, label="9")
+    assert "parking" in day9.note.lower()
+
+    # Most days have no note — the field is optional, not required.
+    day1 = ItineraryDay.objects.get(trip=trip, label="1")
+    assert day1.note == ""
 
 
 @pytest.mark.django_db

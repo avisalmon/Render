@@ -78,6 +78,9 @@ class ItineraryDay(models.Model):
     date_label = models.CharField(max_length=60, help_text='e.g. "Tue Sep 22, 2026"')
     title = models.CharField(max_length=200)
     sleeping = models.CharField(max_length=200, blank=True)
+    note = models.TextField(
+        blank=True, help_text="An open decision or a heads-up for the whole day, not tied to one timeline item."
+    )
 
     class Meta:
         ordering = ["order"]

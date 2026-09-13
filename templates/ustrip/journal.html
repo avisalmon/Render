@@ -7,6 +7,7 @@
 <p class="subtitle">Shared photo diary</p>
 
 <form id="journal-form" class="auth-form" enctype="multipart/form-data">
+  <input type="hidden" name="trip" value="{{ trip.id }}">
   <label class="field">
     <span>Photo (optional)</span>
     <input type="file" name="photo" accept="image/*">
@@ -58,11 +59,11 @@
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
-    ustrip.request("/ustrip/api/journal/posts/", { formData: new FormData(form) })
+    ustrip.request("/ustrip/api/journal-posts/", { formData: new FormData(form) })
       .then((post) => {
         const empty = document.getElementById("journal-empty");
         if (empty) empty.remove();
-        const photoHtml = post.photo_url ? `<img class="photo" src="${post.photo_url}" alt="">` : "";
+        const photoHtml = post.photo ? `<img class="photo" src="${post.photo}" alt="">` : "";
         const node = ustrip.el(
           '<div class="post">' + photoHtml +
           '<div class="postbody"><p class="caption"></p><div class="meta">' +
@@ -73,9 +74,9 @@
           '</div></div></div></div>'
         );
         node.dataset.postId = post.id;
-        node.querySelector(".mavatar").setAttribute("style", post.author.avatar_style);
-        node.querySelector(".mavatar").textContent = post.author.initials;
-        node.querySelector(".mname").textContent = post.author.name;
+        node.querySelector(".mavatar").setAttribute("style", post.author_info.avatar_style);
+        node.querySelector(".mavatar").textContent = post.author_info.initials;
+        node.querySelector(".mname").textContent = post.author_info.name;
         node.querySelector(".caption").textContent = post.caption;
         node.querySelector(".mloc").textContent = post.location;
         feed.prepend(node);
@@ -95,7 +96,7 @@
       const caption = prompt("Edit caption", captionEl.textContent);
       if (caption === null) return;
       const location = prompt("Edit location", locEl.textContent) || "";
-      ustrip.request(`/ustrip/api/journal/posts/${postId}/edit/`, { json: { caption: caption.trim(), location: location.trim() } })
+      ustrip.request(`/ustrip/api/journal-posts/${postId}/`, { method: "PATCH", json: { caption: caption.trim(), location: location.trim() } })
         .then((data) => {
           captionEl.textContent = data.caption;
           locEl.textContent = data.location;
@@ -106,7 +107,7 @@
 
     if (e.target.closest("[data-delete]")) {
       if (!confirm("Delete this post?")) return;
-      ustrip.request(`/ustrip/api/journal/posts/${postId}/delete/`)
+      ustrip.request(`/ustrip/api/journal-posts/${postId}/`, { method: "DELETE" })
         .then(() => {
           post.remove();
           if (!feed.querySelector("[data-post-id]")) {

@@ -63,6 +63,7 @@
 <script>
 (function () {
   const list = document.getElementById("packing-list");
+  const tripId = {{ trip.id|default:"null" }};
 
   function itemRowHtml() {
     return (
@@ -81,7 +82,7 @@
     if (deleteGroupBtn) {
       const card = deleteGroupBtn.closest("[data-group-id]");
       if (!confirm("Delete this whole list and its items?")) return;
-      ustrip.request(`/ustrip/api/packing/groups/${card.dataset.groupId}/delete/`)
+      ustrip.request(`/ustrip/api/checklist-groups/${card.dataset.groupId}/`, { method: "DELETE" })
         .then(() => card.remove())
         .catch((err) => alert(err.message));
       return;
@@ -93,7 +94,7 @@
 
     if (e.target.closest("[data-toggle]")) {
       const btn = e.target.closest("[data-toggle]");
-      ustrip.request(`/ustrip/api/packing/items/${itemId}/toggle/`)
+      ustrip.request(`/ustrip/api/checklist-items/${itemId}/toggle/`)
         .then((data) => {
           btn.classList.toggle("done", data.done);
           btn.innerHTML = data.done ? '<svg viewBox="0 0 24 24"><path d="M5 12l5 5L19 7"/></svg>' : "";
@@ -107,7 +108,7 @@
       const span = row.querySelector(".itxt");
       const text = prompt("Edit item", span.textContent);
       if (text === null || !text.trim()) return;
-      ustrip.request(`/ustrip/api/packing/items/${itemId}/edit/`, { json: { text: text.trim() } })
+      ustrip.request(`/ustrip/api/checklist-items/${itemId}/`, { method: "PATCH", json: { text: text.trim() } })
         .then((item) => { span.textContent = item.text; })
         .catch((err) => alert(err.message));
       return;
@@ -115,7 +116,7 @@
 
     const moveBtn = e.target.closest("[data-move]");
     if (moveBtn) {
-      ustrip.request(`/ustrip/api/packing/items/${itemId}/move/`, { json: { direction: moveBtn.dataset.move } })
+      ustrip.request(`/ustrip/api/checklist-items/${itemId}/move/`, { json: { direction: moveBtn.dataset.move } })
         .then((data) => { if (data.moved) window.location.reload(); })
         .catch((err) => alert(err.message));
       return;
@@ -123,7 +124,7 @@
 
     if (e.target.closest("[data-delete]")) {
       if (!confirm("Delete this item?")) return;
-      ustrip.request(`/ustrip/api/packing/items/${itemId}/delete/`)
+      ustrip.request(`/ustrip/api/checklist-items/${itemId}/`, { method: "DELETE" })
         .then(() => row.remove())
         .catch((err) => alert(err.message));
     }
@@ -136,7 +137,7 @@
     const input = form.querySelector('input[name="text"]');
     const text = input.value.trim();
     if (!text) return;
-    ustrip.request("/ustrip/api/packing/items/", { json: { group_id: form.dataset.groupId, text: text } })
+    ustrip.request("/ustrip/api/checklist-items/", { json: { group: form.dataset.groupId, text: text } })
       .then((item) => {
         const row = ustrip.el(itemRowHtml());
         row.dataset.itemId = item.id;
@@ -153,7 +154,7 @@
     const input = addGroupForm.querySelector('input[name="name"]');
     const name = input.value.trim();
     if (!name) return;
-    ustrip.request("/ustrip/api/packing/groups/", { json: { name: name } })
+    ustrip.request("/ustrip/api/checklist-groups/", { json: { trip: tripId, name: name } })
       .then(() => window.location.reload())
       .catch((err) => alert(err.message));
   });
