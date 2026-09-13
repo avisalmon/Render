@@ -4,6 +4,14 @@
 {% block content %}
 <div class="plain-message">
   <h1 class="serif">You don't have access</h1>
-  <p>This trip planner is private to Avi's family. If you think you should be able to see this, ask Avi to add you.</p>
+  {% if user.is_authenticated %}
+    <p>You're signed in as {{ user.email|default:user.username }}, but you haven't been added to the family list yet. Ask Avi to add you.</p>
+  {% else %}
+    <p>This trip planner is private to Avi's family. Sign in with your account, or create one, then ask Avi to add you.</p>
+    <div class="auth-actions">
+      <a class="btn btn-primary" href="{% url 'login' %}?next={{ request.path }}">Sign in</a>
+      <a class="btn btn-secondary" href="{% url 'register' %}?next={{ request.path }}">Sign up</a>
+    </div>
+  {% endif %}
 </div>
 {% endblock %}

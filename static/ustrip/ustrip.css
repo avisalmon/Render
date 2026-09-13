@@ -180,3 +180,11 @@ body.ustrip {
 .ustrip .plain-message { padding: 60px 24px; text-align: center; }
 .ustrip .plain-message h1 { font-size: 20px; margin: 0 0 10px; }
 .ustrip .plain-message p { font-size: 14px; color: var(--ink-soft); margin: 0; }
+
+.ustrip .auth-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 22px; }
+.ustrip .btn { display: block; padding: 13px 20px; border-radius: 12px; font-size: 14.5px; font-weight: 600;
+  text-align: center; }
+.ustrip .btn-primary { background: var(--rust); color: var(--white-text); }
+.ustrip .btn-primary:hover { background: var(--ink); color: var(--white-text); }
+.ustrip .btn-secondary { background: var(--card); color: var(--ink); border: 1px solid var(--line); }
+.ustrip .btn-secondary:hover { color: var(--ink); border-color: var(--rust); }

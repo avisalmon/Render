@@ -1,11 +1,11 @@
 """ustrip — the family-group access gate (docs/ustrip/spec.md §3).
 
-The whole access model is one rule: `family` Group membership, checked the
-same way everywhere, closed by default. These tests exist to defend that
-rule specifically — an anonymous visitor, a logged-in non-member, and a
-babook superuser who is not in `family` must all see the same access-denied
-page, never the real content and never a 404 (spec §3: ustrip has no reason
-to hide that it exists, unlike /home).
+The access model is `family` Group membership, checked the same way
+everywhere, closed by default — with one deliberate exception: a babook
+superuser always gets in. These tests defend that: an anonymous visitor and
+a logged-in non-member both see the same access-denied page, never the real
+content and never a 404 (spec §3: ustrip has no reason to hide that it
+exists, unlike /home); a superuser gets in even without `family`.
 """
 
 import pytest
@@ -43,6 +43,16 @@ def test_anonymous_visitor_gets_access_denied_not_a_404(client):
 
 
 @pytest.mark.django_db
+def test_anonymous_visitor_sees_sign_in_and_sign_up(client):
+    """An anonymous visitor needs a way to get an account before Avi can add
+    them to `family` — reuses babook's own login/register pages, not a new
+    ustrip signup flow (spec §2.1)."""
+    response = client.get(HOME)
+    assert b"Sign in" in response.content
+    assert b"Sign up" in response.content
+
+
+@pytest.mark.django_db
 def test_logged_in_non_member_gets_access_denied(client, outsider):
     client.force_login(outsider)
     response = client.get(HOME)
@@ -50,12 +60,24 @@ def test_logged_in_non_member_gets_access_denied(client, outsider):
 
 
 @pytest.mark.django_db
-def test_superuser_without_family_group_still_denied(client, db):
-    """Being a babook site admin does not imply family membership — spec §3."""
+def test_logged_in_non_member_sees_pending_message_not_signup_prompt(client, outsider):
+    """Already has an account — the message should point at Avi, not repeat
+    a sign in/sign up prompt they don't need."""
+    client.force_login(outsider)
+    response = client.get(HOME)
+    assert b"Sign up" not in response.content
+    assert outsider.username.encode() in response.content or b"family list" in response.content
+
+
+@pytest.mark.django_db
+def test_superuser_gets_in_without_family_group(client, db):
+    """Deliberate exception to spec §3: a babook superuser always gets in,
+    even without `family` membership, so the site admin isn't locked out of
+    their own app."""
     superuser = User.objects.create_superuser("root", password="x")
     client.force_login(superuser)
     response = client.get(HOME)
-    assert response.status_code == 403
+    assert response.status_code == 200
 
 
 @pytest.mark.django_db

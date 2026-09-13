@@ -24,7 +24,9 @@ babook's look and nav, and only `family`-group members can see it.
 | Access gate: `family`-group check, denied users get an access-denied page (spec §3) | DONE — `access.py` |
 | Own `handler403/404/500`, composed with matazim's in `mysite/errors.py` (Django allows only one project-wide handler) | DONE |
 | Tests: access gate (member / non-member / anonymous / superuser-without-`family` / empty group), registered in `docs/regression.md` | DONE — `tests/test_ustrip_access.py`, 7 passing |
-| **Avi marks `family` for himself, Nirit, and the kids in `/admin/auth/user/`** | **TODO — nobody is in the group yet, so ustrip is live but locked for everyone until this happens** |
+| Superuser bypass added 2026-09-13: `is_superuser` always gets in (spec §3), so Avi has access without being in `family` | DONE |
+| Sign in / sign up links on the access-denied page added 2026-09-13, so a family member without a babook account yet can get one, then wait for Avi | DONE — reuses babook's `login`/`register` views, `?next=` sends them back to `/ustrip/` after |
+| **Avi marks `family` for Nirit and the kids in `/admin/auth/user/`** | **TODO — nobody but Avi (superuser) is in yet, so ustrip is locked for the rest of the family until this happens** |
 
 ## Sprint 2 — Itinerary `DONE, DEPLOYED 2026-09-13`
 

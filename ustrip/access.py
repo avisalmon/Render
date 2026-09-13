@@ -1,9 +1,10 @@
 """Who gets in (spec §3).
 
-One rule, checked one way, everywhere: a person is in the `family` auth
-Group, or they see nothing. No email pattern, no domain check, no
-"babook admin implies access" shortcut — closed by default, no exceptions.
-The group itself is created by a migration (0002) so it always exists.
+A person is in the `family` auth Group, or they see nothing — no email
+pattern, no domain check. One deliberate exception: a babook superuser
+always gets in, so the site admin never has to remember to add themself
+to `family` before they can see their own app. The group itself is
+created by a migration (0002) so it always exists.
 """
 
 from functools import wraps
@@ -16,6 +17,8 @@ FAMILY_GROUP = "family"
 def is_family(user):
     if not user.is_authenticated:
         return False
+    if user.is_superuser:
+        return True
     return user.groups.filter(name=FAMILY_GROUP).exists()
 
 

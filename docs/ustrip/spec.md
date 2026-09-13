@@ -110,16 +110,20 @@ creates the account) and then checks `family` for that user in
 - The group is created automatically by an ustrip migration
   (`Group.objects.get_or_create(name="family")`) so it exists the moment
   the app is deployed — nobody has to remember to create it by hand.
-- **Closed by default, no exceptions:** access requires
-  `request.user.is_authenticated and request.user.groups.filter(name="family").exists()`.
-  An empty or missing group means *nobody* gets in — including Avi, including
-  any babook superuser — until a person is explicitly put in the group. This
-  is the literal implementation of "no one else in the world can ever enter
-  this site": there is no email pattern, no domain check, no admin-implies-access
-  shortcut, only explicit named membership.
-- Being a babook site admin/superuser does **not** imply `family` membership
-  — the two are unrelated flags on the same `User` row, exactly as
-  [[home-security-relay]] treats its own viewer list versus superuser status.
+- **Closed by default, one deliberate exception:** access requires
+  `request.user.is_authenticated and (request.user.is_superuser or request.user.groups.filter(name="family").exists())`.
+  An empty or missing group means *nobody but a superuser* gets in — no email
+  pattern, no domain check, and no `family`-implies-anything-else shortcut,
+  only explicit named membership or being a babook site admin.
+- **Superseded 2026-09-13 (again):** being a babook site admin/superuser
+  *does* imply access, so Avi (the superuser) is never locked out of his own
+  app waiting to remember to add himself to `family`. Everyone else —
+  Nirit, the kids — still needs explicit `family` membership; this exception
+  is scoped to `is_superuser` only, not to babook staff/admin roles in
+  general. This narrows the [[home-security-relay]] comparison: `/home`
+  keeps superuser and viewer-list fully separate because it protects someone
+  else's physical security camera; ustrip is Avi's own app, so admin access
+  for its own admin is a reasonable default.
 - Anonymous visitors and logged-in non-members get the same plain
   "you don't have access" page (not a 404) — ustrip has no reason to hide
   that it exists, unlike `/home`.
