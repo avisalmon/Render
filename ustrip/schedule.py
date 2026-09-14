@@ -32,6 +32,11 @@ optional. Three things are measured:
 An anchor much earlier than the clock (more than NEXT_DAY_TOLERANCE) is
 taken to be the next morning, not a conflict — that is the combined
 "Day 14–15" row: a 15:25 departure, then an 08:55 landing.
+
+A *note* (`kind == NOTE`) is outside the schedule altogether (Avi,
+2026-09-14): a reminder or a piece of information placed wherever it reads
+best in the day's order. No time, no duration, never moves the clock, never
+in a conflict or a gap. Any number of them, anywhere.
 """
 
 from datetime import date, datetime, timedelta
@@ -69,7 +74,7 @@ def compute(day, items=None):
         item.overrun_into = None
         item.gap_before_minutes = 0
         item.past_day_end = False
-        if item.tag == ItineraryItem.REJECTED:
+        if item.tag == ItineraryItem.REJECTED or item.kind == ItineraryItem.NOTE:
             scheduled.append(item)
             continue
 

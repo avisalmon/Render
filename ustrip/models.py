@@ -181,6 +181,10 @@ class ItineraryItem(models.Model):
     REJECTED = "rejected"
     TAG_CHOICES = [(PLAN, "Plan"), (OPTIONAL, "Optional"), (REJECTED, "Rejected")]
 
+    STOP = "stop"
+    NOTE = "note"
+    KIND_CHOICES = [(STOP, "Stop (scheduled)"), (NOTE, "Note (no time)")]
+
     BOOKING_NOT_NEEDED = "not_needed"
     BOOKING_TO_BOOK = "to_book"
     BOOKING_BOOKED = "booked"
@@ -192,6 +196,11 @@ class ItineraryItem(models.Model):
 
     day = models.ForeignKey(ItineraryDay, on_delete=models.CASCADE, related_name="items")
     order = models.PositiveSmallIntegerField()
+    kind = models.CharField(
+        max_length=6, choices=KIND_CHOICES, default=STOP,
+        help_text="A note is a reminder or a piece of information placed in the day's order: no time, and it "
+                  "never moves the times around it (Avi, 2026-09-14).",
+    )
     title = models.CharField(max_length=200, blank=True, default="", help_text="Short headline, e.g. 'Top of the Rock'.")
     description = models.TextField()
     time_label = models.CharField(max_length=60, blank=True, default="", help_text="Optional note shown next to the time.")
@@ -215,6 +224,10 @@ class ItineraryItem(models.Model):
 
     def __str__(self):
         return f"{self.day} — {self.display_title}"
+
+    @property
+    def is_note(self):
+        return self.kind == self.NOTE
 
     @property
     def display_title(self):

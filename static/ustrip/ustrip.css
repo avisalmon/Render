@@ -255,6 +255,12 @@ body.ustrip {
 /* --- Itinerary items: schedule, drag-and-drop, the detail page (spec §4.1, 2026-09-14) --- */
 
 .ustrip .titem.rejected .tdot { background: var(--line); }
+/* A note: no time, an info mark instead, a hollow dot, quieter title. */
+.ustrip .titem.note .tdot { background: var(--card); border: 1.5px solid var(--ink-soft); }
+.ustrip .titem.note .ttitle { font-weight: 500; }
+.ustrip .tinfo svg, .ustrip .mini-row.note .mini-time svg { width: 15px; height: 15px; color: var(--ink-soft); vertical-align: middle; }
+.ustrip .mini-row.note { background: none; border: 1px dotted var(--line); }
+.ustrip .mini-row.note .mini-title { font-weight: 500; }
 .ustrip .titem.rejected .ttitle { color: var(--ink-soft); text-decoration: line-through; text-decoration-color: var(--line); }
 .ustrip .tag.rejected { color: var(--ink-soft); border: 1px solid var(--line); }
 .ustrip .tag.booked { color: var(--white-text); background: var(--rust); }

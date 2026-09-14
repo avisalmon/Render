@@ -15,8 +15,11 @@
 <div class="card detail-hero">
   <p class="detail-when">
     Day {{ day.label }} &middot; {{ day.date_label }}
-    {% if item.start %}&middot; <strong>{{ item.start|time:"H:i" }}{% if item.duration_minutes %}&ndash;{{ item.end|time:"H:i" }}{% endif %}</strong>{% endif %}
-    {% if item.duration_minutes %}&middot; {{ item.duration_minutes|duration_human }}{% endif %}
+    {% if item.is_note %}&middot; note, no time
+    {% else %}
+      {% if item.start %}&middot; <strong>{{ item.start|time:"H:i" }}{% if item.duration_minutes %}&ndash;{{ item.end|time:"H:i" }}{% endif %}</strong>{% endif %}
+      {% if item.duration_minutes %}&middot; {{ item.duration_minutes|duration_human }}{% endif %}
+    {% endif %}
   </p>
   {% if item.time_label %}<p class="detail-when">{{ item.time_label }}</p>{% endif %}
   <div class="tags">

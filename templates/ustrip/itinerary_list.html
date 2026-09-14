@@ -22,8 +22,8 @@
       </summary>
       <div class="mini-timeline" data-day-id="{{ day.id }}">
         {% for item in day.scheduled_items %}
-          <div class="mini-row {{ item.tag }} {% if item.past_day_end %}late{% endif %}" data-item-id="{{ item.id }}">
-            <span class="mini-time">{% if item.start %}{{ item.start|time:"H:i" }}{% else %}&mdash;{% endif %}</span>
+          <div class="mini-row {{ item.tag }} {% if item.is_note %}note{% endif %} {% if item.past_day_end %}late{% endif %}" data-item-id="{{ item.id }}">
+            <span class="mini-time">{% if item.is_note %}<svg class="icon" viewBox="0 0 24 24"><path d="M12 9v4M12 16.5h.01"/><circle cx="12" cy="12" r="9"/></svg>{% elif item.start %}{{ item.start|time:"H:i" }}{% else %}&mdash;{% endif %}</span>
             <a class="mini-title" href="{% url 'ustrip:itinerary_item_detail' item.id %}">{{ item.display_title }}</a>
             <span class="mini-warn" title="Doesn't fit" {% if not item.overrun_minutes and not item.past_day_end %}hidden{% endif %}>!</span>
             <span class="drag-handle" data-drag-handle title="Drag to reorder or move to another day">
@@ -47,7 +47,7 @@
   function applyDay(container, day) {
     day.items.forEach((item) => {
       const row = container.querySelector(`[data-item-id="${item.id}"]`);
-      if (!row) return;
+      if (!row || item.kind === "note") return;
       row.querySelector(".mini-time").textContent = item.start || "—";
       row.classList.toggle("late", !!item.past_day_end);
       row.querySelector(".mini-warn").hidden = !(item.overrun_minutes || item.past_day_end);

@@ -43,10 +43,14 @@
 <div class="timeline" id="timeline">
   {% for item in items %}
     {% if item.gap_before_minutes %}<div class="tgap">{{ item.gap_before_minutes|duration_human }} free</div>{% endif %}
-    <div class="titem {{ item.tag }} {% if item.past_day_end %}late{% endif %}" data-item-id="{{ item.id }}">
+    <div class="titem {{ item.tag }} {% if item.is_note %}note{% endif %} {% if item.past_day_end %}late{% endif %}" data-item-id="{{ item.id }}">
       <div class="ttime">
-        <span class="tstart">{% if item.start %}{{ item.start|time:"H:i" }}{% else %}&mdash;{% endif %}</span>
-        <span class="tend">{% if item.start and item.duration_minutes %}&ndash; {{ item.end|time:"H:i" }}{% endif %}</span>
+        {% if item.is_note %}
+          <span class="tstart tinfo"><svg class="icon" viewBox="0 0 24 24"><path d="M12 9v4M12 16.5h.01"/><circle cx="12" cy="12" r="9"/></svg></span><span class="tend"></span>
+        {% else %}
+          <span class="tstart">{% if item.start %}{{ item.start|time:"H:i" }}{% else %}&mdash;{% endif %}</span>
+          <span class="tend">{% if item.start and item.duration_minutes %}&ndash; {{ item.end|time:"H:i" }}{% endif %}</span>
+        {% endif %}
         {% if item.time_label %}<span class="tnote">{{ item.time_label }}</span>{% endif %}
       </div>
       <div class="tdot"></div>
@@ -61,7 +65,7 @@
           {% if item.fixed_start %}<span class="tag pinned">PINNED {{ item.fixed_start|time:"H:i" }}</span>{% endif %}
         </div>
         <div class="tmeta">
-          {% if item.duration_minutes %}<span>{{ item.duration_minutes|duration_human }}</span>{% endif %}
+          {% if item.duration_minutes and not item.is_note %}<span>{{ item.duration_minutes|duration_human }}</span>{% endif %}
           <span class="{% if item.likes.all|length %}liked{% endif %}"><svg class="icon" viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-7.5-10A4.2 4.2 0 0 1 12 8a4.2 4.2 0 0 1 7.5 2.5c0 5.4-7.5 10-7.5 10z"/></svg>{{ item.likes.all|length }}</span>
           <span><svg class="icon" viewBox="0 0 24 24"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H9l-4.5 4v-4H5.5A1.5 1.5 0 0 1 4 14.5z"/></svg>{{ item.comments.all|length }}</span>
           {% if item.photos.all|length %}<span><svg class="icon" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M3.5 15l5-5 4 4 3-3 4.5 4.5"/><circle cx="15.5" cy="9" r="1.3"/></svg>{{ item.photos.all|length }}</span>{% endif %}
@@ -92,7 +96,11 @@
     <span>Details (optional)</span>
     <textarea name="description" rows="2" placeholder="What's the plan?"></textarea>
   </label>
-  <div class="field-row">
+  <label class="field field-checkbox">
+    <input type="checkbox" name="is_note" id="add-is-note">
+    <span>Just a note or reminder — no time, doesn't move the schedule</span>
+  </label>
+  <div class="field-row" id="add-timing">
     <label class="field">
       <span>Takes (minutes)</span>
       <input type="number" name="duration_minutes" value="60" min="0" step="5">
@@ -102,7 +110,7 @@
       <input type="time" name="fixed_start">
     </label>
   </div>
-  <button type="submit" class="btn btn-secondary">Add item</button>
+  <button type="submit" class="btn btn-secondary">Add</button>
 </form>
 {% endblock %}
 
@@ -130,6 +138,7 @@
     day.items.forEach((item) => {
       const row = timeline.querySelector(`[data-item-id="${item.id}"]`);
       if (!row) return;
+      if (item.kind === "note") return;  // no time, nothing to update
       row.querySelector(".tstart").textContent = item.start || "—";
       row.querySelector(".tend").innerHTML = item.start && item.duration_minutes ? "&ndash; " + item.end : "";
       row.classList.toggle("late", !!item.past_day_end);
@@ -162,15 +171,21 @@
     });
   });
 
+  const isNote = document.getElementById("add-is-note");
+  isNote.addEventListener("change", function () {
+    document.getElementById("add-timing").hidden = isNote.checked;
+  });
+
   form.addEventListener("submit", function (e) {
     e.preventDefault();
     const title = form.title.value.trim();
     if (!title) return;
     const payload = {
       day: dayId, title: title,
+      kind: isNote.checked ? "note" : "stop",
       description: form.description.value.trim() || title,
-      duration_minutes: Number(form.duration_minutes.value || 0),
-      fixed_start: form.fixed_start.value || null,
+      duration_minutes: isNote.checked ? 0 : Number(form.duration_minutes.value || 0),
+      fixed_start: isNote.checked ? null : (form.fixed_start.value || null),
     };
     ustrip.request("/ustrip/api/itinerary-items/", { json: payload })
       .then(() => window.location.reload())

@@ -123,7 +123,7 @@ class ItineraryItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = ItineraryItem
         fields = [
-            "id", "day", "order", "title", "display_title", "description", "time_label", "location", "cost",
+            "id", "day", "order", "kind", "title", "display_title", "description", "time_label", "location", "cost",
             "duration_minutes", "fixed_start", "start", "end", "overrun_minutes", "overrun_into",
             "gap_before_minutes", "past_day_end", "tips", "booking", "booking_display",
             "tag", "tag_display", "links", "photos", "like_count", "liked_by_me", "comment_count",

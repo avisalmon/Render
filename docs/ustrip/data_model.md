@@ -169,7 +169,8 @@ before a planned anchor — not a conflict), `past_day_end`; per day
 these appear in the API and on the pages; none is a column.
 
 **ItineraryItem** (the rich version, 2026-09-14 — spec §4.1): `day` FK,
-`order`, `title` (short headline; `display_title` falls back to the first
+`order`, `kind` (`stop`, scheduled, or `note`, outside the schedule: no
+time, never moves the clock), `title` (short headline; `display_title` falls back to the first
 clause of the description for rows that predate the field), `description`
 (the full text), `time_label` (an optional note shown next to the computed
 time, e.g. "Boats every 15 min, 9:00–17:00"), `location`, `cost` (free

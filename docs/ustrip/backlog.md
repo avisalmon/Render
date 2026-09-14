@@ -217,3 +217,16 @@ a Google Doc.
 | Stay edit page (`lodging/<id>/edit/`, `lodging/new/`): hotel, where, dates, booked, notes, delete; API viewsets for stays and notes (notes with `move`) | DONE |
 | Tests: position in all three phases and the timezone case, a two-date row, seed dates/backfill, stays once + booked survives a redeploy, notes once + edits survive, Home/list/day pages, stays and notes API | DONE — `tests/test_ustrip_today.py` |
 | Deploy | not yet — dev only until Avi says |
+
+## Sprint 10.1 — Notes in the day `DONE, DEV`
+
+**Avi (2026-09-14):** items in a day don't necessarily have a schedule —
+reminders, information, things that don't touch the times but sit in the
+order wherever they read best, as many as wanted.
+
+| Item | Status |
+|---|---|
+| `ItineraryItem.kind`: `stop` (scheduled, as before) or `note` (no time, never moves the clock, never in a conflict or gap) | DONE — migration 0008 |
+| Day page: a note shows an info mark instead of a time, a hollow dot, no duration; the add form has a "just a note" checkbox that hides the timing fields; the edit page has a Kind select | DONE |
+| List page and detail page render notes without a time; notes drag like any item, within and between days | DONE |
+| Tests: a note has no time and B still flows straight from A; a note is created through the API, renders on the three pages, and reorders | DONE — 2 more in `tests/test_ustrip_items.py` |

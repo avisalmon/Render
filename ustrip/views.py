@@ -160,6 +160,7 @@ def itinerary_item_edit(request, item_id):
         {
             "trip": item.day.trip, "item": item, "days": item.day.trip.days.all(),
             "tag_choices": ItineraryItem.TAG_CHOICES, "booking_choices": ItineraryItem.BOOKING_CHOICES,
+            "kind_choices": ItineraryItem.KIND_CHOICES,
             "link_kinds": ItineraryLink.KIND_CHOICES, "active_tab": "itinerary",
         },
     )

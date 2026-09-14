@@ -209,6 +209,15 @@ your durations or days silently is exactly what "computed, never stored"
 exists to avoid. A gap is not a conflict: free time before a pinned stop is
 shown as "1h 15m free", which is where a new stop would fit.
 
+**Notes in the day (Avi, 2026-09-14).** Not every item is a stop. A
+reminder ("passports in the front pocket"), a heads-up ("tolls are
+cashless from here"), a piece of information — these belong in the day's
+order where they read best, but they have no time and must not move the
+times around them. So an item has a `kind`: a *stop* is scheduled as
+above; a *note* is outside the schedule altogether — no start, no
+duration, never in a conflict or a gap, any number of them anywhere, and
+dragged like any other item.
+
 A third tag, `rejected`, marks an alternative the family looked at and
 dropped (the Day 8 VIP tour) — it stays visible, struck through, rather
 than being deleted, because "we considered it and said no" is information.

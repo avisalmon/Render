@@ -29,7 +29,15 @@
       {% endfor %}
     </select>
   </label>
-  <div class="field-row">
+  <label class="field">
+    <span>Kind</span>
+    <select name="kind" id="edit-kind">
+      {% for value, label in kind_choices %}
+        <option value="{{ value }}" {% if value == item.kind %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <div class="field-row" id="edit-timing" {% if item.is_note %}hidden{% endif %}>
     <label class="field">
       <span>Takes (minutes)</span>
       <input type="number" name="duration_minutes" value="{{ item.duration_minutes }}" min="0" step="5">
@@ -113,12 +121,18 @@
   const itemId = {{ item.id }};
   const detailUrl = "{% url 'ustrip:itinerary_item_detail' item.id %}";
 
+  const kind = document.getElementById("edit-kind");
+  kind.addEventListener("change", function () {
+    document.getElementById("edit-timing").hidden = kind.value === "note";
+  });
+
   form.addEventListener("submit", function (e) {
     e.preventDefault();
     const payload = {
       title: form.title.value.trim(),
       description: form.description.value.trim(),
       day: Number(form.day.value),
+      kind: kind.value,
       duration_minutes: Number(form.duration_minutes.value || 0),
       fixed_start: form.fixed_start.value || null,
       time_label: form.time_label.value.trim(),

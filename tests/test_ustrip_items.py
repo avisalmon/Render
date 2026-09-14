@@ -430,3 +430,32 @@ def test_day_end_is_editable_and_the_day_page_shows_the_summary_and_the_gap(clie
     assert 'id="day-end"' in body and 'value="22:00"' in body
     list_body = client.get("/ustrip/itinerary/").content.decode()
     assert "ends 23:30" in list_body and "1h 30m past 22:00" in list_body
+
+
+# --- Notes: items outside the schedule ---------------------------------------
+
+@pytest.mark.django_db
+def test_a_note_has_no_time_and_never_moves_the_clock(day):
+    a, note, b = _items(day, ("A", 60, None), ("Remember the passports", 60, None), ("B", 30, None))
+    note.kind = ItineraryItem.NOTE; note.save()
+    scheduled = schedule.compute(day)
+    assert (scheduled[1].start, scheduled[1].end) == (None, None)
+    assert scheduled[2].start == time(10, 0)          # B flows straight from A
+    assert day.schedule_conflicts == 0
+
+
+@pytest.mark.django_db
+def test_notes_are_created_through_the_api_and_render_without_a_time(client, member, day):
+    (a,) = _items(day, ("A", 60, None))
+    client.force_login(member)
+    response = _post_json(client, "/ustrip/api/itinerary-items/", {"day": day.id, "kind": "note", "title": "Tolls are cashless here", "description": "Tolls are cashless here"})
+    assert response.status_code == 201
+    data = response.json()
+    assert data["kind"] == "note" and data["start"] is None and data["end"] is None
+    body = client.get(f"/ustrip/itinerary/{day.id}/").content.decode()
+    assert "Tolls are cashless here" in body and 'class="titem plan note' in body
+    assert "note, no time" in client.get(f"/ustrip/itinerary/item/{data['id']}/").content.decode()
+    # And it drags like anything else: put it first.
+    response = _post_json(client, f"/ustrip/api/itinerary-days/{day.id}/reorder/", {"item_ids": [data["id"], a.id]})
+    assert [i["kind"] for i in response.json()["items"]] == ["note", "stop"]
+    assert response.json()["items"][1]["start"] == "09:00"
