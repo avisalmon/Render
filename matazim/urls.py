@@ -155,6 +155,10 @@ urlpatterns = [
     path("work/<int:submission_id>/", submission_views.review, name="review"),
     path("work/<int:submission_id>/file/", submission_views.work_file, name="work_file"),
     path("work/<int:submission_id>/say/", submission_views.say_more, name="say_more"),
+    # REQ-M.5e — two yeses before anything is public, and either can be
+    # taken back. The maker offers, the programme publishes.
+    path("work/<int:submission_id>/offer/", submission_views.offer_publicly, name="offer_publicly"),
+    path("work/<int:submission_id>/publish/", submission_views.publish, name="publish_work"),
     # REQ-M.20 — what a certified מט״צ can actually show somebody. `verify` is
     # public on purpose: a school checking one has no account.
     path("my-certificate/", certificate_views.my_certificate, name="my_certificate"),

@@ -96,6 +96,51 @@
     with the partners' own marks. Logos are their SVGs, taken from their own
     sites, drawn at a single optical height so neither dominates the other.
   {% endcomment %}
+  {% if counters %}
+    {% comment %}
+      REQ-M.5f — the stats band, back after being held since SPR-M.1.
+
+      The hold was right, and the reason it is over is that these are counted
+      now. Litala's prototype had a band of invented numbers in it and Avi cut
+      it on sight; a figure on a public page is a claim about a real programme.
+      `public.counters()` counts, drops every zero, and returns nothing at all
+      when there is nothing, so this band cannot say the programme is bigger
+      than it is and cannot announce that it is empty either.
+    {% endcomment %}
+    <section class="mz-band" aria-label="התוכנית במספרים">
+      <ul class="mz-figures">
+        {% for row in counters %}
+          <li><strong>{{ row.figure }}</strong><span>{{ row.label }}</span></li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  {% if showcase %}
+    {% comment %}
+      REQ-M.5e, REQ-M.30a — תוצרים נבחרים, also held since SPR-M.1 and for the
+      same reason: there were no real projects and no real consent.
+
+      Now there are both, and the rule is the one §4.10 states. A title, a
+      description, and a school. Never the maker, never their class, never a
+      link to their file. Two people agreed to each of these appearing here and
+      either can take it back, which removes it on the next request.
+    {% endcomment %}
+    <section class="mz-showcase" aria-labelledby="mzShowcase">
+      <h2 id="mzShowcase">תוצרים נבחרים</h2>
+      <p class="mz-muted">דברים שמט״צים בתוכנית בנו, ובחרו לשתף.</p>
+      <ul class="mz-works">
+        {% for work in showcase %}
+          <li class="mz-work-card">
+            <h3>{{ work.title }}</h3>
+            {% if work.about %}<p>{{ work.about|truncatewords:28 }}</p>{% endif %}
+            {% if work.school %}<p class="mz-muted">{{ work.school }}</p>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
   <section class="mz-partners" aria-labelledby="mzPartners">
     <h2 id="mzPartners">שותפים מרכזיים לעשייה</h2>
     <div class="mz-partner-row">

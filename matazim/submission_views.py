@@ -236,6 +236,10 @@ def review(request, submission_id):
             submission=submission,
             feedback=list(submission.feedback.select_related("author")),
             may_decide=may_decide,
+            # REQ-M.5e — the programme's yes belongs to the program manager,
+            # because this is the one decision here whose audience is the whole
+            # internet rather than one school (§4.4a).
+            may_publish=is_program_manager(request.user),
             error=error,
             posted=request.POST if request.method == "POST" else None,
         ),
@@ -284,4 +288,74 @@ def say_more(request, submission_id):
             url=reverse("matazim:my_work"),
             actor=request.user,
         )
+    return redirect("matazim:review", submission_id=submission.pk)
+
+
+@require_POST
+@login_required(login_url=LOGIN_URL)
+def offer_publicly(request, submission_id):
+    """REQ-M.5e, REQ-M.30a — the maker's yes, and taking it back.
+
+    Theirs alone. A leader cannot consent on a member's behalf and neither can a
+    program manager: §4.10 says publishing a minor's work takes the member's
+    own opt-in, and somebody else pressing it is not an opt-in however well
+    meant.
+
+    Toggling off clears the programme's approval too. Withdrawing consent and
+    leaving a staff yes sitting on the row would mean re-consenting silently
+    republishes, which is not what the person taking it back thinks they did.
+    """
+    submission = get_object_or_404(
+        Submission, pk=submission_id, student__user=request.user
+    )
+
+    if submission.public_consent_at is None:
+        # Approved work only. The public page is not a place to be seen failing,
+        # the same rule the community feed follows (REQ-M.132).
+        if submission.status != Submission.APPROVED:
+            return redirect("matazim:my_work")
+        submission.public_consent_at = timezone.now()
+        submission.save(update_fields=["public_consent_at"])
+    else:
+        submission.public_consent_at = None
+        submission.published_at = None
+        submission.published_by = None
+        submission.save(
+            update_fields=["public_consent_at", "published_at", "published_by"]
+        )
+
+    return redirect("matazim:my_work")
+
+
+@require_POST
+@login_required(login_url=LOGIN_URL)
+def publish(request, submission_id):
+    """REQ-M.5e — the programme's yes, and taking it back.
+
+    A program manager rather than a leader, because this is the one decision in
+    the product whose audience is the whole internet rather than one school, and
+    §4.4a keeps that with the person who answers for the programme.
+
+    Refuses outright if the maker has not offered it. Publishing work whose
+    maker never said yes is the exact thing REQ-M.30a exists to prevent, and the
+    refusal is here rather than on the screen because the screen is not what
+    receives the POST (REQ-M.77's lesson).
+    """
+    from .access import is_program_manager, visible_submissions
+
+    if not is_program_manager(request.user):
+        raise PermissionDenied
+
+    submission = get_object_or_404(visible_submissions(request.user), pk=submission_id)
+
+    if submission.published_at is None:
+        if submission.public_consent_at is None or submission.status != Submission.APPROVED:
+            return redirect("matazim:review", submission_id=submission.pk)
+        submission.published_at = timezone.now()
+        submission.published_by = request.user
+    else:
+        submission.published_at = None
+        submission.published_by = None
+
+    submission.save(update_fields=["published_at", "published_by"])
     return redirect("matazim:review", submission_id=submission.pk)

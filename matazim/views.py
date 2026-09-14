@@ -226,7 +226,18 @@ def shell(request, section, **extra):
 
 
 def home(request):
-    """REQ-M.5 — דף הבית, open to anyone."""
+    """REQ-M.5 — דף הבית, open to anyone.
+
+    REQ-M.5e and REQ-M.5f were HELD here from SPR-M.1 until 2026-09-14, and the
+    hold was the right call rather than a delay: the prototype had a stats band
+    of invented numbers and a showcase of invented projects, and Avi cut both on
+    sight. They come back now because both can finally be true. `public.py`
+    counts and `public.py` reads consent; neither is typed into this template,
+    and both are empty until there is something real, in which case the page
+    reads exactly as it did before.
+    """
+    from .public import counters, published_work
+
     return render(
         request,
         "matazim/home.html",
@@ -235,6 +246,8 @@ def home(request):
             "home",
             stages=public_stages(),
             student_door_open=student_door_is_open(request),
+            counters=counters(),
+            showcase=published_work(),
         ),
     )
 

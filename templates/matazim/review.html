@@ -109,6 +109,41 @@
     </section>
   {% endif %}
 
+  {% if may_publish and submission.status == "approved" %}
+    {% comment %}
+      REQ-M.5e, REQ-M.30a — the programme's yes. The second of two, and it can
+      never be the first: publishing work whose maker never offered it is the
+      exact thing REQ-M.30a exists to prevent, so when there is no consent this
+      panel says so and offers no button at all.
+    {% endcomment %}
+    <section class="mz-panel">
+      <h2>דף הבית</h2>
+      {% if not submission.public_consent_at %}
+        <p class="mz-muted">
+          היוצר/ת עוד לא ביקש/ה להציג את זה. פרסום מתחיל תמיד מהם, לא מאיתנו.
+        </p>
+      {% elif submission.is_public %}
+        <p class="mz-muted">
+          מוצג בדף הבית מאז {{ submission.published_at|date:"j.n.Y" }}. מופיעים
+          שם התוצר, התיאור ובית הספר בלבד.
+        </p>
+        <form method="post" action="{% url 'matazim:publish_work' submission.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="mz-btn mz-btn-ghost">להוריד מדף הבית</button>
+        </form>
+      {% else %}
+        <p>
+          היוצר/ת ביקש/ה להציג את זה בדף הבית. בדף יופיעו שם התוצר, התיאור
+          ובית הספר, אף פעם לא שם של מט״צ.
+        </p>
+        <form method="post" action="{% url 'matazim:publish_work' submission.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="mz-btn mz-btn-primary">לאשר להצגה</button>
+        </form>
+      {% endif %}
+    </section>
+  {% endif %}
+
   <p class="mz-page-actions">
     <a class="mz-linkbtn" href="{% url 'matazim:leader_home' %}">לאזור שלי</a>
     <a class="mz-linkbtn" href="{% url 'matazim:student' submission.student.pk %}">לכרטיס של המט״צ</a>

@@ -2428,6 +2428,82 @@ Those three are the honest answer to "are we done": the member-facing product
 is, the recruitment-facing public page is not, and one line of the client brief
 was never decided either way.
 
+## SPR-M.38 — The public front, held since SPR-M.1  `DONE 2026-09-14`
+
+**Goal:** the two requirements that have been HELD longer than any others, and
+correctly. Litala's prototype had a stats band of invented numbers and a
+showcase of invented projects; Avi cut both on sight in SPR-M.1 and they have
+waited for something real ever since.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.38.1 | `matazim/public.py`: figures counted, zeros dropped | REQ-M.5f | DONE |
+| F-M.38.2 | Two yeses on a `Submission`, either revocable | REQ-M.5e, REQ-M.30a | DONE |
+| F-M.38.3 | The maker's offer, on their own work and nobody else's | REQ-M.30a | DONE |
+| F-M.38.4 | The programme's approval, program manager only | REQ-M.5e, §4.4a | DONE |
+| F-M.38.5 | The band and the gallery on דף הבית | REQ-M.5e, REQ-M.5f | DONE |
+
+### Why this file is almost all negative tests
+
+This is the only code in מט״צים whose output is readable by anybody on the
+internet, and it is about fourteen-year-olds. So the interesting cases are not
+"does the work appear" but every way a thing could reach that page without
+having earned it: one yes instead of two, a consent withdrawn, a leader
+consenting for a member, work that was never approved, a second school that
+starts to identify somebody, a private יום שיא inflating a public count.
+
+### The decision that mattered most
+
+**Sharing to the community is not consent to publish.** §4.12 already said an
+internal feed and a public gallery are different products, and the tempting
+shortcut here was to treat a `Post` of kind `work` as the member's opt-in. It
+is not. A fourteen-year-old putting something in front of the people in their
+programme has not agreed to put it in front of the internet, and reusing one
+consent as the other would have been the worst misreading available in this
+codebase. Two separate fields, and a test that creates the community share and
+asserts the work stays off the public page.
+
+**Withdrawing consent clears the staff yes too.** Otherwise a member who
+withdraws and later changes their mind is republished the instant they
+re-offer, on a decision somebody made about a different moment.
+
+**No photograph.** The card is a title, a description and a school. A minor's
+file lives outside `MEDIA_ROOT` behind a view that asks who is looking
+(REQ-M.122), and publishing a picture of a child's project is a further
+decision nobody has taken. Recorded here so the next person to ask "why is
+there no image" finds the answer rather than adding one.
+
+**A zero is not a figure.** "0 בתי ספר" is a true sentence that makes a claim a
+counter is not for, so empty figures are dropped and an empty programme gets no
+band at all, which is how the page has read for thirty-seven sprints.
+
+### The test that was missing, found by trying to break the others
+
+Removing the consent filter from `published_work` broke no test. Every existing
+one went through the views, and the views were the only thing holding the rule:
+a row published with no consent behind it can only arrive from a migration, the
+admin, or a future view written by somebody who did not read this file, and
+nothing would have caught it. `test_a_row_published_without_consent_still_never_
+shows` builds that state directly. Fifth occurrence of this project's recurring
+failure mode: **defects live in states no fixture creates.**
+
+### A mistake repeated
+
+`git checkout templates/matazim/home.html`, to undo a deliberately introduced
+defect, reverted the whole of this sprint's work on that file. The same mistake
+as SPR-M.34, two sprints ago, and the lesson was written down there and not
+learned. Copy the file first; never use a git command that cannot tell a
+perturbation from the work.
+
+### The spec after this sprint
+
+149 DONE, 1 HELD, 1 DROPPED, nothing WIP and nothing TODO. The one hold is
+REQ-M.12a, superseded by REQ-M.76 and held on purpose.
+
+What is still not built is not in the spec at all, and is recorded in SPR-M.37:
+Litala's צפייה בכל תלמידי בית הספר, which was never accepted or refused, and
+Q8's authoring surface, which is undecided.
+
 ## Also still open
 
 - Retire the old production tables, once ACT-M.2 is answered.

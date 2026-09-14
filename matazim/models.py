@@ -936,6 +936,28 @@ class Submission(models.Model):
         User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
     )
     decided_at = models.DateTimeField(null=True, blank=True)
+
+    # REQ-M.5e, REQ-M.30a — publishing a minor's work takes two yeses, and
+    # either can be taken back.
+    #
+    # **Two fields rather than one flag, and deliberately not the community
+    # share.** §4.12 says an internal feed and a public gallery are different
+    # products: a fourteen-year-old putting work in front of the people in their
+    # programme has not agreed to put it in front of the internet, and treating
+    # one as the other would be the worst misreading available in this codebase.
+    #
+    # The maker's yes and the programme's yes. Both nullable, both needed, and
+    # clearing either takes the work off the public page at once.
+    public_consent_at = models.DateTimeField(
+        null=True, blank=True, verbose_name="הסכמת היוצר/ת לפרסום"
+    )
+    published_at = models.DateTimeField(
+        null=True, blank=True, verbose_name="אושר לפרסום"
+    )
+    published_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
@@ -949,6 +971,19 @@ class Submission(models.Model):
     @property
     def is_waiting(self):
         return self.status == self.WAITING
+
+    @property
+    def is_public(self):
+        """Both yeses, and the work approved. Any one missing means no.
+
+        Read rather than stored, so there is no third field to fall out of step
+        with the two that decide it (§4.6, derived never stored).
+        """
+        return bool(
+            self.public_consent_at
+            and self.published_at
+            and self.status == self.APPROVED
+        )
 
 
 class Feedback(models.Model):

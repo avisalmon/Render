@@ -56,6 +56,49 @@
         {% endif %}
       </p>
 
+      {% if submission.status == "approved" %}
+        {% comment %}
+          REQ-M.5e, REQ-M.30a — the maker's yes, and only the maker's.
+
+          Offered only on work a leader approved, because the public page is not
+          a place to be seen failing. The copy says exactly what happens and
+          exactly what does not, because "share publicly" means nothing to a
+          fourteen-year-old until somebody says which parts travel.
+        {% endcomment %}
+        <div class="mz-share">
+          {% if submission.is_public %}
+            <p class="mz-muted">
+              <strong>מוצג בדף הבית.</strong> מופיעים שם השם של התוצר, התיאור
+              ובית הספר. לא השם שלכם ולא הקובץ.
+            </p>
+            <form method="post" action="{% url 'matazim:offer_publicly' submission.pk %}"
+                  class="mz-inline-form">
+              {% csrf_token %}
+              <button type="submit" class="mz-linkbtn">להוריד מדף הבית</button>
+            </form>
+          {% elif submission.public_consent_at %}
+            <p class="mz-muted">
+              ביקשתם להציג את זה בדף הבית. מנהלת התוכנית צריכה לאשר, ועד אז זה
+              לא מופיע בשום מקום ציבורי.
+            </p>
+            <form method="post" action="{% url 'matazim:offer_publicly' submission.pk %}"
+                  class="mz-inline-form">
+              {% csrf_token %}
+              <button type="submit" class="mz-linkbtn">ביטול הבקשה</button>
+            </form>
+          {% else %}
+            <form method="post" action="{% url 'matazim:offer_publicly' submission.pk %}">
+              {% csrf_token %}
+              <button type="submit" class="mz-linkbtn">להציע את זה לדף הבית</button>
+              <small class="mz-muted">
+                יופיעו שם שם התוצר, התיאור ובית הספר. לא השם שלכם, לא הכיתה ולא
+                הקובץ. אפשר להוריד בכל רגע, וגם מנהלת התוכנית צריכה לאשר.
+              </small>
+            </form>
+          {% endif %}
+        </div>
+      {% endif %}
+
       {% if submission.answers %}
         <p class="mz-muted">גרסה חדשה אחרי "{{ submission.answers.title }}".</p>
       {% endif %}

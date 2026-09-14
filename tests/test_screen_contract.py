@@ -132,6 +132,7 @@ def build_world(
     events=False,
     posts=False,
     teaching=False,
+    published=False,
 ):
     """One institution, dialled to the state under test.
 
@@ -481,6 +482,20 @@ def build_world(
             for_everyone=True,
         )
 
+    # REQ-M.5e, REQ-M.5f — the public front with something real on it: work two
+    # people agreed to show, and therefore figures that are not all zero.
+    if published and students == "mixed" and work:
+        from matazim.models import Submission
+
+        shown = Submission.objects.filter(
+            student__user__email="mid@example.com", status=Submission.APPROVED
+        ).first()
+        if shown is not None:
+            shown.public_consent_at = now
+            shown.published_at = now
+            shown.published_by = manager
+            shown.save()
+
     # REQ-M.32 — a practicum with something in it, including one that did not
     # happen and one still ahead, because those are the two states the list
     # renders differently and neither occurs in a hand-written fixture.
@@ -719,6 +734,9 @@ SCREENS = [
     # with state for a member.
     ("courses/visitor", "/matazim/courses/", None, dict(students="none")),
     ("courses/member", "/matazim/courses/", "mid@example.com", dict(students="mixed")),
+    # REQ-M.5e, REQ-M.5f — the home page with a band and a showcase on it, which
+    # is a state it has never been in before and the one worth looking at.
+    ("home/with-figures", "/matazim/", None, dict(students="mixed", work=True, teaching=True, published=True)),
     (
         "work/review",
         lambda w: f"/matazim/work/{w['work'].pk}/",

@@ -2305,3 +2305,41 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
 /* The action sits at the bottom whatever the title length, so a row of cards
    does not look ragged. */
 .mz-card .mz-btn { margin-top: auto; align-self: flex-start; }
+
+/* ------------------------------- the public front (REQ-M.5e, REQ-M.5f) */
+
+.mz-band { margin: 8px 0 28px; }
+
+/* Reuses .mz-figures from the practicum panel on purpose: the same shape means
+   the same thing in both places, a counted number with its label under it. */
+
+.mz-showcase { margin: 0 0 32px; }
+.mz-showcase h2 { margin: 0 0 4px; }
+.mz-showcase > .mz-muted { margin: 0 0 14px; }
+
+.mz-works {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+}
+.mz-work-card {
+  padding: 16px;
+  border: 1px solid var(--mz-line);
+  border-radius: var(--mz-radius-sm);
+  background: var(--mz-card);
+}
+.mz-work-card h3 { margin: 0 0 6px; font-size: 1.05rem; color: var(--mz-ink); }
+.mz-work-card p { margin: 0 0 4px; overflow-wrap: anywhere; }
+
+/* The public-consent control on a member's own work (REQ-M.5e). Set apart from
+   the submission it belongs to, because it is a decision about the internet
+   rather than another fact about the work. */
+.mz-share {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--mz-line);
+}
+.mz-share small { display: block; margin-top: 4px; }
