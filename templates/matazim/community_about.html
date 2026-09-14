@@ -1,0 +1,54 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.133 — קהילת מט״צים, seen from outside. Replaces the placeholder
+  REQ-M.60 put here in SPR-M.1.
+
+  This page carries no posts, and that is the requirement rather than a gap
+  waiting to be filled. Every row in that feed is a fourteen-year-old writing
+  about themselves, and §4.10 with REQ-M.30a say a consented public gallery is a
+  different product from an internal feed. Building the first must not quietly
+  open the second.
+
+  A candidate sees this page too, not the feed: they are waiting on a decision
+  and have no standing in the room yet (REQ-M.99, REQ-M.102).
+{% endcomment %}
+
+{% block title %}קהילת מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page mz-page-narrow">
+  <div class="mz-page-head">
+    <h1>קהילת מט״צים</h1>
+    <p>
+      מט״צ אחד בכיתה מלמד לבד. מט״צים שמלמדים באותה שנה לא.
+    </p>
+  </div>
+
+  <section class="mz-panel">
+    <h2>מה יש שם</h2>
+    <p>
+      בתוך התוכנית יש מקום שבו המט״צים מספרים מה הם לימדו השבוע, מה עבד,
+      מה נתקע, ומשתפים תוצרים שהמובילים שלהם אישרו. מנהלת התוכנית כותבת שם
+      את ההודעות שכולם צריכים לדעת.
+    </p>
+    <p class="mz-muted">
+      מה שנכתב שם נשאר שם. לא מציגים כאן פוסטים, לא שמות ולא תוצרים של מי
+      שבתוכנית, כי מי שכותב שם הוא בן ארבע־עשרה וכותב לחברים שלו לתוכנית,
+      לא לאינטרנט.
+    </p>
+  </section>
+
+  <section class="mz-panel">
+    <h2>איך נכנסים</h2>
+    <p>
+      הקהילה נפתחת כשמצטרפים לתוכנית ומתחילים ללמד. עוברים את מבחן הכניסה,
+      מצטרפים למוביל/ה בבית הספר, ומשם זה נפתח.
+    </p>
+    <div class="mz-page-actions">
+      <a class="mz-btn mz-btn-primary" href="{% url 'matazim:entrance_test' %}">מבחן הכניסה</a>
+      <a class="mz-btn" href="{% url 'matazim:track' %}">המסלול השנתי</a>
+    </div>
+  </section>
+</div>
+{% endblock %}

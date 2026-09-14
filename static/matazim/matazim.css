@@ -2116,3 +2116,78 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
   color: var(--mz-ink);
   cursor: pointer;
 }
+
+
+/* ------------------------------------------ קהילת מט״צים (REQ-M.26, §4.12) */
+
+.mz-feed { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+
+.mz-post {
+  padding: 14px;
+  border: 1px solid var(--mz-line);
+  border-radius: var(--mz-radius-sm);
+  background: var(--mz-card);
+}
+
+/* An announcement from the programme reads differently from a member's post,
+   and the difference has to survive being scanned at speed. A start-edge rule
+   rather than a colour fill, because the feed is mostly text and a filled card
+   would win the page away from what people actually wrote. */
+.mz-post.is-announcement {
+  border-inline-start: 3px solid var(--mz-teal-text);
+  background: var(--mz-teal-soft);
+}
+
+/* REQ-M.131 — a taken-down post keeps its row and says so. Faded, never gone:
+   a post that vanishes teaches its writer nothing. */
+.mz-post.is-hidden { opacity: .68; border-style: dashed; }
+
+.mz-post-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.mz-post-who { font-weight: 600; color: var(--mz-ink); }
+.mz-post-when { font-size: .78rem; color: var(--mz-muted); }
+.mz-post-body { margin: 0; color: var(--mz-ink); overflow-wrap: anywhere; }
+
+.mz-post-work {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: var(--mz-radius-sm);
+  background: var(--mz-purple-soft);
+}
+.mz-post-work p { margin: 0; }
+
+.mz-post-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.mz-post-moderated {
+  margin: 8px 0 0;
+  font-size: .85rem;
+  color: var(--mz-muted);
+}
+
+/* The take-down control lives behind a summary: a feed with a text box on every
+   card reads like a form, and what is being read is what people wrote. */
+.mz-post-hide summary {
+  cursor: pointer;
+  color: var(--mz-muted);
+  font-size: .9rem;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.mz-post-hide summary:hover { color: var(--mz-ink); }
+.mz-post-hide[open] { margin-top: 4px; }
+.mz-post-hide .mz-field { margin-top: 6px; }
+
+/* The share picker matches the box above it. A select at its content width
+   beside a full-width textarea reads as an afterthought. */
+.mz-field select { width: 100%; }

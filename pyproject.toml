@@ -45,6 +45,7 @@ markers = [
     "sprm29: SPR-M.29 מט״צים the written lesson in our own chrome",
     "sprm30: SPR-M.30 מט״צים the bell",
     "sprm31: SPR-M.31 מט״צים ימי שיא and the calendar",
+    "sprm32: SPR-M.32 מט״צים קהילת מט״צים, the feed inside the walls",
     "screens: the screen contract - every מט״צים screen, in every state, rendered",
     "sprmobile: real-browser phone checks for מט״צים (tests/test_matazim_mobile.py)",
     "smoke: the fast gate, run on every push (see tests/test_smoke.py)",

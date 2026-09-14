@@ -243,3 +243,81 @@ def public_events():
     from .models import Event
 
     return Event.objects.filter(is_public=True, cancelled_at__isnull=True)
+
+
+def institution_of(user):
+    """Which institution's world this person writes into, or None.
+
+    One function because four roles reach the same answer by four different
+    routes, and a screen that worked it out for itself would eventually work it
+    out differently. A program manager is their own institution; a leader
+    belongs to theirs; a member belongs to their leader's.
+
+    None is a real answer, not an error: a member with no leader yet (REQ-M.65)
+    and a candidate waiting on approval (REQ-M.99) both belong to no world, and
+    the thing to do about that is refuse the write rather than guess a world.
+    """
+    if not getattr(user, "is_authenticated", False):
+        return None
+
+    if is_program_manager(user) and not user.is_superuser:
+        return user
+
+    if leader := leader_of(user):
+        return leader.program_manager
+
+    student = Student.objects.filter(user=user).select_related("leader").first()
+    if student and student.leader:
+        return student.leader.program_manager
+
+    # Root last, deliberately. A superuser who also runs an institution should
+    # write into that one, not into a special case.
+    if user.is_superuser:
+        return user
+
+    return None
+
+
+def visible_posts(user):
+    """REQ-M.26, §4.4 — the community rows this person may read.
+
+    Scope as a property of the queryset, like `visible_students` and
+    `visible_events`, so no screen has to remember to filter and none of them
+    can filter differently. The REST API (REQ-M.134) reads this same function,
+    which is the point of it existing: one scope, not one per consumer.
+
+    Hidden rows are not filtered here. Who may see a taken-down post is a
+    different question from which institution it belongs to, and folding the two
+    together would make the program manager's own moderation view impossible to
+    write without going around the scope. `readable_posts` answers that one.
+    """
+    from .models import Post
+
+    if not getattr(user, "is_authenticated", False):
+        return Post.objects.none()
+
+    if user.is_superuser:
+        return Post.objects.all()
+
+    institution = institution_of(user)
+    if institution is None:
+        # A candidate or an unattached member. Not an error, and not everybody's
+        # feed either (§4.12: a candidate has no standing in the room yet).
+        return Post.objects.none()
+
+    return Post.objects.filter(program_manager=institution)
+
+
+def readable_posts(user):
+    """What actually appears in the feed: visible, minus what was taken down.
+
+    A hidden post stays readable to the person who wrote it and to the program
+    manager, and to nobody else. The writer, because REQ-M.131 says a take-down
+    has to be legible to the person it happened to: a post that simply vanishes
+    teaches them nothing. The program manager, because she is the one who did
+    it and has to be able to look at what she has done.
+    """
+    rows = visible_posts(user)
+    if is_program_manager(user):
+        return rows
+    return rows.filter(Q(hidden_at__isnull=True) | Q(author=user))

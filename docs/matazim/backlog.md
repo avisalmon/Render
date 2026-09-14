@@ -2005,6 +2005,113 @@ somebody that it is tomorrow needs a scheduler and a decision from Avi about
 what may run without a person, so REQ-M.34 stays WIP with that named rather
 than marked done on the strength of its easy half.
 
+## SPR-M.32 — קהילת מט״צים  `DONE 2026-09-14`
+
+**Goal:** the last of the three SPR-M.1 placeholders becomes real. A feed inside
+the walls carrying three kinds of row, and a public page that carries none.
+
+**Specified in spec §4.12.** Read that first: every choice in this sprint is a
+restriction, and the restrictions are the point.
+
+**Built under `docs/building_an_app.md` Rule 6.** This is the first מט״צים
+module with a DRF API. The rest of the app predates the rule and has none, which
+is a recorded gap and not something this sprint retrofits.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.32.1 | `Post` model, owned by an institution, taken down rather than deleted | REQ-M.26, REQ-M.131, §4.4 | DONE |
+| F-M.32.2 | `visible_posts(user)` in `access.py`, scope as a property of the queryset | REQ-M.26, §4.4 | DONE |
+| F-M.32.3 | The feed screen: read, write, and the honest empty room | REQ-M.26, REQ-M.102 | DONE |
+| F-M.32.4 | Moderation on the way in, take-down with a reason by the program manager | REQ-M.131, §2.1 | DONE |
+| F-M.32.5 | Sharing an approved submission, and taking it back | REQ-M.132, REQ-M.30a | DONE |
+| F-M.32.6 | The public page, which shows no rows | REQ-M.133, §4.10 | DONE |
+| F-M.32.7 | DRF CRUD over the module, on the same queryset the screens use | REQ-M.134, Rule 6 | DONE |
+
+### Out of scope, deliberately
+
+**Comments.** Named in §4.12 as a real cost rather than an oversight. A feed
+nobody can reply to is a noticeboard. Comments double the moderation surface and
+multiply the places a child's name can be typed by somebody other than its
+owner, and this version exists to find out whether anybody posts at all.
+
+**A network-wide feed.** §4.4 holds. It becomes possible the day somebody decides
+who moderates across institutions, and that person does not exist.
+
+**A public gallery of work.** REQ-M.30a's public half stays WIP. An internal feed
+and a consented public gallery are different products.
+
+### What the build found
+
+**One URL, two screens, rather than two URLs.** The menu has one קהילת מט״צים
+entry and it is in every role's nav and in the footer. Serving the feed at a
+second address would have meant either a dead entry for candidates and visitors
+or a second thing for a member to learn. `institution_of(user)` decides, which
+is also the function that decides whether a write is possible at all, so the
+page somebody gets and the thing they can do on it cannot disagree.
+
+**`institution_of` did not exist and four roles needed it.** A program manager
+is their own institution, a leader belongs to theirs, a member to their
+leader's, and a candidate to none. Four routes to one answer is exactly the
+shape that produced the two `is_member` calculations in SPR-M.24, so it was
+written once before any screen needed it twice.
+
+**Two gaps the screenshots found, not the tests.**
+
+A take-down could not be undone. Every test passed: hiding worked, the reason
+reached the writer, the wrong roles were refused. `docs/building_an_app.md` asks
+whether somebody can fix a mistake without going to /admin/, and the answer was
+no, on the one action in this product aimed at a fourteen-year-old's own words.
+`show_post` and the API's `show` action, with tests, and the way back is no
+wider a door than the way out.
+
+And the moderator's reason box sat open on every card, so a feed of three posts
+read as a page of three forms. Behind a `<details>` summary now. Both of these
+are the argument for looking at the thing as well as running the suite.
+
+### Rules verified by writing the defect
+
+**Tenancy.** Replacing `visible_posts`'s filter with `Post.objects.all()`:
+*another institution's words were readable*.
+
+**The take-down keeps the row.** Making `hide_post` call `delete()`: *the row
+was destroyed instead of marked*. The test was rewritten first, because the
+deleted row made it fail on a `DoesNotExist` traceback rather than on the
+sentence that says what broke.
+
+**The public page carries nothing.** Rendering the feed on it: *a minor's post
+was published*.
+
+**The API cannot reach further than the screen.** Giving the viewset its own
+`Post.objects` queryset: *the API reached another institution's feed*. This is
+the whole reason REQ-M.134 says the API reads `access`.
+
+### Decisions
+
+**Scoped to the institution.** §4.4 with no exception. A post is a
+fourteen-year-old's words with their name on them. A network-wide feed becomes
+possible the day somebody decides who moderates across institutions.
+
+**Moderated on the way in, taken down by a person.** The moderation call fails
+open and is therefore a filter, not a guarantee. What actually holds is the
+take-down, that it carries a reason, that the reason reaches the writer, and
+that it can be reversed.
+
+**Nothing here is public.** The public page describes the community and shows no
+rows. An internal feed and a consented public gallery are different products.
+
+**No comments, and it is a real cost.** Written into §4.12 rather than left out
+quietly. A feed nobody can reply to is a noticeboard. This version exists to
+find out whether anybody posts at all.
+
+### The methodology gaps this sprint did not close
+
+`docs/building_an_app.md` Rule 4 asks every app for a dashboard and a data-model
+document separate from the spec. מט״צים has neither: the data model is §4 of the
+spec, which is the thing Rule 4 says not to do. Rule 6 asks every app for a DRF
+API, and only this module has one. Both are recorded here rather than quietly
+fixed, because retrofitting seventeen models is its own piece of work and
+Avi's to schedule.
+
 ## Also still open
 
 - Retire the old production tables, once ACT-M.2 is answered.

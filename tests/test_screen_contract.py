@@ -130,6 +130,7 @@ def build_world(
     requests=False,
     work=False,
     events=False,
+    posts=False,
 ):
     """One institution, dialled to the state under test.
 
@@ -478,6 +479,37 @@ def build_world(
             for_everyone=True,
         )
 
+    # REQ-M.26 — a feed with something in it. Three kinds of row, plus one
+    # taken down, because a hidden post is a state no fixture would create by
+    # hand and it is the one that renders differently.
+    if posts and students == "mixed":
+        from matazim.models import Post
+
+        # Read from `people` rather than reusing the `mid` the work block binds,
+        # because that block only runs when `work` is on and this one has to
+        # stand alone.
+        author = people["mid@example.com"]
+
+        Post.objects.create(
+            author=manager,
+            program_manager=manager,
+            kind=Post.ANNOUNCEMENT,
+            body="נפגשים ביום שלישי באולם. מביאים מחשב טעון.",
+        )
+        Post.objects.create(
+            author=author.user,
+            program_manager=manager,
+            body="לימדתי היום לולאות לכיתה ד׳. שניים מהם סיימו לבד את המשימה.",
+        )
+        Post.objects.create(
+            author=author.user,
+            program_manager=manager,
+            body="פוסט שירד",
+            hidden_at=now,
+            hidden_by=manager,
+            hidden_reason="היה שם שם של ילד",
+        )
+
     return {
         "manager": manager,
         "work": first_work if work and students == "mixed" else None,
@@ -649,6 +681,13 @@ SCREENS = [
     ("events/calendar", "/matazim/calendar/", "mid@example.com", dict(students="mixed", events=True)),
     ("events/calendar-empty", "/matazim/calendar/", "mid@example.com", dict(students="mixed")),
     ("events/staff", "/matazim/staff/events/", "pm@example.com", dict(students="mixed", events=True)),
+    # REQ-M.26, M.131, M.133 — קהילת מט״צים. One door, so the states worth
+    # looking at are the four different pages it serves.
+    ("community/public", "/matazim/community/", None, dict(students="none")),
+    ("community/member", "/matazim/community/", "mid@example.com", dict(students="mixed", posts=True)),
+    ("community/member-empty", "/matazim/community/", "mid@example.com", dict(students="mixed")),
+    ("community/staff", "/matazim/community/", "pm@example.com", dict(students="mixed", posts=True)),
+    ("community/with-work", "/matazim/community/", "mid@example.com", dict(students="mixed", work=True, posts=True)),
     (
         "work/review",
         lambda w: f"/matazim/work/{w['work'].pk}/",

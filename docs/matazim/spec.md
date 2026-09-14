@@ -396,11 +396,26 @@ place in the path and its target date.
 **No `Program` table.** There is one program. A second network becomes a table
 and a migration on the day one exists, and not before. This retires REQ-M.4.
 
-**No `School` table.** `Leader.school_name` carries the label, so per-school
-reporting is a grouping rather than a join. The cost is honest and recorded: a
-typo makes a second school, and two leaders at one school can drift apart. If
-Litala's school-level reports matter enough, a `School` table is about ten lines
-and one FK, and promoting the field is one migration.
+**No `School` table. Closed, 2026-09-14.** Avi: "Drop school. It's an attribute
+of a leader. We see the world thru leaders." This had been left open as
+something a later sprint might promote, and it is now decided and not coming
+back.
+
+`school_name` carries the label, so per-school reporting is a grouping rather
+than a join. The cost stays honest and recorded: a typo makes a second school,
+and two leaders at one school can drift apart. That is the price of the
+decision, not an argument against it.
+
+The field sits on `StudyClass` rather than on `Leader`, decided separately by
+Avi on 2026-09-10, because a leader running classes at two schools should not
+need a second leader record and the label belongs where the students actually
+sit. `Leader.school_names` is the accessor, and it is how everything in this
+product asks the question. The two decisions agree: a school is not an entity
+here, it is something you read off a leader.
+
+What this retires: there is no schools sprint, no directory to administer, and
+no sign-up flow for an institution. בתי הספר המשתתפים is the distinct set of
+`school_name` across approved leaders and nothing more.
 
 **No group inside a group.** `StudyClass` belongs to a leader and that is the
 only nesting. Whether classes are needed at all is Q14's decision: forty
@@ -610,6 +625,61 @@ child. The form says not to name a student, and the retention rule for these
 rows is the same as everything else here: stated, and enforced by a command
 rather than by a promise (REQ-M.86).
 
+### 4.12 קהילת מט״צים, and why it is small
+
+Specified 2026-09-14. The section has been a placeholder since SPR-M.1 for a
+reason worth stating: a feed is the easiest thing in this product to build and
+the hardest to be responsible for. Every choice below is a restriction, and the
+restrictions are the design.
+
+**Three kinds of row, one stream.** An announcement from the program manager, a
+member's own post, and a piece of work a leader approved that its maker chose to
+share. Three because those are the three things people in this programme
+actually have to say to each other. One stream because a member should not have
+to learn which of three tabs a thing lives in.
+
+**Scoped to the institution, like everything else.** §4.4 with no exception. A
+post is a fourteen-year-old's words with their name on them, and an adult at
+another institution has no relationship with them. A network-wide feed is a real
+thing to want, and it becomes possible on the day somebody decides who moderates
+it. That person does not exist today.
+
+**Moderated on the way in, taken down by a person.** Every post passes through
+babook's `app.safety.text_relevance_ok` on the way in, which is §2.1's shared
+engine rather than a second copy of it (RULE-3). It fails open by design, so it
+is a filter and not a guarantee. The guard that actually matters is that a
+program manager can take any row down, and that taking down is a state rather
+than a deletion: a post that vanishes teaches its writer nothing, and a writer
+who cannot tell whether they were moderated or glitched learns to distrust the
+room.
+
+**Nothing here is public.** The public קהילת מט״צים page describes what the
+community is and shows no rows at all. §4.10 and REQ-M.30a: an internal feed and
+a consented, staff-approved public gallery are different products, and building
+the first must not quietly open the second.
+
+**Who may write.** Members, leaders and the program manager. Not candidates: a
+candidate is waiting on a decision and has no standing in the room yet
+(REQ-M.102). Not visitors, who cannot see it at all.
+
+**No comments, deliberately, and the cost is real.** A feed nobody can reply to
+is a noticeboard, and noticeboards are where programmes go to be quiet. Comments
+double the moderation surface and multiply the places a child's name can be
+typed by someone other than its owner. The first version finds out whether
+anybody posts at all. The reply comes back as its own decision, with its own
+answer about moderation, once there is something to reply to.
+
+**The empty room is a design problem, not a state to ignore.** A programme with
+four members opening an empty feed reads as abandoned. Nothing is auto-written:
+the screen says what will live here, and to the program manager it says plainly
+that she is the one who starts it.
+
+**This module carries a REST API** (`docs/building_an_app.md`, Rule 6). The rest
+of מט״צים predates that rule and has none, which is a recorded gap rather than
+an oversight. The community is the first module built under it, so the pattern
+starts here: DRF, full CRUD on the module's own models, and the screens built on
+top of the API rather than beside it.
+
 ## 5. Requirements
 
 ### 5.1 The space itself
@@ -641,7 +711,7 @@ silently reloads the page you are on reads as broken.
 | REQ-M.57 | אודות התכנית | What מט״צים is, who it is for, who runs it, and what a member actually does. Open logged out. This is the page a parent reads. | DONE |
 | REQ-M.58 | המסלול השנתי | The **five** stages as a path, with what happens at each and roughly when. מתמיינים is included here even though the home page shows four: the teaser sells the journey, this page is the journey. | DONE |
 | REQ-M.59 | הקורסים | The training path. Honest about what is open: מבחן הכניסה is real and reachable today, the rest of the track opens as the cohort moves, and the page says so rather than listing courses nobody can start. | DONE |
-| REQ-M.60 | The sections that need data say so | בתי הספר, קהילת מט״צים and ימי שיא have no `Leader`, `Post` or `Event` behind them yet. Each gets a real page in our voice explaining what will live there, rather than a dead link or invented content. | DONE |
+| REQ-M.60 | The sections that need data say so | בתי הספר, קהילת מט״צים and ימי שיא have no `Leader`, `Post` or `Event` behind them yet. Each gets a real page in our voice explaining what will live there, rather than a dead link or invented content. **Retired 2026-09-14.** ימי שיא became real in SPR-M.31 and קהילת מט״צים in SPR-M.32. בתי הספר stays as written and is not waiting on anything: Avi closed the question on 2026-09-14 (§4.8), a school is an attribute of a leader and never a table, so that page has no model coming. | DONE |
 
 ### 5.2 Identity and access
 
@@ -780,7 +850,11 @@ front rather than letting a kid discover it at lesson four on a phone.
 
 | REQ-ID | Title | Expectation | Status |
 |---|---|---|---|
-| REQ-M.26 | Cohort feed | Announcements and posts, inside the walls. | TODO |
+| REQ-M.26 | Cohort feed | Announcements and posts, inside the walls. **Specified 2026-09-14, §4.12.** One stream carrying three kinds of row: an announcement from the program manager, a member's own post, and a piece of approved work its maker chose to share. Scoped to the institution like everything else (§4.4), written by members, leaders and the program manager but not by candidates, and never shown to a visitor. **Done 2026-09-14.** One URL serves two screens: whoever belongs to an institution gets the feed, everybody else gets the page about the community. | DONE |
+| REQ-M.131 | A post is moderated on the way in and taken down by a person | Text passes `app.safety.text_relevance_ok` before it is stored, which is §2.1's shared engine and not a second copy. That call fails open by design, so it is a filter and not a guarantee, and the real guard is the program manager's take-down. Taking down is a state with a reason attached, never a deletion: a post that vanishes teaches its writer nothing, and a writer who cannot tell whether they were moderated or glitched learns to distrust the room. **Done 2026-09-14.** The moderation call is wrapped whole rather than just its import, because "it handles its own errors" is a property of somebody else's file and the cost of being wrong about it is a member losing what they wrote. A take-down carries a reason, the reason is shown to the writer, and it can be undone: a judgement can be a mistake, and `docs/building_an_app.md` asks whether a mistake is fixable without /admin/. | DONE |
+| REQ-M.132 | Sharing approved work is a separate act from making it | A member may put a submission their leader approved into the feed, and may take it back out. Only approved work, because the feed is not a place to be seen failing, and only by its maker, because §4.10 says whose decision that is. Nothing is shared automatically by being approved. **Done 2026-09-14.** The picker offers only approved work of the reader's own that is not already in the feed, and the share is withdrawable. Withdrawing deletes the post and never the submission: taking a share back is not unmaking the thing. | DONE |
+| REQ-M.133 | The public page shows no rows | קהילת מט״צים replaces its SPR-M.1 placeholder with a real page about what the community is, and shows no posts at all. An internal feed and a consented public gallery are different products (REQ-M.30a), and building the first must not quietly open the second. **Done 2026-09-14.** Replaces the SPR-M.1 placeholder. A test reads the public page for a member's post and a member's name. | DONE |
+| REQ-M.134 | The community has a REST API | `docs/building_an_app.md` Rule 6: full DRF CRUD over this module's models, documented, with the screens built on it rather than beside it. The rest of מט״צים predates the rule and has no API, which is a recorded gap; this module is where the pattern starts. The API answers to the same `visible_posts` queryset the screens use, so there is one scope and not two. **Done 2026-09-14.** `matazim/api.py` and `matazim/serializers.py`, one `ModelViewSet` on `readable_posts`, with `hide` and `show` as actions because a take-down is not a delete. Author and institution are read-only and set server-side, and tests try to set both from a client. | DONE |
 | REQ-M.27 | ימי שיא | Program events with dates, locations, and which leaders or classes they are for. **Specified 2026-09-13.** נעמי writes them; they belong to her world like everything else (§4.4), so a member sees her institution's events and never another's. An event is for everybody in the programme, or for named leaders, or for named classes — a day for one school's ninth-graders should not appear on every member's screen as though they were invited. Announcing one rings the bell (REQ-M.33). **Done 2026-09-13.** Written by a program manager, aimed at everybody or at named leaders, announced through the bell, and cancelled rather than deleted because somebody arranged their week around it. | DONE |
 | REQ-M.129 | The public page shows the year, and names nobody | ימי שיא is one of the eight public sections and has been a placeholder since SPR-M.1. It shows what is coming: the date, the title, the place, and nothing about who is attending. §4.10 and REQ-M.30a govern it — a public page about a programme for fourteen-year-olds names a school at most, and only events marked for showing publicly appear at all, because "when and where our children gather" is not a thing to publish by default. **Done 2026-09-13.** Replaces the SPR-M.1 placeholder. Only ticked events, never cancelled ones, and a test reads the page for a member's and a leader's name. | DONE |
 | REQ-M.130 | What is close is on the screen a member already opens | REQ-M.34's first half. המסלול שלי carries the next thing coming, because a calendar somebody has to remember to visit is a calendar that tells nobody anything. The whole year lives on its own page for when they want it. **Done 2026-09-13.** The next two on המסלול שלי, the year on /matazim/calendar/ with what has already happened underneath. | DONE |

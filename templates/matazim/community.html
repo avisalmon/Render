@@ -1,0 +1,147 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.26 — קהילת מט״צים, inside the walls. Spec §4.12.
+
+  One stream, three kinds of row, and the kinds are visible without being
+  shouted: an announcement from the programme gets a rule down its starting
+  edge, a shared piece of work carries a panel, a post is a post.
+
+  The empty room is handled on purpose. A programme with four members opening
+  an empty feed reads as abandoned, so the empty state says what will live here,
+  and to the program manager it says plainly that she is the one who starts it.
+{% endcomment %}
+
+{% block title %}קהילת מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page mz-page-narrow">
+  <div class="mz-page-head">
+    <h1>קהילת מט״צים</h1>
+    <p>מה קורה אצלנו. מה שכתוב כאן נשאר בין מי שבתוכנית.</p>
+  </div>
+
+  {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
+
+  <section class="mz-panel">
+    <h2>{% if can_moderate %}הודעה לתוכנית{% else %}מה לספר{% endif %}</h2>
+    <form method="post">
+      {% csrf_token %}
+      <label class="mz-field">
+        <span>{% if can_moderate %}ההודעה{% else %}מה קרה{% endif %}</span>
+        <textarea name="body" rows="3" required
+                  placeholder="{% if can_moderate %}מה שכולם צריכים לדעת.{% else %}מה לימדתם השבוע, מה עבד, מה תקוע.{% endif %}">{{ posted }}</textarea>
+      </label>
+
+      {% if shareable %}
+        <label class="mz-field">
+          <span>לצרף תוצר שאושר</span>
+          <select name="submission">
+            <option value="">בלי תוצר</option>
+            {% for work in shareable %}
+              <option value="{{ work.pk }}">{{ work.title }}</option>
+            {% endfor %}
+          </select>
+          <small>רק תוצרים שהמוביל/ה שלכם אישר/ה. אפשר להוציא בחזרה בכל רגע.</small>
+        </label>
+      {% endif %}
+
+      <div class="mz-page-actions">
+        <button type="submit" class="mz-btn mz-btn-primary">פרסום</button>
+      </div>
+    </form>
+  </section>
+
+  {% if posts %}
+    <ul class="mz-feed">
+      {% for post in posts %}
+        <li class="mz-post{% if post.kind == 'announcement' %} is-announcement{% endif %}{% if post.is_hidden %} is-hidden{% endif %}">
+          <div class="mz-post-head">
+            <span class="mz-post-who">{{ post.author.profile.display_name|default:"חבר/ת התוכנית" }}</span>
+            {% if post.kind == 'announcement' %}
+              <span class="mz-tag mz-tag-done">הודעה מהתוכנית</span>
+            {% endif %}
+            <span class="mz-post-when">{{ post.created_at|date:"j בF, H:i" }}</span>
+          </div>
+
+          <p class="mz-post-body">{{ post.body|linebreaksbr }}</p>
+
+          {% if post.submission %}
+            <div class="mz-post-work">
+              <p><strong>{{ post.submission.title }}</strong></p>
+              {% if post.submission.about %}<p class="mz-muted">{{ post.submission.about }}</p>{% endif %}
+            </div>
+          {% endif %}
+
+          {% if post.is_hidden %}
+            {% comment %}
+              REQ-M.131 — the writer is told what happened to them and why. A
+              post that simply vanishes teaches them nothing, and a writer who
+              cannot tell whether they were moderated or glitched learns to
+              distrust the room.
+            {% endcomment %}
+            <p class="mz-post-moderated">
+              הפוסט הזה הוסתר{% if post.hidden_reason %}: {{ post.hidden_reason }}{% endif %}
+            </p>
+          {% endif %}
+
+          <div class="mz-post-actions">
+            {% if post.author_id == request.user.id %}
+              <form method="post" action="{% url 'matazim:unshare_post' post.pk %}"
+                    class="mz-inline-form">
+                {% csrf_token %}
+                <button type="submit" class="mz-linkbtn">מחיקה</button>
+              </form>
+            {% endif %}
+
+            {% if can_moderate %}
+              {% if post.is_hidden %}
+                {% comment %}
+                  A take-down is a person's judgement, so it can be a person's
+                  mistake. Without this the only way back is /admin/, on the one
+                  action in this product aimed at a teenager's own words.
+                {% endcomment %}
+                <form method="post" action="{% url 'matazim:show_post' post.pk %}"
+                      class="mz-inline-form">
+                  {% csrf_token %}
+                  <button type="submit" class="mz-linkbtn">החזרה לקהילה</button>
+                </form>
+              {% else %}
+                {% comment %}
+                  Behind a summary rather than open on every card: a feed with a
+                  text box on each post reads like a form, and the thing being
+                  read is what people wrote.
+                {% endcomment %}
+                <details class="mz-post-hide">
+                  <summary>הסתרה</summary>
+                  <form method="post" action="{% url 'matazim:hide_post' post.pk %}">
+                    {% csrf_token %}
+                    <label class="mz-field">
+                      <span>למה מסתירים</span>
+                      <input type="text" name="reason" maxlength="200" required
+                             placeholder="הכותב/ת יראה/תראה את זה">
+                    </label>
+                    <button type="submit" class="mz-btn mz-btn-ghost">הסתרה</button>
+                  </form>
+                </details>
+              {% endif %}
+            {% endif %}
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <section class="mz-panel">
+      <h2>עוד אין כאן כלום</h2>
+      <p class="mz-muted">
+        {% if can_moderate %}
+          הפוסט הראשון הוא שלכם. ברגע שתכתבו משהו, כל מי שבתוכנית יראה אותו כאן.
+        {% else %}
+          כאן מספרים מה לימדתם, מה עבד ומה תקוע, ומשתפים תוצרים שאושרו.
+          אתם מוזמנים להיות הראשונים.
+        {% endif %}
+      </p>
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

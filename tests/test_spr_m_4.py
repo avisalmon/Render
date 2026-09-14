@@ -143,22 +143,45 @@ def test_courses_is_honest_about_what_is_open(client, db):
 # ---------------------------------------------------------------- F-M.4.5
 
 
-@pytest.mark.parametrize("name", ["matazim:schools", "matazim:community", "matazim:events"])
+@pytest.mark.parametrize("name", ["matazim:schools"])
 def test_a_section_without_data_says_what_is_coming(client, db, name):
-    """T-F-M.4.5-1: REQ-M.60. No dead link, and no invented content either."""
+    """T-F-M.4.5-1: REQ-M.60. No dead link, and no invented content either.
+
+    **Narrowed 2026-09-14, from three sections to one.** ימי שיא became real in
+    SPR-M.31 and קהילת מט״צים in SPR-M.32, so asserting they promise
+    something later would be asserting they are still unbuilt. בתי הספר stays,
+    and stays honestly: Avi closed the school question on 2026-09-14 (§4.8) and a
+    school is an attribute of a leader rather than a table, so no model is
+    coming for it.
+
+    The sibling below still walks all three, because "no page invents a figure"
+    outlives the placeholder and applies hardest to a page that is now real.
+    """
     html = client.get(reverse(name)).content.decode()
     assert "בקרוב" in html or "ייפתח" in html or "עוד לא" in html
+
+
+# A quantity is a quantity whether it is typed in digits or in words, and the
+# words are the ones somebody writes while warming up a paragraph.
+INVENTED_FIGURES = ["מאות", "אלפי", "עשרות אלפי", "כמה מאות"]
 
 
 def test_no_section_invents_content(client, db):
     """T-F-M.4.5-2: the stats-band lesson, held on to.
 
     Nobody counted schools or members, so no page may imply a number.
+
+    **Widened 2026-09-14, because it missed one.** The check was digits only,
+    and the copy that got past it was "מאות מט״צים" on the new קהילת מט״צים
+    page: a figure nobody counted, written while warming up a paragraph, which
+    is how the stats band happened in the first place.
     """
     for name in ["matazim:schools", "matazim:community", "matazim:events"]:
         html = client.get(reverse(name)).content.decode()
         body = html.split("<main>")[1].split("</main>")[0]
         assert not re.search(r"\b\d{2,}\+", body), f"{name} shows an invented figure"
+        for word in INVENTED_FIGURES:
+            assert word not in body, f"{name} implies a count nobody made: {word}"
 
 
 # ---------------------------------------------------------------- F-M.4.7

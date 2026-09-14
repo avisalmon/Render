@@ -5,11 +5,14 @@ with a babook name. RULE-1 is enforced against this: a template under
 templates/matazim/ may only reverse names in this namespace.
 """
 
-from django.urls import path
+from django.urls import include, path
+from rest_framework.routers import DefaultRouter
 
 from . import (
+    api,
     certificate_views,
     cohort_views,
+    community_views,
     conversation_views,
     entrance_views,
     event_views,
@@ -34,7 +37,12 @@ urlpatterns = [
     path("track/", views.track, name="track"),
     path("courses/", views.courses, name="courses"),
     path("schools/", views.schools, name="schools"),
-    path("community/", views.community, name="community"),
+    # REQ-M.26, M.131-M.134 — קהילת מט״צים. One door: a visitor or a
+    # candidate gets the page about the community, a member gets the feed.
+    path("community/", community_views.community, name="community"),
+    path("community/<int:post_id>/hide/", community_views.hide_post, name="hide_post"),
+    path("community/<int:post_id>/show/", community_views.show_post, name="show_post"),
+    path("community/<int:post_id>/remove/", community_views.unshare_post, name="unshare_post"),
     # REQ-M.27, M.129, M.130 — ימי שיא, and the year.
     path("events/", event_views.events_page, name="events"),
     path("calendar/", event_views.calendar, name="calendar"),
@@ -149,3 +157,11 @@ urlpatterns = [
     path("profile/", views.profile, name="profile"),
     path("profile/replay-welcome/", views.profile_reset_welcome, name="profile_reset_welcome"),
 ]
+
+# REQ-M.134, methodology Rule 6. The first מט״צים module with a REST API; the
+# rest of the app predates the rule (spec §4.12). DRF's browsable API is the
+# documentation, which is the same call the site made for ustrip.
+router = DefaultRouter()
+router.register(r"posts", api.PostViewSet, basename="api-post")
+
+urlpatterns += [path("api/", include(router.urls))]

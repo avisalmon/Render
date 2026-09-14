@@ -1101,3 +1101,78 @@ class Event(models.Model):
     @property
     def is_cancelled(self):
         return self.cancelled_at is not None
+
+
+class Post(models.Model):
+    """REQ-M.26 — קהילת מט״צים, the feed inside the walls (§4.12).
+
+    **Three kinds, one stream.** An announcement from the program manager, a
+    member's own words, and a piece of work a leader approved that its maker
+    chose to share. Three because they are the three things people in this
+    programme have to say to each other, and one stream because nobody should
+    have to learn which of three tabs a thing lives in.
+
+    **Owned by an institution** (§4.4), like every other row here. The owner is
+    stamped at write time from the author's own leader rather than read back
+    through the author later, because `Student.leader` can change (REQ-M.98) and
+    a post must not move to a different school when a teenager does.
+
+    **Taken down, never deleted** (REQ-M.131). A post that vanishes teaches its
+    writer nothing, and a writer who cannot tell whether they were moderated or
+    glitched learns to distrust the room. So a hidden post keeps its row, its
+    words and its author, and carries who hid it and why.
+    """
+
+    ANNOUNCEMENT = "announcement"
+    POST = "post"
+    WORK = "work"
+    KIND_CHOICES = [
+        (ANNOUNCEMENT, "הודעה מהתוכנית"),
+        (POST, "פוסט"),
+        (WORK, "תוצר"),
+    ]
+
+    author = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="matazim_posts",
+        verbose_name="מי כתב",
+    )
+    # The institution this belongs to. Stamped once, at write time.
+    program_manager = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="matazim_community",
+        verbose_name="של מנהל/ת התוכנית",
+    )
+
+    kind = models.CharField(
+        max_length=20, choices=KIND_CHOICES, default=POST, db_index=True
+    )
+    body = models.TextField(verbose_name="מה לספר")
+
+    # REQ-M.132 — sharing approved work is a separate act from making it, so
+    # this is a link to a submission and never a copy of one. The file stays
+    # where it was, behind the view that asks who is looking (REQ-M.122).
+    submission = models.ForeignKey(
+        "Submission", on_delete=models.CASCADE, null=True, blank=True,
+        related_name="shared_as", verbose_name="תוצר משותף",
+    )
+
+    hidden_at = models.DateTimeField(null=True, blank=True, verbose_name="הוסתר")
+    hidden_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    hidden_reason = models.CharField(
+        max_length=200, blank=True, default="", verbose_name="למה הוסתר"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "פוסט"
+        verbose_name_plural = "קהילה"
+
+    def __str__(self):
+        return f"{self.get_kind_display()} · {self.body[:40]}"
+
+    @property
+    def is_hidden(self):
+        return self.hidden_at is not None
