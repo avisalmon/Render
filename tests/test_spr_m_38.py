@@ -361,7 +361,7 @@ def test_the_figures_are_counted_from_real_rows(client, db):
     assert figures["מט״צים בתוכנית"] == 2
     assert figures["בית ספר"] == 1, "one school counted twice"
     assert figures["מוביל/ה"] == 1
-    assert figures["שעות הדרכה"] == 2
+    assert figures["שעות פרקטיקום"] == 2
     assert "מוסמכים" not in figures, "a zero was published"
 
 
@@ -384,7 +384,7 @@ def test_a_cancelled_session_is_not_an_hour_taught(client, db):
     )
 
     figures = {row["label"]: row["figure"] for row in counters()}
-    assert figures["שעת הדרכה"] == 1
+    assert figures["שעת פרקטיקום"] == 1
 
 
 def test_an_unapproved_leader_is_not_a_leader_in_the_figures(client, db):

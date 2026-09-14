@@ -127,6 +127,12 @@ class StudyClassSerializer(serializers.ModelSerializer):
         model = StudyClass
         fields = ["id", "leader", "name", "school_name", "year", "is_active", "created_at"]
         read_only_fields = ["id", "created_at"]
+        # `leader` is optional on the way in: a leader creating their own class
+        # should not have to name themselves, and the viewset fills it from
+        # `request.user`. Found 2026-09-14 by a test that tried exactly that
+        # and got a 400 demanding the field. A program manager may still name
+        # one of their own leaders, and the viewset refuses anybody else's.
+        extra_kwargs = {"leader": {"required": False}}
 
 
 class StudentSerializer(serializers.ModelSerializer):

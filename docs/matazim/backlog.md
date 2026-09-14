@@ -2504,6 +2504,81 @@ What is still not built is not in the spec at all, and is recorded in SPR-M.37:
 Litala's צפייה בכל תלמידי בית הספר, which was never accepted or refused, and
 Q8's authoring surface, which is undecided.
 
+## SPR-M.39 — The review's first four  `DONE 2026-09-14`
+
+**Goal:** Avi asked for a review of everything built so far, then said "start
+what you think first." These are the four I put first, in the order I put
+them. The fifth and largest, an `Institution` row, is a data-model change and
+waits for him: `data_model.md` §6 carries the proposal.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.39.1 | `matazim_handover`: everything one manager owns moves to another, atomically | REQ-M.143, §4.4, §4.8 | DONE |
+| F-M.39.2 | The bell reaches the inbox for the things worth leaving the site for | REQ-M.142, REQ-M.33 | DONE |
+| F-M.39.3 | The public band says פרקטיקום, not הדרכה | REQ-M.5f | DONE |
+| F-M.39.4 | `school_name` normalised at the one door every write goes through | REQ-M.5f, §4.8 | DONE |
+| F-M.39.5 | An `Institution` row | proposed, `data_model.md` §6 | HELD for Avi |
+
+### What the handover is, and what it is not
+
+The tenancy root is a person. The day נעמי leaves, her successor signs in to an
+empty programme and every leader, event, invite and post she owned is stranded.
+The command moves ownership and leaves history alone: a leader approved by
+נעמי stays approved by נעמי after she has gone, and her requests stay hers,
+because §4.11's log is her voice. The successor is made a program manager
+through the same function the screen uses, so a pending leader row on them is
+approved rather than left waiting (REQ-M.137). The old manager keeps her role,
+because revoking is a separate decision and a handover that quietly demoted
+somebody would be two decisions dressed as one.
+
+It is a bandage, and the proposal says so. "Who runs this institution" still
+lives in nobody's table.
+
+### The mail is a pointer
+
+Nothing reached a member outside the site until now. The mail carries the same
+short line the bell carries and a link, and nothing else: no feedback text, no
+work, no names beyond the reader's own. A minor's feedback is read inside the
+walls, behind a login, not in an inbox that may be shared with a whole family.
+`FEEDBACK` does not mail, because it accompanies a decision that already does,
+and a second mail for one moment is how mail stops being opened.
+
+### Three things the tests caught in my own work
+
+**Every mail test was passing without the mail ever reaching the guard.** Django's
+test runner swaps `EMAIL_BACKEND` for locmem at start-up, so a plain `send_mail`
+in a test bypasses `GuardedEmailBackend`, and the cap test showed five mails
+under a cap of three. Not because the guard was broken: nothing had gone
+through it. The fixture now puts the guard back outermost. Until it did, six
+green tests said nothing about production.
+
+**The cap test passed alone and failed in the suite.** The counter is keyed by
+address and date in a process-local cache that outlives a test, and other
+tests mail the same address first. `cache.clear()` in the fixture. And a
+finding for babook's guard, not fixed here: that cache is `LocMemCache` by
+default, so in production the cap is per gunicorn worker and resets on every
+deploy. It is a soft cap.
+
+**A leader could not create their own class through the API.** The serializer
+demanded `leader` before the viewset could fill it in, a 400 where the screen
+just works. Found by a test written for something else. `leader` is optional
+on the way in now, and the viewset still refuses anybody else's.
+
+### Rules verified by writing the defect
+
+Dropping `Post` from the handover's table list: the inheritance test named the
+missing key. Removing the normalisation from `StudyClass.save()`: *'  עתיד
+רמלה ' == 'עתיד רמלה'*. Both restored from copies and checked byte-for-byte
+against them, which is the habit two `git checkout` mistakes should have
+taught sooner.
+
+### Not mine, but in the way
+
+The shared smoke file now carries tests for `/memz/`, a third app another chat
+is building, and those fail in my tree because the app is not in it. With the
+ustrip template comments that is two products whose work turns this product's
+gate red. Item 17 of the review, now biting twice.
+
 ## Also still open
 
 - Retire the old production tables, once ACT-M.2 is answered.

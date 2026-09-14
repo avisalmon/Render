@@ -310,3 +310,54 @@ it. The complete list, so nobody has to find out by trying:
 Read the browsable API at `/matazim/api/` as the documentation; DRF renders
 every route, its verbs and its fields, which is the call this site already made
 for ustrip.
+
+---
+
+## 6. Proposed, not built: an `Institution` row
+
+**Status: waiting for Avi.** Rule 4 says the data model is approved before it is
+built, and this is a data-model change, so it is written here and not in code.
+
+**The problem.** The tenancy root is a person. `Leader.program_manager`,
+`Event.program_manager`, `LeaderInvite.program_manager` and `Post.program_manager`
+all point at the `User` who runs the programme, and `access.py` scopes every
+screen by that user. §4.8 argued that a second network becomes a table on the
+day one exists, and never considered the day the first manager leaves. On that
+day her successor signs in to an empty programme and every row she owned is
+stranded. The review of 2026-09-14 named this the largest structural risk in the
+model.
+
+**What exists today instead.** `manage.py matazim_handover old new --apply`
+moves everything one manager owns to another, atomically, and leaves the
+records of who did what untouched. It is a bandage: it works, it needs somebody
+to remember to run it, and it makes "who runs this institution" a fact that
+lives in nobody's table.
+
+**The proposal.** One small model:
+
+| Field | Type | Notes |
+|---|---|---|
+| `name` | char | the institution as it names itself, e.g. רשת עתיד |
+| `managers` | m:n User | who runs it; more than one is allowed and is the point |
+| `created_at` | datetime | |
+
+Then the four `program_manager` FKs become `institution` FKs, `institution_of()`
+returns the row instead of a user, and `is_program_manager(user)` becomes "is a
+manager of any institution". `MemberProfile.is_program_manager` goes, because the
+m:n is the role and a flag beside it is a second copy of one fact.
+
+**What it costs.** Four FK migrations with a data step that creates one
+`Institution` and points everything at it, about thirty call sites in
+`access.py` and the API, and every test that builds a manager. A day's work,
+most of it mechanical, and the sweep in `test_spr_m_34.py` is what makes it
+safe: it asks every endpoint for everything from inside one institution and
+fails if the other one leaks.
+
+**What it buys.** A manager can be replaced without a command. Two managers can
+share one institution, which is what Litala's brief describes for צוות התכנית
+(Avi and Litala). And the day a second network arrives, it is a second row and
+not a redesign.
+
+**Recommendation.** Build it, now, while there is one institution and one
+manager and the migration is trivial. Every sprint from here adds another row
+type that points at a person.

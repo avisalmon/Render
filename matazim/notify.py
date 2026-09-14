@@ -49,12 +49,78 @@ def notify(user, kind, text, *, url="", actor=None):
         url = ""
 
     try:
-        return Notification.objects.create(
+        row = Notification.objects.create(
             user=user, kind=kind, text=text[:300], url=url[:300]
         )
     except Exception as exc:  # pragma: no cover - never worth losing the event for
         logger.warning("matazim: could not write a notification for %s: %s", user, exc)
         return None
+
+    _mail(row)
+    return row
+
+
+# REQ-M.142 — the bell reaches outside the site for the things worth leaving
+# the site for. Until 2026-09-14 nothing did: work returned, a certificate
+# issued, an event tomorrow, all bell-only, and a fourteen-year-old who does not
+# open the site never learns their work came back. The review named it the
+# largest UX gap left.
+#
+# Not every kind. `FEEDBACK` accompanies a decision that already mails, and a
+# second mail for the same moment is how mail stops being opened.
+MAILED_KINDS = frozenset(
+    {
+        Notification.WORK_RETURNED,
+        Notification.WORK_APPROVED,
+        Notification.WORK_WAITING,
+        Notification.CERTIFIED,
+        Notification.JOINED,
+        Notification.EVENT,
+    }
+)
+
+SUBJECT = "מט״צים: יש לך משהו חדש"
+
+
+def _mail(row):
+    """One mail per notification, a pointer and never the content.
+
+    The body carries the same short line the bell carries and a link to the
+    site, and nothing else: no feedback text, no work, no names beyond the
+    reader's own. A minor's feedback is read inside the walls, behind a login,
+    not in an inbox that may be shared with a whole family.
+
+    Never raises. The bell is already written; a mail that fails must not undo
+    it. The per-recipient daily cap and the send log live in the guarded mail
+    backend and apply here without this function knowing about them.
+    """
+    if row.kind not in MAILED_KINDS:
+        return
+    address = (getattr(row.user, "email", "") or "").strip()
+    if not address:
+        return
+
+    from django.conf import settings
+    from django.core.mail import send_mail
+
+    from .request_mail import _site_url
+
+    body = (
+        f"{row.text}\n\n"
+        f"{_site_url()}{row.url or '/matazim/'}\n\n"
+        "המייל הזה נשלח כי משהו קרה בחשבון שלך במט״צים. "
+        "כל הפרטים נמצאים באתר, אחרי כניסה."
+    )
+    try:
+        send_mail(
+            SUBJECT,
+            body,
+            getattr(settings, "DEFAULT_FROM_EMAIL", None),
+            [address],
+            fail_silently=True,
+        )
+    except Exception as exc:  # pragma: no cover - the bell must survive the mail
+        logger.warning("matazim: notification mail to %s failed: %s", address, exc)
 
 
 def unread_count(user):

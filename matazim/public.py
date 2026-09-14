@@ -71,7 +71,12 @@ def counters():
         (matazim, "מט״צ בתוכנית", "מט״צים בתוכנית"),
         (schools, "בית ספר", "בתי ספר"),
         (leaders, "מוביל/ה", "מובילים ומובילות"),
-        (round(minutes / 60), "שעת הדרכה", "שעות הדרכה"),
+        # פרקטיקום, not הדרכה. On this site הדרכה is a course (the standing
+        # brand rule), and the nav item ההדרכות sat one screen away from a band
+        # saying "שעות הדרכה" about something else entirely. The review of
+        # 2026-09-14 caught it; the practicum screen had already been renamed
+        # for the same collision and the band was missed.
+        (round(minutes / 60), "שעת פרקטיקום", "שעות פרקטיקום"),
         (certified, "מוסמך/ת", "מוסמכים"),
         (events, "יום שיא", "ימי שיא"),
     ]

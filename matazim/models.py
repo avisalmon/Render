@@ -319,6 +319,17 @@ class StudyClass(models.Model):
         verbose_name = "כיתה"
         verbose_name_plural = "כיתות"
 
+    def save(self, *args, **kwargs):
+        # `school_name` is free text by decision (§4.8) and it now feeds a public
+        # counter (REQ-M.5f), so "עתיד רמלה" with a trailing space was a second
+        # school on the front page. Normalised here, at the one door every write
+        # goes through, rather than in the view that happened to strip it and
+        # the API that did not. Collapsed inner whitespace too: two spaces
+        # between the words is the same school.
+        self.school_name = " ".join((self.school_name or "").split())
+        self.name = " ".join((self.name or "").split())
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.name} · {self.school_name}" if self.school_name else self.name
 
