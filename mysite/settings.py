@@ -90,6 +90,25 @@ MEDIA_DIR = PERSISTENT_ROOT / "media"
 # so these live outside it and are handed out only by a view that checks who is
 # asking (REQ-M.80).
 MATAZIM_PRIVATE_DIR = PERSISTENT_ROOT / "matazim_private"
+
+# REQ-M.84 — the guardian-consent gate, switched off while the site is being
+# built. Avi, 2026-09-14: "when sign up, don't force the parents agreement for
+# now. We will enable this later. Just have all infrastructure for this but for
+# the development of the site ignore it."
+#
+# Off means off everywhere, this machine and Render alike, because Avi reviews
+# in production. What is switched off is the gate and nothing else: the birth
+# year, the guardian fields, the consent form, the record of who entered it and
+# the policy text all still work, and a consent given today is still stored. The
+# only thing that changes is that a member with no consent on file is not
+# stopped from joining a leader.
+#
+# It is one environment variable rather than deleted code precisely so turning
+# it back on is not a deploy of new logic, and there is a test that fails if
+# anybody deletes the infrastructure while it is off.
+MATAZIM_REQUIRE_GUARDIAN_CONSENT = (
+    os.environ.get("MATAZIM_REQUIRE_GUARDIAN_CONSENT", "False") == "True"
+)
 try:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     MEDIA_DIR.mkdir(parents=True, exist_ok=True)

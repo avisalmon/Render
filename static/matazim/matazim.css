@@ -2191,3 +2191,18 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
 /* The share picker matches the box above it. A select at its content width
    beside a full-width textarea reads as an afterthought. */
 .mz-field select { width: 100%; }
+
+/* REQ-M.136 — the signed-in person's name in the header. Capped and clipped
+   rather than allowed to grow: a long name must not push the bell and the exit
+   off a 390px screen, which is the whole width the phone guard allows. */
+.mz-me-name {
+  display: inline-block;
+  max-width: 11ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+@media (min-width: 700px) {
+  .mz-me-name { max-width: 18ch; }
+}

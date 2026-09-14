@@ -94,10 +94,20 @@ class Command(BaseCommand):
             )
             return
 
-        profile.is_program_manager = value
-        profile.save(update_fields=["is_program_manager", "updated_at"])
-        word = "granted to" if value else "revoked from"
-        self.stdout.write(self.style.SUCCESS(f"program manager {word} {email}"))
+        # REQ-M.137 — the same act as the screen, through the same function, so
+        # the two ways of granting this role cannot come to mean different
+        # things. This command is how the first program manager is made, and
+        # she is the likeliest of all of them to be a pending leader already.
+        from matazim.roles import grant_program_manager, revoke_program_manager
+
+        if value:
+            approved = grant_program_manager(user)
+            self.stdout.write(self.style.SUCCESS(f"program manager granted to {email}"))
+            if approved is not None:
+                self.stdout.write(self.style.SUCCESS(f"  and approved {email} as a leader"))
+        else:
+            revoke_program_manager(user)
+            self.stdout.write(self.style.SUCCESS(f"program manager revoked from {email}"))
 
     def _list(self):
         managers = MemberProfile.objects.filter(is_program_manager=True).select_related("user")

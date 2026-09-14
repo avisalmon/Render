@@ -311,13 +311,20 @@ def staff_admins(request):
             # The likeliest way to lose every admin is by accident.
             error = "אי אפשר להסיר את ההרשאה מעצמכם."
         else:
-            grant = action != "revoke"
-            MemberProfile.objects.update_or_create(
-                user=user, defaults={"is_program_manager": grant}
-            )
-            notice = (
-                f"{email} הוגדר/ה כמנהל/ת התוכנית." if grant else f"הרשאת הניהול הוסרה מ־{email}."
-            )
+            from .roles import grant_program_manager, revoke_program_manager
+
+            if action == "revoke":
+                revoke_program_manager(user)
+                notice = f"הרשאת הניהול הוסרה מ־{email}."
+            else:
+                # REQ-M.137 — granting the role is itself the approval. Somebody
+                # made a program manager must not go on being shown the screen
+                # that says they are waiting for a decision the granter has just
+                # made.
+                approved = grant_program_manager(user, by=request.user)
+                notice = f"{email} הוגדר/ה כמנהל/ת התוכנית."
+                if approved is not None:
+                    notice += " גם ההרשאה כמוביל/ה אושרה, בלי להמתין."
 
     # Superusers hold every admin power whether or not the flag is set, so a
     # page about who has power has to show them. Listing only the flag would

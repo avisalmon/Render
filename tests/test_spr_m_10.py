@@ -9,7 +9,16 @@ wrong. So the gate sits in front of **joining a leader**, which is the moment
 their data starts being shown to another person, and nowhere earlier. Several
 tests below exist only to hold that line.
 
-Traces: REQ-M.84, M.85, M.86.
+**The gate is switched off in the product as of 2026-09-14** (Avi: "don't force
+the parents agreement for now"), and every test in this file that describes what
+the gate does now turns it on first, through `gate_on`. That is deliberate.
+Deleting these tests along with the gate would mean the day somebody flips
+`MATAZIM_REQUIRE_GUARDIAN_CONSENT` back on, nothing would say whether it still
+works, and the thing being switched back on is a safeguard for fourteen-year-
+olds. `test_the_gate_is_off_but_all_of_it_still_works` holds the other half: the
+switch is off, and everything behind it is intact.
+
+Traces: REQ-M.84, M.85, M.86, M.135.
 """
 
 import json
@@ -23,6 +32,17 @@ pytestmark = pytest.mark.sprm10
 
 PASSWORD = "sprm10-pass-2284"
 THIS_YEAR = timezone.now().year
+
+
+@pytest.fixture
+def gate_on(settings):
+    """Turn the guardian-consent gate on for one test.
+
+    Asked for by name rather than applied to the whole file, so it is
+    visible in each signature which tests are describing the gate and which
+    are describing the product as it actually ships today.
+    """
+    settings.MATAZIM_REQUIRE_GUARDIAN_CONSENT = True
 
 
 def make_user(email, name=""):
@@ -67,7 +87,7 @@ def make_admin(email="chief@example.com"):
 # --------------------------------------------- F-M.10.1: who needs a parent
 
 
-def test_a_fourteen_year_old_needs_a_parent(db):
+def test_a_fourteen_year_old_needs_a_parent(db, gate_on):
     """T-F-M.10.1-1: REQ-M.84. The ordinary case: ninth-graders are fourteen."""
     from matazim.consent import needs_guardian_consent
 
@@ -91,7 +111,7 @@ def test_recorded_consent_settles_it(db):
     assert not needs_guardian_consent(profile)
 
 
-def test_an_unknown_age_is_not_treated_as_an_adult(db):
+def test_an_unknown_age_is_not_treated_as_an_adult(db, gate_on):
     """T-F-M.10.1-4: REQ-M.84, and the one that decides whether this is safe.
 
     Everyone registered before today has no birth year. Reading a blank as
@@ -129,7 +149,7 @@ def test_registration_records_the_year_and_the_parent(client, db):
 # ------------------------------------- F-M.10.1: the gate, and where it is not
 
 
-def test_without_consent_you_cannot_join_a_leader(client, db):
+def test_without_consent_you_cannot_join_a_leader(client, db, gate_on):
     """T-F-M.10.1-6: REQ-M.84. The moment their data starts being shown to
     somebody else is the moment consent is owed."""
     from matazim.models import Student
@@ -142,7 +162,7 @@ def test_without_consent_you_cannot_join_a_leader(client, db):
     assert not Student.objects.filter(user=user, leader=leader).exists()
 
 
-def test_without_consent_you_cannot_apply_to_a_leader_either(client, db):
+def test_without_consent_you_cannot_apply_to_a_leader_either(client, db, gate_on):
     """T-F-M.10.1-7: REQ-M.84. Both doors, or neither."""
     from matazim.models import Student
 
@@ -195,7 +215,7 @@ def test_the_gate_does_not_block_the_entrance_test(client, db):
     assert client.get(reverse("matazim:test_lessons")).status_code == 200
 
 
-def test_a_member_is_told_what_is_missing_rather_than_just_refused(client, db):
+def test_a_member_is_told_what_is_missing_rather_than_just_refused(client, db, gate_on):
     """T-F-M.10.1-11: REQ-M.84, the same principle as REQ-M.77.
 
     A blocked teenager who cannot see why will assume the site is broken.
@@ -449,3 +469,72 @@ def test_the_policy_states_the_retention_period(client, db):
 
     html = client.get(reverse("matazim:privacy")).content.decode()
     assert str(FAILED_ATTEMPT_DAYS) in html
+
+
+# --------------------------------- F-M.33.1: the gate, switched off on purpose
+
+
+def test_the_gate_is_off_but_all_of_it_still_works(client, db, settings):
+    """T-F-M.33.1-1: REQ-M.135.
+
+    Avi, 2026-09-14: "don't force the parents agreement for now. We will enable
+    this later. Just have all infrastructure for this."
+
+    So this test is in two halves, and the second half is the one that matters.
+    Off is easy to get right. What is easy to get wrong over the following
+    months is deleting the machinery behind a switch nobody is watching, and
+    then discovering on the day it is turned back on that a safeguard for
+    fourteen-year-olds has quietly rotted.
+    """
+    from matazim.consent import (
+        consent_blocker,
+        gate_is_on,
+        needs_guardian_consent,
+        record_guardian_consent,
+    )
+    from matazim.models import Student
+
+    # Half one: off, and nobody is stopped.
+    assert not gate_is_on(), "the gate shipped on"
+
+    leader = make_leader()
+    user, profile = make_member(born=THIS_YEAR - 14)
+    assert not needs_guardian_consent(profile)
+    assert consent_blocker(profile) is None
+
+    client.force_login(user)
+    client.post(reverse("matazim:join", args=[leader.join_code]), {"action": "join"})
+    assert Student.objects.filter(user=user, leader=leader).exists(), (
+        "the gate is off and somebody was still stopped"
+    )
+
+    # Half two: the machinery behind the switch is all still there. Recording a
+    # consent works and is stored with who said so, and flipping the switch
+    # brings the gate straight back.
+    record_guardian_consent(profile, name="רונית כהן", email="parent@example.com")
+    profile.refresh_from_db()
+    assert profile.guardian_consent_at is not None
+    assert profile.guardian_email == "parent@example.com"
+
+    settings.MATAZIM_REQUIRE_GUARDIAN_CONSENT = True
+    assert gate_is_on()
+
+    _user2, unconsented = make_member(email="kid2@example.com", born=THIS_YEAR - 14)
+    assert needs_guardian_consent(unconsented), (
+        "the switch was turned back on and the gate did not come back"
+    )
+    assert consent_blocker(unconsented), "the refusal lost its words"
+
+
+def test_the_registration_form_still_asks(client, db):
+    """T-F-M.33.1-2: REQ-M.135, REQ-M.82.
+
+    The gate is off; the question is not. A parent's details given today are
+    still collected and still stored, so the day the gate goes on, the people
+    who answered are not asked again. Switching off the gate and switching off
+    the asking are different things, and only the first one was asked for.
+    """
+    html = client.get(reverse("matazim:register")).content.decode()
+
+    assert "birth_year" in html, "the birth year stopped being asked"
+    assert "guardian_email" in html, "the parent's details stopped being asked"

@@ -2112,6 +2112,57 @@ API, and only this module has one. Both are recorded here rather than quietly
 fixed, because retrofitting seventeen models is its own piece of work and
 Avi's to schedule.
 
+## SPR-M.33 — Four things Avi found by using it  `DONE 2026-09-14`
+
+**Goal:** four corrections from him signing in and out of the live site. Not a
+feature sprint. Spec §5.6a.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.33.1 | The guardian-consent gate behind a flag, off, with everything behind it intact | REQ-M.135, REQ-M.84 | DONE |
+| F-M.33.2 | The signed-in person's name in the header | REQ-M.136 | DONE |
+| F-M.33.3 | Granting the program-manager role approves a pending leader row | REQ-M.137, REQ-M.93, REQ-M.114 | DONE |
+| F-M.33.4 | The prototype notice only after signing in, and only once | REQ-M.138, REQ-M.39 | DONE |
+
+### What each one cost beyond the obvious change
+
+**The consent flag was the easy half.** Off is trivial. What is easy to get
+wrong over the following months is deleting the machinery behind a switch nobody
+is watching, and finding out on the day it goes back on that a safeguard for
+fourteen-year-olds has rotted. So the five SPR-M.10 tests that describe the gate
+now ask for it explicitly by name (`gate_on`), and a new pair holds both halves:
+the gate is off and nobody is stopped, and the recording, the form and the
+switch all still work.
+
+**The role grant was hiding a worse bug than the one reported.** Avi asked not
+to wait for an approval. The actual state was that `leader_of()` refuses an
+unapproved row, so somebody made a program manager while their leader row was
+pending held the highest role in the product *and could not reach their own
+students*, while being shown the screen that says they are waiting on a decision
+the granter had just made. Fixed in one function used by both the screen and the
+bootstrap command, since the command is how the first program manager is made
+and she is the likeliest of all of them to already be a pending leader.
+
+**The notice change deleted code, which is the point.** Once a stranger is never
+shown the notice, nobody can accept it while signed out, so the session flag had
+no writer and the acceptance-carried-across-registration path could never fire.
+Leaving them would have meant two functions and a session key that look live and
+are not. Three SPR-M.2 tests were rewritten rather than deleted, because the
+requirement changed and the tests should say what it changed to.
+
+### Rules verified by writing the defect
+
+**The grant approves.** Making `grant_program_manager` set the flag and stop:
+*a program manager was left waiting for approval*.
+
+**Strangers are not nagged.** Restoring the anonymous branch of
+`welcome_is_pending`: *a signed-out visitor was nagged on matazim:home*.
+
+### Still open from this list
+
+Avi's feedback arrived as five numbered items and the fifth came through empty.
+Four are done. The fifth is unknown and is not guessed at here.
+
 ## Also still open
 
 - Retire the old production tables, once ACT-M.2 is answered.

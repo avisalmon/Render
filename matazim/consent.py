@@ -49,8 +49,28 @@ def has_guardian_consent(profile):
     return bool(profile and profile.guardian_consent_at)
 
 
+def gate_is_on():
+    """Whether a missing consent actually stops anybody.
+
+    Avi, 2026-09-14: do not force it yet, keep all the infrastructure, flag it
+    off. So this is the only place the question is asked, and everything else in
+    this file behaves exactly as it did: the birth year is still read, the
+    consent form still records, `record_guardian_consent` still writes who said
+    so, and the policy still says what we do. The gate alone is off.
+
+    Default off, on this machine and on Render, because Avi reviews in
+    production and a flag that is off in dev and on in prod would mean the thing
+    he is looking at is not the thing that was built.
+    """
+    from django.conf import settings
+
+    return bool(getattr(settings, "MATAZIM_REQUIRE_GUARDIAN_CONSENT", False))
+
+
 def needs_guardian_consent(profile):
     """The one question every caller asks."""
+    if not gate_is_on():
+        return False
     if profile is None:
         return True
     return is_minor(profile) and not has_guardian_consent(profile)

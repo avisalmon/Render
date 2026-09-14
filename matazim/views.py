@@ -26,12 +26,6 @@ from app.models import CourseCertificate, Enrollment, UserProfile
 from .content import public_stages
 from .models import MemberProfile, Student
 
-# Anonymous visitors have no row to write to, so their acknowledgement of the
-# prototype notice lives in the session. It cannot be attributed to anyone,
-# which is exactly why REQ-M.40 stores it on the profile for people who signed
-# in. What it must not do is nag them on every page.
-WELCOME_SESSION_KEY = "mz_welcome_accepted"
-
 # --- Shared helpers ---------------------------------------------------------
 
 
@@ -44,10 +38,24 @@ def member_profile(user):
 
 
 def welcome_is_pending(request):
-    """REQ-M.39 — has this person been told the site is a prototype?"""
-    if request.user.is_authenticated:
-        return not member_profile(request.user).has_accepted_welcome()
-    return not request.session.get(WELCOME_SESSION_KEY, False)
+    """REQ-M.39, REQ-M.138 — has this person been told the site is a prototype?
+
+    **Signed-in only, since 2026-09-14.** Avi: "the initial message pops out
+    when I sign out. Don't want this. Only after login for the first time."
+
+    The old rule kept a session flag for anonymous visitors, so signing out
+    started a fresh session and the notice came back, to somebody who had read
+    and dismissed it minutes earlier. It also put a prototype warning in front
+    of every stranger reading the recruitment pages, which is the wrong first
+    thing to say to somebody deciding whether to join.
+
+    The notice is about what it is like to be inside, so it belongs to the
+    people who are inside, and it is shown once because acceptance is stored on
+    the profile rather than in a session that dies with the browser.
+    """
+    if not request.user.is_authenticated:
+        return False
+    return not member_profile(request.user).has_accepted_welcome()
 
 
 def student_door_is_open(request):
@@ -291,7 +299,6 @@ def login(request):
         else:
             auth_login(request, user, backend="django.contrib.auth.backends.ModelBackend")
             _stamp_entry(user)
-            _carry_welcome_across_sign_in(request, user)
             # Same as registration: an invitation tapped before signing in must
             # not be lost by signing in (REQ-M.91, M.92).
             from .invite_views import claim_leader_invite
@@ -375,7 +382,6 @@ def register(request):
                     )
                 MemberProfile.objects.update_or_create(user=user, defaults=member_fields)
             auth_login(request, user, backend="django.contrib.auth.backends.ModelBackend")
-            _carry_welcome_across_sign_in(request, user)
             # REQ-M.91, M.92 — somebody who arrived through a leader invitation
             # had to make an account on the way. The invitation has to survive
             # that, or they land on the home page as an ordinary visitor with no
@@ -433,24 +439,7 @@ def auth_done(request):
     if not request.user.is_authenticated:
         return redirect("matazim:login")
     _stamp_entry(request.user)
-    _carry_welcome_across_sign_in(request, request.user)
     return redirect("matazim:home")
-
-
-def _carry_welcome_across_sign_in(request, user):
-    """Someone who accepted the notice as a stranger has still accepted it.
-
-    Without this, dismissing the welcome and then registering shows it a second
-    time, and the acceptance we do have on record is thrown away. Promoting the
-    session flag onto the profile fixes both: they are asked once, and REQ-M.40
-    gets the timestamp it is supposed to keep.
-    """
-    if not request.session.get(WELCOME_SESSION_KEY):
-        return
-    profile, _ = MemberProfile.objects.get_or_create(user=user)
-    if profile.welcome_accepted_at is None:
-        profile.welcome_accepted_at = timezone.now()
-        profile.save(update_fields=["welcome_accepted_at", "updated_at"])
 
 
 def _stamp_entry(user):
@@ -468,12 +457,17 @@ def _stamp_entry(user):
 
 @require_POST
 def welcome_accept(request):
-    """REQ-M.40 — an explicit acknowledgement, kept where it can be shown."""
+    """REQ-M.40 — an explicit acknowledgement, kept where it can be shown.
+
+    Stored on the profile and nowhere else (REQ-M.138). It used to also set a
+    session flag, for anonymous visitors who were shown the notice; they are
+    not shown it any more, so the flag had no reader and a name that suggested
+    otherwise.
+    """
     if request.user.is_authenticated:
         MemberProfile.objects.update_or_create(
             user=request.user, defaults={"welcome_accepted_at": timezone.now()}
         )
-    request.session[WELCOME_SESSION_KEY] = True
     return redirect(request.POST.get("next") or "matazim:home")
 
 
@@ -492,7 +486,6 @@ def profile_reset_welcome(request):
     MemberProfile.objects.update_or_create(
         user=request.user, defaults={"welcome_accepted_at": None}
     )
-    request.session[WELCOME_SESSION_KEY] = False
     return redirect("matazim:home")
 
 

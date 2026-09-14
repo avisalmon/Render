@@ -184,19 +184,52 @@ def test_an_email_already_in_use_is_refused(client, db):
 # ---------------------------------------------------------------- F-M.2.4
 
 
-def test_first_visit_shows_the_prototype_welcome(client, db):
-    """T-F-M.2.4-1: REQ-M.39."""
+def test_first_visit_after_signing_in_shows_the_prototype_welcome(client, db):
+    """T-F-M.2.4-1: REQ-M.39, REQ-M.138.
+
+    **Changed 2026-09-14**, from "first visit" to "first visit after signing
+    in". Avi: "the initial message pops out when I sign out. Don't want this.
+    Only after login for the first time."
+    """
+    sign_in(client)
     html = client.get(reverse("matazim:home")).content.decode()
     assert "mz-welcome" in html
     assert "אב טיפוס" in html
     assert "אינטל" in html
 
 
-def test_a_visitor_can_dismiss_it_and_it_stays_dismissed(client, db):
-    """T-F-M.2.4-2: nobody to attribute it to, but it must not nag."""
+def test_a_stranger_is_never_shown_the_prototype_notice(client, db):
+    """T-F-M.2.4-2: REQ-M.138, and this is the half that was the complaint.
+
+    The notice used to hang off a session flag, so signing out started a new
+    session and the notice returned to somebody who had read and dismissed it
+    minutes earlier. It also put a prototype warning in front of every stranger
+    reading the recruitment pages, which is the wrong first thing to say to
+    somebody deciding whether to join.
+    """
+    for page in ("matazim:home", "matazim:about", "matazim:track"):
+        html = client.get(reverse(page)).content.decode()
+        assert "mz-welcome" not in html, f"a signed-out visitor was nagged on {page}"
+
+
+def test_signing_out_does_not_bring_the_notice_back(client, db):
+    """T-F-M.2.4-2b: REQ-M.138, said as the sequence Avi actually walked."""
+    from django.utils import timezone
+
+    from matazim.models import MemberProfile
+
+    user = sign_in(client)
     client.post(reverse("matazim:welcome_accept"))
-    html = client.get(reverse("matazim:home")).content.decode()
-    assert "mz-welcome" not in html
+    assert MemberProfile.objects.get(user=user).welcome_accepted_at is not None
+
+    client.post(reverse("matazim:logout"))
+    assert "mz-welcome" not in client.get(reverse("matazim:home")).content.decode()
+
+    # And still gone when they come back, because the acceptance is on the row
+    # rather than in a session that died with the sign-out. The same person,
+    # deliberately: a second account would be a different question.
+    client.force_login(user)
+    assert "mz-welcome" not in client.get(reverse("matazim:home")).content.decode()
 
 
 def test_a_signed_in_acceptance_is_stored(client, db):
@@ -222,26 +255,24 @@ def test_someone_who_accepted_never_sees_it_again(client, db):
     assert "mz-welcome" not in html
 
 
-def test_an_acknowledgement_made_before_signing_in_is_carried_over(client, db):
-    """T-F-M.2.4-5: nobody should be told the same thing twice.
+def test_a_new_account_meets_the_notice_once(client, db):
+    """T-F-M.2.4-5: REQ-M.40, REQ-M.138.
 
-    Found by walking the flow rather than by a unit: dismiss the notice as a
-    stranger, register, and it reappeared, because the new profile had no
-    acceptance on it. The acceptance was real, so it moves onto the profile and
-    REQ-M.40 keeps the timestamp it is meant to keep.
+    **Rewritten 2026-09-14.** This used to test that an acceptance made while
+    signed out was carried onto the new profile at registration. Nobody can
+    make one any more, because a stranger is never shown the notice, so the
+    carry-over and its session flag are gone rather than left as code with no
+    reader. What survives is the thing that mattered: somebody registering is
+    told once, and their acceptance is on their row.
     """
     from matazim.models import MemberProfile
 
-    client.post(reverse("matazim:welcome_accept"))
     client.post(
         reverse("matazim:register"),
         {
             "name": "רון",
             "email": "ron@example.com",
             "password": PASSWORD,
-            # REQ-M.84 — registration now asks how old they are, and a
-            # ninth-grader needs a parent. These fields are required, so a
-            # POST without them is refused rather than ignored.
             "birth_year": "2012",
             "guardian_name": "רונית כהן",
             "guardian_email": "parent@example.com",
@@ -249,6 +280,9 @@ def test_an_acknowledgement_made_before_signing_in_is_carried_over(client, db):
         },
     )
     user = User.objects.get(email="ron@example.com")
+    assert "mz-welcome" in client.get(reverse("matazim:home")).content.decode()
+
+    client.post(reverse("matazim:welcome_accept"))
     assert MemberProfile.objects.get(user=user).welcome_accepted_at is not None
     assert "mz-welcome" not in client.get(reverse("matazim:home")).content.decode()
 
@@ -278,19 +312,20 @@ def test_the_handoff_names_a_return_address_inside_the_prefix(client, db):
     assert reverse("matazim:auth_done") in resp.url
 
 
-def test_coming_back_stamps_entry_and_carries_the_welcome(client, db):
-    """T-F-M.2.9-3: how someone got in must not change what we record."""
+def test_coming_back_through_google_stamps_entry(client, db):
+    """T-F-M.2.9-3: how someone got in must not change what we record.
+
+    The welcome half of this test went with the session flag (REQ-M.138). The
+    entry stamp is the part that was ever about Google.
+    """
     from matazim.models import MemberProfile
 
-    client.post(reverse("matazim:welcome_accept"))
     user = sign_in(client, "viagoogle@example.com")
     resp = client.get(reverse("matazim:auth_done"))
     assert resp.status_code == 302
     assert resp.url.startswith("/matazim/")
 
-    profile = MemberProfile.objects.get(user=user)
-    assert profile.entered_via_matazim is True
-    assert profile.welcome_accepted_at is not None
+    assert MemberProfile.objects.get(user=user).entered_via_matazim is True
 
 
 def test_cancelling_at_google_returns_you_to_our_login(client, db):

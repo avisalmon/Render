@@ -161,9 +161,22 @@
           </svg>
           {% if unread_notices %}<span class="mz-bell-count">{{ unread_notices }}</span>{% endif %}
         </a>
-        <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:profile' %}">
+        {% comment %}
+          REQ-M.136 — whoever is signed in is named here (Avi, 2026-09-14).
+
+          The name rather than the label, because "האזור האישי" is true of
+          everybody and tells the reader nothing about which account they are
+          in. That matters most for the people who hold more than one: a
+          program manager checking what a member sees needs the header to say
+          which of them she currently is.
+
+          The label stays as the fallback, because a person with no display
+          name would otherwise get a door with nothing written on it.
+        {% endcomment %}
+        <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:profile' %}"
+           title="האזור האישי">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          האזור האישי
+          <span class="mz-me-name">{{ user.profile.display_name|default:"האזור האישי" }}</span>
         </a>
         <form method="post" action="{% url 'matazim:logout' %}" class="mz-inline-form">
           {% csrf_token %}
