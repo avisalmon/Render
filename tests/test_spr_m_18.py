@@ -315,3 +315,26 @@ def test_the_history_reads_in_hebrew_not_in_database_keys(client, db):
     assert "מתמיינים" in html
     for key in ("in_training", "applied"):
         assert key not in html, f"a database key reached the page: {key}"
+
+
+def test_this_products_own_suite_is_the_one_that_gets_a_model():
+    """The other half of the live-AI rule, asserted from the entitled side.
+
+    `tests/test_smoke.py` proves a babook test never holds a live key. This
+    proves the flag still does something, because a scoping rule that quietly
+    reaches nobody looks identical to one that works, and the full regression
+    would go on passing while the assessment stopped being exercised at all.
+    """
+    import os
+
+    from django.conf import settings
+
+    on = os.environ.get("MATAZIM_LIVE_AI", "").strip() in ("1", "true", "yes")
+    if not on:
+        assert settings.OPENAI_API_KEY == "", "the mini gate reached a paid API"
+        return
+
+    assert settings.OPENAI_API_KEY, (
+        "MATAZIM_LIVE_AI is set and this suite was still handed a blank key, "
+        "so the full regression is not exercising the model at all"
+    )

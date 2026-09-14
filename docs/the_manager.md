@@ -232,13 +232,35 @@ Sweeping the remaining twenty-two screens into the catalogue produced a clean
     reads `settings.OPENAI_API_KEY` and this machine has a real one. On the gate
     that runs after every change that is slow, it costs money each time, and it
     makes a green suite depend on somebody else's uptime. Avi's rule: live calls
-    on the daily full regression only. `conftest.py` blanks the key unless
-    `MATAZIM_LIVE_AI=1`, so the full run is:
-
-        MATAZIM_LIVE_AI=1 pytest -q
+    on the daily full regression only. `conftest.py` blanks the key, and the
+    `live_ai` fixture hands it back to `tests/test_spr_m_*.py` when
+    `MATAZIM_LIVE_AI=1` is set.
 
     Blanking is not avoidance — every caller fails open when there is no model,
     so the quiet run exercises the path that has to work anyway.
+
+    **Corrected 2026-09-14, twice in one command.** The line here used to read
+    `MATAZIM_LIVE_AI=1 pytest -q`, and both halves were wrong.
+
+    `pytest -q` with no markers is not the full regression, it is all 1638
+    tests in the repository, most of them babook's and many of them Playwright
+    suites that start a browser each. Measured: about six tests a minute, so
+    roughly four hours. The full regression is the marker list below, and it is
+    fifteen minutes because that is what it covers.
+
+    And the flag flipped one global, so a live key reached every one of those
+    1638 tests, including `tests/test_content_safety.py`, which calls the
+    moderation and relevance endpoints on nearly every case. That is what made
+    six tests a minute out of a suite that is otherwise fast, and it was also
+    real money on babook's tests for no reason.
+
+    Both halves are now guarded rather than remembered:
+    `test_a_babook_test_never_holds_a_live_key` in the smoke file asserts the
+    key is blank from a file that is not entitled to one, and
+    `test_this_products_own_suite_is_the_one_that_gets_a_model` in the sprm18
+    invariants asserts the flag still reaches the suite that is, because a
+    scoping rule that quietly reaches nobody looks exactly like one that
+    works.
 20. **When a rule is the kind that dies to one reasonable-looking change, test
     it against that change.** REQ-M.116 says the conversation may never stand
     between her and the send button. The natural way to break it is one polite
@@ -287,11 +309,23 @@ changed, which is seconds rather than minutes:
 pytest -m screens -k "<the new entries>" -q
 ```
 
-**The full regression — once a day, when Avi says.** About fifteen minutes.
+**The full regression — once a day, when Avi says.** 621 tests, seven and a
+half minutes, measured 2026-09-14. It was fifteen before the test password
+hasher changed (see `conftest.py`).
 
 ```
-pytest -m "smoke or screens or sprmobile or sprm1 or sprm2 or ... " -q
+MATAZIM_LIVE_AI=1 pytest -q tests/test_spr_m_*.py tests/test_smoke.py     tests/test_screen_contract.py tests/test_matazim_mobile.py     tests/test_role_journeys.py
 ```
+
+**By path, not by marker, since 2026-09-14.** This was written as a marker list
+with the sprint numbers spelled out and the tail elided as `...`, which meant
+nobody could run it from the document and every new sprint had to remember to
+extend it. The glob cannot forget: `tests/test_spr_m_32.py` is in the next run
+the moment it exists. The four named files are the cross-cutting ones, which
+carry a sprint's marker or none and would not be caught by the glob.
+
+It is not `pytest -q` with nothing after it. That is all 1638 tests in the
+repository, most of them babook's, and it takes about four hours.
 
 **Corrected 2026-09-12, because this had drifted.** The agreement (Avi,
 2026-09-10) was a mini regression per push and a full one once a day on his

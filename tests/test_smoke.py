@@ -193,3 +193,21 @@ def test_the_matazim_track_has_nothing_it_cannot_render(db):
         "render, so members will stop completing it with nothing on screen to "
         "do about it:\n  " + "\n  ".join(blocked)
     )
+
+
+def test_a_babook_test_never_holds_a_live_key():
+    """The live-AI flag is מט״צים's, and reaches nothing else.
+
+    Added 2026-09-14, after `MATAZIM_LIVE_AI=1` was found to hand a real key to
+    all 1638 tests rather than to this product's own suites. babook's
+    content-safety tests call the moderation and relevance endpoints on nearly
+    every case, so the full regression went from minutes to twenty seconds a
+    test. This file is not a מט״צים sprint suite, so the key must be blank here
+    whatever the flag says, and this test says so from the only place that can
+    prove it: inside a test that is not entitled to one.
+    """
+    from django.conf import settings
+
+    assert settings.OPENAI_API_KEY == "", (
+        "a test outside tests/test_spr_m_*.py was handed a live API key"
+    )
