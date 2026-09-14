@@ -14,10 +14,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils.http import url_has_allowed_host_and_scheme
 
-from . import schedule
+from . import schedule, today
 from .access import FAMILY_GROUP, family_required
 from .forms import UstripSignupForm
-from .models import Flight, ItineraryDay, ItineraryItem, ItineraryLink, RentalCar, Trip
+from .models import Flight, ItineraryDay, ItineraryItem, ItineraryLink, Lodging, RentalCar, Trip
 
 
 # --- Auth: ustrip's own login/signup/logout (spec §3 sprint note) ---------
@@ -63,20 +63,30 @@ def home(request):
     family_members = get_user_model().objects.filter(groups__name=FAMILY_GROUP).order_by("date_joined")
     context = {"trip": trip, "family_members": family_members, "active_tab": "home"}
     if trip:
-        context["next_item"] = None
-        upcoming_day = trip.days.first()
-        if upcoming_day is not None:
-            context["upcoming_day"] = upcoming_day
-            next_item = upcoming_day.items.first()
-            if next_item is not None:
-                schedule.annotate(next_item)
-            context["next_item"] = next_item
+        position = today.position(trip)
+        context["position"] = position
+        context["upcoming_day"] = position["day"]
+        context["next_item"] = position["item"]
         context["day_count"] = trip.days.count()
         context["checklist_count"] = trip.checklists.count()
         context["journal_count"] = trip.journal_posts.count()
         context["flights"] = trip.flights.all()
         context["rental_car"] = getattr(trip, "rental_car", None)
+        context["lodgings"] = trip.lodgings.all()
+        context["notes"] = trip.notes.all()
     return render(request, "ustrip/home.html", context)
+
+
+@family_required
+def lodging_edit(request, lodging_id=None):
+    """One stay: name, dates, address, confirmed. `lodging/new/` creates a
+    stay the plan didn't have (the page posts to the API on save)."""
+    trip = _current_trip()
+    lodging = get_object_or_404(Lodging, pk=lodging_id) if lodging_id else None
+    return render(
+        request, "ustrip/lodging_edit.html",
+        {"trip": lodging.trip if lodging else trip, "lodging": lodging, "active_tab": "home"},
+    )
 
 
 def _scheduled_days(trip):
@@ -92,7 +102,21 @@ def _scheduled_days(trip):
 def itinerary_list(request):
     trip = _current_trip()
     days = _scheduled_days(trip)
-    return render(request, "ustrip/itinerary_list.html", {"trip": trip, "days": days, "active_tab": "itinerary"})
+    today_day = today.position(trip)["day"] if trip else None
+    return render(
+        request, "ustrip/itinerary_list.html",
+        {"trip": trip, "days": days, "today_day_id": today_day.id if today_day else None, "active_tab": "itinerary"},
+    )
+
+
+def _lodging_for(day):
+    """The stay covering this day's night, if the trip has one on record."""
+    if day.date is None:
+        return None
+    for stay in day.trip.lodgings.all():
+        if stay.covers(day.date_end or day.date):
+            return stay
+    return None
 
 
 @family_required
@@ -101,7 +125,7 @@ def itinerary_day(request, day_id):
     items = schedule.compute(day, list(day.items.prefetch_related("likes", "comments", "photos").all()))
     return render(
         request, "ustrip/itinerary_day.html",
-        {"trip": day.trip, "day": day, "items": items, "active_tab": "itinerary"},
+        {"trip": day.trip, "day": day, "items": items, "lodging": _lodging_for(day), "active_tab": "itinerary"},
     )
 
 

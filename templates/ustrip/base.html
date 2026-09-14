@@ -1,4 +1,4 @@
-{% load static ustrip_extras %}<!doctype html>
+{% load static ustrip_extras i18n %}{% language "en" %}{# ustrip is English; babook's middleware sets Hebrew, which would turn every date filter into Hebrew month names #}<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -59,4 +59,4 @@
   <script src="{% static 'ustrip/ustrip.js' %}"></script>
   {% block scripts %}{% endblock %}
 </body>
-</html>
+</html>{% endlanguage %}

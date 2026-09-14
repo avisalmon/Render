@@ -31,7 +31,7 @@ from datetime import date, datetime
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
-from ustrip.models import Flight, ItineraryDay, ItineraryItem, RentalCar, Trip
+from ustrip.models import Flight, ItineraryDay, ItineraryItem, Lodging, RentalCar, Trip, TripNote
 
 DATA_PATH = settings.BASE_DIR / "docs" / "ustrip" / "trip-data" / "usa-2026.json"
 
@@ -47,6 +47,14 @@ def _date_label(raw):
         start, end = raw.split("/")
         return f"{_fmt(start)} - {_fmt(end)}"
     return _fmt(raw)
+
+
+def _dates(raw):
+    """"2026-09-22" -> (date, date); "2026-09-29/2026-09-30" -> (first, last)."""
+    parts = raw.split("/")
+    first = date.fromisoformat(parts[0])
+    last = date.fromisoformat(parts[-1])
+    return first, last
 
 
 class Command(BaseCommand):
@@ -77,13 +85,25 @@ class Command(BaseCommand):
         # here on; family members add/edit days' items in-app (spec §4.1).
         if trip.days.exists():
             self.stdout.write(f"'{trip.name}' already has {trip.days.count()} days — leaving the itinerary as-is.")
+            # Real dates arrived after the first import (Sprint 10). Fill them
+            # in once, by position, only where still empty — the day's own
+            # content is never touched.
+            backfilled = 0
+            for order, day in enumerate(data["days"]):
+                first, last = _dates(day["date"])
+                backfilled += trip.days.filter(order=order, date__isnull=True).update(date=first, date_end=last)
+            if backfilled:
+                self.stdout.write(f"backfilled dates on {backfilled} day(s).")
         else:
             for order, day in enumerate(data["days"]):
+                first, last = _dates(day["date"])
                 itinerary_day = ItineraryDay.objects.create(
                     trip=trip,
                     order=order,
                     label=str(day["day"]),
                     date_label=_date_label(day["date"]),
+                    date=first,
+                    date_end=last,
                     title=day["title"],
                     sleeping=day.get("sleeping", ""),
                     note=day.get("note", ""),
@@ -136,6 +156,25 @@ class Command(BaseCommand):
                     "note": rc.get("note", ""),
                 },
             )
+
+        # Where we sleep — one stay per row, imported once. `confirmed` and
+        # everything else is the family's from then on (same rule as the car).
+        if trip.lodgings.exists():
+            self.stdout.write(f"'{trip.name}' already has {trip.lodgings.count()} stays — leaving as-is.")
+        else:
+            for stay in data.get("lodging", []):
+                Lodging.objects.create(
+                    trip=trip, check_in=date.fromisoformat(stay["check_in"]),
+                    check_out=date.fromisoformat(stay["check_out"]),
+                    name=stay.get("name", ""), address=stay.get("address", ""),
+                )
+
+        # Good to know — the family's own notes, imported once; edited in-app after.
+        if trip.notes.exists():
+            self.stdout.write(f"'{trip.name}' already has {trip.notes.count()} notes — leaving as-is.")
+        else:
+            for order, text in enumerate(data.get("notes", [])):
+                TripNote.objects.create(trip=trip, text=text, order=order)
 
         self.stdout.write(
             self.style.SUCCESS(

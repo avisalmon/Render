@@ -17,6 +17,8 @@ router.register(r"itinerary-comments", api.ItineraryCommentViewSet, basename="ap
 router.register(r"itinerary-likes", api.ItineraryLikeViewSet, basename="api-itinerary-like")
 router.register(r"flights", api.FlightViewSet, basename="api-flight")
 router.register(r"rental-cars", api.RentalCarViewSet, basename="api-rental-car")
+router.register(r"lodgings", api.LodgingViewSet, basename="api-lodging")
+router.register(r"trip-notes", api.TripNoteViewSet, basename="api-trip-note")
 router.register(r"checklist-groups", api.ChecklistGroupViewSet, basename="api-checklist-group")
 router.register(r"checklist-items", api.ChecklistItemViewSet, basename="api-checklist-item")
 router.register(r"journal-posts", api.JournalPostViewSet, basename="api-journal-post")
@@ -32,6 +34,8 @@ urlpatterns = [
     path("itinerary/item/<int:item_id>/edit/", views.itinerary_item_edit, name="itinerary_item_edit"),
     path("flight/<int:flight_id>/edit/", views.flight_edit, name="flight_edit"),
     path("rental-car/<int:rental_car_id>/edit/", views.rental_car_edit, name="rental_car_edit"),
+    path("lodging/new/", views.lodging_edit, name="lodging_new"),
+    path("lodging/<int:lodging_id>/edit/", views.lodging_edit, name="lodging_edit"),
     path("packing/", views.packing, name="packing"),
     path("journal/", views.journal, name="journal"),
     path("api/", include(router.urls)),

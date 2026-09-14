@@ -21,12 +21,64 @@ class Trip(models.Model):
     route_summary = models.CharField(
         max_length=300, blank=True, help_text='e.g. "NYC → Finger Lakes → Niagara Falls → ... → home"'
     )
+    timezone = models.CharField(
+        max_length=60, default="America/New_York",
+        help_text="Where the trip happens. 'Today' and 'now' are read on this clock, not the server's.",
+    )
 
     class Meta:
         ordering = ["start_date"]
 
     def __str__(self):
         return self.name
+
+
+class Lodging(models.Model):
+    """Where we sleep, one row per stay (spec §4.4, 2026-09-14). Same idea as
+    RentalCar.confirmed: as harvested these are places, not bookings — Avi
+    flips `confirmed` as each hotel is actually reserved, and reseeding
+    never touches an existing stay."""
+
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name="lodgings")
+    check_in = models.DateField()
+    check_out = models.DateField()
+    name = models.CharField(max_length=200, blank=True, help_text="Hotel name, once there is one.")
+    address = models.CharField(max_length=300, blank=True, help_text="Address or just the town, for the map link.")
+    confirmed = models.BooleanField(default=False, help_text="Actually booked, not just planned.")
+    note = models.TextField(blank=True, help_text="Confirmation number, parking, breakfast — whatever matters.")
+
+    class Meta:
+        ordering = ["check_in", "id"]
+
+    def __str__(self):
+        return f"{self.name or self.address or 'Stay'} ({self.check_in} → {self.check_out})"
+
+    @property
+    def nights(self):
+        return max(0, (self.check_out - self.check_in).days)
+
+    @property
+    def display_name(self):
+        return self.name or self.address or "Somewhere to sleep"
+
+    def covers(self, day_date):
+        return self.check_in <= day_date < self.check_out
+
+
+class TripNote(models.Model):
+    """"Good to know" for the whole trip, not one stop (spec §4.5): transit
+    tips, cash for the Amish vendors, the toll pass. Seeded once from the
+    family's notes doc; the family edits from there."""
+
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name="notes")
+    text = models.TextField()
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return self.text[:60]
 
 
 class Flight(models.Model):
@@ -83,6 +135,8 @@ class ItineraryDay(models.Model):
     order = models.PositiveSmallIntegerField()
     label = models.CharField(max_length=10, help_text='e.g. "5" or "12-13"')
     date_label = models.CharField(max_length=60, help_text='e.g. "Tue Sep 22, 2026"')
+    date = models.DateField(null=True, blank=True, help_text="The calendar day (first one, for a row that spans two).")
+    date_end = models.DateField(null=True, blank=True, help_text="Last calendar day of the row; same as `date` for one day.")
     title = models.CharField(max_length=200)
     sleeping = models.CharField(max_length=200, blank=True)
     note = models.TextField(
@@ -102,6 +156,11 @@ class ItineraryDay(models.Model):
 
     def __str__(self):
         return f"Day {self.label} — {self.title}"
+
+    def covers(self, day_date):
+        if self.date is None:
+            return False
+        return self.date <= day_date <= (self.date_end or self.date)
 
 
 class ItineraryItem(models.Model):

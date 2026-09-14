@@ -8,6 +8,15 @@
     <p class="hero-title serif">{{ trip.name }}</p>
     <p class="hero-dates">{{ trip.start_date|date:"M j" }} &ndash; {{ trip.end_date|date:"M j" }} &middot; {{ day_count }} days</p>
     {% if trip.route_summary %}<p class="hero-route">{{ trip.route_summary }}</p>{% endif %}
+    <p class="hero-phase">
+      {% if position.phase == 'before' %}
+        {% if position.days_to_go == 0 %}Leaving today{% elif position.days_to_go == 1 %}Tomorrow!{% else %}{{ position.days_to_go }} days to go{% endif %}
+      {% elif position.phase == 'during' %}
+        {% if position.day %}Today: Day {{ position.day.label }} &middot; {{ position.day.title }}{% else %}On the road{% endif %}
+      {% else %}
+        Home again. The journal remembers.
+      {% endif %}
+    </p>
     {% if family_members %}
       <div class="avatars">
         {% for member in family_members %}
@@ -18,20 +27,31 @@
   </div>
 
   {% if next_item %}
-    <p class="section-label">Next up</p>
+    <p class="section-label">{{ position.label }}</p>
     <a class="card next-card" href="{% url 'ustrip:itinerary_item_detail' next_item.id %}">
       <div class="next-icon">
         <svg class="icon" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-10.5A6.5 6.5 0 0 1 18.5 10.5C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10.3" r="2.1"/></svg>
       </div>
       <div>
         <p class="next-title">{{ next_item.display_title|truncatechars:60 }}</p>
-        <p class="next-sub">Day {{ upcoming_day.label }} &middot; {% if next_item.start %}{{ next_item.start|time:"H:i" }} &middot; {% endif %}{{ upcoming_day.title }}</p>
+        <p class="next-sub">Day {{ upcoming_day.label }} &middot; {% if next_item.start %}{{ next_item.start|time:"H:i" }}{% if next_item.duration_minutes %}&ndash;{{ next_item.end|time:"H:i" }}{% endif %} &middot; {% endif %}{{ upcoming_day.title }}</p>
+      </div>
+    </a>
+  {% elif upcoming_day %}
+    <p class="section-label">{{ position.label|default:"Today" }}</p>
+    <a class="card next-card" href="{% url 'ustrip:itinerary_day' upcoming_day.id %}">
+      <div class="next-icon">
+        <svg class="icon" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="15" rx="2.2"/><path d="M8 3.5v4M16 3.5v4M3.5 10h17"/></svg>
+      </div>
+      <div>
+        <p class="next-title">Day {{ upcoming_day.label }} &middot; {{ upcoming_day.title }}</p>
+        <p class="next-sub">{{ upcoming_day.date_label }}</p>
       </div>
     </a>
   {% endif %}
 
   {% if flights or rental_car %}
-    <p class="section-label">Trip essentials</p>
+    <p class="section-label">Getting there</p>
     <div class="card essentials-card">
       {% for flight in flights %}
         <div class="essential-row">
@@ -61,6 +81,46 @@
     </div>
   {% endif %}
 
+  <p class="section-label">Where we sleep</p>
+  <div class="card essentials-card">
+    {% for stay in lodgings %}
+      <div class="essential-row">
+        <div class="essential-icon">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M3 18V8.5A1.5 1.5 0 0 1 4.5 7h15A1.5 1.5 0 0 1 21 8.5V18M3 14h18M3 20v-2M21 20v-2"/><path d="M7 11h4v3H7z"/></svg>
+        </div>
+        <div class="essential-body">
+          <p class="essential-title">{{ stay.display_name }}{% if not stay.confirmed %} <span class="pending-pill">not booked yet</span>{% endif %}</p>
+          <p class="essential-sub">{{ stay.check_in|date:"D M j" }} &rarr; {{ stay.check_out|date:"D M j" }} &middot; {{ stay.nights }} night{{ stay.nights|pluralize }}{% if stay.name and stay.address %} &middot; {{ stay.address }}{% endif %}</p>
+        </div>
+        <a class="edit-link" href="{% url 'ustrip:lodging_edit' stay.id %}">Edit</a>
+      </div>
+    {% empty %}
+      <div class="essential-row"><div class="essential-body"><p class="essential-sub">No stays on record yet.</p></div></div>
+    {% endfor %}
+    <div class="essential-row"><a class="edit-link" href="{% url 'ustrip:lodging_new' %}">+ Add a stay</a></div>
+  </div>
+
+  <p class="section-label">Good to know</p>
+  <div class="card note-list" id="note-list">
+    {% for note in notes %}
+      <div class="note-row" data-note-id="{{ note.id }}">
+        <p class="note-text">{{ note.text }}</p>
+        <div class="row-actions row-actions-inline">
+          <button type="button" class="mini-btn" data-move="up" title="Move up">&uarr;</button>
+          <button type="button" class="mini-btn" data-move="down" title="Move down">&darr;</button>
+          <button type="button" class="mini-btn" data-edit title="Edit">&#9998;</button>
+          <button type="button" class="mini-btn mini-btn-danger" data-delete title="Delete">&times;</button>
+        </div>
+      </div>
+    {% empty %}
+      <div class="mini-empty" id="note-empty">Nothing yet. Add the things everyone should know.</div>
+    {% endfor %}
+  </div>
+  <form id="note-form" class="add-item-row" style="margin-top:8px;">
+    <input type="text" name="text" placeholder="Add something good to know" required>
+    <button type="submit" class="add-btn">+</button>
+  </form>
+
   <p class="section-label">Around the trip</p>
   <div class="tiles">
     <a class="card tile" href="{% url 'ustrip:itinerary_list' %}">
@@ -81,5 +141,75 @@
   </div>
 {% else %}
   <div class="empty">No trip yet. Add one from the admin, or run <code>manage.py seed_ustrip</code>.</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if trip %}
+<script>
+(function () {
+  const list = document.getElementById("note-list");
+  const form = document.getElementById("note-form");
+  const tripId = {{ trip.id }};
+
+  function noteNode(note) {
+    const node = ustrip.el(
+      '<div class="note-row"><p class="note-text"></p><div class="row-actions row-actions-inline">' +
+      '<button type="button" class="mini-btn" data-move="up" title="Move up">↑</button>' +
+      '<button type="button" class="mini-btn" data-move="down" title="Move down">↓</button>' +
+      '<button type="button" class="mini-btn" data-edit title="Edit">✎</button>' +
+      '<button type="button" class="mini-btn mini-btn-danger" data-delete title="Delete">×</button></div></div>'
+    );
+    node.dataset.noteId = note.id;
+    node.querySelector(".note-text").textContent = note.text;
+    return node;
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const text = form.text.value.trim();
+    if (!text) return;
+    ustrip.request("/ustrip/api/trip-notes/", { json: { trip: tripId, text: text } })
+      .then((note) => {
+        const empty = document.getElementById("note-empty");
+        if (empty) empty.remove();
+        list.appendChild(noteNode(note));
+        form.reset();
+      })
+      .catch((err) => alert(err.message));
+  });
+
+  list.addEventListener("click", function (e) {
+    const row = e.target.closest("[data-note-id]");
+    if (!row) return;
+    const id = row.dataset.noteId;
+    const moveBtn = e.target.closest("[data-move]");
+    if (moveBtn) {
+      ustrip.request(`/ustrip/api/trip-notes/${id}/move/`, { json: { direction: moveBtn.dataset.move } })
+        .then((data) => { if (data.moved) window.location.reload(); })
+        .catch((err) => alert(err.message));
+      return;
+    }
+    if (e.target.closest("[data-edit]")) {
+      const p = row.querySelector(".note-text");
+      const text = prompt("Edit", p.textContent);
+      if (text === null || !text.trim()) return;
+      ustrip.request(`/ustrip/api/trip-notes/${id}/`, { method: "PATCH", json: { text: text.trim() } })
+        .then((note) => { p.textContent = note.text; })
+        .catch((err) => alert(err.message));
+      return;
+    }
+    if (e.target.closest("[data-delete]")) {
+      if (!confirm("Delete this note?")) return;
+      ustrip.request(`/ustrip/api/trip-notes/${id}/`, { method: "DELETE" })
+        .then(() => {
+          row.remove();
+          if (!list.querySelector("[data-note-id]")) list.appendChild(ustrip.el('<div class="mini-empty" id="note-empty">Nothing yet. Add the things everyone should know.</div>'));
+        })
+        .catch((err) => alert(err.message));
+    }
+  });
+})();
+</script>
 {% endif %}
 {% endblock %}

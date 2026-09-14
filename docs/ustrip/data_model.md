@@ -251,12 +251,32 @@ not kept and attributed to "someone." That's different from
 Low-risk for five accounts that basically never get deleted, but it is a
 real choice, flagging it rather than leaving it implicit.
 
+## Lodging (added 2026-09-14, Sprint 10)
+
+One row per stay: `trip` FK, `check_in`, `check_out`, `name` (blank until
+there is a hotel), `address`, `confirmed` (default False), `note`.
+`nights` and `display_name` are properties. This reverses the earlier
+"deliberately not modeled" call below: as a *place* it duplicated
+`ItineraryDay.sleeping`; as a *booking with a status* it is its own fact,
+and the days' free-text `sleeping` stays as the plan's note. Seeded once
+from the JSON's `lodging` array; never touched again by the seed.
+
+## TripNote (added 2026-09-14, Sprint 10)
+
+`trip` FK, `text`, `order`. The "good to know" list for the whole trip.
+Seeded once from the JSON's `notes` array (the family's own notes doc).
+
+## Trip.timezone and ItineraryDay.date (added 2026-09-14, Sprint 10)
+
+`Trip.timezone` (default `America/New_York`) is the clock "today" and
+"now" are read on. `ItineraryDay.date` / `date_end` (nullable; equal for
+a one-day row) are the real calendar days behind `date_label`; the seed
+backfills them once, by position, where still empty.
+
 ## Deliberately not modeled
 
-- **Lodging** (the source JSON's `lodging` array): the same fact as each
-  `ItineraryDay.sleeping`, grouped by night-block instead of by day. A
-  second model would just be two copies of one fact free to disagree —
-  see backlog.md's Sprint 2 note.
+- ~~**Lodging**~~ — modeled since Sprint 10, see above; the reasoning that
+  a *place* alone duplicated `sleeping` still holds, a *booking* doesn't.
 - **`rejected_ideas`** from the source JSON: planning-process trivia (what
   the family decided against), not trip data the app needs to show or act
   on. Stays in the JSON as a historical note, nothing to model.

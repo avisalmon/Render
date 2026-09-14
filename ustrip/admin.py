@@ -7,7 +7,7 @@ from django.contrib import admin
 
 from .models import (
     ChecklistGroup, ChecklistItem, Flight, ItineraryComment, ItineraryDay, ItineraryItem, ItineraryLike,
-    ItineraryLink, ItineraryPhoto, JournalPost, RentalCar, Trip,
+    ItineraryLink, ItineraryPhoto, JournalPost, Lodging, RentalCar, Trip, TripNote,
 )
 
 
@@ -17,8 +17,16 @@ class ItineraryItemInline(admin.TabularInline):
     fields = ["order", "title", "fixed_start", "duration_minutes", "tag", "booking"]
 
 
+class LodgingAdmin(admin.ModelAdmin):
+    list_display = ["trip", "check_in", "check_out", "name", "address", "confirmed"]
+
+
+class TripNoteAdmin(admin.ModelAdmin):
+    list_display = ["trip", "order", "text"]
+
+
 class ItineraryDayAdmin(admin.ModelAdmin):
-    list_display = ["trip", "label", "title", "sleeping", "start_time", "order"]
+    list_display = ["trip", "label", "date", "title", "sleeping", "start_time", "order"]
     list_filter = ["trip"]
     inlines = [ItineraryItemInline]
 
@@ -75,6 +83,8 @@ class JournalPostAdmin(admin.ModelAdmin):
 admin.site.register(Trip)
 admin.site.register(Flight, FlightAdmin)
 admin.site.register(RentalCar, RentalCarAdmin)
+admin.site.register(Lodging, LodgingAdmin)
+admin.site.register(TripNote, TripNoteAdmin)
 admin.site.register(ItineraryDay, ItineraryDayAdmin)
 admin.site.register(ItineraryItem, ItineraryItemAdmin)
 admin.site.register(ItineraryComment, ItineraryCommentAdmin)

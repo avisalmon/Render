@@ -199,3 +199,21 @@ the family decides (shorten, move, unpin, make optional).
 Not built, on purpose, until asked: suggestions ("shorten X by 25m?",
 "move to Day 3?") that the person accepts with one tap. That is the
 acceptable form of "make room" — a proposal, never a silent change.
+
+## Sprint 10 — Before we fly `DONE, DEV`
+
+**Why now:** the trip starts 2026-09-18. Home showed the first item of the
+first day forever; nothing knew what day it was; six of seven nights had no
+hotel object to put a booking on; the family's practical notes lived only in
+a Google Doc.
+
+| Item | Status |
+|---|---|
+| `ItineraryDay.date` / `date_end`; `Trip.timezone` (New York); `Lodging`; `TripNote` | DONE — migration 0007 |
+| `seed_ustrip`: backfills dates once by position where empty; seeds the 7 stays and the notes once; never touches an existing stay or note | DONE |
+| `ustrip/today.py`: `position(trip, now)` → before (days to go, first stop) / during (today's day; the planned stop now, or next today, or tomorrow's first) / after — on the trip's clock, pure and testable | DONE |
+| Home: phase line ("4 days to go" / "Today: Day 5 · Finger Lakes"), the Now / Next up / Tomorrow / First up card, "Where we sleep" with "not booked yet" pills and Add a stay, "Good to know" with add/edit/delete/reorder inline | DONE |
+| Itinerary list marks today and opens it; day page shows the stay covering that night (linked to its edit page) instead of the free-text line | DONE |
+| Stay edit page (`lodging/<id>/edit/`, `lodging/new/`): hotel, where, dates, booked, notes, delete; API viewsets for stays and notes (notes with `move`) | DONE |
+| Tests: position in all three phases and the timezone case, a two-date row, seed dates/backfill, stays once + booked survives a redeploy, notes once + edits survive, Home/list/day pages, stays and notes API | DONE — `tests/test_ustrip_today.py` |
+| Deploy | not yet — dev only until Avi says |

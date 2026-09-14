@@ -213,6 +213,29 @@ A third tag, `rejected`, marks an alternative the family looked at and
 dropped (the Day 8 VIP tour) — it stays visible, struck through, rather
 than being deleted, because "we considered it and said no" is information.
 
+### 4.4 Where we sleep (2026-09-14)
+One `Lodging` per stay: check-in, check-out, hotel name (blank until there
+is one), address or town (linked to a map), `confirmed`, a note. Same
+philosophy as the rental car: as harvested these are places the plan named,
+not bookings; Avi flips `confirmed` as each is reserved, and the seed never
+touches an existing stay. Shown on Home ("Where we sleep", with a "not
+booked yet" pill) and on each day's page in place of the free-text
+"Sleeping:" line when a stay covers that night. Any member can add a stay
+the plan didn't have.
+
+### 4.5 Good to know (2026-09-14)
+A trip-level list (`TripNote`) for what belongs to the whole trip, not a
+stop: transit tips, cash for the Amish vendors, the toll pass. Seeded once
+from the family's notes doc, then edited in-app like everything else.
+
+### 4.6 Today (2026-09-14)
+Days carry a real `date` (and `date_end` for a row spanning two). The trip
+has a `timezone` (New York) and "now" is read on it, never the server's
+clock. Home shows where the family is: before the trip a countdown and the
+first stop; during it today's day and the planned stop happening now, or
+the next one today, or tomorrow's first; after it, a pointer to the
+journal. The itinerary list marks today and opens it.
+
 ### 4.2 Packing & task lists
 - Shared checklists scoped to the trip: a list has a name (e.g. "Packing —
   Dad", "Before we leave") and items with a checked/unchecked state and who

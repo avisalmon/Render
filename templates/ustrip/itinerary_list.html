@@ -8,12 +8,12 @@
 
 <div class="daylist" id="daylist">
   {% for day in days %}
-    <details class="daysec" data-day-id="{{ day.id }}">
+    <details class="daysec {% if day.id == today_day_id %}today{% endif %}" data-day-id="{{ day.id }}" {% if day.id == today_day_id %}open{% endif %}>
       <summary>
         <div class="dayrow">
           <div class="daystamp">{{ day.label }}</div>
           <div class="daybody">
-            <div class="daytitle-row"><span class="daytitle">{{ day.title }}</span><a class="daylink" href="{% url 'ustrip:itinerary_day' day.id %}">Open &rsaquo;</a></div>
+            <div class="daytitle-row"><span class="daytitle">{{ day.title }}</span>{% if day.id == today_day_id %}<span class="todaypill">TODAY</span>{% endif %}<a class="daylink" href="{% url 'ustrip:itinerary_day' day.id %}">Open &rsaquo;</a></div>
             <div class="daymeta">{{ day.date_label }}{% if day.sleeping %} &middot; Sleeping: {{ day.sleeping }}{% endif %}</div>
             <div class="daymeta dayfit {% if day.schedule_over_minutes or day.schedule_conflicts %}over{% endif %}"><span class="daycount">{{ day.scheduled_items|length }} item{{ day.scheduled_items|length|pluralize }}</span><span class="dayends">{% if day.schedule_ends_at %} &middot; ends {{ day.schedule_ends_at|time:"H:i" }}{% endif %}{% if day.schedule_over_minutes %} ({{ day.schedule_over_minutes|duration_human }} past {{ day.end_time|time:"H:i" }}){% endif %}{% if day.schedule_conflicts %} &middot; {{ day.schedule_conflicts }} {% if day.schedule_conflicts == 1 %}doesn't{% else %}don't{% endif %} fit{% endif %}</span></div>
           </div>

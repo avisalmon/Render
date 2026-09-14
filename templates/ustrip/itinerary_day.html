@@ -13,7 +13,12 @@
 
 {% block content %}
 <p class="subtitle" style="margin-top:-2px;">{{ day.date_label }}</p>
-{% if day.sleeping %}
+{% if lodging %}
+  <a class="banner banner-link" href="{% url 'ustrip:lodging_edit' lodging.id %}">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M3 18V8.5A1.5 1.5 0 0 1 4.5 7h15A1.5 1.5 0 0 1 21 8.5V18M3 14h18M3 20v-2M21 20v-2"/><path d="M7 11h4v3H7z"/></svg>
+    <span>Sleeping: {{ lodging.display_name }}{% if not lodging.confirmed %} <span class="pending-pill">not booked yet</span>{% endif %}</span>
+  </a>
+{% elif day.sleeping %}
   <div class="banner">
     <svg class="icon" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-10.5A6.5 6.5 0 0 1 18.5 10.5C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10.3" r="2.1"/></svg>
     Sleeping: {{ day.sleeping }}

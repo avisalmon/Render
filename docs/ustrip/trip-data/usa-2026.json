@@ -20,15 +20,23 @@
     }
   },
   "lodging": [
-    {"nights": "1-4", "dates": "2026-09-18/2026-09-22", "place": "Manhattan, NYC", "staying": "Delta Hotels Times Square (4 nights)"},
-    {"nights": "5", "dates": "2026-09-22", "place": "Geneva, NY (Finger Lakes)", "staying": "1 night"},
-    {"nights": "6", "dates": "2026-09-23", "place": "Niagara Falls, Canadian side", "staying": "1 night"},
-    {"nights": "7", "dates": "2026-09-24", "place": "Lancaster, PA", "staying": "1 night"},
-    {"nights": "8-9", "dates": "2026-09-25/2026-09-26", "place": "Washington, DC", "staying": "2 nights"},
-    {"nights": "10-11", "dates": "2026-09-27/2026-09-28", "place": "Atlantic City, NJ", "staying": "2 nights"},
-    {"nights": "12-13", "dates": "2026-09-29/2026-09-30", "place": "New Jersey (Meadowlands/Secaucus area)", "staying": "2 nights"},
-    {"nights": "14", "dates": "2026-10-01", "place": "In flight — EWR → TLV (UA84)", "staying": "—"},
-    {"nights": "15", "dates": "2026-10-02", "place": "Arrive Tel Aviv 8:55", "staying": "Trip ends"}
+    {"check_in": "2026-09-18", "check_out": "2026-09-22", "name": "Delta Hotels by Marriott New York Times Square", "address": "Manhattan, NYC"},
+    {"check_in": "2026-09-22", "check_out": "2026-09-23", "name": "", "address": "Geneva, NY (Finger Lakes)"},
+    {"check_in": "2026-09-23", "check_out": "2026-09-24", "name": "", "address": "Niagara Falls, Ontario (Canadian side)"},
+    {"check_in": "2026-09-24", "check_out": "2026-09-25", "name": "", "address": "Lancaster, PA"},
+    {"check_in": "2026-09-25", "check_out": "2026-09-27", "name": "", "address": "Washington, DC"},
+    {"check_in": "2026-09-27", "check_out": "2026-09-29", "name": "", "address": "Atlantic City, NJ"},
+    {"check_in": "2026-09-29", "check_out": "2026-10-01", "name": "", "address": "Secaucus / Meadowlands, NJ"}
+  ],
+  "notes": [
+    "NYC transit: every ride is $3, pay with Google/Apple Pay. Keep using the same card: after $35 within 7 days the rides are free, counted from the first ride.",
+    "Ignore anyone handing out 'gifts' on the street (CDs, bracelets). Don't take it, keep walking.",
+    "Manhattan is expensive for shopping. The big TJ Maxx has last season's brands at about 30% of the original price.",
+    "Broadway: the daily lottery opens around 9:00, results by midday, one hour to buy. Rush tickets via TodayTix. The family has had up to 50% off this way.",
+    "Cash: some Amish vendors don't take cards (Day 8). Canadian dollars for the Niagara evening (Day 6) — USD is accepted at a poor rate and change comes back in CAD.",
+    "Rental car checklist: E-ZPass / toll pass (cashless tolls in NY and PA), unlimited mileage, one-way return at Newark, cover for the night in Canada.",
+    "Fuel up 5–10 km before Newark airport (US-1/9 or I-95). Airport and agency refuelling cost far more.",
+    "Watkins Glen: keep the parking receipt, it's valid at the other Finger Lakes parks that day."
   ],
   "days": [
     {

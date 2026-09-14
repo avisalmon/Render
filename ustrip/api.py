@@ -19,14 +19,15 @@ from rest_framework.response import Response
 
 from .models import (
     ChecklistGroup, ChecklistItem, Flight, ItineraryComment, ItineraryDay, ItineraryItem, ItineraryLike,
-    ItineraryLink, ItineraryPhoto, JournalPost, RentalCar, Trip,
+    ItineraryLink, ItineraryPhoto, JournalPost, Lodging, RentalCar, Trip, TripNote,
 )
 from .permissions import IsFamilyMember, IsOwnerOrReadOnly
 from .reorder import move as reorder_move
 from .serializers import (
     ChecklistGroupSerializer, ChecklistItemSerializer, FlightSerializer, ItineraryCommentSerializer,
     ItineraryDaySerializer, ItineraryItemSerializer, ItineraryLikeSerializer, ItineraryLinkSerializer,
-    ItineraryPhotoSerializer, JournalPostSerializer, RentalCarSerializer, TripSerializer,
+    ItineraryPhotoSerializer, JournalPostSerializer, LodgingSerializer, RentalCarSerializer, TripNoteSerializer,
+    TripSerializer,
 )
 
 
@@ -206,6 +207,34 @@ class RentalCarViewSet(viewsets.ModelViewSet):
     queryset = RentalCar.objects.all()
     serializer_class = RentalCarSerializer
     permission_classes = [IsFamilyMember]
+
+
+class LodgingViewSet(viewsets.ModelViewSet):
+    """Where we sleep — full CRUD; the UI offers edit (and add, for a stay
+    the plan didn't have)."""
+
+    queryset = Lodging.objects.all()
+    serializer_class = LodgingSerializer
+    permission_classes = [IsFamilyMember]
+
+
+class TripNoteViewSet(viewsets.ModelViewSet):
+    queryset = TripNote.objects.all()
+    serializer_class = TripNoteSerializer
+    permission_classes = [IsFamilyMember]
+
+    def perform_create(self, serializer):
+        trip = serializer.validated_data["trip"]
+        serializer.save(order=trip.notes.count())
+
+    @action(detail=True, methods=["post"])
+    def move(self, request, pk=None):
+        note = self.get_object()
+        direction = request.data.get("direction")
+        if direction not in ("up", "down"):
+            return Response({"error": "direction must be up or down"}, status=400)
+        moved = reorder_move(note, note.trip.notes.order_by("order", "id"), direction)
+        return Response({"moved": moved})
 
 
 class ChecklistGroupViewSet(viewsets.ModelViewSet):

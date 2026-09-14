@@ -17,7 +17,7 @@ from rest_framework import serializers
 from . import schedule
 from .models import (
     ChecklistGroup, ChecklistItem, Flight, ItineraryComment, ItineraryDay, ItineraryItem, ItineraryLike,
-    ItineraryLink, ItineraryPhoto, JournalPost, RentalCar, Trip,
+    ItineraryLink, ItineraryPhoto, JournalPost, Lodging, RentalCar, Trip, TripNote,
 )
 from .templatetags.ustrip_extras import avatar_initials, avatar_style
 
@@ -44,7 +44,23 @@ class UserSummarySerializer(serializers.Serializer):
 class TripSerializer(serializers.ModelSerializer):
     class Meta:
         model = Trip
-        fields = ["id", "name", "start_date", "end_date", "route_summary"]
+        fields = ["id", "name", "start_date", "end_date", "route_summary", "timezone"]
+
+
+class LodgingSerializer(serializers.ModelSerializer):
+    nights = serializers.IntegerField(read_only=True)
+    display_name = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = Lodging
+        fields = ["id", "trip", "check_in", "check_out", "name", "address", "confirmed", "note", "nights", "display_name"]
+
+
+class TripNoteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TripNote
+        fields = ["id", "trip", "text", "order"]
+        read_only_fields = ["order"]
 
 
 class ItineraryLinkSerializer(serializers.ModelSerializer):
@@ -166,8 +182,8 @@ class ItineraryDaySerializer(serializers.ModelSerializer):
     class Meta:
         model = ItineraryDay
         fields = [
-            "id", "trip", "order", "label", "date_label", "title", "sleeping", "note", "start_time", "end_time",
-            "schedule_ends_at", "schedule_over_minutes", "schedule_conflicts", "items",
+            "id", "trip", "order", "label", "date_label", "date", "date_end", "title", "sleeping", "note",
+            "start_time", "end_time", "schedule_ends_at", "schedule_over_minutes", "schedule_conflicts", "items",
         ]
         read_only_fields = ["order"]
 
