@@ -268,3 +268,45 @@ def test_the_app_is_installable(phone_page, live_server, trip_pages):
             "async (src) => (await fetch(src)).status", icon["src"]
         )
         assert status == 200, f"icon {icon['src']} is missing ({status})"
+
+
+def test_reordering_a_day_keeps_your_place_and_retimes_the_day(phone_context, live_server, trip_pages):
+    """Sprint 11 F8, and a guard on the page's JS, which nothing else covers.
+
+    Moving a stop used to reload the page, which on a twelve-stop day cost you
+    your place to nudge one item. The arrows now swap in the DOM and re-time
+    from the response. This asserts all three: the order changed, the times
+    after it moved with it, and the page never navigated.
+    """
+    day_path = next(p for p in trip_pages if p.startswith("/ustrip/itinerary/") and p.count("/") == 4)
+    page = phone_context.new_page()
+    try:
+        page.goto(live_server.url + day_path, wait_until="domcontentloaded")
+        page.wait_for_timeout(300)
+
+        rows = page.locator("#timeline [data-item-id]")
+        if rows.count() < 3:
+            pytest.skip("need a few stops to reorder")
+        before = rows.evaluate_all("els => els.map(e => e.dataset.itemId)")
+        moved_id = before[0]
+        moved_start_before = page.locator(f'#timeline [data-item-id="{moved_id}"] .tstart').inner_text()
+
+        # Mark the document so a reload is detectable: a reload throws it away.
+        page.evaluate("() => { window.__notReloaded = true; }")
+
+        page.locator('#timeline [data-item-id] [data-move="down"]').first.click()
+        page.wait_for_timeout(700)
+
+        after = rows.evaluate_all("els => els.map(e => e.dataset.itemId)")
+        assert after[:2] == [before[1], before[0]], f"order did not swap: {before} -> {after}"
+        assert page.evaluate("() => window.__notReloaded === true"), "the page reloaded"
+
+        # The moved stop now runs second, so its start time must have moved
+        # with it. This is the half that a plain DOM swap would get wrong.
+        moved_start_after = page.locator(f'#timeline [data-item-id="{moved_id}"] .tstart').inner_text()
+        assert moved_start_after != moved_start_before, (
+            f"the stop moved but its time did not: still {moved_start_before}"
+        )
+        assert page.locator("#day-summary").inner_text() != "", "the day summary went blank"
+    finally:
+        page.close()

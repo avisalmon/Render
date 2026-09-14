@@ -154,13 +154,20 @@
     applySummary(day);
   }
 
-  ustrip.sortable([timeline], {
-    onDrop: ({ ids }) => {
-      ustrip.request(dayUrl + "reorder/", { json: { item_ids: ids } })
-        .then(applyTimes)
-        .catch((err) => { alert(err.message); window.location.reload(); });
-    },
-  });
+  /* Send the timeline's current order and re-time the day from the response.
+     One path for the drag, the arrows and a delete — the server recomputes,
+     the page never reloads. A failure is the one case that does reload, so
+     the screen can never sit there showing an order the database rejected. */
+  function sendOrder() {
+    const ids = Array.prototype.map.call(
+      timeline.querySelectorAll("[data-item-id]"), (r) => Number(r.dataset.itemId)
+    );
+    return ustrip.request(dayUrl + "reorder/", { json: { item_ids: ids } })
+      .then(applyTimes)
+      .catch((err) => { alert(err.message); window.location.reload(); });
+  }
+
+  ustrip.sortable([timeline], { onDrop: sendOrder });
 
   ["day-start", "day-end"].forEach((id) => {
     document.getElementById(id).addEventListener("change", function () {
@@ -197,18 +204,31 @@
     if (!row) return;
     const itemId = row.dataset.itemId;
 
+    // F8: no reloading. Moving one stop used to cost you your place halfway
+    // down a twelve-stop day. The arrows now take the same path the drag
+    // already does — swap in the DOM, send the new order, re-time from the
+    // response — so the times after the moved stop update with it.
     const moveBtn = e.target.closest("[data-move]");
     if (moveBtn) {
-      ustrip.request(`/ustrip/api/itinerary-items/${itemId}/move/`, { json: { direction: moveBtn.dataset.move } })
-        .then((data) => { if (data.moved) window.location.reload(); })
-        .catch((err) => alert(err.message));
+      const sibling = moveBtn.dataset.move === "up"
+        ? row.previousElementSibling : row.nextElementSibling;
+      if (!sibling || !sibling.hasAttribute("data-item-id")) return;   // already at the end
+      if (moveBtn.dataset.move === "up") timeline.insertBefore(row, sibling);
+      else timeline.insertBefore(sibling, row);
+      sendOrder();
       return;
     }
 
     if (e.target.closest("[data-delete]")) {
       if (!confirm("Delete this item?")) return;
       ustrip.request(`/ustrip/api/itinerary-items/${itemId}/`, { method: "DELETE" })
-        .then(() => window.location.reload())
+        .then(() => {
+          row.remove();
+          if (!timeline.querySelector("[data-item-id]")) {
+            timeline.appendChild(ustrip.el('<div class="empty" id="timeline-empty">Nothing planned for this day yet.</div>'));
+          }
+          sendOrder();   // everything after it shifts earlier
+        })
         .catch((err) => alert(err.message));
     }
   });

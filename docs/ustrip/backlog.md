@@ -323,9 +323,11 @@ Fixed above as F9 plus multi-line add.
 |---|---|
 | Packing: progress, Mine/All filter, owner picker, multi-line add | DONE — see F8/F9 |
 | The whole packing label is the tap target, not the 26px box inside it | DONE — and it exposed that the phone guard was testing an *empty* packing page, because seeding creates no lists. The fixture now gives packing and the journal real content, and the guard immediately failed on five controls it had never been able to see |
-| F8 on the itinerary day and list pages | OPEN — packing is done; those two still reload |
+| F8 on the itinerary day and list pages | DONE — the day's arrows and delete now take the same path the drag already did: swap in the DOM, send the new order, re-time from the response. The list page only ever reloaded on error, which is the right fallback and stays. Home's note arrows swap in place too. A browser test covers the day page, which nothing else did |
 | F12 backup cadence during the trip | **Avi's decision, not started.** Photos sit up to 7 days unbacked |
-| F7 native dialogs, F10 Home tiles, F11 journal grouping, F13 optional-stop label | OPEN |
+| F10 Home tiles | DONE — the three tiles duplicated the nav bar six centimetres below them. The counts they carried stay, as one line instead of three cards |
+| Adding a stop still reloads the day page | OPEN — the least painful of the reloads, since browsers restore scroll on reload, and the row markup is rich enough that building it in JS would duplicate the template |
+| F7 native dialogs, F11 journal grouping, F13 optional-stop label | OPEN |
 
 **Still needs Avi, not code:** nobody but Avi is in the `family` group, so
 none of this is visible to Nirit or the kids; everyone should open the app

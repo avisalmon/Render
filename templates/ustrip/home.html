@@ -121,24 +121,17 @@
     <button type="submit" class="add-btn">+</button>
   </form>
 
-  <p class="section-label">Around the trip</p>
-  <div class="tiles">
-    <a class="card tile" href="{% url 'ustrip:itinerary_list' %}">
-      <div class="tile-icon"><svg class="icon" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="15" rx="2.2"/><path d="M8 3.5v4M16 3.5v4M3.5 10h17"/></svg></div>
-      <div class="tile-title">Itinerary</div>
-      <div class="tile-sub">{{ day_count }} days planned</div>
-    </a>
-    <a class="card tile" href="{% url 'ustrip:packing' %}">
-      <div class="tile-icon"><svg class="icon" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M7.5 9.5l1.6 1.6L11.5 8M7.5 15.5l1.6 1.6l2.4-3.1M14 9.5h4M14 15.5h4"/></svg></div>
-      <div class="tile-title">Packing</div>
-      <div class="tile-sub">{{ checklist_count }} list{{ checklist_count|pluralize }}</div>
-    </a>
-    <a class="card tile" href="{% url 'ustrip:journal' %}">
-      <div class="tile-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M4 8.5a1.5 1.5 0 0 1 1.5-1.5h1.7l1-1.6h7.6l1 1.6h1.7A1.5 1.5 0 0 1 20 8.5V18a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18z"/><circle cx="12" cy="13" r="3.4"/></svg></div>
-      <div class="tile-title">Journal</div>
-      <div class="tile-sub">{{ journal_count }} photo{{ journal_count|pluralize }}</div>
-    </a>
-  </div>
+  {# F10: three "Around the trip" tiles used to sit here, linking to Itinerary,
+     Packing and Journal — the same three destinations as the nav bar directly
+     below them, on the same screen. Home is long enough (hero, next up,
+     getting there, where we sleep, good to know) without a second copy of the
+     navigation. The one thing the tiles carried that the nav does not is the
+     counts, so they stay, as a line instead of three cards. #}
+  <p class="trip-counts">
+    {{ day_count }} day{{ day_count|pluralize }} planned &middot;
+    {{ checklist_count }} packing list{{ checklist_count|pluralize }} &middot;
+    {{ journal_count }} photo{{ journal_count|pluralize }} in the journal
+  </p>
 {% else %}
   <div class="empty">No trip yet. Add one from the admin, or run <code>manage.py seed_ustrip</code>.</div>
 {% endif %}
@@ -183,10 +176,19 @@
     const row = e.target.closest("[data-note-id]");
     if (!row) return;
     const id = row.dataset.noteId;
+    // F8: swap in place. Home is long, and reloading to nudge one note put
+    // you back at the top of it.
     const moveBtn = e.target.closest("[data-move]");
     if (moveBtn) {
+      const sibling = moveBtn.dataset.move === "up"
+        ? row.previousElementSibling : row.nextElementSibling;
+      if (!sibling || !sibling.hasAttribute("data-note-id")) return;
       ustrip.request(`/ustrip/api/trip-notes/${id}/move/`, { json: { direction: moveBtn.dataset.move } })
-        .then((data) => { if (data.moved) window.location.reload(); })
+        .then((data) => {
+          if (!data.moved) return;
+          if (moveBtn.dataset.move === "up") list.insertBefore(row, sibling);
+          else list.insertBefore(sibling, row);
+        })
         .catch((err) => alert(err.message));
       return;
     }

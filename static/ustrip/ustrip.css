@@ -573,3 +573,7 @@ body.ustrip {
   color: inherit; cursor: pointer; }
 .ustrip .item-toggle .box { pointer-events: none; }
 .ustrip .item-toggle .box:before { content: none; }   /* the label carries the target now */
+
+/* What is left of the "Around the trip" tiles (F10): the counts, without a
+   second copy of the navigation that sits six centimetres below them. */
+.ustrip .trip-counts { margin: 26px 0 0; text-align: center; font-size: 12.5px; color: var(--ink-soft); }
