@@ -6,9 +6,17 @@
 <p class="title serif">Packing &amp; Tasks</p>
 <p class="subtitle">{{ trip.name|default:"" }}</p>
 
+{# Lists have had an owner since Sprint 3; this is the first screen that uses
+   it. "Mine" keeps the shared lists too — a shared list is everyone's job. #}
+<div class="filter-chips" id="packing-filter" {% if not groups %}hidden{% endif %}>
+  <button type="button" class="chip active" data-filter="all">All lists</button>
+  <button type="button" class="chip" data-filter="mine">Mine &amp; shared</button>
+</div>
+
 <div class="list" id="packing-list">
   {% for group in groups %}
-    <div class="clcard" data-group-id="{{ group.id }}">
+    {% with total=group.items.all|length done=group.items.all|count_done %}
+    <div class="clcard" data-group-id="{{ group.id }}" data-assigned="{{ group.assigned_to_id|default:'' }}">
       <div class="clhead">
         {% if group.assigned_to %}
           <div class="clavatar" style="{% avatar_style group.assigned_to %}">{{ group.assigned_to|avatar_initials }}</div>
@@ -19,17 +27,24 @@
         {% endif %}
         <div class="clbody">
           <div class="clname">{{ group.name }}</div>
-          <div class="clcount">{{ group.items.all|length }} item{{ group.items.all|length|pluralize }}</div>
+          <div class="clcount"><span data-progress-text>{% if total %}{{ done }} of {{ total }} packed{% else %}Nothing on this list yet{% endif %}</span></div>
+          <div class="progress" {% if not total %}hidden{% endif %}>
+            <div class="progress-fill" data-progress-fill style="width: {% widthratio done total|default:1 100 %}%"></div>
+          </div>
         </div>
         <button type="button" class="mini-btn mini-btn-danger" data-delete-group title="Delete list">&times;</button>
       </div>
       <div class="items">
         {% for item in group.items.all %}
           <div class="item" data-item-id="{{ item.id }}">
-            <button type="button" class="box {% if item.done %}done{% endif %}" data-toggle>
-              {% if item.done %}<svg viewBox="0 0 24 24"><path d="M5 12l5 5L19 7"/></svg>{% endif %}
+            {# The whole label toggles, not a 26px box: this is the control the
+               family taps most, and a thumb is not a mouse pointer. #}
+            <button type="button" class="item-toggle" data-toggle>
+              <span class="box {% if item.done %}done{% endif %}">
+                {% if item.done %}<svg viewBox="0 0 24 24"><path d="M5 12l5 5L19 7"/></svg>{% endif %}
+              </span>
+              <span class="itxt {% if item.done %}done{% endif %}">{{ item.text }}</span>
             </button>
-            <span class="itxt {% if item.done %}done{% endif %}">{{ item.text }}</span>
             <div class="row-actions row-actions-inline">
               <button type="button" class="mini-btn" data-move="up" title="Move up">&uarr;</button>
               <button type="button" class="mini-btn" data-move="down" title="Move down">&darr;</button>
@@ -38,14 +53,16 @@
             </div>
           </div>
         {% endfor %}
-        <form class="add-item-row" data-add-item data-group-id="{{ group.id }}">
-          <input type="text" name="text" placeholder="Add an item" required>
-          <button type="submit" class="add-btn">+</button>
+        {# One line per item, so a whole suitcase goes in at once. #}
+        <form class="add-item-row add-many" data-add-item data-group-id="{{ group.id }}">
+          <textarea name="text" rows="1" placeholder="Add items, one per line"></textarea>
+          <button type="submit" class="add-btn" title="Add">+</button>
         </form>
       </div>
     </div>
+    {% endwith %}
   {% empty %}
-    <div class="empty">No packing lists yet — add one below.</div>
+    <div class="empty">No packing lists yet. Add one below — a list each, or one shared.</div>
   {% endfor %}
 </div>
 
@@ -54,6 +71,15 @@
   <label class="field">
     <span>List name</span>
     <input type="text" name="name" placeholder="e.g. Packing — Mom" required>
+  </label>
+  <label class="field">
+    <span>Whose list?</span>
+    <select name="assigned_to">
+      <option value="">Shared — everyone's</option>
+      {% for member in family_members %}
+        <option value="{{ member.id }}" {% if member.id == user.id %}selected{% endif %}>{{ member.first_name|default:member.get_username }}</option>
+      {% endfor %}
+    </select>
   </label>
   <button type="submit" class="btn btn-secondary">Add list</button>
 </form>
@@ -64,10 +90,12 @@
 (function () {
   const list = document.getElementById("packing-list");
   const tripId = {{ trip.id|default:"null" }};
+  const myId = {{ user.id|default:"null" }};
 
   function itemRowHtml() {
     return (
-      '<div class="item"><button type="button" class="box" data-toggle></button><span class="itxt"></span>' +
+      '<div class="item"><button type="button" class="item-toggle" data-toggle>' +
+      '<span class="box"></span><span class="itxt"></span></button>' +
       '<div class="row-actions row-actions-inline">' +
       '<button type="button" class="mini-btn" data-move="up" title="Move up">↑</button>' +
       '<button type="button" class="mini-btn" data-move="down" title="Move down">↓</button>' +
@@ -76,6 +104,38 @@
       '</div></div>'
     );
   }
+
+  /* Recount from the DOM rather than asking the server: the numbers are already
+     on screen, and this has to stay right with no signal. */
+  function refreshProgress(card) {
+    const rows = card.querySelectorAll("[data-item-id]");
+    const done = card.querySelectorAll(".box.done").length;
+    const text = card.querySelector("[data-progress-text]");
+    const bar = card.querySelector(".progress");
+    const fill = card.querySelector("[data-progress-fill]");
+    text.textContent = rows.length ? done + " of " + rows.length + " packed" : "Nothing on this list yet";
+    bar.hidden = rows.length === 0;
+    fill.style.width = rows.length ? Math.round((done / rows.length) * 100) + "%" : "0%";
+    card.classList.toggle("all-packed", rows.length > 0 && done === rows.length);
+  }
+
+  /* --- the mine/all filter, remembered between visits ------------------- */
+  const chips = document.getElementById("packing-filter");
+  function applyFilter(mode) {
+    list.querySelectorAll("[data-group-id]").forEach((card) => {
+      const owner = card.dataset.assigned;
+      card.hidden = mode === "mine" && owner !== "" && owner !== String(myId);
+    });
+    chips.querySelectorAll(".chip").forEach((c) => c.classList.toggle("active", c.dataset.filter === mode));
+    try { localStorage.setItem("ustrip.packingFilter", mode); } catch (e) { /* private mode */ }
+  }
+  chips.addEventListener("click", (e) => {
+    const chip = e.target.closest(".chip");
+    if (chip) applyFilter(chip.dataset.filter);
+  });
+  let saved = "all";
+  try { saved = localStorage.getItem("ustrip.packingFilter") || "all"; } catch (e) { /* private mode */ }
+  applyFilter(saved);
 
   list.addEventListener("click", function (e) {
     const deleteGroupBtn = e.target.closest("[data-delete-group]");
@@ -90,15 +150,17 @@
 
     const row = e.target.closest("[data-item-id]");
     if (!row) return;
+    const card = row.closest("[data-group-id]");
     const itemId = row.dataset.itemId;
 
     if (e.target.closest("[data-toggle]")) {
-      const btn = e.target.closest("[data-toggle]");
+      const box = row.querySelector(".box");
       ustrip.request(`/ustrip/api/checklist-items/${itemId}/toggle/`)
         .then((data) => {
-          btn.classList.toggle("done", data.done);
-          btn.innerHTML = data.done ? '<svg viewBox="0 0 24 24"><path d="M5 12l5 5L19 7"/></svg>' : "";
+          box.classList.toggle("done", data.done);
+          box.innerHTML = data.done ? '<svg viewBox="0 0 24 24"><path d="M5 12l5 5L19 7"/></svg>' : "";
           row.querySelector(".itxt").classList.toggle("done", data.done);
+          refreshProgress(card);
         })
         .catch((err) => alert(err.message));
       return;
@@ -116,8 +178,17 @@
 
     const moveBtn = e.target.closest("[data-move]");
     if (moveBtn) {
+      // Swap the rows in place. Reloading threw away your scroll position,
+      // which on a long list meant losing your place to move one item (F8).
+      const sibling = moveBtn.dataset.move === "up"
+        ? row.previousElementSibling : row.nextElementSibling;
+      if (!sibling || !sibling.hasAttribute("data-item-id")) return;
       ustrip.request(`/ustrip/api/checklist-items/${itemId}/move/`, { json: { direction: moveBtn.dataset.move } })
-        .then((data) => { if (data.moved) window.location.reload(); })
+        .then((data) => {
+          if (!data.moved) return;
+          if (moveBtn.dataset.move === "up") row.parentElement.insertBefore(row, sibling);
+          else row.parentElement.insertBefore(sibling, row);
+        })
         .catch((err) => alert(err.message));
       return;
     }
@@ -125,7 +196,7 @@
     if (e.target.closest("[data-delete]")) {
       if (!confirm("Delete this item?")) return;
       ustrip.request(`/ustrip/api/checklist-items/${itemId}/`, { method: "DELETE" })
-        .then(() => row.remove())
+        .then(() => { row.remove(); refreshProgress(card); })
         .catch((err) => alert(err.message));
     }
   });
@@ -134,27 +205,41 @@
     const form = e.target.closest("[data-add-item]");
     if (!form) return;
     e.preventDefault();
-    const input = form.querySelector('input[name="text"]');
+    const input = form.querySelector('[name="text"]');
     const text = input.value.trim();
     if (!text) return;
-    ustrip.request("/ustrip/api/checklist-items/", { json: { group: form.dataset.groupId, text: text } })
-      .then((item) => {
-        const row = ustrip.el(itemRowHtml());
-        row.dataset.itemId = item.id;
-        row.querySelector(".itxt").textContent = item.text;
-        form.parentElement.insertBefore(row, form);
+    const card = form.closest("[data-group-id]");
+    ustrip.request(`/ustrip/api/checklist-groups/${form.dataset.groupId}/add_items/`, { json: { text: text } })
+      .then((items) => {
+        items.forEach((item) => {
+          const row = ustrip.el(itemRowHtml());
+          row.dataset.itemId = item.id;
+          row.querySelector(".itxt").textContent = item.text;
+          form.parentElement.insertBefore(row, form);
+        });
         input.value = "";
+        input.rows = 1;
+        refreshProgress(card);
       })
       .catch((err) => alert(err.message));
+  });
+
+  // Grow the add box as a list is typed or pasted in, so you can see it.
+  list.addEventListener("input", function (e) {
+    const box = e.target.closest(".add-many textarea");
+    if (!box) return;
+    box.rows = Math.min(8, box.value.split("\n").length || 1);
   });
 
   const addGroupForm = document.getElementById("add-group-form");
   addGroupForm.addEventListener("submit", function (e) {
     e.preventDefault();
-    const input = addGroupForm.querySelector('input[name="name"]');
-    const name = input.value.trim();
+    const name = addGroupForm.name.value.trim();
     if (!name) return;
-    ustrip.request("/ustrip/api/checklist-groups/", { json: { trip: tripId, name: name } })
+    const owner = addGroupForm.assigned_to.value;
+    ustrip.request("/ustrip/api/checklist-groups/", {
+      json: { trip: tripId, name: name, assigned_to: owner || null },
+    })
       .then(() => window.location.reload())
       .catch((err) => alert(err.message));
   });

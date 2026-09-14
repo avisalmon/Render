@@ -278,6 +278,33 @@ class ChecklistGroupViewSet(viewsets.ModelViewSet):
         trip = serializer.validated_data["trip"]
         serializer.save(order=trip.checklists.count())
 
+    @action(detail=True, methods=["post"])
+    def add_items(self, request, pk=None):
+        """Body: {"text": "socks\\nshoes\\ncharger"} — one item per line.
+
+        Packing is not one thought at a time: it is standing over a suitcase
+        reeling off eight things, or pasting last year's list. One item per
+        round trip made that a chore on a phone, which is where this gets
+        used. Commas split too, since a typed list tends to come out that way.
+        Blank lines and duplicates-in-one-paste are dropped; an item that
+        already exists in the list is *not* skipped, because "two chargers"
+        is a legitimate thing to pack."""
+        group = self.get_object()
+        raw = request.data.get("text") or ""
+        if isinstance(raw, list):
+            parts = [str(p) for p in raw]
+        else:
+            parts = str(raw).replace(",", "\n").splitlines()
+        texts = [p.strip()[:200] for p in parts if p.strip()]
+        if not texts:
+            return Response({"error": "nothing to add"}, status=400)
+
+        start = group.items.count()
+        created = ChecklistItem.objects.bulk_create(
+            [ChecklistItem(group=group, text=text, order=start + i) for i, text in enumerate(texts)]
+        )
+        return Response(ChecklistItemSerializer(created, many=True).data, status=201)
+
 
 class ChecklistItemViewSet(viewsets.ModelViewSet):
     queryset = ChecklistItem.objects.all()

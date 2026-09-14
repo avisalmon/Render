@@ -201,9 +201,17 @@ def rental_car_edit(request, rental_car_id):
 
 @family_required
 def packing(request):
+    """Spec §4.2. The family members come along so a new list can be given an
+    owner at the moment it is created — `assigned_to` has been on the model
+    since Sprint 3, but there was no way to set it outside `/admin/`, which
+    made the "mine" filter a filter over a field nobody could fill in."""
     trip = _current_trip()
-    groups = trip.checklists.prefetch_related("items").all() if trip else []
-    return render(request, "ustrip/packing.html", {"trip": trip, "groups": groups, "active_tab": "packing"})
+    groups = trip.checklists.select_related("assigned_to").prefetch_related("items").all() if trip else []
+    family_members = get_user_model().objects.filter(groups__name=FAMILY_GROUP).order_by("date_joined")
+    return render(
+        request, "ustrip/packing.html",
+        {"trip": trip, "groups": groups, "family_members": family_members, "active_tab": "packing"},
+    )
 
 
 @family_required

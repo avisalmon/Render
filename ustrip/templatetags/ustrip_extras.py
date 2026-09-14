@@ -30,6 +30,16 @@ def avatar_initials(user):
 
 
 @register.filter
+def count_done(items):
+    """How many of a checklist's items are ticked.
+
+    Counted in Python over the already-prefetched items rather than as a
+    queryset annotation, so rendering a packing list costs no extra query —
+    the page has the rows in hand either way."""
+    return sum(1 for item in items if item.done)
+
+
+@register.filter
 def duration_human(minutes):
     """90 -> "1h 30m", 45 -> "45m", 120 -> "2h", 0/None -> ""."""
     try:

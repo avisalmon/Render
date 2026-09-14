@@ -271,3 +271,86 @@ def test_the_api_is_real_crud_even_though_the_ui_never_deletes_a_flight(client, 
     response = client.delete(f"/ustrip/api/flights/{flight.id}/")
     assert response.status_code == 204
     assert not Flight.objects.filter(pk=flight.id).exists()
+
+
+# --- Packing for the week before the trip (Sprint 11 F9) ------------------
+
+@pytest.mark.django_db
+def test_a_whole_suitcase_goes_in_at_once(client, member, trip):
+    """Packing is not one thought at a time. One item per round trip made a
+    suitcase a chore on a phone, which is the only place this gets used."""
+    group = ChecklistGroup.objects.create(trip=trip, name="Packing — Kid")
+    client.force_login(member)
+
+    response = _post_json(
+        client, f"/ustrip/api/checklist-groups/{group.id}/add_items/",
+        {"text": "socks\nshoes\n\n  charger  \nhat"},
+    )
+
+    assert response.status_code == 201
+    assert [i["text"] for i in response.json()] == ["socks", "shoes", "charger", "hat"]
+    # Appended in order, after whatever was already there.
+    assert list(group.items.order_by("order").values_list("text", flat=True)) == [
+        "socks", "shoes", "charger", "hat"
+    ]
+
+
+@pytest.mark.django_db
+def test_a_typed_list_splits_on_commas_too(client, member, trip):
+    group = ChecklistGroup.objects.create(trip=trip, name="Before we leave")
+    client.force_login(member)
+
+    _post_json(
+        client, f"/ustrip/api/checklist-groups/{group.id}/add_items/",
+        {"text": "passports, tickets, cash"},
+    )
+
+    assert list(group.items.order_by("order").values_list("text", flat=True)) == [
+        "passports", "tickets", "cash"
+    ]
+
+
+@pytest.mark.django_db
+def test_adding_nothing_is_refused_rather_than_creating_blanks(client, member, trip):
+    group = ChecklistGroup.objects.create(trip=trip, name="Packing")
+    client.force_login(member)
+
+    response = _post_json(client, f"/ustrip/api/checklist-groups/{group.id}/add_items/", {"text": "  \n \n"})
+
+    assert response.status_code == 400
+    assert group.items.count() == 0
+
+
+@pytest.mark.django_db
+def test_a_list_reports_how_much_is_left(client, member, trip):
+    """The number that matters while packing is not "12 items"."""
+    group = ChecklistGroup.objects.create(trip=trip, name="Packing")
+    ChecklistItem.objects.create(group=group, text="socks", order=0, done=True)
+    ChecklistItem.objects.create(group=group, text="shoes", order=1)
+    ChecklistItem.objects.create(group=group, text="hat", order=2)
+    client.force_login(member)
+
+    body = client.get(f"/ustrip/api/checklist-groups/{group.id}/").json()
+
+    assert body["item_count"] == 3
+    assert body["done_count"] == 1
+
+
+@pytest.mark.django_db
+def test_the_packing_page_shows_progress_and_can_be_filtered_to_mine(client, member, trip):
+    """`assigned_to` has been on the model since Sprint 3 with no way to set
+    it outside /admin/, which made a "mine" filter a filter over a field
+    nobody could fill in. The page now offers both."""
+    mine = ChecklistGroup.objects.create(trip=trip, name="Packing — me", assigned_to=member)
+    ChecklistItem.objects.create(group=mine, text="socks", order=0, done=True)
+    ChecklistItem.objects.create(group=mine, text="shoes", order=1)
+    ChecklistGroup.objects.create(trip=trip, name="Shared")
+    client.force_login(member)
+
+    content = client.get("/ustrip/packing/").content.decode()
+
+    assert "1 of 2 packed" in content
+    assert 'data-filter="mine"' in content
+    assert f'data-assigned="{member.id}"' in content   # mine, attributable
+    assert 'data-assigned=""' in content               # shared, stays in "mine" too
+    assert "<select name=\"assigned_to\"" in content   # a new list can be given an owner

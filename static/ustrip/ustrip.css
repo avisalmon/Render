@@ -536,3 +536,40 @@ body.ustrip {
 /* Set the floor on the target itself, not its container: an `optional` row's
    dashed border ate 2px of the row's 44 and left the title at 42. */
 .ustrip .mini-title { min-height: 44px; }
+
+/* --- Packing: progress, the mine/all filter, and multi-line add ---------
+   Sprint 11 F9 (2026-09-14). "12 items" never answered the question you have
+   while packing, which is how much is left. */
+
+.ustrip .filter-chips { display: flex; gap: 8px; margin: 0 0 14px; }
+.ustrip .chip { min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--card); color: var(--ink-soft); font: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer; }
+.ustrip .chip.active { background: var(--rust-soft); border-color: var(--rust); color: var(--rust); }
+
+.ustrip .progress { height: 4px; border-radius: 99px; background: var(--line); margin-top: 7px; overflow: hidden; }
+.ustrip .progress-fill { height: 100%; background: var(--rust); border-radius: 99px; transition: width .25s ease; }
+.ustrip .clcard.all-packed .progress-fill { background: var(--good, oklch(55% 0.13 155)); }
+.ustrip .clcard.all-packed .clcount { color: var(--good, oklch(55% 0.13 155)); font-weight: 600; }
+@media (prefers-reduced-motion: reduce) { .ustrip .progress-fill { transition: none; } }
+
+.ustrip .add-many { align-items: flex-end; }
+.ustrip .add-many textarea { flex: 1; font: inherit; font-size: 13.5px; color: var(--ink); background: none;
+  border: none; border-bottom: 1px dashed var(--line); padding: 10px 2px; resize: none; line-height: 1.45;
+  min-height: 44px; }
+.ustrip .add-many textarea:focus { outline: none; border-bottom-color: var(--rust); }
+
+.ustrip .field select { font: inherit; font-size: 14.5px; color: var(--ink); background: var(--card);
+  border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; min-height: 44px; }
+.ustrip .field select:focus { outline: none; border-color: var(--rust); }
+
+/* The packing row's target is the whole label, not the 26px box inside it.
+   A 44px hit area on a 26px box could not be reached: the row was ~30px tall
+   with an 11px gap, so a thumb aiming 21px off centre landed in the gap
+   between rows (tests/test_ustrip_mobile.py, 2026-09-14). */
+.ustrip .item { min-height: 44px; }
+.ustrip .item-toggle { flex: 1; min-width: 0; min-height: 44px; display: flex; align-items: center;
+  gap: 11px; background: none; border: none; padding: 0; margin: 0; font: inherit; text-align: left;
+  color: inherit; cursor: pointer; }
+.ustrip .item-toggle .box { pointer-events: none; }
+.ustrip .item-toggle .box:before { content: none; }   /* the label carries the target now */

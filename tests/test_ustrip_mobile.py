@@ -141,7 +141,7 @@ def trip_pages(db, live_server, phone_page):
     from django.contrib.auth.models import Group, User
     from django.core.management import call_command
 
-    from ustrip.models import Trip
+    from ustrip.models import ChecklistGroup, ChecklistItem, JournalPost, Trip
 
     group, _ = Group.objects.get_or_create(name="family")
     user = User.objects.create_user("phone_tester", password="x")
@@ -149,6 +149,17 @@ def trip_pages(db, live_server, phone_page):
     call_command("seed_ustrip")
 
     trip = Trip.objects.get(name="USA Trip 2026")
+
+    # Seeding deliberately creates no packing lists and no journal posts (spec
+    # §4.2/§4.3: nothing fabricated). That left both pages rendering empty here,
+    # so their controls — the checkbox, the row buttons, the filter chips, the
+    # journal's own row actions — were never actually measured. Give them
+    # something to draw.
+    packing = ChecklistGroup.objects.create(trip=trip, name="Packing — tester", assigned_to=user, order=0)
+    for order, text in enumerate(["Socks", "Toothbrush", "Charger"]):
+        ChecklistItem.objects.create(group=packing, text=text, order=order, done=order == 0)
+    ChecklistGroup.objects.create(trip=trip, name="Before we leave", order=1)
+    JournalPost.objects.create(trip=trip, author=user, caption="Made it.", location="Times Square")
     day = trip.days.first()
     item = day.items.first()
     flight = trip.flights.first()

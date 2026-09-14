@@ -268,11 +268,24 @@ class ChecklistItemSerializer(serializers.ModelSerializer):
 class ChecklistGroupSerializer(serializers.ModelSerializer):
     items = ChecklistItemSerializer(many=True, read_only=True)
     assigned_to_info = UserSummarySerializer(source="assigned_to", read_only=True)
+    # "11 items" never answered the question anyone actually has while packing,
+    # which is how much is left.
+    item_count = serializers.SerializerMethodField()
+    done_count = serializers.SerializerMethodField()
 
     class Meta:
         model = ChecklistGroup
-        fields = ["id", "trip", "name", "assigned_to", "assigned_to_info", "order", "items"]
+        fields = [
+            "id", "trip", "name", "assigned_to", "assigned_to_info", "order",
+            "item_count", "done_count", "items",
+        ]
         read_only_fields = ["order"]
+
+    def get_item_count(self, group):
+        return len(group.items.all())
+
+    def get_done_count(self, group):
+        return sum(1 for item in group.items.all() if item.done)
 
 
 class JournalPostSerializer(serializers.ModelSerializer):

@@ -231,7 +231,7 @@ order wherever they read best, as many as wanted.
 | List page and detail page render notes without a time; notes drag like any item, within and between days | DONE |
 | Tests: a note has no time and B still flows straight from A; a note is created through the API, renders on the three pages, and reorders | DONE — 2 more in `tests/test_ustrip_items.py` |
 
-## Sprint 11 — The fix sprint `P1+P2 DONE (DEV), P3/P4 OPEN`
+## Sprint 11 — The fix sprint `P1+P2 DONE, F8/F9 DONE, REST OPEN`
 
 A full review on **2026-09-14**, after Sprints 8-10.1 landed, against
 [spec.md](spec.md) and [building_an_app.md](../building_an_app.md).
@@ -269,8 +269,8 @@ with one bar of signal. P3 and P4 can wait until after the trip.
 | # | Item | Why |
 |---|---|---|
 | F7 | **Replace `alert` / `confirm` / `prompt` with in-page editing and a toast** | **48** native dialogs across the templates. Editing a packing item or a "good to know" note is a `prompt()` — single-line, unstyled, and on iOS it announces the domain. Spec §0a.1 |
-| F8 | **Stop reloading the page after a reorder** — patch the DOM from the response | **8** `location.reload()` calls. The reorder API already returns the recomputed day, so the data is in hand; reloading throws away your scroll position halfway down a 12-stop day or the long Home page. Spec §0a.1 |
-| F9 | **Packing: "N of M packed" per list, and a "just mine" filter** | The page shows "12 items" but never how many are done — the one number that matters while packing. `ChecklistGroup.assigned_to` is already modeled, so "mine" is a filter over data we have, not a new feature |
+| F8 | **Stop reloading the page after a reorder** — patch the DOM from the response | **8** `location.reload()` calls. The reorder API already returns the recomputed day, so the data is in hand; reloading throws away your scroll position halfway down a 12-stop day or the long Home page. Spec §0a.1  **DONE (packing).** The row swaps with its neighbour in place from the response. Still to do on the itinerary day and list pages, which reload for the same reason. |
+| F9 | **Packing: "N of M packed" per list, and a "just mine" filter** | The page shows "12 items" but never how many are done — the one number that matters while packing. `ChecklistGroup.assigned_to` is already modeled, so "mine" is a filter over data we have, not a new feature  **DONE, and more than asked.** "N of M packed" with a bar per list, green when a list is finished; a Mine/All filter remembered in `localStorage`; a `assigned_to` picker on the new-list form, without which the filter was a filter over a field nobody could set outside `/admin/`; and multi-line add (`add_items`), because packing is eight things at once, not one per round trip. |
 | F10 | **Home: drop the "Around the trip" tiles** | They link to Itinerary / Packing / Journal — the exact three destinations in the bottom nav, visible on the same screen. Home is now long (hero, next-up, getting there, where we sleep, good to know, tiles); this is the section that earns its space least |
 
 ### P4 — Worth a decision, maybe not a build
@@ -307,3 +307,27 @@ centre does not hit the control, it is skipped). Overflow is asserted on a named
 offending element rather than `scrollWidth`, which under mobile emulation tracks
 the visual viewport and reports 4px of overflow on a page where nothing
 overflows.
+
+## Sprint 12 — The week before we fly `PART DONE`
+
+Not a bug list: what the family actually touches between now and Friday.
+
+**Packing was the real gap, and it was not on the review's list.** Seeding
+creates the itinerary, flights, rental car, lodging and trip notes, but
+deliberately no packing lists (spec §4.2: nothing fabricated). That was right
+in principle and wrong in effect — the family packs *this* week, and the tab
+was a blank page with a one-item-at-a-time box behind a 30px plus button.
+Fixed above as F9 plus multi-line add.
+
+| Item | Status |
+|---|---|
+| Packing: progress, Mine/All filter, owner picker, multi-line add | DONE — see F8/F9 |
+| The whole packing label is the tap target, not the 26px box inside it | DONE — and it exposed that the phone guard was testing an *empty* packing page, because seeding creates no lists. The fixture now gives packing and the journal real content, and the guard immediately failed on five controls it had never been able to see |
+| F8 on the itinerary day and list pages | OPEN — packing is done; those two still reload |
+| F12 backup cadence during the trip | **Avi's decision, not started.** Photos sit up to 7 days unbacked |
+| F7 native dialogs, F10 Home tiles, F11 journal grouping, F13 optional-stop label | OPEN |
+
+**Still needs Avi, not code:** nobody but Avi is in the `family` group, so
+none of this is visible to Nirit or the kids; everyone should open the app
+once on wifi so the service worker caches the itinerary on their phone; and
+the rental car and some lodging still say "not booked yet" in the app.
