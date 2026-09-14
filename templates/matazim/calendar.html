@@ -1,0 +1,72 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.130 — the whole year, for a member who wants it.
+
+  What is *close* lives on המסלול שלי, because a calendar somebody has to
+  remember to visit tells nobody anything. This page is the one you open
+  deliberately, so it shows everything aimed at you, and what has already
+  happened underneath — a programme is partly the thing you can look back on.
+{% endcomment %}
+
+{% block title %}לוח הזמנים · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page mz-page-narrow">
+  <div class="mz-page-head">
+    <h1>לוח הזמנים</h1>
+    <p>הימים שמיועדים לכם, הקרובים והשכבר היו.</p>
+  </div>
+
+  {% if upcoming %}
+    <section class="mz-panel mz-panel-wide">
+      <h2>מה קרוב</h2>
+      <ul class="mz-events">
+        {% for event in upcoming %}
+          <li class="mz-event">
+            <div class="mz-event-when">
+              <span class="mz-event-day">{{ event.starts_at|date:"j" }}</span>
+              <span class="mz-event-month">{{ event.starts_at|date:"F" }}</span>
+            </div>
+            <div class="mz-event-body">
+              <h3>{{ event.title }}</h3>
+              <p class="mz-muted">
+                {{ event.starts_at|date:"l, H:i" }}
+                {% if event.place %} · {{ event.place }}{% endif %}
+              </p>
+              {% if event.about %}<p>{{ event.about|linebreaksbr }}</p>{% endif %}
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% else %}
+    <section class="mz-panel">
+      <h2>אין כרגע תאריכים קרובים</h2>
+      <p class="mz-muted">
+        כשייקבע יום שיא שמיועד לכם, הוא יופיע כאן ותקבלו על זה התראה.
+      </p>
+    </section>
+  {% endif %}
+
+  {% if past %}
+    <section class="mz-panel mz-panel-wide">
+      <h2>מה כבר היה</h2>
+      <ul class="mz-events">
+        {% for event in past %}
+          <li class="mz-event is-past">
+            <div class="mz-event-when">
+              <span class="mz-event-day">{{ event.starts_at|date:"j" }}</span>
+              <span class="mz-event-month">{{ event.starts_at|date:"F" }}</span>
+            </div>
+            <div class="mz-event-body">
+              <h3>{{ event.title }}</h3>
+              <p class="mz-muted">{{ event.starts_at|date:"j בF Y" }}</p>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

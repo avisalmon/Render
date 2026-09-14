@@ -1007,6 +1007,7 @@ class Notification(models.Model):
     WORK_WAITING = "work_waiting"
     JOINED = "joined"
     CERTIFIED = "certified"
+    EVENT = "event"
     KIND_CHOICES = [
         (FEEDBACK, "משוב חדש"),
         (WORK_APPROVED, "עבודה אושרה"),
@@ -1014,6 +1015,7 @@ class Notification(models.Model):
         (WORK_WAITING, "עבודה מחכה לך"),
         (JOINED, "צירוף למוביל/ה"),
         (CERTIFIED, "הסמכה"),
+        (EVENT, "יום שיא"),
     ]
 
     user = models.ForeignKey(
@@ -1040,3 +1042,62 @@ class Notification(models.Model):
     @property
     def is_unread(self):
         return self.read_at is None
+
+
+class Event(models.Model):
+    """REQ-M.27 — a יום שיא, or anything else with a date on it.
+
+    **Aimed, not broadcast.** For everybody in the programme, or for named
+    leaders, or for named classes. A day for one school's ninth-graders showing
+    on every member's screen as though they were invited is worse than not
+    telling them: it is an invitation that turns out not to be one.
+
+    **Owned by a program manager** (§4.4), like leaders and students. Her
+    institution's events are hers; another's are not merely hidden but
+    unreachable, because the queryset never contained them.
+
+    **Public is a decision, not a default** (REQ-M.129). A public page about a
+    programme for fourteen-year-olds is a public statement of when and where
+    children gather, so the programme's own diary stays the programme's own
+    business unless somebody ticks a box.
+    """
+
+    program_manager = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="matazim_events",
+        verbose_name="של מנהל/ת התוכנית",
+    )
+
+    title = models.CharField(max_length=160, verbose_name="מה")
+    about = models.TextField(blank=True, default="", verbose_name="פרטים")
+    starts_at = models.DateTimeField(db_index=True, verbose_name="מתי")
+    ends_at = models.DateTimeField(null=True, blank=True, verbose_name="עד מתי")
+    place = models.CharField(max_length=200, blank=True, default="", verbose_name="איפה")
+
+    # Who it is for. Empty audience with `for_everyone` false is an event for
+    # nobody, which the form refuses rather than storing.
+    for_everyone = models.BooleanField(default=True, verbose_name="לכל התוכנית")
+    leaders = models.ManyToManyField(
+        Leader, blank=True, related_name="events", verbose_name="למובילים"
+    )
+    classes = models.ManyToManyField(
+        StudyClass, blank=True, related_name="events", verbose_name="לכיתות"
+    )
+
+    is_public = models.BooleanField(
+        default=False, verbose_name="להציג בעמוד הפומבי"
+    )
+    cancelled_at = models.DateTimeField(null=True, blank=True, verbose_name="בוטל")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["starts_at"]
+        verbose_name = "יום שיא"
+        verbose_name_plural = "ימי שיא"
+
+    def __str__(self):
+        return f"{self.title} · {self.starts_at:%d.%m.%Y}"
+
+    @property
+    def is_cancelled(self):
+        return self.cancelled_at is not None

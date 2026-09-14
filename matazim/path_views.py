@@ -123,6 +123,12 @@ def _next_step(profile, student, state, per_course):
     }
 
 
+def _next_events(user):
+    from .event_views import upcoming_for
+
+    return upcoming_for(user, limit=2)
+
+
 def _work_state(student, which):
     """Whether work is sitting with the leader, or an answer is sitting unread.
 
@@ -202,6 +208,9 @@ def my_path(request):
             leader=student.leader if student else None,
             # REQ-M.19 — what the panel should say, which depends on whether
             # anything is waiting on somebody else or on them.
+            # REQ-M.130 — a calendar somebody has to remember to visit tells
+            # nobody anything, so the next thing comes to them.
+            next_events=_next_events(request.user),
             work_waiting=_work_state(student, "waiting"),
             work_answered=_work_state(student, "answered"),
             leader_name=_leader_name(student.leader) if student else "",

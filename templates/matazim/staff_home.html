@@ -65,6 +65,17 @@
       for, and only shouts when something is actually overdue.
     {% endcomment %}
     <section class="mz-panel">
+      <h2>ימי שיא</h2>
+      <p>
+        ימי שיא, תערוכות וסיומי מסלול. מי שהיום מיועד לו מקבל התראה ורואה אותו
+        בלוח הזמנים שלו.
+      </p>
+      <div class="mz-page-actions">
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:staff_events' %}">לימי השיא</a>
+      </div>
+    </section>
+
+    <section class="mz-panel">
       <h2>
         ניקוי מידע ישן
         {% if overdue %}<span class="mz-tag mz-tag-fix">{{ overdue }} ממתינים</span>{% endif %}

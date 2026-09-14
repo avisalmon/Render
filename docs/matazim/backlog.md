@@ -1938,6 +1938,73 @@ constantly, and a product where that loses information is a broken product. This
 one gets a test, because it is the kind of rule that decays the first time
 somebody adds an event in a hurry.
 
+## SPR-M.31 — ימי שיא, and what is coming  `DONE`
+
+REQ-M.27, REQ-M.129, REQ-M.130. The third of the placeholder pages to become
+real, and the one that gives the bell the event type it is missing.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.31.1 | `Event`, owned by a program manager, aimed at an audience | REQ-M.27, §4.4 | DONE |
+| F-M.31.2 | נעמי writes one, and can take it down | REQ-M.27 | DONE |
+| F-M.31.3 | ימי שיא becomes a real public page that names nobody | REQ-M.129 | DONE |
+| F-M.31.4 | What is close, on המסלול שלי, and the year on its own page | REQ-M.130 | DONE |
+| F-M.31.5 | Announcing one rings the bell, for the people it is for | REQ-M.33 | DONE |
+
+### Both load-bearing rules were verified by breaking them  `DONE 2026-09-13`
+
+The two rules this sprint rests on are the two a tired afternoon would simplify
+away, so each was tested by writing the simplification and watching it fail.
+
+**Aimed, not broadcast.** Dropping the audience filter from `visible_events` —
+the obvious "just show the institution's events" — put a day for one school's
+ninth-graders on every member's screen. The test named it: *somebody was shown a
+day they are not invited to*.
+
+**Private unless ticked.** Replacing `public_events()` with a plain query on the
+public page published the programme's internal diary to strangers. The test:
+*the programme's own diary was published*.
+
+A third rule got a test without needing a demonstration: a cancelled day leaves
+the public page, because nobody should travel to something that is not
+happening.
+
+### One half deliberately not built
+
+REQ-M.34 stays WIP. Announcing an event rings the bell; reminding somebody it is
+tomorrow needs something running on a timer, and this product has exactly one
+rule about unattended jobs (REQ-M.87: the machine proposes, a person decides).
+That needs a decision from Avi about what may run without a person, so it is
+named rather than marked done on the strength of its easy half.
+
+### Decisions
+
+**An event is aimed, not broadcast.** For everybody in the programme, or for
+named leaders, or for named classes. A day for one school's ninth-graders
+appearing on every member's screen as though they were invited is worse than
+not telling them: it is an invitation that turns out not to be one.
+
+**The public page names nobody and shows only what is marked for it.** A public
+page about a programme for fourteen-year-olds is a public statement of when and
+where children gather. Date, title, place, and a school at most (REQ-M.30a), and
+only for events נעמי ticks as public — the default is that the programme's own
+diary is the programme's own business.
+
+**What is close goes where people already are.** המסלול שלי carries the next
+thing; the whole year gets its own page for when somebody wants it. A calendar
+you have to remember to visit tells nobody anything.
+
+### One half deliberately not built
+
+REQ-M.34 says "deadlines", and the reminder half of that is harder than it
+looks. "A deadline is approaching" is a thing nobody does — it needs something
+running on a timer, and this product has exactly one rule about unattended jobs
+(REQ-M.87: the machine proposes, a person decides, and nothing deletes a
+member's data unattended). Announcing an event rings the bell today. Reminding
+somebody that it is tomorrow needs a scheduler and a decision from Avi about
+what may run without a person, so REQ-M.34 stays WIP with that named rather
+than marked done on the strength of its easy half.
+
 ## Also still open
 
 - Retire the old production tables, once ACT-M.2 is answered.

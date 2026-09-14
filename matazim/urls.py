@@ -12,6 +12,7 @@ from . import (
     cohort_views,
     conversation_views,
     entrance_views,
+    event_views,
     invite_views,
     joining_views,
     learn_views,
@@ -34,7 +35,11 @@ urlpatterns = [
     path("courses/", views.courses, name="courses"),
     path("schools/", views.schools, name="schools"),
     path("community/", views.community, name="community"),
-    path("events/", views.events, name="events"),
+    # REQ-M.27, M.129, M.130 — ימי שיא, and the year.
+    path("events/", event_views.events_page, name="events"),
+    path("calendar/", event_views.calendar, name="calendar"),
+    path("staff/events/", event_views.staff_events, name="staff_events"),
+    path("staff/events/<int:event_id>/cancel/", event_views.cancel_event, name="cancel_event"),
     # מבחן הכניסה is public: the link gets pasted around, and signing up
     # happens around the test rather than before it (REQ-M.5d).
     path("test/", views.entrance_test, name="entrance_test"),

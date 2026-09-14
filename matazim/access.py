@@ -183,3 +183,63 @@ def unclaimed_students():
 def can_manage_leaders(user):
     """Assigning and deactivating leaders is what the role exists to do."""
     return is_program_manager(user)
+
+
+def visible_events(user):
+    """REQ-M.27, §4.4 — the events aimed at this person.
+
+    Scope as a property of the queryset, like `visible_students` and
+    `visible_leaders`, so no screen has to remember to filter and none of them
+    can filter differently.
+
+    Aimed rather than broadcast: a member sees their institution's
+    whole-programme events plus anything aimed at their leader or one of their
+    classes. A day for another school's ninth-graders is not merely hidden from
+    them, it was never in the queryset.
+    """
+    from django.db.models import Q
+
+    from .models import Event
+
+    if not getattr(user, "is_authenticated", False):
+        return Event.objects.none()
+
+    if user.is_superuser:
+        return Event.objects.all()
+
+    if is_program_manager(user):
+        return Event.objects.filter(program_manager=user)
+
+    if leader := leader_of(user):
+        return Event.objects.filter(
+            Q(program_manager=leader.program_manager)
+        ).filter(
+            Q(for_everyone=True) | Q(leaders=leader) | Q(classes__leader=leader)
+        ).distinct()
+
+    student = Student.objects.filter(user=user).select_related("leader").first()
+    if student and student.leader:
+        return Event.objects.filter(
+            program_manager=student.leader.program_manager
+        ).filter(
+            Q(for_everyone=True)
+            | Q(leaders=student.leader)
+            | Q(classes__in=student.classes.all())
+        ).distinct()
+
+    # A member with no leader belongs to no institution yet, so no institution's
+    # diary is theirs. Not an error: REQ-M.65 says that is a normal state.
+    return Event.objects.none()
+
+
+def public_events():
+    """REQ-M.129 — what a stranger may see.
+
+    Only what somebody ticked, and never cancelled ones. A public page about a
+    programme for fourteen-year-olds is a public statement of when and where
+    children gather, so the default is that the programme's diary is its own
+    business.
+    """
+    from .models import Event
+
+    return Event.objects.filter(is_public=True, cancelled_at__isnull=True)

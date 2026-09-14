@@ -1,0 +1,57 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.129 — ימי שיא, public. Replaces the placeholder REQ-M.60 put here in
+  SPR-M.1.
+
+  This page names nobody, and that is not squeamishness: a public page about a
+  programme for fourteen-year-olds is a public statement of when and where
+  children gather. Date, title, place. Only events somebody deliberately ticked
+  as public appear at all, so the default is that the programme's own diary
+  stays the programme's own business (§4.10, REQ-M.30a).
+
+  The empty state is the honest one and will be the common one for a while: a
+  programme with nothing scheduled should say so rather than invent a calendar.
+{% endcomment %}
+
+{% block title %}ימי שיא · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>ימי שיא</h1>
+    <p>
+      הימים שבהם המט״צים נפגשים: השקות, תערוכות, ימי הדרכה וסיומי מסלול.
+    </p>
+  </div>
+
+  {% if events %}
+    <ul class="mz-events">
+      {% for event in events %}
+        <li class="mz-event">
+          <div class="mz-event-when">
+            <span class="mz-event-day">{{ event.starts_at|date:"j" }}</span>
+            <span class="mz-event-month">{{ event.starts_at|date:"F" }}</span>
+          </div>
+          <div class="mz-event-body">
+            <h2>{{ event.title }}</h2>
+            <p class="mz-muted">
+              {{ event.starts_at|date:"l, j בF Y, H:i" }}
+              {% if event.place %} · {{ event.place }}{% endif %}
+            </p>
+            {% if event.about %}<p>{{ event.about|linebreaksbr }}</p>{% endif %}
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <section class="mz-panel">
+      <h2>עוד לא נקבעו תאריכים</h2>
+      <p class="mz-muted">
+        כשייקבע יום שיא הוא יופיע כאן, עם התאריך והמקום. מט״צים בתוכנית רואים
+        גם את הימים שמיועדים לבית הספר שלהם, באזור האישי.
+      </p>
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

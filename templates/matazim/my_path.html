@@ -129,6 +129,33 @@
     </ul>
   </section>
 
+  {% if next_events %}
+    {% comment %}
+      REQ-M.130 — what is close, where they already are.
+    {% endcomment %}
+    <section class="mz-panel">
+      <h2>מה קרוב</h2>
+      <ul class="mz-events">
+        {% for event in next_events %}
+          <li class="mz-event">
+            <div class="mz-event-when">
+              <span class="mz-event-day">{{ event.starts_at|date:"j" }}</span>
+              <span class="mz-event-month">{{ event.starts_at|date:"F" }}</span>
+            </div>
+            <div class="mz-event-body">
+              <h3>{{ event.title }}</h3>
+              <p class="mz-muted">
+                {{ event.starts_at|date:"l, H:i" }}
+                {% if event.place %} · {{ event.place }}{% endif %}
+              </p>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+      <a class="mz-linkbtn" href="{% url 'matazim:calendar' %}">כל לוח הזמנים</a>
+    </section>
+  {% endif %}
+
   {% if leader %}
     {% comment %}
       REQ-M.19 — the way into יוצרים. Only once somebody has a leader, because

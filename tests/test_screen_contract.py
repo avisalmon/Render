@@ -129,6 +129,7 @@ def build_world(
     candidate=False,
     requests=False,
     work=False,
+    events=False,
 ):
     """One institution, dialled to the state under test.
 
@@ -455,6 +456,28 @@ def build_world(
 
         first_work = waiting_row
 
+    # REQ-M.27 — a diary with something in it, and one day already past, which
+    # is the only state that draws the second half of the calendar.
+    if events:
+        from matazim.models import Event
+
+        Event.objects.create(
+            program_manager=manager,
+            title="תערוכת סיום סקראץ׳",
+            about="כל מט״צ מציג את הפרויקט שלו. מביאים אוזניות.",
+            starts_at=now + timezone.timedelta(days=12),
+            place="אולם הספורט, עתיד רמלה",
+            for_everyone=True,
+            is_public=True,
+        )
+        Event.objects.create(
+            program_manager=manager,
+            title="יום פתיחה",
+            starts_at=now - timezone.timedelta(days=30),
+            place="חדר המורים",
+            for_everyone=True,
+        )
+
     return {
         "manager": manager,
         "work": first_work if work and students == "mixed" else None,
@@ -620,6 +643,12 @@ SCREENS = [
     # is the one most people see first.
     ("notices/some", "/matazim/notices/", "mid@example.com", dict(students="mixed", work=True)),
     ("notices/none", "/matazim/notices/", "fresh@example.com", dict(students="mixed")),
+    # SPR-M.31 — ימי שיא, full and empty on both sides of the wall.
+    ("events/public", "/matazim/events/", None, dict(students="none", events=True)),
+    ("events/public-empty", "/matazim/events/", None, dict(students="none")),
+    ("events/calendar", "/matazim/calendar/", "mid@example.com", dict(students="mixed", events=True)),
+    ("events/calendar-empty", "/matazim/calendar/", "mid@example.com", dict(students="mixed")),
+    ("events/staff", "/matazim/staff/events/", "pm@example.com", dict(students="mixed", events=True)),
     (
         "work/review",
         lambda w: f"/matazim/work/{w['work'].pk}/",

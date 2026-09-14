@@ -2070,3 +2070,49 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
 .mz-notice-body { flex: 1 1 auto; min-width: 0; }
 .mz-notice-body p { margin: 0; color: var(--mz-ink); overflow-wrap: anywhere; }
 .mz-notice-when { font-size: .78rem; color: var(--mz-muted); }
+
+
+/* ---------------------------------------------------- ימי שיא (REQ-M.27) */
+
+.mz-events { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+
+.mz-event {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 14px;
+  border: 1px solid var(--mz-line);
+  border-radius: var(--mz-radius-sm);
+  background: var(--mz-card);
+}
+.mz-event.is-past { opacity: .72; }
+
+/* The date as a block, because a list of days is scanned by date first and a
+   date buried in a sentence has to be read instead. */
+.mz-event-when {
+  flex: none;
+  min-width: 58px;
+  text-align: center;
+  padding: 6px 8px;
+  border-radius: var(--mz-radius-sm);
+  background: var(--mz-purple-soft);
+  color: var(--mz-ink);
+}
+.mz-event-day { display: block; font-size: 1.4rem; font-weight: 700; line-height: 1.1; }
+.mz-event-month { display: block; font-size: .76rem; color: var(--mz-body); }
+
+.mz-event-body { flex: 1 1 14rem; min-width: 0; }
+.mz-event-body h2,
+.mz-event-body h3 { margin: 0 0 2px; color: var(--mz-ink); font-size: 1.05rem; }
+.mz-event-body p { margin: 0 0 4px; overflow-wrap: anywhere; }
+
+.mz-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  margin-bottom: 6px;
+  color: var(--mz-ink);
+  cursor: pointer;
+}

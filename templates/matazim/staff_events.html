@@ -1,0 +1,129 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.27 — נעמי writes a day, and can take one down.
+
+  Two things this form insists on, both for the same reason: an event is a thing
+  people arrange their week around.
+
+  An event must be aimed at somebody. "For everybody" or named leaders, never
+  neither, because an event for nobody is a row no screen can show.
+
+  Public is a tick, never a default. A public page about a programme for
+  fourteen-year-olds is a public statement of when and where children gather.
+{% endcomment %}
+
+{% block title %}ימי שיא · ניהול · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page mz-page-narrow">
+  <div class="mz-page-head">
+    <h1>ימי שיא</h1>
+    <p>מה קבעתם, ולמי. מי שהאירוע מיועד לו מקבל התראה ורואה אותו בלוח הזמנים.</p>
+  </div>
+
+  {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
+
+  <section class="mz-panel">
+    <h2>יום חדש</h2>
+    <form method="post">
+      {% csrf_token %}
+
+      <label class="mz-field">
+        <span>מה</span>
+        <input type="text" name="title" maxlength="160" required
+               value="{{ posted.title|default:'' }}"
+               placeholder="למשל: תערוכת סיום סקראץ׳">
+      </label>
+
+      <label class="mz-field">
+        <span>מתי</span>
+        <input type="datetime-local" name="starts_at" required dir="ltr"
+               value="{{ posted.starts_at|default:'' }}">
+      </label>
+
+      <label class="mz-field">
+        <span>איפה</span>
+        <input type="text" name="place" maxlength="200"
+               value="{{ posted.place|default:'' }}"
+               placeholder="למשל: אולם הספורט, עתיד רמלה">
+      </label>
+
+      <label class="mz-field">
+        <span>פרטים</span>
+        <textarea name="about" rows="3"
+                  placeholder="מה יקרה שם, מה להביא.">{{ posted.about|default:'' }}</textarea>
+      </label>
+
+      <label class="mz-check">
+        <input type="checkbox" name="for_everyone" checked>
+        <span>לכל התוכנית</span>
+      </label>
+
+      {% if leaders %}
+        <label class="mz-field">
+          <span>או רק למובילים האלה</span>
+          <select name="leaders" multiple size="4">
+            {% for leader in leaders %}
+              <option value="{{ leader.pk }}">{{ leader.user.profile.display_name|default:leader.user.email }}</option>
+            {% endfor %}
+          </select>
+          <small>רלוונטי רק אם ביטלתם את "לכל התוכנית".</small>
+        </label>
+      {% endif %}
+
+      <label class="mz-check">
+        <input type="checkbox" name="is_public">
+        <span>להציג בעמוד ימי שיא הפומבי</span>
+      </label>
+      <small class="mz-muted">
+        בעמוד הפומבי מופיעים רק תאריך, שם ומקום. אף פעם לא שמות של מט״צים.
+      </small>
+
+      <div class="mz-page-actions">
+        <button type="submit" class="mz-btn mz-btn-primary">קביעת היום</button>
+      </div>
+    </form>
+  </section>
+
+  {% if events %}
+    <section class="mz-panel mz-panel-wide">
+      <h2>מה קבוע <span class="mz-count">{{ events|length }}</span></h2>
+      <ul class="mz-events">
+        {% for event in events %}
+          <li class="mz-event{% if event.is_cancelled %} is-past{% endif %}">
+            <div class="mz-event-when">
+              <span class="mz-event-day">{{ event.starts_at|date:"j" }}</span>
+              <span class="mz-event-month">{{ event.starts_at|date:"F" }}</span>
+            </div>
+            <div class="mz-event-body">
+              <h3>{{ event.title }}</h3>
+              <p class="mz-muted">
+                {{ event.starts_at|date:"l, j בF Y, H:i" }}
+                {% if event.place %} · {{ event.place }}{% endif %}
+              </p>
+              <p class="mz-muted">
+                {% if event.is_cancelled %}
+                  <span class="mz-tag mz-tag-idle">בוטל</span>
+                {% elif event.for_everyone %}
+                  <span class="mz-tag mz-tag-doing">לכל התוכנית</span>
+                {% else %}
+                  <span class="mz-tag mz-tag-idle">למובילים נבחרים</span>
+                {% endif %}
+                {% if event.is_public %}<span class="mz-tag mz-tag-done">מוצג בעמוד הפומבי</span>{% endif %}
+              </p>
+            </div>
+            {% if not event.is_cancelled %}
+              <form method="post" action="{% url 'matazim:cancel_event' event.pk %}"
+                    class="mz-inline-form">
+                {% csrf_token %}
+                <button type="submit" class="mz-linkbtn">ביטול</button>
+              </form>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+</div>
+{% endblock %}
