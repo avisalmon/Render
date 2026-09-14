@@ -13,6 +13,56 @@ locked out at a desktop), but PC is the fit-it-in case, not the design
 target — same relationship matazim has to RTL/mobile, just phone instead of
 desktop as the default assumption.
 
+### 0a.1 What "phone-first" actually requires (added 2026-09-14)
+
+The review on 2026-09-14 found that "phone-first" had been a stated
+intention with nothing enforcing it: matazim, which is *not* phone-first,
+has a browser test asserting no tap target under 36px; ustrip, which
+declares phone-first in this very section, had no such test and shipped
+20px checkboxes. So the claim gets acceptance criteria:
+
+1. **Tap targets: 44×44px minimum** for anything you tap — the Apple HIG
+   figure, and WCAG 2.5.5. The floor is not negotiable down to WCAG
+   2.5.8's 24px: this app is used one-handed, walking, possibly in the
+   cold. A guard test enforces it, the way matazim's does.
+2. **Destructive controls are not adjacent to routine ones.** Delete does
+   not sit in a row of 26px buttons next to "move down" where a mis-tap
+   erases a stop.
+3. **No browser-native `alert` / `confirm` / `prompt`.** They block the
+   page, ignore the app's design, and on iOS announce the site's domain.
+   Editing is done in the page.
+4. **A tap never costs you your place.** No `location.reload()` after a
+   reorder or a toggle: the API returns the new state, the page patches
+   itself. Losing scroll position halfway down a 12-stop day is a real
+   cost on a phone.
+5. **Every action that hits the network disables its own control until it
+   returns.** Hotel wifi is slow; a second tap must not create a second
+   journal post.
+
+### 0a.2 Offline is a feature, not a nicety (added 2026-09-14)
+
+The trip is Niagara, the Finger Lakes, a car between Lancaster and DC, and
+a foreign SIM. **The itinerary has to open with no signal.** As of this
+review ustrip has no manifest and no service worker: lose signal and the
+family loses the plan — which is the one thing this app exists to hold.
+
+The bar: today's day and the full itinerary readable offline from cache,
+the app installable to the home screen, and writes made offline either
+queued or refused with a message that says so — never silently lost.
+
+### 0a.3 Photos are the one thing that cannot be lost
+
+Journal and stop photos are the trip's actual output. Two constraints
+follow, both found in review:
+
+- **Downscale in the browser before upload.** Raw phone photos are 3-8MB.
+  Render's disk is **1GB, shared with the SQLite database** — a few hundred
+  full-size photos fill it, and the database is on the same volume.
+- Media is already covered by the weekly GCS backup (`backup_db.py`
+  syncs `MEDIA_ROOT`), so the loss window during a 15-day trip is up to
+  seven days of photos. Acceptable or not is Avi's call (see the fix
+  sprint), but it should be a decision, not a surprise.
+
 ## 0b. Language and design principle
 
 **English**, unconditionally — unlike babook and מטצ״ים, ustrip has no
@@ -28,12 +78,15 @@ back empty, not because a placeholder was left in. The three nav
 destinations (Itinerary/Packing/Journal) are the one exception — those are
 fixed product structure, not data.
 
-**Writes go through a JSON API, not a form POST to the page.** Every
+**Writes go through a REST API, not a form POST to the page.** Every
 add/edit/toggle action (packing item, journal post, itinerary line) is a
 `fetch()` call to `/ustrip/api/...`, and the page updates the DOM from the
 JSON response — no full-page reload for something used one-handed mid-trip.
-Plain `JsonResponse` views, the same convention `app/views.py` already uses
-elsewhere in the repo; no DRF or other new dependency for a five-person app.
+Since Sprint 7 that API is **Django REST Framework**: one `ModelViewSet`
+per model, full CRUD, browsable-API documentation
+([building_an_app.md](../building_an_app.md) Rule 6). The earlier
+hand-rolled `JsonResponse` layer is gone; this paragraph used to say "no
+DRF for a five-person app," which Rule 6 overrode.
 
 ## 0. The trip
 

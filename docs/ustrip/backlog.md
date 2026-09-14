@@ -117,7 +117,7 @@ philosophy as itinerary edit in Sprint 5.
 | Rental car: edit every field including `confirmed` (own small page) | DONE — no delete via the UI, same reasoning as flights |
 | Tests: one delete+reorder path per list type, edit+delete for journal/flight/rental car | DONE — 12 tests at the time |
 
-## Sprint 7 — Full DRF CRUD API `DONE, NOT YET DEPLOYED`
+## Sprint 7 — Full DRF CRUD API `DONE, DEPLOYED 2026-09-13`
 
 **Goal:** align ustrip with building_an_app.md Rule 6, written after
 Sprints 1-6 shipped: every app gets a full, documented CRUD API on Django
@@ -176,7 +176,7 @@ This sprint recovers the source text and links exactly.
 Not built, on purpose, until asked: replacing a photo (delete and re-add),
 editing a link in place (remove and re-add), reordering links or photos.
 
-## Sprint 9 — When a day doesn't fit `DONE, DEV`
+## Sprint 9 — When a day doesn't fit `DONE, DEPLOYED 2026-09-14`
 
 **Avi's question (2026-09-14):** what should happen with events that can't
 squeeze into a day — alert, refuse, make room? Decided: **warn, never
@@ -200,7 +200,7 @@ Not built, on purpose, until asked: suggestions ("shorten X by 25m?",
 "move to Day 3?") that the person accepts with one tap. That is the
 acceptable form of "make room" — a proposal, never a silent change.
 
-## Sprint 10 — Before we fly `DONE, DEV`
+## Sprint 10 — Before we fly `DONE, DEPLOYED 2026-09-14`
 
 **Why now:** the trip starts 2026-09-18. Home showed the first item of the
 first day forever; nothing knew what day it was; six of seven nights had no
@@ -218,7 +218,7 @@ a Google Doc.
 | Tests: position in all three phases and the timezone case, a two-date row, seed dates/backfill, stays once + booked survives a redeploy, notes once + edits survive, Home/list/day pages, stays and notes API | DONE — `tests/test_ustrip_today.py` |
 | Deploy | not yet — dev only until Avi says |
 
-## Sprint 10.1 — Notes in the day `DONE, DEV`
+## Sprint 10.1 — Notes in the day `DONE, DEPLOYED 2026-09-14`
 
 **Avi (2026-09-14):** items in a day don't necessarily have a schedule —
 reminders, information, things that don't touch the times but sit in the
@@ -230,3 +230,53 @@ order wherever they read best, as many as wanted.
 | Day page: a note shows an info mark instead of a time, a hollow dot, no duration; the add form has a "just a note" checkbox that hides the timing fields; the edit page has a Kind select | DONE |
 | List page and detail page render notes without a time; notes drag like any item, within and between days | DONE |
 | Tests: a note has no time and B still flows straight from A; a note is created through the API, renders on the three pages, and reorders | DONE — 2 more in `tests/test_ustrip_items.py` |
+
+## Sprint 11 — The fix sprint `PROPOSED, NOT STARTED`
+
+A full review on **2026-09-14**, after Sprints 8-10.1 landed, against
+[spec.md](spec.md) and [building_an_app.md](../building_an_app.md).
+Nothing here is a new feature: every row is something already built that
+doesn't hold up on a phone, on a bad connection, or under a query count.
+Findings are measured, not guessed — the numbers below are from a real
+run against the seeded trip (13 days, 84 items).
+
+**State at review:** 68/68 ustrip tests pass, `manage.py check` clean, all
+six methodology rules aligned. The app is in good shape; this is the list
+of what would embarrass us on the road.
+
+**Context that sets the priority:** the trip starts **Fri Sep 18** — four
+days out. P1 is what matters standing on a street corner in Manhattan
+with one bar of signal. P3 and P4 can wait until after the trip.
+
+### P1 — On the road, or none of it matters
+
+| # | Item | Why |
+|---|---|---|
+| F1 | **Offline: PWA manifest + service worker.** Cache the app shell and the whole itinerary; today's day must open with no signal. Installable to the home screen. Writes made offline are queued or refused out loud, never silently dropped | The app has neither today. Niagara, the Finger Lakes and a rental car between Lancaster and DC are exactly where signal goes, and the itinerary is the one thing the app exists to hold. Spec §0a.2 |
+| F2 | **Downscale photos in the browser before upload** (canvas, ~1600px long edge, JPEG ~0.82) | Raw phone photos are 3-8MB and go up untouched. Render's disk is **1GB and the SQLite database is on it** — a few hundred photos fill the volume the database lives on. Spec §0a.3 |
+| F3 | **Tap targets to 44px; move Delete out of the button row** | `.box` (the packing checkbox) is **20px** — under even WCAG 2.5.8's 24px floor. `.mini-btn`, `.add-btn`, `.drag-handle` are 26px, and on every itinerary row four of them sit adjacent with **delete next to move-down**. Spec §0a.1 |
+| F4 | **Disable a control while its request is in flight** | No form does. On slow wifi a second tap posts a second journal entry / adds a second item. Spec §0a.1 |
+
+### P2 — Performance and the guard that should have caught F3
+
+| # | Item | Why |
+|---|---|---|
+| F5 | **Kill the API N+1.** Annotate like/comment counts on the viewset queryset, pass the day's computed schedule into the nested item serializer instead of recomputing per item, prefetch `likes`/`comments` | Measured: `/ustrip/api/itinerary-days/` = **425 queries**, `/ustrip/api/itinerary-items/` = **342**. Per item it runs `likes.count()`, `likes.filter().exists()`, `comments.count()` and a **full day re-`compute()`**. The pages are fine (15-20) because the views precompute — it's the API, which Rule 6 calls the infrastructure, that is slow. Target: under 15 each |
+| F6 | **A phone guard test for ustrip**, like `test_matazim_mobile.py`: real browser at 390px over every ustrip page — nothing wider than the viewport, no tap target under 44px, the menu opens | matazim, which is *not* phone-first, has this test. ustrip, which declares phone-first in spec §0a, has none — which is exactly why 20px checkboxes shipped |
+
+### P3 — Interactions that feel unfinished
+
+| # | Item | Why |
+|---|---|---|
+| F7 | **Replace `alert` / `confirm` / `prompt` with in-page editing and a toast** | **48** native dialogs across the templates. Editing a packing item or a "good to know" note is a `prompt()` — single-line, unstyled, and on iOS it announces the domain. Spec §0a.1 |
+| F8 | **Stop reloading the page after a reorder** — patch the DOM from the response | **8** `location.reload()` calls. The reorder API already returns the recomputed day, so the data is in hand; reloading throws away your scroll position halfway down a 12-stop day or the long Home page. Spec §0a.1 |
+| F9 | **Packing: "N of M packed" per list, and a "just mine" filter** | The page shows "12 items" but never how many are done — the one number that matters while packing. `ChecklistGroup.assigned_to` is already modeled, so "mine" is a filter over data we have, not a new feature |
+| F10 | **Home: drop the "Around the trip" tiles** | They link to Itinerary / Packing / Journal — the exact three destinations in the bottom nav, visible on the same screen. Home is now long (hero, next-up, getting there, where we sleep, good to know, tiles); this is the section that earns its space least |
+
+### P4 — Worth a decision, maybe not a build
+
+| # | Item | Why |
+|---|---|---|
+| F11 | **Journal: group by day or place** | A flat reverse-chron feed over 15 days and 5 posters has no way to find "the Niagara photos." Cheap version: a date separator. Real version: tie a post to its `ItineraryDay` |
+| F12 | **Backup cadence during the trip** | Media is in the weekly GCS backup, so the loss window is up to **7 days of the family's photos** during a 15-day trip. Daily for the trip window is a two-line change to the workflow — but it's Avi's risk call, not an obvious yes |
+| F13 | **Two consecutive optional stops show the same start time** | Correct per the schedule design (an optional doesn't move the clock), but two rows reading "14:00" look like a bug to anyone who didn't design it. Possibly just a label: "14:00 if you go" |
