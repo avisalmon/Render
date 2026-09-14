@@ -78,8 +78,20 @@ def my_work(request, submission_id=None):
     student = _student_of(request.user)
     if student is None:
         # Having no leader is a normal state (REQ-M.65), but there is nobody to
-        # hand work to, so the honest move is to say so on the path they have.
-        return redirect("matazim:my_path")
+        # hand work to.
+        #
+        # **Changed 2026-09-14 from a redirect to an explanation.** The redirect
+        # sent them to המסלול שלי with no word about why, which reads as a
+        # broken link rather than as a stage that has not opened. REQ-M.77 says
+        # a refusal that does not say why reads as a broken site, and הפרקטיקום
+        # שלי already answered the identical situation by explaining it. Two
+        # screens, one state, two different answers, and the silent one was
+        # the worse one.
+        return render(
+            request,
+            "matazim/my_work.html",
+            shell(request, "work", student=None),
+        )
 
     error = ""
     if request.method == "POST":

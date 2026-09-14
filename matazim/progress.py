@@ -31,6 +31,22 @@ babook's own code path; this file only ever looks.
 from app.models import Course, LessonQuiz, UserVideoProgress, Video
 
 
+class JustAUser:
+    """A stand-in for somebody with no `Student` row, for `cohort_progress`.
+
+    The reader asks each row only for `user_id`, so this is enough, and it keeps
+    one signature instead of two. Their learning is theirs and counts whether or
+    not they have joined anybody (REQ-M.65).
+
+    Lives here rather than in a view because it was written twice, once in
+    `path_views` as `_LooseMember` and once in `views` as `_JustAUser`, which is
+    two names for one idea and the beginning of two behaviours.
+    """
+
+    def __init__(self, user_id):
+        self.user_id = user_id
+
+
 def cohort_progress(students, slugs):
     """Track progress for many students at once.
 

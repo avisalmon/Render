@@ -715,6 +715,10 @@ SCREENS = [
     ("teaching/mine", "/matazim/my-teaching/", "mid@example.com", dict(students="mixed", teaching=True)),
     ("teaching/empty", "/matazim/my-teaching/", "mid@example.com", dict(students="mixed")),
     ("teaching/no-leader", "/matazim/my-teaching/", "unattached@example.com", dict(students="mixed")),
+    # REQ-M.12b — ההדרכות is two pages now: recruitment for a visitor, a track
+    # with state for a member.
+    ("courses/visitor", "/matazim/courses/", None, dict(students="none")),
+    ("courses/member", "/matazim/courses/", "mid@example.com", dict(students="mixed")),
     (
         "work/review",
         lambda w: f"/matazim/work/{w['work'].pk}/",

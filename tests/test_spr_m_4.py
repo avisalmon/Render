@@ -133,11 +133,23 @@ def test_courses_is_honest_about_what_is_open(client, db):
     """T-F-M.4.4-1: REQ-M.59.
 
     Listing a track nobody can start would be the stats band mistake again.
-    What is real today is the entrance test, so that is what the page offers.
+    What a visitor can start today is the entrance test, so that is what the
+    page offers them.
+
+    **Rewritten 2026-09-14**, when REQ-M.12b split this page in two. It used to
+    look for the words בקרוב / ייפתח / נפתח, which was a proxy for honesty
+    rather than honesty itself, and the proxy broke when the copy changed while
+    the property held. Now it asserts the property: a visitor is offered the one
+    real door and is not shown a track with progress on it, which belongs to
+    somebody who has joined.
     """
     html = client.get(reverse("matazim:courses")).content.decode()
+
     assert reverse("matazim:entrance_test") in html
-    assert "בקרוב" in html or "ייפתח" in html or "נפתח" in html
+    assert "המסלול הנדרש" not in html, "a visitor was shown a member's track"
+    assert "%" not in html.split("<main>")[-1].split("</main>")[0], (
+        "a visitor was shown a progress figure that cannot be theirs"
+    )
 
 
 # ---------------------------------------------------------------- F-M.4.5

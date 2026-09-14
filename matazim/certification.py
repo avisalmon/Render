@@ -93,6 +93,31 @@ def eligibility(student):
     )
 
 
+def eligibility_for_user(user):
+    """The same conditions for somebody who has no `Student` row yet.
+
+    They can be most of the way to certifiable before they have joined anybody
+    (REQ-M.65), and a screen should say so rather than show nothing until they
+    do. Lives here rather than in a view because two screens ask it now, and
+    `path_views` having its own copy was how it started.
+    """
+    from app.models import CourseCertificate
+
+    from .models import MemberProfile
+
+    profile = MemberProfile.objects.filter(user=user).first()
+    held = set(
+        CourseCertificate.objects.filter(
+            user=user, course__slug__in=REQUIRED_COURSE_SLUGS
+        ).values_list("course__slug", flat=True)
+    )
+    return Eligibility(
+        entrance_test_passed=bool(profile and profile.has_passed_entrance_test()),
+        certified_courses=[s for s in REQUIRED_COURSE_SLUGS if s in held],
+        missing_courses=[s for s in REQUIRED_COURSE_SLUGS if s not in held],
+    )
+
+
 def eligibility_for_many(students):
     """The same answer for a whole roster, without a query per teenager.
 

@@ -605,12 +605,69 @@ def track(request):
 
 
 def courses(request):
-    """REQ-M.59 — the training path, honest about what is open today.
+    """REQ-M.59, REQ-M.12b — the training path, and where this reader is in it.
 
-    Listing a track nobody can start yet would be the stats-band mistake again.
-    What is real today is the entrance test, so that is what the page offers.
+    **Two readers, two pages, since 2026-09-14.** A visitor is deciding whether
+    to join, so they get what the programme teaches and the one thing they can
+    start today. A member is in it, so they get their own track with their own
+    progress on it.
+
+    That split fixes a live contradiction rather than adding a feature. This
+    page still said "the rest of the track opens later" after REQ-M.76 settled
+    that the required track is `scratch` and `scratch-advanced` and made both
+    playable inside our own walls. A member clicking ההדרכות was told nothing
+    was open, while המסלול שלי showed them two courses they were meant to be
+    doing. Found by reading the two screens next to each other rather than by
+    any test, because each was internally consistent.
+
+    REQ-M.12b asks for a status word and an action that matches the state, and
+    the state is read live from the shared progress tables (RULE-3), never from
+    a second copy of it here.
     """
-    return render(request, "matazim/courses.html", shell(request, "courses"))
+    from app.models import Course
+
+    from .certification import eligibility_for_user
+    from .content import REQUIRED_COURSE_SLUGS
+    from .progress import JustAUser, cohort_progress
+
+    cards = []
+    if request.user.is_authenticated:
+        per_course = cohort_progress(
+            [JustAUser(request.user.id)], REQUIRED_COURSE_SLUGS
+        ).get(request.user.id, {})
+        held = eligibility_for_user(request.user).certified_courses
+
+        titles = dict(
+            Course.objects.filter(slug__in=REQUIRED_COURSE_SLUGS).values_list(
+                "slug", "title"
+            )
+        )
+        for slug in REQUIRED_COURSE_SLUGS:
+            row = per_course.get(slug) or {}
+            pct = int(row.get("pct") or 0)
+            done = slug in held
+            cards.append(
+                {
+                    "slug": slug,
+                    "title": row.get("title") or titles.get(slug, slug),
+                    "pct": 100 if done else pct,
+                    "done": done,
+                    # The action is the state, in words. A card that says
+                    # "התחל" to somebody halfway through is the kind of small
+                    # lie that makes a product feel like it is not watching.
+                    "word": "הושלם" if done else ("באמצע" if pct else "עוד לא התחלתם"),
+                    "action": "צפייה שוב" if done else ("להמשיך" if pct else "להתחיל"),
+                    "exists": slug in titles,
+                }
+            )
+
+    return render(
+        request,
+        "matazim/courses.html",
+        shell(request, "courses", cards=cards),
+    )
+
+
 
 
 def _coming(request, key, section):
@@ -624,18 +681,21 @@ def _coming(request, key, section):
 
 
 def schools(request):
-    """REQ-M.60 — no `School` model yet, so the page says so."""
+    """REQ-M.60 — a page with no model behind it, and not waiting for one.
+
+    Avi closed the question on 2026-09-14 (§4.8): a school is an attribute of a
+    leader and never a table, so unlike the other two placeholders this one has
+    nothing coming. The page says what the section is about and stops there.
+    """
     return _coming(request, "schools", "schools")
 
 
-def community(request):
-    """REQ-M.60 — no `Post` model yet."""
-    return _coming(request, "community", "community")
-
-
-def events(request):
-    """REQ-M.60 — no `Event` model yet."""
-    return _coming(request, "events", "events")
+# `community` and `events` used to live here, saying "no Post model yet" and
+# "no Event model yet". Both became real (SPR-M.31, SPR-M.32) and their routes
+# moved to `event_views` and `community_views`, but these were left behind:
+# unreachable code whose docstrings asserted two things that had stopped being
+# true. Removed 2026-09-14. `schools` stays, and its docstring now says why it
+# is not waiting for anything.
 
 
 def privacy(request):

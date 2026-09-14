@@ -1,8 +1,20 @@
 {% extends "matazim/base.html" %}
 
 {% comment %}
-  REQ-M.59 — honest about what is open. Listing a track nobody can start yet
-  would be the stats-band mistake again, so the page offers what is real today.
+  REQ-M.59, REQ-M.12b — two readers, two pages.
+
+  A visitor is deciding whether to join, so they get what the programme teaches
+  and the one thing they can start today. A member is already in it, so they get
+  their own track with their own progress on it.
+
+  This page told a signed-in member that "the rest of the track opens later"
+  long after REQ-M.76 settled that the required track is scratch and
+  scratch-advanced and made both playable inside our own walls. המסלול שלי
+  showed them two courses; this said nothing was open. Each screen was
+  internally consistent, which is why only reading them side by side found it.
+
+  The state comes from the shared progress tables, live (RULE-3). There is no
+  second copy of "how far through am I" in this product and there must not be.
 {% endcomment %}
 
 {% block title %}ההדרכות · מט״צים{% endblock %}
@@ -11,11 +23,64 @@
 <div class="mz-container mz-page">
   <div class="mz-page-head">
     <h1>ההדרכות</h1>
-    <p>מסלול ההדרכות של התוכנית.</p>
+    <p>
+      {% if cards %}
+        מסלול ההדרכות שלכם, ואיפה אתם בו.
+      {% else %}
+        מסלול ההדרכות של התוכנית.
+      {% endif %}
+    </p>
   </div>
 
+  {% if cards %}
+    <section class="mz-panel mz-panel-wide">
+      <h2>המסלול הנדרש</h2>
+      <p class="mz-muted">
+        שתי ההדרכות האלה נדרשות להסמכה. שאר ההדרכות באתר פתוחות לכם תמיד, וכל
+        מה שתלמדו נספר.
+      </p>
+
+      <ul class="mz-cards">
+        {% for card in cards %}
+          <li class="mz-card{% if card.done %} is-done{% endif %}">
+            <div class="mz-card-head">
+              <h3>{{ card.title }}</h3>
+              <span class="mz-tag {% if card.done %}mz-tag-done{% elif card.pct %}mz-tag-doing{% else %}mz-tag-idle{% endif %}">
+                {{ card.word }}
+              </span>
+            </div>
+
+            {% comment %}
+              The bar is the progress ring REQ-M.12b asks for, flattened. A ring
+              at this size is a decoration you have to decode; a bar with the
+              number beside it is read at a glance, which is the whole ask.
+            {% endcomment %}
+            <div class="mz-progress" role="img"
+                 aria-label="{{ card.pct }} אחוז">
+              <span style="width: {{ card.pct }}%"></span>
+            </div>
+            <p class="mz-card-pct">{{ card.pct }}%</p>
+
+            {% if card.exists %}
+              <a class="mz-btn {% if card.done %}mz-btn-ghost{% else %}mz-btn-primary{% endif %}"
+                 href="{% url 'matazim:learn_course' card.slug %}">{{ card.action }}</a>
+            {% else %}
+              {% comment %}
+                The track is named in our spec and the content lives in the
+                shared engine. If a slug is missing, the honest thing is to say
+                the teaching did not load, which is the lesson REQ-M.104 taught
+                when the entrance task hung off a course that might not be there.
+              {% endcomment %}
+              <p class="mz-muted">ההדרכה הזאת לא נטענה. נתקן.</p>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
   <section class="mz-panel">
-    <h2>פתוח עכשיו</h2>
+    <h2>מבחן הכניסה</h2>
     <p>
       <strong>מבחן הכניסה</strong> הוא הדרכת טינקרקאד קצרה שמסתיימת במשימה: מקבלים
       אובייקט לבנות, בונים אותו, ומעלים לבדיקה. אפשר להתחיל אותו כבר עכשיו, ומי
@@ -33,16 +98,18 @@
     </div>
   </section>
 
-  <section class="mz-panel mz-panel-soft">
-    <h2>נפתח בהמשך</h2>
-    <p>
-      שאר מסלול ההדרכות נפתח לפי התקדמות המחזור: תלת-ממד מתקדם, תכנות,
-      אלקטרוניקה, והדרכות למי שמגיע לשלב המדריכים. לא נפרסם כאן רשימה של
-      הדרכות שאי אפשר להתחיל, אז מה שמופיע כאן הוא מה שבאמת פתוח.
-    </p>
-    <div class="mz-page-actions">
-      <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:track' %}">מה מחכה בהמשך</a>
-    </div>
-  </section>
+  {% if not cards %}
+    <section class="mz-panel mz-panel-soft">
+      <h2>מה לומדים בתוכנית</h2>
+      <p>
+        אחרי מבחן הכניסה מגיע מסלול ההדרכות: סקראץ׳ ותכנות מתקדם, ומשם תלת-ממד,
+        אלקטרוניקה וכלים נוספים. לא נפרסם כאן רשימה של הדרכות שאי אפשר להתחיל,
+        אז מה שמופיע כאן הוא מה שבאמת פתוח.
+      </p>
+      <div class="mz-page-actions">
+        <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:track' %}">המסלול השנתי</a>
+      </div>
+    </section>
+  {% endif %}
 </div>
 {% endblock %}

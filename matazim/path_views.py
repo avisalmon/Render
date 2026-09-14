@@ -24,10 +24,10 @@ does not know things.
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
-from .certification import eligibility
+from .certification import eligibility, eligibility_for_user
 from .content import FUNNEL, REQUIRED_COURSE_SLUGS
 from .models import Student
-from .progress import cohort_progress, track_summary
+from .progress import JustAUser, cohort_progress, track_summary
 from .views import member_profile, shell
 
 LOGIN_URL = "/matazim/login/"
@@ -190,11 +190,11 @@ def my_path(request):
         # No `Student` row yet, but their learning is still theirs and still
         # counts. The reader is keyed by user, so a lightweight stand-in is
         # enough to ask about somebody who has not joined anyone.
-        per_course = cohort_progress([_LooseMember(request.user.id)], REQUIRED_COURSE_SLUGS).get(
+        per_course = cohort_progress([JustAUser(request.user.id)], REQUIRED_COURSE_SLUGS).get(
             request.user.id, {}
         )
 
-    state = eligibility(student) if student else _eligibility_without_a_student(request.user)
+    state = eligibility(student) if student else eligibility_for_user(request.user)
 
     current = _current_stage(student, profile)
     stages = [{**stage, "is_current": stage["key"] == current} for stage in FUNNEL]
@@ -231,39 +231,4 @@ def my_path(request):
             leader_name=_leader_name(student.leader) if student else "",
             pending_name=_leader_name(student.pending_leader) if student else "",
         ),
-    )
-
-
-class _LooseMember:
-    """A stand-in for somebody who has no `Student` row yet.
-
-    `cohort_progress` asks each row only for `user_id`, so this is enough, and
-    it keeps the reader with one signature instead of two. Their learning exists
-    whether or not they have joined a programme.
-    """
-
-    def __init__(self, user_id):
-        self.user_id = user_id
-
-
-def _eligibility_without_a_student(user):
-    """The same three conditions for somebody who has not joined anyone.
-
-    They can be most of the way to being certifiable before they have a leader,
-    and the screen should say so rather than showing nothing until they join.
-    """
-    from app.models import CourseCertificate
-
-    from .certification import Eligibility
-
-    profile = member_profile(user)
-    held = set(
-        CourseCertificate.objects.filter(
-            user=user, course__slug__in=REQUIRED_COURSE_SLUGS
-        ).values_list("course__slug", flat=True)
-    )
-    return Eligibility(
-        entrance_test_passed=bool(profile and profile.has_passed_entrance_test()),
-        certified_courses=[s for s in REQUIRED_COURSE_SLUGS if s in held],
-        missing_courses=[s for s in REQUIRED_COURSE_SLUGS if s not in held],
     )

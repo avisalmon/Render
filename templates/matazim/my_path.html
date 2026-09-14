@@ -129,10 +129,16 @@
     </ul>
   </section>
 
+  {% if leader %}
   {% comment %}
     REQ-M.32 — the teaching, on the screen they already open. A total that only
     shows on a page you have to remember to visit is a total nobody sees, and
     this one is the thing the whole programme is for.
+
+    Gated on having a leader, for the same reason the work panel below is: a
+    button that leads to "this opens when you join somebody" is a button that
+    teaches people not to press. That rule was argued once here and this panel
+    broke it in the other direction until 2026-09-14.
   {% endcomment %}
   <section class="mz-panel">
     <h2>הפרקטיקום שלי</h2>
@@ -151,6 +157,7 @@
       {% if teaching.sessions %}כל המפגשים{% else %}תיעוד מפגש{% endif %}
     </a>
   </section>
+  {% endif %}
 
   {% if next_events %}
     {% comment %}

@@ -2346,6 +2346,88 @@ Removing the `reminded_at` stamp produced *somebody was told the same thing
 twice*. Replacing the audience query with every student produced *somebody was
 reminded about a day they are not invited to*.
 
+## SPR-M.37 — The leftovers, and what the review found  `DONE 2026-09-14`
+
+**Goal:** Avi, 2026-09-14: "make a sprint of the leftovers. And are you sure
+there's no big features? Go over the spec, I'm not sure that we're done."
+
+So this is two things: the last three open requirements, and a read of the spec
+against Litala's brief rather than against its own status column. The second
+part found more than the first.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.37.1 | ההדרכות carries state, and stops contradicting המסלול שלי | REQ-M.12b, REQ-M.59, RULE-3 | DONE |
+| F-M.37.2 | REQ-M.11's amended rule, tested on both halves | REQ-M.11 | DONE |
+| F-M.37.3 | REQ-M.5b closed by REQ-M.101, and one rule held both ways | REQ-M.5b, REQ-M.101 | DONE |
+| F-M.37.4 | Two dead placeholder views removed | REQ-M.60 | DONE |
+
+### The defect that was hiding in the leftovers
+
+ההדרכות told a signed-in member that nothing past the entrance test was
+open. REQ-M.76 settled months ago that the required track is `scratch` and
+`scratch-advanced`, and המסלול שלי showed the same person those two courses
+with their progress. One member, two screens, two different answers about what
+they were meant to be doing.
+
+It survived because each screen was internally consistent and each had passing
+tests. Only reading them side by side as one person found it, which is the class
+of defect a screen-by-screen catalogue cannot see, however many screens it has.
+The guard asserts the two screens **agree**, rather than asserting either one's
+content, because the failure was never in one of them.
+
+### Three duplications the same read turned up
+
+`_eligibility_without_a_student` lived in `path_views` and was about to be
+copied into `views`. It is now `certification.eligibility_for_user`, called by
+both.
+
+`_LooseMember` in `path_views` and `_JustAUser` in `views` were the same
+four-line class under two names, which is the beginning of two behaviours. Now
+`progress.JustAUser`.
+
+`views.community` and `views.events` still existed, unreachable, with docstrings
+asserting "no `Post` model yet" and "no `Event` model yet" after both had been
+built. Removed.
+
+### One rule, held in the direction that was wrong
+
+המסלול שלי argues that a button leading to "this opens when you join
+somebody" is a button that teaches people not to press, and gates the יוצרים
+panel on having a leader. The פרקטיקום panel added in SPR-M.35 did the
+opposite. The test was written assuming the product was wrong; the product was
+right and the new panel was the thing breaking the rule.
+
+And in the other direction: העבודות שלי bounced a member with no leader to
+המסלול שלי with no word about why, which reads as a broken link. The copy
+explaining it was already on the page, below the redirect that stopped anybody
+reaching it.
+
+### What the review found that is NOT built, and is Avi's to decide
+
+Read against `brief-litala.md` rather than against the status column.
+
+**Litala asked for צפייה בכל תלמידי בית הספר.** A leader sees their own
+students and nobody else's. Two teachers at one school cannot see each other's.
+That phrase appears in the brief and **nowhere in the spec**: it was never
+accepted and never refused, it simply never got written down. It is a privacy
+question as much as a feature one.
+
+**Q8, פתיחת תכנים ומשימות by programme staff**, is still undecided and is
+the largest unbuilt capability in her brief. Today staff open no content inside
+מט״צים; babook's studio does it, and nothing here surfaces that.
+
+**Two HELD requirements are now unblocked.** REQ-M.5f (public counters) was held
+"until something computes it" — students, leaders, schools, events and now
+practicum hours are all countable today. REQ-M.5e and REQ-M.30a's public half
+(the showcase) were held until "real projects and real consent exist" — approved
+submissions exist, and members already consent to share work into the community
+feed, so the machinery is built and only the decision is missing.
+
+Those three are the honest answer to "are we done": the member-facing product
+is, the recruitment-facing public page is not, and one line of the client brief
+was never decided either way.
+
 ## Also still open
 
 - Retire the old production tables, once ACT-M.2 is answered.

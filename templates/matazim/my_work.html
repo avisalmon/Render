@@ -83,6 +83,13 @@
   <section class="mz-panel">
     <h2>{% if submissions %}להגיש עוד עבודה{% else %}להגיש עבודה{% endif %}</h2>
     {% if not student.leader %}
+      {% comment %}
+        REQ-M.65, REQ-M.77 — this copy was always right and almost nobody saw
+        it: the view redirected somebody with no `Student` row to המסלול שלי
+        before the page rendered, which reads as a broken link rather than as a
+        stage that has not opened. The redirect is gone (2026-09-14) and this
+        is now the page they get.
+      {% endcomment %}
       <p class="mz-muted">
         עוד אין לכם מוביל/ה, אז אין למי להגיש. ברגע שתצטרפו למוביל/ה זה ייפתח כאן.
       </p>
