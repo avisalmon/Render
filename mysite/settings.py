@@ -54,6 +54,9 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    # Observes /ustrip/ exceptions and mails Avi; acts on no other path,
+    # changes no response. See ustrip/middleware.py.
+    "ustrip.middleware.UstripErrorNotifier",
 ]
 
 ROOT_URLCONF = "mysite.urls"
@@ -403,6 +406,12 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ],
 }
+
+# ustrip: where an unhandled /ustrip/ error is mailed (ustrip/middleware.py).
+# No fallback to DEFAULT_FROM_EMAIL/CONTACT_NOTIFY_EMAIL on purpose — see the
+# comment on _recipient() in that file. Unset means no mail is sent, which is
+# correct in dev and in any environment nobody has configured this for.
+USTRIP_ERROR_NOTIFY = os.environ.get("USTRIP_ERROR_NOTIFY", "")
 
 # ustrip: the shared secret for /ustrip/api/family/, which is the one job that
 # could not be done from a chat (granting a family member access). Unset means

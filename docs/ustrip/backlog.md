@@ -370,3 +370,22 @@ authorized can just CRUD all data."
 | `tests/test_ustrip_api_locked.py` — every route the router registers, every verb, as an anonymous stranger and as a signed-in babook user who is not in `family`. Asserts the refusal *and* that the database is unchanged; a 403 that still wrote the row would pass a status-only check. Routes come from `ustrip.urls.router`, so an endpoint added next month is covered the day it exists | DONE — 43 tests, all refused; and the inverse, a family member *can* read every route, because a test that only checks refusals also passes on a broken app |
 | The same probe against production, anonymously: 12 endpoints × GET/POST/DELETE | DONE — 403 across the board |
 | The family endpoint used to hand back the 50 most recent accounts with email addresses to answer "what did Yotam sign up as." Some of those are מט״צים teenagers. That is the general-admin-key objection one floor down, in my own code | DONE — candidates are now opt-in via `?q=`, two characters minimum so `?q=a` cannot walk the user base, ten results max |
+
+## Sprint 14 — Someone finds out if it breaks `DONE (DEV)`
+
+The trip is fifteen days with nobody watching a log. No Sentry, no `ADMINS`,
+no error email anywhere on the site — a 500 in ustrip on day six at Niagara
+went into Render's log and stopped there; Avi would find out when someone
+texted him.
+
+| Item | Status |
+|---|---|
+| `ustrip/middleware.py` — an unhandled `/ustrip/` exception mails `USTRIP_ERROR_NOTIFY`; every other path is untouched | DONE |
+| Throttled per error signature (type + file + line, not the message), so a crashloop sends one mail every 30 minutes, not one per request | DONE |
+| Body: path, method, who was signed in, error, traceback tail. Never the request body — a journal caption or a password has no place in an error email | DONE |
+| Real bug found building this: the recipient fell back through `CONTACT_NOTIFY_EMAIL` to `DEFAULT_FROM_EMAIL`, which has a non-blank hardcoded default in this project's settings.py. That meant "unset" was never actually unset — it would have mailed a sender address nobody reads, in every environment, including a laptop running the test suite | FIXED — `USTRIP_ERROR_NOTIFY` only, no fallback chain, and a test locks it in |
+| Verified end-to-end, not just unit-level: a real exception through a real `/ustrip/` view, over the real Django request cycle — the 500 page still renders and the mail still sends | DONE |
+| Tests: 8, including the crashloop throttle, the path-scoping to `/ustrip/` only, and the no-fallback regression | DONE — `tests/test_ustrip_error_notify.py` |
+
+**To turn on:** set `USTRIP_ERROR_NOTIFY` in Render to an address that's
+actually read. Unset means silent, same principle as `USTRIP_ADMIN_TOKEN`.
