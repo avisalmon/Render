@@ -321,3 +321,220 @@ def readable_posts(user):
     if is_program_manager(user):
         return rows
     return rows.filter(Q(hidden_at__isnull=True) | Q(author=user))
+
+
+# --- The rest of the model, scoped the same way -----------------------------
+#
+# Added 2026-09-14 for the REST API (REQ-M.139, methodology Rule 6). Every one
+# of these derives from `visible_students` or `visible_leaders` rather than
+# rebuilding the tenancy rule, because a second copy of that rule is a second
+# thing that can be wrong, and this file exists precisely so there is one.
+#
+# An API and a page that answer "who may see this" differently is the failure
+# this whole module is built to make impossible.
+
+
+def visible_classes(user):
+    """Classes, reached through their leader."""
+    from .models import StudyClass
+
+    if not getattr(user, "is_authenticated", False):
+        return StudyClass.objects.none()
+    if user.is_superuser:
+        return StudyClass.objects.all()
+    if student := Student.objects.filter(user=user).first():
+        # A member sees the classes they are in, which is how a class appears
+        # on their own screen at all. Not their leader's whole timetable.
+        return StudyClass.objects.filter(students=student)
+    return StudyClass.objects.filter(leader__in=visible_leaders(user))
+
+
+def visible_members(user):
+    """`MemberProfile` rows: yourself, and the people you are responsible for.
+
+    A leader sees their own students' profiles, because the roster shows a name
+    and a standing. Nobody sees the profile of somebody who is not theirs, which
+    includes a leader and another leader's student: the case `visible_students`
+    already refuses.
+    """
+    from .models import MemberProfile
+
+    if not getattr(user, "is_authenticated", False):
+        return MemberProfile.objects.none()
+    if user.is_superuser:
+        return MemberProfile.objects.all()
+
+    mine = Q(user=user)
+    theirs = Q(user__in=visible_students(user).values("user"))
+    if is_program_manager(user):
+        theirs = theirs | Q(user__in=visible_leaders(user).values("user"))
+    return MemberProfile.objects.filter(mine | theirs).distinct()
+
+
+def visible_attempts(user):
+    """Entrance-test attempts (REQ-M.80).
+
+    Through `visible_members`, so a leader sees their own students' and nobody
+    else's. The file itself is never handed out by a queryset: it lives outside
+    MEDIA_ROOT and only `entrance_views.attempt_file` gives one up, after asking
+    who is looking.
+    """
+    from .models import EntranceAttempt
+
+    if not getattr(user, "is_authenticated", False):
+        return EntranceAttempt.objects.none()
+    return EntranceAttempt.objects.filter(member__in=visible_members(user))
+
+
+def visible_submissions(user):
+    """Work handed in, reached through the student who handed it in."""
+    from .models import Submission
+
+    if not getattr(user, "is_authenticated", False):
+        return Submission.objects.none()
+    return Submission.objects.filter(student__in=visible_students(user))
+
+
+def visible_feedback(user):
+    """What was said about that work."""
+    from .models import Feedback
+
+    if not getattr(user, "is_authenticated", False):
+        return Feedback.objects.none()
+    return Feedback.objects.filter(submission__in=visible_submissions(user))
+
+
+def visible_status_logs(user):
+    """The record of who decided what about whom (REQ-M.21)."""
+    from .models import StatusLog
+
+    if not getattr(user, "is_authenticated", False):
+        return StatusLog.objects.none()
+    return StatusLog.objects.filter(student__in=visible_students(user))
+
+
+def visible_certificates(user):
+    """Certificates, through the student.
+
+    Not how a stranger verifies one. That goes by `public_id` through
+    `certificate_views.verify`, which is public on purpose: a school checking a
+    printed certificate has no account (REQ-M.20).
+    """
+    from .models import MatazCertificate
+
+    if not getattr(user, "is_authenticated", False):
+        return MatazCertificate.objects.none()
+    return MatazCertificate.objects.filter(student__in=visible_students(user))
+
+
+def visible_applications(user):
+    """What somebody wrote when they asked to join (REQ-M.16).
+
+    Two ways in, and the second matters: the leader who was *asked* may read it
+    before they accept, because that is the whole point of the form. Until they
+    accept, the applicant is not yet their student, so going through
+    `visible_students` alone would hide the thing the leader is deciding on.
+    """
+    from .models import Application
+
+    if not getattr(user, "is_authenticated", False):
+        return Application.objects.none()
+    if user.is_superuser:
+        return Application.objects.all()
+
+    return Application.objects.filter(
+        Q(student__in=visible_students(user)) | Q(asked__in=visible_leaders(user))
+    ).distinct()
+
+
+def visible_notifications(user):
+    """Your own bell, and nobody else's, ever.
+
+    No role reads another person's notifications, not a leader and not a program
+    manager. A notification is a pointer to something they can already reach if
+    they are entitled to it, so there is nothing here a staff member needs and a
+    good deal that is none of their business.
+    """
+    from .models import Notification
+
+    if not getattr(user, "is_authenticated", False):
+        return Notification.objects.none()
+    return Notification.objects.filter(user=user)
+
+
+def visible_invites(user):
+    """Leader invitations (REQ-M.79).
+
+    A program manager's own. Deliberately unreadable by a leader: an invite
+    carries a token that attaches its holder to somebody with no confirmation,
+    so the list of live invites is a list of live keys.
+    """
+    from .models import LeaderInvite
+
+    if not getattr(user, "is_authenticated", False):
+        return LeaderInvite.objects.none()
+    if user.is_superuser:
+        return LeaderInvite.objects.all()
+    if is_program_manager(user):
+        return LeaderInvite.objects.filter(program_manager=user)
+    return LeaderInvite.objects.none()
+
+
+def visible_targets(user):
+    """The entrance-test bank (REQ-M.62). Staff only, and not scoped further.
+
+    The bank is one shared set of objects rather than anybody's property: there
+    is nothing per-institution about a cube. Not public, because listing every
+    target next to its brief is most of the test.
+    """
+    from .models import EntranceTarget
+
+    if not is_program_manager(user):
+        return EntranceTarget.objects.none()
+    return EntranceTarget.objects.all()
+
+
+def visible_retention_runs(user):
+    """Who approved which deletion (REQ-M.87). Your own, and read-only.
+
+    Scoped by who ran it, not merely by holding the role. Found 2026-09-14 by
+    the sweep in `test_spr_m_34.py`, which asked every endpoint for everything
+    from inside one institution: this one returned the other institution's
+    deletion history. "Manager X deleted N rows at time T" is an operational
+    record about somebody else's programme, and the fact that it names no
+    teenager does not make it ours to read.
+    """
+    from .models import RetentionRun
+
+    if not is_program_manager(user):
+        return RetentionRun.objects.none()
+    if user.is_superuser:
+        return RetentionRun.objects.all()
+    return RetentionRun.objects.filter(ran_by=user)
+
+
+def visible_requests(user):
+    """§4.11 — the improvement loop.
+
+    Root sees every request, because the decision is Avi's. A program manager
+    sees their own and never another's, which is what lets a second institution
+    have this without a rewrite.
+    """
+    from .models import Request
+
+    if not getattr(user, "is_authenticated", False):
+        return Request.objects.none()
+    if user.is_superuser:
+        return Request.objects.all()
+    if is_program_manager(user):
+        return Request.objects.filter(author=user)
+    return Request.objects.none()
+
+
+def visible_request_messages(user):
+    """The conversation behind a request, scoped by the request."""
+    from .models import RequestMessage
+
+    if not getattr(user, "is_authenticated", False):
+        return RequestMessage.objects.none()
+    return RequestMessage.objects.filter(request__in=visible_requests(user))

@@ -158,10 +158,13 @@ urlpatterns = [
     path("profile/replay-welcome/", views.profile_reset_welcome, name="profile_reset_welcome"),
 ]
 
-# REQ-M.134, methodology Rule 6. The first מט״צים module with a REST API; the
-# rest of the app predates the rule (spec §4.12). DRF's browsable API is the
-# documentation, which is the same call the site made for ustrip.
+# REQ-M.134, REQ-M.139, methodology Rule 6. Every model in this app, one
+# viewset each, registered from `api.ROUTES` so that adding a model and
+# forgetting its endpoint is a thing a test can notice. DRF's browsable API
+# at /matazim/api/ is the documentation, the same call the site made for
+# ustrip.
 router = DefaultRouter()
-router.register(r"posts", api.PostViewSet, basename="api-post")
+for _prefix, _viewset, _model in api.ROUTES:
+    router.register(_prefix, _viewset, basename=f"api-{_prefix}")
 
 urlpatterns += [path("api/", include(router.urls))]

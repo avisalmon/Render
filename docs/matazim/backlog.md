@@ -2163,6 +2163,75 @@ requirement changed and the tests should say what it changed to.
 Avi's feedback arrived as five numbered items and the fifth came through empty.
 Four are done. The fifth is unknown and is not guessed at here.
 
+## SPR-M.34 — The methodology retrofit  `DONE 2026-09-14`
+
+**Goal:** Avi stopped feature work. "I need us to pause and stick to the
+principles there. I.e. have a model document and have DRF and CRUD for all app
+models." Spec §5.6b, and `docs/matazim/data_model.md`.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.34.1 | `docs/matazim/data_model.md`, separate from the spec | REQ-M.140, Rule 4 | DONE |
+| F-M.34.2 | Eighteen `visible_*` functions in `access.py`, one per model | REQ-M.139, §4.4 | DONE |
+| F-M.34.3 | Serializers for every model, ownership fields read-only | REQ-M.139 | DONE |
+| F-M.34.4 | Eighteen viewsets on `access.py` querysets, registered from `ROUTES` | REQ-M.139, Rule 6 | DONE |
+| F-M.34.5 | The refusals, each naming the requirement it protects | REQ-M.21, M.53, M.78, M.87, M.112, M.123, M.124 | DONE |
+| F-M.34.6 | A dashboard for this app | REQ-M.141, Rule 4 | TODO |
+
+### The test that found things
+
+`test_no_endpoint_reaches_another_institution` builds two complete
+institutions, plants a word in every free-text field of each, and then asks all
+eighteen endpoints for everything as three different readers from inside the
+first. It is a sweep rather than eighteen hand-written cases on purpose: a
+hand-written suite covers the endpoints somebody remembered, and the endpoint
+that leaks is the one they did not.
+
+It found one on the first run, in code written an hour earlier. `visible_
+retention_runs` returned every institution's deletion history to any program
+manager, because holding the role read as enough. "Manager X deleted N rows at
+time T" is an operational record about somebody else's programme, and the fact
+that it names no teenager does not make it ours to read. Scoped by `ran_by`.
+
+It also found that creating a leader through the API crashed on a NOT NULL
+constraint rather than answering, because the serializer had no writable way to
+name the account. That is a 500 where a refusal belongs, and it is now the same
+rule `staff_admins` already had from the other side: a typo must never conjure a
+record holding a role.
+
+`test_every_model_has_an_endpoint` is the sweep's other half. A sweep only
+covers what is registered, so something has to fail when a model is added and
+its route is not.
+
+### The one deliberate exception, written down rather than hidden
+
+The entrance-test bank is shared across institutions: generated geometry, the
+same cube for everybody, seeded by a management command. `test_the_bank_is_
+shared_on_purpose` asserts that rather than the sweep quietly skipping it, and
+names the cost: a program manager retiring a target retires it everywhere. With
+one programme that is correct. The day there are two, that test is what has to
+change, and it will be looked at because it says so out loud.
+
+### Rules verified by writing the defect
+
+Dropping the tenancy filter from `visible_submissions` produced *another
+institution's rows came back from: ['submissions', 'feedback']*, which is the
+sweep catching a second endpoint the change was not even aimed at. Putting the
+retention leak back produced *['retention-runs']*. Removing a model's route
+produced *models with no REST endpoint: ['RequestMessage']*.
+
+### A mistake worth recording
+
+`git checkout matazim/api.py` to undo a deliberately-introduced test defect
+reverted the file to its last commit, discarding an afternoon of uncommitted
+work on it. Restoring a file under test needs a copy taken first, not a git
+command that cannot tell the perturbation from the work.
+
+### Still open
+
+REQ-M.141, the dashboard, is Rule 4's third item and is not built. Recorded as
+TODO rather than quietly dropped.
+
 ## Also still open
 
 - Retire the old production tables, once ACT-M.2 is answered.
