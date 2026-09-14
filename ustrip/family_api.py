@@ -100,15 +100,38 @@ class FamilyView(APIView):
     permission_classes = [HasFamilyAdminToken]
 
     def get(self, request):
+        """Who is in, and — only when asked by name — who could be.
+
+        This used to return the fifty most recent accounts with their email
+        addresses, to answer "what did Yotam sign up as". It answered that,
+        and also handed over fifty real people's addresses, some of them
+        מט״צים teenagers, to an endpoint whose whole job is a five-person
+        list. Same objection as a general admin key, one floor down.
+
+        So the candidate list is now opt-in and narrow: pass `?q=` and get
+        the handful that match. No search, no list of other people.
+        """
         User = get_user_model()
         members = User.objects.filter(groups__name=FAMILY_GROUP).order_by("date_joined")
-        others = User.objects.exclude(groups__name=FAMILY_GROUP).exclude(is_superuser=True).order_by("-date_joined")
-        return Response({
-            "family": UserSummarySerializer(members, many=True).data,
-            "accounts_not_in_family": [
-                {"id": u.id, "username": u.get_username(), "email": u.email} for u in others[:50]
-            ],
-        })
+        body = {"family": UserSummarySerializer(members, many=True).data}
+
+        query = (request.query_params.get("q") or "").strip()
+        if len(query) >= 2:
+            matches = (
+                User.objects
+                .exclude(groups__name=FAMILY_GROUP)
+                .filter(Q(username__icontains=query) | Q(email__icontains=query) | Q(first_name__icontains=query))
+                .order_by("-date_joined")[:10]
+            )
+            body["matches"] = [
+                {"id": u.id, "username": u.get_username(), "email": u.email, "name": u.first_name}
+                for u in matches
+            ]
+        else:
+            # Says how to search without saying who there is to find.
+            body["matches"] = []
+            body["hint"] = "Pass ?q= (2 characters or more) to look someone up by name, username or email."
+        return Response(body)
 
     def post(self, request):
         user = _find_user(request.data.get("user"))

@@ -359,3 +359,14 @@ is only true because of the scope rules above.
 **To turn it on:** set `USTRIP_ADMIN_TOKEN` in Render to a long random
 string. Unset means closed, so nothing changes until it is set. Rotate by
 changing the value; no redeploy of logic.
+
+### Sprint 13.1 — "Is the API secure?" answered by attacking it
+
+Avi, 2026-09-14: "verify again that your REST API is secure and no one not
+authorized can just CRUD all data."
+
+| Item | Status |
+|---|---|
+| `tests/test_ustrip_api_locked.py` — every route the router registers, every verb, as an anonymous stranger and as a signed-in babook user who is not in `family`. Asserts the refusal *and* that the database is unchanged; a 403 that still wrote the row would pass a status-only check. Routes come from `ustrip.urls.router`, so an endpoint added next month is covered the day it exists | DONE — 43 tests, all refused; and the inverse, a family member *can* read every route, because a test that only checks refusals also passes on a broken app |
+| The same probe against production, anonymously: 12 endpoints × GET/POST/DELETE | DONE — 403 across the board |
+| The family endpoint used to hand back the 50 most recent accounts with email addresses to answer "what did Yotam sign up as." Some of those are מט״צים teenagers. That is the general-admin-key objection one floor down, in my own code | DONE — candidates are now opt-in via `?q=`, two characters minimum so `?q=a` cannot walk the user base, ten results max |

@@ -144,15 +144,36 @@ def test_an_email_works_as_well_as_a_username(client, yotam, token):
 
 
 @pytest.mark.django_db
-def test_the_listing_shows_who_is_in_and_who_could_be(client, yotam, token):
+def test_looking_someone_up_by_name_finds_them(client, yotam, token):
     """"What did he sign up as" is the question right after "add Yotam", and
     guessing a username over a chat is how the wrong person gets let in."""
-    response = client.get(URL, HTTP_AUTHORIZATION=f"Bearer {token}")
+    response = client.get(URL + "?q=yota", HTTP_AUTHORIZATION=f"Bearer {token}")
 
     assert response.status_code == 200
     body = response.json()
     assert body["family"] == []
-    assert "yotam" in [a["username"] for a in body["accounts_not_in_family"]]
+    assert "yotam" in [a["username"] for a in body["matches"]]
+
+
+@pytest.mark.django_db
+def test_it_does_not_hand_over_the_user_base_unasked(client, yotam, token):
+    """This endpoint manages a five-person list. It used to answer with the
+    fifty most recent accounts and their email addresses, some of them
+    מט״צים teenagers — the same objection as a general admin key, one floor
+    down. Candidates are opt-in now, and only by name."""
+    body = client.get(URL, HTTP_AUTHORIZATION=f"Bearer {token}").json()
+
+    assert body["matches"] == []
+    assert "hint" in body
+    # No other person's address leaves the server unless someone asked for them.
+    assert "yotam@example.com" not in json_module.dumps(body)
+
+
+@pytest.mark.django_db
+def test_a_one_letter_search_is_not_a_way_to_enumerate_everyone(client, yotam, token):
+    """Otherwise `?q=a` walks the whole user base a letter at a time."""
+    body = client.get(URL + "?q=y", HTTP_AUTHORIZATION=f"Bearer {token}").json()
+    assert body["matches"] == []
 
 
 @pytest.mark.django_db
