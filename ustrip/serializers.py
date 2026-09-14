@@ -92,6 +92,10 @@ class ItineraryItemSerializer(serializers.ModelSerializer):
     display_title = serializers.CharField(read_only=True)
     start = serializers.SerializerMethodField()
     end = serializers.SerializerMethodField()
+    overrun_minutes = serializers.SerializerMethodField()
+    overrun_into = serializers.SerializerMethodField()
+    gap_before_minutes = serializers.SerializerMethodField()
+    past_day_end = serializers.SerializerMethodField()
     tag_display = serializers.CharField(source="get_tag_display", read_only=True)
     booking_display = serializers.CharField(source="get_booking_display", read_only=True)
     links = ItineraryLinkSerializer(many=True, read_only=True)
@@ -104,23 +108,37 @@ class ItineraryItemSerializer(serializers.ModelSerializer):
         model = ItineraryItem
         fields = [
             "id", "day", "order", "title", "display_title", "description", "time_label", "location", "cost",
-            "duration_minutes", "fixed_start", "start", "end", "tips", "booking", "booking_display",
+            "duration_minutes", "fixed_start", "start", "end", "overrun_minutes", "overrun_into",
+            "gap_before_minutes", "past_day_end", "tips", "booking", "booking_display",
             "tag", "tag_display", "links", "photos", "like_count", "liked_by_me", "comment_count",
         ]
         read_only_fields = ["order"]
 
-    def _times(self, item):
+    def _scheduled(self, item):
         if not hasattr(item, "start"):
-            item.start, item.end = schedule.for_item(item)
-        return item.start, item.end
+            schedule.annotate(item)
+        return item
 
     def get_start(self, item):
-        start, _ = self._times(item)
+        start = self._scheduled(item).start
         return start.strftime("%H:%M") if start else None
 
     def get_end(self, item):
-        _, end = self._times(item)
+        end = self._scheduled(item).end
         return end.strftime("%H:%M") if end else None
+
+    def get_overrun_minutes(self, item):
+        return self._scheduled(item).overrun_minutes
+
+    def get_overrun_into(self, item):
+        into = self._scheduled(item).overrun_into
+        return into.display_title if into is not None else None
+
+    def get_gap_before_minutes(self, item):
+        return self._scheduled(item).gap_before_minutes
+
+    def get_past_day_end(self, item):
+        return self._scheduled(item).past_day_end
 
     def get_like_count(self, item):
         return item.likes.count()
@@ -136,16 +154,42 @@ class ItineraryItemSerializer(serializers.ModelSerializer):
 
 
 class ItineraryDaySerializer(serializers.ModelSerializer):
+    """The day's items with the computed schedule, plus the day-level
+    summary the pages show: when it ends, how far past `end_time`, and how
+    many planned items don't fit."""
+
     items = serializers.SerializerMethodField()
+    schedule_ends_at = serializers.SerializerMethodField()
+    schedule_over_minutes = serializers.SerializerMethodField()
+    schedule_conflicts = serializers.SerializerMethodField()
 
     class Meta:
         model = ItineraryDay
-        fields = ["id", "trip", "order", "label", "date_label", "title", "sleeping", "note", "start_time", "items"]
+        fields = [
+            "id", "trip", "order", "label", "date_label", "title", "sleeping", "note", "start_time", "end_time",
+            "schedule_ends_at", "schedule_over_minutes", "schedule_conflicts", "items",
+        ]
         read_only_fields = ["order"]
 
+    def _scheduled(self, day):
+        if not hasattr(day, "_ustrip_scheduled"):
+            day._ustrip_scheduled = schedule.compute(day)
+        return day._ustrip_scheduled
+
     def get_items(self, day):
-        scheduled = schedule.compute(day)
-        return ItineraryItemSerializer(scheduled, many=True, context=self.context).data
+        return ItineraryItemSerializer(self._scheduled(day), many=True, context=self.context).data
+
+    def get_schedule_ends_at(self, day):
+        self._scheduled(day)
+        return day.schedule_ends_at.strftime("%H:%M") if day.schedule_ends_at else None
+
+    def get_schedule_over_minutes(self, day):
+        self._scheduled(day)
+        return day.schedule_over_minutes
+
+    def get_schedule_conflicts(self, day):
+        self._scheduled(day)
+        return day.schedule_conflicts
 
 
 class FlightSerializer(serializers.ModelSerializer):

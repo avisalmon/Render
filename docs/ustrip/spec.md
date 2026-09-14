@@ -187,9 +187,27 @@ That is why it's computed rather than saved (`ustrip/schedule.py`): there
 is nothing to keep in sync. The rejected "flow vs. each item keeps its own
 time" alternative would have meant dragging silently left times wrong.
 Only *planned* items move the clock: an optional item shows the time it
-would take if chosen but the plan after it is scheduled as if it were
-skipped (three maybes in a row must not push dinner past midnight), and a
-dropped item has no time at all.
+would take if chosen (at its own pin if it has one) but the plan after it
+is scheduled as if it were skipped (three maybes in a row must not push
+dinner past midnight), and a dropped item has no time at all.
+
+**Overflow is reported, never refused, never auto-fixed (Avi, 2026-09-14).**
+A day has an `end_time` (default 23:00 — late enough that a normal city
+evening, dinner after the Times Square walk or a Broadway show, isn't red
+by default; a warning that fires on most days stops being one) next to its
+start. Adding or
+dragging something that doesn't fit always succeeds; the app then says so
+where it happens: on the squeezed item ("runs 25m into Top of the Rock,
+pinned 15:30"), on the day ("ends 23:40 · 1h 40m past 22:00 · 2 stops
+don't fit"), in red on the times past the day's end, on the itinerary list
+next to the day, and in the API response so a drag shows the conflict the
+moment you drop. The fix is the person's choice — shorten, move, unpin, or
+make optional — each one tap away. Refusing the insert was rejected (you're
+standing in Central Park adding a stop; a plan 20 minutes over is still the
+plan); making room automatically was rejected because the app changing
+your durations or days silently is exactly what "computed, never stored"
+exists to avoid. A gap is not a conflict: free time before a pinned stop is
+shown as "1h 15m free", which is where a new stop would fit.
 
 A third tag, `rejected`, marks an alternative the family looked at and
 dropped (the Day 8 VIP tour) — it stays visible, struck through, rather

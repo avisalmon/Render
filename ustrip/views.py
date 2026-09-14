@@ -69,7 +69,7 @@ def home(request):
             context["upcoming_day"] = upcoming_day
             next_item = upcoming_day.items.first()
             if next_item is not None:
-                next_item.start, next_item.end = schedule.for_item(next_item)
+                schedule.annotate(next_item)
             context["next_item"] = next_item
         context["day_count"] = trip.days.count()
         context["checklist_count"] = trip.checklists.count()
@@ -115,7 +115,7 @@ def itinerary_item_detail(request, item_id):
         ),
         pk=item_id,
     )
-    item.start, item.end = schedule.for_item(item)
+    schedule.annotate(item)
     return render(
         request, "ustrip/itinerary_item_detail.html",
         {

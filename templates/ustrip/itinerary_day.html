@@ -27,14 +27,18 @@
 {% endif %}
 
 <div class="day-start">
-  <span>Day starts at</span>
+  <span>Day runs</span>
   <input type="time" id="day-start" value="{{ day.start_time|time:'H:i' }}">
-  <span style="font-weight:400;">&mdash; times below flow from here; drag to reorder</span>
+  <span>to</span>
+  <input type="time" id="day-end" value="{{ day.end_time|time:'H:i' }}">
 </div>
+<p class="day-summary {% if day.schedule_over_minutes or day.schedule_conflicts %}over{% endif %}" id="day-summary">{% if day.schedule_ends_at %}Ends {{ day.schedule_ends_at|time:"H:i" }}{% endif %}{% if day.schedule_over_minutes %} &middot; {{ day.schedule_over_minutes|duration_human }} past {{ day.end_time|time:"H:i" }}{% endif %}{% if day.schedule_conflicts %} &middot; {{ day.schedule_conflicts }} stop{{ day.schedule_conflicts|pluralize }} {% if day.schedule_conflicts == 1 %}doesn't{% else %}don't{% endif %} fit{% endif %}</p>
+<p class="day-hint">Times flow from the start; pinned stops reset them. Drag to reorder. Nothing is refused: what doesn't fit is flagged, and you decide.</p>
 
 <div class="timeline" id="timeline">
   {% for item in items %}
-    <div class="titem {{ item.tag }}" data-item-id="{{ item.id }}">
+    {% if item.gap_before_minutes %}<div class="tgap">{{ item.gap_before_minutes|duration_human }} free</div>{% endif %}
+    <div class="titem {{ item.tag }} {% if item.past_day_end %}late{% endif %}" data-item-id="{{ item.id }}">
       <div class="ttime">
         <span class="tstart">{% if item.start %}{{ item.start|time:"H:i" }}{% else %}&mdash;{% endif %}</span>
         <span class="tend">{% if item.start and item.duration_minutes %}&ndash; {{ item.end|time:"H:i" }}{% endif %}</span>
@@ -65,6 +69,7 @@
             </span>
           </div>
         </div>
+        {% if item.overrun_minutes %}<p class="twarn">Runs {{ item.overrun_minutes|duration_human }} into {{ item.overrun_into.display_title }} (pinned {{ item.overrun_into.fixed_start|time:"H:i" }})</p>{% endif %}
       </div>
     </div>
   {% empty %}
@@ -101,31 +106,55 @@
 (function () {
   const form = document.getElementById("add-item-form");
   const timeline = document.getElementById("timeline");
+  const summary = document.getElementById("day-summary");
   const dayId = {{ day.id }};
   const dayUrl = `/ustrip/api/itinerary-days/${dayId}/`;
 
-  function applyTimes(items) {
-    items.forEach((item) => {
+  function applySummary(day) {
+    var over = day.schedule_over_minutes > 0 || day.schedule_conflicts > 0;
+    var parts = [];
+    if (day.schedule_ends_at) parts.push("Ends " + day.schedule_ends_at);
+    if (day.schedule_over_minutes > 0) parts.push(ustrip.minutes(day.schedule_over_minutes) + " past " + document.getElementById("day-end").value);
+    if (day.schedule_conflicts > 0) parts.push(day.schedule_conflicts + (day.schedule_conflicts === 1 ? " stop doesn't fit" : " stops don't fit"));
+    summary.textContent = parts.join(" · ");
+    summary.classList.toggle("over", over);
+  }
+
+  function applyTimes(day) {
+    timeline.querySelectorAll(".tgap").forEach((g) => g.remove());
+    day.items.forEach((item) => {
       const row = timeline.querySelector(`[data-item-id="${item.id}"]`);
       if (!row) return;
-      row.querySelector(".tstart").textContent = item.start || "";
-      const end = row.querySelector(".tend");
-      if (end) end.innerHTML = item.duration_minutes ? "&ndash; " + item.end : "";
+      row.querySelector(".tstart").textContent = item.start || "—";
+      row.querySelector(".tend").innerHTML = item.start && item.duration_minutes ? "&ndash; " + item.end : "";
+      row.classList.toggle("late", !!item.past_day_end);
+      let warn = row.querySelector(".twarn");
+      if (item.overrun_minutes) {
+        if (!warn) { warn = ustrip.el('<p class="twarn"></p>'); row.querySelector(".tbody").appendChild(warn); }
+        warn.textContent = "Runs " + ustrip.minutes(item.overrun_minutes) + " into " + item.overrun_into;
+      } else if (warn) {
+        warn.remove();
+      }
+      if (item.gap_before_minutes) row.before(ustrip.el('<div class="tgap">' + ustrip.minutes(item.gap_before_minutes) + " free</div>"));
     });
+    applySummary(day);
   }
 
   ustrip.sortable([timeline], {
     onDrop: ({ ids }) => {
       ustrip.request(dayUrl + "reorder/", { json: { item_ids: ids } })
-        .then((day) => applyTimes(day.items))
+        .then(applyTimes)
         .catch((err) => { alert(err.message); window.location.reload(); });
     },
   });
 
-  document.getElementById("day-start").addEventListener("change", function () {
-    ustrip.request(dayUrl, { method: "PATCH", json: { start_time: this.value } })
-      .then((day) => applyTimes(day.items))
-      .catch((err) => alert(err.message));
+  ["day-start", "day-end"].forEach((id) => {
+    document.getElementById(id).addEventListener("change", function () {
+      const field = id === "day-start" ? "start_time" : "end_time";
+      ustrip.request(dayUrl, { method: "PATCH", json: { [field]: this.value } })
+        .then(applyTimes)
+        .catch((err) => alert(err.message));
+    });
   });
 
   form.addEventListener("submit", function (e) {

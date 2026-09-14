@@ -1,4 +1,5 @@
 {% extends "ustrip/base.html" %}
+{% load ustrip_extras %}
 {% block title %}Itinerary — ustrip{% endblock %}
 
 {% block content %}
@@ -13,16 +14,18 @@
           <div class="daystamp">{{ day.label }}</div>
           <div class="daybody">
             <div class="daytitle-row"><span class="daytitle">{{ day.title }}</span><a class="daylink" href="{% url 'ustrip:itinerary_day' day.id %}">Open &rsaquo;</a></div>
-            <div class="daymeta">{{ day.date_label }}{% if day.sleeping %} &middot; Sleeping: {{ day.sleeping }}{% endif %} &middot; {{ day.scheduled_items|length }} item{{ day.scheduled_items|length|pluralize }}</div>
+            <div class="daymeta">{{ day.date_label }}{% if day.sleeping %} &middot; Sleeping: {{ day.sleeping }}{% endif %}</div>
+            <div class="daymeta dayfit {% if day.schedule_over_minutes or day.schedule_conflicts %}over{% endif %}"><span class="daycount">{{ day.scheduled_items|length }} item{{ day.scheduled_items|length|pluralize }}</span><span class="dayends">{% if day.schedule_ends_at %} &middot; ends {{ day.schedule_ends_at|time:"H:i" }}{% endif %}{% if day.schedule_over_minutes %} ({{ day.schedule_over_minutes|duration_human }} past {{ day.end_time|time:"H:i" }}){% endif %}{% if day.schedule_conflicts %} &middot; {{ day.schedule_conflicts }} {% if day.schedule_conflicts == 1 %}doesn't{% else %}don't{% endif %} fit{% endif %}</span></div>
           </div>
           <svg class="icon chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
         </div>
       </summary>
       <div class="mini-timeline" data-day-id="{{ day.id }}">
         {% for item in day.scheduled_items %}
-          <div class="mini-row {{ item.tag }}" data-item-id="{{ item.id }}">
+          <div class="mini-row {{ item.tag }} {% if item.past_day_end %}late{% endif %}" data-item-id="{{ item.id }}">
             <span class="mini-time">{% if item.start %}{{ item.start|time:"H:i" }}{% else %}&mdash;{% endif %}</span>
             <a class="mini-title" href="{% url 'ustrip:itinerary_item_detail' item.id %}">{{ item.display_title }}</a>
+            <span class="mini-warn" title="Doesn't fit" {% if not item.overrun_minutes and not item.past_day_end %}hidden{% endif %}>!</span>
             <span class="drag-handle" data-drag-handle title="Drag to reorder or move to another day">
               <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>
             </span>
@@ -41,15 +44,23 @@
 (function () {
   const containers = Array.prototype.slice.call(document.querySelectorAll(".mini-timeline"));
 
-  function applyTimes(container, items) {
-    items.forEach((item) => {
+  function applyDay(container, day) {
+    day.items.forEach((item) => {
       const row = container.querySelector(`[data-item-id="${item.id}"]`);
-      if (row) row.querySelector(".mini-time").textContent = item.start || "";
+      if (!row) return;
+      row.querySelector(".mini-time").textContent = item.start || "—";
+      row.classList.toggle("late", !!item.past_day_end);
+      row.querySelector(".mini-warn").hidden = !(item.overrun_minutes || item.past_day_end);
     });
     const sec = container.closest(".daysec");
     const count = container.querySelectorAll("[data-item-id]").length;
-    const meta = sec.querySelector(".daymeta");
-    meta.innerHTML = meta.innerHTML.replace(/\d+ items?$/, count + (count === 1 ? " item" : " items"));
+    sec.querySelector(".daycount").textContent = count + (count === 1 ? " item" : " items");
+    var ends = "";
+    if (day.schedule_ends_at) ends += " · ends " + day.schedule_ends_at;
+    if (day.schedule_over_minutes > 0) ends += " (" + ustrip.minutes(day.schedule_over_minutes) + " past " + day.end_time.slice(0, 5) + ")";
+    if (day.schedule_conflicts > 0) ends += " · " + day.schedule_conflicts + (day.schedule_conflicts === 1 ? " doesn't fit" : " don't fit");
+    sec.querySelector(".dayends").textContent = ends;
+    sec.querySelector(".dayfit").classList.toggle("over", day.schedule_over_minutes > 0 || day.schedule_conflicts > 0);
   }
 
   ustrip.sortable(containers, {
@@ -57,10 +68,10 @@
       const dayId = container.dataset.dayId;
       ustrip.request(`/ustrip/api/itinerary-days/${dayId}/reorder/`, { json: { item_ids: ids } })
         .then((day) => {
-          applyTimes(container, day.items);
+          applyDay(container, day);
           if (fromContainer !== container) {
             return ustrip.request(`/ustrip/api/itinerary-days/${fromContainer.dataset.dayId}/`)
-              .then((from) => applyTimes(fromContainer, from.items));
+              .then((from) => applyDay(fromContainer, from));
           }
         })
         .catch((err) => { alert(err.message); window.location.reload(); });

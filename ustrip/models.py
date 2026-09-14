@@ -89,6 +89,10 @@ class ItineraryDay(models.Model):
         blank=True, help_text="An open decision or a heads-up for the whole day, not tied to one timeline item."
     )
     start_time = models.TimeField(default=time(9, 0), help_text="Where the day's schedule starts counting from.")
+    end_time = models.TimeField(
+        default=time(23, 0),
+        help_text="When the day is meant to be over. Nothing is refused past it; items that run later are flagged.",
+    )
 
     class Meta:
         ordering = ["order"]

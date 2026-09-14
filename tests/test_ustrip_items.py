@@ -350,3 +350,83 @@ def test_every_seeded_item_gets_a_title_and_a_duration():
     assert ItineraryItem.objects.count() == 84
     assert ItineraryItem.objects.filter(tag=ItineraryItem.OPTIONAL).count() == 15
     assert ItineraryItem.objects.filter(tag=ItineraryItem.REJECTED).count() == 1
+
+
+# --- Overflow: reported, never refused, never auto-fixed ---------------------
+
+@pytest.mark.django_db
+def test_a_planned_item_that_runs_into_the_next_pinned_stop_is_flagged_not_cut_silently(day):
+    walk, museum = _items(day, ("Long walk", 240, None), ("Museum", 60, time(12, 0)))
+    scheduled = schedule.compute(day)
+    assert scheduled[0].overrun_minutes == 60           # 09:00 + 4h = 13:00, museum pinned 12:00
+    assert scheduled[0].overrun_into.pk == museum.pk
+    assert scheduled[1].start == time(12, 0)             # the anchor still wins
+    assert day.schedule_conflicts == 1
+
+
+@pytest.mark.django_db
+def test_free_time_before_a_pinned_stop_is_a_gap_not_a_conflict(day):
+    _items(day, ("Breakfast", 45, None), ("Museum", 60, time(12, 0)))
+    scheduled = schedule.compute(day)
+    assert scheduled[1].gap_before_minutes == 135        # 09:45 -> 12:00
+    assert scheduled[0].overrun_minutes == 0
+    assert day.schedule_conflicts == 0
+
+
+@pytest.mark.django_db
+def test_items_past_the_day_end_are_flagged_and_the_day_says_how_far(day):
+    day.end_time = time(22, 0)
+    day.save()
+    dinner, show = _items(day, ("Dinner", 90, time(21, 0)), ("Show", 120, None))
+    scheduled = schedule.compute(day)
+    assert scheduled[0].past_day_end is True             # ends 22:30
+    assert scheduled[1].past_day_end is True             # 22:30 -> 00:30
+    assert day.schedule_ends_at == time(0, 30)
+    assert day.schedule_over_minutes == 150
+    assert day.schedule_conflicts == 2
+
+
+@pytest.mark.django_db
+def test_a_next_morning_anchor_is_not_a_conflict(day):
+    """Day 14–15: 15:25 departure (11h), then the 08:55 landing."""
+    _items(day, ("Depart", 660, time(15, 25)), ("Land", 60, time(8, 55)))
+    scheduled = schedule.compute(day)
+    assert scheduled[0].overrun_minutes == 0
+    assert scheduled[1].gap_before_minutes == 390        # 02:25 -> 08:55 next morning
+
+
+@pytest.mark.django_db
+def test_an_optional_pinned_item_does_not_move_the_clock_either(day):
+    a, maybe, b = _items(day, ("A", 60, None), ("Maybe at noon", 60, time(12, 0)), ("B", 30, None))
+    maybe.tag = ItineraryItem.OPTIONAL; maybe.save()
+    scheduled = schedule.compute(day)
+    assert scheduled[1].start == time(12, 0)             # shown at its pin
+    assert scheduled[2].start == time(10, 0)             # B flows from A, unaffected
+    assert scheduled[0].overrun_minutes == 0             # an optional pin never squeezes a planned item
+
+
+@pytest.mark.django_db
+def test_adding_an_item_that_does_not_fit_succeeds_and_the_api_says_so(client, member, day):
+    _items(day, ("Museum", 60, time(10, 0)))
+    client.force_login(member)
+    response = _post_json(client, "/ustrip/api/itinerary-items/", {"day": day.id, "title": "Breakfast", "description": "Breakfast", "duration_minutes": 90})
+    assert response.status_code == 201                   # not refused
+    response = _post_json(client, f"/ustrip/api/itinerary-days/{day.id}/reorder/", {"item_ids": [response.json()["id"], day.items.get(title="Museum").id]})
+    data = response.json()
+    assert data["items"][0]["overrun_minutes"] == 30
+    assert data["items"][0]["overrun_into"] == "Museum"
+    assert data["schedule_conflicts"] == 1
+    assert data["end_time"] == "23:00:00"  # the default: late enough that a normal NYC evening isn't red
+
+
+@pytest.mark.django_db
+def test_day_end_is_editable_and_the_day_page_shows_the_summary_and_the_gap(client, member, day):
+    _items(day, ("Breakfast", 45, None), ("Museum", 60, time(12, 0)), ("Late show", 120, time(21, 30)))
+    client.force_login(member)
+    response = _patch_json(client, f"/ustrip/api/itinerary-days/{day.id}/", {"end_time": "22:00"})
+    assert response.status_code == 200 and response.json()["schedule_over_minutes"] == 90
+    body = client.get(f"/ustrip/itinerary/{day.id}/").content.decode()
+    assert "2h 15m free" in body
+    assert 'id="day-end"' in body and 'value="22:00"' in body
+    list_body = client.get("/ustrip/itinerary/").content.decode()
+    assert "ends 23:30" in list_body and "1h 30m past 22:00" in list_body

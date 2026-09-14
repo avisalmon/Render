@@ -144,5 +144,14 @@
     });
   }
 
-  window.ustrip = { request: request, el: el, sortable: sortable };
+  /* 90 -> "1h 30m", 45 -> "45m" — the JS twin of the duration_human template filter. */
+  function minutes(n) {
+    n = Number(n) || 0;
+    if (n <= 0) return "";
+    var h = Math.floor(n / 60), m = n % 60;
+    if (h && m) return h + "h " + m + "m";
+    return h ? h + "h" : m + "m";
+  }
+
+  window.ustrip = { request: request, el: el, sortable: sortable, minutes: minutes };
 })();

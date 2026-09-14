@@ -291,6 +291,22 @@ body.ustrip {
   color: var(--ink-soft); font-weight: 600; flex-wrap: wrap; }
 .ustrip .day-start input { font: inherit; font-size: 13px; color: var(--ink); background: var(--card);
   border: 1px solid var(--line); border-radius: 8px; padding: 5px 8px; }
+.ustrip .day-hint { font-size: 11.5px; color: var(--ink-soft); margin: 4px 0 0; }
+
+/* Overflow is reported, never refused (spec §4.1): the day summary, the
+   per-item overrun note, the free-time marker before a pinned stop, and a
+   red time for anything past the day's end. */
+.ustrip .day-summary { font-size: 12.5px; font-weight: 600; color: var(--ink-soft); margin: 8px 0 0; min-height: 1.2em; }
+.ustrip .day-summary.over { color: var(--rust); }
+.ustrip .twarn { font-size: 11.5px; font-weight: 600; color: var(--rust); margin: 6px 0 0; }
+.ustrip .titem.late .ttime .tstart, .ustrip .titem.late .ttime .tend { color: var(--rust); }
+.ustrip .tgap { margin: -8px 0 14px 72px; font-size: 11px; font-weight: 600; color: var(--ink-soft);
+  border-top: 1px dashed var(--line); padding-top: 6px; }
+.ustrip .mini-row.late .mini-time { color: var(--rust); }
+.ustrip .mini-warn { width: 18px; height: 18px; border-radius: 999px; background: var(--rust); color: var(--white-text);
+  font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ustrip .mini-warn[hidden] { display: none; }
+.ustrip .dayfit.over { color: var(--rust); }
 
 /* The list page: each day is a collapsible section with its items inside,
    so an item can be dragged from one day into another. */

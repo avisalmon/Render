@@ -156,8 +156,17 @@ timeline item; e.g. Day 3's "could swap for the Jets game instead"). Added
 2026-09-13 after a full audit of the source JSON found two days' notes
 were silently dropped by the importer — the field didn't exist yet.
 
-**ItineraryDay** also carries `start_time` (default 09:00) since 2026-09-14:
-where the day's computed schedule starts counting from.
+**ItineraryDay** also carries `start_time` (default 09:00) and `end_time`
+(default 23:00) since 2026-09-14: where the day's computed schedule starts
+counting from, and when the day is meant to be over. Nothing is refused
+past `end_time`; items that run later are flagged.
+
+**Computed, not stored, on every schedule pass** (`ustrip/schedule.py`):
+per item `start`, `end`, `overrun_minutes` + `overrun_into` (a planned
+item running into the next planned anchor), `gap_before_minutes` (free time
+before a planned anchor — not a conflict), `past_day_end`; per day
+`schedule_ends_at`, `schedule_over_minutes`, `schedule_conflicts`. All of
+these appear in the API and on the pages; none is a column.
 
 **ItineraryItem** (the rich version, 2026-09-14 — spec §4.1): `day` FK,
 `order`, `title` (short headline; `display_title` falls back to the first

@@ -175,3 +175,27 @@ This sprint recovers the source text and links exactly.
 
 Not built, on purpose, until asked: replacing a photo (delete and re-add),
 editing a link in place (remove and re-add), reordering links or photos.
+
+## Sprint 9 — When a day doesn't fit `DONE, DEV`
+
+**Avi's question (2026-09-14):** what should happen with events that can't
+squeeze into a day — alert, refuse, make room? Decided: **warn, never
+refuse, never auto-fix.** The schedule keeps computing exactly as before;
+it also reports what doesn't fit, the pages show it where it happens, and
+the family decides (shorten, move, unpin, make optional).
+
+| Item | Status |
+|---|---|
+| `ItineraryDay.end_time` (default 23:00 — 22:00 made most NYC evenings red, and a warning that fires on most days stops being one), editable next to the start on the day page | DONE — migration 0006 |
+| Engine reports per item: `overrun_minutes` + `overrun_into` (runs into the next planned anchor), `gap_before_minutes` (free time, not a conflict), `past_day_end`; per day: `schedule_ends_at`, `schedule_over_minutes`, `schedule_conflicts` | DONE — `ustrip/schedule.py` |
+| A next-morning anchor (Day 14–15's landing after an 11h flight) is a gap, not a 17-hour overrun | DONE |
+| Fix: an *optional* pinned item used to reset the clock for the planned items after it, contradicting Sprint 8's rule | DONE |
+| Day page: "Day runs 09:00 to 22:00", a summary line ("Ends 23:40 · 1h 40m past 22:00 · 2 stops don't fit"), a red note on the squeezed item, red times past the day's end, "1h 15m free" markers before pinned stops — all updated in place after a drag or a time change | DONE |
+| Itinerary list: "ends 23:30 (1h 30m past 22:00) · 1 doesn't fit" per day, a red "!" on the rows that don't fit, updated after cross-day drags | DONE |
+| API: the fields above on every item and day representation, so adding an item that doesn't fit succeeds (201) and the response says so | DONE |
+| Tests: overrun into an anchor, gap before an anchor, past-day-end with the day's totals, next-morning anchor, optional pin doesn't move the clock, add-that-doesn't-fit succeeds and reports, `end_time` editable + the page and list render the summary and the gap | DONE — 7 more in `tests/test_ustrip_items.py` |
+| Deploy | not yet — dev only until Avi says |
+
+Not built, on purpose, until asked: suggestions ("shorten X by 25m?",
+"move to Day 3?") that the person accepts with one tap. That is the
+acceptable form of "make room" — a proposal, never a silent change.
