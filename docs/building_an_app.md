@@ -312,3 +312,64 @@ loads is not proof; check for something the old build could not have
 from a 15-minute cache. A transient 502 right after a push is usually the
 new instance still starting, not a broken build, but do not assume that
 either way without checking again.
+
+---
+
+## BKM: giving an agent a key, without giving it the house
+
+**The problem this solves.** Every app ends up with one or two jobs that
+cannot be done from a chat, because they are writes to production that the
+app's own UI deliberately does not expose. In ustrip it was granting a family
+member access: everything else could be built and checked remotely, but
+letting Yotam in stopped dead at "open `/admin/auth/user/` on your phone and
+tick a box." That is a bad place for a job to live when the person is on a
+phone, four days before a trip, running three chats.
+
+The tempting fix is an admin API key. Do not build that. An app on this site
+shares a database with every other app, so a general admin key is a skeleton
+key to other people's accounts, and it will end up pasted into a chat
+transcript, because that is how it reaches the agent that needs it.
+
+**Build a key that is boring to steal instead.** The scope is fenced by the
+code, so the worst case is bounded by what the endpoint *can* express, not by
+who holds the secret:
+
+1. **One job per key.** ustrip's manages the `family` group. Nothing else.
+2. **Name the privileged thing in code, never in the request.** The group name
+   is hardcoded. A caller passing `{"group": "staff"}` gets `family` anyway,
+   because there is no parameter to abuse. Test that.
+3. **Never create the principal.** The endpoint grants access to accounts that
+   already exist and refuses anything else. Otherwise the key is a way to
+   manufacture users on a site that is not only yours.
+4. **Never escalate.** No `is_staff`, no `is_superuser`, no password, no email,
+   no deleting the account. Revoking access takes away *this app* and leaves
+   the person's account alone.
+5. **Fail shut.** An unset environment variable must mean closed. The classic
+   bug is an empty expected value comparing equal to an empty header, and the
+   door standing open in exactly the environment where nobody configured it.
+6. **Constant-time compare.** `==` on a secret leaks its length and prefix
+   through timing. Django ships `constant_time_compare`; `hmac.compare_digest`
+   does the same job.
+7. **Log every use, with who and how.** "Who let this person in" deserves an
+   answer.
+8. **Allow a superuser session as well as the token**, so the endpoint is
+   usable from DRF's browsable API while signed in, and still works if the
+   env var was never set.
+
+**Write the tests for the refusals first.** In ustrip's suite the refusals
+outnumber the happy paths roughly two to one, and that ratio is the point: the
+tests are what make it safe to hand the token over, because they are what stop
+tomorrow's edit from quietly widening the scope.
+
+**Say the quiet part to whoever holds it.** The token has to travel to the
+agent, which means it will sit in a transcript. Treat it as burnable: one
+environment variable, rotated by changing it, no redeploy of logic. And be
+honest about the blast radius rather than implying there is none — for ustrip
+it is "somebody could add themselves to a private family trip planner," which
+is annoying and is not a breach of anything else on the site. That sentence
+is only true because of rules 1 to 4; if you cannot write an equally boring
+sentence about your own endpoint, the scope is still too wide.
+
+Reference implementation: `ustrip/family_api.py`, tests in
+`tests/test_ustrip_family_api.py`, and the older convention it follows in
+`app/security_api.py`.

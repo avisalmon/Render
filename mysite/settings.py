@@ -403,6 +403,14 @@ REST_FRAMEWORK = {
     ],
 }
 
+# ustrip: the shared secret for /ustrip/api/family/, which is the one job that
+# could not be done from a chat (granting a family member access). Unset means
+# closed — the endpoint then answers only a logged-in superuser. Scoped by the
+# code to adding and removing the `family` group and nothing else; see
+# ustrip/family_api.py for what it deliberately cannot do. Rotate by changing
+# this value in Render; nothing else needs redeploying.
+USTRIP_ADMIN_TOKEN = os.environ.get("USTRIP_ADMIN_TOKEN", "")
+
 # django-allauth
 SITE_ID = 1
 AUTHENTICATION_BACKENDS = [

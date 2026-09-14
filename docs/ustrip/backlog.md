@@ -333,3 +333,29 @@ Fixed above as F9 plus multi-line add.
 none of this is visible to Nirit or the kids; everyone should open the app
 once on wifi so the service worker caches the itinerary on their phone; and
 the rental car and some lodging still say "not booked yet" in the app.
+
+## Sprint 13 — Granting access without a laptop `DONE (DEV)`
+
+**Avi, 2026-09-14: "Can you add יותם to the family?"** I could not, and that
+was the finding. Everything else about ustrip can be built, checked and fixed
+from a chat; letting a family member in stopped dead at "open
+`/admin/auth/user/` on your phone and tick a box" — four people to add, four
+days before the trip, from a phone, while running three chats.
+
+| Item | Status |
+|---|---|
+| `/ustrip/api/family/` — GET who is in (and which accounts exist but are not), POST to add, DELETE to remove | DONE — `ustrip/family_api.py` |
+| Auth: a shared secret in `USTRIP_ADMIN_TOKEN`, constant-time compare, following `app/security_api.py`'s convention. A superuser session also works, so it is usable from the browsable API and still works if the env var was never set | DONE |
+| Scope fenced by code, not intentions: only the `family` group (the name is not a parameter), never creates an account, never grants staff/superuser, never deletes a user, fails shut when unset | DONE — 8 of the 13 tests are refusals |
+| Written up as a BKM in [building_an_app.md](../building_an_app.md) | DONE |
+
+**Why it is not an admin key.** An app here shares a database with every
+other app, so a general admin key is a skeleton key to other people's
+accounts — and it will end up in a chat transcript, because that is how it
+reaches the agent that needs it. The worst a stolen `USTRIP_ADMIN_TOKEN` can
+do is add or remove somebody on a private family trip planner. That sentence
+is only true because of the scope rules above.
+
+**To turn it on:** set `USTRIP_ADMIN_TOKEN` in Render to a long random
+string. Unset means closed, so nothing changes until it is set. Rotate by
+changing the value; no redeploy of logic.

@@ -1,7 +1,7 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from . import api, views
+from . import api, family_api, views
 
 app_name = "ustrip"
 
@@ -41,5 +41,8 @@ urlpatterns = [
     path("lodging/<int:lodging_id>/edit/", views.lodging_edit, name="lodging_edit"),
     path("packing/", views.packing, name="packing"),
     path("journal/", views.journal, name="journal"),
+    # Who is in the family (spec §3). Token-or-superuser, not the family gate:
+    # this is how access is granted, so it cannot require access.
+    path("api/family/", family_api.FamilyView.as_view(), name="api_family"),
     path("api/", include(router.urls)),
 ]
