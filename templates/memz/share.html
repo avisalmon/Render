@@ -1,0 +1,34 @@
+{% extends "memz/base.html" %}{% load static i18n %}
+{% block title %}memz{% endblock %}
+{% block screen %}share{% endblock %}
+{% block content %}
+<meta property="og:title" content="{% trans 'מם מ-memz' %}">
+<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ meme.rendered.url }}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ request.build_absolute_uri }}">
+
+<h1 class="memz-title">{% trans "מם" %}</h1>
+
+<img class="memz-result-image" src="{{ meme.rendered.url }}" alt="{{ meme.caption_text }}">
+
+<div class="memz-actions">
+  <button type="button" class="memz-btn memz-btn--primary" data-share-meme
+          data-share-url="{{ request.build_absolute_uri }}"
+          data-share-image="{{ meme.rendered.url }}" data-share-status="#memz-share-status">
+    {% trans "שיתוף" %}
+  </button>
+  <a class="memz-btn memz-btn--secondary" href="{{ meme.rendered.url }}" download="memz-{{ meme.share_slug }}.jpg">{% trans "הורדה" %}</a>
+</div>
+<span class="memz-status" id="memz-share-status"></span>
+
+<div class="memz-stack memz-stack--after">
+  <a class="memz-btn memz-btn--secondary" href="{% url 'memz:create' %}">{% trans "יוצרים מם משלכם" %}</a>
+  <a class="memz-btn memz-btn--ghost" href="{% url 'memz:home' %}">{% trans "לשחק memz" %}</a>
+</div>
+
+<p class="memz-fineprint">
+  <button type="button" class="memz-btn memz-btn--ghost memz-btn--small" data-report-meme="{{ meme.share_slug }}" data-report-status="#memz-report-status">{% trans "דיווח על המם הזה" %}</button>
+  <span class="memz-status" id="memz-report-status"></span>
+</p>
+{% endblock %}
+{% block scripts %}<script src="{% static 'memz/share.js' %}"></script>{% endblock %}

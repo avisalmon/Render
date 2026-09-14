@@ -4,6 +4,13 @@
    (Rule 11.1); every text colour below clears WCAG AA on the surface it is
    used on (Rule 11.4), measured by tests/test_memz_screens.py. */
 
+@font-face {
+  font-family: "Heebo Black";
+  src: url("/static/memz/fonts/Heebo-Black.ttf") format("truetype");
+  font-weight: 900;
+  font-display: swap;
+}
+
 :root {
   --memz-bg: #FFF6E9;
   --memz-card: #FFFFFF;
@@ -211,7 +218,8 @@ body.memz {
   margin-bottom: 14px;
 }
 
-.memz-field > span {
+.memz-field > span,
+.memz-field-label {
   display: block;
   margin-bottom: 6px;
   font-weight: 600;
@@ -286,6 +294,98 @@ p.memz-error { margin: 0 0 14px; }
   font-size: 13px;
   font-weight: 600;
   color: var(--memz-ink-soft);
+}
+
+/* ---- the solo creator --------------------------------------------------- */
+
+.memz-thumb-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 0 0 18px;
+  padding: 0;
+  list-style: none;
+}
+
+.memz-thumb {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 3px solid transparent;
+  cursor: pointer;
+  background: var(--memz-line);
+}
+
+.memz-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.memz-thumb--selected { border-color: var(--memz-accent); }
+
+.memz-thumb input[type="radio"] {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.memz-preview-wrap {
+  margin: 0 0 18px;
+  border-radius: var(--memz-radius);
+  overflow: hidden;
+  border: 1px solid var(--memz-line);
+  background: var(--memz-card);
+}
+
+.memz-preview-wrap canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.memz-textarea { resize: vertical; min-height: 84px; }
+
+.memz-charcount {
+  display: block;
+  margin: 6px 0 18px;
+  text-align: left;
+  font-size: 13px;
+  color: var(--memz-ink-soft);
+  direction: ltr;
+}
+
+.memz-result-image {
+  display: block;
+  width: 100%;
+  border-radius: var(--memz-radius);
+  border: 1px solid var(--memz-line);
+  margin: 0 0 18px;
+}
+
+.memz-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0 0 10px;
+}
+
+.memz-actions > .memz-btn { width: 100%; }
+
+.memz-status {
+  display: block;
+  min-height: 20px;
+  margin: 4px 0 14px;
+  font-size: 14px;
+  color: var(--memz-ink-soft);
+  word-break: break-all;
 }
 
 /* ---- wider screens: the same column, a little more air ----------------- */

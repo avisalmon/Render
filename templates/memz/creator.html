@@ -1,0 +1,42 @@
+{% extends "memz/base.html" %}{% load static i18n %}
+{% block title %}{% trans "יוצרים מם" %} · memz{% endblock %}
+{% block screen %}creator{% endblock %}
+{% block content %}
+<h1 class="memz-title">{% trans "יוצרים מם" %}</h1>
+<p class="memz-lead">{% trans "בוחרים תמונה, כותבים כיתוב, וזהו." %}</p>
+
+{% if not images %}
+<p class="memz-lead">{% trans "אין עדיין תמונות זמינות. נסו שוב עוד רגע." %}</p>
+{% else %}
+<form method="post" class="memz-card memz-form" data-creator-form novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<p class="memz-error" role="alert">{{ form.non_field_errors.0 }}</p>{% endif %}
+
+  <div class="memz-preview-wrap">
+    <canvas data-creator-preview width="480" height="360" data-max-lines="3"></canvas>
+  </div>
+
+  <span class="memz-field-label">{% trans "תמונה" %}</span>
+  {% if form.image.errors %}<span class="memz-error">{{ form.image.errors.0 }}</span>{% endif %}
+  <ul class="memz-thumb-grid">
+    {% for img in images %}
+    <li class="memz-thumb{% if forloop.first and not form.image.value %} memz-thumb--selected{% endif %}" data-creator-thumb="{{ img.file.url }}">
+      <img src="{{ img.file.url }}" alt="{{ img.title }}" loading="lazy">
+      <input type="radio" name="image" value="{{ img.pk }}"
+             {% if form.image.value|stringformat:"s" == img.pk|stringformat:"s" or forloop.first and not form.image.value %}checked{% endif %}>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <label class="memz-field">
+    <span>{{ form.caption_text.label }}</span>
+    {{ form.caption_text }}
+    {% if form.caption_text.errors %}<span class="memz-error">{{ form.caption_text.errors.0 }}</span>{% endif %}
+  </label>
+  <span class="memz-charcount" data-creator-count>0/{{ max_chars }}</span>
+
+  <button type="submit" class="memz-btn memz-btn--primary memz-btn--wide" data-creator-submit>{% trans "עושים מם" %}</button>
+</form>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="{% static 'memz/creator.js' %}"></script>{% endblock %}

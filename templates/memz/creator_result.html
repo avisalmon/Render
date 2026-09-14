@@ -1,0 +1,24 @@
+{% extends "memz/base.html" %}{% load static i18n %}
+{% block title %}{% trans "המם מוכן" %} · memz{% endblock %}
+{% block screen %}creator-result{% endblock %}
+{% block content %}
+<h1 class="memz-title">{% trans "מוכן!" %}</h1>
+
+<img class="memz-result-image" src="{{ meme.rendered.url }}" alt="{{ meme.caption_text }}">
+
+<div class="memz-actions">
+  <button type="button" class="memz-btn memz-btn--primary" data-share-meme
+          data-share-url="{{ request.scheme }}://{{ request.get_host }}{% url 'memz:share' slug=meme.share_slug %}"
+          data-share-image="{{ meme.rendered.url }}" data-share-status="#memz-share-status">
+    {% trans "שיתוף" %}
+  </button>
+  <a class="memz-btn memz-btn--secondary" href="{{ meme.rendered.url }}" download="memz-{{ meme.share_slug }}.jpg">{% trans "הורדה" %}</a>
+</div>
+<span class="memz-status" id="memz-share-status"></span>
+
+<div class="memz-stack memz-stack--after">
+  <a class="memz-btn memz-btn--secondary" href="{% url 'memz:create' %}">{% trans "עוד אחד" %}</a>
+  <a class="memz-btn memz-btn--ghost" href="{% url 'memz:home' %}">{% trans "לדף הראשי" %}</a>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{% static 'memz/share.js' %}"></script>{% endblock %}

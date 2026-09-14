@@ -1,0 +1,11 @@
+{% extends "memz/base.html" %}{% load i18n %}
+{% block title %}{% trans "המם הזה פג תוקף" %} · memz{% endblock %}
+{% block screen %}share-expired{% endblock %}
+{% block content %}
+<h1 class="memz-title">{% trans "המם הזה פג תוקף." %}</h1>
+<p class="memz-lead">{% trans "אולי הוא נמחק, אולי הקישור פשוט ישן. אפשר תמיד להכין אחד חדש." %}</p>
+<div class="memz-stack">
+  <a class="memz-btn memz-btn--primary" href="{% url 'memz:create' %}">{% trans "יוצרים מם" %}</a>
+  <a class="memz-btn memz-btn--secondary" href="{% url 'memz:home' %}">{% trans "לדף הראשי" %}</a>
+</div>
+{% endblock %}

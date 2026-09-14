@@ -8,6 +8,8 @@ import uuid
 from django.utils.text import slugify
 from rest_framework import serializers
 
+from .. import conf
+from ..bank import images_for
 from ..models import CaptionCard, CaptionDeck, Meme, MemeImage, MemzProfile, Pack, PackImage, SavedMeme, Topic
 
 
@@ -123,6 +125,39 @@ class SavedMemeSerializer(serializers.ModelSerializer):
 
     def get_rendered_url(self, obj):
         return obj.meme.rendered.url if obj.meme.rendered else ""
+
+
+class MemeSerializer(serializers.ModelSerializer):
+    """Create-only, for the solo creator (spec §7, §12.3's memes/ resource).
+    `source`, `created_by_user`, `share_slug`, `rendered` and `expires_at`
+    are never taken from the body — the view decides them, the same way
+    every other create in this API refuses to take identity from the
+    caller (spec Rule 12.3.3.3, applied here to "am I a guest")."""
+
+    rendered_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Meme
+        fields = ("id", "image", "caption_text", "source", "share_slug", "rendered_url", "created_at", "expires_at")
+        read_only_fields = ("source", "share_slug", "created_at", "expires_at")
+
+    def get_rendered_url(self, obj):
+        return obj.rendered.url if obj.rendered else ""
+
+    def validate_image(self, image):
+        request = self.context["request"]
+        if not images_for(request.user).filter(pk=image.pk).exists():
+            raise serializers.ValidationError("התמונה הזאת לא זמינה.")
+        return image
+
+    def validate_caption_text(self, text):
+        text = text.strip()
+        if not text:
+            raise serializers.ValidationError("אי אפשר בלי כיתוב.")
+        max_chars = conf.get("CAPTION_MAX_CHARS")
+        if len(text) > max_chars:
+            raise serializers.ValidationError(f"עד {max_chars} תווים.")
+        return text
 
 
 class ProfileSerializer(serializers.ModelSerializer):

@@ -18,11 +18,13 @@ Adding a screen means adding it here. Adding a state means adding that too.
 Skipped, not failed, on a machine without Playwright's browser.
 """
 
+import io
 import os
 import re
 
 import pytest
 from django.contrib.auth.models import User
+from django.core.files.base import ContentFile
 
 os.environ.setdefault("DJANGO_ALLOW_ASYNC_UNSAFE", "1")
 
@@ -126,10 +128,31 @@ TAP_JS = """(minPx) => {
 # ---------------------------------------------------------------- the world
 
 
+def _png_bytes():
+    from PIL import Image
+
+    buf = io.BytesIO()
+    Image.new("RGB", (400, 300), (60, 120, 170)).save(buf, format="PNG")
+    return buf.getvalue()
+
+
 def build_world():
+    from memz.memes import make_meme
+    from memz.models import Meme, MemeImage
+
     user = User.objects.create_user("screens", email="screens@example.com", password=PASSWORD, first_name="נועה")
     taken = User.objects.create_user("taken", email="taken@example.com", password=PASSWORD)
-    return {"user": user, "taken": taken}
+
+    image = MemeImage(owner=None, visibility=MemeImage.PUBLIC, moderation_status=MemeImage.APPROVED, title="לצילום מסך")
+    image.file.save("screenshot-source.png", ContentFile(_png_bytes()), save=True)
+
+    meme = make_meme(image=image, caption_text="זה מם לדוגמה, בשביל לבדוק את המסך", source=Meme.SOLO, user=None)
+    from django.utils import timezone
+
+    expired = make_meme(image=image, caption_text="זה מם שפג לו התוקף", source=Meme.SOLO, user=None)
+    Meme.objects.filter(pk=expired.pk).update(expires_at=timezone.now() - timezone.timedelta(hours=1))
+
+    return {"user": user, "taken": taken, "image": image, "meme": meme, "expired_slug": expired.share_slug}
 
 
 def _wrong_password(page):
@@ -147,7 +170,9 @@ def _taken_email(page):
     page.wait_for_timeout(400)
 
 
-# (label, path, sign in as, action to reach the state, expected data-screen)
+# (label, path, sign in as, action to reach the state, expected data-screen).
+# `path` may be a callable taking the world dict, for a screen whose URL
+# carries something build_world() created (a share slug).
 SCREENS = [
     ("home/anonymous", "/memz/", None, None, "home"),
     ("home/signed-in", "/memz/", "screens@example.com", None, "home"),
@@ -157,6 +182,12 @@ SCREENS = [
     ("signup/taken-email", "/memz/signup/", None, _taken_email, "signup"),
     ("password-reset/form", "/memz/password/reset/", None, None, "password-reset"),
     ("coming/game-not-yet", "/memz/new/", None, None, "coming"),
+    ("creator/empty", "/memz/create/", None, None, "creator"),
+    ("creator/signed-in", "/memz/create/", "screens@example.com", None, "creator"),
+    ("creator/result", lambda w: f"/memz/create/{w['meme'].share_slug}/", None, None, "creator-result"),
+    ("share/live", lambda w: f"/memz/m/{w['meme'].share_slug}/", None, None, "share"),
+    ("share/expired", lambda w: f"/memz/m/{w['expired_slug']}/", None, None, "share-expired"),
+    ("share/never-existed", "/memz/m/not-a-real-slug-at-all/", None, None, "share-expired"),
     ("404", "/memz/nowhere/", None, None, "404"),
 ]
 
@@ -190,7 +221,9 @@ def _open(browser, live_server, email, path):
 
 @pytest.mark.parametrize("label,path,who,action,screen", SCREENS, ids=[s[0] for s in SCREENS])
 def test_screen_contract(browser, live_server, db, label, path, who, action, screen):
-    build_world()
+    world = build_world()
+    if callable(path):
+        path = path(world)
     context, page = _open(browser, live_server, who, path)
     try:
         if action:

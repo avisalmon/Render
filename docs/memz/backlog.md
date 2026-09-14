@@ -72,21 +72,31 @@ that is provably one-time. No game yet, no rendering yet.
 ACT items: none needed to build. **ACT-Z.1** (before SPR-Z.7, not now):
 decide where the real public bank images come from (spec §14.2).
 
-## SPR-Z.2 — The engine, and the first front door `TODO`
+## SPR-Z.2 — The engine, and the first front door `DONE (dev), 2026-09-15, awaiting review`
 
 **Goal:** a meme can be made, seen, shared, downloaded, and expires. The
 solo creator is complete for guests; save arrives with accounts in SPR-Z.5.
 
 | ID | Feature | Traces | Status |
 | --- | --- | --- | --- |
-| F-Z.2.1 | `memz/render.py`: caption bar above the image, wrap, shrink-to-fit floor, `python-bidi` for Hebrew and mixed text, vendored heavy OFL font, guest watermark; JPEG 1080 wide; under 300 ms | spec §8.1 | TODO |
-| F-Z.2.2 | Browser preview twin of the layout rules (same font, same wrap, same shrink) | spec §4.4, §8.1 | TODO |
-| F-Z.2.3 | Solo creator page: pick from public packs, type with live preview, 140 chars and 3 lines enforced, *Make it* | spec §7 | TODO |
-| F-Z.2.4 | `memes/` API: create (solo), retrieve, delete own; `Meme.share_slug` 128-bit | spec §12.3, §12.3.3.6 | TODO |
-| F-Z.2.5 | Share page `/memz/m/<slug>/` with Open Graph tags, download, *make your own*, *play memz*; expired page says so, not a 404; report link (mail to admin, throttled) | spec §8.2, §8.3, §6.4.3 | TODO |
-| F-Z.2.6 | Share button: Web Share API with the image file, URL fallback, copy fallback | spec §8.2 | TODO |
-| F-Z.2.7 | Expiry: guest solo memes get `expires_at`; `memz_cleanup` command deletes expired unsaved memes and expired sessions, idempotent; wired to the site's scheduled-jobs endpoint and `render.yaml` | spec §8.5, Rule 8.5.1 | TODO |
-| F-Z.2.8 | Throttles: solo creation and report, by IP and by user | spec §12.3.3.7 | TODO |
+| F-Z.2.1 | `memz/render.py`: caption bar above the image, wrap, shrink-to-fit floor, `python-bidi` for Hebrew and mixed text, vendored heavy OFL font, guest watermark; JPEG 1080 wide; under 300 ms | spec §8.1 | DONE — font is Heebo Black (Avi's pick), instantiated from Google's variable font and vendored at `static/memz/fonts/Heebo-Black.ttf` |
+| F-Z.2.2 | Browser preview twin of the layout rules (same font, same wrap, same shrink) | spec §4.4, §8.1 | DONE — `static/memz/creator.js`, canvas-based, its own small bidi reshaper (the server's `python-bidi` render is what's actually saved) |
+| F-Z.2.3 | Solo creator page: pick from public packs, type with live preview, 140 chars and 3 lines enforced, *Make it* | spec §7 | DONE — `/memz/create/`; also lists a logged-in user's own approved uploads once SPR-Z.5 adds them |
+| F-Z.2.4 | `memes/` API: create (solo), retrieve, delete own; `Meme.share_slug` 128-bit | spec §12.3, §12.3.3.6 | DONE — create is a deliberate, narrow, spec-sanctioned exception to "no anonymous writes" (spec §7 lets a guest solo-create); everything else stays owner-only |
+| F-Z.2.5 | Share page `/memz/m/<slug>/` with Open Graph tags, download, *make your own*, *play memz*; expired page says so, not a 404; report link (mail to admin, throttled) | spec §8.2, §8.3, §6.4.3 | DONE — an expired, deleted, or never-existed slug all get the same friendly page (200, not 404) |
+| F-Z.2.6 | Share button: Web Share API with the image file, URL fallback, copy fallback | spec §8.2 | DONE — `static/memz/share.js` |
+| F-Z.2.7 | Expiry: guest solo memes get `expires_at`; `memz_cleanup` command deletes expired unsaved memes and expired sessions, idempotent; wired to the site's scheduled-jobs endpoint and `render.yaml` | spec §8.5, Rule 8.5.1 | DONE (cleanup command + `--dry-run`); the scheduled-jobs endpoint and `render.yaml` wiring move to SPR-Z.7 with the rest of deploy |
+| F-Z.2.8 | Throttles: solo creation and report, by IP and by user | spec §12.3.3.7 | DONE — with a fix worth remembering: DRF's throttle rate binds at import time, not per request, so `memz/api/throttles.py` overrides `get_rate()` to read live, or a future admin-tunable rate would silently not apply without a restart |
+| F-Z.2.9 | Tests: rendering cases (Hebrew, mixed, numbers, 3-line wrap, floor, watermark only for guests), cleanup exactness, share page states, throttle trips; screens: creator (empty, typing, result), share page (live, expired) | spec §12.8 | DONE — `tests/test_spr_z_2.py`, 30 tests; 6 new screen-states, all green first run |
+
+**Sprint notes (2026-09-15).** Two real bugs the tests caught before green:
+`fit_caption` was checking line *count* only, not line *width* — a single
+unbreakable word longer than the line never triggered the shrink-and-
+ellipsis fallback, since `wrap_caption` always returns it as "one line"
+regardless of how wide that line actually is. And the throttle tests
+exposed the DRF binding issue in F-Z.2.8 above. Demoed end to end through
+the real dev server (a Hebrew caption on a seeded image, verified by eye)
+before committing.
 | F-Z.2.9 | Tests: rendering cases (Hebrew, mixed, numbers, 3-line wrap, floor, watermark only for guests), cleanup exactness, share page states, throttle trips; screens: creator (empty, typing, result), share page (live, expired) | spec §12.8 | TODO |
 
 ## SPR-Z.3 — The game: Normal mode, typed captions, vote scoring `TODO`

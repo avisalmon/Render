@@ -185,8 +185,10 @@ def test_nothing_in_memz_points_out_of_memz(client, path):
 
 def test_the_game_doors_lead_to_the_temporary_page_for_now(client):
     """F-Z.1.5: Start and Join exist on Home and lead to an honest 'coming in
-    SPR-Z.3' page, catalogued as a state and removed by F-Z.3.1."""
-    for path in ("/memz/new/", "/memz/join/", "/memz/create/"):
+    SPR-Z.3' page, catalogued as a state and removed by F-Z.3.1.
+    (/memz/create/ was this too in SPR-Z.1; SPR-Z.2 gave it the real
+    creator — tests/test_spr_z_2.py.)"""
+    for path in ("/memz/new/", "/memz/join/"):
         response = client.get(path)
         assert response.status_code == 200, path
         assert 'data-screen="coming"' in response.content.decode(), path

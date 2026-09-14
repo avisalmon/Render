@@ -405,6 +405,14 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    # memz's rate limits on its no-login surfaces (docs/memz/spec.md Rule
+    # 12.3.3.7). Scoped throttle classes, not the global anon/user rates,
+    # so nothing else on the site is affected.
+    "DEFAULT_THROTTLE_RATES": {
+        "memz_meme_create_anon": "60/hour",
+        "memz_meme_create_user": "60/hour",
+        "memz_report": "5/hour",
+    },
 }
 
 # ustrip: where an unhandled /ustrip/ error is mailed (ustrip/middleware.py).

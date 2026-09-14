@@ -6,19 +6,21 @@ from django.db import transaction
 from django.db.models import Q
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 from rest_framework.response import Response
 from rest_framework.routers import APIRootView as DRFAPIRootView
 
-from ..models import CaptionCard, CaptionDeck, MemeImage, Pack, PackImage, SavedMeme, Topic
+from ..memes import make_meme
+from ..models import CaptionCard, CaptionDeck, Meme, MemeImage, Pack, PackImage, SavedMeme, Topic
 from ..tiers import profile_for
 from .permissions import IsOwnerOrPublicReadOnly
 from .renderers import StaffOnlyBrowsableRenderer
 from .serializers import (
-    CaptionCardSerializer, CaptionDeckSerializer, MemeImageSerializer, PackImageSerializer, PackSerializer,
-    SavedMemeSerializer, TopicSerializer, visible_images,
+    CaptionCardSerializer, CaptionDeckSerializer, MemeImageSerializer, MemeSerializer, PackImageSerializer,
+    PackSerializer, SavedMemeSerializer, TopicSerializer, visible_images,
 )
+from .throttles import MemeCreateAnonThrottle, MemeCreateUserThrottle
 
 RENDERERS = [JSONRenderer, StaffOnlyBrowsableRenderer]
 
@@ -160,6 +162,43 @@ class TopicViewSet(MemzViewSet):
         serializer.save(owner=self.request.user, is_public=False)
 
 
+class MemeViewSet(MemzViewSet):
+    """The memes/ resource (spec §12.3, §7): create is the one deliberate,
+    narrow exception to "no anonymous writes" (spec Rule 12.3.3.1) — a
+    guest solo-creates a meme with no account, same as spec §7 describes.
+    The exception is scoped the way the site's own BKM asks: it can only
+    create a `Meme` (`source=solo`) from an image already visible in the
+    bank (`MemeSerializer.validate_image`), it cannot set its own owner,
+    verdict, or expiry, and it is throttled (spec Rule 12.3.3.7). Every
+    other verb — list, retrieve, delete — is owner-only, like the rest of
+    the API; a guest simply has no rows to see here (they keep their memes
+    by the share link, spec §8.2)."""
+
+    serializer_class = MemeSerializer
+    http_method_names = ["get", "post", "delete", "head", "options"]
+    throttle_classes = [MemeCreateAnonThrottle, MemeCreateUserThrottle]
+
+    def get_permissions(self):
+        return [AllowAny()] if self.action == "create" else [IsAuthenticated()]
+
+    def get_queryset(self):
+        user = self.request.user
+        if not user.is_authenticated:
+            return Meme.objects.none()
+        return Meme.objects.filter(created_by_user=user, source=Meme.SOLO)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = request.user if request.user.is_authenticated else None
+        meme = make_meme(
+            image=serializer.validated_data["image"], caption_text=serializer.validated_data["caption_text"],
+            source=Meme.SOLO, user=user,
+        )
+        out = self.get_serializer(meme)
+        return Response(out.data, status=status.HTTP_201_CREATED, headers={"Location": f"/memz/m/{meme.share_slug}/"})
+
+
 class SavedMemeViewSet(MemzViewSet):
     """A person's collection (spec §8.4). Saving clears the meme's expiry."""
 
@@ -182,5 +221,5 @@ class SavedMemeViewSet(MemzViewSet):
 
 __all__ = [
     "APIRootView", "BrowsableAPIRenderer", "MemeImageViewSet", "PackViewSet", "PackImageViewSet",
-    "CaptionDeckViewSet", "CaptionCardViewSet", "TopicViewSet", "SavedMemeViewSet",
+    "CaptionDeckViewSet", "CaptionCardViewSet", "TopicViewSet", "MemeViewSet", "SavedMemeViewSet",
 ]
