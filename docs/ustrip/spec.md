@@ -165,6 +165,36 @@ Three pieces, each simple, built in this order:
   trusted family members don't need a permissions system, and a lock would
   just be friction the first time Nirit wants to fix a time Avi typed wrong.
 
+**Vocabulary (Avi, 2026-09-14):** a *day* is an `ItineraryDay`, an *item* is
+an `ItineraryItem`. Those are the words used in conversation from here on.
+
+**The item is rich, and time is computed (decided 2026-09-14).** Every item
+has its own detail page, linked from the day's timeline: a headline, the
+full description, where it is (linked to a map), what it costs, what's good
+to know, links to read more (official site / Wikipedia / map), booking
+status (not needed / needs booking / booked), photos attached to the stop,
+likes (one per person, a toggle), and comments (the one place with a
+creator lock — a comment is its author's words, so only they or a
+superuser can edit or delete it).
+
+An item's time is not stored. Each day has a `start_time`; items run back
+to back in order, each taking `duration_minutes`; an item with a
+`fixed_start` — a flight, a timed museum ticket — is a pinned anchor that
+resets the clock, and everything after it flows from there. Dragging an
+item to another position, on the day page or between two days on the
+itinerary list, therefore updates every time after it with no bookkeeping.
+That is why it's computed rather than saved (`ustrip/schedule.py`): there
+is nothing to keep in sync. The rejected "flow vs. each item keeps its own
+time" alternative would have meant dragging silently left times wrong.
+Only *planned* items move the clock: an optional item shows the time it
+would take if chosen but the plan after it is scheduled as if it were
+skipped (three maybes in a row must not push dinner past midnight), and a
+dropped item has no time at all.
+
+A third tag, `rejected`, marks an alternative the family looked at and
+dropped (the Day 8 VIP tour) — it stays visible, struck through, rather
+than being deleted, because "we considered it and said no" is information.
+
 ### 4.2 Packing & task lists
 - Shared checklists scoped to the trip: a list has a name (e.g. "Packing —
   Dad", "Before we leave") and items with a checked/unchecked state and who

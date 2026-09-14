@@ -3,20 +3,69 @@
 
 {% block content %}
 <p class="title serif">Itinerary</p>
-<p class="subtitle">{% if trip %}{{ trip.name }} &middot; {{ days|length }} days{% else %}No trip yet{% endif %}</p>
+<p class="subtitle">{% if trip %}{{ trip.name }} &middot; {{ days|length }} days &middot; open two days to drag an item between them{% else %}No trip yet{% endif %}</p>
 
-<div class="daylist">
+<div class="daylist" id="daylist">
   {% for day in days %}
-    <a class="dayrow" href="{% url 'ustrip:itinerary_day' day.id %}">
-      <div class="daystamp">{{ day.label }}</div>
-      <div class="daybody">
-        <div class="daytitle-row"><span class="daytitle">{{ day.title }}</span></div>
-        <div class="daymeta">{{ day.date_label }}{% if day.sleeping %} &middot; Sleeping: {{ day.sleeping }}{% endif %}</div>
+    <details class="daysec" data-day-id="{{ day.id }}">
+      <summary>
+        <div class="dayrow">
+          <div class="daystamp">{{ day.label }}</div>
+          <div class="daybody">
+            <div class="daytitle-row"><span class="daytitle">{{ day.title }}</span><a class="daylink" href="{% url 'ustrip:itinerary_day' day.id %}">Open &rsaquo;</a></div>
+            <div class="daymeta">{{ day.date_label }}{% if day.sleeping %} &middot; Sleeping: {{ day.sleeping }}{% endif %} &middot; {{ day.scheduled_items|length }} item{{ day.scheduled_items|length|pluralize }}</div>
+          </div>
+          <svg class="icon chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+        </div>
+      </summary>
+      <div class="mini-timeline" data-day-id="{{ day.id }}">
+        {% for item in day.scheduled_items %}
+          <div class="mini-row {{ item.tag }}" data-item-id="{{ item.id }}">
+            <span class="mini-time">{% if item.start %}{{ item.start|time:"H:i" }}{% else %}&mdash;{% endif %}</span>
+            <a class="mini-title" href="{% url 'ustrip:itinerary_item_detail' item.id %}">{{ item.display_title }}</a>
+            <span class="drag-handle" data-drag-handle title="Drag to reorder or move to another day">
+              <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>
+            </span>
+          </div>
+        {% endfor %}
       </div>
-      <svg class="icon chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-    </a>
+    </details>
   {% empty %}
     <div class="empty">No itinerary yet.</div>
   {% endfor %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const containers = Array.prototype.slice.call(document.querySelectorAll(".mini-timeline"));
+
+  function applyTimes(container, items) {
+    items.forEach((item) => {
+      const row = container.querySelector(`[data-item-id="${item.id}"]`);
+      if (row) row.querySelector(".mini-time").textContent = item.start || "";
+    });
+    const sec = container.closest(".daysec");
+    const count = container.querySelectorAll("[data-item-id]").length;
+    const meta = sec.querySelector(".daymeta");
+    meta.innerHTML = meta.innerHTML.replace(/\d+ items?$/, count + (count === 1 ? " item" : " items"));
+  }
+
+  ustrip.sortable(containers, {
+    onDrop: ({ container, fromContainer, ids }) => {
+      const dayId = container.dataset.dayId;
+      ustrip.request(`/ustrip/api/itinerary-days/${dayId}/reorder/`, { json: { item_ids: ids } })
+        .then((day) => {
+          applyTimes(container, day.items);
+          if (fromContainer !== container) {
+            return ustrip.request(`/ustrip/api/itinerary-days/${fromContainer.dataset.dayId}/`)
+              .then((from) => applyTimes(fromContainer, from.items));
+          }
+        })
+        .catch((err) => { alert(err.message); window.location.reload(); });
+    },
+  });
+})();
+</script>
 {% endblock %}

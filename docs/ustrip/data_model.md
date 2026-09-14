@@ -42,11 +42,45 @@ erDiagram
         string sleeping
         text note
     }
+    ITINERARY_ITEM ||--o{ ITINERARY_LINK : has
+    ITINERARY_ITEM ||--o{ ITINERARY_PHOTO : has
+    ITINERARY_ITEM ||--o{ ITINERARY_LIKE : has
+    ITINERARY_ITEM ||--o{ ITINERARY_COMMENT : has
+    USER ||--o{ ITINERARY_LIKE : "user"
+    USER ||--o{ ITINERARY_COMMENT : "author"
+    USER ||--o{ ITINERARY_PHOTO : "uploaded_by (optional)"
+
     ITINERARY_ITEM {
         int order
-        string time_label
+        string title
         text description
+        string time_label
+        string location
+        string cost
+        int duration_minutes
+        time fixed_start
+        text tips
+        string booking
         string tag
+    }
+    ITINERARY_LINK {
+        string label
+        string url
+        string kind
+        int order
+    }
+    ITINERARY_PHOTO {
+        image photo
+        string caption
+        datetime created_at
+        int order
+    }
+    ITINERARY_LIKE {
+        datetime created_at
+    }
+    ITINERARY_COMMENT {
+        text text
+        datetime created_at
     }
     FLIGHT {
         string direction
@@ -122,8 +156,49 @@ timeline item; e.g. Day 3's "could swap for the Jets game instead"). Added
 2026-09-13 after a full audit of the source JSON found two days' notes
 were silently dropped by the importer — the field didn't exist yet.
 
-**ItineraryItem**: `day` FK, `order`, `time_label` (free text or blank),
-`description`, `tag` (`plan` or `optional`).
+**ItineraryDay** also carries `start_time` (default 09:00) since 2026-09-14:
+where the day's computed schedule starts counting from.
+
+**ItineraryItem** (the rich version, 2026-09-14 — spec §4.1): `day` FK,
+`order`, `title` (short headline; `display_title` falls back to the first
+clause of the description for rows that predate the field), `description`
+(the full text), `time_label` (an optional note shown next to the computed
+time, e.g. "Boats every 15 min, 9:00–17:00"), `location`, `cost` (free
+text — the source is not clean numbers), `duration_minutes`, `fixed_start`
+(nullable time — the anchor), `tips`, `booking` (`not_needed` / `to_book`
+/ `booked`), `tag` (`plan` / `optional` / `rejected`), and `enriched_at`
+(nullable, not editable — stamped once by `enrich_ustrip_items`; explicit
+state so a redeploy can tell "still as seeded" from "edited since", which
+the text alone cannot for the short items whose full source text equals
+the seeded text).
+
+**Time is computed, not stored.** `ustrip/schedule.py` walks a day's items
+in `order` from the day's `start_time`, adding each `duration_minutes`; an
+item with a `fixed_start` resets the clock to it. Only `plan` items advance
+the clock — an `optional` item is timed as if chosen but doesn't delay
+what follows, a `rejected` one has no time (`start`/`end` are null).
+`start`/`end` appear on every API representation and page but exist in no
+table — which is what makes drag-and-drop reorder (and a changed
+duration, and a changed day start) update every following time with
+nothing to keep in sync.
+
+**ItineraryLink**: `item` FK, `label`, `url`, `kind` (`official` /
+`wikipedia` / `map` / `tickets` / `other`), `order`. The source plan
+linked information, never checkout pages; `tickets` is there for the
+family to add.
+
+**ItineraryPhoto**: `item` FK, `photo` (ImageField), `caption`,
+`uploaded_by` (nullable FK to `User`, SET_NULL), `created_at`, `order`.
+Attached to a stop — deliberately separate from `JournalPost`, which is a
+diary in time order. No creator lock, like the item.
+
+**ItineraryLike**: `item` FK, `user` FK, `created_at`; unique per
+(item, user) — a toggle, not a counter. Deletable only by its owner.
+
+**ItineraryComment**: `item` FK, `author` FK (CASCADE, same choice as
+`JournalPost.author`), `text`, `created_at`. **The one creator lock in the
+itinerary**: only the author (or a superuser) can edit or delete a comment,
+because it is one person's words, not shared trip data.
 
 ## Flight
 
@@ -184,6 +259,17 @@ real choice, flagging it rather than leaving it implicit.
   `family` Django Group and actual `User` accounts (spec §3), which is
   live data — who has really signed up and been granted access — rather
   than a static list of first names.
+
+## The second data file: `trip-data/usa-2026-items.json`
+
+Built by `trip-data/build_items_json.py` from a snapshot of the source
+page (`trip-data/source/daily-plan.html`) plus a curated table in that
+script (titles, durations, anchors, costs, tips, booking). It carries the
+full text and every link the first import (`usa-2026.json`) condensed or
+dropped. `manage.py enrich_ustrip_items` reads it under the one-time rule:
+an item still exactly as seeded gets everything; one already enriched only
+has empty fields filled; one the family rewrote is left alone entirely,
+links included. Matched by position (day order, item order).
 
 ## Full audit against the source JSON
 

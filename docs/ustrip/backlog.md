@@ -139,3 +139,39 @@ five rules already held).
 | Tests rewritten against the real DRF endpoints, plus one confirming `author` can't be client-supplied and one confirming the API allows a flight delete even though the UI never offers it | DONE — `tests/test_ustrip_features.py`, 15 passing |
 | `docs/ustrip/dashboard.html` (Rule 4's last missing piece) | DONE |
 | Full audit of `trip-data/usa-2026.json` against the models, prompted by "did you fill all data?" — found `ItineraryDay` had no `note` field, so Day 3's open decision and Day 9's parking heads-up were silently dropped on every import | DONE — `note` field added, seeded, shown on the day page; `duration_days`/`family` name-list confirmed deliberately unmodeled (derivable / superseded by real accounts), documented in `data_model.md` |
+
+## Sprint 8 — Days and items: the rich item, the flow schedule, drag-and-drop `DONE, DEV`
+
+**Goal (Avi, 2026-09-14):** "I want each item to have a very rich detail
+page that will be linked from the day list", plus photos, a schedule, likes
+and comments, ordered by the schedule in the day view, draggable at the
+day level with the schedule updating automatically. Two design questions
+settled with Avi before building: the schedule is a **flow with pinned
+anchors** (not per-item stored times), and drag works **between days**
+too, not just within one.
+
+Also answered here: "did you fill them all from the source, planned and
+optional?" — yes by count (84 items, 69 plan / 15 optional), but the first
+import had condensed every line to a sentence and dropped all the links.
+This sprint recovers the source text and links exactly.
+
+| Item | Status |
+|---|---|
+| `ItineraryItem` gains `title`, `location`, `cost`, `duration_minutes`, `fixed_start`, `tips`, `booking`; a `rejected` tag; `ItineraryDay.start_time` | DONE — migration 0005 |
+| New `ItineraryLink`, `ItineraryPhoto`, `ItineraryLike`, `ItineraryComment` | DONE |
+| `ustrip/schedule.py`: computed flow schedule with anchors; `start`/`end` on every item representation, stored nowhere | DONE |
+| API: viewsets for the four new models; `reorder` on the day (takes ids from any day — one endpoint for within-day and between-day drags); `like` toggle on the item; changing an item's `day` appends it to the new day and renumbers the old | DONE |
+| The one creator lock: comments (and likes) are owner-only to change — `IsOwnerOrReadOnly` | DONE |
+| Item detail page `/ustrip/itinerary/item/<id>/`: everything above, photos + upload, like toggle with avatars, comments, edit/delete | DONE |
+| Edit page: every field, day picker (the non-drag way to move an item), links add/remove | DONE |
+| Day page: computed times, titles linking to detail, tags (optional / dropped / booked / to book / pinned), like/comment/photo counts, day start control, drag-and-drop reorder with times updating in place | DONE |
+| Itinerary list: each day a collapsible section with its items; drag between two open days | DONE |
+| `ustrip.sortable` — pointer-events drag-and-drop written by hand (HTML5 drag events don't fire for touch on phones) | DONE — `static/ustrip/ustrip.js` |
+| `trip-data/build_items_json.py` + `source/daily-plan.html` snapshot → `usa-2026-items.json`: full text + every link (mechanical), titles/durations/anchors/costs/tips/booking (curated) | DONE |
+| `manage.py enrich_ustrip_items`: one-time fill under the seed rule (untouched → everything; enriched → blanks only; family-edited → skipped, links included); wired into `render.yaml` after `seed_ustrip` | DONE |
+| The Day 8 "Considered … dropped" line, tagged `plan` by the first import because the source had no tag, becomes `rejected` | DONE |
+| Tests: schedule + anchors, reorder within/between days, move-to-day, links, photo upload, like toggle, comment author lock, the three pages, enrichment twice with an edited item in the way | DONE — `tests/test_ustrip_items.py` |
+| Deploy | not yet — dev only until Avi says |
+
+Not built, on purpose, until asked: replacing a photo (delete and re-add),
+editing a link in place (remove and re-add), reordering links or photos.

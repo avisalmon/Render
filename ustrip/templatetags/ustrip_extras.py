@@ -1,7 +1,9 @@
 """Per-person avatar color/initials, derived from the user rather than
 hardcoded to today's five family members — anyone added to the `family`
 group later gets a consistent color and initials the same way, with no code
-change. Design tokens (chroma/lightness) match static/ustrip/ustrip.css."""
+change. Design tokens (chroma/lightness) match static/ustrip/ustrip.css.
+
+Plus one small formatter for the computed schedule."""
 
 from django import template
 
@@ -25,3 +27,20 @@ def avatar_initials(user):
     if user.first_name and user.last_name:
         return (user.first_name[0] + user.last_name[0]).upper()
     return name[:2].upper()
+
+
+@register.filter
+def duration_human(minutes):
+    """90 -> "1h 30m", 45 -> "45m", 120 -> "2h", 0/None -> ""."""
+    try:
+        minutes = int(minutes or 0)
+    except (TypeError, ValueError):
+        return ""
+    if minutes <= 0:
+        return ""
+    hours, rest = divmod(minutes, 60)
+    if hours and rest:
+        return f"{hours}h {rest}m"
+    if hours:
+        return f"{hours}h"
+    return f"{rest}m"

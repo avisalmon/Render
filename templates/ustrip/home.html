@@ -19,13 +19,13 @@
 
   {% if next_item %}
     <p class="section-label">Next up</p>
-    <a class="card next-card" href="{% url 'ustrip:itinerary_day' upcoming_day.id %}">
+    <a class="card next-card" href="{% url 'ustrip:itinerary_item_detail' next_item.id %}">
       <div class="next-icon">
         <svg class="icon" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-10.5A6.5 6.5 0 0 1 18.5 10.5C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10.3" r="2.1"/></svg>
       </div>
       <div>
-        <p class="next-title">{{ next_item.description|truncatechars:60 }}</p>
-        <p class="next-sub">Day {{ upcoming_day.label }} &middot; {{ upcoming_day.title }}</p>
+        <p class="next-title">{{ next_item.display_title|truncatechars:60 }}</p>
+        <p class="next-sub">Day {{ upcoming_day.label }} &middot; {% if next_item.start %}{{ next_item.start|time:"H:i" }} &middot; {% endif %}{{ upcoming_day.title }}</p>
       </div>
     </a>
   {% endif %}

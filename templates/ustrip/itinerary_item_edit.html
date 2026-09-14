@@ -1,10 +1,10 @@
 {% extends "ustrip/base.html" %}
-{% block title %}Edit — ustrip{% endblock %}
+{% block title %}Edit — {{ item.display_title }}{% endblock %}
 {% block nav %}{% endblock %}
 
 {% block header %}
 <div class="header with-back">
-  <div class="back"><a href="{% url 'ustrip:itinerary_day' item.day_id %}">
+  <div class="back"><a href="{% url 'ustrip:itinerary_item_detail' item.id %}">
     <svg class="icon" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
   </a></div>
   <div class="title serif" style="font-size:19px;margin:0;">Edit item</div>
@@ -14,14 +14,95 @@
 {% block content %}
 <form id="edit-form" class="auth-form">
   <label class="field">
-    <span>Time (optional)</span>
-    <input type="text" name="time_label" value="{{ item.time_label }}" placeholder="e.g. 15:50 or Evening">
+    <span>Title</span>
+    <input type="text" name="title" value="{{ item.title }}" placeholder="e.g. Top of the Rock">
   </label>
   <label class="field">
-    <span>Description</span>
-    <textarea name="description" rows="3" required>{{ item.description }}</textarea>
+    <span>Details</span>
+    <textarea name="description" rows="4" required>{{ item.description }}</textarea>
   </label>
+  <label class="field">
+    <span>Day</span>
+    <select name="day">
+      {% for d in days %}
+        <option value="{{ d.id }}" {% if d.id == item.day_id %}selected{% endif %}>Day {{ d.label }} &mdash; {{ d.title }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <div class="field-row">
+    <label class="field">
+      <span>Takes (minutes)</span>
+      <input type="number" name="duration_minutes" value="{{ item.duration_minutes }}" min="0" step="5">
+    </label>
+    <label class="field">
+      <span>Pin to a time</span>
+      <input type="time" name="fixed_start" value="{% if item.fixed_start %}{{ item.fixed_start|time:'H:i' }}{% endif %}">
+    </label>
+  </div>
+  <label class="field">
+    <span>Time note (optional)</span>
+    <input type="text" name="time_label" value="{{ item.time_label }}" placeholder="e.g. Boats every 15 min, 9:00–17:00">
+  </label>
+  <label class="field">
+    <span>Where</span>
+    <input type="text" name="location" value="{{ item.location }}" placeholder="Address or place">
+  </label>
+  <label class="field">
+    <span>Cost</span>
+    <input type="text" name="cost" value="{{ item.cost }}" placeholder="e.g. ~$42/person">
+  </label>
+  <label class="field">
+    <span>Good to know</span>
+    <textarea name="tips" rows="3">{{ item.tips }}</textarea>
+  </label>
+  <div class="field-row">
+    <label class="field">
+      <span>Booking</span>
+      <select name="booking">
+        {% for value, label in booking_choices %}
+          <option value="{{ value }}" {% if value == item.booking %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="field">
+      <span>Status</span>
+      <select name="tag">
+        {% for value, label in tag_choices %}
+          <option value="{{ value }}" {% if value == item.tag %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  </div>
   <button type="submit" class="btn btn-primary">Save</button>
+</form>
+
+<p class="section-label">Links</p>
+<div class="link-list" id="link-list">
+  {% for link in item.links.all %}
+    <div class="link-edit" data-link-id="{{ link.id }}">
+      <a class="link-row" href="{{ link.url }}" target="_blank" rel="noopener"><span>{{ link.label }}</span><span class="kind">{{ link.get_kind_display }}</span></a>
+      <button type="button" class="mini-btn mini-btn-danger" data-delete-link title="Remove">&times;</button>
+    </div>
+  {% endfor %}
+</div>
+<form id="link-form" class="auth-form" style="margin-top:10px;">
+  <div class="field-row">
+    <label class="field">
+      <span>Label</span>
+      <input type="text" name="label" placeholder="e.g. Official site" required>
+    </label>
+    <label class="field">
+      <span>Kind</span>
+      <select name="kind">
+        {% for value, label in link_kinds %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+  </div>
+  <label class="field">
+    <span>URL</span>
+    <input type="url" name="url" placeholder="https://" required>
+  </label>
+  <button type="submit" class="btn btn-secondary">Add link</button>
 </form>
 {% endblock %}
 
@@ -30,15 +111,53 @@
 (function () {
   const form = document.getElementById("edit-form");
   const itemId = {{ item.id }};
-  const backUrl = "{% url 'ustrip:itinerary_day' item.day_id %}";
+  const detailUrl = "{% url 'ustrip:itinerary_item_detail' item.id %}";
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
-    const timeLabel = form.time_label.value.trim();
-    const description = form.description.value.trim();
-    if (!description) return;
-    ustrip.request(`/ustrip/api/itinerary-items/${itemId}/`, { method: "PATCH", json: { time_label: timeLabel, description: description } })
-      .then(() => { window.location.href = backUrl; })
+    const payload = {
+      title: form.title.value.trim(),
+      description: form.description.value.trim(),
+      day: Number(form.day.value),
+      duration_minutes: Number(form.duration_minutes.value || 0),
+      fixed_start: form.fixed_start.value || null,
+      time_label: form.time_label.value.trim(),
+      location: form.location.value.trim(),
+      cost: form.cost.value.trim(),
+      tips: form.tips.value.trim(),
+      booking: form.booking.value,
+      tag: form.tag.value,
+    };
+    if (!payload.description) return;
+    ustrip.request(`/ustrip/api/itinerary-items/${itemId}/`, { method: "PATCH", json: payload })
+      .then(() => { window.location.href = detailUrl; })
+      .catch((err) => alert(err.message));
+  });
+
+  const linkList = document.getElementById("link-list");
+  const linkForm = document.getElementById("link-form");
+  linkForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const payload = { item: itemId, label: linkForm.label.value.trim(), url: linkForm.url.value.trim(), kind: linkForm.kind.value };
+    if (!payload.label || !payload.url) return;
+    ustrip.request("/ustrip/api/itinerary-links/", { json: payload })
+      .then((link) => {
+        const node = ustrip.el('<div class="link-edit"><a class="link-row" target="_blank" rel="noopener"><span></span><span class="kind"></span></a><button type="button" class="mini-btn mini-btn-danger" data-delete-link title="Remove">×</button></div>');
+        node.dataset.linkId = link.id;
+        node.querySelector("a").href = link.url;
+        node.querySelector("a span").textContent = link.label;
+        node.querySelector(".kind").textContent = link.kind_display;
+        linkList.appendChild(node);
+        linkForm.reset();
+      })
+      .catch((err) => alert(err.message));
+  });
+  linkList.addEventListener("click", function (e) {
+    const btn = e.target.closest("[data-delete-link]");
+    if (!btn) return;
+    const node = btn.closest("[data-link-id]");
+    ustrip.request(`/ustrip/api/itinerary-links/${node.dataset.linkId}/`, { method: "DELETE" })
+      .then(() => node.remove())
       .catch((err) => alert(err.message));
   });
 })();

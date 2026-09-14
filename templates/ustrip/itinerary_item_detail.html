@@ -1,0 +1,255 @@
+{% extends "ustrip/base.html" %}
+{% load ustrip_extras %}
+{% block title %}{{ item.display_title }} — ustrip{% endblock %}
+
+{% block header %}
+<div class="header with-back">
+  <div class="back"><a href="{% url 'ustrip:itinerary_day' day.id %}">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+  </a></div>
+  <div class="title serif" style="font-size:19px;margin:0;">{{ item.display_title }}</div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card detail-hero">
+  <p class="detail-when">
+    Day {{ day.label }} &middot; {{ day.date_label }}
+    {% if item.start %}&middot; <strong>{{ item.start|time:"H:i" }}{% if item.duration_minutes %}&ndash;{{ item.end|time:"H:i" }}{% endif %}</strong>{% endif %}
+    {% if item.duration_minutes %}&middot; {{ item.duration_minutes|duration_human }}{% endif %}
+  </p>
+  {% if item.time_label %}<p class="detail-when">{{ item.time_label }}</p>{% endif %}
+  <div class="tags">
+    {% if item.tag == 'optional' %}<span class="tag optional">OPTIONAL</span>{% endif %}
+    {% if item.tag == 'rejected' %}<span class="tag rejected">DROPPED</span>{% endif %}
+    {% if item.booking == 'booked' %}<span class="tag booked">BOOKED</span>{% endif %}
+    {% if item.booking == 'to_book' %}<span class="tag to-book">NEEDS BOOKING</span>{% endif %}
+    {% if item.fixed_start %}<span class="tag pinned">PINNED {{ item.fixed_start|time:"H:i" }}</span>{% endif %}
+  </div>
+  <p class="detail-desc">{{ item.description }}</p>
+</div>
+
+{% if item.location or item.cost or item.tips %}
+<div class="card fact-list" style="margin-top:12px;">
+  {% if item.location %}
+  <div class="fact">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-10.5A6.5 6.5 0 0 1 18.5 10.5C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10.3" r="2.1"/></svg>
+    <div class="fact-body"><span class="fact-label">Where</span><a href="https://www.google.com/maps/search/?api=1&query={{ item.location|urlencode }}" target="_blank" rel="noopener">{{ item.location }}</a></div>
+  </div>
+  {% endif %}
+  {% if item.cost %}
+  <div class="fact">
+    <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h3.2a1.7 1.7 0 0 1 0 3.4H11.3a1.7 1.7 0 0 0 0 3.4H15"/></svg>
+    <div class="fact-body"><span class="fact-label">Cost</span>{{ item.cost }}</div>
+  </div>
+  {% endif %}
+  {% if item.tips %}
+  <div class="fact">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.7.5 1 1.3 1 2.1h5c0-.8.3-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>
+    <div class="fact-body"><span class="fact-label">Good to know</span>{{ item.tips }}</div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if item.links.all %}
+<p class="section-label">Read more</p>
+<div class="link-list">
+  {% for link in item.links.all %}
+    <a class="link-row" href="{{ link.url }}" target="_blank" rel="noopener">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 13v5.5A1.5 1.5 0 0 1 16.5 20h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6H11"/></svg>
+      <span>{{ link.label }}</span>
+      <span class="kind">{{ link.get_kind_display }}</span>
+    </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<p class="section-label">Photos</p>
+<div class="photo-grid" id="photo-grid">
+  {% for photo in item.photos.all %}
+    <figure class="photo-tile" data-photo-id="{{ photo.id }}" style="margin:0;">
+      <img src="{{ photo.photo.url }}" alt="">
+      <button type="button" class="mini-btn mini-btn-danger" data-delete-photo title="Delete">&times;</button>
+      <figcaption>{{ photo.caption }}</figcaption>
+    </figure>
+  {% endfor %}
+</div>
+<form id="photo-form" class="photo-add" enctype="multipart/form-data">
+  <input type="file" name="photo" accept="image/*" required>
+  <input type="text" name="caption" placeholder="Caption (optional)">
+  <button type="submit" class="add-btn" title="Add photo">+</button>
+</form>
+
+<p class="section-label">Likes</p>
+<div class="like-row">
+  <button type="button" class="like-btn {% if liked_by_me %}liked{% endif %}" id="like-btn">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-7.5-10A4.2 4.2 0 0 1 12 8a4.2 4.2 0 0 1 7.5 2.5c0 5.4-7.5 10-7.5 10z"/></svg>
+    <span id="like-count">{{ item.likes.all|length }}</span>
+  </button>
+  <div class="avatars" id="like-avatars">
+    {% for like in item.likes.all %}
+      <div class="avatar" style="{% avatar_style like.user %}" title="{{ like.user.first_name|default:like.user.get_username }}">{{ like.user|avatar_initials }}</div>
+    {% endfor %}
+  </div>
+</div>
+
+<p class="section-label">Comments</p>
+<div class="comment-list" id="comment-list">
+  {% for comment in item.comments.all %}
+    <div class="comment" data-comment-id="{{ comment.id }}">
+      <div class="mavatar" style="{% avatar_style comment.author %}">{{ comment.author|avatar_initials }}</div>
+      <div class="comment-body">
+        <div class="comment-head">
+          <span class="mname">{{ comment.author.first_name|default:comment.author.get_username }}</span>
+          <span class="when">{{ comment.created_at|date:"M j, H:i" }}</span>
+          {% if comment.author_id == user.id or user.is_superuser %}
+          <div class="row-actions">
+            <button type="button" class="mini-btn" data-edit-comment title="Edit">&#9998;</button>
+            <button type="button" class="mini-btn mini-btn-danger" data-delete-comment title="Delete">&times;</button>
+          </div>
+          {% endif %}
+        </div>
+        <p class="comment-text">{{ comment.text }}</p>
+      </div>
+    </div>
+  {% empty %}
+    <div class="mini-empty" id="comment-empty">No comments yet.</div>
+  {% endfor %}
+</div>
+<form id="comment-form" class="comment-form">
+  <textarea name="text" rows="1" placeholder="Say something about this stop" required></textarea>
+  <button type="submit" class="btn btn-primary">Post</button>
+</form>
+
+<div class="detail-actions">
+  <a class="btn btn-secondary" href="{% url 'ustrip:itinerary_item_edit' item.id %}">Edit</a>
+  <button type="button" class="btn btn-danger" id="delete-item">Delete</button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const itemId = {{ item.id }};
+  const dayUrl = "{% url 'ustrip:itinerary_day' day.id %}";
+  const myAvatar = { style: "{% avatar_style user %}", initials: "{{ user|avatar_initials }}", name: "{{ user.first_name|default:user.get_username|escapejs }}" };
+  const isSuperuser = {{ user.is_superuser|yesno:"true,false" }};
+
+  // Likes — a toggle.
+  const likeBtn = document.getElementById("like-btn");
+  likeBtn.addEventListener("click", function () {
+    ustrip.request(`/ustrip/api/itinerary-items/${itemId}/like/`)
+      .then((data) => {
+        likeBtn.classList.toggle("liked", data.liked);
+        document.getElementById("like-count").textContent = data.like_count;
+        const avatars = document.getElementById("like-avatars");
+        const mine = avatars.querySelector("[data-me]");
+        if (data.liked && !mine) {
+          const a = ustrip.el('<div class="avatar" data-me></div>');
+          a.setAttribute("style", myAvatar.style);
+          a.textContent = myAvatar.initials;
+          avatars.appendChild(a);
+        } else if (!data.liked) {
+          // Our avatar may have been server-rendered (no data-me); match by initials+style.
+          Array.prototype.forEach.call(avatars.children, (a) => {
+            if (a.hasAttribute("data-me") || (a.textContent === myAvatar.initials && a.getAttribute("style") === myAvatar.style)) a.remove();
+          });
+        }
+      })
+      .catch((err) => alert(err.message));
+  });
+
+  // Photos.
+  const photoForm = document.getElementById("photo-form");
+  const grid = document.getElementById("photo-grid");
+  photoForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const fd = new FormData(photoForm);
+    fd.append("item", itemId);
+    ustrip.request("/ustrip/api/itinerary-photos/", { formData: fd })
+      .then((photo) => {
+        const tile = ustrip.el('<figure class="photo-tile" style="margin:0;"><img alt=""><button type="button" class="mini-btn mini-btn-danger" data-delete-photo title="Delete">×</button><figcaption></figcaption></figure>');
+        tile.dataset.photoId = photo.id;
+        tile.querySelector("img").src = photo.photo;
+        tile.querySelector("figcaption").textContent = photo.caption || "";
+        grid.appendChild(tile);
+        photoForm.reset();
+      })
+      .catch((err) => alert(err.message));
+  });
+  grid.addEventListener("click", function (e) {
+    const btn = e.target.closest("[data-delete-photo]");
+    if (!btn) return;
+    const tile = btn.closest("[data-photo-id]");
+    if (!confirm("Delete this photo?")) return;
+    ustrip.request(`/ustrip/api/itinerary-photos/${tile.dataset.photoId}/`, { method: "DELETE" })
+      .then(() => tile.remove())
+      .catch((err) => alert(err.message));
+  });
+
+  // Comments — author-only edit/delete (the one creator lock in the itinerary).
+  const list = document.getElementById("comment-list");
+  const commentForm = document.getElementById("comment-form");
+  function commentNode(c) {
+    const node = ustrip.el(
+      '<div class="comment"><div class="mavatar"></div><div class="comment-body">' +
+      '<div class="comment-head"><span class="mname"></span><span class="when">just now</span>' +
+      '<div class="row-actions"><button type="button" class="mini-btn" data-edit-comment title="Edit">✎</button>' +
+      '<button type="button" class="mini-btn mini-btn-danger" data-delete-comment title="Delete">×</button></div>' +
+      '</div><p class="comment-text"></p></div></div>'
+    );
+    node.dataset.commentId = c.id;
+    node.querySelector(".mavatar").setAttribute("style", c.author_info.avatar_style);
+    node.querySelector(".mavatar").textContent = c.author_info.initials;
+    node.querySelector(".mname").textContent = c.author_info.name;
+    node.querySelector(".comment-text").textContent = c.text;
+    return node;
+  }
+  commentForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const text = commentForm.text.value.trim();
+    if (!text) return;
+    ustrip.request("/ustrip/api/itinerary-comments/", { json: { item: itemId, text: text } })
+      .then((c) => {
+        const empty = document.getElementById("comment-empty");
+        if (empty) empty.remove();
+        list.appendChild(commentNode(c));
+        commentForm.reset();
+      })
+      .catch((err) => alert(err.message));
+  });
+  list.addEventListener("click", function (e) {
+    const node = e.target.closest("[data-comment-id]");
+    if (!node) return;
+    const id = node.dataset.commentId;
+    if (e.target.closest("[data-edit-comment]")) {
+      const p = node.querySelector(".comment-text");
+      const text = prompt("Edit comment", p.textContent);
+      if (text === null || !text.trim()) return;
+      ustrip.request(`/ustrip/api/itinerary-comments/${id}/`, { method: "PATCH", json: { text: text.trim() } })
+        .then((c) => { p.textContent = c.text; })
+        .catch((err) => alert(err.message));
+      return;
+    }
+    if (e.target.closest("[data-delete-comment]")) {
+      if (!confirm("Delete this comment?")) return;
+      ustrip.request(`/ustrip/api/itinerary-comments/${id}/`, { method: "DELETE" })
+        .then(() => {
+          node.remove();
+          if (!list.querySelector("[data-comment-id]")) list.appendChild(ustrip.el('<div class="mini-empty" id="comment-empty">No comments yet.</div>'));
+        })
+        .catch((err) => alert(err.message));
+    }
+  });
+
+  // Delete the whole item.
+  document.getElementById("delete-item").addEventListener("click", function () {
+    if (!confirm("Delete this item and everything attached to it?")) return;
+    ustrip.request(`/ustrip/api/itinerary-items/${itemId}/`, { method: "DELETE" })
+      .then(() => { window.location.href = dayUrl; })
+      .catch((err) => alert(err.message));
+  });
+})();
+</script>
+{% endblock %}

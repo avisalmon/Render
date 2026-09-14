@@ -1,4 +1,5 @@
 {% extends "ustrip/base.html" %}
+{% load ustrip_extras %}
 {% block title %}Day {{ day.label }} — {{ day.title }}{% endblock %}
 
 {% block header %}
@@ -11,6 +12,7 @@
 {% endblock %}
 
 {% block content %}
+<p class="subtitle" style="margin-top:-2px;">{{ day.date_label }}</p>
 {% if day.sleeping %}
   <div class="banner">
     <svg class="icon" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-10.5A6.5 6.5 0 0 1 18.5 10.5C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10.3" r="2.1"/></svg>
@@ -24,19 +26,44 @@
   </div>
 {% endif %}
 
+<div class="day-start">
+  <span>Day starts at</span>
+  <input type="time" id="day-start" value="{{ day.start_time|time:'H:i' }}">
+  <span style="font-weight:400;">&mdash; times below flow from here; drag to reorder</span>
+</div>
+
 <div class="timeline" id="timeline">
-  {% for item in day.items.all %}
-    <div class="titem {% if item.tag == 'optional' %}optional{% endif %}" data-item-id="{{ item.id }}">
-      <div class="ttime">{{ item.time_label|default:"—" }}</div>
+  {% for item in items %}
+    <div class="titem {{ item.tag }}" data-item-id="{{ item.id }}">
+      <div class="ttime">
+        <span class="tstart">{% if item.start %}{{ item.start|time:"H:i" }}{% else %}&mdash;{% endif %}</span>
+        <span class="tend">{% if item.start and item.duration_minutes %}&ndash; {{ item.end|time:"H:i" }}{% endif %}</span>
+        {% if item.time_label %}<span class="tnote">{{ item.time_label }}</span>{% endif %}
+      </div>
       <div class="tdot"></div>
       <div class="tbody">
-        <p class="tdesc">{{ item.description }}</p>
-        {% if item.tag == 'optional' %}<span class="tag optional">OPTIONAL</span>{% endif %}
-        <div class="row-actions">
-          <a class="edit-link" href="{% url 'ustrip:itinerary_item_edit' item.id %}">Edit</a>
-          <button type="button" class="mini-btn" data-move="up" title="Move earlier">&uarr;</button>
-          <button type="button" class="mini-btn" data-move="down" title="Move later">&darr;</button>
-          <button type="button" class="mini-btn mini-btn-danger" data-delete title="Delete">&times;</button>
+        <a class="ttitle" href="{% url 'ustrip:itinerary_item_detail' item.id %}">{{ item.display_title }}</a>
+        {% if item.title %}<p class="tsummary">{{ item.description|truncatechars:110 }}</p>{% endif %}
+        <div class="tags">
+          {% if item.tag == 'optional' %}<span class="tag optional">OPTIONAL</span>{% endif %}
+          {% if item.tag == 'rejected' %}<span class="tag rejected">DROPPED</span>{% endif %}
+          {% if item.booking == 'booked' %}<span class="tag booked">BOOKED</span>{% endif %}
+          {% if item.booking == 'to_book' %}<span class="tag to-book">TO BOOK</span>{% endif %}
+          {% if item.fixed_start %}<span class="tag pinned">PINNED {{ item.fixed_start|time:"H:i" }}</span>{% endif %}
+        </div>
+        <div class="tmeta">
+          {% if item.duration_minutes %}<span>{{ item.duration_minutes|duration_human }}</span>{% endif %}
+          <span class="{% if item.likes.all|length %}liked{% endif %}"><svg class="icon" viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-7.5-10A4.2 4.2 0 0 1 12 8a4.2 4.2 0 0 1 7.5 2.5c0 5.4-7.5 10-7.5 10z"/></svg>{{ item.likes.all|length }}</span>
+          <span><svg class="icon" viewBox="0 0 24 24"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H9l-4.5 4v-4H5.5A1.5 1.5 0 0 1 4 14.5z"/></svg>{{ item.comments.all|length }}</span>
+          {% if item.photos.all|length %}<span><svg class="icon" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M3.5 15l5-5 4 4 3-3 4.5 4.5"/><circle cx="15.5" cy="9" r="1.3"/></svg>{{ item.photos.all|length }}</span>{% endif %}
+          <div class="row-actions row-actions-inline">
+            <button type="button" class="mini-btn" data-move="up" title="Move earlier">&uarr;</button>
+            <button type="button" class="mini-btn" data-move="down" title="Move later">&darr;</button>
+            <button type="button" class="mini-btn mini-btn-danger" data-delete title="Delete">&times;</button>
+            <span class="drag-handle" data-drag-handle title="Drag to reorder">
+              <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -48,13 +75,23 @@
 <p class="section-label">Add to this day</p>
 <form id="add-item-form" class="auth-form">
   <label class="field">
-    <span>Time (optional)</span>
-    <input type="text" name="time_label" placeholder="e.g. 15:50 or Evening">
+    <span>Title</span>
+    <input type="text" name="title" placeholder="e.g. Top of the Rock" required>
   </label>
   <label class="field">
-    <span>Description</span>
-    <textarea name="description" rows="2" required placeholder="What's the plan?"></textarea>
+    <span>Details (optional)</span>
+    <textarea name="description" rows="2" placeholder="What's the plan?"></textarea>
   </label>
+  <div class="field-row">
+    <label class="field">
+      <span>Takes (minutes)</span>
+      <input type="number" name="duration_minutes" value="60" min="0" step="5">
+    </label>
+    <label class="field">
+      <span>Pin to a time (optional)</span>
+      <input type="time" name="fixed_start">
+    </label>
+  </div>
   <button type="submit" class="btn btn-secondary">Add item</button>
 </form>
 {% endblock %}
@@ -65,34 +102,44 @@
   const form = document.getElementById("add-item-form");
   const timeline = document.getElementById("timeline");
   const dayId = {{ day.id }};
+  const dayUrl = `/ustrip/api/itinerary-days/${dayId}/`;
+
+  function applyTimes(items) {
+    items.forEach((item) => {
+      const row = timeline.querySelector(`[data-item-id="${item.id}"]`);
+      if (!row) return;
+      row.querySelector(".tstart").textContent = item.start || "";
+      const end = row.querySelector(".tend");
+      if (end) end.innerHTML = item.duration_minutes ? "&ndash; " + item.end : "";
+    });
+  }
+
+  ustrip.sortable([timeline], {
+    onDrop: ({ ids }) => {
+      ustrip.request(dayUrl + "reorder/", { json: { item_ids: ids } })
+        .then((day) => applyTimes(day.items))
+        .catch((err) => { alert(err.message); window.location.reload(); });
+    },
+  });
+
+  document.getElementById("day-start").addEventListener("change", function () {
+    ustrip.request(dayUrl, { method: "PATCH", json: { start_time: this.value } })
+      .then((day) => applyTimes(day.items))
+      .catch((err) => alert(err.message));
+  });
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
-    const timeLabel = form.time_label.value.trim();
-    const description = form.description.value.trim();
-    if (!description) return;
-    ustrip.request("/ustrip/api/itinerary-items/", { json: { day: dayId, time_label: timeLabel, description: description } })
-      .then((item) => {
-        const empty = document.getElementById("timeline-empty");
-        if (empty) empty.remove();
-        const node = ustrip.el(
-          '<div class="titem"><div class="ttime"></div><div class="tdot"></div>' +
-          '<div class="tbody"><p class="tdesc"></p><div class="row-actions">' +
-          '<a class="edit-link"></a>' +
-          '<button type="button" class="mini-btn" data-move="up" title="Move earlier">↑</button>' +
-          '<button type="button" class="mini-btn" data-move="down" title="Move later">↓</button>' +
-          '<button type="button" class="mini-btn mini-btn-danger" data-delete title="Delete">×</button>' +
-          '</div></div></div>'
-        );
-        node.dataset.itemId = item.id;
-        node.querySelector(".ttime").textContent = item.time_label || "—";
-        node.querySelector(".tdesc").textContent = item.description;
-        const editLink = node.querySelector(".edit-link");
-        editLink.href = `/ustrip/itinerary/item/${item.id}/edit/`;
-        editLink.textContent = "Edit";
-        timeline.appendChild(node);
-        form.reset();
-      })
+    const title = form.title.value.trim();
+    if (!title) return;
+    const payload = {
+      day: dayId, title: title,
+      description: form.description.value.trim() || title,
+      duration_minutes: Number(form.duration_minutes.value || 0),
+      fixed_start: form.fixed_start.value || null,
+    };
+    ustrip.request("/ustrip/api/itinerary-items/", { json: payload })
+      .then(() => window.location.reload())
       .catch((err) => alert(err.message));
   });
 
@@ -112,12 +159,7 @@
     if (e.target.closest("[data-delete]")) {
       if (!confirm("Delete this item?")) return;
       ustrip.request(`/ustrip/api/itinerary-items/${itemId}/`, { method: "DELETE" })
-        .then(() => {
-          row.remove();
-          if (!timeline.querySelector("[data-item-id]")) {
-            timeline.appendChild(ustrip.el('<div class="empty" id="timeline-empty">Nothing planned for this day yet.</div>'));
-          }
-        })
+        .then(() => window.location.reload())
         .catch((err) => alert(err.message));
     }
   });

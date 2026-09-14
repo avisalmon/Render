@@ -14,9 +14,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils.http import url_has_allowed_host_and_scheme
 
+from . import schedule
 from .access import FAMILY_GROUP, family_required
 from .forms import UstripSignupForm
-from .models import Flight, ItineraryDay, ItineraryItem, RentalCar, Trip
+from .models import Flight, ItineraryDay, ItineraryItem, ItineraryLink, RentalCar, Trip
 
 
 # --- Auth: ustrip's own login/signup/logout (spec §3 sprint note) ---------
@@ -66,7 +67,10 @@ def home(request):
         upcoming_day = trip.days.first()
         if upcoming_day is not None:
             context["upcoming_day"] = upcoming_day
-            context["next_item"] = upcoming_day.items.first()
+            next_item = upcoming_day.items.first()
+            if next_item is not None:
+                next_item.start, next_item.end = schedule.for_item(next_item)
+            context["next_item"] = next_item
         context["day_count"] = trip.days.count()
         context["checklist_count"] = trip.checklists.count()
         context["journal_count"] = trip.journal_posts.count()
@@ -75,24 +79,66 @@ def home(request):
     return render(request, "ustrip/home.html", context)
 
 
+def _scheduled_days(trip):
+    """Every day with its items annotated with computed start/end, for the
+    list page's drag-between-days view."""
+    days = list(trip.days.prefetch_related("items__likes", "items__comments").all()) if trip else []
+    for day in days:
+        day.scheduled_items = schedule.compute(day, list(day.items.all()))
+    return days
+
+
 @family_required
 def itinerary_list(request):
     trip = _current_trip()
-    days = trip.days.all() if trip else []
+    days = _scheduled_days(trip)
     return render(request, "ustrip/itinerary_list.html", {"trip": trip, "days": days, "active_tab": "itinerary"})
 
 
 @family_required
 def itinerary_day(request, day_id):
-    day = get_object_or_404(ItineraryDay, pk=day_id)
-    return render(request, "ustrip/itinerary_day.html", {"trip": day.trip, "day": day, "active_tab": "itinerary"})
+    day = get_object_or_404(ItineraryDay.objects.select_related("trip"), pk=day_id)
+    items = schedule.compute(day, list(day.items.prefetch_related("likes", "comments", "photos").all()))
+    return render(
+        request, "ustrip/itinerary_day.html",
+        {"trip": day.trip, "day": day, "items": items, "active_tab": "itinerary"},
+    )
+
+
+@family_required
+def itinerary_item_detail(request, item_id):
+    """The rich page for one stop (spec §4.1, 2026-09-14): everything known
+    about it, plus the family's photos, likes and comments on it."""
+    item = get_object_or_404(
+        ItineraryItem.objects.select_related("day__trip").prefetch_related(
+            "links", "photos__uploaded_by", "comments__author", "likes__user"
+        ),
+        pk=item_id,
+    )
+    item.start, item.end = schedule.for_item(item)
+    return render(
+        request, "ustrip/itinerary_item_detail.html",
+        {
+            "trip": item.day.trip, "day": item.day, "item": item,
+            "liked_by_me": item.likes.filter(user=request.user).exists(),
+            "active_tab": "itinerary",
+        },
+    )
 
 
 @family_required
 def itinerary_item_edit(request, item_id):
-    """Spec §4.1: any family member can edit — no creator-only lock."""
-    item = get_object_or_404(ItineraryItem, pk=item_id)
-    return render(request, "ustrip/itinerary_item_edit.html", {"trip": item.day.trip, "item": item, "active_tab": "itinerary"})
+    """Spec §4.1: any family member can edit — no creator-only lock. The
+    day picker here is the non-drag way to move an item between days."""
+    item = get_object_or_404(ItineraryItem.objects.select_related("day__trip").prefetch_related("links"), pk=item_id)
+    return render(
+        request, "ustrip/itinerary_item_edit.html",
+        {
+            "trip": item.day.trip, "item": item, "days": item.day.trip.days.all(),
+            "tag_choices": ItineraryItem.TAG_CHOICES, "booking_choices": ItineraryItem.BOOKING_CHOICES,
+            "link_kinds": ItineraryLink.KIND_CHOICES, "active_tab": "itinerary",
+        },
+    )
 
 
 @family_required

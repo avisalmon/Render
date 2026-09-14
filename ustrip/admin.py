@@ -5,29 +5,55 @@ nothing new is built here for it."""
 
 from django.contrib import admin
 
-from .models import ChecklistGroup, ChecklistItem, Flight, ItineraryDay, ItineraryItem, JournalPost, RentalCar, Trip
-
-
-class FlightInline(admin.TabularInline):
-    model = Flight
-    extra = 0
-
-
-class RentalCarInline(admin.StackedInline):
-    model = RentalCar
-    extra = 0
-    max_num = 1
+from .models import (
+    ChecklistGroup, ChecklistItem, Flight, ItineraryComment, ItineraryDay, ItineraryItem, ItineraryLike,
+    ItineraryLink, ItineraryPhoto, JournalPost, RentalCar, Trip,
+)
 
 
 class ItineraryItemInline(admin.TabularInline):
     model = ItineraryItem
     extra = 1
+    fields = ["order", "title", "fixed_start", "duration_minutes", "tag", "booking"]
 
 
 class ItineraryDayAdmin(admin.ModelAdmin):
-    list_display = ["trip", "label", "title", "sleeping", "order"]
+    list_display = ["trip", "label", "title", "sleeping", "start_time", "order"]
     list_filter = ["trip"]
     inlines = [ItineraryItemInline]
+
+
+class ItineraryLinkInline(admin.TabularInline):
+    model = ItineraryLink
+    extra = 1
+
+
+class ItineraryPhotoInline(admin.TabularInline):
+    model = ItineraryPhoto
+    extra = 0
+
+
+class ItineraryItemAdmin(admin.ModelAdmin):
+    list_display = ["day", "order", "title", "fixed_start", "duration_minutes", "tag", "booking"]
+    list_filter = ["day__trip", "tag", "booking"]
+    search_fields = ["title", "description", "location"]
+    inlines = [ItineraryLinkInline, ItineraryPhotoInline]
+
+
+class ItineraryCommentAdmin(admin.ModelAdmin):
+    list_display = ["item", "author", "created_at"]
+
+
+class ItineraryLikeAdmin(admin.ModelAdmin):
+    list_display = ["item", "user", "created_at"]
+
+
+class FlightAdmin(admin.ModelAdmin):
+    list_display = ["trip", "direction", "flight_number", "departure_label", "arrival_label"]
+
+
+class RentalCarAdmin(admin.ModelAdmin):
+    list_display = ["trip", "pickup_date", "dropoff_date", "vehicle_class", "confirmed"]
 
 
 class ChecklistItemInline(admin.TabularInline):
@@ -46,12 +72,12 @@ class JournalPostAdmin(admin.ModelAdmin):
     list_filter = ["trip"]
 
 
-class TripAdmin(admin.ModelAdmin):
-    list_display = ["name", "start_date", "end_date"]
-    inlines = [FlightInline, RentalCarInline]
-
-
-admin.site.register(Trip, TripAdmin)
+admin.site.register(Trip)
+admin.site.register(Flight, FlightAdmin)
+admin.site.register(RentalCar, RentalCarAdmin)
 admin.site.register(ItineraryDay, ItineraryDayAdmin)
+admin.site.register(ItineraryItem, ItineraryItemAdmin)
+admin.site.register(ItineraryComment, ItineraryCommentAdmin)
+admin.site.register(ItineraryLike, ItineraryLikeAdmin)
 admin.site.register(ChecklistGroup, ChecklistGroupAdmin)
 admin.site.register(JournalPost, JournalPostAdmin)

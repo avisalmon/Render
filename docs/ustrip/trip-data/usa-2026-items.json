@@ -1,0 +1,1759 @@
+{
+  "_source": "docs/ustrip/trip-data/source/daily-plan.html (snapshot of https://avisalmon.github.io/arhab/pages/daily-plan.html, 2026-09-14) + curated fields in build_items_json.py",
+  "_note": "One-time enrichment input for `manage.py enrich_ustrip_items`. `seed_description` is the text usa-2026.json seeded, used as the guard: an item whose text no longer matches has been edited by the family and is left alone.",
+  "days": [
+    {
+      "day": 1,
+      "source_id": "day1",
+      "items": [
+        {
+          "seed_description": "Land Newark Liberty (EWR), UA85.",
+          "title": "Land at Newark (EWR)",
+          "description": "Land Newark Liberty (EWR), UA85.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "15:50",
+          "duration_minutes": 60,
+          "location": "Newark Liberty International Airport, NJ",
+          "cost": "",
+          "tips": "",
+          "booking": "booked",
+          "links": [
+            {
+              "label": "Newark Liberty (EWR)",
+              "url": "https://www.newarkairport.com/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Transfer to Manhattan: taxi/Uber ~$100-130, or NJ Transit train to Penn Station ~30-40 min ~$18/person (~$90 for 5).",
+          "title": "Transfer to Manhattan",
+          "description": "Transfer to Manhattan: no fixed taxi/Uber price (traffic + tunnel tolls, easily $100–130); NJ Transit train direct to Penn Station, ~30–40 min, ~$18/person (~$90 for 5).",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 60,
+          "location": "EWR → Penn Station (W 34th St)",
+          "cost": "NJ Transit ~$18/person (~$90 for 5); taxi/Uber $100–130",
+          "tips": "NJ Transit is direct to Penn Station, 30–40 min. A taxi or Uber has no fixed price: the meter, the NJ→NY surcharge, and tunnel tolls push it to $100–130, more if the Lincoln or Holland tunnel is jammed.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "NJ Transit",
+              "url": "https://www.njtransit.com/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Check in: Delta Hotels Times Square.",
+          "title": "Check in: Delta Hotels Times Square",
+          "description": "Check in: Delta Hotels Times Square (map).",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 30,
+          "location": "Delta Hotels by Marriott New York Times Square",
+          "cost": "",
+          "tips": "",
+          "booking": "booked",
+          "links": [
+            {
+              "label": "map",
+              "url": "https://www.google.com/maps/search/?api=1&query=Delta+Hotels+by+Marriott+New+York+Times+Square",
+              "kind": "map"
+            }
+          ]
+        },
+        {
+          "seed_description": "Times Square (7 min walk) → Broadway → Radio City Music Hall → Rockefeller Center → back through Times Square once lit.",
+          "title": "Times Square evening walk",
+          "description": "Times Square (7 min walk) → Broadway → Radio City Music Hall → Rockefeller Center → back through Times Square once the lights are on.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "20:00",
+          "duration_minutes": 120,
+          "location": "Times Square → Rockefeller Center",
+          "cost": "",
+          "tips": "7 min walk from the hotel. Do the loop — Broadway, Radio City, Rockefeller Center — and come back through Times Square once the lights are on.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Times Square",
+              "url": "https://www.timessquarenyc.org/",
+              "kind": "official"
+            },
+            {
+              "label": "Radio City Music Hall",
+              "url": "https://en.wikipedia.org/wiki/Radio_City_Music_Hall",
+              "kind": "wikipedia"
+            },
+            {
+              "label": "Rockefeller Center",
+              "url": "https://www.rockefellercenter.com/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Central Perk coffeehouse — 7th Ave & 47th St.",
+          "title": "Central Perk coffeehouse",
+          "description": "Central Perk coffeehouse — right on this walk, 7th Ave & 47th St.",
+          "tag": "optional",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 45,
+          "location": "7th Ave & 47th St",
+          "cost": "",
+          "tips": "Friends-themed café with the orange couch, 8–10 min from the hotel. The Hershey's store in the same complex hands out chocolate at the door and can print a photo of us on a wrapper.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Central Perk",
+              "url": "https://centralperk.com/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Dinner in Hell's Kitchen.",
+          "title": "Dinner in Hell's Kitchen",
+          "description": "Dinner in Hell's Kitchen.",
+          "tag": "plan",
+          "time_label": "Evening",
+          "fixed_start": null,
+          "duration_minutes": 90,
+          "location": "Hell's Kitchen",
+          "cost": "",
+          "tips": "",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Hell's Kitchen",
+              "url": "https://en.wikipedia.org/wiki/Hell%27s_Kitchen,_Manhattan",
+              "kind": "wikipedia"
+            }
+          ]
+        },
+        {
+          "seed_description": "Sunset sail around Manhattan (Classic Harbor Line / Manhattan by Sail).",
+          "title": "Sunset sail around Manhattan",
+          "description": "Sunset sail around Manhattan — an easy add for a lighter arrival evening (Classic Harbor Line, Manhattan by Sail — compare current times/prices).",
+          "tag": "optional",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 120,
+          "location": "",
+          "cost": "",
+          "tips": "Classic Harbor Line or Manhattan by Sail — compare current times and prices.",
+          "booking": "to_book",
+          "links": []
+        }
+      ]
+    },
+    {
+      "day": 2,
+      "source_id": "day2",
+      "items": [
+        {
+          "seed_description": "Breakfast.",
+          "title": "Breakfast",
+          "description": "Breakfast.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "08:30",
+          "duration_minutes": 45,
+          "location": "",
+          "cost": "",
+          "tips": "",
+          "booking": "not_needed",
+          "links": []
+        },
+        {
+          "seed_description": "Central Park: Columbus Circle → The Mall → Bethesda Terrace & Fountain → the lake → Bow Bridge → Strawberry Fields.",
+          "title": "Central Park walk",
+          "description": "Central Park: Columbus Circle → The Mall → Bethesda Terrace & Fountain → the lake → Bow Bridge → Strawberry Fields (John Lennon memorial).",
+          "tag": "plan",
+          "time_label": "Morning",
+          "fixed_start": null,
+          "duration_minutes": 180,
+          "location": "Central Park, from Columbus Circle",
+          "cost": "",
+          "tips": "Columbus Circle → The Mall → Bethesda Terrace & Fountain → the lake → Bow Bridge → Strawberry Fields (the John Lennon memorial).",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Central Park",
+              "url": "https://www.centralparknyc.org/",
+              "kind": "official"
+            },
+            {
+              "label": "Bethesda Terrace & Fountain",
+              "url": "https://www.centralparknyc.org/locations/bethesda-terrace",
+              "kind": "official"
+            },
+            {
+              "label": "Bow Bridge",
+              "url": "https://www.centralparknyc.org/locations/bow-bridge",
+              "kind": "official"
+            },
+            {
+              "label": "Strawberry Fields",
+              "url": "https://www.centralparknyc.org/locations/strawberry-fields",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Down Fifth Avenue: Apple Fifth Avenue, LEGO Store, St. Patrick's Cathedral, Rockefeller Center.",
+          "title": "Fifth Avenue",
+          "description": "Down Fifth Avenue: Apple Fifth Avenue, the LEGO Store, St. Patrick's Cathedral, Rockefeller Center.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "12:30",
+          "duration_minutes": 150,
+          "location": "Fifth Avenue, Midtown",
+          "cost": "",
+          "tips": "Apple Fifth Avenue, the LEGO Store, St. Patrick's Cathedral, Rockefeller Center.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Fifth Avenue",
+              "url": "https://en.wikipedia.org/wiki/Fifth_Avenue",
+              "kind": "wikipedia"
+            },
+            {
+              "label": "Apple Fifth Avenue",
+              "url": "https://www.apple.com/retail/fifthavenue/",
+              "kind": "official"
+            },
+            {
+              "label": "St. Patrick's Cathedral",
+              "url": "https://www.saintpatrickscathedral.org/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Nintendo New York — same stretch of Fifth Ave.",
+          "title": "Nintendo New York",
+          "description": "Nintendo New York — same stretch of Fifth Ave.",
+          "tag": "optional",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 30,
+          "location": "10 Rockefeller Plaza",
+          "cost": "",
+          "tips": "",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Nintendo New York",
+              "url": "https://www.nintendo.com/us/store/locations/newyork/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Top of the Rock observation deck — reserve ahead, ~$42.",
+          "title": "Top of the Rock",
+          "description": "Top of the Rock observation deck — reserve a time slot ahead, ~$42.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "15:30",
+          "duration_minutes": 75,
+          "location": "30 Rockefeller Plaza",
+          "cost": "~$42/person",
+          "tips": "Reserve a time slot ahead — cheaper online and it skips the ticket line. The view: Central Park one way, the Empire State Building the other.",
+          "booking": "to_book",
+          "links": [
+            {
+              "label": "Top of the Rock",
+              "url": "https://en.wikipedia.org/wiki/Top_of_the_Rock",
+              "kind": "wikipedia"
+            }
+          ]
+        },
+        {
+          "seed_description": "Grand Central Terminal — historic hall, painted ceiling.",
+          "title": "Grand Central Terminal",
+          "description": "Grand Central Terminal — the historic hall and painted ceiling.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "18:30",
+          "duration_minutes": 45,
+          "location": "89 E 42nd St",
+          "cost": "",
+          "tips": "",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Grand Central Terminal",
+              "url": "https://www.grandcentralterminal.com/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Broadway musical, Theater District. Same-day rush/lottery tickets exist for most shows (~50% off).",
+          "title": "Broadway musical",
+          "description": "Broadway musical (Theater District, walking distance from the hotel). Same-day rush and lottery tickets exist for most shows — the family got up to 50% off this way.",
+          "tag": "plan",
+          "time_label": "Evening",
+          "fixed_start": null,
+          "duration_minutes": 180,
+          "location": "Theater District",
+          "cost": "Rush / lottery ~$35–59 per person",
+          "tips": "Same-day rush and lottery tickets exist for most shows — the family has had up to 50% off this way. Lottery: sign up around 9:00, results by midday, one hour to buy. TodayTix rush was $49; an Aladdin lottery win was $35 a seat.",
+          "booking": "to_book",
+          "links": [
+            {
+              "label": "rush and lottery tickets",
+              "url": "https://playbill.com/article/broadway-rush-lottery-and-standing-room-only-policies-com-116003",
+              "kind": "official"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "day": 3,
+      "source_id": "day3",
+      "items": [
+        {
+          "seed_description": "Instead of the day below: Packers @ Jets, MetLife Stadium, Jets' home opener.",
+          "title": "Packers @ Jets (NFL)",
+          "description": "Instead of the day below: Packers @ Jets — confirmed real, MetLife Stadium, Jets' home opener.",
+          "tag": "optional",
+          "time_label": "",
+          "fixed_start": "13:00",
+          "duration_minutes": 210,
+          "location": "MetLife Stadium, East Rutherford NJ",
+          "cost": "",
+          "tips": "Instead of the Downtown/Brooklyn day — the Jets' home opener. This is the open decision for the day.",
+          "booking": "to_book",
+          "links": [
+            {
+              "label": "Packers @ Jets",
+              "url": "https://www.nfl.com/schedules/2026/by-team/new-york-jets",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Subway to 9/11 Memorial & Museum and the Oculus → Wall Street → Charging Bull.",
+          "title": "9/11 Memorial, Oculus & Wall Street",
+          "description": "Subway to 9/11 Memorial & Museum and the Oculus → short walk to Wall Street and the Charging Bull.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "09:00",
+          "duration_minutes": 150,
+          "location": "Lower Manhattan",
+          "cost": "",
+          "tips": "Subway to Ground Zero; the Oculus is right there; short walk on to Wall Street and the Charging Bull.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "9/11 Memorial & Museum",
+              "url": "https://www.911memorial.org/",
+              "kind": "official"
+            },
+            {
+              "label": "Oculus",
+              "url": "https://www.westfield.com/united-states/westfieldworldtradecenter",
+              "kind": "official"
+            },
+            {
+              "label": "Charging Bull",
+              "url": "https://en.wikipedia.org/wiki/Charging_Bull",
+              "kind": "wikipedia"
+            }
+          ]
+        },
+        {
+          "seed_description": "Mercer Labs — immersive art/tech museum (21 Dey St).",
+          "title": "Mercer Labs",
+          "description": "Mercer Labs — immersive art/tech museum, right in this area (21 Dey St).",
+          "tag": "optional",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 90,
+          "location": "21 Dey St",
+          "cost": "",
+          "tips": "Immersive art and technology museum, right in this area.",
+          "booking": "to_book",
+          "links": [
+            {
+              "label": "Mercer Labs",
+              "url": "https://mercerlabs.com/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Walk south to Battery Park.",
+          "title": "Walk to Battery Park",
+          "description": "Walk south to Battery Park.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 30,
+          "location": "Battery Park",
+          "cost": "",
+          "tips": "",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Battery Park",
+              "url": "https://www.thebattery.org/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Free Staten Island Ferry (passes Statue of Liberty, ~25 min) or Statue of Liberty & Ellis Island ferry (~$26, book ahead).",
+          "title": "Statue of Liberty: ferry",
+          "description": "Either the free Staten Island Ferry (passes the Statue of Liberty, ~25 min each way) or the Statue of Liberty & Ellis Island ferry to Liberty Island (~$26, incl. museum + audio tour, option to continue to Ellis Island — book ahead).",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 120,
+          "location": "",
+          "cost": "Staten Island Ferry free; Statue City Cruises ~$26/person",
+          "tips": "Free Staten Island Ferry: every 15–20 min, ~25 min each way, stand on the right side heading out for the statue. Or Statue City Cruises to Liberty Island — book ahead; $26 covers the boat, the museum, the audio tour, and continuing to Ellis Island.",
+          "booking": "to_book",
+          "links": [
+            {
+              "label": "Staten Island Ferry",
+              "url": "https://www.siferry.com/",
+              "kind": "official"
+            },
+            {
+              "label": "Statue of Liberty & Ellis Island",
+              "url": "https://www.nps.gov/stli/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "NYC Ferry, Battery Park/Pier 11 → DUMBO, Brooklyn (~$4/person). Lunch at Time Out Market. Brooklyn Bridge Park, Manhattan Bridge photo spot.",
+          "title": "Ferry to DUMBO & Time Out Market",
+          "description": "NYC Ferry from Battery Park/Pier 11 to DUMBO, Brooklyn (~$4/person). Lunch at Time Out Market. Walk Brooklyn Bridge Park and the famous Manhattan Bridge photo spot.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "13:00",
+          "duration_minutes": 240,
+          "location": "Pier 11 → DUMBO, Brooklyn",
+          "cost": "NYC Ferry ~$4/person",
+          "tips": "Lunch at Time Out Market; walk Brooklyn Bridge Park to the famous Manhattan Bridge photo spot on Washington St.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "NYC Ferry",
+              "url": "https://www.ferry.nyc/",
+              "kind": "official"
+            },
+            {
+              "label": "Time Out Market",
+              "url": "https://www.timeoutmarket.com/newyork/",
+              "kind": "official"
+            },
+            {
+              "label": "Brooklyn Bridge Park",
+              "url": "https://www.brooklynbridgepark.org/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Walk Brooklyn Bridge back to Manhattan for golden hour/lights (~1.8km, easy grade).",
+          "title": "Walk the Brooklyn Bridge",
+          "description": "Walk the Brooklyn Bridge back to Manhattan for golden hour / lights coming on (~1.8km, easy grade).",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "17:15",
+          "duration_minutes": 120,
+          "location": "Brooklyn Bridge, DUMBO → Manhattan",
+          "cost": "",
+          "tips": "Sunset is ~19:00, so 17:15–19:15 gives daylight, golden hour, then the lights coming on. ~1.8 km, about 30 min at an easy pace; the DUMBO / Washington St entrance has a gentle ramp up to the walkway.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Brooklyn Bridge",
+              "url": "https://en.wikipedia.org/wiki/Brooklyn_Bridge",
+              "kind": "wikipedia"
+            }
+          ]
+        },
+        {
+          "seed_description": "Dinner in Chinatown or SoHo.",
+          "title": "Dinner in Chinatown or SoHo",
+          "description": "Dinner in Chinatown or SoHo.",
+          "tag": "plan",
+          "time_label": "Evening",
+          "fixed_start": null,
+          "duration_minutes": 90,
+          "location": "",
+          "cost": "",
+          "tips": "",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Chinatown",
+              "url": "https://en.wikipedia.org/wiki/Chinatown,_Manhattan",
+              "kind": "wikipedia"
+            },
+            {
+              "label": "SoHo",
+              "url": "https://en.wikipedia.org/wiki/SoHo,_Manhattan",
+              "kind": "wikipedia"
+            }
+          ]
+        },
+        {
+          "seed_description": "Meow Parlour cat café — Lower East Side.",
+          "title": "Meow Parlour cat café",
+          "description": "Meow Parlour cat café — nearby on the Lower East Side.",
+          "tag": "optional",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 50,
+          "location": "Lower East Side",
+          "cost": "~$23",
+          "tips": "50 minutes; reserve ahead.",
+          "booking": "to_book",
+          "links": [
+            {
+              "label": "Meow Parlour",
+              "url": "https://www.meowparlour.com/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Feast of San Gennaro — Little Italy, runs Sep 17-27.",
+          "title": "Feast of San Gennaro",
+          "description": "Feast of San Gennaro — Little Italy, right next to Chinatown/SoHo; runs Sep 17–27, so it's on tonight.",
+          "tag": "optional",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 90,
+          "location": "Mulberry St, Little Italy",
+          "cost": "",
+          "tips": "Runs Sep 17–27, so it's on tonight — right next to Chinatown/SoHo. The family list says: definitely doing this.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Feast of San Gennaro",
+              "url": "https://sangennaronyc.org/",
+              "kind": "official"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "day": 4,
+      "source_id": "day4",
+      "items": [
+        {
+          "seed_description": "Hudson Yards (15 min walk) — the Vessel, riverfront skyscrapers. If Top of the Rock skipped, consider Edge observation deck (~1.5 hrs).",
+          "title": "Hudson Yards & the Vessel",
+          "description": "Walk (15 min) to Hudson Yards — the Vessel and the riverfront skyscrapers. If Top of the Rock was skipped, consider Edge observation deck instead (~1.5 hrs).",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "09:00",
+          "duration_minutes": 75,
+          "location": "Hudson Yards",
+          "cost": "",
+          "tips": "15 min walk from the hotel. If Top of the Rock was skipped, consider the Edge observation deck here instead (~1.5 hrs).",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Hudson Yards",
+              "url": "https://www.hudsonyardsnewyork.com/",
+              "kind": "official"
+            },
+            {
+              "label": "Edge",
+              "url": "https://en.wikipedia.org/wiki/Edge_(observation_deck)",
+              "kind": "wikipedia"
+            }
+          ]
+        },
+        {
+          "seed_description": "City Climb at Edge — extreme, ~$185/person (verify).",
+          "title": "City Climb at Edge",
+          "description": "City Climb at Edge — extreme, same building, ~$185/person (verify current price/season).",
+          "tag": "optional",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 120,
+          "location": "",
+          "cost": "~$185/person (verify)",
+          "tips": "Extreme — verify current price and season.",
+          "booking": "to_book",
+          "links": [
+            {
+              "label": "City Climb",
+              "url": "https://en.wikipedia.org/wiki/Edge_(observation_deck)",
+              "kind": "wikipedia"
+            }
+          ]
+        },
+        {
+          "seed_description": "Intrepid Sea, Air & Space Museum — high priority per family list.",
+          "title": "Intrepid Sea, Air & Space Museum",
+          "description": "Intrepid Sea, Air & Space Museum — high priority per the family list, a short walk up the riverfront from here.",
+          "tag": "optional",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 150,
+          "location": "Pier 86, W 46th St",
+          "cost": "",
+          "tips": "High priority on the family list; a short walk up the riverfront from Hudson Yards.",
+          "booking": "to_book",
+          "links": [
+            {
+              "label": "Intrepid Sea, Air & Space Museum",
+              "url": "https://www.intrepidmuseum.org/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "B&H Photo — must-do per list; closed Saturdays, today (Monday) works.",
+          "title": "B&H Photo",
+          "description": "B&H Photo — must-do per the list; today (Monday) works, it's closed Saturdays.",
+          "tag": "optional",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 60,
+          "location": "420 9th Ave",
+          "cost": "",
+          "tips": "Must-do per the list. Closed Saturdays — today (Monday) works.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "B&H Photo",
+              "url": "https://www.bhphotovideo.com/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Walk the High Line south (~2km) through gardens, art, views.",
+          "title": "Walk the High Line",
+          "description": "Walk the High Line south (~2km) through gardens, art, and views over the streets and river.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 90,
+          "location": "High Line, from 30th St south",
+          "cost": "",
+          "tips": "~2 km south through gardens, art and views over the streets and the river — a park built on the old elevated freight railway.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "High Line",
+              "url": "https://www.thehighline.org/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Chelsea Market, or rooftop food at Pier 57.",
+          "title": "Lunch: Chelsea Market or Pier 57",
+          "description": "Chelsea Market, or rooftop food at Pier 57.",
+          "tag": "plan",
+          "time_label": "Lunch",
+          "fixed_start": null,
+          "duration_minutes": 75,
+          "location": "Chelsea Market, 75 9th Ave",
+          "cost": "",
+          "tips": "Chelsea Market is an indoor food hall in the old Oreo factory; Pier 57 has rooftop seating with the view.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Chelsea Market",
+              "url": "https://www.chelseamarket.com/",
+              "kind": "official"
+            },
+            {
+              "label": "Pier 57",
+              "url": "https://www.pier57ny.com/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Little Island floating park; through Meatpacking District cobblestones.",
+          "title": "Little Island",
+          "description": "Little Island floating park; short walk through the cobblestones of the Meatpacking District.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 45,
+          "location": "Pier 55, Hudson River Park",
+          "cost": "",
+          "tips": "A floating park on concrete 'tulips'; then a short walk through the cobblestones of the Meatpacking District.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Little Island",
+              "url": "https://littleisland.org/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Whitney Museum — lower priority than MoMA.",
+          "title": "Whitney Museum",
+          "description": "Whitney Museum — right at this end of the High Line/Meatpacking District; lower priority than MoMA.",
+          "tag": "optional",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 120,
+          "location": "99 Gansevoort St",
+          "cost": "",
+          "tips": "Right at this end of the High Line; lower priority than MoMA.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Whitney Museum",
+              "url": "https://whitney.org/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Greenwich Village: flagship Harry Potter Store near Flatiron, \"Friends\" building photo op on Bedford St, Bleecker St, Washington Square Park.",
+          "title": "Greenwich Village",
+          "description": "Greenwich Village: the flagship Harry Potter Store near the Flatiron Building, the \"Friends\" building photo op on Bedford Street, Bleecker Street, Washington Square Park.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "15:00",
+          "duration_minutes": 150,
+          "location": "Greenwich / West Village",
+          "cost": "",
+          "tips": "The flagship Harry Potter Store near the Flatiron Building, the Friends building on Bedford St, Bleecker Street, Washington Square Park.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Greenwich Village",
+              "url": "https://en.wikipedia.org/wiki/Greenwich_Village",
+              "kind": "wikipedia"
+            },
+            {
+              "label": "Harry Potter Store",
+              "url": "https://www.harrypotterstore.com/",
+              "kind": "official"
+            },
+            {
+              "label": "Bedford Street",
+              "url": "https://en.wikipedia.org/wiki/Bedford_Street_(Manhattan)",
+              "kind": "wikipedia"
+            },
+            {
+              "label": "Washington Square Park",
+              "url": "https://www.nycgovparks.org/parks/washington-square-park",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "National Museum of Mathematics (MoMath) — Flatiron District.",
+          "title": "National Museum of Mathematics (MoMath)",
+          "description": "National Museum of Mathematics (MoMath) — Flatiron District, same area as the Harry Potter Store stop.",
+          "tag": "optional",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 90,
+          "location": "225 5th Ave, Flatiron",
+          "cost": "",
+          "tips": "",
+          "booking": "to_book",
+          "links": [
+            {
+              "label": "National Museum of Mathematics (MoMath)",
+              "url": "https://momath.org/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "SoHo — cast-iron architecture, shopping.",
+          "title": "SoHo",
+          "description": "SoHo — cast-iron architecture, shopping.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 90,
+          "location": "SoHo",
+          "cost": "",
+          "tips": "Cast-iron architecture, shopping.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "SoHo",
+              "url": "https://en.wikipedia.org/wiki/SoHo,_Manhattan",
+              "kind": "wikipedia"
+            }
+          ]
+        },
+        {
+          "seed_description": "MoMA instead of part of this day.",
+          "title": "MoMA",
+          "description": "MoMA instead of part of this day.",
+          "tag": "optional",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 150,
+          "location": "11 W 53rd St",
+          "cost": "",
+          "tips": "Instead of part of this day. The main art option; the Whitney is lower priority.",
+          "booking": "to_book",
+          "links": [
+            {
+              "label": "MoMA",
+              "url": "https://www.moma.org/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Jazz club — Village Vanguard or Smalls.",
+          "title": "Jazz club: Village Vanguard or Smalls",
+          "description": "Jazz club — Village Vanguard or Smalls, both right here in Greenwich Village.",
+          "tag": "optional",
+          "time_label": "Evening",
+          "fixed_start": null,
+          "duration_minutes": 120,
+          "location": "Greenwich Village",
+          "cost": "",
+          "tips": "",
+          "booking": "to_book",
+          "links": [
+            {
+              "label": "Village Vanguard",
+              "url": "https://en.wikipedia.org/wiki/Village_Vanguard",
+              "kind": "wikipedia"
+            },
+            {
+              "label": "Smalls",
+              "url": "https://en.wikipedia.org/wiki/Smalls_Jazz_Club",
+              "kind": "wikipedia"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "day": 5,
+      "source_id": "day5",
+      "items": [
+        {
+          "seed_description": "Pick up rental car — West Side Manhattan, near W 40th St.",
+          "title": "Pick up the rental car",
+          "description": "Pick up rental car — West Side Manhattan, near W 40th St, close to the Lincoln Tunnel. See Car Rental for the full checklist (E‑ZPass/toll pass, unlimited mileage, one-way return, Canada border coverage).",
+          "tag": "plan",
+          "time_label": "Morning",
+          "fixed_start": null,
+          "duration_minutes": 45,
+          "location": "Manhattan West Side, near W 40th St",
+          "cost": "",
+          "tips": "See Trip essentials for the car. Ask for an E-ZPass / toll pass (cashless toll stretches in NY and PA), unlimited mileage, one-way return at Newark, and cover for the night in Canada.",
+          "booking": "to_book",
+          "links": [
+            {
+              "label": "Car Rental",
+              "url": "car-rental.html",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Drive ~4-4.5 hrs / ~400km. Stretch stop (~2 hrs in) around Stroudsburg/Delaware Water Gap or Binghamton.",
+          "title": "Drive to the Finger Lakes",
+          "description": "Drive ~4–4.5 hrs / ~400km. Suggested stretch stop (~2 hrs in) around Stroudsburg / Delaware Water Gap or Binghamton.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 255,
+          "location": "",
+          "cost": "",
+          "tips": "~400 km, 4–4.5 hrs. Stretch stop about 2 hrs in around Stroudsburg / Delaware Water Gap (the Poconos) or Binghamton.",
+          "booking": "not_needed",
+          "links": []
+        },
+        {
+          "seed_description": "Watkins Glen State Park — Gorge Trail past 19 waterfalls (1.6 mi, ~2 hrs incl. photos). Hiking shoes; keep parking receipt (valid at other Finger Lakes parks). Shuttle weekends only after Sep 8.",
+          "title": "Watkins Glen State Park — Gorge Trail",
+          "description": "Watkins Glen State Park — the Gorge Trail past 19 waterfalls (1.6 mi, ~2 hrs incl. photo stops). Hiking shoes; keep the parking receipt, it's valid at other Finger Lakes parks. Shuttle only runs weekends after Sep 8.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "14:00",
+          "duration_minutes": 120,
+          "location": "Watkins Glen, NY",
+          "cost": "Parking fee (the receipt is valid at other Finger Lakes parks)",
+          "tips": "1.6 mi past 19 waterfalls, lots of steps — hiking shoes, picnic food. Keep the parking receipt. The shuttle between parks only runs weekends after Sep 8.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Watkins Glen State Park",
+              "url": "https://parks.ny.gov/parks/watkinsglen/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Drive along Seneca Lake, Route 14 (~25 min with scenic stops).",
+          "title": "Seneca Lake scenic drive",
+          "description": "Drive along Seneca Lake, Route 14 (~25 min with scenic stops).",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "16:00",
+          "duration_minutes": 25,
+          "location": "Route 14 along Seneca Lake",
+          "cost": "",
+          "tips": "",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Seneca Lake",
+              "url": "https://www.fingerlakes.org/attractions/seneca-lake/",
+              "kind": "official"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "day": 6,
+      "source_id": "day6",
+      "items": [
+        {
+          "seed_description": "Drive ~2.5 hrs to Niagara Falls.",
+          "title": "Drive to Niagara Falls",
+          "description": "Drive ~2.5 hrs to Niagara Falls.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 150,
+          "location": "",
+          "cost": "",
+          "tips": "",
+          "booking": "not_needed",
+          "links": []
+        },
+        {
+          "seed_description": "Niagara Falls State Park (US side) — bring a change of socks/shoes, you will get soaked.",
+          "title": "Niagara Falls State Park (US side)",
+          "description": "Niagara Falls State Park (US side) — bring a change of socks/shoes, you will get soaked.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 120,
+          "location": "Niagara Falls, NY",
+          "cost": "",
+          "tips": "Bring a change of socks and shoes — you will get completely soaked. Watch the phone in the spray.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Niagara Falls State Park",
+              "url": "https://www.niagarafallsstatepark.com/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Cave of the Winds — $23/person, includes poncho; buy at park, timed elevator entry.",
+          "title": "Cave of the Winds",
+          "description": "Cave of the Winds — $23/person, includes a poncho; buy at the park, timed elevator entry.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 60,
+          "location": "",
+          "cost": "$23/person (poncho included)",
+          "tips": "Buy at the park; timed elevator entry. Get to the ticket window early, take the next free slot, and walk the park (or do Maid of the Mist) in between.",
+          "booking": "to_book",
+          "links": [
+            {
+              "label": "Cave of the Winds",
+              "url": "https://www.niagarafallsstatepark.com/things-to-do/cave-of-the-winds",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Maid of the Mist boat to base of falls — $30.25/person, boats every 15 min; buy a few days ahead to skip the line.",
+          "title": "Maid of the Mist boat",
+          "description": "Maid of the Mist boat to the base of the falls — $30.25/person, no fixed time slot (boats every 15 min); buy a few days ahead to skip the line.",
+          "tag": "plan",
+          "time_label": "Boats 9:00–17:00, every 15 min",
+          "fixed_start": null,
+          "duration_minutes": 60,
+          "location": "",
+          "cost": "$30.25/person",
+          "tips": "No fixed time slot — board in order of arrival. Buy a few days ahead to skip the ticket line. Blue poncho with a hood.",
+          "booking": "to_book",
+          "links": [
+            {
+              "label": "Maid of the Mist",
+              "url": "https://en.wikipedia.org/wiki/Maid_of_the_Mist",
+              "kind": "wikipedia"
+            }
+          ]
+        },
+        {
+          "seed_description": "Cross Rainbow Bridge to Canadian side, check in.",
+          "title": "Cross Rainbow Bridge, check in (Canada)",
+          "description": "Cross Rainbow Bridge to the Canadian side, check in.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 45,
+          "location": "Rainbow Bridge → Niagara Falls, ON",
+          "cost": "",
+          "tips": "",
+          "booking": "not_needed",
+          "links": []
+        },
+        {
+          "seed_description": "Niagara Parkway — view of all three falls; Clifton Hill lights/attractions; falls illuminated + fireworks. Bring Canadian dollars.",
+          "title": "Niagara Parkway, Clifton Hill & fireworks",
+          "description": "Niagara Parkway — panoramic view of all three falls; Clifton Hill lights and attractions; falls illuminated at night + fireworks. Bring Canadian dollars — USD is accepted but at a poor rate, no change given in USD.",
+          "tag": "plan",
+          "time_label": "Evening",
+          "fixed_start": null,
+          "duration_minutes": 150,
+          "location": "Niagara Parkway / Clifton Hill, ON",
+          "cost": "",
+          "tips": "Panoramic view of all three falls; the falls are lit at night and there are fireworks. Bring Canadian dollars — USD is accepted at a poor rate and change comes back in CAD.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Niagara Parkway",
+              "url": "https://www.niagaraparks.com/",
+              "kind": "official"
+            },
+            {
+              "label": "Clifton Hill",
+              "url": "https://www.cliftonhill.com/",
+              "kind": "official"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "day": 7,
+      "source_id": "day7",
+      "items": [
+        {
+          "seed_description": "Drive Niagara → Lancaster County (~6-6.5 hrs); stretch stop after ~3.5 hrs.",
+          "title": "Drive toward Lancaster County",
+          "description": "Drive Niagara → Lancaster County (~6–6.5 hrs); leg-stretch stop after ~3.5 hrs.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "09:00",
+          "duration_minutes": 240,
+          "location": "",
+          "cost": "",
+          "tips": "~6–6.5 hrs of driving today in total; leg-stretch stop after ~3.5 hrs.",
+          "booking": "not_needed",
+          "links": []
+        },
+        {
+          "seed_description": "Leonard Harrison State Park — overlook of Pine Creek Gorge (\"PA Grand Canyon\"). Skip steep Turkey Path; short flat overlook walk. Free entry/parking.",
+          "title": "Leonard Harrison State Park — the PA Grand Canyon",
+          "description": "Leonard Harrison State Park — breathtaking overlook of Pine Creek Gorge, the \"PA Grand Canyon.\" Skip the steep Turkey Path; short, flat overlook walk instead. Free entry/parking.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "13:00",
+          "duration_minutes": 60,
+          "location": "Wellsboro, PA",
+          "cost": "Free entry and parking",
+          "tips": "Overlook of Pine Creek Gorge a minute from the parking. Skip the steep Turkey Path; do the short flat walk between viewpoints. The visitor center has small exhibits on the canyon.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Leonard Harrison State Park",
+              "url": "https://www.dcnr.pa.gov/StateParks/FindAPark/LeonardHarrisonStatePark/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Lunch in Wellsboro — 19th-century small-town feel, gaslit Main Street. Timeless Destination (Italian/American) or Harland's Family Style Restaurant.",
+          "title": "Lunch in Wellsboro",
+          "description": "Lunch 10–15 min away in Wellsboro — classic 19th-century small-town feel, gaslit Main Street. Try Timeless Destination (Italian/American) or Harland's Family Style Restaurant (quick, cheap).",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "14:00",
+          "duration_minutes": 60,
+          "location": "Wellsboro, PA",
+          "cost": "",
+          "tips": "Gaslit Main Street, 19th-century small-town feel. Timeless Destination (Italian/American) or Harland's Family Style Restaurant (quick, cheap).",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Wellsboro",
+              "url": "https://en.wikipedia.org/wiki/Wellsboro,_Pennsylvania",
+              "kind": "wikipedia"
+            },
+            {
+              "label": "Timeless Destination",
+              "url": "https://timelessdestination.com/",
+              "kind": "official"
+            },
+            {
+              "label": "Harland's Family Style Restaurant",
+              "url": "https://www.facebook.com/HarlandsRestaurant/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Drive to Lancaster, arrive ~18:30.",
+          "title": "Drive to Lancaster",
+          "description": "Drive to Lancaster, arrive ~18:30.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "15:00",
+          "duration_minutes": 210,
+          "location": "",
+          "cost": "",
+          "tips": "Arrive ~18:30.",
+          "booking": "not_needed",
+          "links": []
+        }
+      ]
+    },
+    {
+      "day": 8,
+      "source_id": "day8",
+      "items": [
+        {
+          "seed_description": "The Amish Farm and House bus + farm tour — classic ~$28.95/person (~2-3 hrs), premium incl. 1805 farmhouse ~$36.95/person (~3-4 hrs). Arrive 30 min early; some vendors cash-only. Tours depart 11:00/13:00/15:00.",
+          "title": "The Amish Farm and House tour",
+          "description": "The Amish Farm and House bus + farm tour — classic tour ~$28.95/person (~2–3 hrs), premium incl. 1805 farmhouse ~$36.95/person (~3–4 hrs). Arrive 30 min early; some Amish vendors are cash-only. Tours depart 11:00/13:00/15:00.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "09:30",
+          "duration_minutes": 180,
+          "location": "2395 Covered Bridge Dr, Lancaster",
+          "cost": "Classic ~$28.95/person; premium (1805 farmhouse) ~$36.95/person",
+          "tips": "Arrive 30 min before the bus. Tours leave 11:00 / 13:00 / 15:00; open 9–17. Some Amish vendors are cash-only. Drinks and snacks are allowed.",
+          "booking": "to_book",
+          "links": [
+            {
+              "label": "The Amish Farm and House",
+              "url": "https://amishfarmandhouse.com/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Considered and dropped: Amish Experience VIP Tour (private, up to 14 people, ~3.5 hrs, ~$100 more/family) — only runs at 17:00.",
+          "title": "Amish Experience VIP Tour (dropped)",
+          "description": "Considered: Amish Experience VIP Tour (private, up to 14 people, ~3.5 hrs, ~$100 more per family) — dropped, only runs at 17:00.",
+          "tag": "rejected",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 210,
+          "location": "",
+          "cost": "~$100 more per family",
+          "tips": "Private, up to 14 people, ~3.5 hrs, workshops and working barns with the community — dropped because it only runs at 17:00.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Amish Experience VIP Tour",
+              "url": "https://amishexperience.com/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Drive between farms/villages of Birds in Hand, Intercourse, Ronks, Strasburg — horse-drawn buggies alongside the road.",
+          "title": "Amish country drive: Bird-in-Hand, Intercourse, Strasburg",
+          "description": "Drive between the farms/villages of Birds in Hand, Intercourse, Ronks, Strasburg — horse-drawn buggies alongside the road.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 90,
+          "location": "Lancaster County back roads",
+          "cost": "",
+          "tips": "Farms without power lines, blacksmiths, huge barns, people working the fields with horses, and black buggies alongside the cars.",
+          "booking": "not_needed",
+          "links": []
+        },
+        {
+          "seed_description": "Shopping at Tanger Outlets Lancaster.",
+          "title": "Tanger Outlets Lancaster",
+          "description": "Shopping at Tanger Outlets Lancaster.",
+          "tag": "plan",
+          "time_label": "Midday",
+          "fixed_start": null,
+          "duration_minutes": 120,
+          "location": "311 Stanley K Tanger Blvd, Lancaster",
+          "cost": "",
+          "tips": "",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Tanger Outlets Lancaster",
+              "url": "https://www.tangeroutlet.com/lancaster",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Drive Lancaster → Washington DC (~120 mi, 2.5-3 hrs).",
+          "title": "Drive to Washington, DC",
+          "description": "Drive Lancaster → Washington DC (~120 mi, 2.5–3 hrs).",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "17:00",
+          "duration_minutes": 180,
+          "location": "",
+          "cost": "",
+          "tips": "~120 mi, 2.5–3 hrs.",
+          "booking": "not_needed",
+          "links": []
+        },
+        {
+          "seed_description": "Check in; dinner in Georgetown; evening walk past illuminated monuments.",
+          "title": "Georgetown dinner & the monuments by night",
+          "description": "Check in; dinner in Georgetown; evening walk past the illuminated monuments.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "20:30",
+          "duration_minutes": 150,
+          "location": "Georgetown, DC",
+          "cost": "",
+          "tips": "",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Georgetown",
+              "url": "https://www.georgetowndc.com/",
+              "kind": "official"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "day": 9,
+      "source_id": "day9",
+      "items": [
+        {
+          "seed_description": "Capitol Hill.",
+          "title": "Capitol Hill",
+          "description": "Capitol Hill.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "10:00",
+          "duration_minutes": 60,
+          "location": "US Capitol",
+          "cost": "",
+          "tips": "",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Capitol Hill",
+              "url": "https://www.visitthecapitol.gov/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "National Museum of Natural History (~2 hrs) — no advance booking, security-line order; arrive early.",
+          "title": "National Museum of Natural History",
+          "description": "National Museum of Natural History (~2 hrs) — no advance booking, security-line order; arrive early.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "11:00",
+          "duration_minutes": 120,
+          "location": "10th St & Constitution Ave NW",
+          "cost": "Free",
+          "tips": "No advance booking — it's security-line order; arrive early, before the big lines.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "National Museum of Natural History",
+              "url": "https://naturalhistory.si.edu/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Lunch.",
+          "title": "Lunch",
+          "description": "Lunch.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "13:00",
+          "duration_minutes": 60,
+          "location": "",
+          "cost": "",
+          "tips": "",
+          "booking": "not_needed",
+          "links": []
+        },
+        {
+          "seed_description": "National Air and Space Museum (~2.25 hrs) — 5 tickets already reserved.",
+          "title": "National Air and Space Museum",
+          "description": "National Air and Space Museum (~2.25 hrs) — 5 tickets already reserved.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "14:00",
+          "duration_minutes": 135,
+          "location": "600 Independence Ave SW",
+          "cost": "Free (timed ticket)",
+          "tips": "5 tickets already reserved.",
+          "booking": "booked",
+          "links": [
+            {
+              "label": "National Air and Space Museum",
+              "url": "https://airandspace.si.edu/visit/museum-dc",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "View of the White House; family photo. National Mall: Washington Monument → WWII Memorial → Reflecting Pool → Vietnam & Korean War Memorials → finish at illuminated Lincoln Memorial.",
+          "title": "White House & the National Mall walk",
+          "description": "View of the White House; family photo. National Mall: Washington Monument → WWII Memorial → Reflecting Pool → Vietnam & Korean War Memorials → finish at the illuminated Lincoln Memorial.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "16:30",
+          "duration_minutes": 180,
+          "location": "National Mall",
+          "cost": "",
+          "tips": "Family photo in front of the White House (20 min walk or 5 min taxi from the museums). Then Washington Monument → WWII Memorial → Reflecting Pool → Vietnam & Korean War Memorials → finish at the Lincoln Memorial lit up.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "White House",
+              "url": "https://www.whitehouse.gov/about-the-white-house/tours-events/",
+              "kind": "official"
+            },
+            {
+              "label": "National Mall",
+              "url": "https://www.nps.gov/nama/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Free entry to Smithsonian museums — reserve free timed ticket in advance where required.",
+          "title": "Smithsonian museums: free entry",
+          "description": "Free entry to Smithsonian museums — reserve a free timed ticket in advance where required.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 0,
+          "location": "",
+          "cost": "",
+          "tips": "Reserve a free timed ticket in advance where required. Beyond Air & Space and Natural History there's American History and the art galleries.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Smithsonian museums",
+              "url": "https://www.si.edu/museums",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "International Spy Museum (paid).",
+          "title": "International Spy Museum",
+          "description": "International Spy Museum (paid).",
+          "tag": "optional",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 120,
+          "location": "700 L'Enfant Plaza SW",
+          "cost": "Paid",
+          "tips": "",
+          "booking": "to_book",
+          "links": [
+            {
+              "label": "International Spy Museum",
+              "url": "https://www.spymuseum.org/",
+              "kind": "official"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "day": 10,
+      "source_id": "day10",
+      "items": [
+        {
+          "seed_description": "Drive DC → Philadelphia (~2.5-3 hrs).",
+          "title": "Drive to Philadelphia",
+          "description": "Drive DC → Philadelphia (~2.5–3 hrs).",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 165,
+          "location": "",
+          "cost": "",
+          "tips": "~2.5–3 hrs.",
+          "booking": "not_needed",
+          "links": []
+        },
+        {
+          "seed_description": "Liberty Bell, Independence Hall, Congress Hall / President's House (Independence National Historical Park).",
+          "title": "Liberty Bell & Independence Hall",
+          "description": "Liberty Bell, Independence Hall, Congress Hall / President's House (Independence National Historical Park).",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "12:00",
+          "duration_minutes": 120,
+          "location": "Independence National Historical Park",
+          "cost": "Free",
+          "tips": "Liberty Bell, Independence Hall, Congress Hall / the President's House.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Liberty Bell",
+              "url": "https://www.nps.gov/inde/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Reading Terminal Market.",
+          "title": "Lunch: Reading Terminal Market",
+          "description": "Reading Terminal Market.",
+          "tag": "plan",
+          "time_label": "Lunch",
+          "fixed_start": null,
+          "duration_minutes": 60,
+          "location": "51 N 12th St",
+          "cost": "",
+          "tips": "",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Reading Terminal Market",
+              "url": "https://www.readingterminalmarket.org/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Franklin Court, Elfreth's Alley, Old City.",
+          "title": "Old City: Franklin Court & Elfreth's Alley",
+          "description": "Franklin Court, Elfreth's Alley, Old City.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 90,
+          "location": "Old City, Philadelphia",
+          "cost": "",
+          "tips": "",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Elfreth's Alley",
+              "url": "https://www.elfrethsalley.org/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "The \"Rocky Steps\" at the Philadelphia Museum of Art.",
+          "title": "The Rocky Steps",
+          "description": "The \"Rocky Steps\" at the Philadelphia Museum of Art.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 45,
+          "location": "Philadelphia Museum of Art",
+          "cost": "",
+          "tips": "",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Philadelphia Museum of Art",
+              "url": "https://www.philamuseum.org/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Drive to Atlantic City (~1.5 hrs) → check in, boardwalk, casino.",
+          "title": "Drive to Atlantic City, boardwalk & casino",
+          "description": "Drive to Atlantic City (~1.5 hrs) → check in, boardwalk, casino.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "17:00",
+          "duration_minutes": 90,
+          "location": "",
+          "cost": "",
+          "tips": "~1.5 hrs → check in, the boardwalk, a casino.",
+          "booking": "not_needed",
+          "links": []
+        }
+      ]
+    },
+    {
+      "day": 11,
+      "source_id": "day11",
+      "items": [
+        {
+          "seed_description": "Beach, pool, shopping at Tanger Outlets Atlantic City (no sales tax on clothes/shoes in NJ).",
+          "title": "Beach, pool & Tanger Outlets Atlantic City",
+          "description": "Beach, pool, shopping at Tanger Outlets Atlantic City (no sales tax on clothes/shoes in NJ).",
+          "tag": "plan",
+          "time_label": "Day",
+          "fixed_start": null,
+          "duration_minutes": 480,
+          "location": "Atlantic City, NJ",
+          "cost": "",
+          "tips": "No sales tax on clothes and shoes in NJ.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Tanger Outlets Atlantic City",
+              "url": "https://www.tangeroutlet.com/atlanticcity",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "A show.",
+          "title": "A show",
+          "description": "A show.",
+          "tag": "plan",
+          "time_label": "Evening",
+          "fixed_start": null,
+          "duration_minutes": 150,
+          "location": "",
+          "cost": "",
+          "tips": "",
+          "booking": "to_book",
+          "links": []
+        }
+      ]
+    },
+    {
+      "day": "12-13",
+      "source_id": "day12-13",
+      "items": [
+        {
+          "seed_description": "Drive to New Jersey (~2-2.5 hrs).",
+          "title": "Drive to New Jersey",
+          "description": "Drive to New Jersey (~2–2.5 hrs).",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 135,
+          "location": "",
+          "cost": "",
+          "tips": "~2–2.5 hrs.",
+          "booking": "not_needed",
+          "links": []
+        },
+        {
+          "seed_description": "The Mills at Jersey Gardens — huge indoor outlet mall near Newark.",
+          "title": "The Mills at Jersey Gardens",
+          "description": "The Mills at Jersey Gardens — huge indoor outlet mall near Newark.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 180,
+          "location": "651 Kapkowski Rd, Elizabeth NJ",
+          "cost": "",
+          "tips": "Huge indoor outlet mall near Newark.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "The Mills at Jersey Gardens",
+              "url": "https://www.simon.com/mall/the-mills-at-jersey-gardens",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "American Dream — indoor water park, ice skating, Nickelodeon Universe rollercoasters.",
+          "title": "American Dream",
+          "description": "American Dream — indoor water park, ice skating, Nickelodeon Universe rollercoasters.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 300,
+          "location": "1 American Dream Way, East Rutherford NJ",
+          "cost": "",
+          "tips": "Indoor water park, ice skating, Nickelodeon Universe rollercoasters.",
+          "booking": "to_book",
+          "links": [
+            {
+              "label": "American Dream",
+              "url": "https://www.americandream.com/",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Six Flags Great Adventure — rollercoasters.",
+          "title": "Six Flags Great Adventure",
+          "description": "Six Flags Great Adventure — rollercoasters.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 360,
+          "location": "Jackson, NJ",
+          "cost": "",
+          "tips": "",
+          "booking": "to_book",
+          "links": [
+            {
+              "label": "Six Flags Great Adventure",
+              "url": "https://en.wikipedia.org/wiki/Six_Flags_Great_Adventure",
+              "kind": "wikipedia"
+            }
+          ]
+        },
+        {
+          "seed_description": "Woodbury Common Premium Outlets.",
+          "title": "Woodbury Common Premium Outlets",
+          "description": "Woodbury Common Premium Outlets.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 240,
+          "location": "Central Valley, NY",
+          "cost": "",
+          "tips": "",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Woodbury Common Premium Outlets",
+              "url": "https://www.premiumoutlets.com/outlet/woodbury-common",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Optional quick trip into Manhattan (20-30 min by train/bus).",
+          "title": "Quick trip into Manhattan",
+          "description": "Optional quick trip into Manhattan (20–30 min by train/bus).",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 240,
+          "location": "",
+          "cost": "",
+          "tips": "20–30 min by train or bus.",
+          "booking": "not_needed",
+          "links": []
+        },
+        {
+          "seed_description": "Target / Kohl's in Secaucus; evening at Harmon Meadow complex.",
+          "title": "Target / Kohl's in Secaucus; evening at Harmon Meadow",
+          "description": "Target / Kohl's in Secaucus; evening at the Harmon Meadow complex.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 180,
+          "location": "Secaucus, NJ",
+          "cost": "",
+          "tips": "",
+          "booking": "not_needed",
+          "links": []
+        },
+        {
+          "seed_description": "Laundry; pick up melatonin.",
+          "title": "Laundry & a melatonin run",
+          "description": "Laundry; pick up melatonin.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 90,
+          "location": "",
+          "cost": "",
+          "tips": "",
+          "booking": "not_needed",
+          "links": []
+        }
+      ]
+    },
+    {
+      "day": "14-15",
+      "source_id": "day14-15",
+      "items": [
+        {
+          "seed_description": "Arrive Newark Airport Rental Car Center (Waze: \"Newark Airport Rental Car Center\" / Station P3). Fuel up 5-10km before airport — airport/agency refueling pricier.",
+          "title": "Return the car: Newark Rental Car Center",
+          "description": "Arrive Newark Airport Rental Car Center (Waze: \"Newark Airport Rental Car Center\" / Station P3). Fuel up 5–10km before the airport (US-1/9 or I‑95) — airport/agency refueling is much pricier.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "11:30",
+          "duration_minutes": 45,
+          "location": "Newark Airport Rental Car Center (Station P3)",
+          "cost": "",
+          "tips": "Waze: 'Newark Airport Rental Car Center'. Fuel up 5–10 km before the airport on US-1/9 or I-95 — airport and agency refuelling cost far more.",
+          "booking": "not_needed",
+          "links": [
+            {
+              "label": "Newark Airport Rental Car Center",
+              "url": "https://www.newarkairport.com/to-from-airport/rental-cars",
+              "kind": "official"
+            }
+          ]
+        },
+        {
+          "seed_description": "Return car at Terminal A Parking Garage, then AirTrain (or shuttle) to Terminal A if departing from B/C.",
+          "title": "Terminal A garage → AirTrain to the terminal",
+          "description": "Return car at Terminal A Parking Garage, then AirTrain (or 5-min shuttle) to Terminal A if departing from B/C.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": null,
+          "duration_minutes": 30,
+          "location": "",
+          "cost": "",
+          "tips": "AirTrain (or the 5-min shuttle / 15-min walk) to Terminal A if departing from B or C.",
+          "booking": "not_needed",
+          "links": []
+        },
+        {
+          "seed_description": "Depart EWR, UA84.",
+          "title": "Depart Newark, UA84",
+          "description": "Depart EWR, UA84.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "15:25",
+          "duration_minutes": 660,
+          "location": "",
+          "cost": "",
+          "tips": "",
+          "booking": "booked",
+          "links": []
+        },
+        {
+          "seed_description": "Land Tel Aviv (TLV), Fri Oct 2.",
+          "title": "Land in Tel Aviv",
+          "description": "Land Tel Aviv (TLV), Fri Oct 2.",
+          "tag": "plan",
+          "time_label": "",
+          "fixed_start": "08:55",
+          "duration_minutes": 60,
+          "location": "",
+          "cost": "",
+          "tips": "",
+          "booking": "booked",
+          "links": []
+        }
+      ]
+    }
+  ]
+}
