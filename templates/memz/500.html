@@ -1,0 +1,10 @@
+{% extends "memz/base.html" %}{% load i18n %}
+{% block title %}{% trans "משהו נשבר" %} · memz{% endblock %}
+{% block screen %}500{% endblock %}
+{% block content %}
+<h1 class="memz-title">{% trans "משהו נשבר אצלנו." %}</h1>
+<p class="memz-lead">{% trans "לא אתם, אנחנו. נסו שוב עוד רגע." %}</p>
+<div class="memz-stack">
+  <a class="memz-btn memz-btn--primary" href="/memz/">{% trans "לדף הראשי" %}</a>
+</div>
+{% endblock %}

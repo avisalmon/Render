@@ -1,0 +1,26 @@
+{% extends "memz/base.html" %}{% load i18n %}
+{% block title %}{% trans "פותחים חשבון" %} · memz{% endblock %}
+{% block screen %}signup{% endblock %}
+{% block signin %}{% endblock %}
+{% block content %}
+<h1 class="memz-title">{% trans "פותחים חשבון" %}</h1>
+<p class="memz-lead">{% trans "אימייל וסיסמה, וזהו. בלי אישורים במייל, בלי המתנה." %}</p>
+
+<form method="post" class="memz-card memz-form" novalidate>
+  {% csrf_token %}
+  {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+  {% if form.non_field_errors %}<p class="memz-error" role="alert">{{ form.non_field_errors.0 }}</p>{% endif %}
+  {% for field in form %}
+  <label class="memz-field">
+    <span>{{ field.label }}</span>
+    {{ field }}
+    {% if field.errors %}<span class="memz-error">{{ field.errors.0 }}</span>{% endif %}
+  </label>
+  {% endfor %}
+  <button type="submit" class="memz-btn memz-btn--primary memz-btn--wide">{% trans "יאללה, פותחים" %}</button>
+</form>
+
+<div class="memz-stack memz-stack--after">
+  <a class="memz-btn memz-btn--secondary" href="{% url 'memz:login' %}{% if next %}?next={{ next|urlencode }}{% endif %}">{% trans "יש כבר חשבון? כניסה" %}</a>
+</div>
+{% endblock %}

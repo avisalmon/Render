@@ -1,0 +1,45 @@
+{% load static i18n memz_tags %}<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}memz{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;800&display=swap">
+  <link rel="stylesheet" href="{% static 'memz/memz.css' %}">
+  {% comment %}Installable to the home screen (spec Rule 11.5).{% endcomment %}
+  <link rel="manifest" href="{% static 'memz/manifest.webmanifest' %}">
+  <meta name="theme-color" content="#FFF6E9">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="memz">
+  <link rel="apple-touch-icon" href="{% static 'memz/icon-180.png' %}">
+  <link rel="icon" href="{% static 'memz/icon-192.png' %}">
+</head>
+<body class="memz" data-csrf="{{ csrf_token }}">
+<div class="memz-app">
+  <header class="memz-header">
+    <a class="memz-wordmark" href="{% url 'memz:home' %}">memz</a>
+    <div class="memz-account">
+      {% if user.is_authenticated %}
+        <span class="memz-account-name">{% memz_name user %}</span>
+        <form method="post" action="{% url 'memz:logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="memz-btn memz-btn--secondary memz-btn--small">{% trans "יציאה" %}</button>
+        </form>
+      {% else %}
+        {% block signin %}<a class="memz-btn memz-btn--secondary memz-btn--small" href="{% url 'memz:login' %}">{% trans "כניסה" %}</a>{% endblock %}
+      {% endif %}
+    </div>
+  </header>
+
+  <main class="memz-main" data-screen="{% block screen %}page{% endblock %}">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="memz-footer">{% block footer %}<span>memz</span>{% endblock %}</footer>
+</div>
+<script src="{% static 'memz/memz.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

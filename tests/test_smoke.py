@@ -29,6 +29,9 @@ pytestmark = pytest.mark.smoke
         "/matazim/login/",
         "/matazim/register/",
         "/matazim/test/",
+        "/memz/",  # the memz front door (docs/memz/spec.md §4.1)
+        "/memz/login/",
+        "/memz/signup/",
     ],
 )
 def test_the_page_serves(client, db, path):
@@ -53,6 +56,28 @@ def test_the_two_products_stay_sealed(client, db):
 
     matazim = client.get(reverse("matazim:home")).content.decode()
     assert "babook" not in matazim
+
+
+def test_memz_stays_sealed_too(client, db):
+    """The same seal, for the third product (docs/memz/spec.md §1, building_an_app.md Rule 3)."""
+    babook = client.get("/").content.decode()
+    assert "/memz" not in babook
+
+    memz = client.get("/memz/").content.decode()
+    assert "babook" not in memz.lower()
+    assert "/matazim" not in memz and "/ustrip" not in memz
+
+
+def test_every_memz_css_variable_is_defined():
+    """Same silent failure as the מט״צים check above, for memz's own stylesheet."""
+    import re
+    from pathlib import Path
+
+    css = Path("static/memz/memz.css").read_text(encoding="utf-8")
+    defined = set(re.findall(r"(--memz-[\w-]+)\s*:", css))
+    used = set(re.findall(r"var\(\s*(--memz-[\w-]+)", css))
+    missing = sorted(used - defined)
+    assert not missing, f"used in a rule but never defined, so the rule is dead: {missing}"
 
 
 def test_a_member_page_asks_for_our_login(client, db):

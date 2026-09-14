@@ -1,0 +1,21 @@
+{% extends "memz/base.html" %}{% load i18n %}
+{% block screen %}home{% endblock %}
+{% block content %}
+<section class="memz-hero">
+  <h1 class="memz-hero-title">{% trans "ממים עם חברים." %}</h1>
+  <p class="memz-hero-sub">{% trans "כולם מקבלים תמונה, כותבים את הכיתוב הכי מצחיק, ומצביעים. מי שצחקו עליו הכי הרבה, ניצח." %}</p>
+</section>
+
+<div class="memz-stack">
+  <a class="memz-btn memz-btn--primary memz-btn--big" href="{% url 'memz:new' %}">{% trans "פותחים משחק" %}</a>
+
+  <form class="memz-join" method="get" action="{% url 'memz:join' %}">
+    <label class="memz-visually-hidden" for="memz-code">{% trans "קוד החדר" %}</label>
+    <input id="memz-code" class="memz-input memz-input--code" name="code" placeholder="{% trans 'קוד' %}"
+           maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false">
+    <button class="memz-btn memz-btn--accent" type="submit">{% trans "מצטרפים" %}</button>
+  </form>
+
+  <a class="memz-btn memz-btn--secondary" href="{% url 'memz:create' %}">{% trans "רק ליצור מם" %}</a>
+</div>
+{% endblock %}

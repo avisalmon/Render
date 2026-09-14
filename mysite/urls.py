@@ -46,6 +46,8 @@ urlpatterns = [
     path("matazim/", include("matazim.urls", namespace="matazim")),
     # ustrip is its own product too (docs/ustrip/spec.md) — same reasoning.
     path("ustrip/", include("ustrip.urls", namespace="ustrip")),
+    # memz is its own product too (docs/memz/spec.md) — same reasoning.
+    path("memz/", include("memz.urls", namespace="memz")),
     path("", include("app.urls")),
 ]
 

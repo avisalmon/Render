@@ -1,0 +1,10 @@
+{% extends "memz/base.html" %}{% load i18n %}
+{% block title %}{% trans "לא כאן" %} · memz{% endblock %}
+{% block screen %}403{% endblock %}
+{% block content %}
+<h1 class="memz-title">{% trans "זה לא שלכם." %}</h1>
+<p class="memz-lead">{% trans "הדף הזה שייך למישהו אחר, או שצריך להיכנס קודם." %}</p>
+<div class="memz-stack">
+  <a class="memz-btn memz-btn--primary" href="{% url 'memz:home' %}">{% trans "לדף הראשי" %}</a>
+</div>
+{% endblock %}

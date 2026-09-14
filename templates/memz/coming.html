@@ -1,0 +1,14 @@
+{% extends "memz/base.html" %}{% load i18n %}
+{% comment %}SPR-Z.1 only (backlog F-Z.1.5). Replaced by the real screens in SPR-Z.2 and SPR-Z.3.{% endcomment %}
+{% block title %}{% trans "בקרוב" %} · memz{% endblock %}
+{% block screen %}coming{% endblock %}
+{% block content %}
+<h1 class="memz-title">{% trans "המשחק בדרך." %}</h1>
+<p class="memz-lead">{% trans "החדרים, הקודים, הסבבים וההצבעות נבנים ממש עכשיו. בינתיים אפשר לפתוח חשבון, כדי שביום שזה עולה, התמונות שלכם כבר יחכו כאן." %}</p>
+<div class="memz-stack">
+  {% if not user.is_authenticated %}
+  <a class="memz-btn memz-btn--primary" href="{% url 'memz:signup' %}">{% trans "פותחים חשבון" %}</a>
+  {% endif %}
+  <a class="memz-btn memz-btn--secondary" href="{% url 'memz:home' %}">{% trans "חזרה" %}</a>
+</div>
+{% endblock %}
