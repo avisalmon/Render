@@ -60,7 +60,7 @@
 
   <section class="mz-panel">
     <h2>
-      ההדרכות שלי
+      הפרקטיקום שלי
       <span class="mz-count">{{ summary.done }}/{{ summary.total }}</span>
     </h2>
     <ul class="mz-training">
@@ -127,6 +127,29 @@
         </span>
       </li>
     </ul>
+  </section>
+
+  {% comment %}
+    REQ-M.32 — the teaching, on the screen they already open. A total that only
+    shows on a page you have to remember to visit is a total nobody sees, and
+    this one is the thing the whole programme is for.
+  {% endcomment %}
+  <section class="mz-panel">
+    <h2>הפרקטיקום שלי</h2>
+    {% if teaching.sessions %}
+      <ul class="mz-figures">
+        <li><strong>{{ teaching.sessions }}</strong><span>מפגשים</span></li>
+        <li><strong>{{ teaching.hours }}</strong><span>שעות</span></li>
+        <li><strong>{{ teaching.learners }}</strong><span>תלמידים</span></li>
+      </ul>
+    {% else %}
+      <p class="mz-muted">
+        אחרי כל מפגש שתעבירו, כתבו כאן מה היה. זה השלב שבו הידע הופך להשפעה.
+      </p>
+    {% endif %}
+    <a class="mz-linkbtn" href="{% url 'matazim:my_teaching' %}">
+      {% if teaching.sessions %}כל המפגשים{% else %}תיעוד מפגש{% endif %}
+    </a>
   </section>
 
   {% if next_events %}

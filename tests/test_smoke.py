@@ -211,3 +211,29 @@ def test_a_babook_test_never_holds_a_live_key():
     assert settings.OPENAI_API_KEY == "", (
         "a test outside tests/test_spr_m_*.py was handed a live API key"
     )
+
+
+def test_the_dashboard_is_current():
+    """REQ-M.141 — a generated page that nobody regenerated is a stale page.
+
+    `docs/matazim/dashboard.html` is built from the spec and the backlog by
+    `manage.py matazim_dashboard`. The whole reason it is generated rather than
+    hand-written is that a third copy of a truth already living in two places
+    goes wrong in the copy nobody is looking at. That only holds if something
+    fails when the copy drifts, which is this.
+
+    If this fails: run `python manage.py matazim_dashboard` and commit the file.
+    """
+    import io as _io
+
+    from django.core.management import call_command
+
+    out = _io.StringIO()
+    err = _io.StringIO()
+    try:
+        call_command("matazim_dashboard", check=True, stdout=out, stderr=err)
+    except SystemExit:
+        raise AssertionError(
+            "docs/matazim/dashboard.html is stale. "
+            "Run: python manage.py matazim_dashboard"
+        ) from None

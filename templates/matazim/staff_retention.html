@@ -60,6 +60,41 @@
     {% endif %}
   </section>
 
+  {% comment %}
+    REQ-M.113 — the improvement loop's own rows, on the same screen and behind
+    the same person as everything else that deletes. A second deletion
+    mechanism somewhere else is a second thing to forget about.
+
+    Two years after a request is closed, never from when it was filed: an
+    unanswered question is not stale data, so an open request is never due
+    however old it is.
+  {% endcomment %}
+  <section class="mz-panel">
+    <h2>בקשות סגורות</h2>
+    <p class="mz-muted">
+      בקשה שנסגרה נמחקת אחרי {{ request_days }} ימים. בקשה שעדיין פתוחה לא
+      נמחקת, בלי קשר לגיל שלה.
+    </p>
+    {% if due_requests %}
+      <p><strong>{{ due_requests|length }}</strong> בקשות עברו את התקופה.</p>
+      <ul class="mz-history">
+        {% for row in due_requests %}
+          <li>
+            <span class="mz-history-when">{{ row.decided_at|date:"j.n.Y" }}</span>
+            <span class="mz-history-what">{{ row.body|truncatewords:12 }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="purge_requests">
+        <button type="submit" class="mz-btn mz-btn-primary">אישור מחיקה</button>
+      </form>
+    {% else %}
+      <p class="mz-muted">אין בקשות שעברו את התקופה.</p>
+    {% endif %}
+  </section>
+
   <section class="mz-panel">
     <h2>ההיסטוריה</h2>
     {% comment %}

@@ -107,6 +107,20 @@ def roster(request):
     )
 
 
+def _teaching_for(person):
+    """REQ-M.32 — their practicum, totalled and listed, for their leader.
+
+    The same `summary_for` the member's own screen uses, so the two cannot show
+    different numbers about the same year.
+    """
+    from .teaching_views import summary_for
+
+    return {
+        "totals": summary_for(person),
+        "sessions": list(person.teaching.all()[:12]),
+    }
+
+
 @login_required(login_url=LOGIN_URL)
 def student(request, student_id):
     """REQ-M.23 — one person, in as much detail as a leader needs.
@@ -161,6 +175,11 @@ def student(request, student_id):
             # answers nobody's question, and the person most likely to be asked
             # is whoever is looking at this page.
             history=person.history.select_related("changed_by", "changed_by__profile")[:20],
+            # REQ-M.32 — the teaching, for the person who signs the
+            # certificate. A leader who can approve work and certify somebody
+            # should be able to see the thing being certified, and the two
+            # reflection lines are what there is to talk about.
+            teaching=_teaching_for(person),
             my_classes=StudyClass.objects.filter(leader=leader) if leader else [],
             chosen=set(person.classes.values_list("pk", flat=True)),
         ),

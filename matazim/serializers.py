@@ -45,6 +45,7 @@ from .models import (
     Student,
     StudyClass,
     Submission,
+    TeachingSession,
 )
 
 
@@ -338,3 +339,29 @@ class RequestMessageSerializer(serializers.ModelSerializer):
         model = RequestMessage
         fields = ["id", "request", "who", "body", "created_at"]
         read_only_fields = ["id", "who", "created_at"]
+
+
+class TeachingSessionSerializer(serializers.ModelSerializer):
+    """REQ-M.32 — פרקטיקום.
+
+    `learners` is an integer and there is no field beside it that a name could
+    go into, which is REQ-M.29 expressed as a schema rather than as a rule
+    somebody remembers. `place`, `went_well` and `was_hard` are prose and are
+    the one place that rule can still be broken; the form says so, and no
+    serializer can check it.
+    """
+
+    is_cancelled = serializers.BooleanField(read_only=True)
+    is_planned = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = TeachingSession
+        fields = [
+            "id", "student", "title", "happened_on", "minutes", "learners",
+            "place", "went_well", "was_hard", "is_cancelled", "is_planned",
+            "cancelled_at", "created_at",
+        ]
+        # `cancelled_at` is read-only: a session that did not happen is marked
+        # through the action, so "cancelled" is always something somebody did
+        # rather than a date that appeared.
+        read_only_fields = ["id", "student", "cancelled_at", "created_at"]

@@ -1088,6 +1088,13 @@ class Event(models.Model):
     )
     cancelled_at = models.DateTimeField(null=True, blank=True, verbose_name="בוטל")
 
+    # REQ-M.34 — the guard on the reminder job, and deliberately a stamp on the
+    # row rather than a window the job recalculates. A job that runs twice, or a
+    # deploy that shifts the schedule, must not ring the same bell again: a
+    # member told twice about one day stops reading the bell, and the bell is
+    # how they hear about everything else.
+    reminded_at = models.DateTimeField(null=True, blank=True, verbose_name="נשלחה תזכורת")
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -1176,3 +1183,77 @@ class Post(models.Model):
     @property
     def is_hidden(self):
         return self.hidden_at is not None
+
+
+class TeachingSession(models.Model):
+    """REQ-M.32 — פרקטיקום: the מט״צ actually standing in front of a class.
+
+    The thing the whole programme exists to produce, and the last stage that had
+    no model. Everything around it was tracked and it was not: a leader could
+    read a roster, approve work and certify somebody without ever seeing what
+    that teenager had taught.
+
+    **Counts, never names** (REQ-M.29). The hardest constraint here, and the one
+    that shapes the model. The children being taught are not users, not members
+    and not rows, so a session records how many were there and nothing about who
+    they were. `learners` is an integer for that reason and there is deliberately
+    no field it could be written into instead.
+
+    `place` is free text and is therefore the one field where a fourteen-year-old
+    could type a child's name by accident. The form says not to, the same way the
+    request box does (§4.11), and the guard test that walks this app's schema
+    cannot catch prose. That residual risk is recorded rather than pretended
+    away.
+
+    **Declared, not verified.** A מט״צ writes down what they ran. Nobody
+    counter-signs it and no attendance is taken, because verification would mean
+    a record about the children. Their leader can read it and talk to them about
+    it, which is the mechanism this programme actually runs on.
+
+    **Cancelled rather than deleted**, like an event and a post, for a session
+    that was planned and did not happen: the fact that it was planned and fell
+    through is worth more to a leader than a gap.
+    """
+
+    student = models.ForeignKey(
+        Student, on_delete=models.CASCADE, related_name="teaching",
+        verbose_name="מט״צ",
+    )
+
+    title = models.CharField(max_length=160, verbose_name="מה לימדתם")
+    happened_on = models.DateField(db_index=True, verbose_name="מתי")
+    minutes = models.PositiveIntegerField(default=45, verbose_name="כמה זמן")
+    # A count. Never a name, never a list, never a link to a person.
+    learners = models.PositiveIntegerField(default=0, verbose_name="כמה תלמידים")
+    place = models.CharField(
+        max_length=200, blank=True, default="", verbose_name="איפה"
+    )
+
+    # The two questions worth asking a teenager who just taught, and the reason
+    # this is a reflection rather than a timesheet. A leader reading "ניסיתי
+    # להסביר לולאות ואיבדתי אותם" has something to talk about; a leader reading
+    # "45 דקות, 12 תלמידים" has a number.
+    went_well = models.TextField(blank=True, default="", verbose_name="מה עבד")
+    was_hard = models.TextField(blank=True, default="", verbose_name="מה היה קשה")
+
+    cancelled_at = models.DateTimeField(null=True, blank=True, verbose_name="בוטל")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-happened_on", "-created_at"]
+        verbose_name = "מפגש הדרכה"
+        verbose_name_plural = "פרקטיקום"
+
+    def __str__(self):
+        return f"{self.title} · {self.happened_on:%d.%m.%Y}"
+
+    @property
+    def is_cancelled(self):
+        return self.cancelled_at is not None
+
+    @property
+    def is_planned(self):
+        """Ahead of today. Not a second status field: the date already says it."""
+        from django.utils import timezone
+
+        return self.happened_on > timezone.localdate()

@@ -2232,6 +2232,120 @@ command that cannot tell the perturbation from the work.
 REQ-M.141, the dashboard, is Rule 4's third item and is not built. Recorded as
 TODO rather than quietly dropped.
 
+## SPR-M.35 — פרקטיקום, the teaching itself  `DONE 2026-09-14`
+
+**Goal:** REQ-M.32, the stage the whole programme exists to produce and the last
+one with no model behind it. Before this a leader could read a roster, approve
+work and sign a certificate without ever seeing what that teenager had taught.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.35.1 | `TeachingSession`, counts and never names | REQ-M.32, REQ-M.29 | DONE |
+| F-M.35.2 | הפרקטיקום שלי: log a session, see the year | REQ-M.32 | DONE |
+| F-M.35.3 | The totals on המסלול שלי | REQ-M.32 | DONE |
+| F-M.35.4 | The sessions on the leader's page for that student | REQ-M.23, REQ-M.32 | DONE |
+| F-M.35.5 | `visible_sessions` and a DRF viewset | REQ-M.139, Rule 6 | DONE |
+
+### The constraint that shaped it
+
+REQ-M.29 says nothing here creates, stores or infers a record about one of the
+children a מט״צ teaches. This is the first model in the app where somebody
+would reasonably expect otherwise, because it is literally about a class of
+ten-year-olds. So `learners` is an integer, there is no field beside it a name
+could go into, and the only relation on the whole model is to the מט״צ who ran
+it. A test asserts all three, and it fails on a `pupils` text field being added.
+
+The honest limit: `place`, `went_well` and `was_hard` are prose, and no schema
+can stop a fourteen-year-old typing a name into prose. The form says so twice,
+the same approach §4.11 takes with the request box, and the residual risk is
+recorded rather than pretended away.
+
+### Two decisions worth stating
+
+**Declared, not verified.** Nobody counter-signs a session and no attendance is
+taken, because verification would mean a record about the children. Their leader
+reads it and talks to them about it, which is the mechanism this programme
+actually runs on.
+
+**Not added to the certification gate.** REQ-M.78's two automatic conditions are
+unchanged. Adding a third would refuse every certification currently in flight,
+and that is Avi's call rather than a side effect of building a model. The
+practicum shows on the leader's page beside the eligibility panel, which is
+where the conversation would happen anyway.
+
+### A naming collision caught before it shipped
+
+The screen was called ההדרכות שלי until it was read next to the nav, where
+ההדרכות is this site's word for courses (the standing brand rule: הדרכות,
+never קורסים). Two menu items one word apart meaning different things is the
+kind of thing that reads fine to whoever wrote it. Now הפרקטיקום שלי.
+
+### Rules verified by writing the defect
+
+Dropping tenancy from `visible_sessions` showed one leader another's students.
+Adding a `pupils` text field produced *a session records a child: {'pupils'}*.
+Counting cancelled sessions in the totals produced *assert 3 == 2*.
+
+## SPR-M.36 — Reminders, and how long a request lives  `DONE 2026-09-14`
+
+**Goal:** the two decisions that had been sitting with Avi. He said "continue
+with all of these", so both were taken, and the reasoning is written down rather
+than left to be re-argued.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.36.1 | `matazim/reminders.py`, once per event, aimed like the event | REQ-M.34, REQ-M.27 | DONE |
+| F-M.36.2 | `matazim_remind`, rehearsable, and a token endpoint | REQ-M.34 | DONE |
+| F-M.36.3 | A daily GitHub Action firing it | REQ-M.34 | DONE |
+| F-M.36.4 | `REQUEST_DAYS`, and the purge on the retention screen | REQ-M.113, REQ-M.86 | DONE |
+| F-M.36.5 | A generated dashboard, guarded against going stale | REQ-M.141, Rule 4 | DONE |
+
+### The decision about unattended jobs
+
+REQ-M.87 reads "the machine proposes, a person decides", and it looked like it
+forbade this. Reading it closely is the whole answer: it was written about
+**deletion**, because deletion is the one action in this product where a bug is
+irreversible. A purge that runs wrong at 04:00 has destroyed a teenager's work
+by the time anybody reads the log.
+
+A reminder is the opposite shape. It creates nothing a person did not already
+decide, destroys nothing, and its worst failure is a duplicate bell. So
+reminders run on a timer and purges still do not, and those are two different
+shapes rather than one rule applied inconsistently.
+
+`Event.reminded_at` is the guard, and it is a stamp on the row rather than a
+window calculation on purpose: a job that runs twice, or a deploy that shifts
+the schedule, must not ring the same bell again. A member told twice about one
+day stops reading the bell, and the bell is how they hear about everything else.
+The stamp is written *after* the sending, so a crash halfway leaves the event
+unstamped and the next run finishes it. The cost is a possible duplicate for
+those already told, which is the right way round.
+
+### The number on a request row
+
+730 days, from when a request is **closed** rather than from when it was filed.
+An unanswered question is not stale data: a request nobody decided on, left for
+three years, is a reproach rather than something to tidy away. Two years because
+the log is also the record of why this product is shaped the way it is, and
+somebody asking "why does the roster work like that" eighteen months later
+should find the answer rather than a gap.
+
+Approved on the same screen and by the same person as every other deletion here,
+because a second deletion mechanism somewhere else is a second thing to forget.
+
+### The dashboard is generated
+
+A dashboard somebody maintains by hand is a third copy of a truth that already
+lives in two places, and the copy nobody is looking at is the one that goes
+wrong. `manage.py matazim_dashboard` renders it from the spec and the backlog,
+and a smoke test regenerates and compares so drift fails the suite.
+
+### Rules verified by writing the defect
+
+Removing the `reminded_at` stamp produced *somebody was told the same thing
+twice*. Replacing the audience query with every student produced *somebody was
+reminded about a day they are not invited to*.
+
 ## Also still open
 
 - Retire the old production tables, once ACT-M.2 is answered.

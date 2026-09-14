@@ -2206,3 +2206,52 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
 @media (min-width: 700px) {
   .mz-me-name { max-width: 18ch; }
 }
+
+/* ------------------------------------------- פרקטיקום (REQ-M.32) */
+
+/* The totals. Three numbers a fourteen-year-old should be able to read as an
+   achievement rather than a report, so the figure leads and the label follows
+   underneath it, small. */
+.mz-figures {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+.mz-figures li {
+  flex: 1 1 7rem;
+  padding: 12px 14px;
+  border-radius: var(--mz-radius-sm);
+  background: var(--mz-teal-soft);
+  text-align: center;
+}
+.mz-figures strong {
+  display: block;
+  font-size: 1.7rem;
+  line-height: 1.1;
+  color: var(--mz-teal-text);
+}
+.mz-figures span { font-size: .82rem; color: var(--mz-body); }
+
+.mz-sessions { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+
+.mz-session {
+  padding: 14px;
+  border: 1px solid var(--mz-line);
+  border-radius: var(--mz-radius-sm);
+  background: var(--mz-card);
+}
+/* A session that did not happen keeps its row and stops counting, so it has to
+   read as present-but-spent rather than as an error. */
+.mz-session.is-off { opacity: .62; border-style: dashed; }
+
+.mz-session-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.mz-session-head h3 { margin: 0 0 2px; font-size: 1.05rem; color: var(--mz-ink); }
+.mz-session p { margin: 0 0 4px; overflow-wrap: anywhere; }

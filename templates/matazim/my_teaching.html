@@ -1,0 +1,157 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.32 — פרקטיקום, the מט״צ's own record of what they taught.
+
+  The two reflection questions are the point of the screen, not decoration. A
+  leader reading "ניסיתי להסביר לולאות ואיבדתי אותם" has something to talk
+  about; a leader reading "45 דקות, 12 תלמידים" has a number.
+
+  The learners field is a count and the form says why, because this is the one
+  screen in the product where somebody might reasonably expect to type a child's
+  name and REQ-M.29 says no record here is about a child.
+{% endcomment %}
+
+{% block title %}הפרקטיקום שלי · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page mz-page-narrow">
+  <div class="mz-page-head">
+    <h1>הפרקטיקום שלי</h1>
+    <p>מה העברתם, מתי, ואיך זה הלך. זה השלב שבו הידע הופך להשפעה.</p>
+  </div>
+
+  {% if not student %}
+    <section class="mz-panel">
+      <h2>זה נפתח כשמצטרפים למוביל/ה</h2>
+      <p class="mz-muted">
+        הפרקטיקום הוא השלב שבו מדריכים קבוצה של תלמידים צעירים יותר. כשתהיו
+        רשומים אצל מוביל/ה בבית הספר, תוכלו לתעד כאן כל מפגש.
+      </p>
+      <div class="mz-page-actions">
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:my_path' %}">המסלול שלי</a>
+      </div>
+    </section>
+  {% else %}
+
+    {% if totals.sessions %}
+      <section class="mz-panel mz-panel-wide">
+        <h2>עד כה</h2>
+        <ul class="mz-figures">
+          <li><strong>{{ totals.sessions }}</strong><span>מפגשים</span></li>
+          <li><strong>{{ totals.hours }}</strong><span>שעות הדרכה</span></li>
+          <li><strong>{{ totals.learners }}</strong><span>תלמידים שלימדתם</span></li>
+          {% if totals.planned %}
+            <li><strong>{{ totals.planned }}</strong><span>מתוכננים</span></li>
+          {% endif %}
+        </ul>
+      </section>
+    {% endif %}
+
+    {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
+
+    <section class="mz-panel">
+      <h2>מפגש חדש</h2>
+      <form method="post">
+        {% csrf_token %}
+
+        <label class="mz-field">
+          <span>מה לימדתם</span>
+          <input type="text" name="title" maxlength="160" required
+                 value="{{ posted.title|default:'' }}"
+                 placeholder="למשל: לולאות בסקראץ׳">
+        </label>
+
+        <label class="mz-field">
+          <span>מתי</span>
+          <input type="date" name="happened_on" required dir="ltr"
+                 value="{{ posted.happened_on|default:today }}">
+          <small>אפשר גם תאריך עתידי, למפגש שתכננתם.</small>
+        </label>
+
+        <label class="mz-field">
+          <span>כמה דקות</span>
+          <input type="number" name="minutes" min="0" max="600" dir="ltr"
+                 value="{{ posted.minutes|default:'45' }}">
+        </label>
+
+        <label class="mz-field">
+          <span>כמה תלמידים היו</span>
+          <input type="number" name="learners" min="0" max="500" dir="ltr"
+                 value="{{ posted.learners|default:'' }}">
+          <small>מספר בלבד. אנחנו לא שומרים שום דבר על התלמידים שאתם מלמדים.</small>
+        </label>
+
+        <label class="mz-field">
+          <span>איפה</span>
+          <input type="text" name="place" maxlength="200"
+                 value="{{ posted.place|default:'' }}"
+                 placeholder="למשל: כיתה ד׳2, עתיד רמלה">
+          <small>בלי שמות של תלמידים, גם כאן.</small>
+        </label>
+
+        <label class="mz-field">
+          <span>מה עבד</span>
+          <textarea name="went_well" rows="2"
+                    placeholder="מה הצליח, מה הם אהבו.">{{ posted.went_well|default:'' }}</textarea>
+        </label>
+
+        <label class="mz-field">
+          <span>מה היה קשה</span>
+          <textarea name="was_hard" rows="2"
+                    placeholder="מה לא עבד, מה תעשו אחרת. המוביל/ה שלכם קורא/ת את זה.">{{ posted.was_hard|default:'' }}</textarea>
+        </label>
+
+        <div class="mz-page-actions">
+          <button type="submit" class="mz-btn mz-btn-primary">שמירת המפגש</button>
+        </div>
+      </form>
+    </section>
+
+    {% if sessions %}
+      <section class="mz-panel mz-panel-wide">
+        <h2>מה העברתם <span class="mz-count">{{ sessions|length }}</span></h2>
+        <ul class="mz-sessions">
+          {% for session in sessions %}
+            <li class="mz-session{% if session.is_cancelled %} is-off{% endif %}">
+              <div class="mz-session-head">
+                <h3>{{ session.title }}</h3>
+                {% if session.is_cancelled %}
+                  <span class="mz-tag mz-tag-idle">בוטל</span>
+                {% elif session.is_planned %}
+                  <span class="mz-tag mz-tag-doing">מתוכנן</span>
+                {% endif %}
+              </div>
+              <p class="mz-muted">
+                {{ session.happened_on|date:"j בF Y" }}
+                {% if session.place %} · {{ session.place }}{% endif %}
+                {% if session.learners %} · {{ session.learners }} תלמידים{% endif %}
+                {% if session.minutes %} · {{ session.minutes }} דקות{% endif %}
+              </p>
+              {% if session.went_well %}<p><strong>עבד:</strong> {{ session.went_well }}</p>{% endif %}
+              {% if session.was_hard %}<p><strong>היה קשה:</strong> {{ session.was_hard }}</p>{% endif %}
+
+              {% if not session.is_cancelled %}
+                <form method="post" action="{% url 'matazim:cancel_session' session.pk %}"
+                      class="mz-inline-form">
+                  {% csrf_token %}
+                  <button type="submit" class="mz-linkbtn">לא התקיים</button>
+                </form>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% else %}
+      <section class="mz-panel">
+        <h2>עוד לא תיעדתם מפגש</h2>
+        <p class="mz-muted">
+          אחרי כל מפגש שאתם מעבירים, כתבו כאן מה היה. זה לוקח דקה, וזה מה
+          שהמוביל/ה שלכם רואה כשהוא/היא מלווה אתכם לאורך השנה.
+        </p>
+      </section>
+    {% endif %}
+
+  {% endif %}
+</div>
+{% endblock %}

@@ -52,6 +52,7 @@ from .models import (
     Student,
     StudyClass,
     Submission,
+    TeachingSession,
 )
 from .serializers import (
     ApplicationSerializer,
@@ -72,6 +73,7 @@ from .serializers import (
     StudentSerializer,
     StudyClassSerializer,
     SubmissionSerializer,
+    TeachingSessionSerializer,
 )
 
 # --------------------------------------------------------------- foundations
@@ -684,6 +686,51 @@ class PostViewSet(Scoped):
         return Response(PostSerializer(post).data)
 
 
+class TeachingSessionViewSet(Scoped):
+    """REQ-M.32 — פרקטיקום, the stage the whole programme exists to produce.
+
+    A member writes their own and nobody else's; their leader reads it because
+    a leader who approves work and signs a certificate should be able to see
+    the teaching being certified. Editing is real CRUD and deliberate: this is
+    a teenager's own account of their own year, and getting the number of
+    learners wrong should be fixable without asking anybody.
+
+    `cancel` rather than a `cancelled_at` a client can set, so a session that
+    did not happen is always something somebody marked.
+    """
+
+    serializer_class = TeachingSessionSerializer
+    scope = staticmethod(access.visible_sessions)
+
+    def perform_create(self, serializer):
+        student = Student.objects.filter(user=self.request.user).first()
+        if student is None:
+            raise PermissionDenied("הפרקטיקום נפתח כשמצטרפים למוביל/ה.")
+        serializer.save(student=student)
+
+    def _mine_or_refuse(self, instance):
+        if instance.student.user_id != self.request.user.id:
+            raise PermissionDenied("זה התיעוד של מישהו אחר.")
+
+    def perform_update(self, serializer):
+        self._mine_or_refuse(serializer.instance)
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        self._mine_or_refuse(instance)
+        instance.delete()
+
+    @action(detail=True, methods=["post"])
+    def cancel(self, request, pk=None):
+        """It was planned and did not happen. The row stays and stops counting."""
+        session = self.get_object()
+        self._mine_or_refuse(session)
+        if session.cancelled_at is None:
+            session.cancelled_at = timezone.now()
+            session.save(update_fields=["cancelled_at"])
+        return Response(TeachingSessionSerializer(session).data)
+
+
 # ------------------------------------------------------- the improvement loop
 
 
@@ -783,4 +830,5 @@ ROUTES = [
     ("posts", PostViewSet, Post),
     ("requests", RequestViewSet, Request),
     ("request-messages", RequestMessageViewSet, RequestMessage),
+    ("teaching", TeachingSessionViewSet, TeachingSession),
 ]

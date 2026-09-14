@@ -131,6 +131,7 @@ def build_world(
     work=False,
     events=False,
     posts=False,
+    teaching=False,
 ):
     """One institution, dialled to the state under test.
 
@@ -153,6 +154,7 @@ def build_world(
 
     courses = _courses()
     now = timezone.now()
+    today = timezone.localdate()
 
     # Real ids from the shipped bank, so the drawing and the model on the task
     # screen resolve to files that exist. Without these rows both the task and
@@ -479,6 +481,27 @@ def build_world(
             for_everyone=True,
         )
 
+    # REQ-M.32 — a practicum with something in it, including one that did not
+    # happen and one still ahead, because those are the two states the list
+    # renders differently and neither occurs in a hand-written fixture.
+    if teaching and students == "mixed":
+        from matazim.models import TeachingSession
+
+        who = people["mid@example.com"]
+        TeachingSession.objects.create(
+            student=who, title="לולאות בסקראץ׳", happened_on=today - timezone.timedelta(days=7),
+            minutes=45, learners=12, place="כיתה ד׳2, עתיד רמלה",
+            went_well="הם בנו משחק בעצמם", was_hard="איבדתי אותם בעשר הדקות הראשונות",
+        )
+        TeachingSession.objects.create(
+            student=who, title="מה זה אלגוריתם", happened_on=today + timezone.timedelta(days=6),
+            minutes=45, learners=12,
+        )
+        TeachingSession.objects.create(
+            student=who, title="רובוטיקה", happened_on=today - timezone.timedelta(days=2),
+            minutes=45, learners=8, cancelled_at=now,
+        )
+
     # REQ-M.26 — a feed with something in it. Three kinds of row, plus one
     # taken down, because a hidden post is a state no fixture would create by
     # hand and it is the one that renders differently.
@@ -688,6 +711,10 @@ SCREENS = [
     ("community/member-empty", "/matazim/community/", "mid@example.com", dict(students="mixed")),
     ("community/staff", "/matazim/community/", "pm@example.com", dict(students="mixed", posts=True)),
     ("community/with-work", "/matazim/community/", "mid@example.com", dict(students="mixed", work=True, posts=True)),
+    # REQ-M.32 — פרקטיקום, in its three states.
+    ("teaching/mine", "/matazim/my-teaching/", "mid@example.com", dict(students="mixed", teaching=True)),
+    ("teaching/empty", "/matazim/my-teaching/", "mid@example.com", dict(students="mixed")),
+    ("teaching/no-leader", "/matazim/my-teaching/", "unattached@example.com", dict(students="mixed")),
     (
         "work/review",
         lambda w: f"/matazim/work/{w['work'].pk}/",

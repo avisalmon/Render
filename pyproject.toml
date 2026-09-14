@@ -48,6 +48,8 @@ markers = [
     "sprm32: SPR-M.32 מט״צים קהילת מט״צים, the feed inside the walls",
     "sprm33: SPR-M.33 מט״צים four things Avi found by using the site",
     "sprm34: SPR-M.34 מט״צים the methodology retrofit: a REST API over every model",
+    "sprm35: SPR-M.35 מט״צים פרקטיקום, the teaching itself",
+    "sprm36: SPR-M.36 מט״צים reminders, and how long a request lives",
     "screens: the screen contract - every מט״צים screen, in every state, rendered",
     "sprmobile: real-browser phone checks for מט״צים (tests/test_matazim_mobile.py)",
     "smoke: the fast gate, run on every push (see tests/test_smoke.py)",

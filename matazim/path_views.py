@@ -123,6 +123,19 @@ def _next_step(profile, student, state, per_course):
     }
 
 
+def _teaching(student):
+    """REQ-M.32 — what their practicum adds up to, or None before they join.
+
+    Read through `teaching_views.summary_for` rather than counted here, so the
+    figure on this panel and the figure on ההדרכות שלי cannot disagree.
+    """
+    if student is None:
+        return None
+    from .teaching_views import summary_for
+
+    return summary_for(student)
+
+
 def _next_events(user):
     from .event_views import upcoming_for
 
@@ -211,6 +224,8 @@ def my_path(request):
             # REQ-M.130 — a calendar somebody has to remember to visit tells
             # nobody anything, so the next thing comes to them.
             next_events=_next_events(request.user),
+            # REQ-M.32 — the teaching, counted, on the screen they open.
+            teaching=_teaching(student),
             work_waiting=_work_state(student, "waiting"),
             work_answered=_work_state(student, "answered"),
             leader_name=_leader_name(student.leader) if student else "",

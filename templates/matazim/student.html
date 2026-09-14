@@ -137,6 +137,53 @@
     when somebody is asked a question about a teenager they cannot answer from
     memory, which is exactly when "we do not know" is the wrong answer.
   {% endcomment %}
+  {% comment %}
+    REQ-M.32 — the practicum, for the person who signs the certificate.
+
+    The two reflection lines are why this panel is worth the space. A leader
+    reading "ניסיתי להסביר לולאות ואיבדתי אותם" has something to talk about at
+    the next meeting; a leader reading a count of sessions has a number.
+  {% endcomment %}
+  <section class="mz-panel mz-panel-wide">
+    <h2>פרקטיקום</h2>
+    {% if teaching.totals.sessions %}
+      <ul class="mz-figures">
+        <li><strong>{{ teaching.totals.sessions }}</strong><span>מפגשים</span></li>
+        <li><strong>{{ teaching.totals.hours }}</strong><span>שעות</span></li>
+        <li><strong>{{ teaching.totals.learners }}</strong><span>תלמידים</span></li>
+      </ul>
+    {% endif %}
+
+    {% if teaching.sessions %}
+      <ul class="mz-sessions">
+        {% for session in teaching.sessions %}
+          <li class="mz-session{% if session.is_cancelled %} is-off{% endif %}">
+            <div class="mz-session-head">
+              <h3>{{ session.title }}</h3>
+              {% if session.is_cancelled %}
+                <span class="mz-tag mz-tag-idle">לא התקיים</span>
+              {% elif session.is_planned %}
+                <span class="mz-tag mz-tag-doing">מתוכנן</span>
+              {% endif %}
+            </div>
+            <p class="mz-muted">
+              {{ session.happened_on|date:"j בF Y" }}
+              {% if session.place %} · {{ session.place }}{% endif %}
+              {% if session.learners %} · {{ session.learners }} תלמידים{% endif %}
+            </p>
+            {% if session.went_well %}<p><strong>עבד:</strong> {{ session.went_well }}</p>{% endif %}
+            {% if session.was_hard %}<p><strong>היה קשה:</strong> {{ session.was_hard }}</p>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="mz-muted">
+        עוד לא תועד מפגש הדרכה. זה השלב שהכי קשה ללמד מספר, ושווה לשאול עליו
+        במפגש הבא.
+      </p>
+    {% endif %}
+  </section>
+
   {% if history %}
     <section class="mz-panel">
       <h2>היסטוריה</h2>

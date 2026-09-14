@@ -1,0 +1,35 @@
+name: Daily מט״צים reminders
+
+# REQ-M.34 — tells members an event is tomorrow. The send runs inside the live
+# web service (it needs the SQLite persistent disk); this job only fires the
+# request and turns red if it fails. Reuses BACKUP_TRIGGER_TOKEN.
+#
+# Why this is allowed to run with nobody watching, when the retention purge is
+# not: see matazim/reminders.py. REQ-M.87's rule is about destruction, and a
+# reminder creates nothing a person did not already decide.
+#
+# 15:00 UTC is early evening in Israel, which is when being told about tomorrow
+# is worth something. The reminder window is 36 hours, wider than the daily
+# interval, so an event cannot fall between two runs and be announced by nobody.
+
+on:
+  schedule:
+    - cron: "0 15 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST matazim remind
+        env:
+          MATAZIM_TOKEN: ${{ secrets.BACKUP_TRIGGER_TOKEN }}
+        run: |
+          code=$(curl -sS --max-time 120 -o /tmp/remind.json -w "%{http_code}" \
+            -X POST "https://babook.co.il/matazim/internal/remind/" \
+            -H "X-Matazim-Token: $MATAZIM_TOKEN")
+          echo "HTTP $code"
+          echo "----- response -----"
+          cat /tmp/remind.json || true
+          echo
+          test "$code" = "200"

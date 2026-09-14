@@ -16,6 +16,7 @@ from . import (
     conversation_views,
     entrance_views,
     event_views,
+    internal_views,
     invite_views,
     joining_views,
     learn_views,
@@ -25,6 +26,7 @@ from . import (
     rights_views,
     roster_views,
     submission_views,
+    teaching_views,
     views,
 )
 
@@ -48,6 +50,9 @@ urlpatterns = [
     path("calendar/", event_views.calendar, name="calendar"),
     path("staff/events/", event_views.staff_events, name="staff_events"),
     path("staff/events/<int:event_id>/cancel/", event_views.cancel_event, name="cancel_event"),
+    # REQ-M.34 — the one machine-triggered endpoint here. A token, a POST,
+    # and it can only send reminders.
+    path("internal/remind/", internal_views.run_reminders, name="run_reminders"),
     # מבחן הכניסה is public: the link gets pasted around, and signing up
     # happens around the test rather than before it (REQ-M.5d).
     path("test/", views.entrance_test, name="entrance_test"),
@@ -143,6 +148,9 @@ urlpatterns = [
     path("notices/clear/", notice_views.clear_notices, name="clear_notices"),
     path("my-path/", path_views.my_path, name="my_path"),
     # REQ-M.19 — יוצרים: work handed in, and the feedback that is the point.
+    # REQ-M.32 — פרקטיקום, the stage the whole programme exists to produce.
+    path("my-teaching/", teaching_views.my_teaching, name="my_teaching"),
+    path("my-teaching/<int:session_id>/off/", teaching_views.cancel_session, name="cancel_session"),
     path("my-work/", submission_views.my_work, name="my_work"),
     path("work/<int:submission_id>/", submission_views.review, name="review"),
     path("work/<int:submission_id>/file/", submission_views.work_file, name="work_file"),

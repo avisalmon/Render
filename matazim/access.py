@@ -538,3 +538,18 @@ def visible_request_messages(user):
     if not getattr(user, "is_authenticated", False):
         return RequestMessage.objects.none()
     return RequestMessage.objects.filter(request__in=visible_requests(user))
+
+
+def visible_sessions(user):
+    """REQ-M.32 — פרקטיקום, reached through the student who ran it.
+
+    A leader reads their own מט״צים's teaching because a leader who approves
+    work and signs a certificate should be able to see the thing being
+    certified. Nobody else does: a session is a teenager's own account of their
+    own year, including what they found hard.
+    """
+    from .models import TeachingSession
+
+    if not getattr(user, "is_authenticated", False):
+        return TeachingSession.objects.none()
+    return TeachingSession.objects.filter(student__in=visible_students(user))
