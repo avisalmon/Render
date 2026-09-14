@@ -131,8 +131,26 @@ class ItineraryItemSerializer(serializers.ModelSerializer):
         read_only_fields = ["order"]
 
     def _scheduled(self, item):
-        if not hasattr(item, "start"):
-            schedule.annotate(item)
+        """Annotate `item` with its computed times, computing its whole day at
+        most once per request.
+
+        The day serializer hands items in already annotated. A flat list of
+        items does not, and computing each one on its own used to re-`compute()`
+        the entire day per item — 84 items over 13 days meant 84 full day
+        passes. The cache lives on the serializer context, which DRF shares
+        between a ListSerializer and its child, so one request computes each
+        day once."""
+        if hasattr(item, "start"):
+            return item
+        cache = self.context.setdefault("_ustrip_days", {})
+        if item.day_id not in cache:
+            cache[item.day_id] = {i.pk: i for i in schedule.compute(item.day)}
+        annotated = cache[item.day_id].get(item.pk)
+        if annotated is None:
+            return schedule.annotate(item)
+        if annotated is not item:
+            for attr in schedule.ITEM_ANNOTATIONS:
+                setattr(item, attr, getattr(annotated, attr))
         return item
 
     def get_start(self, item):
@@ -156,17 +174,26 @@ class ItineraryItemSerializer(serializers.ModelSerializer):
     def get_past_day_end(self, item):
         return self._scheduled(item).past_day_end
 
+    # These three used to be a query each, per item — three more round trips
+    # for every row in a list. The viewsets now annotate them onto the
+    # queryset (see api.py `with_counts_for`); the per-item fallbacks are kept
+    # for the paths that serialize a lone unannotated instance.
     def get_like_count(self, item):
-        return item.likes.count()
+        annotated = getattr(item, "like_count_a", None)
+        return annotated if annotated is not None else item.likes.count()
+
+    def get_comment_count(self, item):
+        annotated = getattr(item, "comment_count_a", None)
+        return annotated if annotated is not None else item.comments.count()
 
     def get_liked_by_me(self, item):
+        annotated = getattr(item, "liked_by_me_a", None)
+        if annotated is not None:
+            return annotated
         request = self.context.get("request")
         if not request or not request.user.is_authenticated:
             return False
         return item.likes.filter(user=request.user).exists()
-
-    def get_comment_count(self, item):
-        return item.comments.count()
 
 
 class ItineraryDaySerializer(serializers.ModelSerializer):

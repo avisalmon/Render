@@ -231,7 +231,7 @@ order wherever they read best, as many as wanted.
 | List page and detail page render notes without a time; notes drag like any item, within and between days | DONE |
 | Tests: a note has no time and B still flows straight from A; a note is created through the API, renders on the three pages, and reorders | DONE — 2 more in `tests/test_ustrip_items.py` |
 
-## Sprint 11 — The fix sprint `PROPOSED, NOT STARTED`
+## Sprint 11 — The fix sprint `P1+P2 DONE (DEV), P3/P4 OPEN`
 
 A full review on **2026-09-14**, after Sprints 8-10.1 landed, against
 [spec.md](spec.md) and [building_an_app.md](../building_an_app.md).
@@ -252,17 +252,17 @@ with one bar of signal. P3 and P4 can wait until after the trip.
 
 | # | Item | Why |
 |---|---|---|
-| F1 | **Offline: PWA manifest + service worker.** Cache the app shell and the whole itinerary; today's day must open with no signal. Installable to the home screen. Writes made offline are queued or refused out loud, never silently dropped | The app has neither today. Niagara, the Finger Lakes and a rental car between Lancaster and DC are exactly where signal goes, and the itinerary is the one thing the app exists to hold. Spec §0a.2 |
-| F2 | **Downscale photos in the browser before upload** (canvas, ~1600px long edge, JPEG ~0.82) | Raw phone photos are 3-8MB and go up untouched. Render's disk is **1GB and the SQLite database is on it** — a few hundred photos fill the volume the database lives on. Spec §0a.3 |
-| F3 | **Tap targets to 44px; move Delete out of the button row** | `.box` (the packing checkbox) is **20px** — under even WCAG 2.5.8's 24px floor. `.mini-btn`, `.add-btn`, `.drag-handle` are 26px, and on every itinerary row four of them sit adjacent with **delete next to move-down**. Spec §0a.1 |
-| F4 | **Disable a control while its request is in flight** | No form does. On slow wifi a second tap posts a second journal entry / adds a second item. Spec §0a.1 |
+| F1 | **Offline: PWA manifest + service worker.** Cache the app shell and the whole itinerary; today's day must open with no signal. Installable to the home screen. Writes made offline are queued or refused out loud, never silently dropped | The app has neither today. Niagara, the Finger Lakes and a rental car between Lancaster and DC are exactly where signal goes, and the itinerary is the one thing the app exists to hold. Spec §0a.2  **DONE.** Manifest + service worker at `/ustrip/sw.js` (served from a view so the scope is `/ustrip/` and it can never touch babook); app shell and pages cached, network-first so online always wins; writes are refused out loud, never queued. Tested for real: Playwright cuts the network and the day page still renders. |
+| F2 | **Downscale photos in the browser before upload** (canvas, ~1600px long edge, JPEG ~0.82) | Raw phone photos are 3-8MB and go up untouched. Render's disk is **1GB and the SQLite database is on it** — a few hundred photos fill the volume the database lives on. Spec §0a.3  **DONE.** `ustrip.shrinkPhotos()` downscales to a 1600px long edge at JPEG 0.82 before upload, on both the journal and the stop-photo forms. Anything that fails to decode is passed through untouched — a broken resize must never cost the family the photo. |
+| F3 | **Tap targets to 44px; move Delete out of the button row** | `.box` (the packing checkbox) is **20px** — under even WCAG 2.5.8's 24px floor. `.mini-btn`, `.add-btn`, `.drag-handle` are 26px, and on every itinerary row four of them sit adjacent with **delete next to move-down**. Spec §0a.1  **DONE.** Hit areas to 44px throughout, and delete pushed clear of the move cluster. The guard test found it was not just the row buttons: the bottom nav, the back arrow, the account menu, the booked checkbox and every list title were all under 44 too. |
+| F4 | **Disable a control while its request is in flight** | No form does. On slow wifi a second tap posts a second journal entry / adds a second item. Spec §0a.1  **DONE.** Central: a capture-phase submit listener notes the button, `request()` disables it until the response lands. `ustrip.hold()` covers the async cases (the photo resize holds it across resize *and* upload). |
 
 ### P2 — Performance and the guard that should have caught F3
 
 | # | Item | Why |
 |---|---|---|
-| F5 | **Kill the API N+1.** Annotate like/comment counts on the viewset queryset, pass the day's computed schedule into the nested item serializer instead of recomputing per item, prefetch `likes`/`comments` | Measured: `/ustrip/api/itinerary-days/` = **425 queries**, `/ustrip/api/itinerary-items/` = **342**. Per item it runs `likes.count()`, `likes.filter().exists()`, `comments.count()` and a **full day re-`compute()`**. The pages are fine (15-20) because the views precompute — it's the API, which Rule 6 calls the infrastructure, that is slow. Target: under 15 each |
-| F6 | **A phone guard test for ustrip**, like `test_matazim_mobile.py`: real browser at 390px over every ustrip page — nothing wider than the viewport, no tap target under 44px, the menu opens | matazim, which is *not* phone-first, has this test. ustrip, which declares phone-first in spec §0a, has none — which is exactly why 20px checkboxes shipped |
+| F5 | **Kill the API N+1.** Annotate like/comment counts on the viewset queryset, pass the day's computed schedule into the nested item serializer instead of recomputing per item, prefetch `likes`/`comments` | Measured: `/ustrip/api/itinerary-days/` = **425 queries**, `/ustrip/api/itinerary-items/` = **342**. Per item it runs `likes.count()`, `likes.filter().exists()`, `comments.count()` and a **full day re-`compute()`**. The pages are fine (15-20) because the views precompute — it's the API, which Rule 6 calls the infrastructure, that is slow. Target: under 15 each  **DONE.** 425 → **7** queries on the days endpoint, 342 → **7** on items. Counts annotated onto the queryset, the day's schedule computed once per request instead of per item. |
+| F6 | **A phone guard test for ustrip**, like `test_matazim_mobile.py`: real browser at 390px over every ustrip page — nothing wider than the viewport, no tap target under 44px, the menu opens | matazim, which is *not* phone-first, has this test. ustrip, which declares phone-first in spec §0a, has none — which is exactly why 20px checkboxes shipped  **DONE.** `tests/test_ustrip_mobile.py`: overflow, effective tap targets (probed, not measured from CSS), a real offline reload, and installability. It found every one of F3's targets and two bugs of its own — see below. |
 
 ### P3 — Interactions that feel unfinished
 
@@ -280,3 +280,30 @@ with one bar of signal. P3 and P4 can wait until after the trip.
 | F11 | **Journal: group by day or place** | A flat reverse-chron feed over 15 days and 5 posters has no way to find "the Niagara photos." Cheap version: a date separator. Real version: tie a post to its `ItineraryDay` |
 | F12 | **Backup cadence during the trip** | Media is in the weekly GCS backup, so the loss window is up to **7 days of the family's photos** during a 15-day trip. Daily for the trip window is a two-line change to the workflow — but it's Avi's risk call, not an obvious yes |
 | F13 | **Two consecutive optional stops show the same start time** | Correct per the schedule design (an optional doesn't move the clock), but two rows reading "14:00" look like a bug to anyone who didn't design it. Possibly just a label: "14:00 if you go" |
+
+### What building the fix sprint turned up
+
+Two things the review had not found, both surfaced by F6's guard test the
+moment it existed — which is the argument for the test:
+
+- **Everything was under 44px, not just the row buttons.** The review named the
+  20px checkbox and the 26px row cluster. The test added the bottom nav (39px,
+  and the most-tapped thing in the app), the back arrow, the account menu, the
+  "actually booked" checkbox, every stop title in both list views, and the
+  Post/Save buttons. A review reads templates; the test measures what a thumb
+  hits.
+- **The bottom nav made every long page scroll sideways.** `position: fixed;
+  left: 0; right: 0` resolves against the viewport *including* the scrollbar, so
+  on any page tall enough to scroll the bar came out 4px wider than the document.
+  Now `position: sticky` inside `.app`, which sizes to the column the rest of the
+  app already lives in. This was live in production and nobody had noticed.
+
+The guard test also needed two fixes of its own before it was honest, both
+worth knowing if it ever reports something odd: controls below the fold have
+their centre outside the viewport (they are scrolled into view first), and a
+control that is present but covered — the account menu while its `<details>` is
+shut — fails every probe for reasons that have nothing to do with size (if the
+centre does not hit the control, it is skipped). Overflow is asserted on a named
+offending element rather than `scrollWidth`, which under mobile emulation tracks
+the visual viewport and reports 4px of overflow on a page where nothing
+overflows.

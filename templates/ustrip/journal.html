@@ -59,7 +59,13 @@
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
-    ustrip.request("/ustrip/api/journal-posts/", { formData: new FormData(form) })
+    // Downscale before upload (spec §0a.3) — the disk this lands on is 1GB
+    // and the database is on it. The resize is async, so the submit button is
+    // held explicitly: it has to stay disabled for the resize too, not just
+    // the upload.
+    const release = ustrip.hold(form.querySelector("button[type=submit]"));
+    ustrip.shrinkPhotos(new FormData(form))
+      .then((formData) => ustrip.request("/ustrip/api/journal-posts/", { formData: formData }))
       .then((post) => {
         const empty = document.getElementById("journal-empty");
         if (empty) empty.remove();
@@ -82,7 +88,8 @@
         feed.prepend(node);
         form.reset();
       })
-      .catch((err) => alert(err.message));
+      .catch((err) => alert(err.message))
+      .finally(release);
   });
 
   feed.addEventListener("click", function (e) {

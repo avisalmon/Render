@@ -6,6 +6,13 @@
   <title>{% block title %}ustrip{% endblock %}</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Work+Sans:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="{% static 'ustrip/ustrip.css' %}">
+  {# Installable to the home screen, and readable with no signal — spec §0a.2. #}
+  <link rel="manifest" href="{% static 'ustrip/manifest.webmanifest' %}">
+  <meta name="theme-color" content="#f7f2e9">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="ustrip">
+  <link rel="apple-touch-icon" href="{% static 'ustrip/icon-180.png' %}">
 </head>
 <body class="ustrip" data-csrf="{{ csrf_token }}">
   <div class="app">
@@ -58,5 +65,17 @@
   </div>
   <script src="{% static 'ustrip/ustrip.js' %}"></script>
   {% block scripts %}{% endblock %}
+  <script>
+    /* Spec §0a.2. Registered from /ustrip/sw.js so the scope is /ustrip/.
+       Service workers need a secure context: this is a no-op on plain http
+       (except localhost), which is exactly right for local dev over LAN. */
+    if ("serviceWorker" in navigator && window.isSecureContext) {
+      window.addEventListener("load", function () {
+        navigator.serviceWorker.register("{% url 'ustrip:service_worker' %}").catch(function () {
+          /* No offline support this session. Everything still works online. */
+        });
+      });
+    }
+  </script>
 </body>
 </html>{% endlanguage %}

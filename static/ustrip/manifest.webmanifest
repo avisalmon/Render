@@ -1,0 +1,16 @@
+{
+  "name": "ustrip",
+  "short_name": "ustrip",
+  "description": "The family's trip: today's plan, what to pack, and the journal.",
+  "start_url": "/ustrip/",
+  "scope": "/ustrip/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f2e9",
+  "theme_color": "#f7f2e9",
+  "icons": [
+    { "src": "/static/ustrip/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/static/ustrip/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/static/ustrip/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

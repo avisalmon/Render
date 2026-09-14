@@ -25,6 +25,9 @@ router.register(r"journal-posts", api.JournalPostViewSet, basename="api-journal-
 
 urlpatterns = [
     path("", views.home, name="home"),
+    # Offline (spec §0a.2). Open by design — see the note in views.py.
+    path("sw.js", views.service_worker, name="service_worker"),
+    path("offline/", views.offline, name="offline"),
     path("login/", views.UstripLoginView.as_view(), name="login"),
     path("logout/", views.UstripLogoutView.as_view(), name="logout"),
     path("signup/", views.signup, name="signup"),

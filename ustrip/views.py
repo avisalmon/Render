@@ -57,6 +57,25 @@ def _current_trip():
     return Trip.objects.order_by("-start_date").first()
 
 
+# --- Offline (spec §0a.2) -------------------------------------------------
+# Both of these are deliberately open, not @family_required. The worker is
+# JavaScript with no trip data in it, and the offline page is an empty shell
+# that says "no signal" — it holds nothing private. They have to be reachable
+# without the gate because the browser fetches them outside a normal page
+# load, and because `cache.add` at install time rejects a 403.
+
+def service_worker(request):
+    """Served from /ustrip/sw.js rather than /static/ so its scope is
+    /ustrip/ — a worker under /static/ could only claim /static/, and one at
+    the root could claim all of babook, which it has no business doing."""
+    return render(request, "ustrip/sw.js", content_type="application/javascript")
+
+
+def offline(request):
+    """What the worker shows for a page never opened on this phone."""
+    return render(request, "ustrip/offline.html")
+
+
 @family_required
 def home(request):
     trip = _current_trip()

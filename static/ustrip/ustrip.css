@@ -57,11 +57,20 @@ body.ustrip {
 .ustrip .title { font-weight: 700; font-size: 24px; margin: 0 0 4px; }
 .ustrip .subtitle { font-size: 13px; color: var(--ink-soft); margin: 0 0 14px; }
 
-.ustrip .content { flex: 1; padding: 6px 20px 110px; }
+/* The nav is sticky now, so it occupies its own 78px at the end of the flow;
+   the bottom padding only has to clear the bar where it overlays mid-scroll,
+   not account for its whole height as it did when the bar was fixed. */
+.ustrip .content { flex: 1; padding: 6px 20px 34px; }
 
+/* Sticky, not fixed. `position: fixed; left: 0; right: 0` resolves against the
+   initial containing block, which is the viewport *including* the scrollbar —
+   so on any page long enough to scroll the bar came out wider than the document
+   and the page gained 4px of sideways scroll (caught by
+   tests/test_ustrip_mobile.py, 2026-09-14). Sticky sizes to `.app` instead,
+   which is the column the rest of the app already lives in, and pins to the
+   bottom of the screen the same way while scrolling. */
 .ustrip .navbar {
-  position: fixed; left: 0; right: 0; bottom: 0;
-  max-width: 480px; margin: 0 auto;
+  position: sticky; bottom: 0; margin-top: auto;
   height: 78px; background: var(--card); border-top: 1px solid var(--line);
   display: flex; align-items: center; justify-content: space-around; padding-bottom: 12px;
 }
@@ -166,10 +175,14 @@ body.ustrip {
 .ustrip .items { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line);
   display: flex; flex-direction: column; gap: 11px; }
 .ustrip .item { display: flex; align-items: center; gap: 11px; }
-.ustrip .box { width: 20px; height: 20px; border-radius: 999px; border: 1.5px dashed var(--ink-soft); flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center; background: none; padding: 0; cursor: pointer; }
+/* Was 20px, under even WCAG 2.5.8's 24px floor, in an app whose spec says
+   phone-first. Now 26px drawn with a 44px hit area (spec §0a.1) — this is
+   the control the family taps most, standing over a suitcase. */
+.ustrip .box { width: 26px; height: 26px; border-radius: 999px; border: 1.5px dashed var(--ink-soft); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; background: none; padding: 0; cursor: pointer;
+  position: relative; }
 .ustrip .box.done { border-style: solid; border-color: var(--rust); background: var(--rust); }
-.ustrip .box svg { width: 11px; height: 11px; stroke: var(--white-text); stroke-width: 2.4; fill: none;
+.ustrip .box svg { width: 14px; height: 14px; stroke: var(--white-text); stroke-width: 2.4; fill: none;
   stroke-linecap: round; stroke-linejoin: round; }
 .ustrip .itxt { font-size: 13.5px; }
 .ustrip .itxt.done { color: var(--ink-soft); text-decoration: line-through; text-decoration-color: var(--line); }
@@ -204,6 +217,19 @@ body.ustrip {
 .ustrip .btn-secondary { background: var(--card); color: var(--ink); border: 1px solid var(--line); }
 .ustrip .btn-secondary:hover { color: var(--ink); border-color: var(--rust); }
 
+/* Spec §0a.1: a control stays disabled while its request is in flight, and
+   says so rather than just going dead under the thumb. */
+.ustrip .is-busy, .ustrip button:disabled { opacity: .55; cursor: progress; }
+.ustrip .btn.is-busy { position: relative; color: transparent; }
+.ustrip .btn.is-busy:after {
+  content: ""; position: absolute; top: 50%; left: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px;
+  border: 2px solid currentColor; border-top-color: transparent; border-radius: 999px;
+  color: var(--white-text); animation: ustrip-spin .7s linear infinite;
+}
+.ustrip .btn-secondary.is-busy:after { color: var(--ink); }
+@keyframes ustrip-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ustrip .btn.is-busy:after { animation: none; } }
+
 /* Forms: login/signup, itinerary add/edit, packing new list, journal post. */
 .ustrip .auth-form { display: flex; flex-direction: column; gap: 14px; margin-top: 18px; }
 .ustrip .field { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600;
@@ -223,20 +249,34 @@ body.ustrip {
 
 /* Every item can be edited/deleted/reordered (spec sprint note): a small
    row of icon-buttons reused on itinerary, packing, and journal rows. */
-.ustrip .row-actions { display: flex; align-items: center; gap: 4px; margin-top: 6px; }
+/* 30px visual + 14px gap = exactly 44px pitch, so the expanded hit areas below
+   sit edge to edge without overlapping. At 10px they overlapped and the wrong
+   button won the tap — which is the failure this spacing exists to prevent. */
+.ustrip .row-actions { display: flex; align-items: center; gap: 14px; margin-top: 6px; }
 .ustrip .row-actions-inline { margin-top: 0; margin-left: auto; }
-.ustrip .mini-btn { width: 26px; height: 26px; border-radius: 8px; border: 1px solid var(--line);
-  background: var(--card); color: var(--ink-soft); font-size: 13px; line-height: 1; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ustrip .mini-btn { width: 30px; height: 30px; border-radius: 9px; border: 1px solid var(--line);
+  background: var(--card); color: var(--ink-soft); font-size: 14px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative; }
 .ustrip .mini-btn:hover { border-color: var(--rust); color: var(--rust); }
+/* Spec §0a.1: 44px minimum tap target. The visual button stays small so the
+   rows keep their density; the hit area is expanded past it, which is what
+   a thumb actually needs. Four 44px *visual* buttons do not fit a 360px row. */
+.ustrip .mini-btn:before, .ustrip .box:before, .ustrip .add-btn:before, .ustrip .drag-handle:before {
+  content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 44px; height: 44px;
+}
+/* Destructive controls do not sit shoulder to shoulder with routine ones
+   (spec §0a.1): delete is pushed clear of the move/edit cluster. */
+.ustrip .row-actions .mini-btn-danger { margin-left: 12px; }
 .ustrip .mini-btn-danger:hover { border-color: var(--rust); color: var(--rust); background: var(--rust-soft); }
 
 .ustrip .add-item-row { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
 .ustrip .add-item-row input { flex: 1; font: inherit; font-size: 13.5px; color: var(--ink); background: none;
   border: none; border-bottom: 1px dashed var(--line); padding: 6px 2px; }
 .ustrip .add-item-row input:focus { outline: none; border-bottom-color: var(--rust); }
-.ustrip .add-btn { width: 26px; height: 26px; border-radius: 999px; border: 1.5px dashed var(--rust);
-  background: none; color: var(--rust); font-size: 15px; line-height: 1; cursor: pointer; flex-shrink: 0; }
+.ustrip .add-btn { width: 30px; height: 30px; border-radius: 999px; border: 1.5px dashed var(--rust);
+  background: none; color: var(--rust); font-size: 17px; line-height: 1; cursor: pointer; flex-shrink: 0;
+  position: relative; }
 
 /* Account menu — a <details> disclosure, no JS needed. */
 .ustrip .menu { position: relative; }
@@ -281,9 +321,10 @@ body.ustrip {
 .ustrip .tmeta .liked { color: var(--rust); }
 .ustrip .tmeta .liked svg { fill: currentColor; }
 
-.ustrip .drag-handle { width: 26px; height: 26px; border-radius: 8px; display: flex; align-items: center;
-  justify-content: center; color: var(--ink-soft); cursor: grab; touch-action: none; flex-shrink: 0; }
-.ustrip .drag-handle svg { width: 16px; height: 16px; }
+.ustrip .drag-handle { width: 30px; height: 30px; border-radius: 9px; display: flex; align-items: center;
+  justify-content: center; color: var(--ink-soft); cursor: grab; touch-action: none; flex-shrink: 0;
+  position: relative; }
+.ustrip .drag-handle svg { width: 18px; height: 18px; }
 .ustrip .drag-handle:active { cursor: grabbing; }
 .ustrip .drag-ghost { position: fixed; top: 0; left: 0; z-index: 50; pointer-events: none; opacity: .92;
   background: var(--card); border: 1px solid var(--rust); border-radius: 12px; padding: 10px 12px;
@@ -415,3 +456,83 @@ body.ustrip {
 .ustrip .field-row .field { flex: 1; min-width: 0; }
 .ustrip .link-edit { display: flex; align-items: center; gap: 8px; }
 .ustrip .link-edit .link-row { flex: 1; min-width: 0; }
+
+/* ---------------------------------------------------------------------------
+   Tap targets (spec §0a.1, added 2026-09-14 with tests/test_ustrip_mobile.py)
+
+   The guard test probes 22px from each control's centre in four directions and
+   fails if the tap lands anywhere else. It found that nearly every control in
+   the app was under 44px — including the bottom nav, which is the most-tapped
+   thing here. Where a control can simply be bigger it is; where growing the box
+   would wreck the layout (a text link in a dense row) the hit area is expanded
+   past the visual box instead, which is what a thumb cares about.
+   --------------------------------------------------------------------------- */
+
+/* The bottom nav: four targets the family hits all day. `flex: 1` rather than
+   padding — padding on top of `space-around` pushed the bar to 394px on a
+   390px screen, which the overflow test caught immediately. */
+.ustrip .navitem { min-height: 48px; justify-content: center; flex: 1; }
+
+/* Header: back arrow and the account menu. */
+.ustrip .back { width: 44px; height: 44px; margin-left: -9px; }
+.ustrip .back a { width: 100%; height: 100%; align-items: center; justify-content: center; }
+.ustrip .back svg { width: 24px; height: 24px; }
+.ustrip .menu-btn { width: 44px; height: 44px; font-size: 13px; }
+.ustrip .menu-item { min-height: 44px; display: flex; align-items: center; }
+
+/* Text links that act as buttons ("Edit", "Open ›", "+ Add a stay"). The box
+   stays small so the rows keep their proportions; the hit area does not. */
+.ustrip .edit-link, .ustrip .dayopen { position: relative; }
+.ustrip .edit-link:before, .ustrip .dayopen:before {
+  content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  min-width: 44px; width: 100%; height: 44px;
+}
+
+/* The title of a stop is how you open it; it was 15px tall in a dense list. */
+.ustrip .ttitle { display: inline-block; padding: 11px 0; }
+.ustrip .tsummary { margin-top: 0; }
+
+/* Native controls the browser draws small: the "actually booked" checkbox and
+   the file pickers on the journal and photo forms. */
+.ustrip .field-checkbox input[type=checkbox] { width: 26px; height: 26px; position: relative; }
+.ustrip .field-checkbox input[type=checkbox]:before {
+  content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 44px; height: 44px;
+}
+.ustrip .field input[type=file], .ustrip .photo-add input[type=file] { min-height: 44px; padding: 10px 12px; }
+
+/* Like button on a stop, and the small round add buttons next to a text field. */
+.ustrip .like-btn { min-height: 44px; padding: 6px 14px; }
+.ustrip .photo-add .add-btn, .ustrip .add-item-row .add-btn { margin-left: 7px; }
+
+/* Remaining targets the guard test named, 2026-09-14. */
+
+/* Buttons: "Post", "Save", "Add" were 39px. */
+.ustrip .btn { min-height: 44px; }
+
+/* The stop title on a day page is how you open that stop. 11px of padding
+   left it at 42; 12 clears 44. */
+.ustrip .ttitle { padding: 12px 0; }
+
+/* The itinerary list's compact rows. Rather than expand each title's hit area
+   past the row — which would overlap the rows above and below, trading one
+   mis-tap for another — the row itself becomes the target height. */
+.ustrip .mini-row { min-height: 44px; }
+.ustrip .mini-title { display: flex; align-items: center; align-self: stretch; }
+
+/* "Open ›" sits inline next to the day's title, so it grows outward only. */
+.ustrip .daylink { position: relative; }
+.ustrip .daylink:before {
+  content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  min-width: 44px; width: 100%; height: 44px;
+}
+
+/* The row reached 44px but its padding left the title 30px inside it, and the
+   title is the target. Drop the vertical padding so the stretched title *is*
+   the row's full height. Row pitch stays 52px (44 + the 8px gap), so no two
+   targets overlap. */
+.ustrip .mini-row { padding-top: 0; padding-bottom: 0; }
+
+/* Set the floor on the target itself, not its container: an `optional` row's
+   dashed border ate 2px of the row's 44 and left the title at 42. */
+.ustrip .mini-title { min-height: 44px; }

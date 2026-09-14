@@ -170,7 +170,10 @@
     e.preventDefault();
     const fd = new FormData(photoForm);
     fd.append("item", itemId);
-    ustrip.request("/ustrip/api/itinerary-photos/", { formData: fd })
+    // Downscale before upload (spec §0a.3): a 1GB disk with the database on it.
+    const release = ustrip.hold(photoForm.querySelector("button[type=submit], .add-btn"));
+    ustrip.shrinkPhotos(fd)
+      .then((formData) => ustrip.request("/ustrip/api/itinerary-photos/", { formData: formData }))
       .then((photo) => {
         const tile = ustrip.el('<figure class="photo-tile" style="margin:0;"><img alt=""><button type="button" class="mini-btn mini-btn-danger" data-delete-photo title="Delete">×</button><figcaption></figcaption></figure>');
         tile.dataset.photoId = photo.id;
@@ -179,7 +182,8 @@
         grid.appendChild(tile);
         photoForm.reset();
       })
-      .catch((err) => alert(err.message));
+      .catch((err) => alert(err.message))
+      .finally(release);
   });
   grid.addEventListener("click", function (e) {
     const btn = e.target.closest("[data-delete-photo]");

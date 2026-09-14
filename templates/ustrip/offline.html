@@ -1,0 +1,17 @@
+{% extends "ustrip/base.html" %}
+{% block title %}Offline — ustrip{% endblock %}
+{% block nav %}{% endblock %}
+
+{% block content %}
+<div class="plain-message">
+  <h1 class="serif">No signal</h1>
+  <p>This page hasn't been opened on this phone yet, so there's no copy saved
+    to read offline.</p>
+  <p>Pages you've already opened still work without signal — the itinerary,
+    today's day, the packing lists. Try going back.</p>
+  <div class="auth-actions">
+    <button type="button" class="btn btn-primary" onclick="window.location.reload()">Try again</button>
+    <a class="btn btn-secondary" href="{% url 'ustrip:home' %}">Back to the trip</a>
+  </div>
+</div>
+{% endblock %}
