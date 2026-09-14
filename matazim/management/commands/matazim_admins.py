@@ -87,8 +87,12 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING(f"no account for {email}, skipped"))
             return
 
-        profile, _ = MemberProfile.objects.get_or_create(user=user)
-        if profile.is_program_manager == value:
+        from matazim.models import Institution
+
+        # The role is membership of `Institution.managers` (SPR-M.40); the
+        # flag this compared against is gone.
+        already = Institution.objects.filter(managers=user).exists()
+        if already == value:
             self.stdout.write(
                 f"{email} already {'a program manager' if value else 'not a program manager'}"
             )
@@ -110,10 +114,13 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f"program manager revoked from {email}"))
 
     def _list(self):
-        managers = MemberProfile.objects.filter(is_program_manager=True).select_related("user")
+        from matazim.models import Institution
+
+        inst = Institution.default()
+        managers = list(inst.managers.order_by("email")) if inst else []
         if not managers:
             self.stdout.write("no מט״צים program managers yet")
             return
         self.stdout.write("מט״צים program managers:")
-        for profile in managers:
-            self.stdout.write(f"  {profile.user.email or profile.user.username}")
+        for person in managers:
+            self.stdout.write(f"  {person.email or person.username}")

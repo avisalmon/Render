@@ -24,27 +24,30 @@ PASSWORD = "sprm9-pass-7731"
 def _one_world():
     """REQ-M.88 — these suites describe a single institution.
 
-    Leaders here belong to whichever program manager the test created, and the
-    fixtures run in whatever order the test found readable. So a leader adopts
-    the existing manager if there is one, and a manager adopts any leader made
-    before it existed. Between them, order stops mattering.
+    The first `Institution` found is the one every leader here belongs to,
+    created on first use if none exists yet. Calling this a second time (to add
+    a second manager to the same world) returns the same row rather than making
+    a rival one.
+
+    Rewritten 2026-09-14 for SPR-M.40 (the `Institution` row). The original let
+    a `Leader` exist with no owner and retroactively claimed it when a program
+    manager appeared, a workaround for a nullable FK that no longer exists:
+    `Leader.institution` is required now, so a leader is filed in at creation
+    and there is nothing left to claim.
+
+    REQ-M.93, added in SPR-M.14: an unapproved `Leader` row is a candidate and
+    `leader_of` refuses to return it. These suites predate candidates and mean
+    "a leader" when they say so, so anything unapproved is approved here.
     """
     from django.utils import timezone
 
-    from matazim.models import Leader, MemberProfile
+    from matazim.models import Institution, Leader
 
-    profile = MemberProfile.objects.filter(is_program_manager=True).first()
-    owner = profile.user if profile else None
-    if owner:
-        Leader.objects.filter(program_manager__isnull=True).update(program_manager=owner)
-    # REQ-M.93, added in SPR-M.14: an unapproved Leader row is a candidate and
-    # `leader_of` refuses to return it. These suites predate candidates and mean
-    # "a leader", so anything unapproved here is approved. The candidate state
-    # itself is tested on its own in test_spr_m_14.
-    Leader.objects.filter(approved_at__isnull=True).update(
-        approved_at=timezone.now(), approved_by=owner
-    )
-    return owner
+    inst = Institution.objects.order_by("created_at").first()
+    if inst is None:
+        inst = Institution.objects.create(name="עתיד רמלה")
+    Leader.objects.filter(approved_at__isnull=True).update(approved_at=timezone.now())
+    return inst
 
 
 def make_user(email, name=""):
@@ -60,7 +63,7 @@ def make_leader(email="noa@example.com", name="נעה מורה"):
 
     return Leader.objects.create(
         user=make_user(email, name),
-        program_manager=_one_world(),
+        institution=_one_world(),
         approved_at=timezone.now(),
     )
 
@@ -69,8 +72,9 @@ def make_admin(email="chief@example.com"):
     from matazim.models import MemberProfile
 
     user = make_user(email, "אבי")
-    MemberProfile.objects.update_or_create(user=user, defaults={"is_program_manager": True})
-    _one_world()
+    # See the identical note in test_spr_m_7.py: must join whichever
+    # institution already exists, not a rival one, regardless of call order.
+    _one_world().managers.add(user)
     return user
 
 
@@ -474,3 +478,24 @@ def test_deleting_the_account_takes_the_uploaded_file_with_it(db):
     user.delete()  # exactly what babook's delete_account does
 
     assert not on_disk.exists(), "the account is gone but their work is still on the disk"
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

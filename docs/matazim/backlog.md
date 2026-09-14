@@ -2579,6 +2579,134 @@ is building, and those fail in my tree because the app is not in it. With the
 ustrip template comments that is two products whose work turns this product's
 gate red. Item 17 of the review, now biting twice.
 
+## SPR-M.40 — The tenancy root becomes an institution  `DONE 2026-09-14`
+
+**Goal:** Avi, on the review's recommendation to build the `Institution` row
+now rather than leave it as a handover bandage: "Go." REQ-M.144.
+`docs/matazim/data_model.md` §6 has the full design write-up, written as a
+proposal and updated in place once it shipped.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.40.1 | `Institution` model: `name`, `managers` (m:n `User`) | REQ-M.144 | DONE |
+| F-M.40.2 | Four migrations against real data: add nullable, backfill, drop the old fields, require | REQ-M.144 | DONE |
+| F-M.40.3 | `access.py`, the views, the API and the admin all read `Institution.managers` | REQ-M.144, §4.4 | DONE |
+| F-M.40.4 | `handover.hand_over` rewritten: add/remove a manager, not move rows | REQ-M.143 | DONE |
+| F-M.40.5 | An `Institution` viewset (read + rename only) | REQ-M.139, REQ-M.144 | DONE |
+| F-M.40.6 | Every test fixture that built a manager or a leader, fixed | — | DONE |
+
+### The migration, in four steps, against a database with real rows
+
+`0031` adds the table and four *nullable* `institution` FKs. `0032` is a data
+migration: create the one institution production already implies (from
+whoever held the old `is_program_manager` flag) and file every existing
+`Leader`, `Event`, `LeaderInvite` and `Post` into it. `0033` drops the old
+flag and the four `program_manager` user FKs, now that nothing reads them.
+`0034` makes the four `institution` FKs required — written by hand rather than
+by `makemigrations`, which stops to ask for a one-off default that `0032`
+already made unnecessary, and there was nothing left to default once every row
+was filled.
+
+Four steps rather than one because the FK could not go straight from "does not
+exist" to "required" without a moment in between where the data has to already
+be right. Verified before writing `0034` by hand: zero rows with a null
+`institution` on all four tables.
+
+### What it cost, once the schema actually enforced the model
+
+About thirty call sites across `access.py`, the views, the API and the admin —
+mechanical, and done first. The real cost showed up afterward, in roughly
+twenty test files, once `Leader.institution` went from optional to required
+and every fixture that had been quietly relying on the old field being
+nullable turned into a hard failure instead of a silent gap. That is exactly
+the trade a required column is for, and three different shapes of gap turned
+up:
+
+**A leader with no owner at all.** `matazim/joining_views.py`'s `staff_leaders`
+screen — "the thing an admin exists to do" per its own docstring — never set
+`program_manager` when it created a `Leader`, and never set `approved_at`
+either, which predates candidates (REQ-M.93, SPR-M.14) and was never updated.
+A leader "assigned" from that screen belonged to nobody's institution and
+stayed a candidate forever: `leader_of()` refuses an unapproved row, so the
+admin's own action produced someone who could never sign in as a leader. Both
+were real bugs, silently tolerated by two nullable fields, now fixed together
+and held by a test.
+
+**Two managers who ended up in two different worlds.** Several test files
+build a manager and a leader independently and expect them to share one
+institution (`_make_manager(boss); _one_world()` and similar). `_make_manager`
+always creates a *new* institution; only `_one_world()`/`institution_of()`
+finding an *existing* one and joining it is order-independent. Fixed by
+replacing the pattern with `_one_world().managers.add(user)` everywhere it
+appeared, in `test_spr_m_6.py`, `test_spr_m_7.py`, `test_spr_m_8.py`,
+`test_spr_m_9.py`, `test_spr_m_10.py` and `test_spr_m_18.py`.
+
+**A mechanical sweep that typed a `User` where an `Institution` was wanted.**
+The regex that rewrote most of the suite turned `program_manager=manager or
+make_manager()` into `institution=_inst(manager) or make_manager()` — the
+fallback branch still returned a `User`, which `ValueError`s the moment
+`manager` is omitted. Found in `test_spr_m_18.py`, `test_spr_m_24.py`,
+`test_spr_m_25.py` and `test_spr_m_28.py`, all fixed to `_inst(manager or
+make_manager())` — resolve to one person first, then ask what they manage.
+
+### The bug the review's own test caught, in code an hour old
+
+`handover.hand_over`'s first version called
+`roles.grant_program_manager(new, by=by)` with no institution named, which
+joins whichever institution `Institution.default()` finds — the earliest
+created, not necessarily the one being handed over. Every test database
+carries a second institution, seeded by `0032`'s backfill, so the successor
+ended up managing both, and `institution_of()` — which reads the earliest by
+creation date — picked the seeded one over the one that actually owned
+נעמי's rows. `visible_posts(successor)` came back empty.
+`test_a_successor_inherits_the_whole_institution` (SPR-M.39, still testing the
+pre-Institution handover shape at the time) caught it immediately. Fixed by
+giving `grant_program_manager` an explicit `institutions=` argument, so a
+handover never has to guess.
+
+### A query-count test that found a dropped side effect
+
+`test_spr_m_17.py`'s `make_manager` used to grant the role through
+`MemberProfile.objects.update_or_create(..., defaults={"is_program_manager":
+True})`, which created the `MemberProfile` row as a side effect. The
+mechanical replacement, `_make_manager(user)`, only touches `Institution` —
+the profile row is now created lazily on first touch by whatever view reads
+it. `test_the_report_does_not_grow_a_query_per_leader` compares a query count
+against itself before and after adding six leaders, and the *first* request
+was paying three extra queries (SELECT miss, INSERT, re-SELECT) that the
+second wasn't. Fixed by having `make_manager` create the profile explicitly,
+same as it always implicitly did.
+
+### One test retired, because the state it described is now impossible
+
+`test_an_orphaned_leader_belongs_to_nobody_but_root` built a `Leader` with no
+owner at all and checked that only root could see it — a safe fallback for a
+real gap in the old nullable FK. `Leader.institution` is required now, so that
+state cannot be reached: the gap is closed rather than merely defended
+against. Rewritten as `test_a_leader_cannot_be_created_with_no_institution`,
+asserting the stronger guarantee directly — the database refuses the row.
+
+### One screen's wording, changed on purpose
+
+כניסת מובילים and the profile page told a waiting candidate the name of the
+specific manager they were waiting on. Under the old model there was always
+exactly one. `Institution.managers` is deliberately more than one
+(REQ-M.144), so naming a single manager is now arbitrary — there may be
+several, and picking one to display would be picking one at random. Both
+screens now name the institution instead ("צוות X"), which is still an honest
+answer to "who am I waiting on." `test_a_waiting_candidate_is_told_they_are_
+waiting` updated to match, with the reasoning written into the test rather
+than left for someone to rediscover.
+
+### Rules verified by writing the defect
+
+Removing `institutions=theirs` from the handover's grant call reproduced the
+bug above exactly. Reverting `grant_program_manager`'s `institutions=`
+parameter and re-running the handover test failed on the same assertion it
+failed on the first time, confirmed against a saved copy of the file and
+restored byte-for-byte rather than by `git checkout` — the mistake recorded
+twice already in this backlog, not repeated a third time.
+
 ## Also still open
 
 - Retire the old production tables, once ACT-M.2 is answered.

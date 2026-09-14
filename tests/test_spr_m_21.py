@@ -36,7 +36,7 @@ def _manager(email):
     from matazim.models import MemberProfile
 
     user = _user(email, "מנהלת")
-    MemberProfile.objects.update_or_create(user=user, defaults={"is_program_manager": True})
+    _make_manager(user)
     return user
 
 
@@ -44,7 +44,7 @@ def _leader(email, manager):
     from matazim.models import Leader
 
     return Leader.objects.create(
-        user=_user(email, "נעה מורה"), program_manager=manager, approved_at=timezone.now()
+        user=_user(email, "נעה מורה"), institution=_inst(manager), approved_at=timezone.now()
     )
 
 
@@ -188,3 +188,24 @@ def test_the_data_page_agrees_with_the_rest_of_the_site_about_the_test(client, d
 
     assert response.context["passed_at"] is not None
     assert "עוד לא ניגשתם" not in response.content.decode()
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

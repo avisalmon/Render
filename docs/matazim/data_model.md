@@ -11,8 +11,9 @@ sprints before Rule 4 existed, and its data model lived as §4 of the spec, whic
 is the arrangement that rule exists to prevent. The spec's §4 stays where it is
 and remains the place decisions are argued; this file is the structure.
 
-Eighteen models, one Django app, one migration chain. Source of truth is
-`matazim/models.py`; if the two disagree, the code is right and this file is
+Twenty models (eighteen when this file was written; `TeachingSession` and
+`Institution` came after), one Django app, one migration chain. Source of truth
+is `matazim/models.py`; if the two disagree, the code is right and this file is
 stale.
 
 ---
@@ -35,32 +36,39 @@ wrong on one screen.
 ## 2. The shape, in one picture
 
 ```
-User (babook)
- ├─1:1─ MemberProfile ──1:n── EntranceAttempt ──n:1── EntranceTarget (by target_id, not FK)
- ├─1:1─ Leader ──1:n── StudyClass
+Institution ──m:n── User (babook, as .managers)
+ ├─1:n─ Leader ──1:n── StudyClass
  │        │                 │
  │        │                 └─── m:n ── Student.classes
  │        └─1:n── Student (leader, and pending_leader)
  │                  ├─1:n── StatusLog
  │                  ├─1:n── Application
  │                  ├─1:1── MatazCertificate
+ │                  ├─1:n── TeachingSession
  │                  └─1:n── Submission ──1:n── Feedback
  │                             └─1:n── Post (kind=work)
+ ├─1:n─ Event  ── m:n ── Leader, StudyClass
+ ├─1:n─ Post (as author's institution)
+ ├─1:n─ LeaderInvite
+ └─1:n─ RetentionRun (as ran_by, a User)
+
+User (babook)
+ ├─1:1─ MemberProfile ──1:n── EntranceAttempt ──n:1── EntranceTarget (by target_id, not FK)
  ├─1:n─ Notification
- ├─1:n─ Request ──1:n── RequestMessage
- ├─1:n─ Event (as program_manager)  ── m:n ── Leader, StudyClass
- ├─1:n─ Post (as author)
- ├─1:n─ LeaderInvite (as program_manager)
- └─1:n─ RetentionRun (as ran_by)
+ └─1:n─ Request ──1:n── RequestMessage
 ```
 
 Three things in that diagram are the whole design:
 
-**`Leader.program_manager` is the tenancy root.** Every scoping question in this
-product resolves to it. A student belongs to a leader, a leader belongs to a
-program manager, and that chain is what `matazim/access.py` walks. There is no
-`Institution` table because the FK is enough while there is one programme, and
-a second one becomes a table on the day it exists (spec §4.8).
+**`Institution` is the tenancy root** (REQ-M.144, §6). Every scoping question in
+this product resolves to it: a student belongs to a leader, a leader belongs to
+an institution, and that chain is what `matazim/access.py` walks. Until
+2026-09-14 the root was a `User` (`Leader.program_manager` and three FKs like
+it) rather than its own row, on the argument that a second network becomes a
+table the day one exists and a second *manager* of the same one was not
+expected to matter (spec §4.8). It mattered: the day a manager leaves, and the
+day two people run one programme together, both real from the start (Litala's
+brief describes צוות התכנית as two people). §6 has the full history.
 
 **`Student.leader` is nullable and that is normal.** Somebody registers, passes
 the entrance test, and belongs to nobody yet (REQ-M.65). Every query has to
@@ -68,9 +76,10 @@ survive it, which is why `access.unclaimed_students()` exists.
 
 **There is no table about the children a מט״צ teaches.** The programme's whole
 output is teenagers teaching younger children, and not one of those children is
-a row anywhere here (REQ-M.29). Teaching is recorded as the מט״צ's own declared
-activity. A guard test walks every field on every model in this app and fails on
-a name that looks like a record about a child, so the property is checked
+a row anywhere here (REQ-M.29), `TeachingSession` included: it counts them and
+names none. Teaching is recorded as the מט״צ's own declared activity. A guard
+test walks every field on every model in this app and fails on a name that looks
+like a record about a child, so the property is checked
 against the schema rather than against one screen.
 
 ---
@@ -78,6 +87,11 @@ against the schema rather than against one screen.
 ## 3. The models
 
 ### 3.1 People and roles
+
+**`Institution`** — the tenancy root (REQ-M.144, full design and history in §6).
+`name` and `managers` (m:n `User`). Being a program manager means being in that
+m:n; there is no flag anywhere that could disagree with it. `Leader`, `Event`,
+`LeaderInvite` and `Post` all carry a required `institution` FK.
 
 **`MemberProfile`** — one row per person מט״צים has met, 1:1 with `User`.
 
@@ -288,7 +302,7 @@ invisible until somebody reads another child's words.
 from `request.user`: authors, institutions, join codes, tokens, public ids, and
 the timestamps that record who decided what. A client that could name its own
 author could post as another teenager; a client that could name its own
-`program_manager` could write into another institution's world.
+`institution` could write into another institution's world.
 
 **Some verbs are refused, and the refusal is the requirement.** Full CRUD is the
 default; where a verb is forbidden, the viewset says so in words and a test holds
@@ -306,6 +320,7 @@ it. The complete list, so nobody has to find out by trying:
 | `EntranceAttempt` | update, delete | A retry is a new row; the history is the point (REQ-M.53) |
 | `Student.status` | direct write | Goes through `history.set_status`, which logs it (§4.7) |
 | `Post` | delete of somebody else's | Deletion is withdrawal by its author; moderation is `hide` (REQ-M.131) |
+| `Institution` | create, delete, write to `managers` | No screen makes a second one yet (REQ-M.144); the role is granted on the root-only screen through `roles.py`, never by an m:n write here |
 
 Read the browsable API at `/matazim/api/` as the documentation; DRF renders
 every route, its verbs and its fields, which is the call this site already made
@@ -313,27 +328,29 @@ for ustrip.
 
 ---
 
-## 6. Proposed, not built: an `Institution` row
+## 6. Built: the `Institution` row (REQ-M.144)
 
-**Status: waiting for Avi.** Rule 4 says the data model is approved before it is
-built, and this is a data-model change, so it is written here and not in code.
+**Status: done, 2026-09-14.** Written up here as a proposal, then Avi: "Go."
+Built the same day. Kept in its original shape below (the problem, the design,
+the cost, the payoff) because that is the record of why it exists; only the
+status line and this note are new.
 
-**The problem.** The tenancy root is a person. `Leader.program_manager`,
+**The problem it closed.** The tenancy root was a person. `Leader.program_manager`,
 `Event.program_manager`, `LeaderInvite.program_manager` and `Post.program_manager`
-all point at the `User` who runs the programme, and `access.py` scopes every
+all pointed at the `User` who ran the programme, and `access.py` scoped every
 screen by that user. §4.8 argued that a second network becomes a table on the
 day one exists, and never considered the day the first manager leaves. On that
-day her successor signs in to an empty programme and every row she owned is
-stranded. The review of 2026-09-14 named this the largest structural risk in the
-model.
+day her successor would sign in to an empty programme and every row she owned
+would be stranded. The review of 2026-09-14 named this the largest structural
+risk in the model.
 
-**What exists today instead.** `manage.py matazim_handover old new --apply`
-moves everything one manager owns to another, atomically, and leaves the
-records of who did what untouched. It is a bandage: it works, it needs somebody
-to remember to run it, and it makes "who runs this institution" a fact that
-lives in nobody's table.
+**What existed before this, as a stopgap.** `manage.py matazim_handover old new
+--apply` moved everything one manager owned to another, atomically, and left
+the records of who did what untouched. It worked, needed somebody to remember
+to run it, and left "who runs this institution" a fact living in nobody's
+table. Superseded by this model rather than kept alongside it: see REQ-M.143.
 
-**The proposal.** One small model:
+**The model.** One small table:
 
 | Field | Type | Notes |
 |---|---|---|
@@ -341,23 +358,48 @@ lives in nobody's table.
 | `managers` | m:n User | who runs it; more than one is allowed and is the point |
 | `created_at` | datetime | |
 
-Then the four `program_manager` FKs become `institution` FKs, `institution_of()`
-returns the row instead of a user, and `is_program_manager(user)` becomes "is a
-manager of any institution". `MemberProfile.is_program_manager` goes, because the
-m:n is the role and a flag beside it is a second copy of one fact.
+`Institution.default()` returns the earliest-created row, for the one callers
+that don't yet need to ask "which one" (`roles.grant_program_manager`'s ordinary
+path, the seed commands). The four `program_manager` FKs became `institution`
+FKs, `institution_of()` returns the row instead of a user, and
+`is_program_manager(user)` reads `Institution.objects.filter(managers=user)`
+rather than a flag. `MemberProfile.is_program_manager` is gone: the m:n is the
+role, and a flag beside it would have been a second copy of one fact.
 
-**What it costs.** Four FK migrations with a data step that creates one
-`Institution` and points everything at it, about thirty call sites in
-`access.py` and the API, and every test that builds a manager. A day's work,
-most of it mechanical, and the sweep in `test_spr_m_34.py` is what makes it
-safe: it asks every endpoint for everything from inside one institution and
-fails if the other one leaks.
+**How it shipped against a database with real rows.** Four migrations rather
+than one, because the FK could not go straight from "does not exist" to
+"required": `0031` adds the table and four *nullable* FKs; `0032` is a data
+migration that creates the one institution production already implies (from
+whoever held the old flag) and files every existing `Leader`, `Event`,
+`LeaderInvite` and `Post` into it; `0033` drops the old flag and the four user
+FKs now that nothing reads them; `0034` makes the four `institution` FKs
+required, written by hand rather than by `makemigrations` (which stops to ask
+for a one-off default that `0032` had already made unnecessary).
 
-**What it buys.** A manager can be replaced without a command. Two managers can
-share one institution, which is what Litala's brief describes for צוות התכנית
-(Avi and Litala). And the day a second network arrives, it is a second row and
-not a redesign.
+**What it cost.** About thirty call sites in `access.py`, the views, the API and
+the admin, and every test fixture that built a manager or a leader — several
+hundred lines across roughly twenty test files, most of it mechanical and some
+of it not: a handful of fixtures had silently relied on the old FK being
+nullable (a leader "orphaned" with no owner at all, or created through a screen
+that never set the field), and the required FK turned each of those from a
+silent gap into a test failure, which is exactly the trade a required column is
+for. The sweep in `test_spr_m_34.py` (REQ-M.139) is what made the whole change
+safe to make: it asks all eighteen endpoints for everything from inside one
+institution and fails the moment a second one's rows answer.
 
-**Recommendation.** Build it, now, while there is one institution and one
-manager and the migration is trivial. Every sprint from here adds another row
-type that points at a person.
+**What it bought.** A manager can be added or removed without moving a row.
+Two managers can share one institution, which is what Litala's brief describes
+for צוות התכנית (Avi and Litala) and which a single-owner FK could never
+represent. The day a second network arrives, it is a second row, not a
+redesign.
+
+**A defect this caught in itself.** The first version of `handover.hand_over`
+called `roles.grant_program_manager(new)` with no institution named, which
+joins whichever institution `Institution.default()` finds — the earliest
+created, not necessarily the one being handed over. Every test database
+carries a second institution from `0032`'s backfill (the seeded row), so the
+successor ended up managing both, and `institution_of()` picked the seeded one
+over the one that actually owned the predecessor's rows.
+`test_a_successor_inherits_the_whole_institution` failed on exactly that, which
+is why `grant_program_manager` now takes an explicit `institutions=` argument
+rather than always assuming the default.

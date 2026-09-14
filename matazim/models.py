@@ -18,6 +18,53 @@ from django.dispatch import receiver
 from .storage import entrance_upload_path, private_storage, submission_upload_path
 
 
+class Institution(models.Model):
+    """The thing a programme belongs to, and the people who run it.
+
+    Added 2026-09-14 on Avi's "Go" to the proposal in `data_model.md` §6. Until
+    then the tenancy root was a person: `Leader`, `Event`, `LeaderInvite` and
+    `Post` all pointed at the `User` who ran the programme, and the day she left
+    her successor would have signed in to an empty programme. §4.8 had argued
+    that a second network becomes a table on the day one exists, and never
+    considered the first manager leaving.
+
+    **`managers` is the role.** Being a program manager means being in this
+    m:n, and nothing else says so: `MemberProfile.is_program_manager` was the
+    flag and is gone, because a flag beside the m:n is a second copy of one
+    fact. `access.is_program_manager(user)` reads this. More than one manager
+    is allowed and is the point: Litala's brief describes צוות התכנית as two
+    people.
+
+    **One row today**, made by the migration from whoever held the flag, and
+    `Institution.default()` returns it while there is one. The day a second
+    network arrives it is a second row, not a redesign.
+    """
+
+    name = models.CharField(max_length=120, verbose_name="שם")
+    managers = models.ManyToManyField(
+        User, blank=True, related_name="matazim_institutions", verbose_name="מנהלי/ות התוכנית"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+        verbose_name = "מוסד"
+        verbose_name_plural = "מוסדות"
+
+    def __str__(self):
+        return self.name
+
+    @classmethod
+    def default(cls):
+        """The one institution, while there is one. None before any exists.
+
+        Callers that stamp ownership use this. When a second row exists this
+        stops being the right answer and the caller has to ask which one, which
+        is the day `institution_of()` grows a real decision.
+        """
+        return cls.objects.order_by("created_at").first()
+
+
 class MemberProfile(models.Model):
     """מט״צים's companion to babook's UserProfile. One row per person we meet."""
 
@@ -42,20 +89,12 @@ class MemberProfile(models.Model):
         null=True, blank=True, verbose_name="עבר את מבחן הכניסה"
     )
 
-    # REQ-M.68 — granted here and seeded in production, never self-served:
-    # there is no screen that makes the first one, because they could never have
-    # used it. `manage.py matazim_admins` sets it.
-    #
-    # Renamed from `is_admin` on 2026-09-11 (spec §4.3). "admin" pointed at root
-    # in conversation and at the program manager on screen, an ambiguity that
-    # had already produced one wrong grant of superuser. The Hebrew was right
-    # all along; only the English was lying.
-    #
-    # This is a boolean and not the "role column" the spec forbids. That rule is
-    # about a role having exactly one source: a role field on Student would
-    # compete with the leader FK and the two could disagree. Nothing competes
-    # with this one.
-    is_program_manager = models.BooleanField(default=False, verbose_name="מנהל/ת התוכנית")
+    # The program-manager role lived here as a flag from SPR-M.6 to SPR-M.40,
+    # renamed from `is_admin` on 2026-09-11 (spec §4.3) because "admin" pointed
+    # at root in conversation and at the program manager on screen. It is
+    # `Institution.managers` now, and `access.is_program_manager` reads it
+    # there. REQ-M.68 still holds: granted by root or seeded on deploy, never
+    # self-served, through `roles.grant_program_manager`.
 
     # REQ-M.84 — the programme is ninth-graders, so a parent consents.
     #
@@ -255,13 +294,19 @@ class Leader(models.Model):
     # program manager was deleted is visible to root alone until somebody
     # reassigns them, which is the safe direction to fail in: invisible is
     # recoverable, visible-to-everyone is not.
-    program_manager = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="matazim_leaders",
-        verbose_name="מנהל/ת התוכנית",
+    # The tenancy root (§4.4). A leader belongs to an institution, and the
+    # people who run that institution are `Institution.managers`. Required,
+    # unlike the user FK it replaced: a leader row is created with an
+    # institution now (`approve_leader`, the invite flows, the API) rather than
+    # placed into one later, because there is exactly one institution to place
+    # it into and asking "which one" before a second exists is a question with
+    # no answer. PROTECT because deleting an institution with leaders in it is
+    # not a thing to do by accident.
+    institution = models.ForeignKey(
+        "Institution",
+        on_delete=models.PROTECT,
+        related_name="leaders",
+        verbose_name="מוסד",
     )
 
     assigned_by = models.ForeignKey(
@@ -508,8 +553,9 @@ class LeaderInvite(models.Model):
     OPEN = "open"
     KIND_CHOICES = [(PERSONAL, "אישית"), (OPEN, "פתוחה")]
 
-    program_manager = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="matazim_invites"
+    institution = models.ForeignKey(
+        "Institution", on_delete=models.CASCADE,
+        related_name="invites", verbose_name="מוסד",
     )
     kind = models.CharField(max_length=12, choices=KIND_CHOICES, default=PERSONAL)
     token = models.CharField(max_length=64, unique=True, default=new_invite_token, db_index=True)
@@ -1108,9 +1154,9 @@ class Event(models.Model):
     business unless somebody ticks a box.
     """
 
-    program_manager = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="matazim_events",
-        verbose_name="של מנהל/ת התוכנית",
+    institution = models.ForeignKey(
+        "Institution", on_delete=models.CASCADE,
+        related_name="events", verbose_name="מוסד",
     )
 
     title = models.CharField(max_length=160, verbose_name="מה")
@@ -1190,9 +1236,9 @@ class Post(models.Model):
         verbose_name="מי כתב",
     )
     # The institution this belongs to. Stamped once, at write time.
-    program_manager = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="matazim_community",
-        verbose_name="של מנהל/ת התוכנית",
+    institution = models.ForeignKey(
+        "Institution", on_delete=models.CASCADE,
+        related_name="posts", verbose_name="מוסד",
     )
 
     kind = models.CharField(

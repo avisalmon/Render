@@ -122,7 +122,15 @@ class Command(BaseCommand):
     def _seed(self):
         from app.models import Course, CourseCertificate, UserVideoProgress
         from matazim.history import record_arrival, set_status
-        from matazim.models import Leader, LeaderInvite, MemberProfile, Student, StudyClass
+        from matazim.models import (
+            Institution,
+            Leader,
+            LeaderInvite,
+            MemberProfile,
+            Student,
+            StudyClass,
+        )
+        from matazim.roles import grant_program_manager
 
         random.seed(4417)  # the same world every time, so screenshots compare
         now = timezone.now()
@@ -141,10 +149,14 @@ class Command(BaseCommand):
 
         # The program manager.
         manager = self._user(*MANAGER)
+        # The role is `Institution.managers` now (SPR-M.40); the seed grants it
+        # the way the screen does, and the institution the grant makes or finds
+        # is what every owned row below points at.
+        grant_program_manager(manager)
+        inst = Institution.default()
         MemberProfile.objects.update_or_create(
             user=manager,
             defaults={
-                "is_program_manager": True,
                 "birth_year": year - 41,
                 "welcome_accepted_at": now,
             },
@@ -163,7 +175,7 @@ class Command(BaseCommand):
                     "assigned_by": manager,
                     # REQ-M.88 and M.93 — owned by her, and actually approved.
                     # An unapproved leader is a candidate and reaches nothing.
-                    "program_manager": manager,
+                    "institution": inst,
                     "approved_at": now,
                     "approved_by": manager,
                 },
@@ -272,15 +284,15 @@ class Command(BaseCommand):
             user=hopeful, defaults={"birth_year": year - 35, "welcome_accepted_at": now}
         )
         Leader.objects.get_or_create(
-            user=hopeful, defaults={"program_manager": manager, "is_active": True}
+            user=hopeful, defaults={"institution": inst, "is_active": True}
         )
         LeaderInvite.objects.get_or_create(
-            program_manager=manager,
+            institution=inst,
             kind=LeaderInvite.OPEN,
             defaults={"label": "חדר מורים אורט לוד"},
         )
         LeaderInvite.objects.get_or_create(
-            program_manager=manager,
+            institution=inst,
             kind=LeaderInvite.PERSONAL,
             label="שירה מהראל מודיעין",
         )

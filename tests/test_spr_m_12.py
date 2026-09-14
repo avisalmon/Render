@@ -42,9 +42,9 @@ def test_the_role_survives_the_rename_as_data(db):
     from matazim.models import MemberProfile
 
     user = make_user("naomi@example.com")
-    MemberProfile.objects.create(user=user, is_program_manager=True)
-
-    assert MemberProfile.objects.get(user=user).is_program_manager is True
+    MemberProfile.objects.create(user=user)
+    _make_manager(user)
+    assert _is_pm(user)
 
 
 def test_the_old_field_name_is_gone(db):
@@ -56,8 +56,15 @@ def test_the_old_field_name_is_gone(db):
     from matazim.models import MemberProfile
 
     fields = {f.name for f in MemberProfile._meta.get_fields()}
-    assert "is_program_manager" in fields
+    # SPR-M.40: the role moved off the profile altogether. It is
+    # `Institution.managers` now, so the flag this rename produced is gone
+    # too, and both old names must be absent: a half-removal is worse than
+    # either state, which is the same argument this test always made.
+    assert "is_program_manager" not in fields
     assert "is_admin" not in fields
+    from matazim.models import Institution
+
+    assert "managers" in {f.name for f in Institution._meta.get_fields()}
 
 
 def test_the_deploy_still_grants_the_role_from_the_old_variable(db, monkeypatch):
@@ -75,7 +82,7 @@ def test_the_deploy_still_grants_the_role_from_the_old_variable(db, monkeypatch)
     monkeypatch.delenv("MATAZIM_PROGRAM_MANAGERS", raising=False)
 
     call_command("matazim_admins", "--from-env", stdout=StringIO())
-    assert MemberProfile.objects.get(user=user).is_program_manager is True
+    assert _is_pm(user)
 
 
 def test_the_deploy_grants_the_role_from_the_new_variable(db, monkeypatch):
@@ -87,7 +94,7 @@ def test_the_deploy_grants_the_role_from_the_new_variable(db, monkeypatch):
     monkeypatch.delenv("MATAZIM_ADMINS", raising=False)
 
     call_command("matazim_admins", "--from-env", stdout=StringIO())
-    assert MemberProfile.objects.get(user=user).is_program_manager is True
+    assert _is_pm(user)
 
 
 def test_the_new_variable_wins_when_both_are_set(db, monkeypatch):
@@ -104,8 +111,8 @@ def test_the_new_variable_wins_when_both_are_set(db, monkeypatch):
     monkeypatch.setenv("MATAZIM_ADMINS", "old@example.com")
 
     call_command("matazim_admins", "--from-env", stdout=StringIO())
-    assert MemberProfile.objects.get(user=new).is_program_manager is True
-    assert not MemberProfile.objects.filter(user=old, is_program_manager=True).exists()
+    assert _is_pm(new)
+    assert not _is_pm(old)
 
 
 def test_neither_variable_set_is_not_a_crash(db, monkeypatch):
@@ -136,3 +143,24 @@ def test_the_word_admin_is_gone_from_the_role_vocabulary():
     assert not re.search(r"\bis_admin\b", source)
     assert not re.search(r"^ADMIN = ", source, re.M)
     assert "PROGRAM_MANAGER" in source
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

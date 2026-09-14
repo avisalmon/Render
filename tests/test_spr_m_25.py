@@ -36,7 +36,7 @@ def _manager(email="naomi@example.com", name="נעמי"):
     from matazim.models import MemberProfile
 
     user = _user(email, name)
-    MemberProfile.objects.update_or_create(user=user, defaults={"is_program_manager": True})
+    _make_manager(user)
     return user
 
 
@@ -63,7 +63,12 @@ def _leader(email="noa@example.com", manager=None):
 
     return Leader.objects.create(
         user=_user(email, "נעה מורה"),
-        program_manager=manager or _manager(),
+        # `manager or _manager()` first, so there is one person to ask for
+        # an institution either way: the given manager, or a freshly made
+        # one. The earlier version asked `_inst(manager)` (an Institution or
+        # None) `or _manager()` (a User) for the field, which type-errored
+        # the moment `manager` was omitted.
+        institution=_inst(manager or _manager()),
         approved_at=timezone.now(),
     )
 
@@ -496,9 +501,7 @@ def test_a_program_manager_cannot_appoint_another_program_manager(client, db):
         {"action": "grant", "email": outsider.email},
     )
     assert response.status_code == 403
-    assert not MemberProfile.objects.filter(
-        user=outsider, is_program_manager=True
-    ).exists(), "a program manager appointed another one"
+    assert not _is_pm(outsider), "a program manager appointed another one"
 
 
 def test_root_can_appoint_by_searching_rather_than_by_typing(client, db):
@@ -526,9 +529,9 @@ def test_root_can_appoint_by_searching_rather_than_by_typing(client, db):
         reverse("matazim:staff_admins"),
         {"action": "grant", "email": "noa.cohen@example.com"},
     )
-    assert MemberProfile.objects.filter(
-        user__email="noa.cohen@example.com", is_program_manager=True
-    ).exists()
+    from django.contrib.auth.models import User as AuthUser
+
+    assert _is_pm(AuthUser.objects.get(email="noa.cohen@example.com"))
 
 
 def test_the_door_to_it_is_hidden_from_a_program_manager(client, db):
@@ -544,3 +547,24 @@ def test_the_door_to_it_is_hidden_from_a_program_manager(client, db):
     assert reverse("matazim:staff_admins") in client.get(
         reverse("matazim:staff_home")
     ).content.decode()
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

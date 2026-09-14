@@ -98,7 +98,7 @@ def test_making_a_pending_leader_a_program_manager_approves_them(client, db):
 
     root = _root()
     teacher = _user("noa@example.com", "נעה מורה")
-    Leader.objects.create(user=teacher, program_manager=root, approved_at=None)
+    Leader.objects.create(user=teacher, institution=_inst(root), approved_at=None)
 
     assert candidate_of(teacher) is not None, "the fixture is not the state under test"
 
@@ -142,7 +142,7 @@ def test_an_already_approved_leader_keeps_their_original_approval(client, db):
     teacher = _user("noa@example.com", "נעה מורה")
     long_ago = timezone.now() - timezone.timedelta(days=200)
     leader = Leader.objects.create(
-        user=teacher, program_manager=root, approved_at=long_ago
+        user=teacher, institution=_inst(root), approved_at=long_ago
     )
 
     client.force_login(root)
@@ -166,7 +166,7 @@ def test_revoking_the_role_does_not_un_approve_the_leader(client, db):
 
     root = _root()
     teacher = _user("noa@example.com", "נעה מורה")
-    Leader.objects.create(user=teacher, program_manager=root, approved_at=None)
+    Leader.objects.create(user=teacher, institution=_inst(root), approved_at=None)
 
     client.force_login(root)
     client.post(
@@ -194,7 +194,7 @@ def test_the_bootstrap_command_grants_the_same_way_the_screen_does(db):
 
     root = _root()
     teacher = _user("noa@example.com", "נעה מורה")
-    Leader.objects.create(user=teacher, program_manager=root, approved_at=None)
+    Leader.objects.create(user=teacher, institution=_inst(root), approved_at=None)
 
     call_command("matazim_admins", "--grant", "noa@example.com")
 
@@ -202,3 +202,24 @@ def test_the_bootstrap_command_grants_the_same_way_the_screen_does(db):
 
 
 # ------------------- REQ-M.138 lives in test_spr_m_2.py, beside the notice
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

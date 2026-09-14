@@ -38,10 +38,21 @@ def make_user(email, name):
     return user
 
 
+def _institution():
+    """SPR-M.40: `Leader.institution` is required. One shared institution,
+    made on first use and reused."""
+    from matazim.models import Institution
+
+    inst = Institution.objects.order_by("created_at").first()
+    return inst if inst is not None else Institution.objects.create(name="עתיד רמלה")
+
+
 def make_leader(email="noa@example.com", name="נעה מורה", school="עתיד רמלה"):
     from matazim.models import Leader, StudyClass
 
-    leader = Leader.objects.create(user=make_user(email, name), approved_at=timezone.now())
+    leader = Leader.objects.create(
+        user=make_user(email, name), institution=_institution(), approved_at=timezone.now()
+    )
     StudyClass.objects.create(leader=leader, name="ט1", school_name=school)
     return leader
 

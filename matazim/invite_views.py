@@ -18,7 +18,7 @@ Precisely because anyone holding it could use it, it confers nothing. Whoever
 registers through it becomes a candidate and waits.
 
 Everything here is scoped by `visible_leaders` and by the invite's own
-`program_manager`, so an invitation lands its holder in the right world
+`institution`, so an invitation lands its holder in the right world
 (REQ-M.88).
 """
 
@@ -35,7 +35,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from .access import is_program_manager, visible_leaders
+from .access import institution_of, is_program_manager, visible_leaders
 from .models import Leader, LeaderInvite
 from .views import shell
 
@@ -67,14 +67,14 @@ def approve_leader(user, manager, *, invite=None):
     meaning different things.
     """
     leader, _ = Leader.objects.get_or_create(
-        user=user, defaults={"program_manager": manager, "assigned_by": manager}
+        user=user, defaults={"institution": institution_of(manager), "assigned_by": manager}
     )
-    if leader.program_manager_id is None:
-        leader.program_manager = manager
+    if leader.institution_id is None:
+        leader.institution = institution_of(manager)
     leader.approved_at = leader.approved_at or timezone.now()
     leader.approved_by = leader.approved_by or manager
     leader.is_active = True
-    leader.save(update_fields=["program_manager", "approved_at", "approved_by", "is_active"])
+    leader.save(update_fields=["institution", "approved_at", "approved_by", "is_active"])
     if invite is not None and invite.kind == LeaderInvite.PERSONAL:
         invite.used_at = invite.used_at or timezone.now()
         invite.used_by = invite.used_by or user
@@ -94,7 +94,12 @@ def tell_them(request, leader):
     if not to:
         return False
 
-    manager = leader.approved_by or leader.program_manager
+    # Who to name in the mail. The person who approved them, and failing
+    # that whoever runs the institution; history first, because "approved by
+    # X" is the fact the reader was told.
+    manager = leader.approved_by or (
+        leader.institution.managers.first() if leader.institution_id else None
+    )
     manager_name = ""
     if manager:
         manager_name = getattr(getattr(manager, "profile", None), "display_name", "")
@@ -143,8 +148,9 @@ def leaders(request):
                 error = f"לא נמצא חשבון עם האימייל {email}."
             else:
                 existing = Leader.objects.filter(user=person).first()
-                if existing and existing.program_manager_id not in (None, manager.pk):
-                    # REQ-M.88 — somebody else's leader is not hers to approve.
+                mine = institution_of(manager)
+                if existing and existing.institution_id not in (None, getattr(mine, "pk", None)):
+                    # REQ-M.88 — another institution's leader is not hers to approve.
                     error = "החשבון הזה כבר משויך לתוכנית אחרת."
                 else:
                     leader = approve_leader(person, manager)
@@ -163,7 +169,7 @@ def leaders(request):
                 error = "צריך לכתוב עבור מי ההזמנה. אפשר לטעות בשם, זה רק תווית."
             else:
                 invite = LeaderInvite.objects.create(
-                    program_manager=manager,
+                    institution=institution_of(manager),
                     kind=kind,
                     label=label,
                     email=(request.POST.get("email") or "").strip(),
@@ -178,7 +184,7 @@ def leaders(request):
 
         elif action == "revoke_invite":
             invite = get_object_or_404(
-                LeaderInvite, pk=request.POST.get("invite"), program_manager=manager
+                LeaderInvite, pk=request.POST.get("invite"), institution=institution_of(manager)
             )
             invite.revoked_at = timezone.now()
             invite.save(update_fields=["revoked_at"])
@@ -194,7 +200,7 @@ def leaders(request):
             leaders=mine.filter(approved_at__isnull=False),
             candidates=mine.filter(approved_at__isnull=True),
             invites=LeaderInvite.objects.filter(
-                program_manager=manager, revoked_at__isnull=True
+                institution=institution_of(manager), revoked_at__isnull=True
             ).filter(Q(kind=LeaderInvite.OPEN) | Q(used_at__isnull=True)),
             error=error,
             notice=notice,
@@ -231,7 +237,7 @@ def invite_qr(request, invite_id):
     import qrcode
 
     _manager_or_403(request)
-    invite = get_object_or_404(LeaderInvite, pk=invite_id, program_manager=request.user)
+    invite = get_object_or_404(LeaderInvite, pk=invite_id, institution=institution_of(request.user))
     image = qrcode.make(_invite_url(request, invite), box_size=8, border=2)
     buffer = io.BytesIO()
     image.save(buffer, format="PNG")
@@ -266,7 +272,7 @@ def invite_landing(request, token):
     """
     invite = (
         LeaderInvite.objects.filter(token=token)
-        .select_related("program_manager", "program_manager__profile")
+        .select_related("institution")
         .first()
     )
 
@@ -289,7 +295,7 @@ def invite_landing(request, token):
             # (REQ-M.93).
             Leader.objects.create(
                 user=request.user,
-                program_manager=invite.program_manager,
+                institution=invite.institution,
                 is_active=True,
             )
             if invite.kind == LeaderInvite.PERSONAL:
@@ -331,7 +337,7 @@ def claim_leader_invite(request, user):
     if Leader.objects.filter(user=user).exists():
         return None
 
-    Leader.objects.create(user=user, program_manager=invite.program_manager, is_active=True)
+    Leader.objects.create(user=user, institution=invite.institution, is_active=True)
     if invite.kind == LeaderInvite.PERSONAL:
         invite.used_at = timezone.now()
         invite.used_by = user

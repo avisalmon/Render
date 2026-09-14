@@ -26,27 +26,30 @@ PASSWORD = "sprm7-pass-6612"
 def _one_world():
     """REQ-M.88 — these suites describe a single institution.
 
-    Leaders here belong to whichever program manager the test created, and the
-    fixtures run in whatever order the test found readable. So a leader adopts
-    the existing manager if there is one, and a manager adopts any leader made
-    before it existed. Between them, order stops mattering.
+    The first `Institution` found is the one every leader here belongs to,
+    created on first use if none exists yet. Calling this a second time (to add
+    a second manager to the same world) returns the same row rather than making
+    a rival one.
+
+    Rewritten 2026-09-14 for SPR-M.40 (the `Institution` row). The original let
+    a `Leader` exist with no owner and retroactively claimed it when a program
+    manager appeared, a workaround for a nullable FK that no longer exists:
+    `Leader.institution` is required now, so a leader is filed in at creation
+    and there is nothing left to claim.
+
+    REQ-M.93, added in SPR-M.14: an unapproved `Leader` row is a candidate and
+    `leader_of` refuses to return it. These suites predate candidates and mean
+    "a leader" when they say so, so anything unapproved is approved here.
     """
     from django.utils import timezone
 
-    from matazim.models import Leader, MemberProfile
+    from matazim.models import Institution, Leader
 
-    profile = MemberProfile.objects.filter(is_program_manager=True).first()
-    owner = profile.user if profile else None
-    if owner:
-        Leader.objects.filter(program_manager__isnull=True).update(program_manager=owner)
-    # REQ-M.93, added in SPR-M.14: an unapproved Leader row is a candidate and
-    # `leader_of` refuses to return it. These suites predate candidates and mean
-    # "a leader", so anything unapproved here is approved. The candidate state
-    # itself is tested on its own in test_spr_m_14.
-    Leader.objects.filter(approved_at__isnull=True).update(
-        approved_at=timezone.now(), approved_by=owner
-    )
-    return owner
+    inst = Institution.objects.order_by("created_at").first()
+    if inst is None:
+        inst = Institution.objects.create(name="עתיד רמלה")
+    Leader.objects.filter(approved_at__isnull=True).update(approved_at=timezone.now())
+    return inst
 
 
 def make_user(email, name=""):
@@ -61,8 +64,11 @@ def make_admin(client, email="chief@example.com"):
     from matazim.models import MemberProfile
 
     user = make_user(email, "אבי")
-    MemberProfile.objects.update_or_create(user=user, defaults={"is_program_manager": True})
-    _one_world()
+    # Joins whichever institution `_one_world()` already has (or makes the
+    # first one), rather than `_make_manager`'s always-new institution: this
+    # helper can run before or after `make_leader()` in a given test, and the
+    # two must end up in the same world either way.
+    _one_world().managers.add(user)
     client.force_login(user)
     return user
 
@@ -72,7 +78,7 @@ def make_leader(email="noa@example.com", name="נעה מורה", school="עתי�
 
     leader = Leader.objects.create(
         user=make_user(email, name),
-        program_manager=_one_world(),
+        institution=_one_world(),
         approved_at=timezone.now(),
     )
     StudyClass.objects.create(leader=leader, name="ט1", school_name=school)
@@ -120,6 +126,18 @@ def test_an_admin_can_make_someone_a_leader(client, db):
     assert leader is not None
     assert leader.is_active
     assert leader.join_code, "a leader is useless without a link to hand out"
+
+    # Found 2026-09-14 by SPR-M.40's required `institution` FK, which turned a
+    # silent gap into a crash: this screen never set `approved_at` either, so a
+    # leader "assigned" here (REQ-M.25, "the thing an admin exists to do")
+    # stayed a candidate forever. `leader_of()` refuses an unapproved row, so
+    # the admin's own action would have produced someone who could never sign
+    # in as a leader.
+    from matazim.access import leader_of
+
+    assert leader.institution_id is not None, "assigned into nobody's institution"
+    assert leader.approved_at is not None, "assigned but left as a candidate forever"
+    assert leader_of(teacher) is not None
 
 
 def test_making_a_leader_is_admin_only(client, db):
@@ -377,3 +395,24 @@ def test_an_admin_reaches_the_leaders_screen_from_the_staff_area(client, db):
     make_admin(client)
     html = client.get(reverse("matazim:staff_home")).content.decode()
     assert reverse("matazim:staff_leaders") in html
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

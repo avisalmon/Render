@@ -43,7 +43,7 @@ def _manager(email="naomi@example.com"):
     from matazim.models import MemberProfile
 
     user = _user(email, "נעמי")
-    MemberProfile.objects.update_or_create(user=user, defaults={"is_program_manager": True})
+    _make_manager(user)
     return user
 
 
@@ -51,7 +51,7 @@ def _leader(email, name, manager):
     from matazim.models import Leader
 
     return Leader.objects.create(
-        user=_user(email, name), program_manager=manager, approved_at=timezone.now()
+        user=_user(email, name), institution=_inst(manager), approved_at=timezone.now()
     )
 
 
@@ -69,7 +69,7 @@ def _event(manager, hours=20, **extra):
     from matazim.models import Event
 
     fields = {
-        "program_manager": manager,
+        "institution": _inst(manager),
         "title": "תערוכת סיום",
         "starts_at": timezone.now() + timezone.timedelta(hours=hours),
         "for_everyone": True,
@@ -346,3 +346,24 @@ def test_the_screen_states_the_period_it_enforces(client, db):
 
     assert str(REQUEST_DAYS) in html
     assert "בקשה שעדיין פתוחה לא" in html
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

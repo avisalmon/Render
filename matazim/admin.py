@@ -13,26 +13,47 @@ templates/matazim/, so nothing is bent by being here.
 
 from django.contrib import admin
 
-from .models import EntranceAttempt, EntranceTarget, Leader, MemberProfile, Student, StudyClass
+from .models import (
+    EntranceAttempt,
+    EntranceTarget,
+    Institution,
+    Leader,
+    MemberProfile,
+    Student,
+    StudyClass,
+)
+
+
+@admin.register(Institution)
+class InstitutionAdmin(admin.ModelAdmin):
+    """Where the program-manager role is granted by hand.
+
+    The role is `managers`, and this is the escape hatch for granting it to a
+    named person without a deploy, which `MemberProfileAdmin` used to be when
+    the role was a flag. Root only, like every Django admin screen here.
+    """
+
+    list_display = ("name", "manager_count", "created_at")
+    filter_horizontal = ("managers",)
+    search_fields = ("name", "managers__email")
+
+    @admin.display(description="מנהלים/ות")
+    def manager_count(self, obj):
+        return obj.managers.count()
 
 
 @admin.register(MemberProfile)
 class MemberProfileAdmin(admin.ModelAdmin):
-    """Where the program-manager role is granted by hand.
-
-    `is_program_manager` is editable straight from the list, because the whole
-    reason this is registered is to flip it for a named person without a deploy.
-    """
+    """A person's מט״צים row. The program-manager role is not here any more:
+    it is `Institution.managers`, granted on that screen."""
 
     list_display = (
         "email",
-        "is_program_manager",
         "entered_via_matazim",
         "passed_test",
         "first_seen_at",
     )
-    list_editable = ("is_program_manager",)
-    list_filter = ("is_program_manager", "entered_via_matazim")
+    list_filter = ("entered_via_matazim",)
     search_fields = ("user__email", "user__username", "user__profile__display_name")
     readonly_fields = ("first_seen_at", "updated_at")
     autocomplete_fields = ("user",)

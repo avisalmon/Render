@@ -70,17 +70,30 @@ def make_member(email="kid@example.com", name="יובל", born=None, passed=True
     return user, profile
 
 
+def _institution():
+    """SPR-M.40: `Leader.institution` is required. One shared institution,
+    made on first use and reused, so a leader and an admin made independently
+    in the same test still land in the same world."""
+    from matazim.models import Institution
+
+    inst = Institution.objects.order_by("created_at").first()
+    return inst if inst is not None else Institution.objects.create(name="עתיד רמלה")
+
+
 def make_leader(email="noa@example.com", name="נעה מורה"):
     from matazim.models import Leader
 
-    return Leader.objects.create(user=make_user(email, name))
+    return Leader.objects.create(user=make_user(email, name), institution=_institution())
 
 
 def make_admin(email="chief@example.com"):
     from matazim.models import MemberProfile
 
     user = make_user(email, "אבי")
-    MemberProfile.objects.update_or_create(user=user, defaults={"is_program_manager": True})
+    # Joins whichever institution already exists (or makes it), not a rival
+    # one: an admin made here and a leader made separately in the same test
+    # must share a world, or the admin cannot reach the leader's students.
+    _institution().managers.add(user)
     return user
 
 
@@ -538,3 +551,24 @@ def test_the_registration_form_still_asks(client, db):
 
     assert "birth_year" in html, "the birth year stopped being asked"
     assert "guardian_email" in html, "the parent's details stopped being asked"
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

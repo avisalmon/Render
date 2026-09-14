@@ -62,7 +62,14 @@ def _member(email="kid@example.com"):
     )
     teacher = User.objects.create_user("noa@example.com", "noa@example.com", PASSWORD)
     UserProfile.objects.update_or_create(user=teacher, defaults={"display_name": "נעה מורה"})
-    leader = Leader.objects.create(user=teacher, approved_at=timezone.now())
+    from matazim.models import Institution
+
+    # SPR-M.40: `Leader.institution` is required, this file has no manager
+    # concept of its own.
+    inst = Institution.objects.order_by("created_at").first() or Institution.objects.create(
+        name="עתיד רמלה"
+    )
+    leader = Leader.objects.create(user=teacher, institution=inst, approved_at=timezone.now())
     Student.objects.create(user=user, leader=leader, status=Student.IN_TRAINING)
     return user
 

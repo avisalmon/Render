@@ -36,7 +36,7 @@ def _manager(email="naomi@example.com"):
     from matazim.models import MemberProfile
 
     user = _user(email, "נעמי")
-    MemberProfile.objects.update_or_create(user=user, defaults={"is_program_manager": True})
+    _make_manager(user)
     return user
 
 
@@ -44,7 +44,7 @@ def _leader(email, name, manager):
     from matazim.models import Leader
 
     return Leader.objects.create(
-        user=_user(email, name), program_manager=manager, approved_at=timezone.now()
+        user=_user(email, name), institution=_inst(manager), approved_at=timezone.now()
     )
 
 
@@ -402,3 +402,24 @@ def test_the_api_cannot_quietly_set_cancelled(client, db):
     assert client.post(f"/matazim/api/teaching/{row.pk}/cancel/").status_code == 200
     row.refresh_from_db()
     assert row.is_cancelled
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

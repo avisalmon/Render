@@ -37,7 +37,7 @@ def make_manager(email="naomi@example.com"):
     from matazim.models import MemberProfile
 
     user = make_user(email, "נעמי")
-    MemberProfile.objects.update_or_create(user=user, defaults={"is_program_manager": True})
+    _make_manager(user)
     return user
 
 
@@ -46,7 +46,11 @@ def make_leader(manager=None, email="noa@example.com"):
 
     leader = Leader.objects.create(
         user=make_user(email, "נעה מורה"),
-        program_manager=manager or make_manager(),
+        # `manager or make_manager()` first, so there is one person to ask for
+        # an institution either way. `_inst(manager) or make_manager()` typed
+        # a `User` into the fallback branch of a field that wants an
+        # `Institution`.
+        institution=_inst(manager or make_manager()),
         approved_at=timezone.now(),
     )
     StudyClass.objects.create(leader=leader, name="ט1", school_name="עתיד רמלה")
@@ -338,3 +342,24 @@ def test_this_products_own_suite_is_the_one_that_gets_a_model():
         "MATAZIM_LIVE_AI is set and this suite was still handed a blank key, "
         "so the full regression is not exercising the model at all"
     )
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

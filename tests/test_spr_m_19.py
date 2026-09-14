@@ -77,10 +77,15 @@ def make_member(email="kid@example.com", name="יובל", leader=None):
 
 
 def make_leader():
-    from matazim.models import Leader, StudyClass
+    from matazim.models import Institution, Leader, StudyClass
 
+    # SPR-M.40: `Leader.institution` is required, this file has no manager
+    # concept of its own.
+    inst = Institution.objects.order_by("created_at").first() or Institution.objects.create(
+        name="עתיד רמלה"
+    )
     leader = Leader.objects.create(
-        user=make_user("noa@example.com", "נעה מורה"), approved_at=timezone.now()
+        user=make_user("noa@example.com", "נעה מורה"), institution=inst, approved_at=timezone.now()
     )
     StudyClass.objects.create(leader=leader, name="ט1", school_name="עתיד רמלה")
     return leader

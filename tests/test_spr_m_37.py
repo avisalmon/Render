@@ -230,9 +230,11 @@ def test_a_stage_that_has_not_opened_offers_no_door(client, db):
             f"{page} was offered to somebody it is not open to yet"
         )
 
+    pm = _user("pm@example.com", "נעמי")
+    _make_manager(pm)
     leader = Leader.objects.create(
         user=_user("noa@example.com", "נעה"),
-        program_manager=_user("pm@example.com", "נעמי"),
+        institution=_inst(pm),
         approved_at=timezone.now(),
     )
     Student.objects.create(user=user, leader=leader, status=Student.IN_TRAINING)
@@ -257,3 +259,24 @@ def test_nothing_still_claims_a_section_is_unbuilt(client, db):
     for page in ("matazim:events", "matazim:community"):
         html = client.get(reverse(page)).content.decode()
         assert "בקרוב" not in html, f"{page} still says it is coming"
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

@@ -46,7 +46,7 @@ def _manager(email="naomi@example.com"):
     from matazim.models import MemberProfile
 
     user = _user(email, "נעמי")
-    MemberProfile.objects.update_or_create(user=user, defaults={"is_program_manager": True})
+    _make_manager(user)
     return user
 
 
@@ -54,7 +54,7 @@ def _leader(email, name, manager):
     from matazim.models import Leader
 
     return Leader.objects.create(
-        user=_user(email, name), program_manager=manager, approved_at=timezone.now()
+        user=_user(email, name), institution=_inst(manager), approved_at=timezone.now()
     )
 
 
@@ -257,7 +257,7 @@ def test_sharing_to_the_community_is_not_consent_to_publish(client, db):
     work = _work(student, noa)
 
     Post.objects.create(
-        author=student.user, program_manager=naomi, kind=Post.WORK,
+        author=student.user, institution=_inst(naomi), kind=Post.WORK,
         body="תראו מה עשיתי", submission=work,
     )
 
@@ -400,7 +400,7 @@ def test_an_unapproved_leader_is_not_a_leader_in_the_figures(client, db):
     _leader("noa@example.com", "נעה", naomi)
     Leader.objects.create(
         user=_user("waiting@example.com", "איתי"),
-        program_manager=naomi,
+        institution=_inst(naomi),
         approved_at=None,
     )
 
@@ -416,7 +416,7 @@ def test_a_private_event_is_not_a_public_figure(client, db):
     naomi = _manager()
     _leader("noa@example.com", "נעה", naomi)
     Event.objects.create(
-        program_manager=naomi, title="פנימי",
+        institution=_inst(naomi), title="פנימי",
         starts_at=timezone.now() + timezone.timedelta(days=3),
     )
 
@@ -473,3 +473,24 @@ def test_one_of_something_reads_as_one(db):
     assert "בתי ספר" not in labels
     assert "מט״צ בתוכנית" in labels
     assert "מט״צים בתוכנית" not in labels
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

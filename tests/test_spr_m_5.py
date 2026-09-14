@@ -30,7 +30,7 @@ def make_user(email="tal@example.com", staff=False):
         # stand-in, so the test exercises the rule that actually ships.
         from matazim.models import MemberProfile
 
-        MemberProfile.objects.update_or_create(user=user, defaults={"is_program_manager": True})
+        _make_manager(user)
     from app.models import UserProfile
 
     UserProfile.objects.update_or_create(user=user, defaults={"display_name": "טל"})
@@ -158,3 +158,24 @@ def test_a_member_posting_to_it_directly_is_refused(client, db):
     assert response.status_code in (302, 403)
     # And the acknowledgement they gave is still on record.
     assert MemberProfile.objects.get(user=user).welcome_accepted_at is not None
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

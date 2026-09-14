@@ -212,9 +212,22 @@ def _a_leader_with_a_student():
         username=LEADER_EMAIL, email=LEADER_EMAIL, password=LEADER_PASSWORD
     )
     UserProfile.objects.update_or_create(user=teacher, defaults={"display_name": "נעה מורה"})
+
+    # SPR-M.40: `Leader.institution` is required. One shared institution, made
+    # on first use, so both leaders created here land in the same world (and
+    # `test_the_program_manager_screens_fit_a_phone` below can retroactively
+    # move that world under a specific manager).
+    from matazim.models import Institution
+
+    institution = Institution.objects.order_by("created_at").first()
+    if institution is None:
+        institution = Institution.objects.create(name="עתיד רמלה")
+
     # REQ-M.93 — an unapproved row is a candidate and reaches nothing, so a
     # guard built on one would be walking login redirects rather than screens.
-    leader = Leader.objects.create(user=teacher, approved_at=timezone.now())
+    leader = Leader.objects.create(
+        user=teacher, institution=institution, approved_at=timezone.now()
+    )
     StudyClass.objects.create(leader=leader, name="ט1", school_name="עתיד רמלה")
 
     # And a candidate, because the row that carries the approve button *and* the
@@ -231,7 +244,7 @@ def _a_leader_with_a_student():
     UserProfile.objects.update_or_create(
         user=waiting, defaults={"display_name": "מורה ממתינה"}
     )
-    Leader.objects.create(user=waiting, approved_at=None)
+    Leader.objects.create(user=waiting, institution=institution, approved_at=None)
 
     # SPR-M.19 — the track has to exist, or /matazim/learn/scratch/ is a 404 and
     # the guard measures an error page. This is the same mistake the silent
@@ -366,14 +379,14 @@ def test_the_program_manager_screens_fit_a_phone(phone_page, live_server, db):
     email = "phone-pm@example.com"
     boss = User.objects.create_user(username=email, email=email, password=LEADER_PASSWORD)
     UserProfile.objects.update_or_create(user=boss, defaults={"display_name": "נעמי"})
-    MemberProfile.objects.update_or_create(user=boss, defaults={"is_program_manager": True})
+    _make_manager(boss)
     _a_leader_with_a_student()
 
     # REQ-M.88 — her screens show her own people, so the fixture's leader and
     # candidate have to be hers or this measures an empty page and passes.
     from matazim.models import Leader
 
-    Leader.objects.update(program_manager=boss)
+    Leader.objects.update(institution=_inst(boss))
 
     page = phone_page
     page.goto(live_server.url + "/matazim/login/", wait_until="domcontentloaded")
@@ -399,3 +412,24 @@ def test_the_program_manager_screens_fit_a_phone(phone_page, live_server, db):
         if small:
             broken.append(f"{path}: targets {small}")
     assert not broken, "the program manager screens break on a phone:\n" + "\n".join(broken)
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

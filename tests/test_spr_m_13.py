@@ -42,11 +42,10 @@ def make_world(tag, *, students=2):
     from matazim.models import Leader, MemberProfile, Student, StudyClass
 
     manager = make_user(f"pm-{tag}@example.com", f"מנהלת {tag}")
-    MemberProfile.objects.update_or_create(user=manager, defaults={"is_program_manager": True})
-
+    _make_manager(manager)
     leader = Leader.objects.create(
         user=make_user(f"leader-{tag}@example.com", f"מוביל {tag}"),
-        program_manager=manager,
+        institution=_inst(manager),
         # REQ-M.93, added in SPR-M.14 after this file was written: an unapproved
         # row is a candidate and grants nothing. These worlds are meant to be
         # fully built, so the leader is a real one.
@@ -132,24 +131,27 @@ def test_a_leader_is_unaffected_by_tenancy(db):
     assert not (set(south["students"]) & mine)
 
 
-def test_an_orphaned_leader_belongs_to_nobody_but_root(db):
-    """T-F-M.13.1-1: REQ-M.88.
+def test_a_leader_cannot_be_created_with_no_institution(db):
+    """T-F-M.13.1-1: REQ-M.88, REQ-M.143.
 
-    A null owner means orphaned, not shared. That is the safe direction to fail
-    in: invisible is recoverable by reassigning, visible-to-everyone is not
-    recoverable at all once somebody has read the screen.
+    **Rewritten 2026-09-14 for SPR-M.40.** Before the `Institution` row, the
+    owning FK was nullable, and a leader created through a path that forgot to
+    set it (`joining_views.staff_leaders` turned out to be exactly such a path,
+    found while fixing this) became "orphaned": invisible to every program
+    manager, visible only to root. That was a safe fallback for a real gap.
+
+    The gap itself is closed now rather than merely defended against:
+    `Leader.institution` is required at the schema level, so the state this
+    test used to describe cannot be reached at all. A `Leader` cannot exist
+    with nobody's world to belong to, which is a stronger guarantee than "if it
+    happens, at least root can still see it."
     """
-    from matazim.access import visible_leaders
+    from django.db import IntegrityError
+
     from matazim.models import Leader
 
-    north = make_world("north")
-    orphan = Leader.objects.create(
-        user=make_user("orphan@example.com"), approved_at=timezone.now()
-    )
-    root = User.objects.create_superuser("root@example.com", "root@example.com", PASSWORD)
-
-    assert orphan not in set(visible_leaders(north["manager"]))
-    assert orphan in set(visible_leaders(root))
+    with pytest.raises(IntegrityError):
+        Leader.objects.create(user=make_user("orphan@example.com"), approved_at=timezone.now())
 
 
 # ------------------------------------------------------ every door, from outside
@@ -253,3 +255,24 @@ def test_a_program_manager_cannot_file_a_student_into_another_worlds_class(clien
         {"action": "set_classes", "classes": [south["class"].pk]},
     )
     assert not south["class"].students.filter(pk=north["student"].pk).exists()
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

@@ -4,15 +4,16 @@
     python manage.py matazim_handover old@example.com new@example.com --apply  # do it
 
 Report-only unless `--apply`, like every other command here that touches people.
-`matazim/handover.py` says what moves, what stays, and why this exists at all:
-the tenancy root is a person, and the day she leaves her successor would
-otherwise sign in to an empty programme.
+Since SPR-M.40 rows belong to an `Institution` and nothing moves: the successor
+becomes a manager and the predecessor stops being one. `matazim/handover.py`
+says what changes, what stays, and why.
 """
 
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
 
 from matazim.handover import hand_over, owned_counts
+from matazim.models import Institution
 
 
 class Command(BaseCommand):
@@ -35,20 +36,24 @@ class Command(BaseCommand):
         if old.pk == new.pk:
             raise CommandError("that is the same person")
 
-        counts = owned_counts(old)
-        self.stdout.write(f"{old.email} owns: " + ", ".join(f"{k} {v}" for k, v in counts.items()))
+        theirs = list(Institution.objects.filter(managers=old))
+        if not theirs:
+            raise CommandError(f"{old.email} manages no institution; use the grant screen instead")
+        for inst in theirs:
+            counts = owned_counts(inst)
+            self.stdout.write(
+                f"{inst.name}, run by {old.email}: "
+                + ", ".join(f"{k} {v}" for k, v in counts.items())
+            )
 
         if not options["apply"]:
             self.stdout.write("report only; add --apply to move them")
             return
 
-        moved = hand_over(old, new)
+        counts = hand_over(old, new)
         self.stdout.write(
             self.style.SUCCESS(
-                f"moved to {new.email}: " + ", ".join(f"{k} {v}" for k, v in moved.items())
+                f"{new.email} now runs it: " + ", ".join(f"{k} {v}" for k, v in counts.items())
             )
         )
-        self.stdout.write(
-            f"{old.email} still holds the program-manager role; revoke it on the "
-            "screen if that is intended (REQ-M.114)."
-        )
+        self.stdout.write(f"{old.email} no longer holds the program-manager role.")

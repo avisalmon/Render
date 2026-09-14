@@ -40,7 +40,7 @@ def _manager(email="naomi@example.com"):
     from matazim.models import MemberProfile
 
     user = _user(email, "נעמי")
-    MemberProfile.objects.update_or_create(user=user, defaults={"is_program_manager": True})
+    _make_manager(user)
     return user
 
 
@@ -493,3 +493,24 @@ def test_a_scripted_reply_is_never_used_unless_asked_for(client, db, no_model):
     assert not draft.messages.filter(who=RequestMessage.ASSISTANT).exists(), (
         "a scripted reply appeared without MATAZIM_SCRIPTED_AI being set"
     )
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

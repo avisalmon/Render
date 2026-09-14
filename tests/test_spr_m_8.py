@@ -34,27 +34,31 @@ PASSWORD = "sprm8-pass-4417"
 def _one_world():
     """REQ-M.88 — these suites describe a single institution.
 
-    Leaders here belong to whichever program manager the test created, and the
-    fixtures run in whatever order the test found readable. So a leader adopts
-    the existing manager if there is one, and a manager adopts any leader made
-    before it existed. Between them, order stops mattering.
+    The first `Institution` found is the one every leader here belongs to,
+    created on first use if none exists yet. `make_leader` calls this to get
+    the institution a new leader joins, so calling it a second time (as
+    `test_an_admin_can_certify_too` does, to add a second manager to the same
+    world) returns the same row rather than making a rival one.
+
+    Rewritten 2026-09-14 for SPR-M.40 (the `Institution` row). The original
+    version let a `Leader` exist with no owner and retroactively claimed it
+    when a program manager appeared, which was a workaround for a nullable FK
+    that no longer exists: `Leader.institution` is required now, so a leader is
+    filed into this institution at creation and there is nothing left to claim.
+
+    REQ-M.93, added in SPR-M.14: an unapproved `Leader` row is a candidate and
+    `leader_of` refuses to return it. These suites predate candidates and mean
+    "a leader" when they say so, so anything unapproved is approved here.
     """
     from django.utils import timezone
 
-    from matazim.models import Leader, MemberProfile
+    from matazim.models import Institution, Leader
 
-    profile = MemberProfile.objects.filter(is_program_manager=True).first()
-    owner = profile.user if profile else None
-    if owner:
-        Leader.objects.filter(program_manager__isnull=True).update(program_manager=owner)
-    # REQ-M.93, added in SPR-M.14: an unapproved Leader row is a candidate and
-    # `leader_of` refuses to return it. These suites predate candidates and mean
-    # "a leader", so anything unapproved here is approved. The candidate state
-    # itself is tested on its own in test_spr_m_14.
-    Leader.objects.filter(approved_at__isnull=True).update(
-        approved_at=timezone.now(), approved_by=owner
-    )
-    return owner
+    inst = Institution.objects.order_by("created_at").first()
+    if inst is None:
+        inst = Institution.objects.create(name="עתיד רמלה")
+    Leader.objects.filter(approved_at__isnull=True).update(approved_at=timezone.now())
+    return inst
 
 
 def make_user(email, name=""):
@@ -70,7 +74,7 @@ def make_leader(email="noa@example.com", name="נעה מורה", school="עתי�
 
     leader = Leader.objects.create(
         user=make_user(email, name),
-        program_manager=_one_world(),
+        institution=_one_world(),
         approved_at=timezone.now(),
     )
     StudyClass.objects.create(leader=leader, name="ט1", school_name=school)
@@ -435,8 +439,10 @@ def test_an_admin_can_certify_too(client, db):
     student = eligible_student(leader)
 
     boss = make_user("chief@example.com", "אבי")
-    MemberProfile.objects.update_or_create(user=boss, defaults={"is_program_manager": True})
-    _one_world()
+    # Added as a manager of the *same* institution leader belongs to
+    # (`_one_world()`), not a fresh one of their own — the point of the test is
+    # that a second manager of one institution can act on its students.
+    _one_world().managers.add(boss)
     client.force_login(boss)
     client.post(reverse("matazim:certify", args=[student.pk]), {"action": "certify"})
 

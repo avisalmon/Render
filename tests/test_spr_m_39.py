@@ -46,7 +46,7 @@ def _manager(email="naomi@example.com", name="נעמי"):
     from matazim.models import MemberProfile
 
     user = _user(email, name)
-    MemberProfile.objects.update_or_create(user=user, defaults={"is_program_manager": True})
+    _make_manager(user)
     return user
 
 
@@ -54,7 +54,7 @@ def _leader(email, name, manager):
     from matazim.models import Leader
 
     return Leader.objects.create(
-        user=_user(email, name), program_manager=manager,
+        user=_user(email, name), institution=_inst(manager),
         approved_at=timezone.now(), approved_by=manager,
     )
 
@@ -104,15 +104,15 @@ def _her_world(naomi):
 
     noa = _leader("noa@example.com", "נעה", naomi)
     event = Event.objects.create(
-        program_manager=naomi, title="תערוכה",
+        institution=_inst(naomi), title="תערוכה",
         starts_at=timezone.now() + timezone.timedelta(days=5), for_everyone=True,
     )
     invite = LeaderInvite.objects.create(
-        program_manager=naomi, kind=LeaderInvite.PERSONAL, label="דנה",
+        institution=_inst(naomi), kind=LeaderInvite.PERSONAL, label="דנה",
         token="tok-handover-0123456789",
     )
     post = Post.objects.create(
-        author=naomi, program_manager=naomi, kind=Post.ANNOUNCEMENT, body="שלום"
+        author=naomi, institution=_inst(naomi), kind=Post.ANNOUNCEMENT, body="שלום"
     )
     request = Request.objects.create(
         author=naomi, author_role="program_manager", body="בקשה שלי",
@@ -124,7 +124,18 @@ def _her_world(naomi):
 def test_a_successor_inherits_the_whole_institution(db):
     """T-F-M.39.1-1: the day she leaves, her successor must not see an empty
     programme. Every table that points at her is checked, through the same
-    `visible_*` functions the screens use."""
+    `visible_*` functions the screens use.
+
+    This test caught a real bug once the `Institution` row existed: every test
+    database carries a second institution from migration 0032's backfill (the
+    one seeded row, "רשת עתיד"), and the first version of `hand_over` called
+    `grant_program_manager(new)` with no institution named, which joins
+    whichever institution `Institution.default()` finds — the earliest
+    created, not necessarily the one being handed over. The successor ended up
+    managing both, and `institution_of()` picked the seeded one, which owns
+    none of נעמי's rows. `visible_posts(successor)` came back empty. Fixed by
+    telling `grant_program_manager` which institutions to join.
+    """
     from matazim.access import visible_events, visible_invites, visible_leaders, visible_posts
     from matazim.handover import hand_over
 
@@ -156,7 +167,7 @@ def test_handover_moves_ownership_and_not_history(db):
     hand_over(naomi, successor)
 
     noa.refresh_from_db()
-    assert noa.program_manager_id == successor.id, "ownership did not move"
+    assert successor in noa.institution.managers.all(), "the successor does not run the institution"
     assert noa.approved_by_id == naomi.id, "history was rewritten"
 
 
@@ -184,7 +195,7 @@ def test_the_successor_becomes_a_program_manager_the_same_way_the_screen_does(db
 
     naomi = _manager()
     successor = _user("next@example.com", "רות")
-    Leader.objects.create(user=successor, program_manager=naomi, approved_at=None)
+    Leader.objects.create(user=successor, institution=_inst(naomi), approved_at=None)
     _her_world(naomi)
 
     hand_over(naomi, successor)
@@ -193,10 +204,15 @@ def test_the_successor_becomes_a_program_manager_the_same_way_the_screen_does(db
     assert leader_of(successor) is not None, "the successor was left waiting for approval"
 
 
-def test_the_old_manager_keeps_her_role(db):
-    """T-F-M.39.1-5: REQ-M.114 — revoking is a separate decision made on the
-    screen, and a handover that quietly demoted somebody would be two decisions
-    dressed as one."""
+def test_the_old_manager_stops_being_one(db):
+    """T-F-M.39.1-5: under the `Institution` row a handover is add-and-remove.
+
+    The first version of this test asserted the opposite, and was right for
+    the first version of the model: rows belonged to a person, so removing her
+    role was a separate decision. Rows belong to the institution now, and a
+    manager who keeps the role keeps seeing everything, which is the opposite
+    of a handover. Both facts change together, in one transaction.
+    """
     from matazim.access import is_program_manager
     from matazim.handover import hand_over
 
@@ -206,7 +222,20 @@ def test_the_old_manager_keeps_her_role(db):
 
     hand_over(naomi, successor)
 
-    assert is_program_manager(naomi)
+    assert not is_program_manager(naomi)
+    assert is_program_manager(successor)
+
+
+def test_handover_of_nobody_is_refused(db):
+    """T-F-M.39.1-5b: handing over an institution somebody does not run is a
+    grant with a misleading name, and the grant screen exists for that."""
+    from matazim.handover import hand_over
+
+    nobody = _user("nobody@example.com", "אף אחד")
+    successor = _user("next@example.com", "רות")
+
+    with pytest.raises(ValueError):
+        hand_over(nobody, successor)
 
 
 def test_handover_to_yourself_is_refused(db):
@@ -421,3 +450,24 @@ def test_the_api_goes_through_the_same_door(client, db):
 
     assert response.status_code == 201, response.content
     assert StudyClass.objects.get(pk=response.json()["id"]).school_name == "עתיד רמלה"
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

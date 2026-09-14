@@ -124,7 +124,7 @@ def feed(request):
                 if not error:
                     Post.objects.create(
                         author=request.user,
-                        program_manager=institution,
+                        institution=institution,
                         kind=(
                             Post.ANNOUNCEMENT
                             if is_program_manager(request.user)

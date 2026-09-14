@@ -23,19 +23,39 @@ that is already over.
 from django.utils import timezone
 
 
-def grant_program_manager(user, *, by=None):
+def grant_program_manager(user, *, by=None, institutions=None):
     """Give somebody the role, and stop them waiting for anything.
 
     Returns the `Leader` row that was approved as a result, or None if there was
     nothing pending. Callers use that to say what happened, because "you are now
     a program manager" and "you are now a program manager and your teaching
     account is live" are different pieces of news.
-    """
-    from .models import Leader, MemberProfile
 
-    MemberProfile.objects.update_or_create(
-        user=user, defaults={"is_program_manager": True}
-    )
+    `institutions`, when given, is which institution(s) to make them a manager
+    of. Every ordinary caller passes nothing and gets the one institution that
+    exists today (`Institution.default()`, created if there is none yet).
+    `handover.hand_over` is the exception: it is handing over specific
+    institutions and must not also splice the successor into an unrelated
+    default one, which is exactly the bug that happened the first time this
+    function was reused for a handover without the parameter — the successor
+    ended up managing both the institution being handed over and whichever one
+    a fixture or a migration had created first, and `institution_of()` picked
+    the wrong one because it reads the earliest by creation date.
+    """
+    from .models import Institution, Leader
+
+    if institutions is None:
+        inst = Institution.default()
+        if inst is None:
+            from django.conf import settings
+
+            inst = Institution.objects.create(
+                name=getattr(settings, "MATAZIM_INSTITUTION_NAME", "") or "רשת עתיד"
+            )
+        institutions = [inst]
+
+    for inst in institutions:
+        inst.managers.add(user)
 
     pending = Leader.objects.filter(user=user, approved_at__isnull=True).first()
     if pending is None:
@@ -56,8 +76,7 @@ def revoke_program_manager(user):
     was about something else. Approval was an act by a person (REQ-M.93) and is
     undone by a person, on the screen that is about leaders.
     """
-    from .models import MemberProfile
+    from .models import Institution
 
-    MemberProfile.objects.update_or_create(
-        user=user, defaults={"is_program_manager": False}
-    )
+    for inst in Institution.objects.filter(managers=user):
+        inst.managers.remove(user)

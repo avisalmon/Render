@@ -398,7 +398,7 @@ def test_the_replay_control_brings_the_welcome_back(client, db):
     from matazim.models import MemberProfile
 
     user = sign_in(client)
-    MemberProfile.objects.update_or_create(user=user, defaults={"is_program_manager": True})
+    _make_manager(user)
     MemberProfile.objects.update_or_create(
         user=user, defaults={"welcome_accepted_at": timezone.now()}
     )
@@ -460,3 +460,24 @@ def test_the_shut_door_points_at_the_test(client, db):
     """T-F-M.2.8-2: a lock with no way forward is a dead end."""
     html = client.get(reverse("matazim:home")).content.decode()
     assert reverse("matazim:entrance_test") in html
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

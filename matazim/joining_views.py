@@ -27,7 +27,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
-from .access import is_program_manager, leader_of, visible_leaders
+from .access import institution_of, is_program_manager, leader_of, visible_leaders
 from .consent import consent_blocker, needs_guardian_consent
 from .history import record_arrival, record_leader_change, set_status
 from .models import Application, Leader, Notification, Student
@@ -402,8 +402,27 @@ def staff_leaders(request):
             # typo must not conjure an account with a role attached.
             error = f"לא נמצא חשבון עם האימייל {email}. אפשר למנות רק מי שכבר נרשם לאתר."
         else:
+            from django.utils import timezone
+
+            # `institution` is required (SPR-M.40) and this call never set it,
+            # which only worked before because the FK it replaced was nullable:
+            # a leader "assigned" from this screen belonged to nobody's world.
+            # `approved_at` had the same gap for a different reason — this
+            # predates REQ-M.93 (SPR-M.14) and was never updated, so a leader
+            # made here stayed a candidate forever: `leader_of()` refuses an
+            # unapproved row, so "the thing an admin exists to do" silently
+            # produced someone who could never sign in as a leader. Both are
+            # REQ-M.25 gaps this migration's required FK surfaced rather than
+            # caused, fixed together rather than leaving the second in place
+            # having found it.
             leader, created = Leader.objects.get_or_create(
-                user=person, defaults={"assigned_by": request.user}
+                user=person,
+                defaults={
+                    "institution": institution_of(request.user),
+                    "assigned_by": request.user,
+                    "approved_at": timezone.now(),
+                    "approved_by": request.user,
+                },
             )
             if not created and not leader.is_active:
                 leader.is_active = True

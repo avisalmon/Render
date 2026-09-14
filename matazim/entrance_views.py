@@ -168,6 +168,27 @@ def test_retry(request):
     return redirect("matazim:test_task")
 
 
+def _managers():
+    """Everyone who runs an institution. The role, read from where it lives.
+
+    Was `MemberProfile.objects.filter(is_program_manager=True)` until the flag
+    went (SPR-M.40): the role is `Institution.managers` now, and these staff
+    screens read it from there like `access.is_program_manager` does.
+    """
+    from django.contrib.auth.models import User
+
+    return User.objects.filter(matazim_institutions__isnull=False).distinct()
+
+
+class _ProfileLike:
+    """The `staff_admins` rows used to be profiles; they are users now, and the
+    template reads `.user`. One line of shim beats touching the template."""
+
+    def __init__(self, user):
+        self.user = user
+        self.user_id = user.pk
+
+
 # --- Staff ------------------------------------------------------------------
 
 
@@ -253,7 +274,7 @@ def staff_home(request):
             counts={
                 "targets": EntranceTarget.objects.filter(is_retired=False).count(),
                 "retired": EntranceTarget.objects.filter(is_retired=True).count(),
-                "admins": MemberProfile.objects.filter(is_program_manager=True).count(),
+                "admins": _managers().count(),
                 "leaders": leaders.count(),
                 # Two different facts that were being reported as one. Everybody
                 # in the programme is not a מט״צ: that is what the certificate
@@ -334,13 +355,10 @@ def staff_admins(request):
     for user in User.objects.filter(is_superuser=True).order_by("email"):
         rows.append({"user": user, "source": "root", "can_revoke": False})
         seen.add(user.pk)
-    for profile in (
-        MemberProfile.objects.filter(is_program_manager=True)
-        .select_related("user", "user__profile")
-        .order_by("user__email")
-    ):
-        if profile.user_id in seen:
+    for person in _managers().select_related("profile").order_by("email"):
+        if person.pk in seen:
             continue
+        profile = _ProfileLike(person)
         rows.append(
             {"user": profile.user, "source": "granted", "can_revoke": profile.user != request.user}
         )
@@ -394,9 +412,7 @@ def staff_user_search(request):
         .select_related("profile")
         .order_by("email")[:10]
     )
-    already = set(
-        MemberProfile.objects.filter(is_program_manager=True).values_list("user_id", flat=True)
-    )
+    already = set(_managers().values_list("pk", flat=True))
 
     return JsonResponse(
         {

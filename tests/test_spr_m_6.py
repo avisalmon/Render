@@ -22,27 +22,30 @@ pytestmark = pytest.mark.sprm6
 def _one_world():
     """REQ-M.88 — these suites describe a single institution.
 
-    Leaders here belong to whichever program manager the test created, and the
-    fixtures run in whatever order the test found readable. So a leader adopts
-    the existing manager if there is one, and a manager adopts any leader made
-    before it existed. Between them, order stops mattering.
+    The first `Institution` found is the one every leader here belongs to,
+    created on first use if none exists yet. Calling this a second time (to add
+    a second manager to the same world) returns the same row rather than making
+    a rival one.
+
+    Rewritten 2026-09-14 for SPR-M.40 (the `Institution` row). The original let
+    a `Leader` exist with no owner and retroactively claimed it when a program
+    manager appeared, a workaround for a nullable FK that no longer exists:
+    `Leader.institution` is required now, so a leader is filed in at creation
+    and there is nothing left to claim.
+
+    REQ-M.93, added in SPR-M.14: an unapproved `Leader` row is a candidate and
+    `leader_of` refuses to return it. These suites predate candidates and mean
+    "a leader" when they say so, so anything unapproved is approved here.
     """
     from django.utils import timezone
 
-    from matazim.models import Leader, MemberProfile
+    from matazim.models import Institution, Leader
 
-    profile = MemberProfile.objects.filter(is_program_manager=True).first()
-    owner = profile.user if profile else None
-    if owner:
-        Leader.objects.filter(program_manager__isnull=True).update(program_manager=owner)
-    # REQ-M.93, added in SPR-M.14: an unapproved Leader row is a candidate and
-    # `leader_of` refuses to return it. These suites predate candidates and mean
-    # "a leader", so anything unapproved here is approved. The candidate state
-    # itself is tested on its own in test_spr_m_14.
-    Leader.objects.filter(approved_at__isnull=True).update(
-        approved_at=timezone.now(), approved_by=owner
-    )
-    return owner
+    inst = Institution.objects.order_by("created_at").first()
+    if inst is None:
+        inst = Institution.objects.create(name="עתיד רמלה")
+    Leader.objects.filter(approved_at__isnull=True).update(approved_at=timezone.now())
+    return inst
 
 
 def make_user(email):
@@ -55,7 +58,7 @@ def make_leader(email, active=True):
     leader = Leader.objects.create(
         user=make_user(email),
         is_active=active,
-        program_manager=_one_world(),
+        institution=_one_world(),
         approved_at=timezone.now(),
     )
     return leader
@@ -87,7 +90,7 @@ def test_the_four_models_exist_with_the_agreed_shape(db):
     assert list(leader.students.all()) == [student]
 
     profile = MemberProfile.objects.create(user=make_user("nobody@example.com"))
-    assert profile.is_program_manager is False, "adminship is granted, never a default"
+    assert not _is_pm(profile.user), "adminship is granted, never a default"
 
 
 def test_a_student_can_exist_before_any_leader_has_them(db):
@@ -165,8 +168,14 @@ def test_an_admin_sees_everyone_including_the_unclaimed(db):
     from matazim.models import MemberProfile
 
     boss = make_user("boss@example.com")
-    MemberProfile.objects.create(user=boss, is_program_manager=True)
-    _one_world()
+    MemberProfile.objects.create(user=boss)
+    # Joins whichever institution `_one_world()` finds or makes, rather than
+    # `_make_manager`'s always-new one: the leader below has to land in the
+    # same institution boss manages, or boss cannot see their students. Found
+    # by this exact test, which failed with the two in different institutions
+    # (`_make_manager` created its own while `make_leader` found the one the
+    # 0032 migration seeds into every test database).
+    _one_world().managers.add(boss)
 
     leader = make_leader("lead3@example.com")
     claimed = make_student("claimed@example.com", leader=leader)
@@ -204,10 +213,14 @@ def test_role_precedence_is_manager_then_leader_then_student(db):
     from matazim.models import Leader, MemberProfile, Student
 
     user = make_user("all-three@example.com")
-    Leader.objects.create(user=user)
+    inst = _one_world()
+    Leader.objects.create(user=user, institution=inst)
     Student.objects.create(user=user, cohort_year=2026)
-    MemberProfile.objects.create(user=user, is_program_manager=True)
-    _one_world()
+    MemberProfile.objects.create(user=user)
+    # Added to the same institution the leader row just joined, not a rival one
+    # `_make_manager` would create: this person needs to hold all three roles at
+    # once, which only works if they are a manager of the world they lead in.
+    inst.managers.add(user)
 
     other = make_student("elsewhere@example.com", leader=make_leader("other@example.com"))
 
@@ -326,10 +339,14 @@ def test_adminship_can_be_granted_from_django_admin(db):
     for model in (MemberProfile, Leader, StudyClass, Student):
         assert model in admin.site._registry, f"{model.__name__} is not in Django admin"
 
-    profile_admin = admin.site._registry[MemberProfile]
+    # SPR-M.40: the role is `Institution.managers`, and the escape hatch for
+    # granting it without a deploy moved with it.
+    from matazim.models import Institution
+
+    assert Institution in admin.site._registry, "Institution is not in Django admin"
     assert (
-        "is_program_manager" in profile_admin.list_editable
-    ), "the whole point is flipping it from the list without a deploy"
+        "managers" in admin.site._registry[Institution].filter_horizontal
+    ), "the whole point is granting it from the admin without a deploy"
 
 
 def test_an_admin_can_find_the_students_nobody_has_taken(db):
@@ -354,7 +371,7 @@ def _client_as(client, email, admin=False, root=False):
         user.is_superuser = True
         user.save(update_fields=["is_superuser"])
     if admin:
-        MemberProfile.objects.update_or_create(user=user, defaults={"is_program_manager": True})
+        _make_manager(user)
     client.force_login(user)
     return user
 
@@ -458,8 +475,7 @@ def test_an_admin_can_revoke_someone_else(client, db):
 
     _client_as(client, "chief5@example.com", root=True)  # REQ-M.114
     other = make_user("other-admin@example.com")
-    MemberProfile.objects.update_or_create(user=other, defaults={"is_program_manager": True})
-
+    _make_manager(other)
     client.post(
         reverse("matazim:staff_admins"),
         {"action": "revoke", "email": "other-admin@example.com"},
@@ -585,8 +601,7 @@ def test_the_picker_says_who_is_already_an_admin(client, db):
     from matazim.models import MemberProfile
 
     existing = make_user("already@example.com")
-    MemberProfile.objects.update_or_create(user=existing, defaults={"is_program_manager": True})
-
+    _make_manager(existing)
     _client_as(client, "chief8@example.com", admin=True)
     found = _search(client, "already")
     assert found[0]["is_program_manager"] is True
@@ -660,8 +675,7 @@ def test_the_page_says_which_kind_of_manager_each_person_is(client, db):
     from matazim.models import MemberProfile
 
     granted = make_user("naomi.real@example.com")
-    MemberProfile.objects.update_or_create(user=granted, defaults={"is_program_manager": True})
-
+    _make_manager(granted)
     _client_as(client, "root2@example.com", root=True)
     html = client.get(reverse("matazim:staff_admins")).content.decode()
 
@@ -673,3 +687,24 @@ def test_the_page_says_which_kind_of_manager_each_person_is(client, db):
     assert (
         "מנהל/ת מערכת" not in row
     ), "a granted program manager must not read as the platform owner"
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

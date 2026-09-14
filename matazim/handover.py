@@ -1,78 +1,82 @@
 """Handing an institution from one program manager to the next.
 
-The review of 2026-09-14 named this the largest structural risk in the data
-model: the tenancy root is a person, not an institution. `Leader`, `Event`,
-`LeaderInvite` and `Post` all point at the `User` who runs the programme, and
-`access.py` scopes every screen by that user. §4.8 argued that a second network
-becomes a table on the day one exists, and never considered the day the first
-manager leaves. On that day her successor signs in to an empty programme and
-every row she owned is stranded.
+The review of 2026-09-14 named the tenancy root being a person as the largest
+structural risk in the data model, and the first version of this file was the
+bandage: a command that re-pointed every leader, event, invite and post from
+one `User` to another. Avi then said "Go" to the `Institution` row
+(`data_model.md` §6, SPR-M.40), and with it the problem this solved mostly
+dissolved: rows belong to the institution, and the institution's `managers`
+are whoever runs it. Nothing has to move.
 
-The right fix is an `Institution` row, and that is a data-model change the
-methodology reserves for Avi (`docs/matazim/data_model.md` §6 carries the
-proposal). This is the fix that needs no approval: one command that moves
-everything one manager owns to another, atomically, and writes down that it did.
+What is left of a handover is two facts about people: the successor becomes a
+manager, and the predecessor stops being one. Both through `roles`, so a
+pending leader row on the successor is approved the same way it would be from
+the screen (REQ-M.137), and both in one transaction, because an institution
+with no manager for a moment is an institution nobody can act for.
 
-**What moves and what does not.** Ownership moves: leaders, events, invites,
-posts. Records of who did something do not: `Leader.approved_by`,
-`Submission.decided_by`, `RetentionRun.ran_by` and the like are history, and
-history is not reassigned when a person leaves. A leader approved by נעמי stays
-approved by נעמי after she has gone.
-
-**Requests stay with their author.** §4.11's log is her voice, and it belongs to
-whoever spoke. A successor inherits the programme, not the things the previous
-manager asked for on her own behalf.
+**Records of who did something do not change.** `Leader.approved_by`,
+`Submission.decided_by`, `RetentionRun.ran_by` and the like are history, and a
+leader approved by נעמי stays approved by נעמי after she has gone. **Requests
+stay with their author** (§4.11): the log is her voice.
 """
 
 from django.db import transaction
 
 
+# What an institution owns, and the field that says so. For the report only:
+# these rows do not move any more, they belong to the institution whoever runs
+# it, but "what am I handing over" is still a fair question to want answered.
 OWNED = (
-    ("matazim", "Leader", "program_manager"),
-    ("matazim", "Event", "program_manager"),
-    ("matazim", "LeaderInvite", "program_manager"),
-    ("matazim", "Post", "program_manager"),
+    ("matazim", "Leader", "institution"),
+    ("matazim", "Event", "institution"),
+    ("matazim", "LeaderInvite", "institution"),
+    ("matazim", "Post", "institution"),
 )
 
 
-def owned_counts(user):
-    """How many rows each table holds for this manager. For the report."""
+def owned_counts(institution):
+    """How many rows each table holds for this institution."""
     from django.apps import apps
 
+    if institution is None:
+        return {name: 0 for _app, name, _field in OWNED}
     return {
-        model_name: apps.get_model(app, model_name).objects.filter(**{field: user}).count()
-        for app, model_name, field in OWNED
+        name: apps.get_model(app, name).objects.filter(**{field: institution}).count()
+        for app, name, field in OWNED
     }
 
 
 @transaction.atomic
 def hand_over(old, new, *, by=None):
-    """Move everything `old` owns to `new`. Returns the per-table counts moved.
+    """Make `new` a manager of everything `old` manages, and `old` no longer one.
 
-    Atomic, because a handover that moves the leaders and then fails on the
-    events leaves an institution split between two people, which is worse
-    than either state it was moving between.
+    Returns the per-table counts the successor now runs, for the report.
 
-    `new` is made a program manager if they are not one, through the same
-    function the grant screen uses, so a pending leader row on the successor is
-    approved the same way it would be from the screen (REQ-M.137).
-
-    `old` keeps their role. Removing it is a separate decision that the screen
-    handles (REQ-M.114), and a handover that quietly demoted somebody would be
-    two decisions dressed as one.
+    Refuses a handover to yourself, and refuses when `old` manages nothing:
+    handing over an institution somebody does not run is not a handover, it is
+    a grant with a misleading name, and the grant screen exists for that.
     """
-    from django.apps import apps
-
-    from .roles import grant_program_manager
+    from .models import Institution
+    from .roles import grant_program_manager, revoke_program_manager
 
     if old.pk == new.pk:
         raise ValueError("handover to the same person is not a handover")
 
-    grant_program_manager(new, by=by)
+    theirs = list(Institution.objects.filter(managers=old))
+    if not theirs:
+        raise ValueError("that person manages no institution")
 
-    moved = {}
-    for app, model_name, field in OWNED:
-        model = apps.get_model(app, model_name)
-        moved[model_name] = model.objects.filter(**{field: old}).update(**{field: new})
+    # `institutions=theirs`, not the default. The first version of this called
+    # `grant_program_manager(new, by=by)` with no argument, which joins
+    # whatever institution `Institution.default()` finds (the earliest
+    # created), and in a two-institution world that is not necessarily the one
+    # being handed over. The successor ended up a manager of both, and
+    # `institution_of()` picked the wrong one to scope their screens by.
+    grant_program_manager(new, by=by, institutions=theirs)
+    revoke_program_manager(old)
 
-    return moved
+    counts = {name: 0 for _app, name, _field in OWNED}
+    for inst in theirs:
+        for name, n in owned_counts(inst).items():
+            counts[name] += n
+    return counts

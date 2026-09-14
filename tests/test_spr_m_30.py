@@ -41,9 +41,9 @@ def _leader(email="noa@example.com", name="נעה מורה"):
     from matazim.models import Leader, MemberProfile
 
     manager = _user("naomi@example.com", "נעמי")
-    MemberProfile.objects.update_or_create(user=manager, defaults={"is_program_manager": True})
+    _make_manager(manager)
     return Leader.objects.create(
-        user=_user(email, name), program_manager=manager, approved_at=timezone.now()
+        user=_user(email, name), institution=_inst(manager), approved_at=timezone.now()
     )
 
 
@@ -289,3 +289,24 @@ def test_somebody_elses_bell_is_not_yours(client, db):
 
     client.force_login(mine.user)
     assert "סוד של מישהו אחר" not in client.get(reverse("matazim:notices")).content.decode()
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

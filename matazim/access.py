@@ -51,7 +51,11 @@ def is_program_manager(user):
         return False
     if user.is_superuser:
         return True
-    return MemberProfile.objects.filter(user=user, is_program_manager=True).exists()
+    # The role is membership of `Institution.managers`, and nothing else says
+    # so: the flag this used to read was a second copy of that fact and is gone.
+    from .models import Institution
+
+    return Institution.objects.filter(managers=user).exists()
 
 
 def leader_of(user):
@@ -125,7 +129,7 @@ def visible_students(user):
         # manager exists, one manager seeing a name that will end up in the
         # other's institution. When Q15 is answered this line changes and the
         # test on it changes with it.
-        return Student.objects.filter(Q(leader__program_manager=user) | Q(leader__isnull=True))
+        return Student.objects.filter(Q(leader__institution__managers=user) | Q(leader__isnull=True))
 
     if leader := leader_of(user):
         return Student.objects.filter(leader=leader)
@@ -145,7 +149,7 @@ def visible_leaders(user):
     if user.is_superuser:
         return Leader.objects.all()
     if is_program_manager(user):
-        return Leader.objects.filter(program_manager=user)
+        return Leader.objects.filter(institution__managers=user)
     if leader := leader_of(user):
         return Leader.objects.filter(pk=leader.pk)
     return Leader.objects.none()
@@ -208,11 +212,11 @@ def visible_events(user):
         return Event.objects.all()
 
     if is_program_manager(user):
-        return Event.objects.filter(program_manager=user)
+        return Event.objects.filter(institution__managers=user)
 
     if leader := leader_of(user):
         return Event.objects.filter(
-            Q(program_manager=leader.program_manager)
+            Q(institution=leader.institution)
         ).filter(
             Q(for_everyone=True) | Q(leaders=leader) | Q(classes__leader=leader)
         ).distinct()
@@ -220,7 +224,7 @@ def visible_events(user):
     student = Student.objects.filter(user=user).select_related("leader").first()
     if student and student.leader:
         return Event.objects.filter(
-            program_manager=student.leader.program_manager
+            institution=student.leader.institution
         ).filter(
             Q(for_everyone=True)
             | Q(leaders=student.leader)
@@ -260,20 +264,24 @@ def institution_of(user):
     if not getattr(user, "is_authenticated", False):
         return None
 
-    if is_program_manager(user) and not user.is_superuser:
-        return user
+    from .models import Institution
+
+    if not user.is_superuser:
+        mine = Institution.objects.filter(managers=user).first()
+        if mine is not None:
+            return mine
 
     if leader := leader_of(user):
-        return leader.program_manager
+        return leader.institution
 
     student = Student.objects.filter(user=user).select_related("leader").first()
     if student and student.leader:
-        return student.leader.program_manager
+        return student.leader.institution
 
     # Root last, deliberately. A superuser who also runs an institution should
     # write into that one, not into a special case.
     if user.is_superuser:
-        return user
+        return Institution.default()
 
     return None
 
@@ -305,7 +313,7 @@ def visible_posts(user):
         # feed either (§4.12: a candidate has no standing in the room yet).
         return Post.objects.none()
 
-    return Post.objects.filter(program_manager=institution)
+    return Post.objects.filter(institution=institution)
 
 
 def readable_posts(user):
@@ -476,7 +484,7 @@ def visible_invites(user):
     if user.is_superuser:
         return LeaderInvite.objects.all()
     if is_program_manager(user):
-        return LeaderInvite.objects.filter(program_manager=user)
+        return LeaderInvite.objects.filter(institution__managers=user)
     return LeaderInvite.objects.none()
 
 
@@ -553,3 +561,20 @@ def visible_sessions(user):
     if not getattr(user, "is_authenticated", False):
         return TeachingSession.objects.none()
     return TeachingSession.objects.filter(student__in=visible_students(user))
+
+
+def visible_institutions(user):
+    """REQ-M.139 — the institution row itself, for its own managers and root.
+
+    Added with `Institution` (SPR-M.40). Nobody who is not running a programme
+    has a reason to read this: a leader and a member reach their institution's
+    name through their own screens, never through this endpoint, so there is
+    nothing here for them.
+    """
+    from .models import Institution
+
+    if not getattr(user, "is_authenticated", False):
+        return Institution.objects.none()
+    if user.is_superuser:
+        return Institution.objects.all()
+    return Institution.objects.filter(managers=user)

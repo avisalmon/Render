@@ -163,7 +163,7 @@
         <p>
           נרשמתם דרך הזמנה של צוות התוכנית, וההרשמה נקלטה. כרגע אתם ממתינים
           לאישור של
-          {% if candidate.program_manager %}<strong>{{ candidate.program_manager.profile.display_name|default:"מנהל/ת התוכנית" }}</strong>{% else %}מנהלי התוכנית{% endif %}.
+          {% if candidate.institution %}<strong>צוות {{ candidate.institution.name }}</strong>{% else %}מנהלי התוכנית{% endif %}.
         </p>
         <p class="mz-muted">
           לא צריך לעשות שום דבר נוסף. ברגע שתאושרו, האזור של המובילים ייפתח

@@ -59,7 +59,7 @@ def _manager(email="naomi@example.com", name="נעמי"):
     from matazim.models import MemberProfile
 
     user = _user(email, name)
-    MemberProfile.objects.update_or_create(user=user, defaults={"is_program_manager": True})
+    _make_manager(user)
     return user
 
 
@@ -67,7 +67,7 @@ def _leader(email, name, manager):
     from matazim.models import Leader
 
     return Leader.objects.create(
-        user=_user(email, name), program_manager=manager, approved_at=timezone.now()
+        user=_user(email, name), institution=_inst(manager), approved_at=timezone.now()
     )
 
 
@@ -90,7 +90,7 @@ def _student(email, leader, name="יובל כהן"):
 def _post(author, manager, body="לימדתי היום לולאות", **extra):
     from matazim.models import Post
 
-    return Post.objects.create(author=author, program_manager=manager, body=body, **extra)
+    return Post.objects.create(author=author, institution=_inst(manager), body=body, **extra)
 
 
 # ------------------------------------------- who the room belongs to
@@ -129,7 +129,7 @@ def test_a_candidate_has_no_standing_in_the_room(client, db):
     _post(naomi, naomi, "הודעה")
 
     waiting = _user("waiting@example.com", "איתי")
-    Leader.objects.create(user=waiting, program_manager=naomi, approved_at=None)
+    Leader.objects.create(user=waiting, institution=_inst(naomi), approved_at=None)
 
     assert institution_of(waiting) is None
     assert not visible_posts(waiting).exists()
@@ -143,7 +143,7 @@ def test_a_candidate_gets_the_page_about_the_community_not_the_feed(client, db):
     _post(naomi, naomi, "סוד מהתוכנית")
 
     waiting = _user("waiting@example.com", "איתי")
-    Leader.objects.create(user=waiting, program_manager=naomi, approved_at=None)
+    Leader.objects.create(user=waiting, institution=_inst(naomi), approved_at=None)
 
     client.force_login(waiting)
     html = client.get(reverse("matazim:community")).content.decode()
@@ -192,7 +192,7 @@ def test_a_member_writes_and_the_institution_is_stamped_not_guessed(client, db):
     client.post(reverse("matazim:community"), {"body": "לימדתי היום לולאות"})
 
     post = Post.objects.get()
-    assert post.program_manager_id == naomi.id
+    assert post.institution_id == _inst(naomi).id
     assert post.kind == Post.POST
 
 
@@ -519,6 +519,7 @@ def test_the_api_will_not_let_a_client_name_its_own_author(client, db):
 
 def test_the_api_will_not_let_a_client_choose_its_institution(client, db):
     """T-F-M.32.7-3: §4.4 undone through the back door is still §4.4 undone."""
+    from matazim.access import institution_of
     from matazim.models import Post
 
     naomi = _manager("naomi@example.com")
@@ -528,11 +529,11 @@ def test_the_api_will_not_let_a_client_choose_its_institution(client, db):
     client.force_login(mine.user)
     client.post(
         "/matazim/api/posts/",
-        {"body": "שלום", "program_manager": other.id},
+        {"body": "שלום", "institution": institution_of(other).id},
         content_type="application/json",
     )
 
-    assert Post.objects.get().program_manager_id == naomi.id
+    assert Post.objects.get().institution_id == institution_of(naomi).id
 
 
 def test_the_api_refuses_to_delete_somebody_elses_post(client, db):
@@ -629,3 +630,24 @@ def test_the_api_can_put_something_back_too(client, db):
     assert response.status_code == 200
     post.refresh_from_db()
     assert not post.is_hidden
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

@@ -19,7 +19,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from .access import is_program_manager, public_events, visible_events, visible_leaders
+from .access import institution_of, is_program_manager, public_events, visible_events, visible_leaders
 from .models import Event, Notification, Student
 from .notify import notify
 from .views import shell
@@ -44,7 +44,7 @@ def _audience(event):
     """
     from django.db.models import Q
 
-    students = Student.objects.filter(leader__program_manager=event.program_manager)
+    students = Student.objects.filter(leader__institution=event.institution)
     if not event.for_everyone:
         students = students.filter(
             Q(leader__in=event.leaders.all()) | Q(classes__in=event.classes.all())
@@ -104,7 +104,7 @@ def staff_events(request):
             error = "בחרו למי האירוע: לכל התוכנית, או מובילים מסוימים."
         else:
             event = Event.objects.create(
-                program_manager=request.user,
+                institution=institution_of(request.user),
                 title=title,
                 about=(request.POST.get("about") or "").strip(),
                 starts_at=starts_at,

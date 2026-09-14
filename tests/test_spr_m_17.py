@@ -45,7 +45,15 @@ def make_manager(email="naomi@example.com", name="נעמי"):
     from matazim.models import MemberProfile
 
     user = make_user(email, name)
-    MemberProfile.objects.update_or_create(user=user, defaults={"is_program_manager": True})
+    _make_manager(user)
+    # `MemberProfile.objects.update_or_create(..., defaults={"is_program_manager":
+    # True})` used to make this row as a side effect of granting the role.
+    # `_make_manager` only touches `Institution` now, so the row has to be made
+    # here instead: without it, a view that reads `request.user`'s profile
+    # creates it lazily on first touch, and the query-count test below caught
+    # the asymmetry that leaves — the first request paying for the creation,
+    # every later one not.
+    MemberProfile.objects.get_or_create(user=user)
     return user
 
 
@@ -53,7 +61,7 @@ def make_leader(manager, email, name, school):
     from matazim.models import Leader, StudyClass
 
     leader = Leader.objects.create(
-        user=make_user(email, name), program_manager=manager, approved_at=timezone.now()
+        user=make_user(email, name), institution=_inst(manager), approved_at=timezone.now()
     )
     klass = StudyClass.objects.create(leader=leader, name="ט1", school_name=school)
     return leader, klass
@@ -325,3 +333,24 @@ def test_the_report_does_not_grow_a_query_per_leader(django_assert_num_queries, 
 
     with django_assert_num_queries(len(first)):
         client.get(reverse("matazim:cohort"))
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

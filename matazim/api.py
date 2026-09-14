@@ -35,6 +35,7 @@ from rest_framework.response import Response
 from . import access
 from .models import (
     Application,
+    Institution,
     EntranceAttempt,
     EntranceTarget,
     Event,
@@ -56,6 +57,7 @@ from .models import (
 )
 from .serializers import (
     ApplicationSerializer,
+    InstitutionSerializer,
     EntranceAttemptSerializer,
     EntranceTargetSerializer,
     EventSerializer,
@@ -161,6 +163,25 @@ class NoUpdateMixin:
         raise PermissionDenied(self.update_refusal)
 
 
+class InstitutionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
+                          mixins.UpdateModelMixin, viewsets.GenericViewSet):
+    """REQ-M.139, REQ-M.143 — the tenancy root, readable and renameable by its
+    own managers.
+
+    No create, no delete: there is no screen that makes a second institution
+    yet, and a POST here would be exactly the kind of quiet capability Rule 6
+    warns against building before it is asked for. `managers` is read-only in
+    the serializer, so an update can only ever be the name.
+    """
+
+    serializer_class = InstitutionSerializer
+    scope = staticmethod(access.visible_institutions)
+    permission_classes = [IsProgramManager]
+
+    def get_queryset(self):
+        return self.scope(self.request.user)
+
+
 # --------------------------------------------------------- people and roles
 
 
@@ -195,7 +216,7 @@ class MemberProfileViewSet(NoDeleteMixin, Scoped):
 class LeaderViewSet(Scoped):
     """REQ-M.88, REQ-M.93 — the leaders in your world.
 
-    `program_manager` is stamped from whoever creates the row, which is what
+    `institution` is stamped from whoever creates the row, which is what
     makes a leader belong to an institution at all (§4.4), and approval is an
     act by a person rather than a default: a created row is unapproved, and
     `leader_of()` refuses an unapproved row, so a leader created here grants
@@ -224,7 +245,7 @@ class LeaderViewSet(Scoped):
 
         serializer.save(
             user=person,
-            program_manager=self.request.user,
+            institution=access.institution_of(self.request.user),
             assigned_by=self.request.user,
         )
 
@@ -356,7 +377,7 @@ class LeaderInviteViewSet(NoUpdateMixin, Scoped):
     update_refusal = "הזמנה שנשלחה לא נערכת. אפשר לבטל ולהנפיק חדשה."
 
     def perform_create(self, serializer):
-        serializer.save(program_manager=self.request.user)
+        serializer.save(institution=access.institution_of(self.request.user))
 
     @action(detail=True, methods=["post"])
     def revoke(self, request, pk=None):
@@ -561,7 +582,7 @@ class EventViewSet(Scoped):
             raise ValidationError(
                 {"for_everyone": "בחרו למי האירוע: לכל התוכנית, או מובילים או כיתות."}
             )
-        serializer.save(program_manager=self.request.user)
+        serializer.save(institution=access.institution_of(self.request.user))
 
     @action(detail=True, methods=["post"])
     def cancel(self, request, pk=None):
@@ -617,7 +638,7 @@ class PostViewSet(Scoped):
 
         serializer.save(
             author=user,
-            program_manager=access.institution_of(user),
+            institution=access.institution_of(user),
             kind=(
                 Post.ANNOUNCEMENT
                 if access.is_program_manager(user)
@@ -812,6 +833,7 @@ class RequestMessageViewSet(NoUpdateMixin, NoDeleteMixin, Scoped):
 # urls.py so that adding a model and forgetting its endpoint is visible in one
 # place: `test_every_model_has_an_endpoint` reads this.
 ROUTES = [
+    ("institutions", InstitutionViewSet, Institution),
     ("member-profiles", MemberProfileViewSet, MemberProfile),
     ("leaders", LeaderViewSet, Leader),
     ("classes", StudyClassViewSet, StudyClass),

@@ -35,7 +35,7 @@ def make_user(email="dana@example.com", name="דנה כהן", staff=False):
         # stand-in, so the test exercises the rule that actually ships.
         from matazim.models import MemberProfile
 
-        MemberProfile.objects.update_or_create(user=user, defaults={"is_program_manager": True})
+        _make_manager(user)
     from app.models import UserProfile
 
     UserProfile.objects.update_or_create(user=user, defaults={"display_name": name})
@@ -443,3 +443,24 @@ def test_passing_opens_the_student_door(client, db):
 
     assert MemberProfile.objects.get(user=user).entrance_test_passed_at is not None
     assert "mz-door-locked" not in client.get(reverse("matazim:home")).content.decode()
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

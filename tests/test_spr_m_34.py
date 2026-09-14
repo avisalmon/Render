@@ -75,13 +75,12 @@ def build_world(tag, *, secret):
     )
 
     manager = _user(f"pm-{tag}@example.com", f"מנהלת {secret}")
-    MemberProfile.objects.update_or_create(
-        user=manager, defaults={"is_program_manager": True}
-    )
+    _make_manager(manager)
+    MemberProfile.objects.update_or_create(user=manager)
 
     leader = Leader.objects.create(
         user=_user(f"leader-{tag}@example.com", f"מוביל {secret}"),
-        program_manager=manager,
+        institution=_inst(manager),
         approved_at=timezone.now(),
         contact=secret,
     )
@@ -115,7 +114,7 @@ def build_world(tag, *, secret):
     )
 
     LeaderInvite.objects.create(
-        program_manager=manager, kind=LeaderInvite.PERSONAL, label=secret,
+        institution=_inst(manager), kind=LeaderInvite.PERSONAL, label=secret,
         token=f"tok-{tag}-0123456789",
     )
     Application.objects.create(
@@ -137,13 +136,13 @@ def build_world(tag, *, secret):
     )
 
     event = Event.objects.create(
-        program_manager=manager, title=f"יום {secret}", about=secret,
+        institution=_inst(manager), title=f"יום {secret}", about=secret,
         starts_at=timezone.now() + timezone.timedelta(days=5), place=secret,
         for_everyone=True,
     )
     event.leaders.add(leader)
 
-    Post.objects.create(author=member_user, program_manager=manager, body=secret)
+    Post.objects.create(author=member_user, institution=_inst(manager), body=secret)
 
     req = Request.objects.create(
         author=manager, author_role="program_manager", body=secret,
@@ -458,7 +457,7 @@ def test_only_root_grants_the_program_manager_role(client, two_worlds):
     )
 
     profile.refresh_from_db()
-    assert profile.is_program_manager is False, "the role was granted through the API"
+    assert not _is_pm(profile.user), "the role was granted through the API"
 
 
 def test_passing_the_entrance_test_cannot_be_written(client, two_worlds):
@@ -606,7 +605,7 @@ def test_a_leader_is_created_into_the_creators_world_and_is_unapproved(client, t
     assert response.status_code == 201, response.content
 
     row = Leader.objects.get(pk=response.json()["id"])
-    assert row.program_manager_id == manager.id, "a leader was created into no world"
+    assert row.institution_id == _inst(manager).id, "a leader was created into no world"
     assert row.approved_at is None, "a leader was approved by being created"
     assert leader_of(newcomer) is None, "an unapproved row granted the role anyway"
 
@@ -730,3 +729,24 @@ def test_the_bank_is_shared_on_purpose(client, two_worlds):
         "the bank stopped being shared, which may be right, but the sweep and "
         "this test both have to be updated together"
     )
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

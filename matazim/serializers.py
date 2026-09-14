@@ -7,7 +7,7 @@ before changing anything below.
 from `request.user`.** Authors, institutions, join codes, invite tokens, public
 ids, and the timestamps recording who decided what. A client that could name its
 own author could post as another teenager. A client that could name its own
-`program_manager` could write into another institution's world, which is §4.4
+`institution` could write into another institution's world, which is §4.4
 undone through the back door while every screen still looks correct.
 
 **A second rule, narrower but just as load-bearing: `Student.status` is never
@@ -28,6 +28,7 @@ from rest_framework import serializers
 
 from .models import (
     Application,
+    Institution,
     EntranceAttempt,
     EntranceTarget,
     Event,
@@ -77,19 +78,19 @@ class MemberProfileSerializer(serializers.ModelSerializer):
         model = MemberProfile
         fields = [
             "id", "user", "birth_year", "guardian_name", "guardian_email",
-            "guardian_consent_at", "entrance_test_passed_at", "is_program_manager",
+            "guardian_consent_at", "entrance_test_passed_at",
             "entered_via_matazim", "welcome_accepted_at", "first_seen_at", "updated_at",
         ]
-        # `is_program_manager` is read-only here and granted only through
-        # `roles.grant_program_manager`, behind a root-only screen (REQ-M.114).
-        # It was once settable by anyone holding the role, and the role could
-        # therefore replicate itself across institutions.
+        # The program-manager role is not a field here at all any more: it is
+        # membership of `Institution.managers`, granted only through
+        # `roles.grant_program_manager` behind a root-only screen (REQ-M.114).
+        # When it was a flag it was once settable by anyone holding the role.
         #
         # `entrance_test_passed_at` is read-only because passing is something
         # the test decides (REQ-M.36); a writable field here is a way to walk
         # through the gate to the whole programme.
         read_only_fields = [
-            "id", "user", "is_program_manager", "entrance_test_passed_at",
+            "id", "user", "entrance_test_passed_at",
             "entered_via_matazim", "welcome_accepted_at", "first_seen_at", "updated_at",
         ]
 
@@ -106,16 +107,16 @@ class LeaderSerializer(serializers.ModelSerializer):
         model = Leader
         fields = [
             "id", "user", "user_id", "contact", "is_active", "approved_at",
-            "approved_by", "program_manager", "assigned_at", "schools",
+            "approved_by", "institution", "assigned_at", "schools",
         ]
         # `join_code` is absent from `fields` entirely rather than read-only: a
         # code attaches its holder to this leader with no confirmation
         # (REQ-M.9), so a list endpoint that returned every leader's code would
         # be a harvest. It is shown by the leader's own screen, to them.
         #
-        # `program_manager` is the tenancy root and is stamped server-side.
+        # `institution` is the tenancy root and is stamped server-side.
         read_only_fields = [
-            "id", "user", "approved_at", "approved_by", "program_manager", "assigned_at",
+            "id", "user", "approved_at", "approved_by", "institution", "assigned_at",
         ]
 
     def get_schools(self, leader):
@@ -186,12 +187,12 @@ class LeaderInviteSerializer(serializers.ModelSerializer):
     class Meta:
         model = LeaderInvite
         fields = [
-            "id", "program_manager", "kind", "label", "email", "used_at",
+            "id", "institution", "kind", "label", "email", "used_at",
             "used_by", "revoked_at", "sent_at", "created_at",
         ]
         # `token` is absent for the same reason `join_code` is: it is the key.
         read_only_fields = [
-            "id", "program_manager", "used_at", "used_by", "sent_at", "created_at",
+            "id", "institution", "used_at", "used_by", "sent_at", "created_at",
         ]
 
 
@@ -284,13 +285,13 @@ class EventSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
         fields = [
-            "id", "program_manager", "title", "about", "starts_at", "ends_at",
+            "id", "institution", "title", "about", "starts_at", "ends_at",
             "place", "for_everyone", "is_public", "cancelled_at", "created_at",
             "leaders", "classes",
         ]
         # `cancelled_at` read-only: cancelling tells everybody who was invited,
         # so it is the `cancel` action and not a date somebody can set quietly.
-        read_only_fields = ["id", "program_manager", "cancelled_at", "created_at"]
+        read_only_fields = ["id", "institution", "cancelled_at", "created_at"]
 
 
 class PostAuthorSerializer(PersonSerializer):
@@ -371,3 +372,25 @@ class TeachingSessionSerializer(serializers.ModelSerializer):
         # through the action, so "cancelled" is always something somebody did
         # rather than a date that appeared.
         read_only_fields = ["id", "student", "cancelled_at", "created_at"]
+
+# --- The institution itself ------------------------------------------------
+
+
+class InstitutionSerializer(serializers.ModelSerializer):
+    """REQ-M.139, REQ-M.143 — the row `access.py` scopes everything else by.
+
+    `managers` is read-only here on purpose. Granting or revoking the role is
+    REQ-M.114's decision, made on the root-only screen through `roles.py`, and
+    a writable m:n on this endpoint would put the hole that requirement closed
+    (the role could once grant itself) straight back, in a place no screen
+    shows. `name` is the one thing a manager may actually change: renaming the
+    institution is not a tenancy decision, it is a label.
+    """
+
+    managers = PersonSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Institution
+        fields = ["id", "name", "managers", "created_at"]
+        read_only_fields = ["id", "managers", "created_at"]
+

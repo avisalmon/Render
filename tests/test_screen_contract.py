@@ -172,8 +172,7 @@ def build_world(
         )
 
     manager = _user("pm@example.com", "נעמי")
-    MemberProfile.objects.update_or_create(user=manager, defaults={"is_program_manager": True})
-
+    _make_manager(manager)
     # Avi. Root crosses every world (§4.4), and his is the only press that
     # decides a request (REQ-M.108), so the approval screen cannot be rendered
     # as anybody else.
@@ -184,7 +183,7 @@ def build_world(
 
     leader = Leader.objects.create(
         user=_user("leader@example.com", "נעה מורה"),
-        program_manager=manager,
+        institution=_inst(manager),
         approved_at=now,
     )
 
@@ -196,7 +195,7 @@ def build_world(
     if second_leader:
         other = Leader.objects.create(
             user=_user("leader2@example.com", "דנה כהן"),
-            program_manager=manager,
+            institution=_inst(manager),
             approved_at=now,
         )
 
@@ -207,7 +206,7 @@ def build_world(
     if candidate:
         pending_leader_row = Leader.objects.create(
             user=_user("candidate@example.com", "מורה ממתינה"),
-            program_manager=manager,
+            institution=_inst(manager),
             approved_at=None,
         )
 
@@ -466,7 +465,7 @@ def build_world(
         from matazim.models import Event
 
         Event.objects.create(
-            program_manager=manager,
+            institution=_inst(manager),
             title="תערוכת סיום סקראץ׳",
             about="כל מט״צ מציג את הפרויקט שלו. מביאים אוזניות.",
             starts_at=now + timezone.timedelta(days=12),
@@ -475,7 +474,7 @@ def build_world(
             is_public=True,
         )
         Event.objects.create(
-            program_manager=manager,
+            institution=_inst(manager),
             title="יום פתיחה",
             starts_at=now - timezone.timedelta(days=30),
             place="חדר המורים",
@@ -530,18 +529,18 @@ def build_world(
 
         Post.objects.create(
             author=manager,
-            program_manager=manager,
+            institution=_inst(manager),
             kind=Post.ANNOUNCEMENT,
             body="נפגשים ביום שלישי באולם. מביאים מחשב טעון.",
         )
         Post.objects.create(
             author=author.user,
-            program_manager=manager,
+            institution=_inst(manager),
             body="לימדתי היום לולאות לכיתה ד׳. שניים מהם סיימו לבד את המשימה.",
         )
         Post.objects.create(
             author=author.user,
-            program_manager=manager,
+            institution=_inst(manager),
             body="פוסט שירד",
             hidden_at=now,
             hidden_by=manager,
@@ -1042,3 +1041,24 @@ def test_every_class_a_template_uses_actually_exists():
 
     listing = "\n  ".join(f"{name}  ({where})" for name, where in sorted(unknown.items()))
     assert not unknown, f"markup uses classes the stylesheet does not define:\n  {listing}"
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

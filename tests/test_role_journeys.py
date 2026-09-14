@@ -62,14 +62,13 @@ def world(db):
     )
 
     manager = _user("pm@example.com", "נעמי")
-    MemberProfile.objects.update_or_create(user=manager, defaults={"is_program_manager": True})
-
+    _make_manager(manager)
     leader = Leader.objects.create(
-        user=_user("leader@example.com", "נעה מורה"), program_manager=manager, approved_at=now
+        user=_user("leader@example.com", "נעה מורה"), institution=_inst(manager), approved_at=now
     )
     candidate = Leader.objects.create(
         user=_user("candidate@example.com", "מורה ממתינה"),
-        program_manager=manager,
+        institution=_inst(manager),
         approved_at=None,
     )
 
@@ -255,3 +254,24 @@ def test_nobody_carries_a_menu_they_have_to_read_past(world):
             fat[email] = count
 
     assert not fat, f"a signed-in role is reading too many menu items: {fat}"
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

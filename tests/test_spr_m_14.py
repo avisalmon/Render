@@ -39,14 +39,14 @@ def make_manager(email="naomi@example.com", name="נעמי"):
     from matazim.models import MemberProfile
 
     user = make_user(email, name)
-    MemberProfile.objects.update_or_create(user=user, defaults={"is_program_manager": True})
+    _make_manager(user)
     return user
 
 
 def make_invite(manager, kind="personal", label="רונית מעתיד רמלה", email=""):
     from matazim.models import LeaderInvite
 
-    return LeaderInvite.objects.create(program_manager=manager, kind=kind, label=label, email=email)
+    return LeaderInvite.objects.create(institution=_inst(manager), kind=kind, label=label, email=email)
 
 
 # ------------------------------------------ door one: they already have an account
@@ -64,7 +64,7 @@ def test_a_manager_approves_someone_who_already_has_an_account(client, db):
 
     leader = Leader.objects.get(user=teacher)
     assert leader.is_approved
-    assert leader.program_manager == manager
+    assert leader.institution == _inst(manager)
     assert leader.approved_by == manager
 
 
@@ -107,12 +107,12 @@ def test_a_manager_cannot_approve_another_worlds_leader(client, db):
     mine = make_manager("a@example.com")
     theirs = make_manager("b@example.com")
     teacher = make_user("ronit@example.com")
-    Leader.objects.create(user=teacher, program_manager=theirs, approved_at=timezone.now())
+    Leader.objects.create(user=teacher, institution=_inst(theirs), approved_at=timezone.now())
 
     client.force_login(mine)
     client.post(reverse("matazim:pm_leaders"), {"action": "approve", "email": teacher.email})
 
-    assert Leader.objects.get(user=teacher).program_manager == theirs
+    assert Leader.objects.get(user=teacher).institution == _inst(theirs)
 
 
 # --------------------------------------------- door two: a personal invitation
@@ -132,7 +132,7 @@ def test_a_personal_invite_names_who_it_is_for(client, db):
     invite = LeaderInvite.objects.get()
     assert invite.kind == LeaderInvite.PERSONAL
     assert invite.label == "רונית מעתיד רמלה"
-    assert invite.program_manager == manager
+    assert invite.institution == _inst(manager)
 
 
 def test_a_personal_invite_without_a_name_is_refused(client, db):
@@ -378,7 +378,7 @@ def test_an_invitation_survives_making_an_account(client, db):
     leader = Leader.objects.filter(user=user).first()
     assert leader is not None, "the invitation was lost by registering"
     assert not leader.is_approved, "registering must not approve anyone"
-    assert leader.program_manager == invite.program_manager, "landed in the wrong world"
+    assert leader.institution == invite.institution, "landed in the wrong world"
 
 
 def test_the_real_name_arrives_with_the_account(client, db):
@@ -431,3 +431,24 @@ def test_the_screen_refuses_everyone_else(client, db):
     """T-F-M.14.1-3: a hidden entry is not access control."""
     client.force_login(make_user("kid@example.com"))
     assert client.get(reverse("matazim:pm_leaders")).status_code in (302, 403)
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

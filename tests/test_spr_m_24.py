@@ -37,7 +37,7 @@ def _manager(email="naomi@example.com"):
     from matazim.models import MemberProfile
 
     user = _user(email, "נעמי")
-    MemberProfile.objects.update_or_create(user=user, defaults={"is_program_manager": True})
+    _make_manager(user)
     return user
 
 
@@ -46,7 +46,12 @@ def _leader(email="noa@example.com", name="נעה מורה", manager=None, appro
 
     return Leader.objects.create(
         user=_user(email, name),
-        program_manager=manager or _manager(),
+        # `manager or _manager()` first, so there is one person to ask for
+        # an institution either way: the given manager, or a freshly made
+        # one. The earlier version asked `_inst(manager)` (an Institution or
+        # None) `or _manager()` (a User) for the field, which type-errored
+        # the moment `manager` was omitted.
+        institution=_inst(manager or _manager()),
         approved_at=timezone.now() if approved else None,
     )
 
@@ -76,14 +81,24 @@ def test_a_waiting_candidate_is_told_they_are_waiting(client, db):
     The page told them "already appointed? sign in with the email you gave the
     team and this page will take you straight to your area" while they were
     signed in with that email, and then took them nowhere.
+
+    **Updated 2026-09-14 for SPR-M.40.** This used to assert the *manager's own
+    name* appeared, because a candidate waited on one specific person. Since the
+    `Institution` row, `Institution.managers` is deliberately more than one
+    (REQ-M.139: Litala's brief describes צוות התכנית as two people), so naming
+    a single manager would be arbitrary — there is no longer one right person
+    to name. The screen now names the institution instead, which is still an
+    honest answer to "who am I waiting on": the team running it, not a
+    person picked at random from among however many run it.
     """
-    candidate = _leader("waiting@example.com", "מורה ממתינה", approved=False)
+    manager = _manager()
+    candidate = _leader("waiting@example.com", "מורה ממתינה", manager=manager, approved=False)
     client.force_login(candidate.user)
 
     html = client.get(reverse("matazim:leader_entrance")).content.decode()
 
     assert "ממתינה לאישור" in html, "nothing tells them the invitation was received"
-    assert "נעמי" in html, "they are not told who they are waiting on"
+    assert candidate.institution.name in html, "they are not told who they are waiting on"
     assert "התחברו עם אותו אימייל" not in html, "still telling a signed-in person to sign in"
 
 
@@ -252,3 +267,24 @@ def test_the_task_still_comes_after_the_lessons_when_there_are_lessons(client, d
 
     assert "ואז המשימה" in html
     assert html.index("שיעור 1") < html.index("ואז המשימה"), "the task jumped the lessons"
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

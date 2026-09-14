@@ -41,7 +41,7 @@ def make_admin(email="chief@example.com"):
     from matazim.models import MemberProfile
 
     user = make_user(email, "אבי")
-    MemberProfile.objects.update_or_create(user=user, defaults={"is_program_manager": True})
+    _make_manager(user)
     return user
 
 
@@ -261,3 +261,24 @@ def test_the_policy_says_a_person_reviews_before_deleting(client, db):
     section = html[start : start + 600]
     assert "מאשר" in section
     assert "בודק" in section
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)

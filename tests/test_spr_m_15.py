@@ -37,14 +37,14 @@ def _world():
     from matazim.models import Leader, MemberProfile, Student, StudyClass
 
     boss = make_user("chief@example.com")
-    MemberProfile.objects.create(user=boss, is_program_manager=True)
-
+    MemberProfile.objects.create(user=boss)
+    _make_manager(boss)
     teacher = make_user("noa@example.com")
     UserProfile.objects.update_or_create(user=teacher, defaults={"display_name": "נעה מורה"})
     # REQ-M.88 and REQ-M.93: owned by her, and actually approved. An unowned or
     # unapproved leader is invisible to a program manager, which is correct and
     # would make every assertion below fail for the wrong reason.
-    leader = Leader.objects.create(user=teacher, program_manager=boss, approved_at=timezone.now())
+    leader = Leader.objects.create(user=teacher, institution=_inst(boss), approved_at=timezone.now())
     klass = StudyClass.objects.create(leader=leader, name="ט1", school_name="עתיד רמלה")
 
     for email, name, status in (
@@ -59,7 +59,7 @@ def _world():
 
     # Someone else's student, to prove the list is that leader's and not all of them.
     other = Leader.objects.create(
-        user=make_user("other@example.com"), program_manager=boss, approved_at=timezone.now()
+        user=make_user("other@example.com"), institution=_inst(boss), approved_at=timezone.now()
     )
     elsewhere = make_user("c@example.com")
     UserProfile.objects.update_or_create(user=elsewhere, defaults={"display_name": "דני זר"})
@@ -133,7 +133,7 @@ def test_a_leader_with_no_class_reads_as_a_state_not_a_blank(client, db):
     boss, _leader = _world()
     Leader.objects.create(
         user=make_user("new@example.com", "מוביל חדש"),
-        program_manager=boss,
+        institution=_inst(boss),
         approved_at=timezone.now(),
     )
     client.force_login(boss)
@@ -234,3 +234,24 @@ def test_the_purge_cannot_reach_a_real_account(db):
 
     assert User.objects.filter(pk=real.pk).exists(), "the purge reached a real account"
     assert not User.objects.filter(email__iendswith="@demo.invalid").exists()
+
+
+# --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
+
+def _make_manager(user):
+    """One institution per test manager, so two managers are two worlds."""
+    from matazim.models import Institution
+
+    Institution.objects.create(name=f"מוסד {user.pk}").managers.add(user)
+
+
+def _inst(user):
+    from matazim.access import institution_of
+
+    return institution_of(user)
+
+
+def _is_pm(user):
+    from matazim.access import is_program_manager
+
+    return is_program_manager(user)
