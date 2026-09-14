@@ -188,7 +188,7 @@ def review(request, submission_id):
             outcome = (
                 Submission.RETURNED if action == "return" else Submission.APPROVED
             )
-            submission.status = outcome
+            submission.status = outcome  # not-a-student-status: Submission
             submission.decided_by = request.user
             submission.decided_at = timezone.now()
             submission.save(update_fields=["status", "decided_by", "decided_at"])

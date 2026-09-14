@@ -265,6 +265,14 @@ fifteen-minute suite before every push is the wrong shape. Two gates now.
 
 **The mini gate — every push.** About 90 seconds.
 
+**It always includes `sprm18`, not just the current sprint's marker.** Added
+2026-09-14, after the status-door guard was tripped three sprints running by
+three different people writing `something.status = ...`. That guard protects an
+invariant rather than a feature, so it belongs in every run: a marker-scoped
+gate only checks the sprint being written, and an invariant is precisely the
+thing a *new* sprint breaks. The rule generalises — any test that guards a rule
+rather than a behaviour runs every time.
+
 ```
 pytest -m "smoke or <this sprint's marker>" -q
 ```
