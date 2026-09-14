@@ -140,7 +140,7 @@ five rules already held).
 | `docs/ustrip/dashboard.html` (Rule 4's last missing piece) | DONE |
 | Full audit of `trip-data/usa-2026.json` against the models, prompted by "did you fill all data?" — found `ItineraryDay` had no `note` field, so Day 3's open decision and Day 9's parking heads-up were silently dropped on every import | DONE — `note` field added, seeded, shown on the day page; `duration_days`/`family` name-list confirmed deliberately unmodeled (derivable / superseded by real accounts), documented in `data_model.md` |
 
-## Sprint 8 — Days and items: the rich item, the flow schedule, drag-and-drop `DONE, DEV`
+## Sprint 8 — Days and items: the rich item, the flow schedule, drag-and-drop `DONE, DEPLOYED 2026-09-14`
 
 **Goal (Avi, 2026-09-14):** "I want each item to have a very rich detail
 page that will be linked from the day list", plus photos, a schedule, likes
@@ -171,7 +171,7 @@ This sprint recovers the source text and links exactly.
 | `manage.py enrich_ustrip_items`: one-time fill under the seed rule (untouched → everything; enriched → blanks only; family-edited → skipped, links included); wired into `render.yaml` after `seed_ustrip` | DONE |
 | The Day 8 "Considered … dropped" line, tagged `plan` by the first import because the source had no tag, becomes `rejected` | DONE |
 | Tests: schedule + anchors, reorder within/between days, move-to-day, links, photo upload, like toggle, comment author lock, the three pages, enrichment twice with an edited item in the way | DONE — `tests/test_ustrip_items.py` |
-| Deploy | not yet — dev only until Avi says |
+| Deploy | DONE — pushed f53dcfb on Avi's word, live build verified serving the new CSS ~2 min later; the start command ran migration 0005 and `enrich_ustrip_items` (84 enriched) on the way up |
 
 Not built, on purpose, until asked: replacing a photo (delete and re-add),
 editing a link in place (remove and re-add), reordering links or photos.
