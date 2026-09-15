@@ -435,8 +435,16 @@ close.
    screen, and a Desktop app OAuth client; then opens a browser for the
    one-time approval and prints `DRIVE_CLIENT_ID`, `DRIVE_CLIENT_SECRET`,
    `DRIVE_REFRESH_TOKEN`.
-2. Create (or pick) one Drive folder to be the shared root, copy its id out
-   of the URL — that is `DRIVE_FOLDER_ID`.
+2. `DriveClient.create_folder()` makes the shared root — **not a folder
+   picked from the Drive web UI.** Corrected 2026-09-15, found live doing
+   this setup for real: `DRIVE_FOLDER_ID` pointed at a folder made by hand
+   in Drive, and it was invisible — `root_folder_name()` answered "did not
+   resolve to a folder your account can see" on a folder that obviously
+   existed. The cause is `drive.file` itself, chosen deliberately as the
+   narrowest scope that works (`app/drive.py`'s own docstring): it only ever
+   grants visibility into files an app *created itself*, never something a
+   human merely owns. The folder has to come from the client, so it is one
+   the app can see from the moment it exists.
 3. Put all four in Render (babook service → Environment). Nothing changes
    until all four are set — uploads are refused with a clear message in the
    meantime, same as `USTRIP_ADMIN_TOKEN` unset.
@@ -449,6 +457,16 @@ uploads would stop silently on day eight of a fifteen-day trip while
 everything else looked healthy. This is a fresh OAuth client with no track
 record yet, unlike the home app's, so "it's probably fine" does not apply
 here the way it might have to a years-old grant — check it explicitly.
+**Also found live:** publishing was blocked until the consent screen's
+Branding page had an app name, a developer contact email, and — once a
+homepage domain was set — a privacy policy link (babook already has one,
+`https://babook.co.il/privacy/`). None of this is documented anywhere
+obvious in Google's own console; it only surfaces one missing field at a
+time as you try to publish.
+
+**Done, live, 2026-09-15.** All four credentials verified end to end against
+the real API by hand: token refresh, root folder creation, a real upload,
+a byte-for-byte matching download, and delete. Not yet in Render.
 
 **Not done, and not blocking:** existing local photos are migrated by
 running `migrate_ustrip_photos_to_drive` once by hand in production — it
