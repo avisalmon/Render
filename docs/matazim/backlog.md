@@ -1588,7 +1588,7 @@ not to name a student: free text about a programme is one sentence away from
 free text about a child, and that would otherwise be a new category of personal
 data sitting outside everything §4.10 describes.
 
-## SPR-M.26 — Retention for request rows  `PLANNED`
+## SPR-M.26 — Retention for request rows  `DONE`
 
 Caught while checking whether SPR-M.25 was ready to push, and worth recording
 as a near miss: REQ-M.113 says feedback rows fall under REQ-M.86 like
@@ -1604,16 +1604,24 @@ visible half.
 
 | F-ID | Feature | Traces | Status |
 |---|---|---|---|
-| F-M.26.1 | A stated retention period for request rows | REQ-M.113, M.86 | TODO |
-| F-M.26.2 | The retention screen counts them, and a person approves the purge | REQ-M.87 | TODO |
+| F-M.26.1 | A stated retention period for request rows | REQ-M.113, M.86 | DONE |
+| F-M.26.2 | The retention screen counts them, and a person approves the purge | REQ-M.87 | DONE |
 
-**Needs a number from Avi.** A request and its outcome are the record of why
-the product changed, which argues for keeping them a long time; they are also
-free text written by a member of staff, which argues for not keeping them
-forever. My suggestion is to keep the request and what was built indefinitely
-because they are product history, and to hold the retention rule over
-*declined* rows and anything never acted on, at the same 365 days as everything
-else. That is a decision, not a default, which is why it is not in this sprint.
+**Needed a number from Avi**, which is why this sprint held instead of guessing
+one. A request and its outcome are the record of why the product changed,
+which argues for keeping them a long time; they are also free text written by
+a member of staff, which argues for not keeping them forever. The suggestion
+written here was to keep the request and what was built indefinitely as
+product history, and hold the retention rule over *declined* rows and anything
+never acted on, at the same 365 days as everything else.
+
+**Built two sprints later, under SPR-M.36, with a different number than the
+suggestion above.** `REQUEST_DAYS = 730`: a closed request (done or declined
+alike, no split between them) is purged 730 days after `decided_at`, whole row
+and its conversation with it; an open request is never purged, however old.
+See SPR-M.36 for the reasoning. This row was left `PLANNED` after that shipped
+— the same stale-status mistake this sprint's own opening paragraph is about —
+until the next full backlog read (2026-09-15) caught it.
 
 ## SPR-M.27 — Proposing a change is a conversation  `DONE`
 
@@ -2176,7 +2184,7 @@ models." Spec §5.6b, and `docs/matazim/data_model.md`.
 | F-M.34.3 | Serializers for every model, ownership fields read-only | REQ-M.139 | DONE |
 | F-M.34.4 | Eighteen viewsets on `access.py` querysets, registered from `ROUTES` | REQ-M.139, Rule 6 | DONE |
 | F-M.34.5 | The refusals, each naming the requirement it protects | REQ-M.21, M.53, M.78, M.87, M.112, M.123, M.124 | DONE |
-| F-M.34.6 | A dashboard for this app | REQ-M.141, Rule 4 | TODO |
+| F-M.34.6 | A dashboard for this app | REQ-M.141, Rule 4 | DONE (F-M.36.5) |
 
 ### The test that found things
 
