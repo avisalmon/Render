@@ -18,10 +18,49 @@ def home(request):
     return render(request, "memz/home.html", {"tier": tier_for(request.user)})
 
 
-def coming(request):
-    """SPR-Z.1 only (backlog F-Z.1.5): the game's doors exist on Home and lead
-    here until SPR-Z.3 replaces this with the real create/join screens."""
-    return render(request, "memz/coming.html")
+def new_session(request):
+    """Create a session (spec §4.2). A thin form; the actual create is a
+    fetch() to the API (spec Rule 12.3.2), then a redirect to the lobby."""
+    from . import conf
+    from .tiers import tier_for
+
+    lo, hi, default = conf.get("ROUNDS")
+    clo, chi, cdefault = conf.get("CAPTION_SECONDS")
+    return render(request, "memz/game_new.html", {
+        "tier": tier_for(request.user),
+        "rounds": {"lo": lo, "hi": hi, "default": default},
+        "caption_seconds": {"lo": clo, "hi": chi, "default": cdefault},
+    })
+
+
+def join_session_page(request, code=""):
+    """Spec §4.3.1: a nickname, nothing else. `code` pre-fills from the
+    join link or Home's code field; a bare `/memz/join/` with neither lets
+    someone type one in."""
+    code = code or request.GET.get("code", "")
+    return render(request, "memz/game_join.html", {"code": code.strip().upper()})
+
+
+def game_page(request, code):
+    """The one page for lobby, every round phase, results and the podium —
+    driven entirely by static/memz/game.js reading the state endpoint
+    (spec §12.2's 'one page, driven by state')."""
+    from django.shortcuts import get_object_or_404
+
+    from .models import Session
+
+    session = get_object_or_404(Session, code__iexact=code)
+    return render(request, "memz/game.html", {"code": session.code})
+
+
+def game_screen_page(request, code):
+    """The read-only big screen (spec §4.10): code only, no token."""
+    from django.shortcuts import get_object_or_404
+
+    from .models import Session
+
+    session = get_object_or_404(Session, code__iexact=code)
+    return render(request, "memz/game_screen.html", {"code": session.code})
 
 
 def creator(request):

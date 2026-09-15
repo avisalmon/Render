@@ -1,0 +1,21 @@
+{% extends "memz/base.html" %}{% load static i18n %}
+{% block title %}{% trans "מצטרפים למשחק" %} · memz{% endblock %}
+{% block screen %}game-join{% endblock %}
+{% block content %}
+<h1 class="memz-title">{% trans "מצטרפים" %}</h1>
+
+<form class="memz-card memz-form" data-join-form novalidate>
+  <label class="memz-field">
+    <span>{% trans "קוד החדר" %}</span>
+    <input class="memz-input memz-input--code" type="text" name="code" value="{{ code }}"
+           maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" data-join-code>
+  </label>
+  <label class="memz-field">
+    <span>{% trans "השם שלכם" %}</span>
+    <input class="memz-input" type="text" name="nickname" maxlength="16" autocomplete="nickname" data-join-nickname>
+  </label>
+  <p class="memz-error" data-join-error hidden></p>
+  <button type="submit" class="memz-btn memz-btn--primary memz-btn--wide" data-join-submit>{% trans "מצטרפים" %}</button>
+</form>
+{% endblock %}
+{% block scripts %}<script src="{% static 'memz/game_join.js' %}"></script>{% endblock %}

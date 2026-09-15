@@ -128,12 +128,60 @@ TAP_JS = """(minPx) => {
 # ---------------------------------------------------------------- the world
 
 
-def _png_bytes():
+def _png_bytes(color=(60, 120, 170)):
     from PIL import Image
 
     buf = io.BytesIO()
-    Image.new("RGB", (400, 300), (60, 120, 170)).save(buf, format="PNG")
+    Image.new("RGB", (400, 300), color).save(buf, format="PNG")
     return buf.getvalue()
+
+
+def _game_images(n=4):
+    from memz.models import MemeImage
+
+    images = []
+    for i in range(n):
+        img = MemeImage(owner=None, visibility=MemeImage.PUBLIC, moderation_status=MemeImage.APPROVED, title=f"תמונה {i}")
+        img.file.save(f"game-source-{i}.png", ContentFile(_png_bytes((30 * i, 90, 160))), save=True)
+        images.append(img)
+    return images
+
+
+def _game_at(phase):
+    """A real 3-player game, advanced to `phase` through memz.game itself —
+    the actual state machine, not a fixture faking the row (the_manager.md
+    lesson #10). Returns (code, host_token, guest_token)."""
+    from memz import game
+
+    session, host = game.create_session(host_user=None, round_count=1, round_seconds=60, vote_seconds=20)
+    p2 = game.join_session(session, "חבר")
+    p3 = game.join_session(session, "חברה")
+    if phase == "lobby":
+        return session.code, host.guest_token, p2.guest_token
+
+    game.start_session(session, host)
+    if phase == "captioning":
+        return session.code, host.guest_token, p2.guest_token
+
+    for p in (host, p2, p3):
+        game.submit_caption(session, p, 1, f"כיתוב של {p.nickname}")
+    if phase == "revealed":
+        return session.code, host.guest_token, p2.guest_token
+
+    game.advance(session, host)   # revealed -> voting
+    if phase == "voting":
+        return session.code, host.guest_token, p2.guest_token
+
+    round_obj = game.current_round(session)
+    subs = list(round_obj.submissions.filter(meme__isnull=False))
+    for voter in (host, p2, p3):
+        target = next(s for s in subs if s.player_id != voter.id)
+        game.cast_vote(session, voter, 1, target.id)
+    if phase == "result":
+        return session.code, host.guest_token, p2.guest_token
+
+    game.advance(session, host)   # result -> finished (round_count=1)
+    return session.code, host.guest_token, p2.guest_token
 
 
 def build_world():
@@ -152,7 +200,13 @@ def build_world():
     expired = make_meme(image=image, caption_text="זה מם שפג לו התוקף", source=Meme.SOLO, user=None)
     Meme.objects.filter(pk=expired.pk).update(expires_at=timezone.now() - timezone.timedelta(hours=1))
 
-    return {"user": user, "taken": taken, "image": image, "meme": meme, "expired_slug": expired.share_slug}
+    _game_images()
+    games = {phase: _game_at(phase) for phase in ("lobby", "captioning", "revealed", "voting", "result", "finished")}
+
+    return {
+        "user": user, "taken": taken, "image": image, "meme": meme, "expired_slug": expired.share_slug,
+        "games": games,
+    }
 
 
 def _wrong_password(page):
@@ -170,25 +224,53 @@ def _taken_email(page):
     page.wait_for_timeout(400)
 
 
-# (label, path, sign in as, action to reach the state, expected data-screen).
-# `path` may be a callable taking the world dict, for a screen whose URL
-# carries something build_world() created (a share slug).
+def _token_script(w, phase, who="host"):
+    """localStorage must hold the token *before* game.js runs (it reads it
+    on load and redirects to /join/ if absent), so this is injected via
+    `context.add_init_script`, not set after the page has already loaded."""
+    code, host_token, guest_token = w["games"][phase]
+    token = host_token if who == "host" else guest_token
+    return "localStorage.setItem(%r, %r);" % (f"memz.player.{code}", token)
+
+
+# (label, path, sign in as, action to reach the state, expected data-screen,
+# optional init script for localStorage). `path` may be a callable taking
+# the world dict, for a screen whose URL carries something build_world()
+# created (a share slug, a game code).
 SCREENS = [
-    ("home/anonymous", "/memz/", None, None, "home"),
-    ("home/signed-in", "/memz/", "screens@example.com", None, "home"),
-    ("login/empty", "/memz/login/", None, None, "login"),
-    ("login/wrong-password", "/memz/login/", None, _wrong_password, "login"),
-    ("signup/empty", "/memz/signup/", None, None, "signup"),
-    ("signup/taken-email", "/memz/signup/", None, _taken_email, "signup"),
-    ("password-reset/form", "/memz/password/reset/", None, None, "password-reset"),
-    ("coming/game-not-yet", "/memz/new/", None, None, "coming"),
-    ("creator/empty", "/memz/create/", None, None, "creator"),
-    ("creator/signed-in", "/memz/create/", "screens@example.com", None, "creator"),
-    ("creator/result", lambda w: f"/memz/create/{w['meme'].share_slug}/", None, None, "creator-result"),
-    ("share/live", lambda w: f"/memz/m/{w['meme'].share_slug}/", None, None, "share"),
-    ("share/expired", lambda w: f"/memz/m/{w['expired_slug']}/", None, None, "share-expired"),
-    ("share/never-existed", "/memz/m/not-a-real-slug-at-all/", None, None, "share-expired"),
-    ("404", "/memz/nowhere/", None, None, "404"),
+    ("home/anonymous", "/memz/", None, None, "home", None),
+    ("home/signed-in", "/memz/", "screens@example.com", None, "home", None),
+    ("login/empty", "/memz/login/", None, None, "login", None),
+    ("login/wrong-password", "/memz/login/", None, _wrong_password, "login", None),
+    ("signup/empty", "/memz/signup/", None, None, "signup", None),
+    ("signup/taken-email", "/memz/signup/", None, _taken_email, "signup", None),
+    ("password-reset/form", "/memz/password/reset/", None, None, "password-reset", None),
+    ("creator/empty", "/memz/create/", None, None, "creator", None),
+    ("creator/signed-in", "/memz/create/", "screens@example.com", None, "creator", None),
+    ("creator/result", lambda w: f"/memz/create/{w['meme'].share_slug}/", None, None, "creator-result", None),
+    ("share/live", lambda w: f"/memz/m/{w['meme'].share_slug}/", None, None, "share", None),
+    ("share/expired", lambda w: f"/memz/m/{w['expired_slug']}/", None, None, "share-expired", None),
+    ("share/never-existed", "/memz/m/not-a-real-slug-at-all/", None, None, "share-expired", None),
+    ("game-new/form", "/memz/new/", None, None, "game-new", None),
+    ("game-join/empty", "/memz/join/", None, None, "game-join", None),
+    ("game-join/with-code", "/memz/join/ABCD/", None, None, "game-join", None),
+    ("game/lobby-as-host", lambda w: f"/memz/s/{w['games']['lobby'][0]}/", None, None, "game-lobby",
+     lambda w: _token_script(w, "lobby", "host")),
+    ("game/lobby-as-guest", lambda w: f"/memz/s/{w['games']['lobby'][0]}/", None, None, "game-lobby",
+     lambda w: _token_script(w, "lobby", "guest")),
+    ("game/captioning", lambda w: f"/memz/s/{w['games']['captioning'][0]}/", None, None, "game-captioning",
+     lambda w: _token_script(w, "captioning", "host")),
+    ("game/revealed", lambda w: f"/memz/s/{w['games']['revealed'][0]}/", None, None, "game-revealed",
+     lambda w: _token_script(w, "revealed", "guest")),
+    ("game/voting", lambda w: f"/memz/s/{w['games']['voting'][0]}/", None, None, "game-voting",
+     lambda w: _token_script(w, "voting", "guest")),
+    ("game/result", lambda w: f"/memz/s/{w['games']['result'][0]}/", None, None, "game-result",
+     lambda w: _token_script(w, "result", "host")),
+    ("game/finished", lambda w: f"/memz/s/{w['games']['finished'][0]}/", None, None, "game-finished",
+     lambda w: _token_script(w, "finished", "host")),
+    ("game/big-screen-lobby", lambda w: f"/memz/s/{w['games']['lobby'][0]}/screen/", None, None, "game-lobby", None),
+    ("game/big-screen-voting", lambda w: f"/memz/s/{w['games']['voting'][0]}/screen/", None, None, "game-voting", None),
+    ("404", "/memz/nowhere/", None, None, "404", None),
 ]
 
 
@@ -204,8 +286,13 @@ def browser():
         pytest.skip(f"no browser available: {exc}")
 
 
-def _open(browser, live_server, email, path):
+def _open(browser, live_server, email, path, init_script=None):
     context = browser.new_context(viewport=PHONE, device_scale_factor=2, is_mobile=True, has_touch=True)
+    if init_script:
+        # Must run before game.js's own script on the very first document,
+        # so the player token is already in localStorage when it checks —
+        # setting it after `goto` returns would be one page load too late.
+        context.add_init_script(init_script)
     page = context.new_page()
     if email:
         page.goto(f"{live_server.url}/memz/login/", wait_until="domcontentloaded")
@@ -219,15 +306,21 @@ def _open(browser, live_server, email, path):
     return context, page
 
 
-@pytest.mark.parametrize("label,path,who,action,screen", SCREENS, ids=[s[0] for s in SCREENS])
-def test_screen_contract(browser, live_server, db, label, path, who, action, screen):
+@pytest.mark.parametrize("label,path,who,action,screen,init_script", SCREENS, ids=[s[0] for s in SCREENS])
+def test_screen_contract(browser, live_server, db, label, path, who, action, screen, init_script):
     world = build_world()
     if callable(path):
         path = path(world)
-    context, page = _open(browser, live_server, who, path)
+    if callable(init_script):
+        init_script = init_script(world)
+    context, page = _open(browser, live_server, who, path, init_script)
     try:
         if action:
             action(page)
+        # The game pages redraw async from a fetch; the initial DOM has no
+        # data-screen yet, so give game.js's first poll a moment to land.
+        if init_script:
+            page.wait_for_timeout(400)
         landed = page.locator("[data-screen]").first
         assert landed.count(), f"{label}: no data-screen marker, so the contract cannot tell what it is looking at"
         assert landed.get_attribute("data-screen") == screen, (

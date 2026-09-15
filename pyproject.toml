@@ -55,6 +55,7 @@ markers = [
     "sprm39: SPR-M.39 מט״צים the review's first four: handover, mail, one word, one school",
     "sprz1: SPR-Z.1 memz the skeleton and the seal",
     "sprz2: SPR-Z.2 memz the engine, and the first front door",
+    "sprz3: SPR-Z.3 memz the game, Normal mode, typed captions, vote scoring",
     "memzscreens: memz's screen contract - every memz screen, in every state, rendered on a phone (tests/test_memz_screens.py)",
     "screens: the screen contract - every מט״צים screen, in every state, rendered",
     "sprmobile: real-browser phone checks for מט״צים (tests/test_matazim_mobile.py)",

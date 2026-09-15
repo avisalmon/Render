@@ -2,6 +2,10 @@ from django.urls import include, path
 
 from . import auth_views, views
 from .api import router
+from .api.game_views import (
+    AdvanceView, AgainView, JoinView, LeaveView, RemovePlayerView, SessionCreateView, StartView, StateView,
+    SubmitView, VoteView,
+)
 from .api.profile import ProfileView
 from .api.report import ReportView
 from .api.schema import SchemaView
@@ -10,9 +14,12 @@ app_name = "memz"
 
 urlpatterns = [
     path("", views.home, name="home"),
-    # SPR-Z.1: honest placeholder until SPR-Z.3 builds the game.
-    path("new/", views.coming, name="new"),
-    path("join/", views.coming, name="join"),
+    # The game (spec §4, §12.2).
+    path("new/", views.new_session, name="new"),
+    path("join/", views.join_session_page, name="join"),
+    path("join/<str:code>/", views.join_session_page, name="join_with_code"),
+    path("s/<str:code>/", views.game_page, name="game"),
+    path("s/<str:code>/screen/", views.game_screen_page, name="game_screen"),
     # The solo creator (spec §7).
     path("create/", views.creator, name="create"),
     path("create/<str:slug>/", views.creator_result, name="creator_result"),
@@ -30,5 +37,15 @@ urlpatterns = [
     path("api/profile/", ProfileView.as_view(), name="api_profile"),
     path("api/report/", ReportView.as_view(), name="api_report"),
     path("api/schema/", SchemaView.as_view(), name="api_schema"),
+    path("api/sessions/", SessionCreateView.as_view(), name="api_session_create"),
+    path("api/sessions/<str:code>/join/", JoinView.as_view(), name="api_session_join"),
+    path("api/sessions/<str:code>/state/", StateView.as_view(), name="api_session_state"),
+    path("api/sessions/<str:code>/start/", StartView.as_view(), name="api_session_start"),
+    path("api/sessions/<str:code>/advance/", AdvanceView.as_view(), name="api_session_advance"),
+    path("api/sessions/<str:code>/again/", AgainView.as_view(), name="api_session_again"),
+    path("api/sessions/<str:code>/leave/", LeaveView.as_view(), name="api_session_leave"),
+    path("api/sessions/<str:code>/players/<int:player_id>/remove/", RemovePlayerView.as_view(), name="api_session_remove_player"),
+    path("api/sessions/<str:code>/rounds/<int:number>/submit/", SubmitView.as_view(), name="api_round_submit"),
+    path("api/sessions/<str:code>/rounds/<int:number>/vote/", VoteView.as_view(), name="api_round_vote"),
     path("api/", include(router.urls)),
 ]

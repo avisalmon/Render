@@ -12,6 +12,7 @@ import secrets
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
+from django.utils import timezone
 
 USER = settings.AUTH_USER_MODEL
 
@@ -203,6 +204,11 @@ class Session(models.Model):
     started_at = models.DateTimeField(null=True, blank=True)
     ended_at = models.DateTimeField(null=True, blank=True)
     expires_at = models.DateTimeField(null=True, blank=True)
+    # "Play again" (spec Rule 4.8.1): the session this one was recreated
+    # into, so a player's next poll here can find their new seat.
+    next_session = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.SET_NULL, related_name="previous_session"
+    )
 
     class Meta:
         ordering = ["-created_at"]
@@ -229,8 +235,17 @@ class Player(models.Model):
     seat_order = models.PositiveSmallIntegerField(default=0)
     score = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
-    last_seen_at = models.DateTimeField(auto_now_add=True)
+    # Not auto_now: presence (spec §4.9) needs this touched deliberately, on
+    # a state fetch or an action, not on every incidental save (a score
+    # update must not look like "just seen").
+    last_seen_at = models.DateTimeField(default=timezone.now)
     joined_at = models.DateTimeField(auto_now_add=True)
+    # Set when "Play again" (spec Rule 4.8.1) carries this player into the
+    # new session's lobby automatically, same nickname, new token. Lets a
+    # player's next poll on the *old* session discover where they went.
+    carried_from = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.SET_NULL, related_name="carried_to"
+    )
 
     class Meta:
         ordering = ["seat_order", "id"]
@@ -251,6 +266,7 @@ class Round(models.Model):
     status = models.CharField(max_length=10, choices=STATUSES, default=CAPTIONING)
     started_at = models.DateTimeField(null=True, blank=True)
     caption_deadline = models.DateTimeField(null=True, blank=True)
+    reveal_deadline = models.DateTimeField(null=True, blank=True)
     vote_deadline = models.DateTimeField(null=True, blank=True)
 
     class Meta:

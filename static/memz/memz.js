@@ -6,18 +6,27 @@
 
   var csrf = document.body.getAttribute("data-csrf") || "";
 
-  function playerToken() {
+  // A token is scoped to the one session it was issued for (spec Rule
+  // 3.1.3), so the storage key carries the room code.
+  function tokenKey(code) { return "memz.player." + String(code || "").toUpperCase(); }
+
+  function getPlayerToken(code) {
     try {
-      return window.localStorage.getItem("memz.player") || "";
+      return window.localStorage.getItem(tokenKey(code)) || "";
     } catch (e) {
       return "";
     }
   }
 
-  async function api(method, url, body) {
+  function setPlayerToken(code, token) {
+    try {
+      window.localStorage.setItem(tokenKey(code), token);
+    } catch (e) { /* private mode or full storage: the tab still works this visit */ }
+  }
+
+  async function api(method, url, body, playerToken) {
     var headers = { "Accept": "application/json", "X-CSRFToken": csrf };
-    var token = playerToken();
-    if (token) headers["X-Memz-Player"] = token;
+    if (playerToken) headers["X-Memz-Player"] = playerToken;
     var options = { method: method, headers: headers, credentials: "same-origin" };
     if (body instanceof FormData) {
       options.body = body;
@@ -38,5 +47,5 @@
     return data;
   }
 
-  window.memz = { csrf: csrf, api: api, playerToken: playerToken };
+  window.memz = { csrf: csrf, api: api, getPlayerToken: getPlayerToken, setPlayerToken: setPlayerToken };
 })();

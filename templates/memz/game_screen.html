@@ -1,0 +1,8 @@
+{% extends "memz/base.html" %}{% load static %}
+{% block title %}memz · {{ code }}{% endblock %}
+{% block screen %}game-screen{% endblock %}
+{% block signin %}{% endblock %}
+{% block content %}
+<div data-game-root data-code="{{ code }}" data-screen-mode="1"></div>
+{% endblock %}
+{% block scripts %}<script src="{% static 'memz/game.js' %}"></script>{% endblock %}

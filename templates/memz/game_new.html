@@ -1,0 +1,26 @@
+{% extends "memz/base.html" %}{% load static i18n %}
+{% block title %}{% trans "פותחים משחק" %} · memz{% endblock %}
+{% block screen %}game-new{% endblock %}
+{% block content %}
+<h1 class="memz-title">{% trans "פותחים משחק" %}</h1>
+<p class="memz-lead">{% trans "כמה סבבים, וכמה זמן לכל סבב." %}</p>
+
+<form class="memz-card memz-form" data-new-session-form novalidate>
+  <label class="memz-field">
+    <span>{% trans "כמה סבבים" %} (<span data-rounds-value>{{ rounds.default }}</span>)</span>
+    <input class="memz-input" type="range" name="round_count" min="{{ rounds.lo }}" max="{{ rounds.hi }}" value="{{ rounds.default }}" data-rounds-input>
+  </label>
+  <label class="memz-field">
+    <span>{% trans "זמן לכיתוב" %} (<span data-seconds-value>{{ caption_seconds.default }}</span> {% trans "שניות" %})</span>
+    <input class="memz-input" type="range" name="round_seconds" min="{{ caption_seconds.lo }}" max="{{ caption_seconds.hi }}" value="{{ caption_seconds.default }}" data-seconds-input>
+  </label>
+
+  {% if tier == "guest" %}
+  <p class="memz-fineprint">{% trans "עד 5 שחקנים. עם כניסה לחשבון: 10 שחקנים והתמונות שלכם." %} <a href="{% url 'memz:signup' %}">{% trans "כניסה" %}</a></p>
+  {% endif %}
+
+  <p class="memz-error" data-new-session-error hidden></p>
+  <button type="submit" class="memz-btn memz-btn--primary memz-btn--wide" data-new-session-submit>{% trans "יוצרים חדר" %}</button>
+</form>
+{% endblock %}
+{% block scripts %}<script src="{% static 'memz/game_new.js' %}"></script>{% endblock %}

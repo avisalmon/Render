@@ -10,7 +10,7 @@ later via Django's `setting_changed` signal (which is how a test overrides
 it, and how a future admin-tunable rate would work too)."""
 
 from rest_framework.settings import api_settings
-from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
+from rest_framework.throttling import AnonRateThrottle, SimpleRateThrottle, UserRateThrottle
 
 
 class _LiveRateMixin:
@@ -28,3 +28,21 @@ class MemeCreateUserThrottle(_LiveRateMixin, UserRateThrottle):
 
 class ReportThrottle(_LiveRateMixin, AnonRateThrottle):
     scope = "memz_report"
+
+
+class _IPRateThrottle(_LiveRateMixin, SimpleRateThrottle):
+    """Keyed by IP regardless of login (spec Rule 12.3.3.7 asks for
+    session creation and join attempts limited by IP specifically — DRF's
+    own `AnonRateThrottle` would exempt a logged-in host entirely, which
+    is not what "by IP" means here)."""
+
+    def get_cache_key(self, request, view):
+        return self.cache_format % {"scope": self.scope, "ident": self.get_ident(request)}
+
+
+class SessionCreateThrottle(_IPRateThrottle):
+    scope = "memz_session_create"
+
+
+class JoinAttemptThrottle(_IPRateThrottle):
+    scope = "memz_join_attempt"

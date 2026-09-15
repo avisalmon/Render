@@ -412,6 +412,8 @@ REST_FRAMEWORK = {
         "memz_meme_create_anon": "60/hour",
         "memz_meme_create_user": "60/hour",
         "memz_report": "5/hour",
+        "memz_session_create": "10/hour",
+        "memz_join_attempt": "30/minute",
     },
 }
 

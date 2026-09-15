@@ -1,0 +1,385 @@
+"""The game's state machine (spec §4, §5). This is the only place a
+`Round.status` changes (spec §12.1). Every public function here is called
+with the session row locked (`select_for_update`), so two requests arriving
+at once cannot double-advance a round or double-create the next one (spec
+Rule 5.4.3) — see `locked()`.
+
+Phase flow per round: captioning -> revealed -> voting -> done. `sync()`
+does every *automatic* transition (a deadline passing, everyone having
+submitted or voted) and is called at the top of every action and every
+state read, so the state is always current before anything reads or acts
+on it — nothing waits for a background job. `advance()` is the one thing a
+host does on purpose: skip the rest of a reveal, or move from a round's
+result to the next round (or the podium).
+"""
+
+import secrets
+from contextlib import contextmanager
+
+from django.db import transaction
+from django.utils import timezone
+
+from . import conf, dealing, scoring
+from .memes import make_meme
+from .models import CODE_ALPHABET, Meme, Player, Round, Session, Submission, Vote, new_token
+
+
+class GameError(Exception):
+    """A refused action, with a message safe to show the player."""
+
+
+@contextmanager
+def locked(session):
+    with transaction.atomic():
+        yield Session.objects.select_for_update().get(pk=session.pk)
+
+
+def _bump(session):
+    Session.objects.filter(pk=session.pk).update(version=session.version + 1)
+
+
+def generate_code():
+    for length in (4, 4, 4, 4, 4, 5):   # 5th+ char only after repeated collisions (spec §12.6)
+        code = "".join(secrets.choice(CODE_ALPHABET) for _ in range(length))
+        if not Session.objects.filter(code=code, status__in=Session.ACTIVE).exists():
+            return code
+    raise GameError("לא הצלחנו למצוא קוד פנוי, נסו שוב.")
+
+
+# ------------------------------------------------------------- lobby & join
+
+
+def create_session(*, host_user, round_count, round_seconds, vote_seconds):
+    from .tiers import tier_for
+
+    tier = tier_for(host_user)
+    session = Session.objects.create(
+        code=generate_code(),
+        host_user=host_user if (host_user and host_user.is_authenticated) else None,
+        game_mode=Session.NORMAL, caption_mode=Session.TYPED, scoring_mode=Session.VOTE,
+        image_source=Session.PUBLIC_RANDOM,
+        round_count=round_count, round_seconds=round_seconds, vote_seconds=vote_seconds,
+        max_players=conf.cap("MAX_PLAYERS", tier),
+        remembered=bool(host_user and host_user.is_authenticated),
+    )
+    host_player = Player.objects.create(
+        session=session, user=host_user if (host_user and host_user.is_authenticated) else None,
+        nickname=_default_nickname(host_user), is_host=True, seat_order=0,
+    )
+    return session, host_player
+
+
+def _default_nickname(user):
+    if user and user.is_authenticated:
+        from .tiers import default_display_name
+
+        return default_display_name(user)[:conf.get("NICKNAME_MAX_CHARS")]
+    return "מארח/ת"
+
+
+def _unique_nickname(session, wanted):
+    wanted = (wanted or "").strip()[: conf.get("NICKNAME_MAX_CHARS")] or "אורח"
+    if not Player.objects.filter(session=session, nickname=wanted).exists():
+        return wanted
+    i = 2
+    while Player.objects.filter(session=session, nickname=f"{wanted} {i}").exists():
+        i += 1
+    return f"{wanted} {i}"
+
+
+def join_session(session, nickname, *, user=None):
+    with locked(session):
+        session.refresh_from_db()
+        if session.status == Session.PLAYING:
+            raise GameError("המשחק כבר התחיל, אי אפשר להצטרף באמצע.")
+        if session.status != Session.LOBBY:
+            raise GameError("החדר הזה כבר לא פעיל.")
+        active = session.players.filter(is_active=True).count()
+        if active >= session.max_players:
+            raise GameError(f"החדר מלא ({active} מתוך {session.max_players}).")
+        seat = (session.players.aggregate(models_max=_max_seat())["models_max"] or -1) + 1
+        player = Player.objects.create(
+            session=session, user=user if (user and user.is_authenticated) else None,
+            nickname=_unique_nickname(session, nickname), seat_order=seat,
+        )
+        _bump(session)
+        return player
+
+
+def _max_seat():
+    from django.db.models import Max
+
+    return Max("seat_order")
+
+
+def get_player(session, token):
+    if not token:
+        return None
+    return Player.objects.filter(session=session, guest_token=token).first()
+
+
+def touch(player):
+    Player.objects.filter(pk=player.pk).update(last_seen_at=timezone.now(), is_active=True)
+    player.last_seen_at = timezone.now()
+    player.is_active = True
+
+
+def leave_player(session, player):
+    with locked(session):
+        Player.objects.filter(pk=player.pk, session=session).update(is_active=False)
+        _bump(session)
+
+
+def remove_player(session, host_player, target_id):
+    with locked(session):
+        if not host_player.is_host:
+            raise GameError("רק המארח/ת יכול/ה להסיר שחקנים.")
+        target = Player.objects.filter(session=session, pk=target_id).first()
+        if target is None:
+            raise GameError("לא נמצא שחקן כזה.")
+        if target.pk == host_player.pk:
+            raise GameError("אי אפשר להסיר את עצמך.")
+        Player.objects.filter(pk=target.pk).update(is_active=False, guest_token=new_token())
+        _bump(session)
+
+
+# --------------------------------------------------------------- the rounds
+
+
+def _active_players(session):
+    return list(session.players.filter(is_active=True).order_by("seat_order"))
+
+
+def start_session(session, host_player):
+    with locked(session):
+        session.refresh_from_db()
+        if not host_player.is_host:
+            raise GameError("רק המארח/ת יכול/ה להתחיל.")
+        if session.status != Session.LOBBY:
+            raise GameError("המשחק כבר התחיל.")
+        players = _active_players(session)
+        minimum = conf.get("MIN_PLAYERS").get(session.scoring_mode, conf.get("MIN_PLAYERS")["vote"])
+        if len(players) < minimum:
+            raise GameError(f"צריך לפחות {minimum} שחקנים כדי להתחיל.")
+        session.status = Session.PLAYING
+        session.started_at = timezone.now()
+        session.save(update_fields=["status", "started_at"])
+        _create_round(session, 1, players)
+        _bump(session)
+
+
+def _create_round(session, number, players):
+    round_obj = Round.objects.create(session=session, number=number, status=Round.CAPTIONING,
+                                     started_at=timezone.now(),
+                                     caption_deadline=timezone.now() + timezone.timedelta(seconds=session.round_seconds))
+    dealt = dealing.deal_round(session, players)
+    Submission.objects.bulk_create([
+        Submission(round=round_obj, player=player, image=image) for player, image in dealt.items()
+    ])
+    return round_obj
+
+
+def current_round(session):
+    return session.rounds.order_by("-number").first()
+
+
+def submit_caption(session, player, round_number, caption_text):
+    with locked(session):
+        round_obj = session.rounds.filter(number=round_number).first()
+        if round_obj is None or round_obj.status != Round.CAPTIONING:
+            raise GameError("אי אפשר לשלוח כיתוב עכשיו.")
+        submission = Submission.objects.filter(round=round_obj, player=player).first()
+        if submission is None:
+            raise GameError("אין לך תמונה בסבב הזה.")
+        if submission.meme_id is not None:
+            raise GameError("כבר שלחת כיתוב לסבב הזה.")
+        caption_text = (caption_text or "").strip()
+        if not caption_text:
+            raise GameError("אי אפשר בלי כיתוב.")
+        if len(caption_text) > conf.get("CAPTION_MAX_CHARS"):
+            raise GameError(f"עד {conf.get('CAPTION_MAX_CHARS')} תווים.")
+        meme = make_meme(image=submission.image, caption_text=caption_text, source=Meme.GAME, user=player.user)
+        submission.meme = meme
+        submission.submitted_at = timezone.now()
+        submission.save(update_fields=["meme", "submitted_at"])
+        _bump(session)
+    sync(session)
+
+
+def cast_vote(session, voter, round_number, submission_id):
+    with locked(session):
+        round_obj = session.rounds.filter(number=round_number).first()
+        if round_obj is None or round_obj.status != Round.VOTING:
+            raise GameError("אי אפשר להצביע עכשיו.")
+        submission = round_obj.submissions.filter(pk=submission_id, meme__isnull=False).first()
+        if submission is None:
+            raise GameError("המם הזה לא קיים בסבב.")
+        if submission.player_id == voter.pk:
+            raise GameError("אי אפשר להצביע לעצמך.")
+        if Vote.objects.filter(round=round_obj, voter=voter).exists():
+            raise GameError("כבר הצבעת בסבב הזה.")
+        Vote.objects.create(round=round_obj, voter=voter, submission=submission)
+        _bump(session)
+    sync(session)
+
+
+def advance(session, host_player):
+    """The host's own button: skip the rest of a reveal, or move on from a
+    round's result to the next round (or the podium)."""
+    with locked(session):
+        if not host_player.is_host:
+            raise GameError("רק המארח/ת יכול/ה להמשיך.")
+        round_obj = current_round(session)
+        if round_obj is None:
+            raise GameError("אין סבב פעיל.")
+        if round_obj.status == Round.REVEALED:
+            _start_voting(round_obj)
+        elif round_obj.status == Round.DONE:
+            _next_round_or_finish(session, round_obj)
+        else:
+            raise GameError("אי אפשר להמשיך בשלב הזה.")
+        _bump(session)
+    sync(session)
+
+
+# ------------------------------------------------------- automatic advance
+
+
+def sync(session):
+    """Everything that happens on a deadline or a completed action, not on
+    a host's tap. Idempotent, safe to call on every read."""
+    with locked(session):
+        session.refresh_from_db()
+        _mark_inactive(session)
+        _maybe_handoff_host(session)
+        if session.status != Session.PLAYING:
+            return
+        round_obj = current_round(session)
+        if round_obj is None:
+            return
+        now = timezone.now()
+        changed = True
+        while changed:
+            changed = False
+            round_obj.refresh_from_db()
+            if round_obj.status == Round.CAPTIONING:
+                players = _active_players(session)
+                submitted = set(round_obj.submissions.filter(meme__isnull=False).values_list("player_id", flat=True))
+                everyone_in = players and all(p.id in submitted for p in players)
+                if everyone_in or (round_obj.caption_deadline and now >= round_obj.caption_deadline):
+                    _start_reveal(round_obj)
+                    changed = True
+            elif round_obj.status == Round.REVEALED:
+                if round_obj.reveal_deadline and now >= round_obj.reveal_deadline:
+                    _start_voting(round_obj)
+                    changed = True
+            elif round_obj.status == Round.VOTING:
+                eligible = _active_players(session)
+                voted = set(Vote.objects.filter(round=round_obj).values_list("voter_id", flat=True))
+                everyone_voted = eligible and all(p.id in voted for p in eligible)
+                if everyone_voted or (round_obj.vote_deadline and now >= round_obj.vote_deadline):
+                    _finish_round(round_obj)
+                    changed = True
+
+
+def _start_reveal(round_obj):
+    memes_count = round_obj.submissions.filter(meme__isnull=False).count()
+    round_obj.status = Round.REVEALED
+    round_obj.reveal_deadline = timezone.now() + timezone.timedelta(
+        seconds=conf.get("REVEAL_SECONDS_PER_MEME") * max(1, memes_count)
+    )
+    round_obj.save(update_fields=["status", "reveal_deadline"])
+
+
+def _start_voting(round_obj):
+    memes_count = round_obj.submissions.filter(meme__isnull=False).count()
+    if memes_count < 2:
+        # Rule 4.6.4: fewer than two memes, no vote — the lone meme (or
+        # nobody, if zero) wins the round outright.
+        _finish_round(round_obj, skip_vote=True)
+        return
+    round_obj.status = Round.VOTING
+    round_obj.vote_deadline = timezone.now() + timezone.timedelta(seconds=round_obj.session.vote_seconds)
+    round_obj.save(update_fields=["status", "vote_deadline"])
+
+
+def _finish_round(round_obj, *, skip_vote=False):
+    round_obj.status = Round.DONE
+    round_obj.save(update_fields=["status"])
+    if skip_vote:
+        lone = round_obj.submissions.filter(meme__isnull=False).first()
+        if lone is not None:
+            Player.objects.filter(pk=lone.player_id).update(score=lone.player.score + 1)
+        return
+    points = scoring.vote_round_scores(round_obj)
+    for submission in round_obj.submissions.filter(meme__isnull=False):
+        delta = points.get(submission.id, 0)
+        if delta:
+            Player.objects.filter(pk=submission.player_id).update(score=submission.player.score + delta)
+
+
+def _next_round_or_finish(session, finished_round):
+    players = _active_players(session)
+    minimum = conf.get("MIN_PLAYERS")["vote"]
+    if finished_round.number >= session.round_count or len(players) < minimum:
+        finish_session(session)
+    else:
+        _create_round(session, finished_round.number + 1, players)
+
+
+def finish_session(session):
+    session.status = Session.FINISHED
+    session.ended_at = timezone.now()
+    if not session.remembered:
+        session.expires_at = session.ended_at + timezone.timedelta(hours=conf.get("GUEST_SESSION_TTL_HOURS"))
+    session.save(update_fields=["status", "ended_at", "expires_at"])
+
+
+# ----------------------------------------------------------- presence & host
+
+
+def _mark_inactive(session):
+    cutoff = timezone.now() - timezone.timedelta(seconds=conf.get("INACTIVE_AFTER_SECONDS"))
+    session.players.filter(is_active=True, last_seen_at__lt=cutoff).update(is_active=False)
+
+
+def _maybe_handoff_host(session):
+    if session.status != Session.PLAYING:
+        return
+    host = session.players.filter(is_host=True).first()
+    if host is None or host.is_active:
+        return
+    successor = session.players.filter(is_active=True).exclude(pk=host.pk).order_by("seat_order").first()
+    if successor is None:
+        return
+    Player.objects.filter(pk=host.pk).update(is_host=False)
+    Player.objects.filter(pk=successor.pk).update(is_host=True)
+
+
+# --------------------------------------------------------------- play again
+
+
+def play_again(session, host_player):
+    with locked(session):
+        session.refresh_from_db()
+        if not host_player.is_host:
+            raise GameError("רק המארח/ת יכול/ה להתחיל עוד סבב.")
+        if session.status != Session.FINISHED:
+            raise GameError("המשחק עוד לא נגמר.")
+        if session.next_session_id:
+            return session.next_session
+        new_session = Session.objects.create(
+            code=generate_code(), host_user=session.host_user, game_mode=session.game_mode,
+            caption_mode=session.caption_mode, scoring_mode=session.scoring_mode,
+            image_source=session.image_source, round_count=session.round_count,
+            round_seconds=session.round_seconds, vote_seconds=session.vote_seconds,
+            max_players=session.max_players, remembered=session.remembered,
+        )
+        for old_player in session.players.filter(is_active=True).order_by("seat_order"):
+            Player.objects.create(
+                session=new_session, user=old_player.user, nickname=old_player.nickname,
+                is_host=old_player.is_host, seat_order=old_player.seat_order, carried_from=old_player,
+            )
+        session.next_session = new_session
+        session.save(update_fields=["next_session"])
+        return new_session

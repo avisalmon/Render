@@ -183,15 +183,14 @@ def test_nothing_in_memz_points_out_of_memz(client, path):
     assert "babook" not in html.lower()
 
 
-def test_the_game_doors_lead_to_the_temporary_page_for_now(client):
-    """F-Z.1.5: Start and Join exist on Home and lead to an honest 'coming in
-    SPR-Z.3' page, catalogued as a state and removed by F-Z.3.1.
-    (/memz/create/ was this too in SPR-Z.1; SPR-Z.2 gave it the real
-    creator — tests/test_spr_z_2.py.)"""
+def test_the_game_doors_exist_on_home(client):
+    """F-Z.1.5, updated: Start and Join exist on Home. Both led to an
+    honest 'coming in SPR-Z.3' placeholder at the time this test was
+    written; SPR-Z.3 replaced both with the real create/join screens
+    (tests/test_spr_z_3.py covers them), and SPR-Z.2 did the same for
+    /memz/create/ earlier. Nothing left to catalogue as 'coming'."""
     for path in ("/memz/new/", "/memz/join/"):
-        response = client.get(path)
-        assert response.status_code == 200, path
-        assert 'data-screen="coming"' in response.content.decode(), path
+        assert client.get(path).status_code == 200, path
 
 
 def test_memz_imports_nothing_from_the_other_apps():
