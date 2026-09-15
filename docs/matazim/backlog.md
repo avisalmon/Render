@@ -2725,3 +2725,131 @@ twice already in this backlog, not repeated a third time.
   time the candidate has no leader. Carried as a known deviation for four
   sprints when it was a contradiction. The requirement now says what is true and
   what is actually enforced.
+
+## SPR-M.41 — What a full UX review measured  `PLANNED`
+
+**Goal:** Avi asked for a full review with attention to UX, graphic design and
+clarity. This is what it found. Every screen was walked as every role in a real
+browser at phone width and at 1440px, and the numbers below are measured rather
+than looked at: effective tap area by probing `elementFromPoint` outward from
+each control's centre, contrast against the resolved background rather than an
+assumed white, overflow by finding the elements that actually stick out, and
+queries per screen through the test client.
+
+38 screens, four roles (visitor, מט״צ, מוביל, מנהלת תוכנית).
+
+### What the measurements cleared
+
+Worth writing down, so nobody spends a sprint fixing what is already right.
+
+| Checked | Result |
+|---|---|
+| Effective tap area, every interactive control, 38 screens | 0 under 44px |
+| Contrast, every text node, against resolved background | 0 below AA |
+| Horizontal overflow at 390px | 0 elements, 0 screens |
+| RTL progress fills | correct, anchored to the right edge |
+| `dir="rtl"` / `lang="he"` | 38 of 38 |
+| Exactly one `h1`, no heading-level jumps, no missing `<title>` | 38 of 38 |
+| JS errors, failed requests | none |
+| Queries per screen | 4 to 39, flat. 120 targets render in 24, so no N+1 |
+
+The one apparent desktop overflow is `.mz-blob-a`, a decorative shape bled off
+canvas on purpose, and `scrollWidth === clientWidth`, so nothing scrolls. The
+file picker looked like an unstyled native control in a screenshot and is not:
+it is the deliberate Hebrew `.mz-file` overlay, and the native English one is
+hidden underneath by design.
+
+The 403 page and the empty states are the best writing in the product. "אין לכם
+הרשאה לראות אותו, וזה בסדר גמור" tells a person what happened, that they are not
+in trouble, and who to ask. They should be the model for anything new.
+
+### The findings
+
+| F-ID | Finding | Traces | Status |
+|---|---|---|---|
+| F-M.41.1 | Two panels named הפרקטיקום שלי on המסלול שלי, and the first is not the practicum | REQ-M.130 | TODO |
+| F-M.41.2 | קורסים in three pieces of live copy, against a recorded decision | assess.py:280 | TODO |
+| F-M.41.3 | Prose runs 136 characters per line on nine screens at desktop width | REQ-M.5 | TODO |
+| F-M.41.4 | The front door's strongest enabled button belongs to adults | REQ-M.5c, M.36 | TODO |
+| F-M.41.5 | The lamp loses its label on phones | REQ-M.106, M.75 | TODO |
+| F-M.41.6 | "not yet" is a bare middle dot, with no word and no text alternative | REQ-M.76 | TODO |
+| F-M.41.7 | Three readonly copy fields have no accessible name | REQ-M.139 | TODO |
+| F-M.41.8 | The brand tagline sits at 11.5px on every page | | TODO |
+| F-M.41.9 | Five to seven identical role-resolution queries per request | | TODO |
+
+### F-M.41.1, the one that actually misleads somebody
+
+`my_path.html` line 61 opens a panel headed הפרקטיקום שלי that lists `courses`
+with lesson progress bars and a יש תעודה tag. Line 144 opens the real practicum
+panel, headed הפרקטיקום שלי. Two identical headings on one screen, and the first
+one names the wrong stage of the programme entirely.
+
+A member reading their own path sees "הפרקטיקום שלי 23/34" above their Scratch
+progress. 23/34 is lessons. The practicum is the teaching they have not started.
+This is the screen whose whole job is telling a fourteen-year-old where they
+are, so it is first on the list despite being a one-word fix.
+
+### F-M.41.2, a decision the code records and the copy breaks
+
+`assess.py` line 280 carries it: *"הדרכות", לא "קורסים" (החלטה של אבי,
+13.9.26)*. The navigation, the page titles and `courses.html` all honour it.
+Three strings do not:
+
+- `content.py:32`, "רוכשים ידע טכנולוגי **בקורסים** מקוונים", on the public home
+  page, whose own `detail` two lines later correctly says "מסלול **הדרכות**
+  מקוון". One card, both words.
+- `content.py:23`, "לומדים טינקרקאד **בקורס** קצר".
+- `path_views.py:106`, "בסוף **הקורס** מקבלים תעודה", on the current-mission
+  card at the top of המסלול שלי.
+
+### F-M.41.3, the product already owns the fix
+
+`.mz-legal` is `max-width: 720px` and `.mz-hero-text` is `max-width: 46ch`, so
+the measure problem was solved twice and never applied to panel prose. The
+result, at 1440px: 18 paragraphs across nine screens at 1088px wide, about 136
+characters per line, against the 45 to 90 that is comfortable.
+
+The worst affected are about, track, courses and schools, which are the pages a
+parent or a principal reads before deciding anything. This is one CSS rule.
+
+### F-M.41.4, the hierarchy points at the wrong person
+
+For a visitor who has not taken the test, the three controls in the hero are:
+
+1. כניסת תלמידים, `mz-btn-primary is-disabled`, pale with a padlock.
+2. כניסת מובילים, `mz-btn-secondary`, solid teal. The strongest enabled thing
+   on the page, and it is for adults.
+3. מבחן הכניסה, `mz-btn-ghost`, an outline. The teenager's only real next step,
+   styled as the weakest of the three.
+
+The reasoning in the template is sound and says the test is "one click away".
+The click is there; the weight is not. The path forward for the audience this
+page exists to recruit is an outlined button plus an 11.5px inline link inside
+`.mz-door-why`. Worth Avi's decision rather than a unilateral restyle, because
+which door leads is a product question.
+
+### F-M.41.5
+
+`@media (max-width: 640px) { .mz-lamp-text { display: none } }`. On a phone the
+lamp is a 52px purple circle with an icon. It carries `title` and `aria-label`,
+so assistive tech is fine and a mouse gets a tooltip, but a phone has no hover,
+and this is the only entrance to the improvement loop by design. The icon is
+carrying a feature on its own.
+
+### F-M.41.6
+
+`my_path.html:101` renders `✓` when a requirement is met and `·` when it is not.
+The palette comment in `matazim.css` states the rule this breaks: *status:
+always a word plus a colour, never a colour alone*. A middle dot reads as a
+bullet, not as "not yet", and neither glyph has a text alternative.
+
+### Not raised as findings
+
+The header is 120px on a phone for a signed-in member, 14% of the viewport, and
+sticky. Measured because it looked worse than it is. It is defensible and is
+recorded here only so the next reviewer does not re-measure it.
+
+The public band says 13 מט״צים בתוכנית while the staff page says 19 לומדים
+בתוכנית. Different labels counting different things (`public.py` counts three
+statuses; staff counts every row), so this is correct, and noted only because it
+reads like a contradiction until you check.
