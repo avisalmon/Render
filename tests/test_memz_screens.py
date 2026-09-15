@@ -238,9 +238,37 @@ def build_world():
     games["cards_captioning"] = _game_at("captioning", caption_mode="cards", deck=cards_deck)
     games["relaxed_result"] = _game_at("result", game_mode="relaxed")
 
+    # SPR-Z.5: the profile's own state — a real approved upload, a real
+    # pending one (through the actual create() path, not a bare .create()),
+    # a pack, and a remembered session, so the tabs have something to show.
+    from memz.api.viewsets import MemeImageViewSet
+    from memz.models import Pack, PackImage
+    from rest_framework.test import APIRequestFactory, force_authenticate
+
+    factory = APIRequestFactory()
+    upload_bytes = _png_bytes((10, 130, 90))
+    upload = ContentFile(upload_bytes, name="profile-upload.png")
+    req = factory.post("/memz/api/images/", {"file": upload, "title": "מהפרופיל"}, format="multipart")
+    force_authenticate(req, user=user)
+    MemeImageViewSet.as_view({"post": "create"})(req)
+
+    pending_image = MemeImage(
+        owner=user, visibility=MemeImage.PRIVATE, moderation_status=MemeImage.PENDING, title="עוד בבדיקה",
+    )
+    pending_image.file.save("pending-profile.png", ContentFile(_png_bytes((200, 30, 30))), save=True)
+
+    my_pack = Pack.objects.create(owner=user, name="החבילה שלי", slug="my-screen-pack")
+    PackImage.objects.create(pack=my_pack, image=pending_image, order=0)
+
+    from memz import game as game_module
+
+    remembered_session, _remembered_host = game_module.create_session(
+        host_user=user, round_count=3, round_seconds=60, vote_seconds=20,
+    )
+
     return {
         "user": user, "taken": taken, "image": image, "meme": meme, "expired_slug": expired.share_slug,
-        "games": games,
+        "games": games, "remembered_code": remembered_session.code,
     }
 
 
@@ -311,6 +339,8 @@ SCREENS = [
      lambda w: _token_script(w, "cards_captioning", "host")),
     ("game/relaxed-result", lambda w: f"/memz/s/{w['games']['relaxed_result'][0]}/", None, None, "game-result",
      lambda w: _token_script(w, "relaxed_result", "host")),
+    ("profile/signed-in", "/memz/me/", "screens@example.com", None, "profile", None),
+    ("game-new/signed-in", "/memz/new/", "screens@example.com", None, "game-new", None),
     ("404", "/memz/nowhere/", None, None, "404", None),
 ]
 

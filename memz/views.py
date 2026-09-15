@@ -46,13 +46,23 @@ def join_session_page(request, code=""):
 def game_page(request, code):
     """The one page for lobby, every round phase, results and the podium —
     driven entirely by static/memz/game.js reading the state endpoint
-    (spec §12.2's 'one page, driven by state')."""
+    (spec §12.2's 'one page, driven by state').
+
+    A logged-in visitor with no token in this browser (a different device,
+    a cleared cache, reopening from "My games" days later — spec §4.8.2)
+    is handed their own token back here if they have a seat in this
+    session, so the podium doesn't depend on having kept the one browser
+    that joined."""
     from django.shortcuts import get_object_or_404
 
-    from .models import Session
+    from .models import Player, Session
 
     session = get_object_or_404(Session, code__iexact=code)
-    return render(request, "memz/game.html", {"code": session.code})
+    recovered_token = ""
+    if request.user.is_authenticated:
+        player = Player.objects.filter(session=session, user=request.user).first()
+        recovered_token = player.guest_token if player else ""
+    return render(request, "memz/game.html", {"code": session.code, "recovered_token": recovered_token})
 
 
 def game_screen_page(request, code):
@@ -99,6 +109,39 @@ def creator_result(request, slug):
     public page (spec §8.2) — this one assumes the visitor just made it."""
     meme = get_object_or_404(Meme, share_slug=slug)
     return render(request, "memz/creator_result.html", {"meme": meme})
+
+
+def profile_page(request):
+    """Spec §10: My memes, My bank, My games, Account. Stats (§9.3) waits
+    for SPR-Z.6. Every list here is read here; the actions on it (upload,
+    delete, unsave, create a pack) go through the REST API, per spec
+    Rule 12.3.2 — this view only assembles what to show."""
+    from . import conf
+    from .models import CaptionDeck, MemeImage, Pack, SavedMeme, Session
+    from .tiers import profile_for, tier_for
+
+    if not request.user.is_authenticated:
+        from django.contrib.auth.views import redirect_to_login
+
+        return redirect_to_login(request.get_full_path(), login_url="/memz/login/")
+
+    profile = profile_for(request.user)
+    tier = tier_for(request.user)
+    return render(request, "memz/profile.html", {
+        "profile": profile,
+        "tier": tier,
+        "saved": SavedMeme.objects.filter(user=request.user).select_related("meme").order_by("-saved_at"),
+        "own_images": MemeImage.objects.filter(owner=request.user).order_by("-created_at"),
+        "own_packs": Pack.objects.filter(owner=request.user).order_by("order", "name"),
+        "own_decks": CaptionDeck.objects.filter(owner=request.user).order_by("name"),
+        "own_solo_memes": Meme.objects.filter(created_by_user=request.user, source=Meme.SOLO).order_by("-created_at"),
+        "remembered_sessions": Session.objects.filter(
+            host_user=request.user, remembered=True
+        ).order_by("-created_at"),
+        "upload_limit": conf.cap("UPLOAD_LIMIT", tier),
+        "pack_limit": conf.cap("PACK_LIMIT", tier),
+        "remembered_limit": conf.cap("REMEMBERED_SESSIONS", tier),
+    })
 
 
 def share(request, slug):

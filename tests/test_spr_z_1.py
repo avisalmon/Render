@@ -628,13 +628,17 @@ def test_creating_never_takes_the_owner_or_the_verdict_from_the_body(client, ban
     upload.name = "trip.png"
     r = client.post("/memz/api/images/", {
         "file": upload, "title": "מהטיול", "owner": bank["b"].pk,
-        "visibility": "public", "moderation_status": "approved", "seed_key": "hack",
+        # "rejected" specifically: SPR-Z.5 actually runs moderation now, so a
+        # body claiming "approved" would be indistinguishable from a real
+        # approval and prove nothing. A forced "rejected" that the image
+        # does not end up with proves the field was ignored either way.
+        "visibility": "public", "moderation_status": "rejected", "seed_key": "hack",
     })
     assert r.status_code == 201, r.content
     image = MemeImage.objects.get(id=r.json()["id"])
     assert image.owner == bank["a"]
     assert image.visibility == "private"
-    assert image.moderation_status == "pending"
+    assert image.moderation_status != "rejected"
     assert image.seed_key == ""
 
 
@@ -659,7 +663,9 @@ def test_saving_a_meme_clears_its_expiry_and_unsaving_is_mine_only(client, bank)
 
     Meme.objects.filter(pk=bank["b_meme"].pk).update(expires_at=timezone.now() + timezone.timedelta(hours=1))
     client.force_login(bank["a"])
-    r = _send(client, "post", "/memz/api/saved/", {"meme": bank["b_meme"].pk})
+    # By share_slug, not the numeric id (SPR-Z.5, spec Rule 12.3.3.6): a
+    # meme is addressed externally the same way its share page is.
+    r = _send(client, "post", "/memz/api/saved/", {"share_slug": bank["b_meme"].share_slug})
     assert r.status_code == 201, r.content
     assert Meme.objects.get(pk=bank["b_meme"].pk).expires_at is None
     assert client.delete(f"/memz/api/saved/{bank['b_saved'].pk}/").status_code == 404

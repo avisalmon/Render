@@ -172,19 +172,40 @@ validation at create time (Rule 5.2.1) is real, not just documented: a
 deck under `7 × max_players + rounds` cards is refused at session
 creation with a plain-language reason, not discovered mid-game.
 
-## SPR-Z.5 — Accounts, the bank, and remembering `TODO`
+## SPR-Z.5 — Accounts, the bank, and remembering `DONE (dev), 2026-09-15, awaiting review`
 
 | ID | Feature | Traces | Status |
 | --- | --- | --- | --- |
-| F-Z.5.1 | Uploads: multi-file, JPEG/PNG/WebP (HEIC if Pillow can), 8 MB, EXIF applied, metadata stripped, 1600 px, cap by tier with a named refusal | spec §6.2, Rules 2.4.3, 6.2.1, 6.2.2 | TODO |
-| F-Z.5.2 | Moderation: `memz/moderation.py` adapter calling the site's image check as a service; fail closed to `pending`; the gate that only `approved` is dealt, listed or shown; status shown in the bank | spec §6.4 | TODO |
-| F-Z.5.3 | Packs: create, rename, add own and public images, reorder, remove, delete, within the cap; public packs read-only | spec §6.3 | TODO |
-| F-Z.5.4 | Image source at create: packs, own only, mix; least-played preference for remembered hosts | spec §6.5, Rules 6.5.1, 6.5.2 | TODO |
-| F-Z.5.5 | Remembered sessions: `remembered` for logged-in hosts, no expiry, cap by count with release at create; My games tab reopens the podium | spec §2.2, Rule 2.4.2, §10 | TODO |
-| F-Z.5.6 | Save: `SavedMeme`, clears expiry, any logged-in player, from gallery, share page and creator; My memes tab with unsave, download, delete own | spec §8.4, §10 | TODO |
-| F-Z.5.7 | Profile: display name, tier shown, sign out; a mid-session sign-in attaches the account to the existing player | spec §10, Rule 3.3.5 | TODO |
-| F-Z.5.8 | Guest watermark absent for logged-in creators; upsell line hidden for logged-in hosts | spec §8.1, Rule 4.2.1 | TODO |
-| F-Z.5.9 | Tests: caps (upload, pack, remembered), moderation gate and fail-closed, ownership refusals on every bank resource, private image never dealt into a stranger's room, save clears expiry and survives cleanup, attach-on-login keeps the seat; screens for bank (empty, pending, rejected, full), packs, my memes, my games, profile | spec §12.8, §12.3.3.10 | TODO |
+| F-Z.5.1 | Uploads: multi-file, JPEG/PNG/WebP (HEIC if Pillow can), 8 MB, EXIF applied, metadata stripped, 1600 px, cap by tier with a named refusal | spec §6.2, Rules 2.4.3, 6.2.1, 6.2.2 | DONE — `memz/uploads.py`; "multi-file" is one file per request repeated client-side (`profile.js` loops the chosen files), not a single multi-file endpoint |
+| F-Z.5.2 | Moderation: `memz/moderation.py` adapter calling the site's image check as a service; fail closed to `pending`; the gate that only `approved` is dealt, listed or shown; status shown in the bank | spec §6.4 | DONE — proven by actually raising inside the site's `image_is_safe` in a test and asserting the upload lands `pending`, not silently `approved` |
+| F-Z.5.3 | Packs: create, rename, add own and public images, reorder, remove, delete, within the cap; public packs read-only | spec §6.3 | DONE — the create/reorder/delete API existed since SPR-Z.1; this sprint added the cap and the profile UI on top of it |
+| F-Z.5.4 | Image source at create: packs, own only, mix; least-played preference for remembered hosts | spec §6.5, Rules 6.5.1, 6.5.2 | DONE for the picker itself (public random / own only / mix / packs, with a pack checklist fetched live on the create screen); **the least-played preference (Rule 6.5.2) is not implemented** — dealing is a plain shuffle, no weighting toward images a remembered host has shown their group less often. Carried forward, doesn't affect correctness, only variety over many repeat games |
+| F-Z.5.5 | Remembered sessions: `remembered` for logged-in hosts, no expiry, cap by count with release at create; My games tab reopens the podium | spec §2.2, Rule 2.4.2, §10 | DONE — including the specific UX spec asked for: hitting the cap returns the oldest remembered session's code, and the create screen offers "release and continue" rather than refusing flatly. A profile visitor with no token in this browser (a different device, days later) gets one handed back by the page itself rather than being bounced to /join/ |
+| F-Z.5.6 | Save: `SavedMeme`, clears expiry, any logged-in player, from gallery, share page and creator; My memes tab with unsave, download, delete own | spec §8.4, §10 | DONE from the podium gallery and the My memes tab; **not yet wired into the share page or the solo creator's result page** — both already have the plumbing (the meme's `share_slug` is on the page), just no save button placed there yet. One security tightening beyond spec's literal text: save is addressed by `share_slug`, not the numeric id, so a stranger can't collect memes by counting rather than by having actually seen one (Rule 12.3.3.6 applied here too) |
+| F-Z.5.7 | Profile: display name, tier shown, sign out; a mid-session sign-in attaches the account to the existing player | spec §10, Rule 3.3.5 | DONE — `/memz/me/`; attach happens automatically (silently, once) whenever an authenticated visitor's browser holds a token, whether they just signed in from the lobby or reopened a recovered session |
+| F-Z.5.8 | Guest watermark absent for logged-in creators; upsell line hidden for logged-in hosts | spec §8.1, Rule 4.2.1 | DONE — both were already true since SPR-Z.2/Z.3 (`memes.make_meme`'s `is_guest` check; the create screen's `{% if tier == "guest" %}`); this sprint added the tests that actually prove it rather than leaving it assumed |
+| F-Z.5.9 | Tests: caps (upload, pack, remembered), moderation gate and fail-closed, ownership refusals on every bank resource, private image never dealt into a stranger's room, save clears expiry and survives cleanup, attach-on-login keeps the seat; screens for bank (empty, pending, rejected, full), packs, my memes, my games, profile | spec §12.8, §12.3.3.10 | DONE — `tests/test_spr_z_5.py`, 26 tests; 2 new screen-states (profile with real content, the create screen signed in) |
+
+**Sprint notes (2026-09-15).** Two SPR-Z.1 tests broke, correctly, by this
+sprint doing what it was supposed to: `test_creating_never_takes_the_owner_
+or_the_verdict_from_the_body` asserted uploads always stayed `pending`,
+which stopped being true the moment moderation actually started running;
+fixed by asserting the body's forced `"rejected"` was ignored, not that
+the outcome was a specific status. `test_saving_a_meme_clears_its_expiry_
+and_unsaving_is_mine_only` posted `{"meme": <id>}`, the contract `/saved/`
+no longer accepts (see F-Z.5.6's security note); fixed to use
+`share_slug`, the same address the share page itself uses. A real
+accessibility bug the screen contract caught on the profile page's own
+first run: the tab-strip's links were 40px tall (this repo's own floor is
+44px) and, in Hebrew RTL, overflowed the phone width under
+`overflow-x: auto` — switched to `flex-wrap` and fixed the height, which
+turned out to be the more robust fix for both problems at once.
+
+**Carried forward, explicitly:** least-played dealing weight for
+remembered hosts (F-Z.5.4), save buttons on the share page and creator
+result page (F-Z.5.6), a proactive "release" button in My games (the
+release endpoint exists and is tested; only the create-screen's forced
+flow currently calls it).
 
 ## SPR-Z.6 — Delight, and the phone `TODO`
 

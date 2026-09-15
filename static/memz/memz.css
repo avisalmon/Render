@@ -388,6 +388,57 @@ p.memz-error { margin: 0 0 14px; }
   word-break: break-all;
 }
 
+/* ---- profile ------------------------------------------------------------- */
+
+.memz-tabnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 20px;
+}
+
+.memz-tabnav a {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--memz-card);
+  border: 1px solid var(--memz-line);
+  color: var(--memz-ink);
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+section[id] { scroll-margin-top: 16px; margin-bottom: 32px; }
+
+.memz-thumb--status { position: relative; }
+
+.memz-status-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--memz-card);
+}
+
+.memz-status-badge--approved { color: #1a7d3a; }
+.memz-status-badge--rejected { color: var(--memz-accent); }
+.memz-status-badge--pending { color: var(--memz-ink-soft); }
+
+.memz-thumb-delete {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  right: 4px;
+}
+
 /* ---- the game ------------------------------------------------------------ */
 
 .memz-code-display {
@@ -426,6 +477,16 @@ p.memz-error { margin: 0 0 14px; }
 .memz-player-row span:nth-child(2) { flex: 1 1 auto; font-weight: 600; }
 .memz-player-score { font-variant-numeric: tabular-nums; color: var(--memz-ink-soft); }
 .memz-presence-dot { font-size: 12px; }
+
+.memz-player-row a {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-height: 44px;
+  color: var(--memz-ink);
+  font-weight: 600;
+  text-decoration: none;
+}
 
 .memz-round-timer,
 .memz-timer {

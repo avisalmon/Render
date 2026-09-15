@@ -3,8 +3,8 @@ from django.urls import include, path
 from . import auth_views, views
 from .api import router
 from .api.game_views import (
-    AdvanceView, AgainView, JoinView, LeaveView, RemovePlayerView, SessionCreateView, StartView, StateView,
-    SubmitView, SwapCardView, VoteView,
+    AdvanceView, AgainView, AttachAccountView, JoinView, LeaveView, ReleaseSessionView, RemovePlayerView,
+    SessionCreateView, StartView, StateView, SubmitView, SwapCardView, VoteView,
 )
 from .api.profile import ProfileView
 from .api.report import ReportView
@@ -25,6 +25,8 @@ urlpatterns = [
     path("create/<str:slug>/", views.creator_result, name="creator_result"),
     # A meme's public page (spec §8.2).
     path("m/<str:slug>/", views.share, name="share"),
+    # Profile (spec §10).
+    path("me/", views.profile_page, name="profile"),
     # Auth, in memz's own chrome (spec §3.3).
     path("login/", auth_views.LoginView.as_view(), name="login"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
@@ -44,6 +46,8 @@ urlpatterns = [
     path("api/sessions/<str:code>/advance/", AdvanceView.as_view(), name="api_session_advance"),
     path("api/sessions/<str:code>/again/", AgainView.as_view(), name="api_session_again"),
     path("api/sessions/<str:code>/leave/", LeaveView.as_view(), name="api_session_leave"),
+    path("api/sessions/<str:code>/attach/", AttachAccountView.as_view(), name="api_session_attach"),
+    path("api/sessions/<str:code>/release/", ReleaseSessionView.as_view(), name="api_session_release"),
     path("api/sessions/<str:code>/players/<int:player_id>/remove/", RemovePlayerView.as_view(), name="api_session_remove_player"),
     path("api/sessions/<str:code>/rounds/<int:number>/submit/", SubmitView.as_view(), name="api_round_submit"),
     path("api/sessions/<str:code>/rounds/<int:number>/vote/", VoteView.as_view(), name="api_round_vote"),

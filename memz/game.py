@@ -49,12 +49,26 @@ def generate_code():
 # ------------------------------------------------------------- lobby & join
 
 
+class RememberedCapReached(GameError):
+    """Rule 2.4.2: refuse to silently delete anything — the caller (a
+    logged-in host at the free-tier cap) gets the oldest remembered
+    session back and a chance to release it before trying again."""
+
+    def __init__(self, oldest_session):
+        self.oldest_session = oldest_session
+        super().__init__(
+            f"הגעתם למכסת המשחקים השמורים שלכם ({oldest_session and 'ניתן לשחרר אחד ישן' or ''})."
+        )
+
+
 def create_session(
     *, host_user, round_count, round_seconds, vote_seconds,
     game_mode=Session.NORMAL, caption_mode=Session.TYPED, scoring_mode=Session.VOTE, deck=None,
+    image_source=Session.PUBLIC_RANDOM, packs=None, release_session_code=None,
 ):
     from .tiers import tier_for
 
+    is_logged_in = bool(host_user and host_user.is_authenticated)
     tier = tier_for(host_user)
     max_players = conf.cap("MAX_PLAYERS", tier)
     if caption_mode == Session.CARDS:
@@ -63,20 +77,63 @@ def create_session(
         if not cards.deck_size_ok(deck, max_players=max_players, round_count=round_count):
             raise GameError("החפיסה הזאת קטנה מדי למשחק הזה.")
 
+    if not is_logged_in:
+        image_source = Session.PUBLIC_RANDOM   # spec §2.1: guests always draw from the public bank
+        packs = None
+    elif image_source in (Session.PACKS, Session.MIX) and not packs:
+        raise GameError("צריך לבחור לפחות חבילה אחת.")
+
+    if is_logged_in:
+        remembered_qs = Session.objects.filter(host_user=host_user, remembered=True, expires_at__isnull=True)
+        limit = conf.cap("REMEMBERED_SESSIONS", tier)
+        if limit is not None and remembered_qs.count() >= limit:
+            if release_session_code:
+                released = remembered_qs.filter(code=release_session_code).first()
+                if released is None:
+                    raise GameError("לא מצאנו את המשחק הזה כדי לשחרר אותו.")
+                release_session(released)
+            else:
+                oldest = remembered_qs.order_by("created_at").first()
+                raise RememberedCapReached(oldest)
+
     session = Session.objects.create(
         code=generate_code(),
-        host_user=host_user if (host_user and host_user.is_authenticated) else None,
+        host_user=host_user if is_logged_in else None,
         game_mode=game_mode, caption_mode=caption_mode, scoring_mode=scoring_mode, deck=deck,
-        image_source=Session.PUBLIC_RANDOM,
+        image_source=image_source,
         round_count=round_count, round_seconds=round_seconds, vote_seconds=vote_seconds,
         max_players=max_players,
-        remembered=bool(host_user and host_user.is_authenticated),
+        remembered=is_logged_in,
     )
+    if packs:
+        session.packs.set(packs)
     host_player = Player.objects.create(
-        session=session, user=host_user if (host_user and host_user.is_authenticated) else None,
+        session=session, user=host_user if is_logged_in else None,
         nickname=_default_nickname(host_user), is_host=True, seat_order=0,
     )
     return session, host_player
+
+
+def release_session(session):
+    """Rule 2.4.2: free a remembered slot without deleting anything — the
+    same fate a guest session eventually gets, just chosen rather than
+    automatic."""
+    if session.expires_at is None:
+        session.expires_at = timezone.now() + timezone.timedelta(hours=conf.get("GUEST_SESSION_TTL_HOURS"))
+        session.save(update_fields=["expires_at"])
+
+
+def attach_account(session, player, user):
+    """Rule 3.3.5: signing in mid-session links the account to the seat
+    already in play. Idempotent for the same account; refused for a
+    different one, so a stray logged-in browser can't take over someone
+    else's seat."""
+    if player.user_id is not None and player.user_id != user.id:
+        raise GameError("המושב הזה כבר שייך לחשבון אחר.")
+    if player.user_id == user.id:
+        return
+    Player.objects.filter(pk=player.pk).update(user=user)
+    player.user_id = user.id
 
 
 def _default_nickname(user):

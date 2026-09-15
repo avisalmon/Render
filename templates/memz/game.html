@@ -2,6 +2,6 @@
 {% block title %}memz · {{ code }}{% endblock %}
 {% block screen %}game{% endblock %}
 {% block content %}
-<div data-game-root data-code="{{ code }}"></div>
+<div data-game-root data-code="{{ code }}" data-recovered-token="{{ recovered_token }}"></div>
 {% endblock %}
 {% block scripts %}<script src="{% static 'memz/game.js' %}"></script>{% endblock %}

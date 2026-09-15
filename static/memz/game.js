@@ -12,11 +12,24 @@
   var code = root.dataset.code;
   var screenMode = root.dataset.screenMode === "1";
   var marker = document.querySelector("[data-screen]");
-  var token = screenMode ? "" : window.memz.getPlayerToken(code);
+  // A logged-in visitor with no token in *this* browser (spec §4.8.2 — a
+  // different device, "My games" days later) gets it handed back by the
+  // page itself, server-side, rather than being sent to /join/.
+  var token = screenMode ? "" : (window.memz.getPlayerToken(code) || root.dataset.recoveredToken || "");
 
   if (!screenMode && !token) {
     window.location.href = "/memz/join/" + encodeURIComponent(code) + "/";
     return;
+  }
+  if (!screenMode && token) window.memz.setPlayerToken(code, token);
+
+  var isAuthenticated = document.body.getAttribute("data-authenticated") === "1";
+  if (!screenMode && token && isAuthenticated) {
+    // Rule 3.3.5: a guest who is (or just became) signed in gets this seat
+    // linked to their account. Idempotent for the same account, silently
+    // ignored (never surfaced as an error) if it belongs to someone else —
+    // that only happens from a stray token, not a mistake the visitor made.
+    call("POST", "/attach/").catch(function () {});
   }
 
   var pollTimer = null;
@@ -89,6 +102,8 @@
         ? '<button class="memz-btn memz-btn--primary memz-btn--wide" data-start-btn' + (canStart ? "" : " disabled") + ">" +
           (canStart ? "מתחילים!" : "צריך עוד שחקנים (" + state.min_players + " לפחות)") + "</button>"
         : '<p class="memz-lead">מחכים שהמארח/ת יתחיל/תתחיל...</p>') +
+      (isAuthenticated ? "" : '<p class="memz-fineprint"><a href="/memz/login/?next=' +
+        encodeURIComponent(window.location.pathname) + '">כניסה לחשבון</a> כדי לשמור ממים אחר כך.</p>') +
       '<p class="memz-error" data-action-error></p>';
     if (isHost) {
       root.querySelector("[data-start-btn]").addEventListener("click", function () {
@@ -243,6 +258,7 @@
           '<figure class="memz-meme-tile"><img src="' + esc(g.rendered_url) + '" alt="">' +
           '<figcaption>' + esc(g.nickname) + "</figcaption>" +
           '<a class="memz-btn memz-btn--ghost memz-btn--small" href="/memz/m/' + esc(g.share_slug) + '/">שיתוף</a>' +
+          (isAuthenticated ? '<button type="button" class="memz-btn memz-btn--ghost memz-btn--small" data-save-slug="' + esc(g.share_slug) + '">שמירה</button>' : "") +
           "</figure>"
         );
       }).join("") + "</div>" +
@@ -252,6 +268,18 @@
       "</div>";
     var again = root.querySelector("[data-again-btn]");
     if (again) again.addEventListener("click", function () { guardedAction(function () { return call("POST", "/again/"); }); });
+
+    root.querySelectorAll("[data-save-slug]").forEach(function (btn) {
+      btn.addEventListener("click", async function () {
+        btn.disabled = true;
+        try {
+          await window.memz.api("POST", "/memz/api/saved/", { share_slug: btn.dataset.saveSlug });
+          btn.textContent = "נשמר ✓";
+        } catch (e) {
+          btn.disabled = false;
+        }
+      });
+    });
   }
 
   function renderScreenMode(state) {

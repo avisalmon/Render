@@ -16,7 +16,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .. import conf, game
-from ..models import CaptionDeck, Session
+from ..models import CaptionDeck, Pack, Session
 from ..state import build as build_state
 from .renderers import StaffOnlyBrowsableRenderer
 from .throttles import JoinAttemptThrottle, SessionCreateThrottle
@@ -97,11 +97,25 @@ class SessionCreateView(GameAPIView):
             if deck is None:
                 return Response({"detail": "אין עדיין חפיסת קלפים זמינה."}, status=400)
 
+        image_source = request.data.get("image_source") or Session.PUBLIC_RANDOM
+        if image_source not in dict(Session.IMAGE_SOURCES):
+            image_source = Session.PUBLIC_RANDOM
+        pack_ids = request.data.get("packs") or []
+        packs = list(Pack.objects.filter(pk__in=pack_ids)) if pack_ids else None
+
         try:
             session, host = game.create_session(
                 host_user=user, round_count=round_count, round_seconds=round_seconds, vote_seconds=vote_seconds,
                 game_mode=game_mode, caption_mode=caption_mode, scoring_mode=scoring_mode, deck=deck,
+                image_source=image_source, packs=packs, release_session_code=request.data.get("release_session_code"),
             )
+        except game.RememberedCapReached as exc:
+            oldest = exc.oldest_session
+            return Response({
+                "detail": str(exc),
+                "cap_reached": True,
+                "oldest_session": oldest and {"code": oldest.code, "created_at": oldest.created_at.isoformat()},
+            }, status=409)
         except game.GameError as exc:
             return Response({"detail": str(exc)}, status=400)
         return Response(
@@ -136,6 +150,24 @@ class StateView(GameAPIView):
             game.touch(player)
             player.refresh_from_db()   # sync() may have mutated this row too (e.g. host handoff)
         return Response(build_state(session, player))
+
+
+class AttachAccountView(GameAPIView):
+    """Rule 3.3.5: a guest player who signs in mid-session gets their
+    existing seat linked to the account, not a new one."""
+
+    def post(self, request, code):
+        if not request.user.is_authenticated:
+            return Response({"detail": "צריך להיות מחוברים כדי לקשר חשבון."}, status=401)
+        session = _session_or_404(code)
+        player, refusal = self.require_player(request, session)
+        if refusal:
+            return refusal
+        try:
+            game.attach_account(session, player, request.user)
+        except game.GameError as exc:
+            return Response({"detail": str(exc)}, status=403)
+        return self.state_response(session, player)
 
 
 class LeaveView(GameAPIView):
@@ -190,6 +222,21 @@ class AdvanceView(GameAPIView):
             game.advance(session, player)
         except game.GameError as exc:
             return Response({"detail": str(exc)}, status=409)
+        return self.state_response(session, player)
+
+
+class ReleaseSessionView(GameAPIView):
+    """Rule 2.4.2, the proactive half: a host frees a remembered slot from
+    the profile's My games tab, not only when forced to at create time."""
+
+    def post(self, request, code):
+        session = _session_or_404(code)
+        player, refusal = self.require_player(request, session)
+        if refusal:
+            return refusal
+        if not player.is_host:
+            return Response({"detail": "רק המארח/ת יכול/ה לשחרר את המשחק."}, status=403)
+        game.release_session(session)
         return self.state_response(session, player)
 
 

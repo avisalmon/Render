@@ -1,0 +1,113 @@
+{% extends "memz/base.html" %}{% load static i18n %}
+{% block title %}{% trans "הפרופיל שלי" %} · memz{% endblock %}
+{% block screen %}profile{% endblock %}
+{% block content %}
+<h1 class="memz-title">{% trans "הפרופיל שלי" %}</h1>
+
+<nav class="memz-tabnav">
+  <a href="#my-memes">{% trans "הממים שלי" %}</a>
+  <a href="#my-bank">{% trans "הבנק שלי" %}</a>
+  <a href="#my-games">{% trans "המשחקים שלי" %}</a>
+  <a href="#account">{% trans "חשבון" %}</a>
+</nav>
+
+<section id="my-memes">
+  <h2 class="memz-field-label">{% trans "הממים ששמרתי" %}</h2>
+  {% if saved %}
+  <div class="memz-meme-grid" data-saved-grid>
+    {% for row in saved %}
+    <figure class="memz-meme-tile" data-saved-row="{{ row.pk }}">
+      <img src="{{ row.rendered_url }}" alt="">
+      <a class="memz-btn memz-btn--ghost memz-btn--small" href="{% url 'memz:share' slug=row.share_slug %}">{% trans "פתיחה" %}</a>
+      <button type="button" class="memz-btn memz-btn--ghost memz-btn--small" data-unsave="{{ row.pk }}">{% trans "הסרה" %}</button>
+    </figure>
+    {% endfor %}
+  </div>
+  {% else %}<p class="memz-fineprint">{% trans "עוד לא שמרתם שום מם." %}</p>{% endif %}
+
+  <h2 class="memz-field-label">{% trans "ממים שיצרתי לבד" %}</h2>
+  {% if own_solo_memes %}
+  <div class="memz-meme-grid">
+    {% for meme in own_solo_memes %}
+    <figure class="memz-meme-tile">
+      <img src="{{ meme.rendered.url }}" alt="">
+      <a class="memz-btn memz-btn--ghost memz-btn--small" href="{% url 'memz:share' slug=meme.share_slug %}">{% trans "פתיחה" %}</a>
+    </figure>
+    {% endfor %}
+  </div>
+  {% else %}<p class="memz-fineprint">{% trans "עוד לא יצרתם מם לבד." %} <a href="{% url 'memz:create' %}">{% trans "יוצרים אחד" %}</a></p>{% endif %}
+</section>
+
+<section id="my-bank">
+  <h2 class="memz-field-label" data-bank-count>{% trans "התמונות שלי" %} ({{ own_images|length }}/{{ upload_limit }})</h2>
+
+  <form data-upload-form class="memz-card memz-form">
+    <label class="memz-field">
+      <span>{% trans "העלאת תמונות" %}</span>
+      <input class="memz-input" type="file" name="file" accept="image/*" multiple data-upload-input>
+    </label>
+    <p class="memz-error" data-upload-error hidden></p>
+    <button type="button" class="memz-btn memz-btn--primary memz-btn--wide" data-upload-submit>{% trans "העלאה" %}</button>
+  </form>
+
+  {% if own_images %}
+  <ul class="memz-thumb-grid" data-bank-grid>
+    {% for img in own_images %}
+    <li class="memz-thumb memz-thumb--status" data-bank-row="{{ img.pk }}">
+      <img src="{{ img.file.url }}" alt="{{ img.title }}">
+      <span class="memz-status-badge memz-status-badge--{{ img.moderation_status }}">
+        {% if img.moderation_status == "approved" %}{% trans "אושרה" %}
+        {% elif img.moderation_status == "rejected" %}{% trans "נדחתה" %}
+        {% else %}{% trans "בבדיקה" %}{% endif %}
+      </span>
+      <button type="button" class="memz-btn memz-btn--ghost memz-btn--small memz-thumb-delete" data-delete-image="{{ img.pk }}">{% trans "מחיקה" %}</button>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="memz-fineprint">{% trans "עוד לא העליתם תמונות." %}</p>{% endif %}
+
+  <h2 class="memz-field-label" data-pack-count>{% trans "החבילות שלי" %} ({{ own_packs|length }}/{{ pack_limit }})</h2>
+  <form data-pack-form class="memz-card memz-form">
+    <label class="memz-field">
+      <span>{% trans "שם חבילה חדשה" %}</span>
+      <input class="memz-input" type="text" maxlength="80" data-pack-name>
+    </label>
+    <button type="button" class="memz-btn memz-btn--secondary memz-btn--wide" data-pack-submit>{% trans "יצירת חבילה" %}</button>
+  </form>
+  {% if own_packs %}
+  <ul class="memz-player-list">
+    {% for pack in own_packs %}
+    <li class="memz-player-row">
+      <span>{{ pack.name }} ({{ pack.images.count }})</span>
+      <button type="button" class="memz-btn memz-btn--ghost memz-btn--small" data-delete-pack="{{ pack.pk }}">{% trans "מחיקה" %}</button>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</section>
+
+<section id="my-games">
+  <h2 class="memz-field-label">{% trans "המשחקים השמורים שלי" %} ({{ remembered_sessions|length }}{% if remembered_limit %}/{{ remembered_limit }}{% endif %})</h2>
+  {% if remembered_sessions %}
+  <ul class="memz-player-list">
+    {% for session in remembered_sessions %}
+    <li class="memz-player-row">
+      <a href="{% url 'memz:game' code=session.code %}">{{ session.code }} · {{ session.created_at|date:"d/m/Y" }}
+        {% if session.expires_at %}({% trans "שוחרר" %}){% endif %}</a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="memz-fineprint">{% trans "עוד לא ארחתם משחק כשהייתם מחוברים." %}</p>{% endif %}
+</section>
+
+<section id="account">
+  <h2 class="memz-field-label">{% trans "חשבון" %}</h2>
+  <p>{% trans "שם:" %} {{ profile.display_name }}</p>
+  <p>{% trans "מסלול:" %} {% if tier == "paid" %}{% trans "בתשלום" %}{% else %}{% trans "חינמי" %}{% endif %}</p>
+  <form method="post" action="{% url 'memz:logout' %}">
+    {% csrf_token %}
+    <button type="submit" class="memz-btn memz-btn--secondary">{% trans "יציאה" %}</button>
+  </form>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{% static 'memz/profile.js' %}"></script>{% endblock %}

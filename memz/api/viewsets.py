@@ -57,11 +57,42 @@ class MemeImageViewSet(MemzViewSet):
     def get_queryset(self):
         return visible_images(self.request.user)
 
-    def perform_create(self, serializer):
-        # Upload caps and the moderation call arrive in SPR-Z.5; the verdict
-        # starts `pending` regardless, so the gate (Rule 6.4.1) already holds.
-        serializer.save(owner=self.request.user, visibility=MemeImage.PRIVATE,
-                        moderation_status=MemeImage.PENDING, seed_key="")
+    def create(self, request, *args, **kwargs):
+        """Overridden, not just `perform_create`: the stored file is never
+        the upload as received — `uploads.process_upload` strips EXIF/
+        metadata, applies orientation, and resizes it first (spec Rule
+        6.2.2) — and moderation (Rule 6.4.2) has to run on that same
+        processed file before anything is saved with a verdict."""
+        from .. import conf, moderation, uploads
+        from ..tiers import tier_for
+
+        tier = tier_for(request.user)
+        limit = conf.cap("UPLOAD_LIMIT", tier)
+        if limit is not None and MemeImage.objects.filter(owner=request.user).count() >= limit:
+            return Response(
+                {"detail": f"הגעתם למכסת ההעלאות של החשבון שלכם ({limit} תמונות)."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        raw_file = serializer.validated_data.pop("file")
+        try:
+            processed = uploads.process_upload(raw_file)
+        except uploads.UploadError as exc:
+            return Response({"file": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        verdict, note = moderation.check_image(processed)
+        processed.seek(0)
+
+        image = MemeImage(
+            owner=request.user, visibility=MemeImage.PRIVATE, moderation_status=verdict, moderation_note=note,
+            seed_key="", title=serializer.validated_data.get("title", ""),
+        )
+        image.file.save(raw_file.name, processed, save=True)
+
+        out = self.get_serializer(image)
+        return Response(out.data, status=status.HTTP_201_CREATED)
 
 
 class PackViewSet(MemzViewSet):
@@ -69,6 +100,17 @@ class PackViewSet(MemzViewSet):
 
     def get_queryset(self):
         return _own_or_public(self.request.user, Pack).prefetch_related("images")
+
+    def create(self, request, *args, **kwargs):
+        from .. import conf
+        from ..tiers import tier_for
+
+        limit = conf.cap("PACK_LIMIT", tier_for(request.user))
+        if limit is not None and Pack.objects.filter(owner=request.user).count() >= limit:
+            return Response(
+                {"detail": f"הגעתם למכסת החבילות של החשבון שלכם ({limit})."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user, is_public=False)
@@ -211,12 +253,26 @@ class SavedMemeViewSet(MemzViewSet):
     def owner_id_of(self, obj):
         return obj.user_id
 
-    def perform_create(self, serializer):
+    def create(self, request, *args, **kwargs):
+        """Saving a meme already saved is a no-op, not a 500 (the unique
+        constraint on (user, meme) is the safety net, not the UX).
+
+        Addressed by `share_slug`, not the numeric id: the id is a small,
+        sequential integer, and a save-by-id would let a stranger collect
+        memes by counting rather than by actually having seen them (spec
+        Rule 12.3.3.6 — memes are addressed externally by slug only)."""
+        slug = request.data.get("share_slug")
+        meme = Meme.objects.filter(share_slug=slug).first() if isinstance(slug, str) and slug else None
+        if meme is None:
+            return Response({"share_slug": "לא מצאנו מם כזה."}, status=status.HTTP_400_BAD_REQUEST)
+        existing = SavedMeme.objects.filter(user=request.user, meme=meme).first()
+        if existing is not None:
+            return Response(self.get_serializer(existing).data, status=status.HTTP_200_OK)
         with transaction.atomic():
-            saved = serializer.save(user=self.request.user)
-            if saved.meme.expires_at is not None:
-                saved.meme.expires_at = None
-                saved.meme.save(update_fields=["expires_at"])
+            saved = SavedMeme.objects.create(user=request.user, meme=meme)
+            if meme.expires_at is not None:
+                Meme.objects.filter(pk=meme.pk).update(expires_at=None)
+        return Response(self.get_serializer(saved).data, status=status.HTTP_201_CREATED)
 
 
 __all__ = [

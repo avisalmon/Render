@@ -16,7 +16,7 @@
   <link rel="apple-touch-icon" href="{% static 'memz/icon-180.png' %}">
   <link rel="icon" href="{% static 'memz/icon-192.png' %}">
 </head>
-<body class="memz" data-csrf="{{ csrf_token }}">
+<body class="memz" data-csrf="{{ csrf_token }}" data-authenticated="{% if user.is_authenticated %}1{% else %}0{% endif %}">
 <div class="memz-app">
   <header class="memz-header">
     <a class="memz-wordmark" href="{% url 'memz:home' %}">memz</a>
