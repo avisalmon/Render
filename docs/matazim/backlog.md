@@ -2726,7 +2726,7 @@ twice already in this backlog, not repeated a third time.
   sprints when it was a contradiction. The requirement now says what is true and
   what is actually enforced.
 
-## SPR-M.41 — What a full UX review measured  `PLANNED`
+## SPR-M.41 — What a full UX review measured  `DONE 2026-09-15`
 
 **Goal:** Avi asked for a full review with attention to UX, graphic design and
 clarity. This is what it found. Every screen was walked as every role in a real
@@ -2767,15 +2767,15 @@ in trouble, and who to ask. They should be the model for anything new.
 
 | F-ID | Finding | Traces | Status |
 |---|---|---|---|
-| F-M.41.1 | Two panels named הפרקטיקום שלי on המסלול שלי, and the first is not the practicum | REQ-M.130 | TODO |
-| F-M.41.2 | קורסים in three pieces of live copy, against a recorded decision | assess.py:280 | TODO |
-| F-M.41.3 | Prose runs 136 characters per line on nine screens at desktop width | REQ-M.5 | TODO |
-| F-M.41.4 | The front door's strongest enabled button belongs to adults | REQ-M.5c, M.36 | TODO |
-| F-M.41.5 | The lamp loses its label on phones | REQ-M.106, M.75 | TODO |
-| F-M.41.6 | "not yet" is a bare middle dot, with no word and no text alternative | REQ-M.76 | TODO |
-| F-M.41.7 | Three readonly copy fields have no accessible name | REQ-M.139 | TODO |
-| F-M.41.8 | The brand tagline sits at 11.5px on every page | | TODO |
-| F-M.41.9 | Five to seven identical role-resolution queries per request | | TODO |
+| F-M.41.1 | Two panels named הפרקטיקום שלי on המסלול שלי, and the first is not the practicum | REQ-M.130 | DONE |
+| F-M.41.2 | קורסים in three pieces of live copy, against a recorded decision | assess.py:280 | DONE |
+| F-M.41.3 | Prose runs 136 characters per line on nine screens at desktop width | REQ-M.5 | DONE |
+| F-M.41.4 | The front door's strongest enabled button belongs to adults | REQ-M.5c, M.36 | DECIDED, NOT BUILT |
+| F-M.41.5 | The lamp loses its label on phones | REQ-M.106, M.75 | DONE |
+| F-M.41.6 | "not yet" is a bare middle dot, with no word and no text alternative | REQ-M.76 | DONE |
+| F-M.41.7 | Three readonly copy fields have no accessible name | REQ-M.139 | DONE |
+| F-M.41.8 | The brand tagline sits at 11.5px on every page | | DONE |
+| F-M.41.9 | Five to seven identical role-resolution queries per request | | NOT TAKEN |
 
 ### F-M.41.1, the one that actually misleads somebody
 
@@ -2853,3 +2853,50 @@ The public band says 13 מט״צים בתוכנית while the staff page says 19
 בתוכנית. Different labels counting different things (`public.py` counts three
 statuses; staff counts every row), so this is correct, and noted only because it
 reads like a contradiction until you check.
+
+### F-M.41.4 is decided, and deliberately not built here
+
+Avi, on reading the finding: the site should not put anybody on the spot by
+asking which kind of person they are. It should assume a teenager arrived,
+because that is who the product is for, and give them one path.
+
+A leader is recognised by **how they arrived**: they come through their own
+invite link, and that link already carries the fact that they are a leader, so
+nobody has to be asked. The leader entrance stays visible, in the menu, rather
+than as a door in the hero. His words: not hidden, seen, but in the menu.
+
+That is a larger change than the rest of this sprint, and it reaches the locked
+כניסת תלמידים door too, so it is written down here and left for its own sprint
+rather than folded into a list of fixes.
+
+### F-M.41.9 was measured and then declined
+
+The 5 to 7 repeated queries are `is_program_manager`, `leader_of` and
+`institution_of` resolving the same person several times per request. The
+obvious fix is to memoise on the user instance, which is per-request because
+`request.user` is.
+
+Not taken, because the failure it invites is worse than the cost it removes.
+`grant_program_manager` changes somebody's role inside a request that then goes
+on rendering, and a cached "no" surviving that is a role change that appears not
+to have happened. The queries are constant rather than N+1, which the numbers
+show plainly: the targets bank renders 120 rows in 24 queries. Buying a handful
+of trivial `EXISTS` lookups with a staleness bug in the permission layer is the
+wrong trade, and it is recorded here so it is not rediscovered as an easy win.
+
+### The fix that had to be measured twice
+
+`.mz-check-todo` first used `--mz-idle`, which is what "not yet" obviously
+wants. Re-running the contrast pass afterwards put it at 2.56:1 on the card:
+this sprint would have introduced the product's only contrast failure, on the
+screen it was fixing. `--mz-muted` is the measured 4.97:1 grey the rest of the
+writing already uses. Re-measuring after a change is what caught it, not review.
+
+### What the numbers say now
+
+Re-walked, all 38 screens, after the changes: zero elements overflowing at
+390px, zero tap targets under 44px, zero contrast failures, zero inputs without
+an accessible name, and prose over 100 characters a line on no screen at all,
+down from nine. Tests: 659 matazim tests plus the 8 written here, all passing,
+and each of the new ones was confirmed by reintroducing the defect and watching
+it fail.

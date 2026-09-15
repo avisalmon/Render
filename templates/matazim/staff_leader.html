@@ -17,7 +17,8 @@
   <div class="mz-two-up">
     <section class="mz-panel">
       <h2>קישור ההצטרפות</h2>
-      <input class="mz-copy" type="text" value="{{ join_url }}" readonly onclick="this.select()">
+      <input class="mz-copy" type="text" value="{{ join_url }}" readonly onclick="this.select()"
+             aria-label="קישור ההצטרפות של המוביל/ה">
       <img class="mz-qr" src="{% url 'matazim:leader_qr' leader.pk %}" alt="קוד QR">
       <form method="post">
         {% csrf_token %}

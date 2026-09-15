@@ -103,7 +103,7 @@ def _next_step(profile, student, state, per_course):
                 "where_args": [slug],
                 "course": slug,
                 "why": (
-                    f"{done} מתוך {total} שיעורים. בסוף הקורס מקבלים תעודה."
+                    f"{done} מתוך {total} שיעורים. בסוף ההדרכה מקבלים תעודה."
                     if started
                     else f"{total} שיעורים, ובסוף מקבלים תעודה."
                 ),

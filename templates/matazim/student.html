@@ -54,7 +54,7 @@
     {% endcomment %}
     <ul class="mz-needs">
       <li>
-        <span class="mz-check">{% if eligibility.entrance_test_passed %}✓{% else %}·{% endif %}</span>
+        {% if eligibility.entrance_test_passed %}<span class="mz-check">✓<span class="mz-sr">הושלם.</span></span>{% else %}<span class="mz-check-todo">○<span class="mz-sr">עוד לא.</span></span>{% endif %}
         <span>
           מבחן הכניסה
           {% if not eligibility.entrance_test_passed %}
@@ -64,7 +64,7 @@
       </li>
       {% for course in courses %}
         <li>
-          <span class="mz-check">{% if course.certified %}✓{% else %}·{% endif %}</span>
+          {% if course.certified %}<span class="mz-check">✓<span class="mz-sr">הושלם.</span></span>{% else %}<span class="mz-check-todo">○<span class="mz-sr">עוד לא.</span></span>{% endif %}
           <span>
             תעודה ב{{ course.progress.title|default:course.slug }}
             {% if course.certified %}
@@ -78,7 +78,7 @@
         </li>
       {% endfor %}
       <li>
-        <span class="mz-check">{% if person.status == "certified" %}✓{% else %}·{% endif %}</span>
+        {% if person.status == "certified" %}<span class="mz-check">✓<span class="mz-sr">הושלם.</span></span>{% else %}<span class="mz-check-todo">○<span class="mz-sr">עוד לא.</span></span>{% endif %}
         <span>אישור שלכם</span>
       </li>
     </ul>

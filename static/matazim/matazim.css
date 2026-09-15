@@ -228,7 +228,10 @@ img { max-width: 100%; height: auto; display: block; }
 .mz-brand { display: flex; flex-direction: column; gap: 2px; flex: none; }
 .mz-brand img { height: 34px; width: auto; }
 .mz-brand-tag {
-  font-size: .72rem;
+  /* .72rem measured out at 11.5px, under the 12px floor where a face this
+     small stops being comfortably readable, and it sits on every page of the
+     product (SPR-M.41 F-M.41.8). */
+  font-size: .78rem;
   letter-spacing: .02em;
   color: var(--mz-muted);
 }
@@ -646,6 +649,24 @@ img { max-width: 100%; height: auto; display: block; }
 }
 .mz-panel-soft { background: var(--mz-purple-soft); box-shadow: none; }
 
+/* A reading measure for prose (SPR-M.41 F-M.41.3).
+ *
+ * This product had solved this twice and never applied it to the panels:
+ * .mz-legal caps the policy pages at 720px and .mz-hero-text at 46ch, while a
+ * paragraph inside a panel ran the full container. Measured at 1440px that was
+ * 1088px wide, about 136 characters a line, across nine screens including
+ * about, track, courses and schools, which are the pages somebody reads before
+ * deciding whether their child joins.
+ *
+ * Direct children only, so a paragraph that is one cell of a flex row keeps
+ * whatever width its row gives it. No text-align here: in RTL the block still
+ * starts at the right edge on its own, and forcing alignment would be a second
+ * rule to keep in step with the first. */
+.mz-page-head > p,
+.mz-panel > p,
+.mz-panel > ul > li > p,
+.mz-path-body > p { max-width: 68ch; }
+
 .mz-profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
 .mz-profile-grid .mz-panel { margin-bottom: 0; }
 .mz-panel-wide { grid-column: 1 / -1; }
@@ -899,6 +920,36 @@ img { max-width: 100%; height: auto; display: block; }
 
 .mz-nav-done { color: var(--mz-ink) !important; }
 .mz-check { color: var(--mz-teal-text); font-weight: 700; }
+
+/* Text for assistive technology only. A ✓ and a ○ are read out as punctuation
+   or skipped entirely, so the word rides along invisibly beside them. */
+.mz-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* "Not yet", as a shape rather than as a smaller dot (SPR-M.41 F-M.41.6).
+ *
+ * This state used to be a middle dot painted in .mz-check's teal, which is the
+ * same colour as the ✓ beside it, so done and not-done were told apart by the
+ * glyph alone. Worse, `·` is a bullet everywhere else in this product, in the
+ * privacy and terms lists, so on the certification checklist it read as
+ * decoration rather than as an outstanding requirement. An open ring in the
+ * muted ink is a different shape and a different colour, and .mz-sr carries
+ * the word.
+ *
+ * Not --mz-idle, which was the obvious choice and measures 2.56:1 on the card.
+ * Taking it would have added this product's only contrast failure to the very
+ * screen this sprint set out to fix, which the re-measurement caught.
+ * --mz-muted is the 4.97:1 grey the rest of the writing already uses. */
+.mz-check-todo { color: var(--mz-muted); font-weight: 700; }
 
 .mz-nav-staff {
   padding-inline: 10px !important;
@@ -1745,11 +1796,18 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
   justify-content: center;
 }
 
-/* On a phone the label goes and the lamp becomes a circle, because a pill in
-   the corner of a 390px screen covers content somebody is trying to read. */
+/* The label used to go on a phone, leaving a 52px circle, because a pill in
+   the corner of a 390px screen covers content somebody is trying to read.
+   That trade is reversed here (SPR-M.41 F-M.41.5) and the reason is worth
+   keeping: this lamp is deliberately not a nav item, so it is the only
+   entrance to the improvement loop, and on a touch screen there is no hover to
+   reveal the `title`. An icon alone was carrying a whole feature.
+
+   The footprint stays small: tighter padding, and one short word rather than
+   the desktop phrasing. The footer already reserves room for it below. */
 @media (max-width: 640px) {
-  .mz-lamp { padding: 0; width: 52px; height: 52px; justify-content: center; }
-  .mz-lamp-text { display: none; }
+  .mz-lamp { padding: 0 14px 0 12px; min-height: 48px; }
+  .mz-lamp-text { font-size: .85rem; }
   .mz-lamp-count {
     position: absolute;
     inset-block-start: -4px;

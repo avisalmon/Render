@@ -110,7 +110,8 @@
         שלחו אותו לתלמידים בוואטסאפ, או תלו את הקוד בכיתה. מי שמגיע דרכו מצטרף
         אליכם ישירות, בלי שתצטרכו לאשר.
       </p>
-      <input class="mz-copy" type="text" value="{{ join_url }}" readonly onclick="this.select()">
+      <input class="mz-copy" type="text" value="{{ join_url }}" readonly onclick="this.select()"
+             aria-label="קישור ההצטרפות שלכם">
       <img class="mz-qr" src="{% url 'matazim:leader_qr' leader.pk %}" alt="קוד QR להצטרפות">
     </section>
 

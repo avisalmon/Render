@@ -58,9 +58,15 @@
     </ol>
   </section>
 
+  {% comment %}
+    This panel lists הדרכות and their lessons, and was headed הפרקטיקום שלי
+    until the SPR-M.41 review: the same words as the real practicum panel
+    further down, on the one screen whose job is telling a member which stage
+    they are at. 23/34 here is lessons, not teaching.
+  {% endcomment %}
   <section class="mz-panel">
     <h2>
-      הפרקטיקום שלי
+      ההדרכות שלי
       <span class="mz-count">{{ summary.done }}/{{ summary.total }}</span>
     </h2>
     <ul class="mz-training">
@@ -98,7 +104,7 @@
     {% endcomment %}
     <ul class="mz-needs">
       <li>
-        <span class="mz-check">{% if eligibility.entrance_test_passed %}✓{% else %}·{% endif %}</span>
+        {% if eligibility.entrance_test_passed %}<span class="mz-check">✓<span class="mz-sr">הושלם.</span></span>{% else %}<span class="mz-check-todo">○<span class="mz-sr">עוד לא.</span></span>{% endif %}
         <span>
           מבחן הכניסה
           {% if not eligibility.entrance_test_passed %}
@@ -108,7 +114,7 @@
       </li>
       {% for course in courses %}
         <li>
-          <span class="mz-check">{% if course.certified %}✓{% else %}·{% endif %}</span>
+          {% if course.certified %}<span class="mz-check">✓<span class="mz-sr">הושלם.</span></span>{% else %}<span class="mz-check-todo">○<span class="mz-sr">עוד לא.</span></span>{% endif %}
           <span>
             תעודה ב{{ course.progress.title|default:course.slug }}
             {% if not course.certified and course.progress %}
@@ -118,7 +124,7 @@
         </li>
       {% endfor %}
       <li>
-        <span class="mz-check">{% if student.status == "certified" %}✓{% else %}·{% endif %}</span>
+        {% if student.status == "certified" %}<span class="mz-check">✓<span class="mz-sr">הושלם.</span></span>{% else %}<span class="mz-check-todo">○<span class="mz-sr">עוד לא.</span></span>{% endif %}
         <span>
           אישור של המוביל/ה
           {% if eligibility.is_eligible and student.status != "certified" %}
