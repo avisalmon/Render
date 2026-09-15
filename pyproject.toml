@@ -58,6 +58,7 @@ markers = [
     "sprz3: SPR-Z.3 memz the game, Normal mode, typed captions, vote scoring",
     "sprz4: SPR-Z.4 memz the other ways to play",
     "sprz5: SPR-Z.5 memz accounts, the bank, and remembering",
+    "sprz6: SPR-Z.6 memz delight, and the phone",
     "memzscreens: memz's screen contract - every memz screen, in every state, rendered on a phone (tests/test_memz_screens.py)",
     "screens: the screen contract - every מט״צים screen, in every state, rendered",
     "sprmobile: real-browser phone checks for מט״צים (tests/test_matazim_mobile.py)",

@@ -207,18 +207,61 @@ result page (F-Z.5.6), a proactive "release" button in My games (the
 release endpoint exists and is tested; only the create-screen's forced
 flow currently calls it).
 
-## SPR-Z.6 — Delight, and the phone `TODO`
+## SPR-Z.6 — Delight, and the phone `DONE (dev), 2026-09-15, awaiting review`
+
+**Goal:** the game *feels* like a party, not a form; every screen and
+every viewport gets the same scrutiny the earlier sprints gave the
+happy path.
 
 | ID | Feature | Traces | Status |
 | --- | --- | --- | --- |
-| F-Z.6.1 | Titles: `titles.py`, the ten rules, one per player, best first, shown on the podium; recomputed on reopen | spec §9.2 | TODO |
-| F-Z.6.2 | Sound and haptics: bundled audio, mute toggle persisted, plays only after first tap; vibrate at 5 s | spec §9.1, Rule 4.4.4 | TODO |
-| F-Z.6.3 | Animations: reveal beat, vote count-up, crown, leaderboard movement, confetti | spec §9.1, §4.7, §4.8 | TODO |
-| F-Z.6.4 | Copy pass in Hebrew, playful and never mean; every string translatable | spec §9.1, Rule 11.3 | TODO |
-| F-Z.6.5 | Lifetime stats tab computed from remembered sessions | spec §9.3, §10 | TODO |
-| F-Z.6.6 | Phone guard in the screen contract at 390 px: nothing wider than the screen (measured against `clientWidth`), tap targets, contrast, no native dialogs, no reload after an action, controls disabled in flight | spec §11.1, §11.2, §11.4; the_manager.md Step 4a items 12 to 16 | TODO |
-| F-Z.6.7 | PWA: manifest, icons, install prompt behaviour checked on iOS and Android; lost-connection banner | spec §11.5 | TODO |
-| F-Z.6.8 | Tests: each title rule on a constructed session, mute persistence, the guard proven by breaking it once | spec §12.8 | TODO |
+| F-Z.6.1 | Titles: `titles.py`, the ten rules, one per player, best first, shown on the podium; recomputed on reopen | spec §9.2 | DONE — `_compute_metrics(session)` is split out from `compute_titles` on purpose, so each rule is testable against its own raw numbers, not only against whichever player a higher-priority title left it |
+| F-Z.6.2 | Sound and haptics: bundled audio, mute toggle persisted, plays only after first tap; vibrate at 5 s | spec §9.1, Rule 4.4.4 | DONE — two procedurally-generated WAV files (`memz/seed_assets/make_sounds.py`, committed output in `static/memz/sound/`), a header mute toggle on every page (`localStorage`), `window.memz.playSound`/`vibrate` |
+| F-Z.6.3 | Animations: reveal beat, vote count-up, crown, leaderboard movement, confetti | spec §9.1, §4.7, §4.8 | DONE — staggered tile pop-in on reveal and result, `requestAnimationFrame` vote count-up, a crown shake on the round winner, ▲/▼ leaderboard movement tracked across polls, a small CSS confetti burst once per finished session; all gated behind `prefers-reduced-motion` |
+| F-Z.6.4 | Copy pass in Hebrew, playful and never mean; every string translatable | spec §9.1, Rule 11.3 | DONE — the one real gap this surfaced: a player who ran the clock out without submitting had no message at all on the reveal/voting screens (spec Rule 4.4.3's own worked example, "לא הספקת, קורה", was never actually shown); added. Server-rendered template strings already go through `{% trans %}`; the game's own JS strings stay hardcoded Hebrew, matching every sprint since Z.1 — a real i18n pass over `game.js` is out of this sprint's scope and not blocking, since English isn't v1 (spec §13) |
+| F-Z.6.5 | Lifetime stats tab computed from remembered sessions | spec §9.3, §10 | DONE — `memz/stats.py`, scoped to this user's own *hosted* remembered sessions (a session is remembered per host, not per player, matching "My games"); games, wins, votes received, best meme with its image, titles earned |
+| F-Z.6.6 | Phone guard in the screen contract at 390 px: nothing wider than the screen (measured against `clientWidth`), tap targets, contrast, no native dialogs, no reload after an action, controls disabled in flight | spec §11.1, §11.2, §11.4; the_manager.md Step 4a items 12 to 16 | DONE — the `clientWidth`/tap-target/contrast guards already existed from Z.1; native-dialog detection added to every screen-contract entry (`page.on("dialog")`, Playwright would otherwise auto-dismiss one silently); "no reload" and "disabled in flight" proved with two new dedicated Playwright tests against a real lobby, not asserted about markup |
+| F-Z.6.7 | PWA: manifest, icons, install prompt behaviour checked on iOS and Android; lost-connection banner | spec §11.5 | DONE — manifest and icons existed since Z.1; `beforeinstallprompt` captured for Android/Chrome, a one-time dismissible tip for iOS Safari (which never fires that event); a connection-lost banner on both game pages, shown/hidden by `poll()`'s own success/failure. "Checked on iOS and Android" means real devices, which this environment cannot do — flagged for Avi to confirm by hand, not silently claimed |
+| F-Z.6.8 | Tests: each title rule on a constructed session, mute persistence, the guard proven by breaking it once | spec §12.8 | DONE — `tests/test_spr_z_6.py`, 20 tests, every game state played through `memz.game` itself; the disabled-in-flight guard was proved by reverting the `el.disabled` fix, watching the new test fail, and restoring it (the_manager.md Step 4a item 4) |
+
+**Sprint notes (2026-09-15).** Two real defects the phone guard caught
+before green, both worth remembering:
+
+- **A component's own `display` beats the browser's `[hidden]`.** The new
+  install-tip banner was styled `.memz-install-tip { display: flex; }`
+  and toggled with the `hidden` attribute — same specificity as the UA
+  stylesheet's `[hidden] { display: none }`, and an author style wins
+  ties against a UA style regardless of order. The element was visible
+  on *every* screen, `hidden` attribute or not, and its 36px dismiss
+  button failed the 44px tap-target guard everywhere at once (31 of the
+  suite's screens failed in one run). Fixed with one global rule,
+  `[hidden] { display: none !important; }`, rather than patching the one
+  component — the next component to make this mistake needed to be
+  caught by something that already existed, not rediscovered.
+- **A rotating confetti piece's bounding box is wider than the piece.**
+  Positioned `left: 0-100%` at 8px wide, a piece near either edge mid
+  `rotate(540deg)` swept its *bounding rect* past the viewport
+  (`left=-3`) even though the un-rotated box never would have — the
+  overflow guard measures what actually rendered, not the CSS that
+  produced it. Fixed by keeping every piece's starting position 8-90%
+  rather than edge to edge, and re-run five times (it is randomised)
+  rather than trusted on one green.
+
+`guardedAction()` also picked up a real, previously-unnoticed gap while
+building the "disabled in flight" guard: the `busy` flag already stopped
+a second tap from *doing* anything, but no control ever actually looked
+disabled while its own request was in the air — a plain violation of
+Rule 11.1 that eight sprints of screenshots hadn't surfaced because
+nothing had ever asked the DOM mid-request. Every `guardedAction` call
+site now passes the element it was triggered from; a stray
+`window.alertless = msg` (set, never read anywhere) was removed in the
+same pass.
+
+**Carried forward, explicitly:** the reveal is still a grid, not a true
+one-at-a-time slideshow (unchanged from Z.3, spec's own literal wording
+is "like a slideshow" and the grid was a deliberate simplification then);
+`game.js`'s own strings are not yet routed through Django's i18n (F-Z.6.4
+note above). Neither blocks SPR-Z.7.
 
 ## SPR-Z.7 — Real content, tier admin, and the first deploy `TODO`
 

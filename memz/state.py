@@ -13,6 +13,8 @@ from . import cards as cards_module
 from . import conf
 from .models import Meme, Player, Session, Vote
 from .scoring import rank_players, round_scores
+from .titles import LABELS as TITLE_LABELS
+from .titles import compute_titles
 
 
 def _presence(player):
@@ -130,8 +132,12 @@ def build(session, player):
 
     if session.status == Session.FINISHED:
         ranked = rank_players(session)
+        titles = compute_titles(session)   # spec §9.2: recomputed, never stored (Rule 9.2.1)
         payload["podium"] = [
-            {"player_id": p.id, "nickname": p.nickname, "score": p.score, "tied_with_next": tied}
+            {
+                "player_id": p.id, "nickname": p.nickname, "score": p.score, "tied_with_next": tied,
+                "title": TITLE_LABELS.get(titles.get(p.id)),
+            }
             for p, tied in ranked
         ]
         memes = Meme.objects.filter(submission__round__session=session).select_related("submission__player")

@@ -24,6 +24,108 @@
     } catch (e) { /* private mode or full storage: the tab still works this visit */ }
   }
 
+  // ---- sound, haptics, and the mute toggle (spec §9.1, F-Z.6.2) ---------
+  //
+  // The toggle lives in the header on every page (base.html) so it is
+  // available before a game even starts and persists across sessions.
+  // Audio only plays once the browser has seen a user gesture on this
+  // page — a game is never reached without tapping something first (join,
+  // start, create), so that gesture is always already behind us by the
+  // time a sound would play.
+
+  var MUTE_KEY = "memz.muted";
+
+  function isMuted() {
+    try {
+      return window.localStorage.getItem(MUTE_KEY) === "1";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function setMuted(muted) {
+    try {
+      window.localStorage.setItem(MUTE_KEY, muted ? "1" : "0");
+    } catch (e) { /* private mode: this tab just stays unmuted */ }
+  }
+
+  var soundCache = {};
+
+  function playSound(name) {
+    if (isMuted()) return;
+    try {
+      var audio = soundCache[name];
+      if (!audio) {
+        audio = new Audio("/static/memz/sound/" + name + ".wav");
+        soundCache[name] = audio;
+      }
+      audio.currentTime = 0;
+      audio.play().catch(function () { /* no gesture yet, or autoplay blocked: silent */ });
+    } catch (e) { /* Audio unsupported: never break the page over a sound */ }
+  }
+
+  function vibrate(ms) {
+    if (isMuted()) return;
+    try {
+      if (navigator.vibrate) navigator.vibrate(ms);
+    } catch (e) { /* not every browser allows it; never surfaced as an error */ }
+  }
+
+  function updateMuteButton() {
+    var btn = document.querySelector("[data-mute-toggle]");
+    if (!btn) return;
+    var muted = isMuted();
+    btn.textContent = muted ? "🔇" : "🔊";
+    btn.setAttribute("aria-pressed", muted ? "true" : "false");
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    updateMuteButton();
+    var btn = document.querySelector("[data-mute-toggle]");
+    if (btn) {
+      btn.addEventListener("click", function () {
+        setMuted(!isMuted());
+        updateMuteButton();
+      });
+    }
+  });
+
+  // ---- installable as a PWA (spec Rule 11.5, F-Z.6.7) -------------------
+  //
+  // Android/Chrome fire `beforeinstallprompt`; nothing here does that for
+  // iOS Safari, which only ever offers "add to home screen" through its
+  // own share sheet — so Safari gets a one-time dismissible hint instead
+  // of a button that would never do anything.
+
+  var deferredInstallPrompt = null;
+  window.addEventListener("beforeinstallprompt", function (e) {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+  });
+
+  function isIosSafariNotInstalled() {
+    var ua = window.navigator.userAgent || "";
+    var isIos = /iPhone|iPad|iPod/.test(ua);
+    var isStandalone = window.navigator.standalone === true
+      || window.matchMedia("(display-mode: standalone)").matches;
+    return isIos && !isStandalone;
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var tip = document.querySelector("[data-install-tip]");
+    if (!tip) return;
+    var dismissed = false;
+    try { dismissed = window.localStorage.getItem("memz.installTipDismissed") === "1"; } catch (e) { /* ignore */ }
+    if (!dismissed && isIosSafariNotInstalled()) tip.hidden = false;
+    var dismissBtn = document.querySelector("[data-install-dismiss]");
+    if (dismissBtn) {
+      dismissBtn.addEventListener("click", function () {
+        tip.hidden = true;
+        try { window.localStorage.setItem("memz.installTipDismissed", "1"); } catch (e) { /* ignore */ }
+      });
+    }
+  });
+
   async function api(method, url, body, playerToken) {
     var headers = { "Accept": "application/json", "X-CSRFToken": csrf };
     if (playerToken) headers["X-Memz-Player"] = playerToken;
@@ -47,5 +149,9 @@
     return data;
   }
 
-  window.memz = { csrf: csrf, api: api, getPlayerToken: getPlayerToken, setPlayerToken: setPlayerToken };
+  window.memz = {
+    csrf: csrf, api: api, getPlayerToken: getPlayerToken, setPlayerToken: setPlayerToken,
+    isMuted: isMuted, setMuted: setMuted, playSound: playSound, vibrate: vibrate,
+    deferredInstallPrompt: function () { return deferredInstallPrompt; },
+  };
 })();

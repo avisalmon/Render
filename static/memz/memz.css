@@ -28,6 +28,14 @@
 
 * { box-sizing: border-box; }
 
+/* F-Z.6.7 caught this the hard way: a component's own `display: flex`
+   has the same specificity as the browser's `[hidden] { display: none }`
+   and, being an author style, wins — so an element styled with its own
+   `display` and toggled via the `hidden` attribute stays visible unless
+   this says otherwise. Global, not per-component, so nothing rediscovers
+   it later. */
+[hidden] { display: none !important; }
+
 html { -webkit-text-size-adjust: 100%; }
 
 body.memz {
@@ -498,7 +506,140 @@ section[id] { scroll-margin-top: 16px; margin-bottom: 32px; }
   color: var(--memz-ink);
 }
 
-.memz-timer--urgent { color: var(--memz-accent); }
+.memz-timer--urgent {
+  color: var(--memz-accent);
+  font-size: 52px;
+  animation: memz-timer-pulse 1s ease-in-out infinite;
+}
+
+@keyframes memz-timer-pulse {
+  0%, 100% { transform: scale(1); }
+  40% { transform: scale(1.14); }
+}
+
+.memz-title-badge {
+  display: inline-block;
+  margin-inline-start: 8px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--memz-yellow);
+  color: var(--memz-ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.memz-rank-move {
+  display: inline-block;
+  margin-inline-start: 6px;
+  font-size: 13px;
+}
+
+.memz-rank-move--up { color: #1E7B34; }
+.memz-rank-move--down { color: var(--memz-accent); }
+
+.memz-meme-tile--winner {
+  animation: memz-winner-shake 500ms ease-in-out 1;
+}
+
+.memz-meme-tile--winner figcaption { font-weight: 700; }
+
+@keyframes memz-winner-shake {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(-3deg) scale(1.03); }
+  40% { transform: rotate(3deg) scale(1.03); }
+  60% { transform: rotate(-2deg) scale(1.02); }
+  80% { transform: rotate(2deg) scale(1.02); }
+}
+
+.memz-meme-grid .memz-meme-tile {
+  animation: memz-tile-pop 320ms ease-out both;
+}
+
+@keyframes memz-tile-pop {
+  from { opacity: 0; transform: scale(0.85) translateY(6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.memz-connection-banner {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--memz-accent);
+  color: var(--memz-accent-ink);
+  font-weight: 700;
+  text-align: center;
+}
+
+.memz-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--memz-tap);
+  height: var(--memz-tap);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background: transparent;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.memz-icon-btn--small { width: 36px; height: 36px; font-size: 14px; }
+
+.memz-icon-btn:focus-visible {
+  outline: 3px solid var(--memz-focus);
+  outline-offset: 2px;
+}
+
+.memz-install-tip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--memz-card);
+  border: 1px solid var(--memz-line);
+  font-size: 14px;
+}
+
+.memz-confetti-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 9;
+}
+
+.memz-confetti-piece {
+  position: absolute;
+  top: -12px;
+  width: 8px;
+  height: 14px;
+  border-radius: 2px;
+  animation-name: memz-confetti-fall;
+  animation-timing-function: ease-in;
+  animation-fill-mode: forwards;
+}
+
+@keyframes memz-confetti-fall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(540deg); opacity: 0.7; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .memz-timer--urgent,
+  .memz-meme-tile--winner,
+  .memz-meme-grid .memz-meme-tile,
+  .memz-confetti-piece {
+    animation: none;
+  }
+}
 
 .memz-meme-grid {
   display: grid;
@@ -550,6 +691,8 @@ section[id] { scroll-margin-top: 16px; margin-bottom: 32px; }
 }
 
 .memz-hand-card:active { transform: translateY(1px); }
+
+.memz-busy { opacity: 0.5; pointer-events: none; }
 
 .memz-podium {
   margin: 0 0 18px;

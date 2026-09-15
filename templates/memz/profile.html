@@ -8,6 +8,7 @@
   <a href="#my-memes">{% trans "הממים שלי" %}</a>
   <a href="#my-bank">{% trans "הבנק שלי" %}</a>
   <a href="#my-games">{% trans "המשחקים שלי" %}</a>
+  <a href="#stats">{% trans "סטטיסטיקות" %}</a>
   <a href="#account">{% trans "חשבון" %}</a>
 </nav>
 
@@ -98,6 +99,27 @@
     {% endfor %}
   </ul>
   {% else %}<p class="memz-fineprint">{% trans "עוד לא ארחתם משחק כשהייתם מחוברים." %}</p>{% endif %}
+</section>
+
+<section id="stats">
+  <h2 class="memz-field-label">{% trans "סטטיסטיקות" %}</h2>
+  {% if stats.games %}
+  <ul class="memz-player-list">
+    <li class="memz-player-row"><span>{% trans "משחקים" %}</span><span class="memz-player-score">{{ stats.games }}</span></li>
+    <li class="memz-player-row"><span>{% trans "ניצחונות" %}</span><span class="memz-player-score">{{ stats.wins }}</span></li>
+    <li class="memz-player-row"><span>{% trans "קולות שקיבלתי" %}</span><span class="memz-player-score">{{ stats.votes_received }}</span></li>
+    <li class="memz-player-row"><span>{% trans "תארים שזכיתי בהם" %}</span><span class="memz-player-score">{{ stats.titles_earned }}</span></li>
+  </ul>
+  {% if stats.best_meme %}
+  <h3 class="memz-field-label">{% trans "המם המוצלח ביותר שלי" %}</h3>
+  <div class="memz-meme-grid">
+    <figure class="memz-meme-tile memz-meme-tile--winner">
+      <img src="{{ stats.best_meme.rendered.url }}" alt="">
+      <figcaption>{{ stats.best_meme_votes }} {% trans "קולות" %}</figcaption>
+    </figure>
+  </div>
+  {% endif %}
+  {% else %}<p class="memz-fineprint">{% trans "עוד לא סיימתם משחק שמור. הסטטיסטיקות יופיעו כאן." %}</p>{% endif %}
 </section>
 
 <section id="account">

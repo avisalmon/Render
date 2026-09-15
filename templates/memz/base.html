@@ -21,6 +21,12 @@
   <header class="memz-header">
     <a class="memz-wordmark" href="{% url 'memz:home' %}">memz</a>
     <div class="memz-account">
+      {% comment %}
+        F-Z.6.2: sound and haptics are on by default, muted here persists
+        per browser (spec §9.1). One button, every page, so muting once
+        during a game stays muted on the next one.
+      {% endcomment %}
+      <button type="button" class="memz-icon-btn" data-mute-toggle aria-pressed="false" aria-label="{% trans "השתקת צלילים" %}" title="{% trans "צלילים" %}">🔊</button>
       {% if user.is_authenticated %}
         <span class="memz-account-name">{% memz_name user %}</span>
         <form method="post" action="{% url 'memz:logout' %}">
@@ -32,6 +38,16 @@
       {% endif %}
     </div>
   </header>
+
+  {% comment %}
+    F-Z.6.7: iOS has no `beforeinstallprompt`, so this is the only "add to
+    home screen" affordance Safari ever gets — a one-time dismissible tip,
+    shown by memz.js only when running in Safari standalone-not-yet.
+  {% endcomment %}
+  <p class="memz-install-tip" data-install-tip hidden>
+    {% trans "להתקנה: כפתור השיתוף ואז \"הוספה למסך הבית\"" %}
+    <button type="button" class="memz-icon-btn memz-icon-btn--small" data-install-dismiss aria-label="{% trans "סגירה" %}">✕</button>
+  </p>
 
   <main class="memz-main" data-screen="{% block screen %}page{% endblock %}">
     {% block content %}{% endblock %}

@@ -112,12 +112,13 @@ def creator_result(request, slug):
 
 
 def profile_page(request):
-    """Spec §10: My memes, My bank, My games, Account. Stats (§9.3) waits
-    for SPR-Z.6. Every list here is read here; the actions on it (upload,
-    delete, unsave, create a pack) go through the REST API, per spec
-    Rule 12.3.2 — this view only assembles what to show."""
+    """Spec §10: My memes, My bank, My games, Stats, Account. Every list
+    here is read here; the actions on it (upload, delete, unsave, create a
+    pack) go through the REST API, per spec Rule 12.3.2 — this view only
+    assembles what to show."""
     from . import conf
     from .models import CaptionDeck, MemeImage, Pack, SavedMeme, Session
+    from .stats import lifetime_stats
     from .tiers import profile_for, tier_for
 
     if not request.user.is_authenticated:
@@ -141,6 +142,7 @@ def profile_page(request):
         "upload_limit": conf.cap("UPLOAD_LIMIT", tier),
         "pack_limit": conf.cap("PACK_LIMIT", tier),
         "remembered_limit": conf.cap("REMEMBERED_SESSIONS", tier),
+        "stats": lifetime_stats(request.user),
     })
 
 

@@ -266,6 +266,28 @@ def build_world():
         host_user=user, round_count=3, round_seconds=60, vote_seconds=20,
     )
 
+    # SPR-Z.6: a *finished* remembered game, played through the real state
+    # machine, so the profile's Stats tab (F-Z.6.5) renders its populated
+    # state at least once — an empty stats tab was already in the
+    # catalogue, and Lesson #6 is exactly "an entry whose world is empty
+    # covers only the empty state and quietly claims the whole screen."
+    finished_session, finished_host = game_module.create_session(
+        host_user=user, round_count=1, round_seconds=60, vote_seconds=20,
+    )
+    p2 = game_module.join_session(finished_session, "רון")
+    p3 = game_module.join_session(finished_session, "מאי")
+    game_module.start_session(finished_session, finished_host)
+    round1 = game_module.current_round(finished_session)
+    for player in (finished_host, p2, p3):
+        game_module.submit_caption(finished_session, player, round1.number, caption_text=f"כיתוב {player.nickname}")
+    game_module.advance(finished_session, finished_host)   # revealed -> voting
+    sub = round1.submissions.get(player=finished_host, meme__isnull=False)
+    p2_sub = round1.submissions.get(player=p2, meme__isnull=False)
+    game_module.cast_vote(finished_session, p2, round1.number, sub.id)
+    game_module.cast_vote(finished_session, p3, round1.number, sub.id)
+    game_module.cast_vote(finished_session, finished_host, round1.number, p2_sub.id)   # everyone voted, round decides itself
+    game_module.advance(finished_session, finished_host)   # done -> finished (round_count=1)
+
     return {
         "user": user, "taken": taken, "image": image, "meme": meme, "expired_slug": expired.share_slug,
         "games": games, "remembered_code": remembered_session.code,
@@ -365,6 +387,12 @@ def _open(browser, live_server, email, path, init_script=None):
         # setting it after `goto` returns would be one page load too late.
         context.add_init_script(init_script)
     page = context.new_page()
+    # F-Z.6.6: no browser-native dialog, ever (spec Rule 11.1) — Playwright
+    # auto-dismisses an unhandled one, which would hide the defect rather
+    # than fail on it, so this both records and dismisses it.
+    dialogs = []
+    page.on("dialog", lambda d: (dialogs.append(d.message), d.dismiss()))
+    page._memz_dialogs = dialogs
     if email:
         page.goto(f"{live_server.url}/memz/login/", wait_until="domcontentloaded")
         page.fill('input[name="username"]', email)
@@ -419,6 +447,8 @@ def test_screen_contract(browser, live_server, db, label, path, who, action, scr
             complaints.append(f"wider than the phone: {entry}")
         for entry in page.evaluate(TAP_JS, MIN_TAP_PX):
             complaints.append(f"tap target under {MIN_TAP_PX}px or crowded: {entry}")
+        for message in page._memz_dialogs:
+            complaints.append(f"a native dialog reached the reader: {message!r}")
 
         assert not complaints, f"{label} ({path}):\n  " + "\n  ".join(complaints)
     finally:
