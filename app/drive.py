@@ -129,6 +129,27 @@ class DriveClient:
         return status, raw
 
     # -- folder --------------------------------------------------------------- #
+    def create_folder(self, name: str, parent: str = "") -> str:
+        """Make a folder and return its id. `parent` empty means Drive's own
+        top level ("My Drive").
+
+        The one primitive `DRIVE_FOLDER_ID` setup actually needs: the
+        `drive.file` scope (deliberately the narrowest one that works, see
+        the module docstring) only ever lets this client see files *it
+        created itself*. A folder made by hand in the Drive web UI, even by
+        the account's own owner, is invisible to it — found the hard way,
+        setting this up for real, as "did not resolve to a folder your
+        account can see" from a folder that very obviously existed. The root
+        folder has to come from here, not from clicking around Drive."""
+        meta = {"name": name, "mimeType": FOLDER_MIME}
+        if parent:
+            meta["parents"] = [parent]
+        status, raw = self._call("POST", FILES_URL, data=json.dumps(meta))
+        body = _json(raw)
+        if status not in (200, 201) or not body.get("id"):
+            raise DriveError(f"could not create folder {name!r}: ({status}) {body}")
+        return body["id"]
+
     def subfolder_id(self) -> str:
         """This app's own folder inside the shared root, found once and
         remembered for the process, made on first use rather than assumed to
