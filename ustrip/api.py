@@ -12,11 +12,16 @@ is what a drag-and-drop produces, and which may pull items in from other
 days), and `like` (toggle).
 """
 
+import time
+
 from django.db import transaction
 from django.db.models import Count, Exists, OuterRef, Prefetch
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+
+from app import drive
 
 from .models import (
     ChecklistGroup, ChecklistItem, Flight, ItineraryComment, ItineraryDay, ItineraryItem, ItineraryLike,
@@ -38,6 +43,46 @@ def _renumber(queryset):
         if row.order != index:
             row.order = index
             row.save(update_fields=["order"])
+
+
+def _attach_drive_photo(instance, upload):
+    """Push an uploaded photo to Drive and record where it landed (Sprint 15).
+
+    Called from `perform_create` after the row is saved, so `instance.pk`
+    exists for the filename. Raises loudly when Drive is not configured or the
+    upload fails — never a silent fallback to local disk, which is the exact
+    1GB-shared-disk risk this sprint exists to close (spec §0a.3). `upload`
+    being empty is a normal case for `JournalPost` (a text-only post) and a
+    no-op here, not an error.
+    """
+    if not upload:
+        return
+    client = drive.from_env("ustrip")
+    if client is None:
+        raise ValidationError({
+            "photo": "Photo storage isn't set up yet — ask Avi to set the Drive keys in Render.",
+        })
+    content_type = getattr(upload, "content_type", "") or "image/jpeg"
+    name = f"{instance._meta.model_name}-{instance.pk}-{int(time.time())}.jpg"
+    uploaded = client.upload_bytes(upload.read(), name, mime=content_type)
+    if uploaded is None:
+        raise ValidationError({"photo": "Could not upload the photo. Try again in a moment."})
+    instance.drive_file_id = uploaded.file_id
+    instance.drive_url = uploaded.url
+    instance.content_type = content_type
+    instance.save(update_fields=["drive_file_id", "drive_url", "content_type"])
+
+
+def _detach_drive_photo(instance):
+    """Best-effort delete of the Drive file behind `instance`, mirroring the
+    security app's own "best-effort" note (relay_api.md §6.4): a Drive
+    hiccup on delete must not block the family from removing the row, and
+    `DriveClient.delete` already treats "already gone" as success."""
+    if not instance.drive_file_id:
+        return
+    client = drive.from_env("ustrip")
+    if client is not None:
+        client.delete(instance.drive_file_id)
 
 
 def with_counts_for(queryset, user):
@@ -182,7 +227,10 @@ class ItineraryLinkViewSet(viewsets.ModelViewSet):
 
 
 class ItineraryPhotoViewSet(viewsets.ModelViewSet):
-    """No creator lock on delete — like the item it belongs to."""
+    """No creator lock on delete — like the item it belongs to.
+
+    Sprint 15: `photo` in the request body is the uploaded bytes, not a model
+    field write — it goes to Drive via `_attach_drive_photo`, not to disk."""
 
     queryset = ItineraryPhoto.objects.select_related("uploaded_by").all()
     serializer_class = ItineraryPhotoSerializer
@@ -190,7 +238,18 @@ class ItineraryPhotoViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         item = serializer.validated_data["item"]
-        serializer.save(uploaded_by=self.request.user, order=item.photos.count())
+        upload = serializer.validated_data.pop("photo", None)
+        # Atomic: a failed Drive upload must leave no trace, not an empty
+        # photo row with nothing behind it. Found by the test written for
+        # exactly this case — the row was landing in the database before the
+        # upload was even attempted.
+        with transaction.atomic():
+            instance = serializer.save(uploaded_by=self.request.user, order=item.photos.count())
+            _attach_drive_photo(instance, upload)
+
+    def perform_destroy(self, instance):
+        _detach_drive_photo(instance)
+        instance.delete()
 
 
 class ItineraryCommentViewSet(viewsets.ModelViewSet):
@@ -335,11 +394,25 @@ class ChecklistItemViewSet(viewsets.ModelViewSet):
 
 class JournalPostViewSet(viewsets.ModelViewSet):
     """Spec §4.3. `author` is never client-supplied — always the logged-in
-    family member, set here rather than trusted from the request body."""
+    family member, set here rather than trusted from the request body.
 
-    queryset = JournalPost.objects.select_related("author").all()
+    Sprint 15: same Drive-upload split as `ItineraryPhotoViewSet`, except a
+    post can be text-only, so a missing `photo` is not an error here."""
+
+    # `trip` joined too (not just `author`): F11's `day_label` reads
+    # `post.trip.timezone`, and without this every post in a list response
+    # would fetch its own Trip row fresh — the same class of N+1 F5 fixed
+    # on the itinerary endpoints, just on a much smaller table here.
+    queryset = JournalPost.objects.select_related("author", "trip").all()
     serializer_class = JournalPostSerializer
     permission_classes = [IsFamilyMember]
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        upload = serializer.validated_data.pop("photo", None)
+        with transaction.atomic():
+            instance = serializer.save(author=self.request.user)
+            _attach_drive_photo(instance, upload)
+
+    def perform_destroy(self, instance):
+        _detach_drive_photo(instance)
+        instance.delete()

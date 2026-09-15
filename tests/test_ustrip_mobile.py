@@ -310,3 +310,111 @@ def test_reordering_a_day_keeps_your_place_and_retimes_the_day(phone_context, li
         assert page.locator("#day-summary").inner_text() != "", "the day summary went blank"
     finally:
         page.close()
+
+
+def test_no_native_dialog_ever_fires(phone_context, live_server, trip_pages):
+    """Spec §0a.1 point 3, F7 (Sprint 15): no browser-native alert/confirm/
+    prompt, anywhere. 47 call sites across 10 templates used one of the
+    three; own toast, confirm sheet and inline text edit replaced every one
+    (ustrip.js). This is the guard, not a description of it: Playwright's
+    `dialog` event is the one thing that cannot be faked by code that merely
+    looks right, and it is exercised against the two flows that used to be a
+    `confirm()` and a `prompt()` on the busiest page in the app.
+
+    An unhandled native dialog blocks Chromium's event loop, so the listener
+    both records and dismisses it — a hang here would itself be the proof
+    that something regressed, on top of the assertion.
+    """
+    packing_path = next(p for p in trip_pages if p.endswith("/packing/"))
+    page = phone_context.new_page()
+    fired = []
+    page.on("dialog", lambda d: (fired.append(d.message), d.dismiss()))
+    try:
+        page.goto(live_server.url + packing_path, wait_until="domcontentloaded")
+        page.wait_for_timeout(300)
+
+        row = page.locator("#packing-list [data-item-id]").first
+        assert row.count(), "seed data changed shape — nothing to test against"
+
+        # Edit: used to be prompt(). Now an input replaces the label in place.
+        row.locator("[data-edit]").click()
+        field = row.locator(".u-edit-field")
+        assert field.count(), "editInPlace did not swap in a field"
+        field.fill("Edited from the phone guard")
+        field.press("Enter")
+        page.wait_for_timeout(300)
+        assert row.locator(".itxt").inner_text() == "Edited from the phone guard"
+
+        # Delete: used to be confirm(). Now a sheet with Cancel and Delete.
+        row.locator("[data-delete]").click()
+        sheet = page.locator(".u-sheet")
+        assert sheet.count(), "confirm() sheet did not open"
+        sheet.locator("[data-cancel]").click()
+        page.wait_for_timeout(200)
+        assert page.locator(f'[data-item-id="{row.get_attribute("data-item-id")}"]').count() == 1, (
+            "Cancel deleted the row anyway"
+        )
+
+        item_id = row.get_attribute("data-item-id")
+        row.locator("[data-delete]").click()
+        page.locator(".u-sheet [data-ok]").click()
+        page.wait_for_timeout(300)
+        assert page.locator(f'[data-item-id="{item_id}"]').count() == 0, "Delete did not remove the row"
+
+        assert not fired, f"a native dialog fired: {fired}"
+    finally:
+        page.close()
+
+
+def test_journal_headers_merge_and_clean_up_after_themselves(phone_context, live_server, trip_pages):
+    """F11 (Sprint 15), and a guard on the page's own JS, which the backend
+    tests in test_ustrip_journal_grouping.py cannot see — they prove the
+    label is correct, not that the DOM the family actually reads updates
+    correctly as posts come and go.
+
+    trip_pages seeds one journal post before this test starts. Posting a
+    second one "now" lands in the same day-group as the seeded one (nothing
+    in this app makes two posts a second apart land on different days), so
+    the real question is whether the page joins the existing header instead
+    of stamping a duplicate one above it — and, symmetrically, whether
+    deleting the seeded post drops it back to a lone post with its header
+    intact, then deleting the last one clears the header too.
+    """
+    journal_path = next(p for p in trip_pages if p.endswith("/journal/"))
+    page = phone_context.new_page()
+    try:
+        page.goto(live_server.url + journal_path, wait_until="domcontentloaded")
+        page.wait_for_timeout(300)
+
+        headers_before = page.locator(".feed-daylabel").count()
+        assert headers_before == 1, "the seeded post should start with exactly one header"
+
+        page.fill('textarea[name="caption"]', "Posted from the phone guard")
+        page.click('#journal-form button[type=submit]')
+        page.wait_for_timeout(500)
+
+        assert page.locator(".feed-daylabel").count() == headers_before, (
+            "a second post from the same day should join the existing header, not add one"
+        )
+        posts = page.locator("#journal-feed [data-post-id]")
+        assert posts.count() == 2, "the new post did not land in the feed"
+        # It has to be the first post under the (single, shared) header, not
+        # appended after the seeded one — reverse-chron holds inside a group too.
+        assert posts.first.locator(".caption").inner_text() == "Posted from the phone guard"
+
+        # Delete the newer post: the header must survive, the seeded post remains.
+        posts.first.locator("[data-delete]").click()
+        page.locator(".u-sheet [data-ok]").click()
+        page.wait_for_timeout(400)
+        assert page.locator("#journal-feed [data-post-id]").count() == 1
+        assert page.locator(".feed-daylabel").count() == 1, "the header should not have been removed yet"
+
+        # Delete the last remaining post: now the header goes with it.
+        page.locator("#journal-feed [data-post-id]").first.locator("[data-delete]").click()
+        page.locator(".u-sheet [data-ok]").click()
+        page.wait_for_timeout(400)
+        assert page.locator("#journal-feed [data-post-id]").count() == 0
+        assert page.locator(".feed-daylabel").count() == 0, "an orphaned header was left behind"
+        assert page.locator("#journal-empty").count() == 1
+    finally:
+        page.close()

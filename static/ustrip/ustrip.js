@@ -222,6 +222,125 @@
       .catch(function () { return file; });
   }
 
+  /* --- No native alert/confirm/prompt (spec §0a.1) ------------------------
+   *
+   * Sprint 15/F7. Blocking browser dialogs freeze the whole page, ignore the
+   * app's design, and on iOS a `prompt()` announces the site's own domain in
+   * the dialog chrome — on a family trip app, that is a strange thing for a
+   * kid to see. 47 call sites across 10 templates used one of the three;
+   * these three functions are the whole replacement, one for one.
+   */
+
+  var toastHost = null;
+  function toastContainer() {
+    if (toastHost && document.body.contains(toastHost)) return toastHost;
+    toastHost = document.createElement("div");
+    toastHost.className = "u-toasts";
+    toastHost.setAttribute("aria-live", "polite");
+    document.body.appendChild(toastHost);
+    return toastHost;
+  }
+
+  /* toast(message, { tone }). tone: "error" (default — nearly every existing
+   * call site was an error) or "ok". Auto-dismisses; tap to dismiss early. */
+  function toast(message, options) {
+    var tone = (options && options.tone) || "error";
+    var host = toastContainer();
+    var node = el('<div class="u-toast ' + tone + '" role="status"><span></span></div>');
+    node.querySelector("span").textContent = message;
+    if (tone === "error") node.setAttribute("role", "alert");
+    node.addEventListener("click", function () { dismiss(node); });
+    host.appendChild(node);
+    // Two rAFs: the node has to be painted in its start state before adding
+    // the class that transitions it in, or the transition does not run.
+    requestAnimationFrame(function () { requestAnimationFrame(function () { node.classList.add("in"); }); });
+    var timer = setTimeout(function () { dismiss(node); }, 4000);
+    function dismiss(n) {
+      clearTimeout(timer);
+      n.classList.remove("in");
+      setTimeout(function () { n.remove(); }, 200);
+    }
+  }
+
+  /* confirm(message, { confirmLabel, tone }) -> Promise<boolean>.
+   * tone "danger" (default — nearly every call site is a delete) makes the
+   * confirm button red; "" leaves it the ordinary primary color. Escape and
+   * a tap on the backdrop both resolve false, same as dismissing a native
+   * confirm() ever did. */
+  function confirmDialog(message, options) {
+    var confirmLabel = (options && options.confirmLabel) || "Delete";
+    var tone = options && "tone" in options ? options.tone : "danger";
+    return new Promise(function (resolve) {
+      var overlay = el('<div class="u-overlay" role="presentation"></div>');
+      var panel = el(
+        '<div class="u-sheet" role="alertdialog" aria-modal="true">' +
+        '<p class="u-sheet-text"></p>' +
+        '<div class="u-sheet-actions">' +
+        '<button type="button" class="btn btn-secondary" data-cancel>Cancel</button>' +
+        '<button type="button" class="btn ' + (tone === "danger" ? "btn-danger" : "btn-primary") + '" data-ok></button>' +
+        "</div></div>"
+      );
+      panel.querySelector(".u-sheet-text").textContent = message;
+      panel.querySelector("[data-ok]").textContent = confirmLabel;
+      overlay.appendChild(panel);
+      document.body.appendChild(overlay);
+      document.body.classList.add("u-lock-scroll");
+
+      function finish(result) {
+        document.removeEventListener("keydown", onKey);
+        document.body.classList.remove("u-lock-scroll");
+        overlay.remove();
+        resolve(result);
+      }
+      function onKey(e) { if (e.key === "Escape") finish(false); }
+      overlay.addEventListener("click", function (e) { if (e.target === overlay) finish(false); });
+      panel.querySelector("[data-cancel]").addEventListener("click", function () { finish(false); });
+      panel.querySelector("[data-ok]").addEventListener("click", function () { finish(true); });
+      document.addEventListener("keydown", onKey);
+      panel.querySelector("[data-ok]").focus();
+    });
+  }
+
+  /* editInPlace(el, { multiline }) -> Promise<string|null>.
+   * Swaps el's own text for an input pre-filled with it; resolves the typed
+   * (trimmed) text on Save or Enter, null on Cancel or Escape. el's original
+   * content is always restored before resolving — the caller sets the new
+   * text itself from the result, the same shape prompt()'s call sites
+   * already had ("if (text === null) return; ...use text...").
+   * `multiline` swaps the input for a textarea (captions can run long). */
+  function editInPlace(target, options) {
+    var multiline = options && options.multiline;
+    var original = Array.prototype.slice.call(target.childNodes);
+    var field = document.createElement(multiline ? "textarea" : "input");
+    if (!multiline) field.type = "text";
+    field.className = "u-edit-field";
+    field.value = target.textContent;
+    target.textContent = "";
+    target.appendChild(field);
+    field.focus();
+    field.select();
+
+    return new Promise(function (resolve) {
+      var done = false;
+      function finish(value) {
+        if (done) return;
+        done = true;
+        target.textContent = "";
+        original.forEach(function (n) { target.appendChild(n); });
+        resolve(value);
+      }
+      field.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && !multiline) { e.preventDefault(); finish(field.value.trim()); }
+        if (e.key === "Escape") finish(null);
+      });
+      field.addEventListener("blur", function () {
+        // A blur that was actually an Escape or Enter is already finished
+        // (done === true) by the time this fires, so it is a no-op then.
+        finish(field.value.trim());
+      });
+    });
+  }
+
   function shrinkPhotos(formData, fields) {
     var names = fields || ["photo"];
     var jobs = names.map(function (name) {
@@ -244,5 +363,6 @@
   window.ustrip = {
     request: request, el: el, sortable: sortable, minutes: minutes,
     shrinkPhotos: shrinkPhotos, shrinkFile: shrinkFile, hold: hold,
+    toast: toast, confirm: confirmDialog, editInPlace: editInPlace,
   };
 })();

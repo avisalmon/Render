@@ -145,7 +145,7 @@
     if (!payload.description) return;
     ustrip.request(`/ustrip/api/itinerary-items/${itemId}/`, { method: "PATCH", json: payload })
       .then(() => { window.location.href = detailUrl; })
-      .catch((err) => alert(err.message));
+      .catch((err) => ustrip.toast(err.message));
   });
 
   const linkList = document.getElementById("link-list");
@@ -164,7 +164,7 @@
         linkList.appendChild(node);
         linkForm.reset();
       })
-      .catch((err) => alert(err.message));
+      .catch((err) => ustrip.toast(err.message));
   });
   linkList.addEventListener("click", function (e) {
     const btn = e.target.closest("[data-delete-link]");
@@ -172,7 +172,7 @@
     const node = btn.closest("[data-link-id]");
     ustrip.request(`/ustrip/api/itinerary-links/${node.dataset.linkId}/`, { method: "DELETE" })
       .then(() => node.remove())
-      .catch((err) => alert(err.message));
+      .catch((err) => ustrip.toast(err.message));
   });
 })();
 </script>

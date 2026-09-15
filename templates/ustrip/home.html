@@ -121,12 +121,14 @@
     <button type="submit" class="add-btn">+</button>
   </form>
 
-  {# F10: three "Around the trip" tiles used to sit here, linking to Itinerary,
-     Packing and Journal — the same three destinations as the nav bar directly
-     below them, on the same screen. Home is long enough (hero, next up,
-     getting there, where we sleep, good to know) without a second copy of the
-     navigation. The one thing the tiles carried that the nav does not is the
-     counts, so they stay, as a line instead of three cards. #}
+  {% comment %}
+    F10: three "Around the trip" tiles used to sit here, linking to Itinerary,
+    Packing and Journal — the same three destinations as the nav bar directly
+    below them, on the same screen. Home is long enough (hero, next up,
+    getting there, where we sleep, good to know) without a second copy of the
+    navigation. The one thing the tiles carried that the nav does not is the
+    counts, so they stay, as a line instead of three cards.
+  {% endcomment %}
   <p class="trip-counts">
     {{ day_count }} day{{ day_count|pluralize }} planned &middot;
     {{ checklist_count }} packing list{{ checklist_count|pluralize }} &middot;
@@ -169,10 +171,10 @@
         list.appendChild(noteNode(note));
         form.reset();
       })
-      .catch((err) => alert(err.message));
+      .catch((err) => ustrip.toast(err.message));
   });
 
-  list.addEventListener("click", function (e) {
+  list.addEventListener("click", async function (e) {
     const row = e.target.closest("[data-note-id]");
     if (!row) return;
     const id = row.dataset.noteId;
@@ -189,26 +191,26 @@
           if (moveBtn.dataset.move === "up") list.insertBefore(row, sibling);
           else list.insertBefore(sibling, row);
         })
-        .catch((err) => alert(err.message));
+        .catch((err) => ustrip.toast(err.message));
       return;
     }
     if (e.target.closest("[data-edit]")) {
       const p = row.querySelector(".note-text");
-      const text = prompt("Edit", p.textContent);
+      const text = await ustrip.editInPlace(p, { multiline: true });
       if (text === null || !text.trim()) return;
       ustrip.request(`/ustrip/api/trip-notes/${id}/`, { method: "PATCH", json: { text: text.trim() } })
         .then((note) => { p.textContent = note.text; })
-        .catch((err) => alert(err.message));
+        .catch((err) => ustrip.toast(err.message));
       return;
     }
     if (e.target.closest("[data-delete]")) {
-      if (!confirm("Delete this note?")) return;
+      if (!(await ustrip.confirm("Delete this note?"))) return;
       ustrip.request(`/ustrip/api/trip-notes/${id}/`, { method: "DELETE" })
         .then(() => {
           row.remove();
           if (!list.querySelector("[data-note-id]")) list.appendChild(ustrip.el('<div class="mini-empty" id="note-empty">Nothing yet. Add the things everyone should know.</div>'));
         })
-        .catch((err) => alert(err.message));
+        .catch((err) => ustrip.toast(err.message));
     }
   });
 })();

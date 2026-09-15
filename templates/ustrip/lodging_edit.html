@@ -67,15 +67,15 @@
     const request = lodgingId
       ? ustrip.request(`/ustrip/api/lodgings/${lodgingId}/`, { method: "PATCH", json: payload })
       : ustrip.request("/ustrip/api/lodgings/", { json: payload });
-    request.then(() => { window.location.href = homeUrl; }).catch((err) => alert(err.message));
+    request.then(() => { window.location.href = homeUrl; }).catch((err) => ustrip.toast(err.message));
   });
 
   const del = document.getElementById("delete-lodging");
-  if (del) del.addEventListener("click", function () {
-    if (!confirm("Delete this stay?")) return;
+  if (del) del.addEventListener("click", async function () {
+    if (!(await ustrip.confirm("Delete this stay?"))) return;
     ustrip.request(`/ustrip/api/lodgings/${lodgingId}/`, { method: "DELETE" })
       .then(() => { window.location.href = homeUrl; })
-      .catch((err) => alert(err.message));
+      .catch((err) => ustrip.toast(err.message));
   });
 })();
 </script>

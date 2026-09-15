@@ -24,27 +24,37 @@
 </form>
 
 <p class="section-label">Feed</p>
+{% comment %}
+  F11 — grouped by the day a post was made on (ustrip/journal_grouping.py),
+  so "the Niagara photos" is a heading to scroll to rather than a search
+  through a flat 15-day feed. A header carries no id of its own; the JS
+  that prepends a freshly-posted photo reads the topmost one's text instead
+  to decide whether the new post needs one of its own.
+{% endcomment %}
 <div class="feed" id="journal-feed">
-  {% for post in posts %}
-    <div class="post" data-post-id="{{ post.id }}">
-      {% if post.photo %}
-        <img class="photo" src="{{ post.photo.url }}" alt="">
-      {% endif %}
-      <div class="postbody">
-        <p class="caption">{{ post.caption }}</p>
-        <div class="meta">
-          <div class="mavatar" style="{% avatar_style post.author %}">{{ post.author|avatar_initials }}</div>
-          <div class="mtext">
-            <div class="mname">{{ post.author.first_name|default:post.author.get_username }}</div>
-            <div class="mloc">{{ post.location }}</div>
-          </div>
-          <div class="row-actions">
-            <button type="button" class="mini-btn" data-edit title="Edit">&#9998;</button>
-            <button type="button" class="mini-btn mini-btn-danger" data-delete title="Delete">&times;</button>
+  {% for label, group in groups %}
+    <p class="feed-daylabel" data-day-label>{{ label }}</p>
+    {% for post in group %}
+      <div class="post" data-post-id="{{ post.id }}">
+        {% if post.photo_url %}
+          <img class="photo" src="{{ post.photo_url }}" alt="">
+        {% endif %}
+        <div class="postbody">
+          <p class="caption">{{ post.caption }}</p>
+          <div class="meta">
+            <div class="mavatar" style="{% avatar_style post.author %}">{{ post.author|avatar_initials }}</div>
+            <div class="mtext">
+              <div class="mname">{{ post.author.first_name|default:post.author.get_username }}</div>
+              <div class="mloc">{{ post.location }}</div>
+            </div>
+            <div class="row-actions">
+              <button type="button" class="mini-btn" data-edit title="Edit">&#9998;</button>
+              <button type="button" class="mini-btn mini-btn-danger" data-delete title="Delete">&times;</button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    {% endfor %}
   {% empty %}
     <div class="empty" id="journal-empty">No photos yet — the first one posted here starts the diary.</div>
   {% endfor %}
@@ -69,7 +79,7 @@
       .then((post) => {
         const empty = document.getElementById("journal-empty");
         if (empty) empty.remove();
-        const photoHtml = post.photo ? `<img class="photo" src="${post.photo}" alt="">` : "";
+        const photoHtml = post.photo_url ? `<img class="photo" src="${post.photo_url}" alt="">` : "";
         const node = ustrip.el(
           '<div class="post">' + photoHtml +
           '<div class="postbody"><p class="caption"></p><div class="meta">' +
@@ -85,14 +95,30 @@
         node.querySelector(".mname").textContent = post.author_info.name;
         node.querySelector(".caption").textContent = post.caption;
         node.querySelector(".mloc").textContent = post.location;
-        feed.prepend(node);
+
+        // F11: joins the group already at the top of the feed if it is the
+        // same day, otherwise gets its own header — the same rule the
+        // server-rendered page groups by (ustrip/journal_grouping.py), kept
+        // in sync here only by the label text the API sent back with the
+        // post, not a second copy of the day-lookup logic.
+        const first = feed.firstElementChild;
+        if (first && first.classList.contains("feed-daylabel") && first.textContent === post.day_label) {
+          first.after(node);
+        } else {
+          const label = document.createElement("p");
+          label.className = "feed-daylabel";
+          label.setAttribute("data-day-label", "");
+          label.textContent = post.day_label;
+          feed.prepend(label);
+          label.after(node);
+        }
         form.reset();
       })
-      .catch((err) => alert(err.message))
+      .catch((err) => ustrip.toast(err.message))
       .finally(release);
   });
 
-  feed.addEventListener("click", function (e) {
+  feed.addEventListener("click", async function (e) {
     const post = e.target.closest("[data-post-id]");
     if (!post) return;
     const postId = post.dataset.postId;
@@ -100,28 +126,38 @@
     if (e.target.closest("[data-edit]")) {
       const captionEl = post.querySelector(".caption");
       const locEl = post.querySelector(".mloc");
-      const caption = prompt("Edit caption", captionEl.textContent);
+      const caption = await ustrip.editInPlace(captionEl, { multiline: true });
       if (caption === null) return;
-      const location = prompt("Edit location", locEl.textContent) || "";
-      ustrip.request(`/ustrip/api/journal-posts/${postId}/`, { method: "PATCH", json: { caption: caption.trim(), location: location.trim() } })
+      const location = await ustrip.editInPlace(locEl);
+      ustrip.request(`/ustrip/api/journal-posts/${postId}/`, {
+        method: "PATCH", json: { caption: caption.trim(), location: (location || "").trim() },
+      })
         .then((data) => {
           captionEl.textContent = data.caption;
           locEl.textContent = data.location;
         })
-        .catch((err) => alert(err.message));
+        .catch((err) => ustrip.toast(err.message));
       return;
     }
 
     if (e.target.closest("[data-delete]")) {
-      if (!confirm("Delete this post?")) return;
+      if (!(await ustrip.confirm("Delete this post?"))) return;
       ustrip.request(`/ustrip/api/journal-posts/${postId}/`, { method: "DELETE" })
         .then(() => {
+          // F11: if this was the only post under its day header, the header
+          // is left standing over nothing unless it goes with it. Read
+          // before removing, since `post` is the only handle on where it sat.
+          const prev = post.previousElementSibling;
+          const next = post.nextElementSibling;
           post.remove();
+          if (prev && prev.classList.contains("feed-daylabel") && (!next || next.classList.contains("feed-daylabel"))) {
+            prev.remove();
+          }
           if (!feed.querySelector("[data-post-id]")) {
             feed.appendChild(ustrip.el('<div class="empty" id="journal-empty">No photos yet — the first one posted here starts the diary.</div>'));
           }
         })
-        .catch((err) => alert(err.message));
+        .catch((err) => ustrip.toast(err.message));
     }
   });
 })();

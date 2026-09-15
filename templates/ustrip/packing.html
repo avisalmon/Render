@@ -6,8 +6,10 @@
 <p class="title serif">Packing &amp; Tasks</p>
 <p class="subtitle">{{ trip.name|default:"" }}</p>
 
-{# Lists have had an owner since Sprint 3; this is the first screen that uses
-   it. "Mine" keeps the shared lists too — a shared list is everyone's job. #}
+{% comment %}
+  Lists have had an owner since Sprint 3; this is the first screen that uses
+  it. "Mine" keeps the shared lists too — a shared list is everyone's job.
+{% endcomment %}
 <div class="filter-chips" id="packing-filter" {% if not groups %}hidden{% endif %}>
   <button type="button" class="chip active" data-filter="all">All lists</button>
   <button type="button" class="chip" data-filter="mine">Mine &amp; shared</button>
@@ -37,8 +39,10 @@
       <div class="items">
         {% for item in group.items.all %}
           <div class="item" data-item-id="{{ item.id }}">
-            {# The whole label toggles, not a 26px box: this is the control the
-               family taps most, and a thumb is not a mouse pointer. #}
+            {% comment %}
+              The whole label toggles, not a 26px box: this is the control the
+              family taps most, and a thumb is not a mouse pointer.
+            {% endcomment %}
             <button type="button" class="item-toggle" data-toggle>
               <span class="box {% if item.done %}done{% endif %}">
                 {% if item.done %}<svg viewBox="0 0 24 24"><path d="M5 12l5 5L19 7"/></svg>{% endif %}
@@ -137,14 +141,14 @@
   try { saved = localStorage.getItem("ustrip.packingFilter") || "all"; } catch (e) { /* private mode */ }
   applyFilter(saved);
 
-  list.addEventListener("click", function (e) {
+  list.addEventListener("click", async function (e) {
     const deleteGroupBtn = e.target.closest("[data-delete-group]");
     if (deleteGroupBtn) {
       const card = deleteGroupBtn.closest("[data-group-id]");
-      if (!confirm("Delete this whole list and its items?")) return;
+      if (!(await ustrip.confirm("Delete this whole list and its items?"))) return;
       ustrip.request(`/ustrip/api/checklist-groups/${card.dataset.groupId}/`, { method: "DELETE" })
         .then(() => card.remove())
-        .catch((err) => alert(err.message));
+        .catch((err) => ustrip.toast(err.message));
       return;
     }
 
@@ -162,17 +166,17 @@
           row.querySelector(".itxt").classList.toggle("done", data.done);
           refreshProgress(card);
         })
-        .catch((err) => alert(err.message));
+        .catch((err) => ustrip.toast(err.message));
       return;
     }
 
     if (e.target.closest("[data-edit]")) {
       const span = row.querySelector(".itxt");
-      const text = prompt("Edit item", span.textContent);
+      const text = await ustrip.editInPlace(span);
       if (text === null || !text.trim()) return;
       ustrip.request(`/ustrip/api/checklist-items/${itemId}/`, { method: "PATCH", json: { text: text.trim() } })
         .then((item) => { span.textContent = item.text; })
-        .catch((err) => alert(err.message));
+        .catch((err) => ustrip.toast(err.message));
       return;
     }
 
@@ -189,15 +193,15 @@
           if (moveBtn.dataset.move === "up") row.parentElement.insertBefore(row, sibling);
           else row.parentElement.insertBefore(sibling, row);
         })
-        .catch((err) => alert(err.message));
+        .catch((err) => ustrip.toast(err.message));
       return;
     }
 
     if (e.target.closest("[data-delete]")) {
-      if (!confirm("Delete this item?")) return;
+      if (!(await ustrip.confirm("Delete this item?"))) return;
       ustrip.request(`/ustrip/api/checklist-items/${itemId}/`, { method: "DELETE" })
         .then(() => { row.remove(); refreshProgress(card); })
-        .catch((err) => alert(err.message));
+        .catch((err) => ustrip.toast(err.message));
     }
   });
 
@@ -221,7 +225,7 @@
         input.rows = 1;
         refreshProgress(card);
       })
-      .catch((err) => alert(err.message));
+      .catch((err) => ustrip.toast(err.message));
   });
 
   // Grow the add box as a list is typed or pasted in, so you can see it.
@@ -241,7 +245,7 @@
       json: { trip: tripId, name: name, assigned_to: owner || null },
     })
       .then(() => window.location.reload())
-      .catch((err) => alert(err.message));
+      .catch((err) => ustrip.toast(err.message));
   });
 })();
 </script>

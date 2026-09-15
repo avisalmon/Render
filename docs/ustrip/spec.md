@@ -30,7 +30,13 @@ declares phone-first in this very section, had no such test and shipped
    erases a stop.
 3. **No browser-native `alert` / `confirm` / `prompt`.** They block the
    page, ignore the app's design, and on iOS announce the site's domain.
-   Editing is done in the page.
+   Editing is done in the page. **Done, Sprint 15 (F7).** `ustrip.toast()`,
+   `ustrip.confirm()` and `ustrip.editInPlace()` replaced all 47 call sites
+   across 10 templates. Guarded for real: `test_no_native_dialog_ever_fires`
+   drives a real browser through an edit and a delete with Playwright's
+   `dialog` listener armed — proved to actually catch a regression, not
+   merely pass, by putting one `confirm()` back and watching the test fail
+   on it before restoring the fix.
 4. **A tap never costs you your place.** No `location.reload()` after a
    reorder or a toggle: the API returns the new state, the page patches
    itself. Losing scroll position halfway down a 12-stop day is a real
@@ -58,10 +64,62 @@ follow, both found in review:
 - **Downscale in the browser before upload.** Raw phone photos are 3-8MB.
   Render's disk is **1GB, shared with the SQLite database** — a few hundred
   full-size photos fill it, and the database is on the same volume.
-- Media is already covered by the weekly GCS backup (`backup_db.py`
+- ~~Media is already covered by the weekly GCS backup (`backup_db.py`
   syncs `MEDIA_ROOT`), so the loss window during a 15-day trip is up to
-  seven days of photos. Acceptable or not is Avi's call (see the fix
-  sprint), but it should be a decision, not a surprise.
+  seven days of photos.~~ **Superseded, Sprint 15.** Photos no longer touch
+  `MEDIA_ROOT` at all — see below.
+
+**Sprint 15: photos live in Google Drive, not on Render's disk.** First cut
+(2026-09-15) planned to reuse the home security app's own Drive grant —
+Avi: "we have a dedicated folder with a key that is used in the home app —
+share this and have a directory of your own inside it." **Revised the same
+day, before it shipped**, once the question became "guide me how to create
+this... completely for all the apps... as the main storage": reusing the
+security app's OAuth grant would have coupled two systems that deploy on
+completely different schedules — one on Render, one on a home PC — for no
+real benefit. Instead this project has **its own dedicated Google Cloud
+project and OAuth client**, `app/drive.py`, meant to outlive ustrip: any
+app on this site can use the same four credentials with its own subfolder
+name, the same way ustrip uses `"ustrip"`. Set up once, locally, with
+`manage.py drive_setup` (`app/management/commands/drive_setup.py`) — it
+opens a browser for the one-time consent and prints the three values Render
+needs; a fourth, `DRIVE_FOLDER_ID`, is a Drive folder Avi creates by hand as
+the shared root everything lives under.
+
+Hand-written rather than `google-api-python-client`, for the reason that
+file gives: two endpoints and a token refresh do not justify that
+dependency tree, and a service account has no storage quota in consumer
+Drive, so it has to be an OAuth token for the actual account. Each app
+creates and remembers its own subfolder inside the shared `DRIVE_FOLDER_ID`
+on first use — ustrip can never write into or read from another app's
+subfolder, and vice versa, because they are different folder ids from the
+moment either file is created.
+
+- **Never a hotlinked Drive URL.** A `webViewLink` only opens for whoever is
+  signed into that Google account, which is not the family member's own
+  phone. Every photo is served through `/ustrip/.../file/`, a proxy view
+  gated by the same `@family_required` check as every other ustrip page —
+  so a photo URL is exactly as protected as everything else here, never
+  "anyone with the link."
+- **Unset means refused, not silently local.** `app/drive.py::from_env()`
+  returns `None` until all four credentials are set, and the upload view
+  raises a clear, visible error rather than falling back to `MEDIA_ROOT` —
+  the same "unset means closed" idiom as `USTRIP_ADMIN_TOKEN` and
+  `USTRIP_ERROR_NOTIFY`. A silent fallback would quietly reopen the exact
+  disk-fill risk this sprint exists to close.
+- **The upload and the row are one atomic operation.** A Drive failure must
+  leave no trace — not an empty photo row with nothing behind it. Found by
+  a test written for exactly that case before the transaction was added.
+- **The seven-day trap.** If the Google Cloud project behind these
+  credentials is left in "Testing" publishing status, Google expires the
+  refresh token after seven days and uploads stop silently. The trip is
+  fifteen days long — worth confirming the project is "Published" *before*
+  relying on this, not after day eight goes quiet. `manage.py drive_setup`
+  says so at setup time; nothing checks it again afterward.
+- **Existing local photos** (Sprint 4 was deployed 2026-09-13, two days
+  before this) are moved over by `migrate_ustrip_photos_to_drive`, run once
+  by hand — idempotent, and the local file is only freed after the Drive
+  upload is confirmed, never before.
 
 ## 0b. Language and design principle
 

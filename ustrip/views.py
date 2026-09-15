@@ -10,14 +10,19 @@ and patches the DOM from the response, no full-page reload.
 
 from django.contrib.auth import get_user_model, login as auth_login
 from django.contrib.auth.views import LoginView, LogoutView
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils.http import url_has_allowed_host_and_scheme
 
-from . import schedule, today
+from app import drive
+
+from . import journal_grouping, schedule, today
 from .access import FAMILY_GROUP, family_required
 from .forms import UstripSignupForm
-from .models import Flight, ItineraryDay, ItineraryItem, ItineraryLink, Lodging, RentalCar, Trip
+from .models import (
+    Flight, ItineraryDay, ItineraryItem, ItineraryLink, ItineraryPhoto, JournalPost, Lodging, RentalCar, Trip,
+)
 
 
 # --- Auth: ustrip's own login/signup/logout (spec §3 sprint note) ---------
@@ -216,6 +221,57 @@ def packing(request):
 
 @family_required
 def journal(request):
+    """F11 — grouped by the day it was posted on, in the same trip clock
+    `ustrip/today.py` uses everywhere else (ustrip/journal_grouping.py)."""
     trip = _current_trip()
-    posts = trip.journal_posts.select_related("author").all() if trip else []
-    return render(request, "ustrip/journal.html", {"trip": trip, "posts": posts, "active_tab": "journal"})
+    if trip is None:
+        return render(request, "ustrip/journal.html", {"trip": None, "groups": [], "active_tab": "journal"})
+    posts = list(trip.journal_posts.select_related("author").all())
+    days = list(trip.days.all())
+    groups = journal_grouping.grouped(posts, trip, days)
+    return render(request, "ustrip/journal.html", {"trip": trip, "groups": groups, "active_tab": "journal"})
+
+
+# --- Photos: served from Drive, never hotlinked (Sprint 15) ----------------
+#
+# A Drive "webViewLink" only works for whoever is signed into the Drive
+# account it belongs to — a family member's own phone browser is signed into
+# a different Google account, so an <img> pointed straight at Drive would
+# just fail for everyone but Avi. Fetching the bytes here and gating the
+# fetch with the same @family_required check the rest of the app uses keeps
+# the access rule in one place, and means a photo URL works the same way
+# every other ustrip URL does: signed in as family, or a 403.
+
+
+def _serve_drive_photo(request, obj):
+    if not obj.drive_file_id:
+        raise Http404("no photo on this row")
+    client = drive.from_env("ustrip")
+    if client is None:
+        # Loud, not a blank image — spec §0a.1's "refused out loud, never
+        # silently lost" applies here too: a missing image with no message
+        # reads as a bug, and Drive being unconfigured is not the same fault
+        # as the photo not existing.
+        raise Http404("photo storage is not configured")
+    blob = client.download(obj.drive_file_id)
+    if not blob:
+        raise Http404("could not fetch the photo from Drive")
+    response = HttpResponse(blob, content_type=obj.content_type or "image/jpeg")
+    # Immutable: nothing here ever edits a photo in place, only replaces the
+    # row (delete + re-upload), which is a different id and a different URL.
+    # Long-lived and cacheable by both the browser and the service worker's
+    # network-first fetch handler, the same way hashed static assets are.
+    response["Cache-Control"] = "private, max-age=604800, immutable"
+    return response
+
+
+@family_required
+def item_photo_file(request, pk):
+    photo = get_object_or_404(ItineraryPhoto, pk=pk)
+    return _serve_drive_photo(request, photo)
+
+
+@family_required
+def journal_photo_file(request, pk):
+    post = get_object_or_404(JournalPost, pk=pk)
+    return _serve_drive_photo(request, post)

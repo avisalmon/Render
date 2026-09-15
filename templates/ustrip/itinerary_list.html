@@ -74,7 +74,14 @@
               .then((from) => applyDay(fromContainer, from));
           }
         })
-        .catch((err) => { alert(err.message); window.location.reload(); });
+        .catch((err) => {
+          ustrip.toast(err.message);
+          // Same reasoning as the day page's own reorder failure: the DOM
+          // shows an order the database rejected, and the reload puts it
+          // back in sync. Delayed so the non-blocking toast has time to be
+          // read before the page goes away.
+          setTimeout(() => window.location.reload(), 1500);
+        });
     },
   });
 })();

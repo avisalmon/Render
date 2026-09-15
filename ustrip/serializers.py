@@ -73,11 +73,23 @@ class ItineraryLinkSerializer(serializers.ModelSerializer):
 
 
 class ItineraryPhotoSerializer(serializers.ModelSerializer):
+    """Sprint 15: `photo` is write-only — the uploaded bytes never round-trip
+    back out, because reading always goes through Drive, never the field the
+    model happens to store the id in. `photo_url` is the model property that
+    decides Drive vs the legacy local file; see `ItineraryPhoto.photo_url`.
+
+    The viewset's `perform_create` pops `photo` out of validated_data and
+    hands it to `drive.py` — it is not a real model field write."""
+
     uploaded_by_info = UserSummarySerializer(source="uploaded_by", read_only=True)
+    photo = serializers.ImageField(write_only=True, required=True)
+    photo_url = serializers.ReadOnlyField()
 
     class Meta:
         model = ItineraryPhoto
-        fields = ["id", "item", "photo", "caption", "uploaded_by", "uploaded_by_info", "created_at", "order"]
+        fields = [
+            "id", "item", "photo", "photo_url", "caption", "uploaded_by", "uploaded_by_info", "created_at", "order",
+        ]
         read_only_fields = ["uploaded_by", "created_at", "order"]
 
 
@@ -289,9 +301,31 @@ class ChecklistGroupSerializer(serializers.ModelSerializer):
 
 
 class JournalPostSerializer(serializers.ModelSerializer):
+    """Sprint 15: same split as `ItineraryPhotoSerializer` — `photo` writes
+    to Drive via the viewset, `photo_url` reads it back. A post can still be
+    text-only, so `photo` is optional here (it was already optional on the
+    model).
+
+    F11: `day_label` is one query (`journal_grouping.day_label_for`'s own
+    day lookup) rather than the grouped-feed version, because this field is
+    only ever read on the single post a create/update just returned — the
+    page's own JS uses it to decide whether the new post needs a fresh
+    header or joins the one already at the top of the feed."""
+
     author_info = UserSummarySerializer(source="author", read_only=True)
+    photo = serializers.ImageField(write_only=True, required=False, allow_null=True)
+    photo_url = serializers.ReadOnlyField()
+    day_label = serializers.SerializerMethodField()
 
     class Meta:
         model = JournalPost
-        fields = ["id", "trip", "author", "author_info", "photo", "caption", "location", "created_at"]
+        fields = [
+            "id", "trip", "author", "author_info", "photo", "photo_url", "caption", "location", "created_at",
+            "day_label",
+        ]
         read_only_fields = ["author", "created_at"]
+
+    def get_day_label(self, post):
+        from .journal_grouping import day_label_for
+
+        return day_label_for(post, post.trip)

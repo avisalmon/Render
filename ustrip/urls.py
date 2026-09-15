@@ -41,6 +41,10 @@ urlpatterns = [
     path("lodging/<int:lodging_id>/edit/", views.lodging_edit, name="lodging_edit"),
     path("packing/", views.packing, name="packing"),
     path("journal/", views.journal, name="journal"),
+    # Photo bytes, proxied from Drive (Sprint 15) — see the note in views.py
+    # for why these are never a raw Drive URL in an <img src>.
+    path("itinerary/photo/<int:pk>/file/", views.item_photo_file, name="item_photo_file"),
+    path("journal/photo/<int:pk>/file/", views.journal_photo_file, name="journal_photo_file"),
     # Who is in the family (spec §3). Token-or-superuser, not the family gate:
     # this is how access is granted, so it cannot require access.
     path("api/family/", family_api.FamilyView.as_view(), name="api_family"),

@@ -48,7 +48,14 @@
         {% if item.is_note %}
           <span class="tstart tinfo"><svg class="icon" viewBox="0 0 24 24"><path d="M12 9v4M12 16.5h.01"/><circle cx="12" cy="12" r="9"/></svg></span><span class="tend"></span>
         {% else %}
-          <span class="tstart">{% if item.start %}{{ item.start|time:"H:i" }}{% else %}&mdash;{% endif %}</span>
+          {% comment %}
+            F13: an optional stop is a candidate, not a reservation, so it
+            never moves the clock (ustrip/schedule.py) — which means two
+            consecutive optional stops both land on the same bare time and
+            read as a bug. The tilde says "whenever you get to it" rather
+            than "you have an appointment here".
+          {% endcomment %}
+          <span class="tstart">{% if item.start %}{% if item.tag == "optional" %}~{% endif %}{{ item.start|time:"H:i" }}{% else %}&mdash;{% endif %}</span>
           <span class="tend">{% if item.start and item.duration_minutes %}&ndash; {{ item.end|time:"H:i" }}{% endif %}</span>
         {% endif %}
         {% if item.time_label %}<span class="tnote">{{ item.time_label }}</span>{% endif %}
@@ -139,7 +146,9 @@
       const row = timeline.querySelector(`[data-item-id="${item.id}"]`);
       if (!row) return;
       if (item.kind === "note") return;  // no time, nothing to update
-      row.querySelector(".tstart").textContent = item.start || "—";
+      // F13: same tilde as the server-rendered row — see the comment there.
+      row.querySelector(".tstart").textContent =
+        item.start ? (item.tag === "optional" ? "~" : "") + item.start : "—";
       row.querySelector(".tend").innerHTML = item.start && item.duration_minutes ? "&ndash; " + item.end : "";
       row.classList.toggle("late", !!item.past_day_end);
       let warn = row.querySelector(".twarn");
@@ -164,7 +173,15 @@
     );
     return ustrip.request(dayUrl + "reorder/", { json: { item_ids: ids } })
       .then(applyTimes)
-      .catch((err) => { alert(err.message); window.location.reload(); });
+      .catch((err) => {
+        ustrip.toast(err.message);
+        // The one deliberate reload left (Sprint 11): the DOM already shows
+        // an order the database rejected, and the reload is what puts it
+        // back in sync. alert() used to block until dismissed, which is what
+        // gave you time to read it before the page went away; toast() does
+        // not block, so the reload is delayed to give the same chance.
+        setTimeout(() => window.location.reload(), 1500);
+      });
   }
 
   ustrip.sortable([timeline], { onDrop: sendOrder });
@@ -174,7 +191,7 @@
       const field = id === "day-start" ? "start_time" : "end_time";
       ustrip.request(dayUrl, { method: "PATCH", json: { [field]: this.value } })
         .then(applyTimes)
-        .catch((err) => alert(err.message));
+        .catch((err) => ustrip.toast(err.message));
     });
   });
 
@@ -196,10 +213,10 @@
     };
     ustrip.request("/ustrip/api/itinerary-items/", { json: payload })
       .then(() => window.location.reload())
-      .catch((err) => alert(err.message));
+      .catch((err) => ustrip.toast(err.message));
   });
 
-  timeline.addEventListener("click", function (e) {
+  timeline.addEventListener("click", async function (e) {
     const row = e.target.closest("[data-item-id]");
     if (!row) return;
     const itemId = row.dataset.itemId;
@@ -220,7 +237,7 @@
     }
 
     if (e.target.closest("[data-delete]")) {
-      if (!confirm("Delete this item?")) return;
+      if (!(await ustrip.confirm("Delete this item?"))) return;
       ustrip.request(`/ustrip/api/itinerary-items/${itemId}/`, { method: "DELETE" })
         .then(() => {
           row.remove();
@@ -229,7 +246,7 @@
           }
           sendOrder();   // everything after it shifts earlier
         })
-        .catch((err) => alert(err.message));
+        .catch((err) => ustrip.toast(err.message));
     }
   });
 })();

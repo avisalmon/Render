@@ -231,7 +231,7 @@ order wherever they read best, as many as wanted.
 | List page and detail page render notes without a time; notes drag like any item, within and between days | DONE |
 | Tests: a note has no time and B still flows straight from A; a note is created through the API, renders on the three pages, and reorders | DONE — 2 more in `tests/test_ustrip_items.py` |
 
-## Sprint 11 — The fix sprint `P1+P2 DONE, F8/F9 DONE, REST OPEN`
+## Sprint 11 — The fix sprint `P1+P2 DONE, F7/F8/F9/F11/F13 DONE, F12 mostly moot`
 
 A full review on **2026-09-14**, after Sprints 8-10.1 landed, against
 [spec.md](spec.md) and [building_an_app.md](../building_an_app.md).
@@ -324,10 +324,12 @@ Fixed above as F9 plus multi-line add.
 | Packing: progress, Mine/All filter, owner picker, multi-line add | DONE — see F8/F9 |
 | The whole packing label is the tap target, not the 26px box inside it | DONE — and it exposed that the phone guard was testing an *empty* packing page, because seeding creates no lists. The fixture now gives packing and the journal real content, and the guard immediately failed on five controls it had never been able to see |
 | F8 on the itinerary day and list pages | DONE — the day's arrows and delete now take the same path the drag already did: swap in the DOM, send the new order, re-time from the response. The list page only ever reloaded on error, which is the right fallback and stays. Home's note arrows swap in place too. A browser test covers the day page, which nothing else did |
-| F12 backup cadence during the trip | **Avi's decision, not started.** Photos sit up to 7 days unbacked |
+| F12 backup cadence during the trip | **Avi's decision, mostly moot since Sprint 15.** The original risk was the weekly GCS backup window leaving up to 7 days of photos unbacked in `MEDIA_ROOT`. New photos never touch `MEDIA_ROOT` at all now — they go straight to Drive, which is its own durable store, not something this app backs up. Only photos already on disk before Sprint 15 still carry the old exposure, and only until `migrate_ustrip_photos_to_drive` runs (blocked on the Drive credentials being set, same as everything else in that sprint) |
 | F10 Home tiles | DONE — the three tiles duplicated the nav bar six centimetres below them. The counts they carried stay, as one line instead of three cards |
 | Adding a stop still reloads the day page | OPEN — the least painful of the reloads, since browsers restore scroll on reload, and the row markup is rich enough that building it in JS would duplicate the template |
-| F7 native dialogs, F11 journal grouping, F13 optional-stop label | OPEN |
+| F13 optional-stop label | DONE — a tilde (`~14:00`) on an optional stop's time, in both the server-rendered row and its JS twin. The schedule itself was already correct (an optional stop is a candidate, not a reservation, so it never claims a time slot); this only changed how the same correct number reads when two stops land on it |
+| F7 native dialogs | DONE — 47 call sites across 10 templates. Own `toast()`, `confirm()` and `editInPlace()` in `ustrip.js`, reusing the app's existing design tokens rather than a component library. Proved with a real browser: `tests/test_ustrip_mobile.py::test_no_native_dialog_ever_fires` edits and deletes a real packing item through the real UI with Playwright's `dialog` listener armed, and was confirmed to fail — not just pass — by putting one `confirm()` back and watching it catch that exact regression |
+| F11 journal grouping | DONE — grouped by the day a post was *made on*, not a day picked by hand at post time (the "real version" in the original note, without the extra control that would have added). The label is the day's own title ("Niagara Falls"), read through `ItineraryDay.covers()`, which already existed for `today.py`; no schema change, no migration. `ustrip/journal_grouping.py`. Converted to the trip's own clock, the same reasoning `today.py` already uses, and tested for the exact failure that reasoning exists to prevent: an 11pm post staying on the correct calendar day rather than sliding to the next one in UTC. Headers merge when consecutive posts share a day and clean up after themselves when the last post under one is deleted — proved with a real browser, and proved to actually catch a regression by breaking the merge logic once and watching the test fail on it |
 
 **Still needs Avi, not code:** nobody but Avi is in the `family` group, so
 none of this is visible to Nirit or the kids; everyone should open the app
@@ -389,3 +391,72 @@ texted him.
 
 **To turn on:** set `USTRIP_ERROR_NOTIFY` in Render to an address that's
 actually read. Unset means silent, same principle as `USTRIP_ADMIN_TOKEN`.
+
+## Sprint 15 — Photos move off Render's disk into Drive `DONE (DEV)`
+
+Avi, 2026-09-15: "I want to use my drive as I use in the home app for
+photos." The home app's own pattern doesn't transfer directly — there, the
+house uploads to Drive itself and only ever hands babook a link; here, the
+family uploads straight from their phones through this app, so ustrip has
+to be the one talking to Drive.
+
+**The plan changed twice in one day, and both changes were Avi's calls.**
+First cut: reuse the security relay's own OAuth credentials and Drive
+folder, with ustrip's own subfolder inside it — his answer when first
+asked. Then, having watched the trail to find out where those credentials
+actually lived (a home PC's local `.env`, nowhere near Render), he asked
+instead for a Drive set up "completely for all the apps... as the main
+storage" — this project's **own** dedicated Google Cloud project and OAuth
+client, not borrowed from a system that deploys on a different machine on a
+different schedule. That is what shipped. Whether to keep a local copy too
+was never a strong preference either way — Drive-only, per spec §0a.3,
+since a local copy would keep the exact 1GB-disk risk this sprint exists to
+close.
+
+| Item | Status |
+|---|---|
+| `app/drive.py` — hand-written `DriveClient` (OAuth refresh, `upload_bytes`, `download`, `delete`, `root_folder_name`), shaped like the home security app's own `seccore/drive.py` but a separate module, separate credentials, separate Google Cloud project. One root folder (`DRIVE_FOLDER_ID`), one named subfolder per app | DONE |
+| `app/management/commands/drive_setup.py` — one-time local OAuth consent flow (ported from the Security repo's proven `scripts/drive_setup.py`), `drive.file` scope, loopback redirect, prints the three credentials Render needs; `--check` verifies them read-only, without creating anything | DONE |
+| `ItineraryPhoto` / `JournalPost`: `drive_file_id`, `drive_url`, `content_type` added; `photo` relaxed to optional (legacy, no longer written to) | DONE — migration `0009` |
+| `photo_url` model property: Drive via the proxy view when `drive_file_id` is set, the legacy local file otherwise, `""` when there is no photo at all (legal for a journal post) | DONE |
+| Two proxy views, `@family_required` — the same gate as every other ustrip URL, never a raw Drive URL an outsider could open if they got the link | DONE — `/ustrip/itinerary/photo/<pk>/file/`, `/ustrip/journal/photo/<pk>/file/` |
+| Upload viewsets: `photo` is write-only on the serializer, goes to Drive via `_attach_drive_photo`, never to disk; delete cascades to a best-effort Drive delete | DONE |
+| Drive not configured, or the upload fails: refused with a clear error, never a silent fallback to local disk | DONE |
+| **Bug found by the test written for the failure case**: the photo row was being created *before* the Drive upload was attempted, so a failed upload left an empty, photo-less row behind rather than nothing at all. Fixed — `perform_create` wraps the save and the upload in one transaction | FIXED |
+| `migrate_ustrip_photos_to_drive` — one-time, idempotent backfill for the photos Sprint 4 already put on disk; local file freed only after the Drive upload is confirmed | DONE |
+| Templates and their inline JS (`itinerary_item_detail.html`, `journal.html`) switched from `photo.photo.url` / `post.photo` to `photo_url` | DONE |
+| `render.yaml`: `DRIVE_CLIENT_ID`, `DRIVE_CLIENT_SECRET`, `DRIVE_REFRESH_TOKEN`, `DRIVE_FOLDER_ID` declared `sync: false` — shared across apps, not ustrip-specific, so no `USTRIP_` prefix | DONE |
+| Tests: 14 (`test_ustrip_photos_drive.py`) plus the existing upload/delete test updated for the new response shape — Drive unconfigured, upload failure, atomicity, family-only proxy access, text-only journal posts, delete cascade, backfill idempotency | DONE — 145 ustrip tests pass |
+
+**To turn on, before it does anything, in order:**
+
+1. Run `manage.py drive_setup` locally — walks through creating a Google
+   Cloud project, enabling the Drive API, publishing the OAuth consent
+   screen, and a Desktop app OAuth client; then opens a browser for the
+   one-time approval and prints `DRIVE_CLIENT_ID`, `DRIVE_CLIENT_SECRET`,
+   `DRIVE_REFRESH_TOKEN`.
+2. Create (or pick) one Drive folder to be the shared root, copy its id out
+   of the URL — that is `DRIVE_FOLDER_ID`.
+3. Put all four in Render (babook service → Environment). Nothing changes
+   until all four are set — uploads are refused with a clear message in the
+   meantime, same as `USTRIP_ADMIN_TOKEN` unset.
+4. `manage.py drive_setup --check` confirms the token refreshes and the
+   folder id resolves, without writing anything.
+
+**Publish the OAuth consent screen before the trip, not after.** Left in
+"Testing" status, Google expires the refresh token after seven days —
+uploads would stop silently on day eight of a fifteen-day trip while
+everything else looked healthy. This is a fresh OAuth client with no track
+record yet, unlike the home app's, so "it's probably fine" does not apply
+here the way it might have to a years-old grant — check it explicitly.
+
+**Not done, and not blocking:** existing local photos are migrated by
+running `migrate_ustrip_photos_to_drive` once by hand in production — it
+has not been run yet, because the four credentials are not in Render yet
+either. Both happen together, whenever Avi finishes the setup above.
+
+**Also not done:** matazim and memz do not use `app/drive.py` yet. Nothing
+stops them — same four credentials, their own subfolder name — but nobody
+has asked for it, and building it speculatively for apps that do not upload
+anything today would be exactly the kind of unasked-for work this project's
+own methodology warns against.

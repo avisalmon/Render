@@ -270,10 +270,21 @@ class ItineraryLink(models.Model):
 class ItineraryPhoto(models.Model):
     """Photos that belong to a stop (the poster for the place, or what it
     looked like when we got there). Separate from the journal on purpose:
-    the journal is a diary in time order; these are attached to an item."""
+    the journal is a diary in time order; these are attached to an item.
+
+    Sprint 15: photos live in Avi's Google Drive, not on Render's 1GB disk
+    (spec 0a.3). `photo` is legacy -- rows uploaded before this sprint may
+    still have a local file and nothing else; `photo_url` below prefers Drive
+    and falls back to it so nothing already on disk goes dark. New rows never
+    write to `photo`; `migrate_ustrip_photos_to_drive` moves the old ones over
+    and frees the file once the upload is confirmed.
+    """
 
     item = models.ForeignKey(ItineraryItem, on_delete=models.CASCADE, related_name="photos")
-    photo = models.ImageField(upload_to="ustrip/items/")
+    photo = models.ImageField(upload_to="ustrip/items/", blank=True, null=True)
+    drive_file_id = models.CharField(max_length=128, blank=True, default="")
+    drive_url = models.URLField(max_length=500, blank=True, default="")
+    content_type = models.CharField(max_length=64, blank=True, default="image/jpeg")
     caption = models.CharField(max_length=200, blank=True)
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -281,6 +292,24 @@ class ItineraryPhoto(models.Model):
 
     class Meta:
         ordering = ["order", "id"]
+
+    @property
+    def photo_url(self):
+        """The URL a template or the API should actually render.
+
+        Drive-backed rows go through ustrip's own proxy view, gated by the
+        same family check as everything else -- never a hotlinked Drive URL,
+        which would mean "anyone with the link" rather than "signed-in family
+        member" (spec Sprint 13.1). A row not yet migrated falls back to the
+        local file so nothing already uploaded goes dark mid-transition.
+        """
+        if self.drive_file_id:
+            from django.urls import reverse
+
+            return reverse("ustrip:item_photo_file", args=[self.pk])
+        if self.photo:
+            return self.photo.url
+        return ""
 
     def __str__(self):
         return f"Photo for {self.item.display_title}"
@@ -353,17 +382,37 @@ class ChecklistItem(models.Model):
 
 class JournalPost(models.Model):
     """Spec §4.3 — reverse-chronological shared photo diary. No likes,
-    no comments, just what a family member posted and when."""
+    no comments, just what a family member posted and when.
+
+    Sprint 15: same Drive-backed storage as `ItineraryPhoto`, and a post can
+    still be text-only, so `photo_url` returning "" is a normal state here,
+    not a fallback that failed."""
 
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name="journal_posts")
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     photo = models.ImageField(upload_to="ustrip/journal/", blank=True, null=True)
+    drive_file_id = models.CharField(max_length=128, blank=True, default="")
+    drive_url = models.URLField(max_length=500, blank=True, default="")
+    content_type = models.CharField(max_length=64, blank=True, default="image/jpeg")
     caption = models.TextField(blank=True)
     location = models.CharField(max_length=120, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-created_at"]
+
+    @property
+    def photo_url(self):
+        """See `ItineraryPhoto.photo_url` -- same reasoning, same proxy
+        pattern. Empty string means "no photo on this post", which is legal
+        here (a post can be text-only) and distinct from "not migrated yet"."""
+        if self.drive_file_id:
+            from django.urls import reverse
+
+            return reverse("ustrip:journal_photo_file", args=[self.pk])
+        if self.photo:
+            return self.photo.url
+        return ""
 
     def __str__(self):
         return f"{self.author} — {self.caption[:40]}"

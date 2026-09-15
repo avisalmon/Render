@@ -19,11 +19,48 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from PIL import Image
 
+from app import drive
 from ustrip import schedule
 from ustrip.models import (
     ItineraryComment, ItineraryDay, ItineraryItem, ItineraryLike, ItineraryLink, ItineraryPhoto, Trip,
 )
 from ustrip.templatetags.ustrip_extras import duration_human
+
+
+class FakeDriveClient:
+    """A DriveClient double: records calls, touches no network. Sprint 15."""
+
+    def __init__(self):
+        self.uploaded = []  # (file_id, blob, name, mime)
+        self.deleted = []
+        self._next_id = 0
+
+    def upload_bytes(self, blob, name, mime="image/jpeg"):
+        self._next_id += 1
+        file_id = f"fake-{self._next_id}"
+        self.uploaded.append((file_id, blob, name, mime))
+        return drive.DriveFile(file_id, f"https://drive.google.com/file/d/{file_id}/view")
+
+    def download(self, file_id):
+        for fid, blob, _name, _mime in self.uploaded:
+            if fid == file_id:
+                return blob
+        return b""
+
+    def delete(self, file_id):
+        self.deleted.append(file_id)
+        return True
+
+
+@pytest.fixture
+def fake_drive(monkeypatch):
+    """Stand in for a configured Drive everywhere `drive.from_env()` is
+    called — patching the module attribute covers every consumer (`api.py`,
+    `views.py`) at once, since both do `from . import drive` and look the
+    attribute up at call time."""
+    client = FakeDriveClient()
+    monkeypatch.setattr(drive, "from_env", lambda subfolder, transport=None: client)
+    return client
 
 
 @pytest.fixture
@@ -123,6 +160,28 @@ def test_only_planned_items_move_the_clock(day):
     ]
 
 
+@pytest.mark.django_db
+def test_an_optional_stop_is_marked_approximate_not_a_bare_collision(client, member, day):
+    """F13. "Maybe" and "B" land on the same 10:00 by design (the line above
+    proves it), and two rows both reading a bare "10:00" looks like the app
+    double-booked something when it did not — an optional stop is a
+    candidate, not a reservation. The tilde is the entire fix: no change to
+    the schedule itself, only to how the same correct number is read."""
+    a, maybe, b = _items(day, ("A", 60, None), ("Maybe", 90, None), ("B", 30, None))
+    maybe.tag = ItineraryItem.OPTIONAL
+    maybe.save()
+
+    client.force_login(member)
+    html = client.get(f"/ustrip/itinerary/{day.id}/").content.decode()
+
+    assert '<span class="tstart">~10:00</span>' in html, "the optional stop's time should read as approximate"
+    # The planned item that happens to share the same clock value must not
+    # be marked approximate — only the optional one is a candidate. (The
+    # page has other "10:00"s elsewhere — the day-end time input, "Ends
+    # 10:00" — so this checks the timeline row specifically, not a raw count.)
+    assert '<span class="tstart">10:00</span>' in html
+
+
 def test_duration_human():
     assert duration_human(90) == "1h 30m"
     assert duration_human(45) == "45m"
@@ -201,7 +260,11 @@ def _png():
 
 
 @pytest.mark.django_db
-def test_a_photo_can_be_attached_to_an_item_and_deleted_by_anyone(client, member, other_member, day, settings, tmp_path):
+def test_a_photo_can_be_attached_to_an_item_and_deleted_by_anyone(
+    client, member, other_member, day, settings, tmp_path, fake_drive
+):
+    # Sprint 15: photos go to Drive, not MEDIA_ROOT — settings/tmp_path stay
+    # only so a bug that *does* fall back to local disk leaves no trace.
     settings.MEDIA_ROOT = tmp_path
     (item,) = _items(day, ("Watkins Glen", 120, None))
     client.force_login(member)
@@ -209,10 +272,13 @@ def test_a_photo_can_be_attached_to_an_item_and_deleted_by_anyone(client, member
     assert response.status_code == 201
     photo = ItineraryPhoto.objects.get(item=item)
     assert photo.uploaded_by_id == member.id
-    assert response.json()["photo"].startswith("http")
+    assert photo.drive_file_id == fake_drive.uploaded[0][0]
+    assert not photo.photo  # never wrote to the local field
+    assert response.json()["photo_url"].endswith(f"/ustrip/itinerary/photo/{photo.id}/file/")
     # No creator lock on photos — same as the item they belong to.
     client.force_login(other_member)
     assert client.delete(f"/ustrip/api/itinerary-photos/{photo.id}/").status_code == 204
+    assert fake_drive.deleted == [photo.drive_file_id]
 
 
 @pytest.mark.django_db
