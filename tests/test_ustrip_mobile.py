@@ -418,3 +418,95 @@ def test_journal_headers_merge_and_clean_up_after_themselves(phone_context, live
         assert page.locator("#journal-empty").count() == 1
     finally:
         page.close()
+
+
+def test_tapping_an_item_expands_in_place_without_navigating(phone_context, live_server, trip_pages):
+    """Level 3 (Sprint 15/2026-09-15, Avi): "clicking on an item should
+    collapse another a little bit more details, still in the same view" —
+    proved for real, in a browser: the URL must not change, and the panel
+    must actually carry the item's own facts, not just toggle something
+    empty."""
+    itinerary_path = next(p for p in trip_pages if p == "/ustrip/itinerary/")
+    page = phone_context.new_page()
+    try:
+        page.goto(live_server.url + itinerary_path, wait_until="domcontentloaded")
+        page.wait_for_timeout(300)
+
+        day = page.locator(".daysec").first
+        if not day.locator("[data-expand-item]").first.is_visible():
+            day.locator("summary").click()
+            page.wait_for_timeout(200)
+        row = day.locator("[data-expand-item]").first
+        assert row.count(), "no expandable item on the first day"
+        title_text = row.inner_text()
+
+        url_before = page.url
+        panel = row.locator("xpath=../following-sibling::div[contains(@class,'mini-expand')][1]")
+        assert panel.is_hidden(), "should start collapsed"
+
+        row.click()
+        page.wait_for_timeout(150)
+        assert panel.is_visible(), "tapping the title should reveal the panel"
+        assert page.url == url_before, "expanding must not navigate"
+        assert panel.locator(".mini-expand-more").count(), "no way in from level 3 to the full page"
+
+        row.click()
+        page.wait_for_timeout(150)
+        assert panel.is_hidden(), "tapping again should collapse it"
+        assert title_text.strip(), "sanity: the row actually had a title to expand"
+    finally:
+        page.close()
+
+
+def test_back_from_item_detail_returns_to_the_itinerary_list_not_the_day_page(phone_context, live_server, trip_pages):
+    """The bug (Avi, 2026-09-15): "when i enter an item and then ask to go
+    back, it does not go back to the same itinerary view. it goes to an
+    uglier view." Reproduced and fixed by walking the real path a visitor
+    takes — list, expand a day, open an item's full details, press back —
+    and asserting the URL that lands on, not just that *a* page rendered."""
+    itinerary_path = next(p for p in trip_pages if p == "/ustrip/itinerary/")
+    page = phone_context.new_page()
+    try:
+        page.goto(live_server.url + itinerary_path, wait_until="domcontentloaded")
+        page.wait_for_timeout(300)
+        list_url = page.url
+
+        day = page.locator(".daysec").first
+        if not day.locator("[data-expand-item]").first.is_visible():
+            day.locator("summary").click()
+            page.wait_for_timeout(200)
+        row = day.locator("[data-expand-item]").first
+        row.click()
+        page.wait_for_timeout(150)
+        panel = row.locator("xpath=../following-sibling::div[contains(@class,'mini-expand')][1]")
+        panel.locator(".mini-expand-more").click()
+        page.wait_for_timeout(300)
+        assert "/itinerary/item/" in page.url, "did not reach the item detail page"
+
+        page.locator("#back-link").click()
+        page.wait_for_timeout(300)
+        assert page.url == list_url, f"back landed on {page.url}, not the itinerary list it came from"
+    finally:
+        page.close()
+
+
+def test_back_falls_back_to_the_day_page_with_no_referrer(phone_context, live_server, trip_pages):
+    """The other half of the fix: a bookmarked or shared link to an item's
+    detail page has no ustrip page to return to, and must still go
+    somewhere sensible rather than doing nothing."""
+    item_path = next(
+        p for p in trip_pages if p.startswith("/ustrip/itinerary/item/") and not p.endswith("/edit/")
+    )
+    page = phone_context.new_page()
+    try:
+        # A fresh page with no prior navigation in this browser context has
+        # no document.referrer at all -- the same shape as a bookmark.
+        page.goto(live_server.url + item_path, wait_until="domcontentloaded")
+        page.wait_for_timeout(200)
+        page.locator("#back-link").click()
+        page.wait_for_timeout(300)
+        assert "/itinerary/" in page.url and "/item/" not in page.url, (
+            f"the no-referrer fallback should land on the day page, landed on {page.url}"
+        )
+    finally:
+        page.close()

@@ -147,14 +147,24 @@ def test_seed_imports_the_good_to_know_notes_once():
 
 @pytest.mark.django_db
 def test_home_before_the_trip_shows_the_countdown_and_unbooked_stays(client, member, trip, days, monkeypatch):
+    """2026-09-15: "First up", where we sleep, and good to know all moved
+    off Home onto the itinerary page (Avi: too much information on the main
+    page) — Home keeps only the countdown itself."""
     Lodging.objects.create(trip=trip, check_in=date(2026, 9, 18), check_out=date(2026, 9, 22), address="Manhattan")
     TripNote.objects.create(trip=trip, text="Rides are $3", order=0)
     monkeypatch.setattr(today, "now_for", lambda t: datetime(2026, 9, 14, 10, 0, tzinfo=NY))
     client.force_login(member)
-    body = client.get("/ustrip/").content.decode()
-    assert "4 days to go" in body and "First up" in body and "Land" in body
-    assert "Manhattan" in body and "not booked yet" in body and "4 nights" in body
-    assert "Rides are $3" in body
+
+    home_body = client.get("/ustrip/").content.decode()
+    assert "4 days to go" in home_body
+    assert "First up" not in home_body and "Manhattan" not in home_body, (
+        "Home is meant to be minimal now — next-up and lodging belong on the itinerary page"
+    )
+
+    itinerary_body = client.get("/ustrip/itinerary/").content.decode()
+    assert "First up" in itinerary_body and "Land" in itinerary_body
+    assert "Manhattan" in itinerary_body and "not booked yet" in itinerary_body and "4 nights" in itinerary_body
+    assert "Rides are $3" in itinerary_body
 
 
 @pytest.mark.django_db
@@ -196,6 +206,49 @@ def test_dates_render_in_english_even_though_the_site_speaks_hebrew(client, memb
     Lodging.objects.create(trip=trip, check_in=date(2026, 9, 18), check_out=date(2026, 9, 22), address="Manhattan")
     monkeypatch.setattr(today, "now_for", lambda t: datetime(2026, 9, 14, 10, 0, tzinfo=NY))
     client.force_login(member)
-    body = client.get("/ustrip/", HTTP_ACCEPT_LANGUAGE="he").content.decode()
-    assert "Sep 18" in body and "Fri Sep 18" in body
-    assert "ספט" not in body
+    home_body = client.get("/ustrip/", HTTP_ACCEPT_LANGUAGE="he").content.decode()
+    assert "Sep 18" in home_body and "ספט" not in home_body
+    # "Where we sleep" (the D M j format, "Fri Sep 18") moved to the
+    # itinerary page along with the rest of what used to crowd Home.
+    itinerary_body = client.get("/ustrip/itinerary/", HTTP_ACCEPT_LANGUAGE="he").content.decode()
+    assert "Fri Sep 18" in itinerary_body and "ספט" not in itinerary_body
+
+
+@pytest.mark.django_db
+def test_home_shows_a_trip_logo_and_stays_minimal(client, member, trip):
+    """2026-09-15 (Avi): "some Logo for US trip" at the top, and "too much
+    information" everywhere else. Home's own identity is the trip name, not
+    a second copy of the day/lodging/notes detail that itinerary now owns."""
+    client.force_login(member)
+    body = client.get("/ustrip/").content.decode()
+    assert '<p class="trip-logo-name serif">USA Trip 2026</p>' in body
+    for gone in ("Where we sleep", "Good to know", "trip-counts"):
+        assert gone not in body, f"{gone!r} should have moved off Home"
+
+
+@pytest.mark.django_db
+def test_itinerary_header_names_the_trip_in_focus(client, member, trip, days):
+    """Avi: "when pressing itinerary we will enter the trip in focus. In
+    the top there will be the name of trip in focus." """
+    client.force_login(member)
+    list_body = client.get("/ustrip/itinerary/").content.decode()
+    assert '<p class="trip-name-line">USA Trip 2026</p>' in list_body
+
+    day_body = client.get(f"/ustrip/itinerary/{days[0].id}/").content.decode()
+    assert '<p class="trip-name-line">USA Trip 2026</p>' in day_body
+
+
+@pytest.mark.django_db
+def test_login_and_signup_offer_google_through_the_shared_babook_flow(client, db):
+    """Avi: "sign in need to be with google option. its the same system as
+    babook. same user system." The exact allauth URL babook's own login
+    page uses, not a second implementation."""
+    login_body = client.get("/ustrip/login/").content.decode()
+    assert '/accounts/google/login/?process=login&next=/ustrip/' in login_body
+
+    # next carried through, same as the password form on the same page.
+    with_next = client.get("/ustrip/login/?next=/ustrip/packing/").content.decode()
+    assert "next=/ustrip/packing/" in with_next
+
+    signup_body = client.get("/ustrip/signup/").content.decode()
+    assert "/accounts/google/login/?process=login&next=" in signup_body

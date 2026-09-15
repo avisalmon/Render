@@ -275,6 +275,14 @@ def test_a_photo_can_be_attached_to_an_item_and_deleted_by_anyone(
     assert photo.drive_file_id == fake_drive.uploaded[0][0]
     assert not photo.photo  # never wrote to the local field
     assert response.json()["photo_url"].endswith(f"/ustrip/itinerary/photo/{photo.id}/file/")
+    assert response.json()["created_at"], "the date the JS shows on the tile comes from here"
+
+    # 2026-09-15: "tagged ... with this date" (Avi) — stored since Sprint 15
+    # (created_at) but never actually shown until now.
+    detail_html = client.get(f"/ustrip/itinerary/item/{item.id}/").content.decode()
+    expected_date = photo.created_at.strftime("%b ") + str(photo.created_at.day)
+    assert f'<span class="photo-date">{expected_date}</span>' in detail_html
+
     # No creator lock on photos — same as the item they belong to.
     client.force_login(other_member)
     assert client.delete(f"/ustrip/api/itinerary-photos/{photo.id}/").status_code == 204

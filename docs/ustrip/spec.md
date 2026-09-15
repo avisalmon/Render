@@ -165,6 +165,18 @@ This answers spec §5.3 and §5.5 below: it's **one specific trip**, not a
 general multi-trip planner — `Trip` can be a single row (or even hardcoded)
 rather than a full trip-management feature.
 
+**Designed as if there could be more than one, without building it (Avi,
+2026-09-15).** `_current_trip()` already reads as "the trip in focus" rather
+than "the only trip" — the most recent `Trip` by `start_date` — and Home is
+redesigned around that same idea: a minimal header naming the trip in focus
+plus its dates and flights, not a dump of everything the app holds. Opening
+Itinerary is "entering" that trip in focus, and its own header repeats the
+trip's name so it's never ambiguous which trip you're looking at. None of
+this is a trip switcher — picking *among* trips is still out of scope
+(§7) — it only means the one trip currently in focus is never assumed to be
+the only one that will ever exist, the same way `Trip` was always a real
+row and not a hardcoded singleton.
+
 ## 1. The charter
 
 ustrip is a private trip planner for Avi's family, built and hosted inside the
@@ -195,6 +207,7 @@ room, ustrip is the building, and the engine room has no door onto the street.
 |---|---|
 | Django project, settings, deploy (`render.yaml`) | One app, one deploy, one prod database. |
 | `User` accounts and auth backend (`django.contrib.auth` + allauth) | Family members are real babook users. No second password, no second login page. |
+| Google sign-in (`allauth.socialaccount.providers.google`), added to ustrip's own login page 2026-09-15 (Avi: "same system as babook") | The exact same allauth Google flow babook's own login already offers — `/accounts/google/login/?process=login&next=...` — just linked from ustrip's own styled page instead of babook's. Resolves to the same `User` row an email-matched Google account would in babook, so a family member who signed up on babook with Google signs into ustrip the same way, no second account. |
 | Media storage, mail | Plumbing that already works. |
 
 ### 2.2 Separate (built new, owned by this spec)
@@ -332,6 +345,33 @@ dragged like any other item.
 A third tag, `rejected`, marks an alternative the family looked at and
 dropped (the Day 8 VIP tour) — it stays visible, struck through, rather
 than being deleted, because "we considered it and said no" is information.
+
+**Four levels of collapsing, and going back has to go back (Avi,
+2026-09-15).** The itinerary list page (`itinerary_list.html`) already held
+the first two of these and Avi called both "perfect" as they stand — nothing
+about them changes:
+
+1. **Days, collapsed.** One row per day, closed except today.
+2. **A day, opened.** Its items in order, draggable, with the day's own fit
+   warnings. This is the existing `<details>`/`.mini-timeline` behaviour.
+3. **An item, opened a little further — new.** Tapping an item's row (not
+   its title) expands it in place, inside the same day list, with its main
+   facts (description, where, cost, tags) — no navigation, no page load.
+4. **The full item page — already existed, now reachable from level 3.** A
+   "Full details" link from the level-3 panel opens
+   `itinerary_item_detail.html`, unchanged in nature: an **informative**
+   page (facts, links, photos, likes, comments), not a form — editing stays
+   behind its own explicit "Edit" button, into `itinerary_item_edit.html`,
+   which this does not touch.
+
+**The bug this replaces:** the item detail page's back arrow always
+returned to `itinerary_day.html` (the separate full-day page reachable via
+"Open ›"), regardless of where the visitor actually came from — so arriving
+from the itinerary list's own level-2 expansion and pressing back landed on
+a page Avi had never asked to see, correctly described as "an uglier view."
+Fixed by using the browser's own history (`history.back()`) with the old
+fixed link kept only as a fallback for a direct/shared link with no history
+to return to.
 
 ### 4.4 Where we sleep (2026-09-14)
 One `Lodging` per stay: check-in, check-out, hotel name (blank until there

@@ -4,9 +4,22 @@
 
 {% block content %}
 {% if trip %}
+  {% comment %}
+    2026-09-15 (Avi): "too much information" — this used to also carry
+    today's next stop, where we sleep and good to know, which is now on
+    Itinerary instead (entering the trip in focus is what that tab already
+    means). Home is the screen before that: which trip, when, and how the
+    family gets there. Nothing here needs a trip switcher to be built for
+    it to already read as "the trip in focus" rather than "the only trip"
+    (spec §0).
+  {% endcomment %}
+  <div class="trip-logo">
+    <svg class="trip-logo-mark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg>
+    <p class="trip-logo-name serif">{{ trip.name }}</p>
+  </div>
+
   <div class="card hero">
-    <p class="hero-title serif">{{ trip.name }}</p>
-    <p class="hero-dates">{{ trip.start_date|date:"M j" }} &ndash; {{ trip.end_date|date:"M j" }} &middot; {{ day_count }} days</p>
+    <p class="hero-dates">{{ trip.start_date|date:"M j" }} &ndash; {{ trip.end_date|date:"M j" }} &middot; {{ day_count }} day{{ day_count|pluralize }}</p>
     {% if trip.route_summary %}<p class="hero-route">{{ trip.route_summary }}</p>{% endif %}
     <p class="hero-phase">
       {% if position.phase == 'before' %}
@@ -25,30 +38,6 @@
       </div>
     {% endif %}
   </div>
-
-  {% if next_item %}
-    <p class="section-label">{{ position.label }}</p>
-    <a class="card next-card" href="{% url 'ustrip:itinerary_item_detail' next_item.id %}">
-      <div class="next-icon">
-        <svg class="icon" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-10.5A6.5 6.5 0 0 1 18.5 10.5C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10.3" r="2.1"/></svg>
-      </div>
-      <div>
-        <p class="next-title">{{ next_item.display_title|truncatechars:60 }}</p>
-        <p class="next-sub">Day {{ upcoming_day.label }} &middot; {% if next_item.start %}{{ next_item.start|time:"H:i" }}{% if next_item.duration_minutes %}&ndash;{{ next_item.end|time:"H:i" }}{% endif %} &middot; {% endif %}{{ upcoming_day.title }}</p>
-      </div>
-    </a>
-  {% elif upcoming_day %}
-    <p class="section-label">{{ position.label|default:"Today" }}</p>
-    <a class="card next-card" href="{% url 'ustrip:itinerary_day' upcoming_day.id %}">
-      <div class="next-icon">
-        <svg class="icon" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="15" rx="2.2"/><path d="M8 3.5v4M16 3.5v4M3.5 10h17"/></svg>
-      </div>
-      <div>
-        <p class="next-title">Day {{ upcoming_day.label }} &middot; {{ upcoming_day.title }}</p>
-        <p class="next-sub">{{ upcoming_day.date_label }}</p>
-      </div>
-    </a>
-  {% endif %}
 
   {% if flights or rental_car %}
     <p class="section-label">Getting there</p>
@@ -81,139 +70,8 @@
     </div>
   {% endif %}
 
-  <p class="section-label">Where we sleep</p>
-  <div class="card essentials-card">
-    {% for stay in lodgings %}
-      <div class="essential-row">
-        <div class="essential-icon">
-          <svg class="icon" viewBox="0 0 24 24"><path d="M3 18V8.5A1.5 1.5 0 0 1 4.5 7h15A1.5 1.5 0 0 1 21 8.5V18M3 14h18M3 20v-2M21 20v-2"/><path d="M7 11h4v3H7z"/></svg>
-        </div>
-        <div class="essential-body">
-          <p class="essential-title">{{ stay.display_name }}{% if not stay.confirmed %} <span class="pending-pill">not booked yet</span>{% endif %}</p>
-          <p class="essential-sub">{{ stay.check_in|date:"D M j" }} &rarr; {{ stay.check_out|date:"D M j" }} &middot; {{ stay.nights }} night{{ stay.nights|pluralize }}{% if stay.name and stay.address %} &middot; {{ stay.address }}{% endif %}</p>
-        </div>
-        <a class="edit-link" href="{% url 'ustrip:lodging_edit' stay.id %}">Edit</a>
-      </div>
-    {% empty %}
-      <div class="essential-row"><div class="essential-body"><p class="essential-sub">No stays on record yet.</p></div></div>
-    {% endfor %}
-    <div class="essential-row"><a class="edit-link" href="{% url 'ustrip:lodging_new' %}">+ Add a stay</a></div>
-  </div>
-
-  <p class="section-label">Good to know</p>
-  <div class="card note-list" id="note-list">
-    {% for note in notes %}
-      <div class="note-row" data-note-id="{{ note.id }}">
-        <p class="note-text">{{ note.text }}</p>
-        <div class="row-actions row-actions-inline">
-          <button type="button" class="mini-btn" data-move="up" title="Move up">&uarr;</button>
-          <button type="button" class="mini-btn" data-move="down" title="Move down">&darr;</button>
-          <button type="button" class="mini-btn" data-edit title="Edit">&#9998;</button>
-          <button type="button" class="mini-btn mini-btn-danger" data-delete title="Delete">&times;</button>
-        </div>
-      </div>
-    {% empty %}
-      <div class="mini-empty" id="note-empty">Nothing yet. Add the things everyone should know.</div>
-    {% endfor %}
-  </div>
-  <form id="note-form" class="add-item-row" style="margin-top:8px;">
-    <input type="text" name="text" placeholder="Add something good to know" required>
-    <button type="submit" class="add-btn">+</button>
-  </form>
-
-  {% comment %}
-    F10: three "Around the trip" tiles used to sit here, linking to Itinerary,
-    Packing and Journal — the same three destinations as the nav bar directly
-    below them, on the same screen. Home is long enough (hero, next up,
-    getting there, where we sleep, good to know) without a second copy of the
-    navigation. The one thing the tiles carried that the nav does not is the
-    counts, so they stay, as a line instead of three cards.
-  {% endcomment %}
-  <p class="trip-counts">
-    {{ day_count }} day{{ day_count|pluralize }} planned &middot;
-    {{ checklist_count }} packing list{{ checklist_count|pluralize }} &middot;
-    {{ journal_count }} photo{{ journal_count|pluralize }} in the journal
-  </p>
+  <a class="btn btn-primary" style="margin-top:22px;" href="{% url 'ustrip:itinerary_list' %}">Open the itinerary</a>
 {% else %}
   <div class="empty">No trip yet. Add one from the admin, or run <code>manage.py seed_ustrip</code>.</div>
-{% endif %}
-{% endblock %}
-
-{% block scripts %}
-{% if trip %}
-<script>
-(function () {
-  const list = document.getElementById("note-list");
-  const form = document.getElementById("note-form");
-  const tripId = {{ trip.id }};
-
-  function noteNode(note) {
-    const node = ustrip.el(
-      '<div class="note-row"><p class="note-text"></p><div class="row-actions row-actions-inline">' +
-      '<button type="button" class="mini-btn" data-move="up" title="Move up">↑</button>' +
-      '<button type="button" class="mini-btn" data-move="down" title="Move down">↓</button>' +
-      '<button type="button" class="mini-btn" data-edit title="Edit">✎</button>' +
-      '<button type="button" class="mini-btn mini-btn-danger" data-delete title="Delete">×</button></div></div>'
-    );
-    node.dataset.noteId = note.id;
-    node.querySelector(".note-text").textContent = note.text;
-    return node;
-  }
-
-  form.addEventListener("submit", function (e) {
-    e.preventDefault();
-    const text = form.text.value.trim();
-    if (!text) return;
-    ustrip.request("/ustrip/api/trip-notes/", { json: { trip: tripId, text: text } })
-      .then((note) => {
-        const empty = document.getElementById("note-empty");
-        if (empty) empty.remove();
-        list.appendChild(noteNode(note));
-        form.reset();
-      })
-      .catch((err) => ustrip.toast(err.message));
-  });
-
-  list.addEventListener("click", async function (e) {
-    const row = e.target.closest("[data-note-id]");
-    if (!row) return;
-    const id = row.dataset.noteId;
-    // F8: swap in place. Home is long, and reloading to nudge one note put
-    // you back at the top of it.
-    const moveBtn = e.target.closest("[data-move]");
-    if (moveBtn) {
-      const sibling = moveBtn.dataset.move === "up"
-        ? row.previousElementSibling : row.nextElementSibling;
-      if (!sibling || !sibling.hasAttribute("data-note-id")) return;
-      ustrip.request(`/ustrip/api/trip-notes/${id}/move/`, { json: { direction: moveBtn.dataset.move } })
-        .then((data) => {
-          if (!data.moved) return;
-          if (moveBtn.dataset.move === "up") list.insertBefore(row, sibling);
-          else list.insertBefore(sibling, row);
-        })
-        .catch((err) => ustrip.toast(err.message));
-      return;
-    }
-    if (e.target.closest("[data-edit]")) {
-      const p = row.querySelector(".note-text");
-      const text = await ustrip.editInPlace(p, { multiline: true });
-      if (text === null || !text.trim()) return;
-      ustrip.request(`/ustrip/api/trip-notes/${id}/`, { method: "PATCH", json: { text: text.trim() } })
-        .then((note) => { p.textContent = note.text; })
-        .catch((err) => ustrip.toast(err.message));
-      return;
-    }
-    if (e.target.closest("[data-delete]")) {
-      if (!(await ustrip.confirm("Delete this note?"))) return;
-      ustrip.request(`/ustrip/api/trip-notes/${id}/`, { method: "DELETE" })
-        .then(() => {
-          row.remove();
-          if (!list.querySelector("[data-note-id]")) list.appendChild(ustrip.el('<div class="mini-empty" id="note-empty">Nothing yet. Add the things everyone should know.</div>'));
-        })
-        .catch((err) => ustrip.toast(err.message));
-    }
-  });
-})();
-</script>
 {% endif %}
 {% endblock %}

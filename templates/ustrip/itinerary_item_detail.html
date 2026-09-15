@@ -4,7 +4,15 @@
 
 {% block header %}
 <div class="header with-back">
-  <div class="back"><a href="{% url 'ustrip:itinerary_day' day.id %}">
+  {% comment %}
+    2026-09-15: this always pointed at itinerary_day.html regardless of
+    where the visitor actually came from, so arriving via the itinerary
+    list's own level-2/3 expansion and pressing back landed on a page they
+    had never asked to see ("an uglier view" — Avi). `data-back-fallback`
+    is used only when there is no real history to return to (a bookmark, a
+    shared link, a fresh tab) — see the script at the bottom of this page.
+  {% endcomment %}
+  <div class="back"><a href="{% url 'ustrip:itinerary_day' day.id %}" id="back-link" data-back-fallback="{% url 'ustrip:itinerary_day' day.id %}">
     <svg class="icon" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
   </a></div>
   <div class="title serif" style="font-size:19px;margin:0;">{{ item.display_title }}</div>
@@ -74,7 +82,7 @@
     <figure class="photo-tile" data-photo-id="{{ photo.id }}" style="margin:0;">
       <img src="{{ photo.photo_url }}" alt="">
       <button type="button" class="mini-btn mini-btn-danger" data-delete-photo title="Delete">&times;</button>
-      <figcaption>{{ photo.caption }}</figcaption>
+      <figcaption>{{ photo.caption }}<span class="photo-date">{{ photo.created_at|date:"M j" }}</span></figcaption>
     </figure>
   {% endfor %}
 </div>
@@ -136,6 +144,19 @@
 (function () {
   const itemId = {{ item.id }};
   const dayUrl = "{% url 'ustrip:itinerary_day' day.id %}";
+
+  // 2026-09-15: go back to wherever the visitor actually came from, inside
+  // ustrip, rather than always landing on the day page. `document.referrer`
+  // is checked rather than just `history.length` — that count includes
+  // pages outside this app too, so it cannot tell "came from ustrip" from
+  // "opened in a fresh tab" on its own.
+  const backLink = document.getElementById("back-link");
+  if (backLink && document.referrer && document.referrer.indexOf(window.location.origin + "/ustrip/") === 0) {
+    backLink.addEventListener("click", function (e) {
+      e.preventDefault();
+      history.back();
+    });
+  }
   const myAvatar = { style: "{% avatar_style user %}", initials: "{{ user|avatar_initials }}", name: "{{ user.first_name|default:user.get_username|escapejs }}" };
   const isSuperuser = {{ user.is_superuser|yesno:"true,false" }};
 
@@ -178,7 +199,12 @@
         const tile = ustrip.el('<figure class="photo-tile" style="margin:0;"><img alt=""><button type="button" class="mini-btn mini-btn-danger" data-delete-photo title="Delete">×</button><figcaption></figcaption></figure>');
         tile.dataset.photoId = photo.id;
         tile.querySelector("img").src = photo.photo_url;
-        tile.querySelector("figcaption").textContent = photo.caption || "";
+        const cap = tile.querySelector("figcaption");
+        cap.appendChild(document.createTextNode(photo.caption || ""));
+        const dateSpan = document.createElement("span");
+        dateSpan.className = "photo-date";
+        dateSpan.textContent = new Date(photo.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        cap.appendChild(dateSpan);
         grid.appendChild(tile);
         photoForm.reset();
       })

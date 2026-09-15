@@ -478,3 +478,41 @@ stops them — same four credentials, their own subfolder name — but nobody
 has asked for it, and building it speculatively for apps that do not upload
 anything today would be exactly the kind of unasked-for work this project's
 own methodology warns against.
+
+## Sprint 16 — Home stops being everything; the itinerary gets a level `DONE (DEV)`
+
+Avi, 2026-09-15, in one message: a trip logo on Home; Google sign-in,
+"same system as babook"; Home slimmed to "just a big info of the trip in
+focus, dates, flights, minimum information", built as if the app might one
+day hold more than one trip without actually building a trip switcher; the
+itinerary section's own header naming the trip in focus; a real bug where
+the item detail page's back arrow always landed somewhere the visitor had
+never asked to see; and a fourth level of collapsing on the itinerary —
+tap an item to see a little more in place, then jump from there to the
+full page.
+
+| Item | Status |
+|---|---|
+| Home rebuilt: trip "logo" (typographic — no image asset exists for this trip) at the top, then dates/day-count/phase, then flights and rental car. Next-up, where we sleep, and good to know all moved to the itinerary page | DONE |
+| Itinerary list page: trip name in its own header line, a "First up" card, "Where we sleep & good to know" collapsed by default (`<details>`, matching the day list's own pattern) | DONE |
+| **Level 3**: tapping an item's title expands a panel in place — description, tags, location, cost — no navigation, no network call, server-rendered alongside the row it belongs to | DONE |
+| **Level 4**: a "Full details" link inside the level-3 panel opens the existing, unchanged `itinerary_item_detail.html` — still informative, not a form; editing still lives behind its own explicit Edit button | DONE |
+| **The back-navigation bug, found and fixed**: the item detail page's back arrow always returned to `itinerary_day.html` regardless of where the visitor came from, so arriving from the itinerary list and pressing back landed on a page never asked for. Fixed with `history.back()`, gated on `document.referrer` actually being inside `/ustrip/`, falling back to the old fixed link when there is no history to return to (a bookmark, a shared link, a fresh tab) | FIXED |
+| Google sign-in on both `login.html` and `signup.html` — the exact allauth URL babook's own login page already uses (`/accounts/google/login/?process=login&next=...`), no new view, same shared `User` table | DONE |
+| Photo tiles show the date they were taken (`created_at`), not just held on it — "tagged ... with this date" was already true in the data (Sprint 15) and invisible on the page until now | DONE |
+| **Bug found by the phone guard, immediately**: the new "Where we sleep & good to know" `<summary>` measured 350×37 — under the 44px floor. Fixed with `min-height: 44px; display: flex; align-items: center` rather than padding alone, which does not reliably clear 44px once the text wraps on a narrow phone | FIXED |
+| Tests: 3 new server-rendered checks (trip logo, trip-name header, Google links), 3 new real-browser checks (level-3 expand toggles without navigating, back returns to the itinerary list, back falls back to the day page with no referrer) — the back-navigation fix proved against the exact original bug by reverting it and watching the new test fail on `/ustrip/itinerary/1/`, the precise "uglier view" reported | DONE — 180 ustrip tests pass |
+
+**Two judgment calls made rather than asked, both reversible:**
+
+- **The trip "logo" is typographic**, not an uploaded image — none exists
+  for this trip, and inventing a graphic asset from nothing felt like
+  overreach for something this quick to swap later if Avi wants a real
+  mark.
+- **"Where we sleep & good to know" collapses by default** on the
+  itinerary page rather than always being open — it is trip-level context,
+  not the days themselves, and the days are what the screen is mostly for.
+
+Not done, not asked for: an actual trip switcher. §0 of the spec is
+explicit that this stays true — only the *shape* of "the trip in focus"
+changed, not whether more than one can exist yet.

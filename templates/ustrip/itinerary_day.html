@@ -3,11 +3,14 @@
 {% block title %}Day {{ day.label }} — {{ day.title }}{% endblock %}
 
 {% block header %}
-<div class="header with-back">
-  <div class="back"><a href="{% url 'ustrip:itinerary_list' %}">
-    <svg class="icon" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
-  </a></div>
-  <div class="title serif" style="font-size:19px;margin:0;">Day {{ day.label }} &mdash; {{ day.title }}</div>
+<div class="header with-back header-trip">
+  <div class="back-row">
+    <div class="back"><a href="{% url 'ustrip:itinerary_list' %}">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+    </a></div>
+    <div class="title serif" style="font-size:19px;margin:0;">Day {{ day.label }} &mdash; {{ day.title }}</div>
+  </div>
+  <p class="trip-name-line">{{ day.trip.name }}</p>
 </div>
 {% endblock %}
 

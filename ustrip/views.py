@@ -83,21 +83,21 @@ def offline(request):
 
 @family_required
 def home(request):
+    """Minimal on purpose (Avi, 2026-09-15): the trip in focus, its dates,
+    and how the family is getting there — nothing else. Everything that used
+    to live here (today's next stop, where we sleep, good to know) moved to
+    `itinerary_list`, because "entering the trip in focus" is what pressing
+    Itinerary already means, and Home is what you see before that, not a
+    second copy of it. Designed to still make sense if this app ever holds
+    more than one trip (spec §0), without actually building a trip switcher."""
     trip = _current_trip()
     family_members = get_user_model().objects.filter(groups__name=FAMILY_GROUP).order_by("date_joined")
     context = {"trip": trip, "family_members": family_members, "active_tab": "home"}
     if trip:
-        position = today.position(trip)
-        context["position"] = position
-        context["upcoming_day"] = position["day"]
-        context["next_item"] = position["item"]
+        context["position"] = today.position(trip)
         context["day_count"] = trip.days.count()
-        context["checklist_count"] = trip.checklists.count()
-        context["journal_count"] = trip.journal_posts.count()
         context["flights"] = trip.flights.all()
         context["rental_car"] = getattr(trip, "rental_car", None)
-        context["lodgings"] = trip.lodgings.all()
-        context["notes"] = trip.notes.all()
     return render(request, "ustrip/home.html", context)
 
 
@@ -109,7 +109,9 @@ def lodging_edit(request, lodging_id=None):
     lodging = get_object_or_404(Lodging, pk=lodging_id) if lodging_id else None
     return render(
         request, "ustrip/lodging_edit.html",
-        {"trip": lodging.trip if lodging else trip, "lodging": lodging, "active_tab": "home"},
+        # "Where we sleep" now lives on the itinerary page (2026-09-15), so
+        # that is the tab a visitor came from and should return to.
+        {"trip": lodging.trip if lodging else trip, "lodging": lodging, "active_tab": "itinerary"},
     )
 
 
@@ -124,12 +126,27 @@ def _scheduled_days(trip):
 
 @family_required
 def itinerary_list(request):
+    """"Entering the trip in focus" (Avi, 2026-09-15): everything Home used
+    to show beyond the bare essentials lives here now — today's next stop,
+    where we sleep, good to know — because this is the screen that means
+    "I am now inside this trip", and Home is the screen before that."""
     trip = _current_trip()
     days = _scheduled_days(trip)
-    today_day = today.position(trip)["day"] if trip else None
+    position = today.position(trip) if trip else None
+    today_day = position["day"] if position else None
     return render(
         request, "ustrip/itinerary_list.html",
-        {"trip": trip, "days": days, "today_day_id": today_day.id if today_day else None, "active_tab": "itinerary"},
+        {
+            "trip": trip,
+            "days": days,
+            "today_day_id": today_day.id if today_day else None,
+            "position": position,
+            "upcoming_day": position["day"] if position else None,
+            "next_item": position["item"] if position else None,
+            "lodgings": trip.lodgings.all() if trip else [],
+            "notes": trip.notes.all() if trip else [],
+            "active_tab": "itinerary",
+        },
     )
 
 

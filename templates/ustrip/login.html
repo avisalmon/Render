@@ -20,4 +20,20 @@
   </label>
   <button type="submit" class="btn btn-primary">Sign in</button>
 </form>
+
+{% comment %}
+  2026-09-15 (Avi): "sign in need to be with google option. its the same
+  system as babook. same user system." The exact allauth flow babook's own
+  login page already offers (templates/registration/login.html) — no new
+  view, no new account system, same shared User table. `next` is carried
+  the same way the password form above carries it, so signing in with
+  Google lands you back wherever you were headed, not just at Home.
+{% endcomment %}
+<p class="auth-or">or</p>
+<a class="btn btn-secondary" href="/accounts/google/login/?process=login&next={{ request.GET.next|default:'/ustrip/'|urlencode }}">
+  <svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:none;fill:currentColor;">
+    <path d="M21.35 11.1h-9.17v2.98h5.4c-.23 1.36-1.6 4-5.4 4-3.25 0-5.9-2.7-5.9-6s2.65-6 5.9-6c1.85 0 3.09.79 3.8 1.47l2.6-2.5C17.02 3.46 14.9 2.5 12.18 2.5 6.98 2.5 2.78 6.7 2.78 12s4.2 9.5 9.4 9.5c5.42 0 9.02-3.8 9.02-9.16 0-.62-.07-1.09-.15-1.24z"/>
+  </svg>
+  Continue with Google
+</a>
 {% endblock %}

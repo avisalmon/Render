@@ -385,8 +385,25 @@ body.ustrip {
 .ustrip .mini-row.rejected { opacity: .6; }
 .ustrip .mini-time { width: 42px; flex-shrink: 0; font-size: 11px; font-weight: 600; color: var(--ink-soft); }
 .ustrip .mini-title { flex: 1; min-width: 0; font-size: 13px; font-weight: 600; color: var(--ink);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  /* Was an <a> that navigated straight to the detail page; is a <button>
+     now that it opens the level-3 panel in place instead (2026-09-15) —
+     reset to look exactly as it did. */
+  background: none; border: none; padding: 6px 0; margin: 0; font-family: inherit; text-align: left; cursor: pointer; }
 .ustrip .mini-title:hover { color: var(--rust); }
+
+/* Level 3: a little more, in place, no navigation (2026-09-15). */
+.ustrip .mini-expand {
+  margin: -4px 0 4px 52px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+.ustrip .mini-expand-desc { margin: 0 0 8px; font-size: 12.5px; line-height: 1.5; color: var(--ink-soft); }
+.ustrip .mini-expand .tags { margin: 0 0 8px; }
+.ustrip .tag.place { color: var(--ink-soft); border: 1px solid var(--line); }
+.ustrip .mini-expand-more { font-size: 12.5px; font-weight: 600; }
 .ustrip .mini-empty { font-size: 12px; color: var(--ink-soft); padding: 10px 12px; }
 
 /* The detail page. */
@@ -416,8 +433,12 @@ body.ustrip {
 .ustrip .photo-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .ustrip .photo-tile .mini-btn { position: absolute; top: 6px; right: 6px; }
 .ustrip .photo-tile figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: 6px 9px; font-size: 11px;
+  display: flex; justify-content: space-between; align-items: baseline; gap: 6px;
   color: var(--white-text); background: linear-gradient(transparent, rgba(30,25,15,.7)); }
-.ustrip .photo-tile figcaption:empty { display: none; }
+/* Sprint 15 (2026-09-15): "photo that will be tagged... with this date" —
+   the item tag is the page itself (a photo here is already this item's);
+   the date was stored (created_at) but never shown, so this is that. */
+.ustrip .photo-date { flex-shrink: 0; opacity: .85; font-size: 10px; }
 .ustrip .photo-add { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
 .ustrip .photo-add input[type="file"] { flex: 1; font-size: 12.5px; min-width: 0; }
 .ustrip .photo-add input[type="text"] { flex: 1; font: inherit; font-size: 13px; color: var(--ink); background: var(--card);
@@ -647,3 +668,41 @@ textarea.ustrip.u-edit-field, .ustrip textarea.u-edit-field { resize: vertical; 
   border-top: 1px solid var(--line);
 }
 .ustrip .feed-daylabel:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+
+/* Trip name in the header, on the itinerary pages only (2026-09-15): "which
+   trip am I looking at" only needs answering once you're inside one. The
+   app's own wordmark stays a row; the trip name is a second line below it. */
+.ustrip .header-trip { flex-direction: column; align-items: stretch; gap: 4px; }
+.ustrip .wordmark-row, .ustrip .header-trip .back-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.ustrip .header-trip.with-back .back-row { justify-content: flex-start; }
+.ustrip .trip-name-line { margin: 0; font-size: 12.5px; font-weight: 600; color: var(--ink-soft); }
+
+/* Home's own trip identity (Avi: "some logo for the trip"), 2026-09-15. No
+   image asset exists for this trip, so the mark is typographic — the same
+   spark used for the signed-out header stamp, at logo scale, with the
+   trip's own name as the wordmark rather than "ustrip"'s. */
+.ustrip .trip-logo { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 0 4px; text-align: center; }
+.ustrip .trip-logo-mark { width: 30px; height: 30px; color: var(--rust); }
+.ustrip .trip-logo-name { margin: 0; font-size: 24px; font-weight: 700; }
+
+/* "Where we sleep & good to know" (moved from Home, 2026-09-15): present
+   but not competing with the days for attention, so it collapses shut by
+   default — same `<details>` pattern the day list already uses. */
+.ustrip .trip-extra { margin: 18px 0 4px; }
+.ustrip .trip-extra > summary {
+  list-style: none; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--ink-soft);
+  /* Caught by the phone guard at 350x37: min-height + flex centering, not
+     just padding, since padding alone doesn't reliably clear 44px once the
+     text wraps to one line on a narrow phone. */
+  min-height: 44px; display: flex; align-items: center;
+  padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--card);
+}
+.ustrip .trip-extra > summary::-webkit-details-marker { display: none; }
+.ustrip .trip-extra[open] > summary { border-radius: 10px 10px 0 0; border-bottom: none; }
+
+/* Google sign-in (2026-09-15): a plain allauth link styled as a secondary
+   button, same shape as babook's own login page already uses. */
+.ustrip .auth-or { text-align: center; font-size: 12px; color: var(--ink-soft); margin: 14px 0; }
+.ustrip .btn svg { vertical-align: -3px; margin-inline-end: 6px; }
