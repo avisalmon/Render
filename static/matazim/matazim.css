@@ -477,22 +477,26 @@ img { max-width: 100%; height: auto; display: block; }
 
 /* ---------------------------------------------------------------- gate */
 
-/* REQ-M.36 — a shut door that says why. A lock with no way forward is a dead
- * end, so the reason sits under the button with the test one click away. */
-.mz-door { display: inline-flex; flex-direction: column; gap: 6px; }
-.mz-btn.is-disabled {
-  opacity: .45;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-.mz-door-why { font-size: .8rem; color: var(--mz-muted); }
-/* This link is the only way forward from a locked door, so it gets a real hit
-   area rather than the 15px a bare inline link gives a thumb. */
-.mz-door-why a {
-  display: inline-block;
-  padding: 9px 6px;
-  font-weight: 500;
-  text-decoration: underline;
+/* The locked door is gone (SPR-M.42).
+ *
+ * REQ-M.36 shut כניסת תלמידים until the entrance test was passed, and this
+ * block dressed that: a greyed button, a padlock, and the way forward written
+ * underneath in .8rem grey. It was careful about a door that should not have
+ * been there. The front page no longer asks a reader which kind of person they
+ * are, so there is nothing to lock and nothing to explain: the test is the
+ * button. .mz-door, .mz-door-why and .mz-btn.is-disabled had no other user in
+ * the product and went with it.
+ *
+ * The rule REQ-M.36 protects has not moved. It lives where it always really
+ * lived, in student_door_is_open() and the views that consult it. */
+
+/* The one line under the hero's single action. Not a reason a door is shut,
+   which is what used to sit here: an invitation to start. */
+.mz-hero-note {
+  flex: 1 1 100%;
+  margin-top: -2px;
+  font-size: .86rem;
+  color: var(--mz-muted);
 }
 
 /* ---------------------------------------------------------------- welcome */
@@ -918,7 +922,15 @@ img { max-width: 100%; height: auto; display: block; }
 }
 .mz-btn-done:hover { transform: none; box-shadow: none; }
 
-.mz-nav-done { color: var(--mz-ink) !important; }
+/* A menu item for something already behind you (REQ-M.63).
+ *
+ * This used to darken the text and sit next to a ✓ in the markup, and Avi on
+ * seeing it: it looks ugly and it ruins the look. A navigation bar is not a
+ * checklist. The requirement is that somebody who passed is never invited to
+ * take it again, which de-emphasis says perfectly well: the item stops
+ * competing with the things they still have to do, and stays reachable,
+ * because hiding it broke the test chain for exactly the people who passed. */
+.mz-nav-done { color: var(--mz-muted) !important; font-weight: 400 !important; }
 .mz-check { color: var(--mz-teal-text); font-weight: 700; }
 
 /* Text for assistive technology only. A ✓ and a ○ are read out as punctuation

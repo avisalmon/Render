@@ -2900,3 +2900,69 @@ an accessible name, and prose over 100 characters a line on no screen at all,
 down from nine. Tests: 659 matazim tests plus the 8 written here, all passing,
 and each of the new ones was confirmed by reintroducing the defect and watching
 it fail.
+
+## SPR-M.42 — One door, and it belongs to the teenager  `DONE 2026-09-15`
+
+**Goal:** F-M.41.4, which SPR-M.41 recorded as decided and left for its own
+sprint. Avi: the site should not even state that it is for students or leaders.
+Assume a teenager arrived, because that is who this is for. A leader is
+recognised by the link they arrived through, and the leader entrance stays
+visible in the menu rather than standing in the hero. "It's not so pleasant" to
+put somebody on the spot on arrival.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.42.1 | The hero carries one action, and it is the teenager's | REQ-M.5c superseded | DONE |
+| F-M.42.2 | The locked door, and the CSS that dressed it, are gone | REQ-M.36 unchanged | DONE |
+| F-M.42.3 | The leader door stays in the menu, where it already was | REQ-M.103 | DONE |
+| F-M.42.4 | The passed test is marked without a ✓ in the menu | REQ-M.63 | DONE |
+
+### What the page used to ask
+
+Three controls, and the reader had to place themselves among them: a padlocked
+כניסת תלמידים in the primary slot, a solid teal כניסת מובילים beside it, and
+מבחן הכניסה third as an outline. SPR-M.41 measured the consequence: on a page
+written to recruit fourteen-year-olds, the strongest enabled control was the one
+for adults, and the teenager's actual next step was the weakest of the three
+with its explanation in 11.5px grey underneath.
+
+Now: one primary button. Before the test is passed it *is* the test, because the
+test is the way in and a locked door with the key taped underneath it is still a
+locked door. After it is passed it becomes להצטרף לתוכנית, with the pass
+acknowledged beside it rather than the invitation repeated.
+
+**REQ-M.36 has not moved.** Somebody who has not passed still cannot join, and
+that rule lives where it always really lived, in `student_door_is_open()` and
+the views that consult it, rather than in a greyed button. What was deleted is
+the *drawing* of the gate, not the gate.
+
+**The leader door needed no work at all.** It has been a nav item since
+REQ-M.103, which is exactly the shape Avi asked for: seen, but not in front of
+your eyes. The only change was removing its second copy from the hero.
+
+### Three earlier tests had to be rewritten, on purpose
+
+`test_two_front_doors_and_the_public_test` (SPR-M.1),
+`test_without_a_passed_test_the_student_door_is_shut` (SPR-M.2) and
+`test_passing_opens_the_student_door` (SPR-M.3) all asserted the fork. They
+failed the moment the hero changed, which is what they were for. Each was
+rewritten to assert the new rule rather than deleted, and each carries a note
+saying what it used to assert and why that changed, so the history is readable
+from the test rather than only from here.
+
+### The ✓ in the menu
+
+Avi, while this was being built: in the menu, מבחן הכניסה looks ugly with the ✓
+added, and it ruins the look. A navigation bar is not a checklist. REQ-M.63 asks
+that somebody who passed is never invited to take it again, and de-emphasis says
+that without a badge: `.mz-nav-done` now goes muted and normal-weight. It stays
+in the menu and stays reachable, because hiding it once made the whole test
+chain unreachable for precisely the people who had passed.
+
+### Still open from Avi's note
+
+"A student should have an easier flow of user journey. The site should
+flawlessly lead him on what he is expected to do in every stage." The front door
+is now one such step. The rest of that, every stage saying what the next thing
+is, is a pass over המסלול שלי, the הדרכות, יוצרים and the practicum, and it is
+not in this sprint.

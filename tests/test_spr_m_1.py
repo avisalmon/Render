@@ -196,12 +196,26 @@ def test_hero_renders(client, db):
     assert "בתיכון" in hero
 
 
-def test_two_front_doors_and_the_public_test(client, db):
-    """T-F-M.1.5-2: REQ-M.5c and REQ-M.5d, both drawn on screen 1."""
+def test_one_front_door_and_it_belongs_to_the_teenager(client, db):
+    """T-F-M.1.5-2, rewritten by SPR-M.42. REQ-M.5c's two doors are gone.
+
+    This asserted the fork this page opened with: כניסת תלמידים beside כניסת
+    מובילים, the reader asked which they were. Avi killed it after the SPR-M.41
+    measurement showed the strongest enabled control on a page written to
+    recruit fourteen-year-olds was the one for adults. "It's not so pleasant"
+    to put somebody on the spot like that.
+
+    So the hero carries one action, and it is the teenager's. The leader door
+    is not deleted, it is in the menu (REQ-M.103), which is where a teacher
+    without an invite link goes looking.
+    """
     html = client.get("/matazim/").content.decode()
-    assert "כניסת תלמידים" in html
-    assert "כניסת מובילים" in html
-    assert "מבחן הכניסה" in html
+    hero = html.split("mz-hero-cta")[1].split("</div>")[0]
+
+    assert "מבחן הכניסה" in hero
+    assert "כניסת מובילים" not in hero, "the leader door is back in the hero"
+    assert "כניסת תלמידים" not in html, "nobody is labelled a student on arrival"
+    assert "כניסת מובילים" in html, "the leader door left the menu as well"
 
 
 def test_how_it_works_shows_four_stages_in_order(client, db):

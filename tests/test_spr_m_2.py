@@ -410,18 +410,33 @@ def test_the_replay_control_brings_the_welcome_back(client, db):
 # ---------------------------------------------------------------- F-M.2.7
 
 
-def test_without_a_passed_test_the_student_door_is_shut(client, db):
-    """T-F-M.2.7-1: REQ-M.36, and it says why rather than simply refusing."""
+def test_without_a_passed_test_the_hero_is_the_test(client, db):
+    """T-F-M.2.7-1, rewritten by SPR-M.42.
+
+    REQ-M.36 still holds: somebody who has not passed cannot join. What
+    changed is how the page says so. It used to draw a padlocked כניסת
+    תלמידים with the way forward underneath it in .8rem grey, which is a
+    locked door with the key taped to it. The test is the way in, so the test
+    is the button now, and there is no gate to explain.
+    """
     html = client.get(reverse("matazim:home")).content.decode()
-    assert "mz-door-locked" in html
-    assert "מבחן הכניסה" in html
+    hero = html.split("mz-hero-cta")[1].split("</div>")[0]
+
+    assert "mz-door-locked" not in html, "the padlocked door is back"
+    assert reverse("matazim:entrance_test") in hero
+    assert "מבחן הכניסה" in hero
 
 
 def test_the_leader_door_is_never_gated(client, db):
-    """T-F-M.2.7-2: the test measures a teenager's commitment, not a teacher's."""
+    """T-F-M.2.7-2: the test measures a teenager's commitment, not a teacher's.
+
+    Since SPR-M.42 the leader door is a menu item rather than a hero button,
+    so this now asserts it is reachable without a gate rather than that it is
+    unlocked where it used to stand.
+    """
     html = client.get(reverse("matazim:home")).content.decode()
-    leader = html.split("כניסת מובילים")[0][-400:]
-    assert "mz-door-locked" not in leader
+    assert reverse("matazim:leader_entrance") in html
+    assert "mz-door-locked" not in html
 
 
 def test_the_header_login_is_never_gated(client, db):

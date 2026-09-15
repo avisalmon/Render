@@ -87,8 +87,21 @@
             once passed also made the whole test chain unreachable for them,
             which the reachability audit caught immediately.
           {% endcomment %}
-          <a href="{% url 'matazim:entrance_test' %}" class="{% if section == 'test' %}is-active {% endif %}{% if test_passed %}mz-nav-done{% endif %}">
-            מבחן הכניסה{% if test_passed %} <span class="mz-check" aria-label="עברת">✓</span>{% endif %}
+          {% comment %}
+            SPR-M.42. The done state used to be a ✓ glyph sitting in the menu
+            beside the words, and Avi: it looks ugly and it ruins the look. He
+            is right that a nav bar is not a checklist.
+
+            REQ-M.63's point is that a member who has passed is never invited
+            to take it again, and that survives without the tick. The mark
+            stays, as .mz-nav-done, and now reads as a finished thing going
+            quiet rather than as a call to action wearing a badge. Still there,
+            still reachable, because hiding it once broke the whole test chain
+            for the people who had passed.
+          {% endcomment %}
+          <a href="{% url 'matazim:entrance_test' %}" class="{% if section == 'test' %}is-active {% endif %}{% if test_passed %}mz-nav-done{% endif %}"
+             {% if test_passed %}title="עברתם את מבחן הכניסה"{% endif %}>
+            מבחן הכניסה
           </a>
           {# Programme sections for the people in it, not recruitment copy. #}
           <a href="{% url 'matazim:community' %}" {% if section == 'community' %}class="is-active"{% endif %}>קהילת מט״צים</a>
