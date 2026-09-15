@@ -1,7 +1,8 @@
-"""Scoring (spec §5.3). SPR-Z.3 implements vote mode only — judge mode is
-SPR-Z.4. `Player.score` is a cache; these functions are the truth it is a
-cache *of* (Rule 5.3.1: recomputing from `Vote` rows must always reproduce
-the cached total)."""
+"""Scoring (spec §5.3). `Player.score` is a cache; these functions are the
+truth it is a cache *of* (Rule 5.3.1: recomputing from `Vote` rows must
+always reproduce the cached total)."""
+
+JUDGE_POINTS = 3
 
 from collections import Counter
 
@@ -27,6 +28,26 @@ def vote_round_scores(round_obj):
                 points += 1   # unanimous
         scores[sub.id] = points
     return scores
+
+
+def judge_round_scores(round_obj):
+    """{submission_id: points} for judge mode: the judge's single pick
+    gets 3 points, nothing else scores (spec §5.3 judge mode). If the
+    judge never voted (timed out), this is empty — "the judge fell
+    asleep," nobody scores that round."""
+    vote = round_obj.votes.first()   # cast_vote refuses more than one vote per round
+    if vote is None:
+        return {}
+    return {vote.submission_id: JUDGE_POINTS}
+
+
+def round_scores(round_obj):
+    """The right scoring function for this session's `scoring_mode`."""
+    from .models import Session
+
+    if round_obj.session.scoring_mode == Session.JUDGE:
+        return judge_round_scores(round_obj)
+    return vote_round_scores(round_obj)
 
 
 def rank_players(session):

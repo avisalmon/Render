@@ -11,7 +11,7 @@ import random
 
 from django.db.models import Q
 
-from .models import MemeImage, Session, Submission
+from .models import MemeImage, Session, Submission, Topic
 
 
 def pool_for(session):
@@ -27,23 +27,30 @@ def pool_for(session):
     return MemeImage.objects.filter(base, owner__isnull=True, visibility=MemeImage.PUBLIC)
 
 
+def _unseen_and_pool(session):
+    pool = list(pool_for(session))
+    if not pool:
+        return [], []
+    seen_ids = set(Submission.objects.filter(round__session=session).values_list("image_id", flat=True))
+    unseen = [img for img in pool if img.id not in seen_ids]
+    random.shuffle(unseen)
+    random.shuffle(pool)
+    return unseen, pool
+
+
 def deal_round(session, players):
-    """One image per player for a new round: no repeats within the session
-    while unseen images remain, and no duplicate image within this round
-    while the pool allows (Rule 6.5.1). Returns {player: MemeImage}.
+    """One image per player for a new round (Normal/Topics modes): no
+    repeats within the session while unseen images remain, and no
+    duplicate image within this round while the pool allows (Rule 6.5.1).
+    Returns {player: MemeImage}.
 
     Falls back to reusing images (still no duplicates *within* the round,
     when the pool is at least as big as the player count) once every image
     has been dealt at least once — never crashes a game over a small bank.
     """
-    pool = list(pool_for(session))
+    unseen, pool = _unseen_and_pool(session)
     if not pool:
         return {}
-
-    seen_ids = set(Submission.objects.filter(round__session=session).values_list("image_id", flat=True))
-    unseen = [img for img in pool if img.id not in seen_ids]
-    random.shuffle(unseen)
-    random.shuffle(pool)
 
     assignment = {}
     used_this_round = set()
@@ -57,3 +64,28 @@ def deal_round(session, players):
         if image in unseen:
             unseen.remove(image)
     return assignment
+
+
+def deal_same_image(session, players):
+    """Same Meme mode (spec §5.1): one image, shared by everyone this
+    round. Still prefers an unseen image while any remain."""
+    unseen, pool = _unseen_and_pool(session)
+    if not pool:
+        return {}
+    image = (unseen or pool)[0]
+    return {player: image for player in players}
+
+
+def deal_topic(session):
+    """Topics mode (spec §5.1, Rule 5.1.1): one topic per round, no
+    repeats within the session while unused ones remain. Public topics
+    plus, for a logged-in host, their own."""
+    base = Q(owner__isnull=True, is_public=True)
+    if session.host_user_id:
+        base |= Q(owner_id=session.host_user_id)
+    pool = list(Topic.objects.filter(base))
+    if not pool:
+        return None
+    used_ids = set(session.rounds.exclude(topic=None).values_list("topic_id", flat=True))
+    unused = [t for t in pool if t.id not in used_ids]
+    return random.choice(unused or pool)

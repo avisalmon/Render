@@ -30,6 +30,18 @@ os.environ.setdefault("DJANGO_ALLOW_ASYNC_UNSAFE", "1")
 
 pytestmark = [pytest.mark.memzscreens, pytest.mark.django_db]
 
+
+@pytest.fixture(autouse=True)
+def _media_tmp(settings, tmp_path):
+    """build_world() makes real MemeImage/Meme rows with real files (spec
+    of this contract: real state, not a fixture faking it). Without this,
+    every run of this file writes those files into the *actual* dev
+    media/ folder, since live_server shares process settings and nothing
+    else in this file was overriding MEDIA_ROOT — found 2026-09-15 when a
+    stray file from an old test run showed up in a manual demo screenshot.
+    1902 orphaned files had already accumulated in dev media/ by then."""
+    settings.MEDIA_ROOT = str(tmp_path / "media")
+
 PASSWORD = "memz-screens-7781"
 PHONE = {"width": 390, "height": 844}
 MIN_TAP_PX = 44
@@ -147,13 +159,15 @@ def _game_images(n=4):
     return images
 
 
-def _game_at(phase):
+def _game_at(phase, **session_kwargs):
     """A real 3-player game, advanced to `phase` through memz.game itself —
     the actual state machine, not a fixture faking the row (the_manager.md
     lesson #10). Returns (code, host_token, guest_token)."""
     from memz import game
 
-    session, host = game.create_session(host_user=None, round_count=1, round_seconds=60, vote_seconds=20)
+    session, host = game.create_session(
+        host_user=None, round_count=1, round_seconds=60, vote_seconds=20, **session_kwargs
+    )
     p2 = game.join_session(session, "חבר")
     p3 = game.join_session(session, "חברה")
     if phase == "lobby":
@@ -163,20 +177,32 @@ def _game_at(phase):
     if phase == "captioning":
         return session.code, host.guest_token, p2.guest_token
 
+    from memz import cards as cards_module
+
     for p in (host, p2, p3):
-        game.submit_caption(session, p, 1, f"כיתוב של {p.nickname}")
+        if session.caption_mode == session.CARDS:
+            hand = cards_module.hand_for(p)
+            game.submit_caption(session, p, 1, hand_card_id=hand[0].id)
+        else:
+            game.submit_caption(session, p, 1, caption_text=f"כיתוב של {p.nickname}")
     if phase == "revealed":
         return session.code, host.guest_token, p2.guest_token
 
-    game.advance(session, host)   # revealed -> voting
+    game.advance(session, host)   # revealed -> voting (or straight to done for Relaxed)
     if phase == "voting":
         return session.code, host.guest_token, p2.guest_token
 
     round_obj = game.current_round(session)
-    subs = list(round_obj.submissions.filter(meme__isnull=False))
-    for voter in (host, p2, p3):
-        target = next(s for s in subs if s.player_id != voter.id)
-        game.cast_vote(session, voter, 1, target.id)
+    if round_obj.status == round_obj.VOTING:
+        subs = list(round_obj.submissions.filter(meme__isnull=False))
+        if session.scoring_mode == session.JUDGE:
+            target = next(s for s in subs if s.player_id != round_obj.judge_id)
+            judge = host if round_obj.judge_id == host.id else (p2 if round_obj.judge_id == p2.id else p3)
+            game.cast_vote(session, judge, 1, target.id)
+        else:
+            for voter in (host, p2, p3):
+                target = next(s for s in subs if s.player_id != voter.id)
+                game.cast_vote(session, voter, 1, target.id)
     if phase == "result":
         return session.code, host.guest_token, p2.guest_token
 
@@ -202,6 +228,15 @@ def build_world():
 
     _game_images()
     games = {phase: _game_at(phase) for phase in ("lobby", "captioning", "revealed", "voting", "result", "finished")}
+
+    # SPR-Z.4: one screen each for the modes that look genuinely different.
+    from memz.models import CaptionCard, CaptionDeck
+
+    cards_deck = CaptionDeck.objects.create(name="חפיסה למסך", owner=None, is_public=True)
+    CaptionCard.objects.bulk_create([CaptionCard(deck=cards_deck, text=f"קלף {i}", order=i) for i in range(60)])
+    games["judge_voting"] = _game_at("voting", scoring_mode="judge")
+    games["cards_captioning"] = _game_at("captioning", caption_mode="cards", deck=cards_deck)
+    games["relaxed_result"] = _game_at("result", game_mode="relaxed")
 
     return {
         "user": user, "taken": taken, "image": image, "meme": meme, "expired_slug": expired.share_slug,
@@ -270,6 +305,12 @@ SCREENS = [
      lambda w: _token_script(w, "finished", "host")),
     ("game/big-screen-lobby", lambda w: f"/memz/s/{w['games']['lobby'][0]}/screen/", None, None, "game-lobby", None),
     ("game/big-screen-voting", lambda w: f"/memz/s/{w['games']['voting'][0]}/screen/", None, None, "game-voting", None),
+    ("game/judge-voting", lambda w: f"/memz/s/{w['games']['judge_voting'][0]}/", None, None, "game-voting",
+     lambda w: _token_script(w, "judge_voting", "guest")),   # round 1's judge is the first non-host
+    ("game/cards-captioning", lambda w: f"/memz/s/{w['games']['cards_captioning'][0]}/", None, None, "game-captioning",
+     lambda w: _token_script(w, "cards_captioning", "host")),
+    ("game/relaxed-result", lambda w: f"/memz/s/{w['games']['relaxed_result'][0]}/", None, None, "game-result",
+     lambda w: _token_script(w, "relaxed_result", "host")),
     ("404", "/memz/nowhere/", None, None, "404", None),
 ]
 

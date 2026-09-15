@@ -9,9 +9,10 @@ the round reaches `done`, or a vote count before `done`. `player=None`
 caller-specific (own submission, own vote, the "next session for you"
 carry-over)."""
 
+from . import cards as cards_module
 from . import conf
 from .models import Meme, Player, Session, Vote
-from .scoring import rank_players, vote_round_scores
+from .scoring import rank_players, round_scores
 
 
 def _presence(player):
@@ -41,7 +42,11 @@ def _round_payload(session, round_obj, player):
         "caption_deadline": _iso(round_obj.caption_deadline),
         "reveal_deadline": _iso(round_obj.reveal_deadline),
         "vote_deadline": _iso(round_obj.vote_deadline),
+        "topic": round_obj.topic.text if round_obj.topic_id else None,
     }
+    if session.scoring_mode == Session.JUDGE and round_obj.judge_id:
+        data["judge"] = {"player_id": round_obj.judge_id, "nickname": round_obj.judge.nickname,
+                         "is_me": bool(player and round_obj.judge_id == player.id)}
 
     if round_obj.status == round_obj.CAPTIONING:
         submissions = round_obj.submissions.select_related("image")
@@ -53,6 +58,11 @@ def _round_payload(session, round_obj, player):
                 "image_url": mine.image.file.url if mine.image else "",
                 "submitted": mine.meme_id is not None,
             }
+            if session.caption_mode == Session.CARDS:
+                data["my_hand"] = [
+                    {"hand_card_id": hc.id, "text": hc.card.text} for hc in cards_module.hand_for(player)
+                ]
+                data["can_swap_card"] = not player.card_swap_used
         return data
 
     if round_obj.status in (round_obj.REVEALED, round_obj.VOTING):
@@ -75,7 +85,7 @@ def _round_payload(session, round_obj, player):
     submissions = list(
         round_obj.submissions.filter(meme__isnull=False).select_related("meme", "player")
     )
-    points = vote_round_scores(round_obj)
+    points = round_scores(round_obj)
     top = max(points.values(), default=0)
     data["results"] = sorted(
         (

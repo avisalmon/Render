@@ -234,6 +234,9 @@ class Player(models.Model):
     is_host = models.BooleanField(default=False)
     seat_order = models.PositiveSmallIntegerField(default=0)
     score = models.IntegerField(default=0)
+    # Cards mode (spec Rule 5.2.2): one mercy swap for a dead hand, once
+    # per game.
+    card_swap_used = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     # Not auto_now: presence (spec §4.9) needs this touched deliberately, on
     # a state fetch or an action, not on every incidental save (a score

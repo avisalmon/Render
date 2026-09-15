@@ -16,7 +16,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .. import conf, game
-from ..models import Session
+from ..models import CaptionDeck, Session
 from ..state import build as build_state
 from .renderers import StaffOnlyBrowsableRenderer
 from .throttles import JoinAttemptThrottle, SessionCreateThrottle
@@ -56,6 +56,11 @@ class GameAPIView(APIView):
     def state_response(self, session, player, status=200):
         game.sync(session)
         session.refresh_from_db()
+        if player is not None:
+            # The action just run may have mutated this exact player row
+            # via a queryset .update() (card_swap_used, score, ...), which
+            # never touches the in-memory object already held here.
+            player.refresh_from_db()
         return Response(build_state(session, player), status=status)
 
 
@@ -70,10 +75,35 @@ class SessionCreateView(GameAPIView):
         vlo, vhi, vdefault = conf.get("VOTE_SECONDS")
         vote_seconds = _clamp_int(request.data.get("vote_seconds"), vlo, vhi, vdefault)
 
+        game_mode = request.data.get("game_mode") or Session.NORMAL
+        caption_mode = request.data.get("caption_mode") or Session.TYPED
+        scoring_mode = request.data.get("scoring_mode") or Session.VOTE
+        if game_mode not in dict(Session.GAME_MODES):
+            game_mode = Session.NORMAL
+        if caption_mode not in dict(Session.CAPTION_MODES):
+            caption_mode = Session.TYPED
+        if scoring_mode not in dict(Session.SCORING_MODES):
+            scoring_mode = Session.VOTE
+        if game_mode == Session.RELAXED:
+            scoring_mode = Session.VOTE   # Relaxed has no scoring at all; the field is unused, keep it sane
+
         user = request.user if request.user.is_authenticated else None
-        session, host = game.create_session(
-            host_user=user, round_count=round_count, round_seconds=round_seconds, vote_seconds=vote_seconds
-        )
+        deck = None
+        if caption_mode == Session.CARDS:
+            deck_id = request.data.get("deck")
+            deck = CaptionDeck.objects.filter(
+                pk=deck_id, is_public=True
+            ).first() if deck_id else CaptionDeck.objects.filter(is_public=True).first()
+            if deck is None:
+                return Response({"detail": "אין עדיין חפיסת קלפים זמינה."}, status=400)
+
+        try:
+            session, host = game.create_session(
+                host_user=user, round_count=round_count, round_seconds=round_seconds, vote_seconds=vote_seconds,
+                game_mode=game_mode, caption_mode=caption_mode, scoring_mode=scoring_mode, deck=deck,
+            )
+        except game.GameError as exc:
+            return Response({"detail": str(exc)}, status=400)
         return Response(
             {"code": session.code, "token": host.guest_token, "player_id": host.id}, status=201
         )
@@ -104,6 +134,7 @@ class StateView(GameAPIView):
         session.refresh_from_db()
         if player is not None:
             game.touch(player)
+            player.refresh_from_db()   # sync() may have mutated this row too (e.g. host handoff)
         return Response(build_state(session, player))
 
 
@@ -184,7 +215,23 @@ class SubmitView(GameAPIView):
         if refusal:
             return refusal
         try:
-            game.submit_caption(session, player, number, request.data.get("caption_text", ""))
+            game.submit_caption(
+                session, player, number,
+                caption_text=request.data.get("caption_text", ""), hand_card_id=request.data.get("hand_card_id"),
+            )
+        except game.GameError as exc:
+            return Response({"detail": str(exc)}, status=409)
+        return self.state_response(session, player)
+
+
+class SwapCardView(GameAPIView):
+    def post(self, request, code):
+        session = _session_or_404(code)
+        player, refusal = self.require_player(request, session)
+        if refusal:
+            return refusal
+        try:
+            game.swap_hand_card(session, player, request.data.get("hand_card_id"))
         except game.GameError as exc:
             return Response({"detail": str(exc)}, status=409)
         return self.state_response(session, player)

@@ -19,7 +19,7 @@ from contextlib import contextmanager
 from django.db import transaction
 from django.utils import timezone
 
-from . import conf, dealing, scoring
+from . import cards, conf, dealing, scoring
 from .memes import make_meme
 from .models import CODE_ALPHABET, Meme, Player, Round, Session, Submission, Vote, new_token
 
@@ -49,17 +49,27 @@ def generate_code():
 # ------------------------------------------------------------- lobby & join
 
 
-def create_session(*, host_user, round_count, round_seconds, vote_seconds):
+def create_session(
+    *, host_user, round_count, round_seconds, vote_seconds,
+    game_mode=Session.NORMAL, caption_mode=Session.TYPED, scoring_mode=Session.VOTE, deck=None,
+):
     from .tiers import tier_for
 
     tier = tier_for(host_user)
+    max_players = conf.cap("MAX_PLAYERS", tier)
+    if caption_mode == Session.CARDS:
+        if deck is None:
+            raise GameError("צריך לבחור חפיסת קלפים.")
+        if not cards.deck_size_ok(deck, max_players=max_players, round_count=round_count):
+            raise GameError("החפיסה הזאת קטנה מדי למשחק הזה.")
+
     session = Session.objects.create(
         code=generate_code(),
         host_user=host_user if (host_user and host_user.is_authenticated) else None,
-        game_mode=Session.NORMAL, caption_mode=Session.TYPED, scoring_mode=Session.VOTE,
+        game_mode=game_mode, caption_mode=caption_mode, scoring_mode=scoring_mode, deck=deck,
         image_source=Session.PUBLIC_RANDOM,
         round_count=round_count, round_seconds=round_seconds, vote_seconds=vote_seconds,
-        max_players=conf.cap("MAX_PLAYERS", tier),
+        max_players=max_players,
         remembered=bool(host_user and host_user.is_authenticated),
     )
     host_player = Player.objects.create(
@@ -150,6 +160,15 @@ def _active_players(session):
     return list(session.players.filter(is_active=True).order_by("seat_order"))
 
 
+def _minimum_players(session):
+    """Rule 5.4.1: 3 for vote/judge, 2 for Relaxed — keyed by game mode
+    for Relaxed since it has no real scoring_mode of its own."""
+    table = conf.get("MIN_PLAYERS")
+    if session.game_mode == Session.RELAXED:
+        return table["relaxed"]
+    return table.get(session.scoring_mode, table["vote"])
+
+
 def start_session(session, host_player):
     with locked(session):
         session.refresh_from_db()
@@ -158,7 +177,7 @@ def start_session(session, host_player):
         if session.status != Session.LOBBY:
             raise GameError("המשחק כבר התחיל.")
         players = _active_players(session)
-        minimum = conf.get("MIN_PLAYERS").get(session.scoring_mode, conf.get("MIN_PLAYERS")["vote"])
+        minimum = _minimum_players(session)
         if len(players) < minimum:
             raise GameError(f"צריך לפחות {minimum} שחקנים כדי להתחיל.")
         session.status = Session.PLAYING
@@ -168,14 +187,37 @@ def start_session(session, host_player):
         _bump(session)
 
 
+def _judge_for(session, number, players):
+    """Rotation by seat order, starting with the player after the host
+    (spec §5.3 judge mode), recomputed from whoever is active right now —
+    a player who leaves mid-game simply drops out of the rotation."""
+    if session.scoring_mode != Session.JUDGE or not players:
+        return None
+    ordered = sorted(players, key=lambda p: p.seat_order)
+    host = next((p for p in ordered if p.is_host), ordered[0])
+    start = ordered.index(host)
+    rotation = ordered[start + 1:] + ordered[:start + 1]
+    return rotation[(number - 1) % len(rotation)]
+
+
 def _create_round(session, number, players):
-    round_obj = Round.objects.create(session=session, number=number, status=Round.CAPTIONING,
-                                     started_at=timezone.now(),
-                                     caption_deadline=timezone.now() + timezone.timedelta(seconds=session.round_seconds))
-    dealt = dealing.deal_round(session, players)
+    topic = dealing.deal_topic(session) if session.game_mode == Session.TOPICS else None
+    judge = _judge_for(session, number, players)
+    round_obj = Round.objects.create(
+        session=session, number=number, status=Round.CAPTIONING, started_at=timezone.now(),
+        topic=topic, judge=judge,
+        caption_deadline=timezone.now() + timezone.timedelta(seconds=session.round_seconds),
+    )
+    if session.game_mode == Session.SAME_MEME:
+        dealt = dealing.deal_same_image(session, players)
+    else:
+        dealt = dealing.deal_round(session, players)
     Submission.objects.bulk_create([
         Submission(round=round_obj, player=player, image=image) for player, image in dealt.items()
     ])
+    if session.caption_mode == Session.CARDS and session.deck_id:
+        for player in players:
+            cards.top_up_hand(player, session.deck, number)
     return round_obj
 
 
@@ -183,7 +225,7 @@ def current_round(session):
     return session.rounds.order_by("-number").first()
 
 
-def submit_caption(session, player, round_number, caption_text):
+def submit_caption(session, player, round_number, caption_text=None, hand_card_id=None):
     with locked(session):
         round_obj = session.rounds.filter(number=round_number).first()
         if round_obj is None or round_obj.status != Round.CAPTIONING:
@@ -193,12 +235,23 @@ def submit_caption(session, player, round_number, caption_text):
             raise GameError("אין לך תמונה בסבב הזה.")
         if submission.meme_id is not None:
             raise GameError("כבר שלחת כיתוב לסבב הזה.")
-        caption_text = (caption_text or "").strip()
-        if not caption_text:
-            raise GameError("אי אפשר בלי כיתוב.")
-        if len(caption_text) > conf.get("CAPTION_MAX_CHARS"):
-            raise GameError(f"עד {conf.get('CAPTION_MAX_CHARS')} תווים.")
-        meme = make_meme(image=submission.image, caption_text=caption_text, source=Meme.GAME, user=player.user)
+
+        if session.caption_mode == Session.CARDS:
+            if not hand_card_id:
+                raise GameError("צריך לבחור קלף.")
+            card = cards.play_card(player, round_number, hand_card_id)
+            if card is None:
+                raise GameError("הקלף הזה כבר לא ביד שלך.")
+            meme = make_meme(image=submission.image, caption_text=card.text, source=Meme.GAME,
+                             user=player.user, caption_card=card)
+        else:
+            caption_text = (caption_text or "").strip()
+            if not caption_text:
+                raise GameError("אי אפשר בלי כיתוב.")
+            if len(caption_text) > conf.get("CAPTION_MAX_CHARS"):
+                raise GameError(f"עד {conf.get('CAPTION_MAX_CHARS')} תווים.")
+            meme = make_meme(image=submission.image, caption_text=caption_text, source=Meme.GAME, user=player.user)
+
         submission.meme = meme
         submission.submitted_at = timezone.now()
         submission.save(update_fields=["meme", "submitted_at"])
@@ -206,11 +259,23 @@ def submit_caption(session, player, round_number, caption_text):
     sync(session)
 
 
+def swap_hand_card(session, player, hand_card_id):
+    """Rule 5.2.2: one mercy swap per game, cards mode only."""
+    with locked(session):
+        if session.caption_mode != Session.CARDS:
+            raise GameError("אין קלפים במשחק הזה.")
+        if not cards.swap_card(player, hand_card_id):
+            raise GameError("אי אפשר להחליף את הקלף הזה עכשיו.")
+        _bump(session)
+
+
 def cast_vote(session, voter, round_number, submission_id):
     with locked(session):
         round_obj = session.rounds.filter(number=round_number).first()
         if round_obj is None or round_obj.status != Round.VOTING:
             raise GameError("אי אפשר להצביע עכשיו.")
+        if session.scoring_mode == Session.JUDGE and round_obj.judge_id != voter.pk:
+            raise GameError("רק השופט/ת מחליט/ה בסבב הזה.")
         submission = round_obj.submissions.filter(pk=submission_id, meme__isnull=False).first()
         if submission is None:
             raise GameError("המם הזה לא קיים בסבב.")
@@ -274,10 +339,15 @@ def sync(session):
                     _start_voting(round_obj)
                     changed = True
             elif round_obj.status == Round.VOTING:
-                eligible = _active_players(session)
-                voted = set(Vote.objects.filter(round=round_obj).values_list("voter_id", flat=True))
-                everyone_voted = eligible and all(p.id in voted for p in eligible)
-                if everyone_voted or (round_obj.vote_deadline and now >= round_obj.vote_deadline):
+                if session.scoring_mode == Session.JUDGE:
+                    decided = round_obj.judge_id and Vote.objects.filter(
+                        round=round_obj, voter_id=round_obj.judge_id
+                    ).exists()
+                else:
+                    eligible = _active_players(session)
+                    voted = set(Vote.objects.filter(round=round_obj).values_list("voter_id", flat=True))
+                    decided = bool(eligible) and all(p.id in voted for p in eligible)
+                if decided or (round_obj.vote_deadline and now >= round_obj.vote_deadline):
                     _finish_round(round_obj)
                     changed = True
 
@@ -292,26 +362,46 @@ def _start_reveal(round_obj):
 
 
 def _start_voting(round_obj):
+    session = round_obj.session
     memes_count = round_obj.submissions.filter(meme__isnull=False).count()
+
+    if session.game_mode == Session.RELAXED:
+        # Rule 4.5.3 / §5.1: no voting, no points — the reveal was the
+        # whole point, the round just ends.
+        _finish_round(round_obj, award=False)
+        return
+
+    if session.scoring_mode == Session.JUDGE:
+        if memes_count == 0:
+            _finish_round(round_obj, award=False)
+            return
+        round_obj.status = Round.VOTING
+        # Rule 4.6.2: the judge's timer is twice the ordinary vote timer.
+        round_obj.vote_deadline = timezone.now() + timezone.timedelta(seconds=session.vote_seconds * 2)
+        round_obj.save(update_fields=["status", "vote_deadline"])
+        return
+
     if memes_count < 2:
         # Rule 4.6.4: fewer than two memes, no vote — the lone meme (or
         # nobody, if zero) wins the round outright.
-        _finish_round(round_obj, skip_vote=True)
+        _finish_round(round_obj, skip_vote=True, award=memes_count == 1)
         return
     round_obj.status = Round.VOTING
-    round_obj.vote_deadline = timezone.now() + timezone.timedelta(seconds=round_obj.session.vote_seconds)
+    round_obj.vote_deadline = timezone.now() + timezone.timedelta(seconds=session.vote_seconds)
     round_obj.save(update_fields=["status", "vote_deadline"])
 
 
-def _finish_round(round_obj, *, skip_vote=False):
+def _finish_round(round_obj, *, skip_vote=False, award=True):
     round_obj.status = Round.DONE
     round_obj.save(update_fields=["status"])
+    if not award:
+        return
     if skip_vote:
         lone = round_obj.submissions.filter(meme__isnull=False).first()
         if lone is not None:
             Player.objects.filter(pk=lone.player_id).update(score=lone.player.score + 1)
         return
-    points = scoring.vote_round_scores(round_obj)
+    points = scoring.round_scores(round_obj)
     for submission in round_obj.submissions.filter(meme__isnull=False):
         delta = points.get(submission.id, 0)
         if delta:
@@ -320,7 +410,7 @@ def _finish_round(round_obj, *, skip_vote=False):
 
 def _next_round_or_finish(session, finished_round):
     players = _active_players(session)
-    minimum = conf.get("MIN_PLAYERS")["vote"]
+    minimum = _minimum_players(session)
     if finished_round.number >= session.round_count or len(players) < minimum:
         finish_session(session)
     else:

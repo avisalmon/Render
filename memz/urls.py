@@ -4,7 +4,7 @@ from . import auth_views, views
 from .api import router
 from .api.game_views import (
     AdvanceView, AgainView, JoinView, LeaveView, RemovePlayerView, SessionCreateView, StartView, StateView,
-    SubmitView, VoteView,
+    SubmitView, SwapCardView, VoteView,
 )
 from .api.profile import ProfileView
 from .api.report import ReportView
@@ -47,5 +47,6 @@ urlpatterns = [
     path("api/sessions/<str:code>/players/<int:player_id>/remove/", RemovePlayerView.as_view(), name="api_session_remove_player"),
     path("api/sessions/<str:code>/rounds/<int:number>/submit/", SubmitView.as_view(), name="api_round_submit"),
     path("api/sessions/<str:code>/rounds/<int:number>/vote/", VoteView.as_view(), name="api_round_vote"),
+    path("api/sessions/<str:code>/cards/swap/", SwapCardView.as_view(), name="api_card_swap"),
     path("api/", include(router.urls)),
 ]

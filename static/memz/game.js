@@ -102,13 +102,20 @@
     var r = state.round;
     var mine = r.my_submission;
     var already = mine && mine.submitted;
+    var cardsMode = state.caption_mode === "cards";
     root.innerHTML =
       '<h1 class="memz-title">כותבים כיתוב</h1>' +
-      '<p class="memz-fineprint">סבב ' + r.number + " מתוך " + state.round_count + "</p>" +
+      '<p class="memz-fineprint">סבב ' + r.number + " מתוך " + state.round_count +
+      (r.topic ? " · הנושא: " + esc(r.topic) : "") + "</p>" +
       '<div class="memz-round-timer" data-timer></div>' +
       (mine && mine.image_url ? '<img class="memz-result-image" src="' + esc(mine.image_url) + '" alt="">' : "") +
       (already
         ? '<p class="memz-lead">שלחתם! ' + r.submitted_count + "/" + r.total_count + " כבר שלחו." + "</p>"
+        : cardsMode
+        ? '<ul class="memz-hand">' + (r.my_hand || []).map(function (c) {
+            return '<li class="memz-hand-card" data-hand-card="' + c.hand_card_id + '">' + esc(c.text) + "</li>";
+          }).join("") + "</ul>" +
+          (r.can_swap_card ? '<button class="memz-btn memz-btn--ghost memz-btn--small" data-swap-btn>החלפת קלף אחד (פעם אחת במשחק)</button>' : "")
         : '<form data-caption-form>' +
           '<textarea class="memz-input memz-textarea" maxlength="140" placeholder="הכיתוב שלכם..." data-caption-input></textarea>' +
           '<button class="memz-btn memz-btn--primary memz-btn--wide" type="submit">שולחים</button>' +
@@ -123,6 +130,21 @@
         guardedAction(function () { return call("POST", "/rounds/" + r.number + "/submit/", { caption_text: text }); });
       });
     }
+    root.querySelectorAll("[data-hand-card]").forEach(function (li) {
+      li.addEventListener("click", function () {
+        guardedAction(function () {
+          return call("POST", "/rounds/" + r.number + "/submit/", { hand_card_id: parseInt(li.dataset.handCard, 10) });
+        });
+      });
+    });
+    var swapBtn = root.querySelector("[data-swap-btn]");
+    if (swapBtn) {
+      swapBtn.addEventListener("click", function () {
+        var first = root.querySelector("[data-hand-card]");
+        if (!first) return;
+        guardedAction(function () { return call("POST", "/cards/swap/", { hand_card_id: parseInt(first.dataset.handCard, 10) }); });
+      });
+    }
   }
 
   function renderRevealed(state) {
@@ -131,7 +153,8 @@
     var me = state.players.find(function (p) { return p.is_me; });
     root.innerHTML =
       '<h1 class="memz-title">רגע של חשיפה...</h1>' +
-      '<p class="memz-fineprint">סבב ' + r.number + " מתוך " + state.round_count + "</p>" +
+      '<p class="memz-fineprint">סבב ' + r.number + " מתוך " + state.round_count +
+      (r.topic ? " · הנושא: " + esc(r.topic) : "") + "</p>" +
       '<div class="memz-timer" data-timer></div>' +
       '<div class="memz-meme-grid">' + r.memes.map(function (m) {
         return '<figure class="memz-meme-tile"><img src="' + esc(m.rendered_url) + '" alt=""></figure>';
@@ -145,9 +168,13 @@
   function renderVoting(state) {
     setScreen("game-voting");
     var r = state.round;
+    var isJudgeMode = state.scoring_mode === "judge";
+    var iAmJudge = isJudgeMode && r.judge && r.judge.is_me;
+    var canTap = !isJudgeMode || iAmJudge;
     root.innerHTML =
-      '<h1 class="memz-title">למי הכי מצחיק?</h1>' +
-      '<p class="memz-fineprint">סבב ' + r.number + " מתוך " + state.round_count + "</p>" +
+      '<h1 class="memz-title">' + (isJudgeMode ? (iAmJudge ? "מי המנצח/ת?" : "השופט/ת מחליט/ה...") : "למי הכי מצחיק?") + "</h1>" +
+      '<p class="memz-fineprint">סבב ' + r.number + " מתוך " + state.round_count +
+      (isJudgeMode && r.judge ? " · השופט/ת: " + esc(r.judge.nickname) : "") + "</p>" +
       '<div class="memz-timer" data-timer></div>' +
       '<div class="memz-meme-grid">' + r.memes.map(function (m) {
         var mine = m.is_mine;
@@ -162,7 +189,7 @@
       }).join("") + "</div>" +
       '<p class="memz-error" data-action-error></p>';
     countdown(root.querySelector("[data-timer]"), r.vote_deadline);
-    if (!r.my_vote) {
+    if (!r.my_vote && canTap) {
       root.querySelectorAll("[data-vote-tile]").forEach(function (tile) {
         if (tile.classList.contains("memz-meme-tile--mine")) return;
         tile.addEventListener("click", function () {
@@ -178,18 +205,21 @@
     var r = state.round;
     var me = state.players.find(function (p) { return p.is_me; });
     var isLast = r.number >= state.round_count;
+    var relaxed = state.game_mode === "relaxed";
     root.innerHTML =
-      '<h1 class="memz-title">תוצאות הסבב</h1>' +
+      '<h1 class="memz-title">' + (relaxed ? "היה כיף!" : "תוצאות הסבב") + "</h1>" +
       '<div class="memz-meme-grid">' + r.results.map(function (row) {
         return (
-          '<figure class="memz-meme-tile' + (row.round_winner ? " memz-meme-tile--winner" : "") + '">' +
+          '<figure class="memz-meme-tile' + (!relaxed && row.round_winner ? " memz-meme-tile--winner" : "") + '">' +
           '<img src="' + esc(row.rendered_url) + '" alt="">' +
-          "<figcaption>" + (row.round_winner ? "👑 " : "") + esc(row.nickname) + " · " + row.votes + " קולות</figcaption>" +
+          "<figcaption>" + (!relaxed && row.round_winner ? "👑 " : "") + esc(row.nickname) +
+          (relaxed ? "" : " · " + row.votes + " קולות") + "</figcaption>" +
           "</figure>"
         );
       }).join("") + "</div>" +
-      '<h2 class="memz-field-label">טבלת מובילים</h2>' +
-      '<ul class="memz-player-list">' + state.players.slice().sort(function (a, b) { return b.score - a.score; }).map(playerRow).join("") + "</ul>" +
+      (relaxed ? "" :
+        '<h2 class="memz-field-label">טבלת מובילים</h2>' +
+        '<ul class="memz-player-list">' + state.players.slice().sort(function (a, b) { return b.score - a.score; }).map(playerRow).join("") + "</ul>") +
       (me && me.is_host
         ? '<button class="memz-btn memz-btn--primary memz-btn--wide" data-advance-btn>' + (isLast ? "לתוצאות הסופיות" : "לסבב הבא") + "</button>"
         : '<p class="memz-lead">מחכים למארח/ת...</p>');

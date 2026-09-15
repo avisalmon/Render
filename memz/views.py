@@ -22,6 +22,7 @@ def new_session(request):
     """Create a session (spec §4.2). A thin form; the actual create is a
     fetch() to the API (spec Rule 12.3.2), then a redirect to the lobby."""
     from . import conf
+    from .models import CaptionDeck
     from .tiers import tier_for
 
     lo, hi, default = conf.get("ROUNDS")
@@ -30,6 +31,7 @@ def new_session(request):
         "tier": tier_for(request.user),
         "rounds": {"lo": lo, "hi": hi, "default": default},
         "caption_seconds": {"lo": clo, "hi": chi, "default": cdefault},
+        "decks": CaptionDeck.objects.filter(is_public=True),
     })
 
 

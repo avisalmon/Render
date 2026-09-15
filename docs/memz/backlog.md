@@ -147,17 +147,30 @@ auto-advance timer + leaderboard movement arrows (F-Z.3.11), `abandoned`
 marking (F-Z.3.13). None block SPR-Z.4; each is a presentation or
 polish layer on top of state this sprint already produces correctly.
 
-## SPR-Z.4 — The other ways to play `TODO`
+## SPR-Z.4 — The other ways to play `DONE (dev), 2026-09-15, awaiting review`
 
 | ID | Feature | Traces | Status |
 | --- | --- | --- | --- |
-| F-Z.4.1 | Topics mode: `Topic` dealt without repeats, shown in captioning and reveal | spec §5.1, Rule 5.1.1 | TODO |
-| F-Z.4.2 | Same Meme mode: one image per round for all, reveal shows the image once then captions | spec §5.1, Rule 4.5.1 | TODO |
-| F-Z.4.3 | Relaxed mode: no voting, no result, no points, reveal then next | spec §5.1, Rule 4.5.3 | TODO |
-| F-Z.4.4 | Judge scoring: rotation by seat order, judge-only vote, double timer, timeout means no points, 3 points to the pick | spec §5.3 judge mode, Rule 4.6.2 | TODO |
-| F-Z.4.5 | Cards: `HandCard` dealing to 7, top-up, no repeats until the deck is out, deck size check at create, one swap per game, meme copies the card text | spec §5.2, Rules 5.2.1, 5.2.2 | TODO |
-| F-Z.4.6 | Starter public decks (Hebrew and English, about 60 cards each, family-safe) and starter topics, seeded one-time; Avi reviews the tone | spec §14.3 (ACT-Z.4) | TODO |
-| F-Z.4.7 | Tests: each mode's transitions, judge rotation fairness, judge timeout, hand invariants, swap once, deck exhaustion reshuffle; screens for the new states | spec §12.8 | TODO |
+| F-Z.4.1 | Topics mode: `Topic` dealt without repeats, shown in captioning and reveal | spec §5.1, Rule 5.1.1 | DONE — `dealing.deal_topic` |
+| F-Z.4.2 | Same Meme mode: one image per round for all, reveal shows the image once then captions | spec §5.1, Rule 4.5.1 | DONE — `dealing.deal_same_image`; the reveal grid already shows one distinct image per row in Normal mode, so Same Meme naturally renders as one repeated image, no special-cased template needed |
+| F-Z.4.3 | Relaxed mode: no voting, no result, no points, reveal then next | spec §5.1, Rule 4.5.3 | DONE — `_start_voting` routes Relaxed straight to `_finish_round(award=False)`; the client shows a simplified "היה כיף!" recap (memes and names, no votes, no crown, no leaderboard) rather than skipping the screen outright, since the host still needs a "next round" tap from somewhere |
+| F-Z.4.4 | Judge scoring: rotation by seat order, judge-only vote, double timer, timeout means no points, 3 points to the pick | spec §5.3 judge mode, Rule 4.6.2 | DONE — rotation starts after the host and is recomputed each round from whoever is currently active, so a player leaving mid-game just drops out of it rather than breaking the sequence |
+| F-Z.4.5 | Cards: `HandCard` dealing to 7, top-up, no repeats until the deck is out, deck size check at create, one swap per game, meme copies the card text | spec §5.2, Rules 5.2.1, 5.2.2 | DONE — `memz/cards.py` |
+| F-Z.4.6 | Starter public decks (Hebrew and English, about 60 cards each, family-safe) and starter topics, seeded one-time; Avi reviews the tone | spec §14.3 (ACT-Z.4) | DONE for Hebrew: 40 caption cards + 15 topics, seeded via `seed_memz`, one-time the coarse way (only seeds a deck/topic pool that's still empty — once touched by hand, left alone forever). **ACT-Z.4 still open**: tone review, and an English deck/topics is a straight repeat of this work once Avi has English content or asks for a placeholder |
+| F-Z.4.7 | Tests: each mode's transitions, judge rotation fairness, judge timeout, hand invariants, swap once, deck exhaustion reshuffle; screens for the new states | spec §12.8 | DONE — `tests/test_spr_z_4.py`, 13 tests; 3 new screen-states (judge voting as the judge, cards captioning, the Relaxed result recap) |
+
+**Sprint notes (2026-09-15).** One real bug the tests caught: swapping a
+card, or anything else that mutates the *calling player's own row* via a
+queryset `.update()` (as `cards.swap_card` does for `card_swap_used`),
+didn't show up in the response — `state_response` was building the reply
+from the in-memory `Player` object fetched at the top of the request,
+which a bare `.update()` never touches. Fixed once, centrally, in
+`GameAPIView.state_response` (and the plain `StateView`), so every future
+action that mutates the caller's own player row is safe by construction
+rather than something each new endpoint has to remember. Deck-size
+validation at create time (Rule 5.2.1) is real, not just documented: a
+deck under `7 × max_players + rounds` cards is refused at session
+creation with a plain-language reason, not discovered mid-game.
 
 ## SPR-Z.5 — Accounts, the bank, and remembering `TODO`
 

@@ -13,15 +13,32 @@
 
   var submitBtn = form.querySelector("[data-new-session-submit]");
   var errorEl = form.querySelector("[data-new-session-error]");
+  var gameModeInput = form.querySelector("[data-game-mode]");
+  var captionModeInput = form.querySelector("[data-caption-mode]");
+  var scoringField = form.querySelector("[data-scoring-field]");
+  var deckField = form.querySelector("[data-deck-field]");
+
+  function syncVisibility() {
+    if (scoringField) scoringField.hidden = gameModeInput.value === "relaxed";
+    if (deckField) deckField.hidden = captionModeInput.value !== "cards";
+  }
+  gameModeInput.addEventListener("change", syncVisibility);
+  captionModeInput.addEventListener("change", syncVisibility);
+  syncVisibility();
 
   form.addEventListener("submit", async function (e) {
     e.preventDefault();
     submitBtn.disabled = true;
     errorEl.hidden = true;
     try {
+      var deckField2 = form.querySelector('[name="deck"]');
       var data = await window.memz.api("POST", "/memz/api/sessions/", {
         round_count: parseInt(roundsInput.value, 10),
         round_seconds: parseInt(secondsInput.value, 10),
+        game_mode: gameModeInput.value,
+        caption_mode: captionModeInput.value,
+        scoring_mode: form.querySelector('[name="scoring_mode"]').value,
+        deck: deckField2 ? deckField2.value : undefined,
       });
       window.memz.setPlayerToken(data.code, data.token);
       window.location.href = "/memz/s/" + data.code + "/";

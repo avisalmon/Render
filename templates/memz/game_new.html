@@ -15,6 +15,41 @@
     <input class="memz-input" type="range" name="round_seconds" min="{{ caption_seconds.lo }}" max="{{ caption_seconds.hi }}" value="{{ caption_seconds.default }}" data-seconds-input>
   </label>
 
+  <label class="memz-field">
+    <span>{% trans "איך משחקים" %}</span>
+    <select class="memz-input" name="game_mode" data-game-mode>
+      <option value="normal">{% trans "רגיל" %}</option>
+      <option value="topics">{% trans "נושא לכל סבב" %}</option>
+      <option value="same_meme">{% trans "אותו מם לכולם" %}</option>
+      <option value="relaxed">{% trans "רגוע (בלי ניקוד)" %}</option>
+    </select>
+  </label>
+
+  <label class="memz-field" data-scoring-field>
+    <span>{% trans "מי בוחר את המנצח" %}</span>
+    <select class="memz-input" name="scoring_mode">
+      <option value="vote">{% trans "כולם מצביעים" %}</option>
+      <option value="judge">{% trans "שופט/ת מתחלף/ת" %}</option>
+    </select>
+  </label>
+
+  <label class="memz-field">
+    <span>{% trans "איך כותבים" %}</span>
+    <select class="memz-input" name="caption_mode" data-caption-mode>
+      <option value="typed">{% trans "כותבים בעצמכם" %}</option>
+      <option value="cards">{% trans "בוחרים מקלפים" %}</option>
+    </select>
+  </label>
+
+  {% if decks %}
+  <label class="memz-field" data-deck-field hidden>
+    <span>{% trans "חפיסת הקלפים" %}</span>
+    <select class="memz-input" name="deck">
+      {% for deck in decks %}<option value="{{ deck.pk }}">{{ deck.name }} ({{ deck.cards.count }})</option>{% endfor %}
+    </select>
+  </label>
+  {% endif %}
+
   {% if tier == "guest" %}
   <p class="memz-fineprint">{% trans "עד 5 שחקנים. עם כניסה לחשבון: 10 שחקנים והתמונות שלכם." %} <a href="{% url 'memz:signup' %}">{% trans "כניסה" %}</a></p>
   {% endif %}
