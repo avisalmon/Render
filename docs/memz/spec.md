@@ -146,7 +146,11 @@ Rule 3.3.2: the sign-in, sign-up, password-reset and sign-out pages are
 memz's own templates under `templates/memz/auth/`, in memz's look, mounted
 under `/memz/`. They authenticate against the shared `User` with
 `django.contrib.auth`. A person who arrives by link and taps "sign in" never
-sees another part of the site, and nothing in memz links out.
+sees another part of the site, and nothing in memz links out — except the
+one deliberate door Rule 3.3.3 opens: `/accounts/`, the site's shared
+allauth flow. That is proving who you are, not browsing the rest of the
+site; it carries no babook chrome of its own and returns straight to
+`next`, same as the password form beside it.
 
 Rule 3.3.3: sign-up is email plus password, and the account works
 immediately, no verification email (building_an_app.md, "Auth: a lighter

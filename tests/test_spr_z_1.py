@@ -169,7 +169,13 @@ def test_nothing_in_memz_points_out_of_memz(client, path):
     """Rule 3.3.2 and building_an_app.md Rule 3: no link back to the main site.
 
     Every href on every memz page stays under /memz/, or is a static/media
-    asset, or is a font host, or is an in-page anchor. Nothing else.
+    asset, or is a font host, or is an in-page anchor, or is the one
+    deliberate exception: /accounts/, the site's shared allauth flow
+    (Google sign-in, spec §14.1/Rule 3.3.3, 2026-09-15). That is not a
+    content or navigation leak back to babook — Rule 3.3.1 already made
+    accounts themselves shared; this only extends *how* a person can prove
+    who they are, the same door ustrip and matazim link to from their own
+    sealed chrome.
     """
     html = client.get(path).content.decode()
     hrefs = re.findall(r'href="([^"]+)"', html)
@@ -177,7 +183,8 @@ def test_nothing_in_memz_points_out_of_memz(client, path):
     outside = [
         h for h in hrefs
         if not (h.startswith("/memz/") or h.startswith("/static/") or h.startswith("/media/")
-                or h.startswith("#") or "fonts.googleapis.com" in h or "fonts.gstatic.com" in h)
+                or h.startswith("/accounts/") or h.startswith("#")
+                or "fonts.googleapis.com" in h or "fonts.gstatic.com" in h)
     ]
     assert not outside, f"{path} links outside memz: {outside}"
     assert "babook" not in html.lower()
