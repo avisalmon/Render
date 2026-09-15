@@ -1,0 +1,30 @@
+name: Daily memz cleanup
+
+# Deletes expired guest sessions and expired unsaved memes (spec §8.5, Rule
+# 8.5.1) — memz's own equivalent of the daily/weekly triggers already here.
+# The cleanup runs inside the live web service (it needs the SQLite
+# persistent disk holding rendered meme files); this job only fires the
+# request and turns red if the cleanup fails. Reuses BACKUP_TRIGGER_TOKEN,
+# the same secret every other one of these crons already shares.
+
+on:
+  schedule:
+    - cron: "30 4 * * *" # daily 04:30 UTC, after the dashboard capture
+  workflow_dispatch: {}
+
+jobs:
+  trigger-cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST run-memz-cleanup
+        env:
+          CLEANUP_TOKEN: ${{ secrets.BACKUP_TRIGGER_TOKEN }}
+        run: |
+          code=$(curl -sS --max-time 120 -o /tmp/memz_cleanup_out.json -w "%{http_code}" \
+            -X POST "https://babook.co.il/internal/run-memz-cleanup/" \
+            -H "X-Cleanup-Token: $CLEANUP_TOKEN")
+          echo "HTTP $code"
+          echo "----- response -----"
+          cat /tmp/memz_cleanup_out.json || true
+          echo
+          test "$code" = "200"

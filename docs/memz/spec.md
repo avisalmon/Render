@@ -151,8 +151,11 @@ sees another part of the site, and nothing in memz links out.
 Rule 3.3.3: sign-up is email plus password, and the account works
 immediately, no verification email (building_an_app.md, "Auth: a lighter
 front door is fine"). Email is still required and unique, because it is how
-a person recovers the account. Google sign-in reusing the site's allauth
-provider is a nice-to-have (§14).
+a person recovers the account. Both `/memz/login/` and `/memz/signup/` also
+offer "המשך עם גוגל", the site's existing allauth Google provider (§14.1) —
+no new view, no new credentials: a link to the same shared
+`/accounts/google/login/` flow babook's own login page, ustrip and matazim
+already offer, carrying `next` the same way the password form does.
 
 Rule 3.3.4: a `MemzProfile` is created the first time a logged-in person
 does anything in memz, never for every babook user.
@@ -934,9 +937,12 @@ page of a seeded meme) is live, not the site homepage.
 
 ## 14. Decisions still open (small, none blocking Sprint 1)
 
-1. **Google sign-in in v1** via the site's allauth provider, or email only
-   until asked. Recommendation: email only in v1; add Google when a real
-   user asks.
+1. ~~**Google sign-in in v1**~~ — decided 2026-09-15 (Avi): yes, via the
+   site's existing allauth provider, the same one babook/ustrip/matazim
+   already offer. No new account system, no new credentials to manage —
+   `/memz/login/` and `/memz/signup/` link to the shared
+   `/accounts/google/login/` flow, carrying `next` the same way the
+   password form does. See Rule 3.3.3.
 2. **Initial public bank content**: whose photos, which generated
    illustrations, how many per pack (target: 8 packs × 25 images). Needs
    Avi's input on sources under Rule 6.1.1.

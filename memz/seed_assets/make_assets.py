@@ -3,9 +3,12 @@ and memz's PWA icons. A dev tool, run by hand, its output committed.
 
     .\\env\\Scripts\\python.exe memz\\seed_assets\\make_assets.py
 
-The pictures are deliberately abstract (flat colours and shapes): they are
-here so the bank, the seed, the creator and the game have something to deal
-before the real, licensed content arrives in SPR-Z.7 (spec Rule 6.1.1).
+The pictures are deliberately abstract (flat colours and shapes): they were
+here so the bank, the seed, the creator and the game had something to deal
+before real content arrived. SPR-Z.7 (ACT-Z.1) replaces them with the
+AI-illustrated batch from `generate_bank_images.py`, retired (not deleted)
+by `manage.py retire_placeholder_images` — this script is no longer run for
+the placeholder images, only for the PWA icons it also makes.
 Deterministic, so re-running produces the same files.
 """
 

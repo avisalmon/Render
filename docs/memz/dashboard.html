@@ -56,16 +56,16 @@
 <div class="wrap">
   <h1>memz</h1>
   <p class="sub">One meme engine, two front doors: a solo creator and a live party game.
-    <b>SPR-Z.1 through SPR-Z.6 done in dev, 2026-09-15 — awaiting review, not yet pushed.</b>
+    <b>SPR-Z.1 through SPR-Z.7 done in dev, 2026-09-15 — Epic Z complete, awaiting review, not yet pushed.</b>
     Status truth: <a href="backlog.md">backlog.md</a> + <a href="spec.md">spec.md</a>.</p>
 
   <div class="stat-row">
-    <div class="stat"><div class="n">6 / 7</div><div class="l">Sprints done</div></div>
-    <div class="stat"><div class="n">61 / 65</div><div class="l">Features done</div></div>
-    <div class="stat"><div class="n">221</div><div class="l">Tests</div></div>
+    <div class="stat"><div class="n">7 / 7</div><div class="l">Sprints done</div></div>
+    <div class="stat"><div class="n">65 / 65</div><div class="l">Features done</div></div>
+    <div class="stat"><div class="n">229</div><div class="l">Tests</div></div>
     <div class="stat"><div class="n">Last: SPR-Z.5</div><div class="l">Deployed</div></div>
   </div>
-  <div class="bar"><div style="width:87%"></div></div>
+  <div class="bar"><div style="width:100%"></div></div>
 
   <div class="sprint">
     <div class="sprint-head"><div class="sprint-title">SPR-Z.1 <span>The skeleton and the seal</span></div><span class="pill done">DONE (dev) · 2026-09-14</span></div>
@@ -92,19 +92,19 @@
     <p class="sprint-desc">Titles (recomputed, never stored), bundled sound + haptics + a header mute toggle, reveal/count-up/crown/leaderboard-movement/confetti animations, a lifetime stats tab, PWA install prompt + lost-connection banner, and two new phone-guard checks (no native dialog, controls disabled in flight) that caught two real defects along the way. 8 features, 20 tests, 31 screens still green.</p>
   </div>
   <div class="sprint">
-    <div class="sprint-head"><div class="sprint-title">SPR-Z.7 <span>Real content, tier admin, first deploy</span></div><span class="pill todo">TODO</span></div>
-    <p class="sprint-desc">Real public bank and decks, tier admin, render.yaml wiring, full regression, deploy. 5 features.</p>
+    <div class="sprint-head"><div class="sprint-title">SPR-Z.7 <span>Real content, tier admin, first deploy</span></div><span class="pill done">DONE (dev) · 2026-09-15</span></div>
+    <p class="sprint-desc">Real public bank: 8 packs (4 new), 20 reviewed images each — AI-illustrated (OpenAI gpt-image-1) plus real Pexels photos, every one of the 64 stock candidates checked by hand, 6 rejected and replaced (a real footballer's shirt, sponsor-branded stadium shots, a legible name tag) — see ACT-Z.1 below. Hebrew deck tone-reviewed and expanded to 97 cards / 35 topics (ACT-Z.4); English explicitly deferred. Tier admin proven with tests. render.yaml + a new memz_cleanup cron wired. 5 features, 8 tests, full memz gate (229 tests) green.</p>
   </div>
 
-  <div class="section-label">Waiting on Avi</div>
-  <div class="open-item"><b>ACT-Z.1</b><span>Before SPR-Z.7: where the real public bank images come from (spec §14.2, Rule 6.1.1: licensed or own, no copyrighted meme templates). Placeholders carry dev until then.</span></div>
-  <div class="open-item"><b>ACT-Z.4</b><span>In SPR-Z.4: review the tone of the starter caption decks (spec §14.3).</span></div>
+  <div class="section-label">ACT items, closed this sprint</div>
+  <div class="open-item"><b>ACT-Z.1</b><span>Real bank images: AI-illustrated batch + reviewed real photos, both scoped to non-public-figures (spec §14.2, Rule 6.1.1). A separate request to use real Israeli celebrities or existing memes was declined — publicity rights and copyrighted templates are a different, higher bar than anonymous stock photos.</span></div>
+  <div class="open-item"><b>ACT-Z.4</b><span>Hebrew caption tone reviewed — the original 40 held up, expanded to 97 in the same voice. English deck deferred, Avi's own call.</span></div>
 
   <div class="section-label">Open decisions (spec §14)</div>
   <div class="open-item"><b>§14.1</b><span>Google sign-in in v1, or email only until asked (recommendation: email only).</span></div>
   <div class="open-item"><b>§14.4</b><span>Emoji in rendered captions: render or drop, decided in SPR-Z.2.</span></div>
 
-  <p class="foot">Updated 2026-09-15. This page is updated at the end of every sprint (the_manager.md Step 9).</p>
+  <p class="foot">Updated 2026-09-15 — Epic Z (memz v1) is feature-complete in dev, all seven sprints done. This page is updated at the end of every sprint (the_manager.md Step 9).</p>
 </div>
 </body>
 </html>

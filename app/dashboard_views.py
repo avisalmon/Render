@@ -218,6 +218,34 @@ def run_dashboard_capture(request):
 
 @csrf_exempt
 @require_POST
+def run_memz_cleanup(request):
+    """Token-triggered memz cleanup (SPR-Z.7 F-Z.7.4, spec §8.5, Rule 8.5.1).
+
+    Called by a daily GitHub Actions cron with the shared secret in the
+    ``X-Cleanup-Token`` header. Runs ``memz_cleanup`` in-process (it needs
+    the live DB and the persistent disk holding rendered memes, which a
+    separate Render cron container would not see), deleting expired guest
+    sessions and expired unsaved memes. Idempotent — safe to trigger more
+    than once a day if the schedule is ever tightened. Machine endpoint,
+    not a session/superuser route; reuses BACKUP_TRIGGER_TOKEN rather than
+    minting a fourth secret for a fourth low-stakes cron.
+    """
+    expected = getattr(settings, "BACKUP_TRIGGER_TOKEN", "")
+    provided = request.headers.get("X-Cleanup-Token", "")
+    if not expected or not constant_time_compare(provided, expected):
+        return JsonResponse({"ok": False, "error": "forbidden"}, status=403)
+
+    out = io.StringIO()
+    try:
+        call_command("memz_cleanup", stdout=out, stderr=out)
+    except Exception as exc:  # noqa: BLE001 - surface failure to the caller
+        return JsonResponse(
+            {"ok": False, "error": str(exc), "log": out.getvalue()}, status=500)
+    return JsonResponse({"ok": True, "log": out.getvalue()})
+
+
+@csrf_exempt
+@require_POST
 def test_alert_email(request):
     """Token-triggered test of the alert-email path. Sends a sample alert to every
     superuser's address (the same recipients real dashboard alerts use, e.g. the

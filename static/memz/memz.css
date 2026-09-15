@@ -210,6 +210,13 @@ body.memz {
 
 .memz-stack--after { margin-top: 18px; }
 
+.memz-divider {
+  margin: 18px 0;
+  text-align: center;
+  color: var(--memz-ink-soft);
+  font-size: 13px;
+}
+
 .memz-card {
   background: var(--memz-card);
   border: 1px solid var(--memz-line);

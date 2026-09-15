@@ -81,6 +81,9 @@ urlpatterns = [
     path("internal/run-capture/", dashboard_views.run_dashboard_capture, name="run_dashboard_capture"),
     # Machine endpoint (token): send a test alert email to all superusers.
     path("internal/test-alert-email/", dashboard_views.test_alert_email, name="test_alert_email"),
+    # Machine endpoint: daily GitHub Actions cron POSTs here with X-Cleanup-Token
+    # to run memz_cleanup in-process (SPR-Z.7 F-Z.7.4, spec §8.5).
+    path("internal/run-memz-cleanup/", dashboard_views.run_memz_cleanup, name="run_memz_cleanup"),
 
     # --- Community (EPIC-6.1) ---
     path("community/", community_views.community_home, name="community"),

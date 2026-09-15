@@ -1,0 +1,84 @@
+{
+  "_comment": "SPR-Z.7 / ACT-Z.1: real stock photos supplementing the AI-illustrated batch. Every entry is a Pexels photo (free for commercial use, no attribution required per Pexels' own license: https://www.pexels.com/license/) of ordinary, non-famous people, animals or scenes -- never a public figure, never an existing meme template (see the conversation that ruled those out). Source URL recorded per photo, spec F-Z.7.1 'licences recorded'.",
+  "family": [
+    "https://images.pexels.com/photos/19383102/pexels-photo-19383102.jpeg",
+    "https://images.pexels.com/photos/35358644/pexels-photo-35358644.jpeg",
+    "https://images.pexels.com/photos/27178206/pexels-photo-27178206.jpeg",
+    "https://images.pexels.com/photos/35359590/pexels-photo-35359590.jpeg",
+    "https://images.pexels.com/photos/26903671/pexels-photo-26903671.jpeg",
+    "https://images.pexels.com/photos/17525435/pexels-photo-17525435.jpeg",
+    "https://images.pexels.com/photos/38795494/pexels-photo-38795494.jpeg",
+    "https://images.pexels.com/photos/38752491/pexels-photo-38752491.jpeg"
+  ],
+  "animals": [
+    "https://images.pexels.com/photos/35765429/pexels-photo-35765429.jpeg",
+    "https://images.pexels.com/photos/35765211/pexels-photo-35765211.jpeg",
+    "https://images.pexels.com/photos/29287985/pexels-photo-29287985.jpeg",
+    "https://images.pexels.com/photos/16955228/pexels-photo-16955228.jpeg",
+    "https://images.pexels.com/photos/19225766/pexels-photo-19225766.jpeg",
+    "https://images.pexels.com/photos/30708638/pexels-photo-30708638.jpeg",
+    "https://images.pexels.com/photos/17856909/pexels-photo-17856909.jpeg",
+    "https://images.pexels.com/photos/30526620/pexels-photo-30526620.jpeg"
+  ],
+  "work": [
+    "https://images.pexels.com/photos/36713392/pexels-photo-36713392.jpeg",
+    "https://images.pexels.com/photos/39219753/pexels-photo-39219753.jpeg",
+    "https://images.pexels.com/photos/20955076/pexels-photo-20955076.jpeg",
+    "https://images.pexels.com/photos/8468514/pexels-photo-8468514.jpeg",
+    "https://images.pexels.com/photos/6539032/pexels-photo-6539032.jpeg",
+    "https://images.pexels.com/photos/9077349/pexels-photo-9077349.jpeg",
+    "https://images.pexels.com/photos/6538615/pexels-photo-6538615.jpeg",
+    "https://images.pexels.com/photos/8069139/pexels-photo-8069139.jpeg"
+  ],
+  "school": [
+    "https://images.pexels.com/photos/771317/pexels-photo-771317.jpeg",
+    "https://images.pexels.com/photos/9572552/pexels-photo-9572552.jpeg",
+    "https://images.pexels.com/photos/7092523/pexels-photo-7092523.jpeg",
+    "https://images.pexels.com/photos/20432916/pexels-photo-20432916.jpeg",
+    "https://images.pexels.com/photos/8618015/pexels-photo-8618015.jpeg",
+    "https://images.pexels.com/photos/8197551/pexels-photo-8197551.jpeg",
+    "https://images.pexels.com/photos/8197534/pexels-photo-8197534.jpeg",
+    "https://images.pexels.com/photos/31039030/pexels-photo-31039030.jpeg"
+  ],
+  "friends": [
+    "https://images.pexels.com/photos/3768884/pexels-photo-3768884.jpeg",
+    "https://images.pexels.com/photos/3184308/pexels-photo-3184308.jpeg",
+    "https://images.pexels.com/photos/8555880/pexels-photo-8555880.jpeg",
+    "https://images.pexels.com/photos/4473606/pexels-photo-4473606.jpeg",
+    "https://images.pexels.com/photos/12886711/pexels-photo-12886711.jpeg",
+    "https://images.pexels.com/photos/31393316/pexels-photo-31393316.jpeg",
+    "https://images.pexels.com/photos/7065280/pexels-photo-7065280.jpeg",
+    "https://images.pexels.com/photos/20862422/pexels-photo-20862422.jpeg"
+  ],
+  "food": [
+    "https://images.pexels.com/photos/31970835/pexels-photo-31970835.jpeg",
+    "https://images.pexels.com/photos/35469098/pexels-photo-35469098.jpeg",
+    "https://images.pexels.com/photos/29086309/pexels-photo-29086309.jpeg",
+    "https://images.pexels.com/photos/25916387/pexels-photo-25916387.jpeg",
+    "https://images.pexels.com/photos/19964396/pexels-photo-19964396.jpeg",
+    "https://images.pexels.com/photos/35247161/pexels-photo-35247161.jpeg",
+    "https://images.pexels.com/photos/38069166/pexels-photo-38069166.jpeg",
+    "https://images.pexels.com/photos/35247180/pexels-photo-35247180.jpeg"
+  ],
+  "holidays": [
+    "https://images.pexels.com/photos/6053928/pexels-photo-6053928.jpeg",
+    "https://images.pexels.com/photos/19688082/pexels-photo-19688082.jpeg",
+    "https://images.pexels.com/photos/6054110/pexels-photo-6054110.jpeg",
+    "https://images.pexels.com/photos/6185156/pexels-photo-6185156.jpeg",
+    "https://images.pexels.com/photos/19655273/pexels-photo-19655273.jpeg",
+    "https://images.pexels.com/photos/3730973/pexels-photo-3730973.jpeg",
+    "https://images.pexels.com/photos/6114084/pexels-photo-6114084.jpeg",
+    "https://images.pexels.com/photos/4038296/pexels-photo-4038296.jpeg"
+  ],
+  "sports": [
+    "https://images.pexels.com/photos/28457979/pexels-photo-28457979.jpeg",
+    "https://images.pexels.com/photos/20094571/pexels-photo-20094571.jpeg",
+    "https://images.pexels.com/photos/7551180/pexels-photo-7551180.jpeg",
+    "https://images.pexels.com/photos/18715198/pexels-photo-18715198.jpeg",
+    "https://images.pexels.com/photos/37233292/pexels-photo-37233292.jpeg",
+    "https://images.pexels.com/photos/5037385/pexels-photo-5037385.jpeg",
+    "https://images.pexels.com/photos/34556798/pexels-photo-34556798.jpeg",
+    "https://images.pexels.com/photos/13179883/pexels-photo-13179883.jpeg"
+  ],
+  "_review_notes": "Every one of the 64 photos above was looked at by hand after downloading (not just the search results page). Six were swapped out for a different Pexels photo of the same theme: sports originally pulled a real Cristiano Ronaldo shirt (name and number both legible) and three stadium/crowd shots carrying live sponsor branding (Umbro, DHL, Qatar Airways, Jeep, plus one that was actually a birthday party, not sports) -- replaced with solo running/exercise photos, no team kit, no logos. School originally pulled two documentary-style photos of a real school where an embroidered name tag was legible on a uniform -- replaced with generic desk/classroom photos. The URLs above are already the replacements; nothing here still points at the six rejected photos."
+}
