@@ -684,7 +684,20 @@ below, and for the same reason.
   ordinary things to type — got silently treated as an LTR paragraph and
   came out backwards. `base_dir="R"` is now pinned explicitly
   (`render.shape_for_draw`): memz captions are always Hebrew-first RTL,
-  never a paragraph direction actually in question.
+  never a paragraph direction actually in question. **A second, real
+  instance found and fixed 2026-09-16** (ACT-Z.10, a real screenshot from
+  the live game — "רגע... מה קורה פה?!" rendered with "רגע" spelled
+  backwards): this did not reproduce against any `python-bidi` build
+  installed locally, in several variations tried — the actual cause was
+  version drift, not the code: `requirements.txt` pinned only a range
+  (`>=0.6,<1`), so dev and production had silently resolved different
+  builds of the same library, and production's happened to get this
+  specific punctuation pattern wrong. Pinned to an exact version
+  (`python-bidi==0.6.10`) so what's tested is what ships. Confirmed by
+  hand-comparing rendered glyph shapes against known-correct and
+  known-reversed reference renders of the same word (not by reading the
+  image, which had already produced a wrong answer twice earlier the
+  same day — see backlog.md's ACT-Z.10 sprint notes for the full story).
 - Font: one OFL font with heavy Hebrew and Latin weights (Heebo Black or
   Rubik Black), vendored under `static/memz/fonts/` and used by both the
   server and the browser preview so they match. Emoji fall back to a

@@ -141,6 +141,29 @@ def test_shape_for_draw_keeps_hebrew_first_even_when_the_caption_opens_in_latin(
     assert shaped_digit_first.endswith("5"), f"the digit (typed first) should land rightmost, got {shaped_digit_first!r}"
 
 
+def test_shape_for_draw_handles_punctuation_after_the_first_word():
+    """2026-09-16 QA fix, round 4 (Avi, a real screenshot from the live
+    game: "רגע... מה קורה פה?!" came out with "רגע" spelled backwards on
+    the actual rendered meme). This did not reproduce against any
+    `python-bidi` build installed locally, in any of several variations
+    tried (an ellipsis of three periods, a real "…" character, with or
+    without a trailing "?!", with or without a watermark) -- the
+    behaviour turned out to depend on which exact `python-bidi` build is
+    installed, and `requirements.txt` only pinned a range
+    (">=0.6,<1"), so dev and production had silently drifted onto
+    different resolved versions. Pinned to an exact version afterward;
+    this test locks in the two exact strings from the real report
+    against whatever's actually installed, so a future drift back to a
+    version that gets this wrong fails a test instead of shipping."""
+    from memz.render import shape_for_draw
+
+    for text in ("רגע... מה קורה פה?!", "רגע… מה קורה פה?!"):
+        shaped = shape_for_draw(text)
+        assert shaped.endswith("רגע"[::-1]), (
+            f"רגע (typed first) should land rightmost even with trailing punctuation, got {shaped!r} for {text!r}"
+        )
+
+
 def test_render_handles_empty_caption(public_image):
     from memz import render
 

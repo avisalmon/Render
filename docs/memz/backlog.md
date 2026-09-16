@@ -625,6 +625,43 @@ report still stands.
 
 ---
 
+## ACT-Z.10 — The Hebrew really was still backwards, a fourth time `DONE (dev), 2026-09-16`
+
+Avi sent an actual screenshot from the live game this time: "רגע... מה
+קורה פה?!" rendered with "רגע" spelled backwards, right there on a real
+production meme.
+
+| Feature | Description | Spec | Status |
+| --- | --- | --- | --- |
+| ACT-Z.10.1 | A real, live, reproducible reversal — but only on production, never against any locally-installed `python-bidi` build | spec §8.1 | DONE — root cause was version drift, not the shaping code: `requirements.txt` pinned only `python-bidi>=0.6,<1`, a range, so dev and production had silently resolved different builds of the same library over the course of the day's several deploys. Production's build got this specific pattern (a Hebrew word immediately followed by an ellipsis, then more text ending in `?!`) wrong; every build installed locally got it right, in every variation tried (three literal periods, a real `…` character, with and without a trailing `?!`, with and without the guest watermark). Fixed by pinning the exact version (`python-bidi==0.6.10`) rather than a range, so what gets tested is what ships |
+| ACT-Z.10.2 | Tests | spec §12.8 | DONE — `tests/test_spr_z_2.py` gained a dedicated regression test for the two exact strings from the real report, checked against `shape_for_draw`'s actual output (not a screenshot) |
+
+**Sprint notes — the real lesson here is methodological, not the fix
+itself.** Reading the rendered image directly, the way ACT-Z.7.3 and
+ACT-Z.8.2 were both verified, produced the WRONG answer *twice* on this
+same screenshot before the actual bug was pinned down: a first read
+called it backwards (right, as it turned out), a second read — trying to
+be more careful — talked itself into believing it was actually correct
+(wrong), because judging which end of a multi-word Hebrew line is "the
+right side" by eye, at speed, is exactly the kind of task this session
+had already gotten wrong once earlier the same day (the very first "WOW"
+test, ACT-Z.7.3's own investigation). The method that actually worked:
+generate a rendering of the single word in question, alone, both ways
+("רגע" and its reversal "עגר"), using the *exact same font*, and compare
+the disputed image's glyph shapes against those two unambiguous
+references directly — not "does this look right," but "does this letter
+shape match reference A or reference B." Once that method was in place,
+isolating the actual trigger (an ellipsis, but only some ways of typing
+one, but not even that — it turned out to be nothing about the text at
+all) took a handful of controlled single-variable tests: three-dot vs
+real `…` character, watermark on vs off, real photo vs a solid colour —
+each ruled out in turn, which is what eventually pointed at "this passes
+locally in every variation, so the difference must be the environment,
+not the input" rather than continuing to hunt for a text pattern that
+didn't exist.
+
+---
+
 ## Not in v1 (spec §13)
 
 Payments, AI captions, English UI, GIF and video memes, free-position text

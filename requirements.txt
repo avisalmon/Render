@@ -6,7 +6,12 @@ django-allauth[socialaccount]>=65.0,<66
 requests>=2.31,<3
 Pillow>=10.0,<12
 qrcode>=7,<9
-python-bidi>=0.6,<1
+# Pinned exactly (2026-09-16), not a range: a loose ">=0.6,<1" let dev and
+# production resolve different builds, which rendered the same Hebrew
+# caption differently (a real right-to-left reversal on production, not
+# reproducible against any version installed locally) -- see memz's own
+# spec.md §8.1 for the fuller story.
+python-bidi==0.6.10
 python-dotenv>=1.0,<2
 openai>=1.30,<2
 django-anymail[resend]>=12.0,<13
