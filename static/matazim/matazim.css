@@ -2413,3 +2413,35 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
   border-top: 1px dashed var(--mz-line);
 }
 .mz-share small { display: block; margin-top: 4px; }
+
+/* The work a leader is looking back at (SPR-M.22).
+ *
+ * A list rather than the cards העבודות שלי uses on the member's own screen:
+ * this is read to answer "what have they made, and what did I say", often
+ * several at once, and a leader scanning four submissions does not want four
+ * full cards. The words are quoted rather than truncated, because a piece of
+ * feedback cut off at the interesting part is worse than none. */
+.mz-worklist { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+
+.mz-worklist-item {
+  padding: 14px 16px;
+  border: 1px solid var(--mz-line);
+  border-radius: var(--mz-radius-sm);
+}
+
+.mz-worklist-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.mz-worklist-head a { font-weight: 500; }
+
+.mz-worklist-when { margin: 4px 0 0; font-size: .86rem; }
+
+.mz-worklist-said {
+  margin: 10px 0 0;
+  padding-inline-start: 12px;
+  border-inline-start: 3px solid var(--mz-line);
+  max-width: 68ch;
+}

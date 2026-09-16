@@ -37,6 +37,7 @@ markers = [
     "sprm19: SPR-M.19 מט״צים the member can actually learn",
     "sprm20: SPR-M.20 מט״צים the certificate, and the status made visible",
     "sprm21: SPR-M.21 מט״צים every screen through the contract",
+    "sprm22: SPR-M.22 מט״צים the student detail page, for a leader",
     "sprm23: SPR-M.23 מט״צים what the coherence pass found",
     "sprm24: SPR-M.24 מט״צים every role's own journey, and need-to-know",
     "sprm25: SPR-M.25 מט״צים the improvement loop",

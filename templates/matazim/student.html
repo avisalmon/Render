@@ -184,6 +184,61 @@
     {% endif %}
   </section>
 
+  {% comment %}
+    SPR-M.22, the section this page was missing.
+
+    Everything else here was evidence about a teenager: what they passed, what
+    they are learning, what they taught, who moved them. Not the work. A
+    leader's only route to a submission was the queue on האזור שלי, which holds
+    what is still WAITING, so answering one removed it from every screen they
+    have.
+
+    Newest first, every attempt kept (REQ-M.125): a returned piece and the one
+    that answered it are two rows, and reading them in order is how somebody
+    sees a teenager get better at something. The words are here rather than
+    behind a click, because REQ-M.19 says the feedback is the point and a
+    leader about to certify should be reminded what they already said.
+  {% endcomment %}
+  <section class="mz-panel mz-panel-wide">
+    <h2>
+      העבודות שלהם
+      {% if work %}<span class="mz-count">{{ work|length }}</span>{% endif %}
+    </h2>
+    {% if work %}
+      <ul class="mz-worklist">
+        {% for item in work %}
+          <li class="mz-worklist-item">
+            <div class="mz-worklist-head">
+              <a href="{% url 'matazim:review' item.pk %}">{{ item.title }}</a>
+              {% if item.status == "waiting" %}
+                <span class="mz-tag mz-tag-doing">מחכה לכם</span>
+              {% elif item.status == "returned" %}
+                <span class="mz-tag mz-tag-fix">הוחזר לתיקון</span>
+              {% else %}
+                <span class="mz-tag mz-tag-done">אושר</span>
+              {% endif %}
+            </div>
+            <p class="mz-muted mz-worklist-when">
+              הוגש ב־{{ item.created_at|date:"j.n.Y" }}
+              {% if item.answers %} · תשובה להגשה קודמת{% endif %}
+            </p>
+            {% for note in item.feedback.all %}
+              <p class="mz-worklist-said">
+                <strong>{{ note.author.profile.display_name|default:note.author.email }}:</strong>
+                {{ note.body }}
+              </p>
+            {% endfor %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="mz-muted">
+        עוד לא הגישו עבודה. ההגשה הראשונה היא בדרך כלל משהו שבנו בסקראץ׳, ואפשר
+        לבקש אותה במפגש הבא.
+      </p>
+    {% endif %}
+  </section>
+
   {% if history %}
     <section class="mz-panel">
       <h2>היסטוריה</h2>

@@ -1258,9 +1258,54 @@ gap rather than invisible as an oversight.
 product. Production has zero leaders and zero students; every screen has been
 judged by me, against data I invented, in states I chose.
 
-## SPR-M.22 — The student detail page, for a leader  `NOT PLANNED`
+## SPR-M.22 — The student detail page, for a leader  `DONE 2026-09-16`
 
-Hangs off F-M.15.3. Avi: "we will define it later."
+Hangs off F-M.15.3. Avi: "we will define it later." Later arrived on
+2026-09-16, with the definition handed over: "You define leader detail page."
+
+**What the page is for.** The screen a leader opens when one teenager is the
+subject, rather than a queue or a roster. It answers four questions in order:
+where are they and what is outstanding; what have they made and what did I say
+about it; what have they taught; and who moved them, when.
+
+Three of those were already here. The missing one is the one the programme is
+actually about.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.22.1 | Their work on their page, every attempt, newest first | REQ-M.19, M.125 | DONE |
+| F-M.22.2 | The feedback quoted on the page, not behind a click | REQ-M.123 | DONE |
+| F-M.22.3 | A leader sees their own students, never the school's | REQ-M.145 | DONE |
+
+### The hole this closes
+
+A leader's only route to a submission was the queue on האזור שלי, and
+`waiting_for` filters `status=WAITING`. So the moment a leader answered a piece
+of work it left every screen they have. Nothing linked to it from the roster,
+from the student's page, or from anywhere else: the only way back was typing
+`/matazim/work/<id>/` from memory.
+
+Which means the person who signs the certificate could not look back over the
+body of work they were certifying. On a page whose docstring says "one person,
+in as much detail as a leader needs", the detail that was missing was the work.
+
+The words are quoted on the page rather than linked, because REQ-M.19 says the
+feedback is the point rather than the flag, and a leader about to certify
+somebody should be reminded what they already told them.
+
+### The visibility question, closed after nine sprints
+
+Avi, the same day: **"מוביל רואה את כל התלמידים הקשורים אליו. לא לפי בית ספר."**
+
+That answers Litala's צפייה בכל תלמידי בית הספר, which SPR-M.37 found had been
+neither accepted nor refused since her brief arrived. It is refused, and it is
+now REQ-M.145.
+
+No code changed: `visible_students` already filtered on `leader=leader`. What
+changed is that the rule is chosen rather than incidental, and tested at the
+seam it is actually about. Every existing tenancy test puts the two leaders in
+different institutions; this one puts them in the same school, which is the
+case Litala was asking about and the only one that could have quietly drifted.
 
 
 

@@ -20,7 +20,13 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from .access import is_program_manager, leader_of, visible_leaders, visible_students
+from .access import (
+    is_program_manager,
+    leader_of,
+    visible_leaders,
+    visible_students,
+    visible_submissions,
+)
 from .certification import certify, eligibility, eligibility_for_many, may_certify, revoke
 from .content import REQUIRED_COURSE_SLUGS
 from .models import Student, StudyClass
@@ -180,6 +186,26 @@ def student(request, student_id):
             # should be able to see the thing being certified, and the two
             # reflection lines are what there is to talk about.
             teaching=_teaching_for(person),
+            # REQ-M.19, REQ-M.125 — what they actually made, and what was said
+            # back (SPR-M.22).
+            #
+            # This page had every other kind of evidence about a teenager and
+            # not the one the programme is about. A leader's only route to work
+            # was the queue on האזור שלי, which by design holds what is still
+            # WAITING, so the moment they answered a submission it left every
+            # screen they have. The person who signs the certificate could not
+            # look back at the body of work they were certifying without typing
+            # a URL from memory.
+            #
+            # Scoped through `visible_submissions`, so this inherits the rule
+            # rather than restating it: a leader sees the work of the students
+            # attached to them and nobody else's (REQ-M.22, and Avi 2026-09-16,
+            # "מוביל רואה את כל התלמידים הקשורים אליו, לא לפי בית ספר").
+            work=(
+                visible_submissions(request.user)
+                .filter(student=person)
+                .prefetch_related("feedback__author__profile")
+            ),
             my_classes=StudyClass.objects.filter(leader=leader) if leader else [],
             chosen=set(person.classes.values_list("pk", flat=True)),
         ),
