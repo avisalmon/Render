@@ -17,7 +17,10 @@ class CreatorForm(forms.Form):
     caption_text = forms.CharField(
         label=_("הכיתוב"), required=True, strip=True,
         max_length=conf.get("CAPTION_MAX_CHARS"),
-        widget=forms.Textarea(attrs={"class": "memz-input memz-textarea", "rows": 3, "maxlength": conf.get("CAPTION_MAX_CHARS")}),
+        widget=forms.Textarea(attrs={
+            "class": "memz-input memz-textarea", "rows": 3, "maxlength": conf.get("CAPTION_MAX_CHARS"),
+            "data-creator-caption": "true",
+        }),
         error_messages={"required": _("אי אפשר בלי כיתוב.")},
     )
 

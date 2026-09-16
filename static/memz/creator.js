@@ -1,10 +1,24 @@
 /* The solo creator's live preview (spec F-Z.2.2): the browser twin of
    memz/render.py's layout math, so what a person sees while typing is what
    they get. Same font (Heebo Black, loaded via the @font-face in memz.css),
-   the same wrap-then-shrink loop, and the same width. Bidi reordering here
-   is a small hand-rolled reshaper, not a full Unicode bidi implementation —
-   good enough for a live preview of Hebrew plus embedded Latin/digits; the
-   server's `python-bidi` render is what actually gets saved and shared. */
+   the same wrap-then-shrink loop, and the same width.
+
+   2026-09-16 QA fix (Avi, live-testing the real app -- letters coming out
+   backwards): this used to carry a small hand-rolled bidi reshaper that
+   reversed each Hebrew run's own characters before handing the string to
+   fillText, the same technique python-bidi uses for PIL (which has no
+   bidi awareness of its own and needs pre-shaped text). Canvas fillText
+   is not PIL: modern browsers apply the real Unicode Bidi Algorithm to
+   whatever text they're given, same as any other DOM text. Handing it
+   already-reversed text meant every Hebrew word got reversed twice --
+   once here, once by the browser's own bidi engine on top of that --
+   which scrambles each word's own letters even though the run *order*
+   happened to look right. The fix is not a better reshaper, it's no
+   reshaper: draw the caption exactly as typed and let the browser do
+   what it already does correctly, with `ctx.direction` pinned to "rtl"
+   (matching render.py's own base_dir="R" pin, same reason -- memz
+   captions are always Hebrew-first RTL, never a direction actually in
+   question) rather than left to inherit. */
 (function () {
   "use strict";
 
@@ -13,6 +27,7 @@
 
   var canvas = document.querySelector("[data-creator-preview]");
   var ctx = canvas.getContext("2d");
+  ctx.direction = "rtl";
   var captionInput = form.querySelector("[data-creator-caption]");
   var counter = document.querySelector("[data-creator-count]");
   var thumbs = form.querySelectorAll("[data-creator-thumb]");
@@ -25,48 +40,6 @@
   var LINE_SPACING = 1.18;
   var MAX_LINES = parseInt(canvas.dataset.maxLines || "3", 10);
   var BAR_BG = "#ffffff", BAR_INK = "#111111";
-
-  function isHebrew(ch) {
-    var cp = ch.codePointAt(0);
-    return (cp >= 0x0590 && cp <= 0x05FF) || (cp >= 0xFB1D && cp <= 0xFB4F);
-  }
-
-  function reshape(line) {
-    if (!line || !/[֐-׿יִ-ﭏ]/.test(line)) return line;
-    var tokens = [], i = 0, n = line.length;
-    while (i < n) {
-      var ch = line[i];
-      if (isHebrew(ch)) {
-        var j = i;
-        while (j < n && isHebrew(line[j])) j++;
-        tokens.push({ t: "rtl", s: line.slice(i, j) });
-        i = j;
-      } else if (/[A-Za-z0-9]/.test(ch)) {
-        var k = i;
-        while (k < n && /[A-Za-z0-9]/.test(line[k])) k++;
-        tokens.push({ t: "ltr", s: line.slice(i, k) });
-        i = k;
-      } else {
-        tokens.push({ t: "n", s: ch });
-        i++;
-      }
-    }
-    // neutrals take the neighbouring direction, RTL by default
-    for (var idx = 0; idx < tokens.length; idx++) {
-      if (tokens[idx].t !== "n") continue;
-      var prev = null, next = null;
-      for (var p = idx - 1; p >= 0; p--) { if (tokens[p].t !== "n") { prev = tokens[p].t; break; } }
-      for (var q = idx + 1; q < tokens.length; q++) { if (tokens[q].t !== "n") { next = tokens[q].t; break; } }
-      tokens[idx].t = (prev === next && prev) ? prev : "rtl";
-    }
-    var runs = [];
-    tokens.forEach(function (tok) {
-      var last = runs[runs.length - 1];
-      if (last && last.t === tok.t) last.s += tok.s; else runs.push({ t: tok.t, s: tok.s });
-    });
-    runs.reverse();
-    return runs.map(function (r) { return r.t === "rtl" ? r.s.split("").reverse().join("") : r.s; }).join("");
-  }
 
   function wrapLines(text, fontSize, maxWidth) {
     ctx.font = fontSize + "px 'Heebo Black', 'Heebo', sans-serif";
@@ -124,7 +97,7 @@
     var y = PAD_Y;
     fit.lines.forEach(function (line) {
       ctx.font = fit.size + "px 'Heebo Black', 'Heebo', sans-serif";
-      ctx.fillText(reshape(line), DISPLAY_WIDTH / 2, y, maxWidth);
+      ctx.fillText(line, DISPLAY_WIDTH / 2, y, maxWidth);
       y += lineHeight;
     });
   }

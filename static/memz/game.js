@@ -277,9 +277,24 @@
     if (btn) btn.addEventListener("click", function () { guardedAction(function () { return call("POST", "/advance/"); }, btn); });
   }
 
+  // 2026-09-16 QA fix (Avi, live-testing the real game): "בסוף שרואים את
+  // כולם ובוחרים איזה הכי מצחיקה, זה עושה רפרש כל הזמן" -- voting polls
+  // every second same as captioning, and this rebuilt the whole meme grid
+  // on every single poll, replaying the tiles' own pop-in animation the
+  // whole time you're looking at them and trying to decide. Nothing on
+  // this screen actually needs the poll tick either, until the vote
+  // itself is cast (which re-renders immediately from guardedAction's own
+  // response, not waiting for the next poll) or the round moves on.
+  var votingRenderKey = null;
+  var screenVotingRenderKey = null;   // the shared big-screen's own voting render, tracked separately from the player-facing one above
+
   function renderVoting(state) {
-    setScreen("game-voting");
     var r = state.round;
+    var key = r.number + ":" + r.my_vote + ":" + missedThisRound(r);
+    if (key === votingRenderKey) return;
+    votingRenderKey = key;
+
+    setScreen("game-voting");
     var isJudgeMode = state.scoring_mode === "judge";
     var iAmJudge = isJudgeMode && r.judge && r.judge.is_me;
     var canTap = !isJudgeMode || iAmJudge;
@@ -331,9 +346,20 @@
     requestAnimationFrame(step);
   }
 
+  // Same fix as renderVoting/renderCaptioning/renderRevealed above: once a
+  // round's results are shown, nothing about them changes until the host
+  // advances (score tallies are already final the moment `done` is
+  // reached) -- so a full rebuild every poll only meant the vote-count-up
+  // animation and the tiles' pop-in replayed over and over while everyone
+  // was just trying to read the results.
+  var resultRenderKey = null;
+
   function renderResult(state) {
-    setScreen("game-result");
     var r = state.round;
+    if (r.number + "" === resultRenderKey) return;
+    resultRenderKey = r.number + "";
+
+    setScreen("game-result");
     var me = state.players.find(function (p) { return p.is_me; });
     var isLast = r.number >= state.round_count;
     var relaxed = state.game_mode === "relaxed";
@@ -462,12 +488,19 @@
     } else if (r.status === "revealed") {
       renderRevealed(state);
     } else if (r.status === "voting") {
-      setScreen("game-voting");
-      root.innerHTML = '<h1 class="memz-title">מצביעים...</h1>' +
-        '<p class="memz-lead">סבב ' + r.number + " מתוך " + state.round_count + " · " + state.players.length + " שחקנים בחדר</p>" +
-        '<div class="memz-meme-grid">' +
-        r.memes.map(function (m) { return '<figure class="memz-meme-tile"><img src="' + esc(m.rendered_url) + '" alt=""></figure>'; }).join("") +
-        "</div>";
+      // Same pop-in-replaying-every-second bug as the player-facing
+      // renderVoting, same fix: nothing on the shared screen changes
+      // mid-voting either.
+      var screenVoteKey = "screen:" + r.number;
+      if (screenVoteKey !== screenVotingRenderKey) {
+        screenVotingRenderKey = screenVoteKey;
+        setScreen("game-voting");
+        root.innerHTML = '<h1 class="memz-title">מצביעים...</h1>' +
+          '<p class="memz-lead">סבב ' + r.number + " מתוך " + state.round_count + " · " + state.players.length + " שחקנים בחדר</p>" +
+          '<div class="memz-meme-grid">' +
+          r.memes.map(function (m) { return '<figure class="memz-meme-tile"><img src="' + esc(m.rendered_url) + '" alt=""></figure>'; }).join("") +
+          "</div>";
+      }
     } else {
       renderResult(state);
     }

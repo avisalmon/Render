@@ -649,6 +649,23 @@ multi-box form isn't wired in yet.
 One function, `memz/render.py`, used by the game and the creator, with a
 JavaScript twin for the live preview that follows the same layout rules.
 
+**The JavaScript twin fixed twice on 2026-09-16, in one QA pass (ACT-Z.8):**
+first, `CreatorForm`'s caption widget never carried the `data-creator-
+caption` attribute `static/memz/creator.js` looks for, so the script's own
+first line touching the (null) caption field threw before the canvas ever
+drew a single frame — the whole live preview was silently blank the entire
+time, on every device, since it was first built. Fixed by adding the
+attribute. Once that let the preview actually run, a second, real bug
+became visible for the first time: its own hand-rolled bidi reshaper
+pre-reversed each Hebrew run's letters the way `python-bidi` does for
+PIL — correct for PIL, which has no bidi awareness of its own, but Canvas
+`fillText` already applies real Unicode bidi on its own in every modern
+browser, so the pre-reversed text got reversed *again*, scrambling every
+Hebrew word's own letters. Fixed by deleting the reshaper outright and
+drawing the caption exactly as typed, with `ctx.direction` pinned to
+`"rtl"` — the same fix in spirit as `render.py`'s own `base_dir="R"` pin
+below, and for the same reason.
+
 - Output: JPEG, quality 85, width 1080 px (height follows the image), the
   `Meme.rendered` file.
 - Layout: **caption bar above the image**: a white band, black bold text,
@@ -998,6 +1015,21 @@ Rule 12.4.1: SQLite is in WAL mode (it already is on the site); 50 players
 submitting in the same 5 seconds is 50 short write transactions, which
 WAL handles. A load test of 50 simulated players through one round is part
 of the game sprint's exit criteria.
+
+Rule 12.4.2 (ACT-Z.7/Z.8, 2026-09-16): every poll still fetches the full
+state JSON and calls its screen's own render function, every second —
+what changed is that captioning, revealed, voting and result now each
+keep a small key (round number, plus whatever on that screen can actually
+change — submitted-state, my vote, which meme index the reveal is on) and
+skip rebuilding the DOM entirely when a poll's key matches the last one
+rendered. This is a client-side patch for a real symptom (a full
+`innerHTML` rebuild every second tore a focused `<textarea>` out from
+under the phone keyboard, and replayed every animation on-screen for
+users just trying to look at something), not the underlying fix Rule
+12.4's own ETag/`Session.version` design already calls for — a 304 would
+let the *server* say "nothing changed," skipping the render decision
+(and the JSON payload) entirely, rather than each screen re-deriving it
+client-side. That's F-Z.3.7's own tracked gap, still open.
 
 ### 12.5 Settings
 

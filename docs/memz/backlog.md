@@ -80,7 +80,7 @@ solo creator is complete for guests; save arrives with accounts in SPR-Z.5.
 | ID | Feature | Traces | Status |
 | --- | --- | --- | --- |
 | F-Z.2.1 | `memz/render.py`: caption bar above the image, wrap, shrink-to-fit floor, `python-bidi` for Hebrew and mixed text, vendored heavy OFL font, guest watermark; JPEG 1080 wide; under 300 ms | spec §8.1 | DONE — font is Heebo Black (Avi's pick), instantiated from Google's variable font and vendored at `static/memz/fonts/Heebo-Black.ttf` |
-| F-Z.2.2 | Browser preview twin of the layout rules (same font, same wrap, same shrink) | spec §4.4, §8.1 | DONE — `static/memz/creator.js`, canvas-based, its own small bidi reshaper (the server's `python-bidi` render is what's actually saved) |
+| F-Z.2.2 | Browser preview twin of the layout rules (same font, same wrap, same shrink) | spec §4.4, §8.1 | DONE, though two real bugs sat in it undiscovered until ACT-Z.8 (2026-09-16): the preview never actually drew anything at all (a missing `data-creator-caption` attribute on the Django widget), and its own hand-rolled bidi reshaper double-reversed every Hebrew word once the preview could draw at all. See ACT-Z.8 below — both fixed, the reshaper deleted outright in favour of the browser's own native canvas bidi |
 | F-Z.2.3 | Solo creator page: pick from public packs, type with live preview, 140 chars and 3 lines enforced, *Make it* | spec §7 | DONE — `/memz/create/`; also lists a logged-in user's own approved uploads once SPR-Z.5 adds them |
 | F-Z.2.4 | `memes/` API: create (solo), retrieve, delete own; `Meme.share_slug` 128-bit | spec §12.3, §12.3.3.6 | DONE — create is a deliberate, narrow, spec-sanctioned exception to "no anonymous writes" (spec §7 lets a guest solo-create); everything else stays owner-only |
 | F-Z.2.5 | Share page `/memz/m/<slug>/` with Open Graph tags, download, *make your own*, *play memz*; expired page says so, not a 404; report link (mail to admin, throttled) | spec §8.2, §8.3, §6.4.3 | DONE — an expired, deleted, or never-existed slug all get the same friendly page (200, not 404) |
@@ -519,6 +519,64 @@ reproduction was confirmed ("חייבים לתקן גם את העברית ההפ
 extra scenario-hunting happened anyway, on the reasoning that "the user
 insists it's real" is grounds to look harder, not grounds to skip
 verification and ship a guess.
+
+---
+
+## ACT-Z.8 — A second QA pass: the creator preview, and the jumpy screens `DONE (dev), 2026-09-16`
+
+Avi again, straight after ACT-Z.7 landed: "אתה עדיין הפוך, גם כשאני יוצר
+את המים... צריך לעשות שתעשה איזשהו אג'קס שלא צריך לרפרש את כל הדף." Two
+unrelated findings.
+
+| Feature | Description | Spec | Status |
+| --- | --- | --- | --- |
+| ACT-Z.8.1 | The solo creator's live preview drew nothing at all | spec §8.1, F-Z.2.2 | DONE — `CreatorForm`'s caption `Textarea` never carried the `data-creator-caption` attribute `creator.js` looks for, so `captionInput` was `null` and the script's very next line (`.addEventListener` on it) threw before `draw()` ever ran once. Every visit to `/memz/create/`, on every device, since this was first built — silently, no error a user would ever see, just a blank canvas |
+| ACT-Z.8.2 | Once the preview above could draw at all, it scrambled every Hebrew word's own letters | spec §8.1 | DONE — its hand-rolled bidi reshaper pre-reversed each Hebrew run's characters, the technique `python-bidi` needs for PIL (which has no bidi awareness of its own). Canvas `fillText` isn't PIL: modern browsers already apply real Unicode bidi to canvas text, so the pre-reversed text got reversed a second time by the browser itself. Fixed by deleting the reshaper outright — draw the caption exactly as typed, `ctx.direction` pinned to `"rtl"` (same reasoning as `render.py`'s `base_dir="R"` pin, ACT-Z.7) |
+| ACT-Z.8.3 | Voting and round-result screens rebuilding their whole DOM every poll | spec Rule 12.4.2 (new) | DONE — same root cause and same fix shape as ACT-Z.7's captioning/reveal fix: a small render key (round number, plus `my_vote` for voting) now skips the rebuild once a poll changes nothing, so the meme tiles' own pop-in animation and the result screen's vote-count-up animation stop replaying every 1-2 seconds while someone is just looking at the screen. Applied to the player-facing voting screen, the round-result screen, and the shared big screen's own voting view |
+| ACT-Z.8.4 | Tests | spec §12.8 | DONE — `tests/test_act_z_8.py`, 6 tests: the widget carries the attribute; the preview canvas has real non-blank pixels once an image is picked; the shipped `creator.js` no longer contains the reshaper and does carry the `direction = "rtl"` pin (checked against the actual served file, not re-implemented in the test); a DOM node marked by hand survives a real poll cycle on the voting screen, the result screen, and the big screen's voting view (a full rebuild would have wiped the marker — proved by reverting the voting fix and watching that exact test fail, then restoring it) |
+
+**Sprint notes.** ACT-Z.8.1 was found by accident, not reported: Avi's
+"still backwards, also when I create the memes" pointed at the creator
+page, and taking an actual screenshot of the live preview (rather than
+tracing the code by hand, which is exactly the mistake that nearly
+mislead ACT-Z.7.3) showed a *blank* canvas, not backwards text. Reading
+`creator.js` against `forms_creator.py` found the missing attribute in
+under a minute once the blank screenshot pointed there. Only after fixing
+that did ACT-Z.8.2 become visible to look at all — a second bug that had
+never been reachable before, sitting behind the first one.
+
+ACT-Z.8.2 is the same root mistake as ACT-Z.7.3 (assuming a rendering
+target has no bidi awareness of its own) applied to a *different* target
+that turns out to behave oppositely: PIL genuinely has none, and needs
+`get_display`; Canvas 2D text in a modern browser already has real bidi
+built in, and handing it pre-shaped text breaks it. Confirmed by direct
+experiment, not assumption — a bare canvas page, `fillText` with raw
+logical-order Hebrew and `ctx.direction = "rtl"`, no reshaping at all,
+came out correct on its own.
+
+ACT-Z.8.3 reuses the exact pattern ACT-Z.7.1 introduced for captioning
+and ACT-Z.7.2 for the reveal screen, rather than inventing a fourth
+shape — every poll-driven screen in the game now follows "keep a key of
+what could actually change, skip the rebuild when it hasn't." Spec Rule
+12.4.2 is explicit that this is a client-side patch for a real symptom,
+not the deeper fix the app's own polling design already calls for
+(`Session.version` driving an ETag, a 304 telling the client nothing
+changed at all) — that's F-Z.3.7's own gap, still open, tracked since
+SPR-Z.3.
+
+**Raised, not resolved:** Avi also described voting itself as "too fast"
+and said he wasn't sure how to actually cast a vote, and separately that
+choosing the funniest meme at the end "refreshes" (ACT-Z.8.3 addresses
+the refresh half). Two things deliberately left alone pending his own
+call, not guessed at: (1) how much of "too fast" was really the
+jankiness itself making a perfectly adequate `vote_seconds` budget *feel*
+rushed, now that the screen holds still — `vote_seconds` is already a
+per-game setting the host picks at create time, not a hidden constant;
+(2) whether "not sure how to give a score" means the tap-to-vote
+interaction itself needs a clearer affordance/label, or whether he
+actually wants a different mechanic (an explicit numeric rating per
+meme, say) rather than "tap the funniest one" — a real product decision,
+not a bug.
 
 ---
 
