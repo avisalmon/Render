@@ -89,25 +89,35 @@ def _page(client, member, lesson):
     return resp.content.decode()
 
 
+def _what_a_browser_acts_on(html):
+    """The page minus the two places an address is allowed to appear.
+
+    `<noscript>` is a deliberate exception: a member whose JavaScript did not
+    run would otherwise see a button that does nothing and be unable to watch
+    any lesson at all, and a privacy improvement that costs somebody the
+    product is not one. A browser running scripts never fetches what is in
+    there. `data-embed` is the address the page holds and does not call, which
+    is the whole mechanism.
+    """
+    html = re.sub(r"<noscript>.*?</noscript>", "", html, flags=re.S)
+    return re.sub(r'data-embed="[^"]*"', "", html)
+
+
 def test_opening_a_lesson_sends_nobody_anywhere(client, member, lesson):
     """The bytes a member receives name no other company.
 
     The `data-embed` attribute is the one exception and is deliberate: it is an
     address the page holds and does not call, which is the whole mechanism.
     """
-    html = _page(client, member, lesson)
-    without_the_held_address = re.sub(r'data-embed="[^"]*"', "", html)
-
     for stranger in STRANGERS:
-        assert stranger not in without_the_held_address, (
+        assert stranger not in _what_a_browser_acts_on(_page(client, member, lesson)), (
             f"a lesson page reaches {stranger} before anybody asked it to"
         )
 
 
 def test_there_is_no_iframe_until_somebody_clicks(client, member, lesson):
     """An iframe in the response is a request already made."""
-    html = _page(client, member, lesson)
-    assert "<iframe" not in html
+    assert "<iframe" not in _what_a_browser_acts_on(_page(client, member, lesson))
 
 
 def test_the_page_says_where_the_video_will_come_from(client, member, lesson):
@@ -135,3 +145,17 @@ def test_the_still_is_a_real_target_not_a_small_triangle():
     assert block, "the play control lost its styles"
     assert "aspect-ratio" in block.group(1)
     assert "width: 100%" in block.group(1)
+
+
+def test_a_member_without_javascript_can_still_watch(client, member, lesson):
+    """The trade this sprint must not make.
+
+    The click that buys the choice needs JavaScript. If it did not run, the
+    old behaviour is better than a dead button: being able to watch the
+    programme matters more than being asked first.
+    """
+    html = _page(client, member, lesson)
+    fallback = re.search(r"<noscript>(.*?)</noscript>", html, re.S)
+    assert fallback, "no JavaScript means no lessons at all"
+    assert "<iframe" in fallback.group(1)
+    assert "iframe.mediadelivery.net/embed/" in fallback.group(1)

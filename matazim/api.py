@@ -35,11 +35,11 @@ from rest_framework.response import Response
 from . import access
 from .models import (
     Application,
-    Institution,
     EntranceAttempt,
     EntranceTarget,
     Event,
     Feedback,
+    Institution,
     Leader,
     LeaderInvite,
     MatazCertificate,
@@ -57,11 +57,11 @@ from .models import (
 )
 from .serializers import (
     ApplicationSerializer,
-    InstitutionSerializer,
     EntranceAttemptSerializer,
     EntranceTargetSerializer,
     EventSerializer,
     FeedbackSerializer,
+    InstitutionSerializer,
     LeaderInviteSerializer,
     LeaderSerializer,
     MatazCertificateSerializer,

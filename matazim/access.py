@@ -365,7 +365,6 @@ def visible_members(user):
     includes a leader and another leader's student: the case `visible_students`
     already refuses.
     """
-    from .models import MemberProfile
 
     if not getattr(user, "is_authenticated", False):
         return MemberProfile.objects.none()

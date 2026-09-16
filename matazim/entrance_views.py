@@ -254,7 +254,7 @@ def staff_home(request):
         raise PermissionDenied
 
     from .access import visible_leaders, visible_students
-    from .models import EntranceTarget, MemberProfile, Student
+    from .models import EntranceTarget, Student
     from .retention import FAILED_ATTEMPT_DAYS, overdue_count
 
     # Counted through the scope functions rather than off the bare managers.
@@ -311,7 +311,6 @@ def staff_admins(request):
     from django.contrib.auth.models import User
 
     from .access import is_program_manager
-    from .models import MemberProfile
 
     if not request.user.is_superuser:
         raise PermissionDenied
@@ -394,7 +393,6 @@ def staff_user_search(request):
     from django.db.models import Q
     from django.http import JsonResponse
 
-    from .models import MemberProfile
 
     if not _is_staff(request.user):
         raise PermissionDenied

@@ -28,11 +28,11 @@ from rest_framework import serializers
 
 from .models import (
     Application,
-    Institution,
     EntranceAttempt,
     EntranceTarget,
     Event,
     Feedback,
+    Institution,
     Leader,
     LeaderInvite,
     MatazCertificate,

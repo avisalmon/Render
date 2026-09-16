@@ -56,6 +56,23 @@
           <span class="mz-player-label">הפעלת השיעור</span>
           <span class="mz-player-note">הווידאו מגיע משרת חיצוני (Bunny). עד שתלחצו, לא נשלח לשם כלום.</span>
         </button>
+        {% comment %}
+          Without this, a member whose JavaScript did not run sees a button that
+          does nothing and cannot watch a single lesson: the change that was
+          meant to protect them would have locked them out of the programme.
+          The old plain iframe had no such dependency, and a privacy improvement
+          that costs somebody the product is not an improvement.
+
+          Inside <noscript> the browser loads the frame itself, so this reaches
+          Bunny on sight for that reader. That is the honest trade: the choice
+          this sprint adds needs a click, a click needs JavaScript, and being
+          able to watch matters more than being asked first.
+        {% endcomment %}
+        <noscript>
+          <iframe src="{{ embed_url }}?autoplay=false"
+                  allow="accelerometer; gyroscope; encrypted-media; picture-in-picture"
+                  allowfullscreen></iframe>
+        </noscript>
       </div>
     {% else %}
       <p class="mz-player-empty">השיעור הזה עדיין בלי וידאו.</p>

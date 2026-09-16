@@ -22,7 +22,6 @@ stay with their author** (§4.11): the log is her voice.
 
 from django.db import transaction
 
-
 # What an institution owns, and the field that says so. For the report only:
 # these rows do not move any more, they belong to the institution whoever runs
 # it, but "what am I handing over" is still a fair question to want answered.

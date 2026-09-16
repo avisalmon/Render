@@ -19,7 +19,13 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from .access import institution_of, is_program_manager, public_events, visible_events, visible_leaders
+from .access import (
+    institution_of,
+    is_program_manager,
+    public_events,
+    visible_events,
+    visible_leaders,
+)
 from .models import Event, Notification, Student
 from .notify import notify
 from .views import shell
