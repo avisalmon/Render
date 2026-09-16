@@ -14,7 +14,19 @@
 <div class="mz-container mz-page">
   <div class="mz-page-head">
     <h1>האזור של המוביל/ה</h1>
-    <p>הקישור שלכם, והמט״צים שמחכים לאישור.</p>
+    {% comment %}
+      SPR-M.44. This line used to read "הקישור שלכם, והמט״צים שמחכים לאישור"
+      on every visit, including the ordinary one where nobody is waiting and
+      the leader is simply looking in on their group. A page that opens by
+      naming a queue that is not there describes a screen you are not reading.
+    {% endcomment %}
+    {% if work_waiting or waiting %}
+      <p>מה מחכה לכם עכשיו.</p>
+    {% elif mine %}
+      <p>המט״צים שלכם, ואיפה הם בתוכנית.</p>
+    {% else %}
+      <p>הקישור שלכם, כדי שהמט״צים הראשונים יצטרפו.</p>
+    {% endif %}
   </div>
 
   {% if work_waiting %}
@@ -103,7 +115,15 @@
     </section>
   {% endif %}
 
-  <div class="mz-two-up">
+  {% comment %}
+    SPR-M.44. The join link and the QR are the first thing on this page, and
+    for a leader who already has a group they were the whole first screen on a
+    phone: the tool for recruiting more sat above the people they came to look
+    at. Recruiting is occasional; looking in on your group is why you opened
+    the page. So once there is a group, the group goes first, and the link
+    keeps its place for a leader who has nobody yet and needs it most.
+  {% endcomment %}
+  <div class="mz-two-up{% if mine %} mz-two-up-flip{% endif %}">
     <section class="mz-panel">
       <h2>הקישור שלכם</h2>
       <p class="mz-muted">

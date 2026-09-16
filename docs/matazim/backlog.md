@@ -3096,3 +3096,108 @@ Avi runs several sessions against this one dev server. A perturbation left
 running there is not a private mistake, so: after perturbation testing, touch
 the file and confirm the server is serving the restored code before trusting
 anything you see on it.
+
+## Avi's answers on the open actions  `2026-09-16`
+
+Five of the six ACT items had been waiting on him. He closed four in one go,
+and the wording of each answer matters more than a status column, so it is here.
+
+**ACT-M.2, the old production tables: leave them.** "Leave all in production,
+even if they are demo users, just leave them as is. I will re-remove them later.
+I need them for testing." So the table-drop that has been waiting on this since
+SPR-M.13 is not happening, and this is not a deferral to chase later: the rows
+are in use. `CLOSED, leave as is`.
+
+**ACT-M.4, curating the target bank: nothing is retired.** "Nothing is hard for
+a 14-year-old kid. Leave everything there." The bank ships with all 120 active,
+which is what it already did. REQ-M.55's retire mechanism stays built and
+unused, which is the right way round: the screen exists for the day somebody
+disagrees with this. `CLOSED, retire nothing`.
+
+**ACT-M.5, the drawings: leave them.** "Leave whatever I dropped, leave them
+dropped." Read as: no cosmetic regeneration, the old matazim.co.il colours stay.
+Recorded as an interpretation rather than a quote because the sentence arrived
+through dictation; if it meant something else the correction costs nothing,
+since nothing was built either way. `CLOSED, no regeneration`.
+
+**ACT-M.6, נעמי's role: granted.** "Nomi is granted as a program." Done in
+production by Avi. `CLOSED`.
+
+**ACT-M.3, the disclaimer: still open, and now asked properly.** He asked what
+signing it off meant, which is fair: the item said "confirm the wording" without
+ever showing him the wording. It is the blocking modal every new visitor reads:
+
+> **שימו לב: האתר הזה הוא אב טיפוס.** זהו אתר ניסיוני, שאינו אתר רשמי של אינטל
+> ואינו מייצג אותה. אין בשימוש באתר או במידע שבו כל התחייבות או מחויבות מצד אף
+> גורם.
+
+It names Intel and disclaims representing them, in front of parents and
+fourteen-year-olds, which is why it is his sentence and not ours. `OPEN`.
+
+### A note on how these were closed
+
+Four of five answers were "leave it as it is". That is worth recording because
+the items read like a backlog of pending work and were mostly a backlog of
+pending *permission*, three of them for cosmetic or curation changes nobody had
+asked for. The one that was real, ACT-M.6, he had already done.
+
+## SPR-M.44 — The leader's journey says what to do next, too  `DONE 2026-09-16`
+
+**Goal:** SPR-M.43 walked the member's journey. This is the same walk for the
+adult, signed in at each stage they pass through: a teacher waiting to be
+approved, a leader with people waiting on them, and a leader on an ordinary day
+with an empty queue, which is most days.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.44.1 | A waiting teacher is taken to their status, not refused | REQ-M.93, M.99 | DONE |
+| F-M.44.2 | The page says what is true today rather than one fixed line | REQ-M.73 | DONE |
+| F-M.44.3 | Once there is a group, the group comes before the join link | REQ-M.73 | DONE |
+
+### The ordinary day was the one that was wrong
+
+A leader with a group and nothing pending opened האזור שלי to a first screen
+that was the join link and a QR code, with their own people below the fold,
+under a subtitle promising "המט״צים שמחכים לאישור" when nobody was waiting.
+
+Recruiting is occasional. Looking in on your group is why you opened the page.
+So once there is a group the group goes first, and the link keeps its place for
+the leader who has nobody yet and needs it most. Done with `order` in the
+stylesheet rather than a second copy of the markup, so the two states cannot
+drift apart.
+
+Measured on a phone, for a leader with four students: המט״צים שלי moved from
+below the fold to 276px, and the link panel to 812px.
+
+The ordering when something *is* waiting was already right, and was left alone:
+work first, then approvals, then the group, then the link.
+
+### A candidate was treated as a stranger
+
+A teacher whose leader row is not yet approved got the same 403 as anybody
+else, and that page reads "אם לדעתכם זו טעות, דברו עם המוביל שלכם בבית הספר".
+For a fourteen-year-old that is the right sentence. For a teacher waiting on the
+programme team it is advice to go and ask themselves, and it says nothing about
+the only thing they want to know, which is whether their request has been
+answered.
+
+ההרשאה שלי is that screen and already existed, reachable from their menu. Now
+landing on the leader area sends them there instead of refusing them. Everyone
+else is still refused: the redirect asks `candidate_of`, which is the unapproved
+row and not a way in, and there is a test for somebody with no row at all.
+
+### Checked and left alone
+
+The roster and the notices screen have no single primary action, and should not:
+every row is the action, and adding a headline button to a list of teenagers
+would be inventing a job for the page to do. The manager's cohort report puts
+its export at the bottom, which is where it belongs on a page you read first.
+
+### The measurement could not see this sprint's main fix
+
+"First primary action above the fold" did not move for any of these screens,
+because the roster link on האזור שלי is styled as secondary and the reorder
+changed what is *above* it rather than what it is. The fix was real and the
+number was blind to it, which is the second time in two sprints this metric has
+needed a human to look at the screenshot. Recorded rather than quietly dropped:
+it is a good tripwire and a poor verdict.

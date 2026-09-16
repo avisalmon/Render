@@ -245,6 +245,22 @@ def leader_home(request):
     """
     leader = leader_of(request.user)
     if leader is None:
+        # SPR-M.44 — a candidate is not a trespasser.
+        #
+        # A teacher whose row is still unapproved (REQ-M.93) got the same 403
+        # as a stranger, and that page tells the reader to talk to "המוביל
+        # שלכם בבית הספר". For a teenager that is the right sentence. For a
+        # teacher waiting on the programme team it is advice to ask themselves,
+        # and it says nothing about the thing they actually want to know, which
+        # is whether their request has been answered yet.
+        #
+        # ההרשאה שלי is that screen and already exists, so this sends them to
+        # it rather than refusing them. Still a refusal for everybody else:
+        # `candidate_of` is the unapproved row, not a way in.
+        from .access import candidate_of
+
+        if candidate_of(request.user):
+            return redirect("matazim:leader_entrance")
         raise PermissionDenied
 
     return render(
