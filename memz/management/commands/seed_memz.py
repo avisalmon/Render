@@ -54,6 +54,11 @@ PACKS = [
     ("food", "אוכל", "ארוחות, חטיפים וקינוחים שאי אפשר לעמוד בפניהם.", 5),
     ("holidays", "חגים", "נרות, מתנות וערבי חג משפחתיים.", 6),
     ("sports", "ספורט", "אימונים, משחקים ורגעי ניצחון.", 7),
+    # Post-epic content activity (ACT-Z.5): stock reaction photos -- shocked,
+    # annoyed, facepalm, laughing, confused, disappointed -- standing in for
+    # the copyrighted meme templates and celebrity photos that were asked for
+    # and declined (spec Rule 6.1.1).
+    ("reactions", "תגובות", "פרצופים לכל מצב: מופתעים, מתוסכלים, צוחקים.", 8),
 ]
 
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
@@ -226,12 +231,20 @@ class Command(BaseCommand):
                 image = MemeImage.objects.filter(seed_key=key).first()
                 if image is None:
                     is_placeholder = path.stem.startswith("placeholder-")
-                    note = (
-                        "seeded placeholder (SPR-Z.1); replaced by real content in SPR-Z.7"
-                        if is_placeholder else
-                        "AI-illustrated (SPR-Z.7, spec Rule 6.1.1): our own generated art, "
-                        "not a photo of a real person and not a copyrighted meme template"
-                    )
+                    is_stock = "-stock-" in path.stem
+                    if is_placeholder:
+                        note = "seeded placeholder (SPR-Z.1); replaced by real content in SPR-Z.7"
+                    elif is_stock:
+                        note = (
+                            "stock photo (spec Rule 6.1.1): Pexels, licensed free for commercial "
+                            "use with no attribution required, an ordinary model, never a public "
+                            "figure -- source URL recorded in seed_assets/stock_manifest.json"
+                        )
+                    else:
+                        note = (
+                            "AI-illustrated (SPR-Z.7, spec Rule 6.1.1): our own generated art, "
+                            "not a photo of a real person and not a copyrighted meme template"
+                        )
                     image = MemeImage(
                         owner=None, visibility=MemeImage.PUBLIC, moderation_status=MemeImage.APPROVED,
                         moderation_note=note,

@@ -19,7 +19,7 @@ from contextlib import contextmanager
 from django.db import transaction
 from django.utils import timezone
 
-from . import cards, conf, dealing, scoring
+from . import ai_players, cards, conf, dealing, scoring
 from .memes import make_meme
 from .models import CODE_ALPHABET, Meme, Player, Round, Session, Submission, Vote, new_token
 
@@ -64,13 +64,22 @@ class RememberedCapReached(GameError):
 def create_session(
     *, host_user, round_count, round_seconds, vote_seconds,
     game_mode=Session.NORMAL, caption_mode=Session.TYPED, scoring_mode=Session.VOTE, deck=None,
-    image_source=Session.PUBLIC_RANDOM, packs=None, release_session_code=None,
+    image_source=Session.PUBLIC_RANDOM, packs=None, release_session_code=None, ai_player_count=0,
 ):
     from .tiers import tier_for
 
     is_logged_in = bool(host_user and host_user.is_authenticated)
     tier = tier_for(host_user)
     max_players = conf.cap("MAX_PLAYERS", tier)
+    # spec §4.11: up to AI_PLAYERS_MAX, and always room for the host's own
+    # seat — a bot never displaces the one person who has to be able to
+    # start the game. Signed-in hosts only (Rule 4.11.1, 2026-09-16): a
+    # guest asking for bots is forced back to zero server-side, the same
+    # silent downgrade `image_source` already gets for a guest host —
+    # never trust the client's own claim about who is asking.
+    ai_player_count = 0 if not is_logged_in else max(
+        0, min(int(ai_player_count or 0), conf.get("AI_PLAYERS_MAX"), max_players - 1)
+    )
     if caption_mode == Session.CARDS:
         if deck is None:
             raise GameError("צריך לבחור חפיסת קלפים.")
@@ -111,6 +120,7 @@ def create_session(
         session=session, user=host_user if is_logged_in else None,
         nickname=_default_nickname(host_user), is_host=True, seat_order=0,
     )
+    ai_players.add_ai_players(session, ai_player_count)
     return session, host_player
 
 
@@ -385,6 +395,8 @@ def sync(session):
             changed = False
             round_obj.refresh_from_db()
             if round_obj.status == Round.CAPTIONING:
+                if ai_players.resolve_captioning(session, round_obj):
+                    changed = True
                 players = _active_players(session)
                 submitted = set(round_obj.submissions.filter(meme__isnull=False).values_list("player_id", flat=True))
                 everyone_in = players and all(p.id in submitted for p in players)
@@ -396,6 +408,8 @@ def sync(session):
                     _start_voting(round_obj)
                     changed = True
             elif round_obj.status == Round.VOTING:
+                if ai_players.resolve_voting(session, round_obj):
+                    changed = True
                 if session.scoring_mode == Session.JUDGE:
                     decided = round_obj.judge_id and Vote.objects.filter(
                         round=round_obj, voter_id=round_obj.judge_id
@@ -486,8 +500,11 @@ def finish_session(session):
 
 
 def _mark_inactive(session):
+    # AI players have no "last seen" — nothing ever polls on their behalf,
+    # so a real staleness check would mark every bot inactive within one
+    # threshold window (spec §4.11).
     cutoff = timezone.now() - timezone.timedelta(seconds=conf.get("INACTIVE_AFTER_SECONDS"))
-    session.players.filter(is_active=True, last_seen_at__lt=cutoff).update(is_active=False)
+    session.players.filter(is_active=True, is_ai=False, last_seen_at__lt=cutoff).update(is_active=False)
 
 
 def _maybe_handoff_host(session):
@@ -496,7 +513,9 @@ def _maybe_handoff_host(session):
     host = session.players.filter(is_host=True).first()
     if host is None or host.is_active:
         return
-    successor = session.players.filter(is_active=True).exclude(pk=host.pk).order_by("seat_order").first()
+    # Never to a bot (spec §4.11): nobody is behind it to tap "start" or
+    # "advance" for the group.
+    successor = session.players.filter(is_active=True, is_ai=False).exclude(pk=host.pk).order_by("seat_order").first()
     if successor is None:
         return
     Player.objects.filter(pk=host.pk).update(is_host=False)

@@ -16,7 +16,10 @@ DEFAULTS = {
     # --- tiers (spec §2.4) --------------------------------------------------
     "MAX_PLAYERS": {"guest": 5, "free": 10, "paid": 50},
     "REMEMBERED_SESSIONS": {"guest": 0, "free": 30, "paid": None},
-    "UPLOAD_LIMIT": {"guest": 0, "free": 100, "paid": 2000},
+    # SPR-Z.9 (2026-09-16): tightened from 100/2000 -- a scarce-enough number
+    # to matter now that a free user's own uploads can be dealt into a
+    # shared game other players join, not just their own private bank.
+    "UPLOAD_LIMIT": {"guest": 0, "free": 5, "paid": 50},
     "PACK_LIMIT": {"guest": 0, "free": 10, "paid": None},
     "GUEST_SESSION_TTL_HOURS": 48,
     "GUEST_MEME_TTL_HOURS": 48,
@@ -27,6 +30,8 @@ DEFAULTS = {
     "VOTE_SECONDS": (15, 45, 20),
     "HAND_SIZE": 7,
     "MIN_PLAYERS": {"vote": 3, "judge": 3, "relaxed": 2},
+    # --- AI players (spec §4.11) --------------------------------------------
+    "AI_PLAYERS_MAX": 3,
     "CAPTION_MAX_CHARS": 140,
     "CAPTION_MAX_LINES": 3,
     "NICKNAME_MAX_CHARS": 16,

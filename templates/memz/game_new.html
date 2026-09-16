@@ -15,6 +15,19 @@
     <input class="memz-input" type="range" name="round_seconds" min="{{ caption_seconds.lo }}" max="{{ caption_seconds.hi }}" value="{{ caption_seconds.default }}" data-seconds-input>
   </label>
 
+  {% if user.is_authenticated %}
+  <label class="memz-field">
+    <span>{% trans "שחקני בוט" %} ({% trans "עד" %} {{ ai_players_max }})</span>
+    <select class="memz-input" name="ai_player_count">
+      <option value="0">{% trans "בלי" %}</option>
+      {% for n in ai_players_range %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+    </select>
+  </label>
+  <p class="memz-fineprint">{% trans "בוטים כותבים ומצביעים לבד — טוב לבדיקות או לקבוצה קטנה." %}</p>
+  {% else %}
+  <p class="memz-fineprint">{% trans "שחקני בוט זמינים למי שנכנס/ת לחשבון." %} <a href="{% url 'memz:login' %}?next={{ request.path|urlencode }}">{% trans "כניסה" %}</a></p>
+  {% endif %}
+
   <label class="memz-field">
     <span>{% trans "איך משחקים" %}</span>
     <select class="memz-input" name="game_mode" data-game-mode>

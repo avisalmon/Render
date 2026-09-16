@@ -138,8 +138,11 @@ class MemeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Meme
-        fields = ("id", "image", "caption_text", "source", "share_slug", "rendered_url", "created_at", "expires_at")
-        read_only_fields = ("source", "share_slug", "created_at", "expires_at")
+        fields = (
+            "id", "image", "caption_text", "source", "source_credit", "share_slug",
+            "rendered_url", "created_at", "expires_at",
+        )
+        read_only_fields = ("source", "source_credit", "share_slug", "created_at", "expires_at")
 
     def get_rendered_url(self, obj):
         return obj.rendered.url if obj.rendered else ""

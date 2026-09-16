@@ -107,7 +107,7 @@
   // ---------------------------------------------------------------- render
 
   function playerRow(p) {
-    var dot = p.presence === "active" ? "🟢" : p.presence === "away" ? "🟡" : "⚪️";
+    var dot = p.is_ai ? "🤖" : p.presence === "active" ? "🟢" : p.presence === "away" ? "🟡" : "⚪️";
     return (
       '<li class="memz-player-row' + (p.is_me ? " memz-player-row--me" : "") + '">' +
       '<span class="memz-presence-dot">' + dot + "</span>" +
@@ -125,7 +125,11 @@
     root.innerHTML =
       '<h1 class="memz-title">החדר שלכם</h1>' +
       '<div class="memz-code-display">' + esc(state.code) + "</div>" +
-      '<p class="memz-fineprint">שתפו את הקוד או את הקישור עם חברים.</p>' +
+      '<img class="memz-qr" src="/memz/s/' + encodeURIComponent(state.code) + '/qr.png" width="160" height="160" alt="קוד QR להצטרפות">' +
+      '<p class="memz-fineprint">שתפו את הקוד, את הקישור או את קוד ה-QR עם חברים.</p>' +
+      (screenMode ? "" :
+        '<button type="button" class="memz-btn memz-btn--secondary memz-btn--wide" data-whatsapp-share-btn>' +
+        "שיתוף בוואטסאפ 💬</button>") +
       '<ul class="memz-player-list">' + state.players.map(playerRow).join("") + "</ul>" +
       (isHost
         ? '<button class="memz-btn memz-btn--primary memz-btn--wide" data-start-btn' + (canStart ? "" : " disabled") + ">" +
@@ -138,6 +142,14 @@
       var startBtn = root.querySelector("[data-start-btn]");
       startBtn.addEventListener("click", function () {
         guardedAction(function () { return call("POST", "/start/"); }, startBtn);
+      });
+    }
+    var whatsappBtn = root.querySelector("[data-whatsapp-share-btn]");
+    if (whatsappBtn) {
+      whatsappBtn.addEventListener("click", function () {
+        var joinUrl = window.location.origin + "/memz/join/" + encodeURIComponent(state.code) + "/";
+        var text = "בואו נשחק memz! קוד החדר: " + state.code + "\n" + joinUrl;
+        window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank", "noopener");
       });
     }
   }

@@ -5,10 +5,15 @@
 <h1 class="memz-title">{% trans "יוצרים מם" %}</h1>
 <p class="memz-lead">{% trans "בוחרים תמונה, כותבים כיתוב, וזהו." %}</p>
 
+<div class="memz-source-toggle" data-creator-source-toggle>
+  <button type="button" class="memz-btn memz-btn--primary" data-creator-source-btn="bank">{% trans "מהבנק שלנו" %}</button>
+  <button type="button" class="memz-btn memz-btn--secondary" data-creator-source-btn="imgflip">{% trans "תבנית קלאסית" %}</button>
+</div>
+
 {% if not images %}
 <p class="memz-lead">{% trans "אין עדיין תמונות זמינות. נסו שוב עוד רגע." %}</p>
 {% else %}
-<form method="post" class="memz-card memz-form" data-creator-form novalidate>
+<form method="post" class="memz-card memz-form" data-creator-form data-creator-source-panel="bank" novalidate>
   {% csrf_token %}
   {% if form.non_field_errors %}<p class="memz-error" role="alert">{{ form.non_field_errors.0 }}</p>{% endif %}
 
@@ -38,5 +43,27 @@
   <button type="submit" class="memz-btn memz-btn--primary memz-btn--wide" data-creator-submit>{% trans "עושים מם" %}</button>
 </form>
 {% endif %}
+
+<div class="memz-card memz-form" data-creator-source-panel="imgflip" hidden>
+  <p class="memz-fineprint">{% trans "תבניות מוכרות, מוגשות דרך ה-API הרשמי של Imgflip — לא קובץ שנשמר אצלנו מראש." %}</p>
+  <span class="memz-field-label">{% trans "תבנית" %}</span>
+  <ul class="memz-thumb-grid" data-imgflip-thumb-grid></ul>
+  <p class="memz-fineprint" data-imgflip-loading>{% trans "טוענים תבניות..." %}</p>
+
+  <label class="memz-field">
+    <span>{% trans "שורה עליונה" %}</span>
+    <input class="memz-input" type="text" maxlength="80" data-imgflip-top>
+  </label>
+  <label class="memz-field">
+    <span>{% trans "שורה תחתונה" %}</span>
+    <input class="memz-input" type="text" maxlength="80" data-imgflip-bottom>
+  </label>
+
+  <p class="memz-error" data-imgflip-error hidden></p>
+  <button type="button" class="memz-btn memz-btn--primary memz-btn--wide" data-imgflip-submit disabled>{% trans "עושים מם" %}</button>
+</div>
 {% endblock %}
-{% block scripts %}<script src="{% static 'memz/creator.js' %}"></script>{% endblock %}
+{% block scripts %}
+<script src="{% static 'memz/creator.js' %}"></script>
+<script src="{% static 'memz/creator_imgflip.js' %}"></script>
+{% endblock %}

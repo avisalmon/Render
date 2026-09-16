@@ -64,6 +64,15 @@ def pytest_collection_modifyitems(session, config, items):
     _REAL_KEY["value"] = getattr(settings, "OPENAI_API_KEY", "") or ""
     settings.OPENAI_API_KEY = ""
 
+    # memz ACT-Z.5: same story as OPENAI_API_KEY above — a real Imgflip
+    # account now lives in this developer's .env for manual dev-server use,
+    # and every automated test must exercise imgflip_templates.py's own
+    # "not configured" path (ImgflipUnavailable), not a real network call
+    # to a third party on every run. No test suite needs it live the way
+    # matazim's does for OpenAI, so there is no equivalent opt-back-in here.
+    settings.IMGFLIP_USERNAME = ""
+    settings.IMGFLIP_PASSWORD = ""
+
 
 # Held here because `pytest_collection_modifyitems` takes it away and `live_ai`
 # hands it back for the few tests entitled to it.

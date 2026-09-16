@@ -20,6 +20,8 @@ from .titles import compute_titles
 def _presence(player):
     from django.utils import timezone
 
+    if player.is_ai:
+        return "active"   # nothing ever "polls" for a bot, so staleness means nothing here
     if not player.is_active:
         return "inactive"
     age = (timezone.now() - player.last_seen_at).total_seconds()
@@ -32,7 +34,7 @@ def _players_payload(session, player):
     return [
         {
             "id": p.id, "nickname": p.nickname, "is_host": p.is_host, "score": p.score,
-            "presence": _presence(p), "is_me": bool(player and p.id == player.id),
+            "presence": _presence(p), "is_me": bool(player and p.id == player.id), "is_ai": p.is_ai,
         }
         for p in session.players.order_by("seat_order")
     ]

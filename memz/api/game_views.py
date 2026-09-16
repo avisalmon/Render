@@ -74,6 +74,7 @@ class SessionCreateView(GameAPIView):
         round_seconds = _clamp_int(request.data.get("round_seconds"), clo, chi, cdefault)
         vlo, vhi, vdefault = conf.get("VOTE_SECONDS")
         vote_seconds = _clamp_int(request.data.get("vote_seconds"), vlo, vhi, vdefault)
+        ai_player_count = _clamp_int(request.data.get("ai_player_count"), 0, conf.get("AI_PLAYERS_MAX"), 0)
 
         game_mode = request.data.get("game_mode") or Session.NORMAL
         caption_mode = request.data.get("caption_mode") or Session.TYPED
@@ -108,6 +109,7 @@ class SessionCreateView(GameAPIView):
                 host_user=user, round_count=round_count, round_seconds=round_seconds, vote_seconds=vote_seconds,
                 game_mode=game_mode, caption_mode=caption_mode, scoring_mode=scoring_mode, deck=deck,
                 image_source=image_source, packs=packs, release_session_code=request.data.get("release_session_code"),
+                ai_player_count=ai_player_count,
             )
         except game.RememberedCapReached as exc:
             oldest = exc.oldest_session

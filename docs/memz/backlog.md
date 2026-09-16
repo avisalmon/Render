@@ -111,7 +111,7 @@ caption style, one scoring rule; the rest is SPR-Z.4.
 | F-Z.3.2 | Session codes: unambiguous alphabet, `secrets`, partial unique index on active sessions, case-insensitive match | spec §12.6 | DONE |
 | F-Z.3.3 | Player token: issue on join, cookie + localStorage, `X-Memz-Player` DRF authentication class, one session one seat, reload rejoins, invalidation | spec §3.1, §12.3.1, §12.3.3.3 | DONE, with one deliberate deviation: identity resolution is a plain helper (`_player_from_header` in `memz/api/game_views.py`) called explicitly per view, not a DRF `authentication_classes` plugin — the session is only known from the URL once the view has parsed it, which made a global authentication class fragile to reason about; matches the site's own `ustrip/family_api.py` precedent of a plain `APIView` for a token-scoped endpoint. localStorage only, not a cookie (spec listed both; one mechanism was simpler and the token is never needed server-side outside an explicit header read) |
 | F-Z.3.4 | Join page (nickname only), uniqueness with suffix, cap refusal with the right message to the right person, host removes a player | spec §3.2, §4.3 | DONE |
-| F-Z.3.5 | Lobby: code, QR, share link, player list with presence, Start at minimum | spec §4.3, §5.4.1 | DONE minus the QR code and share-link button (spec's `qrcode` dependency wiring and the Web Share integration); the code is large and copyable by hand meanwhile. Tracked as a gap, not forgotten |
+| F-Z.3.5 | Lobby: code, QR, share link, player list with presence, Start at minimum | spec §4.3, §5.4.1 | DONE minus the QR code (spec's `qrcode` dependency wiring, still tracked as a gap). The share-link half closed 2026-09-16 as ACT-Z.6, see below — built as a WhatsApp-specific button rather than the originally-specced generic Web Share sheet, per Avi's own ask |
 | F-Z.3.6 | `game.py` state machine: start, deal (no repeats, no duplicates in a round, pool check at create), captioning, reveal, voting, result, next, finish; server-side transitions guarded by `select_for_update`; deadlines absolute | spec §4.4 to §4.7, §5.4.2, §5.4.3, §6.5.1 | DONE — `memz/game.py`, `memz/dealing.py`, `memz/scoring.py`. One simplification against the spec's "pool too small caught at create time": SPR-Z.3 falls back to reusing images once the pool is exhausted rather than refusing at create, since the seeded bank is small and a hard refusal there would block testing the product; a real pool-size check is cheap to add once the bank is large (SPR-Z.7) |
 | F-Z.3.7 | State endpoint with `Session.version` and ETag, adaptive polling, under 8 KB for 10 players; leaks nothing (no tokens, no authors or votes before result) | spec §11.6, §12.4, §12.3.3.4 | DONE minus the ETag/304 short-circuit — `version` is in every payload for a future client-side optimisation, but the endpoint always returns the full body today. The leak rules are enforced and tested (`memz/state.py`) |
 | F-Z.3.8 | Captioning screen: dealt image, input with preview, submit renders and locks, "sent" state, last-5-seconds treatment | spec §4.4 | DONE minus the live typed-caption preview (the creator's canvas preview, F-Z.2.2, isn't wired into the game's captioning screen yet) and the 5-second visual/haptic treatment; the countdown itself and the "sent, N others still writing" state are in |
@@ -308,6 +308,183 @@ deleted.
 own deferral); the full ~25-images-per-pack target landed at 20 (a meaningful,
 reviewed batch, not the exact spec number — extending it later is a straight
 re-run of the same two scripts with more scenes/searches).
+
+---
+
+## SPR-Z.8 — AI players `DONE (dev), 2026-09-16, awaiting review`
+
+Post-epic, on request (Avi, 2026-09-16): "add option for AI players to join
+the game... up to three... fun and also easy for testing or a small team
+situation." Then, mid-build: "use our openAI capabilities in render" — real
+model calls through the site's own integration, not a canned phrase bank.
+
+| ID | Feature | Traces | Status |
+| --- | --- | --- | --- |
+| F-Z.8.1 | `Player.is_ai`; the organizer picks 0-3 AI seats at create time, created alongside the host, always leaving the host a seat | spec Rule 4.11.1 | DONE — `memz/ai_players.add_ai_players`, clamped against both `AI_PLAYERS_MAX` and `max_players - 1` inside `game.create_session` itself (defence in depth over the API view's own clamp). **Amended same day**: signed-in hosts only — a guest's request is forced back to zero server-side, the same downgrade `image_source` already gets for a guest, and the create screen doesn't offer the field at all when signed out. Avi's own forward note: expected to move behind the paid tier once that boundary is real; free-tier for now |
+| F-Z.8.2 | AI turns resolved with no browser polling on their behalf: from inside `game.sync()`, which already runs on every action and every state read | spec Rule 4.11.2 | DONE — `ai_players.resolve_captioning`/`resolve_voting`, called at the top of `sync()`'s CAPTIONING/VOTING branches, so an AI's move can itself complete "everyone's in" and let the round advance the same pass rather than waiting for a poll or a deadline |
+| F-Z.8.3 | Real captions and vote choices via the site's OpenAI integration; Cards mode plays a hand card like a human, no model call needed | spec Rule 4.11.1, §12.1.1 | DONE — `memz/ai_players.py` is a second named adapter alongside `moderation.py` (Rule 12.1.1 amended to say so), calling `app.ai_chat.call_openai` with a Hebrew system prompt constraining tone to Rule 9.1 (playful, never mean); stub mode, an API error, an empty reply, or an unparseable vote all fall back to a small built-in caption or a plain random vote — an AI player must never be the reason a round hangs |
+| F-Z.8.4 | Never eligible for host or host handoff; exempt from presence staleness entirely (always shown active) | spec Rule 4.11.3 | DONE — `_maybe_handoff_host` and `_mark_inactive` both exclude `is_ai`; `state._presence` returns `"active"` for a bot unconditionally, since nothing ever "goes quiet" for something that was never polling |
+| F-Z.8.5 | Judge mode: an AI player takes its turn as judge exactly when the existing rotation lands on it, no special case | spec Rule 4.11.2 | DONE — `resolve_voting`'s eligibility check is the same `scoring_mode == JUDGE and round.judge_id == player.id` test `cast_vote` itself uses |
+| F-Z.8.6 | Visible in the UI as a bot, not mistaken for a quiet human | spec §4.11 | DONE — `state.py` exposes `is_ai` per player; the player-row presence dot shows 🤖 instead of a colour dot |
+| F-Z.8.7 | The create-session screen: pick 0-3 AI players | spec §4.2 | DONE — a plain `<select>` next to the existing round/timer controls, `game_new.js` sends `ai_player_count` to `POST /memz/api/sessions/` |
+| F-Z.8.8 | Tests: creation and capping, solo-host-plus-bots can start and clears the vote-mode minimum, an AI submits and votes unattended in Typed/Cards/Judge, never hosts, presence exemption | spec §12.8 | DONE — `tests/test_spr_z_8.py`, 13 tests, every one played through `memz.game` itself. `settings.OPENAI_API_KEY` is blanked globally by the repo's own `conftest.py` outside `test_spr_m_*.py`, so every test here exercises the stub-mode fallback path deliberately, not a gap — the real model was verified once by hand on the dev server (see sprint notes). Includes the guest-forced-to-zero test added with the signed-in-only restriction |
+
+**Sprint notes (2026-09-16).** Two real invariants this sprint ran into, both
+fixed as deliberate, documented exceptions rather than loosened blindly:
+`test_memz_imports_nothing_from_the_other_apps` (Rule 12.1.1) was written
+for exactly one adapter file and had to learn there are now two — the fix
+names `ai_players.py` in the same sentence as `moderation.py`, not a
+loosened pattern match. And spec §13's "not in v1: AI caption suggestions"
+sounded like it ruled this whole sprint out on a first read; it doesn't —
+that line was always about assisting a *human's* own caption, a different
+product decision than a bot playing its own entire turn, and now says so.
+
+`resolve_captioning`/`resolve_voting` run inside `sync()`'s own lock rather
+than calling the public `submit_caption`/`cast_vote` (which each call
+`sync()` again themselves) — reusing them would have meant `sync()` calling
+itself recursively for every pending bot. Bounded at 3 deep given the AI cap,
+so not dangerous, but avoiding it entirely was cheaper than reasoning about
+it: the two resolvers mutate `Submission`/`Vote` directly with the same
+primitives (`make_meme`, `cards.play_card`) the public functions use,
+inside the lock the caller already holds.
+
+Demoed on the real dev server, real key: a solo host plus two AI players
+reached a full podium with generated Hebrew captions and a bot occasionally
+winning a round, exactly the "testing alone" case this sprint was for.
+
+**Amended same day, before review:** Avi restricted AI players to signed-in
+hosts only, with a forward note that it's likely to move behind the paid
+tier once that boundary exists for real. Fixed at the source
+(`create_session` itself forces the count to zero for a guest, not just the
+UI hiding the field), which meant most of the sprint's own tests needed a
+real logged-in host to still see any bots at all — every `host_user=None`
+that expected AI seats became a fresh `_signed_in_host()`, and one test
+(the guest one) was added specifically to prove the zero-forcing.
+
+**Carried forward, explicitly:** no moderation pass on an AI-generated
+caption before it renders (real memes from real players already go through
+no such gate either — captions were never moderated, only uploaded images
+are, spec §6.4 — so this matches existing scope, not a gap this sprint
+opened); the system prompt is the only tone guard, proportionate to
+ephemeral in-game content seen only by that session's own players, not the
+public bank.
+
+---
+
+## ACT-Z.5 — A ninth pack, and classic templates via Imgflip `DONE (dev), 2026-09-16`
+
+| Feature | Description | Spec | Status |
+| --- | --- | --- | --- |
+| ACT-Z.5.1 | A ninth public pack, `reactions`: stock photos of shocked, annoyed, facepalm, laughing, confused and disappointed expressions, standing in for reaction-meme content | spec Rule 6.1.1 | DONE — 26 Pexels photos across the six themes, sourced and reviewed the same way as ACT-Z.1 (`stock_manifest.json`, `download_stock_images.py`), seeded via the existing `seed_memz` pack loop. Also fixed while in there: `seed_memz`'s moderation note called every non-placeholder image "AI-illustrated," which was simply wrong for the 64 Pexels photos already in the bank from ACT-Z.1 — a `-stock-` filename now gets an honest "stock photo" note instead of borrowing the AI batch's |
+| ACT-Z.5.2 | Classic meme templates in the solo creator, via Imgflip's own captioning API rather than memz downloading and re-hosting their template library | spec §7.3, §14 item 6 | DONE — new adapter `memz/imgflip_templates.py` (`list_templates`, cached, no credentials needed; `caption`, needs `IMGFLIP_USERNAME`/`IMGFLIP_PASSWORD`, fails closed with `ImgflipUnavailable` otherwise), `memz/memes.make_meme_from_template` (downloads and stores the composited result like any other `Meme`, `image` left null, `source_credit` records the template name), two endpoints (`/memz/api/imgflip/templates/`, `/memz/api/imgflip/memes/`), and a second mode on the creator screen (`data-creator-source-toggle`, `static/memz/creator_imgflip.js`) next to the existing bank-image form. `Meme.source_credit` is a new field (migration `0005_meme_source_credit`), blank for every ordinary meme. `IMGFLIP_USERNAME`/`IMGFLIP_PASSWORD` blanked for every automated test the same way `OPENAI_API_KEY` already is (`conftest.py`) — real credentials only ever live in this developer's own `.env` and, once pushed, Render's env vars. Verified against the real API with a real (free-tier) Imgflip account: a real template, captioned, downloaded to memz's own storage, and served correctly from its share page |
+
+**Why this exists.** Avi handed over a folder, `docs/memz/image_bank/`, with
+515 files across four subfolders: `imgflip/` and `memegen/` (well-known
+copyrighted meme templates — Bernie Sanders, Batman Slapping Robin, Bell
+Curve, and so on), `giphy/` (copyrighted reaction clips from shows and
+films), and `israeli/` (120 unsourced, hashed-filename images in the same
+category as the "funny Israeli celebrities" request F-Z.7.1 already
+declined). Framed first as "for internal testing, alpha only, not the real
+version," then as a direct request to use them anyway. Declined again, same
+reasoning, unmoved by audience size: republishing someone else's copyrighted
+work to even a handful of testers over a real URL is still redistribution,
+and a real person's likeness in a joke context doesn't get safer just
+because fewer people see it. None of the 515 files were added to a
+`MemeImage`, none reached git or the database; `docs/memz/image_bank/` was
+added to `.gitignore` as a backstop so no chat in the shared working tree
+sweeps it into a commit by accident, and the folder itself was left for Avi
+to remove.
+
+Two legitimate paths forward were discussed instead, and both got built the
+same day. First, this pack: real stock photography doing the same comedic
+job as a reaction meme without a specific copyrighted photo or a specific
+person's likeness behind it. Second, ACT-Z.5.2: Imgflip's own Meme
+Generator API (`https://imgflip.com/api`) renders actual, real meme formats
+— Drake, Distracted Boyfriend, and the rest of their free ~100-template
+list — live through their own compositing service, rather than memz
+downloading and re-hosting their template files itself. Free tier, an
+account Avi created and handed over the credentials for, verified against
+the real API before anything was called done.
+
+Also raised, and decided the same day: whether a user's *own* upload
+should face the same policy once a live-game feature lets other players
+see it — see SPR-Z.9 below. Left explicitly future and not built: a
+paid-tier idea, generating a meme image from a user's own uploaded selfie
+— noted for later, nothing to spec or build yet.
+
+---
+
+## SPR-Z.9 — A joining player's own uploads become part of a shared game `DONE (dev), 2026-09-16`
+
+| Feature | Description | Spec | Status |
+| --- | --- | --- | --- |
+| F-Z.9.1 | Upload quota tightened: 5 images for a free account, 50 for paid (was 100/2000) | spec Rule 6.2.1, `MEMZ_UPLOAD_LIMIT` | DONE — one conf value; `test_spr_z_5.py`'s own test already overrode the setting for its own purposes and needed no change |
+| F-Z.9.2 | `own_only`/`mix` draw from every currently *seated, signed-in* player's own approved uploads, not only the host's | spec Rule 6.5.3 | DONE — `dealing.pool_for` now unions every seated player's `user_id`, not `session.host_user_id`; a guest player contributes nothing (uploads are logged-in-only, Rule 6.2.1) and a player who has since left the seat (or the game) stops contributing the moment they're gone, since the pool is computed fresh from who's seated *now* |
+| F-Z.9.3 | At least one dealt image per round comes from a seated player's own stock when any is available, in every mode including Same Meme's one-shared-image round | spec Rule 6.5.3 | DONE — `deal_round`/`deal_same_image` both try a personal image first, once per round, before falling back to the ordinary draw |
+| F-Z.9.4 | Never more than 30% of a session's dealt images come from players' own stock, checked against the session's real dealt history (not a per-round guess) | spec Rule 6.5.3 | DONE — `dealing.PLAYER_STOCK_MAX_SHARE`, `_dealt_stock_counts` (from `Submission` rows, dealt from the moment a round starts, not just captioned ones) |
+| F-Z.9.5 | A player is never dealt their own upload back (best-effort in `own_only` with a very small pool) | spec Rule 6.5.3 | DOES NOT apply to Same Meme's shared image, on purpose — see below and the rule's own text — otherwise DONE |
+| F-Z.9.6 | An upload-time notice: don't upload photos of other people, celebrities, or existing memes — only what you'd be fine with other players seeing | spec Rule 6.2.5 | DONE — one line of fineprint on the upload form (`templates/memz/profile.html`); no second automated detection pass, per Avi's call |
+| F-Z.9.7 | Tests | spec §12.8 | DONE — `tests/test_spr_z_9.py`, 10 tests, played through `memz.game`/`memz.dealing` directly: the pool includes every seated signed-in player and nobody who has left; a guest contributes nothing; a round never lands a player on their own image while an alternative exists; the session-wide ratio never exceeds 30% across 8 played rounds; the very first round already uses a personal image when one exists; Same Meme's shared image can be a personal one; `own_only` with zero public fallback keeps dealing real images even once the "cap" would otherwise say no |
+
+**Sprint notes.** The real design trap here was checking the 30% cap
+*while* dealing a round, not before it. The first cut re-checked the cap
+after every player was assigned, using the running total updated so far
+*within that same round* — which meant a round where the very first
+player had to be given a non-personal image (because their own upload was
+the only personal candidate, and self-dealing is barred) would look like
+"we just dealt 1 of 1 non-personally, adding a personal one now would be
+50%" and refuse the personal slot for every later player too, well before
+the session was anywhere near 30%. Fixed by deciding once per round, from
+the state *before* that round started, whether a personal image is
+allowed at all this round — never re-checked mid-round. Caught by
+`test_deal_round_uses_at_least_one_personal_image_in_the_first_round_when_available`,
+which failed outright under the first version once a third player was
+added to satisfy Vote mode's own minimum.
+
+`own_only` needed its own carve-out from the cap entirely: that mode's
+pool is 100% personal by construction (no public fallback exists to
+"prefer" once the cap is nominally exceeded), so capping it at 30% would
+have just started returning empty rounds. The fix isn't a special case in
+the cap math — it falls out naturally, since the fallback path always
+prefers a non-personal image *if the pool has one*, and `own_only`'s pool
+never does.
+
+Same Meme's shared image gets no self-exclusion, unlike every other mode
+(F-Z.9.5's carve-out) — there's only one image and everyone including its
+owner sees it, so "prefer someone else" has no other player to mean.
+Written up as a deliberate scope decision in Rule 6.5.3's own text, not
+left as a silent gap.
+
+---
+
+## ACT-Z.6 — A WhatsApp share button and a QR code in the lobby `DONE (dev), 2026-09-16`
+
+Closes F-Z.3.5's long-tracked gap in full.
+
+| Feature | Description | Spec | Status |
+| --- | --- | --- | --- |
+| ACT-Z.6.1 | A "שיתוף בוואטסאפ" button in the lobby, for host and guest seats alike (not the shared big-screen view), opening a pre-filled WhatsApp invite with the room code and join link | spec Rule 4.3.4 | DONE — `static/memz/game.js`'s `renderLobby`, `window.open("https://wa.me/?text=" + encodeURIComponent(...))`. Avi's own ask was specifically WhatsApp, not the generic Web Share API sheet F-Z.3.5 originally specced |
+| ACT-Z.6.2 | A QR code of the join URL, in **both** the regular lobby and the shared big-screen view | spec Rule 4.3.5 | DONE — `memz/views.py`'s `lobby_qr`, `GET /memz/s/<code>/qr.png`, same `qrcode` library and shape (a generated PNG, nothing stored) as matazim's own `leader_qr`/`invite_qr`. No extra authorization on the endpoint — the code it encodes is already shown in plain text on the same page |
+| ACT-Z.6.3 | Tests | spec §12.8 | DONE — `tests/test_act_z_6.py`, 6 tests, real Playwright browser plus two plain view tests: the WhatsApp button renders and, clicked, opens exactly one `wa.me` URL carrying the real room code and the real `/memz/join/<code>/` link (a `window.open` spy, not a real network round-trip — see sprint notes); the shared big-screen lobby never renders the WhatsApp button; the QR endpoint returns real PNG bytes (checked against the actual PNG magic number, not just a 200) for a real code and 404s for one that doesn't exist; the `<img>` actually decodes (`naturalWidth > 0`, not just present in the DOM) in both the player lobby and the big screen |
+
+**Sprint notes.** Small, but worth its own marker (`actz6`) rather than
+folding into an existing sprint's, since it isn't SPR-Z.3, Z.8, or Z.9's
+own work — it just happens to close a gap SPR-Z.3 left open three sprints
+ago (built in two passes the same day: the WhatsApp button first, the QR
+code right after on "Want. Cont."). First WhatsApp test draft used
+Playwright's `expect_popup()`, which actually followed the `wa.me` link
+over the real network in the test browser — `wa.me` redirects to
+`api.whatsapp.com`, so asserting the popup landed on `wa.me` failed even
+though the button worked correctly. Fixed by spying on `window.open`
+instead (an init script replacing it before the page loads), which tests
+the app's own intent without a live third-party network call in the
+suite. The QR code reused matazim's own established pattern
+(`joining_views.leader_qr`) almost verbatim — same library, same "PNG
+response, nothing stored" shape — rather than inventing a new one; the
+only real judgment call was showing it on the big screen too (unlike the
+WhatsApp button, which is player-device-only), since spec §4.10 already
+asked for exactly that and a TV is the one place a QR code is *more*
+useful than a WhatsApp button, not less.
 
 ---
 

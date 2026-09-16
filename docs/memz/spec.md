@@ -208,11 +208,12 @@ Rule 4.2.2: starting creates the `Session` in `lobby` and the host's
 ### 4.3 Lobby
 
 The code, huge, in the unambiguous alphabet (§12.6). A QR code of the join
-URL (the `qrcode` library is already in the project). A "share the link"
-button that opens the phone's share sheet with the join URL. The list of
-players as they arrive, with their nicknames, and a presence dot (§4.9).
-The host sees a **Start** button, enabled once the minimum is reached
-(§5.4); everyone else sees "waiting for the host" and the settings summary.
+URL (Rule 4.3.5). A "share the link" button (built as a WhatsApp-specific
+invite, Rule 4.3.4, not the originally-specced generic share sheet). The
+list of players as they arrive, with their nicknames, and a presence dot
+(§4.9). The host sees a **Start** button, enabled once the minimum is
+reached (§5.4); everyone else sees "waiting for the host" and the settings
+summary.
 
 Rule 4.3.1: joining asks for a nickname only. No other field.
 
@@ -222,6 +223,23 @@ bigger room, shown to the *host*, not to the person who was refused.
 
 Rule 4.3.3: the host can remove a player from the lobby. The removed
 player's token is invalidated for this session.
+
+Rule 4.3.4 (ACT-Z.6, added 2026-09-16): every seat in the lobby (host and
+guest alike, not the shared big-screen view) gets a "שיתוף בוואטסאפ"
+button, opening `https://wa.me/?text=...` with the room code and the
+`/memz/join/<code>/` link pre-filled — Avi's own ask, "share like in
+whatsapp," not the generic Web Share API sheet F-Z.3.5 originally
+specced.
+
+Rule 4.3.5 (ACT-Z.6, added 2026-09-16): a QR code of the join URL,
+`GET /memz/s/<code>/qr.png` (the `qrcode` library, already a project
+dependency via matazim's own invite/join QR endpoints — same shape, a
+generated PNG response, nothing stored), shown in **both** the regular
+lobby and the shared big-screen view (spec §4.10) — unlike the WhatsApp
+button, a QR code on a TV is exactly the point: other players scan it
+with their own phones. No extra authorization on the endpoint: the code
+it encodes is already shown in plain text on the very same page.
+F-Z.3.5's original gap is now fully closed.
 
 ### 4.4 A round: captioning
 
@@ -349,6 +367,52 @@ grid, results, podium. No controls on it; the host's phone stays the
 remote. It uses the session code only (it is read-only and shows nothing a
 player in the room cannot already see), no token.
 
+### 4.11 AI players
+
+Added post-epic, 2026-09-16 (Avi): "add option for AI players to join the
+game... up to three... fun and also easy for testing or a small team
+situation." An organizer can add bot seats when opening a game, so a
+host testing alone — or a real group of two or three — can still reach
+Vote/Judge mode's minimum of three without recruiting anyone.
+
+Rule 4.11.1: at create time only, a **signed-in** organizer picks 0 to
+`MEMZ_AI_PLAYERS_MAX` (3) AI seats, always leaving at least one seat for
+the host — a bot never displaces the one person who has to be able to
+tap "start". A guest host's request is silently forced back to zero
+server-side (Avi, 2026-09-16), the same downgrade `image_source` already
+gets for a guest — the create screen simply doesn't offer the field to a
+signed-out visitor, and the server never trusts the client's own claim
+about who is asking either way. **Noted for later, not built now:** Avi
+expects this to become a paid-tier-only feature once the site has paid
+users to gate it against; free-tier accounts get it for now. Bots are
+created immediately, alongside the host, and count toward `max_players`
+like any other seat. Their captions and vote choices
+come from the site's own OpenAI integration (`app.ai_chat.call_openai`,
+through the one named adapter `memz/ai_players.py`, Rule 12.1.1) — the
+same model every other AI feature on the site uses, in stub mode when
+`OPENAI_API_KEY` is unset, and never the reason a round hangs: a stub
+marker, an API error, or an unusable reply all fall back to a small
+built-in caption or a plain random vote instead.
+
+Rule 4.11.2: an AI player has no browser and nothing ever polls on its
+behalf, so its turn is resolved synchronously from inside `game.sync()` —
+the same function that already runs on every action and every state
+read. In Cards mode it plays a card from its own dealt hand, same as a
+human; in Typed mode it asks the model for one short, playful caption
+(the round's topic, if any, is given as context). Voting picks the
+funniest of the anonymous options the same way, except it never votes
+for its own submission, and in Judge mode it only ever votes when the
+rotation actually makes it the round's judge — the same rotation, the
+same rule, no special case.
+
+Rule 4.11.3: an AI player is exempt from presence tracking (Rule 4.9)
+entirely — always shown as active, never marked away or inactive by
+staleness, since staleness measures a human going quiet. It is never
+eligible for host handoff. Otherwise it is an ordinary `Player` row: it
+can win rounds, receive votes, earn a podium title (§9.2), and appear in
+the gallery, same as anyone else — the point is a full extra player, not
+a placeholder.
+
 ## 5. The rules
 
 ### 5.1 Game modes
@@ -457,6 +521,14 @@ spinner in the bank, a `rejected` one shows why and a delete button.
 Rule 6.2.4: a user can delete their own image. Memes already made from it
 keep their rendered file (`Meme.image` goes null, data model).
 
+Rule 6.2.5 (decided 2026-09-16, SPR-Z.9, spec §14 item 9): the upload form
+carries a plain-text notice — don't upload photos of other people,
+celebrities, or existing memes, only what you'd be fine with other players
+seeing — rather than a second, unreliable automated detection pass on top
+of Rule 6.4.2's existing safety check. The existing report link (Rule
+6.4.3) is the mechanism for anything that slips through; there is no
+in-app moderation queue for this, same as for the public bank.
+
 ### 6.3 Packs
 
 Rule 6.3.1: a logged-in user creates packs (within `MEMZ_PACK_LIMIT`), names
@@ -505,6 +577,23 @@ played least in remembered sessions, so a family that plays every Friday
 sees new photos first. A cheap count over remembered submissions; no new
 model.
 
+Rule 6.5.3 (decided and built 2026-09-16, SPR-Z.9): when
+`image_source` allows outside images, *every* signed-in player currently
+seated contributes their own approved uploads to the pool, not only the
+host's (today's `own_only`/`mix` are host-only). A guest player
+contributes nothing — uploading requires an account (Rule 6.2.1), so a
+guest simply has none. At least one dealt image per round comes from a
+seated player's own stock when any exists, in every mode including Same
+Meme (the one shared image for that round can itself be someone's upload);
+across the whole session, no more than 30% of dealt images may come from
+players' own stock. A player is never dealt their own upload — the pool
+for their draw excludes images they themselves own, even though those
+same images are still eligible for everyone else. This is why Rule
+6.1.1's "their own private room" framing for a user's own bank stops being
+literally true the moment this ships: another seated player, a stranger in
+a public game, can now be shown it. See §14 item 9 for the still-open
+question this raises about upload-time moderation.
+
 ## 7. Solo creator
 
 `/memz/create/`: pick an image (public packs; own bank and own packs when
@@ -520,6 +609,27 @@ user's solo memes are listed under "my memes" (§10) and do not expire.
 Rule 7.2: the creator is also reachable from the podium gallery ("make
 another with this image"), which is how a good image from a game becomes a
 personal meme.
+
+### 7.3 Classic templates, via Imgflip (ACT-Z.5, added 2026-09-16)
+
+Rule 7.3.1: a second creator mode, alongside the bank-image one: pick one
+of Imgflip's own templates and type top/bottom text. memz calls Imgflip's
+own captioning API (`memz/imgflip_templates.py`) rather than storing their
+template library itself — they do the actual compositing, memz downloads
+and stores only the result, same as any other `Meme` (`source = solo`,
+`rendered` set), with `source_credit` recording which template it came
+from (e.g. "Imgflip: Distracted Boyfriend"). `image` is null for these —
+there is no bank `MemeImage` behind an Imgflip meme.
+
+Rule 7.3.2: browsing templates needs no Imgflip account (a cached, public
+list); making one does, via `IMGFLIP_USERNAME`/`IMGFLIP_PASSWORD`. Without
+both configured, the picker still shows templates but captioning refuses
+with a plain message — fail closed, there is no meaningful placeholder
+image to fall back to.
+
+Rule 7.3.3: v1 only fills a template's first two text boxes (top/bottom).
+A template with more than two stays blank past the second — Imgflip's
+multi-box form isn't wired in yet.
 
 ## 8. Memes: rendering, sharing, saving, expiry
 
@@ -719,9 +829,11 @@ Templates under `templates/memz/`, static under `static/memz/`. Mounted at
 and ustrip.
 
 Rule 12.1.1: `memz` imports nothing from `app`, `matazim` or `ustrip`
-except the one moderation function (Rule 6.4.2), called through a small
-adapter in `memz/moderation.py` so the import is in exactly one place and
-can be swapped for memz's own check without touching anything else.
+except two named adapters, each in exactly one file, so either import can
+be swapped for memz's own version without touching anything else: the
+moderation function (Rule 6.4.2), through `memz/moderation.py`, and the
+site's OpenAI wrapper (Rule 4.11.1, AI players), through
+`memz/ai_players.py`.
 
 ### 12.2 URLs (pages)
 
@@ -928,7 +1040,9 @@ page of a seeded meme) is live, not the site homepage.
 
 - Payments and anything that moves money; the paid tier is granted by an
   admin.
-- AI caption suggestions.
+- AI caption *suggestions* — helping a human write their own caption. Not
+  the same decision as AI players (§4.11, added 2026-09-16): a bot writing
+  its own entire turn, never touching a human's.
 - English UI (strings are translatable from day one; the translation is a
   later sprint).
 - GIF and video memes.
@@ -938,6 +1052,9 @@ page of a seeded meme) is live, not the site homepage.
 - Native apps; the PWA is the app.
 - In-app editing of public content (admin only).
 - Team or event features (many rooms under one host, tournaments).
+- Generating a meme image from a user's own uploaded selfie. Avi's own
+  future idea (noted 2026-09-16), floated as a paid-tier feature once the
+  tier boundary is real (§14 item 7) — not specced, not built.
 
 ## 14. Decisions still open (small, none blocking Sprint 1)
 
@@ -947,14 +1064,44 @@ page of a seeded meme) is live, not the site homepage.
    `/memz/login/` and `/memz/signup/` link to the shared
    `/accounts/google/login/` flow, carrying `next` the same way the
    password form does. See Rule 3.3.3.
-2. **Initial public bank content**: whose photos, which generated
-   illustrations, how many per pack (target: 8 packs × 25 images). Needs
-   Avi's input on sources under Rule 6.1.1.
-3. **Initial caption decks**: about 200 Hebrew and 200 English cards. Who
-   writes them, and the tone line (family-safe by default, a "spicy" public
-   deck flagged as such or not at all).
+2. ~~**Initial public bank content**~~ — resolved SPR-Z.7 (2026-09-15): 8
+   packs, 20 images each, AI-illustrated plus reviewed real photos, real
+   people/celebrities and existing meme templates both explicitly ruled
+   out. Not the full ~25/pack target; extending it is a re-run of the same
+   scripts with more scenes, carried forward, not blocking.
+3. ~~**Initial caption decks**~~ — resolved SPR-Z.7 (2026-09-15): Hebrew
+   tone-reviewed and expanded to 97 cards / 35 topics. English deferred,
+   Avi's own call ("lets stick with hebrew for now").
 4. **Emoji in rendered captions**: render or drop (§8.1), decided in the
    rendering sprint.
+5. **AI players as a paid-tier feature** (Rule 4.11.1, noted 2026-09-16):
+   Avi expects this to move behind the paid tier once the site actually
+   has paid users to gate it against. Free-tier accounts get it in the
+   meantime — nothing to build until that tier boundary is real.
+6. ~~**Imgflip's live template API**~~ — resolved and built 2026-09-16
+   (ACT-Z.5): memz calls their captioning service (`memz/imgflip_templates.py`,
+   `/memz/api/imgflip/...`) rather than downloading and re-hosting their
+   template files. The composited result *is* downloaded and stored like
+   any other `Meme` (Rule 7.3.1) — Imgflip's own API docs describe the
+   output as something callers "can link, embed, or even download and
+   host yourself", so this is within what they themselves sanction; the
+   underlying template photo's original copyright is still theirs to
+   carry either way, same as it would be calling any meme-bot API. Free
+   tier, no cost. Verified against the real API with a live account.
+7. **A meme generated from a user's own selfie, paid tier** (raised
+   2026-09-16, Avi's own idea): explicitly a future idea, nothing to spec
+   yet.
+8. ~~**A joining player's own uploads inside a shared game**~~ — decided
+   and built 2026-09-16, Rule 6.5.3 (SPR-Z.9). A guest contributes nothing
+   (uploads are logged-in-only already, Rule 6.2.1); applies to every
+   mode including Same Meme; a player is never dealt their own upload
+   back (best-effort in `own_only` with a very small pool — see the
+   rule's own note).
+9. ~~**Upload-time policy for content Rule 6.1.1 bars from the public
+   bank**~~ — decided 2026-09-16, written up as Rule 6.2.5: a plain-text
+   notice on the upload form, responsibility on the uploader, no second
+   detection pass beyond the existing safety check (Rule 6.4.2) and report
+   link (Rule 6.4.3).
 
 ## 15. Suggested sprint sequence (input to backlog.md)
 

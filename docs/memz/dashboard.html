@@ -56,14 +56,19 @@
 <div class="wrap">
   <h1>memz</h1>
   <p class="sub">One meme engine, two front doors: a solo creator and a live party game.
-    <b>SPR-Z.1 through SPR-Z.7 done in dev, 2026-09-15 — Epic Z complete, awaiting review, not yet pushed.</b>
+    <b>Epic Z (SPR-Z.1-7) shipped to production 2026-09-15, Google sign-in with it.
+    SPR-Z.8 (AI players, post-epic) done in dev 2026-09-16, awaiting review.
+    ACT-Z.5 (a ninth "reactions" content pack, and Imgflip live templates),
+    SPR-Z.9 (a joining player's own uploads in a shared game), and ACT-Z.6
+    (a WhatsApp share button and a QR code in the lobby) all done in dev
+    the same day.</b>
     Status truth: <a href="backlog.md">backlog.md</a> + <a href="spec.md">spec.md</a>.</p>
 
   <div class="stat-row">
-    <div class="stat"><div class="n">7 / 7</div><div class="l">Sprints done</div></div>
-    <div class="stat"><div class="n">65 / 65</div><div class="l">Features done</div></div>
-    <div class="stat"><div class="n">229</div><div class="l">Tests</div></div>
-    <div class="stat"><div class="n">Last: SPR-Z.5</div><div class="l">Deployed</div></div>
+    <div class="stat"><div class="n">7 / 7 + 4</div><div class="l">Sprints done</div></div>
+    <div class="stat"><div class="n">65 + 26</div><div class="l">Features done</div></div>
+    <div class="stat"><div class="n">278</div><div class="l">Tests</div></div>
+    <div class="stat"><div class="n">Last: SPR-Z.7</div><div class="l">Deployed</div></div>
   </div>
   <div class="bar"><div style="width:100%"></div></div>
 
@@ -92,19 +97,28 @@
     <p class="sprint-desc">Titles (recomputed, never stored), bundled sound + haptics + a header mute toggle, reveal/count-up/crown/leaderboard-movement/confetti animations, a lifetime stats tab, PWA install prompt + lost-connection banner, and two new phone-guard checks (no native dialog, controls disabled in flight) that caught two real defects along the way. 8 features, 20 tests, 31 screens still green.</p>
   </div>
   <div class="sprint">
-    <div class="sprint-head"><div class="sprint-title">SPR-Z.7 <span>Real content, tier admin, first deploy</span></div><span class="pill done">DONE (dev) · 2026-09-15</span></div>
-    <p class="sprint-desc">Real public bank: 8 packs (4 new), 20 reviewed images each — AI-illustrated (OpenAI gpt-image-1) plus real Pexels photos, every one of the 64 stock candidates checked by hand, 6 rejected and replaced (a real footballer's shirt, sponsor-branded stadium shots, a legible name tag) — see ACT-Z.1 below. Hebrew deck tone-reviewed and expanded to 97 cards / 35 topics (ACT-Z.4); English explicitly deferred. Tier admin proven with tests. render.yaml + a new memz_cleanup cron wired. 5 features, 8 tests, full memz gate (229 tests) green.</p>
+    <div class="sprint-head"><div class="sprint-title">SPR-Z.7 <span>Real content, tier admin, first deploy</span></div><span class="pill done">DONE · deployed 2026-09-15</span></div>
+    <p class="sprint-desc">Real public bank: 8 packs (4 new), 20 reviewed images each — AI-illustrated (OpenAI gpt-image-1) plus real Pexels photos, every one of the 64 stock candidates checked by hand, 6 rejected and replaced (a real footballer's shirt, sponsor-branded stadium shots, a legible name tag) — see ACT-Z.1 below. Hebrew deck tone-reviewed and expanded to 97 cards / 35 topics (ACT-Z.4); English explicitly deferred. Tier admin proven with tests. render.yaml + a new memz_cleanup cron wired. Post-epic same day: Google sign-in on /memz/login/ and /memz/signup/, the site's own shared allauth flow (§14.1, now resolved) — required teaching the app's own "nothing links out" seal test about the one deliberate exception. A ninth pack, reactions (ACT-Z.5, 2026-09-16), was added later still: 26 stock reaction photos (shocked, annoyed, facepalm, laughing, confused, disappointed) after Avi asked for actual celebrity photos and copyrighted meme templates and was told no — see backlog for the full exchange — plus a fix so a stock photo's moderation note stops incorrectly calling itself "AI-illustrated." Same activity, same day: a second creator mode calling Imgflip's own captioning API for real, recognizable meme formats (Drake, Distracted Boyfriend, and the rest of their ~100-template free list) without memz downloading and re-hosting their template library — Imgflip does the compositing, memz stores only the result, credited (`source_credit`). Verified against the real API with a live account, not just the stub path. 5+1 features, 23 tests, full memz gate (278 tests) green. <b>Live on babook.co.il.</b></p>
+  </div>
+  <div class="sprint">
+    <div class="sprint-head"><div class="sprint-title">SPR-Z.8 <span>AI players</span></div><span class="pill done">DONE (dev) · 2026-09-16</span></div>
+    <p class="sprint-desc">Post-epic, on request: a signed-in organizer picks 0-3 AI seats when opening a game — real Hebrew captions and vote choices from the site's own OpenAI integration (a second named adapter, same pattern as moderation.py), resolved with no browser ever polling for them, from inside the same sync() that already drives every real deadline. Amended the same day, before review: a guest host is silently forced back to zero AI seats, at the source in create_session itself, not just hidden in the UI — Avi's noted for later that this is likely to move behind the paid tier once that boundary exists for real, nothing to build until then. Never host, never counted for presence staleness, otherwise a full player: can win, get voted for, earn a podium title. Verified twice — the automated suite proves the stub-mode fallback (a live key is blanked for every test but matazim's own), and a real dev-server run with a live key produced actual generated Hebrew jokes and correct unattended voting end to end. 8 features, 13 tests, full memz gate (278 tests) green.</p>
+  </div>
+  <div class="sprint">
+    <div class="sprint-head"><div class="sprint-title">SPR-Z.9 <span>A joining player's own uploads, in a shared game</span></div><span class="pill done">DONE (dev) · 2026-09-16</span></div>
+    <p class="sprint-desc">Post-epic, same day: upload quota tightened to 5 free / 50 paid (was 100/2000); own_only/mix now draw from every currently seated signed-in player's own uploads, not just the host's, so a game you join can include your own photos, not only ones you host. At least one dealt image per round comes from someone's stock when available, in every mode including Same Meme, capped session-wide at 30% and checked against real dealt history, not a per-round guess — a player is never dealt their own upload back (best-effort in own_only with a very small pool). A plain-text notice on the upload form now asks people not to upload photos of others, celebrities, or existing memes, rather than a second unreliable detection pass. The real trap: an early version re-checked the 30% cap per player mid-round, which let one self-excluded player's forced public pick poison the cap for the rest of that same round — fixed by deciding once per round, from the state before it started. 7 features, 10 tests, full memz gate (278 tests) green.</p>
   </div>
 
   <div class="section-label">ACT items, closed this sprint</div>
   <div class="open-item"><b>ACT-Z.1</b><span>Real bank images: AI-illustrated batch + reviewed real photos, both scoped to non-public-figures (spec §14.2, Rule 6.1.1). A separate request to use real Israeli celebrities or existing memes was declined — publicity rights and copyrighted templates are a different, higher bar than anonymous stock photos.</span></div>
   <div class="open-item"><b>ACT-Z.4</b><span>Hebrew caption tone reviewed — the original 40 held up, expanded to 97 in the same voice. English deck deferred, Avi's own call.</span></div>
+  <div class="open-item"><b>ACT-Z.5</b><span>A ninth "reactions" pack (26 stock photos) and Imgflip live templates, built as the answer to a request for real celebrity photos and copyrighted meme templates dropped straight into the repo — declined again, same reasoning as ACT-Z.1, unmoved by "alpha, internal testing only." See backlog for the full exchange.</span></div>
+  <div class="open-item"><b>ACT-Z.6</b><span>A WhatsApp share button and a QR code (both lobby and big screen) — closes F-Z.3.5's gap in full, tracked since SPR-Z.3.</span></div>
 
   <div class="section-label">Open decisions (spec §14)</div>
-  <div class="open-item"><b>§14.1</b><span>Google sign-in in v1, or email only until asked (recommendation: email only).</span></div>
   <div class="open-item"><b>§14.4</b><span>Emoji in rendered captions: render or drop, decided in SPR-Z.2.</span></div>
 
-  <p class="foot">Updated 2026-09-15 — Epic Z (memz v1) is feature-complete in dev, all seven sprints done. This page is updated at the end of every sprint (the_manager.md Step 9).</p>
+  <p class="foot">Updated 2026-09-16 — Epic Z (memz v1), all seven sprints, is live on babook.co.il. SPR-Z.8 (AI players) is a post-epic addition, done in dev and awaiting review. This page is updated at the end of every sprint (the_manager.md Step 9).</p>
 </div>
 </body>
 </html>

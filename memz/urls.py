@@ -6,6 +6,7 @@ from .api.game_views import (
     AdvanceView, AgainView, AttachAccountView, JoinView, LeaveView, ReleaseSessionView, RemovePlayerView,
     SessionCreateView, StartView, StateView, SubmitView, SwapCardView, VoteView,
 )
+from .api.imgflip_views import ImgflipCaptionView, ImgflipTemplatesView
 from .api.profile import ProfileView
 from .api.report import ReportView
 from .api.schema import SchemaView
@@ -20,6 +21,7 @@ urlpatterns = [
     path("join/<str:code>/", views.join_session_page, name="join_with_code"),
     path("s/<str:code>/", views.game_page, name="game"),
     path("s/<str:code>/screen/", views.game_screen_page, name="game_screen"),
+    path("s/<str:code>/qr.png", views.lobby_qr, name="lobby_qr"),
     # The solo creator (spec §7).
     path("create/", views.creator, name="create"),
     path("create/<str:slug>/", views.creator_result, name="creator_result"),
@@ -52,5 +54,8 @@ urlpatterns = [
     path("api/sessions/<str:code>/rounds/<int:number>/submit/", SubmitView.as_view(), name="api_round_submit"),
     path("api/sessions/<str:code>/rounds/<int:number>/vote/", VoteView.as_view(), name="api_round_vote"),
     path("api/sessions/<str:code>/cards/swap/", SwapCardView.as_view(), name="api_card_swap"),
+    # Classic Imgflip templates in the solo creator (ACT-Z.5, spec §7.3).
+    path("api/imgflip/templates/", ImgflipTemplatesView.as_view(), name="api_imgflip_templates"),
+    path("api/imgflip/memes/", ImgflipCaptionView.as_view(), name="api_imgflip_caption"),
     path("api/", include(router.urls)),
 ]

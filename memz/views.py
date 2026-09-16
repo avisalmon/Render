@@ -27,11 +27,14 @@ def new_session(request):
 
     lo, hi, default = conf.get("ROUNDS")
     clo, chi, cdefault = conf.get("CAPTION_SECONDS")
+    ai_max = conf.get("AI_PLAYERS_MAX")
     return render(request, "memz/game_new.html", {
         "tier": tier_for(request.user),
         "rounds": {"lo": lo, "hi": hi, "default": default},
         "caption_seconds": {"lo": clo, "hi": chi, "default": cdefault},
         "decks": CaptionDeck.objects.filter(is_public=True),
+        "ai_players_max": ai_max,
+        "ai_players_range": range(1, ai_max + 1),
     })
 
 
@@ -73,6 +76,29 @@ def game_screen_page(request, code):
 
     session = get_object_or_404(Session, code__iexact=code)
     return render(request, "memz/game_screen.html", {"code": session.code})
+
+
+def lobby_qr(request, code):
+    """A QR code of the join URL (spec Rule 4.3.4, the other half of
+    F-Z.3.5's long-tracked gap): same `qrcode` library already used by
+    matazim's own invite/join QR endpoints (`matazim/joining_views.py`),
+    same shape (a PNG response, nothing stored). No extra authorization —
+    the code itself is already shown in plain text on the same page; this
+    is only a scannable rendering of a URL that page already displays."""
+    import io
+
+    import qrcode
+    from django.http import HttpResponse
+    from django.shortcuts import get_object_or_404
+
+    from .models import Session
+
+    session = get_object_or_404(Session, code__iexact=code)
+    url = request.build_absolute_uri(f"/memz/join/{session.code}/")
+    image = qrcode.make(url, box_size=8, border=2)
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    return HttpResponse(buffer.getvalue(), content_type="image/png")
 
 
 def creator(request):

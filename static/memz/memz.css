@@ -403,6 +403,18 @@ p.memz-error { margin: 0 0 14px; }
   word-break: break-all;
 }
 
+/* ---- creator: bank image vs. classic template (ACT-Z.5) ------------------ */
+
+.memz-source-toggle {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+
+.memz-source-toggle .memz-btn {
+  flex: 1 1 0;
+}
+
 /* ---- profile ------------------------------------------------------------- */
 
 .memz-tabnav {
@@ -467,6 +479,14 @@ section[id] { scroll-margin-top: 16px; margin-bottom: 32px; }
   letter-spacing: 0.2em;
   text-align: center;
   direction: ltr;
+}
+
+.memz-qr {
+  display: block;
+  margin: 0 auto 6px;
+  border-radius: var(--memz-radius);
+  background: #fff;
+  padding: 8px;
 }
 
 .memz-player-list {

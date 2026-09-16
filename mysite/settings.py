@@ -290,6 +290,15 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 # can't read billing. Optional: without it the dashboard shows app-only usage.
 OPENAI_ADMIN_KEY = os.environ.get("OPENAI_ADMIN_KEY", "")
 OPENAI_DEFAULT_MODEL = os.environ.get("OPENAI_DEFAULT_MODEL", "gpt-4o-mini")
+
+# ---------------------------------------------------------------------------
+# Imgflip (memz ACT-Z.5): classic meme templates, via their own captioning
+# API rather than memz downloading and re-hosting their template library.
+# Empty by default -- memz/imgflip_templates.py runs in "unavailable" mode
+# without both set, same shape as OPENAI_API_KEY's stub mode above.
+# ---------------------------------------------------------------------------
+IMGFLIP_USERNAME = os.environ.get("IMGFLIP_USERNAME", "")
+IMGFLIP_PASSWORD = os.environ.get("IMGFLIP_PASSWORD", "")
 OPENAI_PREMIUM_MODEL = os.environ.get("OPENAI_PREMIUM_MODEL", "gpt-4o")
 # Tiny, cheap model for semantic search (catalog now; site-wide later). gpt-4o-mini
 # is already ~$0.15/1M input; swap to gpt-4.1-nano via env to spend even less.

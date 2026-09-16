@@ -58,9 +58,11 @@
       var deckField2 = form.querySelector('[name="deck"]');
       var packIds = Array.prototype.slice.call(form.querySelectorAll('[name="pack_ids"]:checked'))
         .map(function (el) { return parseInt(el.value, 10); });
+      var aiField = form.querySelector('[name="ai_player_count"]');
       var data = await window.memz.api("POST", "/memz/api/sessions/", {
         round_count: parseInt(roundsInput.value, 10),
         round_seconds: parseInt(secondsInput.value, 10),
+        ai_player_count: aiField ? parseInt(aiField.value, 10) : 0,
         game_mode: gameModeInput.value,
         caption_mode: captionModeInput.value,
         scoring_mode: form.querySelector('[name="scoring_mode"]').value,

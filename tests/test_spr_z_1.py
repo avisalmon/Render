@@ -201,11 +201,17 @@ def test_the_game_doors_exist_on_home(client):
 
 
 def test_memz_imports_nothing_from_the_other_apps():
-    """Rule 12.1.1: the only allowed import from another app is the moderation
-    adapter (SPR-Z.5), and it lives in exactly one file."""
+    """Rule 12.1.1: the only allowed imports from another app are the two
+    named adapters — moderation.py (SPR-Z.5, calls app.safety as a
+    service) and ai_players.py (SPR-Z.8, calls app.ai_chat the same way,
+    for AI-player captions and votes) — and each lives in exactly one
+    file. The rule is "cross-app reach is rare, deliberate and named",
+    not "never", which is what these two already were before this test
+    had to say so twice."""
+    ADAPTER_FILES = {"moderation.py", "ai_players.py"}
     offenders = []
     for path in sorted(Path("memz").rglob("*.py")):
-        if path.name == "moderation.py":
+        if path.name in ADAPTER_FILES:
             continue
         text = path.read_text(encoding="utf-8")
         for line_no, line in enumerate(text.splitlines(), 1):

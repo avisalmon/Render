@@ -238,6 +238,12 @@ class Player(models.Model):
     # per game.
     card_swap_used = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
+    # An organizer-added bot seat (spec §4.11), never a real person: no
+    # browser ever polls for it, so `memz.ai_players` acts on its behalf
+    # from inside `game.sync()`. Never eligible for host (`is_host`) or
+    # host handoff, and exempt from presence staleness (`is_active` never
+    # flips false on its own — it has no "last seen").
+    is_ai = models.BooleanField(default=False)
     # Not auto_now: presence (spec §4.9) needs this touched deliberately, on
     # a state fetch or an action, not on every incidental save (a score
     # update must not look like "just seen").
@@ -326,6 +332,11 @@ class Meme(models.Model):
     caption_card = models.ForeignKey(CaptionCard, null=True, blank=True, on_delete=models.SET_NULL, related_name="memes")
     rendered = models.ImageField(upload_to="memz/memes/%Y/%m/")
     source = models.CharField(max_length=4, choices=SOURCES, default=SOLO)
+    # ACT-Z.5: set only for a meme made from an Imgflip template (e.g.
+    # "Imgflip: Distracted Boyfriend"), blank for every ordinary bank-image
+    # meme. Attribution/audit trail, not a foreign key -- the template
+    # itself lives on Imgflip, not in memz's own bank.
+    source_credit = models.CharField(max_length=160, blank=True, default="")
     created_by_user = models.ForeignKey(USER, null=True, blank=True, on_delete=models.SET_NULL, related_name="memz_memes")
     share_slug = models.CharField(max_length=32, unique=True, default=new_share_slug)
     created_at = models.DateTimeField(auto_now_add=True)

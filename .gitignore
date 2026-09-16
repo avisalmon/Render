@@ -36,3 +36,10 @@ data/lab_public_base.txt
 # מט״צים entrance-test uploads. Minors' own work, kept outside MEDIA_ROOT
 # (spec §4.10 P2). In dev PERSISTENT_ROOT is the repo, so this lands here.
 matazim_private/
+
+# Never committable: a dump of imgflip/memegen/giphy templates and unsourced
+# "israeli" images someone dropped locally under docs/memz/. memz's own spec
+# (Rule 6.1.1) bars copyrighted meme templates and real-person/celebrity
+# content from the bank regardless of source; this entry is a backstop so no
+# chat in this shared working tree ever `git add -A`s it by accident.
+docs/memz/image_bank/
