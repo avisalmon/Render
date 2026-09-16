@@ -52,6 +52,7 @@ import io
 
 from bidi.algorithm import get_display
 from django.conf import settings
+from fontTools.ttLib import TTFont
 from PIL import Image, ImageDraw, ImageFont, features as pil_features
 
 from . import conf
@@ -63,6 +64,20 @@ from . import conf
 PIL_HAS_RAQM = bool(pil_features.check_feature("raqm"))
 
 FONT_PATH = settings.BASE_DIR / "static" / "memz" / "fonts" / "Heebo-Black.ttf"
+
+# Also checked once at import time: exactly which characters
+# Heebo-Black.ttf can actually draw. It has zero emoji glyphs (a real
+# report, 2026-09-16, ACT-Z.12: a caption with an emoji rendered with a
+# visible broken-glyph box baked right into the image) -- FreeType still
+# draws *something* for a codepoint the font has no glyph for (its
+# ".notdef" glyph, usually a plain empty box), it just isn't the emoji.
+# `_strip_unsupported_chars` (used by `_draw_caption_bar`) drops any
+# character not in this set before layout, rather than let that happen.
+# Reading the font's own cmap table is exact -- correct for whatever this
+# font actually supports, not a guess at which Unicode ranges "are
+# emoji" (a notoriously moving target: modifiers, ZWJ sequences, regional
+# indicators, dingbats...).
+_SUPPORTED_CODEPOINTS = set(TTFont(str(FONT_PATH), lazy=True).getBestCmap().keys())
 
 BAR_BG = (255, 255, 255)
 BAR_INK = (17, 17, 17)
@@ -81,6 +96,21 @@ def _line_width(font, line):
     # Bidi reordering doesn't change glyph widths, only their order, so the
     # *logical* string's width is what a wrap decision needs.
     return font.getlength(line)
+
+
+def strip_unsupported_chars(text):
+    """Drop any character `FONT_PATH` has no glyph for -- almost always
+    emoji, the one thing spec §8.1 always said should be dropped rather
+    than shown broken (2026-09-16, ACT-Z.12: a real caption with an emoji
+    baked a visible tofu box into the rendered meme). Each dropped
+    character becomes a space rather than nothing, so "word1🍕word2" (an
+    emoji typed with no space around it, ordinary enough on a phone
+    keyboard) doesn't fuse into the nonsense word "word1word2" -- and
+    `wrap_caption`'s own `text.split()`, downstream, collapses any run of
+    spaces this creates for free. Applied before wrapping, not after, so
+    a dropped emoji's width never affects a wrap decision the visible
+    text doesn't actually need."""
+    return "".join(ch if (ch == " " or ord(ch) in _SUPPORTED_CODEPOINTS) else " " for ch in text)
 
 
 def wrap_caption(text, font, max_width):
@@ -154,6 +184,7 @@ def shape_for_draw(line):
 
 def _draw_caption_bar(width, text):
     """The white band: measured first (to know its height), drawn second."""
+    text = strip_unsupported_chars(text)
     max_width = width - 2 * BAR_PAD_X
     size, lines = fit_caption(text, max_width)
     font = _font(size)

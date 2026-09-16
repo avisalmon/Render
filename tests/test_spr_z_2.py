@@ -107,6 +107,53 @@ def test_render_handles_mixed_hebrew_latin_and_digits_without_crashing(public_im
     assert data[:2] == b"\xff\xd8"
 
 
+def test_strip_unsupported_chars_drops_emoji_but_keeps_everything_else():
+    """2026-09-16 QA fix (ACT-Z.12, a real screenshot of a live game: a
+    caption with an emoji baked a visible broken-glyph box into the
+    rendered meme). Heebo-Black.ttf has zero emoji glyphs at all -- spec
+    §8.1 always said emoji should be dropped rather than shown broken,
+    but nothing ever actually did that. `strip_unsupported_chars` reads
+    the font's own cmap table rather than guessing at "which Unicode
+    ranges are emoji"."""
+    from memz.render import strip_unsupported_chars
+
+    # An emoji flanked by real spaces on both sides: those spaces are
+    # untouched, the emoji itself becomes one more space (not nothing).
+    assert strip_unsupported_chars("מגניב 🍕 פיצה").split() == ["מגניב", "פיצה"]
+
+    # An emoji typed with NO space around it -- ordinary on a phone
+    # keyboard -- must not fuse the two neighbouring words together.
+    assert strip_unsupported_chars("word1🍕word2").split() == ["word1", "word2"]
+
+    # Hebrew, Latin, digits, and ordinary punctuation (including an
+    # em-dash, already used in the seeded caption-card deck) must all
+    # survive completely unchanged -- this is a *narrow* filter, not a
+    # blanket "keep only Hebrew" one.
+    ordinary = "יש לי 3 חתולים ו-2 כלבים, cool!? — really"
+    assert strip_unsupported_chars(ordinary) == ordinary
+
+
+def test_render_drops_emoji_instead_of_baking_a_broken_glyph_box(public_image, monkeypatch):
+    """The other half of ACT-Z.12: `_draw_caption_bar` must actually
+    call `strip_unsupported_chars` on the caption before it ever reaches
+    `fit_caption`/wrapping, not just have the helper exist unused."""
+    from memz import render
+
+    seen = []
+    real_fit_caption = render.fit_caption
+
+    def spy_fit_caption(text, *args, **kwargs):
+        seen.append(text)
+        return real_fit_caption(text, *args, **kwargs)
+
+    monkeypatch.setattr(render, "fit_caption", spy_fit_caption)
+    render.render(public_image.file, "מגניב 🍕 פיצה", watermark=False)
+
+    assert seen, "fit_caption was never called"
+    assert "🍕" not in seen[0], f"the emoji reached fit_caption unstripped: {seen[0]!r}"
+    assert seen[0].split() == ["מגניב", "פיצה"]
+
+
 def test_shape_for_draw_keeps_hebrew_first_even_when_the_caption_opens_in_latin():
     """2026-09-16 QA fix (Avi, live-testing the real game): a caption
     starting with an English word, a digit, an emoji or a quote mark used

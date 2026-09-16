@@ -691,6 +691,32 @@ theory alone a second time.
 
 ---
 
+## ACT-Z.12 — Emoji baked a broken-glyph box into a real meme `DONE (dev), 2026-09-16`
+
+A live game screenshot (round 2 of a real family game) showed a caption
+with two visible "□□" boxes baked right into the rendered meme — spec
+§8.1 always said emoji should be dropped from the render, but nothing
+ever actually implemented that.
+
+| Feature | Description | Spec | Status |
+| --- | --- | --- | --- |
+| ACT-Z.12.1 | A caption with an emoji renders with a broken-glyph box instead of dropping the emoji | spec §8.1 | DONE — `Heebo-Black.ttf` has zero emoji glyphs (confirmed directly against its own cmap table, 0 of several emoji codepoints tried present out of 463 total). `memz/render.py` now reads the font's cmap once at import (`_SUPPORTED_CODEPOINTS`) and `strip_unsupported_chars` drops any character not in it before wrapping — each dropped character becomes a space, not nothing, so an emoji typed with no surrounding space doesn't fuse its two neighbouring words together. Added `fonttools` to `requirements.txt` (it was already present locally by accident, not actually pinned — would have crashed on deploy without this) |
+| ACT-Z.12.2 | Tests | spec §12.8 | DONE — `tests/test_spr_z_2.py` gained two tests: `strip_unsupported_chars` on its own (emoji with spaces around it, emoji with no spaces around it, and a battery of ordinary characters — Hebrew, Latin, digits, punctuation, an em-dash — that must all survive untouched); and an end-to-end one spying on `fit_caption`'s own input to confirm `_draw_caption_bar` actually calls the new helper, not just that the helper exists. Both reverted-and-confirmed failing without the fix first |
+
+**Sprint notes.** The same screenshot also came with "the game got stuck
+in round 2" — investigated at the code level (the voting screen's
+poll-driven auto-advance, `sync()`'s deadline check, the render-key-skip
+patches from ACT-Z.7/8) and found nothing that would leave it stuck
+*forever*: once a round's `vote_deadline` passes, the very next 1-second
+poll calls `sync()`, which finishes the round unconditionally. Asked Avi
+directly rather than guess further: did it recover a few seconds after
+the screenshot, or did it truly never move? Left open pending his answer
+— the countdown reading "0" in the screenshot is also just what the
+timer looks like in the ordinary, self-resolving case, not necessarily
+evidence of a second bug on top of the emoji one.
+
+---
+
 ## Not in v1 (spec §13)
 
 Payments, AI captions, English UI, GIF and video memes, free-position text

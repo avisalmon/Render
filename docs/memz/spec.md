@@ -712,9 +712,17 @@ below, and for the same reason.
   didn't hold.
 - Font: one OFL font with heavy Hebrew and Latin weights (Heebo Black or
   Rubik Black), vendored under `static/memz/fonts/` and used by both the
-  server and the browser preview so they match. Emoji fall back to a
-  bundled colour-emoji-free glyph set or are dropped from the render with a
-  preview warning; decided during the rendering sprint, recorded here then.
+  server and the browser preview so they match. Emoji are dropped from the
+  render rather than shown broken — decided during the rendering sprint,
+  recorded here then, but **not actually implemented until ACT-Z.12
+  (2026-09-16)**, found from a real game screenshot with a visible
+  broken-glyph box baked into the caption: Heebo Black has no emoji glyphs
+  at all, and nothing dropped them first. `render.strip_unsupported_chars`
+  now reads the font's own cmap table and drops any character it has no
+  glyph for before layout (a dropped character becomes a space, not
+  nothing, so an emoji typed with no space around it doesn't fuse its two
+  neighbouring words together). A live preview warning when an emoji gets
+  dropped (the other half of the original decision) is not yet built.
 - A small watermark "memz" in the corner at 40% opacity for guest-made
   memes; none for logged-in users. The one place the free tier is visible
   in the output.

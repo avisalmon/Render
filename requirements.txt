@@ -5,6 +5,10 @@ whitenoise>=6.7,<7
 django-allauth[socialaccount]>=65.0,<66
 requests>=2.31,<3
 Pillow>=10.0,<12
+# memz's own dependency (ACT-Z.12, 2026-09-16): reads a font's cmap table
+# to know exactly which characters it can draw, so a caption's emoji get
+# dropped before rendering instead of baking in a broken-glyph box.
+fonttools>=4.50,<5
 qrcode>=7,<9
 # Pinned exactly (2026-09-16), not a range: a loose ">=0.6,<1" let dev and
 # production resolve different builds, which rendered the same Hebrew
