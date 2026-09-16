@@ -22,11 +22,40 @@
   </div>
 
   <section class="mz-panel">
+    {% comment %}
+      SPR-M.45 — the player arrives when somebody asks for it, not before.
+
+      Measured on a real lesson page: simply opening it reached ten third-party
+      hosts. The Bunny player's scripts from assets.mediadelivery.net and
+      iframe.mediadelivery.net, video segments from vz-*.b-cdn.net before
+      anybody pressed play, fonts.bunny.net, performance telemetry to
+      rum-metrics.bunny.net and metrics-bunny.net, and latency probes to edge
+      zones as far apart as Auckland and Kenya. Every other screen in מט״צים
+      contacts nobody at all.
+
+      The privacy page says, in bold, "אין כאן גוגל אנליטיקס, אין פיקסל של
+      פייסבוק, ואין שום סקריפט של חברה אחרת", and uses that to explain why
+      there is no cookie banner. On this one screen that sentence was not true,
+      and this is the screen where a fourteen-year-old spends their hours.
+
+      `loading="lazy"` did not help: the player sits at the top of the page, so
+      it is in the viewport and loads immediately.
+
+      So: a still frame and a play button, and the iframe is created on the
+      first click. Opening a lesson now reaches nobody. Pressing play reaches
+      Bunny, which is unavoidable because that is where the video is, and the
+      page says so before it happens rather than after.
+
+      autoplay=true on the swapped-in iframe, because the click *was* the
+      request to play, and making somebody press play twice is a worse screen.
+    {% endcomment %}
     {% if embed_url %}
-      <div class="mz-player">
-        <iframe src="{{ embed_url }}?autoplay=false" loading="lazy"
-                allow="accelerometer; gyroscope; encrypted-media; picture-in-picture"
-                allowfullscreen></iframe>
+      <div class="mz-player mz-player-idle" data-embed="{{ embed_url }}">
+        <button type="button" class="mz-player-start">
+          <span class="mz-player-icon" aria-hidden="true">&#9654;</span>
+          <span class="mz-player-label">הפעלת השיעור</span>
+          <span class="mz-player-note">הווידאו מגיע משרת חיצוני (Bunny). עד שתלחצו, לא נשלח לשם כלום.</span>
+        </button>
       </div>
     {% else %}
       <p class="mz-player-empty">השיעור הזה עדיין בלי וידאו.</p>
@@ -129,6 +158,26 @@
   comment ships. The RULE-1 guard caught exactly that: naming the parent product
   in source a visitor can view is the thing RULE-2 forbids, however small.
 {% endcomment %}
+<script>
+  // The player, built on the first click (SPR-M.45). Until then this page has
+  // contacted nobody.
+  (function () {
+    var box = document.querySelector('.mz-player-idle');
+    if (!box) return;
+    var start = box.querySelector('.mz-player-start');
+    if (!start) return;
+    start.addEventListener('click', function () {
+      var frame = document.createElement('iframe');
+      frame.setAttribute('src', box.dataset.embed + '?autoplay=true');
+      frame.setAttribute('allow', 'accelerometer; gyroscope; encrypted-media; picture-in-picture');
+      frame.setAttribute('allowfullscreen', '');
+      box.classList.remove('mz-player-idle');
+      box.innerHTML = '';
+      box.appendChild(frame);
+    });
+  })();
+</script>
+
 <script>
   (function () {
     var button = document.getElementById('mzDone');

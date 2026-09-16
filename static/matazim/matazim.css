@@ -789,6 +789,53 @@ img { max-width: 100%; height: auto; display: block; }
 .mz-player iframe { width: 100%; aspect-ratio: 16 / 9; border: 0; display: block; }
 .mz-player-empty { aspect-ratio: 16 / 9; display: grid; place-items: center; background: var(--mz-page); }
 
+/* The still, before the player exists (SPR-M.45). A whole-box button rather
+   than a small triangle floating on a panel: the target is the video, which is
+   what somebody reaches for, and it is comfortably past 44px at every width. */
+.mz-player-start {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 20px;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  color: #fff;
+  text-align: center;
+  background: linear-gradient(135deg, #17223b, #0f1524);
+}
+.mz-player-start:hover .mz-player-icon { transform: scale(1.08); }
+.mz-player-start:focus-visible { outline: 3px solid var(--mz-purple); outline-offset: -3px; }
+
+.mz-player-icon {
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--mz-purple);
+  font-size: 1.4rem;
+  /* The glyph is a right-pointing triangle, and this page is RTL, so without
+     this it is mirrored into a rewind button. */
+  transform-origin: center;
+  direction: ltr;
+  transition: transform .15s ease;
+}
+
+.mz-player-label { font-weight: 500; font-size: 1.05rem; }
+
+/* Said before it happens rather than after, which is the whole point of the
+   change: a reader decides whether to reach Bunny at all. */
+.mz-player-note {
+  max-width: 44ch;
+  font-size: .84rem;
+  line-height: 1.5;
+  color: #c9cede;
+}
+
 .mz-lesson-rail { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .mz-lesson-rail a {
   display: flex;

@@ -1022,12 +1022,18 @@ def test_every_class_a_template_uses_actually_exists():
     css = Path("static/matazim/matazim.css").read_text(encoding="utf-8")
     defined = set(re.findall(r"\.(mz-[a-z0-9-]+)", css))
 
-    # State hooks: classes that carry meaning rather than style. `mz-door-locked`
-    # has no CSS and never needed any, because the locked look comes from
-    # `.mz-btn.is-disabled`; what it does is let six tests assert the door is
-    # shut. That is a legitimate thing for a class to be, so the allowlist names
-    # them rather than the check pretending they are mistakes.
-    STATE_ONLY = {"mz-door-locked", "mz-nav-done", "mz-tag-fix", "mz-tag-late"}
+    # State hooks: classes that carry meaning rather than style. `mz-player-idle`
+    # has no CSS and never needed any, because the still's look comes from
+    # `.mz-player` and `.mz-player-start`; what it does is mark a player that
+    # has not been built yet, for the script that builds it on click and for the
+    # tests that assert nothing was fetched before then. That is a legitimate
+    # thing for a class to be, so the allowlist names them rather than the check
+    # pretending they are mistakes.
+    #
+    # `mz-door-locked` left with the locked door in SPR-M.42 and is gone from
+    # here too: an allowlist that keeps names nothing uses stops being a list of
+    # deliberate exceptions and becomes a list of things nobody reviewed.
+    STATE_ONLY = {"mz-player-idle", "mz-nav-done", "mz-tag-fix", "mz-tag-late"}
 
     unknown = {}
     for template in sorted(Path("templates/matazim").glob("*.html")):

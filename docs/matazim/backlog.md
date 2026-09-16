@@ -3201,3 +3201,81 @@ changed what is *above* it rather than what it is. The fix was real and the
 number was blind to it, which is the second time in two sprints this metric has
 needed a human to look at the screenshot. Recorded rather than quietly dropped:
 it is a good tripwire and a poor verdict.
+
+## SPR-M.45 — A lesson reaches nobody until somebody presses play  `DONE 2026-09-16`
+
+**Goal:** walk the screens where a מט״צ actually spends their hours. Every
+review so far had covered the hubs: the front door, המסלול שלי, the roster, the
+staff area. Nobody had opened a lesson and asked anything of it.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.45.1 | The player is built on the first click, not on page load | §4.10 | DONE |
+| F-M.45.2 | The page says where the video comes from, before it goes | §4.10 | DONE |
+
+### What opening a lesson used to do
+
+Ten third-party hosts, measured, before anybody pressed anything:
+
+| Host | What it is |
+|---|---|
+| `assets.mediadelivery.net`, `iframe.mediadelivery.net` | the Bunny player, as scripts |
+| `vz-b521cf57-68f.b-cdn.net` | video segments, 24 requests, 1080p, unasked |
+| `rum-metrics.bunny.net`, `metrics-bunny.net`, `1785c05b.metrics-bunny.net` | performance telemetry |
+| `edgezone-auc…`, `edgezone-ke…`, `edgezone-in…` | latency probes to edge zones worldwide |
+| `fonts.bunny.net` | fonts |
+
+Every other screen in מט״צים contacts nobody. That is not luck: SPR-M.21
+self-hosted Rubik precisely so a Google Fonts link would not send a
+fourteen-year-old's IP address to Google "before they have agreed to anything
+and with nothing on screen saying so".
+
+And the privacy page says, in bold:
+
+> אין כאן גוגל אנליטיקס, אין פיקסל של פייסבוק, **ואין שום סקריפט של חברה אחרת.**
+
+and then uses that to explain why the site asks for no cookie consent. On the
+lesson screen, which is where a member spends most of their time, that sentence
+was not true.
+
+`loading="lazy"` was already on the iframe and did nothing, because the player
+sits at the top of the page and is therefore in the viewport.
+
+### What it does now
+
+A still, a play button, and one line: *הווידאו מגיע משרת חיצוני (Bunny). עד
+שתלחצו, לא נשלח לשם כלום.* The iframe is created by the click.
+
+Measured after: **0 third-party hosts on load, 12 after the click.** Reaching
+Bunny on play is unavoidable, because that is where the video is. The change is
+that it now happens because a reader chose it, and the screen said so first
+rather than a policy page saying so later.
+
+The whole frame is the button (298×190 on a phone), not a glyph, because a play
+control the size of a triangle is the tap-target defect SPR-M.41 swept out.
+
+### What is still not true, and is Avi's sentence
+
+Pressing play still contacts another company, so "אין שום סקריפט של חברה אחרת"
+remains wrong for anybody who watches a lesson, which is everybody. The code now
+makes the claim true for *reaching* the page and honest at the moment it stops
+being true, and that is as far as code can take it. The policy needs a sentence
+about the video, and a privacy policy read by minors is not ours to word. Held
+with ACT-M.3, the disclaimer, as the second thing waiting on Avi.
+
+### A stale allowlist, found by the guard that caught this
+
+`test_every_class_a_template_uses_actually_exists` failed on `mz-player-idle`,
+correctly: it is a state hook with no styling. Adding it to `STATE_ONLY` showed
+that `mz-door-locked` was still listed there, three sprints after SPR-M.42
+deleted the locked door. Removed. An allowlist that keeps names nothing uses
+stops being a list of deliberate exceptions and becomes a list of things nobody
+reviewed.
+
+### The method that nearly hid this
+
+The first walk reported two lesson pages as timing out. They were not: they
+render in 0.1 seconds, and `networkidle` simply never arrives on a page whose
+video player streams continuously. The wrong number pointed at the right screen
+for the wrong reason, and only opening the request log turned "these pages are
+slow" into "these pages are talking to ten strangers".
