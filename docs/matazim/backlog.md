@@ -3279,3 +3279,57 @@ render in 0.1 seconds, and `networkidle` simply never arrives on a page whose
 video player streams continuously. The wrong number pointed at the right screen
 for the wrong reason, and only opening the request log turned "these pages are
 slow" into "these pages are talking to ten strangers".
+
+## SPR-M.46 — The privacy page says what the product does  `DONE 2026-09-16`
+
+**Goal:** the half of SPR-M.45 that was Avi's. He read the finding and said
+"ok", so the paragraph that was not true now says what actually happens.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.46.1 | The page names the video service and the click that gates it | REQ-M.81 | DONE |
+| F-M.46.2 | The page names the graphics library too | REQ-M.81 | DONE |
+| F-M.46.3 | A test that fails on any future undisclosed third party | §4.10 | DONE |
+
+### What the guard found on its first run
+
+The test written for this sprint does not check "does the page mention Bunny".
+It reads every external host out of every מט״צים template and fails on any whose
+owner the privacy page does not name. Naming Bunny fixes today; the way this
+breaks again is somebody embedding a map or a widget next year.
+
+It failed immediately, on **`cdn.jsdelivr.net`**, which nobody had written down
+anywhere. `test_task.html` and `staff_targets.html` both load three.js from it,
+and measured on the real screens that is three scripts fetched eagerly, with no
+click and no notice. `test_task.html` is מבחן הכניסה, which is the first thing a
+fourteen-year-old does here.
+
+So the sprint written to disclose one third party disclosed two, and the second
+was found by the tripwire rather than by anybody noticing it.
+
+### What the page says now
+
+Two named items in a list rather than one buried sentence: the video from Bunny,
+gated behind the click, and three.js from jsDelivr on the entrance test's 3D
+view, which loads as soon as the screen opens. Then the part that matters and
+was never said: these are **files loaded into your browser, not information sent
+about you**; neither sets a cookie; nothing you told us is passed to them; and
+what they do see, like any server a file comes from, is your IP address.
+
+The cookie sentence survives because it was measured rather than assumed: zero
+third-party cookies before the click and after sixteen seconds of playback.
+
+### The fix that is not in this sprint
+
+Disclosure is the honest minimum, not the best answer. SPR-M.21 did not disclose
+Google Fonts, it **removed** them, and said why: a font link sends a
+fourteen-year-old's IP to Google before they have agreed to anything. three.js
+from jsDelivr is the same shape and deserves the same answer, which is vendoring
+it into `static/matazim/` and pointing the import map at ourselves.
+
+Not done here because it is a bigger change than a sentence: the 3D viewer is
+what מבחן הכניסה is, and breaking it breaks the way into the programme. It wants
+its own sprint, with the viewer actually exercised in a browser afterwards.
+
+Bunny cannot be removed the same way, because that is where the video is. The
+click is the right answer there and it already shipped.

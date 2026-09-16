@@ -75,11 +75,51 @@
       <li><span class="mz-check">·</span><span><code>sessionid</code> — כדי שתישארו מחוברים בין עמוד לעמוד.</span></li>
       <li><span class="mz-check">·</span><span><code>csrftoken</code> — כדי שטופס שאתם שולחים באמת יגיע מכם.</span></li>
     </ul>
+    {% comment %}
+      SPR-M.46. This paragraph used to end "ואין שום סקריפט של חברה אחרת", and
+      on every screen but one that was true. The lesson pages play video from
+      Bunny, so for the screens where a member spends most of their time it was
+      not, and a privacy page that is accurate everywhere except the busiest
+      room is a privacy page that is wrong.
+
+      SPR-M.45 made the video wait for a click, which is what lets this
+      paragraph say something both true and worth reading: nothing is sent
+      until you press play. Avi approved the wording change on 2026-09-16.
+
+      The cookie sentence survives unchanged because it was measured and is
+      still right: Bunny sets no cookies, before the click or after it.
+    {% endcomment %}
     <p>
-      <strong>אין כאן גוגל אנליטיקס, אין פיקסל של פייסבוק, ואין שום סקריפט של
-      חברה אחרת.</strong> בגלל זה גם אין באנר שמבקש מכם לאשר עוגיות: אין כאן שום
-      עוגייה שנועדה לנו ולא לכם, ולכן אין על מה לבקש אישור. אם זה ישתנה אי פעם,
-      נבקש אישור לפני שזה יעלה לאוויר ולא אחרי.
+      <strong>אין כאן גוגל אנליטיקס ואין פיקסל של פייסבוק.</strong> שני דברים
+      כן נטענים משרתים שאינם שלנו, וזה בדיוק מה שהם:
+    </p>
+    <ul class="mz-needs">
+      <li>
+        <span class="mz-check">·</span>
+        <span>
+          <strong>הווידאו של השיעורים</strong> מנוגן משירות אחסון וידאו בשם
+          Bunny. כל עוד לא לחצתם על ההפעלה לא נשלח לשם כלום, וברגע שתלחצו השירות
+          מקבל את הבקשה לנגן. זה כתוב גם על מסך השיעור עצמו, לפני הלחיצה.
+        </span>
+      </li>
+      <li>
+        <span class="mz-check">·</span>
+        <span>
+          <strong>התצוגה התלת-ממדית במבחן הכניסה</strong> משתמשת בספריית גרפיקה
+          בשם three.js, שנטענת משירות בשם jsDelivr ברגע שהמסך נפתח.
+        </span>
+      </li>
+    </ul>
+    <p>
+      בשני המקרים מדובר בקבצים שנטענים לדפדפן שלכם, ולא בשליחה של מידע עליכם:
+      אף אחד מהם לא שותל אצלכם עוגייה, ואנחנו לא מעבירים להם שום דבר שסיפרתם
+      לנו. מה שהם כן רואים, כמו כל שרת שממנו נטען קובץ, זו כתובת ה־IP שלכם.
+      בכל שאר המסכים באתר אין שום סקריפט של חברה אחרת.
+    </p>
+    <p>
+      בגלל זה אין כאן באנר שמבקש מכם לאשר עוגיות: אין שום עוגייה שנועדה לנו ולא
+      לכם, ולכן אין על מה לבקש אישור. אם זה ישתנה אי פעם, נבקש אישור לפני שזה
+      יעלה לאוויר ולא אחרי.
     </p>
   </section>
 
