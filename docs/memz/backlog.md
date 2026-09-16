@@ -488,6 +488,40 @@ useful than a WhatsApp button, not less.
 
 ---
 
+## ACT-Z.7 — Three bugs from playing the real thing `DONE (dev), 2026-09-16`
+
+Avi's own QA pass on the live game — his words: "יש הרבה תקלות ופידבקים,
+אז אני רוצה לתת לך פידבק של QA, של הבטחת איכות." Three findings, all
+confirmed by hand before anything was touched (one of the three didn't
+reproduce the way it first looked), all fixed and tested the same day.
+
+| Feature | Description | Spec | Status |
+| --- | --- | --- | --- |
+| ACT-Z.7.1 | The captioning keyboard opening and closing repeatedly, typed text disappearing | spec §12.4 (polling) | DONE — root cause found, not guessed: captioning polls every second, and `renderCaptioning` rebuilt the *entire* screen on every single poll, `<textarea>` included. On a phone that tears the focused element out from under the keyboard (dismissing it) and the freshly-rebuilt textarea starts empty, so whatever was typed was gone, not just visually interrupted. Fixed by skipping the rebuild entirely once the round/submitted-state hasn't actually changed — nothing on that screen depends on the poll tick anyway, the countdown ticks itself client-side |
+| ACT-Z.7.2 | All memes revealed at once instead of one at a time | spec §4.5, Rule 4.5.1 | DONE — closes F-Z.3.9, open since SPR-Z.3: the spec always described a one-at-a-time slideshow (4s per meme, in sync on every screen); it just showed a grid with a staggered fade-in instead. `reveal_seconds_per_meme` is now sent in state (alongside the existing `reveal_deadline`), and every client — phone or the shared big screen — computes the same "which meme right now" index from the same two numbers, no socket, no server push needed for them to agree |
+| ACT-Z.7.3 | Hebrew captions rendering backwards | spec §8.1 | DONE — did not reproduce the way it first sounded. Plain Hebrew, multi-line wraps, Hebrew mixed with numbers or punctuation all rendered correctly in `memz/render.py` under manual testing; the real bug only showed for a caption whose *first* character is a strong-LTR one — an English word, and, checked further, plausibly a digit or an emoji too — because `get_display()` with no `base_dir` guesses the paragraph's direction from that first character, silently treating an otherwise-Hebrew caption as an LTR paragraph. `base_dir="R"` is now pinned explicitly; memz captions are never anything but Hebrew-first RTL, so the direction was never actually in question |
+| ACT-Z.7.4 | Tests | spec §12.8 | DONE — 5 new tests: `shape_for_draw`'s correctness checked against the actual shaped character sequence (`tests/test_spr_z_2.py`), not a rendered pixel; the keyboard fix proved in a real Playwright browser across several real 1-second poll cycles, and proved to actually fail without the fix (reverted it, watched the test fail wiping out the typed text, restored it); a companion test proving the fix doesn't get *stuck* — submitting still reaches the screen on the very next poll; the reveal slideshow proved in both the phone view and the big-screen view, checked against real `rendered_url` values, not pixels (`tests/test_spr_z_6.py`) |
+
+**Sprint notes.** The most important discipline here wasn't the fixes
+themselves, it was not guessing. Avi's report bundled three symptoms
+together as "quality issues with the game"; two had an obvious, findable
+root cause the moment the actual polling/render code was read (7.1, 7.2).
+The third (7.3) did not reproduce under direct testing of ordinary Hebrew
+captions — rather than "fix" something that wasn't visibly broken,
+several more realistic scenarios were tried (mixed Hebrew/Latin, digits,
+punctuation) until one actually failed, and the failure was confirmed
+*programmatically* (comparing the shaped character sequence's first/last
+characters) rather than trusted from eyeballing small Hebrew glyphs in a
+generated image a second time — the first visual read of that same test
+image was actually misread and very nearly pointed at the wrong fix
+entirely. Avi still asked for 7.3 to be fixed even before the exact
+reproduction was confirmed ("חייבים לתקן גם את העברית ההפוכה") — the
+extra scenario-hunting happened anyway, on the reasoning that "the user
+insists it's real" is grounds to look harder, not grounds to skip
+verification and ship a guess.
+
+---
+
 ## Not in v1 (spec §13)
 
 Payments, AI captions, English UI, GIF and video memes, free-position text

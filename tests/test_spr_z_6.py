@@ -405,6 +405,133 @@ def test_the_start_button_disables_itself_while_the_request_is_in_flight(_phone_
     assert page.locator("[data-screen]").get_attribute("data-screen") == "game-captioning"
 
 
+def _captioning_world(round_count=3):
+    session, host = game.create_session(host_user=None, round_count=round_count, round_seconds=60, vote_seconds=20)
+    p2 = game.join_session(session, "שני")
+    p3 = game.join_session(session, "גל")
+    game.start_session(session, host)
+    return session, host, p2, p3
+
+
+def test_typing_a_caption_survives_the_poll_that_used_to_rebuild_it(browser, live_server, db):
+    """2026-09-16 QA fix (Avi, live-testing the real game): captioning
+    polls the server every second (spec §12.4); the old renderCaptioning
+    rebuilt the whole screen on every single poll, tearing out the
+    <textarea> a player might be actively typing in -- on a phone this
+    dismisses the keyboard, and the freshly rebuilt (empty) textarea
+    grabs no focus back, so whatever was typed is simply gone. Proven
+    here across several real poll cycles: type into the textarea, wait
+    out multiple 1-second polls, the text and the focus are both still
+    there."""
+    pytest.importorskip("playwright.sync_api")
+    session, host, _p2, _p3 = _captioning_world()
+    context = browser.new_context(viewport=PHONE, device_scale_factor=2, is_mobile=True, has_touch=True)
+    context.add_init_script(
+        "localStorage.setItem(%r, %r);" % (f"memz.player.{session.code}", host.guest_token)
+    )
+    page = context.new_page()
+    page.goto(f"{live_server.url}/memz/s/{session.code}/", wait_until="domcontentloaded")
+    page.wait_for_timeout(400)
+    assert page.locator("[data-screen]").get_attribute("data-screen") == "game-captioning"
+
+    textarea = page.locator("[data-caption-input]")
+    textarea.click()
+    textarea.type("שלום זה מבחן")
+    # Outlive several 1-second poll cycles -- this is exactly the window
+    # the old bug fired in, every single tick.
+    page.wait_for_timeout(3500)
+    assert textarea.input_value() == "שלום זה מבחן", "a poll tick wiped out what was typed"
+    assert page.evaluate("document.activeElement === document.querySelector('[data-caption-input]')"), (
+        "a poll tick stole focus from the textarea (the keyboard-dismiss bug)"
+    )
+
+
+def test_the_captioning_screen_still_updates_once_something_real_changes(browser, live_server, db):
+    """The fix above must skip redundant rebuilds, not get stuck: once
+    *this* player actually submits, the very next poll has to show it."""
+    pytest.importorskip("playwright.sync_api")
+    session, host, _p2, _p3 = _captioning_world()
+    context = browser.new_context(viewport=PHONE, device_scale_factor=2, is_mobile=True, has_touch=True)
+    context.add_init_script(
+        "localStorage.setItem(%r, %r);" % (f"memz.player.{session.code}", host.guest_token)
+    )
+    page = context.new_page()
+    page.goto(f"{live_server.url}/memz/s/{session.code}/", wait_until="domcontentloaded")
+    page.wait_for_timeout(400)
+
+    page.fill("[data-caption-input]", "כיתוב שלי")
+    page.click("[data-caption-form] button[type=submit]")
+    page.wait_for_timeout(600)
+    assert "שלחתם" in page.inner_text("[data-screen]"), "submitting did not make it to the screen"
+
+
+def _revealed_world(settings):
+    """Three real submissions, all captioned, so the round has already
+    moved itself into `revealed` by the time the page loads -- same
+    server-authoritative path as a real game, just driven directly
+    instead of through three browsers. Deliberately keeps the real
+    `REVEAL_SECONDS_PER_MEME` (4s) rather than compressing it: a browser
+    launch and page load alone can eat over a second, and a tighter
+    per-meme budget made the very first assertion flake past meme 0
+    before the page had even finished loading."""
+    session, host, p2, p3 = _captioning_world(round_count=1)
+    round_obj = game.current_round(session)
+    for player in (host, p2, p3):
+        game.submit_caption(session, player, round_obj.number, caption_text=f"כיתוב {player.nickname}")
+    round_obj.refresh_from_db()
+    assert round_obj.status == Round.REVEALED
+    return session, host, round_obj
+
+
+def test_the_reveal_screen_shows_one_meme_at_a_time_not_a_grid(browser, live_server, db, settings):
+    """2026-09-16 QA fix (Avi, live-testing the real game): "אני רוצה
+    חוויה שבעצם כל המשתתפים רואים את הבדיחות אחת אחת... ולא את כולם
+    ביחד" -- one joke at a time, not a grid everyone sees at once
+    (F-Z.3.9, tracked since SPR-Z.3, never built until now)."""
+    pytest.importorskip("playwright.sync_api")
+    session, host, round_obj = _revealed_world(settings)
+    context = browser.new_context(viewport=PHONE, device_scale_factor=2, is_mobile=True, has_touch=True)
+    context.add_init_script(
+        "localStorage.setItem(%r, %r);" % (f"memz.player.{session.code}", host.guest_token)
+    )
+    page = context.new_page()
+    page.goto(f"{live_server.url}/memz/s/{session.code}/", wait_until="domcontentloaded")
+    page.wait_for_timeout(300)
+
+    assert page.locator("[data-screen]").get_attribute("data-screen") == "game-revealed"
+    assert page.locator(".memz-reveal-image").count() == 1, "more than one meme showing at once"
+    assert page.locator(".memz-meme-grid").count() == 0, "the old all-at-once grid is still there"
+    assert "1 מתוך 3" in page.inner_text("[data-reveal-progress]")
+    first_src = page.locator(".memz-reveal-image").get_attribute("src")
+
+    # Past the first meme's own ~4-second budget, still only one at a
+    # time -- and it's a different one, proven by comparing rendered_url
+    # values already known server-side (never trusting pixels).
+    page.wait_for_timeout(4200)
+    assert page.locator(".memz-reveal-image").count() == 1
+    assert "2 מתוך 3" in page.inner_text("[data-reveal-progress]")
+    second_src = page.locator(".memz-reveal-image").get_attribute("src")
+    assert second_src != first_src, "the slideshow never actually advanced to the next meme"
+
+    expected = [s.meme.rendered.url for s in round_obj.submissions.select_related("meme").order_by("id")]
+    assert first_src == expected[0]
+    assert second_src == expected[1]
+
+
+def test_the_big_screen_reveal_is_also_one_at_a_time(browser, live_server, db, settings):
+    """spec §4.10: the shared TV gets the same slideshow, not its own
+    grid -- if anything, one-at-a-time matters more there."""
+    pytest.importorskip("playwright.sync_api")
+    session, _host, _round_obj = _revealed_world(settings)
+    context = browser.new_context(viewport=PHONE)
+    page = context.new_page()
+    page.goto(f"{live_server.url}/memz/s/{session.code}/screen/", wait_until="domcontentloaded")
+    page.wait_for_timeout(300)
+    assert page.locator("[data-screen]").get_attribute("data-screen") == "game-revealed"
+    assert page.locator(".memz-reveal-image").count() == 1
+    assert page.locator(".memz-meme-grid").count() == 0
+
+
 def test_mute_toggle_persists_across_a_reload(browser, live_server, db):
     context = browser.new_context(viewport=PHONE, device_scale_factor=2, is_mobile=True, has_touch=True)
     page = context.new_page()

@@ -582,6 +582,10 @@ section[id] { scroll-margin-top: 16px; margin-bottom: 32px; }
   animation: memz-tile-pop 320ms ease-out both;
 }
 
+.memz-reveal-image {
+  animation: memz-tile-pop 320ms ease-out both;
+}
+
 @keyframes memz-tile-pop {
   from { opacity: 0; transform: scale(0.85) translateY(6px); }
   to { opacity: 1; transform: scale(1) translateY(0); }

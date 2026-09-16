@@ -107,6 +107,40 @@ def test_render_handles_mixed_hebrew_latin_and_digits_without_crashing(public_im
     assert data[:2] == b"\xff\xd8"
 
 
+def test_shape_for_draw_keeps_hebrew_first_even_when_the_caption_opens_in_latin():
+    """2026-09-16 QA fix (Avi, live-testing the real game): a caption
+    starting with an English word, a digit, an emoji or a quote mark used
+    to come out backwards on the actual rendered meme, because
+    `get_display`'s own auto-detection picks the paragraph's base
+    direction from its *first strong character* -- so "WOW זה מטורף"
+    (an entirely ordinary thing to type) got treated as an LTR paragraph
+    and reordered as if it read "זה מטורף WOW". `shape_for_draw` pins
+    `base_dir="R"` so this can never happen: memz captions are always a
+    Hebrew-first RTL paragraph, never guessed at.
+
+    PIL draws a string strictly left to right, so the *last* character of
+    the shaped string is what lands visually rightmost -- where a Hebrew
+    reader starts. For "WOW זה מטורף", "WOW" (the first thing actually
+    typed) must be what ends up rightmost, i.e. last in the shaped
+    string."""
+    from memz.render import shape_for_draw
+
+    shaped = shape_for_draw("WOW זה מטורף")
+    assert shaped.endswith("WOW"), f"WOW should land rightmost (last in the LTR-drawn string), got {shaped!r}"
+
+    # Un-prefixed Hebrew, and digit-then-Hebrew, must both still read
+    # correctly too -- this fix must not just move the bug around. Each
+    # RTL *run* is itself spelled backwards in the shaped string (that is
+    # what makes PIL's left-to-right glyph drawing come out looking right
+    # again) -- so the word typed first ("אחד") shows up run-reversed
+    # ("דחא") at the very end, not literally as "אחד".
+    shaped_plain = shape_for_draw("אחד שתיים שלוש")
+    assert shaped_plain.endswith("אחד"[::-1]), f"אחד (typed first) should land rightmost, got {shaped_plain!r}"
+
+    shaped_digit_first = shape_for_draw("5 דברים שכל הורה מכיר")
+    assert shaped_digit_first.endswith("5"), f"the digit (typed first) should land rightmost, got {shaped_digit_first!r}"
+
+
 def test_render_handles_empty_caption(public_image):
     from memz import render
 

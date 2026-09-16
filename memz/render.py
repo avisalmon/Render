@@ -12,7 +12,13 @@ Text is laid out with `python-bidi`'s `get_display` before drawing, so a
 Hebrew caption with an embedded English word or a number renders in the
 right visual order — PIL's `ImageDraw.text` has no bidi awareness of its
 own and draws whatever string it is handed strictly left to right, so the
-string it is handed must already be in visual order. Wrapping happens
+string it is handed must already be in visual order. The base direction is
+always pinned to RTL (`base_dir="R"`, 2026-09-16 QA fix) rather than left
+to `get_display`'s own auto-detection, which guesses from the first
+*strong* character and silently flips the whole line backwards for
+anything starting with an English word, a digit, an emoji or a quote mark
+-- ordinary things to type, and always wrong here, since memz captions are
+never anything but a Hebrew-first RTL paragraph. Wrapping happens
 *before* that reordering, on the logical text: a word's rendered width is
 the same regardless of which direction the line reads, so greedy wrapping
 on the logical (typed) word order is correct and simpler than wrapping the
@@ -93,6 +99,22 @@ def fit_caption(text, max_width, max_lines=None):
     return lo, lines
 
 
+def shape_for_draw(line):
+    """Logical (typed) order -> visual (drawn) order, for PIL's own
+    bidi-blind `ImageDraw.text`.
+
+    `base_dir="R"` is pinned deliberately, not left to `get_display`'s own
+    auto-detection (2026-09-16 QA fix): with no `base_dir`, it guesses the
+    paragraph's direction from its *first strong character*, so a caption
+    starting with an English word, a digit, an emoji or a quote mark --
+    all ordinary things to type -- got silently treated as an LTR
+    paragraph with an embedded Hebrew run, which reordered the whole line
+    backwards. memz captions are always a Hebrew-first RTL product; the
+    base direction is never actually in question, so it should never be
+    guessed."""
+    return get_display(line, base_dir="R")
+
+
 def _draw_caption_bar(width, text):
     """The white band: measured first (to know its height), drawn second."""
     max_width = width - 2 * BAR_PAD_X
@@ -105,8 +127,7 @@ def _draw_caption_bar(width, text):
     draw = ImageDraw.Draw(bar)
     y = BAR_PAD_Y
     for line in lines:
-        shaped = get_display(line)
-        draw.text((width / 2, y), shaped, font=font, fill=BAR_INK, anchor="ma")
+        draw.text((width / 2, y), shape_for_draw(line), font=font, fill=BAR_INK, anchor="ma")
         y += line_height
     return bar
 

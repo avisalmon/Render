@@ -154,12 +154,30 @@
     }
   }
 
+  // 2026-09-16 QA fix (Avi, live-testing the real game): captioning polls
+  // every second (schedulePoll/pollInterval below), and this render used
+  // to rebuild the whole screen on every single poll -- including the
+  // <textarea> a player might be mid-word in. On mobile that tears the
+  // focused element out from under the keyboard, which dismisses it, and
+  // a moment later the freshly-rebuilt (empty) textarea grabs no focus
+  // back, so the keyboard just flickers open and shut and whatever was
+  // typed is gone. Nothing in the not-yet-submitted, typed-caption view
+  // actually depends on the poll tick (the timer ticks itself, client
+  // side, via countdown() below; nothing else on that screen changes
+  // until the round itself does) -- so once it's showing, further polls
+  // for the same round in the same submitted-state are simply skipped.
+  var captioningRenderKey = null;
+
   function renderCaptioning(state) {
-    setScreen("game-captioning");
     var r = state.round;
     var mine = r.my_submission;
     var already = mine && mine.submitted;
     var cardsMode = state.caption_mode === "cards";
+    var key = r.number + ":" + already + ":" + cardsMode;
+    if (key === captioningRenderKey) return;
+    captioningRenderKey = key;
+
+    setScreen("game-captioning");
     root.innerHTML =
       '<h1 class="memz-title">כותבים כיתוב</h1>' +
       '<p class="memz-fineprint">סבב ' + r.number + " מתוך " + state.round_count +
@@ -207,18 +225,46 @@
 
   var revealedRoundSeen = null;   // spec §9.1: the drumroll plays once per round, not once per poll
 
+  // 2026-09-16 QA fix (Avi, live-testing the real game): this used to show
+  // every meme in the round at once (a grid, just with a small staggered
+  // fade-in) -- Avi wanted a real one-at-a-time slideshow instead, joke
+  // after joke. The server already budgets `reveal_seconds_per_meme`
+  // seconds per meme into `reveal_deadline` (game._start_reveal); working
+  // backwards from that same deadline is what keeps every connected
+  // screen -- different phones, different poll timings, the shared big
+  // screen -- looking at the *same* meme at the *same* moment, without
+  // needing a websocket or a separate "reveal started at" field.
+  function revealIndexFor(r) {
+    var count = (r.memes || []).length;
+    if (count <= 0 || !r.reveal_deadline) return 0;
+    var perMemeMs = (r.reveal_seconds_per_meme || 4) * 1000;
+    var startedAt = new Date(r.reveal_deadline).getTime() - perMemeMs * count;
+    var idx = Math.floor((Date.now() - startedAt) / perMemeMs);
+    return Math.max(0, Math.min(count - 1, idx));
+  }
+
+  var revealedRenderKey = null;   // same idea as captioningRenderKey: don't replay the pop-in animation every poll tick for a meme that's already showing
+
   function renderRevealed(state) {
-    setScreen("game-revealed");
     var r = state.round;
+    var count = (r.memes || []).length;
+    var idx = revealIndexFor(r);
+    var key = state.code + ":" + r.number + ":" + idx;
+    if (key === revealedRenderKey) return;   // same meme still showing -- countdown() below is already self-ticking, nothing else to refresh
+    revealedRenderKey = key;
+
+    setScreen("game-revealed");
     var me = state.players.find(function (p) { return p.is_me; });
+    var current = r.memes && r.memes[idx];
     root.innerHTML =
       '<h1 class="memz-title">רגע של חשיפה...</h1>' +
       '<p class="memz-fineprint">סבב ' + r.number + " מתוך " + state.round_count +
       (r.topic ? " · הנושא: " + esc(r.topic) : "") + "</p>" +
       '<div class="memz-timer" data-timer></div>' +
-      '<div class="memz-meme-grid">' + r.memes.map(function (m, i) {
-        return '<figure class="memz-meme-tile" style="animation-delay:' + (i * 90) + 'ms"><img src="' + esc(m.rendered_url) + '" alt=""></figure>';
-      }).join("") + "</div>" +
+      (current
+        ? '<img class="memz-result-image memz-reveal-image" src="' + esc(current.rendered_url) + '" alt="">' +
+          (count > 1 ? '<p class="memz-fineprint" data-reveal-progress>' + (idx + 1) + " מתוך " + count + "</p>" : "")
+        : "") +
       (missedThisRound(r) ? '<p class="memz-fineprint">לא הספקת, קורה. בסבב הבא!</p>' : "") +
       (me && me.is_host ? '<button class="memz-btn memz-btn--secondary memz-btn--wide" data-advance-btn>למעבר להצבעה</button>' : "");
     countdown(root.querySelector("[data-timer]"), r.reveal_deadline);

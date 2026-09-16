@@ -280,6 +280,17 @@ first; the client shows the reveal from the state, the server just advances
 the index on a timer of 4 s per meme, host can tap to advance faster). Memes
 are anonymous during the reveal and the vote. Order is random per round.
 
+**Built 2026-09-16** (ACT-Z.7 QA pass; this was F-Z.3.9's own tracked gap,
+open since SPR-Z.3 — until then every meme showed at once, in a grid with
+just a staggered fade-in, never a real slideshow). The index itself isn't
+a value the server advances and pushes — there's no socket to push it
+over — it's computed identically on every client (a phone, or the shared
+big screen) from `reveal_deadline` and `reveal_seconds_per_meme`, both
+already in the state payload: `index = floor((now - (deadline -
+seconds_per_meme × count)) / seconds_per_meme)`. Every screen reaches the
+same number because they're all doing the same arithmetic against the
+same two numbers, not because anyone told them to.
+
 Rule 4.5.1: in Same Meme mode the image is shown once, then only the
 captions cycle. In every other mode each meme is shown whole.
 
@@ -649,7 +660,14 @@ JavaScript twin for the live preview that follows the same layout rules.
 - Text: Hebrew and mixed text laid out with `python-bidi` (already a
   dependency) before drawing, so a Hebrew caption with an English word or a
   number renders in the right order. Tested with the same cases the site's
-  other RTL rendering uses.
+  other RTL rendering uses. **Fixed 2026-09-16** (ACT-Z.7 QA pass, found by
+  Avi live-testing the real game): `get_display`'s base direction was left
+  to auto-detect from the caption's first *strong* character, so anything
+  starting with an English word, a digit, an emoji or a quote mark — all
+  ordinary things to type — got silently treated as an LTR paragraph and
+  came out backwards. `base_dir="R"` is now pinned explicitly
+  (`render.shape_for_draw`): memz captions are always Hebrew-first RTL,
+  never a paragraph direction actually in question.
 - Font: one OFL font with heavy Hebrew and Latin weights (Heebo Black or
   Rubik Black), vendored under `static/memz/fonts/` and used by both the
   server and the browser preview so they match. Emoji fall back to a

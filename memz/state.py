@@ -45,6 +45,11 @@ def _round_payload(session, round_obj, player):
         "number": round_obj.number, "status": round_obj.status,
         "caption_deadline": _iso(round_obj.caption_deadline),
         "reveal_deadline": _iso(round_obj.reveal_deadline),
+        # ACT-Z.7 QA fix (2026-09-16): so the client can work out which
+        # single meme should be showing *right now* without a separate
+        # "reveal started at" field -- reveal_deadline minus this times
+        # the meme count (game._start_reveal's own math) reconstructs it.
+        "reveal_seconds_per_meme": conf.get("REVEAL_SECONDS_PER_MEME"),
         "vote_deadline": _iso(round_obj.vote_deadline),
         "topic": round_obj.topic.text if round_obj.topic_id else None,
     }
