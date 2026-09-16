@@ -685,19 +685,31 @@ below, and for the same reason.
   came out backwards. `base_dir="R"` is now pinned explicitly
   (`render.shape_for_draw`): memz captions are always Hebrew-first RTL,
   never a paragraph direction actually in question. **A second, real
-  instance found and fixed 2026-09-16** (ACT-Z.10, a real screenshot from
-  the live game — "רגע... מה קורה פה?!" rendered with "רגע" spelled
-  backwards): this did not reproduce against any `python-bidi` build
-  installed locally, in several variations tried — the actual cause was
-  version drift, not the code: `requirements.txt` pinned only a range
-  (`>=0.6,<1`), so dev and production had silently resolved different
-  builds of the same library, and production's happened to get this
-  specific punctuation pattern wrong. Pinned to an exact version
-  (`python-bidi==0.6.10`) so what's tested is what ships. Confirmed by
-  hand-comparing rendered glyph shapes against known-correct and
-  known-reversed reference renders of the same word (not by reading the
-  image, which had already produced a wrong answer twice earlier the
-  same day — see backlog.md's ACT-Z.10 sprint notes for the full story).
+  instance found 2026-09-16** (ACT-Z.10, a real screenshot from the live
+  game — "רגע... מה קורה פה?!" rendered with "רגע" spelled backwards): first
+  (wrongly) diagnosed as `requirements.txt` pinning only a range
+  (`>=0.6,<1`) for `python-bidi`, letting dev and production resolve
+  different builds. That fix (`python-bidi==0.6.10`) was deployed,
+  confirmed live, and the exact same meme still rendered reversed —
+  disproving the theory. **The real cause, found and fixed 2026-09-16**
+  (ACT-Z.11): most Linux/macOS Pillow wheels, what Render actually
+  installs, bundle `libraqm` and gain real bidi awareness in
+  `ImageDraw.text` from it — Windows dev wheels don't. Production was
+  reordering `shape_for_draw`'s already-correctly-reordered string a
+  *second* time, the same double-reversal bug class ACT-Z.8.2 fixed in
+  the browser canvas, just server-side and invisible locally (nothing
+  there to double anything with). Fixed by checking
+  `PIL.features.check_feature("raqm")` once at import
+  (`render.PIL_HAS_RAQM`): when true, `shape_for_draw` hands PIL the line
+  *unreordered* and `_draw_caption_bar` passes `direction="rtl"`, letting
+  PIL's own raqm layout do the reordering, same as the browser fix; when
+  false, behaviour is unchanged (`get_display(line, base_dir="R")`, as
+  ACT-Z.7.3/10 left it). Confirmed by hand-comparing rendered glyph shapes
+  against known-correct and known-reversed reference renders of the same
+  word (not by reading the image directly, which had already produced a
+  wrong answer twice earlier the same day) — see backlog.md's ACT-Z.10 and
+  ACT-Z.11 sprint notes for the full story, including why the first fix
+  didn't hold.
 - Font: one OFL font with heavy Hebrew and Latin weights (Heebo Black or
   Rubik Black), vendored under `static/memz/fonts/` and used by both the
   server and the browser preview so they match. Emoji fall back to a

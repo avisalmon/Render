@@ -164,6 +164,60 @@ def test_shape_for_draw_handles_punctuation_after_the_first_word():
         )
 
 
+def test_shape_for_draw_leaves_the_line_alone_when_pil_can_reorder_it_itself(monkeypatch):
+    """2026-09-16 QA fix, round 4 continued (ACT-Z.11) -- the REAL root
+    cause, after ACT-Z.10's version pin was deployed and shown NOT to fix
+    it. The reversal wasn't about which `python-bidi` version was
+    installed at all: it was that most Linux/macOS Pillow wheels (what
+    Render actually runs) bundle `libraqm`, which gives PIL's own
+    `ImageDraw.text` real Unicode-bidi awareness -- so production was
+    reordering `shape_for_draw`'s already-reordered output a SECOND time,
+    unreversing it right back to wrong. This reproduced for every
+    pure-Hebrew multi-word caption, not just ones with punctuation, which
+    is why ACT-Z.10's narrower fix never touched it. `PIL_HAS_RAQM` picks
+    the right path at import time; this test pins that when it's true,
+    `shape_for_draw` must hand PIL the line UNCHANGED, trusting PIL's own
+    raqm layout (given `direction="rtl"`, checked in the next test) to do
+    the reordering -- exactly the same fix shape as creator.js's
+    `ctx.direction = "rtl"` (ACT-Z.8.2), just on the server."""
+    from memz import render
+
+    monkeypatch.setattr(render, "PIL_HAS_RAQM", True)
+    line = "רגע מה קורה פה"
+    assert render.shape_for_draw(line) == line, "raqm-backed PIL must get the logical line, not a pre-reordered one"
+
+    monkeypatch.setattr(render, "PIL_HAS_RAQM", False)
+    assert render.shape_for_draw(line) != line, "without raqm, PIL still needs the line reordered by hand"
+
+
+def test_draw_caption_bar_tells_raqm_backed_pil_the_paragraph_is_rtl(monkeypatch):
+    """The other half of the ACT-Z.11 fix: raqm only reorders correctly if
+    it's told the base direction, the same way `base_dir="R"` pins it on
+    the non-raqm path. Real raqm isn't installed on this dev machine
+    (Windows Pillow wheels don't bundle it -- confirmed via
+    `PIL.features.check_feature("raqm")`, which is exactly why this bug
+    never reproduced locally), so `ImageDraw.text` itself is stubbed out
+    here rather than actually exercised with `direction="rtl"`, which
+    would raise on a non-raqm build."""
+    from PIL import ImageDraw
+
+    from memz import render
+
+    monkeypatch.setattr(render, "PIL_HAS_RAQM", True)
+    calls = []
+    monkeypatch.setattr(
+        ImageDraw.ImageDraw, "text",
+        lambda self, xy, text, **kw: calls.append((text, kw)),
+    )
+
+    render._draw_caption_bar(600, "רגע מה קורה פה")
+
+    assert calls, "no draw call happened"
+    text, kw = calls[0]
+    assert text == "רגע מה קורה פה", f"raqm path must draw the logical line unchanged, got {text!r}"
+    assert kw.get("direction") == "rtl", f"raqm path must tell PIL the base direction, got kwargs {kw!r}"
+
+
 def test_render_handles_empty_caption(public_image):
     from memz import render
 

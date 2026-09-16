@@ -625,7 +625,7 @@ report still stands.
 
 ---
 
-## ACT-Z.10 — The Hebrew really was still backwards, a fourth time `DONE (dev), 2026-09-16`
+## ACT-Z.10 — The Hebrew really was still backwards, a fourth time `SUPERSEDED — fix didn't hold, see ACT-Z.11`
 
 Avi sent an actual screenshot from the live game this time: "רגע... מה
 קורה פה?!" rendered with "רגע" spelled backwards, right there on a real
@@ -633,8 +633,8 @@ production meme.
 
 | Feature | Description | Spec | Status |
 | --- | --- | --- | --- |
-| ACT-Z.10.1 | A real, live, reproducible reversal — but only on production, never against any locally-installed `python-bidi` build | spec §8.1 | DONE — root cause was version drift, not the shaping code: `requirements.txt` pinned only `python-bidi>=0.6,<1`, a range, so dev and production had silently resolved different builds of the same library over the course of the day's several deploys. Production's build got this specific pattern (a Hebrew word immediately followed by an ellipsis, then more text ending in `?!`) wrong; every build installed locally got it right, in every variation tried (three literal periods, a real `…` character, with and without a trailing `?!`, with and without the guest watermark). Fixed by pinning the exact version (`python-bidi==0.6.10`) rather than a range, so what gets tested is what ships |
-| ACT-Z.10.2 | Tests | spec §12.8 | DONE — `tests/test_spr_z_2.py` gained a dedicated regression test for the two exact strings from the real report, checked against `shape_for_draw`'s actual output (not a screenshot) |
+| ACT-Z.10.1 | A real, live, reproducible reversal — but only on production, never against any locally-installed `python-bidi` build | spec §8.1 | **SUPERSEDED.** Diagnosed (wrongly) as `python-bidi` version drift — `requirements.txt` pinned only `python-bidi>=0.6,<1`, a range, so dev and production could resolve different builds. Pinned to `python-bidi==0.6.10`, deployed, confirmed live via commit SHA — and the exact same meme still rendered byte-for-byte reversed. Testing directly against production afterward also found the bug on captions with **no punctuation at all** ("רגע מה קורה פה"), which the punctuation-drift story never explained. The real cause is ACT-Z.11 |
+| ACT-Z.10.2 | Tests | spec §12.8 | Kept — the two `shape_for_draw` regression tests this added are still correct (they test the function's actual output, not a theory of why), just no longer the whole story |
 
 **Sprint notes — the real lesson here is methodological, not the fix
 itself.** Reading the rendered image directly, the way ACT-Z.7.3 and
@@ -650,15 +650,44 @@ generate a rendering of the single word in question, alone, both ways
 ("רגע" and its reversal "עגר"), using the *exact same font*, and compare
 the disputed image's glyph shapes against those two unambiguous
 references directly — not "does this look right," but "does this letter
-shape match reference A or reference B." Once that method was in place,
-isolating the actual trigger (an ellipsis, but only some ways of typing
-one, but not even that — it turned out to be nothing about the text at
-all) took a handful of controlled single-variable tests: three-dot vs
-real `…` character, watermark on vs off, real photo vs a solid colour —
-each ruled out in turn, which is what eventually pointed at "this passes
-locally in every variation, so the difference must be the environment,
-not the input" rather than continuing to hunt for a text pattern that
-didn't exist.
+shape match reference A or reference B." That method correctly confirmed
+the bug was real — but the *theory of the trigger* built on top of it
+(an ellipsis specifically) was still wrong, because a handful of passing
+local variations were mistaken for "this is an environment difference in
+general," when what they actually shared was just "tested locally,"
+never "tested against production with no punctuation at all." The fix
+shipped, was verified deployed, and was verified to NOT work — see
+ACT-Z.11 for what actually explained every data point at once.
+
+---
+
+## ACT-Z.11 — The real bug: Pillow reordering it a second time `DONE (dev), 2026-09-16`
+
+With the version pin deployed and *still* wrong, live, testing moved
+off theories about the text and onto the render environment itself —
+the one variable never actually isolated before.
+
+| Feature | Description | Spec | Status |
+| --- | --- | --- | --- |
+| ACT-Z.11.1 | Find what's actually different between dev and production's render, not another guess about the input | spec §8.1 | DONE — checked `PIL.features.check_feature("raqm")` locally: **not installed**. Most official Pillow wheels for Linux/macOS (what Render runs) have bundled `libraqm` since Pillow 9.2.0; Windows dev wheels do not. A raqm-backed Pillow gives `ImageDraw.text` real Unicode-bidi awareness of its own — so production was taking `shape_for_draw`'s already-correctly-reordered string and reordering it a *second* time, unreversing it right back to wrong, on every multi-word Hebrew caption, not just ones with punctuation. Exactly the same bug class as ACT-Z.8.2's creator-preview double-reversal (a native renderer with its own bidi, fed pre-reordered text) — just server-side instead of client-side, and invisible locally because dev's Pillow has nothing to double anything with |
+| ACT-Z.11.2 | Fix | spec §8.1 | DONE — `memz/render.py` now checks `PIL_HAS_RAQM` once at import time. When it's true, `shape_for_draw` hands PIL the *logical* (unreordered) line, and `_draw_caption_bar` passes `direction="rtl"` so PIL's own raqm layout does the reordering — the same shape of fix as `creator.js`'s `ctx.direction = "rtl"`. When raqm isn't present, behaviour is unchanged: `get_display(line, base_dir="R")` reorders it by hand, exactly as ACT-Z.7.3/10 left it. The `python-bidi==0.6.10` pin from ACT-Z.10 stays (harmless, still avoids drift) but is no longer credited as the fix |
+| ACT-Z.11.3 | Tests | spec §12.8 | DONE — `tests/test_spr_z_2.py` gained two tests. Real raqm can't be exercised on this Windows dev machine at all (Pillow would need to be *built* against libraqm, not just installed), so both tests monkeypatch `render.PIL_HAS_RAQM` rather than relying on the actual native feature: one confirms `shape_for_draw` returns the line unchanged when raqm is true (and still reorders it when false); the other stubs `ImageDraw.Draw.text` to capture its call and confirms the raqm path passes the logical line plus `direction="rtl"`. Both reverted-and-confirmed failing without the fix first |
+
+**Sprint notes.** The version-pin fix (ACT-Z.10) was deployed, watched
+onto production via the GitHub Deployments API, and re-verified against
+the live site — and still failed, byte-identical to before the pin. That
+result is what forced the investigation to stop hypothesizing about the
+*text* (an ellipsis, then no ellipsis at all — "רגע מה קורה פה" reproduced
+it too) and start actually comparing the two *environments* instead,
+which is what should have happened after ACT-Z.9's third "verified fixed"
+turned out not to hold. `PIL.features.check_feature("raqm")` gave a
+definitive, no-theorizing answer in one line, instead of another round of
+generating test images and reading them by eye. Told to Avi plainly: the
+version pin shipped and did not work, this is what actually explains it,
+here is the fix, verified with the pixel-shape-comparison method used
+since ACT-Z.10 plus real reverted-and-confirmed tests — and it should be
+watched closely after the next deploy rather than declared fixed on
+theory alone a second time.
 
 ---
 

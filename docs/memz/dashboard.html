@@ -60,15 +60,19 @@
     SPR-Z.8 (AI players, post-epic) done in dev 2026-09-16, awaiting review.
     ACT-Z.5 (a ninth "reactions" content pack, and Imgflip live templates),
     SPR-Z.9 (a joining player's own uploads in a shared game), ACT-Z.6
-    (a WhatsApp share button and a QR code in the lobby), and four
+    (a WhatsApp share button and a QR code in the lobby), and five
     rounds of QA fixes from Avi playing the live game (ACT-Z.7 through
-    ACT-Z.10) all done in dev the same day.</b>
+    ACT-Z.11) all done in dev the same day. <b>ACT-Z.10's fix (a
+    `python-bidi` version pin) was deployed, confirmed live, and shown
+    NOT to fix the Hebrew-reversal bug — ACT-Z.11 found and fixed the
+    real cause (Pillow's own raqm layout double-reordering on
+    production's Linux build, never reproducible on Windows dev).</b>
     Status truth: <a href="backlog.md">backlog.md</a> + <a href="spec.md">spec.md</a>.</p>
 
   <div class="stat-row">
-    <div class="stat"><div class="n">7 / 7 + 8</div><div class="l">Sprints done</div></div>
-    <div class="stat"><div class="n">65 + 38</div><div class="l">Features done</div></div>
-    <div class="stat"><div class="n">292</div><div class="l">Tests</div></div>
+    <div class="stat"><div class="n">7 / 7 + 9</div><div class="l">Sprints done</div></div>
+    <div class="stat"><div class="n">65 + 41</div><div class="l">Features done</div></div>
+    <div class="stat"><div class="n">294</div><div class="l">Tests</div></div>
     <div class="stat"><div class="n">Last: SPR-Z.7</div><div class="l">Deployed</div></div>
   </div>
   <div class="bar"><div style="width:100%"></div></div>
@@ -79,7 +83,7 @@
   </div>
   <div class="sprint">
     <div class="sprint-head"><div class="sprint-title">SPR-Z.2 <span>The engine, and the first front door</span></div><span class="pill done">DONE (dev) · 2026-09-15</span></div>
-    <p class="sprint-desc">render.py (Heebo Black, bidi-aware Hebrew, shrink-to-fit) and its browser twin, the solo creator, the memes API, the share page, the share button, expiry and cleanup, throttles. 9 features, 30 tests, 6 more screens green. Demoed end to end on the dev server. <b>ACT-Z.7 QA fix (2026-09-16):</b> a caption starting with an English word, digit or emoji used to render backwards — `get_display`'s own base-direction guess is now pinned to RTL, since memz captions are never anything else. <b>ACT-Z.10 QA fix, same day:</b> a real screenshot from the live game showed "רגע... מה קורה פה?!" backwards — never reproduced against any `python-bidi` build installed locally, because `requirements.txt` only pinned a range and production had drifted onto a different exact version; pinned exactly instead — 32 tests now.</p>
+    <p class="sprint-desc">render.py (Heebo Black, bidi-aware Hebrew, shrink-to-fit) and its browser twin, the solo creator, the memes API, the share page, the share button, expiry and cleanup, throttles. 9 features, 30 tests, 6 more screens green. Demoed end to end on the dev server. <b>ACT-Z.7 QA fix (2026-09-16):</b> a caption starting with an English word, digit or emoji used to render backwards — `get_display`'s own base-direction guess is now pinned to RTL, since memz captions are never anything else. <b>ACT-Z.10 QA fix, same day (later shown NOT to be the real fix — see ACT-Z.11):</b> a real screenshot from the live game showed "רגע... מה קורה פה?!" backwards — never reproduced against any `python-bidi` build installed locally, so a version pin (`requirements.txt` only had a range before) was tried, deployed, and confirmed live — and the exact same meme still came out reversed. <b>ACT-Z.11, the actual fix:</b> production's Pillow (Linux wheel) bundles `libraqm`, giving PIL its own real bidi reordering — the manual `get_display()` reorder was being reordered a *second* time on production only, on every multi-word Hebrew caption, not just punctuation ones. `render.py` now checks `PIL.features.check_feature("raqm")` and skips its own reordering when PIL will do it, passing `direction="rtl"` instead — 34 tests now.</p>
   </div>
   <div class="sprint">
     <div class="sprint-head"><div class="sprint-title">SPR-Z.3 <span>The game: Normal, typed, vote</span></div><span class="pill done">DONE (dev) · 2026-09-15</span></div>
@@ -118,7 +122,8 @@
   <div class="open-item"><b>ACT-Z.7</b><span>Three bugs from Avi's own QA pass on the live game: the captioning keyboard dismissing itself every second (and erasing what was typed), all memes revealing at once instead of one at a time (F-Z.3.9's gap, also tracked since SPR-Z.3), and a Hebrew caption rendering backwards when it opens with an English word, digit or emoji. All three found and fixed the same day; one (the reversed text) needed real investigation before the actual trigger was found.</span></div>
   <div class="open-item"><b>ACT-Z.8</b><span>A second QA round straight after: the solo creator's live preview turned out to draw nothing at all (a missing HTML attribute crashed its own script before it ever drew a frame), and once fixed, scrambled every Hebrew word's letters a second way — its own hand-rolled reshaper fighting the browser's own native canvas bidi. Also: voting and the round-result screen no longer rebuild their whole DOM on every poll, which was the real source of the "jumpy, keeps refreshing" feeling while choosing the funniest meme.</span></div>
   <div class="open-item"><b>ACT-Z.9</b><span>A third QA round: every countdown, and the reveal slideshow's own timing, compared a server deadline against the device's own clock — wrong on any phone whose clock isn't accurate. The state payload now carries the server's own time on every poll so the client can correct for its own clock's offset instead of trusting it outright. The Hebrew-reversal report was raised again and re-verified fixed a third time (this round: Chromium and WebKit both, Safari's engine specifically checked and cleared) — no further bug found; most likely explanation is a meme rendered before either fix landed, which keeps its old frozen image forever.</span></div>
-  <div class="open-item"><b>ACT-Z.10</b><span>A real screenshot from the live game proved the Hebrew report right a fourth time — but it didn't reproduce against any locally-installed version of the bidi library. Root cause: `requirements.txt` pinned a range, not an exact version, so dev and production had quietly drifted onto different builds over the day's several deploys. Pinned exactly. Found by comparing the disputed glyphs against known-correct and known-reversed single-word reference renders side by side, after reading the screenshot directly gave the wrong answer twice in a row.</span></div>
+  <div class="open-item"><b>ACT-Z.10</b><span>SUPERSEDED — see ACT-Z.11. A real screenshot from the live game proved the Hebrew report right a fourth time — but it didn't reproduce against any locally-installed version of the bidi library. First diagnosed as `requirements.txt` pinning a range, not an exact version, so dev and production had quietly drifted onto different builds; pinned exactly, deployed, confirmed live — and the exact same meme still rendered reversed, disproving the theory.</span></div>
+  <div class="open-item"><b>ACT-Z.11</b><span>The real fix. Production's Pillow build (Linux wheel) bundles `libraqm`, giving `ImageDraw.text` its own genuine bidi reordering — so production was reordering the already-reordered string a second time, on every multi-word Hebrew caption, not just ones with punctuation (confirmed directly against production: even "רגע מה קורה פה", no punctuation at all, reproduced it). Windows dev wheels don't bundle raqm, which is why nothing ever reproduced locally. `render.py` now checks `PIL.features.check_feature("raqm")` once at import and skips its own reordering when PIL will do it (passing `direction="rtl"` instead) — the same fix shape as ACT-Z.8.2's browser-canvas double-reversal, just server-side. Found by comparing the disputed glyphs against known-correct and known-reversed single-word reference renders side by side, not by reading images directly.</span></div>
 
   <div class="section-label">Open decisions (spec §14)</div>
   <div class="open-item"><b>§14.4</b><span>Emoji in rendered captions: render or drop, decided in SPR-Z.2.</span></div>

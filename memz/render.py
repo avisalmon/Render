@@ -8,30 +8,59 @@ top/bottom Impact-with-outline for the reasons spec §8.1 gives: readable
 on any image at phone size, no Hebrew Impact tradition to honour, and no
 stroke rendering needed.
 
-Text is laid out with `python-bidi`'s `get_display` before drawing, so a
-Hebrew caption with an embedded English word or a number renders in the
-right visual order — PIL's `ImageDraw.text` has no bidi awareness of its
-own and draws whatever string it is handed strictly left to right, so the
-string it is handed must already be in visual order. The base direction is
-always pinned to RTL (`base_dir="R"`, 2026-09-16 QA fix) rather than left
-to `get_display`'s own auto-detection, which guesses from the first
-*strong* character and silently flips the whole line backwards for
-anything starting with an English word, a digit, an emoji or a quote mark
--- ordinary things to type, and always wrong here, since memz captions are
-never anything but a Hebrew-first RTL paragraph. Wrapping happens
-*before* that reordering, on the logical text: a word's rendered width is
-the same regardless of which direction the line reads, so greedy wrapping
-on the logical (typed) word order is correct and simpler than wrapping the
-reordered string.
+Text is laid out in the *right* visual order before drawing, but which of
+two completely different code paths does that depends on how Pillow
+itself was built (2026-09-16, ACT-Z.11 -- the real fix, after ACT-Z.10's
+python-bidi version pin turned out not to be it):
+
+- Most Pillow wheels for Linux/macOS (which is what Render installs) have
+  bundled `libraqm` since Pillow 9.2.0. When raqm is present, PIL's own
+  `ImageDraw.text`/`getlength` gain real Unicode-bidi awareness through
+  it -- pass `direction="rtl"` and PIL reorders a logical Hebrew string
+  correctly all by itself, the same way a browser's Canvas `fillText`
+  does (see `creator.js`, ACT-Z.8.2).
+- Windows Pillow wheels (developer machines) do not bundle raqm.
+  `ImageDraw.text` on that build has no bidi awareness at all and draws
+  whatever string it is handed strictly left to right, so *we* have to
+  reorder it first, with `python-bidi`'s `get_display`.
+
+`shape_for_draw` below picks the right path at import time by checking
+`PIL.features.check_feature("raqm")`. Getting this wrong is exactly how
+ACT-Z.10 happened: production (raqm-enabled Pillow) was reordering our
+own already-reordered `get_display` output a *second* time -- the same
+double-reversal bug class as ACT-Z.8.2, just on the server instead of the
+browser, and invisible locally because dev's Pillow has no raqm to double
+anything. The python-bidi version pin from that round was a red herring
+(the mismatch was never between two versions of python-bidi -- it was
+between two Pillow *builds*, on and off raqm) but is left in place; it's
+harmless and version drift is still worth avoiding on its own.
+
+The base direction is always pinned to RTL (`base_dir="R"` for the
+non-raqm path, `direction="rtl"` for the raqm path) rather than left to
+auto-detection, which guesses from the first *strong* character and
+silently flips the whole line backwards for anything starting with an
+English word, a digit, an emoji or a quote mark -- ordinary things to
+type, and always wrong here, since memz captions are never anything but a
+Hebrew-first RTL paragraph (this part was ACT-Z.7.3, still correct).
+Wrapping happens *before* any of this, on the logical text: a word's
+rendered width is the same regardless of which direction the line reads,
+so greedy wrapping on the logical (typed) word order is correct and
+simpler than wrapping a reordered string.
 """
 
 import io
 
 from bidi.algorithm import get_display
 from django.conf import settings
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, features as pil_features
 
 from . import conf
+
+# Checked once at import time, not per call: whether *this* Pillow build
+# can do its own bidi reordering. See the module docstring -- this is the
+# ACT-Z.11 fix. `check_feature` returns None (not False) if Pillow is too
+# old to know the feature exists at all; either falsy value means "no".
+PIL_HAS_RAQM = bool(pil_features.check_feature("raqm"))
 
 FONT_PATH = settings.BASE_DIR / "static" / "memz" / "fonts" / "Heebo-Black.ttf"
 
@@ -100,18 +129,26 @@ def fit_caption(text, max_width, max_lines=None):
 
 
 def shape_for_draw(line):
-    """Logical (typed) order -> visual (drawn) order, for PIL's own
-    bidi-blind `ImageDraw.text`.
+    """Logical (typed) order -> what `_draw_caption_bar` should hand PIL.
 
-    `base_dir="R"` is pinned deliberately, not left to `get_display`'s own
-    auto-detection (2026-09-16 QA fix): with no `base_dir`, it guesses the
-    paragraph's direction from its *first strong character*, so a caption
-    starting with an English word, a digit, an emoji or a quote mark --
-    all ordinary things to type -- got silently treated as an LTR
-    paragraph with an embedded Hebrew run, which reordered the whole line
-    backwards. memz captions are always a Hebrew-first RTL product; the
-    base direction is never actually in question, so it should never be
-    guessed."""
+    Two different answers depending on `PIL_HAS_RAQM` (see module
+    docstring, ACT-Z.11): when raqm is present, PIL will reorder the line
+    itself (given `direction="rtl"` at draw time), so reordering it here
+    too would double-reverse it -- the line is returned UNCHANGED. When
+    raqm isn't present, PIL does no bidi work at all, so this reorders the
+    line itself via `python-bidi`'s `get_display`, same as always.
+
+    `base_dir="R"` is pinned deliberately on that path, not left to
+    `get_display`'s own auto-detection (2026-09-16 QA fix, ACT-Z.7.3):
+    with no `base_dir`, it guesses the paragraph's direction from its
+    *first strong character*, so a caption starting with an English word,
+    a digit, an emoji or a quote mark -- all ordinary things to type --
+    got silently treated as an LTR paragraph with an embedded Hebrew run,
+    which reordered the whole line backwards. memz captions are always a
+    Hebrew-first RTL product; the base direction is never actually in
+    question, so it should never be guessed."""
+    if PIL_HAS_RAQM:
+        return line
     return get_display(line, base_dir="R")
 
 
@@ -126,8 +163,14 @@ def _draw_caption_bar(width, text):
     bar = Image.new("RGB", (width, bar_height), BAR_BG)
     draw = ImageDraw.Draw(bar)
     y = BAR_PAD_Y
+    # direction="rtl" only means anything (and is only safe to pass) to a
+    # raqm-backed PIL build -- see shape_for_draw / PIL_HAS_RAQM above.
+    draw_kwargs = {"direction": "rtl"} if PIL_HAS_RAQM else {}
     for line in lines:
-        draw.text((width / 2, y), shape_for_draw(line), font=font, fill=BAR_INK, anchor="ma")
+        draw.text(
+            (width / 2, y), shape_for_draw(line),
+            font=font, fill=BAR_INK, anchor="ma", **draw_kwargs,
+        )
         y += line_height
     return bar
 
