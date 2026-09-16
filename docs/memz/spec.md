@@ -1031,6 +1031,19 @@ let the *server* say "nothing changed," skipping the render decision
 (and the JSON payload) entirely, rather than each screen re-deriving it
 client-side. That's F-Z.3.7's own tracked gap, still open.
 
+Rule 12.4.3 (ACT-Z.9, 2026-09-16): every deadline (`caption_deadline`,
+`reveal_deadline`, `vote_deadline`) is a server-issued timestamp; the
+countdown shown for it, and the reveal slideshow's own "which meme right
+now" index (Rule 4.5's own math), compared that timestamp against the
+*client's own* clock (`Date.now()`) — correct only if the device's clock
+happens to actually be right, which a phone's is not guaranteed to be.
+The state payload now also carries `server_time` on every poll; the
+client measures its own offset from it (`serverClockOffsetMs`) and
+applies that correction (`serverNow()`) everywhere a deadline comparison
+happens, rather than trusting the device's clock outright. A crude,
+single-sample clock sync (no round-trip-time compensation), good enough
+at the ~1s granularity this game already runs at.
+
 ### 12.5 Settings
 
 All `MEMZ_*` caps from §2.4, timers' ranges and defaults from §4.2, hand

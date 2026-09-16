@@ -118,8 +118,17 @@ def _iso(dt):
 def build(session, player):
     """`player` is the caller's own `Player` row, or `None` for the
     code-only big-screen view (spec §4.10)."""
+    from django.utils import timezone as _timezone
+
     payload = {
         "code": session.code, "status": session.status, "version": session.version,
+        # ACT-Z.9 QA fix (2026-09-16): every countdown and the reveal
+        # slideshow compare a server-issued deadline against the client's
+        # own clock -- correct only if the device's clock is actually
+        # right, which phones are not always. Sending the server's own
+        # "now" on every poll lets the client measure its *offset* from
+        # the server instead of trusting its own clock outright.
+        "server_time": _iso(_timezone.now()),
         "game_mode": session.game_mode, "caption_mode": session.caption_mode,
         "scoring_mode": session.scoring_mode, "round_count": session.round_count,
         "max_players": session.max_players,

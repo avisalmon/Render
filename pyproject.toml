@@ -70,6 +70,7 @@ markers = [
     "sprz9: SPR-Z.9 memz shared-game uploads",
     "actz6: ACT-Z.6 memz WhatsApp invite share button",
     "actz8: ACT-Z.8 memz second QA pass: the creator preview and the voting/result screens",
+    "actz9: ACT-Z.9 memz third QA pass: clock-skew-proof timers, and the reveal slideshow",
     "memzscreens: memz's screen contract - every memz screen, in every state, rendered on a phone (tests/test_memz_screens.py)",
     "screens: the screen contract - every מט״צים screen, in every state, rendered",
     "sprmobile: real-browser phone checks for מט״צים (tests/test_matazim_mobile.py)",

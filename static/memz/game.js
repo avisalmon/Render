@@ -43,6 +43,26 @@
 
   function setScreen(name) { if (marker) marker.dataset.screen = name; }
 
+  // 2026-09-16 QA fix (Avi: "הזמנים לא מתמהגים נכון" -- the timings
+  // don't sync/behave correctly): every countdown, and the reveal
+  // slideshow's own "which meme right now" index, compare a
+  // server-issued deadline against `Date.now()` -- correct only if the
+  // device's own clock happens to be right, which a phone's isn't
+  // always (wrong timezone, no NTP sync, whatever). `state.server_time`
+  // now rides along on every poll; `serverNow()` is `Date.now()`
+  // corrected by this browser's own measured offset from it, so a
+  // deadline comparison holds even when the device's clock doesn't.
+  var serverClockOffsetMs = 0;
+
+  function updateServerClockOffset(state) {
+    if (!state || !state.server_time) return;
+    serverClockOffsetMs = new Date(state.server_time).getTime() - Date.now();
+  }
+
+  function serverNow() {
+    return Date.now() + serverClockOffsetMs;
+  }
+
   // spec Rule 4.4.3, and its own worked example for tone (§9.1): a player
   // who ran the clock out without submitting still sees the round through,
   // just told plainly and kindly that this one wasn't theirs.
@@ -56,7 +76,7 @@
     var deadline = new Date(deadlineIso).getTime();
     var announced5s = false;   // the moment at 5s left is a one-time beat, not every tick (Rule 4.4.4)
     function tick() {
-      var left = Math.max(0, Math.round((deadline - Date.now()) / 1000));
+      var left = Math.max(0, Math.round((deadline - serverNow()) / 1000));
       el.textContent = String(left);
       var urgent = left <= 5 && left > 0;
       el.classList.toggle("memz-timer--urgent", urgent);
@@ -239,7 +259,7 @@
     if (count <= 0 || !r.reveal_deadline) return 0;
     var perMemeMs = (r.reveal_seconds_per_meme || 4) * 1000;
     var startedAt = new Date(r.reveal_deadline).getTime() - perMemeMs * count;
-    var idx = Math.floor((Date.now() - startedAt) / perMemeMs);
+    var idx = Math.floor((serverNow() - startedAt) / perMemeMs);
     return Math.max(0, Math.min(count - 1, idx));
   }
 
@@ -507,6 +527,7 @@
   }
 
   function render(state) {
+    updateServerClockOffset(state);   // every state update, poll-driven or from an action's own response
     if (screenMode) {
       if (state.status === "finished") renderFinished(state);
       else renderScreenMode(state);

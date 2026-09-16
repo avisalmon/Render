@@ -576,7 +576,52 @@ per-game setting the host picks at create time, not a hidden constant;
 interaction itself needs a clearer affordance/label, or whether he
 actually wants a different mechanic (an explicit numeric rating per
 meme, say) rather than "tap the funniest one" — a real product decision,
-not a bug.
+not a bug. **Resolved 2026-09-16:** Avi confirmed pick-the-funniest is
+exactly what he wants — "מספיק לבחור הכי מצחיק משלל התמונות בסוף." No
+mechanic change; nothing built here beyond ACT-Z.8's own jankiness fix.
+
+---
+
+## ACT-Z.9 — A third QA pass: clock-skew-proof timers `DONE (dev), 2026-09-16`
+
+Avi again: "הזמנים לא מתמהגים נכון... תעבור טוב על זרימת המשחק" — the
+timings don't sync/behave correctly, go over the game flow properly.
+
+| Feature | Description | Spec | Status |
+| --- | --- | --- | --- |
+| ACT-Z.9.1 | Every countdown, and the reveal slideshow's own index math, compared a server deadline against the *client's* clock | spec Rule 12.4.3 (new) | DONE — `state.build` now sends `server_time` on every poll; the client measures its own offset from it (`serverClockOffsetMs`, updated once per poll in `render()`) and every deadline comparison (`countdown()`, `revealIndexFor()`) now goes through `serverNow()` instead of `Date.now()` directly. A phone with a wrong clock (bad timezone, no NTP sync, whatever) used to see countdowns and the reveal slideshow both off — sometimes wildly, since the comparison is against an *absolute* timestamp, not an elapsed duration |
+| ACT-Z.9.2 | Tests | spec §12.8 | DONE — `tests/test_act_z_9.py`, 2 tests, real Playwright browser with `Date.now` patched two hours ahead of real time (the server's own ISO timestamps are unaffected, since parsing a string never calls `Date.now`): the captioning countdown still reads a real, sane number for a 30-second deadline instead of an already-expired one; the reveal slideshow still opens on meme 1 of 3, not clamped straight to the last one. Both proved to actually fail without the fix (reverted `serverNow()` to plain `Date.now()`, watched both tests fail — the reveal one landed on meme 3 of 3 immediately — then restored it) |
+
+**Sprint notes.** This was found by taking "the timings don't sync" at
+face value and reading every place memz's own client code compares a
+server timestamp to `Date.now()`, rather than guessing which specific
+symptom Avi was hitting. `countdown()` had this exact vulnerability from
+SPR-Z.3 onward, everywhere it's used (captioning, reveal, voting) — ACT-
+Z.9 didn't introduce the pattern, it's the first time anything actually
+checked it. The reveal slideshow (ACT-Z.7.2) made the same class of bug
+newly *visible* rather than just inaccurate: a wrong countdown number is
+easy to miss, a slideshow parked on the wrong meme from the moment the
+screen loads is not.
+
+Also re-litigated, not re-fixed: "העברית עדיין הפוכה" (the Hebrew is
+still reversed), raised again despite ACT-Z.7.3 and ACT-Z.8.2 both being
+verified fixed — against `render.py` directly, against the live
+production API, against the actual `creator.js` file served in
+production, and, this round, against **both** Chromium and WebKit engines
+for the canvas-preview fix specifically (Safari's engine was a live
+hypothesis, checked and ruled out — WebKit renders the same test case
+correctly). No further reversal bug was found anywhere in the codebase
+(grepped for any remaining manual character-reversal logic; none exists
+outside the two already-fixed files, and those no longer contain it).
+Declined to "just write it reversed" as suggested — that would re-break
+every case already proven correct. Most likely explanation, raised back
+to Avi rather than guessed at silently: a meme rendered *before* either
+fix landed keeps its old, frozen, wrong JPEG forever — fixing the code
+does not retroactively re-render an already-saved image — so revisiting
+an old share link, a remembered session, or "my memes" from earlier
+testing today would still show the old file. Asked for a screenshot or
+the exact text of something rendered fresh, after this fix, if the
+report still stands.
 
 ---
 
