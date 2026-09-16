@@ -77,13 +77,22 @@ def _next_step(profile, student, state, per_course):
             "why": "מוביל/ה מלווה אתכם בתוכנית ומאשר/ת את ההסמכה בסוף.",
         }
 
-    if student.leader is None and student.pending_leader is not None:
-        return {
-            "text": "לחכות לאישור",
-            "where": None,
-            "why": f"ביקשתם להצטרף ל{_leader_name(student.pending_leader)}. "
-            "ברגע שיאשרו, תוכלו להתחיל.",
-        }
+    # Waiting on somebody else's decision is deliberately *not* checked here,
+    # above the courses (SPR-M.43).
+    #
+    # It used to be: a member whose join request was pending got "לחכות
+    # לאישור", no button, and "ברגע שיאשרו, תוכלו להתחיל". Measured on the
+    # real screen, that left the whole page with no action on it at all, at the
+    # stage where a teenager most needs one.
+    #
+    # It was also untrue. The הדרכות are open to them right then, and the panel
+    # directly underneath was showing 6/19 in סקראץ' 1 while the card told them
+    # to sit and wait for permission to begin. The programme says so itself:
+    # "כל מה שתלמדו נשמר ונספר לכם, גם אם למדתם לפני שהצטרפתם".
+    #
+    # So the wait is context, not a task. It stays on המוביל/ה שלי, which says
+    # who was asked and that an answer is outstanding, and the next step is the
+    # earliest thing actually open to them.
 
     # The earliest unfinished required course, named the way a reader would.
     for slug in REQUIRED_COURSE_SLUGS:
@@ -109,6 +118,16 @@ def _next_step(profile, student, state, per_course):
                 ),
             }
 
+    # Reached only once the learning is done, which is the point at which the
+    # wait really is the next thing rather than an interruption of it.
+    if student.leader is None and student.pending_leader is not None:
+        return {
+            "text": "לחכות לאישור",
+            "where": None,
+            "why": f"סיימתם את ההדרכות. ביקשתם להצטרף ל{_leader_name(student.pending_leader)}, "
+            "וההסמכה מחכה לאישור.",
+        }
+
     if student.status != Student.CERTIFIED:
         return {
             "text": "אתם מוכנים",
@@ -116,10 +135,14 @@ def _next_step(profile, student, state, per_course):
             "why": "השלמתם את כל מה שתלוי בכם. ההחלטה עכשיו אצל המוביל/ה שלכם.",
         }
 
+    # "מכאן מדריכים אחרים" used to be the end of the road, with nowhere to go
+    # from it (SPR-M.43). The sentence names the next stage of the programme and
+    # the screen for it already exists, so it points at it: מדריכים is where a
+    # מט״צ actually spends the rest of the year.
     return {
-        "text": "אתם מט״צ מוסמך",
-        "where": None,
-        "why": "מכאן מדריכים אחרים. מזל טוב.",
+        "text": "להעביר מפגש",
+        "where": "matazim:my_teaching",
+        "why": "אתם מט״צ מוסמך. מכאן מדריכים אחרים, וכל מפגש שתעבירו נרשם כאן.",
     }
 
 

@@ -50,6 +50,23 @@
 
     {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
 
+    {% comment %}
+      SPR-M.43. This explanation used to sit at the bottom of the page, below
+      the form it explains, so somebody opening הפרקטיקום for the first time
+      met seven empty fields and found out what they were for underneath them.
+      Above the form when there is nothing here yet, and gone once there is:
+      a person who has logged a session does not need telling again.
+    {% endcomment %}
+    {% if not sessions %}
+      <section class="mz-panel mz-panel-soft">
+        <h2>עוד לא תיעדתם מפגש</h2>
+        <p class="mz-muted">
+          אחרי כל מפגש שאתם מעבירים, כתבו כאן מה היה. זה לוקח דקה, וזה מה
+          שהמוביל/ה שלכם רואה כשהוא/היא מלווה אתכם לאורך השנה.
+        </p>
+      </section>
+    {% endif %}
+
     <section class="mz-panel">
       <h2>מפגש חדש</h2>
       <form method="post">
@@ -141,14 +158,6 @@
             </li>
           {% endfor %}
         </ul>
-      </section>
-    {% else %}
-      <section class="mz-panel">
-        <h2>עוד לא תיעדתם מפגש</h2>
-        <p class="mz-muted">
-          אחרי כל מפגש שאתם מעבירים, כתבו כאן מה היה. זה לוקח דקה, וזה מה
-          שהמוביל/ה שלכם רואה כשהוא/היא מלווה אתכם לאורך השנה.
-        </p>
       </section>
     {% endif %}
 

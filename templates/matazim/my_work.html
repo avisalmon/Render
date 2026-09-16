@@ -26,6 +26,32 @@
 
   {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
 
+  {% comment %}
+    SPR-M.43. With nothing submitted yet this page went straight from a
+    subtitle promising "מה שהגשתם, ומה שהמוביל/ה כתב/ה עליו" into an empty
+    form, so it described a list that was not there and never said what
+    happens after you press הגשה.
+
+    REQ-M.19's whole point is that the feedback is the product rather than the
+    flag, and a member who does not know a person reads this has no reason to
+    write anything worth reading.
+  {% endcomment %}
+  {% if not submissions %}
+    <section class="mz-panel mz-panel-soft">
+      <h2>עוד לא הגשתם עבודה</h2>
+      <p class="mz-muted">
+        {% if student.leader %}
+          מגישים כאן משהו שבניתם: קישור לסקראץ׳, קובץ תלת-ממד, מה שיצא. המוביל/ה
+          שלכם קורא/ת את זה וכותב/ת לכם חזרה, ואפשר להגיש שוב אחרי זה. זה לא
+          מבחן, וכל הגשה נשמרת עם מה שנאמר עליה.
+        {% else %}
+          כשתצטרפו למוביל/ה תוכלו להגיש כאן עבודות, והוא/היא יקרא/תקרא ויכתוב/תכתוב
+          לכם חזרה.
+        {% endif %}
+      </p>
+    </section>
+  {% endif %}
+
   {% for submission in submissions %}
     <section class="mz-panel mz-work">
       <header class="mz-work-head">

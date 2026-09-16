@@ -2966,3 +2966,88 @@ flawlessly lead him on what he is expected to do in every stage." The front door
 is now one such step. The rest of that, every stage saying what the next thing
 is, is a pass over המסלול שלי, the הדרכות, יוצרים and the practicum, and it is
 not in this sprint.
+
+## SPR-M.43 — The journey says what to do next, at every stage  `DONE 2026-09-16`
+
+**Goal:** Avi: "a student should have an easier flow of user journey. The site
+should flawlessly lead him on what he is expected to do in every stage."
+
+So the journey was walked as the member sees it, one signed-in account per
+stage: signed up but untested, passed and waiting for a leader, in training,
+and certified. On a phone, measuring where the next action actually sits rather
+than whether a link exists somewhere on the page.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.43.1 | Waiting on a leader stops replacing learning already open to them | REQ-M.5a, M.65 | DONE |
+| F-M.43.2 | A certified מט״צ is pointed at the practicum instead of nowhere | REQ-M.32 | DONE |
+| F-M.43.3 | העבודות שלי explains itself before it asks for anything | REQ-M.19 | DONE |
+| F-M.43.4 | הפרקטיקום explains itself above the form rather than below it | REQ-M.32 | DONE |
+
+### What the walk measured
+
+| Stage | Actions on the screen | After |
+|---|---|---|
+| Passed, waiting for a leader | **none at all** | one, above the fold |
+| Certified | first one 1527px down | one, 413px down |
+
+### F-M.43.1, the stage with nothing to do
+
+A member who passed the entrance test and asked to join a leader was told
+"לחכות לאישור", with no button, and "ברגע שיאשרו, תוכלו להתחיל". The whole
+screen had nothing on it to press.
+
+It was also untrue. The הדרכות are open to them at that moment, and the panel
+immediately below the card was showing 6/19 in סקראץ' 1 while the card told them
+to wait for permission to begin. The programme says so itself, in the copy on
+its own front page: "כל מה שתלמדו נשמר ונספר לכם, גם אם למדתם לפני שהצטרפתם".
+
+The ladder in `_next_step` was ordered "the earliest thing still open", and the
+bug was counting somebody else's decision as a thing open to them. Waiting is
+context, not a task. It moved below the courses, where it is reached only once
+the learning is done, and at that point it says so: "סיימתם את ההדרכות".
+
+### F-M.43.2, the end of the road
+
+"אתם מט״צ מוסמך. מכאן מדריכים אחרים." named the next stage of the programme and
+went nowhere, on the one screen whose job is pointing at the next thing.
+הפרקטיקום already existed. It points there now.
+
+### F-M.43.3 and F-M.43.4, two screens that asked before they explained
+
+העבודות שלי, with nothing submitted, went from a subtitle promising "מה שהגשתם,
+ומה שהמוביל/ה כתב/ה עליו" straight into an empty form. It described a list that
+was not there and never said what happens after you press הגשה, on the feature
+whose entire point (REQ-M.19) is that a person reads your work and writes back.
+
+הפרקטיקום had the words but at the bottom, under the seven fields they were
+about, so a first-timer met the form and found out what it was for underneath it.
+
+### A metric that got worse while the screen got better
+
+הפרקטיקום's submit button moved from 1182px down the page to 1385px, because
+the explanation now sits above the form. "First action above the fold" is the
+wrong question for a form: the form *is* the action, its fields start above the
+fold, and the reader needs to know what they are filling in before they fill it.
+Recorded because the number is still in the table above and looks like a
+regression.
+
+### The measurement that lied, and why
+
+One screen appeared to have its action buried at 1092px. It is covered by the
+first-visit welcome overlay, whose own button is the real first action. Nothing
+was wrong with it. A number from an automated pass is a place to look, not a
+finding, and this one was only settled by opening the screenshot.
+
+### Perturbation can leave the dev server wrong
+
+Verifying these tests by reintroducing each defect writes the defect to disk,
+and the shared dev server autoreloads onto it. After restoring the file, the
+server was still serving the perturbed code: a screenshot taken minutes later
+showed the old "ברגע שיאשרו, תוכלו להתחיל" that no longer existed in source,
+which is how it was caught. Rewriting the file to trip autoreload fixed it.
+
+Avi runs several sessions against this one dev server. A perturbation left
+running there is not a private mistake, so: after perturbation testing, touch
+the file and confirm the server is serving the restored code before trusting
+anything you see on it.
