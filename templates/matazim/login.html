@@ -14,7 +14,30 @@
 <div class="mz-container mz-auth">
   <div class="mz-auth-card">
     <h1>התחברות</h1>
-    <p class="mz-auth-sub">שמחים לראות אתכם שוב.</p>
+    {% comment %}
+      SPR-M.47. This said "שמחים לראות אתכם שוב" to everybody, including
+      somebody who had never been here in their life.
+
+      REQ-M.5d makes מבחן הכניסה public on purpose, so signing up happens
+      around the test rather than before it. A curious teenager therefore walks
+      in with no account, reads the test page, opens the lesson list, taps the
+      first lesson, and lands here: greeted as a returning member, and told
+      nothing about why an account appeared in their way.
+
+      `next` is what separates the two readers. Somebody who was sent here was
+      reaching for something, and the page can say what and why. Somebody who
+      came to log in did come back, and the old line is right for them.
+    {% endcomment %}
+    {% if "/test/" in next %}
+      <p class="mz-auth-sub">
+        כדי לשמור את מה שתעשו במבחן צריך חשבון. זה לוקח דקה, וזה גם החשבון
+        שתמשיכו איתו בתוכנית.
+      </p>
+    {% elif next %}
+      <p class="mz-auth-sub">צריך חשבון כדי להמשיך לשם. אם אין לכם, פתיחה לוקחת דקה.</p>
+    {% else %}
+      <p class="mz-auth-sub">שמחים לראות אתכם שוב.</p>
+    {% endif %}
 
     {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
 

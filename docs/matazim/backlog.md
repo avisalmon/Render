@@ -3333,3 +3333,54 @@ its own sprint, with the viewer actually exercised in a browser afterwards.
 
 Bunny cannot be removed the same way, because that is where the video is. The
 click is the right answer there and it already shipped.
+
+## SPR-M.47 — The newcomer is not greeted as a returning member  `DONE 2026-09-17`
+
+**Goal:** Avi, looking at the site logged out: "מבחן הכניסה פעיל ומזמין גם כשאני
+לא מחובר. הכיצד?"
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.47.1 | The login page knows whether it was reached or chosen | REQ-M.5d | DONE |
+
+### The answer to "how come", and the bug behind it
+
+It is deliberate and recorded. REQ-M.5d: מבחן הכניסה is reachable with no
+account, because signing up happens *around* the test rather than before it.
+`/matazim/test/` and `/matazim/test/lessons/` are open; the lesson itself and the
+task require an account.
+
+Walked with no account, which is how the actual defect surfaced:
+
+עמוד המבחן → "מתחילים" → רשימת השיעורים → tap the first lesson →
+`/matazim/login/?next=/matazim/test/lesson/1/`, headed התחברות, subtitled
+**"שמחים לראות אתכם שוב"**.
+
+They had never been here. The product invites a stranger in on purpose, walks
+them through two screens, stops them at a wall, and greets them as somebody
+coming back. Nothing on that page said why an account had appeared in their way.
+
+`next` is what tells the two readers apart, and the view had been passing it for
+sprints. Somebody who was *sent* here was reaching for something and the page
+can now say what and why; somebody who came to log in really is coming back and
+keeps the old line.
+
+Reaching for the test says: "כדי לשמור את מה שתעשו במבחן צריך חשבון. זה לוקח
+דקה, וזה גם החשבון שתמשיכו איתו בתוכנית."
+
+### Also asked, and answered in the data model rather than here
+
+Avi's second question was what the spec defines for taking הדרכות and following
+progress. REQ-M.12b, M.13, M.14, M.74 and M.126, and measured against the real
+screens they hold: status word, percentage, and an action matching the state
+(להתחיל / להמשיך / צפייה שוב).
+
+The gap is not in those. ההדרכות says *"שאר ההדרכות באתר פתוחות לכם תמיד"* and
+shows exactly two, with no route to any other, because `learn_course` refuses
+every slug outside the required pair and RULE-1 forbids sending anybody to
+babook's catalogue. A promise with no path.
+
+That is what `data_model.md` §7 now proposes a shape for, and it is awaiting
+Avi's approval rather than being built. He has already settled its sharpest
+question: the courses a leader adds are a **recommendation**, not a requirement,
+so REQ-M.76 and `certification.py` do not change at all.

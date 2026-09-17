@@ -403,3 +403,151 @@ over the one that actually owned the predecessor's rows.
 `test_a_successor_inherits_the_whole_institution` failed on exactly that, which
 is why `grant_program_manager` now takes an explicit `institutions=` argument
 rather than always assuming the default.
+
+## 7. Proposed: which הדרכות a member can take (awaiting Avi)
+
+**Status: proposal. Nothing here is built.** Avi, 2026-09-16, asked for this and
+the methodology says a model change of this size gets written down and approved
+before any of it is code.
+
+### What he asked for
+
+> "מט״צים צריך להציג את כל ההדרכות שאני אבחר מהאתר הראשי. אתה יכול לבנות לכל
+> מוביל חלון הבוחר איזה הדרכות יוכלו הסטודנטים לראות ולעבור דרך מט״צים, כמו גם
+> הוא יכול להחליט שאצלו חובה קורסים נוספים להסמכה. אני אקבע את ברירת המחדל איזה
+> קורסים יהיו חשופים למט״צים באופן כללי לבחור מתוכם... כל סטודנט שיכנס באופן
+> עצמאי למערכת לא דרך מט״צים אלא דרך האתר המרכזי יכול לעשות איזה קורס שבא לו
+> וזה ישתקף לו במט״צים ללא תלות בהגדרות שלי או של המוביל."
+
+Four layers, narrowest to widest:
+
+1. **Avi's pool.** Which of babook's courses are exposed to מט״צים at all.
+2. **The leader's shelf.** Which of that pool this leader's מט״צים see, and
+   and which of them the leader **recommends** (a pointer, never a gate: see
+   7.3, decided 2026-09-16).
+3. **What the member started themselves**, on the main site, which appears in
+   מט״צים regardless of 1 and 2.
+4. **Where a lesson plays**, which is the one part that collides with a rule.
+
+### Why this is not one table
+
+Layers 1 and 2 are decisions somebody made and must be stored. Layer 3 is not a
+decision at all: it is a fact that already exists in babook's `Enrollment` and
+`UserVideoProgress`, and storing it again would be the second copy REQ-M.14 and
+REQ-M.74 exist to forbid. So layer 3 gets **no model**. It is read.
+
+### 7.1 `OfferedCourse` — Avi's pool
+
+| Field | Type | Why |
+|---|---|---|
+| `slug` | `CharField`, unique | babook's course slug |
+| `is_active` | `bool` | retiring an offer must not erase the history of having offered it |
+| `added_by` | FK `User` | REQ-M.21's habit: a decision carries a name |
+| `added_at` | datetime | |
+| `note` | text, blank | why this one is here, for the next person |
+
+**A slug rather than a foreign key to `app.Course`**, deliberately. That is what
+`REQUIRED_COURSE_SLUGS` already is, and it keeps מט״צים's tables free of a
+database-level dependency on another app's table (Rule 2). The cost is that a
+slug can point at a course that no longer exists, which the screen handles the
+way `courses.html` already handles it: "ההדרכה הזאת לא נטענה. נתקן."
+
+Root only. `Institution` is the tenancy root for everything else here, but Avi
+described this as one list for the whole product, so it is global and the
+screen refuses anybody who is not root, the same shape `staff_admins` uses.
+
+### 7.2 `LeaderCourse` — the leader's shelf
+
+| Field | Type | Why |
+|---|---|---|
+| `leader` | FK `Leader` | whose shelf |
+| `slug` | `CharField` | must be an active `OfferedCourse` at the time of choosing |
+| `recommended` | `bool` | the leader is pointing at this one, not gating on it |
+| `chosen_by`, `chosen_at` | | the same habit again |
+
+Unique on `(leader, slug)`.
+
+**The default when a leader has chosen nothing** must be decided, and I would
+propose: they see Avi's pool as it stands. A leader who never opens the picker
+should not have students staring at an empty shelf, and "nothing chosen" is far
+more likely to mean "has not got to it" than "wants none".
+
+### 7.3 What this does to REQ-M.76: nothing. Decided 2026-09-16
+
+The first draft of this proposal let a leader add courses that were **required**
+for certification, and flagged the cost: two teenagers in one programme would
+face different bars, and the word "certified" would stop meaning one thing.
+
+Avi settled it the same day, and settled it the other way:
+
+> "נעשה שהסמכה למט״צ היא עם סקראץ 1 וסקראץ 2 ואישור המוביל. והקורסים הנוספים
+> שהמוביל יקבע הם המלצה. (הוא יכול להתייחס לזה באישור הידני שלו כרצונו אם הוא
+> רוצה שההמלצה תהיה חובה אבל זה לא סיסטמתי במערכת)"
+
+So **REQ-M.76 is untouched**: the entrance test, `scratch`, `scratch-advanced`,
+and the leader's approval. A leader's extra courses are a recommendation, and
+the place a leader can insist on one is the approval they already give by hand.
+
+This is the cheaper design as well as the smaller promise, and worth naming why:
+
+- `certification.py` does not change at all. No new input to eligibility, no new
+  way for a member to be short of certification, no migration of what "eligible"
+  meant last week. The riskiest part of the original proposal is simply gone.
+- A מט״צ who changes leaders cannot lose ground. Under the required version,
+  moving from a leader who demanded four courses to one who demanded none would
+  have quietly changed what they owed, which nothing on the screen could have
+  explained honestly.
+- The judgement stays where the programme already puts judgement. REQ-M.78 has a
+  person sign the certificate precisely because a machine cannot tell whether
+  somebody is ready, and "she did the electronics course I asked for" is exactly
+  the sort of thing that person should be weighing.
+
+The screens must therefore never render a recommended course as a requirement.
+ההדרכות shows two groups with different weight: **נדרש להסמכה**, which is the
+programme's two, and **מומלץ על ידי המוביל/ה שלי**, which is not a gate. The
+certification checklist on המסלול שלי keeps showing three items and only three.
+
+### 7.4 Where a lesson plays, and the rule it hits
+
+Avi: *"אפשר לשקול שבקורסים אלה הוא ייזרק לאתר המרכזי וזה ינוהל שם אבל הקרדיט
+והמעקב ישתקפו במט״צים."*
+
+**This breaks RULE-1**, which is not a preference but a test:
+`test_rule_1_no_outbound_links` fails on any `href` in a מט״צים template that
+does not start with `/matazim/`. Two honest ways forward:
+
+- **(i) Play everything inside our walls.** RULE-1 survives untouched. The risk
+  is real and worth stating: `learn_lesson.html` renders video, summary, written
+  notes, a quiz and a reflection. A course built around anything else, practice
+  cells for instance, would render thin or not at all, and the member would get
+  materially less of the lesson than a babook learner — the exact complaint
+  REQ-M.126 was written to answer. So the pool in 7.1 can only honestly hold
+  courses מט״צים can actually render, and something has to check that.
+
+- **(ii) Send them out for these courses only.** Cheap, works with any course,
+  and costs the rule. If Avi wants it, RULE-1 is amended in writing to "no
+  outbound links except a member's own self-chosen course", the test is narrowed
+  to match, and the seam is one function rather than a habit of linking out.
+
+Layer 3, the self-started courses, is the case that argues for (ii): those
+courses were never chosen for מט״צים and nobody checked they render here.
+
+### 7.5 What gets read rather than stored
+
+Layer 3 needs no table. `Enrollment` already says which courses a member
+started, and `cohort_progress` already reads progress for any set of slugs. The
+screen unions three lists: the required two, the leader's shelf, and anything
+with an enrolment. The last group is labelled as theirs rather than the
+programme's, so nobody mistakes a course they picked up alone for a requirement.
+
+### 7.6 Screens this implies
+
+1. **Root:** the pool. Every babook course, a tick each, a note field.
+2. **Leader:** the shelf, inside ניהול, with a required toggle per row.
+3. **Member:** ההדרכות grows from two cards to three groups — נדרש להסמכה,
+   מומלץ על ידי המוביל/ה שלי, and מה שהתחלתם בעצמכם. Only the first is a gate,
+   and the other two must not look like one.
+
+And one sentence has to change wherever it appears: ההדרכות currently promises
+*"שאר ההדרכות באתר פתוחות לכם תמיד"* while showing exactly two and linking to
+none. That promise is what this whole proposal is finally making true.
