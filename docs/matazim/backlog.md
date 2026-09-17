@@ -3384,3 +3384,63 @@ That is what `data_model.md` §7 now proposes a shape for, and it is awaiting
 Avi's approval rather than being built. He has already settled its sharpest
 question: the courses a leader adds are a **recommendation**, not a requirement,
 so REQ-M.76 and `certification.py` do not change at all.
+
+## Finding: the certification path does not close inside מט״צים  `OPEN, 2026-09-17`
+
+Found while scoping Avi's course-selection request, by asking what the two
+required הדרכות actually need in order to issue their certificates.
+
+**REQ-M.76 says a מט״צ מוסמך is the entrance test, a `CourseCertificate` for
+both `scratch` and `scratch-advanced`, and the leader's approval.** Measured,
+here is what those two certificates require and what מט״צים offers.
+
+| What babook's gate requires | What מט״צים provides |
+|---|---|
+| `requires_project = True`, `project_min_count = 2` Scratch project links, per course | no upload form anywhere in the app |
+| ≥ 80% of lessons complete (`cert_min_pct`) | provided: the heartbeat writes `UserVideoProgress` |
+| the final-lesson view that runs the gates and issues the certificate | never called: `learn_lesson` has no such path |
+
+`/api/video-progress/`, which is what מט״צים's done button posts to, sets
+`progress.completed_at` and nothing else. `matazim/certification.py` only ever
+**reads** `CourseCertificate`; nothing in the app issues one.
+
+**So a member who does everything מט״צים offers cannot be certified.** They can
+watch all 34 lessons, answer every quiz, write every reflection, and there is
+still no route to either certificate, because the two things that issue it, a
+project upload and the gate behind the final lesson, exist only on babook's own
+lesson page.
+
+### Why this was not visible
+
+Nine `CourseCertificate` rows exist in the dev database against four Scratch
+project submissions in total, so most were seeded rather than earned. Every
+screen downstream reads those rows and looks right: המסלול שלי shows יש תעודה,
+the roster shows progress, `eligibility` computes cleanly. The hole is upstream
+of everything that displays it, which is why sprints of screen work never met it.
+
+REQ-M.14 is also, narrowly, still true: progress *is* written through babook's
+code path. What nobody checked is that the certificate is issued through a
+different code path, and that one מט״צים does not walk.
+
+### This is why Avi's request is bigger than it looked
+
+He asked for מט״צים to show more of the main site's courses, "הכל מתנגן אצלנו
+עם כל הפיצ'רים שיהיו במרכזי". Measured against `templates/app/lesson.html`,
+1474 lines against our 304, the features a course may carry include a materials
+sidebar, an ask-about-this-lesson panel, runnable practice cells (`py-runner.js`),
+Scratch project upload, Tinkercad model upload, notebook submission, and the
+certificate gates themselves.
+
+The two courses מט״צים already requires use one of those, and we do not have it.
+Adding more courses without closing this first means offering a wider shelf of
+things that also cannot be finished here.
+
+### Not decided, and Avi's to decide
+
+1. Build the project upload and the certificate gate inside מט״צים, which is the
+   reading of REQ-M.126 that keeps everything in our walls.
+2. Or let these specific actions happen on babook and reflect back, which is
+   what he already said should be true for a member who wanders over there
+   anyway, and which costs RULE-1 for that one hop.
+
+Whichever, this comes before the course picker in `data_model.md` §7.
