@@ -3444,3 +3444,93 @@ things that also cannot be finished here.
    anyway, and which costs RULE-1 for that one hop.
 
 Whichever, this comes before the course picker in `data_model.md` §7.
+
+## SPR-M.48 — The improvement loop reaches the chat that runs the sprints  `DONE 2026-09-17`
+
+**Goal:** Avi, after talking to נעמי: she will send a lot of feedback, and he
+wants to read it, approve it and turn it into a sprint from a chat while working
+remote, and then have her told what shipped and how to see it.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.48.1 | A narrow key for the queue: read, decide, record | REQ-M.105, M.110 | DONE |
+| F-M.48.2 | The summary mail says how to see it | REQ-M.111 | DONE |
+| F-M.48.3 | And thanks her, because it is true | REQ-M.111 | DONE |
+
+### What already existed, and what actually did not
+
+Most of the loop was built. `Request` carries status, `decided_by`, `sprint`,
+`outcome` and `summary_sent_at`; `manage.py matazim_requests` reads and closes
+rows and mails the summary. Checking before building saved a sprint of
+rebuilding what was there.
+
+The one thing that did not work was the part he asked about. Measured:
+`GET https://babook.co.il/matazim/api/requests/` answers **403, authentication
+credentials were not provided**. That API takes a session cookie, and an agent
+in a chat has none and must never be handed one.
+
+So `/matazim/internal/requests/` is the narrow key, built to the BKM in
+`docs/building_an_app.md` that came out of ustrip's family endpoint.
+
+### What a stolen token can do, and what it cannot
+
+It can read staff feedback about a website and mark it decided. It cannot reach
+a student, a leader, a submission, a certificate or any user account, and that is
+asserted rather than described: `test_the_endpoint_touches_nothing_but_requests`
+fingerprints every user, student and leader row before and after running every
+verb the endpoint has.
+
+Three verbs only, because the loop has three: read what is waiting, decide it,
+record what was built. **No create**, deliberately: a request is somebody's own
+words about their own experience, and a key that could write one could
+manufacture a mandate for work nobody asked for. **No edit of `body`** either,
+because REQ-M.112 says the text is hers and is never rewritten, and there is a
+test that sends a new body along with an approval and checks it was ignored.
+
+Approving still starts nothing (REQ-M.110). The test asserts the row moves and
+that `sprint`, `done_at` and `summary_sent_at` stay empty.
+
+### Two rules that behaviour cannot demonstrate
+
+Running the perturbation pass on the guards produced two honest misses, and they
+are worth recording because the instinct is to treat a miss as a hole.
+
+**Constant-time comparison.** Swapping `constant_time_compare` for `==` was
+caught by nothing, correctly: the two behave identically and differ only in how
+long the wrong answer takes. No functional test can see that.
+
+**Failing shut.** Deleting the `if not expected` guard also changed no outcome,
+because an empty secret cannot match anything anyway: the comparison is already
+guarded by `bool(presented)`. The check stays because the next person to edit
+this function should meet the intent rather than deduce it from two interacting
+conditions.
+
+Both are now locked by reading the source, which is the only place the
+difference is visible.
+
+### The guard that caught me
+
+`test_the_single_door_stays_single` from SPR-M.18 failed on the new module: any
+`.status =` outside `history.py` must say, on the line, which model it assigns
+and why. That rule exists so a real student transition cannot hide inside a
+module that was exempted by name. The opt-out costs a sentence and leaves it in
+the diff, which is exactly right, and it is now on both lines here.
+
+### The mail
+
+It already quoted her words verbatim and said what was done. It now also says
+**how to see it**, because "it is fixed" asks the person who reported a confusing
+screen to go hunting through it again, and the demo line is omitted rather than
+invented when nobody wrote one.
+
+And it thanks her. Not decoration: every review in this project has ended on the
+same admission, that it can check the product against itself and cannot say what
+a real person tried to do and could not. These rows are the only thing that
+answers that.
+
+### What Avi has to do before this works in production
+
+Set `MATAZIM_ADMIN_TOKEN` in Render to a long random string. Unset means closed,
+so until he does, the endpoint answers only a logged-in superuser and nothing
+else changes. The secret never appears in this repo, in this backlog, or in a
+chat transcript.

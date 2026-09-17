@@ -440,6 +440,16 @@ USTRIP_ERROR_NOTIFY = os.environ.get("USTRIP_ERROR_NOTIFY", "")
 # this value in Render; nothing else needs redeploying.
 USTRIP_ADMIN_TOKEN = os.environ.get("USTRIP_ADMIN_TOKEN", "")
 
+# מט״צים: the shared secret for /matazim/internal/requests/, which is the one
+# job the improvement loop could not do from a chat. נעמי writes requests on the
+# site and Avi approves them; the sprint then happens in a conversation that is
+# nowhere near a database. Unset means closed — the endpoint then answers only a
+# logged-in superuser. Scoped by the code to `Request` rows and three verbs,
+# read, decide and record-what-was-built, and to nothing about a student, a
+# leader or a user account; see matazim/requests_api.py for the full list of
+# what it deliberately cannot do. Rotate by changing this value in Render.
+MATAZIM_ADMIN_TOKEN = os.environ.get("MATAZIM_ADMIN_TOKEN", "")
+
 # django-allauth
 SITE_ID = 1
 AUTHENTICATION_BACKENDS = [

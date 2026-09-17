@@ -23,6 +23,7 @@ from . import (
     notice_views,
     path_views,
     request_views,
+    requests_api,
     rights_views,
     roster_views,
     submission_views,
@@ -52,6 +53,9 @@ urlpatterns = [
     path("staff/events/<int:event_id>/cancel/", event_views.cancel_event, name="cancel_event"),
     # REQ-M.34 — the one machine-triggered endpoint here. A token, a POST,
     # and it can only send reminders.
+    # The improvement loop, for the chat that runs the sprints (§4.11).
+    # Token-or-superuser, and scoped to Request rows only: see requests_api.py.
+    path("internal/requests/", requests_api.RequestQueueView.as_view(), name="api_requests_admin"),
     path("internal/remind/", internal_views.run_reminders, name="run_reminders"),
     # מבחן הכניסה is public: the link gets pasted around, and signing up
     # happens around the test rather than before it (REQ-M.5d).

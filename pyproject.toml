@@ -61,6 +61,7 @@ markers = [
     "sprm45: SPR-M.45 מט״צים a lesson reaches nobody until somebody presses play",
     "sprm46: SPR-M.46 מט״צים the privacy page says what the product does",
     "sprm47: SPR-M.47 מט״צים the newcomer is not greeted as a returning member",
+    "sprm48: SPR-M.48 מט״צים the improvement loop reaches the chat",
     "sprz1: SPR-Z.1 memz the skeleton and the seal",
     "sprz2: SPR-Z.2 memz the engine, and the first front door",
     "sprz3: SPR-Z.3 memz the game, Normal mode, typed captions, vote scoring",

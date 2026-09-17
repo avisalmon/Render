@@ -50,7 +50,7 @@ def _display_name(user):
     return (name or "").strip() or (user.email or user.username or "")
 
 
-def _body(row, site_url):
+def _body(row, site_url, demo=""):
     asked_by = _display_name(row.author)
     lines = [
         "שלום,",
@@ -69,15 +69,34 @@ def _body(row, site_url):
         "מה נעשה",
         "",
         (row.outcome or "").strip() or "אין פירוט.",
+    ]
+
+    # Avi, 2026-09-17: the mail should say how to see it. "It is fixed" asks
+    # somebody to go hunting through a product they already told us was
+    # confusing, and the person most likely to look is the one who reported it.
+    # Omitted rather than invented when nobody wrote demo steps.
+    if (demo or "").strip():
+        lines += ["", 'איך לראות את זה', "", demo.strip()]
+
+    lines += [
         "",
         f"הבקשות והמצב שלהן: {site_url}/matazim/requests/",
         "",
-        "צוות מט״צים",
+    # Avi, same day: thank her for her contribution to the quality of the
+    # product. It is also simply true: every review here has ended on the
+    # same admission, that it can check the product against itself and
+    # cannot say what a real person tried to do and could not. These rows
+    # are the only thing that answers that.
+        'תודה רבה על הדיווח. מה שאת כותבת כאן הוא הדרך היחידה שבה אנחנו יודעים',
+        'מה באמת קורה מול המסך, ולא רק מה שתכננו שיקרה. זה משפר את המוצר יותר',
+        'מכל בדיקה שאנחנו עושים לעצמנו.',
+        "",
+        'צוות מט״צים',
     ]
     return "\n".join(lines)
 
 
-def send_request_summary(row, *, site_url=None):
+def send_request_summary(row, *, site_url=None, demo=""):
     """Mail the summary to root and to the requester. Returns the addresses used.
 
     Deliberately not called by approving (REQ-M.110): approving decides
@@ -101,7 +120,7 @@ def send_request_summary(row, *, site_url=None):
     try:
         send_mail(
             subject=subject,
-            message=_body(row, site_url),
+            message=_body(row, site_url, demo=demo),
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=recipients,
             fail_silently=True,
