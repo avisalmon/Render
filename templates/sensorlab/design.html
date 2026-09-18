@@ -1,0 +1,207 @@
+{% extends "sensorlab/base.html" %}
+{% load sensorlab %}
+
+{% block title %}Design reference — SensorLab{% endblock %}
+{% block screen %}design{% endblock %}
+
+{% block content %}
+<section class="sl-shell">
+  <h1>Design reference</h1>
+  <p class="sl-muted">
+    Every component, in both modes. Spec §7. If something here looks wrong,
+    it is wrong everywhere — which is the point of the page existing.
+  </p>
+
+  {# --- the colour language ------------------------------------------- #}
+  <div class="sl-ref-section">
+    <h2>The colour language</h2>
+    <div class="sl-ref-panel">
+      <p class="sl-muted">
+        Amber is a prediction, cyan is a measurement, everything structural is
+        ink. Nothing else may borrow the two accents — that is what makes them
+        mean something when they appear.
+      </p>
+      <div class="sl-ref-row">
+        <span class="sl-chip" style="color: var(--sl-prediction); border-color: var(--sl-prediction);">
+          <span class="sl-chip-dot"></span> prediction
+        </span>
+        <span class="sl-chip sl-chip-measuring"><span class="sl-chip-dot"></span> measurement</span>
+        <span class="sl-chip">structural</span>
+      </div>
+    </div>
+  </div>
+
+  {# --- step rail ------------------------------------------------------ #}
+  <div class="sl-ref-section">
+    <h2>Step rail</h2>
+    <div class="sl-ref-panel" data-component="rail">
+      <div class="sl-rail">
+        <div class="sl-rail-seg is-done"></div>
+        <div class="sl-rail-seg is-done"></div>
+        <div class="sl-rail-seg is-current-predict"></div>
+        <div class="sl-rail-seg"></div>
+        <div class="sl-rail-seg"></div>
+      </div>
+      <div class="sl-rail-caption">Step 3 of 5 — Predict</div>
+    </div>
+  </div>
+
+  {# --- card ----------------------------------------------------------- #}
+  <div class="sl-ref-section">
+    <h2>Card</h2>
+    <div class="sl-card" data-component="card">
+      <div class="sl-label">Continue</div>
+      <p style="margin-block: 6px 0; font-weight: 500;">Free Fall — Measuring g</p>
+    </div>
+  </div>
+
+  {# --- buttons -------------------------------------------------------- #}
+  <div class="sl-ref-section">
+    <h2>Buttons</h2>
+    <div class="sl-ref-row" data-component="button">
+      <button type="button" class="sl-button">Primary</button>
+      <button type="button" class="sl-button sl-button-quiet">Quiet</button>
+      <button type="button" class="sl-button sl-button-quiet" data-demo="confirm">Ask me something</button>
+      <button type="button" class="sl-button sl-button-quiet" data-demo="toast">Toast</button>
+    </div>
+    <p class="sl-muted" style="margin-block-start: 10px;">
+      The last two are the in-page replacements for the browser's own
+      <code>confirm</code> and status messages (§7.4). SensorLab never calls a
+      native dialog, and a real-browser test proves it.
+    </p>
+  </div>
+
+  {# --- chips ---------------------------------------------------------- #}
+  <div class="sl-ref-section">
+    <h2>Chips</h2>
+    <div class="sl-ref-row" data-component="chip">
+      <span class="sl-chip">200 Hz</span>
+      <span class="sl-chip">3-axis → |a|</span>
+      <span class="sl-chip sl-chip-measuring"><span class="sl-chip-dot"></span> Accelerometer</span>
+    </div>
+  </div>
+
+  {# --- stat readout --------------------------------------------------- #}
+  <div class="sl-ref-section">
+    <h2>Stat readout</h2>
+    <div class="sl-card sl-ref-row" style="justify-content: space-between;" data-component="stat">
+      <div class="sl-stat sl-stat-measured">
+        <span class="sl-label">You measured</span>
+        <span class="sl-stat-value sl-tnum">9.72<span class="sl-stat-unit">m/s²</span></span>
+      </div>
+      <div class="sl-stat">
+        <span class="sl-label">Expected</span>
+        <span class="sl-stat-value sl-tnum" style="font-size: 20px;">9.81</span>
+      </div>
+    </div>
+    <p class="sl-muted" style="margin-block-start: 10px;">
+      Tabular numerals, so a live readout counting 9.81 → 10.02 does not shift
+      sideways as the digits change (§7.3).
+    </p>
+  </div>
+
+  {# --- chart ---------------------------------------------------------- #}
+  <div class="sl-ref-section">
+    <h2>Chart</h2>
+    {% chart "Predicted (amber, dashed) against measured (cyan, solid)" %}
+      <svg viewBox="0 0 320 180" role="img" aria-label="Example chart">
+        <path class="sl-chart-grid" d="M34 144 L310 144 M34 100 L310 100 M34 56 L310 56"/>
+        <path class="sl-chart-axis" d="M34 20 L34 144"/>
+        <text class="sl-chart-tick" x="28" y="148" text-anchor="end">0</text>
+        <text class="sl-chart-tick" x="28" y="104" text-anchor="end">10</text>
+        <text class="sl-chart-tick" x="28" y="60" text-anchor="end">20</text>
+        <path class="sl-chart-predicted" d="M34 100 L100 88 L170 72 L240 58 L250 100 L310 100"/>
+        <path class="sl-chart-measured" d="M34 100 L68 100 L76 142 L240 142 L246 40 L256 96 L280 102 L310 100"/>
+      </svg>
+      <div class="sl-legend">
+        <span class="sl-legend-item">
+          <svg width="22" height="8" aria-hidden="true"><path class="sl-chart-predicted" d="M0 4 H22"/></svg>
+          Your prediction
+        </span>
+        <span class="sl-legend-item">
+          <svg width="22" height="8" aria-hidden="true"><path class="sl-chart-measured" d="M0 4 H22"/></svg>
+          Measured
+        </span>
+      </div>
+    {% endchart %}
+    <p class="sl-muted" style="margin-block-start: 10px;">
+      Dashed against solid, not colour alone — roughly 8% of viewers cannot
+      separate the hues, and the comparison <em>is</em> the product. The frame
+      is always <code>dir="ltr"</code>: in Hebrew the chrome mirrors and the
+      axes do not (§7.7).
+    </p>
+  </div>
+
+  {# --- instrument mode ------------------------------------------------- #}
+  <div class="sl-ref-section">
+    <h2>Instrument mode</h2>
+    <p class="sl-muted" style="margin-block-end: 12px;">
+      The same components, one class higher up. Going dark is the cue that you
+      are now taking a real measurement (§7.1).
+    </p>
+    <div class="sl-instrument sl-ref-panel" data-mode="instrument">
+      <div class="sl-rail">
+        <div class="sl-rail-seg is-done"></div>
+        <div class="sl-rail-seg is-done"></div>
+        <div class="sl-rail-seg is-done"></div>
+        <div class="sl-rail-seg is-current-measure"></div>
+        <div class="sl-rail-seg"></div>
+      </div>
+      <div class="sl-rail-caption">Step 4 of 5 — Experiment</div>
+
+      <div class="sl-ref-row" style="margin-block-start: 14px;">
+        <span class="sl-chip sl-chip-measuring"><span class="sl-chip-dot"></span> Accelerometer</span>
+        <span class="sl-chip sl-tnum">200 Hz</span>
+      </div>
+
+      <div class="sl-stat" style="margin-block-start: 14px;">
+        <span class="sl-label">|a| now</span>
+        <span class="sl-stat-value sl-tnum">9.81<span class="sl-stat-unit">m/s²</span></span>
+      </div>
+
+      <div style="margin-block-start: 14px;">
+        {% chart %}
+          <svg viewBox="0 0 320 120" role="img" aria-label="Live trace">
+            <path class="sl-chart-grid" d="M34 96 L310 96 M34 60 L310 60"/>
+            <path class="sl-chart-axis" d="M34 16 L34 96"/>
+            <path class="sl-chart-measured" d="M34 60 L70 58 L106 63 L142 57 L178 62 L214 58 L250 61 L286 57 L310 60"/>
+          </svg>
+        {% endchart %}
+      </div>
+
+      <div class="sl-ref-row" style="margin-block-start: 14px;">
+        <button type="button" class="sl-button">Stop &amp; analyse</button>
+        <button type="button" class="sl-button sl-button-quiet">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  {# --- bottom nav ------------------------------------------------------ #}
+  <div class="sl-ref-section">
+    <h2>Bottom navigation</h2>
+    <div class="sl-nav" data-component="nav" style="border: 1px solid var(--sl-line); border-radius: var(--sl-radius);">
+      <a href="{% url 'sensorlab:lab' %}" class="is-current">Tracks</a>
+      <a href="{% url 'sensorlab:lab' %}">Group</a>
+      <a href="{% url 'sensorlab:lab' %}">Profile</a>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.querySelector("[data-demo='confirm']").addEventListener("click", function () {
+    window.sensorlab.confirm({
+      title: "Discard this run?",
+      body: "The recording and your prediction for it would both go.",
+      confirmLabel: "Discard",
+      danger: true
+    }).then(function (answer) {
+      window.sensorlab.toast(answer ? "Discarded." : "Kept.");
+    });
+  });
+  document.querySelector("[data-demo='toast']").addEventListener("click", function () {
+    window.sensorlab.toast("Saved — 9.72 m/s², within 3% of expected.");
+  });
+</script>
+{% endblock %}

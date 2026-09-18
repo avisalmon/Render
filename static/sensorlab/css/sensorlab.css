@@ -1,24 +1,88 @@
-/* SensorLab — shell styling only.
+/* SensorLab — the design system (SL-A4, spec §7).
  *
- * SL-A1 deliberately ships the minimum: the real design system (tokens per
- * mode, the component set, the instrument-mode scope) is SL-A4, spec §7.
- * Anything added here before then is something SL-A4 has to undo.
+ * Two rules shape this whole file.
  *
- * Logical properties (padding-inline, margin-inline-*) are used from the
- * start so SL-A5's Hebrew/RTL mirroring is automatic rather than a rewrite.
+ * 1. ONE SYSTEM, TWO MODES (§7.1). The learning steps are bright; the
+ *    Experiment step is a dark instrument. That is not two stylesheets: the
+ *    tokens below are redefined inside `.sl-instrument`, so a screen *opts
+ *    into* the mode and every component follows. Adding a parallel set of
+ *    `--sl-dark-*` names would defeat it, and a test forbids that.
+ *
+ * 2. COLOUR CARRIES MEANING, NEVER DECORATION (§7.2). Amber is a
+ *    prediction, cyan is a measurement, and everything structural is ink.
+ *    Buttons, rails, nav and progress are deliberately monochrome so that
+ *    when the two accents appear they mean something. Dash pattern does the
+ *    same job in charts, because ~8% of viewers cannot separate the hues.
+ *
+ * Logical properties only (`padding-inline`, `border-block-end`, …). SL-A5
+ * flips this app to Hebrew, and a `padding-left` survives the mirror still
+ * pointing the old way — silently, since the page still renders. Enforced
+ * by a test rather than remembered.
  */
 
 :root {
+  /* surfaces and ink — pedagogical mode */
   --sl-ground: #FAF9F7;
   --sl-surface: #FFFFFF;
+  --sl-surface-sunken: #F2EFE9;
   --sl-ink: #1A1A18;
   --sl-ink-soft: #6B6862;
+  --sl-ink-faint: #9E9A92;
   --sl-line: #EAE7E1;
-  /* The two semantic accents (spec §7.2). Declared here, used by nothing
-     yet: amber means a prediction, cyan means a measurement, and neither is
-     allowed to become decoration. */
+  --sl-line-strong: #DDD8CF;
+
+  /* the two semantic accents, and nothing else may borrow them */
   --sl-prediction: #D08616;
+  --sl-prediction-tint: #FBF3E6;
   --sl-measurement: #0E8E9B;
+  --sl-measurement-tint: #E6F4F5;
+
+  --sl-danger: #B3261E;
+
+  /* shape and rhythm */
+  --sl-radius: 12px;
+  --sl-radius-lg: 16px;
+  --sl-radius-pill: 999px;
+  --sl-tap: 44px;              /* §7.4, the floor for anything tappable */
+  --sl-gutter: 16px;
+
+  /* type */
+  --sl-font: 'Rubik', 'Segoe UI', system-ui, sans-serif;
+  --sl-size-display: 38px;
+  --sl-size-h1: 24px;
+  --sl-size-body: 15px;
+  --sl-size-small: 13px;
+  --sl-size-label: 11px;
+}
+
+/* Instrument mode (§7.1): the same token names, different values. A screen
+   adds `.sl-instrument` and every component below changes with it.
+ *
+ * The `color`/`background` pair at the end is not decoration, and leaving it
+ * out was a real bug: `color` is INHERITED, so `body` had already resolved
+ * `var(--sl-ink)` to the light mode's dark ink, and that value inherited
+ * straight through this scope. Every component that deliberately does not
+ * set its own colour — which is most of them — kept the wrong one, and the
+ * big readout came out dark grey on near-black. Redefining a custom property
+ * is not the same as using it: the scope has to apply its own tokens too.
+ */
+.sl-instrument {
+  --sl-ground: #0E1113;
+  --sl-surface: #151A1D;
+  --sl-surface-sunken: #10272B;
+  --sl-ink: #E8EBED;
+  --sl-ink-soft: #8A949A;
+  --sl-ink-faint: #5E686E;
+  --sl-line: #222A2F;
+  --sl-line-strong: #2B343A;
+  --sl-prediction: #F5AE42;
+  --sl-prediction-tint: #2A2013;
+  --sl-measurement: #2DD4E0;
+  --sl-measurement-tint: #10272B;
+
+  /* apply them, do not merely declare them — see above */
+  color: var(--sl-ink);
+  background: var(--sl-ground);
 }
 
 * { box-sizing: border-box; }
@@ -27,24 +91,36 @@ body {
   margin: 0;
   background: var(--sl-ground);
   color: var(--sl-ink);
-  font-family: 'Rubik', 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--sl-font);
+  font-size: var(--sl-size-body);
   -webkit-font-smoothing: antialiased;
 }
+
+/* Tabular numerals for anything live or measured (§7.3): without them a
+   readout counting 9.81 → 10.02 shifts sideways as digit widths change, and
+   a jittering number reads as a broken instrument. */
+.sl-tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* ---------------------------------------------------------- app chrome */
 
 .sl-header {
   display: flex;
   align-items: center;
-  padding-block: 16px;
-  padding-inline: 16px;
-  border-block-end: 1px solid var(--sl-line);
+  gap: 8px;
+  padding-block: 12px;
+  padding-inline: var(--sl-gutter);
   background: var(--sl-surface);
+  border-block-end: 1px solid var(--sl-line);
 }
 
 .sl-wordmark {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 44px; /* spec §7.4: nothing tappable under 44px */
+  min-block-size: var(--sl-tap);
   color: var(--sl-measurement);
   text-decoration: none;
   font-size: 19px;
@@ -55,73 +131,57 @@ body {
 .sl-wordmark span { color: var(--sl-ink); }
 
 .sl-shell {
-  padding-block: 32px 48px;
-  padding-inline: 16px;
-  max-width: 640px;
+  padding-block: 24px 40px;
+  padding-inline: var(--sl-gutter);
+  max-inline-size: 640px;
 }
 
+.sl-narrow { max-inline-size: 420px; }
+
 .sl-shell h1 {
-  margin: 0 0 10px;
-  font-size: 26px;
+  margin-block: 0 10px;
+  font-size: var(--sl-size-h1);
   font-weight: 600;
   letter-spacing: -0.4px;
   line-height: 1.2;
 }
 
-.sl-shell p {
-  margin: 0 0 12px;
-  font-size: 15px;
-  line-height: 1.55;
-  color: #3D3B37;
+.sl-shell p { margin-block: 0 12px; line-height: 1.55; }
+
+.sl-muted { color: var(--sl-ink-soft); font-size: var(--sl-size-small); }
+
+.sl-label {
+  font-size: var(--sl-size-label);
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--sl-ink-soft);
 }
 
-.sl-muted { color: var(--sl-ink-soft); font-size: 13px; }
+/* ------------------------------------------------------------- card */
 
-.sl-shell a { color: var(--sl-ink); text-decoration: underline; }
-.sl-shell a:hover { color: var(--sl-ink-soft); }
-
-/* SL-A2: the front door. Still the shell minimum — the real component set
-   (and the instrument mode that goes with it) is SL-A4. */
-
-.sl-narrow { max-width: 420px; }
-
-.sl-form { display: flex; flex-direction: column; gap: 14px; margin-block: 20px; }
-
-.sl-field { display: flex; flex-direction: column; gap: 6px; }
-
-.sl-label { font-size: 13px; color: var(--sl-ink-soft); }
-
-.sl-input {
-  inline-size: 100%;
-  min-block-size: 48px; /* spec §7.4 */
-  padding-inline: 14px;
-  font: inherit;
-  font-size: 15px;
-  color: var(--sl-ink);
+.sl-card {
+  padding: 14px;
   background: var(--sl-surface);
-  border: 1px solid #DDD8CF;
-  border-radius: 11px;
+  border: 1px solid var(--sl-line);
+  border-radius: var(--sl-radius-lg);
 }
 
-.sl-input:focus { outline: 2px solid var(--sl-measurement); outline-offset: 1px; }
-
-.sl-help { font-size: 12px; color: var(--sl-ink-soft); line-height: 1.45; }
-
-.sl-error { font-size: 13px; color: #B3261E; }
+/* ----------------------------------------------------------- buttons */
 
 .sl-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-block-size: 48px; /* spec §7.4 */
+  gap: 8px;
+  min-block-size: 48px;
   padding-inline: 20px;
-  margin-block-end: 10px;
-  font-size: 15px;
+  font: inherit;
   font-weight: 500;
-  color: #FFFFFF;
+  color: var(--sl-ground);
   background: var(--sl-ink);
   border: none;
-  border-radius: 12px;
+  border-radius: var(--sl-radius);
   text-decoration: none;
   cursor: pointer;
 }
@@ -129,7 +189,243 @@ body {
 .sl-button-quiet {
   color: var(--sl-ink);
   background: var(--sl-surface);
-  border: 1px solid #DDD8CF;
+  border: 1px solid var(--sl-line-strong);
 }
 
-.sl-shell .sl-button { text-decoration: none; }
+.sl-button-danger { background: var(--sl-danger); color: #FFFFFF; }
+
+/* --------------------------------------------------------------- chip */
+
+.sl-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-block-size: 32px;
+  padding-inline: 11px;
+  font-size: 12px;
+  color: var(--sl-ink-soft);
+  border: 1px solid var(--sl-line);
+  border-radius: var(--sl-radius-pill);
+}
+
+/* A chip may be cyan only when it is *about* a measurement — an active
+   sensor, a live capture. Never as decoration (§7.2). */
+.sl-chip-measuring {
+  color: var(--sl-measurement);
+  background: var(--sl-measurement-tint);
+  border-color: var(--sl-measurement);
+}
+
+.sl-chip-dot {
+  inline-size: 6px;
+  block-size: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* --------------------------------------------------------- step rail */
+
+.sl-rail { display: flex; gap: 5px; }
+
+.sl-rail-seg {
+  flex: 1;
+  block-size: 5px;
+  border-radius: 3px;
+  background: var(--sl-line);
+}
+
+/* Structural, so ink — not an accent (§7.2). */
+.sl-rail-seg.is-done { background: var(--sl-ink); }
+
+/* The exception, and it is a deliberate one: the current step is tinted by
+   what that step *is*. Predict is a prediction; Experiment and Analysis are
+   measurement. */
+.sl-rail-seg.is-current { background: var(--sl-ink); }
+.sl-rail-seg.is-current-predict { background: var(--sl-prediction); }
+.sl-rail-seg.is-current-measure { background: var(--sl-measurement); }
+
+.sl-rail-caption {
+  margin-block-start: 8px;
+  font-size: 12px;
+  color: var(--sl-ink-soft);
+}
+
+/* ------------------------------------------------------------- stat */
+
+.sl-stat { display: flex; flex-direction: column; gap: 2px; }
+
+.sl-stat-value {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: var(--sl-size-display);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.sl-stat-unit { font-size: 14px; font-weight: 400; color: var(--sl-ink-soft); }
+
+/* A measured number is cyan; that is the whole point of the token. */
+.sl-stat-measured .sl-stat-value { color: var(--sl-measurement); }
+
+/* ------------------------------------------------------------ chart */
+
+/* §7.7: chrome mirrors, geometry and numerals never do. The `dir="ltr"`
+   lives in the component's own markup (templates/sensorlab/components/
+   chart.html) so a caller cannot forget it. */
+.sl-chart {
+  padding: 12px 10px 8px;
+  background: var(--sl-surface);
+  border: 1px solid var(--sl-line);
+  border-radius: var(--sl-radius-lg);
+}
+
+.sl-chart svg { display: block; inline-size: 100%; }
+
+.sl-chart-grid { stroke: var(--sl-line); stroke-width: 1; }
+.sl-chart-axis { stroke: var(--sl-line-strong); stroke-width: 1; }
+.sl-chart-tick { fill: var(--sl-ink-faint); font-size: 10.5px; }
+
+/* The colour language, as marks (§7.2). Dashed vs solid is load-bearing,
+   not styling: the comparison is the product. */
+.sl-chart-predicted {
+  fill: none;
+  stroke: var(--sl-prediction);
+  stroke-width: 2.2;
+  stroke-dasharray: 7 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sl-chart-measured {
+  fill: none;
+  stroke: var(--sl-measurement);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sl-legend { display: flex; gap: 18px; padding-block-start: 8px; }
+.sl-legend-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--sl-ink-soft); }
+
+/* -------------------------------------------------------- bottom nav */
+
+.sl-nav {
+  display: flex;
+  background: var(--sl-surface);
+  border-block-start: 1px solid var(--sl-line);
+}
+
+.sl-nav a {
+  flex: 1;
+  min-block-size: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--sl-ink-faint);
+  text-decoration: none;
+}
+
+.sl-nav a.is-current { color: var(--sl-ink); font-weight: 500; }
+
+/* ------------------------------------------------------------ forms */
+
+.sl-form { display: flex; flex-direction: column; gap: 14px; margin-block: 20px; }
+.sl-field { display: flex; flex-direction: column; gap: 6px; }
+.sl-field > .sl-field-label { font-size: var(--sl-size-small); color: var(--sl-ink-soft); }
+
+.sl-input {
+  inline-size: 100%;
+  min-block-size: 48px;
+  padding-inline: 14px;
+  font: inherit;
+  color: var(--sl-ink);
+  background: var(--sl-surface);
+  border: 1px solid var(--sl-line-strong);
+  border-radius: 11px;
+}
+
+.sl-input:focus { outline: 2px solid var(--sl-measurement); outline-offset: 1px; }
+
+.sl-help { font-size: 12px; color: var(--sl-ink-soft); line-height: 1.45; }
+.sl-error { font-size: var(--sl-size-small); color: var(--sl-danger); }
+
+.sl-shell a { color: var(--sl-ink); text-decoration: underline; }
+.sl-shell a:hover { color: var(--sl-ink-soft); }
+.sl-shell a.sl-button, .sl-shell a.sl-button-quiet { text-decoration: none; }
+
+/* ------------------------------------- toast and dialog (no natives) */
+
+/* §7.4: never `alert`/`confirm`/`prompt`. They block the page, ignore the
+   app's design, and on iOS announce the site's domain. */
+
+.sl-toast-tray {
+  position: fixed;
+  inset-block-end: 20px;
+  inset-inline: var(--sl-gutter);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 60;
+  pointer-events: none;
+}
+
+.sl-toast {
+  padding-block: 12px;
+  padding-inline: 16px;
+  background: var(--sl-ink);
+  color: var(--sl-ground);
+  border-radius: var(--sl-radius);
+  font-size: 14px;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 18%);
+}
+
+.sl-backdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sl-gutter);
+  background: rgb(0 0 0 / 45%);
+  z-index: 70;
+}
+
+.sl-dialog {
+  inline-size: 100%;
+  max-inline-size: 360px;
+  padding: 20px;
+  background: var(--sl-surface);
+  color: var(--sl-ink);
+  border-radius: var(--sl-radius-lg);
+}
+
+.sl-dialog h2 { margin-block: 0 8px; font-size: 18px; font-weight: 600; }
+.sl-dialog p { margin-block: 0 18px; color: var(--sl-ink-soft); line-height: 1.5; }
+.sl-dialog-actions { display: flex; gap: 10px; }
+.sl-dialog-actions .sl-button { flex: 1; }
+
+/* ------------------------------------------- the reference page only */
+
+.sl-ref-section { margin-block-end: 28px; }
+.sl-ref-section > h2 {
+  margin-block: 0 12px;
+  font-size: var(--sl-size-label);
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--sl-ink-faint);
+}
+
+.sl-ref-panel {
+  padding: 16px;
+  background: var(--sl-ground);
+  border: 1px solid var(--sl-line);
+  border-radius: var(--sl-radius-lg);
+}
+
+.sl-ref-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }

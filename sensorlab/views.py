@@ -21,6 +21,18 @@ def home(request):
 
 
 @sensorlab_login_required
+def design(request):
+    """The design reference (SL-A4, spec §7): every component, both modes.
+
+    Behind the gate rather than public — it is a working surface for whoever
+    is building the app, not a page for a person doing an experiment. A board
+    nobody can open is not a design system, so it lives in the app rather
+    than in a static file somewhere.
+    """
+    return render(request, "sensorlab/design.html")
+
+
+@sensorlab_login_required
 def lab(request):
     """The first page behind the gate. A shell until Epic D's runner."""
     profile = profile_for(request.user)

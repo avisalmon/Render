@@ -231,38 +231,67 @@ three where looking at it did not find a bug. The one Hebrew string on the
 API page is `עברית`, the Hebrew language's own name in the switch, which
 is correct in any locale.
 
-### SL-A4 — The design system 🔵 next
+### SL-A4 — The design system ✅
 
 Marker: `sprsl4`
 
 Spec §7, made real. Mockups: `docs/sensorlab/design/`.
 
-- [ ] Tokens as CSS custom properties, one set per mode — pedagogical and
-      instrument — with instrument mode as a single scoping class that swaps
-      the set, so a screen opts in rather than restyling itself.
-- [ ] Rubik loaded with its fallback stack; the type scale; a
-      tabular-numerals utility for every live or measured number.
-- [ ] Components: step rail, card, primary/secondary button, chip, stat
-      readout, chart frame (axes/grid/legend primitives), bottom nav.
-- [ ] **Logical CSS properties throughout** (`padding-inline`, …) from the
-      start, so SL-A5's mirroring is automatic rather than a second pass.
-- [ ] Every chart primitive wraps itself `dir="ltr"` (§7.7) — the rule lives
-      in the component, not in each caller's memory.
-- [ ] A **design reference page** inside the app rendering every component
-      in both modes and both directions.
-- [ ] `sensorlab.toast()` / `.confirm()` / `.editInPlace()` — no native
-      `alert`/`confirm`/`prompt` anywhere (§7.4).
-- [ ] **Guard test: no tap target under 44×44px.** matazim and ustrip both
-      have one; ustrip's exists *because* "phone-first" was an intention
-      with nothing checking it, and it shipped 20px checkboxes.
-- [ ] **Guard test: no native dialog ever fires** — driven through a real
-      browser with a dialog listener armed, the way ustrip's does, since
-      nothing else catches that regression.
+- [x] Tokens as CSS custom properties, one set per mode, with instrument
+      mode as a **single scoping class that swaps the same token names** —
+      a screen opts in rather than restyling itself. A test forbids a
+      parallel `--sl-dark-*` set, which would defeat the whole idea.
+- [x] Rubik with its fallback stack; the type scale; `.sl-tnum` for every
+      live or measured number.
+- [x] Components: step rail, card, primary/quiet/danger buttons, chip,
+      stat readout, chart frame, bottom nav, plus form fields and the
+      toast/dialog surfaces.
+- [x] **Logical properties throughout, enforced by a test** rather than
+      remembered — `padding-left` survives a mirror still pointing the old
+      way, silently, and SL-A5 is about to mirror everything.
+- [x] The chart rule lives in a **`{% chart %}` block tag**, not a CSS
+      class: `dir="ltr"` is emitted by the component, so a lab written in
+      Epic G cannot forget §7.7. Tested over every chart on the page.
+- [x] `/sensorlab/design/` — every component in both modes, behind the gate.
+- [x] `sensorlab.toast()` / `.confirm()` / `.editInPlace()`, and no native
+      `alert`/`confirm`/`prompt` anywhere.
+- [x] **Guard: no tap target under 44×44px** across all five pages. It was
+      red against the SL-A1–A3 pages before this sprint's CSS, so it caught
+      something real rather than passing vacuously.
+- [x] **Guard: no native dialog ever fires** — real browser, dialog listener
+      armed, SensorLab's own confirm asserted to appear instead.
+- [x] **Guard: no page scrolls sideways at 390px.** A phone-only app that
+      scrolls sideways is broken, not imperfect.
 
-**Done when:** the design reference page renders every component in both
-modes and both directions, and both guard tests are green.
+**Done:** 10 tests. Demo: `sl-a4-reference.png`, `sl-a4-instrument.png`,
+`sl-a4-confirm.png`.
 
-### SL-A5 — Bilingual plumbing ⬜
+*The bug that only rendering caught — three sprints out of four now.* In
+instrument mode the big `9.81` readout was almost invisible: dark grey on
+near-black. `.sl-instrument` redefined every token correctly and the
+file-level token test passed, because **redefining a custom property is not
+the same as using it**. `color` is inherited: `body` had already resolved
+`var(--sl-ink)` to the light mode's dark ink, and that value inherited
+straight through the dark scope. Every component that deliberately sets no
+colour of its own — which is most of them — kept the wrong one. The scope
+now applies its own tokens (`color`, `background`), and the guard measures
+**computed luminance in a browser**, which is the only place the difference
+between "declared" and "applied" shows up at all. Red first: text 0.101
+against ground 0.065. After: 0.920 against 0.065.
+
+*And one about the tests themselves.* The `--sl-dark-*` guard first failed
+on the stylesheet comment **explaining** the rule it enforces. A guard that
+reads the documentation instead of the code is worse than no guard, because
+it fails for reasons unconnected to the thing it protects. It strips
+comments now, and `_code()` carries that reasoning.
+
+*Worth noting for the process:* SL-A1 leaked template syntax, SL-A2 showed
+Hebrew labels on an English page, SL-A4 had invisible text. All three were
+appearance, and unit tests have no opinion about appearance. The four
+browser guards added here are the first things in this app that can fail
+for those reasons.
+
+### SL-A5 — Bilingual plumbing 🔵 next
 
 Marker: `sprsl5`
 
