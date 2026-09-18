@@ -470,7 +470,8 @@ def _revealed_world(settings):
     moved itself into `revealed` by the time the page loads -- same
     server-authoritative path as a real game, just driven directly
     instead of through three browsers. Deliberately keeps the real
-    `REVEAL_SECONDS_PER_MEME` (4s) rather than compressing it: a browser
+    `REVEAL_SECONDS_PER_MEME` (8s, ACT-Z.13 2026-09-18 -- was 4s, "הרגע של
+    חשיפה מאד קצר") rather than compressing it: a browser
     launch and page load alone can eat over a second, and a tighter
     per-meme budget made the very first assertion flake past meme 0
     before the page had even finished loading."""
@@ -504,10 +505,10 @@ def test_the_reveal_screen_shows_one_meme_at_a_time_not_a_grid(browser, live_ser
     assert "1 מתוך 3" in page.inner_text("[data-reveal-progress]")
     first_src = page.locator(".memz-reveal-image").get_attribute("src")
 
-    # Past the first meme's own ~4-second budget, still only one at a
+    # Past the first meme's own ~8-second budget, still only one at a
     # time -- and it's a different one, proven by comparing rendered_url
     # values already known server-side (never trusting pixels).
-    page.wait_for_timeout(4200)
+    page.wait_for_timeout(8200)
     assert page.locator(".memz-reveal-image").count() == 1
     assert "2 מתוך 3" in page.inner_text("[data-reveal-progress]")
     second_src = page.locator(".memz-reveal-image").get_attribute("src")

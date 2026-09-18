@@ -717,6 +717,19 @@ evidence of a second bug on top of the emoji one.
 
 ---
 
+## ACT-Z.13 — The reveal moment was too short `DONE (dev), 2026-09-18`
+
+Avi, playing the real game: "הרגע של חשיפה מאד קצר. אולי תתן לכל תמונה 8
+שניות" (the reveal moment is very short, maybe give each image 8
+seconds).
+
+| Feature | Description | Spec | Status |
+| --- | --- | --- | --- |
+| ACT-Z.13.1 | Each meme's turn in the reveal slideshow was too short to actually read | spec Rule 4.5 | DONE — `REVEAL_SECONDS_PER_MEME` (`memz/conf.py`) raised from 4 to 8. No code change needed beyond the one number: the client already computes the slideshow's index from this same config value (`reveal_seconds_per_meme` in the state payload, ACT-Z.9), and the server already sizes `reveal_deadline` from it, so both sides picked up the new pacing automatically |
+| ACT-Z.13.2 | Tests | spec §12.8 | DONE — updated the one test that waited a fixed real-world delay tied to the old 4s figure (`tests/test_spr_z_6.py`'s reveal-slideshow test) to wait past the new 8s budget instead; reran it and the big-screen equivalent, both green |
+
+---
+
 ## Not in v1 (spec §13)
 
 Payments, AI captions, English UI, GIF and video memes, free-position text

@@ -62,19 +62,21 @@
     SPR-Z.9 (a joining player's own uploads in a shared game), ACT-Z.6
     (a WhatsApp share button and a QR code in the lobby), and six
     rounds of QA fixes from Avi playing the live game (ACT-Z.7 through
-    ACT-Z.12) all done in dev the same day. <b>ACT-Z.10's fix (a
+    ACT-Z.13) all done in dev the same window. <b>ACT-Z.10's fix (a
     `python-bidi` version pin) was deployed, confirmed live, and shown
     NOT to fix the Hebrew-reversal bug — ACT-Z.11 found and fixed the
     real cause (Pillow's own raqm layout double-reordering on
     production's Linux build, never reproducible on Windows dev).
     ACT-Z.12: a real screenshot showed a caption's emoji baked in as a
     broken-glyph box — the font has none, and the "drop emoji" spec
-    decision from SPR-Z.2 was never actually implemented until now.</b>
+    decision from SPR-Z.2 was never actually implemented until now.
+    ACT-Z.13 (2026-09-18): the reveal slideshow's per-meme timer raised
+    from 4s to 8s, Avi's own live-play feedback.</b>
     Status truth: <a href="backlog.md">backlog.md</a> + <a href="spec.md">spec.md</a>.</p>
 
   <div class="stat-row">
-    <div class="stat"><div class="n">7 / 7 + 10</div><div class="l">Sprints done</div></div>
-    <div class="stat"><div class="n">65 + 43</div><div class="l">Features done</div></div>
+    <div class="stat"><div class="n">7 / 7 + 11</div><div class="l">Sprints done</div></div>
+    <div class="stat"><div class="n">65 + 45</div><div class="l">Features done</div></div>
     <div class="stat"><div class="n">296</div><div class="l">Tests</div></div>
     <div class="stat"><div class="n">Last: SPR-Z.7</div><div class="l">Deployed</div></div>
   </div>
@@ -128,6 +130,7 @@
   <div class="open-item"><b>ACT-Z.10</b><span>SUPERSEDED — see ACT-Z.11. A real screenshot from the live game proved the Hebrew report right a fourth time — but it didn't reproduce against any locally-installed version of the bidi library. First diagnosed as `requirements.txt` pinning a range, not an exact version, so dev and production had quietly drifted onto different builds; pinned exactly, deployed, confirmed live — and the exact same meme still rendered reversed, disproving the theory.</span></div>
   <div class="open-item"><b>ACT-Z.11</b><span>The real fix. Production's Pillow build (Linux wheel) bundles `libraqm`, giving `ImageDraw.text` its own genuine bidi reordering — so production was reordering the already-reordered string a second time, on every multi-word Hebrew caption, not just ones with punctuation (confirmed directly against production: even "רגע מה קורה פה", no punctuation at all, reproduced it). Windows dev wheels don't bundle raqm, which is why nothing ever reproduced locally. `render.py` now checks `PIL.features.check_feature("raqm")` once at import and skips its own reordering when PIL will do it (passing `direction="rtl"` instead) — the same fix shape as ACT-Z.8.2's browser-canvas double-reversal, just server-side. Found by comparing the disputed glyphs against known-correct and known-reversed single-word reference renders side by side, not by reading images directly. Deployed and verified live: a fresh 3-player game, three brand-new captions never tested before, downloaded straight from production after the deploy — all render correctly.</span></div>
   <div class="open-item"><b>ACT-Z.12</b><span>Same screenshot, a second real bug: a caption's emoji baked in as a visible broken-glyph box. Heebo Black has zero emoji glyphs (checked directly against its own cmap table) — spec always said emoji should be dropped, nothing ever did it. `render.strip_unsupported_chars` now reads the font's cmap and drops any character it can't draw before wrapping, turning it into a space rather than nothing so two words don't fuse together where an emoji used to sit. Closes §14.4 (the "render or drop" decision, made in SPR-Z.2 but never implemented) — the "drop" half is done; a live preview warning when it happens is not yet built.</span></div>
+  <div class="open-item"><b>ACT-Z.13</b><span>"הרגע של חשיפה מאד קצר" — the reveal slideshow's per-meme timer raised from 4s to 8s (`REVEAL_SECONDS_PER_MEME`). Both the server's own `reveal_deadline` sizing and the client's slideshow index already read this one config value, so no other code changed.</span></div>
 
   <div class="section-label">Open decisions (spec §14)</div>
   <div class="open-item"><b>§14.4</b><span>RESOLVED, ACT-Z.12 (2026-09-16): emoji are dropped from the render (the font has no glyphs for them), each turned into a space so words don't fuse together. A live preview warning when a caption's emoji gets dropped is a small remaining follow-up, not yet built.</span></div>
