@@ -3632,3 +3632,110 @@ screens pass in each.
 
 `.mz-qr` stays white in both palettes. A QR code is read by a camera looking for
 dark on light, and a dark one does not scan.
+
+## SPR-M.50 — The second full review: journeys, bytes and what the tests skip  `PLANNED`
+
+**Goal:** Avi, 2026-09-19: "review all the project done so far. Focus on UX,
+functionality, quality and more."
+
+SPR-M.41, four days earlier, measured screens. Four sprints have shipped since
+and each was measured on its way in, so repeating that walk would find what it
+found. This review goes where nothing had looked: whether journeys close end to
+end, what the bytes on disk actually are, and which code the 727 tests never
+execute.
+
+### What was measured
+
+| Check | Method | Result |
+|---|---|---|
+| Code shape | line counts, module sizes, TODO markers | 11,048 lines, 44 modules, largest 1,351; zero real TODOs |
+| Test coverage | pytest-cov over 727 tests | 88%; the 0% modules are commands run in a subprocess |
+| Reachability | every named route vs every template, script and redirect | 80 of 83 reached; 3 are not |
+| Read-only dependency on babook | every `app.models` import, reads vs writes | one true gap, and it is the known one |
+| Page weight | gzip of everything a phone fetches | CSS 21KB; one asset is 102KB |
+| Typography | md5 and OS/2 weight class of all six font files | all six are one file |
+| Contrast, tap targets, overflow, both palettes | the standing suites | 84 screens × 2 palettes, 7 phone checks, all pass |
+
+### The findings
+
+| F-ID | Finding | Traces | Status |
+|---|---|---|---|
+| F-M.50.1 | Every font file is Rubik Light; every heavier weight on the site is fake | REQ-M.5, SPR-M.21 | TODO |
+| F-M.50.2 | The logo is 8.6× oversize and the heaviest thing on every page | REQ-M.5 | TODO |
+| F-M.50.3 | `staff_consent` is a designed screen with no door | REQ-M.84 | TODO |
+| F-M.50.4 | The API's write paths are refused correctly and otherwise untested | REQ-M.139, Rule 6 | TODO |
+| F-M.50.5 | Two endpoints nothing reaches and nothing tests | | TODO |
+| F-M.50.6 | The certification path still does not close, and it is the only gap of its kind | REQ-M.76 | DECISION |
+
+### F-M.50.1 — one font, three names, six files
+
+`md5sum` over `static/matazim/fonts/`: the Hebrew 400, 500 and 700 files are
+byte-identical, and so are the Latin three. Opening any of them with fontTools:
+**OS/2 weight class 300, subfamily "Regular".** All six are Rubik *Light*.
+
+So the product has no medium and no bold. Every `font-weight: 500` and `700` in
+the stylesheet, which is every heading, every button label and every emphasis,
+is the browser thickening the light face on its own. It has been invisible
+because synthesised bold looks roughly like bold, and nobody had put a real one
+beside it.
+
+SPR-M.21 self-hosted Rubik for a good reason and copied one file three times.
+The fix is the real 400, 500 and 700 faces in those six slots, and a test that
+reads the weight class out of each file so it cannot happen again.
+
+### F-M.50.2 — a 102KB wordmark drawn at 34px
+
+`logo.png` is 850×293 pixels and renders at 34px tall in the header. It is
+102KB, does not compress, and is fetched on every page. The whole stylesheet is
+21KB gzipped. An SVG, or a PNG at twice its rendered size, is a few kilobytes.
+
+### F-M.50.3 — a screen with no door
+
+`staff_consent` records guardian consent that a school collected on paper, so
+the record carries who said so (REQ-M.84). Admin only, deliberately. No template
+links to it, and the only test posts straight at the URL, which is how a screen
+stays green while nobody can reach it.
+
+The consent gate is switched off today, so this blocks nothing yet. The day it
+is switched on, a program manager will need this screen and have no way to it.
+Recorded now because "we will find it when we need it" is exactly how it stays
+unfound.
+
+### F-M.50.4 — the API is locked, and that is most of what is tested
+
+The uncovered lines in `api.py` are `perform_create` (30 of them),
+`perform_update`, `_decide`, `retire`, `restore`, `revoke`, `hide`, `show`,
+`mark_read` and `perform_destroy`. SPR-M.34's sweep proved every endpoint
+refuses the wrong reader and scopes every read; that was the right thing to
+prove first. But whether creating a row through the API produces the right row,
+with ownership set from the session and nothing client-supplied trusted, is
+executed by almost nothing.
+
+The API is Rule 6 infrastructure and the surface an agent uses. Its writes
+deserve the same treatment its refusals got.
+
+### F-M.50.5 — two leftovers
+
+`clear_notices` marks everything read; so does opening the notices page, which
+is why nothing links to it. `say_more` adds words to decided work; the review
+screen's own form does that, which is why nothing links to it. Neither has a
+test. Remove both.
+
+### F-M.50.6 — confirmed unique, still Avi's
+
+A sweep of every babook model מט״צים imports, reads against writes:
+`UserVideoProgress` and `LessonReflection` are written through babook's own
+endpoints on purpose (REQ-M.14), and `Course`, `Video`, `LessonQuiz` are babook's
+content. `CourseCertificate` is the one model the programme *requires* its
+members to earn and provides no way to earn. Nothing else has that shape.
+
+Unchanged from 2026-09-17: build the project upload and the gate inside our
+walls, or let those two actions happen on babook and reflect back. The course
+picker in `data_model.md` §7 waits behind this.
+
+### What this review did not find, and looked for
+
+No module over 1,400 lines. No TODO that is real. No route that 404s. No
+N+1 (the targets bank still renders 120 rows in 24 queries). No contrast, tap or
+overflow regression in either palette. No second read-only gap. No stale
+allowlist. 727 tests green.
