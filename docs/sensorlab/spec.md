@@ -124,6 +124,31 @@ actual lab report afterward, not just an exported chart.
   distinctive capability in the field, and SensorLab is building it in
   rather than leaving it out.
 
+### 4.1 Measured, not assumed: what a real phone gives us
+
+Written after running `/sensorlab/sensor-check/` on the target device
+(2026-09-18) rather than from documentation. The page reports what the
+browser in your hand actually does, and the headline number is the one that
+matters: **|a| = 9.81 m/s² at rest**, which is gravity, from real hardware,
+through a web page. The premise this whole app rests on is proven.
+
+| measured | value | consequence |
+|---|---|---|
+| `devicemotion` rate | **~63 Hz** | Not the 200 Hz assumed above and drawn on the mockups. Chrome caps this event near 60 Hz. |
+| `\|a\|` at rest | 9.81 m/s² | Correct to three figures — the sensor is real and calibrated. |
+| rotation rate | reported live | Gyroscope labs are viable. |
+| Generic Sensor API | available | The route to a *higher* rate than `devicemotion` allows, if a lab needs one. |
+| camera | 480×640 @ 60 fps | 60 fps is good for video tracking; the resolution is a default, not a ceiling. |
+| explicit permission gesture | not required | Android behaves as expected; no iOS-style per-gesture prompt. |
+
+**What this changes.** A free-fall drop of 1.20 m lasts 0.497 s, which at
+63 Hz is about **31 samples** — ample to time the fall window, marginal for
+resolving the shape of the impact spike, which is short and could alias.
+Two consequences for Epic F: the achieved rate must be **measured and
+recorded per recording** rather than assumed, and where a lab genuinely
+needs more than ~60 Hz it must come from the Generic Sensor API rather than
+`devicemotion`. Neither is a blocker; both are now facts instead of hopes.
+
 **Analysis and visualization:**
 
 - Live scrolling time-series graph with a synchronized data table.
@@ -339,8 +364,9 @@ retrofit.
 Four places plain CRUD does not fit, named now rather than discovered
 later:
 
-1. **Sensor payloads.** A 60-second 200 Hz 3-axis capture is roughly 36,000
-   readings in one request. Consistent with `data_model.md` §6 (one row, the
+1. **Sensor payloads.** A 60-second capture at the ~63 Hz this device
+   actually delivers is roughly 11,000 readings in one request (the figure
+   here was 36,000, computed from an assumed 200 Hz — see §4.1). Consistent with `data_model.md` §6 (one row, the
    payload on it), but the transport needs a deliberate call: one inline
    POST versus a chunked upload, plus a hard size limit. Decided in Epic F.
 2. **Verbs, not resources.** "Compute the analysis", "grade this
@@ -351,7 +377,7 @@ later:
    aggregate query, not a ViewSet.
 4. **Live streaming is not REST at all.** Epic K's REST surface is only the
    session record; the frames are websockets. Nobody should be polling an
-   endpoint at 200 Hz.
+   endpoint at sensor rate.
 
 ---
 

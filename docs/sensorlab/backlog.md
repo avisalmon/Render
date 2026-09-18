@@ -50,8 +50,8 @@ runs pip), `env\Scripts\activate` for everything Python, and
 | Epic | Sprints | Status |
 |---|---|---|
 | **A — Infrastructure and look and feel** | SL-A1 … SL-A5 | 🔵 in progress |
-| **B — Curriculum and authoring** | SL-B1 … SL-B4 | ⬜ not started |
-| C — Sensor access layer (risk spike) | tbd at gate | ⬜ |
+| **C — Sensor access layer** | SL-C1 … SL-C2 | 🔵 in progress — spike passed |
+| B — Curriculum and authoring | SL-B1 … SL-B4 | ⬜ not started |
 | D — The lab runner | tbd at gate | ⬜ |
 | E — Predict | tbd at gate | ⬜ |
 | F — Capture | tbd at gate | ⬜ |
@@ -388,6 +388,72 @@ front door, a documented API, a design system, and runs in two languages.
 which is this project's epic gate (see "Process weight" above). Not yet run
 — the last attempt was stopped at ~85% by decision, and nothing has
 verified the whole suite since SensorLab landed.
+
+## Epic C — Sensor access layer 🔵 in progress
+
+Spec §9.3 and the measurements in §4.1. Taken before Epic B on purpose:
+everything else assumes a phone will hand a web page its sensors, and that
+assumption is cheap to test and expensive to be wrong about.
+
+**The spike is already done and it passed.** `/sensorlab/sensor-check/`,
+run on the target Android device (2026-09-18): **|a| = 9.81 m/s² at rest**,
+rotation live, camera 480×640 @ 60 fps, no permission gesture demanded.
+It also corrected the spec: `devicemotion` delivers **~63 Hz**, not the
+200 Hz that had been assumed and drawn on the mockups.
+
+### SL-C1 — one way to open a sensor ✅
+
+Marker: `sprsl6` · 8 tests
+
+- [x] `static/sensorlab/js/sensors.js`: a single way to open a sensor,
+      read it, and stop it — so no lab ever talks to `devicemotion` or the
+      Generic Sensor API directly.
+- [x] **Generic Sensor API preferred, `devicemotion` as the fallback.**
+      Not symmetry for its own sake: §4.1 measured `devicemotion` at ~63 Hz,
+      and the Generic Sensor API is the only route to more when a lab needs
+      it. The module picks, the lab does not.
+- [x] Normalised readings regardless of source: `{t, x, y, z, magnitude}`,
+      one shape, so analysis code never branches on which API supplied them.
+- [x] **The achieved rate is measured, not declared.** A lab asks for a
+      rate; the device gives what it gives; the recording records what
+      actually arrived. §4.1 is exactly why: the assumed figure was three
+      times the real one.
+- [x] Capability detection per sensor, distinguishing the three states that
+      matter — **present / absent / present-but-silent**. The last is the
+      one that needs a name: the spike found `DeviceMotionEvent` exists on a
+      desktop with no accelerometer in it and simply never fires.
+
+*A test seam, stated rather than hidden.* `sensors.js` carries
+`window.__slFake*` globals so a browser test can stand in a fake source.
+Test hooks in shipping code are normally a smell; this one is deliberate
+and documented in the file. The silent-sensor case cannot be reproduced on
+a device where the sensor works, and no CI machine has an accelerometer at
+all — so without a seam the single most important behaviour here would be
+the least tested. Inert unless a test sets it. Worth revisiting as an
+injected source factory if it ever grows.
+
+*The same mistake, twice.* The guard forbidding raw sensor APIs in
+templates failed on the comment in `base.html` **explaining why raw sensor
+APIs are forbidden**. SL-A4's `--sl-dark-*` guard had already failed on the
+stylesheet comment documenting its own rule. Named now as a shape rather
+than patched again: **a guard that scans source text will eventually scan
+the sentence describing it.** Explaining a rule beside the code it governs
+is good practice, so the fix belongs in the guard every time — read code,
+never prose. Both now strip comments first.
+
+### SL-C2 — asking, refusing, and being refused 🔵 next
+
+Marker: `sprsl7`
+
+- [ ] The consent flow spec §2 commits to: explicit, visible, per-sensor,
+      never silent — the trust feature, not a footnote.
+- [ ] A denied permission is a first-class state with a way back, not an
+      error page.
+- [ ] A lab that needs a sensor this device lacks is **refused clearly**
+      (spec §1: no degradation tier) rather than started and broken.
+- [ ] The capability report becomes a real screen, replacing the spike page.
+
+---
 
 ## Epic B — Curriculum and authoring
 

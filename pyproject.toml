@@ -62,6 +62,7 @@ markers = [
     "sprm46: SPR-M.46 מט״צים the privacy page says what the product does",
     "sprm47: SPR-M.47 מט״צים the newcomer is not greeted as a returning member",
     "sprm48: SPR-M.48 מט״צים the improvement loop reaches the chat",
+    "sprm49: SPR-M.49 מט״צים מצב לילה, the first sprint from the request queue",
     "sprz1: SPR-Z.1 memz the skeleton and the seal",
     "sprz2: SPR-Z.2 memz the engine, and the first front door",
     "sprz3: SPR-Z.3 memz the game, Normal mode, typed captions, vote scoring",
@@ -82,6 +83,7 @@ markers = [
     "sprsl3: SL-A3 SensorLab the REST platform",
     "sprsl4: SL-A4 SensorLab the design system (spec 7), incl. real-browser guards",
     "sprsl5: SL-A5 SensorLab bilingual plumbing, and the language it serves",
+    "sprsl6: SL-C1 SensorLab one way to open a sensor (spec 4.1)",
     "smoke: the fast gate, run on every push (see tests/test_smoke.py)",
 ]
 

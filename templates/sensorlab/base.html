@@ -52,6 +52,12 @@
     for the browser's own blocking dialogs.
   {% endcomment %}
   <script src="{% static 'sensorlab/js/sensorlab.js' %}"></script>
+  {% comment %}
+    The sensor layer (SL-C1). Loaded everywhere so no lab reaches for
+    `devicemotion` or `new Accelerometer` itself — the rate-measuring
+    and capability rules live in here, and a second door bypasses them.
+  {% endcomment %}
+  <script src="{% static 'sensorlab/js/sensors.js' %}"></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>
