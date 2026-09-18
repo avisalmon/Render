@@ -10,6 +10,8 @@ app_name = "sensorlab"
 urlpatterns = [
     path("", views.home, name="home"),
     path("lab/", views.lab, name="lab"),
+    # Epic C spike: does this device actually give a web page its sensors?
+    path("sensor-check/", views.sensor_check, name="sensor_check"),
     path("design/", views.design, name="design"),
     # SL-A5: the switch, reachable without an account (spec §1).
     path("language/<str:code>/", views.set_language, name="set_language"),

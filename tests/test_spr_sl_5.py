@@ -254,3 +254,14 @@ def test_the_chrome_mirrors_and_the_chart_does_not(client, django_user_model):
     assert charts, "no chart to check"
     for chart in charts:
         assert 'dir="ltr"' in chart, "a chart mirrored with the page"
+
+
+# ------------------------------- Epic C's spike, reachable by anyone
+
+
+def test_the_sensor_check_is_public(client):
+    """The page exists to be opened on a real phone — including one that has
+    no account on this site. A spike nobody can reach proves nothing."""
+    response = client.get("/sensorlab/sensor-check/")
+    assert response.status_code == 200
+    assert 'data-screen="sensor-check"' in response.content.decode()

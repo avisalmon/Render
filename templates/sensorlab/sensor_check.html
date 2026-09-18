@@ -1,0 +1,186 @@
+{% extends "sensorlab/base.html" %}
+{% load sensorlab %}
+
+{% block title %}Sensor check — SensorLab{% endblock %}
+{% block screen %}sensor-check{% endblock %}
+
+{% block content %}
+<section class="sl-shell">
+  <h1>Sensor check</h1>
+  <p class="sl-muted">
+    Open this on the phone you intend to use. It answers one question with
+    evidence rather than documentation: can a page served over the web read
+    this device's sensors?
+  </p>
+
+  <div class="sl-card" style="margin-block-end: 14px;">
+    <div class="sl-label">Environment</div>
+    <div id="env" class="sl-tnum" style="margin-block-start: 8px; font-size: 14px; line-height: 1.7;">…</div>
+  </div>
+
+  <div class="sl-card" style="margin-block-end: 14px;">
+    <div class="sl-label">Motion &amp; orientation</div>
+    <p class="sl-muted" style="margin-block: 8px;">
+      The accelerometer and gyroscope. This is what a free-fall or pendulum
+      lab reads.
+    </p>
+    <button type="button" class="sl-button" id="start-motion">Start reading motion</button>
+    <div id="motion" class="sl-tnum" style="margin-block-start: 12px; font-size: 15px; line-height: 1.8;">
+      not started
+    </div>
+  </div>
+
+  <div class="sl-card" style="margin-block-end: 14px;">
+    <div class="sl-label">Camera</div>
+    <p class="sl-muted" style="margin-block: 8px;">
+      Needed for video motion-tracking labs. Asks permission, shows a frame,
+      then releases the camera immediately.
+    </p>
+    <button type="button" class="sl-button sl-button-quiet" id="start-camera">Test the camera</button>
+    <div id="camera" style="margin-block-start: 12px; font-size: 14px;">not started</div>
+    <video id="preview" playsinline muted
+           style="display: none; inline-size: 100%; margin-block-start: 12px; border-radius: 12px;"></video>
+  </div>
+
+  <div class="sl-card">
+    <div class="sl-label">Verdict</div>
+    <div id="verdict" style="margin-block-start: 8px; font-size: 15px; line-height: 1.6;">
+      Run the checks above.
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+
+  var found = {motion: null, orientation: null, generic: null, camera: null};
+
+  function line(label, value, good) {
+    var mark = good === null ? "·" : (good ? "✓" : "✗");
+    var colour = good === null ? "var(--sl-ink-soft)"
+               : (good ? "var(--sl-measurement)" : "var(--sl-prediction)");
+    return '<div><span style="color:' + colour + '">' + mark + '</span> ' +
+           label + ': <strong>' + value + '</strong></div>';
+  }
+
+  // ---- environment -------------------------------------------------
+  var env = document.getElementById("env");
+  var secure = window.isSecureContext;
+  var hasMotion = typeof window.DeviceMotionEvent !== "undefined";
+  var hasOrientation = typeof window.DeviceOrientationEvent !== "undefined";
+  var hasGeneric = typeof window.Accelerometer !== "undefined";
+  var needsGesture = hasMotion && typeof window.DeviceMotionEvent.requestPermission === "function";
+  found.generic = hasGeneric;
+
+  env.innerHTML =
+    line("HTTPS / secure context", secure ? "yes" : "NO — sensors are blocked without it", secure) +
+    line("DeviceMotionEvent", hasMotion ? "available" : "missing", hasMotion) +
+    line("DeviceOrientationEvent", hasOrientation ? "available" : "missing", hasOrientation) +
+    line("Generic Sensor API", hasGeneric ? "available" : "not on this browser", hasGeneric) +
+    line("Explicit permission needed", needsGesture ? "yes (iOS-style)" : "no (Android-style)", null) +
+    line("User agent", navigator.userAgent.slice(0, 70), null);
+
+  // ---- motion ------------------------------------------------------
+  var motion = document.getElementById("motion");
+  var samples = 0;
+
+  function onMotion(e) {
+    var a = e.accelerationIncludingGravity || {};
+    var r = e.rotationRate || {};
+    samples += 1;
+    if (a.x !== null && a.x !== undefined) found.motion = true;
+    if (r.alpha !== null && r.alpha !== undefined) found.orientation = true;
+    var mag = (a.x || a.y || a.z)
+      ? Math.sqrt((a.x || 0) * (a.x || 0) + (a.y || 0) * (a.y || 0) + (a.z || 0) * (a.z || 0))
+      : null;
+    motion.innerHTML =
+      line("samples", samples + " (" + (e.interval ? Math.round(1000 / e.interval) + " Hz" : "rate unknown") + ")", null) +
+      line("accel x/y/z", [a.x, a.y, a.z].map(function (v) {
+        return v === null || v === undefined ? "—" : v.toFixed(2);
+      }).join(" / "), found.motion) +
+      line("|a|", mag === null ? "—" : mag.toFixed(2) + " m/s²  (≈9.8 at rest)", mag !== null) +
+      line("rotation α/β/γ", [r.alpha, r.beta, r.gamma].map(function (v) {
+        return v === null || v === undefined ? "—" : v.toFixed(1);
+      }).join(" / "), found.orientation);
+    verdict();
+  }
+
+  document.getElementById("start-motion").addEventListener("click", function () {
+    motion.textContent = "waiting for the first reading…";
+    function listen() {
+      window.addEventListener("devicemotion", onMotion);
+      window.setTimeout(function () {
+        if (samples === 0) {
+          motion.innerHTML = line("motion", "no readings arrived — the event exists but fires nothing", false);
+          found.motion = false;
+          verdict();
+        }
+      }, 2500);
+    }
+    if (needsGesture) {
+      window.DeviceMotionEvent.requestPermission().then(function (state) {
+        if (state === "granted") { listen(); }
+        else { found.motion = false; motion.innerHTML = line("permission", state, false); verdict(); }
+      }).catch(function (err) {
+        found.motion = false;
+        motion.innerHTML = line("permission", String(err), false);
+        verdict();
+      });
+    } else {
+      listen();
+    }
+  });
+
+  // ---- camera ------------------------------------------------------
+  document.getElementById("start-camera").addEventListener("click", function () {
+    var out = document.getElementById("camera");
+    var video = document.getElementById("preview");
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      found.camera = false;
+      out.innerHTML = line("getUserMedia", "not available", false);
+      return verdict();
+    }
+    out.textContent = "asking permission…";
+    navigator.mediaDevices.getUserMedia({video: {facingMode: "environment"}}).then(function (stream) {
+      video.srcObject = stream;
+      video.style.display = "block";
+      video.play();
+      var track = stream.getVideoTracks()[0];
+      var s = track.getSettings ? track.getSettings() : {};
+      found.camera = true;
+      out.innerHTML = line("camera", (s.width || "?") + "×" + (s.height || "?") +
+                           (s.frameRate ? " @ " + Math.round(s.frameRate) + "fps" : ""), true);
+      verdict();
+      window.setTimeout(function () {
+        stream.getTracks().forEach(function (t) { t.stop(); });
+        video.style.display = "none";
+        out.innerHTML += '<div class="sl-muted">camera released</div>';
+      }, 4000);
+    }).catch(function (err) {
+      found.camera = false;
+      out.innerHTML = line("camera", err.name + " — " + err.message, false);
+      verdict();
+    });
+  });
+
+  // ---- verdict -----------------------------------------------------
+  function verdict() {
+    var v = document.getElementById("verdict");
+    var parts = [];
+    if (found.motion === true) parts.push("motion sensors work");
+    if (found.motion === false) parts.push("motion sensors did NOT work");
+    if (found.orientation === true) parts.push("gyroscope works");
+    if (found.camera === true) parts.push("camera works");
+    if (found.camera === false) parts.push("camera did NOT work");
+    if (!parts.length) { v.textContent = "Run the checks above."; return; }
+    var ok = found.motion === true;
+    v.innerHTML = '<span style="color:' + (ok ? "var(--sl-measurement)" : "var(--sl-prediction)") +
+      '">' + (ok ? "SensorLab is buildable on this device." : "Something is blocked — see above.") +
+      "</span><br><span class='sl-muted'>" + parts.join(" · ") + "</span>";
+  }
+})();
+</script>
+{% endblock %}

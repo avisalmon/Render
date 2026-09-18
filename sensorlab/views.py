@@ -22,6 +22,21 @@ def home(request):
     return render(request, "sensorlab/home.html")
 
 
+def sensor_check(request):
+    """Epic C's spike, reachable without an account (spec §9.3).
+
+    The whole app rests on one assumption: that a page served over the web
+    can read this phone's sensors. That is checkable on a real device in
+    about ten seconds, and no amount of reading documentation substitutes
+    for doing it — so this page reports what the browser in your hand
+    actually does, including when the answer is "nothing".
+
+    Public on purpose: the point is to open it on any device, including one
+    nobody has an account on.
+    """
+    return render(request, "sensorlab/sensor_check.html")
+
+
 @sensorlab_login_required
 def design(request):
     """The design reference (SL-A4, spec §7): every component, both modes.
