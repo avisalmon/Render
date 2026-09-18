@@ -71,6 +71,46 @@ def _submit(session, player, text):
     game.submit_caption(session, player, round_obj.number, caption_text=text)
 
 
+def _show_reveal_slot(session, index):
+    """Wind a running reveal so meme `index` is the one on screen — the
+    same arithmetic `game.reveal_index` does (SPR-Z.10)."""
+    from memz import conf
+
+    round_obj = game.current_round(session)
+    count = round_obj.submissions.filter(meme__isnull=False).count()
+    per_meme = conf.get("REVEAL_SECONDS_PER_MEME")
+    elapsed = per_meme * index + per_meme / 2
+    Round.objects.filter(pk=round_obj.pk).update(
+        reveal_deadline=timezone.now() + timezone.timedelta(seconds=per_meme * count - elapsed)
+    )
+
+
+def _love(session, round_obj, voter, target):
+    """SPR-Z.10 translation of the old "voter picked target": an אוהב, cast
+    in that meme's own slot in the reveal.
+
+    The old model gave each player one pick per round, so anything they
+    didn't pick simply went unrated — which is exactly what these title
+    tests mean by their (voter, target) pairs, and why translating a pick
+    to a LOVE keeps every one of their expectations intact. Crowd
+    favourite, unanimous and the-crowd all count loves now (titles.py),
+    for the same reason: with everyone rating everything, a raw row count
+    would be the same number for everybody."""
+    from memz.models import Vote
+
+    order = game.reveal_order(round_obj)
+    sub = round_obj.submissions.get(player=target, meme__isnull=False)
+    _show_reveal_slot(session, [s.id for s in order].index(sub.id))
+    game.rate_submission(session, voter, round_obj.number, sub.id, Vote.LOVE)
+
+
+def _end_reveal_now(session, round_obj):
+    Round.objects.filter(pk=round_obj.pk).update(
+        reveal_deadline=timezone.now() - timezone.timedelta(seconds=1)
+    )
+    game.sync(session)
+
+
 def _play_round(session, host, captions, votes):
     """One full round to `done`: `captions` is [(player, text), ...] for
     everyone who submits (a player left out simply misses the round, spec
@@ -88,17 +128,14 @@ def _play_round(session, host, captions, votes):
         game.sync(session)
     round_obj.refresh_from_db()
     if round_obj.status == Round.REVEALED:
-        game.advance(session, host)   # revealed -> voting
-
-    round_obj.refresh_from_db()
-    if round_obj.status == Round.VOTING:
+        # SPR-Z.10: the verdicts are cast *inside* the reveal, and the
+        # reveal ending is what finishes the round -- there is no separate
+        # voting phase to advance into any more (outside Judge mode).
         for voter, target in votes:
-            sub = round_obj.submissions.get(player=target, meme__isnull=False)
-            game.cast_vote(session, voter, round_obj.number, sub.id)
+            _love(session, round_obj, voter, target)
         round_obj.refresh_from_db()
-        if round_obj.status == Round.VOTING:
-            Round.objects.filter(pk=round_obj.pk).update(vote_deadline=timezone.now() - timezone.timedelta(seconds=1))
-            game.sync(session)
+        if round_obj.status == Round.REVEALED:
+            _end_reveal_now(session, round_obj)
 
     round_obj.refresh_from_db()
     assert round_obj.status == Round.DONE
@@ -144,14 +181,11 @@ def test_clutch_is_a_win_submitted_in_the_last_five_seconds():
     a_sub = round_obj.submissions.get(player=a)
     # a's submission lands 3 seconds before the deadline — inside the window.
     Round.objects.filter(pk=round_obj.pk).update(caption_deadline=a_sub.submitted_at + timezone.timedelta(seconds=3))
-    game.advance(session, host)   # revealed -> voting
     for voter, target in [(host, a), (b, a), (c, a)]:
-        sub = round_obj.submissions.get(player=target, meme__isnull=False)
-        game.cast_vote(session, voter, round_obj.number, sub.id)
-    # a never voted, so the round isn't "decided" on its own — force the
+        _love(session, round_obj, voter, target)
+    # a never rated anyone, so the reveal isn't over on its own — force its
     # deadline, same as a real round ending with one player still silent.
-    Round.objects.filter(pk=round_obj.pk).update(vote_deadline=timezone.now() - timezone.timedelta(seconds=1))
-    game.sync(session)
+    _end_reveal_now(session, round_obj)
     game.advance(session, host)
     metrics = _compute_metrics(session)
     assert metrics[CLUTCH] == {a.id: 1}
@@ -165,12 +199,9 @@ def test_clutch_does_not_credit_a_win_submitted_early():
     a_sub = round_obj.submissions.get(player=a)
     # a's submission is nowhere near the deadline this time.
     Round.objects.filter(pk=round_obj.pk).update(caption_deadline=a_sub.submitted_at + timezone.timedelta(minutes=5))
-    game.advance(session, host)
     for voter, target in [(host, a), (b, a), (c, a)]:
-        sub = round_obj.submissions.get(player=target, meme__isnull=False)
-        game.cast_vote(session, voter, round_obj.number, sub.id)
-    Round.objects.filter(pk=round_obj.pk).update(vote_deadline=timezone.now() - timezone.timedelta(seconds=1))
-    game.sync(session)
+        _love(session, round_obj, voter, target)
+    _end_reveal_now(session, round_obj)
     game.advance(session, host)
     metrics = _compute_metrics(session)
     assert metrics[CLUTCH] == {}
@@ -505,18 +536,25 @@ def test_the_reveal_screen_shows_one_meme_at_a_time_not_a_grid(browser, live_ser
     assert "1 מתוך 3" in page.inner_text("[data-reveal-progress]")
     first_src = page.locator(".memz-reveal-image").get_attribute("src")
 
-    # Past the first meme's own ~8-second budget, still only one at a
-    # time -- and it's a different one, proven by comparing rendered_url
-    # values already known server-side (never trusting pixels).
-    page.wait_for_timeout(8200)
+    # Past this meme's own slot, still only one at a time -- and it's a
+    # different one, proven by comparing rendered_url values already known
+    # server-side (never trusting pixels). The wait is read from the config
+    # rather than hardcoded: it was 4s, then 8s (ACT-Z.13), then 10s
+    # (SPR-Z.10) inside three days, and a hardcoded number quietly stopped
+    # proving anything each time -- the 8200ms one only still passed
+    # because launching a browser ate the missing two seconds.
+    from memz import conf
+
+    page.wait_for_timeout(conf.get("REVEAL_SECONDS_PER_MEME") * 1000 + 600)
     assert page.locator(".memz-reveal-image").count() == 1
-    assert "2 מתוך 3" in page.inner_text("[data-reveal-progress]")
+    progress = page.inner_text("[data-reveal-progress]")
+    assert "1 מתוך 3" not in progress, f"the slideshow never advanced past the first meme ({progress})"
     second_src = page.locator(".memz-reveal-image").get_attribute("src")
     assert second_src != first_src, "the slideshow never actually advanced to the next meme"
 
     expected = [s.meme.rendered.url for s in round_obj.submissions.select_related("meme").order_by("id")]
     assert first_src == expected[0]
-    assert second_src == expected[1]
+    assert second_src in expected[1:]
 
 
 def test_the_big_screen_reveal_is_also_one_at_a_time(browser, live_server, db, settings):

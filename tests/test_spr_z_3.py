@@ -268,74 +268,128 @@ def test_a_token_from_another_session_is_refused_here(client, bank):
 # ---------------------------------------------------------------- voting
 
 
-def _play_to_voting(client, code, players):
+def _play_to_reveal(client, code, players, round_number=1):
+    """Everyone captions, which tips the round into its reveal — where,
+    from SPR-Z.10, the rating happens (there is no separate voting phase
+    any more outside Judge mode)."""
     for p in players:
-        post(client, f"/memz/api/sessions/{code}/rounds/1/submit/", {"caption_text": f"כיתוב {p['player_id']}"}, p["token"])
-    r = post(client, f"/memz/api/sessions/{code}/advance/", token=players[0]["token"])
-    assert r.status_code == 200, r.content
-    return r.json()
+        post(
+            client, f"/memz/api/sessions/{code}/rounds/{round_number}/submit/",
+            {"caption_text": f"כיתוב {p['player_id']}"}, p["token"],
+        )
+    st = state(client, code, players[0]["token"])
+    assert st["round"]["status"] == "revealed", st["round"]["status"]
+    return st
 
 
-def test_reveal_then_voting_and_the_full_vote_cycle(client, bank):
+def _show_meme(code, index):
+    """Wind the reveal's clock so meme `index` is the one on screen, the
+    same arithmetic `game.reveal_index` does — beats sleeping through ten
+    real seconds per meme (SPR-Z.10)."""
+    from memz import conf
+    from memz.game import current_round
+    from memz.models import Session
+
+    round_obj = current_round(Session.objects.get(code=code))
+    count = round_obj.submissions.filter(meme__isnull=False).count()
+    per_meme = conf.get("REVEAL_SECONDS_PER_MEME")
+    elapsed = per_meme * index + per_meme / 2
+    round_obj.reveal_deadline = timezone.now() + timezone.timedelta(seconds=per_meme * count - elapsed)
+    round_obj.save(update_fields=["reveal_deadline"])
+
+
+def _end_reveal(client, code, players):
+    from memz.game import current_round
+    from memz.models import Session
+
+    round_obj = current_round(Session.objects.get(code=code))
+    round_obj.reveal_deadline = timezone.now() - timezone.timedelta(seconds=1)
+    round_obj.save(update_fields=["reveal_deadline"])
+    return state(client, code, players[0]["token"])
+
+
+def _rate_all(client, code, players, round_number=1, value=2):
+    """Everyone gives every meme but their own the same verdict, each in
+    its own slot on screen."""
+    memes = state(client, code, players[0]["token"])["round"]["memes"]
+    for index, meme in enumerate(memes):
+        _show_meme(code, index)
+        for p in players:
+            mine = state(client, code, p["token"])["round"]["memes"][index]["is_mine"]
+            if mine:
+                continue
+            r = post(
+                client, f"/memz/api/sessions/{code}/rounds/{round_number}/rate/",
+                {"submission_id": meme["submission_id"], "value": value}, p["token"],
+            )
+            assert r.status_code == 200, r.content
+    return memes
+
+
+def test_reveal_is_where_rating_happens_and_the_round_ends_with_it(client, bank):
+    """SPR-Z.10 replaced the old reveal-then-a-grid-of-thumbnails vote: the
+    reveal itself carries the verdicts, one meme at a time, and when the
+    last slot ends the round is already scored."""
     code, players = _room(client, n=3)
     post(client, f"/memz/api/sessions/{code}/start/", token=players[0]["token"])
-    st = _play_to_voting(client, code, players)
-    assert st["round"]["status"] == "voting"
-    sub_ids = [m["submission_id"] for m in st["round"]["memes"]]
+    _play_to_reveal(client, code, players)
+    _rate_all(client, code, players, value=2)
 
-    for p in players:
-        st_p = state(client, code, p["token"])
-        my_sub = next(m for m in st_p["round"]["memes"] if m["is_mine"])
-        target = next(sid for sid in sub_ids if sid != my_sub["submission_id"])
-        r = post(client, f"/memz/api/sessions/{code}/rounds/1/vote/", {"submission_id": target}, p["token"])
-        assert r.status_code == 200, r.content
-
-    final = state(client, code, players[0]["token"])
+    final = _end_reveal(client, code, players)
     assert final["round"]["status"] == "done"
-    total_votes = sum(row["votes"] for row in final["round"]["results"])
-    assert total_votes == len(players)
+    # Three memes, two "אוהב" (2 points) each from the other two players.
+    assert sorted(row["points"] for row in final["round"]["results"]) == [4, 4, 4]
 
 
-def test_cannot_vote_for_yourself(client, bank):
+def test_cannot_rate_your_own_meme(client, bank):
     code, players = _room(client, n=3)
     post(client, f"/memz/api/sessions/{code}/start/", token=players[0]["token"])
-    st = _play_to_voting(client, code, players)
-    my_sub = next(m for m in st["round"]["memes"] if m["is_mine"])
-    r = post(client, f"/memz/api/sessions/{code}/rounds/1/vote/", {"submission_id": my_sub["submission_id"]}, players[0]["token"])
+    st = _play_to_reveal(client, code, players)
+    mine_index, my_sub = next(
+        (i, m) for i, m in enumerate(st["round"]["memes"]) if m["is_mine"]
+    )
+    _show_meme(code, mine_index)
+    r = post(
+        client, f"/memz/api/sessions/{code}/rounds/1/rate/",
+        {"submission_id": my_sub["submission_id"], "value": 2}, players[0]["token"],
+    )
     assert r.status_code == 409
 
 
-def test_cannot_vote_twice(client, bank):
+def test_cannot_rate_the_same_meme_twice(client, bank):
     code, players = _room(client, n=3)
     post(client, f"/memz/api/sessions/{code}/start/", token=players[0]["token"])
-    st = _play_to_voting(client, code, players)
-    target = next(m["submission_id"] for m in st["round"]["memes"] if not m["is_mine"])
-    post(client, f"/memz/api/sessions/{code}/rounds/1/vote/", {"submission_id": target}, players[0]["token"])
-    r = post(client, f"/memz/api/sessions/{code}/rounds/1/vote/", {"submission_id": target}, players[0]["token"])
+    st = _play_to_reveal(client, code, players)
+    index, target = next(
+        (i, m) for i, m in enumerate(st["round"]["memes"]) if not m["is_mine"]
+    )
+    _show_meme(code, index)
+    body = {"submission_id": target["submission_id"], "value": 2}
+    assert post(client, f"/memz/api/sessions/{code}/rounds/1/rate/", body, players[0]["token"]).status_code == 200
+    r = post(client, f"/memz/api/sessions/{code}/rounds/1/rate/", body, players[0]["token"])
     assert r.status_code == 409
 
 
-def test_votes_and_authors_are_hidden_before_the_result(client, bank):
+def test_authors_and_other_peoples_verdicts_are_hidden_during_the_reveal(client, bank):
     code, players = _room(client, n=3)
     post(client, f"/memz/api/sessions/{code}/start/", token=players[0]["token"])
-    st = _play_to_voting(client, code, players)
-    payload = json.dumps(st)
-    assert "nickname" not in json.dumps(st["round"])   # no authors during voting
+    st = _play_to_reveal(client, code, players)
+    assert "nickname" not in json.dumps(st["round"])   # no authors, ever (Rule 4.7.1)
     for m in st["round"]["memes"]:
         assert "votes" not in m
+    # My own verdicts come back; nobody else's do, in any phase.
+    assert st["round"]["my_ratings"] == {}
 
 
 def test_scores_recomputed_from_votes_equal_the_cached_score(client, bank):
+    """Rule 5.3.1: `Player.score` is only ever a cache of what the Vote
+    rows say — still true now that a row is a per-meme verdict with a
+    value, not a single pick."""
     code, players = _room(client, n=4)
     post(client, f"/memz/api/sessions/{code}/start/", token=players[0]["token"])
-    st = _play_to_voting(client, code, players)
-    subs = st["round"]["memes"]
-    # everyone votes for the first non-own submission
-    for p in players:
-        st_p = state(client, code, p["token"])
-        my_sub = next(m for m in st_p["round"]["memes"] if m["is_mine"])
-        target = next(m["submission_id"] for m in subs if m["submission_id"] != my_sub["submission_id"])
-        post(client, f"/memz/api/sessions/{code}/rounds/1/vote/", {"submission_id": target}, p["token"])
+    _play_to_reveal(client, code, players)
+    _rate_all(client, code, players, value=1)
+    _end_reveal(client, code, players)
 
     from memz.models import Player, Round, Session
     from memz.scoring import vote_round_scores
@@ -343,6 +397,7 @@ def test_scores_recomputed_from_votes_equal_the_cached_score(client, bank):
     session = Session.objects.get(code=code)
     round_obj = Round.objects.get(session=session, number=1)
     expected = vote_round_scores(round_obj)
+    assert set(expected.values()) == {3}, expected   # three others, "ככה ככה" each
     for sub in round_obj.submissions.filter(meme__isnull=False):
         player = Player.objects.get(pk=sub.player_id)
         assert player.score == expected.get(sub.id, 0)
@@ -402,13 +457,10 @@ def _play_full_game(client, n=3, round_count=1):
     for round_number in range(1, round_count + 1):
         for p in players:
             post(client, f"/memz/api/sessions/{code}/rounds/{round_number}/submit/", {"caption_text": f"c{p['player_id']}"}, p["token"])
-        st = post(client, f"/memz/api/sessions/{code}/advance/", token=host["token"]).json()
-        subs = st["round"]["memes"]
-        for p in players:
-            st_p = state(client, code, p["token"])
-            my_sub = next(m for m in st_p["round"]["memes"] if m["is_mine"])
-            target = next(m["submission_id"] for m in subs if m["submission_id"] != my_sub["submission_id"])
-            post(client, f"/memz/api/sessions/{code}/rounds/{round_number}/vote/", {"submission_id": target}, p["token"])
+        # SPR-Z.10: rate inside the reveal, then let the reveal run out —
+        # that alone finishes and scores the round, no voting phase.
+        _rate_all(client, code, players, round_number=round_number, value=2)
+        _end_reveal(client, code, players)
         post(client, f"/memz/api/sessions/{code}/advance/", token=host["token"])
     return code, players
 

@@ -15,7 +15,7 @@ that is what "where the numbers allow" is guarding against.
 
 from collections import Counter, defaultdict
 
-from .models import Round, Session
+from .models import Round, Session, Vote
 
 CROWD_FAVOURITE = "crowd_favourite"
 UNANIMOUS = "unanimous"
@@ -102,13 +102,23 @@ def _compute_metrics(session):
 
         votes = list(r.votes.all())
         if votes:
-            counts = Counter(v.submission_id for v in votes)
+            # SPR-Z.10: everyone now rates every meme, so a raw row count
+            # says only "how many people saw it". An אוהב (Vote.LOVE) is
+            # the thing that used to be a vote -- the one deliberate act of
+            # picking something as funny -- so every title that used to
+            # count votes counts loves instead, and means the same thing it
+            # always did. Judge mode is untouched: one row, one pick.
+            loves = [v for v in votes if v.value == Vote.LOVE]
+            counts = Counter(v.submission_id for v in loves)
             for sid, c in counts.items():
                 votes_received[sub_by_id[sid].player_id] += c
-                if session.scoring_mode == Session.VOTE and c == len(votes) and sid in winner_sub_ids:
+                # "Unanimous" now means every single person who could rate
+                # this meme loved it, not just that it won.
+                raters = len({v.voter_id for v in votes if v.submission_id == sid})
+                if session.scoring_mode == Session.VOTE and raters > 0 and c == raters and sid in winner_sub_ids:
                     unanimous[sub_by_id[sid].player_id] += 1
             if session.scoring_mode == Session.VOTE:
-                for v in votes:
+                for v in loves:
                     if v.submission_id in winner_sub_ids:
                         crowd_agree_count[v.voter_id] += 1
             elif session.scoring_mode == Session.JUDGE:

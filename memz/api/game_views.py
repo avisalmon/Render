@@ -286,6 +286,41 @@ class SwapCardView(GameAPIView):
         return self.state_response(session, player)
 
 
+class SwapImageView(GameAPIView):
+    """Rule 4.4.5 (SPR-Z.10): throw back the dealt image, up to three
+    times a round, while still writing."""
+
+    def post(self, request, code, number):
+        session = _session_or_404(code)
+        player, refusal = self.require_player(request, session)
+        if refusal:
+            return refusal
+        try:
+            game.swap_image(session, player, number)
+        except game.GameError as exc:
+            return Response({"detail": str(exc)}, status=409)
+        return self.state_response(session, player)
+
+
+class RateView(GameAPIView):
+    """Rule 4.6.1 (SPR-Z.10): one verdict per meme, cast while that meme
+    is the one on screen."""
+
+    def post(self, request, code, number):
+        session = _session_or_404(code)
+        player, refusal = self.require_player(request, session)
+        if refusal:
+            return refusal
+        try:
+            game.rate_submission(
+                session, player, number,
+                request.data.get("submission_id"), request.data.get("value"),
+            )
+        except game.GameError as exc:
+            return Response({"detail": str(exc)}, status=409)
+        return self.state_response(session, player)
+
+
 class VoteView(GameAPIView):
     def post(self, request, code, number):
         session = _session_or_404(code)

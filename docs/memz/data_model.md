@@ -315,13 +315,24 @@ row" ambiguity from the first draft.
 | `round` | FK | CASCADE |
 | `voter` | FK `Player` | CASCADE |
 | `submission` | FK `Submission` | CASCADE |
+| `value` | PositiveSmallInteger | SPR-Z.10: אוהב 2, ככה ככה 1, פחות 0. Judge mode writes the default and ignores it — there the pick is the whole thing |
 | `created_at` | DateTimeField | |
 
-Unique per (round, voter): one vote each. **A player cannot vote for their
-own submission**; that is enforced in the API, not the database, and gets
-a test. In `judge` mode only the round's judge has a vote, and it decides
-the round. The same table serves both scoring modes; the mode changes who
-is allowed to vote and how points are computed, not the data.
+**Changed in SPR-Z.10 (2026-09-18).** A row used to mean "who I picked
+this round": unique per `(round, voter)`, no value, one per player. It now
+means "what I thought of this meme": unique per
+`(round, voter, submission)`, carrying `value`, one per meme per player,
+cast during that meme's own slot in the reveal (spec Rule 4.6.1).
+
+The constraint therefore **loosened**, and Judge mode's "exactly one pick
+per round" moved from the database into `game.cast_vote`. That is the one
+guarantee the change traded away; it is written here so nothing later
+assumes the constraint still says what it used to.
+
+**A player cannot vote for or rate their own submission**; that is enforced
+in the API, not the database, and gets a test. The same table serves both
+scoring modes; the mode changes who may act, how many rows they write, and
+how points are computed — not the shape of the data.
 
 ### HandCard: card mode
 
@@ -341,12 +352,12 @@ Playing a card sets `played_in_round` and creates the `Submission` whose
 
 ### Scoring: computed from votes, cached on the player
 
-Points are derived from `Vote` rows by the session's `scoring_mode` (in
-`vote` mode, one point per vote received; in `judge` mode, the judge's pick
-takes the round). `Player.score` is a cache written when a round reaches
-`done`, so the leaderboard is one query. The `Vote` rows are the truth; a
-recompute from them must always reproduce the cached score, and a test
-checks that.
+Points are derived from `Vote` rows by the session's `scoring_mode` (from
+SPR-Z.10, in `vote` mode a meme scores the **sum of its rows' `value`**;
+in `judge` mode the judge's single pick takes the round). `Player.score`
+is a cache written when a round reaches `done`, so the leaderboard is one
+query. The `Vote` rows are the truth; a recompute from them must always
+reproduce the cached score, and a test checks that.
 
 ## Output
 

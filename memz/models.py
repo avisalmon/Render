@@ -293,19 +293,46 @@ class Submission(models.Model):
     image = models.ForeignKey(MemeImage, null=True, blank=True, on_delete=models.SET_NULL, related_name="dealt_in")
     meme = models.OneToOneField("Meme", null=True, blank=True, on_delete=models.SET_NULL, related_name="submission")
     submitted_at = models.DateTimeField(null=True, blank=True)
+    # SPR-Z.10 (Rule 4.4.5): how many times this player has thrown the
+    # dealt image back this round. Capped by conf IMAGE_SWAPS_PER_ROUND.
+    image_swaps_used = models.PositiveSmallIntegerField(default=0)
+    # The images they threw back, so a swap never hands one of them
+    # straight back. `image` alone can't answer that -- it only ever holds
+    # the *current* picture, so a refused one silently returns to the
+    # "nobody has seen this yet" pool the moment it is replaced. Internal
+    # per-round bookkeeping, not content anybody creates or edits, which is
+    # why it's a list here and not a table of its own.
+    swapped_away_image_ids = models.JSONField(default=list, blank=True)
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=["round", "player"], name="memz_submission_unique")]
 
 
 class Vote(models.Model):
+    """One player's verdict on one meme.
+
+    SPR-Z.10 changed what a row means. It used to be "who I picked this
+    round" — one row per voter per round, no value, the pick *was* the
+    vote. Now everyone rates *every* meme they didn't make, as it comes up
+    in the reveal, so a row is (round, voter, submission) and carries how
+    much they liked it: `value` is the points it's worth (spec §5.3).
+    Judge mode still casts exactly one row per round, enforced in
+    `game.cast_vote` rather than by the constraint, since the constraint
+    now has to allow the many-rows-per-round shape everything else uses."""
+
+    LOVE, SOSO, MEH = 2, 1, 0
+    VALUES = [(LOVE, "אוהב"), (SOSO, "ככה ככה"), (MEH, "פחות")]
+
     round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name="votes")
     voter = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="votes_cast")
     submission = models.ForeignKey(Submission, on_delete=models.CASCADE, related_name="votes")
+    value = models.PositiveSmallIntegerField(choices=VALUES, default=LOVE)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        constraints = [models.UniqueConstraint(fields=["round", "voter"], name="memz_vote_once_per_round")]
+        constraints = [
+            models.UniqueConstraint(fields=["round", "voter", "submission"], name="memz_vote_once_per_meme"),
+        ]
 
 
 class HandCard(models.Model):

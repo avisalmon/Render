@@ -35,10 +35,14 @@ DEFAULTS = {
     "CAPTION_MAX_CHARS": 140,
     "CAPTION_MAX_LINES": 3,
     "NICKNAME_MAX_CHARS": 16,
-    # 8s, not 4 (2026-09-18 QA fix, ACT-Z.13, Avi playing the real game):
-    # "the reveal moment is very short" -- everyone's still reading one
-    # meme's caption when the slideshow has already moved to the next.
-    "REVEAL_SECONDS_PER_MEME": 8,
+    # 10s per meme (SPR-Z.10): the reveal is now also when everyone rates,
+    # so this budget has to hold "read the joke AND tap a button", not just
+    # "read the joke". Was 4s until ACT-Z.13 ("הרגע של חשיפה מאד קצר"),
+    # then 8s for the few hours between ACT-Z.13 and SPR-Z.10.
+    "REVEAL_SECONDS_PER_MEME": 10,
+    # SPR-Z.10: how many times a player may throw back the image they were
+    # dealt, per round, before they have to caption what they've got.
+    "IMAGE_SWAPS_PER_ROUND": 3,
     "RESULT_AUTO_ADVANCE_SECONDS": 20,
     # --- presence (spec §4.9) ----------------------------------------------
     "AWAY_AFTER_SECONDS": 15,

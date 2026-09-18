@@ -193,8 +193,15 @@
     var mine = r.my_submission;
     var already = mine && mine.submitted;
     var cardsMode = state.caption_mode === "cards";
-    var key = r.number + ":" + already + ":" + cardsMode;
+    // The dealt image is part of the key from SPR-Z.10 on: swapping it
+    // (Rule 4.4.5) has to redraw this screen, and nothing else about the
+    // skip-the-rebuild fix above may change. Whatever was already typed
+    // survives a swap by being re-filled below, on purpose -- you threw
+    // back the picture, not your sentence.
+    var key = r.number + ":" + already + ":" + cardsMode + ":" + (mine && mine.image_url) +
+      ":" + r.image_swaps_left;
     if (key === captioningRenderKey) return;
+    var typedBefore = (root.querySelector("[data-caption-input]") || {}).value || "";
     captioningRenderKey = key;
 
     setScreen("game-captioning");
@@ -204,6 +211,13 @@
       (r.topic ? " · הנושא: " + esc(r.topic) : "") + "</p>" +
       '<div class="memz-round-timer" data-timer></div>' +
       (mine && mine.image_url ? '<img class="memz-result-image" src="' + esc(mine.image_url) + '" alt="">' : "") +
+      // Rule 4.4.5 (SPR-Z.10): throw this one back and get another, up to
+      // three times a round. Gone once they're used up, and never shown
+      // after submitting (the image is spent by then) or in Same Meme mode.
+      (!already && r.image_swaps_left > 0
+        ? '<button class="memz-btn memz-btn--ghost memz-btn--small" data-swap-image-btn>' +
+          "תמונה אחרת (נשארו " + r.image_swaps_left + ")</button>"
+        : "") +
       (already
         ? '<p class="memz-lead">שלחתם! ' + r.submitted_count + "/" + r.total_count + " כבר שלחו." + "</p>"
         : cardsMode
@@ -218,6 +232,16 @@
       '<p class="memz-error" data-action-error></p>';
     countdown(root.querySelector("[data-timer]"), r.caption_deadline);
     var form = root.querySelector("[data-caption-form]");
+    if (form && typedBefore) {
+      // A swap rebuilt the screen; put back what they had already written.
+      form.querySelector("[data-caption-input]").value = typedBefore;
+    }
+    var swapImageBtn = root.querySelector("[data-swap-image-btn]");
+    if (swapImageBtn) {
+      swapImageBtn.addEventListener("click", function () {
+        guardedAction(function () { return call("POST", "/rounds/" + r.number + "/swap-image/"); }, swapImageBtn);
+      });
+    }
     if (form) {
       form.addEventListener("submit", function (e) {
         e.preventDefault();
@@ -263,21 +287,78 @@
     return Math.max(0, Math.min(count - 1, idx));
   }
 
+  // SPR-Z.10: each meme's own slot ends here, not when the whole reveal
+  // does. The countdown on this screen is the one that matters to a player
+  // -- "how long do I still have to rate *this* one" -- so it counts to the
+  // end of the current slot, not to the end of the round's whole reveal.
+  function revealSlotDeadline(r, idx) {
+    var count = (r.memes || []).length;
+    if (count <= 0 || !r.reveal_deadline) return null;
+    var perMemeMs = (r.reveal_seconds_per_meme || 10) * 1000;
+    var startedAt = new Date(r.reveal_deadline).getTime() - perMemeMs * count;
+    return new Date(startedAt + perMemeMs * (idx + 1)).toISOString();
+  }
+
+  function ratingAllowed(state) {
+    // Relaxed has no scoring at all (spec §5.1) and Judge mode keeps its
+    // own separate picking phase afterwards -- in both, the reveal stays
+    // exactly the passive slideshow it was before SPR-Z.10.
+    return state.game_mode !== "relaxed" && state.scoring_mode !== "judge";
+  }
+
+  var RATING_BUTTONS = [
+    { key: "love", label: "אוהב 😍" },
+    { key: "soso", label: "ככה ככה 😐" },
+    { key: "meh", label: "פחות 🙈" },
+  ];
+
+  function ratingBar(state, r, current) {
+    // The TV never rates: it has no player behind it (spec §4.10), so it
+    // shows the same slideshow with no controls at all.
+    if (screenMode || !ratingAllowed(state) || !current) return "";
+    if (current.is_mine) {
+      // Rule 4.6.1: the author of the meme on screen cannot rate it, and
+      // is told so in the one line Avi wrote himself.
+      return '<p class="memz-lead memz-innocent" data-innocent-face>תעשה פרצוף תמים...</p>';
+    }
+    var values = r.rating_values || { love: 2, soso: 1, meh: 0 };
+    var mine = (r.my_ratings || {})[String(current.submission_id)];
+    var rated = mine !== undefined && mine !== null;
+    return (
+      '<div class="memz-rating-bar" data-rating-bar>' +
+      RATING_BUTTONS.map(function (b) {
+        var value = values[b.key];
+        var chosen = rated && mine === value;
+        return (
+          '<button class="memz-btn memz-rating-btn' + (chosen ? " memz-rating-btn--chosen" : "") +
+          '"' + (rated ? " disabled" : "") + ' data-rate="' + value + '">' + b.label + "</button>"
+        );
+      }).join("") +
+      "</div>" +
+      (rated ? '<p class="memz-fineprint">נרשם. מחכים לבאה...</p>' : "")
+    );
+  }
+
   var revealedRenderKey = null;   // same idea as captioningRenderKey: don't replay the pop-in animation every poll tick for a meme that's already showing
 
   function renderRevealed(state) {
     var r = state.round;
     var count = (r.memes || []).length;
     var idx = revealIndexFor(r);
-    var key = state.code + ":" + r.number + ":" + idx;
+    var current = r.memes && r.memes[idx];
+    var myRating = current ? (r.my_ratings || {})[String(current.submission_id)] : undefined;
+    // The rating I've already given is part of the key: tapping a button
+    // has to redraw this screen (the buttons lock, the chosen one fills
+    // in), while a poll that changes nothing still must not.
+    var key = state.code + ":" + r.number + ":" + idx + ":" + myRating;
     if (key === revealedRenderKey) return;   // same meme still showing -- countdown() below is already self-ticking, nothing else to refresh
     revealedRenderKey = key;
 
     setScreen("game-revealed");
     var me = state.players.find(function (p) { return p.is_me; });
-    var current = r.memes && r.memes[idx];
+    var rating = ratingAllowed(state);
     root.innerHTML =
-      '<h1 class="memz-title">רגע של חשיפה...</h1>' +
+      '<h1 class="memz-title">' + (rating ? "מה דעתכם?" : "רגע של חשיפה...") + "</h1>" +
       '<p class="memz-fineprint">סבב ' + r.number + " מתוך " + state.round_count +
       (r.topic ? " · הנושא: " + esc(r.topic) : "") + "</p>" +
       '<div class="memz-timer" data-timer></div>' +
@@ -285,14 +366,28 @@
         ? '<img class="memz-result-image memz-reveal-image" src="' + esc(current.rendered_url) + '" alt="">' +
           (count > 1 ? '<p class="memz-fineprint" data-reveal-progress>' + (idx + 1) + " מתוך " + count + "</p>" : "")
         : "") +
+      ratingBar(state, r, current) +
       (missedThisRound(r) ? '<p class="memz-fineprint">לא הספקת, קורה. בסבב הבא!</p>' : "") +
-      (me && me.is_host ? '<button class="memz-btn memz-btn--secondary memz-btn--wide" data-advance-btn>למעבר להצבעה</button>' : "");
-    countdown(root.querySelector("[data-timer]"), r.reveal_deadline);
+      (me && me.is_host
+        ? '<button class="memz-btn memz-btn--secondary memz-btn--wide" data-advance-btn>' +
+          (state.scoring_mode === "judge" ? "למעבר להצבעה" : "לסיים את הסבב") + "</button>"
+        : "") +
+      '<p class="memz-error" data-action-error></p>';
+    countdown(root.querySelector("[data-timer]"), revealSlotDeadline(r, idx) || r.reveal_deadline);
     var revealKey = state.code + ":" + r.number;
     if (revealedRoundSeen !== revealKey) {
       revealedRoundSeen = revealKey;
       window.memz.playSound("drumroll");
     }
+    root.querySelectorAll("[data-rate]").forEach(function (rateBtn) {
+      rateBtn.addEventListener("click", function () {
+        guardedAction(function () {
+          return call("POST", "/rounds/" + r.number + "/rate/", {
+            submission_id: current.submission_id, value: parseInt(rateBtn.dataset.rate, 10),
+          });
+        }, rateBtn);
+      });
+    });
     var btn = root.querySelector("[data-advance-btn]");
     if (btn) btn.addEventListener("click", function () { guardedAction(function () { return call("POST", "/advance/"); }, btn); });
   }
@@ -385,13 +480,20 @@
     var relaxed = state.game_mode === "relaxed";
     root.innerHTML =
       '<h1 class="memz-title">' + (relaxed ? "היה כיף!" : "תוצאות הסבב") + "</h1>" +
+      // Rule 4.7.1 (SPR-Z.10): no names here, ever. Each meme shows what it
+      // scored and nothing about who wrote it -- the payload doesn't even
+      // carry the author any more. "שלכם" on your own tile is the one
+      // exception, and it is only ever visible to you.
       '<div class="memz-meme-grid">' + r.results.map(function (row, i) {
         return (
           '<figure class="memz-meme-tile' + (!relaxed && row.round_winner ? " memz-meme-tile--winner" : "") +
+          (row.is_mine ? " memz-meme-tile--mine" : "") +
           '" style="animation-delay:' + (i * 90) + 'ms">' +
           '<img src="' + esc(row.rendered_url) + '" alt="">' +
-          "<figcaption>" + (!relaxed && row.round_winner ? "👑 " : "") + esc(row.nickname) +
-          (relaxed ? "" : ' · <span data-vote-count="' + row.submission_id + '">0</span> קולות') + "</figcaption>" +
+          "<figcaption>" + (!relaxed && row.round_winner ? "👑 " : "") +
+          (row.is_mine ? "שלכם" : "") +
+          (relaxed ? "" : (row.is_mine ? " · " : "") +
+            '<span data-vote-count="' + row.submission_id + '">0</span> נקודות') + "</figcaption>" +
           "</figure>"
         );
       }).join("") + "</div>" +
@@ -404,7 +506,7 @@
     if (!relaxed) {
       r.results.forEach(function (row) {
         var el = root.querySelector('[data-vote-count="' + row.submission_id + '"]');
-        if (el) animateCountUp(el, row.votes);
+        if (el) animateCountUp(el, row.points);   // SPR-Z.10: points, not a raw vote count -- everyone rates everything now
       });
     }
     var btn = root.querySelector("[data-advance-btn]");
@@ -470,8 +572,13 @@
       '<h2 class="memz-field-label">כל הממים</h2>' +
       '<div class="memz-meme-grid">' + (state.gallery || []).map(function (g) {
         return (
-          '<figure class="memz-meme-tile"><img src="' + esc(g.rendered_url) + '" alt="">' +
-          '<figcaption>' + esc(g.nickname) + "</figcaption>" +
+          // Rule 4.7.1 (SPR-Z.10): the end-of-game gallery is anonymous
+          // too -- it used to name every meme's author, which would hand
+          // back at the podium exactly what the round result stopped
+          // revealing. Only your own is marked, and only to you.
+          '<figure class="memz-meme-tile' + (g.is_mine ? " memz-meme-tile--mine" : "") +
+          '"><img src="' + esc(g.rendered_url) + '" alt="">' +
+          (g.is_mine ? "<figcaption>שלכם</figcaption>" : "") +
           '<a class="memz-btn memz-btn--ghost memz-btn--small" href="/memz/m/' + esc(g.share_slug) + '/">שיתוף</a>' +
           (isAuthenticated ? '<button type="button" class="memz-btn memz-btn--ghost memz-btn--small" data-save-slug="' + esc(g.share_slug) + '">שמירה</button>' : "") +
           "</figure>"

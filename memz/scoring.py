@@ -8,26 +8,20 @@ from collections import Counter
 
 
 def vote_round_scores(round_obj):
-    """{submission_id: points} for one round: 1 point per vote received,
-    +1 to the round's most-voted submission(s) (ties share the bonus),
-    +1 more if every vote in the round went to it (unanimous)."""
-    submissions = list(round_obj.submissions.filter(meme__isnull=False))
-    votes = list(round_obj.votes.all())
-    counts = Counter(v.submission_id for v in votes)
-    total_votes = len(votes)
-    max_votes = max(counts.values(), default=0)
-    winners = {sid for sid, c in counts.items() if c == max_votes and max_votes > 0}
+    """{submission_id: points} for one round: the sum of what everyone
+    rated it (spec §5.3, SPR-Z.10) — אוהב 2, ככה ככה 1, פחות 0.
 
-    scores = {}
-    for sub in submissions:
-        received = counts.get(sub.id, 0)
-        points = received
-        if sub.id in winners:
-            points += 1
-            if total_votes > 0 and received == total_votes:
-                points += 1   # unanimous
-        scores[sub.id] = points
-    return scores
+    Deliberately a plain sum, with none of the bonuses the old
+    pick-one-favourite scoring needed (+1 for the round winner, +1 more
+    for a unanimous sweep). Those existed because a single pick per player
+    made for very flat scores; rating every meme separates them on its
+    own. A player can now work out their own score from the buttons they
+    saw, which is worth more than a livelier number nobody can explain."""
+    submissions = list(round_obj.submissions.filter(meme__isnull=False))
+    totals = Counter()
+    for vote in round_obj.votes.all():
+        totals[vote.submission_id] += vote.value
+    return {sub.id: totals.get(sub.id, 0) for sub in submissions}
 
 
 def judge_round_scores(round_obj):
@@ -53,12 +47,18 @@ def round_scores(round_obj):
 def rank_players(session):
     """Final order (spec Rule 5.3.2): score, then total votes received
     across the session, then earliest to join. Returns a list of
-    (player, is_tied_with_next) so the podium can say "tie"."""
+    (player, is_tied_with_next) so the podium can say "tie".
+
+    SPR-Z.10: "votes received" counts **אוהב** verdicts only. Everyone now
+    rates every meme, so counting rows would give every player very nearly
+    the same number and make the tiebreak meaningless; a `LOVE` is the
+    deliberate "this one is funny" that a vote used to be."""
     from .models import Player, Vote
 
     players = list(Player.objects.filter(session=session).order_by("joined_at"))
     votes_received = Counter(
-        Vote.objects.filter(submission__round__session=session).values_list("submission__player_id", flat=True)
+        Vote.objects.filter(submission__round__session=session, value=Vote.LOVE)
+        .values_list("submission__player_id", flat=True)
     )
     ranked = sorted(players, key=lambda p: (-p.score, -votes_received.get(p.id, 0), p.joined_at))
 

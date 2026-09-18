@@ -272,13 +272,34 @@ Rule 4.4.4: the last 5 seconds are unmistakable: the countdown grows,
 changes colour, ticks (sound, if on), and the phone vibrates once at 5 s
 where the browser allows it.
 
-### 4.5 Reveal
+Rule 4.4.5 (SPR-Z.10, 2026-09-18): a player may **throw the dealt image
+back and get another**, up to `IMAGE_SWAPS_PER_ROUND` (3) times per round,
+any time before they submit. The button says how many are left and
+disappears at zero. A swap deals a fresh image under the same rules the
+round's own deal follows (unseen first, never one another player is
+holding this round, the same personal-stock cap), never re-deals anyone
+else, and never touches what the player has already typed. Refused
+outright in Same Meme mode, where everyone captioning the same picture is
+the entire point (§5.1).
 
-Before anyone votes, everyone sees the memes, one at a time, like a
-slideshow, on every phone in sync (`Round.status = revealed` is entered
-first; the client shows the reveal from the state, the server just advances
-the index on a timer of 4 s per meme, host can tap to advance faster). Memes
-are anonymous during the reveal and the vote. Order is random per round.
+### 4.5 Reveal — and, from SPR-Z.10, the vote itself
+
+Everyone sees the memes one at a time, like a slideshow, on every phone in
+sync (`Round.status = revealed`; the client shows the reveal from the
+state, the server budgets `REVEAL_SECONDS_PER_MEME` (10 s) per meme into
+`reveal_deadline`, host can tap to end it early). Memes are anonymous,
+here and everywhere else (Rule 4.7.1).
+
+**Rewritten 2026-09-18 (SPR-Z.10), on Avi's own design after playing the
+real game:** the reveal is no longer a passive prelude to a separate
+voting screen. Each meme's slot on screen *is* its vote — under it, three
+buttons: **אוהב** (2 points), **ככה ככה** (1), **פחות** (0). Everyone in
+the room is looking at the same meme at the same moment and rates it
+before it moves on. The separate grid where everyone picked one favourite
+at the end is gone (§4.6 now describes Judge mode only). Rationale, in
+Avi's words: it keeps everyone watching together instead of scrolling a
+grid alone, and one verdict per meme separates the scores far better than
+one pick per player ever did.
 
 **Built 2026-09-16** (ACT-Z.7 QA pass; this was F-Z.3.9's own tracked gap,
 open since SPR-Z.3 — until then every meme showed at once, in a grid with
@@ -298,45 +319,73 @@ Rule 4.5.2: submissions with no meme are not in the reveal. They are listed
 at the round result as "didn't make it".
 
 Rule 4.5.3: Relaxed mode ends the round after the reveal (§5.1). There is
-no voting and no result screen, just "next round" for the host.
+no rating and no result screen, just "next round" for the host.
 
-### 4.6 Voting
+Rule 4.5.4 (SPR-Z.10): a verdict is only accepted for the meme that is on
+screen **at that moment**, checked on the server against the same
+`reveal_deadline` arithmetic every client runs. Without it a client could
+rate the whole round the instant the reveal opened, before anyone had read
+a single joke.
 
-`Round.status = voting`, `vote_deadline` set. A grid of the round's memes
-(thumbnails; tap to enlarge), still anonymous. Tap one to vote; the vote is
-final on tap (no confirm dialog, §11), the tile shows "your vote", the
-others dim. The player's own meme is in the grid, marked "yours", and cannot
-be tapped.
+Rule 4.5.5 (SPR-Z.10): the player whose meme is on screen cannot rate it,
+and gets the line **"תעשה פרצוף תמים..."** where the buttons would be.
 
-Rule 4.6.1: one vote per player per round. A player with no submission
-still votes.
+### 4.6 Voting — Judge mode only, from SPR-Z.10
+
+`Round.status = voting` is now reached **only in Judge mode**, after the
+reveal: the judge alone picks one winner out of the whole round, which
+can only happen once they have seen all of them. `vote_deadline` set. A
+grid of the round's memes, still anonymous; everyone else sees "the judge
+is deciding" and the judge's nickname.
+
+In every other game this phase does not happen at all: the reveal already
+collected everyone's verdicts (§4.5), so the round goes straight from
+`revealed` to `done`.
+
+Rule 4.6.1 (rewritten SPR-Z.10): outside Judge mode, every player gives
+**every meme except their own** one verdict — אוהב / ככה ככה / פחות —
+cast during that meme's own slot in the reveal. Final on tap, no confirm
+dialog (§11), no changing your mind. A player with no submission of their
+own still rates everyone else's.
 
 Rule 4.6.2: in Judge mode only the judge sees the grid as tappable; everyone
 else sees the grid with "the judge is deciding" and the judge's nickname.
 The judge's timer is twice the vote timer.
 
-Rule 4.6.3: the phase ends when everyone eligible has voted or the deadline
-passes.
+Rule 4.6.3: the Judge-mode phase ends when the judge has picked or the
+deadline passes.
 
 Rule 4.6.4: with fewer than two memes in a round (everyone but one timed
-out) there is no vote; the one meme wins the round outright, the screen
-says so.
+out) there is no contest; the one meme wins the round outright, the screen
+says so, and any verdict that landed on it during the reveal is ignored.
 
 ### 4.7 Round result
 
-Names come off. Memes are shown ranked, each with the author's nickname and
-the votes it got, the votes counting up (animation, §9). The round winner's
-tile gets the crown. Then the running leaderboard, with position changes
-marked (up, down, new leader). The host taps **Next round** (or, after the
-last round, **Results**); a 20 s auto-advance keeps a distracted host from
-stalling the room.
+Memes are shown ranked with the points they scored, counting up
+(animation, §9); the round winner's tile gets the crown. Then the running
+leaderboard by name, with position changes marked (up, down, new leader).
+The host taps **Next round** (or, after the last round, **Results**); a
+20 s auto-advance keeps a distracted host from stalling the room.
+
+Rule 4.7.1 (SPR-Z.10, replacing "names come off"): **no screen ever says
+who made which meme.** Not the round result, not the podium, not the
+end-of-game gallery — and not the state payload behind them, which no
+longer carries the author at all, so it cannot leak through a client
+someone wrote themselves. The only mark is **"שלכם"** on your own meme,
+visible only to you. Names live on the leaderboard and the podium, scores
+beside them; the link between a person and a particular joke is never
+drawn. Avi's reason, in his words: "זה ישמור על מבוכה" — a joke that lands
+badly should cost nobody anything at the table.
 
 ### 4.8 Podium and end of game
 
 The top three, biggest first, with confetti for first place; then everyone
 else in order; then **the titles** (§9.2), one per player, so nobody leaves
 with nothing. Under it: a gallery of every meme from the game, each with a
-share button and, for logged-in players, a save button (§8.3, §8.4).
+share button and, for logged-in players, a save button (§8.3, §8.4). The
+gallery is **anonymous** (Rule 4.7.1) — only your own memes are marked, and
+only to you; it used to name every author, which would have handed back at
+the podium exactly what the round result stopped revealing.
 
 Two actions at the bottom: **Play again** and **Leave**.
 
@@ -461,9 +510,16 @@ that makes holding cards interesting.
 
 ### 5.3 Scoring
 
-**Vote mode**: 1 point per vote received. The round's most-voted meme(s)
-get +1 bonus ("round winner"); a tie shares the bonus. A unanimous vote
-(every eligible voter chose it) gets +1 more and the "unanimous" callout.
+**Vote mode** (rewritten SPR-Z.10, 2026-09-18): a meme scores the **sum of
+the verdicts it collected** during the reveal — אוהב 2, ככה ככה 1, פחות 0
+— and the round winner is simply the highest total. Nothing else: the old
++1 round-winner and +1 unanimous bonuses are gone, because they existed to
+spread out scores that a single pick per player made very flat, and rating
+every meme separates them on its own. The gain is that a player can work
+out their own score from the buttons they watched people press, which is
+worth more than a livelier number nobody can explain. "Unanimous" survives
+as a **podium title** (§9.2) — every single rater said אוהב — just not as
+points.
 
 **Judge mode**: the judge's pick gets 3 points. Nothing else scores. If the
 judge times out, nobody scores that round and the round result says "the
@@ -475,9 +531,11 @@ Rule 5.3.1: `Player.score` is a cache written when a round reaches `done`.
 The `Vote` rows are the truth; a test recomputes every player's score from
 votes and asserts equality, in both modes, with ties and time-outs.
 
-Rule 5.3.2: final ranking: score, then total votes received, then earliest
-`joined_at`. Equal on all three is a shared position and the podium says
-"tie".
+Rule 5.3.2: final ranking: score, then total votes received (from SPR-Z.10,
+that tiebreak counts **אוהב** verdicts — the deliberate "this one is
+funny", which is what a vote used to mean — not raw rows, since everyone
+now rates everything), then earliest `joined_at`. Equal on all three is a
+shared position and the podium says "tie".
 
 ### 5.4 Minimums, maximums, timers
 
@@ -938,7 +996,9 @@ with permissions that scope everything to the caller:
 | `sessions/<code>/state/` | retrieve | token, or code-only for the big screen |
 | `sessions/<code>/start/`, `.../advance/`, `.../again/` | actions | host |
 | `sessions/<code>/rounds/<n>/submit/` | action | token |
-| `sessions/<code>/rounds/<n>/vote/` | action | token |
+| `sessions/<code>/rounds/<n>/vote/` | action (Judge mode's single pick, §4.6) | token |
+| `sessions/<code>/rounds/<n>/rate/` | action (one verdict for the meme on screen, Rule 4.6.1) | token |
+| `sessions/<code>/rounds/<n>/swap-image/` | action (throw the dealt image back, Rule 4.4.5) | token |
 | `sessions/<code>/rounds/<n>/swap-card/` | action | token |
 | `memes/` | create (solo), retrieve, delete (own) | user or token |
 | `saved/` | list, create, delete | user |

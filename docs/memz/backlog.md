@@ -730,6 +730,44 @@ seconds).
 
 ---
 
+## SPR-Z.10 — The round Avi asked for `DONE (dev), 2026-09-18`
+
+Avi, after playing several real games, described the round he actually
+wants end to end: "כל משתתף מקבל תמונה. הוא יכול להחליף תמונה עד שלוש
+פעמים. כותב טקסט ומחכה שכולם יסיימו. ואז מופיעות התמונות של כולם עשר
+שניות כל אחד עם שלושה כפתורי הצבעה: אוהב, ככה ככה, פחות. ובסוף פשוט
+מופיעה רשימת הזוכים לפי שם אבל בלי הזיהוי של מי ייצר איזה מים. זה ישמור
+על מבוכה... מי שמופיעה התמונה שלו לא יכול להצביע ומופיע כיתוב 'תעשה
+פרצוף תמים...'".
+
+Three decisions he made before anything was built: **2/1/0** for the three
+verdicts, **3 swaps per round** (not per game), and a **short leaderboard
+between rounds** rather than only at the end.
+
+| Feature | Description | Spec | Status |
+| --- | --- | --- | --- |
+| F-Z.10.1 | Throw the dealt image back, up to 3 times a round | Rule 4.4.5 (new) | DONE — `Submission.image_swaps_used` + `dealing.deal_replacement` + `POST .../rounds/<n>/swap-image/`. Deals under the same rules the round's own deal follows: unseen first, never an image another player is holding *this round*, the same 30% personal-stock cap, never the player's own upload where the pool allows. Refused in Same Meme mode (everyone captioning one picture is that mode's whole point) and once the caption is in. Whatever was already typed survives the swap — you threw back the picture, not your sentence |
+| F-Z.10.2 | The reveal *is* the vote: 10 s a meme, three verdict buttons under it | §4.5 rewritten, Rule 4.6.1 rewritten | DONE — `Vote` changed shape: was one row per voter per round with no value ("who I picked"), now one row per voter *per meme* carrying `value` (אוהב 2 / ככה ככה 1 / פחות 0). The separate voting grid is gone outside Judge mode; `revealed` now goes straight to `done` (`game._end_reveal`, replacing `_start_voting`) |
+| F-Z.10.3 | A verdict only counts for the meme actually on screen | Rule 4.5.4 (new) | DONE — `game.reveal_index` runs the same `reveal_deadline` arithmetic the clients do, server-side, and `rate_submission` refuses anything else. Without it one client could rate the entire round the instant the reveal opened, before anyone had read a joke |
+| F-Z.10.4 | The author of the meme on screen can't rate it, and is told why | Rule 4.5.5 (new) | DONE — refused server-side, and the client shows Avi's own line, "תעשה פרצוף תמים...", where the buttons would be |
+| F-Z.10.5 | No screen ever says who made which meme | Rule 4.7.1 (new, replacing "names come off") | DONE — the round result, the podium gallery and the state payload behind them no longer carry `nickname` or `player_id` for a meme at all, so it cannot leak through a hand-written client either. `is_mine` is all that is left, and only you see it. Names stay on the leaderboard and podium, next to scores |
+| F-Z.10.6 | Scoring follows the verdicts | §5.3 rewritten | DONE — a meme scores the plain sum of what it collected; the old +1 round-winner and +1 unanimous bonuses are gone (they existed to spread out scores that one-pick-per-player made flat — rating everything does that on its own). Rule 5.3.2's tiebreak now counts **אוהב** verdicts, not rows, or it would be the same number for everybody. "Unanimous" survives as a podium title, not as points |
+| F-Z.10.7 | AI players rate too, without an API call per meme | §4.11 | DONE — `ai_players.resolve_rating` gives each bot one `LOVE` and a spread of the rest from a per-(round, player) seeded RNG, and only ever rates the meme currently on screen, so the room's counters stay honest. Deliberately not an LLM call: rating resolves inside `sync()`, which runs on *every* state read from every phone. Judge mode still asks the model properly |
+| F-Z.10.8 | Tests | §12.8 | DONE — `tests/test_spr_z_10.py`, 14 tests, marker `sprz10`. Also rewrote the 10 existing tests that drove the game through the old voting phase (9 in `test_spr_z_3.py`, 1 in `test_spr_z_4.py`) — they now rate inside the reveal instead. Rule 5.3.1's "score is only ever a cache of the Vote rows" test survives intact, which is the one that would have caught a scoring change going wrong |
+
+**Sprint notes.** The `Vote` unique constraint had to *loosen* — from
+`(round, voter)` to `(round, voter, submission)` — which means Judge
+mode's "exactly one pick per round" is now enforced in code rather than
+by the database. That is the one guarantee this sprint traded away, and
+it is written down here on purpose so a future change doesn't assume the
+constraint still says what it used to.
+
+The timing decision from ACT-Z.13 (8 s a meme) lasted hours: Avi asked
+for 10 in this design, and 10 is what a rating slot needs anyway — it has
+to hold "read the joke AND tap a button", not just "read the joke".
+
+---
+
 ## Not in v1 (spec §13)
 
 Payments, AI captions, English UI, GIF and video memes, free-position text

@@ -9,6 +9,7 @@ import json
 import pytest
 from django.contrib.auth.models import User
 from django.core.files.base import ContentFile
+from django.utils import timezone
 from PIL import Image
 
 pytestmark = [pytest.mark.sprz4, pytest.mark.django_db]
@@ -316,13 +317,16 @@ def test_hand_tops_up_each_round(client, bank, deck):
             stp = state(client, code, p["token"])
             post(client, f"/memz/api/sessions/{code}/rounds/{round_number}/submit/",
                  {"hand_card_id": stp["round"]["my_hand"][0]["hand_card_id"]}, token=p["token"])
-    st2 = post(client, f"/memz/api/sessions/{code}/advance/", token=players[0]["token"]).json()
-    for p in players:
-        stp = state(client, code, p["token"])
-        for target in stp["round"]["memes"]:
-            if not target["is_mine"]:
-                post(client, f"/memz/api/sessions/{code}/rounds/1/vote/", {"submission_id": target["submission_id"]}, token=p["token"])
-                break
+    # SPR-Z.10: no separate voting phase — the reveal running out is what
+    # ends the round. Nothing here is about rating, so it just needs to get
+    # past round 1 to check the hand tops back up.
+    from memz.game import current_round
+    from memz.models import Session
+
+    round_obj = current_round(Session.objects.get(code=code))
+    round_obj.reveal_deadline = timezone.now() - timezone.timedelta(seconds=1)
+    round_obj.save(update_fields=["reveal_deadline"])
+    state(client, code, players[0]["token"])
     post(client, f"/memz/api/sessions/{code}/advance/", token=players[0]["token"])
     st3 = state(client, code, players[0]["token"])
     assert st3["round"]["number"] == 2

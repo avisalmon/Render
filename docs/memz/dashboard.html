@@ -71,13 +71,16 @@
     broken-glyph box — the font has none, and the "drop emoji" spec
     decision from SPR-Z.2 was never actually implemented until now.
     ACT-Z.13 (2026-09-18): the reveal slideshow's per-meme timer raised
-    from 4s to 8s, Avi's own live-play feedback.</b>
+    from 4s to 8s, Avi's own live-play feedback. <b>SPR-Z.10 (2026-09-18)
+    then rewrote the round itself to Avi's own design: three image swaps,
+    rating inside the reveal (אוהב/ככה ככה/פחות, 10s a meme), and no screen
+    ever naming who made which meme.</b></b>
     Status truth: <a href="backlog.md">backlog.md</a> + <a href="spec.md">spec.md</a>.</p>
 
   <div class="stat-row">
-    <div class="stat"><div class="n">7 / 7 + 11</div><div class="l">Sprints done</div></div>
-    <div class="stat"><div class="n">65 + 45</div><div class="l">Features done</div></div>
-    <div class="stat"><div class="n">296</div><div class="l">Tests</div></div>
+    <div class="stat"><div class="n">7 / 7 + 12</div><div class="l">Sprints done</div></div>
+    <div class="stat"><div class="n">65 + 53</div><div class="l">Features done</div></div>
+    <div class="stat"><div class="n">312</div><div class="l">Tests</div></div>
     <div class="stat"><div class="n">Last: SPR-Z.7</div><div class="l">Deployed</div></div>
   </div>
   <div class="bar"><div style="width:100%"></div></div>
@@ -117,6 +120,11 @@
   <div class="sprint">
     <div class="sprint-head"><div class="sprint-title">SPR-Z.9 <span>A joining player's own uploads, in a shared game</span></div><span class="pill done">DONE (dev) · 2026-09-16</span></div>
     <p class="sprint-desc">Post-epic, same day: upload quota tightened to 5 free / 50 paid (was 100/2000); own_only/mix now draw from every currently seated signed-in player's own uploads, not just the host's, so a game you join can include your own photos, not only ones you host. At least one dealt image per round comes from someone's stock when available, in every mode including Same Meme, capped session-wide at 30% and checked against real dealt history, not a per-round guess — a player is never dealt their own upload back (best-effort in own_only with a very small pool). A plain-text notice on the upload form now asks people not to upload photos of others, celebrities, or existing memes, rather than a second unreliable detection pass. The real trap: an early version re-checked the 30% cap per player mid-round, which let one self-excluded player's forced public pick poison the cap for the rest of that same round — fixed by deciding once per round, from the state before it started. 7 features, 10 tests, full memz gate (292 tests) green.</p>
+  </div>
+
+  <div class="sprint">
+    <div class="sprint-head"><div class="sprint-title">SPR-Z.10 <span>The round Avi asked for</span></div><span class="pill done">DONE (dev) · 2026-09-18</span></div>
+    <p class="sprint-desc">Avi played real games, then described the round he actually wants, end to end — and this is it. <b>Three image swaps:</b> throw back the picture you were dealt, up to 3 times a round, without losing what you already typed (refused in Same Meme mode, where one shared picture is the point). <b>The reveal is now the vote:</b> each meme gets 10 seconds on every screen at once, with three buttons under it — אוהב (2), ככה ככה (1), פחות (0) — and the separate grid where everyone picked one favourite at the end is gone. The author of the meme on screen can't rate it and gets Avi's own line instead: "תעשה פרצוף תמים...". A verdict only counts for the meme actually showing, checked server-side against the same deadline arithmetic the clients run, or one client could have rated the whole round the second it opened. <b>Nobody is ever named:</b> the round result, the podium gallery and the payload behind them no longer carry the author at all — only "שלכם" on your own, visible only to you. Names stay on the leaderboard; the link between a person and a joke is never drawn ("זה ישמור על מבוכה"). Scoring follows: a plain sum of the verdicts, the old winner/unanimous bonuses dropped, and the ranking tiebreak now counts אוהב verdicts rather than rows. The `Vote` table changed shape (one row per voter per <i>meme</i>, with a value), which meant a migration and rewriting the 10 existing tests that drove the game through the old voting phase. 8 features, 14 new tests + 2 new screens in the contract.</p>
   </div>
 
   <div class="section-label">ACT items, closed this sprint</div>

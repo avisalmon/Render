@@ -182,7 +182,13 @@ def test_an_ai_player_submits_a_caption_on_its_own():
     assert round_obj.status == Round.REVEALED
 
 
-def test_an_ai_player_votes_on_its_own_and_never_for_itself():
+def test_an_ai_player_rates_on_its_own_and_never_its_own_meme():
+    """SPR-Z.10: a bot rates each meme as it comes up in the reveal, the
+    same slot a human in the room can rate it in — never running ahead of
+    the screen, and never its own."""
+    from memz import conf
+    from memz.models import Vote
+
     session, host = game.create_session(
         host_user=_signed_in_host(), round_count=1, round_seconds=60, vote_seconds=20, ai_player_count=1,
     )
@@ -193,17 +199,31 @@ def test_an_ai_player_votes_on_its_own_and_never_for_itself():
     for player in (host, p2, p3):
         game.submit_caption(session, player, round_obj.number, caption_text=f"כיתוב {player.nickname}")
     round_obj.refresh_from_db()
-    game.advance(session, host)   # revealed -> voting
     ai_player = Player.objects.get(session=session, is_ai=True)
-    for voter, target in [(host, p2), (p2, p3), (p3, host)]:
-        sub = round_obj.submissions.get(player=target, meme__isnull=False)
-        game.cast_vote(session, voter, round_obj.number, sub.id)
-    round_obj.refresh_from_db()
-    from memz.models import Vote
 
-    ai_vote = Vote.objects.get(round=round_obj, voter=ai_player)
-    assert ai_vote.submission.player_id != ai_player.id
-    assert round_obj.status == Round.DONE   # everyone (3 humans + 1 AI) had voted
+    order = game.reveal_order(round_obj)
+    per_meme = conf.get("REVEAL_SECONDS_PER_MEME")
+    for index, submission in enumerate(order):
+        # Wind the reveal to this meme's slot, then let sync() run: that is
+        # the bot's own cue, exactly as it is on a real poll.
+        Round.objects.filter(pk=round_obj.pk).update(
+            reveal_deadline=timezone.now() + timezone.timedelta(
+                seconds=per_meme * len(order) - (per_meme * index + per_meme / 2)
+            )
+        )
+        game.sync(session)
+        cast = Vote.objects.filter(round=round_obj, voter=ai_player, submission=submission)
+        if submission.player_id == ai_player.id:
+            assert not cast.exists(), "the bot rated its own meme"
+        else:
+            assert cast.count() == 1, "the bot didn't rate the meme that was on screen"
+            assert cast.first().value in {Vote.LOVE, Vote.SOSO, Vote.MEH}
+
+    # It never ran ahead of the slideshow: one row per meme it could rate,
+    # and no more.
+    assert Vote.objects.filter(round=round_obj, voter=ai_player).count() == len(
+        [s for s in order if s.player_id != ai_player.id]
+    )
 
 
 def test_an_ai_player_plays_a_card_in_cards_mode():

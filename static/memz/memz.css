@@ -703,6 +703,41 @@ section[id] { scroll-margin-top: 16px; margin-bottom: 32px; }
 .memz-meme-tile--voted { border-color: var(--memz-accent); }
 .memz-meme-tile--winner { border-color: var(--memz-yellow); }
 
+/* SPR-Z.10: the three verdicts, under the meme that's on screen right
+   now. One row on a phone, thumb-sized, no scrolling to reach the third
+   one -- the whole point is that it's tappable inside its 10 seconds. */
+.memz-rating-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 14px 0 6px;
+}
+
+.memz-rating-btn {
+  min-height: 52px;
+  padding: 10px 6px;
+  font-size: 15px;
+  border-radius: 14px;
+  border: 2px solid var(--memz-ink);
+  background: var(--memz-card);
+  color: var(--memz-ink);
+}
+
+.memz-rating-btn--chosen {
+  background: var(--memz-accent);
+  color: #fff;
+}
+
+.memz-rating-btn[disabled] { opacity: 0.45; }
+.memz-rating-btn--chosen[disabled] { opacity: 1; }
+
+/* The line the author of the meme on screen gets instead of buttons. */
+.memz-innocent {
+  margin: 14px 0 6px;
+  text-align: center;
+  font-weight: 700;
+}
+
 .memz-hand {
   list-style: none;
   margin: 0 0 14px;

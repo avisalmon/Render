@@ -183,6 +183,67 @@ def deal_same_image(session, players):
     return {player: image for player in players}
 
 
+def deal_replacement(session, submission):
+    """SPR-Z.10 (Rule 4.4.5): one fresh image for a player who threw back
+    the one they were dealt. Returns a `MemeImage`, or None if the pool
+    has nothing else to give.
+
+    Same preferences as `deal_round`, scoped to one seat: an image nobody
+    in this session has been dealt yet if any remain, never the one they
+    are holding right now, and never one already in someone else's hands
+    this same round (a swap must not create the duplicate within a round
+    that Rule 6.5.1 exists to prevent). A player's own upload is still
+    avoided where the pool allows. The 30% personal-stock cap is checked
+    the same way, just for this single image.
+
+    Deliberately does NOT re-run the whole round's deal: everyone else has
+    already seen their image, some may already be typing, and re-dealing
+    the table because one player didn't like their photo would be a much
+    bigger surprise than the one they asked for."""
+    unseen, pool = _unseen_and_pool(session)
+    if not pool:
+        return None
+
+    # Off limits: what anyone else is holding this round, what this player
+    # is holding now, and everything they have already thrown back --
+    # `Submission.image` only ever remembers the current picture, so
+    # without the third of those a refused image quietly returns to the
+    # "nobody has seen this" pool and can be dealt straight back.
+    held_now = set(
+        Submission.objects.filter(round=submission.round)
+        .exclude(pk=submission.pk)
+        .values_list("image_id", flat=True)
+    )
+    held_now.add(submission.image_id)
+    refused = set(submission.swapped_away_image_ids or [])
+    off_limits = held_now | refused
+
+    def free(images):
+        return [img for img in images if img.id not in off_limits]
+
+    candidates = free(unseen) or free(pool)
+    if not candidates:
+        # Every image in the pool is either on someone's phone this round
+        # or one this player already said no to. Better to hand back
+        # something seen before than to refuse a swap they were told they
+        # had -- but still never the one already in front of them.
+        candidates = [img for img in pool if img.id not in held_now] or \
+            [img for img in pool if img.id != submission.image_id] or pool
+
+    total, personal = _dealt_stock_counts(session)
+    own_user_id = submission.player.user_id
+    if _under_stock_cap(total, personal):
+        personal_candidates = [
+            img for img in candidates if img.owner_id is not None and img.owner_id != own_user_id
+        ]
+        if personal_candidates:
+            return personal_candidates[0]
+
+    non_personal = [img for img in candidates if img.owner_id is None]
+    own_excluded = [img for img in candidates if img.owner_id != own_user_id]
+    return (non_personal or own_excluded or candidates)[0]
+
+
 def deal_topic(session):
     """Topics mode (spec §5.1, Rule 5.1.1): one topic per round, no
     repeats within the session while unused ones remain. Public topics

@@ -159,6 +159,29 @@ def _game_images(n=4):
     return images
 
 
+def _show_reveal_slot(session, index, hold_seconds=0):
+    """Wind a running reveal so meme `index` is the one on screen (SPR-Z.10).
+
+    With `hold_seconds`, park it there: pushing `reveal_deadline` that much
+    further out makes the computed elapsed time negative, which clamps the
+    index to 0 and keeps it there long enough for a browser to boot, load
+    and be screenshotted without the slideshow moving on underneath it."""
+    from django.utils import timezone
+
+    from memz import conf
+    from memz.game import current_round
+
+    round_obj = current_round(session)
+    count = round_obj.submissions.filter(meme__isnull=False).count()
+    per_meme = conf.get("REVEAL_SECONDS_PER_MEME")
+    elapsed = per_meme * index + per_meme / 2
+    round_obj.reveal_deadline = timezone.now() + timezone.timedelta(
+        seconds=per_meme * count - elapsed + hold_seconds
+    )
+    round_obj.save(update_fields=["reveal_deadline"])
+    return round_obj
+
+
 def _game_at(phase, **session_kwargs):
     """A real 3-player game, advanced to `phase` through memz.game itself —
     the actual state machine, not a fixture faking the row (the_manager.md
@@ -178,6 +201,7 @@ def _game_at(phase, **session_kwargs):
         return session.code, host.guest_token, p2.guest_token
 
     from memz import cards as cards_module
+    from memz.models import Vote
 
     for p in (host, p2, p3):
         if session.caption_mode == session.CARDS:
@@ -188,21 +212,29 @@ def _game_at(phase, **session_kwargs):
     if phase == "revealed":
         return session.code, host.guest_token, p2.guest_token
 
-    game.advance(session, host)   # revealed -> voting (or straight to done for Relaxed)
+    # SPR-Z.10: rating happens inside the reveal, and ending the reveal
+    # finishes the round outright -- `voting` is a phase of its own only in
+    # Judge mode now. Everyone rates before the host ends it, so the result
+    # screen this fixture builds has real points on it.
+    if session.game_mode != session.RELAXED and session.scoring_mode != session.JUDGE:
+        order = game.reveal_order(game.current_round(session))
+        for index, sub in enumerate(order):
+            _show_reveal_slot(session, index)
+            for rater in (host, p2, p3):
+                if sub.player_id == rater.id:
+                    continue
+                game.rate_submission(session, rater, 1, sub.id, Vote.LOVE if index == 0 else Vote.SOSO)
+
+    game.advance(session, host)   # ends the reveal: -> voting in Judge mode, -> done everywhere else
     if phase == "voting":
         return session.code, host.guest_token, p2.guest_token
 
     round_obj = game.current_round(session)
     if round_obj.status == round_obj.VOTING:
         subs = list(round_obj.submissions.filter(meme__isnull=False))
-        if session.scoring_mode == session.JUDGE:
-            target = next(s for s in subs if s.player_id != round_obj.judge_id)
-            judge = host if round_obj.judge_id == host.id else (p2 if round_obj.judge_id == p2.id else p3)
-            game.cast_vote(session, judge, 1, target.id)
-        else:
-            for voter in (host, p2, p3):
-                target = next(s for s in subs if s.player_id != voter.id)
-                game.cast_vote(session, voter, 1, target.id)
+        target = next(s for s in subs if s.player_id != round_obj.judge_id)
+        judge = host if round_obj.judge_id == host.id else (p2 if round_obj.judge_id == p2.id else p3)
+        game.cast_vote(session, judge, 1, target.id)
     if phase == "result":
         return session.code, host.guest_token, p2.guest_token
 
@@ -227,7 +259,20 @@ def build_world():
     Meme.objects.filter(pk=expired.pk).update(expires_at=timezone.now() - timezone.timedelta(hours=1))
 
     _game_images()
-    games = {phase: _game_at(phase) for phase in ("lobby", "captioning", "revealed", "voting", "result", "finished")}
+    # SPR-Z.10: `voting` is no longer a phase an ordinary game reaches --
+    # the reveal carries the verdicts and the round finishes with it, so
+    # the voting grid survives only in Judge mode (`judge_voting` below).
+    games = {phase: _game_at(phase) for phase in ("lobby", "captioning", "revealed", "result", "finished")}
+
+    # The reveal is now also the rating screen, and it has two genuinely
+    # different faces: someone else's meme (three buttons) and your own
+    # ("תעשה פרצוף תמים..."). Both are the same phase, parked on meme 1 of
+    # 3 for two minutes so the slideshow can't move on mid-screenshot.
+    from memz.models import Session as _Session
+
+    for key in ("rating", "rating_own"):
+        games[key] = _game_at("revealed")
+        _show_reveal_slot(_Session.objects.get(code=games[key][0]), 0, hold_seconds=120)
 
     # SPR-Z.4: one screen each for the modes that look genuinely different.
     from memz.models import CaptionCard, CaptionDeck
@@ -280,12 +325,22 @@ def build_world():
     round1 = game_module.current_round(finished_session)
     for player in (finished_host, p2, p3):
         game_module.submit_caption(finished_session, player, round1.number, caption_text=f"כיתוב {player.nickname}")
-    game_module.advance(finished_session, finished_host)   # revealed -> voting
+    # SPR-Z.10: rate inside the reveal (the host's meme gets the loves, so
+    # the podium has a clear winner on it), then end the reveal, which now
+    # finishes and scores the round outright.
+    from memz.models import Vote as _Vote
+
     sub = round1.submissions.get(player=finished_host, meme__isnull=False)
-    p2_sub = round1.submissions.get(player=p2, meme__isnull=False)
-    game_module.cast_vote(finished_session, p2, round1.number, sub.id)
-    game_module.cast_vote(finished_session, p3, round1.number, sub.id)
-    game_module.cast_vote(finished_session, finished_host, round1.number, p2_sub.id)   # everyone voted, round decides itself
+    for index, submission in enumerate(game_module.reveal_order(round1)):
+        _show_reveal_slot(finished_session, index)
+        for rater in (finished_host, p2, p3):
+            if submission.player_id == rater.id:
+                continue
+            game_module.rate_submission(
+                finished_session, rater, round1.number, submission.id,
+                _Vote.LOVE if submission.id == sub.id else _Vote.MEH,
+            )
+    game_module.advance(finished_session, finished_host)   # ends the reveal -> done
     game_module.advance(finished_session, finished_host)   # done -> finished (round_count=1)
 
     return {
@@ -347,14 +402,19 @@ SCREENS = [
      lambda w: _token_script(w, "captioning", "host")),
     ("game/revealed", lambda w: f"/memz/s/{w['games']['revealed'][0]}/", None, None, "game-revealed",
      lambda w: _token_script(w, "revealed", "guest")),
-    ("game/voting", lambda w: f"/memz/s/{w['games']['voting'][0]}/", None, None, "game-voting",
-     lambda w: _token_script(w, "voting", "guest")),
+    # SPR-Z.10: the reveal, mid-rating. As a guest, meme 1 of 3 is the
+    # host's, so the three verdict buttons are showing...
+    ("game/rating", lambda w: f"/memz/s/{w['games']['rating'][0]}/", None, None, "game-revealed",
+     lambda w: _token_script(w, "rating", "guest")),
+    # ...and as the host, the same meme is their own, so it isn't.
+    ("game/rating-own-meme", lambda w: f"/memz/s/{w['games']['rating_own'][0]}/", None, None, "game-revealed",
+     lambda w: _token_script(w, "rating_own", "host")),
     ("game/result", lambda w: f"/memz/s/{w['games']['result'][0]}/", None, None, "game-result",
      lambda w: _token_script(w, "result", "host")),
     ("game/finished", lambda w: f"/memz/s/{w['games']['finished'][0]}/", None, None, "game-finished",
      lambda w: _token_script(w, "finished", "host")),
     ("game/big-screen-lobby", lambda w: f"/memz/s/{w['games']['lobby'][0]}/screen/", None, None, "game-lobby", None),
-    ("game/big-screen-voting", lambda w: f"/memz/s/{w['games']['voting'][0]}/screen/", None, None, "game-voting", None),
+    ("game/big-screen-judge-voting", lambda w: f"/memz/s/{w['games']['judge_voting'][0]}/screen/", None, None, "game-voting", None),
     ("game/judge-voting", lambda w: f"/memz/s/{w['games']['judge_voting'][0]}/", None, None, "game-voting",
      lambda w: _token_script(w, "judge_voting", "guest")),   # round 1's judge is the first non-host
     ("game/cards-captioning", lambda w: f"/memz/s/{w['games']['cards_captioning'][0]}/", None, None, "game-captioning",

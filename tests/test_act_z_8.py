@@ -137,7 +137,15 @@ def test_the_creator_preview_no_longer_scrambles_hebrew_letters(public_image, br
 
 
 def _voting_world():
-    session, host = game.create_session(host_user=None, round_count=1, round_seconds=30, vote_seconds=30)
+    """A round sitting in the `voting` phase.
+
+    SPR-Z.10: that phase only exists in Judge mode now — every other game
+    collects its verdicts during the reveal and finishes with it — so this
+    world is a judge game. The grid it renders, and the rebuild-every-poll
+    bug this file exists to guard against, are the same ones."""
+    session, host = game.create_session(
+        host_user=None, round_count=1, round_seconds=30, vote_seconds=30, scoring_mode="judge",
+    )
     p2 = game.join_session(session, "שתיים")
     p3 = game.join_session(session, "שלוש")
     game.start_session(session, host)
@@ -148,6 +156,41 @@ def _voting_world():
     game.sync(session)
     round_obj.refresh_from_db()
     assert round_obj.status == Round.VOTING
+    return session, host, p2, p3, round_obj
+
+
+def _rated_done_world():
+    """A finished round, reached the SPR-Z.10 way: everyone rates each meme
+    in its own slot in the reveal, then the reveal runs out."""
+    from memz import conf
+    from memz.models import Vote
+
+    session, host = game.create_session(host_user=None, round_count=1, round_seconds=30, vote_seconds=30)
+    p2 = game.join_session(session, "שתיים")
+    p3 = game.join_session(session, "שלוש")
+    game.start_session(session, host)
+    round_obj = game.current_round(session)
+    for player in (host, p2, p3):
+        game.submit_caption(session, player, round_obj.number, caption_text=f"כיתוב {player.nickname}")
+    round_obj.refresh_from_db()
+
+    order = game.reveal_order(round_obj)
+    per_meme = conf.get("REVEAL_SECONDS_PER_MEME")
+    for index, submission in enumerate(order):
+        Round.objects.filter(pk=round_obj.pk).update(
+            reveal_deadline=timezone.now() + timezone.timedelta(
+                seconds=per_meme * len(order) - (per_meme * index + per_meme / 2)
+            )
+        )
+        for rater in (host, p2, p3):
+            if submission.player_id == rater.id:
+                continue
+            game.rate_submission(session, rater, round_obj.number, submission.id, Vote.LOVE)
+
+    Round.objects.filter(pk=round_obj.pk).update(reveal_deadline=timezone.now() - timezone.timedelta(seconds=1))
+    game.sync(session)
+    round_obj.refresh_from_db()
+    assert round_obj.status == Round.DONE
     return session, host, p2, p3, round_obj
 
 
@@ -183,12 +226,7 @@ def test_the_result_screen_stops_rebuilding_itself_every_poll(browser, live_serv
     final the moment `done` is reached, so nothing here should ever need
     a poll-driven rebuild)."""
     pytest.importorskip("playwright.sync_api")
-    session, host, p2, p3, round_obj = _voting_world()
-    for voter, target in ((host, p2), (p2, p3), (p3, host)):
-        sub = round_obj.submissions.get(player=target, meme__isnull=False)
-        game.cast_vote(session, voter, round_obj.number, sub.id)
-    round_obj.refresh_from_db()
-    assert round_obj.status == Round.DONE
+    session, host, _p2, _p3, _round_obj = _rated_done_world()
 
     context = browser.new_context(viewport=PHONE, device_scale_factor=2, is_mobile=True, has_touch=True)
     context.add_init_script(
@@ -222,3 +260,47 @@ def test_the_big_screen_voting_view_also_stops_rebuilding_itself(browser, live_s
         () => { var t = document.querySelector('.memz-meme-tile'); return t && t.dataset.testMarker; }
     """)
     assert survived == "still-here"
+
+
+def test_the_rating_screen_does_not_rebuild_itself_under_a_thumb(browser, live_server, db):
+    """SPR-Z.10 inherits this whole file's risk: the reveal is now where
+    everyone taps, and it polls every second. A rebuild mid-slot would
+    move the buttons out from under a thumb that is already on its way
+    down — the same class of bug as the captioning keyboard (ACT-Z.7) and
+    the voting grid above, on the screen that replaced them both."""
+    pytest.importorskip("playwright.sync_api")
+    from memz import conf
+    from memz.models import Session
+
+    session, host = game.create_session(host_user=None, round_count=1, round_seconds=30, vote_seconds=30)
+    p2 = game.join_session(session, "שתיים")
+    p3 = game.join_session(session, "שלוש")
+    game.start_session(session, host)
+    round_obj = game.current_round(session)
+    for player in (host, p2, p3):
+        game.submit_caption(session, player, round_obj.number, caption_text=f"כיתוב {player.nickname}")
+    # Park the reveal on meme 1 of 3 for two minutes: a negative elapsed
+    # time clamps the index to 0, so the slideshow can't move on under the
+    # browser mid-test and turn a real rebuild into a false pass.
+    per_meme = conf.get("REVEAL_SECONDS_PER_MEME")
+    Round.objects.filter(pk=round_obj.pk).update(
+        reveal_deadline=timezone.now() + timezone.timedelta(seconds=per_meme * 3 + 120)
+    )
+    assert Session.objects.get(pk=session.pk).status == "playing"
+
+    context = browser.new_context(viewport=PHONE, device_scale_factor=2, is_mobile=True, has_touch=True)
+    context.add_init_script(
+        "localStorage.setItem(%r, %r);" % (f"memz.player.{session.code}", p2.guest_token)
+    )
+    page = context.new_page()
+    page.goto(f"{live_server.url}/memz/s/{session.code}/", wait_until="domcontentloaded")
+    page.wait_for_timeout(400)
+    assert page.locator("[data-screen]").get_attribute("data-screen") == "game-revealed"
+    assert page.locator("[data-rate]").count() == 3, "the three verdict buttons aren't there"
+
+    page.evaluate("document.querySelector('[data-rate]').dataset.testMarker = 'still-here'")
+    page.wait_for_timeout(2300)   # outlives two real 1-second polls
+    survived = page.evaluate("""
+        () => { var b = document.querySelector('[data-rate]'); return b && b.dataset.testMarker; }
+    """)
+    assert survived == "still-here", "the rating screen was rebuilt by a poll that changed nothing"

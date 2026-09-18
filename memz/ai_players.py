@@ -162,6 +162,65 @@ def resolve_captioning(session, round_obj):
     return True
 
 
+def _ai_round_verdicts(round_obj, player, submission_ids):
+    """{submission_id: Vote value} for one AI player in one round — one
+    `LOVE`, the rest spread over `SOSO`/`MEH`.
+
+    Deliberately not an LLM call (SPR-Z.10). Rating now happens meme by
+    meme, from inside `sync()`, which runs on *every* state read from
+    every phone in the room: one API call per meme per bot per round would
+    add real latency and cost to the hot path, for a choice nobody can
+    attribute to a bot anyway (memes are anonymous, spec Rule 4.7.1). A
+    per-(round, player) seeded RNG instead gives every bot a stable,
+    reproducible set of opinions — the same bot in the same round always
+    says the same thing, no matter how many times sync() re-reads it.
+    Judge mode still asks the model properly (`_choose_vote`): there the
+    pick is the whole round."""
+    rng = random.Random(f"{round_obj.id}:{player.id}")
+    ids = sorted(submission_ids)
+    verdicts = {sid: rng.choice([Vote.SOSO, Vote.MEH]) for sid in ids}
+    verdicts[rng.choice(ids)] = Vote.LOVE
+    return verdicts
+
+
+def resolve_rating(session, round_obj):
+    """Called from inside `game.sync()`'s own lock, while `round_obj.status
+    == REVEALED` (SPR-Z.10). Each AI player rates the meme that is on
+    screen *right now*, the same one a human in the room can rate — never
+    running ahead of the reveal, so the "how many have rated this one"
+    counters stay honest. Returns True if any rating was written."""
+    from . import game
+
+    if session.game_mode == Session.RELAXED or session.scoring_mode == Session.JUDGE:
+        return False
+    ai_players = list(Player.objects.filter(session=session, is_ai=True, is_active=True))
+    if not ai_players:
+        return False
+
+    order = game.reveal_order(round_obj)
+    index = game.reveal_index(round_obj)
+    if index is None or not order:
+        return False
+    showing = order[index]
+
+    already = set(
+        Vote.objects.filter(round=round_obj, submission=showing).values_list("voter_id", flat=True)
+    )
+    changed = False
+    for player in ai_players:
+        if player.id in already or showing.player_id == player.id:
+            continue
+        rateable = [s.id for s in order if s.player_id != player.id]
+        if not rateable:
+            continue
+        verdicts = _ai_round_verdicts(round_obj, player, rateable)
+        Vote.objects.create(
+            round=round_obj, voter=player, submission=showing, value=verdicts[showing.id],
+        )
+        changed = True
+    return changed
+
+
 def resolve_voting(session, round_obj):
     """Called from inside `game.sync()`'s own lock, while `round_obj.status
     == VOTING`. Returns True if any AI player just voted."""

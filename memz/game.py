@@ -4,12 +4,18 @@ with the session row locked (`select_for_update`), so two requests arriving
 at once cannot double-advance a round or double-create the next one (spec
 Rule 5.4.3) — see `locked()`.
 
-Phase flow per round: captioning -> revealed -> voting -> done. `sync()`
-does every *automatic* transition (a deadline passing, everyone having
-submitted or voted) and is called at the top of every action and every
-state read, so the state is always current before anything reads or acts
-on it — nothing waits for a background job. `advance()` is the one thing a
-host does on purpose: skip the rest of a reveal, or move from a round's
+Phase flow per round (SPR-Z.10): captioning -> revealed -> done, with
+`voting` surviving as a phase of its own **only in Judge mode**. In every
+other game the reveal *is* the vote: each meme gets its own slot on
+screen, everyone rates it while it's up (`rate_submission`), and when the
+last slot ends the round is already decided. That replaced the old
+separate grid where everyone picked one favourite at the end.
+
+`sync()` does every *automatic* transition (a deadline passing, everyone
+having submitted or voted) and is called at the top of every action and
+every state read, so the state is always current before anything reads or
+acts on it — nothing waits for a background job. `advance()` is the one
+thing a host does on purpose: end a reveal early, or move from a round's
 result to the next round (or the podium).
 """
 
@@ -336,7 +342,107 @@ def swap_hand_card(session, player, hand_card_id):
         _bump(session)
 
 
+def swap_image(session, player, round_number):
+    """Rule 4.4.5 (SPR-Z.10): throw back the dealt image for another one,
+    up to `IMAGE_SWAPS_PER_ROUND` times per round, while still writing.
+
+    Refused in Same Meme mode: the whole point of that mode is that
+    everyone is captioning the *same* picture (spec §5.1), so one player
+    swapping out of it would break the round for everybody."""
+    limit = conf.get("IMAGE_SWAPS_PER_ROUND")
+    with locked(session):
+        if session.game_mode == Session.SAME_MEME:
+            raise GameError("במצב אותו מם כולם מקבלים את אותה תמונה.")
+        round_obj = session.rounds.filter(number=round_number).first()
+        if round_obj is None or round_obj.status != Round.CAPTIONING:
+            raise GameError("אי אפשר להחליף תמונה עכשיו.")
+        submission = Submission.objects.filter(round=round_obj, player=player).first()
+        if submission is None:
+            raise GameError("אין לך תמונה בסבב הזה.")
+        if submission.meme_id is not None:
+            raise GameError("כבר שלחת כיתוב לסבב הזה.")
+        if submission.image_swaps_used >= limit:
+            raise GameError(f"אפשר להחליף עד {limit} פעמים בסבב.")
+
+        image = dealing.deal_replacement(session, submission)
+        if image is None:
+            raise GameError("אין תמונה אחרת להחליף אליה.")
+
+        if submission.image_id is not None:
+            submission.swapped_away_image_ids = list(submission.swapped_away_image_ids) + [submission.image_id]
+        submission.image = image
+        submission.image_swaps_used += 1
+        submission.save(update_fields=["image", "image_swaps_used", "swapped_away_image_ids"])
+        _bump(session)
+    return image
+
+
+def reveal_index(round_obj):
+    """Which meme the reveal is showing *right now*, or None if the phase
+    isn't running. The same arithmetic every client does (spec §4.5), kept
+    here so the server can check a rating against it rather than trust a
+    submission id a phone sends (Rule 4.5.4) — without this, one client
+    could rate every meme in the round the moment the reveal opened."""
+    if round_obj.status != Round.REVEALED or not round_obj.reveal_deadline:
+        return None
+    count = round_obj.submissions.filter(meme__isnull=False).count()
+    if count == 0:
+        return None
+    per_meme = conf.get("REVEAL_SECONDS_PER_MEME")
+    started = round_obj.reveal_deadline - timezone.timedelta(seconds=per_meme * count)
+    elapsed = (timezone.now() - started).total_seconds()
+    return max(0, min(count - 1, int(elapsed // per_meme)))
+
+
+def reveal_order(round_obj):
+    """The order the reveal walks the round's memes in. `id` order, which
+    is the order submissions were created (one per player at round start),
+    so it is stable across every client and every poll."""
+    return list(round_obj.submissions.filter(meme__isnull=False).order_by("id"))
+
+
+def rate_submission(session, voter, round_number, submission_id, value):
+    """Rule 4.6.1 (SPR-Z.10): one verdict per meme per player, cast while
+    that meme is the one on screen. Final on tap, like the old single vote
+    was -- no changing your mind once it's in."""
+    valid_values = {v for v, _label in Vote.VALUES}
+    with locked(session):
+        round_obj = session.rounds.filter(number=round_number).first()
+        if round_obj is None or round_obj.status != Round.REVEALED:
+            raise GameError("אי אפשר לדרג עכשיו.")
+        if session.game_mode == Session.RELAXED:
+            raise GameError("במצב רגוע לא מדרגים.")
+        if session.scoring_mode == Session.JUDGE:
+            raise GameError("בסבב הזה השופט/ת בוחר/ת בסוף.")
+        try:
+            value = int(value)
+        except (TypeError, ValueError):
+            raise GameError("דירוג לא תקין.")
+        if value not in valid_values:
+            raise GameError("דירוג לא תקין.")
+
+        submission = round_obj.submissions.filter(pk=submission_id, meme__isnull=False).first()
+        if submission is None:
+            raise GameError("המם הזה לא קיים בסבב.")
+        if submission.player_id == voter.pk:
+            raise GameError("תעשה פרצוף תמים, אי אפשר לדרג את עצמך.")
+        if Vote.objects.filter(round=round_obj, voter=voter, submission=submission).exists():
+            raise GameError("כבר דירגת את המם הזה.")
+
+        order = reveal_order(round_obj)
+        index = reveal_index(round_obj)
+        if index is None or order[index].pk != submission.pk:
+            raise GameError("המם הזה כבר לא על המסך.")
+
+        Vote.objects.create(round=round_obj, voter=voter, submission=submission, value=value)
+        _bump(session)
+    sync(session)
+
+
 def cast_vote(session, voter, round_number, submission_id):
+    """Judge mode only, from SPR-Z.10 on: the judge's single pick, in the
+    separate voting phase that now exists only for that mode. Every other
+    game rates during the reveal instead (`rate_submission`)."""
     with locked(session):
         round_obj = session.rounds.filter(number=round_number).first()
         if round_obj is None or round_obj.status != Round.VOTING:
@@ -365,7 +471,11 @@ def advance(session, host_player):
         if round_obj is None:
             raise GameError("אין סבב פעיל.")
         if round_obj.status == Round.REVEALED:
-            _start_voting(round_obj)
+            # SPR-Z.10: ending the reveal early also ends everyone's chance
+            # to rate whatever hadn't come up yet. That is the host's call
+            # to make -- the same call they always had here -- but it is a
+            # bigger one now than when the reveal was only a slideshow.
+            _end_reveal(round_obj)
         elif round_obj.status == Round.DONE:
             _next_round_or_finish(session, round_obj)
         else:
@@ -404,8 +514,14 @@ def sync(session):
                     _start_reveal(round_obj)
                     changed = True
             elif round_obj.status == Round.REVEALED:
+                # SPR-Z.10: everyone rates each meme while it is on screen,
+                # so by the time the last slot ends the round is already
+                # decided -- `_end_reveal` finishes it outright, except in
+                # Judge mode, where the separate voting phase still follows.
+                if ai_players.resolve_rating(session, round_obj):
+                    changed = True
                 if round_obj.reveal_deadline and now >= round_obj.reveal_deadline:
-                    _start_voting(round_obj)
+                    _end_reveal(round_obj)
                     changed = True
             elif round_obj.status == Round.VOTING:
                 if ai_players.resolve_voting(session, round_obj):
@@ -432,12 +548,19 @@ def _start_reveal(round_obj):
     round_obj.save(update_fields=["status", "reveal_deadline"])
 
 
-def _start_voting(round_obj):
+def _end_reveal(round_obj):
+    """What happens when the last meme's slot on screen is over (SPR-Z.10).
+
+    In every mode but Judge the ratings are already in — they were cast
+    meme by meme as the reveal ran — so the round simply finishes and
+    scores. Judge mode is the one flow that still needs a phase of its
+    own afterwards: the judge picks one winner from the whole round, which
+    can only happen once they have seen all of them."""
     session = round_obj.session
     memes_count = round_obj.submissions.filter(meme__isnull=False).count()
 
     if session.game_mode == Session.RELAXED:
-        # Rule 4.5.3 / §5.1: no voting, no points — the reveal was the
+        # Rule 4.5.3 / §5.1: no rating, no points — the reveal was the
         # whole point, the round just ends.
         _finish_round(round_obj, award=False)
         return
@@ -453,13 +576,14 @@ def _start_voting(round_obj):
         return
 
     if memes_count < 2:
-        # Rule 4.6.4: fewer than two memes, no vote — the lone meme (or
-        # nobody, if zero) wins the round outright.
+        # Rule 4.6.4: fewer than two memes, nothing to compare — the lone
+        # meme (or nobody, if zero) takes the round outright. Any rating
+        # that did land on it during the reveal is deliberately ignored;
+        # a round of one is not a contest.
         _finish_round(round_obj, skip_vote=True, award=memes_count == 1)
         return
-    round_obj.status = Round.VOTING
-    round_obj.vote_deadline = timezone.now() + timezone.timedelta(seconds=session.vote_seconds)
-    round_obj.save(update_fields=["status", "vote_deadline"])
+
+    _finish_round(round_obj)
 
 
 def _finish_round(round_obj, *, skip_vote=False, award=True):

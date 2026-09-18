@@ -72,6 +72,12 @@ def _round_payload(session, round_obj, player):
                     {"hand_card_id": hc.id, "text": hc.card.text} for hc in cards_module.hand_for(player)
                 ]
                 data["can_swap_card"] = not player.card_swap_used
+            # Rule 4.4.5 (SPR-Z.10): how many throw-backs are left, so the
+            # button can say so and disappear when they run out.
+            if mine is not None and session.game_mode != Session.SAME_MEME:
+                data["image_swaps_left"] = max(
+                    0, conf.get("IMAGE_SWAPS_PER_ROUND") - mine.image_swaps_used
+                )
         return data
 
     if round_obj.status in (round_obj.REVEALED, round_obj.VOTING):
@@ -85,12 +91,29 @@ def _round_payload(session, round_obj, player):
             }
             for s in memes
         ]
+        if round_obj.status == round_obj.REVEALED and player is not None:
+            # SPR-Z.10: the reveal is where rating happens, so the caller
+            # needs to know which memes they have already had their say on
+            # -- {submission_id: value} for their own rows only. Nobody
+            # ever sees anybody else's verdicts, in any phase.
+            data["my_ratings"] = {
+                str(sid): value
+                for sid, value in Vote.objects.filter(round=round_obj, voter=player).values_list(
+                    "submission_id", "value"
+                )
+            }
+            data["rating_values"] = {"love": Vote.LOVE, "soso": Vote.SOSO, "meh": Vote.MEH}
         if round_obj.status == round_obj.VOTING and player is not None:
             my_vote = Vote.objects.filter(round=round_obj, voter=player).values_list("submission_id", flat=True).first()
             data["my_vote"] = my_vote
         return data
 
-    # done: names come off no longer, everything is visible
+    # Round result. Rule 4.7.1 (SPR-Z.10): names never come off. The memes
+    # are shown with what they scored, ranked, but *no* `player_id` and no
+    # `nickname` -- who made which one is never revealed, in this payload
+    # or any other, so a joke that landed badly stays unattributable. The
+    # running leaderboard (`players`, by name and score) is the only place
+    # a name appears; nobody can work backwards from it to a single meme.
     submissions = list(
         round_obj.submissions.filter(meme__isnull=False).select_related("meme", "player")
     )
@@ -99,14 +122,14 @@ def _round_payload(session, round_obj, player):
     data["results"] = sorted(
         (
             {
-                "submission_id": s.id, "player_id": s.player_id, "nickname": s.player.nickname,
+                "submission_id": s.id,
                 "rendered_url": s.meme.rendered.url, "caption_text": s.meme.caption_text,
-                "votes": Vote.objects.filter(submission=s).count(),
+                "is_mine": bool(player and s.player_id == player.id),
                 "points": points.get(s.id, 0), "round_winner": points.get(s.id, 0) == top and top > 0,
             }
             for s in submissions
         ),
-        key=lambda row: -row["votes"],
+        key=lambda row: -row["points"],
     )
     return data
 
@@ -156,9 +179,16 @@ def build(session, player):
             }
             for p, tied in ranked
         ]
+        # Rule 4.7.1 (SPR-Z.10): the gallery is anonymous too. It used to
+        # carry each meme's author, which would have handed back at the end
+        # exactly what the round result stopped revealing. `is_mine` is the
+        # one thing left, so a player can still find and save their own.
         memes = Meme.objects.filter(submission__round__session=session).select_related("submission__player")
         payload["gallery"] = [
-            {"share_slug": m.share_slug, "rendered_url": m.rendered.url, "nickname": m.submission.player.nickname}
+            {
+                "share_slug": m.share_slug, "rendered_url": m.rendered.url,
+                "is_mine": bool(player and m.submission.player_id == player.id),
+            }
             for m in memes
         ]
         if player is not None and session.next_session_id:
