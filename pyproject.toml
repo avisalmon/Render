@@ -79,6 +79,7 @@ markers = [
     "sprmobile: real-browser phone checks for מט״צים (tests/test_matazim_mobile.py)",
     "sprsl1: SL-A1 SensorLab the app exists and is walled off (docs/sensorlab/backlog.md)",
     "sprsl2: SL-A2 SensorLab auth in its own chrome, and the profile",
+    "sprsl3: SL-A3 SensorLab the REST platform",
     "smoke: the fast gate, run on every push (see tests/test_smoke.py)",
 ]
 

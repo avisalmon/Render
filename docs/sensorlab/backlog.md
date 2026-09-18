@@ -188,26 +188,50 @@ than declared by us — so **SL-A5 must activate the profile's language for
 the request**, which is now a requirement of that sprint rather than an
 implementation detail of it.
 
-### SL-A3 — The REST platform 🔵 next
+### SL-A3 — The REST platform ✅
 
 Marker: `sprsl3`
 
-- [ ] `sensorlab/api/` package following `memz/api/`: `serializers.py`,
-      `viewsets.py`, `permissions.py`, `schema.py`.
-- [ ] URL convention fixed: everything under `/sensorlab/api/`.
-- [ ] DRF configured for this app: permission classes, pagination, and one
-      consistent error shape.
-- [ ] **Documented** (Rule 6): browsable API + a schema endpoint at a
-      stated path.
-- [ ] `GET/PATCH /sensorlab/api/profile/me/` — proves the stack end to end,
-      and is where the language switch will persist.
-- [ ] Test: an anonymous request is refused, an authenticated one gets its
-      own profile and can change its language.
+- [x] `sensorlab/api/`: `__init__.py` (the router), `serializers.py`,
+      `pagination.py`, `profile.py`, `schema.py`.
+- [x] URL convention fixed: everything under `/sensorlab/api/`.
+- [x] Pagination fixed once for the app (25, max 100) so SL-B2's resources
+      do not each invent their own.
+- [x] **Documented** (Rule 6): the browsable API, plus a schema endpoint
+      **derived from the router registry** rather than hand-written — so
+      registering a resource in SL-B2 documents itself with no edit here.
+- [x] `GET/PUT/PATCH /sensorlab/api/profile/me/`, proven end to end against
+      a running server, not only the test client: signed in through the
+      real form, `PATCH {"language": "he"}` returned `he` and flipped
+      `text_direction` to `rtl` — the exact mechanism SL-A5 drives.
+- [x] 10 tests (9 red first).
 
-**Done when:** the API root is reachable and documented, and `profile/me/`
-round-trips a language change.
+**Decisions recorded:**
 
-### SL-A4 — The design system ⬜
+- **The error shape is DRF's own, adopted rather than re-invented.** A
+  custom envelope would need `EXCEPTION_HANDLER` in *project-wide*
+  settings, which Rule 2 forbids — changing it would change memz and
+  matazim too. So the convention is to match what DRF already does
+  consistently and to **say so in the schema**, rather than to build a
+  SensorLab-only wrapper every client and test then has to know about.
+- **No `viewsets.py` or `permissions.py` yet.** The backlog listed them
+  because memz has them; creating them empty would be scaffolding for its
+  own sake. They arrive in SL-B2 with the first resource that needs them.
+- **`profile/me/` resolves from `request.user`, and there is no
+  `/profiles/<id>/` route at all.** One person's row is not a URL guess
+  away from another's, and the view needs no object-level permission class
+  to guarantee it. Tested.
+- **Streaks, freezes and scores are read-only through the API.** A client
+  that can PATCH its own streak makes Epic L's leaderboards fiction. The
+  browsable API's HTML form shows this visually: `Language` is the only
+  editable field on the page (`sl-a3-browsable-api.png`).
+
+*Nothing surprising in the render this time* — the first sprint of the
+three where looking at it did not find a bug. The one Hebrew string on the
+API page is `עברית`, the Hebrew language's own name in the switch, which
+is correct in any locale.
+
+### SL-A4 — The design system 🔵 next
 
 Marker: `sprsl4`
 
