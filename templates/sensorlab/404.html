@@ -1,0 +1,12 @@
+{% extends "sensorlab/base.html" %}
+
+{% block title %}Not found — SensorLab{% endblock %}
+{% block screen %}404{% endblock %}
+
+{% block content %}
+<section class="sl-shell">
+  <h1>Nothing here</h1>
+  <p>That page does not exist.</p>
+  <p><a href="{% url 'sensorlab:home' %}">Back to SensorLab</a></p>
+</section>
+{% endblock %}

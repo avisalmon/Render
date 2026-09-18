@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "matazim",
     "ustrip",
     "memz",
+    "sensorlab",
 ]
 
 MIDDLEWARE = [

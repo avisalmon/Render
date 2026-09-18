@@ -1,0 +1,42 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html",       "x": 0,    "y": 0,   "w": 390, "h": 844, "title": "1 · Home / tracks" },
+    { "file": "Learn.dc.html",      "x": 490,  "y": 0,   "w": 390, "h": 844, "title": "2 · Learn" },
+    { "file": "Predict.dc.html",    "x": 980,  "y": 0,   "w": 390, "h": 844, "title": "3 · Predict" },
+    { "file": "Experiment.dc.html", "x": 1470, "y": 0,   "w": 390, "h": 844, "title": "4 · Experiment — instrument mode" },
+    { "file": "Analysis.dc.html",   "x": 1960, "y": 0,   "w": 390, "h": 844, "title": "5 · Analysis" },
+    { "file": "Tutor.dc.html",      "x": 0,    "y": 994, "w": 390, "h": 844, "title": "Tutor chat (per track)" },
+    { "file": "AnalysisHE.dc.html", "x": 490,  "y": 994, "w": 390, "h": 844, "title": "Analysis — Hebrew / RTL" }
+  ],
+  "annotations": [
+    {
+      "id": "thesis",
+      "x": 0,
+      "y": -300,
+      "w": 860,
+      "text": "SensorLab — free-fall lab, measuring g.\nOne system, two modes. Steps 2, 3 and 5 are PEDAGOGICAL mode: warm off-white, generous. Step 4 is INSTRUMENT mode: dark, dense, credible. The switch is the cue — going dark means you are taking a real measurement.\nChrome stays ink-black on purpose, so amber and cyan only ever carry meaning."
+    },
+    {
+      "id": "instrument-mode",
+      "x": 1470,
+      "y": -300,
+      "w": 390,
+      "text": "INSTRUMENT MODE\nDark, tabular numerals, a rolling trace, and the trigger threshold drawn on the chart. Axis runs to 30 m/s² so the impact spike it is armed for cannot clip off the top.\nHaptic and tone on trigger, because during a free-fall lab nobody is looking at the screen."
+    },
+    {
+      "id": "colour-language",
+      "x": 1960,
+      "y": -300,
+      "w": 390,
+      "text": "THE COLOUR LANGUAGE\nPrediction = warm amber, DASHED.\nMeasured reality = cool cyan, SOLID.\nSeparated by dash pattern as well as hue — the comparison is the product, and colour alone fails ~8% of viewers.\nHere it carries the lesson too: the sketch grew, the measurement went to zero."
+    },
+    {
+      "id": "rtl-rule",
+      "x": 980,
+      "y": 994,
+      "w": 400,
+      "text": "BILINGUAL / RTL\nThe chrome mirrors: chevron flips and moves right, the rail fills from the right, text right-aligns, the language pill swaps its active side.\nThe DATA does not. Axes still run left-to-right, numerals stay Latin, the formula stays LTR. Only the words inside the plot are translated."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}

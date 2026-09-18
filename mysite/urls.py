@@ -48,6 +48,9 @@ urlpatterns = [
     path("ustrip/", include("ustrip.urls", namespace="ustrip")),
     # memz is its own product too (docs/memz/spec.md) — same reasoning.
     path("memz/", include("memz.urls", namespace="memz")),
+    # SensorLab is its own product too (docs/sensorlab/spec.md) — same reasoning,
+    # and mounted before app.urls so the prefix is unambiguously its own.
+    path("sensorlab/", include("sensorlab.urls", namespace="sensorlab")),
     path("", include("app.urls")),
 ]
 

@@ -1,0 +1,136 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Rubik', 'Segoe UI', system-ui, sans-serif;
+           background: #FAF9F7; color: #1A1A18; -webkit-font-smoothing: antialiased; }
+    a { color: #1A1A18; text-decoration: underline; }
+    a:hover { color: #6B6862; }
+    .tnum { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; background: #FAF9F7; display: flex; flex-direction: column;">
+
+  <!-- top bar -->
+  <div style="display: flex; align-items: center; gap: 8px; padding: 16px 16px 6px 6px;">
+    <div style="width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1A1A18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 6l-6 6 6 6"/>
+      </svg>
+    </div>
+    <div style="flex: 1; min-width: 0;">
+      <div style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Free Fall — Measuring g</div>
+    </div>
+    <div style="display: flex; align-items: center; height: 44px; border: 1px solid #EAE7E1; background: #FFFFFF; border-radius: 22px; overflow: hidden; flex-shrink: 0;">
+      <span style="padding: 0 11px; height: 100%; display: flex; align-items: center; font-size: 12.5px; font-weight: 600; background: #1A1A18; color: #FFFFFF;">EN</span>
+      <span style="padding: 0 11px; height: 100%; display: flex; align-items: center; font-size: 12.5px; color: #6B6862;">עב</span>
+    </div>
+  </div>
+
+  <!-- step rail -->
+  <div style="padding: 6px 16px 0 16px;">
+    <div style="display: flex; gap: 5px;">
+      <div style="flex: 1; height: 5px; border-radius: 3px; background: #1A1A18;"></div>
+      <div style="flex: 1; height: 5px; border-radius: 3px; background: #1A1A18;"></div>
+      <div style="flex: 1; height: 5px; border-radius: 3px; background: #D08616;"></div>
+      <div style="flex: 1; height: 5px; border-radius: 3px; background: #E2DED6;"></div>
+      <div style="flex: 1; height: 5px; border-radius: 3px; background: #E2DED6;"></div>
+    </div>
+    <div style="font-size: 12px; color: #6B6862; margin-top: 8px;">Step 3 of 5 — <span style="color: #D08616; font-weight: 500;">Predict</span></div>
+  </div>
+
+  <div style="flex: 1; padding: 18px 16px 0 16px; display: flex; flex-direction: column; gap: 14px;">
+
+    <div>
+      <h1 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.3px; line-height: 1.25;">Before you drop it — draw what the sensor will read.</h1>
+      <p style="margin: 9px 0 0 0; font-size: 14px; line-height: 1.5; color: #6B6862;">
+        From the moment you let go until it hits the cushion.
+      </p>
+    </div>
+
+    <!-- sketch card -->
+    <div style="padding: 14px 10px 8px 10px; background: #FFFFFF; border: 1px solid #EAE7E1; border-radius: 14px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 6px 6px 6px;">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6B6862;">Sketch it</span>
+        <span class="tnum" style="font-size: 11px; color: #9E9A92;">1 of 2</span>
+      </div>
+
+      <svg width="100%" viewBox="0 0 320 200" fill="none" style="display: block;">
+        <text x="8" y="15" font-family="Rubik, sans-serif" font-size="11" fill="#9E9A92">|a| (m/s²)</text>
+
+        <path d="M34 164 L310 164" stroke="#D9D5CD" stroke-width="1"/>
+        <path d="M34 117 L310 117" stroke="#EFECE5" stroke-width="1"/>
+        <path d="M34 71 L310 71" stroke="#EFECE5" stroke-width="1"/>
+        <path d="M34 24 L310 24" stroke="#EFECE5" stroke-width="1"/>
+        <path d="M34 24 L34 164" stroke="#D9D5CD" stroke-width="1"/>
+        <path d="M103 24 L103 164" stroke="#F4F2EC" stroke-width="1"/>
+        <path d="M172 24 L172 164" stroke="#F4F2EC" stroke-width="1"/>
+        <path d="M241 24 L241 164" stroke="#F4F2EC" stroke-width="1"/>
+        <path d="M310 24 L310 164" stroke="#F4F2EC" stroke-width="1"/>
+
+        <text x="28" y="168" text-anchor="end" font-family="Rubik, sans-serif" font-size="10.5" fill="#9E9A92">0</text>
+        <text x="28" y="121" text-anchor="end" font-family="Rubik, sans-serif" font-size="10.5" fill="#9E9A92">10</text>
+        <text x="28" y="75" text-anchor="end" font-family="Rubik, sans-serif" font-size="10.5" fill="#9E9A92">20</text>
+        <text x="28" y="28" text-anchor="end" font-family="Rubik, sans-serif" font-size="10.5" fill="#9E9A92">30</text>
+
+        <text x="34" y="180" text-anchor="middle" font-family="Rubik, sans-serif" font-size="10.5" fill="#9E9A92">0</text>
+        <text x="103" y="180" text-anchor="middle" font-family="Rubik, sans-serif" font-size="10.5" fill="#9E9A92">0.2</text>
+        <text x="172" y="180" text-anchor="middle" font-family="Rubik, sans-serif" font-size="10.5" fill="#9E9A92">0.4</text>
+        <text x="241" y="180" text-anchor="middle" font-family="Rubik, sans-serif" font-size="10.5" fill="#9E9A92">0.6</text>
+        <text x="310" y="180" text-anchor="middle" font-family="Rubik, sans-serif" font-size="10.5" fill="#9E9A92">0.8</text>
+        <text x="172" y="196" text-anchor="middle" font-family="Rubik, sans-serif" font-size="11" fill="#9E9A92">t (s)</text>
+
+        <path d="M68 24 L68 164" stroke="#D9D5CD" stroke-width="1" stroke-dasharray="3 3"/>
+        <text x="72" y="36" font-family="Rubik, sans-serif" font-size="10" fill="#9E9A92">release</text>
+
+        <path d="M34 118 L68 118 L103 108 L138 96 L172 85 L206 73"
+              stroke="#D08616" stroke-width="2.4" stroke-dasharray="7 5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="206" cy="73" r="6.5" fill="#FFFFFF" stroke="#D08616" stroke-width="2.4"/>
+        <text x="218" y="70" font-family="Rubik, sans-serif" font-size="10.5" fill="#D08616">keep dragging</text>
+      </svg>
+    </div>
+
+    <!-- numeric prediction -->
+    <div style="padding: 14px; background: #FFFFFF; border: 1px solid #EAE7E1; border-radius: 14px;">
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6B6862;">Your number</span>
+        <span class="tnum" style="font-size: 11px; color: #9E9A92;">2 of 2</span>
+      </div>
+      <div style="font-size: 14px; color: #3D3B37; margin-top: 9px;">What will you measure for g?</div>
+      <div style="display: flex; align-items: center; gap: 10px; margin-top: 11px;">
+        <div class="tnum" style="flex: 1; height: 50px; display: flex; align-items: center; padding: 0 14px; font-size: 20px; font-weight: 500; background: #FBF3E6; border: 1.5px solid #D08616; border-radius: 11px; color: #1A1A18;">9.8</div>
+        <span style="font-size: 15px; color: #6B6862;">m/s²</span>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 9px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9E9A92" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+        <rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>
+      </svg>
+      <span style="font-size: 12.5px; color: #6B6862; line-height: 1.4;">Locked once the experiment starts — that is the point.</span>
+    </div>
+
+  </div>
+
+  <div style="padding: 14px 16px 16px 16px;">
+    <div style="display: flex; align-items: center; justify-content: center; gap: 8px; height: 50px; background: #1A1A18; color: #FFFFFF; border-radius: 12px; font-size: 15px; font-weight: 500;">
+      Lock it in &amp; start measuring
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 6l6 6-6 6"/>
+      </svg>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

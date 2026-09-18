@@ -1,0 +1,12 @@
+{% extends "sensorlab/base.html" %}
+
+{% block title %}No access — SensorLab{% endblock %}
+{% block screen %}403{% endblock %}
+
+{% block content %}
+<section class="sl-shell">
+  <h1>Not yours to open</h1>
+  <p>You are signed in, but this is not available to your account.</p>
+  <p><a href="{% url 'sensorlab:home' %}">Back to SensorLab</a></p>
+</section>
+{% endblock %}

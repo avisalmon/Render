@@ -1,0 +1,12 @@
+{% extends "sensorlab/base.html" %}
+
+{% block title %}Something broke — SensorLab{% endblock %}
+{% block screen %}500{% endblock %}
+
+{% block content %}
+<section class="sl-shell">
+  <h1>Something broke</h1>
+  <p>That is on us, not on you. Try again in a moment.</p>
+  <p><a href="{% url 'sensorlab:home' %}">Back to SensorLab</a></p>
+</section>
+{% endblock %}

@@ -77,6 +77,7 @@ markers = [
     "memzscreens: memz's screen contract - every memz screen, in every state, rendered on a phone (tests/test_memz_screens.py)",
     "screens: the screen contract - every מט״צים screen, in every state, rendered",
     "sprmobile: real-browser phone checks for מט״צים (tests/test_matazim_mobile.py)",
+    "sprsl1: SL-A1 SensorLab the app exists and is walled off (docs/sensorlab/backlog.md)",
     "smoke: the fast gate, run on every push (see tests/test_smoke.py)",
 ]
 

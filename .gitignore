@@ -43,3 +43,9 @@ matazim_private/
 # content from the bank regardless of source; this entry is a backstop so no
 # chat in this shared working tree ever `git add -A`s it by accident.
 docs/memz/image_bank/
+
+# SensorLab's design canvas is SEEDED from the artboards next to it: the
+# .dc.html files and canvas.json are the source and ARE committed. This is
+# the 2.5MB generated bundle (artboards + a packaged editor) that
+# seed-canvas.mjs rebuilds from them on demand — a build output, not source.
+docs/sensorlab/design/sensorlab-screens.html

@@ -1,0 +1,168 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Rubik', 'Segoe UI', system-ui, sans-serif;
+           background: #0E1113; color: #E8EBED; -webkit-font-smoothing: antialiased; }
+    a { color: #B6BEC3; text-decoration: none; }
+    a:hover { color: #E8EBED; }
+    .tnum { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+    .trace { animation: scroll 5s linear infinite; }
+    @keyframes scroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-276px); }
+    }
+    .rec { animation: blink 1.3s ease-in-out infinite; }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: 0.25; }
+    }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; background: #0E1113; display: flex; flex-direction: column;">
+
+  <!-- top bar -->
+  <div style="display: flex; align-items: center; gap: 8px; padding: 18px 16px 6px 6px;">
+    <div style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8A949A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 6l-6 6 6 6"/>
+      </svg>
+    </div>
+    <div style="flex: 1; min-width: 0;">
+      <div style="font-size: 15px; font-weight: 400; color: #8A949A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Free Fall — Measuring g</div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2DD4E0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 12h3l2-6 3 12 3-9 2 3h7"/>
+      </svg>
+      <span style="font-size: 10px; font-weight: 600; letter-spacing: 1.4px; color: #2DD4E0;">INSTRUMENT</span>
+    </div>
+  </div>
+
+  <!-- step rail -->
+  <div style="padding: 6px 16px 0 16px;">
+    <div style="display: flex; gap: 5px;">
+      <div style="flex: 1; height: 5px; border-radius: 3px; background: #4A5459;"></div>
+      <div style="flex: 1; height: 5px; border-radius: 3px; background: #4A5459;"></div>
+      <div style="flex: 1; height: 5px; border-radius: 3px; background: #4A5459;"></div>
+      <div style="flex: 1; height: 5px; border-radius: 3px; background: #2DD4E0;"></div>
+      <div style="flex: 1; height: 5px; border-radius: 3px; background: #242C31;"></div>
+    </div>
+    <div style="font-size: 12px; color: #8A949A; margin-top: 8px;">Step 4 of 5 — <span style="color: #2DD4E0; font-weight: 500;">Experiment</span></div>
+  </div>
+
+  <!-- sensor chips -->
+  <div style="display: flex; gap: 7px; padding: 16px 16px 0 16px;">
+    <span style="display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px; border: 1px solid #2A5F66; background: #10272B; border-radius: 15px; font-size: 12px; color: #2DD4E0;">
+      <span style="width: 6px; height: 6px; border-radius: 3px; background: #2DD4E0;"></span>
+      Accelerometer
+    </span>
+    <span class="tnum" style="display: inline-flex; align-items: center; height: 30px; padding: 0 11px; border: 1px solid #242C31; border-radius: 15px; font-size: 12px; color: #8A949A;">200 Hz</span>
+    <span style="display: inline-flex; align-items: center; height: 30px; padding: 0 11px; border: 1px solid #242C31; border-radius: 15px; font-size: 12px; color: #8A949A;">3-axis → |a|</span>
+  </div>
+
+  <!-- readout -->
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; padding: 20px 16px 0 16px;">
+    <div>
+      <div style="font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: #5E686E;">|a| now</div>
+      <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 4px;">
+        <span class="tnum" style="font-size: 56px; font-weight: 500; line-height: 1; letter-spacing: -1.5px; color: #E8EBED;">9.81</span>
+        <span style="font-size: 15px; color: #8A949A;">m/s²</span>
+      </div>
+    </div>
+    <div style="text-align: right; padding-bottom: 4px;">
+      <div style="font-size: 11px; color: #5E686E;">peak</div>
+      <div class="tnum" style="font-size: 16px; font-weight: 500; color: #8A949A; margin-top: 1px;">9.94</div>
+      <div style="font-size: 11px; color: #5E686E; margin-top: 8px;">elapsed</div>
+      <div class="tnum" style="font-size: 16px; font-weight: 500; color: #8A949A; margin-top: 1px;">00:02.4</div>
+    </div>
+  </div>
+
+  <!-- live chart: 0-30 m/s², the same scale the impact spike will need -->
+  <div style="margin: 16px 16px 0 16px; padding: 12px 10px 6px 10px; background: #151A1D; border: 1px solid #222A2F; border-radius: 14px;">
+    <svg width="100%" viewBox="0 0 320 200" fill="none" style="display: block;">
+      <defs>
+        <clipPath id="plotclip">
+          <rect x="34" y="24" width="276" height="140"/>
+        </clipPath>
+      </defs>
+
+      <text x="8" y="15" font-family="Rubik, sans-serif" font-size="11" fill="#5E686E">|a| (m/s²)</text>
+
+      <path d="M34 164 L310 164" stroke="#2B343A" stroke-width="1"/>
+      <path d="M34 117 L310 117" stroke="#1C2328" stroke-width="1"/>
+      <path d="M34 71 L310 71" stroke="#1C2328" stroke-width="1"/>
+      <path d="M34 24 L310 24" stroke="#1C2328" stroke-width="1"/>
+      <path d="M34 24 L34 164" stroke="#2B343A" stroke-width="1"/>
+
+      <text x="28" y="168" text-anchor="end" font-family="Rubik, sans-serif" font-size="10.5" fill="#5E686E">0</text>
+      <text x="28" y="121" text-anchor="end" font-family="Rubik, sans-serif" font-size="10.5" fill="#5E686E">10</text>
+      <text x="28" y="75" text-anchor="end" font-family="Rubik, sans-serif" font-size="10.5" fill="#5E686E">20</text>
+      <text x="28" y="28" text-anchor="end" font-family="Rubik, sans-serif" font-size="10.5" fill="#5E686E">30</text>
+
+      <path d="M34 154.7 L310 154.7" stroke="#2A5F66" stroke-width="1.2" stroke-dasharray="5 4"/>
+      <text x="308" y="151" text-anchor="end" font-family="Rubik, sans-serif" font-size="9.5" fill="#4A8C93">trigger 2.0</text>
+
+      <g clip-path="url(#plotclip)">
+        <g class="trace">
+          <path d="M34 118.8 L46 118.2 L58 119.4 L70 117.9 L82 119.0 L94 117.6 L106 119.6 L118 118.4 L130 120.0 L142 118.0 L154 119.2 L166 117.8 L178 118.9 L190 119.7 L202 118.3 L214 117.7 L226 119.3 L238 118.6 L250 119.9 L262 118.1 L274 119.0 L286 117.6 L298 119.5 L310 118.8"
+                stroke="#2DD4E0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M310 118.8 L322 118.2 L334 119.4 L346 117.9 L358 119.0 L370 117.6 L382 119.6 L394 118.4 L406 120.0 L418 118.0 L430 119.2 L442 117.8 L454 118.9 L466 119.7 L478 118.3 L490 117.7 L502 119.3 L514 118.6 L526 119.9 L538 118.1 L550 119.0 L562 117.6 L574 119.5 L586 118.8"
+                stroke="#2DD4E0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+      </g>
+
+      <text x="172" y="192" text-anchor="middle" font-family="Rubik, sans-serif" font-size="10.5" fill="#5E686E">last 5 s — rolling</text>
+    </svg>
+  </div>
+
+  <!-- armed state -->
+  <div style="display: flex; flex-direction: column; gap: 9px; padding: 16px 16px 0 16px;">
+    <div style="display: flex; align-items: center; gap: 9px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2DD4E0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+        <path d="M12 3v5"/><path d="M12 16v5"/><circle cx="12" cy="12" r="3.5"/>
+      </svg>
+      <span style="font-size: 12.5px; color: #B6BEC3; line-height: 1.4;">Armed — capture marks the drop automatically below <span class="tnum" style="color: #2DD4E0;">2.0</span> m/s²</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 9px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5E686E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+        <rect x="8" y="4" width="8" height="16" rx="2"/><path d="M4 9v6M20 9v6"/>
+      </svg>
+      <span style="font-size: 12.5px; color: #8A949A;">Haptic + tone on trigger — you will not be looking at the screen</span>
+    </div>
+  </div>
+
+  <div style="flex: 1;"></div>
+
+  <!-- controls -->
+  <div style="padding: 0 16px 20px 16px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+      <div style="display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; background: #2A1416; border: 1px solid #5C2327; border-radius: 16px;">
+        <span class="rec" style="width: 8px; height: 8px; border-radius: 4px; background: #F05252;"></span>
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.8px; color: #F58787;">REC</span>
+        <span class="tnum" style="font-size: 12px; color: #F58787;">00:02.4</span>
+      </div>
+      <div style="height: 44px; display: flex; align-items: center; padding: 0 8px; font-size: 13px; color: #8A949A;">Cancel</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+      <div style="width: 68px; height: 68px; border-radius: 34px; background: #151A1D; border: 2px solid #2DD4E0; display: flex; align-items: center; justify-content: center;">
+        <div style="width: 22px; height: 22px; border-radius: 4px; background: #E8EBED;"></div>
+      </div>
+      <span style="font-size: 13px; color: #8A949A;">Stop &amp; analyse</span>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,41 @@
+{% load static %}<!doctype html>
+<html lang="{{ sensorlab_lang|default:'en' }}" dir="{{ sensorlab_dir|default:'ltr' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}SensorLab{% endblock %}</title>
+
+  {% comment %}
+    Rubik: decided in spec §7.3 for having genuinely good Hebrew *and* Latin
+    in one family, which a bilingual app needs more than a display face.
+  {% endcomment %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap">
+
+  <link rel="stylesheet" href="{% static 'sensorlab/css/sensorlab.css' %}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+  {% comment %}
+    SensorLab's own chrome. It never extends the main site's base template
+    and carries no link back out of /sensorlab/ — building_an_app.md Rule 3.
+  {% endcomment %}
+  <header class="sl-header">
+    <a class="sl-wordmark" href="{% url 'sensorlab:home' %}">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M2 12h3l2-6 3 12 3-9 2 3h7"/>
+      </svg>
+      <span>SensorLab</span>
+    </a>
+  </header>
+
+  <main data-screen="{% block screen %}{% endblock %}">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,81 @@
+/* SensorLab — shell styling only.
+ *
+ * SL-A1 deliberately ships the minimum: the real design system (tokens per
+ * mode, the component set, the instrument-mode scope) is SL-A4, spec §7.
+ * Anything added here before then is something SL-A4 has to undo.
+ *
+ * Logical properties (padding-inline, margin-inline-*) are used from the
+ * start so SL-A5's Hebrew/RTL mirroring is automatic rather than a rewrite.
+ */
+
+:root {
+  --sl-ground: #FAF9F7;
+  --sl-surface: #FFFFFF;
+  --sl-ink: #1A1A18;
+  --sl-ink-soft: #6B6862;
+  --sl-line: #EAE7E1;
+  /* The two semantic accents (spec §7.2). Declared here, used by nothing
+     yet: amber means a prediction, cyan means a measurement, and neither is
+     allowed to become decoration. */
+  --sl-prediction: #D08616;
+  --sl-measurement: #0E8E9B;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--sl-ground);
+  color: var(--sl-ink);
+  font-family: 'Rubik', 'Segoe UI', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.sl-header {
+  display: flex;
+  align-items: center;
+  padding-block: 16px;
+  padding-inline: 16px;
+  border-block-end: 1px solid var(--sl-line);
+  background: var(--sl-surface);
+}
+
+.sl-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px; /* spec §7.4: nothing tappable under 44px */
+  color: var(--sl-measurement);
+  text-decoration: none;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+
+.sl-wordmark span { color: var(--sl-ink); }
+
+.sl-shell {
+  padding-block: 32px 48px;
+  padding-inline: 16px;
+  max-width: 640px;
+}
+
+.sl-shell h1 {
+  margin: 0 0 10px;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+  line-height: 1.2;
+}
+
+.sl-shell p {
+  margin: 0 0 12px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #3D3B37;
+}
+
+.sl-muted { color: var(--sl-ink-soft); font-size: 13px; }
+
+.sl-shell a { color: var(--sl-ink); text-decoration: underline; }
+.sl-shell a:hover { color: var(--sl-ink-soft); }
