@@ -38,6 +38,28 @@ def sensor_check(request):
 
 
 @sensorlab_login_required
+def sensors(request):
+    """What this device can measure, and what has been agreed to (spec §2).
+
+    The states are filled in by the browser — only the device can answer
+    "is this sensor actually answering?" — so the server ships one slot per
+    sensor and the page reports what it finds.
+    """
+    from .models import SENSORS
+
+    labels = {
+        "accelerometer": "Accelerometer",
+        "linear-accelerometer": "Linear acceleration",
+        "gyroscope": "Gyroscope",
+        "magnetometer": "Magnetometer",
+        "camera": "Camera",
+        "microphone": "Microphone",
+    }
+    shown = [{"key": k, "label": labels.get(k, k.title())} for k in SENSORS if k in labels]
+    return render(request, "sensorlab/sensors.html", {"sensors": shown})
+
+
+@sensorlab_login_required
 def design(request):
     """The design reference (SL-A4, spec §7): every component, both modes.
 

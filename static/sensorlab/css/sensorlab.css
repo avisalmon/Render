@@ -87,6 +87,13 @@
 
 * { box-sizing: border-box; }
 
+/* `[hidden]` is display:none in the browser's own stylesheet, and ANY author
+   rule setting `display` outranks it. `.sl-button` sets inline-flex, so every
+   button here was immune to being hidden — the sensors screen showed an
+   "Allow" button on sensors that were not answering. Same shape as the
+   invisible front door: our own rule defeating what the markup said. */
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
   background: var(--sl-ground);

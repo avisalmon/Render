@@ -74,6 +74,29 @@ STRINGS = {
         "en": "Tracks and labs arrive in Epic B; the five-step runner in Epic D.",
         "he": "המסלולים והמעבדות יגיעו באפיק B, ומנוע חמשת השלבים באפיק D.",
     },
+    # sensors (SL-C2)
+    "sensors.title": {"en": "Your phone's instruments", "he": "המכשירים של הטלפון שלך"},
+    "sensors.blurb": {
+        "en": "What this device can measure, and what you have agreed to let SensorLab read.",
+        "he": "מה המכשיר הזה יודע למדוד, ומה הסכמת ש-SensorLab יקרא.",
+    },
+    "sensors.checking": {"en": "checking…", "he": "בודק…"},
+    "sensors.allow": {"en": "Allow", "he": "אפשר"},
+    "sensors.state_working": {"en": "working", "he": "פעיל"},
+    "sensors.state_silent": {"en": "present, but not answering", "he": "קיים, אך לא מגיב"},
+    "sensors.state_absent": {"en": "this phone does not have one", "he": "לטלפון הזה אין כזה"},
+    "sensors.state_present": {
+        "en": "there — needs your permission to test",
+        "he": "קיים — דורש את אישורך כדי לבדוק",
+    },
+    "sensors.state_needs_consent": {"en": "needs your permission", "he": "דורש את אישורך"},
+    "sensors.state_allowed": {"en": "allowed — thank you", "he": "אושר — תודה"},
+    "sensors.why": {
+        "en": "Your browser would hand these over without asking. SensorLab asks anyway, "
+              "per sensor, and you can withdraw at any time.",
+        "he": "הדפדפן שלך היה מוסר את אלה בלי לשאול. SensorLab שואל בכל זאת, לכל חיישן בנפרד, "
+              "ואפשר לבטל בכל רגע.",
+    },
     # errors
     "error.404_title": {"en": "Nothing here", "he": "אין כאן כלום"},
     "error.404_body": {"en": "That page does not exist.", "he": "הדף הזה לא קיים."},

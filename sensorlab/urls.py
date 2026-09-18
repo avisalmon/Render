@@ -2,6 +2,7 @@ from django.urls import include, path
 
 from . import auth_views, views
 from .api import router
+from .api.consent import SensorConsentItemView, SensorConsentView
 from .api.profile import MyProfileView
 from .api.schema import SchemaView
 
@@ -13,6 +14,7 @@ urlpatterns = [
     # Epic C spike: does this device actually give a web page its sensors?
     path("sensor-check/", views.sensor_check, name="sensor_check"),
     path("design/", views.design, name="design"),
+    path("sensors/", views.sensors, name="sensors"),
     # SL-A5: the switch, reachable without an account (spec §1).
     path("language/<str:code>/", views.set_language, name="set_language"),
     # Auth in SensorLab's own chrome (SL-A2). The accounts are the site's.
@@ -22,6 +24,9 @@ urlpatterns = [
     # The REST platform (SL-A3). Rule 6: infrastructure from the start, not
     # added later for the screens that happen to need it.
     path("api/profile/me/", MyProfileView.as_view(), name="api_profile_me"),
+    path("api/sensor-consent/", SensorConsentView.as_view(), name="api_sensor_consent"),
+    path("api/sensor-consent/<str:sensor>/", SensorConsentItemView.as_view(),
+         name="api_sensor_consent_item"),
     path("api/schema/", SchemaView.as_view(), name="api_schema"),
     path("api/", include(router.urls)),
 ]

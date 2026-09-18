@@ -441,17 +441,68 @@ the sentence describing it.** Explaining a rule beside the code it governs
 is good practice, so the fix belongs in the guard every time — read code,
 never prose. Both now strip comments first.
 
-### SL-C2 — asking, refusing, and being refused 🔵 next
+### SL-C2 — asking, refusing, and being refused ✅ — Epic C complete
+
+Marker: `sprsl7` · 16 tests
 
 Marker: `sprsl7`
 
-- [ ] The consent flow spec §2 commits to: explicit, visible, per-sensor,
+- [x] The consent flow spec §2 commits to: explicit, visible, per-sensor,
       never silent — the trust feature, not a footnote.
-- [ ] A denied permission is a first-class state with a way back, not an
+- [x] A denied permission is a first-class state with a way back, not an
       error page.
-- [ ] A lab that needs a sensor this device lacks is **refused clearly**
+- [x] A lab that needs a sensor this device lacks is **refused clearly**
       (spec §1: no degradation tier) rather than started and broken.
-- [ ] The capability report becomes a real screen, replacing the spike page.
+- [x] The capability report becomes a real screen, replacing the spike page.
+
+**The gate this app imposes on itself.** On Android the browser asks
+nothing — a page may read the accelerometer the moment it loads, which the
+spike confirmed. `request()` therefore refuses with `needs-consent` and
+takes **zero readings** before permission exists. That is the assertion
+that matters: if the sensor starts and a dialog appears afterwards, the
+data was already collected and the gate is theatre.
+
+`SensorConsent` is per sensor, and a withdrawal **keeps the row** and
+stamps `revoked_at` — "agreed Tuesday, withdrew Friday" is the honest
+record, and deleting it would read as though they never agreed at all.
+
+*Three bugs, all found by looking at the screen, all the same species —
+something true in the markup or the model, quietly overridden elsewhere:*
+
+1. **The screen built to refuse honestly was lying.** It told a machine
+   with a camera and microphone that it had neither, because the module
+   knew four sensors while the model knew ten and anything unlisted fell
+   through to `absent`. A hardware claim the code had never checked. All
+   fourteen tests passed while it was true, because none asked what the
+   *page says* about a sensor the module cannot probe.
+2. **A missing vocabulary made it guess.** `enumerateDevices()` reports
+   device kinds with no permission and no labels, so camera presence *is*
+   knowable — but knowing hardware exists is not knowing it works, so
+   `working` and `silent` would have been inventions too. Hence a fourth
+   state, **`present`**: it is there, we have not opened it, and saying
+   more would be making things up. It is also the right state for consent
+   to sit behind — "there, needs your permission to test".
+3. **`[hidden]` did not hide.** `.sl-button` sets `display: inline-flex`,
+   which outranks the browser's own `[hidden] { display: none }` — so
+   **every** button in the app was immune to being hidden, and the sensors
+   screen offered "Allow" on sensors that were not answering. The same
+   shape as SL-A4.1's invisible front door: our stylesheet defeating what
+   the markup said. Fixed app-wide, with a guard.
+
+*And two wasted diagnostic cycles worth remembering.* I grepped a **login
+redirect** for a string and concluded the template was stale — the page is
+behind the gate, so curl never saw it. Then I trusted an HTTP 200 from a
+**zombie server** while a second one held the port. Both are the same error
+as the bugs themselves: measuring something adjacent to the thing I
+actually wanted to know.
+
+---
+
+## Epic C — complete
+
+Two sprints, 24 tests, plus the public spike that started it. The premise
+is proven on real hardware, the layer exists, and nothing is read from a
+person's phone without them saying yes.
 
 ---
 

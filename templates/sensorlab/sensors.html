@@ -1,0 +1,80 @@
+{% extends "sensorlab/base.html" %}
+{% load sensorlab %}
+
+{% block title %}{% t "sensors.title" %} — SensorLab{% endblock %}
+{% block screen %}sensors{% endblock %}
+
+{% block content %}
+<section class="sl-shell">
+  <h1>{% t "sensors.title" %}</h1>
+  <p class="sl-muted">{% t "sensors.blurb" %}</p>
+
+  <div style="display: flex; flex-direction: column; gap: 10px; margin-block-start: 18px;">
+    {% for sensor in sensors %}
+      <div class="sl-card" data-sensor="{{ sensor.key }}">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+          <div>
+            <div style="font-weight: 500;">{{ sensor.label }}</div>
+            <div class="sl-muted" data-state>{% t "sensors.checking" %}</div>
+          </div>
+          <button type="button" class="sl-button sl-button-quiet" data-consent hidden>
+            {% t "sensors.allow" %}
+          </button>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <p class="sl-muted" style="margin-block-start: 18px;">{% t "sensors.why" %}</p>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+  var s = window.sensorlab.sensors;
+  var text = {
+    working: "{% t 'sensors.state_working' %}",
+    silent: "{% t 'sensors.state_silent' %}",
+    absent: "{% t 'sensors.state_absent' %}",
+    present: "{% t 'sensors.state_present' %}",
+    needsConsent: "{% t 'sensors.state_needs_consent' %}",
+    allowed: "{% t 'sensors.state_allowed' %}"
+  };
+
+  document.querySelectorAll("[data-sensor]").forEach(function (card) {
+    var key = card.dataset.sensor;
+    var state = card.querySelector("[data-state]");
+    var button = card.querySelector("[data-consent]");
+
+    function paint(verdict, consented) {
+      if (verdict.state === "absent") { state.textContent = text.absent; return; }
+      if (verdict.state === "silent") { state.textContent = text.silent; return; }
+      if (verdict.state === "present" && !consented) {
+        state.textContent = text.present;
+        button.hidden = false;
+        return;
+      }
+      if (!consented) {
+        state.textContent = text.needsConsent;
+        button.hidden = false;
+        return;
+      }
+      state.textContent = text.working;
+      button.hidden = true;
+    }
+
+    s.probe(key, {timeoutMs: 900}).then(function (verdict) {
+      paint(verdict, s.hasConsent(key));
+      button.addEventListener("click", function () {
+        s.grant(key).then(function () {
+          state.textContent = text.allowed;
+          button.hidden = true;
+        });
+      });
+    });
+  });
+})();
+</script>
+{% endblock %}

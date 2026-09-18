@@ -72,6 +72,7 @@ markers = [
     "sprz7: SPR-Z.7 memz real content, tier admin, and the first deploy",
     "sprz8: SPR-Z.8 memz AI players",
     "sprz9: SPR-Z.9 memz shared-game uploads",
+    "sprz10: SPR-Z.10 memz the round Avi asked for: image swaps, rating in the reveal, nobody named",
     "actz6: ACT-Z.6 memz WhatsApp invite share button",
     "actz8: ACT-Z.8 memz second QA pass: the creator preview and the voting/result screens",
     "actz9: ACT-Z.9 memz third QA pass: clock-skew-proof timers, and the reveal slideshow",
@@ -84,6 +85,7 @@ markers = [
     "sprsl4: SL-A4 SensorLab the design system (spec 7), incl. real-browser guards",
     "sprsl5: SL-A5 SensorLab bilingual plumbing, and the language it serves",
     "sprsl6: SL-C1 SensorLab one way to open a sensor (spec 4.1)",
+    "sprsl7: SL-C2 SensorLab consent, and refusing with the right reason",
     "smoke: the fast gate, run on every push (see tests/test_smoke.py)",
 ]
 
