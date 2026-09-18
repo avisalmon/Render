@@ -870,6 +870,11 @@ def browser():
         pytest.skip(f"no browser available: {exc}")
 
 
+# Which palette this run measures. Light by default, so the contract keeps
+# meaning what it always meant; the night-mode run sets it to dark.
+_THEME = os.environ.get("MZ_THEME", "light")
+
+
 def _open(browser, live_server, email, path):
     """Open a screen as somebody, or as nobody.
 
@@ -880,6 +885,20 @@ def _open(browser, live_server, email, path):
     """
     context = browser.new_context(viewport=DESKTOP)
     page = context.new_page()
+
+    # SPR-M.49 — pin the palette, because otherwise this suite reads the clock.
+    #
+    # Night mode picks itself from the hour when nobody has chosen (that is the
+    # feature), so without this the contract measures the light palette before
+    # 19:00 and the dark one after it. A suite that passes in the morning and
+    # fails at night teaches people to re-run it rather than read it, and the
+    # failure it reports is real either way, which makes the habit worse.
+    #
+    # `MZ_THEME` picks which palette is under test; `test_matazim_night_mode.py`
+    # runs the same contract again with it set to dark.
+    page.add_init_script(
+        "try{localStorage.setItem('mz-theme','%s')}catch(e){}" % _THEME
+    )
 
     if email is None:
         page.goto(live_server.url + path, wait_until="domcontentloaded")

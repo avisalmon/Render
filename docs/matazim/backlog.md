@@ -3534,3 +3534,101 @@ Set `MATAZIM_ADMIN_TOKEN` in Render to a long random string. Unset means closed,
 so until he does, the endpoint answers only a logged-in superuser and nothing
 else changes. The secret never appears in this repo, in this backlog, or in a
 chat transcript.
+
+## SPR-M.49 — מצב לילה, and the first sprint the queue produced  `DONE 2026-09-18`
+
+**Goal:** the two requests sitting approved in the queue since 13.09, read from
+a chat through the key SPR-M.48 built:
+
+> #1  "להוסיף מצב לילה ויום"
+> #2  "מצב לילה אוטומתי לפי שעות היום"
+
+One feature with two halves, plus a third state neither request names and the
+product needs: a person overriding the clock.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.49.1 | A night palette, as tokens only | request #1 | DONE |
+| F-M.49.2 | The clock chooses it, before the page paints | request #2 | DONE |
+| F-M.49.3 | A switch, beside the bell, that outranks the clock | request #1 | DONE |
+| F-M.49.4 | The screen contract stops reading the wall clock | | DONE |
+
+### Only the tokens change
+
+Every screen already draws itself from `:root`, so night mode is a palette swap
+rather than a second stylesheet, and a screen written next year is dark without
+anybody remembering to make it dark. `test_every_colour_token_has_a_night_value`
+is what keeps that true: it reads both blocks and fails if a colour is added to
+one and not the other.
+
+Each dark value was measured against the surface it sits on, the same way the
+light palette was. Dark is where this goes wrong quietly, because grey on grey
+looks restful and is unreadable.
+
+### Decided before the paint, on the reader's own clock
+
+The choice is made by an inline script in the head. That is the one place a
+blocking script earns its keep: decide after the stylesheet paints and somebody
+opening the site at night gets a white flash first, which is the single most
+common reason people distrust a night mode.
+
+The hour comes from the reader's clock, not the server's. UTC is what the server
+knows, and a member reading at 21:00 in Israel is not in the same evening as a
+server that thinks it is 18:00. Night runs 19:00 to 06:00, and a page left open
+across the boundary follows it.
+
+A press of the switch stores a choice and the clock stops arguing. There is
+deliberately no third press back to automatic: a three-state toggle nobody can
+predict is worse than a two-state one.
+
+### What the measuring found, and the gap that matters
+
+The sprint's own contrast sweep covered eight screens and reported **zero**
+failures. The screen contract, run with the dark palette pinned, covered 84 and
+found **38**.
+
+That gap is the whole argument for the screen contract, restated: eight screens
+were the ones I thought to check, and 84 are the ones that exist.
+
+Four root causes, all the same shape, a token doing a job it was not measured
+for:
+
+| What broke | Why |
+|---|---|
+| Every link, 2.65:1 | purple is an excellent button and poor text on a dark ground |
+| Every secondary button label, 4.05:1 | the blue was *lightened* for the dark page, which lowers the contrast of the white sitting on it |
+| The מסלול step markers, 1.79:1 | `--mz-teal-text` means "teal you read", and here it was a surface under white text |
+| Tags, `.mz-btn-done`, `.mz-chosen`, 2.18:1 | hardcoded ink that could not follow the palette anywhere |
+
+So there are now three teals with three jobs: identity, text, and a surface that
+carries white. The same distinction the light palette already drew between
+`--mz-teal` and `--mz-teal-text`, extended one step further.
+
+### Two mistakes of mine worth recording
+
+A blanket replace of `color: var(--mz-purple)` missed the one occurrence written
+with `!important`, and broke a different one that was already correct:
+`.mz-lamp-count` is a white pill on the purple lamp, so its ink must stay the
+dark purple. The night contract caught both.
+
+And `test_the_choice_is_made_before_the_page_paints` passed three times on code
+that had lost the thing it checks. First because the phrase survived in a
+comment; then because the once-a-minute timer contains an identical
+`setAttribute` call. It now pins `setAttribute("data-theme", decide())`, which
+is the pre-paint decision and nothing else. A test that cannot fail is worse
+than no test, because it is counted.
+
+### A suite that read the wall clock
+
+The screen contract picks up whatever the clock chose, so it measured the light
+palette before 19:00 and the dark one after. It was passing in the morning and
+failing at night, and the failure was real both times.
+
+It is pinned to light now, with `MZ_THEME` selecting the palette, and
+`test_matazim_night_mode.py` runs the whole catalogue again in the dark. 84
+screens pass in each.
+
+### Still hardcoded, on purpose
+
+`.mz-qr` stays white in both palettes. A QR code is read by a camera looking for
+dark on light, and a dark one does not scan.

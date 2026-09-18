@@ -85,12 +85,26 @@
      painted with it was under the line. Identity keeps --mz-teal; anything a
      person has to read uses this. */
   --mz-teal-text: #077460;
+  /* A teal *surface* carrying white text, as opposed to teal you read.
+     White on it is 5.71:1, and it stays this value at night: lightening
+     it for the dark page took the white label to 1.79:1 on the מסלול
+     markers, which the night contract caught. */
+  --mz-teal-solid: #077460;
   --mz-teal-soft: #e3f8f2;
 
   /* action */
   --mz-purple: #6b4cd6;
   --mz-purple-deep: #5739bd;
   --mz-purple-soft: #eeeafc;
+  /* Purple as *text*. Identical to --mz-purple in daylight; night mode
+     lightens it, because the button colour measured 2.65:1 as a link on
+     the dark page and every link in the product used it. */
+  --mz-link: #6b4cd6;
+  --mz-tag-done-ink: #0a6b58;
+  --mz-tag-doing-bg: #e6efff;
+  --mz-tag-doing-ink: #1d4ed8;
+  --mz-alert-bg: #fdecec;
+  --mz-alert-ink: #8a1f1f;
 
   /* secondary action */
   --mz-blue: #1d6e96;
@@ -123,6 +137,96 @@
   --mz-container: 1180px;
   --mz-font: "Rubik", "Segoe UI", Arial, sans-serif;
 }
+
+/* ---------------------------------------------------------- מצב לילה
+ *
+ * SPR-M.49, from two requests Avi filed on 13.09: "להוסיף מצב לילה ויום" and
+ * "מצב לילה אוטומטי לפי שעות היום".
+ *
+ * Only the tokens change. Every screen in this product already draws itself
+ * from them, so night mode is a palette swap rather than a second stylesheet,
+ * and a screen built next year is dark without anybody remembering to make it
+ * dark. The one rule that shaped the light palette holds here too: teal is
+ * identity, purple is action.
+ *
+ * Every colour below was measured against the surface it sits on, the same way
+ * the light palette was, and the numbers are in the comments. Dark is where
+ * this goes wrong quietly: grey-on-grey looks restful and is unreadable, and
+ * the people reading this are fourteen and often on a phone at night.
+ */
+:root[data-theme="dark"] {
+  /* Identity keeps its brand teal; text uses the lighter one, 8.6:1 on a card. */
+  --mz-teal: #0fc49b;
+  --mz-teal-deep: #14d8ab;
+  --mz-teal-text: #3fd9b0;
+  --mz-teal-soft: #10312a;
+  --mz-teal-solid: #077460;   /* unchanged: see the light block */
+
+  /* White on this purple is 5.79:1, so the action colour survives the swap
+     unchanged, which keeps every primary button recognisably the same button. */
+  --mz-purple: #6b4cd6;
+  --mz-purple-deep: #7d5fe0;
+  --mz-purple-soft: #241f3d;
+  --mz-link: #a48cf5;   /* 5.59:1 on a card */
+  --mz-tag-done-ink: #5ee3bd;   /* on --mz-teal-soft #10312a */
+  --mz-tag-doing-bg: #17263f;
+  --mz-tag-doing-ink: #8fbcff;
+  --mz-alert-bg: #3a1d1d;
+  --mz-alert-ink: #ffb4b4;
+
+  /* Unchanged from daylight on purpose. This is a surface that carries
+     white text, so lightening it for a dark page lowers the label's
+     contrast rather than raising it: 5.64:1 became 4.05:1. */
+  --mz-blue: #1d6e96;
+  --mz-blue-deep: #175a7c;
+
+  --mz-ink: #eef2f8;     /* 13.67:1 on a card */
+  --mz-body: #c6cedd;    /* 9.71 on a card, 11.01 on the page */
+  --mz-muted: #9aa5ba;   /* 6.19 on a card, 7.02 on the page */
+  --mz-page: #141a26;
+  --mz-card: #1e2533;
+  --mz-line: #2f394b;
+
+  /* doing and late are lightened: the light-mode blue measured 4.17:1 here and
+     the red 4.08:1, both under the line for body text. */
+  --mz-done: #10b981;    /* 6.05 */
+  --mz-doing: #5b9bf8;   /* 5.48 */
+  --mz-fix: #f59e0b;     /* 7.15 */
+  --mz-late: #f87171;    /* 5.55 */
+  --mz-idle: #8d99b0;    /* 5.35 */
+
+  /* A shadow tuned for a white page is invisible on a dark one, and the cards
+     stop being cards. Depth comes from a darker shadow and the line instead. */
+  --mz-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  --mz-shadow-lift: 0 10px 28px rgba(0, 0, 0, 0.5);
+}
+
+/* Two places draw on a fixed light ground rather than a token, and would glow
+   white in the middle of a dark screen. */
+:root[data-theme="dark"] .mz-photo {
+  background-image: linear-gradient(135deg, #10312a, #241f3d);
+}
+:root[data-theme="dark"] .mz-welcome { background: rgba(0, 0, 0, .66); }
+
+/* The toggle itself. Same size and shape as the bell beside it, because they
+   are the same kind of thing: a small control in the corner of the header. */
+.mz-theme-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--mz-line);
+  border-radius: 999px;
+  background: var(--mz-card);
+  color: var(--mz-body);
+  cursor: pointer;
+  padding: 0;
+}
+.mz-theme-btn:hover { color: var(--mz-ink); border-color: var(--mz-muted); }
+.mz-theme-btn:focus-visible { outline: 3px solid var(--mz-purple); outline-offset: 2px; }
+.mz-theme-btn .mz-theme-moon { display: none; }
+:root[data-theme="dark"] .mz-theme-btn .mz-theme-moon { display: block; }
+:root[data-theme="dark"] .mz-theme-btn .mz-theme-sun { display: none; }
 
 /* ---------------------------------------------------------------- base */
 
@@ -158,7 +262,7 @@ h1, h2, h3, h4 {
   line-height: 1.25;
 }
 
-a { color: var(--mz-purple); text-decoration: none; }
+a { color: var(--mz-link); text-decoration: none; }
 a:hover { color: var(--mz-purple-deep); }
 img { max-width: 100%; height: auto; display: block; }
 
@@ -208,7 +312,7 @@ img { max-width: 100%; height: auto; display: block; }
   color: var(--mz-ink);
   border-color: var(--mz-line);
 }
-.mz-btn-ghost:hover { border-color: var(--mz-purple); color: var(--mz-purple); }
+.mz-btn-ghost:hover { border-color: var(--mz-link); color: var(--mz-link); }
 
 /* ---------------------------------------------------------------- header */
 
@@ -529,7 +633,7 @@ img { max-width: 100%; height: auto; display: block; }
   place-items: center;
   border-radius: 50%;
   background: var(--mz-purple-soft);
-  color: var(--mz-purple);
+  color: var(--mz-link);
 }
 .mz-welcome-card h2 { font-size: 1.35rem; }
 .mz-welcome-note {
@@ -579,13 +683,13 @@ img { max-width: 100%; height: auto; display: block; }
   padding: 11px 14px;
   border: 1px solid var(--mz-line);
   border-radius: var(--mz-radius-sm);
-  background: #fff;
+  background: var(--mz-card);
   font: inherit;
   color: var(--mz-ink);
 }
 .mz-field input:focus {
   outline: none;
-  border-color: var(--mz-purple);
+  border-color: var(--mz-link);
   box-shadow: 0 0 0 3px var(--mz-purple-soft);
 }
 .mz-field input:disabled { background: var(--mz-page); color: var(--mz-muted); }
@@ -600,7 +704,7 @@ img { max-width: 100%; height: auto; display: block; }
   border-color: var(--mz-line);
   margin-top: 0;
 }
-.mz-btn-google:hover { border-color: var(--mz-purple); color: var(--mz-ink); }
+.mz-btn-google:hover { border-color: var(--mz-link); color: var(--mz-ink); }
 
 .mz-or {
   display: flex;
@@ -622,9 +726,9 @@ img { max-width: 100%; height: auto; display: block; }
   margin-bottom: 18px;
   padding: 12px 14px;
   border-radius: var(--mz-radius-sm);
-  background: #fdecec;
+  background: var(--mz-alert-bg);
   border: 1px solid #f5c2c2;
-  color: #8a1f1f;
+  color: var(--mz-alert-ink);
   font-size: .9rem;
 }
 .mz-alert-ok { background: var(--mz-teal-soft); border-color: rgba(15,196,155,.4); color: #0a6b58; }
@@ -725,8 +829,10 @@ img { max-width: 100%; height: auto; display: block; }
   font-size: .78rem;
   font-weight: 500;
 }
-.mz-tag-done { background: var(--mz-teal-soft); color: #0a6b58; }
-.mz-tag-doing { background: #e6efff; color: #1d4ed8; }
+/* Tokenised in SPR-M.49. These were hardcoded, so a tag stayed dark-green
+   on dark-green when the palette swapped: 2.18:1. */
+.mz-tag-done { background: var(--mz-teal-soft); color: var(--mz-tag-done-ink); }
+.mz-tag-doing { background: var(--mz-tag-doing-bg); color: var(--mz-tag-doing-ink); }
 .mz-tag-idle { background: var(--mz-page); color: var(--mz-muted); }
 
 .mz-inline-form { display: inline; }
@@ -752,7 +858,7 @@ img { max-width: 100%; height: auto; display: block; }
 
 .mz-eyebrow {
   margin: 0 0 4px;
-  color: var(--mz-purple);
+  color: var(--mz-link);
   font-size: .82rem;
   font-weight: 500;
 }
@@ -768,7 +874,7 @@ img { max-width: 100%; height: auto; display: block; }
   border-radius: var(--mz-radius-sm);
   color: var(--mz-ink);
 }
-.mz-lessons a:hover { border-color: var(--mz-purple); }
+.mz-lessons a:hover { border-color: var(--mz-link); }
 .mz-lessons svg { margin-inline-start: auto; color: var(--mz-muted); }
 .mz-lesson-n {
   flex: none;
@@ -778,7 +884,7 @@ img { max-width: 100%; height: auto; display: block; }
   place-items: center;
   border-radius: 50%;
   background: var(--mz-purple-soft);
-  color: var(--mz-purple);
+  color: var(--mz-link);
   font-size: .85rem;
   font-weight: 500;
 }
@@ -848,7 +954,7 @@ img { max-width: 100%; height: auto; display: block; }
 }
 .mz-lesson-rail a:hover { background: var(--mz-page); }
 .mz-lesson-rail .is-current a { background: var(--mz-purple-soft); color: var(--mz-ink); font-weight: 500; }
-.mz-rail-task a { color: var(--mz-purple); font-weight: 500; }
+.mz-rail-task a { color: var(--mz-link); font-weight: 500; }
 
 /* --- the task --- */
 
@@ -931,7 +1037,7 @@ img { max-width: 100%; height: auto; display: block; }
   font-weight: 700;
 }
 /* White sits on this one, so the background is what has to be dark enough. */
-.mz-path-mark[data-tone="teal"] { background: var(--mz-teal-text); }
+.mz-path-mark[data-tone="teal"] { background: var(--mz-teal-solid); }
 .mz-path-mark[data-tone="purple"] { background: var(--mz-purple); }
 .mz-path-mark[data-tone="blue"] { background: var(--mz-blue); }
 .mz-path-body {
@@ -942,7 +1048,7 @@ img { max-width: 100%; height: auto; display: block; }
   padding: 20px 22px 22px;
 }
 .mz-path-body h2 { font-size: 1.15rem; margin-bottom: 2px; }
-.mz-path-lead { margin: 0 0 10px; color: var(--mz-purple); font-weight: 500; }
+.mz-path-lead { margin: 0 0 10px; color: var(--mz-link); font-weight: 500; }
 .mz-path-body p:last-of-type { margin-bottom: 0; }
 .mz-path-body .mz-btn { margin-top: 16px; }
 
@@ -952,7 +1058,7 @@ img { max-width: 100%; height: auto; display: block; }
   padding: 3px 12px;
   border-radius: 20px;
   background: var(--mz-purple-soft);
-  color: var(--mz-purple);
+  color: var(--mz-link);
   font-size: .8rem;
   font-weight: 500;
 }
@@ -963,7 +1069,7 @@ img { max-width: 100%; height: auto; display: block; }
    colour and the colour completion carries everywhere else in the system. */
 .mz-btn-done {
   background: var(--mz-teal-soft);
-  color: #0a6b58;
+  color: var(--mz-tag-done-ink);
   border-color: rgba(15, 196, 155, .45);
   cursor: default;
 }
@@ -1014,9 +1120,11 @@ img { max-width: 100%; height: auto; display: block; }
   padding-inline: 10px !important;
   border: 1px dashed var(--mz-line);
   border-radius: var(--mz-radius-sm);
-  color: var(--mz-purple) !important;
+  /* Text, so it takes the link token. The !important is why the sweep
+     over `color: var(--mz-purple);` missed it. */
+  color: var(--mz-link) !important;
 }
-.mz-nav-staff:hover { border-color: var(--mz-purple); }
+.mz-nav-staff:hover { border-color: var(--mz-link); }
 
 /* ---------------------------------------------------------------- joining */
 
@@ -1050,12 +1158,12 @@ img { max-width: 100%; height: auto; display: block; }
   border-radius: var(--mz-radius-sm);
   cursor: pointer;
 }
-.mz-choice:hover { border-color: var(--mz-purple); }
+.mz-choice:hover { border-color: var(--mz-link); }
 .mz-choice:has(input:checked) {
-  border-color: var(--mz-purple);
+  border-color: var(--mz-link);
   background: var(--mz-purple-soft);
 }
-.mz-choice input { width: 20px; height: 20px; accent-color: var(--mz-purple); flex: none; }
+.mz-choice input { width: 20px; height: 20px; accent-color: var(--mz-link); flex: none; }
 .mz-choice-name { display: block; color: var(--mz-ink); font-weight: 500; }
 .mz-choice-meta { display: block; color: var(--mz-muted); font-size: .82rem; }
 
@@ -1064,14 +1172,14 @@ img { max-width: 100%; height: auto; display: block; }
   padding: 11px 14px;
   border: 1px solid var(--mz-line);
   border-radius: var(--mz-radius-sm);
-  background: #fff;
+  background: var(--mz-card);
   font: inherit;
   color: var(--mz-ink);
   resize: vertical;
 }
 .mz-field textarea:focus {
   outline: none;
-  border-color: var(--mz-purple);
+  border-color: var(--mz-link);
   box-shadow: 0 0 0 3px var(--mz-purple-soft);
 }
 
@@ -1094,6 +1202,8 @@ img { max-width: 100%; height: auto; display: block; }
   margin: 14px 0;
   border: 1px solid var(--mz-line);
   border-radius: var(--mz-radius-sm);
+  /* Stays white in both palettes on purpose: a QR code is read by a camera
+     looking for dark-on-light, and a dark one does not scan. */
   background: #fff;
 }
 
@@ -1142,7 +1252,7 @@ img { max-width: 100%; height: auto; display: block; }
   padding: 10px 14px;
   border-radius: var(--mz-radius-sm);
   background: var(--mz-teal-soft);
-  color: #0a6b58;
+  color: var(--mz-tag-done-ink);
   font-size: .9rem;
 }
 .mz-btn:disabled { opacity: .45; cursor: not-allowed; }
@@ -1300,7 +1410,7 @@ img { max-width: 100%; height: auto; display: block; }
   text-decoration: none;
   color: inherit;
 }
-.mz-roster-who:hover .mz-roster-name { color: var(--mz-purple); }
+.mz-roster-who:hover .mz-roster-name { color: var(--mz-link); }
 .mz-roster-name { font-weight: 600; color: var(--mz-ink); }
 
 .mz-roster-progress {
@@ -1384,7 +1494,7 @@ a.mz-training-title {
   min-height: 44px;
   text-decoration: none;
 }
-a.mz-training-title:hover { color: var(--mz-purple); }
+a.mz-training-title:hover { color: var(--mz-link); }
 
 /* יציאה sits in the header on every signed-in page, and measured 35.6px. */
 .mz-header-action .mz-linkbtn,
@@ -1585,7 +1695,7 @@ a.mz-training-title:hover { color: var(--mz-purple); }
   color: var(--mz-ink);
 }
 .mz-track-row:last-child a { border-bottom: 0; }
-.mz-track-row a:hover .mz-track-title { color: var(--mz-purple); }
+.mz-track-row a:hover .mz-track-title { color: var(--mz-link); }
 .mz-track-row .mz-track-n {
   flex: 0 0 28px;
   height: 28px;
@@ -1684,7 +1794,7 @@ a.mz-training-title:hover { color: var(--mz-purple); }
   border: 1px solid var(--mz-line);
   border-radius: 12px;
   padding: 8px 10px;
-  background: #fff;
+  background: var(--mz-card);
 }
 
 .mz-file-btn {
@@ -1715,7 +1825,7 @@ a.mz-training-title:hover { color: var(--mz-purple); }
 }
 
 .mz-file:focus-within {
-  border-color: var(--mz-purple);
+  border-color: var(--mz-link);
   box-shadow: 0 0 0 3px rgba(107, 76, 214, 0.18);
 }
 
@@ -1852,6 +1962,11 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
   padding: 0 6px;
   border-radius: 999px;
   background: #fff;
+  /* The button purple, not the link purple, and not a token that follows
+     the palette: this pill is white in both modes because it sits on the
+     purple lamp. The blanket move to --mz-link in SPR-M.49 lightened it to
+     1.79:1 on its own white ground, which the night run of the screen
+     contract caught on five screens. */
   color: var(--mz-purple);
   font-size: .78rem;
   font-weight: 700;
@@ -2137,7 +2252,7 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
   background: var(--mz-card);
   cursor: pointer;
 }
-.mz-quiz label:hover { border-color: var(--mz-purple); }
+.mz-quiz label:hover { border-color: var(--mz-link); }
 .mz-quiz-feedback { margin: 10px 0 0; color: var(--mz-body); }
 .mz-quiz-feedback.is-right { color: var(--mz-teal-text); font-weight: 500; }
 
@@ -2157,7 +2272,7 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
   flex: none;
 }
 .mz-bell:hover { background: var(--mz-page); color: var(--mz-ink); }
-.mz-bell.has-unread { color: var(--mz-purple); }
+.mz-bell.has-unread { color: var(--mz-link); }
 
 .mz-bell-count {
   position: absolute;
