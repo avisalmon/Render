@@ -1,5 +1,5 @@
-{% load static %}<!doctype html>
-<html lang="{{ sensorlab_lang|default:'en' }}" dir="{{ sensorlab_dir|default:'ltr' }}">
+{% load static sensorlab %}<!doctype html>
+<html lang="{{ request.sensorlab_language|default:'en' }}" dir="{{ request.sensorlab_dir|default:'ltr' }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -29,6 +29,16 @@
         <path d="M2 12h3l2-6 3 12 3-9 2 3h7"/>
       </svg>
       <span>SensorLab</span>
+    </a>
+
+    {% comment %}
+      The switch (spec §1). A link rather than script, so it works for a
+      visitor who has not signed in yet — the sign-in page itself has to be
+      readable in Hebrew.
+    {% endcomment %}
+    <a class="sl-lang" href="{% url 'sensorlab:set_language' request.sensorlab_other_language %}"
+       title="{% t 'lang.switch_label' %}" lang="{{ request.sensorlab_other_language }}">
+      {% t "lang.switch_to" %}
     </a>
   </header>
 

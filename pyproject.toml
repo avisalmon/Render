@@ -81,6 +81,7 @@ markers = [
     "sprsl2: SL-A2 SensorLab auth in its own chrome, and the profile",
     "sprsl3: SL-A3 SensorLab the REST platform",
     "sprsl4: SL-A4 SensorLab the design system (spec 7), incl. real-browser guards",
+    "sprsl5: SL-A5 SensorLab bilingual plumbing, and the language it serves",
     "smoke: the fast gate, run on every push (see tests/test_smoke.py)",
 ]
 

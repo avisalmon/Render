@@ -291,29 +291,68 @@ appearance, and unit tests have no opinion about appearance. The four
 browser guards added here are the first things in this app that can fail
 for those reasons.
 
-### SL-A5 — Bilingual plumbing 🔵 next
+### SL-A5 — Bilingual plumbing ✅ — Epic A complete
 
 Marker: `sprsl5`
 
-- [ ] Django i18n for interface strings + the Hebrew catalogue. (Authored
-      *content* is `_en`/`_he` model fields instead — that arrives in SL-B1.)
-- [ ] **Activate the profile's language for the request** (found in SL-A2).
-      Without it, Django's own strings — form labels, validation errors —
-      render in the *site's* language (`he`) regardless of what SensorLab
-      is serving. SensorLab's language is neither the site setting nor the
-      browser's guess. Must not leak across requests: activation belongs in
-      SensorLab's own middleware or a `with translation.override(...)`,
-      never a bare `activate()` in a view.
-- [ ] `dir` driven by the profile's language; the language switch control
-      wired to `PATCH profile/me/`.
-- [ ] Mirroring verified across every component on the reference page.
-- [ ] Test: the same screen in both languages, asserting the chrome mirrors
-      **and** that a chart's axis/numerals do not (§7.7).
+- [x] SensorLab's interface copy in `sensorlab/strings.py`, both languages
+      side by side, read through a `{% t "key" %}` tag.
+- [x] **Activate the profile's language for the request** — the requirement
+      SL-A2 uncovered. `SensorLabLanguageMiddleware`, path-scoped to
+      `/sensorlab/`, using `translation.override` so nothing leaks to the
+      next request on the same worker. Tested from both sides: the language
+      is restored afterwards, and no project-wide setting changes.
+- [x] `dir` driven by the language; the switch reachable **without an
+      account**, because otherwise the sign-in page itself could not be read
+      in Hebrew. Signed in, it also writes the profile, so the choice
+      follows the person to a new device.
+- [x] Profile beats a stale session value; an unknown language is a 404.
+- [x] Mirroring verified live: the switch sits at x=314 in English and x=16
+      in Hebrew on a 390px page, 44px tall in both.
+- [x] §7.7 proven: the chrome mirrors, and every chart still carries
+      `dir="ltr"`.
+- [x] 13 tests. Demo: `sl-a5-en.png`, `sl-a5-he.png`, `sl-a5-he-login.png`.
 
-**Done when:** the app runs end to end in Hebrew with the layout mirrored,
-charts unmirrored, and the switch persisting across sessions.
+**Decision recorded: no gettext, deliberately.** `LOCALE_PATHS` is
+configured on this project but there is no `locale/` directory, no `.po` or
+`.mo` anywhere in the repo, and `msgfmt` is not installed here — the Hebrew
+apps on this site are Hebrew because their templates are written in Hebrew.
+Adding gettext for SensorLab would mean a build step needing GNU gettext
+binaries present both here and on Render, for exactly two languages whose
+copy this app already owns. So the interface uses the **same paradigm the
+data model already chose for content** (`data_model.md` §11: two named
+languages, stored side by side) — one bilingual mechanism in the app rather
+than two. Django's *own* strings are the exception that genuinely needs the
+real machinery, and the middleware is what gives it to them.
+
+*A fix from SL-A2 became a bug here.* Giving the forms SensorLab's own copy
+correctly stopped Django's Hebrew labels appearing on the English page — but
+that copy was English-only, so the moment the rest of the app became
+bilingual, the Hebrew sign-in page had Hebrew headings and buttons above
+English field labels. Found by looking at it. The forms now read the same
+catalogue as everything else and are told the request's language. The
+general lesson: a fix is correct relative to the assumptions around it, and
+those assumptions moved.
+
+*And a test that emptied its own input.* The helper exempting "text marked
+as another language" matched **any** element with a `lang` attribute —
+including `<html lang="he">`, whose closing tag ends the document. It
+stripped the whole page: the Hebrew assertion failed loudly, and the English
+one **passed for the wrong reason**, with nothing left to search. A helper
+that empties its input is the most dangerous kind of green, and it is only
+visible when one assertion using it fails while another passes.
 
 ---
+
+## Epic A — complete
+
+Five sprints, 49 tests of its own. The app exists and is sealed, has its own
+front door, a documented API, a design system, and runs in two languages.
+
+**What remains before the epic can be called done:** the full `pytest` run,
+which is this project's epic gate (see "Process weight" above). Not yet run
+— the last attempt was stopped at ~85% by decision, and nothing has
+verified the whole suite since SensorLab landed.
 
 ## Epic B — Curriculum and authoring
 

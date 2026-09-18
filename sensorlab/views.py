@@ -8,8 +8,10 @@ the gate is SensorLab's own login page rather than the site's, which is why
 """
 
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.http import Http404
+from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from .profiles import profile_for
 
@@ -37,3 +39,32 @@ def lab(request):
     """The first page behind the gate. A shell until Epic D's runner."""
     profile = profile_for(request.user)
     return render(request, "sensorlab/lab.html", {"profile": profile})
+
+
+def set_language(request, code):
+    """Switch the interface language (spec §1) and go back where you were.
+
+    Works for a visitor who has not signed in yet — otherwise the sign-in
+    page itself could not be read in Hebrew, and the switch would only be
+    available to people who already got in. For someone signed in it also
+    writes the profile, so the choice follows them to a new device rather
+    than living in one browser's session.
+    """
+    from .middleware import SESSION_KEY
+    from .profiles import profile_for
+    from .strings import LANGUAGES
+
+    if code not in LANGUAGES:
+        raise Http404("no such language")
+
+    request.session[SESSION_KEY] = code
+    if request.user.is_authenticated:
+        profile = profile_for(request.user)
+        if profile.language != code:
+            profile.language = code
+            profile.save(update_fields=["language"])
+
+    back = request.META.get("HTTP_REFERER", "")
+    if not url_has_allowed_host_and_scheme(back, allowed_hosts={request.get_host()}):
+        back = reverse_lazy("sensorlab:home")
+    return redirect(back)

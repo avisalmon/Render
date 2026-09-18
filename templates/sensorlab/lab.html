@@ -1,20 +1,18 @@
 {% extends "sensorlab/base.html" %}
+{% load sensorlab %}
 
-{% block title %}Your lab — SensorLab{% endblock %}
+{% block title %}{% t "lab.title" %} — SensorLab{% endblock %}
 {% block screen %}lab{% endblock %}
 
 {% block content %}
 <section class="sl-shell">
-  <h1>Your lab</h1>
-  <p>Signed in as <strong>{{ request.user.username }}</strong>.</p>
-  <p class="sl-muted">
-    SL-A2: the gate works and your profile exists. Tracks and labs arrive in
-    Epic B; the five-step runner in Epic D.
-  </p>
+  <h1>{% t "lab.title" %}</h1>
+  <p>{% t "lab.signed_in_as" %} <strong>{{ request.user.username }}</strong>.</p>
+  <p class="sl-muted">{% t "lab.placeholder" %}</p>
 
   <form method="post" action="{% url 'sensorlab:logout' %}" class="sl-form">
     {% csrf_token %}
-    <button type="submit" class="sl-button sl-button-quiet">Sign out</button>
+    <button type="submit" class="sl-button sl-button-quiet">{% t "nav.sign_out" %}</button>
   </form>
 </section>
 {% endblock %}

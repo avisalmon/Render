@@ -1,20 +1,18 @@
 {% extends "sensorlab/base.html" %}
+{% load sensorlab %}
 
 {% block screen %}home{% endblock %}
 
 {% block content %}
 <section class="sl-shell">
-  <h1>A physics lab in your pocket</h1>
-  <p>
-    Live experiments that use your phone's own sensors as the instrument —
-    no app to install.
-  </p>
+  <h1>{% t "home.title" %}</h1>
+  <p>{% t "home.blurb" %}</p>
 
   {% if request.user.is_authenticated %}
-    <a class="sl-button" href="{% url 'sensorlab:lab' %}">Go to your lab</a>
+    <a class="sl-button" href="{% url 'sensorlab:lab' %}">{% t "home.go_to_lab" %}</a>
   {% else %}
-    <a class="sl-button" href="{% url 'sensorlab:login' %}">Sign in</a>
-    <a class="sl-button sl-button-quiet" href="{% url 'sensorlab:signup' %}">Create an account</a>
+    <a class="sl-button" href="{% url 'sensorlab:login' %}">{% t "nav.sign_in" %}</a>
+    <a class="sl-button sl-button-quiet" href="{% url 'sensorlab:signup' %}">{% t "nav.create_account" %}</a>
   {% endif %}
 </section>
 {% endblock %}

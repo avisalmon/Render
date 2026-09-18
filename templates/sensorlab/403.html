@@ -1,12 +1,13 @@
 {% extends "sensorlab/base.html" %}
+{% load sensorlab %}
 
-{% block title %}No access — SensorLab{% endblock %}
+{% block title %}{% t "error.403_title" %} — SensorLab{% endblock %}
 {% block screen %}403{% endblock %}
 
 {% block content %}
 <section class="sl-shell">
-  <h1>Not yours to open</h1>
-  <p>You are signed in, but this is not available to your account.</p>
-  <p><a href="{% url 'sensorlab:home' %}">Back to SensorLab</a></p>
+  <h1>{% t "error.403_title" %}</h1>
+  <p>{% t "error.403_body" %}</p>
+  <p><a href="{% url 'sensorlab:home' %}">{% t "error.back" %}</a></p>
 </section>
 {% endblock %}

@@ -11,6 +11,8 @@ urlpatterns = [
     path("", views.home, name="home"),
     path("lab/", views.lab, name="lab"),
     path("design/", views.design, name="design"),
+    # SL-A5: the switch, reachable without an account (spec §1).
+    path("language/<str:code>/", views.set_language, name="set_language"),
     # Auth in SensorLab's own chrome (SL-A2). The accounts are the site's.
     path("login/", auth_views.LoginView.as_view(), name="login"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),

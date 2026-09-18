@@ -58,6 +58,13 @@ MIDDLEWARE = [
     # Observes /ustrip/ exceptions and mails Avi; acts on no other path,
     # changes no response. See ustrip/middleware.py.
     "ustrip.middleware.UstripErrorNotifier",
+    # Runs /sensorlab/ requests in the language that person chose, and only
+    # those. This site is Hebrew-first, and SensorLab is bilingual with the
+    # choice stored per profile, so without this Django's own strings
+    # (validation errors) come out in the site's language whatever the page
+    # says it is. Uses translation.override, so nothing leaks to the next
+    # request. See sensorlab/middleware.py.
+    "sensorlab.middleware.SensorLabLanguageMiddleware",
 ]
 
 ROOT_URLCONF = "mysite.urls"

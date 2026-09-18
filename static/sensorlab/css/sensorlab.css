@@ -130,6 +130,26 @@ body {
 
 .sl-wordmark span { color: var(--sl-ink); }
 
+/* The language switch (spec §1). `margin-inline-start: auto` rather than a
+   float or `margin-left`, so it sits at the far end in both directions. */
+.sl-lang {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-inline-start: auto;
+  min-inline-size: var(--sl-tap);
+  min-block-size: var(--sl-tap);
+  padding-inline: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sl-ink);
+  border: 1px solid var(--sl-line-strong);
+  border-radius: var(--sl-radius-pill);
+  text-decoration: none;
+}
+
+.sl-lang:hover { background: var(--sl-surface-sunken); }
+
 .sl-shell {
   padding-block: 24px 40px;
   padding-inline: var(--sl-gutter);

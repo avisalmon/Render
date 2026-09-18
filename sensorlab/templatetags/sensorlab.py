@@ -6,15 +6,26 @@ in Hebrew and the *data* does not: axes still run left to right, numerals
 stay Latin, notation stays LTR. Mirroring a velocity-versus-time chart does
 not localise it, it makes the physics wrong.
 
-Wrapping the markup by hand would mean remembering `dir="ltr"` on every
-chart in every lab, forever, and being right every time. This tag remembers
-instead, and a test asserts every chart on the page carries it.
+`{% t "key" %}` reads SensorLab's own copy in whichever language the
+request is running under (see `sensorlab/strings.py` for why this is not
+gettext).
 """
 
 from django import template
 from django.utils.safestring import mark_safe
 
+from ..strings import DEFAULT_LANGUAGE
+from ..strings import text as lookup
+
 register = template.Library()
+
+
+@register.simple_tag(takes_context=True)
+def t(context, key):
+    """One interface string, in the request's language."""
+    request = context.get("request")
+    language = getattr(request, "sensorlab_language", DEFAULT_LANGUAGE)
+    return lookup(key, language)
 
 
 @register.tag(name="chart")

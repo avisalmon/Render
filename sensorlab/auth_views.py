@@ -12,6 +12,11 @@ from django.urls import reverse_lazy
 
 from .forms import SensorLabLoginForm, SensorLabSignupForm
 from .profiles import profile_for
+from .strings import DEFAULT_LANGUAGE
+
+
+def _language(request):
+    return getattr(request, "sensorlab_language", DEFAULT_LANGUAGE)
 
 
 class LoginView(auth.LoginView):
@@ -34,12 +39,12 @@ def signup(request):
     if request.user.is_authenticated:
         return redirect("sensorlab:lab")
     if request.method == "POST":
-        form = SensorLabSignupForm(request.POST)
+        form = SensorLabSignupForm(request.POST, language=_language(request))
         if form.is_valid():
             user = form.save()
             auth_login(request, user, backend="django.contrib.auth.backends.ModelBackend")
             profile_for(user)
             return redirect("sensorlab:lab")
     else:
-        form = SensorLabSignupForm()
+        form = SensorLabSignupForm(language=_language(request))
     return render(request, "sensorlab/auth/signup.html", {"form": form})
