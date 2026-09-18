@@ -230,6 +230,67 @@ def test_instrument_mode_actually_applies_its_own_tokens(phone_page, live_server
     assert readings["text"] - readings["ground"] > 0.5, f"no contrast: {readings}"
 
 
+CONTRAST_JS = """() => {
+    const lum = (s) => {
+        const c = s.match(/\\d+(\\.\\d+)?/g);
+        if (!c) return null;
+        const [r, g, b, a] = c.map(Number);
+        if (a === 0) return null;                       // fully transparent
+        return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+    };
+    const backdrop = (el) => {
+        for (let n = el; n; n = n.parentElement) {
+            const bg = getComputedStyle(n).backgroundColor;
+            const l = lum(bg);
+            if (l !== null) return l;
+        }
+        return 1;
+    };
+    const bad = [];
+    document.querySelectorAll('a, button').forEach(el => {
+        const r = el.getBoundingClientRect();
+        if (r.width < 1 || r.height < 1) return;
+        if (!(el.textContent || '').trim()) return;
+        const text = lum(getComputedStyle(el).color);
+        if (text === null) return;
+        const diff = Math.abs(text - backdrop(el));
+        if (diff < 0.12) {
+            bad.push((el.textContent || '').trim().slice(0, 28) + ' diff=' + diff.toFixed(3));
+        }
+    });
+    return [...new Set(bad)];
+}"""
+
+
+def test_nothing_is_written_in_its_own_background_colour(phone_page, live_server, django_user_model):
+    """Found live, on the deployed landing page: the primary call to action
+    was ink text on an ink background — a solid black rectangle with an
+    invisible label, in both languages.
+
+    The cause was specificity in this app's own stylesheet. `.sl-shell a`
+    sets body-link colour and scores (0,1,1); `.sl-button` scores (0,1,0).
+    So `<a class="sl-button">` inside a shell lost its colour while
+    `<button class="sl-button">` kept it — which is why the login and design
+    pages looked right and the landing page did not.
+
+    Nothing already here could catch it: the tap-target guard measures size,
+    and SL-A4's contrast guard looked only at instrument mode's readout. An
+    invisible button is the right size and passes every structural
+    assertion. So the check is generalised — every visible link and button,
+    on every page, in both languages.
+    """
+    _sign_in(phone_page, live_server, django_user_model)
+    failures = {}
+    for language in ("en", "he"):
+        phone_page.goto(live_server.url + f"/sensorlab/language/{language}/", wait_until="domcontentloaded")
+        for path in PUBLIC_PAGES + MEMBER_PAGES:
+            phone_page.goto(live_server.url + path, wait_until="domcontentloaded")
+            invisible = phone_page.evaluate(CONTRAST_JS)
+            if invisible:
+                failures[f"{language} {path}"] = invisible
+    assert failures == {}, f"text written in its own background colour: {failures}"
+
+
 def test_no_page_scrolls_sideways_on_a_phone(phone_page, live_server, django_user_model):
     """A phone-only app that scrolls sideways is broken, not imperfect."""
     _sign_in(phone_page, live_server, django_user_model)

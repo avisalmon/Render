@@ -342,6 +342,41 @@ one **passed for the wrong reason**, with nothing left to search. A helper
 that empties its input is the most dangerous kind of green, and it is only
 visible when one assertion using it fails while another passes.
 
+### SL-A4.1 — the invisible front door ✅ (fix, found live)
+
+Marker: `sprsl4`
+
+**A production bug, found by opening the deployed site rather than by any
+test.** On `babook.co.il/sensorlab/` the primary call to action — the only
+real action on the only public page — was ink text on an ink background: a
+solid black rectangle with an invisible label, in both languages.
+
+The cause was specificity in SensorLab's own stylesheet, not the token
+system and not the deploy. `.sl-shell a` sets body-link colour and scores
+(0,1,1); `.sl-button` scores (0,1,0). So `<a class="sl-button">` inside a
+shell lost its colour, while `<button class="sl-button">` kept it. The
+reset rule beside it handled only `text-decoration`.
+
+**Why every check passed.** The tap-target guard measures size. SL-A4's
+contrast guard looked only at instrument mode's readout. An invisible
+button is exactly the right size and structurally perfect. And every
+screenshot taken of a primary button through the whole epic happened to be
+of a `<button>` — the login page and the design reference both use one. The
+single place the app uses an anchor-as-button is the landing page, which is
+the first thing a stranger sees.
+
+The guard is therefore general rather than pointed at this page: **every
+visible link and button, on every page, in both languages, must not be
+written in its own background colour.** It walks up for the first
+non-transparent ancestor background, so it catches inherited cases too.
+
+*The wider lesson, and the third of its kind this epic:* structural
+assertions have no opinion about appearance. This one is worse than the
+earlier two, because it shipped — SL-A1's leaked template syntax and
+SL-A2's wrong-language labels were caught before deploy. Looking at a page
+is not a formality at the end of a sprint; it is the only check that can
+fail for this reason.
+
 ---
 
 ## Epic A — complete

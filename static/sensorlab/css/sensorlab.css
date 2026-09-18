@@ -376,7 +376,26 @@ body {
 
 .sl-shell a { color: var(--sl-ink); text-decoration: underline; }
 .sl-shell a:hover { color: var(--sl-ink-soft); }
-.sl-shell a.sl-button, .sl-shell a.sl-button-quiet { text-decoration: none; }
+
+/* An anchor styled as a button is a button, and must keep the button's
+   colours. This rule previously reset only `text-decoration`, so the line
+   above — (0,1,1) against `.sl-button`'s (0,1,0) — quietly won the `color`
+   and painted the label in the button's own background. On the deployed
+   landing page the primary call to action was a solid black rectangle with
+   an invisible label, in both languages, while `<button class="sl-button">`
+   elsewhere looked fine. Specificity, not the token system.
+   A guard now checks every link and button on every page for text written
+   in its own background colour. */
+.sl-shell a.sl-button {
+  color: var(--sl-ground);
+  text-decoration: none;
+}
+
+.sl-shell a.sl-button-quiet,
+.sl-shell a.sl-button.sl-button-quiet {
+  color: var(--sl-ink);
+  text-decoration: none;
+}
 
 /* ------------------------------------- toast and dialog (no natives) */
 
