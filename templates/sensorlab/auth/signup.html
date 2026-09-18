@@ -1,0 +1,31 @@
+{% extends "sensorlab/base.html" %}
+
+{% block title %}Create an account — SensorLab{% endblock %}
+{% block screen %}signup{% endblock %}
+
+{% block content %}
+<section class="sl-shell sl-narrow">
+  <h1>Create an account</h1>
+  <p class="sl-muted">So your experiments and progress are yours to come back to.</p>
+
+  <form method="post" class="sl-form">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="sl-error">{{ form.non_field_errors }}</div>
+    {% endif %}
+    {% for field in form %}
+      <label class="sl-field">
+        <span class="sl-label">{{ field.label }}</span>
+        {{ field }}
+        {% if field.help_text %}<span class="sl-help">{{ field.help_text|safe }}</span>{% endif %}
+        {% if field.errors %}<span class="sl-error">{{ field.errors|striptags }}</span>{% endif %}
+      </label>
+    {% endfor %}
+    <button type="submit" class="sl-button">Create account</button>
+  </form>
+
+  <p class="sl-muted">
+    Already have one? <a href="{% url 'sensorlab:login' %}">Sign in</a>.
+  </p>
+</section>
+{% endblock %}

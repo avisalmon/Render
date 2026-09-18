@@ -138,26 +138,57 @@ used by almost nothing, because anything styled before SL-A4 is something
 SL-A4 has to undo. Logical properties (`padding-inline`, …) are used from
 the first line so SL-A5's mirroring is automatic.
 
-### SL-A2 — Auth in SensorLab's own chrome, and the profile 🔵 next
+### SL-A2 — Auth in SensorLab's own chrome, and the profile ✅
 
 Marker: `sprsl2`
 
-- [ ] `SensorLabProfile` (one-to-one with `User`): `language`, streak
-      fields, per `data_model.md` §2. Created on demand for any user who
-      reaches the app, so no signal/backfill ordering trap.
-- [ ] Login / signup / logout rendered **inside SensorLab's own look**,
-      against the shared `User` and the existing allauth Google config —
-      nobody sees babook's branding mid-flow.
-- [ ] Anonymous visitors are sent to SensorLab's own login page, not
-      babook's.
-- [ ] **Decision to record:** no extra Group gate for now (spec §9.1 A.2).
-      If one is added later, the reason gets written down at the time.
+- [x] `SensorLabProfile` (one-to-one with `User`): `language`, streak
+      fields, per `data_model.md` §2. Migration `0001_initial`, applied
+      with `migrate sensorlab` (Rule 5), not a blanket migrate.
+- [x] Created **on demand** via `profiles.profile_for()`, not a `post_save`
+      signal. Accounts here predate SensorLab by years: a signal covers
+      only people who sign up after it is installed and needs a backfill
+      for everyone else, and it can be installed in the wrong order.
+      `get_or_create` at the point of use cannot. Tested both ways — twice
+      in a row yields one row, and an account made before the app existed
+      gets a profile simply by arriving.
+- [x] Login / signup / logout in SensorLab's own look, against the shared
+      `User`, with Google via the site's shared allauth flow.
+- [x] Anonymous visitors meet **SensorLab's** login page. `login_url` is
+      passed explicitly rather than leaning on the project-wide
+      `LOGIN_URL` — which is unset here, so Django's default would have
+      sent them to babook's `/accounts/login/`. There is a test for exactly
+      that redirect.
+- [x] **Decision recorded:** no extra Group gate. A login is what "closed"
+      means for now; if that changes the reason gets written down then.
+- [x] **Decision recorded:** `/sensorlab/` stays **open** as a front door
+      that says what this is and offers a way in. Everything past it —
+      starting with `/sensorlab/lab/` — needs an account. This is the one
+      place the app is deliberately not closed.
 
-**Done when:** a person signs in through SensorLab's own pages with an
-account they already have, and lands on the app shell with a profile row
-that exists.
+**Done:** 17 tests (13 red first), plus SL-A1's 11 still green — 29 total.
+`manage.py check` clean. Demo: `sl-a2-landing/login/signup/lab.png`,
+rendered at 390px, signed in through the real form rather than
+`force_login`.
 
-### SL-A3 — The REST platform ⬜
+*The bug that only rendering caught — again.* The login page's field labels
+came out in Hebrew: "שם משתמש", "סיסמה". This project is Hebrew-first
+(`LANGUAGE_CODE = "he"`), so Django's own `AuthenticationForm` and
+`UserCreationForm` render their built-in labels through the **site's**
+catalogue, inside a page whose `<html lang>` said `en`. Every test passed
+while it was broken.
+
+The finding is bigger than the labels, and it changes SL-A5's scope:
+**SensorLab cannot inherit the site's language at all.** Its default is
+English, its real language is per-profile, and the project's global setting
+is neither. SensorLab's forms now own their copy outright. What is *not*
+fixed: Django's validation messages ("This field is required") still come
+from the site's catalogue, because they are raised inside Django rather
+than declared by us — so **SL-A5 must activate the profile's language for
+the request**, which is now a requirement of that sprint rather than an
+implementation detail of it.
+
+### SL-A3 — The REST platform 🔵 next
 
 Marker: `sprsl3`
 
@@ -213,6 +244,13 @@ Marker: `sprsl5`
 
 - [ ] Django i18n for interface strings + the Hebrew catalogue. (Authored
       *content* is `_en`/`_he` model fields instead — that arrives in SL-B1.)
+- [ ] **Activate the profile's language for the request** (found in SL-A2).
+      Without it, Django's own strings — form labels, validation errors —
+      render in the *site's* language (`he`) regardless of what SensorLab
+      is serving. SensorLab's language is neither the site setting nor the
+      browser's guess. Must not leak across requests: activation belongs in
+      SensorLab's own middleware or a `with translation.override(...)`,
+      never a bare `activate()` in a view.
 - [ ] `dir` driven by the profile's language; the language switch control
       wired to `PATCH profile/me/`.
 - [ ] Mirroring verified across every component on the reference page.
