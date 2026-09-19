@@ -2570,7 +2570,7 @@ waits for him: `data_model.md` §6 carries the proposal.
 | F-M.39.2 | The bell reaches the inbox for the things worth leaving the site for | REQ-M.142, REQ-M.33 | DONE |
 | F-M.39.3 | The public band says פרקטיקום, not הדרכה | REQ-M.5f | DONE |
 | F-M.39.4 | `school_name` normalised at the one door every write goes through | REQ-M.5f, §4.8 | DONE |
-| F-M.39.5 | An `Institution` row | proposed, `data_model.md` §6 | HELD for Avi |
+| F-M.39.5 | An `Institution` row | REQ-M.144, `data_model.md` §6 | DONE 2026-09-14 |
 
 ### What the handover is, and what it is not
 
@@ -3385,7 +3385,7 @@ Avi's approval rather than being built. He has already settled its sharpest
 question: the courses a leader adds are a **recommendation**, not a requirement,
 so REQ-M.76 and `certification.py` do not change at all.
 
-## Finding: the certification path does not close inside מט״צים  `OPEN, 2026-09-17`
+## Finding: the certification path does not close inside מט״צים  `CLOSED 2026-09-19 by SPR-M.51`
 
 Found while scoping Avi's course-selection request, by asking what the two
 required הדרכות actually need in order to issue their certificates.
@@ -3435,7 +3435,13 @@ The two courses מט״צים already requires use one of those, and we do not ha
 Adding more courses without closing this first means offering a wider shelf of
 things that also cannot be finished here.
 
-### Not decided, and Avi's to decide
+### Decided 2026-09-19: option 1, and built the same day
+
+Avi: "whatever babook can do that is needed I want matazim to use or clone."
+Use, not clone. SPR-M.51 moved the gates to `app/completion.py`, both products
+ask it, and `test_a_member_can_be_certified_without_leaving_matazim` walks the
+whole journey using מט״צים URLs only. The options as they stood that morning
+are kept below, because the reasoning is what the decision was made against.
 
 1. Build the project upload and the certificate gate inside מט״צים, which is the
    reading of REQ-M.126 that keeps everything in our walls.
