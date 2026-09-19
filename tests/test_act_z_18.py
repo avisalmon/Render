@@ -57,10 +57,15 @@ def _own_image(user, name="mine.png", status=None):
 # ------------------------------------------------------------- the door
 
 
-def test_a_signed_out_visitor_is_sent_to_sign_in(client):
+def test_a_signed_out_visitor_is_sent_to_memzs_own_sign_in(client):
+    """And to *memz's* login, not the site's. The first version of this
+    test asserted `"/login/" in Location`, which happily passed while the
+    page was bouncing players out to babook's own branded login page —
+    the exact seal break memz lives behind a wall to avoid (spec §1)."""
     r = client.get(URL)
     assert r.status_code == 302
-    assert "/login/" in r["Location"]
+    assert r["Location"].startswith("/memz/login/"), r["Location"]
+    assert URL in r["Location"], "the player is not returned to the library after signing in"
 
 
 def test_every_signed_in_user_has_the_screen(client):

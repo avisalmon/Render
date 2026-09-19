@@ -233,7 +233,11 @@ def images_page(request):
     from .tiers import profile_for, tier_for
 
     if not request.user.is_authenticated:
-        return redirect_to_login(request.get_full_path())
+        # memz's own login, not the site's (spec §1: the app is sealed,
+        # and its chrome is its own). Omitting this sends a memz player
+        # to babook's branded login page, which is exactly the seal break
+        # the app exists inside a wall to avoid.
+        return redirect_to_login(request.get_full_path(), login_url="/memz/login/")
     profile_for(request.user)
 
     own_images = list(MemeImage.objects.filter(owner=request.user).order_by("-created_at"))
