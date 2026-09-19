@@ -278,3 +278,38 @@ def revoke(user, student):
         revoked_at=timezone.now()
     )
     return True
+
+
+def work_is_frozen(user):
+    """Whether this person's own work may still be deleted or edited by them.
+
+    Avi, 2026-09-20, deciding F-M.50.8: "if mataz was certified, he can't
+    delete his work. The conditions that granted him the mataz title must be
+    frozen."
+
+    Until certification a teenager owns their work completely, which is the
+    right default: it is theirs, they made it, and being able to take down
+    something they are embarrassed by matters more than a tidy archive. The
+    moment somebody is certified, the same rows stop being only theirs. A
+    מוביל/ה approved them *on this evidence*, by hand, and a title granted on
+    evidence that can be deleted afterwards is a title nobody can defend.
+
+    **Frozen by a certificate ever having existed, revoked or not.** A
+    revocation is exactly when the record matters most: somebody is asking what
+    happened, and a member who could clear the trail as the answer arrives
+    would be able to erase the case. `MatazCertificate` is never deleted for
+    the same reason (REQ-M.78), only marked withdrawn.
+
+    This says nothing about the right to erasure. Deleting an account removes
+    everything, is a different right, and is handled in `rights_views.py`.
+    """
+    student = Student.objects.filter(user=user).first()
+    if student is None:
+        return False
+    return MatazCertificate.objects.filter(student=student).exists()
+
+
+FROZEN_REFUSAL = (
+    "אחרי ההסמכה העבודות נשמרות כמו שהן. ההסמכה ניתנה על סמך מה שהגשתם, "
+    "וזה נשאר הרישום שלה."
+)

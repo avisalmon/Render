@@ -134,6 +134,24 @@ class IsInTheProgramme(permissions.BasePermission):
         return access.institution_of(request.user) is not None
 
 
+def _refuse_if_frozen(user):
+    """F-M.50.8, decided by Avi 2026-09-20: a certified מט״צ's work is frozen.
+
+    Here rather than inside each viewset, and asking `certification` rather than
+    re-reading the certificate table, so the rule has one definition and the
+    screens and the API cannot drift about what "certified" means.
+
+    Applied to the work and to the practicum: both are what a leader had in
+    front of them when they certified somebody by hand. It is not applied to
+    posts, which are talk rather than evidence, and not to the right to erasure,
+    which removes the account and everything in it.
+    """
+    from .certification import FROZEN_REFUSAL, work_is_frozen
+
+    if work_is_frozen(user):
+        raise PermissionDenied(FROZEN_REFUSAL)
+
+
 class Scoped(viewsets.ModelViewSet):
     """Base for every viewset here: the queryset is `access.<scope>(user)`.
 
@@ -490,11 +508,13 @@ class SubmissionViewSet(Scoped):
     def perform_update(self, serializer):
         if serializer.instance.student.user_id != self.request.user.id:
             raise PermissionDenied("אפשר לערוך רק את ההגשה שלכם.")
+        _refuse_if_frozen(self.request.user)
         serializer.save()
 
     def perform_destroy(self, instance):
         if instance.student.user_id != self.request.user.id:
             raise PermissionDenied("הגשה של מישהו אחר לא נמחקת.")
+        _refuse_if_frozen(self.request.user)
         instance.delete()
 
     def _decide(self, request, outcome, words_required):
@@ -770,10 +790,12 @@ class TeachingSessionViewSet(Scoped):
 
     def perform_update(self, serializer):
         self._mine_or_refuse(serializer.instance)
+        _refuse_if_frozen(self.request.user)
         serializer.save()
 
     def perform_destroy(self, instance):
         self._mine_or_refuse(instance)
+        _refuse_if_frozen(self.request.user)
         instance.delete()
 
     @action(detail=True, methods=["post"])

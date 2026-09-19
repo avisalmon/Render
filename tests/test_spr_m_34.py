@@ -640,10 +640,18 @@ def test_a_member_posts_edits_and_withdraws_their_own_work(client, two_worlds, s
     The screens never offered editing a submission. The API does, because the
     rule is that every row is an object a person can fix a mistake in without
     going to /admin/.
+
+    **About the first two lines.** This fixture certifies every member, so that
+    the tenancy sweep has one row of every kind in each world, and REQ-M.147
+    freezes a certified מט״צ's work. This test is about the lifecycle *before*
+    certification, which is where fixing a mistake belongs, so it starts from a
+    member in training. The frozen half is held in `test_spr_m_50.py`, and the
+    last line here keeps the two facts in sight of each other.
     """
     settings.CONTENT_RELEVANCE_ENABLED = False
-    from matazim.models import Submission
+    from matazim.models import MatazCertificate, Submission
 
+    MatazCertificate.objects.filter(student=two_worlds["ours"]["student"]).delete()
     client.force_login(two_worlds["ours"]["member_user"])
 
     created = client.post(
@@ -663,6 +671,20 @@ def test_a_member_posts_edits_and_withdraws_their_own_work(client, two_worlds, s
 
     assert client.delete(f"{API}submissions/{row_id}/").status_code == 204
     assert not Submission.objects.filter(pk=row_id).exists()
+
+    # And the same two verbs once they are certified: REQ-M.147, the evidence
+    # the title was granted on stops being only theirs.
+    again = client.post(
+        f"{API}submissions/",
+        {"title": "עוד משחק", "about": "סקראץ׳", "link": "https://scratch.mit.edu/y"},
+        content_type="application/json",
+    ).json()["id"]
+    MatazCertificate.objects.create(
+        student=two_worlds["ours"]["student"], name_on_certificate="תלמיד",
+        awarded_by_name="מוביל", awarded_at=timezone.now(),
+    )
+    assert client.delete(f"{API}submissions/{again}/").status_code == 403
+    assert Submission.objects.filter(pk=again).exists()
 
 
 def test_nobody_edits_or_deletes_somebody_elses_work(client, two_worlds):

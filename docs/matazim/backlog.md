@@ -3678,7 +3678,7 @@ execute.
 | F-M.50.5 | Two endpoints nothing reaches and nothing tests | | DONE |
 | F-M.50.6 | The certification path still does not close, and it is the only gap of its kind | REQ-M.76 | DECISION |
 | F-M.50.7 | A member could write the feedback about their own work | REQ-M.19, M.123 | DONE |
-| F-M.50.8 | A member can delete work a leader has answered, feedback and all | REQ-M.125 | DECISION |
+| F-M.50.8 | A member can delete work a leader has answered, feedback and all | REQ-M.125, REQ-M.147 | DONE 2026-09-20 |
 
 ### F-M.50.1 — one font, three names, six files
 
@@ -3833,16 +3833,40 @@ both a leader's.
 Nothing had ever run that path. That is the whole argument for testing writes
 and not only refusals.
 
-### F-M.50.8 — a question, not a bug, and Avi's to answer
+### F-M.50.8 — answered 2026-09-20: certification is the line
 
-A member can delete their own submission after a leader has answered it, and the
-`Feedback` rows cascade away with it.
+A member could delete their own submission after a leader had answered it, and
+the `Feedback` rows cascaded away with it.
 
-No rule is broken. REQ-M.125 keeps every attempt so that feedback keeps the
-version it was about, which argues one way. A fourteen-year-old's right to
-remove their own work argues the other. Inventing the answer in a test would
-have been a decision made by whoever wrote the test, so the test pins today's
-behaviour instead and the question comes here.
+No rule was broken. REQ-M.125 keeps every attempt so that feedback keeps the
+version it was about, which argued one way. A fourteen-year-old's right to
+remove their own work argued the other. Inventing the answer in a test would
+have been a decision made by whoever wrote the test, so the test pinned the
+behaviour and the question went to Avi.
+
+**He drew the line at certification, not at feedback:**
+
+> "If mataz was certified, he can't delete his work. The conditions that
+> granted him the mataz title must be frozen."
+
+Which is the reading that keeps both halves. In training the work is entirely
+theirs, feedback or no feedback. Once a certificate exists, the evidence a
+leader certified them on stops being only theirs, because the title rests on
+it. Built as REQ-M.147: no delete and no edit, on the work and on the
+practicum, one definition in `certification.work_is_frozen` that the API asks
+rather than restates.
+
+Two edges worth knowing, both tested. A **withdrawn** title still freezes,
+because a revocation is when the record matters most and clearing the trail
+while the question is being asked would erase the case. And the freeze is per
+person: the obvious way to write this wrong is a query that asks whether any
+certificate exists, which would freeze the whole programme the day one
+teenager was certified. Five perturbations, five caught.
+
+**Not covered, and deliberately:** deleting the account. That removes
+everything including the certificate, it is a different right, and it lives in
+`rights_views.py`. If Avi wants a certified מט״צ's record to survive their own
+account deletion, that is a separate decision with a legal side to it.
 
 ### F-M.50.5 — removed
 

@@ -206,19 +206,17 @@ def test_creating_a_leader_refuses_somebody_who_already_is_one(client, world):
 
 
 def test_a_member_can_delete_their_own_work_and_only_their_own(client, world):
-    """What the API actually does, recorded rather than wished at.
+    """Before certification, work belongs completely to whoever made it.
 
     The sweep expected approved work with a leader's feedback on it to be
-    undeletable, and it is not: `perform_destroy` checks ownership and nothing
-    else, so a member can remove a submission a leader has already answered,
-    and the `Feedback` rows go with it on the cascade.
+    undeletable, and it was not: `perform_destroy` checked ownership and
+    nothing else. That was a missing rule rather than a broken one, so it went
+    to Avi, and this test pinned the behaviour meanwhile.
 
-    That is not a broken rule, it is a missing one, and inventing it here would
-    be a test asserting a decision nobody made. REQ-M.125 keeps every attempt
-    so feedback keeps the version it was about, which argues one way; a
-    teenager's right to remove their own work argues the other. Written up for
-    Avi in the backlog; this test pins today's behaviour so the day somebody
-    changes it, they change it on purpose.
+    **He decided it on 2026-09-20 and the answer is below, in
+    `test_a_certified_mataz_cannot_delete_the_work_that_certified_them`.** The
+    line he drew is certification, not feedback, so this half stands unchanged:
+    a member in training deletes their own work and only their own.
     """
     from matazim.models import Submission
 
@@ -237,3 +235,116 @@ def test_a_member_can_delete_their_own_work_and_only_their_own(client, world):
 
     assert client.delete(f"/matazim/api/submissions/{mine.pk}/").status_code == 204
     assert not Submission.objects.filter(pk=mine.pk).exists()
+
+
+# ------------------------------------------- F-M.50.8, as Avi decided it
+
+
+def _certify(student):
+    """The certificate row itself, which is what the freeze reads."""
+    from matazim.models import MatazCertificate
+
+    return MatazCertificate.objects.create(
+        student=student, name_on_certificate="אלמה", awarded_by_name="נעה",
+        awarded_at=timezone.now(),
+    )
+
+
+def test_a_certified_mataz_cannot_delete_the_work_that_certified_them(client, world):
+    """Avi, 2026-09-20: "if mataz was certified, he can't delete his work. The
+    conditions that granted him the mataz title must be frozen."
+
+    A leader certifies by hand, having read this evidence. A title granted on
+    evidence the holder can delete afterwards is a title nobody can defend, and
+    the feedback goes with it on the cascade, so the leader's words vanish too.
+    """
+    from matazim.models import Feedback, Submission
+
+    mine = Submission.objects.create(
+        student=world["me"], leader=world["leader"], title="שלי",
+        link="https://scratch.mit.edu/projects/6", status=Submission.APPROVED,
+    )
+    Feedback.objects.create(submission=mine, author=world["leader"].user,
+                            body="עבודה יפה, אני מאשר")
+    _certify(world["me"])
+
+    client.force_login(world["me"].user)
+    assert client.delete(f"/matazim/api/submissions/{mine.pk}/").status_code == 403
+    assert Submission.objects.filter(pk=mine.pk).exists()
+    assert Feedback.objects.filter(submission=mine).exists(), "the leader's words went too"
+
+
+def test_a_certified_mataz_cannot_edit_it_either(client, world):
+    """Deleting is the obvious hole and editing is the quiet one: swapping the
+    link on approved work changes what the leader approved, while leaving a row
+    that says they approved it."""
+    from matazim.models import Submission
+
+    mine = Submission.objects.create(
+        student=world["me"], leader=world["leader"], title="שלי",
+        link="https://scratch.mit.edu/projects/7", status=Submission.APPROVED,
+    )
+    _certify(world["me"])
+
+    client.force_login(world["me"].user)
+    resp = client.patch(f"/matazim/api/submissions/{mine.pk}/",
+                        {"link": "https://scratch.mit.edu/projects/999"},
+                        content_type="application/json")
+    assert resp.status_code == 403
+    mine.refresh_from_db()
+    assert mine.link.endswith("/7")
+
+
+def test_the_practicum_is_frozen_too(client, world):
+    """REQ-M.32. A leader certifies "having taught them", and the practicum is
+    the record of that teaching. Same evidence, same freeze."""
+    from matazim.models import TeachingSession
+
+    session = TeachingSession.objects.create(
+        student=world["me"], title="לולאות", happened_on=timezone.localdate(),
+        minutes=45, learners=12,
+    )
+    _certify(world["me"])
+
+    client.force_login(world["me"].user)
+    assert client.delete(f"/matazim/api/teaching/{session.pk}/").status_code == 403
+    assert TeachingSession.objects.filter(pk=session.pk).exists()
+
+
+def test_revoking_the_title_does_not_unfreeze_anything(client, world):
+    """The freeze reads "a certificate ever existed", not "is valid now".
+
+    A revocation is exactly when the record matters most: somebody is asking
+    what happened, and a member who could clear the trail as the question
+    arrives would be able to erase the case. `MatazCertificate` is never
+    deleted for the same reason (REQ-M.78), only marked withdrawn.
+    """
+    from matazim.models import Submission
+
+    mine = Submission.objects.create(
+        student=world["me"], leader=world["leader"], title="שלי",
+        link="https://scratch.mit.edu/projects/8", status=Submission.APPROVED,
+    )
+    cert = _certify(world["me"])
+    cert.revoked_at = timezone.now()
+    cert.save(update_fields=["revoked_at"])
+
+    client.force_login(world["me"].user)
+    assert client.delete(f"/matazim/api/submissions/{mine.pk}/").status_code == 403
+    assert Submission.objects.filter(pk=mine.pk).exists()
+
+
+def test_one_persons_certificate_does_not_freeze_anybody_else(client, world):
+    """The freeze is per person, and the obvious way to get this wrong is a
+    query that asks whether *any* certificate exists."""
+    from matazim.models import Submission
+
+    _certify(world["me"])
+    theirs = Submission.objects.create(
+        student=world["them"], leader=world["leader"], title="שלהם",
+        link="https://scratch.mit.edu/projects/9", status=Submission.APPROVED,
+    )
+
+    client.force_login(world["them"].user)
+    assert client.delete(f"/matazim/api/submissions/{theirs.pk}/").status_code == 204
+    assert not Submission.objects.filter(pk=theirs.pk).exists()
