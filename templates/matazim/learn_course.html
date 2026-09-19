@@ -47,4 +47,53 @@
     <a class="mz-linkbtn" href="{% url 'matazim:my_path' %}">חזרה למסלול שלי</a>
   </p>
 </div>
+
+  {% comment %}
+    SPR-M.51 — the certificate, claimable from inside our walls.
+
+    REQ-M.76 makes a CourseCertificate for each Scratch course one of the three
+    things that makes a מט״צ מוסמך, and until now מט״צים provided no way to earn
+    one: the gate that issues it lived behind babook's own lesson screen and
+    this product never called it.
+
+    What is asked here is `app/completion.py`, the same module babook's finish
+    button asks. The rules are the course's own; this screen only reports them.
+  {% endcomment %}
+  {% if certificate %}
+    <section class="mz-panel" id="mzCert">
+      <h2>התעודה</h2>
+
+      {% if certificate.state == "issued" %}
+        <div class="mz-alert mz-alert-good" role="status">התעודה הונפקה. כל הכבוד.</div>
+      {% endif %}
+
+      {% if certificate.held %}
+        <p>
+          <span class="mz-tag mz-tag-done">יש תעודה</span>
+          סיימתם את ההדרכה הזאת.
+        </p>
+      {% elif certificate.ready %}
+        <p class="mz-muted">השלמתם את הכל. אפשר להנפיק את התעודה.</p>
+        <form method="post" action="{% url 'matazim:finish_course' course.slug %}">
+          {% csrf_token %}
+          <button type="submit" class="mz-btn mz-btn-primary">להנפקת התעודה</button>
+        </form>
+      {% else %}
+        <p class="mz-muted">
+          {% if certificate.missing == "progress" %}
+            צריך לסיים עוד שיעורים לפני שאפשר לקבל תעודה.
+          {% elif certificate.missing == "project" %}
+            צריך להגיש את הפרויקטים. ההגשה נמצאת בתוך השיעורים עצמם.
+          {% elif certificate.missing == "quiz" %}
+            יש שאלה בסוף אחד השיעורים שעוד לא ענו עליה נכון.
+          {% elif certificate.missing == "practice" %}
+            יש תרגילים באחד השיעורים שעוד לא הושלמו.
+          {% else %}
+            עוד לא הושלם הכל בהדרכה הזאת.
+          {% endif %}
+        </p>
+      {% endif %}
+    </section>
+  {% endif %}
+
 {% endblock %}

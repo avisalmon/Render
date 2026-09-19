@@ -83,6 +83,8 @@
   --mz-tag-doing-ink: #1d4ed8;
   --mz-alert-bg: #fdecec;
   --mz-alert-ink: #8a1f1f;
+  --mz-good-bg: #e6f7f1;
+  --mz-good-ink: #0a6b58;   /* 5.9:1 */
 
   /* secondary action */
   --mz-blue: #1d6e96;
@@ -151,6 +153,8 @@
   --mz-tag-doing-ink: #8fbcff;
   --mz-alert-bg: #3a1d1d;
   --mz-alert-ink: #ffb4b4;
+  --mz-good-bg: #10312a;
+  --mz-good-ink: #5ee3bd;
 
   /* Unchanged from daylight on purpose. This is a surface that carries
      white text, so lightening it for a dark page lowers the label's
@@ -709,6 +713,15 @@ img { max-width: 100%; height: auto; display: block; }
   color: var(--mz-alert-ink);
   font-size: .9rem;
 }
+
+/* The same shape as .mz-alert and the opposite news (SPR-M.51). An interface
+   that only has a red box has to use it to say "saved", which teaches people
+   to read the box as trouble and then miss the trouble. */
+.mz-alert-good {
+  background: var(--mz-good-bg);
+  color: var(--mz-good-ink);
+}
+
 .mz-alert-ok { background: var(--mz-teal-soft); border-color: rgba(15,196,155,.4); color: #0a6b58; }
 
 /* ---------------------------------------------------------------- pages */

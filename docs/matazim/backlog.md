@@ -3838,3 +3838,92 @@ behaviour instead and the question comes here.
 `clear_notices` marked everything read; so does opening the page. `say_more`
 added words to decided work; the review screen's own form does that. Neither had
 a test, and nothing linked to either.
+
+## SPR-M.51 — The certification path closes  `DONE 2026-09-19`
+
+**Goal:** the hole found on 2026-09-17 and left open for Avi, now decided.
+
+> "Can we add the project requirement to scratch thru matazim to clone the
+> babook req and use babook certification? Whatever babook can do that is needed
+> I want matazim to use or clone."
+
+Use, not clone.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.51.1 | The gates move to `app/completion.py`; both products ask it | RULE-3 | DONE |
+| F-M.51.2 | Handing in a project, inside our own chrome | REQ-M.13, M.76 | DONE |
+| F-M.51.3 | Claiming the certificate, inside our own chrome | REQ-M.76 | DONE |
+| F-M.51.4 | A member can be certified without leaving מט״צים | REQ-M.76, RULE-1 | DONE |
+
+### What was broken
+
+REQ-M.76 makes a `CourseCertificate` for `scratch` **and** `scratch-advanced`
+one of the three things that makes a מט״צ מוסמך. Both courses are
+`requires_project` with `project_min_count = 2`, so each wants two projects
+handed in, and the certificate is issued by a gate sitting behind babook's own
+lesson screen.
+
+מט״צים rendered no way to hand anything in, and never called that gate. So a
+member could watch all 34 lessons, answer every quiz, write every reflection,
+and still earn nothing. Every screen downstream looked right because the
+certificates in the database had been seeded rather than earned: nine rows
+against four project submissions in the entire database.
+
+### Why extraction and not a copy
+
+`course_finish` was a view with five gates and a certificate write inline. The
+options were to copy them into מט״צים or to lift them somewhere both products
+could ask.
+
+Of everything in this codebase that could be duplicated, *"has this person
+earned a certificate"* is the worst candidate: two code paths that drift produce
+a certificate nobody can defend, and the drift would be invisible until a
+teenager was told they had not finished something they had.
+
+`app/lesson_notes.py` was extracted six days ago for the same reason and its
+docstring says so. This follows it. `app/completion.py` now answers
+`why_not_certified(user, course)` with a reason or `None`, and
+`issue_certificate(user, course)` writes. babook's `course_finish` keeps its own
+navigation — which screen each reason sends a learner to — and decides nothing.
+
+**babook's behaviour is unchanged, and that was checked before מט״צים touched
+anything:** its five certificate suites, 43 tests, pass untouched.
+
+### What a member sees now
+
+The hand-in is on the lesson they built it in, because that is where they are
+when they have something to hand in. It uses babook's own link parser and its
+sharing check rather than forming a second opinion about what a Scratch link is,
+and writes `LessonModelSubmission`, which is the row the gate counts. Writing a
+different row would be a submission that satisfies nobody.
+
+The certificate panel on the course page says what is missing in words —
+projects, lessons, a quiz — rather than refusing without explanation.
+
+Three states are reported after a hand-in, and the middle one matters: a project
+that was never shared is a link to something only its maker can open, so it is
+refused with the sentence that tells them to press Share in Scratch.
+
+### The test that is the point
+
+`test_a_member_can_be_certified_without_leaving_matazim` walks the whole journey
+using מט״צים URLs and nothing else: watch the lessons, be refused for the
+missing projects, hand in two, press the button, hold a real certificate. And
+`test_certification_now_reaches_all_three_conditions` ends where REQ-M.76 does,
+with `eligibility()` reporting everything that does not need a person as done.
+
+### A test of mine that was too strict
+
+The first version forbade מט״צים from so much as reading `project_min_count`,
+and failed on the sentence telling a member "you need two, you have one".
+Reading a number to display it is a screen doing its job; comparing against it
+is a second gate. The rule now forbids the comparison and requires the shared
+module be asked, which is what RULE-3 actually says.
+
+### Checked, and not ours
+
+Eight babook tests fail in `test_spr_1_4.py` and `test_spr_6_2.py`. The same
+eight, plus one more, fail on `origin/main` in a clean worktree: they are
+pre-existing in what is deployed and unrelated to this extraction. Recorded so
+nobody re-diagnoses them as fallout from it.

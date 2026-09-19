@@ -2358,13 +2358,18 @@ def lesson_submit_youtube(request, slug, lesson_order):
 @login_required
 def course_finish(request, slug):
     """POST /courses/<slug>/finish/ - validate the completion gate then issue the
-    certificate. Theory courses: all required quizzes passed. Project courses
-    (`requires_project`): >=80% of lessons completed AND a project screenshot
-    uploaded."""
+    certificate.
+
+    The gates themselves moved to `app/completion.py` on 2026-09-19, when מט״צים
+    needed the same answer inside its own chrome. What stayed here is this
+    product's navigation: which screen a learner lands on for each reason. The
+    error codes are unchanged, because the lesson templates read them out of the
+    query string and explain each one.
+    """
     from django.shortcuts import get_object_or_404
     from django.urls import reverse
 
-    from .models import CourseCertificate, CourseProjectSubmission, LessonQuiz
+    from .completion import issue_certificate, why_not_certified
 
     if request.method != "POST":
         return redirect("courses_detail", slug=slug)
@@ -2374,102 +2379,20 @@ def course_finish(request, slug):
     # but guard the endpoint too).
     if not course.issues_certificate:
         return redirect("courses_detail", slug=slug)
-    enrollment = Enrollment.objects.filter(user=request.user, course=course).first()
-    if not enrollment:
+    if not Enrollment.objects.filter(user=request.user, course=course).exists():
         return redirect("courses_detail", slug=slug)
 
-    all_videos = list(course.videos.order_by("lesson_order"))
+    not_yet = why_not_certified(request.user, course, request=request)
+    if not_yet:
+        if not_yet.lesson is not None:
+            url = reverse(
+                "courses_lesson",
+                kwargs={"slug": slug, "lesson_order": not_yet.lesson.lesson_order},
+            )
+            return redirect(f"{url}?error={not_yet.reason}")
+        return _final_lesson_redirect(course, not_yet.reason)
 
-    # Gate A: all requires_correct quizzes must be passed
-    quizzes_required = LessonQuiz.objects.filter(video__in=all_videos, requires_correct=True)
-    if quizzes_required.exists():
-        need_pass = {q.video_id for q in quizzes_required}
-        passed = set(
-            UserVideoProgress.objects.filter(
-                user=request.user, video_id__in=need_pass, quiz_passed=True
-            ).values_list("video_id", flat=True)
-        )
-        missing = need_pass - passed
-        if missing:
-            for v in all_videos:
-                if v.id in missing:
-                    url = reverse(
-                        "courses_lesson",
-                        kwargs={"slug": slug, "lesson_order": v.lesson_order},
-                    )
-                    return redirect(f"{url}?error=quiz")
-
-    # Gate B (project courses only): >=80% lessons completed + a project upload
-    if course.requires_project:
-        pct = _catalog_progress(request.user, [course.id]).get(course.id, {}).get("pct", 0)
-        if pct < course.cert_min_pct:
-            return _final_lesson_redirect(course, "progress")
-        if course.project_upload_type in Course.PROJECT_LINK_TYPES:
-            from .models import LessonModelSubmission
-            n = LessonModelSubmission.objects.filter(
-                user=request.user, video__course=course
-            ).count()
-            if n < course.project_min_count:
-                return _final_lesson_redirect(course, "project")
-        else:
-            sub = CourseProjectSubmission.objects.filter(
-                user=request.user, course=course
-            ).first()
-            if not (sub and sub.artifact):
-                return _final_lesson_redirect(course, "project")
-    elif course.requires_completion:
-        # Gate C (non-project completion-gated courses): >=cert_min_pct% lessons.
-        pct = _catalog_progress(request.user, [course.id]).get(course.id, {}).get("pct", 0)
-        if pct < course.cert_min_pct:
-            return _final_lesson_redirect(course, "progress")
-
-    # Gate D: each required-practice lesson needs at least half its runnable cells
-    # passed (e.g. the exercise lessons). Admins (staff) bypass the practice gate.
-    from .models import StudentCode
-    req_lessons = [] if request.user.is_staff else [v for v in all_videos if v.practice_required]
-    if req_lessons:
-        passed_by = {}
-        for sc in StudentCode.objects.filter(
-            user=request.user, video__in=req_lessons, passed=True
-        ):
-            passed_by[sc.video_id] = passed_by.get(sc.video_id, 0) + 1
-        for v in req_lessons:
-            total = (v.notes_markdown or "").count("```python-run")
-            if total and min(passed_by.get(v.id, 0), total) < (total + 1) // 2:
-                url = reverse(
-                    "courses_lesson", kwargs={"slug": slug, "lesson_order": v.lesson_order})
-                return redirect(f"{url}?error=practice")
-
-    # Gate E (notebook courses): enough Jupyter notebooks passed (AI grade > 75).
-    if course.requires_notebooks:
-        from .models import NotebookSubmission
-        passed_nb = NotebookSubmission.objects.filter(
-            user=request.user, video__course=course, passed=True).count()
-        if passed_nb < course.notebook_min_pass_count:
-            return _final_lesson_redirect(course, "notebooks")
-
-    # Manual-review courses: don't auto-issue. Send the project to a reviewer
-    # (admin or the learner's class teacher) and show the "pending review" state.
-    # The certificate is issued only on approval (see app/review.py). If a review
-    # was already approved we fall through and link the existing certificate.
-    if course.requires_review:
-        from .models import CourseCompletionReview
-        from .review import submit_for_review
-        existing = CourseCompletionReview.objects.filter(
-            user=request.user, course=course).first()
-        if not (existing and existing.is_approved):
-            submit_for_review(request.user, course, request=request)
-            return _final_lesson_redirect(course, "review_pending")
-
-    # All gates passed - issue certificate
-    if not enrollment.completed_at:
-        enrollment.completed_at = timezone.now()
-        enrollment.save(update_fields=["completed_at"])
-
-    cert, _ = CourseCertificate.objects.get_or_create(
-        user=request.user,
-        course=course,
-    )
+    cert = issue_certificate(request.user, course)
     return redirect("certificate_view", cert_id=cert.certificate_id)
 
 

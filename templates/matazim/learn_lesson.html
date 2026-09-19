@@ -112,6 +112,61 @@
     </section>
   {% endif %}
 
+  {% comment %}
+    SPR-M.51 — handing in what they built.
+
+    REQ-M.76 wants a CourseCertificate for both Scratch courses and both are
+    requires_project with project_min_count 2, so this is not an extra: without
+    it nobody can be certified through מט״צים at all, which is what the review
+    on 2026-09-17 found.
+
+    The link goes to our own view, which uses babook's parser and its sharing
+    check rather than forming a second opinion about what a Scratch link is.
+  {% endcomment %}
+  {% if project %}
+    <section class="mz-panel" id="mzProject">
+      <h2>הפרויקט שלכם</h2>
+
+      {% if project.state == "saved" %}
+        <div class="mz-alert mz-alert-good" role="status">נשמר. אפשר להחליף את הקישור מתי שתרצו.</div>
+      {% elif project.state == "badlink" %}
+        <div class="mz-alert" role="alert">זה לא נראה כמו קישור לפרויקט סקראץ׳. העתיקו את הכתובת מהדפדפן כשהפרויקט פתוח.</div>
+      {% elif project.state == "notshared" %}
+        <div class="mz-alert" role="alert">
+          הפרויקט לא משותף, אז אי אפשר לראות אותו. בסקראץ׳ לוחצים Share בעמוד הפרויקט ואז שולחים שוב.
+        </div>
+      {% endif %}
+
+      <p class="mz-muted">
+        {% if project.here %}
+          הגשתם פרויקט לשיעור הזה.
+        {% else %}
+          כשבניתם משהו בשיעור הזה, שתפו אותו בסקראץ׳ והדביקו כאן את הקישור.
+        {% endif %}
+        להסמכה צריך {{ project.needed }} פרויקטים בהדרכה הזאת, ויש לכם {{ project.made }}.
+      </p>
+
+      <form method="post" action="{% url 'matazim:submit_project' course.slug lesson.lesson_order %}">
+        {% csrf_token %}
+        <label class="mz-field">
+          <span>קישור לפרויקט</span>
+          <input type="url" name="scratch_url" required
+                 value="{% if project.here %}https://scratch.mit.edu/projects/{{ project.here.scratch_id }}/{% endif %}"
+                 placeholder="https://scratch.mit.edu/projects/...">
+        </label>
+        <label class="mz-field">
+          <span>כמה מילים על זה (לא חובה)</span>
+          <input type="text" name="caption" maxlength="200"
+                 value="{{ project.here.caption|default:'' }}"
+                 placeholder="מה בניתם, ומה היה קשה">
+        </label>
+        <button type="submit" class="mz-btn mz-btn-primary">
+          {% if project.here %}עדכון הקישור{% else %}הגשה{% endif %}
+        </button>
+      </form>
+    </section>
+  {% endif %}
+
   {% if quiz %}
     {% comment %}
       REQ-M.126 — a lesson that carries a quiz and does not show it is a member

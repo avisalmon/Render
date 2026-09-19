@@ -168,6 +168,10 @@ urlpatterns = [
     # REQ-M.13 — the required track, rendered inside our own walls.
     path("learn/<slug:slug>/", learn_views.learn_course, name="learn_course"),
     path("learn/<slug:slug>/<int:order>/", learn_views.learn_lesson, name="learn_lesson"),
+    # SPR-M.51 — handing in the thing they built, and asking babook whether
+    # the certificate is earned. Both stay inside /matazim/ (RULE-1).
+    path("learn/<slug:slug>/<int:order>/project/", learn_views.submit_project, name="submit_project"),
+    path("learn/<slug:slug>/finish/", learn_views.finish_course, name="finish_course"),
     path("profile/", views.profile, name="profile"),
     path("profile/replay-welcome/", views.profile_reset_welcome, name="profile_reset_welcome"),
 ]

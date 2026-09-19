@@ -30,6 +30,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.decorators.http import require_POST
 
 from app.bunny import get_embed_url
 from app.models import Course, Enrollment, Video
@@ -98,6 +99,8 @@ def learn_course(request, slug):
             progress=_progress_for(request.user, slug),
             # The first lesson they have not finished: what "continue" means.
             resume=next((row["video"] for row in lessons if not row["done"]), None),
+            # SPR-M.51 — the certificate REQ-M.76 requires, claimable here.
+            certificate=_certificate_panel(request, course),
         ),
     )
 
@@ -159,5 +162,129 @@ def learn_lesson(request, slug, order):
             reflection=reflection,
             # Resolved here, so the template holds no babook url name (RULE-1).
             reflect_url=reverse("lesson_reflect", args=[lesson.pk]),
+            # SPR-M.51 — handing in what they built, on the lesson they built
+            # it in. Only for courses that ask for a project, which is both
+            # Scratch courses; a lesson in a course that asks for none renders
+            # nothing here rather than an empty panel.
+            project=_project_panel(request, course, lesson),
         ),
     )
+
+
+def _project_panel(request, course, lesson):
+    """What the lesson's project panel shows, or None for courses without one.
+
+    The count is of the whole course rather than this lesson, because that is
+    what the gate counts: `project_min_count` is two projects anywhere in the
+    course, not two on any one lesson.
+    """
+    from app.models import Course, LessonModelSubmission
+
+    if not (course.requires_project and course.project_upload_type == Course.PROJECT_SCRATCH):
+        return None
+
+    mine = LessonModelSubmission.objects.filter(user=request.user, video=lesson).first()
+    return {
+        "here": mine,
+        "made": LessonModelSubmission.objects.filter(
+            user=request.user, video__course=course
+        ).count(),
+        "needed": course.project_min_count,
+        # ?project=saved|badlink|notshared, set by the redirect after a post.
+        "state": request.GET.get("project", ""),
+    }
+
+
+def _certificate_panel(request, course):
+    """Whether the certificate is earned, already held, or what is missing.
+
+    Asks `app/completion.py`, which is the same module babook's own finish
+    button asks. Read-only here: this is a screen deciding what to draw, and
+    the one gate with a side effect (submitting a manual review) belongs to the
+    press, not to the render. So a course that wants review is reported as
+    unavailable rather than silently opening a review every time somebody looks
+    at the page.
+    """
+    from app.completion import why_not_certified
+    from app.models import CourseCertificate
+
+    held = CourseCertificate.objects.filter(user=request.user, course=course).first()
+    if held:
+        return {"held": held, "ready": False, "missing": None, "state": request.GET.get("cert", "")}
+    if not course.issues_certificate or course.requires_review:
+        return None
+
+    not_yet = why_not_certified(request.user, course)
+    return {
+        "held": None,
+        "ready": not_yet is None,
+        "missing": not_yet.reason if not_yet else None,
+        "state": request.GET.get("cert", ""),
+    }
+
+
+@require_POST
+@login_required(login_url=LOGIN_URL)
+def submit_project(request, slug, order):
+    """SPR-M.51 — the thing a member built, handed in without leaving our walls.
+
+    REQ-M.76 requires a `CourseCertificate` for both Scratch courses, and both
+    are `requires_project` with `project_min_count = 2`. So a member had to
+    submit two projects to be certified, and מט״צים rendered no way to submit
+    one: the review on 2026-09-17 found that nobody could become a מט״צ מוסמך
+    through this product at all.
+
+    Avi, 2026-09-19: "whatever babook can do that is needed I want matazim to
+    use or clone." So this parses and verifies with babook's own helpers rather
+    than a second opinion about what a Scratch link is. `LessonModelSubmission`
+    is the row babook's certificate gate counts, and writing a different row
+    would be a submission that satisfies nobody.
+    """
+    from app.models import Enrollment, LessonModelSubmission, Video
+    from app.views import parse_scratch_id, scratch_project_is_shared
+
+    course = _track_course(slug)
+    lesson = get_object_or_404(Video, course=course, lesson_order=order)
+
+    def back(state):
+        url = reverse("matazim:learn_lesson", kwargs={"slug": slug, "order": order})
+        return redirect(f"{url}?project={state}#mzProject")
+
+    pid = parse_scratch_id(request.POST.get("scratch_url", ""))
+    if not pid:
+        return back("badlink")
+
+    existing = LessonModelSubmission.objects.filter(user=request.user, video=lesson).first()
+    # Only a new or changed link is checked for sharing, which is babook's rule
+    # too: re-saving the same project to fix its title must never be refused.
+    if (not existing or existing.scratch_id != pid) and scratch_project_is_shared(pid) is False:
+        return back("notshared")
+
+    Enrollment.objects.get_or_create(user=request.user, course=course)
+    row = existing or LessonModelSubmission(user=request.user, video=lesson)
+    row.scratch_id = pid
+    row.model_file = ""
+    row.caption = (request.POST.get("caption", "") or "").strip()[:200]
+    row.save()
+    return back("saved")
+
+
+@require_POST
+@login_required(login_url=LOGIN_URL)
+def finish_course(request, slug):
+    """Ask babook whether this member has earned the certificate, and issue it.
+
+    The gates live in `app/completion.py` and are the course's own rules; this
+    asks and reports. No copy of them here, deliberately: a certificate two code
+    paths disagree about is a certificate nobody can defend.
+    """
+    from app.completion import issue_certificate, why_not_certified
+
+    course = _track_course(slug)
+    not_yet = why_not_certified(request.user, course, request=request)
+    url = reverse("matazim:learn_course", kwargs={"slug": slug})
+    if not_yet:
+        return redirect(f"{url}?cert={not_yet.reason}")
+
+    issue_certificate(request.user, course)
+    return redirect(f"{url}?cert=issued")
