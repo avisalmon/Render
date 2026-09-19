@@ -191,13 +191,17 @@
 
   <div class="sprint">
     <div class="sprint-head">
-      <div class="sprint-title">SL-B3 — Free Fall, seeded once <span>· sprsl10</span></div>
-      <span class="pill todo">not started</span>
+      <div class="sprint-title">SL-B3 — Free Fall, seeded once <span>· sprsl10 · 13 tests</span></div>
+      <span class="pill done">done</span>
     </div>
     <p class="sprint-desc">
       The real measuring-g lab in both languages, loaded by a <b>one-time</b> import — because this
       site re-runs every seed command on every deploy, and ustrip's version used to delete and recreate
-      rows each time. Proven by a test that runs it twice.
+      rows each time. Proven by a test that runs it twice comparing primary keys rather than counts,
+      plus the two cases that matter more: an author's edit survives the next deploy, and something an
+      author <b>deleted stays deleted</b>. The lab never quotes the accepted value of g before the
+      Analysis step — a content rule with a test behind it, since no serializer could enforce it.
+      A third defect found by reading output: callouts were reaching students as unrendered Markdown.
     </p>
   </div>
 

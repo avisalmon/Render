@@ -51,7 +51,7 @@ runs pip), `env\Scripts\activate` for everything Python, and
 |---|---|---|
 | **A — Infrastructure and look and feel** | SL-A1 … SL-A5 | 🔵 in progress |
 | **C — Sensor access layer** | SL-C1 … SL-C2 | 🔵 in progress — spike passed |
-| B — Curriculum and authoring | SL-B1 … SL-B4 | 🔵 SL-B1, SL-B2 done |
+| B — Curriculum and authoring | SL-B1 … SL-B4 | 🔵 SL-B4 is all that remains |
 | D — The lab runner | tbd at gate | ⬜ |
 | E — Predict | tbd at gate | ⬜ |
 | F — Capture | tbd at gate | ⬜ |
@@ -658,21 +658,81 @@ were found by looking at output rather than by a red test.
    politer tone. Fixed with `Meta.ordering`, plus a guard that every
    paginated resource's model is ordered.
 
-### SL-B3 — Free Fall, seeded once ⬜
+### SL-B3 — Free Fall, seeded once ✅
 
-Marker: `sprsl10`
+Marker: `sprsl10` — 13 tests, all green.
 
-- [ ] The Free Fall / measuring-g lab as real content in **both
-      languages** — the same content the mockups show.
-- [ ] A management command that is a **one-time import**: checks whether the
-      content exists, leaves it alone if it does, and logs that it did.
-      Not a preference — `render.yaml`'s start command re-runs every seed
-      command on **every deploy**, and ustrip's version deleted and
-      recreated rows each time, which would have destroyed real edits the
-      moment anyone could edit that table.
-- [ ] **A test that runs the command twice** and asserts nothing the app
-      could have created or changed is touched the second time. A test that
-      only checks the first run does not catch this.
+- [x] The Free Fall / measuring-g lab as real content in **both
+      languages** — 5 content blocks, 3 prediction questions, an experiment
+      config with its sensor, and an analysis config, in
+      `sensorlab/management/commands/seed_sensorlab.py`.
+- [x] A management command that is a **one-time import**: if the lab exists
+      it does nothing at all, and says so. Not a preference —
+      `render.yaml`'s start command re-runs every seed command on **every
+      deploy**, and ustrip's version deleted and recreated rows each time,
+      which would have destroyed real edits the moment anyone could edit
+      that table.
+- [x] **A test that runs the command twice** and asserts nothing is touched
+      the second time — comparing primary keys, not row counts, because
+      delete-and-recreate leaves the counts identical and the ids different.
+      Plus the two cases that matter more than "twice": an author's edit
+      survives the next deploy, and something an author **deleted stays
+      deleted**. A command that "creates anything missing" would resurrect
+      it on every deploy, forever.
+- [x] Wired into `render.yaml` with `|| true`, like every other seed here. A
+      seed command nobody runs is not a seed command, and the symptom would
+      have been an empty track list on the deployed site with nothing
+      anywhere saying why. There is a test that reads `render.yaml`.
+- [x] The seeded lab put through SL-B2's assembled endpoint in both
+      languages — the first time that endpoint met content not written to
+      suit it.
+
+#### The rule: once the lab exists, this file has no further say
+
+Deliberately coarse, following `seed_memz`: not "create what is missing"
+but "if the lab exists, do nothing". Re-importing individual missing pieces
+sounds more helpful and is worse — it would put back a block an author
+removed on purpose, on every deploy, with no way to make it stop. To change
+the published lab, edit it in the admin; to re-import, delete the lab and
+let the next run rebuild it.
+
+#### A content rule, because no serializer could enforce it
+
+SL-B2 withholds `expected_value` so "measure g" does not become "confirm
+g". Writing *"gravity is 9.81 m/s²"* into the Learn prose would hand the
+answer over through a field that **is** meant to be sent, and no
+serializer rule can catch that. So the seeded lab never quotes the accepted
+value before Analysis: the prose says "the accepted value", and the number
+lives in `AnalysisConfig.expected_value`, server-side. Tested, so it is a
+rule rather than a style note somebody writes over later.
+
+*The physics, since the choice of `computation` is not obvious.* An
+accelerometer reports **proper** acceleration — what its own springs feel —
+not motion. A phone lying still is pushed up by the table hard enough to
+hold it against gravity, so it reads gravity in full; a phone in free fall
+has nothing pushing it and reads near zero. That inversion is what the
+Predict step aims at, because it is the answer almost everyone gets wrong
+first. Measuring g is therefore the easy half: a stationary phone and a
+mean.
+
+#### A third defect found by reading, not by a red test
+
+`ContentBlock.render()` ran Markdown for `kind = text` only. Half of SL-B1's
+reasoning was right and half was a conflation: **the `kind` governs the
+container, not whether the words inside are prose.** A callout is prose in a
+box; an image's body is its caption. So the seeded callout came back through
+a field named `body_html` carrying literal `
+
+` and backticks — a student
+would have read the backticks. Only `formula` is genuinely not prose, and it
+stays literal because Markdown reads `*`, `_` and `|` as emphasis and table
+pipes, mangling the characters that carry the meaning.
+
+That is three defects in three sprints found by looking at output rather
+than by a failing test — B1's admin label, B2's raw explanation and
+unordered pagination, B3's callout. The pattern is stable enough to be worth
+stating: **assertions check what you thought to ask about; reading the output
+shows what you did not.**
 
 ### SL-B4 — The first real screens ⬜
 

@@ -326,18 +326,30 @@ class ContentBlock(models.Model):
     def __str__(self):
         return f"{self.lab.slug}/{self.step}#{self.order}"
 
+    #: The one kind whose body is not prose. A formula is symbols, and
+    #: Markdown would read `*`, `_` and `|` in one as emphasis and table
+    #: pipes — mangling the very characters that carry the meaning.
+    LITERAL_KINDS = ("formula",)
+
     def render(self, language=None):
         """This block's body as HTML for one language.
 
-        `formula`, `image`, `video` and `callout` deliberately do not go
-        through Markdown: they stay structured `kind`s so both modes can
-        style them and both languages can carry them, instead of becoming
-        markup buried inside prose that nobody can restyle later.
+        **Corrected in SL-B3, by reading a real seeded lab.** This used to
+        render Markdown for `text` only, on the reasoning that images,
+        formulas, video and callouts are structured kinds rather than markup.
+        Half of that was right and half of it was a conflation: the `kind`
+        governs the *container* — what box it is drawn in, how instrument
+        mode styles it — not whether the words inside are prose.
+
+        A callout is prose in a box. An image's body is its caption. Both
+        came back in a field called `body_html` containing literal `\\n\\n`
+        and backticks, which a student would have read as backticks. Only a
+        formula is genuinely not prose.
         """
         text = localised(self, "body", language)
-        if self.kind == self.Kind.TEXT:
-            return render_markdown(text)
-        return mark_safe(html.escape(text, quote=False))
+        if self.kind in self.LITERAL_KINDS:
+            return mark_safe(html.escape(text, quote=False))
+        return render_markdown(text)
 
 
 class PredictionQuestion(models.Model):

@@ -92,6 +92,7 @@ markers = [
     "sprsl7: SL-C2 SensorLab consent, and refusing with the right reason",
     "sprsl8: SL-B1 SensorLab the curriculum models, and authoring a lab",
     "sprsl9: SL-B2 SensorLab the curriculum over REST",
+    "sprsl10: SL-B3 SensorLab Free Fall, seeded once",
     "smoke: the fast gate, run on every push (see tests/test_smoke.py)",
 ]
 
