@@ -4,5 +4,18 @@
 {% block content %}
 <p class="memz-connection-banner" data-connection-banner hidden>{% trans "החיבור נקטע, מנסים שוב..." %}</p>
 <div data-game-root data-code="{{ code }}" data-recovered-token="{{ recovered_token }}"></div>
+
+{# SPR-Z.11: the lobby's "add your own photos" control lives OUTSIDE the #}
+{# game root on purpose. Everything inside that div is rebuilt from the  #}
+{# state on a poll; a file input in there would lose a half-made         #}
+{# selection, or an upload in flight, every couple of seconds. game.js   #}
+{# only toggles this section's `hidden`, never its contents.             #}
+{% if user.is_authenticated %}
+<section class="memz-card memz-upload-card" data-lobby-upload hidden>
+  <h2 class="memz-field-label">{% trans "התמונות שלכם במשחק הזה" %}</h2>
+  <p class="memz-fineprint">{% trans "כל תמונה שתעלו עכשיו יכולה להיות מחולקת לכל אחד בחדר בסבבים הבאים." %}</p>
+  <div data-lobby-uploader></div>
+</section>
+{% endif %}
 {% endblock %}
 {% block scripts %}<script src="{% static 'memz/game.js' %}"></script>{% endblock %}

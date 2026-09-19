@@ -588,10 +588,28 @@ that is their call, in their private room.
 
 ### 6.2 Uploads: a user's own bank
 
-Rule 6.2.1: logged-in users only, within `MEMZ_UPLOAD_LIMIT`. JPEG, PNG,
-WebP; up to 8 MB per file; multiple files per upload action, from camera or
-gallery. HEIC from iPhones is accepted if Pillow can open it on the server,
-else refused with a message that says "choose JPEG in the share sheet".
+Rule 6.2.1: logged-in users only, within `MEMZ_UPLOAD_LIMIT` (30 for a
+free account from SPR-Z.11, raised from 5 now that a player's own photos
+are up to half of what a game deals; 50 paid; a guest cannot upload at
+all). JPEG, PNG, WebP; up to 8 MB per file; multiple files per upload
+action, from camera or gallery. HEIC from iPhones is accepted if Pillow
+can open it on the server, else refused with a message that says "choose
+JPEG in the share sheet".
+
+Rule 6.2.6 (SPR-Z.11, 2026-09-19): uploading is offered **on the home
+screen and in the lobby**, not only in the profile's bank tab — Avi's
+ask was for "a clear interface of upload your own image", and a control
+nobody finds is the same as a control that doesn't exist. The home and
+lobby controls are one implementation (`window.memz.mountUploader`) so
+they cannot drift apart; the profile keeps its own fuller bank manager on
+top of the same endpoint (thumbnails, moderation badges, delete), since
+that screen is for tending the bank, not for adding to it in a hurry.
+The lobby's copy deliberately lives *outside*
+the poll-rebuilt game root: everything inside it is re-rendered from the
+state every couple of seconds, which would throw away a half-made file
+selection or an upload in flight. It is shown in the lobby and hidden
+once play starts — mid-round is the wrong moment to be picking photos,
+and a round's images are chosen when the round begins.
 
 Rule 6.2.2: on upload the server applies EXIF orientation, strips metadata
 (location, device), resizes so the longest side is at most 1600 px, and
@@ -645,10 +663,28 @@ emails the site admin with the slug. No in-app moderation queue in v1.
 
 | `image_source` | Draws from |
 | --- | --- |
+| `mix` (**the default**, SPR-Z.11) | the public bank **plus** every approved image any seated signed-in player owns, plus the selected packs if any |
 | `public_random` | every approved public image |
 | `packs` | the session's selected `packs` (public and the host's own) |
-| `own_only` | every approved image the host owns |
-| `mix` | the selected packs plus every image the host owns |
+| `own_only` | every approved image any seated signed-in player owns |
+
+**Changed 2026-09-19 (SPR-Z.11), on Avi's ask** ("the images are boring,
+I want every signed-in user to upload his own, and whenever he's playing
+a random picture will be chosen from his pictures, as well as all the
+other banks"):
+
+- `mix` is the **default** for every new session, not `public_random`.
+  The engine had been able to deal seated players' uploads since SPR-Z.9,
+  but only if the host went and chose it, so in practice nobody's photos
+  ever reached a table.
+- `mix` now actually includes the public bank. It never did: with no
+  packs selected the query fell through to own-uploads-only, so the
+  screen's own label ("my photos + the public bank") was not what ran,
+  and a room where nobody had uploaded had an *empty* pool.
+- A guest host's session is `mix` too, not `public_random`. A guest still
+  owns nothing and uploads nothing; what changes is that a signed-in
+  *player's* photos now play wherever that player plays, rather than only
+  in rooms a signed-in friend happened to open.
 
 Rule 6.5.1: dealing never repeats an image within a session while unseen
 ones remain; in Normal and Topics modes no two players get the same image
@@ -669,8 +705,12 @@ contributes nothing — uploading requires an account (Rule 6.2.1), so a
 guest simply has none. At least one dealt image per round comes from a
 seated player's own stock when any exists, in every mode including Same
 Meme (the one shared image for that round can itself be someone's upload);
-across the whole session, no more than 30% of dealt images may come from
-players' own stock. A player is never dealt their own upload — the pool
+across the whole session, no more than **50%** of dealt images may come
+from players' own stock (raised from 30% in SPR-Z.11, Avi's call: at 30%
+the players' own photos were seasoning, and the ask was for them to be
+half the game). The ceiling still earns its place — it keeps the public
+bank present, so a room where exactly one person uploaded doesn't become
+an evening of that one person's camera roll. A player is never dealt their own upload — the pool
 for their draw excludes images they themselves own, even though those
 same images are still eligible for everyone else. This is why Rule
 6.1.1's "their own private room" framing for a user's own bank stops being

@@ -98,7 +98,10 @@ class SessionCreateView(GameAPIView):
             if deck is None:
                 return Response({"detail": "אין עדיין חפיסת קלפים זמינה."}, status=400)
 
-        image_source = request.data.get("image_source") or Session.PUBLIC_RANDOM
+        # SPR-Z.11: defaults to `mix` -- everyone's uploads plus the public
+        # bank -- so a room gets the players' own photos without anybody
+        # having to find a setting first.
+        image_source = request.data.get("image_source") or Session.MIX
         if image_source not in dict(Session.IMAGE_SOURCES):
             image_source = Session.PUBLIC_RANDOM
         pack_ids = request.data.get("packs") or []

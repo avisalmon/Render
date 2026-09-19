@@ -731,6 +731,20 @@ section[id] { scroll-margin-top: 16px; margin-bottom: 32px; }
 .memz-rating-btn[disabled] { opacity: 0.45; }
 .memz-rating-btn--chosen[disabled] { opacity: 1; }
 
+/* SPR-Z.11: the "add your own photos" card, on the home screen and in
+   the lobby. Same shape in both, so it reads as one feature and not two. */
+.memz-upload-card {
+  margin-top: 18px;
+  padding: 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.memz-uploader-input {
+  padding: 10px;
+  font-size: 14px;
+}
+
 /* The line the author of the meme on screen gets instead of buttons. */
 .memz-innocent {
   margin: 14px 0 6px;

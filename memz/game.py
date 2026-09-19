@@ -93,9 +93,15 @@ def create_session(
             raise GameError("החפיסה הזאת קטנה מדי למשחק הזה.")
 
     if not is_logged_in:
-        image_source = Session.PUBLIC_RANDOM   # spec §2.1: guests always draw from the public bank
+        # SPR-Z.11: a guest host still can't *pick* packs or an own-only
+        # pool (nothing they own to draw from), but `mix` is now the right
+        # floor rather than `public_random`: mix is the public bank plus
+        # whatever the *seated signed-in players* have uploaded, and a
+        # signed-in player's photos should play wherever they play, not
+        # only in rooms a signed-in friend happened to open.
+        image_source = Session.MIX
         packs = None
-    elif image_source in (Session.PACKS, Session.MIX) and not packs:
+    elif image_source == Session.PACKS and not packs:
         raise GameError("צריך לבחור לפחות חבילה אחת.")
 
     if is_logged_in:

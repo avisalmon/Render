@@ -190,7 +190,11 @@ class Session(models.Model):
     game_mode = models.CharField(max_length=10, choices=GAME_MODES, default=NORMAL)
     caption_mode = models.CharField(max_length=6, choices=CAPTION_MODES, default=TYPED)
     scoring_mode = models.CharField(max_length=6, choices=SCORING_MODES, default=VOTE)
-    image_source = models.CharField(max_length=14, choices=IMAGE_SOURCES, default=PUBLIC_RANDOM)
+    # SPR-Z.11: `mix` (everyone's own uploads + the public bank) is the
+    # default, not `public_random`. The engine could already deal seated
+    # players' photos since SPR-Z.9, but only if the host went and chose
+    # it, so in practice nobody's uploads ever reached a table.
+    image_source = models.CharField(max_length=14, choices=IMAGE_SOURCES, default=MIX)
     packs = models.ManyToManyField(Pack, blank=True, related_name="sessions")
     deck = models.ForeignKey(CaptionDeck, null=True, blank=True, on_delete=models.SET_NULL, related_name="sessions")
     round_count = models.PositiveSmallIntegerField(default=5)

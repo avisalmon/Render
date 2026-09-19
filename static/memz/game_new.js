@@ -26,7 +26,11 @@
     if (scoringField) scoringField.hidden = gameModeInput.value === "relaxed";
     if (deckField) deckField.hidden = captionModeInput.value !== "cards";
     if (packsField && imageSourceInput) {
-      var needsPacks = imageSourceInput.value === "packs" || imageSourceInput.value === "mix";
+      // SPR-Z.11: `mix` no longer means "own + packs" (it is the public
+      // bank + everyone's uploads, packs optional), and it is now the
+      // default -- so opening the create screen no longer unfolds a pack
+      // picker nobody asked for. Only `packs` mode needs one.
+      var needsPacks = imageSourceInput.value === "packs";
       packsField.hidden = !needsPacks;
       if (needsPacks && !packsLoaded) loadPacks();
     }

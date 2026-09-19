@@ -149,9 +149,67 @@
     return data;
   }
 
+  // SPR-Z.11: the same "add your own photos" control now appears in three
+  // places -- the home screen, the lobby, and the profile's bank tab --
+  // so it lives here once instead of being written out three times and
+  // drifting. `container` is any element; it gets a file input, a button
+  // and a status line. `onUploaded(image)` is called per accepted file.
+  function mountUploader(container, options) {
+    if (!container || container.dataset.uploaderMounted === "1") return;
+    container.dataset.uploaderMounted = "1";
+    options = options || {};
+
+    var label = options.label || "הוספת תמונות משלכם";
+    container.innerHTML =
+      '<input class="memz-input memz-uploader-input" type="file" accept="image/*" multiple data-uploader-input>' +
+      '<button type="button" class="memz-btn memz-btn--secondary memz-btn--wide" data-uploader-submit>' + label + "</button>" +
+      '<p class="memz-fineprint" data-uploader-status hidden></p>';
+
+    var input = container.querySelector("[data-uploader-input]");
+    var button = container.querySelector("[data-uploader-submit]");
+    var status = container.querySelector("[data-uploader-status]");
+
+    function say(text) {
+      status.textContent = text;
+      status.hidden = !text;
+    }
+
+    button.addEventListener("click", async function () {
+      var files = Array.prototype.slice.call(input.files || []);
+      if (!files.length) { input.click(); return; }
+      button.disabled = true;
+      var done = 0;
+      var failed = 0;
+      for (var i = 0; i < files.length; i++) {
+        say("מעלים " + (i + 1) + " מתוך " + files.length + "...");
+        var body = new FormData();
+        body.append("file", files[i]);
+        try {
+          var image = await api("POST", "/memz/api/images/", body);
+          done += 1;
+          if (options.onUploaded) options.onUploaded(image);
+        } catch (e) {
+          failed += 1;
+          var detail = (e.data && (e.data.file || e.data.detail)) || "";
+          if (detail) say(String(detail));
+        }
+      }
+      input.value = "";
+      button.disabled = false;
+      if (!failed) {
+        // Rule 6.4.1: an upload is not usable until moderation passes it,
+        // so "uploaded" is the honest word here, not "added to the game".
+        say(done === 1 ? "תמונה אחת נוספה לבנק שלכם." : done + " תמונות נוספו לבנק שלכם.");
+      } else if (done) {
+        say(done + " נוספו, " + failed + " לא עברו.");
+      }
+    });
+  }
+
   window.memz = {
     csrf: csrf, api: api, getPlayerToken: getPlayerToken, setPlayerToken: setPlayerToken,
     isMuted: isMuted, setMuted: setMuted, playSound: playSound, vibrate: vibrate,
+    mountUploader: mountUploader,
     deferredInstallPrompt: function () { return deferredInstallPrompt; },
   };
 })();

@@ -70,9 +70,12 @@ def _public_pack(images):
 # ------------------------------------------------------------- upload quota
 
 
-def test_upload_limit_is_five_free_fifty_paid_zero_guest():
+def test_upload_limit_is_thirty_free_fifty_paid_zero_guest():
+    """SPR-Z.11 raised the free tier from 5 to 30: the players' own photos
+    are now half of what a game deals (Rule 6.5.3), and five of them is a
+    sample, not a bank — enough to run out inside a single evening."""
     assert conf.cap("UPLOAD_LIMIT", "guest") == 0
-    assert conf.cap("UPLOAD_LIMIT", "free") == 5
+    assert conf.cap("UPLOAD_LIMIT", "free") == 30
     assert conf.cap("UPLOAD_LIMIT", "paid") == 50
 
 

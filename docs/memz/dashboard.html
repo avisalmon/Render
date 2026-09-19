@@ -78,9 +78,9 @@
     Status truth: <a href="backlog.md">backlog.md</a> + <a href="spec.md">spec.md</a>.</p>
 
   <div class="stat-row">
-    <div class="stat"><div class="n">7 / 7 + 12</div><div class="l">Sprints done</div></div>
-    <div class="stat"><div class="n">65 + 53</div><div class="l">Features done</div></div>
-    <div class="stat"><div class="n">313</div><div class="l">Tests</div></div>
+    <div class="stat"><div class="n">7 / 7 + 13</div><div class="l">Sprints done</div></div>
+    <div class="stat"><div class="n">65 + 60</div><div class="l">Features done</div></div>
+    <div class="stat"><div class="n">324</div><div class="l">Tests</div></div>
     <div class="stat"><div class="n">Last: SPR-Z.7</div><div class="l">Deployed</div></div>
   </div>
   <div class="bar"><div style="width:100%"></div></div>
@@ -128,6 +128,11 @@
   </div>
 
   <div class="open-item"><b>ACT-Z.14</b><span>SPR-Z.10 hid who made each meme, then showed each meme's points beside a leaderboard — which re-identified the author anyway ("וזה עושה קשר"): a meme worth 4 next to the one player who just rose by 4 is signed. A scoring round's result is now the leaderboard alone, and the per-meme numbers are gone from the payload, not just the screen. Relaxed mode, which has no scores to correlate, still shows the memes.</span></div>
+
+  <div class="sprint">
+    <div class="sprint-head"><div class="sprint-title">SPR-Z.11 <span>Your own photos, by default</span></div><span class="pill done">DONE (dev) · 2026-09-19</span></div>
+    <p class="sprint-desc">Avi: "the images of the memes are boring. I want every signed-in user to upload his own images, and whenever he's playing a random picture will be chosen from his pictures, as well as all the other banks." Most of it turned out to be built and unreachable. <b>The default changed:</b> a new game now draws from `mix` — the public bank plus every seated signed-in player's own uploads — instead of the public bank alone. The engine could deal players' photos since SPR-Z.9, but only if the host went and picked a setting, so in practice nobody's ever reached a table. <b>A real bug under the label:</b> `mix` didn't include the public bank at all; with no packs chosen it queried own-uploads-only, so the screen promised "my photos + the public bank" and a room where nobody had uploaded got an empty pool. <b>Limits raised on Avi's call:</b> personal photos up to 50% of a game (was 30%), and 30 uploads on a free account (was 5). <b>A clear way in:</b> an upload card on the home screen and another in the lobby — the moment everyone is sitting together — sharing one implementation, with the lobby's copy deliberately outside the poll-rebuilt game root so a half-made file selection survives. A guest-hosted room is `mix` too now: a player's photos follow the player, not the host. 7 features, 11 tests.</p>
+  </div>
 
   <div class="section-label">ACT items, closed this sprint</div>
   <div class="open-item"><b>ACT-Z.1</b><span>Real bank images: AI-illustrated batch + reviewed real photos, both scoped to non-public-figures (spec §14.2, Rule 6.1.1). A separate request to use real Israeli celebrities or existing memes was declined — publicity rights and copyrighted templates are a different, higher bar than anonymous stock photos.</span></div>

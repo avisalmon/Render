@@ -67,12 +67,13 @@
   <label class="memz-field">
     <span>{% trans "מאיפה התמונות" %}</span>
     <select class="memz-input" name="image_source" data-image-source>
-      <option value="public_random">{% trans "אקראי מהבנק הציבורי" %}</option>
-      <option value="own_only">{% trans "רק התמונות שלי" %}</option>
-      <option value="mix">{% trans "התמונות שלי + הבנק הציבורי" %}</option>
+      <option value="mix" selected>{% trans "התמונות של כל השחקנים + הבנק הציבורי" %}</option>
+      <option value="public_random">{% trans "רק הבנק הציבורי" %}</option>
+      <option value="own_only">{% trans "רק תמונות של השחקנים" %}</option>
       <option value="packs">{% trans "מחבילות שבחרתי" %}</option>
     </select>
   </label>
+  <p class="memz-fineprint">{% trans "בברירת מחדל המשחק מערבב את התמונות שכל שחקן מחובר העלה עם הבנק הציבורי, עד חצי מהתמונות." %}</p>
   <div class="memz-field" data-packs-field hidden>
     <span class="memz-field-label">{% trans "אילו חבילות" %}</span>
     <ul class="memz-player-list" data-packs-list></ul>

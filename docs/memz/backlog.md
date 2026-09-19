@@ -790,6 +790,48 @@ author field was held to an hour earlier.
 
 ---
 
+## SPR-Z.11 — Your own photos, by default `DONE (dev), 2026-09-19`
+
+Avi: "the images of the memes are boring. I want every signed-in user to
+be able to upload his own images. And whenever he's playing, a random
+picture will be chosen from his pictures... the game will pick randomly
+from this bank, as well as all the other banks. So I want a clear
+interface of upload your own image, and it will be stored in the site and
+tagged for that user."
+
+Most of this was already built and had simply never reached a table. His
+three calls before the work started: personal photos up to **50%** of a
+game, **30** uploads on a free account, and the upload control on **both
+the home screen and the lobby**.
+
+| Feature | Description | Spec | Status |
+| --- | --- | --- | --- |
+| F-Z.11.1 | Seated players' own photos never actually got dealt | §6.5 | DONE — the engine could do it since SPR-Z.9, but only when the host picked a non-default `image_source`, which nobody did. `mix` is now the **default** for every new session, guest-hosted ones included |
+| F-Z.11.2 | `mix` didn't include the public bank at all | §6.5 | DONE — a real bug hiding under the label. With no packs chosen the pool query fell through to own-uploads-only, so the screen promised "my photos + the public bank" and delivered neither the bank nor, in a room where nobody had uploaded, anything at all. `pool_for` now reads public + seated players' own + selected packs |
+| F-Z.11.3 | Personal photos capped at 30% of a game | Rule 6.5.3 | DONE — raised to 50%. The ceiling stays so that one person's camera roll can't become the whole evening in a room where only they uploaded |
+| F-Z.11.4 | Five uploads is not a bank | Rule 6.2.1 | DONE — free tier 5 → 30 (paid stays 50, guests still zero) |
+| F-Z.11.5 | A clear way to upload | Rule 6.2.6 (new) | DONE — an upload card on the memz home screen (and, for a guest, what an account buys instead) plus one in the lobby, which is the moment everyone is sitting together waiting. One shared implementation, `window.memz.mountUploader`. The lobby's copy lives *outside* the poll-rebuilt game root on purpose: inside it, a half-made file selection would be thrown away every couple of seconds |
+| F-Z.11.6 | A signed-in player's photos only played in rooms a signed-in host opened | §2.1 | DONE — a guest-hosted session is `mix` too. A guest still owns nothing and uploads nothing; what changed is that a player's own photos follow the player, not the host |
+| F-Z.11.7 | Tests | §12.8 | DONE — `tests/test_spr_z_11.py`, 11 tests, marker `sprz11` |
+
+**Sprint notes.** The interesting part of this one was how little of it
+was new: uploads, per-user tagging, moderation, and dealing from seated
+players' banks all existed and had been tested since SPR-Z.5 and SPR-Z.9.
+What was missing was a default, a correct query behind a label that
+already promised the right thing, and a way in that wasn't three taps
+deep. Worth remembering next time something "doesn't exist": check
+whether it exists and is unreachable.
+
+The screen contract earned its keep again — defaulting the picker to
+`mix` unfolded the pack list on the create screen, whose checkboxes are
+13×13 px, and the phone-tap-target check failed the build. Only `packs`
+mode opens that list now. **Known small gap, deliberately not fixed
+here:** those checkboxes are still 13×13 when somebody does choose packs
+mode; the contract has no screen for that state, which is why it went
+unnoticed until now.
+
+---
+
 ## Not in v1 (spec §13)
 
 Payments, AI captions, English UI, GIF and video memes, free-position text

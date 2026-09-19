@@ -496,16 +496,40 @@ def test_the_captioning_screen_still_updates_once_something_real_changes(browser
     assert "שלחתם" in page.inner_text("[data-screen]"), "submitting did not make it to the screen"
 
 
+def _park_reveal_on(session, index, hold_seconds=0):
+    """Put meme `index` on screen by driving `reveal_deadline`, rather than
+    waiting out real seconds to get there.
+
+    This test used to race the clock: the fixture started the reveal, then
+    every assertion had to land inside meme 1's slot before it moved on.
+    That held at 4 seconds a meme by luck and at 10 by more luck -- in a
+    full-suite run, launching a browser can eat a whole slot, and the first
+    assertion then finds meme 2. Nothing here is about elapsed time; it is
+    about which meme the arithmetic picks, so the arithmetic is what gets
+    set.
+
+    `hold_seconds` pins it *indefinitely* on the first meme, and only the
+    first: it works by making the computed elapsed time negative, and the
+    index clamps negatives to 0. Use it to survive a slow page load; for
+    any later slot pass nothing and rely on that slot's own width."""
+    from memz import conf
+
+    round_obj = game.current_round(session)
+    count = round_obj.submissions.filter(meme__isnull=False).count()
+    per_meme = conf.get("REVEAL_SECONDS_PER_MEME")
+    elapsed = per_meme * index + per_meme / 2
+    Round.objects.filter(pk=round_obj.pk).update(
+        reveal_deadline=timezone.now() + timezone.timedelta(
+            seconds=per_meme * count - elapsed + hold_seconds
+        )
+    )
+
+
 def _revealed_world(settings):
     """Three real submissions, all captioned, so the round has already
     moved itself into `revealed` by the time the page loads -- same
     server-authoritative path as a real game, just driven directly
-    instead of through three browsers. Deliberately keeps the real
-    `REVEAL_SECONDS_PER_MEME` (8s, ACT-Z.13 2026-09-18 -- was 4s, "הרגע של
-    חשיפה מאד קצר") rather than compressing it: a browser
-    launch and page load alone can eat over a second, and a tighter
-    per-meme budget made the very first assertion flake past meme 0
-    before the page had even finished loading."""
+    instead of through three browsers."""
     session, host, p2, p3 = _captioning_world(round_count=1)
     round_obj = game.current_round(session)
     for player in (host, p2, p3):
@@ -522,6 +546,7 @@ def test_the_reveal_screen_shows_one_meme_at_a_time_not_a_grid(browser, live_ser
     (F-Z.3.9, tracked since SPR-Z.3, never built until now)."""
     pytest.importorskip("playwright.sync_api")
     session, host, round_obj = _revealed_world(settings)
+    _park_reveal_on(session, 0, hold_seconds=180)
     context = browser.new_context(viewport=PHONE, device_scale_factor=2, is_mobile=True, has_touch=True)
     context.add_init_script(
         "localStorage.setItem(%r, %r);" % (f"memz.player.{session.code}", host.guest_token)
@@ -536,25 +561,20 @@ def test_the_reveal_screen_shows_one_meme_at_a_time_not_a_grid(browser, live_ser
     assert "1 מתוך 3" in page.inner_text("[data-reveal-progress]")
     first_src = page.locator(".memz-reveal-image").get_attribute("src")
 
-    # Past this meme's own slot, still only one at a time -- and it's a
-    # different one, proven by comparing rendered_url values already known
-    # server-side (never trusting pixels). The wait is read from the config
-    # rather than hardcoded: it was 4s, then 8s (ACT-Z.13), then 10s
-    # (SPR-Z.10) inside three days, and a hardcoded number quietly stopped
-    # proving anything each time -- the 8200ms one only still passed
-    # because launching a browser ate the missing two seconds.
-    from memz import conf
-
-    page.wait_for_timeout(conf.get("REVEAL_SECONDS_PER_MEME") * 1000 + 600)
+    # Move the reveal on to the next meme and let one poll carry it to the
+    # screen: still one at a time, and a different one, proven against the
+    # rendered_url values already known server-side (never pixels).
+    _park_reveal_on(session, 1)
+    page.wait_for_timeout(1500)   # outlives a real 1-second poll on `revealed`
     assert page.locator(".memz-reveal-image").count() == 1
     progress = page.inner_text("[data-reveal-progress]")
-    assert "1 מתוך 3" not in progress, f"the slideshow never advanced past the first meme ({progress})"
+    assert "2 מתוך 3" in progress, f"the slideshow never advanced to the next meme ({progress})"
     second_src = page.locator(".memz-reveal-image").get_attribute("src")
     assert second_src != first_src, "the slideshow never actually advanced to the next meme"
 
     expected = [s.meme.rendered.url for s in round_obj.submissions.select_related("meme").order_by("id")]
     assert first_src == expected[0]
-    assert second_src in expected[1:]
+    assert second_src == expected[1]
 
 
 def test_the_big_screen_reveal_is_also_one_at_a_time(browser, live_server, db, settings):
@@ -562,6 +582,7 @@ def test_the_big_screen_reveal_is_also_one_at_a_time(browser, live_server, db, s
     grid -- if anything, one-at-a-time matters more there."""
     pytest.importorskip("playwright.sync_api")
     session, _host, _round_obj = _revealed_world(settings)
+    _park_reveal_on(session, 0, hold_seconds=180)   # don't race the slot: see _park_reveal_on
     context = browser.new_context(viewport=PHONE)
     page = context.new_page()
     page.goto(f"{live_server.url}/memz/s/{session.code}/screen/", wait_until="domcontentloaded")

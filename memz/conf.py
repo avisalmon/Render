@@ -19,7 +19,11 @@ DEFAULTS = {
     # SPR-Z.9 (2026-09-16): tightened from 100/2000 -- a scarce-enough number
     # to matter now that a free user's own uploads can be dealt into a
     # shared game other players join, not just their own private bank.
-    "UPLOAD_LIMIT": {"guest": 0, "free": 5, "paid": 50},
+    # SPR-Z.11 (2026-09-19): 5 -> 30. Avi's own photos are now the *point*
+    # ("the images are boring, I want every signed-in user to upload his
+    # own"), and five is not a bank, it is a sample -- enough to run out
+    # inside one game and be re-uploaded before the next.
+    "UPLOAD_LIMIT": {"guest": 0, "free": 30, "paid": 50},
     "PACK_LIMIT": {"guest": 0, "free": 10, "paid": None},
     "GUEST_SESSION_TTL_HOURS": 48,
     "GUEST_MEME_TTL_HOURS": 48,

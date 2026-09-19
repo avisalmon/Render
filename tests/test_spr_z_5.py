@@ -482,9 +482,17 @@ def test_profile_lists_my_things_only(client, media_tmp):
 # ------------------------------------------------------------- guest gap
 
 
-def test_a_guest_host_can_never_choose_anything_but_public_random(client, media_tmp):
+def test_a_guest_hosts_choice_of_image_source_is_ignored(client, media_tmp):
+    """A guest owns no images and picks no packs, so whatever they send is
+    replaced by the one pool that always makes sense for them.
+
+    SPR-Z.11 changed which pool that is: `mix`, not `public_random`. Mix
+    is the public bank *plus* whatever the seated signed-in players have
+    uploaded — and a signed-in player's own photos should play wherever
+    they play, not only in rooms that a signed-in friend happened to be
+    the one to open. A guest still owns nothing and uploads nothing."""
     from memz.models import Session
 
     r = create_session(client, image_source="own_only", round_count=1)
     assert r.status_code == 201
-    assert Session.objects.get(code=r.json()["code"]).image_source == Session.PUBLIC_RANDOM
+    assert Session.objects.get(code=r.json()["code"]).image_source == Session.MIX

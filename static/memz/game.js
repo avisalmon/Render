@@ -137,8 +137,27 @@
     );
   }
 
+  // SPR-Z.11: the lobby's uploader lives outside `root` (see game.html) so
+  // a poll-driven rebuild can't take a half-made file selection with it.
+  // All this does is show it in the lobby and hide it once play starts --
+  // mid-round is the wrong moment to be picking photos, and the images a
+  // round deals are chosen when the round starts anyway.
+  var lobbyUploadSection = document.querySelector("[data-lobby-upload]");
+
+  function showLobbyUploader(show) {
+    if (!lobbyUploadSection) return;
+    lobbyUploadSection.hidden = !show;
+    if (show && window.memz.mountUploader) {
+      window.memz.mountUploader(
+        lobbyUploadSection.querySelector("[data-lobby-uploader]"),
+        { label: "הוספת תמונות שלי" }
+      );
+    }
+  }
+
   function renderLobby(state) {
     setScreen("game-lobby");
+    showLobbyUploader(!screenMode);
     var me = state.players.find(function (p) { return p.is_me; });
     var isHost = me && me.is_host;
     var canStart = state.can_start;
@@ -630,6 +649,7 @@
       return;
     }
 
+    if (state.status !== "lobby") showLobbyUploader(false);
     if (state.status === "lobby") renderLobby(state);
     else if (state.status === "playing") {
       var r = state.round;

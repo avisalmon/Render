@@ -18,4 +18,32 @@
 
   <a class="memz-btn memz-btn--secondary" href="{% url 'memz:create' %}">{% trans "רק ליצור מם" %}</a>
 </div>
+
+{# SPR-Z.11: the players' own photos are half the game now (Rule 6.5.3), #}
+{# so adding them is a first-screen action, not something buried in a    #}
+{# profile tab. A guest is told what an account buys, not scolded.       #}
+<section class="memz-card memz-upload-card">
+  <h2 class="memz-field-label">{% trans "התמונות שלכם" %}</h2>
+  {% if user.is_authenticated %}
+  <p class="memz-fineprint">{% trans "התמונות שתעלו נשמרות אצלכם, ומתערבבות בכל משחק שתשחקו עם הבנק הציבורי." %}</p>
+  <div data-home-uploader></div>
+  <a class="memz-btn memz-btn--ghost memz-btn--small" href="{% url 'memz:profile' %}">{% trans "לבנק שלי" %}</a>
+  {% else %}
+  <p class="memz-fineprint">{% trans "עם חשבון אפשר להעלות תמונות משלכם, והן ישוחקו בכל משחק שתשחקו." %}</p>
+  <a class="memz-btn memz-btn--secondary memz-btn--wide" href="{% url 'memz:signup' %}">{% trans "פתיחת חשבון" %}</a>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}{{ block.super }}
+{# Inside the auth branch on purpose: a guest has nothing to mount it on, #}
+{# so the page shouldn't carry the code either.                           #}
+{% if user.is_authenticated %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var slot = document.querySelector("[data-home-uploader]");
+    if (slot && window.memz && window.memz.mountUploader) window.memz.mountUploader(slot);
+  });
+</script>
+{% endif %}
 {% endblock %}

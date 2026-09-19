@@ -26,7 +26,14 @@ from .models import MemeImage, Player, Session, Submission, Topic
 # Rule 6.5.3: never more than this share of a session's dealt images comes
 # from a player's own stock. Checked before adding one more, so the ratio
 # can sit at or just under this line, never meaningfully over it.
-PLAYER_STOCK_MAX_SHARE = 0.30
+#
+# SPR-Z.11 (2026-09-19): 0.30 -> 0.50, Avi's call. At 30% the players'
+# own photos were seasoning; the ask is for them to be half the game
+# ("whenever he's playing, a random picture will be chosen from his
+# pictures"). A ceiling still earns its place: it keeps the public bank
+# present, so a room where exactly one person uploaded doesn't turn into
+# an evening of that one person's camera roll.
+PLAYER_STOCK_MAX_SHARE = 0.50
 
 
 def _seated_signed_in_user_ids(session):
@@ -41,20 +48,37 @@ def _seated_signed_in_user_ids(session):
 
 
 def pool_for(session):
-    """The images this session may deal, approved only (Rule 6.4.1)."""
+    """The images this session may deal, approved only (Rule 6.4.1).
+
+    `mix` is the default from SPR-Z.11 on, and means what the screen has
+    always said it means: **everyone's own uploads plus the public bank**,
+    plus any packs the host picked. It did not, before: with no packs
+    chosen it quietly fell through to own-uploads-only, so a room where
+    nobody had uploaded anything had an empty pool, and one where somebody
+    had got nothing but that person's photos. The label promised the
+    public bank and the query never included it."""
     base = Q(moderation_status=MemeImage.APPROVED)
+    public = Q(owner__isnull=True, visibility=MemeImage.PUBLIC)
+
     if session.image_source == Session.PACKS and session.packs.exists():
         return MemeImage.objects.filter(base, packs__in=session.packs.all()).distinct()
-    if session.image_source in (Session.OWN_ONLY, Session.MIX):
+
+    if session.image_source == Session.OWN_ONLY:
         user_ids = _seated_signed_in_user_ids(session)
-        own = Q(owner_id__in=user_ids) if user_ids else None
-        if session.image_source == Session.MIX and session.packs.exists():
-            packs_q = Q(packs__in=session.packs.all())
-            own = packs_q if own is None else (own | packs_q)
-        if own is not None:
-            return MemeImage.objects.filter(base & own).distinct()
-        return MemeImage.objects.none()
-    return MemeImage.objects.filter(base, owner__isnull=True, visibility=MemeImage.PUBLIC)
+        if not user_ids:
+            return MemeImage.objects.none()
+        return MemeImage.objects.filter(base & Q(owner_id__in=user_ids)).distinct()
+
+    if session.image_source == Session.MIX:
+        user_ids = _seated_signed_in_user_ids(session)
+        sources = public
+        if user_ids:
+            sources = sources | Q(owner_id__in=user_ids)
+        if session.packs.exists():
+            sources = sources | Q(packs__in=session.packs.all())
+        return MemeImage.objects.filter(base & sources).distinct()
+
+    return MemeImage.objects.filter(base, public)
 
 
 def _unseen_and_pool(session):
