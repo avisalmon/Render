@@ -328,6 +328,135 @@ def test_the_uploader_offers_the_camera_and_the_gallery_as_real_buttons(browser,
         context.close()
 
 
+# ----------------------------------- ACT-Z.16: not a camera's worth of pixels
+
+
+def _camera_photo_bytes(w=4032, h=3024):
+    """A 12MP phone-shaped photo with real detail. A flat colour would
+    compress to almost nothing and prove nothing about storage."""
+    import random
+
+    from PIL import ImageDraw, ImageFilter
+
+    img = Image.new("RGB", (w, h))
+    d = ImageDraw.Draw(img)
+    rnd = random.Random(7)
+    for y in range(0, h, 4):
+        d.rectangle([0, y, w, y + 4], fill=(30 + y * 180 // h, 90 + y * 90 // h, 160 - y * 60 // h))
+    for _ in range(900):
+        x, y = rnd.randrange(w), rnd.randrange(h)
+        r = rnd.randrange(20, 260)
+        d.ellipse([x, y, x + r, y + r], fill=(rnd.randrange(255), rnd.randrange(255), rnd.randrange(255)))
+    img = img.filter(ImageFilter.GaussianBlur(1.2))
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=95)
+    return buf.getvalue()
+
+
+def test_a_phone_photo_is_stored_at_phone_size_not_camera_size(client, media_tmp):
+    """ACT-Z.16 (Avi: "they probably are very big images from cameras on
+    the phone, and we don't really need this resolution, it's all going to
+    a phone screen"). Measured, not assumed: the same photo through the
+    real upload path, at the old settings and the new ones."""
+    from memz import conf, uploads
+    from memz.models import MemeImage
+
+    photo = _camera_photo_bytes()
+    user = _user("shutterbug")
+    client.force_login(user)
+    r = client.post("/memz/api/images/", {"file": ContentFile(photo, name="IMG_9001.JPG")})
+    assert r.status_code == 201, r.content
+
+    image = MemeImage.objects.get(pk=r.json()["id"])
+    with Image.open(image.file) as stored:
+        assert max(stored.size) <= conf.get("UPLOAD_MAX_SIDE") == 1280
+    assert image.file.size < len(photo) / 4, "a camera-sized photo is still being stored near camera size"
+
+    # And the tightening is real: the old settings on the same bytes.
+    real_get = conf.get
+    try:
+        conf.get = lambda k: {"UPLOAD_MAX_SIDE": 1600, "UPLOAD_JPEG_QUALITY": 88}.get(k, real_get(k))
+        old = uploads.process_upload(io.BytesIO(photo)).size
+    finally:
+        conf.get = real_get
+    assert image.file.size < old * 0.8, f"expected a real saving, got {image.file.size} vs {old}"
+
+
+def test_a_rendered_meme_got_lighter_without_changing_its_size_on_screen(public_image_source):
+    """The finished meme keeps its 1080 px width -- it is the thing people
+    share, and it gets opened on laptops too -- so only the encoder moved."""
+    from memz import conf, render
+
+    data, w, h = render.render(io.BytesIO(public_image_source), "כשמבינים שזה כבר יום שלישי", watermark=False)
+    assert w == conf.get("RENDER_WIDTH") == 1080, "the shared output's width must not shrink"
+
+    real_get = conf.get
+    try:
+        conf.get = lambda k: 85 if k == "RENDER_JPEG_QUALITY" else real_get(k)
+        before, _w, _h = render.render(io.BytesIO(public_image_source), "כשמבינים שזה כבר יום שלישי", watermark=False)
+    finally:
+        conf.get = real_get
+    assert len(data) < len(before), "the rendered meme did not get any lighter"
+
+
+@pytest.fixture
+def public_image_source(media_tmp):
+    return _camera_photo_bytes(1600, 1200)
+
+
+def test_the_phone_shrinks_the_photo_before_it_is_ever_uploaded(browser, live_server, db, media_tmp, tmp_path):
+    """The server resizes anyway, so this is not a security boundary: it
+    is the difference between a 1 MB upload and a 150 KB one over a
+    party's wifi, and it is what lets a 48MP photo through at all, since
+    the raw file can exceed the 8 MB the server refuses at."""
+    pytest.importorskip("playwright.sync_api")
+    from tests.test_memz_screens import PHONE
+
+    photo = tmp_path / "IMG_9002.JPG"
+    photo.write_bytes(_camera_photo_bytes())
+    _user("bandwidth")
+
+    # Measured by wrapping fetch in the page, not by reading the request
+    # from Playwright's side: `post_data_buffer` comes back empty for a
+    # large multipart body, which made the first version of this test pass
+    # just as happily with the shrinking turned off.
+    context = browser.new_context(viewport=PHONE, device_scale_factor=2, is_mobile=True, has_touch=True)
+    context.add_init_script(
+        "window.__sentBytes = [];"
+        "var _fetch = window.fetch;"
+        "window.fetch = function (url, options) {"
+        "  try {"
+        "    if (options && options.body instanceof FormData) {"
+        "      var f = options.body.get('file');"
+        "      if (f && typeof f.size === 'number') window.__sentBytes.push(f.size);"
+        "    }"
+        "  } catch (e) {}"
+        "  return _fetch.apply(this, arguments);"
+        "};"
+    )
+    page = context.new_page()
+    try:
+        page.goto(f"{live_server.url}/memz/login/", wait_until="domcontentloaded")
+        page.fill('input[name="username"]', "bandwidth@example.com")
+        page.fill('input[name="password"]', "x")
+        page.click('form button[type="submit"]')
+        page.wait_for_timeout(400)
+        page.goto(f"{live_server.url}/memz/", wait_until="domcontentloaded")
+        page.wait_for_timeout(300)
+
+        page.set_input_files("[data-home-uploader] input[data-uploader-gallery]", str(photo))
+        page.wait_for_timeout(2500)
+
+        sent = page.evaluate("window.__sentBytes")
+        on_disk = photo.stat().st_size
+        assert sent, "nothing was uploaded at all"
+        assert sent[0] < on_disk / 3, (
+            f"the browser sent {sent[0]} bytes of a {on_disk}-byte photo; it did not shrink it first"
+        )
+    finally:
+        context.close()
+
+
 def test_the_upload_quota_is_enforced_at_the_new_limit(client, media_tmp, settings):
     """Thirty, not five — but still a real ceiling."""
     from memz.models import MemeImage

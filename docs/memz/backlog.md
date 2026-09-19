@@ -854,6 +854,70 @@ one holding it.
 
 ---
 
+## ACT-Z.16 — A camera's worth of pixels, for a phone screen `DONE (dev), 2026-09-19`
+
+Avi: "when we upload images, they probably are very big images from
+cameras on the phone, and we don't really need this resolution. It's all
+going to a phone screen. So I want you to squeeze the images either
+before uploading or after uploading, so they will not take so much space
+on the site storage."
+
+Right, and more urgent than it looks: SPR-Z.11 had just raised the free
+upload quota from 5 to 30, and the production disk is **1 GB for the
+whole site** (matazim, the blog, course assets and the SQLite database
+all live on it). At the old settings, 100 users filling that quota would
+have been 761 MB of photographs alone.
+
+| Feature | Description | Spec | Status |
+| --- | --- | --- | --- |
+| ACT-Z.16.1 | Uploads were stored far larger than anything ever displays them | Rule 6.2.2 | DONE — 1600 px/q88 → **1280 px/q82**. Measured on one 12MP photo through the real upload path, not guessed: 260 KB → 165 KB, 36% off. 1280 is deliberate, not round: the widest an upload is ever drawn is `RENDER_WIDTH` (1080), and 1280 leaves a portrait photo enough headroom to reach that width without upscaling |
+| ACT-Z.16.2 | Rendered memes are the ones that multiply | §8.1 | DONE — quality 85 → 80, 14% off each, and a 5-player 5-round game writes 25 of them. The **width stayed at 1080** on purpose: this is the artefact people share to WhatsApp and sometimes open on a laptop, so only the encoder moved |
+| ACT-Z.16.3 | The phone was sending the whole camera file up the wire | Rule 6.2.7 (new) | DONE — `shrinkForUpload` in `memz.js` downscales to the same 1280/q82 before the POST. Not a security boundary (the server still resizes everything and remains the authority): it is a 1 MB upload becoming 150 KB on a party's wifi, and it is the only way a 48MP photo gets in at all, since the raw file can exceed the 8 MB the server refuses at. Applies EXIF orientation while decoding, falls back to the original bytes when the browser cannot decode the format (HEIC outside Apple's engines), and never makes a file bigger than it arrived |
+| ACT-Z.16.4 | Tests | §12.8 | DONE — three in `test_spr_z_11.py`: a 12MP photo is stored within 1280 px and at under a quarter of its original bytes, *and* beats what the old settings produce on the same bytes; the rendered meme is lighter than at q85 while its width is still exactly 1080; and a real phone browser sends under a third of the file it was handed |
+
+**Sprint notes.** The browser test passed on its first run with the
+shrinking **turned off** — Playwright's `post_data_buffer` comes back
+empty for a large multipart body, so it was asserting `0 < size/3` and
+proving nothing. Caught by disabling the fix on purpose before trusting
+the green. Rewritten to wrap `fetch` inside the page and record what the
+client actually put in the FormData, which then failed with "the browser
+sent 1,095,182 bytes of a 1,095,182-byte photo" and passed once restored.
+Worth repeating the lesson: a new test that has never been seen to fail
+has not been verified, it has only been run.
+
+---
+
+## ACT-Z.17 — The public bank's own uploader, for one person `DONE (dev), 2026-09-19`
+
+Avi: "another feature that will be only for the admin user. Nobody will
+see this feature and this will be a general upload, the same kind of
+upload unlimited for me from my phone to upload as many images as I
+like. It's not a user image bank, it's for the general bank. You can
+categorize them as Avi's images, whatever... And this will be exposed
+only to the admin in a special view. I don't need a link to this view.
+Just give me the address."
+
+**The address: `https://babook.co.il/memz/bank/`**
+
+| Feature | Description | Spec | Status |
+| --- | --- | --- | --- |
+| ACT-Z.17.1 | A screen only the admin can reach, linked from nowhere | Rule 6.6.1 (new) | DONE — staff only, and a **404** for everyone else rather than a 403: a 403 confirms the page is there, and the property an unlisted admin screen must have is that nobody else learns anything at all. A test also walks the home, profile, create and creator pages as the admin and asserts none of them links to it |
+| ACT-Z.17.2 | Uploads land in the *general* bank, not the admin's own | Rule 6.6.2 (new) | DONE — `owner=None, visibility=public`, the pool every game everywhere draws from. A **separate endpoint** (`POST /memz/api/bank/images/`), not a flag on the ordinary uploader, so no request to that one can ever be talked into writing a public unowned image. Proven end to end: an image uploaded here turns up in `dealing.pool_for` for a session opened by a stranger |
+| ACT-Z.17.3 | No quota | Rule 6.6.3 (new) | DONE — `UPLOAD_LIMIT` is a tier cap on a person's own bank; this is the house's bank. Test sets the cap to 1 and uploads five |
+| ACT-Z.17.4 | Categories | Rule 6.6.4 (new) | DONE — filed under a public pack, which is what a category already is in this model. Typing a new name opens one, an existing name adds to it, blank files under "התמונות של אבי". The page offers the existing names as a datalist so a phone can pick instead of type |
+| ACT-Z.17.5 | Unlimited is not unmoderated | Rule 6.6.5 (new) | DONE — the same §6.4 check runs, the verdict is stored and shown on the thumbnail. This is the most exposed surface memz has: an image here reaches strangers' phones in rooms nobody here opened, which makes it the last place to skip the check, not the first. Deleting is scoped to public unowned images, so the screen can never reach into somebody's private bank |
+| ACT-Z.17.6 | Tests | §12.8 | DONE — `tests/test_act_z_17.py`, 11 tests, marker `actz17`, plus the screen itself added to the phone screen contract (`bank/admin-only`), which needed a staff user in that world |
+
+**Sprint notes.** The staff gate was disabled on purpose before the green
+was trusted, and the test duly failed with `assert 200 == 404` — worth
+doing every time, but especially on the one test whose whole job is to
+prove a door is shut. The screen reuses `window.memz.mountUploader`
+(camera and gallery, client-side shrink, ACT-Z.15/16) with two new
+options, `endpoint` and `fields`, so the admin's phone gets the same
+upload behaviour as everyone else's without a second implementation.
+
+---
+
 ## Not in v1 (spec §13)
 
 Payments, AI captions, English UI, GIF and video memes, free-position text

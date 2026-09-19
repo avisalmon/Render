@@ -73,5 +73,5 @@ def _encode_jpeg(image):
     import io
 
     buf = io.BytesIO()
-    image.save(buf, format="JPEG", quality=88, optimize=True)
+    image.save(buf, format="JPEG", quality=conf.get("UPLOAD_JPEG_QUALITY"), optimize=True)
     return buf.getvalue()

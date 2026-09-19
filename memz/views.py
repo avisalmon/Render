@@ -183,3 +183,35 @@ def share(request, slug):
     if meme is None or expired:
         return render(request, "memz/share_expired.html")
     return render(request, "memz/share.html", {"meme": meme})
+
+
+def bank_page(request):
+    """The public bank's own uploader (spec §6.6) — staff only, and
+    deliberately unlisted: nothing on the site links here, Avi types the
+    address.
+
+    A **404** for everyone else, not a 403: a 403 confirms the page
+    exists, and the one property this screen is supposed to have is that
+    nobody who isn't meant to be here learns anything at all.
+    """
+    from django.http import Http404
+
+    from .models import MemeImage, Pack
+
+    if not (request.user.is_authenticated and request.user.is_staff):
+        raise Http404
+
+    packs = list(
+        Pack.objects.filter(owner__isnull=True, is_public=True).order_by("order", "name")
+    )
+    images = list(
+        MemeImage.objects.filter(owner__isnull=True, visibility=MemeImage.PUBLIC)
+        .order_by("-created_at")[:60]
+    )
+    return render(request, "memz/bank.html", {
+        "packs": packs,
+        "images": images,
+        "public_total": MemeImage.objects.filter(
+            owner__isnull=True, visibility=MemeImage.PUBLIC
+        ).count(),
+    })

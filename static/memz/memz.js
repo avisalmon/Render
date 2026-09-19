@@ -149,6 +149,52 @@
     return data;
   }
 
+  // ACT-Z.16 (Avi: "they probably are very big images from cameras on the
+  // phone, and we don't really need this resolution, it's all going to a
+  // phone screen"): shrink the picture on the phone, before it is sent.
+  //
+  // The server resizes too, and remains the authority -- this is not a
+  // security boundary, it is the difference between a 3.5 MB upload and a
+  // 170 KB one over a party's wifi, and it is also what lets a 48MP phone
+  // photo through at all, since the raw file can exceed the 8 MB limit the
+  // server refuses at.
+  //
+  // Three things it must not get wrong: EXIF orientation (a portrait photo
+  // re-encoded without it comes out on its side, and re-encoding destroys
+  // the EXIF the server would otherwise have used to fix it -- hence
+  // `imageOrientation: "from-image"`); a browser that cannot decode the
+  // format at all (HEIC outside Apple's engines), which falls back to the
+  // original bytes; and never making a file *bigger* than it arrived.
+  var CLIENT_MAX_SIDE = 1280;
+  var CLIENT_QUALITY = 0.82;
+  var SMALL_ENOUGH_BYTES = 400 * 1024;
+
+  async function shrinkForUpload(file) {
+    if (!window.createImageBitmap || !window.HTMLCanvasElement) return file;
+    if (file.size && file.size <= SMALL_ENOUGH_BYTES) return file;
+    var bitmap = null;
+    try {
+      bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+      var longest = Math.max(bitmap.width, bitmap.height);
+      var scale = Math.min(1, CLIENT_MAX_SIDE / longest);
+      var w = Math.max(1, Math.round(bitmap.width * scale));
+      var h = Math.max(1, Math.round(bitmap.height * scale));
+      var canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext("2d").drawImage(bitmap, 0, 0, w, h);
+      var blob = await new Promise(function (resolve) {
+        canvas.toBlob(resolve, "image/jpeg", CLIENT_QUALITY);
+      });
+      if (!blob) return file;
+      return (file.size && blob.size >= file.size) ? file : blob;
+    } catch (e) {
+      return file;   // undecodable here; the server will do it properly
+    } finally {
+      if (bitmap && bitmap.close) bitmap.close();
+    }
+  }
+
   // SPR-Z.11: the same "add your own photos" control now appears in three
   // places -- the home screen, the lobby, and the profile's bank tab --
   // so it lives here once instead of being written out three times and
@@ -199,9 +245,15 @@
       for (var i = 0; i < files.length; i++) {
         say(files.length === 1 ? "מעלים..." : "מעלים " + (i + 1) + " מתוך " + files.length + "...");
         var body = new FormData();
-        body.append("file", files[i]);
+        body.append("file", await shrinkForUpload(files[i]), "upload.jpg");
+        // ACT-Z.17: the admin's bank screen posts the same files to a
+        // different endpoint, with the category alongside them.
+        var extra = options.fields ? options.fields() : null;
+        if (extra) {
+          Object.keys(extra).forEach(function (k) { body.append(k, extra[k]); });
+        }
         try {
-          var image = await api("POST", "/memz/api/images/", body);
+          var image = await api("POST", options.endpoint || "/memz/api/images/", body);
           done += 1;
           if (options.onUploaded) options.onUploaded(image);
         } catch (e) {

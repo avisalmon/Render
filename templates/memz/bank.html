@@ -1,0 +1,42 @@
+{% extends "memz/base.html" %}{% load static i18n %}
+{% comment %}
+ACT-Z.17: the public bank's own uploader. Staff only (the view 404s for
+everyone else) and linked from nowhere — Avi types the address on his
+phone. Every upload here lands in the *general* bank that every game in
+the world draws from, not in anybody's personal one.
+{% endcomment %}
+{% block title %}memz · הבנק{% endblock %}
+{% block screen %}bank{% endblock %}
+{% block content %}
+<h1 class="memz-title">{% trans "הבנק הציבורי" %}</h1>
+<p class="memz-lead">{% trans "כל תמונה כאן נכנסת לבנק הכללי, ויכולה להגיע לכל משחק באתר. בלי מכסה." %}</p>
+<p class="memz-fineprint">{{ public_total }} {% trans "תמונות בבנק הציבורי כרגע." %}</p>
+
+<section class="memz-card memz-form">
+  <label class="memz-field" for="bank-pack">
+    <span>{% trans "קטגוריה" %}</span>
+    <input class="memz-input" id="bank-pack" list="bank-packs" data-bank-pack
+           placeholder="{% trans 'התמונות של אבי' %}" autocomplete="off">
+  </label>
+  <datalist id="bank-packs">
+    {% for pack in packs %}<option value="{{ pack.name }}"></option>{% endfor %}
+  </datalist>
+  <p class="memz-fineprint">{% trans "שם חדש פותח קטגוריה חדשה. ריק, והתמונות ייכנסו לקטגוריה של אבי." %}</p>
+  <div data-bank-uploader></div>
+</section>
+
+<h2 class="memz-field-label">{% trans "אחרונות בבנק" %}</h2>
+<ul class="memz-thumb-grid" data-bank-grid>
+  {% for img in images %}
+  <li class="memz-thumb memz-thumb--status" data-bank-row="{{ img.pk }}">
+    <img src="{{ img.file.url }}" alt="">
+    <span class="memz-status-badge memz-status-badge--{{ img.moderation_status }}">{{ img.get_moderation_status_display }}</span>
+    <button type="button" class="memz-btn memz-btn--ghost memz-btn--small memz-thumb-delete"
+            data-bank-delete="{{ img.pk }}">{% trans "מחיקה" %}</button>
+  </li>
+  {% empty %}
+  <li class="memz-fineprint">{% trans "עוד לא העלית לכאן כלום." %}</li>
+  {% endfor %}
+</ul>
+{% endblock %}
+{% block scripts %}<script src="{% static 'memz/bank.js' %}"></script>{% endblock %}

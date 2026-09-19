@@ -248,6 +248,12 @@ def build_world():
 
     user = User.objects.create_user("screens", email="screens@example.com", password=PASSWORD, first_name="נועה")
     taken = User.objects.create_user("taken", email="taken@example.com", password=PASSWORD)
+    # ACT-Z.17: the public bank's uploader is staff-only, so the contract
+    # needs somebody who can actually reach it. Its own suite proves
+    # everyone else gets a 404.
+    User.objects.create_user(
+        "bankadmin", email="bankadmin@example.com", password=PASSWORD, is_staff=True
+    )
 
     image = MemeImage(owner=None, visibility=MemeImage.PUBLIC, moderation_status=MemeImage.APPROVED, title="לצילום מסך")
     image.file.save("screenshot-source.png", ContentFile(_png_bytes()), save=True)
@@ -422,6 +428,7 @@ SCREENS = [
     ("game/relaxed-result", lambda w: f"/memz/s/{w['games']['relaxed_result'][0]}/", None, None, "game-result",
      lambda w: _token_script(w, "relaxed_result", "host")),
     ("profile/signed-in", "/memz/me/", "screens@example.com", None, "profile", None),
+    ("bank/admin-only", "/memz/bank/", "bankadmin@example.com", None, "bank", None),
     ("game-new/signed-in", "/memz/new/", "screens@example.com", None, "game-new", None),
     ("404", "/memz/nowhere/", None, None, "404", None),
 ]

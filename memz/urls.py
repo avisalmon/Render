@@ -7,6 +7,7 @@ from .api.game_views import (
     RemovePlayerView, SessionCreateView, StartView, StateView, SubmitView, SwapCardView, SwapImageView,
     VoteView,
 )
+from .api.bank_views import BankImageView, BankUploadView
 from .api.imgflip_views import ImgflipCaptionView, ImgflipTemplatesView
 from .api.profile import ProfileView
 from .api.report import ReportView
@@ -30,6 +31,10 @@ urlpatterns = [
     path("m/<str:slug>/", views.share, name="share"),
     # Profile (spec §10).
     path("me/", views.profile_page, name="profile"),
+
+    # ACT-Z.17: the public bank's own uploader. Staff only, 404 for
+    # everyone else, and linked from nowhere on purpose — Avi types it.
+    path("bank/", views.bank_page, name="bank"),
     # Auth, in memz's own chrome (spec §3.3).
     path("login/", auth_views.LoginView.as_view(), name="login"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
@@ -58,6 +63,8 @@ urlpatterns = [
     path("api/sessions/<str:code>/rounds/<int:number>/swap-image/", SwapImageView.as_view(), name="api_round_swap_image"),
     path("api/sessions/<str:code>/cards/swap/", SwapCardView.as_view(), name="api_card_swap"),
     # Classic Imgflip templates in the solo creator (ACT-Z.5, spec §7.3).
+    path("api/bank/images/", BankUploadView.as_view(), name="api_bank_upload"),
+    path("api/bank/images/<int:pk>/", BankImageView.as_view(), name="api_bank_image"),
     path("api/imgflip/templates/", ImgflipTemplatesView.as_view(), name="api_imgflip_templates"),
     path("api/imgflip/memes/", ImgflipCaptionView.as_view(), name="api_imgflip_caption"),
     path("api/", include(router.urls)),

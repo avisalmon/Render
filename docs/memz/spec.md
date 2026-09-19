@@ -643,8 +643,34 @@ once play starts — mid-round is the wrong moment to be picking photos,
 and a round's images are chosen when the round begins.
 
 Rule 6.2.2: on upload the server applies EXIF orientation, strips metadata
-(location, device), resizes so the longest side is at most 1600 px, and
-stores the result. The original is not kept.
+(location, device), resizes so the longest side is at most
+`UPLOAD_MAX_SIDE`, re-encodes at `UPLOAD_JPEG_QUALITY`, and stores the
+result. The original is not kept.
+
+**Tightened 2026-09-19 (ACT-Z.16), Avi: "they probably are very big images
+from cameras on the phone, and we don't really need this resolution, it's
+all going to a phone screen."** 1600 px/q88 became **1280 px/q82**.
+Measured on the same 12MP photo through the real upload path: 260 KB
+before, 165 KB after, 36% less for nothing visible at arm's length. The
+widest an upload is ever drawn is `RENDER_WIDTH` (1080 px), so 1280 leaves
+headroom for a portrait photo without storing a camera's worth of pixels.
+This matters more than it did: SPR-Z.11 raised the free quota from 5
+uploads to 30, and the production disk is 1 GB for the entire site —
+100 users at the old settings would have been 761 MB of photographs
+alone, against 484 MB now.
+
+Rule 6.2.7 (ACT-Z.16, 2026-09-19): the **phone shrinks the photo before
+sending it**, to the same 1280 px/q82 the server would apply. This is not
+a security boundary — the server still resizes everything it receives and
+remains the authority — it is upload time on a party's wifi (1 MB becomes
+150 KB), and it is the only way a 48MP photo gets in at all, since the raw
+file can exceed the 8 MB the server refuses at. Three things it must not
+get wrong, all covered by tests: EXIF orientation is applied while
+decoding (`imageOrientation: "from-image"`), because re-encoding destroys
+the EXIF the server would otherwise have used and a portrait photo would
+arrive on its side; a browser that cannot decode the format (HEIC outside
+Apple's engines) sends the original bytes untouched; and a file is never
+made larger than it arrived.
 
 Rule 6.2.3: an uploaded image starts `pending` and is moderated (§6.4)
 before it can be dealt or used in the creator. Moderation is fast enough
@@ -749,6 +775,45 @@ literally true the moment this ships: another seated player, a stranger in
 a public game, can now be shown it. See §14 item 9 for the still-open
 question this raises about upload-time moderation.
 
+### 6.6 The public bank's own uploader (staff only)
+
+Added 2026-09-19 (ACT-Z.17), Avi: "another feature that will be only for
+the admin user. Nobody will see this feature... it's not a user image
+bank, it's for the general bank... I can just from my phone upload images
+as many as I want, not as a normal user... I don't need a link to this
+view. Just give me the address."
+
+**`/memz/bank/`** — a page that exists for one person and is linked from
+nowhere.
+
+Rule 6.6.1: staff only, and a **404** for everyone else, signed in or
+out. Not a 403: a 403 confirms the page is there, and the property this
+screen is meant to have is that nobody who isn't meant to be here learns
+anything at all. Nothing on the site links to it — it is reached by
+typing the address.
+
+Rule 6.6.2: what it uploads becomes part of the **general bank**
+(`owner=None, visibility=public`), the pool every game everywhere draws
+from (§6.5), not the uploader's own private bank. It is a **separate
+endpoint** (`POST /memz/api/bank/images/`) rather than a flag on the
+ordinary uploader, so that no request to the ordinary one can ever be
+talked into writing a public, unowned image, whatever it sends.
+
+Rule 6.6.3: **no quota.** `UPLOAD_LIMIT` is a tier cap on a person's own
+bank; this is the house's own bank, and it is filled deliberately.
+
+Rule 6.6.4: uploads are filed under a **public pack**, which is what a
+category already is in this model (§6.3) — typing a new name opens one,
+typing an existing name adds to it, and leaving it blank files under
+"התמונות של אבי". No second grouping concept.
+
+Rule 6.6.5: **unlimited is not unmoderated.** Every upload runs the same
+§6.4 check as a player's, and the verdict is stored and shown. This is
+the most exposed surface memz has: an image here reaches strangers'
+phones in rooms nobody here opened, so it is the last place to skip the
+check. Deleting from this screen is scoped to public, unowned images, so
+it can never reach into somebody's private bank.
+
 ## 7. Solo creator
 
 `/memz/create/`: pick an image (public packs; own bank and own packs when
@@ -810,8 +875,12 @@ drawing the caption exactly as typed, with `ctx.direction` pinned to
 `"rtl"` — the same fix in spirit as `render.py`'s own `base_dir="R"` pin
 below, and for the same reason.
 
-- Output: JPEG, quality 85, width 1080 px (height follows the image), the
-  `Meme.rendered` file.
+- Output: JPEG, `RENDER_JPEG_QUALITY` (80 from ACT-Z.16, was 85), width
+  1080 px (height follows the image), the `Meme.rendered` file. The width
+  deliberately did **not** shrink with the uploads: this is the artefact
+  people share to WhatsApp and sometimes open on a laptop, so only the
+  encoder moved — 14% off every rendered meme, and a 5-player 5-round game
+  writes 25 of them.
 - Layout: **caption bar above the image**: a white band, black bold text,
   centred, auto-wrapped to the width, auto-shrunk from 64 px to a floor of
   36 px to fit 3 lines. Chosen over the classic Impact top/bottom-with-

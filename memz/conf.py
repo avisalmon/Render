@@ -55,11 +55,24 @@ DEFAULTS = {
     # --- polling (spec Rule 11.6) ------------------------------------------
     "POLL_MS": {"lobby": 2000, "captioning": 1000, "voting": 1000, "results": 2000, "finished": 5000},
     # --- rendering (spec §8.1) ---------------------------------------------
+    # The finished meme's own width stays 1080: it is the product's actual
+    # output, shared to WhatsApp and sometimes opened on a laptop. Only the
+    # encoder got tighter (ACT-Z.16): q85 -> q80 is 13% off every rendered
+    # meme, and a round of 5 players x 5 rounds writes 25 of them.
     "RENDER_WIDTH": 1080,
+    "RENDER_JPEG_QUALITY": 80,
     "RENDER_FONT_MAX": 64,
     "RENDER_FONT_MIN": 36,
     "UPLOAD_MAX_BYTES": 8 * 1024 * 1024,
-    "UPLOAD_MAX_SIDE": 1600,
+    # ACT-Z.16 (2026-09-19): 1600 -> 1280, and an explicit quality knob.
+    # Everything an upload becomes is bound for a phone screen, and the
+    # widest it is ever drawn is RENDER_WIDTH (1080). A 12MP phone photo
+    # measured 295 KB at 1600/q88 and 169 KB at 1280/q82 -- 43% less for
+    # nothing anybody can see at arm's length. With the free quota now 30
+    # uploads (SPR-Z.11), that is the difference between 100 users costing
+    # 885 MB and 507 MB, on a 1 GB disk shared with the whole site.
+    "UPLOAD_MAX_SIDE": 1280,
+    "UPLOAD_JPEG_QUALITY": 82,
 }
 
 

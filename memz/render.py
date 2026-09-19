@@ -249,5 +249,5 @@ def render(source_file, caption_text, *, watermark=False):
         canvas = _apply_watermark(canvas)
 
     buf = io.BytesIO()
-    canvas.save(buf, format="JPEG", quality=85, optimize=True)
+    canvas.save(buf, format="JPEG", quality=conf.get("RENDER_JPEG_QUALITY"), optimize=True)
     return buf.getvalue(), canvas.width, canvas.height
