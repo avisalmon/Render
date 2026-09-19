@@ -28,7 +28,10 @@
       {% endcomment %}
       <button type="button" class="memz-icon-btn" data-mute-toggle aria-pressed="false" aria-label="{% trans "השתקת צלילים" %}" title="{% trans "צלילים" %}">🔊</button>
       {% if user.is_authenticated %}
-        <span class="memz-account-name">{% memz_name user %}</span>
+        {# ACT-Z.18: this was a plain <span>, which made the profile (and #}
+        {# with it a player's own photos) reachable from exactly one      #}
+        {# small button on the home screen, and nowhere else.             #}
+        <a class="memz-account-name" href="{% url 'memz:profile' %}">{% memz_name user %}</a>
         <form method="post" action="{% url 'memz:logout' %}">
           {% csrf_token %}
           <button type="submit" class="memz-btn memz-btn--secondary memz-btn--small">{% trans "יציאה" %}</button>

@@ -15,28 +15,28 @@ the world draws from, not in anybody's personal one.
 <section class="memz-card memz-form">
   <label class="memz-field" for="bank-pack">
     <span>{% trans "קטגוריה" %}</span>
-    <input class="memz-input" id="bank-pack" list="bank-packs" data-bank-pack
+    <input class="memz-input" id="bank-pack" list="bank-packs" data-library-pack
            placeholder="{% trans 'התמונות של אבי' %}" autocomplete="off">
   </label>
   <datalist id="bank-packs">
     {% for pack in packs %}<option value="{{ pack.name }}"></option>{% endfor %}
   </datalist>
   <p class="memz-fineprint">{% trans "שם חדש פותח קטגוריה חדשה. ריק, והתמונות ייכנסו לקטגוריה של אבי." %}</p>
-  <div data-bank-uploader></div>
+  <div data-library-uploader data-uploader-label="{% trans 'העלאה לבנק' %}"></div>
 </section>
 
-<h2 class="memz-field-label">{% trans "אחרונות בבנק" %}</h2>
-<ul class="memz-thumb-grid" data-bank-grid>
+<h2 class="memz-field-label" data-library-count>{% trans "אחרונות בבנק" %} ({{ images|length }}/∞)</h2>
+<ul class="memz-thumb-grid" data-library-grid
+    data-upload-url="/memz/api/bank/images/" data-delete-base="/memz/api/bank/images/">
   {% for img in images %}
-  <li class="memz-thumb memz-thumb--status" data-bank-row="{{ img.pk }}">
+  <li class="memz-thumb memz-thumb--status" data-library-row="{{ img.pk }}">
     <img src="{{ img.file.url }}" alt="">
     <span class="memz-status-badge memz-status-badge--{{ img.moderation_status }}">{{ img.get_moderation_status_display }}</span>
     <button type="button" class="memz-btn memz-btn--ghost memz-btn--small memz-thumb-delete"
-            data-bank-delete="{{ img.pk }}">{% trans "מחיקה" %}</button>
+            data-library-delete="{{ img.pk }}">{% trans "מחיקה" %}</button>
   </li>
-  {% empty %}
-  <li class="memz-fineprint">{% trans "עוד לא העלית לכאן כלום." %}</li>
-  {% endfor %}
+    {% endfor %}
 </ul>
+<p class="memz-fineprint" data-library-empty {% if images %}hidden{% endif %}>{% trans "עוד לא העלית לכאן כלום." %}</p>
 {% endblock %}
-{% block scripts %}<script src="{% static 'memz/bank.js' %}"></script>{% endblock %}
+{% block scripts %}<script src="{% static 'memz/library.js' %}"></script>{% endblock %}

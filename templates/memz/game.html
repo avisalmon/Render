@@ -15,6 +15,8 @@
   <h2 class="memz-field-label">{% trans "התמונות שלכם במשחק הזה" %}</h2>
   <p class="memz-fineprint">{% trans "כל תמונה שתעלו עכשיו יכולה להיות מחולקת לכל אחד בחדר בסבבים הבאים." %}</p>
   <div data-lobby-uploader></div>
+  <a class="memz-btn memz-btn--ghost memz-btn--small" href="{% url 'memz:images' %}" target="_blank" rel="noopener">
+    {% trans "לראות ולמחוק את התמונות שלי" %}</a>
 </section>
 {% endif %}
 {% endblock %}

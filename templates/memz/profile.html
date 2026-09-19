@@ -42,31 +42,21 @@
 <section id="my-bank">
   <h2 class="memz-field-label" data-bank-count>{% trans "התמונות שלי" %} ({{ own_images|length }}/{{ upload_limit }})</h2>
 
-  {# ACT-Z.15: the same camera/gallery uploader as the home screen and the #}
-  {# lobby (window.memz.mountUploader), instead of the browser's own       #}
-  {# English "Choose Files" control. profile.js mounts it and keeps this  #}
-  {# page's extra behaviour: the new thumbnail and the count.             #}
-  <div data-upload-form class="memz-card memz-form">
-    <span class="memz-field-label">{% trans "העלאת תמונות" %}</span>
-    <div data-profile-uploader></div>
-    <p class="memz-fineprint">{% trans "תמונות שמעלים עשויות להוצג לשחקנים אחרים במשחקים שמצטרפים אליהם. אל תעלו תמונות של אנשים אחרים, סלבריטאים, או ממים קיימים — רק מה שנוח לכם שאחרים יראו." %}</p>
-  </div>
+  {# ACT-Z.18: the library itself moved to its own screen (/memz/images/), #}
+  {# where it has room and a door. Keeping a second copy of upload/delete #}
+  {# here would be two implementations of one thing, drifting apart.      #}
+  <a class="memz-btn memz-btn--secondary memz-btn--wide" href="{% url 'memz:images' %}">
+    {% trans "לתמונות שלי" %} ({{ own_images|length }}/{{ upload_limit }})
+  </a>
+  <p class="memz-fineprint">{% trans "שם אפשר להוסיף תמונות, לראות אותן ולמחוק." %}</p>
 
   {% if own_images %}
-  <ul class="memz-thumb-grid" data-bank-grid>
-    {% for img in own_images %}
-    <li class="memz-thumb memz-thumb--status" data-bank-row="{{ img.pk }}">
-      <img src="{{ img.file.url }}" alt="{{ img.title }}">
-      <span class="memz-status-badge memz-status-badge--{{ img.moderation_status }}">
-        {% if img.moderation_status == "approved" %}{% trans "אושרה" %}
-        {% elif img.moderation_status == "rejected" %}{% trans "נדחתה" %}
-        {% else %}{% trans "בבדיקה" %}{% endif %}
-      </span>
-      <button type="button" class="memz-btn memz-btn--ghost memz-btn--small memz-thumb-delete" data-delete-image="{{ img.pk }}">{% trans "מחיקה" %}</button>
-    </li>
+  <ul class="memz-thumb-grid">
+    {% for img in own_images|slice:":6" %}
+    <li class="memz-thumb"><img src="{{ img.file.url }}" alt="{{ img.title }}"></li>
     {% endfor %}
   </ul>
-  {% else %}<p class="memz-fineprint">{% trans "עוד לא העליתם תמונות." %}</p>{% endif %}
+  {% endif %}
 
   <h2 class="memz-field-label" data-pack-count>{% trans "החבילות שלי" %} ({{ own_packs|length }}/{{ pack_limit }})</h2>
   <form data-pack-form class="memz-card memz-form">

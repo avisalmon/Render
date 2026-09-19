@@ -27,7 +27,7 @@
   {% if user.is_authenticated %}
   <p class="memz-fineprint">{% trans "התמונות שתעלו נשמרות אצלכם, ומתערבבות בכל משחק שתשחקו עם הבנק הציבורי." %}</p>
   <div data-home-uploader></div>
-  <a class="memz-btn memz-btn--ghost memz-btn--small" href="{% url 'memz:profile' %}">{% trans "לבנק שלי" %}</a>
+  <a class="memz-btn memz-btn--ghost memz-btn--small" href="{% url 'memz:images' %}">{% trans "לתמונות שלי" %}</a>
   {% else %}
   <p class="memz-fineprint">{% trans "עם חשבון אפשר להעלות תמונות משלכם, והן ישוחקו בכל משחק שתשחקו." %}</p>
   <a class="memz-btn memz-btn--secondary memz-btn--wide" href="{% url 'memz:signup' %}">{% trans "פתיחת חשבון" %}</a>

@@ -79,12 +79,18 @@ def test_upload_limit_is_thirty_free_fifty_paid_zero_guest():
     assert conf.cap("UPLOAD_LIMIT", "paid") == 50
 
 
-def test_profile_page_carries_the_upload_safety_notice(client):
+def test_the_upload_form_carries_the_safety_notice(client):
+    """Rule 6.2.5: the notice belongs wherever the upload form is. That
+    was the profile page until ACT-Z.18 moved the library to a screen of
+    its own — so this follows the form rather than the page it used to
+    sit on, and also checks the profile *stopped* claiming to host an
+    upload it no longer has."""
     user = _user()
     client.force_login(user)
-    body = client.get("/memz/me/").content.decode()
+    body = client.get("/memz/images/").content.decode()
     assert "לא נוח לכם שאחרים יראו" not in body   # sanity: not asserting on a typo
     assert "סלבריטאים" in body and "ממים קיימים" in body
+    assert "data-library-uploader" in body, "the notice is on a page with no upload form"
 
 
 # --------------------------------------------------------------- the pool

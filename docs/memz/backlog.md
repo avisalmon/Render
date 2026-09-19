@@ -918,6 +918,36 @@ upload behaviour as everyone else's without a second implementation.
 
 ---
 
+## ACT-Z.18 — A player's own image library, with a door on it `DONE (dev), 2026-09-19`
+
+Avi: "every user should be able to go to his image library with his
+limited count and be able to upload but also see and delete images if he
+wants to replace the images with others. So make this view for every user
+that is logged in to be able to add and delete images."
+
+Checked before building, and the SPR-Z.11 lesson held again: **all of it
+already worked** — upload, thumbnails, moderation badges, per-image
+delete, the quota counter — as one section of a seven-section profile
+page. What it didn't have was a way in. The only link to the profile
+anywhere in the app was one small ghost button on the home screen, and
+the account name in the header was a plain `<span>`.
+
+| Feature | Description | Spec | Status |
+| --- | --- | --- | --- |
+| ACT-Z.18.1 | The library had no screen of its own | Rule 6.7.1 (new) | DONE — `/memz/images/` for every signed-in user, no tier condition; a signed-out visitor is sent to sign in and returned here |
+| ACT-Z.18.2 | Nothing led to it | Rule 6.7.1 | DONE — the header's account name is a **link** now (it was a `<span>`, which is what made the whole profile a dead end), the home card points at the library directly rather than the profile, and the lobby's upload card offers "see and delete my photos" for the moment someone wants to swap one mid-room |
+| ACT-Z.18.3 | Deleting is how you replace | Rule 6.7.3 (new) | DONE — the quota counts images held, not images ever uploaded, so a delete frees room immediately; tested by filling a 1-image quota, being refused, deleting, and succeeding |
+| ACT-Z.18.4 | A full quota said nothing useful | Rule 6.7.2 (new) | DONE — the screen shows used-of-limit, and when full says what to do about it, since at that point the only useful action is a deletion |
+| ACT-Z.18.5 | Don't end up with three copies of one behaviour | §6.6, §6.7 | DONE — the profile's implementation was **removed**, not left beside the new one (it keeps six thumbnails and a link), and the admin bank screen was moved onto the same shared `library.js`, so `bank.js` is gone too. Two screens, one script, configured by data attributes |
+| ACT-Z.18.6 | Tests | §12.8 | DONE — `tests/test_act_z_18.py`, 9 tests, marker `actz18`, plus `images/signed-in` in the phone screen contract. Two of them are about *not* regressing into duplication: the profile carries no uploader or delete buttons any more, in the template or in `profile.js`, and both libraries serve `library.js` |
+
+**Sprint notes.** The phone screen contract earned its keep for the third
+time this week: making the account name a link produced a 33×44 px tap
+target, and the contract failed the build over it before anybody's thumb
+had to. Widened, and it also now centres properly.
+
+---
+
 ## Not in v1 (spec §13)
 
 Payments, AI captions, English UI, GIF and video memes, free-position text

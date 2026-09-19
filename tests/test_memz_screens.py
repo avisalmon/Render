@@ -429,6 +429,7 @@ SCREENS = [
      lambda w: _token_script(w, "relaxed_result", "host")),
     ("profile/signed-in", "/memz/me/", "screens@example.com", None, "profile", None),
     ("bank/admin-only", "/memz/bank/", "bankadmin@example.com", None, "bank", None),
+    ("images/signed-in", "/memz/images/", "screens@example.com", None, "images", None),
     ("game-new/signed-in", "/memz/new/", "screens@example.com", None, "game-new", None),
     ("404", "/memz/nowhere/", None, None, "404", None),
 ]

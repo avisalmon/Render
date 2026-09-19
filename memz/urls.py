@@ -31,6 +31,7 @@ urlpatterns = [
     path("m/<str:slug>/", views.share, name="share"),
     # Profile (spec §10).
     path("me/", views.profile_page, name="profile"),
+    path("images/", views.images_page, name="images"),
 
     # ACT-Z.17: the public bank's own uploader. Staff only, 404 for
     # everyone else, and linked from nowhere on purpose — Avi types it.

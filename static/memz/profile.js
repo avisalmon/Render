@@ -4,8 +4,6 @@
 (function () {
   "use strict";
 
-  var STATUS_LABEL = { approved: "אושרה", rejected: "נדחתה", pending: "בבדיקה" };
-
   function bumpCount(selector, delta) {
     var el = document.querySelector(selector);
     if (!el) return;
@@ -28,20 +26,9 @@
     });
   });
 
-  // ------------------------------------------------------------- delete img
-  document.querySelectorAll("[data-delete-image]").forEach(function (btn) {
-    btn.addEventListener("click", async function () {
-      btn.disabled = true;
-      try {
-        await window.memz.api("DELETE", "/memz/api/images/" + btn.dataset.deleteImage + "/");
-        var row = document.querySelector('[data-bank-row="' + btn.dataset.deleteImage + '"]');
-        if (row) row.remove();
-        bumpCount("[data-bank-count]", -1);
-      } catch (e) {
-        btn.disabled = false;
-      }
-    });
-  });
+  // (Uploading and deleting images left this page in ACT-Z.18: the
+  // library has its own screen now, /memz/images/, driven by library.js.
+  // This page shows a handful of thumbnails and links to it.)
 
   // ------------------------------------------------------------ delete pack
   document.querySelectorAll("[data-delete-pack]").forEach(function (btn) {
@@ -90,39 +77,4 @@
     });
   }
 
-  // ----------------------------------------------------------------- upload
-  // ACT-Z.15: the shared camera/gallery uploader does the picking and the
-  // posting (see memz.js mountUploader); this page only adds what it
-  // alone has -- a thumbnail row for each new image, and the count.
-  var uploadForm = document.querySelector("[data-upload-form]");
-  var uploaderSlot = document.querySelector("[data-profile-uploader]");
-  if (uploadForm && uploaderSlot && window.memz.mountUploader) {
-    var grid = document.querySelector("[data-bank-grid]");
-
-    window.memz.mountUploader(uploaderSlot, {
-      onUploaded: function (image) {
-        if (!grid) {
-          grid = document.createElement("ul");
-          grid.className = "memz-thumb-grid";
-          grid.setAttribute("data-bank-grid", "");
-          uploadForm.insertAdjacentElement("afterend", grid);
-        }
-        var li = document.createElement("li");
-        li.className = "memz-thumb memz-thumb--status";
-        li.setAttribute("data-bank-row", image.id);
-        li.innerHTML =
-          '<img src="' + image.url + '" alt="">' +
-          '<span class="memz-status-badge memz-status-badge--' + image.moderation_status + '">' +
-          (STATUS_LABEL[image.moderation_status] || image.moderation_status) + "</span>" +
-          '<button type="button" class="memz-btn memz-btn--ghost memz-btn--small memz-thumb-delete" data-delete-image="' + image.id + '">מחיקה</button>';
-        grid.prepend(li);
-        bumpCount("[data-bank-count]", 1);
-        li.querySelector("[data-delete-image]").addEventListener("click", async function () {
-          await window.memz.api("DELETE", "/memz/api/images/" + image.id + "/");
-          li.remove();
-          bumpCount("[data-bank-count]", -1);
-        });
-      },
-    });
-  }
 })();

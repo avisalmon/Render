@@ -1,0 +1,46 @@
+{% extends "memz/base.html" %}{% load static i18n %}
+{% comment %}
+ACT-Z.18: a player's own image library. Everything here already existed as
+one section of a seven-section profile page, reachable through a single
+small link on the home screen — this is the same library with a door on
+it. Same markup and same script as the admin's bank screen (library.js),
+pointed at the ordinary, quota-bound endpoint.
+{% endcomment %}
+{% block title %}memz · {% trans "התמונות שלי" %}{% endblock %}
+{% block screen %}images{% endblock %}
+{% block content %}
+<h1 class="memz-title">{% trans "התמונות שלי" %}</h1>
+<p class="memz-lead">{% trans "התמונות שתעלו משוחקות בכל משחק שתשחקו, לצד הבנק הציבורי. אפשר למחוק ולהחליף מתי שרוצים." %}</p>
+<h2 class="memz-field-label" data-library-count>{% trans "בשימוש" %} ({{ own_images|length }}/{{ upload_limit }})</h2>
+
+<section class="memz-card memz-form">
+  <div data-library-uploader data-uploader-label="{% trans 'הוספת תמונות' %}"></div>
+  <p class="memz-fineprint">{% trans "תמונות שמעלים עשויות להוצג לשחקנים אחרים במשחקים שמצטרפים אליהם. אל תעלו תמונות של אנשים אחרים, סלבריטאים, או ממים קיימים — רק מה שנוח לכם שאחרים יראו." %}</p>
+</section>
+
+{% if at_limit %}
+<p class="memz-fineprint">{% trans "הגעתם למכסה. מחקו תמונה כדי לפנות מקום לחדשה." %}</p>
+{% endif %}
+
+<ul class="memz-thumb-grid" data-library-grid
+    data-upload-url="/memz/api/images/" data-delete-base="/memz/api/images/">
+  {% for img in own_images %}
+  <li class="memz-thumb memz-thumb--status" data-library-row="{{ img.pk }}">
+    <img src="{{ img.file.url }}" alt="{{ img.title }}">
+    <span class="memz-status-badge memz-status-badge--{{ img.moderation_status }}">
+      {% if img.moderation_status == "approved" %}{% trans "אושרה" %}
+      {% elif img.moderation_status == "rejected" %}{% trans "נדחתה" %}
+      {% else %}{% trans "בבדיקה" %}{% endif %}
+    </span>
+    <button type="button" class="memz-btn memz-btn--ghost memz-btn--small memz-thumb-delete"
+            data-library-delete="{{ img.pk }}">{% trans "מחיקה" %}</button>
+  </li>
+  {% endfor %}
+</ul>
+<p class="memz-fineprint" data-library-empty {% if own_images %}hidden{% endif %}>
+  {% trans "עוד לא העליתם תמונות. מה שתוסיפו כאן ישוחק במשחקים שלכם." %}
+</p>
+
+<a class="memz-btn memz-btn--ghost memz-btn--small" href="{% url 'memz:profile' %}">{% trans "לפרופיל שלי" %}</a>
+{% endblock %}
+{% block scripts %}<script src="{% static 'memz/library.js' %}"></script>{% endblock %}

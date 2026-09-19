@@ -215,3 +215,31 @@ def bank_page(request):
             owner__isnull=True, visibility=MemeImage.PUBLIC
         ).count(),
     })
+
+
+def images_page(request):
+    """A player's own image library (spec §6.7) — see, add, delete.
+
+    ACT-Z.18. Every part of this already existed as one section of the
+    profile page; what it did not have was a door. The profile is seven
+    sections long and the only link to it anywhere in the app was one
+    small button on the home screen, so "my photos" was effectively
+    unreachable for the people whose photos they are.
+    """
+    from django.contrib.auth.views import redirect_to_login
+
+    from . import conf
+    from .models import MemeImage
+    from .tiers import profile_for, tier_for
+
+    if not request.user.is_authenticated:
+        return redirect_to_login(request.get_full_path())
+    profile_for(request.user)
+
+    own_images = list(MemeImage.objects.filter(owner=request.user).order_by("-created_at"))
+    limit = conf.cap("UPLOAD_LIMIT", tier_for(request.user))
+    return render(request, "memz/images.html", {
+        "own_images": own_images,
+        "upload_limit": limit if limit is not None else "∞",
+        "at_limit": limit is not None and len(own_images) >= limit,
+    })

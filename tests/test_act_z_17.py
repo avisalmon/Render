@@ -65,7 +65,7 @@ def test_the_screen_opens_for_staff(client):
     client.force_login(_user("avi", staff=True))
     r = client.get(BANK_URL)
     assert r.status_code == 200
-    assert "data-bank-uploader" in r.content.decode()
+    assert "data-library-uploader" in r.content.decode()
 
 
 def test_nothing_on_the_site_links_to_it(client):

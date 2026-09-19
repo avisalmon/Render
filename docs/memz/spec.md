@@ -680,8 +680,9 @@ spinner in the bank, a `rejected` one shows why and a delete button.
 Rule 6.2.4: a user can delete their own image. Memes already made from it
 keep their rendered file (`Meme.image` goes null, data model).
 
-Rule 6.2.5 (decided 2026-09-16, SPR-Z.9, spec §14 item 9): the upload form
-carries a plain-text notice — don't upload photos of other people,
+Rule 6.2.5 (decided 2026-09-16, SPR-Z.9, spec §14 item 9; the form moved
+to §6.7's own screen in ACT-Z.18, and the notice moved with it): the
+upload form carries a plain-text notice — don't upload photos of other people,
 celebrities, or existing memes, only what you'd be fine with other players
 seeing — rather than a second, unreliable automated detection pass on top
 of Rule 6.4.2's existing safety check. The existing report link (Rule
@@ -813,6 +814,37 @@ the most exposed surface memz has: an image here reaches strangers'
 phones in rooms nobody here opened, so it is the last place to skip the
 check. Deleting from this screen is scoped to public, unowned images, so
 it can never reach into somebody's private bank.
+
+### 6.7 A player's own image library
+
+Added 2026-09-19 (ACT-Z.18), Avi: "every user should be able to go to his
+image library with his limited count and be able to upload but also see
+and delete images if he wants to replace the images with others."
+
+**`/memz/images/`** — see them, add them, delete them, and a quota that
+says where you stand.
+
+Rule 6.7.1: every signed-in user, no tier condition. A signed-out visitor
+is sent to sign in and returned here.
+
+Rule 6.7.2: the screen shows the quota as used-of-limit, and when it is
+full it says so **and says what to do about it** ("delete one to make
+room"), because at that point the only useful action is a deletion, not a
+failed upload.
+
+Rule 6.7.3: deleting is how you replace. The quota counts images held,
+not images ever uploaded, so a delete immediately frees room — and a
+player can only ever delete their own (Rule 12.3.3.2).
+
+**None of this was new behaviour**; all of it already worked inside one
+section of the seven-section profile page (§10). What it did not have was
+a door: the only link to the profile anywhere in the app was a single
+small button on the home screen, and the account name in the header was a
+plain `<span>`. So ACT-Z.18 gave the library its own screen, **removed**
+the profile's copy rather than leaving two implementations to drift
+(the profile now shows a few thumbnails and links here), and made the
+header name a link. This screen and §6.6's admin bank screen are the same
+screen with different plumbing, and share one script (`library.js`).
 
 ## 7. Solo creator
 

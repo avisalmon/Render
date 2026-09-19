@@ -91,9 +91,18 @@ body.memz {
 
 .memz-account form { margin: 0; }
 
+/* ACT-Z.18: a link now, not a label — but it keeps reading as a name, so
+   no underline, and a tap target tall enough to actually hit. */
 .memz-account-name {
   font-weight: 600;
   color: var(--memz-ink-soft);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding-inline: 6px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
