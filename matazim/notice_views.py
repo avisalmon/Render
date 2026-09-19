@@ -14,9 +14,8 @@ appears on the screen it belongs to.
 """
 
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect, render
+from django.shortcuts import render
 from django.utils import timezone
-from django.views.decorators.http import require_POST
 
 from .models import Notification
 from .views import shell
@@ -41,13 +40,3 @@ def notices(request):
         "matazim/notices.html",
         shell(request, "notices", notices=rows, was_unread=set(unread)),
     )
-
-
-@require_POST
-@login_required(login_url=LOGIN_URL)
-def clear_notices(request):
-    """Somebody who wants the count gone without reading each one."""
-    Notification.objects.filter(user=request.user, read_at__isnull=True).update(
-        read_at=timezone.now()
-    )
-    return redirect("matazim:notices")

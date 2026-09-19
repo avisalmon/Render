@@ -264,7 +264,6 @@ def work_file(request, submission_id):
     return FileResponse(submission.work_file.open("rb"), as_attachment=True)
 
 
-@require_POST
 @login_required(login_url=LOGIN_URL)
 def say_more(request, submission_id):
     """A leader adding a word without changing the decision.

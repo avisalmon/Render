@@ -530,6 +530,23 @@ class FeedbackViewSet(NoUpdateMixin, NoDeleteMixin, Scoped):
             pk=getattr(submission, "pk", None)
         ).exists():
             raise NotFound()
+
+        # SPR-M.50 — a member could write feedback on their own work.
+        #
+        # `visible_submissions` includes a member's own, correctly, because
+        # they have to read what was said. Creating was scoped to the same
+        # queryset, so the person the feedback is *about* could add rows to it
+        # under their own name. REQ-M.123 calls this table "what the leader
+        # said"; the subject writing in it is not a small untidiness, it is the
+        # record of a judgement being written by the person being judged.
+        #
+        # Same rule as `_decide` two classes up: deciding and saying are both a
+        # leader's. Found by the write sweep, which is the first thing that
+        # ever ran this path.
+        if not (access.is_program_manager(self.request.user)
+                or access.leader_of(self.request.user)):
+            raise PermissionDenied("משוב על עבודה נכתב על ידי מוביל/ה.")
+
         serializer.save(author=self.request.user, outcome=submission.status)
 
 

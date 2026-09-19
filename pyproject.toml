@@ -63,6 +63,7 @@ markers = [
     "sprm47: SPR-M.47 מט״צים the newcomer is not greeted as a returning member",
     "sprm48: SPR-M.48 מט״צים the improvement loop reaches the chat",
     "sprm49: SPR-M.49 מט״צים מצב לילה, the first sprint from the request queue",
+    "sprm50: SPR-M.50 מט״צים the second review: API writes, fonts, images, a door",
     "sprz1: SPR-Z.1 memz the skeleton and the seal",
     "sprz2: SPR-Z.2 memz the engine, and the first front door",
     "sprz3: SPR-Z.3 memz the game, Normal mode, typed captions, vote scoring",

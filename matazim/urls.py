@@ -149,7 +149,6 @@ urlpatterns = [
     # REQ-M.12 — the member's own screen, and the only role that had none.
     # REQ-M.33 — the bell.
     path("notices/", notice_views.notices, name="notices"),
-    path("notices/clear/", notice_views.clear_notices, name="clear_notices"),
     path("my-path/", path_views.my_path, name="my_path"),
     # REQ-M.19 — יוצרים: work handed in, and the feedback that is the point.
     # REQ-M.32 — פרקטיקום, the stage the whole programme exists to produce.
@@ -158,7 +157,6 @@ urlpatterns = [
     path("my-work/", submission_views.my_work, name="my_work"),
     path("work/<int:submission_id>/", submission_views.review, name="review"),
     path("work/<int:submission_id>/file/", submission_views.work_file, name="work_file"),
-    path("work/<int:submission_id>/say/", submission_views.say_more, name="say_more"),
     # REQ-M.5e — two yeses before anything is public, and either can be
     # taken back. The maker offers, the programme publishes.
     path("work/<int:submission_id>/offer/", submission_views.offer_publicly, name="offer_publicly"),

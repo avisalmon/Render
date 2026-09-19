@@ -3633,7 +3633,7 @@ screens pass in each.
 `.mz-qr` stays white in both palettes. A QR code is read by a camera looking for
 dark on light, and a dark one does not scan.
 
-## SPR-M.50 — The second full review: journeys, bytes and what the tests skip  `PLANNED`
+## SPR-M.50 — The second full review, and its five fixes  `DONE 2026-09-19`
 
 **Goal:** Avi, 2026-09-19: "review all the project done so far. Focus on UX,
 functionality, quality and more."
@@ -3660,12 +3660,14 @@ execute.
 
 | F-ID | Finding | Traces | Status |
 |---|---|---|---|
-| F-M.50.1 | Every font file is Rubik Light; every heavier weight on the site is fake | REQ-M.5, SPR-M.21 | TODO |
-| F-M.50.2 | The logo is 8.6× oversize and the heaviest thing on every page | REQ-M.5 | TODO |
-| F-M.50.3 | `staff_consent` is a designed screen with no door | REQ-M.84 | TODO |
-| F-M.50.4 | The API's write paths are refused correctly and otherwise untested | REQ-M.139, Rule 6 | TODO |
-| F-M.50.5 | Two endpoints nothing reaches and nothing tests | | TODO |
+| F-M.50.1 | ~~Every heavier weight is fake~~ **Wrong.** Six font files where two would do | REQ-M.5, SPR-M.21 | DONE |
+| F-M.50.2 | 1.47MB of images on a recruitment page, 1.3MB of it one PNG photograph | REQ-M.5 | DONE |
+| F-M.50.3 | `staff_consent` is an action with no door | REQ-M.84 | DONE |
+| F-M.50.4 | The API's write paths are refused correctly and otherwise untested | REQ-M.139, Rule 6 | DONE |
+| F-M.50.5 | Two endpoints nothing reaches and nothing tests | | DONE |
 | F-M.50.6 | The certification path still does not close, and it is the only gap of its kind | REQ-M.76 | DECISION |
+| F-M.50.7 | A member could write the feedback about their own work | REQ-M.19, M.123 | DONE |
+| F-M.50.8 | A member can delete work a leader has answered, feedback and all | REQ-M.125 | DECISION |
 
 ### F-M.50.1 — one font, three names, six files
 
@@ -3739,3 +3741,100 @@ No module over 1,400 lines. No TODO that is real. No route that 404s. No
 N+1 (the targets bank still renders 120 rows in 24 queries). No contrast, tap or
 overflow regression in either palette. No second read-only gap. No stale
 allowlist. 727 tests green.
+
+### F-M.50.1 was wrong, and the correction is the interesting part
+
+The review reported that all six Rubik files are byte-identical and declare
+weight class 300, and concluded that every bold on the site is the browser
+faking it. The first half is true. The conclusion was not, and it was stated
+with more confidence than the evidence carried.
+
+Rubik ships from Google as a **variable font**: `fvar` with a `wght` axis
+running 300 to 900, and `usWeightClass` reports only the default instance. All
+three weights point at one URL because one file covers the axis.
+
+Settled in a browser rather than by reading the spec. The same string rendered
+at several weights, once normally and once with `font-synthesis: none`:
+
+| weight | width | with synthesis off |
+|---|---|---|
+| 400 | 427.30 | 427.30 |
+| 500 | 442.70 | 442.70 |
+| 700 | 457.84 | 457.84 |
+
+Three distinct widths, unchanged by disabling synthesis. The weights were always
+real; the browser was pinning the axis from each `@font-face` and downloading
+the same file three times to do it.
+
+**The real finding, six times smaller and still worth fixing:** 134KB of fonts
+fetched per page where 45KB says the same thing. One declaration per subset with
+`font-weight: 300 900` gives two requests instead of six, identical rendering
+(the widths above are unchanged after the change), and 300 and 900 become
+available as a side effect.
+
+A measurement can be right and its conclusion wrong. md5 plus a weight class
+looked like proof and was two facts about a file that does not work the way the
+conclusion assumed.
+
+### F-M.50.2 — the recruitment page weighed 1.6MB
+
+| | before | after |
+|---|---|---|
+| `hero.png` | 1,322 KB | 92 KB as WebP |
+| `logo.png` | 100 KB, 850×293 | 22 KB, 302×104 |
+| `hemed_logo.png` | 46 KB, 530×468 | 15 KB, 226×200 |
+| the home page, everything | ~1.6 MB | **270 KB** |
+
+The hero was a photograph stored as PNG, which is what cost 1.3MB; it renders at
+350×240 on a phone. WebP is safe here because `.mz-photo` already paints a
+gradient underneath, so a browser too old for it shows a designed surface rather
+than a hole. The two logos were simply larger than anything ever drew them.
+
+### F-M.50.3 — the door
+
+`staff_consent` is an action, not a screen, which the review got half right. It
+takes a profile and records that a school collected consent on paper (REQ-M.84),
+and nothing in the product ever called it.
+
+The panel is on the student's page, because consent is a fact about one teenager
+and that is the page about one teenager. Program managers only, and the view
+still checks the role itself rather than trusting the template to have hidden
+the form. While the gate is off it says so plainly instead of implying a
+consequence that does not exist today.
+
+### F-M.50.4 and F-M.50.7 — the sweep, and what it found on its first run
+
+`test_no_endpoint_lets_a_caller_write_in_somebody_elses_name` hands every
+writable endpoint a body naming somebody else as the owner and asserts the row
+belongs to the caller. It matters more here than on most products: this API is
+what an agent in a chat uses, and a locked door beside an open window is worse
+than either alone.
+
+Ownership held everywhere. What did not:
+
+**A member could write the feedback about their own work.** `visible_submissions`
+includes a member's own, correctly, because they have to read what was said, and
+creation was scoped to the same queryset. So the person the feedback is *about*
+could add rows to it under their own name. REQ-M.123 calls that table "what the
+leader said". Now the same rule `_decide` has always had: saying and deciding are
+both a leader's.
+
+Nothing had ever run that path. That is the whole argument for testing writes
+and not only refusals.
+
+### F-M.50.8 — a question, not a bug, and Avi's to answer
+
+A member can delete their own submission after a leader has answered it, and the
+`Feedback` rows cascade away with it.
+
+No rule is broken. REQ-M.125 keeps every attempt so that feedback keeps the
+version it was about, which argues one way. A fourteen-year-old's right to
+remove their own work argues the other. Inventing the answer in a test would
+have been a decision made by whoever wrote the test, so the test pins today's
+behaviour instead and the question comes here.
+
+### F-M.50.5 — removed
+
+`clear_notices` marked everything read; so does opening the page. `say_more`
+added words to decided work; the review screen's own form does that. Neither had
+a test, and nothing linked to either.

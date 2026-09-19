@@ -16,49 +16,27 @@
 @font-face {
   font-family: 'Rubik';
   font-style: normal;
-  font-weight: 400;
+  /* The whole axis in one declaration, not three faces at three points on it.
+     Rubik ships from Google as a variable font with a wght axis running 300 to
+     900, and the previous six @font-face blocks pointed at six copies of two
+     files: 134KB fetched for every page where 45KB says the same thing.
+
+     The weights were never fake. Measured in a browser with font-synthesis
+     disabled, 400 renders 427px wide, 500 renders 443 and 700 renders 458, and
+     turning synthesis off changes none of them. The browser was pinning the
+     axis correctly from each declaration; it was just downloading the same
+     file three times to do it. */
+  font-weight: 300 900;
   font-display: swap;
-  src: url('fonts/rubik-hebrew-400.woff2') format('woff2');
+  src: url('fonts/rubik-hebrew.woff2') format('woff2-variations');
   unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;
 }
 @font-face {
   font-family: 'Rubik';
   font-style: normal;
-  font-weight: 400;
+  font-weight: 300 900;
   font-display: swap;
-  src: url('fonts/rubik-latin-400.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'Rubik';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url('fonts/rubik-hebrew-500.woff2') format('woff2');
-  unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;
-}
-@font-face {
-  font-family: 'Rubik';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url('fonts/rubik-latin-500.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'Rubik';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('fonts/rubik-hebrew-700.woff2') format('woff2');
-  unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;
-}
-@font-face {
-  font-family: 'Rubik';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('fonts/rubik-latin-700.woff2') format('woff2');
+  src: url('fonts/rubik-latin.woff2') format('woff2-variations');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 

@@ -239,6 +239,52 @@
     {% endif %}
   </section>
 
+  {% comment %}
+    SPR-M.50 — the door to `staff_consent`, which had none.
+
+    REQ-M.84: schools run their own consent process on paper, so somebody has
+    to record that it happened, and the record keeps who said so. Program
+    managers only, and the view checks the role again rather than trusting
+    this template to have hidden the form.
+  {% endcomment %}
+  {% if consent %}
+    <section class="mz-panel">
+      <h2>הסכמת הורה</h2>
+      {% if consent.recorded %}
+        <p>
+          <span class="mz-tag mz-tag-done">נרשמה</span>
+          {{ consent.at|date:"j.n.Y" }}{% if consent.by %},
+          על ידי {{ consent.by.profile.display_name|default:consent.by.email }}{% endif %}{% if consent.name %},
+          לפי {{ consent.name }}{% endif %}.
+        </p>
+      {% elif not consent.minor %}
+        <p class="mz-muted">בן/בת 18 ומעלה. לא נדרשת הסכמת הורה.</p>
+      {% else %}
+        <p class="mz-muted">
+          עוד לא נרשמה הסכמה.
+          {% if consent.enforced %}
+            בלי זה אי אפשר להצטרף למוביל/ה.
+          {% else %}
+            השער כבוי כרגע, אז זה לא חוסם כלום. הרישום נשמר לכשיידלק.
+          {% endif %}
+        </p>
+        <form method="post" action="{% url 'matazim:staff_consent' consent.profile_id %}">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="record">
+          <label class="mz-field">
+            <span>מי ההורה שנתן/נה את ההסכמה</span>
+            <input type="text" name="guardian_name" placeholder="שם מלא">
+          </label>
+          <label class="mz-field">
+            <span>אימייל (לא חובה)</span>
+            <input type="email" name="guardian_email" placeholder="כדי שאפשר יהיה לפנות אם צריך">
+          </label>
+          <button type="submit" class="mz-btn mz-btn-primary">רישום ההסכמה</button>
+        </form>
+      {% endif %}
+    </section>
+  {% endif %}
+
   {% if history %}
     <section class="mz-panel">
       <h2>היסטוריה</h2>

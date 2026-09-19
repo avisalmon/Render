@@ -177,6 +177,21 @@ def student(request, student_id):
             ],
             outstanding=outstanding,
             can_certify=may_certify(request.user, person),
+            # REQ-M.84, SPR-M.50 — the consent a school collected on paper.
+            #
+            # `staff_consent` has existed since SPR-M.10 and nothing has ever
+            # linked to it: the review found it by listing every named route
+            # against every template, and its one test posted straight at the
+            # URL, which is how an endpoint stays green while nobody can reach
+            # it. This is the door.
+            #
+            # Here rather than on a staff screen of its own, because consent is
+            # a fact about one teenager and this is the page about one teenager.
+            # Program managers only, which is the rule the view already
+            # enforces: a leader vouching for a parent they have not spoken to
+            # is not consent, it is a leader being helpful, and the two look
+            # identical a year later.
+            consent=_consent_panel(request.user, person),
             # REQ-M.21 — who moved this student, and when. A log nobody can see
             # answers nobody's question, and the person most likely to be asked
             # is whoever is looking at this page.
@@ -210,6 +225,41 @@ def student(request, student_id):
             chosen=set(person.classes.values_list("pk", flat=True)),
         ),
     )
+
+
+def _consent_panel(user, person):
+    """What the consent panel on a student's page should say, or None.
+
+    None for anybody who is not a program manager, so the template has nothing
+    to render rather than a hidden form somebody could post to anyway. The view
+    behind it checks the role again; this only decides what is drawn.
+    """
+    from .access import is_program_manager
+    from .consent import gate_is_on, has_guardian_consent, is_minor
+
+    if not is_program_manager(user):
+        return None
+
+    profile = getattr(person.user, "matazim_profile", None)
+    if profile is None:
+        from .models import MemberProfile
+
+        profile = MemberProfile.objects.filter(user=person.user).first()
+    if profile is None:
+        return None
+
+    return {
+        "profile_id": profile.pk,
+        "recorded": has_guardian_consent(profile),
+        "at": profile.guardian_consent_at,
+        "by": profile.guardian_consent_recorded_by,
+        "name": profile.guardian_name,
+        "minor": is_minor(profile),
+        # The gate is off while the site is being built (REQ-M.84), so the panel
+        # says whether this is currently blocking anything rather than implying
+        # a consequence that does not exist today.
+        "enforced": gate_is_on(),
+    }
 
 
 def _student_action(request, leader, person):
