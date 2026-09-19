@@ -142,6 +142,15 @@ class SensorConsent(models.Model):
 
 SENSOR_CHOICES = tuple((name, name.replace("-", " ").title()) for name in SENSORS)
 
+#: spec §3's flow, defined once. The assembled API response orders its steps
+#: by this, and the lab overview previews them from it — a screen or a
+#: serializer that spelled the sequence out again would be a second copy
+#: waiting to disagree with the spec the day a step is added.
+#:
+#: Only three of the five are `ContentBlock.Step` values, because only three
+#: are prose (data_model.md §4). The other two have shapes of their own.
+LAB_STEPS = ("intro", "learn", "predict", "experiment", "analysis")
+
 
 # ===========================================================================
 # The curriculum (data_model.md §3–4)

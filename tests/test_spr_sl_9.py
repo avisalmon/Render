@@ -51,8 +51,16 @@ def _staff(django_user_model, name="author"):
 def _seed(published=True):
     """One complete lab — every step populated, so the assembled read has
     something real to assemble."""
-    from sensorlab.models import (AnalysisConfig, ContentBlock, ExperimentConfig, Lab,
-                                  PredictionChoice, PredictionQuestion, SensorRequirement, Track)
+    from sensorlab.models import (
+        AnalysisConfig,
+        ContentBlock,
+        ExperimentConfig,
+        Lab,
+        PredictionChoice,
+        PredictionQuestion,
+        SensorRequirement,
+        Track,
+    )
 
     track = Track.objects.create(
         slug="free-fall", title_en="Free Fall", title_he="נפילה חופשית",

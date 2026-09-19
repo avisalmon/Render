@@ -47,15 +47,15 @@ def sensors(request):
     """
     from .models import SENSORS
 
-    labels = {
-        "accelerometer": "Accelerometer",
-        "linear-accelerometer": "Linear acceleration",
-        "gyroscope": "Gyroscope",
-        "magnetometer": "Magnetometer",
-        "camera": "Camera",
-        "microphone": "Microphone",
-    }
-    shown = [{"key": k, "label": labels.get(k, k.title())} for k in SENSORS if k in labels]
+    #: Which sensors this screen offers to test. Names are NOT built here:
+    #: they used to be, from an English dict, and a Hebrew reader was shown
+    #: "Accelerometer" (SL-A2's bug, third appearance). The template resolves
+    #: each key through `{{ key|sensor_name }}`, so no view can get it wrong.
+    READABLE_HERE = (
+        "accelerometer", "linear-accelerometer", "gyroscope",
+        "magnetometer", "camera", "microphone",
+    )
+    shown = [k for k in SENSORS if k in READABLE_HERE]
     return render(request, "sensorlab/sensors.html", {"sensors": shown})
 
 
@@ -73,9 +73,58 @@ def design(request):
 
 @sensorlab_login_required
 def lab(request):
-    """The first page behind the gate. A shell until Epic D's runner."""
-    profile = profile_for(request.user)
-    return render(request, "sensorlab/lab.html", {"profile": profile})
+    """The member's home: every track, and the labs inside it (SL-B4).
+
+    A track with no published labs is left out rather than listed as empty.
+    Showing "Free Fall — 0 labs" tells a student nothing they can act on, and
+    the whole-page empty state below says the useful version of the same
+    thing. The cost is that a track whose labs are all still drafts
+    disappears from this screen, which is the correct answer for a student
+    and a mildly surprising one for an author — so the admin, not this page,
+    is where authoring progress is read.
+    """
+    from .models import Track
+
+    tracks = []
+    for track in Track.published.prefetch_related("labs"):
+        labs = [row for row in track.labs.all() if row.is_published]
+        if labs:
+            tracks.append({"track": track, "labs": labs, "count": len(labs)})
+
+    return render(request, "sensorlab/tracks.html",
+                  {"tracks": tracks, "profile": profile_for(request.user)})
+
+
+@sensorlab_login_required
+def lab_overview(request, slug):
+    """One lab, before you commit twelve minutes to it (SL-B4).
+
+    What it is, how long, what it will ask of your phone, and what has to be
+    finished first. spec §1 refuses a degradation tier, so "this lab needs
+    your accelerometer" belongs *here* — readable before the lab starts, not
+    discovered as a refusal halfway through.
+
+    There is deliberately no start action: Epic D builds the runner. A
+    primary button over a 404 is this app's recurring failure mode, so the
+    page says plainly that it cannot be run yet.
+    """
+    from django.shortcuts import get_object_or_404
+
+    from .models import LAB_STEPS, Lab
+
+    lab_row = get_object_or_404(
+        Lab.published.select_related("track", "prerequisite_lab"), slug=slug
+    )
+    config = getattr(lab_row, "experiment", None)
+    sensors = list(config.sensor_requirements.all()) if config else []
+
+    return render(request, "sensorlab/lab_overview.html", {
+        "lab": lab_row,
+        "sensors": sensors,
+        # From the model, not spelled out here — one definition of spec §3's
+        # flow, shared with the assembled API response.
+        "steps": LAB_STEPS,
+    })
 
 
 def set_language(request, code):

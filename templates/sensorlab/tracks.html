@@ -1,0 +1,63 @@
+{% extends "sensorlab/base.html" %}
+{% load sensorlab %}
+
+{% block title %}{% t "lab.title" %} — SensorLab{% endblock %}
+{% block screen %}tracks{% endblock %}
+
+{% block content %}
+<section class="sl-shell">
+  <h1>{% t "lab.title" %}</h1>
+  <p class="sl-muted">{% t "tracks.blurb" %}</p>
+
+  {% if tracks %}
+    {% for row in tracks %}
+      <section class="sl-track" aria-labelledby="track-{{ row.track.slug }}">
+        <header class="sl-track-head">
+          <h2 id="track-{{ row.track.slug }}">
+            {% if row.track.icon %}<span aria-hidden="true">{{ row.track.icon }}</span>{% endif %}
+            {{ row.track.title }}
+          </h2>
+          <p class="sl-muted">
+            {% if row.count == 1 %}{% t "tracks.one_lab" %}{% else %}{{ row.count }} {% t "tracks.n_labs" %}{% endif %}
+          </p>
+        </header>
+
+        {% if row.track.description %}<p>{{ row.track.description }}</p>{% endif %}
+
+        <ul class="sl-lab-list">
+          {% for lab in row.labs %}
+            <li>
+              <a class="sl-card sl-lab-row" href="{% url 'sensorlab:lab_overview' lab.slug %}">
+                <span class="sl-lab-name">{{ lab.title }}</span>
+                {% comment %}
+                  Tabular numerals, but NOT `dir="ltr"`. §7.7's rule is for
+                  instrument data and chart axes — forcing a prose phrase
+                  LTR fights the bidi algorithm and pushes the number to the
+                  wrong side of "דקות" on a Hebrew page. Seen in the
+                  SL-B4 screenshots and removed.
+                {% endcomment %}
+                <span class="sl-muted sl-tnum">{{ lab.estimated_minutes }} {% t "lab.minutes" %}</span>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endfor %}
+  {% else %}
+    {% comment %}
+      The state on the day this deploys, before the seed has run. A blank
+      page reads as broken; this says which of the two it is.
+    {% endcomment %}
+    <div class="sl-card sl-empty">
+      <h2>{% t "tracks.empty_title" %}</h2>
+      <p class="sl-muted">{% t "tracks.empty_body" %}</p>
+    </div>
+  {% endif %}
+
+  <form method="post" action="{% url 'sensorlab:logout' %}" class="sl-form sl-signout">
+    {% csrf_token %}
+    <p class="sl-muted">{% t "lab.signed_in_as" %} <strong>{{ request.user.username }}</strong>.</p>
+    <button type="submit" class="sl-button sl-button-quiet">{% t "nav.sign_out" %}</button>
+  </form>
+</section>
+{% endblock %}

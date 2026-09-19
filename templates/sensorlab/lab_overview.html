@@ -1,0 +1,78 @@
+{% extends "sensorlab/base.html" %}
+{% load sensorlab %}
+
+{% block title %}{{ lab.title }} — SensorLab{% endblock %}
+{% block screen %}lab-overview{% endblock %}
+
+{% block content %}
+<section class="sl-shell">
+  {% comment %}
+    A real tap target, not a line of text with a link in it. The first
+    version was an 18px-tall anchor inside a paragraph and SL-A4's 44px
+    guard failed the build on it — which is the guard doing exactly the job
+    it was written for.
+
+    The arrow is `aria-hidden` and flipped by CSS rather than swapped in the
+    template: "back" points the other way in Hebrew, and a template that
+    chose the glyph would be a second place the direction lives.
+  {% endcomment %}
+  <a class="sl-back" href="{% url 'sensorlab:lab' %}">
+    <span class="sl-back-arrow" aria-hidden="true">←</span>{% t "lab.back_to_tracks" %}
+  </a>
+
+  <p class="sl-muted">{{ lab.track.title }}</p>
+  <h1>{{ lab.title }}</h1>
+  {% if lab.summary %}<p>{{ lab.summary }}</p>{% endif %}
+
+  {# Tabular numerals, but no forced dir — see tracks.html for why. #}
+  <p class="sl-muted sl-tnum">{{ lab.estimated_minutes }} {% t "lab.minutes" %}</p>
+
+  {% if lab.prerequisite_lab %}
+    {% comment %}
+      `prerequisite_lab` has been in the model since SL-B1 and would stay
+      invisible until Epic D otherwise — a lock with no label on it.
+    {% endcomment %}
+    <div class="sl-card sl-locked">
+      <h2>{% t "lab.unlocks_after" %}</h2>
+      <p><a href="{% url 'sensorlab:lab_overview' lab.prerequisite_lab.slug %}">{{ lab.prerequisite_lab.title }}</a></p>
+    </div>
+  {% endif %}
+
+  <h2>{% t "lab.what_you_do" %}</h2>
+  <ol class="sl-steps">
+    {% for step in steps %}
+      <li class="sl-step">
+        {% if step == "intro" %}{% t "lab.step_intro" %}
+        {% elif step == "learn" %}{% t "lab.step_learn" %}
+        {% elif step == "predict" %}{% t "lab.step_predict" %}
+        {% elif step == "experiment" %}{% t "lab.step_experiment" %}
+        {% else %}{% t "lab.step_analysis" %}{% endif %}
+      </li>
+    {% endfor %}
+  </ol>
+
+  {% if sensors %}
+    <h2>{% t "lab.what_you_need" %}</h2>
+    <ul class="sl-needs">
+      {% for requirement in sensors %}
+        <li class="sl-chip">
+          {{ requirement.sensor|sensor_name }}
+          {% if not requirement.is_required %}<span class="sl-muted">· {% t "lab.optional" %}</span>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% comment %}
+    No start action, on purpose. Epic D builds the runner; a primary button
+    over a 404 is this app's recurring failure — it knew it could not do the
+    thing and waited for somebody to tap it before saying so. `disabled`
+    rather than hidden, so the shape of the finished screen is visible and
+    the reason is readable.
+  {% endcomment %}
+  <div class="sl-not-ready">
+    <button type="button" class="sl-button" disabled>{% t "lab.not_ready" %}</button>
+    <p class="sl-muted">{% t "lab.not_ready_why" %}</p>
+  </div>
+</section>
+{% endblock %}

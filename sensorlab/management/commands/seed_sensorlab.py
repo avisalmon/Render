@@ -43,8 +43,16 @@ Measuring g is therefore the *easy* half — a stationary phone and a mean.
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from sensorlab.models import (AnalysisConfig, ContentBlock, ExperimentConfig, Lab,
-                              PredictionChoice, PredictionQuestion, SensorRequirement, Track)
+from sensorlab.models import (
+    AnalysisConfig,
+    ContentBlock,
+    ExperimentConfig,
+    Lab,
+    PredictionChoice,
+    PredictionQuestion,
+    SensorRequirement,
+    Track,
+)
 
 TRACK_SLUG = "free-fall"
 LAB_SLUG = "measuring-g"

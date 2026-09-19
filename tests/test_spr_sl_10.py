@@ -48,8 +48,16 @@ def _snapshot():
     a row leaves the counts identical and the ids different, which is the
     failure this sprint exists to prevent. Counting rows would miss it.
     """
-    from sensorlab.models import (AnalysisConfig, ContentBlock, ExperimentConfig, Lab,
-                                  PredictionChoice, PredictionQuestion, SensorRequirement, Track)
+    from sensorlab.models import (
+        AnalysisConfig,
+        ContentBlock,
+        ExperimentConfig,
+        Lab,
+        PredictionChoice,
+        PredictionQuestion,
+        SensorRequirement,
+        Track,
+    )
 
     rows = []
     for model, fields in (
@@ -124,8 +132,14 @@ def test_every_authored_string_exists_in_both_languages():
     into the Hebrew column would satisfy "both present" and translate
     nothing.
     """
-    from sensorlab.models import (AnalysisConfig, ContentBlock, ExperimentConfig, Lab,
-                                  PredictionChoice, PredictionQuestion, Track)
+    from sensorlab.models import (
+        AnalysisConfig,
+        ContentBlock,
+        ExperimentConfig,
+        Lab,
+        PredictionChoice,
+        Track,
+    )
 
     _seed()
     checks = [

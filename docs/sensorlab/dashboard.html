@@ -207,12 +207,20 @@
 
   <div class="sprint">
     <div class="sprint-head">
-      <div class="sprint-title">SL-B4 — The first real screens <span>· sprsl11</span></div>
-      <span class="pill todo">not started</span>
+      <div class="sprint-title">SL-B4 — The first real screens <span>· sprsl11 · 14 tests</span></div>
+      <span class="pill done">done</span>
     </div>
     <p class="sprint-desc">
       Track list and lab overview on the design system with real content, under screen-contract tests
-      in both languages and both directions, empty and populated.
+      in both languages and both directions, empty and populated — and measured on a real 390px phone.
+      <b>No start button:</b> Epic D builds the runner, so the overview shows a disabled control and
+      says why, rather than a live button over a 404 — with a new guard that follows every link on both
+      screens and requires an answer. Two long-running bugs closed as rules rather than patches:
+      sensor names were English on Hebrew pages (SL-A2's bug, third appearance) and are now catalogue
+      entries no view can bypass; and <code>.sl-shell a</code> outranking a component class
+      (SL-A4.1's bug, second appearance) is now stated generally and guarded in a real browser.
+      <a href="design/sl-b4-tracks-he.png">Screenshots</a>, looked at — which is how the 18px back
+      link and a forced text direction on the Hebrew duration were caught.
     </p>
   </div>
 

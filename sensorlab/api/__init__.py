@@ -14,9 +14,16 @@ SL-A3 made and this is the sprint that tested it.
 
 from rest_framework.routers import DefaultRouter
 
-from .curriculum import (AnalysisConfigViewSet, ContentBlockViewSet, ExperimentConfigViewSet,
-                         LabViewSet, PredictionChoiceViewSet, PredictionQuestionViewSet,
-                         SensorRequirementViewSet, TrackViewSet)
+from .curriculum import (
+                         AnalysisConfigViewSet,
+                         ContentBlockViewSet,
+                         ExperimentConfigViewSet,
+                         LabViewSet,
+                         PredictionChoiceViewSet,
+                         PredictionQuestionViewSet,
+                         SensorRequirementViewSet,
+                         TrackViewSet,
+)
 
 #: Everything SensorLab exposes hangs off this.
 router = DefaultRouter()

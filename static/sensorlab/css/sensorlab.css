@@ -50,6 +50,12 @@
   --sl-font: 'Rubik', 'Segoe UI', system-ui, sans-serif;
   --sl-size-display: 38px;
   --sl-size-h1: 24px;
+  /* Added in SL-B4. The ramp had no second heading level because until the
+     lab overview no screen had subheadings — and SL-B4 first used it as
+     `var(--sl-size-h2)`, which renders correctly and is a dead token
+     with a fallback propping it up. SL-A4's own guard failed the build on
+     it, which is exactly why that guard exists. spec §7.3 amended. */
+  --sl-size-h2: 19px;
   --sl-size-body: 15px;
   --sl-size-small: 13px;
   --sl-size-label: 11px;
@@ -475,3 +481,152 @@ body {
 }
 
 .sl-ref-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+/* --------------------------------------- the curriculum screens (SL-B4) */
+
+/* Logical properties only, as everywhere in this file: SL-A5 mirrors the
+   chrome in Hebrew, and a physical `margin-left` survives the flip pointing
+   the old way — silently, since the page still renders. A guard test in
+   tests/test_spr_sl_4.py fails the build on one. */
+
+.sl-track { margin-block-start: 28px; }
+
+.sl-track-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sl-track-head h2 {
+  margin-block: 0 4px;
+  font-size: var(--sl-size-h2);
+  font-weight: 600;
+}
+
+.sl-track-head p { margin-block: 0; }
+
+.sl-lab-list {
+  list-style: none;
+  margin-block: 12px 0;
+  padding-inline-start: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* A whole row is the tap target, not the words in it — spec §7.4, used
+   one-handed and possibly outdoors. 44px is the floor a test enforces. */
+.sl-lab-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-block-size: 56px;
+  text-decoration: none;
+  color: var(--sl-ink);
+}
+
+/* `--sl-line-strong`, NOT the measurement cyan. §7.2 reserves amber and
+   cyan so completely that their appearance means something; a hover state
+   is emphasis, not a measurement, and borrowing the colour would spend the
+   rule's whole value on a border. (`--sl-accent` was invented here and
+   never existed — same dead-token bug as above, same guard caught it.) */
+.sl-lab-row:hover { border-color: var(--sl-line-strong); }
+.sl-lab-name { font-weight: 500; }
+
+.sl-empty { margin-block-start: 20px; text-align: center; }
+.sl-empty h2 { margin-block: 0 6px; font-size: 17px; font-weight: 600; }
+.sl-empty p { margin-block: 0; }
+
+.sl-locked { margin-block: 18px; }
+.sl-locked h2 {
+  margin-block: 0 6px;
+  font-size: var(--sl-size-label);
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--sl-ink-faint);
+}
+.sl-locked p { margin-block: 0; }
+
+.sl-shell h2 {
+  margin-block: 26px 10px;
+  font-size: var(--sl-size-h2);
+  font-weight: 600;
+}
+
+/* Numbered by the browser rather than by hand, so the five steps cannot
+   drift out of the order the model defines them in. */
+.sl-steps {
+  margin-block: 0;
+  padding-inline-start: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sl-step { line-height: 1.5; }
+
+.sl-needs {
+  list-style: none;
+  margin-block: 0;
+  padding-inline-start: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sl-not-ready { margin-block-start: 28px; }
+.sl-not-ready .sl-button { inline-size: 100%; }
+.sl-not-ready p { margin-block-start: 8px; }
+
+/* A disabled control has to LOOK unavailable, or it reads as a broken
+   button rather than an honest one. Contrast stays above the guard's floor
+   on purpose: "not yet" is information, not decoration to be hidden. */
+.sl-button[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.sl-signout {
+  margin-block-start: 40px;
+  padding-block-start: 20px;
+  border-block-start: 1px solid var(--sl-line);
+}
+.sl-signout p { margin-block: 0 10px; }
+
+/* The back link is a control, so it obeys the 44px floor like every other
+   one (spec §7.4). It shipped as an 18px anchor in a paragraph and SL-B4's
+   phone guard failed on it. */
+.sl-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-block-size: 44px;
+  text-decoration: none;
+}
+
+/* The arrow means "back", which is the other direction in Hebrew. Flipped
+   here rather than swapped in the template, so the glyph is not a second
+   place the text direction is decided. */
+[dir="rtl"] .sl-back-arrow { transform: scaleX(-1); }
+
+/* The same specificity trap as SL-A4.1, second occurrence.
+   `.sl-shell a` is (0,1,1) and beats any single component class (0,1,0), so
+   an anchor wearing a component's clothes silently keeps the shell's link
+   styling. In SL-A4.1 that painted the landing page's primary button
+   ink-on-ink; here it underlined every row of the lab list, which is milder
+   and exactly the same mistake.
+
+   Written as the general rule rather than a third patch: a component owns
+   its own affordance, so an anchor that IS one drops the shell's underline
+   and keeps the component's colour. Guarded in tests/test_spr_sl_11.py, in
+   a real browser, because computed style is the only place this is true or
+   false. */
+.sl-shell a.sl-card,
+.sl-shell a.sl-chip {
+  color: var(--sl-ink);
+  text-decoration: none;
+}

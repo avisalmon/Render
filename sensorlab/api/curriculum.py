@@ -30,19 +30,35 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 
 from ..middleware import language_for
-from ..models import (AnalysisConfig, ContentBlock, ExperimentConfig, Lab, PredictionChoice,
-                      PredictionQuestion, SensorRequirement, Track)
+from ..models import (
+    LAB_STEPS,
+    AnalysisConfig,
+    ContentBlock,
+    ExperimentConfig,
+    Lab,
+    PredictionChoice,
+    PredictionQuestion,
+    SensorRequirement,
+    Track,
+)
 from ..strings import LANGUAGES
 from .pagination import SensorLabPagination
 from .permissions import ReadAnyWriteStaff
-from .serializers import (AnalysisConfigSerializer, ContentBlockSerializer,
-                          ExperimentConfigSerializer, LabSerializer, PredictionChoiceSerializer,
-                          PredictionQuestionSerializer, SensorRequirementSerializer,
-                          TrackSerializer)
+from .serializers import (
+    AnalysisConfigSerializer,
+    ContentBlockSerializer,
+    ExperimentConfigSerializer,
+    LabSerializer,
+    PredictionChoiceSerializer,
+    PredictionQuestionSerializer,
+    SensorRequirementSerializer,
+    TrackSerializer,
+)
 
-#: spec §3's flow, in one place. Everything that iterates the steps —
-#: the assembled response, and therefore the runner — reads it from here.
-STEPS = ("intro", "learn", "predict", "experiment", "analysis")
+#: spec §3's flow, re-exported from the model where it is defined, so the
+#: assembled response and the lab-overview screen order their steps from one
+#: tuple rather than two that agree today.
+STEPS = LAB_STEPS
 
 #: Which steps are prose. The other two have shapes of their own.
 PROSE_STEPS = (ContentBlock.Step.INTRO, ContentBlock.Step.LEARN, ContentBlock.Step.ANALYSIS)
@@ -224,7 +240,6 @@ def _experiment(lab, language):
 
 
 def _analysis(lab, language, answers):
-    from ..models import localised
 
     config = getattr(lab, "analysis", None)
     step = {"blocks": _blocks(lab, ContentBlock.Step.ANALYSIS, language)}

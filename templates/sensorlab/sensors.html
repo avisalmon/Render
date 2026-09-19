@@ -11,10 +11,10 @@
 
   <div style="display: flex; flex-direction: column; gap: 10px; margin-block-start: 18px;">
     {% for sensor in sensors %}
-      <div class="sl-card" data-sensor="{{ sensor.key }}">
+      <div class="sl-card" data-sensor="{{ sensor }}">
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
           <div>
-            <div style="font-weight: 500;">{{ sensor.label }}</div>
+            <div style="font-weight: 500;">{{ sensor|sensor_name }}</div>
             <div class="sl-muted" data-state>{% t "sensors.checking" %}</div>
           </div>
           <button type="button" class="sl-button sl-button-quiet" data-consent hidden>

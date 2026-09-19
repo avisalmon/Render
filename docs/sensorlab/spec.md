@@ -268,6 +268,21 @@ tabular-nums`). Without them a readout counting through `9.81 → 10.02`
 shifts horizontally as the digit widths change, and a jittering number
 reads as a broken instrument.
 
+Tabular numerals are **not** the same instruction as a forced text
+direction. §7.7's "the chrome mirrors, the data does not" governs instrument
+readouts and chart axes; a prose phrase that happens to contain a number —
+"12 minutes" — is chrome, and forcing it LTR fights the bidi algorithm and
+puts the digits on the wrong side of the Hebrew word. Corrected in SL-B4,
+after the screenshots showed it.
+
+**The ramp**, in `static/sensorlab/css/sensorlab.css`: display 38 · h1 24 ·
+**h2 19** · body 15 · small 13 · label 11. The h2 rung was added in SL-B4,
+when the lab overview became the first screen with subheadings — and it was
+first written as `var(--sl-size-h2, 19px)`, a token that never existed with
+a fallback propping it up. The page rendered correctly and the rule was
+dead. SL-A4's token guard failed the build on it, which is the whole reason
+that guard exists: a `var()` with no definition still parses.
+
 ### 7.4 Phone-first, inherited from ustrip
 
 This app is Android-phone-only, so §0a.1 of `docs/ustrip/spec.md` applies
@@ -531,14 +546,19 @@ Per `data_model.md` §3–4: `Track`, `Lab`, `ContentBlock`,
 - Django admin with **inlines, so one Lab is authored on one page**: its
   content blocks, its prediction questions and their choices, its
   experiment config and sensor requirements, its analysis config.
-- **Decision to make:** admin-only authoring, or an in-app author role?
-  `data_model.md` §12 flags that no teacher/author role is modelled.
-  Recommendation: **admin only for now**, and say so out loud rather than
-  discovering the gap when a teacher asks.
-- **Decision to make:** are `ContentBlock` bodies plain text, Markdown, or a
-  restricted HTML subset? This affects both the authoring experience and
-  rendering safety, and it is cheaper to settle before content is written
-  than after.
+- **Decided (SL-B1): admin only for now.** `data_model.md` §12 flags that
+  no teacher/author role is modelled; saying so out loud beats discovering
+  the gap when a teacher asks. The API enforces it — signed-in people read
+  the curriculum, only staff write it.
+- **Decided (SL-B1): `ContentBlock` bodies are Markdown, with raw HTML
+  escaped before conversion.** `markdown` is already a dependency of this
+  site; `bleach` is not installed and adding one is not ours to do. So
+  rather than sanitise HTML afterwards, none is produced from author input
+  at all. Only `formula` bodies skip Markdown — Markdown would read `*`, `_`
+  and `|` in one as emphasis and table pipes, mangling the characters that
+  carry the meaning. The `kind` governs the container, not whether the words
+  inside are prose (corrected in SL-B3, after a callout reached a student
+  with its backticks showing).
 
 #### B.3 API
 

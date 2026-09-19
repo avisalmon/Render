@@ -51,7 +51,7 @@ runs pip), `env\Scripts\activate` for everything Python, and
 |---|---|---|
 | **A — Infrastructure and look and feel** | SL-A1 … SL-A5 | 🔵 in progress |
 | **C — Sensor access layer** | SL-C1 … SL-C2 | 🔵 in progress — spike passed |
-| B — Curriculum and authoring | SL-B1 … SL-B4 | 🔵 SL-B4 is all that remains |
+| **B — Curriculum and authoring** | SL-B1 … SL-B4 | ✅ done |
 | D — The lab runner | tbd at gate | ⬜ |
 | E — Predict | tbd at gate | ⬜ |
 | F — Capture | tbd at gate | ⬜ |
@@ -734,14 +734,86 @@ unordered pagination, B3's callout. The pattern is stable enough to be worth
 stating: **assertions check what you thought to ask about; reading the output
 shows what you did not.**
 
-### SL-B4 — The first real screens ⬜
+### SL-B4 — The first real screens ✅
 
-Marker: `sprsl11`
+Marker: `sprsl11` — 14 tests, all green.
 
-- [ ] Track list and lab overview, built on SL-A4's design system, with
+- [x] Track list (`/sensorlab/lab/`, the member's home) and lab overview
+      (`/sensorlab/lab/<slug>/`), built on SL-A4's design system, with the
       real seeded content.
-- [ ] Screen-contract tests for both, in both languages and both
-      directions, in their empty and populated states.
+- [x] Screen-contract tests for both, in both languages and both
+      directions, populated **and empty** — and on a real phone at 390px:
+      taps, overflow, contrast and component links, in both languages.
+- [x] Screenshots, looked at: `design/sl-b4-{tracks,lab-overview}-{en,he}.png`.
+- [x] `LAB_STEPS` moved into `sensorlab/models.py`, so spec §3's flow has
+      **one** definition. The assembled API response and the overview's
+      step preview both read it; a screen that spelled the order out again
+      would be a second copy waiting to disagree the day a step is added.
+- [x] The old `lab.html` placeholder and its `lab.placeholder` string are
+      gone, rather than left to rot next to the real screen.
+
+#### No start button, on purpose
+
+Epic D builds the runner. The overview shows a **disabled** control and says
+why, rather than a live button over a 404. That is this app's recurring
+failure in miniature — the app knew it could not do the thing and would have
+waited for somebody to tap it before saying so — and it now has a guard:
+**every link on both screens is followed and has to answer.** Epic A proved
+links stay inside SensorLab's walls; nothing until now proved they arrive.
+
+#### The bug this sprint inherited: SL-A2's, for the third time
+
+`sensors.html` had been showing **English sensor names on a Hebrew page**
+since SL-C2, because the view built its labels from an English-only dict.
+Same shape as SL-A2 (Django's own form labels) and SL-A5 (the forms' own
+copy): a label that lives anywhere other than `strings.py` is a label one
+language cannot reach.
+
+Fixed as a rule rather than a patch — the names are now catalogue entries,
+resolved by a `{{ key|sensor_name }}` filter, so **no view can hand a
+template an English label again**. Both screens that name a sensor read from
+the same place.
+
+#### And the specificity trap, for the second time
+
+`.sl-shell a` is (0,1,1) and outranks any single component class (0,1,0). In
+SL-A4.1 that painted the deployed landing page's primary button ink-on-ink,
+and was fixed **for `.sl-button` alone**. Here the same rule underlined every
+row of the lab list — milder, identical mistake. Patching a third class
+would have left a fourth to find, so the CSS now states the general rule (an
+anchor that *is* a component keeps the component's affordance) and a browser
+test states it back. Computed style is the only place a cascade is true or
+false; a stylesheet grep cannot resolve one.
+
+#### Two things only the screenshots showed
+
+1. The **back link was an 18px tap target** — under spec §7.4's 44px floor.
+   SL-B4's own phone guard failed the build on it, which is the guard doing
+   precisely the job it was written for.
+2. The duration carried `dir="ltr"`. §7.7's rule — the chrome mirrors, the
+   data does not — is about **instrument readouts and chart axes**. Applying
+   it to a prose phrase fought the bidi algorithm and pushed the number to
+   the wrong side of "דקות". Tabular numerals kept, forced direction
+   removed.
+
+---
+
+## Epic B — closed
+
+All four sprints done. Full regression run at the epic gate (the process
+weight this app chose: sprint markers green per sprint, whole suite per
+epic), against `docs/regression_baseline.txt` — the gate is **no new
+failures**, not all-green.
+
+What Epic B is worth saying about, beyond the features: **four defects were
+found by looking at output rather than by a failing test** — B1's admin
+label, B2's raw Markdown explanation and unordered pagination, B3's
+unrendered callout, B4's underlines, tap target and forced direction. Every
+one passed every assertion in the suite while it was broken.
+
+The pattern is stable enough to state: *assertions check what you thought to
+ask about; reading the output shows what you did not.* Each of those is now
+a guard, so the next one has to be a **new** kind of mistake.
 
 ---
 

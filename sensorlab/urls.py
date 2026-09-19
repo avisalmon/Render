@@ -11,6 +11,9 @@ app_name = "sensorlab"
 urlpatterns = [
     path("", views.home, name="home"),
     path("lab/", views.lab, name="lab"),
+    # SL-B4. After `lab/` so the member home keeps that URL, and a slug can
+    # never shadow it.
+    path("lab/<slug:slug>/", views.lab_overview, name="lab_overview"),
     # Epic C spike: does this device actually give a web page its sensors?
     path("sensor-check/", views.sensor_check, name="sensor_check"),
     path("design/", views.design, name="design"),

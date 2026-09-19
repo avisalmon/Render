@@ -16,8 +16,17 @@ disagree the first time a translation was missing. Neither shape is the
 
 from rest_framework import serializers
 
-from ..models import (AnalysisConfig, ContentBlock, ExperimentConfig, Lab, PredictionChoice,
-                      PredictionQuestion, SensorLabProfile, SensorRequirement, Track)
+from ..models import (
+    AnalysisConfig,
+    ContentBlock,
+    ExperimentConfig,
+    Lab,
+    PredictionChoice,
+    PredictionQuestion,
+    SensorLabProfile,
+    SensorRequirement,
+    Track,
+)
 
 
 class SensorLabProfileSerializer(serializers.ModelSerializer):

@@ -12,8 +12,17 @@ See docs/sensorlab/spec.md §9.2.
 
 from django.contrib import admin
 
-from .models import (AnalysisConfig, ContentBlock, ExperimentConfig, Lab, PredictionChoice,
-                     PredictionQuestion, SensorLabProfile, SensorRequirement, Track)
+from .models import (
+    AnalysisConfig,
+    ContentBlock,
+    ExperimentConfig,
+    Lab,
+    PredictionChoice,
+    PredictionQuestion,
+    SensorLabProfile,
+    SensorRequirement,
+    Track,
+)
 
 
 @admin.register(SensorLabProfile)

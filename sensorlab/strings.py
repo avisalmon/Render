@@ -70,10 +70,51 @@ STRINGS = {
     # the lab
     "lab.title": {"en": "Your lab", "he": "המעבדה שלך"},
     "lab.signed_in_as": {"en": "Signed in as", "he": "מחובר בתור"},
-    "lab.placeholder": {
-        "en": "Tracks and labs arrive in Epic B; the five-step runner in Epic D.",
-        "he": "המסלולים והמעבדות יגיעו באפיק B, ומנוע חמשת השלבים באפיק D.",
+    # the track list (SL-B4)
+    "tracks.blurb": {
+        "en": "Pick a track, then a lab. Each one takes about ten minutes, and your phone is the instrument.",
+        "he": "בחרו מסלול, ואז מעבדה. כל אחת לוקחת בערך עשר דקות, והטלפון שלכם הוא כלי המדידה.",
     },
+    "tracks.one_lab": {"en": "1 lab", "he": "מעבדה אחת"},
+    "tracks.n_labs": {"en": "labs", "he": "מעבדות"},
+    "tracks.empty_title": {"en": "No tracks yet", "he": "אין מסלולים עדיין"},
+    "tracks.empty_body": {
+        "en": "The first experiments are still being written. Nothing is broken — there is simply "
+              "nothing here to open yet.",
+        "he": "הניסויים הראשונים עוד בכתיבה. שום דבר לא שבור — פשוט אין כאן עדיין מה לפתוח.",
+    },
+    # the lab overview (SL-B4)
+    "lab.minutes": {"en": "minutes", "he": "דקות"},
+    "lab.what_you_do": {"en": "What you'll do", "he": "מה תעשו"},
+    "lab.what_you_need": {"en": "What you'll need", "he": "מה תצטרכו"},
+    "lab.step_intro": {"en": "Intro", "he": "פתיחה"},
+    "lab.step_learn": {"en": "Learn", "he": "למידה"},
+    "lab.step_predict": {"en": "Predict", "he": "השערה"},
+    "lab.step_experiment": {"en": "Experiment", "he": "ניסוי"},
+    "lab.step_analysis": {"en": "Analysis", "he": "ניתוח"},
+    "lab.optional": {"en": "optional", "he": "אופציונלי"},
+    "lab.not_ready": {"en": "Not ready to run yet", "he": "עדיין לא ניתן להריץ"},
+    "lab.not_ready_why": {
+        "en": "The five-step runner is still being built. Everything above is real content — "
+              "the lab simply cannot be started from here yet.",
+        "he": "מנוע חמשת השלבים עוד נבנה. כל מה שלמעלה הוא תוכן אמיתי — פשוט אי אפשר עדיין "
+              "להתחיל את המעבדה מכאן.",
+    },
+    "lab.unlocks_after": {"en": "Finish this one first", "he": "יש להשלים קודם"},
+    "lab.back_to_tracks": {"en": "All tracks", "he": "כל המסלולים"},
+    # sensor names. Interface copy like everything else — they used to come
+    # from an English-only dict in the view, which told a Hebrew reader
+    # "Accelerometer" (the SL-A2 bug, third appearance; fixed in SL-B4).
+    "sensor.accelerometer": {"en": "Accelerometer", "he": "מד־תאוצה"},
+    "sensor.linear-accelerometer": {"en": "Linear acceleration", "he": "תאוצה קווית"},
+    "sensor.gyroscope": {"en": "Gyroscope", "he": "גירוסקופ"},
+    "sensor.magnetometer": {"en": "Magnetometer", "he": "מגנטומטר"},
+    "sensor.barometer": {"en": "Barometer", "he": "ברומטר"},
+    "sensor.light": {"en": "Light sensor", "he": "חיישן אור"},
+    "sensor.proximity": {"en": "Proximity sensor", "he": "חיישן קרבה"},
+    "sensor.microphone": {"en": "Microphone", "he": "מיקרופון"},
+    "sensor.camera": {"en": "Camera", "he": "מצלמה"},
+    "sensor.gps": {"en": "GPS", "he": "GPS"},
     # sensors (SL-C2)
     "sensors.title": {"en": "Your phone's instruments", "he": "המכשירים של הטלפון שלך"},
     "sensors.blurb": {

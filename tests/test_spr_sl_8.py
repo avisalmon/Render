@@ -215,8 +215,14 @@ def test_one_lab_is_authored_on_one_page():
     analysis are not four separate admin journeys held together by memory."""
     from django.contrib import admin
 
-    from sensorlab.models import (AnalysisConfig, ContentBlock, ExperimentConfig, Lab,
-                                  PredictionQuestion, Track)
+    from sensorlab.models import (
+        AnalysisConfig,
+        ContentBlock,
+        ExperimentConfig,
+        Lab,
+        PredictionQuestion,
+        Track,
+    )
 
     assert Track in admin.site._registry
     assert Lab in admin.site._registry

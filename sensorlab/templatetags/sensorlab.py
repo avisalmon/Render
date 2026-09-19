@@ -28,6 +28,21 @@ def t(context, key):
     return lookup(key, language)
 
 
+@register.filter
+def sensor_name(key):
+    """A sensor's name in the active language.
+
+    A filter rather than something the view prepares, so no view can hand a
+    template an English label again — which is exactly how the sensors screen
+    came to tell Hebrew readers "Accelerometer" (fixed in SL-B4). The active
+    language is the request's, set by `SensorLabLanguageMiddleware`.
+    """
+    from django.utils import translation
+
+    language = translation.get_language() or DEFAULT_LANGUAGE
+    return lookup(f"sensor.{key}", "he" if str(language).startswith("he") else "en") or key
+
+
 @register.tag(name="chart")
 def chart(parser, token):
     """Wrap chart markup in SensorLab's chart frame, always LTR.
