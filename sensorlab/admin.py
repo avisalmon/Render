@@ -17,6 +17,7 @@ from .models import (
     ContentBlock,
     ExperimentConfig,
     Lab,
+    LabAttempt,
     PredictionChoice,
     PredictionQuestion,
     SensorLabProfile,
@@ -144,3 +145,33 @@ class PredictionQuestionAdmin(admin.ModelAdmin):
     list_display = ("prompt_en", "lab", "kind", "order")
     list_filter = ("lab", "kind")
     inlines = [PredictionChoiceInline]
+
+
+@admin.register(LabAttempt)
+class LabAttemptAdmin(admin.ModelAdmin):
+    """Readable, never editable.
+
+    Readable because support questions are real — "it says I'm on step 3 and
+    I'm not" is answerable only by looking. Never editable because an
+    attempt is a record of what a person actually did, and an admin quietly
+    adjusting one manufactures history that did not happen. spec §6 counts
+    these rows as a learning signal; a signal somebody can hand-edit is not
+    one.
+
+    Deleting stays available: a person asking for their work to be removed
+    is a request that has to be satisfiable.
+    """
+
+    list_display = ("user", "lab", "status", "current_step", "started_at", "is_public")
+    list_filter = ("status", "lab", "is_public")
+    search_fields = ("user__username", "lab__slug", "share_slug")
+    readonly_fields = (
+        "user", "lab", "status", "current_step",
+        "started_at", "completed_at", "share_slug", "is_public",
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False

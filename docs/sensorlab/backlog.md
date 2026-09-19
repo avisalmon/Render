@@ -52,7 +52,7 @@ runs pip), `env\Scripts\activate` for everything Python, and
 | **A — Infrastructure and look and feel** | SL-A1 … SL-A5 | 🔵 in progress |
 | **C — Sensor access layer** | SL-C1 … SL-C2 | 🔵 in progress — spike passed |
 | **B — Curriculum and authoring** | SL-B1 … SL-B4 | ✅ done |
-| D — The lab runner | tbd at gate | ⬜ |
+| **D — The lab runner** | SL-D1 … SL-D3 | 🔵 SL-D1 done |
 | E — Predict | tbd at gate | ⬜ |
 | F — Capture | tbd at gate | ⬜ |
 | G — Analysis | tbd at gate | ⬜ |
@@ -814,6 +814,100 @@ one passed every assertion in the suite while it was broken.
 The pattern is stable enough to state: *assertions check what you thought to
 ask about; reading the output shows what you did not.* Each of those is now
 a guard, so the next one has to be a **new** kind of mistake.
+
+---
+
+## Epic D — The lab runner
+
+Spec §9.4, written at the gate on 2026-09-20. Sprint order is dependency
+order.
+
+### SL-D1 — The attempt, and who may see it ✅
+
+Marker: `sprsl12` — 14 tests, all green.
+
+- [x] `LabAttempt` per `data_model.md` §5, with `lab` on **PROTECT**. A test
+      deletes a lab that has an attempt and expects `ProtectedError`.
+- [x] `LabAttempt.objects.start()` and `.advance()`, walking `LAB_STEPS`
+      rather than a sequence written again — SL-B4 made that the one
+      definition of spec §3's flow, and a third copy would be the first to
+      disagree.
+- [x] `share_slug` minted at creation, `is_public` deciding whether it
+      resolves. `objects.shared()` returns None for an unknown *or* private
+      slug, so a caller cannot tell the two apart — same reason a draft lab
+      404s rather than 403s.
+- [x] Read-only in the admin, and the admin page opened rather than only
+      asserted about.
+
+#### The asymmetry in the two deletes, which is the point of SL-D1
+
+`lab` is **PROTECT**; `user` is **CASCADE**. Deliberately opposite.
+
+An author tidying an old lab out of the admin would otherwise take every
+student's run of it along — no warning, no undo. Being refused is the right
+answer, and removing a lab that has history becomes a decision somebody
+makes out loud. Deleting a *person*, though, should take their work with
+them. A lab belongs to the course; an attempt belongs to them.
+
+#### Decision: unfinished work resumes, finished work never reopens
+
+Open question closed. `data_model.md` §12 assumed re-runnable and asked;
+here is the answer with its reasoning.
+
+**Resume, not duplicate, while a run is unfinished.** Two half-done attempts
+at one lab is a state nothing downstream can read — which of them owns the
+prediction? Preventing it here is far cheaper than disambiguating it in four
+later epics.
+
+**A completed run is never reopened; a new attempt starts beside it.** spec
+§6 wants improvement over time as a learning signal, and overwriting the
+first run throws away exactly that. The cost is real and worth naming: "the
+attempt" becomes "which attempt" everywhere after this, and every later
+epic has to ask. Accepted — much cheaper than the history being gone.
+
+#### Decision: a step name that outlived its flow degrades visibly
+
+`current_step` stores a step *name*, and `LAB_STEPS` can gain or lose one, so
+a row written before that change points at nothing. Neither obvious option is
+acceptable: throwing locks a student out of their own work over a word, and
+silently resetting to step one throws their progress away without telling
+them.
+
+So it reports. `resume_step` falls back to the first step and
+`step_is_known` is False, which lets SL-D2's screen say what happened. The
+same answer this app gives a missing translation — degrade visibly, never
+blank, and never pretend.
+
+### SL-D2 — The runner shell ⬜
+
+Marker: `sprsl13`
+
+- [ ] One screen per step with the **step rail** (spec §7), driven by
+      `LAB_STEPS` so the screen cannot invent its own order.
+- [ ] Intro, Learn and Analysis rendered for real — they are prose, and
+      SL-B2 already returns them assembled and rendered.
+- [ ] **Predict and Experiment are placeholders**, each saying what it is
+      waiting for. SL-B4 set that rule with the disabled start button; this
+      is where it would be easiest to break, so it gets a test.
+- [ ] Resume-where-you-left-off, and the overview's disabled button becomes
+      a real one.
+- [ ] Screen contract: every step, both languages, both directions, on a
+      phone.
+
+### SL-D3 — The attempt API ⬜
+
+Marker: `sprsl14`
+
+- [ ] Owner-scoped CRUD for `LabAttempt`.
+- [ ] The verbs as actions, not odd `PATCH`es (spec §9.0 item 2): start,
+      advance, complete.
+- [ ] The read-only shared result view, gated on `is_public`.
+
+**What Epic D must not do** (spec §9.4): not grade anything — §9.0 item 5
+put the answer key server-side and the grading action belongs to Epic E, so
+D must not open a back door by serialising an answer "for the runner to
+check". And not capture anything — using the sensor layer before Epic F
+decides the payload transport (§9.0 item 1) would decide it by accident.
 
 ---
 

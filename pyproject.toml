@@ -96,6 +96,7 @@ markers = [
     "sprsl9: SL-B2 SensorLab the curriculum over REST",
     "sprsl10: SL-B3 SensorLab Free Fall, seeded once",
     "sprsl11: SL-B4 SensorLab the first real screens",
+    "sprsl12: SL-D1 SensorLab the attempt, and who may see one",
     "smoke: the fast gate, run on every push (see tests/test_smoke.py)",
 ]
 

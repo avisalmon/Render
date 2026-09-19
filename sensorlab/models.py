@@ -10,6 +10,7 @@ added in SL-B1).
 """
 
 import html
+import uuid
 
 import markdown
 from django.conf import settings
@@ -526,3 +527,143 @@ class AnalysisConfig(models.Model):
 
     def rendered_explanation(self, language=None):
         return render_markdown(localised(self, "explanation", language))
+
+
+# ===========================================================================
+# One person's run through one lab (data_model.md §5, spec §9.4)
+#
+# The first table in this app that holds a person's own work rather than
+# authored content. Everything Epics E through H produce — predictions,
+# recordings, notebook entries, results — hangs off a row here, which is why
+# the rules about who may read one, and about what survives a deletion, are
+# settled in this sprint rather than in whichever epic first trips over them.
+# ===========================================================================
+
+
+class LabAttemptManager(models.Manager):
+    def start(self, user, lab):
+        """Begin a lab, or pick up where this person left off.
+
+        **The decision, recorded in docs/sensorlab/backlog.md (SL-D1).**
+        Unfinished work resumes; finished work is never reopened.
+
+        Resuming rather than duplicating, because two half-done attempts at
+        one lab is a state nothing downstream can read — which of them owns
+        the prediction? Better prevented here than tolerated and
+        disambiguated in four later epics.
+
+        A completed run stays completed and a new attempt begins beside it,
+        because spec §6 wants improvement over time as a learning signal,
+        and overwriting the first run throws away precisely that signal. The
+        cost is that "the attempt" becomes "which attempt" everywhere after
+        this — accepted, and much cheaper than the history being gone.
+        """
+        open_attempt = self.filter(
+            user=user, lab=lab, status=self.model.Status.IN_PROGRESS
+        ).order_by("-started_at").first()
+        if open_attempt is not None:
+            return open_attempt
+        return self.create(user=user, lab=lab)
+
+    def shared(self, share_slug):
+        """The attempt behind a share link, or None.
+
+        `is_public` is what decides — holding the slug is not permission.
+        Returns None rather than raising for an unknown or private slug, so
+        a caller cannot tell "no such attempt" from "not shared", which is
+        the same reason a draft lab 404s instead of 403ing (SL-B2).
+        """
+        if not share_slug:
+            return None
+        return self.filter(share_slug=share_slug, is_public=True).first()
+
+
+class LabAttempt(models.Model):
+    """One run, by one person, through one lab."""
+
+    class Status(models.TextChoices):
+        IN_PROGRESS = "in_progress", "In progress"
+        COMPLETED = "completed", "Completed"
+        ABANDONED = "abandoned", "Abandoned"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sensorlab_attempts"
+    )
+
+    #: PROTECT, not CASCADE, and the asymmetry with `user` above is the whole
+    #: point. An author tidying an old lab out of the admin would otherwise
+    #: take every student's run of it along, with no warning and no undo — so
+    #: being refused is the correct answer, and removing a lab that has
+    #: history becomes a decision somebody makes out loud. Deleting a person,
+    #: by contrast, should take their work with them: a lab belongs to the
+    #: course, an attempt belongs to them.
+    lab = models.ForeignKey("sensorlab.Lab", on_delete=models.PROTECT, related_name="attempts")
+
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.IN_PROGRESS)
+
+    #: A step *name*, from `LAB_STEPS`. Stored rather than computed, because
+    #: resuming has to survive the server restarting. See `resume_step` for
+    #: what happens when the flow changes under a stored value.
+    current_step = models.CharField(max_length=20, default=LAB_STEPS[0])
+
+    started_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    #: Minted at creation, because minting it later means a second write at
+    #: the moment somebody is trying to share — and a failure there is a
+    #: failure in front of a person. It is inert until `is_public`.
+    share_slug = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    is_public = models.BooleanField(default=False)
+
+    objects = LabAttemptManager()
+
+    class Meta:
+        ordering = ("-started_at",)
+        indexes = [models.Index(fields=["user", "lab", "status"])]
+
+    def __str__(self):
+        return f"{self.user} — {self.lab.slug} ({self.status})"
+
+    # ------------------------------------------------------ the flow
+
+    @property
+    def step_is_known(self):
+        """Whether `current_step` still names a step this app has.
+
+        A stored step name points at a flow that can grow or lose one, so a
+        row written before such a change points at nothing.
+        """
+        return self.current_step in LAB_STEPS
+
+    @property
+    def resume_step(self):
+        """Where to actually put this person, whatever is stored.
+
+        Throwing would lock a student out of their own work over a word.
+        Silently resetting would throw their progress away without saying
+        so. So it falls back and *reports*: `step_is_known` is False, and a
+        screen can tell them what happened — the same answer a missing
+        translation gets, degrade visibly rather than blank.
+        """
+        return self.current_step if self.step_is_known else LAB_STEPS[0]
+
+    def advance(self):
+        """Move to the next step, or complete. Returns whether it moved.
+
+        Ordered by `LAB_STEPS` rather than by a sequence written here: SL-B4
+        made that the one definition of spec §3's flow, and a third copy
+        would be the first to disagree.
+        """
+        if self.status != self.Status.IN_PROGRESS:
+            return False
+
+        position = LAB_STEPS.index(self.resume_step)
+        if position + 1 < len(LAB_STEPS):
+            self.current_step = LAB_STEPS[position + 1]
+            self.save(update_fields=["current_step"])
+            return True
+
+        self.status = self.Status.COMPLETED
+        self.completed_at = timezone.now()
+        self.save(update_fields=["status", "completed_at"])
+        return False

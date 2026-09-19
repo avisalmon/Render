@@ -678,7 +678,74 @@ into the push).
 
 ---
 
-### 9.4 What ships first
+### 9.4 Epic D — The lab runner
+
+Detail written at the gate, 2026-09-20, with Epics A, B and C closed.
+
+**What it unblocks:** E, F, G and H all attach to a running attempt. Until
+an attempt exists, none of them has anything to hang from — which is the
+same position B was in before it shipped.
+
+**What already exists, so D does not rebuild it:** `GET
+/sensorlab/api/labs/<slug>/` returns the five steps assembled and ordered
+(SL-B2), the sensor layer opens and measures a sensor behind a consent gate
+(Epic C), and `LAB_STEPS` in `sensorlab/models.py` is the one definition of
+the flow. D consumes all three.
+
+#### D.1 The attempt, and what it means to resume
+
+`LabAttempt` per `data_model.md` §5: `user`, `lab` (PROTECT — deleting a lab
+must never silently erase student history), `status`, `current_step`,
+`started_at` / `completed_at`, `share_slug`, `is_public`.
+
+Three decisions this epic has to make rather than inherit:
+
+- **How many attempts per person per lab?** `data_model.md` §12 assumed
+  re-runnable and said so. D is where that becomes real: starting a lab you
+  have already finished has to either resume, start a second attempt, or
+  ask. Whatever is chosen, "resume" must never silently discard a completed
+  run.
+- **What `current_step` means when the model changes.** A stored step name
+  is a string pointing at a flow that can grow a step. Reading one that no
+  longer exists must land somewhere sensible rather than throw.
+- **Who may see an attempt.** Its own owner, plus anyone holding the share
+  slug *if* `is_public`. There is no route that takes a user id, for the
+  same reason `profile/me/` has none.
+
+#### D.2 The runner
+
+The five-step shell: one screen per step, the **step rail** from §7 showing
+where you are and what is behind you, forward movement only when the step
+is answered, and resume-where-you-left-off on returning.
+
+Epic D ships the shell and the Intro, Learn and Analysis steps — the three
+that are prose and therefore already renderable from SL-B2's response.
+**Predict and Experiment are placeholders in D**, filled by E and F. That
+split is deliberate: a runner that can only be tested once the quiz and the
+capture exist is a runner tested late.
+
+Every placeholder says what it is waiting for. SL-B4 set that rule with the
+disabled start button, and D is where it would be easiest to break.
+
+#### D.3 API
+
+`LabAttempt` CRUD scoped to its owner, plus the verbs §9.0 item 2 names
+rather than smuggling them in as odd `PATCH`es: start an attempt, advance
+to the next step, complete it. The step/resume state reads through the
+attempt.
+
+#### D.4 What Epic D must not do
+
+- **Not grade anything.** §9.0 item 5 put the answer key server-side; the
+  grading action belongs to E, and D must not open a back door to it by
+  serialising an answer for "the runner to check".
+- **Not capture anything.** The Experiment step is a placeholder here. The
+  sensor layer exists, and using it before F has decided the payload
+  transport (§9.0 item 1) would decide it by accident.
+
+---
+
+### 9.5 What ships first
 
 **A through G is the shippable core**: one track, a few labs, no tutor, no
 groups, no video — already a working product worth putting in front of a

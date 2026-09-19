@@ -418,6 +418,21 @@ hangs off it.
 | `share_slug` | UUID | The shareable read-only link from spec §4 |
 | `is_public` | Bool | Whether that link resolves for anyone holding it |
 
+**Built in SL-D1, with three things this table did not say.**
+
+- `lab` is **PROTECT** and `user` is **CASCADE**, deliberately opposite. A
+  lab belongs to the course, so deleting one that has history is refused
+  out loud; an attempt belongs to the person, so deleting them takes it.
+- **Unfinished runs resume; finished runs never reopen.** The open question
+  in §12 ("should an attempt be re-runnable?") is closed: yes, but a second
+  attempt starts *beside* the first rather than replacing it, because spec
+  §6 wants improvement over time and overwriting destroys that signal. The
+  price is that every later epic must ask *which* attempt.
+- `current_step` names a step in `LAB_STEPS`, which can change under a
+  stored row. `resume_step` falls back to the first step and
+  `step_is_known` reports that it did, so a screen can say so rather than
+  throw or silently reset.
+
 **Sharing is a field, not a model.** A share is a property of a result
 ("this one is visible by link"), not a thing with its own lifecycle. If
 per-recipient sharing or expiry is ever wanted, *that* is a model; a
@@ -631,11 +646,11 @@ Listed plainly so they are easy to overturn at the gate.
   a one-to-one — but I would rather keep the many and not need it.
 - **Is `RemoteViewer` worth keeping** (§9), or is "the session happened"
   enough?
-- **Should an attempt be re-runnable?** Currently many `LabAttempt` rows
-  per (user, lab) are allowed, which means "best score" and "first try"
-  are both answerable. The alternative — one attempt per user per lab,
-  overwritten — is simpler but throws away the improvement-over-time
-  signal spec §6 explicitly wants. I have assumed re-runnable.
+- ~~**Should an attempt be re-runnable?**~~ **Closed in SL-D1:** yes, and
+  a second attempt starts beside the first rather than replacing it —
+  overwriting would throw away the improvement-over-time signal spec §6
+  asks for. An unfinished run resumes instead of duplicating, because two
+  half-done attempts at one lab is a state nothing downstream can read.
 - **Teacher/author role**: nothing here models "who may author a track."
   Right now that is the Django admin and a superuser. If teachers are
   meant to author content in-app, that is a role concept this model does
