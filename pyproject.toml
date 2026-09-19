@@ -87,6 +87,7 @@ markers = [
     "sprsl5: SL-A5 SensorLab bilingual plumbing, and the language it serves",
     "sprsl6: SL-C1 SensorLab one way to open a sensor (spec 4.1)",
     "sprsl7: SL-C2 SensorLab consent, and refusing with the right reason",
+    "sprsl8: SL-B1 SensorLab the curriculum models, and authoring a lab",
     "smoke: the fast gate, run on every push (see tests/test_smoke.py)",
 ]
 

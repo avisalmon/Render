@@ -5,12 +5,17 @@ sharing stops at the account. Everything SensorLab knows about a person
 that is not "who is this person" lives below, in SensorLab's own table,
 reached through `profiles.profile_for()`.
 
-See docs/sensorlab/data_model.md §2. The curriculum models arrive in SL-B1.
+See docs/sensorlab/data_model.md §2 (identity) and §3–4 (the curriculum,
+added in SL-B1).
 """
 
+import html
+
+import markdown
 from django.conf import settings
 from django.db import models
-from django.utils import timezone
+from django.utils import timezone, translation
+from django.utils.safestring import mark_safe
 
 
 class SensorLabProfile(models.Model):
@@ -133,3 +138,360 @@ class SensorConsent(models.Model):
     @property
     def is_current(self):
         return self.granted_at is not None and self.revoked_at is None
+
+
+SENSOR_CHOICES = tuple((name, name.replace("-", " ").title()) for name in SENSORS)
+
+
+# ===========================================================================
+# The curriculum (data_model.md §3–4)
+#
+# Authored once, read by everyone. Kept deliberately apart from the attempt
+# half of the model: content is the course, an attempt is one person's run
+# through it, and merging them is how a course becomes un-editable without
+# destroying student history.
+# ===========================================================================
+
+
+def localised(instance, base, language=None):
+    """The `base_en` / `base_he` pair, resolved for one language.
+
+    Falls back to the other language rather than returning nothing
+    (data_model.md §11). A half-translated course should look like the wrong
+    language for a sentence, never like a page that failed to load — and it
+    will be half-translated, because content and translation never land in
+    the same commit.
+    """
+    code = str(language or translation.get_language() or "en").lower()
+    primary = "he" if code.startswith("he") else "en"
+    other = "en" if primary == "he" else "he"
+    return getattr(instance, f"{base}_{primary}", "") or getattr(instance, f"{base}_{other}", "") or ""
+
+
+def bilingual(base):
+    """`obj.title` for a model that stores `title_en` and `title_he`."""
+    return property(lambda self: localised(self, base))
+
+
+#: The same three extensions the rest of this site's Markdown uses
+#: (`app/blog.py`, `app/forum_views.py`), so authored text behaves the same
+#: wherever it appears.
+_MD_EXTENSIONS = ["fenced_code", "tables", "nl2br"]
+
+
+def render_markdown(text):
+    """Author text → HTML, with any HTML the author wrote rendered inert.
+
+    **The decision recorded in docs/sensorlab/backlog.md (SL-B1).** Markdown,
+    because `markdown` is already a dependency of this site and plain text
+    cannot express the emphasis, lists and tables teaching material needs.
+    Raw HTML is escaped *before* conversion rather than stripped afterwards,
+    because `bleach` is not installed here and cannot be added — so instead
+    of sanitising HTML, none is ever produced from author input. Markdown
+    reads `&lt;` as an entity and leaves it alone, so the escape survives
+    conversion intact.
+
+    Authoring is admin-only today, which makes the exposure small. It will
+    not stay admin-only: data_model.md §12 anticipates teacher-authored
+    labs, and a content format is far harder to change once a course is
+    written in it than it is to choose carefully now.
+    """
+    escaped = html.escape(text or "", quote=False)
+    return mark_safe(markdown.markdown(escaped, extensions=_MD_EXTENSIONS))
+
+
+class PublishedManager(models.Manager):
+    """Only what is finished.
+
+    Authoring happens against the live database — there is no staging site
+    here — so the difference between "written" and "shown" has to be a
+    field, or a student meets a lab mid-sentence.
+    """
+
+    def get_queryset(self):
+        return super().get_queryset().filter(is_published=True)
+
+
+class Track(models.Model):
+    """One physics topic — spec §3's מסלול."""
+
+    slug = models.SlugField(max_length=64, unique=True)
+    title_en = models.CharField(max_length=120)
+    title_he = models.CharField(max_length=120, blank=True)
+    description_en = models.TextField(blank=True)
+    description_he = models.TextField(blank=True)
+    icon = models.CharField(max_length=32, blank=True, help_text="Emoji or icon name")
+    order = models.PositiveIntegerField(default=0)
+    is_published = models.BooleanField(default=False)
+
+    objects = models.Manager()
+    published = PublishedManager()
+
+    title = bilingual("title")
+    description = bilingual("description")
+
+    class Meta:
+        ordering = ("order", "slug")
+
+    def __str__(self):
+        return self.title_en
+
+
+class Lab(models.Model):
+    """One experiment inside a track."""
+
+    class Mode(models.TextChoices):
+        """The three experiment modalities spec §4 commits to.
+
+        Code, not content: which modalities exist is a capability of the app
+        — each has capture code behind it — not a row someone adds.
+        """
+
+        LIVE_SENSOR = "live_sensor", "Live sensor"
+        VIDEO_TRACKING = "video_tracking", "Video tracking"
+        SIGNAL_GENERATOR = "signal_generator", "Signal generator"
+
+    track = models.ForeignKey(Track, on_delete=models.CASCADE, related_name="labs")
+    slug = models.SlugField(max_length=64)
+    title_en = models.CharField(max_length=120)
+    title_he = models.CharField(max_length=120, blank=True)
+    summary_en = models.TextField(blank=True)
+    summary_he = models.TextField(blank=True)
+    mode = models.CharField(max_length=20, choices=Mode.choices, default=Mode.LIVE_SENSOR)
+    estimated_minutes = models.PositiveIntegerField(default=10)
+    order = models.PositiveIntegerField(default=0)
+    is_published = models.BooleanField(default=False)
+
+    #: Explicit unlocking rather than "the previous one by `order`", so a
+    #: track can branch later without a migration (data_model.md §3).
+    prerequisite_lab = models.ForeignKey(
+        "self", on_delete=models.SET_NULL, null=True, blank=True, related_name="unlocks"
+    )
+
+    objects = models.Manager()
+    published = PublishedManager()
+
+    title = bilingual("title")
+    summary = bilingual("summary")
+
+    class Meta:
+        ordering = ("order", "slug")
+        unique_together = ("track", "slug")
+
+    def __str__(self):
+        return f"{self.track.title_en} — {self.title_en}"
+
+
+class ContentBlock(models.Model):
+    """A block of authored prose or media, for Intro, Learn, or Analysis.
+
+    One model for three of the five steps, because those three are the same
+    shape (data_model.md §4): ordered bilingual prose. Three near-identical
+    tables differing only by name would buy nothing.
+
+    Each block is a real object — addable, editable, reorderable — rather
+    than one long text field per step, so a worked example can be moved
+    without retyping the concept above it.
+    """
+
+    class Step(models.TextChoices):
+        INTRO = "intro", "Intro"
+        LEARN = "learn", "Learn"
+        ANALYSIS = "analysis", "Analysis"
+
+    class Kind(models.TextChoices):
+        TEXT = "text", "Text"
+        IMAGE = "image", "Image"
+        VIDEO = "video", "Video"
+        FORMULA = "formula", "Formula"
+        CALLOUT = "callout", "Callout"
+
+    lab = models.ForeignKey(Lab, on_delete=models.CASCADE, related_name="content_blocks")
+    step = models.CharField(max_length=10, choices=Step.choices, default=Step.INTRO)
+    kind = models.CharField(max_length=10, choices=Kind.choices, default=Kind.TEXT)
+    order = models.PositiveIntegerField(default=0)
+    body_en = models.TextField(blank=True)
+    body_he = models.TextField(blank=True)
+    media = models.ImageField(upload_to="sensorlab/content/", blank=True)
+
+    body = bilingual("body")
+
+    class Meta:
+        ordering = ("step", "order", "id")
+
+    def __str__(self):
+        return f"{self.lab.slug}/{self.step}#{self.order}"
+
+    def render(self, language=None):
+        """This block's body as HTML for one language.
+
+        `formula`, `image`, `video` and `callout` deliberately do not go
+        through Markdown: they stay structured `kind`s so both modes can
+        style them and both languages can carry them, instead of becoming
+        markup buried inside prose that nobody can restyle later.
+        """
+        text = localised(self, "body", language)
+        if self.kind == self.Kind.TEXT:
+            return render_markdown(text)
+        return mark_safe(html.escape(text, quote=False))
+
+
+class PredictionQuestion(models.Model):
+    """One thing the student commits to before any data exists.
+
+    A quiz is data, not a JSON blob — Rule 1's exact case. Questions in a
+    file are unqueryable, so "which prediction do students get wrong most
+    often" becomes unanswerable, and that question is the pedagogical point
+    of the Predict step (spec §3).
+    """
+
+    class Kind(models.TextChoices):
+        MULTIPLE_CHOICE = "multiple_choice", "Multiple choice"
+        NUMERIC = "numeric", "Numeric"
+        FREE_TEXT = "free_text", "Free text"
+        GRAPH_SKETCH = "graph_sketch", "Graph sketch"
+
+    lab = models.ForeignKey(Lab, on_delete=models.CASCADE, related_name="prediction_questions")
+    kind = models.CharField(max_length=16, choices=Kind.choices, default=Kind.MULTIPLE_CHOICE)
+    order = models.PositiveIntegerField(default=0)
+    prompt_en = models.TextField()
+    prompt_he = models.TextField(blank=True)
+
+    #: `numeric` only. A prediction is right if it lands within `tolerance`
+    #: percent — the point is the reasoning, not the decimal places.
+    correct_value = models.FloatField(null=True, blank=True)
+    tolerance = models.FloatField(default=10.0, help_text="Percent")
+
+    prompt = bilingual("prompt")
+
+    class Meta:
+        ordering = ("order", "id")
+
+    def __str__(self):
+        return f"{self.lab.slug}: {self.prompt_en[:40]}"
+
+
+class PredictionChoice(models.Model):
+    """An option on a `multiple_choice` question."""
+
+    question = models.ForeignKey(
+        PredictionQuestion, on_delete=models.CASCADE, related_name="choices"
+    )
+    text_en = models.CharField(max_length=200)
+    text_he = models.CharField(max_length=200, blank=True)
+    is_correct = models.BooleanField(default=False)
+    order = models.PositiveIntegerField(default=0)
+
+    text = bilingual("text")
+
+    class Meta:
+        ordering = ("order", "id")
+
+    def __str__(self):
+        return self.text_en
+
+
+class ExperimentConfig(models.Model):
+    """What the phone is asked to do, and what the student is asked to do."""
+
+    class Trigger(models.TextChoices):
+        MANUAL = "manual", "Manual"
+        THRESHOLD = "threshold", "Threshold"
+
+    lab = models.OneToOneField(Lab, on_delete=models.CASCADE, related_name="experiment")
+    instructions_en = models.TextField(blank=True)
+    instructions_he = models.TextField(blank=True)
+
+    #: **Requested, not configured.** spec §4.1: the phone that ran the spike
+    #: delivered ~63 Hz against an assumed 200. A lab asks; the device
+    #: answers; the recording stores what actually arrived. The data model
+    #: called this `default_sample_rate_hz`, which read like a setting the
+    #: app controls — it never was, and the name was quietly promising
+    #: something no browser will honour.
+    requested_hz = models.PositiveIntegerField(default=60)
+    max_duration_ms = models.PositiveIntegerField(default=10_000)
+
+    trigger_kind = models.CharField(max_length=10, choices=Trigger.choices, default=Trigger.MANUAL)
+    trigger_threshold = models.FloatField(null=True, blank=True)
+
+    uses_signal_generator = models.BooleanField(default=False)
+    tone_frequency_hz = models.PositiveIntegerField(null=True, blank=True)
+    strobe_rate_hz = models.PositiveIntegerField(null=True, blank=True)
+
+    instructions = bilingual("instructions")
+
+    class Meta:
+        verbose_name = "experiment configuration"
+
+    def __str__(self):
+        return f"experiment for {self.lab.slug}"
+
+
+class SensorRequirement(models.Model):
+    """One sensor this lab needs, from the one sensor vocabulary.
+
+    `sensor` draws its choices from `SENSORS` — the same tuple `SensorConsent`
+    validates against. If the two ever diverged, a lab could require
+    something consent has no name for, and nothing would raise: the lab
+    would simply refuse forever, for a reason no error message could state.
+    A test in tests/test_spr_sl_8.py holds them together.
+
+    There is deliberately no fallback or degradation field. spec §1 decided
+    SensorLab does not reshape itself around a phone missing a sensor; it
+    says so plainly instead.
+    """
+
+    config = models.ForeignKey(
+        ExperimentConfig, on_delete=models.CASCADE, related_name="sensor_requirements"
+    )
+    sensor = models.CharField(max_length=32, choices=SENSOR_CHOICES)
+    is_required = models.BooleanField(default=True)
+    axis_filter = models.CharField(
+        max_length=8, blank=True, help_text="e.g. 'z' when only one axis matters"
+    )
+
+    class Meta:
+        unique_together = ("config", "sensor")
+
+    def __str__(self):
+        return f"{self.config.lab.slug} needs {self.sensor}"
+
+
+class AnalysisConfig(models.Model):
+    """What to compute from the capture, and what to compare it against."""
+
+    class Computation(models.TextChoices):
+        PEAK = "peak", "Peak"
+        MEAN = "mean", "Mean"
+        SLOPE = "slope", "Slope"
+        PERIOD = "period", "Period"
+        FFT_PEAK = "fft_peak", "FFT peak"
+        CURVE_FIT = "curve_fit", "Curve fit"
+        AREA = "area", "Area"
+
+    class ExpectedSource(models.TextChoices):
+        CONSTANT = "constant", "A known constant"
+        FORMULA = "formula", "Derived from the student's own inputs"
+
+    lab = models.OneToOneField(Lab, on_delete=models.CASCADE, related_name="analysis")
+    computation = models.CharField(max_length=12, choices=Computation.choices)
+    expected_source = models.CharField(
+        max_length=10, choices=ExpectedSource.choices, default=ExpectedSource.CONSTANT
+    )
+    expected_value = models.FloatField(null=True, blank=True)
+    expected_formula = models.CharField(max_length=200, blank=True)
+    unit = models.CharField(max_length=16, blank=True)
+    pass_tolerance = models.FloatField(default=10.0, help_text="Percent error still counted a pass")
+    explanation_en = models.TextField(blank=True)
+    explanation_he = models.TextField(blank=True)
+
+    explanation = bilingual("explanation")
+
+    class Meta:
+        verbose_name = "analysis configuration"
+
+    def __str__(self):
+        return f"analysis for {self.lab.slug}"
+
+    def rendered_explanation(self, language=None):
+        return render_markdown(localised(self, "explanation", language))

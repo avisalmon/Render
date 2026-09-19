@@ -5,12 +5,12 @@ This is the standalone data model document called for by
 [spec.md](spec.md) on purpose, so the shape of the data can be read and
 reasoned about on its own.
 
-**Status: step 3 of the kickoff sequence. Awaiting Avi's approval.**
-Nothing gets built on top of this until it is signed off — that is the
-gate, and it exists because getting the shape of the data wrong here is
-expensive to unwind later. Decisions I made without asking are listed
-explicitly at the bottom (§12), so they are easy to overturn rather than
-buried in prose.
+**Status: approved; §2–4 are now built.** Identity landed in SL-A2 and
+SL-C2, the curriculum in SL-B1. Everything from §5 onward is still design.
+Decisions I made without asking are listed explicitly at the bottom (§12),
+so they are easy to overturn rather than buried in prose — and where a name
+changed once the code met a real phone, this document was amended in place
+rather than left to disagree with `sensorlab/models.py`.
 
 Every model below will live in `sensorlab/models.py`. Nothing here is
 shared with `app/`, `matazim/`, `ustrip/`, or any other app's models — see
@@ -99,7 +99,7 @@ erDiagram
     EXPERIMENT_CONFIG {
         text instructions_en
         text instructions_he
-        int default_sample_rate_hz
+        int requested_hz
         int max_duration_ms
         string trigger_kind
         float trigger_threshold
@@ -259,7 +259,8 @@ without destroying student history.
 `is_published`, optional `icon`/`cover_image`.
 
 **`Lab`** — one experiment inside a track. `track` FK, `slug`,
-`title_en`/`title_he`, `order`, `is_published`, `estimated_minutes`, and:
+`title_en`/`title_he`, `summary_en`/`summary_he`, `order`, `is_published`,
+`estimated_minutes`, and:
 
 - `mode` — `live_sensor` / `video_tracking` / `signal_generator`, the three
   experiment modalities spec §4 commits to. A code-level `TextChoices`,
@@ -268,6 +269,11 @@ without destroying student history.
 - `prerequisite_lab` — self-referential FK, nullable. Explicit unlocking
   rather than implicit "previous by `order`", so a track can branch later
   without a migration. This is what backs "unlocked content" in spec §8.
+
+Both carry a `published` manager alongside the default one (added in
+SL-B1). There is no staging site here — authoring happens against the live
+database — so "written" and "shown" have to be separate states, or a
+student walks into a lab that is half-typed.
 
 **Sensor types are `TextChoices`, not a table**, for the same reason as
 `mode`: `accelerometer`, `linear_acceleration`, `gyroscope`,
@@ -303,9 +309,27 @@ One model, `lab` FK, discriminated by a `step` field
 | `step` | Char | `intro` / `learn` / `analysis` |
 | `order` | Int | Ordering within that step |
 | `kind` | Char | `text` / `image` / `video` / `formula` / `callout` |
-| `body_en` / `body_he` | Text | |
+| `body_en` / `body_he` | Text | **Markdown** — see below |
 | `media` | Image/File, blank | For `image` / `video` blocks |
 
+**Body format, settled in SL-B1: Markdown, with raw HTML escaped before
+conversion.** `markdown` is already a dependency of this site (`app/blog.py`,
+`app/forum_views.py`) and plain text cannot carry the emphasis, lists and
+occasional table teaching prose needs. The usual next step — a restricted
+HTML subset cleaned with `bleach` — is unavailable: `bleach` is not
+installed and adding a dependency is Avi's call, so rather than ship
+unsanitised HTML, none is produced at all. Escaping `& < >` before
+conversion means author-written markup renders as visible text; Markdown
+reads `&lt;` as an entity and leaves it, so the escape survives.
+
+Authoring is admin-only today, which makes the exposure small — but §12
+anticipates a teacher role, and by then the course is written. The format
+was flagged blocking for exactly that reason.
+
+Only `kind = text` goes through Markdown. `formula`, `image`, `video` and
+`callout` stay structured kinds, so instrument mode can render them
+differently and each language can carry its own, instead of markup frozen
+inside a paragraph the day it was typed.
 Each block is a real, individually editable object — add, edit, delete,
 reorder — which is the "every item is a real object" rule applied to
 course authoring. A Learn step is usually several blocks (the concept, the
@@ -336,7 +360,7 @@ and invisible to any statistics about which questions students get wrong.
 
 **`ExperimentConfig`** — one-to-one with `Lab`. `instructions_en/he`
 (what to physically do: "drop the phone onto the cushion"),
-`default_sample_rate_hz`, `max_duration_ms`, `trigger_kind`
+`requested_hz`, `max_duration_ms`, `trigger_kind`
 (`manual` / `threshold`) + `trigger_threshold` for the auto-capture
 described in spec §4, and `uses_signal_generator` plus its settings
 (tone frequency, strobe rate) for generator-based labs.
@@ -345,6 +369,13 @@ described in spec §4, and `uses_signal_generator` plus its settings
 `is_required`, `axis_filter` (e.g. only the z-axis matters). Many per
 config, which is what makes spec §4's "two sensors captured
 simultaneously" expressible as data instead of a special case in code.
+
+**`requested_hz`, renamed from `default_sample_rate_hz` in SL-B1.** The
+spike in spec §4.1 asked a real phone for 200 Hz and got 63. A lab *asks*
+for a rate; the device answers; the recording (§6) stores what actually
+arrived. The old name read like a setting the app controls, which quietly
+promised something no browser will honour — and a field name is the
+documentation most people read.
 
 There is deliberately **no fallback/degradation field** here — spec §1
 decided SensorLab does not accommodate phones missing a sensor. A lab that
@@ -583,6 +614,9 @@ Listed plainly so they are easy to overturn at the gate.
 7. **`StudyGroup`, not `Group`** — §8, to avoid colliding with Django auth.
 8. **Totals/accuracy are computed aggregates**, not denormalized counters
    on the profile — §2.
+9. **`ContentBlock` bodies are Markdown with raw HTML escaped**, decided in
+   SL-B1 after Avi left the choice to me three times — §4.1. The
+   constraint that decided it was the absence of `bleach`.
 
 **Genuinely open, would like an answer:**
 

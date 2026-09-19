@@ -51,7 +51,7 @@ runs pip), `env\Scripts\activate` for everything Python, and
 |---|---|---|
 | **A — Infrastructure and look and feel** | SL-A1 … SL-A5 | 🔵 in progress |
 | **C — Sensor access layer** | SL-C1 … SL-C2 | 🔵 in progress — spike passed |
-| B — Curriculum and authoring | SL-B1 … SL-B4 | ⬜ not started |
+| B — Curriculum and authoring | SL-B1 … SL-B4 | 🔶 SL-B1 done |
 | D — The lab runner | tbd at gate | ⬜ |
 | E — Predict | tbd at gate | ⬜ |
 | F — Capture | tbd at gate | ⬜ |
@@ -510,27 +510,89 @@ person's phone without them saying yes.
 
 Spec §9.2.
 
-### SL-B1 — The content models and admin authoring ⬜
+### SL-B1 — The content models and admin authoring ✅
 
-Marker: `sprsl6`
+Marker: `sprsl8` — 14 tests, all green.
 
-- [ ] `Track`, `Lab`, `ContentBlock`, `PredictionQuestion`,
+**A note on the markers in this epic.** They originally read `sprsl6` and
+`sprsl7`, written when B was expected to run before C. C ran first, took
+those numbers, and left B's plan quietly pointing at another epic's tests.
+Renumbered here rather than left to be discovered by whoever ran
+`-m sprsl6` expecting content models and got the sensor layer.
+
+- [x] `Track`, `Lab`, `ContentBlock`, `PredictionQuestion`,
       `PredictionChoice`, `ExperimentConfig`, `SensorRequirement`,
       `AnalysisConfig` per `data_model.md` §3–4, each authored string as
       `_en` + `_he` with the language-resolving helper (falls back to the
       other language rather than rendering blank).
-- [ ] `Lab.mode` and the sensor list as `TextChoices`, not tables.
-- [ ] `Lab.prerequisite_lab` self-FK for unlocking.
-- [ ] Admin with **inlines so one Lab is authored on one page**.
-- [ ] **Decision needed from Avi:** are `ContentBlock` bodies plain text,
-      Markdown, or a restricted HTML subset? Cheaper to settle before
-      content is written than after.
-- [ ] **Decision recorded:** admin-only authoring for now; no in-app
+- [x] `Lab.mode` and the sensor list as `TextChoices`, not tables.
+- [x] `Lab.prerequisite_lab` self-FK for unlocking.
+- [x] `Track.published` / `Lab.published` managers — authoring happens
+      against the live database, so "written" and "shown" have to be
+      different states or a student meets a lab mid-sentence.
+- [x] Admin with **inlines so one Lab is authored on one page**.
+      `SensorRequirement` is the one exception: it hangs off
+      `ExperimentConfig`, not `Lab`, and Django does not nest inlines, so
+      the sensor list is one click deeper. Same for a question's choices.
+- [x] **Decision settled (was: needed from Avi).** Avi left this to me
+      three times, so I decided it — see below.
+- [x] **Decision recorded:** admin-only authoring for now; no in-app
       author/teacher role (`data_model.md` §12).
+- [x] **The authoring page is opened, not just registered.** `manage.py
+      check` validates an inline's field names, and the registration
+      assertion checks the four inlines are attached — neither loads the
+      page. Seven bugs in this app so far passed every structural assertion
+      and were obvious the moment somebody looked, so the one screen this
+      sprint ships has a test that renders it and looks for each section by
+      the name an author will read. It also asserts the old
+      `default_sample_rate_hz` label is gone, because a rename that misses
+      the admin label renames nothing an author can see.
+
+#### The rename: `default_sample_rate_hz` → `requested_hz`
+
+Carried out of SL-C1. Spec §4.1 asked a real phone for 200 Hz and got 63,
+and `sensors.js` already keeps `requestedHz` and `achievedHz` apart for
+exactly that reason. The data-model name predated the measurement and read
+like a setting the app controls; it never was one. A field name is the
+documentation most people actually read, so it now says "asked for".
+`data_model.md` §4.3 and its ER diagram were amended in place rather than
+left to disagree with the code.
+
+#### Decision: `ContentBlock` bodies are Markdown, with raw HTML escaped
+
+Open decision 1, closed. Implemented in `sensorlab/models.py`
+(`render_markdown`) and asserted by `test_authored_html_is_inert`.
+
+**Markdown, not plain text**, because teaching prose needs emphasis, lists
+and the occasional table, and because `markdown` is already a dependency of
+this site — `app/blog.py` and `app/forum_views.py` both use it with the same
+three extensions. Nothing new to install, and one Markdown dialect across
+the whole site rather than two.
+
+**Raw HTML escaped, not sanitised.** The usual answer is to allow a
+restricted HTML subset and clean it with `bleach`. **`bleach` is not
+installed here, and adding a dependency is not mine to do**, so the choice
+was between shipping unsanitised HTML and shipping none. Escaping `& < >`
+*before* Markdown converts means no HTML is ever produced from author
+input, so there is nothing to sanitise. Markdown reads `&lt;` as an entity
+and passes it through untouched, which is why the escape survives
+conversion — checked against the real library rather than assumed.
+
+**Why bother, when only admins can author?** Because that is temporary.
+`data_model.md` §12 anticipates a teacher role, and by then the course will
+be written. A content format is cheap to choose now and expensive to change
+once there is content in it — which is the whole reason this decision was
+flagged as blocking rather than deferred.
+
+**What Markdown does *not* carry.** Formulas, images, video and callouts
+stay their own `ContentBlock.kind` values, not markup inside prose. A
+formula that is a `kind` can be rendered differently in instrument mode,
+translated independently, and restyled later; a formula that is HTML inside
+a paragraph is frozen the day it is typed.
 
 ### SL-B2 — The curriculum API ⬜
 
-Marker: `sprsl7`
+Marker: `sprsl9`
 
 - [ ] Documented CRUD for all eight resources, nested where the shape calls
       for it.
@@ -541,7 +603,7 @@ Marker: `sprsl7`
 
 ### SL-B3 — Free Fall, seeded once ⬜
 
-Marker: `sprsl8`
+Marker: `sprsl10`
 
 - [ ] The Free Fall / measuring-g lab as real content in **both
       languages** — the same content the mockups show.
@@ -557,7 +619,7 @@ Marker: `sprsl8`
 
 ### SL-B4 — The first real screens ⬜
 
-Marker: `sprsl9`
+Marker: `sprsl11`
 
 - [ ] Track list and lab overview, built on SL-A4's design system, with
       real seeded content.
@@ -570,8 +632,8 @@ Marker: `sprsl9`
 
 Carried here so they are not lost in prose.
 
-1. **`ContentBlock` body format** — plain text / Markdown / restricted HTML.
-   Needed by SL-B1.
+1. ~~**`ContentBlock` body format**~~ — **closed in SL-B1**: Markdown, with
+   raw HTML escaped before conversion. Reasoning under SL-B1.
 2. **Group gate** — recorded as "not for now" (SL-A2). Revisit only with a
    stated reason.
 3. **Authoring role** — admin-only for now (SL-B1). An in-app teacher role
