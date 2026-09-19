@@ -577,3 +577,115 @@ def visible_institutions(user):
     if user.is_superuser:
         return Institution.objects.all()
     return Institution.objects.filter(managers=user)
+
+
+def visible_course_slugs(user):
+    """Every הדרכה this person may see and take inside מט״צים.
+
+    SPR-M.52. One function because four screens ask the same question and a
+    second opinion would eventually answer differently: the courses list, the
+    course page, the lesson page and the hand-in all gate on this.
+
+    Three sources, in the order a member would name them:
+
+    1. **The programme's own two.** `REQUIRED_COURSE_SLUGS` is what REQ-M.76
+       makes a מט״צ out of, and it is never withdrawable by anybody.
+    2. **What their leader put on the shelf**, out of the pool Avi allows
+       (`OfferedCourse`). Exposure, not a requirement: Avi, 2026-09-16 and
+       again on the 19th.
+    3. **Anything they already started.** A member who began a course on the
+       main site keeps it here, whatever anybody has chosen since, because
+       taking away a course somebody is half-way through is not curation.
+
+    A member with no leader gets 1 and 3, which is right: REQ-M.65 says having
+    no leader yet is a normal state, and it must not cost them the track or
+    their own history.
+    """
+    from app.models import Enrollment
+
+    from .content import REQUIRED_COURSE_SLUGS
+    from .models import LeaderCourse
+
+    slugs = set(REQUIRED_COURSE_SLUGS)
+    if not getattr(user, "is_authenticated", False):
+        return slugs
+
+    leader = leader_of(user)
+    if leader is None:
+        student = _student_row(user)
+        leader = student.leader if student else None
+    if leader is not None:
+        offered = shelvable_slugs()
+        slugs |= {
+            row.slug
+            for row in LeaderCourse.objects.filter(leader=leader)
+            if row.slug in offered
+        }
+
+    slugs |= set(
+        Enrollment.objects.filter(user=user).values_list("course__slug", flat=True)
+    )
+    return slugs
+
+
+def shelvable_slugs():
+    """The live pool: what a leader may put on a shelf at this moment.
+
+    One function because three places ask it and they must never answer
+    differently: the shelf screen filters its list by it, the API validates a
+    write against it, and `visible_course_slugs` above re-reads it on every
+    request, which is what makes withdrawal take effect for members who had not
+    started the course.
+    """
+    from .models import OfferedCourse
+
+    return set(
+        OfferedCourse.objects.filter(is_active=True).values_list("slug", flat=True)
+    )
+
+
+def visible_offered_courses(user):
+    """The pool itself (SPR-M.52), as rows rather than slugs.
+
+    Root reads all of it, including what has been withdrawn, because root is
+    who decides the pool and a withdrawal is a row root can bring back. A
+    leader and a program manager read what is live, which is the list a leader
+    chooses from and nothing more.
+
+    A member gets nothing here, and that is the feature rather than caution:
+    the pool is everything a leader *could* open, and a member seeing it would
+    be shown הדרכות their own leader deliberately did not put in front of them.
+    """
+    from .models import OfferedCourse
+
+    if not getattr(user, "is_authenticated", False):
+        return OfferedCourse.objects.none()
+    if user.is_superuser:
+        return OfferedCourse.objects.all()
+    if is_program_manager(user) or leader_of(user):
+        return OfferedCourse.objects.filter(is_active=True)
+    return OfferedCourse.objects.none()
+
+
+def visible_leader_courses(user):
+    """One leader's shelf, reached through the leader (SPR-M.52).
+
+    Scoped by `visible_leaders` rather than by a filter of its own, so this
+    inherits REQ-M.88's answer instead of giving a second one: a leader sees
+    their own shelf, a program manager sees their institution's leaders'
+    shelves, root sees every shelf, and a member sees none of them. A member
+    reads what their leader chose on the הדרכות screen, which is the shelf
+    turned into an offer; the row that produced it is the leader's working
+    surface, not theirs.
+    """
+    from .models import LeaderCourse
+
+    if not getattr(user, "is_authenticated", False):
+        return LeaderCourse.objects.none()
+    return LeaderCourse.objects.filter(leader__in=visible_leaders(user))
+
+
+def _student_row(user):
+    from .models import Student
+
+    return Student.objects.filter(user=user).select_related("leader").first()

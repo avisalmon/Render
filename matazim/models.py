@@ -1349,3 +1349,81 @@ class TeachingSession(models.Model):
         from django.utils import timezone
 
         return self.happened_on > timezone.localdate()
+
+
+# --------------------------------------------- the shelf of הדרכות (§4.13)
+
+
+class OfferedCourse(models.Model):
+    """A babook course מט״צים is allowed to put in front of its members.
+
+    SPR-M.52. Avi, 2026-09-19: "I want to be able as a leader to decide what
+    training I want to expose for my students... it's about just exposing them
+    to opportunity to take trainings that are available in Babook."
+
+    **Two layers, and this is the outer one.** Avi picks which of babook's
+    catalogue is available to the programme at all; a leader then picks from
+    what he picked. Seventeen published courses is not a list to hand a
+    fourteen-year-old whole, and it is not a list a leader should have to
+    audit either.
+
+    **A slug rather than a foreign key**, which is what `REQUIRED_COURSE_SLUGS`
+    already is. It keeps מט״צים's tables free of a database-level dependency on
+    another app's (Rule 2), and the cost is a slug that can outlive its course,
+    which the screens already handle: ההדרכות says "ההדרכה הזאת לא נטענה" and
+    carries on.
+
+    **Retiring is a flag, never a delete.** A member part-way through a course
+    that is withdrawn keeps their progress and their certificate, because those
+    live in babook's tables and never belonged to this row. What stops is new
+    members starting it.
+    """
+
+    slug = models.CharField(max_length=80, unique=True, verbose_name="מזהה ההדרכה")
+    is_active = models.BooleanField(default=True, verbose_name="זמינה")
+    note = models.TextField(blank=True, default="", verbose_name="למה היא כאן")
+    added_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+    )
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["slug"]
+        verbose_name = "הדרכה זמינה"
+        verbose_name_plural = "הדרכות זמינות"
+
+    def __str__(self):
+        return self.slug
+
+
+class LeaderCourse(models.Model):
+    """One leader putting one הדרכה in front of their own מט״צים.
+
+    Chosen out of `OfferedCourse`, checked when it is chosen rather than when it
+    is read: a course Avi later retires stays on the shelves of the leaders who
+    had already picked it, and their members keep what they started.
+
+    **This is exposure, not a requirement.** Avi settled that on 2026-09-16, and
+    again on the 19th: certification is the entrance test, both Scratch courses
+    and the leader's approval (REQ-M.76), and nothing here changes it. A leader
+    who wants more of somebody weighs it in the approval they already give by
+    hand. So there is no `required` field, and its absence is the design.
+    """
+
+    leader = models.ForeignKey(
+        "Leader", on_delete=models.CASCADE, related_name="shelf", verbose_name="מוביל/ה"
+    )
+    slug = models.CharField(max_length=80, verbose_name="מזהה ההדרכה")
+    chosen_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+    )
+    chosen_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["slug"]
+        unique_together = [("leader", "slug")]
+        verbose_name = "הדרכה שהמוביל/ה הציע/ה"
+        verbose_name_plural = "הדרכות שהמוביל/ה הציע/ה"
+
+    def __str__(self):
+        return f"{self.leader} · {self.slug}"

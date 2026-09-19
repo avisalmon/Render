@@ -1,0 +1,58 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  SPR-M.52 — the shelf. What one leader puts in front of their own מט״צים.
+
+  There is no control here to make anything required, and that is the design:
+  REQ-M.76 says a מט״צ מוסמך is the entrance test, both Scratch courses and the
+  leader's approval. A leader who wants more of somebody weighs it in the
+  approval they already give by hand (Avi, 2026-09-16).
+{% endcomment %}
+
+{% block title %}הדרכות למט״צים שלי · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>הדרכות למט״צים שלי</h1>
+    <p>מה שתסמנו כאן יופיע למט״צים שלכם, והם יוכלו ללמוד את זה כאן באתר.</p>
+  </div>
+
+  <section class="mz-panel mz-panel-wide">
+    <h2>
+      לבחירה
+      <span class="mz-count">{{ chosen }} נבחרו</span>
+    </h2>
+    <p class="mz-muted">
+      זו הזדמנות ולא דרישה. להסמכה צריך את מבחן הכניסה, את שתי הדרכות הסקראץ׳
+      ואת האישור שלכם, וזה לא משתנה. מה שתוסיפו כאן פשוט נפתח בפניהם.
+    </p>
+
+    <ul class="mz-worklist">
+      {% for row in rows %}
+        <li class="mz-worklist-item">
+          <div class="mz-worklist-head">
+            <span>{{ row.title }}</span>
+            {% if row.on %}<span class="mz-tag mz-tag-done">פתוחה להם</span>{% endif %}
+          </div>
+          {% if row.note %}<p class="mz-worklist-said">{{ row.note }}</p>{% endif %}
+          <form method="post" class="mz-inline-form">
+            {% csrf_token %}
+            <input type="hidden" name="slug" value="{{ row.slug }}">
+            {% if row.on %}
+              <input type="hidden" name="action" value="remove">
+              <button type="submit" class="mz-linkbtn">להוריד מהמדף</button>
+            {% else %}
+              <button type="submit" class="mz-linkbtn">לפתוח למט״צים שלי</button>
+            {% endif %}
+          </form>
+        </li>
+      {% empty %}
+        <li class="mz-muted">
+          צוות התוכנית עוד לא סימן הדרכות שאפשר להציע. כשיסמנו, הן יופיעו כאן.
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+</div>
+{% endblock %}

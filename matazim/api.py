@@ -41,10 +41,12 @@ from .models import (
     Feedback,
     Institution,
     Leader,
+    LeaderCourse,
     LeaderInvite,
     MatazCertificate,
     MemberProfile,
     Notification,
+    OfferedCourse,
     Post,
     Request,
     RequestMessage,
@@ -62,11 +64,13 @@ from .serializers import (
     EventSerializer,
     FeedbackSerializer,
     InstitutionSerializer,
+    LeaderCourseSerializer,
     LeaderInviteSerializer,
     LeaderSerializer,
     MatazCertificateSerializer,
     MemberProfileSerializer,
     NotificationSerializer,
+    OfferedCourseSerializer,
     PostSerializer,
     RequestMessageSerializer,
     RequestSerializer,
@@ -99,6 +103,20 @@ class IsProgramManager(permissions.BasePermission):
 
     def has_permission(self, request, view):
         return access.is_program_manager(request.user)
+
+
+class IsRoot(permissions.BasePermission):
+    """The narrowest role here, and the one the least code should need.
+
+    REQ-M.114's shape: a program manager runs a programme, root decides what
+    the programme *is*. Used where a write is a decision taken once for
+    everybody rather than one institution's business.
+    """
+
+    message = "ההחלטה היא של מנהל המוצר."
+
+    def has_permission(self, request, view):
+        return bool(getattr(request.user, "is_superuser", False))
 
 
 class IsInTheProgramme(permissions.BasePermission):
@@ -846,6 +864,92 @@ class RequestMessageViewSet(NoUpdateMixin, NoDeleteMixin, Scoped):
         serializer.save(who=RequestMessage.HER)
 
 
+# ------------------------------------------------------------- the shelf
+
+
+class OfferedCourseViewSet(Scoped):
+    """SPR-M.52 — the pool of הדרכות leaders may choose from.
+
+    **Root writes, everybody else reads what is live.** The permission is
+    method-based rather than a flat class because a leader genuinely needs to
+    read this (it is the list their shelf screen is built from) and must never
+    be able to widen it. `IsRoot` on the whole viewset would have closed the
+    screen; `IsSignedIn` on the whole viewset would have let a leader add
+    seventeen courses to their own pool and call it curation.
+
+    Withdrawal is `is_active = False`, which is an ordinary PATCH here. A
+    DELETE is allowed and means something different: the row never should have
+    existed. Neither touches anybody's progress or certificate, which live in
+    babook's tables and were never this row's to hold.
+    """
+
+    serializer_class = OfferedCourseSerializer
+    scope = staticmethod(access.visible_offered_courses)
+
+    def get_permissions(self):
+        if self.request.method in permissions.SAFE_METHODS:
+            return [IsSignedIn()]
+        return [IsRoot()]
+
+    def perform_create(self, serializer):
+        from app.models import Course
+
+        slug = serializer.validated_data.get("slug", "")
+        if not Course.objects.filter(slug=slug).exists():
+            raise ValidationError({"slug": "אין הדרכה כזאת בקטלוג."})
+        serializer.save(added_by=self.request.user)
+
+
+class LeaderCourseViewSet(Scoped):
+    """SPR-M.52 — what one leader puts in front of their own מט״צים.
+
+    Two rules, and they are the same two the screen enforces, asked of the same
+    function so they cannot drift (RULE-3):
+
+    1. **Your own shelf.** `leader` comes from the session, never from the body.
+    2. **Out of the live pool only.** `access.shelvable_slugs()` decides, so a
+       leader cannot reach past what root opened by posting a slug directly.
+
+    Rule 2 is checked here rather than trusted to the scope, because a queryset
+    filters what comes back and this is about what goes in.
+    """
+
+    serializer_class = LeaderCourseSerializer
+    scope = staticmethod(access.visible_leader_courses)
+
+    def _my_shelf(self):
+        leader = access.leader_of(self.request.user)
+        if leader is None:
+            raise PermissionDenied("מדף ההדרכות הוא של מוביל/ה.")
+        return leader
+
+    def perform_create(self, serializer):
+        leader = self._my_shelf()
+        slug = serializer.validated_data.get("slug", "")
+        if slug not in access.shelvable_slugs():
+            raise ValidationError({"slug": "ההדרכה הזאת לא פתוחה לבחירה."})
+        row, _ = LeaderCourse.objects.get_or_create(
+            leader=leader, slug=slug, defaults={"chosen_by": self.request.user}
+        )
+        serializer.instance = row
+
+    def perform_update(self, serializer):
+        if serializer.instance.leader_id != self._my_shelf().pk:
+            raise PermissionDenied("זה המדף של מוביל/ה אחר/ת.")
+        slug = serializer.validated_data.get("slug", serializer.instance.slug)
+        if slug not in access.shelvable_slugs():
+            raise ValidationError({"slug": "ההדרכה הזאת לא פתוחה לבחירה."})
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        """Taking something off the shelf. Nobody loses what they started:
+        `visible_course_slugs` keeps a member's own enrolments whatever any
+        shelf says."""
+        if instance.leader_id != self._my_shelf().pk:
+            raise PermissionDenied("זה המדף של מוביל/ה אחר/ת.")
+        instance.delete()
+
+
 # Every model in this app, and the route it answers on. Kept here rather than in
 # urls.py so that adding a model and forgetting its endpoint is visible in one
 # place: `test_every_model_has_an_endpoint` reads this.
@@ -870,4 +974,6 @@ ROUTES = [
     ("requests", RequestViewSet, Request),
     ("request-messages", RequestMessageViewSet, RequestMessage),
     ("teaching", TeachingSessionViewSet, TeachingSession),
+    ("offered-courses", OfferedCourseViewSet, OfferedCourse),
+    ("leader-courses", LeaderCourseViewSet, LeaderCourse),
 ]

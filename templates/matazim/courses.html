@@ -79,6 +79,63 @@
     </section>
   {% endif %}
 
+  {% comment %}
+    SPR-M.52 — the shelf, and what they started themselves.
+
+    Avi, 2026-09-19: "everybody that is in מט״צים... to see the availability of
+    trainings that are available in babook, but not all of them. I want to be
+    able as a leader to decide what training I want to expose for my students."
+
+    Deliberately not styled as the required track. These are opportunity, and
+    the certification rule did not move: REQ-M.76 is still the entrance test,
+    both Scratch courses, and the leader's approval. A card here that looked
+    like a card up there would quietly say otherwise.
+  {% endcomment %}
+  {% if started %}
+    <section class="mz-panel mz-panel-wide">
+      <h2>מה שהתחלתם</h2>
+      <p class="mz-muted">הדרכות שכבר נכנסתם אליהן. הן נשארות שלכם.</p>
+      <ul class="mz-cards">
+        {% for card in started %}
+          <li class="mz-card">
+            <div class="mz-card-head">
+              <h3>{{ card.title }}</h3>
+              <span class="mz-tag {% if card.pct %}mz-tag-doing{% else %}mz-tag-idle{% endif %}">{{ card.word }}</span>
+            </div>
+            <div class="mz-progress" role="img"
+                 aria-label="{{ card.pct }} אחוז">
+              <span style="width: {{ card.pct }}%"></span>
+            </div>
+            <p class="mz-card-pct">{{ card.pct }}%</p>
+            <a class="mz-btn mz-btn-primary"
+               href="{% url 'matazim:learn_course' card.slug %}">{{ card.action }}</a>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  {% if offered %}
+    <section class="mz-panel mz-panel-wide">
+      <h2>פתוח לכם</h2>
+      <p class="mz-muted">
+        המוביל/ה שלכם פתח/ה לכם את ההדרכות האלה. הן לא נדרשות להסמכה, אבל כל מה
+        שתלמדו נספר ונשמר.
+      </p>
+      <ul class="mz-cards">
+        {% for card in offered %}
+          <li class="mz-card">
+            <div class="mz-card-head">
+              <h3>{{ card.title }}</h3>
+            </div>
+            <a class="mz-btn mz-btn-ghost"
+               href="{% url 'matazim:learn_course' card.slug %}">{{ card.action }}</a>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
   <section class="mz-panel">
     <h2>מבחן הכניסה</h2>
     <p>

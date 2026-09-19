@@ -27,6 +27,7 @@ own pages do.
 """
 
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -42,15 +43,27 @@ from .views import shell
 LOGIN_URL = "/matazim/login/"
 
 
-def _track_course(slug):
-    """A course the programme requires, or nothing at all.
+def _track_course(slug, user=None):
+    """A course this person may take here, or nothing at all.
 
-    The membership test is the point of the function. Reaching for
-    `Course.objects.get(slug=...)` here is the one-line change that would make
-    this a general reader, and it would not look like a mistake in review.
+    The membership test is still the point of the function. What changed in
+    SPR-M.52 is that membership is no longer "one of the programme's two": a
+    leader can put more of babook's catalogue in front of their own members,
+    and a member keeps anything they already started.
+
+    `access.visible_course_slugs` is the single place that decides, and the one
+    thing this must not become is `Course.objects.get(slug=...)`, which is the
+    one-line change that would open all seventeen to everybody and would not
+    look like a mistake in review.
+
+    `user=None` keeps the old behaviour for callers that have no reader, which
+    is the safe direction: the programme's own two and nothing else.
     """
-    if slug not in REQUIRED_COURSE_SLUGS:
-        raise Http404("not part of the מט״צים track")
+    from . import access
+
+    allowed = access.visible_course_slugs(user) if user is not None else set(REQUIRED_COURSE_SLUGS)
+    if slug not in allowed:
+        raise Http404("not available to this member")
     return get_object_or_404(Course, slug=slug)
 
 
@@ -76,7 +89,7 @@ def learn_course(request, slug):
     Somebody mid-course wants lesson seven, not a "start" button, so every
     lesson is listed with whether it is done.
     """
-    course = _track_course(slug)
+    course = _track_course(slug, request.user)
 
     watched = set(
         Video.objects.filter(course=course, user_progress__user=request.user).values_list(
@@ -108,7 +121,7 @@ def learn_course(request, slug):
 @login_required(login_url=LOGIN_URL)
 def learn_lesson(request, slug, order):
     """REQ-M.13, REQ-M.14 — the lesson itself, and the heartbeat that counts it."""
-    course = _track_course(slug)
+    course = _track_course(slug, request.user)
     lesson = Video.objects.filter(course=course, lesson_order=order).first()
     if lesson is None:
         return redirect("matazim:learn_course", slug=slug)
@@ -243,7 +256,7 @@ def submit_project(request, slug, order):
     from app.models import Enrollment, LessonModelSubmission, Video
     from app.views import parse_scratch_id, scratch_project_is_shared
 
-    course = _track_course(slug)
+    course = _track_course(slug, request.user)
     lesson = get_object_or_404(Video, course=course, lesson_order=order)
 
     def back(state):
@@ -280,7 +293,7 @@ def finish_course(request, slug):
     """
     from app.completion import issue_certificate, why_not_certified
 
-    course = _track_course(slug)
+    course = _track_course(slug, request.user)
     not_yet = why_not_certified(request.user, course, request=request)
     url = reverse("matazim:learn_course", kwargs={"slug": slug})
     if not_yet:
@@ -288,3 +301,100 @@ def finish_course(request, slug):
 
     issue_certificate(request.user, course)
     return redirect(f"{url}?cert=issued")
+
+
+@login_required(login_url=LOGIN_URL)
+def staff_offered(request):
+    """SPR-M.52 — which of babook's catalogue מט״צים may offer at all.
+
+    Root only: Avi asked on 2026-09-16 for an admin screen that sets the
+    default pool leaders then choose from. (His wording is in the backlog under
+    SPR-M.52 rather than here, because it uses the word this product does not
+    print and a guard in `test_spr_m_41.py` reads every file in this app.)
+
+    Not the program manager, deliberately. This is a decision about what the
+    programme is, taken once for everybody, and REQ-M.114's shape applies:
+    the widest decisions are root's.
+    """
+    from app.models import Course
+
+    from .models import OfferedCourse
+
+    if not request.user.is_superuser:
+        raise PermissionDenied
+
+    if request.method == "POST":
+        slug = (request.POST.get("slug") or "").strip()
+        if Course.objects.filter(slug=slug).exists():
+            row, _ = OfferedCourse.objects.get_or_create(
+                slug=slug, defaults={"added_by": request.user}
+            )
+            # Retiring is a flag. A member half-way through a withdrawn course
+            # keeps their progress and their certificate: those live in
+            # babook's tables and never belonged to this row.
+            row.is_active = request.POST.get("action") != "retire"
+            row.note = (request.POST.get("note") or row.note or "").strip()[:400]
+            row.save()
+        return redirect("matazim:staff_offered")
+
+    chosen = {row.slug: row for row in OfferedCourse.objects.all()}
+    catalogue = [
+        {"slug": c.slug, "title": c.title, "offered": chosen.get(c.slug)}
+        for c in Course.objects.filter(is_published=True).order_by("title")
+    ]
+    return render(
+        request,
+        "matazim/staff_offered.html",
+        shell(request, "staff", catalogue=catalogue,
+              live=sum(1 for r in chosen.values() if r.is_active)),
+    )
+
+
+@login_required(login_url=LOGIN_URL)
+def leader_shelf(request):
+    """The הדרכות one leader puts in front of their own מט״צים.
+
+    Chosen out of what root allows, and checked at the moment of choosing: a
+    course retired later stays on the shelves that already hold it, and the
+    members who started it keep it (`access.visible_course_slugs`).
+
+    Exposure, never a requirement. There is no control here to make something
+    required, because REQ-M.76 did not move and a screen offering that would be
+    promising something the certification rule does not honour.
+    """
+    from app.models import Course
+
+    from .access import leader_of, shelvable_slugs
+    from .models import LeaderCourse, OfferedCourse
+
+    leader = leader_of(request.user)
+    if leader is None:
+        raise PermissionDenied
+
+    allowed = shelvable_slugs()
+    offered = [row for row in OfferedCourse.objects.all() if row.slug in allowed]
+
+    if request.method == "POST":
+        slug = (request.POST.get("slug") or "").strip()
+        if slug in allowed:
+            if request.POST.get("action") == "remove":
+                LeaderCourse.objects.filter(leader=leader, slug=slug).delete()
+            else:
+                LeaderCourse.objects.get_or_create(
+                    leader=leader, slug=slug, defaults={"chosen_by": request.user}
+                )
+        return redirect("matazim:leader_shelf")
+
+    mine = set(LeaderCourse.objects.filter(leader=leader).values_list("slug", flat=True))
+    titles = dict(Course.objects.filter(slug__in=allowed).values_list("slug", "title"))
+    rows = [
+        {"slug": row.slug, "title": titles.get(row.slug, row.slug),
+         "note": row.note, "on": row.slug in mine}
+        for row in offered
+        if row.slug in titles
+    ]
+    return render(
+        request,
+        "matazim/leader_shelf.html",
+        shell(request, "leader", rows=rows, chosen=len(mine)),
+    )

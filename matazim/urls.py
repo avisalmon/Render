@@ -172,6 +172,10 @@ urlpatterns = [
     # the certificate is earned. Both stay inside /matazim/ (RULE-1).
     path("learn/<slug:slug>/<int:order>/project/", learn_views.submit_project, name="submit_project"),
     path("learn/<slug:slug>/finish/", learn_views.finish_course, name="finish_course"),
+    # SPR-M.52 — the two shelves: what the programme may offer (root), and
+    # what one leader offers their own מט״צים.
+    path("staff/offered/", learn_views.staff_offered, name="staff_offered"),
+    path("leader/courses/", learn_views.leader_shelf, name="leader_shelf"),
     path("profile/", views.profile, name="profile"),
     path("profile/replay-welcome/", views.profile_reset_welcome, name="profile_reset_welcome"),
 ]

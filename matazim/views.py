@@ -617,6 +617,51 @@ def track(request):
     return render(request, "matazim/track.html", shell(request, "track", funnel=FUNNEL))
 
 
+def _extra_course_cards(request):
+    """The two groups beyond the required track: offered, and already started.
+
+    A course is in at most one of them. Something a member began *and* their
+    leader offers is theirs already, so it belongs under what they started.
+    """
+    from app.models import Course, Enrollment
+
+    from .access import visible_course_slugs
+    from .content import REQUIRED_COURSE_SLUGS
+    from .progress import JustAUser, cohort_progress
+
+    if not request.user.is_authenticated:
+        return [], []
+
+    allowed = visible_course_slugs(request.user) - set(REQUIRED_COURSE_SLUGS)
+    if not allowed:
+        return [], []
+
+    mine_already = set(
+        Enrollment.objects.filter(user=request.user, course__slug__in=allowed)
+        .values_list("course__slug", flat=True)
+    )
+    progress = cohort_progress([JustAUser(request.user.id)], sorted(allowed)).get(
+        request.user.id, {}
+    )
+    titles = dict(Course.objects.filter(slug__in=allowed).values_list("slug", "title"))
+
+    offered, started = [], []
+    for slug in sorted(allowed):
+        if slug not in titles:
+            continue  # a slug whose course is gone: say nothing, not a broken card
+        row = progress.get(slug) or {}
+        pct = int(row.get("pct") or 0)
+        card = {
+            "slug": slug,
+            "title": row.get("title") or titles[slug],
+            "pct": pct,
+            "word": "באמצע" if pct else "עוד לא התחלתם",
+            "action": "להמשיך" if pct else "להתחיל",
+        }
+        (started if slug in mine_already else offered).append(card)
+    return offered, started
+
+
 def courses(request):
     """REQ-M.59, REQ-M.12b — the training path, and where this reader is in it.
 
@@ -674,10 +719,17 @@ def courses(request):
                 }
             )
 
+    # SPR-M.52 — what their leader put in front of them, and what they started
+    # on their own. Separate groups rather than more cards in the same one,
+    # because they mean different things: the required two are what makes a
+    # מט״צ (REQ-M.76) and these are opportunity. Rendering them alike would say
+    # the programme requires seventeen courses, which it does not.
+    offered, started = _extra_course_cards(request)
+
     return render(
         request,
         "matazim/courses.html",
-        shell(request, "courses", cards=cards),
+        shell(request, "courses", cards=cards, offered=offered, started=started),
     )
 
 

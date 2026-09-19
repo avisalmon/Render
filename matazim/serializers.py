@@ -34,10 +34,12 @@ from .models import (
     Feedback,
     Institution,
     Leader,
+    LeaderCourse,
     LeaderInvite,
     MatazCertificate,
     MemberProfile,
     Notification,
+    OfferedCourse,
     Post,
     Request,
     RequestMessage,
@@ -394,3 +396,38 @@ class InstitutionSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "managers", "created_at"]
         read_only_fields = ["id", "managers", "created_at"]
 
+
+# --- The shelf (SPR-M.52) --------------------------------------------------
+
+
+class OfferedCourseSerializer(serializers.ModelSerializer):
+    """The pool: which of babook's catalogue מט״צים may offer at all.
+
+    `added_by` is read-only and set from `request.user`, like every other
+    "who decided this" on this file's first rule. Withdrawal is `is_active`
+    rather than a delete, so the row keeps who opened it and when, and can be
+    reopened without inventing a new history.
+    """
+
+    class Meta:
+        model = OfferedCourse
+        fields = ["id", "slug", "is_active", "note", "added_by", "added_at"]
+        read_only_fields = ["id", "added_by", "added_at"]
+
+
+class LeaderCourseSerializer(serializers.ModelSerializer):
+    """One leader's shelf: an offer to their own מט״צים, never a requirement.
+
+    `leader` is read-only for the reason at the top of this file: it decides
+    whose members are affected, so it comes from the session. A client that
+    could name its own leader could stock somebody else's shelf.
+
+    **There is no `required` field to leave out, and that absence is the
+    design.** REQ-M.76 is uniform across the programme and a flag here would
+    promise a leader something certification does not honour.
+    """
+
+    class Meta:
+        model = LeaderCourse
+        fields = ["id", "leader", "slug", "chosen_by", "chosen_at"]
+        read_only_fields = ["id", "leader", "chosen_by", "chosen_at"]

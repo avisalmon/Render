@@ -1,0 +1,59 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  SPR-M.52 — the pool. Root decides which of babook's catalogue מט״צים may put
+  in front of anybody; a leader then chooses from it for their own members.
+
+  Seventeen published courses is not a list to hand a fourteen-year-old whole,
+  and not a list a leader should have to audit either.
+{% endcomment %}
+
+{% block title %}הדרכות זמינות · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>הדרכות זמינות</h1>
+    <p>מה מהאתר הראשי מותר להציע במט״צים. מובילים בוחרים מתוך מה שסומן כאן.</p>
+  </div>
+
+  <section class="mz-panel mz-panel-wide">
+    <h2>
+      הקטלוג
+      <span class="mz-count">{{ live }} זמינות</span>
+    </h2>
+    <p class="mz-muted">
+      הסרה לא מוחקת כלום: מי שכבר התחיל הדרכה ממשיך בה, וההתקדמות והתעודות שלו
+      נשמרות. מה שנפסק זה שמובילים חדשים יוכלו להציע אותה.
+    </p>
+
+    <ul class="mz-worklist">
+      {% for row in catalogue %}
+        <li class="mz-worklist-item">
+          <div class="mz-worklist-head">
+            <span>{{ row.title }}</span>
+            {% if row.offered and row.offered.is_active %}
+              <span class="mz-tag mz-tag-done">זמינה</span>
+            {% elif row.offered %}
+              <span class="mz-tag mz-tag-idle">הוסרה</span>
+            {% endif %}
+          </div>
+          {% if row.offered.note %}<p class="mz-worklist-said">{{ row.offered.note }}</p>{% endif %}
+          <form method="post" class="mz-inline-form">
+            {% csrf_token %}
+            <input type="hidden" name="slug" value="{{ row.slug }}">
+            {% if row.offered and row.offered.is_active %}
+              <input type="hidden" name="action" value="retire">
+              <button type="submit" class="mz-linkbtn">להסיר</button>
+            {% else %}
+              <button type="submit" class="mz-linkbtn">להפוך לזמינה</button>
+            {% endif %}
+          </form>
+        </li>
+      {% empty %}
+        <li class="mz-muted">אין הדרכות באתר הראשי.</li>
+      {% endfor %}
+    </ul>
+  </section>
+</div>
+{% endblock %}

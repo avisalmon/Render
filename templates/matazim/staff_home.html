@@ -27,6 +27,21 @@
       </div>
     </section>
 
+    {% comment %}
+      SPR-M.52 — the pool, root only. A decision about what the programme is,
+      taken once for everybody, which is REQ-M.114's shape.
+    {% endcomment %}
+    {% if user.is_superuser %}
+      <section class="mz-panel">
+        <h2>הדרכות זמינות</h2>
+        <p class="mz-muted">
+          אילו הדרכות מהאתר הראשי מובילים רשאים להציע למט״צים שלהם.
+        </p>
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:staff_offered' %}">לקטלוג</a>
+      </section>
+    {% endif %}
+
+
     <section class="mz-panel">
       <h2>מובילים</h2>
       <p>

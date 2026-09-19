@@ -3927,3 +3927,102 @@ Eight babook tests fail in `test_spr_1_4.py` and `test_spr_6_2.py`. The same
 eight, plus one more, fail on `origin/main` in a clean worktree: they are
 pre-existing in what is deployed and unrelated to this extraction. Recorded so
 nobody re-diagnoses them as fallout from it.
+
+## SPR-M.52 — The shelf  `DONE 2026-09-19`
+
+**Goal:** a מט״צ sees more of babook's catalogue than the two the programme
+requires, and their own מוביל/ה decides which.
+
+Avi, dictated 2026-09-19:
+
+> "We want everybody that is in מט״צים, any student, to see the availability of
+> trainings that are available in babook, but not all of them. I want to be able
+> as a leader to decide what training I want to expose for my students to see
+> that are available for them to take. And then they take it inside מט״צים, but
+> with the system of babook. **Now, it's not about certification.** We said that
+> any leader can add certification requirements, but it's about just exposing
+> them to opportunity."
+
+And on 2026-09-16, about the layer above it:
+
+> "אני אקבע את ברירת המחדל איזה [הדרכות] יהיו חשופים למט״צים באופן כללי לבחור
+> מתוכם. אני צריך כאדמין לקבל מסך שליטה כזה."
+
+(That second quote lives here rather than in `matazim/learn_views.py`, where the
+screen it describes is written, because the word he used is the one this product
+does not print and `test_nothing_a_member_reads_says_kursim` reads every file in
+the app. The guard caught it, which is the guard working.)
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.52.1 | `OfferedCourse` — the pool, set by root alone | REQ-M.114 | DONE |
+| F-M.52.2 | `LeaderCourse` — one leader's shelf, out of that pool | REQ-M.88 | DONE |
+| F-M.52.3 | `access.visible_course_slugs` — one answer for four screens | RULE-3 | DONE |
+| F-M.52.4 | פתוח לכם / מה שהתחלתם on the הדרכות screen | REQ-M.65 | DONE |
+| F-M.52.5 | Both models over REST, with the screens' own two rules | Rule 6 | DONE |
+
+### Why it needed SPR-M.51 first
+
+A course opened here has to actually work: hand-ins, gates, a real certificate.
+Until the day before, מט״צים could render a lesson and nothing else, so a shelf
+would have offered teenagers seventeen dead ends. The pipe closed first.
+
+### Two layers, and why not one
+
+Root sets a pool; a leader chooses from it. One layer would have meant either
+every leader picking from all seventeen published courses — including ones
+written for adults paying for them — or Avi choosing for every institution.
+
+The load-bearing test is `test_a_course_nobody_offered_stays_shut`. This sprint
+turned a guard that allowed exactly two slugs into one that consults a rule,
+with seventeen courses on the other side of it. The failure mode is not a broken
+screen; it is a quiet widening where everything renders and everyone can reach
+everything.
+
+### It is exposure, not a requirement
+
+REQ-M.76 did not move: a מט״צ מוסמך is still the entrance test, both Scratch
+certificates, and the leader's approval. So:
+
+- `LeaderCourse` has no `required` field, and `test_no_screen_offers_a_leader_a_
+  way_to_make_one_required` pins the absence in both the model and the screen.
+- `test_the_shelf_changes_nothing_about_certification` asserts `eligibility()`
+  reports the same thing before and after a shelf is stocked.
+- The screens style these as an offer, under פתוח לכם, away from the track.
+
+### Three rules that protect a member
+
+1. **The programme's own two are never withdrawable**, by anybody, including
+   from a member who has no leader at all.
+2. **A course you already started stays yours** whatever any shelf says later.
+   Taking away something somebody is half-way through is not curation.
+3. **Withdrawal is a flag, never a delete.** Progress and certificates live in
+   babook's tables and never belonged to the `OfferedCourse` row.
+
+Rule 2 and rule 3 are the two halves of retiring a course, and a perturbation
+run found that only one of them was covered: the shelf is filtered against the
+live pool on every read, and nothing failed when that filter was removed.
+`test_retiring_a_course_closes_it_to_members_who_had_not_started` is that gap.
+
+### The API, and what the perturbation run said about it
+
+Methodology Rule 6 gave both models endpoints, and `test_every_model_has_an_
+endpoint` failed until they had them — which is that guard working too.
+
+SPR-M.50's finding set what to check: a screen that refuses beside an endpoint
+that accepts is a locked door next to an open window. So `offered-courses` is
+readable by anybody signed in and writable by root alone (a leader needs to read
+it — it is the list their own screen is built from — and must never widen it),
+and `leader-courses` takes its owner from the session and validates every slug
+against `access.shelvable_slugs()`, the same function the screen asks.
+
+Four guards, four perturbations, all caught. One first-round MISS worth
+recording: making `leader` writable on the serializer changed nothing, because
+`perform_create` ignores the body regardless. The serializer's `read_only` is
+belt-and-braces; the guard that holds is in the viewset. The test only fails
+when both halves are broken, which is how the real defect would arrive.
+
+### Still open, unchanged by this sprint
+
+F-M.50.8 (a member deleting work a leader has already answered) and Q8 (staff
+authoring content inside מט״צים) are both still waiting on Avi.
