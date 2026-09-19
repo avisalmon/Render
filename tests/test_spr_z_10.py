@@ -365,6 +365,48 @@ def test_the_round_result_never_says_who_made_which_meme(client, bank):
     assert all(p["nickname"] for p in _state(client, code, tokens[0])["players"])
 
 
+def test_the_round_result_never_shows_what_a_single_meme_scored(client, bank):
+    """Rule 4.7.2 (ACT-Z.14). Avi, seeing SPR-Z.10 live: "בסוף הראת גם את
+    רשימת המובילים אבל גם כמה כל מים קיבל. וזה עושה קשר" — and he's right.
+    Hiding the author while publishing the meme's score is not anonymity:
+    a meme worth 4, beside a leaderboard where exactly one player just
+    rose by 4, is signed. The numbers are gone from the payload, not just
+    from the screen, so a hand-written client can't read them either."""
+    code, tokens = _room(client)
+    _all_submit(client, code, tokens)
+    memes = _state(client, code, tokens[0])["round"]["memes"]
+
+    # One meme is loved by everyone, the others get nothing, so if a score
+    # were exposed anywhere the correlation would be trivial.
+    _show_meme(code, 0)
+    for token in tokens:
+        if _state(client, code, token)["round"]["memes"][0]["is_mine"]:
+            continue
+        post(
+            client, f"/memz/api/sessions/{code}/rounds/1/rate/",
+            {"submission_id": memes[0]["submission_id"], "value": 2}, token=token,
+        )
+
+    from memz.game import current_round
+    from memz.models import Session
+
+    round_obj = current_round(Session.objects.get(code=code))
+    round_obj.reveal_deadline = timezone.now() - timezone.timedelta(seconds=1)
+    round_obj.save(update_fields=["reveal_deadline"])
+
+    round_state = _state(client, code, tokens[0])["round"]
+    for row in round_state["results"]:
+        assert "points" not in row, "the round result published a single meme's score"
+        assert "votes" not in row, "the round result published a single meme's vote count"
+        assert "round_winner" not in row, "the round result flagged which meme won"
+
+    # The scoring itself still happened -- it just lives in the aggregate.
+    from memz.scoring import round_scores
+
+    assert sorted(round_scores(round_obj).values()) == [0, 0, 4]
+    assert sorted(p["score"] for p in _state(client, code, tokens[0])["players"]) == [0, 0, 4]
+
+
 def test_the_end_of_game_gallery_is_anonymous_too(client, bank):
     code, tokens = _room(client)
     _all_submit(client, code, tokens)

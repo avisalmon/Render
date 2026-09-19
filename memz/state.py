@@ -12,7 +12,7 @@ carry-over)."""
 from . import cards as cards_module
 from . import conf
 from .models import Meme, Player, Session, Vote
-from .scoring import rank_players, round_scores
+from .scoring import rank_players
 from .titles import LABELS as TITLE_LABELS
 from .titles import compute_titles
 
@@ -108,29 +108,29 @@ def _round_payload(session, round_obj, player):
             data["my_vote"] = my_vote
         return data
 
-    # Round result. Rule 4.7.1 (SPR-Z.10): names never come off. The memes
-    # are shown with what they scored, ranked, but *no* `player_id` and no
-    # `nickname` -- who made which one is never revealed, in this payload
-    # or any other, so a joke that landed badly stays unattributable. The
-    # running leaderboard (`players`, by name and score) is the only place
-    # a name appears; nobody can work backwards from it to a single meme.
+    # Round result. Rule 4.7.1 (SPR-Z.10): names never come off -- no
+    # `player_id`, no `nickname`, in this payload or any other, so a joke
+    # that landed badly stays unattributable.
+    #
+    # Rule 4.7.2 (ACT-Z.14): and no per-meme scores either. Points beside
+    # a leaderboard identify an author just as precisely as a name does --
+    # a meme worth 4 next to the one player whose score rose by 4 is not
+    # anonymous at all. They are gone from the payload rather than merely
+    # hidden in the client, for the same reason the author is: a leak the
+    # server never sends cannot be read out of it by a hand-written one.
+    # The order is deliberately by submission id, not by score, since
+    # ranking them would leak the same thing by position.
     submissions = list(
-        round_obj.submissions.filter(meme__isnull=False).select_related("meme", "player")
+        round_obj.submissions.filter(meme__isnull=False).select_related("meme", "player").order_by("id")
     )
-    points = round_scores(round_obj)
-    top = max(points.values(), default=0)
-    data["results"] = sorted(
-        (
-            {
-                "submission_id": s.id,
-                "rendered_url": s.meme.rendered.url, "caption_text": s.meme.caption_text,
-                "is_mine": bool(player and s.player_id == player.id),
-                "points": points.get(s.id, 0), "round_winner": points.get(s.id, 0) == top and top > 0,
-            }
-            for s in submissions
-        ),
-        key=lambda row: -row["points"],
-    )
+    data["results"] = [
+        {
+            "submission_id": s.id,
+            "rendered_url": s.meme.rendered.url, "caption_text": s.meme.caption_text,
+            "is_mine": bool(player and s.player_id == player.id),
+        }
+        for s in submissions
+    ]
     return data
 
 

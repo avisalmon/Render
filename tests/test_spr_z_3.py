@@ -338,7 +338,17 @@ def test_reveal_is_where_rating_happens_and_the_round_ends_with_it(client, bank)
     final = _end_reveal(client, code, players)
     assert final["round"]["status"] == "done"
     # Three memes, two "אוהב" (2 points) each from the other two players.
-    assert sorted(row["points"] for row in final["round"]["results"]) == [4, 4, 4]
+    # Checked against the scoring function, not the payload: ACT-Z.14 took
+    # per-meme points out of the state entirely, since a meme's score
+    # beside the leaderboard identified its author (Rule 4.7.2).
+    from memz.game import current_round
+    from memz.models import Session
+    from memz.scoring import round_scores
+
+    round_obj = current_round(Session.objects.get(code=code))
+    assert sorted(round_scores(round_obj).values()) == [4, 4, 4]
+    # Every player's cached score agrees with it.
+    assert sorted(p["score"] for p in final["players"]) == [4, 4, 4]
 
 
 def test_cannot_rate_your_own_meme(client, bank):

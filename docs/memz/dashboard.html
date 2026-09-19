@@ -80,7 +80,7 @@
   <div class="stat-row">
     <div class="stat"><div class="n">7 / 7 + 12</div><div class="l">Sprints done</div></div>
     <div class="stat"><div class="n">65 + 53</div><div class="l">Features done</div></div>
-    <div class="stat"><div class="n">312</div><div class="l">Tests</div></div>
+    <div class="stat"><div class="n">313</div><div class="l">Tests</div></div>
     <div class="stat"><div class="n">Last: SPR-Z.7</div><div class="l">Deployed</div></div>
   </div>
   <div class="bar"><div style="width:100%"></div></div>
@@ -126,6 +126,8 @@
     <div class="sprint-head"><div class="sprint-title">SPR-Z.10 <span>The round Avi asked for</span></div><span class="pill done">DONE (dev) · 2026-09-18</span></div>
     <p class="sprint-desc">Avi played real games, then described the round he actually wants, end to end — and this is it. <b>Three image swaps:</b> throw back the picture you were dealt, up to 3 times a round, without losing what you already typed (refused in Same Meme mode, where one shared picture is the point). <b>The reveal is now the vote:</b> each meme gets 10 seconds on every screen at once, with three buttons under it — אוהב (2), ככה ככה (1), פחות (0) — and the separate grid where everyone picked one favourite at the end is gone. The author of the meme on screen can't rate it and gets Avi's own line instead: "תעשה פרצוף תמים...". A verdict only counts for the meme actually showing, checked server-side against the same deadline arithmetic the clients run, or one client could have rated the whole round the second it opened. <b>Nobody is ever named:</b> the round result, the podium gallery and the payload behind them no longer carry the author at all — only "שלכם" on your own, visible only to you. Names stay on the leaderboard; the link between a person and a joke is never drawn ("זה ישמור על מבוכה"). Scoring follows: a plain sum of the verdicts, the old winner/unanimous bonuses dropped, and the ranking tiebreak now counts אוהב verdicts rather than rows. The `Vote` table changed shape (one row per voter per <i>meme</i>, with a value), which meant a migration and rewriting the 10 existing tests that drove the game through the old voting phase. 8 features, 14 new tests + 2 new screens in the contract.</p>
   </div>
+
+  <div class="open-item"><b>ACT-Z.14</b><span>SPR-Z.10 hid who made each meme, then showed each meme's points beside a leaderboard — which re-identified the author anyway ("וזה עושה קשר"): a meme worth 4 next to the one player who just rose by 4 is signed. A scoring round's result is now the leaderboard alone, and the per-meme numbers are gone from the payload, not just the screen. Relaxed mode, which has no scores to correlate, still shows the memes.</span></div>
 
   <div class="section-label">ACT items, closed this sprint</div>
   <div class="open-item"><b>ACT-Z.1</b><span>Real bank images: AI-illustrated batch + reviewed real photos, both scoped to non-public-figures (spec §14.2, Rule 6.1.1). A separate request to use real Israeli celebrities or existing memes was declined — publicity rights and copyrighted templates are a different, higher bar than anonymous stock photos.</span></div>

@@ -361,11 +361,14 @@ says so, and any verdict that landed on it during the reveal is ignored.
 
 ### 4.7 Round result
 
-Memes are shown ranked with the points they scored, counting up
-(animation, §9); the round winner's tile gets the crown. Then the running
-leaderboard by name, with position changes marked (up, down, new leader).
+**The running leaderboard, and nothing else** (ACT-Z.14, 2026-09-19):
+names and scores, with position changes marked (up, down, new leader).
 The host taps **Next round** (or, after the last round, **Results**); a
 20 s auto-advance keeps a distracted host from stalling the room.
+
+Relaxed mode is the exception: it has no scores at all, so its result
+screen still shows the round's memes (no numbers, no names) — seeing them
+together is the whole point of that mode (§5.1).
 
 Rule 4.7.1 (SPR-Z.10, replacing "names come off"): **no screen ever says
 who made which meme.** Not the round result, not the podium, not the
@@ -376,6 +379,18 @@ visible only to you. Names live on the leaderboard and the podium, scores
 beside them; the link between a person and a particular joke is never
 drawn. Avi's reason, in his words: "זה ישמור על מבוכה" — a joke that lands
 badly should cost nobody anything at the table.
+
+Rule 4.7.2 (ACT-Z.14, 2026-09-19): **per-meme scores are never shown
+either.** Avi, seeing SPR-Z.10 live: "בסוף הראת גם את רשימת המובילים אבל
+גם כמה כל מים קיבל. וזה עושה קשר. אנחנו רוצים רק את טבלת המנצחים" — and he
+is right: a meme worth 4 points, displayed beside a leaderboard where
+exactly one player's score just rose by 4, names its author as precisely
+as a caption would. Rule 4.7.1 without this one is not anonymity, just
+indirection. So the points live only in `Player.score`, aggregated, and
+the round result is the table alone. The numbers are removed from the
+state payload, not merely hidden in the client, for the same reason the
+author is: what the server never sends cannot be read out of it by a
+client somebody wrote themselves.
 
 ### 4.8 Podium and end of game
 

@@ -237,12 +237,18 @@ def test_the_result_screen_stops_rebuilding_itself_every_poll(browser, live_serv
     page.wait_for_timeout(400)
     assert page.locator("[data-screen]").get_attribute("data-screen") == "game-result"
 
-    page.evaluate("document.querySelector('.memz-meme-tile').dataset.testMarker = 'still-here'")
+    # ACT-Z.14: a scoring round's result is the leaderboard and nothing
+    # else -- the meme tiles this used to mark are gone, because their
+    # scores beside the table identified their authors (Rule 4.7.2). The
+    # rebuild-every-poll risk is the same, so the marker moves to a row.
+    page.evaluate("document.querySelector('.memz-player-row').dataset.testMarker = 'still-here'")
     page.wait_for_timeout(2300)   # outlives a real 2-second poll (the "done" status's own interval)
     survived = page.evaluate("""
-        () => { var t = document.querySelector('.memz-meme-tile'); return t && t.dataset.testMarker; }
+        () => { var t = document.querySelector('.memz-player-row'); return t && t.dataset.testMarker; }
     """)
     assert survived == "still-here", "the result screen was rebuilt from scratch by a poll that changed nothing"
+    assert page.locator(".memz-meme-tile").count() == 0, "a scoring round's result still shows the memes"
+    assert "נקודות" not in page.inner_text("[data-screen]"), "a per-meme score is still on the result screen"
 
 
 def test_the_big_screen_voting_view_also_stops_rebuilding_itself(browser, live_server, db):

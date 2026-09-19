@@ -768,6 +768,28 @@ to hold "read the joke AND tap a button", not just "read the joke".
 
 ---
 
+## ACT-Z.14 — The scores gave the authors away `DONE (dev), 2026-09-19`
+
+Avi, within minutes of SPR-Z.10 going live: "בסוף הראת גם את רשימת
+המובילים אבל גם כמה כל מים קיבל. וזה עושה קשר. אנחנו רוצים רק את טבלת
+המנצחים."
+
+| Feature | Description | Spec | Status |
+| --- | --- | --- | --- |
+| ACT-Z.14.1 | The round result showed each meme's points *and* the leaderboard, which together re-identified the author SPR-Z.10 had just hidden | Rule 4.7.2 (new) | DONE — a meme worth 4 points, next to the one player whose score rose by 4, is signed as surely as a caption would sign it. Rule 4.7.1 without this was indirection, not anonymity. A scoring round's result is now **the leaderboard alone**; per-meme points, vote counts and the round-winner crown are gone from the screen *and* from the state payload, so a hand-written client can't read them either. Relaxed mode still shows the memes, since it has no scores to correlate them with |
+| ACT-Z.14.2 | Tests | §12.8 | DONE — a new test in `tests/test_spr_z_10.py` sets up the most correlatable round possible (one meme loved by everyone, the others at zero) and asserts no `points`, `votes` or `round_winner` reaches the payload, while checking the scoring itself still happened via `round_scores` and the players' own cached scores. The SPR-Z.3 round-scoring test was moved off the payload onto `round_scores` for the same reason |
+
+**Sprint notes.** Worth naming the mistake plainly: SPR-Z.10 removed the
+author from the result screen and called the job done, when the numbers
+beside it still pointed straight back. Anonymity is not one field being
+absent, it's the absence of *any* pair of visible facts that intersect on
+one person — and a score is exactly such a fact when the leaderboard
+moves in the same breath. The fix deletes the data from the payload
+rather than hiding it in the client, which is the same standard the
+author field was held to an hour earlier.
+
+---
+
 ## Not in v1 (spec §13)
 
 Payments, AI captions, English UI, GIF and video memes, free-position text

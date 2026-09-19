@@ -446,27 +446,15 @@
   var lastRanking = {};       // player_id -> rank (0 = first), from the previous result screen
   var lastRankingCode = null; // which session that ranking belongs to
 
-  function animateCountUp(el, target) {
-    if (target <= 0) { el.textContent = "0"; return; }
-    var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduceMotion) { el.textContent = String(target); return; }
-    var start = null;
-    var duration = 500;
-    function step(ts) {
-      if (start === null) start = ts;
-      var progress = Math.min(1, (ts - start) / duration);
-      el.textContent = String(Math.round(progress * target));
-      if (progress < 1) requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
-  }
+  // (The per-meme vote count-up animation that used to live here went with
+  // the per-meme scores themselves -- ACT-Z.14, see renderResult below.)
 
   // Same fix as renderVoting/renderCaptioning/renderRevealed above: once a
   // round's results are shown, nothing about them changes until the host
   // advances (score tallies are already final the moment `done` is
-  // reached) -- so a full rebuild every poll only meant the vote-count-up
-  // animation and the tiles' pop-in replayed over and over while everyone
-  // was just trying to read the results.
+  // reached) -- so a full rebuild every poll only meant the tiles' pop-in
+  // replaying over and over while everyone was just trying to read the
+  // results.
   var resultRenderKey = null;
 
   function renderResult(state) {
@@ -478,37 +466,31 @@
     var me = state.players.find(function (p) { return p.is_me; });
     var isLast = r.number >= state.round_count;
     var relaxed = state.game_mode === "relaxed";
+    // Rule 4.7.2 (ACT-Z.14, Avi: "בסוף הראת גם את רשימת המובילים אבל גם
+    // כמה כל מים קיבל. וזה עושה קשר"): showing each meme's points *next
+    // to* a leaderboard rebuilt the link SPR-Z.10 removed -- a meme worth
+    // 4 beside the one player whose score just rose by 4 names its author
+    // as surely as a caption would. So a scoring round's result is the
+    // table and nothing else. Relaxed mode, which has no scores at all and
+    // therefore nothing to correlate, still shows the memes: seeing them
+    // together is the whole point of that mode (spec §5.1).
     root.innerHTML =
       '<h1 class="memz-title">' + (relaxed ? "היה כיף!" : "תוצאות הסבב") + "</h1>" +
-      // Rule 4.7.1 (SPR-Z.10): no names here, ever. Each meme shows what it
-      // scored and nothing about who wrote it -- the payload doesn't even
-      // carry the author any more. "שלכם" on your own tile is the one
-      // exception, and it is only ever visible to you.
-      '<div class="memz-meme-grid">' + r.results.map(function (row, i) {
-        return (
-          '<figure class="memz-meme-tile' + (!relaxed && row.round_winner ? " memz-meme-tile--winner" : "") +
-          (row.is_mine ? " memz-meme-tile--mine" : "") +
-          '" style="animation-delay:' + (i * 90) + 'ms">' +
-          '<img src="' + esc(row.rendered_url) + '" alt="">' +
-          "<figcaption>" + (!relaxed && row.round_winner ? "👑 " : "") +
-          (row.is_mine ? "שלכם" : "") +
-          (relaxed ? "" : (row.is_mine ? " · " : "") +
-            '<span data-vote-count="' + row.submission_id + '">0</span> נקודות') + "</figcaption>" +
-          "</figure>"
-        );
-      }).join("") + "</div>" +
-      (relaxed ? "" :
-        '<h2 class="memz-field-label">טבלת מובילים</h2>' +
-        '<ul class="memz-player-list">' + rankedPlayerRows(state.players) + "</ul>") +
+      (relaxed
+        ? '<div class="memz-meme-grid">' + r.results.map(function (row, i) {
+            return (
+              '<figure class="memz-meme-tile' + (row.is_mine ? " memz-meme-tile--mine" : "") +
+              '" style="animation-delay:' + (i * 90) + 'ms">' +
+              '<img src="' + esc(row.rendered_url) + '" alt="">' +
+              (row.is_mine ? "<figcaption>שלכם</figcaption>" : "") +
+              "</figure>"
+            );
+          }).join("") + "</div>"
+        : '<h2 class="memz-field-label">טבלת מובילים</h2>' +
+          '<ul class="memz-player-list">' + rankedPlayerRows(state.players) + "</ul>") +
       (me && me.is_host
         ? '<button class="memz-btn memz-btn--primary memz-btn--wide" data-advance-btn>' + (isLast ? "לתוצאות הסופיות" : "לסבב הבא") + "</button>"
         : '<p class="memz-lead">מחכים למארח/ת...</p>');
-    if (!relaxed) {
-      r.results.forEach(function (row) {
-        var el = root.querySelector('[data-vote-count="' + row.submission_id + '"]');
-        if (el) animateCountUp(el, row.points);   // SPR-Z.10: points, not a raw vote count -- everyone rates everything now
-      });
-    }
     var btn = root.querySelector("[data-advance-btn]");
     if (btn) btn.addEventListener("click", function () { guardedAction(function () { return call("POST", "/advance/"); }, btn); });
   }
