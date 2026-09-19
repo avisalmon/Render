@@ -80,6 +80,21 @@ class SchemaView(APIView):
                         "read_only": list(meta.read_only_fields),
                     },
                     {
+                        "path": "/sensorlab/api/labs/<slug>/",
+                        "methods": ["GET"],
+                        "note": (
+                            "The screen endpoint (SL-B2). A GET here does NOT answer in the "
+                            "shape `labs/` lists — it returns one lab as spec §3's five steps "
+                            "in order, with authored text resolved to one language "
+                            "(?language=en|he, defaulting to the caller's profile) and prose "
+                            "pre-rendered as `*_html`. Writes to this URL use the authoring "
+                            "shape, which is what the author sent. The answer key "
+                            "(is_correct, correct_value, tolerance, expected_value, "
+                            "pass_tolerance) is omitted for non-staff callers, so grading "
+                            "happens server-side."
+                        ),
+                    },
+                    {
                         "path": "/sensorlab/api/schema/",
                         "methods": ["GET"],
                         "note": "this document",

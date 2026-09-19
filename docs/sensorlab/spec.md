@@ -378,6 +378,23 @@ later:
 4. **Live streaming is not REST at all.** Epic K's REST surface is only the
    session record; the frames are websockets. Nobody should be polling an
    endpoint at sensor rate.
+5. **The answer key never crosses the wire** (decided in SL-B2, and it
+   binds every epic after it). Which multiple-choice option is correct, a
+   numeric prediction's expected value and tolerance, and an experiment's
+   expected result are **not serialised at all** for a caller who is not
+   staff — not merely hidden by the interface.
+
+   The reason is §3's methodology rather than security. Predict only means
+   something if the student commits before seeing the answer, and a student
+   can open the JSON their own phone fetched; the ones most likely to look
+   are exactly the ones the step exists for. The same holds for Analysis:
+   `expected_value` is a published constant rather than a secret, but
+   handing it over before the capture turns "measure g" into "confirm g".
+
+   **The consequence, named here rather than discovered in Epic E:**
+   grading is server-side. The client cannot mark its own prediction or its
+   own result — which is what item 2 above already anticipated with "grade
+   this prediction" as a verb route.
 
 ---
 

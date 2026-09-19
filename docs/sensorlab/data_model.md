@@ -270,6 +270,11 @@ without destroying student history.
   rather than implicit "previous by `order`", so a track can branch later
   without a migration. This is what backs "unlocked content" in spec §8.
 
+`Lab.slug` is unique **site-wide**, not per track — tightened in SL-B2. It
+was per track here, which supports a nested URL; the API serves a flat
+`labs/<slug>/`, and a lab is the thing people link to and share (§5, spec
+§6). A shareable link that needs two slugs to be unambiguous is worse.
+
 Both carry a `published` manager alongside the default one (added in
 SL-B1). There is no staging site here — authoring happens against the live
 database — so "written" and "shown" have to be separate states, or a

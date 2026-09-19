@@ -51,7 +51,7 @@ runs pip), `env\Scripts\activate` for everything Python, and
 |---|---|---|
 | **A — Infrastructure and look and feel** | SL-A1 … SL-A5 | 🔵 in progress |
 | **C — Sensor access layer** | SL-C1 … SL-C2 | 🔵 in progress — spike passed |
-| B — Curriculum and authoring | SL-B1 … SL-B4 | 🔶 SL-B1 done |
+| B — Curriculum and authoring | SL-B1 … SL-B4 | 🔵 SL-B1, SL-B2 done |
 | D — The lab runner | tbd at gate | ⬜ |
 | E — Predict | tbd at gate | ⬜ |
 | F — Capture | tbd at gate | ⬜ |
@@ -590,16 +590,73 @@ formula that is a `kind` can be rendered differently in instrument mode,
 translated independently, and restyled later; a formula that is HTML inside
 a paragraph is frozen the day it is typed.
 
-### SL-B2 — The curriculum API ⬜
+### SL-B2 — The curriculum API ✅
 
-Marker: `sprsl9`
+Marker: `sprsl9` — 29 tests, all green.
 
-- [ ] Documented CRUD for all eight resources, nested where the shape calls
-      for it.
-- [ ] `GET /sensorlab/api/tracks/` — the track list.
-- [ ] `GET /sensorlab/api/labs/<slug>/` — one lab with **all five steps
-      assembled in a single response**, the endpoint Epic D's runner will
-      consume.
+- [x] Documented CRUD for all eight resources, on one shared permission rule
+      (`api/permissions.py`) rather than eight `permission_classes` lines
+      with one of them wrong. Signed-in people read, staff write — SL-B1's
+      admin-only authoring decision made enforceable instead of remembered.
+- [x] `GET /sensorlab/api/tracks/` — the track list, carrying each track's
+      labs and count so SL-B4's screen is one request, not one per row.
+- [x] `GET /sensorlab/api/labs/<slug>/` — one lab as **all five steps in a
+      single response**, the endpoint Epic D's runner consumes.
+- [x] Drafts are invisible to a student, including **inside a track** — the
+      leak a nested serializer introduces quietly, where the outer queryset
+      is filtered and the relation is not.
+- [x] `Lab.slug` tightened to unique site-wide (below).
+- [x] The schema listed all eight resources **with no edit to `schema.py`**,
+      which is the claim SL-A3 made when it built the schema off the router
+      registry. This is the sprint that tested it rather than repeating it.
+
+#### The decision: the answer key never crosses the wire
+
+`is_correct`, `correct_value`, `tolerance`, and the Analysis step's
+`expected_value` / `pass_tolerance` are **absent from the response** for any
+caller who is not staff — not hidden in the UI, not serialised at all.
+
+The Predict step is only worth having if the student commits before seeing
+the answer, and a student can open the JSON their own phone fetched. Hiding
+the answer in the interface hides nothing from anyone who thinks to look,
+and the people most likely to look are exactly the ones the step is for.
+
+The same reasoning reaches Analysis. `expected_value` is a published
+constant, not a secret — but handing it over before the capture turns
+"measure g" into "confirm g".
+
+**What this costs, stated now rather than discovered later:** grading has to
+happen server-side, in Epics E and G. The client cannot mark its own
+prediction or its own result. That is a real constraint on those epics and
+it is the price of the decision.
+
+#### `Lab.slug` is now unique site-wide
+
+The data model gave `Lab` a slug unique *within its track*; the backlog
+promised the flat URL `labs/<slug>/`. Those two cannot both be right —
+unique-per-track only supports a nested URL. Resolved in favour of the flat
+one: a lab is the thing people link to and share (spec §6), and a shareable
+link that needs two slugs to be unambiguous is a worse link.
+
+#### Two things reading found that the tests did not
+
+Both are the same shape as the seven appearance bugs in Epic A, and both
+were found by looking at output rather than by a red test.
+
+1. **`AnalysisConfig.explanation` was sent as raw Markdown** while the
+   `ContentBlock` bodies beside it in the same response arrived as rendered
+   `body_html`. A student would have read "the slope \*is\* g" with the
+   asterisks. Every assertion passed; none of them looked at that field. Now
+   `explanation_html`, with a guard asserting the general rule — authored
+   prose in this response ends in `_html` and carries no leftover emphasis —
+   rather than the one field.
+2. **Three resources paginated an unordered queryset.** pytest said so as a
+   `UnorderedObjectListWarning`, which nothing was reading. Both SQLite and
+   Postgres are free to return rows in any order, so page 2 could repeat a
+   row from page 1 or skip one. No test caught it because no test asked for
+   a second page. A warning that describes a wrong answer is a defect with a
+   politer tone. Fixed with `Meta.ordering`, plus a guard that every
+   paginated resource's model is ordered.
 
 ### SL-B3 — Free Fall, seeded once ⬜
 

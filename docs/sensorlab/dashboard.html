@@ -174,12 +174,18 @@
 
   <div class="sprint">
     <div class="sprint-head">
-      <div class="sprint-title">SL-B2 — The curriculum API <span>· sprsl9</span></div>
-      <span class="pill todo">not started</span>
+      <div class="sprint-title">SL-B2 — The curriculum API <span>· sprsl9 · 29 tests</span></div>
+      <span class="pill done">done</span>
     </div>
     <p class="sprint-desc">
-      CRUD for all eight resources, plus the two screen-shaped reads: the track list, and one lab with
-      all five steps assembled in a single response.
+      CRUD for all eight resources on one shared permission rule, plus the two screen-shaped reads:
+      the track list carrying its labs, and one lab as all five steps in a single response.
+      <b>The answer key never crosses the wire</b> — which choice is correct, the numeric answer and
+      the expected result are absent for anyone who is not staff, because a student can read the JSON
+      their own phone fetched. The cost, named now: grading happens server-side in Epics E and G.
+      SL-A3's schema listed all eight resources with no edit, as it claimed it would.
+      Two defects found by reading output rather than by a red test: an explanation sent as raw
+      Markdown beside rendered prose, and three resources paginating an unordered queryset.
     </p>
   </div>
 

@@ -252,7 +252,12 @@ class Lab(models.Model):
         SIGNAL_GENERATOR = "signal_generator", "Signal generator"
 
     track = models.ForeignKey(Track, on_delete=models.CASCADE, related_name="labs")
-    slug = models.SlugField(max_length=64)
+
+    #: Unique site-wide, not merely within its track (tightened in SL-B2).
+    #: `/sensorlab/api/labs/<slug>/` is a flat URL and a lab is the thing
+    #: people link to and share (spec §6); a shareable link that needs two
+    #: slugs to be unambiguous is a worse link.
+    slug = models.SlugField(max_length=64, unique=True)
     title_en = models.CharField(max_length=120)
     title_he = models.CharField(max_length=120, blank=True)
     summary_en = models.TextField(blank=True)
@@ -276,7 +281,6 @@ class Lab(models.Model):
 
     class Meta:
         ordering = ("order", "slug")
-        unique_together = ("track", "slug")
 
     def __str__(self):
         return f"{self.track.title_en} — {self.title_en}"
@@ -421,6 +425,10 @@ class ExperimentConfig(models.Model):
     instructions = bilingual("instructions")
 
     class Meta:
+        # Ordered because paginating an unordered queryset can repeat or skip
+        # rows between pages — pytest warned about exactly that in SL-B2, and
+        # a warning describing a wrong answer is a defect, not noise.
+        ordering = ("lab_id",)
         verbose_name = "experiment configuration"
 
     def __str__(self):
@@ -451,6 +459,7 @@ class SensorRequirement(models.Model):
     )
 
     class Meta:
+        ordering = ("config_id", "sensor")
         unique_together = ("config", "sensor")
 
     def __str__(self):
@@ -488,6 +497,7 @@ class AnalysisConfig(models.Model):
     explanation = bilingual("explanation")
 
     class Meta:
+        ordering = ("lab_id",)
         verbose_name = "analysis configuration"
 
     def __str__(self):
