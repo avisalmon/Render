@@ -2466,9 +2466,14 @@ That phrase appears in the brief and **nowhere in the spec**: it was never
 accepted and never refused, it simply never got written down. It is a privacy
 question as much as a feature one.
 
-**Q8, פתיחת תכנים ומשימות by programme staff**, is still undecided and is
-the largest unbuilt capability in her brief. Today staff open no content inside
-מט״צים; babook's studio does it, and nothing here surfaces that.
+**Q8, פתיחת תכנים ומשימות by programme staff**, was decided on 2026-09-20 and
+the answer is that it never gets built. Avi: "content is created only in babook.
+Matazim utilize them. If matazim wants new content they need to ask and hope
+babook will implement." So the largest unbuilt capability in her brief is
+unbuilt on purpose. babook owns the content; מט״צים owns the exposure, which
+is REQ-M.146 and nothing more. The cost he took with it: the programme cannot
+fix its own teaching material, and a gap in it is a request to another team
+rather than an afternoon's work.
 
 **Two HELD requirements are now unblocked.** REQ-M.5f (public counters) was held
 "until something computes it" — students, leaders, schools, events and now
@@ -2555,7 +2560,7 @@ REQ-M.12a, superseded by REQ-M.76 and held on purpose.
 
 What is still not built is not in the spec at all, and is recorded in SPR-M.37:
 Litala's צפייה בכל תלמידי בית הספר, which was never accepted or refused, and
-Q8's authoring surface, which is undecided.
+Q8's authoring surface, which was refused on 2026-09-20.
 
 ## SPR-M.39 — The review's first four  `DONE 2026-09-14`
 
