@@ -11,6 +11,21 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 
 from . import conf
 
+# ACT-Z.15 (2026-09-19, Avi: "it needs to allow images from phone, real
+# camera and files"): an iPhone's camera roll is HEIC, and Pillow cannot
+# open HEIC on its own -- every such upload used to die at `image.load()`
+# below with "choose JPEG in the share sheet", which is the one thing a
+# person picking a photo at a party will not do. `pillow-heif` teaches
+# Pillow the format. Guarded so a build without the wheel still serves
+# JPEG/PNG/WebP and refuses HEIC with the old message, rather than 500.
+try:
+    from pillow_heif import register_heif_opener
+
+    register_heif_opener()
+    HEIF_SUPPORTED = True
+except ImportError:   # pragma: no cover - only on a build missing the wheel
+    HEIF_SUPPORTED = False
+
 ACCEPTED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"}
 
 

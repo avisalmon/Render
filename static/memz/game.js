@@ -166,9 +166,16 @@
       '<div class="memz-code-display">' + esc(state.code) + "</div>" +
       '<img class="memz-qr" src="/memz/s/' + encodeURIComponent(state.code) + '/qr.png" width="160" height="160" alt="קוד QR להצטרפות">' +
       '<p class="memz-fineprint">שתפו את הקוד, את הקישור או את קוד ה-QR עם חברים.</p>' +
+      // ACT-Z.15: a real link, not a window.open() -- inside an installed
+      // PWA, and in more than one phone browser, a popup from a click is
+      // blocked or lands on wa.me's "continue to chat" page instead of
+      // the app. A link to wa.me is a universal link WhatsApp itself
+      // claims, so it just opens. The click handler below upgrades it to
+      // the native share sheet where the browser has one.
       (screenMode ? "" :
-        '<button type="button" class="memz-btn memz-btn--secondary memz-btn--wide" data-whatsapp-share-btn>' +
-        "שיתוף בוואטסאפ 💬</button>") +
+        '<a class="memz-btn memz-btn--secondary memz-btn--wide" data-whatsapp-share-btn href="' +
+        esc(whatsappInviteUrl(state.code)) + '" target="_blank" rel="noopener">' +
+        "שיתוף בוואטסאפ 💬</a>") +
       '<ul class="memz-player-list">' + state.players.map(playerRow).join("") + "</ul>" +
       (isHost
         ? '<button class="memz-btn memz-btn--primary memz-btn--wide" data-start-btn' + (canStart ? "" : " disabled") + ">" +
@@ -184,13 +191,31 @@
       });
     }
     var whatsappBtn = root.querySelector("[data-whatsapp-share-btn]");
-    if (whatsappBtn) {
-      whatsappBtn.addEventListener("click", function () {
-        var joinUrl = window.location.origin + "/memz/join/" + encodeURIComponent(state.code) + "/";
-        var text = "בואו נשחק memz! קוד החדר: " + state.code + "\n" + joinUrl;
-        window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank", "noopener");
+    if (whatsappBtn && navigator.share) {
+      // The phone's own share sheet: WhatsApp is right there, and so is
+      // everything else, and it works inside an installed PWA. A user
+      // who dismisses it gets nothing else thrown at them; a browser
+      // that refuses the call for any other reason falls back to the
+      // link the anchor already carries.
+      whatsappBtn.addEventListener("click", function (e) {
+        e.preventDefault();
+        var invite = inviteMessage(state.code);
+        navigator.share({ title: "memz", text: invite.text, url: invite.url }).catch(function (err) {
+          if (err && err.name === "AbortError") return;
+          window.location.href = whatsappInviteUrl(state.code);
+        });
       });
     }
+  }
+
+  function inviteMessage(code) {
+    var url = window.location.origin + "/memz/join/" + encodeURIComponent(code) + "/";
+    return { url: url, text: "בואו נשחק memz! קוד החדר: " + code };
+  }
+
+  function whatsappInviteUrl(code) {
+    var invite = inviteMessage(code);
+    return "https://wa.me/?text=" + encodeURIComponent(invite.text + "\n" + invite.url);
   }
 
   // 2026-09-16 QA fix (Avi, live-testing the real game): captioning polls

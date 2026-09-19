@@ -42,15 +42,15 @@
 <section id="my-bank">
   <h2 class="memz-field-label" data-bank-count>{% trans "התמונות שלי" %} ({{ own_images|length }}/{{ upload_limit }})</h2>
 
-  <form data-upload-form class="memz-card memz-form">
-    <label class="memz-field">
-      <span>{% trans "העלאת תמונות" %}</span>
-      <input class="memz-input" type="file" name="file" accept="image/*" multiple data-upload-input>
-    </label>
+  {# ACT-Z.15: the same camera/gallery uploader as the home screen and the #}
+  {# lobby (window.memz.mountUploader), instead of the browser's own       #}
+  {# English "Choose Files" control. profile.js mounts it and keeps this  #}
+  {# page's extra behaviour: the new thumbnail and the count.             #}
+  <div data-upload-form class="memz-card memz-form">
+    <span class="memz-field-label">{% trans "העלאת תמונות" %}</span>
+    <div data-profile-uploader></div>
     <p class="memz-fineprint">{% trans "תמונות שמעלים עשויות להוצג לשחקנים אחרים במשחקים שמצטרפים אליהם. אל תעלו תמונות של אנשים אחרים, סלבריטאים, או ממים קיימים — רק מה שנוח לכם שאחרים יראו." %}</p>
-    <p class="memz-error" data-upload-error hidden></p>
-    <button type="button" class="memz-btn memz-btn--primary memz-btn--wide" data-upload-submit>{% trans "העלאה" %}</button>
-  </form>
+  </div>
 
   {% if own_images %}
   <ul class="memz-thumb-grid" data-bank-grid>

@@ -159,14 +159,26 @@
     container.dataset.uploaderMounted = "1";
     options = options || {};
 
-    var label = options.label || "הוספת תמונות משלכם";
+    // ACT-Z.15 (Avi: "it needs to allow images from phone, real camera
+    // and files"): two real buttons in the house style, each driving a
+    // hidden file input, instead of the browser's own "Choose Files"
+    // control. The camera input carries `capture`, which is what makes a
+    // phone open the camera rather than a file browser; the gallery input
+    // is `multiple`, which the camera one must not be (with `multiple`
+    // set, iOS drops the camera option from its sheet). Picking is the
+    // whole gesture: the upload starts on `change`, no second tap.
     container.innerHTML =
-      '<input class="memz-input memz-uploader-input" type="file" accept="image/*" multiple data-uploader-input>' +
-      '<button type="button" class="memz-btn memz-btn--secondary memz-btn--wide" data-uploader-submit>' + label + "</button>" +
+      '<input type="file" accept="image/*" capture="environment" data-uploader-camera hidden>' +
+      '<input type="file" accept="image/*" multiple data-uploader-gallery hidden>' +
+      '<div class="memz-uploader-buttons">' +
+      '<button type="button" class="memz-btn memz-btn--secondary" data-uploader-take>מצלמים 📷</button>' +
+      '<button type="button" class="memz-btn memz-btn--secondary" data-uploader-pick>מהגלריה</button>' +
+      "</div>" +
       '<p class="memz-fineprint" data-uploader-status hidden></p>';
 
-    var input = container.querySelector("[data-uploader-input]");
-    var button = container.querySelector("[data-uploader-submit]");
+    var cameraInput = container.querySelector("[data-uploader-camera]");
+    var galleryInput = container.querySelector("[data-uploader-gallery]");
+    var buttons = container.querySelectorAll("button");
     var status = container.querySelector("[data-uploader-status]");
 
     function say(text) {
@@ -174,14 +186,18 @@
       status.hidden = !text;
     }
 
-    button.addEventListener("click", async function () {
+    function setBusy(busy) {
+      buttons.forEach(function (b) { b.disabled = busy; });
+    }
+
+    async function uploadAll(input) {
       var files = Array.prototype.slice.call(input.files || []);
-      if (!files.length) { input.click(); return; }
-      button.disabled = true;
+      if (!files.length) return;
+      setBusy(true);
       var done = 0;
       var failed = 0;
       for (var i = 0; i < files.length; i++) {
-        say("מעלים " + (i + 1) + " מתוך " + files.length + "...");
+        say(files.length === 1 ? "מעלים..." : "מעלים " + (i + 1) + " מתוך " + files.length + "...");
         var body = new FormData();
         body.append("file", files[i]);
         try {
@@ -195,7 +211,7 @@
         }
       }
       input.value = "";
-      button.disabled = false;
+      setBusy(false);
       if (!failed) {
         // Rule 6.4.1: an upload is not usable until moderation passes it,
         // so "uploaded" is the honest word here, not "added to the game".
@@ -203,7 +219,12 @@
       } else if (done) {
         say(done + " נוספו, " + failed + " לא עברו.");
       }
-    });
+    }
+
+    container.querySelector("[data-uploader-take]").addEventListener("click", function () { cameraInput.click(); });
+    container.querySelector("[data-uploader-pick]").addEventListener("click", function () { galleryInput.click(); });
+    cameraInput.addEventListener("change", function () { uploadAll(cameraInput); });
+    galleryInput.addEventListener("change", function () { uploadAll(galleryInput); });
   }
 
   window.memz = {

@@ -19,26 +19,48 @@ def _lobby_world():
     return session, host
 
 
-_SPY_ON_WINDOW_OPEN_JS = (
-    "window.__openedUrls = []; "
-    "window.open = function (url) { window.__openedUrls.push(url); return null; };"
+# ACT-Z.15 (2026-09-19, Avi: "the share game on whatsapp is not working
+# well"): the button used to be a window.open() on a wa.me URL, which an
+# installed PWA and several phone browsers block or bounce to wa.me's
+# "continue to chat" page. It is now a real <a href> to wa.me (a universal
+# link WhatsApp claims), upgraded on click to the phone's own share sheet
+# wherever `navigator.share` exists. Two spies: one records what the share
+# sheet was handed, the other stands in for a browser with no share sheet.
+_SPY_ON_SHARE_JS = (
+    "window.__shared = []; "
+    "navigator.share = function (data) { window.__shared.push(data); return Promise.resolve(); };"
 )
+_NO_SHARE_SHEET_JS = "Object.defineProperty(navigator, 'share', { value: undefined, configurable: true });"
+
+
+def _lobby_page(browser, live_server, extra_init_js):
+    session, host = _lobby_world()
+    context = browser.new_context(viewport=PHONE, device_scale_factor=2, is_mobile=True, has_touch=True)
+    context.add_init_script(
+        "localStorage.setItem(%r, %r);" % (f"memz.player.{session.code}", host.guest_token) + extra_init_js
+    )
+    page = context.new_page()
+    page.goto(f"{live_server.url}/memz/s/{session.code}/", wait_until="domcontentloaded")
+    page.wait_for_timeout(400)
+    return context, page, session
 
 
 @pytest.fixture
 def _phone_page(browser, live_server, db):
     pytest.importorskip("playwright.sync_api")
-    session, host = _lobby_world()
-    context = browser.new_context(viewport=PHONE, device_scale_factor=2, is_mobile=True, has_touch=True)
-    context.add_init_script(
-        "localStorage.setItem(%r, %r);" % (f"memz.player.{session.code}", host.guest_token)
-        + _SPY_ON_WINDOW_OPEN_JS
-    )
-    page = context.new_page()
-    page.goto(f"{live_server.url}/memz/s/{session.code}/", wait_until="domcontentloaded")
-    page.wait_for_timeout(400)
+    context, page, session = _lobby_page(browser, live_server, _SPY_ON_SHARE_JS)
     yield page, session
     context.close()
+
+
+def _assert_is_a_real_invite(url_text, session):
+    from urllib.parse import parse_qs, unquote, urlsplit
+
+    parts = urlsplit(url_text)
+    assert parts.scheme == "https" and parts.netloc == "wa.me"
+    text = unquote(parse_qs(parts.query)["text"][0])
+    assert session.code in text
+    assert f"/memz/join/{session.code}/" in text
 
 
 def test_the_lobby_offers_a_whatsapp_share_button(_phone_page):
@@ -47,20 +69,37 @@ def test_the_lobby_offers_a_whatsapp_share_button(_phone_page):
     assert btn.count() == 1
 
 
-def test_the_whatsapp_button_opens_a_prefilled_invite_with_the_real_code_and_join_link(_phone_page):
-    from urllib.parse import parse_qs, unquote, urlsplit
+def test_the_whatsapp_button_is_a_real_link_to_a_prefilled_invite(_phone_page):
+    """The anchor itself carries the invite, so it works with no script
+    at all and inside an installed PWA where a popup would be blocked."""
+    page, session = _phone_page
+    href = page.locator("[data-whatsapp-share-btn]").get_attribute("href")
+    assert page.locator("[data-whatsapp-share-btn]").evaluate("el => el.tagName") == "A"
+    _assert_is_a_real_invite(href, session)
 
+
+def test_on_a_phone_with_a_share_sheet_the_button_opens_it_with_the_join_link(_phone_page):
     page, session = _phone_page
     page.click("[data-whatsapp-share-btn]")
-    page.wait_for_timeout(100)
-    opened = page.evaluate("window.__openedUrls")
-    assert len(opened) == 1
+    page.wait_for_timeout(150)
+    shared = page.evaluate("window.__shared")
+    assert len(shared) == 1, "the native share sheet was not opened"
+    assert shared[0]["url"].endswith(f"/memz/join/{session.code}/")
+    assert session.code in shared[0]["text"]
+    # And it did not *also* navigate away (the anchor's default was suppressed).
+    assert f"/memz/s/{session.code}/" in page.url
 
-    parts = urlsplit(opened[0])
-    assert parts.scheme == "https" and parts.netloc == "wa.me"
-    text = unquote(parse_qs(parts.query)["text"][0])
-    assert session.code in text
-    assert f"/memz/join/{session.code}/" in text
+
+def test_without_a_share_sheet_the_link_simply_is_the_invite(browser, live_server, db):
+    pytest.importorskip("playwright.sync_api")
+    context, page, session = _lobby_page(browser, live_server, _NO_SHARE_SHEET_JS)
+    try:
+        assert page.evaluate("typeof navigator.share") == "undefined"
+        href = page.locator("[data-whatsapp-share-btn]").get_attribute("href")
+        _assert_is_a_real_invite(href, session)
+        assert page.locator("[data-whatsapp-share-btn]").get_attribute("target") == "_blank"
+    finally:
+        context.close()
 
 
 def test_the_big_screen_lobby_never_offers_the_whatsapp_button(browser, live_server, db):

@@ -832,6 +832,28 @@ unnoticed until now.
 
 ---
 
+## ACT-Z.15 — The phone's camera, its HEIC photos, and a WhatsApp button that actually opens WhatsApp `DONE (dev), 2026-09-19`
+
+Avi, minutes after SPR-Z.11 went live: "It needs to allow images from
+phone, real camera and files. Also the share game on whatsapp is not
+working well."
+
+| Feature | Description | Spec | Status |
+| --- | --- | --- | --- |
+| ACT-Z.15.1 | The uploader was the browser's own "Choose Files" control | Rule 6.2.6 | DONE — two real buttons in the house style, "מצלמים" and "מהגלריה", each driving a hidden file input. The camera one carries `capture="environment"` (what makes a phone open the camera rather than a file browser) and is deliberately *not* `multiple`, since with `multiple` set iOS drops the camera option from its sheet; the gallery one is `multiple`. Picking is the whole gesture: the upload starts on `change`, no second tap. Same control on the home screen, the lobby and the profile (the profile keeps its own thumbnail row and count on top, via `onUploaded`) |
+| ACT-Z.15.2 | An iPhone's camera roll is HEIC, and every such upload was refused | Rule 6.2.1 | DONE — Pillow can't open HEIC by itself, so the server died at `image.load()` with "choose JPEG in the share sheet", which nobody at a party will do. `pillow-heif` (ships its own libheif in the wheel) now registers the format at import; guarded so a build without it degrades to the old refusal rather than a 500. Stored as a clean JPEG like everything else |
+| ACT-Z.15.3 | The WhatsApp button was a `window.open()` on a wa.me URL | Rule 4.3.4 | DONE — inside an installed PWA, and in more than one phone browser, a popup from a click is blocked or lands on wa.me's "continue to chat" web page instead of the app. The button is now a real `<a href>` to wa.me (a universal link WhatsApp itself claims, so it just opens), upgraded on click to the phone's own share sheet wherever `navigator.share` exists — WhatsApp is right there, and so is everything else, and it works in a PWA. A dismissed sheet does nothing further; a refused call falls back to the link |
+| ACT-Z.15.4 | Tests | §12.8 | DONE — `test_spr_z_11.py`: a real HEIC file (written by the same plugin) uploads to 201 and is stored as a 640×480 JPEG; a signed-in home screen carries the camera input with `capture` and without `multiple`, the gallery input with `multiple`, and no visible raw file input. `test_act_z_6.py` rewritten: the button is an `<a>` whose href is a real wa.me invite with the code and join link; with a share sheet present it opens that with the join URL and does not navigate away; without one, the link is the invite |
+
+**Sprint notes.** Both are the kind of thing a screenshot can't show and a
+real phone shows in one tap: the desktop test browser has a file dialog,
+not a camera, and opens wa.me happily. Worth writing down as a standing
+check for anything on this app that touches the camera, the share sheet
+or a file input: the phone is the only test that counts, and Avi is the
+one holding it.
+
+---
+
 ## Not in v1 (spec §13)
 
 Payments, AI captions, English UI, GIF and video memes, free-position text

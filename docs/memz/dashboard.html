@@ -79,8 +79,8 @@
 
   <div class="stat-row">
     <div class="stat"><div class="n">7 / 7 + 13</div><div class="l">Sprints done</div></div>
-    <div class="stat"><div class="n">65 + 60</div><div class="l">Features done</div></div>
-    <div class="stat"><div class="n">324</div><div class="l">Tests</div></div>
+    <div class="stat"><div class="n">65 + 64</div><div class="l">Features done</div></div>
+    <div class="stat"><div class="n">328</div><div class="l">Tests</div></div>
     <div class="stat"><div class="n">Last: SPR-Z.7</div><div class="l">Deployed</div></div>
   </div>
   <div class="bar"><div style="width:100%"></div></div>
@@ -134,6 +134,7 @@
     <p class="sprint-desc">Avi: "the images of the memes are boring. I want every signed-in user to upload his own images, and whenever he's playing a random picture will be chosen from his pictures, as well as all the other banks." Most of it turned out to be built and unreachable. <b>The default changed:</b> a new game now draws from `mix` — the public bank plus every seated signed-in player's own uploads — instead of the public bank alone. The engine could deal players' photos since SPR-Z.9, but only if the host went and picked a setting, so in practice nobody's ever reached a table. <b>A real bug under the label:</b> `mix` didn't include the public bank at all; with no packs chosen it queried own-uploads-only, so the screen promised "my photos + the public bank" and a room where nobody had uploaded got an empty pool. <b>Limits raised on Avi's call:</b> personal photos up to 50% of a game (was 30%), and 30 uploads on a free account (was 5). <b>A clear way in:</b> an upload card on the home screen and another in the lobby — the moment everyone is sitting together — sharing one implementation, with the lobby's copy deliberately outside the poll-rebuilt game root so a half-made file selection survives. A guest-hosted room is `mix` too now: a player's photos follow the player, not the host. 7 features, 11 tests.</p>
   </div>
 
+  <div class="open-item"><b>ACT-Z.15</b><span>Minutes after SPR-Z.11 went live: "it needs to allow images from phone, real camera and files. Also the share game on whatsapp is not working well." The uploader was the browser's own English "Choose Files" widget; it is now two buttons, camera (with `capture`, never `multiple`, or iOS hides the camera) and gallery. An iPhone's camera roll is HEIC, which Pillow can't open alone, so every such upload was refused with "choose JPEG in the share sheet"; `pillow-heif` now reads it. The WhatsApp button was a `window.open()` that an installed PWA blocks; it is a real wa.me link now, upgraded to the phone's share sheet where there is one.</span></div>
   <div class="section-label">ACT items, closed this sprint</div>
   <div class="open-item"><b>ACT-Z.1</b><span>Real bank images: AI-illustrated batch + reviewed real photos, both scoped to non-public-figures (spec §14.2, Rule 6.1.1). A separate request to use real Israeli celebrities or existing memes was declined — publicity rights and copyrighted templates are a different, higher bar than anonymous stock photos.</span></div>
   <div class="open-item"><b>ACT-Z.4</b><span>Hebrew caption tone reviewed — the original 40 held up, expanded to 97 in the same voice. English deck deferred, Avi's own call.</span></div>

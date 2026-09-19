@@ -19,6 +19,8 @@ from django.contrib.auth.models import User
 from django.core.files.base import ContentFile
 from PIL import Image
 
+from tests.test_memz_screens import PHONE, browser  # noqa: F401 -- the shared phone fixture
+
 pytestmark = [pytest.mark.sprz11, pytest.mark.django_db]
 
 
@@ -257,6 +259,73 @@ def test_an_upload_is_tagged_to_its_owner_and_private(client, media_tmp):
 
     client.force_login(other)
     assert client.get(f"/memz/api/images/{image.pk}/").status_code == 404
+
+
+# ------------------------------------ ACT-Z.15: a phone's camera and files
+
+
+def test_an_iphone_heic_photo_is_accepted_and_stored_as_a_clean_jpeg(client, media_tmp):
+    """ACT-Z.15 (Avi: "it needs to allow images from phone, real camera
+    and files"). An iPhone's camera roll is HEIC, and Pillow can't open it
+    alone: every such upload used to be refused with "choose JPEG in the
+    share sheet". The HEIC bytes here are real, written by the same
+    plugin that now reads them."""
+    from PIL import Image as PILImage
+
+    from memz import uploads
+    from memz.models import MemeImage
+
+    assert uploads.HEIF_SUPPORTED, "pillow-heif is not installed in this environment"
+    buf = io.BytesIO()
+    PILImage.new("RGB", (640, 480), (120, 60, 200)).save(buf, format="HEIF", quality=80)
+    heic = ContentFile(buf.getvalue(), name="IMG_0042.HEIC")
+    heic.content_type = "image/heic"
+
+    user = _user("iphone")
+    client.force_login(user)
+    r = client.post("/memz/api/images/", {"file": heic})
+    assert r.status_code == 201, r.content
+
+    image = MemeImage.objects.get(pk=r.json()["id"])
+    with PILImage.open(image.file) as stored:
+        assert stored.format == "JPEG", "the upload was not re-encoded to the bank's own format"
+        assert stored.size == (640, 480)
+
+
+def test_the_uploader_offers_the_camera_and_the_gallery_as_real_buttons(browser, live_server, db, media_tmp):
+    """The browser's own "Choose Files" control is gone. Two hidden file
+    inputs stand behind two buttons in the house style: the camera one
+    carries `capture` (what makes a phone open the camera rather than a
+    file browser) and is *not* `multiple` (with it set, iOS drops the
+    camera option from its sheet); the gallery one is `multiple`."""
+    pytest.importorskip("playwright.sync_api")
+    from tests.test_memz_screens import PHONE
+
+    _user("shooter")
+    context = browser.new_context(viewport=PHONE, device_scale_factor=2, is_mobile=True, has_touch=True)
+    page = context.new_page()
+    try:
+        page.goto(f"{live_server.url}/memz/login/", wait_until="domcontentloaded")
+        page.fill('input[name="username"]', "shooter@example.com")
+        page.fill('input[name="password"]', "x")
+        page.click('form button[type="submit"]')
+        page.wait_for_timeout(400)
+        page.goto(f"{live_server.url}/memz/", wait_until="domcontentloaded")
+        page.wait_for_timeout(300)
+
+        camera = page.locator("[data-home-uploader] input[data-uploader-camera]")
+        gallery = page.locator("[data-home-uploader] input[data-uploader-gallery]")
+        assert camera.count() == 1 and gallery.count() == 1
+        assert camera.get_attribute("capture") is not None, "the camera input has no `capture`"
+        assert camera.get_attribute("multiple") is None, "the camera input is `multiple`, which hides the camera on iOS"
+        assert gallery.get_attribute("multiple") is not None
+        assert page.locator("[data-home-uploader] input[type=file]:visible").count() == 0, (
+            "a raw file input is still visible"
+        )
+        assert page.locator("[data-home-uploader] [data-uploader-take]").count() == 1
+        assert page.locator("[data-home-uploader] [data-uploader-pick]").count() == 1
+    finally:
+        context.close()
 
 
 def test_the_upload_quota_is_enforced_at_the_new_limit(client, media_tmp, settings):

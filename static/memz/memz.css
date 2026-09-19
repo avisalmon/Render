@@ -740,9 +740,16 @@ section[id] { scroll-margin-top: 16px; margin-bottom: 32px; }
   gap: 10px;
 }
 
-.memz-uploader-input {
-  padding: 10px;
-  font-size: 14px;
+/* ACT-Z.15: camera and gallery, side by side, thumb-sized; one under the
+   other on a narrow phone. */
+.memz-uploader-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 360px) {
+  .memz-uploader-buttons { grid-template-columns: 1fr; }
 }
 
 /* The line the author of the meme on screen gets instead of buttons. */

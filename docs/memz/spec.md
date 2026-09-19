@@ -231,6 +231,21 @@ button, opening `https://wa.me/?text=...` with the room code and the
 whatsapp," not the generic Web Share API sheet F-Z.3.5 originally
 specced.
 
+**Amended 2026-09-19 (ACT-Z.15), Avi: "the share game on whatsapp is not
+working well."** The button was a `window.open()` on that URL, which an
+installed PWA and more than one phone browser block or bounce to wa.me's
+"continue to chat" web page rather than the app. It is now a real
+`<a href>` to the same wa.me URL (a universal link WhatsApp itself claims,
+so it opens the app directly, no popup involved) — and, where the phone
+has a share sheet (`navigator.share`), a tap opens that instead, with the
+join link. This partly reverses the "not the generic sheet" choice above,
+on purpose: the sheet is the one path that works inside a PWA on both
+platforms, WhatsApp is the first thing on it, and the direct link is what
+Avi reported broken. The button keeps its WhatsApp name and its WhatsApp
+link; the sheet is an upgrade on tap, not a replacement. If the direct
+link turns out to be enough on Avi's own phone, dropping the sheet is a
+one-line change.
+
 Rule 4.3.5 (ACT-Z.6, added 2026-09-16): a QR code of the join URL,
 `GET /memz/s/<code>/qr.png` (the `qrcode` library, already a project
 dependency via matazim's own invite/join QR endpoints — same shape, a
@@ -594,7 +609,13 @@ are up to half of what a game deals; 50 paid; a guest cannot upload at
 all). JPEG, PNG, WebP; up to 8 MB per file; multiple files per upload
 action, from camera or gallery. HEIC from iPhones is accepted if Pillow
 can open it on the server, else refused with a message that says "choose
-JPEG in the share sheet".
+JPEG in the share sheet". **From ACT-Z.15 (2026-09-19) it can:**
+`pillow-heif` is a project dependency and registers the format at import,
+so an iPhone's camera roll uploads like anything else (stored as a clean
+JPEG, Rule 6.2.2). Before that, every HEIC upload was refused with the
+"choose JPEG" message — which nobody picking a photo at a party will act
+on — and that, with the raw file control below, is what Avi meant by "it
+needs to allow images from phone, real camera and files."
 
 Rule 6.2.6 (SPR-Z.11, 2026-09-19): uploading is offered **on the home
 screen and in the lobby**, not only in the profile's bank tab — Avi's
@@ -604,6 +625,16 @@ lobby controls are one implementation (`window.memz.mountUploader`) so
 they cannot drift apart; the profile keeps its own fuller bank manager on
 top of the same endpoint (thumbnails, moderation badges, delete), since
 that screen is for tending the bank, not for adding to it in a hurry.
+**Amended 2026-09-19 (ACT-Z.15):** the control is two buttons, "מצלמים"
+and "מהגלריה", each driving a hidden file input — never the browser's own
+"Choose Files" widget, which is unstyled, in English, and on some phones
+opens a document browser with no camera in sight. The camera input
+carries `capture="environment"` (what makes a phone open the camera) and
+is deliberately not `multiple`, since with `multiple` set iOS drops the
+camera option from its sheet; the gallery input is `multiple`. Picking
+is the whole gesture: the upload starts on `change`, with no second tap.
+The profile uses the same control, mounting it with a callback for the
+thumbnail row and the count that only that page has.
 The lobby's copy deliberately lives *outside*
 the poll-rebuilt game root: everything inside it is re-rendered from the
 state every couple of seconds, which would throw away a half-made file

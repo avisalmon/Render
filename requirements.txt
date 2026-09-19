@@ -9,6 +9,9 @@ Pillow>=10.0,<12
 # to know exactly which characters it can draw, so a caption's emoji get
 # dropped before rendering instead of baking in a broken-glyph box.
 fonttools>=4.50,<5
+# memz (ACT-Z.15, 2026-09-19): iPhone camera-roll photos are HEIC, which
+# Pillow cannot open by itself. Ships its own libheif in the wheel.
+pillow-heif>=0.16,<1
 qrcode>=7,<9
 # Pinned exactly (2026-09-16), not a range: a loose ">=0.6,<1" let dev and
 # production resolve different builds, which rendered the same Hebrew
