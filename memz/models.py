@@ -64,6 +64,21 @@ class MemeImage(models.Model):
     file = models.ImageField(upload_to="memz/images/%Y/%m/")
     title = models.CharField(max_length=120, blank=True)
     owner = models.ForeignKey(USER, null=True, blank=True, on_delete=models.CASCADE, related_name="memz_images")
+    # SPR-W.2 (Rule 5.5.3): a photo taken in the room, during that one
+    # session's photo booth. It belongs to the evening, not to a bank:
+    # `dealing.pool_for` only ever offers it to this session, no screen
+    # lists it, and it dies with the session (CASCADE, and memz_cleanup
+    # deletes expired sessions). Null for every ordinary bank image, which
+    # is all of them outside this mode.
+    session = models.ForeignKey(
+        "Session", null=True, blank=True, on_delete=models.CASCADE, related_name="booth_images",
+    )
+    # Who pressed the shutter -- needed only to hold one player to their
+    # own share of the booth (Rule 5.5.2). Never shown: the photographer is
+    # as anonymous as the caption writer (Rule 4.7.1).
+    booth_taken_by = models.ForeignKey(
+        "Player", null=True, blank=True, on_delete=models.SET_NULL, related_name="booth_photos",
+    )
     visibility = models.CharField(max_length=8, choices=VISIBILITY, default=PRIVATE)
     moderation_status = models.CharField(max_length=8, choices=MODERATION, default=PENDING)
     moderation_note = models.TextField(blank=True)
@@ -171,12 +186,20 @@ class Topic(models.Model):
 class Session(models.Model):
     """One party session, from the moment a host opens it (spec §4)."""
 
-    LOBBY, PLAYING, FINISHED, ABANDONED = "lobby", "playing", "finished", "abandoned"
-    STATUSES = [(LOBBY, "lobby"), (PLAYING, "playing"), (FINISHED, "finished"), (ABANDONED, "abandoned")]
-    ACTIVE = (LOBBY, PLAYING)
+    # SPR-W.2 adds `booth`: the thirty seconds between the lobby and the
+    # first round in which the room photographs itself (spec §5.5).
+    LOBBY, BOOTH, PLAYING, FINISHED, ABANDONED = "lobby", "booth", "playing", "finished", "abandoned"
+    STATUSES = [
+        (LOBBY, "lobby"), (BOOTH, "booth"), (PLAYING, "playing"),
+        (FINISHED, "finished"), (ABANDONED, "abandoned"),
+    ]
+    ACTIVE = (LOBBY, BOOTH, PLAYING)
 
-    NORMAL, TOPICS, SAME_MEME, RELAXED = "normal", "topics", "same_meme", "relaxed"
-    GAME_MODES = [(NORMAL, "normal"), (TOPICS, "topics"), (SAME_MEME, "same_meme"), (RELAXED, "relaxed")]
+    NORMAL, TOPICS, SAME_MEME, RELAXED, PHOTO_BOOTH = "normal", "topics", "same_meme", "relaxed", "photo_booth"
+    GAME_MODES = [
+        (NORMAL, "normal"), (TOPICS, "topics"), (SAME_MEME, "same_meme"),
+        (RELAXED, "relaxed"), (PHOTO_BOOTH, "photo_booth"),
+    ]
     TYPED, CARDS = "typed", "cards"
     CAPTION_MODES = [(TYPED, "typed"), (CARDS, "cards")]
     VOTE, JUDGE = "vote", "judge"
@@ -187,7 +210,7 @@ class Session(models.Model):
     code = models.CharField(max_length=6)
     host_user = models.ForeignKey(USER, null=True, blank=True, on_delete=models.SET_NULL, related_name="memz_hosted")
     status = models.CharField(max_length=10, choices=STATUSES, default=LOBBY)
-    game_mode = models.CharField(max_length=10, choices=GAME_MODES, default=NORMAL)
+    game_mode = models.CharField(max_length=12, choices=GAME_MODES, default=NORMAL)   # 12: "photo_booth" (SPR-W.2)
     caption_mode = models.CharField(max_length=6, choices=CAPTION_MODES, default=TYPED)
     scoring_mode = models.CharField(max_length=6, choices=SCORING_MODES, default=VOTE)
     # SPR-Z.11: `mix` (everyone's own uploads + the public bank) is the
@@ -207,6 +230,18 @@ class Session(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     started_at = models.DateTimeField(null=True, blank=True)
     ended_at = models.DateTimeField(null=True, blank=True)
+    # SPR-W.2: when the photo booth's thirty seconds run out. Set only
+    # while `status == booth`; every client counts down to it the same
+    # way it counts down to a caption deadline (Rule 5.4.2).
+    booth_deadline = models.DateTimeField(null=True, blank=True)
+    # How many times the booth's clock ran out with too few photos to play
+    # (Rule 5.5.4). A stored count rather than one derived from comparing
+    # `booth_deadline` against `started_at + BOOTH_SECONDS`: that
+    # derivation is really a measurement of wall-clock time having passed,
+    # which is true in a room and false anywhere the clock is controlled.
+    # It reads as a nicety and is the trigger for the only way out of a
+    # booth that cannot fill itself (Rule 5.5.6), so it gets a real field.
+    booth_extensions = models.PositiveSmallIntegerField(default=0)
     expires_at = models.DateTimeField(null=True, blank=True)
     # "Play again" (spec Rule 4.8.1): the session this one was recreated
     # into, so a player's next poll here can find their new seat.
@@ -281,6 +316,13 @@ class Round(models.Model):
     caption_deadline = models.DateTimeField(null=True, blank=True)
     reveal_deadline = models.DateTimeField(null=True, blank=True)
     vote_deadline = models.DateTimeField(null=True, blank=True)
+    # SPR-W.5: when the round's result screen moves on by itself. Spec'd
+    # since SPR-Z.3 (`RESULT_AUTO_ADVANCE_SECONDS`) and never built, which
+    # is how a game ended up able to sit on a result screen forever
+    # whenever the host put their phone down -- the one place memz stalls
+    # with nothing on screen saying why. Set when the round finishes,
+    # cleared when it is left behind.
+    result_deadline = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["number"]

@@ -36,6 +36,15 @@ from .models import MemeImage, Player, Session, Submission, Topic
 PLAYER_STOCK_MAX_SHARE = 0.50
 
 
+def booth_photo_count(session, player=None):
+    """How many photos this session's booth holds, or how many one player
+    contributed (SPR-W.2)."""
+    qs = MemeImage.objects.filter(session=session)
+    if player is not None:
+        qs = qs.filter(booth_taken_by=player)
+    return qs.count()
+
+
 def _seated_signed_in_user_ids(session):
     """Rule 6.5.3: a guest contributes nothing — uploading requires an
     account (Rule 6.2.1) — so this is exactly the seated players who
@@ -59,6 +68,14 @@ def pool_for(session):
     public bank and the query never included it."""
     base = Q(moderation_status=MemeImage.APPROVED)
     public = Q(owner__isnull=True, visibility=MemeImage.PUBLIC)
+
+    # SPR-W.2 (Rule 5.5.3): in photo-booth mode the evening's own photos are
+    # the entire pool. Not "as well as the bank" -- instead of it. Every meme
+    # that night is about somebody in the room, which is the whole mode, and
+    # it is also why these images never appear anywhere else: this is the
+    # only query that can reach them.
+    if session.game_mode == Session.PHOTO_BOOTH:
+        return MemeImage.objects.filter(base, session=session)
 
     if session.image_source == Session.PACKS and session.packs.exists():
         return MemeImage.objects.filter(base, packs__in=session.packs.all()).distinct()

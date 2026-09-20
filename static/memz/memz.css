@@ -740,6 +740,67 @@ section[id] { scroll-margin-top: 16px; margin-bottom: 32px; }
 .memz-rating-btn[disabled] { opacity: 0.45; }
 .memz-rating-btn--chosen[disabled] { opacity: 1; }
 
+/* SPR-W.1 (Rule 4.5.6): the tap is felt. The pressed button springs the
+   instant it's touched, before the server has said anything. */
+.memz-rating-btn--tapped {
+  animation: memz-rating-spring 0.32s cubic-bezier(0.2, 1.4, 0.4, 1) 1;
+}
+
+@keyframes memz-rating-spring {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+
+/* SPR-W.1 (Rule 4.5.7): how the room took the meme. A quiet tally while
+   people tap; a beat -- bigger, brighter, once -- in the slot's last two
+   seconds. Counts only, never who. */
+.memz-reaction {
+  margin: 10px 0 0;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--memz-ink);
+  transition: transform 0.25s ease, font-size 0.25s ease;
+}
+
+.memz-reaction--quiet { font-weight: 500; color: var(--memz-ink-soft); font-size: 14px; }
+
+.memz-reaction-face { font-size: 1.25em; vertical-align: -2px; }
+.memz-reaction-sep { color: var(--memz-ink-soft); margin: 0 8px; }
+
+.memz-reaction--beat {
+  font-size: 26px;
+  animation: memz-reaction-beat 0.6s cubic-bezier(0.2, 1.4, 0.4, 1) 1;
+}
+
+@keyframes memz-reaction-beat {
+  0% { transform: scale(0.8); opacity: 0.4; }
+  50% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+/* SPR-W.1 (F-W.1.5): how to play, in the lobby. Three short lines that
+   read as one card, not a manual. */
+.memz-howto {
+  margin: 14px 0 6px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--memz-card);
+  border: 1px solid var(--memz-line);
+  display: grid;
+  gap: 6px;
+}
+
+.memz-howto-line { margin: 0; font-size: 14px; line-height: 1.5; color: var(--memz-ink-soft); }
+.memz-howto-line b { color: var(--memz-ink); margin-inline-end: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .memz-rating-btn--tapped, .memz-reaction--beat { animation: none; }
+  .memz-reaction { transition: none; }
+}
+
 /* SPR-Z.11: the "add your own photos" card, on the home screen and in
    the lobby. Same shape in both, so it reads as one feature and not two. */
 .memz-upload-card {
@@ -790,11 +851,54 @@ section[id] { scroll-margin-top: 16px; margin-bottom: 32px; }
 
 .memz-busy { opacity: 0.5; pointer-events: none; }
 
+/* SPR-W.5: the podium was an inline-flow list, so a title badge sat in
+   the text stream beside the name and the score and crowded both -- the
+   review's "badges overlapping names and scores". Now each place is a
+   row: rank, then name with its title and the one line explaining it,
+   then the score, and nothing shares a line with anything it can push. */
 .memz-podium {
   margin: 0 0 18px;
-  padding: 0 0 0 20px;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   font-size: 18px;
-  line-height: 1.8;
+}
+
+.memz-podium li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  border: 2px solid var(--memz-line);
+  background: var(--memz-card);
+  line-height: 1.35;
+}
+
+.memz-podium-place {
+  flex: 0 0 auto;
+  min-width: 1.8em;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--memz-ink-soft);
+}
+
+.memz-podium-who { flex: 1 1 auto; min-width: 0; font-weight: 700; }
+
+.memz-podium-score {
+  flex: 0 0 auto;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.memz-title-note {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--memz-ink-soft);
 }
 
 /* ---- wider screens: the same column, a little more air ----------------- */
@@ -802,4 +906,424 @@ section[id] { scroll-margin-top: 16px; margin-bottom: 32px; }
 @media (min-width: 600px) {
   .memz-app { padding-top: 12px; }
   .memz-hero-title { font-size: 46px; }
+}
+
+/* SPR-W.3: the evening's two share cards on the podium. Each is a
+   server-rendered JPEG with its own share button under it, stacked rather
+   than side by side -- these are the things somebody is meant to look at
+   and decide to forward, and a thumbnail is not a decision. */
+.memz-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0 0 20px;
+}
+
+.memz-card-share {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.memz-card-share img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+  border: 3px solid var(--memz-line);
+  background: var(--memz-card);
+}
+
+/* SPR-W.2: the photo booth. The counts line carries the one number a
+   player checks repeatedly ("may I take another"), so it gets weight
+   rather than fineprint treatment. */
+.memz-booth-counts {
+  font-weight: 700;
+}
+
+/* ---- SPR-W.4: the TV show -------------------------------------------
+   Everything under .memz-tvmode is the big screen: a room looking at a
+   wall from four metres, not a thumb at 30cm. So the phone column is
+   released, the type is set in viewport units (a 55" TV and a 13" laptop
+   are the same layout at different sizes), and the meme is the largest
+   thing on screen rather than one block in a scrolling page. */
+.memz-tvmode .memz-app {
+  max-width: none;
+  padding: 0 clamp(16px, 2vw, 40px) clamp(8px, 1.5vh, 24px);
+}
+
+.memz-tvmode .memz-main {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+}
+
+.memz-tvmode .memz-footer,
+.memz-tvmode .memz-install-tip { display: none; }
+
+.memz-tv {
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(8px, 1.6vh, 22px);
+  text-align: center;
+}
+
+.memz-tv-kicker {
+  margin: 0;
+  font-size: clamp(14px, 1.7vh, 26px);
+  letter-spacing: 0.04em;
+  color: var(--memz-ink-soft);
+}
+
+.memz-tv-headline {
+  margin: 0;
+  font-size: clamp(26px, min(6.5vh, 8vw), 92px);
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+.memz-tv-timer {
+  margin: 0;
+  font-size: clamp(30px, min(7vh, 9vw), 96px);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.memz-tv-big {
+  margin: 0;
+  font-size: clamp(18px, 3vh, 44px);
+  font-weight: 700;
+}
+
+/* The reveal: the meme takes the screen, and a narrow rail beside it
+   carries the clock and the room's verdicts. On a portrait screen the
+   rail drops underneath instead of squeezing the picture. */
+.memz-tv--reveal {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(12px, 2vw, 40px);
+  width: 100%;
+}
+
+/* `flex: 1 1 0` not `1 1 auto`: sized from the space left over rather
+   than from the meme's own width, so the picture centres in what remains
+   instead of being pushed to one side with dead space on the other. */
+.memz-tv-stage {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+.memz-tv-meme {
+  max-width: 100%;
+  max-height: 84vh;
+  width: auto;
+  height: auto;
+  border-radius: 18px;
+  border: 4px solid var(--memz-line);
+  background: var(--memz-card);
+  animation: memz-tile-pop 320ms ease-out both;
+}
+
+.memz-tv-rail {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(8px, 1.8vh, 22px);
+}
+
+.memz-tv-hint {
+  margin: 0;
+  font-size: clamp(13px, 1.6vh, 22px);
+  color: var(--memz-ink-soft);
+}
+
+.memz-tv-reactions {
+  display: flex;
+  gap: clamp(8px, 1.2vw, 20px);
+}
+
+.memz-tv-reaction {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: clamp(6px, 1vh, 14px) clamp(8px, 1vw, 18px);
+  border-radius: 16px;
+  border: 3px solid var(--memz-line);
+  background: var(--memz-card);
+  opacity: 0.45;
+  transition: opacity 200ms ease;
+}
+
+.memz-tv-reaction.is-live { opacity: 1; border-color: var(--memz-accent); }
+.memz-tv-face { font-size: clamp(20px, 3.4vh, 46px); line-height: 1; }
+
+.memz-tv-reaction b {
+  font-size: clamp(18px, 3vh, 42px);
+  font-variant-numeric: tabular-nums;
+  display: block;
+}
+
+.memz-tv-count--bump { animation: memz-tv-bump 320ms ease-out; }
+
+@keyframes memz-tv-bump {
+  from { transform: scale(1.5); color: var(--memz-accent); }
+  to { transform: scale(1); }
+}
+
+/* The lobby: the join code is the single biggest thing in the room. */
+.memz-tv--lobby { gap: clamp(12px, 3vh, 40px); }
+
+/* An <h1> in the markup (the contract requires every screen to have a
+   heading, and on the lobby TV the code genuinely is the heading), so it
+   needs the browser's default h1 margin cleared. */
+.memz-tv-code {
+  margin: 0;
+  /* Sized from whichever axis is scarcer. A join code is four or five wide
+     glyphs plus letter-spacing, so sizing it from height alone overflows
+     the moment the screen is tall and narrow -- which is what happens the
+     first time somebody opens the big-screen view on a phone to see what
+     it looks like. Caught by the screen contract at 390px. */
+  font-size: clamp(40px, min(16vh, 19vw), 220px);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  max-width: 100%;
+}
+
+.memz-tv-qr { width: clamp(120px, 18vh, 240px); height: auto; }
+
+.memz-tv-players {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(6px, 1vh, 14px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.memz-tv-player {
+  padding: clamp(5px, 0.9vh, 12px) clamp(10px, 1.2vw, 20px);
+  border-radius: 999px;
+  border: 3px solid var(--memz-line);
+  background: var(--memz-card);
+  font-size: clamp(14px, 2.2vh, 30px);
+  font-weight: 700;
+}
+
+.memz-tv-progress {
+  width: min(70vw, 900px);
+  height: clamp(10px, 1.6vh, 22px);
+  border-radius: 999px;
+  background: var(--memz-line);
+  overflow: hidden;
+}
+
+.memz-tv-progress span {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--memz-accent);
+  transition: width 400ms ease;
+}
+
+/* The standings, which move (FLIP in game.js). */
+.memz-tv-ranks {
+  width: min(86vw, 1000px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(4px, 0.8vh, 12px);
+}
+
+.memz-tv-rank {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.2vw, 20px);
+  padding: clamp(6px, 1.1vh, 16px) clamp(10px, 1.4vw, 24px);
+  border-radius: 16px;
+  border: 3px solid var(--memz-line);
+  background: var(--memz-card);
+  font-size: clamp(16px, 2.8vh, 40px);
+  will-change: transform;
+}
+
+.memz-tv-rank.is-leader { border-color: var(--memz-yellow); }
+
+.memz-tv-rank-n {
+  flex: 0 0 auto;
+  min-width: 1.6em;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--memz-ink-soft);
+}
+
+.memz-tv-rank-name { flex: 1 1 auto; text-align: right; font-weight: 800; }
+
+.memz-tv-rank-title {
+  display: block;
+  font-size: 0.5em;
+  font-weight: 700;
+  color: var(--memz-ink-soft);
+}
+
+.memz-tv-rank-score {
+  flex: 0 0 auto;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.memz-tv-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(8px, 1vw, 18px);
+}
+
+.memz-tv-grid img {
+  max-height: 34vh;
+  width: auto;
+  border-radius: 14px;
+  border: 3px solid var(--memz-line);
+}
+
+.memz-tv-card {
+  max-height: 40vh;
+  width: auto;
+  border-radius: 16px;
+  border: 3px solid var(--memz-line);
+}
+
+/* Portrait or narrow: the reveal's rail goes under the meme rather than
+   stealing width from it. A laptop turned sideways, a projector in a
+   4:3 hall, and a phone someone opened the screen view on all land here. */
+@media (max-aspect-ratio: 1/1), (max-width: 760px) {
+  .memz-tv--reveal { flex-direction: column; }
+  .memz-tv-meme { max-height: 58vh; }
+  .memz-tv-rail { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .memz-tv-meme,
+  .memz-tv-count--bump { animation: none; }
+  .memz-tv-rank { transition: none !important; }
+}
+
+/* SPR-W.5: "תן לי רעיון" — three starters under the caption box. Chips,
+   not a list: each one is a 44px tap target that drops its text into the
+   textarea, where it is still editable. They are starters, not answers. */
+.memz-ideas {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.memz-idea {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 2px dashed var(--memz-line);
+  background: var(--memz-card);
+  color: var(--memz-ink);
+  font: inherit;
+  font-size: 15px;
+  text-align: right;
+  cursor: pointer;
+}
+
+.memz-idea:hover { border-style: solid; border-color: var(--memz-accent); }
+
+/* The pack picker (`packs` image source). The checkbox itself is ~13x13
+   CSS px by default, a third of Rule 11.1's 44 px, so the whole row is
+   the target: the label fills it, and the box is scaled up inside it.
+   This is the last control in the app that was still shipping at the
+   browser's default size, because the list only unfolds once `packs` is
+   chosen and no screen-contract row had ever reached it. */
+.memz-pack-row {
+  display: flex;
+  margin: 0 0 8px;
+  border-radius: 14px;
+  border: 2px solid var(--memz-line);
+  background: var(--memz-card);
+}
+
+.memz-pack-label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+/* The box itself is the control the phone guard probes, so widening the
+   row around it was not enough -- the guard checks the four edge
+   midpoints of a 44 px box centred on the input, and a native checkbox is
+   ~13 px. So the input is drawn by hand: a 48 px hit area (the app's own
+   --memz-tap, deliberately larger than the 44 px probe so the probe's
+   corners land inside it rather than on the label behind it) with a 24 px
+   square painted in the middle of it. */
+.memz-pack-label input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: var(--memz-tap);
+  height: var(--memz-tap);
+  flex: 0 0 auto;
+  margin: 0;
+  display: grid;
+  place-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.memz-pack-label input[type="checkbox"]::before {
+  content: "";
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  border: 2px solid var(--memz-ink-soft);
+  background: var(--memz-card);
+}
+
+.memz-pack-label input[type="checkbox"]:checked::before {
+  background: var(--memz-accent);
+  border-color: var(--memz-accent);
+  /* The "tick": the card colour punched back through the middle. No
+     glyph, so nothing depends on a font having one. */
+  box-shadow: inset 0 0 0 5px var(--memz-card);
+}
+
+/* SPR-W.5: the ranked leaderboard's position number, which replaced the
+   presence dot that was reading as a medal in the top rows. */
+.memz-rank-n {
+  min-width: 1.6em;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--memz-ink-soft);
+  text-align: center;
+}
+
+.memz-rank-flag {
+  margin-inline-start: 6px;
+  font-size: 13px;
+  opacity: 0.75;
 }

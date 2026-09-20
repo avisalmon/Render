@@ -161,6 +161,13 @@ no new view, no new credentials: a link to the same shared
 `/accounts/google/login/` flow babook's own login page, ustrip and matazim
 already offer, carrying `next` the same way the password form does.
 
+**Google sits above the password form on both screens** (ACT-Z.19,
+2026-09-20, Avi: "כי המקלדת שם מסתירה"). Not a style preference: on a
+phone, the moment a thumb touches the email field the keyboard covers
+everything below it, so an option placed under the form is invisible to
+exactly the people who have already started down the slower route. On
+sign-up the Google route also skips choosing a password altogether.
+
 Rule 3.3.4: a `MemzProfile` is created the first time a logged-in person
 does anything in memz, never for every babook user.
 
@@ -201,6 +208,12 @@ first tap:
 Rule 4.2.1: the create screen shows the host's tier and the player cap
 that comes with it, and a "sign in to get 10 players and your own photos"
 line for a guest host. That line is the only upsell in the game flow.
+
+Rule 4.2.3 (SPR-W.1, 2026-09-20): the create screen asks the host's
+**name** first, before any setting — pre-filled from the account for
+someone signed in, a placeholder for a guest. A blank still falls back to
+the old default, but the default is no longer what a guest host is stuck
+with: "מקום ראשון: מארח/ת" at the top of a podium was nobody's win.
 
 Rule 4.2.2: starting creates the `Session` in `lobby` and the host's
 `Player` (`is_host`), issues the token, and lands the host in the lobby.
@@ -256,6 +269,14 @@ with their own phones. No extra authorization on the endpoint: the code
 it encodes is already shown in plain text on the very same page.
 F-Z.3.5's original gap is now fully closed.
 
+Rule 4.3.6 (SPR-W.1, 2026-09-20): the lobby carries **how to play**, in
+three lines: everyone gets a picture and writes for it (and may swap it
+up to three times); what the verdict buttons are worth, in the mode this
+room is in; and that nobody learns who wrote what. It is here and not on
+a help page because the lobby is the one moment everyone is sitting
+together with nothing to do yet — and because until this, no screen in
+the app ever stated that אוהב is worth 2. Not a tutorial, not a popup.
+
 ### 4.4 A round: captioning
 
 The round starts for everyone at once (`Round.status = captioning`,
@@ -296,6 +317,34 @@ holding this round, the same personal-stock cap), never re-deals anyone
 else, and never touches what the player has already typed. Refused
 outright in Same Meme mode, where everyone captioning the same picture is
 the entire point (§5.1).
+
+Rule 4.4.6 (SPR-W.5, 2026-09-20): **"תן לי רעיון"** — a button under the
+caption box that returns three short starters. A blank box under a
+60-second clock is the hardest thing in the app, and it is hardest for
+exactly the people memz is for: the shy one at the table, the
+twelve-year-old, the slow typist. They are the ones who submit nothing and
+are then told "לא הספקת, קורה".
+
+Three things bound what it is allowed to be:
+
+- **Starters, not captions.** Tapping one puts the text *in the box*,
+  focused and editable, and never submits it. The joke stays the player's
+  or the game stops being worth playing.
+- **Never a delay, never an error.** It calls a model, and a model is
+  sometimes slow, sometimes down and always off in stub mode. Every one of
+  those paths falls straight through to a canned set, instantly. A person
+  who asked for help under a clock must never get a failure instead —
+  the same discipline `ai_players.py` follows, for the same reason.
+- **Once per round per player.** Cached on the submission, so the button
+  is free to tap twice and a room of ten costs one call, not ten. The
+  endpoint is refused outside captioning and after the player has
+  submitted: an endpoint that answers in every phase is one somebody can
+  bill us for in every phase.
+
+The starters know nothing about the image, deliberately, exactly as memz's
+AI players' own captions never did: the picture is the player's to look
+at, and a model describing it back to them would replace the funny part of
+the game rather than unblock it.
 
 ### 4.5 Reveal — and, from SPR-Z.10, the vote itself
 
@@ -344,6 +393,29 @@ a single joke.
 
 Rule 4.5.5 (SPR-Z.10): the player whose meme is on screen cannot rate it,
 and gets the line **"תעשה פרצוף תמים..."** where the buttons would be.
+
+Rule 4.5.6 (SPR-W.1, 2026-09-20): **the tap is felt.** A verdict button
+vibrates the phone briefly, plays a short pop, and springs — all before
+the server has answered, because this is the thumb's own confirmation,
+not the result (the verdict itself is still only the server's to record,
+Rule 4.5.4). Reduced-motion drops the spring; the mute toggle drops the
+sound; the vibration follows the mute toggle too, as every haptic in
+memz does. Why this exists: the review found the moment everyone taps to
+be the quietest moment in the game, in a product that lives on shared
+laughter.
+
+Rule 4.5.7 (SPR-W.1): **the room reacts.** Under the meme on screen, a
+running tally of the verdicts it has collected so far — "😍 ×3 · 😐 ×1" —
+and in the slot's last two seconds that line becomes a beat: larger,
+animated, once. The state carries `reactions` as **counts per meme, never
+voter ids**, and it is sent to the big screen as well (§4.10), because a
+tally of verdicts identifies nobody and was always the whole room's to
+see. This does not touch Rule 4.7.1's anonymity: nothing here says who
+made the meme or who reacted, only how the room took it. The line is
+patched in place on each poll rather than rebuilt with the screen, so the
+buttons under a thumb mid-tap are never torn out (the ACT-Z.8 guarantee
+holds). The counts stay quiet-looking until the beat, on purpose, so they
+never read as a scoreboard for the person whose meme it is.
 
 ### 4.6 Voting — Judge mode only, from SPR-Z.10
 
@@ -407,6 +479,26 @@ state payload, not merely hidden in the client, for the same reason the
 author is: what the server never sends cannot be read out of it by a
 client somebody wrote themselves.
 
+Rule 4.7.3 (SPR-W.5, 2026-09-20): the result screen **moves on by
+itself** after `RESULT_AUTO_ADVANCE_SECONDS`, and says so while it waits.
+This was spec'd in SPR-Z.3 and never built, which left the one screen in
+the game that could sit there indefinitely with nothing explaining why:
+the host puts their phone down at a result and the room waits on
+"מחכים למארח/ת" with no end to it — and the host is the one person who
+cannot see that it has stalled.
+
+The transition happens in `sync`, on the server, on the first request
+after the deadline (Rule 5.4.3), never from a client's own countdown: five
+phones counting down and POSTing `/advance/` would be five clients racing
+to end the same round. The countdown on screen is a display of a deadline
+the server owns. `Round.result_deadline` is **cleared as the advance
+fires**, because `sync` loops until nothing changes and a condition that
+stays true after firing is how that loop stops terminating — in practice,
+how a room would find round 2 gone before anybody saw it.
+
+The host's button still works and still wins. This is the floor under it,
+not a replacement for it.
+
 ### 4.8 Podium and end of game
 
 The top three, biggest first, with confetti for first place; then everyone
@@ -456,6 +548,43 @@ TV or laptop in the room: the code and QR in the lobby, the countdown and
 grid, results, podium. No controls on it; the host's phone stays the
 remote. It uses the session code only (it is read-only and shows nothing a
 player in the room cannot already see), no token.
+
+**SPR-W.4 rebuilt it as a show, not a page.** Until then it ran the
+phone's own renderers at a slightly larger font, which meant the meme sat
+in a column with a heading above it and fineprint below, taking about a
+third of the wall. A room reads a wall from four metres, not a thumb from
+thirty centimetres.
+
+Rule 4.10.1: the big screen has its own renderers and its own stylesheet
+(everything under `.memz-tvmode` / `.memz-tv-*`). The phone column's
+560px cap is released, type is set in viewport units so a 13" laptop and a
+55" TV are one layout at two sizes, and the meme is the largest object on
+screen with a narrow rail beside it for the clock and the room's verdicts.
+On a portrait or narrow screen the rail drops underneath instead of
+squeezing the picture.
+
+Rule 4.10.2: **no controls, ever.** Nobody stands at a TV, and the view
+holds no player token, so a button there is either dead or a way for
+whoever walks past to end the round. The only visible control on the page
+is the header's mute toggle, which belongs to the device playing the
+sound.
+
+Rule 4.10.3: the room's verdict counts (Rule 4.5.7) are shown on the wall
+live and **patched in place**, never re-rendered — rebuilding the strip on
+every poll would restart the bump animation on numbers that did not move,
+and a count on a wall exists so that a *change* is visible. Counts only,
+never who, exactly as on a phone: the shared screen does not weaken
+Rule 4.7.1, it is the worst place to break it.
+
+Rule 4.10.4: the standings **move**. Rows are keyed by player id and
+reordered with FLIP (measure, rebuild, play the difference backwards), so
+the room watches somebody overtake somebody instead of seeing a list that
+has quietly appeared in a new order. Skipped under
+`prefers-reduced-motion`.
+
+Rule 4.10.5: the podium shows SPR-W.3's meme-of-the-night card (§8.6), so
+anyone photographing the TV gets the good version of the picture rather
+than a leaderboard.
 
 ### 4.11 AI players
 
@@ -513,6 +642,7 @@ a placeholder.
 | Topics | as Normal, plus a `Topic` shown to everyone; the caption should fit the topic (the crowd judges whether it did) | yes | yes |
 | Same Meme | every player gets the same image | yes | yes |
 | Relaxed | as Normal | no | no; the reveal is the whole point |
+| Photo Booth | as Normal, but the pool is the photos the room took of itself in the 30 seconds before round one | yes | yes |
 
 Rule 5.1.1: Topics are drawn without repeats within a session from the
 public topics plus, for a logged-in host, their own.
@@ -581,6 +711,65 @@ Rule 5.4.3: phase transitions happen on the server, on the first request
 that arrives after a deadline (or the last submit/vote), never in a client.
 Two phones reporting the deadline at once cannot double-advance a round;
 the transition is guarded by a `select_for_update` on the session.
+
+### 5.5 Photo Booth (SPR-W.2)
+
+The funniest possible picture at any party is of somebody at that party.
+So one game mode spends its first thirty seconds on that and nothing else,
+and the photos it takes are the entire evening.
+
+Rule 5.5.1: in `photo_booth` mode, "start" opens the booth
+(`Session.status = booth`, `booth_deadline = now + BOOTH_SECONDS`) instead
+of creating round one. Everything after the booth closes is an ordinary
+game: the same rounds, the same reveal, the same scoring.
+
+Rule 5.5.2: any **seated player** may contribute up to
+`BOOTH_PHOTOS_PER_PLAYER` photos, guests included. The account rule that
+governs bank uploads (Rule 6.2.1) does not apply here and must not be
+copied here: it exists because a bank upload becomes somebody's stock and
+counts against somebody's quota, and a booth photo is neither. A mode
+where the guests at the table cannot take part would have no point.
+
+Rule 5.5.3: a booth photo is written with `owner` null, `session` set,
+`visibility = private`. Those three facts are the whole privacy design,
+and they are what make the photo **unreachable from every query in the app
+except its own session's pool** — no bank lists it, no library lists it,
+no other game can be dealt it, and `dealing.pool_for` returns it *instead
+of* the public bank rather than alongside it, because "every meme tonight
+is about someone in this room" has to be true every round or it is not the
+mode. `booth_taken_by` exists to hold one player to their own share and
+for nothing else: the photographer is as anonymous as the caption writer
+(Rule 4.7.1) and never appears in a payload.
+
+Rule 5.5.4: the booth ends when its deadline passes or the host closes it,
+but not into an empty pool: below `BOOTH_MIN_PHOTOS` the game does not
+start. Which then happens depends on who asked. A **deadline** that fired
+is a room that ran out of time, so it gets another `BOOTH_SECONDS` and one
+more `booth_extensions`. A **host** pressing the button early is told to
+keep shooting and their remaining clock is left exactly as it was — an
+impatient host must not buy the room more time, nor reach Rule 5.5.6 by
+tapping three times.
+
+Rule 5.5.5: booth photos go through the same processing and the same
+moderation as every other upload path (§6.4). They are never published
+anywhere, but they go up on a screen in front of a room that is sometimes
+strangers. A rejected photo is not dealt and still counts against its
+photographer's share.
+
+Rule 5.5.6: a booth that has already run its clock out once
+(`booth_extensions > 0`) offers the host a way out: drop the mode and play
+an ordinary game with the ordinary pool. Without it, a room on laptops, or
+a table that said no to being photographed, sits in front of a disabled
+button and a clock that keeps starting over. Taking it **deletes the
+photos already taken**, because they were taken under "these stay in this
+game and are deleted at the end of it" and this is that end — the mode it
+becomes is a different one, and a photograph of somebody's face is not a
+thing to quietly re-purpose. The offer is not on screen before that: it
+would undercut the mode before the room had tried it.
+
+Rule 5.5.7: the booth's camera lives outside the poll-driven game root,
+for the same reason the lobby's does (Rule 6.2.7) — the booth polls every
+second, and a photo being chosen or uploaded has to survive that.
 
 ## 6. The bank
 
@@ -846,6 +1035,24 @@ the profile's copy rather than leaving two implementations to drift
 header name a link. This screen and §6.6's admin bank screen are the same
 screen with different plumbing, and share one script (`library.js`).
 
+### 6.8 Deleting a row deletes its file (SPR-W.2)
+
+Rule 6.8.1: when a `MemeImage` or a `Meme` row is deleted, its file is
+deleted too, on transaction commit (`memz/signals.py`). Django stopped
+doing this in 1.3 for a good reason — a rolled-back transaction cannot
+un-delete a file — and the usual advice is to leave the orphans alone.
+memz cannot take that advice. Every image path in the app deletes rows
+(§6.6, §6.7), guest memes are deleted after `GUEST_MEME_TTL_HOURS`, and
+SPR-W.2 deletes rows *by design*: a photo-booth game writes one file per
+photo and promises the room every one of them is gone afterwards. Left
+alone, a 1 GB disk shared with the whole site accumulates every photo ever
+taken at every party, having told the room they were deleted. `on_commit`
+is what makes it safe: a transaction that rolls back never fires it, so a
+row that still exists never loses its bytes. A failure to delete the file
+is swallowed rather than turned into an error page — the orphan it leaves
+is the exact thing this is here to avoid, not something to trade an error
+for.
+
 ## 7. Solo creator
 
 `/memz/create/`: pick an image (public packs; own bank and own packs when
@@ -854,6 +1061,16 @@ caption with the same live preview and the same 140-character, 3-line
 rules as the game, tap **Make it**. The result is a `Meme` with
 `source = solo`, rendered exactly as a game meme would be, on a result
 screen with share, download and (logged in) save.
+
+Rule 7.0 (ACT-Z.20, 2026-09-20): the screen's order is **preview,
+caption, button, and only then the pictures to choose from** — in both
+tabs. The thumbnail grid used to sit between the preview and the caption
+field, which meant every image added to the public bank pushed the two
+things a person came here to do further down the page (Avi: "התמונות
+נורא נורא מפריעות"). A grid at the bottom only works if choosing from it
+takes you back to what it changed, so picking one scrolls to the preview
+(honouring `prefers-reduced-motion`); the Imgflip tab, which has no live
+canvas, shows the chosen template up there instead.
 
 Rule 7.1: a guest's solo meme gets `expires_at` per §8.5. A logged-in
 user's solo memes are listed under "my memes" (§10) and do not expire.
@@ -1026,6 +1243,54 @@ Rule 8.5.1: a test creates a guest session, a remembered session, a saved
 guest meme and an unsaved one, moves the clock, runs cleanup, and asserts
 exactly the right rows are gone.
 
+### 8.6 The evening's share cards (SPR-W.3)
+
+memz's growth loop is one person showing somebody a picture. The podium
+had nothing to show: a leaderboard on a phone, and a gallery of memes that
+each need explaining. So the end of a game renders **two pictures**, in
+the same engine and the same font as the memes, each one WhatsApp tap
+away.
+
+Rule 8.6.1: **המם של הערב** is the single highest-scoring submission of
+the whole session, recomputed from `Vote` rows like everything else
+(Rule 5.3.1), ties breaking toward the earlier round so one game always
+produces one card. It carries the number of `אוהב` verdicts it got, and
+**nothing about who made it** — not a name, not "anonymous", nothing.
+Rule 4.7.1 is a rule about the card too, and more so: the round was played
+on a promise that nobody finds out, and a card outlives the evening. The
+test for this renames every player and asserts the card comes back byte
+for byte identical.
+
+Rule 8.6.2: **הפודיום** is the final table — rank, name, title, score —
+and it does name people. That is the part of the evening people want
+attributed, and "anonymise everything" would be the wrong lesson to carry
+over from 8.6.1.
+
+Rule 8.6.3: both are drawn, never screenshotted. A screenshot is a phone's
+private business: it cannot be rendered by the server, shared by someone
+who has already closed the app, or fetched as a WhatsApp link preview.
+
+Rule 8.6.4: Hebrew on a card goes through the meme engine's own bidi path
+(`shape_for_draw`, §8.1). This is not stylistic tidiness — Hebrew shipped
+reversed twice (ACT-Z.10, ACT-Z.11), the second time only because
+production's Pillow is built with libraqm and this machine's is not, and
+a card is the one artifact built to be forwarded. A digit next to Hebrew
+is **placed, not composed into one string**: a number at the edge of an
+RTL run lands wherever the algorithm's boundary rules put it rather than
+where the sentence means.
+
+Rule 8.6.5: `GET /memz/s/<code>/card/<meme|podium>.jpg`, open to anyone,
+404 before the game is `finished` and 404 for a meme card a game never
+earned. Rendered on demand and cached against `Session.version` — never
+written to disk (§6.8's whole subject) and never stale, since the version
+already changes on every mutation.
+
+Rule 8.6.6: sharing hands WhatsApp the **file** where the browser can
+(`navigator.canShare({files})`), so it arrives as a photo rather than a
+link. Where it cannot, the fallback is `wa.me` with the card's own
+address, which WhatsApp renders as a preview — one tap further and works
+everywhere, including inside an installed PWA (the ACT-Z.15 lesson).
+
 ## 9. Gamification and delight
 
 The research (spec history, and the party-game literature) is clear on
@@ -1044,6 +1309,18 @@ no XP, no streak counters in the database.
 - Sound and haptics are on by default, with a mute toggle in the header
   that persists per browser. All audio is small, bundled, and only plays
   after the first tap (browsers require it; the join tap counts).
+- **Five sounds** (SPR-W.1 added three to SPR-Z.6's two), all procedural
+  and generated by `memz/seed_assets/make_sounds.py`, so there is no
+  licensing question and each is a few kilobytes: `tick` (the last five
+  seconds), `drumroll` (a round's reveal opens), `reveal` (every further
+  meme's slot begins — so each slot has a beginning you can hear across
+  the room), `pop` (a verdict lands, Rule 4.5.6), and `fanfare` (the
+  podium, once per game). The generator is deterministic; adding sounds
+  never changes the bytes of the ones already shipped, and a test holds
+  it to that.
+- A verdict is felt (Rule 4.5.6) and the room's reaction is shown at the
+  end of each meme's slot (Rule 4.5.7) — the two things the 2026-09-19
+  review found missing from the game's loudest moment.
 - Copy is playful and short, in Hebrew, and never mean. "Didn't make it"
   is "לא הספקת, קורה", not "FAILED".
 
@@ -1068,6 +1345,18 @@ title where the numbers allow. The pool:
 
 Rule 9.2.1: titles are not stored. A remembered session shows the same
 titles when reopened because they are recomputed from the same rows.
+
+Rule 9.2.2 (SPR-W.5, 2026-09-20): **every title carries one line saying
+what earned it** ("הסוס השחור" → "התחיל/ה לאט וסיים/ה חזק"), on the phone
+podium, on the TV, and on the share card (§8.6) — which is the one that
+reaches people who were not in the room and have no way to guess. A badge
+nobody can decode is decoration, not a reward: a title works only if the
+person can tell what they did. Each line is a short phrase, because it
+sits under a name on a podium and is read from four metres on a wall.
+
+The same sprint rebuilt the phone podium as rows (rank / name and title /
+score) rather than an inline-flow list, which is what had the badges
+crowding against both the name and the score.
 
 ### 9.3 For logged-in players, over time
 
@@ -1186,6 +1475,11 @@ with permissions that scope everything to the caller:
 | `sessions/<code>/rounds/<n>/vote/` | action (Judge mode's single pick, §4.6) | token |
 | `sessions/<code>/rounds/<n>/rate/` | action (one verdict for the meme on screen, Rule 4.6.1) | token |
 | `sessions/<code>/rounds/<n>/swap-image/` | action (throw the dealt image back, Rule 4.4.5) | token |
+| `sessions/<code>/rounds/<n>/ideas/` | three caption starters (Rule 4.4.6) | token |
+| `sessions/<code>/booth/photo/` | one photo into this session's booth (Rule 5.5.2) | token |
+| `sessions/<code>/booth/close/` | host ends the booth (Rule 5.5.4) | token |
+| `sessions/<code>/booth/abandon/` | host drops the mode (Rule 5.5.6) | token |
+| `s/<code>/card/<kind>.jpg` | a share card as a JPEG (Rule 8.6.5) | none |
 | `sessions/<code>/rounds/<n>/swap-card/` | action | token |
 | `memes/` | create (solo), retrieve, delete (own) | user or token |
 | `saved/` | list, create, delete | user |

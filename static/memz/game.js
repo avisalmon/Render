@@ -11,6 +11,10 @@
 
   var code = root.dataset.code;
   var screenMode = root.dataset.screenMode === "1";
+  // SPR-W.4: the TV releases the 560px phone column and takes the wall.
+  // Set as a class on the document rather than keyed off the `data-screen`
+  // marker, which `setScreen` rewrites on every phase.
+  if (screenMode) document.documentElement.classList.add("memz-tvmode");
   var marker = document.querySelector("[data-screen]");
   // A logged-in visitor with no token in *this* browser (spec §4.8.2 — a
   // different device, "My games" days later) gets it handed back by the
@@ -155,6 +159,138 @@
     }
   }
 
+  // SPR-W.2: the photo booth's own camera section, same outside-the-root
+  // treatment as the lobby's (see game.html). It is mounted once and only
+  // toggled after that -- a booth poll lands every second and must not be
+  // able to drop a photo that is mid-choose or mid-upload.
+  var boothUploadSection = document.querySelector("[data-booth-upload]");
+
+  function showBoothUploader(show, state) {
+    if (!boothUploadSection) return;
+    boothUploadSection.hidden = !show;
+    if (show && window.memz.mountUploader) {
+      window.memz.mountUploader(
+        boothUploadSection.querySelector("[data-booth-uploader]"),
+        {
+          endpoint: "/memz/api/sessions/" + encodeURIComponent(code) + "/booth/photo/",
+          token: token,
+          cameraFirst: true,
+          cameraLabel: "לצלם מישהו 📷",
+          successText: function (n) {
+            return n === 1 ? "תמונה אחת נכנסה למשחק." : n + " תמונות נכנסו למשחק.";
+          },
+          onUploaded: function () {
+            window.memz.vibrate(40);
+            window.memz.playSound("pop");
+            poll();   // the counts on the screen behind this are now stale
+          },
+        }
+      );
+    }
+  }
+
+  // Built once per booth, then only its numbers are updated -- rebuilding
+  // the markup every second would restart the countdown's interval and
+  // throw away the camera buttons' focus.
+  var boothRenderKey = null;
+  var boothTimerDeadline = null;
+
+  function renderBooth(state) {
+    setScreen("game-booth");
+    showLobbyUploader(false);
+    var b = state.booth || {};
+    if (boothRenderKey !== state.code) {
+      boothRenderKey = state.code;
+      root.innerHTML =
+        '<h1 class="memz-title">צלמו את החדר!</h1>' +
+        '<p class="memz-lead">כל אחד מצלם מישהו אחר בשולחן. התמונות האלה הן כל הממים של הערב.</p>' +
+        '<p class="memz-timer" data-booth-timer></p>' +
+        '<p class="memz-lead memz-booth-counts" data-booth-counts></p>' +
+        // The consent line. This is the one mode where the pictures are of
+        // people who are in the room, so it is not boilerplate: somebody
+        // who does not want to be photographed has to be able to say so
+        // before the shutter, and the screen is where they learn they can.
+        '<p class="memz-fineprint">מצלמים רק את מי שמסכים. התמונות נשארות במשחק הזה בלבד, ' +
+        "נמחקות בסופו, ולא נכנסות לבנק של אף אחד.</p>" +
+        '<div data-booth-host></div>' +
+        '<div data-booth-escape></div>' +
+        '<p class="memz-error" data-action-error></p>';
+      boothTimerDeadline = null;
+    }
+
+    // The booth's deadline moves when the room hasn't shot enough yet
+    // (Rule 5.5.4), so the countdown is re-armed on a *new* deadline
+    // rather than once at build time -- otherwise it would sit on 0 while
+    // the server quietly handed the room another thirty seconds. Only on a
+    // change: re-arming every poll would stack an interval a second.
+    if (b.deadline && b.deadline !== boothTimerDeadline) {
+      boothTimerDeadline = b.deadline;
+      countdown(root.querySelector("[data-booth-timer]"), b.deadline);
+    }
+
+    var counts = root.querySelector("[data-booth-counts]");
+    if (counts) {
+      var mine = b.my_photos || 0;
+      var per = b.per_player || 0;
+      counts.textContent = (b.total_photos || 0) + " תמונות בחדר · לכם יש " + mine + " מתוך " + per +
+        (mine >= per ? " (הגעתם למקסימום)" : "");
+    }
+
+    // Only the host's button is (re)rendered on a change of state, and only
+    // when its *label* would change -- it is the one control here, and a
+    // thumb resting on it must not have it swapped out from underneath.
+    var hostSlot = root.querySelector("[data-booth-host]");
+    if (hostSlot && b.is_host) {
+      var enough = (b.total_photos || 0) >= (b.min_photos || 0);
+      var label = enough ? "מתחילים לשחק!" : "צריך עוד תמונות (" + b.min_photos + " לפחות)";
+      if (hostSlot.dataset.label !== label) {
+        hostSlot.dataset.label = label;
+        hostSlot.innerHTML = '<button class="memz-btn memz-btn--primary memz-btn--wide" data-booth-close' +
+          (enough ? "" : " disabled") + ">" + label + "</button>";
+        var closeBtn = hostSlot.querySelector("[data-booth-close]");
+        closeBtn.addEventListener("click", function () {
+          guardedAction(function () { return call("POST", "/booth/close/"); }, closeBtn);
+        });
+      }
+    }
+
+    // Rule 5.5.6: the escape. It appears only after the booth has already
+    // run out of time once without enough photos -- a room on laptops, or
+    // one that said no to being photographed, would otherwise sit in front
+    // of a disabled button and a clock that keeps starting over.
+    var escapeSlot = root.querySelector("[data-booth-escape]");
+    if (escapeSlot && b.is_host && b.extended && !escapeSlot.dataset.shown) {
+      escapeSlot.dataset.shown = "1";
+      escapeSlot.innerHTML =
+        '<p class="memz-fineprint">אין מצלמות, או שלא בא לכם להצטלם? אפשר לשחק רגיל.</p>' +
+        '<button class="memz-btn memz-btn--secondary memz-btn--wide" data-booth-abandon>' +
+        "לשחק עם התמונות הרגילות</button>";
+      var abandonBtn = escapeSlot.querySelector("[data-booth-abandon]");
+      abandonBtn.addEventListener("click", function () {
+        guardedAction(function () { return call("POST", "/booth/abandon/"); }, abandonBtn);
+      });
+    }
+    showBoothUploader(!screenMode, state);
+  }
+
+  function howToPlayCard(state) {
+    if (screenMode) return "";
+    var relaxed = state.game_mode === "relaxed";
+    var judge = state.scoring_mode === "judge";
+    var verdict = relaxed
+      ? "רואים את כולם יחד, בלי ניקוד."
+      : judge
+      ? "השופט/ת של הסבב בוחר/ת מנצח, 3 נקודות."
+      : "כל מם על המסך 10 שניות. אוהב = 2, ככה ככה = 1, פחות = 0.";
+    return (
+      '<div class="memz-howto" data-howto>' +
+      '<p class="memz-howto-line"><b>1.</b> כל אחד מקבל תמונה וכותב לה כיתוב. לא אהבתם את התמונה? אפשר להחליף עד 3 פעמים.</p>' +
+      '<p class="memz-howto-line"><b>2.</b> ' + verdict + "</p>" +
+      '<p class="memz-howto-line"><b>3.</b> אף אחד לא יודע מי כתב מה. רק הטבלה יודעת מי מוביל.</p>' +
+      "</div>"
+    );
+  }
+
   function renderLobby(state) {
     setScreen("game-lobby");
     showLobbyUploader(!screenMode);
@@ -166,6 +302,10 @@
       '<div class="memz-code-display">' + esc(state.code) + "</div>" +
       '<img class="memz-qr" src="/memz/s/' + encodeURIComponent(state.code) + '/qr.png" width="160" height="160" alt="קוד QR להצטרפות">' +
       '<p class="memz-fineprint">שתפו את הקוד, את הקישור או את קוד ה-QR עם חברים.</p>' +
+      // SPR-W.1 (F-W.1.5): how to play, in the one place everyone is
+      // sitting together waiting. Three lines, not a tutorial -- and the
+      // one fact no other screen states: what the buttons are worth.
+      howToPlayCard(state) +
       // ACT-Z.15: a real link, not a window.open() -- inside an installed
       // PWA, and in more than one phone browser, a popup from a click is
       // blocked or lands on wa.me's "continue to chat" page instead of
@@ -272,6 +412,12 @@
         : '<form data-caption-form>' +
           '<textarea class="memz-input memz-textarea" maxlength="140" placeholder="הכיתוב שלכם..." data-caption-input></textarea>' +
           '<button class="memz-btn memz-btn--primary memz-btn--wide" type="submit">שולחים</button>' +
+          // SPR-W.5 (Rule 4.4.6): the way out of a blank box under a
+          // clock. Below the send button, not above it -- someone who
+          // already has an idea should not be offered one first.
+          '<button type="button" class="memz-btn memz-btn--ghost memz-btn--small" data-ideas-btn>' +
+          "תן לי רעיון 💡</button>" +
+          '<ul class="memz-ideas" data-ideas hidden></ul>' +
           "</form>") +
       '<p class="memz-error" data-action-error></p>';
     countdown(root.querySelector("[data-timer]"), r.caption_deadline);
@@ -279,6 +425,41 @@
     if (form && typedBefore) {
       // A swap rebuilt the screen; put back what they had already written.
       form.querySelector("[data-caption-input]").value = typedBefore;
+    }
+    var ideasBtn = root.querySelector("[data-ideas-btn]");
+    if (ideasBtn) {
+      ideasBtn.addEventListener("click", async function () {
+        var list = root.querySelector("[data-ideas]");
+        if (!list) return;
+        ideasBtn.disabled = true;
+        ideasBtn.textContent = "רגע...";
+        try {
+          var reply = await call("POST", "/rounds/" + r.number + "/ideas/");
+          list.innerHTML = (reply.ideas || []).map(function (idea) {
+            return '<li><button type="button" class="memz-idea" data-idea>' + esc(idea) + "</button></li>";
+          }).join("");
+          list.hidden = false;
+          list.querySelectorAll("[data-idea]").forEach(function (chip) {
+            chip.addEventListener("click", function () {
+              // It goes *into* the box, it does not submit. The joke stays
+              // the player's; this only gets them past the blank page.
+              var input = root.querySelector("[data-caption-input]");
+              if (!input) return;
+              input.value = chip.textContent;
+              input.focus();
+              var end = input.value.length;
+              input.setSelectionRange(end, end);
+            });
+          });
+        } catch (e) {
+          // Never an error on this screen: somebody stuck under a clock
+          // asked for help and got a page telling them off. The button
+          // simply goes away.
+          list.hidden = true;
+        }
+        ideasBtn.textContent = "תן לי רעיון 💡";
+        ideasBtn.disabled = false;
+      });
     }
     var swapImageBtn = root.querySelector("[data-swap-image-btn]");
     if (swapImageBtn) {
@@ -356,6 +537,25 @@
     { key: "meh", label: "פחות 🙈" },
   ];
 
+  // SPR-W.1 (Rule 4.5.7): how the room took the meme, shown in the closing
+  // beat of its slot. Counts only, never who -- a tally of verdicts
+  // identifies nobody and was always the whole room's to see, which is
+  // also why the TV gets it.
+  var REACTION_FACES = { love: "😍", soso: "😐", meh: "🙈" };
+  var springValue = null;   // the verdict just tapped, so the rebuilt button can spring too (Rule 4.5.6)
+
+  function reactionLine(r, current) {
+    if (!current || !r.reactions) return "";
+    var counts = r.reactions[String(current.submission_id)];
+    if (!counts) return "";
+    var total = (counts.love || 0) + (counts.soso || 0) + (counts.meh || 0);
+    if (!total) return '<p class="memz-reaction memz-reaction--quiet" data-reaction>עוד אף אחד לא הגיב...</p>';
+    var parts = ["love", "soso", "meh"].filter(function (k) { return counts[k]; }).map(function (k) {
+      return '<span class="memz-reaction-face">' + REACTION_FACES[k] + "</span>×" + counts[k];
+    });
+    return '<p class="memz-reaction" data-reaction>' + parts.join('<span class="memz-reaction-sep">·</span>') + "</p>";
+  }
+
   function ratingBar(state, r, current) {
     // The TV never rates: it has no player behind it (spec §4.10), so it
     // shows the same slideshow with no controls at all.
@@ -368,6 +568,14 @@
     var values = r.rating_values || { love: 2, soso: 1, meh: 0 };
     var mine = (r.my_ratings || {})[String(current.submission_id)];
     var rated = mine !== undefined && mine !== null;
+    // The spring survives the rebuild that follows a tap (Rule 4.5.6). On
+    // a fast network the server answers inside the 320ms animation and
+    // the screen is redrawn with the verdict recorded -- which would cut
+    // the spring off halfway. So the button that comes back *chosen* is
+    // sprung too, once, and the flag is cleared so a later poll never
+    // replays it.
+    var springNow = rated && mine === springValue;
+    if (springNow) springValue = null;
     return (
       '<div class="memz-rating-bar" data-rating-bar>' +
       RATING_BUTTONS.map(function (b) {
@@ -375,6 +583,7 @@
         var chosen = rated && mine === value;
         return (
           '<button class="memz-btn memz-rating-btn' + (chosen ? " memz-rating-btn--chosen" : "") +
+          (chosen && springNow ? " memz-rating-btn--tapped" : "") +
           '"' + (rated ? " disabled" : "") + ' data-rate="' + value + '">' + b.label + "</button>"
         );
       }).join("") +
@@ -385,6 +594,38 @@
 
   var revealedRenderKey = null;   // same idea as captioningRenderKey: don't replay the pop-in animation every poll tick for a meme that's already showing
 
+  // SPR-W.1 (Rule 4.5.7): the reaction line is refreshed in place on each
+  // poll, and gets its "beat" -- a larger, animated moment -- in the last
+  // two seconds of the slot, once nearly everyone has tapped. Before that
+  // it is a quiet running tally, so the counts never feel like a scoreboard
+  // for the person whose meme it is.
+  function updateReaction(r, current) {
+    var el = root.querySelector("[data-reaction]");
+    var fresh = reactionLine(r, current);
+    if (!el || !fresh) return;
+    var wrap = document.createElement("div");
+    wrap.innerHTML = fresh;
+    var next = wrap.firstChild;
+    if (next.innerHTML !== el.innerHTML) {
+      next.classList.toggle("memz-reaction--beat", el.classList.contains("memz-reaction--beat"));
+      el.replaceWith(next);
+    }
+  }
+
+  var reactionBeatTimer = null;
+
+  function armReactionBeat(r, idx) {
+    clearTimeout(reactionBeatTimer);
+    var end = revealSlotDeadline(r, idx);
+    if (!end) return;
+    var msLeft = new Date(end).getTime() - serverNow();
+    var beatAt = Math.max(0, msLeft - 2000);
+    reactionBeatTimer = setTimeout(function () {
+      var el = root.querySelector("[data-reaction]");
+      if (el) el.classList.add("memz-reaction--beat");
+    }, beatAt);
+  }
+
   function renderRevealed(state) {
     var r = state.round;
     var count = (r.memes || []).length;
@@ -393,9 +634,17 @@
     var myRating = current ? (r.my_ratings || {})[String(current.submission_id)] : undefined;
     // The rating I've already given is part of the key: tapping a button
     // has to redraw this screen (the buttons lock, the chosen one fills
-    // in), while a poll that changes nothing still must not.
+    // in), while a poll that changes nothing still must not. SPR-W.1: the
+    // room's reaction to *this* meme is not in the key on purpose -- it
+    // changes on nearly every poll while people tap, and a full rebuild
+    // each time would replay the pop-in under a thumb mid-tap. It is
+    // patched in place below instead (`updateReaction`).
     var key = state.code + ":" + r.number + ":" + idx + ":" + myRating;
-    if (key === revealedRenderKey) return;   // same meme still showing -- countdown() below is already self-ticking, nothing else to refresh
+    if (key === revealedRenderKey) {
+      updateReaction(r, current);
+      return;
+    }
+    var newMeme = revealedRenderKey === null || revealedRenderKey.indexOf(state.code + ":" + r.number + ":" + idx + ":") !== 0;
     revealedRenderKey = key;
 
     setScreen("game-revealed");
@@ -411,6 +660,7 @@
           (count > 1 ? '<p class="memz-fineprint" data-reveal-progress>' + (idx + 1) + " מתוך " + count + "</p>" : "")
         : "") +
       ratingBar(state, r, current) +
+      reactionLine(r, current) +
       (missedThisRound(r) ? '<p class="memz-fineprint">לא הספקת, קורה. בסבב הבא!</p>' : "") +
       (me && me.is_host
         ? '<button class="memz-btn memz-btn--secondary memz-btn--wide" data-advance-btn>' +
@@ -422,9 +672,21 @@
     if (revealedRoundSeen !== revealKey) {
       revealedRoundSeen = revealKey;
       window.memz.playSound("drumroll");
+    } else if (newMeme) {
+      // SPR-W.1 (F-W.1.3): every slot has a beginning you can hear across
+      // the room, not only the round's first.
+      window.memz.playSound("reveal");
     }
+    armReactionBeat(r, idx);
     root.querySelectorAll("[data-rate]").forEach(function (rateBtn) {
       rateBtn.addEventListener("click", function () {
+        // SPR-W.1 (Rule 4.5.6): the tap is felt before the network answers.
+        // The verdict itself is still the server's to record; this is the
+        // thumb's own confirmation, not the result.
+        window.memz.vibrate(40);
+        window.memz.playSound("pop");
+        rateBtn.classList.add("memz-rating-btn--tapped");
+        springValue = parseInt(rateBtn.dataset.rate, 10);
         guardedAction(function () {
           return call("POST", "/rounds/" + r.number + "/rate/", {
             submission_id: current.submission_id, value: parseInt(rateBtn.dataset.rate, 10),
@@ -534,9 +796,41 @@
           '<ul class="memz-player-list">' + rankedPlayerRows(state.players) + "</ul>") +
       (me && me.is_host
         ? '<button class="memz-btn memz-btn--primary memz-btn--wide" data-advance-btn>' + (isLast ? "לתוצאות הסופיות" : "לסבב הבא") + "</button>"
-        : '<p class="memz-lead">מחכים למארח/ת...</p>');
+        : "") +
+      // SPR-W.5 (Rule 4.7.3): the wait is finite and says so. "מחכים
+      // למארח/ת" with no end to it was the one screen in the game that
+      // could sit there forever, and the host who put their phone down is
+      // exactly the person who cannot see that it has.
+      (r.result_deadline
+        ? '<p class="memz-lead">' + (isLast ? "לתוצאות הסופיות בעוד " : "לסבב הבא בעוד ") +
+          '<b data-result-timer></b></p>'
+        : me && me.is_host ? "" : '<p class="memz-lead">מחכים למארח/ת...</p>');
+    var autoTimer = root.querySelector("[data-result-timer]");
+    if (autoTimer) countdown(autoTimer, r.result_deadline);
     var btn = root.querySelector("[data-advance-btn]");
     if (btn) btn.addEventListener("click", function () { guardedAction(function () { return call("POST", "/advance/"); }, btn); });
+  }
+
+  // SPR-W.5: the round-result leaderboard used to reuse `playerRow`, which
+  // opens with a presence dot -- so the top row showed a coloured circle
+  // beside the leading name and read as a gold medal, with the second
+  // place's yellow "away" dot reading as silver. Presence still matters
+  // mid-game ("has someone gone?"), so it is not dropped, it is demoted:
+  // the position gets the number that actually means position, and only a
+  // player who is *not* active carries a marker at all.
+  function rankRow(p, index, move) {
+    var away = p.is_ai
+      ? '<span class="memz-rank-flag" title="בוט">🤖</span>'
+      : p.presence === "active"
+      ? ""
+      : '<span class="memz-rank-flag" title="לא בקשר כרגע">⏳</span>';
+    return (
+      '<li class="memz-player-row' + (p.is_me ? " memz-player-row--me" : "") + '">' +
+      '<span class="memz-rank-n">' + (index + 1) + "</span>" +
+      "<span>" + esc(p.nickname) + (p.is_host ? " 👑" : "") + away + "</span>" +
+      '<span class="memz-player-score">' + p.score + move + "</span>" +
+      "</li>"
+    );
   }
 
   function rankedPlayerRows(players) {
@@ -550,7 +844,7 @@
         if (prev > i) move = '<span class="memz-rank-move memz-rank-move--up">▲</span>';
         else if (prev < i) move = '<span class="memz-rank-move memz-rank-move--down">▼</span>';
       }
-      return playerRow(p).replace("</li>", move + "</li>");
+      return rankRow(p, i, move);
     }).join("");
     lastRanking = newRanking;
     lastRankingCode = code;
@@ -580,20 +874,91 @@
     setTimeout(function () { layer.remove(); }, 2600);
   }
 
+  // SPR-W.3: the two cards the evening ends with. Server-rendered JPEGs at
+  // a stable address (see memz/share_cards.py), shown on the podium and
+  // shareable in one tap each.
+  function cardUrl(code, kind) {
+    return "/memz/s/" + encodeURIComponent(code) + "/card/" + kind + ".jpg";
+  }
+
+  function shareCardsBlock(state) {
+    if (screenMode) return "";
+    var cards = [
+      // The meme card is listed first and only when the game actually has
+      // one: `has_meme_card` comes from the server rather than being
+      // guessed, because a game nobody submitted to has no best meme and a
+      // broken <img> at the podium is worse than one card.
+      state.has_meme_card
+        ? { kind: "meme", label: "המם של הערב", alt: "המם של הערב" }
+        : null,
+      { kind: "podium", label: "טבלת המנצחים", alt: "טבלת המנצחים" },
+    ].filter(Boolean);
+    return (
+      '<div class="memz-cards">' +
+      cards.map(function (c) {
+        var url = cardUrl(state.code, c.kind);
+        return (
+          '<figure class="memz-card-share">' +
+          '<img src="' + esc(url) + '" alt="' + esc(c.alt) + '" loading="lazy">' +
+          '<button type="button" class="memz-btn memz-btn--secondary memz-btn--wide" ' +
+          'data-share-card="' + c.kind + '">שיתוף ' + esc(c.label) + " 💬</button>" +
+          "</figure>"
+        );
+      }).join("") +
+      "</div>"
+    );
+  }
+
+  async function shareCard(state, kind, btn) {
+    var url = window.location.origin + cardUrl(state.code, kind);
+    var text = kind === "meme" ? "המם של הערב שלנו ב-memz 😂" : "ככה נגמר המשחק שלנו ב-memz 🏆";
+    // The good path: hand WhatsApp the actual picture, so it arrives as a
+    // photo in the thread rather than a link somebody has to tap. Only
+    // some browsers can share files, and a browser that says it can still
+    // refuses some types, so `canShare` is asked about this exact file.
+    try {
+      if (navigator.canShare && navigator.share) {
+        var blob = await (await fetch(url)).blob();
+        var file = new File([blob], "memz-" + kind + ".jpg", { type: "image/jpeg" });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], text: text });
+          return;
+        }
+      }
+    } catch (err) {
+      if (err && err.name === "AbortError") return;   // they changed their mind, not a failure
+    }
+    // The fallback: wa.me with the card's own address. WhatsApp renders a
+    // preview of a direct image URL, so this still arrives as a picture --
+    // one tap further away, and it works everywhere, including inside an
+    // installed PWA (the ACT-Z.15 lesson).
+    window.location.href = "https://wa.me/?text=" + encodeURIComponent(text + "\n" + url);
+  }
+
   function renderFinished(state) {
     setScreen("game-finished");
     if (finishedCelebrated !== state.code) {
       finishedCelebrated = state.code;
       spawnConfetti();
+      window.memz.playSound("fanfare");   // SPR-W.1 (F-W.1.3): the podium is an event, once
     }
     var me = state.players.find(function (p) { return p.is_me; });
     var podium = state.podium || [];
     root.innerHTML =
       '<h1 class="memz-title">🎉 נגמר!</h1>' +
+      shareCardsBlock(state) +
       '<ol class="memz-podium">' + podium.map(function (row, i) {
-        return "<li><b>#" + (i + 1) + "</b> " + esc(row.nickname) + " — " + row.score +
+        return '<li><span class="memz-podium-place">' + (i + 1) + "</span>" +
+          '<span class="memz-podium-who">' + esc(row.nickname) +
           (row.tied_with_next ? " (תיקו)" : "") +
-          (row.title ? '<span class="memz-title-badge">' + esc(row.title) + "</span>" : "") + "</li>";
+          // SPR-W.5: the badge, and under it what it means. The review's
+          // own finding: a title is a reward only if the person can tell
+          // what they did to earn it.
+          (row.title
+            ? '<span class="memz-title-badge">' + esc(row.title) + "</span>" +
+              (row.title_note ? '<span class="memz-title-note">' + esc(row.title_note) + "</span>" : "")
+            : "") + "</span>" +
+          '<span class="memz-podium-score">' + row.score + "</span></li>";
       }).join("") + "</ol>" +
       '<h2 class="memz-field-label">כל הממים</h2>' +
       '<div class="memz-meme-grid">' + (state.gallery || []).map(function (g) {
@@ -617,6 +982,12 @@
     var again = root.querySelector("[data-again-btn]");
     if (again) again.addEventListener("click", function () { guardedAction(function () { return call("POST", "/again/"); }, again); });
 
+    root.querySelectorAll("[data-share-card]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        shareCard(state, btn.dataset.shareCard, btn);
+      });
+    });
+
     root.querySelectorAll("[data-save-slug]").forEach(function (btn) {
       btn.addEventListener("click", async function () {
         btn.disabled = true;
@@ -630,39 +1001,276 @@
     });
   }
 
+  // ------------------------------------------------ SPR-W.4: the TV show
+  //
+  // Until now the big screen ran the phone's own renderers at a bigger
+  // font. That is a page, and a page seen from four metres away across a
+  // room is unreadable and, worse, undramatic: the meme sat in a column
+  // with a heading above it and fineprint below, taking a third of the
+  // wall. The phone is the controller; this is the show. So the TV gets
+  // its own renderers -- the meme fills the screen, the room's verdicts
+  // land on it live, and the standings physically move.
+
+  function tvPill(text, cls) {
+    return '<span class="memz-tv-pill' + (cls ? " " + cls : "") + '">' + esc(text) + "</span>";
+  }
+
+  function tvReactionStrip(r, current) {
+    // The same counts the phones see (SPR-W.1, Rule 4.5.7), but this is
+    // where they belong: everybody is already looking at the wall, and a
+    // number that grows while the room taps is the shared moment the
+    // phones can only hint at. Counts only -- never who.
+    if (!current || !r.reactions) return "";
+    var counts = r.reactions[String(current.submission_id)] || {};
+    return (
+      '<div class="memz-tv-reactions" data-tv-reactions>' +
+      ["love", "soso", "meh"].map(function (k) {
+        return (
+          '<div class="memz-tv-reaction' + (counts[k] ? " is-live" : "") + '">' +
+          '<span class="memz-tv-face">' + REACTION_FACES[k] + "</span>" +
+          '<b data-tv-count="' + k + '">' + (counts[k] || 0) + "</b></div>"
+        );
+      }).join("") +
+      "</div>"
+    );
+  }
+
+  function updateTvReactions(r, current) {
+    // Patched in place, never rebuilt: these change on nearly every poll
+    // while the room taps, and replacing the markup would restart the
+    // count's own bump animation on numbers that did not move.
+    if (!current || !r.reactions) return;
+    var counts = r.reactions[String(current.submission_id)] || {};
+    ["love", "soso", "meh"].forEach(function (k) {
+      var el = root.querySelector('[data-tv-count="' + k + '"]');
+      if (!el) return;
+      var next = String(counts[k] || 0);
+      if (el.textContent === next) return;
+      el.textContent = next;
+      el.parentElement.classList.add("is-live");
+      el.classList.remove("memz-tv-count--bump");
+      void el.offsetWidth;   // restart the animation rather than let it be ignored
+      el.classList.add("memz-tv-count--bump");
+    });
+  }
+
+  var tvRenderKey = null;
+
+  function renderTvLobby(state) {
+    setScreen("game-lobby");
+    var key = "lobby:" + state.players.map(function (p) { return p.id; }).join(",");
+    if (key === tvRenderKey) return;
+    tvRenderKey = key;
+    root.innerHTML =
+      '<div class="memz-tv memz-tv--lobby">' +
+      '<div class="memz-tv-joinbox">' +
+      '<p class="memz-tv-kicker">להצטרף במשחק</p>' +
+      '<h1 class="memz-tv-code">' + esc(state.code) + "</h1>" +
+      '<img class="memz-tv-qr" src="/memz/s/' + encodeURIComponent(state.code) + '/qr.png" alt="">' +
+      '<p class="memz-tv-kicker">babook.co.il/memz</p>' +
+      "</div>" +
+      '<ul class="memz-tv-players">' + state.players.map(function (p) {
+        return '<li class="memz-tv-player">' + esc(p.nickname) + (p.is_host ? " 👑" : "") + "</li>";
+      }).join("") + "</ul>" +
+      "</div>";
+  }
+
+  function renderTvCaptioning(state) {
+    var r = state.round;
+    setScreen("game-lobby");
+    var key = "cap:" + r.number + ":" + r.submitted_count;
+    if (key === tvRenderKey) return;
+    var fresh = tvRenderKey === null || tvRenderKey.indexOf("cap:" + r.number + ":") !== 0;
+    tvRenderKey = key;
+    var done = r.submitted_count, total = r.total_count || 1;
+    if (fresh) {
+      root.innerHTML =
+        '<div class="memz-tv memz-tv--waiting">' +
+        '<p class="memz-tv-kicker">סבב ' + r.number + " מתוך " + state.round_count + "</p>" +
+        '<h1 class="memz-tv-headline">כותבים...</h1>' +
+        '<div class="memz-tv-progress"><span data-tv-bar></span></div>' +
+        '<p class="memz-tv-big" data-tv-submitted></p>' +
+        '<p class="memz-tv-timer" data-timer></p>' +
+        "</div>";
+      countdown(root.querySelector("[data-timer]"), r.caption_deadline);
+    }
+    // Only the number and the bar move between polls; rebuilding the
+    // block would restart the countdown's interval every second.
+    var bar = root.querySelector("[data-tv-bar]");
+    if (bar) bar.style.width = Math.round((done / total) * 100) + "%";
+    var sub = root.querySelector("[data-tv-submitted]");
+    if (sub) sub.textContent = done + " מתוך " + total + " כבר שלחו";
+  }
+
+  function renderTvReveal(state) {
+    var r = state.round;
+    var count = (r.memes || []).length;
+    var idx = revealIndexFor(r);
+    var current = r.memes && r.memes[idx];
+    setScreen("game-revealed");
+    var key = "reveal:" + r.number + ":" + idx;
+    if (key === tvRenderKey) {
+      updateTvReactions(r, current);
+      return;
+    }
+    var newSlot = tvRenderKey !== null && tvRenderKey.indexOf("reveal:" + r.number + ":") === 0;
+    tvRenderKey = key;
+
+    root.innerHTML =
+      '<div class="memz-tv memz-tv--reveal">' +
+      '<div class="memz-tv-stage">' +
+      (current ? '<img class="memz-tv-meme" src="' + esc(current.rendered_url) + '" alt="">' : "") +
+      "</div>" +
+      '<div class="memz-tv-rail">' +
+      '<h1 class="memz-tv-kicker">סבב ' + r.number + " מתוך " + state.round_count +
+      (count > 1 ? " · מם " + (idx + 1) + " מתוך " + count : "") + "</h1>" +
+      '<p class="memz-tv-timer" data-timer></p>' +
+      tvReactionStrip(r, current) +
+      '<p class="memz-tv-hint">מצביעים בטלפון</p>' +
+      "</div></div>";
+    countdown(root.querySelector("[data-timer]"), revealSlotDeadline(r, idx) || r.reveal_deadline);
+    if (newSlot) window.memz.playSound("reveal");
+    else window.memz.playSound("drumroll");
+  }
+
+  // The standings, moved rather than redrawn. Rows are keyed by player id
+  // and animated with FLIP (measure where each row is, rebuild, measure
+  // again, play the difference backwards): the point of a leaderboard on a
+  // wall is watching somebody overtake somebody, which a list that simply
+  // appears in a new order never shows.
+  function tvStandingsRows(state) {
+    var players = state.players.slice().sort(function (a, b) { return b.score - a.score; });
+    return players.map(function (p, i) {
+      return (
+        '<li class="memz-tv-rank' + (i === 0 ? " is-leader" : "") + '" data-rank-id="' + p.id + '">' +
+        '<span class="memz-tv-rank-n">' + (i + 1) + "</span>" +
+        '<span class="memz-tv-rank-name">' + esc(p.nickname) + "</span>" +
+        '<span class="memz-tv-rank-score">' + p.score + "</span></li>"
+      );
+    }).join("");
+  }
+
+  function flipStandings(listEl, redraw) {
+    var before = {};
+    listEl.querySelectorAll("[data-rank-id]").forEach(function (row) {
+      before[row.dataset.rankId] = row.getBoundingClientRect().top;
+    });
+    redraw();
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    listEl.querySelectorAll("[data-rank-id]").forEach(function (row) {
+      var was = before[row.dataset.rankId];
+      if (was === undefined) return;
+      var delta = was - row.getBoundingClientRect().top;
+      if (!delta) return;
+      row.style.transform = "translateY(" + delta + "px)";
+      row.style.transition = "none";
+      requestAnimationFrame(function () {
+        row.style.transition = "transform 520ms cubic-bezier(.2,.8,.2,1)";
+        row.style.transform = "";
+      });
+    });
+  }
+
+  function renderTvResult(state) {
+    var r = state.round;
+    setScreen("game-result");
+    var scoreKey = "result:" + r.number + ":" + state.players.map(function (p) { return p.score; }).join(",");
+    if (scoreKey === tvRenderKey) return;
+    var sameRound = tvRenderKey !== null && tvRenderKey.indexOf("result:" + r.number + ":") === 0;
+    tvRenderKey = scoreKey;
+
+    if (!sameRound) {
+      root.innerHTML =
+        '<div class="memz-tv memz-tv--result">' +
+        '<p class="memz-tv-kicker">סוף סבב ' + r.number + " מתוך " + state.round_count + "</p>" +
+        '<h1 class="memz-tv-headline">הטבלה</h1>' +
+        '<ol class="memz-tv-ranks" data-tv-ranks>' + tvStandingsRows(state) + "</ol>" +
+        // SPR-W.5: the wall says how long this pause lasts, so the room
+        // knows to keep looking at it.
+        (r.result_deadline ? '<p class="memz-tv-timer" data-timer></p>' : "") +
+        "</div>";
+      var tvResultTimer = root.querySelector("[data-timer]");
+      if (tvResultTimer) countdown(tvResultTimer, r.result_deadline);
+      return;
+    }
+    var list = root.querySelector("[data-tv-ranks]");
+    if (!list) return;
+    flipStandings(list, function () { list.innerHTML = tvStandingsRows(state); });
+  }
+
+  function renderTvFinished(state) {
+    setScreen("game-finished");
+    var key = "finished:" + state.code;
+    if (key === tvRenderKey) return;
+    tvRenderKey = key;
+    spawnConfetti();
+    window.memz.playSound("fanfare");
+    var podium = state.podium || [];
+    root.innerHTML =
+      '<div class="memz-tv memz-tv--finished">' +
+      '<h1 class="memz-tv-headline">🎉 נגמר!</h1>' +
+      '<ol class="memz-tv-ranks">' + podium.map(function (row, i) {
+        return (
+          '<li class="memz-tv-rank' + (i === 0 ? " is-leader" : "") + '">' +
+          '<span class="memz-tv-rank-n">' + (i + 1) + "</span>" +
+          '<span class="memz-tv-rank-name">' + esc(row.nickname) +
+          (row.title
+            ? '<b class="memz-tv-rank-title">' + esc(row.title) +
+              (row.title_note ? " · " + esc(row.title_note) : "") + "</b>"
+            : "") + "</span>" +
+          '<span class="memz-tv-rank-score">' + row.score + "</span></li>"
+        );
+      }).join("") + "</ol>" +
+      // SPR-W.3's cards, on the wall: the room can see what is worth
+      // forwarding, and anyone photographing the TV gets the good version
+      // of the picture rather than a leaderboard.
+      (state.has_meme_card
+        ? '<img class="memz-tv-card" src="' + esc(cardUrl(state.code, "meme")) + '" alt="">'
+        : "") +
+      '<p class="memz-tv-kicker">babook.co.il/memz</p>' +
+      "</div>";
+  }
+
   function renderScreenMode(state) {
-    // The TV/laptop view: read-only, larger, no per-player controls.
-    if (state.status === "lobby") return renderLobby(state);
+    // The TV/laptop view: read-only, its own layout (SPR-W.4).
+    if (state.status === "lobby") return renderTvLobby(state);
+    // SPR-W.2: the booth's clock and count on the wall is exactly what a
+    // room full of people pointing phones at each other wants. Its own
+    // renderer already guards the camera off the TV (no player, no token).
+    if (state.status === "booth") return renderBooth(state);
     var r = state.round;
     if (!r) return;
     if (r.status === "captioning") {
-      setScreen("game-lobby");
-      root.innerHTML = '<h1 class="memz-title">כותבים...</h1><p class="memz-lead">' + r.submitted_count + "/" + r.total_count + " כבר שלחו.</p>";
+      renderTvCaptioning(state);
     } else if (r.status === "revealed") {
-      renderRevealed(state);
+      renderTvReveal(state);
     } else if (r.status === "voting") {
-      // Same pop-in-replaying-every-second bug as the player-facing
-      // renderVoting, same fix: nothing on the shared screen changes
-      // mid-voting either.
+      // Judge mode's own phase, which only exists there now. Nothing on
+      // it changes while the judge decides, so it is built once.
       var screenVoteKey = "screen:" + r.number;
       if (screenVoteKey !== screenVotingRenderKey) {
         screenVotingRenderKey = screenVoteKey;
         setScreen("game-voting");
-        root.innerHTML = '<h1 class="memz-title">מצביעים...</h1>' +
-          '<p class="memz-lead">סבב ' + r.number + " מתוך " + state.round_count + " · " + state.players.length + " שחקנים בחדר</p>" +
-          '<div class="memz-meme-grid">' +
-          r.memes.map(function (m) { return '<figure class="memz-meme-tile"><img src="' + esc(m.rendered_url) + '" alt=""></figure>'; }).join("") +
-          "</div>";
+        root.innerHTML =
+          '<div class="memz-tv memz-tv--waiting">' +
+          '<p class="memz-tv-kicker">סבב ' + r.number + " מתוך " + state.round_count +
+          " · " + state.players.length + " שחקנים בחדר</p>" +
+          '<h1 class="memz-tv-headline">' +
+          (r.judge ? esc(r.judge.nickname) + " מחליט/ה..." : "מצביעים...") + "</h1>" +
+          '<p class="memz-tv-hint">כל הממים של הסבב, והשופט/ת בוחר/ת אחד</p>' +
+          '<div class="memz-tv-grid">' +
+          r.memes.map(function (m) { return '<img src="' + esc(m.rendered_url) + '" alt="">'; }).join("") +
+          "</div></div>";
       }
     } else {
-      renderResult(state);
+      renderTvResult(state);
     }
   }
 
   function render(state) {
     updateServerClockOffset(state);   // every state update, poll-driven or from an action's own response
     if (screenMode) {
-      if (state.status === "finished") renderFinished(state);
+      if (state.status === "finished") renderTvFinished(state);
       else renderScreenMode(state);
       schedulePoll(state);
       return;
@@ -675,7 +1283,9 @@
     }
 
     if (state.status !== "lobby") showLobbyUploader(false);
+    if (state.status !== "booth") showBoothUploader(false);
     if (state.status === "lobby") renderLobby(state);
+    else if (state.status === "booth") renderBooth(state);
     else if (state.status === "playing") {
       var r = state.round;
       if (r.status === "captioning") renderCaptioning(state);
@@ -689,7 +1299,7 @@
   }
 
   function pollInterval(state) {
-    var ms = { lobby: 2000, captioning: 1000, revealed: 1000, voting: 1000, done: 2000, finished: 5000 };
+    var ms = { lobby: 2000, booth: 1000, captioning: 1000, revealed: 1000, voting: 1000, done: 2000, finished: 5000 };
     var key = state.status === "playing" && state.round ? state.round.status : state.status;
     return ms[key] || 2000;
   }

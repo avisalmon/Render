@@ -110,8 +110,22 @@
     loadImage(el.dataset.creatorThumb).then(function (img) { currentImage = img; draw(); });
   }
 
+  // ACT-Z.20: the grid moved below the caption and the button, so a
+  // thumbnail can be several screens down from the preview it changes.
+  // Tapping one takes you back up to see what you just picked —
+  // otherwise the only visible result of the tap is a highlight.
+  function scrollToPreview() {
+    var top = document.querySelector("[data-creator-top]");
+    if (!top || !top.scrollIntoView) return;
+    var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    top.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+  }
+
   thumbs.forEach(function (el) {
-    el.addEventListener("click", function () { selectThumb(el); });
+    el.addEventListener("click", function () {
+      selectThumb(el);
+      scrollToPreview();
+    });
   });
   var checked = form.querySelector("input[name=image]:checked");
   if (checked) {

@@ -74,7 +74,7 @@ def _clean_caption(text, max_chars):
 def _generate_caption(topic_text):
     """One short, playful Hebrew caption. Falls back to a random built-in
     line on stub mode, an API error, or an unusable reply — never raises."""
-    from app.ai_chat import call_openai
+    from .ai import call_openai
 
     max_chars = conf.get("CAPTION_MAX_CHARS")
     system_prompt = (
@@ -104,7 +104,7 @@ def _choose_vote(candidates):
     or to parse a number back in range."""
     if len(candidates) == 1:
         return candidates[0][0]
-    from app.ai_chat import call_openai
+    from .ai import call_openai
 
     listing = "\n".join(f"{i + 1}. {text}" for i, (_sid, text) in enumerate(candidates))
     system_prompt = (

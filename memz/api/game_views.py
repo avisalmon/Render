@@ -113,6 +113,7 @@ class SessionCreateView(GameAPIView):
                 game_mode=game_mode, caption_mode=caption_mode, scoring_mode=scoring_mode, deck=deck,
                 image_source=image_source, packs=packs, release_session_code=request.data.get("release_session_code"),
                 ai_player_count=ai_player_count,
+                host_nickname=str(request.data.get("nickname", "")),
             )
         except game.RememberedCapReached as exc:
             oldest = exc.oldest_session
@@ -276,6 +277,30 @@ class SubmitView(GameAPIView):
         return self.state_response(session, player)
 
 
+class IdeasView(GameAPIView):
+    """`POST /memz/api/sessions/<code>/rounds/<n>/ideas/` — three caption
+    starters for the player who is stuck (SPR-W.5, Rule 4.4.6).
+
+    Refused outside captioning and for a player who has already submitted:
+    there is nothing to help with then, and an endpoint that answers in
+    every phase is an endpoint somebody can bill us for in every phase."""
+
+    def post(self, request, code, number):
+        from .. import ideas
+
+        session = _session_or_404(code)
+        player, refusal = self.require_player(request, session)
+        if refusal:
+            return refusal
+        round_obj = session.rounds.filter(number=number).first()
+        if round_obj is None or round_obj.status != round_obj.CAPTIONING:
+            return Response({"detail": "אפשר לבקש רעיון רק בזמן הכתיבה."}, status=409)
+        submission = round_obj.submissions.filter(player=player).first()
+        if submission is None or submission.meme_id is not None:
+            return Response({"detail": "כבר שלחתם כיתוב לסבב הזה."}, status=409)
+        return Response({"ideas": ideas.starters_for(round_obj, submission)})
+
+
 class SwapCardView(GameAPIView):
     def post(self, request, code):
         session = _session_or_404(code)
@@ -284,6 +309,80 @@ class SwapCardView(GameAPIView):
             return refusal
         try:
             game.swap_hand_card(session, player, request.data.get("hand_card_id"))
+        except game.GameError as exc:
+            return Response({"detail": str(exc)}, status=409)
+        return self.state_response(session, player)
+
+
+class BoothPhotoView(GameAPIView):
+    """`POST /memz/api/sessions/<code>/booth/photo/` — one photo into this
+    session's booth (SPR-W.2, Rule 5.5.2).
+
+    A third upload path, and deliberately not a flag on either of the
+    other two: the ordinary uploader writes a private image the uploader
+    owns and is counted against their quota, the bank uploader writes a
+    public one for every game everywhere, and this one writes an image
+    that belongs to a single evening and dies with it. Keeping them apart
+    is what makes it impossible for a photo of somebody at a dinner table
+    to end up in a bank by way of a stray parameter."""
+
+    def post(self, request, code):
+        from .. import moderation, uploads
+
+        session = _session_or_404(code)
+        player, refusal = self.require_player(request, session)
+        if refusal:
+            return refusal
+
+        raw_file = request.data.get("file")
+        if not raw_file:
+            return Response({"file": "לא הגיעה תמונה."}, status=400)
+        try:
+            processed = uploads.process_upload(raw_file)
+        except uploads.UploadError as exc:
+            return Response({"file": str(exc)}, status=400)
+
+        # Rule 5.5.5: moderated like everything else. These photos are
+        # never published anywhere, but they are shown to everyone in the
+        # room, and the room is sometimes strangers.
+        verdict, note = moderation.check_image(processed)
+        processed.seek(0)
+        try:
+            game.add_booth_photo(
+                session, player, processed, verdict=verdict, note=note,
+                original_name=getattr(raw_file, "name", "booth.jpg"),
+            )
+        except game.GameError as exc:
+            return Response({"detail": str(exc)}, status=409)
+        return self.state_response(session, player, status=201)
+
+
+class CloseBoothView(GameAPIView):
+    """The host ending the booth before its timer does."""
+
+    def post(self, request, code):
+        session = _session_or_404(code)
+        player, refusal = self.require_player(request, session)
+        if refusal:
+            return refusal
+        try:
+            game.close_booth(session, player)
+        except game.GameError as exc:
+            return Response({"detail": str(exc)}, status=409)
+        return self.state_response(session, player)
+
+
+class AbandonBoothView(GameAPIView):
+    """The host giving up on the booth and playing an ordinary game
+    instead (Rule 5.5.6). The photos taken so far are deleted."""
+
+    def post(self, request, code):
+        session = _session_or_404(code)
+        player, refusal = self.require_player(request, session)
+        if refusal:
+            return refusal
+        try:
+            game.abandon_booth(session, player)
         except game.GameError as exc:
             return Response({"detail": str(exc)}, status=409)
         return self.state_response(session, player)

@@ -4,7 +4,23 @@
 {% block signin %}{% endblock %}
 {% block content %}
 <h1 class="memz-title">{% trans "כניסה" %}</h1>
-<p class="memz-lead">{% trans "עם האימייל והסיסמה שלכם." %}</p>
+
+{% comment %}
+  ACT-Z.19 (2026-09-20, Avi): Google first, the password form under it.
+  On a phone the moment you touch the email field the keyboard comes up
+  and covers everything below it — so anything sitting under the form is
+  effectively invisible to someone who has started typing, and Google is
+  the faster way in for most people. The order is the whole fix; both
+  options are otherwise unchanged.
+{% endcomment %}
+<a class="memz-btn memz-btn--primary memz-btn--wide" href="/accounts/google/login/?process=login&amp;next={{ next|default:'/memz/'|urlencode }}">
+  <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:none;fill:currentColor;" aria-hidden="true">
+    <path d="M21.35 11.1h-9.17v2.98h5.4c-.23 1.36-1.6 4-5.4 4-3.25 0-5.9-2.7-5.9-6s2.65-6 5.9-6c1.85 0 3.09.79 3.8 1.47l2.6-2.5C17.02 3.46 14.9 2.5 12.18 2.5 6.98 2.5 2.78 6.7 2.78 12s4.2 9.5 9.4 9.5c5.42 0 9.02-3.8 9.02-9.16 0-.62-.07-1.09-.15-1.24z"/>
+  </svg>
+  {% trans "המשך עם גוגל" %}
+</a>
+
+<p class="memz-divider">{% trans "או עם אימייל וסיסמה" %}</p>
 
 <form method="post" class="memz-card memz-form" novalidate>
   {% csrf_token %}
@@ -27,16 +43,8 @@
   The exact allauth flow babook's own login page (and ustrip's, matazim's)
   already offer — no new view, no new account system, the same shared User
   table memz already uses. `next` is carried the same way the password form
-  above carries it.
+  carries it. Moved above the form in ACT-Z.19; see the note up there.
 {% endcomment %}
-<p class="memz-divider">{% trans "או" %}</p>
-<a class="memz-btn memz-btn--secondary memz-btn--wide" href="/accounts/google/login/?process=login&amp;next={{ next|default:'/memz/'|urlencode }}">
-  <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:none;fill:currentColor;" aria-hidden="true">
-    <path d="M21.35 11.1h-9.17v2.98h5.4c-.23 1.36-1.6 4-5.4 4-3.25 0-5.9-2.7-5.9-6s2.65-6 5.9-6c1.85 0 3.09.79 3.8 1.47l2.6-2.5C17.02 3.46 14.9 2.5 12.18 2.5 6.98 2.5 2.78 6.7 2.78 12s4.2 9.5 9.4 9.5c5.42 0 9.02-3.8 9.02-9.16 0-.62-.07-1.09-.15-1.24z"/>
-  </svg>
-  {% trans "המשך עם גוגל" %}
-</a>
-
 <div class="memz-stack memz-stack--after">
   <a class="memz-btn memz-btn--secondary" href="{% url 'memz:signup' %}{% if next %}?next={{ next|urlencode }}{% endif %}">{% trans "אין לכם חשבון? פותחים אחד" %}</a>
   <a class="memz-btn memz-btn--ghost" href="{% url 'memz:password_reset' %}">{% trans "שכחתם את הסיסמה?" %}</a>

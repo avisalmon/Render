@@ -49,13 +49,47 @@ def _sweep(f0, f1, dur, amp=0.45, fade=0.03):
     return out
 
 
+def _mix(*parts):
+    """Overlay equal-length-or-shorter sample lists, clipped."""
+    n = max(len(p) for p in parts)
+    out = [0.0] * n
+    for p in parts:
+        for i, s in enumerate(p):
+            out[i] += s
+    return out
+
+
+def _seq(*parts):
+    """Play sample lists one after another."""
+    out = []
+    for p in parts:
+        out.extend(p)
+    return out
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     # The last-5-seconds tick (Rule 4.4.4): short, high, unmistakable.
     _write(OUT / "tick.wav", _tone(1500, 0.08, amp=0.5, fade=0.005))
     # The reveal's drumroll (spec §9.1): a quick rising swell.
     _write(OUT / "drumroll.wav", _sweep(220, 660, 0.5, amp=0.4, fade=0.03))
-    print(f"wrote {OUT / 'tick.wav'} and {OUT / 'drumroll.wav'}")
+
+    # SPR-W.1, three more, same recipe (spec Rule 4.5.6, §9.1):
+    # A verdict landing: a soft, quick "pop" -- a short downward chirp with
+    # a bright top, over before the thumb has lifted.
+    _write(OUT / "pop.wav", _sweep(900, 420, 0.09, amp=0.45, fade=0.008))
+    # A new meme arriving on screen: two rising notes, a small fanfare of
+    # its own so every slot has a beginning you can hear across the room.
+    _write(OUT / "reveal.wav", _seq(_tone(523, 0.09, amp=0.35, fade=0.01), _tone(784, 0.16, amp=0.4, fade=0.02)))
+    # The podium: a major triad arpeggio that lands on the octave. Long
+    # enough to be an event, short enough not to be a jingle.
+    _write(OUT / "fanfare.wav", _seq(
+        _tone(523, 0.12, amp=0.4, fade=0.01),
+        _tone(659, 0.12, amp=0.4, fade=0.01),
+        _tone(784, 0.12, amp=0.4, fade=0.01),
+        _mix(_tone(1046, 0.45, amp=0.35, fade=0.03), _tone(784, 0.45, amp=0.2, fade=0.03), _tone(523, 0.45, amp=0.15, fade=0.03)),
+    ))
+    print(f"wrote 5 sounds to {OUT}")
 
 
 if __name__ == "__main__":

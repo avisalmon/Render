@@ -15,6 +15,13 @@ once SPR-Z.3 starts setting it):
 2. Memes past `expires_at` that were never saved — saving clears the
    expiry (spec §8.4), so this only ever touches memes nobody kept.
 
+SPR-W.2 gave (1) a second meaning worth naming: a photo-booth session's
+photos hang off it (`MemeImage.session`, CASCADE), so this command is
+what finally keeps the promise that evening's room was made — "these
+stay in this game and are deleted at the end of it". The files go with
+the rows because of Rule 6.8.1's `post_delete` cleanup, which the
+collector fires for cascaded objects too.
+
 Marking a stale-but-not-expired session `abandoned` (spec Rule 4.9.3) needs
 `Player.last_seen_at` to actually mean something, which only happens once
 a game is being played (SPR-Z.3); not implemented here on purpose.

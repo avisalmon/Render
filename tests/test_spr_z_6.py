@@ -579,7 +579,12 @@ def test_the_reveal_screen_shows_one_meme_at_a_time_not_a_grid(browser, live_ser
 
 def test_the_big_screen_reveal_is_also_one_at_a_time(browser, live_server, db, settings):
     """spec §4.10: the shared TV gets the same slideshow, not its own
-    grid -- if anything, one-at-a-time matters more there."""
+    grid -- if anything, one-at-a-time matters more there.
+
+    SPR-W.4 gave the TV its own renderers (Rule 4.10.1), so the element is
+    `.memz-tv-meme` rather than the phone's `.memz-reveal-image`. The rule
+    this test exists for is unchanged: exactly one meme on the wall, never
+    a grid of them."""
     pytest.importorskip("playwright.sync_api")
     session, _host, _round_obj = _revealed_world(settings)
     _park_reveal_on(session, 0, hold_seconds=180)   # don't race the slot: see _park_reveal_on
@@ -588,8 +593,9 @@ def test_the_big_screen_reveal_is_also_one_at_a_time(browser, live_server, db, s
     page.goto(f"{live_server.url}/memz/s/{session.code}/screen/", wait_until="domcontentloaded")
     page.wait_for_timeout(300)
     assert page.locator("[data-screen]").get_attribute("data-screen") == "game-revealed"
-    assert page.locator(".memz-reveal-image").count() == 1
+    assert page.locator(".memz-tv-meme").count() == 1
     assert page.locator(".memz-meme-grid").count() == 0
+    assert page.locator(".memz-tv-grid").count() == 0
 
 
 def test_mute_toggle_persists_across_a_reload(browser, live_server, db):

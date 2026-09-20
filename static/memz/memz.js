@@ -217,7 +217,8 @@
       '<input type="file" accept="image/*" capture="environment" data-uploader-camera hidden>' +
       '<input type="file" accept="image/*" multiple data-uploader-gallery hidden>' +
       '<div class="memz-uploader-buttons">' +
-      '<button type="button" class="memz-btn memz-btn--secondary" data-uploader-take>מצלמים 📷</button>' +
+      '<button type="button" class="memz-btn memz-btn--' + (options.cameraFirst ? "primary" : "secondary") +
+      '" data-uploader-take>' + (options.cameraLabel || "מצלמים 📷") + "</button>" +
       '<button type="button" class="memz-btn memz-btn--secondary" data-uploader-pick>מהגלריה</button>' +
       "</div>" +
       '<p class="memz-fineprint" data-uploader-status hidden></p>';
@@ -253,7 +254,10 @@
           Object.keys(extra).forEach(function (k) { body.append(k, extra[k]); });
         }
         try {
-          var image = await api("POST", options.endpoint || "/memz/api/images/", body);
+          // SPR-W.2: the booth endpoint authenticates by player token, not
+          // by session cookie -- a guest at the table has no account and
+          // still gets to shoot.
+          var image = await api("POST", options.endpoint || "/memz/api/images/", body, options.token);
           done += 1;
           if (options.onUploaded) options.onUploaded(image);
         } catch (e) {
@@ -267,7 +271,10 @@
       if (!failed) {
         // Rule 6.4.1: an upload is not usable until moderation passes it,
         // so "uploaded" is the honest word here, not "added to the game".
-        say(done === 1 ? "תמונה אחת נוספה לבנק שלכם." : done + " תמונות נוספו לבנק שלכם.");
+        // The booth says something else, because "your bank" would be a
+        // lie there: nothing it takes is kept (SPR-W.2).
+        say(options.successText ? options.successText(done)
+          : done === 1 ? "תמונה אחת נוספה לבנק שלכם." : done + " תמונות נוספו לבנק שלכם.");
       } else if (done) {
         say(done + " נוספו, " + failed + " לא עברו.");
       }

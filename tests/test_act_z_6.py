@@ -144,7 +144,9 @@ def test_the_qr_code_renders_in_both_the_player_lobby_and_the_big_screen(_phone_
     screen_page = screen_context.new_page()
     screen_page.goto(f"{live_server.url}/memz/s/{session.code}/screen/", wait_until="domcontentloaded")
     screen_page.wait_for_timeout(400)
-    screen_img = screen_page.locator("img.memz-qr")
+    # SPR-W.4: the TV's own lobby markup (Rule 4.10.1). Same requirement:
+    # the code on the wall is useless without something to scan.
+    screen_img = screen_page.locator("img.memz-tv-qr")
     assert screen_img.count() == 1
-    assert screen_page.evaluate("document.querySelector('img.memz-qr').naturalWidth") > 0
+    assert screen_page.evaluate("document.querySelector('img.memz-tv-qr').naturalWidth") > 0
     screen_context.close()

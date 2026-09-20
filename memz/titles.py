@@ -47,6 +47,24 @@ LABELS = {
     JUDGES_FAVOURITE: "השופט/ת האהוב/ה",
 }
 
+# SPR-W.5: one line each, because a badge nobody can decode is decoration.
+# "הסוס השחור" told a player nothing except that the app had decided
+# something about them; "התחיל/ה לאט וסיים/ה חזק" tells them what they did.
+# Kept to a short phrase: this sits under a name on a podium, and on a TV
+# it is read from four metres.
+EXPLANATIONS = {
+    CROWD_FAVOURITE: "הכי הרבה אוהב בערב",
+    UNANIMOUS: "סבב שכל החדר אהב",
+    STREAK: "ניצח/ה כמה סבבים ברצף",
+    CLUTCH: "הסבב האחרון היה הכי טוב",
+    SPEED: "הכי מהר/ה לשלוח",
+    DARK_HORSE: "התחיל/ה לאט וסיים/ה חזק",
+    PHILOSOPHER: "הכיתובים הכי ארוכים",
+    MINIMALIST: "הכיתובים הכי קצרים",
+    THE_CROWD: "הצביע/ה עם הרוב כמעט תמיד",
+    JUDGES_FAVOURITE: "השופטים בחרו בו/בה הכי הרבה",
+}
+
 
 def _round_winner_ids(points):
     """Submission ids tied for the top positive score — the same

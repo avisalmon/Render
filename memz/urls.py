@@ -3,7 +3,9 @@ from django.urls import include, path
 from . import auth_views, views
 from .api import router
 from .api.game_views import (
-    AdvanceView, AgainView, AttachAccountView, JoinView, LeaveView, RateView, ReleaseSessionView,
+    AbandonBoothView, AdvanceView, AgainView, AttachAccountView, BoothPhotoView, CloseBoothView,
+    IdeasView, JoinView, LeaveView,
+    RateView, ReleaseSessionView,
     RemovePlayerView, SessionCreateView, StartView, StateView, SubmitView, SwapCardView, SwapImageView,
     VoteView,
 )
@@ -24,6 +26,8 @@ urlpatterns = [
     path("s/<str:code>/", views.game_page, name="game"),
     path("s/<str:code>/screen/", views.game_screen_page, name="game_screen"),
     path("s/<str:code>/qr.png", views.lobby_qr, name="lobby_qr"),
+    # SPR-W.3: the evening's two share cards (spec §8.3).
+    path("s/<str:code>/card/<str:kind>.jpg", views.share_card, name="share_card"),
     # The solo creator (spec §7).
     path("create/", views.creator, name="create"),
     path("create/<str:slug>/", views.creator_result, name="creator_result"),
@@ -59,9 +63,13 @@ urlpatterns = [
     path("api/sessions/<str:code>/release/", ReleaseSessionView.as_view(), name="api_session_release"),
     path("api/sessions/<str:code>/players/<int:player_id>/remove/", RemovePlayerView.as_view(), name="api_session_remove_player"),
     path("api/sessions/<str:code>/rounds/<int:number>/submit/", SubmitView.as_view(), name="api_round_submit"),
+    path("api/sessions/<str:code>/rounds/<int:number>/ideas/", IdeasView.as_view(), name="api_round_ideas"),
     path("api/sessions/<str:code>/rounds/<int:number>/vote/", VoteView.as_view(), name="api_round_vote"),
     path("api/sessions/<str:code>/rounds/<int:number>/rate/", RateView.as_view(), name="api_round_rate"),
     path("api/sessions/<str:code>/rounds/<int:number>/swap-image/", SwapImageView.as_view(), name="api_round_swap_image"),
+    path("api/sessions/<str:code>/booth/photo/", BoothPhotoView.as_view(), name="api_booth_photo"),
+    path("api/sessions/<str:code>/booth/close/", CloseBoothView.as_view(), name="api_booth_close"),
+    path("api/sessions/<str:code>/booth/abandon/", AbandonBoothView.as_view(), name="api_booth_abandon"),
     path("api/sessions/<str:code>/cards/swap/", SwapCardView.as_view(), name="api_card_swap"),
     # Classic Imgflip templates in the solo creator (ACT-Z.5, spec §7.3).
     path("api/bank/images/", BankUploadView.as_view(), name="api_bank_upload"),

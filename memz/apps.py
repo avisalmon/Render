@@ -13,3 +13,6 @@ class MemzConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "memz"
     verbose_name = "memz"
+
+    def ready(self):
+        from . import signals   # noqa: F401  (file cleanup on delete, Rule 6.8.1)

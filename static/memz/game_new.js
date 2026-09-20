@@ -22,15 +22,26 @@
   var packsList = form.querySelector("[data-packs-list]");
   var packsLoaded = false;
 
+  var boothNote = form.querySelector("[data-booth-note]");
+  // Two elements (the picker and the line explaining it), so a nodelist.
+  var imageSourceParts = form.querySelectorAll("[data-image-source-field]");
+
   function syncVisibility() {
     if (scoringField) scoringField.hidden = gameModeInput.value === "relaxed";
     if (deckField) deckField.hidden = captionModeInput.value !== "cards";
+    // SPR-W.2: the photo booth brings its own pool, so the "where do the
+    // pictures come from" picker is not merely irrelevant here, it would be
+    // a control that appears to choose something and doesn't. Hide it and
+    // say what happens instead.
+    var isBooth = gameModeInput.value === "photo_booth";
+    if (boothNote) boothNote.hidden = !isBooth;
+    imageSourceParts.forEach(function (el) { el.hidden = isBooth; });
     if (packsField && imageSourceInput) {
       // SPR-Z.11: `mix` no longer means "own + packs" (it is the public
       // bank + everyone's uploads, packs optional), and it is now the
       // default -- so opening the create screen no longer unfolds a pack
       // picker nobody asked for. Only `packs` mode needs one.
-      var needsPacks = imageSourceInput.value === "packs";
+      var needsPacks = !isBooth && imageSourceInput.value === "packs";
       packsField.hidden = !needsPacks;
       if (needsPacks && !packsLoaded) loadPacks();
     }
@@ -44,8 +55,13 @@
     packsLoaded = true;
     try {
       var packs = await window.memz.api("GET", "/memz/api/packs/");
+      // The whole row is the target, not the box inside it. A bare
+      // checkbox renders at about 13x13 CSS px, which is a third of the
+      // 44 px Rule 11.1 requires -- the one control in the app still
+      // shipping that way, because `packs` mode has to be chosen before
+      // the list even unfolds and no screen-contract row reached it.
       packsList.innerHTML = packs.map(function (p) {
-        return '<li class="memz-player-row"><label style="flex:1;display:flex;gap:8px;align-items:center;">' +
+        return '<li class="memz-pack-row"><label class="memz-pack-label">' +
           '<input type="checkbox" name="pack_ids" value="' + p.id + '"> <span>' + p.name +
           ' (' + p.image_count + ')</span></label></li>';
       }).join("") || '<li class="memz-fineprint">אין עדיין חבילות. אפשר ליצור אחת בפרופיל.</li>';
@@ -63,7 +79,9 @@
       var packIds = Array.prototype.slice.call(form.querySelectorAll('[name="pack_ids"]:checked'))
         .map(function (el) { return parseInt(el.value, 10); });
       var aiField = form.querySelector('[name="ai_player_count"]');
+      var nicknameField = form.querySelector("[data-nickname-input]");
       var data = await window.memz.api("POST", "/memz/api/sessions/", {
+        nickname: nicknameField ? nicknameField.value.trim() : "",
         round_count: parseInt(roundsInput.value, 10),
         round_seconds: parseInt(secondsInput.value, 10),
         ai_player_count: aiField ? parseInt(aiField.value, 10) : 0,

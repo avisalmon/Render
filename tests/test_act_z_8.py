@@ -252,6 +252,11 @@ def test_the_result_screen_stops_rebuilding_itself_every_poll(browser, live_serv
 
 
 def test_the_big_screen_voting_view_also_stops_rebuilding_itself(browser, live_server, db):
+    """SPR-W.4 gave the TV its own markup (Rule 4.10.1), so the node this
+    marks is `.memz-tv-grid img` rather than the phone's meme tile. The
+    defect being guarded is the same one: the TV polls every second, and
+    nothing on a judge-mode voting screen changes while the judge decides,
+    so rebuilding it replays every tile's pop-in at everyone in the room."""
     pytest.importorskip("playwright.sync_api")
     session, _host, _p2, _p3, _round_obj = _voting_world()
     context = browser.new_context(viewport=PHONE)
@@ -260,10 +265,10 @@ def test_the_big_screen_voting_view_also_stops_rebuilding_itself(browser, live_s
     page.wait_for_timeout(400)
     assert page.locator("[data-screen]").get_attribute("data-screen") == "game-voting"
 
-    page.evaluate("document.querySelector('.memz-meme-tile').dataset.testMarker = 'still-here'")
+    page.evaluate("document.querySelector('.memz-tv-grid img').dataset.testMarker = 'still-here'")
     page.wait_for_timeout(1300)
     survived = page.evaluate("""
-        () => { var t = document.querySelector('.memz-meme-tile'); return t && t.dataset.testMarker; }
+        () => { var t = document.querySelector('.memz-tv-grid img'); return t && t.dataset.testMarker; }
     """)
     assert survived == "still-here"
 

@@ -6,6 +6,13 @@
 <p class="memz-lead">{% trans "כמה סבבים, וכמה זמן לכל סבב." %}</p>
 
 <form class="memz-card memz-form" data-new-session-form novalidate>
+  {# SPR-W.1 (F-W.1.4): the host's own name, first, before any setting. #}
+  {# A guest host used to be "מארח/ת" all the way to the podium.          #}
+  <label class="memz-field">
+    <span>{% trans "השם שלך" %}</span>
+    <input class="memz-input" type="text" name="nickname" maxlength="{{ nickname_max }}"
+           value="{{ default_nickname }}" placeholder="{% trans 'איך יקראו לך במשחק' %}" autocomplete="nickname" data-nickname-input>
+  </label>
   <label class="memz-field">
     <span>{% trans "כמה סבבים" %} (<span data-rounds-value>{{ rounds.default }}</span>)</span>
     <input class="memz-input" type="range" name="round_count" min="{{ rounds.lo }}" max="{{ rounds.hi }}" value="{{ rounds.default }}" data-rounds-input>
@@ -35,8 +42,14 @@
       <option value="topics">{% trans "נושא לכל סבב" %}</option>
       <option value="same_meme">{% trans "אותו מם לכולם" %}</option>
       <option value="relaxed">{% trans "רגוע (בלי ניקוד)" %}</option>
+      <option value="photo_booth">{% trans "צלמו את החדר 📷" %}</option>
     </select>
   </label>
+  {# SPR-W.2: this mode replaces the image source entirely, so the picker #}
+  {# below is hidden when it is chosen (game_new.js) and this line says   #}
+  {# why, rather than leaving a control that silently does nothing.       #}
+  <p class="memz-fineprint" data-booth-note hidden>
+    {% trans "30 שניות שבהן כולם מצלמים את כולם, ואלה התמונות של כל המשחק. בלי בנק, בלי הכנה. התמונות נמחקות בסוף המשחק." %}</p>
 
   <label class="memz-field" data-scoring-field>
     <span>{% trans "מי בוחר את המנצח" %}</span>
@@ -64,7 +77,7 @@
   {% endif %}
 
   {% if user.is_authenticated %}
-  <label class="memz-field">
+  <label class="memz-field" data-image-source-field>
     <span>{% trans "מאיפה התמונות" %}</span>
     <select class="memz-input" name="image_source" data-image-source>
       <option value="mix" selected>{% trans "התמונות של כל השחקנים + הבנק הציבורי" %}</option>
@@ -73,7 +86,7 @@
       <option value="packs">{% trans "מחבילות שבחרתי" %}</option>
     </select>
   </label>
-  <p class="memz-fineprint">{% trans "בברירת מחדל המשחק מערבב את התמונות שכל שחקן מחובר העלה עם הבנק הציבורי, עד חצי מהתמונות." %}</p>
+  <p class="memz-fineprint" data-image-source-field>{% trans "בברירת מחדל המשחק מערבב את התמונות שכל שחקן מחובר העלה עם הבנק הציבורי, עד חצי מהתמונות." %}</p>
   <div class="memz-field" data-packs-field hidden>
     <span class="memz-field-label">{% trans "אילו חבילות" %}</span>
     <ul class="memz-player-list" data-packs-list></ul>

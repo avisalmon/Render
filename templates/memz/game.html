@@ -19,5 +19,16 @@
     {% trans "לראות ולמחוק את התמונות שלי" %}</a>
 </section>
 {% endif %}
+
+{# SPR-W.2: the photo booth's camera, outside the game root for the same #}
+{# reason as the one above -- the booth polls every second, and a photo  #}
+{# being chosen must survive that. Note there is no is_authenticated     #}
+{# gate here: a booth photo is owned by nobody and counted against       #}
+{# nobody's quota (it belongs to the evening and dies with it), so the   #}
+{# account rule that governs bank uploads has nothing to say about it.   #}
+{# Guests at the table shoot too, which is the entire point of the mode. #}
+<section class="memz-card memz-upload-card" data-booth-upload hidden>
+  <div data-booth-uploader></div>
+</section>
 {% endblock %}
 {% block scripts %}<script src="{% static 'memz/game.js' %}"></script>{% endblock %}

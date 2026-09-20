@@ -182,6 +182,16 @@ def _show_reveal_slot(session, index, hold_seconds=0):
     return round_obj
 
 
+def _booth_photo(session, player):
+    from memz import game
+    from memz.models import MemeImage
+
+    return game.add_booth_photo(
+        session, player, ContentFile(_png_bytes()),
+        verdict=MemeImage.APPROVED, note="", original_name="booth.png",
+    )
+
+
 def _game_at(phase, **session_kwargs):
     """A real 3-player game, advanced to `phase` through memz.game itself —
     the actual state machine, not a fixture faking the row (the_manager.md
@@ -197,6 +207,24 @@ def _game_at(phase, **session_kwargs):
         return session.code, host.guest_token, p2.guest_token
 
     game.start_session(session, host)
+    if phase == "booth":
+        # SPR-W.2: photo-booth mode opens the booth here instead of round
+        # one, so this is where that screen exists. One photo already taken,
+        # so the counts on it are real rather than all zeroes.
+        _booth_photo(session, host)
+        return session.code, host.guest_token, p2.guest_token
+    if phase == "booth_extended":
+        # The same screen after the clock has run out once without enough
+        # photos: the host now also has the way out (Rule 5.5.6).
+        _booth_photo(session, host)
+        from django.utils import timezone
+
+        from memz.models import Session as _S
+
+        _S.objects.filter(pk=session.pk).update(
+            booth_extensions=1, booth_deadline=timezone.now() + timezone.timedelta(seconds=25),
+        )
+        return session.code, host.guest_token, p2.guest_token
     if phase == "captioning":
         return session.code, host.guest_token, p2.guest_token
 
@@ -288,6 +316,10 @@ def build_world():
     games["judge_voting"] = _game_at("voting", scoring_mode="judge")
     games["cards_captioning"] = _game_at("captioning", caption_mode="cards", deck=cards_deck)
     games["relaxed_result"] = _game_at("result", game_mode="relaxed")
+    # SPR-W.2: the booth, and the booth that has already failed to fill
+    # itself once (the only state in which the way out is on screen).
+    games["booth"] = _game_at("booth", game_mode=_Session.PHOTO_BOOTH)
+    games["booth_extended"] = _game_at("booth_extended", game_mode=_Session.PHOTO_BOOTH)
 
     # SPR-Z.5: the profile's own state — a real approved upload, a real
     # pending one (through the actual create() path, not a bare .create()),
@@ -362,6 +394,22 @@ def _wrong_password(page):
     page.wait_for_timeout(400)
 
 
+def _choose_packs(page):
+    """The pack picker only exists once `packs` is chosen as the image
+    source, which is why no contract row had ever reached it — and why it
+    was still shipping 13x13 px checkboxes long after every other control
+    in the app had been widened to a thumb."""
+    page.select_option("[data-image-source]", "packs")
+    page.wait_for_timeout(500)
+
+
+def _photo_booth_mode(page):
+    """SPR-W.2's mode on the create screen: the image-source picker folds
+    away and a line explains what replaces it."""
+    page.select_option("[data-game-mode]", "photo_booth")
+    page.wait_for_timeout(300)
+
+
 def _taken_email(page):
     page.fill('input[name="email"]', "taken@example.com")
     page.fill('input[name="password1"]', PASSWORD)
@@ -421,16 +469,32 @@ SCREENS = [
      lambda w: _token_script(w, "finished", "host")),
     ("game/big-screen-lobby", lambda w: f"/memz/s/{w['games']['lobby'][0]}/screen/", None, None, "game-lobby", None),
     ("game/big-screen-judge-voting", lambda w: f"/memz/s/{w['games']['judge_voting'][0]}/screen/", None, None, "game-voting", None),
+    # SPR-W.4: the TV has its own layout now, so every phase it can show
+    # needs rendering. At 390px these all fall into the narrow branch of
+    # the TV stylesheet, which is the point of checking them here.
+    ("game/big-screen-captioning", lambda w: f"/memz/s/{w['games']['captioning'][0]}/screen/", None, None, "game-lobby", None),
+    ("game/big-screen-reveal", lambda w: f"/memz/s/{w['games']['rating'][0]}/screen/", None, None, "game-revealed", None),
+    ("game/big-screen-result", lambda w: f"/memz/s/{w['games']['result'][0]}/screen/", None, None, "game-result", None),
+    ("game/big-screen-finished", lambda w: f"/memz/s/{w['games']['finished'][0]}/screen/", None, None, "game-finished", None),
     ("game/judge-voting", lambda w: f"/memz/s/{w['games']['judge_voting'][0]}/", None, None, "game-voting",
      lambda w: _token_script(w, "judge_voting", "guest")),   # round 1's judge is the first non-host
     ("game/cards-captioning", lambda w: f"/memz/s/{w['games']['cards_captioning'][0]}/", None, None, "game-captioning",
      lambda w: _token_script(w, "cards_captioning", "host")),
     ("game/relaxed-result", lambda w: f"/memz/s/{w['games']['relaxed_result'][0]}/", None, None, "game-result",
      lambda w: _token_script(w, "relaxed_result", "host")),
+    ("game/booth-as-host", lambda w: f"/memz/s/{w['games']['booth'][0]}/", None, None, "game-booth",
+     lambda w: _token_script(w, "booth", "host")),
+    ("game/booth-as-guest", lambda w: f"/memz/s/{w['games']['booth'][0]}/", None, None, "game-booth",
+     lambda w: _token_script(w, "booth", "guest")),
+    ("game/booth-extended-as-host", lambda w: f"/memz/s/{w['games']['booth_extended'][0]}/", None, None, "game-booth",
+     lambda w: _token_script(w, "booth_extended", "host")),
+    ("game/big-screen-booth", lambda w: f"/memz/s/{w['games']['booth'][0]}/screen/", None, None, "game-booth", None),
     ("profile/signed-in", "/memz/me/", "screens@example.com", None, "profile", None),
     ("bank/admin-only", "/memz/bank/", "bankadmin@example.com", None, "bank", None),
     ("images/signed-in", "/memz/images/", "screens@example.com", None, "images", None),
     ("game-new/signed-in", "/memz/new/", "screens@example.com", None, "game-new", None),
+    ("game-new/packs-chosen", "/memz/new/", "screens@example.com", _choose_packs, "game-new", None),
+    ("game-new/photo-booth", "/memz/new/", "screens@example.com", _photo_booth_mode, "game-new", None),
     ("404", "/memz/nowhere/", None, None, "404", None),
 ]
 

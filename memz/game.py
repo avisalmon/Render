@@ -27,7 +27,7 @@ from django.utils import timezone
 
 from . import ai_players, cards, conf, dealing, scoring
 from .memes import make_meme
-from .models import CODE_ALPHABET, Meme, Player, Round, Session, Submission, Vote, new_token
+from .models import CODE_ALPHABET, Meme, MemeImage, Player, Round, Session, Submission, Vote, new_token
 
 
 class GameError(Exception):
@@ -71,6 +71,7 @@ def create_session(
     *, host_user, round_count, round_seconds, vote_seconds,
     game_mode=Session.NORMAL, caption_mode=Session.TYPED, scoring_mode=Session.VOTE, deck=None,
     image_source=Session.PUBLIC_RANDOM, packs=None, release_session_code=None, ai_player_count=0,
+    host_nickname="",
 ):
     from .tiers import tier_for
 
@@ -128,9 +129,13 @@ def create_session(
     )
     if packs:
         session.packs.set(packs)
+    # SPR-W.1 (F-W.1.4): the host picks a name like everyone else does when
+    # joining. Until now a guest host was "מארח/ת" everywhere, including at
+    # the top of the podium, which was nobody's win.
+    wanted = (host_nickname or "").strip()[:conf.get("NICKNAME_MAX_CHARS")]
     host_player = Player.objects.create(
         session=session, user=host_user if is_logged_in else None,
-        nickname=_default_nickname(host_user), is_host=True, seat_order=0,
+        nickname=wanted or _default_nickname(host_user), is_host=True, seat_order=0,
     )
     ai_players.add_ai_players(session, ai_player_count)
     return session, host_player
@@ -259,10 +264,133 @@ def start_session(session, host_player):
         minimum = _minimum_players(session)
         if len(players) < minimum:
             raise GameError(f"צריך לפחות {minimum} שחקנים כדי להתחיל.")
+
+        # SPR-W.2 (Rule 5.5.1): photo-booth mode opens the booth instead of
+        # round one. Thirty seconds in which the room photographs itself,
+        # and only then does the game begin -- with those photos as the
+        # whole pool. Everything after the booth is an ordinary game.
+        if session.game_mode == Session.PHOTO_BOOTH:
+            session.status = Session.BOOTH
+            session.started_at = timezone.now()
+            session.booth_deadline = timezone.now() + timezone.timedelta(seconds=conf.get("BOOTH_SECONDS"))
+            session.save(update_fields=["status", "started_at", "booth_deadline"])
+            _bump(session)
+            return
+
         session.status = Session.PLAYING
         session.started_at = timezone.now()
         session.save(update_fields=["status", "started_at"])
         _create_round(session, 1, players)
+        _bump(session)
+
+
+def add_booth_photo(session, player, processed_file, *, verdict, note, original_name="booth.jpg"):
+    """Rule 5.5.2: one photo into this session's booth, and nowhere else.
+
+    The caller has already processed and moderated the bytes (the API view
+    does, exactly as every other upload path does). This is the part that
+    must not be got wrong: the image is written with `session` set and
+    `owner` null, which is what keeps it out of every bank query in the
+    app -- `visible_images` looks for an owner or the public bank, and
+    `pool_for` only reaches it for this one session."""
+    with locked(session):
+        session.refresh_from_db()
+        if session.game_mode != Session.PHOTO_BOOTH:
+            raise GameError("המשחק הזה לא במצב צילום.")
+        if session.status != Session.BOOTH:
+            raise GameError("תא הצילום סגור.")
+        per_player = conf.get("BOOTH_PHOTOS_PER_PLAYER")
+        if dealing.booth_photo_count(session, player) >= per_player:
+            raise GameError(f"אפשר עד {per_player} תמונות לכל אחד.")
+
+        image = MemeImage(
+            owner=None, session=session, booth_taken_by=player,
+            visibility=MemeImage.PRIVATE,
+            moderation_status=verdict, moderation_note=note, seed_key="", title="",
+        )
+        image.file.save(original_name, processed_file, save=True)
+        _bump(session)
+    return image
+
+
+def _end_booth(session, *, extend_if_short):
+    """The booth -> the game. **The session lock must already be held.**
+
+    Returns True when the game actually started. On too few photos a game
+    with nothing to deal is not a game, so it doesn't start -- but what
+    happens instead depends on who asked, which is what `extend_if_short`
+    decides (Rule 5.5.4). The timer firing on its own is a room that ran
+    out of time, and it gets more: another BOOTH_SECONDS, and one more
+    mark against the booth, because a booth that has failed to fill itself
+    is the one thing that unlocks the way out (Rule 5.5.6). A host
+    pressing the button early is not that: they are simply told to keep
+    shooting, and the clock they still have is left exactly as it was."""
+    minimum = conf.get("BOOTH_MIN_PHOTOS")
+    if dealing.pool_for(session).count() < minimum:
+        if extend_if_short:
+            session.booth_deadline = timezone.now() + timezone.timedelta(seconds=conf.get("BOOTH_SECONDS"))
+            session.booth_extensions += 1
+            session.save(update_fields=["booth_deadline", "booth_extensions"])
+            _bump(session)
+        return False
+
+    session.status = Session.PLAYING
+    session.booth_deadline = None
+    session.save(update_fields=["status", "booth_deadline"])
+    _create_round(session, 1, _active_players(session))
+    _bump(session)
+    return True
+
+
+def close_booth(session, host_player=None):
+    """The host ending the booth early: the game begins now, with the
+    evening's own photos as the pool."""
+    with locked(session):
+        session.refresh_from_db()
+        if session.status != Session.BOOTH:
+            raise GameError("תא הצילום כבר נסגר.")
+        if host_player is not None and not host_player.is_host:
+            raise GameError("רק המארח/ת יכול/ה לסגור את תא הצילום.")
+        if not _end_booth(session, extend_if_short=False):
+            raise GameError(f"צריך לפחות {conf.get('BOOTH_MIN_PHOTOS')} תמונות. צלמו עוד קצת!")
+
+
+def booth_was_extended(session):
+    """Has this booth already run its clock out without enough photos?
+
+    Just a field read (`Session.booth_extensions`), and deliberately so --
+    an earlier version derived it by comparing `booth_deadline` against
+    `started_at + BOOTH_SECONDS`, which is really a measurement of
+    wall-clock time having passed and is therefore only true in a room."""
+    return session.status == Session.BOOTH and session.booth_extensions > 0
+
+
+def abandon_booth(session, host_player=None):
+    """The way out of a booth that cannot fill itself (Rule 5.5.6).
+
+    A room on laptops, a table that said no to being photographed, a phone
+    whose camera permission is refused: without this the booth extends its
+    own deadline forever and the host stares at a disabled button. So the
+    host may drop the mode and play an ordinary game with the ordinary
+    pool. The photos already taken are deleted rather than carried over,
+    because they were taken under "these stay in this game and are deleted
+    at the end of it" and this is the end of that game as promised -- the
+    mode it turns into is a different one, and a photo of somebody's face
+    is not a thing to quietly re-purpose."""
+    with locked(session):
+        session.refresh_from_db()
+        if session.status != Session.BOOTH:
+            raise GameError("תא הצילום כבר נסגר.")
+        if host_player is not None and not host_player.is_host:
+            raise GameError("רק המארח/ת יכול/ה לבטל את תא הצילום.")
+
+        MemeImage.objects.filter(session=session).delete()
+        session.game_mode = Session.NORMAL
+        session.image_source = Session.MIX
+        session.status = Session.PLAYING
+        session.booth_deadline = None
+        session.save(update_fields=["game_mode", "image_source", "status", "booth_deadline"])
+        _create_round(session, 1, _active_players(session))
         _bump(session)
 
 
@@ -500,6 +628,15 @@ def sync(session):
         session.refresh_from_db()
         _mark_inactive(session)
         _maybe_handoff_host(session)
+        # SPR-W.2: the photo booth closes on its own when its thirty
+        # seconds are up, the same way every other phase ends on its
+        # deadline. The lock is already held here, so this calls the
+        # transition body directly rather than `close_booth`, which takes
+        # the lock itself.
+        if session.status == Session.BOOTH:
+            if session.booth_deadline and timezone.now() >= session.booth_deadline:
+                _end_booth(session, extend_if_short=True)
+            return
         if session.status != Session.PLAYING:
             return
         round_obj = current_round(session)
@@ -542,6 +679,16 @@ def sync(session):
                     decided = bool(eligible) and all(p.id in voted for p in eligible)
                 if decided or (round_obj.vote_deadline and now >= round_obj.vote_deadline):
                     _finish_round(round_obj)
+                    changed = True
+            elif round_obj.status == Round.DONE:
+                # SPR-W.5 (Rule 4.7.3). Deliberately last in the chain and
+                # deliberately in `sync`: Rule 5.4.3 says a phase change
+                # happens on the server, on the first request after its
+                # deadline, so two phones reporting it at once cannot
+                # double-advance. A client counting down and then POSTing
+                # /advance/ would have been three clients racing.
+                if round_obj.result_deadline and now >= round_obj.result_deadline:
+                    _advance_from_result(session, round_obj)
                     changed = True
 
 
@@ -594,7 +741,16 @@ def _end_reveal(round_obj):
 
 def _finish_round(round_obj, *, skip_vote=False, award=True):
     round_obj.status = Round.DONE
-    round_obj.save(update_fields=["status"])
+    # SPR-W.5 (Rule 4.7.3): the result screen moves on by itself. Spec'd
+    # since SPR-Z.3 and never built, which left the one place memz can
+    # stall with nothing on screen explaining why: the host puts their
+    # phone down at the result and the room waits indefinitely. The host's
+    # button still works and still wins -- this is the floor under it, not
+    # a replacement for it.
+    round_obj.result_deadline = timezone.now() + timezone.timedelta(
+        seconds=conf.get("RESULT_AUTO_ADVANCE_SECONDS")
+    )
+    round_obj.save(update_fields=["status", "result_deadline"])
     if not award:
         return
     if skip_vote:
@@ -607,6 +763,17 @@ def _finish_round(round_obj, *, skip_vote=False, award=True):
         delta = points.get(submission.id, 0)
         if delta:
             Player.objects.filter(pk=submission.player_id).update(score=submission.player.score + delta)
+
+
+def _advance_from_result(session, finished_round):
+    """SPR-W.5: the result screen's own deadline firing. The deadline is
+    cleared first so a round that somehow gets looked at again cannot
+    advance the session twice -- `sync` loops until nothing changes, and a
+    condition that stays true is how that loop stops terminating."""
+    Round.objects.filter(pk=finished_round.pk).update(result_deadline=None)
+    finished_round.result_deadline = None
+    _next_round_or_finish(session, finished_round)
+    _bump(session)
 
 
 def _next_round_or_finish(session, finished_round):

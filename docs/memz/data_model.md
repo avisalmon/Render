@@ -120,6 +120,7 @@ erDiagram
         string status
         datetime caption_deadline
         datetime vote_deadline
+        datetime result_deadline
     }
     SUBMISSION {
         datetime submitted_at
@@ -191,10 +192,16 @@ One row per picture in the bank, public or private.
 | `moderation_status` | choice: `pending` / `approved` / `rejected` | uploads start `pending`; only `approved` images are ever dealt into a game or shown in the creator. Seeded public images are created `approved` |
 | `moderation_note` | TextField, blank | why it was rejected, or which check approved it |
 | `seed_key` | CharField, blank, unique when set | the file name in the repo's seed folder. This is what makes the one-time seed idempotent: the seed checks for the key before creating, and never touches a row that exists (building_an_app.md, "Data" section) |
+| `session` | FK `Session`, null | SPR-W.2. **Set only for a photo-booth photo**, and null for every other image in the app. With `owner` null and `visibility` private, this is the whole of Rule 5.5.3: `dealing.pool_for` is the only query that can reach such a row, so the photo exists for one evening and for nothing else |
+| `booth_taken_by` | FK `Player`, null | SPR-W.2. Who pressed the shutter. Exists to hold one player to their share of the booth (Rule 5.5.2) and for nothing else: it never appears in a payload, because the photographer is as anonymous as the caption writer (Rule 4.7.1). SET_NULL, so a player leaving does not take the room's photos with them |
 | `created_at` | DateTimeField | |
 
 Delete rule: `owner` is CASCADE. If an account is deleted, its private
 images go with it. Public images have no owner and are unaffected.
+`session` is CASCADE, which is how a booth photo dies with the evening
+that took it. Deleting the row also deletes the file (Rule 6.8.1,
+`memz/signals.py`): a mode that promises the room its photos are gone
+cannot keep that promise in the database only.
 
 ### Pack and PackImage
 
@@ -239,8 +246,8 @@ root of everything that happens in a game.
 | --- | --- | --- |
 | `code` | CharField | the join code players type, short and shouting-across-the-room friendly (letters and digits, no ambiguous ones). Unique among sessions that are not finished; reusable afterwards |
 | `host_user` | FK `User`, null | **null means a guest hosted it.** SET_NULL so a finished session survives an account deletion |
-| `status` | choice: `lobby` / `playing` / `finished` / `abandoned` | `abandoned` is what cleanup marks a session nobody finished |
-| `game_mode` | choice: `normal` / `topics` / `same_meme` / `relaxed` | spec §3.2 |
+| `status` | choice: `lobby` / `booth` / `playing` / `finished` / `abandoned` | `abandoned` is what cleanup marks a session nobody finished. `booth` is photo-booth mode's own phase between the lobby and round one (spec §5.5) |
+| `game_mode` | choice: `normal` / `topics` / `same_meme` / `relaxed` / `photo_booth` | spec §3.2, §5.5 |
 | `caption_mode` | choice: `typed` / `cards` | spec §3.1 |
 | `scoring_mode` | choice: `vote` / `judge` | spec §3.1; ignored in `relaxed` |
 | `image_source` | choice: `public_random` / `packs` / `own_only` / `mix` | spec §2.2. Guests always get `public_random` |
@@ -252,6 +259,8 @@ root of everything that happens in a game.
 | `max_players` | int | **a snapshot** of the host's cap at creation (5 / 10 / 50), so a tier change mid-game changes nothing |
 | `remembered` | bool | true when the host is logged in and the session is kept on their account; false for guest sessions. See Retention |
 | `created_at` / `started_at` / `ended_at` | DateTimeField | |
+| `booth_deadline` | DateTimeField, null | SPR-W.2. When the photo booth's clock runs out. Set only while `status` is `booth`; every client counts down to it exactly as it counts down to a caption deadline (Rule 5.4.2) |
+| `booth_extensions` | PositiveSmallIntegerField | SPR-W.2. How many times that clock ran out with too few photos to play (Rule 5.5.4), which is the one thing that unlocks the way out of a booth that cannot fill itself (Rule 5.5.6). A stored count rather than one derived from comparing `booth_deadline` against `started_at + BOOTH_SECONDS`: that derivation is really a measurement of wall-clock time having passed, true in a room and false anywhere the clock is controlled |
 | `expires_at` | DateTimeField, null | when cleanup may delete this session and everything under it. Set for guest sessions; null for remembered ones |
 
 ### Player
@@ -289,6 +298,7 @@ One row per round of a session.
 | `judge` | FK `Player`, null | set in `judge` scoring; rotates by `seat_order` |
 | `status` | choice: `captioning` / `voting` / `revealed` / `done` | the state machine every client reads. `relaxed` mode skips `voting` |
 | `started_at` / `caption_deadline` / `vote_deadline` | DateTimeField | the timers, as absolute times so every phone shows the same countdown |
+| `result_deadline` | DateTimeField, null | SPR-W.5. When the round's result screen moves on by itself (Rule 4.7.3). Set when the round finishes and **cleared as the advance fires** — `game.sync` loops until nothing changes, so a deadline left in the past would re-fire and try to create the next round twice |
 
 ### Submission
 

@@ -41,13 +41,30 @@
 
   var selectedId = null;
 
-  function selectTemplate(li, id) {
+  // ACT-Z.20: templates sit below the caption fields and the button now,
+  // so picking one shows it at the top and scrolls you back to it —
+  // this panel has no live preview canvas, so without the chosen image
+  // there would be nothing up there to have gone back for.
+  var chosenWrap = document.querySelector("[data-imgflip-chosen]");
+  var chosenImage = document.querySelector("[data-imgflip-chosen-image]");
+
+  function selectTemplate(li, id, url) {
     grid.querySelectorAll(".memz-thumb--selected").forEach(function (el) {
       el.classList.remove("memz-thumb--selected");
     });
     li.classList.add("memz-thumb--selected");
     selectedId = id;
     submitBtn.disabled = false;
+
+    if (chosenWrap && chosenImage && url) {
+      chosenImage.src = url;
+      chosenWrap.hidden = false;
+    }
+    var top = document.querySelector("[data-creator-top]");
+    if (top && top.scrollIntoView) {
+      var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      top.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+    }
   }
 
   window.memz.api("GET", "/memz/api/imgflip/templates/").then(function (data) {
@@ -60,7 +77,7 @@
       img.alt = t.name || "";
       img.loading = "lazy";
       li.appendChild(img);
-      li.addEventListener("click", function () { selectTemplate(li, t.id); });
+      li.addEventListener("click", function () { selectTemplate(li, t.id, t.url); });
       grid.appendChild(li);
     });
     if (!data.templates || !data.templates.length) {

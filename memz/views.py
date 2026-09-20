@@ -28,8 +28,14 @@ def new_session(request):
     lo, hi, default = conf.get("ROUNDS")
     clo, chi, cdefault = conf.get("CAPTION_SECONDS")
     ai_max = conf.get("AI_PLAYERS_MAX")
+    from .game import _default_nickname
+
     return render(request, "memz/game_new.html", {
         "tier": tier_for(request.user),
+        # SPR-W.1 (F-W.1.4): pre-filled from the account for someone signed
+        # in; empty for a guest, whose placeholder asks. Never "מארח/ת".
+        "default_nickname": _default_nickname(request.user) if request.user.is_authenticated else "",
+        "nickname_max": conf.get("NICKNAME_MAX_CHARS"),
         "rounds": {"lo": lo, "hi": hi, "default": default},
         "caption_seconds": {"lo": clo, "hi": chi, "default": cdefault},
         "decks": CaptionDeck.objects.filter(is_public=True),
@@ -99,6 +105,39 @@ def lobby_qr(request, code):
     buffer = io.BytesIO()
     image.save(buffer, format="PNG")
     return HttpResponse(buffer.getvalue(), content_type="image/png")
+
+
+def share_card(request, code, kind):
+    """SPR-W.3: one of the evening's two share cards as a JPEG (spec §8.3).
+
+    Open, like the meme share page (§8.2) and the lobby QR above, and for
+    the same reason: the whole point of a card is to be forwarded to people
+    who were never in the room and have no token. Nothing here is private
+    by the time it exists — the podium card holds names the game already
+    published to everyone at the table, and the meme card carries no author
+    at all (Rule 4.7.1, which is a rule about the card too).
+
+    A 404 for a game still in progress, and for a game that produced no
+    meme: a card that says nothing is worse than no card."""
+    from django.http import Http404, HttpResponse
+    from django.shortcuts import get_object_or_404
+
+    from . import share_cards
+    from .models import Session
+
+    if kind not in share_cards.KINDS:
+        raise Http404
+    session = get_object_or_404(Session, code__iexact=code)
+    data = share_cards.card_bytes(session, kind)
+    if data is None:
+        raise Http404
+    response = HttpResponse(data, content_type="image/jpeg")
+    # Safe to cache downstream because `finished` is terminal: a session
+    # that has reached it never changes again ("play again" opens a new
+    # session with a new code). The URL itself carries no version on
+    # purpose -- a WhatsApp link preview needs an address that stays put.
+    response["Cache-Control"] = "public, max-age=3600"
+    return response
 
 
 def creator(request):

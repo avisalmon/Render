@@ -11,8 +11,10 @@ carry-over)."""
 
 from . import cards as cards_module
 from . import conf
+from . import dealing
 from .models import Meme, Player, Session, Vote
 from .scoring import rank_players
+from .titles import EXPLANATIONS as TITLE_NOTES
 from .titles import LABELS as TITLE_LABELS
 from .titles import compute_titles
 
@@ -51,6 +53,10 @@ def _round_payload(session, round_obj, player):
         # the meme count (game._start_reveal's own math) reconstructs it.
         "reveal_seconds_per_meme": conf.get("REVEAL_SECONDS_PER_MEME"),
         "vote_deadline": _iso(round_obj.vote_deadline),
+        # SPR-W.5 (Rule 4.7.3): when the result screen moves on by itself.
+        # Sent so the room can see the wait is finite; the transition is
+        # still the server's (Rule 5.4.3), never this countdown's.
+        "result_deadline": _iso(round_obj.result_deadline),
         "topic": round_obj.topic.text if round_obj.topic_id else None,
     }
     if session.scoring_mode == Session.JUDGE and round_obj.judge_id:
@@ -91,6 +97,28 @@ def _round_payload(session, round_obj, player):
             }
             for s in memes
         ]
+        if round_obj.status == round_obj.REVEALED:
+            # SPR-W.1 (Rule 4.5.7): how the room took each meme -- verdict
+            # *counts* per submission, so the closing beat of a slot can
+            # show "😍 ×3 · 😐 ×1". Counts only, never voter ids, and only
+            # for memes whose slot has started (nothing here says what is
+            # still to come). A tally of verdicts identifies nobody, and it
+            # was already the whole room's to see; sending it to the TV as
+            # well (player=None) is the point.
+            from collections import Counter
+
+            tally = Counter(
+                (sid, value)
+                for sid, value in round_obj.votes.values_list("submission_id", "value")
+            )
+            data["reactions"] = {
+                str(s.id): {
+                    "love": tally.get((s.id, Vote.LOVE), 0),
+                    "soso": tally.get((s.id, Vote.SOSO), 0),
+                    "meh": tally.get((s.id, Vote.MEH), 0),
+                }
+                for s in memes
+            }
         if round_obj.status == round_obj.REVEALED and player is not None:
             # SPR-Z.10: the reveal is where rating happens, so the caller
             # needs to know which memes they have already had their say on
@@ -165,6 +193,31 @@ def build(session, player):
         payload["min_players"] = minimum
         payload["can_start"] = active >= minimum
 
+    if session.status == Session.BOOTH:
+        # Imported here, not at module scope: this module's contract is
+        # that it only reads (see the docstring), and a top-level import of
+        # the module that does all the writing is the first step toward
+        # that stopping being true.
+        from . import game as game_module
+
+        # SPR-W.2 (Rule 5.5.4). Two counts, because they answer two
+        # different questions a player has in the same half-second: "is
+        # this nearly over" (the room's total) and "may I take another"
+        # (my own). Sending only the total would make the client guess the
+        # second from the first, which it cannot do.
+        payload["booth"] = {
+            "deadline": _iso(session.booth_deadline),
+            "total_photos": dealing.booth_photo_count(session),
+            "min_photos": conf.get("BOOTH_MIN_PHOTOS"),
+            "per_player": conf.get("BOOTH_PHOTOS_PER_PLAYER"),
+            "my_photos": dealing.booth_photo_count(session, player) if player else 0,
+            "is_host": bool(player and player.is_host),
+            # Rule 5.5.6: only once the booth has already failed to fill
+            # itself does the host get offered the way out -- offering it
+            # from the first second would undercut the mode.
+            "extended": game_module.booth_was_extended(session),
+        }
+
     round_obj = session.rounds.order_by("-number").first()
     if session.status == Session.PLAYING and round_obj is not None:
         payload["round"] = _round_payload(session, round_obj, player)
@@ -176,6 +229,9 @@ def build(session, player):
             {
                 "player_id": p.id, "nickname": p.nickname, "score": p.score, "tied_with_next": tied,
                 "title": TITLE_LABELS.get(titles.get(p.id)),
+                # SPR-W.5 (Rule 9.2.2): what the title actually means. A
+                # badge nobody can decode is decoration.
+                "title_note": TITLE_NOTES.get(titles.get(p.id)),
             }
             for p, tied in ranked
         ]
@@ -191,6 +247,15 @@ def build(session, player):
             }
             for m in memes
         ]
+        # SPR-W.3: whether there *is* a meme of the night, which is not the
+        # same as whether the game finished -- a room where nobody submitted
+        # anything has a podium and no best meme. The client needs to know
+        # before it puts an <img> on screen; guessing from the gallery being
+        # non-empty would be one more place for the two to disagree.
+        from . import share_cards
+
+        payload["has_meme_card"] = share_cards.best_submission(session)[0] is not None
+
         if player is not None and session.next_session_id:
             carried = Player.objects.filter(session_id=session.next_session_id, carried_from=player).first()
             if carried is not None:

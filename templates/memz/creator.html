@@ -17,9 +17,26 @@
   {% csrf_token %}
   {% if form.non_field_errors %}<p class="memz-error" role="alert">{{ form.non_field_errors.0 }}</p>{% endif %}
 
-  <div class="memz-preview-wrap">
+  {% comment %}
+    ACT-Z.20 (2026-09-20, Avi): the picture, then the words, then the
+    button — and every thumbnail *after* all of it. The grid used to sit
+    between the preview and the caption field, so the bigger the bank
+    grew the further it pushed the two things you actually came to do
+    ("התמונות נורא נורא מפריעות"). Picking a thumbnail scrolls back up to
+    the preview, since that is the thing you picked it to see.
+  {% endcomment %}
+  <div class="memz-preview-wrap" data-creator-top>
     <canvas data-creator-preview width="480" height="360" data-max-lines="3"></canvas>
   </div>
+
+  <label class="memz-field">
+    <span>{{ form.caption_text.label }}</span>
+    {{ form.caption_text }}
+    {% if form.caption_text.errors %}<span class="memz-error">{{ form.caption_text.errors.0 }}</span>{% endif %}
+  </label>
+  <span class="memz-charcount" data-creator-count>0/{{ max_chars }}</span>
+
+  <button type="submit" class="memz-btn memz-btn--primary memz-btn--wide" data-creator-submit>{% trans "עושים מם" %}</button>
 
   <span class="memz-field-label">{% trans "תמונה" %}</span>
   {% if form.image.errors %}<span class="memz-error">{{ form.image.errors.0 }}</span>{% endif %}
@@ -32,23 +49,16 @@
     </li>
     {% endfor %}
   </ul>
-
-  <label class="memz-field">
-    <span>{{ form.caption_text.label }}</span>
-    {{ form.caption_text }}
-    {% if form.caption_text.errors %}<span class="memz-error">{{ form.caption_text.errors.0 }}</span>{% endif %}
-  </label>
-  <span class="memz-charcount" data-creator-count>0/{{ max_chars }}</span>
-
-  <button type="submit" class="memz-btn memz-btn--primary memz-btn--wide" data-creator-submit>{% trans "עושים מם" %}</button>
 </form>
 {% endif %}
 
 <div class="memz-card memz-form" data-creator-source-panel="imgflip" hidden>
-  <p class="memz-fineprint">{% trans "תבניות מוכרות, מוגשות דרך ה-API הרשמי של Imgflip — לא קובץ שנשמר אצלנו מראש." %}</p>
-  <span class="memz-field-label">{% trans "תבנית" %}</span>
-  <ul class="memz-thumb-grid" data-imgflip-thumb-grid></ul>
-  <p class="memz-fineprint" data-imgflip-loading>{% trans "טוענים תבניות..." %}</p>
+  {# ACT-Z.20: same order as the bank panel — write first, templates last. #}
+  <p class="memz-fineprint" data-creator-top>{% trans "תבניות מוכרות, מוגשות דרך ה-API הרשמי של Imgflip — לא קובץ שנשמר אצלנו מראש." %}</p>
+
+  <div class="memz-preview-wrap" data-imgflip-chosen hidden>
+    <img data-imgflip-chosen-image src="" alt="">
+  </div>
 
   <label class="memz-field">
     <span>{% trans "שורה עליונה" %}</span>
@@ -61,6 +71,10 @@
 
   <p class="memz-error" data-imgflip-error hidden></p>
   <button type="button" class="memz-btn memz-btn--primary memz-btn--wide" data-imgflip-submit disabled>{% trans "עושים מם" %}</button>
+
+  <span class="memz-field-label">{% trans "תבנית" %}</span>
+  <ul class="memz-thumb-grid" data-imgflip-thumb-grid></ul>
+  <p class="memz-fineprint" data-imgflip-loading>{% trans "טוענים תבניות..." %}</p>
 </div>
 {% endblock %}
 {% block scripts %}

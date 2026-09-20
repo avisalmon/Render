@@ -34,6 +34,18 @@ DEFAULTS = {
     "VOTE_SECONDS": (15, 45, 20),
     "HAND_SIZE": 7,
     "MIN_PLAYERS": {"vote": 3, "judge": 3, "relaxed": 2},
+    # --- photo booth (SPR-W.2, spec §5.5) -----------------------------------
+    # Thirty seconds of everyone photographing everyone. Long enough to
+    # get a few real faces, short enough that it stays a burst rather
+    # than a photo session -- the mode's whole charm is the scramble.
+    "BOOTH_SECONDS": 30,
+    # Each player may contribute this many; the pool needs roughly one
+    # picture per player per round, and a room of four taking three each
+    # covers a five-round game with room to spare.
+    "BOOTH_PHOTOS_PER_PLAYER": 3,
+    # Below this, there is nothing to play with and the booth refuses to
+    # end the game into an empty pool.
+    "BOOTH_MIN_PHOTOS": 2,
     # --- AI players (spec §4.11) --------------------------------------------
     "AI_PLAYERS_MAX": 3,
     "CAPTION_MAX_CHARS": 140,
@@ -53,7 +65,7 @@ DEFAULTS = {
     "INACTIVE_AFTER_SECONDS": 90,
     "ABANDON_AFTER_MINUTES": 10,
     # --- polling (spec Rule 11.6) ------------------------------------------
-    "POLL_MS": {"lobby": 2000, "captioning": 1000, "voting": 1000, "results": 2000, "finished": 5000},
+    "POLL_MS": {"lobby": 2000, "booth": 1000, "captioning": 1000, "voting": 1000, "results": 2000, "finished": 5000},
     # --- rendering (spec §8.1) ---------------------------------------------
     # The finished meme's own width stays 1080: it is the product's actual
     # output, shared to WhatsApp and sometimes opened on a laptop. Only the

@@ -4,7 +4,22 @@
 {% block signin %}{% endblock %}
 {% block content %}
 <h1 class="memz-title">{% trans "פותחים חשבון" %}</h1>
-<p class="memz-lead">{% trans "אימייל וסיסמה, וזהו. בלי אישורים במייל, בלי המתנה." %}</p>
+
+{% comment %}
+  ACT-Z.19: same order as login.html, and for the same reason — the
+  keyboard covers whatever sits under the form the moment somebody starts
+  typing. With Google there is no password to choose at all, which makes
+  it the faster of the two here too.
+{% endcomment %}
+<a class="memz-btn memz-btn--primary memz-btn--wide" href="/accounts/google/login/?process=login&amp;next={{ next|default:'/memz/'|urlencode }}">
+  <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:none;fill:currentColor;" aria-hidden="true">
+    <path d="M21.35 11.1h-9.17v2.98h5.4c-.23 1.36-1.6 4-5.4 4-3.25 0-5.9-2.7-5.9-6s2.65-6 5.9-6c1.85 0 3.09.79 3.8 1.47l2.6-2.5C17.02 3.46 14.9 2.5 12.18 2.5 6.98 2.5 2.78 6.7 2.78 12s4.2 9.5 9.4 9.5c5.42 0 9.02-3.8 9.02-9.16 0-.62-.07-1.09-.15-1.24z"/>
+  </svg>
+  {% trans "המשך עם גוגל" %}
+</a>
+
+<p class="memz-divider">{% trans "או עם אימייל וסיסמה" %}</p>
+<p class="memz-fineprint">{% trans "בלי אישורים במייל, בלי המתנה." %}</p>
 
 <form method="post" class="memz-card memz-form" novalidate>
   {% csrf_token %}
@@ -23,16 +38,8 @@
 {% comment %}
   2026-09-15 (Avi): same Google option as login.html — someone with a Google
   account skips choosing a password entirely, through the same shared
-  allauth flow babook already offers.
+  allauth flow babook already offers. Moved above the form in ACT-Z.19.
 {% endcomment %}
-<p class="memz-divider">{% trans "או" %}</p>
-<a class="memz-btn memz-btn--secondary memz-btn--wide" href="/accounts/google/login/?process=login&amp;next={{ next|default:'/memz/'|urlencode }}">
-  <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:none;fill:currentColor;" aria-hidden="true">
-    <path d="M21.35 11.1h-9.17v2.98h5.4c-.23 1.36-1.6 4-5.4 4-3.25 0-5.9-2.7-5.9-6s2.65-6 5.9-6c1.85 0 3.09.79 3.8 1.47l2.6-2.5C17.02 3.46 14.9 2.5 12.18 2.5 6.98 2.5 2.78 6.7 2.78 12s4.2 9.5 9.4 9.5c5.42 0 9.02-3.8 9.02-9.16 0-.62-.07-1.09-.15-1.24z"/>
-  </svg>
-  {% trans "המשך עם גוגל" %}
-</a>
-
 <div class="memz-stack memz-stack--after">
   <a class="memz-btn memz-btn--secondary" href="{% url 'memz:login' %}{% if next %}?next={{ next|urlencode }}{% endif %}">{% trans "יש כבר חשבון? כניסה" %}</a>
 </div>

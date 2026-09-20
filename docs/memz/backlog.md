@@ -828,7 +828,9 @@ The screen contract earned its keep again — defaulting the picker to
 mode opens that list now. **Known small gap, deliberately not fixed
 here:** those checkboxes are still 13×13 when somebody does choose packs
 mode; the contract has no screen for that state, which is why it went
-unnoticed until now.
+unnoticed until now. *(Closed in SPR-W.5, F-W.5.5: the whole row is the
+target now, and the contract has two new rows that render the create
+screen in the states that actually have controls in them.)*
 
 ---
 
@@ -945,6 +947,191 @@ the account name in the header was a plain `<span>`.
 time this week: making the account name a link produced a 33×44 px tap
 target, and the contract failed the build over it before anybody's thumb
 had to. Widened, and it also now centres properly.
+
+---
+
+## ACT-Z.19 — Google above the password form `DONE (dev), 2026-09-20`
+
+Avi: "בתהליך הכניסה, כשעושים לוגין, תעשה את האופציה של לוגין ואת גוגל
+גבוה, כדי שבטוח יראו את זה, כי המקלדת שם מסתירה."
+
+| Feature | Description | Spec | Status |
+| --- | --- | --- | --- |
+| ACT-Z.19.1 | The Google button sat under the email/password form, where a phone keyboard hides it | §14.1 | DONE — Google first on **both** the login and the signup screen, the password form under it. The reason is the keyboard: the moment a thumb touches the email field the keyboard covers everything below, so the faster way in was invisible to exactly the people who had already started down the slower one. Signup gets the same treatment for the same reason, and there the Google route also skips choosing a password entirely |
+| ACT-Z.19.2 | Tests | §12.8 | DONE — `tests/test_act_z_19.py`, 6 tests: Google's link appears before the `<form>` on both screens, both ways in are still offered exactly once (a reorder must not quietly drop one), the `next` destination still rides along, and a real password sign-in still ends in a redirect away from the login page |
+
+**Sprint notes.** One of the new tests failed on correct markup: it
+demanded `%2F` in the Google link's `next`, but Django's `urlencode`
+filter leaves `/` alone and a slash is legal in a query value, so
+`next=/memz/images/` is what ships and works. Fixed the test to assert
+the destination rather than its encoding.
+
+---
+
+## ACT-Z.20 — In the creator, the pictures come last `DONE (dev), 2026-09-20`
+
+Avi: "באופציה של יצירת מם משלך... הטקסט נמצא מתחת לכל התמונות. עדיף
+שלמעלה תהיה תמונה, ממש מתחתיה הטקסט לכתוב, מתחת לזה כפתורי שיתוף וכאלה,
+רק בסוף כל התמונות... כי התמונות נורא נורא מפריעות."
+
+| Feature | Description | Spec | Status |
+| --- | --- | --- | --- |
+| ACT-Z.20.1 | The thumbnail grid sat between the live preview and the caption field | §7 | DONE — reordered to **preview → caption → button → thumbnails**. This gets worse on its own over time, which is why it needed fixing now rather than later: every image added to the public bank (and ACT-Z.17 exists to add a lot of them) pushed the two things a person came to do further down the page |
+| ACT-Z.20.2 | Same order in the classic-template tab | §7.3 | DONE — the Imgflip panel had the identical shape. Fixing only the first tab would have left the complaint half-standing |
+| ACT-Z.20.3 | Picking a picture from the bottom left you looking at the bottom | §7 | DONE — choosing a thumbnail scrolls back to the preview, which is the thing you picked it to see; without it the only visible result of the tap is a highlight several screens below the change. Honours `prefers-reduced-motion` |
+| ACT-Z.20.4 | The template tab had nothing to scroll back *to* | §7.3 | DONE — that panel has no live canvas, so it now shows the chosen template at the top, where the bank panel shows its preview |
+| ACT-Z.20.5 | Tests | §12.8 | DONE — `tests/test_act_z_20.py`, 7 tests: document order in both panels, the preview still first, an anchor present in each panel to scroll back to, both shipped scripts actually calling `scrollIntoView` and honouring reduced motion, the chosen template revealed, and a meme still actually being made by a real POST |
+
+**Sprint notes.** Verified by screenshot on a phone as well as by the
+order assertions — the assertions prove the markup, the picture proves
+the screen. Worth keeping both for a change whose whole subject is what a
+person sees before scrolling.
+
+---
+
+## Epic W — memz, the show
+
+Avi, 2026-09-20, after the second full review: "All those ideas are
+wonderful. I want you to set all of them in the backlog as an epic and
+start implementing all of those in the best possible way, because this
+is going to be the most advanced and winning app that we're gonna make."
+
+Epic Z built a game that works. Epic W is what makes people ask to play
+it again. Its thesis, from the review: memz's one advantage nobody can
+copy is **memes about the people at the table** — and the game's
+emotional peak, the moment everyone taps a verdict, is currently silent.
+Four bets, in the order they pay back, plus the small things that fell
+out of the review.
+
+| Sprint | Name | The bet | Status |
+| --- | --- | --- | --- |
+| SPR-W.1 | The moment | The rating tap gets felt (sound, vibration, motion); each meme's slot ends with the room's reaction, anonymous; three new sounds; the host gets a name; "how to play" in the lobby | `DONE (dev), 2026-09-20` |
+| SPR-W.2 | Photo booth ("צלמו את החדר") | A game mode where the lobby becomes a 30-second photo booth: everyone shoots someone else at the table, and those photos *are* the evening. No bank, no prep, every meme about someone in the room | `DONE (dev), 2026-09-20` |
+| SPR-W.3 | The evening's card | Two server-rendered share cards at the podium — the meme of the night (no author) and the podium with its titles — one WhatsApp tap each. The growth loop the app doesn't have | `DONE (dev), 2026-09-20` |
+| SPR-W.4 | The TV as the show | A real big-screen layout: the meme fills the screen, the room's ratings appear on it live (counts only), the leaderboard reorders with motion. The phone is the controller; the TV is the show | `DONE (dev), 2026-09-20` |
+| SPR-W.5 | Small wins | "תן לי רעיון": three caption starters from the AI already in the app, for the shy and the young; result-screen auto-advance (spec'd since Z.3, never built); titles explained in one line each | `DONE (dev), 2026-09-20` |
+
+**Order and reasoning.** W.1 first because it is the cheapest change with
+the largest effect and everything after it lands on a game that already
+feels alive. W.2 second because it is the product's identity, and it is
+also the one sprint that needs a design decision from Avi before code:
+photos of real people at a table are the most personal thing memz will
+ever hold, so they must live only inside their session, never enter any
+bank, and vanish with it — how long "vanish" means, and whether a player
+may keep their own, are his calls, asked when W.2 starts. W.3 and W.4
+follow; W.5 fills gaps as they fit.
+
+---
+
+## SPR-W.1 — The moment `DONE (dev), 2026-09-20`
+
+The review's single most important finding: the moment you tap "אוהב" is
+the quietest moment in the game. A party game lives on shared laughter,
+and nothing here made anyone shout across the table.
+
+| Feature | Description | Spec | Status |
+| --- | --- | --- | --- |
+| F-W.1.1 | The tap is felt | Rule 4.5.6 (new) | DONE — a short vibration, a pop sound, and the chosen button springs. Reduced-motion aware; the sound honours the mute toggle like every other |
+| F-W.1.2 | The room reacts | Rule 4.5.7 (new) | DONE — when a meme's slot ends, one beat shows how the room took it: "😍 ×3 · 😐 ×1", counts only, never who. Sent by the server per meme as `reactions` (aggregate counts, no voter ids), shown for the closing second of the slot on every phone and on the TV. Anonymity holds: a count of verdicts identifies nobody, and it was already the whole room's to see |
+| F-W.1.3 | Three new sounds | §9.1 | DONE — `pop.wav` (a verdict), `reveal.wav` (a new meme lands), `fanfare.wav` (the podium). Made by the same procedural generator as the two that existed (`make_sounds.py`), so still no licensing question and still tiny |
+| F-W.1.4 | The host has a name | §4.2 | DONE — a "השם שלך" field first on the create screen, pre-filled from the account for someone signed in. "מקום ראשון: מארח/ת" was nobody's win |
+| F-W.1.5 | How to play, where everyone is waiting | §4.3 | DONE — three lines in the lobby: what happens, what the buttons are worth, and the three image swaps. Not a tutorial, not a popup |
+| F-W.1.6 | Tests | §12.8 | DONE — `tests/test_spr_w_1.py`, marker `sprw1` |
+
+---
+
+## SPR-W.2 — Photo booth ("צלמו את החדר") `DONE (dev), 2026-09-20`
+
+The review's second finding: memz's pictures are strangers' pictures, and
+the funniest possible picture at any party is of somebody at that party.
+So one mode spends its first thirty seconds on exactly that, and those
+photos are the whole evening.
+
+Most of the work is not the camera. It is the line about where those
+photos can never go, and the two ways a room can get stuck.
+
+| Feature | Description | Spec | Status |
+| --- | --- | --- | --- |
+| F-W.2.1 | The booth is a phase | Rule 5.5.1 | DONE — `photo_booth` mode opens `Session.status = booth` with a `booth_deadline` instead of creating round one. Everything after it closes is an ordinary game |
+| F-W.2.2 | Anyone seated may shoot, guests included | Rule 5.5.2 | DONE — up to `BOOTH_PHOTOS_PER_PLAYER` each. The account rule that governs bank uploads was deliberately *not* copied here: it exists because a bank upload becomes somebody's stock against somebody's quota, and a booth photo is neither. A mode the guests at the table cannot join has no point |
+| F-W.2.3 | The photos belong to the evening and nothing else | Rule 5.5.3 | DONE — `owner` null, `session` set, `visibility` private, and a third upload endpoint rather than a flag on either existing one. Seven tests exist only to prove the photo is unreachable from the public bank, from any user's library, and from every other session's pool in all four image-source modes |
+| F-W.2.4 | ...and they really are deleted | Rule 6.8.1 (new) | DONE — CASCADE on the session, plus a new `post_delete` → `on_commit` file cleanup (`memz/signals.py`). This fixed a leak that predates the sprint: every image and meme delete in the app removed the row and left the JPEG, on a 1 GB disk shared with the whole site. A mode that promises the room its photos are gone cannot keep that promise in the database only |
+| F-W.2.5 | It will not start a game it cannot deal | Rule 5.5.4 | DONE — below `BOOTH_MIN_PHOTOS` the game does not start. A deadline that fired gives the room another 30s and one more `booth_extensions`; a host pressing early is told to keep shooting and their clock is left alone. Those two are not the same event, and an impatient host must not buy the room time |
+| F-W.2.6 | A way out of a booth that cannot fill itself | Rule 5.5.6 (new) | DONE — after the clock has run out once, the host may drop the mode and play an ordinary game. Without it a room on laptops, or a table that said no to being photographed, sits in front of a disabled button and a clock that restarts forever. Taking it deletes the photos already taken: they were taken under "deleted at the end of this game", and this is that end |
+| F-W.2.7 | The camera survives the poll | Rule 5.5.7 | DONE — outside the game root, like the lobby's uploader, because the booth polls every second. The countdown is re-armed on a *new* deadline so an extension doesn't leave it sitting on zero |
+| F-W.2.8 | The consent line | Rule 5.5.2 | DONE — "מצלמים רק את מי שמסכים", on the booth screen itself. This is the one mode whose pictures are of people in the room, so somebody who does not want to be photographed has to learn they can say so *before* the shutter |
+| F-W.2.9 | Tests | §12.8 | DONE — `tests/test_spr_w_2.py` (32), marker `sprw2`, plus four new rows in the phone screen contract (booth as host, as guest, extended, and on the TV) |
+
+**The two privacy questions Avi's answer was pending on, and what shipped
+while it was**: how long booth photos live, and whether a player may keep
+their own. Both took the safest available answer — session-scoped, never
+entering any bank, deleted with the session, and no way to keep one — so
+that changing either later is a feature and not a breach of something
+already promised to a room.
+
+---
+
+## SPR-W.3 — The evening's card `DONE (dev), 2026-09-20`
+
+memz's growth loop is one person showing somebody a picture, and the
+podium had nothing to show: a leaderboard on a phone, and a gallery of
+memes that each need explaining to anyone who wasn't there.
+
+| Feature | Description | Spec | Status |
+| --- | --- | --- | --- |
+| F-W.3.1 | המם של הערב | Rule 8.6.1 | DONE — the session's highest-scoring meme, recomputed from `Vote` rows, with its `אוהב` count and **no author at all**. The test renames every player and asserts the card comes back byte for byte identical; the podium card is rendered beside it as the control, so a test that measured nothing would fail |
+| F-W.3.2 | הפודיום | Rule 8.6.2 | DONE — rank, name, title, score, as a table read right to left. The first draft pinned names to one edge and numbers to the other, which left a void down the middle and put two unlabelled figures (rank and score) side by side; rebuilt after looking at it |
+| F-W.3.3 | Drawn, not screenshotted | Rule 8.6.3 | DONE — server-side, in the meme engine's own font and bidi path (Rule 8.6.4). A screenshot cannot be rendered by the server, shared by someone who already closed the app, or fetched as a link preview |
+| F-W.3.4 | A digit next to Hebrew is placed, not composed | Rule 8.6.4 | DONE — `_draw_count_phrase` draws the number and the word separately and puts the number to the right, as Hebrew reads. One mixed-direction string is the case neither bidi path resolves the way a reader expects, and this codebase has shipped reversed Hebrew twice |
+| F-W.3.5 | The endpoint | Rule 8.6.5 | DONE — `/memz/s/<code>/card/<kind>.jpg`, open to anyone, 404 before the game ends and 404 for a meme card a game never earned. Cached against `Session.version`, never written to disk |
+| F-W.3.6 | One WhatsApp tap | Rule 8.6.6 | DONE — the file itself where `navigator.canShare({files})` allows, so it lands as a photo; `wa.me` with the card's address otherwise, which still previews as a picture and works inside an installed PWA |
+| F-W.3.7 | Tests | §12.8 | DONE — `tests/test_spr_w_3.py` (13), marker `sprw3` |
+
+---
+
+## SPR-W.4 — The TV as the show `DONE (dev), 2026-09-20`
+
+The big screen was the phone's layout at a bigger font: the meme in a
+column with a heading above and fineprint below, taking a third of the
+wall. A room reads a wall from four metres.
+
+| Feature | Description | Spec | Status |
+| --- | --- | --- | --- |
+| F-W.4.1 | Its own renderers and its own stylesheet | Rule 4.10.1 | DONE — `.memz-tvmode` releases the 560px phone column; type in viewport units so a 13" laptop and a 55" TV are one layout at two sizes; the meme is the largest object on screen with a rail beside it, which drops underneath on a portrait screen |
+| F-W.4.2 | No controls, ever | Rule 4.10.2 | DONE — and tested by counting the *visible* buttons on the page, which must be exactly the header's mute toggle. Nobody stands at a TV, and the view holds no token, so a button there is dead or dangerous |
+| F-W.4.3 | The room's verdicts, live, on the wall | Rule 4.10.3 | DONE — the counts SPR-W.1 already sends to the TV, patched in place with a bump on the number that changed. The test marks the DOM node, lets a verdict land, and fails if a different node comes back |
+| F-W.4.4 | The standings move | Rule 4.10.4 | DONE — FLIP on rows keyed by player id, so the room watches an overtake rather than finding a reordered list. Skipped under `prefers-reduced-motion` |
+| F-W.4.5 | The podium carries the card | Rule 4.10.5 | DONE — SPR-W.3's meme of the night on the wall, so a photo of the TV is a photo of the meme |
+| F-W.4.6 | Every TV phase is in the screen contract | §11 | DONE — seven rows in `tests/test_memz_screens.py` (lobby, booth, captioning, reveal, judge voting, result, finished), all rendered at 390px. That is what caught the join code overflowing a narrow screen: it was sized from viewport *height* alone, and a tall narrow phone made it 411px wide |
+| F-W.4.7 | Tests | §12.8 | DONE — `tests/test_spr_w_4.py` (9), marker `sprw4` |
+
+**Two defects this sprint introduced and the contract caught before
+anyone saw them**: the TV renderers dropped the `<h1>` every screen is
+required to have (the join code and the round line are now the headings
+they always were in substance), and the judge-mode TV lost the "how many
+are in the room" line in the rewrite.
+
+---
+
+## SPR-W.5 — Small wins `DONE (dev), 2026-09-20`
+
+Three gaps the review left. None of them is a feature anybody would list
+on a page about the app; all three are things a person hits in an evening.
+
+| Feature | Description | Spec | Status |
+| --- | --- | --- | --- |
+| F-W.5.1 | "תן לי רעיון" | Rule 4.4.6 (new) | DONE — three starters under the caption box. They go *into* the box, focused and editable, and never submit: the joke has to stay the player's. Every model failure (down, stub mode, empty, unparseable, too few lines) falls through to a canned set instantly — someone stuck under a clock asked for help and must never get an error instead. Cached per submission, so a room of ten costs one call |
+| F-W.5.2 | The result screen moves on | Rule 4.7.3 | DONE — spec'd since SPR-Z.3 and never built. In `sync`, on the server (Rule 5.4.3), not from five phones counting down and racing to POST `/advance/`; the deadline is cleared as it fires, because `sync` loops until nothing changes and a stale one tried to create the next round twice (the test for that fails with a UNIQUE violation, which is what a room would have seen as a 500) |
+| F-W.5.3 | Titles explained | Rule 9.2.2 (new) | DONE — one line per title, on the phone podium, the TV and the share card. "הסוס השחור" told a player only that the app had decided something about them |
+| F-W.5.4 | The podium stopped crowding itself | Rule 9.2.2 | DONE — the review's "badges overlapping names and scores". It was an inline-flow list, so the badge sat in the text stream beside both; now each place is a row of rank / name-and-title / score |
+| F-W.5.5 | The last 13x13 px control | Rule 11.1 | DONE — the pack picker's checkboxes, the review's other layout finding. They were the app's last browser-default control, and they had survived every phone guard for a structural reason worth writing down: the list only unfolds once `packs` is chosen as the image source, so no screen-contract row had ever rendered it. The whole row is now the target, and two new contract rows (packs chosen, photo-booth chosen) render the create screen in the states that actually have controls in them |
+| F-W.5.6 | Presence dots stopped reading as medals | §4.7 | DONE — the round-result leaderboard reused the lobby's row renderer, which opens with a presence dot, so a green circle beside the leading name read as gold and the second place's yellow "away" dot read as silver. Presence still matters mid-game, so it is demoted rather than dropped: the position gets the number that actually means position, and only a player who is *not* active carries a marker |
+| F-W.5.7 | Tests | §12.8 | DONE — `tests/test_spr_w_5.py` (19), marker `sprw5`, plus two rows in the screen contract |
+
+**One bug this sprint wrote and its own test caught**: the starter cleaner
+stripped quotation marks before the list marker, so a model answering
+`1. "רעיון"` had its number removed and its quotes kept, and the quotes
+would have been typed into a caption box.
 
 ---
 
