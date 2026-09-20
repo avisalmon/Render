@@ -1,0 +1,102 @@
+{% extends "sensorlab/base.html" %}
+{% load sensorlab %}
+
+{% block title %}{{ lab.title }} — SensorLab{% endblock %}
+{% block screen %}run-{{ step }}{% endblock %}
+
+{% block content %}
+<section class="sl-shell">
+
+  {% comment %}
+    The rail. Driven by LAB_STEPS through the view, so this screen cannot
+    invent its own order — the third-copy problem SL-B4 removed by putting
+    the flow in one place. `data-step` and `data-current` are what the test
+    reads, because the visible label is translated and the order is not.
+  {% endcomment %}
+  <ol class="sl-rail" data-current="{{ step }}" aria-label="{% t 'run.step_label' %}">
+    {% for item in rail %}
+      {% comment %}
+        SL-A4's rail component, used as designed rather than re-invented:
+        thin segments, `is-done` and `is-current` in ink because structure is
+        ink (§7.2) — with the one exception that section already carries, the
+        current segment tinted by what the step *is*. Predict is a
+        prediction; Experiment and Analysis are measurement.
+
+        The 5px bar is nowhere near a tap target, so the link around it
+        carries the 44px (§7.4) and the bar stays 5px.
+      {% endcomment %}
+      <li data-step="{{ item.step }}"{% if item.is_current %} aria-current="step"{% endif %}>
+        {% if item.is_reachable %}
+          <a class="sl-rail-hit" href="{% url 'sensorlab:run_step' slug=lab.slug step=item.step %}"
+             aria-label="{% step_name item.step %}" title="{% step_name item.step %}">
+            <span class="sl-rail-seg{% if item.is_done %} is-done{% elif item.is_current %}{% if item.step == 'predict' %} is-current-predict{% elif item.step == 'intro' or item.step == 'learn' %} is-current{% else %} is-current-measure{% endif %}{% endif %}"></span>
+          </a>
+        {% else %}
+          <span class="sl-rail-hit sl-rail-ahead" aria-label="{% step_name item.step %}">
+            <span class="sl-rail-seg"></span>
+          </span>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ol>
+
+  <p class="sl-muted sl-tnum">{% t "run.step_label" %} {{ position }} {% t "run.of" %} {{ total }}</p>
+  <h1>{% step_name step %}</h1>
+
+  {% if progress_moved %}
+    {% comment %}
+      SL-D1 made the model fall back instead of throwing when a stored step
+      no longer names anything. This is the half that matters: the person is
+      told, rather than finding themselves at the beginning wondering what
+      happened.
+    {% endcomment %}
+    <div class="sl-card sl-notice" role="status">
+      <p>{% t "run.progress_moved" %}</p>
+    </div>
+  {% endif %}
+
+  {% if is_prose %}
+    {% for block in step_data.blocks %}
+      <div class="sl-block sl-block-{{ block.kind }}">{{ block.body_html }}</div>
+    {% endfor %}
+  {% else %}
+    {% comment %}
+      Predict and Experiment, filled by Epics E and F. They say what they
+      are waiting for: a step that renders a heading and a Continue button
+      looks finished and quietly does nothing, which is exactly the failure
+      SL-B4 named with its disabled start button. There is a test.
+    {% endcomment %}
+    <div class="sl-card sl-unbuilt">
+      <h2>{% t "run.not_built" %}</h2>
+      {% if step == "predict" %}
+        <p>{% t "run.predict_not_built" %}</p>
+      {% else %}
+        <p>{% t "run.experiment_not_built" %}</p>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  {% if is_complete and is_last %}
+    <div class="sl-card sl-done" role="status">
+      <h2>{% t "run.done_title" %}</h2>
+      <p class="sl-muted">{% t "run.done_body" %}</p>
+      <a class="sl-button" href="{% url 'sensorlab:lab_overview' slug=lab.slug %}">
+        {% t "lab.back_to_tracks" %}
+      </a>
+    </div>
+  {% else %}
+    <form method="post" action="{% url 'sensorlab:run_step' slug=lab.slug step=step %}" class="sl-advance">
+      {% csrf_token %}
+      <button type="submit" class="sl-button">
+        {% if is_last %}{% t "run.finish" %}{% else %}{% t "run.continue" %}{% endif %}
+      </button>
+    </form>
+  {% endif %}
+
+  <p class="sl-leave">
+    <a class="sl-back" href="{% url 'sensorlab:lab_overview' slug=lab.slug %}">
+      <span class="sl-back-arrow" aria-hidden="true">←</span>{% t "run.leave" %}
+    </a>
+  </p>
+</section>
+{% endblock %}

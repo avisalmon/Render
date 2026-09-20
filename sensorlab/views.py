@@ -104,13 +104,13 @@ def lab_overview(request, slug):
     your accelerometer" belongs *here* — readable before the lab starts, not
     discovered as a refusal halfway through.
 
-    There is deliberately no start action: Epic D builds the runner. A
-    primary button over a 404 is this app's recurring failure mode, so the
-    page says plainly that it cannot be run yet.
+    The start action became real in SL-D2. It shipped disabled in SL-B4
+    because the runner did not exist, and a primary button over a 404 is
+    this app's recurring failure — the page has to say what it can do.
     """
     from django.shortcuts import get_object_or_404
 
-    from .models import LAB_STEPS, Lab
+    from .models import LAB_STEPS, Lab, LabAttempt
 
     lab_row = get_object_or_404(
         Lab.published.select_related("track", "prerequisite_lab"), slug=slug
@@ -118,12 +118,29 @@ def lab_overview(request, slug):
     config = getattr(lab_row, "experiment", None)
     sensors = list(config.sensor_requirements.all()) if config else []
 
+    # Three different sentences, because they are three different
+    # situations: nothing started, something half-done, something finished.
+    # SL-D1 decided a finished run is never reopened, so offering "Resume"
+    # over a completed attempt would be offering something that cannot
+    # happen.
+    open_attempt = LabAttempt.objects.filter(
+        user=request.user, lab=lab_row, status=LabAttempt.Status.IN_PROGRESS
+    ).order_by("-started_at").first()
+    finished_before = LabAttempt.objects.filter(
+        user=request.user, lab=lab_row, status=LabAttempt.Status.COMPLETED
+    ).exists()
+
     return render(request, "sensorlab/lab_overview.html", {
         "lab": lab_row,
         "sensors": sensors,
         # From the model, not spelled out here — one definition of spec §3's
-        # flow, shared with the assembled API response.
+        # flow, shared with the assembled API response and the runner's rail.
         "steps": LAB_STEPS,
+        "open_attempt": open_attempt,
+        "open_attempt_position": (
+            LAB_STEPS.index(open_attempt.resume_step) + 1 if open_attempt else None
+        ),
+        "finished_before": finished_before,
     })
 
 
@@ -154,3 +171,123 @@ def set_language(request, code):
     if not url_has_allowed_host_and_scheme(back, allowed_hosts={request.get_host()}):
         back = reverse_lazy("sensorlab:home")
     return redirect(back)
+
+
+# ===========================================================================
+# The runner (SL-D2, spec §9.4)
+#
+# Five screens over one attempt. Three of them are real — Intro, Learn and
+# Analysis are prose, and SL-B2's assembled read already returns them
+# rendered. Predict and Experiment are placeholders that Epics E and F fill,
+# and they say so; a step that renders a heading and a Continue button looks
+# finished and does nothing, which is the failure SL-B4 named.
+#
+# Movement has one rule: you may go back over ground you covered and you may
+# not jump ahead of it, where "ahead" means the attempt's own `current_step`
+# and never a word in the URL. Otherwise the flow is advisory — and Predict,
+# the one step whose entire value is committing before you see the data, is
+# one address bar away from being skipped.
+# ===========================================================================
+
+#: The three steps whose content comes straight from `ContentBlock`.
+PROSE_STEPS = ("intro", "learn", "analysis")
+
+
+def _runnable_lab(slug):
+    from django.shortcuts import get_object_or_404
+
+    from .models import Lab
+
+    return get_object_or_404(Lab.published.select_related("track"), slug=slug)
+
+
+@sensorlab_login_required
+def run(request, slug):
+    """Start a lab (POST) or resume one (GET).
+
+    Starting creates a row, so it is a POST. `GET /run/` means "take me back
+    to where I was" and never creates anything — with nothing to resume it
+    returns to the overview rather than quietly opening a run nobody asked
+    for, which a link preload would otherwise do on a student's behalf.
+    """
+    from .models import LabAttempt
+
+    lab = _runnable_lab(slug)
+
+    if request.method == "POST":
+        attempt = LabAttempt.objects.start(user=request.user, lab=lab)
+    else:
+        attempt = LabAttempt.objects.filter(
+            user=request.user, lab=lab, status=LabAttempt.Status.IN_PROGRESS
+        ).order_by("-started_at").first()
+        if attempt is None:
+            return redirect("sensorlab:lab_overview", slug=lab.slug)
+
+    return redirect("sensorlab:run_step", slug=lab.slug, step=attempt.resume_step)
+
+
+@sensorlab_login_required
+def run_step(request, slug, step):
+    """One step of one attempt."""
+    from .api.curriculum import assemble
+    from .models import LAB_STEPS, LabAttempt
+
+    lab = _runnable_lab(slug)
+    if step not in LAB_STEPS:
+        raise Http404("no such step")
+
+    attempt = LabAttempt.objects.filter(
+        user=request.user, lab=lab
+    ).order_by("-started_at").first()
+    if attempt is None:
+        return redirect("sensorlab:run", slug=lab.slug)
+
+    reached = LAB_STEPS.index(attempt.resume_step)
+    here = LAB_STEPS.index(step)
+
+    if request.method == "POST":
+        # Only the step you are actually on advances anything. A POST from
+        # further back is somebody re-reading and pressing Continue again;
+        # it should carry them forward to where they were, not push them
+        # past it.
+        if here == reached:
+            attempt.advance()
+        return redirect("sensorlab:run_step", slug=lab.slug, step=attempt.resume_step)
+
+    if here > reached:
+        return redirect("sensorlab:run_step", slug=lab.slug, step=attempt.resume_step)
+
+    language = language_of_request(request)
+    lab_data = assemble(lab, language, answers=False)
+    steps = {row["step"]: row for row in lab_data["steps"]}
+
+    return render(request, "sensorlab/run_step.html", {
+        "lab": lab,
+        "attempt": attempt,
+        "step": step,
+        "step_data": steps[step],
+        "is_prose": step in PROSE_STEPS,
+        "rail": [
+            {
+                "step": name,
+                "index": index + 1,
+                "is_current": name == step,
+                "is_done": index < reached,
+                "is_reachable": index <= reached,
+            }
+            for index, name in enumerate(LAB_STEPS)
+        ],
+        "position": here + 1,
+        "total": len(LAB_STEPS),
+        "is_last": here == len(LAB_STEPS) - 1,
+        "is_complete": attempt.status == LabAttempt.Status.COMPLETED,
+        # SL-D1 made the model degrade visibly rather than throw. This is the
+        # half that matters: the person is told.
+        "progress_moved": not attempt.step_is_known,
+    })
+
+
+def language_of_request(request):
+    from .strings import DEFAULT_LANGUAGE
+
+    return getattr(request, "sensorlab_language", DEFAULT_LANGUAGE)

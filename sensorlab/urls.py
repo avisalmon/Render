@@ -14,6 +14,11 @@ urlpatterns = [
     # SL-B4. After `lab/` so the member home keeps that URL, and a slug can
     # never shadow it.
     path("lab/<slug:slug>/", views.lab_overview, name="lab_overview"),
+    # SL-D2. Before the overview pattern would ever match "run" as a
+    # slug — it cannot, since these are longer, but order is the thing
+    # nobody checks until a lab is called "run".
+    path("lab/<slug:slug>/run/", views.run, name="run"),
+    path("lab/<slug:slug>/run/<str:step>/", views.run_step, name="run_step"),
     # Epic C spike: does this device actually give a web page its sensors?
     path("sensor-check/", views.sensor_check, name="sensor_check"),
     path("design/", views.design, name="design"),

@@ -41,13 +41,8 @@
   <h2>{% t "lab.what_you_do" %}</h2>
   <ol class="sl-steps">
     {% for step in steps %}
-      <li class="sl-step">
-        {% if step == "intro" %}{% t "lab.step_intro" %}
-        {% elif step == "learn" %}{% t "lab.step_learn" %}
-        {% elif step == "predict" %}{% t "lab.step_predict" %}
-        {% elif step == "experiment" %}{% t "lab.step_experiment" %}
-        {% else %}{% t "lab.step_analysis" %}{% endif %}
-      </li>
+      {# One tag, not a five-branch chain — the same lookup the runner uses. #}
+      <li class="sl-step">{% step_name step %}</li>
     {% endfor %}
   </ol>
 
@@ -64,15 +59,23 @@
   {% endif %}
 
   {% comment %}
-    No start action, on purpose. Epic D builds the runner; a primary button
-    over a 404 is this app's recurring failure — it knew it could not do the
-    thing and waited for somebody to tap it before saying so. `disabled`
-    rather than hidden, so the shape of the finished screen is visible and
-    the reason is readable.
+    Real as of SL-D2. It shipped `disabled` in SL-B4 because the runner did
+    not exist, and a primary button over a 404 is this app's recurring
+    failure. A POST, because starting a lab creates a row — `GET /run/`
+    means "take me back to where I was" and creates nothing.
   {% endcomment %}
-  <div class="sl-not-ready">
-    <button type="button" class="sl-button" disabled>{% t "lab.not_ready" %}</button>
-    <p class="sl-muted">{% t "lab.not_ready_why" %}</p>
+  <div class="sl-start">
+    {% if open_attempt %}
+      <a class="sl-button" href="{% url 'sensorlab:run' slug=lab.slug %}">{% t "run.resume" %}</a>
+      <p class="sl-muted">{% step_name open_attempt.resume_step %} · {% t "run.step_label" %} {{ open_attempt_position }} {% t "run.of" %} {{ steps|length }}</p>
+    {% else %}
+      <form method="post" action="{% url 'sensorlab:run' slug=lab.slug %}">
+        {% csrf_token %}
+        <button type="submit" class="sl-button">
+          {% if finished_before %}{% t "run.again" %}{% else %}{% t "run.start" %}{% endif %}
+        </button>
+      </form>
+    {% endif %}
   </div>
 </section>
 {% endblock %}

@@ -43,6 +43,20 @@ def sensor_name(key):
     return lookup(f"sensor.{key}", "he" if str(language).startswith("he") else "en") or key
 
 
+@register.simple_tag(takes_context=True)
+def step_name(context, step):
+    """A step's name in the request's language.
+
+    `lab.step_intro` and friends already exist — SL-B4 wrote them for the
+    overview's preview. The runner reads the same keys rather than a second
+    mapping, so the two screens cannot end up calling the same step
+    different things.
+    """
+    request = context.get("request")
+    language = getattr(request, "sensorlab_language", DEFAULT_LANGUAGE)
+    return lookup(f"lab.step_{step}", language) or step
+
+
 @register.tag(name="chart")
 def chart(parser, token):
     """Wrap chart markup in SensorLab's chart frame, always LTR.

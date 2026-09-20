@@ -142,8 +142,16 @@ BLOCKS = (
         "order": 2,
         # The same sentence in both languages, which is why the bilingual
         # test skips formula blocks rather than demanding a difference.
-        "body_en": "|a| = √(aₓ² + a_y² + a_z²)",
-        "body_he": "|a| = √(aₓ² + a_y² + a_z²)",
+        #
+        # `a_x`, not `aₓ`. The first version mixed a Unicode subscript for x
+        # with plain underscores for y and z, because Unicode HAS no subscript
+        # y or z — so it rendered as "aₓ² + a_y² + a_z²", inconsistent and
+        # visibly wrong to anyone reading the physics. Caught in SL-D2 by
+        # looking at the rendered step, not by a test. Formula blocks are
+        # literal by design (Markdown would read `_` as emphasis), so what is
+        # written here is exactly what a student sees.
+        "body_en": "|a| = √(a_x² + a_y² + a_z²)",
+        "body_he": "|a| = √(a_x² + a_y² + a_z²)",
     },
     {
         "step": ContentBlock.Step.LEARN,

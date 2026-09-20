@@ -216,16 +216,34 @@ def test_every_link_on_the_new_screens_actually_answers(client, django_user_mode
     assert dead == {}, f"links that do not answer: {dead}"
 
 
-def test_the_overview_does_not_offer_what_it_cannot_do(client, django_user_model):
-    """Epic D builds the runner. Until then the overview must say that
-    plainly rather than present a button and fail behind it."""
+def test_the_overview_never_offers_what_it_cannot_do(client, django_user_model):
+    """Amended in SL-D2, when the thing it was waiting for arrived.
+
+    As written this asserted the overview showed a **disabled** control,
+    because Epic D had not built the runner and a primary button over a 404
+    is this app's recurring failure. SL-D2 built the runner, so that
+    assertion became false — and a test that fails because the product
+    improved has to be rewritten, not deleted, or the rule it was guarding
+    quietly leaves with it.
+
+    The rule was never "there is a disabled button". It was **the overview
+    does not present an action it cannot carry out.** That is what is
+    asserted now: whatever control is there, pressing it reaches something
+    that answers.
+    """
     _seed()
     client.force_login(_member(django_user_model))
     html = _body(client.get(OVERVIEW).content.decode())
 
-    # If a start control is shown at all, it is not a link to nowhere.
-    assert "disabled" in html, "no honest not-yet state on the overview"
-    assert 'href="/sensorlab/run/' not in html
+    targets = re.findall(r'(?:action|href)="(/sensorlab/[^"]*)"', html)
+    assert targets, "the overview offers no way forward at all"
+
+    for target in set(targets):
+        # A GET on a POST-only start URL is allowed to redirect; what is not
+        # allowed is nothing being there.
+        assert client.get(target).status_code in (200, 302, 405), (
+            f"the overview points at {target}, which does not answer"
+        )
 
 
 def test_a_locked_lab_says_what_unlocks_it(client, django_user_model):

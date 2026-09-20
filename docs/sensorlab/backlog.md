@@ -52,7 +52,7 @@ runs pip), `env\Scripts\activate` for everything Python, and
 | **A — Infrastructure and look and feel** | SL-A1 … SL-A5 | 🔵 in progress |
 | **C — Sensor access layer** | SL-C1 … SL-C2 | 🔵 in progress — spike passed |
 | **B — Curriculum and authoring** | SL-B1 … SL-B4 | ✅ done |
-| **D — The lab runner** | SL-D1 … SL-D3 | 🔵 SL-D1 done |
+| **D — The lab runner** | SL-D1 … SL-D3 | 🔵 SL-D3 is all that remains |
 | E — Predict | tbd at gate | ⬜ |
 | F — Capture | tbd at gate | ⬜ |
 | G — Analysis | tbd at gate | ⬜ |
@@ -878,21 +878,75 @@ So it reports. `resume_step` falls back to the first step and
 same answer this app gives a missing translation — degrade visibly, never
 blank, and never pretend.
 
-### SL-D2 — The runner shell ⬜
+### SL-D2 — The runner shell ✅
 
-Marker: `sprsl13`
+Marker: `sprsl13` — 22 tests, all green.
 
-- [ ] One screen per step with the **step rail** (spec §7), driven by
-      `LAB_STEPS` so the screen cannot invent its own order.
-- [ ] Intro, Learn and Analysis rendered for real — they are prose, and
-      SL-B2 already returns them assembled and rendered.
-- [ ] **Predict and Experiment are placeholders**, each saying what it is
-      waiting for. SL-B4 set that rule with the disabled start button; this
-      is where it would be easiest to break, so it gets a test.
-- [ ] Resume-where-you-left-off, and the overview's disabled button becomes
-      a real one.
-- [ ] Screen contract: every step, both languages, both directions, on a
-      phone.
+- [x] One screen per step with the **step rail**, driven by `LAB_STEPS`
+      through the view so the screen cannot invent its own order.
+- [x] Intro, Learn and Analysis rendered for real, from SL-B2's assembled
+      read — the endpoint built for exactly this, now consumed.
+- [x] **Predict and Experiment are placeholders** that say what they are
+      waiting for, with a test on each.
+- [x] Resume-where-you-left-off; the overview's disabled button is real.
+- [x] Screen contract: every step, both languages, both directions, and a
+      real 390px phone for taps, overflow and link styling.
+- [x] Screenshots of all five steps in both languages:
+      `design/sl-d2-*-{en,he}.png`.
+
+#### Starting is a POST; resuming is a GET
+
+Corrected while writing the tests, before any of it was built. Starting a
+lab creates a row, so it belongs behind a POST. `GET /run/` means "take me
+back to where I was" and creates nothing — with nothing to resume it returns
+to the overview rather than quietly opening a run nobody asked for, which a
+link preload would otherwise do on a student's behalf. That matters most
+once a finished attempt exists, where SL-D1 decided a stray start makes a
+*second* attempt.
+
+#### Movement: back freely, never ahead
+
+"Ahead" means the attempt's own `current_step`, never a word in the URL.
+Otherwise the flow is advisory, and **Predict — the one step whose entire
+value is committing before you see the data — is one address bar away from
+being skipped.** A POST from further back carries you forward to where you
+were rather than pushing you past it, and a GET never advances anything: a
+crawler, a preload or a back button must not walk somebody through their own
+lab.
+
+#### The rail is SL-A4's component, used as designed
+
+It was tempting to build a new one, and that would have been a second
+vocabulary for the same thing — the SL-A4.1 mistake in a different costume.
+So the rail is SL-A4's segments, including the §7.2 rule that section
+already carried and this sprint could easily have ignored: structure is ink,
+and the *current* segment is tinted by what that step is. Predict shows
+amber because it is a prediction; Experiment and Analysis show cyan because
+they are measurement. The one addition is that a 5px bar is nowhere near
+spec §7.4's 44px, so the link around it carries the tap area.
+
+An unreached step is deliberately **not** a link. The movement rule made
+visible, rather than a link that silently bounces you back.
+
+#### A defect found by reading the rendered step
+
+The Learn formula read `aₓ² + a_y² + a_z²` — a Unicode subscript for x
+and plain underscores for y and z, because **Unicode has no subscript y or
+z**. Formula blocks are literal by design (Markdown would read `_` as
+emphasis), so that mixture was exactly what a student saw, and it is visibly
+wrong to anyone reading the physics. Every test passed.
+
+Fixing the seed fixes nothing already installed — that is what "seed once"
+*means*. So `0007_repair_free_fall_formula` repairs the row **only if the
+body is still character-for-character what the seed wrote**; if anybody has
+edited it, theirs stands and the migration does nothing. The seed's promise
+and the repair have to agree, or the promise is worth less than it looks.
+Its reverse is a deliberate no-op: reversing a migration should not put a
+known-wrong string back into somebody's course.
+
+Guarded as a general rule, not the one string — a formula mixing Unicode
+subscripts with underscore notation is inconsistent whichever way round it
+happens, and the next one will be a different formula.
 
 ### SL-D3 — The attempt API ⬜
 

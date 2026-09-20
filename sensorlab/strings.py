@@ -102,6 +102,55 @@ STRINGS = {
     },
     "lab.unlocks_after": {"en": "Finish this one first", "he": "יש להשלים קודם"},
     "lab.back_to_tracks": {"en": "All tracks", "he": "כל המסלולים"},
+    # the runner (SL-D2)
+    "run.start": {"en": "Start the lab", "he": "להתחיל את המעבדה"},
+    "run.resume": {"en": "Resume where you left off", "he": "להמשיך מהמקום שעצרתם"},
+    "run.again": {"en": "Run it again", "he": "להריץ שוב"},
+    "run.continue": {"en": "Continue", "he": "המשך"},
+    "run.finish": {"en": "Finish the lab", "he": "לסיים את המעבדה"},
+    "run.leave": {"en": "Leave — your place is kept", "he": "יציאה — המקום שלכם נשמר"},
+    "run.step_label": {"en": "Step", "he": "שלב"},
+    "run.of": {"en": "of", "he": "מתוך"},
+    # The two steps Epics E and F fill. They say what they are waiting for,
+    # because a step that renders a heading and a Continue button looks
+    # finished and does nothing — the failure SL-B4 named with its disabled
+    # start button, which is easiest to commit here.
+    "run.not_built": {"en": "This step is not built yet", "he": "השלב הזה עוד לא נבנה"},
+    "run.predict_not_built": {
+        "en": "You will commit to a prediction here before any data exists — that is "
+              "what makes the measurement worth taking. The questions are written and "
+              "waiting; the part that records and marks your answer is still being "
+              "built. Continue for now, and nothing is lost.",
+        "he": "כאן תתחייבו להשערה לפני שקיימים נתונים — וזה מה שהופך את המדידה לשווה. "
+              "השאלות כתובות ומחכות; החלק שמתעד ובודק את התשובה שלכם עוד נבנה. "
+              "המשיכו בינתיים, שום דבר לא יאבד.",
+    },
+    "run.experiment_not_built": {
+        "en": "Your phone becomes the instrument here — a live reading, a recording, "
+              "and the rate it actually managed rather than the one we asked for. "
+              "The sensor layer works; the capture screen around it is still being "
+              "built. Continue for now, and nothing is lost.",
+        "he": "כאן הטלפון שלכם הופך לכלי המדידה — קריאה חיה, הקלטה, והקצב שהוא באמת "
+              "הצליח לספק ולא זה שביקשנו. שכבת החיישנים עובדת; מסך ההקלטה סביבה עוד "
+              "נבנה. המשיכו בינתיים, שום דבר לא יאבד.",
+    },
+    "run.done_title": {"en": "Lab complete", "he": "המעבדה הושלמה"},
+    "run.done_body": {
+        "en": "You walked the whole lab. Your results screen arrives with the capture "
+              "and analysis steps — for now, what is recorded is that you finished.",
+        "he": "עברתם את כל המעבדה. מסך התוצאות יגיע יחד עם שלבי ההקלטה והניתוח — "
+              "בינתיים, מה שנרשם הוא שסיימתם.",
+    },
+    # An attempt whose stored step no longer names anything (SL-D1). The
+    # student is told, rather than silently finding themselves at the start
+    # wondering what happened.
+    "run.progress_moved": {
+        "en": "This lab changed since you last opened it, and we could not find the "
+              "step you were on — so we have put you back at the beginning. Nothing "
+              "you did was deleted.",
+        "he": "המעבדה הזו השתנתה מאז הפעם האחרונה שפתחתם אותה, ולא הצלחנו למצוא את "
+              "השלב שהייתם בו — לכן החזרנו אתכם להתחלה. שום דבר ממה שעשיתם לא נמחק.",
+    },
     # sensor names. Interface copy like everything else — they used to come
     # from an English-only dict in the view, which told a Hebrew reader
     # "Accelerometer" (the SL-A2 bug, third appearance; fixed in SL-B4).
