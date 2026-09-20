@@ -98,6 +98,7 @@ markers = [
     "sprsl11: SL-B4 SensorLab the first real screens",
     "sprsl12: SL-D1 SensorLab the attempt, and who may see one",
     "sprsl13: SL-D2 SensorLab the five-step runner shell",
+    "sprsl14: SL-D3 SensorLab the attempt API, and the share link",
     "smoke: the fast gate, run on every push (see tests/test_smoke.py)",
 ]
 

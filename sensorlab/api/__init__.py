@@ -14,6 +14,7 @@ SL-A3 made and this is the sprint that tested it.
 
 from rest_framework.routers import DefaultRouter
 
+from .attempts import LabAttemptViewSet
 from .curriculum import (
                          AnalysisConfigViewSet,
                          ContentBlockViewSet,
@@ -36,3 +37,7 @@ router.register("prediction-choices", PredictionChoiceViewSet)
 router.register("experiment-configs", ExperimentConfigViewSet)
 router.register("sensor-requirements", SensorRequirementViewSet)
 router.register("analysis-configs", AnalysisConfigViewSet)
+
+# SL-D3. The first resource that is a person's own work rather than
+# authored content, which is why its viewset scopes by request.user.
+router.register("attempts", LabAttemptViewSet)

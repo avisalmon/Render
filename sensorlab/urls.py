@@ -2,6 +2,7 @@ from django.urls import include, path
 
 from . import auth_views, views
 from .api import router
+from .api.attempts import SharedAttemptView
 from .api.consent import SensorConsentItemView, SensorConsentView
 from .api.profile import MyProfileView
 from .api.schema import SchemaView
@@ -36,5 +37,9 @@ urlpatterns = [
     path("api/sensor-consent/<str:sensor>/", SensorConsentItemView.as_view(),
          name="api_sensor_consent_item"),
     path("api/schema/", SchemaView.as_view(), name="api_schema"),
+    # SL-D3. Before the router include, so "shared" is never read as
+    # an attempt primary key.
+    path("api/attempts/shared/<uuid:share_slug>/", SharedAttemptView.as_view(),
+         name="api_shared_attempt"),
     path("api/", include(router.urls)),
 ]

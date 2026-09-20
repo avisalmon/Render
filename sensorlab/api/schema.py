@@ -95,6 +95,30 @@ class SchemaView(APIView):
                         ),
                     },
                     {
+                        "path": "/sensorlab/api/attempts/<id>/advance/  ·  /complete/",
+                        "methods": ["POST"],
+                        "note": (
+                            "Progress is a verb, not a field (SL-D3, §9.0 item 2). "
+                            "`current_step` and `status` are read-only on the resource, "
+                            "because a PATCH that set them would skip the Predict step "
+                            "— the one whose value is committing before the data exists. "
+                            "`complete/` is refused with 409 unless the attempt is on the "
+                            "last step, and the refusal names the step it is actually on."
+                        ),
+                    },
+                    {
+                        "path": "/sensorlab/api/attempts/shared/<share_slug>/",
+                        "methods": ["GET"],
+                        "note": (
+                            "The one endpoint an anonymous stranger may open, and only "
+                            "when the owner set `is_public`. A private or unknown slug is "
+                            "404, never 403 — holding the slug is not permission, and a "
+                            "403 would confirm the slug is real. Built by hand rather "
+                            "than from the attempt serializer so a field added there "
+                            "later cannot publish itself here."
+                        ),
+                    },
+                    {
                         "path": "/sensorlab/api/schema/",
                         "methods": ["GET"],
                         "note": "this document",

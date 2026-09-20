@@ -52,7 +52,7 @@ runs pip), `env\Scripts\activate` for everything Python, and
 | **A — Infrastructure and look and feel** | SL-A1 … SL-A5 | 🔵 in progress |
 | **C — Sensor access layer** | SL-C1 … SL-C2 | 🔵 in progress — spike passed |
 | **B — Curriculum and authoring** | SL-B1 … SL-B4 | ✅ done |
-| **D — The lab runner** | SL-D1 … SL-D3 | 🔵 SL-D3 is all that remains |
+| **D — The lab runner** | SL-D1 … SL-D3 | ✅ done |
 | E — Predict | tbd at gate | ⬜ |
 | F — Capture | tbd at gate | ⬜ |
 | G — Analysis | tbd at gate | ⬜ |
@@ -948,14 +948,93 @@ Guarded as a general rule, not the one string — a formula mixing Unicode
 subscripts with underscore notation is inconsistent whichever way round it
 happens, and the next one will be a different formula.
 
-### SL-D3 — The attempt API ⬜
+### SL-D3 — The attempt API ✅
 
-Marker: `sprsl14`
+Marker: `sprsl14` — 20 tests, all green.
 
-- [ ] Owner-scoped CRUD for `LabAttempt`.
-- [ ] The verbs as actions, not odd `PATCH`es (spec §9.0 item 2): start,
-      advance, complete.
-- [ ] The read-only shared result view, gated on `is_public`.
+- [x] Owner-scoped CRUD for `LabAttempt`. Somebody else's row is a **404,
+      not a 403** — a refusal that tells the two apart tells you how many
+      attempts exist and who is running labs. Same reasoning as a draft lab
+      in SL-B2.
+- [x] The verbs as actions (spec §9.0 item 2): create (start/resume),
+      `advance/`, `complete/`.
+- [x] The read-only shared result view, gated on `is_public`, documented in
+      the schema.
+
+#### Progress is not a field you set
+
+The one thing in this sprint that is not plumbing. SL-D2 spent a sprint
+ensuring a student cannot reach the Analysis step by typing it in the URL. A
+`PATCH {"current_step": "analysis"}` would reopen that hole **through the
+front door** — the same skip, no address bar required — and what gets
+skipped is Predict, whose entire value is committing before the data exists.
+`status` is the same shape: a student could mark a run complete having done
+none of it, and spec §6 counts these rows as a learning signal.
+
+So `current_step` and `status` are read-only, and movement happens through
+`advance/`. That is §9.0 item 2's "verbs, not odd PATCHes" earning its keep
+rather than being a style preference. `is_public` is the one field a person
+may set about their own attempt, because sharing is theirs to decide and to
+withdraw — and a share that cannot be withdrawn is a publication.
+
+`complete/` is refused with **409** from anywhere but the last step, and the
+refusal names the step you are actually on. Without that condition it is
+precisely the skip `advance/` was careful not to be.
+
+Starting through the API calls the same `LabAttempt.objects.start()` the
+runner does, so SL-D1's resume-or-new decision has one implementation. **The
+API is a second door onto the rule, not a second rule.**
+
+#### A defect found by reading a real response
+
+The share endpoint resolves the lab and track titles into the reader's
+language — and then handed back `"current_step": "intro"`, a machine word,
+in the one endpoint a stranger opens with no app around it to translate for
+them. Half resolved copy, half vocabulary. It now sends both: a label for a
+person, the raw name for a program.
+
+The share payload is also built **by hand** rather than from the attempt
+serializer. A field added to that serializer later must not be able to
+publish itself through the one URL nobody has to authenticate against.
+
+---
+
+## Epic D — closed
+
+All three sprints done. Full regression at the epic gate:
+**2564 passed, 25 failed, 2 errors in 24m48s**, against a 28-line
+`docs/regression_baseline.txt`. The gate is **no new failures**, not
+all-green — and the diff against the baseline is empty. Nothing SensorLab
+added broke anything.
+
+**The two errors, reported rather than absorbed.**
+`test_spr_z_6.py::test_the_big_screen_reveal_is_also_one_at_a_time` (memz)
+and `test_ustrip_mobile.py::test_reordering_a_day_keeps_your_place_...`
+(ustrip) errored. Neither is a SensorLab test — but SL-B4 and SL-D2 each
+added a Playwright file to the same suite, so "not mine" needed checking
+rather than asserting. Both pass alone, and both pass in one run **together
+with** `sprsl11` and `sprsl13` (38 passed). So the trigger is the full
+~2600-test run, not this epic's additions — the same browser-test contention
+this repo has seen before, where a test passes alone and errors with
+siblings.
+
+What is *not* known is the traceback, and that is my own error: the
+background run was piped through `Select-Object -Last 45`, which threw away
+everything above the summary. **Never truncate a regression log — the detail
+you discard is exactly the detail you need an hour later.** Settling the
+cause properly needs one clean re-run with full output captured.
+
+A student can now sign in, pick a track, read what a lab will ask of their
+phone, walk all five steps, leave and come back to the same place, finish,
+and share the result by link. Two of the five steps say honestly that they
+are not built — Epic E fills Predict, Epic F fills Experiment.
+
+**The pattern held.** Epic B found four defects by reading output rather
+than by a failing test; Epic D found three more — a formula mixing two
+notations, a machine word in a translated payload, and (in SL-B4, caught by
+the *previous* epic's guard) a token that never existed. None of them failed
+a test. Every one is now a guard, which is the only thing that makes the
+habit compound rather than repeat.
 
 **What Epic D must not do** (spec §9.4): not grade anything — §9.0 item 5
 put the answer key server-side and the grading action belongs to Epic E, so
