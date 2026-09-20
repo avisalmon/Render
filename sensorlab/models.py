@@ -647,6 +647,35 @@ class LabAttempt(models.Model):
         """
         return self.current_step if self.step_is_known else LAB_STEPS[0]
 
+    # ------------------------------------------------- predictions (SL-E1)
+
+    @property
+    def predictions_locked(self):
+        """Whether this run's predictions are now fixed (spec §3).
+
+        The lock is the whole reason the Predict step is worth a screen: an
+        answer you can change after the data arrives is a note, not a
+        prediction. It falls the moment the experiment starts and never
+        lifts — SL-D2 lets a student revisit a step they have passed, and
+        revisiting Predict must not quietly reopen it.
+        """
+        return LAB_STEPS.index(self.resume_step) > LAB_STEPS.index("predict")
+
+    def unanswered_predictions(self):
+        """Which of this lab's questions have no answer in this run yet.
+
+        Computed here so the screen, the API and the runner share one
+        definition rather than three that agree today.
+        """
+        answered = set(self.prediction_answers.values_list("question_id", flat=True))
+        return [q for q in self.lab.prediction_questions.all() if q.pk not in answered]
+
+    @property
+    def predictions_complete(self):
+        """True for a lab with no questions at all, on purpose — otherwise
+        "none answered" would make such a lab unfinishable."""
+        return not self.unanswered_predictions()
+
     def advance(self):
         """Move to the next step, or complete. Returns whether it moved.
 
@@ -667,3 +696,147 @@ class LabAttempt(models.Model):
         self.completed_at = timezone.now()
         self.save(update_fields=["status", "completed_at"])
         return False
+
+
+# ===========================================================================
+# What a student predicted (data_model.md §5, spec §9.5)
+#
+# Not a quiz. A quiz asks what you know; Predict asks what you BELIEVE,
+# before any data exists, and then makes you watch it be tested — spec §3's
+# methodology. The Free Fall question exists because "a falling phone reads
+# near zero" is the answer almost everybody gets wrong, and getting it wrong
+# on the record is what makes the measurement land.
+#
+# So the design pressure is on commitment, not scoring. Two consequences run
+# through everything below: grading happens HERE, on the server, because
+# SL-B2 never told the client any answer; and a prediction stops being
+# editable the moment the experiment starts, because an answer you can
+# change after seeing the data is a note, not a prediction.
+# ===========================================================================
+
+
+class PredictionAnswerManager(models.Manager):
+    def record(self, attempt, question, **payload):
+        """Save an answer and grade it, or refuse and say why.
+
+        One row per (attempt, question): changing your mind before the lock
+        replaces the answer rather than adding one, because two answers to
+        one question is a state nothing downstream can read — which counts
+        towards spec §6's accuracy signal? The same reasoning that made
+        SL-D1 resume an unfinished attempt rather than duplicate it.
+        """
+        if question.lab_id != attempt.lab_id:
+            raise ValueError(
+                f"question {question.pk} belongs to lab {question.lab_id}, "
+                f"but this attempt is a run through lab {attempt.lab_id}"
+            )
+        if attempt.predictions_locked:
+            raise self.model.Locked(
+                "This attempt has already reached the experiment step, so its "
+                "predictions are locked. An answer that can be changed after the "
+                "data arrives is not a prediction."
+            )
+
+        payload["is_correct"] = self.model.grade(question, **payload)
+        row, _created = self.update_or_create(
+            attempt=attempt, question=question, defaults=payload
+        )
+        return row
+
+
+class PredictionAnswer(models.Model):
+    """One person's answer to one question, in one run.
+
+    On the attempt rather than on the person, deliberately: SL-D1 allows a
+    second attempt at a finished lab so improvement over time is visible,
+    and that only works if each run carries its own predictions.
+    """
+
+    class Locked(Exception):
+        """Raised when the experiment has started and the answer is fixed."""
+
+    attempt = models.ForeignKey(
+        "sensorlab.LabAttempt", on_delete=models.CASCADE, related_name="prediction_answers"
+    )
+    question = models.ForeignKey(
+        "sensorlab.PredictionQuestion", on_delete=models.CASCADE, related_name="answers"
+    )
+
+    #: Exactly one of these carries the answer, chosen by the question's kind.
+    selected_choice = models.ForeignKey(
+        "sensorlab.PredictionChoice", on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="+",
+    )
+    numeric_value = models.FloatField(null=True, blank=True)
+    text_value = models.TextField(blank=True)
+
+    #: A sketched curve, as a payload rather than a table of points — the
+    #: same named exception data_model.md §6 makes for sensor samples, for
+    #: the same reason: nobody edits, lists or deletes an individual point.
+    curve_points = models.JSONField(null=True, blank=True)
+
+    #: **Stored, never recomputed on read.** A question edited later would
+    #: otherwise silently rewrite what a student "got right", and spec §6
+    #: wants prediction accuracy over time as a learning signal — a signal
+    #: measured against moving goalposts is not one. The honest record is
+    #: what they got right against the question *as it was asked*.
+    #:
+    #: Null for `free_text`, which nobody marks. `False` there would tell a
+    #: student they were wrong about something no one judged.
+    is_correct = models.BooleanField(null=True, blank=True)
+
+    answered_at = models.DateTimeField(auto_now=True)
+
+    objects = PredictionAnswerManager()
+
+    class Meta:
+        ordering = ("question__order", "id")
+        # The manager is the door; this is the wall. A future code path that
+        # bypasses `record()` must still fail rather than quietly produce a
+        # second answer.
+        constraints = [
+            models.UniqueConstraint(
+                fields=["attempt", "question"], name="one_prediction_per_question"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.attempt} — Q{self.question.order}"
+
+    @staticmethod
+    def grade(question, selected_choice=None, numeric_value=None, **_ignored):
+        """Right, wrong, or unmarked — decided on the server, always.
+
+        The client has never been told any answer (SL-B2 withholds the key
+        from every non-staff caller), so this could not have been done
+        anywhere else even if somebody wanted to.
+        """
+        kind = question.kind
+        if kind == question.Kind.MULTIPLE_CHOICE:
+            return bool(selected_choice and selected_choice.is_correct)
+
+        if kind == question.Kind.NUMERIC:
+            if numeric_value is None or question.correct_value is None:
+                return None
+            # Percent, not decimal places: the reasoning is what is being
+            # tested, and a student who says 9.5 understood the physics.
+            expected = question.correct_value
+            if expected == 0:
+                return abs(numeric_value) <= (question.tolerance or 0)
+            error = abs(numeric_value - expected) / abs(expected) * 100
+            return error <= (question.tolerance or 0)
+
+        # free_text and graph_sketch are not auto-scored.
+        return None
+
+    @property
+    def should_reveal(self):
+        """Whether a screen may show whether this was right.
+
+        Graded at submission, revealed at Analysis. Telling a student they
+        were wrong *before* the experiment short-circuits Observe, and spec
+        §3's sequence is predict, then watch, then explain — the surprise is
+        the teaching.
+        """
+        return self.attempt.resume_step == LAB_STEPS[-1] or \
+            self.attempt.status == self.attempt.Status.COMPLETED

@@ -745,7 +745,78 @@ attempt.
 
 ---
 
-### 9.5 What ships first
+### 9.5 Epic E — Predict
+
+Detail written at the gate, 2026-09-20, with A, B, C and D closed.
+
+**Why this epic is not a quiz.** A quiz asks what you know. Predict asks what
+you *believe*, before any data exists, and then makes you watch it be tested.
+That is the whole of §3's methodology: the Free Fall lab's multiple-choice
+question exists because "a falling phone reads near zero" is the answer
+almost everybody gets wrong, and getting it wrong on the record is what makes
+the measurement land. So the design pressure here is not on scoring — it is
+on **commitment**.
+
+**What already exists.** The questions and choices are modelled and seeded
+(SL-B1, SL-B3). SL-B2 withholds the answer key from every non-staff caller,
+and SL-D3 made `current_step` unwritable. Together those already forced this
+epic's central constraint before it began: **grading happens on the server,
+because the client has never been told the answers.** That is not a
+precaution added here; it is a bill now falling due.
+
+#### E.1 An answer, and when it stops being changeable
+
+`PredictionAnswer` per `data_model.md` §5: `attempt` FK, `question` FK, and
+exactly one payload for the question's kind — `selected_choice`,
+`numeric_value`, `text_value`, or `curve_points` — plus `is_correct`,
+nullable because `free_text` is not auto-scored.
+
+`is_correct` is **stored, not computed on read**. Questions can be edited
+after the fact, and the honest record is what the student got right against
+the question *as it was asked*, not against whatever it says today. §6 wants
+prediction accuracy over time as a learning signal, and a signal recomputed
+against moving goalposts is not one.
+
+Three decisions this epic has to make:
+
+- **When does a prediction lock?** Spec §3 says predictions lock when the
+  experiment starts. An answer editable afterwards is not a prediction, it
+  is a note — and the lock is what the whole step is for.
+- **Does the student learn immediately whether they were right?** Leaning
+  no: telling them at Predict time short-circuits Observe, and the
+  comparison belongs in Analysis where the data is. Grading still happens at
+  submission — stored, not shown.
+- **May a student advance past Predict without answering?** Leaning no. A
+  Continue button that skips the step makes the lock decorative.
+
+#### E.2 The Predict screen
+
+The three answerable kinds — multiple choice, numeric, free text — on
+SL-D2's runner, replacing the placeholder. Answers save as you go, stay
+editable until the lock, and the step reports what is still unanswered
+rather than refusing silently.
+
+#### E.3 Sketch your curve
+
+`graph_sketch`: the student draws the curve they expect on empty axes,
+before any data exists. A custom control, touch-first, and the only piece of
+this epic with no precedent anywhere in the app — it may warrant its own
+sprint, and §7.5's "charts must not lie" applies to an empty chart too.
+
+`curve_points` is a payload on the answer row rather than a table of points,
+the same named exception `data_model.md` §6 makes for sensor samples and for
+the same reason.
+
+#### E.4 API
+
+`PredictionAnswer` scoped to the attempt's owner, plus a **grade** action —
+a verb, per §9.0 item 2, and necessarily server-side per item 5. The
+response says whether it was recorded, never whether it was right, until
+Analysis asks.
+
+---
+
+### 9.6 What ships first
 
 **A through G is the shippable core**: one track, a few labs, no tutor, no
 groups, no video — already a working product worth putting in front of a

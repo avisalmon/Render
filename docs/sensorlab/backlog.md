@@ -53,7 +53,7 @@ runs pip), `env\Scripts\activate` for everything Python, and
 | **C — Sensor access layer** | SL-C1 … SL-C2 | 🔵 in progress — spike passed |
 | **B — Curriculum and authoring** | SL-B1 … SL-B4 | ✅ done |
 | **D — The lab runner** | SL-D1 … SL-D3 | ✅ done |
-| E — Predict | tbd at gate | ⬜ |
+| **E — Predict** | SL-E1 … SL-E4 | 🔵 SL-E1 done |
 | F — Capture | tbd at gate | ⬜ |
 | G — Analysis | tbd at gate | ⬜ |
 | H — Lab notebook | tbd at gate | ⬜ |
@@ -1041,6 +1041,101 @@ put the answer key server-side and the grading action belongs to Epic E, so
 D must not open a back door by serialising an answer "for the runner to
 check". And not capture anything — using the sensor layer before Epic F
 decides the payload transport (§9.0 item 1) would decide it by accident.
+
+---
+
+## Epic E — Predict
+
+Spec §9.5, written at the gate on 2026-09-20.
+
+**The constraint this epic inherits rather than chooses.** SL-B2 withholds
+the answer key from every non-staff caller and SL-D3 made progress
+unwritable. Between them, the client has never been told any answer — so
+grading is server-side by construction. That bill was described as a cost
+when it was taken on; this is where it falls due.
+
+### SL-E1 — An answer, and when it stops being changeable ✅
+
+Marker: `sprsl15` — 16 tests, all green.
+
+- [x] `PredictionAnswer` per `data_model.md` §5: one payload per question
+      kind, `is_correct` nullable.
+- [x] Grading **on the server**, at submission, stored.
+- [x] One answer per (attempt, question) — enforced by the manager *and* by
+      a database constraint. The manager is the door; the constraint is the
+      wall, for the code path that bypasses `record()` later.
+- [x] Answers hang off the **attempt**, not the person. SL-D1 allows a
+      second run at a finished lab so improvement over time is visible, and
+      that only works if each run carries its own predictions.
+- [x] Read-only on the attempt's admin page, rendered and looked at.
+
+#### Decision: predictions lock when the experiment starts
+
+Spec §3, now real. `LabAttempt.predictions_locked` is true from the moment
+the run passes Predict, and it never lifts — SL-D2 lets a student revisit a
+step they have passed, and revisiting Predict must not quietly reopen it,
+which would be the lock with extra steps. The refusal names the reason
+rather than just refusing: "no" with a reason is a different product from
+"no".
+
+Before the lock, changing your mind **replaces** the answer rather than
+adding one. Two answers to one question is a state nothing downstream can
+read — which counts towards §6's accuracy signal? The same reasoning that
+made SL-D1 resume an unfinished attempt rather than duplicate it.
+
+#### Decision: graded now, revealed at Analysis
+
+Both halves matter. Grading must happen at submission, because it has to be
+against the question *as it was asked* — an author fixing a typo later would
+otherwise silently rewrite what a student got right. But **telling** them at
+Predict time short-circuits Observe: spec §3's sequence is predict, then
+watch, then explain, and the surprise is the teaching. So `is_correct` is
+written immediately and `should_reveal` says when a screen may show it.
+
+#### Decision: an empty Predict step is complete, not stuck
+
+`predictions_complete` is true for a lab with no questions at all. The
+obvious implementation — "none answered, so you may not proceed" — makes
+such a lab unfinishable, and a lab can legitimately have no prediction step.
+
+#### A test that was wrong about the world
+
+`test_a_runs_predictions_are_readable_on_its_attempt_page` asserted the
+admin page showed "Which lands first". It did not, and the page was
+perfectly fine: that prompt belongs to **`test_spr_sl_9`'s hand-built
+fixture**, while this sprint uses the real seed command, whose
+multiple-choice question asks about a phone falling freely. Worth recording
+because the instinct on a red test is to look at the code — and here the
+code was right and the test had the wrong idea about what exists.
+
+### SL-E2 — The Predict screen ⬜
+
+Marker: `sprsl16`
+
+- [ ] Multiple choice, numeric and free text on SL-D2's runner, replacing
+      the placeholder.
+- [ ] Answers save as you go and stay editable until the lock.
+- [ ] The step says what is still unanswered rather than refusing silently.
+- [ ] Screen contract, both languages and directions, on a phone.
+
+### SL-E3 — Sketch your curve ⬜
+
+Marker: `sprsl17`
+
+- [ ] `graph_sketch`: draw the expected curve on empty axes, touch-first.
+- [ ] `curve_points` as a payload on the answer row — the same named
+      exception `data_model.md` §6 makes for sensor samples.
+- [ ] §7.5 ("charts must not lie") applied to an empty chart: axes labelled
+      and scaled before anything is drawn on them.
+
+### SL-E4 — The answer API ⬜
+
+Marker: `sprsl18`
+
+- [ ] `PredictionAnswer` scoped to the attempt's owner.
+- [ ] A **grade** verb (§9.0 item 2), necessarily server-side (item 5).
+- [ ] The response says an answer was recorded, never whether it was right —
+      until Analysis asks.
 
 ---
 

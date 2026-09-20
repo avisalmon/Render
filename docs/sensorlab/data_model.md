@@ -444,6 +444,14 @@ answer payload depending on the question kind: `selected_choice` FK
 curve. Plus `is_correct` (nullable — null for `free_text`, which is not
 auto-scored).
 
+**Built in SL-E1**, with two rules this table did not state: one answer per
+`(attempt, question)`, enforced by a database constraint as well as by the
+manager; and **predictions lock when the run passes the Predict step** and
+never unlock, because an answer editable after the data arrives is a note,
+not a prediction. Graded at submission, revealed only at Analysis —
+`should_reveal` — since telling a student at Predict time short-circuits
+Observe.
+
 `is_correct` is **stored, not computed on read**, because spec §6 wants
 "hypothesis accuracy improving over time" as a tracked learning signal.
 Recomputing it later would mean re-running a question's grading rules that

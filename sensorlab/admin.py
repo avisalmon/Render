@@ -18,6 +18,7 @@ from .models import (
     ExperimentConfig,
     Lab,
     LabAttempt,
+    PredictionAnswer,
     PredictionChoice,
     PredictionQuestion,
     SensorLabProfile,
@@ -147,6 +148,25 @@ class PredictionQuestionAdmin(admin.ModelAdmin):
     inlines = [PredictionChoiceInline]
 
 
+class PredictionAnswerInline(admin.TabularInline):
+    """A run's predictions, on the run's own page.
+
+    Read-only for the same reason the attempt is: it records what a person
+    actually believed before they measured, and an admin adjusting one
+    manufactures a belief that was never held. spec §6 counts these as a
+    learning signal.
+    """
+
+    model = PredictionAnswer
+    extra = 0
+    can_delete = False
+    fields = ("question", "selected_choice", "numeric_value", "text_value", "is_correct")
+    readonly_fields = fields
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(LabAttempt)
 class LabAttemptAdmin(admin.ModelAdmin):
     """Readable, never editable.
@@ -164,6 +184,7 @@ class LabAttemptAdmin(admin.ModelAdmin):
 
     list_display = ("user", "lab", "status", "current_step", "started_at", "is_public")
     list_filter = ("status", "lab", "is_public")
+    inlines = [PredictionAnswerInline]
     search_fields = ("user__username", "lab__slug", "share_slug")
     readonly_fields = (
         "user", "lab", "status", "current_step",
