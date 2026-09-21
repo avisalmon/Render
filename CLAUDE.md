@@ -1,5 +1,17 @@
 # Project instructions — babook.co.il (this repo)
 
+## What is where
+
+[docs/README.md](docs/README.md) is the map of the documentation tree: what
+belongs to babook, what belongs to each app, which files are process, and what
+is archived. Start there when you do not know where something lives.
+
+**babook keeps three jobs** and everything else is an app: identity and the
+person's general profile, the training and certification engine, and the portal
+that routes a person to their apps. The split is written out topic by topic in
+**Chapter 0 of [docs/main_spec.md](docs/main_spec.md)**, including the rule that
+an app consumes babook's engine and never copies it.
+
 ## Building or changing any app in this repo
 
 Before starting a new app, or doing any nontrivial work on an existing one

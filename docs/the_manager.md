@@ -1,7 +1,20 @@
 # The Manager — Design & Validation Process
 
-> Master process file for delivering babook.co.il.
-> When Avi says **"what's next"**, **"run the next sprint"**, **"continue"**, or any equivalent — Copilot follows this file end-to-end without skipping steps.
+> The delivery loop for **babook itself**: spec to backlog to tests to build to
+> regression. When Avi says "what's next", "run the next sprint", "continue" or
+> any equivalent, this is the file to follow end to end.
+>
+> **Where it sits among the other process files (2026-09-21).** Three files
+> describe how work happens here and they do not overlap:
+> [building_an_app.md](building_an_app.md) is the authority for building a new
+> app and outranks this file whenever the work is an app;
+> `CLAUDE.md` in the repo root carries the standing rules for the assistant in
+> every session; and this file is the sprint loop for the main site. Where this
+> file and `building_an_app.md` disagree about app work, that one wins.
+>
+> The Copilot-era wording that used to open this file is gone rather than
+> updated, because a process file that names one tool implies the process
+> changes when the tool does, and it did not.
 
 ---
 
@@ -27,10 +40,11 @@
 | [docs/backlog.md](backlog.md) | Epic → Sprint → Feature, tracked status |
 | [docs/the_manager.md](the_manager.md) | This file — process definition |
 | [docs/dashboard.html](dashboard.html) | Live progress visualization (updated every sprint) |
-| [docs/test_plan.md](test_plan.md) | Test plan per sprint, mapped to features |
+| [docs/README.md](README.md) | The map of the documentation tree |
+| [docs/building_an_app.md](building_an_app.md) | The rules for building a new app. Outranks this file for app work |
 | [docs/regression.md](regression.md) | Cumulative regression suite (which tests must always pass) |
 | [docs/regression_baseline.txt](regression_baseline.txt) | The tests already failing, so a new failure can be told from an old one |
-| [docs/research/](research/) | Research phases 1-4, competitive landscape, scope reference |
+| [docs/archive/research/](archive/research/) | Research phases 1-4, competitive landscape, scope reference |
 | [docs/procedures/](procedures/) | BKMs (CI/CD, backup, rollback, env vars, etc.) |
 
 ---
@@ -42,7 +56,7 @@ Every sprint follows these 10 steps in order. No exceptions.
 ### Step 1 — Context Load
 
 - Read [docs/main_spec.md](main_spec.md) — current requirements, decisions, directions.
-- Read [docs/research/](research/) — competitive intel, feature skeleton, scope reference.
+- Read [docs/archive/research/](archive/research/) — competitive intel, feature skeleton, scope reference.
 - Read [docs/backlog.md](backlog.md) — current statuses, sprint order.
 - Read [docs/regression.md](regression.md) — existing test coverage.
 - Identify the **next sprint** (first with status `TODO` or `WIP`).
@@ -57,12 +71,22 @@ Every sprint follows these 10 steps in order. No exceptions.
 
 ### Step 3 — TDD: Write Tests First (Red Phase)
 
-- Open / create [docs/test_plan.md](test_plan.md).
-- Append a section for the sprint: each feature → 1+ test cases.
+- Plan the sprint's tests: each feature → 1+ test cases.
+
+  A site-wide `test_plan.md` used to hold these. It was abandoned in practice
+  (its last entries are SPR-6.4, years of sprints ago) and is now in
+  [archive/](archive/README.md). What replaced it is better and is what the
+  recent sprints actually do: **the plan lives in the test file itself.** Each
+  sprint's `tests/test_<sprint>.py` opens with a docstring saying what the
+  sprint is for, which test is load-bearing and why, and what would break if
+  the guard were wrong. Apps that want a separate plan keep their own, as
+  מט״צים does at [matazim/test_plan.md](matazim/test_plan.md).
+
 - Each test row: `Test ID` (`T-F-x.y.z-n`) | `Description` | `Type` (unit/integration/e2e) | `Feature traced` | `Status` (`PLANNED`).
 - Implement the test cases in `tests/` using `pytest-django`.
 - Run `pytest -k "<sprint marker>"` — confirm **all new tests fail** (red).
-- Mark them `RED` in test_plan.md.
+- A test that passes before the feature exists is not testing the feature. If a
+  new test is green on the first run, find out why before writing any code.
 
 ### Step 4 — Implement (Green Phase)
 

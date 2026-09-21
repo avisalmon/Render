@@ -1,27 +1,25 @@
-# GitHub Copilot Instructions — C:\Projects\Render
+# Instructions for any assistant working in C:\Projects\Render
 
-## Python environment
-- **Always** use the `env\` virtual environment in this workspace: `env\Scripts\activate`
-- **Never** auto-install packages. If a new package is needed, add it to `requirements.txt` and **tell Avi** to run:
-  ```powershell
-  .\env\Scripts\pip.exe install -r requirements.txt
-  ```
-- Only Avi installs packages. Copilot proposes, Avi runs.
+**The standing rules live in [`CLAUDE.md`](../CLAUDE.md) in the repo root, and
+in the two process files it points at. Read those; this file is a pointer so
+that a tool which looks here finds the same answer rather than a second one.**
 
-## Deploy flow — MANDATORY
-- `git push` = deploy to production at `babook.co.il`. **Never push without Avi's explicit permission.**
-- Develop and test locally (`python manage.py runserver`) before any deploy.
-- Commit freely, push only when Avi says "deploy", "push", or "go live".
+- [`CLAUDE.md`](../CLAUDE.md) — the standing rules for working in this repo.
+- [`docs/building_an_app.md`](../docs/building_an_app.md) — the authority for
+  building a new app. Read it in full before any nontrivial app work; it
+  changes as Avi adds to it, so re-read rather than remember.
+- [`docs/the_manager.md`](../docs/the_manager.md) — the sprint loop for the
+  main site.
+- [`docs/README.md`](../docs/README.md) — the map of the documentation tree.
 
-## Projects in this workspace
+Two rules are repeated here because getting them wrong is expensive and nobody
+should have to follow a link to learn them:
 
-### Django site (`C:\Projects\Render\`)
-- Production at `https://babook.co.il` (Render Starter, auto-deploy from `main`)
-- Stack: Django 5.2, Gunicorn, WhiteNoise, SQLite on persistent disk, django-allauth Google OAuth
-- Settings: env-var driven. Local overrides via `mysite/settings_local.py` (gitignored)
-- Skill: `c:\Users\asalmon\.copilot\skills\render-django\SKILL.md` — read before any Render/Django work
+- **`git push` deploys to production at babook.co.il. Never push without Avi
+  saying so.** Commit freely; push on his word only.
+- **The virtualenv is `env`**, always, and nothing installs packages without
+  him. New dependencies go into `requirements.txt` and he runs pip.
 
-### Image recognition engine (`C:\Projects\Render\Img_Engine\`)
-- Standalone engine under active development
-- Uses the same `env\` venv
-- Does **not** deploy to Render (local/research only unless stated otherwise)
+This file used to carry its own copy of the workspace conventions, which drifted
+(it still pointed at a `C:\Users\asalmon\` path that no longer exists). One
+truth, pointed at from wherever somebody looks.

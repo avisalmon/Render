@@ -1,6 +1,6 @@
 # Research Phase 1 — Summary
 
-> **Historical note (May 2026):** This was the first broad platform thesis. It is superseded by Research Phase 3 and DEC-19/DEC-19a in [../main_spec.md](../main_spec.md). The active plan is corporate-training authority first: lean `/corporate/`, WhatsApp/contact conversion, newsletter capture, and one flagship course. Token resale, skill marketplace, and broad community-platform work are parked.
+> **Historical note (May 2026):** This was the first broad platform thesis. It is superseded by Research Phase 3 and DEC-19/DEC-19a in [main_spec.md](../../main_spec.md). The active plan is corporate-training authority first: lean `/corporate/`, WhatsApp/contact conversion, newsletter capture, and one flagship course. Token resale, skill marketplace, and broad community-platform work are parked.
 
 **babook.co.il Market Research & Strategy Recommendations**  
 **Date:** May 20, 2026  

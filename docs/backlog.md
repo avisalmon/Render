@@ -1,6 +1,9 @@
 # Backlog — babook.co.il
 
-> Tracks delivery of the spec at [main_spec.md](main_spec.md).
+> Tracks delivery of the spec at [main_spec.md](main_spec.md), whose
+> **Chapter 0** says what babook owns and what belongs to an app.
+> Each app has its own backlog under `docs/<app>/`; see
+> [README.md](README.md) for the map.
 > Hierarchy: **Epic → Sprint → Feature**. Every feature traces to one or more `REQ-*` IDs.
 >
 > **Status legend:** `TODO` / `WIP` / `DONE` / `BLOCKED` / `DEFERRED`
@@ -1526,7 +1529,7 @@ in Chapter 11 §11.9 rather than decided silently:
 
 ### SPR-12.4 — the `v2` proposal, answered (NO BUILD)
 
-`docs/security_relay_v2_proposal.md` asked the home system to make Google Drive
+`docs/archive/security_relay_v2_proposal.md` asked the home system to make Google Drive
 the single source of truth and delete most of this module. Answered 2026-08-29,
 **partially accepted**, and the accepted half is entirely their work.
 
@@ -1561,6 +1564,57 @@ would be wrong here.
 **Blocked on Avi:** set `SECURITY_RELAY_TOKEN` and `SECURITY_OWNER_EMAIL` in the
 Render dashboard. Until the token is set the API answers 503 and the page 404s,
 which is the correct closed default.
+
+---
+
+## EPIC-13 — babook as a portal  `TODO`
+
+Opened 2026-09-21 from Avi's decision that every new capability is its own app
+and babook keeps three jobs: identity, the training and certification engine,
+and the portal that routes people to the apps. The architecture is written as
+**Chapter 0 of [main_spec.md](main_spec.md)**, which is where the split lives;
+this epic is the work that follows from it.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-13.1 | One function that answers "which apps may this person see", asked by the portal and by each app's own door | §0.5 | TODO, blocked on ACT-27 |
+| F-13.2 | The main page as a portal: the person's apps, and nothing about the apps that are not theirs | §0.3, §0.6 | TODO |
+| F-13.3 | An app registry the portal reads, rather than a list hardcoded in a template | §0.6 | TODO |
+| F-13.4 | Each app's own door asks the same function, so a hidden card and an open URL cannot disagree | §0.5 | TODO |
+
+**Why F-13.1 comes first.** Entry is decided four different ways today: a
+Django group (ustrip), an app's own access module (מט״צים), plain sign-in
+(sensorlab), and open to everyone (memz). A portal that decides for itself
+becomes a fifth answer, and the failure is specific: a card that 403s when
+clicked, or a hidden card whose URL still opens. Both mistakes have been made
+in this repo before and both were fixed by making one function the only place
+the question is answered.
+
+| ACT-ID | Action (Avi) | Blocks | Status |
+|---|---|---|---|
+| ACT-27 | Define what decides app visibility: a grant per person, a group, a role, an app-declared rule, or a mix | F-13.1, and therefore the rest of EPIC-13 | OPEN |
+
+---
+
+## EPIC-14 — Housekeeping  `TODO`
+
+Small things that are true and untracked, which is how they stay wrong.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-14.1 | Generate `docs/dashboard.html` from the spec and the backlog, with a test that fails when it drifts | Rule 4 | TODO |
+| F-14.2 | A `docs/data_model.md` for babook | Rule 4 | TODO |
+
+**F-14.1.** babook's dashboard is hand-maintained and has been stale since
+2026-05-27: its newest sprint is SPR-2.2. Every app generates its own, and
+`manage.py matazim_dashboard` is the worked example, including
+`test_the_dashboard_is_current`, which regenerates and compares so a spec change
+nobody re-ran it after fails the suite. The page now carries a banner saying it
+is stale, which is honest and not a fix.
+
+**F-14.2.** Every app has a data model document because Rule 4 says so. babook
+predates the rule and has none, so the shape of the oldest and most-depended-on
+tables in the repo is the one thing nobody can read without reading `models.py`.
 
 ---
 

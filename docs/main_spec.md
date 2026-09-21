@@ -1,12 +1,123 @@
 # Main Spec — Root Project
 
-> Root specification for the babook.co.il project. Centered on AI training (video-based).
-> All other docs (specs, procedures, decisions, architecture) branch from this file.
+> Root specification for **babook.co.il itself**: who a person is here, the
+> training and certification engine, and the portal that routes people to the
+> apps. It is no longer the place an app's detail lives. Each app owns its own
+> spec, backlog, data model and dashboard under `docs/<app>/`, and Chapter 0
+> lists them. `docs/README.md` is the map of the whole documentation tree.
 >
 > **Requirement ID convention:** `REQ-<chapter>.<group>.<n>` — e.g. `REQ-1.2.3`.
 > **Status values:** `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED` / `DEFERRED`.
 > **Decision IDs:** `DEC-<n>`. **Action items (Avi):** `ACT-<n>`.
 > Every commit / PR addressing a requirement must reference its REQ-ID.
+
+---
+
+## Chapter 0 — What babook is, and what an app is
+
+> **Written 2026-09-21**, from Avi's decision to build every new capability as
+> its own app. It is Chapter 0 rather than Chapter 12 because it is the thing
+> to read before any other chapter in this file makes sense.
+
+### 0.1 The three jobs babook keeps
+
+Everything in the chapters below is one of these, and anything that is not one
+of these belongs in an app.
+
+1. **Identity.** Accounts, sign-in, sessions, the person's own profile: the part
+   of somebody that belongs to no app in particular. One person, one account,
+   whatever they use the site for.
+2. **The training and certification engine.** Courses, lessons, video, quizzes,
+   practice, project hand-ins, progress, and the certificate at the end. This is
+   the fundamental business of the site and it stays in babook's own code,
+   because it is what the site is *for*.
+3. **The portal.** The main page routes a signed-in person to the apps that are
+   theirs, and shows them nothing of the apps that are not.
+
+### 0.2 What an app owns
+
+An app owns one topic, completely: its own models, its own screens, its own
+base template and menu, its own URL prefix, its own REST API, and its own
+`docs/<app>/` with a spec, a backlog, a data model and a dashboard. The rules
+are in [building_an_app.md](building_an_app.md), which is the authority on how
+one gets built.
+
+An app does **not** own accounts, and it does **not** own certification. It
+reaches both through babook.
+
+### 0.3 The split, topic by topic
+
+| Topic | Owner | Why |
+|---|---|---|
+| Accounts, sign-in, password, OAuth | **babook** | One person, one account. An app that owned sign-in would be a second identity for the same human. |
+| The person's general profile | **babook** | Name, avatar, the things true of them everywhere. An app may keep its own profile row for its own facts (a leader, a family member, a player), attached to the account rather than replacing it. |
+| Courses, lessons, video, quizzes, practice | **babook** | The training infrastructure is the business. |
+| Project hand-ins and the gates on them | **babook** | `app/completion.py`. |
+| Issuing a certificate | **babook** | One answer to "has this person earned it", never two. |
+| Which courses a given audience may see | **the app** | מט״צים decides who sees what inside מט״צים (REQ-M.146). babook says what a course *is*; an app says who it is *for*. |
+| An app's own subject matter | **the app** | Trips, memes, sensors, a youth programme. |
+| An app's own roles and permissions | **the app** | A leader, a family member, a host. Scoped to that app and meaningless outside it. |
+| Who may enter an app at all | **babook** (§0.5) | The portal and the app's own door must answer this the same way. |
+| Deciding a person's app list | **babook** | It is a fact about the person, not about any one app. |
+
+### 0.4 An app consumes the engine, it never copies it
+
+This is the load-bearing rule of the whole arrangement, and it is not
+theoretical: it already runs in production.
+
+מט״צים needed to know whether a fourteen-year-old had earned a certificate.
+The options were to copy babook's five gates into מט״צים or to lift them
+somewhere both products could ask. They were lifted into `app/completion.py`,
+and both call it (SPR-M.51). Of everything that could be duplicated, *"has this
+person earned a certificate"* is the worst candidate: two code paths that drift
+produce a certificate nobody can defend, and the drift stays invisible until a
+teenager is told they have not finished something they had.
+
+So when an app needs something babook already knows how to do, the answer is to
+**ask babook**, extracting a shared module if the knowledge is currently welded
+into a view. Never a second implementation, and never an app reaching into
+babook's tables directly to form its own opinion.
+
+### 0.5 Which apps a person sees
+
+The portal shows a person the apps that are theirs. That decision is **one
+function in babook**, and both the portal and each app's own door ask it.
+
+The reason it is one function rather than a list on the home page: the failure
+mode of two answers is specific and bad. The portal hides a card while the app
+still opens for anyone who types the URL, or it shows a card that refuses when
+clicked. This repo has made that mistake twice and fixed it twice the same way,
+by making one function the only place the question is answered
+(REQ-M.144 for tenancy, `visible_course_slugs` for courses).
+
+**Today there is no such function, and entry is decided four different ways:**
+a Django group (`ustrip`), an app's own access module (`matazim`), plain
+sign-in (`sensorlab`), and open to everyone including guests (`memz`). The
+portal must not become a fifth answer.
+
+**ACT: Avi to define what decides visibility** — a grant per person, a group, a
+role, an app-declared rule, or some mix. The portal is built with this as a
+seam, so defining it later changes one function rather than every screen.
+
+### 0.6 The apps
+
+Each of these owns its topic and its own docs. This table is a directory, not a
+description: nothing about an app's behaviour belongs in this file.
+
+| App | Path | What it is | Docs |
+|---|---|---|---|
+| מט״צים | `/matazim/` | A youth technology-leadership programme: teenagers learn, build, teach and get certified as מט״צים. | [docs/matazim/](matazim/spec.md) |
+| SensorLab | `/sensorlab/` | A gamified physics lab that runs in a phone's browser, using the phone's own sensors as lab equipment. | [docs/sensorlab/](sensorlab/spec.md) |
+| memz | `/memz/` | One meme engine with two front doors: a solo creator, and a live caption-and-vote party game. | [docs/memz/](memz/spec.md) |
+| ustrip | `/ustrip/` | Family trip planning used on the road: today's plan, packing, a photo journal. | [docs/ustrip/](ustrip/spec.md) |
+
+Two capabilities are **not** apps yet and are recorded here so the gap is
+visible rather than forgotten:
+
+| Capability | Path | State |
+|---|---|---|
+| Home security relay | `/home/` | Built inside babook (Chapter 11). Its contract is owned by the house repo, not by this one, so it is a projection rather than a section. A candidate to become its own app. |
+| CrashTech hackathons | `/crashtech/` | Built inside `app/` in 2026-06, before the app-per-capability rule existed. Spec at [Epic6.5.t.md](Epic6.5.t.md). A candidate to become its own app; nothing depends on it moving. |
 
 ---
 
@@ -659,7 +770,7 @@ Chapter 5 is **DONE** when:
 > his explicit "build with no stop" instruction. **EPIC-6.1 + EPIC-6.2 are DONE**
 > (tests test_spr_6_1/6_2.py, 30 tests; independent UX-expert review applied);
 > EPIC-6.3+ remain `TODO`. Grounded in the full research corpus
-> ([docs/research/](research/)): feature_skeleton Scope 2 + 5, the 15 proven
+> ([docs/archive/research/](archive/research/)): feature_skeleton Scope 2 + 5, the 15 proven
 > AI-Ascent capability types (research_2), the strategic pivot to
 > authority-first (research_3), and the community-architecture deep dive
 > (research_4). Companion UX concept:
@@ -1278,7 +1389,8 @@ the platform grows by its own users bringing their groups in.
 ## Chapter 10 — מט״צים (Young Technology Leaders)
 
 > **SUPERSEDED 2026-09-09.** מט״צים is now an autonomous space with its own
-> spec at `docs/matazim/spec.md`. This chapter is kept as history: it describes
+> spec at [docs/matazim/spec.md](matazim/spec.md), and is listed in §0.6
+> with every other app. This chapter is kept as history: it describes
 > מט״צים as a section *inside* babook, which is exactly the decision that was
 > reversed. Nothing new is added below.
 
@@ -1671,6 +1783,13 @@ on transparent (`logo_full.png` on the source site). **Tagline**: "מטצים �
 ---
 
 ## Chapter 11 — Home Security Relay (`/home`)
+
+> **Not owned here (noted 2026-09-21).** The API contract belongs to the
+> house repo, `C:\Projects\Security\docs\relay_api.md`, and that copy wins
+> over anything below. babook is a projection: no video, no route to the
+> house, no retention of its own. Kept as a chapter because the babook side
+> is genuinely built in `app/`, and listed in §0.6 as a candidate to become
+> its own app. See also [security_relay_spec.md](security_relay_spec.md).
 
 **Status:** built 2026-08-15 (EPIC-12). Contract version `v1`.
 

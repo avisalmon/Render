@@ -647,7 +647,7 @@ what it cannot render.
 
 ### 18.1 On our `v2` proposal
 
-`docs/security_relay_v2_proposal.md` was answered on 2026-08-29 and **partially
+`docs/archive/security_relay_v2_proposal.md` was answered on 2026-08-29 and **partially
 accepted**. The durability half is taken and is this section. The read path, and
 with it dropping `POST /events`, `/state`, `/deletions` and our event models, is
 **not** taken: Drive cannot order or range-query on `appProperties`, so the

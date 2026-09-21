@@ -92,8 +92,19 @@
 </head>
 <body>
   <h1>babook.co.il — Project Dashboard</h1>
+  <div style="border:2px solid #d97706;background:#3b2a12;color:#fcd9a0;padding:14px 16px;border-radius:10px;margin:16px 0;line-height:1.55">
+    <strong>Stale since 2026-05-27, and hand-maintained.</strong>
+    Its newest sprint is SPR-2.2 while the backlog has run far past that, so do not
+    read status from this page. <strong><a href="backlog.md" style="color:#fcd9a0">backlog.md</a> and
+    <a href="main_spec.md" style="color:#fcd9a0">main_spec.md</a> are the truth.</strong>
+    A dashboard somebody updates by hand is a third copy of something that already
+    lives in two places, and the copy nobody looks at is the one that goes wrong.
+    Every app generates its own instead (<code>manage.py matazim_dashboard</code>
+    is the worked example, with a test that fails when it drifts); babook needs the
+    same and does not have it yet. Noted 2026-09-21.
+  </div>
   <div class="sub">
-    Live progress from <a href="backlog.md">backlog.md</a>, traced to
+    Progress from <a href="backlog.md">backlog.md</a>, traced to
     <a href="main_spec.md">main_spec.md</a>.
   </div>
 
