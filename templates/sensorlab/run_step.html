@@ -59,6 +59,11 @@
     {% for block in step_data.blocks %}
       <div class="sl-block sl-block-{{ block.kind }}">{{ block.body_html }}</div>
     {% endfor %}
+    {% comment %}
+      Analysis is prose AND a result. The authored blocks set it up; the
+      numbers follow (SL-G1).
+    {% endcomment %}
+    {% if step == "analysis" %}{% include "sensorlab/_analysis.html" %}{% endif %}
   {% elif step == "predict" %}
     {% include "sensorlab/_predict.html" %}
   {% else %}

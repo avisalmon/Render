@@ -800,3 +800,44 @@ body {
 
 .sl-result { margin-block-start: 20px; }
 .sl-result p { margin-block: 6px 0; line-height: 1.5; }
+
+/* --------------------------------------- the analysis result (SL-G1) */
+
+.sl-results {
+  margin-block: 20px;
+  padding: 20px 16px;
+  border-radius: var(--sl-radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* The student's own number is the largest thing on the screen. Leading with
+   the verdict would make this a score; leading with their measurement makes
+   it a result. */
+.sl-results .sl-stat-measured .sl-stat-value {
+  font-size: var(--sl-size-display);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.sl-results .sl-stat-measured .sl-stat-value,
+.sl-verdict-ok { color: var(--sl-measurement); }
+
+/* §7.2: amber and cyan mean something. A result outside tolerance is not an
+   error — nothing failed — so it stays ink rather than borrowing a colour
+   that would read as a warning about the app. */
+.sl-verdict-off { color: var(--sl-ink-soft); }
+
+.sl-results p { margin-block: 0; line-height: 1.55; }
+
+.sl-prediction-verdict { margin-block: 18px; }
+.sl-prediction-verdict h2 {
+  margin-block: 0 8px;
+  font-size: var(--sl-size-label);
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--sl-ink-faint);
+}
+.sl-prediction-verdict p { margin-block: 0; line-height: 1.55; }

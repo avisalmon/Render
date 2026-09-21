@@ -1,0 +1,76 @@
+{% load sensorlab %}
+{% comment %}
+  The Analysis step (SL-G1) — where the loop closes.
+
+  Order matters here and is deliberate: the student's OWN number first, the
+  accepted value second, the difference third, and only then whether the
+  prediction they locked in Epic E held up. Leading with the verdict would
+  make this a score screen; leading with their measurement makes it a
+  result.
+
+  This is also the first and only place `expected_value` is allowed out.
+  §9.0 item 5 withheld it for four epics so that "measure g" did not quietly
+  become "confirm g".
+{% endcomment %}
+
+{% if analysis_problem %}
+  <div class="sl-card sl-notice sl-notice-warn" role="status">
+    <p>{% t "analysis.nothing_to_analyse" %}</p>
+    <p>
+      <a class="sl-button sl-button-quiet"
+         href="{% url 'sensorlab:run_step' slug=lab.slug step='experiment' %}">
+        {% t "analysis.back_to_experiment" %}
+      </a>
+    </p>
+  </div>
+{% else %}
+  <section class="sl-instrument sl-results">
+    <div class="sl-stat sl-stat-measured">
+      <span class="sl-label">{% t "analysis.you_measured" %}</span>
+      <span>
+        {# The measurement itself: instrument data, so §7.7's dir applies. #}
+        <b class="sl-stat-value sl-tnum" dir="ltr">{{ result.measured_value|floatformat:2 }}</b>
+        <span class="sl-stat-unit" dir="ltr">{{ result.unit }}</span>
+      </span>
+    </div>
+
+    <div class="sl-stat">
+      <span class="sl-label">{% t "analysis.expected" %}</span>
+      <span class="sl-tnum" dir="ltr">{{ result.expected_value|floatformat:2 }} {{ result.unit }}</span>
+    </div>
+
+    {% if result.error_percent != None %}
+      <div class="sl-stat">
+        <span class="sl-label">{% t "analysis.error" %}</span>
+        <span class="sl-tnum" dir="ltr">{{ result.error_percent|floatformat:1 }}%</span>
+      </div>
+      <p class="{% if result.passed %}sl-verdict-ok{% else %}sl-verdict-off{% endif %}">
+        {% if result.passed %}{% t "analysis.within" %}{% else %}{% t "analysis.outside" %}{% endif %}
+      </p>
+    {% endif %}
+  </section>
+
+  {% if result.prediction_was_correct != None %}
+    {% comment %}
+      The moment the Predict step was saving up for. It is not a score: being
+      wrong is the most useful outcome here, and the copy says so, because
+      the whole method rests on a student being willing to commit to an
+      answer they might get wrong.
+    {% endcomment %}
+    <div class="sl-card sl-prediction-verdict">
+      <h2>{% t "analysis.prediction" %}</h2>
+      <p>
+        {% if result.prediction_was_correct %}{% t "analysis.prediction_right" %}
+        {% else %}{% t "analysis.prediction_wrong" %}{% endif %}
+      </p>
+    </div>
+  {% endif %}
+
+  {% if explanation_html %}
+    {% comment %}
+      Written to be read AFTER the number — which is why it lives on the
+      analysis config rather than in the Learn step.
+    {% endcomment %}
+    <div class="sl-block">{{ explanation_html }}</div>
+  {% endif %}
+{% endif %}

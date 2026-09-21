@@ -975,3 +975,140 @@ class SensorRecording(models.Model):
             x, y, z = s.get("x", 0) or 0, s.get("y", 0) or 0, s.get("z", 0) or 0
             out.append((x * x + y * y + z * z) ** 0.5)
         return out
+
+
+# ===========================================================================
+# Explain (data_model.md §5, spec §9.3's G)
+#
+# The loop closes here. Epic F gave a student a number; without this it sits
+# there and the prediction they locked in Epic E goes nowhere. Predict,
+# Observe, EXPLAIN is the method, and this is Explain.
+#
+# Computed on the server because it could not be anywhere else: §9.0 item 5
+# kept `expected_value` off the wire from SL-B2 onward, so the client has
+# never been told what the answer should be. Every sprint since called that
+# a bill. This is it paid, and it cost nothing extra.
+# ===========================================================================
+
+
+class AnalysisResultManager(models.Manager):
+    def compute(self, attempt):
+        """Work out what this run measured, and whether it matched.
+
+        Stamped once and stored (`data_model.md` §5), not recomputed on
+        read: running the numbers over raw sample payloads for every row of
+        every leaderboard query is absurd.
+        """
+        config = getattr(attempt.lab, "analysis", None)
+        if config is None:
+            raise self.model.NotComputable(
+                f"{attempt.lab.slug} has no analysis configuration, so there is "
+                f"nothing to work out."
+            )
+
+        recording = attempt.recordings.first()
+        if recording is None or not recording.samples:
+            raise self.model.NotComputable(
+                "There is no measurement to analyse. Go back to the experiment "
+                "step and record one."
+            )
+
+        measured = self.model.reduce(config.computation, recording)
+        expected = config.expected_value
+        error = None
+        passed = None
+        if expected not in (None, 0):
+            error = abs(measured - expected) / abs(expected) * 100
+            passed = error <= (config.pass_tolerance or 0)
+
+        result, _created = self.update_or_create(
+            attempt=attempt,
+            defaults={
+                "computation": config.computation,
+                "measured_value": measured,
+                "expected_value": expected,
+                "unit": config.unit,
+                "error_percent": error,
+                "passed": passed,
+                "prediction_was_correct": self.model.judge_predictions(attempt),
+                "computed_at": timezone.now(),
+            },
+        )
+        return result
+
+
+class AnalysisResult(models.Model):
+    """What one run measured, and how it compared."""
+
+    class NotComputable(Exception):
+        """Raised rather than returning a number nobody can stand behind."""
+
+    attempt = models.OneToOneField(
+        "sensorlab.LabAttempt", on_delete=models.CASCADE, related_name="analysis_result"
+    )
+
+    computation = models.CharField(max_length=12)
+    measured_value = models.FloatField()
+    expected_value = models.FloatField(null=True, blank=True)
+    unit = models.CharField(max_length=16, blank=True)
+    error_percent = models.FloatField(null=True, blank=True)
+    passed = models.BooleanField(null=True, blank=True)
+
+    #: Whether everything the student committed to in Epic E held up. Null
+    #: when the lab asked nothing markable.
+    prediction_was_correct = models.BooleanField(null=True, blank=True)
+
+    computed_at = models.DateTimeField(null=True, blank=True)
+
+    objects = AnalysisResultManager()
+
+    class Meta:
+        ordering = ("-computed_at",)
+
+    def __str__(self):
+        return f"{self.attempt} — {self.measured_value:.3g} {self.unit}".strip()
+
+    #: The reductions this app can actually perform. The rest of
+    #: `AnalysisConfig.Computation` arrives with the labs that need it —
+    #: built speculatively, they would be untested code standing between a
+    #: student and a number.
+    IMPLEMENTED = ("mean", "peak")
+
+    @classmethod
+    def reduce(cls, computation, recording):
+        """One number from a capture, by the method the lab authored.
+
+        A computation this app cannot do **refuses**. Falling back to a mean
+        would hand a student a confident figure worked out the wrong way,
+        which is this app's worst failure mode wearing a lab coat.
+        """
+        if computation not in cls.IMPLEMENTED:
+            raise cls.NotComputable(
+                f"This lab asks for '{computation}', which SensorLab cannot compute "
+                f"yet. It is not being guessed at."
+            )
+
+        magnitudes = recording.magnitudes
+        if not magnitudes:
+            raise cls.NotComputable("The recording has no readings in it.")
+
+        if computation == "peak":
+            return max(magnitudes)
+        return sum(magnitudes) / len(magnitudes)
+
+    @staticmethod
+    def judge_predictions(attempt):
+        """Did everything they committed to hold up?
+
+        Unmarked kinds (`free_text`, `graph_sketch`) carry `is_correct =
+        None` and are skipped — counting null as False would call a student
+        wrong about something nobody judged. None when nothing was markable.
+        """
+        marked = [
+            answer.is_correct
+            for answer in attempt.prediction_answers.all()
+            if answer.is_correct is not None
+        ]
+        if not marked:
+            return None
+        return all(marked)

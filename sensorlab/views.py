@@ -297,6 +297,7 @@ def run_step(request, slug, step):
         "progress_moved": not attempt.step_is_known,
         **(_predict_context(request, attempt) if step == "predict" else {}),
         **(_experiment_context(request, attempt) if step == "experiment" else {}),
+        **(_analysis_context(attempt) if step == "analysis" else {}),
     })
 
 
@@ -328,6 +329,33 @@ def _experiment_context(request, attempt):
         "recordings": list(attempt.recordings.all()[:5]),
         "latest_recording": attempt.recordings.first(),
     }
+
+def _analysis_context(attempt):
+    """The result, computed on arrival (SL-G1).
+
+    Arriving is the trigger — a student should not have to press "compute"
+    when the data is in and there is nothing left to wait for.
+
+    A capture that cannot be analysed must not 500 on the last screen of the
+    run, which is the place a person is least able to recover from one. So
+    the refusal is caught and shown as words.
+    """
+    from .models import AnalysisResult
+
+    config = getattr(attempt.lab, "analysis", None)
+    try:
+        result = AnalysisResult.objects.compute(attempt)
+        problem = None
+    except AnalysisResult.NotComputable as why:
+        result, problem = None, str(why)
+
+    return {
+        "result": result,
+        "analysis_problem": problem,
+        "analysis_config": config,
+        "explanation_html": config.rendered_explanation() if config else "",
+    }
+
 
 def _predict_context(request, attempt):
     """Everything the Predict step needs, and the two notices it may carry.

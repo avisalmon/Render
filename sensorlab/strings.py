@@ -241,6 +241,38 @@ STRINGS = {
         "he": "הטלפון שלכם מדד, אבל השמירה נכשלה. הקריאה עדיין על המסך — אל תסגרו "
               "את הדף.",
     },
+    # the analysis step (SL-G1) — where the loop closes
+    "analysis.you_measured": {"en": "You measured", "he": "מדדתם"},
+    "analysis.expected": {"en": "Accepted value", "he": "הערך המקובל"},
+    "analysis.error": {"en": "Difference", "he": "הפרש"},
+    "analysis.within": {
+        "en": "Within tolerance — that is a real measurement.",
+        "he": "בתוך הסטייה המותרת — זו מדידה אמיתית.",
+    },
+    "analysis.outside": {
+        "en": "Further off than this lab allows. Worth asking what moved — "
+              "the phone, the table, or the method.",
+        "he": "רחוק יותר ממה שהמעבדה מרשה. שווה לשאול מה זז — הטלפון, השולחן, "
+              "או השיטה.",
+    },
+    "analysis.prediction": {"en": "Your prediction", "he": "ההשערה שלכם"},
+    "analysis.prediction_right": {
+        "en": "You called it. Now you have the data to say why.",
+        "he": "צדקתם. עכשיו יש לכם גם את הנתונים להסביר למה.",
+    },
+    "analysis.prediction_wrong": {
+        "en": "Your prediction did not hold — which is the most useful thing that "
+              "can happen here. You now know something you did not know before, "
+              "and you know it because you measured it.",
+        "he": "ההשערה שלכם לא התאמתה — וזה הדבר הכי מועיל שיכול לקרות כאן. עכשיו "
+              "אתם יודעים משהו שלא ידעתם, ואתם יודעים אותו כי מדדתם.",
+    },
+    "analysis.nothing_to_analyse": {
+        "en": "There is no measurement to analyse yet. Go back to the experiment "
+              "step and record one.",
+        "he": "אין עדיין מדידה לנתח. חזרו לשלב הניסוי והקליטו אחת.",
+    },
+    "analysis.back_to_experiment": {"en": "Back to the experiment", "he": "חזרה לניסוי"},
     # sensor names. Interface copy like everything else — they used to come
     # from an English-only dict in the view, which told a Hebrew reader
     # "Accelerometer" (the SL-A2 bug, third appearance; fixed in SL-B4).

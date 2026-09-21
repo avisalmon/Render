@@ -55,7 +55,7 @@ runs pip), `env\Scripts\activate` for everything Python, and
 | **D — The lab runner** | SL-D1 … SL-D3 | ✅ done |
 | **E — Predict** | SL-E1 … SL-E4 | 🔵 SL-E1, SL-E2 done |
 | **F — Capture** | SL-F1 … SL-F2 | ✅ done |
-| G — Analysis | tbd at gate | ⬜ |
+| **G — Analysis** | SL-G1 … | 🔵 SL-G1 done — the loop closes |
 | H — Lab notebook | tbd at gate | ⬜ |
 | I — AI tutor | tbd at gate | ⬜ |
 | J — Video motion tracking | tbd at gate | ⬜ (candidate to cut) |
@@ -1342,6 +1342,93 @@ Marker: `sprsl19`
 **Not in Epic F**, though §9.3 lists them: threshold triggers, haptics, tone
 and strobe generators, video. None of them stands between here and a student
 measuring gravity.
+
+---
+
+## Epic G — Analysis
+
+Spec §9.3's G, scoped at the gate on 2026-09-21. **This is what closes the
+loop.** Epic F gave a student a number; without G that number sits there and
+the prediction they committed to in Epic E goes nowhere. Predict → Observe →
+Explain is the app's whole method, and G is Explain.
+
+### SL-G1 — The result, computed and compared ✅
+
+Marker: `sprsl20` — 16 tests, plus a template guard (32 more).
+`design/sl-g1-analysis-{en,he}.png` is the loop closed.
+
+- [x] `AnalysisResult`, one-to-one with the attempt, **derived but stored**
+      and stamped once — `data_model.md` §5's call, for leaderboards.
+- [x] `mean` and `peak`. The rest arrive with the labs that use them: built
+      speculatively they would be untested code standing between a student
+      and a number.
+- [x] Computed on arrival. A student should not have to press "compute" when
+      the data is in and there is nothing left to wait for.
+- [x] The prediction from Epic E, finally judged — revealed here and nowhere
+      earlier.
+
+#### The bill from §9.0 item 5, paid in full
+
+SL-B2 kept `expected_value` off the wire so "measure g" would not quietly
+become "confirm g". Every sprint since called that a cost. Here it is paid,
+and **it cost nothing extra** — the comparison had to happen on the server
+anyway, because the client has never been told the answer. A decision made
+early turned out to be free.
+
+#### An unimplemented computation refuses
+
+A silent fallback to `mean` would hand a student a confident number worked
+out the wrong way, which is this app's worst failure wearing a lab coat.
+`fft_peak` says it cannot be done rather than guessing.
+
+#### Being wrong is the copy, not a penalty
+
+The verdict panel leads with the student's own measurement, not with a
+score, and the wrong-prediction text says being wrong is the most useful
+outcome — because the whole method depends on a student being willing to
+commit to an answer they might get wrong. A screen that punishes that
+teaches them not to commit.
+
+#### The `{# #}` bug, for the third time — and the guard that ends it
+
+The analysis explanation shipped with a **two-line `{# ... #}`** comment
+printing into the page. SL-A1 had it in the shell, SL-F2 in the capture
+screen, now here. Each time a render assertion on *that* screen caught it,
+which means it was only ever caught where someone had already thought to
+look — and a new screen got through all three times.
+
+`tests/test_sensorlab_templates.py` now reads the **source of every
+SensorLab template**: no `{#` opened without closing on the same line, every
+comment block closed, every `if`/`for`/`block`/`with` balanced. One cheap
+test a new screen cannot outrun.
+
+**And its first version failed on its own documentation** — a sentence
+inside a comment that mentioned the comment tag. That is the fourth time
+this project has written a guard that trips over the prose describing it
+(SL-A4's tokens, SL-C1's raw-API check, two in SL-F2). The rule is now
+written where the next one will be read: *anything that scans source must
+first remove the source that is about the rule.*
+
+- [ ] `AnalysisResult` per `data_model.md` §5: one-to-one with the attempt,
+      `measured_value`, `expected_value`, `error_percent`,
+      `prediction_was_correct`, `computed_at`. **Derived but stored**, and
+      §5 already argues why: recomputing an FFT over raw payloads for every
+      row of every leaderboard query is absurd.
+- [ ] The computations `AnalysisConfig` already names — starting with
+      `mean`, which is what Free Fall needs. The others arrive with the labs
+      that use them, not speculatively.
+- [ ] Computed **server-side**, necessarily: §9.0 item 5 kept
+      `expected_value` off the wire, so the client cannot compare even if it
+      wanted to. The bill Epic E started paying, paid in full.
+- [ ] The Analysis step finally shows something: what you measured, what was
+      expected, how far off, and **whether the prediction you locked in Epic
+      E was right** — revealed here and nowhere earlier.
+
+### SL-G2 — tbd at G1's gate ⬜
+
+The predicted-versus-measured chart (§7.7: the chrome mirrors, the data does
+not), export, and the shareable result screen. Written once G1 exists and
+there is something real to react to.
 
 ---
 
