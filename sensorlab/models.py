@@ -10,6 +10,7 @@ added in SL-B1).
 """
 
 import html
+import re
 import uuid
 
 import markdown
@@ -189,6 +190,56 @@ def bilingual(base):
 _MD_EXTENSIONS = ["fenced_code", "tables", "nl2br"]
 
 
+#: Display maths (`$$...$$`) and inline maths (`$...$`). Inline is kept to a
+#: single line and requires a non-space after the opening `$`, so a price
+#: ("about $2 to make") cannot open a formula that swallows the paragraph
+#: looking for a partner.
+MATH_SPAN = re.compile(r"\$\$.+?\$\$|\$(?!\s)[^$\n]+?(?<!\s)\$", re.S)
+
+#: A placeholder Markdown will not touch: no punctuation, no underscores,
+#: nothing it recognises. `NUL`-style sentinels are tempting and get
+#: mangled by the serializer.
+_MATH_SLOT = "MATHSPAN{0}ENDMATHSPAN"
+
+
+def protect_maths(text):
+    """Lift maths out of the text, returning (text-with-slots, spans).
+
+    **Measured, not assumed.** The first version of this sprint claimed
+    Markdown turns `$a_x^2$` into `$a<em>x^2$`. It does not — python-markdown
+    will not emphasise inside a word, so intra-word subscripts were never at
+    risk. What it *does* corrupt is ordinary LaTeX like `$a*b*c$` and
+    `$x _y_ z$`, both of which come back as `<em>` and look like an author's
+    typo rather than a rendering fault.
+
+    So the protection is real and narrower than first claimed, and this
+    docstring says which, because "I fixed a bug" is worth nothing without
+    the bug.
+    """
+    spans = []
+
+    def stash(match):
+        spans.append(match.group(0))
+        return _MATH_SLOT.format(len(spans) - 1)
+
+    return MATH_SPAN.sub(stash, text or ""), spans
+
+
+def restore_maths(rendered, spans):
+    """Put the maths back, escaped for HTML but never Markdowned.
+
+    Escaped because SL-B1's guarantee holds inside formulas too: no HTML is
+    ever produced from author input. It costs nothing — KaTeX reads
+    `textContent`, so an escaped `&lt;` reaches the renderer as `<` and an
+    inequality typesets correctly.
+    """
+    for index, span in enumerate(spans):
+        rendered = rendered.replace(
+            _MATH_SLOT.format(index), html.escape(span, quote=False)
+        )
+    return rendered
+
+
 def render_markdown(text):
     """Author text → HTML, with any HTML the author wrote rendered inert.
 
@@ -206,8 +257,10 @@ def render_markdown(text):
     labs, and a content format is far harder to change once a course is
     written in it than it is to choose carefully now.
     """
-    escaped = html.escape(text or "", quote=False)
-    return mark_safe(markdown.markdown(escaped, extensions=_MD_EXTENSIONS))
+    protected, spans = protect_maths(text or "")
+    escaped = html.escape(protected, quote=False)
+    rendered = markdown.markdown(escaped, extensions=_MD_EXTENSIONS)
+    return mark_safe(restore_maths(rendered, spans))
 
 
 class PublishedManager(models.Manager):

@@ -13,6 +13,20 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap">
 
+  {% comment %}
+    KaTeX (SL-M1). Vendored in this repo already at `static/katex/` and used
+    by `app/lesson.html`, so this is wiring rather than a new dependency —
+    and loading a third-party library from shared `static/` is not a Rule 2
+    breach, the same way Rubik above is not. SensorLab still touches no
+    other app's models, views or templates.
+
+    Local rather than a CDN because a physics lab should work on a school
+    network that blocks half the internet.
+  {% endcomment %}
+  <link rel="stylesheet" href="{% static 'katex/katex.min.css' %}">
+  <script defer src="{% static 'katex/katex.min.js' %}"></script>
+  <script defer src="{% static 'katex/katex-auto-render.min.js' %}"></script>
+
   <link rel="stylesheet" href="{% static 'sensorlab/css/sensorlab.css' %}">
   {% block head %}{% endblock %}
 </head>
@@ -58,6 +72,32 @@
     and capability rules live in here, and a second door bypasses them.
   {% endcomment %}
   <script src="{% static 'sensorlab/js/sensors.js' %}"></script>
+
+  {% comment %}
+    Typeset the maths once the page is up (SL-M1). Scoped to `.sl-block`,
+    which is where authored prose lands — never the whole document, so a
+    stray `$` in a lab's title or a student's own free-text answer cannot be
+    swallowed by the renderer.
+
+    `throwOnError: false` on purpose: a broken formula should show its
+    source in red and leave the rest of the lesson readable. A page that
+    goes blank because one backslash is wrong is worse than a visible
+    mistake, and an author needs to SEE which formula broke.
+  {% endcomment %}
+  <script>
+  document.addEventListener("DOMContentLoaded", function () {
+    if (!window.renderMathInElement) { return; }
+    document.querySelectorAll(".sl-block").forEach(function (el) {
+      renderMathInElement(el, {
+        delimiters: [
+          {left: "$$", right: "$$", display: true},
+          {left: "$", right: "$", display: false}
+        ],
+        throwOnError: false
+      });
+    });
+  });
+  </script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

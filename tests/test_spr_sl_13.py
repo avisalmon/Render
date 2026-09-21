@@ -154,9 +154,17 @@ def test_intro_learn_and_analysis_show_the_real_content(client, django_user_mode
 
     _advance_to(client, user, "learn")
     learn = _body(client.get(_step_url("learn")).content.decode())
+    # Updated in SL-M1, which rewrote this step. It used to check for a
+    # `<code>` span, and that span is gone on purpose: the percent-error
+    # formula it held rendered as a mangled bidi mess on a Hebrew phone and
+    # is now LaTeX. The durable claim — Markdown is rendered, raw Markdown
+    # is not — is what remains.
     assert "proper acceleration" in learn
-    assert "<code>" in learn, "the callout's inline code was not rendered"
+    assert "<h3>" in learn, "Markdown headings were not rendered"
+    assert "<strong>" in learn, "Markdown emphasis was not rendered"
     assert "`" not in learn, "raw Markdown reached the screen"
+    # The maths reaches the browser as LaTeX source; KaTeX typesets it there.
+    assert "\\vec{a}" in learn, "the formulas did not survive to the page"
 
     _advance_to(client, user, "analysis")
     analysis = _body(client.get(_step_url("analysis")).content.decode())

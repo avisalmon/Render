@@ -114,6 +114,7 @@ markers = [
     "sprsl18: SL-F1 SensorLab the recording, and its payload",
     "sprsl19: SL-F2 SensorLab the capture screen",
     "sprsl20: SL-G1 SensorLab the result, computed and compared",
+    "sprsl21: SL-M1 SensorLab mathematics, and the explanation",
     "smoke: the fast gate, run on every push (see tests/test_smoke.py)",
 ]
 

@@ -114,64 +114,184 @@ BLOCKS = (
             "וההבדל הזה הוא כל המעבדה."
         ),
     },
+    # ----------------------------------------------------------------
+    # The Learn step, rewritten in SL-M1.
+    #
+    # The first version was three short paragraphs that asserted "an
+    # accelerometer measures proper acceleration" and stopped. Avi read it on
+    # his phone and said, correctly, that it explains nothing: the question a
+    # student is owed is *why gravity is measured as an acceleration at all*.
+    #
+    # So it derives the thing instead. Proof mass, Newton's second law, the
+    # two cases that fall out of it, and the reason the sensor cannot tell
+    # gravity from acceleration — which is the equivalence principle, a fact
+    # about nature rather than a limitation of a cheap chip.
+    #
+    # The equations are identical in both languages, and a test enforces
+    # that: prose is translated, mathematics is not, and a formula that
+    # differs between languages is a transcription error.
+    # ----------------------------------------------------------------
     {
         "step": ContentBlock.Step.LEARN,
         "kind": ContentBlock.Kind.TEXT,
         "order": 1,
         "body_en": (
-            "The accelerometer reports **proper acceleration**: what its own "
-            "springs feel.\n\n"
-            "Lying still on a table, your phone is not accelerating anywhere "
-            "— and yet the table is pushing up on it hard enough to hold it "
-            "against gravity. The springs feel that push. So a phone at rest "
-            "reads the full strength of gravity, pointing up.\n\n"
-            "Now take the table away."
+            "### What is actually inside\n\n"
+            "An accelerometer is not a gravity meter. Inside the chip is a "
+            "tiny block — the **proof mass** — held between springs, and the "
+            "only thing the device can measure is how far that block has "
+            "shifted from its resting position.\n\n"
+            "That shift tells it one thing: the force the *springs* are "
+            "exerting. Nothing else. Keep hold of that, because everything "
+            "surprising below follows from it."
         ),
         "body_he": (
-            "מד־התאוצה מדווח על **תאוצה עצמית**: מה שהקפיצים שלו מרגישים.\n\n"
-            "כשהטלפון מונח בשקט על השולחן הוא אינו מאיץ לשום מקום — ובכל "
-            "זאת השולחן דוחף אותו כלפי מעלה בכוח שמחזיק אותו נגד הכבידה. "
-            "הקפיצים מרגישים את הדחיפה. לכן טלפון במנוחה מראה את עוצמת "
-            "הכבידה במלואה, בכיוון מעלה.\n\n"
-            "ועכשיו נסלק את השולחן."
+            "### מה באמת נמצא בפנים\n\n"
+            "מד־תאוצה אינו מד־כבידה. בתוך השבב יש גוש זעיר — **מסת המבחן** — "
+            "המוחזק בין קפיצים, והדבר היחיד שהמכשיר יודע למדוד הוא כמה הגוש "
+            "הזה הוסט ממקום המנוחה שלו.\n\n"
+            "ההסטה הזו מספרת לו דבר אחד: את הכוח שה*קפיצים* מפעילים. שום דבר "
+            "אחר. כדאי לזכור את זה, כי כל מה שמפתיע בהמשך נובע מכאן."
+        ),
+    },
+    {
+        "step": ContentBlock.Step.LEARN,
+        "kind": ContentBlock.Kind.TEXT,
+        "order": 2,
+        "body_en": (
+            "### Newton, applied to that little block\n\n"
+            "Two forces act on the proof mass: gravity, and the springs. "
+            "Newton's second law says their sum is its mass times its "
+            "acceleration:\n\n"
+            "$$m\\vec{g} + \\vec{F}_{\\text{spring}} = m\\vec{a}$$\n\n"
+            "Here $\\vec{a}$ is the acceleration of the phone itself — how it "
+            "is moving through the room. Divide through by $m$ and rearrange "
+            "to get what the springs feel, per unit mass. That quantity has a "
+            "name: **proper acceleration**, and it is what the chip reports."
+        ),
+        "body_he": (
+            "### ניוטון, בהחלה על הגוש הקטן הזה\n\n"
+            "שני כוחות פועלים על מסת המבחן: הכבידה, והקפיצים. החוק השני של "
+            "ניוטון אומר שסכומם שווה למסה כפול התאוצה שלה:\n\n"
+            "$$m\\vec{g} + \\vec{F}_{\\text{spring}} = m\\vec{a}$$\n\n"
+            "כאן $\\vec{a}$ היא התאוצה של הטלפון עצמו — איך הוא נע בחדר. "
+            "נחלק ב־$m$ ונבודד את מה שהקפיצים מרגישים, ליחידת מסה. לגודל הזה "
+            "יש שם: **תאוצה עצמית**, וזה מה שהשבב מדווח."
         ),
     },
     {
         "step": ContentBlock.Step.LEARN,
         "kind": ContentBlock.Kind.FORMULA,
-        "order": 2,
-        # The same sentence in both languages, which is why the bilingual
-        # test skips formula blocks rather than demanding a difference.
+        "order": 3,
+        # Identical in both languages, which is why the bilingual test skips
+        # formula blocks rather than demanding a difference.
         #
-        # `a_x`, not `aₓ`. The first version mixed a Unicode subscript for x
-        # with plain underscores for y and z, because Unicode HAS no subscript
-        # y or z — so it rendered as "aₓ² + a_y² + a_z²", inconsistent and
-        # visibly wrong to anyone reading the physics. Caught in SL-D2 by
-        # looking at the rendered step, not by a test. Formula blocks are
-        # literal by design (Markdown would read `_` as emphasis), so what is
-        # written here is exactly what a student sees.
-        "body_en": "|a| = √(a_x² + a_y² + a_z²)",
-        "body_he": "|a| = √(a_x² + a_y² + a_z²)",
+        # Now LaTeX. It used to be "|a| = √(a_x² + a_y² + a_z²)" typed by
+        # hand — and before that it mixed a Unicode subscript for x with
+        # plain underscores for y and z, because Unicode HAS no subscript y
+        # or z. Both were caught by looking at the rendered step.
+        "body_en": (
+            "$$\\vec{a}_{\\text{proper}} \\;=\\; "
+            "\\frac{\\vec{F}_{\\text{spring}}}{m} \\;=\\; \\vec{a} - \\vec{g}$$"
+        ),
+        "body_he": (
+            "$$\\vec{a}_{\\text{proper}} \\;=\\; "
+            "\\frac{\\vec{F}_{\\text{spring}}}{m} \\;=\\; \\vec{a} - \\vec{g}$$"
+        ),
+    },
+    {
+        "step": ContentBlock.Step.LEARN,
+        "kind": ContentBlock.Kind.TEXT,
+        "order": 4,
+        "body_en": (
+            "### Two cases, and they are the whole lab\n\n"
+            "**On the table.** The phone goes nowhere, so $\\vec{a} = 0$:\n\n"
+            "$$\\vec{a}_{\\text{proper}} = 0 - \\vec{g} = -\\vec{g}$$\n\n"
+            "The springs are compressed by the table holding the phone up, "
+            "and the reading has the full size of $\\vec{g}$, pointing "
+            "**upward** — away from the Earth, opposite to gravity itself. A "
+            "phone sitting still is already measuring what you came here to "
+            "measure.\n\n"
+            "**In free fall.** Nothing touches the phone, so gravity alone "
+            "acts and $\\vec{a} = \\vec{g}$:\n\n"
+            "$$\\vec{a}_{\\text{proper}} = \\vec{g} - \\vec{g} = 0$$\n\n"
+            "The case and the proof mass fall together at exactly the same "
+            "rate, so the springs are neither stretched nor squashed. The "
+            "accelerometer reads **zero** — while accelerating faster than at "
+            "any other moment in the lab."
+        ),
+        "body_he": (
+            "### שני מקרים, והם כל המעבדה\n\n"
+            "**על השולחן.** הטלפון אינו זז לשום מקום, ולכן $\\vec{a} = 0$:\n\n"
+            "$$\\vec{a}_{\\text{proper}} = 0 - \\vec{g} = -\\vec{g}$$\n\n"
+            "הקפיצים נדחסים בגלל השולחן שמחזיק את הטלפון, והקריאה היא בגודל "
+            "המלא של $\\vec{g}$, בכיוון **מעלה** — הרחק מכדור הארץ, הפוך "
+            "לכבידה עצמה. טלפון שמונח בשקט כבר מודד בדיוק את מה שבאתם למדוד.\n\n"
+            "**בנפילה חופשית.** שום דבר לא נוגע בטלפון, ולכן פועלת רק הכבידה "
+            "ו־$\\vec{a} = \\vec{g}$:\n\n"
+            "$$\\vec{a}_{\\text{proper}} = \\vec{g} - \\vec{g} = 0$$\n\n"
+            "המארז ומסת המבחן נופלים יחד בדיוק באותו קצב, ולכן הקפיצים אינם "
+            "נמתחים ואינם נדחסים. מד־התאוצה מראה **אפס** — בדיוק כשהוא מאיץ "
+            "מהר יותר מבכל רגע אחר במעבדה."
+        ),
     },
     {
         "step": ContentBlock.Step.LEARN,
         "kind": ContentBlock.Kind.CALLOUT,
-        "order": 3,
+        "order": 5,
         "body_en": (
-            "Your phone does not know which way up it is being held, so no "
-            "single axis holds the answer. Take the magnitude of all three "
-            "and orientation stops mattering.\n\n"
-            "How close is close enough? Percent error is "
-            "`|measured − accepted| / accepted × 100`. Under 5% from a phone "
-            "on a kitchen table is a genuinely good result."
+            "**Why can it not just measure gravity directly?**\n\n"
+            "Because nothing can. Einstein's **equivalence principle** says "
+            "no experiment performed inside a sealed box can tell the "
+            "difference between sitting still in a gravitational field and "
+            "accelerating through empty space. The two are not merely hard to "
+            "separate — they are physically the same situation.\n\n"
+            "So the $-\\vec{g}$ in the equation above is not a flaw in a "
+            "cheap chip. It is the reason gravity has to be measured "
+            "*indirectly*: by measuring the force that holds you up against "
+            "it. The table is doing the measuring. Your phone is just reading "
+            "the table."
         ),
         "body_he": (
-            "הטלפון שלך אינו יודע באיזה כיוון מחזיקים אותו, ולכן אף ציר בודד "
-            "אינו מחזיק את התשובה. לוקחים את הגודל של שלושת הצירים יחד, "
-            "והכיוון מפסיק להיות משנה.\n\n"
-            "מה נחשב קרוב מספיק? שגיאה באחוזים היא "
-            "`|נמדד − מקובל| / מקובל × 100`. פחות מ‑5% מטלפון על שולחן "
-            "במטבח היא תוצאה טובה באמת."
+            "**למה אי אפשר פשוט למדוד כבידה ישירות?**\n\n"
+            "כי אף אחד לא יכול. **עקרון השקילות** של איינשטיין אומר ששום ניסוי "
+            "שנעשה בתוך קופסה אטומה אינו יכול להבחין בין לשבת במנוחה בשדה "
+            "כבידה לבין להאיץ בחלל ריק. השניים אינם רק קשים להפרדה — מבחינה "
+            "פיזיקלית הם אותו מצב.\n\n"
+            "לכן ה־$-\\vec{g}$ במשוואה שלמעלה אינו פגם בשבב זול. זו הסיבה "
+            "שכבידה נמדדת *בעקיפין*: על ידי מדידת הכוח שמחזיק אתכם נגדה. "
+            "השולחן הוא זה שמודד. הטלפון רק קורא את השולחן."
+        ),
+    },
+    {
+        "step": ContentBlock.Step.LEARN,
+        "kind": ContentBlock.Kind.TEXT,
+        "order": 6,
+        "body_en": (
+            "### One number, whichever way up\n\n"
+            "The chip reports three axes, and your phone has no idea how you "
+            "are holding it. Take the magnitude and orientation stops "
+            "mattering:\n\n"
+            "$$|\\vec{a}| = \\sqrt{a_x^2 + a_y^2 + a_z^2}$$\n\n"
+            "That single number, averaged over a few still seconds, is your "
+            "measurement. Afterwards you will compare it with the accepted "
+            "value using\n\n"
+            "$$\\varepsilon = \\frac{\\left|a_{\\text{measured}} - "
+            "a_{\\text{accepted}}\\right|}{a_{\\text{accepted}}} \\times 100\\%$$\n\n"
+            "Under 5% from a phone on a kitchen table is a genuinely good "
+            "result — for a sensor that costs a few cents."
+        ),
+        "body_he": (
+            "### מספר אחד, בכל כיוון שתחזיקו\n\n"
+            "השבב מדווח על שלושה צירים, ולטלפון אין מושג איך אתם מחזיקים "
+            "אותו. לוקחים את הגודל, והכיוון מפסיק להיות משנה:\n\n"
+            "$$|\\vec{a}| = \\sqrt{a_x^2 + a_y^2 + a_z^2}$$\n\n"
+            "המספר היחיד הזה, ממוצע על פני כמה שניות של שקט, הוא המדידה שלכם. "
+            "בהמשך תשוו אותו לערך המקובל באמצעות\n\n"
+            "$$\\varepsilon = \\frac{\\left|a_{\\text{measured}} - "
+            "a_{\\text{accepted}}\\right|}{a_{\\text{accepted}}} \\times 100\\%$$\n\n"
+            "פחות מ‑5% מטלפון על שולחן במטבח היא תוצאה טובה באמת — בשביל חיישן "
+            "שעולה כמה אגורות."
         ),
     },
     {

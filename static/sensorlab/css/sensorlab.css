@@ -841,3 +841,40 @@ body {
   color: var(--sl-ink-faint);
 }
 .sl-prediction-verdict p { margin-block: 0; line-height: 1.55; }
+
+/* ------------------------------------------- mathematics (SL-M1) */
+
+/* §7.7, and the clearest case of it in the whole app: **equations never
+   mirror**. On the Hebrew Learn step KaTeX inherited `direction: rtl` from
+   the page and rendered `m g + F = m a` backwards — every display formula in
+   the lab reversed, which is not a translation, it is wrong physics.
+
+   `unicode-bidi: isolate` as well as `direction`, so a formula sitting
+   inside a Hebrew sentence neither flips itself nor disturbs the words
+   around it. */
+.katex,
+.katex-display,
+.katex-display > .katex {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: left;
+}
+
+.katex-display {
+  display: block;
+  margin-block: 14px;
+  text-align: center;
+  /* A long equation on a 390px phone scrolls rather than bursting the
+     page — the same exception §7.5 already grants charts and tables. */
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* Headings inside authored prose. The Learn step uses `###` now that it is
+   long enough to need sections. */
+.sl-block h3 {
+  margin-block: 22px 8px;
+  font-size: var(--sl-size-h2);
+  font-weight: 600;
+}
+.sl-block h3:first-child { margin-block-start: 0; }

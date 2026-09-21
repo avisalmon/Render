@@ -61,7 +61,7 @@ runs pip), `env\Scripts\activate` for everything Python, and
 | J — Video motion tracking | tbd at gate | ⬜ (candidate to cut) |
 | K — Remote / multi-device capture | tbd at gate | ⬜ |
 | L — Groups, sharing and gamification | tbd at gate | ⬜ |
-| M — Content build-out | tbd at gate | ⬜ |
+| **M — Content build-out** | SL-M1 … | 🔵 SL-M1 done |
 | N — PWA and deploy | tbd at gate | ⬜ |
 
 Legend: ⬜ not started · 🔵 in progress · ✅ done · 🚫 blocked
@@ -1460,6 +1460,107 @@ first remove the source that is about the rule.*
 The predicted-versus-measured chart (§7.7: the chrome mirrors, the data does
 not), export, and the shareable result screen. Written once G1 exists and
 there is something real to react to.
+
+---
+
+## Epic M — Content build-out
+
+Scoped at the gate on 2026-09-22, brought forward by Avi looking at the Learn
+step on his own phone and saying the explanation was too thin and the
+formulas should be LaTeX. Ad-hoc requests follow the process (CLAUDE.md), so
+it is written here before it is built.
+
+### SL-M1 — Mathematics, and an explanation that earns it ✅
+
+Marker: `sprsl21` — 15 tests. `design/sl-m1-learn-{en,he}.png`.
+
+The Learn step is now a derivation rather than an assertion: the proof mass,
+Newton's second law applied to it, the two cases that fall out, and the
+equivalence principle as the reason an accelerometer *cannot* separate
+gravity from acceleration. Three blocks became six, in both languages, with
+six typeset equations.
+
+#### The bug I claimed, measured, and got wrong
+
+I asserted from memory that Markdown turns `$a_x^2$` into `$a<em>x^2$`. **It
+does not** — python-markdown will not emphasise inside a word, so intra-word
+subscripts were never at risk. Measured before fixing.
+
+What it *does* corrupt is ordinary LaTeX like `$a*b*c$` and `$x _y_ z$`,
+which come back as `<em>` and look like an author's typo rather than a
+rendering fault. So math spans are lifted out before conversion and restored
+after — real protection, narrower than first claimed, and the test says
+which cases so the next reader does not inherit my wrong version.
+
+#### Equations never mirror (§7.7, at its sharpest)
+
+KaTeX inherited `direction: rtl` from the Hebrew page and rendered
+`mec{g} + ec{F} = mec{a}` **backwards** — every display formula in the
+lab reversed. That is not a translation, it is wrong physics. `direction:
+ltr` plus `unicode-bidi: isolate`, so a formula inside a Hebrew sentence
+neither flips itself nor disturbs the words around it. Found by looking at
+the screenshot; guarded in the stylesheet test.
+
+This is the third time §7.7 has been got wrong in a different place — the
+SL-B4 duration, the SL-F2 results line, and now the maths. Each time the
+error was forcing or inheriting direction on the wrong scope. The rule that
+keeps working: **direction belongs to the smallest thing that is data**, and
+never to the sentence around it.
+
+#### KaTeX was already here
+
+Vendored at `static/katex/` and used by `app/lesson.html`, so this was
+wiring rather than a dependency — and loading a third-party library from
+shared `static/` is not a Rule 2 breach any more than Rubik is. Local rather
+than a CDN, because a physics lab should work on a school network that
+blocks half the internet.
+
+`throwOnError: false`: a broken formula shows its source in red and leaves
+the lesson readable. A page that goes blank over one backslash is worse, and
+an author needs to see *which* formula broke.
+
+#### The rewrite had to reach production
+
+`0011` replaces the Learn step in databases where it is still
+character-for-character what the seed wrote — and skips the whole rewrite if
+**any** of the three original blocks has been edited, because a course half
+in one voice and half in another is worse than an old explanation. Stricter
+than `0007`, which only repaired a typo in place.
+
+#### Two of my own mistakes, for the record
+
+A stray NUL byte and a broken string literal went into `models.py` from a
+shell heredoc mangling backslashes — caught by `ast.parse`, not by a test,
+and fixed by using an exact-edit tool instead of heredocs for anything
+containing escapes.
+
+And SL-D2's content test asserted on the old Learn text, including a
+`<code>` span this rewrite deliberately removed (it was the percent-error
+formula, which rendered as a bidi mess on a Hebrew phone and is now LaTeX).
+Updated to the durable claim rather than the old wording.
+
+**What the screenshot showed.** `|a| = √(a_x² + a_y² + a_z²)` as plain text
+in a grey box; the callout's inline code mangled by bidi into
+`|נמדד − מקובל| / מקובל × 100`; and three short paragraphs where the lab
+should be *teaching* why an accelerometer measures gravity at all.
+
+- [ ] **LaTeX rendering.** KaTeX is already vendored at `static/katex/` and
+      used by `app/lesson.html`, so this is wiring rather than a dependency.
+      Using a vendored third-party library from shared `static/` is not a
+      Rule 2 breach — it is the same category as loading Rubik. SensorLab
+      touches no other app's models, views or templates.
+- [ ] **Math must survive Markdown.** `$a_x^2$` through a Markdown renderer
+      becomes `$a<em>x^2$` — the underscore is read as emphasis and the
+      formula is silently corrupted. Math spans are protected before
+      conversion and restored after, or every subscript in the course is a
+      latent bug.
+- [ ] **A real derivation**, in both languages: what an accelerometer
+      physically is, why a phone at rest reads \(g\), why one in free fall
+      reads zero, and why that is the equivalence principle rather than a
+      defect in the sensor.
+- [ ] The rewrite reaches content already seeded in production, so it ships
+      as a conditional migration — updating only text still identical to what
+      the seed wrote, exactly as `0007` did.
 
 ---
 
