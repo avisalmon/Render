@@ -196,6 +196,10 @@ def test_the_public_half_holds_up_on_a_phone(phone_page, live_server,
         "/exo/learn/algorithms/",
         "/exo/museum/",
         f"/exo/museum/{release.pk}/",
+        # The two doors. Left out of the first version of this list, which is
+        # how a 17px "sign in" link reached production with the suite green.
+        "/exo/join/",
+        "/exo/login/",
     ]
 
     failures = {}

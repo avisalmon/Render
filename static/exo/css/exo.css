@@ -532,6 +532,17 @@ img { max-width: 100%; height: auto; }
   min-block-size: var(--exo-tap);
 }
 
+/* The one alternate action on an otherwise empty auth page: "already have
+   an account? sign in". It reads as prose but it is the only way from one
+   door to the other, so it is a target and gets the floor. Found on the
+   deployed site, because the phone suite was walking five public pages and
+   the two auth pages were not among them. They are now. */
+.exo-auth-alt a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--exo-tap);
+}
+
 .exo-page select,
 .exo-field select {
   min-block-size: var(--exo-tap);
