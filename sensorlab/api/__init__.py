@@ -14,6 +14,7 @@ SL-A3 made and this is the sprint that tested it.
 
 from rest_framework.routers import DefaultRouter
 
+from .answers import PredictionAnswerViewSet
 from .attempts import LabAttemptViewSet
 from .curriculum import (
                          AnalysisConfigViewSet,
@@ -41,3 +42,6 @@ router.register("analysis-configs", AnalysisConfigViewSet)
 # SL-D3. The first resource that is a person's own work rather than
 # authored content, which is why its viewset scopes by request.user.
 router.register("attempts", LabAttemptViewSet)
+
+# SL-E4. Rule 6 debt from SL-E1, which shipped the model without an API.
+router.register("prediction-answers", PredictionAnswerViewSet)

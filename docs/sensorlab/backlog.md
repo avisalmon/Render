@@ -54,7 +54,7 @@ runs pip), `env\Scripts\activate` for everything Python, and
 | **B — Curriculum and authoring** | SL-B1 … SL-B4 | ✅ done |
 | **D — The lab runner** | SL-D1 … SL-D3 | ✅ done |
 | **E — Predict** | SL-E1 … SL-E4 | 🔵 SL-E1, SL-E2 done |
-| F — Capture | tbd at gate | ⬜ |
+| **F — Capture** | SL-F1 … SL-F2 | 🔵 scoped at the gate |
 | G — Analysis | tbd at gate | ⬜ |
 | H — Lab notebook | tbd at gate | ⬜ |
 | I — AI tutor | tbd at gate | ⬜ |
@@ -1168,24 +1168,101 @@ E. The lesson is not "check the fixture": it is that **two labs exist in
 this codebase**, one written to suit the tests and one a student sees, and a
 test that confuses them fails while the product is fine.
 
-### SL-E3 — Sketch your curve ⬜
+### SL-E3 — Sketch your curve 🚫 deferred (2026-09-21)
 
-Marker: `sprsl17`
+Marker: `sprsl17` — **reassigned to SL-E4**, since this sprint is not being
+built now.
 
-- [ ] `graph_sketch`: draw the expected curve on empty axes, touch-first.
-- [ ] `curve_points` as a payload on the answer row — the same named
-      exception `data_model.md` §6 makes for sensor samples.
-- [ ] §7.5 ("charts must not lie") applied to an empty chart: axes labelled
-      and scaled before anything is drawn on them.
+**Deferred, with the reasoning, rather than quietly skipped.** A bespoke
+touch-drawing control is the largest single item left in Epic E and has no
+precedent anywhere in this app — and it serves **one question in one lab**,
+which the seeded lab already runs without, saying so honestly on screen
+(SL-E2). Meanwhile Epic F is what stands between here and a student
+measuring gravity with their own phone, which is the thing this app exists
+to do.
 
-### SL-E4 — The answer API ⬜
+So E3 waits for content pressure: a second or third lab that genuinely needs
+a sketched prediction. The same judgement spec §9.3 applies to Epic J, and
+it is recorded here so the next person reads a decision rather than a gap.
+
+**What it costs to defer:** `graph_sketch` questions stay unanswerable,
+`curve_points` stays an unused field, and the Predict step keeps one
+question marked not-built. All three are visible, none is silent.
+
+What it would have built, kept for whenever it is picked up:
+
+- `graph_sketch`: draw the expected curve on empty axes, touch-first.
+- `curve_points` as a payload on the answer row — the same named exception
+  `data_model.md` §6 makes for sensor samples.
+- §7.5 ("charts must not lie") applied to an empty chart: axes labelled and
+  scaled before anything is drawn on them.
+
+### SL-E4 — The answer API ✅
+
+Marker: `sprsl17` — 13 tests.
+
+- [x] `PredictionAnswer` scoped to the attempt's owner; somebody else's is a
+      404, and an answer cannot be written into their attempt.
+- [x] The lock holds against a client with no screen — otherwise it was
+      never a rule, only a layout.
+- [x] `is_correct` is not serialised until Analysis. The field is on the row
+      from the moment an answer is saved, which makes it the easiest thing
+      here to send by accident, at exactly the moment spec §3 needs a
+      student not to have it.
+- [x] Revealing *your result* is not revealing the key: `correct_value` and
+      `tolerance` stay server-side even at Analysis, or one finished attempt
+      hands over every future one.
+
+#### The planned `grade` verb was not built, and that is the finding
+
+The backlog asked for one. SL-E1 then decided grading happens at submission
+and `is_correct` is **stored, never recomputed** — so an author's later edit
+cannot rewrite what a student got right. Those two cannot both hold: a
+`grade/` action either re-grades, breaking that rule, or does nothing, which
+is a verb that lies about doing something.
+
+So recording and grading are one action and there is no verb. Its absence is
+asserted by a test, rather than left as a gap somebody fills in later
+without reading why.
+
+---
+
+## Epic F — Capture
+
+Spec §9.6, written at the gate on 2026-09-21. **This is the epic the app
+exists for**, and the one that makes a demo worth showing: a phone becomes
+an instrument and a student gets a number nobody gave them.
+
+### SL-F1 — The recording, and how a payload gets here ⬜
 
 Marker: `sprsl18`
 
-- [ ] `PredictionAnswer` scoped to the attempt's owner.
-- [ ] A **grade** verb (§9.0 item 2), necessarily server-side (item 5).
-- [ ] The response says an answer was recorded, never whether it was right —
-      until Analysis asks.
+- [ ] `SensorRecording` per `data_model.md` §6 — samples as a payload on a
+      real row, never a file the app merely points at (the actual ustrip
+      failure).
+- [ ] **Both rates stored**: requested and achieved. §4.1 measured 63 Hz
+      against a request for 200, and every frequency derived from the wrong
+      one is wrong by that ratio.
+- [ ] **The §9.0 item 1 transport decision, now due**: inline POST with a
+      hard cap versus chunked upload. A cap that refuses loudly beats a body
+      that silently truncates.
+- [ ] API, owner-scoped, shipped with the model this time rather than as a
+      debt (the SL-E1 → SL-E4 lesson).
+
+### SL-F2 — The capture screen ⬜
+
+Marker: `sprsl19`
+
+- [ ] Instrument mode replacing SL-D2's Experiment placeholder: live
+      magnitude readout, a record control sized for a thumb, a countdown,
+      and what actually arrived — achieved rate stated, not hidden.
+- [ ] The three refusals, each saying which it is (§1 has no degradation
+      tier): no consent, no such sensor, sensor present but silent.
+- [ ] Screen contract, both languages, on a phone.
+
+**Not in Epic F**, though §9.3 lists them: threshold triggers, haptics, tone
+and strobe generators, video. None of them stands between here and a student
+measuring gravity.
 
 ---
 

@@ -188,16 +188,48 @@ def test_a_formula_does_not_mix_two_notations():
             assert not mixes, f"{field} mixes Unicode subscripts with underscores: {body!r}"
 
 
+def _answer_predictions(client, user):
+    """Answer what SL-E2 requires before Predict will let anyone past.
+
+    SL-D2 walked the runner by pressing Continue. SL-E2 then made Continue
+    REFUSE at Predict until the answerable questions are answered — which is
+    correct, and which broke this helper: it posted, nothing moved, and the
+    loop below span forever. The suite did not fail, it HUNG, and a hang is
+    the one failure mode that tells you nothing.
+
+    So the helper does what a student now has to do, and the loop below is
+    bounded so the next behaviour change is a failure rather than a hang.
+    """
+    attempt = _attempt(user)
+    answer_url = f"{RUN}predict/answer/"
+    for question in attempt.lab.prediction_questions.all():
+        if question.kind == "multiple_choice":
+            client.post(answer_url, {"question": question.pk,
+                                     "choice": question.choices.first().pk})
+        elif question.kind == "numeric":
+            client.post(answer_url, {"question": question.pk, "numeric": "9.5"})
+        elif question.kind == "free_text":
+            client.post(answer_url, {"question": question.pk, "text": "because"})
+
+
 def _advance_to(client, user, step):
     """Walk the attempt forward through the real flow, not by fiat."""
     from sensorlab.models import LAB_STEPS
 
-    while True:
+    # Bounded on purpose. The first version was `while True`, which turned
+    # SL-E2's new rule into a hang instead of a red test.
+    for _ in range(len(LAB_STEPS) + 1):
         attempt = _attempt(user)
         if attempt.current_step == step:
             return attempt
         assert LAB_STEPS.index(attempt.current_step) < LAB_STEPS.index(step)
+        if attempt.current_step == "predict":
+            _answer_predictions(client, user)
         client.post(_step_url(attempt.current_step))
+
+    raise AssertionError(
+        f"could not reach {step!r}: stuck on {_attempt(user).current_step!r}"
+    )
 
 
 def _attempt(user):
@@ -292,6 +324,8 @@ def test_continuing_advances_the_attempt_and_finishing_completes_it(client, djan
 
     for step in LAB_STEPS:
         assert _attempt(user).current_step == step
+        if step == "predict":
+            _answer_predictions(client, user)
         client.post(_step_url(step))
 
     attempt = _attempt(user)
@@ -320,6 +354,8 @@ def test_a_finished_attempt_says_it_is_finished(client, django_user_model):
     from sensorlab.models import LAB_STEPS
 
     for step in LAB_STEPS:
+        if step == "predict":
+            _answer_predictions(client, user)
         client.post(_step_url(step))
 
     html = _body(client.get(_step_url("analysis")).content.decode())

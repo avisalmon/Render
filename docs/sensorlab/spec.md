@@ -816,7 +816,59 @@ Analysis asks.
 
 ---
 
-### 9.6 What ships first
+### 9.6 Epic F — Capture
+
+Detail written at the gate, 2026-09-21, with A–D closed and E part-built.
+
+**This is the epic the app exists for.** Everything before it is a course
+with a quiz in front of it; here a phone becomes an instrument and a
+student gets a number nobody gave them. It is also where §9.0 item 1 —
+the sensor-payload transport decision — comes due.
+
+**What already exists.** `static/sensorlab/js/sensors.js` (Epic C) opens a
+sensor behind a consent gate, measures the rate actually achieved, and
+returns readings in one shape whichever API is underneath. `ExperimentConfig`
+says what to ask the phone for. `LabAttempt` owns the run. Nothing here
+needs new sensor plumbing — F is the screen and the storage around a layer
+that already works on real hardware.
+
+#### F.1 The recording, and how a payload gets here
+
+`SensorRecording` per `data_model.md` §6: `attempt` FK, `sensor`,
+`requested_hz`, `achieved_hz`, `duration_ms`, `sample_count`, `samples` as a
+payload on the row, `recorded_at`, `label`.
+
+**Two rates, never one.** §4.1 measured 63 Hz against a request for 200. A
+recording that stores only the requested figure is storing a wish, and every
+frequency computed from it afterwards is wrong by that ratio.
+
+**The transport decision (§9.0 item 1), now due.** A three-second capture at
+~63 Hz is roughly 190 readings; the 60-second worst case is ~11,000. The
+call to make and record: one inline POST with a hard cap, versus chunked
+upload. Inline is enough for every lab that exists, and a cap that refuses
+loudly beats a body that silently truncates.
+
+#### F.2 The capture screen
+
+Instrument mode (§7.1, §7.6) in earnest, replacing SL-D2's placeholder: a
+live magnitude readout with tabular numerals, a record control sized for a
+thumb, a countdown, and — when it is over — what actually arrived, including
+the achieved rate stated plainly rather than hidden.
+
+The refusals are as much of the screen as the success: no consent yet, a
+sensor this phone does not have, a sensor present but silent (§1 has no
+degradation tier, so each says which it is).
+
+#### F.3 Deliberately not in Epic F
+
+Threshold-triggered capture, haptics, the tone and strobe generators, and
+video. They are in §9.3's description of F and they are **not** what stands
+between here and a student measuring gravity. Pulled forward only if a lab
+needs them.
+
+---
+
+### 9.7 What ships first
 
 **A through G is the shippable core**: one track, a few labs, no tutor, no
 groups, no video — already a working product worth putting in front of a
