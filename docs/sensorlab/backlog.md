@@ -53,7 +53,7 @@ runs pip), `env\Scripts\activate` for everything Python, and
 | **C — Sensor access layer** | SL-C1 … SL-C2 | 🔵 in progress — spike passed |
 | **B — Curriculum and authoring** | SL-B1 … SL-B4 | ✅ done |
 | **D — The lab runner** | SL-D1 … SL-D3 | ✅ done |
-| **E — Predict** | SL-E1 … SL-E4 | 🔵 SL-E1 done |
+| **E — Predict** | SL-E1 … SL-E4 | 🔵 SL-E1, SL-E2 done |
 | F — Capture | tbd at gate | ⬜ |
 | G — Analysis | tbd at gate | ⬜ |
 | H — Lab notebook | tbd at gate | ⬜ |
@@ -1108,15 +1108,65 @@ multiple-choice question asks about a phone falling freely. Worth recording
 because the instinct on a red test is to look at the code — and here the
 code was right and the test had the wrong idea about what exists.
 
-### SL-E2 — The Predict screen ⬜
+### SL-E2 — The Predict screen ✅
 
-Marker: `sprsl16`
+Marker: `sprsl16` — 17 tests, all green.
 
-- [ ] Multiple choice, numeric and free text on SL-D2's runner, replacing
+- [x] Multiple choice, numeric and free text on SL-D2's runner, replacing
       the placeholder.
-- [ ] Answers save as you go and stay editable until the lock.
-- [ ] The step says what is still unanswered rather than refusing silently.
-- [ ] Screen contract, both languages and directions, on a phone.
+- [x] Answers save as you go and stay editable until the lock; after it they
+      are readable and not changeable.
+- [x] Continue is refused while answerable questions are unanswered, and the
+      page says so — a refusal with no explanation reads as a broken button.
+- [x] Screen contract, both languages and directions, measured on a phone.
+      Screenshots: `design/sl-e2-predict-{en,he}.png`.
+
+#### The sketch question is shown and marked, not hidden
+
+SL-E3 builds the drawing control. Dropping the question until then would
+show a student two questions where the lab has three, with nothing anywhere
+saying why — the silence this project keeps catching. So it is displayed,
+marked as not-yet-built, and excluded from the must-answer rule **visibly**.
+`ANSWERABLE_KINDS` in `views.py` is the one place that exclusion lives.
+
+#### A trap found by looking at the screen
+
+The first version had a **Save answer** button under every question. A
+student could pick an answer, not press it, press Continue, and be told to
+answer everything they believed they had answered. Every test passed: each
+one posted to the answer endpoint directly, which is exactly what the button
+does and nothing like what a person does.
+
+Fixed by auto-saving on change — a radio saves when chosen, a typed field
+when you leave it (not per keystroke, or a `9` gets recorded on the way to
+`9.6`). The Save button is still in the HTML and is hidden **by script**, so
+a browser running none keeps the working fallback. There is a test that the
+fallback survives, because the obvious next edit is to delete a button
+nobody sees.
+
+#### The three phone probes now live in one file
+
+`tests/sensorlab_phone.py`. SL-B4 wrote the tap and overflow checks, SL-D2
+copied them, and SL-E2 needed a corrected version — at which point the
+choice was to fix one of three copies or to stop having three. This app has
+spent whole sprints on the cost of a second definition (`LAB_STEPS`, the
+sensor names, the rail), so it stopped here.
+
+**And the correction itself matters.** The tap guard measured every control
+directly, and flagged a radio button as a 20px failure while it sat inside a
+44px label — where the whole label is tappable, which is exactly what §7.4
+asks for. That was not a stricter reading of the rule; it was the wrong one,
+and it would have pushed the design towards giant radios rather than large
+rows. The target is now the control *or* the label that wraps it.
+
+#### Two tests that were wrong about the world, again
+
+Both asserted on prompts from `test_spr_sl_9`'s hand-built fixture — "How
+fast after one second", "Which lands first" — while the screen correctly
+showed the *seeded* lab's wording. That is the second and third time in Epic
+E. The lesson is not "check the fixture": it is that **two labs exist in
+this codebase**, one written to suit the tests and one a student sees, and a
+test that confuses them fails while the product is fine.
 
 ### SL-E3 — Sketch your curve ⬜
 

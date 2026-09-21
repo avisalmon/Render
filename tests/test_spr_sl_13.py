@@ -25,6 +25,7 @@ import os
 import re
 
 import pytest
+from sensorlab_phone import COMPONENT_LINK_JS, MIN_TAP_PX, OVERFLOW_JS, PHONE, TAP_JS
 
 os.environ.setdefault("DJANGO_ALLOW_ASYNC_UNSAFE", "1")
 
@@ -34,8 +35,6 @@ PASSWORD = "sensorlab-test-passw0rd"
 LAB = "measuring-g"
 RUN = f"/sensorlab/lab/{LAB}/run/"
 OVERVIEW = f"/sensorlab/lab/{LAB}/"
-PHONE = {"width": 390, "height": 844}
-MIN_TAP_PX = 44
 
 HEBREW = re.compile(r"[֐-׿]")
 TEMPLATE_SYNTAX = re.compile(r"\{%|\{\{|\{#")
@@ -442,35 +441,6 @@ def phone_page():
             browser.close()
     except Exception as exc:  # pragma: no cover - depends on the machine
         pytest.skip(f"no browser available: {exc}")
-
-
-TAP_JS = """(minPx) => {
-    const bad = [];
-    document.querySelectorAll('a, button, input, select, [role=button]').forEach(el => {
-        const r = el.getBoundingClientRect();
-        if (r.width > 0 && r.height > 0 && r.height < minPx) {
-            bad.push((el.textContent || el.tagName).trim().slice(0, 28) + ' h=' + Math.round(r.height));
-        }
-    });
-    return [...new Set(bad)];
-}"""
-
-OVERFLOW_JS = """() => {
-    const doc = document.documentElement;
-    return {overflow: doc.scrollWidth > doc.clientWidth + 1,
-            scrollW: doc.scrollWidth, clientW: doc.clientWidth};
-}"""
-
-COMPONENT_LINK_JS = """() => {
-    const bad = [];
-    document.querySelectorAll('a.sl-card, a.sl-button, a.sl-chip').forEach(el => {
-        const s = getComputedStyle(el);
-        if ((s.textDecorationLine || '').includes('underline')) {
-            bad.push((el.className || '') + ' :: ' + el.textContent.trim().slice(0, 24));
-        }
-    });
-    return bad;
-}"""
 
 
 def test_the_runner_holds_up_on_a_phone(phone_page, live_server, django_user_model):

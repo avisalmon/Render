@@ -59,20 +59,17 @@
     {% for block in step_data.blocks %}
       <div class="sl-block sl-block-{{ block.kind }}">{{ block.body_html }}</div>
     {% endfor %}
+  {% elif step == "predict" %}
+    {% include "sensorlab/_predict.html" %}
   {% else %}
     {% comment %}
-      Predict and Experiment, filled by Epics E and F. They say what they
-      are waiting for: a step that renders a heading and a Continue button
-      looks finished and quietly does nothing, which is exactly the failure
-      SL-B4 named with its disabled start button. There is a test.
+      Experiment, until Epic F. It says what it is waiting for: a step that
+      renders a heading and a Continue button looks finished and quietly
+      does nothing, which is the failure SL-B4 named.
     {% endcomment %}
     <div class="sl-card sl-unbuilt">
       <h2>{% t "run.not_built" %}</h2>
-      {% if step == "predict" %}
-        <p>{% t "run.predict_not_built" %}</p>
-      {% else %}
-        <p>{% t "run.experiment_not_built" %}</p>
-      {% endif %}
+      <p>{% t "run.experiment_not_built" %}</p>
     </div>
   {% endif %}
 

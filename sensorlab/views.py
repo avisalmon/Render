@@ -251,7 +251,14 @@ def run_step(request, slug, step):
         # it should carry them forward to where they were, not push them
         # past it.
         if here == reached:
-            attempt.advance()
+            # SL-E1 decided Predict may not be walked past while
+            # questions are unanswered — a Continue that skips the step
+            # makes the lock decorative. The refusal is silent here and
+            # spoken on the page, which is where the student is looking.
+            if step == "predict" and _predict_blockers(attempt):
+                request.session["sensorlab_predict_incomplete"] = True
+            else:
+                attempt.advance()
         return redirect("sensorlab:run_step", slug=lab.slug, step=attempt.resume_step)
 
     if here > reached:
@@ -284,10 +291,110 @@ def run_step(request, slug, step):
         # SL-D1 made the model degrade visibly rather than throw. This is the
         # half that matters: the person is told.
         "progress_moved": not attempt.step_is_known,
+        **(_predict_context(request, attempt) if step == "predict" else {}),
     })
+
+
+def _predict_context(request, attempt):
+    """Everything the Predict step needs, and the two notices it may carry.
+
+    Both notices are read-and-clear: they belong to the redirect that set
+    them, not to the page forever.
+    """
+    answers = {a.question_id: a for a in attempt.prediction_answers.all()}
+    bad_number = request.session.pop("sensorlab_predict_error", None)
+    incomplete = request.session.pop("sensorlab_predict_incomplete", False)
+
+    return {
+        "questions": [
+            {
+                "question": question,
+                "answer": answers.get(question.pk),
+                "answerable": question.kind in ANSWERABLE_KINDS,
+                "bad_number": str(question.pk) == str(bad_number),
+            }
+            for question in attempt.lab.prediction_questions.all()
+        ],
+        "predictions_locked": attempt.predictions_locked,
+        "predict_incomplete": incomplete,
+    }
 
 
 def language_of_request(request):
     from .strings import DEFAULT_LANGUAGE
 
     return getattr(request, "sensorlab_language", DEFAULT_LANGUAGE)
+
+
+# ------------------------------------------------------- Predict (SL-E2)
+
+#: The question kinds this release can actually answer. `graph_sketch` is
+#: SL-E3's control and is deliberately absent — it is still SHOWN on the
+#: screen and marked, rather than dropped, because a student would otherwise
+#: see two questions where the lab has three with nothing saying why.
+ANSWERABLE_KINDS = ("multiple_choice", "numeric", "free_text")
+
+
+def _predict_blockers(attempt):
+    """Questions that must be answered before this step may be left.
+
+    Only answerable kinds count. Requiring an answer to a control that does
+    not exist yet would make the seeded lab unfinishable — and silently
+    excluding the sketch question would hide that a question is missing.
+    Both failures are avoided by excluding it *visibly*: see the template.
+    """
+    return [q for q in attempt.unanswered_predictions() if q.kind in ANSWERABLE_KINDS]
+
+
+@sensorlab_login_required
+def answer_prediction(request, slug):
+    """Record one answer and come back to the step.
+
+    One question at a time rather than one big form: answers save as you go
+    (spec §9.5 E.2), so a student who closes the tab mid-thought has not
+    lost the ones they had already decided.
+    """
+    from django.shortcuts import get_object_or_404
+
+    from .models import LabAttempt, PredictionAnswer, PredictionQuestion
+
+    lab = _runnable_lab(slug)
+    attempt = LabAttempt.objects.filter(
+        user=request.user, lab=lab
+    ).order_by("-started_at").first()
+    if attempt is None or request.method != "POST":
+        return redirect("sensorlab:run", slug=lab.slug)
+
+    back = redirect("sensorlab:run_step", slug=lab.slug, step="predict")
+
+    question = get_object_or_404(
+        PredictionQuestion, pk=request.POST.get("question"), lab=lab
+    )
+
+    payload = {}
+    if question.kind == PredictionQuestion.Kind.MULTIPLE_CHOICE:
+        choice = question.choices.filter(pk=request.POST.get("choice")).first()
+        if choice is None:
+            return back
+        payload["selected_choice"] = choice
+    elif question.kind == PredictionQuestion.Kind.NUMERIC:
+        try:
+            payload["numeric_value"] = float(request.POST.get("numeric", ""))
+        except (TypeError, ValueError):
+            # Back to the page with a complaint, not a 500 and not a
+            # silently discarded answer.
+            request.session["sensorlab_predict_error"] = str(question.pk)
+            return back
+    elif question.kind == PredictionQuestion.Kind.FREE_TEXT:
+        payload["text_value"] = (request.POST.get("text") or "").strip()
+        if not payload["text_value"]:
+            return back
+    else:
+        return back
+
+    try:
+        PredictionAnswer.objects.record(attempt=attempt, question=question, **payload)
+    except PredictionAnswer.Locked:
+        # The lock is the model's, and it holds whatever a form posts.
+        pass
+    return back

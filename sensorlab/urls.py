@@ -19,6 +19,10 @@ urlpatterns = [
     # slug — it cannot, since these are longer, but order is the thing
     # nobody checks until a lab is called "run".
     path("lab/<slug:slug>/run/", views.run, name="run"),
+    # SL-E2. Before the step pattern, so "predict/answer/" is never read
+    # as a step named "predict" with a stray segment after it.
+    path("lab/<slug:slug>/run/predict/answer/", views.answer_prediction,
+         name="answer_prediction"),
     path("lab/<slug:slug>/run/<str:step>/", views.run_step, name="run_step"),
     # Epic C spike: does this device actually give a web page its sensors?
     path("sensor-check/", views.sensor_check, name="sensor_check"),

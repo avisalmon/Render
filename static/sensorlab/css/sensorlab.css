@@ -703,3 +703,57 @@ body {
 .sl-start { margin-block-start: 28px; }
 .sl-start .sl-button { inline-size: 100%; }
 .sl-start p { margin-block-start: 8px; text-align: center; }
+
+/* ----------------------------------------------- the Predict step (SL-E2) */
+
+.sl-questions {
+  list-style: none;
+  margin-block: 18px 0;
+  padding-inline-start: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.sl-question {
+  padding: 16px;
+  background: var(--sl-surface);
+  border: 1px solid var(--sl-line);
+  border-radius: var(--sl-radius-lg);
+}
+
+.sl-question-prompt { margin-block: 0 14px; line-height: 1.5; font-weight: 500; }
+
+/* The whole label is the tap target, not the radio inside it — spec §7.4,
+   and this is the screen where a student commits, which is a bad moment to
+   mis-tap. A guard measures it. */
+.sl-choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-block-size: var(--sl-tap);
+  padding-inline: 10px;
+  margin-block-end: 8px;
+  border: 1px solid var(--sl-line);
+  border-radius: var(--sl-radius-lg);
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.sl-choice input { inline-size: 20px; block-size: 20px; flex: none; }
+.sl-choice:has(input:checked) { border-color: var(--sl-ink); }
+
+.sl-answer-form { display: flex; flex-direction: column; gap: 10px; }
+.sl-answer-form .sl-button { align-self: flex-start; }
+
+.sl-saved { font-size: var(--sl-size-small); color: var(--sl-ink-soft); }
+
+.sl-answer-given { margin-block: 0; line-height: 1.5; }
+.sl-answer-given .sl-label { display: block; margin-block-end: 4px; }
+
+.sl-unbuilt-note { margin-block: 0; line-height: 1.5; }
+
+/* A warning, not an error: nothing has gone wrong, something is simply not
+   finished. Amber is §7.2's PREDICTION colour and this is the Predict step,
+   which is the one place that reading is right rather than borrowed. */
+.sl-notice-warn { border-color: var(--sl-prediction); }

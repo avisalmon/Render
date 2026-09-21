@@ -151,6 +151,47 @@ STRINGS = {
         "he": "המעבדה הזו השתנתה מאז הפעם האחרונה שפתחתם אותה, ולא הצלחנו למצוא את "
               "השלב שהייתם בו — לכן החזרנו אתכם להתחלה. שום דבר ממה שעשיתם לא נמחק.",
     },
+    # the Predict step (SL-E2)
+    "predict.intro": {
+        "en": "Commit to an answer before you measure. Being wrong here is not a "
+              "mistake — it is the whole point, and you will find out which you were "
+              "once the data is in.",
+        "he": "התחייבו לתשובה לפני שאתם מודדים. לטעות כאן זו לא שגיאה — זה בדיוק "
+              "העניין, ותגלו מה היה נכון אחרי שהנתונים ייכנסו.",
+    },
+    "predict.save": {"en": "Save answer", "he": "שמירת תשובה"},
+    "predict.saved": {"en": "saved", "he": "נשמר"},
+    "predict.your_answer": {"en": "Your answer", "he": "התשובה שלכם"},
+    "predict.numeric_hint": {"en": "a number, in m/s²", "he": "מספר, במ׳/ש²"},
+    "predict.not_a_number": {
+        "en": "That is not a number. Write it in digits — 9.6, not \"about ten\".",
+        "he": "זה לא מספר. כתבו אותו בספרות — 9.6, ולא \"בערך עשר\".",
+    },
+    "predict.still_missing": {
+        "en": "Answer every question before you continue. This step only works if you "
+              "commit before the data exists.",
+        "he": "ענו על כל השאלות לפני שממשיכים. השלב הזה עובד רק אם מתחייבים לפני "
+              "שהנתונים קיימים.",
+    },
+    "predict.locked": {
+        "en": "Locked — the experiment has started",
+        "he": "נעול — הניסוי התחיל",
+    },
+    "predict.locked_why": {
+        "en": "Your predictions were fixed the moment you began measuring. That is what "
+              "makes them predictions. You can read them; you cannot change them.",
+        "he": "ההשערות שלכם ננעלו ברגע שהתחלתם למדוד. זה מה שהופך אותן להשערות. "
+              "אפשר לקרוא אותן, אי אפשר לשנות.",
+    },
+    "predict.no_answer_given": {"en": "not answered", "he": "לא נענתה"},
+    # graph_sketch, until SL-E3 builds the control.
+    "predict.sketch_not_built": {
+        "en": "Drawing your expected curve is not built yet — it arrives with the next "
+              "release. It is shown here so you know the lab asks it; you can continue "
+              "without answering this one.",
+        "he": "שרטוט העקומה הצפויה עדיין לא נבנה — הוא יגיע בגרסה הבאה. הוא מוצג כאן "
+              "כדי שתדעו שהמעבדה שואלת את זה; אפשר להמשיך בלי לענות עליה.",
+    },
     # sensor names. Interface copy like everything else — they used to come
     # from an English-only dict in the view, which told a Hebrew reader
     # "Accelerometer" (the SL-A2 bug, third appearance; fixed in SL-B4).

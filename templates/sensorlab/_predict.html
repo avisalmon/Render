@@ -1,0 +1,143 @@
+{% load sensorlab %}
+{% comment %}
+  The Predict step (SL-E2). Included by run_step.html in place of SL-D2's
+  placeholder.
+
+  Nothing here says whether an answer was right. Grading happened at
+  submission (SL-E1); revealing it now would short-circuit Observe, and this
+  is the one screen in the app where being wrong has to feel exactly like
+  being right.
+
+  One form per question rather than one big one, so answers save as you go
+  and a student who closes the tab mid-thought keeps the ones they had
+  already decided.
+{% endcomment %}
+
+{% if predictions_locked %}
+  <div class="sl-card sl-notice" role="status">
+    <h2>{% t "predict.locked" %}</h2>
+    <p class="sl-muted">{% t "predict.locked_why" %}</p>
+  </div>
+{% else %}
+  <p>{% t "predict.intro" %}</p>
+{% endif %}
+
+{% if predict_incomplete %}
+  <div class="sl-card sl-notice sl-notice-warn" role="alert">
+    <p>{% t "predict.still_missing" %}</p>
+  </div>
+{% endif %}
+
+<ol class="sl-questions">
+  {% for row in questions %}
+    <li class="sl-question" data-question="{{ row.question.pk }}">
+      <p class="sl-question-prompt">{{ row.question.prompt }}</p>
+
+      {% if not row.answerable %}
+        {% comment %}
+          graph_sketch, until SL-E3 builds the control. SHOWN and marked, not
+          dropped: a student would otherwise see two questions where the lab
+          has three, with nothing anywhere saying why.
+        {% endcomment %}
+        <p class="sl-muted sl-unbuilt-note">{% t "predict.sketch_not_built" %}</p>
+
+      {% elif predictions_locked %}
+        {% comment %}
+          Locked: readable, not editable. Rendered as text rather than as a
+          disabled form, so there is no input to re-enable and nothing that
+          looks like it might still submit.
+        {% endcomment %}
+        <p class="sl-answer-given">
+          <span class="sl-label">{% t "predict.your_answer" %}</span>
+          {% if row.answer.selected_choice %}{{ row.answer.selected_choice.text }}
+          {% elif row.answer.numeric_value != None %}<span class="sl-tnum">{{ row.answer.numeric_value }}</span>
+          {% elif row.answer.text_value %}{{ row.answer.text_value }}
+          {% else %}<span class="sl-muted">{% t "predict.no_answer_given" %}</span>{% endif %}
+        </p>
+
+      {% else %}
+        <form method="post" action="{% url 'sensorlab:answer_prediction' slug=lab.slug %}"
+              class="sl-answer-form">
+          {% csrf_token %}
+          <input type="hidden" name="question" value="{{ row.question.pk }}">
+
+          {% if row.question.kind == "multiple_choice" %}
+            {% for choice in row.question.choices.all %}
+              {% comment %}
+                The label is the tap target, not the 20px radio inside it —
+                spec §7.4, and this is a bad screen to mis-tap on.
+              {% endcomment %}
+              <label class="sl-choice">
+                <input type="radio" name="choice" value="{{ choice.pk }}"
+                       {% if row.answer.selected_choice_id == choice.pk %}checked{% endif %}>
+                <span>{{ choice.text }}</span>
+              </label>
+            {% endfor %}
+
+          {% elif row.question.kind == "numeric" %}
+            <label class="sl-field">
+              <span class="sl-label">{% t "predict.your_answer" %}</span>
+              {% comment %}
+                `inputmode="decimal"` so a phone offers the number pad —
+                but still a text input, because `type=number` hides a wrong
+                entry from the server instead of letting us say why.
+              {% endcomment %}
+              <input class="sl-input sl-tnum" type="text" name="numeric" inputmode="decimal"
+                     dir="ltr" placeholder="{% t 'predict.numeric_hint' %}"
+                     value="{% if row.answer.numeric_value != None %}{{ row.answer.numeric_value }}{% endif %}">
+            </label>
+            {% if row.bad_number %}
+              <p class="sl-error" role="alert">{% t "predict.not_a_number" %}</p>
+            {% endif %}
+
+          {% else %}
+            <label class="sl-field">
+              <span class="sl-label">{% t "predict.your_answer" %}</span>
+              <textarea class="sl-input" name="text" rows="3">{{ row.answer.text_value|default:"" }}</textarea>
+            </label>
+          {% endif %}
+
+          {% comment %}
+            The Save button is the no-JavaScript path, and it is hidden when
+            the script below is running — because with it AND auto-save you
+            get two ways to do one thing, and without either you get the
+            trap this replaced: pick an answer, skip Save, press Continue,
+            and be told to answer everything you thought you had answered.
+            Found by looking at the screen, not by a failing test.
+          {% endcomment %}
+          <button type="submit" class="sl-button sl-button-quiet sl-save">{% t "predict.save" %}</button>
+          {% if row.answer %}<span class="sl-saved">{% t "predict.saved" %}</span>{% endif %}
+        </form>
+      {% endif %}
+    </li>
+  {% endfor %}
+</ol>
+
+{% if not predictions_locked %}
+<script>
+(function () {
+  "use strict";
+  // Progressive enhancement: answers save the moment they are given, so the
+  // Save button is redundant and is removed rather than left to be pressed
+  // for no effect. Without JavaScript nothing below runs and the buttons
+  // stay, which is the point of doing it this way round.
+  var forms = document.querySelectorAll(".sl-answer-form");
+  Array.prototype.forEach.call(forms, function (form) {
+    var save = form.querySelector(".sl-save");
+    if (save) { save.hidden = true; }
+
+    form.addEventListener("change", function (event) {
+      if (event.target.type === "radio") { form.submit(); }
+    });
+    // Text and numbers save when the field is left, not on every keystroke:
+    // submitting mid-number would record "9" on the way to "9.6".
+    var typed = form.querySelector('input[type="text"], textarea');
+    if (typed) {
+      typed.addEventListener("blur", function () {
+        if (typed.value.trim()) { form.submit(); }
+      });
+    }
+  });
+})();
+</script>
+{% endif %}

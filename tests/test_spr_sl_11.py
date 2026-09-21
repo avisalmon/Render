@@ -25,6 +25,7 @@ import os
 import re
 
 import pytest
+from sensorlab_phone import COMPONENT_LINK_JS, CONTRAST_JS, MIN_TAP_PX, OVERFLOW_JS, PHONE, TAP_JS
 
 os.environ.setdefault("DJANGO_ALLOW_ASYNC_UNSAFE", "1")
 
@@ -34,8 +35,6 @@ PASSWORD = "sensorlab-test-passw0rd"
 TRACKS = "/sensorlab/lab/"
 OVERVIEW = "/sensorlab/lab/measuring-g/"
 SENSORS_PAGE = "/sensorlab/sensors/"
-PHONE = {"width": 390, "height": 844}
-MIN_TAP_PX = 44
 
 HEBREW = re.compile(r"[֐-׿]")
 #: Template syntax that reached the body means a template is being *printed*
@@ -280,67 +279,6 @@ def phone_page():
             browser.close()
     except Exception as exc:  # pragma: no cover - depends on the machine
         pytest.skip(f"no browser available: {exc}")
-
-
-TAP_JS = """(minPx) => {
-    const bad = [];
-    document.querySelectorAll('a, button, input, select, [role=button]').forEach(el => {
-        const r = el.getBoundingClientRect();
-        if (r.width > 0 && r.height > 0 && r.height < minPx) {
-            bad.push((el.textContent || el.tagName).trim().slice(0, 28) + ' h=' + Math.round(r.height));
-        }
-    });
-    return [...new Set(bad)];
-}"""
-
-OVERFLOW_JS = """() => {
-    const doc = document.documentElement;
-    return {overflow: doc.scrollWidth > doc.clientWidth + 1,
-            scrollW: doc.scrollWidth, clientW: doc.clientWidth};
-}"""
-
-CONTRAST_JS = """() => {
-    const lum = (c) => {
-        const m = c.match(/[\\d.]+/g) || [0, 0, 0];
-        const [r, g, b] = m.slice(0, 3).map(v => {
-            const s = v / 255;
-            return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
-        });
-        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-    };
-    const bg = (el) => {
-        let n = el;
-        while (n && n !== document.documentElement) {
-            const c = getComputedStyle(n).backgroundColor;
-            if (c && c !== 'rgba(0, 0, 0, 0)' && c !== 'transparent') return c;
-            n = n.parentElement;
-        }
-        return getComputedStyle(document.body).backgroundColor;
-    };
-    const bad = [];
-    document.querySelectorAll('main *').forEach(el => {
-        if (!el.textContent || !el.textContent.trim()) return;
-        if (el.children.length) return;
-        const s = getComputedStyle(el);
-        if (s.visibility === 'hidden' || s.display === 'none') return;
-        const a = lum(s.color), b = lum(bg(el));
-        const ratio = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
-        if (ratio < 2) bad.push(el.textContent.trim().slice(0, 30) + ' ratio=' + ratio.toFixed(2));
-    });
-    return bad;
-}"""
-
-
-COMPONENT_LINK_JS = """() => {
-    const bad = [];
-    document.querySelectorAll('a.sl-card, a.sl-button, a.sl-chip').forEach(el => {
-        const s = getComputedStyle(el);
-        if ((s.textDecorationLine || '').includes('underline')) {
-            bad.push((el.className || '') + ' :: ' + el.textContent.trim().slice(0, 24));
-        }
-    });
-    return bad;
-}"""
 
 
 def _phone_sign_in(page, live_server, django_user_model):
