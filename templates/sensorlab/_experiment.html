@@ -1,0 +1,214 @@
+{% load sensorlab %}
+{% comment %}
+  The capture step (SL-F2) — the screen this app exists for.
+
+  Instrument mode (§7.1, §7.6): no streaks, no badges, no encouragement.
+  A person is taking a measurement and the screen's whole job is to not get
+  in the way of it.
+
+  The lab's authored config reaches the browser as data attributes rather
+  than hardcoded JavaScript. Changing a lab in the admin has to change the
+  capture, or authored configs were decoration.
+{% endcomment %}
+
+{% if needs_recording_notice %}
+  <div class="sl-card sl-notice sl-notice-warn" role="alert">
+    <p>{% t "capture.needs_recording" %}</p>
+  </div>
+{% endif %}
+
+{% if config.instructions %}
+  {% comment %}
+    Before the button. "Lay the phone flat and do not touch it" is useless
+    after you have pressed record.
+
+    `{% comment %}` and not `{# #}` — Django's hash comment is SINGLE-LINE,
+    and this was written as a two-line one. The remainder leaked straight
+    into the page, which is SL-A1's bug exactly. SL-A1's guard caught it,
+    five epics later, which is the entire argument for writing guards.
+  {% endcomment %}
+  <div class="sl-block">{{ config.instructions|linebreaks }}</div>
+{% endif %}
+
+<section class="sl-instrument sl-capture"
+         data-capture
+         data-sensor="{{ sensor }}"
+         data-axis="{{ axis_filter }}"
+         data-requested-hz="{{ config.requested_hz }}"
+         data-duration-ms="{{ config.max_duration_ms }}"
+         data-attempt="{{ attempt.pk }}"
+         data-label-recording="{% t 'capture.recording' %}"
+         data-label-again="{% t 'capture.again' %}"
+         {% if needs_consent %}data-consent-needed{% endif %}>
+
+  {% if needs_consent %}
+    <div class="sl-refusal" data-consent-block>
+      <p>{% t "capture.needs_consent" %}</p>
+      <button type="button" class="sl-button" data-grant>{% t "capture.allow" %}</button>
+    </div>
+  {% endif %}
+
+  <div class="sl-readout">
+    <span class="sl-label">{% t "capture.live" %}</span>
+    {% comment %}
+      A number that jitters reads as a broken instrument (§7.3), so tabular
+      numerals — and `dir="ltr"`, which here is §7.7 applied correctly: this
+      IS instrument data, not prose with a number in it.
+    {% endcomment %}
+    <output class="sl-stat-value sl-tnum" dir="ltr" data-live>—</output>
+    <span class="sl-stat-unit">m/s²</span>
+  </div>
+
+  <button type="button" class="sl-button sl-record" data-record>{% t "capture.record" %}</button>
+
+  {% comment %}
+    The three walls, each with its own sentence (spec §1 — no degradation
+    tier, so a refusal has to carry its reason). All three are rendered and
+    hidden; the browser reveals whichever one it hits, because only the
+    device knows which.
+  {% endcomment %}
+  <div class="sl-refusal" data-refusal hidden>
+    <p data-refusal-absent hidden>{% t "capture.no_sensor" %}</p>
+    <p data-refusal-silent hidden>{% t "capture.silent_sensor" %}</p>
+    <p data-refusal-consent hidden>{% t "capture.needs_consent" %}</p>
+    <p data-refusal-save hidden>{% t "capture.failed_to_save" %}</p>
+  </div>
+
+  <div class="sl-result" data-result {% if not latest_recording %}hidden{% endif %}>
+    <span class="sl-label">{% t "capture.result" %}</span>
+    {% comment %}
+      `dir="ltr"` on each NUMBER, never on the sentence. Forcing the whole
+      line LTR rendered the Hebrew as "150 50 · קריאות Hz" — the digits
+      collapsed together and the words scattered. §7.7 governs instrument
+      data; a sentence that happens to contain a measurement is still prose,
+      and bidi handles it correctly when left alone.
+
+      This is SL-B4's lesson recurring: the same mistake, on a different
+      screen, one epic later.
+    {% endcomment %}
+    <p>
+      <b class="sl-tnum" dir="ltr" data-result-count>{{ latest_recording.sample_count|default:"" }}</b>
+      {% t "capture.samples" %} ·
+      <b class="sl-tnum" dir="ltr" data-result-hz>{{ latest_recording.achieved_hz|default:"" }}</b>
+      <span dir="ltr">Hz</span>
+      <span class="sl-muted">({% t "capture.achieved" %})</span>
+    </p>
+    <p class="sl-muted">
+      {% t "capture.requested" %}: <span class="sl-tnum" dir="ltr">{{ config.requested_hz }} Hz</span>
+    </p>
+  </div>
+</section>
+
+<script>
+// Deferred to DOMContentLoaded on purpose. `base.html` loads sensors.js at
+// the END of <body>, after this block — so at parse time `window.sensorlab`
+// does not exist yet, and the guard below returned early and did nothing,
+// silently. Pressing Record produced no reading, no refusal and no console
+// error: this app's own "silence that hides", in its own code, found by the
+// round-trip test rather than by any assertion about the markup.
+document.addEventListener("DOMContentLoaded", function () {
+  "use strict";
+  var root = document.querySelector("[data-capture]");
+  if (!root) { return; }
+  if (!window.sensorlab || !window.sensorlab.sensors) {
+    // If this ever happens again it will say so, rather than shrug.
+    console.error("SensorLab: the sensor layer did not load; capture is unavailable.");
+    return;
+  }
+
+  var sensors = window.sensorlab.sensors;
+  var sensor = root.getAttribute("data-sensor");
+  var requestedHz = parseInt(root.getAttribute("data-requested-hz"), 10) || 60;
+  var durationMs = parseInt(root.getAttribute("data-duration-ms"), 10) || 3000;
+  var attemptId = root.getAttribute("data-attempt");
+  // Read from the DOM, not interpolated into this script: a quote or an
+  // apostrophe in Hebrew copy would otherwise break the whole file.
+  var labelRecording = root.getAttribute("data-label-recording");
+  var labelAgain = root.getAttribute("data-label-again");
+
+  // SL-C2 keeps consent in an in-memory map that `loadConsent()` fills from
+  // the server. Without this the browser believes nothing has been granted
+  // — even when the server knows it was — and every capture refuses with
+  // "needs permission". The round-trip test caught exactly that, which is
+  // the whole reason it drives a real browser rather than the view.
+  var consentReady = sensors.loadConsent();
+
+  var live = root.querySelector("[data-live]");
+  var button = root.querySelector("[data-record]");
+  var refusal = root.querySelector("[data-refusal]");
+  var result = root.querySelector("[data-result]");
+
+  function show(which) {
+    // One wall at a time, and never a generic shrug: SL-C1 returns three
+    // separate states because they are three different problems.
+    ["absent", "silent", "consent", "save"].forEach(function (name) {
+      var el = root.querySelector("[data-refusal-" + name + "]");
+      if (el) { el.hidden = name !== which; }
+    });
+    refusal.hidden = false;
+  }
+
+  function csrf() {
+    var m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? m[1] : "";
+  }
+
+  root.addEventListener("click", function (event) {
+    if (!event.target.closest("[data-grant]")) { return; }
+    sensors.grant(sensor).then(function () {
+      var block = root.querySelector("[data-consent-block]");
+      if (block) { block.hidden = true; }
+      root.removeAttribute("data-consent-needed");
+    });
+  });
+
+  button.addEventListener("click", function () {
+    refusal.hidden = true;
+    button.disabled = true;
+    button.textContent = labelRecording;
+
+    consentReady
+      .then(function () {
+        return sensors.request(sensor, {ms: durationMs, requestHz: requestedHz,
+                                        probeMs: 900});
+      })
+      .then(function (run) {
+        if (run.state !== "ok") {
+          // "absent", "silent" and "needs-consent" map to their own words.
+          show(run.state === "needs-consent" ? "consent" : run.state);
+          return null;
+        }
+        if (run.samples.length) {
+          live.textContent = run.samples[run.samples.length - 1].magnitude.toFixed(2);
+        }
+        return fetch("/sensorlab/api/recordings/", {
+          method: "POST",
+          headers: {"Content-Type": "application/json", "X-CSRFToken": csrf()},
+          body: JSON.stringify({
+            attempt: attemptId,
+            sensor: sensor,
+            requested_hz: run.requestedHz,
+            duration_ms: run.durationMs,
+            samples: run.samples
+          })
+        }).then(function (response) {
+          if (!response.ok) { show("save"); return null; }
+          return response.json();
+        });
+      })
+      .then(function (saved) {
+        if (!saved) { return; }
+        root.querySelector("[data-result-count]").textContent = saved.sample_count;
+        // The achieved rate the SERVER measured from the samples, not the
+        // one the browser believed. §4.1, all the way through.
+        root.querySelector("[data-result-hz]").textContent = saved.achieved_hz;
+        result.hidden = false;
+      })
+      .catch(function () { show("save"); })
+      .then(function () {
+        button.disabled = false;
+        button.textContent = labelAgain;
+      });
+  });
+});
+</script>

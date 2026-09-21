@@ -192,6 +192,55 @@ STRINGS = {
         "he": "שרטוט העקומה הצפויה עדיין לא נבנה — הוא יגיע בגרסה הבאה. הוא מוצג כאן "
               "כדי שתדעו שהמעבדה שואלת את זה; אפשר להמשיך בלי לענות עליה.",
     },
+    # the capture step (SL-F2) — the screen this app exists for
+    "capture.ready": {"en": "Ready to measure", "he": "מוכנים למדוד"},
+    "capture.record": {"en": "Record", "he": "הקלטה"},
+    "capture.recording": {"en": "Recording…", "he": "מקליט…"},
+    "capture.again": {"en": "Record again", "he": "הקלטה נוספת"},
+    "capture.live": {"en": "Live reading", "he": "קריאה חיה"},
+    "capture.result": {"en": "What your phone measured", "he": "מה הטלפון שלכם מדד"},
+    "capture.samples": {"en": "readings", "he": "קריאות"},
+    "capture.mean": {"en": "average |a|", "he": "ממוצע |a|"},
+    # §4.1 is why this label exists at all: a phone asked for 200 Hz gave 63.
+    # A capture screen that showed the REQUESTED rate would be lying in the
+    # one place this app claims to be a measuring instrument.
+    "capture.achieved": {"en": "actually achieved", "he": "הושג בפועל"},
+    "capture.requested": {"en": "asked for", "he": "התבקש"},
+    "capture.saved": {"en": "Saved to your lab notebook", "he": "נשמר במחברת שלכם"},
+    "capture.needs_recording": {
+        "en": "Record at least one measurement before you continue. A lab you can "
+              "walk past without measuring anything is a slideshow.",
+        "he": "הקליטו לפחות מדידה אחת לפני שממשיכים. מעבדה שאפשר לעבור בלי למדוד "
+              "כלום היא מצגת.",
+    },
+    # The three walls, each with its own sentence (spec §1, SL-C1's three
+    # probe states). They are different problems and a student deserves the
+    # true one rather than a shrug.
+    "capture.needs_consent": {
+        "en": "SensorLab has not been given permission to read this sensor yet. "
+              "Nothing has been measured.",
+        "he": "SensorLab עדיין לא קיבל רשות לקרוא את החיישן הזה. שום דבר לא נמדד.",
+    },
+    "capture.allow": {"en": "Allow this sensor", "he": "לאפשר את החיישן"},
+    "capture.no_sensor": {
+        "en": "This phone does not have the sensor this lab needs, so the lab cannot "
+              "run here. That is the phone, not you — try another device.",
+        "he": "לטלפון הזה אין את החיישן שהמעבדה צריכה, ולכן המעבדה לא יכולה לרוץ כאן. "
+              "זה הטלפון, לא אתם — נסו מכשיר אחר.",
+    },
+    "capture.silent_sensor": {
+        "en": "The sensor is there but it is not answering. Nothing was recorded. "
+              "This usually means the browser is blocking it — try reloading, or "
+              "opening SensorLab over https.",
+        "he": "החיישן קיים אבל הוא לא מגיב. שום דבר לא הוקלט. בדרך כלל זה אומר "
+              "שהדפדפן חוסם אותו — נסו לרענן, או לפתוח את SensorLab דרך https.",
+    },
+    "capture.failed_to_save": {
+        "en": "Your phone measured it, but saving failed. The reading is still on "
+              "screen — do not close this page.",
+        "he": "הטלפון שלכם מדד, אבל השמירה נכשלה. הקריאה עדיין על המסך — אל תסגרו "
+              "את הדף.",
+    },
     # sensor names. Interface copy like everything else — they used to come
     # from an English-only dict in the view, which told a Hebrew reader
     # "Accelerometer" (the SL-A2 bug, third appearance; fixed in SL-B4).

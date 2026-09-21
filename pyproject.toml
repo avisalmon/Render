@@ -111,6 +111,8 @@ markers = [
     "sprsl15: SL-E1 SensorLab a prediction, and when it locks",
     "sprsl16: SL-E2 SensorLab the Predict screen",
     "sprsl17: SL-E4 SensorLab predictions over REST",
+    "sprsl18: SL-F1 SensorLab the recording, and its payload",
+    "sprsl19: SL-F2 SensorLab the capture screen",
     "smoke: the fast gate, run on every push (see tests/test_smoke.py)",
 ]
 

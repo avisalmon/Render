@@ -257,6 +257,10 @@ def run_step(request, slug, step):
             # spoken on the page, which is where the student is looking.
             if step == "predict" and _predict_blockers(attempt):
                 request.session["sensorlab_predict_incomplete"] = True
+            elif step == "experiment" and not attempt.recordings.exists():
+                # Symmetric with Predict (SL-E2). A lab you can walk
+                # past without measuring anything is a slideshow.
+                request.session["sensorlab_needs_recording"] = True
             else:
                 attempt.advance()
         return redirect("sensorlab:run_step", slug=lab.slug, step=attempt.resume_step)
@@ -292,8 +296,38 @@ def run_step(request, slug, step):
         # half that matters: the person is told.
         "progress_moved": not attempt.step_is_known,
         **(_predict_context(request, attempt) if step == "predict" else {}),
+        **(_experiment_context(request, attempt) if step == "experiment" else {}),
     })
 
+
+
+def _experiment_context(request, attempt):
+    """What the capture screen needs (SL-F2).
+
+    The config is AUTHORED (SL-B1), so it is handed to the template and from
+    there to the browser as data attributes — never hardcoded in JavaScript.
+    Changing a lab in the admin has to change the capture, or authored
+    configs were decoration.
+    """
+    from .models import SensorConsent
+    from .profiles import profile_for
+
+    config = getattr(attempt.lab, "experiment", None)
+    requirements = list(config.sensor_requirements.all()) if config else []
+    primary = next((r for r in requirements if r.is_required), None)
+    profile = profile_for(attempt.user)
+
+    return {
+        "needs_recording_notice": request.session.pop("sensorlab_needs_recording", False),
+        "config": config,
+        "sensor": primary.sensor if primary else None,
+        "axis_filter": primary.axis_filter if primary else "",
+        "needs_consent": bool(
+            primary and not SensorConsent.objects.granted(profile, primary.sensor)
+        ),
+        "recordings": list(attempt.recordings.all()[:5]),
+        "latest_recording": attempt.recordings.first(),
+    }
 
 def _predict_context(request, attempt):
     """Everything the Predict step needs, and the two notices it may carry.

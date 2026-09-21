@@ -26,6 +26,7 @@ from .curriculum import (
                          SensorRequirementViewSet,
                          TrackViewSet,
 )
+from .recordings import SensorRecordingViewSet
 
 #: Everything SensorLab exposes hangs off this.
 router = DefaultRouter()
@@ -45,3 +46,6 @@ router.register("attempts", LabAttemptViewSet)
 
 # SL-E4. Rule 6 debt from SL-E1, which shipped the model without an API.
 router.register("prediction-answers", PredictionAnswerViewSet)
+
+# SL-F1. The first resource holding something measured rather than chosen.
+router.register("recordings", SensorRecordingViewSet)

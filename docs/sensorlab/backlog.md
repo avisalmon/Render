@@ -54,7 +54,7 @@ runs pip), `env\Scripts\activate` for everything Python, and
 | **B — Curriculum and authoring** | SL-B1 … SL-B4 | ✅ done |
 | **D — The lab runner** | SL-D1 … SL-D3 | ✅ done |
 | **E — Predict** | SL-E1 … SL-E4 | 🔵 SL-E1, SL-E2 done |
-| **F — Capture** | SL-F1 … SL-F2 | 🔵 scoped at the gate |
+| **F — Capture** | SL-F1 … SL-F2 | ✅ done |
 | G — Analysis | tbd at gate | ⬜ |
 | H — Lab notebook | tbd at gate | ⬜ |
 | I — AI tutor | tbd at gate | ⬜ |
@@ -1233,7 +1233,35 @@ Spec §9.6, written at the gate on 2026-09-21. **This is the epic the app
 exists for**, and the one that makes a demo worth showing: a phone becomes
 an instrument and a student gets a number nobody gave them.
 
-### SL-F1 — The recording, and how a payload gets here ⬜
+### SL-F1 — The recording, and how a payload gets here ✅
+
+Marker: `sprsl18` — 15 tests.
+
+#### The §9.0 item 1 transport decision, made
+
+**One inline POST with a hard cap of 20,000 samples.** A 60-second capture
+at the ~63 Hz §4.1 actually measured is about 3,800 readings; 20,000 leaves
+room for a future lab at several hundred Hz and is still a body one request
+carries comfortably.
+
+**Refusing beats truncating, and it is not close.** A truncated capture
+still produces a plausible number, and a plausible *wrong* number is the
+worst thing this app could hand a student. A refusal they can read is
+recoverable; a quietly shortened run is not. The API answers **413**, not a
+stack trace, and a test checks the cap is big enough that no seeded lab can
+legitimately hit it — a limit that refuses real work is a bug, not a
+safeguard.
+
+**`achieved_hz` is measured, never believed.** Computed from the samples'
+own timestamps; a figure sent by the client is ignored. `sensors.js` reports
+what it observed, but a *record* that repeats a claim is not evidence. Zero
+for a capture too short to have a rate — an honest nothing rather than a
+number invented from one reading.
+
+Shipped **with** its API this time, rather than as a debt: the SL-E1 → SL-E4
+lesson applied rather than repeated.
+
+### ~~SL-F1~~ (original plan)
 
 Marker: `sprsl18`
 
@@ -1249,7 +1277,58 @@ Marker: `sprsl18`
 - [ ] API, owner-scoped, shipped with the model this time rather than as a
       debt (the SL-E1 → SL-E4 lesson).
 
-### SL-F2 — The capture screen ⬜
+### SL-F2 — The capture screen ✅
+
+Marker: `sprsl19` — 15 tests. **This is the screen the app exists for**, and
+`design/sl-f2-measured-{en,he}.png` is what it looks like with 9.81 m/s² on
+it.
+
+The round trip is proven in a real browser against `sensors.js`'s documented
+`window.__slFake*` seam (SL-C1): consent gate, capture, rate measured from
+the samples, POST, row in the database, number on screen. The seam exists
+because no CI machine has an accelerometer and "it works on my phone" is not
+a test — everything above the fake source is the real thing.
+
+#### Three bugs the round-trip test found that nothing else could
+
+1. **The browser did not know consent had been granted.** SL-C2 keeps
+   consent in an in-memory map that `loadConsent()` fills from the server,
+   and the capture screen never called it. The server said yes; the browser
+   refused every capture with "needs permission". Only a test that drives
+   both halves could see that.
+
+2. **The script ran before the sensor layer existed.** `base.html` loads
+   `sensors.js` at the *end* of `<body>` — after the content block — so the
+   inline capture script found `window.sensorlab` undefined and returned
+   early. **Silently.** Pressing Record produced no reading, no refusal and
+   no console error: this app's own "silence that hides", in its own code.
+   Now deferred to `DOMContentLoaded`, and the guard says something if it
+   ever happens again.
+
+3. **A two-line `{# ... #}` comment** leaked into the page. Django's hash
+   comment is single-line. That is SL-A1's bug exactly — caught five epics
+   later by the guard SL-A1 wrote, which is the entire argument for guards.
+
+#### And two mistakes of my own worth recording
+
+**A wait that passed before the thing it waited for happened.** The round
+trip waited for the result panel to become visible — but that panel is
+already visible whenever an earlier recording exists, so the wait returned
+instantly and read a screen still mid-capture. It now waits for the record
+button to come back.
+
+**`dir="ltr"` on a sentence again.** The Hebrew results line rendered as
+"150 50 · קריאות Hz" — digits collapsed, words scattered. §7.7 governs
+instrument *data*; a sentence containing a measurement is still prose. This
+is SL-B4's lesson recurring on a different screen one epic later, which is
+why it is written down rather than just fixed.
+
+#### Not in Epic F, as scoped
+
+Threshold triggers, haptics, tone and strobe generators, video. None stands
+between here and a student measuring gravity.
+
+### ~~SL-F2~~ (original plan)
 
 Marker: `sprsl19`
 

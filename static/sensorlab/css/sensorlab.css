@@ -757,3 +757,46 @@ body {
    finished. Amber is §7.2's PREDICTION colour and this is the Predict step,
    which is the one place that reading is right rather than borrowed. */
 .sl-notice-warn { border-color: var(--sl-prediction); }
+
+/* ---------------------------------------- the capture screen (SL-F2) */
+
+/* Instrument mode in earnest (§7.1, §7.6). No streaks, no encouragement —
+   a person is taking a measurement and the screen's job is to stay out of
+   the way of it. `.sl-instrument` already redefines the tokens AND applies
+   them (the SL-A4 bug); this only lays things out. */
+.sl-capture {
+  margin-block: 20px;
+  padding: 20px 16px;
+  border-radius: var(--sl-radius-lg);
+}
+
+.sl-readout {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-block-end: 18px;
+}
+
+.sl-readout .sl-label { inline-size: 100%; }
+
+.sl-capture .sl-stat-value {
+  font-size: var(--sl-size-display);
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* The one control that matters on this screen, so it is the size of a
+   thumb and nothing competes with it. */
+.sl-record {
+  inline-size: 100%;
+  min-block-size: 56px;
+  font-size: 17px;
+}
+
+.sl-refusal { margin-block-start: 16px; }
+.sl-refusal p { margin-block: 0 10px; line-height: 1.55; }
+.sl-refusal .sl-button { inline-size: 100%; }
+
+.sl-result { margin-block-start: 20px; }
+.sl-result p { margin-block: 6px 0; line-height: 1.5; }

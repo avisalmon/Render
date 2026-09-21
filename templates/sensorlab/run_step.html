@@ -62,15 +62,7 @@
   {% elif step == "predict" %}
     {% include "sensorlab/_predict.html" %}
   {% else %}
-    {% comment %}
-      Experiment, until Epic F. It says what it is waiting for: a step that
-      renders a heading and a Continue button looks finished and quietly
-      does nothing, which is the failure SL-B4 named.
-    {% endcomment %}
-    <div class="sl-card sl-unbuilt">
-      <h2>{% t "run.not_built" %}</h2>
-      <p>{% t "run.experiment_not_built" %}</p>
-    </div>
+    {% include "sensorlab/_experiment.html" %}
   {% endif %}
 
   {% if is_complete and is_last %}

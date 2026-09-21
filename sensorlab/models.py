@@ -840,3 +840,138 @@ class PredictionAnswer(models.Model):
         """
         return self.attempt.resume_step == LAB_STEPS[-1] or \
             self.attempt.status == self.attempt.Status.COMPLETED
+
+
+# ===========================================================================
+# What the world said back (data_model.md §6, spec §9.6)
+#
+# The first table here that stores something MEASURED rather than authored or
+# chosen. Everything before it is content or a decision; a recording is the
+# answer a phone gave.
+# ===========================================================================
+
+
+class SensorRecordingManager(models.Manager):
+    def record(self, attempt, sensor, requested_hz, samples, duration_ms,
+               label="", **_ignored_client_claims):
+        """Store a capture, measuring what it actually was.
+
+        `achieved_hz` is computed from the samples' own timestamps and any
+        figure the client sent is ignored — see the field for why.
+        """
+        if sensor not in SENSORS:
+            raise ValueError(
+                f"{sensor!r} is not a sensor this app knows about. "
+                f"A recording of the wrong instrument is not a slip; it is a "
+                f"row that makes every later analysis wrong."
+            )
+
+        samples = list(samples or [])
+        if len(samples) > self.model.MAX_SAMPLES:
+            raise self.model.TooLarge(
+                f"{len(samples)} samples exceeds the {self.model.MAX_SAMPLES} "
+                f"this app accepts in one capture. Nothing was saved."
+            )
+
+        return self.create(
+            attempt=attempt,
+            sensor=sensor,
+            requested_hz=requested_hz,
+            achieved_hz=self.model.measure_rate(samples),
+            duration_ms=duration_ms,
+            sample_count=len(samples),
+            samples=samples,
+            label=label,
+        )
+
+
+class SensorRecording(models.Model):
+    """One capture, by one phone, during one attempt.
+
+    **The deliberate exception to Rule 1** (`data_model.md` §6): samples are
+    a payload on this row, not a row each. Nobody edits, lists or deletes
+    sample #4,312 — the *recording* is the object a person sees, names,
+    replays and deletes.
+
+    The line that must not be crossed is the one that actually burned
+    ustrip: the payload lives **in the database, on a real row**, never in a
+    file the app merely points at. There is no `FileField` here, and a test
+    asserts there never will be.
+    """
+
+    class TooLarge(Exception):
+        """Raised instead of truncating. See `MAX_SAMPLES`."""
+
+    #: **§9.0 item 1, decided in SL-F1: one inline POST with a hard cap.**
+    #:
+    #: A 60-second capture at the ~63 Hz spec §4.1 actually measured is
+    #: about 3,800 readings; 20,000 leaves room for a future lab at several
+    #: hundred Hz on a phone that can do it, and is still a body a single
+    #: request carries comfortably.
+    #:
+    #: Refusing loudly beats truncating, and it is not a close call: a
+    #: truncated capture still produces a plausible number, and a plausible
+    #: WRONG number is the worst thing this app could hand a student. A
+    #: refusal they can read is recoverable; a quietly shortened run is not.
+    MAX_SAMPLES = 20_000
+
+    attempt = models.ForeignKey(
+        "sensorlab.LabAttempt", on_delete=models.CASCADE, related_name="recordings"
+    )
+    sensor = models.CharField(max_length=32, choices=SENSOR_CHOICES)
+
+    #: Both, always — spec §4.1. The phone that ran the spike answered ~63 Hz
+    #: to a request for 200, and a recording that keeps only the request is
+    #: storing a wish. Every frequency derived from the wrong one is wrong by
+    #: that ratio.
+    requested_hz = models.PositiveIntegerField()
+    achieved_hz = models.FloatField(default=0)
+
+    duration_ms = models.PositiveIntegerField(default=0)
+    sample_count = models.PositiveIntegerField(default=0)
+
+    #: `[{"t": ms, "x":…, "y":…, "z":…}, …]` — the shape `sensors.js`
+    #: already produces, stored as it arrives so nothing is lost in a
+    #: translation nobody asked for.
+    samples = models.JSONField(default=list)
+
+    label = models.CharField(max_length=80, blank=True)
+    recorded_at = models.DateTimeField(auto_now_add=True)
+
+    objects = SensorRecordingManager()
+
+    class Meta:
+        ordering = ("-recorded_at", "-id")
+        indexes = [models.Index(fields=["attempt", "sensor"])]
+
+    def __str__(self):
+        return f"{self.sensor} × {self.sample_count} ({self.attempt})"
+
+    @staticmethod
+    def measure_rate(samples):
+        """The rate this capture actually achieved, from its own timestamps.
+
+        Measured rather than believed, because the client is the one thing
+        here with no way to know: `sensors.js` reports what it observed, but
+        a recording is the record, and a record that repeats a claim is not
+        evidence. Spanning first to last rather than dividing by the
+        requested duration, so a slow start does not flatter the figure.
+
+        Zero for a capture too short to have a rate — an honest nothing
+        rather than a number invented from one reading.
+        """
+        if len(samples) < 2:
+            return 0.0
+        span = samples[-1].get("t", 0) - samples[0].get("t", 0)
+        if span <= 0:
+            return 0.0
+        return round((len(samples) - 1) * 1000.0 / span, 1)
+
+    @property
+    def magnitudes(self):
+        """|a| per sample. Epic G computes from this."""
+        out = []
+        for s in self.samples:
+            x, y, z = s.get("x", 0) or 0, s.get("y", 0) or 0, s.get("z", 0) or 0
+            out.append((x * x + y * y + z * z) ** 0.5)
+        return out
