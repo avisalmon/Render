@@ -212,6 +212,31 @@ def _answer_predictions(client, user):
             client.post(answer_url, {"question": question.pk, "text": "because"})
 
 
+def _record_something(user):
+    """Satisfy what SL-F2 requires before Experiment will let anyone past.
+
+    The second time this helper has had to learn a new rule: SL-E2 made
+    Continue refuse at Predict until the questions are answered, and SL-F2
+    made it refuse at Experiment until something has been measured. Both are
+    correct — a lab you can walk past without predicting or measuring is a
+    slideshow — and both broke a walk written before they existed.
+
+    The full-suite regression caught this one; running sl_13 alone did not,
+    because the last time it ran alone Epic F did not exist yet. That is the
+    argument for the epic gate in one sentence.
+    """
+    from sensorlab.models import SensorRecording
+
+    attempt = _attempt(user)
+    if attempt.recordings.exists():
+        return
+    SensorRecording.objects.record(
+        attempt=attempt, sensor="accelerometer", requested_hz=60,
+        samples=[{"t": i * 16.0, "x": 0, "y": 0, "z": 9.8} for i in range(60)],
+        duration_ms=1000,
+    )
+
+
 def _advance_to(client, user, step):
     """Walk the attempt forward through the real flow, not by fiat."""
     from sensorlab.models import LAB_STEPS
@@ -225,6 +250,8 @@ def _advance_to(client, user, step):
         assert LAB_STEPS.index(attempt.current_step) < LAB_STEPS.index(step)
         if attempt.current_step == "predict":
             _answer_predictions(client, user)
+        elif attempt.current_step == "experiment":
+            _record_something(user)
         client.post(_step_url(attempt.current_step))
 
     raise AssertionError(
@@ -326,6 +353,8 @@ def test_continuing_advances_the_attempt_and_finishing_completes_it(client, djan
         assert _attempt(user).current_step == step
         if step == "predict":
             _answer_predictions(client, user)
+        elif step == "experiment":
+            _record_something(user)
         client.post(_step_url(step))
 
     attempt = _attempt(user)
@@ -356,6 +385,8 @@ def test_a_finished_attempt_says_it_is_finished(client, django_user_model):
     for step in LAB_STEPS:
         if step == "predict":
             _answer_predictions(client, user)
+        elif step == "experiment":
+            _record_something(user)
         client.post(_step_url(step))
 
     html = _body(client.get(_step_url("analysis")).content.decode())

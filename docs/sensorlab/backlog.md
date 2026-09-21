@@ -1389,6 +1389,37 @@ outcome — because the whole method depends on a student being willing to
 commit to an answer they might get wrong. A screen that punishes that
 teaches them not to commit.
 
+#### The regression gate did its job, on my own work
+
+The first full run after SL-G1 found **five new failures, all in SL-D2's
+runner tests** — mine. SL-F2 added "Continue is refused until something has
+been recorded", which broke walk helpers written before Epic F existed.
+Exactly the shape of SL-E2 breaking the same helpers at Predict, one epic
+earlier.
+
+Running `test_spr_sl_13.py` alone did not catch it, and could not have: the
+last time it ran in isolation, **Epic F did not exist**. That is the
+argument for the epic gate in one sentence, and it is why nothing was
+pushed until the second run came back clean.
+
+Second run: **2812 passed, 26 failed, 6 errors**, and the diff against
+`docs/regression_baseline.txt` is **empty** — no new failures. Three
+baseline entries now pass.
+
+#### The errors, reported rather than absorbed
+
+Six errors and one failure, all in `test_spr_z_6.py` (memz) and
+`test_ustrip_mobile.py`. **Every one passes in isolation**, and all 33 of
+those two files' tests pass when run together. The same two files errored at
+the Epic D gate too, before any of this work existed — so this is the
+repo's known browser-test contention in the full ~2900-test run, not a
+regression.
+
+It is honest to add that Epic F and G put **two more Playwright files** into
+that suite, which can only make contention worse. A session-scoped browser
+fixture shared across all of them would cut the number of Playwright
+contexts from six to one, and is the obvious fix when somebody wants it.
+
 #### The `{# #}` bug, for the third time — and the guard that ends it
 
 The analysis explanation shipped with a **two-line `{# ... #}`** comment
