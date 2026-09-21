@@ -1081,6 +1081,13 @@ body.rail-no-scroll { overflow: hidden; }
    Home — "הדרכה" hero box (the live product, focal, light-blue)
    ===================================================================== */
 .training-hero {
+  /* F-14.3 — measured 2026-09-21. Without this the box sizes itself from
+     its contents (a 604px video plus the body's max-content) and renders
+     1440px inside a 1116px column, dragging the signed-in home page 242px
+     sideways at 1280. Neither `width: auto` nor `min-width: 0` on the flex
+     children changes it; both were tried in the live page and measured.
+     This is the line that does: hero 1440 -> 1116, document 1522 -> 1280. */
+  max-width: 100%;
   display: flex; align-items: stretch; gap: 0;
   text-decoration: none; color: var(--text-primary);
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);

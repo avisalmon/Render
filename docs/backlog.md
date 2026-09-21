@@ -1604,7 +1604,7 @@ Small things that are true and untracked, which is how they stay wrong.
 |---|---|---|---|
 | F-14.1 | Generate `docs/dashboard.html` from the spec and the backlog, with a test that fails when it drifts | Rule 4 | TODO |
 | F-14.2 | A `docs/data_model.md` for babook | Rule 4 | TODO |
-| F-14.3 | The signed-in home page scrolls sideways at 1280px | measured 2026-09-21 | TODO |
+| F-14.3 | The signed-in home page scrolls sideways at 1280px | measured 2026-09-21 | DONE 2026-09-21 |
 
 **F-14.1.** babook's dashboard is hand-maintained and has been stale since
 2026-05-27: its newest sprint is SPR-2.2. Every app generates its own, and
@@ -1621,12 +1621,24 @@ out, the same page measures 1280 and does not. The offender is
 `A.training-hero`, which renders **1440px wide inside a 1116px section**
 (`SECTION.home-train`), pulling its left edge to -242 in RTL.
 
-The obvious cause is not the cause: setting `min-width: 0` on
+**Fixed the same day.** `max-width: 100%` on `.training-hero`, which is the
+line that measured: hero 1440 to 1116, document 1522 to 1280. The box was
+sizing itself from its contents, a 604px video plus the body's max-content,
+rather than from its column.
+
+The obvious cause was not the cause: setting `min-width: 0` on
 `.training-hero-body` and `.training-hero-media` in the live page changes
 nothing, so this is not the usual flex-item `min-width: auto` story. Recorded
 with the numbers and without a theory, because a wrong theory in a backlog is
 worse than none: the next person tries it, it fails, and they distrust the
-report rather than the theory.
+report rather than the theory. The theory came later, from the browser, by
+trying three candidate rules in the live page and measuring each.
+
+`tests/test_spr_14_3.py` holds it, and it had to be a browser test: 220 tests
+render this page and every one of them reads HTML, where a box 324px too wide
+looks exactly like a box that fits. Only a viewport can tell. Checked at 1280,
+1024 and 390, signed in and signed out, and confirmed to fail when the fix is
+removed.
 
 **F-14.2.** Every app has a data model document because Rule 4 says so. babook
 predates the rule and has none, so the shape of the oldest and most-depended-on
