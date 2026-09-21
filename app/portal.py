@@ -59,6 +59,7 @@ class App:
     audience: str
     blurb: str
     key: str = ""  # the group name, or the settings key holding the list
+    admin_bypass: bool = False  # see below; only ustrip declares it
 
 
 APPS = [
@@ -89,6 +90,12 @@ APPS = [
         path="/ustrip/",
         audience=GROUP,
         key="family",
+        # ustrip has let any superuser in since it was built, so the site
+        # admin never has to remember to add themself to `family` before
+        # opening his own app. Declared here rather than left inside
+        # ustrip, because F-13.4 found it as a disagreement: the door
+        # opened for an admin and the portal showed them no card.
+        admin_bypass=True,
         blurb="תכנון הטיול המשפחתי: התוכנית להיום, הציוד, ויומן התמונות.",
     ),
     App(
@@ -132,6 +139,37 @@ def _permitted_people(key):
     return {e.strip().lower() for e in allowed if e and e.strip()}
 
 
+def _holds_one_of(user, emails):
+    """Whether this person holds one of these addresses.
+
+    `User.email` is the usual answer, and it is not the only one: allauth may
+    hold a *verified* address that differs from the User row, and somebody the
+    owner deliberately added by that address is still that person. The house's
+    own door has always read both, and F-13.4 found that the portal read only
+    the first, so a person in exactly that position could open `/home` and
+    never see a card for it. One rule now, and it is the more careful one.
+
+    Unverified addresses are never enough: an address anybody can type is not
+    an identity, and this list is what stands between strangers and a named
+    family's cameras.
+    """
+    if not emails:
+        return False
+    if (user.email or "").strip().lower() in emails:
+        return True
+    try:
+        from django.db.models.functions import Lower
+
+        return (
+            user.emailaddress_set.filter(verified=True)
+            .annotate(lowered=Lower("email"))
+            .filter(lowered__in=emails)
+            .exists()
+        )
+    except Exception:  # noqa: BLE001 - allauth absent, or its schema differs
+        return False
+
+
 def _may(user, app):
     """The decision itself, for one person and one app.
 
@@ -141,12 +179,14 @@ def _may(user, app):
     """
     if not getattr(user, "is_authenticated", False):
         return False
+    if app.admin_bypass and user.is_superuser:
+        return True
     if app.audience == EVERYONE:
         return True
     if app.audience == GROUP:
         return user.groups.filter(name=app.key).exists()
     if app.audience == PEOPLE:
-        return (user.email or "").strip().lower() in _permitted_people(app.key)
+        return _holds_one_of(user, _permitted_people(app.key))
     return False
 
 

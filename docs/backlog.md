@@ -1580,7 +1580,7 @@ this epic is the work that follows from it.
 | F-13.1 | One function that answers "which apps may this person see", asked by the portal and by each app's own door | §0.5 | DONE 2026-09-21 |
 | F-13.2 | The main page as a portal: the person's apps, and nothing about the apps that are not theirs | §0.3, §0.6 | DONE 2026-09-21 |
 | F-13.3 | An app registry the portal reads, rather than a list hardcoded in a template | §0.6 | TODO |
-| F-13.4 | Each app's own door asks the same function, so a hidden card and an open URL cannot disagree | §0.5 | TODO |
+| F-13.4 | Each app's own door asks the same function, so a hidden card and an open URL cannot disagree | §0.5 | ustrip + /home DONE 2026-09-21; memz + sensorlab held |
 
 **Why F-13.1 comes first.** Entry is decided four different ways today: a
 Django group (ustrip), an app's own access module (מט״צים), plain sign-in

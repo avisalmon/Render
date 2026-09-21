@@ -130,6 +130,28 @@ Four decisions inside it worth knowing:
   settings key. An app's door may ask this module; this module asks no app
   anything.
 
+**F-13.4, 2026-09-21: each door now asks that same function**, and wiring the
+first two found that they had already drifted. Both disagreements were live:
+
+- **`/home` was more permissive than its card.** The door accepts a *verified*
+  allauth address that differs from `User.email`; the portal read only
+  `User.email`. Somebody the owner had deliberately added by such an address
+  could open the house and never see a card for it. The door was right, so the
+  card adopted its rule.
+- **ustrip was more permissive than its card.** It has let any superuser in
+  since it was built, so the admin never has to add himself to `family` first.
+  The portal said staff get nothing, so an admin saw no card and could still
+  open the trip. The exception moved onto the app in the registry
+  (`admin_bypass`), where the portal can see it. Nobody gained access they did
+  not already have, and the house declares no such exception.
+
+Neither was found by reading the code. Both fell out of writing one sweep that
+asks the card and the door about every app for every kind of person, which is
+the argument for the sweep.
+
+Still to do: `memz` and `sensorlab` doors, held while other sessions are mid
+sprint in those two apps.
+
 CrashTech was not in the list and is therefore not on the portal, recorded in
 `NOT_IN_THE_PORTAL` so that adding it is a decision rather than a drift.
 

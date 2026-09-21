@@ -108,16 +108,32 @@ def test_the_house_is_one_person(people):
         assert "home" not in _slugs(people[who])
 
 
-def test_being_staff_grants_nothing(people):
+def test_being_staff_grants_nothing_unless_an_app_says_so(people):
     """Deliberate, and the opposite of what most permission code does.
 
-    A superuser can already reach anything through /admin/, so a bypass here
-    buys nothing and costs the two rules that are actually about privacy: the
-    family's trip and one household's cameras. Fail shut, and let the list
-    decide.
+    A superuser can already reach anything through /admin/, so a blanket bypass
+    here buys nothing and costs the rules that are actually about privacy.
+
+    **One exception, and it is declared rather than assumed.** ustrip has let
+    any superuser in since it was built, so the site admin never has to
+    remember to add themself to `family` before opening his own app. F-13.4
+    found that as a disagreement: the door opened and the portal showed no
+    card. The fix was to move the exception onto the app in the registry, where
+    the portal can see it, rather than to change what ustrip allows. Nobody
+    gained access they did not already have.
+
+    The house declares no such exception, and that is the point of having the
+    flag per app instead of one rule for staff: a superuser who is not on the
+    list still cannot see it.
     """
     seen = _slugs(people["staff"])
-    assert "ustrip" not in seen and "home" not in seen
+    assert "home" not in seen, "an admin was handed somebody's house"
+    assert "ustrip" in seen, "the card still hides what ustrip's door opens"
+
+    from app.portal import APPS
+
+    declared = {a.slug for a in APPS if a.admin_bypass}
+    assert declared == {"ustrip"}, f"an app quietly granted admins access: {declared}"
 
 
 def test_a_stranger_signed_out_sees_no_cards(db):
@@ -256,3 +272,68 @@ def test_training_is_still_the_hero(client, people, settings):
     somebody decides that on purpose."""
     body = _home(client, people["owner"], settings)
     assert body.index("training-hero") < body.index("home-apps")
+
+
+# ------------------------------------------- F-13.4, the doors themselves
+
+
+def test_a_verified_address_on_the_list_gets_both_the_card_and_the_door(client, people, settings):
+    """The first disagreement F-13.4 found, and it was already live.
+
+    `/home`'s door accepts a *verified allauth address* that differs from
+    `User.email`, because allauth may hold a confirmed address the User row
+    does not. The portal only ever looked at `User.email`. So somebody in
+    exactly that position could open the house and never see a card for it.
+
+    The door's rule is the right one, so the card adopts it rather than the
+    door being narrowed: this is a person the owner deliberately let in.
+    """
+    from app.portal import may_enter
+
+    person = people["stranger"]
+    emailaddress = pytest.importorskip("allauth.account.models").EmailAddress
+    emailaddress.objects.create(user=person, email="AVI@example.com",
+                                verified=True, primary=False)
+
+    assert may_enter(person, "home"), "the card does not know what the door allows"
+    client.force_login(person)
+    assert client.get("/home/").status_code == 200
+
+
+def test_the_ustrip_door_and_the_ustrip_card_agree_for_an_admin(client, people):
+    """The second disagreement, also already live.
+
+    ustrip lets any superuser in on purpose, so the site admin never has to
+    remember to add themself to `family` before they can open their own app.
+    The portal said staff get nothing. So an admin who is not in the family
+    saw no card and could still open the trip.
+
+    Recorded as one rule rather than two: the exception is declared on the app
+    in the registry, where it is visible, instead of living inside ustrip where
+    the portal could not see it.
+    """
+    from app.portal import may_enter
+
+    admin = people["staff"]
+    assert may_enter(admin, "ustrip"), "the card hides what the door opens"
+
+    client.force_login(admin)
+    assert client.get("/ustrip/").status_code == 200
+
+
+def test_each_door_asks_the_registry_rather_than_repeating_it():
+    """F-13.4 as a grep, so the next person cannot quietly add a second copy.
+
+    The property this sprint is about is not "these two agree today", it is
+    "there is only one of them". Two functions that agree are one edit away
+    from not agreeing.
+    """
+    import pathlib
+    import re
+
+    for path, name in (("ustrip/access.py", "is_family"),
+                       ("app/security_views.py", "can_view")):
+        src = pathlib.Path(path).read_text(encoding="utf-8")
+        body = re.search(rf"def {name}\(.*?\n(?=\n\ndef |\n\n# )", src, re.S)
+        assert body, f"{name} not found in {path}"
+        assert "portal" in body.group(0), f"{path}:{name} decides for itself"

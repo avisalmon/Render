@@ -21,7 +21,6 @@ from zoneinfo import ZoneInfo
 
 from django.conf import settings
 from django.core.paginator import Paginator
-from django.db.models.functions import Lower
 from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -64,23 +63,16 @@ def can_view(user):
     correct closed default: an unconfigured deployment hides the page entirely
     rather than exposing it.
     """
-    if not user or not user.is_authenticated:
+    from .portal import may_enter
+
+    # F-13.4 — the same function the portal asks, so the card on the home
+    # page and this door can never disagree. The rule is unchanged, including
+    # the verified-allauth-address case, which moved into `portal` rather than
+    # being dropped: it was the more careful of the two and the portal was the
+    # one that did not know about it.
+    if not user:
         return False
-    allowed = permitted_emails()
-    if not allowed:
-        return False
-    if (user.email or "").strip().lower() in allowed:
-        return True
-    # allauth may hold confirmed addresses that differ from User.email.
-    try:
-        return (
-            user.emailaddress_set.filter(verified=True)
-            .annotate(lowered=Lower("email"))
-            .filter(lowered__in=allowed)
-            .exists()
-        )
-    except Exception:  # noqa: BLE001 - allauth absent or schema differs
-        return False
+    return may_enter(user, "home")
 
 
 def _gate(request):

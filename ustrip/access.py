@@ -18,11 +18,21 @@ FAMILY_GROUP = "family"
 
 
 def is_family(user):
-    if not user.is_authenticated:
-        return False
-    if user.is_superuser:
-        return True
-    return user.groups.filter(name=FAMILY_GROUP).exists()
+    """The one rule, and since F-13.4 it is babook's copy of it.
+
+    The rule has not changed: the `family` group, plus a superuser, for the
+    reason in the module docstring. What changed is where it is written.
+    `app.portal` decides who sees which app, and the portal on babook's home
+    page asks the same function, so a card that appears and a door that opens
+    cannot drift apart. They already had: the portal hid ustrip from an admin
+    while this function let them in.
+
+    The direction of the dependency is the allowed one. An app may ask babook;
+    babook asks no app anything, and `app/portal.py` imports nothing from here.
+    """
+    from app.portal import may_enter
+
+    return may_enter(user, "ustrip")
 
 
 def family_required(view_func):
