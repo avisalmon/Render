@@ -1577,7 +1577,7 @@ this epic is the work that follows from it.
 
 | F-ID | Feature | Traces | Status |
 |---|---|---|---|
-| F-13.1 | One function that answers "which apps may this person see", asked by the portal and by each app's own door | §0.5 | TODO, blocked on ACT-27 |
+| F-13.1 | One function that answers "which apps may this person see", asked by the portal and by each app's own door | §0.5 | DONE 2026-09-21 |
 | F-13.2 | The main page as a portal: the person's apps, and nothing about the apps that are not theirs | §0.3, §0.6 | TODO |
 | F-13.3 | An app registry the portal reads, rather than a list hardcoded in a template | §0.6 | TODO |
 | F-13.4 | Each app's own door asks the same function, so a hidden card and an open URL cannot disagree | §0.5 | TODO |
@@ -1592,7 +1592,7 @@ the question is answered.
 
 | ACT-ID | Action (Avi) | Blocks | Status |
 |---|---|---|---|
-| ACT-27 | Define what decides app visibility: a grant per person, a group, a role, an app-declared rule, or a mix | F-13.1, and therefore the rest of EPIC-13 | OPEN |
+| ACT-27 | Define what decides app visibility | F-13.1 | ANSWERED 2026-09-21: everyone for memz, מט״צים and SensorLab; the family group for ustrip; Avi alone for the house |
 
 ---
 

@@ -16,6 +16,7 @@ markers = [
     "spr211: SPR-2.1.1 Corporate Page Conversion MVP sprint tests",
     "spr213: SPR-2.1.3 Newsletter Capture MVP sprint tests",
     "spr214: SPR-2.1.4 Corporate Page Polish & Compliance sprint tests",
+    "spr131: SPR-13.1 babook portal: who sees which app",
     "sprm1: SPR-M.1 מט״צים front door sprint tests",
     "sprm2: SPR-M.2 מט״צים identity and first-contact sprint tests",
     "sprm3: SPR-M.3 מט״צים entrance test sprint tests",
@@ -107,6 +108,7 @@ markers = [
     "sprsl13: SL-D2 SensorLab the five-step runner shell",
     "sprsl14: SL-D3 SensorLab the attempt API, and the share link",
     "sprsl15: SL-E1 SensorLab a prediction, and when it locks",
+    "sprsl16: SL-E2 SensorLab the Predict screen",
     "smoke: the fast gate, run on every push (see tests/test_smoke.py)",
 ]
 

@@ -95,9 +95,43 @@ a Django group (`ustrip`), an app's own access module (`matazim`), plain
 sign-in (`sensorlab`), and open to everyone including guests (`memz`). The
 portal must not become a fifth answer.
 
-**ACT: Avi to define what decides visibility** — a grant per person, a group, a
-role, an app-declared rule, or some mix. The portal is built with this as a
-seam, so defining it later changes one function rather than every screen.
+**Answered 2026-09-21.** Avi, asked what decides visibility, answered with the
+list itself: "memz everyone. Home security, I only for now. Matazim everyone.
+Ustrip family. Sensorlab everyone."
+
+Which is three kinds, and all three already existed in the code:
+
+| Kind | Means | Apps | Mechanism |
+|---|---|---|---|
+| `EVERYONE` | every signed-in person | memz, מט״צים, SensorLab | nothing to check |
+| `GROUP` | membership of a Django group | ustrip (`family`) | the group ustrip has used since it was built |
+| `PEOPLE` | a named list, read from settings | the house (`SECURITY_VIEWER_EMAILS`) | what `security_views.permitted_emails` already reads |
+
+Built as `app/portal.py` (REQ-13.1). `visible_apps(user)` is what the portal
+renders and `may_enter(user, slug)` is what a door asks, and they are the same
+decision seen from two sides, swept in `test_spr_13_1.py` for every app and
+every kind of person so the two can never drift.
+
+Four decisions inside it worth knowing:
+
+- **"Everyone" is about the door, not the contents.** מט״צים is open to
+  everyone and still shows a stranger its front door rather than a member's
+  screens. An app's internal roles are its own business (§0.3).
+- **Staff get no bypass.** A superuser reaches any row through `/admin/`
+  already, so a bypass buys nothing, and the two rules that are not "everyone"
+  are the two that are actually about privacy: a family's trip and one
+  household's cameras. Fail shut, and let the list decide.
+- **The house is invisible rather than refused.** `/home/` answers 404 to
+  everybody else, because "you may not see this" still says the thing exists,
+  and the existence of a private security system in a named person's house is
+  itself the private part. The portal does not name it either.
+- **`app/portal.py` imports no app.** babook may not depend on what depends on
+  it, so the rules are written in babook's own terms, a group name and a
+  settings key. An app's door may ask this module; this module asks no app
+  anything.
+
+CrashTech was not in the list and is therefore not on the portal, recorded in
+`NOT_IN_THE_PORTAL` so that adding it is a decision rather than a drift.
 
 ### 0.6 The apps
 
