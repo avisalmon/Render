@@ -1,0 +1,78 @@
+{% extends "exo/base.html" %}
+{% load exo %}
+
+{% block title %}{% t "home.title" %}{% endblock %}
+{% block screen %}home{% endblock %}
+
+{% block content %}
+<div class="exo-wrap">
+
+  <section class="exo-hero">
+    <p class="exo-label">MTP + SCALE + IDEAS</p>
+    <h1>{% t "home.title" %}</h1>
+    <p class="exo-hero-lede">{% t "home.lede" %}</p>
+    <div class="exo-hero-actions">
+      <a class="exo-btn exo-btn-lg" href="{% url 'exo:learn' %}">{% t "home.explore" %}</a>
+    </div>
+  </section>
+
+  {% comment %}
+    The formula as three columns of meaning rather than a graphic: it is the
+    one thing a person should leave the lecture able to repeat.
+  {% endcomment %}
+  <section class="exo-formula" aria-label="{% t 'home.formula_title' %}">
+    <div class="exo-formula-part">
+      <div class="exo-formula-key">MTP</div>
+      <p>{% t "home.formula_mtp" %}</p>
+    </div>
+    <div class="exo-formula-part">
+      <div class="exo-formula-key">SCALE</div>
+      <p>{% t "home.formula_scale" %}</p>
+    </div>
+    <div class="exo-formula-part">
+      <div class="exo-formula-key">IDEAS</div>
+      <p>{% t "home.formula_ideas" %}</p>
+    </div>
+  </section>
+
+  {% comment %}
+    The ONE door into the gated half (spec §1). Nowhere else in the public
+    half suggests signing in, which is why this is allowed to be loud.
+  {% endcomment %}
+  <section class="exo-invite">
+    <h2>{% t "home.build_cta" %}</h2>
+    <p>{% t "home.build_blurb" %}</p>
+    <a class="exo-btn exo-btn-lg" href="{% url 'exo:join' %}">{% t "home.build_cta" %}</a>
+  </section>
+
+  {% if scale or ideas %}
+  <section class="exo-group">
+    <div class="exo-group-head">
+      <h2>{% t "learn.title" %}</h2>
+      <a class="exo-small exo-tap-link" href="{% url 'exo:learn' %}">{% t "learn.read_more" %}</a>
+    </div>
+    <div class="exo-grid exo-grid-3">
+      {% if mtp %}
+        <a class="exo-card exo-card-link" href="{% url 'exo:learn_attribute' mtp.key %}">
+          <div class="exo-attr">
+            <span class="exo-attr-en">{% term mtp %}</span>
+            <span class="exo-attr-name">{% tr mtp "name" %}</span>
+            <span class="exo-attr-def">{% tr mtp "short_def" %}</span>
+          </div>
+        </a>
+      {% endif %}
+      {% for a in scale|slice:":2" %}
+        <a class="exo-card exo-card-link" href="{% url 'exo:learn_attribute' a.key %}">
+          <div class="exo-attr">
+            <span class="exo-attr-en">{% term a %}</span>
+            <span class="exo-attr-name">{% tr a "name" %}</span>
+            <span class="exo-attr-def">{% tr a "short_def" %}</span>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+</div>
+{% endblock %}

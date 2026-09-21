@@ -12,6 +12,7 @@ through to Django's own defaults, which is what renders babook's own
 
 from django.views import defaults
 
+from exo import errors as exo_errors
 from matazim import errors as matazim_errors
 from memz import errors as memz_errors
 from sensorlab import errors as sensorlab_errors
@@ -27,6 +28,8 @@ def page_not_found(request, exception=None):
         return memz_errors.page_not_found(request, exception)
     if request.path.startswith(sensorlab_errors.PREFIX):
         return sensorlab_errors.page_not_found(request, exception)
+    if request.path.startswith(exo_errors.PREFIX):
+        return exo_errors.page_not_found(request, exception)
     return defaults.page_not_found(request, exception)
 
 
@@ -39,6 +42,8 @@ def server_error(request):
         return memz_errors.server_error(request)
     if request.path.startswith(sensorlab_errors.PREFIX):
         return sensorlab_errors.server_error(request)
+    if request.path.startswith(exo_errors.PREFIX):
+        return exo_errors.server_error(request)
     return defaults.server_error(request)
 
 
@@ -51,4 +56,6 @@ def permission_denied(request, exception=None):
         return memz_errors.permission_denied(request, exception)
     if request.path.startswith(sensorlab_errors.PREFIX):
         return sensorlab_errors.permission_denied(request, exception)
+    if request.path.startswith(exo_errors.PREFIX):
+        return exo_errors.permission_denied(request, exception)
     return defaults.permission_denied(request, exception)

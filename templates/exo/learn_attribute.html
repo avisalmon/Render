@@ -1,0 +1,57 @@
+{% extends "exo/base.html" %}
+{% load exo %}
+
+{% block title %}{% tr attribute "name" %} — exo{% endblock %}
+{% block description %}{% tr attribute "short_def" %}{% endblock %}
+{% block screen %}learn-attribute{% endblock %}
+
+{% block content %}
+<div class="exo-wrap-narrow exo-page">
+
+  <a class="exo-back" href="{% url 'exo:learn' %}">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M15 18l-6-6 6-6"/>
+    </svg>
+    {% t "learn.back" %}
+  </a>
+
+  <header class="exo-page-head" style="margin-block-start:10px">
+    <p class="exo-attr-en">{% term attribute %}</p>
+    <h1>{% tr attribute "name" %}</h1>
+    <p>{% tr attribute "short_def" %}</p>
+  </header>
+
+  {% for r in resources %}
+    <article class="exo-prose">
+      {% comment %}
+        `linebreaks` rather than a markdown renderer: this is short-form
+        handout copy, and a renderer would mean a dependency plus an escaping
+        decision for what amounts to a few paragraphs.
+      {% endcomment %}
+      {% tr r "body" as body %}
+      {{ body|linebreaks }}
+
+      {% tr r "youtube_url" as video %}
+      {% if video %}
+        <div class="exo-embed">
+          <iframe src="{{ video }}"
+                  title="{% tr r 'title' %}"
+                  loading="lazy"
+                  referrerpolicy="strict-origin-when-cross-origin"
+                  allow="accelerometer; clipboard-write; encrypted-media; picture-in-picture"
+                  allowfullscreen></iframe>
+        </div>
+      {% endif %}
+
+      {% tr r "book_reference" as book %}
+      {% if book %}
+        <p class="exo-quote-book">
+          <strong>{% t "learn.in_the_book" %}:</strong> {{ book }}
+        </p>
+      {% endif %}
+    </article>
+  {% endfor %}
+
+</div>
+{% endblock %}

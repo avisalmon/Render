@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>exo — Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Rubik:wght@300;400;500;600&display=swap">
+<style>
+  :root {
+    --ground: #FBFAF7;
+    --card: #FFFFFF;
+    --ink: #17161B;
+    --ink-soft: #5B5864;
+    --ink-faint: #918D99;
+    --line: #E9E5DE;
+    --accent: #4A3AE8;
+    --accent-soft: #EEEBFE;
+    --done: #1F7A4D;
+    --done-soft: #E7F3EC;
+    --amber: #B45309;
+    --amber-soft: #FDF3E4;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px 20px 72px; background: var(--ground); color: var(--ink);
+    font-family: 'Rubik', system-ui, sans-serif; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; }
+  h1 { font-family: 'Frank Ruhl Libre', Georgia, serif; font-size: 30px; margin: 0 0 6px; letter-spacing: -0.4px; }
+  .sub { color: var(--ink-soft); font-size: 14px; margin: 0 0 6px; line-height: 1.6; max-width: 66ch; }
+  .sub b { color: var(--ink); }
+  .asof { color: var(--ink-faint); font-size: 12px; margin: 0 0 28px; }
+
+  .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 12px; margin-bottom: 30px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+  .stat .n { font-size: 25px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stat .l { font-size: 11px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+
+  h2 { font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-soft);
+       margin: 34px 0 12px; font-weight: 600; }
+
+  .sprint { background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+            padding: 15px 17px; margin-bottom: 10px; }
+  .sprint-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .sprint-title { font-weight: 600; font-size: 14.5px; }
+  .sprint-title span { color: var(--ink-faint); font-weight: 400; }
+  .sprint-desc { font-size: 13px; color: var(--ink-soft); margin: 7px 0 0; line-height: 1.6; }
+  .pill { font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; padding: 4px 10px;
+          border-radius: 99px; white-space: nowrap; text-transform: uppercase; }
+  .pill.done { background: var(--done-soft); color: var(--done); }
+  .pill.wip  { background: var(--accent-soft); color: var(--accent); }
+  .pill.todo { background: #F1EFEA; color: var(--ink-faint); }
+  .pill.hold { background: var(--amber-soft); color: var(--amber); }
+
+  table { width: 100%; border-collapse: collapse; background: var(--card);
+          border: 1px solid var(--line); border-radius: 14px; overflow: hidden; font-size: 13px; }
+  th, td { text-align: start; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  td.n { font-variant-numeric: tabular-nums; color: var(--ink-soft); }
+
+  .note { background: var(--card); border: 1px solid var(--line); border-inline-start: 3px solid var(--accent);
+          border-radius: 10px; padding: 13px 16px; font-size: 13px; color: var(--ink-soft);
+          line-height: 1.65; margin-bottom: 10px; max-width: 74ch; }
+  .note b { color: var(--ink); }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px;
+         background: #F4F1EB; padding: 1px 5px; border-radius: 5px; }
+  ul { margin: 8px 0 0; padding-inline-start: 20px; }
+  li { font-size: 13px; color: var(--ink-soft); line-height: 1.7; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>exo — Exponential Organizations</h1>
+  <p class="sub">
+    A lecture and workshop companion for Salim Ismail's <b>Exponential Organizations</b>:
+    a fully public handout anyone can read with no account, and an invite-only builder
+    that walks a member from an AI interview to a press release from the future, set in
+    a newspaper. Bilingual Hebrew and English, Hebrew first, everything mirrored.
+  </p>
+  <p class="asof">Status as of 21 September 2026 · built in one autonomous run · not yet reviewed by Avi</p>
+
+  <div class="stat-row">
+    <div class="stat"><div class="n">146</div><div class="l">exo tests</div></div>
+    <div class="stat"><div class="n">11</div><div class="l">models</div></div>
+    <div class="stat"><div class="n">24</div><div class="l">templates</div></div>
+    <div class="stat"><div class="n">160</div><div class="l">UI strings ×2</div></div>
+    <div class="stat"><div class="n">13</div><div class="l">attribute slots</div></div>
+    <div class="stat"><div class="n">5</div><div class="l">newspapers</div></div>
+  </div>
+
+  <div class="note">
+    <b>The state of play.</b> Every sprint in the backlog is built, wired and tested
+    locally: 146 exo tests pass, the site's own 2,900-test suite shows no new failures
+    (the 25 that fail were failing before exo existed, and reproduce on a clean checkout
+    of <code>HEAD</code>), <code>manage.py check</code> is clean and there are no
+    unmade migrations. What has <em>not</em> happened is Avi's review, and the app has
+    not been used by a real person in a real room yet.
+  </div>
+
+  <h2>Sprints</h2>
+
+  <div class="sprint">
+    <div class="sprint-head"><span class="sprint-title">Sprint 0 <span>— kickoff</span></span><span class="pill done">done</span></div>
+    <p class="sprint-desc">Interview, thin intro spec, deep web research on comparable tools,
+      data model approved at the gate, full spec in fourteen chapters, backlog with a verified
+      traceability matrix.</p>
+  </div>
+
+  <div class="sprint">
+    <div class="sprint-head"><span class="sprint-title">Sprint 1 <span>— foundation</span></span><span class="pill done">done</span></div>
+    <p class="sprint-desc">The isolated app: its own base template, nav, error pages and
+      stylesheets; the reference models; the idempotent seed; the DRF read API; the bilingual
+      machinery (<code>strings.py</code> + <code>{% t %}</code>, and a middleware that uses
+      <code>translation.override</code> so a language can never leak to the next request).</p>
+  </div>
+
+  <div class="sprint">
+    <div class="sprint-head"><span class="sprint-title">Sprint 2 <span>— learn, the public handout</span></span><span class="pill done">done</span></div>
+    <p class="sprint-desc">The landing, the handout, a page per attribute. No login, and no
+      prompt to log in anywhere in the open half — the single build button on the landing is
+      the one door, asserted by test.</p>
+  </div>
+
+  <div class="sprint">
+    <div class="sprint-head"><span class="sprint-title">Sprint 3 <span>— access</span></span><span class="pill done">done</span></div>
+    <p class="sprint-desc">Request, wait, approve, revoke; Avi's cockpit; and the remote
+      approval key built to the BKM — one job, group named in code, never creates a user,
+      never escalates, fails shut when unset. Twenty-one tests, most of them refusals.</p>
+  </div>
+
+  <div class="sprint">
+    <div class="sprint-head"><span class="sprint-title">Sprints 4–8 <span>— the journey</span></span><span class="pill done">done</span></div>
+    <p class="sprint-desc">Concepts and the AI adapter; the interview that settles into an MTP;
+      the brainstorm across thirteen slots; AI options per slot with selection that survives a
+      regenerate; the document, the press release, five newspaper styles, the exponential score
+      and the stress test.</p>
+  </div>
+
+  <div class="sprint">
+    <div class="sprint-head"><span class="sprint-title">Sprint 9 <span>— visibility and the museum</span></span><span class="pill done">done</span></div>
+    <p class="sprint-desc">Public forever, public until a time, specific people, or private —
+      with visibility computed as a query, so a timed release expires without any scheduled job
+      to fail quietly at 3am. The museum, likes that cannot double-count, and view counts that
+      ignore a refresh.</p>
+  </div>
+
+  <div class="sprint">
+    <div class="sprint-head"><span class="sprint-title">Sprint 10 <span>— cockpit, limits, hardening</span></span><span class="pill done">done</span></div>
+    <p class="sprint-desc">Moderation that hides without destroying; the usage view reading the
+      same guard the guards enforce; three cost ceilings and a provider timeout; the moderation
+      gate before anything reaches the public wall; the phone pass in both directions.</p>
+  </div>
+
+  <div class="sprint">
+    <div class="sprint-head"><span class="sprint-title">First deploy <span>— production</span></span><span class="pill wip">pending Avi</span></div>
+    <p class="sprint-desc">Scoped <code>migrate exo</code> and <code>seed_exo</code> are wired
+      into <code>render.yaml</code>. The push itself waits on Avi's word, per the standing rule.</p>
+  </div>
+
+  <h2>Tests</h2>
+
+  <table>
+    <tr><th>File</th><th>Tests</th><th>What it is actually guarding</th></tr>
+    <tr><td><code>test_exo_foundation.py</code></td><td class="n">25</td>
+        <td>A seed that eats an edit; a public page that starts asking people to log in; a
+            language that leaks; a stylesheet that stops mirroring.</td></tr>
+    <tr><td><code>test_exo_access.py</code></td><td class="n">21</td>
+        <td>The gate matrix, and the remote key — refusals outnumber the happy path.</td></tr>
+    <tr><td><code>test_exo_journey.py</code></td><td class="n">22</td>
+        <td>Work lost on a provider failure; a regenerate eating a selection; one member
+            reaching another's concept.</td></tr>
+    <tr><td><code>test_exo_museum.py</code></td><td class="n">22</td>
+        <td>Every combination of who is asking and what the owner chose, plus expiry tested by
+            moving the clock in both directions.</td></tr>
+    <tr><td><code>test_exo_pages.py</code></td><td class="n">13</td>
+        <td>Every page renders in both languages, with a detector for untranslated string keys
+            that is itself tested for being able to fail.</td></tr>
+    <tr><td><code>test_exo_guards.py</code></td><td class="n">31</td>
+        <td>Each ceiling refusing before a provider is reached; moderation in both directions,
+            including its fail-open case.</td></tr>
+    <tr><td><code>test_exo_phone.py</code></td><td class="n">4</td>
+        <td>Taps, overflow, contrast, the real mirror and anything marked hidden that is
+            still on screen, at 390px. Found four undersized tap targets and confirmed the
+            hidden-row bug, neither of which any other test could see.</td></tr>
+  </table>
+
+  <h2>Decisions worth remembering</h2>
+
+  <div class="note">
+    <b>Bilingual without gettext.</b> Interface copy is a dict in <code>strings.py</code> read
+    through a <code>{% t %}</code> tag; content is <code>_he</code>/<code>_en</code> field pairs
+    with a fallback to the other language. No locale catalogs, because neither this machine nor
+    Render has <code>msgfmt</code>, and a build that depends on a binary nobody has is a build
+    that breaks on the day it matters. A missing key renders as the key, on purpose.
+  </div>
+
+  <div class="note">
+    <b>Stub mode is a feature.</b> With no <code>OPENAI_API_KEY</code> the adapter produces
+    deterministic local content, so the whole journey runs end to end with no key and no bill —
+    the entire test suite uses it. It is labelled in the UI, because content that looks generated
+    and is not would be a lie told by omission.
+  </div>
+
+  <div class="note">
+    <b>Visibility is a query, not a job.</b> A timed release stops matching the museum queryset
+    the moment its time passes. Nothing runs on a schedule, so nothing can fail while nobody is
+    watching, and the row is never rewritten.
+  </div>
+
+  <div class="note">
+    <b>Moderation fails open.</b> A release going public is screened first; private and
+    specific-people work is never sent anywhere. If the check cannot run, the release publishes
+    and the failure is logged — a moderation outage that silently froze the museum during a live
+    workshop would do more damage than the rare thing it would have caught, and Avi can hide
+    anything from the cockpit in one tap.
+  </div>
+
+  <h2>Parked, not scheduled</h2>
+  <ul>
+    <li>Per-attribute score breakdown (a single number was the decision).</li>
+    <li><code>ConceptDocument</code> as its own model, if the document grows internal structure.</li>
+    <li>Live web search during the options stage, if the provider exposes it cleanly.</li>
+    <li>Server-side PDF export — v1 uses the browser's own print.</li>
+    <li>Approval email on the site's mail path (deferred twice; the cockpit is the workflow).</li>
+    <li>Positioning against the official OpenExO ecosystem.</li>
+  </ul>
+
+  <h2>Where things live</h2>
+  <ul>
+    <li><a href="spec.md">spec.md</a> — fourteen chapters, the source of truth for behaviour.</li>
+    <li><a href="data_model.md">data_model.md</a> — the approved model, with the eight decisions recorded.</li>
+    <li><a href="backlog.md">backlog.md</a> — every sprint, and the traceability matrix from spec feature to sprint.</li>
+    <li><code>exo/</code> — the app. <code>templates/exo/</code>, <code>static/exo/</code> — its own shell and design system.</li>
+  </ul>
+
+</div>
+</body>
+</html>

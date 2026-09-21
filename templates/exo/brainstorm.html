@@ -1,0 +1,83 @@
+{% extends "exo/base.html" %}
+{% load static exo %}
+
+{% block title %}{{ concept.title }} — {% t "stage.brainstorm" %}{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+{% block screen %}brainstorm{% endblock %}
+
+{% block content %}
+<div class="exo-wrap exo-page exo-stage">
+
+  {% include "exo/_rail.html" %}
+
+  <header class="exo-page-head">
+    <h1>{% t "brainstorm.title" %}</h1>
+    <p>{% t "brainstorm.lede" %}</p>
+    <p class="exo-small exo-faint">
+      <span id="filled">{{ filled }}</span>/{{ total }} {% t "brainstorm.progress" %}
+      · {% t "brainstorm.skip_ok" %}
+    </p>
+  </header>
+
+  {% comment %}
+    One slot at a time on a phone, the whole grid on a wide screen (spec §5.2,
+    D2.3). Same markup either way — CSS decides, so there is no second
+    template to keep in step.
+  {% endcomment %}
+  <div class="exo-slots" id="slots"
+       data-add="{% url 'exo:entry_add' concept.pk %}"
+       data-concept="{{ concept.pk }}">
+    {% for slot in slots %}
+      <section class="exo-slot" data-key="{{ slot.attribute.key }}"
+               {% if not forloop.first %}data-hidden-mobile="1"{% endif %}>
+        <div class="exo-slot-head">
+          <span class="exo-attr-en">{% term slot.attribute %}</span>
+          <h2 class="exo-attr-name">{% tr slot.attribute "name" %}</h2>
+          <p class="exo-attr-def">{% tr slot.attribute "short_def" %}</p>
+          <a class="exo-small exo-tap-link" target="_blank" rel="noopener"
+             href="{% url 'exo:learn_attribute' slot.attribute.key %}">
+            {% t "brainstorm.what_is_this" %}
+          </a>
+        </div>
+
+        <p class="exo-prompt-hint">{% tr slot.attribute "prompt_hint" %}</p>
+
+        <ul class="exo-entries">
+          {% for e in slot.entries %}
+            <li data-id="{{ e.id }}">
+              <span class="exo-entry-text">{{ e.text }}</span>
+              <button class="exo-icon-btn exo-icon-danger" data-delete="{{ e.id }}"
+                      aria-label="{% t 'concepts.delete' %}">✕</button>
+            </li>
+          {% endfor %}
+        </ul>
+
+        <div class="exo-entry-add">
+          <label class="exo-sr">{% t "brainstorm.placeholder" %}</label>
+          <input type="text" placeholder="{% t 'brainstorm.placeholder' %}">
+          <button class="exo-btn exo-btn-ghost" data-add-btn>{% t "brainstorm.add" %}</button>
+        </div>
+      </section>
+    {% endfor %}
+  </div>
+
+  <div class="exo-slot-nav" id="slotnav">
+    <button class="exo-btn exo-btn-ghost" id="prev">{% t "brainstorm.prev" %}</button>
+    <span class="exo-small exo-faint" id="slotpos"></span>
+    <button class="exo-btn exo-btn-ghost" id="next">{% t "brainstorm.next" %}</button>
+  </div>
+
+  <div class="exo-stage-foot">
+    <form method="post" action="{% url 'exo:concept_to_options' concept.pk %}">
+      {% csrf_token %}
+      <button class="exo-btn exo-btn-lg" type="submit">{% t "brainstorm.generate" %}</button>
+    </form>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'exo/js/journey.js' %}"></script>
+<script>exoBrainstorm();</script>
+{% endblock %}

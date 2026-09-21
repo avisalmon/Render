@@ -1,0 +1,84 @@
+{% extends "exo/base.html" %}
+{% load static exo %}
+
+{% block title %}{{ concept.title }} — {% t "stage.options" %}{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+{% block screen %}options{% endblock %}
+
+{% block content %}
+<div class="exo-wrap exo-page exo-stage">
+
+  {% include "exo/_rail.html" %}
+
+  <header class="exo-page-head">
+    <h1>{% t "options.title" %}</h1>
+    <p>{% t "options.lede" %}</p>
+    {% if concept.downstream_stale %}
+      <p class="exo-stale-note">{% t "options.thin" %}</p>
+    {% endif %}
+    <p class="exo-small exo-faint">{% t "options.ai_note" %}</p>
+  </header>
+
+  <div class="exo-slots exo-slots-wide" id="slots"
+       data-generate="{% url 'exo:options_generate' concept.pk %}"
+       data-own="{% url 'exo:option_add_own' concept.pk %}"
+       data-select="/exo/concepts/{{ concept.pk }}/options/OPTION/select/">
+    {% for slot in slots %}
+      <section class="exo-slot" data-key="{{ slot.attribute.key }}">
+        <div class="exo-slot-head">
+          <span class="exo-attr-en">{% term slot.attribute %}</span>
+          <h2 class="exo-attr-name">{% tr slot.attribute "name" %}</h2>
+        </div>
+
+        {% if slot.entries %}
+          <details class="exo-own-notes">
+            <summary class="exo-small">{% t "brainstorm.title" %}</summary>
+            <ul>{% for e in slot.entries %}<li>{{ e.text }}</li>{% endfor %}</ul>
+          </details>
+        {% endif %}
+
+        <div class="exo-options" data-list>
+          {% for o in slot.options %}
+            <button class="exo-option {% if o.is_selected %}is-selected{% endif %}"
+                    data-option="{{ o.id }}" type="button">
+              <span class="exo-option-check" aria-hidden="true"></span>
+              <span class="exo-option-body">
+                <span class="exo-option-text">{{ o.content }}</span>
+                {% if o.research_note %}
+                  <span class="exo-option-why">
+                    <em>{% t "options.why" %}:</em> {{ o.research_note }}
+                  </span>
+                {% endif %}
+                {% if o.is_user_authored %}<span class="exo-option-mine">✎</span>{% endif %}
+              </span>
+            </button>
+          {% endfor %}
+        </div>
+
+        <div class="exo-slot-actions">
+          <button class="exo-btn exo-btn-ghost" data-gen>
+            {% if slot.options %}{% t "options.regenerate" %}{% else %}{% t "brainstorm.generate" %}{% endif %}
+          </button>
+          <button class="exo-btn exo-btn-quiet" data-own-btn>{% t "options.add_own" %}</button>
+        </div>
+      </section>
+    {% endfor %}
+  </div>
+
+  <div class="exo-stage-foot">
+    <p class="exo-small exo-faint">
+      <span id="withsel">{{ with_selection }}</span>/{{ total }}
+    </p>
+    <form method="post" action="{% url 'exo:concept_to_output' concept.pk %}">
+      {% csrf_token %}
+      <button class="exo-btn exo-btn-lg" type="submit">{% t "options.build" %}</button>
+    </form>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'exo/js/journey.js' %}"></script>
+<script>exoOptions();</script>
+{% endblock %}

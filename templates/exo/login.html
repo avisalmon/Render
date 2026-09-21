@@ -1,0 +1,39 @@
+{% extends "exo/base.html" %}
+{% load exo %}
+
+{% block title %}{% t "join.sign_in" %} — exo{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+{% block screen %}login{% endblock %}
+
+{% block content %}
+<div class="exo-wrap-narrow exo-page">
+  <div class="exo-auth">
+    <h1>{% t "join.sign_in" %}</h1>
+
+    <form method="post" class="exo-form" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="exo-form-error">{{ form.non_field_errors }}</div>
+      {% endif %}
+      <label class="exo-field">
+        <span>{{ form.username.label }}</span>
+        {{ form.username }}
+      </label>
+      <label class="exo-field">
+        <span>{{ form.password.label }}</span>
+        {{ form.password }}
+      </label>
+      <button class="exo-btn exo-btn-lg" type="submit">{% t "join.sign_in" %}</button>
+    </form>
+
+    <a class="exo-btn exo-btn-ghost exo-auth-google"
+       href="/accounts/google/login/?process=login&next={% url 'exo:concepts' %}">
+      {% t "join.with_google" %}
+    </a>
+
+    <p class="exo-small exo-muted exo-auth-alt">
+      <a href="{% url 'exo:join' %}">{% t "join.title" %}</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

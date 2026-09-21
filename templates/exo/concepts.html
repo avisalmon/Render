@@ -1,0 +1,71 @@
+{% extends "exo/base.html" %}
+{% load exo %}
+
+{% block title %}{% t "concepts.title" %} — exo{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+{% block screen %}concepts{% endblock %}
+
+{% block content %}
+<div class="exo-wrap exo-page">
+
+  <header class="exo-page-head exo-row-between">
+    <h1>{% t "concepts.title" %}</h1>
+  </header>
+
+  {% comment %} Creating one asks for a title and nothing else — the journey
+  supplies the rest (spec §5.0, D0.2). At the cap the form is replaced rather
+  than left to fail on submit: a field that takes your title and then refuses
+  it has wasted the only thinking the form asked for (spec §8, G5). {% endcomment %}
+  {% if at_cap %}
+    <p class="exo-notice">{% t "concepts.at_cap" %} ({{ cap }})</p>
+  {% else %}
+    <form method="post" action="{% url 'exo:concept_create' %}" class="exo-newconcept">
+      {% csrf_token %}
+      <label class="exo-sr" for="new-title">{% t "concepts.name_it" %}</label>
+      <input id="new-title" name="title" required maxlength="160"
+             placeholder="{% t 'concepts.name_it' %}">
+      <button class="exo-btn" type="submit">{% t "concepts.new" %}</button>
+    </form>
+    <p class="exo-small exo-faint" style="margin-block-start:6px">{% t "concepts.name_hint" %}</p>
+  {% endif %}
+
+  {% if concepts %}
+    <div class="exo-grid exo-grid-2" style="margin-block-start:24px">
+      {% for c in concepts %}
+        <article class="exo-card exo-concept">
+          <a class="exo-concept-main" href="{% url 'exo:concept_resume' c.pk %}">
+            <span class="exo-attr-en">{% t c.stage|stage_key %}</span>
+            <h2 class="exo-attr-name">{{ c.title }}</h2>
+            {% if c.mtp %}<p class="exo-attr-def">{{ c.mtp|truncatechars:110 }}</p>{% endif %}
+            {% if c.release.exponential_score %}
+              <span class="exo-score-badge">{{ c.release.exponential_score }}</span>
+            {% endif %}
+          </a>
+
+          <div class="exo-concept-actions">
+            <a class="exo-btn exo-btn-quiet" href="{% url 'exo:concept_resume' c.pk %}">
+              {% t "concepts.resume" %}
+            </a>
+            <form method="post" action="{% url 'exo:concept_reorder' c.pk %}">
+              {% csrf_token %}
+              <button class="exo-icon-btn" name="direction" value="up" aria-label="↑">↑</button>
+              <button class="exo-icon-btn" name="direction" value="down" aria-label="↓">↓</button>
+            </form>
+            <form method="post" action="{% url 'exo:concept_delete' c.pk %}"
+                  data-confirm="{% t 'concepts.delete_confirm' %}">
+              {% csrf_token %}
+              <button class="exo-icon-btn exo-icon-danger" type="submit"
+                      aria-label="{% t 'concepts.delete' %}">✕</button>
+            </form>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="exo-empty">
+      <p class="exo-measure" style="margin-inline:auto">{% t "concepts.empty" %}</p>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

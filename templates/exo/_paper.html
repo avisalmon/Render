@@ -1,0 +1,37 @@
+{% load exo %}
+{% comment %}
+  One press release, set as a newspaper front page.
+
+  Shared by the owner's output screen and the public museum, so the thing a
+  person shares looks exactly like the thing they approved. The style is a
+  data row plus a CSS class (spec §6, E1) — switching it re-renders the same
+  content and never regenerates a word.
+{% endcomment %}
+<article class="exo-paper {{ release.newspaper_style.css_class|default:'paper-broadsheet' }}"
+         lang="{{ release.language }}"
+         dir="{% if release.language == 'he' %}rtl{% else %}ltr{% endif %}">
+
+  <header class="exo-paper-masthead">
+    <span class="exo-paper-name">{% tr release.newspaper_style "name" %}</span>
+    <span class="exo-paper-rule"></span>
+    <span class="exo-paper-date">
+      {% comment %} Dated in the future: the release is written as if it has
+      already launched (spec §5.4, D4.1). {% endcomment %}
+      {{ release.created_at|date:"j F Y" }}
+    </span>
+  </header>
+
+  <h1 class="exo-paper-headline">{{ release.headline }}</h1>
+
+  {% if release.exponential_score %}
+    <div class="exo-paper-score">
+      <span class="exo-score-badge">{{ release.exponential_score }}</span>
+      <span class="exo-small exo-faint">{% t "output.score" %}</span>
+      {% if release.score_rationale %}
+        <span class="exo-small exo-faint">— {{ release.score_rationale }}</span>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <div class="exo-paper-body">{{ release.body|linebreaks }}</div>
+</article>

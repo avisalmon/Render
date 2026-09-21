@@ -1,0 +1,21 @@
+{% extends "exo/base.html" %}
+{% load exo %}
+
+{% block title %}{% t "denied.title" %} — exo{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+{% block screen %}denied{% endblock %}
+
+{% block content %}
+<div class="exo-wrap-narrow exo-page">
+  <div class="exo-empty">
+    {% comment %}
+      A plain refusal, not a 404. exo does not pretend not to exist — that is
+      /home's requirement, not this app's (spec §4, C3).
+    {% endcomment %}
+    <h2>{% t "denied.title" %}</h2>
+    <p class="exo-measure" style="margin-inline:auto">{% t "denied.blurb" %}</p>
+    <a class="exo-btn exo-btn-ghost" style="margin-block-start:20px"
+       href="{% url 'exo:learn' %}">{% t "home.explore" %}</a>
+  </div>
+</div>
+{% endblock %}

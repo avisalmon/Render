@@ -1,0 +1,62 @@
+{% extends "exo/base.html" %}
+{% load static exo %}
+
+{% block title %}{{ release.headline }} — exo{% endblock %}
+{% block description %}{{ release.body|truncatechars:180 }}{% endblock %}
+{% block screen %}museum-item{% endblock %}
+
+{% block head %}
+  {% comment %}
+    So a link shared to WhatsApp or email unfurls into something worth opening
+    (spec §6, E4).
+  {% endcomment %}
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="{{ release.headline }}">
+  <meta property="og:description" content="{{ release.body|truncatechars:180 }}">
+  <meta property="og:site_name" content="exo">
+{% endblock %}
+
+{% block content %}
+<div class="exo-wrap-narrow exo-page">
+
+  <a class="exo-back" href="{% url 'exo:museum' %}">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M15 18l-6-6 6-6"/>
+    </svg>
+    {% t "museum.title" %}
+  </a>
+
+  {% if expired and is_owner %}
+    <p class="exo-stale-note" style="margin-block:14px">{% t "vis.expired" %}</p>
+  {% endif %}
+
+  {% include "exo/_paper.html" %}
+
+  <div class="exo-item-actions" id="itemactions"
+       data-like="{% url 'exo:museum_like' release.pk %}"
+       data-signin="{% t 'museum.sign_in_to_like' %}">
+    <button class="exo-btn exo-btn-ghost {% if liked %}is-on{% endif %}" id="like"
+            {% if not request.user.is_authenticated %}data-anon="1"{% endif %}>
+      ♥ <span id="likecount">{{ likes }}</span>
+    </button>
+
+    {% comment %} Share targets a person actually uses on a phone. {% endcomment %}
+    <button class="exo-btn exo-btn-ghost" id="share">{% t "museum.share" %}</button>
+    <span class="exo-small exo-faint">👁 {{ release.view_count }}</span>
+  </div>
+
+  {% if release.document_body %}
+    <details class="exo-document">
+      <summary><strong>{% t "museum.read_document" %}</strong></summary>
+      <div class="exo-prose">{{ release.document_body|linebreaks }}</div>
+    </details>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'exo/js/journey.js' %}"></script>
+<script>exoMuseumItem();</script>
+{% endblock %}

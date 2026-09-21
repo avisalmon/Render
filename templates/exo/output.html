@@ -1,0 +1,129 @@
+{% extends "exo/base.html" %}
+{% load static exo %}
+
+{% block title %}{{ concept.title }} — {% t "stage.output" %}{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+{% block screen %}output{% endblock %}
+
+{% block content %}
+<div class="exo-wrap exo-page exo-stage"
+     data-generate="{% url 'exo:output_generate' concept.pk %}"
+     data-edit="{% url 'exo:output_edit' concept.pk %}"
+     data-style="{% url 'exo:output_style' concept.pk %}"
+     data-stress="{% url 'exo:output_stress_test' concept.pk %}"
+     data-visibility="{% url 'exo:output_visibility' concept.pk %}"
+     id="outputroot">
+
+  {% include "exo/_rail.html" %}
+
+  {% if not release %}
+    {% comment %} Nothing generated yet: one button, one job. {% endcomment %}
+    <div class="exo-empty">
+      <h2>{% t "output.title" %}</h2>
+      <p class="exo-measure" style="margin-inline:auto">{% t "options.lede" %}</p>
+      <button class="exo-btn exo-btn-lg" id="generate" style="margin-block-start:18px">
+        {% t "options.build" %}
+      </button>
+      <p class="exo-small exo-faint" id="genstate" style="margin-block-start:10px"></p>
+    </div>
+  {% else %}
+
+    <div class="exo-output-grid">
+      <div class="exo-output-main">
+        <div id="paper">{% include "exo/_paper.html" %}</div>
+
+        <div class="exo-output-tools">
+          <label class="exo-field exo-field-inline">
+            <span>{% t "output.style" %}</span>
+            <select id="style">
+              {% for s in styles %}
+                <option value="{{ s.key }}"
+                  {% if release.newspaper_style_id == s.id %}selected{% endif %}>
+                  {% tr s "name" %}
+                </option>
+              {% endfor %}
+            </select>
+          </label>
+          <button class="exo-btn exo-btn-quiet" onclick="window.print()">{% t "output.print" %}</button>
+          <button class="exo-btn exo-btn-quiet" id="edit">{% t "output.edit" %}</button>
+          <button class="exo-btn exo-btn-quiet" id="regen">{% t "output.regenerate" %}</button>
+        </div>
+
+        <details class="exo-document">
+          <summary><strong>{% t "output.document" %}</strong></summary>
+          <div class="exo-prose">{{ release.document_body|linebreaks }}</div>
+        </details>
+      </div>
+
+      <aside class="exo-output-side">
+        {% comment %} Amazon's own kill question, turned on the release. {% endcomment %}
+        <section class="exo-card">
+          <h2 class="exo-attr-name">{% t "output.stress_test" %}</h2>
+          <p class="exo-small exo-muted">{% t "output.stress_test_blurb" %}</p>
+          <div id="stresspoints">
+            {% if release.stress_test_feedback %}
+              <ul class="exo-points">
+                {% for p in release.stress_test_feedback.splitlines %}<li>{{ p }}</li>{% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+          <button class="exo-btn exo-btn-ghost" id="stress">{% t "output.run_stress_test" %}</button>
+        </section>
+
+        {% comment %} Visibility (spec §7.1). Default is share forever; timed
+        goes private again by itself, with nothing scheduled. {% endcomment %}
+        <section class="exo-card">
+          <h2 class="exo-attr-name">{% t "vis.title" %}</h2>
+          <div class="exo-vis-options">
+            {% for value, label, blurb in vis_choices %}
+              <label class="exo-vis">
+                <input type="radio" name="visibility" value="{{ value }}"
+                       {% if release.visibility == value %}checked{% endif %}>
+                <span>
+                  <strong>{% t label %}</strong>
+                  <em class="exo-small exo-faint">{% t blurb %}</em>
+                </span>
+              </label>
+            {% endfor %}
+          </div>
+
+          <div id="timedrow" class="exo-vis-extra" {% if release.visibility != 'timed' %}hidden{% endif %}>
+            <select id="hours">
+              <option value="24">{% t "vis.24h" %}</option>
+              <option value="48">{% t "vis.48h" %}</option>
+              <option value="168">{% t "vis.week" %}</option>
+            </select>
+            {% if release.public_until %}
+              <p class="exo-small exo-faint">
+                {% t "vis.until" %} {{ release.public_until|date:"j F, H:i" }}
+              </p>
+            {% endif %}
+          </div>
+
+          <div id="specificrow" class="exo-vis-extra" {% if release.visibility != 'specific' %}hidden{% endif %}>
+            <label class="exo-sr" for="emails">{% t "vis.add_person" %}</label>
+            <input id="emails" type="text" placeholder="{% t 'vis.add_person' %}">
+          </div>
+
+          <button class="exo-btn" id="savevis">{% t "vis.save" %}</button>
+          {% if release.visibility == 'timed' and not release.is_public_now %}
+            <p class="exo-small exo-stale-note">{% t "vis.expired" %}</p>
+          {% endif %}
+        </section>
+
+        {% if release.is_public_now %}
+          <a class="exo-btn exo-btn-ghost" href="{% url 'exo:museum_item' release.pk %}">
+            {% t "nav.museum" %}
+          </a>
+        {% endif %}
+      </aside>
+    </div>
+
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'exo/js/journey.js' %}"></script>
+<script>exoOutput();</script>
+{% endblock %}

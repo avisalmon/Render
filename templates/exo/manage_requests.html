@@ -1,0 +1,84 @@
+{% extends "exo/base.html" %}
+{% load exo %}
+
+{% block title %}{% t "manage.requests" %} — exo{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+{% block screen %}manage-requests{% endblock %}
+
+{% block content %}
+<div class="exo-wrap exo-page">
+
+  <header class="exo-page-head">
+    <h1>{% t "manage.requests" %}</h1>
+    <p class="exo-small">
+      <a href="{% url 'exo:manage_releases' %}">{% t "manage.releases" %}</a> ·
+      <a href="{% url 'exo:manage_usage' %}">{% t "manage.usage" %}</a>
+    </p>
+  </header>
+
+  {% comment %} Waiting first, because it is the only list that needs an act. {% endcomment %}
+  <section class="exo-group">
+    <div class="exo-group-head"><h2>{% t "waiting.title" %}</h2></div>
+    {% if requested %}
+      <div class="exo-rows">
+        {% for m in requested %}
+          <div class="exo-row">
+            <div>
+              <strong>{{ m.user.username }}</strong>
+              <span class="exo-small exo-faint">{{ m.user.email }}</span>
+              <span class="exo-small exo-faint">{{ m.requested_at|date:"j M, H:i" }}</span>
+            </div>
+            <form method="post" action="{% url 'exo:manage_decide' m.pk %}">
+              {% csrf_token %}
+              <button class="exo-btn" name="action" value="approve">{% t "manage.approve" %}</button>
+              <button class="exo-btn exo-btn-quiet" name="action" value="deny">{% t "manage.deny" %}</button>
+            </form>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="exo-muted exo-small">{% t "manage.none" %}</p>
+    {% endif %}
+  </section>
+
+  <section class="exo-group">
+    <div class="exo-group-head"><h2>{% t "manage.approve" %}</h2></div>
+    {% if approved %}
+      <div class="exo-rows">
+        {% for m in approved %}
+          <div class="exo-row">
+            <div>
+              <strong>{{ m.user.username }}</strong>
+              <span class="exo-small exo-faint">{{ m.user.email }}</span>
+            </div>
+            <form method="post" action="{% url 'exo:manage_decide' m.pk %}">
+              {% csrf_token %}
+              <button class="exo-btn exo-btn-quiet" name="action" value="revoke">{% t "manage.revoke" %}</button>
+            </form>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="exo-muted exo-small">{% t "manage.none" %}</p>
+    {% endif %}
+  </section>
+
+  {% if denied %}
+    <section class="exo-group">
+      <div class="exo-group-head"><h2>{% t "manage.deny" %}</h2></div>
+      <div class="exo-rows">
+        {% for m in denied %}
+          <div class="exo-row">
+            <div><strong>{{ m.user.username }}</strong></div>
+            <form method="post" action="{% url 'exo:manage_decide' m.pk %}">
+              {% csrf_token %}
+              <button class="exo-btn exo-btn-quiet" name="action" value="approve">{% t "manage.approve" %}</button>
+            </form>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "ustrip",
     "memz",
     "sensorlab",
+    "exo",
 ]
 
 MIDDLEWARE = [
@@ -65,6 +66,12 @@ MIDDLEWARE = [
     # says it is. Uses translation.override, so nothing leaks to the next
     # request. See sensorlab/middleware.py.
     "sensorlab.middleware.SensorLabLanguageMiddleware",
+    # Runs /exo/ requests in the language that person chose, and only
+    # those. exo is bilingual (Hebrew default) on a Hebrew-first site, so
+    # without this Django's own strings come out in the site's language
+    # inside an English exo page. Uses translation.override, so nothing
+    # leaks to the next request. Same shape as SensorLab's.
+    "exo.middleware.ExoLanguageMiddleware",
 ]
 
 ROOT_URLCONF = "mysite.urls"

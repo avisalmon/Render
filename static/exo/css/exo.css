@@ -1,0 +1,539 @@
+/* exo — the design system (A3, spec §0.2 and §0.3).
+ *
+ * Three rules shape this file.
+ *
+ * 1. EDITORIAL, BECAUSE THE JOURNEY ENDS IN A NEWSPAPER. The climax of this
+ *    app is a press release set as a front page. So the app itself is set like
+ *    a publication — a serif display face, a real type ramp, generous measure —
+ *    rather than a dashboard. The paper at the end should feel like where the
+ *    whole thing was heading, not a costume it puts on at the last screen.
+ *
+ * 2. LOGICAL PROPERTIES ONLY. `padding-inline`, `border-inline-start`,
+ *    `margin-block`. Never left/right. This app mirrors to Hebrew on every
+ *    page, and a `padding-left` survives the mirror still pointing the old
+ *    way — silently, because the page still renders. A test enforces this
+ *    rather than trusting memory.
+ *
+ * 3. ONE ACCENT THAT MEANS SOMETHING. Indigo is *this app's voice*: the
+ *    thing you can act on. Amber means exponential — the score, the AI's
+ *    contribution, the moment something gets bigger. Nothing else borrows
+ *    either colour, so when amber appears it carries meaning.
+ *
+ * Type: Frank Ruhl Libre (display) and Rubik (UI). Chosen because both have
+ * genuinely good Hebrew *and* Latin in one family, which a bilingual app needs
+ * more than a fashionable face — the same reasoning sensorlab recorded.
+ */
+
+:root {
+  /* surfaces and ink */
+  --exo-ground: #FBFAF7;
+  --exo-surface: #FFFFFF;
+  --exo-sunken: #F4F1EB;
+  --exo-ink: #17161B;
+  --exo-ink-soft: #5B5864;
+  --exo-ink-faint: #918D99;
+  --exo-line: #E9E5DE;
+  --exo-line-strong: #D9D4CA;
+
+  /* the voice: what you can act on */
+  --exo-accent: #4A3AE8;
+  --exo-accent-hover: #3B2CD4;
+  --exo-accent-tint: #EEEBFE;
+  --exo-accent-ink: #FFFFFF;
+
+  /* exponential: score, AI, growth. Nothing else may use it. */
+  --exo-amber: #B45309;
+  --exo-amber-tint: #FDF3E4;
+
+  --exo-danger: #B3261E;
+  --exo-danger-tint: #FCEDEC;
+  --exo-ok: #1F7A4D;
+
+  /* shape and rhythm */
+  --exo-radius-sm: 8px;
+  --exo-radius: 14px;
+  --exo-radius-lg: 20px;
+  --exo-pill: 999px;
+  --exo-tap: 44px;              /* the floor for anything tappable (spec §0.2) */
+  --exo-gutter: 18px;
+  --exo-measure: 68ch;          /* reading width for body copy */
+
+  /* type */
+  --exo-display: 'Frank Ruhl Libre', 'Georgia', serif;
+  --exo-ui: 'Rubik', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --exo-size-hero: clamp(30px, 6vw, 52px);
+  --exo-size-h1: clamp(24px, 4.4vw, 34px);
+  --exo-size-h2: 20px;
+  --exo-size-h3: 17px;
+  --exo-size-body: 16px;
+  --exo-size-small: 14px;
+  --exo-size-label: 12px;
+
+  --exo-shadow: 0 1px 2px rgba(23,22,27,.05), 0 8px 24px rgba(23,22,27,.06);
+  --exo-shadow-lift: 0 2px 6px rgba(23,22,27,.07), 0 18px 44px rgba(23,22,27,.10);
+}
+
+/* ---- base ---------------------------------------------------------- */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--exo-ground);
+  color: var(--exo-ink);
+  font-family: var(--exo-ui);
+  font-size: var(--exo-size-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .exo-display {
+  font-family: var(--exo-display);
+  font-weight: 600;
+  line-height: 1.22;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+p { margin: 0 0 1em; }
+p:last-child { margin-block-end: 0; }
+
+a { color: var(--exo-accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+a:hover { color: var(--exo-accent-hover); }
+
+img { max-width: 100%; height: auto; }
+
+:focus-visible {
+  outline: 2px solid var(--exo-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.exo-wrap {
+  max-inline-size: 1080px;
+  margin-inline: auto;
+  padding-inline: var(--exo-gutter);
+}
+.exo-wrap-narrow {
+  max-inline-size: 760px;
+  margin-inline: auto;
+  padding-inline: var(--exo-gutter);
+}
+
+.exo-muted { color: var(--exo-ink-soft); }
+.exo-faint { color: var(--exo-ink-faint); }
+.exo-small { font-size: var(--exo-size-small); }
+.exo-measure { max-inline-size: var(--exo-measure); }
+
+.exo-label {
+  font-size: var(--exo-size-label);
+  font-weight: 600;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--exo-ink-faint);
+}
+
+/* Visually hidden but available to screen readers. */
+.exo-sr {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* ---- header -------------------------------------------------------- */
+
+.exo-header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 40;
+  background: rgba(251,250,247,.86);
+  backdrop-filter: saturate(140%) blur(10px);
+  border-block-end: 1px solid var(--exo-line);
+}
+.exo-header-inner {
+  max-inline-size: 1080px;
+  margin-inline: auto;
+  padding-inline: var(--exo-gutter);
+  min-block-size: 60px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.exo-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--exo-ink);
+  text-decoration: none;
+  font-family: var(--exo-display);
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+.exo-wordmark:hover { color: var(--exo-ink); }
+.exo-wordmark svg { color: var(--exo-accent); flex: none; }
+
+.exo-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-inline-start: auto;
+}
+.exo-nav a,
+.exo-lang {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: var(--exo-tap);
+  min-inline-size: var(--exo-tap);
+  padding-inline: 12px;
+  border-radius: var(--exo-radius-sm);
+  color: var(--exo-ink-soft);
+  text-decoration: none;
+  font-size: var(--exo-size-small);
+  font-weight: 500;
+}
+.exo-nav a:hover, .exo-lang:hover { background: var(--exo-sunken); color: var(--exo-ink); }
+.exo-nav a[aria-current="page"] { color: var(--exo-ink); font-weight: 600; }
+
+.exo-lang {
+  border: 1px solid var(--exo-line-strong);
+  margin-inline-start: 6px;
+}
+
+/* ---- buttons ------------------------------------------------------- */
+
+.exo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-block-size: var(--exo-tap);
+  padding-inline: 20px;
+  padding-block: 10px;
+  border: 1px solid transparent;
+  border-radius: var(--exo-pill);
+  background: var(--exo-accent);
+  color: var(--exo-accent-ink);
+  font-family: var(--exo-ui);
+  font-size: var(--exo-size-body);
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background .15s ease, transform .1s ease, box-shadow .15s ease;
+}
+.exo-btn:hover { background: var(--exo-accent-hover); color: var(--exo-accent-ink); }
+.exo-btn:active { transform: translateY(1px); }
+.exo-btn[disabled], .exo-btn[aria-disabled="true"] {
+  opacity: .5; cursor: not-allowed; transform: none;
+}
+
+.exo-btn-lg { font-size: 17px; padding-inline: 26px; padding-block: 13px; }
+
+.exo-btn-ghost {
+  background: transparent;
+  color: var(--exo-ink);
+  border-color: var(--exo-line-strong);
+}
+.exo-btn-ghost:hover { background: var(--exo-sunken); color: var(--exo-ink); }
+
+.exo-btn-quiet {
+  background: transparent;
+  color: var(--exo-ink-soft);
+  border-color: transparent;
+  padding-inline: 12px;
+}
+.exo-btn-quiet:hover { background: var(--exo-sunken); color: var(--exo-ink); }
+
+.exo-btn-danger { background: var(--exo-danger); }
+.exo-btn-danger:hover { background: #8E1E17; }
+
+/* ---- cards --------------------------------------------------------- */
+
+.exo-card {
+  background: var(--exo-surface);
+  border: 1px solid var(--exo-line);
+  border-radius: var(--exo-radius);
+  padding: 18px;
+}
+.exo-card-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+.exo-card-link:hover {
+  color: inherit;
+  border-color: var(--exo-line-strong);
+  box-shadow: var(--exo-shadow);
+  transform: translateY(-2px);
+}
+
+.exo-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 620px) { .exo-grid-2 { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 900px) { .exo-grid-3 { grid-template-columns: repeat(3, 1fr); } }
+
+/* ---- landing ------------------------------------------------------- */
+
+.exo-hero {
+  padding-block: clamp(40px, 8vw, 84px) clamp(28px, 5vw, 52px);
+}
+.exo-hero h1 {
+  font-size: var(--exo-size-hero);
+  max-inline-size: 18ch;
+}
+.exo-hero-lede {
+  margin-block-start: 18px;
+  font-size: clamp(17px, 2.2vw, 20px);
+  color: var(--exo-ink-soft);
+  max-inline-size: 56ch;
+}
+.exo-hero-actions {
+  margin-block-start: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+/* The formula, set as three columns of meaning rather than a graphic. */
+.exo-formula {
+  margin-block: clamp(28px, 5vw, 48px);
+  display: grid;
+  gap: 2px;
+  background: var(--exo-line);
+  border: 1px solid var(--exo-line);
+  border-radius: var(--exo-radius);
+  overflow: hidden;
+}
+@media (min-width: 760px) { .exo-formula { grid-template-columns: repeat(3, 1fr); } }
+.exo-formula-part { background: var(--exo-surface); padding: 20px; }
+.exo-formula-key {
+  font-family: var(--exo-display);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--exo-accent);
+  letter-spacing: -0.01em;
+}
+.exo-formula-part p { margin-block-start: 6px; color: var(--exo-ink-soft); font-size: var(--exo-size-small); }
+
+/* The invitation into the gated half — the only login prompt in the public
+   half (spec §1), so it is allowed to be the loudest thing on the page. */
+.exo-invite {
+  margin-block: clamp(28px, 5vw, 48px);
+  padding: clamp(22px, 4vw, 36px);
+  border-radius: var(--exo-radius-lg);
+  background: var(--exo-ink);
+  color: #F6F5F2;
+  box-shadow: var(--exo-shadow-lift);
+}
+.exo-invite h2 { color: #FFFFFF; font-size: var(--exo-size-h1); max-inline-size: 20ch; }
+.exo-invite p { color: #BFBBC6; margin-block-start: 10px; max-inline-size: 52ch; }
+.exo-invite .exo-btn { margin-block-start: 20px; }
+
+/* ---- attributes ---------------------------------------------------- */
+
+.exo-group { margin-block: clamp(26px, 4vw, 44px); }
+.exo-group-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-block-end: 14px; }
+.exo-group-head h2 { font-size: var(--exo-size-h2); }
+
+.exo-attr { display: flex; flex-direction: column; gap: 6px; block-size: 100%; }
+.exo-attr-name { font-family: var(--exo-display); font-size: var(--exo-size-h3); font-weight: 600; }
+.exo-attr-en {
+  font-size: var(--exo-size-label);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--exo-ink-faint);
+}
+/* The English term above a Hebrew title renders nothing on an English page,
+   where it would only repeat the title. An empty element is still a flex item
+   and still claims its gap, so it is removed rather than merely blanked. */
+.exo-attr-en:empty { display: none; }
+.exo-attr-def { font-size: var(--exo-size-small); color: var(--exo-ink-soft); }
+
+/* ---- prose --------------------------------------------------------- */
+
+.exo-prose { max-inline-size: var(--exo-measure); font-size: 17px; line-height: 1.72; }
+.exo-prose h2 { font-size: var(--exo-size-h2); margin-block: 1.4em .5em; }
+.exo-prose strong { font-weight: 600; }
+.exo-prose ul { padding-inline-start: 1.2em; }
+
+.exo-embed {
+  position: relative;
+  inline-size: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--exo-radius);
+  overflow: hidden;
+  background: var(--exo-sunken);
+  border: 1px solid var(--exo-line);
+  margin-block: 20px;
+}
+.exo-embed iframe { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; border: 0; }
+
+.exo-quote-book {
+  margin-block: 20px;
+  padding-inline-start: 14px;
+  border-inline-start: 3px solid var(--exo-amber);
+  color: var(--exo-ink-soft);
+  font-size: var(--exo-size-small);
+}
+
+/* ---- page furniture ------------------------------------------------ */
+
+.exo-page { padding-block: clamp(24px, 4vw, 44px) 60px; }
+.exo-page-head { margin-block-end: clamp(20px, 3vw, 32px); }
+.exo-page-head h1 { font-size: var(--exo-size-h1); }
+.exo-page-head p { margin-block-start: 10px; color: var(--exo-ink-soft); max-inline-size: 60ch; }
+
+.exo-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-block-size: var(--exo-tap);
+  font-size: var(--exo-size-small);
+  color: var(--exo-ink-soft);
+  text-decoration: none;
+}
+.exo-back:hover { color: var(--exo-ink); }
+/* The chevron points "back", which is the other way in Hebrew. */
+.exo-back svg { transform: scaleX(1); }
+[dir="rtl"] .exo-back svg { transform: scaleX(-1); }
+
+.exo-footer {
+  border-block-start: 1px solid var(--exo-line);
+  margin-block-start: 40px;
+  padding-block: 28px 40px;
+  color: var(--exo-ink-faint);
+  font-size: var(--exo-size-small);
+}
+
+/* ---- empty + error states ------------------------------------------ */
+
+.exo-empty {
+  text-align: center;
+  padding-block: clamp(40px, 8vw, 80px);
+  color: var(--exo-ink-soft);
+}
+.exo-empty h2 { font-size: var(--exo-size-h2); margin-block-end: 8px; color: var(--exo-ink); }
+
+.exo-error { text-align: center; padding-block: clamp(60px, 12vw, 120px); }
+.exo-error-code {
+  font-family: var(--exo-display);
+  font-size: 64px;
+  font-weight: 700;
+  color: var(--exo-line-strong);
+  line-height: 1;
+}
+.exo-error h1 { font-size: var(--exo-size-h1); margin-block-start: 12px; }
+.exo-error p { color: var(--exo-ink-soft); margin-block-start: 10px; }
+.exo-error .exo-btn { margin-block-start: 22px; }
+
+/* ---- motion -------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---- toasts (exo.js) ----------------------------------------------- */
+
+.exo-toasts {
+  position: fixed;
+  inset-block-end: 18px;
+  inset-inline: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 90;
+  pointer-events: none;
+  padding-inline: var(--exo-gutter);
+}
+.exo-toast {
+  background: var(--exo-ink);
+  color: #F6F5F2;
+  padding-inline: 16px;
+  padding-block: 11px;
+  border-radius: var(--exo-pill);
+  font-size: var(--exo-size-small);
+  box-shadow: var(--exo-shadow-lift);
+  max-inline-size: min(92vw, 460px);
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity .25s ease, transform .25s ease;
+}
+.exo-toast.is-going { opacity: 0; transform: translateY(6px); }
+.exo-toast-error { background: var(--exo-danger); }
+.exo-toast-ok { background: var(--exo-ok); }
+
+/* --- hidden means hidden ------------------------------------------------
+   The `hidden` attribute only carries `display: none` from the user agent
+   stylesheet, so any component rule that sets its own `display` silently
+   beats it. That is how the output screen came to show both the "until when"
+   and the "which people" rows at once, with neither option chosen: the
+   template marked them hidden and `.exo-vis-extra { display: flex }` quietly
+   overruled it.
+
+   Stated once, for the whole app, rather than patched per component. This is
+   the one place an `!important` earns its keep: the point of the rule is to
+   win. */
+[hidden] { display: none !important; }
+
+/* --- notices ------------------------------------------------------------
+   One quiet band for a state the page needs to state plainly: a ceiling
+   reached, a mode the app is running in. Not an alert, because none of these
+   is an error the reader caused — and the warn variant borrows the amber
+   token rather than danger red for the same reason.
+   Logical properties throughout, so it mirrors with the rest (spec §0.3). */
+.exo-notice {
+  background: var(--exo-accent-tint);
+  border: 1px solid var(--exo-line);
+  border-inline-start: 3px solid var(--exo-accent);
+  border-radius: var(--exo-radius-sm);
+  color: var(--exo-ink);
+  font-size: var(--exo-size-small);
+  padding-block: 12px;
+  padding-inline: 14px;
+  margin-block: 16px;
+}
+.exo-notice-warn {
+  background: var(--exo-amber-tint);
+  border-inline-start-color: var(--exo-amber);
+}
+.exo-notice em { color: var(--exo-ink-soft); font-style: normal; }
+
+/* --- the 44px floor, where it was actually being missed -----------------
+   Found by the phone tests, not by looking: the wordmark, two standalone
+   text links and the duration select were all between 19px and 32px tall,
+   on every page, in both languages. A control that is only hard to hit is
+   the kind of fault that never gets reported — people just miss, tap again,
+   and think less of the app (spec §0.2).
+
+   `min-block-size`, not `height`: these are all things that must be free to
+   grow when Hebrew wraps to a second line. */
+.exo-wordmark { min-block-size: var(--exo-tap); }
+
+/* A link that stands alone on its own line is a target, not prose. Inline
+   links inside a sentence are deliberately excluded: padding them to 44px
+   would tear the paragraph apart to fix something nobody struggles with. */
+.exo-tap-link {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--exo-tap);
+}
+
+.exo-page select,
+.exo-field select {
+  min-block-size: var(--exo-tap);
+  padding-inline: 10px;
+}

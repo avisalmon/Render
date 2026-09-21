@@ -1,0 +1,96 @@
+{% extends "exo/base.html" %}
+{% load exo %}
+
+{% block title %}{% t "learn.title" %} — exo{% endblock %}
+{% block screen %}learn{% endblock %}
+
+{% block content %}
+<div class="exo-wrap exo-page">
+
+  <header class="exo-page-head">
+    <h1>{% t "learn.title" %}</h1>
+    <p>{% t "learn.lede" %}</p>
+  </header>
+
+  {% if mtp %}
+  <section class="exo-group">
+    <div class="exo-group-head"><h2>{% t "learn.group_mtp" %}</h2></div>
+    <a class="exo-card exo-card-link" href="{% url 'exo:learn_attribute' mtp.key %}">
+      <div class="exo-attr">
+        <span class="exo-attr-en">{% term mtp %}</span>
+        <span class="exo-attr-name">{% tr mtp "name" %}</span>
+        <span class="exo-attr-def">{% tr mtp "short_def" %}</span>
+      </div>
+    </a>
+  </section>
+  {% endif %}
+
+  <section class="exo-group">
+    <div class="exo-group-head"><h2>{% t "learn.group_scale" %}</h2></div>
+    <div class="exo-grid exo-grid-2">
+      {% for a in scale %}
+        <a class="exo-card exo-card-link" href="{% url 'exo:learn_attribute' a.key %}">
+          <div class="exo-attr">
+            <span class="exo-attr-en">{% term a %}</span>
+            <span class="exo-attr-name">{% tr a "name" %}</span>
+            <span class="exo-attr-def">{% tr a "short_def" %}</span>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="exo-group">
+    <div class="exo-group-head"><h2>{% t "learn.group_ideas" %}</h2></div>
+    <div class="exo-grid exo-grid-2">
+      {% for a in ideas %}
+        <a class="exo-card exo-card-link" href="{% url 'exo:learn_attribute' a.key %}">
+          <div class="exo-attr">
+            <span class="exo-attr-en">{% term a %}</span>
+            <span class="exo-attr-name">{% tr a "name" %}</span>
+            <span class="exo-attr-def">{% tr a "short_def" %}</span>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+
+  {% if extra %}
+  <section class="exo-group">
+    <div class="exo-group-head">
+      <h2>{% t "learn.group_extra" %}</h2>
+    </div>
+    <p class="exo-muted exo-small exo-measure" style="margin-block-end:14px">
+      {% t "learn.group_extra_blurb" %}
+    </p>
+    <div class="exo-grid exo-grid-2">
+      {% for a in extra %}
+        <a class="exo-card exo-card-link" href="{% url 'exo:learn_attribute' a.key %}">
+          <div class="exo-attr">
+            <span class="exo-attr-en">{% term a %}</span>
+            <span class="exo-attr-name">{% tr a "name" %}</span>
+            <span class="exo-attr-def">{% tr a "short_def" %}</span>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if pages %}
+  <section class="exo-group">
+    <div class="exo-group-head"><h2>{% t "learn.handout" %}</h2></div>
+    <div class="exo-grid exo-grid-2">
+      {% for p in pages %}
+        <a class="exo-card exo-card-link" href="{% url 'exo:learn_page' p.key %}">
+          <div class="exo-attr">
+            <span class="exo-attr-name">{% tr p "title" %}</span>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+</div>
+{% endblock %}

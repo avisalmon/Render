@@ -51,6 +51,9 @@ urlpatterns = [
     # SensorLab is its own product too (docs/sensorlab/spec.md) — same reasoning,
     # and mounted before app.urls so the prefix is unambiguously its own.
     path("sensorlab/", include("sensorlab.urls", namespace="sensorlab")),
+    # exo is its own product too (docs/exo/spec.md) — same reasoning,
+    # and mounted before app.urls so the prefix is unambiguously its own.
+    path("exo/", include("exo.urls", namespace="exo")),
     path("", include("app.urls")),
 ]
 

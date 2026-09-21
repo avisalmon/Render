@@ -1,0 +1,74 @@
+{% extends "exo/base.html" %}
+{% load static exo %}
+
+{% block title %}{{ concept.title }} — {% t "stage.interview" %}{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+{% block screen %}interview{% endblock %}
+
+{% block content %}
+<div class="exo-wrap-narrow exo-page exo-stage">
+
+  {% include "exo/_rail.html" %}
+
+  <header class="exo-page-head">
+    <h1>{% t "interview.title" %}</h1>
+    {% if is_stub %}<p class="exo-stub-note">{% t "options.ai_note" %}</p>{% endif %}
+  </header>
+
+  <div class="exo-chat" id="chat" data-send="{% url 'exo:concept_interview_send' concept.pk %}">
+    {% for m in messages %}
+      <div class="exo-msg exo-msg-{{ m.role }}">{{ m.content|linebreaksbr }}</div>
+    {% endfor %}
+  </div>
+
+  <div class="exo-chat-bar">
+    <label class="exo-sr" for="say">{% t "interview.placeholder" %}</label>
+    <textarea id="say" rows="1" placeholder="{% t 'interview.placeholder' %}"></textarea>
+    <button class="exo-btn" id="send">{% t "interview.send" %}</button>
+  </div>
+
+  <div class="exo-stage-foot">
+    <button class="exo-btn exo-btn-ghost" id="settle-open"
+            data-summary="{% url 'exo:concept_interview_summary' concept.pk %}">
+      {% t "interview.settle" %}
+    </button>
+  </div>
+
+  {% comment %}
+    The settle card (spec §5.1, D1.5). The AI proposes; the person edits and
+    accepts. Their edit is what gets stored — the model does not get the last
+    word on their own purpose.
+  {% endcomment %}
+  <div class="exo-sheet" id="settle" hidden
+       data-accept="{% url 'exo:concept_settle' concept.pk %}">
+    <div class="exo-sheet-inner">
+      <h2>{% t "interview.settle" %}</h2>
+      <p class="exo-muted exo-small">{% t "interview.settle_blurb" %}</p>
+
+      <label class="exo-field">
+        <span>{% t "interview.mtp" %}</span>
+        <textarea id="f-mtp" rows="2">{{ concept.mtp }}</textarea>
+      </label>
+      <label class="exo-field">
+        <span>{% t "interview.special" %}</span>
+        <textarea id="f-special" rows="2">{{ concept.special }}</textarea>
+      </label>
+      <label class="exo-field">
+        <span>{% t "interview.unique" %}</span>
+        <textarea id="f-unique" rows="2">{{ concept.unique }}</textarea>
+      </label>
+
+      <div class="exo-sheet-actions">
+        <button class="exo-btn exo-btn-quiet" id="settle-close">{% t "output.cancel" %}</button>
+        <button class="exo-btn" id="settle-accept">{% t "interview.accept" %}</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'exo/js/journey.js' %}"></script>
+<script>exoInterview();</script>
+{% endblock %}

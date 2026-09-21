@@ -1,0 +1,75 @@
+{% extends "exo/base.html" %}
+{% load exo %}
+
+{% block title %}{% t "manage.usage" %} — exo{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+{% block screen %}manage-usage{% endblock %}
+
+{% block content %}
+<div class="exo-wrap exo-page">
+
+  <header class="exo-page-head">
+    <h1>{% t "manage.usage" %}</h1>
+    <p class="exo-small">
+      <a href="{% url 'exo:manage_requests' %}">{% t "manage.requests" %}</a> ·
+      <a href="{% url 'exo:manage_releases' %}">{% t "manage.releases" %}</a>
+    </p>
+  </header>
+
+  {% comment %}
+    The guard first, because it is the only number on this page that can stop
+    the app working: past its ceiling every AI screen says "try later" and the
+    rest of the site carries on untouched (spec §8, G5).
+  {% endcomment %}
+  <div class="exo-notice{% if guard.over %} exo-notice-warn{% endif %}">
+    {% t "manage.guard" %}: <strong>{{ guard.used }}</strong> / {{ guard.ceiling }}
+    {% if guard.over %} — {% t "manage.guard_over" %}{% endif %}
+    {% if stub %} · <em>{% t "manage.stub_mode" %}</em>{% endif %}
+  </div>
+
+  <div class="exo-grid exo-grid-3">
+    <div class="exo-card"><span class="exo-label">24h</span><p class="exo-stat">{{ today }}</p></div>
+    <div class="exo-card"><span class="exo-label">30d</span><p class="exo-stat">{{ total }}</p></div>
+    <div class="exo-card"><span class="exo-label">errors</span><p class="exo-stat">{{ failures }}</p></div>
+  </div>
+
+  <p class="exo-small exo-faint">
+    {% t "manage.ceilings" %}:
+    {{ limits.concepts_per_member }} · {{ limits.regen_per_stage_per_day }} ·
+    {{ limits.calls_per_member_per_day }} · {{ limits.timeout_seconds }}s
+  </p>
+
+  <section class="exo-group">
+    <div class="exo-group-head"><h2>by task</h2></div>
+    <div class="exo-rows">
+      {% for row in by_task %}
+        <div class="exo-row">
+          <div><strong>{{ row.task }}</strong></div>
+          <span class="exo-small exo-faint">
+            {{ row.n }} calls · {{ row.prompt|default:0 }}+{{ row.completion|default:0 }} tokens
+          </span>
+        </div>
+      {% empty %}
+        <p class="exo-muted exo-small">{% t "manage.none" %}</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="exo-group">
+    <div class="exo-group-head"><h2>by person</h2></div>
+    <div class="exo-rows">
+      {% for row in by_person %}
+        <div class="exo-row">
+          <div><strong>{{ row.user__username }}</strong></div>
+          <span class="exo-small exo-faint">
+            {{ row.n }} calls · {{ row.prompt|default:0 }}+{{ row.completion|default:0 }} tokens
+          </span>
+        </div>
+      {% empty %}
+        <p class="exo-muted exo-small">{% t "manage.none" %}</p>
+      {% endfor %}
+    </div>
+  </section>
+
+</div>
+{% endblock %}

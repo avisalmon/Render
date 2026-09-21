@@ -1,0 +1,56 @@
+{% extends "exo/base.html" %}
+{% load exo %}
+
+{% block title %}{% t "join.title" %} — exo{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+{% block screen %}join{% endblock %}
+
+{% block content %}
+<div class="exo-wrap-narrow exo-page">
+  <div class="exo-auth">
+    <h1>{% t "join.title" %}</h1>
+    <p class="exo-muted">{% t "join.blurb" %}</p>
+
+    <form method="post" class="exo-form" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="exo-form-error">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <label class="exo-field">
+        <span>{{ form.username.label }}</span>
+        {{ form.username }}
+        {% if form.username.errors %}<em class="exo-form-error">{{ form.username.errors.0 }}</em>{% endif %}
+      </label>
+
+      <label class="exo-field">
+        <span>{{ form.email.label }}</span>
+        {{ form.email }}
+        {% if form.email.errors %}<em class="exo-form-error">{{ form.email.errors.0 }}</em>{% endif %}
+      </label>
+
+      <label class="exo-field">
+        <span>{{ form.password.label }}</span>
+        {{ form.password }}
+        {% if form.password.errors %}<em class="exo-form-error">{{ form.password.errors.0 }}</em>{% endif %}
+      </label>
+
+      <button class="exo-btn exo-btn-lg" type="submit">{% t "join.submit" %}</button>
+    </form>
+
+    {% comment %}
+      The same shared account, reached the other way. `next` keeps the person
+      inside /exo/ after Google hands them back.
+    {% endcomment %}
+    <a class="exo-btn exo-btn-ghost exo-auth-google"
+       href="/accounts/google/login/?process=login&next={% url 'exo:join' %}">
+      {% t "join.with_google" %}
+    </a>
+
+    <p class="exo-small exo-muted exo-auth-alt">
+      {% t "join.have_account" %}
+      <a href="{% url 'exo:login' %}">{% t "join.sign_in" %}</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

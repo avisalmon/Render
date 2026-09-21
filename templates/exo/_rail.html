@@ -1,0 +1,30 @@
+{% load exo %}
+{% comment %}
+  The progress rail (spec §5.5, D5.1). Rendered from `concept.stage` alone, so
+  every stage page agrees about where the person is without any of them
+  counting stages themselves.
+
+  A reached stage is a link back. Going back keeps everything downstream and
+  marks it stale — it never deletes, which is why this is allowed to be a
+  plain link rather than something that warns first.
+{% endcomment %}
+<nav class="exo-rail" aria-label="{% t 'stage.interview' %}">
+  {% for s in stages %}
+    {% if s.reached and not s.current %}
+      <form method="post" action="{% url 'exo:concept_back' concept.pk %}" class="exo-rail-step-form">
+        {% csrf_token %}
+        <input type="hidden" name="stage" value="{{ s.key }}">
+        <button type="submit" class="exo-rail-step is-done">
+          <span class="exo-rail-dot">{{ s.index|add:1 }}</span>
+          <span class="exo-rail-name">{% t s.key|stage_key %}</span>
+        </button>
+      </form>
+    {% else %}
+      <div class="exo-rail-step {% if s.current %}is-current{% endif %}"
+           {% if s.current %}aria-current="step"{% endif %}>
+        <span class="exo-rail-dot">{{ s.index|add:1 }}</span>
+        <span class="exo-rail-name">{% t s.key|stage_key %}</span>
+      </div>
+    {% endif %}
+  {% endfor %}
+</nav>

@@ -1,0 +1,92 @@
+{% load static exo %}<!doctype html>
+{% comment %}
+  exo's own shell. It never extends the main site's base template and carries
+  no link back out of /exo/ — building_an_app.md Rule 3.
+
+  `lang` and `dir` come from ExoLanguageMiddleware, so the whole app mirrors
+  from this one place and no page has to think about it (spec §0.3).
+{% endcomment %}
+<html lang="{{ request.exo_language|default:'he' }}" dir="{{ request.exo_dir|default:'rtl' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}{% t "home.title" %}{% endblock %}</title>
+  <meta name="description" content="{% block description %}{% t "home.lede" %}{% endblock %}">
+  {% block robots %}{% endblock %}
+
+  {% comment %}
+    Frank Ruhl Libre + Rubik: both have genuinely good Hebrew and Latin in one
+    family, which a bilingual app needs more than a fashionable face (§0.3).
+  {% endcomment %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;600;700&family=Rubik:wght@300;400;500;600&display=swap">
+
+  <link rel="stylesheet" href="{% static 'exo/css/exo.css' %}">
+  <link rel="stylesheet" href="{% static 'exo/css/journey.css' %}">
+  {% block head %}{% endblock %}
+</head>
+<body data-csrf="{{ csrf_token }}">
+
+  <header class="exo-header">
+    <div class="exo-header-inner">
+      <a class="exo-wordmark" href="{% url 'exo:home' %}">
+        {% comment %}
+          An exponential curve, drawn rather than imported: it is the one idea
+          the whole app is about, and it costs nothing here.
+        {% endcomment %}
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 20c4 0 6-1.6 8-6s4-6 8-6"/>
+          <path d="M15 4h4v4"/>
+        </svg>
+        <span>exo</span>
+      </a>
+
+      <nav class="exo-nav" aria-label="{% t 'nav.learn' %}">
+        <a href="{% url 'exo:learn' %}"
+           {% if nav == 'learn' %}aria-current="page"{% endif %}>{% t "nav.learn" %}</a>
+        <a href="{% url 'exo:museum' %}"
+           {% if nav == 'museum' %}aria-current="page"{% endif %}>{% t "nav.museum" %}</a>
+        {% comment %}
+          Build appears only for people who are already in. For everyone else
+          the single button on the landing is the one door (spec §1), and a
+          nav entry would be a second place the public half asks you to sign in.
+        {% endcomment %}
+        {% if request.user.is_authenticated and request.user.exo_membership.status == 'approved' or request.user.is_superuser %}
+          <a href="{% url 'exo:concepts' %}"
+             {% if nav == 'build' %}aria-current="page"{% endif %}>{% t "nav.build" %}</a>
+        {% endif %}
+        {% block nav_extra %}{% endblock %}
+
+        {% comment %}
+          The switch (spec §0.3). A link rather than script, so it works for a
+          visitor who has not signed in — the request-access page itself has to
+          be readable in both languages.
+        {% endcomment %}
+        <a class="exo-lang"
+           href="{% url 'exo:set_language' request.exo_other_language|default:'en' %}?next={{ request.path|urlencode }}"
+           title="{% t 'lang.switch_label' %}"
+           lang="{{ request.exo_other_language|default:'en' }}">{% t "lang.switch_to" %}</a>
+      </nav>
+    </div>
+  </header>
+
+  <main data-screen="{% block screen %}{% endblock %}">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="exo-footer">
+    <div class="exo-wrap">
+      {% comment %}
+        The attribution (B5). The framework is Salim Ismail's and published;
+        naming it is both correct and good for credibility (spec §12.5).
+      {% endcomment %}
+      <p>{% t "footer.book" %}</p>
+    </div>
+  </footer>
+
+  <script src="{% static 'exo/js/exo.js' %}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

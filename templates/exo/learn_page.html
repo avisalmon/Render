@@ -1,0 +1,47 @@
+{% extends "exo/base.html" %}
+{% load exo %}
+
+{% block title %}{% tr page "title" %} — exo{% endblock %}
+{% block screen %}learn-page{% endblock %}
+
+{% block content %}
+<div class="exo-wrap-narrow exo-page">
+
+  <a class="exo-back" href="{% url 'exo:learn' %}">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M15 18l-6-6 6-6"/>
+    </svg>
+    {% t "learn.back" %}
+  </a>
+
+  <header class="exo-page-head" style="margin-block-start:10px">
+    <h1>{% tr page "title" %}</h1>
+  </header>
+
+  <article class="exo-prose">
+    {% tr page "body" as body %}
+    {{ body|linebreaks }}
+
+    {% tr page "youtube_url" as video %}
+    {% if video %}
+      <div class="exo-embed">
+        <iframe src="{{ video }}"
+                title="{% tr page 'title' %}"
+                loading="lazy"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allow="accelerometer; clipboard-write; encrypted-media; picture-in-picture"
+                allowfullscreen></iframe>
+      </div>
+    {% endif %}
+
+    {% tr page "book_reference" as book %}
+    {% if book %}
+      <p class="exo-quote-book">
+        <strong>{% t "learn.in_the_book" %}:</strong> {{ book }}
+      </p>
+    {% endif %}
+  </article>
+
+</div>
+{% endblock %}

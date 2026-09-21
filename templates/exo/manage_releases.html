@@ -1,0 +1,48 @@
+{% extends "exo/base.html" %}
+{% load exo %}
+
+{% block title %}{% t "manage.releases" %} — exo{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+{% block screen %}manage-releases{% endblock %}
+
+{% block content %}
+<div class="exo-wrap exo-page">
+
+  <header class="exo-page-head">
+    <h1>{% t "manage.releases" %}</h1>
+    <p class="exo-small">
+      <a href="{% url 'exo:manage_requests' %}">{% t "manage.requests" %}</a> ·
+      <a href="{% url 'exo:manage_usage' %}">{% t "manage.usage" %}</a>
+    </p>
+  </header>
+
+  {% if releases %}
+    <div class="exo-rows">
+      {% for r in releases %}
+        <div class="exo-row">
+          <div>
+            <strong>{{ r.headline|default:r.concept.title|truncatechars:70 }}</strong>
+            <span class="exo-small exo-faint">
+              {{ r.concept.owner.username }} · {{ r.get_visibility_display }}
+              {% if r.public_until %}· {{ r.public_until|date:"j M H:i" }}{% endif %}
+              · ♥ {{ r.likes }} · 👁 {{ r.view_count }}
+              {% if r.hidden_by_admin %}· <em>{% t "manage.hide" %}</em>{% endif %}
+            </span>
+          </div>
+          <form method="post" action="{% url 'exo:manage_moderate' r.pk %}">
+            {% csrf_token %}
+            {% if r.hidden_by_admin %}
+              <button class="exo-btn exo-btn-quiet" name="action" value="unhide">{% t "manage.unhide" %}</button>
+            {% else %}
+              <button class="exo-btn exo-btn-quiet" name="action" value="hide">{% t "manage.hide" %}</button>
+            {% endif %}
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="exo-muted exo-small">{% t "manage.none" %}</p>
+  {% endif %}
+
+</div>
+{% endblock %}

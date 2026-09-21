@@ -1,0 +1,57 @@
+{% extends "exo/base.html" %}
+{% load exo %}
+
+{% block title %}{% t "museum.title" %} — exo{% endblock %}
+{% block description %}{% t "museum.lede" %}{% endblock %}
+{% block screen %}museum{% endblock %}
+
+{% block content %}
+<div class="exo-wrap exo-page">
+
+  <header class="exo-page-head">
+    <p class="exo-label">exo</p>
+    <h1>{% t "museum.title" %}</h1>
+    <p>{% t "museum.lede" %}</p>
+  </header>
+
+  <div class="exo-sorts">
+    <a class="exo-sort {% if sort == 'new' %}is-on{% endif %}"
+       href="?sort=new">{% t "museum.sort_newest" %}</a>
+    <a class="exo-sort {% if sort == 'liked' %}is-on{% endif %}"
+       href="?sort=liked">{% t "museum.sort_liked" %}</a>
+    <a class="exo-sort {% if sort == 'score' %}is-on{% endif %}"
+       href="?sort=score">{% t "museum.sort_score" %}</a>
+  </div>
+
+  {% if releases %}
+    <div class="exo-wall">
+      {% for r in releases %}
+        <a class="exo-wall-item" href="{% url 'exo:museum_item' r.pk %}">
+          <article class="exo-mini {{ r.newspaper_style.css_class|default:'paper-broadsheet' }}"
+                   lang="{{ r.language }}"
+                   dir="{% if r.language == 'he' %}rtl{% else %}ltr{% endif %}">
+            <span class="exo-mini-masthead">{% tr r.newspaper_style "name" %}</span>
+            <h2 class="exo-mini-headline">{{ r.headline }}</h2>
+            <p class="exo-mini-excerpt">{{ r.body|truncatechars:150 }}</p>
+          </article>
+          <div class="exo-wall-meta">
+            <span>{{ r.concept.title|truncatechars:40 }}</span>
+            <span class="exo-wall-stats">
+              {% if r.exponential_score %}
+                <span class="exo-score-badge exo-score-sm">{{ r.exponential_score }}</span>
+              {% endif %}
+              <span title="{% t 'museum.likes' %}">♥ {{ r.likes }}</span>
+              <span title="{% t 'museum.views' %}">👁 {{ r.view_count }}</span>
+            </span>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="exo-empty">
+      <p>{% t "museum.empty" %}</p>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}
