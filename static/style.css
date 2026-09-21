@@ -2353,3 +2353,47 @@ footer .d-inline-flex > a {
   .blog-wide-cover { min-height: 180px; }
   .blog-pair { grid-template-columns: 1fr; }
 }
+
+/* === F-13.2 — the portal cards on the home page ===========================
+   The apps a signed-in person has, decided by app.portal.visible_apps.
+   Editorial like everything else here: hairline borders, one accent, no
+   shadows. Deliberately quieter than the training hero, because training is
+   the core business (main_spec §0.1) and these sit under it. */
+.home-apps .app-cards {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: .75rem;
+}
+.app-card {
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+  height: 100%;
+  padding: .85rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-surface);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color .15s ease, background .15s ease;
+}
+.app-card:hover,
+.app-card:focus-visible {
+  border-color: var(--accent-primary);
+  background: color-mix(in srgb, var(--accent-primary) 6%, var(--bg-surface));
+  text-decoration: none;
+}
+.app-card-name {
+  font-family: var(--font-heading), serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--text-primary);
+}
+.app-card-blurb {
+  font-size: .85rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}

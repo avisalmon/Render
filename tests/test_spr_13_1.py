@@ -195,3 +195,64 @@ def test_crashtech_is_out_until_avi_says(people):
 
     assert "crashtech" in NOT_IN_THE_PORTAL
     assert "crashtech" not in _slugs(people["staff"])
+
+
+# ------------------------------------------------- F-13.2, the page itself
+
+
+def _home(client, person, settings):
+    settings.CONTENT_RELEVANCE_ENABLED = False
+    client.force_login(person)
+    return client.get("/").content.decode()
+
+
+def test_the_page_shows_a_person_their_own_apps(client, people, settings):
+    """The card is a link to the app, so it is checked as one. A heading that
+    says the right word above nothing is not a portal."""
+    body = _home(client, people["relative"], settings)
+    for expected in ('href="/memz/"', 'href="/matazim/"', 'href="/sensorlab/"',
+                     'href="/ustrip/"'):
+        assert expected in body, f"the family member's home page is missing {expected}"
+    assert 'href="/home/"' not in body
+
+
+def test_the_page_never_hardcodes_the_list(client, people, settings):
+    """§0.5 as a property of the template rather than a promise.
+
+    If the cards came from the template instead of from `visible_apps`, they
+    would survive an empty registry, and the home page would become the second
+    answer this whole module exists to prevent.
+    """
+    import app.portal as portal
+
+    real = portal.APPS
+    try:
+        portal.APPS = []
+        portal._BY_SLUG = {}
+        body = _home(client, people["owner"], settings)
+    finally:
+        portal.APPS = real
+        portal._BY_SLUG = {a.slug: a for a in real}
+
+    for gone in ('href="/memz/"', 'href="/matazim/"', 'href="/sensorlab/"'):
+        assert gone not in body, f"{gone} is written into the template, not read from the registry"
+
+
+def test_a_logged_out_visitor_sees_the_page_they_saw_before(client, db, settings):
+    """The portal is per person, so the public page is unchanged. Asserted
+    because "add a section for signed-in people" is one careless `{% if %}`
+    away from changing what a stranger sees."""
+    settings.CONTENT_RELEVANCE_ENABLED = False
+    body = client.get("/").content.decode()
+    assert "המרחבים שלך" not in body
+    for hidden in ('href="/ustrip/"', 'href="/home/"'):
+        assert hidden not in body
+    assert "הדרכות" in body, "the training hero is what a visitor comes for"
+
+
+def test_training_is_still_the_hero(client, people, settings):
+    """§0.1: babook keeps training as its core business, and the apps sit
+    under it. If the cards ever climb above the training hero, this fails and
+    somebody decides that on purpose."""
+    body = _home(client, people["owner"], settings)
+    assert body.index("training-hero") < body.index("home-apps")

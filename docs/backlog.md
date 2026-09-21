@@ -1578,7 +1578,7 @@ this epic is the work that follows from it.
 | F-ID | Feature | Traces | Status |
 |---|---|---|---|
 | F-13.1 | One function that answers "which apps may this person see", asked by the portal and by each app's own door | §0.5 | DONE 2026-09-21 |
-| F-13.2 | The main page as a portal: the person's apps, and nothing about the apps that are not theirs | §0.3, §0.6 | TODO |
+| F-13.2 | The main page as a portal: the person's apps, and nothing about the apps that are not theirs | §0.3, §0.6 | DONE 2026-09-21 |
 | F-13.3 | An app registry the portal reads, rather than a list hardcoded in a template | §0.6 | TODO |
 | F-13.4 | Each app's own door asks the same function, so a hidden card and an open URL cannot disagree | §0.5 | TODO |
 
@@ -1604,6 +1604,7 @@ Small things that are true and untracked, which is how they stay wrong.
 |---|---|---|---|
 | F-14.1 | Generate `docs/dashboard.html` from the spec and the backlog, with a test that fails when it drifts | Rule 4 | TODO |
 | F-14.2 | A `docs/data_model.md` for babook | Rule 4 | TODO |
+| F-14.3 | The signed-in home page scrolls sideways at 1280px | measured 2026-09-21 | TODO |
 
 **F-14.1.** babook's dashboard is hand-maintained and has been stale since
 2026-05-27: its newest sprint is SPR-2.2. Every app generates its own, and
@@ -1611,6 +1612,21 @@ Small things that are true and untracked, which is how they stay wrong.
 `test_the_dashboard_is_current`, which regenerates and compares so a spec change
 nobody re-ran it after fails the suite. The page now carries a banner saying it
 is stale, which is honest and not a fix.
+
+**F-14.3, measured rather than guessed, and deliberately not diagnosed.** Found
+while measuring the portal cards, and it is not the cards: with them removed the
+numbers are identical. On `/` at a 1280px viewport, signed in, the document
+scrolls to 1522px, so the main page of the site drags 242px sideways. Logged
+out, the same page measures 1280 and does not. The offender is
+`A.training-hero`, which renders **1440px wide inside a 1116px section**
+(`SECTION.home-train`), pulling its left edge to -242 in RTL.
+
+The obvious cause is not the cause: setting `min-width: 0` on
+`.training-hero-body` and `.training-hero-media` in the live page changes
+nothing, so this is not the usual flex-item `min-width: auto` story. Recorded
+with the numbers and without a theory, because a wrong theory in a backlog is
+worse than none: the next person tries it, it fails, and they distrust the
+report rather than the theory.
 
 **F-14.2.** Every app has a data model document because Rule 4 says so. babook
 predates the rule and has none, so the shape of the oldest and most-depended-on

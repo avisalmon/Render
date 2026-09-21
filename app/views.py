@@ -16,6 +16,7 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.generic import TemplateView
 
+from . import portal
 from .models import (
     CopilotSeat,
     Course,
@@ -124,6 +125,9 @@ def home(request):
         "published_course_count": published_course_count,
         "training_videos": training_videos,
         "blog_has_posts": blog_has_posts,
+        # F-13.2 — the portal. One function decides this and each app's own
+        # door asks the same one, so a card and a door cannot disagree (§0.5).
+        "portal_apps": portal.visible_apps(request.user),
     })
 
 
