@@ -36,7 +36,18 @@
           <a class="exo-concept-main" href="{% url 'exo:concept_resume' c.pk %}">
             <span class="exo-attr-en">{% t c.stage|stage_key %}</span>
             <h2 class="exo-attr-name">{{ c.title }}</h2>
-            {% if c.mtp %}<p class="exo-attr-def">{{ c.mtp|truncatechars:110 }}</p>{% endif %}
+            {% comment %}
+              The MTP is a slogan now, so it is shown as one: in full, in the
+              display face, at a size that says it is the point of the card.
+              It used to be truncated at 110 characters, which was the right
+              treatment for the vision statement it used to be.
+            {% endcomment %}
+            {% if c.mtp %}
+              <p class="exo-slogan">{{ c.mtp }}</p>
+              {% if c.mtp_note %}
+                <p class="exo-slogan-note">{{ c.mtp_note }}</p>
+              {% endif %}
+            {% endif %}
             {% if c.release.exponential_score %}
               <span class="exo-score-badge">{{ c.release.exponential_score }}</span>
             {% endif %}

@@ -183,11 +183,26 @@ STRINGS = {
     "interview.thinking": {"he": "חושב…", "en": "Thinking…"},
     "interview.settle": {"he": "לסכם את הרעיון", "en": "Settle the idea"},
     "interview.settle_blurb": {
-        "he": "זה מה שהבנתי. תקן כל דבר שלא מדויק — זה הבסיס לכל השאר.",
+        "he": "זה מה שהבנתי. תקן כל דבר שלא מדויק — זה הבסיס לכל השאר. "
+              "המטרה היא סלוגן, לא חזון: אם אי אפשר להדפיס אותה על חולצה, "
+              "היא עדיין ארוכה מדי.",
         "en": "This is what I understood. Correct anything that is off — "
-              "everything else is built on it.",
+              "everything else is built on it. The purpose is a slogan, not a "
+              "vision statement: if it will not fit on a t-shirt, it is still "
+              "too long.",
     },
-    "interview.mtp": {"he": "המטרה (MTP)", "en": "The purpose (MTP)"},
+    "interview.mtp": {
+        "he": "המטרה (MTP) — סלוגן, עד שבע מילים",
+        "en": "The purpose (MTP) — a slogan, seven words at most",
+    },
+    "interview.mtp_placeholder": {
+        "he": "קצר מספיק להדפסה על חולצה",
+        "en": "Short enough to print on a t-shirt",
+    },
+    "interview.mtp_note": {
+        "he": "משפט הרחבה (לא חובה) — עד חמש־עשרה מילים",
+        "en": "One line of expansion (optional) — fifteen words at most",
+    },
     "interview.special": {"he": "מה מיוחד", "en": "What's special"},
     "interview.unique": {"he": "מה ייחודי", "en": "What's unique"},
     "interview.accept": {"he": "אשר והמשך", "en": "Accept and continue"},

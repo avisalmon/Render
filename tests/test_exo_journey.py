@@ -163,6 +163,97 @@ def test_settling_stores_the_edited_text_not_the_models(signed_in, seeded, membe
     assert concept.stage == Concept.Stage.BRAINSTORM
 
 
+# ---- the MTP is a slogan, not a vision statement ----------------------- #
+#
+# Avi's correction after the first build: an MTP is a handful of words, short
+# enough to print on a t-shirt, with at most one fifteen-word line beside it.
+# The rule lives in three places that can drift apart — the prompt, the model's
+# word caps, and the view — so it is asserted at the view, which is the one a
+# person actually meets.
+
+
+def test_a_slogan_is_accepted_and_stored_with_its_line(signed_in, seeded, member):
+    concept = make_concept(member)
+    response = post_json(signed_in, reverse("exo:concept_settle", args=[concept.pk]), {
+        "mtp": "Movement without ownership",
+        "mtp_note": "Getting anywhere in the city without needing to own a car.",
+        "special": "we know the street", "unique": "it arrives first",
+    })
+    assert response.status_code == 302 or response.status_code == 200
+
+    concept.refresh_from_db()
+    assert concept.mtp == "Movement without ownership"
+    assert concept.mtp_note.startswith("Getting anywhere")
+    assert concept.stage == Concept.Stage.BRAINSTORM
+
+
+def test_a_vision_statement_is_refused_rather_than_quietly_cut(signed_in, seeded,
+                                                               member):
+    """Refused, not trimmed. Cutting somebody's sentence in half behind their
+    back and saving the stump is worse than telling them it is too long."""
+    concept = make_concept(member)
+    essay = ("A world in which every person in every city can move freely "
+             "without ever having to own a vehicle of their own")
+    response = post_json(signed_in, reverse("exo:concept_settle", args=[concept.pk]),
+                         {"mtp": essay})
+    assert response.status_code == 422
+
+    concept.refresh_from_db()
+    assert concept.mtp == ""
+    # And the stage did not advance on a refusal.
+    assert concept.stage == Concept.Stage.INTERVIEW
+
+
+def test_the_expansion_line_has_its_own_ceiling(signed_in, seeded, member):
+    concept = make_concept(member)
+    response = post_json(signed_in, reverse("exo:concept_settle", args=[concept.pk]), {
+        "mtp": "Movement without ownership",
+        "mtp_note": " ".join(["word"] * 16),
+    })
+    assert response.status_code == 422
+    concept.refresh_from_db()
+    assert concept.mtp_note == ""
+
+
+def test_exactly_the_limit_is_allowed(signed_in, seeded, member):
+    """Off-by-one on a limit is the difference between a rule and an
+    irritation."""
+    concept = make_concept(member)
+    response = post_json(signed_in, reverse("exo:concept_settle", args=[concept.pk]), {
+        "mtp": " ".join(["word"] * Concept.MTP_MAX_WORDS),
+        "mtp_note": " ".join(["word"] * Concept.MTP_NOTE_MAX_WORDS),
+    })
+    assert response.status_code in (200, 302)
+    concept.refresh_from_db()
+    assert len(concept.mtp.split()) == Concept.MTP_MAX_WORDS
+
+
+def test_spacing_is_not_counted_as_words(signed_in, seeded, member):
+    concept = make_concept(member)
+    response = post_json(signed_in, reverse("exo:concept_settle", args=[concept.pk]),
+                         {"mtp": "   Movement    without \n ownership  "})
+    assert response.status_code in (200, 302)
+    concept.refresh_from_db()
+    assert concept.mtp == "Movement without ownership"
+
+
+def test_the_model_is_held_to_the_same_rule(seeded, member):
+    """The prompt asks for a slogan twice, but a model asked for seven words
+    will sometimes write nine. What comes back is trimmed before the person is
+    shown it, and nothing reaches a row without them accepting it."""
+    concept = make_concept(member)
+    settled = ai.settle(concept, [], "en", user=member)
+
+    assert len(settled["mtp"].split()) <= Concept.MTP_MAX_WORDS
+    assert len(settled["mtp_note"].split()) <= Concept.MTP_NOTE_MAX_WORDS
+
+
+def test_trimming_keeps_the_front_of_the_line(seeded):
+    assert ai.trim_words("one two three four", 2) == "one two"
+    assert ai.trim_words("  short  ", 7) == "short"
+    assert ai.trim_words(None, 7) == ""
+
+
 # ---- stage 2: the brainstorm ------------------------------------------ #
 
 def test_entries_can_be_added_edited_and_deleted(signed_in, seeded, member):

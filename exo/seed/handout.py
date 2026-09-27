@@ -18,9 +18,9 @@ the English is a translation of the same idea rather than a different lesson.
 ATTRIBUTE_BODIES = {
 
     "mtp": {
-        "body_he": """המטרה היא לא סיסמה ולא הצהרת חזון. זהו משפט אחד שמסביר
-למה הארגון קיים, והוא גדול מספיק כדי שאי אפשר יהיה להשלים אותו לבד ובטווח
-הקרוב.
+        "body_he": """המטרה היא סלוגן. כמה מילים, קצר מספיק להדפסה על חולצה
+ולחזרה מהזיכרון, שאומרות איזה שינוי אתה קיים בשבילו. לא מה אתה מוכר, ולא
+הצהרת חזון באורך פסקה.
 
 כאן נמצא המנוף האמיתי: מטרה גדולה מושכת אנשים שלא עובדים אצלך. מתנדבים,
 שותפים, מפתחים ולקוחות מוקדמים מצטרפים כי הם רוצים שהדבר הזה יקרה, לא כי
@@ -29,11 +29,15 @@ ATTRIBUTE_BODIES = {
 דוגמה: המטרה של TED היא "רעיונות ששווה להפיץ". היא אפשרה לאלפי אנשים ברחבי
 העולם להפעיל אירועי TEDx בעצמם, בלי שאיש מהם הועסק על ידי TED.
 
-מה בדרך כלל משתבש: מנסחים משהו שנשמע יפה אבל אף אחד לא יכול להתנגד לו.
-אם אף אחד לא יכול לחלוק על המטרה שלך, היא כנראה לא אומרת כלום.""",
-        "body_en": """The purpose is not a slogan and not a vision statement.
-It is one sentence explaining why the organisation exists, large enough that
-you could not possibly finish the job alone or this year.
+מה בדרך כלל משתבש: כותבים פסקה. אם צריך לקרוא את המטרה שלך מהדף, היא כבר
+לא עושה את העבודה שלה, כי אף אחד לא מגייס אנשים למשהו שהוא לא זוכר. הכישלון
+השני הוא לנסח משהו שנשמע יפה ואי אפשר להתנגד לו: אם אף אחד לא יכול לחלוק על
+המטרה שלך, היא כנראה לא אומרת כלום.
+
+ואם צריך עוד הסבר, הוא נכנס למשפט אחד קצר לצד הסלוגן. לא לתוכו.""",
+        "body_en": """The purpose is a slogan. A handful of words, short
+enough to print on a t-shirt and repeat from memory, naming the change you
+exist to make. Not what you sell, and not a paragraph-long vision statement.
 
 This is where the real leverage sits: a large purpose attracts people who do
 not work for you. Volunteers, partners, developers and early customers show up
@@ -43,9 +47,14 @@ organisation with a small purpose has to buy every unit of attention it gets.
 Example: TED's purpose is "ideas worth spreading". It let thousands of people
 around the world run TEDx events themselves, none of them employed by TED.
 
-What usually goes wrong: people write something that sounds good and that
-nobody could possibly disagree with. If your purpose cannot be argued with, it
-probably is not saying anything.""",
+What usually goes wrong: people write a paragraph. If your purpose has to be
+read off the page it has already stopped doing its job, because nobody is
+recruited by something they cannot remember. The second failure is writing
+something that sounds good and that nobody could possibly disagree with: if
+your purpose cannot be argued with, it probably is not saying anything.
+
+If it needs more explanation, that goes in one short line beside the slogan.
+Not inside it.""",
     },
 
     "staff-on-demand": {

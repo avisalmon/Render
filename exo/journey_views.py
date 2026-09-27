@@ -128,16 +128,37 @@ def interview_summary(request, pk):
 @member_required
 @require_POST
 def settle(request, pk):
-    """Accept the summary (as edited) and move to the brainstorm."""
+    """Accept the summary (as edited) and move to the brainstorm.
+
+    The MTP is held to a slogan here as well as in the prompt, because the
+    person can type whatever they like into the box and a purpose that grows
+    back into a paragraph stops being able to do its job: nobody repeats a
+    paragraph, and pulling in people who do not work for you is the whole
+    point of having one.
+
+    Refused rather than silently trimmed. Cutting somebody's sentence in half
+    behind their back and saving it is worse than telling them it is too long.
+    """
     concept = get_owned_or_404(request, pk)
     try:
         data = json.loads(request.body or "{}")
     except json.JSONDecodeError:
         return _error("bad request")
-    concept.mtp = (data.get("mtp") or "").strip()
+
+    mtp = " ".join((data.get("mtp") or "").split())
+    note = " ".join((data.get("mtp_note") or "").split())
+
+    if ai.word_count(mtp) > Concept.MTP_MAX_WORDS:
+        return _error("mtp_too_long", status=422)
+    if ai.word_count(note) > Concept.MTP_NOTE_MAX_WORDS:
+        return _error("note_too_long", status=422)
+
+    concept.mtp = mtp[:120]
+    concept.mtp_note = note[:220]
     concept.special = (data.get("special") or "").strip()
     concept.unique = (data.get("unique") or "").strip()
-    concept.save(update_fields=["mtp", "special", "unique", "updated_at"])
+    concept.save(update_fields=["mtp", "mtp_note", "special", "unique",
+                                "updated_at"])
     concept.advance_to(Concept.Stage.BRAINSTORM)
     return JsonResponse({"ok": True, "next": f"/exo/concepts/{concept.pk}/brainstorm/"})
 

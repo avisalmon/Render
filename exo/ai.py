@@ -32,7 +32,7 @@ import re
 from django.conf import settings
 
 from . import prompts
-from .models import AiCall
+from .models import AiCall, Concept
 
 log = logging.getLogger("exo.ai")
 
@@ -256,6 +256,26 @@ def _limit_for(user, task, concept=None, attribute=None):
     _guard(user, task, concept=concept, attribute=attribute)
 
 
+def word_count(text):
+    return len((text or "").split())
+
+
+def trim_words(text, limit):
+    """Hold a field to its word limit.
+
+    The prompt asks for a slogan and says so twice, but a model that is asked
+    for seven words will sometimes write nine, and a purpose that quietly
+    grows back into a vision statement is exactly the thing this rule exists
+    to prevent. Trimming here rather than rejecting keeps a good answer that
+    ran slightly long, and the person can edit it before it is saved: nothing
+    from this function is written to a row without them seeing it first.
+    """
+    words = str(text or "").strip().split()
+    if len(words) <= limit:
+        return " ".join(words)
+    return " ".join(words[:limit])
+
+
 # ---------------------------------------------------------------------------
 # moderation (spec §8, G6)
 # ---------------------------------------------------------------------------
@@ -323,7 +343,8 @@ def settle(concept, history, language, user=None):
     data = _json_call(messages, system, "settle", ("mtp", "special", "unique"),
                       user=user, concept=concept)
     return {
-        "mtp": str(data.get("mtp") or "").strip(),
+        "mtp": trim_words(data.get("mtp"), Concept.MTP_MAX_WORDS),
+        "mtp_note": trim_words(data.get("mtp_note"), Concept.MTP_NOTE_MAX_WORDS),
         "special": str(data.get("special") or "").strip(),
         "unique": str(data.get("unique") or "").strip(),
     }
@@ -345,7 +366,8 @@ def generate_options(concept, attribute, entries, language, user=None):
     own = "\n".join(f"- {e.text}" for e in entries) or "(they wrote nothing here)"
     user_msg = (
         f"THE IDEA: {concept.title}\n"
-        f"PURPOSE (MTP): {concept.mtp}\n"
+        f"PURPOSE (MTP), a slogan: {concept.mtp}\n"
+        f"WHAT THE SLOGAN MEANS: {concept.mtp_note}\n"
         f"WHAT IS SPECIAL: {concept.special}\n"
         f"WHAT IS UNIQUE: {concept.unique}\n\n"
         # Both names. The English term is what the framework is written in and
@@ -391,7 +413,8 @@ def generate_output(concept, selections, language, user=None):
     ) or "(nothing was selected)"
     user_msg = (
         f"THE IDEA: {concept.title}\n"
-        f"PURPOSE (MTP): {concept.mtp}\n"
+        f"PURPOSE (MTP), a slogan: {concept.mtp}\n"
+        f"WHAT THE SLOGAN MEANS: {concept.mtp_note}\n"
         f"WHAT IS SPECIAL: {concept.special}\n"
         f"WHAT IS UNIQUE: {concept.unique}\n\n"
         f"WHAT THEY CHOSE, BY ATTRIBUTE:\n{chosen}"
@@ -414,7 +437,8 @@ def score(concept, release, language, user=None):
         language_rule=prompts.language_rule(language)
     )
     user_msg = (
-        f"PURPOSE: {concept.mtp}\n\nTHE CONCEPT DOCUMENT:\n{release.document_body}"
+        f"PURPOSE: {concept.mtp} — {concept.mtp_note}\n\n"
+        f"THE CONCEPT DOCUMENT:\n{release.document_body}"
     )
     data = _json_call([{"role": "user", "content": user_msg}], system, "score",
                       ("score",), user=user, concept=concept)
@@ -476,15 +500,21 @@ def _stub_interview(concept, history, language):
 
 
 def _stub_settle(concept, history, language):
+    """The stub obeys the same slogan rule as the real path. A stub that
+    returned a paragraph would let the whole suite pass while the live app
+    broke the one thing this stage is for."""
     said = " ".join(m.content for m in history if m.role == "user")[:180]
+    short = " ".join(concept.title.split()[:4])
     if _he(language):
         return {
-            "mtp": f"עולם שבו {concept.title} זמין לכל מי שצריך אותו.",
+            "mtp": f"{short} לכל אחד",
+            "mtp_note": f"שהרעיון של {short} יהיה זמין לכל מי שצריך אותו.",
             "special": said or "הרעיון נוגע בצורך אמיתי ומוכר.",
             "unique": "השילוב הזה עדיין לא קיים בשוק בצורה נגישה.",
         }
     return {
-        "mtp": f"A world where {concept.title} is available to everyone who needs it.",
+        "mtp": f"{short} for everyone",
+        "mtp_note": f"Making {short} available to anyone who needs it.",
         "special": said or "The idea addresses a real and familiar need.",
         "unique": "This combination does not exist accessibly in the market yet.",
     }
@@ -552,7 +582,7 @@ def _stub_output(concept, selections, language):
             "— תוכן הדגמה, נוצר ללא מפתח AI."
         )
         document = (
-            f"המטרה\n{concept.mtp}\n\n"
+            f"המטרה\n{concept.mtp}\n{concept.mtp_note}\n\n"
             f"מה מיוחד\n{concept.special}\n\n"
             f"מה ייחודי\n{concept.unique}\n\n"
             f"מה נבחר\n{chosen}\n\n"
@@ -577,7 +607,7 @@ def _stub_output(concept, selections, language):
             "— Demo content, generated with no AI key."
         )
         document = (
-            f"Purpose\n{concept.mtp}\n\n"
+            f"Purpose\n{concept.mtp}\n{concept.mtp_note}\n\n"
             f"What is special\n{concept.special}\n\n"
             f"What is unique\n{concept.unique}\n\n"
             f"What was chosen\n{chosen}\n\n"

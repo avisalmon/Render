@@ -43,7 +43,17 @@ class Concept(models.Model):
 
     #: The settled output of the interview (spec §5.1). Plain fields rather
     #: than a model: data_model.md decision 2.
-    mtp = models.TextField(blank=True)
+    #:
+    #: `mtp` is a **slogan**, not a vision statement: a few words, short enough
+    #: to print on a t-shirt. The capped length is the rule, not a guess at
+    #: one. A purpose nobody can repeat from memory cannot do the job the
+    #: framework gives it, which is to pull in people who do not work for you.
+    #: `mtp_note` is the optional one-line expansion, held to fifteen words.
+    MTP_MAX_WORDS = 7
+    MTP_NOTE_MAX_WORDS = 15
+
+    mtp = models.CharField(max_length=120, blank=True)
+    mtp_note = models.CharField(max_length=220, blank=True)
     special = models.TextField(blank=True)
     unique = models.TextField(blank=True)
 

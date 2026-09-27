@@ -19,6 +19,12 @@ function exoToastError(err) {
     ai: document.documentElement.lang === "he"
       ? "ה-AI עמוס כרגע. נסה שוב בעוד רגע."
       : "The AI is busy right now. Try again in a moment.",
+    mtp_too_long: document.documentElement.lang === "he"
+      ? "המטרה ארוכה מדי. סלוגן של עד שבע מילים."
+      : "The purpose is too long. A slogan of seven words at most.",
+    note_too_long: document.documentElement.lang === "he"
+      ? "משפט ההרחבה ארוך מדי. עד חמש־עשרה מילים."
+      : "The expansion is too long. Fifteen words at most.",
   };
   exo.toast(map[err && err.message] || (err && err.message) || "Error", "error");
 }
@@ -71,6 +77,45 @@ function exoInterview() {
     }
   });
 
+  const accept = document.getElementById("settle-accept");
+
+  /* The MTP is a slogan and the note is one line. Counting words as they are
+     typed, and refusing to submit while either is over, means the rule is
+     visible before it is enforced. Discovering a limit by being rejected
+     after writing is the worst way to learn one. */
+  function countWords(value) {
+    return (value || "").trim().split(/\s+/).filter(Boolean).length;
+  }
+
+  function watchLength(fieldId, counterId) {
+    const field = document.getElementById(fieldId);
+    const counter = document.getElementById(counterId);
+    if (!field || !counter) return () => true;
+    const max = Number(counter.dataset.max || 0);
+
+    function update() {
+      const n = countWords(field.value);
+      counter.textContent = n + " / " + max;
+      const over = n > max;
+      counter.classList.toggle("is-over", over);
+      return !over;
+    }
+    field.addEventListener("input", () => { update(); refresh(); });
+    update();
+    return update;
+  }
+
+  let checks = [];
+  function refresh() {
+    const ok = checks.every((check) => check());
+    accept.disabled = !ok;
+  }
+  checks = [
+    watchLength("f-mtp", "c-mtp"),
+    watchLength("f-mtp-note", "c-mtp-note"),
+  ];
+  refresh();
+
   open.addEventListener("click", async () => {
     sheet.hidden = false;
     // Only ask the model if the person has not already settled it once.
@@ -78,8 +123,10 @@ function exoInterview() {
       try {
         const data = await exo.api(open.dataset.summary, { method: "POST" });
         document.getElementById("f-mtp").value = data.mtp || "";
+        document.getElementById("f-mtp-note").value = data.mtp_note || "";
         document.getElementById("f-special").value = data.special || "";
         document.getElementById("f-unique").value = data.unique || "";
+        refresh();
       } catch (err) {
         exoToastError(err);
       }
@@ -90,13 +137,14 @@ function exoInterview() {
     sheet.hidden = true;
   });
 
-  document.getElementById("settle-accept").addEventListener("click", async (e) => {
+  accept.addEventListener("click", async (e) => {
     e.target.disabled = true;
     try {
       const data = await exo.api(sheet.dataset.accept, {
         method: "POST",
         json: {
           mtp: document.getElementById("f-mtp").value,
+          mtp_note: document.getElementById("f-mtp-note").value,
           special: document.getElementById("f-special").value,
           unique: document.getElementById("f-unique").value,
         },

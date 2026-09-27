@@ -45,9 +45,23 @@
       <h2>{% t "interview.settle" %}</h2>
       <p class="exo-muted exo-small">{% t "interview.settle_blurb" %}</p>
 
+      {% comment %}
+        The MTP is a slogan, so the box is one line and not a paragraph box.
+        The shape of a field is an instruction: a two-row textarea asks to be
+        filled with two rows. The counter beside it is live, and the accept
+        button refuses while it is over, so nobody discovers the rule by
+        having their sentence rejected after the fact.
+      {% endcomment %}
       <label class="exo-field">
         <span>{% t "interview.mtp" %}</span>
-        <textarea id="f-mtp" rows="2">{{ concept.mtp }}</textarea>
+        <input id="f-mtp" type="text" maxlength="120" value="{{ concept.mtp }}"
+               placeholder="{% t 'interview.mtp_placeholder' %}">
+        <span class="exo-small exo-faint" id="c-mtp" data-max="7"></span>
+      </label>
+      <label class="exo-field">
+        <span>{% t "interview.mtp_note" %}</span>
+        <textarea id="f-mtp-note" rows="2" maxlength="220">{{ concept.mtp_note }}</textarea>
+        <span class="exo-small exo-faint" id="c-mtp-note" data-max="15"></span>
       </label>
       <label class="exo-field">
         <span>{% t "interview.special" %}</span>

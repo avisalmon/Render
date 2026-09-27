@@ -17,16 +17,18 @@ ATTRIBUTES = [
         "key": "mtp", "category": "MTP", "order": 0,
         "name_en": "Massive Transformative Purpose",
         "name_he": "מטרה טרנספורמטיבית מאסיבית",
-        "short_def_en": "The huge, aspirational 'why' that everything else "
-                        "hangs from. Not what you sell — the change you exist "
-                        "to make.",
-        "short_def_he": "ה'למה' הגדול והשאפתני שכל השאר תלוי בו. לא מה אתה "
-                        "מוכר — אלא השינוי שבגללו אתה קיים.",
+        "short_def_en": "The change you exist to make, said in a handful of "
+                        "words. A slogan you could print on a t-shirt, not a "
+                        "vision statement. Not what you sell.",
+        "short_def_he": "השינוי שבגללו אתה קיים, בכמה מילים. סלוגן שאפשר "
+                        "להדפיס על חולצה, לא הצהרת חזון. לא מה שאתה מוכר.",
         "prompt_hint_en": "If this worked completely, what would be different "
-                          "in the world? Say it in one line, with no product "
-                          "in it.",
-        "prompt_hint_he": "אם זה יצליח לגמרי — מה ישתנה בעולם? נסח בשורה אחת, "
-                          "בלי להזכיר את המוצר.",
+                          "in the world? Now cut it to three or four words, "
+                          "with no product in them. If people cannot repeat it "
+                          "from memory, it is still too long.",
+        "prompt_hint_he": "אם זה יצליח לגמרי — מה ישתנה בעולם? עכשיו קצר את זה "
+                          "לשלוש־ארבע מילים, בלי להזכיר את המוצר. אם אי אפשר "
+                          "לחזור על זה מהזיכרון, זה עדיין ארוך מדי.",
     },
     # ---- SCALE: outward, how you reach abundance ------------------------
     {

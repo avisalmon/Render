@@ -458,3 +458,35 @@ button.exo-rail-step:hover { background: var(--exo-sunken); }
   .exo-paper { border: 0; box-shadow: none; padding: 0; }
   .exo-output-grid { display: block; }
 }
+
+/* The live word counters on the settle sheet. The MTP is a slogan, so the
+   count is part of the field rather than a rule discovered by rejection. */
+.exo-field [id^="c-"] {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .04em;
+  /* "4 / 7" is bidi-neutral either side of the slash, so a Hebrew page
+     reorders it into "7 / 4" and the counter reads backwards. Isolated so it
+     always says how many words you have out of how many you get. */
+  direction: ltr;
+  unicode-bidi: isolate;
+  align-self: flex-start;
+}
+.exo-field .is-over { color: var(--exo-danger); font-weight: 500; }
+
+/* The MTP, shown as what it is: a slogan of a few words. Set in the display
+   face at a size that earns its place, because a purpose nobody can repeat
+   cannot pull in people who do not work for you, and one printed small in
+   grey is being treated as a subtitle. */
+.exo-slogan {
+  font-family: var(--exo-display);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--exo-ink);
+  margin-block: 6px 0;
+}
+.exo-slogan-note {
+  font-size: var(--exo-size-small);
+  color: var(--exo-ink-soft);
+  margin-block-start: 4px;
+}

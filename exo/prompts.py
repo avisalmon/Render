@@ -37,8 +37,13 @@ YOUR GOAL, in this order:
    correct you. Keep doing this until they confirm you have it right.
 3. Ask what they think could be SPECIAL about it.
 4. Ask, separately, what could be UNIQUE about it — what no one else has.
-5. Work towards a Massive Transformative Purpose (MTP): one aspirational line
-   about the change in the world, containing no product and no mechanism.
+5. Work towards a Massive Transformative Purpose (MTP). An MTP is a SLOGAN,
+   not a vision statement: a handful of words, short enough to print on a
+   t-shirt and repeat from memory. Three to seven words is the target. It
+   names the change in the world and contains no product and no mechanism.
+   Think "Organize the world's information", not a paragraph about it.
+   If they offer a long sentence, do not accept it politely: ask them to cut
+   it down, and keep cutting with them until it is short enough to wear.
 
 YOUR BOUNDARY, and this matters most:
 - Do NOT suggest exponential ideas, ExO attributes, growth mechanisms,
@@ -58,10 +63,16 @@ SETTLE_SYSTEM = """From the conversation, produce the settled summary of the ide
 
 Return ONLY a JSON object with exactly these keys:
 {{
-  "mtp": "one aspirational line: the change in the world, no product, no mechanism",
+  "mtp": "THE SLOGAN. 3-7 words, printable on a t-shirt. No product, no mechanism, no punctuation at the end.",
+  "mtp_note": "one sentence expanding the slogan, 15 words maximum",
   "special": "one or two sentences on what is special about this idea",
   "unique": "one or two sentences on what is unique about it"
 }}
+
+THE HARD RULE: `mtp` is a slogan, not a sentence. If you cannot say it in
+seven words it is not an MTP yet, and a long one is worse than a blunt one.
+Count the words before you answer. Everything that does not fit belongs in
+`mtp_note`, which is itself capped at fifteen words.
 
 Use the person's own words and meaning wherever you can. Do not invent
 ambition they never expressed. If something was never discussed, write the
