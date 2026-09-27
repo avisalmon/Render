@@ -9,7 +9,12 @@
 
   <section class="exo-hero">
     <p class="exo-label">MTP + SCALE + IDEAS</p>
-    <h1>{% t "home.title" %}</h1>
+    {% comment %}
+      The multiplier is the whole argument of the book in two characters, so
+      it is the one flash of red on the landing page. It is set here rather
+      than inside the string because it is a mark, not a word to translate.
+    {% endcomment %}
+    <h1>{% t "home.title" %} <em>&times;10</em></h1>
     <p class="exo-hero-lede">{% t "home.lede" %}</p>
     <div class="exo-hero-actions">
       <a class="exo-btn exo-btn-lg" href="{% url 'exo:learn' %}">{% t "home.explore" %}</a>

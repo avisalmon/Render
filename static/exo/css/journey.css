@@ -1,9 +1,11 @@
 /* exo — the journey, the papers, the museum.
  *
  * Split from exo.css so the core design system stays readable: that file is
- * the vocabulary, this one is the screens built from it. Same two rules apply
- * here — logical properties only, and the amber accent means "exponential"
- * and nothing else.
+ * the vocabulary, this one is the screens built from it. Same rules apply
+ * here: logical properties only, amber means "exponential" and nothing else,
+ * and since the app became the paper, red is punctuation rather than a brand
+ * colour. Most of this file re-skinned itself when the tokens changed; what
+ * is edited below is what tokens could not reach.
  */
 
 /* ---- forms and auth ------------------------------------------------ */
@@ -50,13 +52,11 @@
 }
 
 .exo-auth {
-  background: var(--exo-surface);
-  border: 1px solid var(--exo-line);
-  border-radius: var(--exo-radius-lg);
-  padding: clamp(20px, 4vw, 34px);
-  max-inline-size: 460px;
+  background: transparent;
+  border-block: 3px solid var(--exo-ink);
+  padding-block: clamp(20px, 4vw, 30px);
+  max-inline-size: 440px;
   margin-inline: auto;
-  box-shadow: var(--exo-shadow);
 }
 .exo-auth h1 { font-size: var(--exo-size-h1); }
 .exo-auth .exo-btn { inline-size: 100%; }
@@ -181,13 +181,11 @@ button.exo-rail-step:hover { background: var(--exo-sunken); }
 .exo-msg-assistant {
   background: var(--exo-sunken);
   align-self: flex-start;
-  border-start-start-radius: 4px;
 }
 .exo-msg-user {
-  background: var(--exo-accent);
+  background: var(--exo-ink);
   color: var(--exo-accent-ink);
   align-self: flex-end;
-  border-start-end-radius: 4px;
 }
 .exo-msg.is-thinking { opacity: .6; }
 
@@ -274,7 +272,7 @@ button.exo-rail-step:hover { background: var(--exo-sunken); }
   border: 1px solid var(--exo-line);
   border-radius: var(--exo-radius-sm);
   padding: 12px;
-  font-family: var(--exo-ui); font-size: var(--exo-size-small);
+  font-family: var(--exo-body); font-size: var(--exo-size-small);
   color: var(--exo-ink);
   cursor: pointer;
   min-block-size: var(--exo-tap);
@@ -283,7 +281,6 @@ button.exo-rail-step:hover { background: var(--exo-sunken); }
 .exo-option-check {
   flex: none; inline-size: 18px; block-size: 18px; margin-block-start: 2px;
   border: 1.5px solid var(--exo-line-strong);
-  border-radius: 5px;
   background: var(--exo-surface);
 }
 .exo-option.is-selected { border-color: var(--exo-accent); background: var(--exo-accent-tint); }
@@ -334,11 +331,9 @@ button.exo-rail-step:hover { background: var(--exo-sunken); }
 /* ---- the newspaper ------------------------------------------------- */
 
 .exo-paper {
-  background: #FFFDF8;
-  border: 1px solid var(--exo-line-strong);
-  border-radius: 6px;
+  background: #F7F6F1;
+  border: 1px solid var(--exo-ink);
   padding: clamp(20px, 4vw, 40px);
-  box-shadow: var(--exo-shadow);
 }
 .exo-paper-masthead {
   display: flex; align-items: center; gap: 12px;
@@ -347,9 +342,8 @@ button.exo-rail-step:hover { background: var(--exo-sunken); }
   margin-block-end: 18px;
 }
 .exo-paper-name {
-  font-family: var(--exo-display);
-  font-weight: 700; font-size: 18px; letter-spacing: .02em;
-  text-transform: uppercase;
+  font-family: var(--exo-masthead);
+  font-size: 20px; letter-spacing: 0;
 }
 .exo-paper-rule { flex: 1; }
 .exo-paper-date { font-size: var(--exo-size-label); color: var(--exo-ink-soft); }
@@ -414,20 +408,19 @@ button.exo-rail-step:hover { background: var(--exo-sunken); }
 
 .exo-wall-item { text-decoration: none; color: inherit; display: flex; flex-direction: column; gap: 8px; }
 .exo-wall-item:hover { color: inherit; }
-.exo-wall-item:hover .exo-mini { transform: translateY(-3px); box-shadow: var(--exo-shadow-lift); }
+.exo-wall-item:hover .exo-mini { background: #FFFFFF; }
 
 .exo-mini {
-  background: #FFFDF8;
-  border: 1px solid var(--exo-line-strong);
-  border-radius: 6px;
+  background: #F7F6F1;
+  border: 1px solid var(--exo-ink);
   padding: 16px;
   block-size: 190px;
   overflow: hidden;
-  transition: transform .15s ease, box-shadow .15s ease;
+  transition: background .12s ease;
 }
 .exo-mini-masthead {
   display: block;
-  font-family: var(--exo-display);
+  font-family: var(--exo-ui);
   font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
   color: var(--exo-ink-soft);
   border-block-end: 1px solid var(--exo-line-strong);
@@ -446,14 +439,12 @@ button.exo-rail-step:hover { background: var(--exo-sunken); }
 
 /* ---- manage -------------------------------------------------------- */
 
-.exo-rows { display: flex; flex-direction: column; gap: 8px; }
+.exo-rows { display: flex; flex-direction: column; gap: 0; }
 .exo-row {
   display: flex; align-items: center; justify-content: space-between;
   gap: 12px; flex-wrap: wrap;
-  background: var(--exo-surface);
-  border: 1px solid var(--exo-line);
-  border-radius: var(--exo-radius-sm);
-  padding: 12px 14px;
+  border-block-end: 1px solid var(--exo-line);
+  padding-block: 12px;
 }
 .exo-row > div { display: flex; flex-direction: column; gap: 2px; }
 .exo-row form { display: inline-flex; gap: 6px; }

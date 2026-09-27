@@ -70,3 +70,35 @@ def term(context, obj):
     if obj is None or _language(context) != "he":
         return ""
     return getattr(obj, "name_en", "") or ""
+
+
+#: Hebrew letter numerals, 1 to 15, with the gershayim a Hebrew document
+#: actually uses. The framework has thirteen slots and the list covers a
+#: couple more; anything past it falls back to a digit rather than inventing
+#: a numeral, because a wrong numeral is worse than a plain one.
+HE_NUMERALS = [
+    "א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ז׳", "ח׳",
+    "ט׳", "י׳", "י״א", "י״ב", "י״ג", "י״ד", "ט״ו",
+]
+
+
+@register.simple_tag(takes_context=True)
+def mark(context, attribute):
+    """The index numeral for one attribute, in the page's own convention.
+
+    Hebrew numbers a list with letters, so the handout's index reads א׳ to
+    י״ג; English falls back to digits. This is the clearest case of the thing
+    the design review turned up: the editorial toolkit does not survive
+    translation, and a Hebrew page that numbered itself 1, 2, 3 would look
+    like a translated page rather than a Hebrew one.
+
+    The number comes from `order`, which is globally sequenced across the
+    whole framework, so the count runs unbroken through all four sections
+    instead of restarting at each heading.
+    """
+    if attribute is None:
+        return ""
+    n = getattr(attribute, "order", 0) + 1
+    if _language(context) != "he":
+        return str(n)
+    return HE_NUMERALS[n - 1] if 1 <= n <= len(HE_NUMERALS) else str(n)

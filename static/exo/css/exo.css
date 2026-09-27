@@ -1,76 +1,84 @@
-/* exo — the design system (A3, spec §0.2 and §0.3).
- *
- * Three rules shape this file.
- *
- * 1. EDITORIAL, BECAUSE THE JOURNEY ENDS IN A NEWSPAPER. The climax of this
- *    app is a press release set as a front page. So the app itself is set like
- *    a publication — a serif display face, a real type ramp, generous measure —
- *    rather than a dashboard. The paper at the end should feel like where the
- *    whole thing was heading, not a costume it puts on at the last screen.
- *
- * 2. LOGICAL PROPERTIES ONLY. `padding-inline`, `border-inline-start`,
- *    `margin-block`. Never left/right. This app mirrors to Hebrew on every
- *    page, and a `padding-left` survives the mirror still pointing the old
- *    way — silently, because the page still renders. A test enforces this
- *    rather than trusting memory.
- *
- * 3. ONE ACCENT THAT MEANS SOMETHING. Indigo is *this app's voice*: the
- *    thing you can act on. Amber means exponential — the score, the AI's
- *    contribution, the moment something gets bigger. Nothing else borrows
- *    either colour, so when amber appears it carries meaning.
- *
- * Type: Frank Ruhl Libre (display) and Rubik (UI). Chosen because both have
- * genuinely good Hebrew *and* Latin in one family, which a bilingual app needs
- * more than a fashionable face — the same reasoning sensorlab recorded.
- */
+/* exo — the design system (spec §0.2, §0.3)
+   ============================================================================
+
+   **The paper.** exo's payoff is a press release set in a newspaper, and for
+   the first build that language lived on exactly one screen while everything
+   before it was a card grid with a purple button. Avi picked direction A from
+   the design review, so the paper is now the whole app: newsprint, ink, rules,
+   and one editorial red.
+
+   Three rules follow from that and explain most of what is below.
+
+   1. **Rules, not boxes.** Hairlines and a heavy masthead rule separate things.
+      Border, fill and radius are spent only where something really is a
+      separate object. `--exo-radius*` are kept as tokens because journey.css
+      reads them, and set to 0: a newspaper has no rounded corners.
+
+   2. **Serif for reading.** Frank Ruhl Libre does the body at 18px, not just
+      the headings. Heebo is chrome only: labels, nav, buttons, meta. Suez One
+      is the masthead face and appears at nameplate size or not at all.
+
+   3. **Red is punctuation.** `--exo-accent` is an editorial red, and it marks
+      structure (section rules, index numerals, the current page) rather than
+      decorating. If everything is red, nothing is.
+
+   **Logical properties only.** This app mirrors on every page, and a
+   `padding-left` survives the mirror still pointing the old way, silently,
+   because the page still renders. There is a test that fails on the physical
+   forms, which is cheaper than remembering.
+   ============================================================================ */
 
 :root {
-  /* surfaces and ink */
-  --exo-ground: #FBFAF7;
-  --exo-surface: #FFFFFF;
-  --exo-sunken: #F4F1EB;
-  --exo-ink: #17161B;
-  --exo-ink-soft: #5B5864;
-  --exo-ink-faint: #918D99;
-  --exo-line: #E9E5DE;
-  --exo-line-strong: #D9D4CA;
+  /* surfaces and ink — newsprint, cool rather than cream */
+  --exo-ground: #E9E8E3;
+  --exo-surface: #F3F2EE;
+  --exo-sunken: #DEDCD4;
+  --exo-ink: #14130F;
+  --exo-ink-soft: #4A473F;
+  --exo-ink-faint: #7C786D;
+  --exo-line: #C7C4BA;
+  --exo-line-strong: #14130F;
 
-  /* the voice: what you can act on */
-  --exo-accent: #4A3AE8;
-  --exo-accent-hover: #3B2CD4;
-  --exo-accent-tint: #EEEBFE;
-  --exo-accent-ink: #FFFFFF;
+  /* the voice: structure and what you can act on */
+  --exo-accent: #A5301F;
+  --exo-accent-hover: #862516;
+  --exo-accent-tint: #F0E3DF;
+  --exo-accent-ink: #FAF9F6;
 
   /* exponential: score, AI, growth. Nothing else may use it. */
-  --exo-amber: #B45309;
-  --exo-amber-tint: #FDF3E4;
+  --exo-amber: #8A6A16;
+  --exo-amber-tint: #EFE9D8;
 
-  --exo-danger: #B3261E;
-  --exo-danger-tint: #FCEDEC;
-  --exo-ok: #1F7A4D;
+  --exo-danger: #9B241B;
+  --exo-danger-tint: #F2E2DF;
+  --exo-ok: #2A6141;
 
-  /* shape and rhythm */
-  --exo-radius-sm: 8px;
-  --exo-radius: 14px;
-  --exo-radius-lg: 20px;
-  --exo-pill: 999px;
+  /* shape and rhythm — a newspaper has no rounded corners */
+  --exo-radius-sm: 0px;
+  --exo-radius: 0px;
+  --exo-radius-lg: 0px;
+  --exo-pill: 0px;
   --exo-tap: 44px;              /* the floor for anything tappable (spec §0.2) */
-  --exo-gutter: 18px;
-  --exo-measure: 68ch;          /* reading width for body copy */
+  --exo-gutter: 20px;
+  --exo-measure: 62ch;          /* reading width for body copy */
 
   /* type */
-  --exo-display: 'Frank Ruhl Libre', 'Georgia', serif;
-  --exo-ui: 'Rubik', 'Segoe UI', system-ui, -apple-system, sans-serif;
-  --exo-size-hero: clamp(30px, 6vw, 52px);
-  --exo-size-h1: clamp(24px, 4.4vw, 34px);
-  --exo-size-h2: 20px;
-  --exo-size-h3: 17px;
-  --exo-size-body: 16px;
-  --exo-size-small: 14px;
-  --exo-size-label: 12px;
+  --exo-masthead: 'Suez One', 'Frank Ruhl Libre', Georgia, serif;
+  --exo-display: 'Frank Ruhl Libre', Georgia, 'Times New Roman', serif;
+  --exo-body: 'Frank Ruhl Libre', Georgia, 'Times New Roman', serif;
+  --exo-ui: 'Heebo', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --exo-size-hero: clamp(34px, 8.5vw, 66px);
+  --exo-size-h1: clamp(26px, 4.6vw, 38px);
+  --exo-size-h2: 22px;
+  --exo-size-h3: 18px;
+  --exo-size-body: 18px;
+  --exo-size-small: 15px;
+  --exo-size-label: 11px;
 
-  --exo-shadow: 0 1px 2px rgba(23,22,27,.05), 0 8px 24px rgba(23,22,27,.06);
-  --exo-shadow-lift: 0 2px 6px rgba(23,22,27,.07), 0 18px 44px rgba(23,22,27,.10);
+  /* Flat by default. Print does not cast shadows; the one exception is a
+     toast, which is genuinely floating above the page. */
+  --exo-shadow: none;
+  --exo-shadow-lift: 0 10px 30px rgba(20,19,15,.18);
 }
 
 /* ---- base ---------------------------------------------------------- */
@@ -83,24 +91,25 @@ body {
   margin: 0;
   background: var(--exo-ground);
   color: var(--exo-ink);
-  font-family: var(--exo-ui);
+  font-family: var(--exo-body);
   font-size: var(--exo-size-body);
-  line-height: 1.6;
+  line-height: 1.68;
   -webkit-font-smoothing: antialiased;
 }
 
 h1, h2, h3, .exo-display {
   font-family: var(--exo-display);
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.22;
   margin: 0;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.005em;
+  text-wrap: balance;
 }
 
 p { margin: 0 0 1em; }
 p:last-child { margin-block-end: 0; }
 
-a { color: var(--exo-accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+a { color: var(--exo-accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
 a:hover { color: var(--exo-accent-hover); }
 
 img { max-width: 100%; height: auto; }
@@ -108,16 +117,15 @@ img { max-width: 100%; height: auto; }
 :focus-visible {
   outline: 2px solid var(--exo-accent);
   outline-offset: 2px;
-  border-radius: 4px;
 }
 
 .exo-wrap {
-  max-inline-size: 1080px;
+  max-inline-size: 1040px;
   margin-inline: auto;
   padding-inline: var(--exo-gutter);
 }
 .exo-wrap-narrow {
-  max-inline-size: 760px;
+  max-inline-size: 720px;
   margin-inline: auto;
   padding-inline: var(--exo-gutter);
 }
@@ -127,10 +135,13 @@ img { max-width: 100%; height: auto; }
 .exo-small { font-size: var(--exo-size-small); }
 .exo-measure { max-inline-size: var(--exo-measure); }
 
+/* The folio line: the small letterspaced type a paper uses for everything
+   that is not the story. Chrome face, never the reading face. */
 .exo-label {
+  font-family: var(--exo-ui);
   font-size: var(--exo-size-label);
-  font-weight: 600;
-  letter-spacing: .09em;
+  font-weight: 500;
+  letter-spacing: .16em;
   text-transform: uppercase;
   color: var(--exo-ink-faint);
 }
@@ -142,21 +153,20 @@ img { max-width: 100%; height: auto; }
   clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
 
-/* ---- header -------------------------------------------------------- */
+/* ---- header: the masthead bar --------------------------------------- */
 
 .exo-header {
   position: sticky;
   inset-block-start: 0;
   z-index: 40;
-  background: rgba(251,250,247,.86);
-  backdrop-filter: saturate(140%) blur(10px);
-  border-block-end: 1px solid var(--exo-line);
+  background: var(--exo-ground);
+  border-block-end: 3px solid var(--exo-ink);
 }
 .exo-header-inner {
-  max-inline-size: 1080px;
+  max-inline-size: 1040px;
   margin-inline: auto;
   padding-inline: var(--exo-gutter);
-  min-block-size: 60px;
+  min-block-size: 58px;
   display: flex;
   align-items: center;
   gap: 14px;
@@ -165,13 +175,14 @@ img { max-width: 100%; height: auto; }
 .exo-wordmark {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
+  gap: 8px;
+  min-block-size: var(--exo-tap);
   color: var(--exo-ink);
   text-decoration: none;
-  font-family: var(--exo-display);
-  font-weight: 700;
-  font-size: 20px;
-  letter-spacing: -0.02em;
+  font-family: var(--exo-masthead);
+  font-size: 27px;
+  line-height: 1;
+  letter-spacing: 0;
 }
 .exo-wordmark:hover { color: var(--exo-ink); }
 .exo-wordmark svg { color: var(--exo-accent); flex: none; }
@@ -189,22 +200,31 @@ img { max-width: 100%; height: auto; }
   justify-content: center;
   min-block-size: var(--exo-tap);
   min-inline-size: var(--exo-tap);
-  padding-inline: 12px;
-  border-radius: var(--exo-radius-sm);
+  padding-inline: 11px;
   color: var(--exo-ink-soft);
   text-decoration: none;
-  font-size: var(--exo-size-small);
+  font-family: var(--exo-ui);
+  font-size: 13px;
   font-weight: 500;
+  letter-spacing: .04em;
 }
-.exo-nav a:hover, .exo-lang:hover { background: var(--exo-sunken); color: var(--exo-ink); }
-.exo-nav a[aria-current="page"] { color: var(--exo-ink); font-weight: 600; }
+.exo-nav a:hover, .exo-lang:hover { color: var(--exo-ink); }
+/* The current section is marked the way a paper marks it: a rule under the
+   word, in red, not a filled pill. */
+.exo-nav a[aria-current="page"] {
+  color: var(--exo-ink);
+  box-shadow: inset 0 -3px 0 var(--exo-accent);
+}
 
 .exo-lang {
-  border: 1px solid var(--exo-line-strong);
-  margin-inline-start: 6px;
+  border: 1px solid var(--exo-line);
+  margin-inline-start: 8px;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  font-size: 11px;
 }
 
-/* ---- buttons ------------------------------------------------------- */
+/* ---- buttons -------------------------------------------------------- */
 
 .exo-btn {
   display: inline-flex;
@@ -212,143 +232,253 @@ img { max-width: 100%; height: auto; }
   justify-content: center;
   gap: 8px;
   min-block-size: var(--exo-tap);
-  padding-inline: 20px;
+  padding-inline: 22px;
   padding-block: 10px;
-  border: 1px solid transparent;
-  border-radius: var(--exo-pill);
-  background: var(--exo-accent);
+  border: 1px solid var(--exo-ink);
+  background: var(--exo-ink);
   color: var(--exo-accent-ink);
   font-family: var(--exo-ui);
-  font-size: var(--exo-size-body);
+  font-size: 15px;
   font-weight: 500;
+  letter-spacing: .02em;
   text-decoration: none;
   cursor: pointer;
-  transition: background .15s ease, transform .1s ease, box-shadow .15s ease;
+  transition: background .12s ease, color .12s ease;
 }
-.exo-btn:hover { background: var(--exo-accent-hover); color: var(--exo-accent-ink); }
-.exo-btn:active { transform: translateY(1px); }
+.exo-btn:hover { background: var(--exo-accent); border-color: var(--exo-accent); color: var(--exo-accent-ink); }
 .exo-btn[disabled], .exo-btn[aria-disabled="true"] {
-  opacity: .5; cursor: not-allowed; transform: none;
+  opacity: .45; cursor: not-allowed;
 }
 
-.exo-btn-lg { font-size: 17px; padding-inline: 26px; padding-block: 13px; }
+.exo-btn-lg {
+  font-size: 16px;
+  padding-inline: 28px;
+  padding-block: 14px;
+  letter-spacing: .04em;
+}
 
 .exo-btn-ghost {
   background: transparent;
   color: var(--exo-ink);
-  border-color: var(--exo-line-strong);
+  border-color: var(--exo-ink);
 }
-.exo-btn-ghost:hover { background: var(--exo-sunken); color: var(--exo-ink); }
+.exo-btn-ghost:hover { background: var(--exo-ink); color: var(--exo-accent-ink); border-color: var(--exo-ink); }
 
+/* The secondary action. A newspaper marks one with small letterspaced caps
+   and a rule, not with a permanently underlined word: the underline is the
+   affordance of a link, and a button that wears it reads as one. The phone
+   suite enforces that distinction, and caught this exact mistake. */
 .exo-btn-quiet {
   background: transparent;
   color: var(--exo-ink-soft);
   border-color: transparent;
-  padding-inline: 12px;
+  padding-inline: 10px;
+  font-size: 12px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  text-decoration: none;
 }
-.exo-btn-quiet:hover { background: var(--exo-sunken); color: var(--exo-ink); }
+.exo-btn-quiet:hover {
+  background: transparent;
+  border-color: transparent;
+  color: var(--exo-accent);
+  box-shadow: inset 0 -2px 0 var(--exo-accent);
+}
 
-.exo-btn-danger { background: var(--exo-danger); }
-.exo-btn-danger:hover { background: #8E1E17; }
+.exo-btn-danger { background: var(--exo-danger); border-color: var(--exo-danger); }
+.exo-btn-danger:hover { background: #7C1B14; border-color: #7C1B14; }
 
-/* ---- cards --------------------------------------------------------- */
+/* ---- cards: ruled blocks, not floating objects ---------------------- */
 
 .exo-card {
-  background: var(--exo-surface);
-  border: 1px solid var(--exo-line);
-  border-radius: var(--exo-radius);
-  padding: 18px;
+  background: transparent;
+  border: 0;
+  border-block-start: 1px solid var(--exo-line);
+  padding-block: 16px;
+  padding-inline: 0;
 }
 .exo-card-link {
   display: block;
   color: inherit;
   text-decoration: none;
-  transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+  transition: background .12s ease;
 }
 .exo-card-link:hover {
   color: inherit;
-  border-color: var(--exo-line-strong);
-  box-shadow: var(--exo-shadow);
-  transform: translateY(-2px);
+  background: var(--exo-surface);
 }
 
 .exo-grid {
   display: grid;
-  gap: 14px;
+  gap: 0 32px;
   grid-template-columns: 1fr;
 }
 @media (min-width: 620px) { .exo-grid-2 { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 900px) { .exo-grid-3 { grid-template-columns: repeat(3, 1fr); } }
 
-/* ---- landing ------------------------------------------------------- */
+/* ---- landing: the nameplate ------------------------------------------ */
 
 .exo-hero {
-  padding-block: clamp(40px, 8vw, 84px) clamp(28px, 5vw, 52px);
+  padding-block: clamp(26px, 5vw, 52px) clamp(20px, 3.5vw, 36px);
+  border-block-end: 1px solid var(--exo-line);
 }
+/* A nameplate spans the page. Capping it to a text measure left half the
+   screen empty beside it and made the masthead look like a headline that had
+   lost its column. */
 .exo-hero h1 {
+  font-family: var(--exo-masthead);
   font-size: var(--exo-size-hero);
-  max-inline-size: 18ch;
+  font-weight: 400;
+  line-height: .98;
+  letter-spacing: -0.01em;
+  padding-block-end: 14px;
+  border-block-end: 1px solid var(--exo-line);
 }
+/* The one flash of red on the landing: the multiplier, which is the whole
+   argument of the book in two characters. */
+.exo-hero h1 em { font-style: normal; color: var(--exo-accent); }
 .exo-hero-lede {
-  margin-block-start: 18px;
+  margin-block-start: 16px;
   font-size: clamp(17px, 2.2vw, 20px);
+  line-height: 1.55;
   color: var(--exo-ink-soft);
-  max-inline-size: 56ch;
+  max-inline-size: 52ch;
 }
 .exo-hero-actions {
-  margin-block-start: 28px;
+  margin-block-start: 26px;
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 14px;
   align-items: center;
 }
 
-/* The formula, set as three columns of meaning rather than a graphic. */
+/* The formula, set as three columns of meaning divided by rules. */
 .exo-formula {
-  margin-block: clamp(28px, 5vw, 48px);
+  margin-block: clamp(24px, 4vw, 40px);
   display: grid;
-  gap: 2px;
-  background: var(--exo-line);
-  border: 1px solid var(--exo-line);
-  border-radius: var(--exo-radius);
-  overflow: hidden;
+  gap: 0;
+  border-block: 1px solid var(--exo-line);
 }
 @media (min-width: 760px) { .exo-formula { grid-template-columns: repeat(3, 1fr); } }
-.exo-formula-part { background: var(--exo-surface); padding: 20px; }
+.exo-formula-part {
+  background: transparent;
+  padding-block: 18px;
+  padding-inline: 0;
+  border-block-start: 1px solid var(--exo-line);
+}
+.exo-formula-part:first-child { border-block-start: 0; }
+@media (min-width: 760px) {
+  .exo-formula-part { border-block-start: 0; padding-inline-end: 26px; }
+  .exo-formula-part + .exo-formula-part {
+    border-inline-start: 1px solid var(--exo-line);
+    padding-inline-start: 26px;
+  }
+}
 .exo-formula-key {
-  font-family: var(--exo-display);
-  font-size: 26px;
+  font-family: var(--exo-ui);
+  font-size: 13px;
   font-weight: 700;
   color: var(--exo-accent);
-  letter-spacing: -0.01em;
+  letter-spacing: .18em;
+  text-transform: uppercase;
 }
-.exo-formula-part p { margin-block-start: 6px; color: var(--exo-ink-soft); font-size: var(--exo-size-small); }
+.exo-formula-part p {
+  margin-block-start: 8px;
+  color: var(--exo-ink-soft);
+  font-size: var(--exo-size-small);
+  line-height: 1.55;
+}
 
 /* The invitation into the gated half — the only login prompt in the public
-   half (spec §1), so it is allowed to be the loudest thing on the page. */
+   half (spec §1), so it is allowed to be the loudest thing on the page. It is
+   the paper's boxed advertisement: reversed out, ruled, squared. */
 .exo-invite {
-  margin-block: clamp(28px, 5vw, 48px);
-  padding: clamp(22px, 4vw, 36px);
-  border-radius: var(--exo-radius-lg);
+  margin-block: clamp(26px, 4vw, 44px);
+  padding: clamp(22px, 4vw, 34px);
   background: var(--exo-ink);
-  color: #F6F5F2;
-  box-shadow: var(--exo-shadow-lift);
+  color: #F3F2EE;
 }
-.exo-invite h2 { color: #FFFFFF; font-size: var(--exo-size-h1); max-inline-size: 20ch; }
-.exo-invite p { color: #BFBBC6; margin-block-start: 10px; max-inline-size: 52ch; }
-.exo-invite .exo-btn { margin-block-start: 20px; }
+.exo-invite h2 {
+  font-family: var(--exo-masthead);
+  font-weight: 400;
+  color: #FFFFFF;
+  font-size: clamp(24px, 4vw, 34px);
+  max-inline-size: 18ch;
+}
+.exo-invite p { color: #BBB6A9; margin-block-start: 12px; max-inline-size: 50ch; }
+.exo-invite .exo-btn {
+  margin-block-start: 22px;
+  background: var(--exo-accent-ink);
+  border-color: var(--exo-accent-ink);
+  color: var(--exo-ink);
+}
+.exo-invite .exo-btn:hover { background: var(--exo-accent); border-color: var(--exo-accent); color: #FFFFFF; }
 
-/* ---- attributes ---------------------------------------------------- */
+/* ---- sections and the index ----------------------------------------- */
 
-.exo-group { margin-block: clamp(26px, 4vw, 44px); }
-.exo-group-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-block-end: 14px; }
-.exo-group-head h2 { font-size: var(--exo-size-h2); }
+.exo-group { margin-block: clamp(26px, 4vw, 40px); }
 
-.exo-attr { display: flex; flex-direction: column; gap: 6px; block-size: 100%; }
-.exo-attr-name { font-family: var(--exo-display); font-size: var(--exo-size-h3); font-weight: 600; }
+/* A section rule with its name on it, the way a paper heads a section. */
+.exo-group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  border-block-end: 1px solid var(--exo-ink);
+  padding-block-end: 7px;
+  margin-block-end: 2px;
+}
+.exo-group-head h2 {
+  font-family: var(--exo-ui);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--exo-accent);
+}
+.exo-group-head .exo-label { letter-spacing: .12em; }
+
+/* The index: the thirteen attributes as a table of contents, which gives the
+   handout a reading order. A card grid cannot have one. */
+.exo-toc { list-style: none; margin: 0; padding: 0; }
+.exo-toc-item { border-block-end: 1px solid var(--exo-line); }
+.exo-toc-link {
+  display: grid;
+  grid-template-columns: 2.6em 1fr;
+  gap: 14px;
+  align-items: baseline;
+  padding-block: 14px;
+  color: inherit;
+  text-decoration: none;
+  transition: background .12s ease;
+}
+.exo-toc-link:hover { color: inherit; background: var(--exo-surface); }
+/* The numeral. In Hebrew these are letters (א׳ … י״ג), which is what a Hebrew
+   document actually does; in English they fall back to digits. */
+.exo-toc-num {
+  font-family: var(--exo-display);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--exo-accent);
+  font-variant-numeric: tabular-nums;
+}
+.exo-toc-body { min-inline-size: 0; }
+
+.exo-attr { display: flex; flex-direction: column; gap: 4px; }
+.exo-attr-name {
+  display: block;
+  font-family: var(--exo-display);
+  font-size: var(--exo-size-h3);
+  font-weight: 700;
+  line-height: 1.3;
+}
 .exo-attr-en {
+  display: block;
+  font-family: var(--exo-ui);
   font-size: var(--exo-size-label);
-  letter-spacing: .06em;
+  font-weight: 400;
+  letter-spacing: .14em;
   text-transform: uppercase;
   color: var(--exo-ink-faint);
 }
@@ -356,65 +486,84 @@ img { max-width: 100%; height: auto; }
    where it would only repeat the title. An empty element is still a flex item
    and still claims its gap, so it is removed rather than merely blanked. */
 .exo-attr-en:empty { display: none; }
-.exo-attr-def { font-size: var(--exo-size-small); color: var(--exo-ink-soft); }
+.exo-attr-def {
+  display: block;
+  font-size: var(--exo-size-small);
+  line-height: 1.6;
+  color: var(--exo-ink-soft);
+  max-inline-size: 58ch;
+}
 
-/* ---- prose --------------------------------------------------------- */
+/* ---- prose ----------------------------------------------------------- */
 
-.exo-prose { max-inline-size: var(--exo-measure); font-size: 17px; line-height: 1.72; }
-.exo-prose h2 { font-size: var(--exo-size-h2); margin-block: 1.4em .5em; }
-.exo-prose strong { font-weight: 600; }
+.exo-prose { max-inline-size: var(--exo-measure); font-size: var(--exo-size-body); line-height: 1.75; }
+.exo-prose h2 { font-size: var(--exo-size-h2); margin-block: 1.4em .45em; }
+.exo-prose strong { font-weight: 700; }
 .exo-prose ul { padding-inline-start: 1.2em; }
+/* Hebrew has no drop cap that works, and no italic worth setting. The
+   equivalent opening move is a heavier first line, so a story still visibly
+   starts. */
+.exo-prose > p:first-of-type::first-line { font-weight: 500; }
 
 .exo-embed {
   position: relative;
   inline-size: 100%;
   aspect-ratio: 16 / 9;
-  border-radius: var(--exo-radius);
   overflow: hidden;
   background: var(--exo-sunken);
   border: 1px solid var(--exo-line);
-  margin-block: 20px;
+  margin-block: 22px;
+  max-inline-size: 100%;
 }
 .exo-embed iframe { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; border: 0; }
 
 .exo-quote-book {
-  margin-block: 20px;
-  padding-inline-start: 14px;
-  border-inline-start: 3px solid var(--exo-amber);
+  margin-block: 22px;
+  padding-inline-start: 16px;
+  border-inline-start: 3px solid var(--exo-accent);
   color: var(--exo-ink-soft);
   font-size: var(--exo-size-small);
 }
 
-/* ---- page furniture ------------------------------------------------ */
+/* ---- page furniture -------------------------------------------------- */
 
-.exo-page { padding-block: clamp(24px, 4vw, 44px) 60px; }
-.exo-page-head { margin-block-end: clamp(20px, 3vw, 32px); }
+.exo-page { padding-block: clamp(22px, 3.5vw, 38px) 64px; }
+.exo-page-head {
+  margin-block-end: clamp(18px, 3vw, 28px);
+  padding-block-end: 12px;
+  border-block-end: 3px solid var(--exo-ink);
+}
 .exo-page-head h1 { font-size: var(--exo-size-h1); }
-.exo-page-head p { margin-block-start: 10px; color: var(--exo-ink-soft); max-inline-size: 60ch; }
+.exo-page-head p { margin-block-start: 10px; color: var(--exo-ink-soft); max-inline-size: 58ch; }
 
 .exo-back {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   min-block-size: var(--exo-tap);
-  font-size: var(--exo-size-small);
+  font-family: var(--exo-ui);
+  font-size: 12px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
   color: var(--exo-ink-soft);
   text-decoration: none;
 }
-.exo-back:hover { color: var(--exo-ink); }
+.exo-back:hover { color: var(--exo-accent); }
 /* The chevron points "back", which is the other way in Hebrew. */
 .exo-back svg { transform: scaleX(1); }
 [dir="rtl"] .exo-back svg { transform: scaleX(-1); }
 
 .exo-footer {
-  border-block-start: 1px solid var(--exo-line);
-  margin-block-start: 40px;
-  padding-block: 28px 40px;
+  border-block-start: 3px solid var(--exo-ink);
+  margin-block-start: 44px;
+  padding-block: 20px 44px;
   color: var(--exo-ink-faint);
-  font-size: var(--exo-size-small);
+  font-family: var(--exo-ui);
+  font-size: 12px;
+  letter-spacing: .04em;
 }
 
-/* ---- empty + error states ------------------------------------------ */
+/* ---- empty + error states -------------------------------------------- */
 
 .exo-empty {
   text-align: center;
@@ -423,19 +572,18 @@ img { max-width: 100%; height: auto; }
 }
 .exo-empty h2 { font-size: var(--exo-size-h2); margin-block-end: 8px; color: var(--exo-ink); }
 
-.exo-error { text-align: center; padding-block: clamp(60px, 12vw, 120px); }
+.exo-error { text-align: center; padding-block: clamp(56px, 11vw, 110px); }
 .exo-error-code {
-  font-family: var(--exo-display);
-  font-size: 64px;
-  font-weight: 700;
-  color: var(--exo-line-strong);
+  font-family: var(--exo-masthead);
+  font-size: 76px;
+  color: var(--exo-accent);
   line-height: 1;
 }
-.exo-error h1 { font-size: var(--exo-size-h1); margin-block-start: 12px; }
+.exo-error h1 { font-size: var(--exo-size-h1); margin-block-start: 14px; }
 .exo-error p { color: var(--exo-ink-soft); margin-block-start: 10px; }
-.exo-error .exo-btn { margin-block-start: 22px; }
+.exo-error .exo-btn { margin-block-start: 24px; }
 
-/* ---- motion -------------------------------------------------------- */
+/* ---- motion ---------------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -445,7 +593,7 @@ img { max-width: 100%; height: auto; }
   }
 }
 
-/* ---- toasts (exo.js) ----------------------------------------------- */
+/* ---- toasts (exo.js) -------------------------------------------------- */
 
 .exo-toasts {
   position: fixed;
@@ -461,11 +609,11 @@ img { max-width: 100%; height: auto; }
 }
 .exo-toast {
   background: var(--exo-ink);
-  color: #F6F5F2;
+  color: #F3F2EE;
   padding-inline: 16px;
   padding-block: 11px;
-  border-radius: var(--exo-pill);
-  font-size: var(--exo-size-small);
+  font-family: var(--exo-ui);
+  font-size: 14px;
   box-shadow: var(--exo-shadow-lift);
   max-inline-size: min(92vw, 460px);
   opacity: 1;
@@ -480,9 +628,7 @@ img { max-width: 100%; height: auto; }
    The `hidden` attribute only carries `display: none` from the user agent
    stylesheet, so any component rule that sets its own `display` silently
    beats it. That is how the output screen came to show both the "until when"
-   and the "which people" rows at once, with neither option chosen: the
-   template marked them hidden and `.exo-vis-extra { display: flex }` quietly
-   overruled it.
+   and the "which people" rows at once, with neither option chosen.
 
    Stated once, for the whole app, rather than patched per component. This is
    the one place an `!important` earns its keep: the point of the rule is to
@@ -491,17 +637,15 @@ img { max-width: 100%; height: auto; }
 
 /* --- notices ------------------------------------------------------------
    One quiet band for a state the page needs to state plainly: a ceiling
-   reached, a mode the app is running in. Not an alert, because none of these
-   is an error the reader caused — and the warn variant borrows the amber
-   token rather than danger red for the same reason.
-   Logical properties throughout, so it mirrors with the rest (spec §0.3). */
+   reached, a mode the app is running in. Ruled rather than filled, like
+   everything else here. */
 .exo-notice {
-  background: var(--exo-accent-tint);
-  border: 1px solid var(--exo-line);
+  background: var(--exo-surface);
+  border-block: 1px solid var(--exo-line);
   border-inline-start: 3px solid var(--exo-accent);
-  border-radius: var(--exo-radius-sm);
   color: var(--exo-ink);
-  font-size: var(--exo-size-small);
+  font-family: var(--exo-ui);
+  font-size: 14px;
   padding-block: 12px;
   padding-inline: 14px;
   margin-block: 16px;
@@ -516,11 +660,11 @@ img { max-width: 100%; height: auto; }
    Found by the phone tests, not by looking: the wordmark, two standalone
    text links and the duration select were all between 19px and 32px tall,
    on every page, in both languages. A control that is only hard to hit is
-   the kind of fault that never gets reported — people just miss, tap again,
+   the kind of fault that never gets reported. People just miss, tap again,
    and think less of the app (spec §0.2).
 
-   `min-block-size`, not `height`: these are all things that must be free to
-   grow when Hebrew wraps to a second line. */
+   `min-block-size`, not `height`: these must be free to grow when Hebrew
+   wraps to a second line. */
 .exo-wordmark { min-block-size: var(--exo-tap); }
 
 /* A link that stands alone on its own line is a target, not prose. Inline
@@ -534,9 +678,7 @@ img { max-width: 100%; height: auto; }
 
 /* The one alternate action on an otherwise empty auth page: "already have
    an account? sign in". It reads as prose but it is the only way from one
-   door to the other, so it is a target and gets the floor. Found on the
-   deployed site, because the phone suite was walking five public pages and
-   the two auth pages were not among them. They are now. */
+   door to the other, so it is a target and gets the floor. */
 .exo-auth-alt a {
   display: inline-flex;
   align-items: center;
