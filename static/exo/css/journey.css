@@ -490,3 +490,50 @@ button.exo-rail-step:hover { background: var(--exo-sunken); }
   color: var(--exo-ink-soft);
   margin-block-start: 4px;
 }
+
+/* --- the options: a multiple choice --------------------------------------
+   Generating adds rather than replaces, so each row carries its own way out.
+   The remove button is a sibling of the option and not a child, because a
+   button cannot contain a button. */
+.exo-option-row { display: flex; align-items: stretch; gap: 6px; }
+.exo-option-row .exo-option { flex: 1; min-inline-size: 0; }
+
+.exo-option-drop {
+  flex: none;
+  min-inline-size: var(--exo-tap);
+  min-block-size: var(--exo-tap);
+  align-self: center;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--exo-ink-faint);
+  font-size: 14px;
+  cursor: pointer;
+}
+.exo-option-drop:hover { color: var(--exo-danger); border-color: var(--exo-line); }
+
+/* A real checkbox, read as one. The old square was small and quiet enough
+   that the stage looked like a single choice. */
+.exo-option-check {
+  inline-size: 20px; block-size: 20px;
+  border-width: 2px;
+  position: relative;
+}
+.exo-option.is-selected .exo-option-check::after {
+  content: "";
+  position: absolute;
+  inset-block-start: 2px;
+  inset-inline-start: 6px;
+  inline-size: 5px; block-size: 10px;
+  border-inline-end: 2px solid var(--exo-accent-ink);
+  border-block-end: 2px solid var(--exo-accent-ink);
+  transform: rotate(45deg);
+}
+.exo-option.is-selected .exo-option-check { box-shadow: none; }
+
+/* How many batches this slot has left today, beside the button that spends
+   them rather than behind it. */
+.exo-left {
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  unicode-bidi: isolate;
+}

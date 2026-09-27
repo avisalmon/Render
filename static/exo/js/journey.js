@@ -264,12 +264,22 @@ function exoOptions() {
   const genUrl = root.dataset.generate;
   const ownUrl = root.dataset.own;
   const selectTemplate = root.dataset.select;
+  const dropTemplate = root.dataset.dropUrl;
 
+  /* Must stay the same shape as the server-rendered row in options.html.
+     Two renderers for one component is a standing hazard in this file; the
+     day that matters, both have to produce a row that the click handlers
+     below can read. */
   function optionEl(o) {
+    const row = document.createElement("div");
+    row.className = "exo-option-row";
+
     const b = document.createElement("button");
     b.type = "button";
     b.className = "exo-option" + (o.is_selected ? " is-selected" : "");
     b.dataset.option = o.id;
+    b.setAttribute("role", "checkbox");
+    b.setAttribute("aria-checked", o.is_selected ? "true" : "false");
     const why = o.research_note
       ? '<span class="exo-option-why"></span>'
       : "";
@@ -280,7 +290,18 @@ function exoOptions() {
       "</span>";
     b.querySelector(".exo-option-text").textContent = o.content;
     if (o.research_note) b.querySelector(".exo-option-why").textContent = o.research_note;
-    return b;
+
+    const drop = document.createElement("button");
+    drop.type = "button";
+    drop.className = "exo-option-drop";
+    drop.dataset.drop = o.id;
+    drop.textContent = "✕";
+    drop.setAttribute("aria-label", root.dataset.dropLabel || "Remove");
+    drop.title = drop.getAttribute("aria-label");
+
+    row.appendChild(b);
+    row.appendChild(drop);
+    return row;
   }
 
   function recount() {
@@ -295,6 +316,18 @@ function exoOptions() {
     const list = slot.querySelector("[data-list]");
     const gen = slot.querySelector("[data-gen]");
     const own = slot.querySelector("[data-own-btn]");
+    const leftLabel = slot.querySelector("[data-left-label]");
+
+    function setLeft(n) {
+      if (n === undefined || n === null) return;
+      gen.dataset.left = n;
+      gen.disabled = n <= 0;
+      if (leftLabel) {
+        leftLabel.textContent = n > 0
+          ? n + "/" + (root.dataset.perSlot || n)
+          : (root.dataset.noMore || "");
+      }
+    }
 
     gen.addEventListener("click", async () => {
       const label = gen.textContent;
@@ -307,8 +340,10 @@ function exoOptions() {
           method: "POST",
           json: { attribute: key },
         });
-        list.innerHTML = "";
-        data.options.forEach((o) => list.appendChild(optionEl(o)));
+        // Appended, never assigned over: the list on screen keeps everything
+        // it already has, so a new batch cannot disturb a tick.
+        (data.added || []).forEach((o) => list.appendChild(optionEl(o)));
+        setLeft(data.left);
         recount();
       } catch (err) {
         exoToastError(err);
@@ -334,6 +369,20 @@ function exoOptions() {
     });
 
     list.addEventListener("click", async (e) => {
+      const drop = e.target.closest(".exo-option-drop");
+      if (drop) {
+        const row = drop.closest(".exo-option-row");
+        try {
+          await exo.api(dropTemplate.replace("OPTION", drop.dataset.drop),
+                        { method: "POST" });
+          row.remove();
+          recount();
+        } catch (err) {
+          exoToastError(err);
+        }
+        return;
+      }
+
       const el = e.target.closest(".exo-option");
       if (!el) return;
       try {
@@ -342,6 +391,7 @@ function exoOptions() {
           { method: "POST" }
         );
         el.classList.toggle("is-selected", data.is_selected);
+        el.setAttribute("aria-checked", data.is_selected ? "true" : "false");
         recount();
       } catch (err) {
         exoToastError(err);

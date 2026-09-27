@@ -263,6 +263,58 @@ def test_every_newspaper_style_survives_a_narrow_screen(phone_page, live_server,
     assert failures == {}, f"a paper broke on a 390px phone: {failures}"
 
 
+def test_options_are_a_multiple_choice_in_a_real_browser(phone_page,
+                                                         live_server,
+                                                         django_user_model):
+    """Ticking several options must accumulate, and removing one must not
+    disturb the rest.
+
+    This lives in the browser suite because the bug it guards could not be
+    seen from the server. Every unit test called the select URL directly and
+    passed, while in the page a delegated `closest("[data-drop]")` matched the
+    container that held the delete URL, so every click anywhere in the list
+    was handled as a delete and no tick ever registered. Only a real click on
+    a real DOM shows that.
+    """
+    from exo.models import Concept, ExoAttribute, GeneratedOption
+
+    _seed()
+    user = _member(django_user_model, "phone-ticker")
+    concept = Concept.objects.create(owner=user, title="A car rental service",
+                                     stage=Concept.Stage.OPTIONS)
+    attribute = ExoAttribute.objects.get(key="engagement")
+    for i in range(4):
+        GeneratedOption.objects.create(concept=concept, attribute=attribute,
+                                       content=f"option number {i}", order=i)
+
+    _sign_in(phone_page, live_server, "phone-ticker")
+    phone_page.goto(live_server.url + f"/exo/concepts/{concept.pk}/options/",
+                    wait_until="domcontentloaded")
+
+    rows = f'.exo-slot[data-key="{attribute.key}"] .exo-option'
+
+    def ticked():
+        return [i for i in range(phone_page.locator(rows).count())
+                if "is-selected" in
+                (phone_page.locator(rows).nth(i).get_attribute("class") or "")]
+
+    assert ticked() == []
+    for i in (0, 1, 2):
+        phone_page.locator(rows).nth(i).click()
+        phone_page.wait_for_timeout(350)
+    assert ticked() == [0, 1, 2], "ticking one untick*ed* another"
+
+    # It is the database that decides what reaches the final build.
+    assert concept.options.filter(is_selected=True).count() == 3
+
+    # Removing one is deliberate, and takes only that one.
+    phone_page.locator(
+        f'.exo-slot[data-key="{attribute.key}"] .exo-option-drop').nth(3).click()
+    phone_page.wait_for_timeout(500)
+    assert phone_page.locator(rows).count() == 3
+    assert concept.options.filter(is_selected=True).count() == 3
+
+
 def test_the_mirror_is_real_and_not_just_an_attribute(phone_page, live_server,
                                                       django_user_model):
     """`dir="rtl"` on the html element is easy to assert and easy to have

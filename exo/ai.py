@@ -189,7 +189,11 @@ def limits():
     numbers the guards actually enforce instead of a second copy that drifts."""
     return {
         "concepts_per_member": _env_int("EXO_MAX_CONCEPTS", 20),
-        "regen_per_stage_per_day": _env_int("EXO_MAX_REGEN_PER_STAGE_PER_DAY", 5),
+        # Four batches per slot per day. Avi's number, and it is a
+        # readability limit as much as a cost one: generating now adds
+        # rather than replaces, so an uncapped slot grows until nobody
+        # can choose from it.
+        "regen_per_stage_per_day": _env_int("EXO_MAX_REGEN_PER_STAGE_PER_DAY", 4),
         "calls_per_member_per_day": _env_int("EXO_MAX_CALLS_PER_DAY", 120),
         "calls_site_per_day": _env_int("EXO_DAILY_SPEND_GUARD", 800),
         "timeout_seconds": _timeout(),

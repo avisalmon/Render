@@ -70,6 +70,8 @@ urlpatterns = [
          name="option_add_own"),
     path("concepts/<int:pk>/options/<int:option_id>/select/",
          journey_views.option_select, name="option_select"),
+    path("concepts/<int:pk>/options/<int:option_id>/delete/",
+         journey_views.option_delete, name="option_delete"),
     path("concepts/<int:pk>/to-output/", journey_views.to_output,
          name="concept_to_output"),
 

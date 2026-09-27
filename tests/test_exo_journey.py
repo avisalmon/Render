@@ -298,21 +298,151 @@ def test_options_are_generated_per_attribute(signed_in, seeded, member):
     assert 1 <= concept.options.filter(attribute=attribute).count() <= 4
 
 
-def test_regenerating_keeps_what_was_selected(signed_in, seeded, member):
-    """A regenerate that eats a person's picks is the bug this guards."""
+def test_asking_for_more_keeps_everything_already_there(signed_in, seeded,
+                                                        member):
+    """The bug Avi found, and the reason this stage exists.
+
+    "More options" used to delete every option the person had not ticked and
+    put a fresh batch in its place. So the natural move — read three, tick
+    one, press the button to see more — destroyed the two still being weighed.
+    The old test only checked that the *ticked* one survived, which is exactly
+    why it passed while the stage was broken.
+
+    Nothing is removed by generating now. Removal is `option_delete`, which a
+    person does on purpose.
+    """
     concept = make_concept(member, stage=Concept.Stage.OPTIONS)
     attribute = ExoAttribute.objects.get(key="engagement")
     post_json(signed_in, reverse("exo:options_generate", args=[concept.pk]),
               {"attribute": attribute.key})
 
+    first_batch = list(concept.options.filter(attribute=attribute)
+                       .values_list("pk", flat=True))
+    assert first_batch
+
+    # Tick one, leave the rest untouched: the state that used to be destroyed.
     keeper = concept.options.filter(attribute=attribute).first()
     post_json(signed_in, reverse("exo:option_select", args=[concept.pk, keeper.pk]))
-    keeper.refresh_from_db()
-    assert keeper.is_selected
 
+    response = post_json(signed_in,
+                         reverse("exo:options_generate", args=[concept.pk]),
+                         {"attribute": attribute.key})
+    assert response.status_code == 200
+
+    after = set(concept.options.filter(attribute=attribute)
+                .values_list("pk", flat=True))
+    assert set(first_batch) <= after, "an unticked option was thrown away"
+    assert len(after) > len(first_batch), "the new batch was not added"
+    assert GeneratedOption.objects.filter(pk=keeper.pk, is_selected=True).exists()
+
+    # And the response carries only what is new, so the page never rebuilds a
+    # list it is already showing.
+    assert len(response.json()["added"]) == len(after) - len(first_batch)
+
+
+def test_many_options_can_be_ticked_at_once(signed_in, seeded, member):
+    """It is a multiple choice. Ticking a second must not untick the first,
+    and everything ticked is what reaches the final build."""
+    concept = make_concept(member, stage=Concept.Stage.OPTIONS)
+    attribute = ExoAttribute.objects.get(key="engagement")
     post_json(signed_in, reverse("exo:options_generate", args=[concept.pk]),
               {"attribute": attribute.key})
-    assert GeneratedOption.objects.filter(pk=keeper.pk, is_selected=True).exists()
+
+    options = list(concept.options.filter(attribute=attribute))
+    assert len(options) >= 2
+    for option in options[:2]:
+        post_json(signed_in,
+                  reverse("exo:option_select", args=[concept.pk, option.pk]))
+
+    selected = set(concept.options.filter(attribute=attribute, is_selected=True)
+                   .values_list("pk", flat=True))
+    assert selected == {options[0].pk, options[1].pk}
+
+    # And both are what the output stage will be given.
+    from exo.journey_views import _selections
+
+    chosen = dict(_selections(concept))
+    assert len(chosen[attribute]) == 2
+
+
+def test_ticking_twice_unticks(signed_in, seeded, member):
+    concept = make_concept(member, stage=Concept.Stage.OPTIONS)
+    attribute = ExoAttribute.objects.get(key="engagement")
+    option = GeneratedOption.objects.create(concept=concept, attribute=attribute,
+                                            content="one")
+    url = reverse("exo:option_select", args=[concept.pk, option.pk])
+    assert post_json(signed_in, url).json()["is_selected"] is True
+    assert post_json(signed_in, url).json()["is_selected"] is False
+
+
+def test_an_option_can_be_thrown_away_on_purpose(signed_in, seeded, member):
+    concept = make_concept(member, stage=Concept.Stage.OPTIONS)
+    attribute = ExoAttribute.objects.get(key="engagement")
+    keep = GeneratedOption.objects.create(concept=concept, attribute=attribute,
+                                          content="keep me")
+    drop = GeneratedOption.objects.create(concept=concept, attribute=attribute,
+                                          content="not this one")
+
+    response = signed_in.post(
+        reverse("exo:option_delete", args=[concept.pk, drop.pk]))
+    assert response.status_code == 200
+    assert not GeneratedOption.objects.filter(pk=drop.pk).exists()
+    assert GeneratedOption.objects.filter(pk=keep.pk).exists()
+
+
+def test_one_member_cannot_delete_another_members_option(signed_in, seeded,
+                                                          other):
+    theirs = make_concept(other, title="not mine")
+    attribute = ExoAttribute.objects.get(key="engagement")
+    option = GeneratedOption.objects.create(concept=theirs, attribute=attribute,
+                                            content="theirs")
+    response = signed_in.post(
+        reverse("exo:option_delete", args=[theirs.pk, option.pk]))
+    assert response.status_code == 404
+    assert GeneratedOption.objects.filter(pk=option.pk).exists()
+
+
+def test_the_page_shows_how_many_batches_are_left(signed_in, seeded, member):
+    """Four a slot a day, shown on the button rather than discovered by being
+    refused.
+
+    Counted from the call ledger, which is where real spending is recorded.
+    Stub generation deliberately spends nothing and so consumes no budget:
+    with no API key the app costs nothing to run and the tests can generate
+    freely. Production has a key, so production is where the ceiling bites.
+    """
+    from exo.models import AiCall
+
+    concept = make_concept(member, stage=Concept.Stage.OPTIONS)
+    response = signed_in.get(reverse("exo:concept_options", args=[concept.pk]))
+    assert response.context["per_slot"] == 4
+    assert all(slot["left"] == 4 for slot in response.context["slots"])
+
+    engagement = ExoAttribute.objects.get(key="engagement")
+    for _ in range(3):
+        AiCall.objects.create(user=member, task="options", concept=concept,
+                              attribute=engagement, ok=True)
+
+    response = signed_in.get(reverse("exo:concept_options", args=[concept.pk]))
+    left = {s["attribute"].key: s["left"] for s in response.context["slots"]}
+    assert left["engagement"] == 1, "the spent batches were not counted"
+    assert left["autonomy"] == 4, "another slot was charged for them"
+
+
+def test_a_slot_at_its_ceiling_offers_no_button_to_press(signed_in, seeded,
+                                                          member):
+    from exo.models import AiCall
+
+    concept = make_concept(member, stage=Concept.Stage.OPTIONS)
+    engagement = ExoAttribute.objects.get(key="engagement")
+    for _ in range(4):
+        AiCall.objects.create(user=member, task="options", concept=concept,
+                              attribute=engagement, ok=True)
+
+    response = signed_in.get(reverse("exo:concept_options", args=[concept.pk]))
+    left = {s["attribute"].key: s["left"] for s in response.context["slots"]}
+    assert left["engagement"] == 0
+    assert "disabled" in response.content.decode()
 
 
 def test_a_users_own_option_survives_a_regenerate(signed_in, seeded, member):

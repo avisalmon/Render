@@ -22,7 +22,11 @@
   <div class="exo-slots exo-slots-wide" id="slots"
        data-generate="{% url 'exo:options_generate' concept.pk %}"
        data-own="{% url 'exo:option_add_own' concept.pk %}"
-       data-select="/exo/concepts/{{ concept.pk }}/options/OPTION/select/">
+       data-select="/exo/concepts/{{ concept.pk }}/options/OPTION/select/"
+       data-drop-url="/exo/concepts/{{ concept.pk }}/options/OPTION/delete/"
+       data-drop-label="{% t 'options.drop' %}"
+       data-per-slot="{{ per_slot }}"
+       data-no-more="{% t 'options.no_more' %}">
     {% for slot in slots %}
       <section class="exo-slot" data-key="{{ slot.attribute.key }}">
         <div class="exo-slot-head">
@@ -37,28 +41,52 @@
           </details>
         {% endif %}
 
+        {% comment %}
+          Tick as many as you like: this is a multiple choice, and everything
+          ticked goes into the final build. `role="checkbox"` says so to a
+          screen reader as well as to the eye.
+
+          The remove button is a sibling rather than a child, because a button
+          cannot live inside a button. It exists because generating now ADDS
+          rather than replaces, so nothing is ever thrown away for you and you
+          need a way to throw it away yourself.
+        {% endcomment %}
         <div class="exo-options" data-list>
           {% for o in slot.options %}
-            <button class="exo-option {% if o.is_selected %}is-selected{% endif %}"
-                    data-option="{{ o.id }}" type="button">
-              <span class="exo-option-check" aria-hidden="true"></span>
-              <span class="exo-option-body">
-                <span class="exo-option-text">{{ o.content }}</span>
-                {% if o.research_note %}
-                  <span class="exo-option-why">
-                    <em>{% t "options.why" %}:</em> {{ o.research_note }}
-                  </span>
-                {% endif %}
-                {% if o.is_user_authored %}<span class="exo-option-mine">✎</span>{% endif %}
-              </span>
-            </button>
+            <div class="exo-option-row">
+              <button class="exo-option {% if o.is_selected %}is-selected{% endif %}"
+                      data-option="{{ o.id }}" type="button"
+                      role="checkbox" aria-checked="{% if o.is_selected %}true{% else %}false{% endif %}">
+                <span class="exo-option-check" aria-hidden="true"></span>
+                <span class="exo-option-body">
+                  <span class="exo-option-text">{{ o.content }}</span>
+                  {% if o.research_note %}
+                    <span class="exo-option-why">
+                      <em>{% t "options.why" %}:</em> {{ o.research_note }}
+                    </span>
+                  {% endif %}
+                  {% if o.is_user_authored %}<span class="exo-option-mine">✎</span>{% endif %}
+                </span>
+              </button>
+              <button class="exo-option-drop" data-drop="{{ o.id }}" type="button"
+                      aria-label="{% t 'options.drop' %}" title="{% t 'options.drop' %}">✕</button>
+            </div>
           {% endfor %}
         </div>
 
         <div class="exo-slot-actions">
-          <button class="exo-btn exo-btn-ghost" data-gen>
-            {% if slot.options %}{% t "options.regenerate" %}{% else %}{% t "brainstorm.generate" %}{% endif %}
+          {% comment %}
+            The budget is on the button, not behind it. Four batches a slot a
+            day is plenty for a workshop and keeps a slot readable; meeting
+            that ceiling by being refused would read like a fault.
+          {% endcomment %}
+          <button class="exo-btn exo-btn-ghost" data-gen data-left="{{ slot.left }}"
+                  {% if not slot.left %}disabled{% endif %}>
+            {% if slot.options %}{% t "options.more" %}{% else %}{% t "brainstorm.generate" %}{% endif %}
           </button>
+          <span class="exo-small exo-faint exo-left" data-left-label>
+            {% if slot.left %}{{ slot.left }}/{{ per_slot }}{% else %}{% t "options.no_more" %}{% endif %}
+          </span>
           <button class="exo-btn exo-btn-quiet" data-own-btn>{% t "options.add_own" %}</button>
         </div>
       </section>

@@ -255,17 +255,25 @@ def options(request, pk):
         by_attribute.setdefault(option.attribute_id, []).append(option)
     for entry in concept.entries.select_related("attribute"):
         entries.setdefault(entry.attribute_id, []).append(entry)
+    # How many batches this slot has left today. Shown on the button rather
+    # than discovered by pressing it: a ceiling you meet by being refused
+    # reads like a fault, and this one is ordinary.
+    per_slot = ai.limits()["regen_per_stage_per_day"]
     slots = [{
         "attribute": a,
         "options": by_attribute.get(a.id, []),
         "entries": entries.get(a.id, []),
         "selected": sum(1 for o in by_attribute.get(a.id, []) if o.is_selected),
+        "left": max(0, per_slot - ai.used_today(
+            user=request.user, task="options", concept=concept, attribute=a,
+        )),
     } for a in attributes]
     context = _stage_context(concept)
     context.update({
         "slots": slots,
         "with_selection": sum(1 for s in slots if s["selected"]),
         "total": len(slots),
+        "per_slot": per_slot,
         "is_stub": ai.is_stub(),
         "nav": "build",
     })
@@ -287,10 +295,16 @@ def options_generate(request, pk):
     if attribute is None:
         return _error("not found", status=404)
 
+    # **This adds; it does not replace.** The first version deleted every
+    # option the person had not ticked and put a fresh batch in its place,
+    # which destroyed exactly the thing this stage is for: looking at a lot of
+    # possibilities and choosing among them. Pressing a button labelled "more"
+    # and losing the two you were still weighing is the worst kind of bug,
+    # because the app looks like it is working.
+    #
+    # Nothing here deletes. Removing an option is now something the person
+    # does deliberately, one at a time, in `option_delete`.
     existing = concept.options.filter(attribute=attribute)
-    keep = list(existing.filter(is_selected=True)) + list(
-        existing.filter(is_user_authored=True).exclude(is_selected=True)
-    )
     entries = list(concept.entries.filter(attribute=attribute))
     try:
         produced = ai.generate_options(
@@ -299,10 +313,7 @@ def options_generate(request, pk):
     except ai.AiError as exc:
         return _ai_failed(exc)
 
-    # Only now, with new content in hand, remove the replaceable ones. A
-    # failure above must not leave the slot empty.
-    existing.exclude(pk__in=[o.pk for o in keep]).delete()
-    start = len(keep)
+    start = (existing.aggregate(m=Max("order"))["m"] or 0) + 1
     made = [
         GeneratedOption.objects.create(
             concept=concept, attribute=attribute,
@@ -311,11 +322,19 @@ def options_generate(request, pk):
         )
         for i, item in enumerate(produced)
     ]
-    return JsonResponse({"options": [
-        {"id": o.id, "content": o.content, "research_note": o.research_note,
-         "is_selected": o.is_selected, "is_user_authored": o.is_user_authored}
-        for o in list(keep) + made
-    ]})
+    left = max(0, ai.limits()["regen_per_stage_per_day"] - ai.used_today(
+        user=request.user, task="options", concept=concept, attribute=attribute,
+    ))
+    return JsonResponse({
+        # Only the new ones: the page keeps what it is already showing, so a
+        # batch arriving can never disturb a tick the person has made.
+        "added": [
+            {"id": o.id, "content": o.content, "research_note": o.research_note,
+             "is_selected": o.is_selected, "is_user_authored": o.is_user_authored}
+            for o in made
+        ],
+        "left": left,
+    })
 
 
 @member_required
@@ -328,6 +347,22 @@ def option_select(request, pk, option_id):
     option.is_selected = not option.is_selected
     option.save(update_fields=["is_selected"])
     return JsonResponse({"id": option.id, "is_selected": option.is_selected})
+
+
+@member_required
+@require_POST
+def option_delete(request, pk, option_id):
+    """Throw one option away.
+
+    The counterpart to generating additively: if nothing is ever removed for
+    you, you need a way to remove it yourself. Deliberate, one at a time, and
+    it takes the tick with it.
+    """
+    concept = get_owned_or_404(request, pk)
+    deleted, _ = concept.options.filter(pk=option_id).delete()
+    if not deleted:
+        return _error("not found", status=404)
+    return JsonResponse({"ok": True})
 
 
 @member_required

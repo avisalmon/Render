@@ -235,7 +235,11 @@ STRINGS = {
               "Mark the ones you want in the concept.",
     },
     "options.generating": {"he": "מייצר…", "en": "Generating…"},
-    "options.regenerate": {"he": "אפשרויות אחרות", "en": "Other options"},
+    # "Other options" invited exactly the press that used to delete
+    # everything unticked. The button adds now, and says so.
+    "options.more": {"he": "עוד אפשרויות", "en": "More options"},
+    "options.no_more": {"he": "די להיום", "en": "Enough for today"},
+    "options.drop": {"he": "הסר אפשרות", "en": "Remove option"},
     "options.add_own": {"he": "הוסף משלך", "en": "Add your own"},
     "options.why": {"he": "למה זה אקספוננציאלי", "en": "Why this is exponential"},
     "options.selected": {"he": "נבחר", "en": "Selected"},
