@@ -15,9 +15,11 @@ keeps their history — and their concepts — instead of being erased.
 """
 
 from functools import wraps
+from urllib.parse import quote
 
 from django.contrib.auth.models import Group
 from django.shortcuts import redirect, render
+from django.urls import reverse
 
 from .models import Membership
 
@@ -101,14 +103,30 @@ def member_required(view):
         user = request.user
         if is_exo_member(user):
             return view(request, *args, **kwargs)
+
+        # Carry the page they were trying to reach, so signing back in
+        # returns them to it rather than to a list they have to search. A
+        # session that expires mid-idea should cost a password, not a place.
+        from .views import safe_next
+
+        here = safe_next(request.get_full_path())
+        suffix = f"?next={quote(here)}" if here else ""
+
         if not user.is_authenticated:
-            return redirect("exo:join")
+            # Sign in, not request access. Somebody who reaches a gated URL
+            # while signed out is overwhelmingly a member whose session ended,
+            # not a newcomer: newcomers arrive through the one door on the
+            # landing page. Sending them to a request form and making them
+            # find the sign-in link is how an expired session costs a person
+            # their place. The login page links on to joining for the rare
+            # case where it really is somebody new.
+            return redirect(reverse("exo:login") + suffix)
         membership = membership_for(user)
         if membership is None:
-            return redirect("exo:join")
+            return redirect(reverse("exo:join") + suffix)
         if membership.status == Membership.Status.DENIED:
             return render(request, "exo/denied.html", status=403)
-        return redirect("exo:waiting")
+        return redirect(reverse("exo:waiting") + suffix)
 
     return wrapper
 

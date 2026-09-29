@@ -166,6 +166,10 @@ STRINGS = {
         "en": "Delete this concept? Its whole journey goes with it.",
     },
     "concepts.resume": {"he": "המשך", "en": "Continue"},
+    "home.resume": {
+        "he": "חזור למקום שעצרת",
+        "en": "Back to where you stopped",
+    },
     "concepts.at_cap": {
         "he": "הגעת למספר הקונספטים המרבי. מחק קונספט קיים כדי להתחיל חדש.",
         "en": "You have reached the maximum number of concepts. Delete one to start another.",

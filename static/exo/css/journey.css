@@ -537,3 +537,42 @@ button.exo-rail-step:hover { background: var(--exo-sunken); }
   direction: ltr;
   unicode-bidi: isolate;
 }
+
+/* --- back to where you stopped -------------------------------------------
+   The first thing a member with work underway sees. Set as a ruled band at
+   the top of the landing rather than a card, like everything else here, and
+   loud enough that nobody has to wonder whether their idea survived. */
+.exo-resume {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-block-start: 18px;
+  padding-block: 14px;
+  border-block: 3px solid var(--exo-ink);
+  color: inherit;
+  text-decoration: none;
+}
+.exo-resume:hover { color: inherit; background: var(--exo-surface); }
+.exo-resume-label {
+  font-family: var(--exo-ui);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--exo-accent);
+}
+.exo-resume-title {
+  font-family: var(--exo-display);
+  font-size: 20px;
+  font-weight: 700;
+  flex: 1;
+  min-inline-size: 0;
+}
+.exo-resume-stage {
+  font-family: var(--exo-ui);
+  font-size: 12px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--exo-ink-faint);
+}

@@ -44,13 +44,26 @@ def test_the_group_exists_from_the_migration():
     assert Group.objects.filter(name=GROUP_NAME).exists()
 
 
-def test_anonymous_is_sent_to_request_access(client):
-    response = client.get(reverse("exo:concepts"))
+def test_anonymous_is_sent_to_sign_in_and_brought_back(client):
+    """Not to the request form.
+
+    Someone who reaches a gated URL while signed out is almost always a member
+    whose session ended, and making them find the sign-in link on a request
+    form is how an expired session costs them their place. Newcomers still
+    arrive through the single door on the landing page.
+    """
+    wanted = reverse("exo:concepts")
+    response = client.get(wanted)
     assert response.status_code == 302
-    assert reverse("exo:join") in response["Location"]
+    assert reverse("exo:login") in response["Location"]
+    assert "next=" in response["Location"]
+
+    # And the sign-in page still points a genuine newcomer at joining.
+    assert reverse("exo:join") in client.get(reverse("exo:login")).content.decode()
 
 
 def test_a_signed_in_stranger_is_sent_to_request_access(client):
+    """Signed in but not a member: the request form is exactly right."""
     make("stranger")
     client.login(username="stranger", password="a-strong-pass-123")
     response = client.get(reverse("exo:concepts"))

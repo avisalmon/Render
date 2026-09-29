@@ -7,6 +7,20 @@
 {% block content %}
 <div class="exo-wrap">
 
+  {% comment %}
+    A member with work underway is greeted by that work, not by the pitch.
+    This is the fix for closing the tab mid-idea and coming back to a page
+    that looks exactly the same as it did before you ever started: nothing was
+    ever lost, but nothing said so either.
+  {% endcomment %}
+  {% if resume %}
+    <a class="exo-resume" href="{% url 'exo:concept_resume' resume.pk %}">
+      <span class="exo-resume-label">{% t "home.resume" %}</span>
+      <span class="exo-resume-title">{{ resume.title }}</span>
+      <span class="exo-resume-stage">{% t resume.stage|stage_key %}</span>
+    </a>
+  {% endif %}
+
   <section class="exo-hero">
     <p class="exo-label">MTP + SCALE + IDEAS</p>
     {% comment %}
@@ -43,11 +57,20 @@
   {% comment %}
     The ONE door into the gated half (spec §1). Nowhere else in the public
     half suggests signing in, which is why this is allowed to be loud.
+
+    A member who is already inside is not asked to request access again; the
+    same block takes them to their concepts instead. Telling somebody who has
+    an idea underway to "build an exponential organization" is a small way of
+    saying you have forgotten them.
   {% endcomment %}
   <section class="exo-invite">
     <h2>{% t "home.build_cta" %}</h2>
     <p>{% t "home.build_blurb" %}</p>
-    <a class="exo-btn exo-btn-lg" href="{% url 'exo:join' %}">{% t "home.build_cta" %}</a>
+    {% if resume %}
+      <a class="exo-btn exo-btn-lg" href="{% url 'exo:concepts' %}">{% t "nav.build" %}</a>
+    {% else %}
+      <a class="exo-btn exo-btn-lg" href="{% url 'exo:join' %}">{% t "home.build_cta" %}</a>
+    {% endif %}
   </section>
 
   {% if scale or ideas %}

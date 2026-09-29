@@ -315,6 +315,41 @@ def test_options_are_a_multiple_choice_in_a_real_browser(phone_page,
     assert concept.options.filter(is_selected=True).count() == 3
 
 
+def test_a_half_typed_answer_survives_closing_the_tab(phone_page, live_server,
+                                                      django_user_model):
+    """The other half of "it forgot what I started".
+
+    Everything sent is stored server-side and was never at risk. What was lost
+    is the sentence still sitting in the box when the tab closes, which is the
+    thought you were in the middle of. It is kept in this browser, per concept,
+    and cleared once the turn is actually sent.
+    """
+    from exo.models import Concept
+
+    _seed()
+    user = _member(django_user_model, "phone-drafter")
+    concept = Concept.objects.create(owner=user, title="A car rental service")
+
+    _sign_in(phone_page, live_server, "phone-drafter")
+    url = live_server.url + f"/exo/concepts/{concept.pk}/interview/"
+    phone_page.goto(url, wait_until="domcontentloaded")
+
+    half_typed = "What I actually want to build is a service that"
+    phone_page.fill("#say", half_typed)
+    phone_page.wait_for_timeout(200)
+
+    # Close the tab on it, the way a person does.
+    phone_page.goto(live_server.url + "/exo/learn/", wait_until="domcontentloaded")
+    phone_page.goto(url, wait_until="domcontentloaded")
+    assert phone_page.input_value("#say") == half_typed, "the draft was lost"
+
+    # And it does not leak into another concept's box.
+    other = Concept.objects.create(owner=user, title="A different idea")
+    phone_page.goto(live_server.url + f"/exo/concepts/{other.pk}/interview/",
+                    wait_until="domcontentloaded")
+    assert phone_page.input_value("#say") == ""
+
+
 def test_the_mirror_is_real_and_not_just_an_attribute(phone_page, live_server,
                                                       django_user_model):
     """`dir="rtl"` on the html element is easy to assert and easy to have

@@ -15,7 +15,8 @@
     {% if is_stub %}<p class="exo-stub-note">{% t "options.ai_note" %}</p>{% endif %}
   </header>
 
-  <div class="exo-chat" id="chat" data-send="{% url 'exo:concept_interview_send' concept.pk %}">
+  <div class="exo-chat" id="chat" data-concept="{{ concept.pk }}"
+       data-send="{% url 'exo:concept_interview_send' concept.pk %}">
     {% for m in messages %}
       <div class="exo-msg exo-msg-{{ m.role }}">{{ m.content|linebreaksbr }}</div>
     {% endfor %}

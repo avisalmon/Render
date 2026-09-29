@@ -26,11 +26,38 @@ def get_owned_or_404(request, pk):
     return get_object_or_404(owned(request), pk=pk)
 
 
+def where_you_were(user):
+    """The concept this person last worked on, or None.
+
+    Answers "where was I" for the landing page and for signing back in. The
+    journey was always resumable — `Concept.stage` is the state and nothing
+    is ever lost — but resuming took knowing to click Build, find your idea
+    and press Continue. Somebody who closes the tab mid-idea and comes back to
+    a page that greets them like a stranger has every reason to think the app
+    forgot them.
+
+    Ordered by `updated_at`, which moves when work happens rather than when a
+    page is merely looked at. That is the honest signal: the last place you
+    did something is the place to put you back.
+
+    `-id` breaks ties. Two saves inside the same clock tick get the same
+    timestamp — the tick is around 15ms on Windows, which a test hits every
+    time and a fast hand occasionally — and a tie resolved by whichever row
+    the database happened to return is a coin flip. The newer row wins.
+    """
+    if not getattr(user, "is_authenticated", False):
+        return None
+    return (Concept.objects.filter(owner=user)
+            .order_by("-updated_at", "-id")
+            .first())
+
+
 @member_required
 def concepts(request):
     """The member's concepts. The front door of the gated half."""
     mine = owned(request).select_related("release")
     cap = ai.limits()["concepts_per_member"]
+    latest = where_you_were(request.user)
     return render(request, "exo/concepts.html", {
         "concepts": mine,
         # The cap is shown as a state of the page rather than sprung as an
@@ -38,6 +65,7 @@ def concepts(request):
         # already wasted the thinking that went into the title.
         "at_cap": mine.count() >= cap,
         "cap": cap,
+        "latest_id": latest.pk if latest else None,
         "nav": "build",
     })
 

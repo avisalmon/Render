@@ -13,13 +13,38 @@ from .models import ExoAttribute, LearnResource
 from .strings import LANGUAGES
 
 
+def safe_next(value):
+    """A redirect target, or "" if it is not one of ours.
+
+    Only ever inside this app. An open redirect here would be a gift to
+    anyone who can get a link in front of a member, and "//evil.example" is a
+    path as far as `startswith("/")` is concerned, so the second character is
+    checked too.
+    """
+    value = (value or "").strip()
+    if value.startswith("/exo/") and not value.startswith("//"):
+        return value
+    return ""
+
+
 def home(request):
-    """The landing page: the framing, the formula, and the one way in."""
+    """The landing page: the framing, the formula, and the one way in.
+
+    For a member with work underway it opens with that work instead. Somebody
+    who closes the tab mid-idea and comes back to the same page a stranger
+    sees has every reason to believe the app forgot them, even though the
+    journey was resumable the whole time.
+    """
+    from .access import is_exo_member
+    from .concept_views import where_you_were
+
     attributes = list(ExoAttribute.objects.all())
+    resume = where_you_were(request.user) if is_exo_member(request.user) else None
     return render(request, "exo/home.html", {
         "mtp": next((a for a in attributes if a.category == ExoAttribute.Category.MTP), None),
         "scale": [a for a in attributes if a.category == ExoAttribute.Category.SCALE],
         "ideas": [a for a in attributes if a.category == ExoAttribute.Category.IDEAS],
+        "resume": resume,
     })
 
 
@@ -81,9 +106,7 @@ def set_language(request, code):
             membership.language = code
             membership.save(update_fields=["language"])
 
-    nxt = request.GET.get("next") or ""
-    # Only ever bounce back inside this app — an open redirect here would be a
-    # gift to anyone who can get a link in front of a member.
-    if nxt.startswith("/exo/"):
+    nxt = safe_next(request.GET.get("next"))
+    if nxt:
         return redirect(nxt)
     return redirect("exo:home")

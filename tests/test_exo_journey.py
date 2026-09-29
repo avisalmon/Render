@@ -8,6 +8,7 @@ another's concept.
 """
 
 import json
+from urllib.parse import quote
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -121,6 +122,104 @@ def test_one_member_cannot_touch_another_members_concept(signed_in, seeded, othe
         assert signed_in.get(url).status_code == 404, url
     assert signed_in.post(reverse("exo:concept_delete", args=[theirs.pk])).status_code == 404
     assert Concept.objects.filter(pk=theirs.pk).exists()
+
+
+# ---- coming back ------------------------------------------------------- #
+#
+# Avi closed the tab mid-idea and came back to a page that greeted him like a
+# stranger. Nothing had been lost: the concept, the stage and the transcript
+# were all in the database the whole time. But the app never took him back,
+# and an app that cannot show you your work has forgotten it as far as you are
+# concerned.
+
+
+def test_the_landing_greets_a_member_with_their_own_work(signed_in, seeded,
+                                                         member):
+    concept = make_concept(member, stage=Concept.Stage.OPTIONS,
+                           title="A car rental service")
+    response = signed_in.get(reverse("exo:home"))
+    assert response.context["resume"].pk == concept.pk
+    body = response.content.decode()
+    assert "A car rental service" in body
+    assert reverse("exo:concept_resume", args=[concept.pk]) in body
+
+
+def test_the_landing_still_pitches_to_everyone_else(client, seeded):
+    """The public half is unchanged for people who are not in it."""
+    response = client.get(reverse("exo:home"))
+    assert response.context["resume"] is None
+    assert response.content.decode().count(reverse("exo:join")) == 1
+
+
+def test_it_offers_the_concept_worked_on_most_recently(signed_in, seeded,
+                                                       member):
+    older = make_concept(member, title="the first one")
+    newer = make_concept(member, title="the one I was in the middle of")
+    # Touch the older one, so "most recent" cannot be passing by luck of id.
+    newer.mtp = "Movement without ownership"
+    newer.save()
+
+    response = signed_in.get(reverse("exo:home"))
+    assert response.context["resume"].pk == newer.pk
+    assert older.pk != newer.pk
+
+
+def test_resume_lands_on_the_stage_not_the_list(signed_in, seeded, member):
+    concept = make_concept(member, stage=Concept.Stage.BRAINSTORM)
+    response = signed_in.get(reverse("exo:concept_resume", args=[concept.pk]))
+    assert response["Location"].endswith(f"/concepts/{concept.pk}/brainstorm/")
+
+
+def test_a_signed_out_member_is_returned_to_the_page_they_wanted(client, seeded,
+                                                                 member):
+    """A session that expires mid-idea should cost a password, not a place."""
+    concept = make_concept(member, stage=Concept.Stage.OPTIONS)
+    wanted = reverse("exo:concept_options", args=[concept.pk])
+
+    response = client.get(wanted)
+    assert response.status_code == 302
+    assert quote(wanted) in response["Location"]
+
+    client.login(username="builder", password="a-strong-pass-123")
+    signed_in_response = client.get(reverse("exo:login"), {"next": wanted})
+    # Already signed in: straight through to where they were going.
+    assert signed_in_response["Location"] == wanted
+
+
+def test_signing_in_with_no_destination_goes_to_the_last_thing_worked_on(
+        client, seeded, member):
+    concept = make_concept(member, stage=Concept.Stage.OUTPUT)
+    response = client.post(reverse("exo:login"), {
+        "username": "builder", "password": "a-strong-pass-123",
+    })
+    assert response.status_code == 302
+    assert response["Location"].endswith(f"/concepts/{concept.pk}/")
+
+
+def test_signing_in_with_nothing_started_goes_to_the_list(client, seeded,
+                                                          member):
+    response = client.post(reverse("exo:login"), {
+        "username": "builder", "password": "a-strong-pass-123",
+    })
+    assert response["Location"] == reverse("exo:concepts")
+
+
+def test_the_return_destination_can_only_be_inside_exo(client, seeded, member):
+    """`next` is attacker-controllable, so it is checked rather than trusted."""
+    from exo.views import safe_next
+
+    assert safe_next("/exo/concepts/3/options/") == "/exo/concepts/3/options/"
+    assert safe_next("https://evil.example/") == ""
+    assert safe_next("//evil.example/") == ""
+    assert safe_next("/courses/") == ""
+    assert safe_next(None) == ""
+
+    client.login(username="builder", password="a-strong-pass-123")
+    response = client.post(reverse("exo:login"), {
+        "username": "builder", "password": "a-strong-pass-123",
+        "next": "https://evil.example/",
+    })
+    assert "evil.example" not in response["Location"]
 
 
 # ---- stage 1: the interview ------------------------------------------- #

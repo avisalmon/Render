@@ -29,12 +29,46 @@ function exoToastError(err) {
   exo.toast(map[err && err.message] || (err && err.message) || "Error", "error");
 }
 
+/* ---- drafts: what you typed but never sent -------------------------- *
+ *
+ * Everything in this journey is stored server-side the moment it is sent, so
+ * nothing committed is ever lost. What used to be lost is the sentence still
+ * sitting in the box when a tab closes, and that is the one that stings:
+ * it is the thought you were in the middle of.
+ *
+ * Kept in this browser only, per concept. It is a convenience, not state the
+ * app depends on, so every access is wrapped: a private window, cleared site
+ * data or a blocked store must not break the page, only forget a draft.
+ */
+const exoDraft = {
+  key(scope, id) { return "exo.draft." + scope + "." + id; },
+  read(scope, id) {
+    try { return window.localStorage.getItem(this.key(scope, id)) || ""; }
+    catch (e) { return ""; }
+  },
+  write(scope, id, value) {
+    try {
+      if (value && value.trim()) {
+        window.localStorage.setItem(this.key(scope, id), value);
+      } else {
+        window.localStorage.removeItem(this.key(scope, id));
+      }
+    } catch (e) { /* no store: the draft is simply not kept */ }
+  },
+  clear(scope, id) { this.write(scope, id, ""); },
+};
+
 /* ---- stage 1: the interview --------------------------------------- */
 
 function exoInterview() {
   const chat = document.getElementById("chat");
   const box = document.getElementById("say");
   const send = document.getElementById("send");
+  const conceptId = chat.dataset.concept || "0";
+
+  // An answer half-typed when the tab closed is waiting where it was left.
+  box.value = exoDraft.read("say", conceptId);
+  box.addEventListener("input", () => exoDraft.write("say", conceptId, box.value));
   const sheet = document.getElementById("settle");
   const open = document.getElementById("settle-open");
 
@@ -51,6 +85,7 @@ function exoInterview() {
     const text = (box.value || "").trim();
     if (!text) return;
     box.value = "";
+    exoDraft.clear("say", conceptId);
     bubble("user", text);
     const thinking = bubble("assistant", "…");
     thinking.classList.add("is-thinking");
@@ -105,6 +140,21 @@ function exoInterview() {
     return update;
   }
 
+  /* The settle sheet is where a person writes their purpose in their own
+     words. Losing that to a closed tab is losing the most considered
+     sentence in the whole journey. */
+  const SETTLE_FIELDS = ["f-mtp", "f-mtp-note", "f-special", "f-unique"];
+  SETTLE_FIELDS.forEach((id) => {
+    const field = document.getElementById(id);
+    if (!field) return;
+    const saved = exoDraft.read(id, conceptId);
+    if (saved && !field.value.trim()) field.value = saved;
+    field.addEventListener("input", () => exoDraft.write(id, conceptId, field.value));
+  });
+  function clearSettleDrafts() {
+    SETTLE_FIELDS.forEach((id) => exoDraft.clear(id, conceptId));
+  }
+
   let checks = [];
   function refresh() {
     const ok = checks.every((check) => check());
@@ -149,6 +199,7 @@ function exoInterview() {
           unique: document.getElementById("f-unique").value,
         },
       });
+      clearSettleDrafts();
       window.location = data.next;
     } catch (err) {
       e.target.disabled = false;
