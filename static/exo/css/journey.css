@@ -576,3 +576,16 @@ button.exo-rail-step:hover { background: var(--exo-sunken); }
   text-transform: uppercase;
   color: var(--exo-ink-faint);
 }
+
+/* The action bar above the article. The commonest thing to want on this
+   screen is another feature, so the control sits where the eye lands rather
+   than below a full newspaper piece. */
+.exo-output-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-block-end: 16px;
+  padding-block-end: 14px;
+  border-block-end: 1px solid var(--exo-line);
+}

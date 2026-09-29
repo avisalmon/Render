@@ -1,0 +1,20 @@
+{% load exo %}
+{% comment %}
+  The "write a new feature" control, included twice on the output page: once
+  above the paper and once below it with the other tools.
+
+  Two buttons, one behaviour. Avi asked for the top copy because wanting
+  another feature is the most common thing to want on this screen, and having
+  to scroll past a whole newspaper article to reach the button each time is a
+  tax on the thing people come here to do.
+
+  Both carry the confirmation text, so `window.confirm` never falls back to
+  the English string baked into the script. That fallback was reachable, and
+  on a Hebrew-first app it was the wrong language for every user.
+{% endcomment %}
+<button class="exo-btn {{ variant|default:'exo-btn-ghost' }}" data-regen
+        data-confirm="{% t 'output.regen_confirm' %}"
+        data-warn="{% t 'output.regen_confirm_edited' %}"
+        data-working="{% t 'output.working' %}">
+  {% t "output.regenerate" %}
+</button>

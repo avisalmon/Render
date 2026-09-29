@@ -541,32 +541,52 @@ function exoOutput() {
     });
   }
 
-  const regen = document.getElementById("regen");
-  if (regen) {
-    regen.addEventListener("click", async () => {
-      try {
-        await exo.api(root.dataset.generate, { method: "POST", json: {} });
-        window.location.reload();
-      } catch (err) {
-        if (err.status === 409) {
-          // Edited by hand: ask before overwriting, never silently.
-          if (window.confirm(regen.dataset.warn || "Overwrite your edits?")) {
-            try {
-              await exo.api(root.dataset.generate, {
-                method: "POST",
-                json: { confirm: true },
-              });
-              window.location.reload();
-            } catch (e2) {
-              exoToastError(e2);
-            }
-          }
+  /* "Write a new feature", in both places it appears: above the article and
+     below it. One behaviour, bound to every copy, because two buttons that
+     drift apart is how one of them quietly stops working.
+
+     It always asks first. Replacing a piece somebody has read, shown to
+     someone, or is about to publish is not something to do on a single click,
+     and a second, stronger question is asked if they edited it by hand. */
+  const regens = Array.from(document.querySelectorAll("[data-regen]"));
+  const states = Array.from(document.querySelectorAll("[data-genstate]"));
+
+  function working(on, label) {
+    regens.forEach((b) => { b.disabled = on; });
+    states.forEach((s) => { s.textContent = on ? label : ""; });
+  }
+
+  async function writeNew(button) {
+    if (!window.confirm(button.dataset.confirm)) return;
+    working(true, button.dataset.working || "…");
+    try {
+      await exo.api(root.dataset.generate, { method: "POST", json: {} });
+      window.location.reload();
+    } catch (err) {
+      if (err.status === 409) {
+        // Edited by hand: ask the stronger question, never overwrite silently.
+        working(false);
+        if (!window.confirm(button.dataset.warn)) return;
+        working(true, button.dataset.working || "…");
+        try {
+          await exo.api(root.dataset.generate, {
+            method: "POST",
+            json: { confirm: true },
+          });
+          window.location.reload();
+          return;
+        } catch (e2) {
+          working(false);
+          exoToastError(e2);
           return;
         }
-        exoToastError(err);
       }
-    });
+      working(false);
+      exoToastError(err);
+    }
   }
+
+  regens.forEach((b) => b.addEventListener("click", () => writeNew(b)));
 
   const edit = document.getElementById("edit");
   if (edit) {

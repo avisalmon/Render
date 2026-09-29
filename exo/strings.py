@@ -279,7 +279,19 @@ STRINGS = {
         "en": "Amazon's own question: would a real customer be excited by this?",
     },
     "output.run_stress_test": {"he": "הרץ את המבחן", "en": "Run the test"},
-    "output.regenerate": {"he": "צור מחדש", "en": "Regenerate"},
+    # "Regenerate" describes the machine's action. "Write a new feature"
+    # describes what the person gets, which is the thing they are deciding
+    # about, and it says out loud that there will be a new one.
+    "output.regenerate": {"he": "כתוב כתבה חדשה", "en": "Write a new feature"},
+    "output.regen_confirm": {
+        "he": "לכתוב כתבה חדשה? הכתבה שקיימת עכשיו תוחלף.",
+        "en": "Write a new feature? The one you have now will be replaced.",
+    },
+    "output.regen_confirm_edited": {
+        "he": "ערכת את הכתבה הזו בעצמך. כתבה חדשה תמחק את העריכות שלך. להמשיך?",
+        "en": "You edited this feature yourself. A new one will discard your edits. Continue?",
+    },
+    "output.working": {"he": "כותב…", "en": "Writing…"},
     "output.regenerate_warn": {
         "he": "ערכת את הטקסט. יצירה מחדש תדרוס את העריכות שלך.",
         "en": "You edited the text. Regenerating will overwrite your edits.",

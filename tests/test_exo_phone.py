@@ -350,6 +350,55 @@ def test_a_half_typed_answer_survives_closing_the_tab(phone_page, live_server,
     assert phone_page.input_value("#say") == ""
 
 
+def test_a_new_feature_is_offered_above_and_below_and_always_asks(
+        phone_page, live_server, django_user_model):
+    """Two copies of one control, and neither replaces a feature silently.
+
+    In the browser because that is where both facts live: that the top copy
+    exists at all, and that a click puts a real question in front of the
+    person before anything is overwritten. Two buttons wired to one behaviour
+    is exactly the arrangement where one of them quietly stops working.
+    """
+    from exo.models import Concept, NewspaperStyle, PressRelease
+
+    _seed()
+    user = _member(django_user_model, "phone-writer")
+    concept = Concept.objects.create(owner=user, title="A falafel shop",
+                                     stage=Concept.Stage.OUTPUT)
+    PressRelease.objects.create(
+        concept=concept, headline="Eighteen months on",
+        body="A feature long enough to fill the page. " * 12,
+        document_body="The document.",
+        newspaper_style=NewspaperStyle.objects.first(),
+    )
+
+    _sign_in(phone_page, live_server, "phone-writer")
+    phone_page.goto(live_server.url + f"/exo/concepts/{concept.pk}/output/",
+                    wait_until="domcontentloaded")
+
+    buttons = phone_page.locator("[data-regen]")
+    assert buttons.count() == 2, "the control is not offered in both places"
+
+    # The top copy comes before the article, which is the whole point of it.
+    positions = [buttons.nth(i).bounding_box()["y"] for i in range(2)]
+    paper_y = phone_page.locator(".exo-paper").bounding_box()["y"]
+    assert min(positions) < paper_y, "no copy of the control above the article"
+    assert max(positions) > paper_y, "no copy of the control below the article"
+
+    # Each asks before replacing anything, and a dismissed question changes
+    # nothing at all.
+    for i in range(2):
+        asked = {}
+        phone_page.once("dialog", lambda d: (asked.update(text=d.message),
+                                             d.dismiss()))
+        buttons.nth(i).click()
+        phone_page.wait_for_timeout(400)
+        assert asked.get("text"), f"copy {i} replaced the feature without asking"
+
+    concept.refresh_from_db()
+    assert concept.release.headline == "Eighteen months on", "it regenerated anyway"
+
+
 def test_the_mirror_is_real_and_not_just_an_attribute(phone_page, live_server,
                                                       django_user_model):
     """`dir="rtl"` on the html element is easy to assert and easy to have

@@ -24,12 +24,24 @@
       <button class="exo-btn exo-btn-lg" id="generate" style="margin-block-start:18px">
         {% t "options.build" %}
       </button>
-      <p class="exo-small exo-faint" id="genstate" style="margin-block-start:10px"></p>
+      <p class="exo-small exo-faint" id="genstate" data-genstate
+         style="margin-block-start:10px"></p>
     </div>
   {% else %}
 
     <div class="exo-output-grid">
       <div class="exo-output-main">
+        {% comment %}
+          The same control as the one below the article. It is here because
+          asking for another feature is the commonest thing to want on this
+          screen, and scrolling past a whole newspaper piece to reach it every
+          time is a tax on exactly that.
+        {% endcomment %}
+        <div class="exo-output-topbar">
+          {% include "exo/_newfeature.html" with variant="exo-btn" %}
+          <span class="exo-small exo-faint" data-genstate></span>
+        </div>
+
         <div id="paper">{% include "exo/_paper.html" %}</div>
 
         <div class="exo-output-tools">
@@ -46,7 +58,8 @@
           </label>
           <button class="exo-btn exo-btn-quiet" onclick="window.print()">{% t "output.print" %}</button>
           <button class="exo-btn exo-btn-quiet" id="edit">{% t "output.edit" %}</button>
-          <button class="exo-btn exo-btn-quiet" id="regen">{% t "output.regenerate" %}</button>
+          {% include "exo/_newfeature.html" %}
+          <span class="exo-small exo-faint" data-genstate></span>
         </div>
 
         <details class="exo-document">
