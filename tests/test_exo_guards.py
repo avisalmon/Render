@@ -181,6 +181,76 @@ def test_hammering_one_slot_is_still_refused(member, monkeypatch, seeded):
     ai._limit_for(member, "options", concept=concept, attribute=other)
 
 
+def test_each_stage_gets_the_ceiling_that_suits_it(member, seeded, monkeypatch):
+    """Avi hit "you have reached a limit" on the press release after four
+    tries. Four was his answer to a question about *option batches*, and
+    applying it to every stage meant the final artifact, the thing people came
+    for, ran out fastest. Another batch of options is a browse; another press
+    release is the work.
+    """
+    monkeypatch.setenv("EXO_MAX_CALLS_PER_DAY", "500")
+    concept = Concept.objects.create(owner=member, title="c")
+
+    # Four option batches on one slot is the ceiling.
+    from exo.models import ExoAttribute
+
+    slot = ExoAttribute.objects.get(key="engagement")
+    log_calls_for(member, "options", 4, concept=concept, attribute=slot)
+    with pytest.raises(ai.AiLimit):
+        ai._limit_for(member, "options", concept=concept, attribute=slot)
+
+    # The same four does not exhaust the press release.
+    log_calls(member, "output", 4, concept=concept)
+    ai._limit_for(member, "output", concept=concept)
+
+    assert ai.limits()["output_per_day"] > ai.limits()["regen_per_stage_per_day"]
+
+
+def test_a_refusal_says_which_ceiling_and_what_the_number_is(member, seeded,
+                                                             monkeypatch):
+    """"You have reached a limit" with no subject is a dead end: a person
+    cannot tell whether to wait an hour, start a fresh idea, or stop."""
+    monkeypatch.setenv("EXO_MAX_OUTPUT_PER_DAY", "3")
+    monkeypatch.setenv("EXO_MAX_CALLS_PER_DAY", "500")
+    concept = Concept.objects.create(owner=member, title="c")
+    log_calls(member, "output", 3, concept=concept)
+
+    with pytest.raises(ai.AiLimit) as caught:
+        ai._limit_for(member, "output", concept=concept)
+    assert str(caught.value) == "limit_stage:output:3"
+
+
+def test_the_page_is_told_which_ceiling_it_hit(signed_in, seeded, member,
+                                               monkeypatch):
+    concept = Concept.objects.create(owner=member, title="c",
+                                     stage=Concept.Stage.OUTPUT)
+
+    def refuse(*args, **kwargs):
+        raise ai.AiLimit("limit_stage:output:12")
+
+    monkeypatch.setattr(ai, "generate_output", refuse)
+    response = post_json(signed_in,
+                         reverse("exo:output_generate", args=[concept.pk]))
+    assert response.status_code == 429
+    body = response.json()
+    assert body["detail"] == "limit_stage"
+    assert body["task"] == "output"
+    assert body["ceiling"] == 12
+
+
+def test_the_other_two_ceilings_name_themselves_too(member, seeded, monkeypatch):
+    monkeypatch.setenv("EXO_MAX_CALLS_PER_DAY", "2")
+    log_calls(member, "interview", 2)
+    with pytest.raises(ai.AiLimit) as member_limit:
+        ai._limit_for(member, "interview")
+    assert str(member_limit.value) == "limit_member"
+
+    monkeypatch.setenv("EXO_DAILY_SPEND_GUARD", "1")
+    with pytest.raises(ai.AiLimit) as site_limit:
+        ai._limit_for(member, "interview")
+    assert str(site_limit.value) == "limit_site"
+
+
 def test_a_member_has_a_daily_ceiling_across_everything(member, monkeypatch):
     monkeypatch.setenv("EXO_MAX_CALLS_PER_DAY", "4")
     log_calls(member, "interview", 4)
@@ -195,7 +265,10 @@ def test_the_site_guard_refuses_everyone_and_says_try_later(member, monkeypatch)
 
     with pytest.raises(ai.AiLimit) as caught:
         ai._limit_for(member, "options")
-    assert "later" in str(caught.value)
+    # The exception carries a code; the sentence a person reads is built on
+    # the page, in their language. It used to carry English prose, which a
+    # Hebrew-first app could never show anyone.
+    assert str(caught.value) == "limit_site"
 
 
 def test_failed_calls_count_toward_the_ceiling(member, monkeypatch):

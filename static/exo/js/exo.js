@@ -32,14 +32,19 @@
     }
     const response = await fetch(url, opts);
     if (!response.ok) {
-      let detail = "";
+      let body = {};
       try {
-        detail = (await response.json()).detail || "";
+        body = (await response.json()) || {};
       } catch (e) {
         /* a non-JSON error body is still an error */
       }
-      const error = new Error(detail || "HTTP " + response.status);
+      // The whole body travels, not just `detail`. A refusal that knows which
+      // ceiling was hit and what the number is can say so on screen, and
+      // dropping everything but one string is how a message ends up as
+      // "you have reached a limit" with no subject.
+      const error = new Error(body.detail || "HTTP " + response.status);
       error.status = response.status;
+      Object.assign(error, body);
       throw error;
     }
     if (response.status === 204) return null;

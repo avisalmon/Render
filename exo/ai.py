@@ -189,11 +189,17 @@ def limits():
     numbers the guards actually enforce instead of a second copy that drifts."""
     return {
         "concepts_per_member": _env_int("EXO_MAX_CONCEPTS", 20),
-        # Four batches per slot per day. Avi's number, and it is a
+        # Four option batches per slot per day. Avi's number, and it is a
         # readability limit as much as a cost one: generating now adds
         # rather than replaces, so an uncapped slot grows until nobody
         # can choose from it.
         "regen_per_stage_per_day": _env_int("EXO_MAX_REGEN_PER_STAGE_PER_DAY", 4),
+        # The press release is the thing people came for, and iterating on it
+        # is the work rather than waste. Four was the answer to a question
+        # about option batches, and applying it here too meant the final
+        # artifact ran out after four tries in a day. Its own number now.
+        "output_per_day": _env_int("EXO_MAX_OUTPUT_PER_DAY", 12),
+        "stress_per_day": _env_int("EXO_MAX_STRESS_PER_DAY", 8),
         "calls_per_member_per_day": _env_int("EXO_MAX_CALLS_PER_DAY", 120),
         "calls_site_per_day": _env_int("EXO_DAILY_SPEND_GUARD", 800),
         "timeout_seconds": _timeout(),
@@ -232,26 +238,45 @@ def guard_status():
     return {"used": used, "ceiling": ceiling, "over": used >= ceiling}
 
 
+#: Each stage gets the ceiling that suits it. They are not the same kind of
+#: act: another batch of options is a browse, another press release is the
+#: work. One shared number meant the cheapest question set the budget for the
+#: most valuable one.
+def _ceiling_for(task, caps):
+    return {
+        "options": caps["regen_per_stage_per_day"],
+        "output": caps["output_per_day"],
+        "stress_test": caps["stress_per_day"],
+    }.get(task)
+
+
 def _guard(user, task, concept=None, attribute=None):
-    """Refuse, before spending anything, if any of the three ceilings is hit."""
+    """Refuse, before spending anything, if any of the three ceilings is hit.
+
+    Each refusal names *which* ceiling. "You have reached a limit" with no
+    subject is a dead end: the person cannot tell whether to wait an hour,
+    start a new idea, or give up, and the first thing they ask is which limit
+    they hit. The reason travels to the screen.
+    """
     caps = limits()
 
     if used_today() >= caps["calls_site_per_day"]:
         # Site-wide: degrade, never fail. Everything that is not an AI call
         # keeps working exactly as it did.
         log.warning("exo ai: daily site guard reached, refusing %s", task)
-        raise AiLimit("the site has reached its daily limit; try later")
+        raise AiLimit("limit_site")
 
     # Per concept, and *per slot* where the stage has slots. Filling thirteen
     # slots once is the workshop working; hitting one slot thirteen times is
     # what this ceiling is for.
-    if concept is not None and used_today(
+    ceiling = _ceiling_for(task, caps)
+    if concept is not None and ceiling is not None and used_today(
         user=user, task=task, concept=concept, attribute=attribute,
-    ) >= caps["regen_per_stage_per_day"]:
-        raise AiLimit(f"{task}: this has been regenerated enough today")
+    ) >= ceiling:
+        raise AiLimit(f"limit_stage:{task}:{ceiling}")
 
     if used_today(user=user) >= caps["calls_per_member_per_day"]:
-        raise AiLimit("you have reached your daily limit; try later")
+        raise AiLimit("limit_member")
 
 
 def _limit_for(user, task, concept=None, attribute=None):

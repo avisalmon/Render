@@ -199,6 +199,67 @@ def test_no_heading_anywhere_renders_empty(client, world):
             assert not empty.search(html), f"empty heading on {url} [{language}]"
 
 
+# ---- each screen speaks for itself ------------------------------------- #
+
+def test_no_stage_wears_another_stages_instructions(client, world):
+    """The output screen printed the *options* screen's lede, so the last
+    stage told people to go and tick attributes they had ticked two stages
+    earlier. A string key is easy to copy into the wrong template and the page
+    still renders perfectly, which is why nothing caught it.
+
+    Checked by asking: does this page contain a lede that belongs to a
+    different stage?
+    """
+    from exo.strings import STRINGS
+
+    client.login(username="owner", password="a-strong-pass-123")
+    concept = world["concept"]
+
+    ledes = {
+        "interview": STRINGS["interview.title"]["he"],
+        "brainstorm": STRINGS["brainstorm.lede"]["he"],
+        "options": STRINGS["options.lede"]["he"],
+        "output": STRINGS["output.lede"]["he"],
+    }
+    pages = {
+        "brainstorm": reverse("exo:concept_brainstorm", args=[concept.pk]),
+        "options": reverse("exo:concept_options", args=[concept.pk]),
+        "output": reverse("exo:concept_output", args=[concept.pk]),
+    }
+
+    client.get(reverse("exo:set_language", args=["he"]))
+    for stage, url in pages.items():
+        html = client.get(url).content.decode()
+        for other, lede in ledes.items():
+            if other == stage or not lede.strip():
+                continue
+            assert lede not in html, (
+                f"the {stage} page is showing the {other} page's instruction"
+            )
+
+
+def test_the_output_page_says_the_ticking_is_already_done(client, world):
+    """Positively, not just by absence: the last stage tells you your choices
+    are in, rather than asking for them again.
+
+    Checked on a concept with no release yet, because that is the screen the
+    instruction appears on and the screen the wrong copy was found on: the one
+    you look at while deciding to press the button.
+    """
+    from exo.strings import STRINGS
+
+    fresh = Concept.objects.create(owner=world["owner"], title="not built yet",
+                                   stage=Concept.Stage.OUTPUT)
+    client.login(username="owner", password="a-strong-pass-123")
+    client.get(reverse("exo:set_language", args=["he"]))
+    html = client.get(
+        reverse("exo:concept_output", args=[fresh.pk])
+    ).content.decode()
+
+    assert STRINGS["output.lede"]["he"] in html
+    assert STRINGS["options.lede"]["he"] not in html
+
+
 # ---- the detector has to be able to fail ------------------------------- #
 
 def test_the_untranslated_key_detector_actually_catches_one():

@@ -260,6 +260,16 @@ STRINGS = {
     "options.build": {"he": "צור את ההודעה לעיתונות", "en": "Create the press release"},
 
     "output.title": {"he": "ההודעה לעיתונות", "en": "The press release"},
+    # The output stage was printing the *options* stage's instruction, so the
+    # last screen asked people to go and tick attributes they had already
+    # ticked two stages earlier.
+    "output.lede": {
+        "he": "כל מה שסימנת נכנס פנימה. מכאן הרעיון הופך למסמך "
+              "מפורט ולהודעה לעיתונות מהעתיד, כאילו הדבר כבר קרה.",
+        "en": "Everything you ticked goes in. From here the idea becomes a "
+              "detailed document and a press release from the future, written "
+              "as though it had already happened.",
+    },
     "output.document": {"he": "המסמך המפורט", "en": "The detailed document"},
     "output.style": {"he": "סגנון העיתון", "en": "Newspaper style"},
     "output.score": {"he": "ציון אקספוננציאלי", "en": "Exponential score"},

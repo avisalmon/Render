@@ -12,10 +12,35 @@
 /* global exo */
 
 function exoToastError(err) {
+  const he = document.documentElement.lang === "he";
+
+  /* A stage limit names the stage and the number, because "you hit a limit"
+     tells a person nothing they can act on. */
+  if (err && err.detail === "limit_stage") {
+    const stage = {
+      options: he ? "יצירת אפשרויות למאפיין הזה" : "generating options for this attribute",
+      output: he ? "הפקת ההודעה לעיתונות לרעיון הזה" : "generating the press release for this idea",
+      stress_test: he ? "מבחן הלקוח לרעיון הזה" : "the stress test for this idea",
+    }[err.task] || (he ? "השלב הזה" : "this stage");
+    exo.toast(
+      he
+        ? `${stage} הגיעה למכסה היומית (${err.ceiling}). נסה שוב מחר, או פתח רעיון חדש.`
+        : `${stage} has reached its daily ceiling (${err.ceiling}). Try tomorrow, or start a new idea.`,
+      "error"
+    );
+    return;
+  }
+
   const map = {
     limit: document.documentElement.lang === "he"
       ? "הגעת למגבלה להיום. נסה שוב מחר."
       : "You've hit today's limit. Try again tomorrow.",
+    limit_member: document.documentElement.lang === "he"
+      ? "הגעת למכסת הבקשות היומית שלך. היא מתאפסת בעוד 24 שעות."
+      : "You have used your daily requests. They reset within 24 hours.",
+    limit_site: document.documentElement.lang === "he"
+      ? "האתר כולו הגיע למכסה היומית. שאר האפליקציה עובדת כרגיל."
+      : "The whole site has reached its daily ceiling. Everything else still works.",
     ai: document.documentElement.lang === "he"
       ? "ה-AI עמוס כרגע. נסה שוב בעוד רגע."
       : "The AI is busy right now. Try again in a moment.",

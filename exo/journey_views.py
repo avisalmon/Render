@@ -48,9 +48,23 @@ def _error(message, status=400):
 
 
 def _ai_failed(exc):
-    """One place that turns an AI failure into something a page can show."""
+    """One place that turns an AI failure into something a page can show.
+
+    A limit carries which limit. "You have reached a limit" with no subject
+    leaves a person unable to tell whether to wait an hour, start a fresh
+    idea, or stop for the day, and the first thing they ask is which one they
+    hit. The guard names it; this passes the name through.
+    """
     if isinstance(exc, ai.AiLimit):
-        return _error("limit", status=429)
+        reason = str(exc)
+        payload = {"detail": "limit", "reason": reason}
+        if reason.startswith("limit_stage:"):
+            _, task, ceiling = reason.split(":", 2)
+            payload.update({"detail": "limit_stage", "task": task,
+                            "ceiling": int(ceiling)})
+        else:
+            payload["detail"] = reason
+        return JsonResponse(payload, status=429)
     return _error("ai", status=503)
 
 
