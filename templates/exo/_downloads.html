@@ -8,8 +8,8 @@
   nothing here worth a fetch handler.
 {% endcomment %}
 <span class="exo-downloads">
-  <a class="exo-btn exo-btn-quiet"
+  <a class="exo-btn {{ variant|default:'exo-btn-quiet' }}"
      href="{% url 'exo:article_download' release.pk 'pdf' %}">{% t "output.download_pdf" %}</a>
-  <a class="exo-btn exo-btn-quiet"
+  <a class="exo-btn {{ variant|default:'exo-btn-quiet' }}"
      href="{% url 'exo:article_download' release.pk 'docx' %}">{% t "output.download_docx" %}</a>
 </span>

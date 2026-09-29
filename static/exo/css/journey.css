@@ -593,3 +593,11 @@ button.exo-rail-step:hover { background: var(--exo-sunken); }
 /* The download pair. Kept together so they read as one choice of format
    rather than two unrelated actions. */
 .exo-downloads { display: inline-flex; align-items: center; gap: 2px; }
+
+/* The top bar carries three actions on a phone, so it wraps rather than
+   squeezing them, and the downloads stay together as one pair when it does. */
+@media (max-width: 520px) {
+  .exo-output-topbar { gap: 8px; }
+  .exo-output-topbar .exo-downloads { flex: 1 1 100%; }
+  .exo-output-topbar .exo-downloads .exo-btn { flex: 1; }
+}

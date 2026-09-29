@@ -39,6 +39,14 @@
         {% endcomment %}
         <div class="exo-output-topbar">
           {% include "exo/_newfeature.html" with variant="exo-btn" %}
+          {% comment %}
+            The downloads belong up here too. Put only at the bottom they sat
+            61% of the way down a 2,900px phone page, below the whole article,
+            which is the same thing that was wrong with the new-feature button
+            before it was copied to the top. Somebody who wants the file
+            should not have to read the piece again to find it.
+          {% endcomment %}
+          {% include "exo/_downloads.html" with variant="exo-btn-ghost" %}
           <span class="exo-small exo-faint" data-genstate></span>
         </div>
 

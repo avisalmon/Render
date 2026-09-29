@@ -399,6 +399,52 @@ def test_a_new_feature_is_offered_above_and_below_and_always_asks(
     assert concept.release.headline == "Eighteen months on", "it regenerated anyway"
 
 
+def test_the_downloads_are_reachable_without_reading_the_article_again(
+        phone_page, live_server, django_user_model):
+    """Offered only at the bottom, the download links sat 61% of the way down
+    a 2,900px phone page, below the whole feature. Avi could not find them,
+    and said so: it is the same fault the new-feature button had before it was
+    copied to the top, made twice.
+
+    Measured against the article rather than against a pixel count, so the
+    test keeps meaning something when the page grows.
+    """
+    from exo.models import Concept, NewspaperStyle, PressRelease
+
+    _seed()
+    user = _member(django_user_model, "phone-downloader")
+    concept = Concept.objects.create(owner=user, title="A falafel shop",
+                                     stage=Concept.Stage.OUTPUT)
+    PressRelease.objects.create(
+        concept=concept, headline="Eighteen months on",
+        body="A feature long enough to push anything below it out of "
+             "reach. " * 40,
+        document_body="The document.",
+        newspaper_style=NewspaperStyle.objects.first(),
+    )
+
+    _sign_in(phone_page, live_server, "phone-downloader")
+    phone_page.goto(live_server.url + f"/exo/concepts/{concept.pk}/output/",
+                    wait_until="domcontentloaded")
+
+    paper_y = phone_page.locator(".exo-paper").bounding_box()["y"]
+    links = phone_page.locator(".exo-downloads a")
+    assert links.count() >= 2
+
+    tops = [links.nth(i).bounding_box()["y"] for i in range(links.count())]
+    assert min(tops) < paper_y, "no download link above the article"
+
+    # Both formats are offered up there, not just one.
+    above = [links.nth(i).get_attribute("href") for i in range(links.count())
+             if links.nth(i).bounding_box()["y"] < paper_y]
+    assert any(h.endswith("/pdf/") for h in above), "no PDF above the article"
+    assert any(h.endswith("/docx/") for h in above), "no Word above the article"
+
+    # And they are real targets, not text somebody has to aim at.
+    for i in range(links.count()):
+        assert links.nth(i).bounding_box()["height"] >= MIN_TAP_PX - 1
+
+
 def test_the_mirror_is_real_and_not_just_an_attribute(phone_page, live_server,
                                                       django_user_model):
     """`dir="rtl"` on the html element is easy to assert and easy to have
