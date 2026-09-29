@@ -57,6 +57,7 @@
             </select>
           </label>
           <button class="exo-btn exo-btn-quiet" onclick="window.print()">{% t "output.print" %}</button>
+          {% include "exo/_downloads.html" %}
           <button class="exo-btn exo-btn-quiet" id="edit">{% t "output.edit" %}</button>
           {% include "exo/_newfeature.html" %}
           <span class="exo-small exo-faint" data-genstate></span>

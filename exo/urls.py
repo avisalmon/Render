@@ -24,6 +24,10 @@ urlpatterns = [
     path("museum/", museum_views.museum, name="museum"),
     path("museum/<int:pk>/", museum_views.museum_item, name="museum_item"),
     path("museum/<int:pk>/like/", museum_views.like, name="museum_like"),
+    # One download route for both places the article is read: the owner's
+    # output screen and the museum. `visible_to` decides, not the URL.
+    path("article/<int:pk>/download/<str:fmt>/", museum_views.download,
+         name="article_download"),
     # The switch, reachable without an account (spec §0.3).
     path("language/<str:code>/", views.set_language, name="set_language"),
 

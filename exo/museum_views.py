@@ -7,11 +7,13 @@ nobody is watching.
 """
 
 
+from urllib.parse import quote
+
 from django.db.models import Count, Q
-from django.http import Http404, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 
 from .models import PressRelease, PressReleaseLike
 
@@ -113,3 +115,48 @@ def like(request, pk):
         PressReleaseLike.objects.get_or_create(release=release, user=request.user)
         liked = True
     return JsonResponse({"liked": liked, "likes": release.like_rows.count()})
+
+
+@require_GET
+def download(request, pk, fmt):
+    """The feature as a file (spec §5.4). Downloads only; sharing is not here.
+
+    Mounted on the release rather than the concept so one view serves both
+    places the article appears: the owner's output screen and the museum. The
+    check is `visible_to`, which the owner always passes and which keeps a
+    private piece private even if somebody guesses the number.
+    """
+    from . import documents
+
+    builder = documents.BUILDERS.get(fmt)
+    if builder is None:
+        raise Http404
+
+    release = get_object_or_404(
+        PressRelease.objects.select_related("concept", "concept__owner",
+                                            "newspaper_style"),
+        pk=pk,
+    )
+    if not release.visible_to(request.user):
+        raise Http404
+
+    build, content_type = builder
+    try:
+        payload = build(release)
+    except ImportError:
+        # The PDF library is the one thing here that is not standard. If a
+        # deployment is missing it, say so plainly rather than throwing a 500
+        # at somebody who only wanted a download.
+        return JsonResponse({"detail": "pdf_unavailable"}, status=503)
+
+    filename = documents.filename_for(release, fmt)
+    response = HttpResponse(payload, content_type=content_type)
+    # A Hebrew filename cannot travel in a plain `filename=`; RFC 5987's
+    # `filename*` is what carries it, with an ASCII fallback for anything old
+    # enough not to understand that.
+    ascii_name = quote(filename)
+    response["Content-Disposition"] = (
+        f"attachment; filename=\"{fmt}\"; filename*=UTF-8''{ascii_name}"
+    )
+    response["Content-Length"] = str(len(payload))
+    return response

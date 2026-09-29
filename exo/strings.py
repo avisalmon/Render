@@ -292,6 +292,8 @@ STRINGS = {
         "en": "You edited this feature yourself. A new one will discard your edits. Continue?",
     },
     "output.working": {"he": "כותב…", "en": "Writing…"},
+    "output.download_pdf": {"he": "הורדה PDF", "en": "Download PDF"},
+    "output.download_docx": {"he": "הורדה Word", "en": "Download Word"},
     "output.regenerate_warn": {
         "he": "ערכת את הטקסט. יצירה מחדש תדרוס את העריכות שלך.",
         "en": "You edited the text. Regenerating will overwrite your edits.",

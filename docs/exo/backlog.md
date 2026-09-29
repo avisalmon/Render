@@ -585,7 +585,15 @@ Recorded so they are not lost; none is in scope until Avi pulls it in.
   number.
 - `ConceptDocument` as its own model if the document grows internal structure.
 - Live web search in stage 3 (decision Q3) if the provider exposes it cleanly.
-- Server-side PDF export (v1 uses browser print).
+- ~~Server-side PDF export (v1 uses browser print).~~ **Built 2026-09-30** on
+  Avi's ask, alongside a Word download. `exo/documents.py`. The whole
+  difficulty was one thing: Word does its own bidi and ReportLab does none, so
+  the same Hebrew string needs opposite treatment in the two formats, and
+  doing it twice reverses the line back to gibberish. The `.docx` is written
+  directly as a zip of three XML parts rather than with a library, which keeps
+  the site's build unchanged and gives exact control over `w:bidi`; the PDF
+  added `reportlab` to requirements. Sharing was explicitly out of scope:
+  download only.
 - Share analytics (share count) if wanted.
 - Positioning vs the official OpenExO ecosystem (spec §12.5).
 

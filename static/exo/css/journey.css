@@ -589,3 +589,7 @@ button.exo-rail-step:hover { background: var(--exo-sunken); }
   padding-block-end: 14px;
   border-block-end: 1px solid var(--exo-line);
 }
+
+/* The download pair. Kept together so they read as one choice of format
+   rather than two unrelated actions. */
+.exo-downloads { display: inline-flex; align-items: center; gap: 2px; }

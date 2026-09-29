@@ -19,6 +19,11 @@ qrcode>=7,<9
 # reproducible against any version installed locally) -- see memz's own
 # spec.md §8.1 for the fuller story.
 python-bidi==0.6.10
+# exo (2026-09-30): the feature downloads as a PDF. Pure Python, no system
+# libraries, which is why it and not WeasyPrint. Hebrew comes from the Heebo
+# TTF already in static/fonts/ plus python-bidi above, because ReportLab does
+# no bidi of its own -- see exo/documents.py for which formats need which.
+reportlab>=4.0,<5
 python-dotenv>=1.0,<2
 openai>=1.30,<2
 django-anymail[resend]>=12.0,<13

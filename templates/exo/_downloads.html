@@ -1,0 +1,15 @@
+{% load exo %}
+{% comment %}
+  Download the feature. Included wherever the article is read: the owner's
+  output screen and the museum page.
+
+  Plain links, not script. A download is exactly what an anchor is for, it
+  works with a long press on a phone and with "open in new tab", and there is
+  nothing here worth a fetch handler.
+{% endcomment %}
+<span class="exo-downloads">
+  <a class="exo-btn exo-btn-quiet"
+     href="{% url 'exo:article_download' release.pk 'pdf' %}">{% t "output.download_pdf" %}</a>
+  <a class="exo-btn exo-btn-quiet"
+     href="{% url 'exo:article_download' release.pk 'docx' %}">{% t "output.download_docx" %}</a>
+</span>
