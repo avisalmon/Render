@@ -122,26 +122,62 @@ OUTPUT_SYSTEM = """You write two artifacts for an exponential-organization conce
    the sources of abundance it stands on and the first launch steps. Written
    for a thoughtful reader, in prose with short headings.
 
-2. An AMAZON-STYLE PRESS RELEASE, written "working backwards": dated in the
-   future, written as if the thing has just launched. It must contain, in
-   order: a headline; a one-line subheading; the customer problem in plain
-   words; the solution; a quote from a leader at the organization; a quote
-   from a named (invented) customer describing their own experience; how to
-   get started; and a short FAQ of 3-4 questions.
+2. A NEWSPAPER FEATURE, and this is the harder one. Read these rules twice.
+
+   **It is not a launch announcement and not a press release.** The business
+   has been open and running for about a year and a half. Nothing is being
+   announced. A journalist has gone to see a place that is already part of
+   people's lives, and is writing it up warmly for a weekend paper.
+
+   THE FOUR THINGS THAT MAKE IT A FEATURE RATHER THAN AN ANNOUNCEMENT:
+
+   a. TIME HAS PASSED. Write about what settled, not what is planned. Never
+      "they plan to" or "the service will" — it already happened, and you are
+      reporting what came of it. Say what changed since the doors opened, what
+      people got used to, what turned out differently from how it started.
+
+   b. A REPORTER'S VOICE, NOT THE COMPANY'S. Never "we", never "our
+      solution". You are an outsider who visited. You watched, you queued, you
+      asked people. Third person throughout.
+
+   c. OPEN ON A SCENE. Not on a problem statement. A specific moment on a
+      specific ordinary day: what you saw when you walked in, who was there,
+      what it smelled or sounded like. One concrete paragraph before any
+      explaining. This is the single biggest difference from a press release.
+
+   d. THE MECHANISMS SHOW AS EVIDENCE. Every attribute the person chose must
+      appear as something visible that HAS happened, with a trace: not "there
+      is a recipe competition" but "the recipe competition, now in its fourth
+      round, is where three of the seven things on the menu came from". Give
+      it the accumulated detail only time produces: the regulars, the numbers
+      that piled up, the thing that surprised even the owner.
+
+   QUOTES: at least two. The owner or founder, sounding like a person a year
+   and a half in rather than a person at a launch, and at least one named
+   (invented) customer for whom the place is now routine. Quotes should sound
+   spoken, not written.
+
+   TONE: warm and generous, the way a good local feature is fond of its
+   subject, but still reporting. Appreciative, not promotional.
+
+   It should read like a piece someone sends to a friend saying "we should go
+   here", and it should make a reader want to visit.
 
 Return ONLY a JSON object:
 {{
-  "headline": "the press release headline, under 110 characters",
-  "body": "the full press release, plain text with blank lines between parts",
+  "headline": "the feature's headline, under 110 characters, a headline a paper would print",
+  "body": "the full feature, plain text with blank lines between paragraphs",
   "document_body": "the detailed document, plain text with short headings"
 }}
 
 BOUNDARIES:
-- Customer-centred, never feature-centred. Amazon's test is whether a real
-  customer would be excited, not whether the technology is clever.
+- Customer-centred, never feature-centred. The test is whether a reader cares,
+  not whether the technology is clever.
 - Concrete over grand. No 'revolutionary', no 'game-changing', no
   'disrupting'. Describe what is actually different for a person.
 - Use only what the person chose. Do not add attributes they rejected.
+- Invented specifics (names, numbers, a regular's order) are wanted: this is
+  a story from a future that has not happened. Keep them plausible and small.
 {language_rule}"""
 
 
@@ -161,18 +197,21 @@ Return ONLY a JSON object:
 {language_rule}"""
 
 
-STRESS_TEST_SYSTEM = """Critique this press release against Amazon's own kill question:
-"would a real customer actually be excited by this?"
+STRESS_TEST_SYSTEM = """Critique this feature against the question a reader
+would ask without meaning to: "do I believe this, and would I actually go?"
 
 Give 3-5 sharp, specific points. Each must name something IN the text — a
 claim, a phrase, a promise — not general advice. Cover, where they apply:
 - what is genuinely compelling and should be kept;
 - what is vague, abstract or could describe any company;
-- what a customer would simply not believe;
-- what the release promises but never explains how.
+- what reads as invented rather than observed, or as a company describing
+  itself rather than a reporter describing what they saw;
+- what still sounds like a plan instead of something that already happened,
+  which is the failure this piece is most prone to;
+- what a reader would simply not believe.
 
-BOUNDARY: be useful, not cruel, and never flatter. If the release would not
-excite anyone, say that in the first point.
+BOUNDARY: be useful, not cruel, and never flatter. If nobody would want to go
+after reading it, say that in the first point.
 
 Return ONLY a JSON object:
 {{"points": ["point one", "point two", "..."]}}

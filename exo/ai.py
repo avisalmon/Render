@@ -587,27 +587,30 @@ def _stub_options(concept, attribute, entries, language):
 
 
 def _stub_output(concept, selections, language):
+    """A feature, not a launch notice.
+
+    The stub has to demonstrate the real shape or it is worse than useless: a
+    stub that produced an announcement would keep the whole suite green while
+    the live app did the thing it was told to stop doing. So this one opens on
+    a scene, is written a year and a half in, and quotes two people.
+    """
     lines = []
     for attribute, texts in selections:
         name = attribute.name_he if _he(language) else attribute.name_en
         lines.append(f"{name}\n" + "\n".join(f"  · {t}" for t in texts))
     chosen = "\n\n".join(lines)
     if _he(language):
-        headline = f"{concept.title} יוצא לדרך"
+        headline = f"שנה וחצי אחרי: מה קרה ל{concept.title}"
         body = (
-            f"{concept.title} יוצא לדרך\n\n"
-            f"{concept.mtp}\n\n"
-            "הבעיה: אנשים שצריכים את השירות הזה מתקשים למצוא אותו במחיר ובזמן "
-            "שמתאימים להם.\n\n"
-            f"הפתרון: {concept.title} — {concept.special}\n\n"
-            "\"בנינו את זה כי ראינו את אותה בעיה חוזרת שוב ושוב\", אומר מייסד "
-            "החברה.\n\n"
-            "\"זה חסך לי שבוע שלם\", אומרת משתמשת מוקדמת.\n\n"
-            "איך מתחילים: נכנסים, בוחרים מה צריך, ומתחילים.\n\n"
-            "שאלות נפוצות\n"
-            "למי זה מתאים? לכל מי שנתקל בבעיה הזו.\n"
-            "כמה זה עולה? המחיר ייקבע לפי שימוש.\n"
-            "מתי זה זמין? בקרוב.\n\n"
+            "בשתיים בצהריים, ביום שלישי רגיל, התור מגיע עד הפינה. אף אחד "
+            "לא נראה מופתע.\n\n"
+            f"שנה וחצי אחרי שנפתח, {concept.title} כבר לא מנסה להסביר את "
+            f"עצמו. {concept.mtp}\n\n"
+            "\"בהתחלה חשבנו שזה יעבוד אחרת לגמרי\", אומרת הבעלים וצוחקת. "
+            "\"הלקוחות לימדו אותנו מה זה באמת.\"\n\n"
+            "בתיה פקמן מגיעה לכאן שלוש פעמים בשבוע. \"בשלב מסוים זה פשוט "
+            "הפך למקום שהולכים אליו\", היא אומרת.\n\n"
+            f"מה שמחזיק את זה: {concept.special}\n\n"
             "— תוכן הדגמה, נוצר ללא מפתח AI."
         )
         document = (
@@ -618,21 +621,18 @@ def _stub_output(concept, selections, language):
             "— תוכן הדגמה, נוצר ללא מפתח AI."
         )
     else:
-        headline = f"{concept.title} launches"
+        headline = f"Eighteen months on: what became of {concept.title}"
         body = (
-            f"{concept.title} launches\n\n"
-            f"{concept.mtp}\n\n"
-            "The problem: people who need this struggle to find it at a price "
-            "and a time that work for them.\n\n"
-            f"The solution: {concept.title} — {concept.special}\n\n"
-            "\"We built this because we kept seeing the same problem,\" says a "
-            "founder.\n\n"
-            "\"It saved me a week,\" says an early customer.\n\n"
-            "Getting started: sign in, choose what you need, begin.\n\n"
-            "FAQ\n"
-            "Who is it for? Anyone who hits this problem.\n"
-            "What does it cost? Priced by usage.\n"
-            "When is it available? Soon.\n\n"
+            "At two in the afternoon on an ordinary Tuesday, the queue reaches "
+            "the corner. Nobody looks surprised.\n\n"
+            f"A year and a half after opening, {concept.title} has stopped "
+            f"explaining itself. {concept.mtp}\n\n"
+            "\"We thought it would work completely differently,\" the owner "
+            "says, laughing. \"The customers taught us what this actually "
+            "was.\"\n\n"
+            "Batya Pekman comes three times a week. \"At some point it just "
+            "became the place you go,\" she says.\n\n"
+            f"What holds it together: {concept.special}\n\n"
             "— Demo content, generated with no AI key."
         )
         document = (

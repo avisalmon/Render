@@ -18,8 +18,9 @@
 `exo` supports Avi's lecture and workshop on **Exponential Organizations** (Salim
 Ismail's book). It is an open **educational handout** anyone can read, and an
 invite-only **guided builder** that walks an approved person, step by step, from
-"here is my idea" to an **Amazon-style press release** in a fake newspaper, with
-a public **museum** of those press releases.
+"here is my idea" to a **newspaper feature about it**, written from a future in
+which it has been running for a year and a half, set in a fake paper, with a
+public **museum** of those features.
 
 ### 0.2 Platform: works fully on a phone, designed for both
 
@@ -295,21 +296,42 @@ next.
   press release" advances to stage 4 (allowed with any selections; the AI works
   from what is selected and flags thin areas).
 
-### 5.4 Stage 4 — The output: document and press release
+### 5.4 Stage 4 — The output: document and feature
+
+**Changed after the first build (2026-09-29).** This stage originally produced
+an Amazon-style press release, written "working backwards" from a launch. Avi
+read the first real one, about a falafel shop, and called it: it announced an
+opening, it was written in the company's own voice ("our solution is"), and it
+described plans rather than events. An announcement does not make a future feel
+real. What does is a feature written a year and a half in, by a reporter who
+went to see a place that is already part of people's lives. The working-
+backwards idea survives; the genre changed.
 
 - **D4.1** `/exo/concepts/<id>/output/`. From the MTP, special/unique and the
   **selected** options, the AI generates **two artifacts** in one `PressRelease`
-  row:
+  row (the model keeps its original name; see its docstring):
   - **`document_body`** — the **detailed concept document**: the MTP, then each
     attribute with its chosen ideas and how they make the concept exponential,
     the abundance sources and first steps. The full "what we would build."
-  - **`headline` + `body`** — the **Amazon-style press release** ("working
-    backwards"): dated in the future, written as if launched, customer-centred:
-    the problem, the solution, a customer quote, a leader quote, how to get
-    started. Plus a short **FAQ** section (part of `body`).
+  - **`headline` + `body`** — the **newspaper feature**, set **about eighteen
+    months after the thing opened**. Four rules make it a feature rather than an
+    announcement: time has passed and it reports what settled rather than what
+    is planned; it is in a reporter's third-person voice, never "we"; it
+    **opens on a scene** rather than a problem statement; and every chosen
+    attribute appears as visible evidence with a trace ("the recipe
+    competition, now in its fourth round, is where three of the seven things on
+    the menu came from"). At least two quotes: the owner, sounding like someone
+    eighteen months in, and a named customer for whom the place is now routine.
+    Warm and appreciative, still reporting, never promotional.
+- **D4.1a** **The dateline.** The paper's masthead is dated
+  `created_at + PressRelease.FUTURE_DAYS` (two years), because the concept opens
+  within months and the piece is written about eighteen months after that. A
+  story about a year and a half of trading cannot carry today's date, and the
+  date is the first thing a reader checks against the story.
 - **D4.2** **Newspaper style.** The user picks a `NewspaperStyle` (§6.1); the
-  press release renders inside that paper's look. Switching style re-renders the
-  same content instantly (no regeneration).
+  feature renders inside that paper's look. Switching style re-renders the
+  same content instantly (no regeneration). The five styles earn their keep
+  here: a feature reads genuinely differently in a broadsheet and a local paper.
 - **D4.3** **Exponential score.** A single number (0-100) with a one-line
   rationale, generated alongside the artifacts. Shown as a badge on the release
   and in the museum. *(Single number by decision; a per-attribute breakdown is a

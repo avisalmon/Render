@@ -15,9 +15,10 @@
     <span class="exo-paper-name">{% tr release.newspaper_style "name" %}</span>
     <span class="exo-paper-rule"></span>
     <span class="exo-paper-date">
-      {% comment %} Dated in the future: the release is written as if it has
-      already launched (spec §5.4, D4.1). {% endcomment %}
-      {{ release.created_at|date:"j F Y" }}
+      {% comment %} Dated in the future, and far enough into it: the feature
+      is written about a year and a half after the thing opened, and a story
+      about a year and a half of trading cannot carry today's date. {% endcomment %}
+      {{ release.dateline|date:"j F Y" }}
     </span>
   </header>
 

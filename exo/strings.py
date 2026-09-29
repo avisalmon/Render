@@ -67,7 +67,7 @@ STRINGS = {
         "he": "מסע מונחה שהופך רעיון אחד שלך לקונספט אקספוננציאלי — ולהודעה "
               "לעיתונות מהעתיד.",
         "en": "A guided journey that turns one idea of yours into an "
-              "exponential concept — and a press release from the future.",
+              "exponential concept, and a feature written about it from the future.",
     },
     "home.museum_cta": {"he": "לראות מה אחרים בנו", "en": "See what others built"},
 
@@ -97,9 +97,9 @@ STRINGS = {
     # ---- museum ---------------------------------------------------------
     "museum.title": {"he": "חדשות מהעתיד", "en": "News from the future"},
     "museum.lede": {
-        "he": "כל אחת מאלה היא הודעה לעיתונות של ארגון שעוד לא קיים, שנכתבה "
+        "he": "כל אחת מאלה היא כתבה על ארגון שעוד לא קיים, שנכתבה "
               "בידי מישהו שעבר את המסע.",
-        "en": "Each of these is a press release for an organization that does "
+        "en": "Each of these is a feature about an organization that does "
               "not exist yet, written by someone who walked the journey.",
     },
     "museum.empty": {
@@ -149,9 +149,9 @@ STRINGS = {
     "concepts.new": {"he": "קונספט חדש", "en": "New concept"},
     "concepts.empty": {
         "he": "עוד לא התחלת. קונספט הוא רעיון אחד שעובר את המסע מהתחלה ועד "
-              "הודעה לעיתונות.",
+              "כתבה בעיתון.",
         "en": "Nothing started yet. A concept is one idea taken through the "
-              "journey, from scratch to a press release.",
+              "journey, from scratch to a published feature.",
     },
     "concepts.name_it": {"he": "מה אתה רוצה לבנות?", "en": "What do you want to build?"},
     "concepts.name_hint": {
@@ -257,18 +257,18 @@ STRINGS = {
         "en": "The reasoning and examples were written by a language model. "
               "They're a starting point for thinking, not a verified source.",
     },
-    "options.build": {"he": "צור את ההודעה לעיתונות", "en": "Create the press release"},
+    "options.build": {"he": "כתוב את הכתבה", "en": "Write the feature"},
 
-    "output.title": {"he": "ההודעה לעיתונות", "en": "The press release"},
+    "output.title": {"he": "הכתבה", "en": "The feature"},
     # The output stage was printing the *options* stage's instruction, so the
     # last screen asked people to go and tick attributes they had already
     # ticked two stages earlier.
     "output.lede": {
         "he": "כל מה שסימנת נכנס פנימה. מכאן הרעיון הופך למסמך "
-              "מפורט ולהודעה לעיתונות מהעתיד, כאילו הדבר כבר קרה.",
+              "מפורט ולכתבה בעיתון, שנכתבה שנה וחצי אחרי שהעסק כבר פועל.",
         "en": "Everything you ticked goes in. From here the idea becomes a "
-              "detailed document and a press release from the future, written "
-              "as though it had already happened.",
+              "detailed document and a newspaper feature, written a year and a half "
+              "after the thing opened its doors.",
     },
     "output.document": {"he": "המסמך המפורט", "en": "The detailed document"},
     "output.style": {"he": "סגנון העיתון", "en": "Newspaper style"},
@@ -325,7 +325,7 @@ STRINGS = {
 
     # ---- manage ----------------------------------------------------------
     "manage.requests": {"he": "בקשות גישה", "en": "Access requests"},
-    "manage.releases": {"he": "הודעות לעיתונות", "en": "Press releases"},
+    "manage.releases": {"he": "כתבות", "en": "Features"},
     "manage.usage": {"he": "שימוש ב־AI", "en": "AI usage"},
     "manage.approve": {"he": "אשר", "en": "Approve"},
     "manage.deny": {"he": "דחה", "en": "Deny"},

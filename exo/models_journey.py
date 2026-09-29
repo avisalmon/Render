@@ -176,13 +176,29 @@ class GeneratedOption(models.Model):
 
 
 class PressRelease(models.Model):
-    """The result: a detailed document and an Amazon-style press release, set
-    in a newspaper (spec §5.4, §6).
+    """The result: a detailed document and a newspaper feature about the
+    concept, set in a paper (spec §5.4, §6).
+
+    **The class name is now behind the product.** This began as an Amazon-style
+    press release, written "working backwards" from a launch. Avi's correction:
+    an announcement is not what makes the future feel real. What does is a
+    warm feature written a year and a half after the doors opened, by a
+    reporter who went to see a place that is already part of people's lives.
+    The fields hold that instead. The name is left alone deliberately, because
+    renaming a model that six migrations and fifteen modules refer to buys a
+    tidier word and risks a live table; this note is the cheaper fix.
 
     Visibility is **computed, not scheduled** (spec §7.1): a `timed` release
     stops matching the museum query the moment its time passes, so there is no
     expiry job to run and nothing to go wrong while nobody is watching.
     """
+
+    #: How far ahead the paper is dated. The concept opens within the next few
+    #: months and the piece is written about eighteen months after that, so the
+    #: masthead reads roughly two years out. A feature about a year and a half
+    #: of trading cannot carry today's date, and the date is the first thing a
+    #: reader checks against the story.
+    FUTURE_DAYS = 730
 
     class Visibility(models.TextChoices):
         PUBLIC = "public", "Public forever"
@@ -252,6 +268,13 @@ class PressRelease(models.Model):
                 return False
             return self.shared_with.filter(pk=user.pk).exists()
         return False
+
+    @property
+    def dateline(self):
+        """The date the paper carries: the day this was written, moved into
+        the future by `FUTURE_DAYS`. Computed rather than stored, so it cannot
+        drift away from the story and needs no migration."""
+        return self.created_at + timezone.timedelta(days=self.FUTURE_DAYS)
 
     @property
     def like_count(self):

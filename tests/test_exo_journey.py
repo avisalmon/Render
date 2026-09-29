@@ -602,6 +602,54 @@ def test_generating_writes_both_artifacts_and_a_score(signed_in, seeded, member)
     assert release.exponential_score is not None
 
 
+def test_the_output_is_a_feature_not_a_launch_notice(signed_in, seeded, member):
+    """Avi's correction after reading the falafel piece.
+
+    What it produced was an announcement: "has launched its operations",
+    written in the company's own voice ("our solution is"), describing plans
+    ("with programmes such as"). What it has to be is a newspaper feature
+    written about eighteen months in, by a reporter who visited a place that
+    is already part of people's lives.
+
+    Asserted on the stub, which has to demonstrate the same shape — a stub
+    that produced a launch notice would keep this suite green while the live
+    app went on announcing things.
+    """
+    concept = make_concept(member, stage=Concept.Stage.OUTPUT,
+                           mtp="Movement without ownership")
+    produced = ai.generate_output(concept, [], "en", user=member)
+
+    body = produced["body"].lower()
+    headline = produced["headline"].lower()
+
+    # It is not an announcement.
+    for announcement in ["launches", "launching", "has launched", "is proud to",
+                         "announces", "coming soon"]:
+        assert announcement not in headline, f"the headline announces: {headline}"
+        assert announcement not in body, f"the feature announces: {announcement}"
+
+    # It is not the company talking about itself.
+    for corporate in ["our solution", "we offer", "we provide"]:
+        assert corporate not in body, f"written in the company's voice: {corporate}"
+
+    # Time has passed, and somebody is quoted.
+    assert "months" in body or "year" in body, "nothing says time has passed"
+    assert body.count('"') >= 4, "a feature without quotes is not reportage"
+
+
+def test_the_paper_is_dated_far_enough_into_the_future(signed_in, seeded, member):
+    """A story about a year and a half of trading cannot carry today's date,
+    and the date is the first thing a reader checks against the story."""
+    from django.utils import timezone
+
+    concept = make_concept(member, stage=Concept.Stage.OUTPUT)
+    post_json(signed_in, reverse("exo:output_generate", args=[concept.pk]))
+    release = PressRelease.objects.get(concept=concept)
+
+    ahead = (release.dateline - timezone.now()).days
+    assert ahead > 365, "the paper is dated before the business could have run a year"
+
+
 def test_switching_style_never_changes_the_words(signed_in, seeded, member):
     concept = make_concept(member, stage=Concept.Stage.OUTPUT)
     post_json(signed_in, reverse("exo:output_generate", args=[concept.pk]))
