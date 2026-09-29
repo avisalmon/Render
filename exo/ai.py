@@ -31,7 +31,7 @@ import re
 
 from django.conf import settings
 
-from . import prompts
+from . import prompts, quality
 from .models import AiCall, Concept
 
 log = logging.getLogger("exo.ai")
@@ -135,14 +135,30 @@ _JSON_BLOCK = re.compile(r"\{.*\}", re.S)
 
 
 def _json_call(messages, system, task, schema_keys, user=None, concept=None,
-               retries=1, attribute=None):
+               retries=1, attribute=None, check=None):
     """A call that must return a JSON object with `schema_keys`.
 
     Retried once, because a single malformed answer is usually noise; after
     that it is a real failure and the caller gets to show a retry rather than
     a page of nonsense.
+
+    `check` is the second question, and a different one. The schema says
+    whether this is the right *shape*; `check` says whether the content is any
+    good — a stray Cyrillic word in a Hebrew sentence, a feature that has
+    drifted back into announcing a launch, a body too short to read. See
+    `exo/quality.py`.
+
+    **The two failures are not treated the same.** A malformed answer is
+    unusable and, after the retries, raises. Content problems are asked about
+    again, but if the second answer is no better the *better of the two* is
+    returned with the blemish logged, because refusing outright would mean a
+    stray foreign word costs somebody the artifact they came for. Losing the
+    work is worse than a small flaw in it.
     """
     last = None
+    best = None
+    best_problems = None
+
     for attempt in range(retries + 1):
         content = _call(messages, system, task, user=user, concept=concept,
                         attribute=attribute)
@@ -154,12 +170,24 @@ def _json_call(messages, system, task, schema_keys, user=None, concept=None,
                 last = exc
             else:
                 if all(k in data for k in schema_keys):
-                    return data
-                last = ValueError(f"missing keys, wanted {schema_keys}")
+                    problems = check(data) if check else []
+                    if not problems:
+                        return data
+                    # Keep the least bad answer seen so far.
+                    if best is None or len(problems) < len(best_problems):
+                        best, best_problems = data, problems
+                    last = ValueError("; ".join(problems))
+                else:
+                    last = ValueError(f"missing keys, wanted {schema_keys}")
         else:
             last = ValueError("no JSON object in the response")
         log.warning("exo ai %s: unusable response (attempt %s): %s",
                     task, attempt + 1, last)
+
+    if best is not None:
+        log.warning("exo ai %s: returning the best of %s attempts with: %s",
+                    task, retries + 1, "; ".join(best_problems))
+        return best
     raise AiError(f"{task}: {last}")
 
 
@@ -409,7 +437,10 @@ def generate_options(concept, attribute, entries, language, user=None):
     )
     data = _json_call([{"role": "user", "content": user_msg}], system,
                       "options", ("options",), user=user, concept=concept,
-                      attribute=attribute)
+                      attribute=attribute,
+                      # Options are short prose, so only the script check
+                      # applies: there is no genre here to drift out of.
+                      check=lambda d: quality.review_text(json.dumps(d, ensure_ascii=False)))
     out = []
     for item in (data.get("options") or [])[:4]:
         content = str((item or {}).get("content") or "").strip()
@@ -448,9 +479,13 @@ def generate_output(concept, selections, language, user=None):
         f"WHAT IS UNIQUE: {concept.unique}\n\n"
         f"WHAT THEY CHOSE, BY ATTRIBUTE:\n{chosen}"
     )
+    # The correctness pass runs as part of generating, not as a test: these
+    # are failures a model produces occasionally and unpredictably, so they
+    # cannot be caught once and fixed, only caught every time.
     data = _json_call([{"role": "user", "content": user_msg}], system, "output",
                       ("headline", "body", "document_body"),
-                      user=user, concept=concept)
+                      user=user, concept=concept,
+                      check=lambda d: quality.review_feature(d, language))
     return {
         "headline": str(data.get("headline") or "").strip()[:300],
         "body": str(data.get("body") or "").strip(),

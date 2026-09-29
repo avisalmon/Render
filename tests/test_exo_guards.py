@@ -448,6 +448,84 @@ def test_empty_text_needs_no_provider(monkeypatch):
     assert ai.public_text_is_safe("") == (True, "")
 
 
+# ---- the correctness pass, during generation ---------------------------- #
+
+def test_a_blemished_answer_is_asked_again(member, seeded, monkeypatch):
+    """The check runs as part of generating. A first answer with a stray
+    script gets one more try, and the clean second answer is what is kept."""
+    import json as _json
+
+    answers = [
+        _json.dumps({"headline": "שנה וחצי אחרי: הפלאפל",
+                     "body": "הס меню " + ("טקסט ארוך מספיק כדי לעבור. " * 30)
+                             + ' "ציטוט" ועוד "ציטוט"',
+                     "document_body": "מסמך"}, ensure_ascii=False),
+        _json.dumps({"headline": "שנה וחצי אחרי: הפלאפל",
+                     "body": ("בשתיים בצהריים התור מגיע עד הפינה. " * 20)
+                             + ' "ציטוט" ועוד "ציטוט"',
+                     "document_body": "מסמך"}, ensure_ascii=False),
+    ]
+    calls = {"n": 0}
+
+    def answer(*args, **kwargs):
+        i = calls["n"]
+        calls["n"] += 1
+        return {"content": answers[min(i, len(answers) - 1)],
+                "model": "test", "prompt_tokens": 1, "completion_tokens": 1}
+
+    monkeypatch.setattr(ai, "is_stub", lambda: False)
+    monkeypatch.setattr("app.ai_chat.call_openai", answer)
+
+    concept = Concept.objects.create(owner=member, title="חנות פלאפל",
+                                     mtp="פלאפל כאמנות")
+    produced = ai.generate_output(concept, [], "he", user=member)
+
+    assert calls["n"] == 2, "a blemished answer was accepted without asking again"
+    assert "меню" not in produced["body"], "the blemished answer was kept"
+
+
+def test_a_blemish_that_survives_is_kept_rather_than_losing_the_work(
+        member, seeded, monkeypatch):
+    """If asking again does not help, the better attempt is returned anyway.
+
+    Refusing outright would mean one stray foreign word costs somebody the
+    artifact they came for, which is a worse outcome than a small flaw in it.
+    """
+    import json as _json
+
+    blemished = _json.dumps(
+        {"headline": "שנה וחצי אחרי: הפלאפל",
+         "body": "הס меню " + ("טקסט ארוך מספיק כדי לעבור. " * 30)
+                 + ' "ציטוט" ועוד "ציטוט"',
+         "document_body": "מסמך"}, ensure_ascii=False)
+
+    monkeypatch.setattr(ai, "is_stub", lambda: False)
+    monkeypatch.setattr("app.ai_chat.call_openai",
+                        lambda *a, **k: {"content": blemished, "model": "test",
+                                         "prompt_tokens": 1, "completion_tokens": 1})
+
+    concept = Concept.objects.create(owner=member, title="חנות פלאפל")
+    produced = ai.generate_output(concept, [], "he", user=member)
+
+    assert produced["headline"], "the work was lost over a blemish"
+    assert "меню" in produced["body"]  # kept, and logged as a warning
+
+
+def test_a_malformed_answer_still_fails_rather_than_being_kept(member, seeded,
+                                                                monkeypatch):
+    """The two failures are not the same. Unusable JSON has nothing worth
+    keeping, so it still raises after the retries."""
+    monkeypatch.setattr(ai, "is_stub", lambda: False)
+    monkeypatch.setattr("app.ai_chat.call_openai",
+                        lambda *a, **k: {"content": "not json at all",
+                                         "model": "test", "prompt_tokens": 1,
+                                         "completion_tokens": 1})
+
+    concept = Concept.objects.create(owner=member, title="c")
+    with pytest.raises(ai.AiError):
+        ai.generate_output(concept, [], "he", user=member)
+
+
 # ---- the cockpit -------------------------------------------------------- #
 
 @pytest.fixture
