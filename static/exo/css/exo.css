@@ -690,3 +690,13 @@ img { max-width: 100%; height: auto; }
   min-block-size: var(--exo-tap);
   padding-inline: 10px;
 }
+
+/* The cockpit's own navigation: the three manage pages link to each other,
+   and on a phone those links were 19px tall. They are the only way between
+   the pages, so they are targets, not prose. */
+.exo-taprow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}

@@ -2,7 +2,9 @@
 
 `main_spec.md` §0.5, REQ-13.1. Avi answered ACT-27 on 2026-09-21 by listing the
 apps and their audiences: memz everyone, מט״צים everyone, SensorLab everyone,
-ustrip the family, the house him alone.
+ustrip the family, the house him alone. exo was added on 2026-09-30, everyone,
+on the same reasoning as מט״צים: its front half is public and its builder is
+invite-only, which is the app's door to police rather than the portal's.
 
 **Why one function instead of a list on the home page.** The portal and each
 app's own door are two places asking the same question, and two answers drift.
@@ -83,6 +85,19 @@ APPS = [
         path="/memz/",
         audience=EVERYONE,
         blurb="יוצרים ממים, ומשחקים משחק כתוביות והצבעה עם חברים.",
+    ),
+    App(
+        slug="exo",
+        name="exo",
+        path="/exo/",
+        audience=EVERYONE,
+        # EVERYONE for the same reason מט״צים is: the handout, the
+        # thirteen attributes and the museum are open to anybody, and the
+        # builder behind them is invite-only. That is the app's own door to
+        # police, not the portal's. A card that only appeared for approved
+        # members would hide the public half from everybody who might want
+        # to ask for the other one.
+        blurb="ארגונים אקספוננציאליים: מהרעיון שלך לכתבה בעיתון מהעתיד.",
     ),
     App(
         slug="ustrip",

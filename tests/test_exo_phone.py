@@ -573,6 +573,25 @@ def test_an_emptied_article_cannot_be_saved(phone_page, live_server,
     assert concept.release.body == original, "the article was emptied"
 
 
+def test_the_cockpit_navigates_on_a_phone(phone_page, live_server,
+                                          django_user_model):
+    """The three manage pages link to each other, and on a phone those links
+    were 19px tall: the only way between them and the hardest thing on the
+    page to hit. Found by sweeping every exo page at four widths rather than
+    by looking at the ones I happened to remember."""
+    _seed()
+    django_user_model.objects.filter(username="phone-root").delete()
+    django_user_model.objects.create_superuser("phone-root", "r@example.com",
+                                               PASSWORD)
+    _sign_in(phone_page, live_server, "phone-root")
+
+    for path in ["/exo/manage/requests/", "/exo/manage/releases/",
+                 "/exo/manage/usage/"]:
+        phone_page.goto(live_server.url + path, wait_until="domcontentloaded")
+        small = phone_page.evaluate(TAP_JS, MIN_TAP_PX)
+        assert small == [], f"{path}: {small}"
+
+
 def test_the_mirror_is_real_and_not_just_an_attribute(phone_page, live_server,
                                                       django_user_model):
     """`dir="rtl"` on the html element is easy to assert and easy to have

@@ -179,10 +179,37 @@ def test_every_installed_app_is_in_the_registry_or_deliberately_out():
     worse than no directory. An app added to the site without an audience
     decision fails here rather than quietly appearing to nobody.
     """
+    from pathlib import Path
+
+    from django.apps import apps as django_apps
+    from django.conf import settings
+
     from app.portal import APPS, NOT_IN_THE_PORTAL
 
     known = {a.slug for a in APPS} | set(NOT_IN_THE_PORTAL)
-    installed = {"matazim", "ustrip", "memz", "sensorlab"}
+
+    # Asked of the project rather than written out here. This list used to be
+    # the literal {"matazim", "ustrip", "memz", "sensorlab"}, and it went
+    # stale the moment exo was installed: the test promises that an app added
+    # without an audience decision fails, and for exo it did not, because what
+    # it compared against was a copy of the answer instead of the question.
+    #
+    # "Ours" means the code lives in this repository: Django's own apps and
+    # everything installed into the virtualenv sit elsewhere on disk, and
+    # `app` is the site itself rather than one of its spaces. So a new app
+    # added here fails this test until somebody decides who it is for, which
+    # is the whole point of it.
+    root = Path(settings.BASE_DIR).resolve()
+    venv = root / "env"
+    installed = set()
+    for config in django_apps.get_app_configs():
+        path = Path(config.path).resolve()
+        if config.label == "app":
+            continue
+        if root in path.parents and venv not in path.parents:
+            installed.add(config.label)
+
+    assert installed, "the sweep found no apps at all, so it is proving nothing"
     assert installed <= known, f"no audience decided for: {sorted(installed - known)}"
 
 
