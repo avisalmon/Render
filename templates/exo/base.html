@@ -64,6 +64,18 @@
           <a href="{% url 'exo:concepts' %}"
              {% if nav == 'build' %}aria-current="page"{% endif %}>{% t "nav.build" %}</a>
         {% endif %}
+        {% comment %}
+          The cockpit needed a door. It was reachable only by typing the URL,
+          which is how a page ends up unused: Avi asked where it was on the day
+          he needed it. Shown to the same people `access.is_exo_admin` lets in,
+          so the link never leads to a 403, and it lands on the workshops page
+          because that is the one opened before every session. The other three
+          management pages are one tap from there.
+        {% endcomment %}
+        {% if request.user.is_superuser or request.user.is_staff %}
+          <a href="{% url 'exo:manage_cohorts' %}"
+             {% if nav == 'manage' %}aria-current="page"{% endif %}>{% t "nav.manage" %}</a>
+        {% endif %}
         {% block nav_extra %}{% endblock %}
 
         {% comment %}

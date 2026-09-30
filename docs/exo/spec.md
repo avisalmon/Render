@@ -228,7 +228,13 @@ clock.
   which falls out of K3 rather than needing a rule of its own. Work made from
   then on is **stamped** with the newer cohort at creation, so "what came out of
   that workshop" stays a true answer after the next one.
-- **K5. Avi's cohort page** `/exo/manage/cohorts/`: create a workshop, copy its
+- **K5. Avi's cohort page** `/exo/manage/cohorts/`, reached from a **ניהול /
+  Manage** entry in the nav shown only to staff and superusers (the same test
+  `access.is_exo_admin` applies, so the link never leads to a 403). The whole
+  management area had no link anywhere and was reachable only by typing the
+  URL, which is how Avi came to ask where it was. The nav lands on workshops
+  because that is the page opened before a session; the other three are one tap
+  from there. On it: create a workshop, copy its
   link, see the window and whether it is open, see everyone who arrived through
   it and when, see how many concepts and articles came out of it, and close it
   by hand at any moment.

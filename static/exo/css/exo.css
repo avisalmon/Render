@@ -193,6 +193,16 @@ img { max-width: 100%; height: auto; }
   gap: 2px;
   margin-inline-start: auto;
 }
+
+/* An admin carries one nav item more than anybody else, and at 390px that put
+   the whole page 51px past the edge. The header wraps to a second line rather
+   than scrolling sideways: sideways is the one thing a page must never do, and
+   the extra line costs only the person who has the extra link. */
+@media (max-width: 560px) {
+  .exo-header-inner { flex-wrap: wrap; gap: 4px 10px; padding-block: 6px; }
+  .exo-nav { margin-inline-start: 0; flex-wrap: wrap; }
+  .exo-nav a, .exo-lang { padding-inline: 8px; }
+}
 .exo-nav a,
 .exo-lang {
   display: inline-flex;

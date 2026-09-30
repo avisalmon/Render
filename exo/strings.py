@@ -362,6 +362,9 @@ STRINGS = {
     "vis.save": {"he": "שמור", "en": "Save"},
 
     # ---- manage ----------------------------------------------------------
+    # The nav entry is deliberately the general word, not "workshops": it is
+    # the door to all four management pages and only lands on workshops first.
+    "nav.manage": {"he": "ניהול", "en": "Manage"},
     "manage.requests": {"he": "בקשות גישה", "en": "Access requests"},
     "manage.releases": {"he": "כתבות", "en": "Features"},
     "manage.usage": {"he": "שימוש ב־AI", "en": "AI usage"},

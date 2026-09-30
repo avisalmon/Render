@@ -713,3 +713,58 @@ def test_a_private_piece_is_still_never_sent_anywhere(seeded, workshop,
 
     assert journey_views._screen_before_the_wall(piece, piece.concept.owner) == ""
     assert called == []
+
+
+# ---- the door to the cockpit --------------------------------------------- #
+#
+# The four management pages were reachable only by typing the URL. Avi asked
+# where the workshops page was on the day he wanted to run a workshop, which is
+# the same failure the download buttons had: built, tested, and invisible.
+
+
+def test_an_admin_sees_the_way_in_from_every_page(client, seeded):
+    """On the nav, so it is there from wherever he happens to be."""
+    from exo.strings import STRINGS
+
+    label = STRINGS["nav.manage"]["he"]
+    boss = User.objects.create_superuser("boss2", "b2@example.com",
+                                         "a-strong-pass-123")
+    approve(membership_for(boss, create=True))
+    client.login(username="boss2", password="a-strong-pass-123")
+
+    for name in ("exo:home", "exo:museum", "exo:learn", "exo:concepts"):
+        body = client.get(reverse(name)).content.decode()
+        assert label in body, name
+        assert reverse("exo:manage_cohorts") in body, name
+
+
+def test_the_link_never_leads_to_a_refusal(client, seeded):
+    """Shown to exactly the people the view lets in, so nobody is offered a
+    door that shuts in their face."""
+    from exo.strings import STRINGS
+
+    label = STRINGS["nav.manage"]["he"]
+
+    assert label not in client.get(reverse("exo:museum")).content.decode()
+
+    member = User.objects.create_user("plain", "p@example.com",
+                                      "a-strong-pass-123")
+    approve(membership_for(member, create=True))
+    client.login(username="plain", password="a-strong-pass-123")
+    assert label not in client.get(reverse("exo:museum")).content.decode()
+    assert client.get(reverse("exo:manage_cohorts")).status_code == 403
+
+    staffer = User.objects.create_user("staffer", "s2@example.com",
+                                       "a-strong-pass-123", is_staff=True)
+    approve(membership_for(staffer, create=True))
+    client.login(username="staffer", password="a-strong-pass-123")
+    assert label in client.get(reverse("exo:museum")).content.decode()
+    assert client.get(reverse("exo:manage_cohorts")).status_code == 200
+
+
+def test_the_cockpit_pages_reach_each_other(admin, seeded):
+    """Landing on workshops first is fine only because the other three are one
+    tap away from it."""
+    body = admin.get(reverse("exo:manage_cohorts")).content.decode()
+    for name in ("exo:manage_requests", "exo:manage_releases", "exo:manage_usage"):
+        assert reverse(name) in body, name

@@ -209,3 +209,49 @@ def test_the_switch_fits_a_phone_and_a_desktop(browser, live_server):
                 failures[f"{where} {link.inner_text()}"] = round(box["height"])
 
     assert not failures, failures
+
+
+def test_the_nav_still_fits_with_the_managers_extra_link(browser, live_server,
+                                                          django_user_model):
+    """An admin's nav carries one item more than anybody else's, and Hebrew
+    and English set it at different widths. The narrowest screen is where a
+    fifth item would wrap into the masthead."""
+    from sensorlab_phone import MIN_TAP_PX, OVERFLOW_JS
+
+    from exo.access import approve, membership_for
+    from exo.strings import STRINGS
+
+    _seed()
+    boss = django_user_model.objects.create_superuser(
+        "look-boss", "boss@example.com", PASSWORD)
+    approve(membership_for(boss, create=True))
+
+    page = _phone(browser)
+    page.goto(live_server.url + "/exo/login/", wait_until="domcontentloaded")
+    page.fill("#id_username", "look-boss")
+    page.fill("#id_password", PASSWORD)
+    page.click("button[type=submit]")
+    page.wait_for_load_state("domcontentloaded")
+
+    failures = {}
+    for language in ("he", "en"):
+        page.goto(f"{live_server.url}/exo/language/{language}/",
+                  wait_until="domcontentloaded")
+        for path in ("/exo/", "/exo/museum/", "/exo/manage/cohorts/"):
+            page.goto(live_server.url + path, wait_until="domcontentloaded")
+            where = f"{language} {path}"
+
+            link = page.get_by_role("link", name=STRINGS["nav.manage"][language],
+                                    exact=True).first
+            if link.count() == 0:
+                failures[f"{where} no way in"] = True
+                continue
+            box = link.bounding_box()
+            if box and box["height"] < MIN_TAP_PX:
+                failures[f"{where} tap"] = round(box["height"])
+
+            spill = page.evaluate(OVERFLOW_JS)
+            if spill["overflow"]:
+                failures[f"{where} sideways"] = spill
+
+    assert not failures, failures
