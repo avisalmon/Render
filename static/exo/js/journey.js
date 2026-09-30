@@ -38,6 +38,9 @@ function exoToastError(err) {
     limit_member: document.documentElement.lang === "he"
       ? "הגעת למכסת הבקשות היומית שלך. היא מתאפסת בעוד 24 שעות."
       : "You have used your daily requests. They reset within 24 hours.",
+    limit_window: document.documentElement.lang === "he"
+      ? "חלון הסדנה נסגר, אז יצירה חדשה עם AI כבויה. כל מה שכתבת שמור, ואפשר לקרוא, לערוך ולהוריד."
+      : "The workshop window has closed, so generating with AI is off. Everything you wrote is safe, and you can still read, edit and download it.",
     limit_site: document.documentElement.lang === "he"
       ? "האתר כולו הגיע למכסה היומית. שאר האפליקציה עובדת כרגיל."
       : "The whole site has reached its daily ceiling. Everything else still works.",

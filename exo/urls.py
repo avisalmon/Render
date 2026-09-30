@@ -2,6 +2,7 @@ from django.urls import include, path
 
 from . import (
     auth_views,
+    cohort_views,
     concept_views,
     journey_views,
     manage_views,
@@ -33,6 +34,9 @@ urlpatterns = [
 
     # ---- access (spec §4) --------------------------------------------
     path("join/", auth_views.join, name="join"),
+    # The workshop link. Before the bare join route's siblings so a token can
+    # never be read as one of them.
+    path("join/<str:token>/", cohort_views.join_by_link, name="join_by_link"),
     path("login/", auth_views.LoginView.as_view(), name="login"),
     path("logout/", auth_views.logout_view, name="logout"),
     path("waiting/", auth_views.waiting, name="waiting"),
@@ -98,6 +102,11 @@ urlpatterns = [
     path("manage/releases/", manage_views.releases, name="manage_releases"),
     path("manage/releases/<int:pk>/", manage_views.moderate, name="manage_moderate"),
     path("manage/usage/", manage_views.usage, name="manage_usage"),
+    path("manage/cohorts/", cohort_views.cohorts, name="manage_cohorts"),
+    path("manage/cohorts/new/", cohort_views.cohort_create,
+         name="manage_cohort_create"),
+    path("manage/cohorts/<int:pk>/close/", cohort_views.cohort_close,
+         name="manage_cohort_close"),
 
     # ---- the REST platform (Rule 6) ----------------------------------
     # Before the router, so "approve" is never read as a resource lookup.

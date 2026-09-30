@@ -10,6 +10,12 @@ The migration chain is unaffected by the split: Django resolves `app_label`
 from the package, not the module.
 """
 
+from .models_cohort import (  # noqa: F401
+    Cohort,
+    CohortMember,
+    current_cohort,
+    has_open_window,
+)
 from .models_journey import (  # noqa: F401
     AiCall,
     BrainstormEntry,

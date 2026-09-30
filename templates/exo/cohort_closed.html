@@ -1,0 +1,30 @@
+{% extends "exo/base.html" %}
+{% load exo %}
+
+{% block title %}{% t "cohort.closed_title" %} — exo{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+{% block screen %}cohort-closed{% endblock %}
+
+{% comment %}
+  Somebody arriving a day late has done nothing wrong, so this is a plain page
+  saying what happened, not an error. Each reason gets its own sentence: "the
+  workshop finished" and "the room is full" are different facts and being told
+  the wrong one is worse than being told nothing.
+{% endcomment %}
+
+{% block content %}
+<div class="exo-wrap-narrow exo-page">
+  <div class="exo-empty">
+    <h1>{% t "cohort.closed_title" %}</h1>
+    <p class="exo-measure" style="margin-inline:auto">
+      {% if reason == "finished" %}{% t "cohort.finished" %}
+      {% elif reason == "full" %}{% t "cohort.full" %}
+      {% elif reason == "not_started" %}{% t "cohort.not_started" %}
+      {% else %}{% t "cohort.closed" %}{% endif %}
+    </p>
+    <p class="exo-small exo-faint">{{ cohort.name }}</p>
+    <a class="exo-btn exo-btn-lg" href="{% url 'exo:learn' %}"
+       style="margin-block-start:18px">{% t "nav.learn" %}</a>
+  </div>
+</div>
+{% endblock %}

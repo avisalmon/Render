@@ -162,6 +162,12 @@ class Membership(models.Model):
     status = models.CharField(
         max_length=10, choices=Status.choices, default=Status.REQUESTED,
     )
+    #: True when this membership was created *by a workshop link*, which makes
+    #: the person's AI licensed by their workshop windows rather than open.
+    #: It separates a participant from somebody Avi approved by hand, who has
+    #: no window and must never acquire one by attending a workshop later.
+    ai_needs_open_window = models.BooleanField(default=False)
+
     #: The person's own language choice, so it follows them to a new device
     #: rather than depending on a cookie (spec §0.3).
     language = models.CharField(max_length=2, default=DEFAULT_LANGUAGE)

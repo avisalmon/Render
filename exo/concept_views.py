@@ -82,11 +82,16 @@ def create(request):
     if owned(request).count() >= ai.limits()["concepts_per_member"]:
         return redirect("exo:concepts")
     last = owned(request).aggregate(m=Max("position"))["m"] or 0
+    from .models import current_cohort
+
     concept = Concept.objects.create(
         owner=request.user,
         title=title[:160],
         language=language_for(request),
         position=last + 1,
+        # Stamped at creation, never derived later: a third workshop must not
+        # reattribute the first one's work (data_model.md §6).
+        cohort=current_cohort(request.user),
     )
     return redirect("exo:concept_resume", pk=concept.pk)
 

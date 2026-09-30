@@ -200,6 +200,69 @@ person has to be let in by Avi.
   the ExO builder", nothing more. Reference: `ustrip/family_api.py`.
 - **C7. Login/logout pages** in the app's look, against the shared `User`.
 
+### 4.2 EPIC K — Workshop groups: one link for a room *(added 2026-10-01)*
+
+Avi teaches this material. C2-C4 are right for one person asking to be let in
+and wrong for thirty people in a room on a Tuesday: nobody runs a workshop by
+tapping Approve thirty times. So a **cohort** is a workshop, with a link and a
+clock.
+
+- **K1. The cohort.** A name ("סדנת מנהלים, אוקטובר"), a random token, a start
+  time and a window. Created by Avi from his cockpit. Everything else about it
+  is computed from those.
+- **K2. The link approves on the spot.** `/exo/join/<token>/` signs the person
+  in or creates their account, creates `Membership(status=approved)`, adds them
+  to `exo_members`, and records the arrival. One click from a WhatsApp message
+  to the builder.
+- **K3. One window, two doors.** The window is **24 hours from the start**
+  (Avi's number, configurable per cohort, start settable for a link prepared
+  the night before):
+  - **Joining.** Outside it the link is dead and says so plainly. Not an error
+    page: "this workshop has finished".
+  - **Generating.** Outside it every call that reaches a model is refused for
+    that participant. Reading, editing, downloading, publishing, the museum and
+    everything else stay exactly as they were. The line is "does this spend
+    money", enforced in `ai._guard` so it is one place rather than five views.
+- **K4. Belonging accumulates.** A second workshop adds a second membership and
+  keeps the first. AI opens again because the person now has an open window,
+  which falls out of K3 rather than needing a rule of its own. Work made from
+  then on is **stamped** with the newer cohort at creation, so "what came out of
+  that workshop" stays a true answer after the next one.
+- **K5. Avi's cohort page** `/exo/manage/cohorts/`: create a workshop, copy its
+  link, see the window and whether it is open, see everyone who arrived through
+  it and when, see how many concepts and articles came out of it, and close it
+  by hand at any moment.
+- **K6. The museum, by group.** A participant can look at their workshop's wall
+  or at everything ever made here. *(Whether a cohort is only a filter over
+  already-public articles, or also a fifth visibility option, "my group only",
+  is the one open decision — see the note at the end of this section.)*
+
+**K7. The link is a key, and mostly follows the BKM** in
+`building_an_app.md`: the token is long and random rather than sequential, the
+group it grants is named in code and never in the request, it grants ordinary
+membership and never staff or superuser, an unknown or expired or closed token
+refuses, the comparison is constant-time, and every use is recorded with who
+and when.
+
+**It breaks one BKM rule on purpose, and that deserves saying out loud.** Rule
+3 is "never create the principal", and this link does exactly that: a person in
+a workshop has usually never used babook, and an invite that cannot make an
+account is not an invite. The rule exists because a key that manufactures users
+is a way to fill a shared site with accounts, so the risk is real and is bounded
+three ways instead: the window is short, Avi can kill the link instantly, and a
+cohort has a **maximum number of joins** (default 60, set per workshop) so a
+forwarded link cannot run away.
+
+The blast-radius sentence the BKM asks for: *somebody who forwards the link
+during the workshop day could let strangers into the ExO builder and spend some
+of Avi's AI budget until the window closes, the cap fills, or he closes it by
+hand. It grants nothing else anywhere on the site, and it expires by itself.*
+If that sentence ever stops being boring, the scope has grown too wide.
+
+**Open decision (K6).** Filter or visibility option. Everything above is
+identical either way; only the museum switch and `PressRelease.visibility`
+depend on it.
+
 ---
 
 ## 5. EPIC D — The Concept journey

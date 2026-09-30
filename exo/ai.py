@@ -68,6 +68,28 @@ def _timeout():
         return 45
 
 
+def _workshop_window_closed(user):
+    """True when this person's AI is licensed by workshop windows and none is
+    open right now (spec K3).
+
+    Avi's rule: the link is good for the day, and after that it should stop
+    costing him tokens. Checked here, in the one place every task passes
+    through, so the line is exactly "does this spend money" rather than five
+    separate view-level guesses at the same thing. Everything that does not
+    reach a model keeps working, which is the half that matters: a gate that
+    took too much would end a workshop with people locked out of their own
+    writing.
+    """
+    membership = getattr(user, "exo_membership", None)
+    if membership is None or not membership.ai_needs_open_window:
+        return False
+    if getattr(user, "is_superuser", False):
+        return False
+    from .models import has_open_window
+
+    return not has_open_window(user)
+
+
 def _call(messages, system, task, user=None, concept=None, attribute=None):
     """The site's shared wrapper, with exo's timeout and logging around it.
 
@@ -86,6 +108,17 @@ def _call(messages, system, task, user=None, concept=None, attribute=None):
     from concurrent.futures import TimeoutError as Timeout
 
     from app.ai_chat import call_openai
+
+    # The workshop licence is checked *here*, at the single door to the
+    # provider, rather than in `_guard`. Only three of the six tasks pass
+    # through the ceilings; every one of them passes through this function, so
+    # this is the literal answer to "does this spend money" and the interview
+    # and the summary cannot quietly keep spending after a window closes.
+    #
+    # It is not a ceiling that resets tomorrow, it is a licence that ended, so
+    # it raises its own reason rather than borrowing "try again later".
+    if _workshop_window_closed(user):
+        raise AiLimit("limit_window")
 
     pool = ThreadPoolExecutor(max_workers=1)
     future = pool.submit(call_openai, messages, system_prompt=system)

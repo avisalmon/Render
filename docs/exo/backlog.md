@@ -652,6 +652,56 @@ is named, so nothing is "done" by implication.
 
 ---
 
+## Sprint 11 — Workshop groups: one link for a room (1 October 2026)
+
+**Goal.** Avi sends one link to a course group; everybody is working within a
+minute; the link and its AI budget expire with the workshop day; afterwards he
+can see who came and what they made.
+
+**Delivers.** Spec EPIC K (K1-K7). Data model §6.
+
+- [x] **K1** `Cohort` and `CohortMember` models; `Concept.cohort`;
+  `Membership.ai_needs_open_window`. Window computed, never stored.
+- [x] **K2** `/exo/join/<token>/`: approves on the spot, creates the account if
+  new, records the arrival, sends them to the builder.
+- [x] **K3a** Joining refused outside the window, over the cap, or after Avi
+  closes it — each with its own plain sentence, never an error page.
+- [x] **K3b** The AI gate in `ai._guard`: a participant with no open window is
+  refused every call that reaches a model, and nothing else changes for them.
+- [x] **K4** Belonging accumulates; new work stamped with the newest cohort.
+- [x] **K5** `/exo/manage/cohorts/`: create, copy the link, see the window, see
+  the arrivals, see the output, close by hand.
+- [ ] **K6** The museum switch — **blocked on the open decision**, built last.
+
+**Tests (the refusals first, per the BKM).** 28 of them, refusals outnumbering
+happy paths as the BKM asks.
+
+- [x] An unknown token, an expired window, a closed cohort and a full cohort
+  each refuse, and none of them creates a membership.
+- [x] The token is not guessable and not sequential; comparison is
+  constant-time.
+- [x] The link grants `exo_members` and never staff, superuser or anything
+  chosen by the caller.
+- [x] A participant past their window: every AI endpoint refuses; reading,
+  editing, downloading, publishing and the museum all still work. That second
+  half is the one that matters, because a gate that takes too much is how a
+  workshop ends with people locked out of their own writing.
+- [x] A hand-approved member never acquires a window by attending a workshop.
+- [x] A second workshop reopens AI and leaves the first membership standing.
+- [x] Work is stamped at creation and a later workshop does not move it.
+
+**Demo.** Done end to end in a browser on 2026-10-01: Avi opens a workshop on
+a phone, the link is created, a participant opens it in a clean browser and
+lands in the builder one click later, and the arrival appears on the cockpit
+page with the window and the counts.
+
+**The AI gate applies to a *participant*, and that is deliberate.** Avi and
+anybody he approves by hand have no window and never acquire one by attending
+a workshop, which there is a test for: otherwise running his own session would
+switch his own AI off the next day.
+
+---
+
 ## 13. State at the end of the first build (21 September 2026)
 
 Written at the end of the autonomous run, before any review.

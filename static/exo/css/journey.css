@@ -671,3 +671,27 @@ button.exo-rail-step:hover { background: var(--exo-sunken); }
   .exo-para-tools { flex-direction: row; align-self: flex-end; }
   .exo-para-tools .exo-icon-btn { min-block-size: var(--exo-tap); min-inline-size: var(--exo-tap); }
 }
+
+/* --- workshop groups ------------------------------------------------------
+   The link is the point of the page, so it gets the width and the copy button
+   sits on it. */
+.exo-cohort-new { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+.exo-cohort-new .exo-field { flex: 1 1 220px; }
+.exo-field-narrow { flex: 0 0 110px !important; }
+
+.exo-linkrow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-block: 10px; }
+.exo-linkbox {
+  flex: 1 1 260px;
+  min-inline-size: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  background: var(--exo-surface);
+  border: 1px solid var(--exo-ink);
+  padding-block: 10px;
+  padding-inline: 12px;
+  min-block-size: var(--exo-tap);
+  /* A URL is left-to-right even on a mirrored page. */
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+.exo-cohort-facts { display: flex; gap: 14px; flex-wrap: wrap; }

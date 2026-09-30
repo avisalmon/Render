@@ -258,3 +258,58 @@ action, not stored, unless we later want share analytics.)
    prompt_hint; `LearnResource` title / body / youtube_url; `NewspaperStyle`
    name / description), and `Concept` and `PressRelease` each gained a
    `language`. No new models. ✅
+
+## 6. Workshop groups (2026-10-01)
+
+Two new models and two new fields, for EPIC K in the spec.
+
+### `Cohort` — one workshop
+
+| field | why it exists |
+| --- | --- |
+| `name` | what Avi calls the workshop; the only thing he types |
+| `token` | the secret in the link. `secrets.token_urlsafe(24)`, unique, indexed. Random rather than sequential, because a guessable invite is not an invite |
+| `starts_at` | defaults to now, settable ahead for a link prepared the night before |
+| `window_hours` | 24 by default, Avi's number, per cohort so a long day can differ |
+| `max_joins` | a cap, default 60. The one bound on a forwarded link (see spec K7) |
+| `is_closed` | killed by hand, separate from the clock, so a room can be closed early |
+| `created_by`, `created_at` | who opened it and when |
+
+`ends_at`, `is_open()` and `closes_in()` are **computed, never stored**, the
+same rule the museum's timed visibility follows: nothing has to run on a
+schedule to close a window, so nothing can fail to run and leave one open.
+
+### `CohortMember` — one arrival
+
+`cohort` + `user` + `joined_at`, unique together.
+
+A row per join rather than a field on the person, because "who came through
+this link" is the question Avi asked and it has to stay answerable after
+somebody attends a second workshop. **Belonging accumulates**: nothing here is
+ever moved or overwritten, so a person shows up in every workshop they
+attended.
+
+### Two fields elsewhere
+
+- **`Concept.cohort`** (nullable FK). Stamped at creation from the person's
+  most recent arrival. Stamped rather than derived, because deriving would let
+  a third workshop quietly reattribute the first one's work, and "what came out
+  of that workshop" would stop being true.
+- **`Membership.ai_needs_open_window`** (bool, default False). True when the
+  membership was created *by a link*. It is what separates a workshop
+  participant, whose AI is licensed by their windows, from somebody Avi
+  approved by hand, who has no window and must never acquire one by attending
+  a workshop later.
+
+### Decisions
+
+1. **The link approves on the spot.** Thirty people cannot each wait for a tap.
+   This is what makes the link a key, and K7 in the spec is the discipline that
+   follows.
+2. **One window governs two doors**: joining, and spending money on AI.
+   Everything that does not reach a model keeps working after it closes.
+3. **Many cohorts per person**, accumulating. AI reopens because a new window
+   is open, which falls out of the rule rather than needing its own.
+4. **Attribution is stamped, not derived.**
+5. **Open:** whether a cohort is only a filter over public articles or also a
+   fifth `PressRelease.visibility`. Everything above is identical either way.

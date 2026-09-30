@@ -586,7 +586,7 @@ def test_the_cockpit_navigates_on_a_phone(phone_page, live_server,
     _sign_in(phone_page, live_server, "phone-root")
 
     for path in ["/exo/manage/requests/", "/exo/manage/releases/",
-                 "/exo/manage/usage/"]:
+                 "/exo/manage/usage/", "/exo/manage/cohorts/"]:
         phone_page.goto(live_server.url + path, wait_until="domcontentloaded")
         small = phone_page.evaluate(TAP_JS, MIN_TAP_PX)
         assert small == [], f"{path}: {small}"

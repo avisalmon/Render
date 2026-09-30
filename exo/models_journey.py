@@ -57,6 +57,15 @@ class Concept(models.Model):
     special = models.TextField(blank=True)
     unique = models.TextField(blank=True)
 
+    #: Which workshop this came out of, stamped at creation from the person's
+    #: most recent arrival (data_model.md §6). Stamped rather than derived: a
+    #: third workshop must not quietly reattribute the first one's work, or
+    #: "what came out of that workshop" stops being a true answer.
+    cohort = models.ForeignKey(
+        "exo.Cohort", null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="concepts",
+    )
+
     position = models.PositiveIntegerField(default=0)
     #: Set when the user goes back a stage, so downstream work can be shown as
     #: possibly out of date without deleting any of it (spec §5.5).
