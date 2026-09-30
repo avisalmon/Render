@@ -294,6 +294,30 @@ STRINGS = {
     "output.working": {"he": "כותב…", "en": "Writing…"},
     "output.download_pdf": {"he": "הורדה PDF", "en": "Download PDF"},
     "output.download_docx": {"he": "הורדה Word", "en": "Download Word"},
+    "edit.title": {"he": "עריכת הכתבה", "en": "Editing the feature"},
+    "edit.headline": {"he": "כותרת", "en": "Headline"},
+    "edit.save": {"he": "שמור", "en": "Save"},
+    "edit.cancel": {"he": "ביטול", "en": "Cancel"},
+    "edit.add_paragraph": {"he": "הוסף פסקה", "en": "Add a paragraph"},
+    "edit.move_up": {"he": "העלה פסקה", "en": "Move paragraph up"},
+    "edit.move_down": {"he": "הורד פסקה", "en": "Move paragraph down"},
+    "edit.remove": {"he": "מחק פסקה", "en": "Delete paragraph"},
+    "edit.words": {"he": "מילים", "en": "words"},
+    "edit.discard": {
+        "he": "לבטל את העריכות? מה ששינית ולא שמרת יאבד.",
+        "en": "Discard your edits? Anything you changed and did not save will be lost.",
+    },
+    "edit.hint": {
+        "he": "כל תיבה היא פסקה בכתבה. אפשר להעביר פסקאות למעלה ולמטה, "
+              "למחוק ולהוסיף. הטיוטה נשמרת בדפדפן עד שתשמור.",
+        "en": "Each box is one paragraph. Move them up and down, delete them, add "
+              "more. Your draft is kept in this browser until you save.",
+    },
+    "edit.empty": {
+        "he": "כתבה בלי טקסט אי אפשר לשמור.",
+        "en": "A feature with no text cannot be saved.",
+    },
+    "edit.saved": {"he": "נשמר", "en": "Saved"},
     "output.regenerate_warn": {
         "he": "ערכת את הטקסט. יצירה מחדש תדרוס את העריכות שלך.",
         "en": "You edited the text. Regenerating will overwrite your edits.",

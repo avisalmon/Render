@@ -683,6 +683,37 @@ def test_regenerating_over_a_hand_edit_needs_confirmation(signed_in, seeded, mem
     assert allowed.status_code == 200
 
 
+def test_an_edit_that_empties_the_article_is_refused(signed_in, seeded, member):
+    """A deletion by accident, with no undo behind it. The editor disables its
+    own save for this, but the button is not the only way in."""
+    concept = make_concept(member, stage=Concept.Stage.OUTPUT)
+    post_json(signed_in, reverse("exo:output_generate", args=[concept.pk]))
+    before = PressRelease.objects.get(concept=concept).body
+    assert before
+
+    for payload in [{"body": "   "}, {"headline": ""}, {"body": ""}]:
+        response = post_json(
+            signed_in, reverse("exo:output_edit", args=[concept.pk]), payload)
+        assert response.status_code == 422, payload
+
+    assert PressRelease.objects.get(concept=concept).body == before
+
+
+def test_a_real_edit_is_kept_and_marks_the_article_as_touched(signed_in, seeded,
+                                                              member):
+    concept = make_concept(member, stage=Concept.Stage.OUTPUT)
+    post_json(signed_in, reverse("exo:output_generate", args=[concept.pk]))
+
+    post_json(signed_in, reverse("exo:output_edit", args=[concept.pk]), {
+        "headline": "כותרת שכתבתי בעצמי",
+        "body": "פסקה ראשונה.\n\nפסקה שנייה.",
+    })
+    release = PressRelease.objects.get(concept=concept)
+    assert release.headline == "כותרת שכתבתי בעצמי"
+    assert release.body.count("\n\n") == 1, "the paragraph break was not kept"
+    assert release.edited_by_owner is True
+
+
 def test_the_stress_test_is_stored(signed_in, seeded, member):
     concept = make_concept(member, stage=Concept.Stage.OUTPUT)
     post_json(signed_in, reverse("exo:output_generate", args=[concept.pk]))

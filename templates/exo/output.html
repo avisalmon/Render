@@ -52,6 +52,47 @@
 
         <div id="paper">{% include "exo/_paper.html" %}</div>
 
+        {% comment %}
+          The editor (2026-09-30). Editing used to be `contentEditable` turned
+          on over the printed article: no cancel, no way back once you had
+          typed, and genuinely awkward inside a two-column newspaper layout on
+          a phone.
+
+          It works on paragraphs because that is the unit the article is
+          actually stored in, blank-line separated, and the unit that the web
+          page, the PDF and the Word file all already read. So reordering and
+          deleting need no new format and cannot make the three renderers
+          disagree.
+        {% endcomment %}
+        <section class="exo-editor" id="editor" hidden
+                 data-release="{{ release.pk }}"
+                 data-confirm-cancel="{% t 'edit.discard' %}"
+                 data-empty-warning="{% t 'edit.empty' %}"
+                 data-word-label="{% t 'edit.words' %}"
+                 data-label-up="{% t 'edit.move_up' %}"
+                 data-label-down="{% t 'edit.move_down' %}"
+                 data-label-del="{% t 'edit.remove' %}">
+          <header class="exo-editor-bar">
+            <strong>{% t "edit.title" %}</strong>
+            <span class="exo-small exo-faint" id="ed-count"></span>
+            <span class="exo-editor-actions">
+              <button class="exo-btn exo-btn-quiet" id="ed-cancel">{% t "edit.cancel" %}</button>
+              <button class="exo-btn" id="ed-save">{% t "edit.save" %}</button>
+            </span>
+          </header>
+
+          <label class="exo-field">
+            <span>{% t "edit.headline" %}</span>
+            <input id="ed-headline" type="text" maxlength="300"
+                   value="{{ release.headline }}">
+          </label>
+
+          <div id="ed-paragraphs" class="exo-paras"></div>
+
+          <button class="exo-btn exo-btn-ghost" id="ed-add">{% t "edit.add_paragraph" %}</button>
+          <p class="exo-small exo-faint">{% t "edit.hint" %}</p>
+        </section>
+
         <div class="exo-output-tools">
           <label class="exo-field exo-field-inline">
             <span>{% t "output.style" %}</span>

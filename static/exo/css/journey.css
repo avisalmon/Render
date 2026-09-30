@@ -601,3 +601,73 @@ button.exo-rail-step:hover { background: var(--exo-sunken); }
   .exo-output-topbar .exo-downloads { flex: 1 1 100%; }
   .exo-output-topbar .exo-downloads .exo-btn { flex: 1; }
 }
+
+/* --- the article editor --------------------------------------------------
+   Editing happens on a plain surface, not over the printed piece: a
+   two-column newspaper layout is a bad place to type, especially on a phone.
+   The paper is hidden while this is open, so there is one thing on screen and
+   it is obvious which one you are changing. */
+.exo-editor {
+  border-block: 3px solid var(--exo-ink);
+  padding-block: 16px;
+  margin-block-end: 18px;
+}
+.exo-editor-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-block-end: 14px;
+}
+.exo-editor-bar strong { font-family: var(--exo-display); font-size: 18px; }
+.exo-editor-actions {
+  display: inline-flex;
+  gap: 8px;
+  margin-inline-start: auto;
+}
+#ed-count { font-variant-numeric: tabular-nums; }
+#ed-headline {
+  font-family: var(--exo-display);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.exo-paras { display: flex; flex-direction: column; gap: 10px; margin-block: 14px; }
+
+/* One paragraph, with its own handles. The tools sit beside the text rather
+   than inside it, so they never move as the box grows. */
+.exo-para { display: flex; align-items: flex-start; gap: 6px; }
+.exo-para textarea {
+  flex: 1;
+  min-inline-size: 0;
+  font-family: var(--exo-body);
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--exo-ink);
+  background: var(--exo-surface);
+  border: 1px solid var(--exo-line);
+  padding-block: 10px;
+  padding-inline: 12px;
+  resize: none;
+  overflow: hidden;
+}
+.exo-para textarea:focus {
+  outline: none;
+  border-color: var(--exo-ink);
+  background: #FFFFFF;
+}
+.exo-para-tools { display: flex; flex-direction: column; gap: 2px; flex: none; }
+.exo-para-tools .exo-icon-btn { min-block-size: 32px; min-inline-size: 36px; }
+@media (max-width: 520px) {
+  /* On a phone the handles go under the box: a 36px column beside a textarea
+     leaves the text too narrow to read what you are writing. */
+  .exo-para { flex-direction: column; }
+  /* `flex: 1` above is there to take the remaining *width* beside the
+     handles. Once this container turns into a column it governs height
+     instead, and it silently overrules the height the auto-sizer sets, so
+     every paragraph sits clipped at two rows however long it is. The
+     auto-sizing was never broken; this was. */
+  .exo-para textarea { flex: none; inline-size: 100%; }
+  .exo-para-tools { flex-direction: row; align-self: flex-end; }
+  .exo-para-tools .exo-icon-btn { min-block-size: var(--exo-tap); min-inline-size: var(--exo-tap); }
+}

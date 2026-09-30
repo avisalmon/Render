@@ -445,6 +445,134 @@ def test_the_downloads_are_reachable_without_reading_the_article_again(
         assert links.nth(i).bounding_box()["height"] >= MIN_TAP_PX - 1
 
 
+def _with_a_feature(django_user_model, name, paragraphs=4):
+    from exo.models import Concept, NewspaperStyle, PressRelease
+
+    user = _member(django_user_model, name)
+    concept = Concept.objects.create(owner=user, title="A falafel shop",
+                                     stage=Concept.Stage.OUTPUT)
+    body = "\n\n".join(
+        f"Paragraph number {i}. " + ("It runs on for a while so the box has "
+                                     "something real to size itself to. " * 3)
+        for i in range(1, paragraphs + 1)
+    )
+    PressRelease.objects.create(
+        concept=concept, headline="Eighteen months on", body=body,
+        document_body="The document.",
+        newspaper_style=NewspaperStyle.objects.first(),
+    )
+    return concept
+
+
+def test_the_editor_opens_on_paragraphs_and_hides_the_printed_piece(
+        phone_page, live_server, django_user_model):
+    """Editing used to be `contentEditable` over the printed article, inside a
+    two-column newspaper layout, with no cancel. It now edits the thing the
+    article actually is: a headline and a list of paragraphs."""
+    _seed()
+    concept = _with_a_feature(django_user_model, "phone-editor")
+    _sign_in(phone_page, live_server, "phone-editor")
+    phone_page.goto(live_server.url + f"/exo/concepts/{concept.pk}/output/",
+                    wait_until="domcontentloaded")
+
+    phone_page.click("#edit")
+    phone_page.wait_for_timeout(500)
+
+    assert phone_page.locator(".exo-para textarea").count() == 4
+    assert phone_page.locator("#paper").is_hidden(), "the paper is still showing"
+    assert phone_page.input_value("#ed-headline") == "Eighteen months on"
+
+
+def test_no_paragraph_box_hides_its_own_text(phone_page, live_server,
+                                             django_user_model):
+    """The bug this guards: `.exo-para` becomes a column at phone width, and
+    `flex: 1` on the textarea then governs its *height* and silently overrules
+    the height the auto-sizer sets. Every paragraph opened clipped to two rows
+    however long it was, and the auto-sizing looked broken when it never was.
+    """
+    _seed()
+    concept = _with_a_feature(django_user_model, "phone-clipper")
+    _sign_in(phone_page, live_server, "phone-clipper")
+    phone_page.goto(live_server.url + f"/exo/concepts/{concept.pk}/output/",
+                    wait_until="domcontentloaded")
+    phone_page.click("#edit")
+    phone_page.wait_for_timeout(900)
+
+    clipped = phone_page.evaluate("""() => {
+        const bad = [];
+        document.querySelectorAll('.exo-para textarea').forEach((t, i) => {
+            if (t.scrollHeight > t.clientHeight + 2) {
+                bad.push(i + ': needs ' + t.scrollHeight + ' has ' + t.clientHeight);
+            }
+        });
+        return bad;
+    }""")
+    assert clipped == [], f"paragraphs clipped: {clipped}"
+
+
+def test_paragraphs_can_be_reordered_and_the_order_is_what_is_saved(
+        phone_page, live_server, django_user_model):
+    _seed()
+    concept = _with_a_feature(django_user_model, "phone-mover")
+    _sign_in(phone_page, live_server, "phone-mover")
+    phone_page.goto(live_server.url + f"/exo/concepts/{concept.pk}/output/",
+                    wait_until="domcontentloaded")
+    phone_page.click("#edit")
+    phone_page.wait_for_timeout(500)
+
+    # Move the second paragraph above the first, then save.
+    phone_page.locator(".exo-para").nth(1).locator("button").nth(0).click()
+    phone_page.wait_for_timeout(200)
+    phone_page.click("#ed-save")
+    phone_page.wait_for_timeout(2000)
+
+    concept.refresh_from_db()
+    first = concept.release.body.split("\n\n")[0]
+    assert first.startswith("Paragraph number 2"), concept.release.body[:80]
+
+
+def test_cancelling_asks_and_then_changes_nothing(phone_page, live_server,
+                                                  django_user_model):
+    _seed()
+    concept = _with_a_feature(django_user_model, "phone-canceller")
+    original = concept.release.body
+    _sign_in(phone_page, live_server, "phone-canceller")
+    phone_page.goto(live_server.url + f"/exo/concepts/{concept.pk}/output/",
+                    wait_until="domcontentloaded")
+    phone_page.click("#edit")
+    phone_page.wait_for_timeout(500)
+
+    phone_page.locator(".exo-para textarea").nth(0).fill("Something else entirely.")
+    asked = {}
+    phone_page.once("dialog", lambda d: (asked.update(t=d.message), d.accept()))
+    phone_page.click("#ed-cancel")
+    phone_page.wait_for_timeout(400)
+
+    assert asked.get("t"), "cancelling threw the edits away without asking"
+    assert phone_page.locator("#paper").is_visible()
+    concept.refresh_from_db()
+    assert concept.release.body == original
+
+
+def test_an_emptied_article_cannot_be_saved(phone_page, live_server,
+                                            django_user_model):
+    _seed()
+    concept = _with_a_feature(django_user_model, "phone-emptier", paragraphs=1)
+    original = concept.release.body
+    _sign_in(phone_page, live_server, "phone-emptier")
+    phone_page.goto(live_server.url + f"/exo/concepts/{concept.pk}/output/",
+                    wait_until="domcontentloaded")
+    phone_page.click("#edit")
+    phone_page.wait_for_timeout(500)
+
+    phone_page.locator(".exo-para textarea").nth(0).fill("")
+    phone_page.click("#ed-save")
+    phone_page.wait_for_timeout(700)
+
+    concept.refresh_from_db()
+    assert concept.release.body == original, "the article was emptied"
+
+
 def test_the_mirror_is_real_and_not_just_an_attribute(phone_page, live_server,
                                                       django_user_model):
     """`dir="rtl"` on the html element is easy to assert and easy to have

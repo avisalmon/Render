@@ -588,34 +588,207 @@ function exoOutput() {
 
   regens.forEach((b) => b.addEventListener("click", () => writeNew(b)));
 
+  /* ---- editing the article ------------------------------------------
+     Editing used to be `contentEditable` switched on over the printed piece:
+     one button that meant both "start" and "save", no cancel, and nothing to
+     get back to if you changed your mind halfway.
+
+     This edits the article as what it actually is: a headline and a list of
+     paragraphs. That is the unit it is stored in, blank-line separated, and
+     the unit the page, the PDF and the Word file all read, so reordering and
+     deleting need no new format and cannot make the three disagree. */
+  const editor = document.getElementById("editor");
   const edit = document.getElementById("edit");
-  if (edit) {
-    edit.addEventListener("click", async () => {
-      const paper = document.querySelector(".exo-paper-body");
-      const head = document.querySelector(".exo-paper-headline");
-      const editing = edit.dataset.editing === "1";
-      if (!editing) {
-        paper.contentEditable = "true";
-        head.contentEditable = "true";
-        paper.focus();
-        edit.dataset.editing = "1";
-        edit.classList.add("is-on");
+
+  if (editor && edit) {
+    const paras = document.getElementById("ed-paragraphs");
+    const headlineBox = document.getElementById("ed-headline");
+    const counter = document.getElementById("ed-count");
+    const paperEl = document.getElementById("paper");
+    const releaseId = editor.dataset.release;
+    const label = (key, fallback) =>
+      document.documentElement.lang === "he" ? key : fallback;
+
+    let opened = "";   // what the article looked like when editing began
+
+    function autosize(box) {
+      box.style.height = "auto";
+      box.style.height = box.scrollHeight + "px";
+    }
+
+    function autosizeAll() {
+      rows().forEach(autosize);
+    }
+
+    /* Measured twice on purpose. The first pass runs with whatever font is
+       available at that instant, and this page loads a serif from the network;
+       when it arrives every line gets taller and each box is left clipped
+       showing two rows of a five-row paragraph. `document.fonts.ready`
+       settles after the real face is in, so the second pass measures the text
+       people will actually see. Resizing changes the wrap, so that re-measures
+       too. */
+    function autosizeWhenSettled() {
+      autosizeAll();
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(autosizeAll);
+      }
+      window.requestAnimationFrame(autosizeAll);
+    }
+
+    window.addEventListener("resize", () => {
+      if (!editor.hidden) autosizeAll();
+    });
+
+    function countWords() {
+      const text = [headlineBox.value]
+        .concat(rows().map((b) => b.value))
+        .join(" ");
+      const n = text.trim().split(/\s+/).filter(Boolean).length;
+      counter.textContent = n + " " + (editor.dataset.wordLabel || "");
+    }
+
+    function rows() {
+      return Array.from(paras.querySelectorAll("textarea"));
+    }
+
+    function snapshot() {
+      return JSON.stringify({
+        headline: headlineBox.value,
+        body: rows().map((b) => b.value.trim()).filter(Boolean).join("\n\n"),
+      });
+    }
+
+    function addRow(text, before) {
+      const row = document.createElement("div");
+      row.className = "exo-para";
+
+      const box = document.createElement("textarea");
+      box.rows = 2;
+      box.value = text || "";
+      box.addEventListener("input", () => {
+        autosize(box);
+        countWords();
+        saveDraft();
+      });
+
+      const tools = document.createElement("div");
+      tools.className = "exo-para-tools";
+      [
+        ["up", "↑", editor.dataset.labelUp],
+        ["down", "↓", editor.dataset.labelDown],
+        ["del", "✕", editor.dataset.labelDel],
+      ].forEach(([action, glyph, title]) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "exo-icon-btn";
+        button.textContent = glyph;
+        button.title = title || action;
+        button.setAttribute("aria-label", title || action);
+        button.addEventListener("click", () => {
+          if (action === "up" && row.previousElementSibling) {
+            paras.insertBefore(row, row.previousElementSibling);
+          } else if (action === "down" && row.nextElementSibling) {
+            paras.insertBefore(row.nextElementSibling, row);
+          } else if (action === "del") {
+            row.remove();
+            if (!rows().length) addRow("");
+          }
+          countWords();
+          saveDraft();
+          box.focus();
+        });
+        tools.appendChild(button);
+      });
+
+      row.appendChild(box);
+      row.appendChild(tools);
+      paras.insertBefore(row, before || null);
+      autosize(box);
+      return box;
+    }
+
+    function load(headline, body) {
+      headlineBox.value = headline;
+      paras.innerHTML = "";
+      const blocks = (body || "").split(/\n\s*\n/).map((b) => b.trim())
+        .filter(Boolean);
+      (blocks.length ? blocks : [""]).forEach((b) => addRow(b));
+      autosizeWhenSettled();
+      countWords();
+    }
+
+    /* The draft survives a closed tab, like the interview box does. It is a
+       convenience and never state the app depends on, so every access is
+       wrapped. */
+    const draftKey = "article." + releaseId;
+    function saveDraft() { exoDraft.write(draftKey, "v1", snapshot()); }
+
+    function open() {
+      const current = {
+        headline: document.querySelector(".exo-paper-headline").innerText.trim(),
+        body: Array.from(document.querySelectorAll(".exo-paper-body p"))
+          .map((p) => p.innerText.trim()).filter(Boolean).join("\n\n"),
+      };
+      const saved = exoDraft.read(draftKey, "v1");
+      let start = current;
+      if (saved) {
+        try { start = JSON.parse(saved); } catch (e) { start = current; }
+      }
+      // Shown *before* filling: a textarea inside a hidden element reports a
+      // scrollHeight of zero, so auto-sizing it there measures nothing and
+      // every paragraph opens clipped to two rows.
+      editor.hidden = false;
+      paperEl.hidden = true;
+      load(start.headline, start.body);
+      opened = JSON.stringify(current);
+      edit.classList.add("is-on");
+      headlineBox.focus();
+    }
+
+    function close() {
+      editor.hidden = true;
+      paperEl.hidden = false;
+      edit.classList.remove("is-on");
+    }
+
+    edit.addEventListener("click", () => (editor.hidden ? open() : close()));
+
+    document.getElementById("ed-add").addEventListener("click", () => {
+      addRow("").focus();
+      saveDraft();
+    });
+
+    document.getElementById("ed-cancel").addEventListener("click", () => {
+      if (snapshot() !== opened && !window.confirm(editor.dataset.confirmCancel)) {
         return;
       }
-      paper.contentEditable = "false";
-      head.contentEditable = "false";
-      edit.dataset.editing = "0";
-      edit.classList.remove("is-on");
+      exoDraft.clear(draftKey, "v1");
+      close();
+    });
+
+    document.getElementById("ed-save").addEventListener("click", async (e) => {
+      const payload = JSON.parse(snapshot());
+      if (!payload.body.trim()) {
+        exo.toast(editor.dataset.emptyWarning, "error");
+        return;
+      }
+      e.target.disabled = true;
       try {
-        await exo.api(root.dataset.edit, {
-          method: "POST",
-          json: { headline: head.innerText, body: paper.innerText },
-        });
-        exo.toast(document.documentElement.lang === "he" ? "נשמר" : "Saved", "ok");
+        await exo.api(root.dataset.edit, { method: "POST", json: payload });
+        exoDraft.clear(draftKey, "v1");
+        window.location.reload();
       } catch (err) {
+        e.target.disabled = false;
         exoToastError(err);
       }
     });
+
+    // Escape closes, asking first if anything changed.
+    editor.addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape") document.getElementById("ed-cancel").click();
+    });
+
+    headlineBox.addEventListener("input", () => { countWords(); saveDraft(); });
   }
 
   const radios = document.querySelectorAll('input[name="visibility"]');

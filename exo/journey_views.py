@@ -542,6 +542,14 @@ def output_edit(request, pk):
         data = json.loads(request.body or "{}")
     except json.JSONDecodeError:
         return _error("bad request")
+    # An edit that empties the article is a deletion by accident, and there is
+    # no undo behind it. The editor disables its own save button for this, but
+    # the button is not the only way in.
+    if "body" in data and not str(data["body"]).strip():
+        return _error("empty", status=422)
+    if "headline" in data and not str(data["headline"]).strip():
+        return _error("empty", status=422)
+
     for field in ("headline", "body", "document_body"):
         if field in data:
             setattr(release, field, str(data[field]).strip())
