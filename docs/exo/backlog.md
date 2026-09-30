@@ -671,9 +671,11 @@ can see who came and what they made.
 - [x] **K4** Belonging accumulates; new work stamped with the newest cohort.
 - [x] **K5** `/exo/manage/cohorts/`: create, copy the link, see the window, see
   the arrivals, see the output, close by hand.
-- [ ] **K6** The museum switch — **blocked on the open decision**, built last.
+- [x] **K6** The museum switch, and the group as a fifth visibility. Avi decided
+  the wider reading ("both"), so this is the switch on the museum *and*
+  `Visibility.COHORT` in the publish panel, offered only inside a workshop.
 
-**Tests (the refusals first, per the BKM).** 28 of them, refusals outnumbering
+**Tests (the refusals first, per the BKM).** 42 of them, refusals outnumbering
 happy paths as the BKM asks.
 
 - [x] An unknown token, an expired window, a closed cohort and a full cohort
@@ -689,6 +691,15 @@ happy paths as the BKM asks.
 - [x] A hand-approved member never acquires a window by attending a workshop.
 - [x] A second workshop reopens AI and leaves the first membership standing.
 - [x] Work is stamped at creation and a later workshop does not move it.
+- [x] A "my group" article is on no public wall, is not `is_public_now()`, and
+  404s for a stranger and for another workshop's participant — on the article
+  page and on the download route alike.
+- [x] "My group" with **no** group shows the piece to nobody rather than to
+  everybody. That is the one way this visibility could have failed open.
+- [x] The switch and the publish choice are each offered only to somebody who
+  has a group; asking for the group wall without one falls back to everything.
+- [x] The group wall is screened like the public one, and a private piece is
+  still never sent to a provider.
 
 **Demo.** Done end to end in a browser on 2026-10-01: Avi opens a workshop on
 a phone, the link is created, a participant opens it in a clean browser and

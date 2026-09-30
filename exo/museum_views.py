@@ -41,9 +41,68 @@ def publicly_visible(now=None):
     )
 
 
+def cohort_visible(user, now=None):
+    """The workshop wall: everything from this person's workshops that they
+    may see (spec K6).
+
+    Wider than the public wall in one direction and narrower in another. It
+    includes pieces marked for the group, which are on no public wall at all,
+    and it is limited to the workshops this person actually attended. A person
+    in no workshop has no group wall, which is why the switch only appears for
+    somebody who has one.
+
+    Built on `publicly_visible`'s rules rather than beside them: hidden stays
+    hidden, and an expired timed release is as gone here as it is there.
+    """
+    from .models import CohortMember
+
+    now = now or timezone.now()
+    if not getattr(user, "is_authenticated", False):
+        return PressRelease.objects.none()
+
+    mine = list(CohortMember.objects.filter(user=user)
+                .values_list("cohort_id", flat=True))
+    if not mine:
+        return PressRelease.objects.none()
+
+    return (
+        PressRelease.objects
+        .filter(hidden_by_admin=False, concept__cohort_id__in=mine)
+        .filter(
+            Q(visibility=PressRelease.Visibility.PUBLIC)
+            | Q(visibility=PressRelease.Visibility.COHORT)
+            | Q(visibility=PressRelease.Visibility.TIMED, public_until__gt=now)
+        )
+        .exclude(headline="")
+        .select_related("concept", "concept__owner", "newspaper_style")
+        .annotate(likes=Count("like_rows", distinct=True))
+    )
+
+
+def my_cohorts(user):
+    from .models import CohortMember
+
+    if not getattr(user, "is_authenticated", False):
+        return []
+    return list(
+        CohortMember.objects.filter(user=user)
+        .select_related("cohort").order_by("-joined_at")
+    )
+
+
 def museum(request):
     sort = request.GET.get("sort") or "new"
-    releases = publicly_visible()
+    joined = my_cohorts(request.user)
+
+    # The group wall is only offered to somebody who has one, and "everyone"
+    # stays the default: the museum's job is still to show what this place has
+    # made.
+    wall = request.GET.get("wall")
+    if wall == "group" and joined:
+        releases = cohort_visible(request.user)
+    else:
+        wall = "all"
+        releases = publicly_visible()
     if sort == "liked":
         releases = releases.order_by("-likes", "-created_at")
     elif sort == "score":
@@ -59,6 +118,8 @@ def museum(request):
         "releases": releases[:60],
         "sort": sort,
         "lang_filter": language,
+        "wall": wall,
+        "cohorts": [j.cohort for j in joined],
         "nav": "museum",
     })
 

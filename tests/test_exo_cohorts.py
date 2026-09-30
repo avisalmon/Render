@@ -462,3 +462,254 @@ def test_twenty_four_hours_is_the_default(seeded):
     cohort = Cohort.objects.create(name="default")
     assert cohort.window_hours == 24
     assert (cohort.ends_at - cohort.starts_at) == timezone.timedelta(hours=24)
+
+
+# ---- the group wall: the fifth visibility (spec K6) ---------------------- #
+#
+# Avi's answer to the open question was that the group should be a *choice*
+# when publishing, not only a filter on the museum. That makes it the first new
+# visibility since the app was built, so these tests are mostly about what it
+# must not leak: not onto the public wall, not to another workshop, and not to
+# everyone when there is no workshop at all.
+
+
+def participant(name, cohort=None):
+    user = User.objects.create_user(name, f"{name}@example.com",
+                                    "a-strong-pass-123")
+    approve(membership_for(user, create=True))
+    if cohort is not None:
+        CohortMember.objects.create(cohort=cohort, user=user)
+    return user
+
+
+def article(owner, cohort, visibility, headline="A feature"):
+    from exo.models import NewspaperStyle, PressRelease
+
+    concept = Concept.objects.create(owner=owner, title="idea", cohort=cohort,
+                                     stage=Concept.Stage.OUTPUT)
+    return PressRelease.objects.create(
+        concept=concept, headline=headline, body="A paragraph.",
+        document_body="doc", visibility=visibility,
+        newspaper_style=NewspaperStyle.objects.first(),
+    )
+
+
+def test_a_group_piece_is_not_on_the_public_wall(seeded, workshop):
+    """The whole point of the choice: the room, not the internet."""
+    from exo.models import PressRelease
+    from exo.museum_views import publicly_visible
+
+    piece = article(participant("writer", workshop), workshop,
+                    PressRelease.Visibility.COHORT)
+
+    assert piece.is_public_now() is False
+    assert piece.pk not in [r.pk for r in publicly_visible()]
+
+
+def test_the_room_reads_it_and_a_stranger_does_not(client, seeded, workshop):
+    from exo.models import PressRelease
+
+    writer = participant("writer2", workshop)
+    classmate = participant("classmate", workshop)
+    stranger = participant("stranger")
+    piece = article(writer, workshop, PressRelease.Visibility.COHORT)
+
+    assert piece.visible_to(writer) is True
+    assert piece.visible_to(classmate) is True
+    assert piece.visible_to(stranger) is False
+    assert piece.visible_to(None) is False
+
+    url = reverse("exo:museum_item", args=[piece.pk])
+    assert client.get(url).status_code == 404
+    client.login(username="classmate", password="a-strong-pass-123")
+    assert client.get(url).status_code == 200
+
+
+def test_another_workshop_is_not_the_same_room(seeded, workshop):
+    from exo.models import PressRelease
+
+    elsewhere = Cohort.objects.create(name="סדנה אחרת")
+    piece = article(participant("writer3", workshop), workshop,
+                    PressRelease.Visibility.COHORT)
+
+    assert piece.visible_to(participant("guest", elsewhere)) is False
+
+
+def test_choosing_my_group_without_one_shows_it_to_nobody(seeded):
+    """Not a back door to everyone. A concept made outside a workshop has no
+    room to show it to, so the piece stays the owner's alone."""
+    from exo.models import PressRelease
+
+    loner = participant("loner")
+    piece = article(loner, None, PressRelease.Visibility.COHORT)
+
+    assert piece.cohort_ids() == []
+    assert piece.visible_to(participant("anyone")) is False
+    assert piece.visible_to(loner) is True
+
+
+def test_the_two_walls_show_different_things(seeded, workshop):
+    from exo.models import PressRelease
+    from exo.museum_views import cohort_visible, publicly_visible
+
+    writer = participant("writer4", workshop)
+    reader = participant("reader", workshop)
+
+    room = article(writer, workshop, PressRelease.Visibility.COHORT,
+                   "Only the room")
+    world = article(writer, workshop, PressRelease.Visibility.PUBLIC,
+                    "Everybody")
+    nobody = article(writer, workshop, PressRelease.Visibility.PRIVATE,
+                     "Nobody")
+
+    group_wall = [r.pk for r in cohort_visible(reader)]
+    assert room.pk in group_wall
+    assert world.pk in group_wall, "the group wall should show the room's public work too"
+    assert nobody.pk not in group_wall
+
+    public_wall = [r.pk for r in publicly_visible()]
+    assert room.pk not in public_wall
+    assert world.pk in public_wall
+
+
+def test_hidden_is_hidden_on_the_group_wall_too(seeded, workshop):
+    """The group wall is built on the public wall's rules rather than beside
+    them, so an admin's hand reaches it."""
+    from exo.models import PressRelease
+    from exo.museum_views import cohort_visible
+
+    reader = participant("reader2", workshop)
+    piece = article(participant("writer5", workshop), workshop,
+                    PressRelease.Visibility.COHORT)
+    piece.hidden_by_admin = True
+    piece.save()
+
+    assert piece.pk not in [r.pk for r in cohort_visible(reader)]
+
+
+def test_an_expired_timed_piece_is_as_gone_here_as_anywhere(seeded, workshop):
+    from exo.models import PressRelease
+    from exo.museum_views import cohort_visible
+
+    reader = participant("reader3", workshop)
+    piece = article(participant("writer6", workshop), workshop,
+                    PressRelease.Visibility.TIMED)
+    piece.public_until = timezone.now() - timezone.timedelta(minutes=1)
+    piece.save()
+
+    assert piece.pk not in [r.pk for r in cohort_visible(reader)]
+
+
+def test_the_switch_is_only_offered_to_somebody_with_a_group(client, seeded,
+                                                            workshop):
+    from exo.strings import STRINGS
+
+    label = STRINGS["museum.wall_group"]["he"]
+    assert label not in client.get(reverse("exo:museum")).content.decode()
+
+    participant("switcher", workshop)
+    client.login(username="switcher", password="a-strong-pass-123")
+    assert label in client.get(reverse("exo:museum")).content.decode()
+
+
+def test_asking_for_a_group_wall_without_a_group_falls_back(client, seeded,
+                                                            workshop):
+    """Never an error, and never another room's work."""
+    from exo.models import PressRelease
+
+    article(participant("writer7", workshop), workshop,
+            PressRelease.Visibility.COHORT, "Only the room")
+
+    response = client.get(reverse("exo:museum"), {"wall": "group"})
+    assert response.status_code == 200
+    assert response.context["wall"] == "all"
+    assert "Only the room" not in response.content.decode()
+
+
+def test_the_group_wall_keeps_the_sort_and_the_language(client, seeded,
+                                                        workshop):
+    from exo.models import PressRelease
+
+    reader = participant("reader4", workshop)
+    piece = article(reader, workshop, PressRelease.Visibility.COHORT,
+                    "Only the room")
+    client.login(username="reader4", password="a-strong-pass-123")
+
+    for sort in ("new", "liked", "score"):
+        response = client.get(reverse("exo:museum"),
+                              {"wall": "group", "sort": sort})
+        assert response.status_code == 200
+        assert response.context["wall"] == "group"
+        assert piece.pk in [r.pk for r in response.context["releases"]], sort
+
+
+def test_the_publish_panel_offers_the_group_only_inside_a_workshop(client,
+                                                                   seeded,
+                                                                   workshop):
+    from exo.models import PressRelease
+    from exo.strings import STRINGS
+
+    label = STRINGS["vis.cohort"]["he"]
+
+    inside = participant("inside", workshop)
+    theirs = article(inside, workshop, PressRelease.Visibility.PRIVATE)
+    client.login(username="inside", password="a-strong-pass-123")
+    shown = client.get(reverse("exo:concept_output", args=[theirs.concept.pk]))
+    assert label in shown.content.decode()
+
+    outside = participant("outside")
+    plain = article(outside, None, PressRelease.Visibility.PRIVATE)
+    client.login(username="outside", password="a-strong-pass-123")
+    shown = client.get(reverse("exo:concept_output", args=[plain.concept.pk]))
+    assert label not in shown.content.decode()
+
+
+def test_the_room_can_download_it_and_a_stranger_cannot(client, seeded,
+                                                         workshop):
+    """`visible_to` governs the download route, so the new visibility reaches
+    it without the route learning anything about workshops."""
+    from exo.models import PressRelease
+
+    piece = article(participant("writer8", workshop), workshop,
+                    PressRelease.Visibility.COHORT)
+    participant("mate", workshop)
+    url = reverse("exo:article_download", args=[piece.pk, "pdf"])
+
+    assert client.get(url).status_code == 404
+    client.login(username="mate", password="a-strong-pass-123")
+    assert client.get(url).status_code == 200
+
+
+def test_the_group_wall_is_screened_like_the_public_one(seeded, workshop,
+                                                        monkeypatch):
+    """A room of strangers reading each other is still an audience, and the
+    check is free, so choosing the group does not skip it."""
+    from exo import journey_views
+    from exo.models import PressRelease
+
+    piece = article(participant("writer9", workshop), workshop,
+                    PressRelease.Visibility.COHORT)
+    monkeypatch.setattr(ai, "public_text_is_safe",
+                        lambda text, user=None: (False, "violence"))
+
+    reason = journey_views._screen_before_the_wall(piece, piece.concept.owner)
+    assert reason
+    piece.refresh_from_db()
+    assert piece.visibility == PressRelease.Visibility.PRIVATE
+
+
+def test_a_private_piece_is_still_never_sent_anywhere(seeded, workshop,
+                                                      monkeypatch):
+    """The other side of the same rule, kept honest: widening the screen to the
+    group must not have widened it to what a person wrote for themselves."""
+    from exo import journey_views
+    from exo.models import PressRelease
+
+    piece = article(participant("writer10", workshop), workshop,
+                    PressRelease.Visibility.PRIVATE)
+    called = []
+    monkeypatch.setattr(ai, "public_text_is_safe",
+                        lambda text, user=None: called.append(text) or (True, ""))
+
+    assert journey_views._screen_before_the_wall(piece, piece.concept.owner) == ""
+    assert called == []

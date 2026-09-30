@@ -233,9 +233,19 @@ clock.
   it and when, see how many concepts and articles came out of it, and close it
   by hand at any moment.
 - **K6. The museum, by group.** A participant can look at their workshop's wall
-  or at everything ever made here. *(Whether a cohort is only a filter over
-  already-public articles, or also a fifth visibility option, "my group only",
-  is the one open decision — see the note at the end of this section.)*
+  or at everything ever made here. **Avi's decision: the group is also a fifth
+  visibility, "רק הקבוצה שלי", not only a filter.** So K6 is two things:
+  - A **switch** on `/exo/museum/` — *כל הכתבות* / *הקבוצה שלי* — shown only to
+    somebody who attended a workshop, with *everything* still the default. The
+    group wall shows every article from their workshops they may see, and is
+    built on the public wall's rules rather than beside them, so an admin's hand
+    and an expired window still reach it.
+  - A **choice when publishing** — offered only when the concept itself carries a
+    cohort, since a piece written outside a workshop has no room to show it to.
+    A "my group" article is on **no** public wall, is not counted as public, and
+    is readable only by somebody who attended the same workshop. It is still
+    screened before it goes up: a room of strangers reading each other is an
+    audience, and the moderation check is free.
 
 **K7. The link is a key, and mostly follows the BKM** in
 `building_an_app.md`: the token is long and random rather than sequential, the
@@ -259,9 +269,11 @@ of Avi's AI budget until the window closes, the cap fills, or he closes it by
 hand. It grants nothing else anywhere on the site, and it expires by itself.*
 If that sentence ever stops being boring, the scope has grown too wide.
 
-**Open decision (K6).** Filter or visibility option. Everything above is
-identical either way; only the museum switch and `PressRelease.visibility`
-depend on it.
+**Decided (K6), 1 October 2026.** Filter *and* visibility option: Avi chose the
+wider reading. The consequence worth writing down is that `visibility` now has a
+value whose audience is not fixed at publish time — it depends on who joined the
+concept's workshop afterwards — so `is_public_now()` deliberately stays false for
+it and every reader is checked through `visible_to()` instead.
 
 ---
 

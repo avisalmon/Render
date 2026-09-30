@@ -366,6 +366,13 @@ STRINGS = {
     "manage.releases": {"he": "כתבות", "en": "Features"},
     "manage.usage": {"he": "שימוש ב־AI", "en": "AI usage"},
     "manage.cohorts": {"he": "סדנאות", "en": "Workshops"},
+    "museum.wall_all": {"he": "כל הכתבות", "en": "Everything"},
+    "museum.wall_group": {"he": "הקבוצה שלי", "en": "My group"},
+    "vis.cohort": {"he": "רק הקבוצה שלי", "en": "My workshop group"},
+    "vis.cohort_blurb": {
+        "he": "מופיע בתערוכה של הסדנה בלבד, ולא במוזיאון הפתוח.",
+        "en": "Shown on your workshop's wall only, not in the open museum.",
+    },
     "cohort.new": {"he": "סדנה חדשה", "en": "New workshop"},
     "cohort.name": {"he": "שם הסדנה", "en": "Workshop name"},
     "cohort.hours": {"he": "שעות", "en": "Hours"},

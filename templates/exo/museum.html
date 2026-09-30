@@ -14,13 +14,37 @@
     <p>{% t "museum.lede" %}</p>
   </header>
 
+  {% comment %}
+    The group wall, offered only to somebody who has a group. "Everyone" stays
+    the default: the museum's job is still to show what this place has made.
+  {% endcomment %}
+  {% if cohorts %}
+    <div class="exo-sorts">
+      <a class="exo-sort {% if wall == 'all' %}is-on{% endif %}"
+         href="?wall=all{% if sort != 'new' %}&sort={{ sort }}{% endif %}">{% t "museum.wall_all" %}</a>
+      <a class="exo-sort {% if wall == 'group' %}is-on{% endif %}"
+         href="?wall=group{% if sort != 'new' %}&sort={{ sort }}{% endif %}">{% t "museum.wall_group" %}</a>
+    </div>
+    {% comment %} Which room, by name. Somebody who has been to two workshops
+    is looking at both at once, and should be told so rather than left to
+    wonder why a stranger's article is on their group wall. {% endcomment %}
+    {% if wall == 'group' %}
+      {% comment %} <bdi> and not dir="auto": the line belongs to the page's
+      direction, and only each name needs isolating so a Latin workshop name
+      does not drag the separators around it. {% endcomment %}
+      <p class="exo-small exo-faint exo-wall-rooms">
+        {% for c in cohorts %}<bdi>{{ c.name }}</bdi>{% if not forloop.last %} · {% endif %}{% endfor %}
+      </p>
+    {% endif %}
+  {% endif %}
+
   <div class="exo-sorts">
     <a class="exo-sort {% if sort == 'new' %}is-on{% endif %}"
-       href="?sort=new">{% t "museum.sort_newest" %}</a>
+       href="?sort=new{% if wall == 'group' %}&wall=group{% endif %}">{% t "museum.sort_newest" %}</a>
     <a class="exo-sort {% if sort == 'liked' %}is-on{% endif %}"
-       href="?sort=liked">{% t "museum.sort_liked" %}</a>
+       href="?sort=liked{% if wall == 'group' %}&wall=group{% endif %}">{% t "museum.sort_liked" %}</a>
     <a class="exo-sort {% if sort == 'score' %}is-on{% endif %}"
-       href="?sort=score">{% t "museum.sort_score" %}</a>
+       href="?sort=score{% if wall == 'group' %}&wall=group{% endif %}">{% t "museum.sort_score" %}</a>
   </div>
 
   {% if releases %}

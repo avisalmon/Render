@@ -435,12 +435,18 @@ def output(request, pk):
         "release": release,
         # (value, label key, blurb key) — the template should not hold a second
         # copy of the visibility vocabulary.
-        "vis_choices": [
-            ("public", "vis.public", "vis.public_blurb"),
-            ("timed", "vis.timed", "vis.timed_blurb"),
-            ("specific", "vis.specific", "vis.specific_blurb"),
-            ("private", "vis.private", "vis.private_blurb"),
-        ],
+        # (value, label key, blurb key). "My group" is offered only when this
+        # concept actually came out of a workshop: an option that would show
+        # the work to nobody is worse than no option at all.
+        "vis_choices": (
+            [("public", "vis.public", "vis.public_blurb"),
+             ("timed", "vis.timed", "vis.timed_blurb")]
+            + ([("cohort", "vis.cohort", "vis.cohort_blurb")]
+               if concept.cohort_id else [])
+            + [("specific", "vis.specific", "vis.specific_blurb"),
+               ("private", "vis.private", "vis.private_blurb")]
+        ),
+        "cohort": concept.cohort,
         "styles": NewspaperStyle.objects.filter(is_active=True),
         "selections": _selections(concept),
         "is_stub": ai.is_stub(),
@@ -461,8 +467,16 @@ def _screen_before_the_wall(release, user):
     writes for themselves, or hands to three named people, is not the museum's
     business, and sending it to a provider anyway would be a small betrayal of
     a person who deliberately chose not to publish.
+
+    The workshop wall does get screened. It is a smaller audience than the
+    internet but it is still a room of strangers reading each other, the check
+    is free (the provider's moderation endpoint costs nothing), and a person
+    who chose "my group" chose to be read. So the room gets the protection the
+    world gets.
     """
-    public_choices = (PressRelease.Visibility.PUBLIC, PressRelease.Visibility.TIMED)
+    public_choices = (PressRelease.Visibility.PUBLIC,
+                      PressRelease.Visibility.TIMED,
+                      PressRelease.Visibility.COHORT)
     if release.visibility not in public_choices:
         return ""
     parts = [release.headline, release.body, release.document_body]

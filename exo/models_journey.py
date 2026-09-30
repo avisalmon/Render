@@ -212,6 +212,12 @@ class PressRelease(models.Model):
     class Visibility(models.TextChoices):
         PUBLIC = "public", "Public forever"
         TIMED = "timed", "Public until a time"
+        #: The workshop wall (spec K6, Avi's answer 2026-10-01). A room of
+        #: people he invited personally, and not the internet. People write
+        #: differently when the audience is the room, and without this the
+        #: honest choice for somebody unsure was "only me", which leaves the
+        #: group exhibition empty.
+        COHORT = "cohort", "My workshop group"
         SPECIFIC = "specific", "Specific people"
         PRIVATE = "private", "Only me"
 
@@ -253,7 +259,12 @@ class PressRelease(models.Model):
     # -- visibility, computed rather than scheduled --------------------- #
 
     def is_public_now(self, now=None):
-        """Is this on the public wall at this moment?"""
+        """Is this on the **public** wall at this moment?
+
+        A workshop-group release is deliberately not: it is shown to a room,
+        and the room is not the world. The group wall is a different query,
+        `exo.museum_views.cohort_visible`.
+        """
         if self.hidden_by_admin:
             return False
         if self.visibility == self.Visibility.PUBLIC:
@@ -262,6 +273,16 @@ class PressRelease(models.Model):
             now = now or timezone.now()
             return bool(self.public_until and self.public_until > now)
         return False
+
+    def cohort_ids(self):
+        """The workshops that may see this, which is the one it was made in.
+
+        Empty when the concept was not made in a workshop: choosing "my group"
+        with no group is not a way to show something to everybody, so it shows
+        it to nobody but the owner.
+        """
+        cohort_id = self.concept.cohort_id
+        return [cohort_id] if cohort_id else []
 
     def visible_to(self, user, now=None):
         """May this person open it?"""
@@ -276,6 +297,17 @@ class PressRelease(models.Model):
             if user is None or not getattr(user, "is_authenticated", False):
                 return False
             return self.shared_with.filter(pk=user.pk).exists()
+        if self.visibility == self.Visibility.COHORT:
+            if user is None or not getattr(user, "is_authenticated", False):
+                return False
+            from .models_cohort import CohortMember
+
+            cohorts = self.cohort_ids()
+            if not cohorts:
+                return False
+            return CohortMember.objects.filter(
+                user=user, cohort_id__in=cohorts,
+            ).exists()
         return False
 
     @property

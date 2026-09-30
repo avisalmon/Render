@@ -183,7 +183,8 @@ Generated from the selected options. One per Concept (the museum piece).
 - `stress_test_feedback` — the AI "would a customer be excited?" critique
 - **visibility** *(decision 6)* — how widely and for how long it is shown:
   - `visibility` — enum: **`public`** (in the museum forever — the **default**),
-    `timed` (public until `public_until`, then owner-only), `specific` (only the
+    `timed` (public until `public_until`, then owner-only), `cohort` (only people
+    who attended the same workshop as the concept — see §6), `specific` (only the
     users in `shared_with`), `private` (owner only, not in the museum)
   - `public_until` — nullable datetime, used by `timed` (e.g. 24h, "just for the
     workshop"). After it passes the release is treated as `private`: still fully
@@ -199,7 +200,12 @@ Generated from the selected options. One per Concept (the museum piece).
 "can this user see it" check apply the rule live: a release is publicly visible
 when `visibility == public`, or `visibility == timed` and `public_until` is in the
 future; visible to a named user when `specific` and they are in `shared_with`;
-always visible to the owner. A `timed` release does not need a job to "expire" it
+visible to a fellow participant when `cohort` and they hold a `CohortMember` row
+for the concept's cohort; always visible to the owner. `cohort` is the one value
+whose audience is **not** fixed when the owner chooses it — somebody joining that
+workshop later can read it — which is why it is never treated as public and every
+reader goes through `visible_to()`. A `cohort` release on a concept with no cohort
+is owner-only, deliberately: the failure has to be closed, not open. A `timed` release does not need a job to "expire" it
 — the query simply stops matching it once the time passes. The owner can change
 any of this at any time (extend, re-share, make public again).
 
@@ -311,5 +317,7 @@ attended.
 3. **Many cohorts per person**, accumulating. AI reopens because a new window
    is open, which falls out of the rule rather than needing its own.
 4. **Attribution is stamped, not derived.**
-5. **Open:** whether a cohort is only a filter over public articles or also a
-   fifth `PressRelease.visibility`. Everything above is identical either way.
+5. **Both, decided 1 October 2026:** a cohort is a filter over the museum *and*
+   a fifth `PressRelease.visibility`. The group wall reuses the public wall's
+   rules (hidden stays hidden, an expired `timed` stays expired) rather than
+   being a second set of rules that can drift out of step with the first.

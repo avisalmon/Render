@@ -402,6 +402,10 @@ button.exo-rail-step:hover { background: var(--exo-sunken); }
 .exo-sort:hover { background: var(--exo-sunken); color: var(--exo-ink); }
 .exo-sort.is-on { background: var(--exo-ink); border-color: var(--exo-ink); color: #F6F5F2; }
 
+/* The workshop names belong to the switch above them, so they are pulled up
+   out of its bottom margin rather than left floating between two rows. */
+.exo-wall-rooms { margin-block: -14px 20px; }
+
 .exo-wall { display: grid; gap: 16px; grid-template-columns: 1fr; }
 @media (min-width: 640px) { .exo-wall { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 1000px) { .exo-wall { grid-template-columns: repeat(3, 1fr); } }

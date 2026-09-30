@@ -144,7 +144,10 @@
                        {% if release.visibility == value %}checked{% endif %}>
                 <span>
                   <strong>{% t label %}</strong>
-                  <em class="exo-small exo-faint">{% t blurb %}</em>
+                  {% comment %} The group is named, not implied: somebody who
+                  has been to two workshops should not have to guess which one
+                  this piece belongs to. {% endcomment %}
+                  <em class="exo-small exo-faint">{% t blurb %}{% if value == 'cohort' and cohort %} (<bdi>{{ cohort.name }}</bdi>){% endif %}</em>
                 </span>
               </label>
             {% endfor %}
