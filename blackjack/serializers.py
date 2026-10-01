@@ -12,7 +12,7 @@ product exists to get right.
 
 from rest_framework import serializers
 
-from .models import Cell, Chart, Player, RuleSet
+from .models import Attempt, Cell, Chart, Player, RuleSet
 
 
 class RuleSetSerializer(serializers.ModelSerializer):
@@ -78,3 +78,28 @@ class PlayerSerializer(serializers.ModelSerializer):
 
     def get_display_name(self, row):
         return row.user.get_username()
+
+
+class AttemptSerializer(serializers.ModelSerializer):
+    """One recorded decision.
+
+    **Almost everything is read-only, and that is the design.** The client says
+    what situation it was asked and what the person chose. Whether that was
+    correct is decided on the server from the chart row, because the browser
+    holds the whole chart and could otherwise report any accuracy it liked, and
+    the accuracy is the thing being sold.
+
+    `player` comes from the session, like every owner on this site.
+    """
+
+    class Meta:
+        model = Attempt
+        fields = [
+            "id", "player", "rule_set", "cell_kind", "cell_player", "cell_dealer",
+            "player_cards", "chosen", "correct", "correct_fallback", "is_correct",
+            "answer_ms", "source", "created_at",
+        ]
+        read_only_fields = [
+            "id", "player", "rule_set", "correct", "correct_fallback",
+            "is_correct", "created_at",
+        ]

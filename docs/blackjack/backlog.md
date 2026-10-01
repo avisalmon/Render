@@ -33,7 +33,7 @@ claimed. It is written in SPR-B.1.3, before the screen that it guards exists.
 
 ---
 
-## EPIC-B.2 — The drill  `TODO`
+## EPIC-B.2 — The drill  `DONE 2026-10-02`
 
 **Goal:** the product. A real table, a decision, the answer, and a record of it.
 
@@ -41,9 +41,9 @@ claimed. It is written in SPR-B.1.3, before the screen that it guards exists.
 |---|---|---|---|
 | SPR-B.2.1 | The table: cards, casino deal order, animation, reduced motion, no sound | REQ-B.4.1, B.4.5, B.4.7, B.4.8 | **DONE 2026-10-02** |
 | SPR-B.2.2 | Decide then learn: four buttons, the answer and its reason after | REQ-B.4.2, B.4.3 | **DONE 2026-10-02** |
-| SPR-B.2.3 | `Attempt` recorded per hand, with the chart serialised into the page so answers are instant | REQ-B.4.4, B.4.5 |
-| SPR-B.2.4 | Offline queue: attempts survive a tunnel and sync after | REQ-B.4.6 |
-| SPR-B.2.5 | Phone measurement pass: 390/1024/1280, thumb reach, no idle work | REQ-B.10.1 to B.10.4 |
+| SPR-B.2.3 | `Attempt` recorded per hand, judged on the server | REQ-B.4.4, B.6.3 | **DONE 2026-10-02** |
+| SPR-B.2.4 | Offline queue: attempts survive a tunnel and sync after | REQ-B.4.6 | **DONE 2026-10-02** |
+| SPR-B.2.5 | Phone measurement pass: 390/1024/1280, thumb reach, no idle work | REQ-B.10.1 to B.10.4 | **DONE 2026-10-02** |
 
 ---
 

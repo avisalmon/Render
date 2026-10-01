@@ -13,6 +13,7 @@ A blackjack-branded sign-in page of our own is SPR-B.1.2 work.
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 LOGIN_URL = "/login/?next=/blackjack/"
 
@@ -192,9 +193,16 @@ def chart_payload(chart):
     }
 
 
+@ensure_csrf_cookie
 @login_required(login_url=LOGIN_URL)
 def drill(request):
     """The practice table (REQ-B.4.1 to B.4.5).
+
+    `ensure_csrf_cookie` because the page posts attempts without ever rendering
+    a form. Without it there is no csrftoken cookie, every POST is refused, and
+    the queue drops them as unfixable, so a person drills happily while nothing
+    is recorded. Found by the browser test rather than by reading, which is the
+    argument for driving the real page.
 
     The whole chart goes down with the page and the decision happens in the
     browser. That is not an optimisation, it is the product: a person drilling

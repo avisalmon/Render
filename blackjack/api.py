@@ -25,11 +25,12 @@ Where a verb is refused the viewset says so in words, and a test holds each one.
 """
 
 from rest_framework import mixins, permissions, viewsets
-from rest_framework.exceptions import MethodNotAllowed, PermissionDenied
+from rest_framework.exceptions import MethodNotAllowed, PermissionDenied, ValidationError
 
 from . import access
-from .models import Cell, Chart, Player, RuleSet
+from .models import Attempt, Cell, Chart, Player, RuleSet
 from .serializers import (
+    AttemptSerializer,
     CellSerializer,
     ChartSerializer,
     PlayerSerializer,
@@ -162,6 +163,69 @@ class CellViewSet(ReadOnlyScoped):
         return rows
 
 
+class AttemptViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
+):
+    """Recording what somebody played (REQ-B.4.4).
+
+    **Create and read only.** An attempt is a record of something that
+    happened. Updating one would rewrite history, and deleting one would let a
+    person quietly erase the hands they got wrong, which is the one thing that
+    would make every number in the product meaningless. A person who wants a
+    clean slate starts a new session (REQ-B.5.6); the history stays.
+
+    **The server decides whether they were right.** The chart ships with the
+    page, so the browser knows the answer and could report any accuracy it
+    liked. The numbers are what is being sold, so `correct`, `correct_fallback`
+    and `is_correct` are read off the chart row here and the client's opinion is
+    not consulted. This is also what makes the offline queue safe: a queued
+    attempt sent an hour later is judged against the same row it was asked from.
+    """
+
+    serializer_class = AttemptSerializer
+    permission_classes = [IsSignedIn]
+
+    def get_queryset(self):
+        return access.visible_attempts(self.request.user)
+
+    def perform_create(self, serializer):
+        from django.utils import timezone
+
+        from .models import Chart
+
+        player = Player.for_user(self.request.user)
+        chart = Chart.objects.filter(rule_set=player.rule_set).first()
+        if chart is None:
+            raise ValidationError({"detail": "אין טבלה לשולחן הזה."})
+
+        data = serializer.validated_data
+        cell = chart.cells.filter(
+            kind=data["cell_kind"],
+            player=data["cell_player"],
+            dealer=data["cell_dealer"],
+        ).first()
+        if cell is None:
+            raise ValidationError({"detail": "אין תא כזה בטבלה."})
+
+        # REQ-B.6.3 — the thirty minutes start at the first hand, not at
+        # signup. Set once, here, because this is the first moment the app can
+        # honestly say somebody has used it.
+        if player.first_used_at is None:
+            player.first_used_at = timezone.now()
+            player.save(update_fields=["first_used_at"])
+
+        serializer.save(
+            player=player,
+            rule_set=player.rule_set,
+            correct=cell.action,
+            correct_fallback=cell.fallback,
+            is_correct=data["chosen"] == cell.action,
+        )
+
+
 # Every model this app owns, and the route it answers on. Kept here rather than
 # in urls.py so that adding a model and forgetting its endpoint is visible in
 # one place: `test_every_model_has_an_endpoint` reads this.
@@ -170,4 +234,5 @@ ROUTES = [
     ("players", PlayerViewSet, Player),
     ("charts", ChartViewSet, Chart),
     ("cells", CellViewSet, Cell),
+    ("attempts", AttemptViewSet, Attempt),
 ]

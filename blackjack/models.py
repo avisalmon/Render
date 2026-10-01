@@ -215,3 +215,60 @@ class Cell(models.Model):
 
     def __str__(self):
         return f"{self.kind} {self.player} vs {self.dealer}: {self.action}"
+
+
+class Attempt(models.Model):
+    """One decision, at one situation, under one rule set.
+
+    **Everything in this app is a read over this table.** The statistics, the
+    history, the mastery grid, the note every twenty hands and the coaching are
+    all views of these rows. Nothing else stores "how is this person doing",
+    because a second copy drifts, and the day it drifts the app is lying to a
+    learner about their own progress.
+
+    Written once and never updated. An attempt is a record of something that
+    happened; editing one would rewrite history, and the history is the product.
+
+    **`is_correct` is decided by the server, never sent by the client.** The
+    browser knows the right answer, because the chart ships with the page, so a
+    client could report whatever accuracy it liked. The numbers are the thing
+    being sold, so they are computed here from the chart row.
+    """
+
+    ACTION_CHOICES = Cell.ACTION_CHOICES
+    SOURCE_CHOICES = [
+        ("random", "אקראי"),
+        ("adaptive", "מותאם"),
+        ("simulator", "סימולטור"),
+    ]
+
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="attempts")
+    rule_set = models.ForeignKey(RuleSet, on_delete=models.PROTECT, related_name="attempts")
+
+    cell_kind = models.CharField(max_length=4, choices=Cell.KIND_CHOICES)
+    cell_player = models.PositiveSmallIntegerField()
+    cell_dealer = models.PositiveSmallIntegerField()
+    player_cards = models.JSONField(default=list, blank=True)
+
+    chosen = models.CharField(max_length=1, choices=ACTION_CHOICES)
+    correct = models.CharField(max_length=1, choices=ACTION_CHOICES)
+    correct_fallback = models.CharField(max_length=1, choices=ACTION_CHOICES)
+    is_correct = models.BooleanField()
+
+    # How long they took. Hesitation is a weak cell that has not failed yet,
+    # which is something the mastery grid can use and a raw score cannot.
+    answer_ms = models.PositiveIntegerField(null=True, blank=True)
+    source = models.CharField(max_length=10, choices=SOURCE_CHOICES, default="random")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["player", "-created_at"]),
+            models.Index(fields=["player", "cell_kind", "cell_player", "cell_dealer"]),
+        ]
+
+    def __str__(self):
+        mark = "v" if self.is_correct else "x"
+        return f"{mark} {self.cell_kind} {self.cell_player} vs {self.cell_dealer}"

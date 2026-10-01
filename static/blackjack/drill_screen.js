@@ -27,6 +27,7 @@
 
   var situation = null;
   var answered = false;
+  var askedAt = 0;
   var played = 0;
   var right = 0;
 
@@ -59,6 +60,7 @@
       button.classList.remove("is-chosen", "is-answer");
     });
 
+    askedAt = Date.now();
     window.__bjSituation = situation;      /* read by the browser tests */
   }
 
@@ -103,6 +105,23 @@
       if (button.dataset.act === chosen) button.classList.add("is-chosen");
       if (button.dataset.act === verdict.correct) button.classList.add("is-answer");
     });
+
+    /* Recorded after the screen has already updated, so the drill never waits
+       on a network. REQ-B.4.4, and the queue in record.js carries it over a
+       tunnel. The correct answer is deliberately not sent: the server reads it
+       off the chart row, so a client cannot report an accuracy it did not
+       earn. */
+    if (window.BJRecord) {
+      window.BJRecord.record({
+        cell_kind: situation.cell.kind,
+        cell_player: situation.cell.player,
+        cell_dealer: situation.cell.dealer,
+        player_cards: situation.playerCards,
+        chosen: chosen,
+        answer_ms: Math.max(0, Math.min(600000, Date.now() - askedAt)),
+        source: "random"
+      });
+    }
 
     showScore();
     elements.next.focus();

@@ -182,7 +182,9 @@
 }
 
 .bj-field select {
-  min-height: 40px;
+  /* 44, not 40: measured at 40 in the SPR-B.2.5 pass, which is under the
+     line for a thumb on the screen where somebody sets up their table. */
+  min-height: 44px;
   padding: 4px 8px;
   background: var(--bj-felt);
   color: var(--bj-ink);
@@ -356,7 +358,7 @@
 .bj-btn-small {
   display: inline-flex;
   align-items: center;
-  min-height: 40px;
+  min-height: 44px;          /* measured at 40 in the SPR-B.2.5 pass */
   margin-top: 10px;
   padding: 0 14px;
   font-size: .9rem;

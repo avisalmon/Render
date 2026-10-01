@@ -55,3 +55,17 @@ def visible_cells(user):
     if not getattr(user, "is_authenticated", False):
         return Cell.objects.none()
     return Cell.objects.all()
+
+
+def visible_attempts(user):
+    """Your own hands and nobody else's.
+
+    This is the most private table in the app: it is a record of what somebody
+    is bad at. Sharing and following are paid features (REQ-B.8.7) and will
+    widen this deliberately, through this function, when Avi answers Q2 and Q3.
+    """
+    from .models import Attempt
+
+    if not getattr(user, "is_authenticated", False):
+        return Attempt.objects.none()
+    return Attempt.objects.filter(player__user=user)
