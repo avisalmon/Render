@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "memz",
     "sensorlab",
     "exo",
+    "blackjack",
 ]
 
 MIDDLEWARE = [

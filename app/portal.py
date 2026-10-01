@@ -80,6 +80,13 @@ APPS = [
         blurb="מעבדת פיזיקה בטלפון: החיישנים של המכשיר הם ציוד המעבדה.",
     ),
     App(
+        slug="blackjack",
+        name="blackjack",
+        path="/blackjack/",
+        audience=EVERYONE,
+        blurb="ללמוד לשחק בלקג'ק נכון: טבלאות החלטה, תרגול יד אחרי יד, ומאמן שזוכר אתכם.",
+    ),
+    App(
         slug="memz",
         name="memz",
         path="/memz/",

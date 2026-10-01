@@ -54,6 +54,7 @@ urlpatterns = [
     # exo is its own product too (docs/exo/spec.md) — same reasoning,
     # and mounted before app.urls so the prefix is unambiguously its own.
     path("exo/", include("exo.urls", namespace="exo")),
+    path("blackjack/", include("blackjack.urls", namespace="blackjack")),
     path("", include("app.urls")),
 ]
 
