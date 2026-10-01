@@ -162,3 +162,56 @@ class Player(models.Model):
         self.rule_set = RuleSet.for_rules(**rules)
         self.save(update_fields=["rule_set"])
         return self.rule_set
+
+
+class Chart(models.Model):
+    """The full set of correct plays for one rule set (REQ-B.2.5).
+
+    Rows rather than a file, per Avi: "charts are tables". One source, two
+    readers: the cheat sheet screen renders these, and the drill serialises
+    these, so the promise in spec 1.5 is structural rather than aspirational.
+    """
+
+    rule_set = models.OneToOneField(RuleSet, on_delete=models.CASCADE, related_name="chart")
+    source = models.CharField(
+        max_length=120,
+        default="blackjack.strategy",
+        help_text="where these cells came from, so a cell can be defended",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"chart for {self.rule_set}"
+
+
+class Cell(models.Model):
+    """One decision: this hand, against this upcard, under these rules."""
+
+    HARD, SOFT, PAIR = "hard", "soft", "pair"
+    KIND_CHOICES = [(HARD, "קשה"), (SOFT, "רך"), (PAIR, "זוג")]
+
+    ACTION_CHOICES = [
+        ("H", "קלף"),
+        ("S", "עצירה"),
+        ("D", "הכפלה"),
+        ("P", "פיצול"),
+    ]
+
+    chart = models.ForeignKey(Chart, on_delete=models.CASCADE, related_name="cells")
+    kind = models.CharField(max_length=4, choices=KIND_CHOICES)
+    player = models.PositiveSmallIntegerField(help_text="total, or the rank of a pair")
+    dealer = models.PositiveSmallIntegerField(help_text="2..11, where 11 is an ace")
+
+    action = models.CharField(max_length=1, choices=ACTION_CHOICES)
+    # What to do when the action is unavailable: no double on three cards, no
+    # split once you are out of hands. D on hard 9 falls back to hitting; D on
+    # soft 18 falls back to standing. Four letters cannot carry that.
+    fallback = models.CharField(max_length=1, choices=ACTION_CHOICES)
+    reason = models.TextField()
+
+    class Meta:
+        unique_together = [("chart", "kind", "player", "dealer")]
+        ordering = ["kind", "player", "dealer"]
+
+    def __str__(self):
+        return f"{self.kind} {self.player} vs {self.dealer}: {self.action}"
