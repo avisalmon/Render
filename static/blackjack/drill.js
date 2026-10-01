@@ -129,10 +129,41 @@
     }
   }
 
+  /* Which actions are even offered for this hand.
+
+     Split is only offered on a pair. Offering it everywhere would be a button
+     that is always wrong, which teaches nothing except that one of the four is
+     decoration. Double is always offered here because a drilled situation is
+     always the first two cards, which is exactly when doubling is allowed. */
+  function legalActions(situation) {
+    var all = ["H", "S", "D", "P"];
+    if (situation.cell.kind !== "pair") {
+      all = all.filter(function (a) { return a !== "P"; });
+    }
+    return all;
+  }
+
+  /* The verdict. Deliberately not "wrong": a person drilling three hundred
+     hands is told they are wrong often, and the word they read each time
+     shapes whether they come back. The correct play and the reason do the
+     teaching; the label only says whether to move on or to look again. */
+  function judge(situation, chosen) {
+    var cell = situation.cell;
+    return {
+      chosen: chosen,
+      correct: cell.action,
+      fallback: cell.fallback,
+      reason: cell.reason,
+      right: chosen === cell.action
+    };
+  }
+
   window.BJ = {
     cardsFor: cardsFor,
     handTotal: handTotal,
     nextSituation: nextSituation,
+    legalActions: legalActions,
+    judge: judge,
     deal: deal,
     label: label,
     DEAL_ORDER: DEAL_ORDER

@@ -9,10 +9,19 @@
   REQ-B.4.5 — the chart ships with the page, serialised from the same rows the
   cheat sheet renders. The decision happens here, in the browser, so an answer
   arrives in the time it takes to look up and the drill works with no signal.
+
+  Yes, a determined person could read this JSON and find the answer before
+  choosing. That is fine and is not the threat model: this is a practice tool,
+  not an exam, and somebody cheating a drill is only robbing themselves. The
+  alternative, asking the server each hand, costs everyone the instant answer
+  and the tunnel, which is a real loss to stop an imaginary one.
 {% endcomment %}
 <script id="bjChart" type="application/json">{{ chart_json|safe }}</script>
 
-<h1 class="bj-h1 bj-drill-h1">תרגול</h1>
+<div class="bj-drill-top">
+  <h1 class="bj-h1 bj-drill-h1">תרגול</h1>
+  <p class="bj-score" id="bjScore" aria-live="polite"></p>
+</div>
 
 <section class="bj-felt-area" aria-label="השולחן">
   <div class="bj-seat">
@@ -28,20 +37,22 @@
 
 <p class="bj-ask" id="bjAsk">מה עושים?</p>
 
+{% comment %}
+  REQ-B.4.2 — decide, then learn. Nothing about the correct play is rendered
+  until a choice is made, so the screen cannot teach by accident.
+{% endcomment %}
+<div class="bj-actions" id="bjActions" role="group" aria-label="פעולות">
+  <button type="button" class="bj-act" data-act="H">קלף<small>H</small></button>
+  <button type="button" class="bj-act" data-act="S">עצירה<small>S</small></button>
+  <button type="button" class="bj-act" data-act="D">הכפלה<small>D</small></button>
+  <button type="button" class="bj-act" data-act="P">פיצול<small>P</small></button>
+</div>
+
+<section class="bj-verdict" id="bjVerdict" aria-live="polite" hidden></section>
+
+<button type="button" class="bj-btn bj-next" id="bjNext" hidden>יד הבאה</button>
+
 <script src="{% static 'blackjack/drill.js' %}"></script>
-<script>
-  (function () {
-    var chart = JSON.parse(document.getElementById("bjChart").textContent);
-    var elements = {
-      player: document.getElementById("bjPlayer"),
-      dealer: document.getElementById("bjDealer")
-    };
-    var situation = window.BJ.nextSituation(chart.cells);
-    window.BJ.deal(situation, elements);
-    document.getElementById("bjTotal").textContent =
-      window.BJ.handTotal(situation.playerCards);
-    window.__bjSituation = situation;   /* read by the browser tests */
-  })();
-</script>
+<script src="{% static 'blackjack/drill_screen.js' %}"></script>
 
 {% endblock %}

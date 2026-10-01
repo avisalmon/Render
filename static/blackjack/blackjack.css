@@ -443,3 +443,83 @@
   font-size: 1.05rem;
   font-weight: 700;
 }
+
+/* --- deciding (SPR-B.2.2) ----------------------------------------------- */
+
+.bj-drill-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.bj-score {
+  margin: 0;
+  color: var(--bj-ink-soft);
+  font-size: .9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.bj-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 14px;
+}
+
+/* Tall, because these four are tapped a few hundred times in a session and
+   they sit where a thumb rests. REQ-B.10.3. */
+.bj-act {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 62px;
+  padding: 6px 4px;
+  border: 1px solid var(--bj-line);
+  border-radius: var(--bj-radius);
+  background: var(--bj-felt-high);
+  color: var(--bj-ink);
+  font: inherit;
+  font-weight: 600;
+  font-size: .95rem;
+  cursor: pointer;
+}
+
+.bj-act small {
+  color: var(--bj-ink-soft);
+  font-size: .72rem;
+  font-weight: 500;
+}
+
+.bj-act:disabled { opacity: .4; cursor: default; }
+
+.bj-act.is-chosen { border-color: var(--bj-ink); }
+
+.bj-act.is-answer {
+  background: var(--bj-gold);
+  border-color: var(--bj-gold);
+  color: #241a05;
+}
+
+.bj-act.is-answer small { color: #4a360c; }
+
+.bj-verdict {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: var(--bj-felt-high);
+  border: 1px solid var(--bj-line);
+  border-radius: var(--bj-radius);
+}
+
+.bj-verdict p { margin: 0 0 6px; }
+.bj-verdict p:last-child { margin-bottom: 0; }
+
+.bj-verdict-head { font-weight: 700; }
+.bj-verdict-head.is-right { color: #8fd3b6; }
+.bj-verdict-head.is-not { color: var(--bj-gold); }
+.bj-verdict-why { color: var(--bj-ink); font-size: .95rem; }
+.bj-verdict-fallback { color: var(--bj-ink-soft); font-size: .85rem; }
+
+.bj-next { margin-top: 12px; width: 100%; }
