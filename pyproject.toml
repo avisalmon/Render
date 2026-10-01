@@ -21,6 +21,7 @@ markers = [
     "sprb12: SPR-B.1.2 blackjack: rule sets and the player",
     "sprb13: SPR-B.1.3 blackjack: the chart, and why each cell is what it is",
     "sprb14: SPR-B.1.4 blackjack: the cheat sheet",
+    "sprb15: SPR-B.1.5 blackjack: the API, and the verbs it refuses",
     "spr143: F-14.3 the home page must not scroll sideways",
     "sprm1: SPR-M.1 מט״צים front door sprint tests",
     "sprm2: SPR-M.2 מט״צים identity and first-contact sprint tests",

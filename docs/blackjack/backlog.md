@@ -10,7 +10,7 @@
 
 ---
 
-## EPIC-B.1 — The spine  `TODO`
+## EPIC-B.1 — The spine  `DONE 2026-10-02, awaiting review`
 
 **Goal:** the app exists, has its own chrome, knows the rules, and can show a
 correct cheat sheet. Nothing is drilled yet.
@@ -25,7 +25,7 @@ a drill hides it behind a hand nobody checks.
 | SPR-B.1.2 | `RuleSet` and `Player`, the default preset, the rule-picker screen | REQ-B.2.1, B.2.2, B.2.3 | **DONE 2026-10-01** |
 | SPR-B.1.3 | `Chart` and `Cell`, seeded once, all 340 decisions with their reasons | REQ-B.2.5, B.3.4 | **DONE 2026-10-01** |
 | SPR-B.1.4 | The cheat sheet screen: split views, tap a cell for its reason | REQ-B.3.1 to B.3.5 | **DONE 2026-10-01** |
-| SPR-B.1.5 | The DRF API over everything so far | REQ-B.10.6 |
+| SPR-B.1.5 | The DRF API over everything so far | REQ-B.10.6 | **DONE 2026-10-02** |
 
 **The load-bearing test of this epic** is REQ-B.3.5: what the sheet renders and
 what the drill will later answer come from the same rows, proven rather than
