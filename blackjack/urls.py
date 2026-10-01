@@ -17,5 +17,6 @@ urlpatterns = [
     path("", views.home, name="home"),
     path("table/", views.table, name="table"),
     path("sheet/", views.sheet, name="sheet"),
+    path("drill/", views.drill, name="drill"),
     path("api/", include(router.urls)),
 ]

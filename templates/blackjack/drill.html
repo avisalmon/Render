@@ -1,0 +1,47 @@
+{% extends "blackjack/base.html" %}
+{% load static %}
+
+{% block title %}תרגול · blackjack{% endblock %}
+
+{% block content %}
+
+{% comment %}
+  REQ-B.4.5 — the chart ships with the page, serialised from the same rows the
+  cheat sheet renders. The decision happens here, in the browser, so an answer
+  arrives in the time it takes to look up and the drill works with no signal.
+{% endcomment %}
+<script id="bjChart" type="application/json">{{ chart_json|safe }}</script>
+
+<h1 class="bj-h1 bj-drill-h1">תרגול</h1>
+
+<section class="bj-felt-area" aria-label="השולחן">
+  <div class="bj-seat">
+    <span class="bj-seat-label">הדילר</span>
+    <div class="bj-hand" id="bjDealer"></div>
+  </div>
+
+  <div class="bj-seat">
+    <span class="bj-seat-label">אתם <span id="bjTotal" class="bj-total"></span></span>
+    <div class="bj-hand" id="bjPlayer"></div>
+  </div>
+</section>
+
+<p class="bj-ask" id="bjAsk">מה עושים?</p>
+
+<script src="{% static 'blackjack/drill.js' %}"></script>
+<script>
+  (function () {
+    var chart = JSON.parse(document.getElementById("bjChart").textContent);
+    var elements = {
+      player: document.getElementById("bjPlayer"),
+      dealer: document.getElementById("bjDealer")
+    };
+    var situation = window.BJ.nextSituation(chart.cells);
+    window.BJ.deal(situation, elements);
+    document.getElementById("bjTotal").textContent =
+      window.BJ.handTotal(situation.playerCards);
+    window.__bjSituation = situation;   /* read by the browser tests */
+  })();
+</script>
+
+{% endblock %}

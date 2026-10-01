@@ -37,9 +37,9 @@ claimed. It is written in SPR-B.1.3, before the screen that it guards exists.
 
 **Goal:** the product. A real table, a decision, the answer, and a record of it.
 
-| Sprint | What | Traces |
-|---|---|---|
-| SPR-B.2.1 | The table: cards, casino deal order, animation, reduced motion, no sound | REQ-B.4.1, B.4.7, B.4.8 |
+| Sprint | What | Traces | Status |
+|---|---|---|---|
+| SPR-B.2.1 | The table: cards, casino deal order, animation, reduced motion, no sound | REQ-B.4.1, B.4.5, B.4.7, B.4.8 | **DONE 2026-10-02** |
 | SPR-B.2.2 | Decide then learn: four buttons, the answer and its reason after | REQ-B.4.2, B.4.3 |
 | SPR-B.2.3 | `Attempt` recorded per hand, with the chart serialised into the page so answers are instant | REQ-B.4.4, B.4.5 |
 | SPR-B.2.4 | Offline queue: attempts survive a tunnel and sync after | REQ-B.4.6 |

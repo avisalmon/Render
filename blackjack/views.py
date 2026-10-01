@@ -162,3 +162,67 @@ def _row_label(kind, player):
     if kind == "soft":
         return f"A,{player - 11}"
     return str(player)
+
+
+def chart_payload(chart):
+    """The chart, as the browser needs it (REQ-B.4.5).
+
+    Serialised from the same rows the sheet renders, which is what makes the
+    promise in spec 1.5 hold through the drill as well: there is one set of
+    rows and two readers, so a cell cannot say one thing on the sheet and
+    another at the table.
+
+    Shipped with the page rather than fetched, so the drill answers instantly
+    and keeps working with no signal. The server is never asked what the right
+    play was.
+    """
+    return {
+        "rules": chart.rule_set.rules,
+        "cells": [
+            {
+                "kind": cell.kind,
+                "player": cell.player,
+                "dealer": cell.dealer,
+                "action": cell.action,
+                "fallback": cell.fallback,
+                "reason": cell.reason,
+            }
+            for cell in chart.cells.all().order_by("kind", "player", "dealer")
+        ],
+    }
+
+
+@login_required(login_url=LOGIN_URL)
+def drill(request):
+    """The practice table (REQ-B.4.1 to B.4.5).
+
+    The whole chart goes down with the page and the decision happens in the
+    browser. That is not an optimisation, it is the product: a person drilling
+    on a train must get their answer in the time it takes to look up, and a
+    round trip per hand would make the tutor feel slower than the thought it is
+    trying to replace.
+    """
+    import json
+
+    from django.core.serializers.json import DjangoJSONEncoder
+
+    from .models import Chart, Player
+    from .strategy import supports
+
+    player = Player.for_user(request.user)
+    chart = Chart.objects.filter(rule_set=player.rule_set).first()
+
+    if chart is None:
+        ok, why = supports(player.rule_set.rules)
+        return render(request, "blackjack/sheet_missing.html", {
+            "player": player,
+            "rules": player.rule_set,
+            "why": why if not ok else ["הטבלה לשולחן הזה עוד לא נבנתה"],
+        })
+
+    return render(request, "blackjack/drill.html", {
+        "player": player,
+        "rules": player.rule_set,
+        "chart_json": json.dumps(chart_payload(chart), cls=DjangoJSONEncoder,
+                                 ensure_ascii=False),
+    })
