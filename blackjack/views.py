@@ -67,3 +67,98 @@ def table(request):
         "surrender_choices": RuleSet._meta.get_field("surrender").choices,
         "payout_choices": RuleSet._meta.get_field("blackjack_pays").choices,
     })
+
+
+# The sheet is split because a ten-column chart is unreadable in a hand
+# (REQ-B.3.3). These are the views Avi named, plus the two the hard table
+# needs because it is the widest.
+SHEET_VIEWS = (
+    ("weak", "דילר חלש", "hard", (2, 3, 4, 5, 6)),
+    ("strong", "דילר חזק", "hard", (7, 8, 9, 10, 11)),
+    ("soft", "ידיים רכות", "soft", (2, 3, 4, 5, 6, 7, 8, 9, 10, 11)),
+    ("pairs", "זוגות", "pair", (2, 3, 4, 5, 6, 7, 8, 9, 10, 11)),
+    ("doubles", "הכפלות", None, None),
+)
+
+
+@login_required(login_url=LOGIN_URL)
+def sheet(request):
+    """The cheat sheet for this person's table (REQ-B.3.1 to B.3.5).
+
+    Every cell on screen is a row from the database. Nothing here computes a
+    play, which is what makes the promise in spec 1.5 structural: the drill
+    will serialise the same rows, so the sheet and the drill cannot disagree
+    about what the right answer is.
+
+    A table with no chart says so rather than rendering an empty grid. An empty
+    grid looks like a bug; a sentence looks like an answer, and REQ-B.2.5 says
+    we refuse rather than approximate.
+    """
+    from .models import Chart, Player
+    from .strategy import supports
+
+    player = Player.for_user(request.user)
+    rules = player.rule_set.rules
+    chart = Chart.objects.filter(rule_set=player.rule_set).first()
+
+    if chart is None:
+        ok, why = supports(rules)
+        return render(request, "blackjack/sheet_missing.html", {
+            "player": player,
+            "rules": player.rule_set,
+            "why": why if not ok else ["הטבלה לשולחן הזה עוד לא נבנתה"],
+        })
+
+    chosen = request.GET.get("view") or "weak"
+    chosen = chosen if chosen in {key for key, *_ in SHEET_VIEWS} else "weak"
+    _key, title, kind, dealers = next(v for v in SHEET_VIEWS if v[0] == chosen)
+
+    if chosen == "doubles":
+        # The cross-cutting view: every cell that says double, on one sheet.
+        # Beginners miss doubles more than anything else, so they get a page.
+        cells = chart.cells.filter(action="D").order_by("kind", "player", "dealer")
+        rows, dealers = _as_rows(cells)
+    else:
+        cells = chart.cells.filter(kind=kind, dealer__in=dealers).order_by("player", "dealer")
+        rows, dealers = _as_rows(cells, dealers)
+
+    return render(request, "blackjack/sheet.html", {
+        "player": player,
+        "rules": player.rule_set,
+        "views": SHEET_VIEWS,
+        "chosen": chosen,
+        "title": title,
+        "rows": rows,
+        "dealers": dealers,
+    })
+
+
+def _as_rows(cells, dealers=None):
+    """Group cells into the rows a table draws, keeping the order stable.
+
+    Written here rather than in the template because a template that builds a
+    grid is a template nobody can test.
+    """
+    cells = list(cells)
+    if dealers is None:
+        dealers = sorted({cell.dealer for cell in cells})
+    by_row = {}
+    for cell in cells:
+        by_row.setdefault((cell.kind, cell.player), {})[cell.dealer] = cell
+    rows = []
+    for (kind, player), found in sorted(by_row.items(), key=lambda item: (item[0][0], item[0][1])):
+        rows.append({
+            "kind": kind,
+            "player": player,
+            "label": _row_label(kind, player),
+            "cells": [found.get(dealer) for dealer in dealers],
+        })
+    return rows, dealers
+
+
+def _row_label(kind, player):
+    if kind == "pair":
+        return "A,A" if player == 11 else f"{player},{player}"
+    if kind == "soft":
+        return f"A,{player - 11}"
+    return str(player)

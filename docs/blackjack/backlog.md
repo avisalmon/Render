@@ -24,7 +24,7 @@ a drill hides it behind a hand nobody checks.
 | SPR-B.1.1 | The Django app, its own base template and nav, mounted at `/blackjack/`, plus the portal card so it is reachable | REQ-B.10.5, REQ-B.6.1 | **DONE 2026-10-01** |
 | SPR-B.1.2 | `RuleSet` and `Player`, the default preset, the rule-picker screen | REQ-B.2.1, B.2.2, B.2.3 | **DONE 2026-10-01** |
 | SPR-B.1.3 | `Chart` and `Cell`, seeded once, all 340 decisions with their reasons | REQ-B.2.5, B.3.4 | **DONE 2026-10-01** |
-| SPR-B.1.4 | The cheat sheet screen: split views, tap a cell for its reason | REQ-B.3.1, B.3.2, B.3.3 |
+| SPR-B.1.4 | The cheat sheet screen: split views, tap a cell for its reason | REQ-B.3.1 to B.3.5 | **DONE 2026-10-01** |
 | SPR-B.1.5 | The DRF API over everything so far | REQ-B.10.6 |
 
 **The load-bearing test of this epic** is REQ-B.3.5: what the sheet renders and

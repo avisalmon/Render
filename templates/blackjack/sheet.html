@@ -1,0 +1,83 @@
+{% extends "blackjack/base.html" %}
+{% load static %}
+
+{% block title %}טבלת ההחלטות · blackjack{% endblock %}
+
+{% block content %}
+
+<h1 class="bj-h1">טבלת ההחלטות</h1>
+<p class="bj-sheet-rules">{{ rules.describe }}</p>
+
+{% comment %}
+  REQ-B.3.3 — the sheet is split rather than shown whole. A ten-column chart is
+  unreadable on a phone, and a person cannot memorise what they cannot read.
+  Five columns is a thumb.
+{% endcomment %}
+<nav class="bj-tabs" aria-label="תצוגות">
+  {% for key, label, kind, dealers in views %}
+    <a class="bj-tab {% if key == chosen %}is-on{% endif %}"
+       href="?view={{ key }}"
+       {% if key == chosen %}aria-current="page"{% endif %}>{{ label }}</a>
+  {% endfor %}
+</nav>
+
+<h2 class="bj-sheet-title">{{ title }}</h2>
+
+<div class="bj-sheet-wrap">
+  <table class="bj-sheet">
+    <thead>
+      <tr>
+        <th scope="col"><span class="bj-sr">היד שלכם</span></th>
+        {% for d in dealers %}
+          <th scope="col">{% if d == 11 %}A{% else %}{{ d }}{% endif %}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+        <tr>
+          <th scope="row">{{ row.label }}</th>
+          {% for cell in row.cells %}
+            <td>
+              {% if cell %}
+                {% comment %}
+                  Every cell is a button, not a coloured box: the reason is the
+                  product (REQ-B.3.4), and a reason you cannot reach is a
+                  reason that does not exist.
+                {% endcomment %}
+                <button type="button"
+                        class="bj-cell bj-cell-{{ cell.action }}"
+                        data-reason="{{ cell.reason }}"
+                        data-hand="{{ row.label }}"
+                        data-dealer="{% if cell.dealer == 11 %}A{% else %}{{ cell.dealer }}{% endif %}"
+                        data-fallback="{{ cell.fallback }}"
+                        data-action="{{ cell.action }}">{{ cell.action }}</button>
+              {% else %}
+                <span class="bj-cell bj-cell-empty" aria-hidden="true">·</span>
+              {% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<p class="bj-legend">
+  <span><b>H</b> קלף</span>
+  <span><b>S</b> עצירה</span>
+  <span><b>D</b> הכפלה</span>
+  <span><b>P</b> פיצול</span>
+</p>
+
+{% comment %}
+  The explanation panel. Starts with an instruction rather than empty, so the
+  screen tells you it is interactive instead of waiting to be discovered.
+{% endcomment %}
+<aside class="bj-why" id="bjWhy" aria-live="polite">
+  <p class="bj-why-hint">לחצו על תא כדי לראות למה זו התשובה.</p>
+</aside>
+
+<script src="{% static 'blackjack/sheet.js' %}" defer></script>
+
+{% endblock %}

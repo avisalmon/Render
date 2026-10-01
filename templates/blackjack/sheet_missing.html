@@ -1,0 +1,24 @@
+{% extends "blackjack/base.html" %}
+
+{% block title %}טבלת ההחלטות · blackjack{% endblock %}
+
+{% block content %}
+
+<h1 class="bj-h1">אין לנו טבלה לשולחן הזה</h1>
+
+{% comment %}
+  REQ-B.2.5 — refuse rather than approximate. A near-enough chart is how a
+  trainer teaches a play that loses money, and an empty grid would look like a
+  bug rather than an answer.
+{% endcomment %}
+<p class="bj-lead">
+  אנחנו לא מראים טבלה קרובה. טבלה שכמעט נכונה מלמדת מהלך מפסיד, ואי אפשר לדעת אילו ידיים נלמדו לא נכון.
+</p>
+
+<ul class="bj-why-not">
+  {% for line in why %}<li>{{ line }}</li>{% endfor %}
+</ul>
+
+<p><a class="bj-btn" href="{% url 'blackjack:table' %}">לשנות את השולחן</a></p>
+
+{% endblock %}
