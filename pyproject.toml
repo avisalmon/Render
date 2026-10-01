@@ -18,6 +18,7 @@ markers = [
     "spr214: SPR-2.1.4 Corporate Page Polish & Compliance sprint tests",
     "spr131: SPR-13.1 babook portal: who sees which app",
     "sprb11: SPR-B.1.1 blackjack: the app, its chrome, and its portal card",
+    "sprb12: SPR-B.1.2 blackjack: rule sets and the player",
     "spr143: F-14.3 the home page must not scroll sideways",
     "sprm1: SPR-M.1 מט״צים front door sprint tests",
     "sprm2: SPR-M.2 מט״צים identity and first-contact sprint tests",

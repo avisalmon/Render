@@ -1,0 +1,92 @@
+{% extends "blackjack/base.html" %}
+
+{% block title %}השולחן שלי · blackjack{% endblock %}
+
+{% block content %}
+
+<h1 class="bj-h1">השולחן שלי</h1>
+<p class="bj-lead">
+  לכל חוק יש משמעות: טבלת ההחלטות משתנה לפיו. אפשר להשאיר כמו שזה, זה המקרה
+  הנפוץ, ואפשר להתאים לשולחן שאתם באמת משחקים בו.
+</p>
+
+<p class="bj-rules-now">{{ rules.describe }}</p>
+
+{% comment %}
+  REQ-B.2.3 — this form never edits the rule set the player is on. Posting it
+  points them at the row for the new rules, so every hand already dealt keeps
+  the rules it was dealt under.
+{% endcomment %}
+<form method="post" class="bj-form">
+  {% csrf_token %}
+
+  <label class="bj-field">
+    <span>מספר חפיסות</span>
+    <select name="decks">
+      {% for n in deck_choices %}
+        <option value="{{ n }}" {% if rules.decks == n %}selected{% endif %}>{{ n }}</option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <label class="bj-check">
+    <input type="checkbox" name="dealer_hits_soft_17" {% if rules.dealer_hits_soft_17 %}checked{% endif %}>
+    <span>הדילר לוקח קלף על 17 רך<small>החוק שמשנה הכי הרבה תאים בטבלה</small></span>
+  </label>
+
+  <label class="bj-check">
+    <input type="checkbox" name="double_any_two" {% if rules.double_any_two %}checked{% endif %}>
+    <span>אפשר להכפיל על כל שני קלפים<small>אחרת רק על 9, 10 ו-11</small></span>
+  </label>
+
+  <label class="bj-check">
+    <input type="checkbox" name="double_after_split" {% if rules.double_after_split %}checked{% endif %}>
+    <span>אפשר להכפיל אחרי פיצול</span>
+  </label>
+
+  <label class="bj-field">
+    <span>עד כמה ידיים אפשר לפצל</span>
+    <select name="max_splits">
+      {% for n in "234" %}
+        <option value="{{ n }}" {% if rules.max_splits|stringformat:"s" == n %}selected{% endif %}>{{ n }}</option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <label class="bj-check">
+    <input type="checkbox" name="resplit_aces" {% if rules.resplit_aces %}checked{% endif %}>
+    <span>אפשר לפצל אסים שוב</span>
+  </label>
+
+  <label class="bj-check">
+    <input type="checkbox" name="hit_split_aces" {% if rules.hit_split_aces %}checked{% endif %}>
+    <span>אפשר לקחת עוד קלף על אסים מפוצלים</span>
+  </label>
+
+  <label class="bj-field">
+    <span>כניעה</span>
+    <select name="surrender">
+      {% for value, label in surrender_choices %}
+        <option value="{{ value }}" {% if rules.surrender == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <label class="bj-field">
+    <span>בלאקג'ק משלם</span>
+    <select name="blackjack_pays">
+      {% for value, label in payout_choices %}
+        <option value="{{ value }}" {% if rules.blackjack_pays == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <label class="bj-check">
+    <input type="checkbox" name="dealer_peeks" {% if rules.dealer_peeks %}checked{% endif %}>
+    <span>הדילר בודק בלאקג'ק מראש</span>
+  </label>
+
+  <button type="submit" class="bj-btn">שמירה</button>
+</form>
+
+{% endblock %}
