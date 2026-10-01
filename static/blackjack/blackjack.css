@@ -1,0 +1,140 @@
+/* blackjack — the app's own look, owing nothing to babook's stylesheet.
+   Methodology Rule 3. Phone first (REQ-B.10.1): every size below is chosen at
+   390px and allowed to grow, rather than chosen at 1280 and squeezed.
+
+   The palette is a card table seen at night: deep felt, bone-white cards, one
+   warm accent. Deliberately dark, because this is the screen somebody opens in
+   bed and on a train, and a white page at midnight is a page you close. */
+
+:root {
+  --bj-felt: #0d2b22;
+  --bj-felt-high: #143a2e;
+  --bj-line: #22513f;
+  --bj-ink: #f3efe6;
+  --bj-ink-soft: #b9c9c0;
+  --bj-gold: #d9a441;
+  --bj-radius: 12px;
+  --bj-gutter: 18px;
+}
+
+* { box-sizing: border-box; }
+
+.bj-body {
+  margin: 0;
+  background: var(--bj-felt);
+  color: var(--bj-ink);
+  font: 16px/1.55 "Heebo", "Segoe UI", system-ui, -apple-system, sans-serif;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- top bar ------------------------------------------------------------ */
+
+.bj-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px var(--bj-gutter);
+  background: var(--bj-felt-high);
+  border-bottom: 1px solid var(--bj-line);
+}
+
+.bj-brand {
+  color: var(--bj-ink);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: .01em;
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  /* 44px tall including padding. Measured at 27px on the first build, which is
+     a thumb-sized miss on the one link that is always on screen. REQ-B.10.3. */
+  min-height: 44px;
+  padding-inline: 2px;
+}
+
+.bj-pip { color: var(--bj-gold); }
+
+.bj-nav { display: flex; gap: 14px; }
+
+.bj-nav-soon {
+  color: var(--bj-ink-soft);
+  font-size: .9rem;
+  opacity: .75;
+}
+
+/* --- page --------------------------------------------------------------- */
+
+.bj-main {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 22px var(--bj-gutter) 40px;
+}
+
+.bj-h1 {
+  margin: 0 0 .4rem;
+  font-size: clamp(1.6rem, 6vw, 2.3rem);
+  line-height: 1.2;
+}
+
+.bj-lead {
+  margin: 0;
+  color: var(--bj-ink-soft);
+  max-width: 46ch;
+}
+
+/* --- the three sections ------------------------------------------------- */
+
+.bj-sections {
+  list-style: none;
+  margin: 26px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+.bj-card {
+  position: relative;
+  padding: 16px 16px 14px;
+  background: var(--bj-felt-high);
+  border: 1px solid var(--bj-line);
+  border-radius: var(--bj-radius);
+}
+
+.bj-card h2 {
+  margin: 0 0 .35rem;
+  font-size: 1.05rem;
+}
+
+.bj-card p {
+  margin: 0;
+  color: var(--bj-ink-soft);
+  font-size: .9rem;
+}
+
+.bj-soon {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 2px 9px;
+  border: 1px solid var(--bj-gold);
+  border-radius: 999px;
+  color: var(--bj-gold);
+  font-size: .75rem;
+}
+
+/* --- foot --------------------------------------------------------------- */
+
+.bj-foot {
+  padding: 16px var(--bj-gutter) calc(16px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--bj-line);
+  color: var(--bj-ink-soft);
+  font-size: .8rem;
+}
+
+.bj-foot p { margin: 0; }

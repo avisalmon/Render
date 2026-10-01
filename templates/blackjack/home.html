@@ -1,0 +1,38 @@
+{% extends "blackjack/base.html" %}
+
+{% block title %}blackjack{% endblock %}
+
+{% block content %}
+
+<section class="bj-hero">
+  <h1 class="bj-h1">ללמוד לשחק נכון</h1>
+  <p class="bj-lead">
+    בלקג'ק הוא המשחק היחיד בקזינו שבו לכל יד יש תשובה נכונה אחת, והיא ידועה.
+    כאן לומדים אותה, מתאמנים עליה יד אחרי יד, ורואים בדיוק מה עוד לא יושב.
+  </p>
+</section>
+
+{% comment %}
+  Three cards for the three sections of the product (spec section 1.2). Two of
+  them are not built yet and say so. SPR-B.1.4 turns the first into a link,
+  EPIC-B.2 the second.
+{% endcomment %}
+<ul class="bj-sections">
+  <li class="bj-card">
+    <h2>לימוד</h2>
+    <p>טבלאות החלטה שנבנות מהחוקים של השולחן שבחרתם, מפוצלות כך שאפשר לזכור אותן.</p>
+    <span class="bj-soon">בקרוב</span>
+  </li>
+  <li class="bj-card">
+    <h2>תרגול</h2>
+    <p>שולחן אמיתי, יד אחרי יד. בוחרים פעולה, ומקבלים את התשובה הנכונה ואת הסיבה.</p>
+    <span class="bj-soon">בקרוב</span>
+  </li>
+  <li class="bj-card">
+    <h2>מתקדם</h2>
+    <p>מאמן שזוכר אתכם: משוב על ההיסטוריה שלכם, תרגול שמתכוונן לחולשות, וטריקים לזכירה.</p>
+    <span class="bj-soon">בקרוב</span>
+  </li>
+</ul>
+
+{% endblock %}
