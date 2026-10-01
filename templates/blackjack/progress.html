@@ -1,0 +1,87 @@
+{% extends "blackjack/base.html" %}
+
+{% block title %}ההתקדמות שלי · blackjack{% endblock %}
+
+{% block content %}
+
+<h1 class="bj-h1">ההתקדמות שלי</h1>
+
+{% comment %}
+  REQ-B.5.2 — not one percentage. The complaint users make about every
+  competing trainer is that they cannot tell which hands are their weak ones,
+  and an overall score is exactly the number that hides it.
+{% endcomment %}
+<p class="bj-progress-sum">
+  <strong>{{ summary.solid }}</strong> מתוך {{ summary.total }} החלטות יושבות.
+  {% if summary.shaky %}<span class="bj-shaky">{{ summary.shaky }} עדיין מתנדנדות.</span>{% endif %}
+  {% if summary.new %}<span class="bj-muted">{{ summary.new }} עוד לא נפגשתם איתן.</span>{% endif %}
+</p>
+
+{% if summary.worst %}
+  <section class="bj-worst">
+    <h2>מה הכי מבלבל אתכם</h2>
+    <ul>
+      {% for row in summary.worst %}
+        <li>
+          <span class="bj-worst-hand">
+            {% if row.cell.kind == 'pair' %}{% if row.cell.player == 11 %}A,A{% else %}{{ row.cell.player }},{{ row.cell.player }}{% endif %}
+            {% elif row.cell.kind == 'soft' %}A,{{ row.cell.player|add:"-11" }}
+            {% else %}{{ row.cell.player }}{% endif %}
+            מול {% if row.cell.dealer == 11 %}A{% else %}{{ row.cell.dealer }}{% endif %}
+          </span>
+          <span class="bj-worst-score">{{ row.correct }} מתוך {{ row.seen }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endif %}
+
+<nav class="bj-tabs" aria-label="תצוגות">
+  {% for key, label, kind, dealers in views %}
+    <a class="bj-tab {% if key == chosen %}is-on{% endif %}" href="?view={{ key }}"
+       {% if key == chosen %}aria-current="page"{% endif %}>{{ label }}</a>
+  {% endfor %}
+</nav>
+
+<h2 class="bj-sheet-title">{{ title }}</h2>
+
+<div class="bj-sheet-wrap">
+  <table class="bj-sheet bj-grid">
+    <thead>
+      <tr>
+        <th scope="col"><span class="bj-sr">היד שלכם</span></th>
+        {% for d in dealers %}
+          <th scope="col">{% if d == 11 %}A{% else %}{{ d }}{% endif %}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+        <tr>
+          <th scope="row">{{ row.label }}</th>
+          {% for item in row.cells %}
+            <td>
+              {% if item %}
+                <span class="bj-cell bj-state-{{ item.state }}"
+                      title="{{ item.correct }}/{{ item.seen }}">
+                  {% if item.seen %}{{ item.correct }}/{{ item.seen }}{% else %}·{% endif %}
+                </span>
+              {% else %}
+                <span class="bj-cell bj-cell-empty" aria-hidden="true">·</span>
+              {% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<p class="bj-legend">
+  <span class="bj-key bj-state-solid"></span> יושב
+  <span class="bj-key bj-state-learning"></span> בדרך
+  <span class="bj-key bj-state-shaky"></span> מתנדנד
+  <span class="bj-key bj-state-new"></span> עוד לא
+</p>
+
+{% endblock %}

@@ -18,5 +18,6 @@ urlpatterns = [
     path("table/", views.table, name="table"),
     path("sheet/", views.sheet, name="sheet"),
     path("drill/", views.drill, name="drill"),
+    path("progress/", views.progress, name="progress"),
     path("api/", include(router.urls)),
 ]

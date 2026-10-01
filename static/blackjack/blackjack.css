@@ -525,3 +525,56 @@
 .bj-verdict-fallback { color: var(--bj-ink-soft); font-size: .85rem; }
 
 .bj-next { margin-top: 12px; width: 100%; }
+
+/* --- progress (SPR-B.3.2) ----------------------------------------------- */
+
+.bj-progress-sum {
+  margin: 14px 0 0;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.bj-progress-sum strong { font-size: 1.3rem; color: var(--bj-gold); }
+.bj-shaky { color: var(--bj-gold); }
+.bj-muted { color: var(--bj-ink-soft); }
+
+.bj-worst {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: var(--bj-felt-high);
+  border: 1px solid var(--bj-line);
+  border-radius: var(--bj-radius);
+}
+
+.bj-worst h2 { margin: 0 0 8px; font-size: .95rem; }
+.bj-worst ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+
+.bj-worst li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: .92rem;
+}
+
+.bj-worst-score { color: var(--bj-ink-soft); font-variant-numeric: tabular-nums; }
+
+/* The grid reuses the sheet's table so a person reads one layout, not two. */
+.bj-grid .bj-cell {
+  font-size: .72rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: default;
+}
+
+.bj-state-solid { background: #7fb3a2; color: #10231c; }
+.bj-state-learning { background: #c9d6cf; color: #10231c; }
+.bj-state-shaky { background: #e2c275; color: #241a05; }
+.bj-state-new { background: #1b3b33; color: var(--bj-ink-soft); }
+
+.bj-key {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  vertical-align: -2px;
+}

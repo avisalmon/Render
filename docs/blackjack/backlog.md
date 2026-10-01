@@ -55,7 +55,7 @@ whether they are improving. All free, all deterministic.
 | Sprint | What | Traces | Status |
 |---|---|---|---|
 | SPR-B.3.1 | `Mastery`, updated per attempt, plus the rebuild command and its test | REQ-B.5.2, B.5.7 | **DONE 2026-10-02** |
-| SPR-B.3.2 | The mastery grid: 270 cells, grey to solid, weakest named | REQ-B.5.2 |
+| SPR-B.3.2 | The mastery grid: 340 cells, four states, weakest named | REQ-B.5.2 | **DONE 2026-10-02** |
 | SPR-B.3.3 | History, and replaying a hand | REQ-B.5.1 |
 | SPR-B.3.4 | `Session`, named, and reset meaning a fresh one | REQ-B.5.5, B.5.6 |
 | SPR-B.3.5 | `BatchNote` every twenty hands, written deterministically | REQ-B.5.3 |

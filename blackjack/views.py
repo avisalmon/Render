@@ -234,3 +234,73 @@ def drill(request):
         "chart_json": json.dumps(chart_payload(chart), cls=DjangoJSONEncoder,
                                  ensure_ascii=False),
     })
+
+
+PROGRESS_VIEWS = (
+    ("weak", "דילר חלש", "hard", (2, 3, 4, 5, 6)),
+    ("strong", "דילר חזק", "hard", (7, 8, 9, 10, 11)),
+    ("soft", "ידיים רכות", "soft", (2, 3, 4, 5, 6, 7, 8, 9, 10, 11)),
+    ("pairs", "זוגות", "pair", (2, 3, 4, 5, 6, 7, 8, 9, 10, 11)),
+)
+
+
+@login_required(login_url=LOGIN_URL)
+def progress(request):
+    """What this person knows, decision by decision (REQ-B.5.2).
+
+    The same shape as the cheat sheet on purpose. A learner who has spent an
+    hour reading the chart in that layout should be able to read their own
+    progress without learning a second one, and the overlap is the point: this
+    screen is that chart with their history painted onto it.
+
+    Four states rather than a percentage, and the counts live underneath each
+    cell for anybody who wants them.
+    """
+    from . import mastery
+    from .models import Chart, Player
+
+    player = Player.for_user(request.user)
+    chart = Chart.objects.filter(rule_set=player.rule_set).first()
+    if chart is None:
+        from .strategy import supports
+
+        ok, why = supports(player.rule_set.rules)
+        return render(request, "blackjack/sheet_missing.html", {
+            "player": player,
+            "rules": player.rule_set,
+            "why": why if not ok else ["הטבלה לשולחן הזה עוד לא נבנתה"],
+        })
+
+    chosen = request.GET.get("view") or "weak"
+    chosen = chosen if chosen in {key for key, *_ in PROGRESS_VIEWS} else "weak"
+    _key, title, kind, dealers = next(v for v in PROGRESS_VIEWS if v[0] == chosen)
+
+    known = {
+        (row["cell"].kind, row["cell"].player, row["cell"].dealer): row
+        for row in mastery.grid(player)
+    }
+
+    cells = chart.cells.filter(kind=kind, dealer__in=dealers).order_by("player", "dealer")
+    by_row = {}
+    for cell in cells:
+        found = known.get((cell.kind, cell.player, cell.dealer))
+        by_row.setdefault(cell.player, {})[cell.dealer] = found
+
+    rows = [
+        {
+            "label": _row_label(kind, value),
+            "cells": [found.get(dealer) for dealer in dealers],
+        }
+        for value, found in sorted(by_row.items())
+    ]
+
+    return render(request, "blackjack/progress.html", {
+        "player": player,
+        "rules": player.rule_set,
+        "summary": mastery.summary(player),
+        "views": PROGRESS_VIEWS,
+        "chosen": chosen,
+        "title": title,
+        "rows": rows,
+        "dealers": dealers,
+    })
