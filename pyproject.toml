@@ -26,6 +26,7 @@ markers = [
     "sprb22: SPR-B.2.2 blackjack: decide, then learn",
     "sprb23: SPR-B.2.3/2.4 blackjack: recording hands, and the tunnel",
     "sprb25: SPR-B.2.5 blackjack: the measurement pass",
+    "sprb31: SPR-B.3.1 blackjack: mastery per decision",
     "spr143: F-14.3 the home page must not scroll sideways",
     "sprm1: SPR-M.1 מט״צים front door sprint tests",
     "sprm2: SPR-M.2 מט״צים identity and first-contact sprint tests",

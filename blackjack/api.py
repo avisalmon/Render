@@ -217,13 +217,21 @@ class AttemptViewSet(
             player.first_used_at = timezone.now()
             player.save(update_fields=["first_used_at"])
 
-        serializer.save(
+        attempt = serializer.save(
             player=player,
             rule_set=player.rule_set,
             correct=cell.action,
             correct_fallback=cell.fallback,
             is_correct=data["chosen"] == cell.action,
         )
+
+        # The mastery row is folded here rather than in a signal, so the one
+        # place a hand is recorded is the one place everything about a hand
+        # happens. A signal would make this invisible to anybody reading the
+        # endpoint, which is where somebody looks when the numbers are wrong.
+        from . import mastery
+
+        mastery.record(attempt)
 
 
 # Every model this app owns, and the route it answers on. Kept here rather than

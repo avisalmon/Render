@@ -272,3 +272,35 @@ class Attempt(models.Model):
     def __str__(self):
         mark = "v" if self.is_correct else "x"
         return f"{mark} {self.cell_kind} {self.cell_player} vs {self.cell_dealer}"
+
+
+class Mastery(models.Model):
+    """What one person knows about one decision, and when to ask it again.
+
+    At most 340 rows per person. Counts are a named denormalisation of
+    `Attempt`, which stays the only truth; `due_at` and `strength` are
+    scheduling state. All of it can be rebuilt exactly by replaying the
+    attempts in order, which `blackjack.mastery.rebuild` does and a test
+    proves, so nothing here is unrecoverable.
+    """
+
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="mastery")
+    cell_kind = models.CharField(max_length=4, choices=Cell.KIND_CHOICES)
+    cell_player = models.PositiveSmallIntegerField()
+    cell_dealer = models.PositiveSmallIntegerField()
+
+    seen = models.PositiveIntegerField(default=0)
+    correct = models.PositiveIntegerField(default=0)
+    streak = models.PositiveIntegerField(default=0)
+
+    last_seen_at = models.DateTimeField(null=True, blank=True)
+    due_at = models.DateTimeField(null=True, blank=True)
+    strength = models.FloatField(default=1.0)
+
+    class Meta:
+        unique_together = [("player", "cell_kind", "cell_player", "cell_dealer")]
+        ordering = ["cell_kind", "cell_player", "cell_dealer"]
+        indexes = [models.Index(fields=["player", "due_at"])]
+
+    def __str__(self):
+        return f"{self.cell_kind} {self.cell_player} vs {self.cell_dealer}: {self.correct}/{self.seen}"

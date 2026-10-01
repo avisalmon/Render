@@ -52,9 +52,9 @@ claimed. It is written in SPR-B.1.3, before the screen that it guards exists.
 **Goal:** the person can see what they are good at, what they are not, and
 whether they are improving. All free, all deterministic.
 
-| Sprint | What | Traces |
-|---|---|---|
-| SPR-B.3.1 | `Mastery`, updated per attempt, plus the rebuild command and its test | REQ-B.5.2 |
+| Sprint | What | Traces | Status |
+|---|---|---|---|
+| SPR-B.3.1 | `Mastery`, updated per attempt, plus the rebuild command and its test | REQ-B.5.2, B.5.7 | **DONE 2026-10-02** |
 | SPR-B.3.2 | The mastery grid: 270 cells, grey to solid, weakest named | REQ-B.5.2 |
 | SPR-B.3.3 | History, and replaying a hand | REQ-B.5.1 |
 | SPR-B.3.4 | `Session`, named, and reset meaning a fresh one | REQ-B.5.5, B.5.6 |
