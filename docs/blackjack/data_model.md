@@ -243,17 +243,59 @@ Named so the shape is known, deliberately not designed until the core works.
 
 ---
 
-## 8. What is not a model, and why
+## 8. The charts themselves
 
-**The strategy charts themselves.** The 270 decisions and the reasoning text
-attached to each cell ship as static data with the page, not as rows. They are
-constants of the game, like a multiplication table: no person edits them, they
-must be instant, and they must work with no signal.
+Avi, 2026-10-01, asked whether the charts ship as static data instead of rows:
 
-Methodology Rule 1 says real data is database rows and that exceptions get
-**written down at the time rather than assumed silently**. This is that
-writing-down, and it is Q1 in the spec, awaiting an explicit yes.
+> "Charts are tables."
 
-The charts are generated into that static data from one source, and the same
-source feeds the cheat sheet screen and the drill's correct answer, which is
-what makes the promise in spec §1.5 true rather than aspirational.
+So **Rule 1 stands and there is no exception to write down.** The chart is
+database rows, and the page ships a serialised copy of the one chart it needs
+to the browser, which is what "all in js and ready data" asked for. One source,
+two readers.
+
+### `Chart`
+
+One chart is the full answer for one rule set.
+
+| Field | Type | Notes |
+|---|---|---|
+| `rule_set` | FK RuleSet | what makes this chart correct |
+| `source` | char | where the chart came from, e.g. a published table or a solver run, so a cell can be defended |
+| `created_at` | datetime | |
+
+### `Cell`
+
+One of the 270 decisions.
+
+| Field | Type | Notes |
+|---|---|---|
+| `chart` | FK Chart | |
+| `kind` | choice | `hard` / `soft` / `pair` |
+| `player` | int | total, or the rank for a pair |
+| `dealer` | int | 2..11, where 11 is an ace |
+| `action` | choice | H / S / D / P |
+| `fallback` | choice | what to do when the action is unavailable (§3) |
+| `reason` | text | the canned explanation shown free, after every hand |
+
+Unique together on chart + kind + player + dealer.
+
+**Seeded once, never resynced.** The methodology's costliest recorded mistake
+was a seed command wired to run on every deploy that wholesale replaced rows
+from a file. Here the import checks before creating, leaves existing rows
+alone, says so in its output, and a test runs it twice and asserts the second
+run changes nothing.
+
+**Why this is better than a file, now that it is written down.** A chart in the
+database can be corrected without a deploy, can carry its source per cell, can
+be diffed when a rule set changes, and is reachable from the admin. And the
+promise in spec §1.5 gets stronger rather than weaker: the cheat sheet screen
+and the drill's correct answer are literally the same rows, and the test that
+proves it compares what the screen renders against what the API returns for the
+same cell.
+
+**How it reaches the browser.** The drill page serialises its chart into the
+page payload. The client then answers instantly and offline, and the server
+never needs asking what the right play was. The serialiser is one function and
+is covered by the same equality test, so a chart that renders one way and
+serialises another fails rather than teaching somebody the wrong play.
