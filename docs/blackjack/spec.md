@@ -230,7 +230,7 @@ Sketched so the shape is known. Not designed until the core works.
 
 | REQ | Title | Expectation | Status |
 |---|---|---|---|
-| REQ-B.9.1 | Play simulator | Full hands with a bankroll. Play money only. Each decision inside is an ordinary attempt. | LATER |
+| REQ-B.9.1 | Play simulator | Full hands with a bankroll. Play money only. Each decision inside is an ordinary attempt. **Built 2026-10-02 at `/blackjack/play/`.** Free for everybody signed in (Avi: "free for all, no ai api needed"): it never asks the gate and calls no model; the explanation after a decision is the chart cell's own sentence. A real multi-deck shoe shuffled with the operating system's entropy, a cut card at 65 to 78 percent and a reshuffle before the next round. The shoe and the dealer's down card stay on the server. Bets 10 to 500 in tens, 1,000 chips to start, a free refill when the stack is gone. Insurance is offered on an ace and is never scored (it is a bad bet and the answer is always no). A pair is judged as a pair only while it can be split; otherwise by its total. A double the table forbids is judged by the cell's fallback. Chips are private, cannot be bought or withdrawn, and are never ranked. | **DONE 2026-10-02** |
 | REQ-B.9.2 | Play with friends | A room, seats, a shared shoe. | LATER |
 | REQ-B.9.3 | Champion league | Ranked by decision accuracy, never by chips won. Ranking winnings ranks luck, and a leaderboard that rewards a hot shoe teaches the opposite of the product. | LATER |
 

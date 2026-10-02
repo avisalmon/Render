@@ -615,3 +615,91 @@ class Clip(models.Model):
     @property
     def thumb_url(self):
         return f"https://i.ytimg.com/vi/{self.youtube_id}/mqdefault.jpg"
+
+
+# --- the play simulator (REQ-B.9.1) ---------------------------------------
+
+# Play money. Nothing in this app sells, grants, or pays out chips: they exist
+# only to make a decision feel like one, and the spec forbids a path from
+# money to chips or from chips to money.
+START_CHIPS = 1000
+MIN_BET = 10
+MAX_BET = 500
+BET_STEP = 10
+
+
+class PlayTable(models.Model):
+    """One person's seat at the simulator: a shoe, and some play chips.
+
+    **The shoe lives here, on the server, and nowhere else.** A shoe shipped to
+    the browser would let anybody read the next card, and a simulator that can
+    be read is a toy. So the browser asks to deal and to act, and is told what
+    is face up. The serializer never includes `cards`.
+
+    One per player, made on first sight. Changing the rules does not edit it:
+    the next round notices, reshuffles a shoe of the new size and says so.
+    """
+
+    player = models.OneToOneField(Player, on_delete=models.CASCADE, related_name="play_table")
+    rule_set = models.ForeignKey(RuleSet, on_delete=models.PROTECT, related_name="+")
+
+    cards = models.JSONField(default=list, blank=True)
+    position = models.PositiveIntegerField(default=0)
+    cut_at = models.PositiveIntegerField(default=0)
+
+    chips = models.IntegerField(default=START_CHIPS)
+    refills = models.PositiveIntegerField(default=0)
+    shuffles = models.PositiveIntegerField(default=0)
+
+    # Bumped by every change. The browser sends the number it last saw, and a
+    # request carrying an old one is refused, which is what stops a double tap
+    # or a second tab from playing the same decision twice.
+    step = models.PositiveIntegerField(default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.player} at the table ({self.chips})"
+
+
+class PlayRound(models.Model):
+    """One round at the table: the cards, the bets, what each hand did.
+
+    A row per round and never edited once `settled`. `hands` and `dealer` are
+    the engine's own state, stored as it is, so a round can be read back and
+    re-judged exactly. `log` is the player's decisions with the verdict on
+    each; the decisions are *also* ordinary `Attempt` rows (source
+    "simulator"), and that is where statistics come from. The log exists so
+    that a screen can show a round's decisions without a second query per one.
+    """
+
+    PHASES = [
+        ("insurance", "ביטוח"),
+        ("player", "תורכם"),
+        ("settled", "נסגרה"),
+    ]
+
+    table = models.ForeignKey(PlayTable, on_delete=models.CASCADE, related_name="rounds")
+    rule_set = models.ForeignKey(RuleSet, on_delete=models.PROTECT, related_name="+")
+
+    bet = models.PositiveIntegerField()
+    phase = models.CharField(max_length=10, choices=PHASES, default="player")
+    dealer = models.JSONField(default=list)
+    hands = models.JSONField(default=list)
+    active = models.PositiveSmallIntegerField(default=0)
+    insurance = models.PositiveIntegerField(default=0)
+    dealer_natural = models.BooleanField(default=False)
+
+    net = models.IntegerField(default=0, help_text="Chips won or lost, insurance included")
+    log = models.JSONField(default=list, blank=True)
+
+    started_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    settled_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-id"]
+
+    def __str__(self):
+        return f"round {self.pk}: {self.get_phase_display()}"

@@ -149,3 +149,23 @@ def visible_clips(user):
     if getattr(user, "is_superuser", False):
         return Clip.objects.all()
     return Clip.objects.filter(is_active=True)
+
+
+def visible_play_tables(user):
+    """Your own seat at the simulator. Chips are play money and private all the
+    same: nobody follows a bankroll, and the league (REQ-B.9.3) ranks accuracy,
+    never chips."""
+    from .models import PlayTable
+
+    if not getattr(user, "is_authenticated", False):
+        return PlayTable.objects.none()
+    return PlayTable.objects.filter(player__user=user)
+
+
+def visible_play_rounds(user):
+    """Your own rounds and nobody else's."""
+    from .models import PlayRound
+
+    if not getattr(user, "is_authenticated", False):
+        return PlayRound.objects.none()
+    return PlayRound.objects.filter(table__player__user=user)

@@ -18,6 +18,7 @@ urlpatterns = [
     path("table/", views.table, name="table"),
     path("sheet/", views.sheet, name="sheet"),
     path("drill/", views.drill, name="drill"),
+    path("play/", views.simulator, name="play"),
     path("progress/", views.progress, name="progress"),
     path("history/", views.history, name="history"),
     path("redeem/", views.redeem, name="redeem"),

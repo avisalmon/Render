@@ -1322,3 +1322,140 @@
 .bj-clip-title { font-weight: 700; font-size: .95rem; text-align: end; }
 .bj-clip-by { text-align: end; }
 .bj-clip-why { margin-top: 6px; font-size: .88rem; }
+
+/* --- the play table (REQ-B.9.1) ----------------------------------------- */
+
+.bj-sim-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin: 0 0 4px;
+}
+
+.bj-sim-chips { margin: 0; display: flex; align-items: baseline; gap: 8px; }
+
+.bj-sim-chips-n {
+  color: var(--bj-gold);
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.bj-sim-shoe { margin: 0; font-variant-numeric: tabular-nums; }
+
+.bj-sim-felt { min-height: 330px; align-content: start; }
+
+/* Hearts and diamonds. The drill draws no suit colour; at a real table the
+   red is half of what lets you read a hand at a glance. */
+.bj-card.bj-sim-red { color: #b3261e; }
+
+.bj-sim-hands { display: flex; flex-wrap: wrap; gap: 14px 18px; }
+
+.bj-sim-hand {
+  display: grid;
+  gap: 6px;
+  padding: 6px 8px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--bj-radius);
+}
+
+.bj-sim-hand.is-active { border-color: var(--bj-gold); }
+
+.bj-sim-hand-meta {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+}
+
+.bj-sim-result { font-size: .85rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.bj-sim-result.is-win { color: #8fd3b6; }
+.bj-sim-result.is-loss { color: #f0c9c2; }
+
+.bj-sim-outcome {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.bj-sim-outcome.is-win { color: #8fd3b6; }
+.bj-sim-outcome.is-loss { color: #f0c9c2; }
+
+.bj-sim-error {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border: 1px solid #c9766a;
+  border-radius: var(--bj-radius);
+  background: rgba(201, 118, 106, .14);
+  color: #f0c9c2;
+}
+
+.bj-sim-panel { margin-top: 6px; }
+
+.bj-sim-stepper {
+  display: grid;
+  grid-template-columns: 56px 1fr 56px;
+  direction: ltr;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.bj-sim-step {
+  min-height: 56px;
+  border: 1px solid var(--bj-line);
+  border-radius: var(--bj-radius);
+  background: var(--bj-felt-high);
+  color: var(--bj-ink);
+  font: inherit;
+  font-size: 1.6rem;
+  cursor: pointer;
+}
+
+.bj-sim-step:disabled { opacity: .4; cursor: default; }
+
+.bj-sim-bet {
+  display: block;
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--bj-gold);
+  font-variant-numeric: tabular-nums;
+}
+
+.bj-sim-quick {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  direction: ltr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.bj-sim-quick-btn {
+  min-height: 48px;
+  border: 1px solid var(--bj-line);
+  border-radius: 999px;
+  background: var(--bj-felt-high);
+  color: var(--bj-ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bj-sim-quick-btn.is-on { border-color: var(--bj-gold); color: var(--bj-gold); }
+.bj-sim-quick-btn:disabled { opacity: .4; cursor: default; }
+
+.bj-sim-deal { margin-top: 12px; width: 100%; min-height: 52px; }
+.bj-sim-deal:disabled { opacity: .5; cursor: default; }
+
+.bj-sim-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.bj-sim-fine { margin: 22px 0 0; line-height: 1.6; }

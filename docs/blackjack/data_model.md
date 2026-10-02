@@ -232,9 +232,8 @@ URL conf rather than from a list somebody maintains by hand.
 
 Named so the shape is known, deliberately not designed until the core works.
 
-- **Simulator**: a played round has a bet, an outcome and a payoff, and each
-  decision inside it is an ordinary `Attempt` with `source="simulator"`. Play
-  money only, see the spec's refusals.
+- ~~**Simulator**~~: built 2026-10-02, see section 10. Play money only, see
+  the spec's refusals.
 - **Play with friends**: a room, seats, a shared shoe.
 - **Champion league**: a season and an entry. **Ranked by decision accuracy,
   never by chips won.** Ranking by winnings ranks luck, and a leaderboard that
@@ -376,3 +375,45 @@ friend here would otherwise have nowhere to press.
 You arrive at a person through a result they shared with you. No directory, no
 search: a lookup would mean typing part of an email address and being told
 whether that account exists.
+
+---
+
+## 10. The play table
+
+REQ-B.9.1. Two models, both read-only over the API: the verbs are the four
+actions on `/blackjack/api/play-tables/` (`deal`, `insurance`, `act`,
+`refill`), each of which runs the engine on the server.
+
+### `PlayTable`
+
+One person's seat. Made on first sight, one per `Player`.
+
+| Field | Type | Notes |
+|---|---|---|
+| `player` | one-to-one | |
+| `rule_set` | FK, protected | the rules the shoe was built for; a change reshuffles at the next deal |
+| `cards`, `position`, `cut_at` | JSON list, ints | the shoe: card numbers 0..51 repeated per deck, the next index, and where the cut card sits. **Never serialized.** |
+| `chips` | int | play money. Starts at 1,000. Cannot be written through the API |
+| `refills` | int | how many times the free refill was taken |
+| `shuffles` | int | |
+| `step` | int | bumped by every change; a request carrying an older one is refused with 409 |
+
+### `PlayRound`
+
+One round. Never edited once `settled`.
+
+| Field | Type | Notes |
+|---|---|---|
+| `table`, `rule_set` | FK | the rules in force when it was dealt |
+| `bet` | int | 10 to 500 in tens |
+| `phase` | `insurance`, `player`, `settled` | |
+| `dealer`, `hands`, `active`, `insurance`, `dealer_natural` | | the engine's own state, stored as it is, so a round can be re-judged |
+| `net` | int | profit or loss, insurance included, set when it settles |
+| `log` | JSON list | the decisions with their verdicts. Insurance is logged with `counted: false` |
+| `started_at`, `settled_at` | datetime | |
+
+The dealer's down card is a placeholder in every response until `phase` is
+`settled`. Statistics are not read from here: each scored decision is also an
+`Attempt` with `source="simulator"`, and that is where the grid and the graph
+read it from. Chips are private and are not ranked by anything; the champion
+league (REQ-B.9.3) ranks accuracy.

@@ -44,6 +44,7 @@ markers = [
     "bjclasses: blackjack: every class in the markup is styled",
     "review1002: blackjack: the review pass of 2026-10-02",
     "videosgraph1002: blackjack: videos on the learning screen, numbers on the history graph",
+    "playsim: blackjack: the play simulator (REQ-B.9.1), engine, table, API and screen",
     "spr143: F-14.3 the home page must not scroll sideways",
     "sprm1: SPR-M.1 מט״צים front door sprint tests",
     "sprm2: SPR-M.2 מט״צים identity and first-contact sprint tests",

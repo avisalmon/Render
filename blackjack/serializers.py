@@ -22,6 +22,8 @@ from .models import (
     Grant,
     Mastery,
     Player,
+    PlayRound,
+    PlayTable,
     RuleSet,
     Session,
     Share,
@@ -236,3 +238,50 @@ class ClipSerializer(serializers.ModelSerializer):
         if not re.fullmatch(r"[A-Za-z0-9_-]{11}", value):
             raise serializers.ValidationError("מזהה יוטיוב הוא 11 תווים: אותיות, ספרות, מקף וקו תחתון.")
         return value
+
+
+class PlayTableSerializer(serializers.ModelSerializer):
+    """Your seat, without the shoe.
+
+    `cards`, `position` and `cut_at` are deliberately not fields: they are the
+    order of the cards still to come, and an API that returned them would turn a
+    shuffled shoe into a list somebody could read ahead in. Read-only in full;
+    chips change by playing, never by writing a number.
+    """
+
+    cards_left = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PlayTable
+        fields = ["id", "player", "rule_set", "chips", "refills", "shuffles",
+                  "cards_left", "step", "created_at", "updated_at"]
+        read_only_fields = fields
+
+    def get_cards_left(self, table):
+        return max(0, len(table.cards) - table.position)
+
+
+class PlayRoundSerializer(serializers.ModelSerializer):
+    """A round as its player may see it: the dealer's down card is hidden until
+    the round is settled, here exactly as at the table. The same function
+    builds both, so the two cannot disagree about what is secret."""
+
+    dealer = serializers.SerializerMethodField()
+    hands = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PlayRound
+        fields = ["id", "table", "rule_set", "bet", "phase", "dealer", "hands",
+                  "insurance", "net", "log", "started_at", "settled_at"]
+        read_only_fields = fields
+
+    def _public(self, round_):
+        from . import play
+
+        return play.public_round(round_)
+
+    def get_dealer(self, round_):
+        return self._public(round_)["dealer"]
+
+    def get_hands(self, round_):
+        return self._public(round_)["hands"]

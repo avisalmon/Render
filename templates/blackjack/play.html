@@ -1,0 +1,115 @@
+{% extends "blackjack/base.html" %}
+{% load static %}
+
+{% block title %}משחק · blackjack{% endblock %}
+
+{% block content %}
+
+{% comment %}
+  REQ-B.9.1 — the play table. Unlike the drill, nothing about the game is
+  decided in the browser: the page gets the table as the server will allow it
+  to be seen (no shoe, no dealer hole card) and every deal and decision goes to
+  the API. That is the price of a shoe that is really shuffled and a hole card
+  that cannot be read out of the page source.
+
+  Free for everybody signed in. The chips are play money: they cannot be
+  bought, withdrawn or ranked, and the page says so.
+{% endcomment %}
+<script id="bjTable" type="application/json">{{ table_json|safe }}</script>
+
+<div class="bj-drill-top">
+  <h1 class="bj-h1 bj-drill-h1">משחק</h1>
+  <div class="bj-drill-meta">
+    {% if streak.current %}
+      <span class="bj-streak {% if streak.at_risk %}is-at-risk{% endif %}">
+        <span aria-hidden="true">▲</span> {{ streak.current }}
+      </span>
+    {% endif %}
+  </div>
+</div>
+
+<div class="bj-sim-bar">
+  <p class="bj-sim-chips" aria-live="polite">
+    <span class="bj-muted">ז'יטונים</span>
+    <strong id="bjChips" class="bj-sim-chips-n"></strong>
+  </p>
+  <p class="bj-sim-shoe bj-muted bj-small" id="bjShoe"></p>
+</div>
+<p class="bj-batch-line"><span class="bj-batch" id="bjBatch"></span></p>
+
+<section class="bj-felt-area bj-sim-felt" aria-label="השולחן">
+  <div class="bj-seat">
+    <span class="bj-seat-label">הדילר <span id="bjDealerTotal" class="bj-total"></span></span>
+    <div class="bj-hand" id="bjDealer"></div>
+  </div>
+
+  <div class="bj-seat">
+    <span class="bj-seat-label">אתם <span id="bjHint" class="bj-muted"></span></span>
+    <div class="bj-sim-hands" id="bjHands"></div>
+  </div>
+
+  <p class="bj-sim-outcome" id="bjOutcome" aria-live="polite" hidden></p>
+</section>
+
+<p class="bj-sim-error" id="bjError" role="alert" hidden></p>
+
+{% comment %}
+  One panel at a time. The script shows the bet panel between rounds, the
+  insurance question when the dealer shows an ace, the four actions while a
+  hand is waiting, and the refill when the stack is gone.
+{% endcomment %}
+<section class="bj-sim-panel" id="bjBetPanel" aria-label="הימור" hidden>
+  <p class="bj-ask">כמה מהמרים?</p>
+  <div class="bj-sim-stepper">
+    <button type="button" class="bj-sim-step" id="bjBetDown" aria-label="פחות">&minus;</button>
+    <output class="bj-sim-bet" id="bjBet" aria-live="polite"></output>
+    <button type="button" class="bj-sim-step" id="bjBetUp" aria-label="יותר">+</button>
+  </div>
+  <div class="bj-sim-quick" id="bjQuick" role="group" aria-label="הימורים מהירים">
+    <button type="button" class="bj-sim-quick-btn" data-bet="10">10</button>
+    <button type="button" class="bj-sim-quick-btn" data-bet="50">50</button>
+    <button type="button" class="bj-sim-quick-btn" data-bet="100">100</button>
+    <button type="button" class="bj-sim-quick-btn" data-bet="250">250</button>
+    <button type="button" class="bj-sim-quick-btn" data-bet="500">500</button>
+  </div>
+  <button type="button" class="bj-btn bj-sim-deal" id="bjDeal">לחלק</button>
+</section>
+
+<section class="bj-sim-panel" id="bjInsurancePanel" aria-label="ביטוח" hidden>
+  <p class="bj-ask">הדילר מראה אס. לקחת ביטוח?</p>
+  <p class="bj-muted bj-small" id="bjInsuranceCost"></p>
+  <div class="bj-sim-pair">
+    <button type="button" class="bj-act" id="bjInsureNo">בלי ביטוח</button>
+    <button type="button" class="bj-act" id="bjInsureYes">לקחת ביטוח</button>
+  </div>
+</section>
+
+<section class="bj-sim-panel" id="bjActPanel" aria-label="פעולות" hidden>
+  <p class="bj-ask" id="bjAsk">מה עושים?</p>
+  <div class="bj-actions" id="bjActions" role="group" aria-label="פעולות">
+    <button type="button" class="bj-act" data-act="H">קלף<small>H</small></button>
+    <button type="button" class="bj-act" data-act="S">עצירה<small>S</small></button>
+    <button type="button" class="bj-act" data-act="D">הכפלה<small>D</small></button>
+    <button type="button" class="bj-act" data-act="P">פיצול<small>P</small></button>
+  </div>
+</section>
+
+<section class="bj-sim-panel" id="bjBrokePanel" aria-label="נגמרו הז'יטונים" hidden>
+  <p class="bj-ask">נגמרו הז'יטונים.</p>
+  <p class="bj-muted bj-small">הם של הצגה, אז מקבלים מחדש בחינם.</p>
+  <button type="button" class="bj-btn bj-sim-deal" id="bjRefill">לקבל 1,000 ז'יטונים</button>
+</section>
+
+<section class="bj-verdict" id="bjVerdict" aria-live="polite" hidden></section>
+
+<aside class="bj-batch-note" id="bjNote" aria-live="polite" hidden></aside>
+
+<p class="bj-sim-fine bj-muted bj-small">
+  ז'יטונים של הצגה. אי אפשר לקנות אותם, אי אפשר למשוך אותם, והם לא נכנסים
+  לשום דירוג. מה שנספר הוא ההחלטות: כל החלטה כאן נרשמת כתרגול, באותה טבלה
+  של <bdi>{{ rules.describe }}</bdi>.
+</p>
+
+<script src="{% static 'blackjack/play.js' %}"></script>
+
+{% endblock %}

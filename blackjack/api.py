@@ -25,9 +25,11 @@ Where a verb is refused the viewset says so in words, and a test holds each one.
 """
 
 from rest_framework import mixins, permissions, viewsets
+from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed, PermissionDenied, ValidationError
+from rest_framework.response import Response
 
-from . import access
+from . import access, recording
 from .models import (
     Attempt,
     BatchNote,
@@ -38,6 +40,8 @@ from .models import (
     Grant,
     Mastery,
     Player,
+    PlayRound,
+    PlayTable,
     RuleSet,
     Session,
     Share,
@@ -53,6 +57,8 @@ from .serializers import (
     GrantSerializer,
     MasterySerializer,
     PlayerSerializer,
+    PlayRoundSerializer,
+    PlayTableSerializer,
     RuleSetSerializer,
     SessionSerializer,
     ShareSerializer,
@@ -214,8 +220,6 @@ class AttemptViewSet(
         return access.visible_attempts(self.request.user)
 
     def perform_create(self, serializer):
-        from django.utils import timezone
-
         from .models import Chart
 
         player = Player.for_user(self.request.user)
@@ -232,12 +236,7 @@ class AttemptViewSet(
         if cell is None:
             raise ValidationError({"detail": "אין תא כזה בטבלה."})
 
-        # REQ-B.6.3 — the thirty minutes start at the first hand, not at
-        # signup. Set once, here, because this is the first moment the app can
-        # honestly say somebody has used it.
-        if player.first_used_at is None:
-            player.first_used_at = timezone.now()
-            player.save(update_fields=["first_used_at"])
+        recording.touch(player)
 
         from .models import Session
 
@@ -250,25 +249,12 @@ class AttemptViewSet(
             is_correct=data["chosen"] == cell.action,
         )
 
-        # The mastery row is folded here rather than in a signal, so the one
-        # place a hand is recorded is the one place everything about a hand
-        # happens. A signal would make this invisible to anybody reading the
-        # endpoint, which is where somebody looks when the numbers are wrong.
-        from . import mastery, notes
-
-        mastery.record(attempt)
-        note = notes.maybe_write(player, attempt.session)
-
-        # Handed back to the drill, which shows the note at the table and keeps
-        # its "hand 7 of 20" honest. Read in `create` below.
-        from .models import Attempt
-
-        self._after = {
-            "note": note.text if note else None,
-            "in_batch": Attempt.objects.filter(
-                player=player, session=attempt.session
-            ).count() % notes.BatchNote.BATCH,
-        }
+        # Folded here rather than in a signal, so the one place a hand is
+        # recorded is the one place everything about a hand happens. A signal
+        # would make this invisible to anybody reading the endpoint, which is
+        # where somebody looks when the numbers are wrong. The simulator goes
+        # through the same `recording.after`.
+        self._after = recording.after(player, attempt)
 
     def create(self, request, *args, **kwargs):
         """The row, plus what the drill needs to say about it.
@@ -441,6 +427,108 @@ class ClipViewSet(viewsets.ModelViewSet):
         return access.visible_clips(self.request.user)
 
 
+class PlayTableViewSet(ReadOnlyScoped):
+    """Your seat at the simulator (REQ-B.9.1), and the four things you can do
+    at it.
+
+    **Read-only as a resource, and the verbs are actions.** A chip count or a
+    shoe that could be PUT would be a simulator that can be told what to deal.
+    So `GET` shows the table (never the shoe, never the dealer's down card) and
+    the only ways it changes are `deal`, `insurance`, `act` and `refill`, each
+    of which runs the engine on the server. There is no create and no delete: a
+    seat is made on first sight and goes with the account.
+
+    Every action carries the `step` the caller last saw. A stale one is refused
+    with 409 and the current table, which is what makes a double tap or a
+    second open tab harmless.
+
+    **Free, for everybody signed in.** Nothing here consults the gate: the
+    simulator is not part of the paid coach, and the explanation after a
+    decision is the chart's own text, not a model's.
+    """
+
+    serializer_class = PlayTableSerializer
+    scope = staticmethod(access.visible_play_tables)
+
+    def _answer(self, table, **extra):
+        from . import play
+
+        body = play.present(table)
+        body.update(extra)
+        return Response(body)
+
+    @action(detail=False, methods=["get"])
+    def current(self, request):
+        """The table as it stands, made on first sight."""
+        from . import play
+
+        return self._answer(play.table_for(Player.for_user(request.user)))
+
+    @action(detail=False, methods=["post"])
+    def deal(self, request):
+        from . import play
+
+        player = Player.for_user(request.user)
+        try:
+            table = play.deal(player, request.data.get("bet"), request.data.get("step"))
+        except play.Refused as refusal:
+            return self._refused(player, refusal)
+        return self._answer(table)
+
+    @action(detail=False, methods=["post"])
+    def insurance(self, request):
+        from . import play
+
+        player = Player.for_user(request.user)
+        try:
+            table = play.insure(player, request.data.get("take"), request.data.get("step"))
+        except play.Refused as refusal:
+            return self._refused(player, refusal)
+        return self._answer(table)
+
+    @action(detail=False, methods=["post"])
+    def act(self, request):
+        """One decision on the hand in play: H, S, D or P. The reply carries the
+        verdict on it, and the note if it was the twentieth hand."""
+        from . import play
+
+        player = Player.for_user(request.user)
+        try:
+            table, verdict, after = play.act(
+                player, request.data.get("action"), request.data.get("step")
+            )
+        except play.Refused as refusal:
+            return self._refused(player, refusal)
+        return self._answer(table, verdict=verdict, note=(after or {}).get("note"))
+
+    @action(detail=False, methods=["post"])
+    def refill(self, request):
+        from . import play
+
+        player = Player.for_user(request.user)
+        try:
+            table = play.refill(player, request.data.get("step"))
+        except play.Refused as refusal:
+            return self._refused(player, refusal)
+        return self._answer(table)
+
+    def _refused(self, player, refusal):
+        from . import play
+
+        return Response(
+            {"detail": refusal.message, "table": play.present(play.table_for(player))},
+            status=refusal.code,
+        )
+
+
+class PlayRoundViewSet(ReadOnlyScoped):
+    """Rounds played, newest first. Read-only: a round is what happened, and the
+    engine is the only thing that writes one."""
+
+    serializer_class = PlayRoundSerializer
+    scope = staticmethod(access.visible_play_rounds)
+
+
 # Every model this app owns, and the route it answers on. Kept here rather than
 # in urls.py so that adding a model and forgetting its endpoint is visible in
 # one place: `test_every_model_has_an_endpoint` reads this.
@@ -458,4 +546,6 @@ ROUTES = [
     ("tricks", TrickViewSet, Trick),
     ("shares", ShareViewSet, Share),
     ("clips", ClipViewSet, Clip),
+    ("play-tables", PlayTableViewSet, PlayTable),
+    ("play-rounds", PlayRoundViewSet, PlayRound),
 ]

@@ -99,8 +99,9 @@ stopping them.
 
 ## EPIC-B.6 — The table with other people  `LATER`
 
-The simulator, playing with friends, the champion league. Not designed until
-the core works. REQ-B.9.*.
+Playing with friends and the champion league. Not designed until the core
+works. REQ-B.9.2, REQ-B.9.3. The simulator (REQ-B.9.1) came out of this epic
+and was built on its own, see the next section.
 
 ---
 
@@ -217,6 +218,31 @@ and a learner on a phone pays for all of them. The frame carries
 and read out by a small script, for the same reason there is no charting
 library: twelve points. The five videos were checked against their
 transcripts, not their titles.
+
+---
+
+## The play simulator (2026-10-02)
+
+Avi asked whether there was a simulator to play against real shuffled decks
+with fake money, and then: "I want it. And free for all. No ai api needed."
+
+| Item | What | Traces | Status |
+|---|---|---|---|
+| SPR-B.11.1 | `engine.py`: the shoe, the round, every payout, tested to the chip and by a long run against a dealer-mimic | REQ-B.9.1 | **DONE 2026-10-02** |
+| SPR-B.11.2 | `PlayTable`, `PlayRound`, `play.py`, their API, and the shared `recording.py` | REQ-B.9.1, REQ-B.10.6 | **DONE 2026-10-02** |
+| SPR-B.11.3 | `/blackjack/play/`: the bet, the hand, insurance, the verdict and the refill, at 390 and 1280 | REQ-B.9.1, REQ-B.10.1 to B.10.3 | **DONE 2026-10-02** |
+
+**What was decided.** The server deals and the browser only draws: a shoe in
+the page would be a shoe anybody could read. Every request carries the `step`
+the browser last saw, so a double tap or a second tab is refused with the
+current table instead of playing a decision twice. A decision at the table is
+the same `Attempt` as in the drill (`source="simulator"`) and goes through the
+same `recording.py`, so the grid, the graph, the streak and the note every
+twenty hands all move. Playing the first hand starts the coach's thirty free
+minutes, as it does in the drill, but the simulator itself never asks.
+Surrender and the no-peek table are not offered, for the reason the chart does
+not cover them. Not built, on purpose: buying or withdrawing chips, a chip
+leaderboard, side bets other than insurance.
 
 ---
 

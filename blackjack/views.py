@@ -264,6 +264,43 @@ def chart_payload(chart):
 
 @ensure_csrf_cookie
 @login_required(login_url=LOGIN_URL)
+def simulator(request):
+    """The play table (REQ-B.9.1): full hands against a real shuffled shoe, with
+    play money.
+
+    Free for everybody signed in, which is why nothing here asks the gate.
+    The page carries only the table as it stands now, and the browser then
+    talks to the API for every deal and every decision. The shoe and the
+    dealer's hole card are on the server and stay there.
+    """
+    import json
+
+    from django.core.serializers.json import DjangoJSONEncoder
+
+    from . import play, streaks
+    from .models import Chart, Player
+    from .strategy import supports
+
+    player = Player.for_user(request.user)
+    ok, why = supports(player.rule_set.rules)
+    if not ok or not Chart.objects.filter(rule_set=player.rule_set).exists():
+        return render(request, "blackjack/sheet_missing.html", {
+            "player": player,
+            "rules": player.rule_set,
+            "why": why if not ok else ["הטבלה לשולחן הזה עוד לא נבנתה"],
+        })
+
+    table = play.table_for(player)
+    return render(request, "blackjack/play.html", {
+        "player": player,
+        "rules": player.rule_set,
+        "streak": streaks.of(player),
+        "table_json": json.dumps(play.present(table), cls=DjangoJSONEncoder, ensure_ascii=False),
+    })
+
+
+@ensure_csrf_cookie
+@login_required(login_url=LOGIN_URL)
 def drill(request):
     """The practice table (REQ-B.4.1 to B.4.5).
 
