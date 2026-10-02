@@ -94,7 +94,6 @@ stopping them.
 | SPR-B.5.2 | AI feedback over this person's own attempts, through babook's client | REQ-B.8.1, B.8.5 |
 | SPR-B.5.3 | Deeper explanation on demand | REQ-B.8.3 |
 | SPR-B.5.4 | Mnemonics for the cells this person keeps missing | REQ-B.8.4 |
-| SPR-B.5.5 | Streaks, sharing, following | REQ-B.8.7 |
 
 ---
 
@@ -105,12 +104,28 @@ the core works. REQ-B.9.*.
 
 ---
 
-## Open questions
+## EPIC-B.7 — the social half  `TODO`
 
-| # | Question | Blocks |
+**Goal:** the three things that bring somebody back on a Tuesday. Free, per
+Avi on 2026-10-02, reversing his own call of the day before.
+
+It is its own epic rather than a sprint inside EPIC-B.5 because that epic's
+goal is "what people are paying for", and a free sprint sitting inside it
+would make the goal a lie. Moving it keeps each epic's sentence true.
+
+| Sprint | What | Traces | Status |
+|---|---|---|---|
+| SPR-B.7.1 | Streaks: days in a row, and what breaks one | REQ-B.5.8 | TODO |
+| SPR-B.7.2 | Sharing a result, as a link somebody can open | REQ-B.5.8 | TODO |
+| SPR-B.7.3 | Following, **reading babook's `Follow`**, never a second graph | REQ-B.5.8, Q2 | TODO |
+
+---
+
+## Questions, all answered
+
+| # | Question | Answer |
 |---|---|---|
-| Q2 | Reuse babook's `Follow`, or keep our own? | SPR-B.5.5 |
-| Q3 | Free tier genuinely without streaks, sharing and following? | SPR-B.5.5 |
-
-Answered 2026-10-01: **Q1**, charts are database tables, so Rule 1 stands with
-no exception; **Q4**, the app is `blackjack` at `/blackjack/`.
+| Q1 | Charts as static data or rows? | Rows. "Charts are tables", 2026-10-01. Rule 1 stands, no exception. |
+| Q2 | Reuse babook's `Follow`? | **Reuse**, 2026-10-02. Following a person is identity, which babook owns. |
+| Q3 | Streaks, sharing, following paid? | **Free**, 2026-10-02, reversing the 2026-10-01 call. |
+| Q4 | The name? | `blackjack` at `/blackjack/`, 2026-10-01. |

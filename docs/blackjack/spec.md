@@ -51,8 +51,13 @@ a language model because nothing in the free product talks to one.
 - Drilling that adapts to their weak areas.
 - Explanations deeper than the canned reason attached to each cell.
 - Tricks to remember, built for the hands *they* keep missing.
-- Sharing, following, and gamification such as streaks.
 - A play simulator, playing with friends, and a champion league.
+
+**Streaks, sharing and following are free** (Avi, 2026-10-02, reversing his own
+earlier call). They are what brings somebody back on a Tuesday and what
+spreads the app, and under the old rule only paying users could spread it.
+They also need no model, so they sit on the free side of the line without
+weakening it.
 
 Three ways to hold paid access: a **subscription**, through babook; a **coupon**
 from Avi, worth one week; and **thirty minutes** from first use, for anybody new.
@@ -132,8 +137,8 @@ and a generated dashboard.
 | # | Question | Answer, or why it matters |
 |---|---|---|
 | Q1 | Does the strategy chart ship as static data rather than database rows? | **Answered 2026-10-01: "charts are tables."** So Rule 1 stands and there is no exception to write down. The 340 decisions and their reasons are rows, and the page ships a serialised copy of the one chart it needs, which is what "all in js and ready data" asked for. One source, two readers, and the promise in 1.5 gets stronger: the sheet and the drill are literally the same rows. |
-| Q2 | **OPEN.** Does following reuse babook's `Follow`, or does this app keep its own? | babook already has a member-follows-member graph, used by its community feed. Reusing it means following somebody at the blackjack table also follows them in the community, which a person may not expect. Keeping our own means two follow lists on one site. Bites in SPR-B.5.5. |
-| Q3 | **OPEN.** Is the free tier really without streaks, sharing and following? | Avi's call and a coherent one: the free tier is a tool, the paid tier is a habit. Recorded because those three are usually what brings a free user back and what spreads the app, and only paying users would be able to spread it. Bites in SPR-B.5.5. |
+| Q2 | Does following reuse babook's `Follow`, or does this app keep its own? | **Answered 2026-10-02: reuse.** Following a person is about identity, which babook owns (main_spec 0.3), so blackjack reads that graph and never grows a second one. The cost, accepted: following somebody here also follows them in babook's community. |
+| Q3 | Is the free tier really without streaks, sharing and following? | **Answered 2026-10-02: no, they are free**, reversing his 2026-10-01 call that everything from that point was advanced. They need no model, so the free tier still has no path to one, and the paid tier is still defined by exactly the thing arithmetic cannot do. |
 | Q4 | The app's public name. | **Answered 2026-10-01: `blackjack`**, at `/blackjack/`. A product name can still sit on top of both without a migration. |
 
 ---
@@ -182,6 +187,7 @@ and a generated dashboard.
 | REQ-B.5.5 | Named sessions | Drill one thing without polluting lifetime numbers. | TODO |
 | REQ-B.5.6 | Reset means start fresh, never destroy | A reset opens a new session. The history stays. | TODO |
 | REQ-B.5.7 | Recently missed cells come back | The weak form of spaced repetition, free. The real scheduler is paid (REQ-B.8.2). | TODO |
+| REQ-B.5.8 | Streaks, sharing and following, free | Avi, 2026-10-02, reversing his earlier call: these three are what brings somebody back on a Tuesday and what spreads the app, and under the old rule only paying users could spread it. Following **reuses babook's `Follow`** (Q2), because following a person is about identity, which babook owns; blackjack reads that graph and never grows a second one. | TODO |
 
 ## Chapter 6 — Access
 
@@ -214,7 +220,7 @@ and a generated dashboard.
 | REQ-B.8.4 | Tricks to remember | Mnemonics built for the cells this person keeps missing. | TODO |
 | REQ-B.8.5 | Every model call goes through babook | app/ai_chat.py owns the client, the usage log and the monthly cost cap. No second client, no second budget. | TODO |
 | REQ-B.8.6 | The chart is never asked of a model | The model explains the answer; it never decides it. | TODO |
-| REQ-B.8.7 | Streaks, sharing, following | Paid, per Avi. Q3 of section 1.7 records the argument against and his decision. Following reuses babook's graph pending Q2. | TODO |
+| REQ-B.8.7 | Streaks, sharing, following | **Moved to REQ-B.5.8 on 2026-10-02.** Avi reversed himself and put these in the free tier. Kept here as a pointer so the renumbering is visible rather than silent. | MOVED |
 
 ## Chapter 9 — Later
 
