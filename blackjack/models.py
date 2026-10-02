@@ -454,3 +454,32 @@ class Grant(models.Model):
 
     def __str__(self):
         return f"{self.source} until {self.ends_at:%Y-%m-%d %H:%M}"
+
+
+class Trick(models.Model):
+    """A way to remember one decision, written for one person (REQ-B.8.4).
+
+    One row per person per cell, replaced when they ask again. Stored rather
+    than generated each time it is shown, for two reasons: a mnemonic that
+    changes every time you look at it is not a mnemonic, and generating one
+    costs money on every page view.
+
+    The cell key is the same three fields `Attempt` and `Mastery` use, so a
+    trick can be found for the hand somebody is looking at.
+    """
+
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="tricks")
+    cell_kind = models.CharField(max_length=4, choices=Cell.KIND_CHOICES)
+    cell_player = models.PositiveSmallIntegerField()
+    cell_dealer = models.PositiveSmallIntegerField()
+
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = [("player", "cell_kind", "cell_player", "cell_dealer")]
+        ordering = ["-updated_at"]
+
+    def __str__(self):
+        return f"trick for {self.cell_kind} {self.cell_player} vs {self.cell_dealer}"

@@ -115,3 +115,12 @@ def visible_grants(user):
     if not getattr(user, "is_authenticated", False):
         return Grant.objects.none()
     return Grant.objects.filter(player__user=user)
+
+
+def visible_tricks(user):
+    """Your own mnemonics. They name the hands you are worst at."""
+    from .models import Trick
+
+    if not getattr(user, "is_authenticated", False):
+        return Trick.objects.none()
+    return Trick.objects.filter(player__user=user)

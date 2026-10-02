@@ -39,6 +39,7 @@ from .models import (
     Player,
     RuleSet,
     Session,
+    Trick,
 )
 from .serializers import (
     AttemptSerializer,
@@ -51,6 +52,7 @@ from .serializers import (
     PlayerSerializer,
     RuleSetSerializer,
     SessionSerializer,
+    TrickSerializer,
 )
 
 
@@ -364,6 +366,13 @@ class GrantViewSet(ReadOnlyScoped):
     scope = staticmethod(access.visible_grants)
 
 
+class TrickViewSet(ReadOnlyScoped):
+    """Mnemonics, read-only, like every other thing the coach writes."""
+
+    serializer_class = TrickSerializer
+    scope = staticmethod(access.visible_tricks)
+
+
 # Every model this app owns, and the route it answers on. Kept here rather than
 # in urls.py so that adding a model and forgetting its endpoint is visible in
 # one place: `test_every_model_has_an_endpoint` reads this.
@@ -378,4 +387,5 @@ ROUTES = [
     ("mastery", MasteryViewSet, Mastery),
     ("coupons", CouponViewSet, Coupon),
     ("grants", GrantViewSet, Grant),
+    ("tricks", TrickViewSet, Trick),
 ]

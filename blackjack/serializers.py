@@ -23,6 +23,7 @@ from .models import (
     Player,
     RuleSet,
     Session,
+    Trick,
 )
 
 
@@ -183,4 +184,16 @@ class GrantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Grant
         fields = ["id", "player", "source", "coupon", "starts_at", "ends_at"]
+        read_only_fields = fields
+
+
+class TrickSerializer(serializers.ModelSerializer):
+    """A mnemonic. Read-only: it is written by the coach, for one person, from
+    their own weak cells, and a client writing one would be writing its own
+    coaching."""
+
+    class Meta:
+        model = Trick
+        fields = ["id", "player", "cell_kind", "cell_player", "cell_dealer",
+                  "text", "created_at", "updated_at"]
         read_only_fields = fields

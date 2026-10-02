@@ -260,3 +260,84 @@ def explain(user, player, cell_facts):
                                 result["completion_tokens"]),
     )
     return result["content"].strip()
+
+
+TRICKS_SYSTEM = """את/ה עוזר/ת לאדם לזכור כמה החלטות ספציפיות בבלקג'ק.
+
+כללים:
+- הפעולה הנכונה לכל יד נתונה לך. אל תחליט/י ואל תסתור/י אותה.
+- לכל יד תן/י דרך אחת לזכור: חרוז, תמונה, או כלל קצר שנצמד לראש.
+  לא הסבר תאורטי, לא "תתרגל יותר".
+- שורה אחת לכל יד, ובתחילת השורה היד עצמה כפי שנתתי לך.
+- עברית. בלי כותרות, בלי מספור, בלי הקדמה ובלי סיכום."""
+
+
+def tricks(user, player, cells):
+    """A mnemonic for each of these cells (REQ-B.8.4).
+
+    `cells` comes in with the correct action already on it, for the same reason
+    as `explain`: this module never looks a play up, so it cannot invent one.
+
+    One row per cell, replaced when somebody asks again. A mnemonic that
+    changes every time you look at it is not a mnemonic.
+    """
+    from app.ai_chat import _estimate_cost, call_openai, check_cost_cap, check_rate_limit
+    from app.models import UsageLog
+
+    from . import gate
+    from .models import Trick
+
+    if not gate.ai_is_open(user):
+        return Refused(gate.LOCKED_SENTENCE)
+    if not cells:
+        return Refused("אין עדיין יד שחוזרת ומפספסים. תשחקו עוד קצת.")
+
+    under_cap, _spent = check_cost_cap()
+    if not under_cap:
+        return Refused("המאמן בהפסקה קצרה. נסו שוב מאוחר יותר.")
+
+    allowed, _why = check_rate_limit(user)
+    if not allowed:
+        return Refused("הגעתם למכסה היומית של המאמן. מחר זה נפתח שוב.")
+
+    words = {"H": "לקחת קלף", "S": "לעצור", "D": "להכפיל", "P": "לפצל"}
+    lines = []
+    for cell in cells:
+        lines.append(
+            f"{cell['hand']} — הפעולה הנכונה: {words.get(cell['action'], cell['action'])}."
+            f" ההסבר הקצר: {cell['reason']}"
+        )
+
+    result = call_openai(
+        [{"role": "user", "content": "\n".join(lines)}],
+        system_prompt=TRICKS_SYSTEM,
+    )
+
+    UsageLog.objects.create(
+        user=user,
+        model=result["model"],
+        prompt_tokens=result["prompt_tokens"],
+        completion_tokens=result["completion_tokens"],
+        cost_usd=_estimate_cost(result["model"], result["prompt_tokens"],
+                                result["completion_tokens"]),
+    )
+
+    # One answer, several hands. Matching lines back to cells by the hand name
+    # we put at the start of each; anything unmatched goes to the first cell
+    # rather than being dropped, because a trick nobody can find is a trick
+    # that was paid for and lost.
+    written = []
+    text = result["content"].strip()
+    chunks = [line.strip() for line in text.splitlines() if line.strip()]
+    for index, cell in enumerate(cells):
+        mine = [c for c in chunks if c.startswith(cell["hand"])]
+        body = mine[0] if mine else (chunks[index] if index < len(chunks) else text)
+        row, _ = Trick.objects.update_or_create(
+            player=player,
+            cell_kind=cell["kind"],
+            cell_player=cell["player"],
+            cell_dealer=cell["dealer"],
+            defaults={"text": body},
+        )
+        written.append(row)
+    return written

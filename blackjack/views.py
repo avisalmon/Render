@@ -473,13 +473,16 @@ def advanced(request):
     reading, and because every reading costs money.
     """
     from . import coach
-    from .models import BatchNote, Player
+    from .models import BatchNote, Player, Trick
 
     player = Player.for_user(request.user)
     refused = None
 
     if request.method == "POST":
-        answer = coach.feedback(request.user, player)
+        if request.POST.get("what") == "tricks":
+            answer = coach.tricks(request.user, player, _weak_cells(player))
+        else:
+            answer = coach.feedback(request.user, player)
         if isinstance(answer, coach.Refused):
             refused = answer.reason
         else:
@@ -489,8 +492,36 @@ def advanced(request):
         "access": request.bj_access,
         "refused": refused,
         "notes": BatchNote.objects.filter(player=player, is_ai=True)[:5],
+        "tricks": Trick.objects.filter(player=player)[:8],
         "hands": player.attempts.count(),
     })
+
+
+def _weak_cells(player, limit=5):
+    """The hands worth a mnemonic, with their correct play attached.
+
+    Read here rather than in the coach, so the coach still has no way to look a
+    play up. Same arrangement as `explain`, for the same reason.
+    """
+    from . import mastery
+    from .models import Chart
+
+    chart = Chart.objects.filter(rule_set=player.rule_set).first()
+    if chart is None:
+        return []
+
+    found = []
+    for row in mastery.summary(player)["worst"][:limit]:
+        cell = row["cell"]
+        found.append({
+            "kind": cell.kind,
+            "player": cell.player,
+            "dealer": cell.dealer,
+            "hand": _hand_label(cell.kind, cell.player, cell.dealer),
+            "action": cell.action,
+            "reason": cell.reason,
+        })
+    return found
 
 
 # ------------------------------------------------------------ admin

@@ -51,6 +51,18 @@
   </section>
 {% endif %}
 
+{% if tricks %}
+  <section class="bj-notes">
+    <h2>טריקים לזכירה</h2>
+    <p class="bj-muted bj-small">נכתבו לידיים שאתם ממשיכים לפספס, לא לטבלה בכלל.</p>
+    <ul>
+      {% for trick in tricks %}
+        <li><span class="bj-note-text">{{ trick.text }}</span></li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endif %}
+
 <ul class="bj-sections">
   <li class="bj-tile">
     <span class="bj-tile-mark" aria-hidden="true">D</span>
@@ -61,14 +73,18 @@
   <li class="bj-tile">
     <span class="bj-tile-mark" aria-hidden="true">S</span>
     <h2>הסבר מעמיק</h2>
-    <p>למה התא הזה הוא מה שהוא, ולמה הוא מרגיש לא נכון.</p>
-    <span class="bj-soon">בקרוב</span>
+    <p>פעיל. אחרי יד שטעיתם בה, בתרגול, יש כפתור שמסביר אותה לעומק.</p>
+    <a class="bj-btn bj-btn-small" href="{% url 'blackjack:drill' %}">לתרגול</a>
   </li>
   <li class="bj-tile">
     <span class="bj-tile-mark" aria-hidden="true">P</span>
     <h2>טריקים לזכירה</h2>
-    <p>דרך לזכור בדיוק את התאים שאתם מפספסים, לא טבלה כללית.</p>
-    <span class="bj-soon">בקרוב</span>
+    <p>דרך לזכור בדיוק את הידיים שאתם מפספסים, לא טבלה כללית.</p>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="what" value="tricks">
+      <button type="submit" class="bj-btn bj-btn-small">לכתוב לי טריקים</button>
+    </form>
   </li>
 </ul>
 
