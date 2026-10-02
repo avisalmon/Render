@@ -117,7 +117,7 @@ would make the goal a lie. Moving it keeps each epic's sentence true.
 |---|---|---|---|
 | SPR-B.7.1 | Streaks: days in a row, and what breaks one | REQ-B.5.8 | **DONE 2026-10-02** |
 | SPR-B.7.2 | Sharing a result, as a link somebody can open | REQ-B.5.8 | **DONE 2026-10-02** |
-| SPR-B.7.3 | Following, **reading babook's `Follow`**, never a second graph | REQ-B.5.8, Q2 | TODO |
+| SPR-B.7.3 | Following, **on babook's `Follow`**, never a second graph | REQ-B.5.8, Q2 | **DONE 2026-10-02** |
 
 **SPR-B.7.2, what was decided.** A shared link is a frozen snapshot, not a
 live page. Recomputing on read is the obvious implementation and it turns one
@@ -132,6 +132,26 @@ a link that asks you to sign in before it shows you anything is a sign-up wall,
 and nobody forwards one of those. The name on it is the first name babook
 holds and nothing else, because usernames here are email addresses. Links are
 revocable and the row survives revocation.
+
+**SPR-B.7.3, what was decided.** One graph. Following a person is about
+identity, which babook owns, so `blackjack/friends.py` reads and writes
+`app.models.Follow` and keeps no table of its own. Writing it rather than only
+reading it is the part worth defending: Rule 3 forbids a link back to the main
+site, so a person who finds a friend here would otherwise have nowhere to
+press. Consume, do not copy, doing what it says.
+
+**You arrive at a person through a result they shared with you.** There is no
+directory and no search, because a lookup would mean typing part of somebody's
+email address and being told whether that account exists. A revoked link is not
+a way in either.
+
+A follower sees accuracy, hands and streak, never the hands themselves, and
+only while the other person leaves the switch on. Two independent things hold
+that: `card` returns zeros and the template asks before printing. Perturbing
+either alone changed nothing on screen, so each is now tested where it can
+actually be reached, per methodology entry 4.
+
+**EPIC-B.7 is closed.** Avi reviews here.
 
 **SPR-B.7.1, what was decided.** A streak runs up to the last day played and
 stays alive through today, so somebody who played yesterday and opens the app

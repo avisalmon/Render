@@ -482,10 +482,63 @@ def shared(request, token):
 
     Share.objects.filter(pk=share_row.pk).update(views=F("views") + 1)
 
+    # A signed-in stranger can follow the person whose result they were just
+    # shown, which is the only way into the circle: there is no directory.
+    from . import friends as circle_of
+
+    me = request.user
+    mine = getattr(me, "is_authenticated", False) and me.pk == share_row.player.user_id
+    can_follow = (
+        getattr(me, "is_authenticated", False)
+        and not mine
+        and not circle_of.follows(me, share_row.player.user)
+    )
+
     return render(request, "blackjack/shared.html", {
         "data": share_row.snapshot,
         "headline": share_row.headline,
         "shared_on": share_row.snapshot.get("shared_on", ""),
+        "token": share_row.token,
+        "can_follow": can_follow,
+        "is_mine": mine,
+    })
+
+
+@login_required(login_url=LOGIN_URL)
+def friends(request):
+    """The people you follow, and how they are doing (REQ-B.5.8, Q2).
+
+    Free. Following is how people pull each other back to a practice app, and
+    putting it behind the paid tier would be charging for the thing that grows
+    the product.
+
+    There is no search box here on purpose. Looking somebody up would mean
+    typing part of their email address and being told whether it exists. You
+    arrive at a person through a result they shared with you.
+    """
+    from . import friends as circle_of
+    from .models import Player
+
+    player = Player.for_user(request.user)
+
+    if request.method == "POST":
+        if "token" in request.POST:
+            circle_of.follow_by_share(request.user, request.POST["token"].strip())
+        elif "unfollow" in request.POST:
+            from django.contrib.auth.models import User
+
+            other = User.objects.filter(pk=request.POST["unfollow"]).first()
+            if other is not None:
+                circle_of.unfollow(request.user, other)
+        elif "visibility" in request.POST:
+            player.show_to_followers = request.POST["visibility"] == "on"
+            player.save(update_fields=["show_to_followers"])
+        return redirect("blackjack:friends")
+
+    return render(request, "blackjack/friends.html", {
+        "player": player,
+        "circle": circle_of.circle(request.user),
+        "shows": player.show_to_followers,
     })
 
 

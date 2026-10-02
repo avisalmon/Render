@@ -1031,3 +1031,41 @@
   color: var(--bj-ink-soft);
   line-height: 1.6;
 }
+
+/* --- following (SPR-B.7.3) ---------------------------------------------- */
+
+.bj-circle { margin: 18px 0; }
+
+.bj-circle-list { list-style: none; margin: 0; padding: 0; }
+
+.bj-circle-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--bj-line);
+}
+
+.bj-circle-name { font-weight: 700; min-width: 7ch; }
+
+.bj-circle-nums {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.bj-circle-stop { margin-inline-start: auto; }
+
+.bj-circle-mine {
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px solid var(--bj-line);
+  border-radius: 14px;
+  background: var(--bj-felt-high);
+}
+
+.bj-circle-mine h2 { margin-top: 0; }
+.bj-circle-visibility p { max-width: 48ch; }
+.bj-shared-follow { margin-top: 14px; }

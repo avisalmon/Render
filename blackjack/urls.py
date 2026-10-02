@@ -23,6 +23,7 @@ urlpatterns = [
     path("redeem/", views.redeem, name="redeem"),
     path("redeem/<str:code>/", views.redeem, name="redeem_code"),
     path("share/", views.share, name="share"),
+    path("friends/", views.friends, name="friends"),
     path("r/<str:token>/", views.shared, name="shared"),
     path("advanced/", views.advanced, name="advanced"),
     path("advanced/explain/", views.explain, name="explain"),

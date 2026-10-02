@@ -1,0 +1,76 @@
+{% extends "blackjack/base.html" %}
+
+{% block title %}חברים · blackjack{% endblock %}
+
+{% block content %}
+
+<h1 class="bj-h1">חברים</h1>
+
+<p class="bj-lede">
+  האנשים שאתם עוקבים אחריהם. העקיבה היא של babook, לא של האפליקציה הזאת, כך
+  שיש רשימה אחת בלבד ולא שתיים שיכולות לא להסכים.
+</p>
+
+{% comment %}
+  REQ-B.5.8, Q2. No search box. Looking somebody up here would mean typing part
+  of their email address and being told whether it exists. You get to a person
+  through a result they shared with you.
+{% endcomment %}
+
+<section class="bj-circle">
+  {% if circle %}
+    <ul class="bj-circle-list">
+      {% for row in circle %}
+        <li class="bj-circle-row">
+          <span class="bj-circle-name">
+            {% if row.name %}{{ row.name }}{% else %}מישהו{% endif %}
+          </span>
+
+          {% if row.plays and row.shows %}
+            <span class="bj-circle-nums">
+              <strong>{{ row.accuracy }}%</strong>
+              <span class="bj-muted bj-small">{{ row.hands }} ידיים</span>
+              {% if row.streak %}
+                <span class="bj-streak"><span aria-hidden="true">▲</span> {{ row.streak }}</span>
+              {% endif %}
+            </span>
+          {% elif row.plays %}
+            <span class="bj-muted bj-small">בחר לא להראות מספרים</span>
+          {% else %}
+            <span class="bj-muted bj-small">עוד לא משחק כאן</span>
+          {% endif %}
+
+          <form method="post" class="bj-circle-stop">
+            {% csrf_token %}
+            <input type="hidden" name="unfollow" value="{{ row.user_id }}">
+            <button type="submit" class="bj-btn bj-btn-small bj-btn-quiet">להפסיק לעקוב</button>
+          </form>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="bj-muted">
+      אתם עוד לא עוקבים אחרי אף אחד. פותחים קישור שמישהו שיתף, ומשם אפשר לעקוב.
+    </p>
+  {% endif %}
+</section>
+
+<section class="bj-circle-mine">
+  <h2>מה הם רואים עליי</h2>
+  <form method="post" class="bj-circle-visibility">
+    {% csrf_token %}
+    <input type="hidden" name="visibility" value="{% if shows %}off{% else %}on{% endif %}">
+    <p class="bj-muted bj-small">
+      {% if shows %}
+        מי שעוקב אחריכם רואה את אחוז הדיוק, מספר הידיים והרצף. לא את הידיים עצמן.
+      {% else %}
+        אף אחד לא רואה את המספרים שלכם. אתם עדיין מופיעים ברשימה שלהם בשם.
+      {% endif %}
+    </p>
+    <button type="submit" class="bj-btn bj-btn-small bj-btn-quiet">
+      {% if shows %}להפסיק להראות{% else %}להראות מספרים{% endif %}
+    </button>
+  </form>
+</section>
+
+{% endblock %}

@@ -139,6 +139,12 @@ class Player(models.Model):
     # and comes back on Thursday still gets their half hour.
     first_used_at = models.DateTimeField(null=True, blank=True)
 
+    # Whether the people who follow you see your numbers (REQ-B.5.8). On by
+    # default, because a following feature where nobody can see anything is a
+    # feature that does nothing, and off is one switch away. Followers only:
+    # nothing here is ever public, and a share link is a separate decision.
+    show_to_followers = models.BooleanField(default=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

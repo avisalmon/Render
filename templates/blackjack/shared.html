@@ -40,9 +40,23 @@
     צילום מצב מ-<bdi dir="ltr">{{ shared_on }}</bdi>. המספרים לא מתעדכנים.
   </p>
 
-  <a class="bj-btn bj-shared-cta" href="{% url 'blackjack:home' %}">
-    גם אני רוצה לנסות
-  </a>
+  {% if can_follow %}
+    {% comment %}
+      The only way into somebody's circle. There is no directory to search, so
+      a result that was shared with you is the introduction.
+    {% endcomment %}
+    <form method="post" action="{% url 'blackjack:friends' %}" class="bj-shared-follow">
+      {% csrf_token %}
+      <input type="hidden" name="token" value="{{ token }}">
+      <button type="submit" class="bj-btn">
+        לעקוב אחרי {% if data.name %}{{ data.name }}{% else %}השחקן הזה{% endif %}
+      </button>
+    </form>
+  {% elif not is_mine %}
+    <a class="bj-btn bj-shared-cta" href="{% url 'blackjack:home' %}">
+      גם אני רוצה לנסות
+    </a>
+  {% endif %}
 </section>
 
 {% endblock %}
