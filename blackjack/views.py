@@ -234,8 +234,18 @@ def drill(request):
             "why": why if not ok else ["הטבלה לשולחן הזה עוד לא נבנתה"],
         })
 
+    from . import gate, mastery
+
     payload = chart_payload(chart)
     payload["review"] = recent_misses(player)
+
+    # REQ-B.8.2 — the scheduler, for whoever is paying. Free practice is
+    # random with recent misses mixed back in; paid practice is driven by when
+    # each cell is actually due. Both are arithmetic: the difference somebody
+    # pays for is that the second one remembers across sittings.
+    access = gate.ai_is_open(request.user)
+    payload["adaptive"] = bool(access)
+    payload["due"] = mastery.due_cells(player) if access else []
 
     return render(request, "blackjack/drill.html", {
         "player": player,

@@ -153,3 +153,28 @@ def summary(player):
         "new": len([r for r in rows if r["state"] == "new"]),
         "worst": shaky[:5],
     }
+
+
+def due_cells(player, limit=40):
+    """Cells the scheduler says are ready to be asked again (REQ-B.8.2).
+
+    This is the paid half of spaced repetition, and it is **arithmetic, not a
+    model call**. A language model choosing the next flashcard would cost money
+    and latency on every hand to do worse than a sort by date, and the paid
+    tier is better spent on the things only a model can do.
+
+    Overdue first, because somebody returning after a week should meet what
+    they were about to forget before they meet what they nearly know.
+    """
+    from django.utils import timezone
+
+    from .models import Mastery
+
+    rows = (
+        Mastery.objects.filter(player=player, due_at__lte=timezone.now())
+        .order_by("due_at")[:limit]
+    )
+    return [
+        {"kind": row.cell_kind, "player": row.cell_player, "dealer": row.cell_dealer}
+        for row in rows
+    ]

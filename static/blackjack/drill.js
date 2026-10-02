@@ -77,17 +77,34 @@
      the paid feature (REQ-B.8.2). */
   var REVIEW_SHARE = 0.4;
 
-  function nextSituation(cells, review) {
+  /* Paid practice leans harder on the schedule than free practice leans on
+     recent misses, because the schedule is a better signal: it knows what you
+     were about to forget, not just what you got wrong in the last forty hands.
+     Still a share, for the same reason as REVIEW_SHARE: a drill that only ever
+     asks what is due stops checking what you already knew. */
+  var DUE_SHARE = 0.6;
+
+  function find(cells, want) {
+    return cells.filter(function (c) {
+      return c.kind === want.kind && c.player === want.player && c.dealer === want.dealer;
+    })[0] || null;
+  }
+
+  function nextSituation(cells, review, due) {
     var cell = null;
-    if (review && review.length && Math.random() < REVIEW_SHARE) {
-      var want = pick(review);
-      cell = cells.filter(function (c) {
-        return c.kind === want.kind && c.player === want.player && c.dealer === want.dealer;
-      })[0] || null;
+    var source = "random";
+
+    if (due && due.length && Math.random() < DUE_SHARE) {
+      cell = find(cells, pick(due));
+      if (cell) source = "adaptive";
+    }
+    if (!cell && review && review.length && Math.random() < REVIEW_SHARE) {
+      cell = find(cells, pick(review));
     }
     if (!cell) cell = pick(cells);
     return {
       cell: cell,
+      source: source,
       playerCards: cardsFor(cell.kind, cell.player),
       dealerCard: cell.dealer
     };
@@ -182,6 +199,7 @@
     nextSituation: nextSituation,
     legalActions: legalActions,
     REVIEW_SHARE: REVIEW_SHARE,
+    DUE_SHARE: DUE_SHARE,
     judge: judge,
     deal: deal,
     label: label,

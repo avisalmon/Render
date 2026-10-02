@@ -40,7 +40,7 @@
   }
 
   function nextHand() {
-    situation = window.BJ.nextSituation(chart.cells, chart.review);
+    situation = window.BJ.nextSituation(chart.cells, chart.review, chart.due);
     answered = false;
 
     window.BJ.deal(situation, elements);
@@ -119,7 +119,7 @@
         player_cards: situation.playerCards,
         chosen: chosen,
         answer_ms: Math.max(0, Math.min(600000, Date.now() - askedAt)),
-        source: "random"
+        source: situation.source || "random"
       });
     }
 
