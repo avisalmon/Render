@@ -187,7 +187,7 @@ and a generated dashboard.
 | REQ-B.5.5 | Named sessions | Drill one thing without polluting lifetime numbers. | TODO |
 | REQ-B.5.6 | Reset means start fresh, never destroy | A reset opens a new session. The history stays. | TODO |
 | REQ-B.5.7 | Recently missed cells come back | The weak form of spaced repetition, free. The real scheduler is paid (REQ-B.8.2). | TODO |
-| REQ-B.5.8 | Streaks, sharing and following, free | Avi, 2026-10-02, reversing his earlier call: these three are what brings somebody back on a Tuesday and what spreads the app, and under the old rule only paying users could spread it. Following **reuses babook's `Follow`** (Q2), because following a person is about identity, which babook owns; blackjack reads that graph and never grows a second one. | TODO |
+| REQ-B.5.8 | Streaks, sharing and following, free | Avi, 2026-10-02, reversing his earlier call: these three are what brings somebody back on a Tuesday and what spreads the app, and under the old rule only paying users could spread it. Following **reuses babook's `Follow`** (Q2), because following a person is about identity, which babook owns; blackjack reads that graph and never grows a second one. | Streaks **DONE 2026-10-02**; sharing and following TODO |
 
 ## Chapter 6 — Access
 

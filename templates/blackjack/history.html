@@ -11,6 +11,26 @@
 </p>
 
 {% comment %}
+  REQ-B.5.8. A streak runs up to the last day played and stays alive through
+  today, so opening the app in the morning does not announce that you have lost
+  it. The only nudge the app ever gives is "today is still open", and only when
+  that is true.
+{% endcomment %}
+{% if streak.best %}
+  <p class="bj-streak-line">
+    <span class="bj-streak {% if streak.at_risk %}is-at-risk{% endif %}">
+      <span aria-hidden="true">▲</span> {{ streak.current }}
+    </span>
+    {% if streak.current %}
+      ימים ברצף{% if streak.at_risk %}, ועוד לא שיחקתם היום{% endif %}.
+    {% else %}
+      הרצף נקטע. יד אחת היום מתחילה אחד חדש.
+    {% endif %}
+    <span class="bj-muted bj-small">הכי ארוך: {{ streak.best }}.</span>
+  </p>
+{% endif %}
+
+{% comment %}
   REQ-B.5.4 — the accuracy graph, asked for by name by users of competing
   trainers. One polyline, drawn by the server, because a charting library would
   be ninety kilobytes on a phone to draw a line through twelve points.

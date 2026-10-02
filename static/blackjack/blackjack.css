@@ -857,3 +857,43 @@
   font-size: .92rem;
   line-height: 1.6;
 }
+
+/* --- streaks (SPR-B.7.1) ------------------------------------------------ */
+
+.bj-drill-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bj-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bj-gold) 18%, var(--bj-felt-high));
+  border: 1px solid var(--bj-gold);
+  color: var(--bj-gold);
+  font-weight: 700;
+  font-size: .85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Alive but today is unplayed. The only state the app nudges about, and it
+   nudges by looking different rather than by saying anything. */
+.bj-streak.is-at-risk {
+  background: transparent;
+  border-style: dashed;
+  color: var(--bj-ink-soft);
+  border-color: var(--bj-line);
+}
+
+.bj-streak-line {
+  margin: 10px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: .92rem;
+}

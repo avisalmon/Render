@@ -234,7 +234,7 @@ def drill(request):
             "why": why if not ok else ["הטבלה לשולחן הזה עוד לא נבנתה"],
         })
 
-    from . import gate, mastery
+    from . import gate, mastery, streaks
 
     payload = chart_payload(chart)
     payload["review"] = recent_misses(player)
@@ -250,6 +250,7 @@ def drill(request):
     return render(request, "blackjack/drill.html", {
         "player": player,
         "rules": player.rule_set,
+        "streak": streaks.of(player),
         "chart_json": json.dumps(payload, cls=DjangoJSONEncoder, ensure_ascii=False),
     })
 
@@ -392,9 +393,12 @@ def history(request):
     # Oldest first, so the graph reads left to right the way time does.
     points = list(reversed([round(note.accuracy * 100) for note in notes]))
 
+    from . import streaks
+
     return render(request, "blackjack/history.html", {
         "player": player,
         "session": session,
+        "streak": streaks.of(player),
         "played_here": in_session.count(),
         "notes": notes,
         "points": points,

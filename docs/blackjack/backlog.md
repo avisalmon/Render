@@ -115,9 +115,21 @@ would make the goal a lie. Moving it keeps each epic's sentence true.
 
 | Sprint | What | Traces | Status |
 |---|---|---|---|
-| SPR-B.7.1 | Streaks: days in a row, and what breaks one | REQ-B.5.8 | TODO |
+| SPR-B.7.1 | Streaks: days in a row, and what breaks one | REQ-B.5.8 | **DONE 2026-10-02** |
 | SPR-B.7.2 | Sharing a result, as a link somebody can open | REQ-B.5.8 | TODO |
 | SPR-B.7.3 | Following, **reading babook's `Follow`**, never a second graph | REQ-B.5.8, Q2 | TODO |
+
+**SPR-B.7.1, what was decided.** A streak runs up to the last day played and
+stays alive through today, so somebody who played yesterday and opens the app
+at nine in the morning still sees their run rather than a zero. Counting
+naively is the obvious implementation and it greets a returning user by telling
+them they lost the thing the app is asking them to keep. The badge is muted and
+dashed while today is unplayed and gold once it is: the app marks the open day
+by looking different, and never writes a sentence nagging about it.
+
+Derived from `Attempt` every time, never stored, like everything else here. A
+stored counter drifts the first time the drill's offline queue posts yesterday's
+hands after today's, which it does by design.
 
 ---
 

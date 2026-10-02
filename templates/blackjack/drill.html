@@ -20,7 +20,15 @@
 
 <div class="bj-drill-top">
   <h1 class="bj-h1 bj-drill-h1">תרגול</h1>
-  <p class="bj-score" id="bjScore" aria-live="polite"></p>
+  <div class="bj-drill-meta">
+    {% if streak.current %}
+      <span class="bj-streak {% if streak.at_risk %}is-at-risk{% endif %}"
+            title="{% if streak.played_today %}שיחקתם היום{% else %}עוד לא שיחקתם היום{% endif %}">
+        <span aria-hidden="true">▲</span> {{ streak.current }}
+      </span>
+    {% endif %}
+    <p class="bj-score" id="bjScore" aria-live="polite"></p>
+  </div>
 </div>
 
 <section class="bj-felt-area" aria-label="השולחן">
