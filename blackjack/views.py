@@ -465,12 +465,32 @@ def redeem(request, code=""):
 @login_required(login_url=LOGIN_URL)
 @paid_only
 def advanced(request):
-    """The paid tier's front door. Behind the gate, with nothing behind it yet.
+    """The coach (REQ-B.8.1).
 
-    EPIC-B.5 fills this screen. For now it says what is open and until when,
-    which proves the gate end to end and gives the sweep a door to knock on.
+    A POST asks the model to read this person's practice; a GET shows what it
+    has said before. The reading is on demand rather than automatic, because a
+    coach that speaks unprompted every time you open a page is a coach you stop
+    reading, and because every reading costs money.
     """
-    return render(request, "blackjack/advanced.html", {"access": request.bj_access})
+    from . import coach
+    from .models import BatchNote, Player
+
+    player = Player.for_user(request.user)
+    refused = None
+
+    if request.method == "POST":
+        answer = coach.feedback(request.user, player)
+        if isinstance(answer, coach.Refused):
+            refused = answer.reason
+        else:
+            return redirect("blackjack:advanced")
+
+    return render(request, "blackjack/advanced.html", {
+        "access": request.bj_access,
+        "refused": refused,
+        "notes": BatchNote.objects.filter(player=player, is_ai=True)[:5],
+        "hands": player.attempts.count(),
+    })
 
 
 # ------------------------------------------------------------ admin

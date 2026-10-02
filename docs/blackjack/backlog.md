@@ -91,7 +91,7 @@ stopping them.
 | Sprint | What | Traces | Status |
 |---|---|---|---|
 | SPR-B.5.1 | Adaptive drilling, by the scheduler, deterministic | REQ-B.8.2 | **DONE 2026-10-02** |
-| SPR-B.5.2 | AI feedback over this person's own attempts, through babook's client | REQ-B.8.1, B.8.5 |
+| SPR-B.5.2 | AI feedback over this person's own attempts, through babook's client | REQ-B.8.1, B.8.5, B.8.6 | **DONE 2026-10-02** |
 | SPR-B.5.3 | Deeper explanation on demand | REQ-B.8.3 |
 | SPR-B.5.4 | Mnemonics for the cells this person keeps missing | REQ-B.8.4 |
 
