@@ -1,0 +1,41 @@
+{% extends "blackjack/base.html" %}
+
+{% block title %}מתקדם · blackjack{% endblock %}
+
+{% block content %}
+
+{% comment %}
+  REQ-B.6.6, B.6.7 — a free user tapped something paid. Not a 403: they are a
+  future customer, and the honest answer is what it is and how to open it.
+  Nothing of theirs is touched by landing here; the history, the grid and the
+  notes are all on the free side of the line.
+{% endcomment %}
+<h1 class="bj-h1">המאמן</h1>
+
+{% if access.source == 'ended' %}
+  <p class="bj-lead">
+    שלושים הדקות שלכם נגמרו. כל מה שתרגלתם נשאר: ההיסטוריה, הטבלה, ההערות.
+    מה שנסגר זה המאמן, שזוכר אתכם ומתאים את התרגול לנקודות החלשות שלכם.
+  </p>
+{% else %}
+  <p class="bj-lead">
+    המאמן הוא החלק שזוכר אתכם: משוב על ההיסטוריה שלכם, תרגול שמתכוונן למה
+    שאתם מפספסים, וטריקים לזכירה. {{ trial_minutes }} הדקות הראשונות פתוחות לכולם,
+    מהיד הראשונה שמשחקים.
+  </p>
+{% endif %}
+
+<ul class="bj-sections">
+  <li class="bj-card">
+    <h2>יש לכם קופון?</h2>
+    <p>קופון פותח שבוע. הקוד נכנס כאן, או דרך הקישור שקיבלתם.</p>
+    <a class="bj-btn bj-btn-small" href="{% url 'blackjack:redeem' %}">להזין קוד</a>
+  </li>
+  <li class="bj-card">
+    <h2>מנוי</h2>
+    <p>מנוי אחד לכל האפליקציות באתר, כולל המאמן כאן, לתמיד.</p>
+    <span class="bj-soon">בקרוב</span>
+  </li>
+</ul>
+
+{% endblock %}

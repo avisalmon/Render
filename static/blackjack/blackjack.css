@@ -669,3 +669,78 @@
 .bj-hand-row.is-right { border-inline-start-color: #7fb3a2; }
 .bj-hand-row.is-not { border-inline-start-color: var(--bj-gold); }
 .bj-hand-said { color: var(--bj-ink-soft); }
+
+/* --- the paid door and the admin (SPR-B.4.3 to B.4.6) ------------------- */
+
+.bj-refused { color: var(--bj-gold); }
+
+.bj-code-input {
+  min-height: 44px;
+  padding: 0 10px;
+  background: var(--bj-felt);
+  color: var(--bj-ink);
+  border: 1px solid var(--bj-line);
+  border-radius: 8px;
+  font: inherit;
+  font-family: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  font-size: 1.1rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  width: 100%;
+  max-width: 220px;
+}
+
+.bj-days { flex: 0 0 90px; }
+
+.bj-stats {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+}
+
+.bj-stats li {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  background: var(--bj-felt-high);
+  border: 1px solid var(--bj-line);
+  border-radius: var(--bj-radius);
+}
+
+.bj-stats strong { font-size: 1.3rem; color: var(--bj-gold); }
+.bj-stats span { color: var(--bj-ink-soft); font-size: .78rem; }
+
+.bj-coupons { display: grid; gap: 10px; }
+
+.bj-coupon {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  background: var(--bj-felt);
+  border: 1px solid var(--bj-line);
+  border-radius: 8px;
+}
+
+.bj-coupon.is-spent { opacity: .6; }
+
+.bj-coupon-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 12px;
+}
+
+.bj-coupon-code {
+  font-family: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  font-size: 1.05rem;
+  letter-spacing: .12em;
+  color: var(--bj-gold);
+}
+
+.bj-coupon a { color: var(--bj-ink); word-break: break-all; }
+
+.bj-qr { width: 150px; max-width: 100%; margin-top: 6px; background: #fff; border-radius: 6px; padding: 6px; }
+.bj-qr svg { width: 100%; height: auto; display: block; }

@@ -1,0 +1,33 @@
+{% extends "blackjack/base.html" %}
+
+{% block title %}קופון · blackjack{% endblock %}
+
+{% block content %}
+
+<h1 class="bj-h1">קופון</h1>
+
+{% comment %}
+  REQ-B.6.4. A GET with the code in the path shows a button rather than
+  redeeming on sight: WhatsApp fetches every link it previews, and a coupon
+  that spent itself on preview would be gone before the person ever saw it.
+{% endcomment %}
+{% if refused %}
+  <p class="bj-lead bj-refused">
+    הקוד הזה לא פתוח. או שהוא כבר נוצל, או שיש בו טעות הקלדה. אפשר לנסות שוב.
+  </p>
+{% else %}
+  <p class="bj-lead">קופון פותח שבוע של המאמן. הכניסו את הקוד, או אשרו את זה שבקישור.</p>
+{% endif %}
+
+<form method="post" class="bj-form bj-redeem-form">
+  {% csrf_token %}
+  <label class="bj-field">
+    <span>הקוד</span>
+    <input type="text" name="code" value="{{ code }}" maxlength="16"
+           autocomplete="off" autocapitalize="characters" spellcheck="false"
+           class="bj-code-input" aria-label="קוד הקופון">
+  </label>
+  <button type="submit" class="bj-btn">לפתוח</button>
+</form>
+
+{% endblock %}

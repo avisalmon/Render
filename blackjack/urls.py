@@ -20,5 +20,9 @@ urlpatterns = [
     path("drill/", views.drill, name="drill"),
     path("progress/", views.progress, name="progress"),
     path("history/", views.history, name="history"),
+    path("redeem/", views.redeem, name="redeem"),
+    path("redeem/<str:code>/", views.redeem, name="redeem_code"),
+    path("advanced/", views.advanced, name="advanced"),
+    path("staff/coupons/", views.admin_coupons, name="admin_coupons"),
     path("api/", include(router.urls)),
 ]

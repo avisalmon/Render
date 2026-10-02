@@ -1,0 +1,43 @@
+{% extends "blackjack/base.html" %}
+
+{% block title %}המאמן · blackjack{% endblock %}
+
+{% block content %}
+
+<h1 class="bj-h1">המאמן</h1>
+
+{% comment %}
+  Behind the gate, with nothing behind it yet. EPIC-B.5 fills this screen. For
+  now it says what is open and until when, which proves the gate end to end.
+{% endcomment %}
+<p class="bj-progress-sum">
+  {% if access.source == 'subscription' %}
+    פתוח במנוי.
+  {% elif access.source == 'trial' %}
+    פתוח בניסיון, עד <strong>{{ access.until|date:"H:i" }}</strong>.
+  {% elif access.source == 'coupon' %}
+    פתוח בקופון, עד <strong>{{ access.until|date:"j.n.Y" }}</strong>.
+  {% else %}
+    פתוח.
+  {% endif %}
+</p>
+
+<ul class="bj-sections">
+  <li class="bj-card">
+    <h2>משוב על המשחק שלכם</h2>
+    <p>המאמן קורא את ההיסטוריה שלכם ואומר מה הוא רואה.</p>
+    <span class="bj-soon">בקרוב</span>
+  </li>
+  <li class="bj-card">
+    <h2>תרגול מותאם</h2>
+    <p>הידיים שאתם מפספסים חוזרות לפי לוח זמנים, לא לפי מזל.</p>
+    <span class="bj-soon">בקרוב</span>
+  </li>
+  <li class="bj-card">
+    <h2>טריקים לזכירה</h2>
+    <p>דרך לזכור בדיוק את התאים שלכם, לא טבלה כללית.</p>
+    <span class="bj-soon">בקרוב</span>
+  </li>
+</ul>
+
+{% endblock %}

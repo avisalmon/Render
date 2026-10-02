@@ -25,7 +25,9 @@ pytestmark = pytest.mark.sprb25
 
 PASSWORD = "sprb25-pass-4418"
 
-SCREENS = ["/blackjack/", "/blackjack/table/", "/blackjack/sheet/", "/blackjack/drill/"]
+SCREENS = ["/blackjack/", "/blackjack/table/", "/blackjack/sheet/", "/blackjack/drill/",
+           "/blackjack/progress/", "/blackjack/history/", "/blackjack/advanced/",
+           "/blackjack/redeem/"]
 WIDTHS = [("phone", 390, 844), ("laptop", 1024, 800), ("desktop", 1280, 900)]
 
 SIDEWAYS = """() => {

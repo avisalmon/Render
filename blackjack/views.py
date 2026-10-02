@@ -11,10 +11,15 @@ keeps shared ("Auth: reuse the User model, but a lighter front door is fine").
 A blackjack-branded sign-in page of our own is SPR-B.1.2 work.
 """
 
+from datetime import timedelta
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
+
+from .gate import paid_only
 
 LOGIN_URL = "/login/?next=/blackjack/"
 
@@ -417,3 +422,107 @@ def _spark(points, width=300, height=70):
         y = height - pad - ((value - floor) / (ceiling - floor)) * (height - pad * 2)
         coords.append(f"{x:.1f},{y:.1f}")
     return " ".join(coords)
+
+
+# ------------------------------------------------------------ the paid door
+
+
+@login_required(login_url=LOGIN_URL)
+def redeem(request, code=""):
+    """Open a coupon (REQ-B.6.4).
+
+    Reached two ways: a link or QR carrying the code, which is how Avi sends
+    them, and a plain form for somebody who was read the code over the phone.
+    Both land here, and both end on the advanced screen with the week open.
+
+    A GET with a code in the path does not redeem by itself. A link previewer
+    in WhatsApp fetches every URL it is shown, and a coupon that spent itself
+    on preview would be spent before the person ever saw it. So the link shows
+    a button, and the button posts.
+    """
+    from . import gate
+
+    if request.method == "POST":
+        typed = request.POST.get("code") or code
+        grant = gate.redeem(request.user, typed)
+        if grant is None:
+            return render(request, "blackjack/redeem.html", {"code": typed, "refused": True})
+        return redirect("blackjack:advanced")
+
+    return render(request, "blackjack/redeem.html", {"code": code, "refused": False})
+
+
+@login_required(login_url=LOGIN_URL)
+@paid_only
+def advanced(request):
+    """The paid tier's front door. Behind the gate, with nothing behind it yet.
+
+    EPIC-B.5 fills this screen. For now it says what is open and until when,
+    which proves the gate end to end and gives the sweep a door to knock on.
+    """
+    return render(request, "blackjack/advanced.html", {"access": request.bj_access})
+
+
+# ------------------------------------------------------------ admin
+
+
+@login_required(login_url=LOGIN_URL)
+def admin_coupons(request):
+    """Mint coupons and watch the app (REQ-B.7.1 to B.7.4).
+
+    Root only: not staff, not a tier. Counts and accuracy, never a named
+    person's hands. A teacher's dashboard, not surveillance.
+    """
+    from django.core.exceptions import PermissionDenied
+
+    from .models import Attempt, Coupon, Grant, Player
+
+    if not request.user.is_superuser:
+        raise PermissionDenied
+
+    if request.method == "POST":
+        days = int(request.POST.get("days") or 7)
+        label = (request.POST.get("label") or "").strip()[:80]
+        Coupon.mint(by=request.user, days=max(1, min(days, 365)), label=label)
+        return redirect("blackjack:admin_coupons")
+
+    now = timezone.now()
+    week = now - timedelta(days=7)
+    coupons = list(Coupon.objects.select_related("redeemed_by")[:50])
+    for coupon in coupons:
+        coupon.link = request.build_absolute_uri(
+            reverse("blackjack:redeem_code", kwargs={"code": coupon.code})
+        )
+        coupon.qr = _qr_svg(coupon.link)
+
+    return render(request, "blackjack/admin_coupons.html", {
+        "coupons": coupons,
+        "players": Player.objects.count(),
+        "active_week": Player.objects.filter(attempts__created_at__gte=week).distinct().count(),
+        "hands": Attempt.objects.count(),
+        "hands_week": Attempt.objects.filter(created_at__gte=week).count(),
+        "accuracy": _accuracy(Attempt.objects.filter(created_at__gte=week)),
+        "trials_open": Player.objects.filter(first_used_at__gte=now - timedelta(minutes=30)).count(),
+        "grants_open": Grant.objects.filter(starts_at__lte=now, ends_at__gt=now).count(),
+        "coupons_open": Coupon.objects.filter(redeemed_by__isnull=True).count(),
+    })
+
+
+def _accuracy(attempts):
+    total = attempts.count()
+    if not total:
+        return None
+    return round(100 * attempts.filter(is_correct=True).count() / total)
+
+
+def _qr_svg(text):
+    """A QR as inline SVG, from the library the site already carries."""
+    import io
+
+    import qrcode
+    import qrcode.image.svg
+
+    image = qrcode.make(text, image_factory=qrcode.image.svg.SvgPathImage, box_size=6, border=2)
+    out = io.BytesIO()
+    image.save(out)
+    return out.getvalue().decode("utf-8")

@@ -96,3 +96,22 @@ def visible_mastery(user):
     if not getattr(user, "is_authenticated", False):
         return Mastery.objects.none()
     return Mastery.objects.filter(player__user=user)
+
+
+def visible_coupons(user):
+    """Root sees the coupons. Nobody else sees any, including the person who
+    redeemed one: a coupon is Avi's record of who he let in, not a receipt."""
+    from .models import Coupon
+
+    if not getattr(user, "is_superuser", False):
+        return Coupon.objects.none()
+    return Coupon.objects.all()
+
+
+def visible_grants(user):
+    """Your own windows of access."""
+    from .models import Grant
+
+    if not getattr(user, "is_authenticated", False):
+        return Grant.objects.none()
+    return Grant.objects.filter(player__user=user)

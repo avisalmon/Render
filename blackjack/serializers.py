@@ -12,7 +12,18 @@ product exists to get right.
 
 from rest_framework import serializers
 
-from .models import Attempt, BatchNote, Cell, Chart, Mastery, Player, RuleSet, Session
+from .models import (
+    Attempt,
+    BatchNote,
+    Cell,
+    Chart,
+    Coupon,
+    Grant,
+    Mastery,
+    Player,
+    RuleSet,
+    Session,
+)
 
 
 class RuleSetSerializer(serializers.ModelSerializer):
@@ -147,4 +158,29 @@ class MasterySerializer(serializers.ModelSerializer):
         model = Mastery
         fields = ["id", "player", "cell_kind", "cell_player", "cell_dealer",
                   "seen", "correct", "streak", "last_seen_at", "due_at", "strength"]
+        read_only_fields = fields
+
+
+class CouponSerializer(serializers.ModelSerializer):
+    """A coupon, for root. The code is minted, never chosen: a chosen code is a
+    guessable one, and these open a week of the paid tier."""
+
+    is_spent = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = Coupon
+        fields = ["id", "code", "days", "label", "is_spent", "created_by",
+                  "created_at", "redeemed_by", "redeemed_at"]
+        read_only_fields = ["id", "code", "is_spent", "created_by", "created_at",
+                            "redeemed_by", "redeemed_at"]
+
+
+class GrantSerializer(serializers.ModelSerializer):
+    """A window of paid access. Read-only in full: a writable grant is a
+    client handing itself the paid tier, which is the whole thing the gate
+    exists to prevent."""
+
+    class Meta:
+        model = Grant
+        fields = ["id", "player", "source", "coupon", "starts_at", "ends_at"]
         read_only_fields = fields

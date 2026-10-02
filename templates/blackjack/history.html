@@ -81,7 +81,12 @@
       {% endfor %}
     </ul>
   {% else %}
-    <p class="bj-muted">עוד לא שיחקתם יד. <a href="{% url 'blackjack:drill' %}">להתחיל</a>.</p>
+    {% comment %}
+      A button, not an inline link. The measurement pass caught the link at
+      21px tall, which is the one thing on this screen a brand-new person taps.
+    {% endcomment %}
+    <p class="bj-muted">עוד לא שיחקתם יד.</p>
+    <a class="bj-btn bj-btn-small" href="{% url 'blackjack:drill' %}">להתחיל</a>
   {% endif %}
 </section>
 

@@ -149,3 +149,38 @@ def redeem(user, code):
             starts_at=now,
             ends_at=now + timedelta(days=coupon.days),
         )
+
+
+# Every view behind the paid tier registers itself here by being decorated.
+# `test_every_paid_door_refuses_a_free_account` reads this list and knocks on
+# each one, and its other half greps the URL conf for anything that looks paid
+# and is not in this list, so a paid screen added without the decorator is
+# caught either way.
+PAID_VIEWS = []
+
+
+def paid_only(view):
+    """The one door to the paid tier (REQ-B.6.6).
+
+    A refusal here is a page, not a 403: the person is a free user who tapped
+    something, and the honest answer is what it costs and how to open it.
+    Nothing is lost on refusal (REQ-B.6.7): history, mastery and notes all sit
+    on the free side of this line and are never touched by it.
+    """
+    from functools import wraps
+
+    from django.shortcuts import render
+
+    @wraps(view)
+    def wrapped(request, *args, **kwargs):
+        access = ai_is_open(request.user)
+        if not access:
+            return render(request, "blackjack/locked.html", {
+                "access": access,
+                "trial_minutes": TRIAL_MINUTES,
+            }, status=402)
+        request.bj_access = access
+        return view(request, *args, **kwargs)
+
+    PAID_VIEWS.append(wrapped)
+    return wrapped

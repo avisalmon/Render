@@ -64,7 +64,7 @@ whether they are improving. All free, all deterministic.
 
 ---
 
-## EPIC-B.4 — The gate  `TODO`
+## EPIC-B.4 — The gate  `DONE 2026-10-02`
 
 **Goal:** paid access exists and is provable. No AI yet; this epic is the lock,
 not what is behind it.
@@ -77,10 +77,10 @@ stopping them.
 |---|---|---|---|
 | SPR-B.4.1 | `Coupon` and `Grant`, and `ai_is_open` asking babook's `Entitlement` | REQ-B.6.2, B.6.4, B.6.5 | **DONE 2026-10-02** |
 | SPR-B.4.2 | The trial: thirty minutes from first use | REQ-B.6.3 | **DONE 2026-10-02** |
-| SPR-B.4.3 | Redemption by link and by QR | REQ-B.6.4 |
-| SPR-B.4.4 | The sweep: every AI entry point enumerated from the URL conf, each refusing a free account | REQ-B.6.6 |
-| SPR-B.4.5 | Expiry closes the paid surfaces and loses nothing | REQ-B.6.7 |
-| SPR-B.4.6 | Admin: generate coupons, see activity, root only, no private hands shown | REQ-B.7.1 to B.7.4 |
+| SPR-B.4.3 | Redemption by link and by QR | REQ-B.6.4 | **DONE 2026-10-02** |
+| SPR-B.4.4 | The sweep: every paid door enumerated from the URL conf, each refusing a free account | REQ-B.6.6 | **DONE 2026-10-02** |
+| SPR-B.4.5 | Expiry closes the paid surfaces and loses nothing | REQ-B.6.7 | **DONE 2026-10-02** |
+| SPR-B.4.6 | Admin: generate coupons, see activity, root only, no private hands shown | REQ-B.7.1 to B.7.4 | **DONE 2026-10-02** |
 
 ---
 

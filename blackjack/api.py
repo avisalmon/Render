@@ -28,12 +28,25 @@ from rest_framework import mixins, permissions, viewsets
 from rest_framework.exceptions import MethodNotAllowed, PermissionDenied, ValidationError
 
 from . import access
-from .models import Attempt, BatchNote, Cell, Chart, Mastery, Player, RuleSet, Session
+from .models import (
+    Attempt,
+    BatchNote,
+    Cell,
+    Chart,
+    Coupon,
+    Grant,
+    Mastery,
+    Player,
+    RuleSet,
+    Session,
+)
 from .serializers import (
     AttemptSerializer,
     BatchNoteSerializer,
     CellSerializer,
     ChartSerializer,
+    CouponSerializer,
+    GrantSerializer,
     MasterySerializer,
     PlayerSerializer,
     RuleSetSerializer,
@@ -305,6 +318,52 @@ class MasteryViewSet(ReadOnlyScoped):
     scope = staticmethod(access.visible_mastery)
 
 
+class IsRoot(permissions.BasePermission):
+    """Not staff, not a tier. REQ-B.7.3."""
+
+    message = "ההחלטה היא של מנהל המוצר."
+
+    def has_permission(self, request, view):
+        return bool(getattr(request.user, "is_superuser", False))
+
+
+class CouponViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
+):
+    """Coupons, for root (REQ-B.7.1).
+
+    Created by minting, never by choosing a code. Never updated, because the
+    only fields worth editing are the ones that would change what a code
+    already in somebody's WhatsApp is worth. Never deleted, because a redeemed
+    coupon is the record of who was let in and when.
+    """
+
+    serializer_class = CouponSerializer
+    permission_classes = [IsRoot]
+
+    def get_queryset(self):
+        return access.visible_coupons(self.request.user)
+
+    def perform_create(self, serializer):
+        data = serializer.validated_data
+        serializer.instance = Coupon.mint(
+            by=self.request.user,
+            days=max(1, min(int(data.get("days") or 7), 365)),
+            label=data.get("label", ""),
+        )
+
+
+class GrantViewSet(ReadOnlyScoped):
+    """Your own windows of access, read-only. A writable grant is a client
+    handing itself the paid tier."""
+
+    serializer_class = GrantSerializer
+    scope = staticmethod(access.visible_grants)
+
+
 # Every model this app owns, and the route it answers on. Kept here rather than
 # in urls.py so that adding a model and forgetting its endpoint is visible in
 # one place: `test_every_model_has_an_endpoint` reads this.
@@ -317,4 +376,6 @@ ROUTES = [
     ("sessions", SessionViewSet, Session),
     ("notes", BatchNoteViewSet, BatchNote),
     ("mastery", MasteryViewSet, Mastery),
+    ("coupons", CouponViewSet, Coupon),
+    ("grants", GrantViewSet, Grant),
 ]
