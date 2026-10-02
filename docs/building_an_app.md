@@ -373,3 +373,198 @@ sentence about your own endpoint, the scope is still too wide.
 Reference implementation: `ustrip/family_api.py`, tests in
 `tests/test_ustrip_family_api.py`, and the older convention it follows in
 `app/security_api.py`.
+
+---
+
+## Mistakes we actually made, and the rules that came out of them
+
+Avi, 2026-10-02: "document all your mistakes and add them to the process to
+prevent them in the future."
+
+Everything below happened while building blackjack and מט״צים over two days.
+Each entry is the incident first and the rule second, because a rule without
+the failure behind it gets ignored the next time someone is in a hurry. Several
+of these happened **more than once**, which is the strongest argument for
+writing them down: knowing the principle did not stop me repeating it.
+
+### 1. A substring is not an assertion
+
+Four times in two days, a test passed because the string it searched for
+appeared somewhere innocent:
+
+- `assert "/home/" not in body` failed on `/static/img/home/`, an image folder,
+  and would have passed just as happily if the real link were present.
+- `assert "bj-state-shaky" in html` passed while every tile was painted solid,
+  because the **legend** at the bottom of the page carries those class names.
+- `assert "0/4" in html` passed while the tile showed the wrong number, because
+  the `title` attribute carried the right one.
+- `assert str(other.pk) not in prompt` compared against the digit `2`, which
+  matched inside "25 hands". That one can never be made to work.
+
+**The rule.** Assert on the thing, not on text that happens to contain it.
+Check a link as `href="/home/"`, not `/home/`. Scope the search to the region
+you mean, usually by extracting the `<tbody>` or the component first. Before
+writing `assert X in html`, ask where else `X` could legitimately appear on
+that page: a legend, a tooltip, an attribute, an asset path, another number.
+If the answer is "somewhere", the assertion is already broken.
+
+### 2. Test the surface a person actually touches
+
+- A test clicked a **disabled** button three times to prove a double-tap counts
+  once. Clicking a disabled button dispatches no event at all, so the test was
+  proving the `disabled` attribute and never reached the guard it was named
+  after. Rewritten through the keyboard, which has no `disabled` to hide
+  behind, it reached the real path.
+- A tap-target test flagged a 22px checkbox that sits inside a 48px clickable
+  `<label>`. The target a thumb hits is 48px. The test would have pushed a
+  pointless change to a control that was already correct.
+- A deal-order test sorted by `parseInt(getComputedStyle(el).animationDelay)`.
+  That reads back as `"0.16s"`, and `parseInt` of it is `0`, so every card
+  looked simultaneous and the sort silently kept DOM order. It passed for the
+  wrong reason until it failed for the right one.
+
+**The rule.** Measure the effective thing: the clickable ancestor, not the
+input; the visible text, not the attribute; the real event path, not a
+programmatic call that skips it. And when you read a computed style, check its
+units before parsing it.
+
+### 3. A test that cannot fail is worse than no test
+
+A test meant to prove that a drill prefers recently-missed cells 40% of the
+time mirrored the contract in Python and counted `random.random()` calls. It
+measured Python's random number generator. Nothing it did could have failed if
+the real code were wrong, and it read like coverage in the suite listing.
+
+**The rule.** A test must execute the code it is named after. If the logic
+lives in the browser, drive it in a browser; do not reimplement its contract
+next to it. Before keeping a green test, ask what change to the product would
+make it fail. If there isn't one, delete it.
+
+### 4. Perturb the property, not the line
+
+The discipline is to break each guard and confirm a test catches it. Five
+times, breaking one line changed nothing, and it was not because the test was
+weak:
+
+- `read_only` on a serializer field **plus** `perform_create` passing its own
+  value. Either alone still holds. (Hit twice: מט״צים's leader ownership,
+  blackjack's `is_correct`.)
+- An `answered` flag **plus** the buttons being disabled.
+- A coupon's `code` read-only **plus** `mint()` generating it.
+- A context processor's auth check **plus** `visible_apps` refusing anonymous.
+
+**The rule.** When a perturbation changes nothing, do not shrug and move on,
+and do not assume the test is weak. Find out which other thing is also holding
+the property. Then either break both and confirm the test fails, or say plainly
+that two independent things hold it. "Two things hold this" is a more useful
+sentence than a false "one guard, one test".
+
+### 5. When a perturbation proves nothing, suspect the perturbation
+
+- Deleting `partial_update = update` from a viewset changed nothing, because
+  DRF's `partial_update` delegates to `update` anyway. The override was still
+  there.
+- A hardcoded `<a>` added **inside** a `{% for %}` loop cannot render when the
+  loop is empty, so the test that empties the registry still passed.
+- Breaking a `return False` that no current input can reach changed nothing,
+  because it was unreachable: every app used one of the three known branches.
+
+**The rule.** A perturbation that leaves the suite green is a claim about your
+perturbation first and the test second. Confirm the defect you introduced is
+actually reachable. The unreachable-branch case is worth its own note: if a
+guard cannot be reached by any current input, write the test that constructs
+the input, because the branch exists for the day somebody adds a fourth case.
+
+### 6. Screenshot what you build, at least once
+
+`.bj-card` was both the drill's playing card (64×90, fixed) and the front
+page's section card. The playing-card rule came later in the stylesheet and
+won. The front page rendered with 64px tiles and text spilling across the hero
+**for four sprints**, and I shipped it to production twice.
+
+Nothing caught it. The measurement pass checks sideways scroll and tap targets,
+and a 64px box overflows nothing and has no small tap target. Every other test
+reads HTML, where a collapsed layout and a correct one are identical markup.
+
+The same week, a screenshot caught RTL bidi mangling every coupon URL into
+`/http://babook.co.il/blackjack/redeem/ABCD2345`. The `href` was correct; what
+was broken was what a person sees before deciding to send it.
+
+**The rule.** Look at every screen you build, as an image, once. HTML-reading
+tests cannot see layout, and layout is most of what a person experiences. Then
+write the general guard rather than the specific one: *every tile is a real
+share of its container and its own text fits inside it* catches this collision
+and the next one, whatever the class names are.
+
+### 7. Namespace component classes, or they will collide
+
+Same incident, different lesson. `.bj-card` was a reasonable name twice.
+
+**The rule.** Name a class after the component, not the concept:
+`.bj-playing-card` and `.bj-tile`, never two meanings of `.bj-card`. A
+collision in CSS is silent, order-dependent, and survives every test that reads
+markup.
+
+### 8. A page that POSTs needs a CSRF cookie
+
+The drill recorded every hand through `fetch`, and the page never rendered a
+form, so Django never set a `csrftoken` cookie. Every POST was refused. The
+offline queue then correctly dropped them as unfixable 4xx. A person would have
+drilled happily while **nothing was recorded**, and no HTML test could see it.
+
+**The rule.** A page that posts without rendering a form needs
+`@ensure_csrf_cookie`. And a retry queue that drops 4xx must be paired with a
+test that something actually arrives, because "drop what will never succeed" is
+right for one bad row and catastrophic for a systemic refusal.
+
+### 9. Do not run a formatter across a shared tree
+
+`ruff check --fix tests/` rewrote 55 test files belonging to other sprints and
+two other sessions' in-progress work. Undoing it precisely took longer than the
+original task, and one file had to be rebuilt from `HEAD` plus a hand-applied
+hunk.
+
+**The rule.** Scope every automatic fix to the files you are editing. On this
+repo, where two or three sessions share one working tree, check
+`git status --short` before and after anything that writes more than one file,
+and stage only your own paths.
+
+### 10. Keep status honest, including about yourself
+
+Three separate times, a document said OPEN about something already decided: two
+מט״צים backlog rows, and blackjack's Q1 and Q4 which Avi answered in the same
+message that settled them. He reads those lists to decide where to spend an
+evening.
+
+And once, I ended a turn saying "starting now" having built nothing, which read
+as progress.
+
+**The rule.** When a decision lands, update the status in the same commit that
+acts on it, not in a tidy-up later. Never report intent as progress: say what
+exists, and if nothing exists yet, say that.
+
+### 11. Say "pre-existing" only after measuring
+
+I attributed a 242px horizontal overflow to the site's nav drawer because the
+drawer appeared in the offender list. It was not: the drawer appears on pages
+that do not overflow. The real cause was `A.training-hero` rendering 1440px
+inside a 1116px column, found by comparing the same page signed in and signed
+out.
+
+**The rule.** "That was already broken" is a claim like any other. Prove it by
+removing your change, or by finding the same symptom somewhere your change
+never touched. Then record the numbers, not the theory: the first theory for
+that overflow (`min-width: 0` on flex children) was wrong, and a wrong theory
+in a backlog gets tried, fails, and teaches the next person to distrust the
+report.
+
+### 12. Watch your line endings when scripting edits
+
+A Python script rewrote `spec.md` with different line endings, turning a
+one-line change into a 1,959-line diff that buried the actual edit. It had to be
+normalised and the commit amended.
+
+**The rule.** When editing files from a script, read with `newline=""`, detect
+the file's existing ending, and write it back the same way. Check
+`git diff --stat` before committing: a one-line change that reports hundreds of
+lines is a line-ending flip, not a change you made.
