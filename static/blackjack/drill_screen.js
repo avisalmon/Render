@@ -40,7 +40,7 @@
   }
 
   function nextHand() {
-    situation = window.BJ.nextSituation(chart.cells);
+    situation = window.BJ.nextSituation(chart.cells, chart.review);
     answered = false;
 
     window.BJ.deal(situation, elements);

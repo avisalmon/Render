@@ -64,10 +64,28 @@
     return total;
   }
 
-  /* Choose what to ask next. Uniformly random at this sprint: adaptive
-     selection is a paid feature (REQ-B.8.2) and arrives with the scheduler. */
-  function nextSituation(cells) {
-    var cell = pick(cells);
+  /* Choose what to ask next.
+
+     Mostly random, and sometimes a cell the person has recently missed and not
+     since put right. REQ-B.5.7: this is the weak form of spaced repetition and
+     it is free on purpose, because a free tier that does not actually teach
+     converts nobody, and drilling pure random forever is how people plateau.
+
+     REVIEW_SHARE is a share, not a rule: a drill that only ever asks what you
+     are bad at is demoralising and also stops checking what you already knew.
+     The real scheduler, reading due dates rather than the last forty hands, is
+     the paid feature (REQ-B.8.2). */
+  var REVIEW_SHARE = 0.4;
+
+  function nextSituation(cells, review) {
+    var cell = null;
+    if (review && review.length && Math.random() < REVIEW_SHARE) {
+      var want = pick(review);
+      cell = cells.filter(function (c) {
+        return c.kind === want.kind && c.player === want.player && c.dealer === want.dealer;
+      })[0] || null;
+    }
+    if (!cell) cell = pick(cells);
     return {
       cell: cell,
       playerCards: cardsFor(cell.kind, cell.player),
@@ -163,6 +181,7 @@
     handTotal: handTotal,
     nextSituation: nextSituation,
     legalActions: legalActions,
+    REVIEW_SHARE: REVIEW_SHARE,
     judge: judge,
     deal: deal,
     label: label,

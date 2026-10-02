@@ -228,12 +228,48 @@ def drill(request):
             "why": why if not ok else ["הטבלה לשולחן הזה עוד לא נבנתה"],
         })
 
+    payload = chart_payload(chart)
+    payload["review"] = recent_misses(player)
+
     return render(request, "blackjack/drill.html", {
         "player": player,
         "rules": player.rule_set,
-        "chart_json": json.dumps(chart_payload(chart), cls=DjangoJSONEncoder,
-                                 ensure_ascii=False),
+        "chart_json": json.dumps(payload, cls=DjangoJSONEncoder, ensure_ascii=False),
     })
+
+
+def recent_misses(player, window=40):
+    """Cells this person has missed lately and not since put right.
+
+    REQ-B.5.7, the free half of spaced repetition. The paid tier gets the real
+    scheduler reading `Mastery.due_at` (REQ-B.8.2); this is the weak form, and
+    the weak form is deliberately in the free product because a free tier that
+    does not actually teach converts nobody. Drilling pure random forever is
+    how people plateau.
+
+    Read from `Attempt` rather than from `Mastery`, because "lately" is a
+    question about the last few dozen hands rather than about a running total,
+    and this way the list cannot drift from what they actually just played.
+    """
+    from .models import Attempt
+
+    recent = list(
+        Attempt.objects.filter(player=player)
+        .order_by("-created_at")[:window]
+        .values("cell_kind", "cell_player", "cell_dealer", "is_correct")
+    )
+
+    settled, waiting = set(), []
+    for row in recent:           # newest first, so a later success wins
+        key = (row["cell_kind"], row["cell_player"], row["cell_dealer"])
+        if key in settled:
+            continue
+        if row["is_correct"]:
+            settled.add(key)
+        else:
+            settled.add(key)
+            waiting.append({"kind": key[0], "player": key[1], "dealer": key[2]})
+    return waiting
 
 
 PROGRESS_VIEWS = (

@@ -60,7 +60,7 @@ whether they are improving. All free, all deterministic.
 | SPR-B.3.4 | `Session`, named, and reset meaning a fresh one | REQ-B.5.5, B.5.6 |
 | SPR-B.3.5 | `BatchNote` every twenty hands, written deterministically | REQ-B.5.3 |
 | SPR-B.3.6 | The accuracy graph | REQ-B.5.4 |
-| SPR-B.3.7 | Recently missed cells come back | REQ-B.5.7 |
+| SPR-B.3.7 | Recently missed cells come back | REQ-B.5.7 | **DONE 2026-10-02** |
 
 ---
 
