@@ -73,10 +73,10 @@ Deliberately before the AI features. A gate built after the thing it guards is
 a gate with a hole in it, because the paths were written while nothing was
 stopping them.
 
-| Sprint | What | Traces |
-|---|---|---|
-| SPR-B.4.1 | `Coupon` and `Grant`, and `ai_is_open` asking babook's `Entitlement` | REQ-B.6.2, B.6.4, B.6.5 |
-| SPR-B.4.2 | The trial: thirty minutes from first use | REQ-B.6.3 |
+| Sprint | What | Traces | Status |
+|---|---|---|---|
+| SPR-B.4.1 | `Coupon` and `Grant`, and `ai_is_open` asking babook's `Entitlement` | REQ-B.6.2, B.6.4, B.6.5 | **DONE 2026-10-02** |
+| SPR-B.4.2 | The trial: thirty minutes from first use | REQ-B.6.3 | **DONE 2026-10-02** |
 | SPR-B.4.3 | Redemption by link and by QR | REQ-B.6.4 |
 | SPR-B.4.4 | The sweep: every AI entry point enumerated from the URL conf, each refusing a free account | REQ-B.6.6 |
 | SPR-B.4.5 | Expiry closes the paid surfaces and loses nothing | REQ-B.6.7 |

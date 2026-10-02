@@ -367,3 +367,90 @@ class BatchNote(models.Model):
 
     def __str__(self):
         return f"{self.accuracy:.0%} over {self.BATCH}"
+
+
+class Coupon(models.Model):
+    """A week of the paid tier, as a link somebody can send (REQ-B.6.4).
+
+    **Bearer and one-time.** Avi: "cupons single personal one time use that can
+    be shared on whatsapp or qr code." The first account to redeem it claims it
+    and it is spent. Pre-assigning it to a named person would make it
+    unforwardable, which is the opposite of how it travels.
+
+    Never deleted once redeemed: it is the record of who was let in and when,
+    and "who gave this person access" deserves an answer that does not depend
+    on memory.
+    """
+
+    ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"   # no O/0, no I/1/L
+    LENGTH = 8
+
+    code = models.CharField(max_length=16, unique=True, db_index=True)
+    days = models.PositiveSmallIntegerField(default=7)
+    label = models.CharField(
+        max_length=80, blank=True, default="",
+        help_text="מי זה היה, לזכרון שלכם",
+    )
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True,
+                                   blank=True, related_name="+")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    redeemed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True,
+                                    blank=True, related_name="blackjack_coupons")
+    redeemed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.code} ({'spent' if self.redeemed_by_id else 'open'})"
+
+    @property
+    def is_spent(self):
+        return self.redeemed_by_id is not None
+
+    @classmethod
+    def mint(cls, by=None, days=7, label=""):
+        """A new coupon with a code that survives being read aloud.
+
+        The alphabet has no O or 0 and no I, 1 or L, because these travel by
+        WhatsApp and by somebody squinting at a QR that did not scan.
+        """
+        import secrets
+
+        while True:
+            code = "".join(secrets.choice(cls.ALPHABET) for _ in range(cls.LENGTH))
+            if not cls.objects.filter(code=code).exists():
+                return cls.objects.create(code=code, created_by=by, days=days, label=label)
+
+
+class Grant(models.Model):
+    """A window of paid access (REQ-B.6.2, B.6.3, B.6.4).
+
+    **The trial and the coupon are the same thing**, which is why there is one
+    model and not two: both are a span with a source and an end. A subscription
+    is deliberately absent, because babook owns `Entitlement` and one payment
+    will one day cover every app on the site; this app asks rather than stores,
+    so that change costs nothing here.
+    """
+
+    TRIAL, COUPON, GIFT = "trial", "coupon", "gift"
+    SOURCE_CHOICES = [
+        (TRIAL, "ניסיון"),
+        (COUPON, "קופון"),
+        (GIFT, "מתנה"),
+    ]
+
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="grants")
+    source = models.CharField(max_length=8, choices=SOURCE_CHOICES)
+    coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL, null=True,
+                               blank=True, related_name="grants")
+    starts_at = models.DateTimeField()
+    ends_at = models.DateTimeField()
+
+    class Meta:
+        ordering = ["-starts_at"]
+        indexes = [models.Index(fields=["player", "ends_at"])]
+
+    def __str__(self):
+        return f"{self.source} until {self.ends_at:%Y-%m-%d %H:%M}"
