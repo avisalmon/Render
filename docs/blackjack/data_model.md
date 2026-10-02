@@ -343,6 +343,27 @@ The public page `/blackjack/r/<token>/` is the only screen in the app that
 does not require an account. A link that asks a stranger to sign in before it
 shows anything is a sign-up wall, and nobody forwards one of those.
 
+### `Clip`
+
+A YouTube video on the learning screen (REQ-B.5.10). A row rather than template
+text, so root can reword, reorder or switch one off without a deploy.
+
+| Field | Type | Notes |
+|---|---|---|
+| `youtube_id` | 11 chars, unique | the id only, never a URL; the API refuses anything that is not eleven of `[A-Za-z0-9_-]` |
+| `title`, `channel` | char | the video's own, in English, as YouTube shows them |
+| `group` | `game` or `gestures` | "how the game works" or "how to signal the dealer" |
+| `seconds` | int | shown as m:ss on the card |
+| `why` | char | one Hebrew line: what this video is for, in this app's terms |
+| `language` | char | `en` today; the card says the videos are in English |
+| `order` | small int | within its group |
+| `is_active` | bool | off hides it from everybody but root |
+
+Derived, not stored: `watch_url`, `embed_url` (`youtube-nocookie.com`, autoplay),
+`thumb_url` (`i.ytimg.com`), `length`. Read by anybody signed in, written by
+root only (`IsRootOrReadOnly`). The seed `seed_blackjack_videos` adds the
+missing ids and never touches a row that exists.
+
 ### Following, which is not a model here
 
 `blackjack/friends.py` reads and writes `app.models.Follow`. There is no

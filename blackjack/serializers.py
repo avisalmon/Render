@@ -17,6 +17,7 @@ from .models import (
     BatchNote,
     Cell,
     Chart,
+    Clip,
     Coupon,
     Grant,
     Mastery,
@@ -212,3 +213,26 @@ class ShareSerializer(serializers.ModelSerializer):
         fields = ["id", "token", "path", "player", "headline", "snapshot",
                   "created_at", "revoked_at", "views"]
         read_only_fields = fields
+
+
+class ClipSerializer(serializers.ModelSerializer):
+    """A video pointer. Writable by root only (see the viewset); the derived
+    URLs are read-only because they are built from the id and nothing else."""
+
+    watch_url = serializers.CharField(read_only=True)
+    embed_url = serializers.CharField(read_only=True)
+    length = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = Clip
+        fields = ["id", "youtube_id", "title", "channel", "group", "seconds",
+                  "length", "why", "language", "order", "is_active",
+                  "watch_url", "embed_url", "created_at"]
+        read_only_fields = ["id", "length", "watch_url", "embed_url", "created_at"]
+
+    def validate_youtube_id(self, value):
+        import re
+
+        if not re.fullmatch(r"[A-Za-z0-9_-]{11}", value):
+            raise serializers.ValidationError("מזהה יוטיוב הוא 11 תווים: אותיות, ספרות, מקף וקו תחתון.")
+        return value

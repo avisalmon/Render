@@ -182,7 +182,25 @@ def sheet(request):
         "chosen": chosen,
         "title": title,
         "tables": _split(rows, dealers),
+        "clip_groups": _clip_groups(),
     })
+
+
+def _clip_groups():
+    """The videos that are switched on, in the groups the screen shows them.
+
+    A group with nothing in it is left out, so taking the last video of a group
+    down does not leave a heading over nothing.
+    """
+    from .models import Clip
+
+    clips = list(Clip.objects.filter(is_active=True))
+    groups = []
+    for key, label in Clip.GROUPS:
+        mine = [clip for clip in clips if clip.group == key]
+        if mine:
+            groups.append((key, label, mine))
+    return groups
 
 
 def _as_rows(cells, dealers=None):
@@ -446,9 +464,6 @@ def history(request):
     in_session = Attempt.objects.filter(player=player, session=session)
     notes = list(BatchNote.objects.filter(player=player)[:12])
 
-    # Oldest first, so the graph reads left to right the way time does.
-    points = list(reversed([round(note.accuracy * 100) for note in notes]))
-
     from . import streaks
 
     return render(request, "blackjack/history.html", {
@@ -457,8 +472,7 @@ def history(request):
         "streak": streaks.of(player),
         "played_here": in_session.count(),
         "notes": notes,
-        "points": points,
-        "spark": _spark(points),
+        "graph": _graph(notes),
         "hands": list(
             Attempt.objects.filter(player=player).select_related("rule_set")[:40]
         ),
@@ -598,12 +612,16 @@ def friends(request):
     })
 
 
-def _spark(points, width=300, height=70):
-    """The accuracy graph, as an SVG path.
+def _spark(points, lo=0):
+    """The accuracy line, as SVG points in a 0-100 square.
 
     Drawn here rather than by a charting library, for the same reason the drill
     has no framework: this is one polyline, and a library would be 90KB on a
     phone to draw it. Users of competing trainers ask for this graph by name.
+
+    The square is stretched to the plot by the template, so these numbers are
+    shares of the width and height, not pixels. `lo` is the accuracy at the
+    bottom edge; the top is always 100.
 
     Returns None below two points: a line through one point is not a trend, it
     is a dot pretending to be information.
@@ -611,17 +629,57 @@ def _spark(points, width=300, height=70):
     if len(points) < 2:
         return None
 
-    pad = 6
-    span = max(1, len(points) - 1)
-    step = (width - pad * 2) / span
-    floor, ceiling = 0, 100
+    last = len(points) - 1
+    span = 100 - lo
+    return " ".join(
+        f"{index * 100 / last:.2f},{100 - (value - lo) / span * 100:.2f}"
+        for index, value in enumerate(points)
+    )
 
-    coords = []
-    for index, value in enumerate(points):
-        x = pad + index * step
-        y = height - pad - ((value - floor) / (ceiling - floor)) * (height - pad * 2)
-        coords.append(f"{x:.1f},{y:.1f}")
-    return " ".join(coords)
+
+def _graph(notes):
+    """Everything the history graph draws, in the order time runs.
+
+    `notes` arrive newest first, as the model orders them. The graph goes oldest
+    to newest, left to right, because that is how time reads even on a page that
+    reads right to left.
+
+    Each point carries its percentage and the moment it was written, because a
+    line with no numbers on it is a line a person has to take on faith (Avi: "make
+    numbers there to see my percentage and time"). The bottom of the plot is the
+    lowest batch rounded down to a multiple of twenty and then twenty below that,
+    so a person who never drops under 90 sees their wobble rather than a flat
+    line against a floor of zero, and the axis says where the floor is.
+    """
+    from .models import BatchNote
+
+    ordered = list(reversed(notes))
+    if len(ordered) < 2:
+        return None
+
+    values = [round(note.accuracy * 100) for note in ordered]
+    lo = max(0, min(values) // 20 * 20 - 20)
+    span = 100 - lo
+    last = len(values) - 1
+
+    points = [
+        {
+            "pct": value,
+            "at": note.created_at,
+            "x": f"{index * 100 / last:.2f}",
+            "y": f"{(value - lo) / span * 100:.2f}",
+        }
+        for index, (note, value) in enumerate(zip(ordered, values, strict=True))
+    ]
+    return {
+        "points": points,
+        "line": _spark(values, lo),
+        "lo": lo,
+        "mid": (lo + 100) // 2,
+        "first": points[0],
+        "last": points[-1],
+        "batch": BatchNote.BATCH,
+    }
 
 
 # ------------------------------------------------------------ the paid door

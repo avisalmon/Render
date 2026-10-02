@@ -10,6 +10,9 @@
   {{ rules.describe }}.
   <a class="bj-rules-link" href="{% url 'blackjack:table' %}">לשנות את השולחן</a>
 </p>
+{% if clip_groups %}
+  <p class="bj-sheet-rules"><a class="bj-rules-link" href="#videos">סרטונים: איך המשחק עובד ואיך מסמנים לדילר</a></p>
+{% endif %}
 
 {% comment %}
   REQ-B.3.3 — the sheet is split rather than shown whole. A ten-column chart is
@@ -94,6 +97,45 @@
   <p class="bj-why-hint">לחצו על תא כדי לראות למה זו התשובה.</p>
 </aside>
 
+{% comment %}
+  The videos. A card is a plain link to YouTube that a script turns into a
+  player on press, so the page makes no request to YouTube for video until a
+  person asks (only the small preview picture, lazily), and works with
+  JavaScript off. The player is the no-cookie host with referrerpolicy set on
+  the frame: Django's default policy sends no referrer cross-origin, and
+  YouTube answers a frame with none by refusing to play it.
+{% endcomment %}
+{% if clip_groups %}
+  <section class="bj-videos" id="videos" aria-labelledby="bjVideosTitle">
+    <h2 class="bj-videos-title" id="bjVideosTitle">סרטונים</h2>
+    <p class="bj-muted bj-small">
+      מיוטיוב, באנגלית. כל אחד נטען רק כשלוחצים עליו.
+    </p>
+    {% for key, label, clips in clip_groups %}
+      <h3 class="bj-videos-group">{{ label }}</h3>
+      <ul class="bj-clips">
+        {% for clip in clips %}
+          <li class="bj-clip" data-embed="{{ clip.embed_url }}" data-title="{{ clip.title }}">
+            <a class="bj-clip-play" href="{{ clip.watch_url }}" target="_blank" rel="noopener"
+               aria-label="לנגן: {{ clip.title }}, {{ clip.length }} דקות">
+              <img class="bj-clip-thumb" src="{{ clip.thumb_url }}" alt="" loading="lazy"
+                   width="320" height="180" referrerpolicy="no-referrer">
+              <span class="bj-clip-go" aria-hidden="true">&#9654;</span>
+              <span class="bj-clip-len" aria-hidden="true">{{ clip.length }}</span>
+            </a>
+            <div class="bj-clip-text">
+              <p class="bj-clip-title" dir="ltr">{{ clip.title }}</p>
+              <p class="bj-clip-by bj-muted bj-small" dir="ltr">{{ clip.channel }}</p>
+              <p class="bj-clip-why">{{ clip.why }}</p>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endfor %}
+  </section>
+{% endif %}
+
 <script src="{% static 'blackjack/sheet.js' %}" defer></script>
+<script src="{% static 'blackjack/videos.js' %}" defer></script>
 
 {% endblock %}

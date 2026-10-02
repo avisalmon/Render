@@ -33,6 +33,7 @@ from .models import (
     BatchNote,
     Cell,
     Chart,
+    Clip,
     Coupon,
     Grant,
     Mastery,
@@ -47,6 +48,7 @@ from .serializers import (
     BatchNoteSerializer,
     CellSerializer,
     ChartSerializer,
+    ClipSerializer,
     CouponSerializer,
     GrantSerializer,
     MasterySerializer,
@@ -410,6 +412,34 @@ class ShareViewSet(ReadOnlyScoped):
     scope = staticmethod(access.visible_shares)
 
 
+class IsRootOrReadOnly(permissions.BasePermission):
+    """Anybody signed in may look; only root may change."""
+
+    message = "ההחלטה היא של מנהל המוצר."
+
+    def has_permission(self, request, view):
+        if not getattr(request.user, "is_authenticated", False):
+            return False
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return bool(getattr(request.user, "is_superuser", False))
+
+
+class ClipViewSet(viewsets.ModelViewSet):
+    """The videos on the learning screen. Full CRUD for root, read for everyone
+    else, who see only the ones that are switched on.
+
+    Deleting is allowed, unlike a rule set or a coupon: nothing points at a
+    clip, and a video that was taken down by YouTube should be removable
+    rather than hidden forever.
+    """
+
+    serializer_class = ClipSerializer
+    permission_classes = [IsRootOrReadOnly]
+
+    def get_queryset(self):
+        return access.visible_clips(self.request.user)
+
 
 # Every model this app owns, and the route it answers on. Kept here rather than
 # in urls.py so that adding a model and forgetting its endpoint is visible in
@@ -427,4 +457,5 @@ ROUTES = [
     ("grants", GrantViewSet, Grant),
     ("tricks", TrickViewSet, Trick),
     ("shares", ShareViewSet, Share),
+    ("clips", ClipViewSet, Clip),
 ]

@@ -554,3 +554,64 @@ class Share(models.Model):
             token = "".join(secrets.choice(cls.ALPHABET) for _ in range(cls.LENGTH))
             if not cls.objects.filter(token=token).exists():
                 return token
+
+
+class Clip(models.Model):
+    """A video somebody else made, worth watching before or between hands.
+
+    The app does not host video. A row here is a pointer: the YouTube id, what
+    the person will get from it in our words, and where it sits on the learning
+    screen. They are rows rather than a list in a template because Rule 1 says
+    content that changes is data, and because a video gets taken down or a better
+    one turns up, and fixing that should be an edit by root and not a deploy.
+
+    Seeded once and never overwritten (`seed_blackjack_videos`): a row root has
+    reworded or switched off stays that way.
+    """
+
+    GAME = "game"
+    GESTURES = "gestures"
+    GROUPS = [
+        (GAME, "איך המשחק עובד"),
+        (GESTURES, "איך מסמנים לדילר"),
+    ]
+
+    youtube_id = models.CharField(max_length=11, unique=True)
+    title = models.CharField(max_length=200, help_text="As it is called on YouTube")
+    channel = models.CharField(max_length=100, blank=True)
+    group = models.CharField(max_length=10, choices=GROUPS, default=GAME)
+    seconds = models.PositiveIntegerField(default=0)
+    why = models.CharField(max_length=300, help_text="What a person gets from it, in Hebrew")
+    language = models.CharField(max_length=5, default="en")
+    order = models.PositiveSmallIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["group", "order", "pk"]
+
+    def __str__(self):
+        return f"{self.title} ({self.youtube_id})"
+
+    @property
+    def length(self):
+        """m:ss, which is how a person reads how long they are committing to."""
+        minutes, seconds = divmod(self.seconds, 60)
+        return f"{minutes}:{seconds:02d}"
+
+    @property
+    def watch_url(self):
+        return f"https://www.youtube.com/watch?v={self.youtube_id}"
+
+    @property
+    def embed_url(self):
+        """The no-cookie host, so nothing is set on a person until they press
+        play, and `rel=0` so the end of the video does not offer a casino's."""
+        return (
+            f"https://www.youtube-nocookie.com/embed/{self.youtube_id}"
+            "?autoplay=1&rel=0&playsinline=1&modestbranding=1"
+        )
+
+    @property
+    def thumb_url(self):
+        return f"https://i.ytimg.com/vi/{self.youtube_id}/mqdefault.jpg"

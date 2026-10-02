@@ -200,6 +200,26 @@ hands after today's, which it does by design.
 
 ---
 
+## Learning videos and the graph's numbers (2026-10-02)
+
+Two asks from Avi after the review pass, built together and reviewed together.
+
+| Item | What | Traces | Status |
+|---|---|---|---|
+| B.9.1 | `Clip`, its API, its seed, and the videos section of the sheet | REQ-B.5.10 | **DONE 2026-10-02** |
+| B.9.2 | The history graph with percentages, dates and a readout | REQ-B.5.9 | **DONE 2026-10-02** |
+
+**What was decided.** A video is a click-to-load card, not an iframe on the
+page: five players would be five YouTube pages loaded before anybody asked,
+and a learner on a phone pays for all of them. The frame carries
+`referrerpolicy="strict-origin-when-cross-origin"` because Django's default of
+`same-origin` makes YouTube refuse to play. The graph is drawn by the server
+and read out by a small script, for the same reason there is no charting
+library: twelve points. The five videos were checked against their
+transcripts, not their titles.
+
+---
+
 ## Questions, all answered
 
 | # | Question | Answer |

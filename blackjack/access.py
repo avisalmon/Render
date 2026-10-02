@@ -137,3 +137,15 @@ def visible_shares(user):
     if not getattr(user, "is_authenticated", False):
         return Share.objects.none()
     return Share.objects.filter(player__user=user)
+
+
+def visible_clips(user):
+    """Every signed-in person sees the videos that are switched on; root sees
+    all of them, including the ones taken down, so they can be put back."""
+    from .models import Clip
+
+    if not getattr(user, "is_authenticated", False):
+        return Clip.objects.none()
+    if getattr(user, "is_superuser", False):
+        return Clip.objects.all()
+    return Clip.objects.filter(is_active=True)

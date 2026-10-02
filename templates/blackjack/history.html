@@ -1,4 +1,5 @@
 {% extends "blackjack/base.html" %}
+{% load static %}
 
 {% block title %}ההיסטוריה שלי · blackjack{% endblock %}
 
@@ -36,19 +37,54 @@
 {% endif %}
 
 {% comment %}
-  REQ-B.5.4 — the accuracy graph, asked for by name by users of competing
-  trainers. One polyline, drawn by the server, because a charting library would
-  be ninety kilobytes on a phone to draw a line through twelve points.
+  REQ-B.5.4, the accuracy graph, asked for by name by users of competing
+  trainers, and (REQ-B.5.9) with its numbers on it: every point says its
+  percentage, the two ends of the axis say when, and touching or arrowing across
+  the plot reads out the exact percentage and time of any one batch.
+
+  One polyline and some positioned dots, all worked out by the server, because a
+  charting library would be ninety kilobytes on a phone to draw twelve points.
+  The graph is always left-to-right, old to new, on a page that is right-to-left:
+  that is how time reads on every chart a person has ever seen. Without the
+  script the numbers and the axis dates are all still there.
 {% endcomment %}
-{% if spark %}
+{% if graph %}
   <section class="bj-graph" aria-label="דיוק לאורך זמן">
-    <svg viewBox="0 0 300 70" width="100%" height="70" role="img"
-         aria-label="הדיוק שלכם לאורך הזמן, לפי מקבצים של עשרים ידיים">
-      <line x1="6" y1="64" x2="294" y2="64" class="bj-graph-axis"></line>
-      <line x1="6" y1="6" x2="294" y2="6" class="bj-graph-axis bj-graph-top"></line>
-      <polyline points="{{ spark }}" class="bj-graph-line"></polyline>
-    </svg>
-    <p class="bj-graph-foot">כל נקודה היא מקבץ של עשרים ידיים. ישן משמאל, חדש מימין.</p>
+    <div class="bj-graph-body">
+      <div class="bj-yaxis" aria-hidden="true">
+        <div class="bj-yaxis-in">
+          <span class="bj-ylabel" style="bottom:100%">100%</span>
+          <span class="bj-ylabel" style="bottom:50%">{{ graph.mid }}%</span>
+          <span class="bj-ylabel" style="bottom:0">{{ graph.lo }}%</span>
+        </div>
+      </div>
+      <div class="bj-plot" tabindex="0" role="group"
+           aria-label="הדיוק בכל מקבץ של {{ graph.batch }} ידיים. אפשר לעבור בין הנקודות עם החצים.">
+        <div class="bj-plot-in">
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            <line x1="0" y1="0" x2="100" y2="0" class="bj-graph-axis bj-graph-top"></line>
+            <line x1="0" y1="50" x2="100" y2="50" class="bj-graph-axis bj-graph-top"></line>
+            <line x1="0" y1="100" x2="100" y2="100" class="bj-graph-axis"></line>
+            <polyline points="{{ graph.line }}" class="bj-graph-line"></polyline>
+          </svg>
+          {% for point in graph.points %}
+            <span class="bj-dot{% if forloop.last %} is-picked{% endif %}"
+                  style="left:{{ point.x }}%;bottom:{{ point.y }}%"
+                  data-pct="{{ point.pct }}" data-at="{{ point.at|date:'j.n H:i' }}">
+              <span class="bj-dot-num">{{ point.pct }}</span>
+            </span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="bj-xaxis" aria-hidden="true">
+      <span>{{ graph.first.at|date:"j.n H:i" }}</span>
+      <span>{{ graph.last.at|date:"j.n H:i" }}</span>
+    </div>
+    <p class="bj-graph-readout" aria-live="polite">
+      <strong>{{ graph.last.pct }}%</strong> ב{{ graph.last.at|date:"j.n"}} בשעה {{ graph.last.at|date:"H:i" }}
+    </p>
+    <p class="bj-graph-foot">כל נקודה היא מקבץ של {{ graph.batch }} ידיים. ישן משמאל, חדש מימין. נגעו בגרף לראות מתי.</p>
   </section>
 {% endif %}
 
@@ -119,5 +155,7 @@
     <a class="bj-btn bj-btn-small" href="{% url 'blackjack:drill' %}">להתחיל</a>
   {% endif %}
 </section>
+
+<script src="{% static 'blackjack/graph.js' %}" defer></script>
 
 {% endblock %}
