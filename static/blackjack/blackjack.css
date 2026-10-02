@@ -1459,3 +1459,34 @@
 }
 
 .bj-sim-fine { margin: 22px 0 0; line-height: 1.6; }
+
+/* --- account strip: the way back to babook, and the way out ------------- */
+
+.bj-account {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px 6px;
+  padding: 0 var(--bj-gutter);
+  background: var(--bj-felt-high);
+  border-bottom: 1px solid var(--bj-line);
+  font-size: .8rem;
+}
+
+.bj-account-form { margin: 0; display: inline-flex; }
+
+.bj-account-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 10px;
+  margin: 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  color: var(--bj-ink-soft);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.bj-account-link:hover { color: var(--bj-gold); }

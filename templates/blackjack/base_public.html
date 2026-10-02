@@ -16,6 +16,18 @@
 </head>
 <body class="bj-body bj-body-public">
 
+  <div class="bj-account">
+    {% if user.is_authenticated %}
+      <a class="bj-account-link" href="/">babook</a>
+      <form class="bj-account-form" method="post" action="/logout/">
+        {% csrf_token %}
+        <button type="submit" class="bj-account-link">יציאה</button>
+      </form>
+    {% else %}
+      <a class="bj-account-link" href="/login/?next={{ request.path|urlencode }}">כניסה</a>
+    {% endif %}
+  </div>
+
   <header class="bj-top bj-top-public">
     <a class="bj-brand" href="{% url 'blackjack:home' %}">
       <span class="bj-pip">&#9824;</span> blackjack

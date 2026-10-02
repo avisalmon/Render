@@ -6,9 +6,11 @@
   <title>{% block title %}blackjack{% endblock %}</title>
 
   {% comment %}
-    Methodology Rule 3: this app's own base template, its own nav, and no link
-    back to babook. It does not extend the site's base.html, so none of the
-    main site's chrome, RTL quirks or Bootstrap drawer reaches these screens.
+    Methodology Rule 3: this app's own base template and its own nav. It does
+    not extend the site's base.html, so none of the main site's chrome, RTL
+    quirks or Bootstrap drawer reaches these screens. The one exception, asked
+    for by Avi on 2026-10-03: a signed-in person gets a slim strip with a way
+    back to babook (/) and a way out (/logout/). Nothing else links out.
 
     No external CSS or font. The app is phone-first and the drill is meant to
     open instantly on a bad connection, so the whole look is one stylesheet
@@ -17,6 +19,14 @@
   <link rel="stylesheet" href="{% static 'blackjack/blackjack.css' %}">
 </head>
 <body class="bj-body">
+
+  <div class="bj-account">
+    <a class="bj-account-link" href="/">babook</a>
+    <form class="bj-account-form" method="post" action="/logout/">
+      {% csrf_token %}
+      <button type="submit" class="bj-account-link">יציאה</button>
+    </form>
+  </div>
 
   <header class="bj-top">
     <a class="bj-brand" href="{% url 'blackjack:home' %}">

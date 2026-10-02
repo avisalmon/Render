@@ -51,6 +51,8 @@ def test_the_app_never_links_back_to_babook(client, person):
         t for t in targets
         if t.startswith("/")
         and not t.startswith(("/blackjack/", "/static/", "/accounts/", "/media/"))
+        # Avi, 2026-10-03: a signed-in person may go back to babook and sign out.
+        and t not in ("/", "/logout/")
     ]
     assert not escaped, f"the app links out to babook: {sorted(set(escaped))}"
 
@@ -109,3 +111,34 @@ def test_the_card_and_the_door_agree_about_this_app(client, person):
     shown = may_enter(person, "blackjack")
     opens = client.get("/blackjack/").status_code == 200
     assert shown == opens, f"portal says {shown}, the door says {opens}"
+
+
+# ------------------------------------------------- the way back and the way out
+
+
+def test_a_signed_in_person_can_go_back_to_babook_and_sign_out(client, person):
+    """Avi, 2026-10-03: no sign-out was visible, and he asked for a link back."""
+    import re
+
+    client.force_login(person)
+    for path in ("/blackjack/", "/blackjack/play/"):
+        body = client.get(path).content.decode()
+        assert re.search(r'<a class="bj-account-link" href="/">', body), path
+        assert re.search(r'<form[^>]*action="/logout/"', body), path
+
+    client.post("/logout/")
+    assert client.get("/blackjack/").status_code == 302, "still signed in"
+
+
+def test_the_shared_page_offers_sign_in_to_a_stranger_and_sign_out_to_a_member(rf, person):
+    from django.contrib.auth.models import AnonymousUser
+    from django.template.loader import render_to_string
+
+    request = rf.get("/blackjack/share/x/")
+    request.user = AnonymousUser()
+    body = render_to_string("blackjack/base_public.html", {}, request=request)
+    assert "/login/?next=/blackjack/share/x/" in body
+
+    request.user = person
+    body = render_to_string("blackjack/base_public.html", {}, request=request)
+    assert 'action="/logout/"' in body and 'href="/"' in body
