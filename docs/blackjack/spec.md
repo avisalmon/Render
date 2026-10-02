@@ -127,14 +127,14 @@ a public product with strangers as users and money involved: numbered
 requirements, a spec in chapters, a backlog with sprints, tests written first,
 and a generated dashboard.
 
-### 1.7 Decisions still open
+### 1.7 Decisions
 
-| # | Question | Why it matters |
+| # | Question | Answer, or why it matters |
 |---|---|---|
-| Q1 | Does the strategy chart ship as static data rather than database rows? | Methodology Rule 1 says real data is database rows; a strategy chart is a constant of the game, like a multiplication table, and must be instant and offline. The rule allows exceptions **written down at the time**, so this needs an explicit yes. Asked 2026-10-01, not yet answered. |
-| Q2 | Does following reuse babook's `Follow`, or does this app keep its own? | babook already has a member-follows-member graph. Reusing it means following someone here also follows them in babook's community, which a person may not expect. |
-| Q3 | Is the free tier really without streaks, sharing and following? | Avi's call and a coherent one: the free tier is a tool, the paid tier is a habit. Recorded because those three features are usually what brings a free user back and converts them. |
-| Q4 | The app's public name. | `blackjack` is the Django label and `/blackjack/` the path. A product name can sit on top of both without a migration. |
+| Q1 | Does the strategy chart ship as static data rather than database rows? | **Answered 2026-10-01: "charts are tables."** So Rule 1 stands and there is no exception to write down. The 340 decisions and their reasons are rows, and the page ships a serialised copy of the one chart it needs, which is what "all in js and ready data" asked for. One source, two readers, and the promise in 1.5 gets stronger: the sheet and the drill are literally the same rows. |
+| Q2 | **OPEN.** Does following reuse babook's `Follow`, or does this app keep its own? | babook already has a member-follows-member graph, used by its community feed. Reusing it means following somebody at the blackjack table also follows them in the community, which a person may not expect. Keeping our own means two follow lists on one site. Bites in SPR-B.5.5. |
+| Q3 | **OPEN.** Is the free tier really without streaks, sharing and following? | Avi's call and a coherent one: the free tier is a tool, the paid tier is a habit. Recorded because those three are usually what brings a free user back and what spreads the app, and only paying users would be able to spread it. Bites in SPR-B.5.5. |
+| Q4 | The app's public name. | **Answered 2026-10-01: `blackjack`**, at `/blackjack/`. A product name can still sit on top of both without a migration. |
 
 ---
 
