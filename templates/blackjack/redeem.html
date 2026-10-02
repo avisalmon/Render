@@ -23,7 +23,12 @@
   {% csrf_token %}
   <label class="bj-field">
     <span>הקוד</span>
-    <input type="text" name="code" value="{{ code }}" maxlength="16"
+    {% comment %}
+      dir="ltr" for the same reason as the admin screen: this page is RTL, and
+      a Latin code typed into an RTL field drifts and reads wrong while
+      somebody is checking it against a message on their phone.
+    {% endcomment %}
+    <input type="text" name="code" value="{{ code }}" maxlength="16" dir="ltr"
            autocomplete="off" autocapitalize="characters" spellcheck="false"
            class="bj-code-input" aria-label="קוד הקופון">
   </label>
