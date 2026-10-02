@@ -47,7 +47,7 @@ claimed. It is written in SPR-B.1.3, before the screen that it guards exists.
 
 ---
 
-## EPIC-B.3 — Progress  `TODO`
+## EPIC-B.3 — Progress  `DONE 2026-10-02`
 
 **Goal:** the person can see what they are good at, what they are not, and
 whether they are improving. All free, all deterministic.
@@ -56,10 +56,10 @@ whether they are improving. All free, all deterministic.
 |---|---|---|---|
 | SPR-B.3.1 | `Mastery`, updated per attempt, plus the rebuild command and its test | REQ-B.5.2, B.5.7 | **DONE 2026-10-02** |
 | SPR-B.3.2 | The mastery grid: 340 cells, four states, weakest named | REQ-B.5.2 | **DONE 2026-10-02** |
-| SPR-B.3.3 | History, and replaying a hand | REQ-B.5.1 |
-| SPR-B.3.4 | `Session`, named, and reset meaning a fresh one | REQ-B.5.5, B.5.6 |
-| SPR-B.3.5 | `BatchNote` every twenty hands, written deterministically | REQ-B.5.3 |
-| SPR-B.3.6 | The accuracy graph | REQ-B.5.4 |
+| SPR-B.3.3 | History: the hands, the notes, the graph on one screen | REQ-B.5.1 | **DONE 2026-10-02** |
+| SPR-B.3.4 | `Session`, named, and reset meaning a fresh one | REQ-B.5.5, B.5.6 | **DONE 2026-10-02** |
+| SPR-B.3.5 | `BatchNote` every twenty hands, written deterministically | REQ-B.5.3 | **DONE 2026-10-02** |
+| SPR-B.3.6 | The accuracy graph | REQ-B.5.4 | **DONE 2026-10-02** |
 | SPR-B.3.7 | Recently missed cells come back | REQ-B.5.7 | **DONE 2026-10-02** |
 
 ---

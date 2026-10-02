@@ -12,7 +12,7 @@ product exists to get right.
 
 from rest_framework import serializers
 
-from .models import Attempt, Cell, Chart, Player, RuleSet
+from .models import Attempt, BatchNote, Cell, Chart, Mastery, Player, RuleSet, Session
 
 
 class RuleSetSerializer(serializers.ModelSerializer):
@@ -103,3 +103,48 @@ class AttemptSerializer(serializers.ModelSerializer):
             "id", "player", "rule_set", "correct", "correct_fallback",
             "is_correct", "created_at",
         ]
+
+
+class SessionSerializer(serializers.ModelSerializer):
+    """A named run of practice. `player` from the session, as always."""
+
+    hands = serializers.IntegerField(source="attempts.count", read_only=True)
+
+    class Meta:
+        model = Session
+        fields = ["id", "player", "name", "hands", "started_at", "ended_at"]
+        read_only_fields = ["id", "player", "hands", "started_at", "ended_at"]
+
+
+class BatchNoteSerializer(serializers.ModelSerializer):
+    """Read-only in full.
+
+    A note is what somebody was told at a moment, computed from the hands they
+    had played by then. A writable note is a client fabricating its own
+    coaching, which is the same mistake as a writable chart cell wearing
+    different clothes.
+    """
+
+    class Meta:
+        model = BatchNote
+        fields = ["id", "player", "session", "accuracy", "previous_accuracy",
+                  "weakest", "text", "is_ai", "created_at"]
+        read_only_fields = fields
+
+
+class MasterySerializer(serializers.ModelSerializer):
+    """What somebody knows about one decision.
+
+    Read-only in full, and this one is the most tempting to make writable and
+    the worst to: a client that could set `seen`, `correct` or `due_at` could
+    hand itself a finished grid, and the grid is the thing a learner trusts
+    when deciding they are ready. Every field here is derived from `Attempt`
+    and can be rebuilt from it, so there is nothing a client could legitimately
+    tell us that playing a hand would not.
+    """
+
+    class Meta:
+        model = Mastery
+        fields = ["id", "player", "cell_kind", "cell_player", "cell_dealer",
+                  "seen", "correct", "streak", "last_seen_at", "due_at", "strength"]
+        read_only_fields = fields

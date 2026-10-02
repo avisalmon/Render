@@ -28,13 +28,16 @@ from rest_framework import mixins, permissions, viewsets
 from rest_framework.exceptions import MethodNotAllowed, PermissionDenied, ValidationError
 
 from . import access
-from .models import Attempt, Cell, Chart, Player, RuleSet
+from .models import Attempt, BatchNote, Cell, Chart, Mastery, Player, RuleSet, Session
 from .serializers import (
     AttemptSerializer,
+    BatchNoteSerializer,
     CellSerializer,
     ChartSerializer,
+    MasterySerializer,
     PlayerSerializer,
     RuleSetSerializer,
+    SessionSerializer,
 )
 
 
@@ -217,9 +220,12 @@ class AttemptViewSet(
             player.first_used_at = timezone.now()
             player.save(update_fields=["first_used_at"])
 
+        from .models import Session
+
         attempt = serializer.save(
             player=player,
             rule_set=player.rule_set,
+            session=Session.current(player),
             correct=cell.action,
             correct_fallback=cell.fallback,
             is_correct=data["chosen"] == cell.action,
@@ -229,9 +235,74 @@ class AttemptViewSet(
         # place a hand is recorded is the one place everything about a hand
         # happens. A signal would make this invisible to anybody reading the
         # endpoint, which is where somebody looks when the numbers are wrong.
-        from . import mastery
+        from . import mastery, notes
 
         mastery.record(attempt)
+        notes.maybe_write(player, attempt.session)
+
+
+class SessionViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    viewsets.GenericViewSet,
+):
+    """Runs of practice. Created, renamed, and never deleted.
+
+    Creating one closes whatever was open, which is what "reset my stats"
+    means here: a fresh count, with every hand still exactly where it was
+    (REQ-B.5.6). Deleting a session is refused because it is the one verb that
+    would let somebody quietly disown a bad evening, and a product whose
+    numbers can be curated has no numbers.
+    """
+
+    serializer_class = SessionSerializer
+    permission_classes = [IsSignedIn]
+
+    def get_queryset(self):
+        return access.visible_sessions(self.request.user)
+
+    def perform_create(self, serializer):
+        from django.utils import timezone
+
+        player = Player.for_user(self.request.user)
+        Session.objects.filter(player=player, ended_at__isnull=True).update(
+            ended_at=timezone.now()
+        )
+        serializer.save(player=player)
+
+    def perform_update(self, serializer):
+        if serializer.instance.player.user_id != self.request.user.id:
+            raise PermissionDenied("זה הסשן של מישהו אחר.")
+        serializer.save()
+
+    def destroy(self, request, *args, **kwargs):
+        raise MethodNotAllowed(
+            request.method,
+            detail="סשן לא נמחק. אפשר להתחיל חדש, וההיסטוריה נשארת.",
+        )
+
+
+class BatchNoteViewSet(ReadOnlyScoped):
+    """The notes. Read-only, like the chart and for the same reason: a writable
+    note is a client writing its own coaching."""
+
+    serializer_class = BatchNoteSerializer
+    scope = staticmethod(access.visible_notes)
+
+
+class MasteryViewSet(ReadOnlyScoped):
+    """The grid, read-only.
+
+    Derived from `Attempt` and rebuildable from it, so there is nothing a
+    client could honestly tell us here that playing a hand would not. A
+    writable row would let somebody hand themselves a finished grid, and the
+    grid is what a learner reads when deciding they are ready.
+    """
+
+    serializer_class = MasterySerializer
+    scope = staticmethod(access.visible_mastery)
 
 
 # Every model this app owns, and the route it answers on. Kept here rather than
@@ -243,4 +314,7 @@ ROUTES = [
     ("charts", ChartViewSet, Chart),
     ("cells", CellViewSet, Cell),
     ("attempts", AttemptViewSet, Attempt),
+    ("sessions", SessionViewSet, Session),
+    ("notes", BatchNoteViewSet, BatchNote),
+    ("mastery", MasteryViewSet, Mastery),
 ]

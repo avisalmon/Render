@@ -69,3 +69,30 @@ def visible_attempts(user):
     if not getattr(user, "is_authenticated", False):
         return Attempt.objects.none()
     return Attempt.objects.filter(player__user=user)
+
+
+def visible_sessions(user):
+    """Your own runs of practice."""
+    from .models import Session
+
+    if not getattr(user, "is_authenticated", False):
+        return Session.objects.none()
+    return Session.objects.filter(player__user=user)
+
+
+def visible_notes(user):
+    """Your own notes. As private as the attempts they were computed from."""
+    from .models import BatchNote
+
+    if not getattr(user, "is_authenticated", False):
+        return BatchNote.objects.none()
+    return BatchNote.objects.filter(player__user=user)
+
+
+def visible_mastery(user):
+    """Your own grid."""
+    from .models import Mastery
+
+    if not getattr(user, "is_authenticated", False):
+        return Mastery.objects.none()
+    return Mastery.objects.filter(player__user=user)

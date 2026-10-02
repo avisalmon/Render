@@ -35,7 +35,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  /* Wraps, because the nav grew to four links in EPIC-B.3 and overflowed a
+     390px screen by 31px. Caught by the measurement pass the same hour it was
+     introduced, which is the argument for having that test at all: a nav that
+     hangs off the edge of a phone is invisible on a laptop. */
+  flex-wrap: wrap;
+  gap: 8px 12px;
   padding: 12px var(--bj-gutter);
   background: var(--bj-felt-high);
   border-bottom: 1px solid var(--bj-line);
@@ -58,7 +63,7 @@
 
 .bj-pip { color: var(--bj-gold); }
 
-.bj-nav { display: flex; gap: 14px; }
+.bj-nav { display: flex; flex-wrap: wrap; gap: 6px 14px; }
 
 .bj-nav-soon {
   color: var(--bj-ink-soft);
@@ -578,3 +583,89 @@
   border-radius: 4px;
   vertical-align: -2px;
 }
+
+/* --- history (SPR-B.3.3 to B.3.6) --------------------------------------- */
+
+.bj-graph {
+  margin-top: 14px;
+  padding: 10px 12px 6px;
+  background: var(--bj-felt-high);
+  border: 1px solid var(--bj-line);
+  border-radius: var(--bj-radius);
+}
+
+.bj-graph-axis { stroke: var(--bj-line); stroke-width: 1; }
+.bj-graph-top { stroke-dasharray: 3 5; }
+
+.bj-graph-line {
+  fill: none;
+  stroke: var(--bj-gold);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.bj-graph-foot {
+  margin: 6px 0 0;
+  color: var(--bj-ink-soft);
+  font-size: .76rem;
+}
+
+.bj-session, .bj-notes, .bj-hands {
+  margin-top: 18px;
+  padding: 12px 14px;
+  background: var(--bj-felt-high);
+  border: 1px solid var(--bj-line);
+  border-radius: var(--bj-radius);
+}
+
+.bj-session h2, .bj-notes h2, .bj-hands h2 {
+  margin: 0 0 8px;
+  font-size: .95rem;
+}
+
+.bj-small { font-size: .78rem; }
+
+.bj-session-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 6px;
+}
+
+.bj-session-form input {
+  flex: 1 1 150px;
+  min-height: 44px;
+  padding: 0 10px;
+  background: var(--bj-felt);
+  color: var(--bj-ink);
+  border: 1px solid var(--bj-line);
+  border-radius: 8px;
+  font: inherit;
+}
+
+.bj-notes ul, .bj-hands ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.bj-notes li { display: grid; gap: 2px; font-size: .9rem; }
+
+.bj-hand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border-inline-start: 3px solid var(--bj-line);
+  border-radius: 6px;
+  background: var(--bj-felt);
+  font-size: .88rem;
+}
+
+.bj-hand-row.is-right { border-inline-start-color: #7fb3a2; }
+.bj-hand-row.is-not { border-inline-start-color: var(--bj-gold); }
+.bj-hand-said { color: var(--bj-ink-soft); }

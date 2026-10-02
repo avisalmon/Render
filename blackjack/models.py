@@ -244,6 +244,9 @@ class Attempt(models.Model):
 
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="attempts")
     rule_set = models.ForeignKey(RuleSet, on_delete=models.PROTECT, related_name="attempts")
+    session = models.ForeignKey(
+        "Session", on_delete=models.SET_NULL, null=True, blank=True, related_name="attempts"
+    )
 
     cell_kind = models.CharField(max_length=4, choices=Cell.KIND_CHOICES)
     cell_player = models.PositiveSmallIntegerField()
@@ -304,3 +307,63 @@ class Mastery(models.Model):
 
     def __str__(self):
         return f"{self.cell_kind} {self.cell_player} vs {self.cell_dealer}: {self.correct}/{self.seen}"
+
+
+class Session(models.Model):
+    """A named run of practice (REQ-B.5.5, REQ-B.5.6).
+
+    Two jobs. Somebody can drill one thing for ten minutes without it moving
+    their lifetime numbers, and "reset my stats" can mean *starting fresh*
+    rather than destroying anything. A product that lets a person delete the
+    hands they got wrong is a product whose numbers mean nothing, so reset
+    opens a new session and the history stays exactly where it was.
+    """
+
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="sessions")
+    name = models.CharField(max_length=60, blank=True, default="")
+    started_at = models.DateTimeField(auto_now_add=True)
+    ended_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-started_at"]
+
+    def __str__(self):
+        return self.name or f"session {self.pk}"
+
+    @classmethod
+    def current(cls, player):
+        """The open session, opened on first sight."""
+        row = cls.objects.filter(player=player, ended_at__isnull=True).first()
+        return row or cls.objects.create(player=player)
+
+
+class BatchNote(models.Model):
+    """What the app says after every twenty hands (REQ-B.5.3).
+
+    Stored rather than recomputed, because a note is a thing a person was told
+    at a moment: it describes the numbers as they were then, and recomputing it
+    later against different numbers would quietly rewrite what they were told.
+
+    `is_ai` is the seam for the paid tier. The same row, two writers: free is
+    deterministic arithmetic, paid is a model reading the person's own history
+    (REQ-B.8.1). The free note is complete on its own and is not a teaser.
+    """
+
+    BATCH = 20
+
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="notes")
+    session = models.ForeignKey(
+        Session, on_delete=models.CASCADE, related_name="notes", null=True, blank=True
+    )
+    accuracy = models.FloatField()
+    previous_accuracy = models.FloatField(null=True, blank=True)
+    weakest = models.JSONField(default=list, blank=True)
+    text = models.TextField()
+    is_ai = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.accuracy:.0%} over {self.BATCH}"

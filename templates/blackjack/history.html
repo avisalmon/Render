@@ -1,0 +1,88 @@
+{% extends "blackjack/base.html" %}
+
+{% block title %}ההיסטוריה שלי · blackjack{% endblock %}
+
+{% block content %}
+
+<h1 class="bj-h1">ההיסטוריה שלי</h1>
+
+<p class="bj-progress-sum">
+  <strong>{{ lifetime_right }}</strong> מתוך {{ lifetime }} ידיים נכונות, מאז ומתמיד.
+</p>
+
+{% comment %}
+  REQ-B.5.4 — the accuracy graph, asked for by name by users of competing
+  trainers. One polyline, drawn by the server, because a charting library would
+  be ninety kilobytes on a phone to draw a line through twelve points.
+{% endcomment %}
+{% if spark %}
+  <section class="bj-graph" aria-label="דיוק לאורך זמן">
+    <svg viewBox="0 0 300 70" width="100%" height="70" role="img"
+         aria-label="הדיוק שלכם לאורך הזמן, לפי מקבצים של עשרים ידיים">
+      <line x1="6" y1="64" x2="294" y2="64" class="bj-graph-axis"></line>
+      <line x1="6" y1="6" x2="294" y2="6" class="bj-graph-axis bj-graph-top"></line>
+      <polyline points="{{ spark }}" class="bj-graph-line"></polyline>
+    </svg>
+    <p class="bj-graph-foot">כל נקודה היא מקבץ של עשרים ידיים. ישן משמאל, חדש מימין.</p>
+  </section>
+{% endif %}
+
+<section class="bj-session">
+  <h2>הסשן הנוכחי</h2>
+  <p class="bj-muted">
+    {% if session.name %}{{ session.name }} ·{% endif %}
+    {{ played_here }} ידיים
+  </p>
+
+  {% comment %}
+    REQ-B.5.6 — reset means fresh, never gone. This closes the open session and
+    opens a new one. Nothing is deleted, because a product that lets somebody
+    erase the hands they got wrong is a product whose numbers mean nothing.
+  {% endcomment %}
+  <form method="post" class="bj-session-form">
+    {% csrf_token %}
+    <input type="text" name="name" maxlength="60" placeholder="שם לסשן החדש, אם בא לכם">
+    <button type="submit" class="bj-btn">להתחיל סשן חדש</button>
+  </form>
+  <p class="bj-muted bj-small">סשן חדש מתחיל ספירה נקייה. שום יד לא נמחקת.</p>
+</section>
+
+{% if notes %}
+  <section class="bj-notes">
+    <h2>מה נאמר לכם בדרך</h2>
+    <ul>
+      {% for note in notes %}
+        <li>
+          <span class="bj-note-text">{{ note.text }}</span>
+          <span class="bj-muted bj-small">{{ note.created_at|date:"j.n H:i" }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endif %}
+
+<section class="bj-hands">
+  <h2>הידיים האחרונות</h2>
+  {% if hands %}
+    <ul>
+      {% for hand in hands %}
+        <li class="bj-hand-row {% if hand.is_correct %}is-right{% else %}is-not{% endif %}">
+          <span class="bj-hand-what">
+            {% if hand.cell_kind == 'pair' %}{% if hand.cell_player == 11 %}A,A{% else %}{{ hand.cell_player }},{{ hand.cell_player }}{% endif %}
+            {% elif hand.cell_kind == 'soft' %}A,{{ hand.cell_player|add:"-11" }}
+            {% else %}{{ hand.cell_player }}{% endif %}
+            מול {% if hand.cell_dealer == 11 %}A{% else %}{{ hand.cell_dealer }}{% endif %}
+          </span>
+          <span class="bj-hand-said">
+            {{ hand.get_chosen_display }}{% if not hand.is_correct %} ← {{ hand.get_correct_display }}{% endif %}
+          </span>
+          <span class="bj-muted bj-small">{{ hand.created_at|date:"j.n H:i" }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="bj-muted">עוד לא שיחקתם יד. <a href="{% url 'blackjack:drill' %}">להתחיל</a>.</p>
+  {% endif %}
+</section>
+
+{% endblock %}

@@ -29,6 +29,7 @@ markers = [
     "sprb31: SPR-B.3.1 blackjack: mastery per decision",
     "sprb32: SPR-B.3.2 blackjack: the progress grid",
     "sprb37: SPR-B.3.7 blackjack: missed cells come back",
+    "sprb33: SPR-B.3.3-3.6 blackjack: history, sessions, notes, the graph",
     "spr143: F-14.3 the home page must not scroll sideways",
     "sprm1: SPR-M.1 מט״צים front door sprint tests",
     "sprm2: SPR-M.2 מט״צים identity and first-contact sprint tests",

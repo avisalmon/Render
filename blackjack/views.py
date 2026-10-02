@@ -13,6 +13,7 @@ A blackjack-branded sign-in page of our own is SPR-B.1.2 work.
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
+from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 LOGIN_URL = "/login/?next=/blackjack/"
@@ -340,3 +341,79 @@ def progress(request):
         "rows": rows,
         "dealers": dealers,
     })
+
+
+@login_required(login_url=LOGIN_URL)
+def history(request):
+    """Everything that happened, and the shape of it (REQ-B.5.1, B.5.3, B.5.4).
+
+    Three things on one screen because they answer one question. The graph says
+    whether somebody is improving, the notes say what changed, and the hands say
+    what actually happened. Separating them would make a person navigate to
+    assemble an answer they came with.
+
+    POST starts a new session. **Reset means fresh, never gone** (REQ-B.5.6):
+    the open session is closed and a new one opened, and not one row is deleted.
+    A product that lets somebody erase the hands they got wrong is a product
+    whose numbers mean nothing.
+    """
+    from .models import Attempt, BatchNote, Player, Session
+
+    player = Player.for_user(request.user)
+
+    if request.method == "POST":
+        name = (request.POST.get("name") or "").strip()[:60]
+        open_now = Session.objects.filter(player=player, ended_at__isnull=True).first()
+        if open_now:
+            open_now.ended_at = timezone.now()
+            open_now.save(update_fields=["ended_at"])
+        Session.objects.create(player=player, name=name)
+        return redirect("blackjack:history")
+
+    session = Session.current(player)
+    in_session = Attempt.objects.filter(player=player, session=session)
+    notes = list(BatchNote.objects.filter(player=player)[:12])
+
+    # Oldest first, so the graph reads left to right the way time does.
+    points = list(reversed([round(note.accuracy * 100) for note in notes]))
+
+    return render(request, "blackjack/history.html", {
+        "player": player,
+        "session": session,
+        "played_here": in_session.count(),
+        "notes": notes,
+        "points": points,
+        "spark": _spark(points),
+        "hands": list(
+            Attempt.objects.filter(player=player).select_related("rule_set")[:40]
+        ),
+        "lifetime": Attempt.objects.filter(player=player).count(),
+        "lifetime_right": Attempt.objects.filter(player=player, is_correct=True).count(),
+        "sessions": Session.objects.filter(player=player)[:10],
+    })
+
+
+def _spark(points, width=300, height=70):
+    """The accuracy graph, as an SVG path.
+
+    Drawn here rather than by a charting library, for the same reason the drill
+    has no framework: this is one polyline, and a library would be 90KB on a
+    phone to draw it. Users of competing trainers ask for this graph by name.
+
+    Returns None below two points: a line through one point is not a trend, it
+    is a dot pretending to be information.
+    """
+    if len(points) < 2:
+        return None
+
+    pad = 6
+    span = max(1, len(points) - 1)
+    step = (width - pad * 2) / span
+    floor, ceiling = 0, 100
+
+    coords = []
+    for index, value in enumerate(points):
+        x = pad + index * step
+        y = height - pad - ((value - floor) / (ceiling - floor)) * (height - pad * 2)
+        coords.append(f"{x:.1f},{y:.1f}")
+    return " ".join(coords)
