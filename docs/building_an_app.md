@@ -568,3 +568,32 @@ normalised and the commit amended.
 the file's existing ending, and write it back the same way. Check
 `git diff --stat` before committing: a one-line change that reports hundreds of
 lines is a line-ending flip, not a change you made.
+
+
+### 13. A class that styles nothing is silence, not an error
+
+Building blackjack's sharing screen I wrote `class="bj-btn-quiet"` to make a
+second-rank button quieter, and `class="bj-lede"` to set an intro paragraph.
+Neither existed in the stylesheet. Three gold buttons shouted equally on that
+screen and one of them closes a shared link for good. Nothing failed, because
+an undefined class is not an error in CSS, it is nothing at all, and every test
+that reads HTML sees the same markup either way.
+
+This is the `.bj-card` collision's quieter sibling: CSS fails silently in both
+directions, by colliding and by not existing.
+
+**The rule.** Guard it structurally: every class the markup uses is a class the
+stylesheet defines, with the deliberate exceptions listed by name so leaving
+one unstyled is a decision somebody wrote down. The test is twenty lines and it
+caught its first real orphan on the run it was written.
+
+### 14. Scope an assertion to the element, not the page, including the title
+
+Methodology entry 1 again, with a new hiding place. A test proved a shared link
+was frozen by searching the page for `"100%"`. Under perturbation the page
+showed `25%` and the test still passed, because the `<title>` carries the
+frozen headline and the headline still said 100.
+
+**The rule.** The list of innocent places a string can hide now reads: a
+legend, a tooltip, an attribute, an asset path, another number, **and the page
+title**. Extract the element you mean and assert on that.
