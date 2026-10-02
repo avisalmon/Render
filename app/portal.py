@@ -62,11 +62,13 @@ class App:
     blurb: str
     key: str = ""  # the group name, or the settings key holding the list
     admin_bypass: bool = False  # see below; only ustrip declares it
+    icon: str = "box"           # a Bootstrap icon name, for the nav
 
 
 APPS = [
     App(
         slug="matazim",
+        icon="mortarboard",
         name="מט״צים",
         path="/matazim/",
         audience=EVERYONE,
@@ -74,6 +76,7 @@ APPS = [
     ),
     App(
         slug="sensorlab",
+        icon="phone-vibrate",
         name="SensorLab",
         path="/sensorlab/",
         audience=EVERYONE,
@@ -81,6 +84,7 @@ APPS = [
     ),
     App(
         slug="blackjack",
+        icon="suit-spade",
         name="blackjack",
         path="/blackjack/",
         audience=EVERYONE,
@@ -88,6 +92,7 @@ APPS = [
     ),
     App(
         slug="memz",
+        icon="emoji-laughing",
         name="memz",
         path="/memz/",
         audience=EVERYONE,
@@ -95,6 +100,7 @@ APPS = [
     ),
     App(
         slug="exo",
+        icon="stars",
         name="exo",
         path="/exo/",
         audience=EVERYONE,
@@ -108,6 +114,7 @@ APPS = [
     ),
     App(
         slug="ustrip",
+        icon="suitcase",
         name="ustrip",
         path="/ustrip/",
         audience=GROUP,
@@ -122,6 +129,7 @@ APPS = [
     ),
     App(
         slug="home",
+        icon="house-lock",
         name="הבית",
         path="/home/",
         audience=PEOPLE,

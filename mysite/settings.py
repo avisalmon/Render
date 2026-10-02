@@ -92,6 +92,7 @@ TEMPLATES = [
                 "app.context_processors.community_ctx",
                 "app.context_processors.breadcrumbs_ctx",
                 "app.context_processors.plausible_events_ctx",
+                "app.context_processors.portal_apps",
             ],
         },
     },

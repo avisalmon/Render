@@ -188,9 +188,18 @@
         {% if user.is_superuser %}
         <a href="{% url 'admin_dashboard' %}"><i class="bi bi-clipboard-data"></i> ניהול</a>
         {% endif %}
-        {# Chapter 11: security allow-list only. Not is_staff, not is_superuser. #}
-        {% if show_home_security %}
-        <a href="{% url 'security_home' %}"><i class="bi bi-house-lock"></i> הבית</a>
+        {% comment %}
+          The spaces this person has, from app.portal.visible_apps, which is
+          the same function each app's own door asks (main_spec 0.5). The
+          house used to be linked here on its own; it is in this list now,
+          under the same rule, so there is one answer rather than two that
+          agree until somebody edits one.
+        {% endcomment %}
+        {% if nav_apps %}
+        <hr class="site-drawer-sep">
+        {% for app in nav_apps %}
+        <a href="{{ app.path }}"><i class="bi bi-{{ app.icon }}"></i> {{ app.name }}</a>
+        {% endfor %}
         {% endif %}
         <hr class="site-drawer-sep">
         <form method="post" action="{% url 'logout' %}" class="m-0">{% csrf_token %}

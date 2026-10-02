@@ -101,3 +101,20 @@ def first_visit(request):
             "entry_course": entry_course,
         }
     return ctx
+
+
+def portal_apps(request):
+    """The apps this person has, available to every template.
+
+    The home page has shown these as cards since F-13.2, but cards on one page
+    are not navigation: from anywhere else on babook there was no way into any
+    app at all. The nav needs the same list, and it must be the *same* list,
+    so this reads `portal.visible_apps` rather than growing a second answer
+    (main_spec section 0.5).
+    """
+    from .portal import visible_apps
+
+    user = getattr(request, "user", None)
+    if user is None or not getattr(user, "is_authenticated", False):
+        return {"nav_apps": []}
+    return {"nav_apps": visible_apps(user)}

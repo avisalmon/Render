@@ -17,6 +17,7 @@ markers = [
     "spr213: SPR-2.1.3 Newsletter Capture MVP sprint tests",
     "spr214: SPR-2.1.4 Corporate Page Polish & Compliance sprint tests",
     "spr131: SPR-13.1 babook portal: who sees which app",
+    "spr135: F-13.5 babook nav: the apps reach every page",
     "sprb11: SPR-B.1.1 blackjack: the app, its chrome, and its portal card",
     "sprb12: SPR-B.1.2 blackjack: rule sets and the player",
     "sprb13: SPR-B.1.3 blackjack: the chart, and why each cell is what it is",
