@@ -4,33 +4,49 @@
 
 {% block content %}
 
-<section class="bj-hero">
-  <h1 class="bj-h1">ללמוד לשחק נכון</h1>
-  <p class="bj-lead">
-    בלקג'ק הוא המשחק היחיד בקזינו שבו לכל יד יש תשובה נכונה אחת, והיא ידועה.
-    כאן לומדים אותה, מתאמנים עליה יד אחרי יד, ורואים בדיוק מה עוד לא יושב.
+{% comment %}
+  The front page's job is one sentence and one button. Everything else on it is
+  a way of not getting in the way of those two.
+
+  The dealt hand is drawn in CSS from the same card the drill table uses, so the
+  page shows the product rather than describing it, and costs no image and no
+  request. Marked aria-hidden: it is decoration, and a screen reader announcing
+  "A spade ten diamond" before the headline would be noise.
+{% endcomment %}
+<section class="bj-front">
+  <div class="bj-front-deal" aria-hidden="true">
+    <span class="bj-card bj-deal-a">A<i>&spades;</i></span>
+    <span class="bj-card bj-deal-b">10<i>&diams;</i></span>
+    <span class="bj-card is-down bj-deal-c"></span>
+  </div>
+
+  <h1 class="bj-front-title">לכל יד יש תשובה אחת נכונה</h1>
+  <p class="bj-front-lead">
+    בלקג'ק הוא המשחק היחיד בקזינו שבו ידוע מראש מה נכון לעשות בכל מצב.
+    כאן לומדים את זה יד אחרי יד, ורואים בדיוק מה עוד לא יושב.
   </p>
+
+  <a class="bj-btn bj-front-cta" href="{% url 'blackjack:drill' %}">להתחיל לתרגל</a>
+  <p class="bj-front-note">בלי כסף, בלי פרסומות, בלי הימורים.</p>
 </section>
 
-{% comment %}
-  Three cards for the three sections of the product (spec section 1.2). Two of
-  them are not built yet and say so. SPR-B.1.4 turns the first into a link,
-  EPIC-B.2 the second.
-{% endcomment %}
 <ul class="bj-sections">
-  <li class="bj-card">
+  <li class="bj-tile">
+    <span class="bj-tile-mark" aria-hidden="true">S</span>
     <h2>לימוד</h2>
-    <p>טבלאות החלטה שנבנות מהחוקים של השולחן שבחרתם, מפוצלות כך שאפשר לזכור אותן.</p>
+    <p>טבלת ההחלטות של השולחן שלכם, מפוצלת לחתיכות שאפשר לזכור. כל תא מסביר את עצמו.</p>
     <a class="bj-btn bj-btn-small" href="{% url 'blackjack:sheet' %}">לטבלה</a>
   </li>
-  <li class="bj-card">
-    <h2>תרגול</h2>
-    <p>שולחן אמיתי, יד אחרי יד. בוחרים פעולה, ומקבלים את התשובה הנכונה ואת הסיבה.</p>
-    <a class="bj-btn bj-btn-small" href="{% url 'blackjack:drill' %}">לתרגול</a>
+  <li class="bj-tile">
+    <span class="bj-tile-mark" aria-hidden="true">H</span>
+    <h2>התקדמות</h2>
+    <p>340 ההחלטות, וכמה מהן כבר יושבות. כולל אלה שאתם ממשיכים לפספס.</p>
+    <a class="bj-btn bj-btn-small" href="{% url 'blackjack:progress' %}">למה שלמדתם</a>
   </li>
-  <li class="bj-card">
-    <h2>מתקדם</h2>
-    <p>מאמן שזוכר אתכם: משוב על ההיסטוריה שלכם, תרגול שמתכוונן לחולשות, וטריקים לזכירה.</p>
+  <li class="bj-tile">
+    <span class="bj-tile-mark" aria-hidden="true">D</span>
+    <h2>מאמן</h2>
+    <p>משוב על ההיסטוריה שלכם, תרגול שמתכוונן לחולשות, וטריקים לזכירה. שלושים הדקות הראשונות פתוחות.</p>
     <a class="bj-btn bj-btn-small" href="{% url 'blackjack:advanced' %}">למאמן</a>
   </li>
 </ul>

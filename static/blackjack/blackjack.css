@@ -63,7 +63,17 @@
 
 .bj-pip { color: var(--bj-gold); }
 
-.bj-nav { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.bj-nav {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.bj-nav::-webkit-scrollbar { display: none; }
+
+.bj-nav-link { white-space: nowrap; }
 
 .bj-nav-soon {
   color: var(--bj-ink-soft);
@@ -104,20 +114,29 @@
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
 }
 
-.bj-card {
+/* A section tile. Named `.bj-tile` and not `.bj-card` because `.bj-card` is
+   the playing card on the drill table, 64 by 90 and fixed. They collided for
+   several sprints: the playing-card rule is later in this file, so it won,
+   and the front page's tiles rendered 64px wide with their text spilling out
+   across the hero. Nothing caught it, because the measurement pass checks for
+   overflow and tap targets and a 64px box overflows nothing. */
+.bj-tile {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   padding: 16px 16px 14px;
   background: var(--bj-felt-high);
   border: 1px solid var(--bj-line);
   border-radius: var(--bj-radius);
 }
 
-.bj-card h2 {
+.bj-tile h2 {
   margin: 0 0 .35rem;
   font-size: 1.05rem;
 }
 
-.bj-card p {
+.bj-tile p {
   margin: 0;
   color: var(--bj-ink-soft);
   font-size: .9rem;
@@ -744,3 +763,86 @@
 
 .bj-qr { width: 150px; max-width: 100%; margin-top: 6px; background: #fff; border-radius: 6px; padding: 6px; }
 .bj-qr svg { width: 100%; height: auto; display: block; }
+
+/* --- the front page ----------------------------------------------------- */
+
+.bj-front {
+  padding: 26px 0 8px;
+  text-align: center;
+}
+
+/* A dealt hand, drawn from the same card the drill uses. The page shows the
+   product instead of describing it, and costs no image and no request. */
+.bj-front-deal {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  height: 104px;
+}
+
+.bj-front-deal .bj-card {
+  animation: none;                 /* it is furniture, not a deal */
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .35);
+}
+
+.bj-deal-a { transform: rotate(-9deg) translateY(6px); }
+.bj-deal-b { transform: rotate(-2deg); margin-inline-start: -18px; z-index: 2; }
+.bj-deal-c { transform: rotate(7deg) translateY(8px); margin-inline-start: -18px; }
+
+.bj-front-title {
+  margin: 0 0 .5rem;
+  font-size: clamp(1.5rem, 6.2vw, 2.2rem);
+  line-height: 1.22;
+  letter-spacing: -0.01em;
+}
+
+.bj-front-lead {
+  margin: 0 auto;
+  max-width: 34ch;
+  color: var(--bj-ink-soft);
+  font-size: .98rem;
+  line-height: 1.6;
+}
+
+.bj-front-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+  min-width: 220px;
+  min-height: 54px;
+  font-size: 1.05rem;
+  text-decoration: none;
+}
+
+.bj-front-note {
+  margin: 10px 0 0;
+  color: var(--bj-ink-soft);
+  font-size: .8rem;
+}
+
+/* The three tiles sit below the fold-ish, as somewhere to go next rather than
+   a menu to choose from. The letter is the action a player would press for it,
+   which is a small joke that also makes the three tell themselves apart. */
+.bj-sections { margin-top: 28px; }
+
+.bj-tile-mark {
+  position: absolute;
+  inset-block-start: 12px;
+  inset-inline-end: 14px;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  background: var(--bj-felt);
+  border: 1px solid var(--bj-line);
+  color: var(--bj-gold);
+  font-weight: 700;
+  font-size: .78rem;
+}
+
+.bj-tile h2 { padding-inline-end: 34px; }
+
+.bj-tile p { margin-bottom: 12px; }

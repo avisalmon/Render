@@ -34,6 +34,7 @@ markers = [
     "sprb41: SPR-B.4.1/4.2 blackjack: the gate, coupons and the trial",
     "sprb43: SPR-B.4.3-4.6 blackjack: redemption, the paid door, expiry, admin",
     "sprb51: SPR-B.5.1 blackjack: adaptive drilling",
+    "sprb52layout: blackjack: section tiles are not playing cards",
     "spr143: F-14.3 the home page must not scroll sideways",
     "sprm1: SPR-M.1 מט״צים front door sprint tests",
     "sprm2: SPR-M.2 מט״צים identity and first-contact sprint tests",
