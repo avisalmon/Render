@@ -556,3 +556,60 @@ def _qr_svg(text):
     out = io.BytesIO()
     image.save(out)
     return out.getvalue().decode("utf-8")
+
+
+@login_required(login_url=LOGIN_URL)
+@paid_only
+def explain(request):
+    """A deeper explanation of one cell, for the drill's verdict panel.
+
+    **The view reads the chart, not the coach.** It looks the cell up here and
+    hands the correct action to `coach.explain`, which keeps the coach unable
+    to decide anything even if somebody later edits its prompt.
+
+    JSON, because the drill is a page that never reloads. A free account is
+    refused by the same decorator every other paid screen uses, and gets JSON
+    rather than an HTML page because that is what asked.
+    """
+    from django.http import JsonResponse
+
+    from . import coach
+    from .models import Chart, Mastery, Player
+
+    player = Player.for_user(request.user)
+    chart = Chart.objects.filter(rule_set=player.rule_set).first()
+    if chart is None:
+        return JsonResponse({"refused": "אין טבלה לשולחן הזה."}, status=400)
+
+    try:
+        kind = request.POST["kind"]
+        value = int(request.POST["player"])
+        dealer = int(request.POST["dealer"])
+    except (KeyError, TypeError, ValueError):
+        return JsonResponse({"refused": "חסרים פרטי היד."}, status=400)
+
+    cell = chart.cells.filter(kind=kind, player=value, dealer=dealer).first()
+    if cell is None:
+        return JsonResponse({"refused": "אין תא כזה בטבלה."}, status=400)
+
+    record = Mastery.objects.filter(
+        player=player, cell_kind=kind, cell_player=value, cell_dealer=dealer
+    ).first()
+
+    answer = coach.explain(request.user, player, {
+        "hand": _hand_label(kind, value, dealer),
+        "action": cell.action,
+        "fallback": cell.fallback,
+        "reason": cell.reason,
+        "seen": record.seen if record else 0,
+        "correct": record.correct if record else 0,
+    })
+
+    if isinstance(answer, coach.Refused):
+        return JsonResponse({"refused": answer.reason}, status=402)
+    return JsonResponse({"text": answer})
+
+
+def _hand_label(kind, value, dealer):
+    face = "A" if dealer == 11 else str(dealer)
+    return f"{_row_label(kind, value)} מול {face}"

@@ -36,6 +36,7 @@ markers = [
     "sprb51: SPR-B.5.1 blackjack: adaptive drilling",
     "sprb52layout: blackjack: section tiles are not playing cards",
     "sprb52: SPR-B.5.2 blackjack: the coach",
+    "sprb53: SPR-B.5.3 blackjack: the deeper explanation",
     "spr143: F-14.3 the home page must not scroll sideways",
     "sprm1: SPR-M.1 מט״צים front door sprint tests",
     "sprm2: SPR-M.2 מט״צים identity and first-contact sprint tests",

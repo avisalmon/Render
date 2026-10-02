@@ -156,6 +156,8 @@ def redeem(user, code):
 # each one, and its other half greps the URL conf for anything that looks paid
 # and is not in this list, so a paid screen added without the decorator is
 # caught either way.
+LOCKED_SENTENCE = "המאמן נפתח עם מנוי, קופון, או בשלושים הדקות הראשונות."
+
 PAID_VIEWS = []
 
 
@@ -175,6 +177,14 @@ def paid_only(view):
     def wrapped(request, *args, **kwargs):
         access = ai_is_open(request.user)
         if not access:
+            # A page for a person, JSON for a script. Same gate, same status,
+            # and one decorator: a separate guard for the JSON paths would be
+            # a second answer, and the JSON paths are the ones a free account
+            # would actually try.
+            if "application/json" in (request.headers.get("Accept") or ""):
+                from django.http import JsonResponse
+
+                return JsonResponse({"refused": LOCKED_SENTENCE}, status=402)
             return render(request, "blackjack/locked.html", {
                 "access": access,
                 "trial_minutes": TRIAL_MINUTES,

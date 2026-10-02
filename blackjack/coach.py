@@ -191,3 +191,72 @@ def feedback(user, player):
         text=result["content"].strip(),
         is_ai=True,
     )
+
+
+EXPLAIN_SYSTEM = """את/ה מאמן/ת בלקג'ק ומסביר/ה תא אחד בטבלה לאדם שטעה בו.
+
+כללים:
+- הפעולה הנכונה נתונה לך למטה. אל תחליט/י מה נכון ואל תסתור/י את מה שכתוב.
+- הסבר/י למה זה נכון: מה הדילר עושה מהקלף שלו, ולמה היד הזאת מתנהגת ככה.
+- אם ההחלטה מרגישה לא נכון לשחקנים, תגיד/י את זה ולמה היא בכל זאת נכונה.
+- עברית, גוף שני, שלוש עד ארבע שורות. בלי כותרות, בלי רשימות, בלי מספרים
+  שלא נתתי לך."""
+
+
+def explain(user, player, cell_facts):
+    """A longer answer about one decision (REQ-B.8.3).
+
+    **`cell_facts` is handed in, never looked up here.** The caller reads the
+    chart row and passes the correct action along with everything else, which
+    keeps the rule this module is built on: the coach explains a decision it is
+    told, and never makes one. That is also why `coach.py` imports neither the
+    chart nor the strategy module, and a test checks the imports rather than
+    trusting this sentence.
+    """
+    from app.ai_chat import _estimate_cost, call_openai, check_cost_cap, check_rate_limit
+    from app.models import UsageLog
+
+    from . import gate
+
+    if not gate.ai_is_open(user):
+        return Refused(gate.LOCKED_SENTENCE)
+
+    under_cap, _spent = check_cost_cap()
+    if not under_cap:
+        return Refused("המאמן בהפסקה קצרה. נסו שוב מאוחר יותר.")
+
+    allowed, _why = check_rate_limit(user)
+    if not allowed:
+        return Refused("הגעתם למכסה היומית של המאמן. מחר זה נפתח שוב.")
+
+    words = {"H": "לקחת קלף", "S": "לעצור", "D": "להכפיל", "P": "לפצל"}
+    lines = [
+        f"היד: {cell_facts['hand']}.",
+        f"הפעולה הנכונה: {words.get(cell_facts['action'], cell_facts['action'])}.",
+    ]
+    if cell_facts.get("fallback") and cell_facts["fallback"] != cell_facts["action"]:
+        lines.append(
+            f"אם אי אפשר, אז: {words.get(cell_facts['fallback'], cell_facts['fallback'])}."
+        )
+    lines.append(f"ההסבר הקצר שכבר ראו: {cell_facts['reason']}")
+    if cell_facts.get("seen"):
+        lines.append(
+            f"האדם הזה נפגש בתא הזה {cell_facts['seen']} פעמים "
+            f"וענה נכון {cell_facts['correct']}."
+        )
+    lines.append(f"השולחן: {player.rule_set.describe()}.")
+
+    result = call_openai(
+        [{"role": "user", "content": "\n".join(lines)}],
+        system_prompt=EXPLAIN_SYSTEM,
+    )
+
+    UsageLog.objects.create(
+        user=user,
+        model=result["model"],
+        prompt_tokens=result["prompt_tokens"],
+        completion_tokens=result["completion_tokens"],
+        cost_usd=_estimate_cost(result["model"], result["prompt_tokens"],
+                                result["completion_tokens"]),
+    )
+    return result["content"].strip()

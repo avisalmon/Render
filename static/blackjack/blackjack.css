@@ -846,3 +846,14 @@
 .bj-tile h2 { padding-inline-end: 34px; }
 
 .bj-tile p { margin-bottom: 12px; }
+
+.bj-why-more { margin-top: 10px; }
+
+.bj-verdict-deeper {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--bj-line);
+  color: var(--bj-ink);
+  font-size: .92rem;
+  line-height: 1.6;
+}

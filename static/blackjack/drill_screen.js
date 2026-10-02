@@ -96,6 +96,22 @@
       ));
     }
 
+    /* REQ-B.8.3 — the deeper explanation, for whoever is paying. The button
+       only appears for them, because an explanation a free user is offered and
+       then refused is worse than one never offered: it teaches that the app
+       advertises what it will not give. `chart.adaptive` is the same flag that
+       decides the schedule, so one answer drives both. */
+    if (chart.adaptive) {
+      var deeper = document.createElement("button");
+      deeper.type = "button";
+      deeper.className = "bj-btn bj-btn-small bj-why-more";
+      deeper.textContent = "להסביר לעומק";
+      deeper.addEventListener("click", function () {
+        askDeeper(deeper, situation.cell);
+      });
+      elements.verdict.appendChild(deeper);
+    }
+
     elements.verdict.hidden = false;
     elements.next.hidden = false;
     elements.ask.textContent = "";
@@ -125,6 +141,45 @@
 
     showScore();
     elements.next.focus();
+  }
+
+  /* The one place in the drill that talks to the server about this hand. It
+     is deliberately after the answer and behind a press: the drill itself
+     stays instant and offline, and only somebody who asked waits for a
+     network. */
+  function askDeeper(button, cell) {
+    button.disabled = true;
+    button.textContent = "רגע…";
+
+    var body = new URLSearchParams({
+      kind: cell.kind, player: cell.player, dealer: cell.dealer
+    });
+
+    window.fetch("/blackjack/advanced/explain/", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "application/json",
+        "X-CSRFToken": csrf()
+      },
+      body: body.toString()
+    }).then(function (response) {
+      return response.json().catch(function () { return {}; });
+    }).then(function (data) {
+      button.remove();
+      elements.verdict.appendChild(
+        line("bj-verdict-deeper", data.text || data.refused || "לא הצלחנו להסביר כרגע.")
+      );
+    }).catch(function () {
+      button.disabled = false;
+      button.textContent = "להסביר לעומק";
+    });
+  }
+
+  function csrf() {
+    var match = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : "";
   }
 
   elements.actions.addEventListener("click", function (event) {

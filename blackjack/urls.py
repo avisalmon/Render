@@ -23,6 +23,7 @@ urlpatterns = [
     path("redeem/", views.redeem, name="redeem"),
     path("redeem/<str:code>/", views.redeem, name="redeem_code"),
     path("advanced/", views.advanced, name="advanced"),
+    path("advanced/explain/", views.explain, name="explain"),
     path("staff/coupons/", views.admin_coupons, name="admin_coupons"),
     path("api/", include(router.urls)),
 ]
