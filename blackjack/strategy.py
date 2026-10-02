@@ -38,6 +38,18 @@ PAIR_RANKS = tuple(range(2, 12))       # 2..10, and 11 for aces
 WEAK = (2, 3, 4, 5, 6)                 # the dealer busts often
 STRONG = (7, 8, 9, 10, 11)
 
+# Bumped whenever a rule or a reason changes. The seed command compares it to
+# what a stored chart was built from and rebuilds when they differ, so a fix
+# here reaches production without somebody remembering to type --rebuild.
+# Cells are never edited by a person, which is what makes that safe.
+STRATEGY_VERSION = 2
+
+
+def face(dealer):
+    """The dealer's card as a person says it. 11 is how the code counts an
+    ace; nobody at a table has ever said "against eleven"."""
+    return "אס" if dealer == 11 else str(dealer)
+
 
 class Unsupported(Exception):
     """No chart exists for these rules, and we will not invent one."""
@@ -78,21 +90,21 @@ def _hard(total, dealer, rules):
     if total >= 13:
         if dealer in WEAK:
             return STAND, STAND, (
-                f"מול {dealer} לדילר יש סיכוי גבוה להישרף. אתם כבר ביד שנשרפת מקלף גבוה, "
+                f"מול {face(dealer)} לדילר יש סיכוי גבוה להישרף. אתם כבר ביד שנשרפת מקלף גבוה, "
                 "אז נותנים לו לעבוד."
             )
         return HIT, HIT, (
-            f"מול {dealer} הדילר כנראה יגיע ל-17 ומעלה. {total} לא מנצח את זה, "
+            f"מול {face(dealer)} הדילר כנראה יגיע ל-17 ומעלה. {total} לא מנצח את זה, "
             "אז לוקחים קלף למרות הסיכון."
         )
     if total == 12:
         if dealer in (4, 5, 6):
             return STAND, STAND, (
-                f"12 מול {dealer} זה המקרה הכי לא אינטואיטיבי בטבלה. עוצרים לא כי היד טובה, "
+                f"12 מול {face(dealer)} זה המקרה הכי לא אינטואיטיבי בטבלה. עוצרים לא כי היד טובה, "
                 "אלא כי זה הקלף שהכי מפיל את הדילר."
             )
         return HIT, HIT, (
-            f"12 מול {dealer} עדיין מפסיד אם עוצרים. רק ארבעה קלפים מתוך שלושה-עשר שורפים אתכם כאן."
+            f"12 מול {face(dealer)} עדיין מפסיד אם עוצרים. רק ארבעה קלפים מתוך שלושה-עשר שורפים אתכם כאן."
         )
     if total == 11:
         if dealer == 11 and not h17:
@@ -105,15 +117,15 @@ def _hard(total, dealer, rules):
     if total == 10:
         if dealer in (10, 11):
             return HIT, HIT, (
-                f"10 מול {dealer} לא מכפילים: הקלף של הדילר חזק מדי מכדי להכפיל את ההימור מולו."
+                f"10 מול {face(dealer)} לא מכפילים: הקלף של הדילר חזק מדי מכדי להכפיל את ההימור מולו."
             )
         return DOUBLE, HIT, (
-            f"10 מול {dealer} מכפילים: אתם מתחילים יותר גבוה ממנו, וקלף עשר נותן לכם 20."
+            f"10 מול {face(dealer)} מכפילים: אתם מתחילים יותר גבוה ממנו, וקלף עשר נותן לכם 20."
         )
     if total == 9:
         if dealer in (3, 4, 5, 6):
             return DOUBLE, HIT, (
-                f"9 מול {dealer} זו הכפלה: הדילר חלש, ולכם יש יד שקלף אחד הופך לחזקה."
+                f"9 מול {face(dealer)} זו הכפלה: הדילר חלש, ולכם יש יד שקלף אחד הופך לחזקה."
             )
         return HIT, HIT, "9 מול קלף שאינו חלש: פשוט לוקחים קלף, בלי להכפיל."
     return HIT, HIT, (
@@ -137,15 +149,15 @@ def _soft(total, dealer, rules):
     if total == 18:
         if dealer in (3, 4, 5, 6) or (h17 and dealer == 2):
             return DOUBLE, STAND, (
-                f"A,7 מול {dealer} מכפילים, ואם אי אפשר להכפיל, עוצרים. "
+                f"A,7 מול {face(dealer)} מכפילים, ואם אי אפשר להכפיל, עוצרים. "
                 "שימו לב: זה בדיוק התא שבו D ו-H מתבלבלים."
             )
         if dealer in (2, 7, 8):
             return STAND, STAND, (
-                f"A,7 מול {dealer} זה 18 מול יד בינונית. עוצרים ולא נוגעים."
+                f"A,7 מול {face(dealer)} זה 18 מול יד בינונית. עוצרים ולא נוגעים."
             )
         return HIT, HIT, (
-            f"A,7 מול {dealer} זה המלכוד הקלאסי: 18 מרגיש כמו יד טובה, והוא מפסיד "
+            f"A,7 מול {face(dealer)} זה המלכוד הקלאסי: 18 מרגיש כמו יד טובה, והוא מפסיד "
             "מול קלף חזק. לוקחים קלף, ואי אפשר להישרף."
         )
     if total == 17:
@@ -154,10 +166,10 @@ def _soft(total, dealer, rules):
         return HIT, HIT, "A,6 זו עדיין יד שצריך לשפר. לוקחים."
     if total in (15, 16):
         if dealer in (4, 5, 6):
-            return DOUBLE, HIT, f"A,{ace_with} מול {dealer}: מכפילים מול הקלפים החלשים ביותר."
+            return DOUBLE, HIT, f"A,{ace_with} מול {face(dealer)}: מכפילים מול הקלפים החלשים ביותר."
         return HIT, HIT, f"A,{ace_with}: יד נמוכה, לוקחים קלף. האס מגן מפני שריפה."
     if dealer in (5, 6):
-        return DOUBLE, HIT, f"A,{ace_with} מול {dealer}: מכפילים רק מול 5 ו-6."
+        return DOUBLE, HIT, f"A,{ace_with} מול {face(dealer)}: מכפילים רק מול 5 ו-6."
     return HIT, HIT, f"A,{ace_with}: לוקחים. אין מה להפסיד, האס סופג כל קלף."
 
 
@@ -177,9 +189,9 @@ def _pair(rank, dealer, rules):
     if rank == 9:
         if dealer in (7, 10, 11):
             return STAND, STAND, (
-                f"9,9 מול {dealer} עוצרים: 18 מספיק טוב מול 7, ומול 10 או אס פיצול רק מכפיל הפסד."
+                f"9,9 מול {face(dealer)} עוצרים: 18 מספיק טוב מול 7, ומול 10 או אס פיצול רק מכפיל הפסד."
             )
-        return SPLIT, STAND, f"9,9 מול {dealer} מפצלים: שתי ידיים שמתחילות ב-9 עדיפות על 18 אחד."
+        return SPLIT, STAND, f"9,9 מול {face(dealer)} מפצלים: שתי ידיים שמתחילות ב-9 עדיפות על 18 אחד."
     if rank == 8:
         return SPLIT, HIT, (
             "שמיניות תמיד מפצלים. 16 היא היד הגרועה במשחק, ושתי ידיים שמתחילות ב-8 "
@@ -187,14 +199,14 @@ def _pair(rank, dealer, rules):
         )
     if rank == 7:
         if dealer in (2, 3, 4, 5, 6, 7):
-            return SPLIT, HIT, f"7,7 מול {dealer} מפצלים."
-        return HIT, HIT, f"7,7 מול {dealer} זה 14 מול קלף חזק. לוקחים קלף."
+            return SPLIT, HIT, f"7,7 מול {face(dealer)} מפצלים."
+        return HIT, HIT, f"7,7 מול {face(dealer)} זה 14 מול קלף חזק. לוקחים קלף."
     if rank == 6:
         if dealer in (3, 4, 5, 6) or (das and dealer == 2):
             return SPLIT, HIT, (
-                f"6,6 מול {dealer} מפצלים, כי 12 זו יד שאי אפשר לעשות איתה כלום."
+                f"6,6 מול {face(dealer)} מפצלים, כי 12 זו יד שאי אפשר לעשות איתה כלום."
             )
-        return HIT, HIT, f"6,6 מול {dealer}: לא מפצלים מול קלף חזק, לוקחים קלף."
+        return HIT, HIT, f"6,6 מול {face(dealer)}: לא מפצלים מול קלף חזק, לוקחים קלף."
     if rank == 5:
         if dealer in (10, 11):
             return HIT, HIT, "5,5 זה 10, ואת 10 לא מפצלים לעולם. מול 10 או אס פשוט לוקחים."
@@ -207,8 +219,8 @@ def _pair(rank, dealer, rules):
         return HIT, HIT, "4,4 זה 8, יד בטוחה לקלף נוסף. לא מפצלים."
     # 2,2 and 3,3
     if dealer in (4, 5, 6, 7) or (das and dealer in (2, 3)):
-        return SPLIT, HIT, f"{rank},{rank} מול {dealer} מפצלים."
-    return HIT, HIT, f"{rank},{rank} מול {dealer}: לא מפצלים, לוקחים קלף."
+        return SPLIT, HIT, f"{rank},{rank} מול {face(dealer)} מפצלים."
+    return HIT, HIT, f"{rank},{rank} מול {face(dealer)}: לא מפצלים, לוקחים קלף."
 
 
 def decide(kind, player, dealer, rules):

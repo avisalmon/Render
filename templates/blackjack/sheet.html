@@ -6,7 +6,10 @@
 {% block content %}
 
 <h1 class="bj-h1">טבלת ההחלטות</h1>
-<p class="bj-sheet-rules">{{ rules.describe }}</p>
+<p class="bj-sheet-rules">
+  {{ rules.describe }}.
+  <a class="bj-rules-link" href="{% url 'blackjack:table' %}">לשנות את השולחן</a>
+</p>
 
 {% comment %}
   REQ-B.3.3 — the sheet is split rather than shown whole. A ten-column chart is
@@ -23,44 +26,57 @@
 
 <h2 class="bj-sheet-title">{{ title }}</h2>
 
-<div class="bj-sheet-wrap">
-  <table class="bj-sheet">
-    <thead>
-      <tr>
-        <th scope="col"><span class="bj-sr">היד שלכם</span></th>
-        {% for d in dealers %}
-          <th scope="col">{% if d == 11 %}A{% else %}{{ d }}{% endif %}</th>
-        {% endfor %}
-      </tr>
-    </thead>
-    <tbody>
-      {% for row in rows %}
-        <tr>
-          <th scope="row">{{ row.label }}</th>
-          {% for cell in row.cells %}
-            <td>
-              {% if cell %}
-                {% comment %}
-                  Every cell is a button, not a coloured box: the reason is the
-                  product (REQ-B.3.4), and a reason you cannot reach is a
-                  reason that does not exist.
-                {% endcomment %}
-                <button type="button"
-                        class="bj-cell bj-cell-{{ cell.action }}"
-                        data-reason="{{ cell.reason }}"
-                        data-hand="{{ row.label }}"
-                        data-dealer="{% if cell.dealer == 11 %}A{% else %}{{ cell.dealer }}{% endif %}"
-                        data-fallback="{{ cell.fallback }}"
-                        data-action="{{ cell.action }}">{{ cell.action }}</button>
-              {% else %}
-                <span class="bj-cell bj-cell-empty" aria-hidden="true">·</span>
-              {% endif %}
-            </td>
-          {% endfor %}
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+{% comment %}
+  A view wider than five dealer columns arrives as two tables, weak dealers
+  and strong dealers. Stacked on a phone, side by side on a desk. Nothing on
+  this screen scrolls sideways, because a column you have to know to scroll to
+  is a column you never learn.
+{% endcomment %}
+<div class="bj-halves">
+  {% for subtitle, dealers, rows in tables %}
+    <div class="bj-half">
+      {% if subtitle %}<h3 class="bj-half-title">{{ subtitle }}</h3>{% endif %}
+      <div class="bj-sheet-wrap">
+        <table class="bj-sheet">
+          <thead>
+            <tr>
+              <th scope="col"><span class="bj-sr">היד שלכם</span></th>
+              {% for d in dealers %}
+                <th scope="col">{% if d == 11 %}A{% else %}{{ d }}{% endif %}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+              <tr>
+                <th scope="row">{{ row.label }}</th>
+                {% for cell in row.cells %}
+                  <td>
+                    {% if cell %}
+                      {% comment %}
+                        Every cell is a button, not a coloured box: the reason is
+                        the product (REQ-B.3.4), and a reason you cannot reach is
+                        a reason that does not exist.
+                      {% endcomment %}
+                      <button type="button"
+                              class="bj-cell bj-cell-{{ cell.action }}"
+                              data-reason="{{ cell.reason }}"
+                              data-hand="{{ row.label }}"
+                              data-dealer="{% if cell.dealer == 11 %}A{% else %}{{ cell.dealer }}{% endif %}"
+                              data-fallback="{{ cell.fallback }}"
+                              data-action="{{ cell.action }}">{{ cell.action }}</button>
+                    {% else %}
+                      <span class="bj-cell bj-cell-empty" aria-hidden="true">·</span>
+                    {% endif %}
+                  </td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endfor %}
 </div>
 
 <p class="bj-legend">

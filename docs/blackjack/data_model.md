@@ -67,6 +67,7 @@ an app never adds fields to babook's user, it keeps its own row.
 | `user` | OneToOne User | the shared account |
 | `rule_set` | FK RuleSet | the table they are currently playing |
 | `first_used_at` | datetime, null | **set once, on the first drilled hand.** The 30-minute trial is measured from here, not from signup, so somebody who signs up and returns on Thursday still gets their half hour |
+| `show_to_followers` | bool, default true | whether the people who follow you (babook's `Follow`) see your accuracy, hands and streak. Followers only, never public; a share link is a separate decision. Added in SPR-B.7.3 |
 | `created_at` | datetime | |
 
 ---
@@ -238,8 +239,9 @@ Named so the shape is known, deliberately not designed until the core works.
 - **Champion league**: a season and an entry. **Ranked by decision accuracy,
   never by chips won.** Ranking by winnings ranks luck, and a leaderboard that
   rewards a hot shoe teaches the opposite of the product.
-- **Following**: Q2 in the spec. babook already has a `Follow` graph; this app
-  should read it rather than grow a second one, pending Avi's answer.
+- ~~**Following**~~: answered (Q2, 2026-10-02) and built in SPR-B.7.3. There
+  is no model here: `blackjack/friends.py` reads and writes babook's `Follow`
+  and is the only module that touches it. See section 9.
 
 ---
 
@@ -299,3 +301,57 @@ page payload. The client then answers instantly and offline, and the server
 never needs asking what the right play was. The serialiser is one function and
 is covered by the same equality test, so a chart that renders one way and
 serialises another fails rather than teaching somebody the wrong play.
+
+---
+
+## 9. What the coach writes, and what a person shares
+
+Added after EPIC-B.5 and EPIC-B.7, which the first draft of this document
+predates. Three things, two of them rows and one of them deliberately not.
+
+### `Trick`
+
+A mnemonic the coach wrote for one cell this person keeps missing (REQ-B.8.4).
+Paid tier; written by `coach.tricks`, which is handed the correct play and
+never looks one up.
+
+| Field | Type | Notes |
+|---|---|---|
+| `player` | FK Player | whose |
+| `cell_kind`, `cell_player`, `cell_dealer` | the cell | one row per person per cell, replaced when they ask again. A mnemonic that changes every time you look at it is not a mnemonic |
+| `text` | text | the line itself |
+| `created_at`, `updated_at` | datetime | |
+
+Read-only through the API. A client that could write one would be writing its
+own coaching.
+
+### `Share`
+
+A result, frozen, behind a link anybody can open (REQ-B.5.8). Free.
+
+| Field | Type | Notes |
+|---|---|---|
+| `token` | 10 chars, unique | random from a 31-letter alphabet, about fifty bits. Never a row number: one forwarded link must not be a tour of everybody else's results |
+| `player` | FK Player | whose |
+| `headline` | char | one sentence, because that is what a group chat shows |
+| `snapshot` | JSON | **frozen at the moment of sharing and never recomputed.** `blackjack/sharing.py` decides once what goes in: first name, hands, right, accuracy, streak, best streak, the table's rules, the date. The public page renders this dict and reaches through to nothing, so a field added to `Player` next month cannot appear on a link shared last month |
+| `created_at` | datetime | |
+| `revoked_at` | datetime, null | closing a link keeps the row and kills the token |
+| `views` | int | counted with `F() + 1` |
+
+The public page `/blackjack/r/<token>/` is the only screen in the app that
+does not require an account. A link that asks a stranger to sign in before it
+shows anything is a sign-up wall, and nobody forwards one of those.
+
+### Following, which is not a model here
+
+`blackjack/friends.py` reads and writes `app.models.Follow`. There is no
+`BlackjackFollow`, on purpose: a second graph is a second answer to "who does
+this person follow", free to disagree with the first. Writing babook's table
+from here is the one place this app touches a babook model directly, and the
+reason is Rule 3: with no link back to the main site, a person who finds a
+friend here would otherwise have nowhere to press.
+
+You arrive at a person through a result they shared with you. No directory, no
+search: a lookup would mean typing part of an email address and being told
+whether that account exists.

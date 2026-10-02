@@ -42,6 +42,7 @@ markers = [
     "sprb72: SPR-B.7.2 blackjack: sharing a result",
     "sprb73: SPR-B.7.3 blackjack: following",
     "bjclasses: blackjack: every class in the markup is styled",
+    "review1002: blackjack: the review pass of 2026-10-02",
     "spr143: F-14.3 the home page must not scroll sideways",
     "sprm1: SPR-M.1 מט״צים front door sprint tests",
     "sprm2: SPR-M.2 מט״צים identity and first-contact sprint tests",

@@ -26,13 +26,31 @@ LOGIN_URL = "/login/?next=/blackjack/"
 
 @login_required(login_url=LOGIN_URL)
 def home(request):
-    """The front door. Three sections, two of them not built yet.
+    """The front door: one sentence and one button.
 
-    It says what is coming rather than hiding it, because an app whose menu
-    items do nothing feels broken, while an app that says "the drill is next"
-    feels like it is being built.
+    For somebody who has played, the button says "continue" and a strip above
+    it says where they stand: streak, hands, accuracy. The review pass found
+    the front page identical for a first visit and a fortieth, which told a
+    returning person nothing about why to come back.
     """
-    return render(request, "blackjack/home.html", {})
+    from . import mastery, streaks
+    from .models import Attempt, Player
+
+    player = Player.objects.filter(user=request.user).first()
+    hands = Attempt.objects.filter(player=player).count() if player else 0
+    standing = None
+    if hands:
+        right = Attempt.objects.filter(player=player, is_correct=True).count()
+        summary = mastery.summary(player)
+        standing = {
+            "hands": hands,
+            "accuracy": round(100 * right / hands),
+            "streak": streaks.of(player),
+            "solid": summary["solid"],
+            "learning": summary["learning"],
+            "total": summary["total"],
+        }
+    return render(request, "blackjack/home.html", {"standing": standing})
 
 
 @login_required(login_url=LOGIN_URL)
@@ -87,6 +105,34 @@ SHEET_VIEWS = (
     ("doubles", "הכפלות", None, None),
 )
 
+# Any view wider than a thumb is drawn as two tables, weak dealers and strong
+# dealers, stacked on a phone and side by side on a desk. The review pass
+# found the soft, pairs and doubles views clipped at 390px with the 8, 9, 10
+# and A columns off the left edge and nothing saying "scroll": the sheet's own
+# rule, five columns is a thumb, applied to the hard table and to nothing else.
+HALVES = (("דילר חלש", (2, 3, 4, 5, 6)), ("דילר חזק", (7, 8, 9, 10, 11)))
+
+
+def _split(rows, dealers):
+    """One wide table into the halves a phone can show whole.
+
+    Returns a list of (subtitle, dealers, rows). A table that already fits is
+    returned as a single unlabelled half, so the template has one shape.
+    """
+    if len(dealers) <= 5:
+        return [("", list(dealers), rows)]
+    halves = []
+    for subtitle, group in HALVES:
+        keep = [d for d in dealers if d in group]
+        if not keep:
+            continue
+        halves.append((subtitle, keep, [
+            {**row, "cells": [cell for cell, d in zip(row["cells"], dealers, strict=True)
+                              if d in group]}
+            for row in rows
+        ]))
+    return halves
+
 
 @login_required(login_url=LOGIN_URL)
 def sheet(request):
@@ -135,8 +181,7 @@ def sheet(request):
         "views": SHEET_VIEWS,
         "chosen": chosen,
         "title": title,
-        "rows": rows,
-        "dealers": dealers,
+        "tables": _split(rows, dealers),
     })
 
 
@@ -235,9 +280,19 @@ def drill(request):
         })
 
     from . import gate, mastery, streaks
+    from .models import Attempt, BatchNote, Session
 
     payload = chart_payload(chart)
     payload["review"] = recent_misses(player)
+
+    # Where this person is inside the current batch of twenty, so the drill
+    # can say "hand 7 of 20" and the note at twenty does not come from nowhere.
+    # The review pass found the note was written and shown only on the history
+    # page, which nobody reads mid-drill: the thing the spec promised "every
+    # twenty hands" was never seen at the table.
+    in_session = Attempt.objects.filter(player=player, session=Session.current(player)).count()
+    payload["in_batch"] = in_session % BatchNote.BATCH
+    payload["batch"] = BatchNote.BATCH
 
     # REQ-B.8.2 — the scheduler, for whoever is paying. Free practice is
     # random with recent misses mixed back in; paid practice is driven by when
@@ -251,6 +306,7 @@ def drill(request):
         "player": player,
         "rules": player.rule_set,
         "streak": streaks.of(player),
+        "access": access,
         "chart_json": json.dumps(payload, cls=DjangoJSONEncoder, ensure_ascii=False),
     })
 
@@ -354,8 +410,8 @@ def progress(request):
         "views": PROGRESS_VIEWS,
         "chosen": chosen,
         "title": title,
-        "rows": rows,
-        "dealers": dealers,
+        "tables": _split(rows, list(dealers)),
+        "lifetime": player.attempts.count(),
     })
 
 

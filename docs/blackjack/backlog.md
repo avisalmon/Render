@@ -153,6 +153,39 @@ actually be reached, per methodology entry 4.
 
 **EPIC-B.7 is closed.** Avi reviews here.
 
+### The review pass, 2026-10-02
+
+Avi: "pause and review everything we did by now for correctness, UX,
+gamification, adapt to phone and PC, bugs, human flawless understanding of
+what's going on. Fix it to perfection."
+
+Every screen was walked at 390px and 1280px as two people, one brand new and
+one with sixty hands over four days, and read as a user rather than as its
+builder. What that found, and what changed:
+
+| Found | Where | Fixed |
+|---|---|---|
+| Every explanation naming the dealer's ace said "מול 11" | all ace cells | `strategy.face()`; the seed rebuilds a chart built by an older `STRATEGY_VERSION`, so the fix reaches production on deploy |
+| The note promised "every 20 hands" went to the history page; the table stayed silent | drill | the attempt API returns `note` and `in_batch`; the drill shows the note where the twenty were played and counts "עוד 7 ידיים להערה הבאה" |
+| Soft, pairs and doubles views were ten columns; the 8, 9, 10, A columns sat off a phone's left edge behind a hidden scrollbar | sheet, progress | every view is at most five dealers wide; wide views are two tables, stacked on a phone, side by side from 720px |
+| The chosen-but-wrong button had a faint border that read as unselected | drill | red tint, struck through, full opacity |
+| The seventh nav link, השולחן, was off the edge at 390px | every screen | the table's rules are a setting, reached from the sheet's rules line; six links fit |
+| The front page was identical on the first visit and the fortieth | home | a standing strip: streak, accuracy over hands, solid and on-the-way; "להמשיך לתרגל" |
+| "0 מתוך 340 יושבות" after an hour read as "nothing"; the count that moves on day one was omitted | progress | "44 בדרך" in the sentence, and a line saying what solid and on-the-way mean; a door to the drill for an empty grid |
+| "עצירה ← קלף" made a reader decode which side was theirs | history | "עצירה במקום קלף" |
+| A share button at zero hands | history | hidden until there is something to share |
+| The locked page said the trial opens at the first hand and offered no way to play one | coach, never played | "לשחק יד ראשונה, וזה נפתח" |
+| Nothing at the table said the thirty minutes were running | drill | "המאמן פתוח עד 15:13", in the trial only |
+| The locked page's tab said מתקדם under a heading that said המאמן | coach | one word |
+
+Checked and left alone: the strategy table itself against published 6-deck
+S17/H17 DAS basic strategy, cell by cell in the spot checks and by the existing
+cross-check test; the keyboard path (Enter on the focused next button deals
+once, not twice); tap targets and sideways scroll on every screen at both
+widths. The data model doc, which had never been given `Trick`, `Share` or
+`show_to_followers`, now has them.
+
+
 **SPR-B.7.1, what was decided.** A streak runs up to the last day played and
 stays alive through today, so somebody who played yesterday and opens the app
 at nine in the morning still sees their run rather than a zero. Counting

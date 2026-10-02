@@ -149,6 +149,10 @@ def summary(player):
     return {
         "total": len(rows),
         "solid": len(solid),
+        # Right every time so far, but fewer than three in a row. On day one
+        # this is the only count that moves, and a summary without it reads
+        # as "nothing yet" to somebody who has just done an hour's work.
+        "learning": len([r for r in rows if r["state"] == "learning"]),
         "shaky": len(shaky),
         "new": len([r for r in rows if r["state"] == "new"]),
         "worst": shaky[:5],

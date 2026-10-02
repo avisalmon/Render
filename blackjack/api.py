@@ -255,7 +255,30 @@ class AttemptViewSet(
         from . import mastery, notes
 
         mastery.record(attempt)
-        notes.maybe_write(player, attempt.session)
+        note = notes.maybe_write(player, attempt.session)
+
+        # Handed back to the drill, which shows the note at the table and keeps
+        # its "hand 7 of 20" honest. Read in `create` below.
+        from .models import Attempt
+
+        self._after = {
+            "note": note.text if note else None,
+            "in_batch": Attempt.objects.filter(
+                player=player, session=attempt.session
+            ).count() % notes.BatchNote.BATCH,
+        }
+
+    def create(self, request, *args, **kwargs):
+        """The row, plus what the drill needs to say about it.
+
+        `note` is the sentence written at the twentieth hand, or null, and
+        `in_batch` is how far into the next twenty this hand leaves them. The
+        drill shows both, because a note that is written but never shown at the
+        table is a feature on paper.
+        """
+        response = super().create(request, *args, **kwargs)
+        response.data.update(getattr(self, "_after", {}))
+        return response
 
 
 class SessionViewSet(

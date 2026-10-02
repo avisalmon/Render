@@ -23,6 +23,19 @@
   var ENDPOINT = "/blackjack/api/attempts/";
   var sending = false;
 
+  /* Who wants to know what the server replied. The drill does: the reply
+     carries the note written at the twentieth hand and the count into the
+     next twenty, and a note nobody shows at the table is a note on paper. */
+  var listeners = [];
+
+  function onSent(fn) { listeners.push(fn); }
+
+  function tell(data) {
+    listeners.forEach(function (fn) {
+      try { fn(data); } catch (e) { /* a listener must never stop the queue */ }
+    });
+  }
+
   function readQueue() {
     try {
       var raw = window.localStorage.getItem(KEY);
@@ -70,6 +83,7 @@
       sending = false;
       if (response.ok) {
         writeQueue(readQueue().slice(1));
+        response.json().then(tell, function () {});
         return flush();
       }
       /* A refusal is not a network problem and will not fix itself: a hand the
@@ -100,7 +114,7 @@
   window.addEventListener("online", flush);
   window.addEventListener("pageshow", flush);
 
-  window.BJRecord = { record: record, flush: flush, readQueue: readQueue, KEY: KEY };
+  window.BJRecord = { record: record, flush: flush, readQueue: readQueue, onSent: onSent, KEY: KEY };
 
   flush();
 })();

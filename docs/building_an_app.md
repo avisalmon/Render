@@ -597,3 +597,31 @@ frozen headline and the headline still said 100.
 **The rule.** The list of innocent places a string can hide now reads: a
 legend, a tooltip, an attribute, an asset path, another number, **and the page
 title**. Extract the element you mean and assert on that.
+
+### 15. Show the thing where the moment happens
+
+The blackjack spec promised a note every twenty hands. It was written at the
+twentieth hand, stored, and shown on the history page. Nobody opens the history
+page mid-drill, so the feature the spec described at the table was never seen
+at the table. Every test passed, because every test checked that the note
+existed.
+
+**The rule.** When a feature is "after X, the person gets Y", the test is that
+Y appears on the screen where X happened, driven through that screen. A note
+that exists and is shown somewhere else is a feature on paper. The walk-through
+that found this was the first time anyone had played twenty hands as a user
+rather than posted twenty attempts as a test.
+
+### 16. A rule applied to the case that prompted it is not yet a rule
+
+"Five columns is a thumb" was written for the hard table, which is the widest
+and the one a beginner reads most, and the hard table was split. The soft,
+pairs and doubles views stayed ten columns wide for five sprints, with the 8,
+9, 10 and A columns off the left edge of a phone behind a scrollbar hidden on
+purpose. The spec stated the principle and the code applied it once.
+
+**The rule.** When a principle lands, grep for every place it applies before
+closing the sprint, and write the test over the principle, not the instance:
+*no cell on any view sits outside a 390px viewport*, not *the hard table has
+five columns*. The first catches the next view somebody adds; the second
+passed while three views were broken.

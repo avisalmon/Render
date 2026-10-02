@@ -26,7 +26,25 @@
     כאן לומדים את זה יד אחרי יד, ורואים בדיוק מה עוד לא יושב.
   </p>
 
-  <a class="bj-btn bj-front-cta" href="{% url 'blackjack:drill' %}">להתחיל לתרגל</a>
+  {% if standing %}
+    {% comment %}
+      Where a returning person stands, in one line, above the button that
+      takes them back. Streak first because it is the thing that expires.
+    {% endcomment %}
+    <p class="bj-standing">
+      {% if standing.streak.current %}
+        <span class="bj-streak {% if standing.streak.at_risk %}is-at-risk{% endif %}"><span aria-hidden="true">▲</span> {{ standing.streak.current }}</span>
+        <span>{% if standing.streak.at_risk %}ימים ברצף, היום עוד פתוח{% else %}ימים ברצף{% endif %}</span>
+        <span class="bj-standing-dot" aria-hidden="true">·</span>
+      {% endif %}
+      <span><strong>{{ standing.accuracy }}%</strong> נכון ב-{{ standing.hands }} ידיים</span>
+      <span class="bj-standing-dot" aria-hidden="true">·</span>
+      <span><strong>{{ standing.solid }}</strong> יושבות{% if standing.learning %}, {{ standing.learning }} בדרך{% endif %}</span>
+    </p>
+    <a class="bj-btn bj-front-cta" href="{% url 'blackjack:drill' %}">להמשיך לתרגל</a>
+  {% else %}
+    <a class="bj-btn bj-front-cta" href="{% url 'blackjack:drill' %}">להתחיל לתרגל</a>
+  {% endif %}
   <p class="bj-front-note">בלי כסף, בלי פרסומות, בלי הימורים.</p>
 </section>
 

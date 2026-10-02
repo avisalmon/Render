@@ -10,7 +10,9 @@
   <p class="bj-progress-sum">
     <strong>{{ lifetime_right }}</strong> מתוך {{ lifetime }} ידיים נכונות, מאז ומתמיד.
   </p>
-  <a class="bj-btn bj-btn-small bj-btn-quiet" href="{% url 'blackjack:share' %}">לשתף</a>
+  {% if lifetime %}
+    <a class="bj-btn bj-btn-small bj-btn-quiet" href="{% url 'blackjack:share' %}">לשתף</a>
+  {% endif %}
 </div>
 
 {% comment %}
@@ -96,8 +98,13 @@
             {% else %}{{ hand.cell_player }}{% endif %}
             מול {% if hand.cell_dealer == 11 %}A{% else %}{{ hand.cell_dealer }}{% endif %}
           </span>
+          {% comment %}
+            Words, not an arrow. "עצירה ← קלף" made a reader work out which
+            side was theirs and which was the book, in a column that is
+            scanned, not read.
+          {% endcomment %}
           <span class="bj-hand-said">
-            {{ hand.get_chosen_display }}{% if not hand.is_correct %} ← {{ hand.get_correct_display }}{% endif %}
+            {% if hand.is_correct %}{{ hand.get_chosen_display }}{% else %}{{ hand.get_chosen_display }} <span class="bj-muted">במקום</span> {{ hand.get_correct_display }}{% endif %}
           </span>
           <span class="bj-muted bj-small">{{ hand.created_at|date:"j.n H:i" }}</span>
         </li>

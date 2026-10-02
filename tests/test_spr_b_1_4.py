@@ -125,20 +125,29 @@ def test_a_table_with_no_chart_says_so_instead_of_drawing_nothing(client, person
 # ------------------------------------------------- the splits
 
 
-@pytest.mark.parametrize("view,expected_columns", [
-    ("weak", 5),
-    ("strong", 5),
-    ("soft", 10),
-    ("pairs", 10),
+@pytest.mark.parametrize("view,expected_tables", [
+    ("weak", 1),
+    ("strong", 1),
+    ("soft", 2),
+    ("pairs", 2),
+    ("doubles", 2),
 ])
-def test_the_dealer_is_split_so_the_table_fits_a_hand(client, person, view, expected_columns):
-    """REQ-B.3.3. The hard table is the widest and the one a beginner reads
-    most, so it is the one that splits."""
+def test_the_dealer_is_split_so_the_table_fits_a_hand(client, person, view, expected_tables):
+    """REQ-B.3.3: five columns is a thumb, on every view.
+
+    First written for the hard table alone, with soft and pairs allowed ten
+    columns. The review pass of 2026-10-02 found those views clipped on a
+    390px phone with the 8, 9, 10 and A columns off the edge behind a hidden
+    scrollbar. So now every table on the sheet is at most five dealers wide,
+    and a wide view arrives as two tables.
+    """
     client.force_login(person)
     html = client.get(f"/blackjack/sheet/?view={view}").content.decode()
-    header = re.search(r"<thead>.*?</thead>", html, re.S).group(0)
-    columns = len(re.findall(r"<th scope=\"col\">", header)) - 1  # minus the corner
-    assert columns == expected_columns
+    headers = re.findall(r"<thead>.*?</thead>", html, re.S)
+    assert len(headers) == expected_tables
+    for header in headers:
+        columns = len(re.findall(r"<th scope=\"col\">", header)) - 1  # minus the corner
+        assert 1 <= columns <= 5, f"{view}: a table {columns} dealers wide"
 
 
 def test_the_doubles_view_holds_only_doubles(client, person):

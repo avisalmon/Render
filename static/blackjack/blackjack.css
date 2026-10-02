@@ -63,15 +63,16 @@
 
 .bj-pip { color: var(--bj-gold); }
 
+/* Wraps to a second row rather than scrolling. The review pass found the
+   seventh link, השולחן, sitting off the left edge of a 390px screen behind a
+   scrollbar that was hidden on purpose, so nothing said it was there. A link
+   nobody can see is not in the menu. */
 .bj-nav {
   display: flex;
-  gap: 14px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  justify-content: flex-start;
 }
-
-.bj-nav::-webkit-scrollbar { display: none; }
 
 .bj-nav-link { white-space: nowrap; }
 
@@ -521,7 +522,17 @@
 
 .bj-act:disabled { opacity: .4; cursor: default; }
 
-.bj-act.is-chosen { border-color: var(--bj-ink); }
+/* What they pressed, when it was not the answer. A plain border read as
+   "unselected" next to the gold answer, so the eye saw one highlighted button
+   and no record of the choice. Red-tinted, struck through, still legible. */
+.bj-act.is-chosen:not(.is-answer) {
+  border-color: #c9766a;
+  background: rgba(201, 118, 106, .14);
+  color: #f0c9c2;
+  text-decoration: line-through;
+  text-decoration-color: #c9766a;
+  opacity: 1;
+}
 
 .bj-act.is-answer {
   background: var(--bj-gold);
@@ -1069,3 +1080,94 @@
 .bj-circle-mine h2 { margin-top: 0; }
 .bj-circle-visibility p { max-width: 48ch; }
 .bj-shared-follow { margin-top: 14px; }
+
+/* --- review pass (2026-10-02) ------------------------------------------- */
+
+/* Two five-column tables instead of one ten-column one. A phone stacks them;
+   from 720px they sit side by side, which is the full chart a desk can read. */
+.bj-halves {
+  display: grid;
+  gap: 14px 22px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 720px) {
+  .bj-halves { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+}
+
+.bj-half { min-width: 0; }
+
+.bj-half-title {
+  margin: 4px 0 6px;
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--bj-ink-soft);
+  text-align: center;
+}
+
+/* The drill's second line: distance to the next note, and the trial clock. */
+.bj-batch-line {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin: 0 0 8px;
+  min-height: 1.2em;
+}
+
+.bj-batch {
+  color: var(--bj-ink-soft);
+  font-size: .82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.bj-trial-note { white-space: nowrap; }
+
+/* The note at the twentieth hand, where the twenty were played. */
+.bj-batch-note {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--bj-gold);
+  border-radius: var(--bj-radius);
+  background: color-mix(in srgb, var(--bj-gold) 10%, var(--bj-felt-high));
+}
+
+.bj-batch-note p { margin: 0 0 4px; }
+.bj-batch-note p:last-child { margin-bottom: 0; }
+.bj-batch-note-head { color: var(--bj-gold); font-weight: 700; font-size: .85rem; }
+.bj-batch-note-text { font-size: .95rem; line-height: 1.55; }
+
+/* Where a returning person stands, above the front-page button. */
+.bj-standing {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 6px 8px;
+  margin: 18px auto 0;
+  max-width: 44ch;
+  color: var(--bj-ink-soft);
+  font-size: .95rem;
+}
+
+.bj-standing strong { color: var(--bj-ink); }
+.bj-standing-dot { color: var(--bj-line); }
+
+.bj-learning { color: #c9d6cf; }
+
+.bj-locked-start {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 16px;
+}
+
+/* The way to the table's rules, on the line that shows them. A 44px target
+   even though it is a text link, because it is the only door to that screen. */
+.bj-rules-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--bj-gold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

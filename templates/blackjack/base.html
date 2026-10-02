@@ -35,7 +35,11 @@
       <a class="bj-nav-link" href="{% url 'blackjack:history' %}">היסטוריה</a>
       <a class="bj-nav-link" href="{% url 'blackjack:friends' %}">חברים</a>
       <a class="bj-nav-link" href="{% url 'blackjack:advanced' %}">המאמן</a>
-      <a class="bj-nav-link" href="{% url 'blackjack:table' %}">השולחן</a>
+      {% comment %}
+        The table's rules are not in this menu. They are a setting, reached
+        from the sheet, which is the screen that shows them. Seven links put
+        the seventh off the edge of a phone; six fit.
+      {% endcomment %}
     </nav>
   </header>
 

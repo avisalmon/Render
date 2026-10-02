@@ -20,7 +20,9 @@
     actions: document.getElementById("bjActions"),
     verdict: document.getElementById("bjVerdict"),
     next: document.getElementById("bjNext"),
-    score: document.getElementById("bjScore")
+    score: document.getElementById("bjScore"),
+    batch: document.getElementById("bjBatch"),
+    note: document.getElementById("bjNote")
   };
 
   var WORDS = { H: "קלף", S: "עצירה", D: "הכפלה", P: "פיצול" };
@@ -31,12 +33,35 @@
   var played = 0;
   var right = 0;
 
+  /* Where this person is inside the current twenty. Starts from what the
+     server knows, counts locally so it moves the instant a hand is answered,
+     and is corrected by the server's reply when that arrives, so a hand
+     played in a tunnel still lines up once it is sent. */
+  var inBatch = chart.in_batch || 0;
+  var BATCH = chart.batch || 20;
+
   function showScore() {
     if (!played) {
       elements.score.textContent = "";
       return;
     }
     elements.score.textContent = right + " מתוך " + played;
+  }
+
+  function showBatch() {
+    if (!elements.batch) return;
+    var left = BATCH - inBatch;
+    elements.batch.textContent = left === BATCH
+      ? "הערה אחרי " + BATCH + " ידיים"
+      : "עוד " + left + " " + (left === 1 ? "יד" : "ידיים") + " להערה הבאה";
+  }
+
+  function showNote(text) {
+    if (!elements.note) return;
+    elements.note.innerHTML = "";
+    elements.note.appendChild(line("bj-batch-note-head", "אחרי " + BATCH + " ידיים"));
+    elements.note.appendChild(line("bj-batch-note-text", text));
+    elements.note.hidden = false;
   }
 
   function nextHand() {
@@ -52,6 +77,10 @@
     elements.verdict.innerHTML = "";
     elements.verdict.hidden = true;
     elements.next.hidden = true;
+    if (elements.note) {
+      elements.note.hidden = true;
+      elements.note.innerHTML = "";
+    }
 
     var legal = window.BJ.legalActions(situation);
     elements.actions.querySelectorAll(".bj-act").forEach(function (button) {
@@ -139,8 +168,23 @@
       });
     }
 
+    inBatch = (inBatch + 1) % BATCH;
     showScore();
+    showBatch();
     elements.next.focus();
+  }
+
+  /* The server's word on a recorded hand: the note, if this was the
+     twentieth, and the true count into the next twenty. */
+  if (window.BJRecord && window.BJRecord.onSent) {
+    window.BJRecord.onSent(function (data) {
+      if (!data) return;
+      if (typeof data.in_batch === "number") {
+        inBatch = data.in_batch;
+        showBatch();
+      }
+      if (data.note) showNote(data.note);
+    });
   }
 
   /* The one place in the drill that talks to the server about this hand. It
@@ -202,5 +246,6 @@
   });
 
   window.__bjNextHand = nextHand;          /* read by the browser tests */
+  showBatch();
   nextHand();
 })();

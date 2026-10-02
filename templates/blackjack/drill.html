@@ -31,6 +31,19 @@
   </div>
 </div>
 
+{% comment %}
+  Two lines a person at the table actually wants: how far to the next note,
+  and, while the thirty free minutes run, that they are running. The second is
+  shown only in the trial. A subscriber does not need a clock and a free
+  account is not nagged with one.
+{% endcomment %}
+<p class="bj-batch-line">
+  <span class="bj-batch" id="bjBatch"></span>
+  {% if access.source == 'trial' %}
+    <span class="bj-muted bj-small bj-trial-note">המאמן פתוח עד <bdi>{{ access.until|date:"H:i" }}</bdi></span>
+  {% endif %}
+</p>
+
 <section class="bj-felt-area" aria-label="השולחן">
   <div class="bj-seat">
     <span class="bj-seat-label">הדילר</span>
@@ -57,6 +70,15 @@
 </div>
 
 <section class="bj-verdict" id="bjVerdict" aria-live="polite" hidden></section>
+
+{% comment %}
+  The note after every twenty hands, shown where the twenty were played. It
+  arrives with the server's reply to the twentieth hand and stays until the
+  next hand is dealt. REQ-B.5.3 said "every 20 calls the system will give a
+  note"; until this pass the note went to the history page and the table
+  stayed silent.
+{% endcomment %}
+<aside class="bj-batch-note" id="bjNote" aria-live="polite" hidden></aside>
 
 <button type="button" class="bj-btn bj-next" id="bjNext" hidden>יד הבאה</button>
 

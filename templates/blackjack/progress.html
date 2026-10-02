@@ -11,11 +11,28 @@
   competing trainer is that they cannot tell which hands are their weak ones,
   and an overall score is exactly the number that hides it.
 {% endcomment %}
-<p class="bj-progress-sum">
-  <strong>{{ summary.solid }}</strong> מתוך {{ summary.total }} החלטות יושבות.
-  {% if summary.shaky %}<span class="bj-shaky">{{ summary.shaky }} עדיין מתנדנדות.</span>{% endif %}
-  {% if summary.new %}<span class="bj-muted">{{ summary.new }} עוד לא נפגשתם איתן.</span>{% endif %}
-</p>
+{% if lifetime %}
+  {% comment %}
+    Four numbers, all of them, because "0 of 340 solid" after an hour of
+    practice is a true sentence that reads as "you have done nothing". A cell
+    is solid after three right in a row, which takes a few hundred hands across
+    a chart this size; the count that moves on day one is "on the way", and the
+    review pass found it was the one number this sentence left out.
+  {% endcomment %}
+  <p class="bj-progress-sum">
+    <strong>{{ summary.solid }}</strong> מתוך {{ summary.total }} החלטות יושבות{% if summary.learning %},
+    <span class="bj-learning">{{ summary.learning }} בדרך</span>{% endif %}.
+    {% if summary.shaky %}<span class="bj-shaky">{{ summary.shaky }} עדיין מתנדנדות.</span>{% endif %}
+    {% if summary.new %}<span class="bj-muted">{{ summary.new }} עוד לא נפגשתם איתן.</span>{% endif %}
+  </p>
+  <p class="bj-muted bj-small">תא "יושב" אחרי שלוש תשובות נכונות ברצף. "בדרך" הוא תא שעניתם עליו נכון, אבל עוד לא שלוש פעמים.</p>
+{% else %}
+  <p class="bj-progress-sum">
+    <strong>{{ summary.total }}</strong> החלטות בטבלה. כאן תראו, תא אחרי תא, מה כבר
+    יושב ומה עוד לא. עוד לא שיחקתם יד.
+  </p>
+  <a class="bj-btn bj-btn-small" href="{% url 'blackjack:drill' %}">להתחיל לתרגל</a>
+{% endif %}
 
 {% if summary.worst %}
   <section class="bj-worst">
@@ -45,36 +62,43 @@
 
 <h2 class="bj-sheet-title">{{ title }}</h2>
 
-<div class="bj-sheet-wrap">
-  <table class="bj-sheet bj-grid">
-    <thead>
-      <tr>
-        <th scope="col"><span class="bj-sr">היד שלכם</span></th>
-        {% for d in dealers %}
-          <th scope="col">{% if d == 11 %}A{% else %}{{ d }}{% endif %}</th>
-        {% endfor %}
-      </tr>
-    </thead>
-    <tbody>
-      {% for row in rows %}
-        <tr>
-          <th scope="row">{{ row.label }}</th>
-          {% for item in row.cells %}
-            <td>
-              {% if item %}
-                <span class="bj-cell bj-state-{{ item.state }}"
-                      title="{{ item.correct }}/{{ item.seen }}">
-                  {% if item.seen %}{{ item.correct }}/{{ item.seen }}{% else %}·{% endif %}
-                </span>
-              {% else %}
-                <span class="bj-cell bj-cell-empty" aria-hidden="true">·</span>
-              {% endif %}
-            </td>
-          {% endfor %}
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div class="bj-halves">
+  {% for subtitle, dealers, rows in tables %}
+    <div class="bj-half">
+      {% if subtitle %}<h3 class="bj-half-title">{{ subtitle }}</h3>{% endif %}
+      <div class="bj-sheet-wrap">
+        <table class="bj-sheet bj-grid">
+          <thead>
+            <tr>
+              <th scope="col"><span class="bj-sr">היד שלכם</span></th>
+              {% for d in dealers %}
+                <th scope="col">{% if d == 11 %}A{% else %}{{ d }}{% endif %}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+              <tr>
+                <th scope="row">{{ row.label }}</th>
+                {% for item in row.cells %}
+                  <td>
+                    {% if item %}
+                      <span class="bj-cell bj-state-{{ item.state }}"
+                            title="{{ item.correct }}/{{ item.seen }}">
+                        {% if item.seen %}{{ item.correct }}/{{ item.seen }}{% else %}·{% endif %}
+                      </span>
+                    {% else %}
+                      <span class="bj-cell bj-cell-empty" aria-hidden="true">·</span>
+                    {% endif %}
+                  </td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endfor %}
 </div>
 
 <p class="bj-legend">

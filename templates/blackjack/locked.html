@@ -1,6 +1,6 @@
 {% extends "blackjack/base.html" %}
 
-{% block title %}מתקדם · blackjack{% endblock %}
+{% block title %}המאמן · blackjack{% endblock %}
 
 {% block content %}
 
@@ -23,6 +23,12 @@
     שאתם מפספסים, וטריקים לזכירה. {{ trial_minutes }} הדקות הראשונות פתוחות לכולם,
     מהיד הראשונה שמשחקים.
   </p>
+  {% comment %}
+    This person has not played a hand, so their thirty minutes have not
+    started. The sentence above promises the door opens at the first hand; the
+    review pass found the page then offered no way to play one.
+  {% endcomment %}
+  <a class="bj-btn bj-locked-start" href="{% url 'blackjack:drill' %}">לשחק יד ראשונה, וזה נפתח</a>
 {% endif %}
 
 <ul class="bj-sections">
