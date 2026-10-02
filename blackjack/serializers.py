@@ -23,6 +23,7 @@ from .models import (
     Player,
     RuleSet,
     Session,
+    Share,
     Trick,
 )
 
@@ -196,4 +197,18 @@ class TrickSerializer(serializers.ModelSerializer):
         model = Trick
         fields = ["id", "player", "cell_kind", "cell_player", "cell_dealer",
                   "text", "created_at", "updated_at"]
+        read_only_fields = fields
+
+
+class ShareSerializer(serializers.ModelSerializer):
+    """A link somebody opened. Read-only: a share is frozen by definition, and
+    a client that could edit `snapshot` could publish any claim it liked under
+    somebody else's name."""
+
+    path = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = Share
+        fields = ["id", "token", "path", "player", "headline", "snapshot",
+                  "created_at", "revoked_at", "views"]
         read_only_fields = fields

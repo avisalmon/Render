@@ -412,6 +412,83 @@ def history(request):
     })
 
 
+@login_required(login_url=LOGIN_URL)
+def share(request):
+    """Your shared links: make one, send it, close it (REQ-B.5.8).
+
+    A POST freezes this moment and hands back a link. Free, and deliberately
+    so: sharing is how the app reaches the next person, and putting it behind
+    the paid tier would be charging for the thing that grows the product.
+
+    `dir="ltr"` on every URL shown here, because RTL bidi reorders a Latin URL
+    into something that looks broken and copies wrong. That cost us a round of
+    coupon links already.
+    """
+    from . import sharing
+    from .models import Player, Share
+
+    player = Player.for_user(request.user)
+    fresh = None
+
+    if request.method == "POST":
+        token = (request.POST.get("revoke") or "").strip()
+        if token:
+            sharing.revoke(player, token)
+            return redirect("blackjack:share")
+        fresh = sharing.make(player)
+        return redirect(f"{reverse('blackjack:share')}?new={fresh.token}")
+
+    shares = list(Share.objects.filter(player=player)[:20])
+    wanted = request.GET.get("new")
+    fresh = next((s for s in shares if s.token == wanted), None)
+
+    rows = []
+    for item in shares:
+        url = request.build_absolute_uri(item.path)
+        rows.append({"share": item, "url": url})
+
+    return render(request, "blackjack/share.html", {
+        "rows": rows,
+        "fresh": fresh,
+        "fresh_url": request.build_absolute_uri(fresh.path) if fresh else "",
+        "fresh_qr": _qr_svg(request.build_absolute_uri(fresh.path)) if fresh else "",
+        "lifetime": player.attempts.count(),
+    })
+
+
+def shared(request, token):
+    """Somebody's frozen result, open to anybody holding the link.
+
+    **The only screen in this app that does not require an account.** It has to
+    be: a link that asks a stranger to sign in before it shows them anything is
+    not a shared result, it is a sign-up wall, and nobody forwards one of those.
+
+    It renders `share.snapshot` and nothing else. Reading through to the player
+    here would be how a field added next month appears on a link shared last
+    month.
+    """
+    from django.http import Http404
+
+    from . import sharing
+    from .models import Share
+
+    share_row = sharing.live(token)
+    if share_row is None:
+        raise Http404("אין כאן תוצאה. יכול להיות שהקישור נסגר.")
+
+    # Counted with an update rather than a save, so two people opening it at
+    # once do not overwrite each other's count.
+    from django.db.models import F
+
+    Share.objects.filter(pk=share_row.pk).update(views=F("views") + 1)
+
+    return render(request, "blackjack/shared.html", {
+        "data": share_row.snapshot,
+        "headline": share_row.headline,
+        "shared_on": share_row.snapshot.get("shared_on", ""),
+    })
+
+
 def _spark(points, width=300, height=70):
     """The accuracy graph, as an SVG path.
 

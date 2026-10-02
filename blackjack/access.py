@@ -124,3 +124,16 @@ def visible_tricks(user):
     if not getattr(user, "is_authenticated", False):
         return Trick.objects.none()
     return Trick.objects.filter(player__user=user)
+
+
+def visible_shares(user):
+    """Your own links, so you can see what is out there and close one.
+
+    Reading somebody else's shares through the API would turn an unguessable
+    link into a listable one, which is the whole of its security.
+    """
+    from .models import Share
+
+    if not getattr(user, "is_authenticated", False):
+        return Share.objects.none()
+    return Share.objects.filter(player__user=user)

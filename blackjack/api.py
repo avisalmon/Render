@@ -39,6 +39,7 @@ from .models import (
     Player,
     RuleSet,
     Session,
+    Share,
     Trick,
 )
 from .serializers import (
@@ -52,6 +53,7 @@ from .serializers import (
     PlayerSerializer,
     RuleSetSerializer,
     SessionSerializer,
+    ShareSerializer,
     TrickSerializer,
 )
 
@@ -373,6 +375,19 @@ class TrickViewSet(ReadOnlyScoped):
     scope = staticmethod(access.visible_tricks)
 
 
+class ShareViewSet(ReadOnlyScoped):
+    """Your own shared links, read-only.
+
+    Made and closed through the screen, not here: creating one freezes a
+    snapshot that `sharing.py` decides, and a writable endpoint would be a
+    second way to decide it.
+    """
+
+    serializer_class = ShareSerializer
+    scope = staticmethod(access.visible_shares)
+
+
+
 # Every model this app owns, and the route it answers on. Kept here rather than
 # in urls.py so that adding a model and forgetting its endpoint is visible in
 # one place: `test_every_model_has_an_endpoint` reads this.
@@ -388,4 +403,5 @@ ROUTES = [
     ("coupons", CouponViewSet, Coupon),
     ("grants", GrantViewSet, Grant),
     ("tricks", TrickViewSet, Trick),
+    ("shares", ShareViewSet, Share),
 ]

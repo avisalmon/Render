@@ -6,9 +6,12 @@
 
 <h1 class="bj-h1">ההיסטוריה שלי</h1>
 
-<p class="bj-progress-sum">
-  <strong>{{ lifetime_right }}</strong> מתוך {{ lifetime }} ידיים נכונות, מאז ומתמיד.
-</p>
+<div class="bj-history-head">
+  <p class="bj-progress-sum">
+    <strong>{{ lifetime_right }}</strong> מתוך {{ lifetime }} ידיים נכונות, מאז ומתמיד.
+  </p>
+  <a class="bj-btn bj-btn-small bj-btn-quiet" href="{% url 'blackjack:share' %}">לשתף</a>
+</div>
 
 {% comment %}
   REQ-B.5.8. A streak runs up to the last day played and stays alive through

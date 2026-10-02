@@ -483,3 +483,68 @@ class Trick(models.Model):
 
     def __str__(self):
         return f"trick for {self.cell_kind} {self.cell_player} vs {self.cell_dealer}"
+
+
+class Share(models.Model):
+    """A result, frozen, behind a link anybody can open (REQ-B.5.8).
+
+    **The snapshot is frozen at the moment of sharing, and never recomputed.**
+    A link that keeps updating is a tracker somebody handed to a group chat:
+    they shared one evening's result and would be publishing every evening
+    after it, including the bad ones, to a WhatsApp group they have forgotten
+    they posted in. What is shared is what was true when they pressed the
+    button.
+
+    **Nothing here is derived at read time, so nothing can leak later.** The
+    page renders this JSON and nothing else, which means a field added to
+    `Player` next month cannot quietly appear on a link shared last month.
+    What goes in is decided once, in `blackjack/sharing.py`.
+
+    Revocable, because a thing you sent to a group chat is a thing you may want
+    back. Revoking keeps the row and closes the door: the record of what was
+    shared is worth having, and reusing a dead token is not.
+    """
+
+    ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789"   # no o/0, no i/1/l
+    LENGTH = 10
+
+    token = models.CharField(max_length=24, unique=True, db_index=True)
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="shares")
+
+    headline = models.CharField(max_length=120)
+    snapshot = models.JSONField(default=dict)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    views = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.token} ({'revoked' if self.revoked_at else 'live'})"
+
+    @property
+    def is_live(self):
+        return self.revoked_at is None
+
+    @property
+    def path(self):
+        from django.urls import reverse
+
+        return reverse("blackjack:shared", args=[self.token])
+
+    @classmethod
+    def new_token(cls):
+        """Long and random, because the link is the only thing guarding it.
+
+        Ten characters of a thirty-one letter alphabet is about fifty bits,
+        which is not guessable by anybody who would bother. A sequential id
+        would let one shared link be walked into everybody else's.
+        """
+        import secrets
+
+        while True:
+            token = "".join(secrets.choice(cls.ALPHABET) for _ in range(cls.LENGTH))
+            if not cls.objects.filter(token=token).exists():
+                return token

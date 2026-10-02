@@ -116,8 +116,22 @@ would make the goal a lie. Moving it keeps each epic's sentence true.
 | Sprint | What | Traces | Status |
 |---|---|---|---|
 | SPR-B.7.1 | Streaks: days in a row, and what breaks one | REQ-B.5.8 | **DONE 2026-10-02** |
-| SPR-B.7.2 | Sharing a result, as a link somebody can open | REQ-B.5.8 | TODO |
+| SPR-B.7.2 | Sharing a result, as a link somebody can open | REQ-B.5.8 | **DONE 2026-10-02** |
 | SPR-B.7.3 | Following, **reading babook's `Follow`**, never a second graph | REQ-B.5.8, Q2 | TODO |
+
+**SPR-B.7.2, what was decided.** A shared link is a frozen snapshot, not a
+live page. Recomputing on read is the obvious implementation and it turns one
+shared evening into a standing feed of somebody's results to a group chat they
+have stopped thinking about. `blackjack/sharing.py` decides once what leaves
+the account, the public page renders that dict and reaches through to nothing,
+so a field added to `Player` next month cannot appear on a link shared last
+month.
+
+It is the only screen in the app a signed-out stranger can open. It has to be:
+a link that asks you to sign in before it shows you anything is a sign-up wall,
+and nobody forwards one of those. The name on it is the first name babook
+holds and nothing else, because usernames here are email addresses. Links are
+revocable and the row survives revocation.
 
 **SPR-B.7.1, what was decided.** A streak runs up to the last day played and
 stays alive through today, so somebody who played yesterday and opens the app

@@ -1,0 +1,34 @@
+{% load static %}<!doctype html>
+<html lang="he" dir="rtl" data-bj-theme="felt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}blackjack{% endblock %}</title>
+
+  {% comment %}
+    The shared-result page, and only that page. It has no nav, because every
+    link in the app's menu leads somewhere a signed-out stranger cannot go, and
+    a menu of doors that all ask you to sign in is worse than no menu.
+
+    Same stylesheet, same shell, one brand mark that is also the way in.
+  {% endcomment %}
+  <link rel="stylesheet" href="{% static 'blackjack/blackjack.css' %}">
+</head>
+<body class="bj-body bj-body-public">
+
+  <header class="bj-top bj-top-public">
+    <a class="bj-brand" href="{% url 'blackjack:home' %}">
+      <span class="bj-pip">&#9824;</span> blackjack
+    </a>
+  </header>
+
+  <main class="bj-main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="bj-foot">
+    <p>משחק לימודי בלבד. אין כאן הימורים, אין כסף אמיתי, ואין פרסים.</p>
+  </footer>
+
+</body>
+</html>

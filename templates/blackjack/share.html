@@ -1,0 +1,72 @@
+{% extends "blackjack/base.html" %}
+
+{% block title %}לשתף תוצאה · blackjack{% endblock %}
+
+{% block content %}
+
+<h1 class="bj-h1">לשתף תוצאה</h1>
+
+<p class="bj-lede">
+  קישור שמראה את המספרים שלכם ברגע הזה. מי שפותח אותו רואה צילום מצב, לא מעקב:
+  המספרים קפואים ולא ימשיכו להתעדכן אחרי ששלחתם.
+</p>
+
+{% if fresh %}
+  <section class="bj-share-new">
+    <h2>הקישור מוכן</h2>
+    <p class="bj-share-headline">{{ fresh.headline }}</p>
+
+    {% comment %}
+      dir="ltr" on the URL itself. A Latin address inside an RTL paragraph gets
+      reordered by the bidi algorithm into something that looks broken and
+      copies wrong, which is exactly what happened to the coupon links.
+    {% endcomment %}
+    <p class="bj-share-url" dir="ltr"><code>{{ fresh_url }}</code></p>
+
+    <div class="bj-share-actions">
+      <a class="bj-btn" dir="ltr"
+         href="https://wa.me/?text={{ fresh_url|urlencode }}">WhatsApp</a>
+      <a class="bj-btn bj-btn-quiet" href="{{ fresh.path }}">לראות מה יראו</a>
+    </div>
+
+    <div class="bj-share-qr">{{ fresh_qr|safe }}</div>
+  </section>
+{% endif %}
+
+<form method="post" class="bj-share-make">
+  {% csrf_token %}
+  <button type="submit" class="bj-btn">ליצור קישור חדש</button>
+  <span class="bj-muted bj-small">כל קישור הוא צילום מצב נפרד.</span>
+</form>
+
+<section class="bj-share-list">
+  <h2>הקישורים שלי</h2>
+  {% if rows %}
+    <ul>
+      {% for row in rows %}
+        <li class="bj-share-row {% if not row.share.is_live %}is-closed{% endif %}">
+          <span class="bj-share-row-head">{{ row.share.headline }}</span>
+          <span class="bj-muted bj-small">
+            {{ row.share.created_at|date:"j.n" }} ·
+            {{ row.share.views }} צפיות
+            {% if not row.share.is_live %}· סגור{% endif %}
+          </span>
+          {% if row.share.is_live %}
+            <form method="post" class="bj-share-revoke">
+              {% csrf_token %}
+              <input type="hidden" name="revoke" value="{{ row.share.token }}">
+              <button type="submit" class="bj-btn bj-btn-small bj-btn-quiet">לסגור</button>
+            </form>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+    <p class="bj-muted bj-small">
+      סגירה מכבה את הקישור לכל מי שקיבל אותו. מה שכבר נראה, נראה.
+    </p>
+  {% else %}
+    <p class="bj-muted">עוד לא שיתפתם כלום.</p>
+  {% endif %}
+</section>
+
+{% endblock %}

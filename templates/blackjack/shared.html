@@ -1,0 +1,48 @@
+{% extends "blackjack/base_public.html" %}
+
+{% block title %}{{ headline }} · blackjack{% endblock %}
+
+{% block content %}
+
+{% comment %}
+  REQ-B.5.8. Everything on this page comes from `share.snapshot`, a dict frozen
+  when the person pressed the button. Nothing here reaches through to the
+  player or the user, so no field added later can appear on a link shared
+  earlier.
+{% endcomment %}
+
+<section class="bj-shared">
+  <p class="bj-shared-who">
+    {% if data.name %}{{ data.name }}{% else %}מישהו{% endif %} מתאמן בבלקג'ק בסיסי
+  </p>
+
+  <p class="bj-shared-big">{{ data.accuracy }}<span class="bj-shared-pct">%</span></p>
+  <p class="bj-shared-sub">{{ data.right }} מתוך {{ data.hands }} ידיים נכונות</p>
+
+  <dl class="bj-shared-facts">
+    {% if data.streak %}
+      <div><dt>ימים ברצף</dt><dd>{{ data.streak }}</dd></div>
+    {% endif %}
+    {% if data.best_streak %}
+      <div><dt>הרצף הארוך ביותר</dt><dd>{{ data.best_streak }}</dd></div>
+    {% endif %}
+    {% if data.rules %}
+      <div class="bj-shared-rules"><dt>השולחן</dt><dd>{{ data.rules }}</dd></div>
+    {% endif %}
+  </dl>
+
+  {% comment %}
+    The date is Latin digits with hyphens inside an RTL sentence, which is the
+    shape that bidi reorders. <bdi> isolates it so it reads the way it was
+    written, the same lesson the coupon links taught.
+  {% endcomment %}
+  <p class="bj-muted bj-small">
+    צילום מצב מ-<bdi dir="ltr">{{ shared_on }}</bdi>. המספרים לא מתעדכנים.
+  </p>
+
+  <a class="bj-btn bj-shared-cta" href="{% url 'blackjack:home' %}">
+    גם אני רוצה לנסות
+  </a>
+</section>
+
+{% endblock %}

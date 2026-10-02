@@ -39,6 +39,8 @@ markers = [
     "sprb53: SPR-B.5.3 blackjack: the deeper explanation",
     "sprb54: SPR-B.5.4 blackjack: mnemonics",
     "sprb71: SPR-B.7.1 blackjack: streaks",
+    "sprb72: SPR-B.7.2 blackjack: sharing a result",
+    "bjclasses: blackjack: every class in the markup is styled",
     "spr143: F-14.3 the home page must not scroll sideways",
     "sprm1: SPR-M.1 מט״צים front door sprint tests",
     "sprm2: SPR-M.2 מט״צים identity and first-contact sprint tests",

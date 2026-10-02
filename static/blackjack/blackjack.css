@@ -897,3 +897,137 @@
   gap: 8px;
   font-size: .92rem;
 }
+
+/* --- sharing a result (SPR-B.7.2) --------------------------------------- */
+
+.bj-history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.bj-share-new {
+  margin: 18px 0;
+  padding: 16px;
+  border: 1px solid var(--bj-gold);
+  border-radius: 14px;
+  background: var(--bj-felt-high);
+}
+
+.bj-share-headline { margin: 0 0 10px; font-weight: 700; }
+
+/* The URL is Latin text in an RTL page. Left-aligned and ltr, or bidi
+   reorders it into something that looks broken and copies wrong. */
+.bj-share-url {
+  margin: 0 0 12px;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.bj-share-url code {
+  font-size: .9rem;
+  color: var(--bj-ink);
+}
+
+.bj-share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.bj-share-qr {
+  width: 160px;
+  max-width: 60%;
+  background: #fff;
+  padding: 8px;
+  border-radius: 10px;
+}
+
+.bj-share-qr svg { display: block; width: 100%; height: auto; }
+
+.bj-share-make {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 18px 0;
+}
+
+.bj-share-list ul { list-style: none; margin: 0; padding: 0; }
+
+.bj-share-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--bj-line);
+}
+
+.bj-share-row-head { font-weight: 600; }
+.bj-share-row.is-closed { opacity: .55; }
+.bj-share-revoke { margin-inline-start: auto; }
+
+/* The one page a stranger sees. One number, large, and a way in. */
+.bj-shared {
+  max-width: 460px;
+  margin: 24px auto;
+  padding: 24px 20px;
+  text-align: center;
+  border: 1px solid var(--bj-line);
+  border-radius: 18px;
+  background: var(--bj-felt-high);
+}
+
+.bj-shared-who { margin: 0 0 6px; color: var(--bj-ink-soft); }
+
+.bj-shared-big {
+  margin: 0;
+  font-size: 4rem;
+  line-height: 1;
+  font-weight: 800;
+  color: var(--bj-gold);
+  font-variant-numeric: tabular-nums;
+}
+
+.bj-shared-pct { font-size: 1.6rem; margin-inline-start: 2px; }
+.bj-shared-sub { margin: 6px 0 18px; color: var(--bj-ink-soft); }
+
+.bj-shared-facts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 22px;
+  margin: 0 0 16px;
+}
+
+.bj-shared-facts div { min-width: 90px; }
+.bj-shared-facts dt { font-size: .8rem; color: var(--bj-ink-soft); }
+.bj-shared-facts dd { margin: 2px 0 0; font-size: 1.3rem; font-weight: 700; }
+.bj-shared-rules dd { font-size: .95rem; font-weight: 500; }
+
+.bj-shared-cta { margin-top: 14px; }
+
+.bj-top-public { justify-content: center; }
+
+/* A second-rank button: still a 44px target, but it does not shout. Three
+   gold buttons in a row give a person no idea which one the screen wants
+   them to press, and one of them here closes a link for good. */
+.bj-btn-quiet {
+  background: transparent;
+  color: var(--bj-ink);
+  border: 1px solid var(--bj-line);
+}
+
+.bj-btn-quiet:hover { border-color: var(--bj-gold); color: var(--bj-gold); }
+
+/* The sentence under a heading that says what the screen is for. */
+.bj-lede {
+  max-width: 54ch;
+  margin: 0 0 18px;
+  color: var(--bj-ink-soft);
+  line-height: 1.6;
+}
