@@ -78,7 +78,6 @@ import http.server
 import json
 import os
 import socket
-import sys
 import threading
 import urllib.parse
 import urllib.request

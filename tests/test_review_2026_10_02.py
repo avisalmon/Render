@@ -332,8 +332,8 @@ def test_the_table_is_reached_from_the_sheet_and_the_nav_fits_a_phone(client, pe
     client.force_login(person)
     body = client.get("/blackjack/sheet/").content.decode()
     nav = body[body.find("<nav"):body.find("</nav>")]
-    assert "/blackjack/table/" not in nav, "seven links put the seventh off a phone"
-    assert nav.count("bj-nav-link") == 6
+    assert "/blackjack/table/" not in nav, "the rules are a setting, not a menu item"
+    assert nav.count("bj-nav-link") == 7, "the simulator made seven; they wrap on a phone"
     rules = body[body.find('class="bj-sheet-rules"'):][:400]
     assert "/blackjack/table/" in rules, "the rules are shown with no way to change them"
 

@@ -1159,7 +1159,11 @@ def test_the_nav_entry_is_hidden_from_everyone_but_the_allow_list(client):
     client.login(username="nosy", password="p")
     assert link not in client.get("/").content.decode()
 
-    _viewer()
+    # Avi, 2026-10-03: the link is shown to an admin who is also on the list.
+    owner = _viewer()
+    owner.is_superuser = True
+    owner.is_staff = True
+    owner.save(update_fields=["is_staff", "is_superuser"])
     client.login(username="owner", password="p")
     assert link in client.get("/").content.decode()
 
