@@ -23,8 +23,9 @@ def test_backup_live_storage_costed(monkeypatch):
     assert source == "live"
     # (12 - 5 free) * 0.020 = 0.14
     assert amount == Decimal("0.14")
-    assert raw == {"storage_gb": 12.0, "object_count": 30}
-    assert "12.00 GB in 30 backups" in note
+    assert raw["storage_gb"] == 12.0 and raw["object_count"] == 30
+    assert raw["free_limit_gb"] == 5.0 and raw["free_tier_pct"] == 240.0
+    assert "12.00 GB in 30 objects" in note
 
 
 @pytest.mark.django_db
@@ -34,7 +35,7 @@ def test_backup_within_free_tier_is_zero(monkeypatch):
     monkeypatch.setattr(a, "_bucket_usage", lambda: (3.2, 8, None))  # under 5 GB
     amount, source, note, raw = a.fetch("2026-06")
     assert source == "live" and amount == Decimal("0")
-    assert "within free tier" in note
+    assert "64% of 5 GB free tier" in note and "before paid" in note
 
 
 @pytest.mark.django_db

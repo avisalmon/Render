@@ -92,7 +92,7 @@ def test_lesson_page_renders_iframe():
     from django.test import override_settings
 
     from app.models import Course, Video
-    course = Course.objects.create(title="Test Course", slug="test-course", description="Test")
+    course = Course.objects.create(title="Test Course", slug="test-course", description="Test", is_published=True)
     Video.objects.create(
         course=course, bunny_video_id="test-vid-123", title="Lesson 1",
         duration_seconds=300, lesson_order=1, is_free_preview=True,
@@ -115,7 +115,7 @@ def test_player_responsive_aspect_ratio():
     from django.test import override_settings
 
     from app.models import Course, Video
-    course = Course.objects.create(title="Test Course 2", slug="test-course-2", description="Test")
+    course = Course.objects.create(title="Test Course 2", slug="test-course-2", description="Test", is_published=True)
     Video.objects.create(
         course=course, bunny_video_id="test-vid-456", title="Lesson 1",
         duration_seconds=300, lesson_order=1, is_free_preview=True,
@@ -157,7 +157,7 @@ def test_generate_signed_url():
 def test_any_lesson_open_to_logged_in_user():
     """Open-access model: every lesson is open to any logged-in user (no tiers, no paywall)."""
     from app.models import Course, Video
-    course = Course.objects.create(title="Open Course", slug="open-course", description="Open")
+    course = Course.objects.create(title="Open Course", slug="open-course", description="Open", is_published=True)
     Video.objects.create(
         course=course, bunny_video_id="open-vid-789", title="Lesson",
         duration_seconds=600, lesson_order=1, is_free_preview=False,
@@ -188,7 +188,7 @@ def test_user_video_progress_model_fields():
 def test_heartbeat_endpoint_accepts_post():
     """T-F-1.4.5-2: POST /api/video-progress/ with valid data returns 200."""
     from app.models import Course, Video
-    course = Course.objects.create(title="HB Course", slug="hb-course", description="HB")
+    course = Course.objects.create(title="HB Course", slug="hb-course", description="HB", is_published=True)
     video = Video.objects.create(
         course=course, bunny_video_id="hb-vid-1", title="HB Lesson",
         duration_seconds=300, lesson_order=1, is_free_preview=True,
@@ -209,7 +209,7 @@ def test_heartbeat_endpoint_accepts_post():
 def test_heartbeat_updates_existing_progress():
     """T-F-1.4.5-3: Second heartbeat updates existing record, no duplicate."""
     from app.models import Course, UserVideoProgress, Video
-    course = Course.objects.create(title="HB2 Course", slug="hb2-course", description="HB2")
+    course = Course.objects.create(title="HB2 Course", slug="hb2-course", description="HB2", is_published=True)
     video = Video.objects.create(
         course=course, bunny_video_id="hb2-vid-1", title="HB2 Lesson",
         duration_seconds=300, lesson_order=1, is_free_preview=True,
@@ -244,7 +244,7 @@ def test_heartbeat_updates_existing_progress():
 def test_lesson_page_includes_last_position():
     """T-F-1.4.6-1: Lesson page context includes last_position_seconds for user with progress."""
     from app.models import Course, UserVideoProgress, Video
-    course = Course.objects.create(title="Resume Course", slug="resume-course", description="R")
+    course = Course.objects.create(title="Resume Course", slug="resume-course", description="R", is_published=True)
     video = Video.objects.create(
         course=course, bunny_video_id="resume-vid-1", title="Resume Lesson",
         duration_seconds=300, lesson_order=1, is_free_preview=True,
@@ -271,7 +271,7 @@ def test_lesson_page_includes_last_position():
 def test_course_detail_shows_progress():
     """T-F-1.4.7-1: Course page shows correct progress % for logged-in user."""
     from app.models import Course, UserVideoProgress, Video
-    course = Course.objects.create(title="Prog Course", slug="prog-course", description="P")
+    course = Course.objects.create(title="Prog Course", slug="prog-course", description="P", is_published=True)
     v1 = Video.objects.create(
         course=course, bunny_video_id="prog-v1", title="L1",
         duration_seconds=300, lesson_order=1, is_free_preview=True,
@@ -296,7 +296,7 @@ def test_course_detail_shows_progress():
 def test_course_complete_at_95_percent():
     """T-F-1.4.7-2: Course marked complete when all videos >= 95% watched."""
     from app.models import Course, UserVideoProgress, Video
-    course = Course.objects.create(title="Complete Course", slug="complete-course", description="C")
+    course = Course.objects.create(title="Complete Course", slug="complete-course", description="C", is_published=True)
     v1 = Video.objects.create(
         course=course, bunny_video_id="comp-v1", title="L1",
         duration_seconds=300, lesson_order=1, is_free_preview=True,
@@ -326,7 +326,7 @@ def test_course_complete_at_95_percent():
 def test_lesson_accessible_to_logged_in_user():
     """T-F-1.4.8-1: Any lesson returns 200 for a logged-in user (login is the only gate)."""
     from app.models import Course, Video
-    course = Course.objects.create(title="Free Course", slug="free-course", description="Free")
+    course = Course.objects.create(title="Free Course", slug="free-course", description="Free", is_published=True)
     Video.objects.create(
         course=course, bunny_video_id="free-vid-1", title="Free Lesson",
         duration_seconds=300, lesson_order=1, is_free_preview=True,
@@ -344,7 +344,7 @@ def test_non_preview_redirects_anonymous_to_login():
     """T-F-1.4.8-2: Non-preview video redirects anonymous users to the
     context-aware wall, preserving next (updated by REQ-5.1.2/5.4.1)."""
     from app.models import Course, Video
-    course = Course.objects.create(title="Paid Course 2", slug="paid-course-2", description="Paid")
+    course = Course.objects.create(title="Paid Course 2", slug="paid-course-2", description="Paid", is_published=True)
     Video.objects.create(
         course=course, bunny_video_id="paid-vid-2", title="Paid Lesson",
         duration_seconds=300, lesson_order=1, is_free_preview=False,

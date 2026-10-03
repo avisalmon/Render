@@ -124,7 +124,7 @@ def test_home_generic_without_learner_profile():
     c.force_login(u)
     body = c.get("/").content.decode()
     assert "מומלץ עבורך" not in body
-    assert "העולמות של babook" in body
+    assert "המרחבים שלך" in body, "the generic home lists the apps"
 
 
 # --- funnel events (REQ-5.7.1) ---

@@ -52,7 +52,9 @@ def test_nav_falls_back_to_username():
 # --- F-7.1.4: hero only on the first day ---
 
 @pytest.mark.django_db
-def test_hero_shows_for_new_user_hidden_for_old():
+def test_hero_line_shows_for_new_and_old_users():
+    """The slim hero line is pinned to the top of the home page for everyone
+    (SPR-13.2 replaced the first-day-only hero)."""
     new = _user("freshie")
     assert "בינתיים יש כאן כל השאר" in _client(new).get("/").content.decode()
 
@@ -60,7 +62,7 @@ def test_hero_shows_for_new_user_hidden_for_old():
     User.objects.filter(pk=old.pk).update(
         date_joined=timezone.now() - timezone.timedelta(days=3)
     )
-    assert "בינתיים יש כאן כל השאר" not in _client(old).get("/").content.decode()
+    assert "בינתיים יש כאן כל השאר" in _client(old).get("/").content.decode()
 
 
 @pytest.mark.django_db
@@ -108,7 +110,8 @@ def test_cookie_consent_links_user():
 @pytest.mark.django_db
 def test_footer_connect_with_avi():
     body = Client().get("/").content.decode()
-    assert "רוצים להתחבר לאבי סלמון" in body
+    assert "מייל לאבי סלמון" in body
+    assert "linkedin.com/in/avi-salmon" in body
 
 
 # --- F-7.1.10: Google button starts OAuth directly ---

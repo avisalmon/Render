@@ -857,7 +857,7 @@ body {
 .katex-display > .katex {
   direction: ltr;
   unicode-bidi: isolate;
-  text-align: left;
+  text-align: start;
 }
 
 .katex-display {

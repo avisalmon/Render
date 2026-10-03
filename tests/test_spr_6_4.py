@@ -134,11 +134,14 @@ def _seed_activity():
 
 @pytest.mark.django_db
 def test_feed_aggregates_all_sources():
+    """The hub page no longer renders the feed (area-map redesign); the
+    aggregation itself is still the build_feed contract."""
+    from app.feed import build_feed
     _seed_activity()
-    body = Client().get("/community/").content.decode()
-    assert "טיפ בפיד" in body
-    assert "פרויקט בפיד" in body
-    assert "שאלה בפיד" in body
+    text = " ".join(str(it) for it in build_feed(None, scope="all"))
+    assert "טיפ בפיד" in text
+    assert "פרויקט בפיד" in text
+    assert "שאלה בפיד" in text
 
 
 @pytest.mark.django_db
@@ -150,9 +153,10 @@ def test_feed_following_scope_filters_to_followed():
     Follow.objects.create(follower=me, followed=friend)
     Tip.objects.create(author=friend, body="טיפ של חבר")
     Tip.objects.create(author=stranger, body="טיפ של זר")
-    body = _client(me).get("/community/?scope=following").content.decode()
-    assert "טיפ של חבר" in body
-    assert "טיפ של זר" not in body
+    from app.feed import build_feed
+    text = " ".join(str(it) for it in build_feed(me, scope="following"))
+    assert "טיפ של חבר" in text
+    assert "טיפ של זר" not in text
 
 
 @pytest.mark.django_db
@@ -161,9 +165,10 @@ def test_feed_domain_scope_uses_interests():
     me = _member("domainuser", interests=["ai"])
     Tip.objects.create(author=me, body="טיפ AI", tags=["ai"])
     Tip.objects.create(author=me, body="טיפ אחר", tags=["cooking"])
-    body = _client(me).get("/community/?scope=domain").content.decode()
-    assert "טיפ AI" in body
-    assert "טיפ אחר" not in body
+    from app.feed import build_feed
+    text = " ".join(str(it) for it in build_feed(me, scope="domain"))
+    assert "טיפ AI" in text
+    assert "טיפ אחר" not in text
 
 
 @pytest.mark.django_db
@@ -179,22 +184,23 @@ def test_build_feed_is_reverse_chronological():
 # --- F-6.4.3: Composer -------------------------------------------------------
 
 @pytest.mark.django_db
-def test_composer_present_for_member():
-    body = _client(_member("composer")).get("/community/").content.decode()
-    assert "שתפו משהו" in body
-    # routes to the three destinations
-    assert "/community/forum/new/" in body
-    assert "/community/showcase/new/" in body
+def test_composer_destinations_open_for_member():
+    """The hub has no inline composer any more; the destinations it routed to
+    stay open to a member."""
+    c = _client(_member("composer"))
+    assert c.get("/community/forum/new/").status_code == 200
+    assert c.get("/community/showcase/new/").status_code == 200
 
 
 # --- F-6.4.5: Homepage hook --------------------------------------------------
 
 @pytest.mark.django_db
-def test_homepage_shows_community_strip_when_logged_in():
+def test_homepage_has_no_community_strip_when_logged_in():
+    """SPR-13.2 made the home a portal; the activity strip lives on the hub."""
     _seed_activity()
     viewer = _member("homeviewer")
     body = _client(viewer).get("/").content.decode()
-    assert "מהקהילה" in body
+    assert "מהקהילה" not in body
 
 
 @pytest.mark.django_db

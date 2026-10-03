@@ -194,15 +194,14 @@ def test_media_upload_saves_to_media_root(client, django_user_model, tmp_path, s
     """T-F-1.1.8-2: Uploading an image saves the file under MEDIA_ROOT."""
     # Override MEDIA_ROOT to tmp_path for test isolation
     settings.MEDIA_ROOT = tmp_path
+    settings.IMAGE_MODERATION_ENABLED = False  # no network; the structural check still runs
     user = django_user_model.objects.create_user(username="testuploader", password="pass")
     client.force_login(user)
-    # Create a minimal 1x1 PNG in memory
-    png = (
-        b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01"
-        b"\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\x0f\x00"
-        b"\x00\x01\x01\x00\x05\x18\xd8N\x00\x00\x00\x00IEND\xaeB`\x82"
-    )
-    upload = io.BytesIO(png)
+    # A real PNG: the upload path rejects files PIL cannot decode
+    from PIL import Image
+    buf = io.BytesIO()
+    Image.new("RGB", (1, 1), "white").save(buf, "PNG")
+    upload = io.BytesIO(buf.getvalue())
     upload.name = "test.png"
     response = client.post(
         "/add_note/",

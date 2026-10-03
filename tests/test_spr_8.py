@@ -180,9 +180,11 @@ def test_cost_adapters_run_all():
 
 
 @pytest.mark.django_db
-def test_openai_adapter_live_from_usagelog():
-    """REQ-8.3.3 — OpenAI cost comes live from UsageLog."""
+def test_openai_adapter_live_from_usagelog(settings):
+    """REQ-8.3.3 — without an admin key, OpenAI cost is the app's own UsageLog
+    total, reported as an estimate (not account-wide spend)."""
     from app.dashboard.cost_adapters import OpenAICostAdapter
+    settings.OPENAI_ADMIN_KEY = ""  # never call the real Costs API from a test
 
     u = _user("payer")
     sess = ChatSession.objects.create(user=u)
@@ -196,7 +198,8 @@ def test_openai_adapter_live_from_usagelog():
     )
     period = timezone.now().strftime("%Y-%m")
     amount, source, note, raw = OpenAICostAdapter().fetch(period)
-    assert source == "live"
+    assert source == "estimate"
+    assert raw["app_only"] is True
     assert float(amount) == pytest.approx(1.25)
 
 

@@ -35,9 +35,15 @@ def test_full_crashtech_lifecycle():
     # --- SETUP: staff creates a hackathon, becomes organizer ---
     host = _staff("host")
     oc = _c(host)
+    from django.utils import timezone
+    fmt = "%Y-%m-%dT%H:%M"
+    now = timezone.localtime()
     oc.post("/crashtech/new/", {
-        "name": "E2E Cup", "start_at": "2026-08-01T09:00", "end_at": "2026-08-02T09:00",
-        "submission_deadline": "2026-08-02T09:00", "team_size": 2, "hardware_stock": 2,
+        "name": "E2E Cup",
+        "start_at": (now - timezone.timedelta(days=1)).strftime(fmt),
+        "end_at": (now + timezone.timedelta(days=30)).strftime(fmt),
+        "submission_deadline": (now + timezone.timedelta(days=30)).strftime(fmt),
+        "team_size": 2, "hardware_stock": 2,
     })
     h = Hackathon.objects.get(name="E2E Cup")
     assert h.status == "setup"
