@@ -21,6 +21,9 @@
 <body class="bj-body">
 
   <div class="bj-account">
+    {% if user.is_superuser %}
+      <a class="bj-account-link" href="{% url 'blackjack:admin_coupons' %}">ניהול</a>
+    {% endif %}
     <a class="bj-account-link" href="/">babook</a>
     <form class="bj-account-form" method="post" action="/logout/">
       {% csrf_token %}

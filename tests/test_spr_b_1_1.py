@@ -142,3 +142,15 @@ def test_the_shared_page_offers_sign_in_to_a_stranger_and_sign_out_to_a_member(r
     request.user = person
     body = render_to_string("blackjack/base_public.html", {}, request=request)
     assert 'action="/logout/"' in body and 'href="/"' in body
+
+
+def test_only_the_root_user_sees_the_admin_link(client, person):
+    client.force_login(person)
+    assert "/blackjack/staff/coupons/" not in client.get("/blackjack/").content.decode()
+
+    person.is_superuser = True
+    person.save()
+    client.force_login(person)
+    body = client.get("/blackjack/").content.decode()
+    assert 'href="/blackjack/staff/coupons/"' in body
+    assert client.get("/blackjack/staff/coupons/").status_code == 200
