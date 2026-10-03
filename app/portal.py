@@ -63,6 +63,12 @@ class App:
     key: str = ""  # the group name, or the settings key holding the list
     admin_bypass: bool = False  # see below; only ustrip declares it
     icon: str = "box"           # a Bootstrap icon name, for the nav
+    # Where babook shows the app, as distinct from who may open it. The door
+    # (`may_enter`) never reads these two. Avi, 2026-10-03: ustrip is reached
+    # by its own address and not from babook, and the house is linked for
+    # him alone even though its own allow-list still opens it for others.
+    listed: bool = True
+    card_admin_only: bool = False
 
 
 APPS = [
@@ -119,6 +125,7 @@ APPS = [
         path="/ustrip/",
         audience=GROUP,
         key="family",
+        listed=False,
         # ustrip has let any superuser in since it was built, so the site
         # admin never has to remember to add themself to `family` before
         # opening his own app. Declared here rather than left inside
@@ -134,6 +141,7 @@ APPS = [
         path="/home/",
         audience=PEOPLE,
         key="SECURITY_VIEWER_EMAILS",
+        card_admin_only=True,
         blurb="מה קורה בבית, לקריאה בלבד.",
     ),
 ]
@@ -222,7 +230,10 @@ def _may(user, app):
 
 def visible_apps(user):
     """The apps this person has, in registry order. The portal renders these."""
-    return [a for a in APPS if _may(user, a)]
+    return [
+        a for a in APPS
+        if a.listed and _may(user, a) and (user.is_superuser or not a.card_admin_only)
+    ]
 
 
 def may_enter(user, slug):

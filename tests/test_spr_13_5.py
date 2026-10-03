@@ -111,9 +111,16 @@ def test_everyone_sees_the_open_apps_and_only_the_owner_sees_the_house(client, p
     assert "/ustrip/" not in linked
 
     client.force_login(people["relative"])
-    assert "/ustrip/" in _links(client.get("/").content.decode())
+    assert "/ustrip/" not in _links(client.get("/").content.decode())
 
     client.force_login(people["owner"])
+    assert "/home/" not in _links(client.get("/").content.decode())
+
+    owner = people["owner"]
+    owner.is_superuser = True
+    owner.is_staff = True
+    owner.save(update_fields=["is_staff", "is_superuser"])
+    client.force_login(owner)
     assert "/home/" in _links(client.get("/").content.decode())
 
 

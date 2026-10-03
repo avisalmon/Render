@@ -77,6 +77,12 @@ def test_the_card_and_the_door_never_disagree(people):
     for who, person in people.items():
         shown = {a.slug for a in visible_apps(person)}
         for app in APPS:
+            if not app.listed or app.card_admin_only:
+                # Where babook links an app is narrower than who may open it,
+                # on purpose; the card must still never exceed the door.
+                if app.slug in shown:
+                    assert may_enter(person, app.slug), f"{who}: a card the door refuses"
+                continue
             opens = may_enter(person, app.slug)
             assert opens == (app.slug in shown), (
                 f"{who}: the portal says {app.slug in shown} about {app.slug} "
@@ -96,16 +102,34 @@ def test_everyone_means_every_signed_in_person(people):
             assert slug in _slugs(people[who]), f"{who} cannot see {slug}"
 
 
-def test_ustrip_is_the_family_and_nobody_else(people):
-    assert "ustrip" in _slugs(people["relative"])
+def test_ustrip_is_the_family_and_nobody_else_and_is_not_on_babook(people):
+    """Avi, 2026-10-03: no card and no nav link for ustrip anywhere on babook.
+    Its door is unchanged: the family (and any superuser) still open it."""
+    from app.portal import may_enter
+
+    for who in people:
+        assert "ustrip" not in _slugs(people[who]), f"{who} was shown a link to ustrip"
+    assert may_enter(people["relative"], "ustrip")
+    assert may_enter(people["staff"], "ustrip")
     for who in ("stranger", "owner"):
-        assert "ustrip" not in _slugs(people[who]), f"{who} was shown the family trip"
+        assert not may_enter(people[who], "ustrip"), f"{who} may open the family trip"
 
 
-def test_the_house_is_one_person(people):
-    assert "home" in _slugs(people["owner"])
+def test_the_house_is_linked_for_the_admin_alone(people):
+    """Avi, 2026-10-03. The door keeps its allow-list, so an owner address that
+    is not a superuser can still open /home/ by address, but babook shows the
+    link to an admin only."""
+    from app.portal import may_enter
+
+    assert "home" not in _slugs(people["owner"]), "linked to a non-admin"
     for who in ("stranger", "relative"):
         assert "home" not in _slugs(people[who])
+    assert may_enter(people["owner"], "home"), "the door lost its allow-list"
+    owner = people["owner"]
+    owner.is_superuser = True
+    owner.is_staff = True
+    owner.save(update_fields=["is_staff", "is_superuser"])
+    assert "home" in _slugs(owner)
 
 
 def test_being_staff_grants_nothing_unless_an_app_says_so(people):
@@ -126,9 +150,12 @@ def test_being_staff_grants_nothing_unless_an_app_says_so(people):
     flag per app instead of one rule for staff: a superuser who is not on the
     list still cannot see it.
     """
+    from app.portal import may_enter
+
     seen = _slugs(people["staff"])
-    assert "home" not in seen, "an admin was handed somebody's house"
-    assert "ustrip" in seen, "the card still hides what ustrip's door opens"
+    assert "home" not in seen, "an admin off the list was handed somebody's house"
+    assert "ustrip" not in seen, "ustrip is not linked from babook any more"
+    assert may_enter(people["staff"], "ustrip"), "ustrip's door stopped admitting an admin"
 
     from app.portal import APPS
 
@@ -253,9 +280,9 @@ def test_the_page_shows_a_person_their_own_apps(client, people, settings):
     """The card is a link to the app, so it is checked as one. A heading that
     says the right word above nothing is not a portal."""
     body = _home(client, people["relative"], settings)
-    for expected in ('href="/memz/"', 'href="/matazim/"', 'href="/sensorlab/"',
-                     'href="/ustrip/"'):
+    for expected in ('href="/memz/"', 'href="/matazim/"', 'href="/sensorlab/"'):
         assert expected in body, f"the family member's home page is missing {expected}"
+    assert 'href="/ustrip/"' not in body
     assert 'href="/home/"' not in body
 
 
@@ -342,7 +369,7 @@ def test_the_ustrip_door_and_the_ustrip_card_agree_for_an_admin(client, people):
     from app.portal import may_enter
 
     admin = people["staff"]
-    assert may_enter(admin, "ustrip"), "the card hides what the door opens"
+    assert may_enter(admin, "ustrip"), "ustrip's door stopped admitting an admin"
 
     client.force_login(admin)
     assert client.get("/ustrip/").status_code == 200
