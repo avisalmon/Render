@@ -38,6 +38,21 @@
     return out;
   }
 
+  // The next `count` beats after the ones already scheduled (audio-clock seconds).
+  // Only clicks within the look-ahead are scheduled, so a note played early for the
+  // next beat would otherwise be matched to the previous click and read very late.
+  function upcoming(nextAudio, gapSeconds, count) {
+    return beatTimes(nextAudio, 60 / gapSeconds, count);
+  }
+
+  // Gaps between consecutive notes (ms). Their spread says how steady the playing
+  // and the MIDI path are, independent of where the click is.
+  function intervals(timesMs) {
+    const out = [];
+    for (let i = 1; i < timesMs.length; i++) out.push(timesMs[i] - timesMs[i - 1]);
+    return out;
+  }
+
   // The click a note was most likely aimed at, and how far off it landed (ms, positive = late).
   function nearestClick(noteMs, clickMs) {
     if (!clickMs.length) return null;
@@ -64,5 +79,5 @@
     return { usable: true, reason: "steady enough for one offset" };
   }
 
-  return { makeAnchor, heardAt, beatTimes, nearestClick, stats, verdict, MIN_BPM, MAX_BPM };
+  return { makeAnchor, heardAt, beatTimes, upcoming, intervals, nearestClick, stats, verdict, MIN_BPM, MAX_BPM };
 });

@@ -146,3 +146,41 @@ test("note names", () => {
   assert.equal(midi.noteName(21), "A0");
   assert.equal(midi.noteName(108), "C8");
 });
+
+// ------------------------------------------- clicks not yet scheduled, and steadiness
+
+test("the next clicks are projected from the next beat and the gap, so a note played early is not matched to the previous click", () => {
+  const upcoming = timing.upcoming(10.0, 60 / 90, 2);
+  assert.equal(upcoming.length, 2);
+  close(upcoming[0], 10.0);
+  close(upcoming[1], 10.0 + 60 / 90);
+});
+
+test("a note 267 ms before the next beat reads 267 ms early, not 400 ms late", () => {
+  // scheduled so far: a click at 9.333 s. The next one is due at 10.0 s, not yet scheduled.
+  const scheduledMs = [9333];
+  const withNext = scheduledMs.concat(timing.upcoming(10.0, 60 / 90, 1).map((s) => s * 1000));
+  const hit = timing.nearestClick(9733, withNext); // 400 ms after the last click
+  close(hit.offsetMs, -267, 1);
+  assert.equal(hit.index, 1);
+  const without = timing.nearestClick(9733, scheduledMs);
+  close(without.offsetMs, 400, 1); // what the page used to say
+});
+
+test("steadiness is the spread of the gaps between consecutive notes, whatever the click does", () => {
+  const gaps = timing.intervals([1000, 1700, 2400, 3100]);
+  assert.deepEqual(gaps, [700, 700, 700]);
+  close(timing.stats(gaps).sd, 0);
+  const uneven = timing.intervals([1000, 1700, 2500, 3100]);
+  assert.deepEqual(uneven, [700, 800, 600]);
+});
+
+test("fewer than two notes have no gaps", () => {
+  assert.deepEqual(timing.intervals([]), []);
+  assert.deepEqual(timing.intervals([5]), []);
+});
+
+test("upcoming rejects a tempo outside the range, like beatTimes", () => {
+  assert.throws(() => timing.upcoming(1, 0, 2));
+  assert.throws(() => timing.upcoming(1, 60 / 500, 2));
+});

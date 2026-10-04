@@ -20,6 +20,7 @@
     anchor: null,
     clicks: [], // audio-clock times of clicks already scheduled
     nextBeat: 0,
+    gap: 0.5,
     beat: 0,
     timer: null,
     midi: null,
@@ -118,6 +119,7 @@
     let gap;
     try {
       gap = 60 / bpm;
+      state.gap = gap;
       T.beatTimes(0, bpm, 1);
     } catch (e) {
       return;
@@ -228,11 +230,12 @@
     if (message.type !== "on") return;
     let offset = null;
     if (state.anchor && state.clicks.length && state.timer) {
-      const heard = state.clicks.map((t) => T.heardAt(state.anchor, t));
+      const audioClicks = state.clicks.concat(T.upcoming(state.nextBeat, state.gap, 2));
+      const heard = audioClicks.map((t) => T.heardAt(state.anchor, t));
       const hit = T.nearestClick(timestampMs, heard);
       offset = hit ? hit.offsetMs : null;
     }
-    state.rows.unshift({ n: ++state.counter, source, note: message.note, velocity: message.velocity, offset });
+    state.rows.unshift({ n: ++state.counter, source, note: message.note, velocity: message.velocity, offset, at: timestampMs });
     if (state.rows.length > 200) state.rows.pop();
     renderRows();
     renderSummary();
@@ -268,6 +271,13 @@
     return { s, v: s.n ? T.verdict(s) : null };
   }
 
+  function steadiness(source) {
+    const times = state.rows.filter((r) => r.source === source).slice(0, LAST_N).map((r) => r.at).reverse();
+    const s = T.stats(T.intervals(times));
+    if (!s.n) return "";
+    return " Gaps between notes: mean " + s.mean.toFixed(0) + " ms, spread " + (s.sd === null ? "n/a" : s.sd.toFixed(0) + " ms") + ".";
+  }
+
   function describe(label, { s, v }) {
     if (!s.n) return label + ": no notes against the click yet.";
     const sd = s.sd === null ? "n/a" : s.sd.toFixed(1) + " ms";
@@ -278,7 +288,7 @@
   }
 
   function renderSummary() {
-    $("summary").textContent = describe("Piano", summaryFor("midi")) + "\n" + describe("Screen keyboard", summaryFor("screen"));
+    $("summary").textContent = describe("Piano", summaryFor("midi")) + steadiness("midi") + "\n" + describe("Screen keyboard", summaryFor("screen"));
     report();
   }
 
