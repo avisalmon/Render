@@ -55,6 +55,8 @@ urlpatterns = [
     # and mounted before app.urls so the prefix is unambiguously its own.
     path("exo/", include("exo.urls", namespace="exo")),
     path("blackjack/", include("blackjack.urls", namespace="blackjack")),
+    # improv is private (docs/improv/spec.md ch. 7): its gate is in the middleware.
+    path("improv/", include("improv.urls", namespace="improv")),
     path("", include("app.urls")),
 ]
 

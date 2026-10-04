@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "sensorlab",
     "exo",
     "blackjack",
+    "improv",
 ]
 
 MIDDLEWARE = [
@@ -57,6 +58,10 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    # improv's gate: a 404 for anyone who is not a player, identical to the
+    # site's own. Late on purpose, so the refusal has had everything done to it
+    # that a real 404 gets. See improv/middleware.py.
+    "improv.middleware.GateMiddleware",
     # Observes /ustrip/ exceptions and mails Avi; acts on no other path,
     # changes no response. See ustrip/middleware.py.
     "ustrip.middleware.UstripErrorNotifier",

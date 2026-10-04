@@ -1,0 +1,40 @@
+/* improv: one stylesheet, our own domain, no external requests. */
+:root {
+  --im-bg: #14161a;
+  --im-fg: #e9e6df;
+  --im-muted: #9a978f;
+  --im-accent: #e0b84c;
+}
+.im-body { margin: 0; background: var(--im-bg); color: var(--im-fg); font: 16px/1.5 system-ui, sans-serif; }
+.im-top { display: flex; align-items: center; gap: 1.5rem; padding: .75rem 1rem; border-bottom: 1px solid #2a2d33; }
+.im-brand { color: var(--im-accent); font-weight: 700; font-size: 1.25rem; text-decoration: none; letter-spacing: .02em; }
+.im-nav { display: flex; flex-wrap: wrap; gap: 1rem; }
+.im-nav-link { color: var(--im-fg); text-decoration: none; }
+.im-nav-link:hover { color: var(--im-accent); }
+.im-main { max-width: 60rem; margin: 0 auto; padding: 1.5rem 1rem; }
+.im-title { margin: 0 0 .5rem; }
+.im-lead { color: var(--im-muted); margin: 0; }
+
+/* the timing spike page (SPR-I.1.2) */
+.im-h2 { font-size: 1.1rem; margin: 0 0 .5rem; }
+.im-panel { border: 1px solid #2a2d33; border-radius: .6rem; padding: 1rem; margin: 1rem 0; }
+.im-note { color: var(--im-muted); font-size: .9rem; margin: .5rem 0; }
+.im-status { margin: .5rem 0; }
+.im-mono { font-family: ui-monospace, Consolas, monospace; }
+.im-btn { background: var(--im-accent); color: #14161a; border: 0; border-radius: .4rem; padding: .5rem 1rem; font: inherit; font-weight: 600; cursor: pointer; }
+.im-btn:disabled { opacity: .4; cursor: default; }
+.im-field { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: .5rem 0; }
+.im-input, .im-select { background: #1d2025; color: var(--im-fg); border: 1px solid #3a3e46; border-radius: .3rem; padding: .35rem .5rem; font: inherit; }
+.im-input { width: 5rem; }
+.im-keyboard { position: relative; height: 8rem; background: #0e0f12; border-radius: .4rem; margin: .5rem 0; touch-action: none; user-select: none; }
+.im-key { position: absolute; top: 0; box-sizing: border-box; }
+.im-key-white { height: 100%; background: #f3f0e8; border: 1px solid #14161a; border-radius: 0 0 .2rem .2rem; }
+.im-key-black { height: 60%; background: #14161a; border: 1px solid #000; z-index: 2; border-radius: 0 0 .2rem .2rem; }
+.im-key-white.im-key-on { background: var(--im-accent); }
+.im-key-black.im-key-on { background: #b88a1c; }
+.im-summary { white-space: pre-line; background: #1d2025; border-radius: .4rem; padding: .75rem; margin: .5rem 0; }
+.im-table-wrap { overflow-x: auto; }
+.im-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.im-table th, .im-table td { text-align: left; padding: .25rem .5rem; border-bottom: 1px solid #2a2d33; }
+.im-pre { white-space: pre-wrap; background: #1d2025; border-radius: .4rem; padding: .75rem; margin: .5rem 0; font-size: .85rem; }
+.im-report { width: 100%; box-sizing: border-box; background: #1d2025; color: var(--im-fg); border: 1px solid #3a3e46; border-radius: .3rem; font: .8rem ui-monospace, Consolas, monospace; margin: .5rem 0; }

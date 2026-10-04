@@ -1,0 +1,1310 @@
+{
+ "_about": "Theory reference for improv (docs/improv/data_model.md section 1). Imported once by `manage.py seed_improv_theory`, which adds missing rows and never overwrites an edit. The app never reads this file at runtime.",
+ "chord_qualities": [
+  {
+   "symbol": "maj",
+   "name": "major triad",
+   "family": "major",
+   "intervals": [
+    0,
+    4,
+    7
+   ],
+   "roles": {
+    "0": "root",
+    "4": "third",
+    "7": "fifth"
+   },
+   "aliases": [
+    "M"
+   ],
+   "sort_order": 1
+  },
+  {
+   "symbol": "m",
+   "name": "minor triad",
+   "family": "minor",
+   "intervals": [
+    0,
+    3,
+    7
+   ],
+   "roles": {
+    "0": "root",
+    "3": "third",
+    "7": "fifth"
+   },
+   "aliases": [
+    "min",
+    "mi",
+    "-"
+   ],
+   "sort_order": 2
+  },
+  {
+   "symbol": "dim",
+   "name": "diminished triad",
+   "family": "diminished",
+   "intervals": [
+    0,
+    3,
+    6
+   ],
+   "roles": {
+    "0": "root",
+    "3": "third",
+    "6": "flat_fifth"
+   },
+   "aliases": [
+    "o",
+    "dim5"
+   ],
+   "sort_order": 3
+  },
+  {
+   "symbol": "aug",
+   "name": "augmented triad",
+   "family": "augmented",
+   "intervals": [
+    0,
+    4,
+    8
+   ],
+   "roles": {
+    "0": "root",
+    "4": "third",
+    "8": "sharp_fifth"
+   },
+   "aliases": [
+    "+",
+    "aug5"
+   ],
+   "sort_order": 4
+  },
+  {
+   "symbol": "sus2",
+   "name": "suspended second",
+   "family": "suspended",
+   "intervals": [
+    0,
+    2,
+    7
+   ],
+   "roles": {
+    "0": "root",
+    "2": "second",
+    "7": "fifth"
+   },
+   "aliases": [
+    "sus9"
+   ],
+   "sort_order": 5
+  },
+  {
+   "symbol": "sus4",
+   "name": "suspended fourth",
+   "family": "suspended",
+   "intervals": [
+    0,
+    5,
+    7
+   ],
+   "roles": {
+    "0": "root",
+    "5": "fourth",
+    "7": "fifth"
+   },
+   "aliases": [
+    "sus"
+   ],
+   "sort_order": 6
+  },
+  {
+   "symbol": "6",
+   "name": "major sixth",
+   "family": "major",
+   "intervals": [
+    0,
+    4,
+    7,
+    9
+   ],
+   "roles": {
+    "0": "root",
+    "4": "third",
+    "7": "fifth",
+    "9": "sixth"
+   },
+   "aliases": [
+    "maj6",
+    "M6"
+   ],
+   "sort_order": 7
+  },
+  {
+   "symbol": "m6",
+   "name": "minor sixth",
+   "family": "minor",
+   "intervals": [
+    0,
+    3,
+    7,
+    9
+   ],
+   "roles": {
+    "0": "root",
+    "3": "third",
+    "7": "fifth",
+    "9": "sixth"
+   },
+   "aliases": [
+    "min6",
+    "-6",
+    "mi6"
+   ],
+   "sort_order": 8
+  },
+  {
+   "symbol": "maj7",
+   "name": "major seventh",
+   "family": "major",
+   "intervals": [
+    0,
+    4,
+    7,
+    11
+   ],
+   "roles": {
+    "0": "root",
+    "4": "third",
+    "7": "fifth",
+    "11": "seventh"
+   },
+   "aliases": [
+    "M7",
+    "Maj7",
+    "ma7",
+    "Δ",
+    "Δ7"
+   ],
+   "sort_order": 9
+  },
+  {
+   "symbol": "m7",
+   "name": "minor seventh",
+   "family": "minor",
+   "intervals": [
+    0,
+    3,
+    7,
+    10
+   ],
+   "roles": {
+    "0": "root",
+    "3": "third",
+    "7": "fifth",
+    "10": "seventh"
+   },
+   "aliases": [
+    "min7",
+    "-7",
+    "mi7"
+   ],
+   "sort_order": 10
+  },
+  {
+   "symbol": "7",
+   "name": "dominant seventh",
+   "family": "dominant",
+   "intervals": [
+    0,
+    4,
+    7,
+    10
+   ],
+   "roles": {
+    "0": "root",
+    "4": "third",
+    "7": "fifth",
+    "10": "seventh"
+   },
+   "aliases": [
+    "dom7"
+   ],
+   "sort_order": 11
+  },
+  {
+   "symbol": "m7b5",
+   "name": "half-diminished seventh",
+   "family": "half_diminished",
+   "intervals": [
+    0,
+    3,
+    6,
+    10
+   ],
+   "roles": {
+    "0": "root",
+    "3": "third",
+    "6": "flat_fifth",
+    "10": "seventh"
+   },
+   "aliases": [
+    "ø",
+    "ø7",
+    "min7b5",
+    "-7b5",
+    "m7-5"
+   ],
+   "sort_order": 12
+  },
+  {
+   "symbol": "dim7",
+   "name": "diminished seventh",
+   "family": "diminished",
+   "intervals": [
+    0,
+    3,
+    6,
+    9
+   ],
+   "roles": {
+    "0": "root",
+    "3": "third",
+    "6": "flat_fifth",
+    "9": "diminished_seventh"
+   },
+   "aliases": [
+    "o7"
+   ],
+   "sort_order": 13
+  },
+  {
+   "symbol": "mMaj7",
+   "name": "minor major seventh",
+   "family": "minor",
+   "intervals": [
+    0,
+    3,
+    7,
+    11
+   ],
+   "roles": {
+    "0": "root",
+    "3": "third",
+    "7": "fifth",
+    "11": "seventh"
+   },
+   "aliases": [
+    "m(maj7)",
+    "minMaj7",
+    "mM7",
+    "-maj7"
+   ],
+   "sort_order": 14
+  },
+  {
+   "symbol": "maj7#5",
+   "name": "major seventh sharp five",
+   "family": "major",
+   "intervals": [
+    0,
+    4,
+    8,
+    11
+   ],
+   "roles": {
+    "0": "root",
+    "4": "third",
+    "8": "sharp_fifth",
+    "11": "seventh"
+   },
+   "aliases": [
+    "M7#5",
+    "maj7+5",
+    "maj7+"
+   ],
+   "sort_order": 15
+  },
+  {
+   "symbol": "7sus4",
+   "name": "dominant seventh suspended fourth",
+   "family": "suspended",
+   "intervals": [
+    0,
+    5,
+    7,
+    10
+   ],
+   "roles": {
+    "0": "root",
+    "5": "fourth",
+    "7": "fifth",
+    "10": "seventh"
+   },
+   "aliases": [
+    "7sus"
+   ],
+   "sort_order": 16
+  },
+  {
+   "symbol": "add9",
+   "name": "major add nine",
+   "family": "major",
+   "intervals": [
+    0,
+    2,
+    4,
+    7
+   ],
+   "roles": {
+    "0": "root",
+    "2": "ninth",
+    "4": "third",
+    "7": "fifth"
+   },
+   "aliases": [
+    "add2",
+    "M(add9)"
+   ],
+   "sort_order": 17
+  },
+  {
+   "symbol": "9",
+   "name": "dominant ninth",
+   "family": "dominant",
+   "intervals": [
+    0,
+    2,
+    4,
+    7,
+    10
+   ],
+   "roles": {
+    "0": "root",
+    "2": "ninth",
+    "4": "third",
+    "7": "fifth",
+    "10": "seventh"
+   },
+   "aliases": [
+    "dom9"
+   ],
+   "sort_order": 18
+  },
+  {
+   "symbol": "maj9",
+   "name": "major ninth",
+   "family": "major",
+   "intervals": [
+    0,
+    2,
+    4,
+    7,
+    11
+   ],
+   "roles": {
+    "0": "root",
+    "2": "ninth",
+    "4": "third",
+    "7": "fifth",
+    "11": "seventh"
+   },
+   "aliases": [
+    "M9",
+    "Maj9"
+   ],
+   "sort_order": 19
+  },
+  {
+   "symbol": "m9",
+   "name": "minor ninth",
+   "family": "minor",
+   "intervals": [
+    0,
+    2,
+    3,
+    7,
+    10
+   ],
+   "roles": {
+    "0": "root",
+    "2": "ninth",
+    "3": "third",
+    "7": "fifth",
+    "10": "seventh"
+   },
+   "aliases": [
+    "min9",
+    "-9"
+   ],
+   "sort_order": 20
+  },
+  {
+   "symbol": "m11",
+   "name": "minor eleventh",
+   "family": "minor",
+   "intervals": [
+    0,
+    2,
+    3,
+    5,
+    7,
+    10
+   ],
+   "roles": {
+    "0": "root",
+    "2": "ninth",
+    "3": "third",
+    "5": "eleventh",
+    "7": "fifth",
+    "10": "seventh"
+   },
+   "aliases": [
+    "min11",
+    "-11"
+   ],
+   "sort_order": 21
+  },
+  {
+   "symbol": "13",
+   "name": "dominant thirteenth",
+   "family": "dominant",
+   "intervals": [
+    0,
+    2,
+    4,
+    7,
+    9,
+    10
+   ],
+   "roles": {
+    "0": "root",
+    "2": "ninth",
+    "4": "third",
+    "7": "fifth",
+    "9": "thirteenth",
+    "10": "seventh"
+   },
+   "aliases": [
+    "dom13"
+   ],
+   "sort_order": 22
+  },
+  {
+   "symbol": "7b9",
+   "name": "dominant seventh flat nine",
+   "family": "dominant",
+   "intervals": [
+    0,
+    1,
+    4,
+    7,
+    10
+   ],
+   "roles": {
+    "0": "root",
+    "1": "flat_ninth",
+    "4": "third",
+    "7": "fifth",
+    "10": "seventh"
+   },
+   "aliases": [
+    "7-9"
+   ],
+   "sort_order": 23
+  },
+  {
+   "symbol": "7#9",
+   "name": "dominant seventh sharp nine",
+   "family": "dominant",
+   "intervals": [
+    0,
+    3,
+    4,
+    7,
+    10
+   ],
+   "roles": {
+    "0": "root",
+    "3": "sharp_ninth",
+    "4": "third",
+    "7": "fifth",
+    "10": "seventh"
+   },
+   "aliases": [
+    "7+9"
+   ],
+   "sort_order": 24
+  },
+  {
+   "symbol": "7#11",
+   "name": "dominant seventh sharp eleven",
+   "family": "dominant",
+   "intervals": [
+    0,
+    4,
+    6,
+    7,
+    10
+   ],
+   "roles": {
+    "0": "root",
+    "4": "third",
+    "6": "sharp_eleventh",
+    "7": "fifth",
+    "10": "seventh"
+   },
+   "aliases": [
+    "7+11",
+    "7b5"
+   ],
+   "sort_order": 25
+  },
+  {
+   "symbol": "7b13",
+   "name": "dominant seventh flat thirteen",
+   "family": "dominant",
+   "intervals": [
+    0,
+    4,
+    7,
+    8,
+    10
+   ],
+   "roles": {
+    "0": "root",
+    "4": "third",
+    "7": "fifth",
+    "8": "flat_thirteenth",
+    "10": "seventh"
+   },
+   "aliases": [
+    "7b6",
+    "7-13"
+   ],
+   "sort_order": 26
+  },
+  {
+   "symbol": "7alt",
+   "name": "altered dominant",
+   "family": "dominant",
+   "intervals": [
+    0,
+    1,
+    4,
+    8,
+    10
+   ],
+   "roles": {
+    "0": "root",
+    "1": "flat_ninth",
+    "4": "third",
+    "8": "sharp_fifth",
+    "10": "seventh"
+   },
+   "aliases": [
+    "alt",
+    "7#5b9"
+   ],
+   "sort_order": 27
+  }
+ ],
+ "scales": [
+  {
+   "slug": "major",
+   "name": "Major (Ionian)",
+   "family": "major_modes",
+   "intervals": [
+    0,
+    2,
+    4,
+    5,
+    7,
+    9,
+    11
+   ],
+   "parent": null,
+   "mode_number": null
+  },
+  {
+   "slug": "dorian",
+   "name": "Dorian",
+   "family": "major_modes",
+   "intervals": [
+    0,
+    2,
+    3,
+    5,
+    7,
+    9,
+    10
+   ],
+   "parent": "major",
+   "mode_number": 2
+  },
+  {
+   "slug": "phrygian",
+   "name": "Phrygian",
+   "family": "major_modes",
+   "intervals": [
+    0,
+    1,
+    3,
+    5,
+    7,
+    8,
+    10
+   ],
+   "parent": "major",
+   "mode_number": 3
+  },
+  {
+   "slug": "lydian",
+   "name": "Lydian",
+   "family": "major_modes",
+   "intervals": [
+    0,
+    2,
+    4,
+    6,
+    7,
+    9,
+    11
+   ],
+   "parent": "major",
+   "mode_number": 4
+  },
+  {
+   "slug": "mixolydian",
+   "name": "Mixolydian",
+   "family": "major_modes",
+   "intervals": [
+    0,
+    2,
+    4,
+    5,
+    7,
+    9,
+    10
+   ],
+   "parent": "major",
+   "mode_number": 5
+  },
+  {
+   "slug": "aeolian",
+   "name": "Aeolian (natural minor)",
+   "family": "major_modes",
+   "intervals": [
+    0,
+    2,
+    3,
+    5,
+    7,
+    8,
+    10
+   ],
+   "parent": "major",
+   "mode_number": 6
+  },
+  {
+   "slug": "locrian",
+   "name": "Locrian",
+   "family": "major_modes",
+   "intervals": [
+    0,
+    1,
+    3,
+    5,
+    6,
+    8,
+    10
+   ],
+   "parent": "major",
+   "mode_number": 7
+  },
+  {
+   "slug": "melodic-minor",
+   "name": "Melodic minor",
+   "family": "melodic_minor_modes",
+   "intervals": [
+    0,
+    2,
+    3,
+    5,
+    7,
+    9,
+    11
+   ],
+   "parent": null,
+   "mode_number": null
+  },
+  {
+   "slug": "dorian-b2",
+   "name": "Dorian b2",
+   "family": "melodic_minor_modes",
+   "intervals": [
+    0,
+    1,
+    3,
+    5,
+    7,
+    9,
+    10
+   ],
+   "parent": "melodic-minor",
+   "mode_number": 2
+  },
+  {
+   "slug": "lydian-augmented",
+   "name": "Lydian augmented",
+   "family": "melodic_minor_modes",
+   "intervals": [
+    0,
+    2,
+    4,
+    6,
+    8,
+    9,
+    11
+   ],
+   "parent": "melodic-minor",
+   "mode_number": 3
+  },
+  {
+   "slug": "lydian-dominant",
+   "name": "Lydian dominant",
+   "family": "melodic_minor_modes",
+   "intervals": [
+    0,
+    2,
+    4,
+    6,
+    7,
+    9,
+    10
+   ],
+   "parent": "melodic-minor",
+   "mode_number": 4
+  },
+  {
+   "slug": "mixolydian-b6",
+   "name": "Mixolydian b6",
+   "family": "melodic_minor_modes",
+   "intervals": [
+    0,
+    2,
+    4,
+    5,
+    7,
+    8,
+    10
+   ],
+   "parent": "melodic-minor",
+   "mode_number": 5
+  },
+  {
+   "slug": "locrian-natural-2",
+   "name": "Locrian natural 2",
+   "family": "melodic_minor_modes",
+   "intervals": [
+    0,
+    2,
+    3,
+    5,
+    6,
+    8,
+    10
+   ],
+   "parent": "melodic-minor",
+   "mode_number": 6
+  },
+  {
+   "slug": "altered",
+   "name": "Altered (super locrian)",
+   "family": "melodic_minor_modes",
+   "intervals": [
+    0,
+    1,
+    3,
+    4,
+    6,
+    8,
+    10
+   ],
+   "parent": "melodic-minor",
+   "mode_number": 7
+  },
+  {
+   "slug": "harmonic-minor",
+   "name": "Harmonic minor",
+   "family": "harmonic_minor_modes",
+   "intervals": [
+    0,
+    2,
+    3,
+    5,
+    7,
+    8,
+    11
+   ],
+   "parent": null,
+   "mode_number": null
+  },
+  {
+   "slug": "phrygian-dominant",
+   "name": "Phrygian dominant",
+   "family": "harmonic_minor_modes",
+   "intervals": [
+    0,
+    1,
+    4,
+    5,
+    7,
+    8,
+    10
+   ],
+   "parent": "harmonic-minor",
+   "mode_number": 5
+  },
+  {
+   "slug": "major-pentatonic",
+   "name": "Major pentatonic",
+   "family": "pentatonic",
+   "intervals": [
+    0,
+    2,
+    4,
+    7,
+    9
+   ],
+   "parent": null,
+   "mode_number": null
+  },
+  {
+   "slug": "minor-pentatonic",
+   "name": "Minor pentatonic",
+   "family": "pentatonic",
+   "intervals": [
+    0,
+    3,
+    5,
+    7,
+    10
+   ],
+   "parent": null,
+   "mode_number": null
+  },
+  {
+   "slug": "blues",
+   "name": "Blues",
+   "family": "blues",
+   "intervals": [
+    0,
+    3,
+    5,
+    6,
+    7,
+    10
+   ],
+   "parent": null,
+   "mode_number": null
+  },
+  {
+   "slug": "major-blues",
+   "name": "Major blues",
+   "family": "blues",
+   "intervals": [
+    0,
+    2,
+    3,
+    4,
+    7,
+    9
+   ],
+   "parent": null,
+   "mode_number": null
+  },
+  {
+   "slug": "whole-half-diminished",
+   "name": "Diminished (whole-half)",
+   "family": "symmetric",
+   "intervals": [
+    0,
+    2,
+    3,
+    5,
+    6,
+    8,
+    9,
+    11
+   ],
+   "parent": null,
+   "mode_number": null
+  },
+  {
+   "slug": "half-whole-diminished",
+   "name": "Diminished (half-whole)",
+   "family": "symmetric",
+   "intervals": [
+    0,
+    1,
+    3,
+    4,
+    6,
+    7,
+    9,
+    10
+   ],
+   "parent": null,
+   "mode_number": null
+  },
+  {
+   "slug": "whole-tone",
+   "name": "Whole tone",
+   "family": "symmetric",
+   "intervals": [
+    0,
+    2,
+    4,
+    6,
+    8,
+    10
+   ],
+   "parent": null,
+   "mode_number": null
+  }
+ ],
+ "chord_scales": [
+  {
+   "quality": "maj",
+   "scale": "major",
+   "preference": 1,
+   "note": ""
+  },
+  {
+   "quality": "maj",
+   "scale": "lydian",
+   "preference": 2,
+   "note": "tension option: the raised fourth"
+  },
+  {
+   "quality": "maj",
+   "scale": "major-pentatonic",
+   "preference": 3,
+   "note": "simple, safe"
+  },
+  {
+   "quality": "m",
+   "scale": "dorian",
+   "preference": 1,
+   "note": ""
+  },
+  {
+   "quality": "m",
+   "scale": "aeolian",
+   "preference": 2,
+   "note": "darker"
+  },
+  {
+   "quality": "m",
+   "scale": "minor-pentatonic",
+   "preference": 3,
+   "note": "simple, safe"
+  },
+  {
+   "quality": "dim",
+   "scale": "whole-half-diminished",
+   "preference": 1,
+   "note": ""
+  },
+  {
+   "quality": "aug",
+   "scale": "whole-tone",
+   "preference": 1,
+   "note": ""
+  },
+  {
+   "quality": "aug",
+   "scale": "lydian-augmented",
+   "preference": 2,
+   "note": ""
+  },
+  {
+   "quality": "sus2",
+   "scale": "major",
+   "preference": 1,
+   "note": ""
+  },
+  {
+   "quality": "sus2",
+   "scale": "mixolydian",
+   "preference": 2,
+   "note": ""
+  },
+  {
+   "quality": "sus4",
+   "scale": "mixolydian",
+   "preference": 1,
+   "note": ""
+  },
+  {
+   "quality": "sus4",
+   "scale": "dorian",
+   "preference": 2,
+   "note": ""
+  },
+  {
+   "quality": "6",
+   "scale": "major",
+   "preference": 1,
+   "note": ""
+  },
+  {
+   "quality": "6",
+   "scale": "major-pentatonic",
+   "preference": 2,
+   "note": "simple, safe"
+  },
+  {
+   "quality": "6",
+   "scale": "lydian",
+   "preference": 3,
+   "note": ""
+  },
+  {
+   "quality": "m6",
+   "scale": "dorian",
+   "preference": 1,
+   "note": ""
+  },
+  {
+   "quality": "m6",
+   "scale": "melodic-minor",
+   "preference": 2,
+   "note": "the tonic minor sound"
+  },
+  {
+   "quality": "maj7",
+   "scale": "major",
+   "preference": 1,
+   "note": "avoid sitting on the fourth"
+  },
+  {
+   "quality": "maj7",
+   "scale": "lydian",
+   "preference": 2,
+   "note": "tension option: the raised fourth"
+  },
+  {
+   "quality": "m7",
+   "scale": "dorian",
+   "preference": 1,
+   "note": "the usual choice for a ii chord"
+  },
+  {
+   "quality": "m7",
+   "scale": "aeolian",
+   "preference": 2,
+   "note": "the usual choice for a vi chord"
+  },
+  {
+   "quality": "m7",
+   "scale": "phrygian",
+   "preference": 3,
+   "note": "dark, for a iii chord"
+  },
+  {
+   "quality": "m7",
+   "scale": "minor-pentatonic",
+   "preference": 4,
+   "note": "simple, safe"
+  },
+  {
+   "quality": "7",
+   "scale": "mixolydian",
+   "preference": 1,
+   "note": "avoid sitting on the fourth"
+  },
+  {
+   "quality": "7",
+   "scale": "lydian-dominant",
+   "preference": 2,
+   "note": "tension option: the raised fourth"
+  },
+  {
+   "quality": "7",
+   "scale": "half-whole-diminished",
+   "preference": 3,
+   "note": "tension option"
+  },
+  {
+   "quality": "m7b5",
+   "scale": "locrian",
+   "preference": 1,
+   "note": "avoid the b2 on a long note"
+  },
+  {
+   "quality": "m7b5",
+   "scale": "locrian-natural-2",
+   "preference": 2,
+   "note": "brighter, a gentler ninth"
+  },
+  {
+   "quality": "dim7",
+   "scale": "whole-half-diminished",
+   "preference": 1,
+   "note": ""
+  },
+  {
+   "quality": "mMaj7",
+   "scale": "melodic-minor",
+   "preference": 1,
+   "note": ""
+  },
+  {
+   "quality": "mMaj7",
+   "scale": "harmonic-minor",
+   "preference": 2,
+   "note": ""
+  },
+  {
+   "quality": "maj7#5",
+   "scale": "lydian-augmented",
+   "preference": 1,
+   "note": ""
+  },
+  {
+   "quality": "7sus4",
+   "scale": "mixolydian",
+   "preference": 1,
+   "note": ""
+  },
+  {
+   "quality": "7sus4",
+   "scale": "dorian",
+   "preference": 2,
+   "note": ""
+  },
+  {
+   "quality": "add9",
+   "scale": "major",
+   "preference": 1,
+   "note": ""
+  },
+  {
+   "quality": "add9",
+   "scale": "lydian",
+   "preference": 2,
+   "note": ""
+  },
+  {
+   "quality": "9",
+   "scale": "mixolydian",
+   "preference": 1,
+   "note": ""
+  },
+  {
+   "quality": "9",
+   "scale": "lydian-dominant",
+   "preference": 2,
+   "note": "tension option: the raised fourth"
+  },
+  {
+   "quality": "maj9",
+   "scale": "major",
+   "preference": 1,
+   "note": ""
+  },
+  {
+   "quality": "maj9",
+   "scale": "lydian",
+   "preference": 2,
+   "note": ""
+  },
+  {
+   "quality": "m9",
+   "scale": "dorian",
+   "preference": 1,
+   "note": ""
+  },
+  {
+   "quality": "m9",
+   "scale": "aeolian",
+   "preference": 2,
+   "note": ""
+  },
+  {
+   "quality": "m11",
+   "scale": "dorian",
+   "preference": 1,
+   "note": ""
+  },
+  {
+   "quality": "m11",
+   "scale": "aeolian",
+   "preference": 2,
+   "note": ""
+  },
+  {
+   "quality": "13",
+   "scale": "mixolydian",
+   "preference": 1,
+   "note": ""
+  },
+  {
+   "quality": "13",
+   "scale": "lydian-dominant",
+   "preference": 2,
+   "note": ""
+  },
+  {
+   "quality": "7b9",
+   "scale": "half-whole-diminished",
+   "preference": 1,
+   "note": ""
+  },
+  {
+   "quality": "7b9",
+   "scale": "phrygian-dominant",
+   "preference": 2,
+   "note": "the sound of a V in minor"
+  },
+  {
+   "quality": "7#9",
+   "scale": "half-whole-diminished",
+   "preference": 1,
+   "note": "the rock and blues dominant"
+  },
+  {
+   "quality": "7#11",
+   "scale": "lydian-dominant",
+   "preference": 1,
+   "note": ""
+  },
+  {
+   "quality": "7#11",
+   "scale": "half-whole-diminished",
+   "preference": 2,
+   "note": ""
+  },
+  {
+   "quality": "7b13",
+   "scale": "mixolydian-b6",
+   "preference": 1,
+   "note": ""
+  },
+  {
+   "quality": "7b13",
+   "scale": "phrygian-dominant",
+   "preference": 2,
+   "note": ""
+  },
+  {
+   "quality": "7alt",
+   "scale": "altered",
+   "preference": 1,
+   "note": "every tension is available"
+  }
+ ]
+}

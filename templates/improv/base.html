@@ -1,0 +1,28 @@
+{% load static %}<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}improv{% endblock %}</title>
+  {% comment %}
+    Methodology Rule 3: this app's own base template and its own menu. It does
+    not extend the site's base.html and it links nowhere outside /improv/. No
+    external CSS or font: one stylesheet from our own domain.
+  {% endcomment %}
+  <link rel="icon" type="image/svg+xml" href="{% static 'improv/icon.svg' %}">
+  <link rel="stylesheet" href="{% static 'improv/improv.css' %}">
+</head>
+<body class="im-body">
+  <header class="im-top">
+    <a class="im-brand" href="{% url 'improv:home' %}">improv</a>
+    <nav class="im-nav" aria-label="Main">
+      <a class="im-nav-link" href="{% url 'improv:home' %}">Home</a>
+      <a class="im-nav-link" href="{% url 'improv:spike' %}">Timing spike</a>
+    </nav>
+  </header>
+  <main class="im-main">
+    {% block content %}{% endblock %}
+  </main>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -144,6 +144,18 @@ APPS = [
         card_admin_only=True,
         blurb="מה קורה בבית, לקריאה בלבד.",
     ),
+    App(
+        slug="improv",
+        icon="music-note-beamed",
+        name="improv",
+        path="/improv/",
+        audience=GROUP,
+        key="improv_players",
+        # Private until it is stable (Avi, 2026-10-04). A superuser is let in so
+        # the site admin never has to add himself to the group.
+        admin_bypass=True,
+        blurb="תרגול אלתור בפסנתר.",
+    ),
 ]
 
 # Capabilities that exist on the site and are deliberately not on the portal.

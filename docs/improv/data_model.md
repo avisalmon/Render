@@ -1,0 +1,417 @@
+# improv: Data model
+
+> **Status: approved by Avi, 2026-10-04.** Step 3 of the kickoff sequence in
+> [building_an_app.md](../building_an_app.md). The four open points in section
+> 11 are answered. No code exists yet. Two fields were added after approval,
+> `Player.demo_output` and `Player.timezone`, because the spec chapters needed
+> them; both are marked below.
+
+---
+
+## The one sentence version
+
+**Everything the person does is a `Take`, and everything the app tells them
+about their playing is a read over takes.** The streak, the XP, the level, which
+lessons are unlocked, the weakness report and the daily workout are all
+computed from takes and completions. Nothing stores a second copy of "how is
+this person doing", because a second copy drifts, and the day it drifts the app
+is lying to a learner about their own progress. (Same lesson as blackjack's
+`Attempt`.)
+
+The other half of the app is content: chords, scales, band grooves, chord
+charts, lessons. That is all rows too, seeded once and editable afterwards.
+
+---
+
+## 0. Who may open it
+
+Not a model, but it shapes the models, so it is stated first.
+
+- A plain Django `Group` named `improv_players`, created by a migration.
+- The check is one function: signed in AND in the group. Superusers bypass it,
+  on purpose and written down: so the site admin is never locked out of his own
+  app. At launch nobody is in the group, so in practice it is Avi alone.
+- **Non-members get a 404, not an access page.** Avi asked that nobody else see
+  the link or the app, so the app hides that it exists (the way `/home` does).
+- babook's portal lists it with `audience=GROUP`, `admin_bypass=True`, so the
+  card appears for superusers and for group members and for nobody else. The
+  portal sweep test already asserts the card never exceeds the door.
+- Opening it to more people later is adding them to the group. No code change.
+- Every API endpoint sits behind the same check. A hidden page with an open API
+  would not be hidden.
+
+---
+
+## 1. Music theory reference (seeded once, read by everything)
+
+The chord recognizer, the live feedback, the reference screens and the lessons
+all ask the same questions: what notes are in Dm7, which scale fits it, is this
+note a chord tone. If those answers live in three places they disagree, so they
+live in these three tables and nowhere else.
+
+### `ChordQuality`
+
+| Field | Type | Notes |
+|---|---|---|
+| `symbol` | char, unique | `m7`, `maj7`, `7`, `m7b5`, `dim7`, `sus4`, `7alt` ... |
+| `name` | char | "minor seventh" |
+| `intervals` | JSON list of ints | semitones above the root, `[0,3,7,10]` |
+| `roles` | JSON map | semitone to role: `{"0":"root","3":"third","10":"seventh"}`; the guide tones are the third and seventh |
+| `aliases` | JSON list of strings | `["min7","-7","mi7"]`, read by the chart parser and the recognizer |
+| `family` | choice | major / minor / dominant / diminished / half-diminished / suspended / augmented |
+| `sort_order` | int | |
+
+About 25 rows.
+
+### `Scale`
+
+| Field | Type | Notes |
+|---|---|---|
+| `name` | char | "Dorian" |
+| `slug` | slug, unique | |
+| `intervals` | JSON list of ints | `[0,2,3,5,7,9,10]` |
+| `family` | choice | major modes / melodic minor modes / harmonic minor modes / pentatonic / blues / symmetric |
+| `parent_scale` | FK self, null | Dorian's parent is Major |
+| `mode_number` | int, null | Dorian is mode 2 |
+
+### `ChordScale`
+
+Which scales fit which chord quality. This is what makes "scale tone or outside
+note" a lookup instead of an opinion.
+
+| Field | Type | Notes |
+|---|---|---|
+| `chord_quality` | FK | |
+| `scale` | FK | |
+| `preference` | int | 1 is the first choice; a dominant 7 has several |
+| `note` | char | "avoid the 4th", "tension option" |
+
+Unique on (`chord_quality`, `scale`). **Known limit, stated now so it is not a
+surprise:** Dm7 is Dorian as a ii chord and Aeolian as a vi chord, so a lookup
+by quality alone is right most of the time and wrong sometimes. v1 accepts
+that; a per-chord override written into the chart (`Dm7{aeolian}`) is the likely
+fix and does not change these tables.
+
+---
+
+## 2. The band
+
+### `Style`
+
+One groove for the browser band: drums, bass, comping. A row rather than a
+settings blob because grooves are content a person will want to add and tune.
+
+| Field | Type | Notes |
+|---|---|---|
+| `name`, `slug` | char, slug | "Medium swing", "Bossa nova", "Pop ballad" |
+| `genre` | choice | jazz / blues / pop / rock / gospel / latin / funk |
+| `feel` | choice | swing / straight / shuffle |
+| `swing_ratio` | decimal | 0.5 straight to about 0.67 hard swing |
+| `time_signature` | char | `4/4` default |
+| `default_tempo`, `min_tempo`, `max_tempo` | int | |
+| `drums` | JSON | step grid per instrument at 16th resolution |
+| `bass` | JSON | the rule (root-fifth, walking, tumbao ...) plus its parameters |
+| `comp` | JSON | the comping rhythm and the voicing style |
+| `is_preset` | bool | shipped vs the person's own |
+| `owner` | FK User, null | null for presets |
+
+**Why JSON columns here, stated because Rule 1 asks for a reason.** A groove is
+one indivisible value that the audio engine reads whole and nothing ever queries
+a single hit of. Modelling it as a table of drum hits would be thousands of rows
+that no screen reads one at a time. The row is the real data; the column is the
+shape of one cell of it, not a file standing in for a model.
+
+The band is synthesized in the browser (Web Audio, no external service, no
+API). The model holds what to play, never audio files.
+
+---
+
+## 3. Charts
+
+### `Progression`
+
+A chord chart plus how to play it. **The chart text is the only copy of the
+harmony.** The parsed bars and the transposed key are computed on the page,
+never stored, because a stored parse goes stale the moment the text is edited.
+
+| Field | Type | Notes |
+|---|---|---|
+| `title`, `slug` | char, slug | "ii-V-I in major", "12-bar blues" |
+| `genre` | choice | same list as `Style.genre` |
+| `tags` | M2M `Tag` | "turnaround", "minor ii-V", "modal vamp", "key change" |
+| `chart` | text | `\| Dm7 \| G7 \| Cmaj7 \| % \|`, with repeats, endings, key-change markers |
+| `home_key` | char | the key the chart is written in, concrete; transposing is done at play time |
+| `time_signature` | char | |
+| `default_tempo` | int | |
+| `default_style` | FK `Style`, null | |
+| `difficulty` | int 1 to 5 | |
+| `description` | text | what to listen for, where it appears |
+| `is_preset` | bool | |
+| `owner` | FK User, null | null for presets |
+| `created_at`, `updated_at` | datetime | |
+
+About 40 presets to start. **They are generic patterns, not named songs**:
+"rhythm changes" and "autumn-leaves-style minor ii-V-I", not a catalogue of
+copyrighted tunes. A progression is not a song, and keeping the library to
+patterns is what lets this be a product later.
+
+### `Tag`
+
+`name`, `slug` (unique). Plain labels, so "show me every minor ii-V" is a query.
+
+---
+
+## 4. Teaching
+
+### `Phrase`
+
+A short run of notes: the demo in a lesson, the prompt in call-and-response.
+
+| Field | Type | Notes |
+|---|---|---|
+| `name` | char | |
+| `kind` | choice | demo / call / answer / lick |
+| `notes` | JSON list | `{midi, beat, length, velocity}` per note |
+| `length_beats` | decimal | |
+| `chart_context` | text | the chords underneath, if it only makes sense over them |
+| `written_in_key` | char | so it can be transposed with the chart |
+| `owner` | FK User, null | |
+
+A phrase is a value read whole, the same argument as `Style`'s JSON columns.
+
+### `Lesson`
+
+One unit on one track. The explanation and the demo live here; the playing
+tasks live in `Exercise`.
+
+| Field | Type | Notes |
+|---|---|---|
+| `track` | choice | chord tones / guide tones / scales and modes / approach notes / rhythm motifs / call and response / voicings and comping |
+| `order` | int | position within the track |
+| `title`, `slug` | char, slug | |
+| `level` | int 1 to 3 | all inside "intermediate" |
+| `summary` | char | one line for the card |
+| `explanation` | text (markdown) | the short teaching text |
+| `demo_phrase` | FK `Phrase`, null | |
+| `progression` | FK `Progression`, null | the changes the lesson is taught over |
+| `style` | FK `Style`, null | |
+| `prerequisite` | FK self, null | |
+| `authorship` | choice | ai_drafted / reviewed / avi_written |
+| `status` | choice | draft / published |
+| `created_at`, `updated_at` | datetime | |
+
+Unique on (`track`, `order`). **Lessons are drafted by AI during development,
+reviewed, and seeded; the app never generates a lesson at runtime.** `authorship`
+records which they are, so "what has Avi actually read" is a query and not a
+memory.
+
+### `Exercise`
+
+A playing task with a way of being scored. This one table covers both a
+lesson's practice step and a standalone challenge: **a challenge is an exercise
+with no lesson.** "Hit chord tones on beats 1 and 3 for 8 bars" is one row.
+
+| Field | Type | Notes |
+|---|---|---|
+| `lesson` | FK, null | null means a standalone challenge or daily-workout candidate |
+| `order` | int | within the lesson |
+| `title` | char | |
+| `instructions` | text | |
+| `progression` | FK | |
+| `key` | char | |
+| `tempo` | int | |
+| `style` | FK, null | |
+| `bars` | int | how much to play |
+| `scoring_kind` | choice | chord tones on beats / guide tones / scale only / approach notes / rhythm motif / call and response / comping voicings / free play |
+| `scoring_params` | JSON | `{"beats":[1,3],"min_ratio":0.8}`; its shape depends on the kind |
+| `pass_score` | int | |
+| `xp` | int | |
+| `daily_eligible` | bool | may the daily workout pick it |
+
+`scoring_params` is JSON for the same reason as above: each kind reads its own
+shape, and nothing filters across kinds by a parameter.
+
+---
+
+## 5. The person
+
+### `Player`
+
+One-to-one with the shared `User`. This is the app's own profile, as Rule 2
+requires, not a change to `User`.
+
+| Field | Type | Notes |
+|---|---|---|
+| `user` | 1-to-1 User | |
+| `daily_goal_minutes` | int | default 15 |
+| `latency_offset_ms` | int | **timing calibration**, default 0, see below |
+| `midi_input_name` | char | the keyboard last used, to reconnect it |
+| `note_names` | choice | sharps / flats |
+| `demo_output` | choice | laptop / piano: where lesson demos and call-and-response phrases sound. Added after approval, see spec chapter 6. |
+| `timezone` | char | IANA name, default `Asia/Jerusalem`. Added after approval: the site runs on UTC, and a streak is made of the player's own days, so the day boundary has to be theirs. |
+| `created_at` | datetime | |
+
+**Why `latency_offset_ms` is data.** The piano is heard from the piano; the band
+comes out of the laptop, maybe through a cable into the piano, maybe through
+speakers. The app never hears the piano's sound, only its MIDI. So "was that
+note on the beat" is measured as MIDI timestamp against the app's own clock,
+and the laptop's audio output delay shifts where the player feels the beat. One
+calibration number, per player, per setup, and feature 14 (timing feedback) is
+meaningless without it.
+
+---
+
+## 6. What the person did
+
+### `PracticeSession`
+
+| Field | Type | Notes |
+|---|---|---|
+| `player` | FK | |
+| `started_at` | datetime | |
+| `ended_at` | datetime, null | |
+| `active_seconds` | int | time actually playing, not time the tab was open |
+
+The practice log (feature 16) is this table. The daily goal is `active_seconds`
+summed for a day against `Player.daily_goal_minutes`.
+
+### `Take`
+
+One play-through. The source of truth for everything the app says about how the
+person plays.
+
+| Field | Type | Notes |
+|---|---|---|
+| `player` | FK | |
+| `session` | FK `PracticeSession` | |
+| `exercise` | FK, null | null for free practice |
+| `progression` | FK, null (SET_NULL) | |
+| `chart` | text | **snapshot** of the chart as played |
+| `key` | char | as played |
+| `tempo` | int | as played |
+| `style` | FK, null (SET_NULL) | |
+| `started_at` | datetime | |
+| `duration_ms` | int | |
+| `bars` | int | |
+| `events` | JSON list | `{t_ms, type: on/off, note, velocity}` as the MIDI arrived |
+| `score` | int, null | what the person was told |
+| `metrics` | JSON | chord-tone %, scale %, outside %, mean timing offset, spread |
+| `judge_version` | int | which version of the judging code produced `score` |
+| `is_kept` | bool | feature 15: saved on purpose vs kept only as history |
+
+**Snapshots, for the same reason as blackjack's immutable `RuleSet`.** Whether a
+note was right depends on the chart it was played over. Edit the progression
+tomorrow and every old take would be re-judged against the wrong chords, so a
+take carries its own chart, key and tempo. **`judge_version`** does the same job
+for the judging code: when the rules for "approach note" change, old scores stay
+explainable instead of silently disagreeing with new ones.
+
+`events` is a JSON list rather than a row per note because it is replayed and
+re-analysed whole, and nothing queries one note. The weakness report reads
+across takes by decoding them, which is fine at one player's scale; **if it ever
+is not, the answer is a rollup table built from takes, never a counter that
+replaces them.**
+
+### `Completion`
+
+The first time a player passes an exercise. A fact, not a status.
+
+| Field | Type | Notes |
+|---|---|---|
+| `player` | FK | |
+| `exercise` | FK | |
+| `take` | FK `Take` | the take that passed |
+| `xp_awarded` | int | frozen at the time |
+| `completed_at` | datetime | |
+
+Unique on (`player`, `exercise`).
+
+---
+
+## 7. Later (v2), modelled now so the shape is right
+
+### `DrillAttempt`
+
+One answer in an ear-training or speed game: name the chord, name the
+progression, repeat the lick, spell the chord. Same idea as blackjack's
+`Attempt`: one row per decision, and every game statistic is a read over it.
+
+`player`, `kind` (chord name / progression name / lick repeat / chord spelling),
+`prompt` (JSON), `answer` (JSON), `is_correct`, `response_ms`, `answered_at`.
+
+Not built in v1, listed so nothing in v1 closes the door on it.
+
+---
+
+## 8. What is deliberately not stored
+
+Each of these is a read, never a column:
+
+| Thing | Where it comes from |
+|---|---|
+| Streak | days that have a `PracticeSession` with practice in it |
+| Total XP | sum of `Completion.xp_awarded` |
+| Level | a function of total XP |
+| Lesson done | every `Exercise` of the lesson has a `Completion` |
+| Lesson unlocked | its `prerequisite` is done |
+| Weakness report | decoded `Take.events` across takes, joined to `ChordQuality` |
+| Daily workout | picked from `daily_eligible` exercises by date and weakness |
+| Parsed chart, transposed chart | the `chart` text, parsed on the page |
+| Chord and scale tones | `ChordQuality.intervals` and `Scale.intervals` |
+
+---
+
+## 9. How it fits together
+
+```
+User ──1:1── Player
+               │
+               ├── PracticeSession ──┐
+               │                     │
+               └── Take ◄────────────┘ (session)
+                     │  ├── Exercise ──── Lesson ──── Phrase (demo)
+                     │  │       │            │
+                     │  │       └────────────┴──── Progression ──── Style
+                     │  └── snapshots chart/key/tempo      │
+                     │                                    Tag (M2M)
+                     └── Completion (player, exercise, passing take)
+
+ChordQuality ──── ChordScale ──── Scale      (reference, read by judging and the recognizer)
+```
+
+`Take` is the hub. Content flows into it (exercise, progression, style) and
+everything the app reports flows out of it.
+
+---
+
+## 10. Seeding and the API
+
+- **Seeding is a one-time import** (building_an_app.md, "Data: everything real
+  becomes a model"). Reference theory, the starter grooves, the 40 progressions
+  and the lessons arrive from files written during development, and each seed
+  command checks whether the row exists and leaves it alone if so. A test runs
+  every seed command twice and asserts a row edited in between survives.
+- **Rule 6:** every model above gets a DRF CRUD API under `/improv/api/`,
+  documented, behind the group check. Presets and reference rows are read-only
+  to a player; a player's own progressions, styles and phrases are fully
+  editable. `Take` and `Completion` are created by the page through the API, not
+  by a special endpoint.
+- Own migration chain from `0001`, own templates and static files, own base
+  template with its own English menu, and no link back to babook inside the app
+  unless Avi asks for one.
+
+---
+
+## 11. Open points: all answered (Avi, 2026-10-04)
+
+1. **The gate.** Group plus superuser bypass, 404 for everyone else, portal card
+   for superusers and members only. **Accepted.**
+2. **Who judges a take.** The browser judges live and the server stores the
+   events and the score the page computed. **Accepted for v1.** The day there is
+   a leaderboard or a paid tier it needs a server-side judge; `judge_version`
+   plus stored events is what keeps that migration possible.
+3. **Take retention.** Every play-through is recorded; `is_kept` marks the ones
+   saved on purpose. Unkept takes are pruned after 30 days, but their score and
+   metrics stay, since the weakness report needs those and not the raw events.
+   **Accepted.**
+4. **Name.** `improv`. **Accepted.**

@@ -32,6 +32,7 @@ there is a directory and nothing more.
 | SensorLab | `/sensorlab/` | [sensorlab/](sensorlab/spec.md) |
 | memz | `/memz/` | [memz/](memz/spec.md) |
 | ustrip | `/ustrip/` | [ustrip/](ustrip/spec.md) |
+| improv (private, in build) | `/improv/` | [improv/](improv/spec.md) |
 
 Two capabilities are built but are not apps yet, both recorded in §0.6 of the
 main spec: the home security relay at `/home/` (contract owned by the house
