@@ -184,3 +184,38 @@ test("upcoming rejects a tempo outside the range, like beatTimes", () => {
   assert.throws(() => timing.upcoming(1, 0, 2));
   assert.throws(() => timing.upcoming(1, 60 / 500, 2));
 });
+
+// ------------------------------------------------------------ the grid (subdivisions)
+
+test("a grid of eighth notes puts one point halfway between each pair of clicks, and keeps the clicks", () => {
+  assert.deepEqual(timing.subdivide([1000, 1600, 2200], 2), [1000, 1300, 1600, 1900, 2200]);
+});
+
+test("a grid of quarter notes is the clicks themselves", () => {
+  assert.deepEqual(timing.subdivide([1000, 1600], 1), [1000, 1600]);
+});
+
+test("triplets and sixteenths divide the gap evenly", () => {
+  assert.deepEqual(timing.subdivide([0, 900], 3), [0, 300, 600, 900]);
+  assert.deepEqual(timing.subdivide([0, 400], 4), [0, 100, 200, 300, 400]);
+});
+
+test("one click or none has nothing to divide", () => {
+  assert.deepEqual(timing.subdivide([1000], 2), [1000]);
+  assert.deepEqual(timing.subdivide([], 2), []);
+});
+
+test("an eighth-note off-beat played 40 ms early reads 40 ms early on an eighth grid, and 293 ms late on a quarter grid", () => {
+  const clicks = [10000, 10667, 11333];
+  const note = 10667 - 333 - 40 + 0; // an off-beat before the click at 10667, 40 ms early
+  const eighth = timing.nearestClick(note, timing.subdivide(clicks, 2));
+  close(eighth.offsetMs, -40, 1);
+  const quarter = timing.nearestClick(note, clicks);
+  assert.ok(Math.abs(quarter.offsetMs) > 250);
+});
+
+test("subdivide rejects a division that is not a whole number from 1 to 8", () => {
+  assert.throws(() => timing.subdivide([0, 600], 0));
+  assert.throws(() => timing.subdivide([0, 600], 2.5));
+  assert.throws(() => timing.subdivide([0, 600], 9));
+});

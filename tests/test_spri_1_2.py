@@ -64,6 +64,7 @@ def test_the_page_has_every_control_the_spike_needs(member):
         "midi-status",
         "midi-input",
         "bpm",
+        "grid",
         "click-toggle",
         "keyboard",
         "readout",

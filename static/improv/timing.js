@@ -45,6 +45,21 @@
     return beatTimes(nextAudio, 60 / gapSeconds, count);
   }
 
+  // The grid a note is judged against: each gap between clicks cut into `parts`
+  // equal pieces (2 = eighth notes). Works in any unit, as long as it is the same one.
+  function subdivide(clicks, parts) {
+    if (!Number.isInteger(parts) || parts < 1 || parts > 8) throw new Error("Division must be a whole number from 1 to 8");
+    const out = [];
+    for (let i = 0; i < clicks.length; i++) {
+      out.push(clicks[i]);
+      if (i < clicks.length - 1) {
+        const step = (clicks[i + 1] - clicks[i]) / parts;
+        for (let p = 1; p < parts; p++) out.push(clicks[i] + p * step);
+      }
+    }
+    return out;
+  }
+
   // Gaps between consecutive notes (ms). Their spread says how steady the playing
   // and the MIDI path are, independent of where the click is.
   function intervals(timesMs) {
@@ -79,5 +94,5 @@
     return { usable: true, reason: "steady enough for one offset" };
   }
 
-  return { makeAnchor, heardAt, beatTimes, upcoming, intervals, nearestClick, stats, verdict, MIN_BPM, MAX_BPM };
+  return { makeAnchor, heardAt, beatTimes, upcoming, subdivide, intervals, nearestClick, stats, verdict, MIN_BPM, MAX_BPM };
 });

@@ -231,7 +231,7 @@
     let offset = null;
     if (state.anchor && state.clicks.length && state.timer) {
       const audioClicks = state.clicks.concat(T.upcoming(state.nextBeat, state.gap, 2));
-      const heard = audioClicks.map((t) => T.heardAt(state.anchor, t));
+      const heard = T.subdivide(audioClicks.map((t) => T.heardAt(state.anchor, t)), Number($("grid").value));
       const hit = T.nearestClick(timestampMs, heard);
       offset = hit ? hit.offsetMs : null;
     }
@@ -316,7 +316,7 @@
   function report() {
     const piano = state.rows.filter((r) => r.source === "midi" && r.offset !== null).slice(0, LAST_N).map((r) => r.offset.toFixed(1));
     $("report").value =
-      "improv timing spike\n" + $("environment").textContent + "\nTempo: " + $("bpm").value + " bpm\n" +
+      "improv timing spike\n" + $("environment").textContent + "\nTempo: " + $("bpm").value + " bpm, grid: " + $("grid").selectedOptions[0].textContent + "\n" +
       $("summary").textContent + "\nLast piano offsets (ms, newest first): " + (piano.join(", ") || "none") + "\n";
   }
 
@@ -340,5 +340,6 @@
   $("midi-input").addEventListener("change", () => state.midi && attach(state.midi.inputs.get($("midi-input").value)));
   $("copy-result").addEventListener("click", copyReport);
   $("bpm").addEventListener("change", report);
+  $("grid").addEventListener("change", report);
   report();
 })();

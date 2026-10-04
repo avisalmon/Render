@@ -28,6 +28,14 @@
   <label class="im-field">Tempo
     <input id="bpm" class="im-input" type="number" min="20" max="300" value="90"> bpm
   </label>
+  <label class="im-field">Judge notes against
+    <select id="grid" class="im-select">
+      <option value="1">each click (quarter notes)</option>
+      <option value="2">eighth notes (the click and halfway between)</option>
+      <option value="3">triplets</option>
+      <option value="4">sixteenth notes</option>
+    </select>
+  </label>
   <button id="click-toggle" class="im-btn" type="button" disabled>Start click</button>
   <p class="im-note">
     Play one note on each click, as steadily as you can, for a minute. Use the lowest
