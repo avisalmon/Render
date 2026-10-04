@@ -2,13 +2,28 @@
 
 Reference rows are read-only here and edited in the admin. The tables are a few
 dozen rows, so they come back whole rather than paged.
+
+Content a player can own (styles, progressions) is shown as the presets plus the
+player's own rows. Presets are read-only; an own row is fully editable; another
+player's row does not exist as far as this player can tell.
 """
 
+from django.db.models import Count, Q
 from rest_framework import viewsets
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import SAFE_METHODS
 
-from .models import ChordQuality, ChordScale, Scale
+from .models import ChordQuality, ChordScale, Progression, Scale, Style, Tag
 from .permissions import IsPlayer
-from .serializers import ChordQualitySerializer, ChordScaleSerializer, ScaleSerializer
+from .serializers import (
+    ChordQualitySerializer,
+    ChordScaleSerializer,
+    ProgressionSerializer,
+    ScaleSerializer,
+    StyleSerializer,
+    TagSerializer,
+)
+from .slugs import unique_slug
 
 
 class ReferenceViewSet(viewsets.ReadOnlyModelViewSet):
@@ -41,8 +56,82 @@ class ChordScaleViewSet(ReferenceViewSet):
         return rows
 
 
-ENDPOINTS = {
+class TagViewSet(ReferenceViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+
+    def get_queryset(self):
+        mine = Q(progressions__is_preset=True) | Q(progressions__owner=self.request.user)
+        return Tag.objects.annotate(progression_count=Count("progressions", filter=mine, distinct=True))
+
+
+class OwnedViewSet(viewsets.ModelViewSet):
+    """Presets plus my own rows. A subclass names the model's queryset, the field the
+    slug is made from, and the filters its screens need."""
+
+    permission_classes = [IsPlayer]
+    pagination_class = None
+    slug_source = "name"
+
+    def get_queryset(self):
+        user = self.request.user
+        rows = super().get_queryset().filter(Q(is_preset=True) | Q(owner=user))
+        params = self.request.query_params
+        if params.get("mine"):
+            rows = rows.filter(owner=user)
+        if params.get("genre"):
+            rows = rows.filter(genre=params["genre"])
+        return self.filter_more(rows, params).distinct()
+
+    def filter_more(self, rows, params):
+        return rows
+
+    def get_object(self):
+        row = super().get_object()
+        if self.request.method not in SAFE_METHODS and (row.is_preset or row.owner_id != self.request.user.pk):
+            raise PermissionDenied("Presets are read-only here. They are edited in the admin.")
+        return row
+
+    def perform_create(self, serializer):
+        slug = unique_slug(self.queryset.model, serializer.validated_data.get(self.slug_source, ""))
+        serializer.save(owner=self.request.user, is_preset=False, slug=slug)
+
+
+class StyleViewSet(OwnedViewSet):
+    queryset = Style.objects.all()
+    serializer_class = StyleSerializer
+    slug_source = "name"
+
+    def filter_more(self, rows, params):
+        return rows.filter(feel=params["feel"]) if params.get("feel") else rows
+
+
+class ProgressionViewSet(OwnedViewSet):
+    queryset = Progression.objects.prefetch_related("tags")
+    serializer_class = ProgressionSerializer
+    slug_source = "title"
+
+    def filter_more(self, rows, params):
+        if params.get("tag"):
+            rows = rows.filter(tags__slug=params["tag"])
+        if params.get("difficulty"):
+            try:
+                rows = rows.filter(difficulty=int(params["difficulty"]))
+            except ValueError:
+                rows = rows.none()
+        if params.get("q"):
+            rows = rows.filter(Q(title__icontains=params["q"]) | Q(description__icontains=params["q"]))
+        return rows
+
+
+REFERENCE_ENDPOINTS = {
     "chord-qualities": ChordQualityViewSet,
     "scales": ScaleViewSet,
     "chord-scales": ChordScaleViewSet,
+    "tags": TagViewSet,
 }
+OWNED_ENDPOINTS = {
+    "styles": StyleViewSet,
+    "progressions": ProgressionViewSet,
+}
+ENDPOINTS = {**REFERENCE_ENDPOINTS, **OWNED_ENDPOINTS}

@@ -106,3 +106,33 @@ def live_ai(request):
         yield
     finally:
         settings.OPENAI_API_KEY = ""
+
+
+@pytest.fixture
+def one_request_at_a_time(monkeypatch):
+    """Browser tests: let the live server handle one request at a time.
+
+    The test database is in memory, so every server thread shares one SQLite
+    connection, and a page that fires three fetches at once makes it fail with
+    "bad parameter or other API misuse". Serialising the handler is a test
+    harness fix only; production uses a file database and a connection per thread.
+    """
+    import threading
+
+    from django.core.handlers.wsgi import WSGIHandler
+
+    lock = threading.Lock()
+    original = WSGIHandler.__call__
+
+    def serial(self, environ, start_response):
+        with lock:
+            body = original(self, environ, start_response)
+            return [b"".join(body)] if not hasattr(body, "close") else _drain(body)
+
+    def _drain(body):
+        try:
+            return [b"".join(body)]
+        finally:
+            body.close()
+
+    monkeypatch.setattr(WSGIHandler, "__call__", serial)

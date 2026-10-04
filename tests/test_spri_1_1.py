@@ -50,6 +50,7 @@ def people(db):
     made["member"].groups.add(group)
     # The sweep fills a detail route with id 1; there has to be a row 1 behind it.
     call_command("seed_improv_theory", stdout=io.StringIO())
+    call_command("seed_improv_library", stdout=io.StringIO())
     return made
 
 

@@ -1,0 +1,247 @@
+{
+  "_about": "Golden cases for static/improv/chart.js (SPR-I.2.1). Each bar is one string: chords as name@beat/length, separated by spaces. `keys` is the key in force for each bar (null when none has been set). `written` is the index of the written bar each played bar came from. Errors give the 1-based line and bar of the first problem.",
+  "ok": [
+    {
+      "name": "the plainest chart: percent repeats the last bar",
+      "chart": "| Dm7 | G7 | Cmaj7 | % |",
+      "bars": ["Dm7@0/4", "G7@0/4", "Cmaj7@0/4", "Cmaj7@0/4"],
+      "written": [0, 1, 2, 3]
+    },
+    {
+      "name": "the leading and the closing bar line are optional",
+      "chart": "Dm7 | G7 | Cmaj7",
+      "bars": ["Dm7@0/4", "G7@0/4", "Cmaj7@0/4"]
+    },
+    {
+      "name": "double bar lines and a closing bracket are read as bar lines",
+      "chart": "| Dm7 || G7 | Cmaj7 |]",
+      "bars": ["Dm7@0/4", "G7@0/4", "Cmaj7@0/4"]
+    },
+    {
+      "name": "two chords in one bar split it evenly",
+      "chart": "| Dm7 G7 | Cmaj7 |",
+      "bars": ["Dm7@0/2 G7@2/2", "Cmaj7@0/4"]
+    },
+    {
+      "name": "four chords in one bar get a beat each",
+      "chart": "| C Am Dm G7 |",
+      "bars": ["C@0/1 Am@1/1 Dm@2/1 G7@3/1"]
+    },
+    {
+      "name": "three chords in four beats split evenly, with fractions",
+      "chart": "| C F G |",
+      "bars": ["C@0/1.33 F@1.33/1.33 G@2.67/1.33"]
+    },
+    {
+      "name": "in three-four a bar is three beats",
+      "chart": "| C | G7 F |",
+      "beatsPerBar": 3,
+      "bars": ["C@0/3", "G7@0/1.5 F@1.5/1.5"]
+    },
+    {
+      "name": "a percent repeats a bar that held two chords",
+      "chart": "| Dm7 G7 | % | Cmaj7 |",
+      "bars": ["Dm7@0/2 G7@2/2", "Dm7@0/2 G7@2/2", "Cmaj7@0/4"]
+    },
+    {
+      "name": "a bare root is a major triad",
+      "chart": "| C | F | G |",
+      "bars": ["C@0/4", "F@0/4", "G@0/4"]
+    },
+    {
+      "name": "aliases are the same chord as the symbol",
+      "chart": "| Dmin7 | D-7 | Dmi7 | Dm7 |",
+      "bars": ["Dm7@0/4", "Dm7@0/4", "Dm7@0/4", "Dm7@0/4"]
+    },
+    {
+      "name": "major seventh in all its common spellings",
+      "chart": "| CM7 | CMaj7 | Cma7 | CΔ | CΔ7 | Cmaj7 |",
+      "bars": ["Cmaj7@0/4", "Cmaj7@0/4", "Cmaj7@0/4", "Cmaj7@0/4", "Cmaj7@0/4", "Cmaj7@0/4"]
+    },
+    {
+      "name": "half diminished, diminished and augmented",
+      "chart": "| Bø | Bø7 | Bm7b5 | Bo7 | Bdim | B+ |",
+      "bars": ["Bm7b5@0/4", "Bm7b5@0/4", "Bm7b5@0/4", "Bdim7@0/4", "Bdim@0/4", "Baug@0/4"]
+    },
+    {
+      "name": "altered and extended dominants",
+      "chart": "| G7b9 | G7#9 | G7alt | G13 | G9 | G7#11 |",
+      "bars": ["G7b9@0/4", "G7#9@0/4", "G7alt@0/4", "G13@0/4", "G9@0/4", "G7#11@0/4"]
+    },
+    {
+      "name": "sharps and flats in the root",
+      "chart": "| F#m7 | Bb7 | Ebmaj7 | C#dim7 | Abmaj7 |",
+      "bars": ["F#m7@0/4", "Bb7@0/4", "Ebmaj7@0/4", "C#dim7@0/4", "Abmaj7@0/4"]
+    },
+    {
+      "name": "a slash chord keeps its bass note",
+      "chart": "| C/E | F/G | Dm7/C | Bb/D |",
+      "bars": ["C/E@0/4", "F/G@0/4", "Dm7/C@0/4", "Bb/D@0/4"]
+    },
+    {
+      "name": "a repeat plays the section twice",
+      "chart": "|: C | G :| F |",
+      "bars": ["C@0/4", "G@0/4", "C@0/4", "G@0/4", "F@0/4"],
+      "written": [0, 1, 0, 1, 2]
+    },
+    {
+      "name": "a closing repeat sign with no opening one repeats from the top",
+      "chart": "| C | G :| F |",
+      "bars": ["C@0/4", "G@0/4", "C@0/4", "G@0/4", "F@0/4"]
+    },
+    {
+      "name": "first and second endings",
+      "chart": "|: C | G | [1 Am | F :| [2 Dm | G7 |",
+      "bars": ["C@0/4", "G@0/4", "Am@0/4", "F@0/4", "C@0/4", "G@0/4", "Dm@0/4", "G7@0/4"],
+      "written": [0, 1, 2, 3, 0, 1, 4, 5],
+      "passes": [1, 1, 1, 1, 2, 2, 2, 2]
+    },
+    {
+      "name": "endings with a closing bracket and a chart that carries on after them",
+      "chart": "|: C | [1 G :| [2 F ] | Am |",
+      "bars": ["C@0/4", "G@0/4", "C@0/4", "F@0/4", "Am@0/4"]
+    },
+    {
+      "name": "after a first ending, the music that follows the repeat sign is the second ending",
+      "chart": "|: C | [1 G :| F |",
+      "bars": ["C@0/4", "G@0/4", "C@0/4", "F@0/4"]
+    },
+    {
+      "name": "three endings",
+      "chart": "|: C | [1 G :| [2 F :| [3 Am |",
+      "bars": ["C@0/4", "G@0/4", "C@0/4", "F@0/4", "C@0/4", "Am@0/4"]
+    },
+    {
+      "name": "two repeated sections one after the other",
+      "chart": "|: C | G :| |: Am | F :|",
+      "bars": ["C@0/4", "G@0/4", "C@0/4", "G@0/4", "Am@0/4", "F@0/4", "Am@0/4", "F@0/4"]
+    },
+    {
+      "name": "a key change marker sets the key for the bars after it",
+      "chart": "{key: C} | Dm7 | G7 | Cmaj7 | {key: Eb} | Fm7 | Bb7 | Ebmaj7 |",
+      "bars": ["Dm7@0/4", "G7@0/4", "Cmaj7@0/4", "Fm7@0/4", "Bb7@0/4", "Ebmaj7@0/4"],
+      "keys": ["C", "C", "C", "Eb", "Eb", "Eb"]
+    },
+    {
+      "name": "a minor key marker",
+      "chart": "{key: Am} | Bm7b5 | E7alt | Am7 |",
+      "bars": ["Bm7b5@0/4", "E7alt@0/4", "Am7@0/4"],
+      "keys": ["Am", "Am", "Am"]
+    },
+    {
+      "name": "before any marker the key is the home key, or none",
+      "chart": "| C | G |",
+      "homeKey": "C",
+      "bars": ["C@0/4", "G@0/4"],
+      "keys": ["C", "C"]
+    },
+    {
+      "name": "with no home key and no marker the key is null",
+      "chart": "| C | G |",
+      "bars": ["C@0/4", "G@0/4"],
+      "keys": [null, null]
+    },
+    {
+      "name": "a chart can run over several lines and carry comments",
+      "chart": "// ii V I\n| Dm7 | G7 |\n\n| Cmaj7 | % | // tonic\n",
+      "bars": ["Dm7@0/4", "G7@0/4", "Cmaj7@0/4", "Cmaj7@0/4"]
+    },
+    {
+      "name": "a bar can sit on the line after its bar line",
+      "chart": "|\nDm7\n|\nG7\n|",
+      "bars": ["Dm7@0/4", "G7@0/4"]
+    },
+    {
+      "name": "windows line endings read the same",
+      "chart": "| Dm7 |\r\n| G7 |\r\n",
+      "bars": ["Dm7@0/4", "G7@0/4"]
+    },
+    {
+      "name": "the twelve bar blues, written out",
+      "chart": "| C7 | F7 | C7 | C7 | F7 | F7 | C7 | C7 | G7 | F7 | C7 | G7 |",
+      "bars": ["C7@0/4", "F7@0/4", "C7@0/4", "C7@0/4", "F7@0/4", "F7@0/4", "C7@0/4", "C7@0/4", "G7@0/4", "F7@0/4", "C7@0/4", "G7@0/4"]
+    }
+  ],
+  "errors": [
+    {
+      "name": "an unknown chord names its line and bar",
+      "chart": "| Dm7 | Xm7 | C |",
+      "error": { "line": 1, "bar": 2, "includes": "Xm7" }
+    },
+    {
+      "name": "an unknown quality on a good root",
+      "chart": "| C | Cmaj13 |",
+      "error": { "line": 1, "bar": 2, "includes": "Cmaj13" }
+    },
+    {
+      "name": "the error is on the right line of a multi-line chart",
+      "chart": "| C | G |\n| Am | F |\n| Dm | Q7 |",
+      "error": { "line": 3, "bar": 6, "includes": "Q7" }
+    },
+    {
+      "name": "percent in the very first bar has nothing to repeat",
+      "chart": "| % | C |",
+      "error": { "line": 1, "bar": 1, "includes": "%" }
+    },
+    {
+      "name": "an empty bar is refused, with the way to repeat a bar",
+      "chart": "| C | | G |",
+      "error": { "line": 1, "bar": 2, "includes": "empty" }
+    },
+    {
+      "name": "more chords than beats in a bar",
+      "chart": "| C | C D E F G |",
+      "error": { "line": 1, "bar": 2, "includes": "beats" }
+    },
+    {
+      "name": "a slash chord with a bass that is not a note",
+      "chart": "| C | C/H |",
+      "error": { "line": 1, "bar": 2, "includes": "C/H" }
+    },
+    {
+      "name": "a key marker that is not closed",
+      "chart": "| C | {key: Eb | F |",
+      "error": { "line": 1, "bar": 2, "includes": "{" }
+    },
+    {
+      "name": "a key marker with a key that is not a key",
+      "chart": "{key: H} | C |",
+      "error": { "line": 1, "bar": 1, "includes": "key" }
+    },
+    {
+      "name": "endings have to come in order",
+      "chart": "|: C | [1 G :| [3 F |",
+      "error": { "line": 1, "bar": 3, "includes": "ending" }
+    },
+    {
+      "name": "a repeat with nothing in it",
+      "chart": "|: :| C |",
+      "error": { "line": 1, "bar": 1, "includes": "repeat" }
+    },
+    {
+      "name": "an ending number of zero",
+      "chart": "|: C | [0 G :|",
+      "error": { "line": 1, "bar": 2, "includes": "ending" }
+    },
+    {
+      "name": "an opening repeat that is never closed",
+      "chart": "|: C | G |",
+      "error": { "line": 1, "bar": 1, "includes": "repeat" }
+    },
+    {
+      "name": "an ending with no repeat to belong to",
+      "chart": "| C | [1 G | [2 F |",
+      "error": { "line": 1, "bar": 2, "includes": "ending" }
+    },
+    {
+      "name": "an empty chart",
+      "chart": "   \n  // only a comment\n",
+      "error": { "line": 1, "bar": 0, "includes": "empty" }
+    },
+    {
+      "name": "text that is not a chart at all",
+      "chart": "hello world",
+      "error": { "line": 1, "bar": 1, "includes": "hello" }
+    }
+  ]
+}

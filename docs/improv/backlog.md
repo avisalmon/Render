@@ -19,7 +19,7 @@
 
 ---
 
-## EPIC-I.1: The skeleton and the proof  `IN PROGRESS`
+## EPIC-I.1: The skeleton and the proof  `DONE`
 
 **Goal:** the app exists behind its gate, and the one risky assumption (the piano
 and the laptop talk, and timing is usable) is proved before anything is built on
@@ -28,7 +28,7 @@ it.
 | Sprint | What | Traces | Status |
 |---|---|---|---|
 | SPR-I.1.1 | The Django app `improv`, own base template and English menu, mounted at `/improv/`; group `improv_players` created by migration; the gate (404 for anonymous, non-members, every URL); portal card `GROUP` plus `admin_bypass`; the gate-sweep test and the portal sweep still green | ch. 7, feature 23 | DONE 2026-10-04 |
-| SPR-I.1.2 | **The spike, at the piano.** A bare page: Web MIDI in with timestamps mapped onto the `AudioContext` clock, an on-screen keyboard that lights from either source, a click track, and a readout of how far each note landed from the click. Run on Avi's piano and laptop; the result (numbers, any browser problem) is written into the spec before moving on | ch. 3, 4, 9, features 1, 5 | IN PROGRESS |
+| SPR-I.1.2 | **The spike, at the piano.** A bare page: Web MIDI in with timestamps mapped onto the `AudioContext` clock, an on-screen keyboard that lights from either source, a click track, and a readout of how far each note landed from the click. Run on Avi's piano and laptop; the result (numbers, any browser problem) is written into the spec before moving on | ch. 3, 4, 9, features 1, 5 | DONE 2026-10-04 |
 | SPR-I.1.3 | Theory reference: `ChordQuality`, `Scale`, `ChordScale`, seeded once from a reviewed file, seed run twice in a test | ch. 4, 5, features 2, 11 | DONE 2026-10-04 |
 | SPR-I.1.4 | The DRF base for the app: the gate as a permission class, read-only reference endpoints, `docs/improv/api.md` started, the "every model has an endpoint" test | ch. 7 | DONE 2026-10-04 |
 | SPR-I.1.5 | The dashboard, generated from this backlog, with a test that fails when it drifts | Rule 4 | DONE 2026-10-04 |
@@ -39,19 +39,19 @@ SPR-I.1.1, before there is anything behind the gate worth hiding.
 
 ---
 
-## EPIC-I.2: The band and the charts  `TODO`
+## EPIC-I.2: The band and the charts  `DONE`
 
 **Goal:** pick a progression, press play, and a steady band plays it in any key
 and tempo. No judging yet.
 
 | Sprint | What | Traces | Status |
 |---|---|---|---|
-| SPR-I.2.1 | The chart parser: bars, `%`, repeats, endings, key change, aliases, slash chords, first-error position; transposition. Pure JS with golden fixtures run under Node | ch. 3, feature 6 | TODO |
-| SPR-I.2.2 | `Style`, `Progression` and `Tag` models, the starter grooves and the first progressions seeded, API for all three | ch. 3, features 5, 7 | TODO |
-| SPR-I.2.3 | The band engine: look-ahead scheduler, synthesized drums, bass and comp, swing, exact timing; a style per genre starting with medium swing, then blues, bossa, pop ballad, rock, gospel | ch. 3, feature 5 | TODO |
-| SPR-I.2.4 | The Play screen v0: chart with the bar lit, transport, count-in, loop a bar range, tempo, key, swing or straight, metronome-only, per-instrument mix | ch. 3, 8, feature 8 | TODO |
-| SPR-I.2.5 | The library: all ~40 progressions seeded as generic patterns, browse by genre, tag and difficulty; the chart editor with live parse and the error where it is | ch. 8, features 6, 7 | TODO |
-| SPR-I.2.6 | Output picker where the browser allows it; changing tempo and key at the next bar line | ch. 3 | TODO |
+| SPR-I.2.1 | The chart parser: bars, `%`, repeats, endings, key change, aliases, slash chords, first-error position; transposition. Pure JS with golden fixtures run under Node | ch. 3, feature 6 | DONE 2026-10-04 |
+| SPR-I.2.2 | `Style`, `Progression` and `Tag` models, the starter grooves and the first progressions seeded, API for all three | ch. 3, features 5, 7 | DONE 2026-10-04 |
+| SPR-I.2.3 | The band engine: look-ahead scheduler, synthesized drums, bass and comp, swing, exact timing; a style per genre starting with medium swing, then blues, bossa, pop ballad, rock, gospel | ch. 3, feature 5 | DONE 2026-10-04 |
+| SPR-I.2.4 | The Play screen v0: chart with the bar lit, transport, count-in, loop a bar range, tempo, key, swing or straight, metronome-only, per-instrument mix | ch. 3, 8, feature 8 | DONE 2026-10-04 |
+| SPR-I.2.5 | The library: all ~40 progressions seeded as generic patterns, browse by genre, tag and difficulty; the chart editor with live parse and the error where it is | ch. 8, features 6, 7 | DONE 2026-10-04 |
+| SPR-I.2.6 | Output picker where the browser allows it; changing tempo and key at the next bar line | ch. 3 | DONE 2026-10-04 |
 
 ---
 

@@ -187,6 +187,66 @@ fraction of a second of events onto that clock, which is the standard way to kee
 a browser band from drifting when the page is busy. The same clock is the
 reference the MIDI timestamps are mapped onto (chapter 4).
 
+### Rules in v1
+
+What the band does, exactly. Each rule is a pure function of the chart and the
+style, and the tests in `tests/js/spri23.test.js` pin every line of it.
+
+**Swing.** Positions are written as straight sixteenths. The first half of every
+beat maps onto the first `swing_ratio` of the beat and the second half onto the
+rest, so the off-beat eighth of a 0.67 groove lands at 0.67 of the beat and the
+beat itself never moves. A ratio of 0.50 is straight. This is the only
+displacement in the band; a click and the band always agree on the beat.
+
+**Bass rules.** The first note of a chord is its bass note, so a slash chord
+(`C/E`) puts the E underneath. Every note is kept inside `Style.bass.range`.
+
+| Rule | What it plays |
+|---|---|
+| `walking` | one note a beat: the root nearest the last note, then chord tones climbing (third, fifth, seventh), and on the last beat of the chord a half step from the next root. At the end of a looping chart that root is the first chord's |
+| `two_feel` | the root on beat 1 and the fifth on beat 3, each held about four fifths of its length |
+| `root_fifth` | the same two notes, left ringing |
+| `eighths` | the root on every eighth, the beats a little stronger |
+| `bossa` | the root on the beat, the fifth a beat and a half later, repeating every two beats |
+| `boogie` | the eighth pattern root, third, fifth, sixth, flat seven, sixth, fifth, third, with the minor third on a minor chord |
+
+**Voicings.** Placed inside `Style.comp.register`.
+
+| Voicing | Notes |
+|---|---|
+| `shell` | the third, the seventh (or the sixth, or the fifth when there is no seventh) and one color tone, the ninth, left out when the chord already alters it or is suspended |
+| `triad` | the root, third and fifth of the chord's quality |
+| `seventh` | all the chord tones, thinned to four for the big chords while keeping the third and the seventh |
+
+For each chord the placer tries every inversion in every octave of the register
+and keeps the one whose notes move the least from the last chord, so voices glide
+instead of jumping. A chord that repeats reuses its notes exactly. A comping hit
+that crosses a chord change is cut at the change and the new chord starts its own
+articulation.
+
+**Drums.** One event for every non-zero step of every grid, with the step's
+strength as the velocity, swung like the rest.
+
+**Refusals.** The band says why it cannot play instead of playing something odd:
+a chart whose beats per bar do not match the groove's signature, a style with a
+rule or voicing it does not know, a chord quality it has no row for, a swing ratio
+outside 0.50 to 0.75, an empty bar range.
+
+**The scheduler.** The timer is never trusted with the beat. Every 30 ms it asks
+which bars start in the next 150 ms (the look-ahead) and queues their events on
+the audio clock; the clock keeps the time, so a late timer cannot move a note. A
+bar more than a quarter of a second behind, because the page was busy or hidden,
+is restarted just ahead of now instead of firing a burst of old notes, and is
+counted. A tempo change applies from the next bar that has not been queued, which
+is the next bar line; a bar already queued keeps its length. Tempo is held to 20
+to 300 beats per minute.
+
+**The voices.** Drums are bursts of filtered noise and short tones; the bass is a
+sawtooth with a sine under it through a closing lowpass; the comp is a sine with a
+short bright tine. Each part has its own level and mute, and everything passes
+through one gentle limiter so a full chord, the bass and the ride on the same beat
+cannot clip. A note whose start time has already passed is heard now, not dropped.
+
 ### Controls
 
 Tempo, key, swing or straight, count-in, metronome-only, loop a bar range, and
@@ -482,7 +542,7 @@ Every model in the data model has a full, documented CRUD endpoint under
 `/improv/api/`, behind the same gate, written in DRF from the first sprint
 (Rule 6). The rules that make it safe:
 
-- Reference rows (`ChordQuality`, `Scale`, `ChordScale`) and presets (`Style`,
+- Reference rows (`ChordQuality`, `Scale`, `ChordScale`, `Tag`) and presets (`Style`,
   `Progression`, `Phrase`, `Lesson`, `Exercise`) are read-only to a player. A
   player's own progressions, styles and phrases are fully editable.
 - Everything a player owns is filtered to that player in the queryset, not in the
@@ -523,6 +583,53 @@ sizes degrade to readable rather than being designed for.
 | **Takes** | saved takes with replay over the same band, and delete |
 | **Setup** | MIDI input and output choice, calibration, demo output, daily goal, sharps or flats |
 
+**Play in version 1 so far (SPR-I.2.4).** `/improv/play/` loads the progressions, the
+styles and the chord qualities from the API, so it plays whatever the library holds.
+It has the chart as a grid of bars, four to a row, with the playing bar lit and a
+bar-long progress line; Play and Stop (Space does the same); the progression and the
+band; the key (twelve keys in the progression's major or minor, the chart redrawn in
+that key); tempo held to the band's own range; swing or straight; a count-in of none,
+one or two bars of click, played once and never again when the loop comes round;
+a loop over a range of bars (typed 1-based, blank means the whole chart, the bars
+outside the loop dimmed); metronome only, which is a click on every beat of the same
+bars; and a mix with a level and a mute for the drums, the bass, the comping and the
+click. The shape of the take locks while it plays (the progression, the count-in, the
+loop range and the metronome switch) and the rest stays live, which is SPR-I.2.6 below.
+The logic is `static/improv/play.js`, tested under Node; the page script is only glue.
+
+**Changes while it plays, and the output picker (SPR-I.2.6).** The key, the tempo, the
+feel (swing or straight) and the band stay live while it plays. Each change is built into a
+new plan at once and handed to the scheduler, which swaps it in at the first bar not yet
+queued, so nothing sounds mid-bar and there is no gap and no overlap; a tempo change goes in
+at that same bar line. The chart is redrawn when that bar line arrives, not when the control is
+touched, so the screen and the sound agree. A change that would alter the shape of the take is
+refused with a plain message and the band plays on as it was; Stop drops a change that was still
+waiting. The output picker ("Sound goes to") lists the audio outputs the browser reports, with
+the system default first, and sends the sound there with `AudioContext.setSinkId`, also while it
+plays. It never asks for the microphone, so Chrome and Edge may only give numbered names
+("Output 2") until the site has been allowed one; the page says so. If the chosen output is
+unplugged, or the browser refuses it, the sound goes back to the system default and the page
+says so. Where the browser has no `setSinkId` (Safari, and so an iPad), the picker is not shown
+and a note says to choose the output in the device's sound settings; Play works the same. The
+rules are `scheduler.js` (`setPlan`), `play.js` (`canGoLive`) and `output.js`, tested under Node.
+
+**Library and Editor in version 1 so far (SPR-I.2.5).** `/improv/library/` lists the forty
+seeded progressions (and the player's own) as cards: title, level, genre, key, tempo,
+bar count, the first eight bars as chord names, the tags, and Play or Edit (a preset
+offers "Make my copy" instead). It filters by genre, tag, level, free text and "mine",
+sorts by level, title or genre, shows a count beside each menu choice so a menu never
+offers a choice that finds nothing, and keeps the filters in the address so a view can
+be bookmarked. `/improv/editor/` is a text box for the chart with a live check: it shows
+"OK: 12 bars" and the chart drawn as bars, or the line, the column and the bar of the
+first mistake with a caret under it and a button that selects the word. Save stays off
+until the chart parses and the form is valid. A preset opens as a copy, titled "(my
+copy)", and saves as a new row of the player's own; the preset is never changed. A
+row of the player's own can be saved again or deleted (two clicks). The server only
+checks that a chart is not blank, so a client other than this editor could store a
+chart that does not parse; Play then explains the error and will not start. This is a
+recorded gap, not a bug, because the grammar lives in one place (`chart.js`). The logic
+is `library.js` and `editor.js`, tested under Node; the page scripts are only glue.
+
 The Play screen is the only complicated one. Its rule is that **nothing on it
 needs a click during playing**: the learner's hands are on the piano, so
 everything that has to be adjusted is adjusted before or between takes, and the
@@ -544,10 +651,38 @@ live display only shows.
 
 ### Spike result (SPR-I.1.2)
 
-**Not run yet.** The page is built at `/improv/spike/` and its maths is tested, but
-the numbers can only come from Avi's piano and laptop. After the run, this section
-records: browser and version, whether MIDI connected and which input name it showed,
-the mean offset and the spread over sixteen notes, whether the spread was steady
-enough for one stored offset (the page's first-guess threshold is 30 ms and is to be
-tuned from this result), and anything that behaved badly (hot-plug, a Bluetooth
-output, a tab in the background). Epics 2 to 4 are built on what this says.
+**Run on 2026-10-04, on the production page, Avi's own piano and laptop.**
+
+- **Setup.** Chrome 154 on Windows 10/11, a Yamaha Clavinova over USB, listed by Web
+  MIDI as "Clavinova (Yamaha Corp.)". Audio at 48 kHz, `baseLatency` 0.010 s,
+  `outputLatency` 0.048 s, and `getOutputTimestamp()` available. MIDI note timestamps
+  and the audio clock could be put on one timeline.
+- **Steadiness of the pipeline.** Sixteen single eighth notes at 90 bpm (a 333 ms
+  gap): the gaps between notes had a mean of 332 ms and a spread of 15 ms. That is
+  an upper bound on the piano and browser jitter, because it includes Avi's own
+  unevenness. Two notes struck together arrived 2 to 33 ms apart.
+- **Offset against the click, on the eighth-note grid.** The page was left on the
+  quarter-note grid for that run, so the figures here are worked out by hand from
+  the sixteen offsets: on-beat notes averaged about -52 ms, off-beat notes about
+  -44 ms against the half-beat, together about -48 ms (early) with a spread of about
+  13 ms. One stored offset describes it.
+- **Verdict.** The path works and is steady enough for a single per-player offset.
+  The 30 ms threshold stays as the "usable" line: a steady human sits at about half
+  of it, so it flags real trouble without failing a good take.
+- **A coincidence to watch, not a finding.** The mean offset (about -48 ms) is close
+  to `outputLatency` (48 ms). Either Avi leads the click by that much, as players
+  tapping to a click usually lead it by 20 to 50 ms, or the page is placing the click
+  too late by the output latency. One run cannot tell them apart. Epic 3 (calibration)
+  settles it with a test that does not depend on how Avi plays: the app compares the
+  piano's own sound with the click, or lets him slide the offset until it feels right.
+- **Lessons that change the build.**
+  1. A note must be judged against the grid of its exercise (quarters, eighths,
+     triplets), never only the quarter click: eighth-note playing read 300 ms late
+     against quarter clicks. The judge takes a grid parameter from day one.
+  2. Notes must be compared with beats that are not yet scheduled, not only the ones
+     inside the look-ahead window. The first version missed this.
+  3. Chords arrive as separate notes up to about 30 ms apart; the judge groups notes
+     struck within that window.
+- **Not tested.** Unplugging and replugging the piano, a Bluetooth output (adds a
+  large and variable delay), a background tab, and Edge. Treat Bluetooth audio as
+  unsupported for scored takes until it is measured.

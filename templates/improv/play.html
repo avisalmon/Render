@@ -1,0 +1,88 @@
+{% extends "improv/base.html" %}
+{% load static %}
+{% block title %}improv - Play{% endblock %}
+{% block content %}
+<div id="play" class="im-play"
+     data-api-progressions="{{ api.progressions }}"
+     data-api-styles="{{ api.styles }}"
+     data-api-qualities="{{ api.qualities }}">
+
+  <div class="im-play-head">
+    <h1 class="im-title">Play</h1>
+    <p id="play-status" class="im-status" role="status" aria-live="polite">Loading the library.</p>
+  </div>
+
+  <section class="im-panel" aria-label="Transport">
+    <div class="im-transport">
+      <button id="play-toggle" class="im-btn im-btn-big" type="button" disabled>Play</button>
+      <div id="count-in" class="im-countin" aria-live="off" hidden></div>
+      <p class="im-note im-hint">Space starts and stops it. While it plays you can change the key, tempo, feel and band, and the mix; each change comes in at the next bar line. The progression, count-in and loop wait for Stop.</p>
+    </div>
+    <p id="play-error" class="im-error" role="alert" hidden></p>
+  </section>
+
+  <section class="im-panel" aria-label="Chart">
+    <h2 class="im-h2" id="chart-title">Chart</h2>
+    <div id="chart" class="im-chart" aria-label="Chart"></div>
+  </section>
+
+  <section class="im-panel im-settings" aria-label="Settings">
+    <div class="im-grid">
+      <label class="im-field">Progression
+        <select id="progression" class="im-select"></select>
+      </label>
+      <label class="im-field">Band
+        <select id="style" class="im-select"></select>
+      </label>
+      <label class="im-field">Key
+        <select id="key" class="im-select"></select>
+      </label>
+      <label class="im-field">Tempo
+        <input id="bpm" class="im-input" type="number" min="20" max="300" step="1"> bpm
+      </label>
+      <label class="im-field">Feel
+        <select id="swing" class="im-select">
+          <option value="swing">Swing</option>
+          <option value="straight">Straight</option>
+        </select>
+      </label>
+      <label class="im-field">Count-in
+        <select id="countin" class="im-select">
+          <option value="0">None</option>
+          <option value="1" selected>One bar</option>
+          <option value="2">Two bars</option>
+        </select>
+      </label>
+      <div class="im-field">Loop bars
+        <input id="first" class="im-input im-input-small" type="number" min="1" placeholder="1" aria-label="First bar of the loop">
+        to
+        <input id="last" class="im-input im-input-small" type="number" min="1" placeholder="end" aria-label="Last bar of the loop">
+      </div>
+      <label class="im-field im-check">
+        <input id="metronome" type="checkbox"> Metronome only
+      </label>
+    </div>
+  </section>
+
+  <section class="im-panel" aria-label="Mix">
+    <h2 class="im-h2">Mix</h2>
+    <div id="mix" class="im-mix"></div>
+    <p class="im-note">Mute the comping to hear your own harmony.</p>
+    <div id="output-row" class="im-field" hidden>
+      <label for="output">Sound goes to</label>
+      <select id="output" class="im-select"></select>
+    </div>
+    <p id="output-note" class="im-note" hidden></p>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{% static 'improv/chart.js' %}"></script>
+<script src="{% static 'improv/band.js' %}"></script>
+<script src="{% static 'improv/scheduler.js' %}"></script>
+<script src="{% static 'improv/synth.js' %}"></script>
+<script src="{% static 'improv/chart-view.js' %}"></script>
+<script src="{% static 'improv/play.js' %}"></script>
+<script src="{% static 'improv/output.js' %}"></script>
+<script src="{% static 'improv/play-page.js' %}"></script>
+{% endblock %}

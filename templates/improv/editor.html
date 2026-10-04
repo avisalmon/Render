@@ -1,0 +1,94 @@
+{% extends "improv/base.html" %}
+{% load static %}
+{% block title %}improv - Chart editor{% endblock %}
+{% block content %}
+<div id="editor" class="im-editor"
+     data-api-progressions="{{ api.progressions }}"
+     data-api-styles="{{ api.styles }}"
+     data-api-qualities="{{ api.qualities }}"
+     data-api-tags="{{ api.tags }}"
+     data-play-url="{{ play_url }}"
+     data-library-url="{{ library_url }}"
+     data-csrf="{{ csrf_token }}">
+
+  <div class="im-play-head">
+    <h1 class="im-title" id="editor-title">Chart editor</h1>
+    <p id="editor-status" class="im-status" role="status" aria-live="polite">Loading.</p>
+  </div>
+
+  <section class="im-panel" aria-label="Chart">
+    <h2 class="im-h2">Chart</h2>
+    <textarea id="chart-text" class="im-textarea im-mono" rows="9" spellcheck="false" autocapitalize="off"
+              autocomplete="off" aria-describedby="chart-check"></textarea>
+    <p id="chart-check" class="im-check-line" role="status" aria-live="polite"></p>
+    <div id="chart-error" class="im-error-box" hidden>
+      <pre id="chart-error-line" class="im-pre im-mono"></pre>
+      <button id="chart-goto" class="im-btn im-btn-link im-btn-quiet" type="button">Go to the error</button>
+    </div>
+    <details class="im-note">
+      <summary>How to write a chart</summary>
+      <ul>
+        <li>Bars sit between bar lines: <span class="im-mono">| Dm7 | G7 | Cmaj7 | % |</span>. A <span class="im-mono">%</span> repeats the bar before it.</li>
+        <li>Two or more chords in a bar share it evenly: <span class="im-mono">| Dm7 G7 |</span>.</li>
+        <li>Slash chords keep their bass note: <span class="im-mono">C/E</span>. Dm7, Dmin7 and D-7 are the same chord.</li>
+        <li>Repeats: <span class="im-mono">|: A | B :|</span>. Endings: <span class="im-mono">|: A | [1 B :| [2 C |</span>.</li>
+        <li>A key change sits between bars: <span class="im-mono">{key: Eb}</span>. A line starting with <span class="im-mono">//</span> is a comment.</li>
+      </ul>
+    </details>
+    <h2 class="im-h2">What it looks like</h2>
+    <div id="chart-preview" class="im-chart" aria-label="Chart preview"></div>
+  </section>
+
+  <section class="im-panel im-settings" aria-label="Details">
+    <div class="im-grid">
+      <label class="im-field">Title
+        <input id="title" class="im-input im-input-wide" type="text" maxlength="100" autocomplete="off">
+      </label>
+      <label class="im-field">Genre
+        <select id="genre" class="im-select"></select>
+      </label>
+      <label class="im-field">Key the chart is written in
+        <select id="home-key" class="im-select"></select>
+      </label>
+      <label class="im-field">Beats in a bar
+        <select id="signature" class="im-select"></select>
+      </label>
+      <label class="im-field">Tempo
+        <input id="tempo" class="im-input" type="number" min="20" max="300" step="1"> bpm
+      </label>
+      <label class="im-field">Band
+        <select id="style" class="im-select"></select>
+      </label>
+      <label class="im-field">Level
+        <select id="difficulty" class="im-select"></select>
+      </label>
+    </div>
+    <label class="im-field">Description
+      <textarea id="description" class="im-textarea im-textarea-short" rows="2"></textarea>
+    </label>
+    <fieldset class="im-fieldset">
+      <legend>Tags</legend>
+      <div id="tags" class="im-tags"></div>
+    </fieldset>
+  </section>
+
+  <section class="im-panel" aria-label="Save">
+    <div class="im-transport">
+      <button id="save" class="im-btn im-btn-big" type="button" disabled>Save</button>
+      <a id="open-play" class="im-btn im-btn-link im-btn-quiet" href="{{ play_url }}" hidden>Open in Play</a>
+      <button id="delete" class="im-btn im-btn-quiet im-btn-danger" type="button" hidden>Delete</button>
+      <a class="im-btn im-btn-link im-btn-quiet" href="{{ library_url }}">Back to the library</a>
+    </div>
+    <p id="editor-problems" class="im-error" role="alert" hidden></p>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{% static 'improv/chart.js' %}"></script>
+<script src="{% static 'improv/band.js' %}"></script>
+<script src="{% static 'improv/play.js' %}"></script>
+<script src="{% static 'improv/library.js' %}"></script>
+<script src="{% static 'improv/editor.js' %}"></script>
+<script src="{% static 'improv/chart-view.js' %}"></script>
+<script src="{% static 'improv/editor-page.js' %}"></script>
+{% endblock %}

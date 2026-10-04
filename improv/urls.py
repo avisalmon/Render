@@ -9,6 +9,9 @@ app_name = "improv"
 
 urlpatterns = [
     path("", views.home, name="home"),
+    path("play/", views.play, name="play"),
+    path("library/", views.library, name="library"),
+    path("editor/", views.editor, name="editor"),
     path("spike/", views.spike, name="spike"),
     path("api/", include("improv.api_urls")),
 ]

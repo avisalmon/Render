@@ -125,7 +125,7 @@ def test_reference_rows_cannot_be_written_through_the_api(people, who):
 
     before = (ChordQuality.objects.count(), Scale.objects.count(), ChordScale.objects.count())
     client = client_for(people[who])
-    for path in api.ENDPOINTS:
+    for path in api.REFERENCE_ENDPOINTS:
         detail = f"{API}{path}/1/"
         assert client.post(f"{API}{path}/", {"x": 1}).status_code == 405, f"POST {path}"
         for method in ("put", "patch", "delete"):

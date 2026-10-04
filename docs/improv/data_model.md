@@ -121,6 +121,27 @@ a single hit of. Modelling it as a table of drum hits would be thousands of rows
 that no screen reads one at a time. The row is the real data; the column is the
 shape of one cell of it, not a file standing in for a model.
 
+**The shapes, checked in one place (`improv/grooves.py`).** The model, the admin and
+the API all refuse a groove the band cannot play, so a bad one is caught when it is
+saved and never when it is played. Time signatures run from `2/4` to `12/4`; a bar
+has four steps (sixteenths) per beat, so 16 in 4/4 and 12 in 3/4.
+
+- `drums`: `{instrument: [strength per step]}`. Instruments are `kick`, `snare`,
+  `rim`, `hat`, `openhat`, `ride`, `shaker`, `clave`. Each grid has exactly one
+  number from 0 (silent) to 1 (hard) per step. Swing is applied to the off-beat
+  steps by the band from `swing_ratio`, never written into the grid.
+- `bass`: `{"rule": ..., "range": [low, high]}`. Rules are `walking`, `two_feel`,
+  `root_fifth`, `eighths`, `bossa`, `boogie`. The range is two whole MIDI notes
+  inside 24 to 72, at least 12 semitones apart (an octave, so the band can reach every
+  note name).
+- `comp`: `{"rhythm": [[start, length], ...], "voicing": ..., "register": [low, high]}`.
+  The rhythm is a list of hits in steps, in order, not overlapping, inside the bar.
+  Voicings are `shell`, `triad`, `seventh`. The register is two MIDI notes inside 36
+  to 96, at least 19 semitones apart (a voicing has to fit inside it).
+
+Tempos run 20 to 300, `swing_ratio` 0.50 to 0.75, and `min_tempo <= default_tempo <=
+max_tempo`.
+
 The band is synthesized in the browser (Web Audio, no external service, no
 API). The model holds what to play, never audio files.
 
