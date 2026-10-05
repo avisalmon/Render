@@ -102,3 +102,18 @@
 .im-fieldset { border: 1px solid #2a2d33; border-radius: .4rem; margin: .75rem 0 0; }
 .im-fieldset legend { color: var(--im-muted); font-size: .9rem; padding: 0 .4rem; }
 @media (max-width: 30rem) { .im-input-wide { width: 100%; } }
+
+/* Setup (SPR-I.3.1) */
+.im-setup { max-width: 52rem; }
+.im-row { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin: .75rem 0 0; }
+.im-heard { min-height: 2.2rem; font-size: 1.4rem; letter-spacing: .08em; color: var(--im-accent); margin: .25rem 0 0; }
+
+/* Reference (SPR-I.3.5) */
+.im-reference { display: block; }
+.im-key-step { position: absolute; bottom: .3rem; left: 0; right: 0; text-align: center; font-size: .7rem; font-weight: 700; color: #14161a; }
+.im-key-black .im-key-step { color: #f3f0e8; bottom: .2rem; }
+.im-key-black.im-key-on .im-key-step { color: #14161a; }
+.im-ref-notes { font-size: 1.2rem; letter-spacing: .04em; margin: .5rem 0 .25rem; }
+.im-list { margin: .25rem 0; padding-left: 1.2rem; }
+.im-list-item { margin: .15rem 0; }
+.im-note-inline { color: var(--im-muted); font-size: .85rem; }

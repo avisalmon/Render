@@ -57,6 +57,8 @@ def test_every_model_has_an_endpoint_and_the_endpoint_is_documented():
     models = list(apps.get_app_config("improv").get_models())
     assert models
     registered = {viewset.queryset.model: path for path, viewset in api.ENDPOINTS.items()}
+    # A model with exactly one row per person is served without an id (see api.SINGLETONS).
+    registered.update({view.serializer_class.Meta.model: path for path, view in api.SINGLETONS.items()})
     docs = pathlib.Path("docs/improv/api.md").read_text(encoding="utf-8")
 
     for model in models:
@@ -69,8 +71,8 @@ def test_every_endpoint_is_behind_the_player_permission():
     from improv import api
     from improv.permissions import IsPlayer
 
-    for path, viewset in api.ENDPOINTS.items():
-        assert list(viewset.permission_classes) == [IsPlayer], (
+    for path, view in {**api.ENDPOINTS, **api.SINGLETONS}.items():
+        assert list(view.permission_classes) == [IsPlayer], (
             f"{path} must use exactly IsPlayer, not the site default and nothing weaker"
         )
 

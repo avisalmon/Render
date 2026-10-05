@@ -1,0 +1,48 @@
+{
+  "comment": "SPR-I.3.2 golden cases for chord recognition. notes are MIDI numbers as a player would hold them, lowest first. name is what the app must call them. exact is false when the reading leaves a note of the chord out, which is when alternatives are offered. These are musical judgements, not whatever the code happens to do: change one only with a reason.",
+  "cases": [
+    { "notes": [60, 64, 67], "name": "C", "why": "a plain major triad has no symbol, as on a chart" },
+    { "notes": [60, 63, 67], "name": "Cm" },
+    { "notes": [60, 64, 68], "name": "Caug" },
+    { "notes": [60, 63, 66], "name": "Cdim" },
+    { "notes": [60, 65, 67], "name": "Csus4" },
+    { "notes": [60, 62, 67], "name": "Csus2", "why": "the same notes as Gsus4; the bass decides" },
+    { "notes": [55, 60, 62], "name": "Gsus4", "why": "and here the bass is G" },
+    { "notes": [60, 64, 67, 69], "name": "C6" },
+    { "notes": [60, 63, 67, 69], "name": "Cm6" },
+    { "notes": [60, 64, 67, 71], "name": "Cmaj7" },
+    { "notes": [62, 65, 69, 72], "name": "Dm7" },
+    { "notes": [55, 59, 62, 65], "name": "G7" },
+    { "notes": [59, 62, 65, 69], "name": "Bm7b5" },
+    { "notes": [60, 63, 66, 69], "name": "Cdim7" },
+    { "notes": [60, 63, 67, 71], "name": "CmMaj7" },
+    { "notes": [55, 60, 62, 65], "name": "G7sus4" },
+    { "notes": [62, 66, 69, 76], "name": "Dadd9" },
+    { "notes": [60, 62, 64, 67, 70], "name": "C9" },
+    { "notes": [60, 62, 64, 67, 71], "name": "Cmaj9" },
+    { "notes": [60, 63, 65, 67, 70], "name": "Cm11", "exact": false, "why": "C Eb F G Bb is an m11 with the ninth left out, which is how it is played" },
+    { "notes": [55, 59, 62, 65, 70], "name": "G7#9", "why": "G B D F Bb: the Bb over a major third is the sharp ninth, not a minor third" },
+
+    { "notes": [52, 55, 60], "name": "C/E", "why": "the bass is not the root, so it is a slash chord, not a different chord" },
+    { "notes": [55, 60, 64], "name": "C/G" },
+    { "notes": [53, 62, 65, 69, 72], "name": "F6", "why": "the same notes as Dm7, and with F in the bass F6 is the reading" },
+    { "notes": [53, 62, 65, 69], "name": "Dm/F", "why": "F D A is a D minor triad with F underneath, and nothing is missing from it" },
+    { "notes": [62, 65, 69, 72], "name": "Dm7", "why": "and the same notes with D in the bass are Dm7" },
+    { "notes": [48, 64, 69], "name": "Am/C" },
+    { "notes": [50, 60, 64, 67], "name": "Cadd9/D", "why": "C major over a D: every note is named, and the D is both the ninth and the bass" },
+
+    { "notes": [59, 65, 69], "name": "Bm7b5", "exact": false, "alternatives": ["Dm6/B"],
+      "why": "B F A has no fifth, so it is a best guess, and the same three notes are a D minor sixth without its D" },
+    { "notes": [64, 67, 71, 74], "name": "Em7", "why": "E G B D is a chord in its own right, not a rootless Cmaj9" },
+
+    { "notes": [60], "kind": "notes", "text": "C4" },
+    { "notes": [60, 72], "kind": "notes", "text": "C4 C5, an octave" },
+    { "notes": [60, 67], "kind": "notes", "text": "C4 G4, a fifth" },
+    { "notes": [60, 64], "kind": "notes", "text": "C4 E4, a major third" },
+    { "notes": [59, 65], "kind": "notes", "text": "B3 F4, a tritone", "guesses": ["C#7", "G7"],
+      "why": "a third and a seventh with no root: the jazz shell, and a tritone really is two dominants, spelled the way the player asked" },
+    { "notes": [64, 70], "kind": "notes", "text": "E4 Bb4, a tritone", "guesses": ["C7", "Gb7"],
+      "why": "spelled with flats here, because the player asked for flats" , "spelling": "flats" },
+    { "notes": [], "kind": "none" }
+  ]
+}

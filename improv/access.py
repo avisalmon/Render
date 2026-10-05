@@ -22,3 +22,16 @@ def is_improv_path(path):
     """True for /improv and anything under /improv/, and for nothing that merely
     starts with the same letters (/improvement/)."""
     return path == PREFIX or path.startswith(PREFIX + "/")
+
+
+def profile_for(user):
+    """The player's own profile, made on first visit.
+
+    Not a post_save signal on User: the people who matter here were added to the
+    group long after their account existed, and a signal would also fire for every
+    account on a site where almost nobody plays the piano.
+    """
+    from .models import Player
+
+    profile, _ = Player.objects.get_or_create(user=user)
+    return profile

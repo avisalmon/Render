@@ -613,6 +613,56 @@ says so. Where the browser has no `setSinkId` (Safari, and so an iPad), the pick
 and a note says to choose the output in the device's sound settings; Play works the same. The
 rules are `scheduler.js` (`setPlan`), `play.js` (`canGoLive`) and `output.js`, tested under Node.
 
+**Setup in version 1 so far (SPR-I.3.1).** `/improv/setup/` is where a person's own
+profile lives, made on their first visit to any improv page rather than by a signal on
+the account. It asks the browser for MIDI without sysex, never for the microphone, and
+lists the keyboards it finds, plugged-in ones first. The keyboard is remembered **by
+name**, not by port id, because an id is not promised to be the same next session while
+the name is what the player recognises; so the same piano is picked up again after a
+replug even on a new id. Unplugging and replugging is handled where it happens, with a
+sentence saying what changed, and never needs a reload. Pressing keys shows the note
+names, which is how a player can tell the wiring works before trusting a score. The
+screen also holds the note spelling, where demos sound, the daily goal and the timezone,
+each checked on the page before the server sees it. Where there is no Web MIDI the page
+says so plainly and everything else on it still works. The rules are
+`static/improv/setup.js`, tested under Node; the page script is only glue.
+
+**Reading the piano in version 1 so far (SPR-I.3.2 to I.3.5).** What is held down is named
+on the Setup screen as it is played: every chord quality in the table is tried over every
+root and scored by how much of it is being held and how much is left over, so the table stays
+the only thing that says what a chord is. The bass is preferred as the root; a root that is
+not the bass makes a slash chord rather than a different chord (C, E and G over an E is C/E);
+a complete reading beats an incomplete one with the bass as its root (C, E and A is Am/C, not
+a C6 with no fifth); and a reading that leaves a note of the chord out, or that has to treat
+the lowest note as a foreign bass, is shown as a best guess with the other readings of the
+same notes beside it. Fewer than three notes are never forced into a chord name: they are
+shown as notes and the interval between them, except that a tritone is offered as the two
+dominant sevenths it is the third and seventh of, which is the rootless shell a player
+actually holds. A run of single notes is matched against the scale table over a few seconds,
+and nothing is claimed until five different notes have been heard, because three notes fit a
+dozen scales; the closest fit comes first, counting the notes of the scale left unplayed, and
+a minor pentatonic is told from its relative major pentatonic by which note the run started
+on. The Reference screen (`/improv/reference/`) does the same work in reverse: any chord or
+scale, in any of the twelve keys, lit on a drawn keyboard with the interval written on each
+key, its notes named, and the scales that fit a chord or the chords that fit a scale listed in
+the order the theory table prefers. Everything follows the player's own sharps-or-flats
+setting. The rules are `static/improv/recognize.js` and `reference.js`, tested under Node with
+golden cases, including one that every row of both tables can be reached by playing it.
+
+**Calibration in version 1 so far (SPR-I.3.4).** The Setup screen plays four clicks to find
+the pulse and sixteen more to tap against. Each tap is matched to the click nearest it on the
+performance clock, with the clicks placed where they are *heard* (through
+`getOutputTimestamp`), not where they were scheduled, which is the trap the timing spike
+found. Two taps on one click count once, as a bounce. The mean is stored in
+`Player.latency_offset_ms` and the spread is shown beside it; a run spread over more than
+30 ms, or fewer than eight taps, is refused with a reason rather than quietly stored. Nothing
+throws a tap away for being far from its click, because a tap is always within half a beat of
+*some* click, so a filter like that could only ever fire on the setup with a huge delay that
+most needs reporting. An output that reports more than 100 ms of its own delay is called out,
+because one number cannot put Bluetooth right. The maths is the spike's `timing.js`;
+`calibrate.js` adds only the calibration's own rules. **This sprint is accepted at the piano
+and nowhere else.**
+
 **Library and Editor in version 1 so far (SPR-I.2.5).** `/improv/library/` lists the forty
 seeded progressions (and the player's own) as cards: title, level, genre, key, tempo,
 bar count, the first eight bars as chord names, the tags, and Play or Edit (a preset

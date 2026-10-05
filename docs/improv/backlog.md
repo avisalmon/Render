@@ -55,18 +55,18 @@ and tempo. No judging yet.
 
 ---
 
-## EPIC-I.3: Reading the piano  `TODO`
+## EPIC-I.3: Reading the piano  `IN PROGRESS`
 
 **Goal:** the app knows what you are playing, names it, and knows your setup's
 delay.
 
 | Sprint | What | Traces | Status |
 |---|---|---|---|
-| SPR-I.3.1 | `Player` model and profile created on first visit; the Setup screen; MIDI input remembered and reconnected; hot-plug handled | ch. 4, 8, feature 23 | TODO |
-| SPR-I.3.2 | Chord recognition: pitch classes, bass, slash chords, shell guesses with alternatives, fewer than three notes shown as notes. Golden fixtures under Node | ch. 4, feature 2 | TODO |
-| SPR-I.3.3 | Scale hints: five pitch classes before a name, best fit first | ch. 4, feature 2 | TODO |
-| SPR-I.3.4 | **At the piano.** Calibration: sixteen taps against the click, mean offset stored in `Player.latency_offset_ms`, spread shown, Bluetooth warning | ch. 4, 9, feature 14 | TODO |
-| SPR-I.3.5 | The Reference screen: any chord or scale in any key lit on the keyboard | ch. 8, feature 11 | TODO |
+| SPR-I.3.1 | `Player` model and profile created on first visit; the Setup screen; MIDI input remembered and reconnected; hot-plug handled | ch. 4, 8, feature 23 | DONE 2026-10-05 |
+| SPR-I.3.2 | Chord recognition: pitch classes, bass, slash chords, shell guesses with alternatives, fewer than three notes shown as notes. Golden fixtures under Node | ch. 4, feature 2 | DONE 2026-10-05 |
+| SPR-I.3.3 | Scale hints: five pitch classes before a name, best fit first | ch. 4, feature 2 | DONE 2026-10-05 |
+| SPR-I.3.4 | **At the piano.** Calibration: sixteen taps against the click, mean offset stored in `Player.latency_offset_ms`, spread shown, Bluetooth warning. Built and green 2026-10-05; stays IN PROGRESS until Avi taps it on his own piano | ch. 4, 9, feature 14 | IN PROGRESS |
+| SPR-I.3.5 | The Reference screen: any chord or scale in any key lit on the keyboard | ch. 8, feature 11 | DONE 2026-10-05 |
 
 ---
 

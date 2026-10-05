@@ -205,3 +205,50 @@ class Progression(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Player(models.Model):
+    """The app's own profile for a person, one to one with the shared User.
+
+    Rule 2: an app never changes the shared User. Everything improv needs to know
+    about a person that babook has no business knowing lives here, and the row is
+    made on the person's first visit rather than by a signal, so a player who was
+    added to the group before this app existed gets one too.
+    """
+
+    class NoteNames(models.TextChoices):
+        SHARPS = "sharps", "sharps (C#)"
+        FLATS = "flats", "flats (Db)"
+
+    class DemoOutput(models.TextChoices):
+        PIANO = "piano", "the piano, over MIDI"
+        LAPTOP = "laptop", "the laptop, as a plain tone"
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="improv_player")
+    daily_goal_minutes = models.PositiveSmallIntegerField(
+        default=15, validators=[MinValueValidator(5), MaxValueValidator(240)]
+    )
+    latency_offset_ms = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(-500), MaxValueValidator(500)],
+        help_text="Measured by calibration (SPR-I.3.4). Judging subtracts it from every note time.",
+    )
+    midi_input_name = models.CharField(
+        max_length=120,
+        blank=True,
+        help_text="The keyboard last used, by name: a port's id is not promised to stay the same.",
+    )
+    note_names = models.CharField(max_length=6, choices=NoteNames.choices, default=NoteNames.SHARPS)
+    demo_output = models.CharField(max_length=6, choices=DemoOutput.choices, default=DemoOutput.PIANO)
+    timezone = models.CharField(
+        max_length=40,
+        default="Asia/Jerusalem",
+        help_text="IANA name. The site runs on UTC and a streak is made of the player's own days.",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["id"]
+
+    def __str__(self):
+        return f"improv player {self.user}"

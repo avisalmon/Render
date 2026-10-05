@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import ChordQuality, ChordScale, Progression, Scale, Style, Tag
+from .models import ChordQuality, ChordScale, Player, Progression, Scale, Style, Tag
 
 
 class ChordScaleInline(admin.TabularInline):
@@ -45,3 +45,10 @@ class ProgressionAdmin(admin.ModelAdmin):
     search_fields = ("title", "slug", "chart")
     prepopulated_fields = {"slug": ("title",)}
     filter_horizontal = ("tags",)
+
+
+@admin.register(Player)
+class PlayerAdmin(admin.ModelAdmin):
+    list_display = ("user", "daily_goal_minutes", "latency_offset_ms", "midi_input_name", "note_names", "demo_output", "timezone")
+    list_filter = ("note_names", "demo_output")
+    search_fields = ("user__username", "user__email", "midi_input_name")

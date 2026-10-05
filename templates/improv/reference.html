@@ -1,0 +1,55 @@
+{% extends "improv/base.html" %}
+{% load static %}
+{% block title %}Reference, improv{% endblock %}
+
+{% block content %}
+<div id="reference" class="im-reference"
+     data-api-player="{{ api.player }}"
+     data-api-qualities="{{ api.qualities }}"
+     data-api-scales="{{ api.scales }}"
+     data-api-chord-scales="{{ api.chord_scales }}">
+
+  <h1 class="im-title">Reference</h1>
+  <p id="ref-status" class="im-status" role="status" aria-live="polite">Loading the theory tables.</p>
+
+  <section class="im-panel" aria-label="What to look up">
+    <div class="im-grid">
+      <label class="im-field">Look up
+        <select id="ref-kind" class="im-select">
+          <option value="chord">A chord</option>
+          <option value="scale">A scale</option>
+        </select>
+      </label>
+      <label class="im-field">Key
+        <select id="ref-key" class="im-select"></select>
+      </label>
+      <label class="im-field" id="ref-chord-row">Chord
+        <select id="ref-chord" class="im-select"></select>
+      </label>
+      <label class="im-field" id="ref-scale-row" hidden>Scale
+        <select id="ref-scale" class="im-select"></select>
+      </label>
+    </div>
+  </section>
+
+  <section class="im-panel" aria-label="What it looks like">
+    <h2 class="im-h2" id="ref-name">Nothing chosen yet</h2>
+    <div id="ref-keyboard" class="im-keyboard" aria-label="Keyboard"></div>
+    <p id="ref-notes" class="im-ref-notes"></p>
+    <p id="ref-steps" class="im-note"></p>
+  </section>
+
+  <section class="im-panel" aria-label="What goes with it">
+    <h2 class="im-h2" id="ref-goes-title">What goes with it</h2>
+    <ul id="ref-goes" class="im-list"></ul>
+    <p id="ref-goes-empty" class="im-note" hidden>The theory table has nothing paired with this one yet.</p>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'improv/chart.js' %}"></script>
+<script src="{% static 'improv/reference.js' %}"></script>
+<script src="{% static 'improv/keyboard-view.js' %}"></script>
+<script src="{% static 'improv/reference-page.js' %}"></script>
+{% endblock %}

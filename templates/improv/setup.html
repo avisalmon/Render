@@ -1,0 +1,84 @@
+{% extends "improv/base.html" %}
+{% load static %}
+{% block title %}Setup, improv{% endblock %}
+
+{% block content %}
+<div id="setup" class="im-setup"
+     data-api-player="{{ api.player }}"
+     data-api-qualities="{{ api.qualities }}"
+     data-api-scales="{{ api.scales }}"
+     data-csrf="{{ csrf_token }}">
+
+  <h1 class="im-title">Setup</h1>
+  <p id="setup-status" class="im-status" role="status" aria-live="polite">Loading your setup.</p>
+
+  <section class="im-panel" aria-label="The piano">
+    <h2 class="im-h2">The piano</h2>
+    <p id="midi-state" class="im-note">Looking for MIDI.</p>
+    <div id="midi-row" class="im-field" hidden>
+      <label for="midi-input">Keyboard</label>
+      <select id="midi-input" class="im-select"></select>
+    </div>
+    <p id="midi-help" class="im-note" hidden></p>
+    <button id="midi-allow" class="im-btn" type="button" hidden>Allow MIDI</button>
+    <p class="im-note">Press a few keys to check it: what you play is named here.</p>
+    <p id="heard" class="im-heard" aria-live="off">Nothing yet.</p>
+    <p id="heard-notes" class="im-note im-mono"></p>
+    <p id="scale-fits" class="im-note">Play a run of single notes and the scales they fit are named here.</p>
+    <p id="setup-error" class="im-error" role="alert" hidden></p>
+  </section>
+
+  <section class="im-panel" aria-label="Preferences">
+    <h2 class="im-h2">Preferences</h2>
+    <div class="im-grid">
+      <label class="im-field">Note names
+        <select id="note-names" class="im-select"></select>
+      </label>
+      <label class="im-field">Demos and answers play on
+        <select id="demo-output" class="im-select"></select>
+      </label>
+      <label class="im-field">Daily goal
+        <input id="daily-goal" class="im-input" type="number" min="5" max="240" step="1"> minutes
+      </label>
+      <label class="im-field">Timezone
+        <input id="timezone" class="im-input im-input-wide" type="text" autocomplete="off">
+      </label>
+    </div>
+    <p class="im-note">Your timezone decides when a day ends, which is what a streak counts.</p>
+    <p id="setup-problems" class="im-error" role="alert" hidden></p>
+    <div class="im-row">
+      <button id="save" class="im-btn" type="button" disabled>Save</button>
+    </div>
+  </section>
+
+  <section class="im-panel" aria-label="Timing">
+    <h2 class="im-h2">Timing</h2>
+    <p class="im-note">
+      The app hears the piano over MIDI while the band comes out of the laptop, and each has its
+      own delay. Until that is measured, "on the beat" means nothing.
+    </p>
+    <p id="latency" class="im-status">Not calibrated yet.</p>
+    <div class="im-row">
+      <button id="calibrate" class="im-btn" type="button">Calibrate</button>
+      <span id="cal-count" class="im-mono"></span>
+    </div>
+    <p id="cal-help" class="im-note">A click plays four times to find the pulse, then sixteen more. Tap any one key with each of those sixteen.</p>
+    <p id="cal-result" class="im-status" role="status" aria-live="polite"></p>
+    <p id="cal-warning" class="im-note" hidden></p>
+    <div class="im-row">
+      <button id="cal-save" class="im-btn" type="button" hidden>Save this offset</button>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'improv/midi.js' %}"></script>
+<script src="{% static 'improv/chart.js' %}"></script>
+<script src="{% static 'improv/recognize.js' %}"></script>
+<script src="{% static 'improv/timing.js' %}"></script>
+<script src="{% static 'improv/synth.js' %}"></script>
+<script src="{% static 'improv/calibrate.js' %}"></script>
+<script src="{% static 'improv/setup.js' %}"></script>
+<script src="{% static 'improv/setup-page.js' %}"></script>
+{% endblock %}

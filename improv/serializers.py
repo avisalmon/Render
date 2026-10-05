@@ -2,7 +2,7 @@ from django.db.models import Q
 from rest_framework import serializers
 
 from .grooves import check_groove
-from .models import ChordQuality, ChordScale, Progression, Scale, Style, Tag
+from .models import ChordQuality, ChordScale, Player, Progression, Scale, Style, Tag
 
 
 class RankedScaleSerializer(serializers.ModelSerializer):
@@ -114,3 +114,18 @@ class ProgressionSerializer(OwnedSerializer):
             "is_preset", "is_mine", "created_at", "updated_at",
         ]  # fmt: skip
         read_only_fields = ["slug", "is_preset", "created_at", "updated_at"]
+
+
+class PlayerSerializer(serializers.ModelSerializer):
+    """The player's own profile. `user` is read-only on purpose: the row is reached
+    through the API as the person logged in, and nobody edits whose profile it is."""
+
+    username = serializers.CharField(source="user.username", read_only=True)
+
+    class Meta:
+        model = Player
+        fields = [
+            "id", "username", "daily_goal_minutes", "latency_offset_ms", "midi_input_name",
+            "note_names", "demo_output", "timezone", "created_at",
+        ]  # fmt: skip
+        read_only_fields = ["created_at"]

@@ -1,6 +1,7 @@
+from django.urls import path
 from rest_framework import routers
 
-from .api import ENDPOINTS
+from .api import ENDPOINTS, SINGLETONS
 from .permissions import IsPlayer
 
 
@@ -14,7 +15,9 @@ class PlayerRouter(routers.DefaultRouter):
 
 
 router = PlayerRouter()
-for path, viewset in ENDPOINTS.items():
-    router.register(path, viewset, basename=f"api-{path}")
+for prefix, viewset in ENDPOINTS.items():
+    router.register(prefix, viewset, basename=f"api-{prefix}")
 
-urlpatterns = router.urls
+urlpatterns = router.urls + [
+    path(f"{name}/", view.as_view(), name=f"api-{name}") for name, view in SINGLETONS.items()
+]

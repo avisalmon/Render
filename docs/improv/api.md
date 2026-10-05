@@ -117,6 +117,29 @@ Filters: `?genre=`, `?tag=<slug>`, `?difficulty=<1-5>`, `?mine=1`, `?q=<text>`
 (title or description). Easiest first, then by title. An unknown value, or a
 difficulty that is not a number, gives an empty list.
 
+## Your own profile
+
+### Player
+
+`GET, PUT, PATCH /improv/api/player/`
+
+Your own profile, and the one endpoint with **no id in the route**. There is exactly
+one row per person, made on your first visit to the app, so there is nothing to list
+and nothing to create; an id in the route would only invite asking for somebody
+else's row, which this app will not answer. There is no DELETE either: it would throw
+away the calibration that makes timing mean anything. POST and DELETE answer 405.
+
+`id`, `username` (read-only), `daily_goal_minutes` (5 to 240, default 15),
+`latency_offset_ms` (-500 to 500, default 0, written by calibration and subtracted
+from every note time when a take is judged), `midi_input_name` (the keyboard last
+used, **by name**: a MIDI port's id is not promised to be the same next session),
+`note_names` (`sharps` or `flats`), `demo_output` (`piano`, over MIDI, or `laptop`,
+as a plain tone), `timezone` (an IANA name, default `Asia/Jerusalem`, because the
+site runs on UTC and a streak is made of your own days), `created_at`.
+
+Whose profile it is cannot be changed: `username` and `id` are read-only, and the
+row you get is always the one belonging to the person signed in.
+
 ## Chart grammar
 
 A chart is plain text. It is what a progression stores in its `chart` field, what

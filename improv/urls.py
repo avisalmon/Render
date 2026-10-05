@@ -12,6 +12,8 @@ urlpatterns = [
     path("play/", views.play, name="play"),
     path("library/", views.library, name="library"),
     path("editor/", views.editor, name="editor"),
+    path("setup/", views.setup, name="setup"),
+    path("reference/", views.reference, name="reference"),
     path("spike/", views.spike, name="spike"),
     path("api/", include("improv.api_urls")),
 ]

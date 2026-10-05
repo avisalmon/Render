@@ -9,15 +9,17 @@ player's row does not exist as far as this player can tell.
 """
 
 from django.db.models import Count, Q
-from rest_framework import viewsets
+from rest_framework import generics, viewsets
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import SAFE_METHODS
 
 from .models import ChordQuality, ChordScale, Progression, Scale, Style, Tag
+from .access import profile_for
 from .permissions import IsPlayer
 from .serializers import (
     ChordQualitySerializer,
     ChordScaleSerializer,
+    PlayerSerializer,
     ProgressionSerializer,
     ScaleSerializer,
     StyleSerializer,
@@ -124,6 +126,23 @@ class ProgressionViewSet(OwnedViewSet):
         return rows
 
 
+class PlayerView(generics.RetrieveUpdateAPIView):
+    """The person's own profile: one row, reached without an id.
+
+    A singleton on purpose, and the documented shape in docs/improv/api.md. There is
+    exactly one profile per person, made on their first visit, so there is nothing to
+    create and nothing to list; an id in the route would only invite asking for
+    somebody else's row, which this app will not answer. Delete is absent too: it
+    would throw away the calibration that makes timing mean anything.
+    """
+
+    serializer_class = PlayerSerializer
+    permission_classes = [IsPlayer]
+
+    def get_object(self):
+        return profile_for(self.request.user)
+
+
 REFERENCE_ENDPOINTS = {
     "chord-qualities": ChordQualityViewSet,
     "scales": ScaleViewSet,
@@ -134,4 +153,6 @@ OWNED_ENDPOINTS = {
     "styles": StyleViewSet,
     "progressions": ProgressionViewSet,
 }
+# Not a router endpoint: see PlayerView.
+SINGLETONS = {"player": PlayerView}
 ENDPOINTS = {**REFERENCE_ENDPOINTS, **OWNED_ENDPOINTS}
