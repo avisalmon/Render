@@ -54,6 +54,13 @@
     return remembered || usable[0] || null;
   }
 
+  // Where a demo goes when it goes to the piano: the output with the piano's own name, so
+  // the sound comes out of the instrument the player is sitting at; else the first plugged in.
+  function pickOutput(choices, inputName) {
+    const usable = (choices || []).filter((c) => c.connected);
+    return usable.find((c) => c.name === inputName) || usable[0] || null;
+  }
+
   // What can be played changed: an unplugged port counts as gone, because it cannot be used.
   // The first listing has nothing to compare with, so nothing about it is news.
   function changes(before, after) {
@@ -153,6 +160,7 @@
     BLANK_PROFILE,
     inputChoices,
     pickInput,
+    pickOutput,
     changes,
     describeChange,
     cleanProfile,

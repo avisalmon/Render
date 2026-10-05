@@ -32,17 +32,20 @@
     return keys;
   }
 
-  // notes is a list of { midi, step }: the step is written on the key, so the shape and the
-  // intervals are read in one look.
+  const LIT = ["im-key-on", "im-key-chord", "im-key-guide", "im-key-scale", "im-key-approach", "im-key-pending", "im-key-outside"];
+
+  // notes is a list of { midi, step, className }: the step, if any, is written on the key, so
+  // the shape and the intervals are read in one look; the class, if any, is the colour the
+  // judge gave the note, and plain lit otherwise.
   function light(keys, notes) {
     for (const key of keys.values()) {
-      key.classList.remove("im-key-on");
+      key.classList.remove(...LIT);
       key.textContent = "";
     }
     for (const note of notes || []) {
       const key = keys.get(note.midi);
       if (!key) continue;
-      key.classList.add("im-key-on");
+      key.classList.add(LIT.includes(note.className) ? note.className : "im-key-on");
       if (note.step) {
         const tag = document.createElement("span");
         tag.className = "im-key-step";

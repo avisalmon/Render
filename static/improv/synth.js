@@ -14,8 +14,8 @@
   if (typeof module === "object" && module.exports) module.exports = factory();
   else root.ImprovSynth = factory();
 })(typeof self !== "undefined" ? self : this, function () {
-  const GROUPS = ["drums", "bass", "comp", "click"];
-  const DEFAULT_LEVELS = { drums: 0.8, bass: 0.9, comp: 0.7, click: 0.8 };
+  const GROUPS = ["drums", "bass", "comp", "click", "demo"];
+  const DEFAULT_LEVELS = { drums: 0.8, bass: 0.9, comp: 0.7, click: 0.8, demo: 0.9 };
 
   function midiToHz(midi) {
     return 440 * Math.pow(2, (midi - 69) / 12);
@@ -170,6 +170,24 @@
       tine.stop(when + hold + 0.2);
     }
 
+    // The demo voice: a plain tone for a replayed take or a lesson phrase when the piano's
+    // own MIDI out is not there. Deliberately simple, so it is never mistaken for the band.
+    function demo(out, when, midi, length, v) {
+      const osc = ctx.createOscillator();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(midiToHz(midi), when);
+      const gain = ctx.createGain();
+      const hold = Math.max(0.05, length);
+      gain.gain.setValueAtTime(0, when);
+      gain.gain.linearRampToValueAtTime(0.5 * v, when + 0.01);
+      gain.gain.setTargetAtTime(0.3 * v, when + 0.01, 0.15);
+      gain.gain.setTargetAtTime(0, when + hold, 0.05);
+      osc.connect(gain);
+      gain.connect(out);
+      osc.start(when);
+      osc.stop(when + hold + 0.3);
+    }
+
     function applyGain(name) {
       groups[name].gain.value = muted[name] ? 0 : levels[name];
     }
@@ -189,6 +207,7 @@
           tone(out, at, { from: event.accent ? 1568 : 1046, peak: 0.5 * v, decay: 0.045 });
         } else if (event.voice === "bass") bass(out, at, event.midi, seconds, v);
         else if (event.voice === "comp") comp(out, at, event.midi, seconds, v);
+        else if (event.voice === "demo") demo(out, at, event.midi, seconds, v);
       },
 
       setLevel(name, level) {

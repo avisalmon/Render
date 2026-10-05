@@ -117,3 +117,60 @@
 .im-list { margin: .25rem 0; padding-left: 1.2rem; }
 .im-list-item { margin: .15rem 0; }
 .im-note-inline { color: var(--im-muted); font-size: .85rem; }
+
+/* Live feedback (SPR-I.4.2) */
+.im-feedback { font-size: 1.05rem; }
+.im-key-white.im-key-chord { background: #6fbf7a; }
+.im-key-black.im-key-chord { background: #3f8f4a; }
+.im-key-white.im-key-guide { background: #a4f0a8; }
+.im-key-black.im-key-guide { background: #5fc46a; }
+.im-key-white.im-key-scale { background: #7fb2e8; }
+.im-key-black.im-key-scale { background: #3f78b8; }
+.im-key-white.im-key-approach, .im-key-white.im-key-pending { background: #e8c06a; }
+.im-key-black.im-key-approach, .im-key-black.im-key-pending { background: #b88a1c; }
+.im-key-white.im-key-pending, .im-key-black.im-key-pending { opacity: .75; }
+.im-key-white.im-key-outside { background: #e8907f; }
+.im-key-black.im-key-outside { background: #a84d3f; }
+
+/* Takes (SPR-I.4.4) */
+.im-takes { display: block; }
+.im-takes-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .75rem; }
+.im-take { border: 1px solid #2a2d33; border-radius: .6rem; padding: .8rem 1rem; background: #181b20; display: flex; flex-direction: column; gap: .35rem; }
+.im-take-kept { border-color: var(--im-accent); }
+.im-take-head { display: flex; justify-content: space-between; gap: .75rem; align-items: baseline; flex-wrap: wrap; }
+.im-take-title { font-weight: 600; }
+.im-take-when { color: var(--im-muted); font-size: .85rem; }
+.im-take-summary { margin: 0; color: var(--im-muted); font-size: .9rem; }
+
+/* Lessons (SPR-I.5.1) */
+.im-lessons, .im-lesson { display: block; }
+.im-authorship { font-style: italic; }
+.im-h3 { font-size: 1rem; margin: 1rem 0 .35rem; }
+.im-prose { max-width: 42rem; }
+.im-prose-p { margin: .5rem 0; }
+.im-prose-list { margin: .5rem 0; padding-left: 1.4rem; }
+.im-prose code { background: #20242b; padding: 0 .3rem; border-radius: .25rem; }
+.im-exercise { border-color: var(--im-accent); }
+.im-exercise-text { margin: .25rem 0; }
+
+/* Progress (SPR-I.5.2) */
+.im-level-line { margin: 0 0 .25rem; font-weight: 600; color: var(--im-accent); }
+.im-state { font-size: .8rem; border: 1px solid #3a3e46; border-radius: 1rem; padding: 0 .55rem; color: var(--im-muted); white-space: nowrap; }
+.im-state-done { border-color: var(--im-accent); color: var(--im-accent); }
+.im-locked { opacity: .7; }
+
+/* Today and Progress (SPR-I.6.1) */
+.im-today-goal { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.5rem; }
+.im-ring { --pct: 0; width: 7.5rem; height: 7.5rem; border-radius: 50%; display: grid; place-items: center; flex: none;
+  background: conic-gradient(var(--im-accent) calc(var(--pct) * 1%), #2a2d33 0); position: relative; }
+.im-ring::before { content: ""; position: absolute; inset: .7rem; border-radius: 50%; background: var(--im-bg); }
+.im-ring-label { position: relative; font-weight: 600; text-align: center; font-size: .9rem; padding: 0 .4rem; }
+.im-ring[data-met="yes"] .im-ring-label { color: var(--im-accent); }
+.im-xp { width: 100%; max-width: 28rem; height: .8rem; accent-color: var(--im-accent); }
+.im-calendar { display: grid; grid-template-columns: repeat(7, minmax(0, 2.6rem)); gap: .3rem; margin: .5rem 0; }
+.im-cal-head { font-size: .75rem; color: var(--im-muted); text-align: center; }
+.im-cal-day { height: 2.2rem; display: grid; place-items: center; border-radius: .35rem; font-size: .8rem; border: 1px solid #2a2d33; color: var(--im-muted); }
+.im-cal-day[data-state="practised"] { border-color: var(--im-accent); color: var(--im-fg); }
+.im-cal-day[data-state="met"] { background: var(--im-accent); border-color: var(--im-accent); color: #14161a; font-weight: 600; }
+.im-cal-day[data-state="future"] { opacity: .35; border-style: dashed; }
+.im-cal-day[data-today="yes"] { outline: 2px solid var(--im-fg); outline-offset: 1px; }

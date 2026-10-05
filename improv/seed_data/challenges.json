@@ -1,0 +1,70 @@
+{
+  "_about": "Standalone challenges: exercises with no lesson, always open, all offered to the daily workout. One for each kind of weakness the weakness report can name, on progressions from the library. Drafted by AI, to be tuned once Avi has played them.",
+  "challenges": [
+    {
+      "slug": "challenge-blues-chord-tones",
+      "title": "Chord tones through the blues",
+      "instructions": "Play a full twelve-bar blues and land a note of the chord on beat 1 and beat 3 of every bar. Between those beats you may play whatever you like. The chord changes at the start of the bar, so listen for the four in bar 5 and the five in bar 9.",
+      "progression": "twelve-bar-blues",
+      "key": "C",
+      "tempo": 90,
+      "bars": 12,
+      "scoring_kind": "chord_tones_on_beats",
+      "scoring_params": {"beats": [1, 3]},
+      "pass_score": 70,
+      "xp": 40
+    },
+    {
+      "slug": "challenge-turnaround-scale",
+      "title": "Stay in the scale around the turnaround",
+      "instructions": "Four bars of a one six two five. Play a steady line, eighth notes if you can, and keep every note inside the scale that fits the chord of that bar. If a bar sounds wrong, check the chord first: the scale changes with it.",
+      "progression": "turnaround-i-vi-ii-v",
+      "key": "C",
+      "tempo": 100,
+      "bars": 4,
+      "scoring_kind": "scale_only",
+      "scoring_params": {},
+      "pass_score": 75,
+      "xp": 30
+    },
+    {
+      "slug": "challenge-jazz-blues-guide-tones",
+      "title": "Guide tones through a jazz blues",
+      "instructions": "A jazz blues has a chord change almost every bar. Play the third or the seventh of each chord, and make each one land a step from the one before. Aim for a line that moves smoothly instead of jumping.",
+      "progression": "jazz-blues",
+      "key": "C",
+      "tempo": 100,
+      "bars": 12,
+      "scoring_kind": "guide_tones",
+      "scoring_params": {"step": 2},
+      "pass_score": 65,
+      "xp": 50
+    },
+    {
+      "slug": "challenge-bossa-rhythm",
+      "title": "A bossa rhythm over the two five one",
+      "instructions": "Play the same rhythm in every bar: a note on beat 1, on the and of 2, on beat 3 and on the and of 4. Any notes that fit the chord. The rhythm is the whole point, so keep it even from the first bar to the last.",
+      "progression": "bossa-ii-v-i-loop",
+      "key": "C",
+      "tempo": 110,
+      "bars": 4,
+      "scoring_kind": "rhythm_motif",
+      "scoring_params": {"pattern": [0, 1.5, 2, 3.5]},
+      "pass_score": 70,
+      "xp": 30
+    },
+    {
+      "slug": "challenge-minor-blues-approach",
+      "title": "Approach the chord in a minor blues",
+      "instructions": "In a twelve-bar minor blues, play a note a half step above or below a chord tone just before beat 1 of the bar, then land on that chord tone on beat 1. Do it in every bar and let the approach note lead you in.",
+      "progression": "minor-blues",
+      "key": "Cm",
+      "tempo": 90,
+      "bars": 12,
+      "scoring_kind": "approach_notes",
+      "scoring_params": {"beats": [1]},
+      "pass_score": 65,
+      "xp": 50
+    }
+  ]
+}

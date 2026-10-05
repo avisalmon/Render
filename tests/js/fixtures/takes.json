@@ -1,0 +1,144 @@
+{
+  "comment": "SPR-I.4.1 golden takes for the judge. Every case is over | Dm7 | G7 | Cmaj7 | % | in C, 4/4, 120 bpm (a beat is 500 ms, a bar 2000 ms), t_ms 0 being the downbeat of bar 1 after the count-in. Dm7 is D F A C with F and C the guide tones and D Dorian its first-choice scale; G7 is G B D F over G Mixolydian; Cmaj7 is C E G B over C Major. These are hand-checked musical judgements: change one only with a reason and a judge_version bump.",
+  "chart": "| Dm7 | G7 | Cmaj7 | % |",
+  "key": "C",
+  "bpm": 120,
+  "cases": [
+    {
+      "name": "every note a chord tone, on the beat: full marks, right on the beat",
+      "events": [
+        [0, 62], [500, 65], [1000, 69], [1500, 72],
+        [2000, 67], [2500, 71], [3000, 74], [3500, 77],
+        [4000, 72], [4500, 76], [5000, 79], [5500, 83],
+        [6000, 72]
+      ],
+      "classes": ["chord", "chord", "chord", "chord", "chord", "chord", "chord", "chord", "chord", "chord", "chord", "chord", "chord"],
+      "guides": [false, true, false, true, false, true, false, true, false, true, false, true, false],
+      "chords": ["Dm7", "Dm7", "Dm7", "Dm7", "G7", "G7", "G7", "G7", "Cmaj7", "Cmaj7", "Cmaj7", "Cmaj7", "Cmaj7"],
+      "scoring": { "kind": "chord_tones_on_beats", "params": {} },
+      "score": 100,
+      "timing": { "meanMs": 0, "spreadMs": 0, "withinPct": 100, "words": "right on the beat" }
+    },
+    {
+      "name": "a scale tone and an outside note over Dm7, each called what it is",
+      "events": [[0, 62], [500, 64], [1000, 63], [1500, 69]],
+      "classes": ["chord", "scale", "outside", "chord"],
+      "why": "E is in D Dorian but not in Dm7; Eb is in neither, and the A that follows it is not the chord tone a semitone away, so it is not an approach",
+      "scoring": { "kind": "scale_only", "params": {} },
+      "score": 75,
+      "metrics": { "chordTonePct": 50, "scalePct": 25, "outsidePct": 25, "approachPct": 0 }
+    },
+    {
+      "name": "the same notes scored on chord tones on the beat give half marks",
+      "events": [[0, 62], [500, 64], [1000, 63], [1500, 69]],
+      "scoring": { "kind": "chord_tones_on_beats", "params": {} },
+      "score": 50
+    },
+    {
+      "name": "an outside note that steps into a chord tone within a beat is an approach note",
+      "events": [[0, 62], [1000, 63], [1500, 62]],
+      "classes": ["chord", "approach", "chord"],
+      "why": "Eb is outside Dm7 and D Dorian, a semitone below D, and D lands 500 ms later",
+      "scoring": { "kind": "scale_only", "params": {} },
+      "score": 67,
+      "metrics": { "approachPct": 33 }
+    },
+    {
+      "name": "an outside note followed by the chord tone too late is only outside",
+      "events": [[0, 62], [1000, 63], [1600, 62]],
+      "classes": ["chord", "outside", "chord"],
+      "why": "D comes 600 ms after the Eb, more than the beat an approach is allowed"
+    },
+    {
+      "name": "an outside note followed by a chord tone that is not its neighbour is only outside",
+      "events": [[0, 62], [1000, 63], [1200, 69]],
+      "classes": ["chord", "outside", "chord"]
+    },
+    {
+      "name": "a note just before the chord change is judged against the chord it anticipates",
+      "events": [[1700, 71], [1900, 71]],
+      "classes": ["scale", "chord"],
+      "guides": [false, true],
+      "chords": ["Dm7", "G7"],
+      "why": "B at 1900 is 100 ms before G7, inside the half-beat look-ahead, so it is G7's third; B at 1700 is still over Dm7, where it is a Dorian scale tone"
+    },
+    {
+      "name": "the fourth bar repeats the third, and the loop comes round to Dm7 again",
+      "events": [[6000, 72], [6500, 76], [8000, 62], [8500, 65]],
+      "chords": ["Cmaj7", "Cmaj7", "Dm7", "Dm7"],
+      "classes": ["chord", "chord", "chord", "chord"]
+    },
+    {
+      "name": "notes a steady 30 ms late are told so in words, and the offset puts it right",
+      "events": [[30, 62], [530, 65], [1030, 69], [1530, 72]],
+      "timing": { "meanMs": 30, "spreadMs": 0, "withinPct": 100, "words": "you drag by 30 ms" },
+      "withOffset": { "latencyOffsetMs": 30, "timing": { "meanMs": 0, "words": "right on the beat" } }
+    },
+    {
+      "name": "notes early are rushing",
+      "events": [[-20, 62], [480, 65], [980, 69], [1480, 72]],
+      "timing": { "meanMs": -20, "words": "you rush by 20 ms" },
+      "why": "the first note is before t 0 but inside half a beat of it, so it is a note on beat 1, not a count-in note"
+    },
+    {
+      "name": "a note more than a tenth of a beat off is outside the tolerance",
+      "events": [[0, 62], [580, 65], [1000, 69], [1500, 72]],
+      "timing": { "withinPct": 75 },
+      "why": "the tolerance at 120 bpm is 50 ms; 80 ms late is outside it"
+    },
+    {
+      "name": "free play has metrics and no score",
+      "events": [[0, 62], [500, 64], [1000, 63]],
+      "scoring": { "kind": "free_play", "params": {} },
+      "score": null,
+      "metrics": { "chordTonePct": 33 }
+    },
+    {
+      "name": "chord tones on the named beats only count the notes on those beats",
+      "events": [[0, 62], [500, 63], [1000, 69], [1500, 63]],
+      "scoring": { "kind": "chord_tones_on_beats", "params": { "beats": [1, 3] } },
+      "score": 100,
+      "why": "the Ebs on beats 2 and 4 are outside, but only beats 1 and 3 are asked about"
+    },
+    {
+      "name": "a note too far from any named beat is not a note on that beat",
+      "events": [[0, 62], [250, 69], [1000, 69]],
+      "scoring": { "kind": "chord_tones_on_beats", "params": { "beats": [1, 3] } },
+      "score": 100,
+      "onBeat": [true, false, true],
+      "why": "the A at 250 ms sits between beats 1 and 2, so it is nobody's beat and is not counted either way"
+    },
+    {
+      "name": "notes during the count-in are not judged, and the take still scores",
+      "events": [[-1500, 60], [-1000, 60], [0, 62], [500, 65]],
+      "ignored": 2,
+      "classes": ["chord", "chord"],
+      "scoring": { "kind": "chord_tones_on_beats", "params": {} },
+      "score": 100
+    },
+    {
+      "name": "no notes at all is nought, not a crash",
+      "events": [],
+      "scoring": { "kind": "chord_tones_on_beats", "params": {} },
+      "score": 0,
+      "timing": { "meanMs": null, "words": "no notes yet" }
+    },
+    {
+      "name": "an eighth note is on the eighth grid and off the beat grid",
+      "events": [[0, 62], [250, 64]],
+      "grid": "eighth",
+      "timing": { "meanMs": 0 },
+      "onOtherGrid": { "grid": "beat", "meanMs": 125 },
+      "why": "on the beat grid the second note is 250 ms from both beats, and the earlier one is taken, so it reads 250 late; the mean over both notes is 125"
+    },
+    {
+      "name": "a swung off-beat is on time on the swung grid and late on the straight one",
+      "events": [[0, 62], [335, 64]],
+      "swingRatio": 0.67,
+      "grid": "swung",
+      "timing": { "meanMs": 0 },
+      "onOtherGrid": { "grid": "eighth", "meanMs": 43 },
+      "why": "at 0.67 the off-beat lands 335 ms into the beat; the straight eighth is at 250, so the note is 85 late there and the mean over both notes is 42.5, rounded up"
+    }
+  ]
+}

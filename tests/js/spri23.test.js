@@ -678,7 +678,7 @@ test("each part has its own level and mute, so the comping can be silenced to he
   synth.setMuted("drums", true);
   synth.setMuted("drums", false);
   assert.equal(drums.gain.value, 0.25, "unmuting brings back the level that was set");
-  assert.deepEqual(synth.groups, ["drums", "bass", "comp", "click"]);
+  assert.deepEqual(synth.groups, ["drums", "bass", "comp", "click", "demo"], "the band's four parts, and the demo voice (SPR-I.4.4)");
 });
 
 test("a whole planned bar goes through the synth without a single bad automation value", () => {

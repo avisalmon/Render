@@ -2,7 +2,8 @@ from django.db.models import Q
 from rest_framework import serializers
 
 from .grooves import check_groove
-from .models import ChordQuality, ChordScale, Player, Progression, Scale, Style, Tag
+from .models import ChordQuality, ChordScale, Completion, Exercise, Lesson, Phrase, Player, PracticeSession, Progression, Scale, Style, Tag, Take
+from .teaching import check_notes
 
 
 class RankedScaleSerializer(serializers.ModelSerializer):
@@ -129,3 +130,187 @@ class PlayerSerializer(serializers.ModelSerializer):
             "note_names", "demo_output", "timezone", "created_at",
         ]  # fmt: skip
         read_only_fields = ["created_at"]
+
+
+class PracticeSessionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PracticeSession
+        fields = ["id", "started_at", "ended_at", "active_seconds"]
+        read_only_fields = ["started_at"]
+
+
+class VisibleProgressionField(serializers.PrimaryKeyRelatedField):
+    def get_queryset(self):
+        user = self.context["request"].user
+        return Progression.objects.filter(Q(is_preset=True) | Q(owner=user))
+
+
+class OwnSessionField(serializers.PrimaryKeyRelatedField):
+    def get_queryset(self):
+        return PracticeSession.objects.filter(player__user=self.context["request"].user)
+
+
+class VisibleExerciseField(serializers.SlugRelatedField):
+    """An exercise a take may be played for: a challenge, or one of a published lesson. The
+    superuser who is reading the drafts may play those too."""
+
+    def get_queryset(self):
+        return visible_exercises(self.context["request"].user)
+
+
+def visible_lessons(user):
+    rows = Lesson.objects.all()
+    return rows if user.is_superuser else rows.filter(status=Lesson.Status.PUBLISHED)
+
+
+def visible_exercises(user):
+    rows = Exercise.objects.select_related("lesson", "progression")
+    return rows if user.is_superuser else rows.filter(Q(lesson__isnull=True) | Q(lesson__status=Lesson.Status.PUBLISHED))
+
+
+class PhraseSerializer(OwnedSerializer):
+    class Meta:
+        model = Phrase
+        fields = ["id", "name", "slug", "kind", "notes", "length_beats", "chart_context", "written_in_key", "is_preset", "is_mine"]
+        read_only_fields = ["slug", "is_preset"]
+        extra_kwargs = {"length_beats": {"coerce_to_string": False}}
+
+    def validate(self, attrs):
+        def value(name):
+            return attrs[name] if name in attrs else getattr(self.instance, name, None)
+
+        problem = check_notes(value("notes"), value("length_beats"))
+        if problem:
+            raise serializers.ValidationError({"notes": [problem]})
+        return attrs
+
+
+class LessonSerializer(serializers.ModelSerializer):
+    progression_slug = serializers.CharField(source="progression.slug", default=None, read_only=True)
+    prerequisite = serializers.SlugRelatedField(slug_field="slug", read_only=True)
+    exercises = serializers.SerializerMethodField()
+    state = serializers.SerializerMethodField()
+    exercises_done = serializers.SerializerMethodField()
+    exercises_total = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Lesson
+        fields = [
+            "id", "track", "order", "title", "slug", "level", "summary", "explanation", "demo_phrase",
+            "progression", "progression_slug", "style", "prerequisite", "exercises", "authorship", "status",
+            "state", "exercises_done", "exercises_total", "created_at", "updated_at",
+        ]  # fmt: skip
+        read_only_fields = fields
+
+    def _state(self, obj, key):
+        return self.context.get("lesson_states", {}).get(obj.pk, {}).get(key)
+
+    def get_state(self, obj):
+        return self._state(obj, "state")
+
+    def get_exercises_done(self, obj):
+        return self._state(obj, "exercises_done")
+
+    def get_exercises_total(self, obj):
+        return self._state(obj, "exercises_total")
+
+    def get_exercises(self, obj):
+        return [e.slug for e in sorted(obj.exercises.all(), key=lambda e: (e.order, e.pk))]
+
+
+class ExerciseSerializer(serializers.ModelSerializer):
+    lesson = serializers.SlugRelatedField(slug_field="slug", read_only=True)
+    progression_slug = serializers.CharField(source="progression.slug", read_only=True)
+    completed = serializers.SerializerMethodField()
+    locked = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Exercise
+        fields = [
+            "id", "slug", "lesson", "order", "title", "instructions", "progression", "progression_slug", "key",
+            "tempo", "style", "bars", "scoring_kind", "scoring_params", "pass_score", "xp", "daily_eligible",
+            "completed", "locked",
+        ]  # fmt: skip
+        read_only_fields = fields
+
+    def get_completed(self, obj):
+        return obj.pk in self.context.get("done_exercises", ())
+
+    def get_locked(self, obj):
+        if obj.lesson_id is None:
+            return False
+        return self.context.get("lesson_states", {}).get(obj.lesson_id, {}).get("state") == "locked"
+
+
+class CompletionSerializer(serializers.ModelSerializer):
+    exercise = serializers.SlugRelatedField(slug_field="slug", read_only=True)
+    exercise_title = serializers.CharField(source="exercise.title", read_only=True)
+    lesson = serializers.CharField(source="exercise.lesson.slug", default=None, read_only=True)
+
+    class Meta:
+        model = Completion
+        fields = ["id", "exercise", "exercise_title", "lesson", "take", "xp_awarded", "completed_at"]
+        read_only_fields = fields
+
+
+MOST_EVENTS = 20000
+
+
+class TakeSerializer(serializers.ModelSerializer):
+    """What the page posts after a take, checked for shape and range only. The server
+    does not re-judge (data model, section 11): it believes the score for now, and it
+    keeps the events so a later judge can disagree with a reason."""
+
+    session = OwnSessionField()
+    progression = VisibleProgressionField(required=False, allow_null=True)
+    style = VisibleStyleField(required=False, allow_null=True)
+    exercise = VisibleExerciseField(slug_field="slug", required=False, allow_null=True)
+    completion = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Take
+        fields = [
+            "id", "session", "progression", "style", "exercise", "chart", "home_key", "key", "time_signature", "tempo", "swing_ratio",
+            "loop_from", "loop_to", "started_at", "duration_ms", "bars", "events", "score",
+            "metrics", "judge_version", "is_kept", "completion", "created_at",
+        ]  # fmt: skip
+        read_only_fields = ["created_at", "completion"]
+
+    def get_completion(self, obj):
+        """What this take earned, if it was the one that passed the exercise. Only the server
+        makes a completion, so there is nothing here the client can send."""
+        done = getattr(obj, "completion", None)
+        return {"id": done.pk, "xp_awarded": done.xp_awarded} if done else None
+
+    def validate_events(self, events):
+        if not isinstance(events, list):
+            raise serializers.ValidationError("events is a list.")
+        if len(events) > MOST_EVENTS:
+            raise serializers.ValidationError(f"A take holds at most {MOST_EVENTS} events.")
+        for i, e in enumerate(events):
+            ok = (
+                isinstance(e, dict)
+                and isinstance(e.get("t_ms"), int) and not isinstance(e.get("t_ms"), bool)
+                and e.get("type") in ("on", "off")
+                and isinstance(e.get("note"), int) and 0 <= e["note"] <= 127
+                and isinstance(e.get("velocity"), int) and 0 <= e["velocity"] <= 127
+            )
+            if not ok:
+                raise serializers.ValidationError(f"event {i} is not {{t_ms, type: on/off, note 0..127, velocity 0..127}}.")
+        return events
+
+    def validate_metrics(self, metrics):
+        if not isinstance(metrics, dict):
+            raise serializers.ValidationError("metrics is an object.")
+        return metrics
+
+    def validate(self, attrs):
+        def value(name):
+            return attrs[name] if name in attrs else getattr(self.instance, name, None)
+
+        if value("loop_to") is not None and value("loop_from") is not None and value("loop_to") <= value("loop_from"):
+            raise serializers.ValidationError({"loop_to": ["loop_to has to be past loop_from."]})
+        if value("bars") is not None and value("loop_to") is not None and value("loop_from") is not None:
+            if value("bars") != value("loop_to") - value("loop_from"):
+                raise serializers.ValidationError({"bars": ["bars has to be the number of bars between loop_from and loop_to."]})
+        return attrs

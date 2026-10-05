@@ -1,0 +1,67 @@
+{% extends "improv/base.html" %}
+{% load static %}
+{% block title %}Lesson, improv{% endblock %}
+
+{% block content %}
+<div id="lesson" class="im-lesson"
+     data-lesson="{{ slug }}"
+     data-api-lessons="{{ api.lessons }}"
+     data-api-exercises="{{ api.exercises }}"
+     data-api-summary="{{ api.summary }}"
+     data-api-phrases="{{ api.phrases }}"
+     data-api-progressions="{{ api.progressions }}"
+     data-api-styles="{{ api.styles }}"
+     data-api-qualities="{{ api.qualities }}"
+     data-api-player="{{ api.player }}"
+     data-play-url="{{ play_url }}"
+     data-lessons-url="{{ lessons_url }}">
+
+  <div class="im-play-head">
+    <h1 class="im-title" id="lesson-title">Lesson</h1>
+    <p id="lesson-status" class="im-status" role="status" aria-live="polite">Loading the lesson.</p>
+  </div>
+  <p id="lesson-meta" class="im-note"></p>
+  <p id="lesson-level" class="im-level-line"></p>
+  <p id="lesson-lock" class="im-note" role="status" hidden></p>
+  <p id="lesson-authorship" class="im-note im-authorship" hidden></p>
+  <p><a class="im-btn im-btn-quiet im-btn-link" href="{{ lessons_url }}">All lessons</a></p>
+
+  <div id="lesson-body" hidden>
+    <section class="im-panel" aria-label="Read">
+      <h2 class="im-h2">Read</h2>
+      <div id="lesson-text" class="im-prose"></div>
+    </section>
+
+    <section class="im-panel" aria-label="Hear">
+      <div class="im-play-head">
+        <h2 class="im-h2">Hear</h2>
+        <button id="hear-toggle" class="im-btn" type="button">Hear it</button>
+      </div>
+      <p id="hear-status" class="im-status" role="status" aria-live="polite"></p>
+      <div id="hear-chart" class="im-chart" aria-label="Chart"></div>
+      <p id="hear-output" class="im-note"></p>
+      <p id="hear-error" class="im-error" role="alert" hidden></p>
+    </section>
+
+    <section class="im-panel" aria-label="Play">
+      <h2 class="im-h2">Play</h2>
+      <ul id="lesson-exercises" class="im-takes-list"></ul>
+      <p id="lesson-no-exercises" class="im-note" hidden>This lesson has nothing to play yet.</p>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'improv/chart.js' %}"></script>
+<script src="{% static 'improv/band.js' %}"></script>
+<script src="{% static 'improv/scheduler.js' %}"></script>
+<script src="{% static 'improv/synth.js' %}"></script>
+<script src="{% static 'improv/chart-view.js' %}"></script>
+<script src="{% static 'improv/play.js' %}"></script>
+<script src="{% static 'improv/midi.js' %}"></script>
+<script src="{% static 'improv/setup.js' %}"></script>
+<script src="{% static 'improv/timing.js' %}"></script>
+<script src="{% static 'improv/lessons.js' %}"></script>
+<script src="{% static 'improv/lesson-page.js' %}"></script>
+{% endblock %}

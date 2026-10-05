@@ -1,9 +1,63 @@
 {% extends "improv/base.html" %}
+{% load static %}
+{% block title %}Today, improv{% endblock %}
+
 {% block content %}
-<h1 class="im-title">improv</h1>
-<p class="im-lead">Piano improvisation practice. The app is being built; the band and the charts come first.</p>
-<p>
-  <a class="im-btn im-btn-link" href="{% url 'improv:play' %}">Open Play</a>
-  <a class="im-btn im-btn-link" href="{% url 'improv:library' %}">Browse the library</a>
-</p>
+<div id="today" class="im-lessons"
+     data-api-practice="{{ api.practice }}"
+     data-api-workout="{{ api.workout }}"
+     data-api-summary="{{ api.summary }}"
+     data-api-continue="{{ api.continue }}"
+     data-play-url="{{ play_url }}"
+     data-lessons-url="{{ lessons_url }}">
+
+  <div class="im-play-head">
+    <h1 class="im-title">Today</h1>
+    <p id="today-status" class="im-status" role="status" aria-live="polite">Loading today.</p>
+  </div>
+
+  <section class="im-panel im-today-goal" aria-label="Daily goal">
+    <div id="today-ring" class="im-ring" role="img" aria-label="Daily goal">
+      <span id="today-ring-label" class="im-ring-label"></span>
+    </div>
+    <div>
+      <p id="today-goal" class="im-level-line"></p>
+      <p id="today-streak" class="im-level-line"></p>
+      <p id="today-level" class="im-note"></p>
+      <p class="im-note">The goal and the timezone are set in <a href="{{ setup_url }}">Setup</a>. Time counts while the band is running and for ten seconds after each note.</p>
+    </div>
+  </section>
+
+  <section class="im-panel" aria-label="Today's workout">
+    <h2 class="im-h2">Today's workout</h2>
+    <p id="workout-status" class="im-level-line">Loading the workout.</p>
+    <ul id="workout-list" class="im-takes-list"></ul>
+    <p id="workout-empty" class="im-note" hidden>Nothing to pick yet. Open a lesson and the workout fills up.</p>
+    <p class="im-note">The same three all day, a new set tomorrow.</p>
+  </section>
+
+  <section class="im-panel" aria-label="Continue">
+    <h2 class="im-h2">Your lessons</h2>
+    <p id="continue-line" class="im-level-line">Loading your lessons.</p>
+    <p>
+      <a id="continue-link" class="im-btn im-btn-link" href="{{ lessons_url }}" hidden>Start</a>
+      <a class="im-btn im-btn-link im-btn-quiet" href="{{ lessons_url }}">All lessons</a>
+    </p>
+  </section>
+
+  <section class="im-panel" aria-label="Free play">
+    <h2 class="im-h2">Or just play</h2>
+    <p>
+      <a class="im-btn im-btn-link" href="{{ play_url }}">Open Play</a>
+      <a class="im-btn im-btn-link im-btn-quiet" href="{{ library_url }}">Browse the library</a>
+    </p>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'improv/practice.js' %}"></script>
+<script src="{% static 'improv/workout.js' %}"></script>
+<script src="{% static 'improv/today.js' %}"></script>
+<script src="{% static 'improv/today-page.js' %}"></script>
 {% endblock %}

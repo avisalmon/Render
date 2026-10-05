@@ -1,0 +1,44 @@
+{% extends "improv/base.html" %}
+{% load static %}
+{% block title %}Practice, improv{% endblock %}
+
+{% block content %}
+<div id="practice" class="im-lessons"
+     data-api-practice="{{ api.practice }}"
+     data-api-workout="{{ api.workout }}"
+     data-play-url="{{ play_url }}">
+
+  <div class="im-play-head">
+    <h1 class="im-title">Practice</h1>
+    <p id="practice-status" class="im-status" role="status" aria-live="polite">Loading your practice.</p>
+  </div>
+
+  <section class="im-panel" aria-label="Today's workout">
+    <h2 class="im-h2">Today's workout</h2>
+    <p id="workout-status" class="im-level-line">Loading the workout.</p>
+    <ul id="workout-list" class="im-takes-list"></ul>
+    <p id="workout-empty" class="im-note" hidden>Nothing to pick yet. Open a lesson and the workout fills up.</p>
+    <p class="im-note">The same three all day, a new set tomorrow.</p>
+  </section>
+
+  <section class="im-panel" aria-label="Today">
+    <p id="practice-goal" class="im-level-line"></p>
+    <p id="practice-streak" class="im-level-line"></p>
+    <p id="practice-best" class="im-note"></p>
+    <p id="practice-zone" class="im-note"></p>
+    <p class="im-note">Time counts while the band is running, and for ten seconds after each note you play. The daily goal and the timezone are set in <a href="{{ setup_url }}">Setup</a>.</p>
+  </section>
+
+  <section class="im-panel" aria-label="Log">
+    <h2 class="im-h2">The last thirty days</h2>
+    <ul id="practice-log" class="im-takes-list"></ul>
+    <p id="practice-empty" class="im-note" hidden>No practice yet. Press Play and the minutes land here.</p>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'improv/practice.js' %}"></script>
+<script src="{% static 'improv/workout.js' %}"></script>
+<script src="{% static 'improv/practice-page.js' %}"></script>
+{% endblock %}

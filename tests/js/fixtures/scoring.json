@@ -1,0 +1,144 @@
+{
+  "comment": "SPR-I.4.5 golden cases for the scoring kinds beyond the first three, over the same chart as takes.json: | Dm7 | G7 | Cmaj7 | % | in C, 4/4, 120 bpm (a beat is 500 ms, a bar 2000 ms). Dm7 guide tones are F and C, G7's are B and F, Cmaj7's are E and B. Hand-checked musical judgements: change one only with a reason and a judge_version bump.",
+  "chart": "| Dm7 | G7 | Cmaj7 | % |",
+  "key": "C",
+  "bpm": 120,
+  "cases": [
+    {
+      "name": "guide tones: a line of thirds and sevenths that steps from chord to chord is full marks",
+      "events": [[0, 72], [2000, 71], [3000, 65], [4000, 64]],
+      "scoring": { "kind": "guide_tones", "params": {} },
+      "score": 100,
+      "why": "C the seventh of Dm7 steps down to B the third of G7; F the seventh of G7 steps down to E the third of Cmaj7"
+    },
+    {
+      "name": "guide tones: a root is not a guide tone, and a leap into the next chord is not a connection",
+      "events": [[0, 74], [2000, 71], [3000, 65], [4000, 64]],
+      "scoring": { "kind": "guide_tones", "params": {} },
+      "score": 67,
+      "why": "three of four notes are guide tones; of the two chord changes, D to B is a leap and only F to E connects: (3 + 1) of (4 + 2)"
+    },
+    {
+      "name": "guide tones: a step of a whole tone still connects, a minor third does not",
+      "events": [[0, 65], [2000, 67], [2500, 71], [3000, 65], [4000, 64]],
+      "scoring": { "kind": "guide_tones", "params": {} },
+      "score": 71,
+      "why": "F to G into G7 is a whole tone but G is the root, not a guide tone, so that change does not connect; F to E does: (4 + 1) of (5 + 2)"
+    },
+    {
+      "name": "guide tones: nothing played is nought",
+      "events": [],
+      "scoring": { "kind": "guide_tones", "params": {} },
+      "score": 0
+    },
+    {
+      "name": "approach notes: every target on the named beats reached from a half step is full marks",
+      "events": [[500, 63], [1000, 62], [1800, 66], [2000, 67]],
+      "scoring": { "kind": "approach_notes", "params": { "beats": [1, 3] } },
+      "score": 100,
+      "why": "Eb into D on beat 3 of Dm7, F# into G on beat 1 of G7; both outside notes a semitone below, both landing within a beat"
+    },
+    {
+      "name": "approach notes: a target landed on with no approach before it is a target missed",
+      "events": [[500, 63], [1000, 62], [1800, 66], [2000, 67], [4000, 72]],
+      "scoring": { "kind": "approach_notes", "params": { "beats": [1, 3] } },
+      "score": 67,
+      "why": "C on beat 1 of Cmaj7 is a chord tone on a named beat, so it is a target, and nothing led into it"
+    },
+    {
+      "name": "approach notes: the named beats default to the downbeat",
+      "events": [[1800, 66], [2000, 67], [3800, 63], [4000, 64]],
+      "scoring": { "kind": "approach_notes", "params": {} },
+      "score": 100,
+      "why": "Eb into E on the downbeat of Cmaj7, F# into G on the downbeat of G7"
+    },
+    {
+      "name": "approach notes: no targets at all is nought, not a crash",
+      "events": [[500, 63], [1500, 63]],
+      "scoring": { "kind": "approach_notes", "params": { "beats": [1] } },
+      "score": 0
+    },
+    {
+      "name": "rhythm motif: every onset of the pattern in every bar, on time, is full marks, whatever the pitches",
+      "events": [
+        [0, 60], [750, 61], [1000, 62], [1750, 63],
+        [2000, 60], [2750, 61], [3000, 62], [3750, 63],
+        [4000, 60], [4750, 61], [5000, 62], [5750, 63],
+        [6000, 60], [6750, 61], [7000, 62], [7750, 63]
+      ],
+      "scoring": { "kind": "rhythm_motif", "params": { "pattern": [0, 1.5, 2, 3.5] } },
+      "score": 100,
+      "why": "the pattern is beats 1, the and of 2, 3 and the and of 4; the notes are chromatic nonsense and that is fine"
+    },
+    {
+      "name": "rhythm motif: one onset late by more than the tolerance is one onset missed",
+      "events": [
+        [0, 60], [750, 61], [1000, 62], [1830, 63],
+        [2000, 60], [2750, 61], [3000, 62], [3750, 63],
+        [4000, 60], [4750, 61], [5000, 62], [5750, 63],
+        [6000, 60], [6750, 61], [7000, 62], [7750, 63]
+      ],
+      "scoring": { "kind": "rhythm_motif", "params": { "pattern": [0, 1.5, 2, 3.5] } },
+      "score": 94,
+      "why": "15 of 16 onsets, the tolerance at 120 bpm being 50 ms"
+    },
+    {
+      "name": "rhythm motif: hammering every eighth does not match the pattern, it buries it",
+      "events": [
+        [0, 60], [250, 60], [500, 60], [750, 60], [1000, 60], [1250, 60], [1500, 60], [1750, 60],
+        [2000, 60], [2250, 60], [2500, 60], [2750, 60], [3000, 60], [3250, 60], [3500, 60], [3750, 60],
+        [4000, 60], [4250, 60], [4500, 60], [4750, 60], [5000, 60], [5250, 60], [5500, 60], [5750, 60],
+        [6000, 60], [6250, 60], [6500, 60], [6750, 60], [7000, 60], [7250, 60], [7500, 60], [7750, 60]
+      ],
+      "scoring": { "kind": "rhythm_motif", "params": { "pattern": [0, 1.5, 2, 3.5] } },
+      "score": 50,
+      "why": "all 16 onsets are hit, but 32 notes were played: 16 of 32"
+    },
+    {
+      "name": "rhythm motif: playing only half the bars is half the marks",
+      "events": [[0, 60], [750, 61], [1000, 62], [1750, 63], [2000, 60], [2750, 61], [3000, 62], [3750, 63]],
+      "scoring": { "kind": "rhythm_motif", "params": { "pattern": [0, 1.5, 2, 3.5] } },
+      "score": 50
+    },
+    {
+      "name": "call and response: the answer in the answer bar with the same rhythm and shape is full marks",
+      "events": [[4000, 67], [4500, 69], [5000, 71]],
+      "scoring": { "kind": "call_and_response", "params": { "phrase": [[0, 62], [1, 64], [2, 65]], "answerBar": 2 } },
+      "score": 100,
+      "why": "the call D E F rises on beats 1, 2, 3; the answer G A B rises on the same beats of bar 3"
+    },
+    {
+      "name": "call and response: the right rhythm with the wrong shape loses the shape",
+      "events": [[4000, 67], [4500, 65], [5000, 71]],
+      "scoring": { "kind": "call_and_response", "params": { "phrase": [[0, 62], [1, 64], [2, 65]], "answerBar": 2 } },
+      "score": 80,
+      "why": "three onsets in time, but the answer goes down then up where the call went up and up: 3 + 1 of 3 + 2"
+    },
+    {
+      "name": "call and response: when exact notes are asked for, the same shape in another place is not the phrase",
+      "events": [[4000, 67], [4500, 69], [5000, 71]],
+      "scoring": { "kind": "call_and_response", "params": { "phrase": [[0, 62], [1, 64], [2, 65]], "answerBar": 2, "exact": true } },
+      "score": 50,
+      "why": "three onsets in time, no note the same: 3 + 0 of 3 + 3"
+    },
+    {
+      "name": "call and response: exact notes an octave away are the same notes",
+      "events": [[4000, 74], [4500, 76], [5000, 77]],
+      "scoring": { "kind": "call_and_response", "params": { "phrase": [[0, 62], [1, 64], [2, 65]], "answerBar": 2, "exact": true } },
+      "score": 100
+    },
+    {
+      "name": "call and response: notes outside the answer bar are not the answer",
+      "events": [[0, 62], [500, 64], [1000, 65]],
+      "scoring": { "kind": "call_and_response", "params": { "phrase": [[0, 62], [1, 64], [2, 65]], "answerBar": 2 } },
+      "score": 0,
+      "why": "the call bar is the band's turn; playing along with it is not answering"
+    },
+    {
+      "name": "comping voicings is not a kind this version scores",
+      "events": [[0, 62]],
+      "scoring": { "kind": "comping_voicings", "params": {} },
+      "throws": true
+    }
+  ]
+}

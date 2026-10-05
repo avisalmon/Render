@@ -1,0 +1,429 @@
+{
+  "_about": "The first six lessons, one per scored track, drafted by AI and not yet read by Avi. Phrases list notes as [midi, beat, length] or [midi, beat, length, velocity]; the seed command turns them into the stored shape. Voicings and comping are not here: that kind is not scored in version 1.",
+  "phrases": [
+    {
+      "slug": "demo-chord-tones",
+      "name": "Chord tones through a two five one",
+      "kind": "demo",
+      "written_in_key": "C",
+      "length_beats": 16,
+      "chart_context": "| Dm7 | G7 | Cmaj7 | % |",
+      "notes": [
+        [62, 0, 0.9], [65, 1, 0.9], [69, 2, 0.9], [72, 3, 0.9],
+        [77, 4, 0.9], [74, 5, 0.9], [71, 6, 0.9], [67, 7, 0.9],
+        [64, 8, 0.9], [67, 9, 0.9], [71, 10, 0.9], [72, 11, 0.9],
+        [67, 12, 1.9], [72, 14, 2]
+      ]
+    },
+    {
+      "slug": "demo-guide-tones",
+      "name": "Thirds and sevenths that connect",
+      "kind": "demo",
+      "written_in_key": "C",
+      "length_beats": 16,
+      "chart_context": "| Dm7 | G7 | Cmaj7 | % |",
+      "notes": [
+        [65, 0, 2], [72, 2, 2],
+        [71, 4, 2], [77, 6, 2],
+        [76, 8, 2], [71, 10, 2],
+        [76, 12, 4]
+      ]
+    },
+    {
+      "slug": "demo-scales",
+      "name": "The scale of each chord",
+      "kind": "demo",
+      "written_in_key": "C",
+      "length_beats": 16,
+      "chart_context": "| Dm7 | G7 | Cmaj7 | % |",
+      "notes": [
+        [62, 0, 0.9], [64, 1, 0.9], [65, 2, 0.9], [67, 3, 0.9],
+        [69, 4, 0.9], [71, 5, 0.9], [72, 6, 0.9], [74, 7, 0.9],
+        [76, 8, 0.9], [74, 9, 0.9], [72, 10, 0.9], [71, 11, 0.9],
+        [72, 12, 4]
+      ]
+    },
+    {
+      "slug": "demo-approach-notes",
+      "name": "A half step into the target",
+      "kind": "demo",
+      "written_in_key": "C",
+      "length_beats": 16,
+      "chart_context": "| Dm7 | G7 | Cmaj7 | % |",
+      "notes": [
+        [65, 0, 0.9], [69, 1, 0.9], [72, 2, 0.9], [70, 3.5, 0.5],
+        [71, 4, 0.9], [74, 5, 0.9], [77, 6, 0.9], [75, 7.5, 0.5],
+        [76, 8, 0.9], [74, 9, 0.9], [72, 10, 0.9], [71, 11, 0.9],
+        [72, 12, 4]
+      ]
+    },
+    {
+      "slug": "demo-rhythm-motif",
+      "name": "One rhythm, every bar",
+      "kind": "demo",
+      "written_in_key": "C",
+      "length_beats": 16,
+      "chart_context": "| C | Am | F | G7 |",
+      "notes": [
+        [76, 0, 1.4], [79, 1.5, 0.5],
+        [72, 4, 1.4], [76, 5.5, 0.5],
+        [69, 8, 1.4], [72, 9.5, 0.5],
+        [71, 12, 1.4], [74, 13.5, 0.5]
+      ]
+    },
+    {
+      "slug": "demo-call-and-response",
+      "name": "A call and its answer",
+      "kind": "demo",
+      "written_in_key": "C",
+      "length_beats": 8,
+      "chart_context": "| C | G |",
+      "notes": [
+        [72, 0, 0.9], [74, 1, 0.9], [76, 2, 2],
+        [71, 4, 0.9], [74, 5, 0.9], [79, 6, 2]
+      ]
+    }
+  ],
+  "lessons": [
+    {
+      "track": "chord_tones",
+      "order": 1,
+      "title": "Chord tones on the beat",
+      "slug": "chord-tones-on-the-beat",
+      "level": 1,
+      "summary": "Land on a note of the chord on the strong beats and the line sounds like it belongs.",
+      "explanation": "## Read\n\nA chord is a handful of notes that sound good together. Dm7 is D, F, A and C. When the chord changes, those are the notes the band is playing, so those are the notes that are safe.\n\nThe strong beats are the ones a listener feels: beat 1 most of all, then beat 3. If you land on a chord tone there, almost anything you play in between will sound like it was meant.\n\n## Hear\n\nPress Hear. The phrase walks the notes of each chord, one to a beat. Listen to how settled it sounds, even though it is plain.\n\n## Play\n\nThe chords are Dm7, G7 and Cmaj7. Before the take, find the four notes of each chord on the keyboard. The Play screen names the chord for each bar and shows its notes. Start with beat 1 only, then add beat 3, then every beat.\n\nOnly the notes that fall on the beats the exercise names are judged. Between them you are free.",
+      "demo_phrase": "demo-chord-tones",
+      "progression": "ii-v-i-major",
+      "prerequisite": null,
+      "exercises": [
+        {
+          "order": 1,
+          "slug": "chord-tones-beat-one",
+          "title": "A chord tone on beat 1",
+          "instructions": "Play one note per bar, on beat 1, and make it a note of that bar's chord: Dm7 is D F A C, G7 is G B D F, Cmaj7 is C E G B. Any octave. Four bars, four notes.",
+          "key": "C",
+          "tempo": 70,
+          "bars": 4,
+          "scoring_kind": "chord_tones_on_beats",
+          "scoring_params": {"beats": [1]},
+          "pass_score": 70,
+          "xp": 10,
+          "daily_eligible": true
+        },
+        {
+          "order": 2,
+          "slug": "chord-tones-beats-one-and-three",
+          "title": "Chord tones on beats 1 and 3",
+          "instructions": "Now two notes a bar, on beat 1 and beat 3, each a note of the chord. Move to a different chord tone each time so it sings a little.",
+          "key": "C",
+          "tempo": 80,
+          "bars": 4,
+          "scoring_kind": "chord_tones_on_beats",
+          "scoring_params": {"beats": [1, 3]},
+          "pass_score": 75,
+          "xp": 15,
+          "daily_eligible": true
+        },
+        {
+          "order": 3,
+          "slug": "chord-tones-every-beat",
+          "title": "A chord tone on every beat",
+          "instructions": "Four notes a bar, one on each beat, all chord tones. Walk up the chord, then down it, and change direction when the chord changes.",
+          "key": "C",
+          "tempo": 90,
+          "bars": 4,
+          "scoring_kind": "chord_tones_on_beats",
+          "scoring_params": {"beats": [1, 2, 3, 4]},
+          "pass_score": 75,
+          "xp": 20,
+          "daily_eligible": false
+        }
+      ]
+    },
+    {
+      "track": "guide_tones",
+      "order": 1,
+      "title": "Guide tones: thirds and sevenths",
+      "slug": "guide-tones-thirds-and-sevenths",
+      "level": 2,
+      "summary": "The third and the seventh say what a chord is. Connect them across the changes.",
+      "explanation": "## Read\n\nThe root and the fifth do not tell you much. The third says major or minor, and the seventh says what kind of seventh. Those two are the guide tones.\n\nThe trick is that they move by a step into the next chord. In a two five one in C, the seventh of Dm7 (C) falls a half step to the third of G7 (B). The seventh of G7 (F) falls a half step to the third of Cmaj7 (E). A line of guide tones is smooth, and it spells out the harmony without a single other note.\n\n## Hear\n\nPress Hear. The phrase plays only thirds and sevenths. Listen to the half-step falls at each chord change.\n\n## Play\n\nPlay only the third and the seventh of each chord. At each change, aim to land within a step of where you were. The score gives a point for each guide tone and a point for each change where you connect.",
+      "demo_phrase": "demo-guide-tones",
+      "progression": "ii-v-i-major",
+      "prerequisite": "chord-tones-on-the-beat",
+      "exercises": [
+        {
+          "order": 1,
+          "slug": "guide-tones-find-them",
+          "title": "Find the thirds and sevenths",
+          "instructions": "Play only thirds and sevenths. Dm7: F and C. G7: B and F. Cmaj7: E and B. Do not worry about connecting yet.",
+          "key": "C",
+          "tempo": 70,
+          "bars": 4,
+          "scoring_kind": "guide_tones",
+          "scoring_params": {"step": 2},
+          "pass_score": 60,
+          "xp": 15,
+          "daily_eligible": true
+        },
+        {
+          "order": 2,
+          "slug": "guide-tones-connect-the-changes",
+          "title": "Connect the changes",
+          "instructions": "Same notes, but now the last note of each bar and the first of the next must be guide tones a step apart: C down to B, then F down to E.",
+          "key": "C",
+          "tempo": 90,
+          "bars": 4,
+          "scoring_kind": "guide_tones",
+          "scoring_params": {"step": 2},
+          "pass_score": 70,
+          "xp": 20,
+          "daily_eligible": true
+        },
+        {
+          "order": 3,
+          "slug": "guide-tones-turnaround",
+          "title": "Guide tones round a turnaround",
+          "instructions": "A longer path: Em7, A7, Dm7 G7, Cmaj7. Thirds and sevenths only, and look for the falls: D down to C#, then G down to F.",
+          "progression_slug": "iii-vi-ii-v",
+          "key": "C",
+          "tempo": 100,
+          "bars": 4,
+          "scoring_kind": "guide_tones",
+          "scoring_params": {"step": 2},
+          "pass_score": 70,
+          "xp": 25,
+          "daily_eligible": false
+        }
+      ]
+    },
+    {
+      "track": "scales_modes",
+      "order": 1,
+      "title": "Scales that fit the chord",
+      "slug": "scales-that-fit-the-chord",
+      "level": 1,
+      "summary": "Each chord has a scale that goes with it. Stay inside it and nothing clashes.",
+      "explanation": "## Read\n\nA scale is the pool of notes that fit over a chord. Over Dm7 the pool is D dorian: D E F G A B C. Over G7 it is G mixolydian: G A B C D E F. Over Cmaj7 it is C major. In this key those are all the same seven white notes, which is why a two five one in C is a friendly place to start.\n\nStaying in the scale is the first rule of improvising. The Play screen lights each note as you play: chord tones, scale tones, or outside.\n\n## Hear\n\nPress Hear. The phrase runs up and down the scales, a bar for each chord.\n\n## Play\n\nPlay anything you like, but keep to the scale of the chord that is sounding. The score is the share of your notes that are chord or scale tones, so every wrong note costs you.",
+      "demo_phrase": "demo-scales",
+      "progression": "ii-v-i-major",
+      "prerequisite": "chord-tones-on-the-beat",
+      "exercises": [
+        {
+          "order": 1,
+          "slug": "scales-stay-in-the-scale",
+          "title": "Stay in the scale",
+          "instructions": "Four bars of any notes you like, as long as they fit the chord. Slow and steady is fine. Aim for a clean take.",
+          "key": "C",
+          "tempo": 80,
+          "bars": 4,
+          "scoring_kind": "scale_only",
+          "scoring_params": {},
+          "pass_score": 80,
+          "xp": 15,
+          "daily_eligible": true
+        },
+        {
+          "order": 2,
+          "slug": "scales-dorian-groove",
+          "title": "One scale, two chords",
+          "instructions": "Dm7 for two bars, then G7 for two bars. D dorian and G mixolydian are the same notes here, so stay inside the white keys and focus on the rhythm of what you play.",
+          "progression_slug": "dorian-groove",
+          "key": "Dm",
+          "tempo": 90,
+          "bars": 4,
+          "scoring_kind": "scale_only",
+          "scoring_params": {},
+          "pass_score": 85,
+          "xp": 20,
+          "daily_eligible": true
+        },
+        {
+          "order": 3,
+          "slug": "scales-turnaround",
+          "title": "Scales round a turnaround",
+          "instructions": "Cmaj7, Am7, Dm7, G7: one chord a bar and a different scale for each. Keep every note inside the scale of the chord that is sounding.",
+          "progression_slug": "turnaround-i-vi-ii-v",
+          "key": "C",
+          "tempo": 100,
+          "bars": 4,
+          "scoring_kind": "scale_only",
+          "scoring_params": {},
+          "pass_score": 85,
+          "xp": 25,
+          "daily_eligible": false
+        }
+      ]
+    },
+    {
+      "track": "approach_notes",
+      "order": 1,
+      "title": "Approach notes",
+      "slug": "approach-notes",
+      "level": 2,
+      "summary": "Step in from a half step away and the target note sounds like an arrival.",
+      "explanation": "## Read\n\nAn approach note is a note a half step above or below a target, played just before it. It is not in the scale, and that is the point: it creates a small tension that the target resolves. A target is a chord tone you land on a strong beat.\n\nIt works because the ear expects the half step to move on. Play B flat then B, or E flat then E, and the second note feels like home.\n\n## Hear\n\nPress Hear. Listen for the short note a half step away, just before the chord tone it leads into.\n\n## Play\n\nPick a chord tone to land on, and play the note a half step below or above it just before. The score counts the targets you reach this way. A target you land on without an approach does not count, and an approach that leads nowhere does not count either.",
+      "demo_phrase": "demo-approach-notes",
+      "progression": "ii-v-i-major",
+      "prerequisite": "scales-that-fit-the-chord",
+      "exercises": [
+        {
+          "order": 1,
+          "slug": "approach-notes-beat-one",
+          "title": "Approach the downbeat",
+          "instructions": "Aim at a chord tone on beat 1 of each bar and play the note a half step below or above it on the beat before. You can also use the last half beat of the bar before.",
+          "key": "C",
+          "tempo": 70,
+          "bars": 4,
+          "scoring_kind": "approach_notes",
+          "scoring_params": {"beats": [1]},
+          "pass_score": 50,
+          "xp": 20,
+          "daily_eligible": true
+        },
+        {
+          "order": 2,
+          "slug": "approach-notes-beats-one-and-three",
+          "title": "Approach beats 1 and 3",
+          "instructions": "Two targets a bar now, on beats 1 and 3. Mix approaches from above and below so it does not sound mechanical.",
+          "key": "C",
+          "tempo": 80,
+          "bars": 4,
+          "scoring_kind": "approach_notes",
+          "scoring_params": {"beats": [1, 3]},
+          "pass_score": 60,
+          "xp": 25,
+          "daily_eligible": true
+        },
+        {
+          "order": 3,
+          "slug": "approach-notes-turnaround",
+          "title": "Approach notes at pace",
+          "instructions": "Em7, A7, Dm7 G7, Cmaj7 at a moving tempo. Target beat 1 of every bar with a half-step approach.",
+          "progression_slug": "iii-vi-ii-v",
+          "key": "C",
+          "tempo": 100,
+          "bars": 4,
+          "scoring_kind": "approach_notes",
+          "scoring_params": {"beats": [1]},
+          "pass_score": 70,
+          "xp": 30,
+          "daily_eligible": false
+        }
+      ]
+    },
+    {
+      "track": "rhythm_motifs",
+      "order": 1,
+      "title": "Rhythm motifs",
+      "slug": "rhythm-motifs",
+      "level": 1,
+      "summary": "Pick a short rhythm and repeat it. A good rhythm makes any notes sound intentional.",
+      "explanation": "## Read\n\nA motif is a short idea you repeat. A rhythm motif is the timing alone: which beats you play on, whatever notes you choose. Repeating it each bar gives the listener something to hold on to, and it is the quickest way to sound like you know what you are doing.\n\nBeats are counted from 0 here: 0 is beat 1, 1 is beat 2, and 1.5 is the half beat after beat 2, the \"and\".\n\n## Hear\n\nPress Hear. Every bar plays the same rhythm: a long note on beat 1, then a short one on the \"and\" of 2. The notes change with the chords, the rhythm does not.\n\n## Play\n\nThese exercises use a straight feel, so the \"and\" is exactly half way between beats. Match the rhythm in every bar. The notes are free, but play only the rhythm: an extra note is counted against you.",
+      "demo_phrase": "demo-rhythm-motif",
+      "progression": "fifties-changes",
+      "prerequisite": "chord-tones-on-the-beat",
+      "exercises": [
+        {
+          "order": 1,
+          "slug": "rhythm-half-notes",
+          "title": "Beats 1 and 3",
+          "instructions": "One note on beat 1 and one on beat 3 of every bar. Nothing else. Any notes.",
+          "key": "C",
+          "tempo": 70,
+          "bars": 4,
+          "scoring_kind": "rhythm_motif",
+          "scoring_params": {"pattern": [0, 2]},
+          "pass_score": 70,
+          "xp": 10,
+          "daily_eligible": true
+        },
+        {
+          "order": 2,
+          "slug": "rhythm-charleston",
+          "title": "Beat 1 and the and of 2",
+          "instructions": "A note on beat 1, then a note half a beat after beat 2: count 1, 2 and. Repeat every bar.",
+          "key": "C",
+          "tempo": 80,
+          "bars": 4,
+          "scoring_kind": "rhythm_motif",
+          "scoring_params": {"pattern": [0, 1.5]},
+          "pass_score": 70,
+          "xp": 15,
+          "daily_eligible": true
+        },
+        {
+          "order": 3,
+          "slug": "rhythm-offbeats",
+          "title": "Only on the ands",
+          "instructions": "Four notes a bar, all on the ands: 1 and, 2 and, 3 and, 4 and. Do not play on a beat itself.",
+          "key": "C",
+          "tempo": 80,
+          "bars": 4,
+          "scoring_kind": "rhythm_motif",
+          "scoring_params": {"pattern": [0.5, 1.5, 2.5, 3.5]},
+          "pass_score": 70,
+          "xp": 20,
+          "daily_eligible": false
+        }
+      ]
+    },
+    {
+      "track": "call_and_response",
+      "order": 1,
+      "title": "Call and response",
+      "slug": "call-and-response",
+      "level": 2,
+      "summary": "Hear a short phrase, answer it back. The oldest way to build a solo.",
+      "explanation": "## Read\n\nImprovising is a conversation. You play a short phrase, then answer it. The answer keeps the rhythm of the call and follows its shape: if the call goes up, the answer goes up. It does not have to use the same notes.\n\nThis is how a good solo gets built out of nothing. Play something small, answer it, and you already have two bars of music.\n\n## Hear\n\nPress Hear. The call is in bar 1, the answer in bar 2. Same rhythm, same direction, different notes.\n\n## Play\n\nThe exercise gives you the call to play yourself in one bar, and the answer is the bar you are scored on. Match the rhythm of the call and the way it moves. The last exercise asks for the same notes, in any octave.",
+      "demo_phrase": "demo-call-and-response",
+      "progression": "pop-four-chords",
+      "prerequisite": "rhythm-motifs",
+      "exercises": [
+        {
+          "order": 1,
+          "slug": "call-response-echo-the-rhythm",
+          "title": "Echo the rhythm",
+          "instructions": "In bar 1 play C, D, E on beats 1, 2, 3. In bar 2 answer: three notes on the same beats, going up the same way. Any notes you like.",
+          "key": "C",
+          "tempo": 80,
+          "bars": 4,
+          "scoring_kind": "call_and_response",
+          "scoring_params": {"phrase": [[0, 72], [1, 74], [2, 76]], "answerBar": 1},
+          "pass_score": 70,
+          "xp": 15,
+          "daily_eligible": true
+        },
+        {
+          "order": 2,
+          "slug": "call-response-answer-a-skip",
+          "title": "Answer a skip",
+          "instructions": "In bar 2 play C on beat 1, a jump up to E on the and of 2, D on beat 3 and C on beat 4. In bar 3 answer with the same rhythm and the same up then down shape.",
+          "key": "C",
+          "tempo": 80,
+          "bars": 4,
+          "scoring_kind": "call_and_response",
+          "scoring_params": {"phrase": [[0, 72], [1.5, 76], [2, 74], [3, 72]], "answerBar": 2},
+          "pass_score": 70,
+          "xp": 20,
+          "daily_eligible": true
+        },
+        {
+          "order": 3,
+          "slug": "call-response-same-notes",
+          "title": "Echo the exact notes",
+          "instructions": "In bar 3 play G, A, C, A on beats 1 to 4. In bar 4 answer with the same notes at the same beats. Any octave counts.",
+          "key": "C",
+          "tempo": 70,
+          "bars": 4,
+          "scoring_kind": "call_and_response",
+          "scoring_params": {"phrase": [[0, 67], [1, 69], [2, 72], [3, 69]], "answerBar": 3, "exact": true},
+          "pass_score": 70,
+          "xp": 25,
+          "daily_eligible": false
+        }
+      ]
+    }
+  ]
+}

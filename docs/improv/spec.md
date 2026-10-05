@@ -429,6 +429,13 @@ difficulty:
 
 Voicings and comping, ear training and the rest follow after v1.
 
+**As built (SPR-I.5.3).** Lesson 6 is taught over a four-bar pop progression, not a blues:
+a call and its answer need an even four-beat bar on a straight groove, and the judge reads
+the answer bar only. The lessons live in `improv/seed_data/lessons.json` and are seeded by
+`seed_improv_lessons` as drafted by AI and not yet read; every exercise has been passed
+by a model player through the real judge in the tests. Avi reads each lesson before it is
+passed off as taught.
+
 ### The cycle of a lesson
 
 Every lesson is the same three steps, in this order, so the learner always knows
@@ -473,6 +480,15 @@ last ten seconds, not time the tab is open. The page reports it every thirty
 seconds to the open `PracticeSession`; a new session starts after thirty idle
 minutes. The timer is the player's own log and counts toward nothing else.
 
+**As built (SPR-I.5.4).** The page keeps a small clock (`static/improv/practice.js`): it
+counts the band's running time plus ten seconds after each note, once, and never the open tab.
+A note played with the band stopped opens a sitting too. It reports to the sitting every thirty
+seconds, at Stop and when the page is left, and a sitting that went thirty minutes without
+activity is closed and the next activity opens a new one. The server reads the log, today
+against the goal and the streak from the sittings in `/improv/api/practice/`, in the player's
+own timezone; a sitting belongs to the day it started on. The Play screen carries a one-line
+"Today: 5 of 15 minutes" and the Practice screen shows the streak and the last thirty days.
+
 ### The daily workout
 
 Three exercises, picked from the `daily_eligible` ones the player has unlocked:
@@ -481,6 +497,19 @@ exercise as a review, and the next unfinished one. The pick is a function of the
 player and the date, so the same three show all day and a reload does not
 shuffle them.
 
+**As built (SPR-I.5.5).** `improv/workout.py` reads the workout; nothing is stored. It is a
+function of the player id, the date (the player's own day) and what had been passed before that
+day began, so passing one during the day changes nothing about the other two. The slots, in
+order: a weak spot (an eligible exercise of the first kind the weakness report names that has
+one, with the kinds from the weakness report below), a review (one passed before today, chosen by a stable
+hash of player, date and slot), the next one (the first not yet passed, in the order of the
+tracks, then the lesson, then the exercise, with challenges last) and fresh ones to make up
+three. An exercise is never offered twice, never from a draft or locked lesson, and never unless
+it is marked for the workout, so a new player may get fewer than three. An item is done today
+when a take of exactly that exercise, played today and at or over the pass mark, exists; a
+review passed again is done but earns no XP. The Practice screen lists the three with a reason
+for each and a Play link, from `/improv/api/workout/`.
+
 ### The weakness report
 
 Read from the last thirty days of takes: per scoring dimension and per chord
@@ -488,6 +517,20 @@ family, where the player's chord-tone, scale, outside and timing numbers are
 worst. It says nothing until there are enough notes behind a claim (twenty in a
 bucket), because "you struggle with m7b5" from four notes is noise. It names at
 most three things, in plain words, each with an exercise that works on it.
+
+**As built (SPR-I.5.6).** `improv/weakness.py` reads the report; nothing is stored. The judge
+now writes `metrics.byQuality` on each take (per chord quality: notes played, and how many were
+chord, scale, approach or outside), which is what lets the server say "over minor chords" by
+joining the quality to its family. The judge version stays 1 because no score changed. Takes in
+the 30 days before now count, weighted by their notes, and anything in `metrics` that is not a
+sensible number is ignored. Four areas, each needing 20 notes of its own: timing (under 60
+percent close to the beat), chord tones (under 30 percent), outside (over 25 percent) and a
+chord family (over 25 percent outside over that family). At most three are named, the furthest
+from fine first, ties in the order timing, chord tones, outside, family. Each names the first
+open exercise of a kind that works on it, preferring one not yet passed, or none. The daily
+workout's weak slot takes its kinds from the report as it stood when the day began, so playing
+badly today changes tomorrow's workout and not today's. The Progress screen shows it under
+"Where to work", and says how many notes it still needs rather than guessing.
 
 ### Challenges and takes
 
@@ -498,6 +541,14 @@ their events after thirty days and keep their score and metrics, which is all th
 weakness report needs. Pruning happens when the same player saves their next take,
 because Render's scheduled jobs cannot see the SQLite disk and a prune that needs
 a scheduler would not run.
+
+**As built (SPR-I.5.6).** The standalone challenges are five exercises with no lesson, seeded by
+their own command, `seed_improv_challenges` (add-missing-by-slug, never overwrites, needs the
+library first): chord tones through a twelve-bar blues, scale notes around a turnaround, guide
+tones through a jazz blues, a bossa rhythm, and approach notes in a minor blues. They are always
+open and offered to the daily workout. A personal best is a read, `improv/bests.py`: the highest
+score among takes that count the way a completion counts, the earliest if two tie. The
+Challenges screen lists every challenge with its best, and the bests in the lessons below.
 
 ---
 
@@ -583,6 +634,31 @@ sizes degrade to readable rather than being designed for.
 | **Takes** | saved takes with replay over the same band, and delete |
 | **Setup** | MIDI input and output choice, calibration, demo output, daily goal, sharps or flats |
 
+**Today and Progress (SPR-I.6.1).** Today is the page at `/improv/` and the first item in the menu.
+It holds the daily goal as a ring (a conic gradient set from one CSS variable, with the minutes
+written inside it), the streak, the three workout exercises each with a Play link, and a button into
+the lesson in progress. The lesson to go on with is its own read, `GET /improv/api/continue/`
+(`progress.continue_lesson`): an open lesson with some exercises passed comes first, otherwise the
+first open lesson in the order of the path, never a draft, a locked lesson or one with nothing to
+play, and when everything is done the page says so instead. Progress is at `/improv/progress/`: the
+level and XP with a bar, the streak and a five-week calendar (Monday first, the last week holding
+today; a gold day met the goal, an outline day had some practice), the weakness report, and the five
+best takes. The words and the calendar are pure functions in `static/improv/today.js`, tested under
+Node, and each page only reads derived endpoints, so it says what every other screen says. The
+Practice screen stays as the plain log and the workout; the weakness panel moved off it to Progress,
+where the spec put it. Nothing new is stored.
+
+**Retention and the deploy (SPR-I.6.2).** A take not kept loses its events once it is more than
+thirty days old and keeps its score, metrics, chart, key and judge version, which is everything the
+weakness report and the bests read. The prune is `retention.prune(player)`, run inside the same
+transaction that saves the player's next take, and only for that player: a read never prunes, and a
+save that fails prunes nothing. A kept take is never pruned. The Takes screen says "The notes were
+cleared after 30 days. The score stays." on such a take and turns off Replay and Keep, and the API
+answers 400 to a request to keep one, since a kept take with nothing to replay would be a lie. The
+deploy runs all four seed commands, theory, library, lessons and challenges, each as
+`(python manage.py <name> || true)` after the ordinary `migrate`, so a seed that fails never keeps the
+site down, and each adds only the rows that are missing.
+
 **Play in version 1 so far (SPR-I.2.4).** `/improv/play/` loads the progressions, the
 styles and the chord qualities from the API, so it plays whatever the library holds.
 It has the chart as a grid of bars, four to a row, with the playing bar lit and a
@@ -648,6 +724,65 @@ key, its notes named, and the scales that fit a chord or the chords that fit a s
 the order the theory table prefers. Everything follows the player's own sharps-or-flats
 setting. The rules are `static/improv/recognize.js` and `reference.js`, tested under Node with
 golden cases, including one that every row of both tables can be reached by playing it.
+
+**The judge in version 1 so far (SPR-I.4.1).** `static/improv/judge.js` is one pure function,
+judge_version 1. The notes played, the chart they were played over, the tempo, feel and grid,
+the scoring kind and the player's latency offset go in; a class for every note, the timing, the
+metrics and the score come out. Run with `now` while it plays and without it at the end, so the
+screen and the score come from the same rules. The chord sounding at a moment is found with the
+half-beat look-ahead and the judged bars loop; the four classes are as the table above says,
+with the approach note pending until the next note lands or a beat runs out; timing is against
+the beat, the eighth or the swung eighth (the swung off-beat where the band's own swing puts it),
+with a tolerance of a tenth of a beat and the result in words. Notes before the first judged
+downbeat by more than half a beat are the count-in and are not judged. Three scoring kinds so
+far: chord tones on the named beats, scale only (chord or scale tones, so an approach note does
+not count), and free play, which has metrics and no score. The golden takes are
+`tests/js/fixtures/takes.json`, every one a hand-checked judgement over a real chart with the
+app's own theory table, so a change to the rules is a fixture diff and a deliberate version bump.
+
+**Live feedback in version 1 so far (SPR-I.4.2).** The Play screen hears the piano while the
+band plays. Each note is put on the take's own clock (milliseconds from the first judged
+downbeat, the count-in negative, the second time round the loop carrying on) through the anchor
+between the MIDI clock and the audio clock, never the wall clock, and the judge runs over the
+take as it grows. The held keys wear the judge's colours (green for a chord tone, brighter for
+the third and seventh; blue in the scale; amber for an approach note or one still being decided;
+red, soft, for outside), the chord being held is named, and a running sentence says how many
+notes, how many chord tones, and whether you rush or drag. At Stop the same judge settles
+everything. Free play only, until the exercises arrive.
+
+**Sessions and takes in version 1 so far (SPR-I.4.3).** A sitting is a `PracticeSession`,
+opened the first time the band starts and closed, with the time the band ran, when the page is
+left. Every play-through with a note in it is a `Take`, posted whole at Stop: the chart text,
+the key it is written in and the key it was played in, the bar length, the tempo, the feel and
+the bars played (the snapshot, self-contained), the events as the MIDI arrived, and the verdict
+with the judge version that gave it. The server checks shape and range and keeps it; it does
+not re-judge, which is the accepted limit of browser judging (data model, section 11). A run
+with nothing played is not a take. Only `is_kept` may change afterwards. `/improv/api/sessions/`
+and `/improv/api/takes/` are the player's own and nobody else's.
+
+**Takes in version 1 so far (SPR-I.4.4).** `/improv/takes/` lists every take, newest first, in
+words (where, what, how many notes, how it went), kept ones marked; Keep is one click, Delete
+is two. Replay rebuilds the band from the take's own snapshot with `buildPlan`, exactly as Play
+builds it, so a progression edited or deleted since changes nothing: one bar of count-in, the
+chart lit bar by bar, and the player's notes sent either to the piano over MIDI (the output with
+the piano's own name, every note with a timestamp on the clock the sound comes out on, every
+note let go at Stop) or as a plain tone from the laptop, as `Player.demo_output` says.
+
+**The scoring kinds in version 1 so far (SPR-I.4.5).** All seven of the table above except
+comping voicings, which is v2 and is refused rather than scored as nought. Guide tones: a point
+for every note that is a third or seventh, and a point for every chord change where the last
+note before it and the first after it are both guide tones a step apart (a tone or less), which
+is what "the guide tones connect" means at the piano. Approach notes: the targets are the chord
+tones landing on the named beats (the downbeat unless the exercise says), and a target is
+reached when the note before it was an approach note, which the judge already requires to be a
+semitone away and within a beat. Rhythm motif: the pattern is beats inside the bar, repeated for
+every bar played; an onset is matched by a note within the tolerance, and extra notes count
+against, because hammering every eighth would otherwise match any pattern. Call and response:
+the answer is what was played in the answer bar; each onset of the phrase in time is a point and
+each step of the phrase whose direction the answer follows is a point, or, when exact notes are
+asked for, each note that is the same note in any octave. Each kind says what it counted beside
+the score, so a lesson can explain the mark. Adding kinds changed no existing score, so
+judge_version stays 1. The golden cases are `tests/js/fixtures/scoring.json`.
 
 **Calibration in version 1 so far (SPR-I.3.4).** The Setup screen plays four clicks to find
 the pulse and sixteen more to tap against. Each tap is matched to the click nearest it on the

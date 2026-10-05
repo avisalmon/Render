@@ -157,6 +157,45 @@
   // What may change while it plays, and what may not. A change goes live only if the take
   // keeps its shape (the same bars, the same count-in, the same loop), so the place in the
   // loop is still the place; everything that would reshape it stays locked until Stop.
+  // A note's time on the take's own clock: milliseconds from the first judged downbeat, which
+  // is the start of the first bar after the count-in. The count-in is negative time, so the
+  // judge can leave it out; the second time round the loop carries on counting.
+  function takeTimeMs(position, built, bpm) {
+    if (!position || !built || !built.plan) return null;
+    const beatsPerBar = built.plan.beatsPerBar;
+    const lead = built.countInBars || 0;
+    const loopBars = built.plan.bars.length - lead;
+    const bars = position.pass * loopBars + (position.index - lead);
+    return (bars * beatsPerBar + position.beat) * (60000 / bpm);
+  }
+
+  // The colour a judged note gets on the keys (spec ch. 5): chord tones green with the guide
+  // tones brighter, scale tones blue, approach notes amber, outside red and soft.
+  const KEY_CLASSES = {
+    chord: "im-key-chord",
+    guide: "im-key-guide",
+    scale: "im-key-scale",
+    approach: "im-key-approach",
+    pending: "im-key-pending",
+    outside: "im-key-outside",
+  };
+
+  function keyClassFor(note) {
+    if (!note) return "im-key-on";
+    if (note.class === "chord") return note.guide ? KEY_CLASSES.guide : KEY_CLASSES.chord;
+    return KEY_CLASSES[note.class] || "im-key-on";
+  }
+
+  function liveSummary(judged) {
+    const m = judged.metrics;
+    if (!m.notes) return "Play something.";
+    const parts = [`${m.notes} ${m.notes === 1 ? "note" : "notes"}`, `${m.chordTonePct}% chord tones`];
+    if (m.scalePct) parts.push(`${m.scalePct}% scale tones`);
+    if (m.approachPct) parts.push(`${m.approachPct}% approach notes`);
+    if (m.outsidePct) parts.push(`${m.outsidePct}% outside`);
+    return `${parts.join(", ")}. ${judged.timing.words.charAt(0).toUpperCase()}${judged.timing.words.slice(1)}.`;
+  }
+
   const LIVE_CONTROLS = ["style", "key", "bpm", "swing"];
   const LOCKED_CONTROLS = ["progression", "countin", "first", "last", "metronome"];
 
@@ -204,10 +243,62 @@
     return rows;
   }
 
+  // ------------------------------------------------------------ exercises (SPR-I.5.1)
+  //
+  // Play can be opened for an exercise: the chart, key, tempo and bars it asks for, scored the
+  // way it asks. A take counts for the exercise only while the player is still playing what it
+  // asked for; change the chart or the bars and it is free play again.
+
+  function exerciseScoring(exercise, kinds) {
+    if (!exercise || !(kinds || []).includes(exercise.scoring_kind)) return { kind: "free_play", params: {} };
+    return { kind: exercise.scoring_kind, params: exercise.scoring_params || {} };
+  }
+
+  // The loop the exercise asks for: from bar 1, as many bars as it says, never past the chart.
+  function exerciseRange(exercise, barCount) {
+    return { first: "1", last: String(Math.max(1, Math.min(exercise.bars, barCount))) };
+  }
+
+  function exerciseApplies(exercise, progression, built) {
+    if (!exercise || !progression || !built || !built.ok || built.metronome) return false;
+    return progression.id === exercise.progression && built.from === 0 && built.to === Math.min(exercise.bars, built.chart.bars.length);
+  }
+
+  function exerciseVerdict(score, passScore) {
+    if (score === null || score === undefined) return "";
+    return score >= passScore ? `Score ${score}. That passes (${passScore} needed).` : `Score ${score}. ${passScore} needed to pass.`;
+  }
+
+  // The line under the exercise's name: what it asks, or why this play-through is not it.
+  // `applies` is exerciseApplies for what is on the screen now.
+  function exerciseGoalLine(exercise, applies) {
+    if (!applies) return "You changed the chart or the bars, so this is free play and will not count for the exercise.";
+    const ask = `${exercise.bars} ${exercise.bars === 1 ? "bar" : "bars"}, pass at ${exercise.pass_score}`;
+    if (exercise.locked) return `${ask}. This lesson is locked until the one before it is passed, so a take here earns nothing yet.`;
+    if (exercise.completed) return `${ask}. You have passed this one already, so it earns no more XP.`;
+    return `${ask}, worth ${exercise.xp} XP.`;
+  }
+
+  // What the server says about a take it has just saved: the XP it earned, if it earned any.
+  function completionNote(saved) {
+    const done = saved && saved.completion;
+    return done ? `Passed. +${done.xp_awarded} XP.` : "";
+  }
+
   return {
+    exerciseScoring,
+    exerciseRange,
+    exerciseApplies,
+    exerciseVerdict,
+    exerciseGoalLine,
+    completionNote,
     buildPlan,
     litFor,
     layoutBars,
+    takeTimeMs,
+    keyClassFor,
+    liveSummary,
+    KEY_CLASSES,
     canGoLive,
     LIVE_CONTROLS,
     LOCKED_CONTROLS,

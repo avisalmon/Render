@@ -30,6 +30,12 @@
     return anchor.perf + (audioTime - anchor.audio) * 1000;
   }
 
+  // The audio-clock time (s) that was heard at performance time `perfMs`: the inverse, for
+  // putting a MIDI note on the band's own clock.
+  function audioAt(anchor, perfMs) {
+    return anchor.audio + (perfMs - anchor.perf) / 1000;
+  }
+
   function beatTimes(startAudio, bpm, count) {
     if (!(bpm >= MIN_BPM && bpm <= MAX_BPM)) throw new Error(`Tempo must be ${MIN_BPM} to ${MAX_BPM} bpm`);
     const gap = 60 / bpm;
@@ -94,5 +100,5 @@
     return { usable: true, reason: "steady enough for one offset" };
   }
 
-  return { makeAnchor, heardAt, beatTimes, upcoming, subdivide, intervals, nearestClick, stats, verdict, MIN_BPM, MAX_BPM };
+  return { makeAnchor, heardAt, audioAt, beatTimes, upcoming, subdivide, intervals, nearestClick, stats, verdict, MIN_BPM, MAX_BPM };
 });

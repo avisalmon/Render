@@ -5,12 +5,27 @@
 <div id="play" class="im-play"
      data-api-progressions="{{ api.progressions }}"
      data-api-styles="{{ api.styles }}"
-     data-api-qualities="{{ api.qualities }}">
+     data-api-qualities="{{ api.qualities }}"
+     data-api-player="{{ api.player }}"
+     data-api-sessions="{{ api.sessions }}"
+     data-api-takes="{{ api.takes }}"
+     data-api-exercises="{{ api.exercises }}"
+     data-api-practice="{{ api.practice }}"
+     data-csrf="{{ csrf_token }}">
 
   <div class="im-play-head">
     <h1 class="im-title">Play</h1>
     <p id="play-status" class="im-status" role="status" aria-live="polite">Loading the library.</p>
   </div>
+  <p id="practice-line" class="im-note" aria-live="off"></p>
+
+  <section class="im-panel im-exercise" id="exercise-panel" aria-label="Exercise" hidden>
+    <h2 class="im-h2" id="exercise-title">Exercise</h2>
+    <p id="exercise-instructions" class="im-exercise-text"></p>
+    <p id="exercise-goal" class="im-note"></p>
+    <p id="exercise-result" class="im-status" role="status" aria-live="polite"></p>
+    <a id="exercise-back" class="im-btn im-btn-quiet im-btn-link" href="{% url 'improv:lessons' %}">Back to the lessons</a>
+  </section>
 
   <section class="im-panel" aria-label="Transport">
     <div class="im-transport">
@@ -24,6 +39,18 @@
   <section class="im-panel" aria-label="Chart">
     <h2 class="im-h2" id="chart-title">Chart</h2>
     <div id="chart" class="im-chart" aria-label="Chart"></div>
+  </section>
+
+  <section class="im-panel" aria-label="You">
+    <div class="im-play-head">
+      <h2 class="im-h2">You</h2>
+      <p id="midi-state" class="im-note">Looking for the piano.</p>
+    </div>
+    <div id="keys" class="im-keyboard" aria-label="Keyboard"></div>
+    <p id="heard" class="im-heard" aria-live="off"></p>
+    <p id="feedback" class="im-status im-feedback" role="status" aria-live="off">Play something.</p>
+    <p id="take-status" class="im-note" role="status" aria-live="polite"></p>
+    <p class="im-note">Green is a chord tone, brighter for the third and seventh. Blue is in the scale. Amber is an approach note, or one still being decided. Red is outside, which is information, not a failure.</p>
   </section>
 
   <section class="im-panel im-settings" aria-label="Settings">
@@ -84,5 +111,12 @@
 <script src="{% static 'improv/chart-view.js' %}"></script>
 <script src="{% static 'improv/play.js' %}"></script>
 <script src="{% static 'improv/output.js' %}"></script>
+<script src="{% static 'improv/midi.js' %}"></script>
+<script src="{% static 'improv/setup.js' %}"></script>
+<script src="{% static 'improv/recognize.js' %}"></script>
+<script src="{% static 'improv/timing.js' %}"></script>
+<script src="{% static 'improv/judge.js' %}"></script>
+<script src="{% static 'improv/practice.js' %}"></script>
+<script src="{% static 'improv/keyboard-view.js' %}"></script>
 <script src="{% static 'improv/play-page.js' %}"></script>
 {% endblock %}

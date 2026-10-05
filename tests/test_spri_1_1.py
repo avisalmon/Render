@@ -189,9 +189,13 @@ def test_every_route_refuses_outsiders_and_admits_a_player(people):
         for label, user in (("member", people["member"]), ("admin", people["admin"])):
             client = _client_for(user)
             response = client.get(url)
-            assert response.status_code < 400 or response.status_code == 405, (
-                f"{label} GET {url} got {response.status_code}"
-            )
+            admitted = response.status_code < 400 or response.status_code == 405
+            if not admitted and response.status_code == 404 and url.endswith("/1/"):
+                # Sessions and takes are one player's own: row 1 does not exist for the other
+                # one, and that is right. The endpoint still has to admit them, so the list
+                # beside the row must answer.
+                admitted = client.get(url[: -len("1/")]).status_code < 400
+            assert admitted, f"{label} GET {url} got {response.status_code}"
 
 
 # -------------------------------------------------- hiding it, not just refusing

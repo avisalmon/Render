@@ -70,44 +70,44 @@ delay.
 
 ---
 
-## EPIC-I.4: Judging and takes  `TODO`
+## EPIC-I.4: Judging and takes  `IN PROGRESS`
 
 **Goal:** you play over the band and are told, live and at the end, how you did.
 The most important epic in the app.
 
 | Sprint | What | Traces | Status |
 |---|---|---|---|
-| SPR-I.4.1 | The judge as a pure function: chord sounding at a time (half a beat lookahead), the four classes, approach settling, timing metrics, the score for the first scoring kinds (chord tones on beats, scale only, free play). Golden fixtures run under Node, `judge_version` 1 | ch. 5, feature 13 | TODO |
-| SPR-I.4.2 | Live feedback on the Play screen: key colours per note, the timing strip, the recognized chord, all driven by the same judge | ch. 5, 8, features 13, 14 | TODO |
-| SPR-I.4.3 | `PracticeSession` and `Take`: the page records events and posts the take; snapshots of chart, key, tempo; server-side range checks; API | ch. 5, 6, feature 15 | TODO |
-| SPR-I.4.4 | Saved takes and replay over the same band through the demo output (MIDI out to the piano or a plain tone); the Takes screen | ch. 6, 8, feature 15 | TODO |
-| SPR-I.4.5 | The remaining scoring kinds: guide tones, approach notes, rhythm motif, call and response; comping voicings is v2 | ch. 5, features 18, 19 | TODO |
+| SPR-I.4.1 | The judge as a pure function: chord sounding at a time (half a beat lookahead), the four classes, approach settling, timing metrics, the score for the first scoring kinds (chord tones on beats, scale only, free play). Golden fixtures run under Node, `judge_version` 1 | ch. 5, feature 13 | DONE 2026-10-05 |
+| SPR-I.4.2 | Live feedback on the Play screen: key colours per note, the timing strip, the recognized chord, all driven by the same judge | ch. 5, 8, features 13, 14 | DONE 2026-10-05 |
+| SPR-I.4.3 | `PracticeSession` and `Take`: the page records events and posts the take; snapshots of chart, key, tempo; server-side range checks; API | ch. 5, 6, feature 15 | DONE 2026-10-05 |
+| SPR-I.4.4 | Saved takes and replay over the same band through the demo output (MIDI out to the piano or a plain tone); the Takes screen | ch. 6, 8, feature 15 | DONE 2026-10-05 |
+| SPR-I.4.5 | The remaining scoring kinds: guide tones, approach notes, rhythm motif, call and response; comping voicings is v2 | ch. 5, features 18, 19 | DONE 2026-10-05 |
 | SPR-I.4.6 | **At the piano.** Avi plays real takes; the judge is tuned against what he knows he did right and wrong, and the fixtures grow from his cases | ch. 5, 9 | TODO |
 
 ---
 
-## EPIC-I.5: Lessons and the game layer  `TODO`
+## EPIC-I.5: Lessons and the game layer  `DONE`
 
 **Goal:** a path to follow and a reason to come back tomorrow.
 
 | Sprint | What | Traces | Status |
 |---|---|---|---|
-| SPR-I.5.1 | `Phrase`, `Lesson`, `Exercise` models, API, the lesson page doing Read, Hear, Play | ch. 6, features 9, 10 | TODO |
-| SPR-I.5.2 | `Completion` created by the server from a passing take; XP from the exercise row; level and unlock as reads | ch. 5, 6, features 19, 20 | TODO |
-| SPR-I.5.3 | The six v1 lessons, AI-drafted, each read and corrected by Avi before it is published, seeded once with `authorship` set truthfully | ch. 6, feature 9 | TODO |
-| SPR-I.5.4 | The practice timer, daily goal, the practice log, the streak with its timezone rule | ch. 6, features 16, 21 | TODO |
-| SPR-I.5.5 | The daily workout: three picks, stable for the day | ch. 6, feature 21 | TODO |
-| SPR-I.5.6 | The weakness report with its twenty-note floor; standalone challenges and personal bests | ch. 6, features 17, 19 | TODO |
+| SPR-I.5.1 | `Phrase`, `Lesson`, `Exercise` models, API, the lesson page doing Read, Hear, Play | ch. 6, features 9, 10 | DONE 2026-10-05 |
+| SPR-I.5.2 | `Completion` created by the server from a passing take; XP from the exercise row; level and unlock as reads | ch. 5, 6, features 19, 20 | DONE 2026-10-05 |
+| SPR-I.5.3 | The six v1 lessons, AI-drafted, each read and corrected by Avi before it is published, seeded once with `authorship` set truthfully | ch. 6, feature 9 | DONE 2026-10-05 |
+| SPR-I.5.4 | The practice timer, daily goal, the practice log, the streak with its timezone rule | ch. 6, features 16, 21 | DONE 2026-10-05 |
+| SPR-I.5.5 | The daily workout: three picks, stable for the day | ch. 6, feature 21 | DONE 2026-10-05 |
+| SPR-I.5.6 | The weakness report with its twenty-note floor; standalone challenges and personal bests | ch. 6, features 17, 19 | DONE 2026-10-05 |
 
 ---
 
-## EPIC-I.6: Today, polish, and getting it live for Avi  `TODO`
+## EPIC-I.6: Today, polish, and getting it live for Avi  `IN PROGRESS`
 
 | Sprint | What | Traces | Status |
 |---|---|---|---|
-| SPR-I.6.1 | The Today and Progress screens | ch. 8 | TODO |
-| SPR-I.6.2 | Pruning of unkept takes on the next save, with its test; the full API documented; the seed commands wired into the deploy with the same `\|\| true` pattern as the other apps | ch. 6, 7 | TODO |
-| SPR-I.6.3 | Scoped migrate, push on Avi's word, live check of a page and an API route the old build could not have, and a check that a non-member still gets 404 on the live site | Rule 5 | TODO |
+| SPR-I.6.1 | The Today and Progress screens | ch. 8 | DONE 2026-10-05 |
+| SPR-I.6.2 | Pruning of unkept takes on the next save, with its test; the full API documented; the seed commands wired into the deploy with the same `\|\| true` pattern as the other apps | ch. 6, 7 | DONE 2026-10-05 |
+| SPR-I.6.3 | Scoped migrate, push on Avi's word, live check of a page and an API route the old build could not have, and a check that a non-member still gets 404 on the live site. Ready 2026-10-05: migrations 0004 to 0007 match the models, the scoped migrate and seeds run clean on dev, `collectstatic` passes with `DEBUG=False`, and the new pages and routes are gated (tests/test_spri_6_3.py). Stays IN PROGRESS until Avi says Push and the live check is made | Rule 5 | IN PROGRESS |
 
 ---
 

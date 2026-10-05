@@ -1,0 +1,30 @@
+{% extends "improv/base.html" %}
+{% load static %}
+{% block title %}Lessons, improv{% endblock %}
+
+{% block content %}
+<div id="lessons" class="im-lessons"
+     data-api-lessons="{{ api.lessons }}"
+     data-api-summary="{{ api.summary }}"
+     data-lesson-url="{% url 'improv:lessons' %}">
+
+  <div class="im-play-head">
+    <h1 class="im-title">Lessons</h1>
+    <p id="lessons-status" class="im-status" role="status" aria-live="polite">Loading the lessons.</p>
+  </div>
+
+  <p id="lessons-level" class="im-level-line"></p>
+  <p id="lessons-done" class="im-note"></p>
+
+  <p class="im-note">Each lesson is three steps: Read a short explanation, Hear it over the band, Play it and be scored.</p>
+
+  <div id="lessons-tracks"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'improv/chart.js' %}"></script>
+<script src="{% static 'improv/band.js' %}"></script>
+<script src="{% static 'improv/lessons.js' %}"></script>
+<script src="{% static 'improv/lessons-page.js' %}"></script>
+{% endblock %}

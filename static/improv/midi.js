@@ -26,10 +26,21 @@
     return null;
   }
 
+  // The bytes to send a note out: the same message as comes in. A velocity of 0 to 1 is
+  // scaled to MIDI's 0 to 127; anything larger is taken to be MIDI already.
+  function noteOnBytes(note, velocity) {
+    const v = velocity <= 1 ? Math.round(velocity * 127) : Math.round(velocity);
+    return Uint8Array.from([0x90, note & 0x7f, Math.min(127, Math.max(1, v))]);
+  }
+
+  function noteOffBytes(note) {
+    return Uint8Array.from([0x80, note & 0x7f, 0]);
+  }
+
   // Middle C (60) is C4.
   function noteName(note) {
     return NAMES[note % 12] + (Math.floor(note / 12) - 1);
   }
 
-  return { parse, noteName };
+  return { parse, noteName, noteOnBytes, noteOffBytes };
 });

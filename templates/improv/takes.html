@@ -1,0 +1,58 @@
+{% extends "improv/base.html" %}
+{% load static %}
+{% block title %}Takes, improv{% endblock %}
+
+{% block content %}
+<div id="takes" class="im-takes"
+     data-api-takes="{{ api.takes }}"
+     data-api-progressions="{{ api.progressions }}"
+     data-api-styles="{{ api.styles }}"
+     data-api-qualities="{{ api.qualities }}"
+     data-api-player="{{ api.player }}"
+     data-play-url="{{ play_url }}"
+     data-csrf="{{ csrf_token }}">
+
+  <div class="im-play-head">
+    <h1 class="im-title">Takes</h1>
+    <p id="takes-status" class="im-status" role="status" aria-live="polite">Loading your takes.</p>
+  </div>
+
+  <section class="im-panel" aria-label="Filter">
+    <div class="im-row">
+      <label class="im-check"><input id="f-kept" type="checkbox"> Kept only</label>
+      <span id="takes-count" class="im-note"></span>
+    </div>
+    <p class="im-note">Every take is recorded. Keep the ones worth coming back to: unkept takes lose their notes after thirty days and keep only their score.</p>
+  </section>
+
+  <section class="im-panel" aria-label="Replay" id="replay-panel" hidden>
+    <div class="im-play-head">
+      <h2 class="im-h2" id="replay-title">Replay</h2>
+      <button id="replay-stop" class="im-btn im-btn-quiet" type="button">Stop</button>
+    </div>
+    <p id="replay-status" class="im-status" role="status" aria-live="polite"></p>
+    <div id="replay-chart" class="im-chart" aria-label="Chart"></div>
+    <p id="replay-output" class="im-note"></p>
+    <p id="replay-error" class="im-error" role="alert" hidden></p>
+  </section>
+
+  <section class="im-panel" aria-label="Your takes">
+    <ul id="takes-list" class="im-takes-list"></ul>
+    <p id="takes-empty" class="im-note" hidden>No takes yet. Play over the band and every take lands here.</p>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'improv/chart.js' %}"></script>
+<script src="{% static 'improv/band.js' %}"></script>
+<script src="{% static 'improv/scheduler.js' %}"></script>
+<script src="{% static 'improv/synth.js' %}"></script>
+<script src="{% static 'improv/chart-view.js' %}"></script>
+<script src="{% static 'improv/play.js' %}"></script>
+<script src="{% static 'improv/midi.js' %}"></script>
+<script src="{% static 'improv/setup.js' %}"></script>
+<script src="{% static 'improv/timing.js' %}"></script>
+<script src="{% static 'improv/takes.js' %}"></script>
+<script src="{% static 'improv/takes-page.js' %}"></script>
+{% endblock %}

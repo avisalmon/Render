@@ -15,6 +15,7 @@ from django.db import models
 from django.db.models.functions import Lower
 
 from .grooves import beats_in, check_groove
+from .teaching import check_notes, check_scoring
 
 
 class ChordQuality(models.Model):
@@ -252,3 +253,236 @@ class Player(models.Model):
 
     def __str__(self):
         return f"improv player {self.user}"
+
+
+class PracticeSession(models.Model):
+    """One sitting at the piano. The practice log (feature 16) is this table."""
+
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="sessions")
+    started_at = models.DateTimeField(auto_now_add=True)
+    ended_at = models.DateTimeField(null=True, blank=True)
+    active_seconds = models.PositiveIntegerField(
+        default=0,
+        validators=[MaxValueValidator(24 * 3600)],
+        help_text="Time the band was running or a note was played, not time the tab was open.",
+    )
+
+    class Meta:
+        ordering = ["-started_at"]
+
+    def __str__(self):
+        return f"session {self.pk} of {self.player}"
+
+
+class Take(models.Model):
+    """One play-through: the source of truth for everything the app says about how the
+    person plays. It carries its own chart, key, tempo and feel, because whether a note
+    was right depends on what it was played over, and the progression may be edited
+    tomorrow. judge_version does the same job for the judging code.
+
+    Added after the data model was approved: home_key, time_signature, swing_ratio, loop_from
+    and loop_to, because re-judging or replaying a take needs the key the chart text is written
+    in, the bar length, the feel, and which bars of the chart were played, and none of those is
+    in the chart text; a snapshot that needs another row to be read is not a snapshot.
+    exercise (SPR-I.5.1) names the task the take was played for, if there was one; deleting an
+    exercise keeps the take, because the take is a record of what the player did.
+    """
+
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="takes")
+    session = models.ForeignKey(PracticeSession, on_delete=models.CASCADE, related_name="takes")
+    progression = models.ForeignKey(Progression, null=True, blank=True, on_delete=models.SET_NULL, related_name="takes")
+    style = models.ForeignKey(Style, null=True, blank=True, on_delete=models.SET_NULL, related_name="takes")
+    exercise = models.ForeignKey("Exercise", null=True, blank=True, on_delete=models.SET_NULL, related_name="takes")
+    chart = models.TextField(validators=[_not_blank, MaxLengthValidator(20000)], help_text="Snapshot of the chart as played.")
+    home_key = models.CharField(max_length=3, validators=[key_name], help_text="The key the chart text is written in.")
+    key = models.CharField(max_length=3, validators=[key_name], help_text="The key it was played in.")
+    time_signature = models.CharField(max_length=5, default="4/4", validators=[_signature_is_playable])
+    tempo = models.PositiveSmallIntegerField(validators=tempo_limits)
+    swing_ratio = models.DecimalField(
+        max_digits=3, decimal_places=2, default=Decimal("0.50"),
+        validators=[MinValueValidator(Decimal("0.50")), MaxValueValidator(Decimal("0.75"))],
+    )
+    loop_from = models.PositiveSmallIntegerField(default=0, help_text="First bar played, 0-based.")
+    loop_to = models.PositiveSmallIntegerField(help_text="One past the last bar played.")
+    started_at = models.DateTimeField()
+    duration_ms = models.PositiveIntegerField(validators=[MaxValueValidator(6 * 3600 * 1000)])
+    bars = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
+    events = models.JSONField(default=list, help_text="{t_ms, type: on/off, note, velocity} as the MIDI arrived.")
+    score = models.PositiveSmallIntegerField(null=True, blank=True, validators=[MaxValueValidator(100)])
+    metrics = models.JSONField(default=dict)
+    judge_version = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
+    is_kept = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-started_at"]
+
+    def __str__(self):
+        return f"take {self.pk} of {self.player}"
+
+
+# ---------------------------------------------------------------- SPR-I.5.1
+# Teaching. A lesson is Read, Hear, Play: the explanation, a demo phrase over the band, and
+# exercises the judge scores. The rows are written during development and seeded once; the
+# app never makes a lesson at runtime. The JSON shapes are checked by improv/teaching.py.
+
+
+class Phrase(models.Model):
+    """A short run of notes: the demo in a lesson, the prompt in call and response, or a lick of
+    the player's own. A phrase is read whole, so its notes are JSON."""
+
+    class Kind(models.TextChoices):
+        DEMO = "demo", "demo"
+        CALL = "call", "call"
+        ANSWER = "answer", "answer"
+        LICK = "lick", "lick"
+
+    name = models.CharField(max_length=80, validators=[_not_blank])
+    slug = models.SlugField(max_length=60, unique=True)
+    kind = models.CharField(max_length=8, choices=Kind.choices, default=Kind.LICK)
+    notes = models.JSONField(help_text="[{midi, beat, length, velocity}]: beats counted from 0 at the start of the phrase.")
+    length_beats = models.DecimalField(
+        max_digits=5, decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.25")), MaxValueValidator(Decimal("64"))],
+    )  # fmt: skip
+    chart_context = models.TextField(blank=True, validators=[MaxLengthValidator(2000)], help_text="The chords underneath, if it only makes sense over them.")
+    written_in_key = models.CharField(max_length=3, default="C", validators=[key_name], help_text="So it can be transposed with the chart.")
+    is_preset = models.BooleanField(default=False)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE, related_name="improv_phrases"
+    )
+
+    class Meta:
+        ordering = [Lower("name")]
+
+    def __str__(self):
+        return self.name
+
+    def clean(self):
+        if self.length_beats is not None:
+            problem = check_notes(self.notes, self.length_beats)
+            if problem:
+                raise ValidationError({"notes": problem})
+
+
+class Lesson(models.Model):
+    """One unit on one track. The explanation and the demo live here; the playing tasks live
+    in Exercise. authorship says who wrote it, so "what has Avi actually read" is a query."""
+
+    class Track(models.TextChoices):
+        CHORD_TONES = "chord_tones", "chord tones"
+        GUIDE_TONES = "guide_tones", "guide tones"
+        SCALES_MODES = "scales_modes", "scales and modes"
+        APPROACH_NOTES = "approach_notes", "approach notes"
+        RHYTHM_MOTIFS = "rhythm_motifs", "rhythm motifs"
+        CALL_AND_RESPONSE = "call_and_response", "call and response"
+        VOICINGS_COMPING = "voicings_comping", "voicings and comping"
+
+    class Authorship(models.TextChoices):
+        AI_DRAFTED = "ai_drafted", "drafted by AI, not yet read"
+        REVIEWED = "reviewed", "drafted by AI, read and corrected"
+        AVI_WRITTEN = "avi_written", "written by Avi"
+
+    class Status(models.TextChoices):
+        DRAFT = "draft", "draft"
+        PUBLISHED = "published", "published"
+
+    track = models.CharField(max_length=20, choices=Track.choices)
+    order = models.PositiveSmallIntegerField(help_text="Position within the track.")
+    title = models.CharField(max_length=100, validators=[_not_blank])
+    slug = models.SlugField(max_length=60, unique=True)
+    level = models.PositiveSmallIntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(3)])
+    summary = models.CharField(max_length=200, validators=[_not_blank], help_text="One line for the card.")
+    explanation = models.TextField(validators=[_not_blank, MaxLengthValidator(20000)], help_text="The short teaching text, in markdown.")
+    demo_phrase = models.ForeignKey(Phrase, null=True, blank=True, on_delete=models.SET_NULL, related_name="lessons")
+    progression = models.ForeignKey(Progression, null=True, blank=True, on_delete=models.SET_NULL, related_name="lessons", help_text="The changes the lesson is taught over.")
+    style = models.ForeignKey(Style, null=True, blank=True, on_delete=models.SET_NULL, related_name="lessons")
+    prerequisite = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL, related_name="unlocks")
+    authorship = models.CharField(max_length=12, choices=Authorship.choices, default=Authorship.AI_DRAFTED)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.DRAFT)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["track", "order"]
+        constraints = [
+            models.UniqueConstraint(fields=["track", "order"], name="improv_lesson_track_order_unique"),
+        ]
+
+    def __str__(self):
+        return self.title
+
+    def clean(self):
+        if self.prerequisite_id and self.prerequisite_id == self.pk:
+            raise ValidationError({"prerequisite": "A lesson cannot be its own prerequisite."})
+
+
+class Exercise(models.Model):
+    """A playing task with a way of being scored. A challenge is an exercise with no lesson."""
+
+    class ScoringKind(models.TextChoices):
+        CHORD_TONES_ON_BEATS = "chord_tones_on_beats", "chord tones on beats"
+        GUIDE_TONES = "guide_tones", "guide tones"
+        SCALE_ONLY = "scale_only", "scale only"
+        APPROACH_NOTES = "approach_notes", "approach notes"
+        RHYTHM_MOTIF = "rhythm_motif", "rhythm motif"
+        CALL_AND_RESPONSE = "call_and_response", "call and response"
+        COMPING_VOICINGS = "comping_voicings", "comping voicings (a later version)"
+        FREE_PLAY = "free_play", "free play"
+
+    lesson = models.ForeignKey(Lesson, null=True, blank=True, on_delete=models.CASCADE, related_name="exercises", help_text="Empty means a standalone challenge or a daily-workout candidate.")
+    order = models.PositiveSmallIntegerField(default=1, help_text="Within the lesson.")
+    title = models.CharField(max_length=100, validators=[_not_blank])
+    slug = models.SlugField(max_length=60, unique=True)
+    instructions = models.TextField(validators=[_not_blank, MaxLengthValidator(4000)])
+    progression = models.ForeignKey(Progression, on_delete=models.PROTECT, related_name="exercises")
+    key = models.CharField(max_length=3, validators=[key_name])
+    tempo = models.PositiveSmallIntegerField(validators=tempo_limits)
+    style = models.ForeignKey(Style, null=True, blank=True, on_delete=models.SET_NULL, related_name="exercises")
+    bars = models.PositiveSmallIntegerField(default=4, validators=[MinValueValidator(1), MaxValueValidator(64)], help_text="How much to play.")
+    scoring_kind = models.CharField(max_length=24, choices=ScoringKind.choices)
+    scoring_params = models.JSONField(default=dict, blank=True, help_text='The judge reads these by kind, e.g. {"beats": [1, 3]}. See improv/teaching.py.')
+    pass_score = models.PositiveSmallIntegerField(default=70, validators=[MaxValueValidator(100)])
+    xp = models.PositiveSmallIntegerField(default=10, validators=[MaxValueValidator(1000)])
+    daily_eligible = models.BooleanField(default=False, help_text="May the daily workout pick it.")
+
+    class Meta:
+        ordering = ["lesson__track", "lesson__order", "order", "id"]
+        constraints = [
+            models.UniqueConstraint(fields=["lesson", "order"], name="improv_exercise_lesson_order_unique"),
+        ]
+
+    def __str__(self):
+        return self.title
+
+    def clean(self):
+        beats = beats_in(self.progression.time_signature) if self.progression_id else 4
+        problem = check_scoring(self.scoring_kind, self.scoring_params, beats_per_bar=beats or 4, bars=self.bars or 1)
+        if problem:
+            raise ValidationError({"scoring_params": problem})
+
+
+# ---------------------------------------------------------------- SPR-I.5.2
+
+
+class Completion(models.Model):
+    """The first time a player passed an exercise. A fact, not a status.
+
+    Only the server makes one, as the consequence of a take (improv/progress.py), and the XP is
+    frozen from the exercise row at that moment. XP, level and what is unlocked are reads over
+    these rows. The take is SET_NULL because pruning old takes must never un-earn anything."""
+
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="completions")
+    exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE, related_name="completions")
+    take = models.OneToOneField(Take, null=True, blank=True, on_delete=models.SET_NULL, related_name="completion")
+    xp_awarded = models.PositiveSmallIntegerField()
+    completed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-completed_at", "-id"]
+        constraints = [
+            models.UniqueConstraint(fields=["player", "exercise"], name="improv_completion_player_exercise_unique"),
+        ]
+
+    def __str__(self):
+        return f"{self.player} passed {self.exercise}"

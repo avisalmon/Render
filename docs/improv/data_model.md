@@ -252,6 +252,27 @@ with no lesson.** "Hit chord tones on beats 1 and 3 for 8 bars" is one row.
 `scoring_params` is JSON for the same reason as above: each kind reads its own
 shape, and nothing filters across kinds by a parameter.
 
+**Added after approval, SPR-I.5.1.** Built as above, with these differences, each
+found while building the lesson page and the API:
+
+- `Phrase` has `slug` (unique) and `is_preset`. A phrase is the first teaching row a
+  player may own, so it follows `Style` and `Progression`: presets seeded and read-only,
+  the player's own rows writable. A lesson's demo and a challenge's prompt are presets.
+- `Exercise` has `slug` (unique). The page opens Play on an exercise by `?exercise=<slug>`
+  and a take names its exercise by slug, so a link survives a reseed that changes ids.
+  It is also unique on (`lesson`, `order`). Its `progression` is PROTECT: a progression
+  that a lesson is taught over cannot be deleted from under it.
+- `Take.exercise` is SET_NULL. Deleting an exercise keeps the takes played for it, as free
+  play, because a take is a record of what happened.
+- `scoring_params` and a phrase's `notes` are checked when the row is saved, by
+  `improv/teaching.py`, because they are JSON and Django cannot check them. The scoring
+  check mirrors what `static/improv/judge.js` reads for each kind; a test keeps the two
+  lists of kinds the same.
+- `Lesson.demo_phrase`, `progression`, `style` and `prerequisite` are SET_NULL: deleting
+  any of them leaves the lesson readable.
+- A take counts for an exercise only while the progression and the loop match what it asks
+  (from bar 1, to the exercise's `bars`). Anything else is saved with `exercise` null.
+
 ---
 
 ## 5. The person
@@ -308,8 +329,12 @@ person plays.
 | `exercise` | FK, null | null for free practice |
 | `progression` | FK, null (SET_NULL) | |
 | `chart` | text | **snapshot** of the chart as played |
+| `home_key` | char | the key the chart text is written in. Added after approval (SPR-I.4.3): a snapshot that needs the progression row to be read is not a snapshot. |
 | `key` | char | as played |
+| `time_signature` | char | the bar length. Added after approval, same reason. |
 | `tempo` | int | as played |
+| `swing_ratio` | decimal | the feel, 0.50 to 0.75. Added after approval: replaying or re-judging a take needs it and it is not in the chart text. |
+| `loop_from`, `loop_to` | int | which bars of the chart were played, 0-based, `loop_to` one past the last. Added after approval, same reason. |
 | `style` | FK, null (SET_NULL) | |
 | `started_at` | datetime | |
 | `duration_ms` | int | |
@@ -346,6 +371,61 @@ The first time a player passes an exercise. A fact, not a status.
 | `completed_at` | datetime | |
 
 Unique on (`player`, `exercise`).
+
+**Added after approval, SPR-I.5.2.** Built as above, with these differences:
+
+- A completion is made **by the server**, in the same transaction as the take that earns it
+  (`improv/progress.py`, `award`), and the API is read-only for it. The page can report a
+  take, so it could not otherwise be stopped from awarding itself XP. A take earns a
+  completion when it has a score at or above the exercise's `pass_score`, was played over
+  the exercise's progression from the first bar for the exercise's `bars`, its lesson is not
+  locked for the player, and the exercise is not already passed.
+- `xp_awarded` is read from the exercise row when the completion is made, and then frozen.
+- `take` is SET_NULL, not required. Takes are pruned after 30 days unless kept (Epic I.6),
+  and a pruned take must not un-earn XP. `exercise` is CASCADE: a completion of an exercise
+  that no longer exists is not worth keeping. `player` is CASCADE.
+- `take` is one-to-one: a take passes at most one exercise.
+- Total XP, level, a lesson's state (open, locked or done) and the counts on the summary are
+  computed from the completions on every read (`progress.summary`, `progress.lesson_states`)
+  and stored nowhere, as the table below says. A lesson with no exercises is never "done"
+  and never holds up the lesson after it, unless it is itself locked, in which case
+  everything behind it stays locked too.
+- Levels: level n begins at 25 times (n - 1) times n XP, capped at 50. Both numbers are
+  constants in `progress.py`.
+
+**Added after approval, SPR-I.5.3.** The first six lessons are seeded by
+`seed_improv_lessons` from `improv/seed_data/lessons.json`: 6 demo phrases (presets, kind
+`demo`), 6 lessons and 18 exercises, one lesson to each scored track. The command adds what
+is missing by slug, never overwrites, runs in one transaction and needs
+`seed_improv_library` first. Every seeded lesson is `published` with `authorship` set to
+`ai_drafted`, because that is the truth until Avi reads it; the pages say so on the card and
+on the lesson. When Avi has read a lesson he sets it to `reviewed` or `avi_written` in the
+admin, and a later seed run leaves it alone. The lessons are drafts that the app serves, and
+they must be read before they are passed off as taught.
+
+**Added after approval, SPR-I.5.4.** No new table and no new column. The practice log, the
+daily goal and the streak are reads over `PracticeSession` and `Player`, computed in
+`improv/practice.py`. A sitting belongs to the day it started on, read in the player's own
+`timezone` (an unknown zone name reads as UTC). A day meets the goal when its sitting seconds
+reach `daily_goal_minutes` times 60, using the goal as it is now for every day. The streak is
+the run of goal days ending today, or ending yesterday while today is still short of the goal,
+so an unfinished day never breaks it. The page, not the server, counts `active_seconds`: the
+band running, or a note played in the last ten seconds, reported every thirty seconds and at
+Stop and on leaving.
+
+**Added after approval, SPR-I.5.5.** No new table and no new column. The daily workout is a read
+over `Exercise` (its `daily_eligible` flag), `Completion` and `Take`, computed in
+`improv/workout.py`. It is a function of the player, the date in the player's own `timezone` and
+the completions made before that day began, so the same three show all day. Nothing about a
+pick is saved: finishing one is a take, and "done today" is a take of that exercise from today
+at or over the pass mark.
+
+**Added after approval, SPR-I.5.6.** No new table and no new column. The weakness report
+(`improv/weakness.py`) and the personal bests (`improv/bests.py`) are reads over `Take`, joined to
+`ChordQuality.family`. The one change in what is stored is inside `Take.metrics`, which is a free
+form dict: the judge now adds `byQuality`, a map from chord quality symbol to `{notes, chord,
+scale, approach, outside}`. Older takes simply lack it and count toward every area but the chord
+family one. Challenges are `Exercise` rows with no lesson, added by `seed_improv_challenges`.
 
 ---
 
@@ -415,8 +495,9 @@ everything the app reports flows out of it.
 - **Rule 6:** every model above gets a DRF CRUD API under `/improv/api/`,
   documented, behind the group check. Presets and reference rows are read-only
   to a player; a player's own progressions, styles and phrases are fully
-  editable. `Take` and `Completion` are created by the page through the API, not
-  by a special endpoint.
+  editable. `Take` is created by the page through the API, not by a special
+  endpoint. `Completion` is made by the server when it saves a take, and is read-only
+  through the API (see "Added after approval, SPR-I.5.2").
 - Own migration chain from `0001`, own templates and static files, own base
   template with its own English menu, and no link back to babook inside the app
   unless Avi asks for one.

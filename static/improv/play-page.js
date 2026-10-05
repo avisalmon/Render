@@ -8,6 +8,16 @@
   const Synth = window.ImprovSynth;
   const View = window.ImprovChartView;
   const Out = window.ImprovOutput;
+  const M = window.ImprovMidi;
+  const S = window.ImprovSetup;
+  const Rec = window.ImprovRecognize;
+  const Timing = window.ImprovTiming;
+  const J = window.ImprovJudge;
+  const Pr = window.ImprovPractice;
+  const Keys = window.ImprovKeyboardView;
+  const FIRST_KEY = 36; // C2
+  const LAST_KEY = 96; // C7
+  const JUDGE_EVERY_FRAMES = 6;
   const $ = (id) => document.getElementById(id);
 
   const host = $("play");
@@ -27,6 +37,21 @@
     pending: null,
     sinkId: "",
     outputs: [],
+    profile: null,
+    midi: null,
+    listening: null,
+    inputs: null,
+    keys: null,
+    held: [],
+    take: null,
+    judged: null,
+    frames: 0,
+    session: null,
+    sessionPromise: null,
+    exercise: null,
+    clock: Pr.createClock(),
+    lastActiveAt: 0,
+    reportedSeconds: -1,
   };
 
   const MIX = [
@@ -168,6 +193,9 @@
       $("chart-title").textContent = `${state.progression.title}, ${state.built.key}`;
       drawChart();
     }
+    anchorTake();
+    state.frames += 1;
+    if (state.frames % JUDGE_EVERY_FRAMES === 0 && state.take && state.take.events.length) judgeLive(false);
     const lit = P.litFor(state.built, state.scheduler.barAt(state.ctx.currentTime));
     for (const c of state.cells) if (c) c.el.classList.remove("im-bar-lit");
     const box = $("count-in");
@@ -200,6 +228,65 @@
     $("chart-title").textContent = `${state.progression.title}, ${settings.key}`;
     drawChart();
     $("play-toggle").disabled = !state.built.ok;
+    showExercise();
+  }
+
+  // ---------------------------------------------------------------- exercise
+
+  // Say whether what is on the screen is still the exercise. The result line is the judge's own.
+  function showExercise() {
+    if (!state.exercise) return;
+    const on = P.exerciseApplies(state.exercise, state.progression, state.built);
+    $("exercise-goal").textContent = P.exerciseGoalLine(state.exercise, on);
+    if (!on) $("exercise-result").textContent = "";
+  }
+
+  // Put the band where the exercise asks for it: its chart and band, its key and tempo, its bars.
+  async function openExercise(slug) {
+    let found;
+    try {
+      found = (await getJson(host.dataset.apiExercises)).find((e) => e.slug === slug);
+    } catch (e) {
+      showError("The exercise could not be loaded, so this is free play. " + e.message);
+      return;
+    }
+    if (!found) {
+      showError("There is no exercise by that name, so this is free play.");
+      return;
+    }
+    state.exercise = found;
+    chooseProgression(found.progression_slug);
+    if (state.progression.id !== found.progression) {
+      state.exercise = null;
+      showError("The exercise's chart is not in the library, so this is free play.");
+      return;
+    }
+    const style = state.styles.find((s) => s.id === found.style);
+    if (style && style.time_signature === state.progression.time_signature) {
+      state.style = style;
+      $("style").value = String(style.id);
+    }
+    if ($("key").value !== found.key) {
+      const option = document.createElement("option");
+      option.value = found.key;
+      option.textContent = found.key;
+      $("key").appendChild(option);
+      $("key").value = found.key;
+    }
+    $("bpm").value = P.clampTempo(state.style, found.tempo);
+    $("swing").value = P.defaultSwingMode(state.style);
+    refresh();
+    if (state.built && state.built.ok) {
+      const range = P.exerciseRange(found, state.built.chart.bars.length);
+      $("first").value = range.first;
+      $("last").value = range.last;
+      refresh();
+    }
+    $("exercise-title").textContent = found.title;
+    $("exercise-instructions").textContent = found.instructions;
+    if (found.lesson) $("exercise-back").href = `/improv/lessons/${encodeURIComponent(found.lesson)}/`;
+    $("exercise-panel").hidden = false;
+    showExercise();
   }
 
   // A change made while it plays: build the new plan, hand it to the scheduler for the next bar
@@ -241,6 +328,249 @@
     if (!state.playing) return;
     state.scheduler.setBpm(bpm);
     say(`${bpm} bpm from the next bar.`);
+  }
+
+  // ------------------------------------------------------------------- you
+
+  // The take being recorded: every MIDI event on the take's own clock, and the anchor that
+  // ties the piano's clock to the band's. The judge runs over it live, with `now`, and the
+  // same events are what SPR-I.4.3 posts.
+  function newTake() {
+    return { events: [], anchor: null, startedAt: new Date().toISOString() };
+  }
+
+  async function send(method, url, body) {
+    const response = await fetch(url, {
+      method,
+      credentials: "same-origin",
+      keepalive: true,
+      headers: { Accept: "application/json", "Content-Type": "application/json", "X-CSRFToken": host.dataset.csrf },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    const data = await response.json().catch(() => null);
+    if (!response.ok) throw new Error(data ? Object.values(data).flat().join(" ") : `${url} answered ${response.status}`);
+    return data;
+  }
+
+  // One sitting is one session: opened the first time the band starts or a note is played, and
+  // closed when the page goes or after thirty idle minutes. Its active seconds are what the
+  // timer counted, the band running or a note in the last ten seconds, which is what the daily
+  // goal counts. The page reports them every thirty seconds.
+  const clockNow = () => performance.now();
+
+  function ensureSession() {
+    if (!state.sessionPromise) {
+      state.sessionPromise = send("POST", host.dataset.apiSessions, {}).then(
+        (row) => (state.session = row),
+        (e) => {
+          state.sessionPromise = null;
+          throw e;
+        }
+      );
+    }
+    return state.sessionPromise;
+  }
+
+  // Before anything is counted: if the last sitting went cold, close it and start afresh.
+  function rollSittingIfCold() {
+    const t = clockNow();
+    if (!state.session || state.playing || !Pr.sittingIsOver(state.lastActiveAt, t)) return;
+    closeSession(new Date(Date.now() - (t - state.lastActiveAt)));
+    state.session = null;
+    state.sessionPromise = null;
+    state.clock = Pr.createClock();
+    state.reportedSeconds = -1;
+  }
+
+  function closeSession(endedAt) {
+    if (!state.session) return;
+    send("PATCH", `${host.dataset.apiSessions}${state.session.id}/`, {
+      active_seconds: state.clock.seconds(clockNow()),
+      ended_at: (endedAt || new Date()).toISOString(),
+    }).catch(() => {});
+  }
+
+  async function reportSession() {
+    if (!state.session) return;
+    const seconds = state.clock.seconds(clockNow());
+    if (seconds === state.reportedSeconds) return;
+    state.reportedSeconds = seconds;
+    try {
+      await send("PATCH", `${host.dataset.apiSessions}${state.session.id}/`, { active_seconds: seconds });
+      await showPractice();
+    } catch (e) {
+      state.reportedSeconds = -1;
+    }
+  }
+
+  async function showPractice() {
+    if (!host.dataset.apiPractice) return;
+    try {
+      const response = await fetch(host.dataset.apiPractice, { credentials: "same-origin", headers: { Accept: "application/json" } });
+      if (!response.ok) return;
+      const report = await response.json();
+      const streak = report.streak ? ` Streak: ${report.streak} ${report.streak === 1 ? "day" : "days"}.` : "";
+      $("practice-line").textContent = Pr.goalLine(report) + streak;
+    } catch (e) {
+      // The line is a convenience; the page works without it.
+    }
+  }
+
+  function noteActivity() {
+    rollSittingIfCold();
+    state.clock.notePlayed(clockNow());
+    state.lastActiveAt = clockNow();
+    ensureSession().catch(() => {});
+  }
+
+  // Every play-through with a note in it is recorded, whole, with the chart, key, tempo and
+  // feel it was played over, and the verdict the judge gave it (spec ch. 5 and 6).
+  async function postTake(take, judged, built, bpm, swingRatio) {
+    const last = take.events.length ? take.events[take.events.length - 1].t_ms : 0;
+    const body = {
+      session: (await ensureSession()).id,
+      progression: state.progression ? state.progression.id : null,
+      style: state.style ? state.style.id : null,
+      exercise: P.exerciseApplies(state.exercise, state.progression, state.built) ? state.exercise.slug : null,
+      chart: state.progression.chart,
+      home_key: state.progression.home_key,
+      key: built.key,
+      time_signature: state.progression.time_signature,
+      tempo: bpm,
+      swing_ratio: swingRatio.toFixed(2),
+      loop_from: built.from,
+      loop_to: built.to,
+      started_at: take.startedAt,
+      duration_ms: Math.max(0, Math.round(Math.max(last, take.endedAtMs || 0))),
+      bars: built.to - built.from,
+      events: take.events,
+      score: judged.score,
+      metrics: judged.metrics,
+      judge_version: judged.version,
+    };
+    $("take-status").textContent = "Saving the take.";
+    try {
+      const saved = await send("POST", host.dataset.apiTakes, body);
+      const earned = P.completionNote(saved);
+      $("take-status").textContent = `Take ${saved.id} saved: ${judged.metrics.notes} notes.` + (earned ? " " + earned : "");
+      if (earned && state.exercise) {
+        state.exercise.completed = true;
+        showExercise();
+      }
+    } catch (e) {
+      $("take-status").textContent = "The take was not saved. " + e.message;
+    }
+  }
+
+  function swingRatioNow() {
+    return $("swing").value === "swing" && state.style ? Number(state.style.swing_ratio) : 0.5;
+  }
+
+  function takeNow() {
+    if (!state.playing || !state.scheduler) return null;
+    return P.takeTimeMs(state.scheduler.barAt(state.ctx.currentTime), state.built, state.scheduler.bpm);
+  }
+
+  function takeTimeOf(perfMs) {
+    if (!state.playing || !state.take || !state.take.anchor) return null;
+    const audio = Timing.audioAt(state.take.anchor, perfMs);
+    return P.takeTimeMs(state.scheduler.barAt(audio), state.built, state.scheduler.bpm);
+  }
+
+  function anchorTake() {
+    if (!state.take || state.take.anchor || !state.ctx) return;
+    try {
+      state.take.anchor = Timing.makeAnchor(state.ctx.getOutputTimestamp());
+    } catch (e) {
+      // not producing sound yet; try again next frame
+    }
+  }
+
+  function judgeLive(final) {
+    if (!state.take || !state.built || !state.built.ok) return;
+    const now = final ? undefined : takeNow();
+    state.judged = J.judge({
+      events: state.take.events,
+      chart: state.built.chart,
+      from: state.built.from,
+      to: state.built.to,
+      bpm: state.scheduler.bpm,
+      swingRatio: swingRatioNow(),
+      qualities: state.qualities,
+      scoring: P.exerciseScoring(P.exerciseApplies(state.exercise, state.progression, state.built) ? state.exercise : null, J.SCORING_KINDS),
+      latencyOffsetMs: state.profile ? state.profile.latency_offset_ms : 0,
+      grid: "beat",
+      now: now === null ? undefined : now,
+    });
+    $("feedback").textContent = P.liveSummary(state.judged);
+    if (state.exercise && P.exerciseApplies(state.exercise, state.progression, state.built)) {
+      $("exercise-result").textContent = P.exerciseVerdict(state.judged.score, state.exercise.pass_score);
+    }
+    lightKeys();
+  }
+
+  // Each held key wears the colour of the last judgement of that note.
+  function lightKeys() {
+    const latest = new Map();
+    for (const n of state.judged ? state.judged.notes : []) latest.set(n.note, n);
+    Keys.light(
+      state.keys,
+      state.held.map((midi) => ({ midi, className: P.keyClassFor(latest.get(midi)) }))
+    );
+    const spelling = state.profile ? state.profile.note_names : "sharps";
+    const read = Rec.recognize(state.held, state.qualities, { spelling });
+    $("heard").textContent = read.kind === "chord" ? read.name + (read.exact ? "" : "?") : read.kind === "notes" ? read.text : "";
+  }
+
+  function onMidi(event) {
+    const message = M.parse(event.data);
+    if (!message || message.type === "pedal") return;
+    if (message.type === "on") noteActivity();
+    if (message.type === "on") state.held = [...state.held.filter((n) => n !== message.note), message.note];
+    else state.held = state.held.filter((n) => n !== message.note);
+    const t = takeTimeOf(event.timeStamp);
+    if (state.take && t !== null) {
+      state.take.events.push({ t_ms: Math.round(t), type: message.type, note: message.note, velocity: message.velocity || 0 });
+      judgeLive(false);
+    } else {
+      lightKeys();
+    }
+  }
+
+  function attachInput(choice) {
+    for (const port of state.midi ? state.midi.inputs.values() : []) port.onmidimessage = null;
+    state.listening = choice || null;
+    state.held = [];
+    lightKeys();
+    if (!choice) return;
+    const port = state.midi.inputs.get(choice.id);
+    if (port) port.onmidimessage = onMidi;
+  }
+
+  function listInputs() {
+    const before = state.inputs;
+    state.inputs = S.inputChoices(Array.from(state.midi.inputs.values()));
+    const news = S.describeChange(S.changes(before, state.inputs), state.listening ? state.listening.name : "");
+    const remembered = state.listening ? state.listening.name : state.profile ? state.profile.midi_input_name : "";
+    const choice = S.pickInput(state.inputs, remembered);
+    const sentence = choice ? `Listening to ${choice.name}.` : "No keyboard is connected. Plug the piano in by USB.";
+    $("midi-state").textContent = news ? `${sentence} ${news}` : sentence;
+    if (!choice || !state.listening || choice.id !== state.listening.id) attachInput(choice);
+  }
+
+  async function startMidi() {
+    if (!navigator.requestMIDIAccess) {
+      $("midi-state").textContent = "This browser has no Web MIDI, so it cannot hear the piano. Use Chrome or Edge.";
+      return;
+    }
+    try {
+      state.midi = await navigator.requestMIDIAccess({ sysex: false });
+    } catch (e) {
+      $("midi-state").textContent = "MIDI was refused, so the piano cannot be heard. Allow it in the address bar.";
+      return;
+    }
+    state.midi.onstatechange = listInputs;
+    listInputs();
   }
 
   // ----------------------------------------------------------------- the mix
@@ -310,12 +640,20 @@
   async function start() {
     refresh();
     if (!state.built || !state.built.ok) return;
+    rollSittingIfCold();
     ensureAudio();
     if (state.ctx.state !== "running") await state.ctx.resume();
     const bpm = P.clampTempo(state.style, $("bpm").value);
     $("bpm").value = bpm;
     state.scheduler.start(state.built.plan, { bpm, loop: true, loopFrom: state.built.loopFrom });
     state.playing = true;
+    state.take = newTake();
+    state.judged = null;
+    state.clock.bandStarted(clockNow());
+    state.lastActiveAt = clockNow();
+    $("feedback").textContent = "Play something.";
+    $("take-status").textContent = "";
+    ensureSession().catch((e) => ($("take-status").textContent = "No session could be opened. " + e.message));
     lockSettings(true);
     $("play-toggle").textContent = "Stop";
     say(state.built.metronome ? "Metronome." : `${state.style.name}, ${bpm} bpm, ${state.built.key}.`);
@@ -323,6 +661,15 @@
   }
 
   function stop() {
+    if (state.take && state.take.events.length) {
+      state.take.endedAtMs = takeNow() || 0;
+      judgeLive(true);
+      postTake(state.take, state.judged, state.built, state.scheduler.bpm, swingRatioNow());
+    }
+    state.clock.bandStopped(clockNow());
+    state.lastActiveAt = clockNow();
+    reportSession();
+    state.take = null;
     if (state.scheduler) state.scheduler.stop();
     state.playing = false;
     state.pending = null;
@@ -400,14 +747,16 @@
   async function init() {
     buildMix();
     try {
-      const [progressions, styles, qualities] = await Promise.all([
+      const [progressions, styles, qualities, profile] = await Promise.all([
         getJson(host.dataset.apiProgressions),
         getJson(host.dataset.apiStyles),
         getJson(host.dataset.apiQualities),
+        getJson(host.dataset.apiPlayer),
       ]);
       state.progressions = progressions;
       state.styles = styles;
       state.qualities = qualities;
+      state.profile = profile;
     } catch (e) {
       say("The library could not be loaded.");
       showError(e.message);
@@ -420,8 +769,18 @@
     fillProgressions();
     const asked = new URLSearchParams(window.location.search).get("p");
     chooseProgression(asked);
+    const exercise = new URLSearchParams(window.location.search).get("exercise");
+    if (exercise) await openExercise(exercise);
     say("Ready. Press Play, or Space.");
+    state.keys = Keys.draw($("keys"), FIRST_KEY, LAST_KEY);
     setupOutput();
+    startMidi();
+    window.addEventListener("pagehide", () => {
+      if (state.playing) state.clock.bandStopped(clockNow());
+      closeSession();
+    });
+    setInterval(reportSession, Pr.REPORT_EVERY_MS);
+    showPractice();
 
     $("progression").addEventListener("change", () => chooseProgression($("progression").value));
     $("style").addEventListener("change", chooseStyle);
@@ -437,6 +796,6 @@
     });
   }
 
-  if (!P || !Band || !Sched || !Synth || !View || !Out) say("The page's scripts did not load.");
+  if (!P || !Band || !Sched || !Synth || !View || !Out || !M || !S || !Rec || !Timing || !J || !Keys) say("The page's scripts did not load.");
   else init();
 })();
