@@ -2,28 +2,32 @@
 {% load static %}
 {% block title %}improv - timing spike{% endblock %}
 {% block content %}
-<h1 class="im-title">Timing spike</h1>
-<p class="im-lead">
-  Proves three things on your own piano and laptop before anything else is built on them:
-  your piano's notes arrive, a click plays out, and the page can say how far each note
-  landed from the click. Use Chrome or Edge, and keep this tab in front while you play.
-</p>
+<div class="im-screen">
+<div class="im-play-head">
+  <h1 class="im-title">Timing spike</h1>
+  <p class="im-lead im-note">
+    Proves on your own piano and laptop that your notes arrive, a click plays out, and the page can say
+    how far each note landed from the click. Use Chrome or Edge, and keep this tab in front while you play.
+  </p>
+</div>
 
-<section class="im-panel">
+<div class="im-cols im-cols-3">
+<div class="im-col">
+<section class="im-panel im-flat">
   <h2 class="im-h2">1. Start</h2>
   <p class="im-note">
     Browsers only start sound after a click. Press the button, then turn the piano on and
     plug it in by USB. If the browser asks to use your MIDI devices, say yes. Without MIDI
     the on-screen keyboard below still works, but its timing is not trustworthy.
   </p>
-  <button id="start-audio" class="im-btn" type="button">Start audio and MIDI</button>
+  <button id="start-audio" data-key-action="primary" class="im-btn" type="button">Start audio and MIDI</button>
   <p id="midi-status" class="im-status">Not started.</p>
   <label class="im-field">Piano input
     <select id="midi-input" class="im-select"><option value="">(none found yet)</option></select>
   </label>
 </section>
 
-<section class="im-panel">
+<section class="im-panel im-flat">
   <h2 class="im-h2">2. Click</h2>
   <label class="im-field">Tempo
     <input id="bpm" class="im-input" type="number" min="20" max="300" value="90"> bpm
@@ -36,7 +40,7 @@
       <option value="4">sixteenth notes</option>
     </select>
   </label>
-  <button id="click-toggle" class="im-btn" type="button" disabled>Start click</button>
+  <button id="click-toggle" data-key-action="secondary" class="im-btn" type="button" disabled>Start click</button>
   <p class="im-note">
     Play one note on each click, as steadily as you can, for a minute. Use the lowest
     volume setting on the piano's own speakers, or the headphone socket, so you hear the
@@ -44,32 +48,38 @@
   </p>
 </section>
 
-<section class="im-panel">
+</div>
+
+<div class="im-col">
+<section class="im-panel im-flat">
   <h2 class="im-h2">3. Keyboard</h2>
   <p class="im-note">Lights from the piano and from the mouse or touch. The two are told apart in the table.</p>
   <div id="keyboard" class="im-keyboard" aria-label="Keyboard"></div>
   <p class="im-note">Sustain pedal: <span id="pedal" class="im-mono">up</span></p>
 </section>
 
-<section class="im-panel">
+<section class="im-panel im-flat">
+  <h2 class="im-h2">This setup</h2>
+  <pre id="environment" class="im-pre">Not started.</pre>
+  <textarea id="report" class="im-report" rows="4" readonly aria-label="Report"></textarea>
+  <button id="copy-result" class="im-btn im-btn-small" type="button">Copy the report</button>
+  <span id="copied" class="im-note"></span>
+</section>
+</div>
+
+<section class="im-panel im-fill">
   <h2 class="im-h2">4. Result</h2>
   <div id="summary" class="im-summary">Play some notes with the click running.</div>
   <p class="im-note">Positive means after the click, negative means before it.</p>
-  <div class="im-table-wrap">
+  <div class="im-table-wrap" data-bounded-list>
     <table class="im-table">
       <thead><tr><th>#</th><th>Source</th><th>Note</th><th>Velocity</th><th>Offset</th></tr></thead>
       <tbody id="readout"></tbody>
     </table>
   </div>
 </section>
-
-<section class="im-panel">
-  <h2 class="im-h2">This setup</h2>
-  <pre id="environment" class="im-pre">Not started.</pre>
-  <textarea id="report" class="im-report" rows="8" readonly aria-label="Report"></textarea>
-  <button id="copy-result" class="im-btn" type="button">Copy the report</button>
-  <span id="copied" class="im-note"></span>
-</section>
+</div>
+</div>
 {% endblock %}
 {% block scripts %}
 <script src="{% static 'improv/midi.js' %}"></script>

@@ -28,10 +28,13 @@
       <a class="im-nav-link" href="{% url 'improv:setup' %}">Setup</a>
       <a class="im-nav-link" href="{% url 'improv:spike' %}">Timing spike</a>
     </nav>
+    <span class="im-keys" title="The top keys of an 88-key piano press the marked buttons: C8 is the main one, B7 the second, A#7 the third.">Piano keys <b>C8</b> <b>B7</b> <b>A#7</b></span>
   </header>
   <main class="im-main">
     {% block content %}{% endblock %}
   </main>
+  <script src="{% static 'improv/control.js' %}"></script>
+  <script src="{% static 'improv/control-page.js' %}"></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

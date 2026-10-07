@@ -54,6 +54,7 @@
       li.appendChild(head);
       li.appendChild(make("p", "im-note", W.reason(item)));
       const play = make("a", "im-btn im-btn-link", W.playLabel(item));
+      play.dataset.keyItem = "yes";
       play.href = W.playUrl(host.dataset.playUrl, item);
       li.appendChild(play);
       list.appendChild(li);

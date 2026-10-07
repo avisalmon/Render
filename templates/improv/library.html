@@ -2,7 +2,7 @@
 {% load static %}
 {% block title %}improv - Library{% endblock %}
 {% block content %}
-<div id="library" class="im-lib"
+<div id="library" class="im-screen"
      data-api-progressions="{{ api.progressions }}"
      data-api-qualities="{{ api.qualities }}"
      data-play-url="{{ play_url }}"
@@ -11,11 +11,11 @@
   <div class="im-play-head">
     <h1 class="im-title">Library</h1>
     <p id="lib-status" class="im-status" role="status" aria-live="polite">Loading the library.</p>
-    <a class="im-btn im-btn-link" href="{{ editor_url }}">New progression</a>
+    <a class="im-btn im-btn-link im-btn-small im-head-end" data-key-action="secondary" href="{{ editor_url }}">New progression</a>
   </div>
 
-  <section class="im-panel" aria-label="Filters">
-    <div class="im-grid">
+  <section class="im-panel im-flat" aria-label="Filters">
+    <div class="im-filter-band">
       <label class="im-field">Search
         <input id="f-q" class="im-input im-input-wide" type="search" placeholder="title, tag or word" autocomplete="off">
       </label>
@@ -38,14 +38,14 @@
       <label class="im-field im-check">
         <input id="f-mine" type="checkbox"> My progressions only
       </label>
+      <p class="im-note">
+        <span id="lib-count"></span>
+        <button id="f-clear" class="im-btn im-btn-link im-btn-quiet im-btn-small" type="button">Clear filters</button>
+      </p>
     </div>
-    <p class="im-note">
-      <span id="lib-count"></span>
-      <button id="f-clear" class="im-btn im-btn-link im-btn-quiet" type="button">Clear filters</button>
-    </p>
   </section>
 
-  <section id="lib-list" class="im-cards" aria-label="Progressions"></section>
+  <section id="lib-list" class="im-cards" aria-label="Progressions" data-key-in="primary" data-bounded-list></section>
   <p id="lib-empty" class="im-note" hidden>Nothing matches these filters.</p>
 </div>
 {% endblock %}

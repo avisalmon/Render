@@ -3,7 +3,7 @@
 {% block title %}Progress, improv{% endblock %}
 
 {% block content %}
-<div id="progress" class="im-lessons"
+<div id="progress" class="im-screen"
      data-api-summary="{{ api.summary }}"
      data-api-practice="{{ api.practice }}"
      data-api-weakness="{{ api.weakness }}"
@@ -15,7 +15,9 @@
     <p id="progress-status" class="im-status" role="status" aria-live="polite">Loading your progress.</p>
   </div>
 
-  <section class="im-panel" aria-label="Level">
+  <div class="im-cols im-cols-3">
+  <div class="im-col">
+  <section class="im-panel im-flat" aria-label="Level">
     <h2 class="im-h2">Level</h2>
     <p id="progress-level" class="im-level-line"></p>
     <progress id="progress-xp" class="im-xp" value="0" max="1" hidden></progress>
@@ -23,7 +25,15 @@
     <p class="im-note">XP comes from passing an exercise for the first time. Replaying one earns nothing more.</p>
   </section>
 
-  <section class="im-panel" aria-label="Practice calendar">
+  <section class="im-panel im-flat" aria-label="Where to work">
+    <h2 class="im-h2">Where to work</h2>
+    <p id="weakness-status" class="im-level-line">Reading your takes.</p>
+    <ul id="weakness-list" class="im-takes-list"></ul>
+    <p class="im-note">This reads the last thirty days of takes. It stays quiet until it has twenty notes to go on, so it never guesses.</p>
+  </section>
+  </div>
+
+  <section class="im-panel im-flat" aria-label="Practice calendar">
     <h2 class="im-h2">Practice</h2>
     <p id="progress-streak" class="im-level-line"></p>
     <p id="progress-best-streak" class="im-note"></p>
@@ -32,20 +42,14 @@
     <p class="im-note">Gold is a day the goal was met, an outline a day with some practice. The full log is on <a href="{{ practice_url }}">Practice</a>.</p>
   </section>
 
-  <section class="im-panel" aria-label="Where to work">
-    <h2 class="im-h2">Where to work</h2>
-    <p id="weakness-status" class="im-level-line">Reading your takes.</p>
-    <ul id="weakness-list" class="im-takes-list"></ul>
-    <p class="im-note">This reads the last thirty days of takes. It stays quiet until it has twenty notes to go on, so it never guesses.</p>
-  </section>
-
-  <section class="im-panel" aria-label="Best takes">
+  <section class="im-panel im-fill" aria-label="Best takes">
     <h2 class="im-h2">Best takes</h2>
     <p id="bests-status" class="im-level-line">Reading your takes.</p>
-    <ul id="bests-list" class="im-takes-list"></ul>
+    <ul id="bests-list" class="im-takes-list" data-bounded-list></ul>
     <p id="bests-empty" class="im-note" hidden>No scored takes of an exercise yet. Play one on <a href="{{ challenges_url }}">Challenges</a> or in a <a href="{{ lessons_url }}">lesson</a>.</p>
-    <p><a class="im-btn im-btn-link im-btn-quiet" href="{{ challenges_url }}">All challenges</a></p>
+    <p class="im-tight"><a class="im-btn im-btn-link im-btn-quiet im-btn-small" data-key-action="primary" href="{{ challenges_url }}">All challenges</a></p>
   </section>
+  </div>
 </div>
 {% endblock %}
 

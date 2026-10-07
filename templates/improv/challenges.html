@@ -3,7 +3,7 @@
 {% block title %}Challenges, improv{% endblock %}
 
 {% block content %}
-<div id="challenges" class="im-lessons"
+<div id="challenges" class="im-screen"
      data-api-bests="{{ api.bests }}"
      data-play-url="{{ play_url }}">
 
@@ -12,18 +12,20 @@
     <p id="challenges-status" class="im-status" role="status" aria-live="polite">Loading the challenges.</p>
   </div>
 
-  <section class="im-panel" aria-label="Challenges">
-    <h2 class="im-h2">Challenges</h2>
-    <p class="im-note">Each one is always open, whatever lesson you are on. Your best score is kept, and the first pass earns its XP once.</p>
-    <ul id="challenges-list" class="im-takes-list"></ul>
-    <p id="challenges-empty" class="im-note" hidden>No challenges yet.</p>
-  </section>
+  <div class="im-cols">
+    <section class="im-panel im-fill" aria-label="Challenges">
+      <h2 class="im-h2">Challenges</h2>
+      <p class="im-note">Each one is always open, whatever lesson you are on. Your best score is kept, and the first pass earns its XP once.</p>
+      <ul id="challenges-list" class="im-takes-list" data-key-in="primary" data-bounded-list></ul>
+      <p id="challenges-empty" class="im-note" hidden>No challenges yet.</p>
+    </section>
 
-  <section class="im-panel" aria-label="Bests in lessons">
-    <h2 class="im-h2">Your bests in the lessons</h2>
-    <ul id="lessons-bests" class="im-takes-list"></ul>
-    <p id="lessons-bests-empty" class="im-note" hidden>Play an exercise from a lesson and your best score shows here.</p>
-  </section>
+    <section class="im-panel im-fill" aria-label="Bests in lessons">
+      <h2 class="im-h2">Your bests in the lessons</h2>
+      <ul id="lessons-bests" class="im-takes-list" data-bounded-list></ul>
+      <p id="lessons-bests-empty" class="im-note" hidden>Play an exercise from a lesson and your best score shows here.</p>
+    </section>
+  </div>
 </div>
 {% endblock %}
 

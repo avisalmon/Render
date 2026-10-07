@@ -111,6 +111,22 @@ The most important epic in the app.
 
 ---
 
+## EPIC-I.7: The piano is the remote, and every screen fits the window  `DONE`
+
+Avi, 2026-10-06, said as a general rule for the whole app: it is a PC app used at the piano, so all
+information fits one screen with no scrolling, and every start or stop button can be pressed from
+the piano, starting with the top key of the 88. Spec: ch. 8, "Two standing rules for every screen".
+
+| Sprint | What | Traces | Status |
+|---|---|---|---|
+| SPR-I.7.1 | The control keys: `control.js` (C8 primary, B7 secondary, A#7 tertiary, note-on only, 400 ms debounce, pick the first visible enabled button), the page layer that listens on every MIDI input, the key printed on each marked button, and the control zone left out of judging, chord naming and takes. Node tests, browser test with a faked piano | ch. 4, 8 | DONE 2026-10-07 |
+| SPR-I.7.2 | Mark every screen's buttons with their action: Play, Lesson, Today, Takes, Setup, Editor, Spike, and the first item of the lists (lessons, challenges, practice, library) | ch. 8 | DONE 2026-10-07 |
+| SPR-I.7.3 | The one-screen shell and the Play, Lesson and Takes layouts | ch. 8 | DONE 2026-10-07 |
+| SPR-I.7.4 | One-screen layouts for Today, Lessons, Challenges, Library, Editor, Practice, Progress, Reference, Setup and Spike | ch. 8 | DONE 2026-10-07 |
+| SPR-I.7.5 | The guard: every screen at 1280 by 720 and 1920 by 1080 with real data does not scroll; ready to push | ch. 8 | DONE 2026-10-07 |
+
+---
+
 ## After v1, in the order Avi sees fit
 
 Ear training inside lessons (12), the weakness-driven extras, ear and speed

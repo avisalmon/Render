@@ -122,7 +122,7 @@ def test_the_library_leads_to_the_editor_and_back(people):
 @pytest.mark.parametrize("which", PAGES)
 def test_every_script_the_page_loads_is_served_and_in_the_right_order(people, which):
     html = _html(people["member"], which)
-    names = [Path(src).name for src in re.findall(r'<script src="([^"]+)"', html)]
+    names = [Path(src).name for src in re.findall(r'<script src="([^"]+)"', html) if Path(src).name not in ("control.js", "control-page.js")]
     assert names == PAGES[which]["scripts"]
     for name in names:
         assert finders.find(f"improv/{name}"), f"{name} is not found by staticfiles"

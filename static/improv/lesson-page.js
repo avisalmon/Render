@@ -102,6 +102,7 @@
       if (!ex.locked) {
         const actions = make("div", "im-card-actions");
         const go = make("a", "im-btn im-btn-link", ex.completed ? "Play it again" : "Play it");
+        go.dataset.keyItem = "yes";
         go.href = L.exerciseUrl(host.dataset.playUrl, ex.slug);
         actions.appendChild(go);
         li.appendChild(actions);

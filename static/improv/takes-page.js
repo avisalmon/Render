@@ -85,6 +85,7 @@
     const actions = make("div", "im-card-actions");
     const replay = make("button", "im-btn", "Replay");
     replay.type = "button";
+    replay.dataset.keyItem = "yes";
     replay.addEventListener("click", () => startReplay(take));
     const keep = make("button", "im-btn im-btn-quiet", take.is_kept ? "Kept" : "Keep");
     keep.type = "button";

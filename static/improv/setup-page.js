@@ -5,6 +5,7 @@
   "use strict";
   const S = window.ImprovSetup;
   const M = window.ImprovMidi;
+  const Ctl = window.ImprovControl;
   const Rec = window.ImprovRecognize;
   const Cal = window.ImprovCalibrate;
   const Timing = window.ImprovTiming;
@@ -177,7 +178,7 @@
     if (!port) return;
     port.onmidimessage = (event) => {
       const message = M.parse(event.data);
-      if (!message) return;
+      if (!message || Ctl.isControlNote(message.note)) return;
       if (message.type === "on") {
         state.held = [...state.held.filter((n) => n !== message.note), message.note];
         state.run.push({ note: message.note, at: performance.now() / 1000 });

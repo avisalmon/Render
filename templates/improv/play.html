@@ -2,7 +2,7 @@
 {% load static %}
 {% block title %}improv - Play{% endblock %}
 {% block content %}
-<div id="play" class="im-play"
+<div id="play" class="im-screen im-play"
      data-api-progressions="{{ api.progressions }}"
      data-api-styles="{{ api.styles }}"
      data-api-qualities="{{ api.qualities }}"
@@ -16,91 +16,105 @@
   <div class="im-play-head">
     <h1 class="im-title">Play</h1>
     <p id="play-status" class="im-status" role="status" aria-live="polite">Loading the library.</p>
+    <p id="practice-line" class="im-note" aria-live="off"></p>
   </div>
-  <p id="practice-line" class="im-note" aria-live="off"></p>
 
-  <section class="im-panel im-exercise" id="exercise-panel" aria-label="Exercise" hidden>
-    <h2 class="im-h2" id="exercise-title">Exercise</h2>
-    <p id="exercise-instructions" class="im-exercise-text"></p>
-    <p id="exercise-goal" class="im-note"></p>
-    <p id="exercise-result" class="im-status" role="status" aria-live="polite"></p>
-    <a id="exercise-back" class="im-btn im-btn-quiet im-btn-link" href="{% url 'improv:lessons' %}">Back to the lessons</a>
-  </section>
+  <div class="im-play-main">
+    <section class="im-panel im-exercise im-exercise-panel im-flat" id="exercise-panel" aria-label="Exercise" hidden>
+      <h2 class="im-h2" id="exercise-title">Exercise</h2>
+      <p id="exercise-instructions" class="im-exercise-text"></p>
+      <p id="exercise-goal" class="im-note"></p>
+      <p id="exercise-result" class="im-status" role="status" aria-live="polite"></p>
+      <a id="exercise-back" data-key-action="secondary" class="im-btn im-btn-quiet im-btn-link" href="{% url 'improv:lessons' %}">Back to the lessons</a>
+    </section>
 
-  <section class="im-panel" aria-label="Transport">
-    <div class="im-transport">
-      <button id="play-toggle" class="im-btn im-btn-big" type="button" disabled>Play</button>
-      <div id="count-in" class="im-countin" aria-live="off" hidden></div>
-      <p class="im-note im-hint">Space starts and stops it. While it plays you can change the key, tempo, feel and band, and the mix; each change comes in at the next bar line. The progression, count-in and loop wait for Stop.</p>
-    </div>
-    <p id="play-error" class="im-error" role="alert" hidden></p>
-  </section>
-
-  <section class="im-panel" aria-label="Chart">
-    <h2 class="im-h2" id="chart-title">Chart</h2>
-    <div id="chart" class="im-chart" aria-label="Chart"></div>
-  </section>
-
-  <section class="im-panel" aria-label="You">
-    <div class="im-play-head">
-      <h2 class="im-h2">You</h2>
-      <p id="midi-state" class="im-note">Looking for the piano.</p>
-    </div>
-    <div id="keys" class="im-keyboard" aria-label="Keyboard"></div>
-    <p id="heard" class="im-heard" aria-live="off"></p>
-    <p id="feedback" class="im-status im-feedback" role="status" aria-live="off">Play something.</p>
-    <p id="take-status" class="im-note" role="status" aria-live="polite"></p>
-    <p class="im-note">Green is a chord tone, brighter for the third and seventh. Blue is in the scale. Amber is an approach note, or one still being decided. Red is outside, which is information, not a failure.</p>
-  </section>
-
-  <section class="im-panel im-settings" aria-label="Settings">
-    <div class="im-grid">
-      <label class="im-field">Progression
-        <select id="progression" class="im-select"></select>
-      </label>
-      <label class="im-field">Band
-        <select id="style" class="im-select"></select>
-      </label>
-      <label class="im-field">Key
-        <select id="key" class="im-select"></select>
-      </label>
-      <label class="im-field">Tempo
-        <input id="bpm" class="im-input" type="number" min="20" max="300" step="1"> bpm
-      </label>
-      <label class="im-field">Feel
-        <select id="swing" class="im-select">
-          <option value="swing">Swing</option>
-          <option value="straight">Straight</option>
-        </select>
-      </label>
-      <label class="im-field">Count-in
-        <select id="countin" class="im-select">
-          <option value="0">None</option>
-          <option value="1" selected>One bar</option>
-          <option value="2">Two bars</option>
-        </select>
-      </label>
-      <div class="im-field">Loop bars
-        <input id="first" class="im-input im-input-small" type="number" min="1" placeholder="1" aria-label="First bar of the loop">
-        to
-        <input id="last" class="im-input im-input-small" type="number" min="1" placeholder="end" aria-label="Last bar of the loop">
+    <section class="im-panel im-panel-flush im-flat" aria-label="Transport">
+      <div class="im-transport">
+        <button id="play-toggle" data-key-action="primary" class="im-btn im-btn-big" type="button" disabled>Play</button>
+        <div id="count-in" class="im-countin" aria-live="off" hidden></div>
+        <p class="im-note im-hint">Space starts and stops it. Key, tempo, feel, band and mix change at the next bar line while it plays. The progression, count-in and loop wait for Stop.</p>
       </div>
-      <label class="im-field im-check">
-        <input id="metronome" type="checkbox"> Metronome only
-      </label>
-    </div>
-  </section>
+      <p id="play-error" class="im-error" role="alert" hidden></p>
+    </section>
 
-  <section class="im-panel" aria-label="Mix">
-    <h2 class="im-h2">Mix</h2>
-    <div id="mix" class="im-mix"></div>
-    <p class="im-note">Mute the comping to hear your own harmony.</p>
-    <div id="output-row" class="im-field" hidden>
-      <label for="output">Sound goes to</label>
-      <select id="output" class="im-select"></select>
-    </div>
-    <p id="output-note" class="im-note" hidden></p>
-  </section>
+    <section class="im-panel im-fill im-chart-panel" aria-label="Chart">
+      <h2 class="im-h2" id="chart-title">Chart</h2>
+      <div id="chart" class="im-chart" aria-label="Chart" data-bounded-list></div>
+    </section>
+
+    <section class="im-panel im-panel-flush im-flat im-you" aria-label="You">
+      <div class="im-play-head">
+        <h2 class="im-h2">You</h2>
+        <p id="midi-state" class="im-note">Looking for the piano.</p>
+      </div>
+      <div id="keys" class="im-keyboard" aria-label="Keyboard"></div>
+      <div class="im-you-line">
+        <p id="heard" class="im-heard" aria-live="off"></p>
+        <p id="feedback" class="im-status im-feedback" role="status" aria-live="off">Play something.</p>
+        <p id="take-status" class="im-note" role="status" aria-live="polite"></p>
+      </div>
+      <p class="im-legend" title="Brighter green is the third and seventh. Amber is an approach note, or one still being decided. Red is outside, which is information, not a failure.">
+        <span class="im-swatch im-swatch-chord">chord tone</span>
+        <span class="im-swatch im-swatch-scale">in the scale</span>
+        <span class="im-swatch im-swatch-approach">approach</span>
+        <span class="im-swatch im-swatch-outside">outside</span>
+        Brighter green is the third and seventh. Red is information, not a failure.
+      </p>
+    </section>
+  </div>
+
+  <div class="im-play-side">
+    <section class="im-panel im-settings" aria-label="Settings">
+      <div class="im-grid">
+        <label class="im-field">Progression
+          <select id="progression" class="im-select"></select>
+        </label>
+        <label class="im-field">Band
+          <select id="style" class="im-select"></select>
+        </label>
+        <label class="im-field">Key
+          <select id="key" class="im-select"></select>
+        </label>
+        <label class="im-field">Tempo
+          <span><input id="bpm" class="im-input" type="number" min="20" max="300" step="1"> bpm</span>
+        </label>
+        <label class="im-field">Feel
+          <select id="swing" class="im-select">
+            <option value="swing">Swing</option>
+            <option value="straight">Straight</option>
+          </select>
+        </label>
+        <label class="im-field">Count-in
+          <select id="countin" class="im-select">
+            <option value="0">None</option>
+            <option value="1" selected>One bar</option>
+            <option value="2">Two bars</option>
+          </select>
+        </label>
+        <div class="im-field">Loop bars
+          <span>
+            <input id="first" class="im-input im-input-small" type="number" min="1" placeholder="1" aria-label="First bar of the loop">
+            to
+            <input id="last" class="im-input im-input-small" type="number" min="1" placeholder="end" aria-label="Last bar of the loop">
+          </span>
+        </div>
+        <label class="im-field im-check">
+          <span>Metronome only</span> <input id="metronome" type="checkbox">
+        </label>
+      </div>
+    </section>
+
+    <section class="im-panel" aria-label="Mix">
+      <h2 class="im-h2">Mix</h2>
+      <div id="mix" class="im-mix"></div>
+      <p class="im-note">Mute the comping to hear your own harmony.</p>
+      <div id="output-row" class="im-field" hidden>
+        <label for="output">Sound goes to</label>
+        <select id="output" class="im-select"></select>
+      </div>
+      <p id="output-note" class="im-note" hidden></p>
+    </section>
+  </div>
 </div>
 {% endblock %}
 {% block scripts %}

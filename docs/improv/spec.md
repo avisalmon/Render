@@ -622,6 +622,56 @@ added next month cannot quietly skip the gate.
 The app has its own base template and its own English menu. Laptop first; other
 sizes degrade to readable rather than being designed for.
 
+### Two standing rules for every screen (Avi, 2026-10-06)
+
+improv is a PC app used while sitting at the piano, hands on the keys, so two rules
+apply to every screen, existing and future. They are not features of one screen.
+
+1. **One screen, no scrolling.** Everything the player needs is visible at once in the
+   browser window. No page scrolls vertically at 1280 by 720 or larger. Panels share
+   the window in columns and rows instead of stacking down the page. The only
+   scrolling allowed is inside one bounded list that can grow without limit (takes,
+   the practice log, the library), never the page itself, and each such list shows
+   its newest or first items without scrolling.
+2. **The piano is a remote control.** Every activation button (start, stop, hear, save,
+   continue, replay) can also be pressed from the piano. The top key of an 88-key
+   piano (MIDI 108, C8) is the primary action of the screen. Its neighbours are the
+   second and third actions. Each such button shows its key on its face.
+
+**The control keys.**
+
+| Key | MIDI | Action |
+|---|---|---|
+| C8 | 108 | primary: Play and Stop, Hear it, Continue, Save, Replay |
+| B7 | 107 | secondary: the next most useful button on that screen |
+| A#7 | 106 | tertiary |
+
+- The mapping lives in `control.js` (pure, tested under Node). A page marks a button with
+  `data-key-action="primary"`, `"secondary"` or `"tertiary"`; it does no MIDI itself. When a
+  control key goes down, the first button of that action that is visible and enabled is
+  clicked, so a button that is hidden or disabled is skipped and the next one is used.
+- A control key is acted on at note-on only, and the same key twice within 400 ms counts once,
+  so a heavy hand does not start and stop the band.
+- The three keys are a control zone. They are never judged, never shown as played notes, never
+  named in a chord and never recorded in a take. The Play screen leaves them out of the
+  band's scoring entirely.
+- The keys work on any connected MIDI input, not only the remembered one, and need no setup.
+- A smaller keyboard has no C8. Making the control key settable is listed after v1.
+
+**One-screen layout.** The shell (`improv.css`) gives the window to the page: a compact menu
+on top and a main area that takes the rest of the height. A screen is a grid of panels in that
+area. The Play screen puts the transport, chart and keyboard in the left column and the
+settings and mix in a narrow right column. Every other screen is a root `im-screen` holding
+a header line and a grid of columns (`im-cols`), each panel either sized to its content
+(`im-flat`) or sharing what is left (`im-fill`). A list that can grow without limit carries
+`data-bounded-list` and is the only kind of element that may scroll inside itself. Below
+60rem wide or 34rem tall (a phone, a small window) the shell steps aside and the page flows
+and scrolls like any page, because that is not the piano setup. Guard: a browser test
+(`tests/test_spri_7_5_browser.py`) opens every screen at 1280 by 720 and 1920 by 1080 with a
+month of practice, forty takes and the longest chart, and fails when the page is taller or
+wider than the window or when anything unmarked scrolls inside itself. Today and Lessons
+must also fit without their lists scrolling at 1280 by 720.
+
 | Screen | What it is for |
 |---|---|
 | **Today** | the landing page: the streak, the daily goal as a progress ring, the three workout exercises, and a "continue" to the lesson in progress |

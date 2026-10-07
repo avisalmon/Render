@@ -85,7 +85,7 @@ def test_the_menu_leads_to_the_reference(people):
 
 def test_every_script_the_page_loads_is_served_and_in_the_right_order(people):
     html = _html(people["member"])
-    names = [Path(src).name for src in re.findall(r'<script src="([^"]+)"', html)]
+    names = [Path(src).name for src in re.findall(r'<script src="([^"]+)"', html) if Path(src).name not in ("control.js", "control-page.js")]
     assert names == ["chart.js", "reference.js", "keyboard-view.js", "reference-page.js"]
     for name in names:
         assert finders.find(f"improv/{name}"), f"{name} is not found by staticfiles"

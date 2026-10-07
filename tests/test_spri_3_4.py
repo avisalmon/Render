@@ -89,7 +89,7 @@ def test_the_screen_has_the_calibration_and_says_what_to_do(player):
 def test_the_page_loads_the_click_and_the_maths_it_needs_in_order(player):
     client, _ = player
     html = client.get("/improv/setup/").content.decode("utf-8")
-    names = [Path(src).name for src in re.findall(r'<script src="([^"]+)"', html)]
+    names = [Path(src).name for src in re.findall(r'<script src="([^"]+)"', html) if Path(src).name not in ("control.js", "control-page.js")]
     assert names == [
         "midi.js", "chart.js", "recognize.js", "timing.js", "synth.js", "calibrate.js",
         "setup.js", "setup-page.js",

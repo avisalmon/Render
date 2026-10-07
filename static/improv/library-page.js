@@ -95,6 +95,7 @@
 
     const actions = make("div", "im-card-actions");
     const play = make("a", "im-btn im-btn-link", "Play");
+    play.dataset.keyItem = "yes";
     play.href = host.dataset.playUrl + "?p=" + encodeURIComponent(p.slug);
     const edit = make("a", "im-btn im-btn-link im-btn-quiet", p.is_mine ? "Edit" : "Make my copy");
     edit.href = host.dataset.editorUrl + "?p=" + encodeURIComponent(p.slug);

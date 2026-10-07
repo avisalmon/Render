@@ -3,7 +3,7 @@
 {% block title %}Takes, improv{% endblock %}
 
 {% block content %}
-<div id="takes" class="im-takes"
+<div id="takes" class="im-screen"
      data-api-takes="{{ api.takes }}"
      data-api-progressions="{{ api.progressions }}"
      data-api-styles="{{ api.styles }}"
@@ -17,29 +17,31 @@
     <p id="takes-status" class="im-status" role="status" aria-live="polite">Loading your takes.</p>
   </div>
 
-  <section class="im-panel" aria-label="Filter">
-    <div class="im-row">
+  <section class="im-panel im-flat" aria-label="Filter">
+    <div class="im-filter-band">
       <label class="im-check"><input id="f-kept" type="checkbox"> Kept only</label>
       <span id="takes-count" class="im-note"></span>
+      <p class="im-note">Every take is recorded. Keep the ones worth coming back to: unkept takes lose their notes after thirty days and keep only their score.</p>
     </div>
-    <p class="im-note">Every take is recorded. Keep the ones worth coming back to: unkept takes lose their notes after thirty days and keep only their score.</p>
   </section>
 
-  <section class="im-panel" aria-label="Replay" id="replay-panel" hidden>
+  <div class="im-cols im-takes-cols">
+  <section class="im-panel im-fill" aria-label="Replay" id="replay-panel" hidden>
     <div class="im-play-head">
       <h2 class="im-h2" id="replay-title">Replay</h2>
-      <button id="replay-stop" class="im-btn im-btn-quiet" type="button">Stop</button>
+      <button id="replay-stop" data-key-action="primary" class="im-btn im-btn-quiet" type="button">Stop</button>
     </div>
     <p id="replay-status" class="im-status" role="status" aria-live="polite"></p>
-    <div id="replay-chart" class="im-chart" aria-label="Chart"></div>
+    <div id="replay-chart" class="im-chart" aria-label="Chart" data-bounded-list></div>
     <p id="replay-output" class="im-note"></p>
     <p id="replay-error" class="im-error" role="alert" hidden></p>
   </section>
 
-  <section class="im-panel" aria-label="Your takes">
-    <ul id="takes-list" class="im-takes-list"></ul>
+  <section class="im-panel im-fill" aria-label="Your takes">
+    <ul id="takes-list" class="im-takes-list" data-key-in="primary" data-bounded-list></ul>
     <p id="takes-empty" class="im-note" hidden>No takes yet. Play over the band and every take lands here.</p>
   </section>
+  </div>
 </div>
 {% endblock %}
 

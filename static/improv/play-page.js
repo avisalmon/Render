@@ -15,6 +15,7 @@
   const J = window.ImprovJudge;
   const Pr = window.ImprovPractice;
   const Keys = window.ImprovKeyboardView;
+  const Ctl = window.ImprovControl;
   const FIRST_KEY = 36; // C2
   const LAST_KEY = 96; // C7
   const JUDGE_EVERY_FRAMES = 6;
@@ -524,7 +525,7 @@
 
   function onMidi(event) {
     const message = M.parse(event.data);
-    if (!message || message.type === "pedal") return;
+    if (!message || message.type === "pedal" || Ctl.isControlNote(message.note)) return;
     if (message.type === "on") noteActivity();
     if (message.type === "on") state.held = [...state.held.filter((n) => n !== message.note), message.note];
     else state.held = state.held.filter((n) => n !== message.note);
@@ -796,6 +797,6 @@
     });
   }
 
-  if (!P || !Band || !Sched || !Synth || !View || !Out || !M || !S || !Rec || !Timing || !J || !Keys) say("The page's scripts did not load.");
+  if (!P || !Band || !Sched || !Synth || !View || !Out || !M || !S || !Rec || !Timing || !J || !Keys || !Ctl) say("The page's scripts did not load.");
   else init();
 })();

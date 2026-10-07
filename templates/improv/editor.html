@@ -2,7 +2,7 @@
 {% load static %}
 {% block title %}improv - Chart editor{% endblock %}
 {% block content %}
-<div id="editor" class="im-editor"
+<div id="editor" class="im-screen"
      data-api-progressions="{{ api.progressions }}"
      data-api-styles="{{ api.styles }}"
      data-api-qualities="{{ api.qualities }}"
@@ -16,9 +16,10 @@
     <p id="editor-status" class="im-status" role="status" aria-live="polite">Loading.</p>
   </div>
 
-  <section class="im-panel" aria-label="Chart">
+  <div class="im-cols im-cols-left">
+  <section class="im-panel im-fill" aria-label="Chart">
     <h2 class="im-h2">Chart</h2>
-    <textarea id="chart-text" class="im-textarea im-mono" rows="9" spellcheck="false" autocapitalize="off"
+    <textarea id="chart-text" class="im-textarea im-mono im-editor-text" rows="7" spellcheck="false" autocapitalize="off"
               autocomplete="off" aria-describedby="chart-check"></textarea>
     <p id="chart-check" class="im-check-line" role="status" aria-live="polite"></p>
     <div id="chart-error" class="im-error-box" hidden>
@@ -36,10 +37,11 @@
       </ul>
     </details>
     <h2 class="im-h2">What it looks like</h2>
-    <div id="chart-preview" class="im-chart" aria-label="Chart preview"></div>
+    <div id="chart-preview" class="im-chart" aria-label="Chart preview" data-bounded-list></div>
   </section>
 
-  <section class="im-panel im-settings" aria-label="Details">
+  <div class="im-col">
+  <section class="im-panel im-settings im-flat" aria-label="Details">
     <div class="im-grid">
       <label class="im-field">Title
         <input id="title" class="im-input im-input-wide" type="text" maxlength="100" autocomplete="off">
@@ -72,15 +74,17 @@
     </fieldset>
   </section>
 
-  <section class="im-panel" aria-label="Save">
+  <section class="im-panel im-flat" aria-label="Save">
     <div class="im-transport">
-      <button id="save" class="im-btn im-btn-big" type="button" disabled>Save</button>
+      <button id="save" data-key-action="primary" class="im-btn im-btn-big" type="button" disabled>Save</button>
       <a id="open-play" class="im-btn im-btn-link im-btn-quiet" href="{{ play_url }}" hidden>Open in Play</a>
       <button id="delete" class="im-btn im-btn-quiet im-btn-danger" type="button" hidden>Delete</button>
       <a class="im-btn im-btn-link im-btn-quiet" href="{{ library_url }}">Back to the library</a>
     </div>
     <p id="editor-problems" class="im-error" role="alert" hidden></p>
   </section>
+  </div>
+  </div>
 </div>
 {% endblock %}
 {% block scripts %}

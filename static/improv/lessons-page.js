@@ -37,6 +37,7 @@
     if (note) li.appendChild(make("p", "im-note im-authorship", note));
     const actions = make("div", "im-card-actions");
     const open = make("a", "im-btn im-btn-link", lesson.state === "locked" ? "Read the lesson" : "Open the lesson");
+    if (lesson.state !== "locked" && lesson.state !== "done") open.dataset.keyItem = "yes";
     open.href = host.dataset.lessonUrl + encodeURIComponent(lesson.slug) + "/";
     actions.appendChild(open);
     li.appendChild(actions);

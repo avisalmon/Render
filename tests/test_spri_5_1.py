@@ -448,7 +448,7 @@ def test_the_lesson_page_says_where_its_data_comes_from_and_the_three_steps(peop
     for needle in ('data-lesson="chord-tones-ii-v-i"', 'data-api-lessons="/improv/api/lessons/"', 'data-api-exercises="/improv/api/exercises/"', 'data-api-phrases="/improv/api/phrases/"'):
         assert needle in html, needle
     for step in ("Read", "Hear", "Play"):
-        assert f">{step}<" in html, step
+        assert f". {step}<" in html, step
 
 
 def test_the_play_page_knows_the_exercises_endpoint(people):
@@ -484,7 +484,7 @@ def test_the_lessons_logic_touches_no_browser_api():
 
 
 def _scripts(html):
-    return [Path(src).name for src in re.findall(r'<script src="([^"]+)"', html)]
+    return [Path(src).name for src in re.findall(r'<script src="([^"]+)"', html) if Path(src).name not in ("control.js", "control-page.js")]
 
 
 def test_each_lesson_page_loads_its_scripts_in_dependency_order(people, content):

@@ -26,6 +26,7 @@
     const tries = B.attemptsLine(item);
     li.appendChild(make("p", "im-note", [B.scoreLine(item), tries].filter(Boolean).join(" ")));
     const play = make("a", "im-btn im-btn-link", B.playLabel(item));
+    play.dataset.keyItem = "yes";
     play.href = B.playUrl(host.dataset.playUrl, item);
     li.appendChild(play);
     return li;
