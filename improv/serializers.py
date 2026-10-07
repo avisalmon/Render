@@ -2,7 +2,7 @@ from django.db.models import Q
 from rest_framework import serializers
 
 from .grooves import check_groove
-from .models import ChordQuality, ChordScale, Completion, Exercise, Lesson, Phrase, Player, PracticeSession, Progression, Scale, Style, Tag, Take
+from .models import ChordQuality, ChordScale, Completion, DrillAttempt, Exercise, Lesson, Phrase, Player, PracticeSession, Progression, Scale, ScaleFingering, ScaleRun, Style, Tag, Take
 from .teaching import check_notes
 
 
@@ -34,6 +34,14 @@ class ScaleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Scale
         fields = ["id", "slug", "name", "family", "intervals", "parent_slug", "mode_number"]
+
+
+class ScaleFingeringSerializer(serializers.ModelSerializer):
+    scale = serializers.SlugRelatedField(slug_field="slug", read_only=True)
+
+    class Meta:
+        model = ScaleFingering
+        fields = ["id", "scale", "root_pc", "hand", "first_octave", "next_octaves", "last_note", "authorship"]
 
 
 class ChordScaleSerializer(serializers.ModelSerializer):
@@ -127,7 +135,7 @@ class PlayerSerializer(serializers.ModelSerializer):
         model = Player
         fields = [
             "id", "username", "daily_goal_minutes", "latency_offset_ms", "midi_input_name",
-            "note_names", "demo_output", "timezone", "created_at",
+            "note_names", "demo_output", "trainer_tempo", "timezone", "created_at",
         ]  # fmt: skip
         read_only_fields = ["created_at"]
 
@@ -313,4 +321,67 @@ class TakeSerializer(serializers.ModelSerializer):
         if value("bars") is not None and value("loop_to") is not None and value("loop_from") is not None:
             if value("bars") != value("loop_to") - value("loop_from"):
                 raise serializers.ValidationError({"bars": ["bars has to be the number of bars between loop_from and loop_to."]})
+        return attrs
+
+
+# ---------------------------------------------------------------- SPR-I.8.2
+
+
+class ScaleRunSerializer(serializers.ModelSerializer):
+    """What the scales page posts after a run, checked for shape and range only. `passed` is the
+    server's: the score measured against the pass line."""
+
+    scale = serializers.SlugRelatedField(slug_field="slug", queryset=Scale.objects.all(), required=False)
+
+    class Meta:
+        model = ScaleRun
+        fields = [
+            "id", "scale", "root_pc", "octaves", "notes_per_beat", "tempo_bpm", "score", "pitch_accuracy", "timing_accuracy",
+            "mean_offset_ms", "passed", "missed_steps", "judge_version", "created_at",
+        ]  # fmt: skip
+        read_only_fields = ["passed", "created_at"]
+
+    def validate(self, attrs):
+        if self.instance is None and "scale" not in attrs:
+            major = Scale.objects.filter(slug="major").first()
+            if major is None:
+                raise serializers.ValidationError({"scale": ["The major scale is not seeded yet."]})
+            attrs["scale"] = major
+        return attrs
+
+
+# ---------------------------------------------------------------- SPR-I.8.4
+
+
+class DrillAttemptSerializer(serializers.ModelSerializer):
+    """What the chords page posts for each prompt. `prompt` and `answer` are objects the page owns."""
+
+    class Meta:
+        model = DrillAttempt
+        fields = [
+            "id", "kind", "key_pc", "level", "prompt", "answer", "is_correct", "wrong_tries", "hint_used", "skipped",
+            "response_ms", "answered_at",
+        ]  # fmt: skip
+        read_only_fields = ["answered_at"]
+
+    def validate_prompt(self, value):
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("prompt is an object.")
+        return value
+
+    def validate_answer(self, value):
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("answer is an object.")
+        return value
+
+    def validate(self, attrs):
+        def value(name):
+            return attrs[name] if name in attrs else getattr(self.instance, name, None)
+
+        if value("skipped") and value("response_ms") is not None:
+            raise serializers.ValidationError({"response_ms": ["A skipped prompt has no response time."]})
+        if value("skipped") and value("is_correct"):
+            raise serializers.ValidationError({"is_correct": ["A skipped prompt is not correct."]})
+        if value("is_correct") and value("wrong_tries"):
+            raise serializers.ValidationError({"is_correct": ["A prompt with wrong tries is not correct."]})
         return attrs

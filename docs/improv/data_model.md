@@ -290,6 +290,7 @@ requires, not a change to `User`.
 | `midi_input_name` | char | the keyboard last used, to reconnect it |
 | `note_names` | choice | sharps / flats |
 | `demo_output` | choice | laptop / piano: where lesson demos and call-and-response phrases sound. Added after approval, see spec chapter 6. |
+| `trainer_tempo` | int | the scale trainer's tempo in bpm, 30 to 160, default 60. Added with Epic I.8 (Avi: "default 60, can be changed, remembered for next time"). |
 | `timezone` | char | IANA name, default `Asia/Jerusalem`. Added after approval: the site runs on UTC, and a streak is made of the player's own days, so the day boundary has to be theirs. |
 | `created_at` | datetime | |
 
@@ -429,18 +430,52 @@ family one. Challenges are `Exercise` rows with no lesson, added by `seed_improv
 
 ---
 
-## 7. Later (v2), modelled now so the shape is right
+## 6a. The scales and chords trainer (Epic I.8, added 2026-10-07)
+
+Spec chapter 10. Three tables, all about what a player is taught or did.
+
+### `ScaleFingering` (reference, read-only to a player)
+
+The standard fingering of a major scale for one hand, one key. Seeded once from
+`improv/seed_data/fingerings.json`.
+
+| Field | Type | Notes |
+|---|---|---|
+| `scale` | FK Scale | Major (Ionian) for now; other scales add rows later |
+| `root_pc` | int 0-11 | the key's tonic as a pitch class, C is 0 |
+| `hand` | choice | `L` or `R` |
+| `first_octave` | JSON, 7 numbers | finger for each scale degree in the first octave, 1 is the thumb |
+| `next_octaves` | JSON, 7 numbers | the same for every later octave (it differs only where the hand starts on a different finger) |
+| `last_note` | int | the finger on the final top note |
+| `authorship` | choice | same meaning as on `Lesson`: `ai_drafted` until Avi has read it |
+
+Unique on (`scale`, `root_pc`, `hand`). Descending is the ascending list reversed. **Why JSON columns
+here:** a fingering is one seven-number cell that the screen reads whole and nothing queries by a single
+finger; the row is the data. The numbers were checked against a published chart (masterpiano.com,
+"Piano Scales") and against the standard exam fingerings; they are `authorship = ai_drafted` until Avi
+has read them at the piano.
+
+### `ScaleRun`
+
+One attempt at a scale in time, with its score.
+
+`player`, `scale`, `root_pc`, `octaves` (2 to 4), `notes_per_beat` (2 to 4), `tempo_bpm`,
+`score` (0 to 100), `pitch_accuracy`, `timing_accuracy`, `mean_offset_ms` (negative is early),
+`passed` (score at or above 80), `missed_steps` (JSON list of step numbers, a cell read whole),
+`judge_version`, `created_at`.
 
 ### `DrillAttempt`
 
-One answer in an ear-training or speed game: name the chord, name the
-progression, repeat the lick, spell the chord. Same idea as blackjack's
-`Attempt`: one row per decision, and every game statistic is a read over it.
+One prompt of a trainer drill: a chord and a position. One row per prompt, and every chord statistic is a
+read over it. (It was modelled in v2 for ear-training games; the same shape serves this drill, so it is
+built now with a few more fields.)
 
-`player`, `kind` (chord name / progression name / lick repeat / chord spelling),
-`prompt` (JSON), `answer` (JSON), `is_correct`, `response_ms`, `answered_at`.
-
-Not built in v1, listed so nothing in v1 closes the door on it.
+`player`, `kind` (`chord_position` now; later chord name, progression name, lick repeat),
+`key_pc` (the key being drilled, 0 to 11, kept as a column so "weakest key" is a plain query),
+`level` (1 to 3), `prompt` (JSON: degree, chord symbol, position, expected pitch classes and bass),
+`answer` (JSON: the notes of the last try and what the recognizer called them),
+`is_correct` (right with no wrong tries), `wrong_tries`, `hint_used`, `skipped`,
+`response_ms` (null if skipped), `answered_at`.
 
 ---
 

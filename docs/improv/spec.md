@@ -870,6 +870,10 @@ needs a click during playing**: the learner's hands are on the piano, so
 everything that has to be adjusted is adjusted before or between takes, and the
 live display only shows.
 
+### The trainer screens
+
+`/improv/scales/` and `/improv/chords/` are specified in chapter 10 and follow both standing rules above.
+
 ---
 
 ## Chapter 9. Risks, named now
@@ -921,3 +925,116 @@ live display only shows.
 - **Not tested.** Unplugging and replugging the piano, a Bluetooth output (adds a
   large and variable delay), a background tab, and Edge. Treat Bluetooth audio as
   unsupported for scored takes until it is measured.
+
+---
+
+## Chapter 10. The scales and chords trainer (Epic I.8, Avi 2026-10-07)
+
+Avi asked to focus on chord training. This chapter is what was agreed, in his words first.
+
+> A scales and chords teacher and trainer. You get a scale, say D#, and play it with two
+> hands in tempo: first two octaves with two notes per beat, then three octaves with three
+> notes per beat, then four octaves with four notes per beat. It grades my accuracy and shows
+> the fingering expected over the scale. That is the scale part. Then it teaches me all the
+> chords of that scale and their positions, and trains me to identify them by letter. In the
+> C scale it challenges me on "C7, first position", then "Cmaj7, second position", and when I
+> hit it right it marks it and shows the next one. It measures how long I take to identify
+> the chord, and shows it visually if I press a hint button.
+
+His answers to the two open questions: the chord drills run **all twelve keys in circle-of-fifths
+order starting from G** (G, D, A, E, B, F#/Gb, Db, Ab, Eb, Bb, F, C), and the scale tempo
+**defaults to 60 bpm, can be changed, and is remembered for next time**. Everything else below
+was proposed back to him and accepted ("all the rest you got it").
+
+Both screens follow the two standing rules of chapter 8: one screen with no scrolling, and the
+piano's top keys as the buttons (C8 Start, B7 Hint, A#7 Skip).
+
+### The scale trainer (`/improv/scales/`)
+
+**What the player does.** Chooses a key (a major scale for now), a level, and a tempo. Presses
+Start (or C8). Four clicks count in, then the click keeps the beat and the player plays the scale
+**with both hands in parallel motion, up and then back down**, finishing on the tonic.
+
+**Levels.** They are selectable, not locked, so Avi can start anywhere.
+
+| Level | Octaves | Notes per beat | Steps up and down |
+|---|---|---|---|
+| 1 | 2 | 2 (eighths) | 29 |
+| 2 | 3 | 3 (triplets) | 43 |
+| 3 | 4 | 4 (sixteenths) | 57 |
+
+A step is one note in each hand, so the player plays two keys at the same moment. Steps are 14 times
+the octaves, plus one. The right hand plays an octave above the left. The left hand starts on the
+tonic at MIDI 48 plus the root for two octaves, and at MIDI 36 plus the root for three and four. The
+right hand always stays below A#7 (MIDI 106), because the top three keys are the control keys: where
+the top note would reach it (B and Bb in four octaves) the whole scale moves down an octave. **Four
+octaves needs an 88-key piano.** The screen says so on that level, rather than failing silently on a
+smaller keyboard.
+
+**Fingering.** Shown for both hands as a strip of cells, one per step: the note name above and the
+finger number below, the current step lit. It is data, not a calculation: a `ScaleFingering` row per
+key and hand (data model, section 6a), taken from the standard published fingerings, thumb is 1. The
+descending fingering is the ascending one reversed. A key with no stored fingering says so and can
+still be played; a fingering is never guessed.
+
+**Grading.** Pitch and timing, both against the grid.
+
+- Each step expects its two notes at `start + step * beat / notes_per_beat`, with the player's
+  `latency_offset_ms` taken off every note, as in chapter 5.
+- A played note counts for an expected note when it is the same MIDI number and falls within half
+  a step of the expected time. Notes that match nothing are *extra* (wrong or doubled keys).
+- **Pitch accuracy** is the matched notes divided by (expected notes plus extra notes).
+- **Timing accuracy** is the share of matched notes within the tolerance of the grid: 40% of a step,
+  never less than 50 ms and never more than 120 ms.
+- **Score** is 0 to 100: 70% pitch, 30% timing. **Pass at 80.**
+- The result lists the steps that were missed or wrong and the average offset (early or late), so the
+  report says where to work, not only a number.
+- The judge is a pure function (`scale.js`), like the chapter 5 judge, and a run is stored with the
+  `judge_version` that scored it.
+
+**Tempo.** The tempo is a field on the screen, 30 to 160 bpm, default 60. Changing it saves it to
+the player (`Player.trainer_tempo`), so the next visit opens at the last tempo used.
+
+**Key names.** Standard spelling for each key (Db, Eb, Ab, Bb); F#/Gb follows the player's
+sharps or flats setting. Avi's "D#" is shown as Eb, which is the same key.
+
+### The chord trainer (`/improv/chords/`)
+
+**The pool for a key.** The seven diatonic triads and the seven diatonic seventh chords of the major
+key, and the two borrowed dominants **I7 and IV7**. The borrowed ones are there because Avi's own
+example, "C7 in C", is not diatonic: it is the dominant of F, and a trainer that refused to ask it
+would be wrong about what he wants. In C: C, Dm, Em, F, G, Am, Bdim; Cmaj7, Dm7, Em7, Fmaj7, G7,
+Am7, Bm7b5; C7, F7.
+
+**Positions.** The same chord in its inversions. Avi's wording is *first position, second
+position*, so: **first position is root position, second is the first inversion, third is the
+second inversion, and fourth (sevenths only) is the third inversion.** The screen shows both
+names. The lowest note must be the expected bass for the answer to be right.
+
+**Modes.**
+
+- **Learn.** Pick a key; all its chords and positions are listed, and any one can be shown on the
+  keyboard. Nothing is scored.
+- **Drill.** One key. Each prompt is a chord and a position, for example "Cmaj7, second position". The
+  prompt stays until it is answered; hitting the right chord marks it and moves on.
+- **Circle.** The same drill through all twelve keys in the order above, one prompt per chord of the
+  level's pool in each key, each with a random position: 84 prompts at levels 1 and 2, 108 at level 3
+  (nine chords a key). The key changes on screen.
+
+**Levels.** 1: triads in their three positions. 2: sevenths in four positions. 3: sevenths plus I7 and
+IV7, the dominant colours.
+
+**What counts as right.** The set of pitch classes is the chord's, any octave, either hand, and the
+lowest note sounding is the expected bass. A **wrong chord** shows what was played (the recognizer
+of chapter 4 names it), counts as a miss for this prompt, and the prompt stays. A prompt's `is_correct`
+is true only when it was answered with no wrong tries. The **response time** runs from the prompt
+appearing to the right chord, and includes the wrong tries, because the time to know it is what is
+measured.
+
+**Hint.** The Hint button (B7) lights the answer on the on-screen keyboard. The attempt is stored with
+`hint_used`, so a hinted answer is visible in the history and does not count as a clean one. **Skip**
+(A#7) moves on, stored as a miss without a time.
+
+**What is kept.** Every answered or skipped prompt is a `DrillAttempt` (data model, section 7),
+and every scale run is a `ScaleRun`. A derived read, `GET /improv/api/trainer/`, returns the best score
+per key and level, the slowest chords and the weakest keys, and the screens show them as "work on this".

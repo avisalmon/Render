@@ -215,7 +215,7 @@ away the calibration that makes timing mean anything. POST and DELETE answer 405
 from every note time when a take is judged), `midi_input_name` (the keyboard last
 used, **by name**: a MIDI port's id is not promised to be the same next session),
 `note_names` (`sharps` or `flats`), `demo_output` (`piano`, over MIDI, or `laptop`,
-as a plain tone), `timezone` (an IANA name, default `Asia/Jerusalem`, because the
+as a plain tone), `trainer_tempo` (30 to 160, default 60, the scale trainer's tempo, saved when it is changed), `timezone` (an IANA name, default `Asia/Jerusalem`, because the
 site runs on UTC and a streak is made of your own days), `created_at`.
 
 Whose profile it is cannot be changed: `username` and `id` are read-only, and the
@@ -451,9 +451,45 @@ anyone outside the gate, like everything else.
   thirty days as a list.
 - `/improv/challenges/`: the standalone challenges with your best score on each, and your bests
   in the lessons.
+- `/improv/scales/`: the scale trainer: pick a key, a level and the tempo, play it with both hands in time against the
+  fingering strip, and get the score.
+- `/improv/chords/`: the chord trainer: Learn, Drill and Circle, the hint, and the time of each answer.
 - `/improv/play/?exercise={slug}`: Play opened on an exercise: the progression, key, tempo,
   feel and loop are set from it, and a take played over exactly that loop is scored by the
   exercise's own kind and posted with `exercise` set.
+
+## The scales and chords trainer
+
+### Scale fingerings
+
+`GET /improv/api/scale-fingerings/`, `GET /improv/api/scale-fingerings/{id}/`. Read-only reference (405 on a write).
+Each row is `id`, `scale` (slug), `root_pc`, `hand` (`L` or `R`), `first_octave`, `next_octaves`, `last_note`.
+Filters: `?root_pc=7`, `?hand=R`.
+
+### Scale runs
+
+`GET, POST /improv/api/scale-runs/`, `GET, PUT, PATCH, DELETE /improv/api/scale-runs/{id}/`. Your own runs only. Newest first.
+`scale` (slug, default Major), `root_pc` (0 to 11), `octaves` (2 to 4), `notes_per_beat` (2 to 4), `tempo_bpm` (30 to 160),
+`score` (0 to 100), `pitch_accuracy`, `timing_accuracy` (0 to 1), `mean_offset_ms`, `passed` (read-only: the server sets it, score 80 or more), `missed_steps` (a list of
+step numbers), `judge_version`, `created_at` (read-only). Filters: `?root_pc=`, `?octaves=`.
+
+### Drill attempts
+
+`GET, POST /improv/api/drill-attempts/`, `GET, PUT, PATCH, DELETE /improv/api/drill-attempts/{id}/`. Your own attempts only. Newest first.
+`kind` (`chord_position`), `key_pc` (0 to 11), `level` (1 to 3), `prompt`, `answer` (JSON objects), `is_correct`, `wrong_tries`,
+`hint_used`, `skipped`, `response_ms` (blank when skipped), `answered_at` (read-only). Filters: `?key_pc=`, `?kind=`.
+
+### Trainer
+
+`GET /improv/api/trainer/`. Read-only (405 on a write), your own data only, stored nowhere. Both trainer screens show it as
+"work on this".
+- `scales`: the best run for each key and octave count, ordered by key then octaves: `root_pc`, `octaves`, `score`,
+  `tempo_bpm`, `passed`, `runs` (how many runs of that key and length) and `at`.
+- `slowest_chords`: up to five chords (a chord in a position, in a key) with the longest median response time, each with at
+  least three timed answers: `title`, `key_pc`, `position`, `median_ms`, `attempts`. Skipped prompts have no time and are left out.
+- `weakest_keys`: keys with at least five prompts, ordered by the share missed (a wrong try or a skip counts as missed; a hint
+  alone does not): `key_pc`, `attempts`, `missed`, `miss_share`.
+- `totals`: `runs`, `passes`, `attempts`, `clean` (answers with no wrong try and no hint).
 
 ## Still to come
 

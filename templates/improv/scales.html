@@ -1,0 +1,68 @@
+{% extends "improv/base.html" %}
+{% load static %}
+{% block title %}Scales, improv{% endblock %}
+
+{% block content %}
+<div id="scales" class="im-screen"
+     data-api-player="{{ api.player }}"
+     data-api-fingerings="{{ api.fingerings }}"
+     data-api-runs="{{ api.runs }}"
+     data-api-trainer="{{ api.trainer }}"
+     data-csrf="{{ csrf_token }}">
+
+  <div class="im-play-head">
+    <h1 class="im-title">Scales</h1>
+    <p id="sc-status" class="im-status" role="status" aria-live="polite">Loading the fingerings.</p>
+    <p id="sc-midi" class="im-note">Looking for the piano.</p>
+  </div>
+
+  <section class="im-panel im-flat" aria-label="What to play">
+    <div class="im-grid">
+      <label class="im-field">Key
+        <select id="sc-key" class="im-select"></select>
+      </label>
+      <label class="im-field">Level
+        <select id="sc-level" class="im-select"></select>
+      </label>
+      <label class="im-field">Tempo (beats a minute)
+        <input id="sc-tempo" class="im-input" type="number" min="30" max="160" step="1" value="60">
+      </label>
+      <div class="im-field">
+        <button id="sc-start" class="im-btn im-btn-big" type="button" data-key-action="primary" disabled>Start</button>
+        <button id="sc-next" class="im-btn im-btn-quiet" type="button" data-key-action="secondary" disabled>Next key</button>
+      </div>
+    </div>
+    <p id="sc-line" class="im-note"></p>
+    <p id="tr-work" class="im-note im-work"></p>
+  </section>
+
+  <div class="im-cols im-cols-left">
+    <section class="im-panel im-fill" aria-label="The scale">
+      <h2 class="im-h2" id="sc-name">Pick a key</h2>
+      <div id="sc-strip" class="im-strip" data-bounded-list aria-label="Notes and fingering"></div>
+      <div id="sc-keyboard" class="im-keyboard" aria-label="Keyboard"></div>
+    </section>
+
+    <section class="im-panel im-fill" aria-label="How it went">
+      <h2 class="im-h2" id="sc-result-title">How it went</h2>
+      <p id="sc-verdict" class="im-status"></p>
+      <p id="sc-feel" class="im-note"></p>
+      <p id="sc-misses" class="im-note"></p>
+      <p id="sc-best" class="im-note"></p>
+      <h3 class="im-h3">Your last runs</h3>
+      <ul id="sc-runs" class="im-list" data-bounded-list></ul>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'improv/midi.js' %}"></script>
+<script src="{% static 'improv/setup.js' %}"></script>
+<script src="{% static 'improv/timing.js' %}"></script>
+<script src="{% static 'improv/synth.js' %}"></script>
+<script src="{% static 'improv/keyboard-view.js' %}"></script>
+<script src="{% static 'improv/scale.js' %}"></script>
+<script src="{% static 'improv/work.js' %}"></script>
+<script src="{% static 'improv/scales-page.js' %}"></script>
+{% endblock %}

@@ -29,7 +29,7 @@ pytestmark = [pytest.mark.spri75, pytest.mark.django_db]
 
 PASSWORD = "spri75-browser-2046"
 SIZES = ((1280, 720), (1920, 1080))
-SCREENS = ("today", "play", "play-longest", "play-exercise", "lessons", "lesson", "challenges", "library", "editor", "takes", "practice", "progress", "reference", "setup", "spike")
+SCREENS = ("today", "play", "play-longest", "play-exercise", "lessons", "lesson", "challenges", "library", "editor", "takes", "practice", "progress", "reference", "setup", "spike", "scales", "scales-4-octaves", "chords", "chords-learn")
 UTC = dt.timezone.utc
 # These screens show everything at once at 1280 by 720; a bounded list there is for future growth.
 NO_INNER_SCROLL = ("today", "lessons")
@@ -104,7 +104,7 @@ def world(browser, live_server, db, one_request_at_a_time):
     group, _ = Group.objects.get_or_create(name="improv_players")
     user = User.objects.create_user("p75browser", password=PASSWORD)
     user.groups.add(group)
-    for command in ("seed_improv_theory", "seed_improv_library", "seed_improv_lessons", "seed_improv_challenges"):
+    for command in ("seed_improv_theory", "seed_improv_fingerings", "seed_improv_library", "seed_improv_lessons", "seed_improv_challenges"):
         call_command(command, stdout=io.StringIO())
     player, _ = Player.objects.get_or_create(user=user)
     _history(player)
@@ -134,6 +134,10 @@ def _paths():
         "reference": "/improv/reference/",
         "setup": "/improv/setup/",
         "spike": "/improv/spike/",
+        "scales": "/improv/scales/",
+        "scales-4-octaves": "/improv/scales/?level=3&key=11",
+        "chords": "/improv/chords/",
+        "chords-learn": "/improv/chords/?mode=learn&level=3",
     }
 
 
@@ -149,6 +153,8 @@ READY = {
     "progress": "!document.getElementById('bests-status').textContent.startsWith('Reading')",
     "reference": "document.querySelectorAll('#ref-chord option').length > 3",
     "setup": "document.getElementById('setup-status').textContent.startsWith('Choose')",
+    "scales": "document.querySelectorAll('#sc-strip .im-sc-cell').length > 20",
+    "chords": "document.getElementById('chords') && document.getElementById('chords').dataset.running === 'no'",
     "editor": "document.getElementById('chart-text') && document.getElementById('chart-text').value.length > 5",
 }
 

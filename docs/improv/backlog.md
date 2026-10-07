@@ -127,10 +127,27 @@ the piano, starting with the top key of the 88. Spec: ch. 8, "Two standing rules
 
 ---
 
+## EPIC-I.8: The scales and chords trainer  `DONE 2026-10-07`
+
+Avi, 2026-10-07: "I want to focus on chord training capabilities." A scale trainer (two hands in tempo, three
+levels, accuracy graded, fingering shown) and a chord trainer (every chord of a key and its positions, named by
+letter, timed, with a hint), in circle-of-fifths order from G, tempo default 60 and remembered. Spec: ch. 10.
+
+| Sprint | What | Traces | Status |
+|---|---|---|---|
+| SPR-I.8.1 | `ScaleFingering` model and seed (checked against a published chart), `Player.trainer_tempo`, the scale layout in `scale.js` (steps, ranges, fingering for both hands up and down, key spelling), Node and Django tests | ch. 10 | DONE 2026-10-07 |
+| SPR-I.8.2 | The scale judge (pure, in `scale.js`), `ScaleRun` with its endpoint, tests for pitch, timing, extras and the pass line | ch. 5, 10 | DONE 2026-10-07 |
+| SPR-I.8.3 | The scales screen: key, level, tempo (remembered), count-in, fingering strip, on-screen keyboard, live judge, result, C8 Start, one screen | ch. 8, 10 | DONE 2026-10-07 |
+| SPR-I.8.4 | The chord pool, positions and matcher (pure, `drill.js`), the circle order, `DrillAttempt` with its endpoint | ch. 10 | DONE 2026-10-07 |
+| SPR-I.8.5 | The chords screen: Learn, Drill, Circle, the timer, wrong chord shown, Hint (B7), Skip (A#7), one screen | ch. 8, 10 | DONE 2026-10-07 |
+| SPR-I.8.6 | The trainer read (best per key, slowest chords, weakest keys) shown on both screens, menu items, both screens in the layout guard, scoped regression, ready to push | ch. 7, 8, 10 | DONE 2026-10-07 |
+
+---
+
 ## After v1, in the order Avi sees fit
 
 Ear training inside lessons (12), the weakness-driven extras, ear and speed
-mini-games (22) with `DrillAttempt`, voicings and comping lessons, play-along as
+mini-games (22) on the `DrillAttempt` table that Epic I.8 builds, voicings and comping lessons, play-along as
 its own mode, then the product layer: accounts beyond Avi, subscription, sharing,
 teacher mode, a phone version, Hebrew. The server-side judge is a prerequisite
 for any leaderboard or paid tier.

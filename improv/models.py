@@ -241,6 +241,11 @@ class Player(models.Model):
     )
     note_names = models.CharField(max_length=6, choices=NoteNames.choices, default=NoteNames.SHARPS)
     demo_output = models.CharField(max_length=6, choices=DemoOutput.choices, default=DemoOutput.PIANO)
+    trainer_tempo = models.PositiveSmallIntegerField(
+        default=60,
+        validators=[MinValueValidator(30), MaxValueValidator(160)],
+        help_text="The scale trainer's tempo in bpm. Changing it on the screen saves it here.",
+    )
     timezone = models.CharField(
         max_length=40,
         default="Asia/Jerusalem",
@@ -486,3 +491,130 @@ class Completion(models.Model):
 
     def __str__(self):
         return f"{self.player} passed {self.exercise}"
+
+
+# ---------------------------------------------------------------- SPR-I.8.1
+
+
+def _check_fingers(value, name):
+    if not isinstance(value, list) or len(value) != 7 or any(isinstance(n, bool) or not isinstance(n, int) or not 1 <= n <= 5 for n in value):
+        raise ValidationError({name: "Seven finger numbers, each from 1 to 5, one for each degree of the scale."})
+
+
+class ScaleFingering(models.Model):
+    """The standard fingering of a scale for one hand in one key (spec chapter 10, data model 6a).
+
+    Going down is the list going up, reversed. The two seven-number cells are JSON because the
+    screen reads each whole and nothing ever asks about a single finger."""
+
+    class Hand(models.TextChoices):
+        LEFT = "L", "left hand"
+        RIGHT = "R", "right hand"
+
+    class Authorship(models.TextChoices):
+        AI_DRAFTED = "ai_drafted", "taken from a published chart, not yet read at the piano"
+        REVIEWED = "reviewed", "read and checked by Avi"
+
+    scale = models.ForeignKey(Scale, on_delete=models.CASCADE, related_name="fingerings")
+    root_pc = models.PositiveSmallIntegerField(validators=[MaxValueValidator(11)], help_text="The tonic as a pitch class, C is 0.")
+    hand = models.CharField(max_length=1, choices=Hand.choices)
+    first_octave = models.JSONField(help_text="Seven fingers, one per scale degree, for the first octave. 1 is the thumb.")
+    next_octaves = models.JSONField(help_text="Seven fingers for every later octave.")
+    last_note = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)], help_text="The finger on the top note.")
+    authorship = models.CharField(max_length=12, choices=Authorship.choices, default=Authorship.AI_DRAFTED)
+
+    class Meta:
+        ordering = ["scale_id", "root_pc", "hand"]
+        constraints = [
+            models.UniqueConstraint(fields=["scale", "root_pc", "hand"], name="improv_scalefingering_scale_key_hand_unique"),
+        ]
+
+    def __str__(self):
+        return f"{self.scale} {self.root_pc} {self.get_hand_display()}"
+
+    def clean(self):
+        _check_fingers(self.first_octave, "first_octave")
+        _check_fingers(self.next_octaves, "next_octaves")
+
+
+# ---------------------------------------------------------------- SPR-I.8.2
+
+SCALE_PASS_SCORE = 80
+MOST_SCALE_STEPS = 57  # four octaves, up and down: 14 * 4 + 1
+
+
+def _check_missed_steps(value):
+    ok = isinstance(value, list) and len(value) <= MOST_SCALE_STEPS
+    ok = ok and all(isinstance(n, int) and not isinstance(n, bool) and 0 <= n < MOST_SCALE_STEPS for n in value)
+    if not ok:
+        raise ValidationError(f"A list of step numbers, each from 0 to {MOST_SCALE_STEPS - 1}.")
+
+
+class ScaleRun(models.Model):
+    """One attempt at a scale in time, with its score (spec chapter 10, data model 6a).
+
+    The page judges and posts the result, as it does for a take; the pass line is the one thing the
+    server decides, so `passed` is always the score measured against it."""
+
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="scale_runs")
+    scale = models.ForeignKey(Scale, on_delete=models.PROTECT, related_name="runs")
+    root_pc = models.PositiveSmallIntegerField(validators=[MaxValueValidator(11)])
+    octaves = models.PositiveSmallIntegerField(validators=[MinValueValidator(2), MaxValueValidator(4)])
+    notes_per_beat = models.PositiveSmallIntegerField(validators=[MinValueValidator(2), MaxValueValidator(4)])
+    tempo_bpm = models.PositiveSmallIntegerField(validators=[MinValueValidator(30), MaxValueValidator(160)])
+    score = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)])
+    pitch_accuracy = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(1)])
+    timing_accuracy = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(1)])
+    mean_offset_ms = models.IntegerField(validators=[MinValueValidator(-5000), MaxValueValidator(5000)], help_text="Negative is early.")
+    passed = models.BooleanField(default=False, editable=False)
+    missed_steps = models.JSONField(default=list, validators=[_check_missed_steps], help_text="0-based step numbers where a note was missed.")
+    judge_version = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+
+    def __str__(self):
+        return f"{self.player} {self.root_pc} x{self.octaves} {self.score}"
+
+    def save(self, *args, **kwargs):
+        self.passed = self.score >= SCALE_PASS_SCORE
+        super().save(*args, **kwargs)
+
+
+# ---------------------------------------------------------------- SPR-I.8.4
+
+DRILL_KINDS = [("chord_position", "A chord in a position")]
+
+
+class DrillAttempt(models.Model):
+    """One prompt of the chord trainer, answered or skipped (spec chapter 10, data model section 7).
+
+    `is_correct` is "got it with no wrong try" and a skipped prompt is never correct. The response time
+    runs from the prompt appearing to the right chord and includes any wrong tries; it is empty when
+    the prompt was skipped."""
+
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="drill_attempts")
+    kind = models.CharField(max_length=24, choices=DRILL_KINDS, default="chord_position")
+    key_pc = models.PositiveSmallIntegerField(validators=[MaxValueValidator(11)])
+    level = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(3)])
+    prompt = models.JSONField(default=dict)
+    answer = models.JSONField(default=dict, blank=True)
+    is_correct = models.BooleanField(default=False)
+    wrong_tries = models.PositiveSmallIntegerField(default=0, validators=[MaxValueValidator(200)])
+    hint_used = models.BooleanField(default=False)
+    skipped = models.BooleanField(default=False)
+    response_ms = models.PositiveIntegerField(null=True, blank=True, validators=[MaxValueValidator(3_600_000)])
+    answered_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-answered_at", "-id"]
+
+    def __str__(self):
+        return f"{self.player} {self.kind} {self.key_pc} {'ok' if self.is_correct else 'miss'}"
+
+    def clean(self):
+        if self.skipped and self.response_ms is not None:
+            raise ValidationError({"response_ms": "A skipped prompt has no response time."})
+        if self.skipped and self.is_correct:
+            raise ValidationError({"is_correct": "A skipped prompt is not correct."})

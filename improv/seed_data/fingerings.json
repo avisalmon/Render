@@ -1,0 +1,558 @@
+{
+ "_about": "Standard major-scale fingerings, thumb is 1 (docs/improv/data_model.md section 6a). Imported once by `manage.py seed_improv_fingerings`, which adds missing rows and never overwrites an edit. Checked against masterpiano.com/piano-scales and the usual exam fingerings; marked ai_drafted until Avi has read them at the piano. The app never reads this file at runtime.",
+ "scale": "major",
+ "fingerings": [
+  {
+   "root_pc": 0,
+   "hand": "R",
+   "first_octave": [
+    1,
+    2,
+    3,
+    1,
+    2,
+    3,
+    4
+   ],
+   "next_octaves": [
+    1,
+    2,
+    3,
+    1,
+    2,
+    3,
+    4
+   ],
+   "last_note": 5
+  },
+  {
+   "root_pc": 0,
+   "hand": "L",
+   "first_octave": [
+    5,
+    4,
+    3,
+    2,
+    1,
+    3,
+    2
+   ],
+   "next_octaves": [
+    1,
+    4,
+    3,
+    2,
+    1,
+    3,
+    2
+   ],
+   "last_note": 1
+  },
+  {
+   "root_pc": 1,
+   "hand": "R",
+   "first_octave": [
+    2,
+    3,
+    1,
+    2,
+    3,
+    4,
+    1
+   ],
+   "next_octaves": [
+    2,
+    3,
+    1,
+    2,
+    3,
+    4,
+    1
+   ],
+   "last_note": 2
+  },
+  {
+   "root_pc": 1,
+   "hand": "L",
+   "first_octave": [
+    3,
+    2,
+    1,
+    4,
+    3,
+    2,
+    1
+   ],
+   "next_octaves": [
+    3,
+    2,
+    1,
+    4,
+    3,
+    2,
+    1
+   ],
+   "last_note": 3
+  },
+  {
+   "root_pc": 2,
+   "hand": "R",
+   "first_octave": [
+    1,
+    2,
+    3,
+    1,
+    2,
+    3,
+    4
+   ],
+   "next_octaves": [
+    1,
+    2,
+    3,
+    1,
+    2,
+    3,
+    4
+   ],
+   "last_note": 5
+  },
+  {
+   "root_pc": 2,
+   "hand": "L",
+   "first_octave": [
+    5,
+    4,
+    3,
+    2,
+    1,
+    3,
+    2
+   ],
+   "next_octaves": [
+    1,
+    4,
+    3,
+    2,
+    1,
+    3,
+    2
+   ],
+   "last_note": 1
+  },
+  {
+   "root_pc": 3,
+   "hand": "R",
+   "first_octave": [
+    3,
+    1,
+    2,
+    3,
+    4,
+    1,
+    2
+   ],
+   "next_octaves": [
+    3,
+    1,
+    2,
+    3,
+    4,
+    1,
+    2
+   ],
+   "last_note": 3
+  },
+  {
+   "root_pc": 3,
+   "hand": "L",
+   "first_octave": [
+    3,
+    2,
+    1,
+    4,
+    3,
+    2,
+    1
+   ],
+   "next_octaves": [
+    3,
+    2,
+    1,
+    4,
+    3,
+    2,
+    1
+   ],
+   "last_note": 3
+  },
+  {
+   "root_pc": 4,
+   "hand": "R",
+   "first_octave": [
+    1,
+    2,
+    3,
+    1,
+    2,
+    3,
+    4
+   ],
+   "next_octaves": [
+    1,
+    2,
+    3,
+    1,
+    2,
+    3,
+    4
+   ],
+   "last_note": 5
+  },
+  {
+   "root_pc": 4,
+   "hand": "L",
+   "first_octave": [
+    5,
+    4,
+    3,
+    2,
+    1,
+    3,
+    2
+   ],
+   "next_octaves": [
+    1,
+    4,
+    3,
+    2,
+    1,
+    3,
+    2
+   ],
+   "last_note": 1
+  },
+  {
+   "root_pc": 5,
+   "hand": "R",
+   "first_octave": [
+    1,
+    2,
+    3,
+    4,
+    1,
+    2,
+    3
+   ],
+   "next_octaves": [
+    1,
+    2,
+    3,
+    4,
+    1,
+    2,
+    3
+   ],
+   "last_note": 4
+  },
+  {
+   "root_pc": 5,
+   "hand": "L",
+   "first_octave": [
+    5,
+    4,
+    3,
+    2,
+    1,
+    3,
+    2
+   ],
+   "next_octaves": [
+    1,
+    4,
+    3,
+    2,
+    1,
+    3,
+    2
+   ],
+   "last_note": 1
+  },
+  {
+   "root_pc": 6,
+   "hand": "R",
+   "first_octave": [
+    2,
+    3,
+    4,
+    1,
+    2,
+    3,
+    1
+   ],
+   "next_octaves": [
+    2,
+    3,
+    4,
+    1,
+    2,
+    3,
+    1
+   ],
+   "last_note": 2
+  },
+  {
+   "root_pc": 6,
+   "hand": "L",
+   "first_octave": [
+    4,
+    3,
+    2,
+    1,
+    3,
+    2,
+    1
+   ],
+   "next_octaves": [
+    4,
+    3,
+    2,
+    1,
+    3,
+    2,
+    1
+   ],
+   "last_note": 4
+  },
+  {
+   "root_pc": 7,
+   "hand": "R",
+   "first_octave": [
+    1,
+    2,
+    3,
+    1,
+    2,
+    3,
+    4
+   ],
+   "next_octaves": [
+    1,
+    2,
+    3,
+    1,
+    2,
+    3,
+    4
+   ],
+   "last_note": 5
+  },
+  {
+   "root_pc": 7,
+   "hand": "L",
+   "first_octave": [
+    5,
+    4,
+    3,
+    2,
+    1,
+    3,
+    2
+   ],
+   "next_octaves": [
+    1,
+    4,
+    3,
+    2,
+    1,
+    3,
+    2
+   ],
+   "last_note": 1
+  },
+  {
+   "root_pc": 8,
+   "hand": "R",
+   "first_octave": [
+    3,
+    4,
+    1,
+    2,
+    3,
+    1,
+    2
+   ],
+   "next_octaves": [
+    3,
+    4,
+    1,
+    2,
+    3,
+    1,
+    2
+   ],
+   "last_note": 3
+  },
+  {
+   "root_pc": 8,
+   "hand": "L",
+   "first_octave": [
+    3,
+    2,
+    1,
+    4,
+    3,
+    2,
+    1
+   ],
+   "next_octaves": [
+    3,
+    2,
+    1,
+    4,
+    3,
+    2,
+    1
+   ],
+   "last_note": 3
+  },
+  {
+   "root_pc": 9,
+   "hand": "R",
+   "first_octave": [
+    1,
+    2,
+    3,
+    1,
+    2,
+    3,
+    4
+   ],
+   "next_octaves": [
+    1,
+    2,
+    3,
+    1,
+    2,
+    3,
+    4
+   ],
+   "last_note": 5
+  },
+  {
+   "root_pc": 9,
+   "hand": "L",
+   "first_octave": [
+    5,
+    4,
+    3,
+    2,
+    1,
+    3,
+    2
+   ],
+   "next_octaves": [
+    1,
+    4,
+    3,
+    2,
+    1,
+    3,
+    2
+   ],
+   "last_note": 1
+  },
+  {
+   "root_pc": 10,
+   "hand": "R",
+   "first_octave": [
+    4,
+    1,
+    2,
+    3,
+    1,
+    2,
+    3
+   ],
+   "next_octaves": [
+    4,
+    1,
+    2,
+    3,
+    1,
+    2,
+    3
+   ],
+   "last_note": 4
+  },
+  {
+   "root_pc": 10,
+   "hand": "L",
+   "first_octave": [
+    3,
+    2,
+    1,
+    4,
+    3,
+    2,
+    1
+   ],
+   "next_octaves": [
+    3,
+    2,
+    1,
+    4,
+    3,
+    2,
+    1
+   ],
+   "last_note": 3
+  },
+  {
+   "root_pc": 11,
+   "hand": "R",
+   "first_octave": [
+    1,
+    2,
+    3,
+    1,
+    2,
+    3,
+    4
+   ],
+   "next_octaves": [
+    1,
+    2,
+    3,
+    1,
+    2,
+    3,
+    4
+   ],
+   "last_note": 5
+  },
+  {
+   "root_pc": 11,
+   "hand": "L",
+   "first_octave": [
+    4,
+    3,
+    2,
+    1,
+    4,
+    3,
+    2
+   ],
+   "next_octaves": [
+    1,
+    3,
+    2,
+    1,
+    4,
+    3,
+    2
+   ],
+   "last_note": 1
+  }
+ ]
+}

@@ -1,0 +1,75 @@
+{% extends "improv/base.html" %}
+{% load static %}
+{% block title %}Chords, improv{% endblock %}
+
+{% block content %}
+<div id="chords" class="im-screen"
+     data-api-player="{{ api.player }}"
+     data-api-qualities="{{ api.qualities }}"
+     data-api-attempts="{{ api.attempts }}"
+     data-api-trainer="{{ api.trainer }}"
+     data-csrf="{{ csrf_token }}">
+
+  <div class="im-play-head">
+    <h1 class="im-title">Chords</h1>
+    <p id="ch-status" class="im-status" role="status" aria-live="polite">Loading.</p>
+    <p id="ch-midi" class="im-note">Looking for the piano.</p>
+  </div>
+
+  <section class="im-panel im-flat" aria-label="What to practise">
+    <div class="im-grid">
+      <label class="im-field">Mode
+        <select id="ch-mode" class="im-select"></select>
+      </label>
+      <label class="im-field">Key
+        <select id="ch-key" class="im-select"></select>
+      </label>
+      <label class="im-field">Level
+        <select id="ch-level" class="im-select"></select>
+      </label>
+      <div class="im-field">
+        <button id="ch-start" class="im-btn im-btn-big" type="button" data-key-action="primary" disabled>Start</button>
+        <button id="ch-hint" class="im-btn im-btn-quiet" type="button" data-key-action="secondary" disabled>Hint</button>
+        <button id="ch-skip" class="im-btn im-btn-quiet" type="button" data-key-action="tertiary" disabled>Skip</button>
+      </div>
+    </div>
+    <p id="ch-line" class="im-note"></p>
+    <p id="tr-work" class="im-note im-work"></p>
+  </section>
+
+  <div class="im-cols im-cols-left">
+    <section class="im-panel im-fill" aria-label="The prompt">
+      <p id="ch-progress" class="im-note"></p>
+      <p id="ch-prompt" class="im-prompt">Pick a mode</p>
+      <p id="ch-detail" class="im-prompt-sub"></p>
+      <p id="ch-timer" class="im-timer"></p>
+      <p id="ch-feedback" class="im-feedback" role="status" aria-live="polite"></p>
+      <div id="ch-keyboard" class="im-keyboard" aria-label="Keyboard"></div>
+    </section>
+
+    <section class="im-panel im-fill" aria-label="Chords and results">
+      <div id="ch-learn-box">
+        <h2 class="im-h2" id="ch-learn-title">The chords of the key</h2>
+        <div id="ch-learn" data-bounded-list></div>
+      </div>
+      <div id="ch-results-box">
+        <h2 class="im-h2">How it is going</h2>
+        <p id="ch-summary" class="im-status"></p>
+        <ul id="ch-results" class="im-list" data-bounded-list></ul>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'improv/midi.js' %}"></script>
+<script src="{% static 'improv/setup.js' %}"></script>
+<script src="{% static 'improv/chart.js' %}"></script>
+<script src="{% static 'improv/recognize.js' %}"></script>
+<script src="{% static 'improv/keyboard-view.js' %}"></script>
+<script src="{% static 'improv/scale.js' %}"></script>
+<script src="{% static 'improv/drill.js' %}"></script>
+<script src="{% static 'improv/work.js' %}"></script>
+<script src="{% static 'improv/chords-page.js' %}"></script>
+{% endblock %}

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import ChordQuality, ChordScale, Completion, Exercise, Lesson, Phrase, Player, PracticeSession, Progression, Scale, Style, Tag, Take
+from .models import ChordQuality, ChordScale, Completion, DrillAttempt, Exercise, Lesson, Phrase, Player, PracticeSession, Progression, Scale, ScaleFingering, ScaleRun, Style, Tag, Take
 
 
 class ChordScaleInline(admin.TabularInline):
@@ -21,6 +21,12 @@ class ScaleAdmin(admin.ModelAdmin):
     list_display = ("name", "slug", "family", "parent_scale", "mode_number")
     list_filter = ("family",)
     search_fields = ("name", "slug")
+
+
+@admin.register(ScaleFingering)
+class ScaleFingeringAdmin(admin.ModelAdmin):
+    list_display = ("scale", "root_pc", "hand", "first_octave", "next_octaves", "last_note", "authorship")
+    list_filter = ("hand", "authorship", "scale")
 
 
 @admin.register(Tag)
@@ -65,6 +71,18 @@ class TakeAdmin(admin.ModelAdmin):
     list_display = ("id", "player", "progression", "key", "tempo", "score", "judge_version", "is_kept", "started_at")
     list_filter = ("is_kept", "judge_version", "player")
     search_fields = ("chart",)
+
+
+@admin.register(ScaleRun)
+class ScaleRunAdmin(admin.ModelAdmin):
+    list_display = ("id", "player", "root_pc", "octaves", "tempo_bpm", "score", "passed", "created_at")
+    list_filter = ("passed", "octaves", "player")
+
+
+@admin.register(DrillAttempt)
+class DrillAttemptAdmin(admin.ModelAdmin):
+    list_display = ("id", "player", "kind", "key_pc", "level", "is_correct", "wrong_tries", "hint_used", "skipped", "response_ms", "answered_at")
+    list_filter = ("kind", "level", "is_correct", "skipped", "player")
 
 
 @admin.register(Phrase)

@@ -187,3 +187,29 @@ def lesson(request, slug):
 
 def spike(request):
     return render(request, "improv/spike.html")
+
+
+def scales(request):
+    """The scale trainer: two hands, in tempo, with the fingering shown. The page loads the
+    fingering table, the player and the player's own runs from the API."""
+    profile_for(request.user)
+    api = {
+        "player": reverse("improv:api-player"),
+        "fingerings": reverse("improv:api-scale-fingerings-list"),
+        "runs": reverse("improv:api-scale-runs-list"),
+        "trainer": reverse("improv:api-trainer"),
+    }
+    return render(request, "improv/scales.html", {"api": api})
+
+
+def chords(request):
+    """The chord trainer: Learn, Drill and Circle. The page loads the player, the chord table (to name
+    a wrong chord) and posts one attempt for each prompt."""
+    profile_for(request.user)
+    api = {
+        "player": reverse("improv:api-player"),
+        "qualities": reverse("improv:api-chord-qualities-list"),
+        "attempts": reverse("improv:api-drill-attempts-list"),
+        "trainer": reverse("improv:api-trainer"),
+    }
+    return render(request, "improv/chords.html", {"api": api})

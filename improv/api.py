@@ -16,14 +16,15 @@ from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import SAFE_METHODS
 
-from .models import ChordQuality, ChordScale, Completion, Exercise, Lesson, Phrase, PracticeSession, Progression, Scale, Style, Tag, Take
-from . import bests, practice, progress, retention, weakness, workout
+from .models import ChordQuality, ChordScale, Completion, DrillAttempt, Exercise, Lesson, Phrase, PracticeSession, Progression, Scale, ScaleFingering, ScaleRun, Style, Tag, Take
+from . import bests, practice, progress, retention, trainer, weakness, workout
 from .access import profile_for
 from .permissions import IsPlayer
 from .serializers import (
     ChordQualitySerializer,
     ChordScaleSerializer,
     CompletionSerializer,
+    DrillAttemptSerializer,
     ExerciseSerializer,
     LessonSerializer,
     PhraseSerializer,
@@ -33,6 +34,8 @@ from .serializers import (
     PracticeSessionSerializer,
     TakeSerializer,
     ProgressionSerializer,
+    ScaleFingeringSerializer,
+    ScaleRunSerializer,
     ScaleSerializer,
     StyleSerializer,
     TagSerializer,
@@ -54,6 +57,20 @@ class ChordQualityViewSet(ReferenceViewSet):
 class ScaleViewSet(ReferenceViewSet):
     queryset = Scale.objects.select_related("parent_scale")
     serializer_class = ScaleSerializer
+
+
+class ScaleFingeringViewSet(ReferenceViewSet):
+    queryset = ScaleFingering.objects.select_related("scale")
+    serializer_class = ScaleFingeringSerializer
+
+    def get_queryset(self):
+        rows = super().get_queryset()
+        params = self.request.query_params
+        if params.get("root_pc"):
+            rows = rows.filter(root_pc=params["root_pc"]) if params["root_pc"].isdigit() else rows.none()
+        if params.get("hand"):
+            rows = rows.filter(hand=params["hand"])
+        return rows
 
 
 class ChordScaleViewSet(ReferenceViewSet):
@@ -267,6 +284,33 @@ class TakeViewSet(MineViewSet):
         serializer.save()
 
 
+class ScaleRunViewSet(MineViewSet):
+    queryset = ScaleRun.objects.select_related("scale")
+    serializer_class = ScaleRunSerializer
+
+    def get_queryset(self):
+        rows = super().get_queryset()
+        params = self.request.query_params
+        for name in ("root_pc", "octaves"):
+            if params.get(name):
+                rows = rows.filter(**{name: params[name]}) if params[name].isdigit() else rows.none()
+        return rows
+
+
+class DrillAttemptViewSet(MineViewSet):
+    queryset = DrillAttempt.objects.all()
+    serializer_class = DrillAttemptSerializer
+
+    def get_queryset(self):
+        rows = super().get_queryset()
+        params = self.request.query_params
+        if params.get("key_pc"):
+            rows = rows.filter(key_pc=params["key_pc"]) if params["key_pc"].isdigit() else rows.none()
+        if params.get("kind"):
+            rows = rows.filter(kind=params["kind"])
+        return rows
+
+
 class CompletionViewSet(viewsets.ReadOnlyModelViewSet):
     """The exercises this player has passed. Read-only for everyone: the server makes a
     completion as the consequence of a take, because one a client could write would be an XP
@@ -351,9 +395,19 @@ class BestsView(APIView):
         return Response(bests.report(profile_for(request.user)))
 
 
+class TrainerView(APIView):
+    """What to work on in the scales and chords trainer: a read over runs and attempts, stored nowhere."""
+
+    permission_classes = [IsPlayer]
+
+    def get(self, request):
+        return Response(trainer.report(profile_for(request.user)))
+
+
 REFERENCE_ENDPOINTS = {
     "chord-qualities": ChordQualityViewSet,
     "scales": ScaleViewSet,
+    "scale-fingerings": ScaleFingeringViewSet,
     "chord-scales": ChordScaleViewSet,
     "tags": TagViewSet,
     "lessons": LessonViewSet,
@@ -367,6 +421,8 @@ OWNED_ENDPOINTS = {
 MINE_ENDPOINTS = {
     "sessions": PracticeSessionViewSet,
     "takes": TakeViewSet,
+    "scale-runs": ScaleRunViewSet,
+    "drill-attempts": DrillAttemptViewSet,
     "completions": CompletionViewSet,
 }
 # Not a router endpoint: see PlayerView.
@@ -379,5 +435,6 @@ DERIVED = {
     "workout": WorkoutView,
     "weakness": WeaknessView,
     "bests": BestsView,
+    "trainer": TrainerView,
 }
 ENDPOINTS = {**REFERENCE_ENDPOINTS, **OWNED_ENDPOINTS, **MINE_ENDPOINTS}
