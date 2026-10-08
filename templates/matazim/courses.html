@@ -1,139 +1,110 @@
 {% extends "matazim/base.html" %}
+{% load static %}
 
 {% comment %}
-  REQ-M.59, REQ-M.12b — two readers, two pages.
+  REQ-M.59, REQ-M.12b — ההדרכות, built to Litala's screen 2
+  (docs/matazim/prototype/image012.png) since SPR-M.56.
 
-  A visitor is deciding whether to join, so they get what the programme teaches
-  and the one thing they can start today. A member is already in it, so they get
-  their own track with their own progress on it.
+  Her screen: a strip with an illustration, a row of chips to narrow the list,
+  a sidebar with one ring for everything and the stage they are at, and cards
+  with a cover, a line of text, a progress ring and a button whose word is the
+  state. All of that is here. What is not here is her padlocked "future"
+  cards: SPR-M.52 decided a member sees what their leader opened and nothing
+  else, and a locked card is a promise about courses nobody has decided to
+  offer.
 
-  This page told a signed-in member that "the rest of the track opens later"
-  long after REQ-M.76 settled that the required track is scratch and
-  scratch-advanced and made both playable inside our own walls. המסלול שלי
-  showed them two courses; this said nothing was open. Each screen was
-  internally consistent, which is why only reading them side by side found it.
-
-  The state comes from the shared progress tables, live (RULE-3). There is no
-  second copy of "how far through am I" in this product and there must not be.
+  Two readers, two pages, since 2026-09-14: a visitor gets what the programme
+  teaches and the one thing they can start; a member gets their own track with
+  their own progress on it, read live from the shared tables (RULE-3).
 {% endcomment %}
 
 {% block title %}ההדרכות · מט״צים{% endblock %}
 
 {% block content %}
 <div class="mz-container mz-page">
-  <div class="mz-page-head">
-    <h1>ההדרכות</h1>
-    <p>
-      {% if cards %}
-        מסלול ההדרכות שלכם, ואיפה אתם בו.
-      {% else %}
-        מסלול ההדרכות של התוכנית.
-      {% endif %}
-    </p>
+  <div class="mz-page-head mz-path-head">
+    <div>
+      <h1>{% if cards %}ההדרכות שלי{% else %}ההדרכות{% endif %}</h1>
+      <p>
+        {% if cards %}
+          כאן תמצאו את כל ההדרכות שלכם לפי שלבי התכנית. בחרו הדרכה כדי להתחיל ללמוד ולהתקדם.
+        {% else %}
+          מסלול ההדרכות של התוכנית.
+        {% endif %}
+      </p>
+    </div>
+    <svg class="mz-path-art" width="150" height="72" viewBox="0 0 150 72" fill="none" aria-hidden="true">
+      <rect x="30" y="14" width="78" height="46" rx="6" stroke="var(--mz-purple)" stroke-width="3"/>
+      <path d="M18 62h102" stroke="var(--mz-purple)" stroke-width="3" stroke-linecap="round"/>
+      <path d="M48 36l8 8-8 8M62 52h16" stroke="var(--mz-teal)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="128" cy="24" r="9" stroke="var(--mz-teal)" stroke-width="3"/>
+      <path d="M128 33v10M121 48h14" stroke="var(--mz-teal)" stroke-width="3" stroke-linecap="round"/>
+    </svg>
   </div>
 
   {% if cards %}
-    <section class="mz-panel mz-panel-wide">
-      <h2>המסלול הנדרש</h2>
-      <p class="mz-muted">
-        שתי ההדרכות האלה נדרשות להסמכה. שאר ההדרכות באתר פתוחות לכם תמיד, וכל
-        מה שתלמדו נספר.
-      </p>
+    {% comment %}
+      Her chips, over the groups this product actually has. A chip for a
+      category nobody can open would be a filter over an empty list.
+    {% endcomment %}
+    <ul class="mz-chips" id="mzChips" role="group" aria-label="סינון">
+      <li><button type="button" class="mz-chip" data-chip="all" aria-pressed="true">הכל <span class="mz-count">{{ overview.total }}</span></button></li>
+      <li><button type="button" class="mz-chip" data-chip="required" aria-pressed="false">המסלול הנדרש <span class="mz-count">{{ cards|length }}</span></button></li>
+      {% if started %}<li><button type="button" class="mz-chip" data-chip="started" aria-pressed="false">מה שהתחלתם <span class="mz-count">{{ started|length }}</span></button></li>{% endif %}
+      {% if offered %}<li><button type="button" class="mz-chip" data-chip="offered" aria-pressed="false">פתוח לכם <span class="mz-count">{{ offered|length }}</span></button></li>{% endif %}
+    </ul>
 
-      <ul class="mz-cards">
-        {% for card in cards %}
-          <li class="mz-card{% if card.done %} is-done{% endif %}">
-            <div class="mz-card-head">
-              <h3>{{ card.title }}</h3>
-              <span class="mz-tag {% if card.done %}mz-tag-done{% elif card.pct %}mz-tag-doing{% else %}mz-tag-idle{% endif %}">
-                {{ card.word }}
+    <div class="mz-courses-layout">
+      <div>
+        <ul class="mz-course-grid" id="mzCourseGrid">
+          {% for card in cards %}
+            {% include "matazim/_course_card.html" with card=card group="required" %}
+          {% endfor %}
+          {% for card in started %}
+            {% include "matazim/_course_card.html" with card=card group="started" %}
+          {% endfor %}
+          {% for card in offered %}
+            {% include "matazim/_course_card.html" with card=card group="offered" %}
+          {% endfor %}
+        </ul>
+        <p class="mz-muted mz-small" style="margin-top: 14px;">
+          שתי ההדרכות המסומנות נדרשות להסמכה. כל השאר הן הזדמנות, וכל מה שתלמדו נספר ונשמר.
+        </p>
+      </div>
+
+      <aside class="mz-courses-side">
+        {% if overview %}
+          <section class="mz-panel">
+            <h2>ההתקדמות שלי</h2>
+            <div class="mz-overview">
+              <span class="mz-ring mz-ring-lg" style="--pct: {{ overview.pct }}" role="img" aria-label="{{ overview.pct }} אחוז השלמה">
+                <span class="mz-ring-label">{{ overview.pct }}%</span>
               </span>
+              <span class="mz-overview-sub">השלמת ההדרכות שלכם</span>
+              <ul class="mz-breakdown">
+                <li class="is-done"><span>הושלמו</span><strong>{{ overview.done }}</strong></li>
+                <li class="is-doing"><span>בתהליך</span><strong>{{ overview.doing }}</strong></li>
+                <li class="is-todo"><span>טרם התחילו</span><strong>{{ overview.todo }}</strong></li>
+              </ul>
+              <a class="mz-btn mz-btn-ghost mz-btn-sm" href="{% url 'matazim:my_path' %}">למסלול שלי</a>
             </div>
-
-            {% comment %}
-              The bar is the progress ring REQ-M.12b asks for, flattened. A ring
-              at this size is a decoration you have to decode; a bar with the
-              number beside it is read at a glance, which is the whole ask.
-            {% endcomment %}
-            <div class="mz-progress" role="img"
-                 aria-label="{{ card.pct }} אחוז">
-              <span style="width: {{ card.pct }}%"></span>
+          </section>
+        {% endif %}
+        {% if stage %}
+          <section class="mz-panel">
+            <h2>השלב הנוכחי</h2>
+            <div class="mz-stage-now">
+              <span class="mz-stage-icon" data-tone="{{ stage.tone }}" aria-hidden="true">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              </span>
+              <strong>{{ stage.title }}</strong>
+              <span class="mz-muted mz-small">{{ stage.hint }}</span>
+              <a class="mz-linkbtn" href="{% url 'matazim:track' %}">לפרטים נוספים</a>
             </div>
-            <p class="mz-card-pct">{{ card.pct }}%</p>
-
-            {% if card.exists %}
-              <a class="mz-btn {% if card.done %}mz-btn-ghost{% else %}mz-btn-primary{% endif %}"
-                 href="{% url 'matazim:learn_course' card.slug %}">{{ card.action }}</a>
-            {% else %}
-              {% comment %}
-                The track is named in our spec and the content lives in the
-                shared engine. If a slug is missing, the honest thing is to say
-                the teaching did not load, which is the lesson REQ-M.104 taught
-                when the entrance task hung off a course that might not be there.
-              {% endcomment %}
-              <p class="mz-muted">ההדרכה הזאת לא נטענה. נתקן.</p>
-            {% endif %}
-          </li>
-        {% endfor %}
-      </ul>
-    </section>
-  {% endif %}
-
-  {% comment %}
-    SPR-M.52 — the shelf, and what they started themselves.
-
-    Avi, 2026-09-19: "everybody that is in מט״צים... to see the availability of
-    trainings that are available in babook, but not all of them. I want to be
-    able as a leader to decide what training I want to expose for my students."
-
-    Deliberately not styled as the required track. These are opportunity, and
-    the certification rule did not move: REQ-M.76 is still the entrance test,
-    both Scratch courses, and the leader's approval. A card here that looked
-    like a card up there would quietly say otherwise.
-  {% endcomment %}
-  {% if started %}
-    <section class="mz-panel mz-panel-wide">
-      <h2>מה שהתחלתם</h2>
-      <p class="mz-muted">הדרכות שכבר נכנסתם אליהן. הן נשארות שלכם.</p>
-      <ul class="mz-cards">
-        {% for card in started %}
-          <li class="mz-card">
-            <div class="mz-card-head">
-              <h3>{{ card.title }}</h3>
-              <span class="mz-tag {% if card.pct %}mz-tag-doing{% else %}mz-tag-idle{% endif %}">{{ card.word }}</span>
-            </div>
-            <div class="mz-progress" role="img"
-                 aria-label="{{ card.pct }} אחוז">
-              <span style="width: {{ card.pct }}%"></span>
-            </div>
-            <p class="mz-card-pct">{{ card.pct }}%</p>
-            <a class="mz-btn mz-btn-primary"
-               href="{% url 'matazim:learn_course' card.slug %}">{{ card.action }}</a>
-          </li>
-        {% endfor %}
-      </ul>
-    </section>
-  {% endif %}
-
-  {% if offered %}
-    <section class="mz-panel mz-panel-wide">
-      <h2>פתוח לכם</h2>
-      <p class="mz-muted">
-        המוביל/ה שלכם פתח/ה לכם את ההדרכות האלה. הן לא נדרשות להסמכה, אבל כל מה
-        שתלמדו נספר ונשמר.
-      </p>
-      <ul class="mz-cards">
-        {% for card in offered %}
-          <li class="mz-card">
-            <div class="mz-card-head">
-              <h3>{{ card.title }}</h3>
-            </div>
-            <a class="mz-btn mz-btn-ghost"
-               href="{% url 'matazim:learn_course' card.slug %}">{{ card.action }}</a>
-          </li>
-        {% endfor %}
-      </ul>
-    </section>
+          </section>
+        {% endif %}
+      </aside>
+    </div>
   {% endif %}
 
   <section class="mz-panel">
@@ -169,4 +140,25 @@
     </section>
   {% endif %}
 </div>
+
+{% if cards %}
+<script>
+  // Her chips: narrow the grid to one group. No fetch, no state anywhere but
+  // the buttons themselves; reloading the page shows everything again, which
+  // is what a filter should do.
+  (function () {
+    var chips = document.querySelectorAll('#mzChips .mz-chip');
+    var cards = document.querySelectorAll('#mzCourseGrid .mz-course');
+    chips.forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        var want = chip.getAttribute('data-chip');
+        chips.forEach(function (c) { c.setAttribute('aria-pressed', c === chip ? 'true' : 'false'); });
+        cards.forEach(function (card) {
+          card.hidden = want !== 'all' && card.getAttribute('data-group') !== want;
+        });
+      });
+    });
+  })();
+</script>
+{% endif %}
 {% endblock %}

@@ -662,7 +662,9 @@ def _extra_course_cards(request):
     progress = cohort_progress([JustAUser(request.user.id)], sorted(allowed)).get(
         request.user.id, {}
     )
-    titles = dict(Course.objects.filter(slug__in=allowed).values_list("slug", "title"))
+    titles, covers, abouts = {}, {}, {}
+    for c in Course.objects.filter(slug__in=allowed):
+        titles[c.slug], covers[c.slug], abouts[c.slug] = c.title, c.thumbnail or "", c.description or ""
 
     offered, started = [], []
     for slug in sorted(allowed):
@@ -673,6 +675,8 @@ def _extra_course_cards(request):
         card = {
             "slug": slug,
             "title": row.get("title") or titles[slug],
+            "thumbnail": covers.get(slug, ""),
+            "about": abouts.get(slug, ""),
             "pct": pct,
             "word": "באמצע" if pct else "עוד לא התחלתם",
             "action": "להמשיך" if pct else "להתחיל",
@@ -714,11 +718,11 @@ def courses(request):
         ).get(request.user.id, {})
         held = eligibility_for_user(request.user).certified_courses
 
-        titles = dict(
-            Course.objects.filter(slug__in=REQUIRED_COURSE_SLUGS).values_list(
-                "slug", "title"
-            )
-        )
+        meta = {
+            c.slug: c
+            for c in Course.objects.filter(slug__in=REQUIRED_COURSE_SLUGS)
+        }
+        titles = {slug: c.title for slug, c in meta.items()}
         for slug in REQUIRED_COURSE_SLUGS:
             row = per_course.get(slug) or {}
             pct = int(row.get("pct") or 0)
@@ -727,6 +731,10 @@ def courses(request):
                 {
                     "slug": slug,
                     "title": row.get("title") or titles.get(slug, slug),
+                    # SPR-M.56 — her cards carry a cover and a line of text.
+                    "thumbnail": getattr(meta.get(slug), "thumbnail", "") or "",
+                    "about": getattr(meta.get(slug), "description", "") or "",
+                    "required": True,
                     "pct": 100 if done else pct,
                     "done": done,
                     # The action is the state, in words. A card that says
@@ -745,10 +753,43 @@ def courses(request):
     # the programme requires seventeen courses, which it does not.
     offered, started = _extra_course_cards(request)
 
+    # SPR-M.56 — her sidebar: one ring for everything on this page, broken
+    # into finished / in progress / not started, and the stage they are at.
+    # Counted off the cards already built, so the sidebar and the cards cannot
+    # disagree about what is on the page.
+    everything = cards + started + offered
+    overview = None
+    stage = None
+    if request.user.is_authenticated and everything:
+        done_n = sum(1 for c in everything if c.get("done") or c.get("pct", 0) >= 100)
+        doing_n = sum(1 for c in everything if 0 < c.get("pct", 0) < 100 and not c.get("done"))
+        overview = {
+            "total": len(everything),
+            "done": done_n,
+            "doing": doing_n,
+            "todo": len(everything) - done_n - doing_n,
+            "pct": int(sum(min(100, c.get("pct", 0)) for c in everything) / len(everything)),
+        }
+        from .content import FUNNEL
+        from .path_views import _current_stage
+
+        current = _current_stage(_student_of(request.user), member_profile(request.user))
+        stage = next((row for row in FUNNEL if row["key"] == current), None)
+        if stage is not None:
+            missing = [c["title"] for c in cards if not c.get("done")]
+            if len(missing) > 1:
+                hint = f"השלימו עוד {len(missing)} הדרכות כדי לעבור לשלב הבא"
+            elif missing:
+                hint = f"השלימו את {missing[0]} כדי לעבור לשלב הבא"
+            else:
+                hint = "סיימתם את ההדרכות הנדרשות"
+            stage = {**stage, "hint": hint}
+
     return render(
         request,
         "matazim/courses.html",
-        shell(request, "courses", cards=cards, offered=offered, started=started),
+        shell(request, "courses", cards=cards, offered=offered, started=started,
+              overview=overview, stage=stage),
     )
 
 

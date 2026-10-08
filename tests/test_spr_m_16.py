@@ -404,8 +404,12 @@ def test_the_here_you_are_badge_is_a_label_not_a_banner(live_server, db):
         page.goto(f"{live_server.url}/matazim/my-path/", wait_until="domcontentloaded")
         page.wait_for_timeout(400)
 
+        # SPR-M.56 rebuilt the page to Litala's screen: the five-stage list
+        # became the milestone path and כאן אתם became המשימה הנוכחית. The
+        # risk this test guards is the same: a badge in a flex column that
+        # stretches to the container rather than hugging its text.
         width = page.evaluate(
-            "() => { const t = document.querySelector('.mz-journey-body > .mz-tag');"
+            "() => { const t = document.querySelector('.mz-path-now');"
             " return t ? Math.round(t.getBoundingClientRect().width) : -1; }"
         )
         browser.close()

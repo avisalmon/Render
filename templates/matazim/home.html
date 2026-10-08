@@ -88,6 +88,44 @@
 {# ------------------------------------------------------- how it works #}
 <div class="mz-container">
   {% comment %}
+    SPR-M.56 — her order. Screen 1 reads hero, איך זה עובד, the band, then the
+    showcase. The partners were sitting between the hero and the four stages,
+    which put two logos where she put the programme.
+  {% endcomment %}
+  <section class="mz-how" aria-labelledby="mzHow">
+    <h2 id="mzHow">איך זה עובד?</h2>
+
+    {% comment %}
+      Four stages, not five: מתמיינים is the entrance test, which has its own
+      call to action above. Spec Q12.
+    {% endcomment %}
+    <div class="mz-stages">
+      {% for stage in stages %}
+        {% if not forloop.first %}
+          <svg class="mz-stage-sep" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18 9 12l6-6"/></svg>
+        {% endif %}
+        <div class="mz-stage">
+          <span class="mz-stage-icon" data-tone="{{ stage.tone }}" aria-hidden="true">
+            {% if stage.key == 'learn' %}
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            {% elif stage.key == 'create' %}
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12"/></svg>
+            {% elif stage.key == 'teach' %}
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            {% else %}
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
+            {% endif %}
+          </span>
+          <span>
+            <span class="mz-stage-title">{{ stage.title }}</span>
+            <span class="mz-stage-text">{{ stage.text }}</span>
+          </span>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  {% comment %}
     שותפים מרכזיים לעשייה. Avi asked for this to carry real weight rather than
     sit as a line of small print in the footer, so it is a section of its own
     with the partners' own marks. Logos are their SVGs, taken from their own
@@ -104,10 +142,18 @@
       when there is nothing, so this band cannot say the programme is bigger
       than it is and cannot announce that it is empty either.
     {% endcomment %}
-    <section class="mz-band" aria-label="התוכנית במספרים">
+    <section class="mz-band mz-band-gradient" aria-label="התוכנית במספרים">
       <ul class="mz-figures">
         {% for row in counters %}
-          <li><strong>{{ row.figure }}</strong><span>{{ row.label }}</span></li>
+          <li>
+            {% if row.icon == 'people' %}<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            {% elif row.icon == 'school' %}<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
+            {% elif row.icon == 'hours' %}<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+            {% elif row.icon == 'cert' %}<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="6"/><path d="m8.5 14-1.5 7 5-3 5 3-1.5-7"/></svg>
+            {% elif row.icon == 'event' %}<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            {% else %}<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>{% endif %}
+            <strong>{{ row.figure }}</strong><span>{{ row.label }}</span>
+          </li>
         {% endfor %}
       </ul>
     </section>
@@ -152,38 +198,7 @@
     </div>
   </section>
 
-  <section class="mz-how" aria-labelledby="mzHow">
-    <h2 id="mzHow">איך זה עובד?</h2>
 
-    {% comment %}
-      Four stages, not five: מתמיינים is the entrance test, which has its own
-      call to action above. Spec Q12.
-    {% endcomment %}
-    <div class="mz-stages">
-      {% for stage in stages %}
-        {% if not forloop.first %}
-          <svg class="mz-stage-sep" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18 9 12l6-6"/></svg>
-        {% endif %}
-        <div class="mz-stage">
-          <span class="mz-stage-icon" data-tone="{{ stage.tone }}" aria-hidden="true">
-            {% if stage.key == 'learn' %}
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-            {% elif stage.key == 'create' %}
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12"/></svg>
-            {% elif stage.key == 'teach' %}
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            {% else %}
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
-            {% endif %}
-          </span>
-          <span>
-            <span class="mz-stage-title">{{ stage.title }}</span>
-            <span class="mz-stage-text">{{ stage.text }}</span>
-          </span>
-        </div>
-      {% endfor %}
-    </div>
-  </section>
 
 </div>
 

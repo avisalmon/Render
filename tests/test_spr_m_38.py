@@ -358,7 +358,7 @@ def test_the_figures_are_counted_from_real_rows(client, db):
 
     figures = {row["label"]: row["figure"] for row in counters()}
 
-    assert figures["מט״צים בתוכנית"] == 2
+    assert figures["לומדים בתוכנית"] == 2
     assert figures["בית ספר"] == 1, "one school counted twice"
     assert figures["מוביל/ה"] == 1
     assert figures["שעות פרקטיקום"] == 2
@@ -471,8 +471,10 @@ def test_one_of_something_reads_as_one(db):
 
     assert "בית ספר" in labels
     assert "בתי ספר" not in labels
-    assert "מט״צ בתוכנית" in labels
-    assert "מט״צים בתוכנית" not in labels
+    # SPR-M.56: the word is לומדים now (§4.9 — מט״צ is the outcome), but the
+    # rule this test holds is singular against plural, and it holds the same.
+    assert "לומד/ת בתוכנית" in labels
+    assert "לומדים בתוכנית" not in labels
 
 
 # --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---

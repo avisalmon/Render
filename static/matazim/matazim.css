@@ -107,6 +107,8 @@
   --mz-done: #10b981;
   --mz-doing: #3b82f6;
   --mz-fix: #f59e0b;
+  --mz-fix-bg: #fff4e0;
+  --mz-fix-ink: #9a5b00;    /* 5.6:1 on --mz-fix-bg */
   --mz-late: #ef4444;
   --mz-idle: #94a3b8;
 
@@ -174,6 +176,8 @@
   --mz-done: #10b981;    /* 6.05 */
   --mz-doing: #5b9bf8;   /* 5.48 */
   --mz-fix: #f59e0b;     /* 7.15 */
+  --mz-fix-bg: #3a2a0e;
+  --mz-fix-ink: #ffc46b;    /* 8.9:1 on --mz-fix-bg */
   --mz-late: #f87171;    /* 5.55 */
   --mz-idle: #8d99b0;    /* 5.35 */
 
@@ -2623,3 +2627,254 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
   border-inline-start: 3px solid var(--mz-line);
   max-width: 68ch;
 }
+
+/* ================================================================ SPR-M.56
+ * Litala's three screens, as drawn (docs/matazim/prototype/image011-013.png).
+ *
+ * Her design system is already the tokens above: teal is identity and
+ * completed states, purple is action and the current step, status is always a
+ * word plus a colour. Nothing new is introduced below the token layer.
+ * ------------------------------------------------------------------------ */
+
+/* ---- page head with a small illustration, her strip above each screen --- */
+.mz-path-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.mz-path-art { flex: none; opacity: .9; }
+
+/* ---- status cards: a row that wraps, each an eyebrow, a figure, a line --- */
+.mz-status-row {
+  list-style: none; margin: 0 0 20px; padding: 0;
+  display: grid; gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+}
+.mz-status {
+  display: flex; flex-direction: column; gap: 6px; align-items: flex-start;
+  padding: 16px 18px;
+  background: var(--mz-card);
+  border-radius: var(--mz-radius);
+  box-shadow: var(--mz-shadow);
+  border-top: 4px solid var(--mz-line);
+}
+.mz-status-purple { border-top-color: var(--mz-purple); }
+.mz-status-blue   { border-top-color: var(--mz-blue); }
+.mz-status-teal   { border-top-color: var(--mz-teal); }
+.mz-status-amber  { border-top-color: var(--mz-fix); }
+.mz-status-title { font-size: .82rem; font-weight: 600; color: var(--mz-muted); }
+.mz-status-figure { font-size: 2rem; line-height: 1; color: var(--mz-ink); }
+.mz-status-text { color: var(--mz-ink); font-weight: 600; line-height: 1.35; }
+.mz-status .mz-muted { font-size: .86rem; }
+.mz-progress-sm { display: block; width: 100%; height: 6px; }
+.mz-btn-sm { min-height: 38px; padding: 6px 14px; font-size: .88rem; margin-top: 4px; }
+.mz-small { font-size: .84rem; }
+
+/* ---- the path: horizontal on a wide screen, reading right to left -------- */
+.mz-path {
+  list-style: none; margin: 6px 0 0; padding: 18px 0 8px;
+  display: flex; align-items: flex-start; gap: 0;
+  overflow-x: auto; overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+.mz-path-node {
+  position: relative; flex: 1 0 7.2rem; min-width: 7.2rem;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  text-align: center; padding-top: 22px;
+}
+/* The line between nodes, drawn behind the dots so a dot sits on it. */
+.mz-path-node::before {
+  content: ""; position: absolute; top: 40px; inset-inline-start: 50%; inset-inline-end: -50%;
+  height: 3px; background: var(--mz-line);
+}
+.mz-path-node:last-child::before { display: none; }
+.mz-path-node.is-done::before { background: var(--mz-done); }
+.mz-path-dot {
+  position: relative; z-index: 1;
+  width: 38px; height: 38px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: .8rem; font-weight: 700;
+  background: var(--mz-card); color: var(--mz-body);
+  border: 3px solid var(--mz-idle);
+}
+.is-done  > .mz-path-dot { background: var(--mz-teal-solid); border-color: var(--mz-teal-solid); color: #fff; }
+.is-doing > .mz-path-dot { background: var(--mz-tag-doing-bg); border-color: var(--mz-doing); color: var(--mz-tag-doing-ink); }
+.is-fix   > .mz-path-dot { background: var(--mz-fix-bg); border-color: var(--mz-fix); color: var(--mz-fix-ink); }
+/* The current step is marked by weight and a ring, never by colour alone. */
+/* `--mz-link` rather than purple-deep: it is the purple the night palette
+   lightens for reading, and this is text. */
+.mz-path-node.is-current > .mz-path-dot { box-shadow: 0 0 0 5px var(--mz-purple-soft); border-color: var(--mz-purple); color: var(--mz-link); }
+.mz-path-now {
+  position: absolute; top: -4px; inset-inline: 0; margin: 0 auto; width: max-content; max-width: 100%;
+  font-size: .7rem; font-weight: 700; padding: 3px 9px; border-radius: 999px;
+  background: var(--mz-purple); color: #fff;
+}
+.mz-path-body { display: flex; flex-direction: column; gap: 2px; padding: 0 6px; }
+.mz-path-title { font-size: .86rem; font-weight: 600; color: var(--mz-ink); text-decoration: none; line-height: 1.25;
+  display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 2px; }
+@media (max-width: 640px) { .mz-path-title { justify-content: flex-start; } }
+a.mz-path-title:hover { color: var(--mz-link); }
+.mz-path-word { font-size: .76rem; color: var(--mz-muted); }
+.is-done  .mz-path-word { color: var(--mz-good-ink); }
+.is-doing .mz-path-word { color: var(--mz-tag-doing-ink); }
+.is-fix   .mz-path-word { color: var(--mz-fix-ink); }
+.mz-path-when { font-size: .74rem; color: var(--mz-muted); font-variant-numeric: tabular-nums; }
+
+.mz-legend {
+  list-style: none; margin: 14px 0 0; padding: 12px 0 0;
+  border-top: 1px solid var(--mz-line);
+  display: flex; flex-wrap: wrap; gap: 8px 18px;
+  font-size: .8rem; color: var(--mz-muted);
+}
+.mz-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.mz-legend-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--mz-idle); }
+.mz-legend-dot.is-done { background: var(--mz-done); }
+.mz-legend-dot.is-doing { background: var(--mz-doing); }
+.mz-legend-dot.is-fix { background: var(--mz-fix); }
+
+/* On a phone the path turns vertical: same markup, read top to bottom. */
+@media (max-width: 640px) {
+  .mz-path-head { align-items: flex-start; }
+  .mz-path-art { display: none; }
+  .mz-path { flex-direction: column; overflow: visible; padding: 4px 0 0; }
+  .mz-path-node {
+    flex: none; min-width: 0; width: 100%;
+    flex-direction: row; align-items: flex-start; text-align: start;
+    gap: 12px; padding: 8px 0 14px;
+  }
+  .mz-path-node::before {
+    top: 44px; bottom: -8px;
+    inset-inline-start: 17px; inset-inline-end: auto; width: 3px; height: auto;
+  }
+  .mz-path-dot { flex: none; }
+  .mz-path-now { position: static; order: 3; margin: 2px 0 0; align-self: flex-start; }
+  .mz-path-body { padding: 6px 0 0; }
+}
+
+/* ---- the three panels ---------------------------------------------------- */
+.mz-three-up { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: start; }
+.mz-three-up .mz-panel { margin-bottom: 20px; }
+@media (max-width: 900px) { .mz-three-up { grid-template-columns: 1fr; } }
+
+/* A progress ring, the thing her cards and panels carry. Conic gradient with
+ * the number inside, so it is read at a glance and never decoded. */
+.mz-ring {
+  --pct: 0;
+  position: relative; flex: none; width: 64px; height: 64px; border-radius: 50%;
+  background: conic-gradient(var(--mz-teal) calc(var(--pct) * 1%), var(--mz-line) 0);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.mz-ring::before { content: ""; position: absolute; width: 50px; height: 50px; border-radius: 50%; background: var(--mz-card); }
+.mz-ring-label { position: relative; font-size: .82rem; font-weight: 700; color: var(--mz-teal-text); font-variant-numeric: tabular-nums; }
+.mz-ring-sm { width: 48px; height: 48px; }
+.mz-ring-sm::before { width: 36px; height: 36px; }
+.mz-ring-sm .mz-ring-label { font-size: .72rem; }
+.mz-ring-lg { width: 112px; height: 112px; }
+.mz-ring-lg::before { width: 88px; height: 88px; }
+.mz-ring-lg .mz-ring-label { font-size: 1.3rem; }
+
+.mz-now-course { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+.mz-now-course > div { display: flex; flex-direction: column; gap: 2px; }
+.mz-now-title { font-weight: 700; color: var(--mz-ink); text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; }
+.mz-now-title:hover { color: var(--mz-link); }
+
+.mz-lessons { list-style: none; margin: 0; padding: 0; }
+.mz-lesson a {
+  display: flex; align-items: center; gap: 10px;
+  min-height: 44px; padding: 6px 4px;
+  color: var(--mz-body); text-decoration: none;
+  border-bottom: 1px solid var(--mz-line);
+}
+.mz-lesson:last-child a { border-bottom: 0; }
+.mz-lesson a:hover .mz-lesson-title { color: var(--mz-link); }
+.mz-lesson-mark {
+  flex: none; width: 24px; height: 24px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: .8rem; font-weight: 700;
+  background: var(--mz-page); color: var(--mz-body);
+}
+.mz-lesson.is-done .mz-lesson-mark { background: var(--mz-teal-soft); color: var(--mz-teal-text); }
+.mz-lesson.is-current .mz-lesson-mark { background: var(--mz-tag-doing-bg); color: var(--mz-tag-doing-ink); }
+.mz-lesson.is-current .mz-lesson-title { color: var(--mz-ink); font-weight: 600; }
+.mz-lesson-title { font-size: .92rem; }
+
+.mz-worklist { list-style: none; margin: 0 0 10px; padding: 0; }
+.mz-worklist li {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  min-height: 44px; padding: 6px 0; border-bottom: 1px solid var(--mz-line);
+}
+.mz-worklist li:last-child { border-bottom: 0; }
+.mz-worklist-title { font-weight: 600; color: var(--mz-ink); }
+.mz-tag-fix { background: var(--mz-fix-bg); color: var(--mz-fix-ink); }
+
+/* ---- screen 2, ההדרכות: chips, a sidebar, cards with rings and covers ---- */
+.mz-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; padding: 0; list-style: none; }
+.mz-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: 44px; padding: 8px 16px; border-radius: 999px;
+  background: var(--mz-card); color: var(--mz-body);
+  border: 1px solid var(--mz-line); box-shadow: var(--mz-shadow);
+  font: inherit; font-size: .92rem; cursor: pointer;
+}
+.mz-chip[aria-pressed="true"] { background: var(--mz-purple); border-color: var(--mz-purple); color: #fff; }
+/* The count keeps its own pill; on the pressed chip it inverts so the figure
+   stays readable on purple. */
+.mz-chip[aria-pressed="true"] .mz-count { background: #fff; color: var(--mz-purple-deep); }
+
+/* Her sidebar is on the start side, so in RTL it is the first column. */
+.mz-courses-layout { display: grid; grid-template-columns: 17rem 1fr; gap: 20px; align-items: start; }
+.mz-courses-side { order: -1; }
+@media (max-width: 900px) { .mz-courses-layout { grid-template-columns: 1fr; } }
+.mz-courses-side .mz-panel { margin-bottom: 16px; }
+.mz-overview { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.mz-overview-sub { font-size: .82rem; color: var(--mz-muted); }
+.mz-breakdown { list-style: none; margin: 4px 0 0; padding: 0; width: 100%; display: grid; gap: 6px; font-size: .88rem; }
+.mz-breakdown li { display: flex; justify-content: space-between; gap: 8px; }
+.mz-breakdown strong { font-variant-numeric: tabular-nums; }
+.mz-breakdown .is-done { color: var(--mz-good-ink); }
+.mz-breakdown .is-doing { color: var(--mz-tag-doing-ink); }
+.mz-breakdown .is-todo { color: var(--mz-muted); }
+.mz-stage-now { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+.mz-stage-now .mz-stage-icon { width: 54px; height: 54px; }
+.mz-stage-now strong { font-size: 1rem; }
+
+.mz-course-grid {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+}
+.mz-course {
+  display: flex; flex-direction: column; gap: 10px;
+  background: var(--mz-card); border-radius: var(--mz-radius);
+  box-shadow: var(--mz-shadow); overflow: hidden;
+}
+.mz-course[hidden] { display: none; }
+.mz-course-cover {
+  display: block; aspect-ratio: 16 / 9; width: 100%; object-fit: cover;
+  background: linear-gradient(135deg, var(--mz-teal-soft), var(--mz-purple-soft));
+}
+.mz-course-cover-art { display: flex; align-items: center; justify-content: center; color: var(--mz-purple); }
+.mz-course-body { display: flex; flex-direction: column; gap: 6px; padding: 0 16px; flex: 1; }
+.mz-course-body h3 { margin: 0; font-size: 1rem; }
+.mz-course-about { font-size: .86rem; color: var(--mz-muted); margin: 0;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mz-course-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 16px 16px; }
+.mz-course-state { display: inline-flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--mz-muted); }
+.mz-course.is-done .mz-course-state { color: var(--mz-good-ink); }
+.mz-course-badge {
+  position: absolute; inset-inline-end: 10px; top: 10px;
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--mz-teal-solid); color: #fff;
+  display: inline-flex; align-items: center; justify-content: center; font-size: .8rem; font-weight: 700;
+}
+.mz-course-head { position: relative; }
+/* The same pair the primary button wears, which passes the contract in both
+   palettes; purple-deep on purple-soft measured 3.43:1 at night. */
+.mz-course-required { font-size: .74rem; font-weight: 600; color: #fff; background: var(--mz-purple); padding: 2px 8px; border-radius: 999px; align-self: flex-start; }
+
+/* ---- screen 1, the stats band as she drew it: one gradient, white figures - */
+.mz-band-gradient {
+  background: linear-gradient(90deg, var(--mz-teal) 0%, var(--mz-purple) 100%);
+  border-radius: var(--mz-radius); padding: 18px 22px;
+}
+.mz-band-gradient .mz-figures { gap: 10px; }
+.mz-band-gradient .mz-figures li { background: transparent; padding: 8px 10px; }
+.mz-band-gradient .mz-figures strong { color: #fff; }
+.mz-band-gradient .mz-figures span { color: rgba(255,255,255,.92); }
+.mz-band-gradient .mz-figures svg { display: block; margin: 0 auto 6px; color: rgba(255,255,255,.9); }

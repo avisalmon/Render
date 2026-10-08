@@ -76,7 +76,9 @@ def test_the_training_panel_says_what_it_lists():
     them, and the practicum panel keeps its own name."""
     html = _read(TEMPLATES / "my_path.html")
     heads = _headings(html)
-    assert "ההדרכות שלי" in heads
+    # SPR-M.56 named the panel the way Litala's screen does, ההדרכות שלי
+    # עכשיו; the rule here is that it is named for what it lists.
+    assert any(h.startswith("ההדרכות שלי") for h in heads), heads
     assert "הפרקטיקום שלי" in heads
 
 

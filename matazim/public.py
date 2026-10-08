@@ -67,22 +67,25 @@ def counters():
     # "1 בתי ספר" on its own front page is a small thing that makes a site look
     # unattended, and this is the one page read by people deciding whether to
     # trust it. Early counts here are all going to be 1.
+    # §4.9 — לומדים for everybody in the programme and מוסמכים for the ones
+    # who finished, never the same word for both; Litala's own band says
+    # תלמידים here. The icon key is for her band's pictograms (SPR-M.56).
     rows = [
-        (matazim, "מט״צ בתוכנית", "מט״צים בתוכנית"),
-        (schools, "בית ספר", "בתי ספר"),
-        (leaders, "מוביל/ה", "מובילים ומובילות"),
+        (matazim, "לומד/ת בתוכנית", "לומדים בתוכנית", "learners"),
+        (schools, "בית ספר", "בתי ספר", "school"),
+        (leaders, "מוביל/ה", "מובילים ומובילות", "people"),
         # פרקטיקום, not הדרכה. On this site הדרכה is a course (the standing
         # brand rule), and the nav item ההדרכות sat one screen away from a band
         # saying "שעות הדרכה" about something else entirely. The review of
         # 2026-09-14 caught it; the practicum screen had already been renamed
         # for the same collision and the band was missed.
-        (round(minutes / 60), "שעת פרקטיקום", "שעות פרקטיקום"),
-        (certified, "מוסמך/ת", "מוסמכים"),
-        (events, "יום שיא", "ימי שיא"),
+        (round(minutes / 60), "שעת פרקטיקום", "שעות פרקטיקום", "hours"),
+        (certified, "מט״צ מוסמך/ת", "מט״צים מוסמכים", "cert"),
+        (events, "יום שיא", "ימי שיא", "event"),
     ]
     return [
-        {"figure": n, "label": one if n == 1 else many}
-        for n, one, many in rows
+        {"figure": n, "label": one if n == 1 else many, "icon": icon}
+        for n, one, many, icon in rows
         if n
     ]
 

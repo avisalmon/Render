@@ -1,0 +1,41 @@
+{% load static %}
+{% comment %}
+  One הדרכה card, as Litala drew it (SPR-M.56): a cover, the title, a line of
+  text, a progress ring with the number inside, and a button whose word is the
+  state. `group` is the chip it answers to.
+
+  The ring replaces the bar that courses.html carried from SPR-M.19 ("a ring at
+  this size is a decoration you have to decode"). Hers has the number inside
+  it, which is the half of that argument that was right, kept.
+{% endcomment %}
+<li class="mz-course{% if card.done %} is-done{% endif %}" data-group="{{ group }}">
+  <div class="mz-course-head">
+    {% if card.thumbnail %}
+      <img class="mz-course-cover" src="{% static card.thumbnail %}" alt="" loading="lazy">
+    {% else %}
+      <div class="mz-course-cover mz-course-cover-art" aria-hidden="true">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12"/></svg>
+      </div>
+    {% endif %}
+    {% if card.done %}<span class="mz-course-badge" aria-hidden="true">✓</span>{% endif %}
+  </div>
+  <div class="mz-course-body">
+    {% if card.required %}<span class="mz-course-required">חלק מהמסלול</span>{% endif %}
+    <h3>{{ card.title }}</h3>
+    {% if card.about %}<p class="mz-course-about">{{ card.about|striptags|truncatewords:18 }}</p>{% endif %}
+  </div>
+  <div class="mz-course-foot">
+    <span class="mz-course-state">
+      <span class="mz-ring mz-ring-sm" style="--pct: {{ card.pct }}" role="img" aria-label="{{ card.pct }} אחוז">
+        <span class="mz-ring-label">{{ card.pct }}%</span>
+      </span>
+      {{ card.word }}
+    </span>
+    {% if card.exists|default:True %}
+      <a class="mz-btn {% if card.done %}mz-btn-ghost{% else %}mz-btn-primary{% endif %} mz-btn-sm"
+         href="{% url 'matazim:learn_course' card.slug %}">{{ card.action }}</a>
+    {% else %}
+      <span class="mz-muted mz-small">ההדרכה הזאת לא נטענה. נתקן.</span>
+    {% endif %}
+  </div>
+</li>

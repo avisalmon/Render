@@ -182,6 +182,16 @@ def _work_state(student, which):
     return rows.exclude(status=Submission.WAITING).exists()
 
 
+def _unread_count(user):
+    """The bell's number, for the משוב חדש card. Same reader the header uses."""
+    from .views import _unread_notices
+
+    try:
+        return int(_unread_notices(user) or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
 def _leader_name(leader):
     if leader is None:
         return ""
@@ -222,6 +232,17 @@ def my_path(request):
     current = _current_stage(student, profile)
     stages = [{**stage, "is_current": stage["key"] == current} for stage in FUNNEL]
 
+    # SPR-M.56 — her screen 3, built from the same facts the panels below
+    # already read. `track` is the only module that knows how her drawing
+    # arranges them; this view just hands it what it already had.
+    from . import track
+
+    summary = track_summary(per_course)
+    next_step = _next_step(profile, student, state, per_course)
+    next_events = _next_events(request.user)
+    work_waiting = _work_state(student, "waiting")
+    work_answered = _work_state(student, "answered")
+
     return render(
         request,
         "matazim/my_path.html",
@@ -230,7 +251,17 @@ def my_path(request):
             "path",
             student=student,
             stages=stages,
-            summary=track_summary(per_course),
+            summary=summary,
+            milestones=track.milestones(request.user, profile, student, state, per_course),
+            legend=track.LEGEND,
+            status_cards=track.status_cards(
+                summary=summary, next_step=next_step, student=student,
+                work_waiting=work_waiting, work_answered=work_answered,
+                next_events=next_events,
+                unread=_unread_count(request.user),
+            ),
+            current_course=track.current_course(request.user, per_course),
+            recent_work=track.recent_work(student),
             courses=[
                 {
                     "slug": slug,
@@ -240,17 +271,17 @@ def my_path(request):
                 for slug in REQUIRED_COURSE_SLUGS
             ],
             eligibility=state,
-            next_step=_next_step(profile, student, state, per_course),
+            next_step=next_step,
             leader=student.leader if student else None,
             # REQ-M.19 — what the panel should say, which depends on whether
             # anything is waiting on somebody else or on them.
             # REQ-M.130 — a calendar somebody has to remember to visit tells
             # nobody anything, so the next thing comes to them.
-            next_events=_next_events(request.user),
+            next_events=next_events,
             # REQ-M.32 — the teaching, counted, on the screen they open.
             teaching=_teaching(student),
-            work_waiting=_work_state(student, "waiting"),
-            work_answered=_work_state(student, "answered"),
+            work_waiting=work_waiting,
+            work_answered=work_answered,
             leader_name=_leader_name(student.leader) if student else "",
             pending_name=_leader_name(student.pending_leader) if student else "",
         ),

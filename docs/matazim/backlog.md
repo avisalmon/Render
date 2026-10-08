@@ -4253,3 +4253,73 @@ before; with more than one the answer is genuinely unknown (Q15) and
 `test_two_staffed_programmes_are_not_guessed_between` records that rather than
 inventing it.
 
+---
+
+## SPR-M.56 — Litala's three screens, as drawn  `DONE 2026-10-08`
+
+**Goal.** Avi: "עד כמה שניתן לדבוק בעיצוב שלה. ותעבור על האתר ותשפר אותו
+להיות מהמם, אינטואיטיבי ודבק ברצון הלקוחה."
+
+Her three prototype screens (`prototype/image011-013.png`, read in full on
+2026-09-09) are all the member's site: דף הבית, ההדרכות, המסלול שלי. Compared
+screen by screen against what was live, as a signed-in member with real
+progress, before anything was changed. The home page already matched her
+identity, colours, nav and four stages; the two member screens did not match
+her layouts at all.
+
+**Delivers.** REQ-M.153, REQ-M.154, REQ-M.155.
+
+- [x] **M56.1** `matazim/track.py` — her screen 3 as a reader: `milestones`,
+  `status_cards`, `current_course`, `recent_work`. Reads only what exists;
+  decides nothing (`certification.eligibility` still does).
+- [x] **M56.2** `my_path.html` rebuilt to her three bands. Horizontal path on
+  a wide screen, vertical on a phone, same markup.
+- [x] **M56.3** `courses.html` rebuilt to her screen 2: chips, sidebar ring and
+  stage, cards with covers, rings and state words. `_course_card.html` is the
+  one card, used for all three groups.
+- [x] **M56.4** `home.html` in her order; the band as her gradient with
+  pictograms; the first figure says לומדים.
+- [x] **M56.5** Four new tokens and ~200 lines of CSS, all drawn from the
+  existing token layer. Night mode needed nothing: the tokens already swap.
+
+**Tests.** 16 in `tests/test_spr_m_56.py`, and both member screens were
+already in the screen contract's catalogue in four member states each, so the
+class contract, the phone widths and the dark palette cover the new layouts
+without a new entry.
+
+- [x] A milestone carries a date only when something happened; a member on
+  day one has six undated nodes and the first is current.
+- [x] The path reads the same progress tables the leader's roster reads
+  (three lessons of eight is 37% in both places).
+- [x] Exactly one current node.
+- [x] A status card exists only when there is something behind it.
+- [x] The lesson checklist is a six-lesson window around the current one.
+- [x] The sidebar ring is counted off the cards on the page.
+- [x] Chips exist only for groups that have something in them.
+- [x] The home reads hero, איך זה עובד, band; the band is the gradient with a
+  pictogram per figure; her invented numbers never appear anywhere.
+
+### What her drawings decide that was deliberately not followed
+
+Each one is a recorded decision, not drift, and the record is the reason it
+stays:
+
+| Her drawing | What is live | Why |
+|---|---|---|
+| Three hero doors: כניסת תלמידים, כניסת מובילים, מבחן הכניסה | One: the test | SPR-M.42, Avi's own reading: the page should not put a fourteen-year-old on the spot about which kind of person they are |
+| A stats band of 1,250 תלמידים, 28 בתי ספר, 4,300 תוצרים | The same band shape over counted figures, zeros dropped | REQ-M.5f: a figure on a public page is a claim about a real programme |
+| Six showcased projects | Nothing until two people consent | REQ-M.30a, §4.10 |
+| הקורסים in the nav | ההדרכות | The standing brand rule |
+| Padlocked future course cards | Only what the leader opened | SPR-M.52. Open question for Avi, below |
+| Five status cards every time | As many as are true | A card saying "nothing" three times across is a row nobody reads |
+| Fourteen dated milestones | As many as the programme has, dated when something happened | The same rule |
+
+### One question for Avi
+
+Her ההדרכות screen shows the whole year ahead as greyed, padlocked cards, and
+that is a real design choice: a teenager sees there is more coming. Our
+product shows only what the leader opened (SPR-M.52). Showing the pool as
+locked cards would be faithful to her and honest about the data, but it tells
+every member what root put in the pool before any leader chose. That is his to
+decide, and it is written here rather than built.
+

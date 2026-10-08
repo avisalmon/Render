@@ -1,90 +1,186 @@
 {% extends "matazim/base.html" %}
 
 {% comment %}
-  REQ-M.12 — המסלול שלי. REQ-M.5a is the acceptance test, in Litala's words:
-  every member sees immediately where they are, what they have completed, and
-  what their next task is.
+  REQ-M.12 — המסלול שלי, built to Litala's screen 3
+  (docs/matazim/prototype/image013.png) since SPR-M.56.
 
-  The order on the page is that sentence, in that order. Where you are, what is
-  next, then the detail. A member opens this to decide what to do in the next
-  twenty minutes, not to audit themselves.
+  Her sentence is REQ-M.5a: every member sees immediately where they are, what
+  they have completed, and what their next task is. Her screen answers it in
+  three bands, and so does this one: status cards across the top, the path of
+  milestones with a word and a date on each, then the הדרכה they are in now
+  with its lessons, their submissions, and what is coming up.
+
+  Nothing on this page is drawn to fill a slot. Her picture has fourteen
+  milestones with dates because it is a picture; a member on day one has one.
+  `matazim/track.py` reads what is true and this template shows that.
 {% endcomment %}
 
 {% block title %}המסלול שלי · מט״צים{% endblock %}
 
 {% block content %}
 <div class="mz-container mz-page">
-  <div class="mz-page-head">
-    <h1>המסלול שלי</h1>
-    <p>איפה אתם, מה כבר עשיתם, ומה הצעד הבא.</p>
+  <div class="mz-page-head mz-path-head">
+    <div>
+      <h1>המסלול שלי</h1>
+      <p>כאן תוכלו לראות את ההתקדמות שלכם בתכנית. לומדים, יוצרים, מדריכים ומשפיעים.</p>
+    </div>
+    <svg class="mz-path-art" width="150" height="72" viewBox="0 0 150 72" fill="none" aria-hidden="true">
+      <path d="M6 60 C 40 60, 40 14, 76 14 S 112 60, 144 60" stroke="var(--mz-teal)" stroke-width="5" stroke-linecap="round" stroke-dasharray="1 9"/>
+      <circle cx="76" cy="14" r="7" fill="var(--mz-purple)"/>
+      <circle cx="6" cy="60" r="6" fill="var(--mz-teal)"/>
+      <path d="M144 60 l0 -22 l12 5 l-12 5" stroke="var(--mz-blue)" stroke-width="3" stroke-linejoin="round" fill="none"/>
+    </svg>
   </div>
 
-  {% comment %}
-    The next step first, because it is the only thing on this page that asks
-    anything of the reader. Everything below it is context for this.
-  {% endcomment %}
-  <section class="mz-panel mz-next">
-    <span class="mz-eyebrow">המשימה הנוכחית</span>
-    <h2>{{ next_step.text }}</h2>
-    <p class="mz-muted">{{ next_step.why }}</p>
-    {% if next_step.where %}
-      <p class="mz-page-actions">
-        <a class="mz-btn mz-btn-primary"
-           href="{% if next_step.where_args %}{% url next_step.where next_step.where_args.0 %}{% else %}{% url next_step.where %}{% endif %}">
-          קדימה
-        </a>
-      </p>
-    {% endif %}
-  </section>
+  {# ------------------------------------------------------ status cards #}
+  <ul class="mz-status-row" aria-label="מצב נוכחי">
+    {% for card in status_cards %}
+      <li class="mz-status mz-status-{{ card.tone }}">
+        <span class="mz-status-title">{{ card.title }}</span>
+        {% if card.key == 'progress' %}
+          <strong class="mz-status-figure">{{ card.figure }}</strong>
+          <span class="mz-progress mz-progress-sm" role="img" aria-label="{{ card.pct }} אחוז"><span style="width: {{ card.pct }}%"></span></span>
+          {% comment %}
+            The fraction under the figure is the same number the leader's
+            roster shows for this person (REQ-M.74), kept so the two screens
+            can be read against each other.
+          {% endcomment %}
+          <span class="mz-muted">{{ summary.done }}/{{ summary.total }} שיעורים</span>
+          <span class="mz-status-text">{{ card.text }}</span>
+        {% else %}
+          <strong class="mz-status-text">{{ card.text }}</strong>
+          {% if card.sub %}<span class="mz-muted">{{ card.sub }}</span>{% endif %}
+          {% if card.where %}
+            <a class="mz-btn mz-btn-ghost mz-btn-sm"
+               href="{% if card.where_args %}{% url card.where card.where_args.0 %}{% else %}{% url card.where %}{% endif %}">{{ card.button }}</a>
+          {% endif %}
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
 
+  {# ------------------------------------------------------- the path #}
   <section class="mz-panel">
-    <h2>המסלול</h2>
+    <h2>המסלול שלי בתכנית</h2>
     {% comment %}
-      All five stages, with the current one marked rather than the rest hidden.
-      A teenager should be able to see where this goes, not only the next step:
-      the whole point of the programme is that it ends somewhere.
+      Horizontal on a wide screen, reading right to left like her drawing;
+      vertical on a phone, where a scrolling strip of fourteen nodes is a thing
+      a thumb loses. Same markup, one class switch in CSS.
     {% endcomment %}
-    <ol class="mz-journey">
-      {% for stage in stages %}
-        <li class="mz-journey-step{% if stage.is_current %} is-current{% endif %}">
-          <span class="mz-journey-dot"></span>
-          <span class="mz-journey-body">
-            <span class="mz-journey-name">{{ stage.title }}</span>
-            <span class="mz-muted">{{ stage.text }}</span>
-            {% if stage.is_current %}<span class="mz-tag mz-tag-doing">כאן אתם</span>{% endif %}
+    <ol class="mz-path" aria-label="אבני הדרך">
+      {% for node in milestones %}
+        <li class="mz-path-node is-{{ node.status }}{% if node.is_current %} is-current{% endif %}">
+          {% if node.is_current %}<span class="mz-path-now">המשימה הנוכחית</span>{% endif %}
+          <span class="mz-path-dot" aria-hidden="true">
+            {% if node.status == 'done' %}✓{% elif node.status == 'doing' and node.pct %}{{ node.pct }}%{% elif node.status == 'doing' %}…{% elif node.status == 'fix' %}!{% else %}{{ forloop.counter }}{% endif %}
+          </span>
+          <span class="mz-path-body">
+            {% if node.where %}
+              <a class="mz-path-title" href="{% if node.where_args %}{% url node.where node.where_args.0 %}{% else %}{% url node.where %}{% endif %}">{{ node.title }}</a>
+            {% else %}
+              <span class="mz-path-title">{{ node.title }}</span>
+            {% endif %}
+            <span class="mz-path-word">{{ node.word }}{% if node.status == 'doing' and node.pct %} {{ node.pct }}%{% endif %}</span>
+            {% if node.when %}<span class="mz-path-when">{{ node.when|date:"d.m.y" }}</span>{% endif %}
           </span>
         </li>
       {% endfor %}
     </ol>
-  </section>
-
-  {% comment %}
-    This panel lists הדרכות and their lessons, and was headed הפרקטיקום שלי
-    until the SPR-M.41 review: the same words as the real practicum panel
-    further down, on the one screen whose job is telling a member which stage
-    they are at. 23/34 here is lessons, not teaching.
-  {% endcomment %}
-  <section class="mz-panel">
-    <h2>
-      ההדרכות שלי
-      <span class="mz-count">{{ summary.done }}/{{ summary.total }}</span>
-    </h2>
-    <ul class="mz-training">
-      {% for course in courses %}
-        <li>
-          <a class="mz-training-title" href="{% url 'matazim:learn_course' course.slug %}">
-            {{ course.progress.title|default:course.slug }}
-            {% if course.certified %}<span class="mz-tag mz-tag-done">יש תעודה</span>{% endif %}
-          </a>
-          <span class="mz-roster-progress">
-            <span class="mz-bar"><span class="mz-bar-fill" style="width: {{ course.progress.pct|default:0 }}%"></span></span>
-            <span class="mz-muted">{{ course.progress.done|default:0 }}/{{ course.progress.total|default:0 }}</span>
-          </span>
-        </li>
+    <ul class="mz-legend" aria-label="מקרא">
+      {% for status, word in legend %}
+        <li><span class="mz-legend-dot is-{{ status }}" aria-hidden="true"></span>{{ word }}</li>
       {% endfor %}
     </ul>
   </section>
 
+  {# ------------------------------------------------ the three panels #}
+  <div class="mz-three-up">
+    <section class="mz-panel">
+      <h2>ההדרכות שלי עכשיו</h2>
+      {% if current_course %}
+        <div class="mz-now-course">
+          <span class="mz-ring" style="--pct: {{ current_course.pct }}" role="img" aria-label="{{ current_course.pct }} אחוז">
+            <span class="mz-ring-label">{{ current_course.pct }}%</span>
+          </span>
+          <div>
+            <a class="mz-now-title" href="{% url 'matazim:learn_course' current_course.slug %}">{{ current_course.title }}</a>
+            <span class="mz-muted">{{ current_course.done }} מתוך {{ current_course.total }} שיעורים</span>
+          </div>
+        </div>
+        <ol class="mz-lessons">
+          {% for lesson in current_course.lessons %}
+            <li class="mz-lesson{% if lesson.done %} is-done{% endif %}{% if lesson.is_current %} is-current{% endif %}">
+              <a href="{% url 'matazim:learn_lesson' current_course.slug lesson.order %}">
+                <span class="mz-lesson-mark" aria-hidden="true">{% if lesson.done %}✓{% elif lesson.is_current %}›{% else %}○{% endif %}</span>
+                <span class="mz-lesson-title">שיעור {{ lesson.order }}: {{ lesson.title }}</span>
+                <span class="mz-sr">{% if lesson.done %}הושלם.{% elif lesson.is_current %}השיעור הנוכחי.{% else %}עוד לא.{% endif %}</span>
+              </a>
+            </li>
+          {% endfor %}
+        </ol>
+        {% if current_course.hidden %}<p class="mz-muted mz-small">ועוד {{ current_course.hidden }} שיעורים בעמוד ההדרכה.</p>{% endif %}
+        <div class="mz-page-actions">
+          <a class="mz-btn mz-btn-primary"
+             href="{% if current_course.resume_order %}{% url 'matazim:learn_lesson' current_course.slug current_course.resume_order %}{% else %}{% url 'matazim:learn_course' current_course.slug %}{% endif %}">
+            {% if current_course.pct >= 100 %}צפייה שוב{% elif current_course.pct %}להמשיך{% else %}להתחיל{% endif %}
+          </a>
+        </div>
+      {% else %}
+        <p class="mz-muted">ההדרכות ייפתחו כאן ברגע שתתחילו.</p>
+      {% endif %}
+    </section>
+
+    <section class="mz-panel">
+      <h2>תוצרים והגשות</h2>
+      {% if recent_work %}
+        <ul class="mz-worklist">
+          {% for row in recent_work %}
+            <li>
+              <span class="mz-worklist-title">{{ row.title }}</span>
+              <span class="mz-tag {% if row.status == 'done' %}mz-tag-done{% elif row.status == 'doing' %}mz-tag-doing{% else %}mz-tag-fix{% endif %}">{{ row.word }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+        <a class="mz-linkbtn" href="{% url 'matazim:my_work' %}">כל העבודות שלי</a>
+      {% elif leader %}
+        <p class="mz-muted">כשבניתם משהו שאתם רוצים שהמוביל/ה יראה, אפשר להגיש אותו כאן.</p>
+        <div class="mz-page-actions">
+          <a class="mz-btn mz-btn-primary" href="{% url 'matazim:my_work' %}">להגשת תוצר</a>
+        </div>
+      {% else %}
+        {% comment %}
+          REQ-M.19 — nobody to hand work to before a leader, and a button that
+          leads to "you have no leader" teaches people not to press.
+        {% endcomment %}
+        <p class="mz-muted">הגשת תוצרים נפתחת אחרי שמצטרפים למוביל/ה.</p>
+      {% endif %}
+    </section>
+
+    <section class="mz-panel">
+      <h2>אירועים קרובים</h2>
+      {% if next_events %}
+        <ul class="mz-events">
+          {% for event in next_events %}
+            <li class="mz-event">
+              <div class="mz-event-when">
+                <span class="mz-event-day">{{ event.starts_at|date:"j" }}</span>
+                <span class="mz-event-month">{{ event.starts_at|date:"F" }}</span>
+              </div>
+              <div class="mz-event-body">
+                <h3>{{ event.title }}</h3>
+                <p class="mz-muted">{{ event.starts_at|date:"l, H:i" }}{% if event.place %} · {{ event.place }}{% endif %}</p>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="mz-muted">אין כרגע יום שיא קרוב. כשייקבע, הוא יופיע כאן.</p>
+      {% endif %}
+      <a class="mz-linkbtn" href="{% url 'matazim:calendar' %}">לצפייה מלאה בלוח הזמנים</a>
+    </section>
+  </div>
+
+  {# ------------------------------------------------ the detail panels #}
   <section class="mz-panel">
     <h2>כדי להיות מט״צ מוסמך</h2>
     {% if student.status == "certified" %}
@@ -96,146 +192,60 @@
         <a class="mz-btn mz-btn-primary" href="{% url 'matazim:my_certificate' %}">התעודה שלי</a>
       </p>
     {% endif %}
-
     {% comment %}
       REQ-M.76, the same three conditions the leader sees, arranged for somebody
-      who can act on them rather than somebody judging them. Always all three,
-      so the page reads the same way every time.
+      who can act on them rather than somebody judging them.
     {% endcomment %}
     <ul class="mz-needs">
       <li>
         {% if eligibility.entrance_test_passed %}<span class="mz-check">✓<span class="mz-sr">הושלם.</span></span>{% else %}<span class="mz-check-todo">○<span class="mz-sr">עוד לא.</span></span>{% endif %}
-        <span>
-          מבחן הכניסה
-          {% if not eligibility.entrance_test_passed %}
-            <a href="{% url 'matazim:entrance_test' %}">למבחן</a>
-          {% endif %}
-        </span>
+        <span>מבחן הכניסה{% if not eligibility.entrance_test_passed %} <a href="{% url 'matazim:entrance_test' %}">למבחן</a>{% endif %}</span>
       </li>
       {% for course in courses %}
         <li>
           {% if course.certified %}<span class="mz-check">✓<span class="mz-sr">הושלם.</span></span>{% else %}<span class="mz-check-todo">○<span class="mz-sr">עוד לא.</span></span>{% endif %}
           <span>
             תעודה ב{{ course.progress.title|default:course.slug }}
-            {% if not course.certified and course.progress %}
-              <span class="mz-muted">{{ course.progress.done }}/{{ course.progress.total }} שיעורים</span>
-            {% endif %}
+            {% if not course.certified and course.progress %}<span class="mz-muted">{{ course.progress.done }}/{{ course.progress.total }} שיעורים</span>{% endif %}
           </span>
         </li>
       {% endfor %}
       <li>
         {% if student.status == "certified" %}<span class="mz-check">✓<span class="mz-sr">הושלם.</span></span>{% else %}<span class="mz-check-todo">○<span class="mz-sr">עוד לא.</span></span>{% endif %}
-        <span>
-          אישור של המוביל/ה
-          {% if eligibility.is_eligible and student.status != "certified" %}
-            <span class="mz-muted">אתם מוכנים. ההחלטה אצלם.</span>
-          {% endif %}
-        </span>
+        <span>אישור של המוביל/ה{% if eligibility.is_eligible and student.status != "certified" %} <span class="mz-muted">אתם מוכנים. ההחלטה אצלם.</span>{% endif %}</span>
       </li>
     </ul>
   </section>
 
-  {% if leader %}
-  {% comment %}
-    REQ-M.32 — the teaching, on the screen they already open. A total that only
-    shows on a page you have to remember to visit is a total nobody sees, and
-    this one is the thing the whole programme is for.
-
-    Gated on having a leader, for the same reason the work panel below is: a
-    button that leads to "this opens when you join somebody" is a button that
-    teaches people not to press. That rule was argued once here and this panel
-    broke it in the other direction until 2026-09-14.
-  {% endcomment %}
-  <section class="mz-panel">
-    <h2>הפרקטיקום שלי</h2>
-    {% if teaching.sessions %}
-      <ul class="mz-figures">
-        <li><strong>{{ teaching.sessions }}</strong><span>מפגשים</span></li>
-        <li><strong>{{ teaching.hours }}</strong><span>שעות</span></li>
-        <li><strong>{{ teaching.learners }}</strong><span>תלמידים</span></li>
-      </ul>
-    {% else %}
-      <p class="mz-muted">
-        אחרי כל מפגש שתעבירו, כתבו כאן מה היה. זה השלב שבו הידע הופך להשפעה.
-      </p>
-    {% endif %}
-    <a class="mz-linkbtn" href="{% url 'matazim:my_teaching' %}">
-      {% if teaching.sessions %}כל המפגשים{% else %}תיעוד מפגש{% endif %}
-    </a>
-  </section>
-  {% endif %}
-
-  {% if next_events %}
-    {% comment %}
-      REQ-M.130 — what is close, where they already are.
-    {% endcomment %}
-    <section class="mz-panel">
-      <h2>מה קרוב</h2>
-      <ul class="mz-events">
-        {% for event in next_events %}
-          <li class="mz-event">
-            <div class="mz-event-when">
-              <span class="mz-event-day">{{ event.starts_at|date:"j" }}</span>
-              <span class="mz-event-month">{{ event.starts_at|date:"F" }}</span>
-            </div>
-            <div class="mz-event-body">
-              <h3>{{ event.title }}</h3>
-              <p class="mz-muted">
-                {{ event.starts_at|date:"l, H:i" }}
-                {% if event.place %} · {{ event.place }}{% endif %}
-              </p>
-            </div>
-          </li>
-        {% endfor %}
-      </ul>
-      <a class="mz-linkbtn" href="{% url 'matazim:calendar' %}">כל לוח הזמנים</a>
-    </section>
-  {% endif %}
-
-  {% if leader %}
-    {% comment %}
-      REQ-M.19 — the way into יוצרים. Only once somebody has a leader, because
-      there is nobody to hand work to before that, and a button that leads to
-      "you have no leader" is a button that teaches people not to press.
-    {% endcomment %}
-    <section class="mz-panel">
-      <h2>העבודות שלי</h2>
-      <p class="mz-muted">
-        {% if work_waiting %}
-          הגשתם עבודה ואתם מחכים לתשובה.
-        {% elif work_answered %}
-          המוביל/ה כתב/ה לכם משוב.
-        {% else %}
-          כשבניתם משהו שאתם רוצים שהמוביל/ה יראה — אפשר להגיש אותו כאן.
-        {% endif %}
-      </p>
-      <a class="mz-btn mz-btn-primary" href="{% url 'matazim:my_work' %}">לעבודות שלי</a>
-    </section>
-  {% endif %}
-
-  <section class="mz-panel">
-    <h2>המוביל/ה שלי</h2>
+  <div class="mz-two-up">
     {% if leader %}
-      <p>
-        <strong>{{ leader_name }}</strong>
-        {% for school in leader.school_names %}<span class="mz-muted">{{ school }}</span>{% endfor %}
-      </p>
-      <p class="mz-muted">
-        המוביל/ה שלכם רואה את ההתקדמות שלכם, כדי ללוות אתכם ולהחליט מתי אתם
-        מוכנים להסמכה. <a href="{% url 'matazim:privacy' %}">מה עוד נראה להם</a>.
-      </p>
-    {% elif pending_name %}
-      <p>ביקשתם להצטרף ל<strong>{{ pending_name }}</strong>, ומחכים לאישור.</p>
-    {% else %}
-      {% comment %}
-        REQ-M.65 — no leader is a normal state, and the page reads as a
-        beginning rather than as something that went wrong.
-      {% endcomment %}
-      <p class="mz-muted">עוד לא הצטרפתם למוביל/ה. זה השלב הבא, ואפשר לעשות אותו עכשיו.</p>
-      <p class="mz-page-actions">
-        <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:apply' %}">בחירת מוביל/ה</a>
-      </p>
+    <section class="mz-panel">
+      <h2>הפרקטיקום שלי</h2>
+      {% if teaching.sessions %}
+        <ul class="mz-figures">
+          <li><strong>{{ teaching.sessions }}</strong><span>מפגשים</span></li>
+          <li><strong>{{ teaching.hours }}</strong><span>שעות</span></li>
+          <li><strong>{{ teaching.learners }}</strong><span>תלמידים</span></li>
+        </ul>
+      {% else %}
+        <p class="mz-muted">אחרי כל מפגש שתעבירו, כתבו כאן מה היה. זה השלב שבו הידע הופך להשפעה.</p>
+      {% endif %}
+      <a class="mz-linkbtn" href="{% url 'matazim:my_teaching' %}">{% if teaching.sessions %}כל המפגשים{% else %}תיעוד מפגש{% endif %}</a>
+    </section>
     {% endif %}
-  </section>
+
+    <section class="mz-panel">
+      <h2>המוביל/ה שלי</h2>
+      {% if leader %}
+        <p><strong>{{ leader_name }}</strong> {% for school in leader.school_names %}<span class="mz-muted">{{ school }}</span>{% endfor %}</p>
+        <p class="mz-muted">המוביל/ה שלכם רואה את ההתקדמות שלכם, כדי ללוות אתכם ולהחליט מתי אתם מוכנים להסמכה. <a href="{% url 'matazim:privacy' %}">מה עוד נראה להם</a>.</p>
+      {% elif pending_name %}
+        <p>ביקשתם להצטרף ל<strong>{{ pending_name }}</strong>, ומחכים לאישור.</p>
+      {% else %}
+        <p class="mz-muted">עוד לא הצטרפתם למוביל/ה. זה השלב הבא, ואפשר לעשות אותו עכשיו.</p>
+        <p class="mz-page-actions"><a class="mz-btn mz-btn-secondary" href="{% url 'matazim:apply' %}">בחירת מוביל/ה</a></p>
+      {% endif %}
+    </section>
+  </div>
 </div>
 {% endblock %}
