@@ -637,3 +637,26 @@ def test_neither_of_them_can_appoint_or_change_the_pool(client, pair):
         for path in ("/matazim/staff/admins/", "/matazim/staff/offered/"):
             assert session.get(path).status_code == 403, f"{email} {path}"
         session.logout()
+
+
+def test_only_the_certified_are_called_matazim(client, world):
+    """§4.9 — a certified מט״צ is what the whole programme produces, so the word
+    is the outcome and not the intake. Counting everybody as one makes the
+    number that matters unreadable, and the staff door had already been fixed
+    once for exactly this; the new report reintroduced it, directly above the
+    band that disagreed with it.
+
+    Pins the two screens together rather than the wording of either, because
+    the wording is Avi's to choose and the contradiction is not.
+    """
+    _participant = _user("counted@example.com", "לומד")
+    session = _login(client, "naomi@example.com")
+
+    door = session.get("/matazim/staff/").content.decode()
+    report = session.get("/matazim/staff/people/").content.decode()
+
+    for page, where in ((door, "staff door"), (report, "people report")):
+        assert "לומדים בתוכנית" in page, where
+        assert "מט״צים בתוכנית" not in page, (
+            f"{where} calls everybody in training a מט״צ")
+        assert "מט״צים מוסמכים" in page, where

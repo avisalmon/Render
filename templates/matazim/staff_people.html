@@ -23,12 +23,19 @@
     <p>מי מוביל, איפה הם עומדים בהדרכות, ומי עבר את מבחן הכניסה.</p>
   </div>
 
+  {% comment %}
+    §4.9 — לומדים for the ones in training and מט״צים מוסמכים for the ones
+    who finished, never the same word for both. A certified מט״צ is what the
+    whole programme produces, and counting everybody as one makes the number
+    that matters unreadable. This panel sat directly above the staff door's
+    band saying לומדים for the same figure.
+  {% endcomment %}
   <section class="mz-panel mz-panel-soft">
     <h2>מה יש במערכת</h2>
     <dl class="mz-facts">
       <div><dt>מובילים פעילים</dt><dd>{{ counts.leaders }}</dd></div>
       <div><dt>ממתינים לאישור</dt><dd>{{ counts.candidates }}</dd></div>
-      <div><dt>מט״צים בתוכנית</dt><dd>{{ counts.students }}</dd></div>
+      <div><dt>לומדים בתוכנית</dt><dd>{{ counts.students }}</dd></div>
       <div><dt>עברו את מבחן הכניסה</dt><dd>{{ counts.passed_test }}</dd></div>
       <div><dt>מט״צים מוסמכים</dt><dd>{{ counts.certified }}</dd></div>
       <div><dt>בלי מוביל/ה</dt><dd>{{ counts.unled }}</dd></div>
@@ -100,7 +107,7 @@
                 <span class="mz-tag mz-tag-fix">טרם עבר/ה את המבחן</span>
               {% endif %}
 
-              <span class="mz-muted">{{ row.students }} מט״צים</span>
+              <span class="mz-muted">{{ row.students }} לומדים</span>
               {% if row.certified %}
                 <span class="mz-tag mz-tag-done">{{ row.certified }} מוסמכים</span>
               {% endif %}

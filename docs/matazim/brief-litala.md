@@ -4,10 +4,19 @@ From ליטל אביב (ראש תחום חינוך חברתי ומובילת ת�
 mail of 2026-08-03, subject "אפיון האתר - תכנית מטצים", forwarded to Avi again
 on 2026-09-09.
 
+Her address is `litala@Atid.org.il`; the mail reached Avi's gmail as a forward
+on 2026-08-08 and again on 2026-09-09.
+
 Three prototype screens were attached inline (`image011.png`, `image012.png`,
-`image013.png`). **They have not been read yet.** The Gmail tooling returns
-attachment metadata only, so they need saving into `prototype/` by hand. Until
-then, every layout decision in `spec.md` is ours rather than hers.
+`image013.png`). **They were saved into `prototype/` on 2026-09-09 and read at
+full resolution**; `prototype/README.md` is the reading, and the images
+themselves are the reference for anything it does not answer. This paragraph
+said they had never been read until 2026-10-08, by which point it had been
+wrong for a month — worth noting as a doc that outlived its own truth.
+
+**All three screens are the student's site**: דף הבית, הקורסים שלי and
+המסלול שלי. She drew no staff screen, so everything behind ניהול is designed
+from her written brief and from Avi, not from her drawings.
 
 ## Her words
 
