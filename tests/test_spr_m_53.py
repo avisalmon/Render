@@ -133,7 +133,6 @@ def test_the_course_counts_are_scoped_too(world):
     """The catalogue is the same list for everybody; how many of *our* people
     are doing each one is not."""
     from app.models import Course, Enrollment
-
     from matazim.overview import course_rows
 
     arduino = Course.objects.get(slug="arduino")
@@ -176,9 +175,8 @@ def test_every_course_on_the_site_is_on_the_page(client, world):
 
 
 def test_the_catalogue_says_what_each_course_is_to_the_programme(world):
-    from matazim.overview import course_rows
-
     from matazim.models import OfferedCourse
+    from matazim.overview import course_rows
 
     OfferedCourse.objects.create(slug="arduino", added_by=world["root"])
     OfferedCourse.objects.create(slug="fpga", added_by=world["root"], is_active=False)
@@ -254,7 +252,6 @@ def test_progress_is_read_from_the_shared_tables(world):
     """RULE-3 — the same reader the member's own screen uses, so a leader's row
     here and their own המסלול שלי can never disagree."""
     from app.models import Course, UserVideoProgress, Video
-
     from matazim.overview import leader_rows
 
     scratch = Course.objects.get(slug="scratch")
@@ -388,3 +385,80 @@ def test_neither_report_writes_anything(client, world):
     from matazim.models import Leader
 
     assert Leader.objects.get(pk=world["waiting"].pk).approved_at is None
+
+
+# ----------------------------------------------------- SPR-M.54, the appointment
+
+
+def test_a_program_manager_sees_what_root_sees_of_the_programme(client, world):
+    """REQ-M.151. Avi reversed the superuser decision for ליטל the same day:
+    "היא רואה מה שנעמי רואה". This is the test that makes that true rather
+    than hoped for: every screen that *shows* the programme opens for a program
+    manager, and only the two that *change* it stay with root."""
+    showing = ("/matazim/staff/", "/matazim/staff/people/", "/matazim/staff/courses/",
+               "/matazim/staff/cohort/", "/matazim/staff/team/", "/matazim/staff/leaders/",
+               "/matazim/staff/retention/", "/matazim/staff/targets/")
+    session = _login(client, "naomi@example.com")
+    for path in showing:
+        assert session.get(path).status_code == 200, path
+
+    # REQ-M.114 — the widest decisions stay root's, and both of these change the
+    # programme rather than report on it.
+    for path in ("/matazim/staff/admins/", "/matazim/staff/offered/"):
+        assert session.get(path).status_code == 403, path
+
+
+def test_the_grant_screen_carries_the_way_to_open_an_account(client, world):
+    """The role can never create one (REQ-M.68), so appointing is a two-step and
+    step one used to be an instruction given over the phone."""
+    body = _login(client, "avi@example.com").get("/matazim/staff/admins/").content.decode()
+    assert "/matazim/register/" in body
+
+
+def test_an_email_with_no_account_is_refused_rather_than_invented(client, world):
+    """A typo must not conjure an account holding the highest role."""
+    from django.contrib.auth.models import User
+
+    from matazim.models import Institution
+
+    response = _login(client, "avi@example.com").post(
+        "/matazim/staff/admins/", {"action": "grant", "email": "typo@example.com"})
+    assert response.status_code == 200
+    assert not User.objects.filter(email="typo@example.com").exists()
+    assert Institution.objects.filter(managers__email="typo@example.com").count() == 0
+
+
+def test_the_screen_and_the_deploy_mean_the_same_act(world):
+    """Two ways to grant the role, one function underneath, so they cannot come
+    to mean different things."""
+    from django.core.management import call_command
+
+    from matazim.access import is_program_manager
+    from matazim.models import Institution
+
+    fresh = _user("litala@example.com", "ליטל")
+    assert is_program_manager(fresh) is False
+
+    call_command("matazim_admins", grant=["litala@example.com"], verbosity=0)
+    assert is_program_manager(fresh) is True
+    assert Institution.objects.filter(managers=fresh).exists()
+
+
+def test_the_deploy_never_revokes_somebody_granted_on_the_screen(world, monkeypatch):
+    """What makes two grant paths safe. If `--from-env` synced rather than
+    granted, every appointment made in the browser would be undone by the next
+    deploy, silently and hours later."""
+    from django.core.management import call_command
+
+    from matazim.access import is_program_manager
+
+    by_hand = _user("onscreen@example.com", "במסך")
+    call_command("matazim_admins", grant=["onscreen@example.com"], verbosity=0)
+    assert is_program_manager(by_hand) is True
+
+    # A deploy whose env names somebody else entirely.
+    monkeypatch.setenv("MATAZIM_PROGRAM_MANAGERS", "naomi@example.com")
+    call_command("matazim_admins", from_env=True, verbosity=0)
+
+    by_hand.refresh_from_db()
+    assert is_program_manager(by_hand) is True, "the deploy revoked a screen grant"

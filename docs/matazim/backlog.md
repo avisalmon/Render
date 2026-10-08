@@ -4143,13 +4143,61 @@ fixture only ever created a profile for somebody who had passed.
 
 ### What was not built, and why
 
-**No new role.** Avi was offered a read-only observer and chose full superuser
-for ליטל after reading what it carries, so the existing roles cover both
-people: `Institution.managers` for נעמי and `is_superuser` for ליטל. Writing a
-sixth role nobody asked for would have been the larger change.
+**No new role.** Both women hold the existing program-manager role:
+`Institution.managers`, nothing else. Avi first chose full superuser for ליטל
+and reversed it the same day — "בעצם ליטל לא סופר יוזר. היא רואה מה שנעמי
+רואה" — which is the better answer and costs nothing to implement, because
+parity with נעמי is what the role already means.
 
-**The grants themselves are not in this repo.** נעמי's is an entry in
+It is worth recording *why* it costs nothing: this sprint is what made the
+program-manager role sufficient. Before it, the whole catalogue was visible
+only to root, so "see what I see" genuinely did need root. Now a program
+manager has the reports, and the only things still root-only are the two that
+**change** the programme rather than show it: setting the course pool, and
+handing out this role.
+
+**The grants themselves are not in this repo**, and that is REQ-M.68's shape.
+Two ways in, and they agree because they call the same `grant_program_manager`:
+`/matazim/staff/admins/`, which is root-only and instant, and an entry in
 `MATAZIM_PROGRAM_MANAGERS` on Render, which `matazim_admins --from-env` applies
-on every deploy. ליטל's is a superuser flag set by hand. Neither is something a
-deploy should be able to hand out from a file, which is REQ-M.68's shape.
+on every deploy. `--from-env` only ever grants, never revokes, so a grant made
+from the screen survives every deploy; the env var is for durability against a
+database restore, not a second source of truth that could disagree.
+
+Neither can create an account. Somebody being appointed opens one first, which
+is a two-step, and SPR-M.54 put the sign-up link on the grant screen so step
+one stops being an instruction given over the phone.
+
+---
+
+## SPR-M.54 — the appointment, made possible to actually do (8 October 2026)
+
+**Goal.** Avi: "תעדכן את האתר ותגיד לי בדיוק מה לעשות", having reversed the
+superuser decision for ליטל: "היא רואה מה שנעמי רואה."
+
+**Delivers.** REQ-M.151. No new role and no new permission: SPR-M.53 is what
+made the program-manager role sufficient for "see what I see".
+
+- [x] **M54.1** The sign-up link on `/matazim/staff/admins/`, copyable. The
+  role can never create an account (REQ-M.68), so appointing somebody is a
+  two-step, and step one was an instruction given over the phone.
+- [x] **M54.2** The record corrected: ליטל is a program manager, not root.
+
+### Why the reversal cost nothing
+
+Before SPR-M.53 the whole catalogue was visible only to root, so "see what I
+see" genuinely did need root, and the superuser answer was not as wrong as it
+looked. A day later it is: a program manager now has both reports, and the only
+things left to root are the two that **change** the programme rather than show
+it — setting the course pool, and handing out this role. That is REQ-M.114's
+line holding exactly where it was drawn.
+
+### The two ways to grant, and why they cannot disagree
+
+`/matazim/staff/admins/` and `MATAZIM_PROGRAM_MANAGERS` both call
+`roles.grant_program_manager`, so the screen and the deploy mean the same act.
+`matazim_admins --from-env` only ever grants and never revokes, which is what
+makes the pair safe: a grant made on the screen is not quietly undone by the
+next deploy, and the env var is durability against a database restore rather
+than a second source of truth.
 

@@ -28,6 +28,20 @@
     </p>
 
     {% comment %}
+      SPR-M.54 — the half of the job this screen used to leave to somebody's
+      memory. REQ-M.68 is right that the role is never self-served, but the
+      consequence is a two-step: they open an account, then you appoint them.
+      Without the link here, step one is an instruction given over the phone.
+    {% endcomment %}
+    <p class="mz-muted">
+      עוד אין להם חשבון? שלחו את הקישור הזה, ואחרי שהם נרשמים חפשו אותם כאן לפי שם
+      או אימייל.
+    </p>
+    <input class="mz-copy" type="text" readonly onclick="this.select()"
+           aria-label="קישור לפתיחת חשבון"
+           value="{{ request.scheme }}://{{ request.get_host }}/matazim/register/">
+
+    {% comment %}
       REQ-M.71 — search by name or by email. A native datalist cannot do this:
       browsers filter options by their value, so typing a Hebrew name would
       never match an option whose value is an address.
