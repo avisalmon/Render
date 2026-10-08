@@ -84,10 +84,15 @@ def test_a_player_gets_the_page(people, which):
 
 
 @pytest.mark.parametrize("which", PAGES)
-@pytest.mark.parametrize("who", ["anonymous", "stranger"])
-def test_nobody_else_gets_the_page(people, which, who):
-    user = None if who == "anonymous" else people["stranger"]
-    assert _client(user).get(PAGES[which]["url"]).status_code == 404
+def test_a_visitor_is_sent_to_the_front_door(people, which):
+    response = _client(None).get(PAGES[which]["url"])
+    assert response.status_code == 302
+    assert response.headers["Location"].startswith("/improv/?next=")
+
+
+@pytest.mark.parametrize("which", PAGES)
+def test_a_signed_in_person_without_a_group_gets_the_page(people, which):
+    assert _client(people["stranger"]).get(PAGES[which]["url"]).status_code == 200
 
 
 @pytest.mark.parametrize("which", PAGES)

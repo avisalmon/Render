@@ -302,12 +302,15 @@ def test_a_completion_just_after_local_midnight_counts_for_the_new_day(people, p
 
 
 def test_the_workout_read_is_behind_the_gate_and_read_only(people, path):
-    assert _client().get(WORKOUT).status_code == 404
-    assert _client(people["stranger"]).get(WORKOUT).status_code == 404
-    client = _client(people["member"])
-    assert client.get(WORKOUT).status_code == 200
+    assert _client().get(WORKOUT).status_code in (401, 403)
+    for who in ("member", "stranger"):
+        client = _client(people[who])
+        assert client.get(WORKOUT).status_code == 200, who
+        for method in ("post", "put", "patch", "delete"):
+            assert getattr(client, method)(WORKOUT).status_code == 405, (who, method)
+    visitor = _client()
     for method in ("post", "put", "patch", "delete"):
-        assert getattr(client, method)(WORKOUT).status_code == 405
+        assert getattr(visitor, method)(WORKOUT).status_code in (401, 403, 405), method
 
 
 def test_the_workout_read_carries_what_the_page_needs(people, path):

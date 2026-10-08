@@ -2,7 +2,7 @@ from django.db.models import Q
 from rest_framework import serializers
 
 from .grooves import check_groove
-from .models import ChordQuality, ChordScale, Completion, DrillAttempt, Exercise, Lesson, Phrase, Player, PracticeSession, Progression, Scale, ScaleFingering, ScaleRun, Style, Tag, Take
+from .models import ChordQuality, ChordScale, Completion, DrillAttempt, Exercise, Feedback, Lesson, Phrase, Player, PracticeSession, Progression, Scale, ScaleFingering, ScaleRun, Style, Tag, Take
 from .teaching import check_notes
 
 
@@ -137,6 +137,13 @@ class PlayerSerializer(serializers.ModelSerializer):
             "id", "username", "daily_goal_minutes", "latency_offset_ms", "midi_input_name",
             "note_names", "demo_output", "trainer_tempo", "timezone", "created_at",
         ]  # fmt: skip
+        read_only_fields = ["created_at"]
+
+
+class FeedbackSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Feedback
+        fields = ["id", "kind", "message", "page", "created_at"]
         read_only_fields = ["created_at"]
 
 

@@ -1,12 +1,21 @@
 """Who may play (spec ch. 7).
 
-A person is in the `improv_players` group, or they see nothing. A superuser is
-let in too, so the site admin never has to put himself in the group; that
-exception is written down on the portal entry, which is where the rule lives.
+Anyone who is signed in, on any account. `app.portal` holds the rule (audience
+EVERYONE), so the door and the portal cannot drift. Until 2026-10-08 this was the
+`improv_players` group, and the group is still created by migration 0001 though
+nothing reads it now.
 """
 
-GROUP = "improv_players"
+from urllib.parse import urlsplit
+
 PREFIX = "/improv"
+HOME = "/improv/"
+LOGIN = "/improv/login/"
+SIGNUP = "/improv/signup/"
+LOGOUT = "/improv/logout/"
+# What a visitor who is not signed in may open. Everything else asks them to sign in first.
+PUBLIC_PATHS = frozenset({HOME, LOGIN, SIGNUP, LOGOUT})
+API_PREFIX = "/improv/api/"
 
 
 def is_player(user):
@@ -24,12 +33,31 @@ def is_improv_path(path):
     return path == PREFIX or path.startswith(PREFIX + "/")
 
 
+def safe_next(raw):
+    """Where to send a person after they sign in: a page inside improv, or the front page.
+
+    A person is never sent outside the app by a link someone else made, and never back to the
+    sign-in pages themselves."""
+    if not raw or not raw.startswith(HOME) or "\\" in raw or "//" in raw or any(c in raw for c in "\r\n\t "):
+        return HOME
+    parts = urlsplit(raw)
+    if parts.scheme or parts.netloc or parts.path in (LOGIN, SIGNUP, LOGOUT):
+        return HOME
+    return raw
+
+
+def client_ip(request):
+    forwarded = request.META.get("HTTP_X_FORWARDED_FOR")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.META.get("REMOTE_ADDR", "")
+
+
 def profile_for(user):
     """The player's own profile, made on first visit.
 
-    Not a post_save signal on User: the people who matter here were added to the
-    group long after their account existed, and a signal would also fire for every
-    account on a site where almost nobody plays the piano.
+    Not a post_save signal on User: most accounts on the site never open this app, and a
+    signal would make a profile for every one of them.
     """
     from .models import Player
 

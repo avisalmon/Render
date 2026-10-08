@@ -218,9 +218,9 @@ def test_another_players_practice_is_not_mine(people):
 # ------------------------------------------------------------------ the API
 
 
-def test_the_practice_read_is_behind_the_gate(people):
-    assert _client().get(PRACTICE).status_code == 404
-    assert _client(people["stranger"]).get(PRACTICE).status_code == 404
+def test_the_practice_read_is_for_anyone_signed_in_and_refuses_a_visitor(people):
+    assert _client().get(PRACTICE).status_code in (401, 403)
+    assert _client(people["stranger"]).get(PRACTICE).status_code == 200
     assert _client(people["member"]).get(PRACTICE).status_code == 200
 
 
@@ -262,10 +262,12 @@ def test_the_read_makes_a_profile_for_a_first_visit(people):
 # ------------------------------------------------------------------ the pages and the docs
 
 
-def test_the_practice_page_opens_for_a_player_and_not_for_a_stranger(people):
+def test_the_practice_page_opens_for_anyone_signed_in_and_sends_a_visitor_to_the_front_door(people):
     assert _client(people["member"]).get("/improv/practice/").status_code == 200
-    assert _client(people["stranger"]).get("/improv/practice/").status_code == 404
-    assert _client().get("/improv/practice/").status_code == 404
+    assert _client(people["stranger"]).get("/improv/practice/").status_code == 200
+    visitor = _client().get("/improv/practice/")
+    assert visitor.status_code == 302
+    assert visitor.headers["Location"].startswith("/improv/?next=")
 
 
 def test_the_menu_names_the_practice_log(people):

@@ -63,9 +63,14 @@ def test_a_player_gets_the_page(people):
     assert "Play" in html
 
 
-@pytest.mark.parametrize("who", ["anonymous", "stranger"])
-def test_nobody_else_gets_the_page(people, who):
-    assert _get(None if who == "anonymous" else people["stranger"]).status_code == 404
+def test_a_visitor_is_sent_to_the_front_door(people):
+    response = _get(None)
+    assert response.status_code == 302
+    assert response.headers["Location"].startswith("/improv/?next=")
+
+
+def test_a_signed_in_person_without_a_group_gets_the_page(people):
+    assert _get(people["stranger"]).status_code == 200
 
 
 def test_the_page_says_where_the_api_is_and_the_api_answers(people):

@@ -149,11 +149,13 @@ APPS = [
         icon="music-note-beamed",
         name="improv",
         path="/improv/",
-        audience=GROUP,
-        key="improv_players",
-        # Private until it is stable (Avi, 2026-10-04). A superuser is let in so
-        # the site admin never has to add himself to the group.
-        admin_bypass=True,
+        audience=EVERYONE,
+        # Private to Avi until 2026-10-08, then opened to anyone who signs in
+        # so people can try it and say what they think. Shared by its link
+        # (https://babook.co.il/improv/, which has its own log in and sign up);
+        # the portal card is for the owner alone, like the home app.
+        listed=True,
+        card_admin_only=True,
         blurb="תרגול אלתור בפסנתר.",
     ),
 ]

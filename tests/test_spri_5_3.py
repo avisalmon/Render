@@ -246,13 +246,24 @@ def test_the_exercises_and_phrases_are_in_the_api(player):
     }  # fmt: skip
 
 
-def test_an_outsider_sees_none_of_it(seeded):
+def test_a_visitor_sees_none_of_it(seeded):
+    client = Client()
+    for path in ("lessons/", "exercises/", "phrases/"):
+        assert client.get(f"{API}{path}").status_code in (401, 403), path
+    page = client.get("/improv/lessons/chord-tones-on-the-beat/")
+    assert page.status_code == 302
+    assert page.headers["Location"].startswith("/improv/?next=")
+
+
+def test_a_signed_in_person_without_a_group_sees_the_lessons(seeded):
     stranger = User.objects.create_user("p53stranger", password=PASSWORD)
     client = Client()
     client.force_login(stranger)
     for path in ("lessons/", "exercises/", "phrases/"):
-        assert client.get(f"{API}{path}").status_code == 404, path
-    assert client.get("/improv/lessons/chord-tones-on-the-beat/").status_code == 404
+        reply = client.get(f"{API}{path}")
+        assert reply.status_code == 200, path
+        assert len(reply.json()) > 0, path
+    assert client.get("/improv/lessons/chord-tones-on-the-beat/").status_code == 200
 
 
 def test_the_first_lesson_page_opens_for_a_player(player):

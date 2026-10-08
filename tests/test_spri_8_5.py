@@ -136,10 +136,12 @@ def test_the_page_is_behind_the_gate(db):
     member = User.objects.create_user("p85member", password=PASSWORD)
     member.groups.add(group)
     stranger = User.objects.create_user("p85stranger", password=PASSWORD)
-    assert Client().get("/improv/chords/").status_code == 404
+    visitor = Client().get("/improv/chords/")
+    assert visitor.status_code == 302
+    assert visitor.headers["Location"].startswith("/improv/?next=")
     other = Client()
     other.force_login(stranger)
-    assert other.get("/improv/chords/").status_code == 404
+    assert other.get("/improv/chords/").status_code == 200, "anyone signed in may open it"
     mine = Client()
     mine.force_login(member)
     response = mine.get("/improv/chords/")

@@ -16,6 +16,9 @@
   const Pr = window.ImprovPractice;
   const Keys = window.ImprovKeyboardView;
   const Ctl = window.ImprovControl;
+  const Dm = window.ImprovDemo;
+  const DEMO_AHEAD = 0.4;
+  const DEMO_PUMP_MS = 50;
   const FIRST_KEY = 36; // C2
   const LAST_KEY = 96; // C7
   const JUDGE_EVERY_FRAMES = 6;
@@ -50,6 +53,9 @@
     session: null,
     sessionPromise: null,
     exercise: null,
+    demo: null,
+    demoFrame: 0,
+    demoTimer: null,
     clock: Pr.createClock(),
     lastActiveAt: 0,
     reportedSeconds: -1,
@@ -221,22 +227,27 @@
     anchorTake();
     state.frames += 1;
     if (state.frames % JUDGE_EVERY_FRAMES === 0 && state.take && state.take.events.length) judgeLive(false);
-    const lit = P.litFor(state.built, state.scheduler.barAt(state.ctx.currentTime));
+    showPosition(state.built);
+    state.frame = requestAnimationFrame(frame);
+  }
+
+  // Light the bar the music is in, and say the count-in while it is counting.
+  function showPosition(built) {
+    const lit = P.litFor(built, state.scheduler.barAt(state.ctx.currentTime));
     for (const c of state.cells) if (c) c.el.classList.remove("im-bar-lit");
     const box = $("count-in");
     if (lit && lit.countIn) {
       box.hidden = false;
-      box.textContent = `Count-in ${lit.number}/${lit.of}: ${Math.min(state.built.plan.beatsPerBar, Math.floor(lit.beat) + 1)}`;
+      box.textContent = `Count-in ${lit.number}/${lit.of}: ${Math.min(built.plan.beatsPerBar, Math.floor(lit.beat) + 1)}`;
     } else {
       box.hidden = true;
       if (lit && state.cells[lit.bar]) {
         const c = state.cells[lit.bar];
         c.el.classList.add("im-bar-lit");
-        c.beat.style.width = Math.min(100, (lit.beat / state.built.plan.beatsPerBar) * 100) + "%";
+        c.beat.style.width = Math.min(100, (lit.beat / built.plan.beatsPerBar) * 100) + "%";
         c.el.scrollIntoView({ block: "nearest" });
       }
     }
-    state.frame = requestAnimationFrame(frame);
   }
 
   function refresh() {
@@ -260,6 +271,7 @@
 
   // Say whether what is on the screen is still the exercise. The result line is the judge's own.
   function showExercise() {
+    updateShowMe();
     if (!state.exercise) return;
     const on = P.exerciseApplies(state.exercise, state.progression, state.built);
     $("exercise-goal").textContent = P.exerciseGoalLine(state.exercise, on);
@@ -645,6 +657,151 @@
     }
   }
 
+  // ------------------------------------------------------------------- show me
+
+  // The button is there for an exercise that has an answer to show, and works while what is on
+  // the screen is still that exercise and no take is running.
+  function updateShowMe() {
+    const button = $("show-me");
+    const exercise = state.exercise;
+    if (!exercise || !Dm.canShow(exercise.scoring_kind)) {
+      button.hidden = true;
+      return;
+    }
+    button.hidden = false;
+    if (state.demo) {
+      button.textContent = "Stop";
+      button.disabled = false;
+      button.title = "";
+      return;
+    }
+    const on = P.exerciseApplies(exercise, state.progression, state.built);
+    button.textContent = "Show me";
+    button.disabled = state.playing || !on;
+    button.title = on ? "" : "Put the exercise's chart and bars back to see it.";
+  }
+
+  function lockForDemo(locked) {
+    for (const id of [...P.LOCKED_CONTROLS, ...P.LIVE_CONTROLS]) $(id).disabled = locked;
+  }
+
+  async function demoOutput() {
+    if (!state.profile || state.profile.demo_output !== "piano" || !navigator.requestMIDIAccess) return null;
+    try {
+      if (!state.midi) state.midi = await navigator.requestMIDIAccess({ sysex: false });
+    } catch (e) {
+      return null;
+    }
+    const choice = S.pickOutput(S.inputChoices(Array.from(state.midi.outputs.values())), state.profile.midi_input_name);
+    return choice ? state.midi.outputs.get(choice.id) : null;
+  }
+
+  async function startDemo() {
+    if (state.playing || state.demo) return;
+    refresh();
+    const exercise = state.exercise;
+    if (!exercise || !state.built || !state.built.ok || !P.exerciseApplies(exercise, state.progression, state.built)) return;
+    const built = state.built;
+    ensureAudio();
+    if (state.ctx.state !== "running") await state.ctx.resume();
+    const output = await demoOutput();
+    if (state.playing || state.demo) return;
+    const bpm = P.clampTempo(state.style, $("bpm").value);
+    $("bpm").value = bpm;
+    const beatSeconds = 60 / bpm;
+    const at = state.ctx.currentTime + 0.3;
+    const downbeat = at + built.countInBars * built.plan.beatsPerBar * beatSeconds;
+    const made = Dm.build({
+      scoring: { kind: exercise.scoring_kind, params: exercise.scoring_params || {} },
+      chart: built.chart,
+      from: built.from,
+      to: built.to,
+      qualities: state.qualities,
+      beatsPerBar: built.plan.beatsPerBar,
+      bpm,
+      downbeat,
+    });
+    if (!made.ok) {
+      say(made.reason);
+      return;
+    }
+    showError("");
+    state.scheduler.start(built.plan, { bpm, loop: false, loopFrom: built.loopFrom, at });
+    state.demo = { built, output, notes: made.notes, next: 0, anchor: null, endsAt: made.endsAt };
+    lockForDemo(true);
+    updateShowMe();
+    $("feedback").textContent = made.line;
+    $("take-status").textContent = "";
+    say(output ? `Watch and listen. The notes go to ${output.name}.` : "Watch and listen. The notes sound as a plain tone from the laptop.");
+    state.demoTimer = window.setInterval(pumpDemo, DEMO_PUMP_MS);
+    pumpDemo();
+    state.demoFrame = requestAnimationFrame(demoFrame);
+  }
+
+  // Notes are handed over a moment before they sound, so stopping early leaves almost nothing queued.
+  function pumpDemo() {
+    const d = state.demo;
+    if (!d) return;
+    if (d.output && !d.anchor) {
+      try {
+        d.anchor = Timing.makeAnchor(state.ctx.getOutputTimestamp());
+      } catch (e) {
+        return; // not producing sound yet; try again on the next pump
+      }
+    }
+    const now = state.ctx.currentTime;
+    while (d.next < d.notes.length && d.notes[d.next].when < now + DEMO_AHEAD) {
+      const n = d.notes[d.next];
+      d.next += 1;
+      if (d.output) {
+        d.output.send(M.noteOnBytes(n.note, n.velocity), Timing.heardAt(d.anchor, n.when));
+        d.output.send(M.noteOffBytes(n.note), Timing.heardAt(d.anchor, n.when + n.seconds));
+      } else {
+        state.synth.play({ voice: "demo", midi: n.note, velocity: n.velocity }, Math.max(n.when, now), n.seconds);
+      }
+    }
+  }
+
+  function demoFrame() {
+    state.demoFrame = 0;
+    const d = state.demo;
+    if (!d) return;
+    pumpDemo();
+    const now = state.ctx.currentTime;
+    if (now >= d.endsAt) {
+      endDemo("Done. Now you try it, or watch it again.");
+      return;
+    }
+    showPosition(d.built);
+    const sounding = d.notes.filter((n) => now >= n.when && now < n.when + n.seconds).map((n) => n.note);
+    const held = state.held.filter((n) => !sounding.includes(n));
+    Keys.light(state.keys, [...sounding, ...held].map((midi) => ({ midi, className: "im-key-on" })));
+    state.demoFrame = requestAnimationFrame(demoFrame);
+  }
+
+  function endDemo(message) {
+    const d = state.demo;
+    if (!d) return;
+    state.demo = null;
+    if (state.scheduler) state.scheduler.stop();
+    if (state.demoTimer) window.clearInterval(state.demoTimer);
+    state.demoTimer = null;
+    if (state.demoFrame) cancelAnimationFrame(state.demoFrame);
+    state.demoFrame = 0;
+    if (d.output) for (const n of d.notes) d.output.send(M.noteOffBytes(n.note));
+    clearLit();
+    lockForDemo(false);
+    lightKeys();
+    $("feedback").textContent = "Play something.";
+    updateShowMe();
+    if (message) say(message);
+  }
+
+  function toggleDemo() {
+    if (state.demo) endDemo("Stopped.");
+    else startDemo().catch((e) => showError("The sound could not start: " + e.message));
+  }
+
   // ---------------------------------------------------------------- transport
 
   function lockSettings(locked) {
@@ -667,6 +824,7 @@
   }
 
   async function start() {
+    endDemo();
     refresh();
     if (!state.built || !state.built.ok) return;
     rollSittingIfCold();
@@ -684,6 +842,7 @@
     $("take-status").textContent = "";
     ensureSession().catch((e) => ($("take-status").textContent = "No session could be opened. " + e.message));
     lockSettings(true);
+    updateShowMe();
     $("play-toggle").textContent = "Stop";
     say(state.built.metronome ? "Metronome." : `${state.style.name}, ${bpm} bpm, ${state.built.key}.`);
     if (!state.frame) state.frame = requestAnimationFrame(frame);
@@ -816,6 +975,7 @@
     for (const id of ["key", "swing", "countin", "first", "last", "metronome"]) $(id).addEventListener("change", settingChanged);
     $("bpm").addEventListener("change", tempoChanged);
     $("play-toggle").addEventListener("click", toggle);
+    $("show-me").addEventListener("click", toggleDemo);
     document.addEventListener("keydown", (e) => {
       if (e.code !== "Space" || e.repeat) return;
       const tag = (e.target && e.target.tagName) || "";
@@ -825,6 +985,6 @@
     });
   }
 
-  if (!P || !Band || !Sched || !Synth || !View || !Out || !M || !S || !Rec || !Timing || !J || !Keys || !Ctl) say("The page's scripts did not load.");
+  if (!P || !Band || !Sched || !Synth || !View || !Out || !M || !S || !Rec || !Timing || !J || !Keys || !Ctl || !Dm) say("The page's scripts did not load.");
   else init();
 })();

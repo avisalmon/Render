@@ -27,18 +27,11 @@ charts, lessons. That is all rows too, seeded once and editable afterwards.
 
 Not a model, but it shapes the models, so it is stated first.
 
-- A plain Django `Group` named `improv_players`, created by a migration.
-- The check is one function: signed in AND in the group. Superusers bypass it,
-  on purpose and written down: so the site admin is never locked out of his own
-  app. At launch nobody is in the group, so in practice it is Avi alone.
-- **Non-members get a 404, not an access page.** Avi asked that nobody else see
-  the link or the app, so the app hides that it exists (the way `/home` does).
-- babook's portal lists it with `audience=GROUP`, `admin_bypass=True`, so the
-  card appears for superusers and for group members and for nobody else. The
-  portal sweep test already asserts the card never exceeds the door.
-- Opening it to more people later is adding them to the group. No code change.
-- Every API endpoint sits behind the same check. A hidden page with an open API
-  would not be hidden.
+- **Changed 2026-10-08:** the app is open to anyone who signs in, free. The check is one function: signed in.
+  The group `improv_players` and the 404-for-strangers design (as first approved) are gone; a visitor
+  sees improv's own front door and the API answers a visitor with 401/403.
+- babook's portal lists it with `audience=EVERYONE`, `listed=True, card_admin_only=True`: the card is shown to the owner only, the link is shared. A person keeps at most 1000 of their own rows of each kind (the owner is unlimited).
+- Every API endpoint sits behind the same check; a person's own rows are filtered to them.
 
 ---
 
@@ -479,6 +472,18 @@ built now with a few more fields.)
 
 ---
 
+## 6b. Feedback (added 2026-10-08)
+
+### `Feedback`
+
+A note from a person who is trying the app.
+
+`player` (FK to Player, cascade: deleting the account deletes the notes), `kind` (`idea`, `problem`, `praise`,
+`other`), `message` (text, 1 to 2000, not blank), `page` (where they were, up to 200, may be empty),
+`created_at`. Newest first. A person reads and edits only their own; the owner reads all in the admin.
+
+---
+
 ## 8. What is deliberately not stored
 
 Each of these is a read, never a column:
@@ -541,7 +546,7 @@ everything the app reports flows out of it.
 
 ## 11. Open points: all answered (Avi, 2026-10-04)
 
-1. **The gate.** Group plus superuser bypass, 404 for everyone else, portal card
+1. **The gate (superseded 2026-10-08, see section 0).** Group plus superuser bypass, 404 for everyone else, portal card
    for superusers and members only. **Accepted.**
 2. **Who judges a take.** The browser judges live and the server stores the
    events and the score the page computed. **Accepted for v1.** The day there is

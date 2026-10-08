@@ -1,17 +1,16 @@
 """SPR-I.1.1 improv: the app, its chrome, its gate and its portal card.
 
-Avi, 2026-10-04: the app is available only to him until it is stable, linked
-from babook for him alone, and "no other to see the link and the app".
+Avi, 2026-10-04: the app was private to him, with a 404 for everyone else.
+On 2026-10-08 he opened it on purpose: anyone who is signed in is a player, the
+babook portal shows no card (the link is shared by hand), and a visitor who is
+not signed in is sent to the app's own front door. test_spri_9_1 holds the new
+door in detail; this file keeps the sweep and the registry entry honest.
 
-**The load-bearing test is `test_every_route_refuses_outsiders_and_admits_a_player`.**
-It walks every route the app registers, and knocks on each as an anonymous
-visitor, a signed-in non-member and a member, GET and POST. It is written before
-there is anything behind the gate worth hiding, so the next route somebody adds
-is covered the day it appears rather than the day somebody remembers.
-
-**Second is `test_a_refusal_is_the_same_page_as_a_url_that_does_not_exist`.** A 404
-that looks different from the site's own 404 is an announcement that something is
-here. The gate hides the app only if it is indistinguishable from nothing.
+**The load-bearing test is `test_every_route_admits_a_signed_in_person_and_stops_a_visitor`.**
+It walks every route the app registers, and knocks on each as a visitor, a
+signed-in person with no group, a member of the old group and an admin. It is
+written so the next route somebody adds is covered the day it appears rather
+than the day somebody remembers.
 
 Traces: spec ch. 7, data model section 0.
 """
@@ -124,7 +123,7 @@ def test_who_may_play(people):
 
     assert is_player(people["member"])
     assert is_player(people["admin"]), "the site admin was locked out of his own app"
-    assert not is_player(people["stranger"])
+    assert is_player(people["stranger"]), "a signed-in person with no group is admitted since 2026-10-08"
 
 
 def test_an_anonymous_visitor_may_not_play(db):
@@ -173,20 +172,26 @@ def test_the_gate_covers_the_prefix_and_nothing_that_merely_looks_like_it(path, 
 # ----------------------------------------------------------- the load-bearing one
 
 
-def test_every_route_refuses_outsiders_and_admits_a_player(people):
+def test_every_route_admits_a_signed_in_person_and_stops_a_visitor(people):
     urls = improv_urls()
     assert urls
+    public = {"/improv/", "/improv/login/", "/improv/signup/", "/improv/logout/"}
 
     for url in urls:
-        for label, user in (("anonymous", None), ("stranger", people["stranger"])):
+        # A visitor: pages go to the front door, the API answers 401 or 403, GET and POST alike.
+        # The four public pages are checked in test_spri_9_1; a POST there fails the CSRF check.
+        if url not in public:
             for method in ("get", "post"):
-                client = _client_for(user, enforce_csrf_checks=True)
+                client = _client_for(None, enforce_csrf_checks=True)
                 response = getattr(client, method)(url)
-                assert response.status_code == 404, (
-                    f"{label} {method.upper()} {url} got {response.status_code}, not 404"
-                )
+                if url.startswith("/improv/api/"):
+                    assert response.status_code in (401, 403), f"visitor {method.upper()} {url} got {response.status_code}"
+                else:
+                    assert response.status_code == 302, f"visitor {method.upper()} {url} got {response.status_code}"
+                    assert response.headers["Location"].startswith("/improv/?next="), response.headers["Location"]
 
-        for label, user in (("member", people["member"]), ("admin", people["admin"])):
+        # Every kind of signed-in person is a full player, with or without the old group.
+        for label, user in (("stranger", people["stranger"]), ("member", people["member"]), ("admin", people["admin"])):
             client = _client_for(user)
             response = client.get(url)
             admitted = response.status_code < 400 or response.status_code == 405
@@ -198,40 +203,19 @@ def test_every_route_refuses_outsiders_and_admits_a_player(people):
             assert admitted, f"{label} GET {url} got {response.status_code}"
 
 
-# -------------------------------------------------- hiding it, not just refusing
+# -------------------------------------------------- the edges of the door
 
 
-def _normalised(response):
-    """The page without the parts that legitimately differ between two requests."""
-    html = response.content.decode("utf-8")
-    html = re.sub(r'name="csrfmiddlewaretoken" value="[^"]+"', "", html)
-    html = re.sub(r"[A-Za-z0-9]{64}", "TOKEN", html)
-    return html
+def test_a_visitor_on_the_bare_path_is_sent_to_the_front_door_not_hidden(people):
+    response = _client_for(None).get("/improv")
+    assert response.status_code == 301
+    assert response.headers["Location"].endswith("/improv/")
 
 
-@pytest.mark.parametrize("who", ["anonymous", "stranger"])
-def test_a_refusal_is_the_same_page_as_a_url_that_does_not_exist(people, who):
-    user = None if who == "anonymous" else people["stranger"]
-    # A fresh client per request: the site shows a first-visit script once per
-    # session, which would make the first page differ from the rest for a reason
-    # that has nothing to do with the gate.
-    nothing = _client_for(user).get("/this-page-does-not-exist-zq/")
-    refused = _client_for(user).get("/improv/")
-    refused_deep = _client_for(user).get("/improv/api/")
-
-    assert nothing.status_code == refused.status_code == refused_deep.status_code == 404
-    assert _normalised(refused) == _normalised(nothing)
-    assert _normalised(refused_deep) == _normalised(nothing)
-
-
-@pytest.mark.parametrize("who", ["anonymous", "stranger"])
-def test_the_bare_path_does_not_give_the_app_away(people, who):
-    """Django's APPEND_SLASH answers /improv with a redirect to /improv/ when that
-    exists, and a redirect is an announcement that it does. It must be a 404."""
-    user = None if who == "anonymous" else people["stranger"]
-    response = _client_for(user).get("/improv")
-    assert response.status_code == 404, f"/improv answered {response.status_code}"
-    assert not response.headers.get("Location")
+def test_a_visitor_on_a_deep_page_is_sent_to_the_front_door(people):
+    response = _client_for(None).get("/improv/play/")
+    assert response.status_code == 302
+    assert response.headers["Location"] == "/improv/?next=/improv/play/"
 
 
 def test_a_player_on_the_bare_path_is_sent_to_the_app(people):
@@ -269,54 +253,45 @@ def test_a_player_who_leaves_off_the_slash_is_sent_on_in_the_app(people):
     assert response.headers["Location"] == "/improv/play/"
 
 
-def test_a_post_without_a_token_is_a_404_not_a_403(db):
-    """A 403 from the CSRF check would say something is here."""
-    anonymous = Client(enforce_csrf_checks=True)
-    assert anonymous.post("/improv/").status_code == 404
+def test_a_post_without_a_token_is_refused_for_a_signed_in_person(people):
+    """Being open does not mean being forgeable: a signed-in POST with no CSRF token is a 403."""
+    client = _client_for(people["stranger"], enforce_csrf_checks=True)
+    assert client.post("/improv/").status_code == 403
+    assert client.post("/improv/api/player/").status_code == 403
+
+
+def test_a_visitors_post_to_a_page_behind_the_door_is_redirected(db):
+    client = Client(enforce_csrf_checks=True)
+    response = client.post("/improv/play/")
+    assert response.status_code == 302
+    assert response.headers["Location"].startswith("/improv/?next=")
 
 
 # ------------------------------------------------------------------- the portal
 
 
-def test_the_portal_shows_the_card_to_a_player_and_an_admin_and_to_nobody_else(people):
-    from app.portal import visible_apps
-
-    def slugs(user):
-        return [a.slug for a in visible_apps(user)]
-
-    assert "improv" in slugs(people["member"])
-    assert "improv" in slugs(people["admin"])
-    assert "improv" not in slugs(people["stranger"])
-
-
-def test_the_card_never_exceeds_the_door(people):
+def test_the_portal_shows_the_card_to_the_owner_alone_though_everyone_may_enter(people):
     from app.portal import may_enter, visible_apps
 
-    for user in people.values():
+    for who, user in people.items():
         shown = "improv" in [a.slug for a in visible_apps(user)]
-        assert shown == may_enter(user, "improv")
+        assert shown == user.is_superuser, f"{who}: card shown={shown}"
+        assert may_enter(user, "improv"), f"{who} may not enter"
 
 
-def test_the_registry_entry_is_a_group_with_the_admin_bypass():
-    from app.portal import APPS
+def test_the_registry_entry_is_everyone_and_card_for_the_owner_only():
+    from app.portal import APPS, EVERYONE
 
     entry = next(a for a in APPS if a.slug == "improv")
-    assert entry.audience == "group"
-    assert entry.key == GROUP
-    assert entry.admin_bypass is True
+    assert entry.audience == EVERYONE
+    assert entry.listed is True and entry.card_admin_only is True
     assert entry.path == "/improv/"
 
 
-def test_the_portal_does_not_name_improv_to_a_stranger(people):
-    client = _client_for(people["stranger"])
-    html = client.get("/").content.decode("utf-8")
-    assert 'href="/improv/"' not in html
-
-
-def test_the_portal_links_a_player_to_improv(people):
-    client = _client_for(people["member"])
-    html = client.get("/").content.decode("utf-8")
-    assert 'href="/improv/"' in html
+def test_the_portal_does_not_name_improv_to_anyone_but_the_owner(people):
+    for who in ("stranger", "member"):
+        html = _client_for(people[who]).get("/").content.decode("utf-8")
+        assert 'href="/improv/"' not in html, who
 
 
 # ------------------------------------------------------------------- the chrome

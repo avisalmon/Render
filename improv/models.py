@@ -618,3 +618,30 @@ class DrillAttempt(models.Model):
             raise ValidationError({"response_ms": "A skipped prompt has no response time."})
         if self.skipped and self.is_correct:
             raise ValidationError({"is_correct": "A skipped prompt is not correct."})
+
+
+class Feedback(models.Model):
+    """What a person tells the owner about the app (SPR-I.9.3). Theirs to read, fix or withdraw;
+    the owner reads all of it in the admin."""
+
+    class Kind(models.TextChoices):
+        IDEA = "idea", "an idea"
+        PROBLEM = "problem", "something is wrong"
+        PRAISE = "praise", "something I liked"
+        OTHER = "other", "something else"
+
+    MESSAGE_MAX = 2000
+
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="feedback")
+    kind = models.CharField(max_length=7, choices=Kind.choices, default=Kind.IDEA)
+    message = models.TextField(max_length=MESSAGE_MAX)
+    page = models.CharField(max_length=200, blank=True, help_text="The improv screen they were on, e.g. /improv/play/.")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        verbose_name_plural = "feedback"
+
+    def __str__(self):
+        return f"{self.kind}: {self.message[:40]}"
+

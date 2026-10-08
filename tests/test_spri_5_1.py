@@ -430,11 +430,13 @@ def test_deleting_an_exercise_keeps_the_takes_played_for_it(people, content):
 # ------------------------------------------------------------------------------- pages
 
 
-def test_the_lessons_page_and_a_lesson_page_open_for_a_member_and_not_for_a_stranger(people, content):
+def test_the_lessons_page_and_a_lesson_page_open_for_anyone_signed_in_and_send_a_visitor_to_the_front_door(people, content):
     for url in ("/improv/lessons/", "/improv/lessons/chord-tones-ii-v-i/"):
         assert _client(people["member"]).get(url).status_code == 200, url
-        assert _client(people["stranger"]).get(url).status_code == 404, url
-        assert _client(None).get(url).status_code == 404, url
+        assert _client(people["stranger"]).get(url).status_code == 200, url
+        visitor = _client(None).get(url)
+        assert visitor.status_code == 302, url
+        assert visitor.headers["Location"].startswith("/improv/?next="), url
 
 
 def test_the_menu_leads_to_the_lessons(people):

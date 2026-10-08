@@ -3,12 +3,16 @@ catch-all include of babook's own urls. The gate is improv.middleware."""
 
 from django.urls import include, path
 
-from . import views
+from . import signin, views
 
 app_name = "improv"
 
 urlpatterns = [
     path("", views.home, name="home"),
+    path("login/", signin.login_view, name="login"),
+    path("signup/", signin.signup_view, name="signup"),
+    path("logout/", signin.logout_view, name="logout"),
+    path("feedback/", views.feedback, name="feedback"),
     path("play/", views.play, name="play"),
     path("library/", views.library, name="library"),
     path("editor/", views.editor, name="editor"),

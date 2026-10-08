@@ -25,7 +25,10 @@
       <p id="exercise-instructions" class="im-exercise-text"></p>
       <p id="exercise-goal" class="im-note"></p>
       <p id="exercise-result" class="im-status" role="status" aria-live="polite"></p>
-      <a id="exercise-back" data-key-action="secondary" class="im-btn im-btn-quiet im-btn-link" href="{% url 'improv:lessons' %}">Back to the lessons</a>
+      <div class="im-exercise-actions">
+        <button id="show-me" data-key-action="tertiary" class="im-btn" type="button" hidden>Show me</button>
+        <a id="exercise-back" data-key-action="secondary" class="im-btn im-btn-quiet im-btn-link" href="{% url 'improv:lessons' %}">Back to the lessons</a>
+      </div>
     </section>
 
     <section class="im-panel im-panel-flush im-flat" aria-label="Transport">
@@ -132,5 +135,6 @@
 <script src="{% static 'improv/judge.js' %}"></script>
 <script src="{% static 'improv/practice.js' %}"></script>
 <script src="{% static 'improv/keyboard-view.js' %}"></script>
+<script src="{% static 'improv/demo.js' %}"></script>
 <script src="{% static 'improv/play-page.js' %}"></script>
 {% endblock %}

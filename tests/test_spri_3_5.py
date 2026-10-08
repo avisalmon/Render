@@ -60,10 +60,12 @@ def test_the_reference_logic_passes_under_node():
     assert result.returncode == 0, result.stdout[-4000:] + result.stderr[-2000:]
 
 
-def test_a_player_gets_the_page_and_nobody_else_does(people):
+def test_anyone_signed_in_gets_the_page_and_a_visitor_is_sent_to_the_front_door(people):
     assert 'id="reference"' in _html(people["member"])
-    assert _client(None).get(URL).status_code == 404
-    assert _client(people["stranger"]).get(URL).status_code == 404
+    assert 'id="reference"' in _html(people["stranger"])
+    visitor = _client(None).get(URL)
+    assert visitor.status_code == 302
+    assert visitor.headers["Location"].startswith("/improv/?next=")
 
 
 def test_the_page_says_where_every_table_it_needs_is_and_they_all_answer(people):

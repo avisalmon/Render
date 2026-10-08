@@ -361,17 +361,22 @@ def test_the_seed_file_keeps_to_its_own_shape():
 
 
 @pytest.mark.parametrize("path", ["styles", "progressions", "tags"])
-def test_a_stranger_gets_a_404_and_a_player_gets_the_list(people, path):
-    assert Client().get(f"{API}{path}/").status_code == 404
-    assert client_for(people["stranger"]).get(f"{API}{path}/").status_code == 404
+def test_a_visitor_is_refused_and_anyone_signed_in_gets_the_list(people, path):
+    assert Client().get(f"{API}{path}/").status_code in (401, 403)
+    assert client_for(people["stranger"]).get(f"{API}{path}/").status_code == 200
     assert client_for(people["one"]).get(f"{API}{path}/").status_code == 200
     assert client_for(people["admin"]).get(f"{API}{path}/").status_code == 200
 
 
-def test_a_stranger_cannot_write_either(people):
+def test_a_visitor_cannot_write_and_a_person_without_a_group_writes_only_their_own(people):
+    visitor = Client()
+    assert send(visitor, "post", f"{API}styles/", {"name": "x"}).status_code in (401, 403)
+    assert send(visitor, "post", f"{API}progressions/", {"title": "x"}).status_code in (401, 403)
+    assert Style.objects.filter(name="x").count() == 0
+    # A signed-in person with no group is a normal player now: a bad payload is a 400, not a 404.
     client = client_for(people["stranger"])
-    assert send(client, "post", f"{API}styles/", {"name": "x"}).status_code == 404
-    assert send(client, "post", f"{API}progressions/", {"title": "x"}).status_code == 404
+    assert send(client, "post", f"{API}styles/", {"name": "x"}).status_code == 400
+    assert send(client, "post", f"{API}progressions/", {"title": "x"}).status_code == 400
 
 
 # ============================================================ the API: styles

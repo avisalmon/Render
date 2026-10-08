@@ -169,9 +169,11 @@ def test_one_players_read_is_not_anothers(people):
 
 
 def test_the_read_is_behind_the_gate_and_read_only(people):
-    assert _client(None).get(URL).status_code == 404
-    assert _client(people["stranger"]).get(URL).status_code == 404
-    assert _client(people["one"]).post(URL, {}, content_type="application/json").status_code == 405
+    assert _client(None).get(URL).status_code in (401, 403)
+    for who in ("one", "stranger"):
+        client = _client(people[who])
+        assert client.get(URL).status_code == 200, who
+        assert client.post(URL, {}, content_type="application/json").status_code == 405, who
 
 
 def test_the_read_is_in_the_api_docs():

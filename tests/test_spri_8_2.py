@@ -182,10 +182,17 @@ def test_runs_are_filtered_by_key_and_octaves(people):
 
 
 def test_runs_are_behind_the_gate(people):
-    assert _client(None).get(f"{API}scale-runs/").status_code == 404
-    assert _client(people["stranger"]).get(f"{API}scale-runs/").status_code == 404
-    assert _json(_client(people["stranger"]), "post", f"{API}scale-runs/", _run()).status_code == 404
+    assert _client(None).get(f"{API}scale-runs/").status_code in (401, 403)
+    assert _json(_client(None), "post", f"{API}scale-runs/", _run()).status_code in (401, 403)
     assert ScaleRun.objects.count() == 0
+
+
+def test_a_person_without_a_group_keeps_runs_of_their_own(people):
+    stranger = _client(people["stranger"])
+    assert stranger.get(f"{API}scale-runs/").status_code == 200
+    assert _json(stranger, "post", f"{API}scale-runs/", _run()).status_code == 201
+    assert ScaleRun.objects.get().player.user == people["stranger"]
+    assert _client(people["one"]).get(f"{API}scale-runs/").json() == [], "another player never sees it"
 
 
 def test_a_players_runs_go_when_the_player_goes(people):

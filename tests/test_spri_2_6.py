@@ -58,10 +58,12 @@ def test_the_live_change_and_output_logic_passes_under_node():
     assert result.returncode == 0, result.stdout[-3000:] + result.stderr[-2000:]
 
 
-def test_a_player_gets_the_page_and_nobody_else_does(people):
+def test_anyone_signed_in_gets_the_page_and_a_visitor_is_sent_to_the_front_door(people):
     assert _html(people["member"]).status_code == 200
-    assert _html(None).status_code == 404
-    assert _html(people["stranger"]).status_code == 404
+    assert _html(people["stranger"]).status_code == 200
+    visitor = _html(None)
+    assert visitor.status_code == 302
+    assert visitor.headers["Location"].startswith("/improv/?next=")
 
 
 def test_the_output_picker_is_on_the_page_and_starts_hidden(people):

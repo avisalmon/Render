@@ -160,8 +160,8 @@ def test_being_staff_grants_nothing_unless_an_app_says_so(people):
     from app.portal import APPS
 
     declared = {a.slug for a in APPS if a.admin_bypass}
-    # improv joined on 2026-10-04, declared on purpose: the admin is its only user.
-    assert declared == {"ustrip", "improv"}, f"an app quietly granted admins access: {declared}"
+    # improv had the bypass while it was private to the admin; since 2026-10-08 it is open to anyone who signs in.
+    assert declared == {"ustrip"}, f"an app quietly granted admins access: {declared}"
 
 
 def test_a_stranger_signed_out_sees_no_cards(db):

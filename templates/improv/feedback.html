@@ -1,0 +1,48 @@
+{% extends "improv/base.html" %}
+{% load static %}
+{% block title %}Feedback, improv{% endblock %}
+
+{% block content %}
+<div id="feedback" class="im-screen"
+     data-api-feedback="{{ api_feedback }}"
+     data-csrf="{{ csrf_token }}"
+     data-from="{{ came_from }}">
+
+  <div class="im-play-head">
+    <h1 class="im-title">Feedback</h1>
+    <p id="fb-status" class="im-status" role="status" aria-live="polite">Tell us what worked, what did not, and what you want next.</p>
+  </div>
+
+  <div class="im-cols im-cols-left">
+    <section class="im-panel im-fill" aria-label="Send feedback">
+      <label class="im-field">It is
+        <select id="fb-kind" class="im-select">
+          <option value="idea">an idea</option>
+          <option value="problem">something that is wrong</option>
+          <option value="praise">something I liked</option>
+          <option value="other">something else</option>
+        </select>
+      </label>
+      <label class="im-field im-field-fill">What would you like to say?
+        <textarea id="fb-message" class="im-textarea" maxlength="2000" rows="4" placeholder="Be as plain as you like. If something broke, say what you pressed and what happened."></textarea>
+      </label>
+      <p id="fb-error" class="im-error" role="alert" hidden></p>
+      <div class="im-row">
+        <button id="fb-send" data-key-action="primary" class="im-btn" type="button">Send</button>
+        <a class="im-btn im-btn-quiet im-btn-link" href="{{ back_url }}">Back</a>
+        <span id="fb-count" class="im-note im-mono">0 / 2000</span>
+      </div>
+    </section>
+
+    <section class="im-panel im-fill" aria-label="What you sent">
+      <h2 class="im-h2">What you have sent</h2>
+      <ul id="fb-list" class="im-feedback-list" data-bounded-list></ul>
+      <p id="fb-empty" class="im-note">Nothing yet.</p>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'improv/feedback-page.js' %}"></script>
+{% endblock %}

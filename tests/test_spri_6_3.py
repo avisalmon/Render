@@ -73,9 +73,18 @@ def test_the_scoped_migrate_reaches_the_last_improv_migration(db):
 
 
 @pytest.mark.parametrize("path", NEW_SURFACE)
-def test_the_new_surface_is_open_to_a_member_and_hidden_from_everyone_else(people, path):
-    assert _client().get(path).status_code == 404, "anonymous"
-    assert _client(people["stranger"]).get(path).status_code == 404, "signed in but not a player"
+def test_the_new_surface_is_open_to_anyone_signed_in_and_closed_to_a_visitor(people, path):
+    visitor = _client().get(path)
+    if path == "/improv/":
+        # The front door is the one page a visitor may open; it is the log in page, not Today.
+        assert visitor.status_code == 200, "anonymous"
+        assert 'id="continue-line"' not in visitor.content.decode("utf-8")
+    elif path.startswith("/improv/api/"):
+        assert visitor.status_code in (401, 403), "anonymous"
+    else:
+        assert visitor.status_code == 302, "anonymous"
+        assert visitor.headers["Location"].startswith("/improv/?next="), "anonymous"
+    assert _client(people["stranger"]).get(path).status_code == 200, "signed in with no group"
     assert _client(people["member"]).get(path).status_code == 200, "a member"
 
 

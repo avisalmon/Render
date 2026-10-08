@@ -54,7 +54,14 @@ def test_the_spike_page_loads_for_a_player(member):
 
 
 def test_the_spike_page_is_gated_like_everything_else(db):
-    assert Client().get("/improv/spike/").status_code == 404
+    """A visitor is sent to the front door; any signed-in person may open the page, though the
+    menu links it for staff only."""
+    visitor = Client().get("/improv/spike/")
+    assert visitor.status_code == 302
+    assert visitor.headers["Location"] == "/improv/?next=/improv/spike/"
+    person = Client()
+    person.force_login(User.objects.create_user(username="spike-nogroup", password="spri12-pass-3317"))
+    assert person.get("/improv/spike/").status_code == 200
 
 
 def test_the_page_has_every_control_the_spike_needs(member):

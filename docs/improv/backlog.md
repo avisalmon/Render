@@ -143,6 +143,22 @@ letter, timed, with a hint), in circle-of-fifths order from C (G at first, C aft
 | SPR-I.8.6 | The trainer read (best per key, slowest chords, weakest keys) shown on both screens, menu items, both screens in the layout guard, scoped regression, ready to push | ch. 7, 8, 10 | DONE 2026-10-07 |
 | SPR-I.8.7 | Avi's live check: circle starts at C, keep going through 2, 3, 4 octaves, a lower and choosable start octave, the header shows the key heard and the MIDI access is kept, a quieter and remembered Play mix | ch. 10 | DONE 2026-10-07 |
 | SPR-I.8.8 | Reference: running-scale fingering for both hands, and chord menu lines like "Cmaj7  -  Major seventh" | ch. 10 | DONE 2026-10-07 |
+| SPR-I.8.9 | Play: a "Show me" button on an exercise that plays what it expects (rhythm, chord tones, scale, guide tones, approach notes, call and response) over the band, checked against the real judge for every seeded exercise | ch. 5, 10 | DONE 2026-10-08 |
+
+---
+
+## EPIC-I.9: Open to anyone who signs in, and feedback  `DONE 2026-10-08`
+
+Avi, 2026-10-08: "enable login in the main page of this app and get everything free to anyone entering. I want users to
+try and feedback." Sharing `https://babook.co.il/improv/` shows improv's own front door with log in and sign up, not
+babook; a signed-in person goes straight in. Spec: ch. 7.
+
+| Sprint | What | Traces | Status |
+|---|---|---|---|
+| SPR-I.9.1 | The gate opened: signed in is enough, portal entry for everyone, card for the owner only, visitors redirected to the front door, API 401/403, ownership and read-only presets re-proved for strangers | ch. 7 | DONE 2026-10-08 |
+| SPR-I.9.2 | The front door, log in, sign up (with Google) and log out, with a login lock and a sign-up cap; header shows the account and hides the spike from non-staff | ch. 7, 8 | DONE 2026-10-08 |
+| SPR-I.9.3 | Feedback: model, API, admin, a screen and a link on every screen | ch. 7 | DONE 2026-10-08 |
+| SPR-I.9.4 | The one-screen guard covers the front door, sign up and feedback; a ceiling of 1000 own items per person (owner unlimited); feedback emailed to Avi's two addresses; older gate tests moved to the new rule; docs; regression | ch. 8 | DONE 2026-10-08 |
 
 ---
 

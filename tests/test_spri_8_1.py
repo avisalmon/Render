@@ -169,8 +169,10 @@ def test_the_fingerings_are_served_read_only(people):
 
 
 def test_the_fingerings_are_behind_the_gate(people):
-    assert _client(None).get(f"{API}scale-fingerings/").status_code == 404
-    assert _client(people["stranger"]).get(f"{API}scale-fingerings/").status_code == 404
+    assert _client(None).get(f"{API}scale-fingerings/").status_code in (401, 403)
+    stranger = _client(people["stranger"])
+    assert stranger.get(f"{API}scale-fingerings/").status_code == 200, "anyone signed in may read them"
+    assert _json(stranger, "post", f"{API}scale-fingerings/", {"last_note": 1}).status_code == 405, "and nobody writes them"
 
 
 # ------------------------------------------------------------------ the tempo

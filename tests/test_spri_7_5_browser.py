@@ -21,7 +21,7 @@ from django.core.management import call_command
 from django.test import Client
 from django.utils import timezone
 
-from improv.models import Completion, Exercise, Lesson, Player, PracticeSession, Progression, Take
+from improv.models import Completion, Exercise, Feedback, Lesson, Player, PracticeSession, Progression, Take
 
 os.environ.setdefault("DJANGO_ALLOW_ASYNC_UNSAFE", "1")
 
@@ -29,7 +29,8 @@ pytestmark = [pytest.mark.spri75, pytest.mark.django_db]
 
 PASSWORD = "spri75-browser-2046"
 SIZES = ((1280, 720), (1920, 1080))
-SCREENS = ("today", "play", "play-longest", "play-exercise", "lessons", "lesson", "challenges", "library", "editor", "takes", "practice", "progress", "reference", "setup", "spike", "scales", "scales-4-octaves", "chords", "chords-learn")
+SCREENS = ("today", "play", "play-longest", "play-exercise", "lessons", "lesson", "challenges", "library", "editor", "takes", "practice", "progress", "reference", "setup", "spike", "scales", "scales-4-octaves", "chords", "chords-learn", "feedback", "front-door", "signup")
+ANONYMOUS = ("front-door", "signup")
 UTC = dt.timezone.utc
 # These screens show everything at once at 1280 by 720; a bounded list there is for future growth.
 NO_INNER_SCROLL = ("today", "lessons")
@@ -93,6 +94,8 @@ def _history(player):
                 score=40 + i, metrics={"notes": 30, "chordTonePct": 50 + i % 40}, judge_version=1, is_kept=(i % 7 == 0),
             )
         )
+    for i in range(15):
+        Feedback.objects.create(player=player, kind="idea", message=f"Note number {i}: please let me change the band volume per instrument.")
     for lesson in Lesson.objects.order_by("track", "order")[:2]:
         for ex in lesson.exercises.all():
             take = next(t for t in made if t.exercise_id == ex.id)
@@ -138,6 +141,9 @@ def _paths():
         "scales-4-octaves": "/improv/scales/?level=3&key=11",
         "chords": "/improv/chords/",
         "chords-learn": "/improv/chords/?mode=learn&level=3",
+        "feedback": "/improv/feedback/?from=/improv/play/",
+        "front-door": "/improv/",
+        "signup": "/improv/signup/",
     }
 
 
@@ -170,12 +176,13 @@ def test_the_screen_fits_the_window(world, name, size):
     browser, cookie, base = world
     path = _paths()[name]
     context = browser.new_context(viewport={"width": size[0], "height": size[1]})
-    context.add_cookies([cookie])
+    if name not in ANONYMOUS:
+        context.add_cookies([cookie])
     page = context.new_page()
     errors = []
     page.on("pageerror", lambda e: errors.append(str(e)))
     page.goto(f"{base}{path}", wait_until="domcontentloaded")
-    ready = _ready(name)
+    ready = None if name in ANONYMOUS else _ready(name)
     if ready:
         page.wait_for_function(ready, timeout=15000)
     page.wait_for_timeout(500)

@@ -6,11 +6,9 @@ must be listed here (`tests/test_spri_1_4.py`).
 
 ## Access
 
-One rule for every endpoint: signed in and in the group `improv_players`, or a
-superuser. **Anyone else gets a plain 404**, anonymous visitors included, so the API
-does not announce that it exists. The rule is enforced twice: by the gate middleware
-before routing, and again by the `IsPlayer` permission class on every view, so the
-API stays closed even if the middleware is ever removed or reordered.
+One rule for every endpoint: signed in. Anyone signed in may use everything, free (since 2026-10-08). **A visitor
+gets 401 or 403** from DRF, with no data. Presets and reference tables are read-only to everyone; a person's own
+rows are filtered to them, so someone else's row is a 404. The `IsPlayer` permission class repeats the check on every view.
 
 ## Conventions
 
@@ -436,8 +434,11 @@ the problem), and never a half-parsed chart.
 
 ## Pages
 
-These are screens, not API, listed so the route list is complete. Each answers 404 to
-anyone outside the gate, like everything else.
+These are screens, not API, listed so the route list is complete. Each redirects a visitor to the front door
+(`/improv/?next=...`), except the public ones: `/improv/` (the front door for a visitor, Today for a signed-in person),
+`/improv/login/`, `/improv/signup/` and `/improv/logout/` (POST).
+
+- `/improv/feedback/?from=`: send a note about the app and see your own earlier notes.
 
 - `/improv/`: Today, the landing page: the daily goal as a ring, the streak, today's workout, and a
   way back into the lesson in progress (the continue read below).
@@ -478,6 +479,18 @@ step numbers), `judge_version`, `created_at` (read-only). Filters: `?root_pc=`, 
 `GET, POST /improv/api/drill-attempts/`, `GET, PUT, PATCH, DELETE /improv/api/drill-attempts/{id}/`. Your own attempts only. Newest first.
 `kind` (`chord_position`), `key_pc` (0 to 11), `level` (1 to 3), `prompt`, `answer` (JSON objects), `is_correct`, `wrong_tries`,
 `hint_used`, `skipped`, `response_ms` (blank when skipped), `answered_at` (read-only). Filters: `?key_pc=`, `?kind=`.
+
+### Feedback
+
+`GET, POST /improv/api/feedback/`, `GET, PUT, PATCH, DELETE /improv/api/feedback/{id}/`. Your own notes only, newest first.
+`kind` (`idea`, `problem`, `praise`, `other`), `message` (1 to 2000 characters, not blank), `page` (up to 200, may be
+empty), `created_at` (read-only). The player is never sent. More than 20 in an hour answers 429. Avi reads every note
+in the admin, and every new note is emailed to his two addresses.
+
+### Limits
+
+Creating a style, progression, phrase, take or feedback note when you already hold 1000 of that kind answers 400 and
+says to delete some first (practice sessions, scale runs and drill attempts: 20000). A superuser has no limit.
 
 ### Trainer
 

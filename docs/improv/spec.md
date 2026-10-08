@@ -16,8 +16,8 @@ playing, teaches you what to try next, and listens to whether you did it.
 
 It is **built for Avi first**, as a tool he practices with, and **built as a
 product from the start**: every choice is made so that other people can use it
-later without a rewrite. Until it is stable it is private to him, and nobody
-else can see the link or the app.
+later without a rewrite. It was private to him until it was stable; since 2026-10-08 it is open to anyone who signs up, free, so that
+people can try it and tell him what they think (chapter 7).
 
 ### Who it is for
 
@@ -125,7 +125,7 @@ loop has proved itself on Avi's own playing.
 
 ### Decided here, and approved by Avi on 2026-10-04
 
-- Access is a Django group with a superuser bypass; everyone else gets a 404.
+- Access was a Django group with a superuser bypass and a 404 for everyone else. **Superseded 2026-10-08:** anyone who signs in may use everything, free; a visitor sees the front door (chapter 7).
 - The progression library is generic patterns, not named songs.
 - The browser judges live and the server stores the result (revisit for any
   leaderboard or paid tier).
@@ -554,38 +554,64 @@ Challenges screen lists every challenge with its best, and the bests in the less
 
 ## Chapter 7. Access, the portal link and the API
 
-### The gate
+### The gate (open to anyone who signs in, 2026-10-08)
 
-As the data model, section 0: one function, signed in and in the Django group
-`improv_players`, superuser bypass, and **404 for everyone else**, including
-anonymous visitors and including every URL under `/improv/` and the API. The
-group is created by a migration. At launch it is empty; Avi is in by being a
-superuser.
+Avi, 2026-10-08: "enable login in the main page of this app and get everything free to anyone entering. I want
+users to try and feedback." And: if he gives out `https://babook.co.il/improv/`, people "will not be directed to
+babook, rather invited to login or signup; if they are logged in then go ahead to the site like me."
 
-**Static files are not behind the gate.** WhiteNoise serves `/static/improv/` before
-Django routing runs, so the stylesheet and scripts are public. That is accepted:
-they are code, not data, and no player's content is ever a static file. The
-consequence is that the improv code can be read by anyone who guesses its path;
-nothing private is in it.
+The rule is one function, `improv.access.is_player`: **signed in**. There is no group and no payment. It
+delegates to `app.portal.may_enter`, where improv is `audience=EVERYONE`.
 
-**How the gate is built.** `improv.middleware.GateMiddleware` stops every request
-under `/improv` before routing, CSRF and the views. It sits late in the middleware
-stack so a refusal has had everything done to it that a real 404 gets (session,
-first-visit strip, cookies). It answers with the site's own 404 and points the
-request at an empty urlconf so Django's append-slash redirect cannot reveal that
-`/improv/` exists. **There is deliberately no improv-branded 404 page**: a branded
-page would tell a stranger what they found. This is a recorded exception to the
-rule that each app owns its error pages. The gate is covered by a sweep over every
-route the app registers and by a test that a refusal is the same page, with the
-same cookies, as a URL that does not exist. A DRF permission class repeats the check
-inside the API as defence in depth (SPR-I.1.4).
+**A visitor** (not signed in) sees improv's own front door at `/improv/`, in improv's look and in English: what the
+app is, that it is free, a log in form, a link to sign up, and Continue with Google. The public pages are exactly
+`/improv/`, `/improv/login/`, `/improv/signup/` and `/improv/logout/` (POST only). Any other page redirects to
+`/improv/?next=...`, and after signing in the person lands where they were going. `next` is honoured only if it
+stays inside `/improv/`. The API answers a visitor with 401/403 (DRF), never with data.
+
+**A signed-in person** goes straight to Today, like Avi. A `Player` row is created on the first visit.
+
+**Accounts.** Sign up and log in are improv's own views (`improv/signin.py`) and create or use ordinary site
+accounts: one email and password also works on babook, and Google sign-in goes through the site's own provider
+and returns to `/improv/`. Nothing in improv shows babook pages or branding. Guards against abuse: a login lock
+after ten failures per address and email for fifteen minutes, ten sign-ups per address per hour, a password check,
+and a throttled feedback form.
+
+**Staff only.** The Timing spike link is shown to staff only. The portal card is shown to the owner only
+(`card_admin_only`); everyone else is given the link by hand.
+
+**Static files are not behind the gate.** WhiteNoise serves `/static/improv/` before Django routing, so the
+stylesheet and scripts are public. They are code, not data.
+
+**How the gate is built.** `improv.middleware.GateMiddleware` adds the trailing slash (301) and sends a visitor on
+a non-public page to the front door. `IsPlayer` repeats the check inside the API as defence in depth.
+The old design (group `improv_players`, a 404 for everyone) is gone; the `improv_players` group, if it still
+exists, means nothing.
+
+**What strangers can and cannot do.** Presets, lessons, challenges and the reference tables are read-only to
+everyone. Styles, progressions, phrases, takes, sessions, completions and feedback are the person's own and are
+filtered to them in the queryset. A completion is still created only by the server, as the consequence of a take.
+
+### Feedback
+
+Every signed-in screen has a Feedback link (`/improv/feedback/?from=<page>`). The form takes a kind (idea,
+something wrong, something liked, other) and a message up to 2000 characters; the page it came from is kept. A
+person sees their own notes there. Avi reads everyone's in the admin, at `/admin/improv/feedback/`. **Every new
+note is also emailed** to avi.salmon@gmail.com and avi.salmon@intel.com (fixed in `improv/feedback_mail.py`, not a
+setting), with the sender as reply-to, the kind and the page. Editing a note sends nothing, and a mail failure is
+logged and never loses the note. A person is limited to 20 notes an hour.
 
 ### The portal
 
-One `App` entry with `audience=GROUP`, `key="improv_players"`, `admin_bypass=True`:
-the card shows for superusers and group members and for nobody else. The existing
-portal sweep test already fails if a card is ever shown to someone the door would
-turn away. The link goes from babook to improv; nothing in improv links back.
+One `App` entry, `audience=EVERYONE`, `listed=True`, `card_admin_only=True`: every signed-in person may enter, but
+the card is shown to superusers only, so for everyone else the link is shared by hand. Nothing in improv links back.
+
+### Limits
+
+A person may keep up to **1000** of their own saved items of each kind (styles, progressions, phrases, takes,
+feedback notes). Past that, saving answers 400 with a message that says to delete some first. Practice sessions, scale
+runs and drill attempts, which pile up by themselves, have a ceiling of 20000. The owner (a superuser) has no limit.
+The numbers are `MAX_OWN_ROWS` and `MAX_LOG_ROWS` in `improv/api.py`.
 
 ### The API
 
@@ -611,9 +637,9 @@ Every model in the data model has a full, documented CRUD endpoint under
 
 ### Tests that guard the gate
 
-An anonymous request, a signed-in non-member and a member are each sent to every
-route the app registers, and the test asserts the 404 or the 200, so a route
-added next month cannot quietly skip the gate.
+A visitor and a signed-in person are each sent to every route the app registers, and the test asserts the
+redirect to the front door or the 200, and 401/403 on every API endpoint for a visitor, so a route added next
+month cannot quietly skip the gate (`tests/test_spri_9_1.py`).
 
 ---
 
@@ -884,7 +910,7 @@ live display only shows.
 | The laptop's audio delay makes timing scores nonsense | Calibration is a first-class screen and a stored number, not an afterthought |
 | Chord naming is ambiguous for partial voicings | Show best guess plus alternatives; never claim certainty the notes do not support |
 | "Outside note" feels like criticism of good playing | It is shown as information and only penalized where the exercise asks for it |
-| Browser-side judging can be cheated | Accepted while the app is private; the pure judge plus stored events and `judge_version` is the path to a server-side judge |
+| Browser-side judging can be cheated | Accepted while the app is a free trial; the pure judge plus stored events and `judge_version` is the path to a server-side judge |
 | AI-drafted lessons teach something wrong | `authorship` records what Avi has read; v1 lessons are all read before they are published |
 | Scope: the feature list is long | v1 is the one loop (chapter 2); everything else waits until that loop has proved itself on Avi's playing |
 
@@ -1025,6 +1051,30 @@ where he wants to start; and on the Play screen the backing track drowns his own
   strip with the right hand and left hand finger under each note, running up two octaves; coming down
   is the same in reverse. A scale with none says so. The chord menu names each chord as it is written
   in the chosen key, then what it is called: "Cmaj7  -  Major seventh", "Cm  -  Minor triad".
+
+### Show me (SPR-I.8.9, Avi 2026-10-08)
+
+On the bossa challenge Avi asked for "a button show me so you can demonstrate to me what you expect".
+An exercise on the Play screen now has a **Show me** button (A#7, the third piano key) next to the
+back link. It plays the answer over the band and the count-in, lights the bar and the keys as it
+goes, and stops by itself at the end of the bars.
+
+- **What can be shown.** Every kind with an answer: scale only, chord tones on beats, guide tones,
+  approach notes, rhythm motif and call and response. Free play has no answer, so the button is
+  hidden there. It is greyed out while a take is running or when the chart or bars were changed so it
+  is no longer the exercise, and the button's tooltip says so.
+- **What is played.** `static/improv/demo.js` (pure, tested under Node) builds the notes from the
+  same chart and chord table the judge reads. A rhythm is played on the exact written beats in
+  chord tones, moving to the nearest tone of each chord. A line under the keys says in words what
+  is being shown ("In every bar, a chord tone on beat 1, the and of 2, beat 3 and the and of 4").
+- **Proof it asks the right thing.** The Node tests run the demonstration for all 23 seeded
+  exercises through the real judge and require a pass. The demonstration is therefore a passing take
+  by construction and cannot drift from the exercise.
+- **Where it sounds.** Over MIDI out on the piano when the profile says so and an output port
+  exists, otherwise a plain tone from the laptop, the same as the lessons. The band stays on the laptop.
+- **What it is not.** It is not a take. Nothing is recorded, judged or saved, no session or practice
+  clock starts, and no XP is earned. While it plays the settings are locked. Play (or C8) ends it and
+  starts a real take; the button, or the third key, stops it early and lifts every note.
 
 ### The chord trainer (`/improv/chords/`)
 

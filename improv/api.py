@@ -8,17 +8,21 @@ player's own rows. Presets are read-only; an own row is fully editable; another
 player's row does not exist as far as this player can tell.
 """
 
+import datetime as dt
+
 from django.db import transaction
 from django.db.models import Count, Q
+from django.utils import timezone
 from rest_framework import generics, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import PermissionDenied, Throttled, ValidationError
 from rest_framework.permissions import SAFE_METHODS
 
-from .models import ChordQuality, ChordScale, Completion, DrillAttempt, Exercise, Lesson, Phrase, PracticeSession, Progression, Scale, ScaleFingering, ScaleRun, Style, Tag, Take
+from .models import ChordQuality, ChordScale, Completion, DrillAttempt, Exercise, Feedback, Lesson, Phrase, PracticeSession, Progression, Scale, ScaleFingering, ScaleRun, Style, Tag, Take
 from . import bests, practice, progress, retention, trainer, weakness, workout
 from .access import profile_for
+from .feedback_mail import send_feedback_mail
 from .permissions import IsPlayer
 from .serializers import (
     ChordQualitySerializer,
@@ -26,6 +30,7 @@ from .serializers import (
     CompletionSerializer,
     DrillAttemptSerializer,
     ExerciseSerializer,
+    FeedbackSerializer,
     LessonSerializer,
     PhraseSerializer,
     PlayerSerializer,
@@ -42,6 +47,20 @@ from .serializers import (
 )
 from .slugs import unique_slug
 from .teaching import track_rank
+
+
+MAX_OWN_ROWS = 1000
+MAX_LOG_ROWS = 20000
+
+
+def check_room(user, count, ceiling):
+    """Anyone but the owner may keep only so many rows of one kind; the owner has no limit."""
+    if user.is_superuser:
+        return
+    if count >= ceiling:
+        raise ValidationError(
+            f"You have reached the limit of {ceiling} saved items of this kind. Delete some you no longer need, then try again."
+        )
 
 
 class ReferenceViewSet(viewsets.ReadOnlyModelViewSet):
@@ -170,7 +189,9 @@ class OwnedViewSet(viewsets.ModelViewSet):
         return row
 
     def perform_create(self, serializer):
-        slug = unique_slug(self.queryset.model, serializer.validated_data.get(self.slug_source, ""))
+        model = self.queryset.model
+        check_room(self.request.user, model.objects.filter(owner=self.request.user, is_preset=False).count(), MAX_OWN_ROWS)
+        slug = unique_slug(model, serializer.validated_data.get(self.slug_source, ""))
         serializer.save(owner=self.request.user, is_preset=False, slug=slug)
 
 
@@ -234,17 +255,42 @@ class MineViewSet(viewsets.ModelViewSet):
 
     permission_classes = [IsPlayer]
     pagination_class = None
+    is_log = False
 
     def get_queryset(self):
         return super().get_queryset().filter(player__user=self.request.user)
 
+    def check_room(self):
+        count = self.queryset.model.objects.filter(player__user=self.request.user).count()
+        check_room(self.request.user, count, MAX_LOG_ROWS if self.is_log else MAX_OWN_ROWS)
+
     def perform_create(self, serializer):
+        self.check_room()
         serializer.save(player=profile_for(self.request.user))
+
+
+class FeedbackViewSet(MineViewSet):
+    """What the signed-in person told the owner. Theirs to list, fix and withdraw; a flood from one
+    person is stopped, because anyone who signs up may write here."""
+
+    queryset = Feedback.objects.all()
+    serializer_class = FeedbackSerializer
+    PER_HOUR = 20
+
+    def perform_create(self, serializer):
+        player = profile_for(self.request.user)
+        since = timezone.now() - dt.timedelta(hours=1)
+        if player.feedback.filter(created_at__gte=since).count() >= self.PER_HOUR:
+            raise Throttled(detail="That is a lot of feedback in one hour. Thank you; try again a little later.")
+        self.check_room()
+        note = serializer.save(player=player)
+        send_feedback_mail(note, self.request.user)
 
 
 class PracticeSessionViewSet(MineViewSet):
     queryset = PracticeSession.objects.all()
     serializer_class = PracticeSessionSerializer
+    is_log = True
 
 
 class TakeViewSet(MineViewSet):
@@ -256,6 +302,8 @@ class TakeViewSet(MineViewSet):
         # completion that was never written would be XP lost for good.
         with transaction.atomic():
             player = profile_for(self.request.user)
+            retention.prune(player)
+            self.check_room()
             take = serializer.save(player=player)
             progress.award(take)
             retention.prune(player)
@@ -287,6 +335,7 @@ class TakeViewSet(MineViewSet):
 class ScaleRunViewSet(MineViewSet):
     queryset = ScaleRun.objects.select_related("scale")
     serializer_class = ScaleRunSerializer
+    is_log = True
 
     def get_queryset(self):
         rows = super().get_queryset()
@@ -300,6 +349,7 @@ class ScaleRunViewSet(MineViewSet):
 class DrillAttemptViewSet(MineViewSet):
     queryset = DrillAttempt.objects.all()
     serializer_class = DrillAttemptSerializer
+    is_log = True
 
     def get_queryset(self):
         rows = super().get_queryset()
@@ -419,6 +469,7 @@ OWNED_ENDPOINTS = {
     "phrases": PhraseViewSet,
 }
 MINE_ENDPOINTS = {
+    "feedback": FeedbackViewSet,
     "sessions": PracticeSessionViewSet,
     "takes": TakeViewSet,
     "scale-runs": ScaleRunViewSet,

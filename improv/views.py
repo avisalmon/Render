@@ -1,12 +1,15 @@
 from django.shortcuts import render
 from django.urls import reverse
 
-from .access import profile_for
+from .access import profile_for, safe_next
+from .signin import front_door
 
 
 def home(request):
     """Today: the goal, the streak, the three workout exercises and where to go on in the lessons.
     The page reads each from its own derived endpoint, so it says what the other screens say."""
+    if not request.user.is_authenticated:
+        return front_door(request)
     profile_for(request.user)
     api = {
         "practice": reverse("improv:api-practice"),
@@ -214,3 +217,15 @@ def chords(request):
         "trainer": reverse("improv:api-trainer"),
     }
     return render(request, "improv/chords.html", {"api": api})
+
+
+def feedback(request):
+    """Tell the owner what you think. The page posts to the feedback endpoint and says which
+    screen the person came from, so a remark about Play is known to be about Play."""
+    profile_for(request.user)
+    came_from = safe_next(request.GET.get("from", ""))
+    return render(
+        request,
+        "improv/feedback.html",
+        {"api_feedback": reverse("improv:api-feedback-list"), "came_from": came_from, "back_url": came_from},
+    )

@@ -1,0 +1,45 @@
+{% extends "improv/base.html" %}
+{% block title %}improv, practise piano improvisation{% endblock %}
+
+{% block content %}
+<div id="welcome" class="im-screen">
+  <div class="im-play-head">
+    <h1 class="im-title">improv</h1>
+    <p class="im-lead">Practise piano improvisation over a backing band, and hear how you did.</p>
+  </div>
+
+  <div class="im-cols">
+    <section class="im-panel im-fill" aria-label="What you get">
+      <h2 class="im-h2">What you get</h2>
+      <ul class="im-points">
+        <li>A backing band in any key, over chord charts from blues to bossa.</li>
+        <li>Lessons and challenges that listen to your piano and tell you what to fix.</li>
+        <li>Scale and chord trainers with the fingering shown.</li>
+        <li>Your progress, your streak and your best takes.</li>
+      </ul>
+      <p class="im-note">It is free, for everyone. It works best in Chrome or Edge with a digital piano or MIDI keyboard on USB. Without one you can still look around.</p>
+      <p class="im-note">This is an early version. After you try it, please tell us what you think: there is a Feedback link on every screen.</p>
+    </section>
+
+    <section class="im-panel im-fill" aria-label="Log in">
+      <h2 class="im-h2">Log in</h2>
+      <form method="post" action="{{ login_url }}" class="im-form">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        <label class="im-field">Email
+          <input class="im-input im-input-wide" type="text" name="email" value="{{ email }}" autocomplete="username" required>
+        </label>
+        <label class="im-field">Password
+          <input class="im-input im-input-wide" type="password" name="password" autocomplete="current-password" required>
+        </label>
+        {% if error %}<p id="login-error" class="im-error" role="alert">{{ error }}</p>{% endif %}
+        <div class="im-row">
+          <button class="im-btn" type="submit">Log in</button>
+          <a class="im-btn im-btn-quiet im-btn-link" href="{{ google_url }}">Continue with Google</a>
+        </div>
+      </form>
+      <p class="im-note">New here? <a href="{{ signup_url }}?next={{ next|urlencode:'/' }}">Create an account</a>, it takes a minute. <a href="/accounts/password/reset/">Forgot your password?</a></p>
+    </section>
+  </div>
+</div>
+{% endblock %}

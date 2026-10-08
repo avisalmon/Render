@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import ChordQuality, ChordScale, Completion, DrillAttempt, Exercise, Lesson, Phrase, Player, PracticeSession, Progression, Scale, ScaleFingering, ScaleRun, Style, Tag, Take
+from .models import ChordQuality, ChordScale, Completion, DrillAttempt, Exercise, Feedback, Lesson, Phrase, Player, PracticeSession, Progression, Scale, ScaleFingering, ScaleRun, Style, Tag, Take
 
 
 class ChordScaleInline(admin.TabularInline):
@@ -131,3 +131,19 @@ class CompletionAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
+
+
+@admin.register(Feedback)
+class FeedbackAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "kind", "short_message", "page", "player")
+    list_filter = ("kind",)
+    search_fields = ("message", "page", "player__user__email", "player__user__username")
+    date_hierarchy = "created_at"
+    readonly_fields = ("player", "created_at")
+
+    def has_add_permission(self, request):
+        return False
+
+    @admin.display(description="message")
+    def short_message(self, row):
+        return row.message[:90]

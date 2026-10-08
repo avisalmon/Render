@@ -89,22 +89,30 @@ def test_the_api_root_names_every_endpoint(people):
 # ------------------------------------------------- the gate repeated in the API
 
 
-@pytest.mark.parametrize("who", ["anonymous", "stranger"])
-def test_the_permission_class_refuses_on_its_own(people, who):
-    """No middleware, no urlconf: the view alone, called directly. If the gate is
-    ever removed or reordered, the API must still answer 404 to an outsider and
-    must not reveal that it exists by answering 401 or 403."""
+def test_the_permission_class_refuses_a_visitor_on_its_own(people):
+    """No middleware, no urlconf: the view alone, called directly. If the gate is ever removed
+    or reordered, the API must still refuse a visitor with 401 or 403 and never hand over data."""
     from improv import api
 
-    user = AnonymousUser() if who == "anonymous" else people["stranger"]
     factory = APIRequestFactory()
     for path, viewset in api.ENDPOINTS.items():
         for action, kwargs in (("list", {}), ("retrieve", {"pk": 1})):
             request = factory.get(f"{API}{path}/")
-            if who != "anonymous":
-                force_authenticate(request, user=user)
             response = viewset.as_view({"get": action})(request, **kwargs)
-            assert response.status_code == 404, f"{who} {action} {path} got {response.status_code}"
+            assert response.status_code in (401, 403), f"visitor {action} {path} got {response.status_code}"
+            assert "results" not in getattr(response, "data", {}), path
+
+
+def test_the_permission_class_admits_a_signed_in_person_on_its_own(people):
+    """The same direct call with a signed-in person who is in no group: the list answers."""
+    from improv import api
+
+    factory = APIRequestFactory()
+    for path, viewset in api.ENDPOINTS.items():
+        request = factory.get(f"{API}{path}/")
+        force_authenticate(request, user=people["stranger"])
+        response = viewset.as_view({"get": "list"})(request)
+        assert response.status_code == 200, f"stranger list {path} got {response.status_code}"
 
 
 def test_a_member_and_the_admin_may_read(people):

@@ -166,13 +166,13 @@ def test_the_lessons_follow_the_tracks_in_their_order_not_the_alphabet(people):
 
 
 def test_the_continue_read_is_behind_the_gate_and_read_only(people):
-    assert _client().get(API + "continue/").status_code == 404
-    assert _client(people["stranger"]).get(API + "continue/").status_code == 404
-    member = _client(people["member"])
-    reply = member.get(API + "continue/")
-    assert reply.status_code == 200 and set(reply.json()) == KEYS
-    for method in ("post", "put", "patch", "delete"):
-        assert getattr(member, method)(API + "continue/").status_code == 405
+    assert _client().get(API + "continue/").status_code in (401, 403)
+    for who in ("member", "stranger"):
+        client = _client(people[who])
+        reply = client.get(API + "continue/")
+        assert reply.status_code == 200 and set(reply.json()) == KEYS, who
+        for method in ("post", "put", "patch", "delete"):
+            assert getattr(client, method)(API + "continue/").status_code == 405, (who, method)
 
 
 def test_the_read_follows_the_player_over_the_api(people):
@@ -216,9 +216,11 @@ def test_progress_has_what_it_shows(people):
         assert f'id="{element_id}"' in html, element_id
 
 
-def test_progress_is_behind_the_gate(people):
-    assert _client().get("/improv/progress/").status_code == 404
-    assert _client(people["stranger"]).get("/improv/progress/").status_code == 404
+def test_progress_is_for_anyone_signed_in_and_sends_a_visitor_to_the_front_door(people):
+    visitor = _client().get("/improv/progress/")
+    assert visitor.status_code == 302
+    assert visitor.headers["Location"].startswith("/improv/?next=")
+    assert _client(people["stranger"]).get("/improv/progress/").status_code == 200
     assert _client(people["member"]).get("/improv/progress/").status_code == 200
 
 

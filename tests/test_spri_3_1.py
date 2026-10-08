@@ -87,11 +87,21 @@ def test_each_player_gets_their_own_profile(people):
     assert Player.objects.filter(user=people["member"]).count() == 1
 
 
-def test_nobody_else_gets_the_page_or_the_profile(people):
-    for user in (None, people["stranger"]):
-        assert _client(user).get(URL).status_code == 404
-        assert _client(user).get(API).status_code == 404
-    assert not Player.objects.exists(), "an outsider does not get a profile made for them"
+def test_a_visitor_gets_neither_the_page_nor_a_profile(people):
+    page = _client(None).get(URL)
+    assert page.status_code == 302
+    assert page.headers["Location"].startswith("/improv/?next=")
+    assert _client(None).get(API).status_code in (401, 403)
+    assert not Player.objects.exists(), "a visitor does not get a profile made for them"
+
+
+def test_a_signed_in_person_without_a_group_gets_the_page_and_their_own_profile(people):
+    stranger = people["stranger"]
+    assert _client(stranger).get(URL).status_code == 200
+    reply = _client(stranger).get(API)
+    assert reply.status_code == 200
+    assert reply.json()["id"] == Player.objects.get(user=stranger).pk
+    assert Player.objects.count() == 1, "only the person who came in gets a profile"
 
 
 # -------------------------------------------------------------------- the API

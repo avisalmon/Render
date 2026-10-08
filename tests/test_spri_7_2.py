@@ -47,7 +47,9 @@ def test_the_screen_has_a_primary_action(member, path):
 @pytest.mark.parametrize("path", NO_BUTTONS)
 def test_a_screen_of_drop_downs_has_no_button_to_press(member, path):
     html = member.get(path).content.decode("utf-8")
-    assert "<button" not in html
+    # The header carries the account's Log out button on every page, so look at the screen itself.
+    screen = html[html.index("<main"):html.index("</main>")]
+    assert "<button" not in screen
     assert "data-key-action" not in html
 
 

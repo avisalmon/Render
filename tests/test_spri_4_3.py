@@ -114,10 +114,23 @@ def test_another_players_session_does_not_exist_for_me(people):
     assert other.get(SESSIONS).json() == []
 
 
-def test_nobody_else_gets_near_sessions_or_takes(people):
-    for user in (None, people["stranger"]):
-        assert _client(user).get(SESSIONS).status_code == 404
-        assert _client(user).post(TAKES, {}, content_type="application/json").status_code == 404
+def test_a_visitor_gets_near_neither_sessions_nor_takes(people):
+    visitor = _client(None)
+    assert visitor.get(SESSIONS).status_code in (401, 403)
+    assert visitor.post(SESSIONS, {}, content_type="application/json").status_code in (401, 403)
+    assert visitor.post(TAKES, {}, content_type="application/json").status_code in (401, 403)
+    assert PracticeSession.objects.count() == 0 and Take.objects.count() == 0
+
+
+def test_a_signed_in_person_without_a_group_is_a_normal_player_with_their_own_sessions(people):
+    stranger = _client(people["stranger"])
+    assert stranger.get(SESSIONS).status_code == 200
+    assert stranger.get(SESSIONS).json() == []
+    made = _session(stranger)
+    assert PracticeSession.objects.get(pk=made["id"]).player.user == people["stranger"]
+    assert _client(people["member"]).get(SESSIONS).json() == [], "the new person's sitting is theirs alone"
+    # A take needs a body; an empty one is a plain 400 for anyone signed in, not a 404.
+    assert stranger.post(TAKES, {}, content_type="application/json").status_code == 400
 
 
 # -------------------------------------------------------------------------- takes

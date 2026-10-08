@@ -353,8 +353,9 @@ def test_the_summary_counts_only_the_signed_in_players_work(people, path):
 def test_the_summary_is_not_writable_and_is_behind_the_gate(people):
     member = _client(people["member"])
     assert member.post(f"{API}summary/", {"xp": 1000}, content_type="application/json").status_code == 405
-    assert _client(people["stranger"]).get(f"{API}summary/").status_code == 404
-    assert _client(None).get(f"{API}summary/").status_code == 404
+    assert _client(people["stranger"]).get(f"{API}summary/").status_code == 200, "anyone signed in has a summary of their own"
+    assert _client(people["stranger"]).post(f"{API}summary/", {"xp": 1000}, content_type="application/json").status_code == 405
+    assert _client(None).get(f"{API}summary/").status_code in (401, 403)
 
 
 def test_every_derived_read_uses_the_player_permission():

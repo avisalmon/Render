@@ -449,12 +449,12 @@ def test_the_bests_come_challenges_last_after_the_lessons_in_order(people, path)
 @pytest.mark.parametrize("name", ["weakness", "bests"])
 def test_the_new_reads_are_behind_the_gate_and_read_only(people, path, name):
     url = f"{API}{name}/"
-    assert _client().get(url).status_code == 404
-    assert _client(people["stranger"]).get(url).status_code == 404
-    client = _client(people["member"])
-    assert client.get(url).status_code == 200
-    for method in ("post", "put", "patch", "delete"):
-        assert getattr(client, method)(url).status_code == 405
+    assert _client().get(url).status_code in (401, 403)
+    for who in ("member", "stranger"):
+        client = _client(people[who])
+        assert client.get(url).status_code == 200, who
+        for method in ("post", "put", "patch", "delete"):
+            assert getattr(client, method)(url).status_code == 405, (who, method)
 
 
 def test_the_weakness_read_carries_the_claims(people, path):
@@ -587,9 +587,11 @@ def test_the_progress_page_has_the_weakness_panel(people):
         assert f'id="{element_id}"' in html
 
 
-def test_the_challenges_page_is_behind_the_gate(people):
-    assert _client().get("/improv/challenges/").status_code == 404
-    assert _client(people["stranger"]).get("/improv/challenges/").status_code == 404
+def test_the_challenges_page_is_for_anyone_signed_in_and_sends_a_visitor_to_the_front_door(people):
+    visitor = _client().get("/improv/challenges/")
+    assert visitor.status_code == 302
+    assert visitor.headers["Location"].startswith("/improv/?next=")
+    assert _client(people["stranger"]).get("/improv/challenges/").status_code == 200
 
 
 def test_the_docs_describe_the_new_reads_and_the_backlog_is_done():

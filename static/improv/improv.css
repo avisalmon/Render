@@ -225,7 +225,7 @@
 .im-swatch-outside { background: #e8907f; }
 .im-exercise-panel { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 1rem; align-items: center; }
 .im-exercise-panel > .im-h2 { grid-column: 1; }
-.im-exercise-panel > a { grid-column: 2; grid-row: 1 / span 4; }
+.im-exercise-panel > .im-exercise-actions { grid-column: 2; grid-row: 1 / span 4; display: flex; gap: .5rem; align-items: center; }
 .im-exercise-panel > p { grid-column: 1; margin: .1rem 0; }
 
 /* Lists that sit beside each other */
@@ -294,3 +294,19 @@
 #ch-learn-box[hidden], #ch-results-box[hidden] { display: none; }
 .im-work { color: var(--im-accent); margin: .15rem 0 0; }
 .im-work:empty { display: none; }
+
+/* SPR-I.9: the front door, sign up, feedback, and the signed-in account strip */
+.im-account { display: flex; align-items: center; gap: .6rem; margin: 0; white-space: nowrap; font-size: .8rem; color: var(--im-muted); }
+.im-who { max-width: 11rem; overflow: hidden; text-overflow: ellipsis; }
+.im-logout { background: transparent; border: 0; padding: 0; font: inherit; font-size: .8rem; cursor: pointer; }
+.im-nav-feedback { color: var(--im-accent); }
+.im-form { display: flex; flex-direction: column; gap: .15rem; }
+.im-form .im-field { flex-direction: column; align-items: flex-start; gap: .2rem; }
+.im-form .im-input-wide { width: min(100%, 22rem); box-sizing: border-box; }
+.im-points { margin: .2rem 0 .5rem 1.1rem; padding: 0; display: flex; flex-direction: column; gap: .3rem; }
+.im-field-fill { flex: 1 1 0; min-height: 0; flex-direction: column; align-items: stretch; flex-wrap: nowrap; }
+.im-field-fill .im-textarea { flex: 1 1 0; min-height: 0; resize: none; }
+.im-feedback-list { flex: 1 1 0; min-height: 0; overflow-y: auto; margin: .2rem 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: .35rem; }
+.im-feedback-list li { border: 1px solid #2a2d33; border-radius: .4rem; padding: .3rem .6rem; font-size: .9rem; overflow-wrap: anywhere; }
+.im-feedback-list .im-note { margin: 0; }
+#welcome .im-note, #signup .im-note { max-width: 40rem; }

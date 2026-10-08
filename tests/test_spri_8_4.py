@@ -165,10 +165,17 @@ def test_attempts_are_filtered_by_key_and_kind(people):
 
 
 def test_attempts_are_behind_the_gate(people):
-    assert _client(None).get(f"{API}drill-attempts/").status_code == 404
-    assert _client(people["stranger"]).get(f"{API}drill-attempts/").status_code == 404
-    assert _json(_client(people["stranger"]), "post", f"{API}drill-attempts/", _attempt()).status_code == 404
+    assert _client(None).get(f"{API}drill-attempts/").status_code in (401, 403)
+    assert _json(_client(None), "post", f"{API}drill-attempts/", _attempt()).status_code in (401, 403)
     assert DrillAttempt.objects.count() == 0
+
+
+def test_a_person_without_a_group_keeps_attempts_of_their_own(people):
+    stranger = _client(people["stranger"])
+    assert stranger.get(f"{API}drill-attempts/").status_code == 200
+    assert _json(stranger, "post", f"{API}drill-attempts/", _attempt()).status_code == 201
+    assert DrillAttempt.objects.get().player.user == people["stranger"]
+    assert _client(people["one"]).get(f"{API}drill-attempts/").json() == [], "another player never sees it"
 
 
 def test_a_players_attempts_go_when_the_player_goes(people):
