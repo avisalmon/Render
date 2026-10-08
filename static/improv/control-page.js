@@ -69,7 +69,17 @@
     return { type: "on", note: data[1], velocity: data[2] };
   }
 
+  const NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+
+  // The last key the browser heard, so a key that does nothing can be told from a key that never arrived.
+  function showHeard(note) {
+    const el = document.getElementById("im-heard");
+    if (el) el.textContent = `heard ${NAMES[note % 12]}${Math.floor(note / 12) - 1} (${note})`;
+  }
+
   function onMessage(event) {
+    const heard = noteOn(event.data);
+    if (heard) showHeard(heard.note);
     const action = controller.handle(noteOn(event.data), event.timeStamp);
     if (action) press(action);
   }
@@ -91,9 +101,11 @@
   });
   scheduleHints();
 
+  // Chrome stops delivering a port's messages once nothing holds its MIDIAccess, so this one is kept.
   navigator
     .requestMIDIAccess({ sysex: false })
     .then((access) => {
+      window.__improvMidiAccess = access;
       attach(access);
       access.addEventListener("statechange", () => attach(access));
       document.documentElement.dataset.keys = "on";

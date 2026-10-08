@@ -7,7 +7,8 @@
      data-api-player="{{ api.player }}"
      data-api-qualities="{{ api.qualities }}"
      data-api-scales="{{ api.scales }}"
-     data-api-chord-scales="{{ api.chord_scales }}">
+     data-api-chord-scales="{{ api.chord_scales }}"
+     data-api-fingerings="{{ api.fingerings }}">
 
   <div class="im-play-head">
     <h1 class="im-title">Reference</h1>
@@ -40,6 +41,11 @@
     <div id="ref-keyboard" class="im-keyboard" aria-label="Keyboard"></div>
     <p id="ref-notes" class="im-ref-notes"></p>
     <p id="ref-steps" class="im-note"></p>
+    <div id="ref-fingering" hidden>
+      <h3 class="im-h3">Fingering, running up two octaves (thumb is 1; coming down is the same in reverse)</h3>
+      <div id="ref-finger-strip" class="im-strip" aria-label="Right and left hand fingering"></div>
+      <p id="ref-finger-note" class="im-note" hidden>No fingering is stored for this scale yet.</p>
+    </div>
   </section>
 
   <section class="im-panel im-fill" aria-label="What goes with it">
@@ -54,6 +60,7 @@
 {% block scripts %}
 <script src="{% static 'improv/chart.js' %}"></script>
 <script src="{% static 'improv/reference.js' %}"></script>
+<script src="{% static 'improv/scale.js' %}"></script>
 <script src="{% static 'improv/keyboard-view.js' %}"></script>
 <script src="{% static 'improv/reference-page.js' %}"></script>
 {% endblock %}

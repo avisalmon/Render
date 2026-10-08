@@ -46,12 +46,12 @@ test("a scale's notes are spelled by letter, one letter each", () => {
 test("the left hand starts at the tonic, the right hand an octave above", () => {
   const steps = Scale.buildSteps(0, 2);
   assert.equal(steps.length, 29);
-  assert.equal(steps[0].left, 48);
-  assert.equal(steps[0].right, 60);
-  assert.equal(steps[14].left, 72);
-  assert.equal(steps[14].right, 84);
-  assert.equal(steps[28].left, 48);
-  assert.equal(steps[28].right, 60);
+  assert.equal(steps[0].left, 36);
+  assert.equal(steps[0].right, 48);
+  assert.equal(steps[14].left, 60);
+  assert.equal(steps[14].right, 72);
+  assert.equal(steps[28].left, 36);
+  assert.equal(steps[28].right, 48);
 });
 
 test("a scale goes up and comes back down the same notes, with the top note played once", () => {

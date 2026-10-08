@@ -177,6 +177,8 @@
 /* Piano keys as buttons (SPR-I.7.1) */
 .im-keys { margin-left: auto; color: var(--im-muted); font-size: .8rem; white-space: nowrap; }
 .im-keys b { color: var(--im-accent); font-weight: 600; }
+.im-keys-heard { font-style: normal; color: var(--im-fg); margin-left: .35rem; }
+.im-keys-heard:empty { display: none; }
 [data-key-hint]::after { content: attr(data-key-hint); margin-left: .6em; padding: 0 .4em; border: 1px solid currentColor; border-radius: .25rem; font-size: .7em; font-weight: 700; opacity: .75; vertical-align: .1em; }
 .im-key-pressed { outline: 2px solid var(--im-fg); outline-offset: 2px; }
 
@@ -271,6 +273,7 @@
 .im-strip { display: flex; flex-wrap: wrap; gap: .2rem; align-content: flex-start; }
 .im-sc-cell { display: flex; flex-direction: column; align-items: center; min-width: 1.9rem; padding: .1rem .2rem; border: 1px solid #2a2d33; border-radius: .25rem; font-size: .75rem; line-height: 1.15; }
 .im-sc-note { font-weight: 700; }
+.im-sc-legend { border-color: transparent; min-width: 1.4rem; }
 .im-sc-finger { color: var(--im-muted); }
 .im-sc-cell[data-state="hit"] { background: #2f5a37; border-color: #6fbf7a; }
 .im-sc-cell[data-state="partial"] { background: #5a4a1f; border-color: #e8c06a; }

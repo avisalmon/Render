@@ -36,6 +36,7 @@ def people(db):
     member.groups.add(group)
     stranger = User.objects.create_user("p35stranger", password=PASSWORD)
     call_command("seed_improv_theory", stdout=io.StringIO())
+    call_command("seed_improv_fingerings", stdout=io.StringIO())
     return {"member": member, "stranger": stranger}
 
 
@@ -69,7 +70,7 @@ def test_the_page_says_where_every_table_it_needs_is_and_they_all_answer(people)
     html = _html(people["member"])
     client = _client(people["member"])
     urls = re.findall(r'data-api-[a-z-]+="([^"]+)"', html)
-    assert len(urls) == 4, "the player's spelling, the chords, the scales and the pairings"
+    assert len(urls) == 5, "the player's spelling, the chords, the scales, the pairings and the fingerings"
     for url in urls:
         reply = client.get(url)
         assert reply.status_code == 200, url
@@ -86,7 +87,7 @@ def test_the_menu_leads_to_the_reference(people):
 def test_every_script_the_page_loads_is_served_and_in_the_right_order(people):
     html = _html(people["member"])
     names = [Path(src).name for src in re.findall(r'<script src="([^"]+)"', html) if Path(src).name not in ("control.js", "control-page.js")]
-    assert names == ["chart.js", "reference.js", "keyboard-view.js", "reference-page.js"]
+    assert names == ["chart.js", "reference.js", "scale.js", "keyboard-view.js", "reference-page.js"]
     for name in names:
         assert finders.find(f"improv/{name}"), f"{name} is not found by staticfiles"
 
@@ -106,7 +107,7 @@ def test_every_dataset_attribute_the_script_reads_is_in_the_template():
     script = PAGE_JS.read_text(encoding="utf-8")
     html = TEMPLATE.read_text(encoding="utf-8")
     camels = set(re.findall(r"host\.dataset\.(\w+)", script))
-    assert len(camels) == 4
+    assert len(camels) == 5
     for camel in camels:
         kebab = "data-" + re.sub(r"([A-Z])", lambda m: "-" + m.group(1).lower(), camel)
         assert kebab in html, f"the script reads {camel} but the template has no {kebab}"

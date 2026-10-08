@@ -153,12 +153,12 @@ def test_the_page_is_behind_the_gate(db):
 # ------------------------------------------------------------------ in a browser
 
 
-def test_it_opens_in_drill_on_g_with_start_ready_and_no_errors(world):
+def test_it_opens_in_drill_on_c_with_start_ready_and_no_errors(world):
     page, errors, _, base = world
     _open(page, base)
     assert page.locator("#ch-mode option").all_inner_texts()[0].lower().startswith("drill")
-    assert page.locator("#ch-key option").all_inner_texts() == ["G", "D", "A", "E", "B", "F#", "Db", "Ab", "Eb", "Bb", "F", "C"]
-    assert page.locator("#ch-key").input_value() == "7"
+    assert page.locator("#ch-key option").all_inner_texts() == ["C", "G", "D", "A", "E", "B", "F#", "Db", "Ab", "Eb", "Bb", "F"]
+    assert page.locator("#ch-key").input_value() == "0"
     assert page.locator("#ch-level option").count() == 3
     assert page.locator("#ch-hint").is_disabled() and page.locator("#ch-skip").is_disabled()
     assert page.locator("#chords").get_attribute("data-running") == "no"
@@ -171,7 +171,7 @@ def test_start_shows_a_prompt_with_a_running_clock(world):
     page.click("#ch-start")
     page.wait_for_selector('#chords[data-running="yes"]')
     prompt = _prompt(page)
-    assert prompt["key_pc"] == 7 and prompt["level"] == 2
+    assert prompt["key_pc"] == 0 and prompt["level"] == 2
     assert prompt["title"] in page.locator("#ch-prompt").inner_text()
     assert page.locator("#ch-hint").is_enabled() and page.locator("#ch-skip").is_enabled()
     first = page.locator("#ch-timer").inner_text()
@@ -194,7 +194,7 @@ def test_the_right_chord_is_marked_saved_and_the_next_one_shown(world):
     )
     row = DrillAttempt.objects.get()
     assert row.player == player and row.is_correct and row.wrong_tries == 0 and not row.hint_used and not row.skipped
-    assert row.response_ms is not None and row.prompt["id"] == first["id"] and row.key_pc == 7 and row.level == 2
+    assert row.response_ms is not None and row.prompt["id"] == first["id"] and row.key_pc == 0 and row.level == 2
     assert not errors, errors
 
 
@@ -267,17 +267,17 @@ def test_c8_starts_and_stops_and_a_stopped_drill_saves_nothing_more(world):
     assert not errors, errors
 
 
-def test_circle_walks_the_keys_from_g(world):
+def test_circle_walks_the_keys_from_c(world):
     page, errors, _, base = world
     _open(page, base, "?mode=circle&level=1")
     page.click("#ch-start")
     page.wait_for_selector('#chords[data-running="yes"]')
-    assert _prompt(page)["key_pc"] == 7
+    assert _prompt(page)["key_pc"] == 0
     assert "1" in page.locator("#ch-progress").inner_text() and "84" in page.locator("#ch-progress").inner_text()
     for _ in range(7):
         page.evaluate(PLAY_CHORD, page.evaluate(RIGHT_NOTES))
         page.wait_for_timeout(900)
-    assert _prompt(page)["key_pc"] == 2
+    assert _prompt(page)["key_pc"] == 7
     assert not errors, errors
 
 

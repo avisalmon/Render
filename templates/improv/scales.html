@@ -24,12 +24,16 @@
       <label class="im-field">Level
         <select id="sc-level" class="im-select"></select>
       </label>
+      <label class="im-field">Left hand starts on
+        <select id="sc-octave" class="im-select"></select>
+      </label>
       <label class="im-field">Tempo (beats a minute)
         <input id="sc-tempo" class="im-input" type="number" min="30" max="160" step="1" value="60">
       </label>
       <div class="im-field">
         <button id="sc-start" class="im-btn im-btn-big" type="button" data-key-action="primary" disabled>Start</button>
         <button id="sc-next" class="im-btn im-btn-quiet" type="button" data-key-action="secondary" disabled>Next key</button>
+        <label class="im-check"><input id="sc-auto" type="checkbox" checked> Keep going</label>
       </div>
     </div>
     <p id="sc-line" class="im-note"></p>

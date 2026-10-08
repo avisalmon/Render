@@ -7,7 +7,7 @@ const run = (root_pc, octaves, score) => ({ root_pc, octaves, score, tempo_bpm: 
 
 test("a player with no runs is told where to begin", () => {
   assert.match(Work.scaleWork(empty, "sharps"), /No scale run yet/);
-  assert.match(Work.scaleWork(empty, "sharps"), /G at 2 octaves/);
+  assert.match(Work.scaleWork(empty, "sharps"), /C at 2 octaves/);
 });
 
 test("the weakest scale not yet passed is the one to work on", () => {
@@ -17,14 +17,14 @@ test("the weakest scale not yet passed is the one to work on", () => {
 });
 
 test("when every run passed, the next key in the circle at the same length is suggested", () => {
-  const read = { ...empty, scales: [run(7, 2, 90)], totals: { runs: 1, passes: 1, attempts: 0, clean: 0 } };
-  assert.match(Work.scaleWork(read, "sharps"), /Next: D at 2 octaves/);
+  const read = { ...empty, scales: [run(0, 2, 90)], totals: { runs: 1, passes: 1, attempts: 0, clean: 0 } };
+  assert.match(Work.scaleWork(read, "sharps"), /Next: G at 2 octaves/);
 });
 
 test("the circle moves on to three octaves once all twelve keys pass at two", () => {
   const scales = Work.CIRCLE.map((pc) => run(pc, 2, 85));
   const read = { ...empty, scales, totals: { runs: 12, passes: 12, attempts: 0, clean: 0 } };
-  assert.match(Work.scaleWork(read, "sharps"), /Next: G at 3 octaves/);
+  assert.match(Work.scaleWork(read, "sharps"), /Next: C at 3 octaves/);
 });
 
 test("when everything passed at every length there is nothing left to chase", () => {

@@ -942,7 +942,7 @@ Avi asked to focus on chord training. This chapter is what was agreed, in his wo
 > the chord, and shows it visually if I press a hint button.
 
 His answers to the two open questions: the chord drills run **all twelve keys in circle-of-fifths
-order starting from G** (G, D, A, E, B, F#/Gb, Db, Ab, Eb, Bb, F, C), and the scale tempo
+order starting from G** (changed after his live check, see "The live check" below: it starts at C), and the scale tempo
 **defaults to 60 bpm, can be changed, and is remembered for next time**. Everything else below
 was proposed back to him and accepted ("all the rest you got it").
 
@@ -965,7 +965,7 @@ Start (or C8). Four clicks count in, then the click keeps the beat and the playe
 
 A step is one note in each hand, so the player plays two keys at the same moment. Steps are 14 times
 the octaves, plus one. The right hand plays an octave above the left. The left hand starts on the
-tonic at MIDI 48 plus the root for two octaves, and at MIDI 36 plus the root for three and four. The
+tonic two octaves below middle C (MIDI 36 plus the root) for every length; the player can pick another octave on the screen (see "The live check"). The
 right hand always stays below A#7 (MIDI 106), because the top three keys are the control keys: where
 the top note would reach it (B and Bb in four octaves) the whole scale moves down an octave. **Four
 octaves needs an 88-key piano.** The screen says so on that level, rather than failing silently on a
@@ -997,6 +997,34 @@ the player (`Player.trainer_tempo`), so the next visit opens at the last tempo u
 
 **Key names.** Standard spelling for each key (Db, Eb, Ab, Bb); F#/Gb follows the player's
 sharps or flats setting. Avi's "D#" is shown as Eb, which is the same key.
+
+### The live check (SPR-I.8.7, Avi 2026-10-07)
+
+After playing the pushed trainer Avi said: C8 did not start anything; start with C and then G, D, A,
+E; ask for the next length immediately, 2, 3, 4 notes a beat; the scale should start lower, or follow
+where he wants to start; and on the Play screen the backing track drowns his own playing. What changed:
+
+- **The circle starts at C**, then G, D, A, E, B, F#/Gb, Db, Ab, Eb, Bb, F, for both screens and for the
+  "work on this" line.
+- **Keep going.** A checkbox, on by default and remembered. A passed run goes straight on to the next
+  length in the same key (2 octaves and 2 notes a beat, then 3 and 3, then 4 and 4) after a two second
+  pause, with the usual four-click count-in. Pressing Start or C8 during the pause starts at once.
+  A pass at four octaves moves to the next key at two octaves and waits, because the hands have to
+  move. A run that did not pass stays where it is and waits. Stop with C8 or the Stop button.
+- **Where it starts.** The left hand's tonic defaults to two octaves below middle C (C2 for C). A
+  select, "Left hand starts on", offers every octave the scale fits in without leaving the piano or
+  touching the control keys; the choice is remembered in the browser and kept when the key changes,
+  and a start a key cannot fit is moved to the nearest one that can.
+- **Heard keys.** The header shows the last key the browser heard from the piano ("heard C8 (108)"),
+  so a key that does nothing can be told apart from a key that never arrived. The control layer also
+  keeps hold of its MIDI access: Chrome stops delivering a port's messages once nothing references
+  its access object, which fits "it worked, then C8 did nothing".
+- **A quieter band.** The Play mix starts at 25 to 40 percent (it was 70 to 90) and each level and mute
+  is remembered in the browser.
+- **The Reference screen.** A scale with stored fingering (the major scale, in every key) now shows a
+  strip with the right hand and left hand finger under each note, running up two octaves; coming down
+  is the same in reverse. A scale with none says so. The chord menu names each chord as it is written
+  in the chosen key, then what it is called: "Cmaj7  -  Major seventh", "Cm  -  Minor triad".
 
 ### The chord trainer (`/improv/chords/`)
 

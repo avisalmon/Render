@@ -57,16 +57,44 @@
     });
   }
 
-  // The left hand's first note. Two octaves sit around middle C; more start lower, and a scale whose
-  // top would touch the control keys moves down an octave.
-  function leftStart(pc, octaves) {
-    let start = (octaves === 2 ? 48 : 36) + pc;
-    if (start + 12 * octaves + 12 >= CONTROL_FLOOR) start -= 12;
-    return start;
+  // The left hand's first note is the tonic in some octave. The default is two octaves below middle C
+  // (C2 for C); a scale whose top would touch the control keys moves down an octave. The player can pick
+  // any octave the scale fits in, and a start it does not fit in is pulled to the nearest one that does.
+  function noteOf(pc, octave) {
+    return 12 * (octave + 1) + pc;
   }
 
-  function buildSteps(pc, octaves) {
-    const start = leftStart(pc, octaves);
+  function startChoices(pc, octaves) {
+    const out = [];
+    for (let octave = 0; octave <= 8; octave++) {
+      const left = noteOf(pc, octave);
+      if (left >= LOWEST_KEY && left + 12 * octaves + 12 < CONTROL_FLOOR) out.push(octave);
+    }
+    return out;
+  }
+
+  function defaultStart(pc, octaves) {
+    return noteOf(pc, 2) + 12 * octaves + 12 >= CONTROL_FLOOR ? 1 : 2;
+  }
+
+  function resolveStart(pc, octaves, startOctave) {
+    const choices = startChoices(pc, octaves);
+    if (typeof startOctave !== "number" || !Number.isFinite(startOctave)) return defaultStart(pc, octaves);
+    let best = choices[0];
+    for (const octave of choices) if (Math.abs(octave - startOctave) < Math.abs(best - startOctave)) best = octave;
+    return best;
+  }
+
+  function startName(pc, octave, spelling) {
+    return `${keyName(pc, spelling)}${octave}`;
+  }
+
+  function leftStart(pc, octaves, startOctave) {
+    return noteOf(pc, resolveStart(pc, octaves, startOctave));
+  }
+
+  function buildSteps(pc, octaves, startOctave) {
+    const start = leftStart(pc, octaves, startOctave);
     const total = 7 * octaves;
     const up = [];
     for (let k = 0; k <= total; k++) {
@@ -99,7 +127,7 @@
     return up.concat(up.slice(0, -1).reverse());
   }
 
-  function plan(pc, octaves, spelling, fingerings) {
+  function plan(pc, octaves, spelling, fingerings, startOctave) {
     const rows = fingerings || [];
     const find = (hand) => rows.find((r) => r.root_pc === pc && r.hand === hand);
     const leftRow = find("L");
@@ -107,13 +135,14 @@
     const left = leftRow ? fingersUpAndDown(leftRow, octaves) : null;
     const right = rightRow ? fingersUpAndDown(rightRow, octaves) : null;
     const names = scaleNotes(pc, spelling);
-    const steps = buildSteps(pc, octaves).map((step) => ({
+    const startAt = resolveStart(pc, octaves, startOctave);
+    const steps = buildSteps(pc, octaves, startAt).map((step) => ({
       ...step,
       name: names[step.degree],
       leftFinger: left ? left[step.index] : null,
       rightFinger: right ? right[step.index] : null,
     }));
-    return { key: keyName(pc, spelling), pc, octaves, steps, hasFingering: Boolean(left && right) };
+    return { key: keyName(pc, spelling), pc, octaves, steps, startOctave: startAt, hasFingering: Boolean(left && right) };
   }
 
   // ---------------------------------------------------------------------- the judge
@@ -233,8 +262,8 @@
 
   // ---------------------------------------------------------------------- the screen's rules
 
-  // The order Avi drills in: round the circle of fifths from G.
-  const CIRCLE = [7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5, 0];
+  // The order Avi drills in: C, then round the circle of fifths.
+  const CIRCLE = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5];
   const TEMPO_MIN = 30;
   const TEMPO_MAX = 160;
   const TEMPO_DEFAULT = 60;
@@ -263,6 +292,21 @@
 
   function runMs(plan, clock) {
     return plan.steps.length * clock.stepMs;
+  }
+
+  // What happens when a run ends: a pass goes straight on to the next length in the same key (two
+  // octaves, then three, then four); a pass at four octaves moves to the next key and waits; a run that
+  // did not pass stays where it is and waits.
+  function afterRun(pc, level, passed) {
+    if (!passed) return { pc, level, auto: false, newKey: false };
+    if (level < 3) return { pc, level: level + 1, auto: true, newKey: false };
+    return { pc: nextKey(pc), level: 1, auto: false, newKey: true };
+  }
+
+  function nextWords(next, spelling) {
+    if (next.newKey) return `Next key: ${keyName(next.pc, spelling)}, ${levelLabel(next.level)}. Press Start when you are ready.`;
+    if (next.auto) return `Next: ${levelLabel(next.level)}.`;
+    return "Start again, or slow the tempo.";
   }
 
   function levelLabel(level) {
@@ -320,5 +364,5 @@
     return lit;
   }
 
-  return { CIRCLE, TEMPO_MIN, TEMPO_MAX, TEMPO_DEFAULT, nextKey, clampTempo, timeline, runBeats, runMs, levelLabel, verdict, feelWords, missedWords, fingerWords, bestOf, keyboardRange, litNotes, JUDGE_VERSION, PASS_SCORE, PITCH_WEIGHT, TIMING_WEIGHT, stepMs, toleranceMs, judge, toRecord, MAJOR, CONTROL_FLOOR, LOWEST_KEY, levelInfo, needsFullKeyboard, keyName, scaleNotes, leftStart, buildSteps, fingers, fingersUpAndDown, plan };
+  return { afterRun, nextWords, startChoices, defaultStart, startName, CIRCLE, TEMPO_MIN, TEMPO_MAX, TEMPO_DEFAULT, nextKey, clampTempo, timeline, runBeats, runMs, levelLabel, verdict, feelWords, missedWords, fingerWords, bestOf, keyboardRange, litNotes, JUDGE_VERSION, PASS_SCORE, PITCH_WEIGHT, TIMING_WEIGHT, stepMs, toleranceMs, judge, toRecord, MAJOR, CONTROL_FLOOR, LOWEST_KEY, levelInfo, needsFullKeyboard, keyName, scaleNotes, leftStart, buildSteps, fingers, fingersUpAndDown, plan };
 });

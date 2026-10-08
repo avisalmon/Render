@@ -31,7 +31,7 @@
 
   function chordWork(read, spelling) {
     const totals = read.totals || {};
-    if (!totals.attempts) return "No chord answers yet. Start a drill in G.";
+    if (!totals.attempts) return "No chord answers yet. Start a drill in C.";
     const parts = [];
     const slow = (read.slowest_chords || [])[0];
     if (slow) parts.push(`Slowest: ${slow.title}, ${seconds(slow.median_ms)}.`);

@@ -16,6 +16,9 @@
   const AHEAD_S = 0.2;
   const LEAD_S = 0.3;
   const TAIL_MS = 150;
+  const GAP_MS = 2000;
+  const STORE_OCTAVE = "improv.scales.startOctave";
+  const STORE_AUTO = "improv.scales.keepGoing";
 
   const state = {
     profile: null,
@@ -40,9 +43,28 @@
     midi: null,
     listening: null,
     tempoSaved: Scale.TEMPO_DEFAULT,
+    startOctave: null,
+    pending: null,
   };
 
   const say = (text) => ($("sc-status").textContent = text);
+
+  // Per-viewer conveniences: where the player likes to start, and whether the next length follows.
+  function remember(key, value) {
+    try {
+      window.localStorage.setItem(key, String(value));
+    } catch (e) {
+      // storage can be blocked; the choice then lasts until the page closes
+    }
+  }
+
+  function recall(key) {
+    try {
+      return window.localStorage.getItem(key);
+    } catch (e) {
+      return null;
+    }
+  }
 
   function make(tag, text, className) {
     const el = document.createElement(tag);
@@ -119,10 +141,17 @@
     $("sc-line").textContent = parts.join(" ");
   }
 
+  function drawStartChoices() {
+    const octaves = Scale.levelInfo(level()).octaves;
+    fill($("sc-octave"), Scale.startChoices(rootPc(), octaves).map((o) => [o, Scale.startName(rootPc(), o, spelling())]), state.plan.startOctave);
+  }
+
   function chooseScale() {
     if (state.mode === "running") return;
-    state.plan = Scale.plan(rootPc(), Scale.levelInfo(level()).octaves, spelling(), state.fingerings);
-    $("sc-name").textContent = `${state.plan.key} major, both hands, ${Scale.levelLabel(level())}`;
+    state.plan = Scale.plan(rootPc(), Scale.levelInfo(level()).octaves, spelling(), state.fingerings, state.startOctave);
+    drawStartChoices();
+    host.dataset.startNote = String(state.plan.steps[0].left);
+    $("sc-name").textContent = `${state.plan.key} major, both hands, ${Scale.levelLabel(level())}, from ${Scale.startName(rootPc(), state.plan.startOctave, spelling())}`;
     drawKeyboard();
     drawStrip();
     lightKeys(null);
@@ -228,7 +257,13 @@
 
   // ------------------------------------------------------------------ run and finish
 
+  function cancelPending() {
+    if (state.pending) window.clearTimeout(state.pending);
+    state.pending = null;
+  }
+
   async function start() {
+    cancelPending();
     if (state.mode === "running" || !state.plan) return;
     ensureAudio();
     if (state.ctx.state !== "running") await state.ctx.resume();
@@ -280,7 +315,11 @@
     $("sc-feel").textContent = Scale.feelWords(result);
     const missed = Scale.missedWords(state.plan, result);
     $("sc-misses").textContent = missed.length ? `Missed: ${missed.join(", ")}.` : "No note was missed.";
-    say(result.passed ? "Passed. Next key when you are ready." : "Not yet. Start again, or slow the tempo.");
+    const keepGoing = $("sc-auto").checked;
+    const next = Scale.afterRun(rootPc(), level(), result.passed);
+    if (!result.passed) say("Not yet. Start again, or slow the tempo.");
+    else if (!keepGoing) say("Passed. Next key when you are ready.");
+    else say(`Passed. ${Scale.nextWords(next, spelling())}${next.auto ? " Starting in a moment." : ""}`);
     const record = Scale.toRecord(result, { rootPc: rootPc(), octaves: info.octaves, perBeat: info.perBeat, tempo: state.clock.tempo });
     state.mode = "idle";
     try {
@@ -288,11 +327,22 @@
       state.runs.unshift(saved);
       listRuns();
       showBest();
+      advance(result.passed && keepGoing ? next : null);
       host.dataset.saved = "yes";
       refreshWork();
     } catch (e) {
       say("The run could not be saved. " + e.message);
     }
+  }
+
+  // Moves the key and the length on to what the pass earned, and starts it after a short pause when it
+  // is the same key's next length. A new key waits for the player, who has to move their hands.
+  function advance(next) {
+    if (!next || (!next.auto && !next.newKey)) return;
+    $("sc-key").value = String(next.pc);
+    $("sc-level").value = String(next.level);
+    chooseScale();
+    if (next.auto) state.pending = window.setTimeout(start, GAP_MS);
   }
 
   function clearResult() {
@@ -302,13 +352,14 @@
   }
 
   function lock(running) {
-    for (const id of ["sc-key", "sc-level", "sc-tempo"]) $(id).disabled = running;
+    for (const id of ["sc-key", "sc-level", "sc-tempo", "sc-octave"]) $(id).disabled = running;
     $("sc-start").textContent = running ? "Stop" : "Start";
     $("sc-next").disabled = running;
   }
 
   function nextKey() {
     if (state.mode === "running") return;
+    cancelPending();
     $("sc-key").value = String(Scale.nextKey(rootPc()));
     chooseScale();
   }
@@ -435,6 +486,9 @@
     fill($("sc-key"), Scale.CIRCLE.map((pc) => [pc, Scale.keyName(pc, spelling())]), asked.get("key") !== null && Scale.CIRCLE.includes(askedKey) ? askedKey : Scale.CIRCLE[0]);
     fill($("sc-level"), [1, 2, 3].map((n) => [n, Scale.levelLabel(n)]), [1, 2, 3].includes(askedLevel) ? askedLevel : 1);
     $("sc-tempo").value = state.tempoSaved;
+    const savedOctave = recall(STORE_OCTAVE);
+    state.startOctave = savedOctave !== null && savedOctave !== "" && Number.isFinite(Number(savedOctave)) ? Number(savedOctave) : null;
+    $("sc-auto").checked = recall(STORE_AUTO) !== "no";
     chooseScale();
     listRuns();
     refreshWork();
@@ -442,8 +496,24 @@
     $("sc-next").disabled = false;
     say("Pick the key, then Start. Four clicks, then play both hands.");
 
-    $("sc-key").addEventListener("change", chooseScale);
-    $("sc-level").addEventListener("change", chooseScale);
+    $("sc-key").addEventListener("change", () => {
+      cancelPending();
+      chooseScale();
+    });
+    $("sc-level").addEventListener("change", () => {
+      cancelPending();
+      chooseScale();
+    });
+    $("sc-octave").addEventListener("change", () => {
+      cancelPending();
+      state.startOctave = Number($("sc-octave").value);
+      remember(STORE_OCTAVE, state.startOctave);
+      chooseScale();
+    });
+    $("sc-auto").addEventListener("change", () => {
+      remember(STORE_AUTO, $("sc-auto").checked ? "yes" : "no");
+      if (!$("sc-auto").checked) cancelPending();
+    });
     $("sc-tempo").addEventListener("change", saveTempo);
     $("sc-start").addEventListener("click", () => (state.mode === "running" ? stop() : start()));
     $("sc-next").addEventListener("click", nextKey);

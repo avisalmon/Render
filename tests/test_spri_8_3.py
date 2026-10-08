@@ -136,11 +136,11 @@ def test_the_page_is_behind_the_gate(db):
 # ------------------------------------------------------------------ in a browser
 
 
-def test_it_opens_on_g_at_sixty_with_the_fingering_and_no_errors(world):
+def test_it_opens_on_c_at_sixty_with_the_fingering_and_no_errors(world):
     page, errors, _, base = world
     _open(page, base)
-    assert page.locator("#sc-key option").all_inner_texts() == ["G", "D", "A", "E", "B", "F#", "Db", "Ab", "Eb", "Bb", "F", "C"]
-    assert page.locator("#sc-key").input_value() == "7"
+    assert page.locator("#sc-key option").all_inner_texts() == ["C", "G", "D", "A", "E", "B", "F#", "Db", "Ab", "Eb", "Bb", "F"]
+    assert page.locator("#sc-key").input_value() == "0"
     assert page.locator("#sc-tempo").input_value() == "60"
     assert page.locator("#sc-strip .im-sc-cell").count() == 29
     assert page.locator("#sc-keyboard .im-key").count() > 24
@@ -187,15 +187,17 @@ def test_a_scale_played_right_in_tempo_is_judged_and_saved(world):
     page.wait_for_selector('#scales[data-running="yes"]')
     assert page.locator("#sc-start").inner_text() == "Stop"
     assert page.locator("#sc-key").is_disabled()
-    page.evaluate(PLAY_IT_RIGHT, {"pc": 7, "octaves": 2, "tempo": 160})
+    page.evaluate(PLAY_IT_RIGHT, {"pc": 0, "octaves": 2, "tempo": 160})
     page.wait_for_selector('#scales[data-saved="yes"]', timeout=10000)
     assert page.locator("#sc-verdict").inner_text().startswith("Passed")
     assert page.locator("#sc-misses").inner_text() == "No note was missed."
     assert page.locator("#sc-start").inner_text() == "Start"
     run = ScaleRun.objects.get(player=player)
-    assert run.root_pc == 7 and run.octaves == 2 and run.notes_per_beat == 2 and run.tempo_bpm == 160
+    assert run.root_pc == 0 and run.octaves == 2 and run.notes_per_beat == 2 and run.tempo_bpm == 160
     assert run.passed and run.score >= 90 and run.missed_steps == []
     assert page.locator("#sc-runs li").count() == 1
+    assert page.locator("#sc-level").input_value() == "2"
+    page.select_option("#sc-level", "1")
     assert "Your best here" in page.locator("#sc-best").inner_text()
     assert not errors, errors
 
@@ -235,8 +237,8 @@ def test_b7_moves_round_the_circle_of_fifths(world):
     _open(page, base)
     page.wait_for_selector('#sc-next[data-key-hint="B7"]')
     page.evaluate("window.__press(107)")
-    page.wait_for_function("document.getElementById('sc-key').value === '2'", timeout=5000)
-    assert "D major" in page.locator("#sc-name").inner_text()
+    page.wait_for_function("document.getElementById('sc-key').value === '7'", timeout=5000)
+    assert "G major" in page.locator("#sc-name").inner_text()
     assert not errors, errors
 
 

@@ -124,3 +124,12 @@ test("a missing row names nothing and throws nothing", () => {
   assert.equal(Ref.scaleView(null, 0, {}), null);
   assert.equal(Ref.chordView({ symbol: "x", intervals: [] }, 0, {}), null);
 });
+
+// ----------------------------------------------------------------- the menu line
+
+test("a chord is listed as it is written in the key, then what it is called", () => {
+  assert.equal(Ref.chordLabel(quality("maj7"), 0, "sharps"), "Cmaj7  -  Major seventh");
+  assert.equal(Ref.chordLabel(quality("m"), 0, "sharps"), "Cm  -  Minor triad");
+  assert.equal(Ref.chordLabel(quality("maj"), 7, "sharps"), "G  -  Major triad");
+  assert.equal(Ref.chordLabel(quality("7"), 10, "flats"), "Bb7  -  Dominant seventh");
+});

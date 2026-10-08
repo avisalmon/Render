@@ -9,17 +9,17 @@ const fs = require("node:fs");
 const Scale = require(path.join("..", "..", "static", "improv", "scale.js"));
 const seed = JSON.parse(fs.readFileSync(path.join("improv", "seed_data", "fingerings.json"), "utf8")).fingerings;
 
-test("the keys come in circle-of-fifths order from G", () => {
-  assert.deepEqual(Scale.CIRCLE, [7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5, 0]);
-  assert.deepEqual(Scale.CIRCLE.map((pc) => Scale.keyName(pc, "sharps")), ["G", "D", "A", "E", "B", "F#", "Db", "Ab", "Eb", "Bb", "F", "C"]);
+test("the keys come in circle-of-fifths order from C", () => {
+  assert.deepEqual(Scale.CIRCLE, [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5]);
+  assert.deepEqual(Scale.CIRCLE.map((pc) => Scale.keyName(pc, "sharps")), ["C", "G", "D", "A", "E", "B", "F#", "Db", "Ab", "Eb", "Bb", "F"]);
   assert.equal(new Set(Scale.CIRCLE).size, 12);
 });
 
-test("the next key follows the circle and comes round from C to G", () => {
+test("the next key follows the circle and comes round from F to C", () => {
+  assert.equal(Scale.nextKey(0), 7);
   assert.equal(Scale.nextKey(7), 2);
   assert.equal(Scale.nextKey(5), 0);
-  assert.equal(Scale.nextKey(0), 7);
-  assert.equal(Scale.nextKey(99), 7);
+  assert.equal(Scale.nextKey(99), 0);
 });
 
 test("a tempo is a whole number from 30 to 160, and 60 when it is nonsense", () => {

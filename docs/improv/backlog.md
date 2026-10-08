@@ -131,7 +131,7 @@ the piano, starting with the top key of the 88. Spec: ch. 8, "Two standing rules
 
 Avi, 2026-10-07: "I want to focus on chord training capabilities." A scale trainer (two hands in tempo, three
 levels, accuracy graded, fingering shown) and a chord trainer (every chord of a key and its positions, named by
-letter, timed, with a hint), in circle-of-fifths order from G, tempo default 60 and remembered. Spec: ch. 10.
+letter, timed, with a hint), in circle-of-fifths order from C (G at first, C after the live check), tempo default 60 and remembered. Spec: ch. 10.
 
 | Sprint | What | Traces | Status |
 |---|---|---|---|
@@ -141,6 +141,8 @@ letter, timed, with a hint), in circle-of-fifths order from G, tempo default 60 
 | SPR-I.8.4 | The chord pool, positions and matcher (pure, `drill.js`), the circle order, `DrillAttempt` with its endpoint | ch. 10 | DONE 2026-10-07 |
 | SPR-I.8.5 | The chords screen: Learn, Drill, Circle, the timer, wrong chord shown, Hint (B7), Skip (A#7), one screen | ch. 8, 10 | DONE 2026-10-07 |
 | SPR-I.8.6 | The trainer read (best per key, slowest chords, weakest keys) shown on both screens, menu items, both screens in the layout guard, scoped regression, ready to push | ch. 7, 8, 10 | DONE 2026-10-07 |
+| SPR-I.8.7 | Avi's live check: circle starts at C, keep going through 2, 3, 4 octaves, a lower and choosable start octave, the header shows the key heard and the MIDI access is kept, a quieter and remembered Play mix | ch. 10 | DONE 2026-10-07 |
+| SPR-I.8.8 | Reference: running-scale fingering for both hands, and chord menu lines like "Cmaj7  -  Major seventh" | ch. 10 | DONE 2026-10-07 |
 
 ---
 

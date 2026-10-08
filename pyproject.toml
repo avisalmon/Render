@@ -174,6 +174,7 @@ markers = [
     "spri84: SPR-I.8.4 improv the chord pool, positions, matcher and DrillAttempt",
     "spri85: SPR-I.8.5 improv the chords screen",
     "spri86: SPR-I.8.6 improv the trainer read, menu and layout guard",
+    "spri87: SPR-I.8.7 improv the live check of the trainer: C first, keep going, start octave, heard key, quieter band",
     "sprsl12: SL-D1 SensorLab the attempt, and who may see one",
     "sprsl13: SL-D2 SensorLab the five-step runner shell",
     "sprsl14: SL-D3 SensorLab the attempt API, and the share link",

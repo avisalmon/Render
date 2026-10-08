@@ -115,6 +115,7 @@ def reference(request):
         "qualities": reverse("improv:api-chord-qualities-list"),
         "scales": reverse("improv:api-scales-list"),
         "chord_scales": reverse("improv:api-chord-scales-list"),
+        "fingerings": reverse("improv:api-scale-fingerings-list"),
     }
     return render(request, "improv/reference.html", {"api": api})
 

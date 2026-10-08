@@ -20,9 +20,9 @@ function seeded(seed) {
 
 const names = (pool) => pool.map((c) => c.name);
 
-test("the keys come in circle-of-fifths order from G", () => {
-  assert.deepEqual(Drill.CIRCLE, [7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5, 0]);
-  assert.deepEqual(Drill.CIRCLE.map((pc) => Drill.keyName(pc, "sharps")), ["G", "D", "A", "E", "B", "F#", "Db", "Ab", "Eb", "Bb", "F", "C"]);
+test("the keys come in circle-of-fifths order from C", () => {
+  assert.deepEqual(Drill.CIRCLE, [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5]);
+  assert.deepEqual(Drill.CIRCLE.map((pc) => Drill.keyName(pc, "sharps")), ["C", "G", "D", "A", "E", "B", "F#", "Db", "Ab", "Eb", "Bb", "F"]);
   assert.equal(Drill.keyName(6, "flats"), "Gb");
 });
 
@@ -212,7 +212,7 @@ test("a different seed gives a different order, the same seed the same", () => {
   assert.notDeepEqual(a, c);
 });
 
-test("the circle asks each chord of each key once, round the keys from G", () => {
+test("the circle asks each chord of each key once, round the keys from C", () => {
   const prompts = Drill.makeCircle(1, "sharps", seeded(3));
   assert.equal(prompts.length, 84);
   assert.deepEqual([...new Set(prompts.map((p) => p.key_pc))], Drill.CIRCLE);

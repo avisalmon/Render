@@ -36,6 +36,12 @@
     return MIDDLE_C + rootPc;
   }
 
+  // The menu line for a chord in a key: how it is written, then what it is called. "Cmaj7  -  Major seventh".
+  function chordLabel(quality, rootPc, spelling) {
+    const name = String(quality.name || "");
+    return `${Chart.chordName(spell(rootPc, spelling), quality.symbol, "")}  -  ${name.charAt(0).toUpperCase()}${name.slice(1)}`;
+  }
+
   function chordView(quality, rootPc, options) {
     if (!quality || !(quality.intervals || []).length) return null;
     const spelling = (options || {}).spelling === "flats" ? "flats" : "sharps";
@@ -108,5 +114,5 @@
     return { from, to };
   }
 
-  return { keyChoices, chordView, scaleView, keyboardRange, STEPS };
+  return { keyChoices, chordLabel, chordView, scaleView, keyboardRange, STEPS };
 });

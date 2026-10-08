@@ -41,7 +41,8 @@ def reference(browser, live_server, db, one_request_at_a_time):
     group, _ = Group.objects.get_or_create(name="improv_players")
     user = User.objects.create_user("p35browser", password=PASSWORD)
     user.groups.add(group)
-    call_command("seed_improv_theory", stdout=io.StringIO())
+    for command in ("seed_improv_theory", "seed_improv_fingerings"):
+        call_command(command, stdout=io.StringIO())
 
     client = Client()
     client.force_login(user)
@@ -146,4 +147,52 @@ def test_a_plain_major_triad_is_written_the_way_a_chart_writes_it(reference):
     page.select_option("#ref-key", "7")
     page.wait_for_function("document.getElementById('ref-name').textContent === 'G'")
     assert len(_lit(page)) == 3
+    assert not errors, errors
+
+
+def test_the_chord_menu_names_each_chord_in_the_chosen_key(reference):
+    opener, errors, _ = reference
+    page = opener()
+    options = page.locator("#ref-chord option").all_inner_texts()
+    assert "C  -  Major triad" in options
+    assert "Cm  -  Minor triad" in options
+    assert "Cmaj7  -  Major seventh" in options
+    page.select_option("#ref-chord", "maj7")
+    page.select_option("#ref-key", "7")
+    options = page.locator("#ref-chord option").all_inner_texts()
+    assert "Gmaj7  -  Major seventh" in options and "Gm  -  Minor triad" in options
+    assert page.locator("#ref-chord").input_value() == "maj7"
+    assert page.locator("#ref-name").inner_text() == "Gmaj7"
+    assert not errors, errors
+
+
+def test_a_scale_shows_the_fingering_of_both_hands_running_up(reference):
+    opener, errors, _ = reference
+    page = opener()
+    page.select_option("#ref-kind", "scale")
+    page.select_option("#ref-scale", "major")
+    cells = page.locator("#ref-finger-strip .im-sc-cell")
+    assert cells.count() == 16
+    rows = [c.locator("span").all_inner_texts() for c in cells.all()]
+    assert rows[0] == ["", "RH", "LH"]
+    assert [r[1] for r in rows[1:]] == list("123123412312345")
+    assert [r[2] for r in rows[1:]] == list("543213214321321")
+    assert rows[1][0] == "C" and rows[8][0] == "C" and rows[15][0] == "C"
+    page.select_option("#ref-key", "5")
+    rows = [c.locator("span").all_inner_texts() for c in page.locator("#ref-finger-strip .im-sc-cell").all()]
+    assert [r[1] for r in rows[1:]] == list("123412312341234")
+    assert rows[1][0] == "F"
+    assert not errors, errors
+
+
+def test_a_scale_with_no_stored_fingering_says_so_and_a_chord_shows_none(reference):
+    opener, errors, _ = reference
+    page = opener()
+    assert page.locator("#ref-fingering").is_hidden()
+    page.select_option("#ref-kind", "scale")
+    page.select_option("#ref-scale", "dorian")
+    assert page.locator("#ref-finger-strip").is_hidden()
+    assert "No fingering is stored" in page.locator("#ref-finger-note").inner_text()
+    page.select_option("#ref-kind", "chord")
+    assert page.locator("#ref-fingering").is_hidden()
     assert not errors, errors

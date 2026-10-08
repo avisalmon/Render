@@ -61,7 +61,31 @@
     { name: "comp", label: "Comping" },
     { name: "click", label: "Click" },
   ];
-  const mix = { drums: { level: 0.8, muted: false }, bass: { level: 0.9, muted: false }, comp: { level: 0.7, muted: false }, click: { level: 0.8, muted: false } };
+  // The band starts well under the piano: it is there to play along with, not to cover what you play.
+  const MIX_STORE = "improv.play.mix";
+  const mix = { drums: { level: 0.3, muted: false }, bass: { level: 0.35, muted: false }, comp: { level: 0.25, muted: false }, click: { level: 0.4, muted: false } };
+
+  function loadMix() {
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(MIX_STORE) || "{}");
+      for (const part of MIX) {
+        const mine = saved[part.name];
+        if (!mine) continue;
+        if (typeof mine.level === "number" && mine.level >= 0 && mine.level <= 1) mix[part.name].level = mine.level;
+        mix[part.name].muted = mine.muted === true;
+      }
+    } catch (e) {
+      // storage can be blocked or hold something else: the quiet defaults stand
+    }
+  }
+
+  function saveMix() {
+    try {
+      window.localStorage.setItem(MIX_STORE, JSON.stringify(mix));
+    } catch (e) {
+      // the mix then lasts until the page closes
+    }
+  }
 
   const say = (text) => ($("play-status").textContent = text);
 
@@ -577,6 +601,7 @@
   // ----------------------------------------------------------------- the mix
 
   function buildMix() {
+    loadMix();
     const box = $("mix");
     for (const part of MIX) {
       const row = document.createElement("div");
@@ -594,14 +619,17 @@
       mute.className = "im-check";
       const check = document.createElement("input");
       check.type = "checkbox";
+      check.checked = mix[part.name].muted;
       mute.appendChild(check);
       mute.appendChild(document.createTextNode(" Mute"));
       slider.addEventListener("input", () => {
         mix[part.name].level = Number(slider.value) / 100;
+        saveMix();
         applyMix();
       });
       check.addEventListener("change", () => {
         mix[part.name].muted = check.checked;
+        saveMix();
         applyMix();
       });
       row.append(label, slider, mute);
