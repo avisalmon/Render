@@ -4064,7 +4064,7 @@ authoring content inside מט״צים) are both still waiting on Avi.
 
 ---
 
-## SPR-M.53 — the programme from above (8 October 2026)
+## SPR-M.53 — The programme from above  `DONE 2026-10-08`
 
 **Goal.** נעמי and ליטל sign in and see how the programme is doing, without
 being treated as pupils and without being asked to sit the entrance test.
@@ -4170,7 +4170,7 @@ one stops being an instruction given over the phone.
 
 ---
 
-## SPR-M.54 — the appointment, made possible to actually do (8 October 2026)
+## SPR-M.54 — The appointment  `DONE 2026-10-08`
 
 **Goal.** Avi: "תעדכן את האתר ותגיד לי בדיוק מה לעשות", having reversed the
 superuser decision for ליטל: "היא רואה מה שנעמי רואה."
@@ -4200,4 +4200,56 @@ line holding exactly where it was drawn.
 makes the pair safe: a grant made on the screen is not quietly undone by the
 next deploy, and the env var is durability against a database restore rather
 than a second source of truth.
+
+---
+
+## SPR-M.55 — Two managers, one desk  `DONE 2026-10-08`
+
+**Goal.** Avi: "I want them to see the same data as program managers. It's as
+if they are the same person."
+
+**Delivers.** REQ-M.152.
+
+Almost all of it was already true, because a program manager's scope has always
+been her **institution** rather than herself: leaders, members, courses, counts
+and the funnel all came out identical for two managers of one programme. Two
+things were not, and both are the kind of thing nobody goes looking for.
+
+- [x] **M55.1** The improvement log is the programme's, not one person's.
+  `visible_requests` filtered on `author=user`, so ליטל could file feedback
+  about the site and נעמי could see neither the request nor the answer. It
+  joins through the institution now, and another programme's requests stay
+  invisible, which is the property the author filter was protecting.
+- [x] **M55.2** One definition of that rule. `request_views` carried a second
+  copy and `api.py` used `access`'s, so this change would have moved one and
+  left the other: the screen and the endpoint would have disagreed about who
+  may read a request, which is SPR-M.50's locked-door-and-open-window again.
+- [x] **M55.3** Appointing a program manager lands her **with the team**.
+
+**Tests.** 9 more in `tests/test_spr_m_53.py`.
+
+- [x] Both readers, both sets of counts and five whole rendered screens are
+  compared byte for byte between the two managers, with the greeting and the
+  CSRF token taken out. Comparing the readers alone would miss a view that
+  narrows what a reader returned, which is the level Avi judges it at.
+- [x] Another programme's requests stay invisible, and root still sees all.
+- [x] The screen and the API scope requests identically.
+- [x] Seeing the same things is not deciding the same things: neither of them
+  can press Avi's button, appoint anybody, or change the course pool.
+
+### The one that was nearly missed
+
+`roles.grant_program_manager` asked `Institution.default()`, which returns the
+earliest row by creation date. That is a different question from "the
+institution the team is on", and the model's own docstring says so. In a test
+database that has held more than one institution it put a newly appointed
+manager into a third institution nobody worked in — so ליטל would have been a
+program manager of an empty programme, seeing nothing, with no error anywhere.
+
+Production has one institution, so this was latent rather than live. It now
+appoints into the single staffed institution when there is exactly one, which
+is the case that can be answered. With none it is a bootstrap and behaves as
+before; with more than one the answer is genuinely unknown (Q15) and
+`test_two_staffed_programmes_are_not_guessed_between` records that rather than
+inventing it.
 

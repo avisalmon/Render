@@ -462,3 +462,178 @@ def test_the_deploy_never_revokes_somebody_granted_on_the_screen(world, monkeypa
 
     by_hand.refresh_from_db()
     assert is_program_manager(by_hand) is True, "the deploy revoked a screen grant"
+
+
+# ------------------------------------------- SPR-M.55, two managers, one desk
+#
+# Avi, 2026-10-08: "I want them to see the same data as program managers. It's
+# as if they are the same person."
+#
+# Almost everything already worked that way, because a program manager's scope
+# has always been her institution rather than herself. The exception was the
+# improvement log, and the exception is what these tests are about: a rule that
+# is *nearly* uniform is worse than one that is not, because nobody goes
+# looking for the one screen that differs.
+
+
+@pytest.fixture
+def pair(world):
+    """ליטל added to נעמי's institution, the way the grant screen does it."""
+    from matazim.models import Institution
+    from matazim.roles import grant_program_manager
+
+    litala = _user("litala2@example.com", "ליטל")
+    grant_program_manager(litala, by=world["root"])
+    ours = Institution.objects.get(name="הרשת שלנו")
+    ours.managers.add(litala)
+    return {"naomi": world["naomi"], "litala": litala}
+
+
+def test_the_grant_screen_puts_them_on_the_same_desk(client, world):
+    """The whole thing rests on this. Two managers of two institutions would
+    see two different programmes, and every other assertion here would pass
+    while the product was wrong.
+
+    One staffed institution, which is what production is. The appointee has to
+    land with the team, not in whichever row is oldest — and before SPR-M.55
+    she landed in a third institution nobody worked in, because
+    `Institution.default()` answers a different question.
+    """
+    from matazim.access import institution_of
+    from matazim.models import Institution
+
+    # One programme with people in it, the way production looks.
+    for inst in Institution.objects.exclude(name="הרשת שלנו"):
+        inst.managers.clear()
+
+    before = Institution.objects.count()
+    _user("litala3@example.com", "ליטל")
+    _login(client, "avi@example.com").post(
+        "/matazim/staff/admins/", {"action": "grant", "email": "litala3@example.com"})
+
+    assert Institution.objects.count() == before, "appointing invented an institution"
+    litala = User.objects.get(email="litala3@example.com")
+    assert institution_of(litala) == institution_of(world["naomi"])
+
+
+def test_two_staffed_programmes_are_not_guessed_between(client, world):
+    """The honest other half. With more than one institution carrying staff,
+    which one a new manager joins is Q15 and genuinely unanswered, so the grant
+    falls back to the documented default rather than picking for somebody.
+
+    Recorded rather than fixed: production has one programme, and inventing an
+    answer here would be a product decision taken by whoever wrote this file.
+    """
+    from matazim.access import institution_of
+    from matazim.models import Institution
+
+    assert Institution.objects.filter(managers__isnull=False).distinct().count() == 2
+
+    _user("third@example.com", "שלישית")
+    _login(client, "avi@example.com").post(
+        "/matazim/staff/admins/", {"action": "grant", "email": "third@example.com"})
+
+    third = User.objects.get(email="third@example.com")
+    assert institution_of(third) == Institution.default()
+
+
+def test_they_read_the_same_leaders_members_and_courses(pair):
+    """Every reader a program manager uses, compared row for row."""
+    from matazim.access import visible_leaders, visible_students
+    from matazim.overview import course_rows, leader_rows, programme_counts
+
+    def ids(queryset):
+        return sorted(row.pk for row in queryset)
+
+    assert ids(visible_leaders(pair["naomi"])) == ids(visible_leaders(pair["litala"]))
+    assert ids(visible_students(pair["naomi"])) == ids(visible_students(pair["litala"]))
+    assert programme_counts(pair["naomi"]) == programme_counts(pair["litala"])
+    assert ([r["email"] for r in leader_rows(pair["naomi"])]
+            == [r["email"] for r in leader_rows(pair["litala"])])
+    assert ([(r["slug"], r["started"], r["finished"]) for r in course_rows(pair["naomi"])]
+            == [(r["slug"], r["started"], r["finished"]) for r in course_rows(pair["litala"])])
+
+
+def test_every_staff_screen_renders_the_same_for_both(client, pair):
+    """Not the readers but the screens, because a view can narrow what a reader
+    returned and this is the level Avi actually judges it at."""
+    import re
+
+    paths = ("/matazim/staff/", "/matazim/staff/people/", "/matazim/staff/courses/",
+             "/matazim/staff/cohort/", "/matazim/staff/leaders/")
+
+    def body(email, path):
+        session = _login(client, email)
+        html = session.get(path).content.decode()
+        session.logout()
+        # The greeting and CSRF token differ by person and by request, and
+        # neither is programme data.
+        html = re.sub(r'name="csrfmiddlewaretoken" value="[^"]+"', "", html)
+        for name in ("נעמי", "ליטל", "naomi@example.com", "litala2@example.com"):
+            html = html.replace(name, "")
+        return html
+
+    for path in paths:
+        assert body("naomi@example.com", path) == body("litala2@example.com", path), path
+
+
+def test_the_improvement_log_is_the_programmes_and_not_one_persons(pair):
+    """The one place they were not the same person. ליטל's job is to file
+    feedback about the site; a log only she can read is a log נעמי cannot act
+    on."""
+    from matazim.access import visible_requests
+    from matazim.models import Request
+
+    hers = Request.objects.create(author=pair["litala"], body="הכפתור קטן מדי")
+    theirs = Request.objects.create(author=pair["naomi"], body="חסר ייצוא")
+
+    for who in (pair["naomi"], pair["litala"]):
+        seen = set(visible_requests(who).values_list("pk", flat=True))
+        assert {hers.pk, theirs.pk} <= seen
+
+
+def test_another_programmes_requests_are_still_invisible(pair, world):
+    """What the author filter was protecting, kept by the join rather than
+    lost with it."""
+    from matazim.access import visible_requests
+    from matazim.models import Request
+
+    elsewhere = Request.objects.create(author=world["other_pm"], body="לא שלכם")
+    assert elsewhere.pk not in set(
+        visible_requests(pair["naomi"]).values_list("pk", flat=True))
+    assert elsewhere.pk in set(
+        visible_requests(world["root"]).values_list("pk", flat=True))
+
+
+def test_the_screen_and_the_api_scope_requests_identically(client, pair):
+    """They were two copies of one rule, and only one of them would have been
+    changed. A locked door beside an open window is SPR-M.50's finding."""
+    from matazim import request_views
+    from matazim.access import visible_requests
+    from matazim.models import Request
+
+    Request.objects.create(author=pair["litala"], body="אחת")
+    Request.objects.create(author=pair["naomi"], body="שתיים")
+
+    for who in (pair["naomi"], pair["litala"]):
+        assert (sorted(visible_requests(who).values_list("pk", flat=True))
+                == sorted(request_views.visible_requests(who).values_list("pk", flat=True)))
+
+
+def test_deciding_is_still_only_avis(pair):
+    """Seeing the same things is not deciding the same things. REQ-M.108 is one
+    human gate, and widening the log must not have widened the press."""
+    from matazim.request_views import may_decide
+
+    assert may_decide(pair["naomi"]) is False
+    assert may_decide(pair["litala"]) is False
+
+
+def test_neither_of_them_can_appoint_or_change_the_pool(client, pair):
+    """REQ-M.114 — they are the same person as each other, and neither of them
+    is root."""
+    for email in ("naomi@example.com", "litala2@example.com"):
+        session = _login(client, email)
+        for path in ("/matazim/staff/admins/", "/matazim/staff/offered/"):
+            assert session.get(path).status_code == 403, f"{email} {path}"
+        session.logout()

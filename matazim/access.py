@@ -524,17 +524,29 @@ def visible_requests(user):
     """§4.11 — the improvement loop.
 
     Root sees every request, because the decision is Avi's. A program manager
-    sees their own and never another's, which is what lets a second institution
-    have this without a rewrite.
+    sees **her institution's**, which includes her own and those of anybody who
+    manages the same institution.
+
+    **Institution and not author, since 2026-10-08.** Avi, on נעמי and ליטל:
+    "I want them to see the same data as program managers. It's as if they are
+    the same person." Everything else a program manager reads was already
+    scoped to the institution, so two managers of one programme saw identical
+    leaders, members, courses and counts — and then one personal log each,
+    where ליטל could file a request about the site and נעמי could not see it
+    or the answer. That is the opposite of one desk shared by two people.
+
+    A second institution is still invisible to the first, which is the property
+    the author filter was protecting and which the join keeps.
     """
-    from .models import Request
+    from .models import Institution, Request
 
     if not getattr(user, "is_authenticated", False):
         return Request.objects.none()
     if user.is_superuser:
         return Request.objects.all()
     if is_program_manager(user):
-        return Request.objects.filter(author=user)
+        mine = Institution.objects.filter(managers=user)
+        return Request.objects.filter(author__matazim_institutions__in=mine).distinct()
     return Request.objects.none()
 
 

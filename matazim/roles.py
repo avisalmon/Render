@@ -45,14 +45,32 @@ def grant_program_manager(user, *, by=None, institutions=None):
     from .models import Institution, Leader
 
     if institutions is None:
-        inst = Institution.default()
-        if inst is None:
-            from django.conf import settings
+        # **Alongside the people already doing the job**, not whichever row is
+        # oldest. Avi, 2026-10-08, on נעמי and ליטל: "I want them to see the
+        # same data as program managers. It's as if they are the same person."
+        # That is only true if appointing the second one lands her in the first
+        # one's institution, and `Institution.default()` does not promise it:
+        # it returns the earliest row by creation date, which in a database
+        # that has ever held more than one institution is a different question
+        # from "the one the team is on". A test caught it putting a new manager
+        # in a third institution nobody worked in.
+        #
+        # Exactly one staffed institution is the only case this decides. With
+        # none it is a bootstrap and falls through to the old behaviour; with
+        # more than one the right answer is genuinely unknown (Q15) and
+        # guessing here would be worse than the documented default.
+        staffed = list(Institution.objects.filter(managers__isnull=False).distinct())
+        if len(staffed) == 1:
+            institutions = staffed
+        else:
+            inst = Institution.default()
+            if inst is None:
+                from django.conf import settings
 
-            inst = Institution.objects.create(
-                name=getattr(settings, "MATAZIM_INSTITUTION_NAME", "") or "רשת עתיד"
-            )
-        institutions = [inst]
+                inst = Institution.objects.create(
+                    name=getattr(settings, "MATAZIM_INSTITUTION_NAME", "") or "רשת עתיד"
+                )
+            institutions = [inst]
 
     for inst in institutions:
         inst.managers.add(user)

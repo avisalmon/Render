@@ -40,16 +40,20 @@ def may_use_requests(user):
 
 
 def visible_requests(user):
-    """A manager sees their own, root sees all (§4.4).
+    """A manager sees her institution's, root sees all (§4.4).
 
-    Same shape as `visible_students` and `visible_leaders`: scope as a property
-    of the queryset, so no screen has to remember to filter.
+    **One definition, in `access`.** This was a second copy of that rule, and
+    the API used one while this screen used the other: when the rule changed on
+    2026-10-08 from "her own" to "her institution's", only one of them would
+    have changed and the screen and the endpoint would quietly have disagreed
+    about who may read a request. Kept as a name here because four callers
+    import it from this module.
     """
     if not may_use_requests(user):
         return Request.objects.none()
-    if user.is_superuser:
-        return Request.objects.all()
-    return Request.objects.filter(author=user)
+    from .access import visible_requests as scoped
+
+    return scoped(user)
 
 
 def may_decide(user):
