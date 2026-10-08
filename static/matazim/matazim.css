@@ -1200,7 +1200,24 @@ img { max-width: 100%; height: auto; display: block; }
 
 /* ---------------------------------------------------------------- roles */
 
+/* SPR-M.53 — a heading over a group of panels rather than inside one, so the
+   staff door can say כלי ניהול above the tools and keep the two reports above
+   that. */
+.mz-section-title {
+  margin: 28px 0 12px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--mz-ink);
+}
+
 .mz-role { display: inline-flex; align-items: center; gap: 10px; flex: none; }
+/* SPR-M.53 — a row that carries five facts where the other rosters carry two.
+   `.mz-role` does not wrap, so on a phone the extra ones ran 131px past the
+   edge of the screen. With this the facts drop to their own line under the
+   name instead of pushing the page sideways. Scoped to the rows that need it,
+   because the two-fact rows read better on one line. */
+.mz-role-facts { flex-wrap: wrap; row-gap: 6px; }
+@media (max-width: 640px) { .mz-role-facts { flex: 1 1 100%; } }
 .mz-role-key { margin-top: 16px; }
 .mz-role-key dt { min-width: 130px; }
 .mz-role-key dd { margin: 0; font-size: .84rem; text-align: start; }
@@ -1427,6 +1444,9 @@ img { max-width: 100%; height: auto; display: block; }
   background: var(--mz-teal);
   border-radius: 999px;
 }
+/* SPR-M.53 — the same bar inside a roster row, where it is one fact among
+   several rather than the row itself, so it does not take the whole width. */
+.mz-bar-sm { flex: 0 0 72px; min-width: 72px; height: 6px; }
 
 .mz-pager {
   display: flex;

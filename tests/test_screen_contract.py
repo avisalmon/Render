@@ -634,6 +634,14 @@ SCREENS = [
     ("pm/retention", "/matazim/staff/retention/", "pm@example.com", dict(students="mixed")),
     ("pm/targets", "/matazim/staff/targets/", "pm@example.com", dict(students="none")),
 
+    # SPR-M.53 — the two reports, in both the state that has people in it and
+    # the state a new programme actually starts in.
+    ("pm/people", "/matazim/staff/people/", "pm@example.com", dict(students="mixed")),
+    ("pm/people-empty", "/matazim/staff/people/", "pm@example.com", dict(students="none")),
+    ("pm/all-courses", "/matazim/staff/courses/", "pm@example.com", dict(students="mixed")),
+    ("pm/all-courses-empty", "/matazim/staff/courses/", "pm@example.com",
+     dict(students="none")),
+
     # SPR-M.23 — the detail screens, which no catalogue entry could name until
     # the paths here were allowed to be built from the world.
     (

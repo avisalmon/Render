@@ -169,6 +169,13 @@
           <a href="{% url 'matazim:pm_leaders' %}" class="mz-nav-staff{% if section == 'staff' %} is-active{% endif %}">המובילים שלי</a>
           {# Her main report, which was a grey one-line link on one screen. #}
           <a href="{% url 'matazim:cohort' %}" {% if section == 'cohort' %}class="is-active"{% endif %}>המחזור</a>
+          {% comment %}
+            SPR-M.53 — the two reports are deliberately **not** here. They were,
+            for an hour, and REQ-M.101's cap is what took them out again: a
+            program manager was reading nine items, and a menu that does not
+            change is a menu nobody reads. They lead the ניהול door instead,
+            and signing in as staff lands on that door.
+          {% endcomment %}
           <a href="{% url 'matazim:staff_home' %}" class="mz-nav-staff{% if section == 'staff' %} is-active{% endif %}">ניהול</a>
           {% comment %}
             §4.11 — Avi asked for the menu option as well as the lamp. Root

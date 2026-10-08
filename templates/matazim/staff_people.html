@@ -1,0 +1,125 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.149, SPR-M.53 — every מוביל with the three facts Avi named: who they
+  are, how far through the training, and whether they sat the entrance test.
+
+  A report and nothing else. The screens that appoint, approve, deactivate and
+  move people are one link away and keep their own guards; this page has no
+  button that changes anything, which is what makes it safe to leave open in a
+  meeting.
+
+  Every row came through `access.visible_leaders`, so a program manager reading
+  this sees her programme and root sees all of it, without this template
+  knowing the difference (REQ-M.88).
+{% endcomment %}
+
+{% block title %}מובילים והתקדמות · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>מובילים והתקדמות</h1>
+    <p>מי מוביל, איפה הם עומדים בהדרכות, ומי עבר את מבחן הכניסה.</p>
+  </div>
+
+  <section class="mz-panel mz-panel-soft">
+    <h2>מה יש במערכת</h2>
+    <dl class="mz-facts">
+      <div><dt>מובילים פעילים</dt><dd>{{ counts.leaders }}</dd></div>
+      <div><dt>ממתינים לאישור</dt><dd>{{ counts.candidates }}</dd></div>
+      <div><dt>מט״צים בתוכנית</dt><dd>{{ counts.students }}</dd></div>
+      <div><dt>עברו את מבחן הכניסה</dt><dd>{{ counts.passed_test }}</dd></div>
+      <div><dt>מט״צים מוסמכים</dt><dd>{{ counts.certified }}</dd></div>
+      <div><dt>בלי מוביל/ה</dt><dd>{{ counts.unled }}</dd></div>
+    </dl>
+  </section>
+
+  {% comment %}
+    The waiting come first. They are the one state in this product that stays
+    stuck until a person presses something, so burying them under a list of
+    everybody who is fine is how somebody waits a fortnight.
+  {% endcomment %}
+  {% if candidates %}
+    <section class="mz-panel">
+      <h2>ממתינים לאישור <span class="mz-count">{{ candidates|length }}</span></h2>
+      <p class="mz-muted">
+        נרשמו דרך קישור הזמנה ועוד לא אושרו. עד שמישהו מאשר, אין להם גישה לכלום.
+      </p>
+      <ul class="mz-roster">
+        {% for row in candidates %}
+          <li class="mz-roster-row">
+            <span class="mz-roster-who">
+              <span class="mz-roster-name">{{ row.name }}</span>
+              <span class="mz-muted">{{ row.email }}</span>
+            </span>
+            <span class="mz-role mz-role-facts"><span class="mz-tag mz-tag-fix">ממתין/ה</span></span>
+          </li>
+        {% endfor %}
+      </ul>
+      <div class="mz-page-actions">
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:pm_leaders' %}">לאישור</a>
+      </div>
+    </section>
+  {% endif %}
+
+  <section class="mz-panel">
+    <h2>המובילים <span class="mz-count">{{ rows|length }}</span></h2>
+    {% if rows %}
+      <ul class="mz-roster">
+        {% for row in rows %}
+          <li class="mz-roster-row">
+            <a class="mz-roster-who" href="{% url 'matazim:staff_leader' row.leader.pk %}">
+              <span class="mz-roster-name">{{ row.name }}</span>
+              <span class="mz-muted">
+                {% for school in row.schools %}{{ school }}{% if not forloop.last %} · {% endif %}{% empty %}עוד לא פתח/ה כיתה{% endfor %}
+              </span>
+            </a>
+            <span class="mz-role mz-role-facts">
+              {% comment %}
+                Three facts, in the order they were asked for. The bar is the
+                required track; the certificates are everything they have
+                finished anywhere on babook, which counts retroactively.
+              {% endcomment %}
+              <span class="mz-bar mz-bar-sm" role="img"
+                    aria-label="התקדמות במסלול: {{ row.progress.pct }} אחוז">
+                <span class="mz-bar-fill" style="width: {{ row.progress.pct }}%"></span>
+              </span>
+              <span class="mz-muted">{{ row.progress.courses_done }}/{{ row.progress.courses_total }} במסלול</span>
+
+              {% if row.took_test %}
+                <span class="mz-tag mz-tag-done">עבר/ה את המבחן</span>
+              {% elif row.took_test is None %}
+                {% comment %}
+                  Not a failure. Most leaders are adults who were never asked
+                  to sit it, and a red mark here would report something that
+                  never happened.
+                {% endcomment %}
+                <span class="mz-tag mz-tag-idle">לא ניגש/ה למבחן</span>
+              {% else %}
+                <span class="mz-tag mz-tag-fix">טרם עבר/ה את המבחן</span>
+              {% endif %}
+
+              <span class="mz-muted">{{ row.students }} מט״צים</span>
+              {% if row.certified %}
+                <span class="mz-tag mz-tag-done">{{ row.certified }} מוסמכים</span>
+              {% endif %}
+              {% if not row.is_active %}
+                <span class="mz-tag mz-tag-idle">לא פעיל/ה</span>
+              {% endif %}
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="mz-muted">עוד אין מובילים מאושרים.</p>
+    {% endif %}
+  </section>
+
+  <div class="mz-page-actions">
+    <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:cohort' %}">המחזור, לפי שלב ובית ספר</a>
+    <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:staff_courses' %}">כל ההדרכות</a>
+    <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:pm_leaders' %}">מינוי וניהול מובילים</a>
+  </div>
+</div>
+{% endblock %}

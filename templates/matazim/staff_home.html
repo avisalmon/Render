@@ -15,6 +15,92 @@
     <p>הכלים של צוות התוכנית.</p>
   </div>
 
+  {% comment %}
+    SPR-M.53 — the two reports first, above every tool.
+
+    Avi, 2026-10-08: הכי חשוב בשלב הזה שהן יראו בברור בכניסה למערכת.
+    So they are the first thing on the page rather than two more cards in a
+    grid of eight: somebody arriving to find out how the programme is doing
+    should not have to read a menu of administrative tools first.
+  {% endcomment %}
+  <div class="mz-two-up">
+    <section class="mz-panel">
+      <h2>מובילים והתקדמות</h2>
+      <p>
+        {{ counts.leaders }} מובילים פעילים{% if counts.candidates %},
+        <strong>{{ counts.candidates }} ממתינים לאישור</strong>{% endif %}.
+        כל אחד עם ההתקדמות שלו בהדרכות, אם עבר את מבחן הכניסה, וכמה מט״צים יש לו.
+      </p>
+      <div class="mz-page-actions">
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:staff_people' %}">לרשימה המלאה</a>
+      </div>
+    </section>
+
+    <section class="mz-panel">
+      <h2>כל ההדרכות</h2>
+      <p>
+        כל ההדרכות שיש באתר, מה מהן פתוח למט״צים, מה חלק מהמסלול
+        החובה, וכמה התחילו וסיימו כל אחת.
+      </p>
+      <div class="mz-page-actions">
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:staff_courses' %}">לקטלוג המלא</a>
+      </div>
+    </section>
+
+    <section class="mz-panel">
+      <h2>המחזור</h2>
+      <p>
+        {{ counts.students }} מט״צים בתוכנית. כמה יש בכל שלב, לפי מוביל ולפי
+        בית ספר, עם ייצוא לאקסל.
+      </p>
+      <div class="mz-page-actions">
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:cohort' %}">למחזור</a>
+      </div>
+    </section>
+
+    {% comment %}
+      §4.11 — the improvement loop, named on this page rather than left to the
+      lamp. Somebody whose job is to give feedback on the product should find
+      the way to file it without being told where the lamp is.
+    {% endcomment %}
+    <section class="mz-panel">
+      <h2>בקשות שיפור</h2>
+      <p>
+        משהו באתר לא עובד, חסר או מבלבל? אפשר לפתוח בקשה מכל מסך,
+        והיא נשמרת עם השיחה עליה.
+      </p>
+      <div class="mz-page-actions">
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:new_request' %}?from={{ request.path|urlencode }}">לפתוח בקשה</a>
+        {% if user.is_superuser %}
+          <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:request_queue' %}">לתור הבקשות</a>
+        {% else %}
+          <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:my_requests' %}">הבקשות שלי</a>
+        {% endif %}
+      </div>
+    </section>
+
+    {% comment %}
+      The member's own screens, from the outside. Somebody whose job is to
+      judge the product never sees what a fourteen-year-old sees, because they
+      are not one and must not have to pretend to be one. These pages are built
+      from `request.user` and cope with a reader who has joined nobody, so they
+      open read-only and show the track as a מט״צ meets it.
+    {% endcomment %}
+    <section class="mz-panel">
+      <h2>איך זה נראה למט״צ</h2>
+      <p>
+        המסכים שמט״צ רואה, כמו שהוא רואה אותם. צפייה בלבד: אתם לא נרשמים
+        לתוכנית ולא נדרשים למבחן הכניסה.
+      </p>
+      <div class="mz-page-actions">
+        <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:my_path' %}">המסלול של מט״צ</a>
+        <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:courses' %}">ההדרכות כפי שהן נראות</a>
+      </div>
+    </section>
+  </div>
+
+  <h2 class="mz-section-title">כלי ניהול</h2>
+
   <div class="mz-two-up">
     <section class="mz-panel">
       <h2>משימות מבחן הכניסה</h2>

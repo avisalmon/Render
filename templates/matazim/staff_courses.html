@@ -1,0 +1,71 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.148, SPR-M.53 — every הדרכה babook publishes, and what each one is to
+  this programme. The first time a program manager can see the catalogue at
+  all: the only screen that showed it was root's, and that one is a control
+  panel for setting the pool rather than a report.
+
+  Three states, and they are genuinely different: part of the required track,
+  open to members, or withdrawn. A withdrawn course keeps everybody who already
+  started it (SPR-M.52), which is why the counts stay on the row.
+{% endcomment %}
+
+{% block title %}כל ההדרכות · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>כל ההדרכות</h1>
+    <p>כל ההדרכות שיש באתר, ומה מהן פתוח למט״צים.</p>
+  </div>
+
+  <section class="mz-panel mz-panel-soft">
+    <dl class="mz-facts">
+      <div><dt>הדרכות באתר</dt><dd>{{ rows|length }}</dd></div>
+      <div><dt>פתוחות למט״צים</dt><dd>{{ offered }}</dd></div>
+      <div><dt>הוצאו מהמאגר</dt><dd>{{ withdrawn }}</dd></div>
+    </dl>
+    {% if user.is_superuser %}
+      <div class="mz-page-actions">
+        <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:staff_offered' %}">לשנות מה פתוח</a>
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="mz-panel">
+    <h2>הקטלוג <span class="mz-count">{{ rows|length }}</span></h2>
+    {% if rows %}
+      <ul class="mz-roster">
+        {% for row in rows %}
+          <li class="mz-roster-row">
+            <span class="mz-roster-who">
+              <span class="mz-roster-name">{{ row.title }}</span>
+              {% if row.note %}<span class="mz-muted">{{ row.note }}</span>{% endif %}
+            </span>
+            <span class="mz-role mz-role-facts">
+              {% if row.required %}
+                <span class="mz-tag mz-tag-done">חלק מהמסלול</span>
+              {% elif row.withdrawn %}
+                <span class="mz-tag mz-tag-idle">הוצאה מהמאגר</span>
+              {% elif row.offered %}
+                <span class="mz-tag mz-tag-done">פתוחה למט״צים</span>
+              {% else %}
+                <span class="mz-tag mz-tag-idle">לא במאגר</span>
+              {% endif %}
+              <span class="mz-muted">{{ row.started }} התחילו · {{ row.finished }} סיימו</span>
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="mz-muted">אין עדיין הדרכות באתר.</p>
+    {% endif %}
+  </section>
+
+  <div class="mz-page-actions">
+    <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:staff_people' %}">מובילים והתקדמות</a>
+    <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:cohort' %}">המחזור</a>
+  </div>
+</div>
+{% endblock %}

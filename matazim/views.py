@@ -292,6 +292,25 @@ def safe_next(request):
     return candidate
 
 
+def _landing_for(user):
+    """Where signing in puts somebody (SPR-M.53).
+
+    דף הבית is written for a visitor deciding whether to join, which is the
+    wrong page for the person running the programme: Avi asked that נעמי and
+    ליטל see how things stand בכניסה למערכת, and recruitment copy is not that.
+
+    Staff land on the ניהול door, which leads with the two reports. This is a
+    default and not a cage: `?next=` still wins, every other role is untouched,
+    and דף הבית is one tap away in the menu.
+
+    Deliberately not done by adding menu items. That was the first attempt and
+    REQ-M.101's seven-item cap refused it, correctly.
+    """
+    from .access import is_program_manager
+
+    return "matazim:staff_home" if is_program_manager(user) else "matazim:home"
+
+
 def login(request):
     """REQ-M.6, REQ-M.7 — our screen, babook's accounts, no linking step."""
     if request.user.is_authenticated:
@@ -318,7 +337,7 @@ def login(request):
 
             if claim_leader_invite(request, user):
                 return redirect("matazim:leader_entrance")
-            return redirect(safe_next(request) or "matazim:home")
+            return redirect(safe_next(request) or _landing_for(user))
 
     return render(
         request,

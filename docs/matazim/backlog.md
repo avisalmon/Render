@@ -4061,3 +4061,95 @@ when both halves are broken, which is how the real defect would arrive.
 
 F-M.50.8 (a member deleting work a leader has already answered) and Q8 (staff
 authoring content inside מט״צים) are both still waiting on Avi.
+
+---
+
+## SPR-M.53 — the programme from above (8 October 2026)
+
+**Goal.** נעמי and ליטל sign in and see how the programme is doing, without
+being treated as pupils and without being asked to sit the entrance test.
+
+Avi, 2026-10-08:
+
+> "אני צריך שתעשה שליטל ונעמי יראו את כל היכולות כמו שאני רואה. הם לא במעמד
+> תלמיד ולא צריכות לעשות את המבחן. נעמי היא מנהלת פרוייקט ולכן היא צריכה לראות
+> את כל המידע שמנהל פרוייקט רואה וליטל היא עוזרת לתת פידבק על האתר ולכן היא
+> צריכה לראות כל מה שאני רואה. הכי חשוב בשלב הזה שהו יראו בברור בכניסה למערכת:
+> את כל הקורסים, את כל המובילים והסטטוס התקדמות שלהם ואם עשו את המבחן."
+
+**Delivers.** REQ-M.148, REQ-M.149, REQ-M.150.
+
+- [x] **M53.1** `matazim/overview.py` — two readers, `course_rows` and
+  `leader_rows`, both scoped through `access.visible_*` and both one pass.
+- [x] **M53.2** `/matazim/staff/courses/` — every published הדרכה, what it is to
+  the programme, and how many of our people started and finished it.
+- [x] **M53.3** `/matazim/staff/people/` — every מוביל with progress, the
+  entrance test, their מט״צים and their certified. Candidates first.
+- [x] **M53.4** The staff door rebuilt: the two reports above the tools, plus
+  the cohort funnel, the improvement loop and read-only links into the member's
+  own screens.
+- [x] **M53.5** Signing in as staff lands on the ניהול door rather than on
+  דף הבית. `?next=` still wins and every other role is untouched.
+- [x] **M53.6** `programme_counts` — one source for the numbers. The staff home
+  was counting four of them itself.
+
+**Tests.** 20 in `tests/test_spr_m_53.py`.
+
+- [x] A second institution exists in the fixture purely to stay invisible. Two
+  screens that read across the programme are exactly the shape of change that
+  quietly widens a program manager's world, so the tenancy guard is the
+  load-bearing test and the course counts are checked the same way.
+- [x] Root crosses every programme, which is what makes ליטל's grant work.
+- [x] A member and a leader are refused by both views, not merely unlinked.
+- [x] The whole catalogue is on the page; an unpublished course is not.
+- [x] The track's own two read as open with no pool row at all (REQ-M.76).
+- [x] Never sitting the test is a third state, not a failure.
+- [x] The reader does not grow with the programme: the query count is measured
+  at three leaders and again at nine.
+- [x] Neither report writes. A POST aimed at one changes nothing.
+- [x] Staff are not pupils, and looking at the member screens joins nobody.
+
+### Three states for the entrance test, not two
+
+A leader who never sat it and a leader who sat it and did not pass look the same
+in a boolean. They are not the same thing: the programme's entrance test is for
+ninth-graders, so *most* leaders were never asked, and a red mark against them
+reports a failure that never happened. `took_test` is `None` there, and the
+screen says לא ניגש/ה rather than טרם עבר/ה.
+
+### The menu was the wrong answer, and REQ-M.101 said so
+
+The first version put both reports in the staff menu, which is the obvious way
+to make something easy to reach. `test_nobody_carries_a_menu_they_have_to_read_past`
+failed immediately: a program manager was reading nine items against a cap of
+seven, and that cap exists because a menu that does not change is a menu nobody
+reads, after which the one item that is actually theirs is as hard to find as
+the rest.
+
+So the reports came back out and the landing page moved instead. דף הבית is
+recruitment copy written for somebody deciding whether to join, which is the
+wrong first screen for the person running the programme. Staff now land on the
+ניהול door, which leads with the two reports. Same goal, nothing added to
+anybody's reading.
+
+### Found by looking at real data, not by a test
+
+Every leader in the development database showed a red טרם עבר/ה את המבחן.
+The three-state rule was right and the fact it read was wrong: `MemberProfile`
+is created the moment somebody accepts the welcome notice, so every leader has
+one, and "has a profile" is not "sat the test". `_test_status` asks
+`EntranceAttempt` instead. The unit test passed in both versions, because the
+fixture only ever created a profile for somebody who had passed.
+
+### What was not built, and why
+
+**No new role.** Avi was offered a read-only observer and chose full superuser
+for ליטל after reading what it carries, so the existing roles cover both
+people: `Institution.managers` for נעמי and `is_superuser` for ליטל. Writing a
+sixth role nobody asked for would have been the larger change.
+
+**The grants themselves are not in this repo.** נעמי's is an entry in
+`MATAZIM_PROGRAM_MANAGERS` on Render, which `matazim_admins --from-env` applies
+on every deploy. ליטל's is a superuser flag set by hand. Neither is something a
+deploy should be able to hand out from a file, which is REQ-M.68's shape.
+

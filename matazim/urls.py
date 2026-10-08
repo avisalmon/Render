@@ -21,6 +21,7 @@ from . import (
     joining_views,
     learn_views,
     notice_views,
+    overview_views,
     path_views,
     request_views,
     requests_api,
@@ -71,6 +72,10 @@ urlpatterns = [
     # REQ-M.87 — what is due for deletion, and the person who approves it.
     path("staff/retention/", entrance_views.staff_retention, name="staff_retention"),
     path("staff/targets/", entrance_views.staff_targets, name="staff_targets"),
+    # SPR-M.53 — the two reports. Read-only, and under /staff/ with the
+    # rest of the programme's own screens rather than off on their own.
+    path("staff/courses/", overview_views.staff_courses, name="staff_courses"),
+    path("staff/people/", overview_views.staff_people, name="staff_people"),
     path(
         "staff/targets/<str:target_id>/toggle/",
         entrance_views.staff_target_toggle,

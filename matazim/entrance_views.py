@@ -253,8 +253,8 @@ def staff_home(request):
     if not _is_staff(request.user):
         raise PermissionDenied
 
-    from .access import visible_leaders, visible_students
-    from .models import EntranceTarget, Student
+    from .models import EntranceTarget
+    from .overview import programme_counts
     from .retention import FAILED_ATTEMPT_DAYS, overdue_count
 
     # Counted through the scope functions rather than off the bare managers.
@@ -262,8 +262,18 @@ def staff_home(request):
     # installation, so a program manager's own dashboard was reporting other
     # institutions' people back to them, which is exactly what §4.4 says must
     # not happen. Root still crosses everything, because these functions say so.
-    mine = visible_students(request.user)
-    leaders = visible_leaders(request.user).filter(is_active=True)
+    #
+    # SPR-M.53 moved the counting itself into `overview.programme_counts`: this
+    # view had its own copy of four of these numbers and the new report had
+    # another, which is how two screens start disagreeing about how many
+    # leaders there are.
+
+    counts = programme_counts(request.user)
+    counts.update({
+        "targets": EntranceTarget.objects.filter(is_retired=False).count(),
+        "retired": EntranceTarget.objects.filter(is_retired=True).count(),
+        "admins": _managers().count(),
+    })
 
     return render(
         request,
@@ -271,17 +281,7 @@ def staff_home(request):
         shell(
             request,
             "staff",
-            counts={
-                "targets": EntranceTarget.objects.filter(is_retired=False).count(),
-                "retired": EntranceTarget.objects.filter(is_retired=True).count(),
-                "admins": _managers().count(),
-                "leaders": leaders.count(),
-                # Two different facts that were being reported as one. Everybody
-                # in the programme is not a מט״צ: that is what the certificate
-                # means (§4.9), and a student in training has not earned it yet.
-                "students": mine.count(),
-                "certified": mine.filter(status=Student.CERTIFIED).count(),
-            },
+            counts=counts,
             # REQ-M.87 — standing, so nobody has to remember to go looking.
             overdue=overdue_count(),
             retention_days=FAILED_ATTEMPT_DAYS,
