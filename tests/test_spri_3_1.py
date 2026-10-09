@@ -197,7 +197,7 @@ def test_every_script_the_page_loads_is_served_and_this_sprints_are_in_order(peo
     """Later sprints add more scripts to this page, and the newest sprint's test pins the
     whole list. What this one owns is that its own three are there, in their own order."""
     html = _client(people["member"]).get(URL).content.decode("utf-8")
-    names = [Path(src).name for src in re.findall(r'<script src="([^"]+)"', html) if Path(src).name not in ("control.js", "control-page.js")]
+    names = [Path(src).name for src in re.findall(r'<script src="([^"]+)"', html) if Path(src).name not in ("control.js", "control-page.js", "menu.js")]
     for name in names:
         assert finders.find(f"improv/{name}"), f"{name} is not found by staticfiles"
     assert names[-1] == "setup-page.js", "the page script runs after everything it uses"

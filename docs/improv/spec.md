@@ -563,13 +563,27 @@ babook, rather invited to login or signup; if they are logged in then go ahead t
 The rule is one function, `improv.access.is_player`: **signed in**. There is no group and no payment. It
 delegates to `app.portal.may_enter`, where improv is `audience=EVERYONE`.
 
-**A visitor** (not signed in) sees improv's own front door at `/improv/`, in improv's look and in English: what the
-app is, that it is free, a log in form, a link to sign up, and Continue with Google. The public pages are exactly
+**A visitor** (not signed in) sees improv's own front door at `/improv/`, in improv's look and in English. Since
+SPR-I.9.5 it is one step, not a form: a headline (draft copy, Avi may rewrite it: "Play over a real band and hear
+what to fix."), a filled Sign up free button, Continue with Google, a quiet "Have an account? Log in" link, fine
+print (free, works best in Chrome or Edge with a digital piano on USB), and a silent looping demo of a chart (Slow
+blues in C, 90 bpm, the four chord cells lighting in turn, a piano strip, three lines on what you get). The demo is
+CSS only and stands still under reduced motion. The log in form is its own page, `/improv/login/`, which also
+carries the password reset link. The visitor header is a quiet Log in link and a filled Sign up free button. The
+destination (`next`) is carried by every link. The public pages are exactly
 `/improv/`, `/improv/login/`, `/improv/signup/` and `/improv/logout/` (POST only). Any other page redirects to
 `/improv/?next=...`, and after signing in the person lands where they were going. `next` is honoured only if it
 stays inside `/improv/`. The API answers a visitor with 401/403 (DRF), never with data.
 
 **A signed-in person** goes straight to Today, like Avi. A `Player` row is created on the first visit.
+
+**The menu (SPR-I.9.5).** The header shows only the everyday screens: Today, Play, Lessons, Scales, Chords. A
+**More** menu holds Challenges, Library, Takes and Reference. The person's email is an **account menu** holding
+Progress, Practice log, Setup, Feedback (and Timing spike, for staff) and Log out (a POST form). Every screen is
+still one click or two away. The menus are `<details>` elements, closed by a click elsewhere, by Escape or by
+opening the other menu (`static/improv/menu.js`). They are mouse and touch only and hold no `data-key-action`
+button, so C8, B7 and A#7 keep the jobs each screen gives them. The "Piano keys C8 B7 A#7" hint stays in the bar.
+An open menu overlays the screen and never makes the page scroll (guarded at 1280 by 720 and 1920 by 1080).
 
 **Accounts.** Sign up and log in are improv's own views (`improv/signin.py`) and create or use ordinary site
 accounts: one email and password also works on babook, and Google sign-in goes through the site's own provider

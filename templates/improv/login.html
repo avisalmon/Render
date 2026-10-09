@@ -1,0 +1,37 @@
+{% extends "improv/base.html" %}
+{% block title %}Log in, improv{% endblock %}
+
+{% block content %}
+<div id="login" class="im-screen">
+  <div class="im-play-head">
+    <h1 class="im-title">Log in</h1>
+    <p class="im-lead">Welcome back.</p>
+  </div>
+
+  <div class="im-cols im-cols-left">
+    <section class="im-panel im-fill" aria-label="Log in">
+      <form method="post" action="{{ login_url }}" class="im-form">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        <label class="im-field">Email
+          <input class="im-input im-input-wide" type="text" name="email" value="{{ email }}" autocomplete="username" required>
+        </label>
+        <label class="im-field">Password
+          <input class="im-input im-input-wide" type="password" name="password" autocomplete="current-password" required>
+        </label>
+        {% if error %}<p id="login-error" class="im-error" role="alert">{{ error }}</p>{% endif %}
+        <div class="im-row">
+          <button class="im-btn" type="submit">Log in</button>
+          <a class="im-btn im-btn-quiet im-btn-link" href="{{ google_url }}">Continue with Google</a>
+        </div>
+      </form>
+      <p class="im-note"><a href="/accounts/password/reset/">Forgot your password?</a></p>
+    </section>
+
+    <section class="im-panel im-fill" aria-label="New here">
+      <h2 class="im-h2">New here?</h2>
+      <p class="im-note"><a href="{{ signup_url }}{% if next and next != '/improv/' %}?next={{ next|urlencode:'' }}{% endif %}">Create an account</a>, it is free and takes a minute. If you already have an account on this site, the same email and password work here.</p>
+    </section>
+  </div>
+</div>
+{% endblock %}

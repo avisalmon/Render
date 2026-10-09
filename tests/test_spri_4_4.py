@@ -83,7 +83,7 @@ def test_the_menu_leads_to_the_takes(people):
 
 def test_every_script_the_page_loads_is_served_and_the_band_comes_before_the_page(people):
     html = _client(people["member"]).get(URL).content.decode("utf-8")
-    names = [Path(src).name for src in re.findall(r'<script src="([^"]+)"', html) if Path(src).name not in ("control.js", "control-page.js")]
+    names = [Path(src).name for src in re.findall(r'<script src="([^"]+)"', html) if Path(src).name not in ("control.js", "control-page.js", "menu.js")]
     assert names == [
         "chart.js", "band.js", "scheduler.js", "synth.js", "chart-view.js", "play.js",
         "midi.js", "setup.js", "timing.js", "takes.js", "takes-page.js",

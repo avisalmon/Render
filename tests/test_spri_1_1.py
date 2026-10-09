@@ -244,7 +244,9 @@ def test_the_gate_sits_late_so_a_refusal_has_had_everything_a_real_404_gets():
 def test_a_refusal_sets_the_same_cookies_as_a_url_that_does_not_exist(db):
     nothing = Client().get("/this-page-does-not-exist-zq/")
     refused = Client().get("/improv/")
-    assert sorted(nothing.cookies) == sorted(refused.cookies)
+    # The front door has no form, so it sets no csrf cookie; it must still set no more than a missing page does.
+    assert set(refused.cookies) <= set(nothing.cookies)
+    assert ("sessionid" in refused.cookies) == ("sessionid" in nothing.cookies)
 
 
 def test_a_player_who_leaves_off_the_slash_is_sent_on_in_the_app(people):

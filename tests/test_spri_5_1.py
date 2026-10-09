@@ -486,7 +486,7 @@ def test_the_lessons_logic_touches_no_browser_api():
 
 
 def _scripts(html):
-    return [Path(src).name for src in re.findall(r'<script src="([^"]+)"', html) if Path(src).name not in ("control.js", "control-page.js")]
+    return [Path(src).name for src in re.findall(r'<script src="([^"]+)"', html) if Path(src).name not in ("control.js", "control-page.js", "menu.js")]
 
 
 def test_each_lesson_page_loads_its_scripts_in_dependency_order(people, content):

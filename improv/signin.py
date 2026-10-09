@@ -46,27 +46,31 @@ def _context(request, **extra):
 
 
 def front_door(request, **extra):
-    """The page a visitor sees at /improv/: what the app is, and the log in."""
+    """The page a visitor sees at /improv/: what the app is, and one way in."""
     return render(request, "improv/welcome.html", _context(request, **extra))
+
+
+def login_page(request, **extra):
+    return render(request, "improv/login.html", _context(request, **extra))
 
 
 def login_view(request):
     if request.user.is_authenticated:
         return redirect(HOME)
     if request.method != "POST":
-        return front_door(request)
+        return login_page(request)
 
     ident = request.POST.get("email", "").strip()[:EMAIL_MAX]
     password = request.POST.get("password", "")
     lock = f"improv_login_{_digest(client_ip(request), ident.lower())}"
     if cache.get(lock, 0) >= LOGIN_TRIES:
-        return front_door(request, error="Too many tries. Wait a few minutes and try again.", email=ident)
+        return login_page(request, error="Too many tries. Wait a few minutes and try again.", email=ident)
     if not ident or not password:
-        return front_door(request, error="Enter your email and your password.", email=ident)
+        return login_page(request, error="Enter your email and your password.", email=ident)
     user = authenticate(request, username=ident, password=password)
     if user is None:
         cache.set(lock, cache.get(lock, 0) + 1, LOGIN_LOCK_SECONDS)
-        return front_door(request, error="That email and password did not match.", email=ident)
+        return login_page(request, error="That email and password did not match.", email=ident)
     cache.delete(lock)
     login(request, user)
     return redirect(safe_next(request.POST.get("next")))

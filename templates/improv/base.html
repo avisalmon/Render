@@ -22,26 +22,35 @@
       <a class="im-nav-link" href="{% url 'improv:lessons' %}">Lessons</a>
       <a class="im-nav-link" href="{% url 'improv:scales' %}">Scales</a>
       <a class="im-nav-link" href="{% url 'improv:chords' %}">Chords</a>
-      <a class="im-nav-link" href="{% url 'improv:challenges' %}">Challenges</a>
-      <a class="im-nav-link" href="{% url 'improv:library' %}">Library</a>
-      <a class="im-nav-link" href="{% url 'improv:takes' %}">Takes</a>
-      <a class="im-nav-link" href="{% url 'improv:practice' %}">Practice</a>
-      <a class="im-nav-link" href="{% url 'improv:progress' %}">Progress</a>
-      <a class="im-nav-link" href="{% url 'improv:reference' %}">Reference</a>
-      <a class="im-nav-link" href="{% url 'improv:setup' %}">Setup</a>
-      {% if user.is_staff %}<a class="im-nav-link" href="{% url 'improv:spike' %}">Timing spike</a>{% endif %}
-      <a class="im-nav-link im-nav-feedback" href="{% url 'improv:feedback' %}?from={{ request.path }}">Feedback</a>
+      <details class="im-menu" id="im-more">
+        <summary>More</summary>
+        <div class="im-menu-list">
+          <a href="{% url 'improv:challenges' %}">Challenges</a>
+          <a href="{% url 'improv:library' %}">Library</a>
+          <a href="{% url 'improv:takes' %}">Takes</a>
+          <a href="{% url 'improv:reference' %}">Reference</a>
+        </div>
+      </details>
     </nav>
     <span class="im-keys" title="The top keys of an 88-key piano press the marked buttons: C8 is the main one, B7 the second, A#7 the third.">Piano keys <b>C8</b> <b>B7</b> <b>A#7</b> <i id="im-heard" class="im-keys-heard" aria-live="off"></i></span>
-    <form class="im-account" method="post" action="{% url 'improv:logout' %}">
-      {% csrf_token %}
-      <span class="im-who" title="Signed in as {{ user.email|default:user.username }}">{{ user.email|default:user.username }}</span>
-      <button class="im-nav-link im-logout" type="submit">Log out</button>
-    </form>
+    <details class="im-menu im-menu-account" id="im-account">
+      <summary title="Signed in as {{ user.email|default:user.username }}">{{ user.email|default:user.username }}</summary>
+      <div class="im-menu-list">
+        <a href="{% url 'improv:progress' %}">Progress</a>
+        <a href="{% url 'improv:practice' %}">Practice log</a>
+        <a href="{% url 'improv:setup' %}">Setup</a>
+        {% if user.is_staff %}<a href="{% url 'improv:spike' %}">Timing spike</a>{% endif %}
+        <a href="{% url 'improv:feedback' %}?from={{ request.path }}">Feedback</a>
+        <form method="post" action="{% url 'improv:logout' %}">
+          {% csrf_token %}
+          <button type="submit">Log out</button>
+        </form>
+      </div>
+    </details>
 {% else %}
-    <nav class="im-nav" aria-label="Account">
-      <a class="im-nav-link" href="{% url 'improv:home' %}">Log in</a>
-      <a class="im-nav-link" href="{% url 'improv:signup' %}">Sign up</a>
+    <nav class="im-nav im-nav-visitor" aria-label="Account">
+      <a class="im-nav-link" href="{% url 'improv:login' %}{% if next and next != '/improv/' %}?next={{ next|urlencode:'' }}{% endif %}">Log in</a>
+      <a class="im-btn" href="{% url 'improv:signup' %}{% if next and next != '/improv/' %}?next={{ next|urlencode:'' }}{% endif %}">Sign up free</a>
     </nav>
 {% endif %}
   </header>
@@ -49,7 +58,8 @@
     {% block content %}{% endblock %}
   </main>
   {% if user.is_authenticated %}<script src="{% static 'improv/control.js' %}"></script>
-  <script src="{% static 'improv/control-page.js' %}"></script>{% endif %}
+  <script src="{% static 'improv/control-page.js' %}"></script>
+  <script src="{% static 'improv/menu.js' %}"></script>{% endif %}
   {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -245,11 +245,11 @@ def test_the_front_door_invites_a_visitor_to_log_in_or_sign_up(db):
     response = Client().get("/improv/")
     assert response.status_code == 200
     html = response.content.decode("utf-8")
-    assert 'action="/improv/login/"' in html
-    assert 'name="email"' in html and 'name="password"' in html
+    assert 'href="/improv/login/' in html
     assert 'href="/improv/signup/' in html
     assert "/accounts/google/login/?process=login&amp;next=/improv/" in html or "/accounts/google/login/?process=login&next=/improv/" in html
-    assert 'name="csrfmiddlewaretoken"' in html
+    page = Client().get("/improv/login/").content.decode("utf-8")
+    assert 'name="email"' in page and 'name="password"' in page and 'name="csrfmiddlewaretoken"' in page
 
 
 def test_the_front_door_is_improv_not_babook(db):
@@ -273,12 +273,15 @@ def test_the_front_door_says_it_is_free(db):
 
 
 def test_the_front_door_carries_a_safe_next_to_the_login_form(db):
-    html = Client().get("/improv/?next=/improv/lessons/").content.decode("utf-8")
+    door = Client().get("/improv/?next=/improv/lessons/").content.decode("utf-8")
+    assert "next=%2Fimprov%2Flessons%2F" in door
+    html = Client().get("/improv/login/?next=/improv/lessons/").content.decode("utf-8")
     assert 'name="next" value="/improv/lessons/"' in html
-    outside = Client().get("/improv/?next=https://evil.example/x").content.decode("utf-8")
-    assert "evil.example" not in outside
-    other_app = Client().get("/improv/?next=/matazim/").content.decode("utf-8")
-    assert 'value="/matazim/"' not in other_app
+    for path in ("/improv/", "/improv/login/"):
+        outside = Client().get(path + "?next=https://evil.example/x").content.decode("utf-8")
+        assert "evil.example" not in outside
+        other_app = Client().get(path + "?next=/matazim/").content.decode("utf-8")
+        assert "matazim" not in other_app
 
 
 def test_a_visitor_on_a_deep_page_is_asked_to_sign_in_and_brought_back(db):
@@ -353,7 +356,7 @@ def test_an_empty_login_asks_for_both(db):
     assert 'id="login-error"' in response.content.decode("utf-8")
 
 
-def test_the_login_address_shows_the_front_door_on_a_get(db):
+def test_the_login_address_shows_the_login_form_on_a_get(db):
     response = Client().get("/improv/login/")
     assert response.status_code == 200
     assert 'action="/improv/login/"' in response.content.decode("utf-8")

@@ -61,7 +61,7 @@ def test_the_page_has_the_keys_the_chord_and_the_feedback(player):
 
 def test_the_page_loads_the_judge_and_what_it_needs_in_order(player):
     html = player.get("/improv/play/").content.decode("utf-8")
-    names = [Path(src).name for src in re.findall(r'<script src="([^"]+)"', html) if Path(src).name not in ("control.js", "control-page.js")]
+    names = [Path(src).name for src in re.findall(r'<script src="([^"]+)"', html) if Path(src).name not in ("control.js", "control-page.js", "menu.js")]
     assert names == [
         "chart.js", "band.js", "scheduler.js", "synth.js", "chart-view.js", "play.js", "output.js",
         "midi.js", "setup.js", "recognize.js", "timing.js", "judge.js", "practice.js", "keyboard-view.js", "demo.js", "play-page.js",

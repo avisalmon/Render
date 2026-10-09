@@ -168,7 +168,8 @@ def test_a_lesson_exercise_that_was_played_shows_among_the_bests(world):
 def test_the_menu_reaches_the_challenges_screen(world):
     page, errors, player, base = world
     page.goto(f"{base}/improv/practice/", wait_until="domcontentloaded")
-    page.locator("a.im-nav-link", has_text="Challenges").click()
+    page.locator("#im-more > summary").click()
+    page.locator("#im-more a", has_text="Challenges").click()
     page.wait_for_url("**/improv/challenges/", timeout=10000)
     page.wait_for_selector("#challenges-list .im-take", timeout=10000)
     assert not errors, errors

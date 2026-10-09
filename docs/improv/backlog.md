@@ -159,6 +159,7 @@ babook; a signed-in person goes straight in. Spec: ch. 7.
 | SPR-I.9.2 | The front door, log in, sign up (with Google) and log out, with a login lock and a sign-up cap; header shows the account and hides the spike from non-staff | ch. 7, 8 | DONE 2026-10-08 |
 | SPR-I.9.3 | Feedback: model, API, admin, a screen and a link on every screen | ch. 7 | DONE 2026-10-08 |
 | SPR-I.9.4 | The one-screen guard covers the front door, sign up and feedback; a ceiling of 1000 own items per person (owner unlimited); feedback emailed to Avi's two addresses; older gate tests moved to the new rule; docs; regression | ch. 8 | DONE 2026-10-08 |
+| SPR-I.9.5 | The short menu (Today, Play, Lessons, Scales, Chords, More, account menu) and the front door as a hero with a looping chart demo, log in on its own page; layout guard covers login and the open menus | ch. 7, 8 | DONE 2026-10-09 |
 
 ---
 

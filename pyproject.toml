@@ -181,6 +181,7 @@ markers = [
     "spri9: SPR-I.9 improv open to anyone who signs in: the front door, log in, sign up, log out",
     "spri93: SPR-I.9.3 improv feedback from the people trying it",
     "spri94: SPR-I.9.4 improv ceiling, owner card, feedback email",
+    "spri95: SPR-I.9.5 improv short menu with More and account menus, front door hero",
     "sprsl12: SL-D1 SensorLab the attempt, and who may see one",
     "sprsl13: SL-D2 SensorLab the five-step runner shell",
     "sprsl14: SL-D3 SensorLab the attempt API, and the share link",

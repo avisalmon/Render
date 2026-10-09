@@ -29,8 +29,8 @@ pytestmark = [pytest.mark.spri75, pytest.mark.django_db]
 
 PASSWORD = "spri75-browser-2046"
 SIZES = ((1280, 720), (1920, 1080))
-SCREENS = ("today", "play", "play-longest", "play-exercise", "lessons", "lesson", "challenges", "library", "editor", "takes", "practice", "progress", "reference", "setup", "spike", "scales", "scales-4-octaves", "chords", "chords-learn", "feedback", "front-door", "signup")
-ANONYMOUS = ("front-door", "signup")
+SCREENS = ("today", "play", "play-longest", "play-exercise", "lessons", "lesson", "challenges", "library", "editor", "takes", "practice", "progress", "reference", "setup", "spike", "scales", "scales-4-octaves", "chords", "chords-learn", "feedback", "front-door", "login", "signup")
+ANONYMOUS = ("front-door", "login", "signup")
 UTC = dt.timezone.utc
 # These screens show everything at once at 1280 by 720; a bounded list there is for future growth.
 NO_INNER_SCROLL = ("today", "lessons")
@@ -143,6 +143,7 @@ def _paths():
         "chords-learn": "/improv/chords/?mode=learn&level=3",
         "feedback": "/improv/feedback/?from=/improv/play/",
         "front-door": "/improv/",
+        "login": "/improv/login/",
         "signup": "/improv/signup/",
     }
 
@@ -199,3 +200,70 @@ def test_the_screen_fits_the_window(world, name, size):
     assert not measured["loose"], f"{name} at {size}: scrolls inside itself: {measured['loose']}"
     if name in NO_INNER_SCROLL and size == SIZES[0]:
         assert not measured["scrolled"], f"{name} at {size}: a list scrolls with only the seed data: {measured['scrolled']}"
+
+
+# ------------------------------------------------------------------ SPR-I.9.5: the header menus
+
+
+def _open_page(world, size=SIZES[0], path="/improv/play/"):
+    browser, cookie, base = world
+    context = browser.new_context(viewport={"width": size[0], "height": size[1]})
+    context.add_cookies([cookie])
+    page = context.new_page()
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.goto(f"{base}{path}", wait_until="domcontentloaded")
+    page.wait_for_selector("#im-more")
+    return context, page, errors, base
+
+
+@pytest.mark.parametrize("size", SIZES, ids=lambda s: f"{s[0]}x{s[1]}")
+def test_an_open_menu_does_not_make_the_page_scroll(world, size):
+    context, page, errors, _ = _open_page(world, size)
+    for menu in ("#im-more", "#im-account"):
+        page.locator(f"{menu} > summary").click()
+        assert page.locator(f"{menu} .im-menu-list").is_visible()
+        measured = page.evaluate(MEASURE)
+        assert measured["tall"] <= 0 and measured["wide"] <= 0 and measured["bodyTall"] <= 0, (menu, size, measured)
+        box = page.locator(f"{menu} .im-menu-list").bounding_box()
+        assert box["x"] >= 0 and box["x"] + box["width"] <= size[0] and box["y"] + box["height"] <= size[1], (menu, box)
+    context.close()
+    assert not errors, errors
+
+
+def test_the_menus_open_close_and_reach_their_screens(world):
+    context, page, errors, base = _open_page(world)
+    more, account = page.locator("#im-more"), page.locator("#im-account")
+    assert more.evaluate("e => e.open") is False and account.evaluate("e => e.open") is False
+
+    page.locator("#im-more > summary").click()
+    assert more.evaluate("e => e.open") is True
+    page.locator("#im-account > summary").click()
+    assert account.evaluate("e => e.open") is True and more.evaluate("e => e.open") is False, "one menu at a time"
+
+    page.mouse.click(600, 400)
+    assert account.evaluate("e => e.open") is False, "a click elsewhere closes it"
+
+    page.locator("#im-more > summary").click()
+    page.keyboard.press("Escape")
+    assert more.evaluate("e => e.open") is False, "Escape closes it"
+
+    page.locator("#im-more > summary").click()
+    page.locator("#im-more a", has_text="Takes").click()
+    page.wait_for_url("**/improv/takes/", timeout=10000)
+    assert page.locator("#im-more").evaluate("e => e.open") is False, "a new screen starts with the menus shut"
+
+    page.locator("#im-account > summary").click()
+    page.locator("#im-account button", has_text="Log out").click()
+    page.wait_for_url(f"{base}/improv/", timeout=10000)
+    assert page.locator("a", has_text="Sign up free").count() >= 1
+    context.close()
+    assert not errors, errors
+
+
+def test_a_control_key_still_does_its_screen_job_with_a_menu_open(world):
+    context, page, errors, _ = _open_page(world)
+    page.locator("#im-more > summary").click()
+    assert page.locator("#im-more [data-key-action], #im-account [data-key-action]").count() == 0
+    context.close()
+    assert not errors, errors

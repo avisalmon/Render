@@ -227,7 +227,7 @@ def test_progress_is_for_anyone_signed_in_and_sends_a_visitor_to_the_front_door(
 def test_the_menu_names_today_and_progress(people):
     html = _client(people["member"]).get("/improv/practice/").content.decode("utf-8")
     assert re.search(r'<a class="im-nav-link" href="/improv/">Today</a>', html)
-    assert re.search(r'<a class="im-nav-link" href="/improv/progress/">Progress</a>', html)
+    assert re.search(r'<a href="/improv/progress/">Progress</a>', html), "Progress is in the account menu"
     assert ">Home<" not in html
 
 
