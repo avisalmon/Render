@@ -579,11 +579,15 @@ stays inside `/improv/`. The API answers a visitor with 401/403 (DRF), never wit
 
 **The menu (SPR-I.9.5).** The header shows only the everyday screens: Today, Play, Lessons, Scales, Chords. A
 **More** menu holds Challenges, Library, Takes and Reference. The person's email is an **account menu** holding
-Progress, Practice log, Setup, Feedback (and Timing spike, for staff) and Log out (a POST form). Every screen is
-still one click or two away. The menus are `<details>` elements, closed by a click elsewhere, by Escape or by
-opening the other menu (`static/improv/menu.js`). They are mouse and touch only and hold no `data-key-action`
-button, so C8, B7 and A#7 keep the jobs each screen gives them. The "Piano keys C8 B7 A#7" hint stays in the bar.
-An open menu overlays the screen and never makes the page scroll (guarded at 1280 by 720 and 1920 by 1080).
+Progress, Practice log, Setup (and Timing spike, for staff) and Log out (a POST form). **Feedback stays in plain
+sight** in the bar, in the accent colour, because feedback is why the app was opened up and the front door promises
+a Feedback link on every screen. Every screen is still one click or two away. The bar marks the screen you are on
+(`aria-current="page"`; when it sits inside a menu, the menu's summary lights up). The menus are `<details>`
+elements, closed by a click elsewhere, by Escape or by opening the other menu (`static/improv/menu.js`). They are
+mouse and touch only and hold no `data-key-action` button, so C8, B7 and A#7 keep the jobs each screen gives them.
+The "Piano keys C8 B7 A#7" hint stays in the bar (hidden under 40rem, where there is no room and rarely a piano).
+An open menu overlays the screen and never makes the page scroll (guarded at 1280 by 720 and 1920 by 1080). The
+login and sign-up pages offer only the other way in, not themselves.
 
 **Accounts.** Sign up and log in are improv's own views (`improv/signin.py`) and create or use ordinary site
 accounts: one email and password also works on babook, and Google sign-in goes through the site's own provider

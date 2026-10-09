@@ -15,32 +15,33 @@
 <body class="im-body">
   <header class="im-top">
     <a class="im-brand" href="{% url 'improv:home' %}">improv</a>
+{% with here=request.resolver_match.url_name %}
 {% if user.is_authenticated %}
     <nav class="im-nav" aria-label="Main">
-      <a class="im-nav-link" href="{% url 'improv:home' %}">Today</a>
-      <a class="im-nav-link" href="{% url 'improv:play' %}">Play</a>
-      <a class="im-nav-link" href="{% url 'improv:lessons' %}">Lessons</a>
-      <a class="im-nav-link" href="{% url 'improv:scales' %}">Scales</a>
-      <a class="im-nav-link" href="{% url 'improv:chords' %}">Chords</a>
-      <details class="im-menu" id="im-more">
+      <a class="im-nav-link" href="{% url 'improv:home' %}"{% if here == 'home' %} aria-current="page"{% endif %}>Today</a>
+      <a class="im-nav-link" href="{% url 'improv:play' %}"{% if here == 'play' %} aria-current="page"{% endif %}>Play</a>
+      <a class="im-nav-link" href="{% url 'improv:lessons' %}"{% if here == 'lessons' or here == 'lesson' %} aria-current="page"{% endif %}>Lessons</a>
+      <a class="im-nav-link" href="{% url 'improv:scales' %}"{% if here == 'scales' %} aria-current="page"{% endif %}>Scales</a>
+      <a class="im-nav-link" href="{% url 'improv:chords' %}"{% if here == 'chords' %} aria-current="page"{% endif %}>Chords</a>
+      <details class="im-menu" id="im-more"{% if here in "challenges library editor takes reference" %} data-here="yes"{% endif %}>
         <summary>More</summary>
         <div class="im-menu-list">
-          <a href="{% url 'improv:challenges' %}">Challenges</a>
-          <a href="{% url 'improv:library' %}">Library</a>
-          <a href="{% url 'improv:takes' %}">Takes</a>
-          <a href="{% url 'improv:reference' %}">Reference</a>
+          <a href="{% url 'improv:challenges' %}"{% if here == 'challenges' %} aria-current="page"{% endif %}>Challenges</a>
+          <a href="{% url 'improv:library' %}"{% if here == 'library' or here == 'editor' %} aria-current="page"{% endif %}>Library</a>
+          <a href="{% url 'improv:takes' %}"{% if here == 'takes' %} aria-current="page"{% endif %}>Takes</a>
+          <a href="{% url 'improv:reference' %}"{% if here == 'reference' %} aria-current="page"{% endif %}>Reference</a>
         </div>
       </details>
     </nav>
     <span class="im-keys" title="The top keys of an 88-key piano press the marked buttons: C8 is the main one, B7 the second, A#7 the third.">Piano keys <b>C8</b> <b>B7</b> <b>A#7</b> <i id="im-heard" class="im-keys-heard" aria-live="off"></i></span>
-    <details class="im-menu im-menu-account" id="im-account">
+    <a class="im-nav-link im-nav-feedback" href="{% url 'improv:feedback' %}?from={{ request.path }}"{% if here == 'feedback' %} aria-current="page"{% endif %}>Feedback</a>
+    <details class="im-menu im-menu-account" id="im-account"{% if here in "progress practice setup spike" %} data-here="yes"{% endif %}>
       <summary title="Signed in as {{ user.email|default:user.username }}">{{ user.email|default:user.username }}</summary>
       <div class="im-menu-list">
-        <a href="{% url 'improv:progress' %}">Progress</a>
-        <a href="{% url 'improv:practice' %}">Practice log</a>
-        <a href="{% url 'improv:setup' %}">Setup</a>
-        {% if user.is_staff %}<a href="{% url 'improv:spike' %}">Timing spike</a>{% endif %}
-        <a href="{% url 'improv:feedback' %}?from={{ request.path }}">Feedback</a>
+        <a href="{% url 'improv:progress' %}"{% if here == 'progress' %} aria-current="page"{% endif %}>Progress</a>
+        <a href="{% url 'improv:practice' %}"{% if here == 'practice' %} aria-current="page"{% endif %}>Practice log</a>
+        <a href="{% url 'improv:setup' %}"{% if here == 'setup' %} aria-current="page"{% endif %}>Setup</a>
+        {% if user.is_staff %}<a href="{% url 'improv:spike' %}"{% if here == 'spike' %} aria-current="page"{% endif %}>Timing spike</a>{% endif %}
         <form method="post" action="{% url 'improv:logout' %}">
           {% csrf_token %}
           <button type="submit">Log out</button>
@@ -49,10 +50,11 @@
     </details>
 {% else %}
     <nav class="im-nav im-nav-visitor" aria-label="Account">
-      <a class="im-nav-link" href="{% url 'improv:login' %}{% if next and next != '/improv/' %}?next={{ next|urlencode:'' }}{% endif %}">Log in</a>
-      <a class="im-btn" href="{% url 'improv:signup' %}{% if next and next != '/improv/' %}?next={{ next|urlencode:'' }}{% endif %}">Sign up free</a>
+      {% if here != 'login' %}<a class="im-nav-link" href="{% url 'improv:login' %}{% if next and next != '/improv/' %}?next={{ next|urlencode:'' }}{% endif %}">Log in</a>{% endif %}
+      {% if here != 'signup' %}<a class="im-btn" href="{% url 'improv:signup' %}{% if next and next != '/improv/' %}?next={{ next|urlencode:'' }}{% endif %}">Sign up free</a>{% endif %}
     </nav>
 {% endif %}
+{% endwith %}
   </header>
   <main class="im-main">
     {% block content %}{% endblock %}

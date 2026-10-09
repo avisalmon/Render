@@ -81,10 +81,37 @@ def test_the_account_menu_holds_me_and_log_out():
     assert links["Progress"] == "/improv/progress/"
     assert links["Practice log"] == "/improv/practice/"
     assert links["Setup"] == "/improv/setup/"
-    assert links["Feedback"] == "/improv/feedback/?from=/improv/play/"
     form = re.search(r'<form[^>]*action="/improv/logout/"[^>]*>.*?</form>', account, re.S).group(0)
     assert 'method="post"' in form and "csrfmiddlewaretoken" in form
     assert re.search(r"<button[^>]*type=\"submit\"[^>]*>\s*Log out\s*</button>", form)
+
+
+def test_feedback_stays_in_plain_sight_not_in_a_menu():
+    header = _header(_client().get("/improv/play/").content.decode("utf-8"))
+    outside = re.sub(r"<details.*?</details>", "", header, flags=re.S)
+    assert re.search(r'<a class="im-nav-link im-nav-feedback" href="/improv/feedback/\?from=/improv/play/"', outside)
+    for menu in re.findall(r"<details.*?</details>", header, flags=re.S):
+        assert "/improv/feedback/" not in menu
+
+
+def test_the_bar_marks_the_screen_you_are_on():
+    client = _client()
+    play = _header(client.get("/improv/play/").content.decode("utf-8"))
+    assert re.search(r'href="/improv/play/" aria-current="page"', play)
+    assert play.count('aria-current="page"') == 1
+    assert "data-here" not in play
+
+    lesson = _header(client.get("/improv/lessons/").content.decode("utf-8"))
+    assert re.search(r'href="/improv/lessons/" aria-current="page"', lesson)
+
+    challenges = _header(client.get("/improv/challenges/").content.decode("utf-8"))
+    assert 'id="im-more" data-here="yes"' in challenges, "More shows it holds the current screen"
+    assert re.search(r'href="/improv/challenges/" aria-current="page"', challenges)
+    assert 'id="im-account" data-here' not in challenges
+
+    setup = _header(client.get("/improv/setup/").content.decode("utf-8"))
+    assert 'id="im-account" data-here="yes"' in setup
+    assert re.search(r'href="/improv/setup/" aria-current="page"', setup)
 
 
 def test_no_screen_was_lost_from_the_menus():
@@ -137,10 +164,11 @@ def test_a_visitor_sees_log_in_and_a_filled_sign_up():
     assert re.search(r'<a class="im-btn"[^>]*href="/improv/signup/[^"]*"[^>]*>\s*Sign up free\s*</a>', header)
 
 
-def test_the_same_header_is_on_the_login_and_sign_up_pages():
-    for path in ("/improv/login/", "/improv/signup/"):
-        header = _header(Client().get(path).content.decode("utf-8"))
-        assert "Log in" in header and "Sign up free" in header, path
+def test_the_login_and_sign_up_pages_offer_the_other_way_in_not_themselves():
+    login = _header(Client().get("/improv/login/").content.decode("utf-8"))
+    assert "Sign up free" in login and ">Log in<" not in login
+    signup = _header(Client().get("/improv/signup/").content.decode("utf-8"))
+    assert ">Log in<" in signup and "Sign up free" not in signup
 
 
 # ---------------------------------------------------------------- front door
