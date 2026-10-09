@@ -77,9 +77,16 @@
       <span class="mz-brand-tag">מנהיגות טכנולוגית צעירה</span>
     </a>
 
-    <button class="mz-nav-toggle" type="button" aria-label="תפריט" aria-expanded="false"
+    {% comment %}
+      The word, not only the icon. Avi, 2026-10-09, on his phone: "I don't see
+      a menu in the main page." The toggle was there, a thin outline on white
+      with three grey lines in it, and it did not read as the menu. A control
+      that has to be recognised is a control that is not found.
+    {% endcomment %}
+    <button class="mz-nav-toggle" type="button" aria-expanded="false"
             aria-controls="mzNav" onclick="var n=document.getElementById('mzNav');var o=n.classList.toggle('is-open');this.setAttribute('aria-expanded',o)">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      <span>תפריט</span>
     </button>
 
     {% comment %}

@@ -357,12 +357,20 @@ img { max-width: 100%; height: auto; display: block; }
 .mz-nav-toggle {
   display: none;
   margin-inline-start: auto;
-  padding: 8px;
-  background: none;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 14px;
+  background: var(--mz-page);
+  color: var(--mz-ink);
   border: 1px solid var(--mz-line);
   border-radius: var(--mz-radius-sm);
+  font: inherit;
+  font-size: .95rem;
+  font-weight: 600;
   cursor: pointer;
 }
+.mz-nav-toggle[aria-expanded="true"] { background: var(--mz-purple); border-color: var(--mz-purple); color: #fff; }
 
 /* ---------------------------------------------------------------- hero */
 
@@ -1337,7 +1345,7 @@ img { max-width: 100%; height: auto; display: block; }
   }
   .mz-nav.is-open { display: flex; }
   .mz-nav a { padding: 8px 0; width: 100%; }
-  .mz-nav-toggle { display: block; }
+  .mz-nav-toggle { display: inline-flex; }
   .mz-header-inner { flex-wrap: wrap; gap: 12px; }
   .mz-header-action .mz-btn { padding: 10px 14px; }
   .mz-hero-inner { grid-template-columns: 1fr; padding-block: 34px 30px; }

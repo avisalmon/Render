@@ -273,7 +273,12 @@ def test_partners_section_carries_weight(client, db):
     assert "partners/atid.svg" in html
     assert "partners/hemed_logo.png" in html
     assert "וגופים נוספים נפלאים" in html
-    assert html.index("שותפים מרכזיים לעשייה") < html.index("איך זה עובד")
+    # SPR-M.56 (2026-10-09): Litala's screen 1 reads hero, איך זה עובד, the
+    # band, and Avi's rule is that her order is preferred. The partners keep
+    # their own section with their own marks, directly after the band, which
+    # is still the top half of the page. The order assertion moved with it.
+    assert html.index("איך זה עובד") < html.index("שותפים מרכזיים לעשייה")
+    assert html.index("שותפים מרכזיים לעשייה") < html.index("<footer")
 
 
 # ---------------------------------------------------------------- F-M.1.6
