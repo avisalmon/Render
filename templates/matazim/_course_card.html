@@ -8,7 +8,7 @@
   this size is a decoration you have to decode"). Hers has the number inside
   it, which is the half of that argument that was right, kept.
 {% endcomment %}
-<li class="mz-course{% if card.done %} is-done{% endif %}" data-group="{{ group }}">
+<li class="mz-course{% if card.done %} is-done{% endif %}{% if card.locked %} is-locked{% endif %}" data-group="{{ group }}">
   <div class="mz-course-head">
     {% if card.thumbnail %}
       <img class="mz-course-cover" src="{% static card.thumbnail %}" alt="" loading="lazy">
@@ -18,6 +18,11 @@
       </div>
     {% endif %}
     {% if card.done %}<span class="mz-course-badge" aria-hidden="true">✓</span>{% endif %}
+    {% if card.locked %}
+      <span class="mz-course-badge mz-course-lock" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      </span>
+    {% endif %}
   </div>
   <div class="mz-course-body">
     {% if card.required %}<span class="mz-course-required">חלק מהמסלול</span>{% endif %}
@@ -26,12 +31,18 @@
   </div>
   <div class="mz-course-foot">
     <span class="mz-course-state">
-      <span class="mz-ring mz-ring-sm" style="--pct: {{ card.pct }}" role="img" aria-label="{{ card.pct }} אחוז">
-        <span class="mz-ring-label">{{ card.pct }}%</span>
-      </span>
-      {{ card.word }}
+      {% if card.locked %}
+        <span class="mz-sr">נעול.</span>{{ card.word }}
+      {% else %}
+        <span class="mz-ring mz-ring-sm" style="--pct: {{ card.pct }}" role="img" aria-label="{{ card.pct }} אחוז">
+          <span class="mz-ring-label">{{ card.pct }}%</span>
+        </span>
+        {{ card.word }}
+      {% endif %}
     </span>
-    {% if card.exists|default:True %}
+    {% if card.locked %}
+      <span class="mz-muted mz-small">המוביל/ה פותח/ת</span>
+    {% elif card.exists|default:True %}
       <a class="mz-btn {% if card.done %}mz-btn-ghost{% else %}mz-btn-primary{% endif %} mz-btn-sm"
          href="{% url 'matazim:learn_course' card.slug %}">{{ card.action }}</a>
     {% else %}

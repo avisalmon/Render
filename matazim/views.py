@@ -685,6 +685,41 @@ def _extra_course_cards(request):
     return offered, started
 
 
+def _locked_course_cards(request, shown):
+    """The rest of the pool, greyed and padlocked, as Litala drew it.
+
+    Her screen 2 shows the year ahead as locked cards, and Avi, 2026-10-09,
+    on whether to follow it over SPR-M.52's "only what the leader opened":
+    "מה שהיא ביקשה תמיד עדיף." So a member sees what is in the programme's pool
+    and has not been opened for them yet. A card, not a door: nothing here
+    links to the course, and `access.visible_course_slugs` still gates every
+    page behind it exactly as before. What changed is what they can *see*
+    coming, which is the point of her drawing.
+    """
+    from app.models import Course
+
+    from .access import shelvable_slugs
+
+    if not request.user.is_authenticated:
+        return []
+    hidden = shelvable_slugs() - set(shown)
+    if not hidden:
+        return []
+    cards = []
+    for c in Course.objects.filter(slug__in=hidden, is_published=True).order_by("title"):
+        cards.append({
+            "slug": c.slug,
+            "title": c.title,
+            "thumbnail": c.thumbnail or "",
+            "about": c.description or "",
+            "pct": 0,
+            "locked": True,
+            "word": "ייפתח בהמשך",
+            "action": "",
+        })
+    return cards
+
+
 def courses(request):
     """REQ-M.59, REQ-M.12b — the training path, and where this reader is in it.
 
@@ -752,12 +787,16 @@ def courses(request):
     # מט״צ (REQ-M.76) and these are opportunity. Rendering them alike would say
     # the programme requires seventeen courses, which it does not.
     offered, started = _extra_course_cards(request)
+    locked = _locked_course_cards(
+        request, [c["slug"] for c in cards + started + offered]
+    )
 
     # SPR-M.56 — her sidebar: one ring for everything on this page, broken
     # into finished / in progress / not started, and the stage they are at.
     # Counted off the cards already built, so the sidebar and the cards cannot
-    # disagree about what is on the page.
-    everything = cards + started + offered
+    # disagree about what is on the page. The locked ones count as not started,
+    # which is what her sidebar does with them.
+    everything = cards + started + offered + locked
     overview = None
     stage = None
     if request.user.is_authenticated and everything:
@@ -789,7 +828,7 @@ def courses(request):
         request,
         "matazim/courses.html",
         shell(request, "courses", cards=cards, offered=offered, started=started,
-              overview=overview, stage=stage),
+              locked=locked, overview=overview, stage=stage),
     )
 
 

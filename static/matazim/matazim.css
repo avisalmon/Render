@@ -2878,3 +2878,10 @@ a.mz-path-title:hover { color: var(--mz-link); }
 .mz-band-gradient .mz-figures strong { color: #fff; }
 .mz-band-gradient .mz-figures span { color: rgba(255,255,255,.92); }
 .mz-band-gradient .mz-figures svg { display: block; margin: 0 auto 6px; color: rgba(255,255,255,.9); }
+
+/* Her padlocked cards: the year ahead, seen but not open. The cover goes grey
+   and the whole card steps back; the padlock takes the badge slot. Still a
+   card and never a door: there is no link on it. */
+.mz-course.is-locked .mz-course-cover { filter: grayscale(1); opacity: .55; }
+.mz-course.is-locked .mz-course-body h3 { color: var(--mz-body); }
+.mz-course-lock { background: var(--mz-card); color: var(--mz-body); border: 1px solid var(--mz-line); }

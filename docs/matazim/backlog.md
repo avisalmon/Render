@@ -4314,12 +4314,29 @@ stays:
 | Five status cards every time | As many as are true | A card saying "nothing" three times across is a row nobody reads |
 | Fourteen dated milestones | As many as the programme has, dated when something happened | The same rule |
 
-### One question for Avi
+### The one question, answered the next morning
 
-Her ההדרכות screen shows the whole year ahead as greyed, padlocked cards, and
-that is a real design choice: a teenager sees there is more coming. Our
-product shows only what the leader opened (SPR-M.52). Showing the pool as
-locked cards would be faithful to her and honest about the data, but it tells
-every member what root put in the pool before any leader chose. That is his to
-decide, and it is written here rather than built.
+Her ההדרכות screen shows the whole year ahead as greyed, padlocked cards. Our
+product showed only what the leader opened (SPR-M.52), and the difference was
+written here as a question rather than built. Avi, 2026-10-09: "מה שהיא ביקשה
+תמיד עדיף."
 
+- [x] **M56.6** `_locked_course_cards`: the active pool minus what this member
+  can already see, as grey padlocked cards under a בהמשך chip, counted in the
+  sidebar as not started. No link on the card; the course page behind it is as
+  shut as it was. Withdrawn courses are not shown locked, because a padlock
+  promises it opens. Five tests.
+
+That sentence is also the standing rule from here on: where a מט״צים screen
+and her drawing disagree, hers is built, and the change is recorded. The
+exceptions are his own earlier decisions on reading her design (SPR-M.42) and
+the rules about truth (real figures, consent, הדרכות), which are raised with
+him rather than reversed.
+
+### Also on 2026-10-09: REQ-M.156, a leader owes nothing
+
+Avi, after seeing leaders on the report with a bar at zero and a grey test
+tag: a leader does not have to sit the test or take the courses, may, and it
+changes nothing about what they can do. Checked: no leader screen gates on
+either (REQ-M.36 gates כניסת תלמידים only). Two tests pin it and the report
+says it in words above the list.

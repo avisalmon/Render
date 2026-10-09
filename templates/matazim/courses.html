@@ -52,6 +52,7 @@
       <li><button type="button" class="mz-chip" data-chip="required" aria-pressed="false">המסלול הנדרש <span class="mz-count">{{ cards|length }}</span></button></li>
       {% if started %}<li><button type="button" class="mz-chip" data-chip="started" aria-pressed="false">מה שהתחלתם <span class="mz-count">{{ started|length }}</span></button></li>{% endif %}
       {% if offered %}<li><button type="button" class="mz-chip" data-chip="offered" aria-pressed="false">פתוח לכם <span class="mz-count">{{ offered|length }}</span></button></li>{% endif %}
+      {% if locked %}<li><button type="button" class="mz-chip" data-chip="locked" aria-pressed="false">בהמשך <span class="mz-count">{{ locked|length }}</span></button></li>{% endif %}
     </ul>
 
     <div class="mz-courses-layout">
@@ -66,9 +67,18 @@
           {% for card in offered %}
             {% include "matazim/_course_card.html" with card=card group="offered" %}
           {% endfor %}
+          {% comment %}
+            Her locked cards: the year ahead, greyed, with a padlock. Avi,
+            2026-10-09: what she asked for is always preferable. A card and not
+            a door; the course behind it stays shut until a leader opens it.
+          {% endcomment %}
+          {% for card in locked %}
+            {% include "matazim/_course_card.html" with card=card group="locked" %}
+          {% endfor %}
         </ul>
         <p class="mz-muted mz-small" style="margin-top: 14px;">
-          שתי ההדרכות המסומנות נדרשות להסמכה. כל השאר הן הזדמנות, וכל מה שתלמדו נספר ונשמר.
+          שתי ההדרכות המסומנות נדרשות להסמכה. כל השאר הן הזדמנות, וכל מה שתלמדו נספר ונשמר.{% if locked %}
+          ההדרכות הנעולות ייפתחו כשהמוביל/ה שלכם יפתח אותן.{% endif %}
         </p>
       </div>
 

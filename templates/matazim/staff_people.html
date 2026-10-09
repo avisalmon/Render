@@ -72,6 +72,16 @@
 
   <section class="mz-panel">
     <h2>המובילים <span class="mz-count">{{ rows|length }}</span></h2>
+    {% comment %}
+      REQ-M.156. Avi, 2026-10-09: a leader does not have to sit the test or
+      take the courses. They may, and it changes nothing about what they can
+      do. Said here because this is the one screen that shows a leader next
+      to a progress bar and a test tag, and a bar at zero reads as a debt
+      unless the page says it is not one.
+    {% endcomment %}
+    <p class="mz-muted">
+      ההדרכות ומבחן הכניסה הם רשות למובילים. מוביל/ה מנהל/ת, צופה בדוחות ומאשר/ת בלי קשר למה שעשה בעצמו.
+    </p>
     {% if rows %}
       <ul class="mz-roster">
         {% for row in rows %}

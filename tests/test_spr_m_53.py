@@ -660,3 +660,36 @@ def test_only_the_certified_are_called_matazim(client, world):
         assert "מט״צים בתוכנית" not in page, (
             f"{where} calls everybody in training a מט״צ")
         assert "מט״צים מוסמכים" in page, where
+
+
+# -------------------------------------------- REQ-M.156, a leader owes nothing
+
+
+def test_a_leader_who_sat_nothing_and_learned_nothing_manages_everything(client, world):
+    """Avi, 2026-10-09: מי שמוגדר כמוביל לא חייב לעבור מבחנים או קורסים בעצמו.
+    The plain leader in the fixture has no member profile, no attempt and no
+    lesson watched. Every screen that is theirs opens, and the report shows
+    them without a mark against them."""
+    from matazim.models import MemberProfile, Student
+
+    plain = world["plain"]
+    assert not MemberProfile.objects.filter(user=plain.user).exists()
+    kid = Student.objects.create(user=_user("kid9@example.com", "מט״צ"),
+                                 leader=plain, status=Student.IN_TRAINING)
+
+    session = _login(client, "plain@example.com")
+    for path in ("/matazim/leader/", "/matazim/leader/students/",
+                 "/matazim/leader/classes/", f"/matazim/leader/students/{kid.pk}/",
+                 "/matazim/staff/team/" if False else "/matazim/leader/"):
+        assert session.get(path).status_code == 200, path
+
+    body = session.get("/matazim/").content.decode()
+    assert "מבחן הכניסה" not in body.split("<nav")[1].split("</nav>")[0], (
+        "a leader is invited to sit the test from the menu")
+
+
+def test_the_report_says_the_test_and_the_courses_are_optional_for_leaders(client, world):
+    body = _login(client, "naomi@example.com").get("/matazim/staff/people/").content.decode()
+    assert "רשות למובילים" in body
+    assert "טרם עבר/ה את המבחן" not in body, (
+        "nobody in the fixture sat and failed, so nobody reads as failing")

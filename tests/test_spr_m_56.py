@@ -313,3 +313,73 @@ def test_nothing_on_any_of_the_three_screens_is_invented(client, world):
     # itself. No first submission (nobody to hand it to yet) and no first
     # teaching session (not certified), because neither is a step they have.
     assert member.count('class="mz-path-node') == 7
+
+
+# ------------------------------------------ her padlocked cards, 2026-10-09
+
+
+def test_the_pool_a_leader_has_not_opened_shows_as_locked(client, world):
+    """Avi, on whether to follow her drawing over SPR-M.52: what she asked for
+    is always preferable. The year ahead is visible, greyed, with a padlock."""
+    from matazim.models import OfferedCourse
+
+    _course("arduino", "\u05d0\u05e8\u05d3\u05d5\u05d0\u05d9\u05e0\u05d5", lessons=2)
+    OfferedCourse.objects.create(slug="arduino", added_by=world["leader"].user)
+
+    response = _login(client, "mid@example.com").get("/matazim/courses/")
+    locked = response.context["locked"]
+    assert [c["slug"] for c in locked] == ["arduino"]
+    assert locked[0]["locked"] is True
+
+    body = response.content.decode()
+    assert 'data-chip="locked"' in body
+    assert "is-locked" in body
+    assert "\u05d4\u05de\u05d5\u05d1\u05d9\u05dc/\u05d4 \u05e4\u05d5\u05ea\u05d7/\u05ea" in body
+
+
+def test_a_locked_card_is_a_card_and_not_a_door(client, world):
+    """What SPR-M.52 was protecting, kept: seeing it coming is not reaching it."""
+    from matazim.models import OfferedCourse
+
+    _course("arduino", "\u05d0\u05e8\u05d3\u05d5\u05d0\u05d9\u05e0\u05d5", lessons=2)
+    OfferedCourse.objects.create(slug="arduino", added_by=world["leader"].user)
+
+    session = _login(client, "mid@example.com")
+    body = session.get("/matazim/courses/").content.decode()
+    assert "/matazim/learn/arduino/" not in body, "the locked card links to the course"
+    assert session.get("/matazim/learn/arduino/").status_code == 404
+
+
+def test_what_the_leader_opened_is_never_shown_locked(client, world):
+    from matazim.models import LeaderCourse, OfferedCourse
+
+    _course("arduino", "\u05d0\u05e8\u05d3\u05d5\u05d0\u05d9\u05e0\u05d5", lessons=2)
+    OfferedCourse.objects.create(slug="arduino", added_by=world["leader"].user)
+    LeaderCourse.objects.create(leader=world["leader"], slug="arduino")
+
+    response = _login(client, "mid@example.com").get("/matazim/courses/")
+    assert response.context["locked"] == []
+    assert [c["slug"] for c in response.context["offered"]] == ["arduino"]
+
+
+def test_a_withdrawn_course_is_not_shown_at_all(client, world):
+    """Withdrawn means gone from the pool, not locked: a padlock promises it
+    opens, and a withdrawn course does not."""
+    from matazim.models import OfferedCourse
+
+    _course("fpga", "FPGA", lessons=2)
+    OfferedCourse.objects.create(slug="fpga", added_by=world["leader"].user, is_active=False)
+
+    response = _login(client, "mid@example.com").get("/matazim/courses/")
+    assert response.context["locked"] == []
+
+
+def test_the_locked_count_in_her_sidebar_as_not_started(client, world):
+    from matazim.models import OfferedCourse
+
+    _course("arduino", "\u05d0\u05e8\u05d3\u05d5\u05d0\u05d9\u05e0\u05d5", lessons=2)
+    OfferedCourse.objects.create(slug="arduino", added_by=world["leader"].user)
+
+    overview = _login(client, "mid@example.com").get("/matazim/courses/").context["overview"]
+    assert overview["total"] == 3
+    assert overview["todo"] == 2
