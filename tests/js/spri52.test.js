@@ -12,9 +12,9 @@ const P = require(path.join(root, "static", "improv", "play.js"));
 
 const lesson = (extra) => ({ slug: "b", title: "Guide tones", state: "open", exercises_done: 0, exercises_total: 3, prerequisite: "a", ...extra });
 
-test("a locked lesson says Locked, whatever it holds", () => {
-  assert.equal(L.stateLabel(lesson({ state: "locked" })), "Locked");
-  assert.equal(L.stateLabel(lesson({ state: "locked", exercises_total: 0 })), "Locked");
+test("a lesson ahead of the player says so, whatever it holds", () => {
+  assert.equal(L.stateLabel(lesson({ state: "ahead" })), "Ahead of you");
+  assert.equal(L.stateLabel(lesson({ state: "ahead", exercises_total: 0 })), "Ahead of you");
 });
 
 test("an open lesson says how many of its exercises are passed", () => {
@@ -30,11 +30,11 @@ test("a lesson with nothing to play carries no tag", () => {
   assert.equal(L.stateLabel(lesson({ exercises_total: 0 })), "");
 });
 
-test("the reason a lesson is shut names the lesson that opens it", () => {
+test("a lesson ahead names the lesson it builds on and says it can still be started", () => {
   const all = [{ slug: "a", title: "Chord tones" }, lesson({})];
-  assert.equal(L.lockedReason(lesson({}), all), "Pass every exercise in Chord tones to open this.");
-  assert.equal(L.lockedReason(lesson({ prerequisite: "gone" }), all), "Pass the lesson before this one to open it.");
-  assert.equal(L.lockedReason(lesson({ prerequisite: null }), all), "Pass the lesson before this one to open it.");
+  assert.match(L.aheadNote(lesson({}), all), /^Builds on Chord tones, which you have not finished\. You can start here anyway/);
+  assert.match(L.aheadNote(lesson({ prerequisite: "gone" }), all), /^Builds on the lesson before it/);
+  assert.match(L.aheadNote(lesson({ prerequisite: null }), all), /^Builds on the lesson before it/);
 });
 
 test("the level line gives level, XP and the distance to the next level", () => {
@@ -57,13 +57,13 @@ test("the lessons line counts the published lessons the player has finished", ()
   assert.equal(L.lessonsDoneLine({ lessons_done: 0, lessons_total: 0 }), "");
 });
 
-test("an exercise is marked passed, locked, or left plain", () => {
-  assert.equal(L.exerciseMark({ completed: true, locked: false }), "Passed");
-  assert.equal(L.exerciseMark({ completed: false, locked: true }), "Locked");
-  assert.equal(L.exerciseMark({ completed: false, locked: false }), "");
+test("an exercise is marked passed or left plain; a lesson ahead marks nothing", () => {
+  assert.equal(L.exerciseMark({ completed: true, ahead: false }), "Passed");
+  assert.equal(L.exerciseMark({ completed: false, ahead: true }), "");
+  assert.equal(L.exerciseMark({ completed: false, ahead: false }), "");
 });
 
-const exercise = (extra) => ({ bars: 4, pass_score: 70, xp: 20, completed: false, locked: false, ...extra });
+const exercise = (extra) => ({ bars: 4, pass_score: 70, xp: 20, completed: false, ahead: false, ...extra });
 
 test("the Play screen states what an exercise asks and what it pays", () => {
   assert.equal(P.exerciseGoalLine(exercise({}), true), "4 bars, pass at 70, worth 20 XP.");
@@ -76,12 +76,12 @@ test("an exercise already passed says it earns no more", () => {
   assert.doesNotMatch(line, /worth/);
 });
 
-test("an exercise in a locked lesson says a take earns nothing yet", () => {
-  assert.match(P.exerciseGoalLine(exercise({ locked: true }), true), /locked.*earns nothing yet/);
+test("an exercise in a lesson ahead says a take still counts", () => {
+  assert.match(P.exerciseGoalLine(exercise({ ahead: true }), true), /builds on one you have not finished.*counts all the same/);
 });
 
 test("changing the chart or the bars makes it free play, whatever else is true", () => {
-  for (const extra of [{}, { completed: true }, { locked: true }]) {
+  for (const extra of [{}, { completed: true }, { ahead: true }]) {
     assert.match(P.exerciseGoalLine(exercise(extra), false), /free play and will not count/);
   }
 });

@@ -212,6 +212,7 @@ tasks live in `Exercise`.
 | `prerequisite` | FK self, null | |
 | `authorship` | choice | ai_drafted / reviewed / avi_written |
 | `status` | choice | draft / published |
+| `path_order` | int, null, unique | the lesson's place in the whole path, across tracks (SPR-I.10.2). Set by the seed from the file's order, for every lesson, read or not. Empty sorts after every numbered lesson, by level, track and order. |
 | `created_at`, `updated_at` | datetime | |
 
 Unique on (`track`, `order`). **Lessons are drafted by AI during development,
@@ -278,6 +279,7 @@ requires, not a change to `User`.
 | Field | Type | Notes |
 |---|---|---|
 | `user` | 1-to-1 User | |
+| `current_lesson` | FK `Lesson`, null, SET_NULL | the pointer: where the player chose to be in the path (SPR-I.10.1, Avi: "continue from the spot he chose"). Set by Start here on a lesson page and by playing an exercise of a lesson. Everything up to it is open; Today and Continue follow it. The only stored piece of progress besides completions. |
 | `daily_goal_minutes` | int | default 15 |
 | `latency_offset_ms` | int | **timing calibration**, default 0, see below |
 | `midi_input_name` | char | the keyboard last used, to reconnect it |

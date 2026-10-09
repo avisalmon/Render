@@ -417,24 +417,66 @@ suite loudly, not quietly skipped.
 
 Seven tracks, from the data model: chord tones, guide tones, scales and modes,
 approach notes, rhythm motifs, call and response, voicings and comping. Version 1
-ships about six lessons, one from each of the first six tracks, in this order of
-difficulty:
+shipped six lessons, one from each of the first six tracks. Voicings and comping, ear
+training and the rest follow later.
 
-1. Chord tones over a ii-V-I.
-2. Guide tones: the third and seventh, and how they connect.
-3. A scale for each chord: Dorian, Mixolydian, Major.
-4. Approach notes from a half step.
-5. A rhythm motif, repeated and varied.
-6. Call and response over a blues.
+**As built (SPR-I.5.3).** The call-and-response lesson is taught over a four-bar pop
+progression, not a blues: a call and its answer need an even four-beat bar on a straight
+groove, and the judge reads the answer bar only. The lessons live in
+`improv/seed_data/lessons.json` and are seeded by `seed_improv_lessons` as drafted by AI
+and not yet read; every exercise has been passed by a model player through the real judge
+in the tests. Avi reads each lesson before it is passed off as taught.
 
-Voicings and comping, ear training and the rest follow after v1.
+### The path: twenty lessons in three levels (SPR-I.10.2, Avi 2026-10-09)
 
-**As built (SPR-I.5.3).** Lesson 6 is taught over a four-bar pop progression, not a blues:
-a call and its answer need an even four-beat bar on a straight groove, and the judge reads
-the answer bar only. The lessons live in `improv/seed_data/lessons.json` and are seeded by
-`seed_improv_lessons` as drafted by AI and not yet read; every exercise has been passed
-by a model player through the real judge in the tests. Avi reads each lesson before it is
-passed off as taught.
+"Build the lessons not randomly, with real logic behind the progress, from beginner to
+intermediate; maybe 20." The curriculum is twenty lessons, each one idea with three exercises
+that get harder (slower to faster, fewer to more targets, one chart to a longer one). The path
+is numbered one to twenty (`Lesson.path_order`) and interleaves the tracks, so no two lessons
+of one kind come in a row, and every prerequisite comes earlier in the path.
+
+- **Level 1, beginner (7).** Chord tones on the beat over four easy triads; rhythm motifs;
+  scales that fit the chord (white keys over a two five one); chord tones through the
+  twelve-bar blues; syncopation; call and response; chord tones in a two five one with
+  seventh chords.
+- **Level 2, moving on (7).** Guide tones (thirds and sevenths); approach notes; when the
+  scale changes (one new note per chord); bossa rhythms; guide tones round the turnaround;
+  answering with the shape; approach notes through the blues.
+- **Level 3, intermediate (6).** Chord tones through the jazz blues (two chords in a bar);
+  the minor two five one (locrian, altered, dorian); guide tones through secondary dominants;
+  funk rhythms; approach notes at tempo; longer calls with eighth notes.
+
+Rules the content keeps, each checked by a test: an exercise is set in its chart's own key;
+rhythm motifs sit only on straight grooves, because the motif judge matches a straight grid;
+a lesson's demo phrase names only chords of its own chart; the hardest exercise of a lesson
+is never a daily-workout pick; the whole course is worth a handful of levels; the words are
+plain. The six original lessons kept their slugs and their exercise slugs, so nobody loses a
+pass they earned.
+
+`seed_improv_lessons --refresh-drafts` (the way the deploy runs it) also brings every lesson
+still marked `ai_drafted` up to date with the file, exercises and demo phrase included, so a
+draft improves until the day Avi reads it. A lesson marked reviewed or written by Avi is never
+touched, nothing is ever deleted, and `path_order` is kept right for every lesson because the
+order of the path is structure, not words.
+
+### Start anywhere (SPR-I.10.1, Avi 2026-10-09)
+
+"Give the opportunity to unlock any lesson the user would like to start from and continue from
+the spot he chose. If he goes back or jumps ahead, let him, and the progress keeps going from
+the new point." So **nothing is locked.** A lesson whose prerequisite still has exercises to pass
+is **ahead** of the player, not shut: it says what it builds on ("Builds on Chord tones on the
+beat, which you have not finished. You can start here anyway"), every exercise links to Play, and
+a pass there counts like any other.
+
+The one stored thing is **`Player.current_lesson`, the pointer**: where the player chose to be.
+It moves when they press **Start here** on a lesson page (`POST /improv/api/start-here/`) and
+whenever they play an exercise of a lesson. Everything up to the pointer in the path is open.
+Today and Continue follow the pointer: that lesson while it has exercises to pass, then the next
+unfinished lesson after it, then whatever is left before it, then "finished". Without a pointer
+the old rule holds (the first open lesson, a begun one first), and a lesson ahead is never
+offered until the player goes there. The daily workout draws from the lessons up to the pointer
+and never pushes a person into a lesson ahead. The Lessons screen groups the path by level,
+marks the pointer "You are here", and the piano key opens that lesson.
 
 ### The cycle of a lesson
 
@@ -447,8 +489,9 @@ where they are:
 3. **Play.** The lesson's exercises, one after another, over the band, each judged
    as in chapter 5. A lesson is done when every exercise has a `Completion`.
 
-A lesson unlocks when its `prerequisite` is done. Nothing else locks content: a
-standalone challenge or free practice is always open.
+A lesson whose `prerequisite` is done is open; one whose prerequisite is not is ahead
+of the player, which is advice, not a lock (see "Start anywhere"). A standalone challenge
+or free practice is always open.
 
 ### Where demos and answers sound
 

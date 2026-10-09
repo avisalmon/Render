@@ -94,21 +94,23 @@ def _lessons(page, base):
     page.wait_for_function("document.getElementById('lessons-level').textContent !== ''", timeout=10000)
 
 
-def test_a_new_player_sees_level_one_and_the_second_lesson_locked(world):
+def test_a_new_player_sees_level_one_and_the_second_lesson_ahead(world):
     page, errors, user, base = world
     _lessons(page, base)
     assert page.locator("#lessons-level").inner_text() == "Level 1, 0 XP. 50 XP to level 2."
     assert page.locator("#lessons-done").inner_text() == "0 of 2 lessons done."
     first = page.locator('#lessons-tracks .im-take[data-slug="first-idea"]')
     second = page.locator('#lessons-tracks .im-take[data-slug="second-idea"]')
-    assert second.get_attribute("data-state") == "locked"
-    assert "Locked" in second.inner_text()
-    assert "Pass every exercise in First idea to open this." in second.inner_text()
+    assert second.get_attribute("data-state") == "ahead"
+    assert "Ahead of you" in second.inner_text()
+    assert "Builds on First idea, which you have not finished." in second.inner_text()
     assert "0 of 1 passed" in first.inner_text()
     assert not errors, errors
 
 
-def test_a_locked_lesson_can_be_read_but_offers_no_play(world):
+def test_a_lesson_ahead_can_be_played_and_start_here_moves_the_player_there(world):
+    from improv.models import Player
+
     page, errors, user, base = world
     Exercise.objects.create(
         lesson=Lesson.objects.get(slug="second-idea"), order=1, slug="second-exercise", title="Second task", instructions="Play.",
@@ -117,11 +119,29 @@ def test_a_locked_lesson_can_be_read_but_offers_no_play(world):
     )
     page.goto(f"{base}/improv/lessons/second-idea/", wait_until="domcontentloaded")
     page.wait_for_selector("#lesson-body:not([hidden])", timeout=10000)
-    assert page.locator("#lesson-lock").is_visible()
-    assert "Pass every exercise in First idea" in page.locator("#lesson-lock").inner_text()
+    assert page.locator("#lesson-ahead").is_visible()
+    assert "Builds on First idea" in page.locator("#lesson-ahead").inner_text()
     assert page.locator("#lesson-exercises .im-take").count() == 1
-    assert page.locator("#lesson-exercises a").count() == 0, "no Play link while the lesson is locked"
-    assert "Locked" in page.locator("#lesson-exercises").inner_text()
+    assert page.locator("#lesson-exercises a").count() == 1, "a lesson ahead still links its exercise to Play"
+    assert "Locked" not in page.locator("#lesson-exercises").inner_text()
+    assert page.locator("#start-here").is_visible()
+    assert not page.locator("#lesson-here").is_visible()
+
+    page.click("#start-here")
+    page.wait_for_selector("#lesson-here:not([hidden])", timeout=10000)
+    assert not page.locator("#start-here").is_visible()
+    assert not page.locator("#lesson-ahead").is_visible()
+    assert Player.objects.get(user=user).current_lesson.slug == "second-idea"
+
+    _lessons(page, base)
+    second = page.locator('#lessons-tracks .im-take[data-slug="second-idea"]')
+    assert second.get_attribute("data-current") == "yes"
+    assert "You are here" in second.inner_text()
+    assert second.get_attribute("data-state") == "open"
+
+    page.goto(f"{base}/improv/", wait_until="domcontentloaded")
+    page.wait_for_function("document.getElementById('continue-line').textContent !== 'Loading your lessons.'", timeout=10000)
+    assert "Second idea" in page.locator("#continue-line").inner_text()
     assert not errors, errors
 
 

@@ -181,6 +181,7 @@ def lesson(request, slug):
         "styles": reverse("improv:api-styles-list"),
         "qualities": reverse("improv:api-chord-qualities-list"),
         "player": reverse("improv:api-player"),
+        "start_here": reverse("improv:api-start-here"),
     }
     return render(
         request,

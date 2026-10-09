@@ -99,14 +99,12 @@
       li.appendChild(head);
       li.appendChild(make("p", "im-take-summary", ex.instructions));
       li.appendChild(make("p", "im-note", L.exerciseLine(ex)));
-      if (!ex.locked) {
-        const actions = make("div", "im-card-actions");
-        const go = make("a", "im-btn im-btn-link", ex.completed ? "Play it again" : "Play it");
-        go.dataset.keyItem = "yes";
-        go.href = L.exerciseUrl(host.dataset.playUrl, ex.slug);
-        actions.appendChild(go);
-        li.appendChild(actions);
-      }
+      const actions = make("div", "im-card-actions");
+      const go = make("a", "im-btn im-btn-link", ex.completed ? "Play it again" : "Play it");
+      go.dataset.keyItem = "yes";
+      go.href = L.exerciseUrl(host.dataset.playUrl, ex.slug);
+      actions.appendChild(go);
+      li.appendChild(actions);
       list.appendChild(li);
     }
     $("lesson-no-exercises").hidden = state.exercises.length > 0;
@@ -229,15 +227,47 @@
     $("hear-toggle").textContent = "Hear it";
   }
 
+  // ------------------------------------------------------------- start here
+
+  function showHere() {
+    $("lesson-here").hidden = !state.lesson.current;
+    $("start-here").hidden = Boolean(state.lesson.current) || state.lesson.state === "done";
+  }
+
+  async function startHere() {
+    const button = $("start-here");
+    button.disabled = true;
+    try {
+      const response = await fetch(host.dataset.apiStartHere, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { Accept: "application/json", "Content-Type": "application/json", "X-CSRFToken": host.dataset.csrf },
+        body: JSON.stringify({ lesson: state.lesson.slug }),
+      });
+      if (!response.ok) throw new Error(`answered ${response.status}`);
+      state.lesson.current = true;
+      if (state.lesson.state === "ahead") state.lesson.state = "open";
+      $("lesson-ahead").hidden = true;
+      showHere();
+      say("You are here now. Today points at this lesson.");
+    } catch (e) {
+      say("Could not move you here. " + e.message);
+    } finally {
+      button.disabled = false;
+    }
+  }
+
   // ------------------------------------------------------------------ start
 
   function ready() {
     $("lesson-title").textContent = state.lesson.title;
-    $("lesson-meta").textContent = `${L.trackLabel(state.lesson.track)}. ${L.describe(state.lesson, state.lessons)}`;
+    $("lesson-meta").textContent = `${L.levelLabel(state.lesson.level)}. ${L.describe(state.lesson, state.lessons)}`;
     $("lesson-level").textContent = L.levelLine(state.summary);
-    const locked = state.lesson.state === "locked";
-    $("lesson-lock").textContent = locked ? L.lockedReason(state.lesson, state.lessons) + " You can read and hear it now; plays count once it is open." : "";
-    $("lesson-lock").hidden = !locked;
+    const ahead = state.lesson.state === "ahead";
+    $("lesson-ahead").textContent = ahead ? L.aheadNote(state.lesson, state.lessons) : "";
+    $("lesson-ahead").hidden = !ahead;
+    showHere();
+    $("start-here").addEventListener("click", startHere);
     const note = L.authorshipNote(state.lesson);
     $("lesson-authorship").textContent = note;
     $("lesson-authorship").hidden = !note;

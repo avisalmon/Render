@@ -1,7 +1,7 @@
-// SPR-I.5.3 improv: the seeded lessons can be passed. A lesson nobody can pass is worse than no
-// lesson, so for every seeded exercise a model player plays the take the exercise asks for, exactly
-// on the grid, and the real judge has to score it at or above the pass mark. A take of wrong notes
-// has to fall short, so an exercise is not passed just by turning up.
+// SPR-I.5.3 and SPR-I.10.2 improv: the seeded lessons can be passed. A lesson nobody can pass is worse
+// than no lesson, so for every seeded exercise a model player plays the take the exercise asks for,
+// exactly on the grid, and the real judge has to score it at or above the pass mark. A take of wrong
+// notes has to fall short, so an exercise is not passed just by turning up.
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
@@ -111,6 +111,20 @@ function modelTake(ex, chart) {
   return out;
 }
 
+// The pitch class that fits the fewest chords of the exercise's bars: the worst note to play on every beat.
+function worstNote(ex, chart) {
+  const counts = Array(12).fill(0);
+  for (let bar = 0; bar < ex.bars; bar++) {
+    for (const chord of chart.bars[bar % chart.bars.length].chords) {
+      const inside = new Set([...tonesOf(chord), ...scaleOf(chord)]);
+      for (let pc = 0; pc < 12; pc++) if (inside.has(pc)) counts[pc] += 1;
+    }
+  }
+  let pc = 0;
+  for (let i = 1; i < 12; i++) if (counts[i] < counts[pc]) pc = i;
+  return 60 + pc;
+}
+
 function judgeTake(ex, chart, notes) {
   const beatMs = 60000 / ex.tempo;
   const events = [];
@@ -133,9 +147,10 @@ function judgeTake(ex, chart, notes) {
   });
 }
 
-test("the seed has the lessons the sprint promises", () => {
-  assert.equal(lessons.lessons.length, 6);
-  assert.ok(exercises.length >= 10 && exercises.length <= 20, `${exercises.length} exercises`);
+test("the seed has the curriculum the sprint promises: twenty lessons, three to a lesson", () => {
+  assert.equal(lessons.lessons.length, 20);
+  assert.equal(exercises.length, 60);
+  for (const lesson of lessons.lessons) assert.equal(lesson.exercises.length, 3, lesson.slug);
 });
 
 test("a model player passes every seeded exercise", () => {
@@ -156,12 +171,13 @@ test("playing nothing passes no exercise", () => {
   }
 });
 
-test("wrong notes on the beats pass none of the pitch exercises", () => {
+test("a note that fits none of the chords, on every beat, passes none of the pitch exercises", () => {
   const pitched = ["chord_tones_on_beats", "scale_only", "guide_tones", "approach_notes"];
   for (const ex of exercises.filter((e) => pitched.includes(e.scoring_kind))) {
     const chart = setup(ex);
+    const bad = worstNote(ex, chart);
     const notes = [];
-    for (let beat = 0; beat < ex.bars * BEATS; beat++) notes.push([beat, 63]);
+    for (let beat = 0; beat < ex.bars * BEATS; beat++) notes.push([beat, bad]);
     const got = judgeTake(ex, chart, notes);
     assert.ok(!(got.score >= ex.pass_score), `${ex.slug} passed with a note that fits no chord (score ${got.score})`);
   }
@@ -174,5 +190,15 @@ test("a rhythm that is the wrong shape does not pass a rhythm motif", () => {
     for (let beat = 0; beat < ex.bars * BEATS; beat += 0.5) notes.push([beat, 60]);
     const got = judgeTake(ex, chart, notes);
     assert.ok(!(got.score >= ex.pass_score), `${ex.slug} passed by playing every eighth (score ${got.score})`);
+  }
+});
+
+test("an answer in the wrong bar passes no call and response", () => {
+  for (const ex of exercises.filter((e) => e.scoring_kind === "call_and_response")) {
+    const chart = setup(ex);
+    const wrongBar = (ex.scoring_params.answerBar + 1) % ex.bars;
+    const notes = ex.scoring_params.phrase.map(([beat, note]) => [wrongBar * BEATS + beat, note]);
+    const got = judgeTake(ex, chart, notes);
+    assert.ok(!(got.score >= ex.pass_score), `${ex.slug} passed with the answer in the wrong bar (score ${got.score})`);
   }
 });

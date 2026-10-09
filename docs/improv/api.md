@@ -359,14 +359,30 @@ DELETE answer 405.
 
 `GET /improv/api/continue/`
 
-The lesson to go back to, computed from your completions each time and stored nowhere. Only
-published lessons with something to play count: a lesson with nothing to play is read and never
-ticked off. `state` is `continue` (an open lesson you have passed some of, the first in the order
-of the path), `start` (no lesson begun, so the first open one), `finished` (every lesson is done) or
-`none` (no lesson to play yet). `lesson` (slug), `title`, `track`, `exercises_done` and
-`exercises_total` describe the lesson, and are null, empty and 0 for `finished` and `none`. A locked
-lesson and a draft are never offered. Today draws it as a button. Read-only: POST, PUT, PATCH and
-DELETE answer 405.
+The lesson to go back to, computed from your completions and your pointer (`Player.current_lesson`)
+each time. Only published lessons with something to play count: a lesson with nothing to play is read
+and never ticked off. With a pointer: that lesson while it has exercises to pass, then the next
+unfinished lesson after it in the path, then whatever is left before it. Without one: the open lesson
+you have passed some of, else the first open lesson in the order of the path; a lesson ahead (one whose
+prerequisite you have not finished) is never offered until you go there, and a draft never. `state` is
+`continue` (some exercises passed), `start` (none yet), `finished` (every lesson is done) or `none`
+(no lesson to play yet). `lesson` (slug), `title`, `track`, `exercises_done` and `exercises_total`
+describe the lesson, and are null, empty and 0 for `finished` and `none`. Today draws it as a button.
+Read-only: POST, PUT, PATCH and DELETE answer 405.
+
+### Start here
+
+`POST /improv/api/start-here/` with `{"lesson": "<slug>"}`
+
+Points you at a lesson (SPR-I.10.1): Today and Continue follow from there, and everything up to it
+in the path is open. The answer is the continue read above. 404 for a slug that is not there or a
+draft you may not see; 405 for GET. Playing an exercise of a lesson moves the pointer there too, so
+most people never call this: it is the Start here button on a lesson page.
+
+Lessons carry `path_order` (their place in the whole path, across tracks), `state` (`open`, `ahead`
+or `done`; nothing is `locked` any more) and `current` (this is the lesson the pointer is on).
+Exercises carry `ahead` instead of `locked`: the lesson builds on one you have not finished, and a
+take there still counts. The lessons list comes in path order.
 
 ### Summary
 

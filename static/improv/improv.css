@@ -156,7 +156,8 @@
 .im-level-line { margin: 0 0 .25rem; font-weight: 600; color: var(--im-accent); }
 .im-state { font-size: .8rem; border: 1px solid #3a3e46; border-radius: 1rem; padding: 0 .55rem; color: var(--im-muted); white-space: nowrap; }
 .im-state-done { border-color: var(--im-accent); color: var(--im-accent); }
-.im-locked { opacity: .7; }
+.im-state-here { border-color: var(--im-fg); color: var(--im-fg); font-weight: 600; }
+.im-take[data-current="yes"] { border-color: var(--im-accent); }
 
 /* Today and Progress (SPR-I.6.1) */
 .im-today-goal { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.5rem; }
@@ -342,6 +343,9 @@
   .im-hero-copy .im-lead { font-size: 1.15rem; max-width: 30rem; }
   .im-hero { gap: 4rem; }
 }
+
+/* SPR-I.10: the lesson page's Start here beside All lessons */
+.im-head-actions { display: inline-flex; align-items: center; gap: .4rem; }
 
 .im-hero-title { margin: 0 0 .6rem; font-size: 2rem; line-height: 1.15; max-width: 22rem; }
 .im-hero-copy .im-lead { margin: 0 0 .9rem; max-width: 26rem; }

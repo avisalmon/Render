@@ -57,11 +57,10 @@ def player(seeded):
 # ------------------------------------------------------------------- what the seed holds
 
 
-def test_the_seed_adds_six_lessons_one_for_each_scored_track(seeded):
-    tracks = list(Lesson.objects.order_by("track").values_list("track", flat=True))
-    assert Lesson.objects.count() == 6
-    assert sorted(tracks) == sorted(set(tracks)), "one lesson to a track"
-    assert set(tracks) <= set(TRACK_ORDER)
+def test_the_seed_covers_every_scored_track(seeded):
+    tracks = set(Lesson.objects.values_list("track", flat=True))
+    assert Lesson.objects.count() == 20, "twenty lessons since SPR-I.10.2"
+    assert tracks == set(TRACK_ORDER) - {"voicings_comping"}
     assert "voicings_comping" not in tracks, "that kind is not scored in version 1, so there is nothing to teach it with yet"
 
 
@@ -81,8 +80,8 @@ def test_every_lesson_reads_hears_and_plays(seeded):
         lesson.full_clean()
 
 
-def test_the_exercises_number_between_ten_and_twenty(seeded):
-    assert 10 <= Exercise.objects.count() <= 20
+def test_the_exercises_number_three_to_a_lesson(seeded):
+    assert Exercise.objects.count() == 60
 
 
 def test_every_exercise_passes_the_same_check_as_a_saved_one(seeded):
@@ -139,7 +138,7 @@ def test_a_new_player_can_start_one_lesson_and_the_rest_wait(seeded):
     slugs = dict(Lesson.objects.values_list("id", "slug"))
     states = {slugs[pk]: row["state"] for pk, row in progress.lesson_states(user).items()}
     assert [slug for slug, state in states.items() if state == "open"] == ["chord-tones-on-the-beat"]
-    assert set(states.values()) == {"open", "locked"}
+    assert set(states.values()) == {"open", "ahead"}
 
 
 def test_the_level_and_the_xp_of_the_whole_course_are_reachable(seeded):
@@ -175,10 +174,10 @@ def test_the_command_reports_what_it_added_then_nothing(db):
     call_command("seed_improv_theory", stdout=io.StringIO())
     call_command("seed_improv_library", stdout=io.StringIO())
     first = _seed()
-    assert re.search(r"improv lessons: added 30 \(6 phrases, 6 lessons, 18 exercises\)\.", first), first
+    assert re.search(r"improv lessons: added 100 \(20 phrases, 20 lessons, 60 exercises\)\.", first), first
     second = _seed()
     assert "improv lessons: added 0" in second
-    assert (Phrase.objects.count(), Lesson.objects.count(), Exercise.objects.count()) == (6, 6, 18)
+    assert (Phrase.objects.count(), Lesson.objects.count(), Exercise.objects.count()) == (20, 20, 60)
 
 
 def test_running_it_again_never_undoes_an_edit(seeded):
@@ -203,7 +202,7 @@ def test_it_fills_in_what_was_deleted_and_leaves_the_rest(seeded):
     Exercise.objects.get(slug="rhythm-offbeats").delete()
     out = _seed()
     assert "added 1 (0 phrases, 0 lessons, 1 exercises)" in out, out
-    assert Exercise.objects.count() == 18
+    assert Exercise.objects.count() == 60
 
 
 def test_it_is_all_or_nothing(db):
@@ -229,17 +228,16 @@ def test_the_seeded_lessons_arrive_through_the_api_in_the_order_a_player_meets_t
     assert got.status_code == 200
     body = got.json()
     rows = body["lessons"] if isinstance(body, dict) else body
-    tracks = [row["track"] for row in rows]
-    assert tracks == [t for t in TRACK_ORDER if t in tracks], "tracks come in the order a player meets them"
+    assert [row["path_order"] for row in rows] == list(range(1, 21)), "the path, in order"
     assert {row["slug"]: row["state"] for row in rows}["chord-tones-on-the-beat"] == "open"
-    assert {row["slug"]: row["state"] for row in rows}["call-and-response"] == "locked"
+    assert {row["slug"]: row["state"] for row in rows}["call-and-response"] == "ahead"
 
 
 def test_the_exercises_and_phrases_are_in_the_api(player):
     _, client = player
     exercises = client.get(f"{API}exercises/").json()
     phrases = client.get(f"{API}phrases/").json()
-    assert len(exercises) == 18 and len(phrases) == 6
+    assert len(exercises) == 60 and len(phrases) == 20
     assert all(e["lesson"] for e in exercises)
     assert {e["scoring_kind"] for e in exercises} == {
         "chord_tones_on_beats", "guide_tones", "scale_only", "approach_notes", "rhythm_motif", "call_and_response",

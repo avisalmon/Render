@@ -13,6 +13,8 @@
      data-api-styles="{{ api.styles }}"
      data-api-qualities="{{ api.qualities }}"
      data-api-player="{{ api.player }}"
+     data-api-start-here="{{ api.start_here }}"
+     data-csrf="{{ csrf_token }}"
      data-play-url="{{ play_url }}"
      data-lessons-url="{{ lessons_url }}">
 
@@ -21,9 +23,13 @@
     <p id="lesson-status" class="im-status" role="status" aria-live="polite">Loading the lesson.</p>
     <p id="lesson-meta" class="im-note"></p>
     <p id="lesson-level" class="im-level-line"></p>
-    <a class="im-btn im-btn-quiet im-btn-link im-btn-small im-head-end" href="{{ lessons_url }}">All lessons</a>
+    <span class="im-head-end im-head-actions">
+      <button id="start-here" class="im-btn im-btn-quiet im-btn-small" type="button" hidden title="Make this the lesson Today points at">Start here</button>
+      <a class="im-btn im-btn-quiet im-btn-link im-btn-small" href="{{ lessons_url }}">All lessons</a>
+    </span>
   </div>
-  <p id="lesson-lock" class="im-note im-tight" role="status" hidden></p>
+  <p id="lesson-ahead" class="im-note im-tight" role="status" hidden></p>
+  <p id="lesson-here" class="im-note im-tight" role="status" hidden>You are here: Today points at this lesson.</p>
   <p id="lesson-authorship" class="im-note im-authorship im-tight" hidden></p>
 
   <div id="lesson-body" class="im-cols im-cols-3" hidden>

@@ -22,24 +22,23 @@ test("the tracks are in the order the Python knows them in", () => {
   assert.deepEqual(L.TRACKS.map((t) => t[0]), slugs);
 });
 
-test("lessons are grouped by track in teaching order, by position, and an empty track is left out", () => {
-  const groups = L.groupByTrack([lesson("b", "guide_tones", 2), lesson("a", "guide_tones", 1), lesson("c", "chord_tones", 1)]);
-  assert.deepEqual(groups.map((g) => g.track), ["chord_tones", "guide_tones"]);
-  assert.deepEqual(groups[1].lessons.map((l) => l.slug), ["a", "b"]);
-  assert.equal(groups[0].label, "Chord tones");
+test("lessons are grouped by level in the order of the path, and a level with nothing in it is left out", () => {
+  const groups = L.groupByLevel([lesson("b", "guide_tones", 2), lesson("a", "guide_tones", 1), lesson("c", "chord_tones", 1, { level: 2 })]);
+  assert.deepEqual(groups.map((g) => g.level), [1, 2]);
+  assert.deepEqual(groups[0].lessons.map((l) => l.slug), ["a", "b"]);
+  assert.equal(groups[0].label, "Level 1, beginner");
 });
 
-test("a track the page does not know is shown under Other rather than lost", () => {
-  const groups = L.groupByTrack([lesson("x", "something_new", 1)]);
-  assert.equal(groups[0].label, "Other");
-  assert.equal(groups[0].lessons.length, 1);
+test("a track the page does not know still has a label rather than being lost", () => {
+  assert.equal(L.trackLabel("something_new"), "something_new");
+  assert.equal(L.trackLabel("chord_tones"), "Chord tones");
 });
 
-test("the small line names the level, the lesson before it and a draft", () => {
+test("the small line names the track, the lesson before it and a draft", () => {
   const first = lesson("chord-tones", "chord_tones", 1, { title: "Chord tones over ii-V-I" });
   const second = lesson("guide", "guide_tones", 1, { level: 2, prerequisite: "chord-tones", status: "draft" });
-  assert.equal(L.describe(first, [first, second]), "Level 1.");
-  assert.equal(L.describe(second, [first, second]), "Level 2, after Chord tones over ii-V-I, draft, only you can see it.");
+  assert.equal(L.describe(first, [first, second]), "Chord tones.");
+  assert.equal(L.describe(second, [first, second]), "Guide tones, after Chord tones over ii-V-I, draft, only you can see it.");
 });
 
 test("a lesson no person has read says so", () => {

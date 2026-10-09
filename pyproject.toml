@@ -182,6 +182,8 @@ markers = [
     "spri93: SPR-I.9.3 improv feedback from the people trying it",
     "spri94: SPR-I.9.4 improv ceiling, owner card, feedback email",
     "spri95: SPR-I.9.5 improv short menu with More and account menus, front door hero",
+    "spri101: SPR-I.10.1 improv start anywhere: no locks, a pointer in the path, Start here",
+    "spri102: SPR-I.10.2 improv the twenty-lesson curriculum and the draft-refreshing seed",
     "sprsl12: SL-D1 SensorLab the attempt, and who may see one",
     "sprsl13: SL-D2 SensorLab the five-step runner shell",
     "sprsl14: SL-D3 SensorLab the attempt API, and the share link",

@@ -226,6 +226,14 @@ class Player(models.Model):
         LAPTOP = "laptop", "the laptop, as a plain tone"
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="improv_player")
+    current_lesson = models.ForeignKey(
+        "Lesson",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="players_here",
+        help_text="Where the player chose to be in the path: Today and Continue follow from here. Moves when they press Start here or play an exercise of another lesson.",
+    )
     daily_goal_minutes = models.PositiveSmallIntegerField(
         default=15, validators=[MinValueValidator(5), MaxValueValidator(240)]
     )
@@ -405,6 +413,9 @@ class Lesson(models.Model):
     prerequisite = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL, related_name="unlocks")
     authorship = models.CharField(max_length=12, choices=Authorship.choices, default=Authorship.AI_DRAFTED)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.DRAFT)
+    path_order = models.PositiveSmallIntegerField(
+        null=True, blank=True, unique=True, help_text="Position in the whole path, across tracks. Empty sorts after every numbered lesson, by level, track and order."
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

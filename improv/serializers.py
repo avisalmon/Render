@@ -205,15 +205,16 @@ class LessonSerializer(serializers.ModelSerializer):
     prerequisite = serializers.SlugRelatedField(slug_field="slug", read_only=True)
     exercises = serializers.SerializerMethodField()
     state = serializers.SerializerMethodField()
+    current = serializers.SerializerMethodField()
     exercises_done = serializers.SerializerMethodField()
     exercises_total = serializers.SerializerMethodField()
 
     class Meta:
         model = Lesson
         fields = [
-            "id", "track", "order", "title", "slug", "level", "summary", "explanation", "demo_phrase",
+            "id", "track", "order", "path_order", "title", "slug", "level", "summary", "explanation", "demo_phrase",
             "progression", "progression_slug", "style", "prerequisite", "exercises", "authorship", "status",
-            "state", "exercises_done", "exercises_total", "created_at", "updated_at",
+            "state", "current", "exercises_done", "exercises_total", "created_at", "updated_at",
         ]  # fmt: skip
         read_only_fields = fields
 
@@ -222,6 +223,9 @@ class LessonSerializer(serializers.ModelSerializer):
 
     def get_state(self, obj):
         return self._state(obj, "state")
+
+    def get_current(self, obj):
+        return bool(self._state(obj, "current"))
 
     def get_exercises_done(self, obj):
         return self._state(obj, "exercises_done")
@@ -237,24 +241,25 @@ class ExerciseSerializer(serializers.ModelSerializer):
     lesson = serializers.SlugRelatedField(slug_field="slug", read_only=True)
     progression_slug = serializers.CharField(source="progression.slug", read_only=True)
     completed = serializers.SerializerMethodField()
-    locked = serializers.SerializerMethodField()
+    ahead = serializers.SerializerMethodField()
 
     class Meta:
         model = Exercise
         fields = [
             "id", "slug", "lesson", "order", "title", "instructions", "progression", "progression_slug", "key",
             "tempo", "style", "bars", "scoring_kind", "scoring_params", "pass_score", "xp", "daily_eligible",
-            "completed", "locked",
+            "completed", "ahead",
         ]  # fmt: skip
         read_only_fields = fields
 
     def get_completed(self, obj):
         return obj.pk in self.context.get("done_exercises", ())
 
-    def get_locked(self, obj):
+    def get_ahead(self, obj):
+        """The lesson builds on one the player has not finished. A take here still counts."""
         if obj.lesson_id is None:
             return False
-        return self.context.get("lesson_states", {}).get(obj.lesson_id, {}).get("state") == "locked"
+        return self.context.get("lesson_states", {}).get(obj.lesson_id, {}).get("state") == "ahead"
 
 
 class CompletionSerializer(serializers.ModelSerializer):

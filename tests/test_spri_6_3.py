@@ -93,7 +93,7 @@ def test_the_deploy_command_migrates_first_and_does_not_depend_on_the_seeds():
     command = next(line for line in text.splitlines() if "startCommand" in line)
     assert "python manage.py migrate &&" in command
     for name in ("seed_improv_theory", "seed_improv_library", "seed_improv_lessons", "seed_improv_challenges"):
-        assert f"(python manage.py {name} || true)" in command
+        assert f"(python manage.py {name} || true)" in command or f"(python manage.py {name} --refresh-drafts || true)" in command
     assert command.rstrip().endswith("--timeout 120")
 
 

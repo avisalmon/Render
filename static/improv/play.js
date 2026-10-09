@@ -274,7 +274,7 @@
   function exerciseGoalLine(exercise, applies) {
     if (!applies) return "You changed the chart or the bars, so this is free play and will not count for the exercise.";
     const ask = `${exercise.bars} ${exercise.bars === 1 ? "bar" : "bars"}, pass at ${exercise.pass_score}`;
-    if (exercise.locked) return `${ask}. This lesson is locked until the one before it is passed, so a take here earns nothing yet.`;
+    if (exercise.ahead) return `${ask}. This lesson builds on one you have not finished; a take here counts all the same, and Today will follow you here.`;
     if (exercise.completed) return `${ask}. You have passed this one already, so it earns no more XP.`;
     return `${ask}, worth ${exercise.xp} XP.`;
   }

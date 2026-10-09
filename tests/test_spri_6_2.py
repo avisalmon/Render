@@ -210,7 +210,7 @@ def _start_command():
 def test_every_improv_seed_is_in_the_deploy_with_the_or_true_pattern():
     command = _start_command()
     for name in ("seed_improv_theory", "seed_improv_library", "seed_improv_lessons", "seed_improv_challenges"):
-        assert f"(python manage.py {name} || true)" in command, name
+        assert f"(python manage.py {name} || true)" in command or f"(python manage.py {name} --refresh-drafts || true)" in command, name
 
 
 def test_the_seeds_run_in_the_order_their_rows_need_each_other():

@@ -163,6 +163,20 @@ babook; a signed-in person goes straight in. Spec: ch. 7.
 
 ---
 
+## EPIC-I.10: Start anywhere, and a real curriculum  `DONE 2026-10-09`
+
+Avi, 2026-10-09: "give the opportunity to unlock any lesson that the user would like to start from and just
+continue from the spot that he chose; if he goes back or jumps ahead, let him, the progress keeps going from the
+new point", and "build the lessons not randomly, with real logic behind the progress, from beginner to
+intermediate, maybe 20". Spec: ch. 6 "The path" and "Start anywhere".
+
+| Sprint | What | Traces | Status |
+|---|---|---|---|
+| SPR-I.10.1 | Nothing is locked: a lesson is open, ahead or done; a pass in a lesson ahead counts; `Player.current_lesson` is the pointer, moved by Start here (`POST /improv/api/start-here/`) and by playing; Continue and the workout follow it; the Lessons screen groups by level and marks "You are here" | ch. 6, data model, api | DONE 2026-10-09 |
+| SPR-I.10.2 | Twenty lessons in three levels, tracks interleaved, `Lesson.path_order`; the six originals keep their slugs; `seed_improv_lessons --refresh-drafts` keeps AI drafts in step with the file and never touches a read lesson; model player passes all sixty exercises | ch. 6 | DONE 2026-10-09 |
+
+---
+
 ## After v1, in the order Avi sees fit
 
 Ear training inside lessons (12), the weakness-driven extras, ear and speed

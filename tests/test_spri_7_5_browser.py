@@ -32,8 +32,9 @@ SIZES = ((1280, 720), (1920, 1080))
 SCREENS = ("today", "play", "play-longest", "play-exercise", "lessons", "lesson", "challenges", "library", "editor", "takes", "practice", "progress", "reference", "setup", "spike", "scales", "scales-4-octaves", "chords", "chords-learn", "feedback", "front-door", "login", "signup")
 ANONYMOUS = ("front-door", "login", "signup")
 UTC = dt.timezone.utc
-# These screens show everything at once at 1280 by 720; a bounded list there is for future growth.
-NO_INNER_SCROLL = ("today", "lessons")
+# This screen shows everything at once at 1280 by 720; a bounded list there is for future growth.
+# Lessons left the list with the twenty-lesson curriculum (SPR-I.10.2): a level column scrolls inside itself.
+NO_INNER_SCROLL = ("today",)
 
 MEASURE = """
 () => {
@@ -96,9 +97,9 @@ def _history(player):
         )
     for i in range(15):
         Feedback.objects.create(player=player, kind="idea", message=f"Note number {i}: please let me change the band volume per instrument.")
-    for lesson in Lesson.objects.order_by("track", "order")[:2]:
+    for lesson in Lesson.objects.order_by("path_order")[:2]:
         for ex in lesson.exercises.all():
-            take = next(t for t in made if t.exercise_id == ex.id)
+            take = next((t for t in made if t.exercise_id == ex.id), None)
             Completion.objects.get_or_create(player=player, exercise=ex, defaults={"take": take, "xp_awarded": ex.xp})
 
 

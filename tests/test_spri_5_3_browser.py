@@ -73,18 +73,19 @@ def world(browser, live_server, db, one_request_at_a_time):
     context.close()
 
 
-def test_a_new_player_sees_six_lessons_and_only_the_first_is_open(world):
+def test_a_new_player_sees_twenty_lessons_in_three_levels_and_only_the_first_is_open(world):
     page, errors, base = world
     page.goto(f"{base}/improv/lessons/", wait_until="domcontentloaded")
-    page.wait_for_selector('#lessons-tracks .im-take[data-slug="call-and-response"]', timeout=10000)
+    page.wait_for_selector('#lessons-tracks .im-take[data-slug="call-and-response-longer"]', timeout=10000)
     page.wait_for_function("document.getElementById('lessons-level').textContent !== ''", timeout=10000)
     cards = page.locator("#lessons-tracks .im-take")
-    assert cards.count() == 6
-    states = [cards.nth(i).get_attribute("data-state") for i in range(6)]
-    assert states.count("open") == 1 and states.count("locked") == 5
+    assert cards.count() == 20
+    states = [cards.nth(i).get_attribute("data-state") for i in range(20)]
+    assert states.count("open") == 1 and states.count("ahead") == 19
     assert page.locator('#lessons-tracks .im-take[data-slug="chord-tones-on-the-beat"]').get_attribute("data-state") == "open"
-    assert page.locator("#lessons-done").inner_text() == "0 of 6 lessons done."
-    assert "Drafted by AI" in page.locator("#lessons-tracks").inner_text()
+    assert page.locator("#lessons-done").inner_text() == "0 of 20 lessons done."
+    assert [page.locator("#lessons-tracks section").nth(i).get_attribute("data-level") for i in range(3)] == ["1", "2", "3"]
+    assert page.locator('#lessons-tracks section[data-level="1"] .im-take').count() == 7
     assert not errors, errors
 
 
@@ -96,7 +97,8 @@ def test_the_first_lesson_reads_hears_and_offers_its_three_exercises(world):
     assert page.locator("#lesson-authorship").is_visible()
     assert page.locator("#lesson-exercises .im-take").count() == 3
     assert page.locator("#lesson-exercises a").count() == 3, "an open lesson links each exercise to Play"
-    assert not page.locator("#lesson-lock").is_visible()
+    assert not page.locator("#lesson-ahead").is_visible()
+    assert page.locator("#start-here").is_visible(), "the first lesson is open but not yet where the player is"
     assert not errors, errors
 
 
@@ -105,5 +107,5 @@ def test_a_seeded_exercise_opens_on_the_play_screen_with_its_goal(world):
     page.goto(f"{base}/improv/play/?exercise=rhythm-charleston", wait_until="domcontentloaded")
     page.wait_for_selector("#exercise-panel:not([hidden])", timeout=15000)
     goal = page.locator("#exercise-goal").inner_text()
-    assert "4 bars, pass at 70, worth 15 XP." in goal or "locked" in goal
+    assert "4 bars, pass at 70, worth 15 XP." in goal or "builds on one you have not finished" in goal
     assert not errors, errors

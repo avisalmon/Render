@@ -11,12 +11,12 @@ player's row does not exist as far as this player can tell.
 import datetime as dt
 
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count, F, Q
 from django.utils import timezone
 from rest_framework import generics, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.exceptions import PermissionDenied, Throttled, ValidationError
+from rest_framework.exceptions import NotFound, PermissionDenied, Throttled, ValidationError
 from rest_framework.permissions import SAFE_METHODS
 
 from .models import ChordQuality, ChordScale, Completion, DrillAttempt, Exercise, Feedback, Lesson, Phrase, PracticeSession, Progression, Scale, ScaleFingering, ScaleRun, Style, Tag, Take
@@ -141,7 +141,7 @@ class LessonViewSet(ProgressContextMixin, ReferenceViewSet):
         rows = visible_lessons(self.request.user).select_related("progression", "prerequisite").prefetch_related("exercises")
         if self.request.query_params.get("track"):
             rows = rows.filter(track=self.request.query_params["track"])
-        return rows.annotate(track_rank=track_rank()).order_by("track_rank", "order")
+        return rows.annotate(track_rank=track_rank()).order_by(F("path_order").asc(nulls_last=True), "level", "track_rank", "order")
 
 
 class ExerciseViewSet(ProgressContextMixin, ReferenceViewSet):
@@ -306,6 +306,8 @@ class TakeViewSet(MineViewSet):
             self.check_room()
             take = serializer.save(player=player)
             progress.award(take)
+            if take.exercise_id and take.exercise.lesson_id:
+                progress.move_to(player, take.exercise.lesson)
             retention.prune(player)
 
     def get_queryset(self):
@@ -400,6 +402,22 @@ class ContinueView(APIView):
         return Response(progress.continue_lesson(profile_for(request.user)))
 
 
+class StartHereView(APIView):
+    """Where the player chooses to be in the path (spec ch. 6). POST {"lesson": slug} points Today and
+    Continue at that lesson and opens everything before it; the answer is the continue read."""
+
+    permission_classes = [IsPlayer]
+
+    def post(self, request):
+        slug = str(request.data.get("lesson") or "")[:60]
+        lesson = visible_lessons(request.user).filter(slug=slug).first()
+        if lesson is None:
+            raise NotFound("There is no lesson by that name.")
+        player = profile_for(request.user)
+        progress.move_to(player, lesson)
+        return Response(progress.continue_lesson(player))
+
+
 class PracticeView(APIView):
     """Today against the daily goal, the streak and the practice log: a read over the player's
     sittings in their own timezone, stored nowhere."""
@@ -488,4 +506,6 @@ DERIVED = {
     "bests": BestsView,
     "trainer": TrainerView,
 }
+# Actions: a POST that changes one thing about the player and answers with a read.
+ACTIONS = {"start-here": StartHereView}
 ENDPOINTS = {**REFERENCE_ENDPOINTS, **OWNED_ENDPOINTS, **MINE_ENDPOINTS}

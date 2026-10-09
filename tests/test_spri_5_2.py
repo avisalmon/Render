@@ -206,17 +206,12 @@ def test_a_take_over_another_progression_does_not_count(people, path):
     assert made.json()["completion"] is None
 
 
-def test_an_exercise_of_a_locked_lesson_does_not_count_until_the_one_before_is_cleared(people, path):
+def test_an_exercise_of_a_lesson_ahead_counts_all_the_same(people, path):
+    # Since SPR-I.10.1 nothing is locked: a person may start where they like, and the pass counts.
     client = _client(people["member"])
-    session = _session(client)
-    early = _take(client, session, path, exercise="b-one", score=100)
-    assert early.status_code == 201 and early.json()["completion"] is None
-    assert _take(client, session, path, exercise="a-one", score=100).json()["completion"]
-    still = _take(client, session, path, exercise="b-one", score=100)
-    assert still.json()["completion"] is None, "lesson A has a second exercise still to pass"
-    assert _take(client, session, path, exercise="a-two", score=80).json()["completion"]
-    now = _take(client, session, path, exercise="b-one", score=100)
-    assert now.json()["completion"]["xp_awarded"] == 40
+    early = _take(client, _session(client), path, exercise="b-one", score=100)
+    assert early.status_code == 201
+    assert early.json()["completion"]["xp_awarded"] == 40
 
 
 def test_a_challenge_is_never_locked(people, path):
@@ -374,20 +369,20 @@ def _states(client):
     return {row["slug"]: row for row in client.get(f"{API}lessons/").json()}
 
 
-def test_a_lesson_is_open_locked_or_done_for_this_player(people, path):
+def test_a_lesson_is_open_ahead_or_done_for_this_player(people, path):
     client = _client(people["member"])
     states = _states(client)
     assert states["lesson-a"]["state"] == "open"
-    assert states["lesson-b"]["state"] == "locked"
-    assert states["lesson-c"]["state"] == "locked"
-    assert states["lesson-d"]["state"] == "locked"
+    assert states["lesson-b"]["state"] == "ahead"
+    assert states["lesson-c"]["state"] == "ahead"
+    assert states["lesson-d"]["state"] == "ahead"
     assert states["lesson-a"]["exercises_done"] == 0 and states["lesson-a"]["exercises_total"] == 2
 
     session = _session(client)
     _take(client, session, path, exercise="a-one", score=100)
     states = _states(client)
     assert states["lesson-a"]["state"] == "open" and states["lesson-a"]["exercises_done"] == 1
-    assert states["lesson-b"]["state"] == "locked"
+    assert states["lesson-b"]["state"] == "ahead"
 
     _take(client, session, path, exercise="a-two", score=100)
     states = _states(client)
@@ -412,24 +407,24 @@ def test_one_player_finishing_a_lesson_unlocks_nothing_for_another(people, path)
     session = _session(other)
     _take(other, session, path, exercise="a-one", score=100)
     _take(other, session, path, exercise="a-two", score=100)
-    assert _states(_client(people["member"]))["lesson-b"]["state"] == "locked"
+    assert _states(_client(people["member"]))["lesson-b"]["state"] == "ahead"
     assert _states(other)["lesson-b"]["state"] == "open"
 
 
-def test_an_exercise_says_whether_it_is_done_and_whether_it_is_locked(people, path):
+def test_an_exercise_says_whether_it_is_done_and_whether_it_is_ahead(people, path):
     client = _client(people["member"])
     _take(client, _session(client), path, exercise="a-one", score=100)
     rows = {row["slug"]: row for row in client.get(f"{API}exercises/").json()}
-    assert rows["a-one"]["completed"] is True and rows["a-one"]["locked"] is False
-    assert rows["a-two"]["completed"] is False and rows["a-two"]["locked"] is False
-    assert rows["b-one"]["locked"] is True
-    assert rows["a-challenge"]["locked"] is False and rows["a-challenge"]["completed"] is False
+    assert rows["a-one"]["completed"] is True and rows["a-one"]["ahead"] is False
+    assert rows["a-two"]["completed"] is False and rows["a-two"]["ahead"] is False
+    assert rows["b-one"]["ahead"] is True
+    assert rows["a-challenge"]["ahead"] is False and rows["a-challenge"]["completed"] is False
 
 
 def test_the_detail_reads_say_it_too(people, path):
     client = _client(people["member"])
-    assert client.get(f"{API}lessons/{path['b'].pk}/").json()["state"] == "locked"
-    assert client.get(f"{API}exercises/{path['b1'].pk}/").json()["locked"] is True
+    assert client.get(f"{API}lessons/{path['b'].pk}/").json()["state"] == "ahead"
+    assert client.get(f"{API}exercises/{path['b1'].pk}/").json()["ahead"] is True
 
 
 # ----------------------------------------------------------------- admin, pages, docs
@@ -471,7 +466,7 @@ def test_the_pages_show_progress_from_what_the_server_says_and_award_nothing_the
     lessons = Path("static/improv/lessons-page.js").read_text(encoding="utf-8")
     assert "L.stateLabel(lesson)" in lessons and "L.levelLine(summary)" in lessons
     lesson = Path("static/improv/lesson-page.js").read_text(encoding="utf-8")
-    assert "if (!ex.locked)" in lesson
+    assert "L.exerciseMark(ex)" in lesson
     for text in (play, lessons, lesson):
         code = re.sub(r"//[^\n]*", "", text)
         assert "xp_awarded:" not in code, "a page must not write a completion"

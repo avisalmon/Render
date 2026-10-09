@@ -106,7 +106,7 @@ def test_a_finished_lesson_moves_on_to_the_next_that_it_opens(people):
     assert got["state"] == "start" and got["lesson"] == "second"
 
 
-def test_a_locked_lesson_is_never_offered(people):
+def test_a_lesson_ahead_is_never_offered_before_the_player_goes_there(people):
     first = _lesson("chord_tones", "first", order=1)
     _lesson("chord_tones", "second", order=2, prerequisite=first)
     got = progress.continue_lesson(_player(people["member"]))

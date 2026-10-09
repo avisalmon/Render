@@ -18,7 +18,7 @@
     ["call_and_response", "Call and response"],
     ["voicings_comping", "Voicings and comping"],
   ];
-  const LEVELS = { 1: "Level 1", 2: "Level 2", 3: "Level 3" };
+  const LEVELS = { 1: "Level 1, beginner", 2: "Level 2, moving on", 3: "Level 3, intermediate" };
   const HEAR_COUNT_IN = 1;
   const MOST_BARS_HEARD = 16;
 
@@ -27,23 +27,40 @@
     return found ? found[1] : slug;
   }
 
-  // Lessons as the API gives them (already in track order) grouped under their track, tracks
-  // with nothing in them left out.
-  function groupByTrack(lessons) {
-    const groups = [];
-    for (const [slug, label] of TRACKS) {
-      const own = (lessons || []).filter((l) => l.track === slug).sort((a, b) => a.order - b.order);
-      if (own.length) groups.push({ track: slug, label, lessons: own });
-    }
-    const known = new Set(TRACKS.map((t) => t[0]));
-    const rest = (lessons || []).filter((l) => !known.has(l.track));
-    if (rest.length) groups.push({ track: "other", label: "Other", lessons: rest });
-    return groups;
+  function levelLabel(level) {
+    return LEVELS[level] || `Level ${level}`;
   }
 
-  // "Level 1, after Guide tones." for the card's small line.
+  // Where a lesson sits in the path: its path_order, else after every numbered lesson by level,
+  // track and position. The same rule as improv/progress.py.
+  function pathKey(lesson) {
+    if (lesson.path_order !== null && lesson.path_order !== undefined) return [0, lesson.path_order, 0, 0];
+    const track = TRACKS.findIndex((t) => t[0] === lesson.track);
+    return [1, lesson.level || 0, track < 0 ? TRACKS.length : track, lesson.order || 0];
+  }
+
+  function byPath(a, b) {
+    const ka = pathKey(a);
+    const kb = pathKey(b);
+    for (let i = 0; i < ka.length; i++) if (ka[i] !== kb[i]) return ka[i] - kb[i];
+    return 0;
+  }
+
+  // Lessons grouped by level, lowest first, each level in the order of the path. A lesson with
+  // no level the page knows goes under Other rather than being lost.
+  function groupByLevel(lessons) {
+    const groups = new Map();
+    for (const lesson of [...(lessons || [])].sort(byPath)) {
+      const level = Number.isInteger(lesson.level) && lesson.level > 0 ? lesson.level : "other";
+      if (!groups.has(level)) groups.set(level, { level, label: level === "other" ? "Other" : levelLabel(level), lessons: [] });
+      groups.get(level).lessons.push(lesson);
+    }
+    return [...groups.values()].sort((a, b) => (a.level === "other") - (b.level === "other") || a.level - b.level);
+  }
+
+  // "Chord tones, after Guide tones." for the card's small line: the track, what it builds on, a draft.
   function describe(lesson, lessons) {
-    const parts = [LEVELS[lesson.level] || `Level ${lesson.level}`];
+    const parts = [trackLabel(lesson.track)];
     const before = lesson.prerequisite && (lessons || []).find((l) => l.slug === lesson.prerequisite);
     if (before) parts.push(`after ${before.title}`);
     if (lesson.status === "draft") parts.push("draft, only you can see it");
@@ -170,18 +187,19 @@
   // ------------------------------------------------------------------ progress
 
   // The small tag on a lesson card: where the player stands in it. A lesson with nothing to play
-  // is only read, so it carries none.
+  // is only read, so it carries none unless it is ahead.
   function stateLabel(lesson) {
-    if (lesson.state === "locked") return "Locked";
+    if (lesson.state === "ahead") return "Ahead of you";
     if (!lesson.exercises_total) return "";
     if (lesson.state === "done") return "Done";
     return `${lesson.exercises_done} of ${lesson.exercises_total} passed`;
   }
 
-  // Why a lesson is shut, naming the lesson that opens it.
-  function lockedReason(lesson, lessons) {
+  // What a lesson ahead of the player builds on, and that nothing stops them starting there.
+  function aheadNote(lesson, lessons) {
     const before = lesson.prerequisite && (lessons || []).find((l) => l.slug === lesson.prerequisite);
-    return before ? `Pass every exercise in ${before.title} to open this.` : "Pass the lesson before this one to open it.";
+    const builds = before ? `Builds on ${before.title}, which you have not finished.` : "Builds on the lesson before it, which you have not finished.";
+    return `${builds} You can start here anyway: plays count, and Today will follow you.`;
   }
 
   // The one line the Lessons screen leads with: level, XP, and what the next level asks.
@@ -197,11 +215,9 @@
     return `${summary.lessons_done} of ${summary.lessons_total} ${summary.lessons_total === 1 ? "lesson" : "lessons"} done.`;
   }
 
-  // The mark on an exercise: passed, locked, or nothing yet.
+  // The mark on an exercise: passed, or nothing yet.
   function exerciseMark(exercise) {
-    if (exercise.completed) return "Passed";
-    if (exercise.locked) return "Locked";
-    return "";
+    return exercise.completed ? "Passed" : "";
   }
 
   // ------------------------------------------------------------------ the exercises
@@ -218,7 +234,10 @@
   return {
     TRACKS,
     trackLabel,
-    groupByTrack,
+    levelLabel,
+    pathKey,
+    byPath,
+    groupByLevel,
     describe,
     authorshipNote,
     parseText,
@@ -226,7 +245,7 @@
     demoNotes,
     hearSettings,
     stateLabel,
-    lockedReason,
+    aheadNote,
     levelLine,
     lessonsDoneLine,
     exerciseMark,
