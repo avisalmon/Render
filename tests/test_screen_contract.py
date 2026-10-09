@@ -581,6 +581,7 @@ SCREENS = [
     ),
     ("leader/classes", "/matazim/leader/classes/", "leader@example.com", dict(students="mixed")),
     ("leader/home", "/matazim/leader/", "leader@example.com", dict(students="mixed")),
+    ("leader/guide", "/matazim/leader/guide/", "leader@example.com", dict(students="mixed")),
     ("pm/leaders", "/matazim/staff/team/", "pm@example.com", dict(students="mixed")),
     (
         "pm/leaders-two-classes",
@@ -629,6 +630,7 @@ SCREENS = [
 
     # The program manager's remaining screens.
     ("pm/staff-home", "/matazim/staff/", "pm@example.com", dict(students="mixed")),
+    ("pm/guide", "/matazim/staff/guide/", "pm@example.com", dict(students="mixed")),
     ("pm/admins", "/matazim/staff/admins/", "pm@example.com", dict(students="mixed")),
     ("pm/leaders-old", "/matazim/staff/leaders/", "pm@example.com", dict(students="mixed")),
     ("pm/retention", "/matazim/staff/retention/", "pm@example.com", dict(students="mixed")),

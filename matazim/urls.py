@@ -16,6 +16,7 @@ from . import (
     conversation_views,
     entrance_views,
     event_views,
+    guide_views,
     internal_views,
     invite_views,
     joining_views,
@@ -76,6 +77,9 @@ urlpatterns = [
     # rest of the programme's own screens rather than off on their own.
     path("staff/courses/", overview_views.staff_courses, name="staff_courses"),
     path("staff/people/", overview_views.staff_people, name="staff_people"),
+    # SPR-M.57 — the two tutorials. Read-only, so they sit with the reports
+    # rather than with the tools that change something.
+    path("staff/guide/", guide_views.staff_guide, name="staff_guide"),
     path(
         "staff/targets/<str:target_id>/toggle/",
         entrance_views.staff_target_toggle,
@@ -109,6 +113,7 @@ urlpatterns = [
         name="reject_candidate",
     ),
     path("leader/", joining_views.leader_home, name="leader_home"),
+    path("leader/guide/", guide_views.leader_guide, name="leader_guide"),
     path("leader/confirm/<int:student_id>/", joining_views.leader_confirm, name="leader_confirm"),
     # The desk, once someone is standing at it (SPR-M.8).
     path("leader/students/", roster_views.roster, name="roster"),

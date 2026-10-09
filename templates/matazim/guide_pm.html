@@ -1,0 +1,102 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.157, SPR-M.57 — what a program manager is, and how the screens work.
+
+  ניהול is eight tools with no sentence connecting them to the job. This is
+  that sentence, expanded into a page: what the role covers, and which screen
+  does which part of it. Every link is the real screen with its real guard;
+  this page adds no ability nobody already had, and the "not yours" section at
+  the end is as important as the rest — a tutorial that promises a button that
+  is not there teaches the wrong lesson.
+{% endcomment %}
+
+{% block title %}מדריך למנהל/ת התוכנית · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>מדריך למנהל/ת התוכנית</h1>
+    <p>מה התפקיד שלכם, ואיך עושים אותו במסך אחרי מסך.</p>
+  </div>
+
+  <section class="mz-panel">
+    <h2>מה התפקיד שלכם</h2>
+    <p>
+      אתם לא מלווים מט״צים ישירות — זה תפקיד המוביל/ה. אתם מנהלים את
+      התכנית ברמת המוסד: מי המובילים, איך הם מתקדמים, מה קורה בתכנית
+      כולה, ומה צריך להשתנות באתר עצמו. הכלים שלכם רואים את כל המוסד שלכם,
+      לא רק קבוצה אחת.
+    </p>
+  </section>
+
+  <section class="mz-panel">
+    <h2>1. גיוס ואישור מובילים</h2>
+    <p>
+      ב<a href="{% url 'matazim:pm_leaders' %}">המובילים שלי</a> יוצרים
+      הזמנה — אישית למישהו ספציפי, או קישור פתוח לשיתוף — ומשם מי שנרשם
+      דרכה מחכה לאישור שלכם, בדיוק כמו שמט״צ מחכה למוביל. אפשר גם למנות
+      ישירות מי שכבר פתח/ה חשבון באתר. לוחצים על שם מוביל כדי לפתוח את הדף
+      שלו: להחליף את הקישור שלו, להוציא אותו משימוש זמנית, או להעביר מט״צ
+      בודד למוביל/ה אחר/ת באותו מוסד.
+    </p>
+  </section>
+
+  <section class="mz-panel">
+    <h2>2. תמונת המצב</h2>
+    <p>
+      <a href="{% url 'matazim:staff_people' %}">מובילים והתקדמות</a> מראה
+      כל מוביל שלכם, כמה מט״צים יש לו, וכמה מהם מוסמכים — והממתינים לאישור
+      תמיד למעלה. <a href="{% url 'matazim:staff_courses' %}">כל ההדרכות</a>
+      מראה את כל הקטלוג ומה פתוח למט״צים כרגע.
+      <a href="{% url 'matazim:cohort' %}">המחזור</a> הוא הדוח המרכזי — לפי
+      שלב, לפי מוביל ולפי בית ספר, עם ייצוא ל-CSV.
+    </p>
+  </section>
+
+  <section class="mz-panel">
+    <h2>3. יום-יום בתכנית</h2>
+    <ul class="mz-needs">
+      <li><span class="mz-muted">
+        <a href="{% url 'matazim:staff_events' %}">ימי שיא</a> — קביעת
+        התאריכים שכל המט״צים שלכם רואים בלוח הזמנים שלהם.
+      </span></li>
+      <li><span class="mz-muted">
+        הסכמת הורה נרשמת בדף של כל מט״צ בנפרד, דרך
+        <a href="{% url 'matazim:staff_people' %}">מובילים והתקדמות</a> ←
+        הדף של המוביל ← הדף של אותו מט״צ.
+      </span></li>
+      <li><span class="mz-muted">
+        <a href="{% url 'matazim:staff_retention' %}">ניקוי מידע ישן</a> —
+        ניסיונות מבחן כניסה שלא עברו נמחקים אחרי תקופה קבועה, ורק אחרי
+        שמישהו כאן מאשר.
+      </span></li>
+      <li><span class="mz-muted">
+        <a href="{% url 'matazim:staff_targets' %}">משימות מבחן הכניסה</a>
+        — בנק המשימות שמט״צים פותרים כדי להתקבל.
+      </span></li>
+    </ul>
+  </section>
+
+  <section class="mz-panel">
+    <h2>4. לבקש שינוי במערכת</h2>
+    <p>
+      משהו באתר לא עובד, חסר, או סתם לא ברור? ב
+      <a href="{% url 'matazim:new_request' %}">בקשת שיפור</a> (גם דרך
+      הפעמון הסגול שמופיע בכל עמוד) אתם כותבים מה קרה, ועוקבים אחרי
+      התשובה ב<a href="{% url 'matazim:my_requests' %}">הבקשות שלי</a>.
+      זה לא טופס תלונות — זה הערוץ שדרכו נבנה כל מסך שאתם רואים כאן.
+    </p>
+  </section>
+
+  <section class="mz-panel mz-panel-soft">
+    <h2>מה לא בתפקיד שלכם</h2>
+    <p>
+      שני דברים נשארים רק אצל אבי: למנות מנהל/ת תכנית נוספת, ולקבוע אילו
+      הדרכות מהאתר הראשי פתוחות בכלל למט״צים (המאגר שממנו מוביל/ה בוחרת
+      למה שהמט״צים שלה רואים). שניהם החלטות שנוגעות לכל המוסדות, לא רק
+      לשלכם — ואם צריך שינוי באחד מהם, זו בדיוק הבקשה שכותבים למעלה.
+    </p>
+  </section>
+</div>
+{% endblock %}

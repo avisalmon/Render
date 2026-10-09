@@ -4340,3 +4340,86 @@ tag: a leader does not have to sit the test or take the courses, may, and it
 changes nothing about what they can do. Checked: no leader screen gates on
 either (REQ-M.36 gates כניסת תלמידים only). Two tests pin it and the report
 says it in words above the list.
+
+---
+
+## SPR-M.57 — A training page for each role  `DONE 2026-10-09`
+
+**Goal.** Avi: "build a training page for pm and another training page for
+leader? like a tutorial on how to do their role and what is their role in
+general."
+
+Neither role had one. האזור שלי opened on a link to hand out and, once somebody
+had joined, a queue — with nothing on the page saying what the queue *is* or
+what happens after. ניהול is eight tools with no sentence connecting them to
+the job.
+
+**Delivers.** REQ-M.157.
+
+- [x] **M57.1** `matazim/guide_views.py` — two read-only views, gated exactly
+  like `leader_home` and every PM screen. A candidate is sent to ההרשאה שלי
+  rather than shown a guide to a role they do not hold yet.
+- [x] **M57.2** `guide_leader.html` — role overview, then a numbered walk
+  through the real screens in the order the job is done: the link → the
+  roster → reviewing work → certifying → the two optional tools. States
+  REQ-M.156 in words: the entrance test and the הדרכות are not a leader's to
+  complete.
+- [x] **M57.3** `guide_pm.html` — the same shape for a program manager:
+  recruiting and approving leaders → the two reports → day-to-day tools → the
+  improvement-request channel.
+- [x] **M57.4** Both guides close with **מה לא בתפקיד שלכם**, naming what is not
+  theirs without linking it: moving a student and recording consent for a
+  leader; granting the PM role and setting the course pool for a program
+  manager. A tutorial that promises a button nobody can click teaches the
+  wrong lesson.
+- [x] **M57.5** Linked from האזור שלי and ניהול, not added to the nav —
+  REQ-M.101's seven-item cap is still the rule.
+- [x] **M57.6** Both screens added to the screen-contract catalogue
+  (`leader/guide`, `pm/guide`), so the class contract, phone widths and the
+  dark palette cover them the same as every other screen.
+
+**Tests.** 14 in `tests/test_spr_m_57.py`.
+
+- [x] The gate matches the real screen's gate exactly, including the
+  candidate redirect.
+- [x] Every link on both pages resolves — the meaningful check for a page made
+  mostly of `{% url %}` tags, where a renamed route 500s rather than quietly
+  pointing nowhere.
+- [x] Neither guide links what the reader cannot reach: a test written against
+  the first draft, which told every leader to use the improvement-request
+  button — a screen REQ-M.102 reserves for the program-manager role and root.
+  Caught before it shipped.
+- [x] The PM guide does not link the two root-only screens it names.
+- [x] Both homes link to their guide.
+- [x] Neither guide writes: a POST changes nothing.
+
+### The one real mistake this caught before it shipped
+
+The leader guide's first draft said "there's a feedback-request button on
+every page" — true for a program manager, false for a leader
+(`may_use_requests` is PM-and-root only). Checking the real gate rather than
+writing from memory of how the lamp looked while building SPR-M.53 is what
+caught it, before the file was ever committed. The sentence was rewritten to
+point a leader at their program manager instead, and
+`test_the_leader_guide_does_not_promise_the_request_channel` is what stops it
+from quietly coming back.
+
+### A second real bug, caught by an existing test rather than a new one
+
+`_course_card.html`, written fresh for SPR-M.56, used
+`{% elif card.exists|default:True %}` to cover the one group of cards
+(started/offered) that never set the key. Django's `default` filter fires on
+*any* falsy value, not only a missing one, so it silently turned an honest
+`exists: False` — set for a required course whose row had vanished — back
+into True, and the "ההדרכה הזאת לא נטענה" message the whole branch exists for
+stopped rendering. `test_a_missing_course_says_so_rather_than_offering_a_dead_link`
+(SPR-M.37, REQ-M.104) was already in the suite and caught it on the first
+full regression run after SPR-M.56 shipped.
+
+Fixed at the source rather than in the template: every card dict now sets
+`exists` explicitly (`True` for started/offered/locked, since each is only
+ever built from a confirmed row), and the partial uses a plain
+`{% if card.exists %}`. The lesson, stated for next time: `|default:X` is for
+a missing value, not a falsy one, and the two look identical in a template
+until exactly this happens.
+

@@ -1,0 +1,111 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.157, SPR-M.57 — what a leader is, and how the screens work.
+
+  Written for somebody standing in front of האזור שלי for the first time, who
+  knows they agreed to help and does not yet know what pressing anything does.
+  Every link below is the real screen, with its real guard; this page adds no
+  ability nobody already had.
+
+  Ordered the way the job is actually done: the link first, because nothing
+  else happens before somebody joins through it; then the roster, because that
+  is where a leader lives most days; then certifying, which is the one
+  irreversible act of the role; then the two optional tools last.
+{% endcomment %}
+
+{% block title %}מדריך למוביל/ה · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>מדריך למוביל/ה</h1>
+    <p>מה התפקיד שלכם, ואיך עושים אותו במסך אחרי מסך.</p>
+  </div>
+
+  <section class="mz-panel">
+    <h2>מה התפקיד שלכם</h2>
+    <p>
+      אתם מלווים קבוצה של מט״צים: תלמידים שעברו את מבחן הכניסה, וביקשו
+      להצטרף אליכם. התפקיד שלכם הוא ללוות אותם עד ההסמכה — לעקוב אחרי
+      ההתקדמות שלהם, לתת משוב על מה שהם מגישים, ובסוף להחליט אם הם מוכנים.
+    </p>
+    <p class="mz-muted">
+      אתם רואים רק את המט״צים שמשויכים אליכם, ולא את כל תלמידי בית הספר.
+      <strong>אתם לא חייבים לעבור בעצמכם את מבחן הכניסה או את ההדרכות</strong>
+      — זה לא חלק מהתפקיד, ואתם מנהלים ומאשרים בלי קשר למה שעשיתם בעצמכם.
+    </p>
+  </section>
+
+  <section class="mz-panel">
+    <h2>1. הקישור שלכם — איך מט״צים מצטרפים</h2>
+    <p>
+      ב<a href="{% url 'matazim:leader_home' %}">האזור שלי</a> יש קישור וקוד
+      QR אישיים לכם. כל תלמיד שלוחץ עליהם מבקש להצטרף אליכם, ומופיע שם תחת
+      "ממתינים לאישור" עם מה שהוא כתב. אתם מאשרים או דוחים — ברגע שאישרתם,
+      הוא נכנס לרשימת המט״צים שלכם.
+    </p>
+  </section>
+
+  <section class="mz-panel">
+    <h2>2. המט״צים שלי — מי איתכם ואיפה הם</h2>
+    <p>
+      <a href="{% url 'matazim:roster' %}">המט״צים שלי</a> היא הרשימה המלאה,
+      עם ההתקדמות של כל אחד בהדרכות הנדרשות. לוחצים על שם כדי לפתוח את הדף
+      המלא שלו: מה הושלם, מה חסר, עבודות שהוא הגיש, והפרקטיקום שלו אחרי
+      שהוסמך. דרך אותו דף אפשר גם לשייך אותו לכיתה.
+    </p>
+    <p class="mz-muted">
+      אפשר גם לארגן את המט״צים שלכם ב<a href="{% url 'matazim:classes' %}">כיתות</a>,
+      אם זה עוזר לכם לסדר את הקבוצה שלכם.
+    </p>
+  </section>
+
+  <section class="mz-panel">
+    <h2>3. עבודות שמחכות למשוב</h2>
+    <p>
+      כשמט״צ מגיש תוצר, הוא מופיע תחת "עבודות שמחכות לכם" ב
+      <a href="{% url 'matazim:leader_home' %}">האזור שלי</a>, ואתם פותחים
+      אותו משם כדי לתת משוב. זו העבודה שהתלמיד הכי ממתין לה — אף דבר אחר
+      במוצר לא יגיד לו שמישהו ראה את זה חוץ מכם.
+    </p>
+  </section>
+
+  <section class="mz-panel">
+    <h2>4. ההסמכה — ההחלטה שלכם</h2>
+    <p>
+      מט״צ מוכן להסמכה כשהוא עבר את מבחן הכניסה וסיים את שתי ההדרכות
+      הנדרשות — שני תנאים שהמערכת בודקת לבד. <strong>האישור השלישי הוא
+      שלכם</strong>: בדף שלו מופיע כפתור הסמכה ברגע ששני התנאים האוטומטיים
+      מתקיימים, ולחיצה עליו היא מה שהופך אותו למט״צ מוסמך בפועל. זה הדבר
+      היחיד בתפקיד שאי אפשר לבטל בקלות, אז הוא נשאר אצלכם ולא קורה לבד.
+    </p>
+  </section>
+
+  <section class="mz-panel">
+    <h2>עוד שני כלים, לפי הצורך</h2>
+    <ul class="mz-needs">
+      <li><span class="mz-muted">
+        <a href="{% url 'matazim:leader_shelf' %}">הדרכות נוספות</a> — אפשר
+        לפתוח למט״צים שלכם הדרכות מעבר לשתיים הנדרשות, מתוך מה שהתוכנית
+        מאפשרת. זו הזדמנות ולא דרישה; ההסמכה לא תלויה בהן.
+      </span></li>
+      <li><span class="mz-muted">
+        <a href="{% url 'matazim:community' %}">קהילת מט״צים</a> ו
+        <a href="{% url 'matazim:events' %}">ימי שיא</a> — אותם מסכים
+        שהמט״צים שלכם רואים, כדי שתדעו מה קורה שם.
+      </span></li>
+    </ul>
+  </section>
+
+  <section class="mz-panel mz-panel-soft">
+    <h2>מה לא בתפקיד שלכם</h2>
+    <p>
+      העברה של מט״צ למוביל/ה אחר/ת, הוצאה משימוש של מוביל, ורישום הסכמת
+      הורה — אלה בידי מנהל/ת התוכנית, לא אתכם. אם משהו כזה צריך לקרות, או
+      שמשהו במסכים האלה מפריע לכם או חסר, דברו עם מנהל/ת התוכנית שלכם —
+      אצלה יש ערוץ ישיר לבקש שינוי במערכת.
+    </p>
+  </section>
+</div>
+{% endblock %}

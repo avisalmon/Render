@@ -42,7 +42,15 @@
     </span>
     {% if card.locked %}
       <span class="mz-muted mz-small">המוביל/ה פותח/ת</span>
-    {% elif card.exists|default:True %}
+    {% elif card.exists %}
+      {% comment %}
+        Not `card.exists|default:True`. Django's `default` filter fires on any
+        falsy value, not only a missing key, so it silently turned an honest
+        `exists: False` for a vanished course back into True and hid the "לא
+        נטענה" message the whole branch exists for. `exists` is set
+        explicitly on every card this partial ever receives, so a plain
+        truthiness check is correct and the filter was never needed.
+      {% endcomment %}
       <a class="mz-btn {% if card.done %}mz-btn-ghost{% else %}mz-btn-primary{% endif %} mz-btn-sm"
          href="{% url 'matazim:learn_course' card.slug %}">{{ card.action }}</a>
     {% else %}

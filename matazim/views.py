@@ -680,6 +680,12 @@ def _extra_course_cards(request):
             "pct": pct,
             "word": "באמצע" if pct else "עוד לא התחלתם",
             "action": "להמשיך" if pct else "להתחיל",
+            # Always true here (the `continue` above guarantees a real title),
+            # and said explicitly: `_course_card.html` checks this key, and a
+            # missing key must not be confused with an honest False. That
+            # confusion is exactly what `|default:True` used to do in the
+            # template before it was found and removed.
+            "exists": True,
         }
         (started if slug in mine_already else offered).append(card)
     return offered, started
@@ -716,6 +722,7 @@ def _locked_course_cards(request, shown):
             "locked": True,
             "word": "ייפתח בהמשך",
             "action": "",
+            "exists": True,  # built from a real Course row, above
         })
     return cards
 
