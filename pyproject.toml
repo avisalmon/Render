@@ -189,6 +189,8 @@ markers = [
     "spri111: SPR-I.11.1 improv the Play screen's chord guide (scale, root position and inversions on a keyboard)",
     "spri112: SPR-I.11.2 improv pause on the Play screen (B7, the left pedal) and a click to hold a chord",
     "spri121: SPR-I.12.1 improv the reading trainer: the ladder of stages, generated exercises, Flow and Step, the staff",
+    "spri131: SPR-I.13.1 improv the repertoire: classical pieces taught phrase by phrase, hand by hand; the ladder, the seed, the takes",
+    "spri141: SPR-I.14 improv where the notes come from: touch keys for a phone and the microphone as a piano ear, with MIDI still the default",
     "sprsl12: SL-D1 SensorLab the attempt, and who may see one",
     "sprsl13: SL-D2 SensorLab the five-step runner shell",
     "sprsl14: SL-D3 SensorLab the attempt API, and the share link",

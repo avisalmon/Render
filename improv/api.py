@@ -19,8 +19,8 @@ from rest_framework.views import APIView
 from rest_framework.exceptions import NotFound, PermissionDenied, Throttled, ValidationError
 from rest_framework.permissions import SAFE_METHODS
 
-from .models import ChordQuality, ChordScale, Completion, DrillAttempt, Exercise, Feedback, Lesson, Phrase, PracticeSession, Progression, ReadingTake, Scale, ScaleFingering, ScaleRun, Style, Tag, Take
-from . import bests, practice, progress, reading, retention, trainer, weakness, workout
+from .models import ChordQuality, ChordScale, Completion, DrillAttempt, Exercise, Feedback, Lesson, Phrase, Piece, PiecePhrase, PieceTake, PracticeSession, Progression, ReadingTake, Scale, ScaleFingering, ScaleRun, Style, Tag, Take
+from . import bests, practice, progress, reading, repertoire, retention, trainer, weakness, workout
 from .access import profile_for
 from .feedback_mail import send_feedback_mail
 from .permissions import IsPlayer
@@ -33,9 +33,13 @@ from .serializers import (
     FeedbackSerializer,
     LessonSerializer,
     PhraseSerializer,
+    PieceSerializer,
+    PiecePhraseSerializer,
+    PieceTakeSerializer,
     PlayerSerializer,
     visible_exercises,
     visible_lessons,
+    visible_pieces,
     PracticeSessionSerializer,
     ReadingTakeSerializer,
     TakeSerializer,
@@ -158,6 +162,32 @@ class ExerciseViewSet(ProgressContextMixin, ReferenceViewSet):
             rows = rows.filter(lesson__isnull=True)
         if params.get("daily"):
             rows = rows.filter(daily_eligible=True)
+        return rows
+
+
+class PieceViewSet(ReferenceViewSet):
+    """The repertoire, easiest first. A draft is hidden from everyone but the superuser who reads it."""
+
+    queryset = Piece.objects.all()
+    serializer_class = PieceSerializer
+
+    def get_queryset(self):
+        rows = visible_pieces(self.request.user)
+        if self.request.query_params.get("level", "").isdigit():
+            rows = rows.filter(level=self.request.query_params["level"])
+        return rows
+
+
+class PiecePhraseViewSet(ReferenceViewSet):
+    queryset = PiecePhrase.objects.select_related("piece")
+    serializer_class = PiecePhraseSerializer
+
+    def get_queryset(self):
+        rows = super().get_queryset()
+        if not self.request.user.is_superuser:
+            rows = rows.filter(piece__status=Piece.Status.PUBLISHED)
+        if self.request.query_params.get("piece"):
+            rows = rows.filter(piece__slug=self.request.query_params["piece"])
         return rows
 
 
@@ -384,6 +414,26 @@ class ReadingTakeViewSet(MineViewSet):
         return rows
 
 
+class PieceTakeViewSet(MineViewSet):
+    """One go at a rung of a piece, or a drill of any bars of it. The page judges and posts the result; the
+    pass line and the tempo are the server's (improv/ladder.py)."""
+
+    queryset = PieceTake.objects.select_related("piece")
+    serializer_class = PieceTakeSerializer
+    is_log = True
+
+    def get_queryset(self):
+        rows = super().get_queryset()
+        params = self.request.query_params
+        if params.get("piece"):
+            rows = rows.filter(piece__slug=params["piece"])
+        if params.get("rung"):
+            rows = rows.filter(rung=params["rung"])
+        if params.get("mode"):
+            rows = rows.filter(mode=params["mode"])
+        return rows
+
+
 class CompletionViewSet(viewsets.ReadOnlyModelViewSet):
     """The exercises this player has passed. Read-only for everyone: the server makes a
     completion as the consequence of a take, because one a client could write would be an XP
@@ -493,6 +543,15 @@ class ReadingView(APIView):
         return Response(reading.report(profile_for(request.user)))
 
 
+class RepertoireView(APIView):
+    """Every piece with its ladder, what the player has passed and where to go next: a read over piece takes, stored nowhere."""
+
+    permission_classes = [IsPlayer]
+
+    def get(self, request):
+        return Response(repertoire.report(profile_for(request.user), request.user))
+
+
 class TrainerView(APIView):
     """What to work on in the scales and chords trainer: a read over runs and attempts, stored nowhere."""
 
@@ -510,6 +569,8 @@ REFERENCE_ENDPOINTS = {
     "tags": TagViewSet,
     "lessons": LessonViewSet,
     "exercises": ExerciseViewSet,
+    "pieces": PieceViewSet,
+    "piece-phrases": PiecePhraseViewSet,
 }
 OWNED_ENDPOINTS = {
     "styles": StyleViewSet,
@@ -523,6 +584,7 @@ MINE_ENDPOINTS = {
     "scale-runs": ScaleRunViewSet,
     "drill-attempts": DrillAttemptViewSet,
     "reading-takes": ReadingTakeViewSet,
+    "piece-takes": PieceTakeViewSet,
     "completions": CompletionViewSet,
 }
 # Not a router endpoint: see PlayerView.
@@ -537,6 +599,7 @@ DERIVED = {
     "bests": BestsView,
     "trainer": TrainerView,
     "reading": ReadingView,
+    "repertoire": RepertoireView,
 }
 # Actions: a POST that changes one thing about the player and answers with a read.
 ACTIONS = {"start-here": StartHereView}

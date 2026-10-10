@@ -1,0 +1,107 @@
+{% extends "improv/base.html" %}
+{% load static %}
+{% block title %}Pieces, improv{% endblock %}
+
+{% block content %}
+<div id="repertoire" class="im-screen"
+     data-api-player="{{ api.player }}"
+     data-api-pieces="{{ api.pieces }}"
+     data-api-takes="{{ api.takes }}"
+     data-api-repertoire="{{ api.repertoire }}"
+     data-csrf="{{ csrf_token }}">
+
+  <div class="im-play-head">
+    <h1 class="im-title">Pieces</h1>
+    <p id="rp-status" class="im-status" role="status" aria-live="polite">Loading the pieces.</p>
+    <p id="rp-midi" class="im-note">Looking for the piano.</p>
+  </div>
+
+  <section class="im-panel im-flat" aria-label="What to play">
+    <div class="im-rd-row">
+      <label class="im-field">Piece
+        <select id="rp-piece" class="im-select"></select>
+      </label>
+      <label class="im-field">Step
+        <select id="rp-rung" class="im-select im-rp-rung"></select>
+      </label>
+      <span id="rp-drill" class="im-rd-row" hidden>
+        <label class="im-field">Hands
+          <select id="rp-hands" class="im-select">
+            <option value="R">right hand</option>
+            <option value="L">left hand</option>
+            <option value="B">both hands</option>
+          </select>
+        </label>
+        <label class="im-field">Bars
+          <input id="rp-from" class="im-input im-input-small" type="number" min="1" value="1" aria-label="First bar">
+        </label>
+        <label class="im-field">to
+          <input id="rp-to" class="im-input im-input-small" type="number" min="1" value="4" aria-label="Last bar">
+        </label>
+      </span>
+      <label class="im-field">Tempo
+        <input id="rp-tempo" class="im-input im-input-small" type="number" min="30" max="160" step="1" value="60" aria-label="Tempo in beats a minute">
+      </label>
+      <label class="im-field">Mode
+        <select id="rp-mode" class="im-select">
+          <option value="flow">Flow: the pulse never waits</option>
+          <option value="step">Step: it waits for you</option>
+        </select>
+      </label>
+      <label class="im-field im-check"><span>Curtain</span> <input id="rp-curtain" type="checkbox"></label>
+      <div class="im-field im-rd-buttons">
+        <button id="rp-start" class="im-btn im-btn-big" type="button" data-key-action="primary" disabled>Start</button>
+        <button id="rp-show" class="im-btn im-btn-quiet" type="button" data-key-action="secondary" disabled>Show me</button>
+        <button id="rp-next" class="im-btn im-btn-quiet" type="button" data-key-action="tertiary" disabled>Next step</button>
+      </div>
+    </div>
+    <p class="im-note"><span id="rp-path"></span> <span id="rp-advice" class="im-work"></span></p>
+  </section>
+
+  <section class="im-panel im-panel-flush im-flat im-rd-music" aria-label="The music">
+    <h2 class="im-h2"><span id="rp-name">Pick a piece</span> <span id="rp-rung-line" class="im-note"></span></h2>
+    <svg id="rp-staff" class="im-staff" viewBox="0 0 960 250" preserveAspectRatio="xMidYMid meet" aria-label="Grand staff"></svg>
+    <p id="rp-line" class="im-note" aria-live="off"></p>
+  </section>
+
+  <div class="im-cols im-cols-left im-rd-bottom">
+    <section class="im-panel im-panel-flush im-flat" aria-label="You">
+      <div id="rp-keyboard" class="im-keyboard" aria-label="Keyboard"></div>
+      <p class="im-legend">
+        <span class="im-swatch im-swatch-rdright">right, in time</span>
+        <span class="im-swatch im-swatch-rdoff">right, early or late</span>
+        <span class="im-swatch im-swatch-rdwrong">wrong note (dotted: what you played)</span>
+        <span class="im-swatch im-swatch-rdmissed">missed</span>
+        Hover a note afterwards to hear it.
+      </p>
+    </section>
+
+    <section class="im-panel im-panel-flush im-flat" aria-label="How it went">
+      <div class="im-rd-meters">
+        <p id="rp-verdict" class="im-status"></p>
+        <span class="im-rd-meter"><b id="m-score" class="im-mono">-</b> score</span>
+        <span class="im-rd-meter"><b id="m-pitch" class="im-mono">-</b> pitch</span>
+        <span class="im-rd-meter"><b id="m-time" class="im-mono">-</b> timing</span>
+        <p id="rp-best" class="im-note"></p>
+      </div>
+      <ul id="rp-spots" class="im-list im-rd-spots" data-bounded-list aria-label="What to look at"></ul>
+      <div id="rp-fix" class="im-rd-fix"></div>
+      <ul id="rp-takes" class="im-list im-rd-takes" data-bounded-list aria-label="Your last takes"></ul>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'improv/midi.js' %}"></script>
+<script src="{% static 'improv/setup.js' %}"></script>
+<script src="{% static 'improv/timing.js' %}"></script>
+<script src="{% static 'improv/synth.js' %}"></script>
+<script src="{% static 'improv/keyboard-view.js' %}"></script>
+<script src="{% static 'improv/reading.js' %}"></script>
+<script src="{% static 'improv/staff-view.js' %}"></script>
+<script src="{% static 'improv/repertoire.js' %}"></script>
+<script src="{% static 'improv/pitch.js' %}"></script>
+<script src="{% static 'improv/input-source.js' %}"></script>
+<script src="{% static 'improv/repertoire-page.js' %}"></script>
+{% endblock %}

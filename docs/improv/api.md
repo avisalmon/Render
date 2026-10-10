@@ -546,6 +546,40 @@ wrong, missed, out or pending; timing; offset_ms; played}`), `score` (0 to 100),
 - `focus`: up to two zones with at least six notes seen and a quarter of them missed; the generator leans toward them.
 - `totals`: `takes`, `passes`.
 
+## The repertoire
+
+### Pieces
+
+`GET /improv/api/pieces/` and `GET /improv/api/pieces/{id}/`. Read-only for a player (a write is 405). A published piece
+for everyone who is signed in; a draft only for the superuser. Easiest first; `?level=` filters. Each piece carries its
+`phrases` (nested), the `notes` as written and the `authorship` (`ai_drafted`, `reviewed`, `avi_written`).
+Fields: `id`, `slug`, `title`, `composer`, `catalog`, `level`, `order`, `key`, `beats_per_bar`, `bars`, `tempo_bpm`,
+`slow_bpm`, `notes`, `blurb`, `teacher_note`, `source`, `authorship`, `status`, `phrases`, `created_at`, `updated_at`.
+
+### Piece phrases
+
+`GET /improv/api/piece-phrases/` and `GET /improv/api/piece-phrases/{id}/`. Read-only. `?piece=` takes a slug.
+`id`, `piece`, `piece_slug`, `order`, `first_bar`, `last_bar`, `title`, `hint`.
+
+### Piece takes
+
+`GET, POST /improv/api/piece-takes/`, `GET, PUT, PATCH, DELETE /improv/api/piece-takes/{id}/`. Your own takes only.
+Newest first. `piece` (the slug), `rung` (a rung key of the piece's ladder, or `drill`), `first_bar`, `last_bar`,
+`hands` (`R`, `L`, `B`), `mode` (`flow` or `step`), `tempo_bpm` (30 to 200), `curtain`, `notes` (1 to 800 of `{hand, step,
+acc, midi, beat, dur, bar}`), `events` (up to 6000), `results` (one per note), `score` (0 to 100), `pitch_accuracy`,
+`timing_accuracy` (0 to 1), `passed` (read-only: the server sets it from the rung's line, tempo and mode), `judge_version`,
+`created_at` (read-only). A rung the piece does not have, or bars and hands that are not the rung's, are refused (400,
+on `rung`). Filters: `?piece=`, `?rung=`, `?mode=`. The ceiling is the log ceiling (20000).
+
+### Repertoire
+
+`GET /improv/api/repertoire/`. Read-only (405 on a write), your own data only, stored nowhere. The Pieces screen opens on it.
+- `pieces`: one per visible piece, easiest first: `slug`, `title`, `level`, `order`, `next` (the first rung not yet passed, or
+  null), `passed_count`, `total`, `done`, and `rungs`: the ladder, each `{key, kind, hands, first_bar, last_bar, tempo, line,
+  phrase, passed, best, takes}`. `kind` is `phrase`, `join`, `whole` or `perform`; `tempo` is `slow` or `tempo`; `best` is the
+  best Flow score or null. Drills are not counted.
+- `totals`: `takes`, `passes`, `pieces_done`.
+
 ## Still to come
 
 Nothing is planned beyond what is above for the first version. A model cannot ship without its

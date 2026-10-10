@@ -8,6 +8,7 @@
   const Scale = window.ImprovScale;
   const Work = window.ImprovWork;
   const Keys = window.ImprovKeyboardView;
+  const Input = window.ImprovInput;
   const Midi = window.ImprovMidi;
   const Setup = window.ImprovSetup;
   const Rec = window.ImprovRecognize;
@@ -459,6 +460,11 @@
     if (!choice || !state.listening || choice.id !== state.listening.id) attachInput(choice);
   }
 
+  function stopMidi() {
+    if (state.midi) state.midi.onstatechange = null;
+    attachInput(null);
+  }
+
   async function startMidi() {
     if (!navigator.requestMIDIAccess) {
       $("ch-midi").textContent = "This browser has no Web MIDI, so it cannot hear the piano. Use Chrome or Edge.";
@@ -525,7 +531,8 @@
     $("ch-hint").addEventListener("click", hint);
     $("ch-skip").addEventListener("click", skip);
     renderResults();
-    startMidi();
+    if (Input) Input.attach({ status: $("ch-midi"), deliver: onMidi, midiStart: startMidi, midiStop: stopMidi }).start();
+    else startMidi();
   }
 
   if (!Drill || !Scale || !Keys || !Midi || !Setup) say("The page's scripts did not load.");

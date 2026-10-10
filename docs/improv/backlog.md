@@ -206,6 +206,37 @@ the left indication." Spec: ch. 11.
 
 ---
 
+## EPIC-I.13: The repertoire, taught like a teacher  `IN PROGRESS`
+
+Avi, 2026-10-10: "I want the note practice to have also a library of classical pieces. Bach etc. You can serve them in
+multiple levels, from beginners to advanced. The teaching method should be bar by bar, hand by hand, conquering the
+piece. Make sense? Like a piano teacher." Then: "Do the beginners you identified." Level 1 is built; levels 2 to 5 are
+not. Spec: ch. 12.
+
+| Sprint | What | Traces | Status |
+|---|---|---|---|
+| SPR-I.13.1 | Level 1 at `/improv/repertoire/` (menu: Pieces): Ode to Joy, Minuet in G (A strain, bars 1 to 16), Musette in D (A strain, bars 1 to 8) and Prelude in C (all 35 bars), each a `Piece` with its `PiecePhrase` rows, taught on a ladder (a phrase of two to four bars: right hand, left hand, both slowly, both at tempo; a join between phrases; the whole piece slowly and at tempo; a performance), the server's pass line (80, performance 90, Flow only, at the rung's tempo or faster), Drill any bars (never passes), Show me, Flow and Step, the curtain, a grand staff of both hands that turns the page at the bar line (ties, rests, chords, beams, voices), `PieceTake` and its API, the `repertoire` read, `seed_improv_pieces` on deploy, the one-screen guard (three screens) and the three piano keys | ch. 12, data model 6d, api | DONE 2026-10-10 |
+| SPR-I.13.2 | **Avi at the piano and with the scores:** play each piece once through, say which notes are wrong, which tempo is fair, whether the hand split of the Prelude is right, and whether the teaching order feels like a teacher; the pieces are marked drafted by AI until he has | ch. 12 | IN PROGRESS |
+| SPR-I.13.3 | Levels 2 to 5: more pieces on the same ladder. Needs a decision from Avi on which pieces and on repeats and B strains, which level 1 leaves out | ch. 12 | TODO |
+| SPR-I.13.4 | Polish found while building: the page turns instantly at the bar line with no look-ahead (a second page peeking in would help sight reading); Prelude bar 33 crowds its ledger lines; the reading page and the repertoire page repeat the same runner and should share one | ch. 12 | TODO |
+
+---
+
+## EPIC-I.14: Where the notes come from  `IN PROGRESS`
+
+Avi, 2026-10-10: "Do you think we can add a no midi mode so I can just jam from my phone? Also I wonder if you can sound
+recognize the piano instead of midi. The midi option is the default but I want the no midi sound input as options."
+MIDI stays the default. Touch keys and the microphone are two more choices on the five playing screens. Spec: ch. 13.
+
+| Sprint | What | Traces | Status |
+|---|---|---|---|
+| SPR-I.14.1 | `pitch.js`: a piano ear. A Hann-windowed 4096 FFT, harmonic matching for every note C2 to C7, up to four voices at once, a noise gate, and a tracker that turns frames into note on and note off with a time and a velocity, including a note struck again while it still rings. Pure JS with `tests/js/spri141.test.js` (13 tests on made signals) | ch. 13 | DONE 2026-10-10 |
+| SPR-I.14.2 | `input-source.js`: an input choice (Piano MIDI, Touch keys, Microphone) on Play, Reading, Pieces, Scales and Chords, kept on the device. Touch keys: a dock of two to four octaves, Lower and Higher, several fingers at once, sliding, loudness from where the key is struck, a small own sound. Microphone: getUserMedia with no echo cancel, noise suppression or auto gain, status line, refusal message. Every page's `onMidi` is untouched: both modes hand it the same event a MIDI port does. `tests/test_spri_14_2_browser.py` (a generated C4 through a fake microphone lights the key) | ch. 13 | DONE 2026-10-10 |
+| SPR-I.14.3 | **Avi:** try the touch keys on his phone, and the microphone with the real piano in his room. Say how late the notes feel, which chords it misses, and whether the headphone advice is enough | ch. 13 | TODO |
+| SPR-I.14.4 | Later, only if I.14.3 asks for it: tune the detector on real piano recordings; octave doublings and a fourth voice; a calibration step that measures the room and the lag; sending the control keys by touch in microphone mode | ch. 13 | TODO |
+
+---
+
 ## After v1, in the order Avi sees fit
 
 Ear training inside lessons (12), the weakness-driven extras, ear and speed

@@ -219,6 +219,19 @@ def reading(request):
     return render(request, "improv/reading.html", {"api": api})
 
 
+def repertoire(request):
+    """The repertoire: classical pieces taught phrase by phrase, hand by hand, on a grand staff. The page loads
+    the player, the pieces, the player's piece takes and the ladder read from the API."""
+    profile_for(request.user)
+    api = {
+        "player": reverse("improv:api-player"),
+        "pieces": reverse("improv:api-pieces-list"),
+        "takes": reverse("improv:api-piece-takes-list"),
+        "repertoire": reverse("improv:api-repertoire"),
+    }
+    return render(request, "improv/repertoire.html", {"api": api})
+
+
 def chords(request):
     """The chord trainer: Learn, Drill and Circle. The page loads the player, the chord table (to name
     a wrong chord) and posts one attempt for each prompt."""

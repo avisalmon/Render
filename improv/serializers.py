@@ -1,8 +1,9 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import Q
 from rest_framework import serializers
 
 from .grooves import check_groove
-from .models import MOST_READING_EVENTS, MOST_READING_NOTES, ChordQuality, ChordScale, Completion, DrillAttempt, Exercise, Feedback, Lesson, Phrase, Player, PracticeSession, Progression, ReadingTake, Scale, ScaleFingering, ScaleRun, Style, Tag, Take
+from .models import MOST_READING_EVENTS, MOST_READING_NOTES, MOST_TAKE_EVENTS, MOST_TAKE_NOTES, ChordQuality, ChordScale, Completion, DrillAttempt, Exercise, Feedback, Lesson, Phrase, Piece, PiecePhrase, PieceTake, Player, PracticeSession, Progression, ReadingTake, Scale, ScaleFingering, ScaleRun, Style, Tag, Take
 from .teaching import check_notes
 
 
@@ -408,26 +409,15 @@ def _is_int(value):
     return isinstance(value, int) and not isinstance(value, bool)
 
 
-class ReadingTakeSerializer(serializers.ModelSerializer):
-    """What the reading page posts after a take, checked for shape and range. `passed` is the server's:
-    a Flow take at the line or above, never a Step take."""
+class TakeShape:
+    """The shape checks shared by the takes that carry a written stretch, the piano's events and the judge's results."""
 
-    class Meta:
-        model = ReadingTake
-        fields = [
-            "id", "key", "hands", "difficulty", "tempo_bpm", "mode", "curtain", "seed", "notes", "events", "results",
-            "score", "pitch_accuracy", "timing_accuracy", "passed", "judge_version", "created_at",
-        ]  # fmt: skip
-        read_only_fields = ["passed", "created_at"]
-
-    def validate_key(self, value):
-        if value not in ("C", "G", "F", "D", "Bb", "A", "Eb", "E", "Ab", "B", "Db", "F#"):
-            raise serializers.ValidationError("A major key as the ladder writes it: C, G, F, D, Bb, A, Eb, E, Ab, B, Db or F#.")
-        return value
+    most_notes = MOST_READING_NOTES
+    most_events = MOST_READING_EVENTS
 
     def validate_notes(self, notes):
-        if not isinstance(notes, list) or not notes or len(notes) > MOST_READING_NOTES:
-            raise serializers.ValidationError(f"notes is a list of 1 to {MOST_READING_NOTES} notes.")
+        if not isinstance(notes, list) or not notes or len(notes) > self.most_notes:
+            raise serializers.ValidationError(f"notes is a list of 1 to {self.most_notes} notes.")
         for i, n in enumerate(notes):
             ok = (
                 isinstance(n, dict)
@@ -443,8 +433,8 @@ class ReadingTakeSerializer(serializers.ModelSerializer):
         return notes
 
     def validate_events(self, events):
-        if not isinstance(events, list) or len(events) > MOST_READING_EVENTS:
-            raise serializers.ValidationError(f"events is a list of at most {MOST_READING_EVENTS} events.")
+        if not isinstance(events, list) or len(events) > self.most_events:
+            raise serializers.ValidationError(f"events is a list of at most {self.most_events} events.")
         for i, e in enumerate(events):
             ok = (
                 isinstance(e, dict)
@@ -458,8 +448,8 @@ class ReadingTakeSerializer(serializers.ModelSerializer):
         return events
 
     def validate_results(self, results):
-        if not isinstance(results, list) or len(results) > MOST_READING_NOTES:
-            raise serializers.ValidationError(f"results is a list of at most {MOST_READING_NOTES} objects.")
+        if not isinstance(results, list) or len(results) > self.most_notes:
+            raise serializers.ValidationError(f"results is a list of at most {self.most_notes} objects.")
         for i, r in enumerate(results):
             ok = (
                 isinstance(r, dict)
@@ -478,4 +468,84 @@ class ReadingTakeSerializer(serializers.ModelSerializer):
         notes, results = value("notes"), value("results")
         if notes is not None and results is not None and len(results) != len(notes):
             raise serializers.ValidationError({"results": ["One result for each written note."]})
+        return attrs
+
+
+class ReadingTakeSerializer(TakeShape, serializers.ModelSerializer):
+    """What the reading page posts after a take, checked for shape and range. `passed` is the server's:
+    a Flow take at the line or above, never a Step take."""
+
+    class Meta:
+        model = ReadingTake
+        fields = [
+            "id", "key", "hands", "difficulty", "tempo_bpm", "mode", "curtain", "seed", "notes", "events", "results",
+            "score", "pitch_accuracy", "timing_accuracy", "passed", "judge_version", "created_at",
+        ]  # fmt: skip
+        read_only_fields = ["passed", "created_at"]
+
+    def validate_key(self, value):
+        if value not in ("C", "G", "F", "D", "Bb", "A", "Eb", "E", "Ab", "B", "Db", "F#"):
+            raise serializers.ValidationError("A major key as the ladder writes it: C, G, F, D, Bb, A, Eb, E, Ab, B, Db or F#.")
+        return value
+
+
+# ---------------------------------------------------------------- SPR-I.13.1
+
+
+class PiecePhraseSerializer(serializers.ModelSerializer):
+    piece_slug = serializers.CharField(source="piece.slug", read_only=True)
+
+    class Meta:
+        model = PiecePhrase
+        fields = ["id", "piece", "piece_slug", "order", "first_bar", "last_bar", "title", "hint"]
+        read_only_fields = fields
+
+
+class PieceSerializer(serializers.ModelSerializer):
+    phrases = PiecePhraseSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Piece
+        fields = [
+            "id", "slug", "title", "composer", "catalog", "level", "order", "key", "beats_per_bar", "bars",
+            "tempo_bpm", "slow_bpm", "notes", "blurb", "teacher_note", "source", "authorship", "status",
+            "phrases", "created_at", "updated_at",
+        ]  # fmt: skip
+        read_only_fields = fields
+
+
+def visible_pieces(user):
+    rows = Piece.objects.prefetch_related("phrases")
+    return rows if user.is_superuser else rows.filter(status=Piece.Status.PUBLISHED)
+
+
+class VisiblePieceField(serializers.SlugRelatedField):
+    def get_queryset(self):
+        return visible_pieces(self.context["request"].user)
+
+
+class PieceTakeSerializer(TakeShape, serializers.ModelSerializer):
+    """What the repertoire page posts after a take. `passed` is the server's, from the rung's line and tempo."""
+
+    most_notes = MOST_TAKE_NOTES
+    most_events = MOST_TAKE_EVENTS
+    piece = VisiblePieceField(slug_field="slug")
+
+    class Meta:
+        model = PieceTake
+        fields = [
+            "id", "piece", "rung", "first_bar", "last_bar", "hands", "mode", "tempo_bpm", "curtain", "notes", "events",
+            "results", "score", "pitch_accuracy", "timing_accuracy", "passed", "judge_version", "created_at",
+        ]  # fmt: skip
+        read_only_fields = ["passed", "created_at"]
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        # The model's own rules (a rung that exists, its hands and bars) are the one place they are written.
+        draft = PieceTake(**{k: v for k, v in attrs.items()}) if self.instance is None else None
+        if draft is not None:
+            try:
+                draft.clean()
+            except DjangoValidationError as err:
+                raise serializers.ValidationError(err.message_dict if hasattr(err, "error_dict") else {"rung": err.messages})
         return attrs

@@ -210,6 +210,44 @@
         else if (event.voice === "demo") demo(out, at, event.midi, seconds, v);
       },
 
+      // A note that sounds until it is let go, for the touch keys. Gives back the function that lets it go.
+      hold(midi, velocity) {
+        const out = groups.demo;
+        const v = Math.min(1, Math.max(0.05, Number(velocity) || 0.5));
+        const now = ctx.currentTime;
+        const hz = midiToHz(midi);
+        const body = ctx.createOscillator();
+        body.type = "triangle";
+        body.frequency.setValueAtTime(hz, now);
+        const shine = ctx.createOscillator();
+        shine.type = "sine";
+        shine.frequency.setValueAtTime(hz * 2, now);
+        const shineGain = ctx.createGain();
+        shineGain.gain.value = 0.25;
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.55 * v, now + 0.008);
+        gain.gain.setTargetAtTime(0.2 * v, now + 0.008, 0.7);
+        body.connect(gain);
+        shine.connect(shineGain);
+        shineGain.connect(gain);
+        gain.connect(out);
+        body.start(now);
+        shine.start(now);
+        let released = false;
+        return function release() {
+          if (released) return;
+          released = true;
+          const t = ctx.currentTime;
+          const level = gain.gain.value;
+          gain.gain.cancelScheduledValues(t);
+          gain.gain.setValueAtTime(level, t);
+          gain.gain.setTargetAtTime(0, t, 0.07);
+          body.stop(t + 0.5);
+          shine.stop(t + 0.5);
+        };
+      },
+
       setLevel(name, level) {
         if (!(name in groups)) return;
         levels[name] = Math.min(1, Math.max(0, Number(level)));

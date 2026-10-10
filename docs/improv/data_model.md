@@ -514,6 +514,44 @@ derived reads, never columns.
 
 ---
 
+## 6d. The repertoire (Epic I.13, added 2026-10-10)
+
+Spec chapter 12. Three tables. A piece is data, not generated, so unlike the reading trainer its notes live in the
+database as the real thing, imported once by `seed_improv_pieces` (Rule 1).
+
+### `Piece`
+
+One piece of the library. `slug` (unique), `title`, `composer`, `catalog` (BWV 846, Anh. 114), `level` (1 beginner to
+5 advanced), `order` (within its level; unique with `level`), `key` (the major key signature as written),
+`beats_per_bar` (2 to 4), `bars` (1 to 200), `tempo_bpm` (the tempo it is meant to be played at), `slow_bpm` (the
+practice tempo, never faster than `tempo_bpm`), `notes` (JSON: `{hand, step, acc, midi, beat, dur, bar, voice}` per
+note and, only when needed, `shown` (the accidental glyph the piece writes there), `ties` and `hold`; beats are
+absolute quarter notes from 0, bars counted from 1), `blurb`, `teacher_note` (what is simplified or left out, said
+plainly), `source`, `authorship` (`ai_drafted`, `reviewed`, `avi_written`; a seed never touches the last two),
+`status` (`draft` or `published`; a draft is hidden from everyone but the superuser), `created_at`, `updated_at`.
+
+**Why a JSON column:** the notes are read whole to cut a stretch for a rung and are never queried one at a time.
+
+### `PiecePhrase`
+
+A stretch of two to four bars a teacher would set as one task. `piece`, `order` (unique with `piece`), `first_bar`,
+`last_bar` (not before the first, not past the piece), `title`, `hint` (where each hand starts). The ladder is built
+from these and is not stored.
+
+### `PieceTake`
+
+One go at a rung of a piece's ladder, or a drill. `player`, `piece`, `rung` (a rung key, or `drill`), `first_bar`,
+`last_bar`, `hands` (`R`, `L`, `B`), `mode` (`flow` or `step`), `tempo_bpm`, `curtain`, `notes` (JSON: the stretch as
+written, rebased to start at bar 0, beat 0), `events` (JSON: the MIDI as it arrived), `results` (JSON: the judge's
+word on each written note, one per note), `score` (0 to 100), `pitch_accuracy`, `timing_accuracy` (0 to 1), `passed`
+(the server's: a Flow take of the rung's own bars and hands at the line or above, at the rung's tempo or faster; a
+Step take and a drill never pass), `judge_version`, `created_at`. Newest first. The rung must exist on the piece's
+ladder and its bars and hands must match the rung's, or the take is refused.
+
+**What is derived and never stored:** the ladder, which rung is next, and every rung's best score (the `repertoire` read).
+
+---
+
 ## 8. What is deliberately not stored
 
 Each of these is a read, never a column:
@@ -529,6 +567,7 @@ Each of these is a read, never a column:
 | Daily workout | picked from `daily_eligible` exercises by date and weakness |
 | Parsed chart, transposed chart | the `chart` text, parsed on the page |
 | Chord and scale tones | `ChordQuality.intervals` and `Scale.intervals` |
+| Where the notes come from (Piano MIDI, Touch keys, Microphone; Epic I.14) | the device, in the browser's `localStorage` key `improv.input.mode`; a phone and a piano laptop differ, so it is not an account setting. A take recorded from touch or the microphone is a normal `Take` with the same note events, and the take does not say how it was played |
 
 ---
 

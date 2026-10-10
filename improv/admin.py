@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import ChordQuality, ChordScale, Completion, DrillAttempt, Exercise, Feedback, Lesson, Phrase, Player, PracticeSession, Progression, ReadingTake, Scale, ScaleFingering, ScaleRun, Style, Tag, Take
+from .models import ChordQuality, ChordScale, Completion, DrillAttempt, Exercise, Feedback, Lesson, Phrase, Piece, PiecePhrase, PieceTake, Player, PracticeSession, Progression, ReadingTake, Scale, ScaleFingering, ScaleRun, Style, Tag, Take
 
 
 class ChordScaleInline(admin.TabularInline):
@@ -89,6 +89,25 @@ class DrillAttemptAdmin(admin.ModelAdmin):
 class ReadingTakeAdmin(admin.ModelAdmin):
     list_display = ("id", "player", "key", "hands", "difficulty", "mode", "tempo_bpm", "score", "passed", "created_at")
     list_filter = ("hands", "mode", "passed", "key", "player")
+
+
+class PiecePhraseInline(admin.TabularInline):
+    model = PiecePhrase
+    extra = 0
+
+
+@admin.register(Piece)
+class PieceAdmin(admin.ModelAdmin):
+    list_display = ("title", "composer", "level", "order", "key", "bars", "tempo_bpm", "authorship", "status")
+    list_filter = ("level", "authorship", "status")
+    search_fields = ("title", "composer", "slug")
+    inlines = [PiecePhraseInline]
+
+
+@admin.register(PieceTake)
+class PieceTakeAdmin(admin.ModelAdmin):
+    list_display = ("id", "player", "piece", "rung", "hands", "mode", "tempo_bpm", "score", "passed", "created_at")
+    list_filter = ("piece", "hands", "mode", "passed", "player")
 
 
 @admin.register(Phrase)

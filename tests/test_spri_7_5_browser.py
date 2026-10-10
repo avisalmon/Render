@@ -29,7 +29,7 @@ pytestmark = [pytest.mark.spri75, pytest.mark.django_db]
 
 PASSWORD = "spri75-browser-2046"
 SIZES = ((1280, 720), (1920, 1080))
-SCREENS = ("today", "play", "play-longest", "play-exercise", "lessons", "lesson", "challenges", "library", "editor", "takes", "practice", "progress", "reference", "setup", "spike", "scales", "scales-4-octaves", "chords", "chords-learn", "reading", "reading-both", "reading-read", "feedback", "front-door", "login", "signup")
+SCREENS = ("today", "play", "play-longest", "play-exercise", "lessons", "lesson", "challenges", "library", "editor", "takes", "practice", "progress", "reference", "setup", "spike", "scales", "scales-4-octaves", "chords", "chords-learn", "reading", "reading-both", "reading-read", "repertoire", "repertoire-prelude", "repertoire-drill", "feedback", "front-door", "login", "signup")
 ANONYMOUS = ("front-door", "login", "signup")
 UTC = dt.timezone.utc
 # This screen shows everything at once at 1280 by 720; a bounded list there is for future growth.
@@ -108,7 +108,7 @@ def world(browser, live_server, db, one_request_at_a_time):
     group, _ = Group.objects.get_or_create(name="improv_players")
     user = User.objects.create_user("p75browser", password=PASSWORD)
     user.groups.add(group)
-    for command in ("seed_improv_theory", "seed_improv_fingerings", "seed_improv_library", "seed_improv_lessons", "seed_improv_challenges"):
+    for command in ("seed_improv_theory", "seed_improv_pieces", "seed_improv_fingerings", "seed_improv_library", "seed_improv_lessons", "seed_improv_challenges"):
         call_command(command, stdout=io.StringIO())
     player, _ = Player.objects.get_or_create(user=user)
     _history(player)
@@ -145,6 +145,9 @@ def _paths():
         "reading": "/improv/reading/",
         "reading-both": "/improv/reading/?key=F%23&hands=B&seed=42",
         "reading-read": "/improv/reading/?key=C&hands=R&seed=5&read=yes",
+        "repertoire": "/improv/repertoire/",
+        "repertoire-prelude": "/improv/repertoire/?piece=prelude-in-c&rung=whole-B-tempo",
+        "repertoire-drill": "/improv/repertoire/?piece=minuet-in-g&rung=drill",
         "feedback": "/improv/feedback/?from=/improv/play/",
         "front-door": "/improv/",
         "login": "/improv/login/",
@@ -167,6 +170,7 @@ READY = {
     "scales": "document.querySelectorAll('#sc-strip .im-sc-cell').length > 20",
     "chords": "document.getElementById('chords') && document.getElementById('chords').dataset.running === 'no'",
     "reading": "document.getElementById('rd-start') && !document.getElementById('rd-start').disabled",
+    "repertoire": "document.getElementById('rp-start') && !document.getElementById('rp-start').disabled",
     "editor": "document.getElementById('chart-text') && document.getElementById('chart-text').value.length > 5",
 }
 

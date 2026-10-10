@@ -699,6 +699,169 @@ class ReadingTake(models.Model):
         super().save(*args, **kwargs)
 
 
+# ---------------------------------------------------------------- SPR-I.13.1
+# Repertoire. A piece is read whole by the page, so its notes are JSON on the piece, like a Phrase; the
+# phrases a teacher would split it into are rows, because the ladder and the player's progress hang on them.
+# The pieces are written by build_pieces.py from public-domain sources and seeded once.
+
+MOST_PIECE_NOTES = 3000
+MOST_TAKE_NOTES = 800
+MOST_TAKE_EVENTS = 6000
+
+
+class Piece(models.Model):
+    """One piece of the library, taught bar by bar, hand by hand (spec chapter 12, data model 6d)."""
+
+    class Authorship(models.TextChoices):
+        AI_DRAFTED = "ai_drafted", "drafted by AI, not yet checked at the piano"
+        REVIEWED = "reviewed", "drafted by AI, checked and corrected"
+        AVI_WRITTEN = "avi_written", "written by Avi"
+
+    class Status(models.TextChoices):
+        DRAFT = "draft", "draft"
+        PUBLISHED = "published", "published"
+
+    slug = models.SlugField(max_length=60, unique=True)
+    title = models.CharField(max_length=100, validators=[_not_blank])
+    composer = models.CharField(max_length=100, validators=[_not_blank])
+    catalog = models.CharField(max_length=60, blank=True, help_text="BWV 846, Anh. 114.")
+    level = models.PositiveSmallIntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(5)], help_text="1 beginner to 5 advanced.")
+    order = models.PositiveSmallIntegerField(help_text="Position within its level.")
+    key = models.CharField(max_length=3, validators=[key_name], default="C", help_text="The major key signature, as written.")
+    beats_per_bar = models.PositiveSmallIntegerField(validators=[MinValueValidator(2), MaxValueValidator(4)])
+    bars = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(200)])
+    tempo_bpm = models.PositiveSmallIntegerField(validators=[MinValueValidator(30), MaxValueValidator(200)], help_text="The tempo it is meant to be played at.")
+    slow_bpm = models.PositiveSmallIntegerField(validators=[MinValueValidator(30), MaxValueValidator(200)], help_text="The slow practice tempo.")
+    notes = models.JSONField(help_text="[{hand, step, acc, midi, beat, dur, bar, shown, voice, ties?, hold?}]: beats are absolute quarter notes from 0.")
+    blurb = models.CharField(max_length=300, blank=True, help_text="One or two lines about the piece, for the card.")
+    teacher_note = models.TextField(blank=True, validators=[MaxLengthValidator(2000)], help_text="What is simplified or left out, said plainly.")
+    source = models.CharField(max_length=300, blank=True, help_text="Where the notes come from.")
+    authorship = models.CharField(max_length=12, choices=Authorship.choices, default=Authorship.AI_DRAFTED)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.DRAFT)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["level", "order"]
+        constraints = [
+            models.UniqueConstraint(fields=["level", "order"], name="improv_piece_level_order_unique"),
+        ]
+
+    def __str__(self):
+        return self.title
+
+    def clean(self):
+        _check_reading_list(self.notes, MOST_PIECE_NOTES, "notes")
+        if self.slow_bpm and self.tempo_bpm and self.slow_bpm > self.tempo_bpm:
+            raise ValidationError({"slow_bpm": "The slow tempo cannot be faster than the tempo."})
+
+
+class PiecePhrase(models.Model):
+    """A stretch of bars a teacher would set as one task: two to four bars, ending where the music breathes."""
+
+    piece = models.ForeignKey(Piece, on_delete=models.CASCADE, related_name="phrases")
+    order = models.PositiveSmallIntegerField(help_text="1 for the first phrase.")
+    first_bar = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
+    last_bar = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
+    title = models.CharField(max_length=60, validators=[_not_blank])
+    hint = models.CharField(max_length=200, blank=True, help_text="Where each hand starts.")
+
+    class Meta:
+        ordering = ["piece", "order"]
+        constraints = [
+            models.UniqueConstraint(fields=["piece", "order"], name="improv_piecephrase_order_unique"),
+        ]
+
+    def __str__(self):
+        return f"{self.piece.title}: {self.title}"
+
+    def clean(self):
+        if self.first_bar and self.last_bar and self.last_bar < self.first_bar:
+            raise ValidationError({"last_bar": "A phrase cannot end before it starts."})
+        if self.piece_id and self.last_bar and self.last_bar > self.piece.bars:
+            raise ValidationError({"last_bar": "The piece has fewer bars than that."})
+
+
+class PieceTake(models.Model):
+    """One go at a rung of a piece's ladder, or a drill of any bars of it (spec chapter 12).
+
+    The stretch played is stored with the take (`notes`, sliced from the piece), `events` is what the piano sent and
+    `results` what the judge said of every written note, so a take can be shown again. `passed` is the server's:
+    a Flow take of the rung's own bars and hands, at the line or above, at the rung's tempo or faster. A drill
+    never passes, and a Step take never passes."""
+
+    class Hands(models.TextChoices):
+        RIGHT = "R", "right hand"
+        LEFT = "L", "left hand"
+        BOTH = "B", "both hands"
+
+    class Mode(models.TextChoices):
+        FLOW = "flow", "flow: the pulse never waits"
+        STEP = "step", "step: it waits for the right note"
+
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="piece_takes")
+    piece = models.ForeignKey(Piece, on_delete=models.CASCADE, related_name="takes")
+    rung = models.CharField(max_length=20, help_text="A rung key of the piece's ladder, or drill for any bars.")
+    first_bar = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
+    last_bar = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
+    hands = models.CharField(max_length=1, choices=Hands.choices)
+    mode = models.CharField(max_length=4, choices=Mode.choices, default=Mode.FLOW)
+    tempo_bpm = models.PositiveSmallIntegerField(validators=[MinValueValidator(30), MaxValueValidator(200)])
+    curtain = models.BooleanField(default=False)
+    notes = models.JSONField(default=list, help_text="The stretch as written: {hand, step, acc, midi, beat, dur, bar} per note, rebased to the stretch.")
+    events = models.JSONField(default=list, help_text="{t_ms, type: on/off, note, velocity} as the MIDI arrived.")
+    results = models.JSONField(default=list, help_text="The judge's word on each written note: {state, timing, offset_ms, played}.")
+    score = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)])
+    pitch_accuracy = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(1)])
+    timing_accuracy = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(1)])
+    passed = models.BooleanField(default=False, editable=False)
+    judge_version = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+
+    def __str__(self):
+        return f"{self.player} {self.piece} {self.rung} {self.score}"
+
+    def _rung(self):
+        from . import ladder
+
+        if self.rung == ladder.DRILL:
+            return None
+        phrases = list(self.piece.phrases.values_list("first_bar", "last_bar"))
+        return ladder.find(phrases, self.rung)
+
+    def clean(self):
+        from . import ladder
+
+        _check_reading_list(self.notes, MOST_TAKE_NOTES, "notes")
+        _check_reading_list(self.events, MOST_TAKE_EVENTS, "events")
+        _check_reading_list(self.results, MOST_TAKE_NOTES, "results")
+        if self.first_bar and self.last_bar and self.last_bar < self.first_bar:
+            raise ValidationError({"last_bar": "A take cannot end before it starts."})
+        if self.piece_id and self.last_bar and self.last_bar > self.piece.bars:
+            raise ValidationError({"last_bar": "The piece has fewer bars than that."})
+        if self.piece_id and self.rung != ladder.DRILL:
+            rung = self._rung()
+            if rung is None:
+                raise ValidationError({"rung": f"There is no rung {self.rung!r} on this piece's ladder."})
+            if (rung["hands"], rung["first_bar"], rung["last_bar"]) != (self.hands, self.first_bar, self.last_bar):
+                raise ValidationError(f"Rung {self.rung} is {rung['hands']} hands, bars {rung['first_bar']} to {rung['last_bar']}.")
+
+    def save(self, *args, **kwargs):
+        from . import ladder
+
+        rung = self._rung() if self.piece_id else None
+        self.passed = bool(
+            rung
+            and self.mode == self.Mode.FLOW
+            and self.score >= rung["line"]
+            and self.tempo_bpm >= ladder.required_bpm(rung, self.piece.slow_bpm, self.piece.tempo_bpm)
+        )
+        super().save(*args, **kwargs)
+
+
 class Feedback(models.Model):
     """What a person tells the owner about the app (SPR-I.9.3). Theirs to read, fix or withdraw;
     the owner reads all of it in the admin."""

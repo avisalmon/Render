@@ -1,0 +1,8721 @@
+[
+ {
+  "slug": "ode-to-joy",
+  "title": "Ode to Joy",
+  "composer": "Ludwig van Beethoven",
+  "catalog": "Symphony No. 9, theme",
+  "level": 1,
+  "order": 1,
+  "key": "C",
+  "bars": 16,
+  "tempo_bpm": 92,
+  "slow_bpm": 60,
+  "blurb": "The tune everyone knows, one step at a time: it hardly leaves five notes.",
+  "teacher_note": "The right hand is Beethoven's theme. The left hand is a simple two-note bass written for improv, not Beethoven's. The right hand sits in the five-finger position C to G, with one drop to the low G in bar 12.",
+  "source": "Theme: Beethoven, 1824, public domain. Written out for improv.",
+  "beats_per_bar": 4,
+  "notes": [
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 0.0,
+    "dur": 1.0,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 21,
+    "acc": 0,
+    "midi": 48,
+    "beat": 0.0,
+    "dur": 4.0,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 1.0,
+    "dur": 1.0,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 2.0,
+    "dur": 1.0,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 3.0,
+    "dur": 1.0,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 4.0,
+    "dur": 1.0,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 4.0,
+    "dur": 4.0,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 5.0,
+    "dur": 1.0,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 6.0,
+    "dur": 1.0,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 7.0,
+    "dur": 1.0,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 8.0,
+    "dur": 1.0,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 21,
+    "acc": 0,
+    "midi": 48,
+    "beat": 8.0,
+    "dur": 4.0,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 9.0,
+    "dur": 1.0,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 10.0,
+    "dur": 1.0,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 11.0,
+    "dur": 1.0,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 12.0,
+    "dur": 1.5,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 12.0,
+    "dur": 4.0,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 13.5,
+    "dur": 0.5,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 14.0,
+    "dur": 2.0,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 16.0,
+    "dur": 1.0,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 21,
+    "acc": 0,
+    "midi": 48,
+    "beat": 16.0,
+    "dur": 4.0,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 17.0,
+    "dur": 1.0,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 18.0,
+    "dur": 1.0,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 19.0,
+    "dur": 1.0,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 20.0,
+    "dur": 1.0,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 20.0,
+    "dur": 4.0,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 21.0,
+    "dur": 1.0,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 22.0,
+    "dur": 1.0,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 23.0,
+    "dur": 1.0,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 24.0,
+    "dur": 1.0,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 21,
+    "acc": 0,
+    "midi": 48,
+    "beat": 24.0,
+    "dur": 4.0,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 25.0,
+    "dur": 1.0,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 26.0,
+    "dur": 1.0,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 27.0,
+    "dur": 1.0,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 28.0,
+    "dur": 1.5,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 28.0,
+    "dur": 2.0,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 29.5,
+    "dur": 0.5,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 30.0,
+    "dur": 2.0,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 21,
+    "acc": 0,
+    "midi": 48,
+    "beat": 30.0,
+    "dur": 2.0,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 32.0,
+    "dur": 1.0,
+    "bar": 9,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 32.0,
+    "dur": 4.0,
+    "bar": 9,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 33.0,
+    "dur": 1.0,
+    "bar": 9,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 34.0,
+    "dur": 1.0,
+    "bar": 9,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 35.0,
+    "dur": 1.0,
+    "bar": 9,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 36.0,
+    "dur": 1.0,
+    "bar": 10,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 21,
+    "acc": 0,
+    "midi": 48,
+    "beat": 36.0,
+    "dur": 4.0,
+    "bar": 10,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 37.0,
+    "dur": 0.5,
+    "bar": 10,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 37.5,
+    "dur": 0.5,
+    "bar": 10,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 38.0,
+    "dur": 1.0,
+    "bar": 10,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 39.0,
+    "dur": 1.0,
+    "bar": 10,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 40.0,
+    "dur": 1.0,
+    "bar": 11,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 40.0,
+    "dur": 4.0,
+    "bar": 11,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 41.0,
+    "dur": 0.5,
+    "bar": 11,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 41.5,
+    "dur": 0.5,
+    "bar": 11,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 42.0,
+    "dur": 1.0,
+    "bar": 11,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 43.0,
+    "dur": 1.0,
+    "bar": 11,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 44.0,
+    "dur": 1.0,
+    "bar": 12,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 21,
+    "acc": 0,
+    "midi": 48,
+    "beat": 44.0,
+    "dur": 2.0,
+    "bar": 12,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 45.0,
+    "dur": 1.0,
+    "bar": 12,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 46.0,
+    "dur": 2.0,
+    "bar": 12,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 46.0,
+    "dur": 2.0,
+    "bar": 12,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 48.0,
+    "dur": 1.0,
+    "bar": 13,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 21,
+    "acc": 0,
+    "midi": 48,
+    "beat": 48.0,
+    "dur": 4.0,
+    "bar": 13,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 49.0,
+    "dur": 1.0,
+    "bar": 13,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 50.0,
+    "dur": 1.0,
+    "bar": 13,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 51.0,
+    "dur": 1.0,
+    "bar": 13,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 52.0,
+    "dur": 1.0,
+    "bar": 14,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 52.0,
+    "dur": 4.0,
+    "bar": 14,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 53.0,
+    "dur": 1.0,
+    "bar": 14,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 54.0,
+    "dur": 1.0,
+    "bar": 14,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 55.0,
+    "dur": 1.0,
+    "bar": 14,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 56.0,
+    "dur": 1.0,
+    "bar": 15,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 21,
+    "acc": 0,
+    "midi": 48,
+    "beat": 56.0,
+    "dur": 4.0,
+    "bar": 15,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 57.0,
+    "dur": 1.0,
+    "bar": 15,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 58.0,
+    "dur": 1.0,
+    "bar": 15,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 59.0,
+    "dur": 1.0,
+    "bar": 15,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 60.0,
+    "dur": 1.5,
+    "bar": 16,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 60.0,
+    "dur": 2.0,
+    "bar": 16,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 61.5,
+    "dur": 0.5,
+    "bar": 16,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 62.0,
+    "dur": 2.0,
+    "bar": 16,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 21,
+    "acc": 0,
+    "midi": 48,
+    "beat": 62.0,
+    "dur": 2.0,
+    "bar": 16,
+    "voice": 1
+   }
+  ],
+  "phrases": [
+   {
+    "order": 1,
+    "first_bar": 1,
+    "last_bar": 4,
+    "title": "Bars 1 to 4",
+    "hint": "Right hand starts on E4. Left hand starts on C3."
+   },
+   {
+    "order": 2,
+    "first_bar": 5,
+    "last_bar": 8,
+    "title": "Bars 5 to 8",
+    "hint": "Right hand starts on E4. Left hand starts on C3."
+   },
+   {
+    "order": 3,
+    "first_bar": 9,
+    "last_bar": 12,
+    "title": "Bars 9 to 12",
+    "hint": "Right hand starts on D4. Left hand starts on G2."
+   },
+   {
+    "order": 4,
+    "first_bar": 13,
+    "last_bar": 16,
+    "title": "Bars 13 to 16",
+    "hint": "Right hand starts on E4. Left hand starts on C3."
+   }
+  ]
+ },
+ {
+  "slug": "minuet-in-g",
+  "title": "Minuet in G",
+  "composer": "Johann Sebastian Bach",
+  "catalog": "BWV Anh. 114",
+  "level": 1,
+  "order": 2,
+  "key": "G",
+  "bars": 16,
+  "tempo_bpm": 108,
+  "slow_bpm": 66,
+  "blurb": "From the Notebook for Anna Magdalena Bach. Eight notes against a steady left hand, in three beats to the bar.",
+  "teacher_note": "This is the first half only (bars 1 to 16, the repeat is left out). The little ornaments (mordents and the grace note in bar 8) are left out so the line is plain.",
+  "source": "Mutopia Project, typeset by Allen Garvin, public domain.",
+  "beats_per_bar": 3,
+  "notes": [
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 0.0,
+    "dur": 1.0,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 0.0,
+    "dur": 2.0,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 0.0,
+    "dur": 2.0,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 0.0,
+    "dur": 2.0,
+    "bar": 1,
+    "voice": 2
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 1.0,
+    "dur": 0.5,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 1.5,
+    "dur": 0.5,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 34,
+    "acc": 0,
+    "midi": 71,
+    "beat": 2.0,
+    "dur": 0.5,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 2.0,
+    "dur": 1.0,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 2.5,
+    "dur": 0.5,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 3.0,
+    "dur": 1.0,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 3.0,
+    "dur": 3.0,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 4.0,
+    "dur": 1.0,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 5.0,
+    "dur": 1.0,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 37,
+    "acc": 0,
+    "midi": 76,
+    "beat": 6.0,
+    "dur": 1.0,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 6.0,
+    "dur": 3.0,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 7.0,
+    "dur": 0.5,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 7.5,
+    "dur": 0.5,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 37,
+    "acc": 0,
+    "midi": 76,
+    "beat": 8.0,
+    "dur": 0.5,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 38,
+    "acc": 1,
+    "midi": 78,
+    "beat": 8.5,
+    "dur": 0.5,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 39,
+    "acc": 0,
+    "midi": 79,
+    "beat": 9.0,
+    "dur": 1.0,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 9.0,
+    "dur": 3.0,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 10.0,
+    "dur": 1.0,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 11.0,
+    "dur": 1.0,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 12.0,
+    "dur": 1.0,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 12.0,
+    "dur": 3.0,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 13.0,
+    "dur": 0.5,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 13.5,
+    "dur": 0.5,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 34,
+    "acc": 0,
+    "midi": 71,
+    "beat": 14.0,
+    "dur": 0.5,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 14.5,
+    "dur": 0.5,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 34,
+    "acc": 0,
+    "midi": 71,
+    "beat": 15.0,
+    "dur": 1.0,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 15.0,
+    "dur": 3.0,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 16.0,
+    "dur": 0.5,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 34,
+    "acc": 0,
+    "midi": 71,
+    "beat": 16.5,
+    "dur": 0.5,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 17.0,
+    "dur": 0.5,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 17.5,
+    "dur": 0.5,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 1,
+    "midi": 66,
+    "beat": 18.0,
+    "dur": 1.0,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 18.0,
+    "dur": 1.0,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 19.0,
+    "dur": 0.5,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 19.0,
+    "dur": 1.0,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 19.5,
+    "dur": 0.5,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 34,
+    "acc": 0,
+    "midi": 71,
+    "beat": 20.0,
+    "dur": 0.5,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 20.0,
+    "dur": 1.0,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 20.5,
+    "dur": 0.5,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 21.0,
+    "dur": 3.0,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 21.0,
+    "dur": 1.0,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 22.0,
+    "dur": 0.5,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 22.5,
+    "dur": 0.5,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 23.0,
+    "dur": 0.5,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 23.5,
+    "dur": 0.5,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 24.0,
+    "dur": 1.0,
+    "bar": 9,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 24.0,
+    "dur": 2.0,
+    "bar": 9,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 25.0,
+    "dur": 0.5,
+    "bar": 9,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 25.5,
+    "dur": 0.5,
+    "bar": 9,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 34,
+    "acc": 0,
+    "midi": 71,
+    "beat": 26.0,
+    "dur": 0.5,
+    "bar": 9,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 26.0,
+    "dur": 1.0,
+    "bar": 9,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 26.5,
+    "dur": 0.5,
+    "bar": 9,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 27.0,
+    "dur": 1.0,
+    "bar": 10,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 27.0,
+    "dur": 1.0,
+    "bar": 10,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 28.0,
+    "dur": 1.0,
+    "bar": 10,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 28.0,
+    "dur": 1.0,
+    "bar": 10,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 29.0,
+    "dur": 1.0,
+    "bar": 10,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 29.0,
+    "dur": 1.0,
+    "bar": 10,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 37,
+    "acc": 0,
+    "midi": 76,
+    "beat": 30.0,
+    "dur": 1.0,
+    "bar": 11,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 30.0,
+    "dur": 3.0,
+    "bar": 11,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 31.0,
+    "dur": 0.5,
+    "bar": 11,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 31.5,
+    "dur": 0.5,
+    "bar": 11,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 37,
+    "acc": 0,
+    "midi": 76,
+    "beat": 32.0,
+    "dur": 0.5,
+    "bar": 11,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 38,
+    "acc": 1,
+    "midi": 78,
+    "beat": 32.5,
+    "dur": 0.5,
+    "bar": 11,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 39,
+    "acc": 0,
+    "midi": 79,
+    "beat": 33.0,
+    "dur": 1.0,
+    "bar": 12,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 33.0,
+    "dur": 1.0,
+    "bar": 12,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 34.0,
+    "dur": 1.0,
+    "bar": 12,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 34.0,
+    "dur": 0.5,
+    "bar": 12,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 34.5,
+    "dur": 0.5,
+    "bar": 12,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 35.0,
+    "dur": 1.0,
+    "bar": 12,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 35.0,
+    "dur": 0.5,
+    "bar": 12,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 35.5,
+    "dur": 0.5,
+    "bar": 12,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 36.0,
+    "dur": 1.0,
+    "bar": 13,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 36.0,
+    "dur": 2.0,
+    "bar": 13,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 37.0,
+    "dur": 0.5,
+    "bar": 13,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 37.5,
+    "dur": 0.5,
+    "bar": 13,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 34,
+    "acc": 0,
+    "midi": 71,
+    "beat": 38.0,
+    "dur": 0.5,
+    "bar": 13,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 24,
+    "acc": 1,
+    "midi": 54,
+    "beat": 38.0,
+    "dur": 1.0,
+    "bar": 13,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 38.5,
+    "dur": 0.5,
+    "bar": 13,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 34,
+    "acc": 0,
+    "midi": 71,
+    "beat": 39.0,
+    "dur": 1.0,
+    "bar": 14,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 39.0,
+    "dur": 2.0,
+    "bar": 14,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 40.0,
+    "dur": 0.5,
+    "bar": 14,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 34,
+    "acc": 0,
+    "midi": 71,
+    "beat": 40.5,
+    "dur": 0.5,
+    "bar": 14,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 41.0,
+    "dur": 0.5,
+    "bar": 14,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 41.0,
+    "dur": 1.0,
+    "bar": 14,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 41.5,
+    "dur": 0.5,
+    "bar": 14,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 42.0,
+    "dur": 1.0,
+    "bar": 15,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 42.0,
+    "dur": 1.0,
+    "bar": 15,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 34,
+    "acc": 0,
+    "midi": 71,
+    "beat": 43.0,
+    "dur": 0.5,
+    "bar": 15,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 43.0,
+    "dur": 1.0,
+    "bar": 15,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 43.5,
+    "dur": 0.5,
+    "bar": 15,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 44.0,
+    "dur": 0.5,
+    "bar": 15,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 44.0,
+    "dur": 1.0,
+    "bar": 15,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 1,
+    "midi": 66,
+    "beat": 44.5,
+    "dur": 0.5,
+    "bar": 15,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 45.0,
+    "dur": 3.0,
+    "bar": 16,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 45.0,
+    "dur": 2.0,
+    "bar": 16,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 47.0,
+    "dur": 1.0,
+    "bar": 16,
+    "voice": 1
+   }
+  ],
+  "phrases": [
+   {
+    "order": 1,
+    "first_bar": 1,
+    "last_bar": 4,
+    "title": "Bars 1 to 4",
+    "hint": "Right hand starts on D5. Left hand starts on G3."
+   },
+   {
+    "order": 2,
+    "first_bar": 5,
+    "last_bar": 8,
+    "title": "Bars 5 to 8",
+    "hint": "Right hand starts on C5. Left hand starts on A3."
+   },
+   {
+    "order": 3,
+    "first_bar": 9,
+    "last_bar": 12,
+    "title": "Bars 9 to 12",
+    "hint": "Right hand starts on D5. Left hand starts on B3."
+   },
+   {
+    "order": 4,
+    "first_bar": 13,
+    "last_bar": 16,
+    "title": "Bars 13 to 16",
+    "hint": "Right hand starts on C5. Left hand starts on A3."
+   }
+  ]
+ },
+ {
+  "slug": "musette-in-d",
+  "title": "Musette in D",
+  "composer": "Johann Sebastian Bach",
+  "catalog": "BWV Anh. 126",
+  "level": 1,
+  "order": 3,
+  "key": "D",
+  "bars": 8,
+  "tempo_bpm": 100,
+  "slow_bpm": 64,
+  "blurb": "A little bagpipe dance: a bouncing left hand and a tune that runs in sixteenth notes.",
+  "teacher_note": "This is the first eight bars only (the repeat and the second half are left out). The pause (fermata) at the end is left out.",
+  "source": "Mutopia Project, typeset by Allen Garvin, public domain.",
+  "beats_per_bar": 2,
+  "notes": [
+   {
+    "hand": "R",
+    "step": 40,
+    "acc": 0,
+    "midi": 81,
+    "beat": 0.0,
+    "dur": 1.0,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 15,
+    "acc": 0,
+    "midi": 38,
+    "beat": 0.0,
+    "dur": 0.5,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 0.5,
+    "dur": 0.5,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 39,
+    "acc": 0,
+    "midi": 79,
+    "beat": 1.0,
+    "dur": 0.25,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 15,
+    "acc": 0,
+    "midi": 38,
+    "beat": 1.0,
+    "dur": 0.5,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 38,
+    "acc": 1,
+    "midi": 78,
+    "beat": 1.25,
+    "dur": 0.25,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 37,
+    "acc": 0,
+    "midi": 76,
+    "beat": 1.5,
+    "dur": 0.25,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 1.5,
+    "dur": 0.5,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 1.75,
+    "dur": 0.25,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 40,
+    "acc": 0,
+    "midi": 81,
+    "beat": 2.0,
+    "dur": 1.0,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 15,
+    "acc": 0,
+    "midi": 38,
+    "beat": 2.0,
+    "dur": 0.5,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 2.5,
+    "dur": 0.5,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 39,
+    "acc": 0,
+    "midi": 79,
+    "beat": 3.0,
+    "dur": 0.25,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 15,
+    "acc": 0,
+    "midi": 38,
+    "beat": 3.0,
+    "dur": 0.5,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 38,
+    "acc": 1,
+    "midi": 78,
+    "beat": 3.25,
+    "dur": 0.25,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 37,
+    "acc": 0,
+    "midi": 76,
+    "beat": 3.5,
+    "dur": 0.25,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 3.5,
+    "dur": 0.5,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 3.75,
+    "dur": 0.25,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 1,
+    "midi": 66,
+    "beat": 4.0,
+    "dur": 0.25,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 24,
+    "acc": 1,
+    "midi": 54,
+    "beat": 4.0,
+    "dur": 0.25,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 4.25,
+    "dur": 0.25,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 4.25,
+    "dur": 0.25,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 4.5,
+    "dur": 0.5,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 4.5,
+    "dur": 0.5,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 5.0,
+    "dur": 0.5,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 5.0,
+    "dur": 0.5,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 1,
+    "midi": 66,
+    "beat": 5.5,
+    "dur": 0.5,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 24,
+    "acc": 1,
+    "midi": 54,
+    "beat": 5.5,
+    "dur": 0.5,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 6.0,
+    "dur": 0.5,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 23,
+    "acc": 0,
+    "midi": 52,
+    "beat": 6.0,
+    "dur": 0.5,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 6.5,
+    "dur": 0.5,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 6.5,
+    "dur": 0.5,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 1,
+    "midi": 66,
+    "beat": 7.0,
+    "dur": 0.5,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 24,
+    "acc": 1,
+    "midi": 54,
+    "beat": 7.0,
+    "dur": 0.5,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 7.5,
+    "dur": 0.5,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 7.5,
+    "dur": 0.5,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 40,
+    "acc": 0,
+    "midi": 81,
+    "beat": 8.0,
+    "dur": 1.0,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 15,
+    "acc": 0,
+    "midi": 38,
+    "beat": 8.0,
+    "dur": 0.5,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 8.5,
+    "dur": 0.5,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 39,
+    "acc": 0,
+    "midi": 79,
+    "beat": 9.0,
+    "dur": 0.25,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 15,
+    "acc": 0,
+    "midi": 38,
+    "beat": 9.0,
+    "dur": 0.5,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 38,
+    "acc": 1,
+    "midi": 78,
+    "beat": 9.25,
+    "dur": 0.25,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 37,
+    "acc": 0,
+    "midi": 76,
+    "beat": 9.5,
+    "dur": 0.25,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 9.5,
+    "dur": 0.5,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 9.75,
+    "dur": 0.25,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 40,
+    "acc": 0,
+    "midi": 81,
+    "beat": 10.0,
+    "dur": 1.0,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 15,
+    "acc": 0,
+    "midi": 38,
+    "beat": 10.0,
+    "dur": 0.5,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 10.5,
+    "dur": 0.5,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 39,
+    "acc": 0,
+    "midi": 79,
+    "beat": 11.0,
+    "dur": 0.25,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 15,
+    "acc": 0,
+    "midi": 38,
+    "beat": 11.0,
+    "dur": 0.5,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 38,
+    "acc": 1,
+    "midi": 78,
+    "beat": 11.25,
+    "dur": 0.25,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 37,
+    "acc": 0,
+    "midi": 76,
+    "beat": 11.5,
+    "dur": 0.25,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 11.5,
+    "dur": 0.5,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 11.75,
+    "dur": 0.25,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 1,
+    "midi": 66,
+    "beat": 12.0,
+    "dur": 0.25,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 24,
+    "acc": 1,
+    "midi": 54,
+    "beat": 12.0,
+    "dur": 0.25,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 12.25,
+    "dur": 0.25,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 12.25,
+    "dur": 0.25,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 12.5,
+    "dur": 0.5,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 12.5,
+    "dur": 0.5,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 13.0,
+    "dur": 0.5,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 13.0,
+    "dur": 0.5,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 1,
+    "midi": 66,
+    "beat": 13.5,
+    "dur": 0.5,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 24,
+    "acc": 1,
+    "midi": 54,
+    "beat": 13.5,
+    "dur": 0.5,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 14.0,
+    "dur": 0.5,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 23,
+    "acc": 0,
+    "midi": 52,
+    "beat": 14.0,
+    "dur": 0.5,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 14.5,
+    "dur": 0.5,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 14.5,
+    "dur": 0.5,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 15.0,
+    "dur": 1.0,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 15.0,
+    "dur": 1.0,
+    "bar": 8,
+    "voice": 1
+   }
+  ],
+  "phrases": [
+   {
+    "order": 1,
+    "first_bar": 1,
+    "last_bar": 2,
+    "title": "Bars 1 to 2",
+    "hint": "Right hand starts on A5. Left hand starts on D2."
+   },
+   {
+    "order": 2,
+    "first_bar": 3,
+    "last_bar": 4,
+    "title": "Bars 3 to 4",
+    "hint": "Right hand starts on F#4. Left hand starts on F#3."
+   },
+   {
+    "order": 3,
+    "first_bar": 5,
+    "last_bar": 6,
+    "title": "Bars 5 to 6",
+    "hint": "Right hand starts on A5. Left hand starts on D2."
+   },
+   {
+    "order": 4,
+    "first_bar": 7,
+    "last_bar": 8,
+    "title": "Bars 7 to 8",
+    "hint": "Right hand starts on F#4. Left hand starts on F#3."
+   }
+  ]
+ },
+ {
+  "slug": "prelude-in-c",
+  "title": "Prelude in C",
+  "composer": "Johann Sebastian Bach",
+  "catalog": "BWV 846, Well-Tempered Clavier I",
+  "level": 1,
+  "order": 4,
+  "key": "C",
+  "bars": 35,
+  "tempo_bpm": 66,
+  "slow_bpm": 46,
+  "blurb": "Broken chords that rise and fall. Each bar is one chord, played twice; learn the chords and the piece plays itself.",
+  "teacher_note": "All 35 bars. The pause on the last chord and the arpeggio sign are left out: play the last chord together. In bars 33 and 34 the right hand dips below the treble staff, which is how Bach wrote it.",
+  "source": "Mutopia Project, typeset by Tobias Erbsland, public domain.",
+  "beats_per_bar": 4,
+  "notes": [
+   {
+    "hand": "L",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 0.0,
+    "dur": 2.0,
+    "bar": 1,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 0.25,
+    "dur": 0.75,
+    "bar": 1,
+    "voice": 1,
+    "ties": [
+     [
+      1.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 0.5,
+    "dur": 0.25,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 0.75,
+    "dur": 0.25,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 37,
+    "acc": 0,
+    "midi": 76,
+    "beat": 1.0,
+    "dur": 0.25,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 1.25,
+    "dur": 0.25,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 1.5,
+    "dur": 0.25,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 37,
+    "acc": 0,
+    "midi": 76,
+    "beat": 1.75,
+    "dur": 0.25,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 2.0,
+    "dur": 2.0,
+    "bar": 1,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 2.25,
+    "dur": 0.75,
+    "bar": 1,
+    "voice": 1,
+    "ties": [
+     [
+      3.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 2.5,
+    "dur": 0.25,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 2.75,
+    "dur": 0.25,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 37,
+    "acc": 0,
+    "midi": 76,
+    "beat": 3.0,
+    "dur": 0.25,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 3.25,
+    "dur": 0.25,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 3.5,
+    "dur": 0.25,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 37,
+    "acc": 0,
+    "midi": 76,
+    "beat": 3.75,
+    "dur": 0.25,
+    "bar": 1,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 4.0,
+    "dur": 2.0,
+    "bar": 2,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 4.25,
+    "dur": 0.75,
+    "bar": 2,
+    "voice": 1,
+    "ties": [
+     [
+      5.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 4.5,
+    "dur": 0.25,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 4.75,
+    "dur": 0.25,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 38,
+    "acc": 0,
+    "midi": 77,
+    "beat": 5.0,
+    "dur": 0.25,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 5.25,
+    "dur": 0.25,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 5.5,
+    "dur": 0.25,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 38,
+    "acc": 0,
+    "midi": 77,
+    "beat": 5.75,
+    "dur": 0.25,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 6.0,
+    "dur": 2.0,
+    "bar": 2,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 6.25,
+    "dur": 0.75,
+    "bar": 2,
+    "voice": 1,
+    "ties": [
+     [
+      7.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 6.5,
+    "dur": 0.25,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 6.75,
+    "dur": 0.25,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 38,
+    "acc": 0,
+    "midi": 77,
+    "beat": 7.0,
+    "dur": 0.25,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 7.25,
+    "dur": 0.25,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 7.5,
+    "dur": 0.25,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 38,
+    "acc": 0,
+    "midi": 77,
+    "beat": 7.75,
+    "dur": 0.25,
+    "bar": 2,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 8.0,
+    "dur": 2.0,
+    "bar": 3,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 8.25,
+    "dur": 0.75,
+    "bar": 3,
+    "voice": 1,
+    "ties": [
+     [
+      9.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 8.5,
+    "dur": 0.25,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 8.75,
+    "dur": 0.25,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 38,
+    "acc": 0,
+    "midi": 77,
+    "beat": 9.0,
+    "dur": 0.25,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 9.25,
+    "dur": 0.25,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 9.5,
+    "dur": 0.25,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 38,
+    "acc": 0,
+    "midi": 77,
+    "beat": 9.75,
+    "dur": 0.25,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 10.0,
+    "dur": 2.0,
+    "bar": 3,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 10.25,
+    "dur": 0.75,
+    "bar": 3,
+    "voice": 1,
+    "ties": [
+     [
+      11.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 10.5,
+    "dur": 0.25,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 10.75,
+    "dur": 0.25,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 38,
+    "acc": 0,
+    "midi": 77,
+    "beat": 11.0,
+    "dur": 0.25,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 11.25,
+    "dur": 0.25,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 11.5,
+    "dur": 0.25,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 38,
+    "acc": 0,
+    "midi": 77,
+    "beat": 11.75,
+    "dur": 0.25,
+    "bar": 3,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 12.0,
+    "dur": 2.0,
+    "bar": 4,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 12.25,
+    "dur": 0.75,
+    "bar": 4,
+    "voice": 1,
+    "ties": [
+     [
+      13.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 12.5,
+    "dur": 0.25,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 12.75,
+    "dur": 0.25,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 37,
+    "acc": 0,
+    "midi": 76,
+    "beat": 13.0,
+    "dur": 0.25,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 13.25,
+    "dur": 0.25,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 13.5,
+    "dur": 0.25,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 37,
+    "acc": 0,
+    "midi": 76,
+    "beat": 13.75,
+    "dur": 0.25,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 14.0,
+    "dur": 2.0,
+    "bar": 4,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 14.25,
+    "dur": 0.75,
+    "bar": 4,
+    "voice": 1,
+    "ties": [
+     [
+      15.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 14.5,
+    "dur": 0.25,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 14.75,
+    "dur": 0.25,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 37,
+    "acc": 0,
+    "midi": 76,
+    "beat": 15.0,
+    "dur": 0.25,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 15.25,
+    "dur": 0.25,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 15.5,
+    "dur": 0.25,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 37,
+    "acc": 0,
+    "midi": 76,
+    "beat": 15.75,
+    "dur": 0.25,
+    "bar": 4,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 16.0,
+    "dur": 2.0,
+    "bar": 5,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 16.25,
+    "dur": 0.75,
+    "bar": 5,
+    "voice": 1,
+    "ties": [
+     [
+      17.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 16.5,
+    "dur": 0.25,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 37,
+    "acc": 0,
+    "midi": 76,
+    "beat": 16.75,
+    "dur": 0.25,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 40,
+    "acc": 0,
+    "midi": 81,
+    "beat": 17.0,
+    "dur": 0.25,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 17.25,
+    "dur": 0.25,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 37,
+    "acc": 0,
+    "midi": 76,
+    "beat": 17.5,
+    "dur": 0.25,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 40,
+    "acc": 0,
+    "midi": 81,
+    "beat": 17.75,
+    "dur": 0.25,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 18.0,
+    "dur": 2.0,
+    "bar": 5,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 18.25,
+    "dur": 0.75,
+    "bar": 5,
+    "voice": 1,
+    "ties": [
+     [
+      19.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 18.5,
+    "dur": 0.25,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 37,
+    "acc": 0,
+    "midi": 76,
+    "beat": 18.75,
+    "dur": 0.25,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 40,
+    "acc": 0,
+    "midi": 81,
+    "beat": 19.0,
+    "dur": 0.25,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 19.25,
+    "dur": 0.25,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 37,
+    "acc": 0,
+    "midi": 76,
+    "beat": 19.5,
+    "dur": 0.25,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 40,
+    "acc": 0,
+    "midi": 81,
+    "beat": 19.75,
+    "dur": 0.25,
+    "bar": 5,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 20.0,
+    "dur": 2.0,
+    "bar": 6,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 20.25,
+    "dur": 0.75,
+    "bar": 6,
+    "voice": 1,
+    "ties": [
+     [
+      21.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 1,
+    "midi": 66,
+    "beat": 20.5,
+    "dur": 0.25,
+    "bar": 6,
+    "voice": 1,
+    "shown": "#"
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 20.75,
+    "dur": 0.25,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 21.0,
+    "dur": 0.25,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 1,
+    "midi": 66,
+    "beat": 21.25,
+    "dur": 0.25,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 21.5,
+    "dur": 0.25,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 21.75,
+    "dur": 0.25,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 22.0,
+    "dur": 2.0,
+    "bar": 6,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 22.25,
+    "dur": 0.75,
+    "bar": 6,
+    "voice": 1,
+    "ties": [
+     [
+      23.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 1,
+    "midi": 66,
+    "beat": 22.5,
+    "dur": 0.25,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 22.75,
+    "dur": 0.25,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 23.0,
+    "dur": 0.25,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 1,
+    "midi": 66,
+    "beat": 23.25,
+    "dur": 0.25,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 23.5,
+    "dur": 0.25,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 23.75,
+    "dur": 0.25,
+    "bar": 6,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 24.0,
+    "dur": 2.0,
+    "bar": 7,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 24.25,
+    "dur": 0.75,
+    "bar": 7,
+    "voice": 1,
+    "ties": [
+     [
+      25.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 24.5,
+    "dur": 0.25,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 24.75,
+    "dur": 0.25,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 39,
+    "acc": 0,
+    "midi": 79,
+    "beat": 25.0,
+    "dur": 0.25,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 25.25,
+    "dur": 0.25,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 25.5,
+    "dur": 0.25,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 39,
+    "acc": 0,
+    "midi": 79,
+    "beat": 25.75,
+    "dur": 0.25,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 26.0,
+    "dur": 2.0,
+    "bar": 7,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 26.25,
+    "dur": 0.75,
+    "bar": 7,
+    "voice": 1,
+    "ties": [
+     [
+      27.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 26.5,
+    "dur": 0.25,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 26.75,
+    "dur": 0.25,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 39,
+    "acc": 0,
+    "midi": 79,
+    "beat": 27.0,
+    "dur": 0.25,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 27.25,
+    "dur": 0.25,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 27.5,
+    "dur": 0.25,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 39,
+    "acc": 0,
+    "midi": 79,
+    "beat": 27.75,
+    "dur": 0.25,
+    "bar": 7,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 28.0,
+    "dur": 2.0,
+    "bar": 8,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 28.25,
+    "dur": 0.75,
+    "bar": 8,
+    "voice": 1,
+    "ties": [
+     [
+      29.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 28.5,
+    "dur": 0.25,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 28.75,
+    "dur": 0.25,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 29.0,
+    "dur": 0.25,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 29.25,
+    "dur": 0.25,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 29.5,
+    "dur": 0.25,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 29.75,
+    "dur": 0.25,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 30.0,
+    "dur": 2.0,
+    "bar": 8,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 30.25,
+    "dur": 0.75,
+    "bar": 8,
+    "voice": 1,
+    "ties": [
+     [
+      31.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 30.5,
+    "dur": 0.25,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 30.75,
+    "dur": 0.25,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 31.0,
+    "dur": 0.25,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 31.25,
+    "dur": 0.25,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 31.5,
+    "dur": 0.25,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 31.75,
+    "dur": 0.25,
+    "bar": 8,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 32.0,
+    "dur": 2.0,
+    "bar": 9,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 32.25,
+    "dur": 0.75,
+    "bar": 9,
+    "voice": 1,
+    "ties": [
+     [
+      33.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 32.5,
+    "dur": 0.25,
+    "bar": 9,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 32.75,
+    "dur": 0.25,
+    "bar": 9,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 33.0,
+    "dur": 0.25,
+    "bar": 9,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 33.25,
+    "dur": 0.25,
+    "bar": 9,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 33.5,
+    "dur": 0.25,
+    "bar": 9,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 33.75,
+    "dur": 0.25,
+    "bar": 9,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 34.0,
+    "dur": 2.0,
+    "bar": 9,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 34.25,
+    "dur": 0.75,
+    "bar": 9,
+    "voice": 1,
+    "ties": [
+     [
+      35.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 34.5,
+    "dur": 0.25,
+    "bar": 9,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 34.75,
+    "dur": 0.25,
+    "bar": 9,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 35.0,
+    "dur": 0.25,
+    "bar": 9,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 35.25,
+    "dur": 0.25,
+    "bar": 9,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 35.5,
+    "dur": 0.25,
+    "bar": 9,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 35.75,
+    "dur": 0.25,
+    "bar": 9,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 36.0,
+    "dur": 2.0,
+    "bar": 10,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 36.25,
+    "dur": 0.75,
+    "bar": 10,
+    "voice": 1,
+    "ties": [
+     [
+      37.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 36.5,
+    "dur": 0.25,
+    "bar": 10,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 1,
+    "midi": 66,
+    "beat": 36.75,
+    "dur": 0.25,
+    "bar": 10,
+    "voice": 1,
+    "shown": "#"
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 37.0,
+    "dur": 0.25,
+    "bar": 10,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 37.25,
+    "dur": 0.25,
+    "bar": 10,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 1,
+    "midi": 66,
+    "beat": 37.5,
+    "dur": 0.25,
+    "bar": 10,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 37.75,
+    "dur": 0.25,
+    "bar": 10,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 38.0,
+    "dur": 2.0,
+    "bar": 10,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 38.25,
+    "dur": 0.75,
+    "bar": 10,
+    "voice": 1,
+    "ties": [
+     [
+      39.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 38.5,
+    "dur": 0.25,
+    "bar": 10,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 1,
+    "midi": 66,
+    "beat": 38.75,
+    "dur": 0.25,
+    "bar": 10,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 39.0,
+    "dur": 0.25,
+    "bar": 10,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 39.25,
+    "dur": 0.25,
+    "bar": 10,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 1,
+    "midi": 66,
+    "beat": 39.5,
+    "dur": 0.25,
+    "bar": 10,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 39.75,
+    "dur": 0.25,
+    "bar": 10,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 40.0,
+    "dur": 2.0,
+    "bar": 11,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 40.25,
+    "dur": 0.75,
+    "bar": 11,
+    "voice": 1,
+    "ties": [
+     [
+      41.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 40.5,
+    "dur": 0.25,
+    "bar": 11,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 40.75,
+    "dur": 0.25,
+    "bar": 11,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 34,
+    "acc": 0,
+    "midi": 71,
+    "beat": 41.0,
+    "dur": 0.25,
+    "bar": 11,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 41.25,
+    "dur": 0.25,
+    "bar": 11,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 41.5,
+    "dur": 0.25,
+    "bar": 11,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 34,
+    "acc": 0,
+    "midi": 71,
+    "beat": 41.75,
+    "dur": 0.25,
+    "bar": 11,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 42.0,
+    "dur": 2.0,
+    "bar": 11,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 42.25,
+    "dur": 0.75,
+    "bar": 11,
+    "voice": 1,
+    "ties": [
+     [
+      43.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 42.5,
+    "dur": 0.25,
+    "bar": 11,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 42.75,
+    "dur": 0.25,
+    "bar": 11,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 34,
+    "acc": 0,
+    "midi": 71,
+    "beat": 43.0,
+    "dur": 0.25,
+    "bar": 11,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 43.25,
+    "dur": 0.25,
+    "bar": 11,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 43.5,
+    "dur": 0.25,
+    "bar": 11,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 34,
+    "acc": 0,
+    "midi": 71,
+    "beat": 43.75,
+    "dur": 0.25,
+    "bar": 11,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 44.0,
+    "dur": 2.0,
+    "bar": 12,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 27,
+    "acc": -1,
+    "midi": 58,
+    "beat": 44.25,
+    "dur": 0.75,
+    "bar": 12,
+    "voice": 1,
+    "ties": [
+     [
+      45.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75,
+    "shown": "b"
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 44.5,
+    "dur": 0.25,
+    "bar": 12,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 44.75,
+    "dur": 0.25,
+    "bar": 12,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 1,
+    "midi": 73,
+    "beat": 45.0,
+    "dur": 0.25,
+    "bar": 12,
+    "voice": 1,
+    "shown": "#"
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 45.25,
+    "dur": 0.25,
+    "bar": 12,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 45.5,
+    "dur": 0.25,
+    "bar": 12,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 1,
+    "midi": 73,
+    "beat": 45.75,
+    "dur": 0.25,
+    "bar": 12,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 46.0,
+    "dur": 2.0,
+    "bar": 12,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 27,
+    "acc": -1,
+    "midi": 58,
+    "beat": 46.25,
+    "dur": 0.75,
+    "bar": 12,
+    "voice": 1,
+    "ties": [
+     [
+      47.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 46.5,
+    "dur": 0.25,
+    "bar": 12,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 46.75,
+    "dur": 0.25,
+    "bar": 12,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 1,
+    "midi": 73,
+    "beat": 47.0,
+    "dur": 0.25,
+    "bar": 12,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 47.25,
+    "dur": 0.25,
+    "bar": 12,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 47.5,
+    "dur": 0.25,
+    "bar": 12,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 1,
+    "midi": 73,
+    "beat": 47.75,
+    "dur": 0.25,
+    "bar": 12,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 24,
+    "acc": 0,
+    "midi": 53,
+    "beat": 48.0,
+    "dur": 2.0,
+    "bar": 13,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 48.25,
+    "dur": 0.75,
+    "bar": 13,
+    "voice": 1,
+    "ties": [
+     [
+      49.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 48.5,
+    "dur": 0.25,
+    "bar": 13,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 48.75,
+    "dur": 0.25,
+    "bar": 13,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 49.0,
+    "dur": 0.25,
+    "bar": 13,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 49.25,
+    "dur": 0.25,
+    "bar": 13,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 49.5,
+    "dur": 0.25,
+    "bar": 13,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 49.75,
+    "dur": 0.25,
+    "bar": 13,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 24,
+    "acc": 0,
+    "midi": 53,
+    "beat": 50.0,
+    "dur": 2.0,
+    "bar": 13,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 50.25,
+    "dur": 0.75,
+    "bar": 13,
+    "voice": 1,
+    "ties": [
+     [
+      51.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 50.5,
+    "dur": 0.25,
+    "bar": 13,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 50.75,
+    "dur": 0.25,
+    "bar": 13,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 51.0,
+    "dur": 0.25,
+    "bar": 13,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 51.25,
+    "dur": 0.25,
+    "bar": 13,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 33,
+    "acc": 0,
+    "midi": 69,
+    "beat": 51.5,
+    "dur": 0.25,
+    "bar": 13,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 51.75,
+    "dur": 0.25,
+    "bar": 13,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 24,
+    "acc": 0,
+    "midi": 53,
+    "beat": 52.0,
+    "dur": 2.0,
+    "bar": 14,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 26,
+    "acc": -1,
+    "midi": 56,
+    "beat": 52.25,
+    "dur": 0.75,
+    "bar": 14,
+    "voice": 1,
+    "ties": [
+     [
+      53.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75,
+    "shown": "b"
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 52.5,
+    "dur": 0.25,
+    "bar": 14,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 52.75,
+    "dur": 0.25,
+    "bar": 14,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 34,
+    "acc": 0,
+    "midi": 71,
+    "beat": 53.0,
+    "dur": 0.25,
+    "bar": 14,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 53.25,
+    "dur": 0.25,
+    "bar": 14,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 53.5,
+    "dur": 0.25,
+    "bar": 14,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 34,
+    "acc": 0,
+    "midi": 71,
+    "beat": 53.75,
+    "dur": 0.25,
+    "bar": 14,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 24,
+    "acc": 0,
+    "midi": 53,
+    "beat": 54.0,
+    "dur": 2.0,
+    "bar": 14,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 26,
+    "acc": -1,
+    "midi": 56,
+    "beat": 54.25,
+    "dur": 0.75,
+    "bar": 14,
+    "voice": 1,
+    "ties": [
+     [
+      55.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 54.5,
+    "dur": 0.25,
+    "bar": 14,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 54.75,
+    "dur": 0.25,
+    "bar": 14,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 34,
+    "acc": 0,
+    "midi": 71,
+    "beat": 55.0,
+    "dur": 0.25,
+    "bar": 14,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 55.25,
+    "dur": 0.25,
+    "bar": 14,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 55.5,
+    "dur": 0.25,
+    "bar": 14,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 34,
+    "acc": 0,
+    "midi": 71,
+    "beat": 55.75,
+    "dur": 0.25,
+    "bar": 14,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 23,
+    "acc": 0,
+    "midi": 52,
+    "beat": 56.0,
+    "dur": 2.0,
+    "bar": 15,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 56.25,
+    "dur": 0.75,
+    "bar": 15,
+    "voice": 1,
+    "ties": [
+     [
+      57.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 56.5,
+    "dur": 0.25,
+    "bar": 15,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 56.75,
+    "dur": 0.25,
+    "bar": 15,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 57.0,
+    "dur": 0.25,
+    "bar": 15,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 57.25,
+    "dur": 0.25,
+    "bar": 15,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 57.5,
+    "dur": 0.25,
+    "bar": 15,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 57.75,
+    "dur": 0.25,
+    "bar": 15,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 23,
+    "acc": 0,
+    "midi": 52,
+    "beat": 58.0,
+    "dur": 2.0,
+    "bar": 15,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 58.25,
+    "dur": 0.75,
+    "bar": 15,
+    "voice": 1,
+    "ties": [
+     [
+      59.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 58.5,
+    "dur": 0.25,
+    "bar": 15,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 58.75,
+    "dur": 0.25,
+    "bar": 15,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 59.0,
+    "dur": 0.25,
+    "bar": 15,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 59.25,
+    "dur": 0.25,
+    "bar": 15,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 59.5,
+    "dur": 0.25,
+    "bar": 15,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 59.75,
+    "dur": 0.25,
+    "bar": 15,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 23,
+    "acc": 0,
+    "midi": 52,
+    "beat": 60.0,
+    "dur": 2.0,
+    "bar": 16,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 24,
+    "acc": 0,
+    "midi": 53,
+    "beat": 60.25,
+    "dur": 0.75,
+    "bar": 16,
+    "voice": 1,
+    "ties": [
+     [
+      61.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 60.5,
+    "dur": 0.25,
+    "bar": 16,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 60.75,
+    "dur": 0.25,
+    "bar": 16,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 61.0,
+    "dur": 0.25,
+    "bar": 16,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 61.25,
+    "dur": 0.25,
+    "bar": 16,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 61.5,
+    "dur": 0.25,
+    "bar": 16,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 61.75,
+    "dur": 0.25,
+    "bar": 16,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 23,
+    "acc": 0,
+    "midi": 52,
+    "beat": 62.0,
+    "dur": 2.0,
+    "bar": 16,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 24,
+    "acc": 0,
+    "midi": 53,
+    "beat": 62.25,
+    "dur": 0.75,
+    "bar": 16,
+    "voice": 1,
+    "ties": [
+     [
+      63.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 62.5,
+    "dur": 0.25,
+    "bar": 16,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 62.75,
+    "dur": 0.25,
+    "bar": 16,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 63.0,
+    "dur": 0.25,
+    "bar": 16,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 63.25,
+    "dur": 0.25,
+    "bar": 16,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 63.5,
+    "dur": 0.25,
+    "bar": 16,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 63.75,
+    "dur": 0.25,
+    "bar": 16,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 64.0,
+    "dur": 2.0,
+    "bar": 17,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 24,
+    "acc": 0,
+    "midi": 53,
+    "beat": 64.25,
+    "dur": 0.75,
+    "bar": 17,
+    "voice": 1,
+    "ties": [
+     [
+      65.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 64.5,
+    "dur": 0.25,
+    "bar": 17,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 64.75,
+    "dur": 0.25,
+    "bar": 17,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 65.0,
+    "dur": 0.25,
+    "bar": 17,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 65.25,
+    "dur": 0.25,
+    "bar": 17,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 65.5,
+    "dur": 0.25,
+    "bar": 17,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 65.75,
+    "dur": 0.25,
+    "bar": 17,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 66.0,
+    "dur": 2.0,
+    "bar": 17,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 24,
+    "acc": 0,
+    "midi": 53,
+    "beat": 66.25,
+    "dur": 0.75,
+    "bar": 17,
+    "voice": 1,
+    "ties": [
+     [
+      67.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 66.5,
+    "dur": 0.25,
+    "bar": 17,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 66.75,
+    "dur": 0.25,
+    "bar": 17,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 67.0,
+    "dur": 0.25,
+    "bar": 17,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 67.25,
+    "dur": 0.25,
+    "bar": 17,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 67.5,
+    "dur": 0.25,
+    "bar": 17,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 67.75,
+    "dur": 0.25,
+    "bar": 17,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 68.0,
+    "dur": 2.0,
+    "bar": 18,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 68.25,
+    "dur": 0.75,
+    "bar": 18,
+    "voice": 1,
+    "ties": [
+     [
+      69.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 68.5,
+    "dur": 0.25,
+    "bar": 18,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 68.75,
+    "dur": 0.25,
+    "bar": 18,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 69.0,
+    "dur": 0.25,
+    "bar": 18,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 69.25,
+    "dur": 0.25,
+    "bar": 18,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 69.5,
+    "dur": 0.25,
+    "bar": 18,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 69.75,
+    "dur": 0.25,
+    "bar": 18,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 70.0,
+    "dur": 2.0,
+    "bar": 18,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 70.25,
+    "dur": 0.75,
+    "bar": 18,
+    "voice": 1,
+    "ties": [
+     [
+      71.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 70.5,
+    "dur": 0.25,
+    "bar": 18,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 70.75,
+    "dur": 0.25,
+    "bar": 18,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 71.0,
+    "dur": 0.25,
+    "bar": 18,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 71.25,
+    "dur": 0.25,
+    "bar": 18,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 71.5,
+    "dur": 0.25,
+    "bar": 18,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 71.75,
+    "dur": 0.25,
+    "bar": 18,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 21,
+    "acc": 0,
+    "midi": 48,
+    "beat": 72.0,
+    "dur": 2.0,
+    "bar": 19,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 23,
+    "acc": 0,
+    "midi": 52,
+    "beat": 72.25,
+    "dur": 0.75,
+    "bar": 19,
+    "voice": 1,
+    "ties": [
+     [
+      73.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 72.5,
+    "dur": 0.25,
+    "bar": 19,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 72.75,
+    "dur": 0.25,
+    "bar": 19,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 73.0,
+    "dur": 0.25,
+    "bar": 19,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 73.25,
+    "dur": 0.25,
+    "bar": 19,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 73.5,
+    "dur": 0.25,
+    "bar": 19,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 73.75,
+    "dur": 0.25,
+    "bar": 19,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 21,
+    "acc": 0,
+    "midi": 48,
+    "beat": 74.0,
+    "dur": 2.0,
+    "bar": 19,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 23,
+    "acc": 0,
+    "midi": 52,
+    "beat": 74.25,
+    "dur": 0.75,
+    "bar": 19,
+    "voice": 1,
+    "ties": [
+     [
+      75.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 74.5,
+    "dur": 0.25,
+    "bar": 19,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 74.75,
+    "dur": 0.25,
+    "bar": 19,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 75.0,
+    "dur": 0.25,
+    "bar": 19,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 75.25,
+    "dur": 0.25,
+    "bar": 19,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 75.5,
+    "dur": 0.25,
+    "bar": 19,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 75.75,
+    "dur": 0.25,
+    "bar": 19,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 21,
+    "acc": 0,
+    "midi": 48,
+    "beat": 76.0,
+    "dur": 2.0,
+    "bar": 20,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 76.25,
+    "dur": 0.75,
+    "bar": 20,
+    "voice": 1,
+    "ties": [
+     [
+      77.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": -1,
+    "midi": 58,
+    "beat": 76.5,
+    "dur": 0.25,
+    "bar": 20,
+    "voice": 1,
+    "shown": "b"
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 76.75,
+    "dur": 0.25,
+    "bar": 20,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 77.0,
+    "dur": 0.25,
+    "bar": 20,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": -1,
+    "midi": 58,
+    "beat": 77.25,
+    "dur": 0.25,
+    "bar": 20,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 77.5,
+    "dur": 0.25,
+    "bar": 20,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 77.75,
+    "dur": 0.25,
+    "bar": 20,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 21,
+    "acc": 0,
+    "midi": 48,
+    "beat": 78.0,
+    "dur": 2.0,
+    "bar": 20,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 78.25,
+    "dur": 0.75,
+    "bar": 20,
+    "voice": 1,
+    "ties": [
+     [
+      79.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": -1,
+    "midi": 58,
+    "beat": 78.5,
+    "dur": 0.25,
+    "bar": 20,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 78.75,
+    "dur": 0.25,
+    "bar": 20,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 79.0,
+    "dur": 0.25,
+    "bar": 20,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": -1,
+    "midi": 58,
+    "beat": 79.25,
+    "dur": 0.25,
+    "bar": 20,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 79.5,
+    "dur": 0.25,
+    "bar": 20,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 79.75,
+    "dur": 0.25,
+    "bar": 20,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 17,
+    "acc": 0,
+    "midi": 41,
+    "beat": 80.0,
+    "dur": 2.0,
+    "bar": 21,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 24,
+    "acc": 0,
+    "midi": 53,
+    "beat": 80.25,
+    "dur": 0.75,
+    "bar": 21,
+    "voice": 1,
+    "ties": [
+     [
+      81.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 80.5,
+    "dur": 0.25,
+    "bar": 21,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 80.75,
+    "dur": 0.25,
+    "bar": 21,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 81.0,
+    "dur": 0.25,
+    "bar": 21,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 81.25,
+    "dur": 0.25,
+    "bar": 21,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 81.5,
+    "dur": 0.25,
+    "bar": 21,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 81.75,
+    "dur": 0.25,
+    "bar": 21,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 17,
+    "acc": 0,
+    "midi": 41,
+    "beat": 82.0,
+    "dur": 2.0,
+    "bar": 21,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 24,
+    "acc": 0,
+    "midi": 53,
+    "beat": 82.25,
+    "dur": 0.75,
+    "bar": 21,
+    "voice": 1,
+    "ties": [
+     [
+      83.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 82.5,
+    "dur": 0.25,
+    "bar": 21,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 82.75,
+    "dur": 0.25,
+    "bar": 21,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 83.0,
+    "dur": 0.25,
+    "bar": 21,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 83.25,
+    "dur": 0.25,
+    "bar": 21,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 83.5,
+    "dur": 0.25,
+    "bar": 21,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 83.75,
+    "dur": 0.25,
+    "bar": 21,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 17,
+    "acc": 1,
+    "midi": 42,
+    "beat": 84.0,
+    "dur": 2.0,
+    "bar": 22,
+    "voice": 2,
+    "shown": "#"
+   },
+   {
+    "hand": "L",
+    "step": 21,
+    "acc": 0,
+    "midi": 48,
+    "beat": 84.25,
+    "dur": 0.75,
+    "bar": 22,
+    "voice": 1,
+    "ties": [
+     [
+      85.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 84.5,
+    "dur": 0.25,
+    "bar": 22,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 84.75,
+    "dur": 0.25,
+    "bar": 22,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": -1,
+    "midi": 63,
+    "beat": 85.0,
+    "dur": 0.25,
+    "bar": 22,
+    "voice": 1,
+    "shown": "b"
+   },
+   {
+    "hand": "R",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 85.25,
+    "dur": 0.25,
+    "bar": 22,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 85.5,
+    "dur": 0.25,
+    "bar": 22,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": -1,
+    "midi": 63,
+    "beat": 85.75,
+    "dur": 0.25,
+    "bar": 22,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 17,
+    "acc": 1,
+    "midi": 42,
+    "beat": 86.0,
+    "dur": 2.0,
+    "bar": 22,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 21,
+    "acc": 0,
+    "midi": 48,
+    "beat": 86.25,
+    "dur": 0.75,
+    "bar": 22,
+    "voice": 1,
+    "ties": [
+     [
+      87.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 86.5,
+    "dur": 0.25,
+    "bar": 22,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 86.75,
+    "dur": 0.25,
+    "bar": 22,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": -1,
+    "midi": 63,
+    "beat": 87.0,
+    "dur": 0.25,
+    "bar": 22,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 87.25,
+    "dur": 0.25,
+    "bar": 22,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 87.5,
+    "dur": 0.25,
+    "bar": 22,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": -1,
+    "midi": 63,
+    "beat": 87.75,
+    "dur": 0.25,
+    "bar": 22,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 19,
+    "acc": -1,
+    "midi": 44,
+    "beat": 88.0,
+    "dur": 2.0,
+    "bar": 23,
+    "voice": 2,
+    "shown": "b"
+   },
+   {
+    "hand": "L",
+    "step": 24,
+    "acc": 0,
+    "midi": 53,
+    "beat": 88.25,
+    "dur": 0.75,
+    "bar": 23,
+    "voice": 1,
+    "ties": [
+     [
+      89.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 88.5,
+    "dur": 0.25,
+    "bar": 23,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 88.75,
+    "dur": 0.25,
+    "bar": 23,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 89.0,
+    "dur": 0.25,
+    "bar": 23,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 89.25,
+    "dur": 0.25,
+    "bar": 23,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 89.5,
+    "dur": 0.25,
+    "bar": 23,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 89.75,
+    "dur": 0.25,
+    "bar": 23,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 19,
+    "acc": -1,
+    "midi": 44,
+    "beat": 90.0,
+    "dur": 2.0,
+    "bar": 23,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 24,
+    "acc": 0,
+    "midi": 53,
+    "beat": 90.25,
+    "dur": 0.75,
+    "bar": 23,
+    "voice": 1,
+    "ties": [
+     [
+      91.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 90.5,
+    "dur": 0.25,
+    "bar": 23,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 90.75,
+    "dur": 0.25,
+    "bar": 23,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 91.0,
+    "dur": 0.25,
+    "bar": 23,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 91.25,
+    "dur": 0.25,
+    "bar": 23,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 91.5,
+    "dur": 0.25,
+    "bar": 23,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 91.75,
+    "dur": 0.25,
+    "bar": 23,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 92.0,
+    "dur": 2.0,
+    "bar": 24,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 24,
+    "acc": 0,
+    "midi": 53,
+    "beat": 92.25,
+    "dur": 0.75,
+    "bar": 24,
+    "voice": 1,
+    "ties": [
+     [
+      93.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 92.5,
+    "dur": 0.25,
+    "bar": 24,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 92.75,
+    "dur": 0.25,
+    "bar": 24,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 93.0,
+    "dur": 0.25,
+    "bar": 24,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 93.25,
+    "dur": 0.25,
+    "bar": 24,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 93.5,
+    "dur": 0.25,
+    "bar": 24,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 93.75,
+    "dur": 0.25,
+    "bar": 24,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 94.0,
+    "dur": 2.0,
+    "bar": 24,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 24,
+    "acc": 0,
+    "midi": 53,
+    "beat": 94.25,
+    "dur": 0.75,
+    "bar": 24,
+    "voice": 1,
+    "ties": [
+     [
+      95.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 94.5,
+    "dur": 0.25,
+    "bar": 24,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 94.75,
+    "dur": 0.25,
+    "bar": 24,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 95.0,
+    "dur": 0.25,
+    "bar": 24,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 95.25,
+    "dur": 0.25,
+    "bar": 24,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 95.5,
+    "dur": 0.25,
+    "bar": 24,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 95.75,
+    "dur": 0.25,
+    "bar": 24,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 96.0,
+    "dur": 2.0,
+    "bar": 25,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 23,
+    "acc": 0,
+    "midi": 52,
+    "beat": 96.25,
+    "dur": 0.75,
+    "bar": 25,
+    "voice": 1,
+    "ties": [
+     [
+      97.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 96.5,
+    "dur": 0.25,
+    "bar": 25,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 96.75,
+    "dur": 0.25,
+    "bar": 25,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 97.0,
+    "dur": 0.25,
+    "bar": 25,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 97.25,
+    "dur": 0.25,
+    "bar": 25,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 97.5,
+    "dur": 0.25,
+    "bar": 25,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 97.75,
+    "dur": 0.25,
+    "bar": 25,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 98.0,
+    "dur": 2.0,
+    "bar": 25,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 23,
+    "acc": 0,
+    "midi": 52,
+    "beat": 98.25,
+    "dur": 0.75,
+    "bar": 25,
+    "voice": 1,
+    "ties": [
+     [
+      99.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 98.5,
+    "dur": 0.25,
+    "bar": 25,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 98.75,
+    "dur": 0.25,
+    "bar": 25,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 99.0,
+    "dur": 0.25,
+    "bar": 25,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 99.25,
+    "dur": 0.25,
+    "bar": 25,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 99.5,
+    "dur": 0.25,
+    "bar": 25,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 99.75,
+    "dur": 0.25,
+    "bar": 25,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 100.0,
+    "dur": 2.0,
+    "bar": 26,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 100.25,
+    "dur": 0.75,
+    "bar": 26,
+    "voice": 1,
+    "ties": [
+     [
+      101.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 100.5,
+    "dur": 0.25,
+    "bar": 26,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 100.75,
+    "dur": 0.25,
+    "bar": 26,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 101.0,
+    "dur": 0.25,
+    "bar": 26,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 101.25,
+    "dur": 0.25,
+    "bar": 26,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 101.5,
+    "dur": 0.25,
+    "bar": 26,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 101.75,
+    "dur": 0.25,
+    "bar": 26,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 102.0,
+    "dur": 2.0,
+    "bar": 26,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 102.25,
+    "dur": 0.75,
+    "bar": 26,
+    "voice": 1,
+    "ties": [
+     [
+      103.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 102.5,
+    "dur": 0.25,
+    "bar": 26,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 102.75,
+    "dur": 0.25,
+    "bar": 26,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 103.0,
+    "dur": 0.25,
+    "bar": 26,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 103.25,
+    "dur": 0.25,
+    "bar": 26,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 103.5,
+    "dur": 0.25,
+    "bar": 26,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 103.75,
+    "dur": 0.25,
+    "bar": 26,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 104.0,
+    "dur": 2.0,
+    "bar": 27,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 104.25,
+    "dur": 0.75,
+    "bar": 27,
+    "voice": 1,
+    "ties": [
+     [
+      105.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 104.5,
+    "dur": 0.25,
+    "bar": 27,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 104.75,
+    "dur": 0.25,
+    "bar": 27,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 105.0,
+    "dur": 0.25,
+    "bar": 27,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 105.25,
+    "dur": 0.25,
+    "bar": 27,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 105.5,
+    "dur": 0.25,
+    "bar": 27,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 105.75,
+    "dur": 0.25,
+    "bar": 27,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 106.0,
+    "dur": 2.0,
+    "bar": 27,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 106.25,
+    "dur": 0.75,
+    "bar": 27,
+    "voice": 1,
+    "ties": [
+     [
+      107.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 106.5,
+    "dur": 0.25,
+    "bar": 27,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 106.75,
+    "dur": 0.25,
+    "bar": 27,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 107.0,
+    "dur": 0.25,
+    "bar": 27,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 107.25,
+    "dur": 0.25,
+    "bar": 27,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 107.5,
+    "dur": 0.25,
+    "bar": 27,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 107.75,
+    "dur": 0.25,
+    "bar": 27,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 108.0,
+    "dur": 2.0,
+    "bar": 28,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 23,
+    "acc": -1,
+    "midi": 51,
+    "beat": 108.25,
+    "dur": 0.75,
+    "bar": 28,
+    "voice": 1,
+    "ties": [
+     [
+      109.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75,
+    "shown": "b"
+   },
+   {
+    "hand": "R",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 108.5,
+    "dur": 0.25,
+    "bar": 28,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 108.75,
+    "dur": 0.25,
+    "bar": 28,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 1,
+    "midi": 66,
+    "beat": 109.0,
+    "dur": 0.25,
+    "bar": 28,
+    "voice": 1,
+    "shown": "#"
+   },
+   {
+    "hand": "R",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 109.25,
+    "dur": 0.25,
+    "bar": 28,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 109.5,
+    "dur": 0.25,
+    "bar": 28,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 1,
+    "midi": 66,
+    "beat": 109.75,
+    "dur": 0.25,
+    "bar": 28,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 110.0,
+    "dur": 2.0,
+    "bar": 28,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 23,
+    "acc": -1,
+    "midi": 51,
+    "beat": 110.25,
+    "dur": 0.75,
+    "bar": 28,
+    "voice": 1,
+    "ties": [
+     [
+      111.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 110.5,
+    "dur": 0.25,
+    "bar": 28,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 110.75,
+    "dur": 0.25,
+    "bar": 28,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 1,
+    "midi": 66,
+    "beat": 111.0,
+    "dur": 0.25,
+    "bar": 28,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 111.25,
+    "dur": 0.25,
+    "bar": 28,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 111.5,
+    "dur": 0.25,
+    "bar": 28,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 1,
+    "midi": 66,
+    "beat": 111.75,
+    "dur": 0.25,
+    "bar": 28,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 112.0,
+    "dur": 2.0,
+    "bar": 29,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 23,
+    "acc": 0,
+    "midi": 52,
+    "beat": 112.25,
+    "dur": 0.75,
+    "bar": 29,
+    "voice": 1,
+    "ties": [
+     [
+      113.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 112.5,
+    "dur": 0.25,
+    "bar": 29,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 112.75,
+    "dur": 0.25,
+    "bar": 29,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 113.0,
+    "dur": 0.25,
+    "bar": 29,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 113.25,
+    "dur": 0.25,
+    "bar": 29,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 113.5,
+    "dur": 0.25,
+    "bar": 29,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 113.75,
+    "dur": 0.25,
+    "bar": 29,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 114.0,
+    "dur": 2.0,
+    "bar": 29,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 23,
+    "acc": 0,
+    "midi": 52,
+    "beat": 114.25,
+    "dur": 0.75,
+    "bar": 29,
+    "voice": 1,
+    "ties": [
+     [
+      115.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 114.5,
+    "dur": 0.25,
+    "bar": 29,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 114.75,
+    "dur": 0.25,
+    "bar": 29,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 115.0,
+    "dur": 0.25,
+    "bar": 29,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 115.25,
+    "dur": 0.25,
+    "bar": 29,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 115.5,
+    "dur": 0.25,
+    "bar": 29,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 115.75,
+    "dur": 0.25,
+    "bar": 29,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 116.0,
+    "dur": 2.0,
+    "bar": 30,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 116.25,
+    "dur": 0.75,
+    "bar": 30,
+    "voice": 1,
+    "ties": [
+     [
+      117.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 116.5,
+    "dur": 0.25,
+    "bar": 30,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 116.75,
+    "dur": 0.25,
+    "bar": 30,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 117.0,
+    "dur": 0.25,
+    "bar": 30,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 117.25,
+    "dur": 0.25,
+    "bar": 30,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 117.5,
+    "dur": 0.25,
+    "bar": 30,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 117.75,
+    "dur": 0.25,
+    "bar": 30,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 118.0,
+    "dur": 2.0,
+    "bar": 30,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 118.25,
+    "dur": 0.75,
+    "bar": 30,
+    "voice": 1,
+    "ties": [
+     [
+      119.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 118.5,
+    "dur": 0.25,
+    "bar": 30,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 118.75,
+    "dur": 0.25,
+    "bar": 30,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 119.0,
+    "dur": 0.25,
+    "bar": 30,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 119.25,
+    "dur": 0.25,
+    "bar": 30,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 119.5,
+    "dur": 0.25,
+    "bar": 30,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 119.75,
+    "dur": 0.25,
+    "bar": 30,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 120.0,
+    "dur": 2.0,
+    "bar": 31,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 120.25,
+    "dur": 0.75,
+    "bar": 31,
+    "voice": 1,
+    "ties": [
+     [
+      121.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 120.5,
+    "dur": 0.25,
+    "bar": 31,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 120.75,
+    "dur": 0.25,
+    "bar": 31,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 121.0,
+    "dur": 0.25,
+    "bar": 31,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 121.25,
+    "dur": 0.25,
+    "bar": 31,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 121.5,
+    "dur": 0.25,
+    "bar": 31,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 121.75,
+    "dur": 0.25,
+    "bar": 31,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 18,
+    "acc": 0,
+    "midi": 43,
+    "beat": 122.0,
+    "dur": 2.0,
+    "bar": 31,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 122.25,
+    "dur": 0.75,
+    "bar": 31,
+    "voice": 1,
+    "ties": [
+     [
+      123.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 122.5,
+    "dur": 0.25,
+    "bar": 31,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 122.75,
+    "dur": 0.25,
+    "bar": 31,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 123.0,
+    "dur": 0.25,
+    "bar": 31,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 123.25,
+    "dur": 0.25,
+    "bar": 31,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": 0,
+    "midi": 59,
+    "beat": 123.5,
+    "dur": 0.25,
+    "bar": 31,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 123.75,
+    "dur": 0.25,
+    "bar": 31,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 14,
+    "acc": 0,
+    "midi": 36,
+    "beat": 124.0,
+    "dur": 2.0,
+    "bar": 32,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 21,
+    "acc": 0,
+    "midi": 48,
+    "beat": 124.25,
+    "dur": 0.75,
+    "bar": 32,
+    "voice": 1,
+    "ties": [
+     [
+      125.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 124.5,
+    "dur": 0.25,
+    "bar": 32,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": -1,
+    "midi": 58,
+    "beat": 124.75,
+    "dur": 0.25,
+    "bar": 32,
+    "voice": 1,
+    "shown": "b"
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 125.0,
+    "dur": 0.25,
+    "bar": 32,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 125.25,
+    "dur": 0.25,
+    "bar": 32,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": -1,
+    "midi": 58,
+    "beat": 125.5,
+    "dur": 0.25,
+    "bar": 32,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 125.75,
+    "dur": 0.25,
+    "bar": 32,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 14,
+    "acc": 0,
+    "midi": 36,
+    "beat": 126.0,
+    "dur": 2.0,
+    "bar": 32,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 21,
+    "acc": 0,
+    "midi": 48,
+    "beat": 126.25,
+    "dur": 0.75,
+    "bar": 32,
+    "voice": 1,
+    "ties": [
+     [
+      127.0,
+      1.0
+     ]
+    ],
+    "hold": 1.75
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 126.5,
+    "dur": 0.25,
+    "bar": 32,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": -1,
+    "midi": 58,
+    "beat": 126.75,
+    "dur": 0.25,
+    "bar": 32,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 127.0,
+    "dur": 0.25,
+    "bar": 32,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 25,
+    "acc": 0,
+    "midi": 55,
+    "beat": 127.25,
+    "dur": 0.25,
+    "bar": 32,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 27,
+    "acc": -1,
+    "midi": 58,
+    "beat": 127.5,
+    "dur": 0.25,
+    "bar": 32,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 127.75,
+    "dur": 0.25,
+    "bar": 32,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 14,
+    "acc": 0,
+    "midi": 36,
+    "beat": 128.0,
+    "dur": 4.0,
+    "bar": 33,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 21,
+    "acc": 0,
+    "midi": 48,
+    "beat": 128.25,
+    "dur": 0.75,
+    "bar": 33,
+    "voice": 1,
+    "ties": [
+     [
+      129.0,
+      1.0
+     ],
+     [
+      130.0,
+      2.0
+     ]
+    ],
+    "hold": 3.75
+   },
+   {
+    "hand": "R",
+    "step": 24,
+    "acc": 0,
+    "midi": 53,
+    "beat": 128.5,
+    "dur": 0.25,
+    "bar": 33,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 128.75,
+    "dur": 0.25,
+    "bar": 33,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 129.0,
+    "dur": 0.25,
+    "bar": 33,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 129.25,
+    "dur": 0.25,
+    "bar": 33,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 129.5,
+    "dur": 0.25,
+    "bar": 33,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 129.75,
+    "dur": 0.25,
+    "bar": 33,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 28,
+    "acc": 0,
+    "midi": 60,
+    "beat": 130.0,
+    "dur": 0.25,
+    "bar": 33,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 130.25,
+    "dur": 0.25,
+    "bar": 33,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 24,
+    "acc": 0,
+    "midi": 53,
+    "beat": 130.5,
+    "dur": 0.25,
+    "bar": 33,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 26,
+    "acc": 0,
+    "midi": 57,
+    "beat": 130.75,
+    "dur": 0.25,
+    "bar": 33,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 24,
+    "acc": 0,
+    "midi": 53,
+    "beat": 131.0,
+    "dur": 0.25,
+    "bar": 33,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 131.25,
+    "dur": 0.25,
+    "bar": 33,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 24,
+    "acc": 0,
+    "midi": 53,
+    "beat": 131.5,
+    "dur": 0.25,
+    "bar": 33,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 22,
+    "acc": 0,
+    "midi": 50,
+    "beat": 131.75,
+    "dur": 0.25,
+    "bar": 33,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 14,
+    "acc": 0,
+    "midi": 36,
+    "beat": 132.0,
+    "dur": 4.0,
+    "bar": 34,
+    "voice": 2
+   },
+   {
+    "hand": "L",
+    "step": 20,
+    "acc": 0,
+    "midi": 47,
+    "beat": 132.25,
+    "dur": 0.75,
+    "bar": 34,
+    "voice": 1,
+    "ties": [
+     [
+      133.0,
+      1.0
+     ],
+     [
+      134.0,
+      2.0
+     ]
+    ],
+    "hold": 3.75
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 132.5,
+    "dur": 0.25,
+    "bar": 34,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 34,
+    "acc": 0,
+    "midi": 71,
+    "beat": 132.75,
+    "dur": 0.25,
+    "bar": 34,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 133.0,
+    "dur": 0.25,
+    "bar": 34,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 38,
+    "acc": 0,
+    "midi": 77,
+    "beat": 133.25,
+    "dur": 0.25,
+    "bar": 34,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 133.5,
+    "dur": 0.25,
+    "bar": 34,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 34,
+    "acc": 0,
+    "midi": 71,
+    "beat": 133.75,
+    "dur": 0.25,
+    "bar": 34,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 36,
+    "acc": 0,
+    "midi": 74,
+    "beat": 134.0,
+    "dur": 0.25,
+    "bar": 34,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 34,
+    "acc": 0,
+    "midi": 71,
+    "beat": 134.25,
+    "dur": 0.25,
+    "bar": 34,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 134.5,
+    "dur": 0.25,
+    "bar": 34,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 34,
+    "acc": 0,
+    "midi": 71,
+    "beat": 134.75,
+    "dur": 0.25,
+    "bar": 34,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 135.0,
+    "dur": 0.25,
+    "bar": 34,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 31,
+    "acc": 0,
+    "midi": 65,
+    "beat": 135.25,
+    "dur": 0.25,
+    "bar": 34,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 135.5,
+    "dur": 0.25,
+    "bar": 34,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 29,
+    "acc": 0,
+    "midi": 62,
+    "beat": 135.75,
+    "dur": 0.25,
+    "bar": 34,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 35,
+    "acc": 0,
+    "midi": 72,
+    "beat": 136.0,
+    "dur": 4.0,
+    "bar": 35,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 32,
+    "acc": 0,
+    "midi": 67,
+    "beat": 136.0,
+    "dur": 4.0,
+    "bar": 35,
+    "voice": 1
+   },
+   {
+    "hand": "R",
+    "step": 30,
+    "acc": 0,
+    "midi": 64,
+    "beat": 136.0,
+    "dur": 4.0,
+    "bar": 35,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 21,
+    "acc": 0,
+    "midi": 48,
+    "beat": 136.0,
+    "dur": 4.0,
+    "bar": 35,
+    "voice": 1
+   },
+   {
+    "hand": "L",
+    "step": 14,
+    "acc": 0,
+    "midi": 36,
+    "beat": 136.0,
+    "dur": 4.0,
+    "bar": 35,
+    "voice": 2
+   }
+  ],
+  "phrases": [
+   {
+    "order": 1,
+    "first_bar": 1,
+    "last_bar": 4,
+    "title": "Bars 1 to 4",
+    "hint": "Right hand starts on G4. Left hand starts on C4."
+   },
+   {
+    "order": 2,
+    "first_bar": 5,
+    "last_bar": 8,
+    "title": "Bars 5 to 8",
+    "hint": "Right hand starts on A4. Left hand starts on C4."
+   },
+   {
+    "order": 3,
+    "first_bar": 9,
+    "last_bar": 12,
+    "title": "Bars 9 to 12",
+    "hint": "Right hand starts on E4. Left hand starts on A3."
+   },
+   {
+    "order": 4,
+    "first_bar": 13,
+    "last_bar": 16,
+    "title": "Bars 13 to 16",
+    "hint": "Right hand starts on D4. Left hand starts on F3."
+   },
+   {
+    "order": 5,
+    "first_bar": 17,
+    "last_bar": 20,
+    "title": "Bars 17 to 20",
+    "hint": "Right hand starts on A3. Left hand starts on D3."
+   },
+   {
+    "order": 6,
+    "first_bar": 21,
+    "last_bar": 24,
+    "title": "Bars 21 to 24",
+    "hint": "Right hand starts on A3. Left hand starts on F2."
+   },
+   {
+    "order": 7,
+    "first_bar": 25,
+    "last_bar": 28,
+    "title": "Bars 25 to 28",
+    "hint": "Right hand starts on G3. Left hand starts on G2."
+   },
+   {
+    "order": 8,
+    "first_bar": 29,
+    "last_bar": 32,
+    "title": "Bars 29 to 32",
+    "hint": "Right hand starts on G3. Left hand starts on G2."
+   },
+   {
+    "order": 9,
+    "first_bar": 33,
+    "last_bar": 35,
+    "title": "Bars 33 to 35",
+    "hint": "Right hand starts on F3. Left hand starts on C2."
+   }
+  ]
+ }
+]

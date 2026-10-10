@@ -27,8 +27,9 @@ not a conservatory course.
 
 ### What it is not
 
-- Not a song-learning app. There is no sheet music to follow and no catalogue of
-  songs. The unit of work is a **progression**, not a tune.
+- Not a song-learning app. The unit of work is a **progression**, not a tune. The
+  one exception is the short repertoire of classical pieces Avi asked for on
+  2026-10-10 (chapter 12), which is taught as sheet music, bar by bar.
 - Not a synthesizer or a recorder. It makes no sound for your own playing: the
   piano makes the piano sound. (Demos and take playback are sent to the piano as
   MIDI, or as a plain tone if the player prefers; see chapter 6.)
@@ -1010,8 +1011,8 @@ nothing.
 
 ### The trainer screens
 
-`/improv/scales/` and `/improv/chords/` are specified in chapter 10, and `/improv/reading/` in chapter 11; all
-three follow both standing rules above.
+`/improv/scales/` and `/improv/chords/` are specified in chapter 10, `/improv/reading/` in chapter 11 and
+`/improv/repertoire/` in chapter 12; all four follow both standing rules above.
 
 ---
 
@@ -1340,3 +1341,129 @@ Pause (the left pedal) on this screen; the demonstration through the piano over 
 the ladder's twelve majors and the minors; imported pieces (MusicXML); lead-sheet reading with
 chord symbols, the bridge back to improvising; a flash drill (a bar shown for a second, then
 played from memory).
+
+
+## Chapter 12. The repertoire (Epic I.13, Avi 2026-10-10)
+
+Avi asked for a library of classical pieces next. His words:
+
+> I want the note practice to have also a library of classical pieces. Bach etc. You can serve them
+> in multiple levels, from beginners to advanced. The teaching method should be bar by bar, hand by
+> hand, conquering the piece. Make sense? Like a piano teacher.
+
+Then, after the proposal: **"Do the beginners you identified."** Level 1 is built; levels 2 to 5 are
+the same machine with more pieces and are not built.
+
+### What a piece is, and where the notes come from
+
+A piece is stored whole (`Piece`, data model 6d): its key, bars and time signature, two tempos (the
+slow one for practice, the one it is meant to be played at), and every note as written, for both hands,
+with its bar, its voice and any ties. Unlike the reading trainer's exercises, a piece is not generated;
+the notes are data, written by `docs/improv/build_pieces.py` from public-domain sources kept in
+`docs/improv/scores/` and imported once by `seed_improv_pieces` (Rule 1: the rows are the data, the
+JSON file is only the way in). Level 1 has four pieces:
+
+| Piece | Key and time | What is in it | Tempos |
+|---|---|---|---|
+| Ode to Joy (Beethoven) | C, 4/4 | all 16 bars, 81 notes | 60, then 92 |
+| Minuet in G (BWV Anh. 114) | G, 3/4 | the A strain, bars 1 to 16, 101 notes | 66, then 108 |
+| Musette in D (BWV Anh. 126) | D, 2/4 | the A strain, bars 1 to 8, 70 notes | 64, then 100 |
+| Prelude in C (BWV 846) | C, 4/4 | all 35 bars, 549 notes | 46, then 66 |
+
+**What is simplified or left out is said on the piece itself (`teacher_note`) and here.** Ornaments
+(the Minuet's mordents and grace note) are dropped. Repeats and the B strains of the Minuet and the
+Musette are left out. The pauses and the arpeggio sign at the end of the Prelude are left out, so its
+last chord is played together. The Ode's left hand is **not Beethoven's**: it is a plain two-note
+bass written for improv. The Prelude's hands are split by staff, as printed. Every piece is
+**marked drafted by AI and not yet checked at the piano** (`authorship`) until Avi has played it and
+changed it to reviewed; the seed brings a draft up to date with the file on each deploy and never
+touches a reviewed one.
+
+### The ladder
+
+Each piece is cut into **phrases** of two to four bars, ending where the music breathes (`PiecePhrase`,
+with a hint saying where each hand starts). A teacher sets them in this order, and the order is the
+ladder (`improv/ladder.py`, pure):
+
+1. For each phrase: **right hand** slowly, **left hand** slowly, **both hands** slowly, **both hands
+   at tempo**.
+2. After the second phrase and each later one, a **join** of the two latest phrases at tempo, so the
+   seam between them is no surprise.
+3. **The whole piece** slowly, then at tempo, then a **performance**: the whole piece at tempo with a
+   higher line.
+
+For n phrases that is 4n + (n - 1) + 3 rungs: 22 for the Ode, the Minuet and the Musette (four phrases
+each) and 47 for the Prelude (nine). The rung's key names it (`p2-L-slow`, `j1-2`, `whole-B-tempo`,
+`perform`). **Nothing is locked**: the player may open any rung, a pass further along counts, and the
+path's `next` is the first rung not yet passed. A **drill** is any bars with any hand, to mend a bar;
+it is saved but never passes.
+
+**The pass is the server's.** A rung passes on a Flow take of the rung's own bars and hands, at a
+score of **80** (the performance, **90**), at the rung's tempo or faster. A Step take never passes and
+neither does a drill. The page judges the take with the reading trainer's judge (chapter 11, judge
+version 1) and posts it; `passed` is set by the server and cannot be posted.
+
+### The screen
+
+`/improv/repertoire/` (menu: Pieces). A piece, a step on its ladder (or Drill, with hands and a first
+and last bar), the tempo, Flow or Step, the curtain. Under them one line says where the rung sits on
+the path ("Step 2 of 22. This is the next step on the path.") and one gives the teacher's advice for
+it. The staff is the reading trainer's, generalised (`staff-view.js`): both hands always shown, the
+hand asked for in full colour and the other in grey, the bars in pages of four turned at the bar
+line, with ties, rests, chords sharing a stem, stems by voice and beams. Every beat is the same width
+so the cursor moves at one speed. Accidentals are drawn where the piece wrote them and not where the
+key already says them. A pass moves the step on to the next rung and the staff stays on the result to
+be looked at. **C8** is Start and Stop, **B7** is Show me, **A#7** is Next step. The one-screen rule
+holds, at 1280 by 720 and 1920 by 1080, for the opening screen, the longest piece and the drill
+fields (`tests/test_spri_7_5_browser.py`).
+
+### What is kept
+
+Every finished take is a `PieceTake` (data model 6d): the rung and bars played, the hands, tempo,
+mode, the stretch as written, the MIDI as it arrived, the judge's word on every note, the score and
+the server's `passed`. The derived read `GET /improv/api/repertoire/` returns each piece's ladder with
+every rung's passed, best Flow score and takes, and the `next` rung. The path is read from the takes
+and stored nowhere.
+
+### Known limits (Epic I.13, sprint 4)
+
+The page turns **instantly** at the bar line, with no look-ahead of the next page. Bar 33 of the Prelude
+crowds its ledger lines. The reading page and the repertoire page repeat the same runner. The pieces
+are drafts until Avi has played them; levels 2 to 5 and the B strains are not built.
+
+---
+
+## Chapter 13. Where the notes come from (Epic I.14, Avi 2026-10-10)
+
+Avi asked: "Do you think we can add a no midi mode so I can just jam from my phone? Also I wonder if you can sound recognize the piano instead of midi. The midi option is the default but I want the no midi sound input as options."
+
+Every playing screen (Play, Reading, Pieces, Scales, Chords) now has a small choice next to the status line: **Piano (MIDI)**, **Touch keys**, **Microphone**. MIDI is the default and nothing about it changed. The choice is kept on the device, not in the account.
+
+### How it fits without touching the screens
+
+Each screen already reads a note as an event with `.data` (three MIDI bytes) and `.timeStamp` (the `performance.now` clock). `static/improv/input-source.js` hands the screen exactly that event from touch or from the microphone, so the judge, the staff, the keyboards and the band never know the difference. A take played from the phone is an ordinary `Take`.
+
+### Touch keys
+
+A keyboard docks at the bottom of the screen: two octaves on a phone, three on a tablet, four on a desktop. **Lower** and **Higher** move it by an octave; it can never reach the three control keys (C8, B7, A#7), which keep their on-screen buttons. Several fingers play a chord, sliding from key to key plays the next note, and the key struck low is louder than the key struck high, the way a finger meets a real key. The keys make their own simple sound, so a phone alone is enough to jam with the band. On a desktop the dock takes its height from the window and the page still fits one screen; on a phone the page scrolls as it already did and the dock stays fixed at the bottom.
+
+### Microphone
+
+`static/improv/pitch.js` is a small piano ear in plain JavaScript, with no library and no server. The browser opens the microphone with echo cancellation, noise suppression and automatic gain **off** (they would smear the notes), and every 93 ms window is read like this:
+
+1. A Hann-windowed 4096-point FFT, and the spectrum peaks refined to a fraction of a bin.
+2. For each note C2 to C7, a score of how much of its harmonic series is there (overtones slightly stretched, the way a piano's are). A sine alone is not a note; overtones make one.
+3. Up to four voices, strongest first. After a voice is taken its overtones are damped, so the octave and the fifth above it are not read again as notes of their own. A later voice must be a third as strong as the first and must own its fundamental.
+4. A noise gate: a quiet-room floor and a peakiness check, so hiss and a fan make no notes.
+5. A tracker. A note starts after two agreeing frames and ends after three quiet ones. The start time is taken back to the front of the window, so it lands near the real strike. A note struck again while it still rings is found by a sudden rise in loudness and sent as an off and an on. Loudness becomes a velocity from 20 to 120.
+
+The status line says what it hears ("Listening. Heard C4 E4 G4."), asks for a tap if the browser has paused the audio, and says plainly when the microphone is refused or the browser cannot do it.
+
+### Known limits, stated before anyone is surprised
+
+- **It is late.** About 100 ms between the key and the note, against about 5 ms for MIDI. Flow mode and the pass line are fair to a player who plays a little behind, but a tight take will score a little lower than it would on MIDI.
+- **Range and chords.** Single notes are reliable from C2 to C7. Chords are read best from C3 up, up to four notes. A doubled octave inside a chord or a fourth voice can be missed, and one voicing of G7 misses its D.
+- **The band is heard as the player.** The speakers' sound comes back into the microphone, and it is a piano-like sound. Use headphones with the band, or the microphone mode will judge the band.
+- **Not tested against a real piano yet.** The detector is tested on made signals (piano-like overtones, decay, noise, chords, runs, a note struck again) and one end-to-end browser run with a recorded note through a fake microphone. Whether it holds on Avi's own piano in his room is open (SPR-I.14.3).
+- **The microphone makes no sound and sends no control keys.** C8, B7 and A#7 are still there as the on-screen buttons.
+- **The microphone needs a secure page** (https, or localhost) and the person's permission.

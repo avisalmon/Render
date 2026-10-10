@@ -7,6 +7,7 @@
   const R = window.ImprovReading;
   const Staff = window.ImprovStaffView;
   const Keys = window.ImprovKeyboardView;
+  const Input = window.ImprovInput;
   const Timing = window.ImprovTiming;
   const Synth = window.ImprovSynth;
   const Midi = window.ImprovMidi;
@@ -520,6 +521,11 @@
     if (!choice || !state.listening || choice.id !== state.listening.id) attachInput(choice);
   }
 
+  function stopMidi() {
+    if (state.midi) state.midi.onstatechange = null;
+    attachInput(null);
+  }
+
   async function startMidi() {
     if (!navigator.requestMIDIAccess) {
       $("rd-midi").textContent = "This browser has no Web MIDI, so it cannot hear the piano. Use Chrome or Edge.";
@@ -581,7 +587,8 @@
     $("rd-start").addEventListener("click", () => (state.mode === "running" || state.mode === "showing" ? stop() : start()));
     $("rd-show").addEventListener("click", showMe);
     $("rd-next").addEventListener("click", () => fresh(newSeed()));
-    startMidi();
+    if (Input) Input.attach({ status: $("rd-midi"), deliver: onMidi, midiStart: startMidi, midiStop: stopMidi }).start();
+    else startMidi();
   }
 
   // For the tests and the console: the exercise on the screen, and a note as if the piano sent it.

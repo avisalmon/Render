@@ -15,6 +15,7 @@
   const J = window.ImprovJudge;
   const Pr = window.ImprovPractice;
   const Keys = window.ImprovKeyboardView;
+  const Input = window.ImprovInput;
   const Ctl = window.ImprovControl;
   const Dm = window.ImprovDemo;
   const CG = window.ImprovChordGuide;
@@ -705,6 +706,11 @@
     if (!choice || !state.listening || choice.id !== state.listening.id) attachInput(choice);
   }
 
+  function stopMidi() {
+    if (state.midi) state.midi.onstatechange = null;
+    attachInput(null);
+  }
+
   async function startMidi() {
     if (!navigator.requestMIDIAccess) {
       $("midi-state").textContent = "This browser has no Web MIDI, so it cannot hear the piano. Use Chrome or Edge.";
@@ -1115,7 +1121,8 @@
     state.guideKeys = CGV.draw($("guide-keys"));
     updateGuide();
     setupOutput();
-    startMidi();
+    if (Input) Input.attach({ status: $("midi-state"), deliver: onMidi, midiStart: startMidi, midiStop: stopMidi }).start();
+    else startMidi();
     window.addEventListener("pagehide", () => {
       if (state.playing) state.clock.bandStopped(clockNow());
       closeSession();

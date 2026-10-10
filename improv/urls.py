@@ -21,6 +21,7 @@ urlpatterns = [
     path("scales/", views.scales, name="scales"),
     path("chords/", views.chords, name="chords"),
     path("reading/", views.reading, name="reading"),
+    path("repertoire/", views.repertoire, name="repertoire"),
     path("takes/", views.takes, name="takes"),
     path("practice/", views.practice, name="practice"),
     path("challenges/", views.challenges, name="challenges"),

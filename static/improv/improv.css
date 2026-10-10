@@ -25,7 +25,7 @@
 .im-btn:disabled { opacity: .4; cursor: default; }
 .im-field { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: .3rem 0; }
 [hidden] { display: none !important; }
-.im-input, .im-select { background: #1d2025; color: var(--im-fg); border: 1px solid #3a3e46; border-radius: .3rem; padding: .35rem .5rem; font: inherit; }
+.im-input, .im-select { background: #1d2025; color: var(--im-fg); border: 1px solid #3a3e46; border-radius: .3rem; padding: .35rem .5rem; font: inherit; max-width: 100%; }
 .im-input { width: 5rem; }
 .im-keyboard { position: relative; height: clamp(4.5rem, 14vh, 9rem); background: #0e0f12; border-radius: .4rem; margin: .5rem 0; touch-action: none; user-select: none; }
 .im-key { position: absolute; top: 0; box-sizing: border-box; }
@@ -424,7 +424,13 @@
 .im-st-note { fill: var(--im-fg); stroke: var(--im-fg); outline: none; }
 .im-st-note .im-st-hollow { fill: #1c1f24; stroke-width: 1.8; }
 .im-st-note .im-st-stem, .im-st-note .im-st-beam { stroke-width: 1.5; }
-.im-st-note .im-st-beam { stroke-width: 4; }
+.im-st-note .im-st-beam { stroke-width: 3.4; }
+.im-st-note .im-st-tie { fill: none; stroke-width: 1.4; }
+.im-st-note .im-st-dot { stroke: none; }
+.im-st-rest-fill { fill: var(--im-fg); stroke: none; }
+.im-st-rest-line { fill: none; stroke: var(--im-fg); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.im-st-rest.im-st-other .im-st-rest-fill { fill: #7d8088; }
+.im-st-rest.im-st-other .im-st-rest-line { stroke: #7d8088; }
 .im-st-note .im-st-flag { fill: none; stroke-width: 1.5; }
 .im-st-note .im-st-acc { stroke: none; }
 .im-st-note.im-st-right { fill: #6fbf7a; stroke: #6fbf7a; }
@@ -452,3 +458,15 @@
 .im-swatch-rdoff { background: #e8c06a; }
 .im-swatch-rdwrong { background: #e8907f; }
 .im-swatch-rdmissed { background: #6b6e75; color: #f3f0e8; }
+
+/* where the notes come from (SPR-I.14): the picker beside the status line, and the touch keys on a phone */
+.im-input-mode { font-size: .85rem; padding: .15rem .4rem; max-width: 10rem; }
+.im-dock { flex: none; border-top: 1px solid #2a2d33; background: var(--im-bg); padding: .35rem .75rem calc(.35rem + env(safe-area-inset-bottom)); }
+.im-dock-bar { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+.im-dock-bar .im-btn { padding: .25rem .8rem; }
+.im-dock-bar .im-note { margin: 0; }
+.im-dock .im-dock-keys { height: clamp(7rem, 30vh, 14rem); margin: .35rem 0 0; }
+@media (max-width: 60rem), (max-height: 34rem) {
+  .im-dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; box-shadow: 0 -6px 18px rgba(0, 0, 0, .45); }
+  html[data-input="touch"] .im-body { padding-bottom: calc(clamp(7rem, 30vh, 14rem) + 3.4rem); }
+}
