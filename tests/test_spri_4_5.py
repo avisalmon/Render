@@ -54,8 +54,8 @@ def test_every_kind_in_the_spec_table_is_either_scored_or_named_as_v2():
     assert "Comping voicings" in rows
 
 
-def test_the_judge_version_did_not_move_because_no_existing_score_changed():
-    assert "JUDGE_VERSION = 1;" in JUDGE_JS.read_text(encoding="utf-8")
+def test_the_judge_version_moved_once_when_a_swung_rhythm_started_to_score_differently():
+    assert "JUDGE_VERSION = 2;" in JUDGE_JS.read_text(encoding="utf-8")
 
 
 def test_each_kind_explains_itself_beside_the_score():

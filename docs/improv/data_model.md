@@ -203,7 +203,7 @@ tasks live in `Exercise`.
 | `track` | choice | chord tones / guide tones / scales and modes / approach notes / rhythm motifs / call and response / voicings and comping |
 | `order` | int | position within the track |
 | `title`, `slug` | char, slug | |
-| `level` | int 1 to 3 | all inside "intermediate" |
+| `level` | int 1 to 4 | 1 beginner, 2 moving on, 3 intermediate, 4 swing and feel |
 | `summary` | char | one line for the card |
 | `explanation` | text (markdown) | the short teaching text |
 | `demo_phrase` | FK `Phrase`, null | |

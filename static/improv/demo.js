@@ -5,7 +5,7 @@
 // the same chord table the judge reads, and the tests run them through the real judge, so the
 // demonstration is a passing take and cannot drift from what the exercise really wants.
 //
-//   const demo = ImprovDemo.build({ scoring, chart, from, to, qualities, beatsPerBar, bpm, downbeat });
+//   const demo = ImprovDemo.build({ scoring, chart, from, to, qualities, beatsPerBar, bpm, downbeat, swingRatio });
 //   demo.ok     false, with demo.reason, when there is nothing to show
 //   demo.notes  [{ note, when, seconds, velocity }] on the audio clock, from `downbeat`
 //   demo.line   one sentence saying what is about to be shown
@@ -22,6 +22,15 @@
   const SHOWN = ["scale_only", "chord_tones_on_beats", "guide_tones", "approach_notes", "rhythm_motif", "call_and_response"];
 
   const pcOf = (note) => ((note % 12) + 12) % 12;
+
+  // Where a written beat position sounds once the feel is swung: the band's own warp, and the
+  // judge's, so the demonstration is on time for the exercise it shows. 0.5 moves nothing.
+  function swingBeat(beat, ratio) {
+    const whole = Math.floor(beat + EPS);
+    const frac = Math.max(0, beat - whole);
+    const warped = frac <= 0.5 ? frac * 2 * ratio : ratio + (frac - 0.5) * 2 * (1 - ratio);
+    return whole + warped;
+  }
 
   function canShow(kind) {
     return SHOWN.includes(kind);
@@ -229,13 +238,16 @@
 
     events.sort((a, b) => a.pos - b.pos || a.note - b.note);
     const beatSeconds = 60 / input.bpm;
+    const ratio = Number.isFinite(input.swingRatio) ? input.swingRatio : 0.5;
     const notes = events.map((e, i) => {
       let len = e.len;
       if (len === undefined) {
         const next = events.slice(i + 1).find((n) => n.pos > e.pos + EPS);
         len = next ? Math.min(2, Math.max(0.25, (next.pos - e.pos) * 0.9)) : 1;
       }
-      return { note: e.note, when: input.downbeat + e.pos * beatSeconds, seconds: Math.max(0.05, len * beatSeconds), velocity: VELOCITY };
+      const start = swingBeat(e.pos, ratio);
+      const held = swingBeat(e.pos + len, ratio) - start;
+      return { note: e.note, when: input.downbeat + start * beatSeconds, seconds: Math.max(0.05, held * beatSeconds), velocity: VELOCITY };
     });
     return { ok: true, notes, line, endsAt: input.downbeat + bars * beatsPerBar * beatSeconds };
   }

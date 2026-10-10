@@ -18,7 +18,7 @@
     ["call_and_response", "Call and response"],
     ["voicings_comping", "Voicings and comping"],
   ];
-  const LEVELS = { 1: "Level 1, beginner", 2: "Level 2, moving on", 3: "Level 3, intermediate" };
+  const LEVELS = { 1: "Level 1, beginner", 2: "Level 2, moving on", 3: "Level 3, intermediate", 4: "Level 4, swing and feel" };
   const HEAR_COUNT_IN = 1;
   const MOST_BARS_HEARD = 16;
 

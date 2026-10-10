@@ -186,6 +186,7 @@ markers = [
     "spri101: SPR-I.10.1 improv start anywhere: no locks, a pointer in the path, Start here",
     "spri102: SPR-I.10.2 improv the twenty-lesson curriculum and the draft-refreshing seed",
     "spri103: SPR-I.10.3 improv the judge reads swing (version 2) and Level 4, swing and feel",
+    "spri111: SPR-I.11.1 improv the Play screen's chord guide (scale, root position and inversions on a keyboard)",
     "sprsl12: SL-D1 SensorLab the attempt, and who may see one",
     "sprsl13: SL-D2 SensorLab the five-step runner shell",
     "sprsl14: SL-D3 SensorLab the attempt API, and the share link",

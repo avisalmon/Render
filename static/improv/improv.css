@@ -378,3 +378,26 @@
   .im-hero-copy { flex: 0 1 28rem; }
   .im-demo { flex: 0 1 30rem; }
 }
+
+/* The chord guide (SPR-I.11.1): the scale in a pale blue, the chord in green, darkest in root position and
+   lighter in each inversion. The same blue and green as the live feedback, so a colour means one thing. */
+.im-guide-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: .1rem 1rem; }
+.im-guide-head > * { margin: 0; }
+.im-guide-chord { font-size: 1.05rem; font-weight: 700; color: var(--im-accent); font-variant-numeric: tabular-nums; }
+.im-guide .im-legend { margin: 0; }
+.im-guide .im-keyboard { height: clamp(3rem, 9vh, 5rem); margin: .3rem 0 0; }
+.im-guide .im-key-step { font-size: .62rem; bottom: .15rem; }
+.im-key-white.im-g-scale { background: #b9d4f0; }
+.im-key-black.im-g-scale { background: #4a79ad; }
+.im-key-white.im-g-p1 { background: #1f7a35; }
+.im-key-black.im-g-p1 { background: #14502a; outline: 1px solid #6fbf7a; }
+.im-key-white.im-g-p2 { background: #4fae5f; }
+.im-key-black.im-g-p2 { background: #2f8a40; }
+.im-key-white.im-g-p3 { background: #9fd8a8; }
+.im-key-black.im-g-p3 { background: #5e9f68; }
+.im-guide .im-key-white.im-g-p1 .im-key-step, .im-guide .im-key-black.im-g-scale .im-key-step, .im-guide .im-key-black .im-key-step { color: #f3f0e8; }
+.im-swatch-gscale { background: #b9d4f0; }
+.im-swatch-gp1 { background: #1f7a35; color: #f3f0e8; }
+.im-swatch-gp2 { background: #4fae5f; }
+.im-swatch-gp3 { background: #9fd8a8; }
+.im-bar[data-previewing="yes"] { border-color: var(--im-fg); }

@@ -427,12 +427,12 @@ groove, and the judge reads the answer bar only. The lessons live in
 and not yet read; every exercise has been passed by a model player through the real judge
 in the tests. Avi reads each lesson before it is passed off as taught.
 
-### The path: twenty lessons in three levels (SPR-I.10.2, Avi 2026-10-09)
+### The path: thirty lessons in four levels (SPR-I.10.2 and I.10.3, Avi 2026-10-09)
 
 "Build the lessons not randomly, with real logic behind the progress, from beginner to
-intermediate; maybe 20." The curriculum is twenty lessons, each one idea with three exercises
+intermediate; maybe 20." The curriculum is thirty lessons, each one idea with three exercises
 that get harder (slower to faster, fewer to more targets, one chart to a longer one). The path
-is numbered one to twenty (`Lesson.path_order`) and interleaves the tracks, so no two lessons
+is numbered one to thirty (`Lesson.path_order`) and interleaves the tracks, so no two lessons
 of one kind come in a row, and every prerequisite comes earlier in the path.
 
 - **Level 1, beginner (7).** Chord tones on the beat over four easy triads; rhythm motifs;
@@ -445,9 +445,24 @@ of one kind come in a row, and every prerequisite comes earlier in the path.
 - **Level 3, intermediate (6).** Chord tones through the jazz blues (two chords in a bar);
   the minor two five one (locrian, altered, dorian); guide tones through secondary dominants;
   funk rhythms; approach notes at tempo; longer calls with eighth notes.
+- **Level 4, swing and feel (10; SPR-I.10.3).** Swinging the eighths; chord tones round the circle
+  of fifths; answering with the swing; scales when the key moves up a tone; guide tones through a
+  tritone substitution; comping rhythms over the jazz blues; approach notes with a swing; call and
+  response over the blues; chord tones on 2 and 4 over the backdoor two five; minor scales and the
+  slide.
+
+**The judge reads swing (SPR-I.10.3, judge version 2).** A rhythm pattern or a phrase is written in
+straight counts ("the and of 2" is 1.5), and when the style is swung the judge moves each off-beat
+to where the band puts it, with the same warp the band, the Hear step and Show me use (the ratio is
+the share of a beat the on-beat eighth lasts: 0.5 straight, 0.62 medium swing, 0.67 shuffle). So the
+same pattern is on time swung and late straight; a straight take over a swung chart does not pass the
+rhythm lessons. Call and response now picks the answer bar by the clock, not by the note's distance,
+so an answer ending on the last off-beat still counts as its bar. Every exercise in the seed is
+passed by the model player swung and fails when played straight (where it has enough off-beats),
+both checked in `tests/js/spri53.test.js`. Takes made before the change keep judge version 1.
 
 Rules the content keeps, each checked by a test: an exercise is set in its chart's own key;
-rhythm motifs sit only on straight grooves, because the motif judge matches a straight grid;
+rhythm motifs are written in straight counts and the judge swings them by the style's feel (levels 1 to 3 sit on straight grooves, level 4 teaches the swung ones);
 a lesson's demo phrase names only chords of its own chart; the hardest exercise of a lesson
 is never a daily-workout pick; the whole course is worth a handful of levels; the words are
 plain. The six original lessons kept their slugs and their exercise slugs, so nobody loses a
@@ -564,7 +579,7 @@ most three things, in plain words, each with an exercise that works on it.
 **As built (SPR-I.5.6).** `improv/weakness.py` reads the report; nothing is stored. The judge
 now writes `metrics.byQuality` on each take (per chord quality: notes played, and how many were
 chord, scale, approach or outside), which is what lets the server say "over minor chords" by
-joining the quality to its family. The judge version stays 1 because no score changed. Takes in
+joining the quality to its family. The judge version stayed 1 then because no score changed; SPR-I.10.3 made it 2. Takes in
 the 30 days before now count, weighted by their notes, and anything in `metrics` that is not a
 sensible number is ignored. Four areas, each needing 20 notes of its own: timing (under 60
 percent close to the beat), chord tones (under 30 percent), outside (over 25 percent) and a
@@ -956,6 +971,31 @@ The Play screen is the only complicated one. Its rule is that **nothing on it
 needs a click during playing**: the learner's hands are on the piano, so
 everything that has to be adjusted is adjusted before or between takes, and the
 live display only shows.
+
+### The chord guide (SPR-I.11.1, Avi 2026-10-10)
+
+A player who reads "Cmaj7" or "Dm7b5" and does not know what is in it should see the keys without anything
+getting in the way of the playing. Avi floated a popup on hover, a corner that always shows the keys, or both.
+The decision is a **panel that is always there, plus a look-ahead by pointing**, because a popup covers the
+chart while the hands are busy and a corner alone cannot show a chord the band has not reached yet.
+
+- **Where.** A flat panel, "Chord guide", between the chart and the "You" keyboard. It adds a fixed height of
+  a few rem and the screen still fits at 1280x720 and 1920x1080 (the layout guard covers it).
+- **What it shows.** The chord's name and notes ("Bbmaj7 = A# D F A", spelled as the player's note-name
+  setting says), the scale it sits in (the first-ranked scale for its quality, from the chord-scale table) and a
+  five-octave keyboard (C3 to B7) coloured by role: the scale in a pale blue, the chord in **root position in
+  the darkest green**, the **first inversion** in a lighter green and the **second inversion** in the lightest.
+  The three positions are laid in three octaves side by side so none hides another; each chord key is labelled
+  with its note name. A legend names the shades.
+- **Which chord.** While the band plays, the chord now sounding ("Now playing"). Stopped, the first chord of
+  the loop ("First chord"). Pointing at a bar, focusing it with Tab or tapping it shows that chord instead
+  ("Looking ahead") and the bar gets a border; in a bar of two chords the half pointed at picks the chord. Moving
+  away, or the next bar line while playing, goes back to following the band. Nothing is pinned and nothing needs a
+  click, which keeps the standing rule that the screen needs no click while playing.
+- **Logic.** `static/improv/chord-guide.js` is pure and tested under Node (`tests/js/spri111.test.js`): chord and
+  library qualities in, tones, scale and the keyboard roles out, for every library quality on every root.
+  `chord-guide-view.js` only paints. Chords with more than three tones show three positions; a triad shows
+  three; a position that would run off the top of the keyboard is dropped.
 
 ### The trainer screens
 

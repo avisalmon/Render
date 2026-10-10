@@ -29,6 +29,11 @@ function progressionOf(slug) {
   return found;
 }
 
+function swingFor(exercise) {
+  const style = (library.styles || []).find((st) => st.slug === progressionOf(exercise.progression).default_style);
+  return style && style.swing_ratio !== undefined ? Number(style.swing_ratio) : 0.5;
+}
+
 function chartFor(exercise) {
   const p = progressionOf(exercise.progression);
   const beatsPerBar = Number(String(p.time_signature).split("/")[0]);
@@ -49,6 +54,7 @@ function demoFor(exercise, extra) {
     beatsPerBar: chart.beatsPerBar,
     bpm: exercise.tempo,
     downbeat: 10,
+    swingRatio: swingFor(exercise),
     ...extra,
   });
 }
@@ -86,7 +92,7 @@ test("what the demo plays is judged as a pass by the real judge, for every seede
       from: 0,
       to: Math.min(ex.bars, chart.bars.length),
       bpm: ex.tempo,
-      swingRatio: 0.5,
+      swingRatio: swingFor(ex),
       qualities,
       scoring: { kind: ex.scoring_kind, params: ex.scoring_params },
       latencyOffsetMs: 0,

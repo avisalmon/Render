@@ -76,8 +76,8 @@ test("every kind the spec names for version 1 is a kind the judge scores, and co
   assert.ok(!J.SCORING_KINDS.includes("comping_voicings"));
 });
 
-test("adding kinds did not change what the first kinds say, so the judge version stays", () => {
-  assert.equal(J.JUDGE_VERSION, 1);
+test("adding kinds did not change what the first kinds say", () => {
+  assert.equal(J.JUDGE_VERSION, 2);
   const first = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures", "takes.json"), "utf8"));
   const sample = first.cases.find((c) => c.name.startsWith("every note a chord tone"));
   assert.equal(run(sample).score, 100);

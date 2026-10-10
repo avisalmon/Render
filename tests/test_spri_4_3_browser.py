@@ -110,7 +110,7 @@ def test_a_take_played_over_the_band_is_posted_whole_at_stop(play):
     assert take.progression.slug == "ii-v-i-major"
     assert take.chart == take.progression.chart and take.key == "C" and take.tempo == 120
     assert take.loop_from == 0 and take.loop_to == 4 and take.bars == 4
-    assert take.judge_version == 1 and take.score is None, "free play has no score"
+    assert take.judge_version == 2 and take.score is None, "free play has no score"
     ons = [e for e in take.events if e["type"] == "on"]
     assert [e["note"] for e in ons] == [62, 65, 69]
     assert all(e["t_ms"] >= 0 for e in ons), "played after the first downbeat"

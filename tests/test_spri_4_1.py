@@ -51,9 +51,9 @@ def test_the_judge_is_pure():
         assert forbidden not in text, f"judge.js reaches for {forbidden}"
 
 
-def test_the_judge_is_versioned_and_the_version_is_one():
+def test_the_judge_is_versioned_and_the_version_is_two():
     text = JUDGE_JS.read_text(encoding="utf-8")
-    assert re.search(r"JUDGE_VERSION = 1;", text), "judge_version 1 is this sprint's rules; a rule change bumps it"
+    assert re.search(r"JUDGE_VERSION = 2;", text), "judge_version 2 is the rules since swung rhythms; a rule change bumps it"
 
 
 def test_the_judge_reads_chords_and_scales_from_the_table_not_from_itself():

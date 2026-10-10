@@ -94,8 +94,8 @@ test("every golden take is judged the way a teacher would judge it", () => {
 // --------------------------------------------------------------------- the contract
 
 test("the result says which version of the rules made it", () => {
-  assert.equal(J.JUDGE_VERSION, 1);
-  assert.equal(run(golden.cases[0]).version, 1);
+  assert.equal(J.JUDGE_VERSION, 2);
+  assert.equal(run(golden.cases[0]).version, 2);
 });
 
 test("every note-on comes back with what the player needs to see, and note-offs do not", () => {

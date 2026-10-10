@@ -69,6 +69,12 @@ function setup(ex) {
   return chart;
 }
 
+// The feel of the exercise's style: patterns are written in straight counts and the band swings them.
+const swingOf = (ex) => {
+  const style = stylesBySlug.get(ex.progression.default_style);
+  return style.swing_ratio === undefined ? 0.5 : Number(style.swing_ratio);
+};
+
 // The notes a model player plays for an exercise: [beat counted from the first downbeat, midi].
 function modelTake(ex, chart) {
   const out = [];
@@ -103,9 +109,9 @@ function modelTake(ex, chart) {
         }
       }
     } else if (ex.scoring_kind === "rhythm_motif") {
-      for (const p of params.pattern) out.push([at(p), 60 + Math.round(p * 2)]);
+      for (const p of params.pattern) out.push([at(J.swingBeat(p, swingOf(ex))), 60 + Math.round(p * 2)]);
     } else if (ex.scoring_kind === "call_and_response" && bar === params.answerBar) {
-      for (const [beat, note] of params.phrase) out.push([at(beat), note]);
+      for (const [beat, note] of params.phrase) out.push([at(J.swingBeat(beat, swingOf(ex))), note]);
     }
   }
   return out;
@@ -132,14 +138,13 @@ function judgeTake(ex, chart, notes) {
     events.push({ t_ms: Math.round(beat * beatMs), type: "on", note, velocity: 90 });
     events.push({ t_ms: Math.round(beat * beatMs) + 200, type: "off", note, velocity: 0 });
   }
-  const style = stylesBySlug.get(ex.progression.default_style);
   return J.judge({
     events,
     chart,
     from: 0,
     to: ex.bars,
     bpm: ex.tempo,
-    swingRatio: style.swing_ratio === undefined ? 0.5 : style.swing_ratio,
+    swingRatio: swingOf(ex),
     qualities,
     scoring: { kind: ex.scoring_kind, params: ex.scoring_params },
     latencyOffsetMs: 0,
@@ -147,9 +152,9 @@ function judgeTake(ex, chart, notes) {
   });
 }
 
-test("the seed has the curriculum the sprint promises: twenty lessons, three to a lesson", () => {
-  assert.equal(lessons.lessons.length, 20);
-  assert.equal(exercises.length, 60);
+test("the seed has the curriculum the sprints promise: thirty lessons, three to a lesson", () => {
+  assert.equal(lessons.lessons.length, 30);
+  assert.equal(exercises.length, 90);
   for (const lesson of lessons.lessons) assert.equal(lesson.exercises.length, 3, lesson.slug);
 });
 
@@ -197,8 +202,29 @@ test("an answer in the wrong bar passes no call and response", () => {
   for (const ex of exercises.filter((e) => e.scoring_kind === "call_and_response")) {
     const chart = setup(ex);
     const wrongBar = (ex.scoring_params.answerBar + 1) % ex.bars;
-    const notes = ex.scoring_params.phrase.map(([beat, note]) => [wrongBar * BEATS + beat, note]);
+    const notes = ex.scoring_params.phrase.map(([beat, note]) => [wrongBar * BEATS + J.swingBeat(beat, swingOf(ex)), note]);
     const got = judgeTake(ex, chart, notes);
     assert.ok(!(got.score >= ex.pass_score), `${ex.slug} passed with the answer in the wrong bar (score ${got.score})`);
   }
+});
+
+test("the swing matters: a straight take of an off-beat rhythm over a swung style does not pass", () => {
+  const checked = [];
+  for (const ex of exercises.filter((e) => e.scoring_kind === "rhythm_motif" || e.scoring_kind === "call_and_response")) {
+    if (swingOf(ex) < 0.6) continue;
+    const beats = ex.scoring_kind === "rhythm_motif" ? ex.scoring_params.pattern : ex.scoring_params.phrase.map((n) => n[0]);
+    const late = beats.filter((x) => !Number.isInteger(x)).length;
+    if (late === 0 || (ex.scoring_kind === "call_and_response" && late / beats.length < 0.4)) continue;
+    const chart = setup(ex);
+    const straight = modelTake(ex, chart).map(([at, note]) => {
+      const bar = Math.floor((at + 1e-9) / BEATS);
+      const within = at - bar * BEATS;
+      const written = ex.scoring_kind === "rhythm_motif" ? beats.find((b) => Math.abs(J.swingBeat(b, swingOf(ex)) - within) < 1e-6) : beats.find((b) => Math.abs(J.swingBeat(b, swingOf(ex)) - within) < 1e-6);
+      return [bar * BEATS + (written === undefined ? within : written), note];
+    });
+    checked.push(ex.slug);
+    const got = judgeTake(ex, chart, straight);
+    assert.ok(!(got.score >= ex.pass_score), `${ex.slug} passed when played straight (score ${got.score})`);
+  }
+  assert.ok(checked.length >= 8, `only ${checked.length} swung exercises were checked`);
 });

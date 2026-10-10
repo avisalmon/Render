@@ -75,7 +75,7 @@ test("no notes means no counts, and every other metric is where it was", () => {
   for (const key of ["ignored", "chordTonePct", "scalePct", "approachPct", "outsidePct", "guideTonePct", "meanOffsetMs", "spreadMs", "withinPct"]) {
     assert.ok(key in result.metrics, key);
   }
-  assert.equal(result.version, 1);
+  assert.equal(result.version, 2);
 });
 
 test("the counts survive being sent as JSON and read back", () => {

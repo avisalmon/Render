@@ -404,7 +404,7 @@ class Lesson(models.Model):
     order = models.PositiveSmallIntegerField(help_text="Position within the track.")
     title = models.CharField(max_length=100, validators=[_not_blank])
     slug = models.SlugField(max_length=60, unique=True)
-    level = models.PositiveSmallIntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(3)])
+    level = models.PositiveSmallIntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(4)])
     summary = models.CharField(max_length=200, validators=[_not_blank], help_text="One line for the card.")
     explanation = models.TextField(validators=[_not_blank, MaxLengthValidator(20000)], help_text="The short teaching text, in markdown.")
     demo_phrase = models.ForeignKey(Phrase, null=True, blank=True, on_delete=models.SET_NULL, related_name="lessons")

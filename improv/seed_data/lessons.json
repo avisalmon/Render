@@ -1,5 +1,5 @@
 {
-  "_about": "The curriculum: twenty lessons in three levels, beginner to intermediate, drafted by AI and marked so until Avi has read them. The order of the list is the order of the path (Lesson.path_order), tracks interleaved so no two lessons of one kind come in a row. Phrases list notes as [midi, beat, length] or [midi, beat, length, velocity]; the seed command turns them into the stored shape. Every exercise is in its chart's own key, rhythm motifs sit on straight grooves because the judge matches a straight grid, and a model player passes every exercise through the real judge in tests/js/spri53.test.js. Voicings and comping are not here: that kind is not scored in version 1.",
+  "_about": "The curriculum: thirty lessons in four levels, beginner to swinging, drafted by AI and marked so until Avi has read them. The order of the list is the order of the path (Lesson.path_order), tracks interleaved so no two lessons of one kind come in a row. Phrases list notes as [midi, beat, length] or [midi, beat, length, velocity]; the seed command turns them into the stored shape. Every exercise is in its chart's own key, rhythm motifs are written in straight counts and the judge swings them with the style's feel, and a model player passes every exercise through the real judge in tests/js/spri53.test.js. Voicings and comping are not here: that kind is not scored in version 1.",
   "phrases": [
     {
       "slug": "demo-chord-tones",
@@ -285,6 +285,143 @@
       "notes": [
         [65, 0, 0.4], [67, 0.5, 0.4], [69, 1, 0.9], [72, 2, 0.4], [71, 2.5, 0.4], [69, 3, 0.9],
         [71, 4, 0.4], [72, 4.5, 0.4], [74, 5, 0.9], [77, 6, 0.4], [76, 6.5, 0.4], [74, 7, 0.9]
+      ]
+    },
+    {
+      "slug": "demo-swing-eighths",
+      "name": "Pairs of swung eighths",
+      "kind": "demo",
+      "written_in_key": "C",
+      "length_beats": 16,
+      "chart_context": "| Dm7 | G7 | Cmaj7 | % |",
+      "notes": [
+        [65, 0, 0.5], [69, 0.5, 0.4], [72, 2, 0.5], [69, 2.5, 1.4],
+        [71, 4, 0.5], [74, 4.5, 0.4], [77, 6, 0.5], [74, 6.5, 1.4],
+        [72, 8, 0.5], [76, 8.5, 0.4], [79, 10, 0.5], [76, 10.5, 1.4],
+        [72, 12, 3.5]
+      ]
+    },
+    {
+      "slug": "demo-circle-tones",
+      "name": "Chord tones down the circle of fifths",
+      "kind": "demo",
+      "written_in_key": "C",
+      "length_beats": 32,
+      "chart_context": "| Cmaj7 | Fmaj7 | Bm7b5 | E7alt | Am7 | Dm7 | G7 | Cmaj7 |",
+      "notes": [
+        [76, 0, 1.8], [71, 2, 1.8], [69, 4, 1.8], [65, 6, 1.8],
+        [62, 8, 1.8], [65, 10, 1.8], [64, 12, 1.8], [68, 14, 1.8],
+        [69, 16, 1.8], [72, 18, 1.8], [74, 20, 1.8], [72, 22, 1.8],
+        [71, 24, 1.8], [67, 26, 1.8], [72, 28, 3.8]
+      ]
+    },
+    {
+      "slug": "demo-swing-call",
+      "name": "A swung call and its answer",
+      "kind": "demo",
+      "written_in_key": "C",
+      "length_beats": 8,
+      "chart_context": "| Dm7 | G7 |",
+      "notes": [
+        [62, 0, 0.5], [65, 1.5, 0.4], [69, 2, 0.9], [72, 3, 0.9],
+        [67, 4, 0.5], [71, 5.5, 0.4], [74, 6, 0.9], [77, 7, 0.9]
+      ]
+    },
+    {
+      "slug": "demo-key-change-scales",
+      "name": "The scales of a key change",
+      "kind": "demo",
+      "written_in_key": "C",
+      "length_beats": 32,
+      "chart_context": "| Dm7 | G7 | Cmaj7 | % | Fm7 | Bb7 | Ebmaj7 | % |",
+      "notes": [
+        [62, 0, 0.9], [64, 1, 0.9], [65, 2, 0.9], [67, 3, 0.9],
+        [69, 4, 0.9], [71, 5, 0.9], [72, 6, 0.9], [74, 7, 0.9],
+        [76, 8, 0.9], [74, 9, 0.9], [72, 10, 0.9], [71, 11, 0.9],
+        [72, 12, 4], [65, 16, 0.9], [67, 17, 0.9], [68, 18, 0.9],
+        [70, 19, 0.9], [72, 20, 0.9], [74, 21, 0.9], [75, 22, 0.9],
+        [77, 23, 0.9], [79, 24, 0.9], [77, 25, 0.9], [75, 26, 0.9],
+        [74, 27, 0.9], [75, 28, 4]
+      ]
+    },
+    {
+      "slug": "demo-tritone-guide",
+      "name": "Guide tones through a tritone substitution",
+      "kind": "demo",
+      "written_in_key": "C",
+      "length_beats": 16,
+      "chart_context": "| Dm7 | Db7 | Cmaj7 | % |",
+      "notes": [
+        [65, 0, 1.8], [72, 2, 1.8], [65, 4, 1.8], [71, 6, 1.8],
+        [64, 8, 1.8], [71, 10, 1.8], [64, 12, 3.8]
+      ]
+    },
+    {
+      "slug": "demo-comping",
+      "name": "Short chords on the Charleston",
+      "kind": "demo",
+      "written_in_key": "C",
+      "length_beats": 16,
+      "chart_context": "| C7 | F7 | C7 | % |",
+      "notes": [
+        [64, 0, 0.4], [70, 0, 0.4], [64, 1.5, 0.4], [70, 1.5, 0.4],
+        [63, 4, 0.4], [69, 4, 0.4], [63, 5.5, 0.4], [69, 5.5, 0.4],
+        [64, 8, 0.4], [70, 8, 0.4], [64, 9.5, 0.4], [70, 9.5, 0.4],
+        [64, 12, 0.4], [70, 12, 0.4], [64, 13.5, 0.4], [70, 13.5, 0.4]
+      ]
+    },
+    {
+      "slug": "demo-swing-approach",
+      "name": "Approach notes round a iii vi ii V",
+      "kind": "demo",
+      "written_in_key": "C",
+      "length_beats": 16,
+      "chart_context": "| Em7 | A7 | Dm7 G7 | Cmaj7 |",
+      "notes": [
+        [64, 0, 0.9], [67, 1, 0.9], [71, 2, 0.9], [72, 3.5, 0.5],
+        [73, 4, 0.9], [69, 5, 0.9], [76, 6, 0.9], [73, 7.5, 0.5],
+        [74, 8, 0.9], [77, 9, 0.4], [70, 9.5, 0.4], [71, 10, 0.9],
+        [74, 11, 0.4], [75, 11.5, 0.4], [76, 12, 0.9], [72, 13, 0.9],
+        [67, 14, 0.9], [64, 15, 0.9]
+      ]
+    },
+    {
+      "slug": "demo-blues-call",
+      "name": "A blues call and its answer a fourth up",
+      "kind": "demo",
+      "written_in_key": "C",
+      "length_beats": 8,
+      "chart_context": "| C7 | F7 |",
+      "notes": [
+        [60, 0, 0.5], [63, 0.5, 0.4], [65, 1, 0.4], [66, 1.5, 0.4],
+        [67, 2, 1.9], [65, 4, 0.5], [68, 4.5, 0.4], [70, 5, 0.4],
+        [71, 5.5, 0.4], [72, 6, 1.9]
+      ]
+    },
+    {
+      "slug": "demo-two-and-four",
+      "name": "Chord tones on 2 and 4",
+      "kind": "demo",
+      "written_in_key": "C",
+      "length_beats": 16,
+      "chart_context": "| Fm7 | Bb7 | Cmaj7 | % |",
+      "notes": [
+        [68, 1, 0.9], [72, 3, 0.9], [74, 5, 0.9], [68, 7, 0.9],
+        [67, 9, 0.9], [71, 11, 0.9], [76, 13, 0.9], [72, 15, 0.9]
+      ]
+    },
+    {
+      "slug": "demo-minor-modes",
+      "name": "Locrian, altered, dorian",
+      "kind": "demo",
+      "written_in_key": "C",
+      "length_beats": 16,
+      "chart_context": "| Am7b5 | D7alt | Gm7 | % |",
+      "notes": [
+        [69, 0, 0.9], [70, 1, 0.9], [72, 2, 0.9], [74, 3, 0.9],
+        [75, 4, 0.9], [77, 5, 0.9], [78, 6, 0.9], [80, 7, 0.9],
+        [79, 8, 0.9], [77, 9, 0.9], [76, 10, 0.9], [74, 11, 0.9],
+        [67, 12, 4]
       ]
     }
   ],
@@ -1418,6 +1555,576 @@
           "scoring_params": {"phrase": [[0, 76], [0.5, 74], [1, 72], [1.5, 71], [2, 69], [3, 72]], "answerBar": 3, "exact": true},
           "pass_score": 70,
           "xp": 45,
+          "daily_eligible": false
+        }
+      ]
+    },
+    {
+      "track": "rhythm_motifs",
+      "order": 5,
+      "title": "Swing the eighths",
+      "slug": "rhythm-motifs-swing",
+      "level": 4,
+      "summary": "Swing makes the second eighth of a beat late. Wait for the and and the band's feel does the rest.",
+      "explanation": "## Read\n\nSwing means the two eighth notes in a beat are not equal. The first is long and the second comes late, about two thirds of the way through the beat instead of half way. The band plays it that way, so the off-beat you count as 'and' lands later than you would expect.\n\nThat is the whole secret of the feel. A line that waits for the and sounds loose and easy; the same line on straight eighths sounds stiff over a swinging band.\n\n## Hear\n\nPress Hear. The phrase is written in plain eighths and it comes out swung, because the band's feel moves them. Tap your foot on the beats and listen to the ands sit late.\n\n## Play\n\nThe patterns are counted straight: 1, the and of 1, and so on. Count them that way and let the band's swing place the and: wait for it. The judge knows the feel too, so a note on the late and is on time and a straight one is early. The last exercise is a blues shuffle, which swings deeper.",
+      "demo_phrase": "demo-swing-eighths",
+      "progression": "ii-v-i-major",
+      "prerequisite": "rhythm-motifs-funk",
+      "exercises": [
+        {
+          "order": 1,
+          "slug": "rhythm-swing-pairs",
+          "title": "Two pairs of eighths",
+          "instructions": "Four notes a bar: beat 1, the and of 1, beat 3, the and of 3. Count it straight, wait for the ands, and keep the second note of each pair short.",
+          "key": "C",
+          "tempo": 100,
+          "bars": 4,
+          "scoring_kind": "rhythm_motif",
+          "scoring_params": {"pattern": [0, 0.5, 2, 2.5]},
+          "pass_score": 70,
+          "xp": 40,
+          "daily_eligible": true
+        },
+        {
+          "order": 2,
+          "slug": "rhythm-swing-line",
+          "title": "A swung line",
+          "instructions": "Four eighth notes in a row, then rest: beat 1, the and of 1, beat 2, the and of 2. Beats 3 and 4 are silent. The ands are late, so the group leans forward.",
+          "key": "C",
+          "tempo": 110,
+          "bars": 4,
+          "scoring_kind": "rhythm_motif",
+          "scoring_params": {"pattern": [0, 0.5, 1, 1.5]},
+          "pass_score": 70,
+          "xp": 45,
+          "daily_eligible": true
+        },
+        {
+          "order": 3,
+          "slug": "rhythm-swing-shuffle",
+          "title": "The blues shuffle",
+          "instructions": "Over a blues shuffle, eighth notes on beats 1, 2 and 3 and their ands: six notes a bar, nothing on beat 4. The swing is deeper here, nearly a triplet, so wait even longer for each and.",
+          "progression_slug": "twelve-bar-blues",
+          "key": "C",
+          "tempo": 120,
+          "bars": 4,
+          "scoring_kind": "rhythm_motif",
+          "scoring_params": {"pattern": [0, 0.5, 1, 1.5, 2, 2.5]},
+          "pass_score": 70,
+          "xp": 50,
+          "daily_eligible": false
+        }
+      ]
+    },
+    {
+      "track": "chord_tones",
+      "order": 5,
+      "title": "Chord tones round the circle",
+      "slug": "chord-tones-circle-of-fifths",
+      "level": 4,
+      "summary": "Eight chords whose roots fall a fifth each bar, and the small steps that join their chord tones.",
+      "explanation": "## Read\n\nThe circle of fifths is the road most jazz tunes drive down: every chord's root falls a fifth, C, F, B, E, A, D, G, back to C. Each chord is a different colour, so a chord tone that works in one bar is wrong in the next.\n\nThe road has a trick that makes it easy to walk. The seventh of each chord sits a step above the third of the next one: B in Cmaj7 falls to A in Fmaj7, E falls to D, and so on. Follow that and the line moves by the smallest steps.\n\n## Hear\n\nPress Hear. Two chord tones a bar, falling along the circle, always a step or two from the last. It sounds like a line, not like a list of notes.\n\n## Play\n\nThe chords are Cmaj7, Fmaj7, Bm7b5, E7alt, Am7, Dm7, G7 and Cmaj7, one to a bar. Read the next chord before you reach it. E7alt is E, G sharp and D, with F and C as the altered notes.",
+      "demo_phrase": "demo-circle-tones",
+      "progression": "circle-of-fifths-diatonic",
+      "prerequisite": "chord-tones-jazz-blues",
+      "exercises": [
+        {
+          "order": 1,
+          "slug": "circle-downbeats",
+          "title": "A chord tone on every downbeat",
+          "instructions": "Eight bars, one chord tone on beat 1 of each. Cmaj7 is C E G B, Fmaj7 is F A C E, Bm7b5 is B D F A, E7alt is E G sharp D, Am7 is A C E G, Dm7 is D F A C, G7 is G B D F.",
+          "key": "C",
+          "tempo": 90,
+          "bars": 8,
+          "scoring_kind": "chord_tones_on_beats",
+          "scoring_params": {"beats": [1]},
+          "pass_score": 70,
+          "xp": 40,
+          "daily_eligible": true
+        },
+        {
+          "order": 2,
+          "slug": "circle-one-and-three",
+          "title": "Beats 1 and 3 round the circle",
+          "instructions": "Two notes a bar, on beats 1 and 3, both chord tones. Use the step trick: the seventh you leave on lands a step from the third of the next chord.",
+          "key": "C",
+          "tempo": 100,
+          "bars": 8,
+          "scoring_kind": "chord_tones_on_beats",
+          "scoring_params": {"beats": [1, 3]},
+          "pass_score": 70,
+          "xp": 45,
+          "daily_eligible": true
+        },
+        {
+          "order": 3,
+          "slug": "circle-every-beat",
+          "title": "Walk the circle",
+          "instructions": "A chord tone on every beat for eight bars. Think of a bass line that always knows the next chord: arrive on a new note the moment the chord changes.",
+          "key": "C",
+          "tempo": 110,
+          "bars": 8,
+          "scoring_kind": "chord_tones_on_beats",
+          "scoring_params": {"beats": [1, 2, 3, 4]},
+          "pass_score": 70,
+          "xp": 50,
+          "daily_eligible": false
+        }
+      ]
+    },
+    {
+      "track": "call_and_response",
+      "order": 4,
+      "title": "Answer with the swing",
+      "slug": "call-and-response-swing",
+      "level": 4,
+      "summary": "A call with an off-beat in it, answered a bar later with the same long and short of the eighths.",
+      "explanation": "## Read\n\nA call that swings has to be answered with the same swing. Copying the notes is not enough: the answer has to keep the long and short of the eighths, the late ands, the little push at the end.\n\nSo listen for the rhythm first and the notes second. Count the call against the beat, say it to yourself as 'one, and, two', and then play it back in the next bar, over the new chord.\n\n## Hear\n\nPress Hear. A short call over Dm7 with an off-beat in it, and an answer over G7 with the same swing and the same shape on the new chord's notes.\n\n## Play\n\nPlay the call in its bar and answer in the next one. The first two exercises score the rhythm and the shape; the last wants the exact notes, in any octave. Wait for the late ands and the answer lands on time.",
+      "demo_phrase": "demo-swing-call",
+      "progression": "ii-v-i-major",
+      "prerequisite": "call-and-response-longer",
+      "exercises": [
+        {
+          "order": 1,
+          "slug": "call-swing-four-notes",
+          "title": "Four notes and two late ones",
+          "instructions": "In bar 1 play D on 1, F on the and of 2, A on 3, G on the and of 4. In bar 2 answer over G7 with the same rhythm and the same shape: up, up, then a step back.",
+          "key": "C",
+          "tempo": 100,
+          "bars": 4,
+          "scoring_kind": "call_and_response",
+          "scoring_params": {"phrase": [[0, 62], [1.5, 65], [2, 69], [3.5, 67]], "answerBar": 1},
+          "pass_score": 75,
+          "xp": 40,
+          "daily_eligible": true
+        },
+        {
+          "order": 2,
+          "slug": "call-swing-eighths",
+          "title": "A call that pushes",
+          "instructions": "In bar 2 play G on 1, B on the and of 1, D on the and of 2, C on 3, A on 4, G on the and of 4. In bar 3 answer over Cmaj7 with the same rhythm and the same up and down.",
+          "key": "C",
+          "tempo": 100,
+          "bars": 4,
+          "scoring_kind": "call_and_response",
+          "scoring_params": {"phrase": [[0, 67], [0.5, 71], [1.5, 74], [2, 72], [3, 69], [3.5, 67]], "answerBar": 2},
+          "pass_score": 80,
+          "xp": 45,
+          "daily_eligible": true
+        },
+        {
+          "order": 3,
+          "slug": "call-swing-exact",
+          "title": "Echo it note for note",
+          "instructions": "In bar 3 play E on the and of 1, G on 2, C on the and of 2, B on 3, A on the and of 4. In bar 4 give back the same five notes on the same beats, any octave.",
+          "key": "C",
+          "tempo": 110,
+          "bars": 4,
+          "scoring_kind": "call_and_response",
+          "scoring_params": {"phrase": [[0.5, 64], [1, 67], [1.5, 72], [2, 71], [3.5, 69]], "answerBar": 3, "exact": true},
+          "pass_score": 85,
+          "xp": 50,
+          "daily_eligible": false
+        }
+      ]
+    },
+    {
+      "track": "scales_modes",
+      "order": 4,
+      "title": "Scales when the key moves",
+      "slug": "scales-key-change",
+      "level": 4,
+      "summary": "A backdoor ii V, a key change up a tone and a run of secondary dominants: new scales every bar or two.",
+      "explanation": "## Read\n\nWhen a tune changes key, the scales change with it, and so do the notes that fit. Up a tone from C to E flat, the white keys stop working and three black keys take over: B flat, E flat and A flat.\n\nYou do not have to learn eight new scales. Name the chord, name its scale, play it. Fm7 is F dorian, B flat 7 is B flat mixolydian, E flat maj7 is E flat major. Same shapes as before, a tone higher.\n\n## Hear\n\nPress Hear. The line runs the scales of a ii V I in C, then the same ii V I a tone up. Listen for the moment the key slips, in bar 5.\n\n## Play\n\nThree charts where the ground moves: the backdoor, the key change, and a run of secondary dominants. Read one chord ahead, because the new scale has to be in your fingers on the downbeat.",
+      "demo_phrase": "demo-key-change-scales",
+      "progression": "key-change-up-a-tone",
+      "prerequisite": "scales-minor-two-five-one",
+      "exercises": [
+        {
+          "order": 1,
+          "slug": "scales-backdoor",
+          "title": "The backdoor",
+          "instructions": "Fm7, Bb7, Cmaj7, Cmaj7. F dorian, then B flat mixolydian, then C major. The first two chords borrow from C minor, so a few black keys appear for two bars.",
+          "progression_slug": "backdoor-ii-v",
+          "key": "C",
+          "tempo": 80,
+          "bars": 4,
+          "scoring_kind": "scale_only",
+          "scoring_params": {},
+          "pass_score": 80,
+          "xp": 40,
+          "daily_eligible": true
+        },
+        {
+          "order": 2,
+          "slug": "scales-key-change",
+          "title": "Up a tone",
+          "instructions": "Eight bars: Dm7, G7, Cmaj7, Cmaj7, then Fm7, Bb7, Ebmaj7, Ebmaj7. The white keys fit the first four bars, and the last four need B flat, E flat and A flat.",
+          "key": "C",
+          "tempo": 90,
+          "bars": 8,
+          "scoring_kind": "scale_only",
+          "scoring_params": {},
+          "pass_score": 80,
+          "xp": 45,
+          "daily_eligible": true
+        },
+        {
+          "order": 3,
+          "slug": "scales-secondary-dominants",
+          "title": "A scale for every dominant",
+          "instructions": "Cmaj7, E7, Am7, C7, Fmaj7, D7, Dm7 G7, Cmaj7. Each dominant is mixolydian: E7 brings G sharp and C sharp, C7 brings B flat, D7 brings F sharp.",
+          "progression_slug": "secondary-dominant-run",
+          "key": "C",
+          "tempo": 100,
+          "bars": 8,
+          "scoring_kind": "scale_only",
+          "scoring_params": {},
+          "pass_score": 80,
+          "xp": 50,
+          "daily_eligible": false
+        }
+      ]
+    },
+    {
+      "track": "guide_tones",
+      "order": 4,
+      "title": "Guide tones through a tritone sub",
+      "slug": "guide-tones-tritone-sub",
+      "level": 4,
+      "summary": "G7 swapped for D flat 7 shares its third and seventh, and the guide tones slide down by half steps.",
+      "explanation": "## Read\n\nThe tritone substitution swaps G7 for D flat 7. It sounds like a surprise but the guide tones tell you why it works: the third and seventh of D flat 7 are F and B (written C flat), the same two notes as the third and seventh of G7, swapped round.\n\nOver Dm7, D flat 7 and Cmaj7 the top line falls by a half step, C, B, B, and the lower line holds F, F and then falls to E. A line like that is why the substitution is worth knowing.\n\n## Hear\n\nPress Hear. Two guide tones a bar. Listen to the top voice slide down a half step as the chord drops from D to D flat.\n\n## Play\n\nThe first exercise is the substitution itself. Then the minor version, where the line falls again, and last the whole circle of fifths, where every seventh is a step above the next third. Thirds and sevenths only, and connect them.",
+      "demo_phrase": "demo-tritone-guide",
+      "progression": "tritone-sub-ii-v-i",
+      "prerequisite": "guide-tones-secondary-dominants",
+      "exercises": [
+        {
+          "order": 1,
+          "slug": "guide-tritone-sub",
+          "title": "The slide down",
+          "instructions": "Dm7, Db7, Cmaj7, Cmaj7. Dm7: F and C. Db7: F and B. Cmaj7: E and B. The top voice falls C, B, B; the lower one holds F, F and then falls to E.",
+          "key": "C",
+          "tempo": 80,
+          "bars": 4,
+          "scoring_kind": "guide_tones",
+          "scoring_params": {"step": 2},
+          "pass_score": 70,
+          "xp": 45,
+          "daily_eligible": true
+        },
+        {
+          "order": 2,
+          "slug": "guide-minor-two-five-one",
+          "title": "The minor version",
+          "instructions": "Dm7b5, G7alt, Cm7, Cm7. Dm7b5: F and C. G7alt: B and F. Cm7: E flat and B flat. The top voice falls again, C, B, B flat, and the lower one ends on E flat.",
+          "progression_slug": "ii-v-i-minor",
+          "key": "Cm",
+          "tempo": 90,
+          "bars": 4,
+          "scoring_kind": "guide_tones",
+          "scoring_params": {"step": 2},
+          "pass_score": 70,
+          "xp": 50,
+          "daily_eligible": true
+        },
+        {
+          "order": 3,
+          "slug": "guide-circle",
+          "title": "Guide tones round the circle",
+          "instructions": "Eight bars, Cmaj7 to Fmaj7 to Bm7b5 to E7alt to Am7 to Dm7 to G7 to Cmaj7. Thirds and sevenths only. The seventh you leave is a step from the third you arrive on, every time.",
+          "progression_slug": "circle-of-fifths-diatonic",
+          "key": "C",
+          "tempo": 100,
+          "bars": 8,
+          "scoring_kind": "guide_tones",
+          "scoring_params": {"step": 2},
+          "pass_score": 65,
+          "xp": 55,
+          "daily_eligible": false
+        }
+      ]
+    },
+    {
+      "track": "rhythm_motifs",
+      "order": 6,
+      "title": "Comping rhythms",
+      "slug": "rhythm-motifs-comping",
+      "level": 4,
+      "summary": "The short chords a jazz pianist places off the beat: the Charleston and two rhythms that push the band.",
+      "explanation": "## Read\n\nComping is what you play behind a soloist, or behind yourself: short chords placed on rhythms that leave space. The classic jazz comping rhythms are a few simple shapes that sit just off the beat, and they only work swung.\n\nThe Charleston is a chord on 1 and a chord on the and of 2, and then silence. A chord that lands late on the and of 2 pulls the band forward, and the silence after it is what makes it swing.\n\n## Hear\n\nPress Hear. Short two-note chords on the Charleston, bar after bar of a C blues. The chords are plain; the placing is the point.\n\n## Play\n\nPlay any chord or any note you like, short, on the beats of the pattern, and nothing else. The patterns are counted straight and the swing places the ands. The last one is the longest, twelve bars of jazz blues, so keep it steady.",
+      "demo_phrase": "demo-comping",
+      "progression": "jazz-blues",
+      "prerequisite": "rhythm-motifs-swing",
+      "exercises": [
+        {
+          "order": 1,
+          "slug": "comping-charleston",
+          "title": "The Charleston",
+          "instructions": "A chord on beat 1 and a chord on the and of 2, in every bar. Short, then silence until the next bar. Wait for the late and.",
+          "key": "C",
+          "tempo": 100,
+          "bars": 4,
+          "scoring_kind": "rhythm_motif",
+          "scoring_params": {"pattern": [0, 1.5]},
+          "pass_score": 70,
+          "xp": 40,
+          "daily_eligible": true
+        },
+        {
+          "order": 2,
+          "slug": "comping-two-ands",
+          "title": "Both ands",
+          "instructions": "A chord on the and of 2 and a chord on the and of 4, in every bar. Nothing on the beats themselves: the band keeps them, and you land between.",
+          "key": "C",
+          "tempo": 110,
+          "bars": 8,
+          "scoring_kind": "rhythm_motif",
+          "scoring_params": {"pattern": [1.5, 3.5]},
+          "pass_score": 70,
+          "xp": 45,
+          "daily_eligible": true
+        },
+        {
+          "order": 3,
+          "slug": "comping-swing-push",
+          "title": "Beat 1, the and of 2, 3, the and of 4",
+          "instructions": "Four chords a bar: beat 1, the and of 2, beat 3, the and of 4. Twelve bars of jazz blues. Keep the chords short so the last one leans into the next bar and the one lands clean.",
+          "key": "C",
+          "tempo": 120,
+          "bars": 12,
+          "scoring_kind": "rhythm_motif",
+          "scoring_params": {"pattern": [0, 1.5, 2, 3.5]},
+          "pass_score": 70,
+          "xp": 50,
+          "daily_eligible": false
+        }
+      ]
+    },
+    {
+      "track": "approach_notes",
+      "order": 4,
+      "title": "Approach notes with a swing",
+      "slug": "approach-notes-swing",
+      "level": 4,
+      "summary": "Half steps on the late and, leaning into the target on the beat, round faster changes.",
+      "explanation": "## Read\n\nAn approach note is a half step that leans into a chord tone. At a medium swing tempo it lives on the and: the approach sits on the late and before the beat and the chord tone lands on the beat, so it sounds like a small slide into the chord.\n\nHere the changes come faster and you do not have time to decide. Pick the target for the next bar while you play this one, and step in from below or above, whichever is nearer.\n\n## Hear\n\nPress Hear. Eighth-note approaches into the target of each bar, swung, round a iii vi ii V.\n\n## Play\n\nThe chords are Em7, A7, Dm7 G7 and Cmaj7, then the jazz blues. Aim at beat 1 first, then at beats 1 and 3, and finish with the jazz blues at a brisk 130. If you miss an approach, let it go and aim at the next one.",
+      "demo_phrase": "demo-swing-approach",
+      "progression": "iii-vi-ii-v",
+      "prerequisite": "approach-notes-at-tempo",
+      "exercises": [
+        {
+          "order": 1,
+          "slug": "approach-swing-downbeats",
+          "title": "Into every downbeat",
+          "instructions": "Em7, A7, Dm7 G7, Cmaj7. Aim a chord tone at beat 1 of each bar and play its half-step neighbour on the and before it. A7 has C sharp, E and G to aim at.",
+          "key": "C",
+          "tempo": 110,
+          "bars": 4,
+          "scoring_kind": "approach_notes",
+          "scoring_params": {"beats": [1]},
+          "pass_score": 60,
+          "xp": 45,
+          "daily_eligible": true
+        },
+        {
+          "order": 2,
+          "slug": "approach-swing-one-and-three",
+          "title": "Beats 1 and 3",
+          "instructions": "Two targets a bar, beats 1 and 3. In the bar of Dm7 G7 the second target belongs to G7, so aim at B, D or F there.",
+          "key": "C",
+          "tempo": 120,
+          "bars": 4,
+          "scoring_kind": "approach_notes",
+          "scoring_params": {"beats": [1, 3]},
+          "pass_score": 60,
+          "xp": 50,
+          "daily_eligible": true
+        },
+        {
+          "order": 3,
+          "slug": "approach-swing-jazz-blues",
+          "title": "Twelve bars of jazz blues",
+          "instructions": "Approach the downbeat of every bar of the jazz blues at a brisk tempo. Bar 6 is Fdim7 and bar 8 is A7alt, so read ahead and choose your target before you get there.",
+          "progression_slug": "jazz-blues",
+          "key": "C",
+          "tempo": 130,
+          "bars": 12,
+          "scoring_kind": "approach_notes",
+          "scoring_params": {"beats": [1]},
+          "pass_score": 60,
+          "xp": 55,
+          "daily_eligible": false
+        }
+      ]
+    },
+    {
+      "track": "call_and_response",
+      "order": 5,
+      "title": "Call and response over the blues",
+      "slug": "call-and-response-blues",
+      "level": 4,
+      "summary": "A blues lick answered on the next chord, over a shuffle where the eighths swing hard.",
+      "explanation": "## Read\n\nThe blues is built on call and response, one phrase and then its answer, and it is shuffled: the eighths are swung hard, closer to a triplet than the jazz swing. The call says something and the answer repeats it, usually on the next chord.\n\nBlues licks lean on the flat third and the flat fifth, the notes between the keys. You have the notes, so listen for the push and pull of the rhythm and let the shuffle carry it.\n\n## Hear\n\nPress Hear. A short blues lick over C7 and its answer a fourth up over F7, in the same shuffle.\n\n## Play\n\nThe twelve-bar blues in C, at a shuffle. Play the call in its bar and answer in the next. The first two score the rhythm and the shape. The last wants the exact notes, in any octave, so say them to yourself before you play them back.",
+      "demo_phrase": "demo-blues-call",
+      "progression": "twelve-bar-blues",
+      "prerequisite": "call-and-response-swing",
+      "exercises": [
+        {
+          "order": 1,
+          "slug": "call-blues-lick",
+          "title": "A short blues lick",
+          "instructions": "In bar 1 over C7 play C on 1, E flat on the and of 1, F on 2, G on 3. In bar 2 answer over F7 with the same rhythm and shape, a fourth higher.",
+          "key": "C",
+          "tempo": 90,
+          "bars": 4,
+          "scoring_kind": "call_and_response",
+          "scoring_params": {"phrase": [[0, 60], [0.5, 63], [1, 65], [2, 67]], "answerBar": 1},
+          "pass_score": 80,
+          "xp": 45,
+          "daily_eligible": true
+        },
+        {
+          "order": 2,
+          "slug": "call-blues-climb",
+          "title": "A climbing call",
+          "instructions": "In bar 2 over F7 play F on 1, A flat on 2, B flat on the and of 2, B on 3, C on 4. In bar 3 answer over C7: same beats, same climb.",
+          "key": "C",
+          "tempo": 100,
+          "bars": 4,
+          "scoring_kind": "call_and_response",
+          "scoring_params": {"phrase": [[0, 65], [1, 68], [1.5, 70], [2, 71], [3, 72]], "answerBar": 2},
+          "pass_score": 80,
+          "xp": 50,
+          "daily_eligible": true
+        },
+        {
+          "order": 3,
+          "slug": "call-blues-exact",
+          "title": "Echo the lick note for note",
+          "instructions": "In bar 3 over C7 play G on 1, B flat on the and of 1, G on 2, E on 3, E flat on the and of 3, C on 4. In bar 4 give back the same six notes on the same beats, any octave.",
+          "key": "C",
+          "tempo": 110,
+          "bars": 4,
+          "scoring_kind": "call_and_response",
+          "scoring_params": {"phrase": [[0, 67], [0.5, 70], [1, 67], [2, 64], [2.5, 63], [3, 60]], "answerBar": 3, "exact": true},
+          "pass_score": 85,
+          "xp": 55,
+          "daily_eligible": false
+        }
+      ]
+    },
+    {
+      "track": "chord_tones",
+      "order": 6,
+      "title": "Chord tones on 2 and 4",
+      "slug": "chord-tones-two-and-four",
+      "level": 4,
+      "summary": "A swing band feels beats 2 and 4. Land chord tones there and the line floats on the band.",
+      "explanation": "## Read\n\nA swing band feels beats 2 and 4. The drummer's hi-hat closes there and the whole band leans on them, so a note placed on 2 or 4 sounds like it belongs to the band, while a note on 1 and 3 sounds like the start of a bar.\n\nPlay chord tones on 2 and 4 and the line floats on top of the band instead of sitting on it. It is the same skill as before, aimed at the other beats.\n\n## Hear\n\nPress Hear. One chord tone on beat 2 and one on beat 4, round a backdoor ii V. Tap your foot on 2 and 4 as you listen.\n\n## Play\n\nBeats 2 and 4 only; the rest is free. In the jazz blues, remember that bars 4, 11 and 12 change chord on beat 3, so the note on 4 belongs to the second chord: C7 in bar 4, A7alt in bar 11, G7 in bar 12.",
+      "demo_phrase": "demo-two-and-four",
+      "progression": "backdoor-ii-v",
+      "prerequisite": "chord-tones-circle-of-fifths",
+      "exercises": [
+        {
+          "order": 1,
+          "slug": "two-and-four-backdoor",
+          "title": "Backdoor, beats 2 and 4",
+          "instructions": "Fm7, Bb7, Cmaj7, Cmaj7. A chord tone on beat 2 and on beat 4 of each bar. Fm7 is F A flat C E flat, B flat 7 is B flat D F A flat, Cmaj7 is C E G B.",
+          "key": "C",
+          "tempo": 100,
+          "bars": 4,
+          "scoring_kind": "chord_tones_on_beats",
+          "scoring_params": {"beats": [2, 4]},
+          "pass_score": 70,
+          "xp": 45,
+          "daily_eligible": true
+        },
+        {
+          "order": 2,
+          "slug": "two-and-four-minor",
+          "title": "A minor turnaround, 2 and 4",
+          "instructions": "Cm7, Am7b5, Dm7b5, G7alt, one chord a bar. A chord tone on beats 2 and 4. Each chord is new, so name its notes as you reach it.",
+          "progression_slug": "minor-turnaround",
+          "key": "Cm",
+          "tempo": 110,
+          "bars": 4,
+          "scoring_kind": "chord_tones_on_beats",
+          "scoring_params": {"beats": [2, 4]},
+          "pass_score": 70,
+          "xp": 50,
+          "daily_eligible": true
+        },
+        {
+          "order": 3,
+          "slug": "two-and-four-jazz-blues",
+          "title": "The jazz blues, 2 and 4",
+          "instructions": "Twelve bars, a chord tone on beats 2 and 4. In bars 4, 11 and 12 the chord changes on beat 3, so beat 4 belongs to the second chord: C7, A7alt and G7.",
+          "progression_slug": "jazz-blues",
+          "key": "C",
+          "tempo": 120,
+          "bars": 12,
+          "scoring_kind": "chord_tones_on_beats",
+          "scoring_params": {"beats": [2, 4]},
+          "pass_score": 70,
+          "xp": 55,
+          "daily_eligible": false
+        }
+      ]
+    },
+    {
+      "track": "scales_modes",
+      "order": 5,
+      "title": "Minor scales and the slide",
+      "slug": "scales-dorian-minor",
+      "level": 4,
+      "summary": "Dorian, locrian and altered over minor chords, and a dorian vamp that slides up a half step.",
+      "explanation": "## Read\n\nMinor is not one scale. Over a minor seventh chord you usually play dorian, with its raised sixth; over a minor seventh flat five you play locrian; over an altered dominant you play the altered scale, with every colour note in it. A minor tune moves between them.\n\nThe hardest part is the slide, such as D dorian a half step up to E flat dorian. The shape is the same and every note moves up a half step.\n\n## Hear\n\nPress Hear. Locrian over Am7b5, altered over D7alt, dorian over Gm7: one run of four notes for each, joined into a line.\n\n## Play\n\nSixteen bars of dorian, with the slide up a half step at bar 9; a bossa minor ii V i; and the minor circle of fifths. Name the scale of each bar to yourself as it comes, and read a chord ahead.",
+      "demo_phrase": "demo-minor-modes",
+      "progression": "minor-circle-ii-v-i",
+      "prerequisite": "scales-key-change",
+      "exercises": [
+        {
+          "order": 1,
+          "slug": "scales-dorian-slide",
+          "title": "Dorian, then a half step up",
+          "instructions": "Sixteen bars: D dorian over Dm7 for eight bars, then E flat dorian over E flat m7 for eight. The white keys give D dorian. For E flat dorian, every note moves up a half step.",
+          "progression_slug": "modal-vamp-dorian",
+          "key": "Dm",
+          "tempo": 90,
+          "bars": 16,
+          "scoring_kind": "scale_only",
+          "scoring_params": {},
+          "pass_score": 80,
+          "xp": 45,
+          "daily_eligible": true
+        },
+        {
+          "order": 2,
+          "slug": "scales-bossa-minor",
+          "title": "A minor ii V i",
+          "instructions": "Am7, Bm7b5, E7alt, Am7. A dorian, B locrian, E altered, then A dorian again. Four bars, a different scale in each of the middle two.",
+          "progression_slug": "bossa-minor-ii-v-i",
+          "key": "Am",
+          "tempo": 100,
+          "bars": 4,
+          "scoring_kind": "scale_only",
+          "scoring_params": {},
+          "pass_score": 80,
+          "xp": 50,
+          "daily_eligible": true
+        },
+        {
+          "order": 3,
+          "slug": "scales-minor-circle",
+          "title": "The minor circle",
+          "instructions": "Cm7, F7, Bbmaj7, Ebmaj7, Am7b5, D7alt, Gm7, Gm7. Dorian, mixolydian, two major scales, locrian, altered, dorian. Eight bars of the road a minor tune drives down.",
+          "key": "Gm",
+          "tempo": 110,
+          "bars": 8,
+          "scoring_kind": "scale_only",
+          "scoring_params": {},
+          "pass_score": 80,
+          "xp": 55,
           "daily_eligible": false
         }
       ]

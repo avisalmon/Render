@@ -61,14 +61,14 @@ def _path():
 # ------------------------------------------------------------------ the shape of the course
 
 
-def test_twenty_lessons_in_three_levels_with_three_exercises_each(seeded):
-    assert Lesson.objects.count() == 20
-    assert Exercise.objects.filter(lesson__isnull=False).count() == 60
+def test_thirty_lessons_in_four_levels_with_three_exercises_each(seeded):
+    assert Lesson.objects.count() == 30
+    assert Exercise.objects.filter(lesson__isnull=False).count() == 90
     for lesson in Lesson.objects.all():
         assert lesson.exercises.count() == 3, lesson.slug
         assert lesson.status == "published" and lesson.authorship == "ai_drafted", lesson.slug
-    by_level = {level: Lesson.objects.filter(level=level).count() for level in (1, 2, 3)}
-    assert by_level == {1: 7, 2: 7, 3: 6}
+    by_level = {level: Lesson.objects.filter(level=level).count() for level in (1, 2, 3, 4)}
+    assert by_level == {1: 7, 2: 7, 3: 6, 4: 10}
 
 
 def test_every_scored_track_has_at_least_three_lessons(seeded):
@@ -76,11 +76,11 @@ def test_every_scored_track_has_at_least_three_lessons(seeded):
         assert Lesson.objects.filter(track=track).count() >= 3, track
 
 
-def test_the_path_is_numbered_one_to_twenty_and_climbs_through_the_levels(seeded):
+def test_the_path_is_numbered_one_to_thirty_and_climbs_through_the_levels(seeded):
     path = _path()
-    assert [lesson.path_order for lesson in path] == list(range(1, 21))
+    assert [lesson.path_order for lesson in path] == list(range(1, 31))
     levels = [lesson.level for lesson in path]
-    assert levels == sorted(levels), "level 1 before level 2 before level 3"
+    assert levels == sorted(levels), "level 1 before level 2 before level 3 before level 4"
 
 
 def test_no_two_lessons_of_one_track_come_in_a_row(seeded):
@@ -131,7 +131,7 @@ def test_the_levels_climb_in_tempo_and_reward(seeded):
 
     assert max(tempos(1)) <= 90 and min(tempos(3)) >= 80
     assert max(xps(1)) < min(xps(3))
-    assert sum(xps(1)) < sum(xps(2)) < sum(xps(3))
+    assert sum(xps(1)) < sum(xps(2)) < sum(xps(3)) < sum(xps(4))
 
 
 def test_every_exercise_is_in_its_charts_own_key_and_within_its_chart(seeded):
@@ -144,7 +144,7 @@ def test_every_exercise_is_in_its_charts_own_key_and_within_its_chart(seeded):
 
 def test_the_whole_course_is_worth_a_handful_of_levels(seeded):
     total = sum(Exercise.objects.values_list("xp", flat=True))
-    assert 6 <= progress.level_for(total) <= 10, total
+    assert 6 <= progress.level_for(total) <= 12, total
 
 
 def test_every_lesson_has_its_own_demo_inside_its_own_chart(seeded):
@@ -184,9 +184,9 @@ def test_the_command_reports_what_it_added_then_nothing(db):
     call_command("seed_improv_theory", stdout=io.StringIO())
     call_command("seed_improv_library", stdout=io.StringIO())
     first = _seed()
-    assert "improv lessons: added 100 (20 phrases, 20 lessons, 60 exercises)." in first, first
+    assert "improv lessons: added 150 (30 phrases, 30 lessons, 90 exercises)." in first, first
     assert "improv lessons: added 0" in _seed()
-    assert (Phrase.objects.count(), Lesson.objects.count(), Exercise.objects.count()) == (20, 20, 60)
+    assert (Phrase.objects.count(), Lesson.objects.count(), Exercise.objects.count()) == (30, 30, 90)
 
 
 def test_refresh_brings_a_draft_back_to_the_file_and_leaves_a_read_lesson_alone(seeded):
@@ -251,7 +251,7 @@ def test_the_deploy_refreshes_drafts():
 
 def test_the_docs_describe_the_course_and_the_backlog_row_is_done():
     spec = Path("docs/improv/spec.md").read_text(encoding="utf-8")
-    assert "twenty lessons" in spec.lower() or "20 lessons" in spec
+    assert "thirty lessons" in spec.lower() or "30 lessons" in spec
     assert "--refresh-drafts" in spec or "--refresh-drafts" in Path("docs/improv/data_model.md").read_text(encoding="utf-8")
     backlog = Path("docs/improv/backlog.md").read_text(encoding="utf-8")
     assert re.search(r"SPR-I\.10\.2 \|.*\| DONE 20\d\d-\d\d-\d\d \|", backlog)

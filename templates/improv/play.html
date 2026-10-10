@@ -45,6 +45,22 @@
       <div id="chart" class="im-chart" aria-label="Chart" data-bounded-list></div>
     </section>
 
+    <section class="im-panel im-panel-flush im-flat im-guide" aria-label="Chord guide">
+      <div class="im-guide-head">
+        <h2 class="im-h2">Chord guide</h2>
+        <p id="guide-chord" class="im-guide-chord" aria-live="off"></p>
+        <p id="guide-scale" class="im-note"></p>
+        <p class="im-legend" id="guide-legend">
+          <span class="im-swatch im-swatch-gscale">scale</span>
+          <span class="im-swatch im-swatch-gp1">root position</span>
+          <span class="im-swatch im-swatch-gp2">first inversion</span>
+          <span class="im-swatch im-swatch-gp3">second inversion</span>
+          <span id="guide-hint">Point at a bar to look ahead.</span>
+        </p>
+      </div>
+      <div id="guide-keys" class="im-keyboard im-guide-keys" aria-label="Chord guide keyboard"></div>
+    </section>
+
     <section class="im-panel im-panel-flush im-flat im-you" aria-label="You">
       <div class="im-play-head">
         <h2 class="im-h2">You</h2>
@@ -135,6 +151,8 @@
 <script src="{% static 'improv/judge.js' %}"></script>
 <script src="{% static 'improv/practice.js' %}"></script>
 <script src="{% static 'improv/keyboard-view.js' %}"></script>
+<script src="{% static 'improv/chord-guide.js' %}"></script>
+<script src="{% static 'improv/chord-guide-view.js' %}"></script>
 <script src="{% static 'improv/demo.js' %}"></script>
 <script src="{% static 'improv/play-page.js' %}"></script>
 {% endblock %}

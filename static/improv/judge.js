@@ -10,7 +10,7 @@
   if (typeof module === "object" && module.exports) module.exports = factory();
   else root.ImprovJudge = factory();
 })(typeof self !== "undefined" ? self : this, function () {
-  const JUDGE_VERSION = 1;
+  const JUDGE_VERSION = 2;
   const SCORING_KINDS = [
     "chord_tones_on_beats",
     "scale_only",
@@ -87,6 +87,16 @@
       else if (kind === "swung") out.push((beat + swingRatio) * beatMs);
     }
     return out;
+  }
+
+  // Where a written beat position sounds once the feel is swung: the same warp as the band's
+  // (band.js, swingBeat), so a pattern written in straight eighths is on time when it is swung
+  // with the band. At ratio 0.5 it moves nothing.
+  function swingBeat(beat, ratio) {
+    const whole = Math.floor(beat + EPS);
+    const frac = Math.max(0, beat - whole);
+    const warped = frac <= 0.5 ? frac * 2 * ratio : ratio + (frac - 0.5) * 2 * (1 - ratio);
+    return whole + warped;
   }
 
   function nearest(ms, points) {
@@ -220,7 +230,7 @@
       byQuality: perQuality,
     };
 
-    const scored = scoreFor(scoring, notes, { beatsPerBar, beatMs, from: input.from, to: input.to, tolerance });
+    const scored = scoreFor(scoring, notes, { beatsPerBar, beatMs, from: input.from, to: input.to, tolerance, swingRatio });
     return { version: JUDGE_VERSION, notes, metrics, timing, score: scored.score, scoring: scored.details };
   }
 
@@ -283,7 +293,8 @@
       return { score: share(reached, targets), details: { kind, targets, reached } };
     }
 
-    // The pattern is beats inside the bar, repeated every bar played. An onset is matched when
+    // The pattern is beats inside the bar, written straight and repeated every bar played; when
+    // the feel is swung the off-beats are where the band puts them. An onset is matched when
     // a note lands within the tolerance; extra notes count against, because hammering every
     // eighth would otherwise match any pattern.
     if (kind === "rhythm_motif") {
@@ -295,7 +306,7 @@
       if (!ok) throw new Error("rhythm_motif needs a pattern: a list of beats inside the bar, from 0");
       const bars = ctx.to - ctx.from;
       const expected = [];
-      for (let b = 0; b < bars; b++) for (const p of pattern) expected.push((b * ctx.beatsPerBar + p) * ctx.beatMs);
+      for (let b = 0; b < bars; b++) for (const p of pattern) expected.push((b * ctx.beatsPerBar + swingBeat(p, ctx.swingRatio)) * ctx.beatMs);
       const free = notes.map((n) => n.tMs);
       let matched = 0;
       for (const at of expected) {
@@ -328,11 +339,14 @@
       const answerBar = Number.isInteger(params.answerBar) ? params.answerBar : 1;
       const exact = Boolean(params.exact);
       const start = answerBar * ctx.beatsPerBar * ctx.beatMs;
-      const answer = notes.filter((n) => n.bar !== null && n.bar - ctx.from === answerBar);
+      // The answer bar is found by the clock, not by the chord: the chord is read half a beat
+      // ahead, which would hand an answer's last off-beat to the next bar.
+      const barMs = ctx.beatsPerBar * ctx.beatMs;
+      const answer = notes.filter((n) => n.tMs >= start - ctx.tolerance - EPS && n.tMs < start + barMs - ctx.tolerance - EPS);
       const free = answer.map((n) => n.tMs);
       let onsetsMatched = 0;
       for (const [beat] of phrase) {
-        const at = start + beat * ctx.beatMs;
+        const at = start + swingBeat(beat, ctx.swingRatio) * ctx.beatMs;
         let best = -1;
         for (let i = 0; i < free.length; i++) {
           if (free[i] === null) continue;
@@ -378,5 +392,5 @@
     return fallback || Array.from({ length: beatsPerBar }, (_, i) => i + 1);
   }
 
-  return { judge, chordAt, gridTimes, toleranceMs, timingWords, JUDGE_VERSION, SCORING_KINDS };
+  return { judge, chordAt, gridTimes, swingBeat, toleranceMs, timingWords, JUDGE_VERSION, SCORING_KINDS };
 });

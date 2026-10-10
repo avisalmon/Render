@@ -59,7 +59,7 @@ def player(seeded):
 
 def test_the_seed_covers_every_scored_track(seeded):
     tracks = set(Lesson.objects.values_list("track", flat=True))
-    assert Lesson.objects.count() == 20, "twenty lessons since SPR-I.10.2"
+    assert Lesson.objects.count() == 30, "thirty lessons since SPR-I.10.3"
     assert tracks == set(TRACK_ORDER) - {"voicings_comping"}
     assert "voicings_comping" not in tracks, "that kind is not scored in version 1, so there is nothing to teach it with yet"
 
@@ -81,7 +81,7 @@ def test_every_lesson_reads_hears_and_plays(seeded):
 
 
 def test_the_exercises_number_three_to_a_lesson(seeded):
-    assert Exercise.objects.count() == 60
+    assert Exercise.objects.count() == 90
 
 
 def test_every_exercise_passes_the_same_check_as_a_saved_one(seeded):
@@ -102,10 +102,10 @@ def test_an_exercise_asks_for_no_more_than_its_chart_has(seeded):
         assert check_scoring(ex.scoring_kind, params, beats_per_bar=4, bars=ex.bars) is None
 
 
-def test_a_rhythm_motif_is_taught_on_a_straight_groove(seeded):
+def test_a_rhythm_motif_is_judged_on_its_styles_own_feel(seeded):
     for ex in Exercise.objects.filter(scoring_kind="rhythm_motif").select_related("style", "progression__default_style"):
         style = ex.style or ex.progression.default_style
-        assert float(style.swing_ratio) == 0.5, f"{ex.slug}: the judge expects straight beats for a rhythm motif"
+        assert 0.5 <= float(style.swing_ratio) <= 0.75, f"{ex.slug}: the judge swings the pattern by this ratio (SPR-I.10.3)"
 
 
 def test_every_demo_phrase_is_a_valid_phrase_inside_its_lesson_chart(seeded):
@@ -144,7 +144,7 @@ def test_a_new_player_can_start_one_lesson_and_the_rest_wait(seeded):
 def test_the_level_and_the_xp_of_the_whole_course_are_reachable(seeded):
     total = sum(Exercise.objects.values_list("xp", flat=True))
     assert progress.level_for(total) >= 3, "finishing everything should be worth a few levels"
-    assert progress.level_for(total) < 10, "and not a hundred"
+    assert progress.level_for(total) < 15, "and not a hundred"
 
 
 def test_every_authored_text_is_plain(seeded):
@@ -174,10 +174,10 @@ def test_the_command_reports_what_it_added_then_nothing(db):
     call_command("seed_improv_theory", stdout=io.StringIO())
     call_command("seed_improv_library", stdout=io.StringIO())
     first = _seed()
-    assert re.search(r"improv lessons: added 100 \(20 phrases, 20 lessons, 60 exercises\)\.", first), first
+    assert re.search(r"improv lessons: added 150 \(30 phrases, 30 lessons, 90 exercises\)\.", first), first
     second = _seed()
     assert "improv lessons: added 0" in second
-    assert (Phrase.objects.count(), Lesson.objects.count(), Exercise.objects.count()) == (20, 20, 60)
+    assert (Phrase.objects.count(), Lesson.objects.count(), Exercise.objects.count()) == (30, 30, 90)
 
 
 def test_running_it_again_never_undoes_an_edit(seeded):
@@ -202,7 +202,7 @@ def test_it_fills_in_what_was_deleted_and_leaves_the_rest(seeded):
     Exercise.objects.get(slug="rhythm-offbeats").delete()
     out = _seed()
     assert "added 1 (0 phrases, 0 lessons, 1 exercises)" in out, out
-    assert Exercise.objects.count() == 60
+    assert Exercise.objects.count() == 90
 
 
 def test_it_is_all_or_nothing(db):
@@ -228,7 +228,7 @@ def test_the_seeded_lessons_arrive_through_the_api_in_the_order_a_player_meets_t
     assert got.status_code == 200
     body = got.json()
     rows = body["lessons"] if isinstance(body, dict) else body
-    assert [row["path_order"] for row in rows] == list(range(1, 21)), "the path, in order"
+    assert [row["path_order"] for row in rows] == list(range(1, 31)), "the path, in order"
     assert {row["slug"]: row["state"] for row in rows}["chord-tones-on-the-beat"] == "open"
     assert {row["slug"]: row["state"] for row in rows}["call-and-response"] == "ahead"
 
@@ -237,7 +237,7 @@ def test_the_exercises_and_phrases_are_in_the_api(player):
     _, client = player
     exercises = client.get(f"{API}exercises/").json()
     phrases = client.get(f"{API}phrases/").json()
-    assert len(exercises) == 60 and len(phrases) == 20
+    assert len(exercises) == 90 and len(phrases) == 30
     assert all(e["lesson"] for e in exercises)
     assert {e["scoring_kind"] for e in exercises} == {
         "chord_tones_on_beats", "guide_tones", "scale_only", "approach_notes", "rhythm_motif", "call_and_response",

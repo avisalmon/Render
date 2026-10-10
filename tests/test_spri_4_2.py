@@ -54,7 +54,7 @@ def test_the_page_has_the_keys_the_chord_and_the_feedback(player):
     for control in ("keys", "heard", "feedback", "midi-state"):
         assert f'id="{control}"' in html, control
     assert 'data-api-player="/improv/api/player/"' in html, "the profile carries the keyboard's name and the offset"
-    legend = re.search(r'<p class="im-legend".*?</p>', html, re.S).group(0)
+    legend = re.search(r'<p class="im-legend" title=.*?</p>', html, re.S).group(0)
     for meaning in ("chord tone", "in the scale", "approach", "outside"):
         assert meaning in legend
 
@@ -64,7 +64,7 @@ def test_the_page_loads_the_judge_and_what_it_needs_in_order(player):
     names = [Path(src).name for src in re.findall(r'<script src="([^"]+)"', html) if Path(src).name not in ("control.js", "control-page.js", "menu.js")]
     assert names == [
         "chart.js", "band.js", "scheduler.js", "synth.js", "chart-view.js", "play.js", "output.js",
-        "midi.js", "setup.js", "recognize.js", "timing.js", "judge.js", "practice.js", "keyboard-view.js", "demo.js", "play-page.js",
+        "midi.js", "setup.js", "recognize.js", "timing.js", "judge.js", "practice.js", "keyboard-view.js", "chord-guide.js", "chord-guide-view.js", "demo.js", "play-page.js",
     ]  # fmt: skip
     for name in names:
         assert finders.find(f"improv/{name}"), f"{name} is not found by staticfiles"

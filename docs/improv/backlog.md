@@ -174,6 +174,19 @@ intermediate, maybe 20". Spec: ch. 6 "The path" and "Start anywhere".
 |---|---|---|---|
 | SPR-I.10.1 | Nothing is locked: a lesson is open, ahead or done; a pass in a lesson ahead counts; `Player.current_lesson` is the pointer, moved by Start here (`POST /improv/api/start-here/`) and by playing; Continue and the workout follow it; the Lessons screen groups by level and marks "You are here" | ch. 6, data model, api | DONE 2026-10-09 |
 | SPR-I.10.2 | Twenty lessons in three levels, tracks interleaved, `Lesson.path_order`; the six originals keep their slugs; `seed_improv_lessons --refresh-drafts` keeps AI drafts in step with the file and never touches a read lesson; model player passes all sixty exercises | ch. 6 | DONE 2026-10-09 |
+| SPR-I.10.3 | The judge reads swing (judge version 2: off-beats of a rhythm or call are where the style's swing puts them; call and response picks the answer bar by the clock) and ten more lessons as Level 4, swing and feel; thirty lessons, ninety exercises; Show me swings | ch. 6, ch. 4 | DONE 2026-10-09 |
+
+---
+
+## EPIC-I.11: See the chord  `DONE 2026-10-10`
+
+Avi, 2026-10-10: "if I do not know the chords, say Cmaj7, I want to see in an intuitive way which keys are in it,
+without disturbing the flow": the scale tones in one colour, the chord in position 1 dark, its inversions in
+lighter shades. Spec: ch. 8 "The chord guide".
+
+| Sprint | What | Traces | Status |
+|---|---|---|---|
+| SPR-I.11.1 | The Play screen's chord guide: a five-octave keyboard under the chart that follows the band, a look-ahead by hover, focus or tap on any bar, scale tones in pale blue, root position in dark green, inversions in lighter greens, notes spelled as the player's setting says | ch. 8 | DONE 2026-10-10 |
 
 ---
 

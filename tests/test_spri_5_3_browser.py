@@ -73,18 +73,18 @@ def world(browser, live_server, db, one_request_at_a_time):
     context.close()
 
 
-def test_a_new_player_sees_twenty_lessons_in_three_levels_and_only_the_first_is_open(world):
+def test_a_new_player_sees_thirty_lessons_in_four_levels_and_only_the_first_is_open(world):
     page, errors, base = world
     page.goto(f"{base}/improv/lessons/", wait_until="domcontentloaded")
     page.wait_for_selector('#lessons-tracks .im-take[data-slug="call-and-response-longer"]', timeout=10000)
     page.wait_for_function("document.getElementById('lessons-level').textContent !== ''", timeout=10000)
     cards = page.locator("#lessons-tracks .im-take")
-    assert cards.count() == 20
-    states = [cards.nth(i).get_attribute("data-state") for i in range(20)]
-    assert states.count("open") == 1 and states.count("ahead") == 19
+    assert cards.count() == 30
+    states = [cards.nth(i).get_attribute("data-state") for i in range(30)]
+    assert states.count("open") == 1 and states.count("ahead") == 29
     assert page.locator('#lessons-tracks .im-take[data-slug="chord-tones-on-the-beat"]').get_attribute("data-state") == "open"
-    assert page.locator("#lessons-done").inner_text() == "0 of 20 lessons done."
-    assert [page.locator("#lessons-tracks section").nth(i).get_attribute("data-level") for i in range(3)] == ["1", "2", "3"]
+    assert page.locator("#lessons-done").inner_text() == "0 of 30 lessons done."
+    assert [page.locator("#lessons-tracks section").nth(i).get_attribute("data-level") for i in range(4)] == ["1", "2", "3", "4"]
     assert page.locator('#lessons-tracks section[data-level="1"] .im-take').count() == 7
     assert not errors, errors
 

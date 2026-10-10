@@ -17,6 +17,8 @@
   const Keys = window.ImprovKeyboardView;
   const Ctl = window.ImprovControl;
   const Dm = window.ImprovDemo;
+  const CG = window.ImprovChordGuide;
+  const CGV = window.ImprovChordGuideView;
   const DEMO_AHEAD = 0.4;
   const DEMO_PUMP_MS = 50;
   const FIRST_KEY = 36; // C2
@@ -46,6 +48,10 @@
     listening: null,
     inputs: null,
     keys: null,
+    guideKeys: null,
+    guideShown: null,
+    preview: null,
+    nowChord: null,
     held: [],
     take: null,
     judged: null,
@@ -202,6 +208,74 @@
     if (!state.built || !state.built.ok) return;
     const rows = P.layoutBars(state.built.chart, state.built.from, state.built.to);
     state.cells = View.draw($("chart"), rows);
+    state.preview = null;
+    wirePreview();
+    state.guideShown = null;
+    updateGuide();
+  }
+
+  // ------------------------------------------------------------- the chord guide
+
+  // Pointing at a bar (or tabbing to it) looks ahead at its chord; leaving returns to the band's own.
+  // With two chords in a bar, the half you point at decides which.
+  function previewAt(index, fraction) {
+    const bar = state.built && state.built.ok ? state.built.chart.bars[index] : null;
+    if (!bar || !bar.chords.length) return;
+    const chord = CG.chordInBar(bar, fraction * bar.beats);
+    state.preview = { bar: index, chord };
+    updateGuide();
+  }
+
+  function clearPreview() {
+    if (!state.preview) return;
+    state.preview = null;
+    updateGuide();
+  }
+
+  function wirePreview() {
+    state.cells.forEach((cell, index) => {
+      if (!cell) return;
+      cell.el.tabIndex = 0;
+      const at = (e) => {
+        const box = cell.el.getBoundingClientRect();
+        return box.width ? Math.min(0.999, Math.max(0, (e.clientX - box.left) / box.width)) : 0;
+      };
+      cell.el.addEventListener("mousemove", (e) => previewAt(index, at(e)));
+      cell.el.addEventListener("mouseenter", (e) => previewAt(index, at(e)));
+      cell.el.addEventListener("mouseleave", clearPreview);
+      cell.el.addEventListener("focus", () => previewAt(index, 0));
+      cell.el.addEventListener("blur", clearPreview);
+    });
+  }
+
+  // The chord the guide should show, and why: pointed at, else the one the band is on, else the
+  // first of the loop when nothing is playing.
+  function guideTarget() {
+    if (state.preview) return { chord: state.preview.chord, bar: state.preview.bar, why: "Looking ahead" };
+    if (!state.built || !state.built.ok) return null;
+    if (state.playing && state.nowChord) return { chord: state.nowChord.chord, bar: state.nowChord.bar, why: "Now playing" };
+    const bar = state.built.chart.bars[state.built.from];
+    return bar && bar.chords.length ? { chord: bar.chords[0], bar: state.built.from, why: "First chord" } : null;
+  }
+
+  function updateGuide() {
+    if (!state.guideKeys) return;
+    const target = guideTarget();
+    const key = target ? `${target.chord.name}|${target.why}|${target.bar}` : "";
+    if (key === state.guideShown) return;
+    state.guideShown = key;
+    for (const c of state.cells) if (c) c.el.removeAttribute("data-previewing");
+    const spelling = state.profile ? state.profile.note_names : "sharps";
+    const guide = target ? CG.guideFor(target.chord, state.qualities, spelling) : null;
+    CGV.show(state.guideKeys, guide);
+    if (!target || !guide) {
+      $("guide-chord").textContent = "";
+      $("guide-scale").textContent = "";
+      return;
+    }
+    if (target.why === "Looking ahead" && state.cells[target.bar]) state.cells[target.bar].el.setAttribute("data-previewing", "yes");
+    $("guide-chord").textContent = `${target.why}: ${guide.name}  =  ${guide.tones.join(" ")}`;
+    $("guide-scale").textContent = guide.scaleName ? `Scale: ${guide.scaleName} (${guide.scaleNotes.join(" ")})` : "";
   }
 
   function clearLit() {
@@ -241,6 +315,10 @@
       box.textContent = `Count-in ${lit.number}/${lit.of}: ${Math.min(built.plan.beatsPerBar, Math.floor(lit.beat) + 1)}`;
     } else {
       box.hidden = true;
+      if (lit && built.chart.bars[lit.bar]) {
+        const chord = CG.chordInBar(built.chart.bars[lit.bar], lit.beat);
+        if (chord) state.nowChord = { chord, bar: lit.bar };
+      }
       if (lit && state.cells[lit.bar]) {
         const c = state.cells[lit.bar];
         c.el.classList.add("im-bar-lit");
@@ -248,6 +326,7 @@
         c.el.scrollIntoView({ block: "nearest" });
       }
     }
+    updateGuide();
   }
 
   function refresh() {
@@ -720,6 +799,7 @@
       beatsPerBar: built.plan.beatsPerBar,
       bpm,
       downbeat,
+      swingRatio: swingRatioNow(),
     });
     if (!made.ok) {
       say(made.reason);
@@ -860,6 +940,7 @@
     state.take = null;
     if (state.scheduler) state.scheduler.stop();
     state.playing = false;
+    state.nowChord = null;
     state.pending = null;
     if (state.frame) cancelAnimationFrame(state.frame);
     state.frame = 0;
@@ -961,6 +1042,8 @@
     if (exercise) await openExercise(exercise);
     say("Ready. Press Play, or Space.");
     state.keys = Keys.draw($("keys"), FIRST_KEY, LAST_KEY);
+    state.guideKeys = CGV.draw($("guide-keys"));
+    updateGuide();
     setupOutput();
     startMidi();
     window.addEventListener("pagehide", () => {
@@ -985,6 +1068,6 @@
     });
   }
 
-  if (!P || !Band || !Sched || !Synth || !View || !Out || !M || !S || !Rec || !Timing || !J || !Keys || !Ctl || !Dm) say("The page's scripts did not load.");
+  if (!P || !Band || !Sched || !Synth || !View || !Out || !M || !S || !Rec || !Timing || !J || !Keys || !Ctl || !Dm || !CG || !CGV) say("The page's scripts did not load.");
   else init();
 })();
