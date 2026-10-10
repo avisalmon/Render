@@ -201,7 +201,8 @@ the left indication." Spec: ch. 11.
 | Sprint | What | Traces | Status |
 |---|---|---|---|
 | SPR-I.12.1 | The reading trainer at `/improv/reading/`: a ladder of thirty-six stages (twelve keys, each right hand, left hand, both), generated four-bar exercises on a grand staff with the hand and the key written beside each staff, Flow (count-in, the pulse never waits, judged against the clock) and Step (waits for the right note, never passes), the curtain, Show me, slips named by part of the staff and kind, Drill bar N, a weak-spot map that leans the next exercise, `ReadingTake` and its API, the `reading` read, `Player.reading_tempo`, Reading in the menu, the one-screen guard and the three keys | ch. 11, data model 6c, api | DONE 2026-10-10 |
-| SPR-I.12.2 | **Avi at the piano:** the first stages at the real piano: is the window fair, is the curtain right, does Step feel like a repair shop; then pause, the demo through the piano, and what he asks for | ch. 11 | TODO |
+| SPR-I.12.2 | **Avi at the piano:** the first stages at the real piano: is the window fair, is the curtain right, does Step feel like a repair shop; then pause, the demo through the piano, and what he asks for | ch. 11 | IN PROGRESS |
+| SPR-I.12.3 | Live check 1 (Avi, 2026-10-10): the cursor moves at one speed (every beat the same width, bar lines included; it used to lag after beat 3 and jump); every piece is written for two hands, the stage says which hand is judged, the other hand is drawn in grey, and the seed stays through a change of hands and a pass, so the piece practised one hand at a time is the piece played with both | ch. 11 | DONE 2026-10-10 |
 
 ---
 

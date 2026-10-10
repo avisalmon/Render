@@ -184,10 +184,10 @@ def _read_through(page):
     page.wait_for_function("document.getElementById('reading').dataset.running === 'yes'", timeout=5000)
     page.evaluate("""async () => {
       const host = document.getElementById('reading');
-      const ex = window.ImprovReadingPage.exercise();
+      const notes = window.ImprovReadingPage.active();
       const beat = 60000 / 160;
       const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-      for (const [i, n] of ex.notes.entries()) {
+      for (const [i, n] of notes.entries()) {
         const due = Number(host.dataset.runStart) + n.beat * beat;
         const gap = due - performance.now();
         if (gap > 0) await wait(gap);

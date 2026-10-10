@@ -1262,15 +1262,23 @@ counts. The ladder is read from the takes and stored nowhere.
 
 ### The exercise
 
-Four bars of 4/4 from a seed (`reading.js`, pure, tested under Node). The active hand reads a walk
-through the key's letters inside the hand's range (right: C4 to G5 at difficulty 1, widening to F3
-to E6; left: G2 to C4, widening to C2 to G4). With both hands the left plays long notes on the
-key's bass notes under the right hand's line. The last note is the tonic. The same stage and seed
-give the same exercise, so a take can be shown again; a new press of Next (A#7) is a new seed.
+Four bars of 4/4 for two hands from a seed (`reading.js`, pure, tested under Node). The right hand
+is a walk through the key's letters inside its range (C4 to G5 at difficulty 1, widening to F3 to
+E6), the left hand the key's bass notes under it (whole and half notes at first, quarters by
+difficulty 3), and the last note is the tonic. **The piece is always written for both hands; the
+stage says which hand is asked for.** With one hand chosen, the other hand's notes are drawn in grey,
+not judged and not counted, so the player sees the whole piece while reading one hand (Avi's live
+check, 2026-10-10: "I want to see both hands when practicing one hand"). The seed names the piece
+and the same seed gives the same piece whichever hand is chosen, and it stays through a change of
+hands and through a pass to the next hand, so **the piece practised right hand, then left, is the
+piece played with both**. Only Next (A#7) or a new visit is a new seed; a take can be shown again
+from its seed.
 
 The staff is a grand staff drawn in SVG (`staff-view.js`): clefs, the key signature, the time
-signature, bar numbers, ledger lines, stems away from the middle line, beams on eighth pairs, dots,
-and whole rests on the silent hand. **Next to each staff the hand is named ("right hand", "left
+signature, bar numbers, ledger lines, stems away from the middle line, beams on eighth pairs and
+dots. Every beat is the same width, bar lines included, so the cursor moves at one speed and
+crosses a bar line at the rate it crosses a beat (the first build padded each bar, and the line
+lagged after beat 3 and jumped at the bar line; Avi's live check). **Next to each staff the hand is named ("right hand", "left
 hand") and under it the key is written out, "G major" and "1 sharp (F#)"**, in the accent colour,
 so the player never has to count the signature.
 

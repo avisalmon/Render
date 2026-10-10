@@ -418,7 +418,8 @@
 .im-st-barno { fill: var(--im-muted); font-family: ui-monospace, Consolas, monospace; }
 .im-st-hand, .im-st-key { fill: var(--im-muted); font-family: system-ui, sans-serif; }
 .im-st-key { fill: var(--im-accent); }
-.im-st-rest { fill: var(--im-muted); }
+.im-st-note.im-st-other { fill: #7d8088; stroke: #7d8088; }
+.im-st-note.im-st-other .im-st-hollow { fill: #1c1f24; }
 .im-st-ledger { stroke: var(--im-fg); stroke-width: 1; }
 .im-st-note { fill: var(--im-fg); stroke: var(--im-fg); outline: none; }
 .im-st-note .im-st-hollow { fill: #1c1f24; stroke-width: 1.8; }

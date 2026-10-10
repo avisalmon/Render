@@ -44,7 +44,9 @@ test("an exercise is four full bars in the key, inside the hand's range, and the
       const ex = R.generate(stage, seed);
       const sig = R.keyAccidentals(stage.key);
       const hands = new Set(ex.notes.map((n) => n.hand));
-      assert.deepEqual([...hands].sort(), stage.hands === "B" ? ["L", "R"] : [stage.hands], `${stage.key} ${stage.hands}`);
+      assert.deepEqual([...hands].sort(), ["L", "R"], "always a piece for two hands");
+      const active = new Set(R.activeNotes(ex).map((n) => n.hand));
+      assert.deepEqual([...active].sort(), stage.hands === "B" ? ["L", "R"] : [stage.hands], `${stage.key} ${stage.hands}`);
       for (const hand of hands) {
         const total = ex.notes.filter((n) => n.hand === hand).reduce((a, n) => a + n.dur, 0);
         assert.equal(total, 16, `${stage.key} ${stage.hands} ${hand} fills four bars of four`);
@@ -53,7 +55,7 @@ test("an exercise is four full bars in the key, inside the hand's range, and the
         assert.equal(n.midi, R.midiOf(n.step, n.acc));
         if (!n.shown) assert.equal(n.acc, sig[LETTERS[n.step % 7]], "a note with no accidental is in the key");
         else assert.equal(stage.difficulty, 3, "accidentals only at the third difficulty");
-        const range = stage.hands === "B" && n.hand === "L" ? [14, 32] : R.RANGES[n.hand][stage.difficulty];
+        const range = R.RANGES[n.hand][stage.difficulty];
         assert.ok(n.step >= range[0] && n.step <= range[1], `${stage.key} ${stage.hands} ${n.hand} step ${n.step} in ${range}`);
         assert.ok(n.midi < R.CONTROL_FLOOR);
       }
@@ -61,6 +63,23 @@ test("an exercise is four full bars in the key, inside the hand's range, and the
     }
   }
   assert.notDeepEqual(R.generate(R.stageOf(0), 1).notes, R.generate(R.stageOf(0), 2).notes);
+});
+
+test("the same seed is the same piece whichever hand is practised, so one hand leads to both", () => {
+  for (const seed of [3, 44, 505]) {
+    const right = R.generate(R.stageOf(3), seed);
+    const left = R.generate(R.stageOf(4), seed);
+    const both = R.generate(R.stageOf(5), seed);
+    assert.deepEqual(right.notes, left.notes);
+    assert.deepEqual(right.notes, both.notes);
+    assert.ok(R.activeNotes(right).every((n) => n.hand === "R") && R.activeNotes(left).every((n) => n.hand === "L"));
+    assert.equal(R.activeNotes(both).length, both.notes.length);
+    assert.ok(R.activeNotes(right).length > 0 && R.activeNotes(left).length > 0);
+    const run = R.createStepRun(right.notes, null, "R");
+    assert.ok(right.notes.filter((n) => n.hand === "L").every((n) => run.summary().results[n.index].state === "out"), "the other hand is out of a step run");
+    const range = R.keyboardRange(left);
+    assert.ok(range.to < 72, "the keyboard is the left hand's");
+  }
 });
 
 test("the first difficulty is steps and quarters; later ones bring leaps, eighths and ledger lines", () => {

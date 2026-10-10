@@ -84,6 +84,10 @@
 
   // --------------------------------------------------------------- the exercise on the screen
 
+  const newSeed = () => (Date.now() ^ (Math.random() * 0x7fffffff)) >>> 0;
+
+  // The seed names the piece. It stays through a change of hands (and a pass to the next hand), so the
+  // piece practised with one hand is the piece played with both; only Next or a new visit changes it.
   function fresh(seed) {
     if (state.mode === "running" || state.mode === "showing") return;
     state.pendingStage = false;
@@ -92,7 +96,8 @@
     state.judged = null;
     state.step = null;
     const focus = state.report && state.report.focus ? state.report.focus : [];
-    state.exercise = R.generate(state.stage, seed === undefined ? (Date.now() ^ (Math.random() * 0x7fffffff)) >>> 0 : seed, focus);
+    const keep = seed === undefined && state.exercise ? state.exercise.seed : seed;
+    state.exercise = R.generate(state.stage, keep === undefined ? newSeed() : keep, focus);
     const key = state.exercise.key;
     state.layout = Staff.draw($("rd-staff"), state.exercise, {
       right: "right hand",
@@ -106,7 +111,10 @@
     host.dataset.stage = String(state.stage.index);
     host.dataset.seed = String(state.exercise.seed);
     host.dataset.saved = "no";
-    $("rd-name").textContent = `${R.stageTitle(state.stage)}, ${state.exercise.notes.length} notes in ${state.exercise.bars} bars`;
+    const active = R.activeNotes(state.exercise).length;
+    $("rd-name").textContent = state.stage.hands === "B"
+      ? `${R.stageTitle(state.stage)}, ${active} notes in ${state.exercise.bars} bars`
+      : `${R.stageTitle(state.stage)}, ${active} notes in ${state.exercise.bars} bars; the other hand is shown, not asked for`;
     $("rd-stage-line").textContent = R.stageLine(state.report, state.stage);
     $("rd-work").textContent = R.workWords(state.report);
     clearResult();
@@ -203,7 +211,7 @@
 
   function judgeNow(final) {
     const now = final ? undefined : runNow();
-    const notes = state.range ? state.exercise.notes.filter((n) => n.bar >= state.range[0] && n.bar <= state.range[1]) : state.exercise.notes;
+    const notes = R.activeNotes(state.exercise).filter((n) => !state.range || (n.bar >= state.range[0] && n.bar <= state.range[1]));
     const shifted = notes.map((n) => ({ ...n, beat: n.beat - rangeStartBeat() }));
     const judged = R.judge({ notes: shifted, tempo: tempo(), events: state.events, latencyMs: state.profile ? state.profile.latency_offset_ms : 0, now });
     // Notes outside a drilled range are "out" in the full-length result the staff is painted from.
@@ -255,7 +263,7 @@
     host.dataset.mode = state.kind;
     lock(true);
     if (state.kind === "step") {
-      state.step = R.createStepRun(state.exercise.notes, state.range);
+      state.step = R.createStepRun(state.exercise.notes, state.range, state.exercise.hands);
       state.step.arrive(performance.now());
       Staff.paint(state.layout, state.step.summary(), state.step.waiting());
       state.layout.place(state.step.target(), curtainOn(), state.range ? state.range[0] : 0);
@@ -572,13 +580,14 @@
     $("rd-tempo").addEventListener("change", saveTempo);
     $("rd-start").addEventListener("click", () => (state.mode === "running" || state.mode === "showing" ? stop() : start()));
     $("rd-show").addEventListener("click", showMe);
-    $("rd-next").addEventListener("click", () => fresh());
+    $("rd-next").addEventListener("click", () => fresh(newSeed()));
     startMidi();
   }
 
   // For the tests and the console: the exercise on the screen, and a note as if the piano sent it.
   window.ImprovReadingPage = {
     exercise: () => state.exercise,
+    active: () => R.activeNotes(state.exercise),
     press: (midi) => onMidi({ data: Uint8Array.from([0x90, midi, 90]), timeStamp: performance.now() }),
   };
   if (!R || !Staff || !Keys || !Timing || !Synth || !Midi || !Setup) say("The page's scripts did not load.");

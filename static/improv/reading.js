@@ -1,7 +1,9 @@
 // improv: the note-reading trainer's rules. Pure: no browser, no clock, runs under Node in the tests.
 //
 // A stage is a key and a hand: right hand first, then the left, then both, in C, then on through the keys.
-// An exercise is four bars generated from a seed, never a stored piece, so it can only be read. The judge
+// An exercise is four bars for two hands generated from a seed, never a stored piece, so it can only be
+// read; the stage says which hand is judged, and the same seed gives the same piece whichever hand, so the
+// piece practised one hand at a time is the piece played with both (Avi, 2026-10-10). The judge
 // takes the notes played, in milliseconds from the first beat, and says for every written note whether it
 // came, how far from its time, and what was played instead; the live display and the final score come
 // from this one function. Step mode is a small state machine that waits for the right note. JUDGE_VERSION
@@ -45,9 +47,10 @@
   const BASS = { bottom: 18, top: 26 };
   const RANGES = {
     R: { 1: [28, 39], 2: [26, 42], 3: [24, 44] },
-    L: { 1: [18, 28], 2: [16, 30], 3: [14, 32] },
+    L: { 1: [14, 26], 2: [14, 26], 3: [14, 30] },
   };
   const BASS_ROOTS = { 1: [14, 18, 21, 25], 2: [14, 17, 18, 21, 24, 25], 3: [14, 16, 17, 18, 19, 21, 24, 25, 28] };
+  const BASS_RHYTHMS = { 1: [[4], [4], [2, 2]], 2: [[4], [2, 2], [2, 2], [2, 1, 1]], 3: [[2, 2], [2, 1, 1], [1, 1, 2], [1, 1, 1, 1]] };
 
   // ------------------------------------------------------------------------- stages
 
@@ -253,33 +256,34 @@
     return notes;
   }
 
-  // The left hand under a right-hand line: long notes on the key's bass notes.
+  // The left hand under the right hand's line: the key's bass notes, longer at first, moving more later.
   function accompaniment(rnd, keyName, difficulty) {
     const sig = keyAccidentals(keyName);
     const tonic = LETTERS.indexOf(keyInfo(keyName).name[0]);
-    const roots = BASS_ROOTS[difficulty].map((s) => s + tonic).map((s) => (s > 30 ? s - 7 : s));
+    // Inside the bass staff until the third difficulty, which may reach above it.
+    const top = RANGES.L[difficulty][1];
+    const roots = BASS_ROOTS[difficulty].map((s) => s + tonic).map((s) => (s > top ? s - 7 : s));
+    const home = Math.max(14, Math.min(28, 14 + tonic + (tonic > 4 ? 0 : 7)));
     const notes = [];
     for (let bar = 0; bar < BARS; bar++) {
       const last = bar === BARS - 1;
-      const split = !last && difficulty >= 2 && rnd() < (difficulty === 3 ? 0.6 : 0.4);
-      const parts = split ? [[0, 2], [2, 2]] : [[0, 4]];
-      for (const [at, dur] of parts) {
-        let step = last ? roots[0] + (roots[0] < 16 ? 7 : 0) : pick(rnd, roots);
-        if (last) step = Math.max(14, Math.min(28, 14 + tonic + (tonic > 4 ? 0 : 7)));
+      const rhythm = last ? [4] : pick(rnd, BASS_RHYTHMS[difficulty]);
+      let at = 0;
+      for (const dur of rhythm) {
+        const step = last ? home : pick(rnd, roots);
         const acc = sig[letterOf(step)];
         notes.push({ hand: "L", step, acc, midi: midiOf(step, acc), beat: bar * BEATS + at, dur, bar });
+        at += dur;
       }
     }
     return notes;
   }
 
+  // Always both hands, in the same order from the random stream, so the seed alone names the piece.
   function generate(stage, seed, bias) {
     const rnd = makeRandom(seed);
     const key = stage.key;
-    let notes = [];
-    if (stage.hands === "R") notes = melody(rnd, "R", key, stage.difficulty, bias);
-    else if (stage.hands === "L") notes = melody(rnd, "L", key, stage.difficulty, bias);
-    else notes = [...melody(rnd, "R", key, stage.difficulty, bias), ...accompaniment(rnd, key, stage.difficulty)];
+    const notes = [...melody(rnd, "R", key, stage.difficulty, bias), ...accompaniment(rnd, key, stage.difficulty)];
     notes.sort((a, b) => a.beat - b.beat || (a.hand === "L" ? -1 : 1) - (b.hand === "L" ? -1 : 1) || a.midi - b.midi);
     notes.forEach((n, i) => {
       n.index = i;
@@ -288,8 +292,17 @@
     return { key, hands: stage.hands, difficulty: stage.difficulty, seed: Math.floor(Number(seed)) >>> 0, bars: BARS, beats: BEATS, notes };
   }
 
+  // Whether a note is the stage's to play: with one hand chosen, the other is shown and left alone.
+  function isActive(exercise, note) {
+    return exercise.hands === "B" || note.hand === exercise.hands;
+  }
+
+  function activeNotes(exercise) {
+    return exercise.notes.filter((n) => isActive(exercise, n));
+  }
+
   function keyboardRange(exercise) {
-    const midis = exercise.notes.map((n) => n.midi);
+    const midis = activeNotes(exercise).map((n) => n.midi);
     const from = Math.min(...midis) - 3;
     const to = Math.max(...midis) + 3;
     return { from: from - (from % 12), to: to + (11 - ((to % 12) + 12) % 12) };
@@ -388,11 +401,13 @@
   // Waits at each onset until every note there has been played; a wrong key is counted against the
   // notes still waiting and the first wrong one is remembered. Nothing passes in step mode: it is the
   // repair shop, not the test.
-  function createStepRun(notes, range) {
+  // `hands` is the stage's: notes of the other hand are out, as are the bars outside `range`.
+  function createStepRun(notes, range, hands) {
     const from = range ? range[0] : 0;
     const to = range ? range[1] : BARS - 1;
-    const mine = notes.filter((n) => n.bar >= from && n.bar <= to);
-    const results = notes.map((n) => ({ state: n.bar >= from && n.bar <= to ? "pending" : "out", timing: null, offset_ms: null, played: null, tries: 0 }));
+    const inside = (n) => n.bar >= from && n.bar <= to && (!hands || hands === "B" || n.hand === hands);
+    const mine = notes.filter(inside);
+    const results = notes.map((n) => ({ state: inside(n) ? "pending" : "out", timing: null, offset_ms: null, played: null, tries: 0 }));
     const onsets = [...new Set(mine.map((n) => n.beat))].sort((a, b) => a - b);
     let at = 0;
     let arrivedMs = null;
@@ -609,6 +624,6 @@
   return {
     KEYS, HANDS, HAND_WORDS, BARS, BEATS, CONTROL_FLOOR, JUDGE_VERSION, PASS_SCORE, PITCH_WEIGHT, TIMING_WEIGHT, TEMPO_MIN, TEMPO_MAX, TEMPO_DEFAULT, TREBLE, BASS, RANGES,
     stageCount, stageOf, stageIndex, keyInfo, keyWords, stageTitle, keyAccidentals, signaturePositions, midiOf, spell, shownAccidental, noteName, zoneOf, zoneWords,
-    makeRandom, generate, keyboardRange, toleranceMs, judge, createStepRun, slips, spotWords, badBars, verdict, noteWords, toRecord, clampTempo, stageLine, workWords, litNotes,
+    makeRandom, generate, isActive, activeNotes, keyboardRange, toleranceMs, judge, createStepRun, slips, spotWords, badBars, verdict, noteWords, toRecord, clampTempo, stageLine, workWords, litNotes,
   };
 });

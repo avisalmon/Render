@@ -46,10 +46,10 @@ FAKE_PIANO = """
 READ_IT = """
 async ({ tempo, wrongEvery }) => {
   const host = document.getElementById('reading');
-  const ex = window.ImprovReadingPage.exercise();
+  const notes = window.ImprovReadingPage.active();
   const beat = 60000 / tempo;
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-  for (const [i, n] of ex.notes.entries()) {
+  for (const [i, n] of notes.entries()) {
     const due = Number(host.dataset.runStart) + n.beat * beat;
     const gap = due - performance.now();
     if (gap > 0) await wait(gap);
@@ -127,12 +127,17 @@ def test_the_stage_opens_where_the_path_is_with_the_key_beside_the_staff(world):
     assert _texts(page, "#rd-staff .im-st-hand") == ["right hand", "left hand"]
     assert _texts(page, "#rd-staff .im-st-key") == ["C major", "no sharps or flats"]
     assert page.locator("#rd-staff .im-st-note").count() >= 8
-    assert page.locator("#rd-staff .im-st-rest").count() == 4, "the silent hand rests"
+    assert page.locator("#rd-staff .im-st-note.im-st-other").count() >= 4, "the left hand is shown in grey"
+    assert page.locator("#rd-staff .im-st-note:not(.im-st-other)").count() >= 8
+    seed = page.get_attribute("#reading", "data-seed")
     assert page.inner_text("#rd-midi") == "Listening to Fake piano."
     page.select_option("#rd-key", "D")
     page.select_option("#rd-hands", "B")
     assert _texts(page, "#rd-staff .im-st-key") == ["D major", "2 sharps (F#, C#)"]
-    assert page.locator("#rd-staff .im-st-rest").count() == 0
+    assert page.locator("#rd-staff .im-st-note.im-st-other").count() == 0, "both hands are asked for"
+    assert page.get_attribute("#reading", "data-seed") == seed, "the piece stays through a change of key and hands"
+    page.click("#rd-next")
+    assert page.get_attribute("#reading", "data-seed") != seed, "Next is a new piece"
     assert page.locator("#rd-staff .im-st-acc").count() == 4, "two sharps on each staff"
     assert page.evaluate(MEASURE) == [0, 0]
     assert errors == []
@@ -142,7 +147,8 @@ def test_a_clean_flow_read_is_saved_passes_and_moves_the_stage_on(world):
     page, errors, player, base = world
     _open(page, base)
     _run(page, errors, tempo=160)
-    assert page.locator("#rd-staff .im-st-note.im-st-right").count() == page.locator("#rd-staff .im-st-note").count()
+    assert page.locator("#rd-staff .im-st-note.im-st-right").count() == page.locator("#rd-staff .im-st-note:not(.im-st-other)").count()
+    seed = page.get_attribute("#reading", "data-seed")
     assert page.inner_text("#rd-verdict").startswith("Passed: 100.")
     assert page.inner_text("#m-score") == "100"
     row = ReadingTake.objects.get(player=player)
@@ -152,11 +158,16 @@ def test_a_clean_flow_read_is_saved_passes_and_moves_the_stage_on(world):
     assert page.inner_text("#rd-status").startswith("Passed. Next: C major, left hand.")
     assert page.inner_text("#rd-stage-line").startswith("Stage 1 of 36: C major, right hand. Passed already; the path is at stage 2.")
     assert page.locator("#rd-takes li").count() == 1
-    page.click("#rd-next")
+    assert page.locator("#rd-staff .im-st-note.im-st-right").count() > 0, "the result stays on the staff to be looked at"
+    page.click("#rd-start")
+    page.wait_for_function("document.getElementById('reading').dataset.running === 'yes'", timeout=5000)
     assert page.inner_text("#rd-stage-line").startswith("Stage 2 of 36: C major, left hand. Pass it in Flow to move on.")
     assert _texts(page, "#rd-staff .im-st-key") == ["C major", "no sharps or flats"]
-    assert page.locator("#rd-staff .im-st-rest").count() == 4, "now the right hand rests"
-    assert page.locator("#rd-staff .im-st-note.im-st-right").count() == 0, "a fresh exercise"
+    assert page.get_attribute("#reading", "data-seed") == seed, "the left hand reads the piece the right hand just passed"
+    assert page.locator("#rd-staff .im-st-note.im-st-other").count() >= 4, "now the right hand is the grey one"
+    assert page.locator("#rd-staff .im-st-note.im-st-right").count() == 0, "a fresh take"
+    page.click("#rd-start")
+    page.wait_for_function("document.getElementById('reading').dataset.running === 'no'", timeout=5000)
     assert page.evaluate(MEASURE) == [0, 0]
     assert errors == []
 
@@ -185,7 +196,7 @@ def test_slips_are_coloured_named_and_offered_as_a_bar_to_drill(world):
 def test_step_mode_waits_for_the_right_note_and_cannot_pass(world):
     page, errors, player, base = world
     _open(page, base, "?key=C&hands=R&seed=9&mode=step")
-    notes = page.evaluate("window.ImprovReadingPage.exercise().notes.map((n) => n.midi)")
+    notes = page.evaluate("window.ImprovReadingPage.active().map((n) => n.midi)")
     page.click("#rd-start")
     page.wait_for_function("document.getElementById('reading').dataset.running === 'yes'", timeout=5000)
     assert page.get_attribute("#reading", "data-target") == "0"

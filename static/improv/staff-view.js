@@ -45,11 +45,9 @@
     const sigW = sig.treble.length * 9 + (sig.treble.length ? 6 : 0);
     const bar0 = LEFT + CLEF_W + sigW + 30;
     const barW = (W - bar0 - RIGHT) / exercise.bars;
-    const noteX = (beat) => {
-      const bar = Math.floor(beat / exercise.beats);
-      const inBar = beat - bar * exercise.beats;
-      return bar0 + bar * barW + 20 + inBar * ((barW - 30) / exercise.beats);
-    };
+    // One beat is the same width everywhere, bar lines included, so the cursor moves at one speed and
+    // crosses a bar line at the same rate it crosses a beat.
+    const noteX = (beat) => bar0 + 20 + beat * (barW / exercise.beats);
 
     for (const base of [TREBLE_Y, BASS_Y]) for (let i = 0; i < 5; i++) el("line", { x1: LEFT, x2: W - RIGHT, y1: base - i * 10, y2: base - i * 10, class: "im-st-line" }, host);
     el("line", { x1: LEFT, x2: LEFT, y1: TREBLE_Y - 40, y2: BASS_Y, class: "im-st-bar" }, host);
@@ -73,21 +71,13 @@
     text(host, 4, TREBLE_Y + 14, words.key, "im-st-key", 11);
     text(host, 4, BASS_Y + 14, words.signature, "im-st-key", 11);
 
-    const silent = exercise.hands === "R" ? "L" : exercise.hands === "L" ? "R" : null;
-    if (silent) {
-      for (let b = 0; b < exercise.bars; b++) {
-        const base = silent === "R" ? TREBLE_Y : BASS_Y;
-        el("rect", { x: bar0 + b * barW + barW / 2 - 7, y: base - 30, width: 14, height: 5, class: "im-st-rest" }, host);
-      }
-    }
-
     const layer = el("g", { class: "im-st-notes" }, host);
     const groups = [];
     const beamed = new Set();
     exercise.notes.forEach((n, i) => {
       const x = noteX(n.beat);
       const y = yOf(n.hand, n.step);
-      const g = el("g", { class: "im-st-note", "data-index": i, tabindex: "-1" }, layer);
+      const g = el("g", { class: "im-st-note" + (R.isActive(exercise, n) ? "" : " im-st-other"), "data-index": i, tabindex: "-1" }, layer);
       const staff = n.hand === "R" ? R.TREBLE : R.BASS;
       const diff = n.step - staff.bottom;
       if (diff < 0) for (let d = -2; d >= diff; d -= 2) el("line", { x1: x - 10, x2: x + 10, y1: yOf(n.hand, staff.bottom + d), y2: yOf(n.hand, staff.bottom + d), class: "im-st-ledger" }, g);
@@ -170,7 +160,7 @@
         if (r.state === "right") g.classList.add(r.timing === "ontime" || r.timing === "quick" ? "im-st-right" : "im-st-off");
         else if (r.state === "wrong") g.classList.add("im-st-wrong");
         else if (r.state === "missed") g.classList.add("im-st-missed");
-        else if (r.state === "out") g.classList.add("im-st-out");
+        else if (r.state === "out" && !g.classList.contains("im-st-other")) g.classList.add("im-st-out");
       }
       if (due.has(i)) g.classList.add("im-st-due");
     });
