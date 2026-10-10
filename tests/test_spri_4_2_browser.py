@@ -89,7 +89,7 @@ def _start(page):
 
 
 def _key_class(page, note):
-    return page.eval_on_selector(f'.im-key[data-note="{note}"]', "k => k.className")
+    return page.eval_on_selector(f'#keys .im-key[data-note="{note}"]', "k => k.className")
 
 
 def test_the_keys_are_drawn_and_the_piano_is_heard_before_playing(play):
@@ -112,9 +112,9 @@ def test_a_chord_tone_over_the_band_goes_green_and_a_guide_tone_brighter(play):
     _start(page)
     # Bar 1 is Dm7 for four slow seconds: F is the third, D the root.
     page.evaluate("window.__piano.press(65)")
-    page.wait_for_function("document.querySelector('.im-key[data-note=\"65\"]').classList.contains('im-key-guide')", timeout=4000)
+    page.wait_for_function("document.querySelector('#keys .im-key[data-note=\"65\"]').classList.contains('im-key-guide')", timeout=4000)
     page.evaluate("window.__piano.press(62)")
-    page.wait_for_function("document.querySelector('.im-key[data-note=\"62\"]').classList.contains('im-key-chord')", timeout=4000)
+    page.wait_for_function("document.querySelector('#keys .im-key[data-note=\"62\"]').classList.contains('im-key-chord')", timeout=4000)
     assert "chord tones" in page.locator("#feedback").inner_text()
     assert page.locator("#heard").inner_text() in ("D4 F4, a minor third", "Dm7?", "Dm", "D4 F4, a minor third")
     page.click("#play-toggle")
@@ -125,9 +125,9 @@ def test_an_outside_note_is_amber_while_undecided_and_settles(play):
     page, errors = play
     _start(page)
     page.evaluate("window.__piano.press(63)")
-    page.wait_for_function("document.querySelector('.im-key[data-note=\"63\"]').classList.contains('im-key-pending')", timeout=4000)
+    page.wait_for_function("document.querySelector('#keys .im-key[data-note=\"63\"]').classList.contains('im-key-pending')", timeout=4000)
     # A beat at 60 bpm is a second; with nothing after it, the Eb settles as outside.
-    page.wait_for_function("document.querySelector('.im-key[data-note=\"63\"]').classList.contains('im-key-outside')", timeout=4000)
+    page.wait_for_function("document.querySelector('#keys .im-key[data-note=\"63\"]').classList.contains('im-key-outside')", timeout=4000)
     assert "outside" in page.locator("#feedback").inner_text()
     page.click("#play-toggle")
     assert not errors, errors

@@ -34,8 +34,9 @@
     <section class="im-panel im-panel-flush im-flat" aria-label="Transport">
       <div class="im-transport">
         <button id="play-toggle" data-key-action="primary" class="im-btn im-btn-big" type="button" disabled>Play</button>
+        <button id="pause-toggle" data-key-action="secondary" class="im-btn" type="button" hidden>Pause</button>
         <div id="count-in" class="im-countin" aria-live="off" hidden></div>
-        <p class="im-note im-hint">Space starts and stops it. Key, tempo, feel, band and mix change at the next bar line while it plays. The progression, count-in and loop wait for Stop.</p>
+        <p class="im-note im-hint">Space starts and stops it. B7 or the left pedal pauses. Key, tempo, feel, band and mix change at the next bar line while it plays. The progression, count-in and loop wait for Stop.</p>
       </div>
       <p id="play-error" class="im-error" role="alert" hidden></p>
     </section>
@@ -55,7 +56,7 @@
           <span class="im-swatch im-swatch-gp1">root position</span>
           <span class="im-swatch im-swatch-gp2">first inversion</span>
           <span class="im-swatch im-swatch-gp3">second inversion</span>
-          <span id="guide-hint">Point at a bar to look ahead.</span>
+          <span id="guide-hint">Click a chord to hold it.</span>
         </p>
       </div>
       <div id="guide-keys" class="im-keyboard im-guide-keys" aria-label="Chord guide keyboard"></div>

@@ -19,8 +19,8 @@ from rest_framework.views import APIView
 from rest_framework.exceptions import NotFound, PermissionDenied, Throttled, ValidationError
 from rest_framework.permissions import SAFE_METHODS
 
-from .models import ChordQuality, ChordScale, Completion, DrillAttempt, Exercise, Feedback, Lesson, Phrase, PracticeSession, Progression, Scale, ScaleFingering, ScaleRun, Style, Tag, Take
-from . import bests, practice, progress, retention, trainer, weakness, workout
+from .models import ChordQuality, ChordScale, Completion, DrillAttempt, Exercise, Feedback, Lesson, Phrase, PracticeSession, Progression, ReadingTake, Scale, ScaleFingering, ScaleRun, Style, Tag, Take
+from . import bests, practice, progress, reading, retention, trainer, weakness, workout
 from .access import profile_for
 from .feedback_mail import send_feedback_mail
 from .permissions import IsPlayer
@@ -37,6 +37,7 @@ from .serializers import (
     visible_exercises,
     visible_lessons,
     PracticeSessionSerializer,
+    ReadingTakeSerializer,
     TakeSerializer,
     ProgressionSerializer,
     ScaleFingeringSerializer,
@@ -363,6 +364,26 @@ class DrillAttemptViewSet(MineViewSet):
         return rows
 
 
+class ReadingTakeViewSet(MineViewSet):
+    """One read-through in the reading trainer. The page judges and posts the result; the pass line is the
+    server's, and a Step take never passes."""
+
+    queryset = ReadingTake.objects.all()
+    serializer_class = ReadingTakeSerializer
+    is_log = True
+
+    def get_queryset(self):
+        rows = super().get_queryset()
+        params = self.request.query_params
+        if params.get("key"):
+            rows = rows.filter(key=params["key"])
+        if params.get("hands"):
+            rows = rows.filter(hands=params["hands"])
+        if params.get("mode"):
+            rows = rows.filter(mode=params["mode"])
+        return rows
+
+
 class CompletionViewSet(viewsets.ReadOnlyModelViewSet):
     """The exercises this player has passed. Read-only for everyone: the server makes a
     completion as the consequence of a take, because one a client could write would be an XP
@@ -463,6 +484,15 @@ class BestsView(APIView):
         return Response(bests.report(profile_for(request.user)))
 
 
+class ReadingView(APIView):
+    """Where the player is in the reading ladder and what they misread: a read over reading takes, stored nowhere."""
+
+    permission_classes = [IsPlayer]
+
+    def get(self, request):
+        return Response(reading.report(profile_for(request.user)))
+
+
 class TrainerView(APIView):
     """What to work on in the scales and chords trainer: a read over runs and attempts, stored nowhere."""
 
@@ -492,6 +522,7 @@ MINE_ENDPOINTS = {
     "takes": TakeViewSet,
     "scale-runs": ScaleRunViewSet,
     "drill-attempts": DrillAttemptViewSet,
+    "reading-takes": ReadingTakeViewSet,
     "completions": CompletionViewSet,
 }
 # Not a router endpoint: see PlayerView.
@@ -505,6 +536,7 @@ DERIVED = {
     "weakness": WeaknessView,
     "bests": BestsView,
     "trainer": TrainerView,
+    "reading": ReadingView,
 }
 # Actions: a POST that changes one thing about the player and answers with a read.
 ACTIONS = {"start-here": StartHereView}

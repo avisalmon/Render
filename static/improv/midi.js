@@ -1,5 +1,5 @@
 // improv: reading MIDI messages. Pure: no browser, runs under Node in the tests.
-// Used: note on (velocity 0 is note off), note off, the sustain pedal. Channel is
+// Used: note on (velocity 0 is note off), note off, the sustain pedal, the left (soft) pedal. Channel is
 // ignored. Everything else is dropped, including anything malformed.
 (function (root, factory) {
   if (typeof module === "object" && module.exports) module.exports = factory();
@@ -22,6 +22,9 @@
     }
     if (kind === 0xb0 && a === 64 && b !== undefined && b <= 127) {
       return { type: "pedal", down: b >= 64 };
+    }
+    if (kind === 0xb0 && a === 67 && b !== undefined && b <= 127) {
+      return { type: "softpedal", down: b >= 64 };
     }
     return null;
   }

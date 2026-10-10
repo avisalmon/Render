@@ -187,6 +187,21 @@ lighter shades. Spec: ch. 8 "The chord guide".
 | Sprint | What | Traces | Status |
 |---|---|---|---|
 | SPR-I.11.1 | The Play screen's chord guide: a five-octave keyboard under the chart that follows the band, a look-ahead by hover, focus or tap on any bar, scale tones in pale blue, root position in dark green, inversions in lighter greens, notes spelled as the player's setting says | ch. 8 | DONE 2026-10-10 |
+| SPR-I.11.2 | Pause on the Play screen: a Pause button, B7 and the left pedal (controller 67) pause and resume by suspending the audio clock; nothing is recorded or judged while paused; a click on a chord holds it in the guide while stopped or paused | ch. 8 | DONE 2026-10-10 |
+
+---
+
+## EPIC-I.12: Note reading  `IN PROGRESS`
+
+Avi, 2026-10-10: "The user will get a sheet note 2 hands and the system will practice him. It will include a show me,
+play, score... let's have something amazing above what's out there." After the proposal: "Right hand first, after
+success left hand and then after success both. Start with C but progress to the rest. Also hint what scale we are near
+the left indication." Spec: ch. 11.
+
+| Sprint | What | Traces | Status |
+|---|---|---|---|
+| SPR-I.12.1 | The reading trainer at `/improv/reading/`: a ladder of thirty-six stages (twelve keys, each right hand, left hand, both), generated four-bar exercises on a grand staff with the hand and the key written beside each staff, Flow (count-in, the pulse never waits, judged against the clock) and Step (waits for the right note, never passes), the curtain, Show me, slips named by part of the staff and kind, Drill bar N, a weak-spot map that leans the next exercise, `ReadingTake` and its API, the `reading` read, `Player.reading_tempo`, Reading in the menu, the one-screen guard and the three keys | ch. 11, data model 6c, api | DONE 2026-10-10 |
+| SPR-I.12.2 | **Avi at the piano:** the first stages at the real piano: is the window fair, is the curtain right, does Step feel like a repair shop; then pause, the demo through the piano, and what he asks for | ch. 11 | TODO |
 
 ---
 

@@ -213,7 +213,7 @@ away the calibration that makes timing mean anything. POST and DELETE answer 405
 from every note time when a take is judged), `midi_input_name` (the keyboard last
 used, **by name**: a MIDI port's id is not promised to be the same next session),
 `note_names` (`sharps` or `flats`), `demo_output` (`piano`, over MIDI, or `laptop`,
-as a plain tone), `trainer_tempo` (30 to 160, default 60, the scale trainer's tempo, saved when it is changed), `timezone` (an IANA name, default `Asia/Jerusalem`, because the
+as a plain tone), `trainer_tempo` (30 to 160, default 60, the scale trainer's tempo, saved when it is changed), `reading_tempo` (30 to 160, default 72, the reading trainer's, saved the same way), `timezone` (an IANA name, default `Asia/Jerusalem`, because the
 site runs on UTC and a streak is made of your own days), `created_at`.
 
 Whose profile it is cannot be changed: `username` and `id` are read-only, and the
@@ -471,6 +471,8 @@ These are screens, not API, listed so the route list is complete. Each redirects
 - `/improv/scales/`: the scale trainer: pick a key, a level and the tempo, play it with both hands in time against the
   fingering strip, and get the score.
 - `/improv/chords/`: the chord trainer: Learn, Drill and Circle, the hint, and the time of each answer.
+- `/improv/reading/`: the reading trainer: a generated exercise on a grand staff, read in Flow or Step, with Show me
+  and the stage ladder. `?key=G&hands=B` opens a stage, `&seed=` a particular exercise, `&mode=step` in Step.
 - `/improv/play/?exercise={slug}`: Play opened on an exercise: the progression, key, tempo,
   feel and loop are set from it, and a take played over exactly that loop is scored by the
   exercise's own kind and posted with `exercise` set.
@@ -519,6 +521,30 @@ says to delete some first (practice sessions, scale runs and drill attempts: 200
 - `weakest_keys`: keys with at least five prompts, ordered by the share missed (a wrong try or a skip counts as missed; a hint
   alone does not): `key_pc`, `attempts`, `missed`, `miss_share`.
 - `totals`: `runs`, `passes`, `attempts`, `clean` (answers with no wrong try and no hint).
+
+## The reading trainer
+
+### Reading takes
+
+`GET, POST /improv/api/reading-takes/`, `GET, PUT, PATCH, DELETE /improv/api/reading-takes/{id}/`. Your own takes only.
+Newest first. `key` (C, G, F, D, Bb, A, Eb, E, Ab, B, Db or F#), `hands` (`R`, `L`, `B`), `difficulty` (1 to 3),
+`tempo_bpm` (30 to 160), `mode` (`flow` or `step`), `curtain`, `seed`, `notes` (1 to 200 of `{hand, step, acc, midi,
+beat, dur}`), `events` (up to 4000 of `{t_ms, type: on/off, note, velocity}`), `results` (one per note: `{state: right,
+wrong, missed, out or pending; timing; offset_ms; played}`), `score` (0 to 100), `pitch_accuracy`, `timing_accuracy`
+(0 to 1), `passed` (read-only: the server sets it, a Flow take with a score of 80 or more; a Step take never passes),
+`judge_version`, `created_at` (read-only). Filters: `?key=`, `?hands=`, `?mode=`. The ceiling is the log ceiling (20000).
+
+### Reading
+
+`GET /improv/api/reading/`. Read-only (405 on a write), your own data only, stored nowhere. The reading screen opens on it.
+- `stage`: where the path is: `index` (0 to 35), `key`, `hands`, `difficulty`, `total` (36) and `done` (every stage passed).
+  The stage is one past the highest stage passed in Flow; a pass further along counts.
+- `passed`: the stage indexes passed, ascending.
+- `bests`: the best Flow take of each stage played: `index`, `key`, `hands`, `score`, `tempo_bpm`, `passed`, `takes`, `at`.
+- `zones`: the weak-spot map over the last thirty days, worst first: `zone` (`treble-below`, `treble-on`, `treble-above`,
+  `bass-below`, `bass-on`, `bass-above`), `seen`, `missed`, `share`.
+- `focus`: up to two zones with at least six notes seen and a quarter of them missed; the generator leans toward them.
+- `totals`: `takes`, `passes`.
 
 ## Still to come
 

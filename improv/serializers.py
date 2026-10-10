@@ -2,7 +2,7 @@ from django.db.models import Q
 from rest_framework import serializers
 
 from .grooves import check_groove
-from .models import ChordQuality, ChordScale, Completion, DrillAttempt, Exercise, Feedback, Lesson, Phrase, Player, PracticeSession, Progression, Scale, ScaleFingering, ScaleRun, Style, Tag, Take
+from .models import MOST_READING_EVENTS, MOST_READING_NOTES, ChordQuality, ChordScale, Completion, DrillAttempt, Exercise, Feedback, Lesson, Phrase, Player, PracticeSession, Progression, ReadingTake, Scale, ScaleFingering, ScaleRun, Style, Tag, Take
 from .teaching import check_notes
 
 
@@ -135,7 +135,7 @@ class PlayerSerializer(serializers.ModelSerializer):
         model = Player
         fields = [
             "id", "username", "daily_goal_minutes", "latency_offset_ms", "midi_input_name",
-            "note_names", "demo_output", "trainer_tempo", "timezone", "created_at",
+            "note_names", "demo_output", "trainer_tempo", "reading_tempo", "timezone", "created_at",
         ]  # fmt: skip
         read_only_fields = ["created_at"]
 
@@ -396,4 +396,86 @@ class DrillAttemptSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"is_correct": ["A skipped prompt is not correct."]})
         if value("is_correct") and value("wrong_tries"):
             raise serializers.ValidationError({"is_correct": ["A prompt with wrong tries is not correct."]})
+        return attrs
+
+
+# ---------------------------------------------------------------- SPR-I.12.1
+
+READING_STATES = ("right", "wrong", "missed", "out", "pending")
+
+
+def _is_int(value):
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+class ReadingTakeSerializer(serializers.ModelSerializer):
+    """What the reading page posts after a take, checked for shape and range. `passed` is the server's:
+    a Flow take at the line or above, never a Step take."""
+
+    class Meta:
+        model = ReadingTake
+        fields = [
+            "id", "key", "hands", "difficulty", "tempo_bpm", "mode", "curtain", "seed", "notes", "events", "results",
+            "score", "pitch_accuracy", "timing_accuracy", "passed", "judge_version", "created_at",
+        ]  # fmt: skip
+        read_only_fields = ["passed", "created_at"]
+
+    def validate_key(self, value):
+        if value not in ("C", "G", "F", "D", "Bb", "A", "Eb", "E", "Ab", "B", "Db", "F#"):
+            raise serializers.ValidationError("A major key as the ladder writes it: C, G, F, D, Bb, A, Eb, E, Ab, B, Db or F#.")
+        return value
+
+    def validate_notes(self, notes):
+        if not isinstance(notes, list) or not notes or len(notes) > MOST_READING_NOTES:
+            raise serializers.ValidationError(f"notes is a list of 1 to {MOST_READING_NOTES} notes.")
+        for i, n in enumerate(notes):
+            ok = (
+                isinstance(n, dict)
+                and n.get("hand") in ("R", "L")
+                and _is_int(n.get("step")) and 0 <= n["step"] <= 70
+                and _is_int(n.get("acc")) and -1 <= n["acc"] <= 1
+                and _is_int(n.get("midi")) and 0 <= n["midi"] <= 127
+                and isinstance(n.get("beat"), (int, float)) and not isinstance(n.get("beat"), bool) and n["beat"] >= 0
+                and isinstance(n.get("dur"), (int, float)) and not isinstance(n.get("dur"), bool) and n["dur"] > 0
+            )
+            if not ok:
+                raise serializers.ValidationError(f"note {i} is not {{hand R/L, step, acc -1..1, midi 0..127, beat, dur}}.")
+        return notes
+
+    def validate_events(self, events):
+        if not isinstance(events, list) or len(events) > MOST_READING_EVENTS:
+            raise serializers.ValidationError(f"events is a list of at most {MOST_READING_EVENTS} events.")
+        for i, e in enumerate(events):
+            ok = (
+                isinstance(e, dict)
+                and _is_int(e.get("t_ms"))
+                and e.get("type") in ("on", "off")
+                and _is_int(e.get("note")) and 0 <= e["note"] <= 127
+                and _is_int(e.get("velocity")) and 0 <= e["velocity"] <= 127
+            )
+            if not ok:
+                raise serializers.ValidationError(f"event {i} is not {{t_ms, type: on/off, note 0..127, velocity 0..127}}.")
+        return events
+
+    def validate_results(self, results):
+        if not isinstance(results, list) or len(results) > MOST_READING_NOTES:
+            raise serializers.ValidationError(f"results is a list of at most {MOST_READING_NOTES} objects.")
+        for i, r in enumerate(results):
+            ok = (
+                isinstance(r, dict)
+                and r.get("state") in READING_STATES
+                and (r.get("offset_ms") is None or _is_int(r.get("offset_ms")))
+                and (r.get("played") is None or (_is_int(r.get("played")) and 0 <= r["played"] <= 127))
+            )
+            if not ok:
+                raise serializers.ValidationError(f"result {i} is not {{state, timing, offset_ms, played}}.")
+        return results
+
+    def validate(self, attrs):
+        def value(name):
+            return attrs[name] if name in attrs else getattr(self.instance, name, None)
+
+        notes, results = value("notes"), value("results")
+        if notes is not None and results is not None and len(results) != len(notes):
+            raise serializers.ValidationError({"results": ["One result for each written note."]})
         return attrs

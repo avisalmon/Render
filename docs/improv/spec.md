@@ -635,7 +635,7 @@ stays inside `/improv/`. The API answers a visitor with 401/403 (DRF), never wit
 
 **A signed-in person** goes straight to Today, like Avi. A `Player` row is created on the first visit.
 
-**The menu (SPR-I.9.5).** The header shows only the everyday screens: Today, Play, Lessons, Scales, Chords. A
+**The menu (SPR-I.9.5).** The header shows only the everyday screens: Today, Play, Lessons, Scales, Chords, Reading (since SPR-I.12.1). A
 **More** menu holds Challenges, Library, Takes and Reference. The person's email is an **account menu** holding
 Progress, Practice log, Setup (and Timing spike, for staff) and Log out (a POST form). **Feedback stays in plain
 sight** in the bar, in the accent colour, because feedback is why the app was opened up and the front door promises
@@ -997,9 +997,21 @@ chart while the hands are busy and a corner alone cannot show a chord the band h
   `chord-guide-view.js` only paints. Chords with more than three tones show three positions; a triad shows
   three; a position that would run off the top of the keyboard is dropped.
 
+**Pause (SPR-I.11.2, Avi 2026-10-10).** Play, Stop and now Pause. While the band plays, a Pause button sits
+beside Stop; **B7** presses it (the second control key) and so does the **left pedal** (MIDI controller 67, down
+at 64 and above, debounced like the control keys). Pause suspends the audio clock, so the band, the lit bar and
+every sound already scheduled stand still, and Resume carries on from the same place, one more B7 or pedal press.
+Nothing played while paused is recorded or judged, and the practice timer does not count the pause. C8 and the
+Stop button end the take as usual, also from a pause. While playing, B7 is Pause and no longer "Back to the
+lessons" on an exercise. The reason for pausing is to look at a chord, so a paused screen behaves like a stopped
+one for the guide: **a click on a bar holds that chord** ("Holding"), a click on the same chord again lets it go,
+Enter does the same from the keyboard, and Resume (or Stop) drops the hold. Clicks while the band plays hold
+nothing.
+
 ### The trainer screens
 
-`/improv/scales/` and `/improv/chords/` are specified in chapter 10 and follow both standing rules above.
+`/improv/scales/` and `/improv/chords/` are specified in chapter 10, and `/improv/reading/` in chapter 11; all
+three follow both standing rules above.
 
 ---
 
@@ -1217,3 +1229,106 @@ measured.
 **What is kept.** Every answered or skipped prompt is a `DrillAttempt` (data model, section 7),
 and every scale run is a `ScaleRun`. A derived read, `GET /improv/api/trainer/`, returns the best score
 per key and level, the slowest chords and the weakest keys, and the screens show them as "work on this".
+
+---
+
+## Chapter 11. The reading trainer (Epic I.12, Avi 2026-10-10)
+
+Avi asked for note reading next. His words:
+
+> The user will get a sheet note, two hands, and the system will practice him. It will include a
+> show me, play, score. Get ideas from existing solutions but let's have something amazing above
+> what's out there.
+
+And after the proposal: **"Right hand first, after success left hand and then after success both.
+Start with C but progress to the rest. Also hint what scale we are near the left indication."**
+
+What the proposal set out, and he accepted: nothing is a stored piece, every exercise is generated
+so it can only be read; two honest modes, Flow (the pulse never waits) and Step (it waits for the
+right note); a curtain that hides what is behind the cursor so the eyes move forward; a diagnosis
+by part of the staff and kind of slip that leans the next exercise toward the weak spot; Show me;
+and a score with a pass line that moves the player along a ladder.
+
+### The ladder
+
+A **stage** is a key and a hand. Twelve keys in the order C, G, F, D, Bb, A, Eb, E, Ab, B, Db, F#
+(one new accidental at a time), and in each key the right hand first, then the left, then both:
+thirty-six stages. The difficulty grows with the key: the first four keys are steps and thirds in
+quarters and halves (difficulty 1); the next four add leaps, dotted notes, eighth pairs and ledger
+lines (2); the last four add wider leaps and a chromatic neighbour with its accidental, resolved a
+step up (3). The path's stage is one past the highest stage **passed in Flow**; as in the lessons
+(chapter 6, "Start anywhere"), the player may pick any key and hand, and a pass further along
+counts. The ladder is read from the takes and stored nowhere.
+
+### The exercise
+
+Four bars of 4/4 from a seed (`reading.js`, pure, tested under Node). The active hand reads a walk
+through the key's letters inside the hand's range (right: C4 to G5 at difficulty 1, widening to F3
+to E6; left: G2 to C4, widening to C2 to G4). With both hands the left plays long notes on the
+key's bass notes under the right hand's line. The last note is the tonic. The same stage and seed
+give the same exercise, so a take can be shown again; a new press of Next (A#7) is a new seed.
+
+The staff is a grand staff drawn in SVG (`staff-view.js`): clefs, the key signature, the time
+signature, bar numbers, ledger lines, stems away from the middle line, beams on eighth pairs, dots,
+and whole rests on the silent hand. **Next to each staff the hand is named ("right hand", "left
+hand") and under it the key is written out, "G major" and "1 sharp (F#)"**, in the accent colour,
+so the player never has to count the signature.
+
+### Flow and Step
+
+**Flow** (the default) is real sight reading: four clicks count in, then the click keeps the pulse
+to the end of the fourth bar whatever happens. The cursor runs across the staff; the notes due now
+glow and are amber on the keyboard. Every written note is judged (`reading.js` `judge`, judge
+version 1, the live display and the final score from the same function): a press of the right key
+within half the note's length of its time is **right**, in time within a tolerance of 30% of a beat
+(60 to 150 ms) and otherwise **early** or **late**; a press of another key in that window, with no
+right press for the note, is **wrong** and the note played is kept and drawn as a dotted head where
+it was played; a note with no press is **missed**; a press that belongs to no note is an extra. The
+control keys are never judged. The player's latency offset (chapter 4) is subtracted from every
+note. Score = 70% pitch (right notes over written notes plus extras) + 30% timing (in-time notes
+over right notes). **The line is 80**, and the server draws it.
+
+**Step** waits at each onset until every note there has been played; a wrong key counts a try
+against the notes still waiting and the first wrong one is remembered. It scores first-try notes
+and notes found within a second and a half. **A Step take never passes the stage**: it is the repair
+shop. After a Flow take every bar with a slip gets a "Drill bar N" button, which runs Step on that
+bar alone, the other bars dimmed.
+
+**The curtain** (a checkbox) covers everything behind the cursor while reading, so the eyes have
+nowhere to go but forward.
+
+### What went wrong, and the lean
+
+After a take the screen says, worst first: how many notes in each part of the staff were missed or
+misread ("Treble clef, below the staff: 3 of 8"), how many were off by one step (a line read as the
+next space), in the wrong octave, an accidental missed, and how many were off the beat and which
+hand drifts. Hovering a note afterwards says what it was and what was played, and sounds both.
+
+The server keeps a **weak-spot map**: over the last thirty days, per part of the staff (treble or
+bass; below, on or above the staff), how many notes were seen and how many missed or misread. A part
+with at least six notes and a quarter missed is a **focus** (up to two), shown as "Work on: ..." on
+the screen, and the generator leans the next exercises that way: the walk starts and drifts toward
+that part of the staff.
+
+### Show me, the keys, the tempo
+
+**Show me** (B7) plays the exercise on the laptop's demo voice at the chosen tempo, lighting each
+note on the staff and on the keyboard as it sounds; it is not a take. The piano's own sound over
+MIDI (chapter 6, "Where demos and answers sound") is listed below as still to come. **C8** is Start
+and Stop, **A#7** is Next. The tempo (30 to 160, default 72) is remembered on the profile as
+`reading_tempo`, separately from the scale trainer's.
+
+### What is kept
+
+Every finished Flow or Step take is a `ReadingTake` (data model, section 6c): the stage, tempo, mode,
+curtain, seed, the exercise as written, the MIDI as it arrived, the judge's word on every note, the
+score and the server's `passed`. The derived read `GET /improv/api/reading/` returns the path's
+stage, the stages passed, the best take per stage, the weak-spot map and the focus. The screen
+lists the last ten takes.
+
+### Still to come
+
+Pause (the left pedal) on this screen; the demonstration through the piano over MIDI; keys beyond
+the ladder's twelve majors and the minors; imported pieces (MusicXML); lead-sheet reading with
+chord symbols, the bridge back to improvising; a flash drill (a bar shown for a second, then
+played from memory).

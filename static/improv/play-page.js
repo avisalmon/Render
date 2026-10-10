@@ -38,6 +38,9 @@
     synth: null,
     scheduler: null,
     playing: false,
+    paused: false,
+    pinned: null,
+    lastPedalAt: -1e9,
     frame: 0,
     cells: [],
     pending: null,
@@ -209,6 +212,7 @@
     const rows = P.layoutBars(state.built.chart, state.built.from, state.built.to);
     state.cells = View.draw($("chart"), rows);
     state.preview = null;
+    state.pinned = null;
     wirePreview();
     state.guideShown = null;
     updateGuide();
@@ -245,7 +249,23 @@
       cell.el.addEventListener("mouseleave", clearPreview);
       cell.el.addEventListener("focus", () => previewAt(index, 0));
       cell.el.addEventListener("blur", clearPreview);
+      cell.el.addEventListener("click", (e) => holdAt(index, at(e)));
+      cell.el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") holdAt(index, 0);
+      });
     });
+  }
+
+  // Stopped or paused, a click keeps that chord in the guide; the same chord again lets it go.
+  function holdAt(index, fraction) {
+    if (state.playing && !state.paused) return;
+    const bar = state.built && state.built.ok ? state.built.chart.bars[index] : null;
+    if (!bar || !bar.chords.length) return;
+    const chord = CG.chordInBar(bar, fraction * bar.beats);
+    const same = state.pinned && state.pinned.bar === index && state.pinned.chord.name === chord.name && state.pinned.chord.beat === chord.beat;
+    state.pinned = same ? null : { bar: index, chord };
+    state.guideShown = null;
+    updateGuide();
   }
 
   // The chord the guide should show, and why: pointed at, else the one the band is on, else the
@@ -253,7 +273,8 @@
   function guideTarget() {
     if (state.preview) return { chord: state.preview.chord, bar: state.preview.bar, why: "Looking ahead" };
     if (!state.built || !state.built.ok) return null;
-    if (state.playing && state.nowChord) return { chord: state.nowChord.chord, bar: state.nowChord.bar, why: "Now playing" };
+    if (state.pinned && (!state.playing || state.paused)) return { chord: state.pinned.chord, bar: state.pinned.bar, why: "Holding" };
+    if (state.playing && state.nowChord) return { chord: state.nowChord.chord, bar: state.nowChord.bar, why: state.paused ? "Paused on" : "Now playing" };
     const bar = state.built.chart.bars[state.built.from];
     return bar && bar.chords.length ? { chord: bar.chords[0], bar: state.built.from, why: "First chord" } : null;
   }
@@ -261,10 +282,12 @@
   function updateGuide() {
     if (!state.guideKeys) return;
     const target = guideTarget();
+    $("guide-hint").textContent = state.playing && !state.paused ? "Point at a bar to look ahead." : "Click a chord to hold it.";
     const key = target ? `${target.chord.name}|${target.why}|${target.bar}` : "";
     if (key === state.guideShown) return;
     state.guideShown = key;
     for (const c of state.cells) if (c) c.el.removeAttribute("data-previewing");
+    for (const c of state.cells) if (c) c.el.removeAttribute("data-held");
     const spelling = state.profile ? state.profile.note_names : "sharps";
     const guide = target ? CG.guideFor(target.chord, state.qualities, spelling) : null;
     CGV.show(state.guideKeys, guide);
@@ -274,6 +297,7 @@
       return;
     }
     if (target.why === "Looking ahead" && state.cells[target.bar]) state.cells[target.bar].el.setAttribute("data-previewing", "yes");
+    if (state.pinned && state.cells[state.pinned.bar] && (!state.playing || state.paused)) state.cells[state.pinned.bar].el.setAttribute("data-held", "yes");
     $("guide-chord").textContent = `${target.why}: ${guide.name}  =  ${guide.tones.join(" ")}`;
     $("guide-scale").textContent = guide.scaleName ? `Scale: ${guide.scaleName} (${guide.scaleNotes.join(" ")})` : "";
   }
@@ -588,7 +612,7 @@
   }
 
   function takeTimeOf(perfMs) {
-    if (!state.playing || !state.take || !state.take.anchor) return null;
+    if (!state.playing || state.paused || !state.take || !state.take.anchor) return null;
     const audio = Timing.audioAt(state.take.anchor, perfMs);
     return P.takeTimeMs(state.scheduler.barAt(audio), state.built, state.scheduler.bpm);
   }
@@ -640,6 +664,13 @@
 
   function onMidi(event) {
     const message = M.parse(event.data);
+    if (message && message.type === "softpedal") {
+      if (message.down && event.timeStamp - state.lastPedalAt >= Ctl.DEBOUNCE_MS) {
+        state.lastPedalAt = event.timeStamp;
+        togglePause().catch((e) => showError("Pause failed: " + e.message));
+      }
+      return;
+    }
     if (!message || message.type === "pedal" || Ctl.isControlNote(message.note)) return;
     if (message.type === "on") noteActivity();
     if (message.type === "on") state.held = [...state.held.filter((n) => n !== message.note), message.note];
@@ -923,12 +954,13 @@
     ensureSession().catch((e) => ($("take-status").textContent = "No session could be opened. " + e.message));
     lockSettings(true);
     updateShowMe();
-    $("play-toggle").textContent = "Stop";
+    showPauseButton();
     say(state.built.metronome ? "Metronome." : `${state.style.name}, ${bpm} bpm, ${state.built.key}.`);
     if (!state.frame) state.frame = requestAnimationFrame(frame);
   }
 
   function stop() {
+    const wasPaused = state.paused;
     if (state.take && state.take.events.length) {
       state.take.endedAtMs = takeNow() || 0;
       judgeLive(true);
@@ -939,7 +971,11 @@
     reportSession();
     state.take = null;
     if (state.scheduler) state.scheduler.stop();
+    if (wasPaused && state.ctx) state.ctx.resume().catch(() => {});
     state.playing = false;
+    state.paused = false;
+    state.pinned = null;
+    showPauseButton();
     state.nowChord = null;
     state.pending = null;
     if (state.frame) cancelAnimationFrame(state.frame);
@@ -947,8 +983,42 @@
     clearLit();
     lockSettings(false);
     refresh();
-    $("play-toggle").textContent = "Play";
     say("Stopped.");
+  }
+
+  // Pause freezes the audio clock, so the band, the lit bar and every sound already scheduled stand still and
+  // carry on from the same place. Nothing played while paused is recorded or judged.
+  function showPauseButton() {
+    const button = $("pause-toggle");
+    button.hidden = !state.playing;
+    button.textContent = state.paused ? "Resume" : "Pause";
+    $("play-toggle").textContent = state.playing ? "Stop" : "Play";
+    const back = $("exercise-back");
+    if (state.playing) back.removeAttribute("data-key-action");
+    else back.setAttribute("data-key-action", "secondary");
+  }
+
+  async function togglePause() {
+    if (!state.playing || state.demo || !state.ctx) return;
+    if (state.paused) {
+      state.pinned = null;
+      state.paused = false;
+      if (state.take) state.take.anchor = null;
+      state.clock.bandStarted(clockNow());
+      await state.ctx.resume();
+      if (!state.frame) state.frame = requestAnimationFrame(frame);
+      say("Playing.");
+    } else {
+      state.paused = true;
+      state.clock.bandStopped(clockNow());
+      if (state.frame) cancelAnimationFrame(state.frame);
+      state.frame = 0;
+      await state.ctx.suspend();
+      say("Paused. Click a chord to see it, then Resume.");
+    }
+    showPauseButton();
+    state.guideShown = null;
+    updateGuide();
   }
 
   function toggle() {
@@ -1058,6 +1128,7 @@
     for (const id of ["key", "swing", "countin", "first", "last", "metronome"]) $(id).addEventListener("change", settingChanged);
     $("bpm").addEventListener("change", tempoChanged);
     $("play-toggle").addEventListener("click", toggle);
+    $("pause-toggle").addEventListener("click", () => togglePause().catch((e) => showError("Pause failed: " + e.message)));
     $("show-me").addEventListener("click", toggleDemo);
     document.addEventListener("keydown", (e) => {
       if (e.code !== "Space" || e.repeat) return;

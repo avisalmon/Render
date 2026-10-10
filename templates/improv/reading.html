@@ -1,0 +1,88 @@
+{% extends "improv/base.html" %}
+{% load static %}
+{% block title %}Reading, improv{% endblock %}
+
+{% block content %}
+<div id="reading" class="im-screen"
+     data-api-player="{{ api.player }}"
+     data-api-takes="{{ api.takes }}"
+     data-api-reading="{{ api.reading }}"
+     data-csrf="{{ csrf_token }}">
+
+  <div class="im-play-head">
+    <h1 class="im-title">Reading</h1>
+    <p id="rd-status" class="im-status" role="status" aria-live="polite">Loading your stage.</p>
+    <p id="rd-midi" class="im-note">Looking for the piano.</p>
+  </div>
+
+  <section class="im-panel im-flat" aria-label="What to read">
+    <div class="im-rd-row">
+      <label class="im-field">Key
+        <select id="rd-key" class="im-select"></select>
+      </label>
+      <label class="im-field">Hands
+        <select id="rd-hands" class="im-select"></select>
+      </label>
+      <label class="im-field">Tempo
+        <input id="rd-tempo" class="im-input im-input-small" type="number" min="30" max="160" step="1" value="72" aria-label="Tempo in beats a minute">
+      </label>
+      <label class="im-field">Mode
+        <select id="rd-mode" class="im-select">
+          <option value="flow">Flow: the pulse never waits</option>
+          <option value="step">Step: it waits for you</option>
+        </select>
+      </label>
+      <label class="im-field im-check"><span>Curtain</span> <input id="rd-curtain" type="checkbox"></label>
+      <div class="im-field im-rd-buttons">
+        <button id="rd-start" class="im-btn im-btn-big" type="button" data-key-action="primary" disabled>Start</button>
+        <button id="rd-show" class="im-btn im-btn-quiet" type="button" data-key-action="secondary" disabled>Show me</button>
+        <button id="rd-next" class="im-btn im-btn-quiet" type="button" data-key-action="tertiary" disabled>Next</button>
+      </div>
+    </div>
+    <p id="rd-stage" class="im-note"><span id="rd-stage-line"></span> <span id="rd-work" class="im-work"></span></p>
+  </section>
+
+  <section class="im-panel im-panel-flush im-flat im-rd-music" aria-label="The music">
+    <h2 class="im-h2" id="rd-name">Pick a stage</h2>
+    <svg id="rd-staff" class="im-staff" viewBox="0 0 960 250" preserveAspectRatio="xMidYMid meet" aria-label="Grand staff"></svg>
+    <p id="rd-line" class="im-note" aria-live="off"></p>
+  </section>
+
+  <div class="im-cols im-cols-left im-rd-bottom">
+    <section class="im-panel im-panel-flush im-flat" aria-label="You">
+      <div id="rd-keyboard" class="im-keyboard" aria-label="Keyboard"></div>
+      <p class="im-legend">
+        <span class="im-swatch im-swatch-rdright">right, in time</span>
+        <span class="im-swatch im-swatch-rdoff">right, early or late</span>
+        <span class="im-swatch im-swatch-rdwrong">wrong note (dotted: what you played)</span>
+        <span class="im-swatch im-swatch-rdmissed">missed</span>
+        Hover a note afterwards to hear it.
+      </p>
+    </section>
+
+    <section class="im-panel im-panel-flush im-flat" aria-label="How it went">
+      <div class="im-rd-meters">
+        <p id="rd-verdict" class="im-status"></p>
+        <span class="im-rd-meter"><b id="m-score" class="im-mono">-</b> score</span>
+        <span class="im-rd-meter"><b id="m-pitch" class="im-mono">-</b> pitch</span>
+        <span class="im-rd-meter"><b id="m-time" class="im-mono">-</b> timing</span>
+        <p id="rd-best" class="im-note"></p>
+      </div>
+      <ul id="rd-spots" class="im-list im-rd-spots" data-bounded-list aria-label="What to look at"></ul>
+      <div id="rd-fix" class="im-rd-fix"></div>
+      <ul id="rd-takes" class="im-list im-rd-takes" data-bounded-list aria-label="Your last takes"></ul>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'improv/midi.js' %}"></script>
+<script src="{% static 'improv/setup.js' %}"></script>
+<script src="{% static 'improv/timing.js' %}"></script>
+<script src="{% static 'improv/synth.js' %}"></script>
+<script src="{% static 'improv/keyboard-view.js' %}"></script>
+<script src="{% static 'improv/reading.js' %}"></script>
+<script src="{% static 'improv/staff-view.js' %}"></script>
+<script src="{% static 'improv/reading-page.js' %}"></script>
+{% endblock %}

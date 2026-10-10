@@ -207,6 +207,18 @@ def scales(request):
     return render(request, "improv/scales.html", {"api": api})
 
 
+def reading(request):
+    """The reading trainer: a generated two-hand exercise on a grand staff, read in Flow or Step. The page loads
+    the player, their reading takes and the ladder read from the API."""
+    profile_for(request.user)
+    api = {
+        "player": reverse("improv:api-player"),
+        "takes": reverse("improv:api-reading-takes-list"),
+        "reading": reverse("improv:api-reading"),
+    }
+    return render(request, "improv/reading.html", {"api": api})
+
+
 def chords(request):
     """The chord trainer: Learn, Drill and Circle. The page loads the player, the chord table (to name
     a wrong chord) and posts one attempt for each prompt."""

@@ -18,7 +18,8 @@ HERE = pathlib.Path(__file__).resolve().parent
 BACKLOG = HERE / "backlog.md"
 DASHBOARD = HERE / "dashboard.html"
 
-EPIC = re.compile(r"^## (EPIC-I\.\d+): (.+?)\s+`([A-Z ]+)`\s*$")
+# The header status may carry the day it was closed: "`DONE 2026-10-07`" reads as DONE.
+EPIC = re.compile(r"^## (EPIC-I\.\d+): (.+?)\s+`([A-Z ]+?)(?: \d{4}-\d{2}-\d{2})?`\s*$")
 SPRINT = re.compile(r"^\| (SPR-I\.\d+\.\d+) \|")
 CELL_SPLIT = re.compile(r"(?<!\\)\|")
 

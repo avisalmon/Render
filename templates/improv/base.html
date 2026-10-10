@@ -23,6 +23,7 @@
       <a class="im-nav-link" href="{% url 'improv:lessons' %}"{% if here == 'lessons' or here == 'lesson' %} aria-current="page"{% endif %}>Lessons</a>
       <a class="im-nav-link" href="{% url 'improv:scales' %}"{% if here == 'scales' %} aria-current="page"{% endif %}>Scales</a>
       <a class="im-nav-link" href="{% url 'improv:chords' %}"{% if here == 'chords' %} aria-current="page"{% endif %}>Chords</a>
+      <a class="im-nav-link" href="{% url 'improv:reading' %}"{% if here == 'reading' %} aria-current="page"{% endif %}>Reading</a>
       <details class="im-menu" id="im-more"{% if here in "challenges library editor takes reference" %} data-here="yes"{% endif %}>
         <summary>More</summary>
         <div class="im-menu-list">

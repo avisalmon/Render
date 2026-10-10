@@ -115,7 +115,7 @@ def test_the_profile_endpoint_answers_with_this_players_own_row(people):
     assert data["id"] == Player.objects.get(user=people["member"]).pk
     assert set(data) == {
         "id", "username", "daily_goal_minutes", "latency_offset_ms", "midi_input_name",
-        "note_names", "demo_output", "timezone", "trainer_tempo", "created_at",
+        "note_names", "demo_output", "timezone", "trainer_tempo", "reading_tempo", "created_at",
     }  # fmt: skip
 
 

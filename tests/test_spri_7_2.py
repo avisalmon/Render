@@ -19,7 +19,7 @@ PASSWORD = "spri72-pass-9004"
 WITH_A_PRIMARY = (
     "/improv/", "/improv/play/", "/improv/lessons/", "/improv/lessons/lesson-one/", "/improv/challenges/",
     "/improv/library/", "/improv/editor/", "/improv/takes/", "/improv/practice/", "/improv/progress/",
-    "/improv/setup/", "/improv/spike/",
+    "/improv/setup/", "/improv/spike/", "/improv/scales/", "/improv/chords/", "/improv/reading/",
 )
 NO_BUTTONS = ("/improv/reference/",)
 

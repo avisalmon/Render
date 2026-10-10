@@ -20,6 +20,7 @@ urlpatterns = [
     path("reference/", views.reference, name="reference"),
     path("scales/", views.scales, name="scales"),
     path("chords/", views.chords, name="chords"),
+    path("reading/", views.reading, name="reading"),
     path("takes/", views.takes, name="takes"),
     path("practice/", views.practice, name="practice"),
     path("challenges/", views.challenges, name="challenges"),

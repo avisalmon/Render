@@ -29,7 +29,7 @@ pytestmark = [pytest.mark.spri75, pytest.mark.django_db]
 
 PASSWORD = "spri75-browser-2046"
 SIZES = ((1280, 720), (1920, 1080))
-SCREENS = ("today", "play", "play-longest", "play-exercise", "lessons", "lesson", "challenges", "library", "editor", "takes", "practice", "progress", "reference", "setup", "spike", "scales", "scales-4-octaves", "chords", "chords-learn", "feedback", "front-door", "login", "signup")
+SCREENS = ("today", "play", "play-longest", "play-exercise", "lessons", "lesson", "challenges", "library", "editor", "takes", "practice", "progress", "reference", "setup", "spike", "scales", "scales-4-octaves", "chords", "chords-learn", "reading", "reading-both", "reading-read", "feedback", "front-door", "login", "signup")
 ANONYMOUS = ("front-door", "login", "signup")
 UTC = dt.timezone.utc
 # This screen shows everything at once at 1280 by 720; a bounded list there is for future growth.
@@ -142,6 +142,9 @@ def _paths():
         "scales-4-octaves": "/improv/scales/?level=3&key=11",
         "chords": "/improv/chords/",
         "chords-learn": "/improv/chords/?mode=learn&level=3",
+        "reading": "/improv/reading/",
+        "reading-both": "/improv/reading/?key=F%23&hands=B&seed=42",
+        "reading-read": "/improv/reading/?key=C&hands=R&seed=5&read=yes",
         "feedback": "/improv/feedback/?from=/improv/play/",
         "front-door": "/improv/",
         "login": "/improv/login/",
@@ -163,6 +166,7 @@ READY = {
     "setup": "document.getElementById('setup-status').textContent.startsWith('Choose')",
     "scales": "document.querySelectorAll('#sc-strip .im-sc-cell').length > 20",
     "chords": "document.getElementById('chords') && document.getElementById('chords').dataset.running === 'no'",
+    "reading": "document.getElementById('rd-start') && !document.getElementById('rd-start').disabled",
     "editor": "document.getElementById('chart-text') && document.getElementById('chart-text').value.length > 5",
 }
 
@@ -170,6 +174,27 @@ READY = {
 def _ready(name):
     key = name.split("-")[0]
     return READY.get(key)
+
+
+# The reading screen at its fullest: a take with slips, so the spots, the drill buttons and the takes list are there.
+def _read_through(page):
+    page.fill("#rd-tempo", "160")
+    page.dispatch_event("#rd-tempo", "change")
+    page.click("#rd-start")
+    page.wait_for_function("document.getElementById('reading').dataset.running === 'yes'", timeout=5000)
+    page.evaluate("""async () => {
+      const host = document.getElementById('reading');
+      const ex = window.ImprovReadingPage.exercise();
+      const beat = 60000 / 160;
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      for (const [i, n] of ex.notes.entries()) {
+        const due = Number(host.dataset.runStart) + n.beat * beat;
+        const gap = due - performance.now();
+        if (gap > 0) await wait(gap);
+        if (i % 5 !== 2) window.ImprovReadingPage.press(i % 3 === 1 ? n.midi + 2 : n.midi);
+      }
+    }""")
+    page.wait_for_function("document.getElementById('reading').dataset.saved === 'yes'", timeout=30000)
 
 
 @pytest.mark.parametrize("size", SIZES, ids=lambda s: f"{s[0]}x{s[1]}")
@@ -187,6 +212,8 @@ def test_the_screen_fits_the_window(world, name, size):
     ready = None if name in ANONYMOUS else _ready(name)
     if ready:
         page.wait_for_function(ready, timeout=15000)
+    if name == "reading-read":
+        _read_through(page)
     page.wait_for_timeout(500)
     shots = os.environ.get("IMPROV_SHOTS")
     if shots:

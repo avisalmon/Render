@@ -254,6 +254,11 @@ class Player(models.Model):
         validators=[MinValueValidator(30), MaxValueValidator(160)],
         help_text="The scale trainer's tempo in bpm. Changing it on the screen saves it here.",
     )
+    reading_tempo = models.PositiveSmallIntegerField(
+        default=72,
+        validators=[MinValueValidator(30), MaxValueValidator(160)],
+        help_text="The reading trainer's tempo in bpm. Changing it on the screen saves it here.",
+    )
     timezone = models.CharField(
         max_length=40,
         default="Asia/Jerusalem",
@@ -629,6 +634,69 @@ class DrillAttempt(models.Model):
             raise ValidationError({"response_ms": "A skipped prompt has no response time."})
         if self.skipped and self.is_correct:
             raise ValidationError({"is_correct": "A skipped prompt is not correct."})
+
+
+# ---------------------------------------------------------------- SPR-I.12.1
+
+READING_PASS_SCORE = 80
+MOST_READING_NOTES = 200
+MOST_READING_EVENTS = 4000
+
+
+def _check_reading_list(value, most, name):
+    if not isinstance(value, list) or len(value) > most or not all(isinstance(row, dict) for row in value):
+        raise ValidationError(f"{name} is a list of at most {most} objects.")
+
+
+class ReadingTake(models.Model):
+    """One read-through of a generated exercise in the reading trainer (spec chapter 11, data model 6c).
+
+    The exercise is stored with the take (`notes`), because it was generated and exists nowhere else; `events`
+    is what the piano sent and `results` what the judge said of every written note, so a take can be shown again
+    and re-judged. The pass line is the server's: only a Flow take at the line or above passes; Step mode waits
+    for the right note, so it can never pass."""
+
+    class Hands(models.TextChoices):
+        RIGHT = "R", "right hand"
+        LEFT = "L", "left hand"
+        BOTH = "B", "both hands"
+
+    class Mode(models.TextChoices):
+        FLOW = "flow", "flow: the pulse never waits"
+        STEP = "step", "step: it waits for the right note"
+
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="reading_takes")
+    key = models.CharField(max_length=3, validators=[key_name], help_text="The major key, as written: C, F#, Bb.")
+    hands = models.CharField(max_length=1, choices=Hands.choices)
+    difficulty = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(3)])
+    tempo_bpm = models.PositiveSmallIntegerField(validators=[MinValueValidator(30), MaxValueValidator(160)])
+    mode = models.CharField(max_length=4, choices=Mode.choices, default=Mode.FLOW)
+    curtain = models.BooleanField(default=False, help_text="Whether the notes behind the cursor were hidden.")
+    seed = models.PositiveIntegerField(help_text="The generator's seed: the same stage and seed give the same exercise.")
+    notes = models.JSONField(default=list, help_text="The exercise as written: {hand, step, acc, midi, beat, dur} per note.")
+    events = models.JSONField(default=list, help_text="{t_ms, type: on/off, note, velocity} as the MIDI arrived.")
+    results = models.JSONField(default=list, help_text="The judge's word on each written note: {state, timing, offset_ms, played}.")
+    score = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)])
+    pitch_accuracy = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(1)])
+    timing_accuracy = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(1)])
+    passed = models.BooleanField(default=False, editable=False)
+    judge_version = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+
+    def __str__(self):
+        return f"{self.player} reading {self.key} {self.hands} {self.score}"
+
+    def clean(self):
+        _check_reading_list(self.notes, MOST_READING_NOTES, "notes")
+        _check_reading_list(self.events, MOST_READING_EVENTS, "events")
+        _check_reading_list(self.results, MOST_READING_NOTES, "results")
+
+    def save(self, *args, **kwargs):
+        self.passed = self.mode == self.Mode.FLOW and self.score >= READING_PASS_SCORE
+        super().save(*args, **kwargs)
 
 
 class Feedback(models.Model):

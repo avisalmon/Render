@@ -486,6 +486,34 @@ A note from a person who is trying the app.
 
 ---
 
+## 6c. The reading trainer (Epic I.12, added 2026-10-10)
+
+Spec chapter 11. One table, and one field on `Player`.
+
+### `Player.reading_tempo`
+
+The reading trainer's tempo in bpm (30 to 160, default 72), remembered when it is changed on the screen, like
+`trainer_tempo` for the scales.
+
+### `ReadingTake`
+
+One read-through of a generated exercise, in Flow or Step.
+
+`player`, `key` (the major key as the ladder writes it: C, G, F, D, Bb, A, Eb, E, Ab, B, Db, F#), `hands` (`R`, `L`,
+`B`), `difficulty` (1 to 3), `tempo_bpm` (30 to 160), `mode` (`flow` or `step`), `curtain` (whether the notes behind
+the cursor were hidden), `seed` (the generator's seed: the same stage and seed give the same exercise), `notes` (JSON:
+the exercise as written, `{hand, step, acc, midi, beat, dur}` per note, kept here because it was generated and exists
+nowhere else), `events` (JSON: `{t_ms, type, note, velocity}` as the MIDI arrived), `results` (JSON: the judge's word on
+every written note, `{state, timing, offset_ms, played}`, one per note), `score` (0 to 100), `pitch_accuracy`,
+`timing_accuracy` (0 to 1), `passed` (the server's: a Flow take at 80 or above; a Step take never), `judge_version`,
+`created_at`. Newest first.
+
+**Why JSON columns here:** a take is read whole to be drawn again and re-judged, and nothing queries one note of it
+except the weak-spot map, which is a read over the last month's takes. The ladder (which stage is next) and the map are
+derived reads, never columns.
+
+---
+
 ## 8. What is deliberately not stored
 
 Each of these is a read, never a column:

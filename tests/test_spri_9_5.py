@@ -58,11 +58,11 @@ def _links(fragment):
 # ------------------------------------------------------------------ signed in
 
 
-def test_the_bar_holds_the_five_everyday_screens():
+def test_the_bar_holds_the_everyday_screens():
     html = _client().get("/improv/play/").content.decode("utf-8")
     nav = re.search(r'<nav class="im-nav" aria-label="Main">(.*?)</nav>', _header(html), re.S).group(1)
     direct = re.sub(r"<details.*?</details>", "", nav, flags=re.S)
-    assert [text for _, text in _links(direct)] == ["Today", "Play", "Lessons", "Scales", "Chords"]
+    assert [text for _, text in _links(direct)] == ["Today", "Play", "Lessons", "Scales", "Chords", "Reading"]
 
 
 def test_more_holds_the_less_used_screens():
