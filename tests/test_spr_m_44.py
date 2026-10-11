@@ -143,13 +143,18 @@ def test_the_group_is_put_before_the_join_link_once_there_is_a_group(client, db)
     _student("kid3@example.com", "שירה", leader)
     client.force_login(leader.user)
 
-    assert "mz-two-up-flip" in client.get(reverse("matazim:leader_home")).content.decode()
+    # SPR-M.58 rebuilt the page as a dashboard: the group is its own section
+    # above the link, so the order no longer needs a flip class to hold it.
+    html = client.get(reverse("matazim:leader_home")).content.decode()
+    assert html.index("<h2>המט״צים שלי") < html.index('class="mz-copy"')
 
 
 def test_a_leader_with_nobody_keeps_the_link_first(client, db):
     leader = _leader()
     client.force_login(leader.user)
-    assert "mz-two-up-flip" not in client.get(reverse("matazim:leader_home")).content.decode()
+    html = client.get(reverse("matazim:leader_home")).content.decode()
+    assert "<h2>המט״צים שלי" not in html
+    assert "<h2>הקישור שלכם" in html
 
 
 def test_the_stylesheet_actually_swaps_them():

@@ -236,6 +236,7 @@ def home(request):
     and both are empty until there is something real, in which case the page
     reads exactly as it did before.
     """
+    from .landing import hero_state, student_orientation
     from .public import counters, published_work
 
     return render(
@@ -246,6 +247,10 @@ def home(request):
             "home",
             stages=public_stages(),
             student_door_open=student_door_is_open(request),
+            # SPR-M.58 — the hero knows who is reading, and the strip under
+            # it is the road: four steps, with this reader's place on it.
+            hero=hero_state(request),
+            orientation=student_orientation(request),
             counters=counters(),
             showcase=published_work(),
         ),
@@ -293,22 +298,36 @@ def safe_next(request):
 
 
 def _landing_for(user):
-    """Where signing in puts somebody (SPR-M.53).
+    """Where signing in puts somebody: their own front door (SPR-M.58).
 
-    דף הבית is written for a visitor deciding whether to join, which is the
-    wrong page for the person running the programme: Avi asked that נעמי and
-    ליטל see how things stand בכניסה למערכת, and recruitment copy is not that.
+    SPR-M.53 sent staff to ניהול and left everyone else on דף הבית, which is
+    recruitment copy written for a visitor deciding whether to join. Avi,
+    2026-10-11: each persona should land on "the view that interests them"
+    and know at a glance that the site recognised who they are. So:
 
-    Staff land on the ניהול door, which leads with the two reports. This is a
-    default and not a cage: `?next=` still wins, every other role is untouched,
-    and דף הבית is one tap away in the menu.
+    - a program manager lands on ניהול, now their leaders dashboard;
+    - a leader lands on האזור שלי, now their group dashboard;
+    - a member lands on המסלול שלי, Litala's screen 3, which already says
+      where they are and what is next;
+    - anybody with no role yet (just registered) lands on דף הבית, which now
+      carries the orientation strip for exactly that person.
 
-    Deliberately not done by adding menu items. That was the first attempt and
-    REQ-M.101's seven-item cap refused it, correctly.
+    Precedence is the one `access` uses: program manager, then leader, then
+    member. A candidate still waiting on approval is not a leader yet and is a
+    member for this purpose; ההרשאה שלי is one tap away in their menu.
+
+    A default and not a cage: `?next=` still wins.
     """
-    from .access import is_program_manager
+    from .access import is_program_manager, leader_of
+    from .models import Student
 
-    return "matazim:staff_home" if is_program_manager(user) else "matazim:home"
+    if is_program_manager(user):
+        return "matazim:staff_home"
+    if leader_of(user):
+        return "matazim:leader_home"
+    if Student.objects.filter(user=user).exists() or member_profile(user).has_passed_entrance_test():
+        return "matazim:my_path"
+    return "matazim:home"
 
 
 def login(request):
@@ -430,7 +449,11 @@ def register(request):
             # REQ-M.46 - the main view, not the personal area. Someone who has
             # just signed in wants to see the program, not a form about
             # themselves, and the personal area is one click away in the header.
-            return redirect("matazim:home")
+            # SPR-M.58 — the same front door as signing in. Somebody who just
+            # registered lands on דף הבית, which now carries the orientation
+            # strip for exactly them; somebody who registered and then
+            # claimed an invite went above.
+            return redirect(_landing_for(user))
 
     return render(
         request,

@@ -1,206 +1,130 @@
 {% extends "matazim/base.html" %}
 
 {% comment %}
-  REQ-M.69 — one door to the staff area, so the nav does not grow an item per
-  tool. Everything behind it refuses non-admins on its own; hiding a link has
-  never been access control.
+  REQ-M.69, rebuilt in SPR-M.58 as the program manager's dashboard.
+
+  Avi, 2026-10-11: a program manager "needs to enter the site and understand
+  in the first glance that the system recognized him as the program manager,
+  show him in high level who are the leaders that he owns, the main status of
+  each one, like how many students, pass rate, and a clear way to invite a new
+  leader. This is the main interest of the program manager."
+
+  So this page is the leaders. The greeting names the person and the role; the
+  one primary action is inviting; anyone waiting for a yes is above the list;
+  the list is one line per leader with the four numbers that matter; and the
+  reports and tools that used to be this whole page are a quiet row at the
+  bottom, one tap away. Everything behind every link still refuses the wrong
+  role on its own (hiding a link has never been access control).
 {% endcomment %}
 
 {% block title %}ניהול · מט״צים{% endblock %}
 
 {% block content %}
 <div class="mz-container mz-page">
-  <div class="mz-page-head">
-    <h1>ניהול</h1>
-    <p>הכלים של צוות התוכנית.</p>
-    <a class="mz-linkbtn" href="{% url 'matazim:staff_guide' %}">מדריך לתפקיד</a>
+  <div class="mz-page-head mz-hello">
+    <div>
+      <span class="mz-eyebrow">מנהל/ת התכנית{% if dashboard.institution %} · {{ dashboard.institution }}{% endif %}</span>
+      <h1>שלום{% if '@' not in manager_name %} {{ manager_name }}{% endif %}</h1>
+      <p>
+        {{ counts.leaders }} מובילים פעילים, {{ counts.students }} לומדים בתוכנית, {{ counts.certified }} מט״צים מוסמכים.
+        {% if counts.candidates %}<strong>{{ counts.candidates }} ממתינים לאישור שלכם.</strong>{% endif %}
+      </p>
+    </div>
+    <div class="mz-hello-actions">
+      <a class="mz-btn mz-btn-primary" href="{% url 'matazim:pm_leaders' %}#invite">הזמנת מוביל/ה חדש/ה</a>
+      <a class="mz-linkbtn" href="{% url 'matazim:staff_guide' %}">מדריך לתפקיד</a>
+    </div>
   </div>
+
+  {% if dashboard.candidates %}
+    {% comment %}
+      The one state that stays stuck until a person presses something, so it
+      is above the list of everybody who is fine.
+    {% endcomment %}
+    <section class="mz-panel mz-attention">
+      <h2>ממתינים לאישור <span class="mz-count">{{ dashboard.candidates|length }}</span></h2>
+      <ul class="mz-roster">
+        {% for row in dashboard.candidates %}
+          <li class="mz-roster-row">
+            <span class="mz-roster-who">
+              <span class="mz-roster-name">{{ row.name }}</span>
+              <span class="mz-muted">{{ row.email }}</span>
+            </span>
+            <span class="mz-role"><span class="mz-tag mz-tag-fix">ממתין/ה</span></span>
+          </li>
+        {% endfor %}
+      </ul>
+      <div class="mz-page-actions">
+        <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:pm_leaders' %}">לאישור</a>
+      </div>
+    </section>
+  {% endif %}
+
+  <section class="mz-panel">
+    <h2>המובילים שלי <span class="mz-count">{{ dashboard.rows|length }}</span></h2>
+    {% if dashboard.rows %}
+      <ul class="mz-roster">
+        {% for row in dashboard.rows %}
+          <li class="mz-roster-row">
+            <a class="mz-roster-who" href="{% url 'matazim:staff_leader' row.leader.pk %}">
+              <span class="mz-roster-name">{{ row.name }}</span>
+              <span class="mz-muted">
+                {% for school in row.schools %}{{ school }}{% if not forloop.last %} · {% endif %}{% empty %}עוד לא פתח/ה כיתה{% endfor %}
+              </span>
+            </a>
+            <span class="mz-role mz-role-facts">
+              <span class="mz-stat"><strong>{{ row.students }}</strong> לומדים</span>
+              <span class="mz-stat"><strong>{{ row.certified }}</strong> מוסמכים</span>
+              {% if row.rate is not None %}
+                <span class="mz-stat"><strong>{{ row.rate }}%</strong> הסמכה</span>
+              {% else %}
+                <span class="mz-muted">עוד אין מט״צים</span>
+              {% endif %}
+              {% if not row.is_active %}<span class="mz-tag mz-tag-idle">לא פעיל/ה</span>{% endif %}
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+      <p class="mz-muted mz-small">לוחצים על שם כדי לראות את המט״צים שלו, להחליף את הקישור שלו או להעביר מט״צ.</p>
+    {% else %}
+      <p class="mz-muted">עוד אין מובילים. הזמנת מוביל/ה היא הצעד הראשון, ומשם הכל מתחיל.</p>
+      <div class="mz-page-actions">
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:pm_leaders' %}#invite">הזמנת מוביל/ה</a>
+      </div>
+    {% endif %}
+  </section>
 
   {% comment %}
-    SPR-M.53 — the two reports first, above every tool.
-
-    Avi, 2026-10-08: הכי חשוב בשלב הזה שהן יראו בברור בכניסה למערכת.
-    So they are the first thing on the page rather than two more cards in a
-    grid of eight: somebody arriving to find out how the programme is doing
-    should not have to read a menu of administrative tools first.
+    The reports and the tools, one tap away. This was the whole page until
+    SPR-M.58, eight cards in a grid; it is a row now, because the people above
+    are what somebody opens this page for.
   {% endcomment %}
-  <div class="mz-two-up">
-    <section class="mz-panel">
-      <h2>מובילים והתקדמות</h2>
-      <p>
-        {{ counts.leaders }} מובילים פעילים{% if counts.candidates %},
-        <strong>{{ counts.candidates }} ממתינים לאישור</strong>{% endif %}.
-        כל אחד עם ההתקדמות שלו בהדרכות, אם עבר את מבחן הכניסה, וכמה מט״צים יש לו.
-      </p>
-      <div class="mz-page-actions">
-        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:staff_people' %}">לרשימה המלאה</a>
-      </div>
-    </section>
-
-    <section class="mz-panel">
-      <h2>כל ההדרכות</h2>
-      <p>
-        כל ההדרכות שיש באתר, מה מהן פתוח למט״צים, מה חלק מהמסלול
-        החובה, וכמה התחילו וסיימו כל אחת.
-      </p>
-      <div class="mz-page-actions">
-        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:staff_courses' %}">לקטלוג המלא</a>
-      </div>
-    </section>
-
-    <section class="mz-panel">
-      <h2>המחזור</h2>
-      <p>
-        {{ counts.students }} לומדים בתוכנית. כמה יש בכל שלב, לפי מוביל ולפי
-        בית ספר, עם ייצוא לאקסל.
-      </p>
-      <div class="mz-page-actions">
-        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:cohort' %}">למחזור</a>
-      </div>
-    </section>
-
-    {% comment %}
-      §4.11 — the improvement loop, named on this page rather than left to the
-      lamp. Somebody whose job is to give feedback on the product should find
-      the way to file it without being told where the lamp is.
-    {% endcomment %}
-    <section class="mz-panel">
-      <h2>בקשות שיפור</h2>
-      <p>
-        משהו באתר לא עובד, חסר או מבלבל? אפשר לפתוח בקשה מכל מסך,
-        והיא נשמרת עם השיחה עליה.
-      </p>
-      <div class="mz-page-actions">
-        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:new_request' %}?from={{ request.path|urlencode }}">לפתוח בקשה</a>
-        {% if user.is_superuser %}
-          <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:request_queue' %}">לתור הבקשות</a>
-        {% else %}
-          <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:my_requests' %}">הבקשות שלי</a>
-        {% endif %}
-      </div>
-    </section>
-
-    {% comment %}
-      The member's own screens, from the outside. Somebody whose job is to
-      judge the product never sees what a fourteen-year-old sees, because they
-      are not one and must not have to pretend to be one. These pages are built
-      from `request.user` and cope with a reader who has joined nobody, so they
-      open read-only and show the track as a מט״צ meets it.
-    {% endcomment %}
-    <section class="mz-panel">
-      <h2>איך זה נראה למט״צ</h2>
-      <p>
-        המסכים שמט״צ רואה, כמו שהוא רואה אותם. צפייה בלבד: אתם לא נרשמים
-        לתוכנית ולא נדרשים למבחן הכניסה.
-      </p>
-      <div class="mz-page-actions">
-        <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:my_path' %}">המסלול של מט״צ</a>
-        <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:courses' %}">ההדרכות כפי שהן נראות</a>
-      </div>
-    </section>
-  </div>
-
-  <h2 class="mz-section-title">כלי ניהול</h2>
-
-  <div class="mz-two-up">
-    <section class="mz-panel">
-      <h2>משימות מבחן הכניסה</h2>
-      <p>
-        {{ counts.targets }} משימות פעילות{% if counts.retired %}, {{ counts.retired }} הוצאו משימוש{% endif %}.
-        כל משימה עם שרטוט ומודל תלת-ממדי, ואפשר להוציא משימוש כל מה שקשה מדי.
-      </p>
-      <div class="mz-page-actions">
-        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:staff_targets' %}">לבנק המשימות</a>
-      </div>
-    </section>
-
-    {% comment %}
-      SPR-M.52 — the pool, root only. A decision about what the programme is,
-      taken once for everybody, which is REQ-M.114's shape.
-    {% endcomment %}
-    {% if user.is_superuser %}
-      <section class="mz-panel">
-        <h2>הדרכות זמינות</h2>
-        <p class="mz-muted">
-          אילו הדרכות מהאתר הראשי מובילים רשאים להציע למט״צים שלהם.
-        </p>
-        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:staff_offered' %}">לקטלוג</a>
-      </section>
-    {% endif %}
-
-
-    <section class="mz-panel">
-      <h2>מובילים</h2>
-      <p>
-        {{ counts.leaders }} מובילים פעילים. מוביל מלווה מט״צים בבית ספר, מאשר
-        אותם ומקבל קישור הצטרפות משלו.
-      </p>
-      <div class="mz-page-actions">
-        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:staff_leaders' %}">לניהול המובילים</a>
-      </div>
-    </section>
-
-    {% comment %}
-      REQ-M.114 — root only, and the door goes with it. A program manager
-      seeing a card whose button returns 403 is worse than not seeing the card:
-      it reads as a fault rather than as a boundary. The page behind it refuses
-      her on its own regardless, because hiding a button is not access control.
-    {% endcomment %}
-    {% if user.is_superuser %}
-    <section class="mz-panel">
-      <h2>מנהלי התוכנית</h2>
-      <p>
-        {{ counts.admins }} מנהלים כרגע. מנהל/ת התוכנית רואה את המובילים שלה
-        ואת המט״צים שלהם, וממנה מובילים. את ההרשאה הזאת רק אתה מחלק.
-      </p>
-      <div class="mz-page-actions">
-        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:staff_admins' %}">מינוי מנהל/ת תוכנית</a>
-      </div>
-    </section>
-    {% endif %}
-
-    {% comment %}
-      REQ-M.87 — the counterweight to putting a person in front of deletion.
-      A job that needs a human is a job that does not run while the human is
-      busy, which is how "we have a retention policy" quietly becomes "we kept
-      everything". So the number stands here rather than waiting to be asked
-      for, and only shouts when something is actually overdue.
-    {% endcomment %}
-    <section class="mz-panel">
-      <h2>ימי שיא</h2>
-      <p>
-        ימי שיא, תערוכות וסיומי מסלול. מי שהיום מיועד לו מקבל התראה ורואה אותו
-        בלוח הזמנים שלו.
-      </p>
-      <div class="mz-page-actions">
-        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:staff_events' %}">לימי השיא</a>
-      </div>
-    </section>
-
-    <section class="mz-panel">
-      <h2>
-        ניקוי מידע ישן
-        {% if overdue %}<span class="mz-tag mz-tag-fix">{{ overdue }} ממתינים</span>{% endif %}
-      </h2>
-      <p>
-        ניסיונות במבחן הכניסה שלא עברו נמחקים אחרי {{ retention_days }} ימים,
-        יחד עם הקבצים. המחיקה קורית רק אחרי שמישהו כאן מאשר אותה.
-      </p>
-      <div class="mz-page-actions">
-        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:staff_retention' %}">
-          {% if overdue %}לאישור המחיקה{% else %}למסך הניקוי{% endif %}
-        </a>
-      </div>
-    </section>
-  </div>
-
   <section class="mz-panel mz-panel-soft">
-    <h2>מה יש במערכת</h2>
-    <dl class="mz-facts">
-      <div><dt>מובילים פעילים</dt><dd>{{ counts.leaders }}</dd></div>
-      <div><dt>לומדים בתוכנית</dt><dd>{{ counts.students }}</dd></div>
-      <div><dt>מט״צים מוסמכים</dt><dd>{{ counts.certified }}</dd></div>
-    </dl>
+    <h2>דוחות וכלים</h2>
+    <ul class="mz-toolrow">
+      <li><a class="mz-linkbtn" href="{% url 'matazim:staff_people' %}">מובילים והתקדמות</a></li>
+      <li><a class="mz-linkbtn" href="{% url 'matazim:staff_leaders' %}">ניהול מובילים</a></li>
+      <li><a class="mz-linkbtn" href="{% url 'matazim:cohort' %}">המחזור</a></li>
+      <li><a class="mz-linkbtn" href="{% url 'matazim:staff_courses' %}">כל ההדרכות</a></li>
+      <li><a class="mz-linkbtn" href="{% url 'matazim:staff_events' %}">ימי שיא</a></li>
+      <li><a class="mz-linkbtn" href="{% url 'matazim:new_request' %}?from={{ request.path|urlencode }}">בקשת שיפור</a></li>
+      {% if user.is_superuser %}
+        <li><a class="mz-linkbtn" href="{% url 'matazim:request_queue' %}">תור הבקשות</a></li>
+      {% else %}
+        <li><a class="mz-linkbtn" href="{% url 'matazim:my_requests' %}">הבקשות שלי</a></li>
+      {% endif %}
+      <li><a class="mz-linkbtn" href="{% url 'matazim:my_path' %}">איך זה נראה למט״צ</a></li>
+      <li><a class="mz-linkbtn" href="{% url 'matazim:staff_targets' %}">משימות מבחן הכניסה</a></li>
+      <li>
+        <a class="mz-linkbtn" href="{% url 'matazim:staff_retention' %}">
+          ניקוי מידע ישן{% if overdue %} <span class="mz-tag mz-tag-fix">{{ overdue }}</span>{% endif %}
+        </a>
+      </li>
+      {% if user.is_superuser %}
+        <li><a class="mz-linkbtn" href="{% url 'matazim:staff_offered' %}">הדרכות זמינות</a></li>
+        <li><a class="mz-linkbtn" href="{% url 'matazim:staff_admins' %}">מנהלי התוכנית</a></li>
+      {% endif %}
+    </ul>
   </section>
 </div>
 {% endblock %}

@@ -4423,3 +4423,73 @@ ever built from a confirmed row), and the partial uses a plain
 a missing value, not a falsy one, and the two look identical in a template
 until exactly this happens.
 
+---
+
+## SPR-M.58 — Each persona lands on their own front door  `DONE 2026-10-11`
+
+**Goal.** Avi, in three parts and one rule. A first-time student sees one
+button and "it's not intuitive what I need to do". A program manager should
+"understand in the first glance that the system recognized him" and see his
+leaders and how to add one. A leader "needs to own students, invite students,
+track them, report up" and should be shown that, not a shared shell. And:
+"user experience has priority over the defined screens we talked about
+earlier."
+
+**Delivers.** REQ-M.158, REQ-M.159, REQ-M.160, REQ-M.161.
+
+- [x] **M58.1** `matazim/landing.py` — one reader per persona, each answering
+  *what is my situation* and *what do I do now* in that persona's own terms,
+  through the same scope functions and progress readers as every other
+  screen (RULE-3). Decides nothing.
+- [x] **M58.2** דף הבית: the hero's one action knows who is reading, and the
+  orientation strip under it is the road with this reader's place on it.
+  Four steps, one עכשיו, פתוח כבר for the הדרכות before the test.
+- [x] **M58.3** ניהול rebuilt as the leaders dashboard: greeting, invite as
+  the one primary action, candidates above the list, one line per leader
+  with students / certified / rate, the reports and tools as a quiet row.
+- [x] **M58.4** האזור שלי rebuilt as the group dashboard: greeting with the
+  manager's numbers, what needs a decision today (including מוכנים להסמכה,
+  new here), the group with a bar and a word each, the link and the tools.
+- [x] **M58.5** `_landing_for` finishes what SPR-M.53 started: every role
+  lands on its own door, registering included.
+
+**Tests.** 23 in `tests/test_spr_m_58.py`.
+
+- [x] Five roles, five doors, parametrised; a candidate is a member for
+  landing; `?next=` still wins.
+- [x] The strip's states for a visitor, somebody registered, somebody passed,
+  a member, a certified מט״צ — and exactly one עכשיו in every one of them.
+- [x] A member is never asked to join again.
+- [x] The PM dashboard's numbers are the full report's numbers; a leader with
+  nobody has no rate rather than 0%; a candidate sits above the list; the
+  invite anchor it points at exists.
+- [x] The leader dashboard puts somebody ready to certify first; day one still
+  leads with the link; "report up" is the same numbers the manager sees; the
+  page does not grow a query per student.
+
+### What "UX has priority over the defined screens" changed, concretely
+
+Three screens from the last fortnight were demoted rather than removed.
+SPR-M.53's two reports and SPR-M.57's guide are now a row at the bottom of
+ניהול instead of its body; SPR-M.56's three screens are untouched because
+המסלול שלי already was the member's door, and the only change for a member is
+that signing in now goes there. Nothing was deleted: every route, every test
+and every link still works, and the catalogue entries for the three rebuilt
+pages (`public/home`, `pm/staff-home`, `leader/home`) carried the new layouts
+through the class contract, the phone widths and the dark palette without a
+new entry.
+
+### Two things settled by reading the code rather than guessing
+
+**"Can he already do some trainings even though he didn't pass the test?"**
+Yes, since REQ-M.65: `visible_course_slugs` includes the required two for
+anybody signed in, and `learn_course` asks for a login and nothing else. The
+test gates *joining* (REQ-M.36), not learning. So the strip says פתוח כבר on
+the learning step for somebody registered, and the hero offers להתחיל ללמוד
+כבר עכשיו beside the test. That was already true; nobody was told.
+
+**"Report up to the program manager."** There is nothing to file. The
+manager's dashboard and the full report read the same rows the leader's page
+reads, so the honest version is showing the leader the same numbers on the
+page they open every day, and saying so in one line.
+

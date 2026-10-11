@@ -263,6 +263,8 @@ def leader_home(request):
             return redirect("matazim:leader_entrance")
         raise PermissionDenied
 
+    from .landing import leader_dashboard
+
     return render(
         request,
         "matazim/leader_home.html",
@@ -270,6 +272,10 @@ def leader_home(request):
             request,
             "leader",
             leader=leader,
+            leader_name=_name_of(leader),
+            # SPR-M.58 — the group at a glance, and the numbers the program
+            # manager sees about it, on the page a leader opens every day.
+            dashboard=leader_dashboard(leader),
             join_url=request.build_absolute_uri(f"/matazim/join/{leader.join_code}/"),
             waiting=_waiting_on(leader),
             # REQ-M.124 — work sitting on this leader's desk. A queue nobody is

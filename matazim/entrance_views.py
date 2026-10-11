@@ -247,14 +247,20 @@ def staff_target_toggle(request, target_id):
 # --- The staff area ---------------------------------------------------------
 
 
+def _display_name_of(user):
+    from .certification import _display_name
+
+    return _display_name(user)
+
+
 @login_required(login_url=LOGIN_URL)
 def staff_home(request):
     """REQ-M.69 — one door, so the nav does not grow an item per tool."""
     if not _is_staff(request.user):
         raise PermissionDenied
 
+    from .landing import pm_dashboard
     from .models import EntranceTarget
-    from .overview import programme_counts
     from .retention import FAILED_ATTEMPT_DAYS, overdue_count
 
     # Counted through the scope functions rather than off the bare managers.
@@ -268,7 +274,12 @@ def staff_home(request):
     # another, which is how two screens start disagreeing about how many
     # leaders there are.
 
-    counts = programme_counts(request.user)
+    # SPR-M.58 — the leaders themselves, first. Avi: "the main interest of
+    # the program manager is who are his leaders and how can he get
+    # progress." The reports stay one tap away; this page leads with the
+    # people.
+    dashboard = pm_dashboard(request.user)
+    counts = dict(dashboard["counts"])
     counts.update({
         "targets": EntranceTarget.objects.filter(is_retired=False).count(),
         "retired": EntranceTarget.objects.filter(is_retired=True).count(),
@@ -282,6 +293,8 @@ def staff_home(request):
             request,
             "staff",
             counts=counts,
+            dashboard=dashboard,
+            manager_name=_display_name_of(request.user),
             # REQ-M.87 — standing, so nobody has to remember to go looking.
             overdue=overdue_count(),
             retention_days=FAILED_ATTEMPT_DAYS,

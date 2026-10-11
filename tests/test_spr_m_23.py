@@ -33,7 +33,6 @@ def _user(email, name):
 
 
 def _manager(email="naomi@example.com"):
-    from matazim.models import MemberProfile
 
     user = _user(email, "נעמי")
     _make_manager(user)
@@ -228,7 +227,13 @@ def test_it_refuses_to_be_an_open_redirect(client, db, hostile):
         {"email": user.email, "password": PASSWORD, "next": hostile},
     )
     assert response.status_code == 302
-    assert response.url == reverse("matazim:home"), f"followed {hostile!r} to {response.url}"
+    # SPR-M.58: a refused destination falls back to this person's own front
+    # door, which is no longer always דף הבית. The property under test is
+    # unchanged: never the hostile value, always inside the walls.
+    from matazim.views import _landing_for
+
+    assert response.url == reverse(_landing_for(user)), f"followed {hostile!r} to {response.url}"
+    assert response.url.startswith("/matazim/")
 
 
 def test_registering_returns_there_too(client, db):

@@ -1,42 +1,63 @@
 {% extends "matazim/base.html" %}
 
 {% comment %}
-  REQ-M.73 — a leader has somewhere to stand.
+  REQ-M.73, rebuilt in SPR-M.58 as the leader's dashboard.
 
-  Two things only: the link they hand out, and the people waiting on them.
-  Without the second, the open door has no exit, because nobody can accept
-  anyone. The roster with progress is a later sprint.
+  Avi, 2026-10-11: a leader "needs to own students, invite students, track
+  them, report up to the program manager", and their first screen should be
+  built around exactly that, not a shared shell. So, in the order a leader
+  needs them:
+
+  1. The greeting says who they are and the three numbers their program
+     manager sees about them — which is what "report up" actually is here,
+     since the manager reads the same rows and nothing is filed.
+  2. Whatever needs a decision today: work waiting for feedback, people
+     waiting to join, anyone ready to certify.
+  3. The group, one line each with where they are.
+  4. The link to invite more, and the optional tools.
+
+  A leader on day one has nothing in 2 and 3, so for them the link stays the
+  first thing, which SPR-M.44 settled and this keeps.
 {% endcomment %}
 
 {% block title %}האזור שלי · מט״צים{% endblock %}
 
 {% block content %}
 <div class="mz-container mz-page">
-  <div class="mz-page-head">
-    <h1>האזור של המוביל/ה</h1>
-    {% comment %}
-      SPR-M.44. This line used to read "הקישור שלכם, והמט״צים שמחכים לאישור"
-      on every visit, including the ordinary one where nobody is waiting and
-      the leader is simply looking in on their group. A page that opens by
-      naming a queue that is not there describes a screen you are not reading.
-    {% endcomment %}
-    {% if work_waiting or waiting %}
-      <p>מה מחכה לכם עכשיו.</p>
-    {% elif mine %}
-      <p>המט״צים שלכם, ואיפה הם בתוכנית.</p>
-    {% else %}
-      <p>הקישור שלכם, כדי שהמט״צים הראשונים יצטרפו.</p>
-    {% endif %}
-    <a class="mz-linkbtn" href="{% url 'matazim:leader_guide' %}">מדריך למוביל/ה</a>
+  <div class="mz-page-head mz-hello">
+    <div>
+      <span class="mz-eyebrow">מוביל/ה{% for school in leader.school_names %} · {{ school }}{% endfor %}</span>
+      <h1>שלום{% if '@' not in leader_name %} {{ leader_name }}{% endif %}</h1>
+      {% comment %}
+        SPR-M.44's rule kept: the line describes the page you are reading.
+        The first-day sentence is the one a leader with nobody yet sees.
+      {% endcomment %}
+      {% if work_waiting or waiting %}
+        <p>מה מחכה לכם עכשיו.</p>
+      {% elif mine %}
+        <p>
+          המט״צים שלכם, ואיפה הם בתוכנית.
+          {{ dashboard.students }} מט״צים, {{ dashboard.certified }} מוסמכים{% if dashboard.ready %},
+          <strong>{{ dashboard.ready }} מוכנים להסמכה</strong>{% endif %}.
+        </p>
+      {% else %}
+        <p>הקישור שלכם, כדי שהמט״צים הראשונים יצטרפו.</p>
+      {% endif %}
+    </div>
+    <div class="mz-hello-actions">
+      {% if mine %}
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:roster' %}">המט״צים שלי</a>
+      {% endif %}
+      <a class="mz-linkbtn" href="{% url 'matazim:leader_guide' %}">מדריך למוביל/ה</a>
+    </div>
   </div>
 
   {% if work_waiting %}
     {% comment %}
-      REQ-M.124 — first on the screen, above the joining requests. Somebody is
-      waiting on a sentence from this person, and nothing else in the product
-      will tell them.
+      REQ-M.124 — first on the screen. Somebody is waiting on a sentence from
+      this person, and nothing else in the product will tell them.
     {% endcomment %}
-    <section class="mz-panel">
+    <section class="mz-panel mz-attention">
       <h2>עבודות שמחכות לך <span class="mz-count">{{ work_waiting|length }}</span></h2>
       <ul class="mz-training">
         {% for submission in work_waiting %}
@@ -58,12 +79,11 @@
   {% endif %}
 
   {% if waiting %}
-    <section class="mz-panel">
+    <section class="mz-panel mz-attention">
       <h2>מחכים לאישור שלכם <span class="mz-count">{{ waiting|length }}</span></h2>
       {% comment %}
-        REQ-M.16. This was a name, an email and two buttons: a decision taken
-        with nothing to read. What they wrote is the reason the form asks, so it
-        sits on the screen where the leader says yes.
+        REQ-M.16. What they wrote is the reason the form asks, so it sits on
+        the screen where the leader says yes.
       {% endcomment %}
       <ul class="mz-requests">
         {% for row in waiting %}
@@ -91,10 +111,6 @@
                 {% endif %}
               </dl>
             {% else %}
-              {% comment %}
-                Everyone who applied before REQ-M.16 shipped. Saying so is
-                better than an empty panel that looks like a fault.
-              {% endcomment %}
               <p class="mz-muted">הבקשה הזו נשלחה לפני שהשאלות נשמרו, ולכן אין כאן טקסט.</p>
             {% endif %}
 
@@ -116,26 +132,56 @@
     </section>
   {% endif %}
 
-  {% comment %}
-    SPR-M.44. The join link and the QR are the first thing on this page, and
-    for a leader who already has a group they were the whole first screen on a
-    phone: the tool for recruiting more sat above the people they came to look
-    at. Recruiting is occasional; looking in on your group is why you opened
-    the page. So once there is a group, the group goes first, and the link
-    keeps its place for a leader who has nobody yet and needs it most.
-  {% endcomment %}
-  <div class="mz-two-up{% if mine %} mz-two-up-flip{% endif %}">
-    <section class="mz-panel">
-      <h2>הדרכות למט״צים שלי</h2>
-      <p class="mz-muted">
-        אפשר לפתוח למט״צים שלכם הדרכות נוספות מהאתר הראשי. זו הזדמנות ולא
-        דרישה: ההסמכה נשארת מבחן הכניסה, שתי הסקראץ׳ והאישור שלכם.
-      </p>
-      <a class="mz-linkbtn" href="{% url 'matazim:leader_shelf' %}">לבחירת הדרכות</a>
+  {% if dashboard.attention %}
+    {% comment %}
+      REQ-M.76, from the leader's side: the two automatic conditions are met
+      and the third is theirs. Nothing else in the product says so until they
+      open the student's page, which is the wrong way round for the one
+      irreversible act of the role.
+    {% endcomment %}
+    <section class="mz-panel mz-attention">
+      <h2>מוכנים להסמכה <span class="mz-count">{{ dashboard.attention|length }}</span></h2>
+      <p class="mz-muted">עברו את המבחן וסיימו את שתי ההדרכות. ההחלטה עכשיו שלכם.</p>
+      <ul class="mz-roster">
+        {% for row in dashboard.attention %}
+          <li class="mz-roster-row">
+            <a class="mz-roster-who" href="{% url 'matazim:student' row.student.pk %}">
+              <span class="mz-roster-name">{{ row.name }}</span>
+            </a>
+            <span class="mz-role"><a class="mz-btn mz-btn-secondary mz-btn-sm" href="{% url 'matazim:student' row.student.pk %}">לדף שלו/ה</a></span>
+          </li>
+        {% endfor %}
+      </ul>
     </section>
+  {% endif %}
 
+  {% if mine %}
     <section class="mz-panel">
-      <h2>הקישור שלכם</h2>
+      <h2>המט״צים שלי <span class="mz-count">{{ dashboard.students }}</span></h2>
+      <ul class="mz-roster">
+        {% for row in dashboard.rows %}
+          <li class="mz-roster-row">
+            <a class="mz-roster-who" href="{% url 'matazim:student' row.student.pk %}">
+              <span class="mz-roster-name">{{ row.name }}</span>
+            </a>
+            <span class="mz-role mz-role-facts">
+              <span class="mz-bar mz-bar-sm" role="img" aria-label="{{ row.pct }} אחוז במסלול">
+                <span class="mz-bar-fill" style="width: {{ row.pct }}%"></span>
+              </span>
+              <span class="mz-tag {% if row.status == 'done' %}mz-tag-done{% elif row.status == 'fix' %}mz-tag-fix{% elif row.status == 'doing' %}mz-tag-doing{% else %}mz-tag-idle{% endif %}">{{ row.word }}</span>
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+      <p class="mz-page-actions">
+        <a class="mz-linkbtn" href="{% url 'matazim:roster' %}">הרשימה המלאה, עם חיפוש וכיתות</a>
+      </p>
+    </section>
+  {% endif %}
+
+  <div class="mz-two-up">
+    <section class="mz-panel">
+      <h2>{% if mine %}להזמין עוד מט״צים{% else %}הקישור שלכם{% endif %}</h2>
       <p class="mz-muted">
         שלחו אותו לתלמידים בוואטסאפ, או תלו את הקוד בכיתה. מי שמגיע דרכו מצטרף
         אליכם ישירות, בלי שתצטרכו לאשר.
@@ -143,38 +189,25 @@
       <input class="mz-copy" type="text" value="{{ join_url }}" readonly onclick="this.select()"
              aria-label="קישור ההצטרפות שלכם">
       <img class="mz-qr" src="{% url 'matazim:leader_qr' leader.pk %}" alt="קוד QR להצטרפות">
-    </section>
-
-    <section class="mz-panel">
-      <h2>המט״צים שלי <span class="mz-count">{{ mine|length }}</span></h2>
-      {% if mine %}
-        <ul class="mz-training">
-          {% for student in mine %}
-            <li>
-              <a class="mz-training-title" href="{% url 'matazim:student' student.pk %}">
-                {{ student.user.profile.display_name|default:student.user.email }}
-              </a>
-              <span class="mz-tag mz-tag-doing">{{ student.get_status_display }}</span>
-            </li>
-          {% endfor %}
-        </ul>
-        <p class="mz-page-actions">
-          <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:roster' %}">
-            הרשימה המלאה, עם התקדמות והסמכה
-          </a>
-        </p>
-      {% else %}
+      {% if not mine %}
         <p class="mz-muted">עוד אין מט״צים משויכים אליכם. שלחו את הקישור ונתחיל.</p>
-        {% comment %}
-          The entry stays even with nobody on the roster. A leader on their
-          first day is precisely who needs to learn that the screen exists,
-          and a link that appears only once it has content is a link nobody
-          finds the day it starts mattering.
-        {% endcomment %}
         <p class="mz-page-actions">
           <a class="mz-linkbtn" href="{% url 'matazim:roster' %}">רשימת המט״צים</a>
         </p>
       {% endif %}
+    </section>
+
+    <section class="mz-panel">
+      <h2>עוד כלים</h2>
+      <ul class="mz-toolrow">
+        <li><a class="mz-linkbtn" href="{% url 'matazim:classes' %}">הכיתות שלי</a></li>
+        <li><a class="mz-linkbtn" href="{% url 'matazim:leader_shelf' %}">הדרכות נוספות למט״צים שלי</a></li>
+        <li><a class="mz-linkbtn" href="{% url 'matazim:events' %}">ימי שיא</a></li>
+        <li><a class="mz-linkbtn" href="{% url 'matazim:community' %}">קהילת מט״צים</a></li>
+      </ul>
+      <p class="mz-muted mz-small">
+        מנהל/ת התכנית רואה את המספרים של הקבוצה שלכם בדיוק כפי שהם כאן. אין מה לדווח בנפרד.
+      </p>
     </section>
   </div>
 </div>

@@ -287,11 +287,15 @@ def test_signing_in_as_staff_lands_on_the_reports(client, world):
     assert response["Location"] == "/matazim/staff/"
 
 
-def test_everybody_else_still_lands_where_they_did(client, world):
-    for email in ("kid@example.com", "teacher@example.com"):
+def test_everybody_else_lands_on_their_own_door_too(client, world):
+    """SPR-M.53 sent staff to ניהול and left everyone else on the recruitment
+    page; SPR-M.58 finished the job. A member lands on המסלול שלי, a leader on
+    האזור שלי. The full matrix is in test_spr_m_58."""
+    for email, where in (("kid@example.com", "/matazim/my-path/"),
+                         ("teacher@example.com", "/matazim/leader/")):
         response = client.post("/matazim/login/",
                                {"email": email, "password": PASSWORD})
-        assert response["Location"] == "/matazim/", email
+        assert response["Location"] == where, email
         client.logout()
 
 
@@ -480,10 +484,12 @@ def test_the_deploy_never_revokes_somebody_granted_on_the_screen(world, monkeypa
 def pair(world):
     """ליטל added to נעמי's institution, the way the grant screen does it."""
     from matazim.models import Institution
-    from matazim.roles import grant_program_manager
 
     litala = _user("litala2@example.com", "ליטל")
-    grant_program_manager(litala, by=world["root"])
+    # The role is membership of the institution and nothing else. Calling
+    # grant_program_manager here, in a fixture with two staffed institutions,
+    # also appointed her into the default one, so the two "same desk" people
+    # were on two desks and the greeting named a different institution.
     ours = Institution.objects.get(name="הרשת שלנו")
     ours.managers.add(litala)
     return {"naomi": world["naomi"], "litala": litala}

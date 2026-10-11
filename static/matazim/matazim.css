@@ -2893,3 +2893,58 @@ a.mz-path-title:hover { color: var(--mz-link); }
 .mz-course.is-locked .mz-course-cover { filter: grayscale(1); opacity: .55; }
 .mz-course.is-locked .mz-course-body h3 { color: var(--mz-body); }
 .mz-course-lock { background: var(--mz-card); color: var(--mz-body); border: 1px solid var(--mz-line); }
+
+/* ================================================================ SPR-M.58
+ * Each persona's front door. A greeting that names the role, one primary
+ * action, what needs attention, then the list. Drawn from the token layer;
+ * nothing new below it.
+ * ------------------------------------------------------------------------ */
+
+/* ---- the greeting head: name, role, numbers, and the one action --------- */
+.mz-hello { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+.mz-hello .mz-eyebrow { display: block; margin-bottom: 4px; }
+.mz-hello p { margin: 6px 0 0; }
+.mz-hello-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+/* A panel that needs a decision carries a stripe, so it is told apart from
+   the panels that merely inform. Purple, because action is purple here. */
+.mz-attention { border-inline-start: 4px solid var(--mz-purple); }
+
+/* One number and its word, on a dashboard row. */
+.mz-stat { font-size: .88rem; color: var(--mz-body); white-space: nowrap; }
+.mz-stat strong { color: var(--mz-ink); font-variant-numeric: tabular-nums; }
+
+/* The quiet row of secondary links at the bottom of a dashboard. */
+.mz-toolrow { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.mz-toolrow li { display: inline-flex; }
+
+/* ---- the orientation strip on דף הבית ----------------------------------- */
+.mz-orient {
+  background: var(--mz-card); border-radius: var(--mz-radius); box-shadow: var(--mz-shadow);
+  padding: 22px 24px 20px; margin: 0 0 24px;
+}
+.mz-orient h2 { font-size: 1.1rem; margin: 0 0 14px; }
+.mz-orient-steps {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+}
+.mz-orient-step { display: flex; gap: 12px; align-items: flex-start; }
+.mz-orient-n {
+  flex: none; width: 34px; height: 34px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: .9rem;
+  background: var(--mz-page); color: var(--mz-body); border: 2px solid var(--mz-line);
+}
+.mz-orient-step.is-now  .mz-orient-n { background: var(--mz-purple); border-color: var(--mz-purple); color: #fff; }
+.mz-orient-step.is-done .mz-orient-n { background: var(--mz-teal-solid); border-color: var(--mz-teal-solid); color: #fff; }
+.mz-orient-step.is-open .mz-orient-n { border-color: var(--mz-teal); color: var(--mz-teal-text); }
+.mz-orient-body { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.mz-orient-title { font-weight: 700; color: var(--mz-ink); display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mz-orient-text { font-size: .9rem; color: var(--mz-body); line-height: 1.45; }
+.mz-orient-step.is-later .mz-orient-title, .mz-orient-step.is-later .mz-orient-text { color: var(--mz-muted); }
+.mz-orient-step.is-now { background: var(--mz-purple-soft); border-radius: var(--mz-radius-sm); padding: 10px; margin: -10px; }
+@media (max-width: 640px) {
+  .mz-orient { padding: 18px 16px 16px; }
+  .mz-orient-step.is-now { margin: 0; }
+}
