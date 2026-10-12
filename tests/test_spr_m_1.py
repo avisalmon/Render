@@ -152,7 +152,6 @@ def test_logged_out_nav_matches_the_prototype(client, db):
         "אודות התכנית",
         "המסלול השנתי",
         "ההדרכות",
-        "מבחן הכניסה",
         "בתי הספר",
         "קהילת מט״צים",
         "ימי שיא",
@@ -212,7 +211,10 @@ def test_one_front_door_and_it_belongs_to_the_teenager(client, db):
     html = client.get("/matazim/").content.decode()
     hero = html.split("mz-hero-cta")[1].split("</div>")[0]
 
-    assert "מבחן הכניסה" in hero
+    # REQ-M.166, REQ-M.177 — two doors, and nothing about a test in front.
+    assert "אני רוצה ללמוד" in hero
+    assert "אני רוצה להיות מט״צ" in hero
+    assert "מבחן" not in hero, "the test is in the visitor's face"
     assert "כניסת מובילים" not in hero, "the leader door is back in the hero"
     assert "כניסת תלמידים" not in html, "nobody is labelled a student on arrival"
     assert "כניסת מובילים" in html, "the leader door left the menu as well"

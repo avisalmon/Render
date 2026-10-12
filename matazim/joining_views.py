@@ -64,6 +64,64 @@ def has_passed(user):
 
 # --- Journey A: someone arrives with a link ---------------------------------
 
+CODE_TRIES = 8
+CODE_WINDOW = 15 * 60
+
+
+def _client_key(request):
+    """Who is guessing: the address when there is one, the session otherwise."""
+    forwarded = (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
+    return forwarded or request.META.get("REMOTE_ADDR") or "-"
+
+
+def enter_code(request):
+    """REQ-M.165, REQ-M.166 — "I want to be a מט״צ": a box for a leader's code.
+
+    Public on purpose, like the link it stands in for: the code is read off a
+    board or out of a chat and typed by someone who may have no account yet.
+    A right code goes to the same page the link opens, which remembers it
+    through registering. A wrong code says so and nothing more.
+
+    Throttled, because a code is a secret that gets typed into a box: eight
+    wrong guesses in fifteen minutes from one place and the box rests. The
+    codes are long random strings, so this is a seatbelt and not the lock.
+    """
+    from django.core.cache import cache
+
+    error = ""
+    key = f"mz_code_fail:{_client_key(request)}"
+    if request.method == "POST":
+        if (cache.get(key) or 0) >= CODE_TRIES:
+            error = "ניסיתם הרבה פעמים. נסו שוב בעוד כמה דקות."
+        else:
+            raw = (request.POST.get("code") or "").strip()
+            # A pasted link carries the code as its last path segment.
+            code = raw.rstrip("/").rsplit("/", 1)[-1].strip()
+            leader = (
+                Leader.objects.filter(join_code=code, is_active=True).first() if code else None
+            )
+            if leader is not None:
+                return redirect("matazim:join", code=leader.join_code)
+            # REQ-M.171: one box for both kinds of code. A class code goes to
+            # the class's own page, which asks nothing of anybody.
+            from .access import open_class_for_code
+
+            cls = open_class_for_code(code)
+            if cls is not None:
+                return redirect("matazim:open_join", code=cls.code)
+            if cache.add(key, 1, CODE_WINDOW) is False:
+                try:
+                    cache.incr(key)
+                except ValueError:
+                    cache.set(key, 1, CODE_WINDOW)
+            error = "הקוד הזה לא מוכר. בדקו אותו מול המוביל/ה שלכם ונסו שוב."
+    return render(
+        request,
+        "matazim/code.html",
+        shell(request, "join", error=error, invite=pending_invite(request)),
+    )
+
+
 
 def join(request, code):
     """REQ-M.9 — the landing page an invite opens.
@@ -88,8 +146,9 @@ def join(request, code):
     if request.method == "POST" and request.POST.get("action") == "join":
         if not request.user.is_authenticated:
             return redirect(f"{LOGIN_URL}?next={request.path}")
-        if not passed:
-            return redirect("matazim:entrance_test")
+        # REQ-M.177 — no test before joining. The test runs beside the road: a
+        # person is attached to the leader at once and takes it whenever they
+        # like, and it matters only if this leader asks for it (REQ-M.178).
         if needs_guardian_consent(member_profile(request.user)):
             # REQ-M.84 — this is the moment their data starts being shown to
             # another person, which is the moment consent is owed. Not earlier:
@@ -155,8 +214,6 @@ def apply(request):
     the entrance test is, so every extra field here is only a teenager who does
     not finish the form.
     """
-    if not has_passed(request.user):
-        return redirect("matazim:entrance_test")
     if needs_guardian_consent(member_profile(request.user)):
         # REQ-M.84 — both doors, or neither.
         return redirect("matazim:profile")
@@ -340,6 +397,22 @@ def _waiting_on(leader):
 
 
 @require_POST
+@login_required(login_url=LOGIN_URL)
+@require_POST
+def leader_test_switch(request):
+    """REQ-M.178 — one switch: does this leader ask their members for the test?
+
+    Flipping it removes nobody and un-certifies nobody; it changes who counts
+    as ready and what the roster says is outstanding, nothing else.
+    """
+    leader = leader_of(request.user)
+    if leader is None:
+        raise PermissionDenied
+    leader.requires_entrance_test = request.POST.get("required") == "1"
+    leader.save(update_fields=["requires_entrance_test"])
+    return redirect("matazim:leader_home")
+
+
 @login_required(login_url=LOGIN_URL)
 def leader_confirm(request, student_id):
     """Say yes, or say no. Scoped to people who actually asked *you*."""

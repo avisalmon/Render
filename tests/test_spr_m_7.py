@@ -230,25 +230,26 @@ def test_joining_by_link_needs_no_confirmation(client, db):
     assert student.pending_leader is None
 
 
-def test_you_cannot_join_before_passing_the_test(client, db):
-    """T-F-M.7.7-2: REQ-M.36 holds even with an invite in hand."""
+def test_you_can_join_before_passing_the_test(client, db):
+    """T-F-M.7.7-2, turned round by REQ-M.177 (2026-10-12): the test runs beside
+    the road, so an invite in hand attaches the person at once."""
     from matazim.models import Student
 
     leader = make_leader()
-    sign_in(client, passed=False)
+    user = sign_in(client, passed=False)
 
     client.post(reverse("matazim:join", args=[leader.join_code]), {"action": "join"})
-    assert not Student.objects.exists()
+    assert Student.objects.get(user=user).leader == leader
 
 
 # ------------------------------------------------- Journey B: the open door
 
 
-def test_the_unlocked_door_leads_to_the_application(client, db):
-    """T-F-M.7.4-1: it used to lead to the registration form they had just filled in."""
+def test_the_second_door_leads_to_the_code_box(client, db):
+    """T-F-M.7.4-1, REQ-M.166: "I want to be a מט״צ" asks for a leader's code."""
     sign_in(client, passed=True)
     html = client.get(reverse("matazim:home")).content.decode()
-    assert reverse("matazim:apply") in html
+    assert reverse("matazim:code") in html
 
 
 def test_applying_creates_the_student_and_asks_a_leader(client, db):
@@ -292,15 +293,12 @@ def test_an_applicant_is_told_who_they_are_waiting_for(client, db):
     assert "ממתין" in html or "אישור" in html
 
 
-def test_you_cannot_apply_before_passing_the_test(client, db):
-    """T-F-M.7.4-3."""
-    from matazim.models import Student
-
+def test_the_application_does_not_wait_for_the_test(client, db):
+    """T-F-M.7.4-3, turned round by REQ-M.177."""
     make_leader()
     sign_in(client, passed=False)
     response = client.get(reverse("matazim:apply"))
-    assert response.status_code == 302
-    assert not Student.objects.exists()
+    assert response.status_code == 200
 
 
 # ------------------------------------------------- Journey D: the leader

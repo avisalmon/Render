@@ -42,24 +42,16 @@
       </div>
     </section>
 
-  {% elif not passed %}
-    <section class="mz-panel">
-      <h2>קודם מבחן הכניסה</h2>
-      <p>
-        כל מי שמצטרף עובר קודם את מבחן הכניסה: הדרכת טינקרקאד קצרה שמסתיימת במשימה.
-        <strong>ההזמנה שלכם נשמרת</strong>, וברגע שתעברו תוכלו להצטרף בלחיצה אחת.
-      </p>
-      <div class="mz-page-actions">
-        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:entrance_test' %}">למבחן הכניסה</a>
-      </div>
-    </section>
-
   {% else %}
+    {% comment %}
+      REQ-M.177 — no test in front of this button. The test is offered after
+      joining, as one item beside the courses, when this leader asks for it.
+    {% endcomment %}
     <section class="mz-panel">
       <h2>מוכנים להצטרף</h2>
       <p>
-        עברתם את מבחן הכניסה, ו{{ leader.user.profile.display_name|default:"המוביל/ה" }}
-        הזמין/ה אתכם. לחיצה אחת ואתם בפנים, בלי לחכות לאישור.
+        {{ leader.user.profile.display_name|default:"המוביל/ה" }}
+        הזמין/ה אתכם. לחיצה אחת ואתם בפנים, בלי לחכות לאישור, ומיד אפשר להתחיל ללמוד.
       </p>
       <form method="post">
         {% csrf_token %}

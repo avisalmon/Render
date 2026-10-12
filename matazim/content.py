@@ -18,10 +18,11 @@ FUNNEL = [
     {
         "key": "apply",
         "title": "מתמיינים",
-        "text": "עוברים את מבחן הכניסה ומצטרפים לתוכנית",
+        "text": "מצטרפים למוביל/ה עם קוד",
         "detail": (
-            "לומדים טינקרקאד בהדרכה קצרה, בונים אובייקט אישי שקיבלתם, ומעלים אותו "
-            "לבדיקה. המבחן בודק התמדה ולא ידע מוקדם, ואפשר לנסות שוב בלי הגבלה."
+            "מי שרוצה להיות מט״צ מקבל קוד ממוביל/ה, מצטרף אליו/ה ומיד מתחיל ללמוד. "
+            "אם המוביל/ה בחר/ה במבחן כניסה, אפשר לעשות אותו בכל שלב: הוא הדרכת "
+            "טינקרקאד קצרה שבודקת התמדה ולא ידע מוקדם, ואפשר לנסות שוב בלי הגבלה."
         ),
         "tone": "purple",
         "teaser": False,
@@ -125,3 +126,18 @@ COMING = {
 # A course listed here and missing from the database is a configuration
 # mistake, not a crash: the reader reports zero of zero and the screens say so.
 REQUIRED_COURSE_SLUGS = ("scratch", "scratch-advanced")
+
+# SPR-M.59 (REQ-M.163) — the open basics Avi named on 2026-10-12: Scratch 1 and
+# 2, Tinkercad, Fusion 360, MicroPython, Arduino (both babook courses) and
+# Python. Used once, by the migration that seeds `OfferedCourse.open_to_all`;
+# after that the database is the list and root owns it.
+OPEN_BASICS = (
+    "scratch",
+    "scratch-advanced",
+    "tinkercad",
+    "fusion360",
+    "micropython-thonny",
+    "arduino-tinkercad",
+    "arduino",
+    "python",
+)

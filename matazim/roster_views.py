@@ -150,7 +150,7 @@ def student(request, student_id):
     # deals in slugs because slugs are what the rule is written against, but a
     # slug has no business in a Hebrew sentence on a screen.
     outstanding = []
-    if not state.entrance_test_passed:
+    if not state.test_met:
         outstanding.append("מבחן הכניסה")
     outstanding += [
         (per_course.get(slug) or {}).get("title", slug) for slug in state.missing_courses
@@ -300,20 +300,37 @@ def certify_student(request, student_id):
 
 
 @login_required(login_url=LOGIN_URL)
+def leader_classes(request):
+    """The leader's own address for the hub keeps its old rule: leaders and
+    admins only (REQ-M.11). Everybody else reaches the same page at classes/."""
+    _leader_or_403(request)
+    return classes(request)
+
+
+@login_required(login_url=LOGIN_URL)
 def classes(request):
-    """REQ-M.23, and Q14 defaulted: offered, never required.
+    """REQ-M.23, and Q14 defaulted: offered, never required. REQ-M.175: the hub.
 
     A leader with six students should not have to invent a filing system before
     they can see them, so nothing anywhere insists a student be in a class.
+
+    This is the one place for classes of every kind. A leader sees their
+    official classes with the open ones beneath; everybody else sees the open
+    ones alone. The two are listed separately and never counted together
+    (REQ-M.172).
     """
-    leader = _leader_or_403(request)
-    if leader is None:
+    from django.db.models import Count, Q
+
+    from .access import visible_open_classes, visible_open_members
+
+    leader = leader_of(request.user)
+    if leader is None and is_program_manager(request.user):
         # An admin has no classes of their own to manage. The roster is what
         # they came for.
         return redirect("matazim:roster")
 
     error = ""
-    if request.method == "POST" and request.POST.get("action") == "add":
+    if leader is not None and request.method == "POST" and request.POST.get("action") == "add":
         name = (request.POST.get("name") or "").strip()
         school = (request.POST.get("school_name") or "").strip()
         if not name:
@@ -324,9 +341,32 @@ def classes(request):
             )
             return redirect("matazim:classes")
 
-    mine = StudyClass.objects.filter(leader=leader).prefetch_related("students")
+    mine = (
+        StudyClass.objects.filter(leader=leader).prefetch_related("students")
+        if leader is not None
+        else StudyClass.objects.none()
+    )
+    owned = (
+        visible_open_classes(request.user)
+        .filter(owner=request.user, archived_at__isnull=True)
+        .annotate(n=Count("members", filter=Q(members__ended_at__isnull=True)))
+        .order_by("-created_at")
+    )
+    joined = (
+        visible_open_members(request.user)
+        .filter(user=request.user)
+        .select_related("open_class", "open_class__owner", "open_class__owner__profile")
+    )
     return render(
         request,
         "matazim/classes.html",
-        shell(request, "leader", leader=leader, classes=mine, error=error),
+        shell(
+            request,
+            "classes" if leader is None else "leader",
+            leader=leader,
+            classes=mine,
+            error=error,
+            owned=owned,
+            joined=joined,
+        ),
     )

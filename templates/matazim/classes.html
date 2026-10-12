@@ -14,11 +14,12 @@
 <div class="mz-container mz-page">
   <div class="mz-page-head">
     <h1>הכיתות שלי</h1>
-    <p>דרך לסדר את המט״צים שלכם. אפשר גם בלי, ואף אחד לא חייב להיות בכיתה.</p>
+    <p>{% if leader %}דרך לסדר את המט״צים שלכם. אפשר גם בלי, ואף אחד לא חייב להיות בכיתה.{% else %}הכיתות הפתוחות שפתחתם, ואלה שהצטרפתם אליהן.{% endif %}</p>
   </div>
 
   {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
 
+  {% if leader %}
   <section class="mz-panel">
     <h2>כיתה חדשה</h2>
     <form method="post">
@@ -58,9 +59,59 @@
       <p class="mz-muted">עוד אין כיתות. אפשר לפתוח אחת למעלה, או להמשיך בלי.</p>
     {% endif %}
   </section>
+  {% endif %}
 
+  {% comment %}
+    SPR-M.60, REQ-M.175 — open classes, listed apart from the official ones and
+    never counted with them (REQ-M.172).
+  {% endcomment %}
+  <section class="mz-panel" id="open-classes">
+    <h2>כיתות פתוחות <span class="mz-count">{{ owned|length }}</span></h2>
+    <p class="mz-muted">
+      כיתה שכל אחד יכול לפתוח ולהזמין אליה, ללימוד ההדרכות הפתוחות. מי שמצטרף עושה זאת בעצמו.
+    </p>
+    {% if owned %}
+      <ul class="mz-training">
+        {% for c in owned %}
+          <li>
+            <span class="mz-training-title">{{ c.name }}</span>
+            <span class="mz-role">
+              <a class="mz-linkbtn" href="{% url 'matazim:open_class' c.pk %}">{{ c.n }} חברים</a>
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    <p class="mz-page-actions">
+      <a class="mz-btn mz-btn-primary" href="{% url 'matazim:open_new' %}">לפתוח כיתה פתוחה</a>
+      <a class="mz-linkbtn" href="{% url 'matazim:open_guide' %}">מדריך קצר</a>
+    </p>
+  </section>
+
+  {% if joined %}
+    <section class="mz-panel">
+      <h2>כיתות שהצטרפתי אליהן <span class="mz-count">{{ joined|length }}</span></h2>
+      <ul class="mz-training">
+        {% for m in joined %}
+          <li>
+            <span class="mz-training-title">{{ m.open_class.name }}</span>
+            <span class="mz-role">
+              <a class="mz-linkbtn" href="{% url 'matazim:open_class' m.open_class.pk %}">לדף הכיתה</a>
+              <form method="post" action="{% url 'matazim:open_leave' m.open_class.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="mz-btn mz-btn-ghost mz-btn-sm">לעזוב</button>
+              </form>
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  {% if leader %}
   <p class="mz-page-actions">
     <a class="mz-linkbtn" href="{% url 'matazim:roster' %}">חזרה לרשימת המט״צים</a>
   </p>
+  {% endif %}
 </div>
 {% endblock %}

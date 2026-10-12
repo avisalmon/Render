@@ -31,6 +31,7 @@ from rest_framework import mixins, permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.response import Response
+from rest_framework.renderers import JSONRenderer
 
 from . import access
 from .models import (
@@ -46,6 +47,8 @@ from .models import (
     MatazCertificate,
     MemberProfile,
     Notification,
+    OpenClass,
+    OpenClassMember,
     OfferedCourse,
     Post,
     Request,
@@ -71,6 +74,8 @@ from .serializers import (
     MemberProfileSerializer,
     NotificationSerializer,
     OfferedCourseSerializer,
+    OpenClassMemberSerializer,
+    OpenClassSerializer,
     PostSerializer,
     RequestMessageSerializer,
     RequestSerializer,
@@ -972,6 +977,108 @@ class LeaderCourseViewSet(Scoped):
         instance.delete()
 
 
+class OpenClassViewSet(Scoped):
+    """SPR-M.60 — classes anybody may open.
+
+    Any signed-in account can create one (REQ-M.167), and the terms must be
+    accepted in the same request. The owner is the session. Changing or ending a
+    class is the owner's alone: a member who can read a class gets a refusal, a
+    stranger gets a 404 because the scope never returned the row. DELETE
+    archives, because a class that has had members is a record, and archiving
+    is what frees the place under the cap (REQ-M.174).
+    """
+
+    serializer_class = OpenClassSerializer
+    scope = staticmethod(access.visible_open_classes)
+
+    def _must_own(self, instance):
+        if instance.owner_id != self.request.user.id:
+            raise PermissionDenied("הכיתה הזו לא שלכם.")
+        if instance.is_archived:
+            raise PermissionDenied("הכיתה הסתיימה.")
+
+    def perform_create(self, serializer):
+        from . import open_class as oc
+
+        if not serializer.validated_data.get("terms_accepted"):
+            raise ValidationError({"terms_accepted": "כדי לפתוח כיתה צריך לאשר את התנאים."})
+        if not oc.can_open_another(self.request.user):
+            raise ValidationError(
+                {"name": f"אפשר להחזיק עד {oc.MAX_LIVE_CLASSES} כיתות פתוחות בו זמנית."}
+            )
+        serializer.instance = oc.create_class(self.request.user, serializer.validated_data["name"])
+
+    def perform_update(self, serializer):
+        from . import open_class as oc
+
+        self._must_own(serializer.instance)
+        rotate = serializer.validated_data.pop("rotate_code", False)
+        serializer.validated_data.pop("terms_accepted", None)
+        row = serializer.save()
+        if rotate:
+            oc.replace_code(row)
+
+    def perform_destroy(self, instance):
+        from . import open_class as oc
+
+        self._must_own(instance)
+        oc.archive(instance)
+
+
+class OpenClassMemberViewSet(NoUpdateMixin, Scoped):
+    """SPR-M.60 — memberships, and the one way one is made.
+
+    POST takes a class `code` and joins **the caller**. There is no `user` in
+    the serializer, so there is nothing to name anyone else with (REQ-M.168).
+    Wrong, closed and archived codes are one and the same answer, and wrong ones
+    are counted so the endpoint rests after a few (REQ-M.171). DELETE ends a
+    membership; it is allowed to the member (leaving) and to the owner
+    (removing), and the row is kept so a person is never listed twice. JSON
+    only: there is no browsable form for a box that takes a secret.
+    """
+
+    serializer_class = OpenClassMemberSerializer
+    scope = staticmethod(access.visible_open_members)
+    update_refusal = "חברות בכיתה לא נערכת. אפשר להצטרף או לעזוב."
+
+    renderer_classes = [JSONRenderer]
+
+    def perform_create(self, serializer):
+        from . import open_class as oc
+        from .consent import consent_blocker, needs_guardian_consent
+        from .views import member_profile
+
+        request = self.request
+        key = f"mz_class_code_fail:{request.user.id}"
+        if oc.guessing_rested(key):
+            raise PermissionDenied("ניסיתם הרבה פעמים. נסו שוב בעוד כמה דקות.")
+        raw = (serializer.validated_data.get("code") or "").strip()
+        code = raw.rstrip("/").rsplit("/", 1)[-1].strip()
+        cls = access.open_class_for_code(code)
+        if cls is None:
+            oc.note_wrong_guess(key)
+            raise ValidationError({"code": "הקוד הזה לא מוכר."})
+        if cls.owner_id == request.user.id:
+            raise ValidationError({"code": "זו הכיתה שלכם."})
+        profile = member_profile(request.user)
+        if needs_guardian_consent(profile):
+            raise PermissionDenied(consent_blocker(profile))
+        try:
+            row, created = oc.join_class(cls, request.user)
+        except oc.ClassFull:
+            raise ValidationError({"code": "הכיתה מלאה כרגע."})
+        except oc.ClassClosed:
+            raise ValidationError({"code": "הקוד הזה לא מוכר."})
+        if created:
+            oc.announce_join(cls, request.user)
+        serializer.instance = row
+
+    def perform_destroy(self, instance):
+        from . import open_class as oc
+
+        oc.end_membership(instance, by=self.request.user)
+
+
 # Every model in this app, and the route it answers on. Kept here rather than in
 # urls.py so that adding a model and forgetting its endpoint is visible in one
 # place: `test_every_model_has_an_endpoint` reads this.
@@ -998,4 +1105,6 @@ ROUTES = [
     ("teaching", TeachingSessionViewSet, TeachingSession),
     ("offered-courses", OfferedCourseViewSet, OfferedCourse),
     ("leader-courses", LeaderCourseViewSet, LeaderCourse),
+    ("open-classes", OpenClassViewSet, OpenClass),
+    ("open-class-members", OpenClassMemberViewSet, OpenClassMember),
 ]

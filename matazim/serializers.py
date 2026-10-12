@@ -38,6 +38,8 @@ from .models import (
     LeaderInvite,
     MatazCertificate,
     MemberProfile,
+    OpenClass,
+    OpenClassMember,
     Notification,
     OfferedCourse,
     Post,
@@ -109,7 +111,7 @@ class LeaderSerializer(serializers.ModelSerializer):
         model = Leader
         fields = [
             "id", "user", "user_id", "contact", "is_active", "approved_at",
-            "approved_by", "institution", "assigned_at", "schools",
+            "approved_by", "institution", "assigned_at", "schools", "requires_entrance_test",
         ]
         # `join_code` is absent from `fields` entirely rather than read-only: a
         # code attaches its holder to this leader with no confirmation
@@ -411,7 +413,7 @@ class OfferedCourseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OfferedCourse
-        fields = ["id", "slug", "is_active", "note", "added_by", "added_at"]
+        fields = ["id", "slug", "is_active", "open_to_all", "note", "added_by", "added_at"]
         read_only_fields = ["id", "added_by", "added_at"]
 
 
@@ -431,3 +433,92 @@ class LeaderCourseSerializer(serializers.ModelSerializer):
         model = LeaderCourse
         fields = ["id", "leader", "slug", "chosen_by", "chosen_at"]
         read_only_fields = ["id", "leader", "chosen_by", "chosen_at"]
+
+
+class OpenClassSerializer(serializers.ModelSerializer):
+    """SPR-M.60 — a class anybody may open.
+
+    `owner` is not a field at all: it is the session and nothing a body can
+    say. `code` is shown to the owner and to nobody else, because it is the
+    credential. `terms_accepted` is write-only and is what stamps
+    `terms_accepted_at` on the server; a client cannot supply the timestamp.
+    `rotate_code` is write-only too, and replaces the code.
+    """
+
+    owner_name = serializers.SerializerMethodField()
+    terms_accepted = serializers.BooleanField(write_only=True, required=False, default=False)
+    rotate_code = serializers.BooleanField(write_only=True, required=False, default=False)
+
+    class Meta:
+        model = OpenClass
+        fields = [
+            "id", "name", "code", "is_open", "owner_name", "archived_at", "created_at",
+            "terms_accepted", "rotate_code",
+        ]
+        read_only_fields = ["id", "code", "owner_name", "archived_at", "created_at"]
+
+    def get_owner_name(self, obj):
+        from .open_class import display_name
+
+        return display_name(obj.owner)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get("request")
+        if request is None or instance.owner_id != getattr(request.user, "id", None):
+            data.pop("code", None)
+        return data
+
+
+class OpenClassMemberSerializer(serializers.ModelSerializer):
+    """SPR-M.60 — one membership, shown through the lens and nothing else.
+
+    **There is no `user` field, in either direction.** A request names a class
+    by its code and the server joins the caller; nobody can be named. The read
+    side carries exactly `open_class.LENS`: a name, open-course progress,
+    certificates for open courses, and when they last learned. No email, birth
+    year, consent, hand-in, feedback, leader or other class.
+    """
+
+    code = serializers.CharField(write_only=True)
+    name = serializers.SerializerMethodField()
+    started = serializers.SerializerMethodField()
+    certificates = serializers.SerializerMethodField()
+    last_active = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OpenClassMember
+        fields = [
+            "id", "open_class", "code", "name", "joined_at", "ended_at",
+            "started", "certificates", "last_active",
+        ]
+        read_only_fields = [
+            "id", "open_class", "name", "joined_at", "ended_at",
+            "started", "certificates", "last_active",
+        ]
+
+    def _lens(self, obj):
+        from .open_class import lens_for
+
+        cache = self.context.setdefault("_lens", {})
+        if obj.pk not in cache:
+            siblings = getattr(self.parent, "instance", None)
+            many = isinstance(self.parent, serializers.ListSerializer)
+            batch = list(siblings) if many and siblings is not None else [obj]
+            if obj.pk not in {m.pk for m in batch}:
+                batch = [obj]
+            for row in lens_for(batch):
+                cache[row["member"].pk] = row
+        return cache[obj.pk]
+
+    def get_name(self, obj):
+        return self._lens(obj)["name"]
+
+    def get_started(self, obj):
+        return self._lens(obj)["started"]
+
+    def get_certificates(self, obj):
+        return self._lens(obj)["certificates"]
+
+    def get_last_active(self, obj):
+        return self._lens(obj)["last_active"]

@@ -254,11 +254,11 @@ def test_it_renders_only_the_courses_the_programme_requires(client, db):
     from app.models import Course
 
     make_track()
-    Course.objects.create(slug="arduino", title="ארדואינו", is_published=True)
+    Course.objects.create(slug="robotics", title="ארדואינו", is_published=True)
     user = make_member(leader=make_leader())
     client.force_login(user)
 
-    assert client.get(reverse("matazim:learn_course", args=["arduino"])).status_code == 404
+    assert client.get(reverse("matazim:learn_course", args=["robotics"])).status_code == 404
 
 
 def test_an_unknown_course_is_not_a_crash(client, db):

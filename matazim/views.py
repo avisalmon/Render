@@ -112,6 +112,16 @@ def _has_leader(user):
     return Student.objects.filter(user=user, leader__isnull=False).exists()
 
 
+def _test_required(user):
+    from .models import Student
+
+    if not getattr(user, "is_authenticated", False):
+        return False
+    return Student.objects.filter(
+        user=user, leader__isnull=False, leader__requires_entrance_test=True
+    ).exists()
+
+
 def _leader_of(user):
     from .access import leader_of
 
@@ -202,6 +212,9 @@ def shell(request, section, **extra):
         "invite": _pending_invite(request),
         "is_leader": _leader_of(request.user),
         "student_has_leader": _has_leader(request.user),
+        # REQ-M.178 — whether this person's leader asks for the test. False for
+        # everybody else, so no page invites a visitor to it.
+        "test_required": _test_required(request.user),
         # REQ-M.101, REQ-M.102 — the menu is the role's menu, so base.html has
         # to know which role is reading. `is_member` is deliberately narrow: a
         # leader is not a pupil (§4.9), and carrying המסלול שלי into a

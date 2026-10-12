@@ -107,8 +107,12 @@ def test_a_milestone_carries_a_date_only_when_something_happened(world):
     assert nodes, "a member on day one still has a path in front of them"
     assert all(n["when"] is None for n in nodes)
     assert all(n["status"] != DONE for n in nodes)
-    assert nodes[0]["key"] == "test" and nodes[0]["status"] == TODO
-    assert nodes[0]["is_current"] is True
+    # REQ-M.177 — joining is an offer beside the road, never the current step,
+    # and a learner with no leader is shown no test at all.
+    assert nodes[0]["key"] == "join" and nodes[0]["status"] == TODO
+    assert nodes[0]["parallel"] is True and nodes[0]["is_current"] is False
+    assert "test" not in [n["key"] for n in nodes]
+    assert [n for n in nodes if n["is_current"]][0]["key"] != "join"
 
 
 def test_the_path_reads_the_same_tables_the_leader_reads(world):
@@ -309,10 +313,10 @@ def test_nothing_on_any_of_the_three_screens_is_invented(client, world):
     assert "תוצרים נבחרים" not in body
 
     member = _login(client, "fresh@example.com").get("/matazim/my-path/").content.decode()
-    # The test, joining, two courses, two certificates, and certification
-    # itself. No first submission (nobody to hand it to yet) and no first
+    # Joining, two courses, two certificates, and certification itself (the
+    # test only appears for somebody whose leader asks for it). No first submission (nobody to hand it to yet) and no first
     # teaching session (not certified), because neither is a step they have.
-    assert member.count('class="mz-path-node') == 7
+    assert member.count('class="mz-path-node') == 6
 
 
 # ------------------------------------------ her padlocked cards, 2026-10-09
@@ -323,12 +327,12 @@ def test_the_pool_a_leader_has_not_opened_shows_as_locked(client, world):
     is always preferable. The year ahead is visible, greyed, with a padlock."""
     from matazim.models import OfferedCourse
 
-    _course("arduino", "\u05d0\u05e8\u05d3\u05d5\u05d0\u05d9\u05e0\u05d5", lessons=2)
-    OfferedCourse.objects.create(slug="arduino", added_by=world["leader"].user)
+    _course("robotics", "\u05d0\u05e8\u05d3\u05d5\u05d0\u05d9\u05e0\u05d5", lessons=2)
+    OfferedCourse.objects.create(slug="robotics", added_by=world["leader"].user)
 
     response = _login(client, "mid@example.com").get("/matazim/courses/")
     locked = response.context["locked"]
-    assert [c["slug"] for c in locked] == ["arduino"]
+    assert [c["slug"] for c in locked] == ["robotics"]
     assert locked[0]["locked"] is True
 
     body = response.content.decode()
@@ -341,25 +345,25 @@ def test_a_locked_card_is_a_card_and_not_a_door(client, world):
     """What SPR-M.52 was protecting, kept: seeing it coming is not reaching it."""
     from matazim.models import OfferedCourse
 
-    _course("arduino", "\u05d0\u05e8\u05d3\u05d5\u05d0\u05d9\u05e0\u05d5", lessons=2)
-    OfferedCourse.objects.create(slug="arduino", added_by=world["leader"].user)
+    _course("robotics", "\u05d0\u05e8\u05d3\u05d5\u05d0\u05d9\u05e0\u05d5", lessons=2)
+    OfferedCourse.objects.create(slug="robotics", added_by=world["leader"].user)
 
     session = _login(client, "mid@example.com")
     body = session.get("/matazim/courses/").content.decode()
-    assert "/matazim/learn/arduino/" not in body, "the locked card links to the course"
-    assert session.get("/matazim/learn/arduino/").status_code == 404
+    assert "/matazim/learn/robotics/" not in body, "the locked card links to the course"
+    assert session.get("/matazim/learn/robotics/").status_code == 404
 
 
 def test_what_the_leader_opened_is_never_shown_locked(client, world):
     from matazim.models import LeaderCourse, OfferedCourse
 
-    _course("arduino", "\u05d0\u05e8\u05d3\u05d5\u05d0\u05d9\u05e0\u05d5", lessons=2)
-    OfferedCourse.objects.create(slug="arduino", added_by=world["leader"].user)
-    LeaderCourse.objects.create(leader=world["leader"], slug="arduino")
+    _course("robotics", "\u05d0\u05e8\u05d3\u05d5\u05d0\u05d9\u05e0\u05d5", lessons=2)
+    OfferedCourse.objects.create(slug="robotics", added_by=world["leader"].user)
+    LeaderCourse.objects.create(leader=world["leader"], slug="robotics")
 
     response = _login(client, "mid@example.com").get("/matazim/courses/")
     assert response.context["locked"] == []
-    assert [c["slug"] for c in response.context["offered"]] == ["arduino"]
+    assert [c["slug"] for c in response.context["offered"]] == ["robotics"]
 
 
 def test_a_withdrawn_course_is_not_shown_at_all(client, world):
@@ -377,8 +381,8 @@ def test_a_withdrawn_course_is_not_shown_at_all(client, world):
 def test_the_locked_count_in_her_sidebar_as_not_started(client, world):
     from matazim.models import OfferedCourse
 
-    _course("arduino", "\u05d0\u05e8\u05d3\u05d5\u05d0\u05d9\u05e0\u05d5", lessons=2)
-    OfferedCourse.objects.create(slug="arduino", added_by=world["leader"].user)
+    _course("robotics", "\u05d0\u05e8\u05d3\u05d5\u05d0\u05d9\u05e0\u05d5", lessons=2)
+    OfferedCourse.objects.create(slug="robotics", added_by=world["leader"].user)
 
     overview = _login(client, "mid@example.com").get("/matazim/courses/").context["overview"]
     assert overview["total"] == 3

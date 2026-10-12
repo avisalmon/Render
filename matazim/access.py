@@ -612,6 +612,10 @@ def visible_course_slugs(user):
     A member with no leader gets 1 and 3, which is right: REQ-M.65 says having
     no leader yet is a normal state, and it must not cost them the track or
     their own history.
+
+    SPR-M.59 adds a fourth, the widest: **the open basics** (REQ-M.163), every
+    active `OfferedCourse` marked `open_to_all`. Any signed-in account has
+    them, with no leader, no shelf entry and no test. Avi, 2026-10-12.
     """
     from app.models import Enrollment
 
@@ -621,6 +625,8 @@ def visible_course_slugs(user):
     slugs = set(REQUIRED_COURSE_SLUGS)
     if not getattr(user, "is_authenticated", False):
         return slugs
+
+    slugs |= open_slugs()
 
     leader = leader_of(user)
     if leader is None:
@@ -638,6 +644,20 @@ def visible_course_slugs(user):
         Enrollment.objects.filter(user=user).values_list("course__slug", flat=True)
     )
     return slugs
+
+
+def open_slugs():
+    """The open basics at this moment (REQ-M.163): active and open_to_all.
+
+    Read on every request, like `shelvable_slugs`, so root withdrawing one
+    takes effect for everyone who had not started it.
+    """
+    from .models import OfferedCourse
+
+    return set(
+        OfferedCourse.objects.filter(is_active=True, open_to_all=True)
+        .values_list("slug", flat=True)
+    )
 
 
 def shelvable_slugs():
@@ -701,3 +721,61 @@ def _student_row(user):
     from .models import Student
 
     return Student.objects.filter(user=user).select_related("leader").first()
+
+
+# --- SPR-M.60: open classes ---------------------------------------------------
+#
+# Two scopes and a lookup, and nothing else queries the open tables directly
+# (REQ-M.173). A program manager and a leader get no view into somebody else's
+# open class: this is a different world from the roster, joined to it only at
+# `User`.
+
+
+def visible_open_classes(user):
+    """Classes I own, classes I am in, everything for root."""
+    from .models import OpenClass
+
+    if not getattr(user, "is_authenticated", False):
+        return OpenClass.objects.none()
+    if user.is_superuser:
+        return OpenClass.objects.all()
+    return OpenClass.objects.filter(
+        Q(owner=user)
+        | Q(
+            members__user=user,
+            members__ended_at__isnull=True,
+            archived_at__isnull=True,
+        )
+    ).distinct()
+
+
+def visible_open_members(user):
+    """Active members of classes I own, my own memberships, everything for root.
+
+    Members do not see each other (Q18): the second term is a person's own
+    rows, never the class's.
+    """
+    from .models import OpenClassMember
+
+    if not getattr(user, "is_authenticated", False):
+        return OpenClassMember.objects.none()
+    if user.is_superuser:
+        return OpenClassMember.objects.all()
+    return OpenClassMember.objects.filter(
+        Q(open_class__owner=user, open_class__archived_at__isnull=True, ended_at__isnull=True)
+        | Q(user=user, ended_at__isnull=True)
+    ).distinct()
+
+
+def open_class_for_code(code):
+    """The one class a code names, while it is open and not archived."""
+    from .models import OpenClass
+    from .open_class import code_matches
+
+    code = (code or "").strip()
+    if not code:
+        return None
+    row = OpenClass.objects.filter(code=code, is_open=True, archived_at__isnull=True).first()
+    if row is None or not code_matches(code, row.code):
+        return None
+    return row

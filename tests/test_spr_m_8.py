@@ -297,12 +297,30 @@ def test_the_entrance_test_is_required_even_with_both_certificates(db):
     from matazim.certification import eligibility
 
     scratch, advanced = make_track()
-    student = make_student(passed=False)
+    student = make_student(leader=make_leader(), passed=False)
+    # REQ-M.178 — condition one counts only for a leader who asks for it.
+    student.leader.requires_entrance_test = True
+    student.leader.save(update_fields=["requires_entrance_test"])
     certify(student.user, scratch)
     certify(student.user, advanced)
 
     state = eligibility(student)
     assert not state.is_eligible
+    assert not state.entrance_test_passed
+
+
+def test_the_entrance_test_is_waived_for_a_leader_who_does_not_require_it(db):
+    """REQ-M.178: optional means optional. The pass is still recorded and shown."""
+    from matazim.certification import eligibility
+
+    scratch, advanced = make_track()
+    student = make_student(leader=make_leader(), passed=False)
+    assert student.leader.requires_entrance_test is False
+    certify(student.user, scratch)
+    certify(student.user, advanced)
+
+    state = eligibility(student)
+    assert state.is_eligible
     assert not state.entrance_test_passed
 
 

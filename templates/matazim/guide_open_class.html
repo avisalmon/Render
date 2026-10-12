@@ -1,0 +1,55 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.176 — a short page for whoever opens a class.
+
+  Written for someone who is not a leader and has no training in this, so it
+  says what they are, what they see, and what they cannot do, in that order.
+{% endcomment %}
+
+{% block title %}מדריך לכיתה פתוחה · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>מדריך לכיתה פתוחה</h1>
+    <p>איך פותחים כיתה, ומה אפשר ואי אפשר לעשות בה.</p>
+  </div>
+
+  <section class="mz-panel">
+    <h2>מה זו כיתה פתוחה</h2>
+    <p>
+      קבוצה של אנשים שלומדים את ההדרכות הפתוחות ושיתפו אתכם בהתקדמות שלהם.
+      לא צריך להיות מוביל/ה ולא צריך אישור. אתם המורה של הכיתה, ולא יותר מזה.
+    </p>
+  </section>
+
+  <section class="mz-panel">
+    <h2>איך מצרפים אנשים</h2>
+    <ol class="mz-needs">
+      <li>פותחים כיתה ונותנים לה שם.</li>
+      <li>שולחים את הקישור, או מראים את הקוד או את קוד ה-QR.</li>
+      <li>כל אחד לוחץ בעצמו על כפתור ההצטרפות. אי אפשר להוסיף אף אחד במקומו.</li>
+    </ol>
+    <p class="mz-muted">אפשר להחזיק עד {{ cap }} כיתות ועד {{ members }} חברים בכל אחת.</p>
+  </section>
+
+  <section class="mz-panel">
+    <h2>מה אתם רואים על כל חבר/ה</h2>
+    <ul class="mz-needs">{% for t in lens %}<li>{{ t }}</li>{% endfor %}</ul>
+    <h2>מה אתם לא רואים</h2>
+    <ul class="mz-needs">{% for t in never %}<li>{{ t }}</li>{% endfor %}</ul>
+  </section>
+
+  <section class="mz-panel">
+    <h2>ומה לא עושים</h2>
+    <ul class="mz-needs">{% for t in terms %}<li>{{ t }}</li>{% endfor %}</ul>
+    <p class="mz-muted">להסמכה כמט״צ מוסמך אין קיצור: היא רק דרך מוביל/ה.</p>
+  </section>
+
+  <p class="mz-page-actions">
+    <a class="mz-btn mz-btn-primary" href="{% url 'matazim:open_new' %}">לפתוח כיתה</a>
+    <a class="mz-linkbtn" href="{% url 'matazim:my_classes' %}">הכיתות שלי</a>
+  </p>
+</div>
+{% endblock %}

@@ -133,6 +133,7 @@ def build_world(
     posts=False,
     teaching=False,
     published=False,
+    open_classes=False,
 ):
     """One institution, dialled to the state under test.
 
@@ -547,7 +548,17 @@ def build_world(
             hidden_reason="היה שם שם של ילד",
         )
 
+    # SPR-M.60 — a class one learner opened and another joined, so the owner's
+    # page, the member's page and the join page all have somebody in them.
+    open_class = None
+    if open_classes and students == "mixed":
+        from matazim import open_class as oc
+
+        open_class = oc.create_class(people["fresh@example.com"].user, "חוג רובוטיקה")
+        oc.join_class(open_class, people["mid@example.com"].user)
+
     return {
+        "open_class": open_class,
         "manager": manager,
         "work": first_work if work and students == "mixed" else None,
         "root": root,
@@ -580,6 +591,36 @@ SCREENS = [
         dict(students="none"),
     ),
     ("leader/classes", "/matazim/leader/classes/", "leader@example.com", dict(students="mixed")),
+    # SPR-M.60 — open classes, in the states each reader meets them.
+    ("open/hub-empty", "/matazim/classes/", "fresh@example.com", dict(students="mixed")),
+    ("open/hub-owner", "/matazim/classes/", "fresh@example.com", dict(students="mixed", open_classes=True)),
+    ("open/hub-joined", "/matazim/classes/", "mid@example.com", dict(students="mixed", open_classes=True)),
+    ("open/new", "/matazim/classes/open/new/", "fresh@example.com", dict(students="mixed")),
+    ("open/guide", "/matazim/classes/open/guide/", None, dict(students="none")),
+    (
+        "open/owner-page",
+        lambda w: f"/matazim/classes/open/{w['open_class'].pk}/",
+        "fresh@example.com",
+        dict(students="mixed", open_classes=True),
+    ),
+    (
+        "open/member-page",
+        lambda w: f"/matazim/classes/open/{w['open_class'].pk}/",
+        "mid@example.com",
+        dict(students="mixed", open_classes=True),
+    ),
+    (
+        "open/join-visitor",
+        lambda w: f"/matazim/class/{w['open_class'].code}/",
+        None,
+        dict(students="mixed", open_classes=True),
+    ),
+    (
+        "open/join-signed-in",
+        lambda w: f"/matazim/class/{w['open_class'].code}/",
+        "unattached@example.com",
+        dict(students="mixed", open_classes=True),
+    ),
     ("leader/home", "/matazim/leader/", "leader@example.com", dict(students="mixed")),
     ("leader/guide", "/matazim/leader/guide/", "leader@example.com", dict(students="mixed")),
     ("pm/leaders", "/matazim/staff/team/", "pm@example.com", dict(students="mixed")),

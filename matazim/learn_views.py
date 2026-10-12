@@ -332,7 +332,16 @@ def staff_offered(request):
             # Retiring is a flag. A member half-way through a withdrawn course
             # keeps their progress and their certificate: those live in
             # babook's tables and never belonged to this row.
-            row.is_active = request.POST.get("action") != "retire"
+            action = request.POST.get("action")
+            if action in ("open", "close"):
+                # REQ-M.162 — open to anyone who registered, no leader needed.
+                # Opening also makes it available, so the two cannot disagree.
+                row.open_to_all = action == "open"
+                if row.open_to_all:
+                    row.is_active = True
+                row.save()
+                return redirect("matazim:staff_offered")
+            row.is_active = action != "retire"
             row.note = (request.POST.get("note") or row.note or "").strip()[:400]
             row.save()
         return redirect("matazim:staff_offered")

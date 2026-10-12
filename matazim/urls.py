@@ -20,6 +20,7 @@ from . import (
     internal_views,
     invite_views,
     joining_views,
+    open_class_views,
     learn_views,
     notice_views,
     overview_views,
@@ -96,6 +97,7 @@ urlpatterns = [
     # First contact (REQ-M.39 to M.41).
     path("welcome/accept/", views.welcome_accept, name="welcome_accept"),
     # Becoming someone: the invite link, the open door, and the leader's page.
+    path("code/", joining_views.enter_code, name="code"),
     path("join/<str:code>/", joining_views.join, name="join"),
     path("joined/", joining_views.joined, name="joined"),
     path("apply/", joining_views.apply, name="apply"),
@@ -114,6 +116,7 @@ urlpatterns = [
     ),
     path("leader/", joining_views.leader_home, name="leader_home"),
     path("leader/guide/", guide_views.leader_guide, name="leader_guide"),
+    path("leader/test/", joining_views.leader_test_switch, name="leader_test_switch"),
     path("leader/confirm/<int:student_id>/", joining_views.leader_confirm, name="leader_confirm"),
     # The desk, once someone is standing at it (SPR-M.8).
     path("leader/students/", roster_views.roster, name="roster"),
@@ -123,7 +126,16 @@ urlpatterns = [
         roster_views.certify_student,
         name="certify",
     ),
-    path("leader/classes/", roster_views.classes, name="classes"),
+    path("leader/classes/", roster_views.leader_classes, name="classes"),
+    # SPR-M.60 — the same hub for everybody, and the open classes under it.
+    path("classes/", roster_views.classes, name="my_classes"),
+    path("classes/open/new/", open_class_views.open_new, name="open_new"),
+    path("classes/open/guide/", open_class_views.open_guide, name="open_guide"),
+    path("classes/open/<int:pk>/", open_class_views.open_class_page, name="open_class"),
+    path("classes/open/<int:pk>/qr.png", open_class_views.open_class_qr, name="open_class_qr"),
+    path("classes/open/<int:pk>/leave/", open_class_views.open_leave, name="open_leave"),
+    path("classes/open/<int:pk>/report/", open_class_views.open_report, name="open_report"),
+    path("class/<str:code>/", open_class_views.open_join, name="open_join"),
     path("leader/<int:leader_id>/qr.png", joining_views.leader_qr, name="leader_qr"),
     path("staff/leaders/", joining_views.staff_leaders, name="staff_leaders"),
     path("staff/leaders/<int:leader_id>/", joining_views.staff_leader, name="staff_leader"),

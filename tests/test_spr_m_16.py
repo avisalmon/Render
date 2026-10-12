@@ -313,7 +313,7 @@ def test_a_member_with_no_leader_is_given_the_way_forward(client, db):
     client.force_login(user)
 
     html = client.get(reverse("matazim:my_path")).content.decode()
-    assert reverse("matazim:apply") in html
+    assert reverse("matazim:code") in html
     assert "שגיאה" not in html
 
 

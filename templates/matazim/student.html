@@ -54,11 +54,11 @@
     {% endcomment %}
     <ul class="mz-needs">
       <li>
-        {% if eligibility.entrance_test_passed %}<span class="mz-check">✓<span class="mz-sr">הושלם.</span></span>{% else %}<span class="mz-check-todo">○<span class="mz-sr">עוד לא.</span></span>{% endif %}
+        {% if eligibility.entrance_test_passed %}<span class="mz-check">✓<span class="mz-sr">הושלם.</span></span>{% elif eligibility.entrance_test_required %}<span class="mz-check-todo">○<span class="mz-sr">עוד לא.</span></span>{% else %}<span class="mz-check-todo">·<span class="mz-sr">לא נדרש.</span></span>{% endif %}
         <span>
           מבחן הכניסה
           {% if not eligibility.entrance_test_passed %}
-            <span class="mz-muted">עוד לא עבר/ה</span>
+            <span class="mz-muted">{% if eligibility.entrance_test_required %}עוד לא עבר/ה{% else %}לא נדרש בקבוצה הזו{% endif %}</span>
           {% endif %}
         </span>
       </li>

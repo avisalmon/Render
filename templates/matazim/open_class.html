@@ -1,0 +1,129 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.169, REQ-M.175 — one class page for two readers.
+
+  The owner sees the invite and the members with the lens and nothing else. A
+  member sees who runs the class, what that person can see of them, and a way
+  out. There is deliberately no control here that certifies, approves or moves
+  anybody to a stage: an owner is a מורה on screen and nothing in the data.
+{% endcomment %}
+
+{% block title %}{{ cls.name }} · כיתה פתוחה{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <p class="mz-eyebrow">כיתה פתוחה{% if cls.is_archived %} · הסתיימה{% elif not cls.is_open %} · סגורה להצטרפות{% endif %}</p>
+    <h1>{{ cls.name }}</h1>
+    <p>המורה: {{ owner_name }}</p>
+    <p class="mz-muted mz-small">מורה בכיתה פתוחה לא מסמיך/ה אף אחד/ת למט״צ. ההסמכה היא רק דרך מוביל/ה.</p>
+  </div>
+
+  {% if is_owner %}
+    {% if not cls.is_archived %}
+      <section class="mz-panel">
+        <h2>להזמין לכיתה</h2>
+        <p class="mz-muted">
+          שלחו את הקישור, או הראו את הקוד. כל אחד מצטרף בעצמו, ואתם לא יכולים להוסיף אף אחד.
+        </p>
+        <input class="mz-copy" type="text" value="{{ join_url }}" readonly onclick="this.select()"
+               aria-label="קישור ההצטרפות לכיתה">
+        <p dir="ltr" class="mz-small">{{ cls.code }}</p>
+        <img class="mz-qr" src="{% url 'matazim:open_class_qr' cls.pk %}" alt="קוד QR להצטרפות לכיתה">
+        <form method="post" class="mz-page-actions">
+          {% csrf_token %}
+          {% if cls.is_open %}
+            <button name="action" value="close" class="mz-btn mz-btn-ghost">לסגור להצטרפות</button>
+          {% else %}
+            <button name="action" value="reopen" class="mz-btn mz-btn-ghost">לפתוח להצטרפות</button>
+          {% endif %}
+          <button name="action" value="replace_code" class="mz-btn mz-btn-ghost">להחליף קוד</button>
+        </form>
+      </section>
+    {% endif %}
+  {% endif %}
+
+  {% if rows is not None %}
+    <section class="mz-panel">
+      <h2>החברים <span class="mz-count">{{ count }}</span> <span class="mz-muted mz-small">מתוך {{ max_members }}</span></h2>
+      {% if rows %}
+        <ul class="mz-training">
+          {% for r in rows %}
+            <li>
+              <span class="mz-training-title">
+                {{ r.name }}
+                <span class="mz-muted mz-small">הצטרף/ה {{ r.joined_at|date:"d.m.Y" }}</span>
+                {% if r.last_active %}<span class="mz-muted mz-small">למד/ה לאחרונה {{ r.last_active|date:"d.m.Y" }}</span>{% endif %}
+              </span>
+              <span class="mz-role">
+                {% for s in r.started %}
+                  <span class="mz-small">{{ s.title }} {{ s.pct }}%</span>
+                {% empty %}
+                  <span class="mz-muted mz-small">עוד לא התחיל/ה</span>
+                {% endfor %}
+                {% for c in r.certificates %}<span class="mz-check">תעודה: {{ c }}</span>{% endfor %}
+                {% if is_owner and not cls.is_archived %}
+                  <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="remove">
+                    <input type="hidden" name="member" value="{{ r.member.pk }}">
+                    <button type="submit" class="mz-btn mz-btn-ghost mz-btn-sm">להסיר</button>
+                  </form>
+                {% endif %}
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="mz-muted">עוד אין חברים. שלחו את הקישור ונתחיל.</p>
+      {% endif %}
+      <p class="mz-muted mz-small">
+        כאן רואים רק את מה שכל חבר/ה הסכימו להראות: שם, הדרכות פתוחות, אחוזים ותעודות סיום.
+      </p>
+    </section>
+  {% endif %}
+
+  {% if is_member and not is_owner %}
+    <section class="mz-panel">
+      <h2>מה המורה רואה עליכם</h2>
+      <ul class="mz-needs">{% for t in lens %}<li>{{ t }}</li>{% endfor %}</ul>
+      <h2>מה המורה לא רואה</h2>
+      <ul class="mz-needs">{% for t in never %}<li>{{ t }}</li>{% endfor %}</ul>
+      <form method="post" action="{% url 'matazim:open_leave' cls.pk %}" class="mz-page-actions">
+        {% csrf_token %}
+        <button type="submit" class="mz-btn mz-btn-ghost">לעזוב את הכיתה</button>
+      </form>
+    </section>
+  {% endif %}
+
+  {% if not is_owner and not cls.is_archived %}
+    <details class="mz-panel">
+      <summary>לדווח על הכיתה</summary>
+      <form method="post" action="{% url 'matazim:open_report' cls.pk %}">
+        {% csrf_token %}
+        <label class="mz-field">
+          <span>מה קרה</span>
+          <textarea id="reason" name="reason" rows="3" maxlength="500"></textarea>
+        </label>
+        <button type="submit" class="mz-btn mz-btn-ghost">שליחת דיווח</button>
+      </form>
+    </details>
+  {% endif %}
+
+  {% if is_owner and not cls.is_archived %}
+    <section class="mz-panel mz-panel-soft">
+      <h2>לסיים את הכיתה</h2>
+      <p class="mz-muted">הכיתה נסגרת, החברים מפסיקים להיראות, וזה מפנה מקום לכיתה חדשה. מה שהם למדו נשאר שלהם.</p>
+      <form method="post">
+        {% csrf_token %}
+        <button name="action" value="archive" class="mz-btn mz-btn-ghost">לסיים את הכיתה</button>
+      </form>
+    </section>
+  {% endif %}
+
+  <p class="mz-page-actions">
+    <a class="mz-linkbtn" href="{% url 'matazim:my_classes' %}">חזרה להכיתות שלי</a>
+  </p>
+</div>
+{% endblock %}

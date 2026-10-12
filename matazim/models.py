@@ -266,6 +266,15 @@ class Leader(models.Model):
     # deliberately.
     is_active = models.BooleanField(default=True, verbose_name="פעיל")
 
+    # SPR-M.59 (REQ-M.178) — whether this leader asks their members to pass the
+    # entrance test to be officially accepted. Avi, 2026-10-12: the test is an
+    # optional thing a leader can choose, and it runs beside the road rather
+    # than across it. Leaders that existed when this shipped are on, so nothing
+    # changes for anyone today; new leaders start off.
+    requires_entrance_test = models.BooleanField(
+        default=False, verbose_name="דורש/ת מבחן כניסה"
+    )
+
     # REQ-M.93 — a candidate is a row that exists and grants nothing.
     #
     # Somebody who signed up through an open invite has a Leader row and is not
@@ -1098,6 +1107,7 @@ class Notification(models.Model):
     WORK_RETURNED = "work_returned"
     WORK_WAITING = "work_waiting"
     JOINED = "joined"
+    OPEN_JOINED = "open_joined"
     CERTIFIED = "certified"
     EVENT = "event"
     KIND_CHOICES = [
@@ -1106,6 +1116,7 @@ class Notification(models.Model):
         (WORK_RETURNED, "עבודה הוחזרה"),
         (WORK_WAITING, "עבודה מחכה לך"),
         (JOINED, "צירוף למוביל/ה"),
+        (OPEN_JOINED, "הצטרפות לכיתה פתוחה"),
         (CERTIFIED, "הסמכה"),
         (EVENT, "יום שיא"),
     ]
@@ -1386,6 +1397,11 @@ class OfferedCourse(models.Model):
         User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
     )
     added_at = models.DateTimeField(auto_now_add=True)
+    # SPR-M.59 (REQ-M.163) — open to any signed-in account, with no leader and
+    # no shelf entry. Avi, 2026-10-12: the basics are free for everyone who
+    # registers. A flag on the pool rather than a list in code, so root changes
+    # the set on the screen that already exists.
+    open_to_all = models.BooleanField(default=False, verbose_name="פתוחה לכולם")
 
     class Meta:
         ordering = ["slug"]
@@ -1427,3 +1443,103 @@ class LeaderCourse(models.Model):
 
     def __str__(self):
         return f"{self.leader} · {self.slug}"
+
+
+def new_class_code():
+    """A code no leader and no other class holds (REQ-M.171).
+
+    One generator for both kinds of code, and uniqueness checked against both
+    tables, so the single "יש לי קוד" box can never meet a string that names
+    two things. The space is 72 bits; the loop is a seatbelt.
+    """
+    while True:
+        code = new_join_code()
+        if not Leader.objects.filter(join_code=code).exists() and not OpenClass.objects.filter(
+            code=code
+        ).exists():
+            return code
+
+
+class OpenClass(models.Model):
+    """כיתה פתוחה (SPR-M.60, REQ-M.167).
+
+    Anybody who is signed in can open one. Its owner is a מורה on screen and a
+    role nowhere: it is derived from owning a row here, the way a leader is
+    derived from having a `Leader` row, and nothing stored says "teacher".
+
+    **Nothing joins this half to the official one.** No key to `Leader`,
+    `Student`, `StudyClass` or `MatazCertificate`, and none the other way, so no
+    query on the roster side can return an open class and an owner can never
+    reach a roster (REQ-M.172).
+
+    **The code is a bearer credential** and is shown to the owner alone, like a
+    leader's. Replacing it kills the old one at once.
+    """
+
+    owner = models.ForeignKey(
+        User, on_delete=models.PROTECT, related_name="matazim_open_classes",
+        verbose_name="בעלים",
+    )
+    name = models.CharField(max_length=80, verbose_name="שם הכיתה")
+    code = models.CharField(
+        max_length=32, unique=True, default=new_class_code, db_index=True,
+        verbose_name="קוד הכיתה",
+    )
+    is_open = models.BooleanField(default=True, verbose_name="פתוחה להצטרפות")
+    # The owner read "I am not a leader, I cannot certify, I see only this".
+    # A decision carries a time (REQ-M.21), and no default on purpose: a row
+    # that cannot say when its owner agreed should not exist.
+    terms_accepted_at = models.DateTimeField(verbose_name="התנאים אושרו")
+    archived_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "כיתה פתוחה"
+        verbose_name_plural = "כיתות פתוחות"
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def is_archived(self):
+        return self.archived_at is not None
+
+
+class OpenClassMember(models.Model):
+    """Somebody who joined an open class, by their own act (REQ-M.168).
+
+    **Nothing is stored about the person** beyond the fact and the dates. No
+    role, stage, score, consent flag or copy of progress: progress is read from
+    babook's tables by account (RULE-3), and consent is asked at the moment of
+    joining. A snapshot here would be a second answer that drifts.
+
+    **The only inserter is `open_class.join_class`**, and it inserts the
+    requesting user. There is no function, form or API field that makes a row
+    for somebody else.
+    """
+
+    open_class = models.ForeignKey(
+        OpenClass, on_delete=models.CASCADE, related_name="members"
+    )
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="matazim_open_memberships"
+    )
+    joined_at = models.DateTimeField()
+    ended_at = models.DateTimeField(null=True, blank=True)
+    ended_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+
+    class Meta:
+        unique_together = [("open_class", "user")]
+        ordering = ["joined_at"]
+        verbose_name = "חבר/ה בכיתה פתוחה"
+        verbose_name_plural = "חברים בכיתות פתוחות"
+
+    def __str__(self):
+        return f"{self.user_id} in {self.open_class_id}"
+
+    @property
+    def is_active(self):
+        return self.ended_at is None

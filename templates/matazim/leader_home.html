@@ -141,7 +141,7 @@
     {% endcomment %}
     <section class="mz-panel mz-attention">
       <h2>מוכנים להסמכה <span class="mz-count">{{ dashboard.attention|length }}</span></h2>
-      <p class="mz-muted">עברו את המבחן וסיימו את שתי ההדרכות. ההחלטה עכשיו שלכם.</p>
+      <p class="mz-muted">{% if leader.requires_entrance_test %}עברו את המבחן וסיימו{% else %}סיימו{% endif %} את שתי ההדרכות. ההחלטה עכשיו שלכם.</p>
       <ul class="mz-roster">
         {% for row in dashboard.attention %}
           <li class="mz-roster-row">
@@ -208,6 +208,22 @@
       <p class="mz-muted mz-small">
         מנהל/ת התכנית רואה את המספרים של הקבוצה שלכם בדיוק כפי שהם כאן. אין מה לדווח בנפרד.
       </p>
+
+      {% comment %}
+        REQ-M.178 — the one switch, with the one sentence it needs. It sits
+        among the tools and not in anyone's way: members of either kind join
+        and learn at once.
+      {% endcomment %}
+      <form method="post" action="{% url 'matazim:leader_test_switch' %}">
+        {% csrf_token %}
+        <input type="hidden" name="required" value="{% if leader.requires_entrance_test %}0{% else %}1{% endif %}">
+        <p>
+          <strong>מבחן כניסה:</strong>
+          {% if leader.requires_entrance_test %}נדרש מהמט״צים שלכם להסמכה.{% else %}רשות. המט״צים שלכם לומדים ומוסמכים גם בלעדיו.{% endif %}
+        </p>
+        <button type="submit" class="mz-linkbtn">{% if leader.requires_entrance_test %}לא לדרוש{% else %}לדרוש מבחן כניסה{% endif %}</button>
+        <p class="mz-muted mz-small">שינוי לא מוציא אף אחד ולא מבטל הסמכה קיימת.</p>
+      </form>
     </section>
   </div>
 </div>

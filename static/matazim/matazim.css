@@ -688,6 +688,10 @@ img { max-width: 100%; height: auto; display: block; }
 }
 .mz-field input:disabled { background: var(--mz-page); color: var(--mz-muted); }
 .mz-field small { display: block; margin-top: 5px; color: var(--mz-muted); font-size: .78rem; }
+/* A tick box and its sentence on one line; the box keeps its own size. */
+.mz-field-check { display: flex; align-items: flex-start; gap: 10px; }
+.mz-field-check input { width: auto; flex: none; margin-top: 4px; padding: 0; }
+.mz-field-check > span { margin-bottom: 0; }
 .mz-btn-block { width: 100%; justify-content: center; margin-top: 6px; }
 
 /* Google's mark carries its own colours, so the button stays neutral around it

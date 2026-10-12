@@ -2,7 +2,10 @@
 
 Avi, 2026-09-11. Three conditions, all of them required (REQ-M.76):
 
-1. The entrance test is passed. Ours, and already built.
+1. The entrance test is passed. Ours, and already built. Only when the
+   student's leader asks for it (REQ-M.178, 2026-10-12): the test is a leader's
+   optional choice, so for a leader who does not require it this condition is
+   waived, and a pass is still recorded and shown.
 2. babook has issued a `CourseCertificate` for **both** Scratch courses.
 3. The student's own leader has approved them, by hand, having taught them.
 
@@ -43,7 +46,7 @@ from app.models import CourseCertificate
 from .access import is_program_manager, leader_of
 from .content import REQUIRED_COURSE_SLUGS
 from .history import set_status
-from .models import MatazCertificate, MemberProfile, Student
+from .models import Leader, MatazCertificate, MemberProfile, Student
 
 
 @dataclass
@@ -56,8 +59,17 @@ class Eligibility:
     """
 
     entrance_test_passed: bool = False
+    # REQ-M.178 — whether this person's leader asks for the test at all. True
+    # by default so a caller that does not know (no leader yet) keeps the old,
+    # stricter reading rather than silently waiving a condition.
+    entrance_test_required: bool = True
     certified_courses: list = field(default_factory=list)
     missing_courses: list = field(default_factory=list)
+
+    @property
+    def test_met(self):
+        """Condition one: passed, or not asked for."""
+        return self.entrance_test_passed or not self.entrance_test_required
 
     @property
     def courses_certified(self):
@@ -66,13 +78,13 @@ class Eligibility:
     @property
     def is_eligible(self):
         """All three minus the human one: what the gate checks (REQ-M.77)."""
-        return self.entrance_test_passed and self.courses_certified
+        return self.test_met and self.courses_certified
 
     @property
     def missing(self):
         """Everything outstanding, in the order a student would do it."""
         out = []
-        if not self.entrance_test_passed:
+        if not self.test_met:
             out.append("entrance_test")
         out.extend(self.missing_courses)
         return out
@@ -86,8 +98,10 @@ def eligibility(student):
             user_id=student.user_id, course__slug__in=REQUIRED_COURSE_SLUGS
         ).values_list("course__slug", flat=True)
     )
+    leader = student.leader
     return Eligibility(
         entrance_test_passed=bool(profile and profile.has_passed_entrance_test()),
+        entrance_test_required=bool(leader and leader.requires_entrance_test),
         certified_courses=[s for s in REQUIRED_COURSE_SLUGS if s in held],
         missing_courses=[s for s in REQUIRED_COURSE_SLUGS if s not in held],
     )
@@ -111,8 +125,11 @@ def eligibility_for_user(user):
             user=user, course__slug__in=REQUIRED_COURSE_SLUGS
         ).values_list("course__slug", flat=True)
     )
+    student = Student.objects.filter(user=user).select_related("leader").first()
+    leader = student.leader if student else None
     return Eligibility(
         entrance_test_passed=bool(profile and profile.has_passed_entrance_test()),
+        entrance_test_required=bool(leader and leader.requires_entrance_test),
         certified_courses=[s for s in REQUIRED_COURSE_SLUGS if s in held],
         missing_courses=[s for s in REQUIRED_COURSE_SLUGS if s not in held],
     )
@@ -126,6 +143,11 @@ def eligibility_for_many(students):
     students = list(students)
     if not students:
         return {}
+    leader_ids = {s.leader_id for s in students if s.leader_id}
+    asks = set(
+        Leader.objects.filter(pk__in=leader_ids, requires_entrance_test=True)
+        .values_list("pk", flat=True)
+    )
 
     user_ids = [s.user_id for s in students]
     passed = set(
@@ -145,6 +167,7 @@ def eligibility_for_many(students):
         mine = held.get(s.user_id, set())
         out[s.user_id] = Eligibility(
             entrance_test_passed=s.user_id in passed,
+            entrance_test_required=s.leader_id in asks,
             certified_courses=[x for x in REQUIRED_COURSE_SLUGS if x in mine],
             missing_courses=[x for x in REQUIRED_COURSE_SLUGS if x not in mine],
         )

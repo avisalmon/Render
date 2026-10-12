@@ -40,12 +40,15 @@ LEGEND = [(DONE, STATUS_WORD[DONE]), (DOING, STATUS_WORD[DOING]),
           (FIX, STATUS_WORD[FIX]), (TODO, STATUS_WORD[TODO])]
 
 
-def _node(key, title, status, when=None, *, pct=None, where=None, where_args=None):
+def _node(key, title, status, when=None, *, pct=None, where=None, where_args=None,
+          word=None, parallel=False):
+    """`parallel` is a step beside the road (REQ-M.177): shown, never "current"."""
     return {
         "key": key,
         "title": title,
         "status": status,
-        "word": STATUS_WORD[status],
+        "word": word or STATUS_WORD[status],
+        "parallel": parallel,
         "when": when,
         "pct": pct,
         "where": where,
@@ -68,22 +71,31 @@ def milestones(user, profile, student, state, per_course):
 
     nodes = []
 
-    # 1. The entrance test.
-    passed_at = getattr(profile, "entrance_test_passed_at", None) if profile else None
-    if passed_at:
-        nodes.append(_node("test", "מבחן הכניסה", DONE, passed_at))
-    else:
-        tried = bool(profile) and EntranceAttempt.objects.filter(member=profile).exists()
-        nodes.append(_node("test", "מבחן הכניסה", FIX if tried else TODO,
-                           where="matazim:entrance_test"))
-
-    # 2. Joining a leader. Pending is a real state and reads as one.
+    # 1. Joining a leader. Pending is a real state and reads as one. Without a
+    #    leader this is an offer and not the next task: learning needs no
+    #    leader, so it is a parallel step and never marked "current".
     if student is not None and student.leader_id:
         nodes.append(_node("join", "הצטרפות למוביל/ה", DONE, student.joined_at))
     elif student is not None and student.pending_leader_id:
         nodes.append(_node("join", "הצטרפות למוביל/ה", DOING))
     else:
-        nodes.append(_node("join", "הצטרפות למוביל/ה", TODO, where="matazim:apply"))
+        nodes.append(_node("join", "הצטרפות למוביל/ה", TODO, where="matazim:code",
+                           word="עם קוד", parallel=True))
+
+    # 2. The entrance test, beside the road (REQ-M.177, REQ-M.178). Present
+    #    only when it means something to this person: they passed it, they
+    #    tried it, or their leader asks for it. A learner with no leader is
+    #    never shown it.
+    passed_at = getattr(profile, "entrance_test_passed_at", None) if profile else None
+    tried = bool(profile) and EntranceAttempt.objects.filter(member=profile).exists()
+    if passed_at:
+        nodes.append(_node("test", "מבחן הכניסה", DONE, passed_at, parallel=True))
+    elif state.entrance_test_required or tried:
+        nodes.append(_node(
+            "test", "מבחן הכניסה", FIX if tried else TODO, where="matazim:entrance_test",
+            word=None if tried else ("מבוקש" if state.entrance_test_required else "רשות"),
+            parallel=True,
+        ))
 
     # 3. Each required הדרכה, then its certificate.
     issued = {
@@ -151,7 +163,7 @@ def milestones(user, profile, student, state, per_course):
     # The current node is the first one not finished. Her drawing badges it
     # המשימה הנוכחית, and so does ours.
     for node in nodes:
-        if node["status"] != DONE:
+        if node["status"] != DONE and not node["parallel"]:
             node["is_current"] = True
             break
     return nodes

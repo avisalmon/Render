@@ -66,25 +66,18 @@
         {% elif hero.kind == 'staff' %}
           <a class="mz-btn mz-btn-primary" href="{% url 'matazim:staff_home' %}">ניהול התכנית</a>
           <span class="mz-hero-note">אתם מנהל/ת התכנית. המובילים שלכם מחכים שם.</span>
-        {% elif hero.kind == 'join' %}
-          <a class="mz-btn mz-btn-primary" href="{% if invite %}{% url 'matazim:join' invite.join_code %}{% else %}{% url 'matazim:apply' %}{% endif %}">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            להצטרף לתוכנית
-          </a>
-          <span class="mz-btn mz-btn-done" aria-disabled="true">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-            עברתם את מבחן הכניסה
-          </span>
         {% else %}
-          <a class="mz-btn mz-btn-primary" href="{% url 'matazim:entrance_test' %}">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12"/></svg>
-            מבחן הכניסה
+          {% comment %}
+            REQ-M.166, REQ-M.177 — two doors and nothing about a test. The
+            first is for anybody; the second asks for a leader's code, and says
+            on the next screen that without one the person can still learn.
+          {% endcomment %}
+          <a class="mz-btn mz-btn-primary" href="{% if user.is_authenticated %}{% url 'matazim:courses' %}{% else %}{% url 'matazim:register' %}?next={% url 'matazim:courses' %}{% endif %}">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            אני רוצה ללמוד
           </a>
-          {% if hero.learning_open %}
-            <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:courses' %}">להתחיל ללמוד כבר עכשיו</a>
-          {% else %}
-            <span class="mz-hero-note">מתחילים כאן. אפשר לנסות שוב בלי הגבלה.</span>
-          {% endif %}
+          <a class="mz-btn mz-btn-ghost" href="{% if invite %}{% url 'matazim:join' invite.join_code %}{% else %}{% url 'matazim:code' %}{% endif %}">אני רוצה להיות מט״צ</a>
+          <span class="mz-hero-note">בלי קוד ממוביל/ה אפשר ללמוד הכל. מט״צ מוסמך אפשר להיות רק עם מוביל/ה.</span>
         {% endif %}
       </div>
     </div>
@@ -114,7 +107,7 @@
     this says what *you* do, and the four stages below say where it leads.
   {% endcomment %}
   <section class="mz-orient" aria-labelledby="mzOrient">
-    <h2 id="mzOrient">{% if user.is_authenticated %}איפה אתם, ומה עכשיו{% else %}איך מצטרפים{% endif %}</h2>
+    <h2 id="mzOrient">{% if user.is_authenticated %}איפה אתם, ומה עכשיו{% else %}איך זה עובד{% endif %}</h2>
     <ol class="mz-orient-steps">
       {% for step in orientation %}
         <li class="mz-orient-step is-{{ step.state }}">
@@ -124,7 +117,7 @@
               {{ step.title }}
               {% if step.state == 'now' %}<span class="mz-tag mz-tag-doing">עכשיו</span>
               {% elif step.state == 'done' %}<span class="mz-tag mz-tag-done">הושלם</span>
-              {% elif step.state == 'open' %}<span class="mz-tag mz-tag-done">פתוח כבר</span>
+              {% elif step.state == 'open' %}<span class="mz-tag mz-tag-done">{{ step.tag|default:"פתוח כבר" }}</span>
               {% else %}<span class="mz-tag mz-tag-idle">בהמשך</span>{% endif %}
             </span>
             <span class="mz-orient-text">{{ step.text }}</span>
@@ -146,8 +139,8 @@
     <h2 id="mzHow">איך זה עובד?</h2>
 
     {% comment %}
-      Four stages, not five: מתמיינים is the entrance test, which has its own
-      call to action above. Spec Q12.
+      Four stages, not five: מתמיינים is joining a leader, which has its own
+      step in the strip above. Spec Q12.
     {% endcomment %}
     <div class="mz-stages">
       {% for stage in stages %}

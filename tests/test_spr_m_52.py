@@ -57,7 +57,7 @@ def world(db):
 
     for slug in ("scratch", "scratch-advanced"):
         _course(slug, "סקראץ׳")
-    _course("arduino", "ארדואינו")
+    _course("robotics", "ארדואינו")
     _course("django", "Django")
     _course("fpga", "FPGA")
 
@@ -123,14 +123,14 @@ def test_one_leaders_shelf_is_not_anothers(client, world):
     members and nobody else's."""
     from matazim.access import visible_course_slugs
 
-    _offer("arduino", world["root"])
-    _shelve(world["leaders"]["mine"], "arduino")
+    _offer("robotics", world["root"])
+    _shelve(world["leaders"]["mine"], "robotics")
 
-    assert "arduino" in visible_course_slugs(world["members"]["mine"].user)
-    assert "arduino" not in visible_course_slugs(world["members"]["theirs"].user)
+    assert "robotics" in visible_course_slugs(world["members"]["mine"].user)
+    assert "robotics" not in visible_course_slugs(world["members"]["theirs"].user)
 
     client.force_login(world["members"]["theirs"].user)
-    assert client.get("/matazim/learn/arduino/").status_code == 404
+    assert client.get("/matazim/learn/robotics/").status_code == 404
 
 
 def test_a_leader_cannot_shelve_what_root_never_offered(client, world):
@@ -186,15 +186,15 @@ def test_retiring_a_course_closes_it_to_members_who_had_not_started(world):
     from matazim.access import visible_course_slugs
     from matazim.models import OfferedCourse
 
-    row = _offer("arduino", world["root"])
-    _shelve(world["leaders"]["mine"], "arduino")
+    row = _offer("robotics", world["root"])
+    _shelve(world["leaders"]["mine"], "robotics")
     member = world["members"]["mine"]
-    assert "arduino" in visible_course_slugs(member.user)
+    assert "robotics" in visible_course_slugs(member.user)
 
     row.is_active = False
     row.save()
-    assert "arduino" not in visible_course_slugs(member.user)
-    assert OfferedCourse.objects.filter(slug="arduino").exists(), "withdrawal is a flag"
+    assert "robotics" not in visible_course_slugs(member.user)
+    assert OfferedCourse.objects.filter(slug="robotics").exists(), "withdrawal is a flag"
 
 
 def test_retiring_a_course_does_not_delete_anybodys_progress(world):
@@ -203,11 +203,11 @@ def test_retiring_a_course_does_not_delete_anybodys_progress(world):
     from app.models import Course, CourseCertificate, Enrollment
 
     member = world["members"]["mine"]
-    course = Course.objects.get(slug="arduino")
+    course = Course.objects.get(slug="robotics")
     Enrollment.objects.create(user=member.user, course=course)
     CourseCertificate.objects.create(user=member.user, course=course)
 
-    row = _offer("arduino", world["root"])
+    row = _offer("robotics", world["root"])
     row.is_active = False
     row.save()
 
@@ -226,13 +226,13 @@ def test_only_root_sets_the_pool(client, world):
     manager = User.objects.get(username="pm@example.com")
     client.force_login(manager)
     assert client.get("/matazim/staff/offered/").status_code == 403
-    client.post("/matazim/staff/offered/", {"slug": "arduino"})
-    assert not OfferedCourse.objects.filter(slug="arduino").exists()
+    client.post("/matazim/staff/offered/", {"slug": "robotics"})
+    assert not OfferedCourse.objects.filter(slug="robotics").exists()
 
     client.force_login(world["root"])
     assert client.get("/matazim/staff/offered/").status_code == 200
-    client.post("/matazim/staff/offered/", {"slug": "arduino"})
-    assert OfferedCourse.objects.filter(slug="arduino", is_active=True).exists()
+    client.post("/matazim/staff/offered/", {"slug": "robotics"})
+    assert OfferedCourse.objects.filter(slug="robotics", is_active=True).exists()
 
 
 def test_a_member_cannot_reach_either_control_screen(client, world):
@@ -252,8 +252,8 @@ def test_the_shelf_changes_nothing_about_certification(client, world):
     member = world["members"]["mine"]
     before = eligibility(member)
 
-    _offer("arduino", world["root"])
-    _shelve(world["leaders"]["mine"], "arduino")
+    _offer("robotics", world["root"])
+    _shelve(world["leaders"]["mine"], "robotics")
 
     after = eligibility(member)
     assert after.missing_courses == before.missing_courses
@@ -288,15 +288,15 @@ def test_the_api_files_a_shelf_row_under_whoever_posted_it(client, world):
     shows."""
     from matazim.models import LeaderCourse
 
-    _offer("arduino", world["root"])
+    _offer("robotics", world["root"])
     client.force_login(world["leaders"]["mine"].user)
     resp = client.post(
         "/matazim/api/leader-courses/",
-        {"slug": "arduino", "leader": world["leaders"]["other"].pk},
+        {"slug": "robotics", "leader": world["leaders"]["other"].pk},
         content_type="application/json",
     )
     assert resp.status_code in (200, 201), resp.content[:300]
-    row = LeaderCourse.objects.get(slug="arduino")
+    row = LeaderCourse.objects.get(slug="robotics")
     assert row.leader_id == world["leaders"]["mine"].pk, "filed under the leader it named"
 
 
@@ -317,8 +317,8 @@ def test_one_leader_cannot_read_or_clear_anothers_shelf(client, world):
     """REQ-M.88 through the endpoint, both verbs."""
     from matazim.models import LeaderCourse
 
-    _offer("arduino", world["root"])
-    theirs = _shelve(world["leaders"]["other"], "arduino")
+    _offer("robotics", world["root"])
+    theirs = _shelve(world["leaders"]["other"], "robotics")
 
     client.force_login(world["leaders"]["mine"].user)
     assert client.get("/matazim/api/leader-courses/").json() == []
@@ -341,7 +341,7 @@ def test_the_pool_is_one_programme_wide_decision(client, world):
     """
     from matazim.models import Institution, Leader
 
-    _offer("arduino", world["root"])
+    _offer("robotics", world["root"])
     elsewhere = Institution.objects.create(name="רשת ביתא")
     far = Leader.objects.create(
         user=_user("l9@example.com", "מוביל רחוק"), institution=elsewhere,
@@ -350,9 +350,9 @@ def test_the_pool_is_one_programme_wide_decision(client, world):
 
     client.force_login(far.user)
     pool = client.get("/matazim/api/offered-courses/").json()
-    assert [row["slug"] for row in pool] == ["arduino"], "the pool is programme-wide"
+    assert "robotics" in [row["slug"] for row in pool], "the pool is programme-wide"
 
-    _shelve(world["leaders"]["mine"], "arduino")
+    _shelve(world["leaders"]["mine"], "robotics")
     assert client.get("/matazim/api/leader-courses/").json() == [], "a shelf is not"
 
 
@@ -360,8 +360,8 @@ def test_a_member_reads_neither_table_through_the_api(client, world):
     """The pool is everything a leader *could* open. A member reading it would
     be shown exactly the הדרכות their own leader chose not to put in front of
     them, which is the feature running backwards."""
-    _offer("arduino", world["root"])
-    _shelve(world["leaders"]["mine"], "arduino")
+    _offer("robotics", world["root"])
+    _shelve(world["leaders"]["mine"], "robotics")
 
     client.force_login(world["members"]["mine"].user)
     for prefix in ("offered-courses", "leader-courses"):

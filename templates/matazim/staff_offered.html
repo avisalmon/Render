@@ -25,6 +25,8 @@
     <p class="mz-muted">
       הסרה לא מוחקת כלום: מי שכבר התחיל הדרכה ממשיך בה, וההתקדמות והתעודות שלו
       נשמרות. מה שנפסק זה שמובילים חדשים יוכלו להציע אותה.
+      <strong>פתוחה לכולם</strong> אומר שכל מי שנרשם יכול ללמוד אותה, בלי מוביל/ה,
+      ומקבל עליה תעודת סיום.
     </p>
 
     <ul class="mz-worklist">
@@ -34,6 +36,7 @@
             <span>{{ row.title }}</span>
             {% if row.offered and row.offered.is_active %}
               <span class="mz-tag mz-tag-done">זמינה</span>
+              {% if row.offered.open_to_all %}<span class="mz-tag mz-tag-doing">פתוחה לכולם</span>{% endif %}
             {% elif row.offered %}
               <span class="mz-tag mz-tag-idle">הוסרה</span>
             {% endif %}
@@ -45,6 +48,17 @@
             {% if row.offered and row.offered.is_active %}
               <input type="hidden" name="action" value="retire">
               <button type="submit" class="mz-linkbtn">להסיר</button>
+            </form>
+            <form method="post" class="mz-inline-form">
+              {% csrf_token %}
+              <input type="hidden" name="slug" value="{{ row.slug }}">
+              {% if row.offered.open_to_all %}
+                <input type="hidden" name="action" value="close">
+                <button type="submit" class="mz-linkbtn">לסגור למי שנרשם</button>
+              {% else %}
+                <input type="hidden" name="action" value="open">
+                <button type="submit" class="mz-linkbtn">לפתוח לכל מי שנרשם</button>
+              {% endif %}
             {% else %}
               <button type="submit" class="mz-linkbtn">להפוך לזמינה</button>
             {% endif %}

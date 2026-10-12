@@ -1,0 +1,52 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.167 — opening a class is one field and a tick.
+
+  The terms come first and are four plain sentences, because the one thing an
+  owner must understand before they hold other people's names is what they are
+  and are not (REQ-M.172). There is no approval and no test.
+{% endcomment %}
+
+{% block title %}כיתה פתוחה חדשה · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <p class="mz-eyebrow">כיתה פתוחה</p>
+    <h1>לפתוח כיתה</h1>
+    <p>
+      כיתה פתוחה היא קבוצה של אנשים שלומדים את ההדרכות הפתוחות, ואתם רואים איך הולך להם.
+      כל אחד מצטרף בעצמו, דרך קוד או קישור שאתם שולחים.
+    </p>
+  </div>
+
+  {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
+
+  <section class="mz-panel">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <label class="mz-field">
+        <span>שם הכיתה</span>
+        <input id="name" name="name" type="text" maxlength="80" value="{{ name }}"
+               placeholder="למשל: חוג רובוטיקה, שכבה ז׳" required>
+      </label>
+
+      <h2>מה זה אומר להיות מורה בכיתה פתוחה</h2>
+      <ul class="mz-needs">
+        {% for t in terms %}<li>{{ t }}</li>{% endfor %}
+      </ul>
+
+      <label class="mz-field mz-field-check">
+        <input id="terms" name="terms" type="checkbox" value="1" required>
+        <span>קראתי ואני מאשר/ת</span>
+      </label>
+
+      <div class="mz-page-actions">
+        <button type="submit" class="mz-btn mz-btn-primary">לפתוח את הכיתה</button>
+        <a class="mz-linkbtn" href="{% url 'matazim:open_guide' %}">מדריך קצר</a>
+      </div>
+    </form>
+  </section>
+</div>
+{% endblock %}

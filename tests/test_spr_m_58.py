@@ -135,35 +135,34 @@ def test_an_explicit_destination_still_wins(client, world):
 
 
 def test_a_visitor_sees_the_whole_road_with_the_first_step_marked(client, world):
-    """"Even if he can only do the test, it needs to be informative enough to
-    tell him that he needs to do the test now and what he will do in the
-    future." Four steps, every one named, exactly one עכשיו."""
+    """Turned round by REQ-M.177 (2026-10-12): no test on the road. Three steps,
+    every one named, exactly one עכשיו, and nothing about a test."""
     response = client.get("/matazim/")
     steps = response.context["orientation"]
-    assert [s["key"] for s in steps] == ["account", "test", "join", "learn"]
-    assert [s["state"] for s in steps] == ["now", "later", "later", "later"]
+    assert [s["key"] for s in steps] == ["account", "learn", "join"]
+    assert [s["state"] for s in steps] == ["now", "later", "open"]
     body = response.content.decode()
-    assert "איך מצטרפים" in body
+    assert "איך זה עובד" in body
     assert body.count("עכשיו</span>") == 1
+    assert "/matazim/test/" not in body.split('id="mzOrient"')[1].split("</section>")[0]
 
 
-def test_somebody_who_registered_is_told_the_test_is_next_and_learning_is_open(client, world):
-    """REQ-M.65 said the הדרכות count before the test; the page now says so
-    rather than leaving it to be discovered."""
+def test_somebody_who_registered_is_told_to_learn_and_may_join_with_a_code(client, world):
+    """REQ-M.177: learning is the next thing, joining is an offer beside it."""
     response = _login(client, "fresh@example.com").get("/matazim/")
     states = {s["key"]: s["state"] for s in response.context["orientation"]}
-    assert states == {"account": "done", "test": "now", "join": "later", "learn": "open"}
-    assert response.context["hero"] == {"kind": "test", "learning_open": True}
+    assert states == {"account": "done", "learn": "now", "join": "open"}
+    assert response.context["hero"]["kind"] == "doors"
     body = response.content.decode()
-    assert "להתחיל ללמוד כבר עכשיו" in body
-    assert "פתוח כבר" in body
+    assert "עם קוד" in body
 
 
-def test_somebody_who_passed_is_told_to_join(client, world):
+def test_passing_the_test_does_not_change_what_the_front_page_asks(client, world):
     response = _login(client, "passed@example.com").get("/matazim/")
     states = {s["key"]: s["state"] for s in response.context["orientation"]}
-    assert states["test"] == "done" and states["join"] == "now"
-    assert response.context["hero"]["kind"] == "join"
+    assert "test" not in states
+    assert states["learn"] == "now" and states["join"] == "open"
+    assert response.context["hero"]["kind"] == "doors"
 
 
 def test_a_member_is_never_asked_to_join_again(client, world):
@@ -176,7 +175,7 @@ def test_a_member_is_never_asked_to_join_again(client, world):
     assert "להצטרף לתוכנית" not in body
     assert "/matazim/my-path/" in body
     states = {s["key"]: s["state"] for s in response.context["orientation"]}
-    assert states == {"account": "done", "test": "done", "join": "done", "learn": "now"}
+    assert states == {"account": "done", "learn": "now", "join": "done"}
 
 
 def test_a_certified_mataz_sees_a_fifth_step(client, world):

@@ -551,3 +551,158 @@ programme's, so nobody mistakes a course they picked up alone for a requirement.
 And one sentence has to change wherever it appears: ההדרכות currently promises
 *"שאר ההדרכות באתר פתוחות לכם תמיד"* while showing exactly two and linking to
 none. That promise is what this whole proposal is finally making true.
+
+
+## 8. Open classes and the open door (built, SPR-M.59 and SPR-M.60)
+
+Specified 2026-10-12 from the brainstorm in `spec.md` section 4.13 and
+REQ-M.162 to REQ-M.176, and built on 2026-10-12 as written (migrations 0036 and
+0037). It adds two tables and two columns, and **changes no existing table's
+meaning**.
+
+### 8.1 What it is, in one picture
+
+```
+Leader ---< StudyClass ---< Student          OFFICIAL, unchanged
+   |                           |
+   |                    MatazCertificate     only a leader presses certify
+
+User ---< OpenClass ---< OpenClassMember >--- User      OPEN, new
+ (owner)                     (joined by code, by their own act)
+
+OfferedCourse.open_to_all  ->  the courses any signed-in User may take
+```
+
+The two halves meet only at `User`. There is no foreign key from an open table
+to `Leader`, `Student`, `StudyClass` or `MatazCertificate`, and none the other
+way, so no query in the official half can return an open row and no open query
+can reach a roster.
+
+### 8.2 `OpenClass`
+
+| Field | Type | Why |
+|---|---|---|
+| `owner` | FK `User`, `PROTECT` | who made it. Deleting an owner is an erasure case (§4.10) and is handled there, not by cascade |
+| `name` | `CharField(80)` | what the joiner sees on the join page |
+| `code` | `CharField`, unique | the bearer credential. `secrets.token_urlsafe(9)`, the same generator as `Leader.join_code`, and checked unique against that table too (REQ-M.171) |
+| `is_open` | `bool`, default True | closed to new joiners without ending the class. Replacing the code is a second, separate action |
+| `terms_accepted_at` | datetime | the owner read "I am not a leader, I cannot certify, I will see only this" (REQ-M.167). A decision carries a time, REQ-M.21's habit |
+| `archived_at` | datetime, null | a finished class stops counting toward the cap and disappears from the owner's hub, and nothing is deleted |
+| `created_at` | datetime | |
+
+Unique together: none beyond `code`. Two classes may share a name, even for one
+owner, because a pupil will make "Scratch" twice.
+
+### 8.3 `OpenClassMember`
+
+| Field | Type | Why |
+|---|---|---|
+| `open_class` | FK `OpenClass`, `CASCADE` | |
+| `user` | FK `User`, `CASCADE` | the person who joined, **by their own request** |
+| `joined_at` | datetime | |
+| `ended_at` | datetime, null | set when they leave or are removed. Active means `ended_at IS NULL` |
+| `ended_by` | FK `User`, null | themselves, or the owner. Whether it was a choice or a removal is a thing a person may later need to know |
+
+Unique together: (`open_class`, `user`). Rejoining reuses the row: it clears
+`ended_at` and sets `joined_at` again, so a person cannot be in a class twice
+and the owner cannot count them twice.
+
+**What is deliberately not stored.** No role, no stage, no score, no copy of
+progress, no consent flag. Progress is read from babook's tables by account
+(RULE-3) and the guardian-consent gate is `consent.needs_guardian_consent`,
+asked at join time. A snapshot would be a second answer that drifts.
+
+**No way to create a member row for somebody else.** The only code path that
+inserts an `OpenClassMember` is the join view, and it inserts `request.user`.
+The API's create serializer takes the class from the code and the user from the
+session; it has no `user` field to write. That is REQ-M.168 as a property of the
+schema's only door, not as a check in a screen.
+
+### 8.4 Two columns on existing tables
+
+#### `OfferedCourse.open_to_all`
+
+| Field | Type | Why |
+|---|---|---|
+| `open_to_all` | `bool`, default False | this course is open to any signed-in account with no leader and no shelf entry (REQ-M.163) |
+
+One data migration sets it for the eight slugs, creating the `OfferedCourse`
+row first when a slug is not yet in the pool (`added_by` null for the seed, so
+the migration needs `added_by` to allow null or to use the first root; see the
+open point below). It runs once. After it, root owns the set.
+
+`visible_course_slugs` gains one term, the active `open_to_all` rows. Nothing
+else about `OfferedCourse` changes, including the way a withdrawn course keeps
+serving whoever is part-way through.
+
+*Open point for the build:* `OfferedCourse.added_by` is a required FK today. The
+seed migration should use the oldest superuser and skip with a printed note when
+there is none, which is the case on a fresh test database, rather than loosening
+the column for one migration.
+
+#### `Leader.requires_entrance_test`
+
+| Field | Type | Why |
+|---|---|---|
+| `requires_entrance_test` | `bool`, default False | the leader asks their members to pass the entrance test to be officially accepted, and it counts as condition one of certification (REQ-M.178) |
+
+The migration sets it True for every leader that exists when it runs, so
+nothing changes for anyone today; leaders created afterwards start False.
+Nothing is removed by flipping it either way. Whether a given student has
+"passed" is still `MemberProfile.entrance_test_passed_at`, which this does not
+touch; the flag only says whether that fact is asked for.
+
+### 8.5 Scope, as querysets (`matazim/access.py`)
+
+| Function | Returns |
+|---|---|
+| `visible_open_classes(user)` | classes the user owns, classes they are an active member of, all for root, none for anyone else. A program manager and a leader get no extra view |
+| `visible_open_members(user)` | active members of classes the user owns, the user's own membership rows, all for root |
+| `open_class_for_code(code)` | the one `OpenClass` a code names, only when `is_open` and not archived. The join view's only lookup, constant-time compared |
+
+A class id outside `visible_open_classes` is a 404. The owner's lens reads
+progress through the existing `cohort_progress` and `JustAUser` readers for the
+open slugs only, never through `Student`.
+
+### 8.6 The REST API (Rule 6)
+
+Full CRUD on both models, under `/matazim/api/`, each viewset's queryset from
+the two functions above:
+
+- `open-classes/`: list and retrieve are scoped; create makes the caller the
+  owner and requires `terms_accepted`; update changes `name` and `is_open` and
+  may rotate `code`; delete archives, it does not remove rows.
+- `open-class-members/`: list and retrieve are scoped. **Create takes a code**
+  and joins the caller; there is no `user` field. Delete ends the membership,
+  by the member or by the class owner.
+- `open-class-members/` returns the lens fields only. The serializer has no
+  email, birth year or consent field to leak, which is stronger than hiding them
+  in a screen.
+
+Throttled on the code-taking endpoint (REQ-M.171). Documented in the same place
+as section 5.
+
+### 8.7 What this does to the privacy picture (§4.10)
+
+| Fact | Who can read it now | Who can read it after |
+|---|---|---|
+| A learner's progress in an open course | the learner, their leader, their program manager, root | the same, plus the owner of any open class they joined, for open courses only |
+| That a person is in an open class | n/a | the person, the owner, root |
+| A learner's email, birth year, consent | unchanged | unchanged. The owner never gets them |
+
+The new reader is a class owner, who can be a child. The mitigations are
+structural: a narrow lens (REQ-M.169), shown before joining (REQ-M.170), only
+for people who chose to join (REQ-M.168), and revocable by one tap. Q19 records
+that no age floor or email verification is proposed.
+
+### 8.8 Decisions to confirm
+
+Defaults chosen so nothing waits; each is a one-line change.
+
+1. Separate tables rather than a flag on `StudyClass` (section 4.13 gives the
+   reason). This reverses the lean I voiced in the brainstorm.
+2. Both Arduino courses are open (Q17).
+3. Members do not see each other (Q18).
+4. 10 live classes per owner, 100 members per class (Q20).
+5. The entrance test is a leader's optional choice and runs beside the road, not before joining (Q16 answered; defaults in Q23).
+6. The list of leaders to apply to is retired for new people (Q22).

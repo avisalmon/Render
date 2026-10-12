@@ -1,0 +1,82 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.168, REQ-M.170 — the page a class link or QR opens.
+
+  It says who runs the class, lists everything that person will be able to see
+  about you before there is any button, and the button is yours. Nobody is
+  added by anybody else.
+{% endcomment %}
+
+{% block title %}{{ cls.name }} · כיתה פתוחה{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <p class="mz-eyebrow">הזמנה לכיתה פתוחה</p>
+    <h1>{{ cls.name }}</h1>
+    <p>{{ owner_name }} הזמין/ה אתכם ללמוד יחד את ההדרכות הפתוחות.</p>
+  </div>
+
+  {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
+
+  <section class="mz-panel">
+    <h2>מה המורה יראה עליכם</h2>
+    <ul class="mz-needs" id="lens">
+      {% for t in lens %}<li>{{ t }}</li>{% endfor %}
+    </ul>
+    <h2>מה המורה לא יראה</h2>
+    <ul class="mz-needs" id="never">
+      {% for t in never %}<li>{{ t }}</li>{% endfor %}
+    </ul>
+    <p class="mz-muted mz-small">
+      אפשר לעזוב בכל רגע, והמורה מפסיק/ה לראות אתכם. מה שלמדתם נשאר שלכם.
+      המורה לא מסמיך/ה אף אחד/ת למט״צ. ההסמכה היא רק דרך מוביל/ה.
+    </p>
+  </section>
+
+  <section class="mz-panel">
+    {% if not user.is_authenticated %}
+      <p>כדי להצטרף צריך להירשם או להתחבר. אחרי זה תחזרו לכאן.</p>
+      <div class="mz-page-actions">
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:register' %}?next={{ request.path|urlencode }}">להירשם ולהצטרף</a>
+        <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:login' %}?next={{ request.path|urlencode }}">יש לי חשבון</a>
+      </div>
+    {% elif is_owner %}
+      <p>זו הכיתה שלכם.</p>
+      <div class="mz-page-actions">
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:open_class' cls.pk %}">לדף הכיתה</a>
+      </div>
+    {% elif already %}
+      <p>אתם כבר בכיתה הזו.</p>
+      <div class="mz-page-actions">
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:open_class' cls.pk %}">לדף הכיתה</a>
+      </div>
+    {% else %}
+      {% if consent_blocker %}
+        <div class="mz-alert" role="status">{{ consent_blocker }}</div>
+      {% endif %}
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="join">
+        <button type="submit" class="mz-btn mz-btn-primary">אני מצטרף/ת לכיתה</button>
+      </form>
+    {% endif %}
+  </section>
+
+  {% if user.is_authenticated and not is_owner %}
+    <details class="mz-panel">
+      <summary>משהו כאן לא בסדר? אפשר לדווח</summary>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="report">
+        <label class="mz-field">
+          <span>מה קרה</span>
+          <textarea id="reason" name="reason" rows="3" maxlength="500"></textarea>
+        </label>
+        <button type="submit" class="mz-btn mz-btn-ghost">שליחת דיווח</button>
+      </form>
+    </details>
+  {% endif %}
+</div>
+{% endblock %}

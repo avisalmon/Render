@@ -197,10 +197,12 @@
       who can act on them rather than somebody judging them.
     {% endcomment %}
     <ul class="mz-needs">
+      {% if eligibility.entrance_test_required or eligibility.entrance_test_passed %}
       <li>
         {% if eligibility.entrance_test_passed %}<span class="mz-check">✓<span class="mz-sr">הושלם.</span></span>{% else %}<span class="mz-check-todo">○<span class="mz-sr">עוד לא.</span></span>{% endif %}
-        <span>מבחן הכניסה{% if not eligibility.entrance_test_passed %} <a href="{% url 'matazim:entrance_test' %}">למבחן</a>{% endif %}</span>
+        <span>מבחן הכניסה{% if not eligibility.entrance_test_passed %} <a href="{% url 'matazim:entrance_test' %}">למבחן</a> <span class="mz-muted">המוביל/ה ביקש/ה אותו, ואפשר בכל שלב</span>{% endif %}</span>
       </li>
+      {% endif %}
       {% for course in courses %}
         <li>
           {% if course.certified %}<span class="mz-check">✓<span class="mz-sr">הושלם.</span></span>{% else %}<span class="mz-check-todo">○<span class="mz-sr">עוד לא.</span></span>{% endif %}
@@ -242,8 +244,8 @@
       {% elif pending_name %}
         <p>ביקשתם להצטרף ל<strong>{{ pending_name }}</strong>, ומחכים לאישור.</p>
       {% else %}
-        <p class="mz-muted">עוד לא הצטרפתם למוביל/ה. זה השלב הבא, ואפשר לעשות אותו עכשיו.</p>
-        <p class="mz-page-actions"><a class="mz-btn mz-btn-secondary" href="{% url 'matazim:apply' %}">בחירת מוביל/ה</a></p>
+        <p class="mz-muted">אפשר ללמוד בלי מוביל/ה. כדי להיות מט״צ מוסמך צריך קוד ממוביל/ה.</p>
+        <p class="mz-page-actions"><a class="mz-btn mz-btn-secondary" href="{% url 'matazim:code' %}">יש לי קוד</a></p>
       {% endif %}
     </section>
   </div>

@@ -116,7 +116,6 @@
         <a href="{% url 'matazim:about' %}" {% if section == 'about' %}class="is-active"{% endif %}>אודות התכנית</a>
         <a href="{% url 'matazim:track' %}" {% if section == 'track' %}class="is-active"{% endif %}>המסלול השנתי</a>
         <a href="{% url 'matazim:courses' %}" {% if section == 'courses' %}class="is-active"{% endif %}>ההדרכות</a>
-        <a href="{% url 'matazim:entrance_test' %}" {% if section == 'test' %}class="is-active"{% endif %}>מבחן הכניסה</a>
         <a href="{% url 'matazim:schools' %}" {% if section == 'schools' %}class="is-active"{% endif %}>בתי הספר</a>
         <a href="{% url 'matazim:community' %}" {% if section == 'community' %}class="is-active"{% endif %}>קהילת מט״צים</a>
         <a href="{% url 'matazim:events' %}" {% if section == 'events' %}class="is-active"{% endif %}>ימי שיא</a>
@@ -131,6 +130,10 @@
           {# What a member came here to do. #}
           <a href="{% url 'matazim:my_path' %}" {% if section == 'path' %}class="is-active"{% endif %}>המסלול שלי</a>
           <a href="{% url 'matazim:courses' %}" {% if section == 'courses' %}class="is-active"{% endif %}>ההדרכות</a>
+          {% if not is_leader %}
+            {# SPR-M.60 — the learner's way to classes they run or have joined. A leader has theirs below. #}
+            <a href="{% url 'matazim:my_classes' %}" {% if section == 'classes' %}class="is-active"{% endif %}>הכיתות שלי</a>
+          {% endif %}
           {% comment %}
             REQ-M.63 — marked when it is behind them, never hidden. Hiding it
             once passed also made the whole test chain unreachable for them,

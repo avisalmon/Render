@@ -4493,3 +4493,224 @@ manager's dashboard and the full report read the same rows the leader's page
 reads, so the honest version is showing the leader the same numbers on the
 page they open every day, and saying so in one line.
 
+
+## SPR-M.59 — The open door: anyone who registers can learn  `DONE`
+
+**Goal.** Avi, 2026-10-12: מט״צים should be "open to everyone who enters, with
+no leader and no manager"; everything a learner does is theirs, with credits and
+certificates; and becoming a מט״צ needs a leader's code, because "someone has to
+certify". This sprint is the learner half: the eight basics open to every
+signed-in account, the front door that offers two paths, and the retirement of
+the cold list of leaders. It builds nothing about classes.
+
+**Delivers.** REQ-M.162, REQ-M.163, REQ-M.164, REQ-M.165, REQ-M.166, REQ-M.177,
+REQ-M.178.
+
+**Needs from Avi before the build:** the answers to Q22 and Q23 in `spec.md`.
+Both have defaults and the sprint is written to them. Q16 is answered: the
+entrance test is a leader's optional choice and runs in parallel.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.59.1 | `OfferedCourse.open_to_all` and the seed migration for the eight slugs | REQ-M.163 | DONE |
+| F-M.59.2 | `visible_course_slugs` adds the active open set, still one answer for every screen | REQ-M.163 | DONE |
+| F-M.59.3 | Root's pool screen shows and toggles "פתוח לכולם" per course | REQ-M.163 | DONE |
+| F-M.59.4 | ההדרכות: the open basics shown as open, completion certificate on a finished card | REQ-M.162, REQ-M.164 | DONE |
+| F-M.59.5 | דף הבית and the strip: two doors, learn and be a מט״צ, exactly one עכשיו | REQ-M.166 | DONE |
+| F-M.59.6 | The "יש לי קוד" box for a leader's code, and the apply list withdrawn from new people | REQ-M.165, REQ-M.171 | DONE |
+| F-M.59.7 | Course and lesson pages open to a signed-in non-member for the open set, and refusing outside it | REQ-M.162 | DONE |
+| F-M.59.8 | The pool flag over REST with the existing root-only rule | Rule 6 | DONE |
+| F-M.59.9 | `Leader.requires_entrance_test`, migrated on for existing leaders, over REST | REQ-M.178 | DONE |
+| F-M.59.10 | `join` attaches at once; no test before joining | REQ-M.177 | DONE |
+| F-M.59.11 | The test off the front door and on המסלול שלי as one quiet item | REQ-M.177 | DONE |
+| F-M.59.12 | Certification condition one waived for a leader who does not require it | REQ-M.178 | DONE |
+| F-M.59.13 | The leader's switch and the manager's view of it | REQ-M.178 | DONE |
+
+- [x] **M59.1** Migration `matazim.00NN_open_to_all`: add the column; seed the
+  eight slugs from `OPEN_BASICS` in the migration, once, using the oldest
+  superuser for `added_by` and skipping with a note when there is none.
+- [x] **M59.2** `access.visible_course_slugs` adds
+  `OfferedCourse.objects.filter(is_active=True, open_to_all=True)`. The course
+  page, lesson page, hand-in and cohort readers already ask it.
+- [x] **M59.3** `staff_offered`: a second tick per row. Root only, as today.
+- [x] **M59.4** `courses.html` and `_course_card.html`: a plain line saying
+  these are open to everyone who registers, and the certificate on a finished
+  card worded as תעודת סיום הדרכה. Nothing on a card says מט״צ מוסמך.
+- [x] **M59.5** `landing.student_orientation` and `home.html`: two doors.
+  Rewritten steps keep the "one עכשיו" invariant of SPR-M.58.
+- [x] **M59.6** `apply` no longer lists leaders to a new account; an existing
+  application is still shown and answered. The code box goes in the shared
+  header area of דף הבית and ההדרכות.
+- [x] **M59.7** Check every path a non-member can reach for a course outside the
+  open set: it is a 404 as before.
+- [x] **M59.8** `OfferedCourseSerializer` gains the field. The viewset's rule
+  does not change.
+- [x] **M59.9** Migration for `Leader.requires_entrance_test`: add the column,
+  then set True for every existing leader. Serializer field writable by the
+  leader for their own row and by root.
+- [x] **M59.10** `joining_views.join`: remove the passed-the-test check. The
+  consent gate, `record_arrival` and the unique-row logic stay.
+- [x] **M59.11** `landing.hero_state`/`student_orientation` and `home.html`: no
+  test step, no test button for visitors; the `join` hero kind goes. On
+  המסלול שלי the test is one item, worded by whether the leader requires it,
+  and never the sole עכשיו that hides the rest. Member nav keeps the entry.
+- [x] **M59.12** The certification readiness check treats condition one as met
+  when the student's leader does not require the test.
+- [x] **M59.13** One switch on האזור שלי; a column on the program manager's
+  leader row.
+
+**Tests (DONE).** `tests/test_spr_m_59.py`.
+
+- [x] A fresh account with no `Student` and no leader sees all eight open
+  courses and can open a lesson in each.
+- [x] The same account gets a 404 for a course outside the eight.
+- [x] Withdrawing an open course (inactive) hides it from new people and keeps
+  it for someone with an enrolment.
+- [x] Only root can change `open_to_all`, on the screen and over REST.
+- [x] The seed migration is idempotent and survives a database with no superuser.
+- [x] A finished open course shows its certificate worded as completion, and the
+  text מט״צ מוסמך appears nowhere on the page.
+- [x] A learner's progress and certificate are the same rows after they later
+  join a leader (nothing copied, nothing lost).
+- [x] The strip for a visitor, a fresh registrant, a member and a leader has
+  exactly one עכשיו each, and a registrant sees two doors.
+- [x] A new account no longer sees the list of leaders; an existing application
+  is still answered.
+- [x] Phone widths and the dark palette through the screen contract for the
+  rebuilt `public/home` and the courses page.
+- [x] A visitor's דף הבית contains no mention of the entrance test and offers
+  two doors only; the test page still opens at its own address.
+- [x] A signed-in person with a leader's code joins at once without having
+  passed the test, and then sees courses, the leader and the test item.
+- [x] No page, course or class is refused to a member who has not taken the test.
+- [x] With the switch on, the leader sees who has and has not passed, and a
+  student who has not is not ready to certify; with it off, a student who has
+  not taken it is ready if the other two conditions hold.
+- [x] Existing leaders are on after the migration; a new leader is off.
+- [x] Flipping the switch removes no member and un-certifies nobody.
+- [x] On המסלול שלי the test is one item beside the others, never the only
+  עכשיו when other work exists.
+
+**Built as decided on Avi's behalf (2026-10-12).** `apply` is no longer linked
+from anywhere a new person goes (Q22 default); the route and any existing
+application still work. The code box takes a leader's code or a pasted link now,
+with eight wrong tries in fifteen minutes resting it; class codes join it in
+SPR-M.60 (REQ-M.171). The leader switch is a form on האזור שלי, so the leader
+REST viewset stays program-manager-only. Tests: `tests/test_spr_m_59.py`, and
+the SPR-M.1, 2, 3, 4, 7, 8, 16 and 58 tests that assumed "test first" were
+turned round on purpose.
+
+## SPR-M.60 — The open class  `DONE`
+
+**Goal.** Avi, 2026-10-12: any user can open a class and invite others by code,
+QR or link, and see the progress of those who joined, without being a leader and
+without any way to certify; and an owner can never add somebody, the joiner
+always acts. This sprint is the class half.
+
+**Delivers.** REQ-M.167, REQ-M.168, REQ-M.169, REQ-M.170, REQ-M.171, REQ-M.172,
+REQ-M.173, REQ-M.174, REQ-M.175, REQ-M.176.
+
+**Needs from Avi before the build:** a yes on `data_model.md` section 8 (the
+kickoff rule, since this adds models), and Q18 to Q21 if any default is wrong.
+Built on the defaults and on section 8 as written, 2026-10-12.
+Depends on SPR-M.59 for the open set and for the code box.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.60.1 | `OpenClass` and `OpenClassMember`, with the unique code across both tables | REQ-M.167, REQ-M.171 | DONE |
+| F-M.60.2 | `visible_open_classes`, `visible_open_members`, `open_class_for_code` | REQ-M.173 | DONE |
+| F-M.60.3 | Open a class: one field, the terms read, the code made | REQ-M.167 | DONE |
+| F-M.60.4 | The join page and the join act: the lens shown first, consent gate, `request.user` only | REQ-M.168, REQ-M.170 | DONE |
+| F-M.60.5 | One code box routing to a leader's or a class's join page, throttled | REQ-M.171 | DONE |
+| F-M.60.6 | The owner's page: code, link, QR (owner only), members with the lens, remove, close, replace code, archive | REQ-M.169, REQ-M.172, REQ-M.174 | DONE |
+| F-M.60.7 | הכיתות שלי as the one hub; leave a class; nav entry for learners | REQ-M.175 | DONE |
+| F-M.60.8 | Bell notice to the owner on a join | REQ-M.175 | DONE |
+| F-M.60.9 | מדריך לפתיחת כיתה | REQ-M.176 | DONE |
+| F-M.60.10 | Both models over REST: create-by-code, no `user` field, lens-only serializer | Rule 6 | DONE |
+| F-M.60.11 | Limits, report-a-class through the lamp, caps in one place | REQ-M.174 | DONE |
+
+- [x] **M60.1** Models and migration, scoped: `manage.py migrate matazim`.
+  Code generator shared with `Leader.new_join_code`; creation retries until
+  unique across both tables.
+- [x] **M60.2** The three functions in `access.py`; nothing else queries the
+  tables directly.
+- [x] **M60.3** Create view and template; refuses to save without the terms
+  ticked; enforces the 10-class cap.
+- [x] **M60.4** `open_join` view: signed-out visitors are carried through
+  register or sign in by the same session key `INVITE_KEY` pattern; shows the
+  lens list; applies `needs_guardian_consent`; inserts exactly one row for
+  `request.user`; reuses an ended row.
+- [x] **M60.5** `have_code` view: looks the string up in both tables, redirects
+  to the right join page, one neutral message otherwise; throttle by account and
+  by address; constant-time compare.
+- [x] **M60.6** Owner page. The QR endpoint is login-required and owner-only,
+  written from the start with finding P1 in mind.
+- [x] **M60.7** `classes.html` gains the open classes beneath the official ones;
+  member nav gets one entry within the cap of seven.
+- [x] **M60.8** `Notification` on join; no email.
+- [x] **M60.9** One guide page, linked from הכיתות שלי.
+- [x] **M60.10** Serializers and viewsets; the browsable API is not enabled for
+  the code-taking endpoint.
+- [x] **M60.11** Constants in one module; the report path reuses the request
+  lamp.
+
+**Tests (DONE).** `tests/test_spr_m_60.py`, and entries in
+`tests/test_screen_contract.py`.
+
+- [x] Any signed-in account, including a minor, can open a class; a signed-out
+  visitor cannot.
+- [x] Opening without the terms ticked saves nothing.
+- [x] The eleventh live class is refused; archiving one frees a place.
+- [x] A class code is never equal to any leader's code, across 1000 generated.
+- [x] There is no route, form field, API field or management path through which
+  an owner adds a named user. A test enumerates the URL patterns and the
+  serializer fields.
+- [x] Joining inserts exactly one row for the requesting user, and posting a
+  different user id changes nothing.
+- [x] Rejoining reuses the row; a person is never listed twice.
+- [x] Signed out, the link is carried through registration and lands on the join
+  page.
+- [x] The join page lists exactly the lens fields before the button.
+- [x] The owner's lens shows name, open-course progress, completion
+  certificates and last activity, and no email, birth year, consent state,
+  hand-in, feedback, leader or other class; checked against the rendered HTML
+  and the REST payload.
+- [x] Progress in a non-open course is absent from the lens.
+- [x] A member leaves and the owner stops seeing them at once; a removed member
+  is not blocked from other classes.
+- [x] Membership creates no `Student` row and changes no count on a program
+  manager's or leader's dashboard.
+- [x] No open-class page contains a certify, approve or stage control, and the
+  sentence saying so is present.
+- [x] A program manager, a leader and an unrelated learner get a 404 for another
+  person's class, its members and its QR; the QR needs login and ownership.
+- [x] One code box sends a leader's code to the leader join page and a class code
+  to the class join page; a wrong code gets the same sentence for both near
+  misses; the eighth bad attempt in fifteen minutes rests the box.
+- [x] The guardian-consent gate, switched on in the test, stops an under-18
+  without consent at the join step and not before.
+- [x] A person on a leader's roster joins an open class and the roster, stage and
+  certification are unchanged.
+- [x] REST: create-by-code joins the caller; no `user` field exists; list is
+  scoped; the owner can delete a membership, a stranger cannot.
+- [x] The owner gets a bell notice on a join and no email is sent.
+- [x] Phone widths and the dark palette through the screen contract for every new
+  page.
+
+**Built as decided on Avi's behalf (2026-10-12).**
+
+- The hub for everybody is `/matazim/classes/` (`my_classes`). A leader's own
+  address `/matazim/leader/classes/` keeps its old rule, leaders and admins
+  only, and shows the same page.
+- A report is a `Request` row (kind problem, status new), because the request
+  lamp is program-manager-only and a learner has no lamp. The class code is
+  never copied into the report text.
+- `OPEN_JOINED` is a bell notice only, never mailed.
+- Root may view a class and its members but is shown no code, link or QR and
+  cannot change anything.
+- The member endpoint of the REST API renders JSON only, and counts wrong codes
+  per account (eight in fifteen minutes), so it cannot be used to guess codes.
+- `open_class.join_class` is the only function in the app that inserts an
+  `OpenClassMember`; a test scans the source for any other.
+- Tests: 70 in `tests/test_spr_m_60.py`, and nine `open/` entries in
+  `tests/test_screen_contract.py`.

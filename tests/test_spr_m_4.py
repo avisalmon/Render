@@ -120,10 +120,12 @@ def test_the_track_shows_all_five_stages_in_order(client, db):
     assert positions == sorted(positions)
 
 
-def test_the_track_starts_at_the_entrance_test(client, db):
-    """T-F-M.4.3-2: מתמיינים is the entrance test, so the page links to it."""
+def test_the_track_starts_at_joining_with_a_code(client, db):
+    """T-F-M.4.3-2, REQ-M.177: מתמיינים is joining a leader with a code, and the
+    page links to the code box, not to the test."""
     html = client.get(reverse("matazim:track")).content.decode()
-    assert reverse("matazim:entrance_test") in html
+    assert reverse("matazim:code") in html
+    assert reverse("matazim:entrance_test") not in html
 
 
 # ---------------------------------------------------------------- F-M.4.4
@@ -145,7 +147,8 @@ def test_courses_is_honest_about_what_is_open(client, db):
     """
     html = client.get(reverse("matazim:courses")).content.decode()
 
-    assert reverse("matazim:entrance_test") in html
+    assert reverse("matazim:register") in html or reverse("matazim:courses") in html
+    assert reverse("matazim:entrance_test") not in html, "a visitor was sent to the test"
     assert "המסלול הנדרש" not in html, "a visitor was shown a member's track"
     assert "%" not in html.split("<main>")[-1].split("</main>")[0], (
         "a visitor was shown a progress figure that cannot be theirs"

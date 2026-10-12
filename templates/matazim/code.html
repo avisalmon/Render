@@ -1,0 +1,51 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.165, REQ-M.166 — "אני רוצה להיות מט״צ".
+
+  Being a מט״צ needs somebody to certify you, so this asks for that somebody's
+  code. Without one the person can still learn everything, and the page says so
+  in the first screen rather than leaving a dead end.
+{% endcomment %}
+
+{% block title %}להיות מט״צ · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <p class="mz-eyebrow">להיות מט״צ</p>
+    <h1>יש לכם קוד ממוביל/ה?</h1>
+    <p>
+      מט״צ מוסמך הוא מי שמוביל/ה מסמיך/ה, ולכן מצטרפים דרך הקוד שלו/ה. אפשר להקליד
+      אותו כאן, או להדביק את הקישור שקיבלתם.
+    </p>
+  </div>
+
+  <section class="mz-panel">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if error %}<div id="codeError" class="mz-alert" role="alert">{{ error }}</div>{% endif %}
+      <label class="mz-field">
+        <span>הקוד או הקישור</span>
+        <input id="code" name="code" type="text" dir="ltr" autocomplete="off" autocapitalize="off"
+               spellcheck="false" autofocus required aria-describedby="codeHelp">
+      </label>
+      <p id="codeHelp" class="mz-muted mz-small">המוביל/ה מוסר/ת אותו בכיתה, בוואטסאפ או בקוד QR.</p>
+      <div class="mz-page-actions">
+        <button type="submit" class="mz-btn mz-btn-primary">להמשיך</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="mz-panel mz-panel-soft">
+    <h2>אין לכם קוד?</h2>
+    <p>
+      אפשר ללמוד בכל זאת. ההדרכות פתוחות לכל מי שנרשם, בלי מוביל/ה ובלי בית ספר,
+      וכל מה שתלמדו נשמר לכם ומסתיים בתעודה.
+    </p>
+    <div class="mz-page-actions">
+      <a class="mz-btn mz-btn-secondary" href="{% if user.is_authenticated %}{% url 'matazim:courses' %}{% else %}{% url 'matazim:register' %}?next={% url 'matazim:courses' %}{% endif %}">אני רוצה ללמוד</a>
+    </div>
+  </section>
+</div>
+{% endblock %}

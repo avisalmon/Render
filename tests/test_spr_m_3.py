@@ -438,9 +438,9 @@ def test_passing_opens_the_student_door(client, db):
         html = client.get(reverse("matazim:home")).content.decode()
         return html.split("mz-hero-cta")[1].split("</div>")[0]
 
-    # Before: the hero's one action is the test itself (SPR-M.42; this used to
-    # assert a padlocked כניסת תלמידים, which no longer exists).
-    assert reverse("matazim:entrance_test") in hero()
+    # Before: the hero carries no test (REQ-M.177; SPR-M.42 once made the test
+    # the hero's one action, and before that it was a padlocked door).
+    assert reverse("matazim:entrance_test") not in hero()
 
     client.post(
         reverse("matazim:test_task"),
@@ -448,11 +448,10 @@ def test_passing_opens_the_student_door(client, db):
     )
 
     assert MemberProfile.objects.get(user=user).entrance_test_passed_at is not None
-    # After: it becomes joining, and the pass is acknowledged rather than
-    # the invitation being repeated (REQ-M.63).
+    # After: the hero is unchanged and still does not invite anyone to the
+    # test again (REQ-M.63); the pass is recorded on the profile.
     after = hero()
-    assert "להצטרף לתוכנית" in after
-    assert "עברתם את מבחן הכניסה" in after
+    assert reverse("matazim:entrance_test") not in after
 
 
 # --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---

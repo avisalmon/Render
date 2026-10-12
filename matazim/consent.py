@@ -110,4 +110,4 @@ def consent_blocker(profile):
         return None
     if not (profile and profile.birth_year):
         return "עוד לא אמרתם לנו באיזו שנה נולדתם, וזה מה שקובע אם צריך אישור הורה."
-    return "כדי להצטרף למוביל/ה צריך אישור של הורה או אפוטרופוס."
+    return "כדי להצטרף צריך אישור של הורה או אפוטרופוס."

@@ -63,20 +63,9 @@ def _next_step(profile, student, state, per_course):
     earliest thing still open rather than a list of everything outstanding. A
     teenager given five things to do does none of them.
     """
-    if not (profile and profile.has_passed_entrance_test()):
-        return {
-            "text": "לעבור את מבחן הכניסה",
-            "where": "matazim:entrance_test",
-            "why": "זה הצעד הראשון, והוא בודק התמדה ולא ידע מוקדם.",
-        }
-
-    if student is None or (student.leader is None and student.pending_leader is None):
-        return {
-            "text": "להצטרף למוביל/ה",
-            "where": "matazim:apply",
-            "why": "מוביל/ה מלווה אתכם בתוכנית ומאשר/ת את ההסמכה בסוף.",
-        }
-
+    # REQ-M.177 — neither the test nor a leader comes first any more. Learning
+    # is open to anyone who registered, so the earliest thing open is a course,
+    # and the test and the code are waited for below, never in front of it.
     # Waiting on somebody else's decision is deliberately *not* checked here,
     # above the courses (SPR-M.43).
     #
@@ -120,12 +109,28 @@ def _next_step(profile, student, state, per_course):
 
     # Reached only once the learning is done, which is the point at which the
     # wait really is the next thing rather than an interruption of it.
-    if student.leader is None and student.pending_leader is not None:
+    if student is not None and student.leader is None and student.pending_leader is not None:
         return {
             "text": "לחכות לאישור",
             "where": None,
             "why": f"סיימתם את ההדרכות. ביקשתם להצטרף ל{_leader_name(student.pending_leader)}, "
             "וההסמכה מחכה לאישור.",
+        }
+
+    if student is None or (student.leader is None and student.pending_leader is None):
+        return {
+            "text": "להמשיך ללמוד",
+            "where": "matazim:courses",
+            "why": "סיימתם את שתי ההדרכות הראשונות, ויש עוד הדרכות פתוחות לכולם. "
+            "כדי להיות מט״צ מוסמך צריך קוד ממוביל/ה.",
+        }
+
+    if not state.test_met:
+        return {
+            "text": "לעבור את מבחן הכניסה",
+            "where": "matazim:entrance_test",
+            "why": "המוביל/ה שלכם ביקש/ה אותו. הוא הדרכת טינקרקאד קצרה, "
+            "ואפשר לנסות שוב בלי הגבלה.",
         }
 
     if student.status != Student.CERTIFIED:

@@ -77,7 +77,7 @@
           {% endfor %}
         </ul>
         <p class="mz-muted mz-small" style="margin-top: 14px;">
-          שתי ההדרכות המסומנות נדרשות להסמכה. כל השאר הן הזדמנות, וכל מה שתלמדו נספר ונשמר.{% if locked %}
+          שתי ההדרכות המסומנות נדרשות להסמכה כמט״צ. כל ההדרכות מסתיימות בתעודה שלכם, וכל מה שתלמדו נספר ונשמר.{% if locked %}
           ההדרכות הנעולות ייפתחו כשהמוביל/ה שלכם יפתח אותן.{% endif %}
         </p>
       </div>
@@ -117,31 +117,32 @@
     </div>
   {% endif %}
 
+  {% comment %}
+    REQ-M.177 — the test appears here only for somebody whose leader asks for
+    it, or who already passed. A learner with no leader is never shown it.
+  {% endcomment %}
+  {% if test_required or test_passed %}
   <section class="mz-panel">
     <h2>מבחן הכניסה</h2>
-    <p>
-      <strong>מבחן הכניסה</strong> הוא הדרכת טינקרקאד קצרה שמסתיימת במשימה: מקבלים
-      אובייקט לבנות, בונים אותו, ומעלים לבדיקה. אפשר להתחיל אותו כבר עכשיו, ומי
-      שמסיים אותו מקבל תעודה גם אם לא ימשיך בתוכנית.
-    </p>
-    <div class="mz-page-actions">
-      {% if test_passed %}
-        <span class="mz-btn mz-btn-done" aria-disabled="true">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-          עברתם את מבחן הכניסה
-        </span>
-      {% else %}
-        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:entrance_test' %}">להתחיל</a>
-      {% endif %}
-    </div>
+    {% if test_passed %}
+      <p class="mz-muted">עברתם את מבחן הכניסה.</p>
+    {% else %}
+      <p>
+        המוביל/ה שלכם ביקש/ה את <strong>מבחן הכניסה</strong>: הדרכת טינקרקאד קצרה
+        שמסתיימת במשימה. אפשר לעשות אותו בכל שלב, במקביל ללימודים, ולנסות שוב בלי הגבלה.
+      </p>
+      <div class="mz-page-actions">
+        <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:entrance_test' %}">להתחיל</a>
+      </div>
+    {% endif %}
   </section>
+  {% endif %}
 
   {% if not cards %}
     <section class="mz-panel mz-panel-soft">
       <h2>מה לומדים בתוכנית</h2>
       <p>
-        אחרי מבחן הכניסה מגיע מסלול ההדרכות: סקראץ׳ ותכנות מתקדם, ומשם תלת-ממד,
-        אלקטרוניקה וכלים נוספים. לא נפרסם כאן רשימה של הדרכות שאי אפשר להתחיל,
+        מסלול ההדרכות: סקראץ׳ ותכנות מתקדם, ומשם תלת-ממד, אלקטרוניקה וכלים נוספים. לא נפרסם כאן רשימה של הדרכות שאי אפשר להתחיל,
         אז מה שמופיע כאן הוא מה שבאמת פתוח.
       </p>
       <div class="mz-page-actions">

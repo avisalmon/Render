@@ -56,7 +56,7 @@ def world(db):
 
     for slug in ("scratch", "scratch-advanced"):
         _course(slug, "סקראץ׳")
-    _course("arduino", "ארדואינו")
+    _course("robotics", "ארדואינו")
     _course("fpga", "FPGA")
     _course("secret", "טיוטה", published=False)
 
@@ -135,12 +135,12 @@ def test_the_course_counts_are_scoped_too(world):
     from app.models import Course, Enrollment
     from matazim.overview import course_rows
 
-    arduino = Course.objects.get(slug="arduino")
-    Enrollment.objects.create(user=world["kid"].user, course=arduino)
-    Enrollment.objects.create(user=world["their_kid"].user, course=arduino)
+    robotics = Course.objects.get(slug="robotics")
+    Enrollment.objects.create(user=world["kid"].user, course=robotics)
+    Enrollment.objects.create(user=world["their_kid"].user, course=robotics)
 
     def started(user):
-        return next(r["started"] for r in course_rows(user) if r["slug"] == "arduino")
+        return next(r["started"] for r in course_rows(user) if r["slug"] == "robotics")
 
     assert started(world["naomi"]) == 1, "she is counting another programme's member"
     assert started(world["root"]) == 2
@@ -178,13 +178,13 @@ def test_the_catalogue_says_what_each_course_is_to_the_programme(world):
     from matazim.models import OfferedCourse
     from matazim.overview import course_rows
 
-    OfferedCourse.objects.create(slug="arduino", added_by=world["root"])
+    OfferedCourse.objects.create(slug="robotics", added_by=world["root"])
     OfferedCourse.objects.create(slug="fpga", added_by=world["root"], is_active=False)
 
     rows = {r["slug"]: r for r in course_rows(world["naomi"])}
     assert rows["scratch"]["required"] is True
     assert rows["scratch"]["offered"] is True
-    assert rows["arduino"]["offered"] is True
+    assert rows["robotics"]["offered"] is True
     assert rows["fpga"]["withdrawn"] is True
     assert rows["fpga"]["offered"] is False
 

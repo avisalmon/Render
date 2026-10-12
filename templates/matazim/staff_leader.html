@@ -33,6 +33,7 @@
       <dl class="mz-facts">
         <div><dt>מט״צים משויכים</dt><dd>{{ students }}</dd></div>
         <div><dt>ממתינים לאישור</dt><dd>{{ waiting }}</dd></div>
+        <div><dt>מבחן כניסה</dt><dd>{% if leader.requires_entrance_test %}נדרש{% else %}רשות{% endif %}</dd></div>
         <div>
           <dt>סטטוס</dt>
           <dd>{% if leader.is_active %}<span class="mz-tag mz-tag-done">פעיל/ה</span>{% else %}<span class="mz-tag mz-tag-idle">לא פעיל/ה</span>{% endif %}</dd>

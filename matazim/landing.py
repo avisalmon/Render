@@ -26,28 +26,26 @@ NOW, DONE, LATER, OPEN = "now", "done", "later", "open"
 
 
 def student_orientation(request):
-    """The four steps into the programme, each with where *this* reader is.
+    """The three steps into the programme, each with where *this* reader is.
 
-    Shown on דף הבית to everybody, signed in or not. Avi's point was that
-    "take the test" on its own is a door with no building behind it; this is
-    the building. Four states:
+    Shown on דף הבית to everybody, signed in or not. Avi, 2026-10-12: anyone
+    who registers can learn, and being a מט״צ is a separate thing that needs a
+    leader's code. The entrance test is **not** a step here at all: it runs
+    beside the road as a leader's optional choice and "must not be broadcast as
+    something in your face" (REQ-M.177).
 
     - ``now``   the thing to do next, one of them at most
     - ``done``  behind them
-    - ``open``  available already, though not the next thing — the הדרכות
-                are open to anyone with an account before the test (REQ-M.65),
-                and Avi asked that this be said rather than discovered
+    - ``open``  available already, though not the next thing
     - ``later`` ahead of them, named so the road is visible
 
-    Order is the programme's order (REQ-M.36: the test gates joining, not
-    learning). A visitor sees step one as עכשיו; a certified מט״צ sees four
-    ticks and a fifth step, teaching, which is what the rest of their year is.
+    A visitor sees step one as עכשיו; a certified מט״צ sees the learning behind
+    them and a fourth step, teaching, which is what the rest of their year is.
     """
-    from .views import _has_leader, _student_of, member_profile
+    from .views import _has_leader, _student_of
 
     user = request.user
     signed_in = bool(getattr(user, "is_authenticated", False))
-    passed = signed_in and member_profile(user).has_passed_entrance_test()
     student = _student_of(user) if signed_in else None
     joined = signed_in and _has_leader(user)
     certified = bool(student and student.status == "certified")
@@ -62,28 +60,23 @@ def student_orientation(request):
             "button": "פתיחת חשבון",
         },
         {
-            "key": "test",
-            "title": "מבחן הכניסה",
-            "text": "הדרכת טינקרקאד קצרה ומשימה אחת. בודק התמדה, לא ידע מוקדם. אפשר לנסות שוב.",
-            "state": DONE if passed else (NOW if signed_in else LATER),
-            "where": None if passed else "matazim:entrance_test",
-            "button": "למבחן",
+            "key": "learn",
+            "title": "לומדים",
+            "text": "הדרכות פתוחות לכל מי שנרשם: סקראץ׳, תלת-ממד, תכנות ואלקטרוניקה. "
+            "בלי מוביל/ה, בלי בית ספר ובלי מבחן. כל הדרכה שתסיימו מסתיימת בתעודה שלכם.",
+            "state": DONE if certified else (NOW if signed_in else LATER),
+            "where": None if certified else "matazim:courses",
+            "button": "להדרכות",
         },
         {
             "key": "join",
-            "title": "מצטרפים למוביל/ה",
-            "text": "מורה מבית הספר שמלווה אתכם ומאשר/ת את ההסמכה בסוף.",
-            "state": DONE if joined else (NOW if passed else LATER),
-            "where": None if joined else ("matazim:apply" if passed else None),
-            "button": "לבחירת מוביל/ה",
-        },
-        {
-            "key": "learn",
-            "title": "לומדים ומוסמכים",
-            "text": "שתי הדרכות סקראץ׳, תוצר משלכם, ואישור המוביל/ה. אפשר להתחיל ללמוד עוד לפני המבחן.",
-            "state": DONE if certified else (NOW if joined else (OPEN if signed_in else LATER)),
-            "where": None if certified else "matazim:courses",
-            "button": "להדרכות",
+            "title": "רוצים להיות מט״צ? מצטרפים למוביל/ה",
+            "text": "מט״צ מוסמך הוא מי שמוביל/ה מסמיך/ה, ולכן צריך קוד ממנו/ה. "
+            "בלי קוד אפשר ללמוד הכל, ולא להיות מט״צ.",
+            "state": DONE if joined else OPEN,
+            "tag": "עם קוד",
+            "where": None if joined else "matazim:code",
+            "button": "יש לי קוד",
         },
     ]
     if certified:
@@ -96,9 +89,7 @@ def student_orientation(request):
             "button": "לפרקטיקום",
         })
 
-    # Exactly one עכשיו. The list above can produce two (joined and the learn
-    # step both say NOW for somebody mid-programme), and a page that says "now"
-    # twice has said it zero times.
+    # Exactly one עכשיו. A page that says "now" twice has said it zero times.
     seen = False
     for step in steps:
         if step["state"] == NOW:
@@ -111,16 +102,16 @@ def student_orientation(request):
 def hero_state(request):
     """Which single call to action the hero carries, for this reader.
 
-    The hero used to offer להצטרף לתוכנית to anybody who had passed the
-    test, including somebody who joined a leader weeks ago and was visiting
-    דף הבית from the menu. A front door that asks a member to join is a
-    front door that has not noticed who walked in.
+    Four kinds. A member who has a leader gets their path, a leader and a
+    program manager get their own front door, and everybody else gets the two
+    doors of REQ-M.166: learn, or become a מט״צ with a code. There is no test
+    kind any more (REQ-M.177).
     """
-    from .views import _has_leader, _is_member, _student_of, member_profile
+    from .views import _has_leader, _is_member, _student_of
 
     user = request.user
     if not getattr(user, "is_authenticated", False):
-        return {"kind": "test"}
+        return {"kind": "doors"}
     if not _is_member(user):
         # A leader or a program manager reading the public page: send them to
         # their own front door rather than to a pupil's.
@@ -130,11 +121,9 @@ def hero_state(request):
             return {"kind": "staff"}
         if leader_of(user):
             return {"kind": "leader"}
-        return {"kind": "test"}
-    if not member_profile(user).has_passed_entrance_test():
-        return {"kind": "test", "learning_open": True}
+        return {"kind": "doors"}
     if not _has_leader(user):
-        return {"kind": "join"}
+        return {"kind": "doors", "signed_in": True}
     student = _student_of(user)
     return {"kind": "path", "certified": bool(student and student.status == "certified")}
 

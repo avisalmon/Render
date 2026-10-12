@@ -423,8 +423,11 @@ def test_without_a_passed_test_the_hero_is_the_test(client, db):
     hero = html.split("mz-hero-cta")[1].split("</div>")[0]
 
     assert "mz-door-locked" not in html, "the padlocked door is back"
-    assert reverse("matazim:entrance_test") in hero
-    assert "מבחן הכניסה" in hero
+    # REQ-M.177 (2026-10-12) turned this round: the test is no longer the way
+    # in, it runs beside the road, so the hero shows two doors and no test.
+    assert reverse("matazim:entrance_test") not in hero
+    assert "מבחן" not in hero
+    assert reverse("matazim:code") in hero
 
 
 def test_the_leader_door_is_never_gated(client, db):
@@ -472,9 +475,10 @@ def test_the_entrance_test_page_serves_without_an_account(client, db):
 
 
 def test_the_shut_door_points_at_the_test(client, db):
-    """T-F-M.2.8-2: a lock with no way forward is a dead end."""
+    """T-F-M.2.8-2, turned round by REQ-M.177: there is no shut door any more,
+    and a visitor's front page does not send them to the test."""
     html = client.get(reverse("matazim:home")).content.decode()
-    assert reverse("matazim:entrance_test") in html
+    assert reverse("matazim:entrance_test") not in html
 
 
 # --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
