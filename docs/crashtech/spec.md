@@ -125,16 +125,35 @@ compare against, so they score only when a judge grades them. A team cannot
 report its own originality any more than it could report its own final
 placing.
 
-**Milestone 4 — Close and judging.** Submissions lock. Judges review.
-Verification is a **spot check, not an audit**: the scores that decide the
-winners get looked at, the artifacts are there as evidence, and the rest
-stands on trust. Creativity challenges are different and always need a
-human grade, because there is no number to report. Then results are
-published.
+**Milestone 4 — Close and judging.** Submissions lock, and **all judging
+happens here, none of it during the event**. Creativity submissions are
+**shortlisted** and only the shortlist is graded, because seventy-odd
+submissions get a rubber stamp while fifteen finalists get real attention.
+Measured top scores get a **spot check, not an audit**: the scores that
+decide the winners are looked at, the artifacts are the evidence, and the
+rest stands on trust.
 
-**Milestone 5 — The museum.** A permanent public page for the event: the
-photos, an exhibition of the projects and videos that were submitted, and
-the feedback. It does not expire.
+**Milestone 5 — Publishing, and the museum.** When judging is final an
+admin publishes, in **one click with three permanent effects**: the
+standings become public, the museum opens, and both stay that way forever.
+
+The museum is a permanent public page: the photos, an exhibition of the
+projects and videos, the final standings, and the feedback. It is also
+**participatory**, not curated. Anyone signed in may add photos and anyone
+may download them, because the good pictures from any event are on the
+participants' phones rather than the organiser's.
+
+That last point carries a constraint large enough to be an architecture
+decision rather than a detail: **nothing a user uploads is stored on this
+site's own disk.** One event's raw demo videos are around 26 GB against a
+1 GB disk shared by every app here.
+
+Media goes to **Google Cloud Storage**, which this site already has
+configured for backups, in a **separate public-read bucket** because
+backups are private and museum media is not. Demo video asks for a link
+before it offers an upload, and images are resized on the way in. The
+arithmetic, and why Drive is the wrong Google product for it, are in
+[data_model.md](data_model.md) §9.
 
 ### 1.5.1 Where things live
 

@@ -77,6 +77,7 @@ One event. The root of everything.
 | `repo_url` | URLField, blank | pointer to the supporting repo: examples, skills, methodology. **A URL and nothing more**, so a repo reused across several events costs nothing and a fresh one per event is equally fine. Never holds challenges |
 | `timezone` | CharField | an event is a physical place; a UTC-only model gets the pickup day wrong |
 | `leaderboard_visibility` | choice | `admins` (default) / `participants` / `public`. **A setting, not a policy**: an admin opens the board up when they want to, including onto a screen in the room, and it stays shut otherwise |
+| `results_published_at` | DateTime, null | when an admin published. Until then the standings exist and almost nobody may see them |
 | `created_at` | DateTime | |
 
 **Status is the spine.** Every surface in the app gates on it, and it is the
@@ -88,8 +89,14 @@ one piece of the 2026 platform that survives untouched because it was right.
 | `published` | Milestone 1. The event page is public, sign-up is open, challenges invisible. |
 | `kits` | Milestone 2. Hardware is being handed out, the supporting repo is open, challenges still invisible. |
 | `live` | Milestone 3. Entering this state **makes every challenge visible at once**. Submissions accepted. |
-| `closed` | Milestone 4. Submissions locked. Judging and verification. |
-| `museum` | Milestone 5. Permanent and public. Terminal. |
+| `closed` | Milestone 4. Submissions locked. Judges shortlist, grade and verify. Standings still private. |
+| `museum` | Milestone 5. **Results published.** Permanent, public, terminal. |
+
+**Advancing from `closed` to `museum` is the act of publishing**, and it is
+the single most meaningful click an admin makes. It is one action with
+three effects: the final standings become public, the museum opens, and
+both stay that way forever. It is therefore gated (§7, "Publishing is
+gated") rather than available whenever somebody feels like it.
 
 ### Milestone
 
@@ -449,6 +456,8 @@ and costs nothing.
 | `verification` | choice | `unverified` / `verified` / `disputed` / `withdrawn` |
 | `verified_by` / `verified_at` | FK User null / DateTime null | the spot check |
 | `verification_note` | TextField, blank | |
+| `is_finalist` | bool | **shortlisted for judging.** See below |
+| `finalist_set_by` / `finalist_set_at` | FK User null / DateTime null | |
 | `created_at` / `updated_at` | DateTime | |
 
 Unique on (`challenge`, `team`).
@@ -463,8 +472,8 @@ the great majority of submissions. Nothing blocks on a judge.
 
 **With one exception, and it is not an exception to trust.** A
 `creativity` challenge scores **only** on a judge's grade (`JudgeGrade`,
-§7). Its `tentative_points` are always zero and its score stays zero until a
-human has looked at it.
+§7). Its `tentative_points` are always zero, and it carries no score at all
+until judging finishes after the event.
 
 That is not distrust, it is arithmetic. Trust works for the other two kinds
 because there is something to report and something to check later: a
@@ -526,6 +535,27 @@ grade the same submission.
 
 Unique on (`submission`, `judge`).
 
+**Judging happens after the event, never during it.** `JudgeGrade` rows can
+only be created while the hackathon is `closed`. During the 24 hours judges
+have nothing to do, which is deliberate: a judge grading live would be
+scoring work against a moving field, and the earliest submission would be
+judged on a different standard from the last.
+
+### Publishing is gated
+
+Advancing `closed` to `museum` publishes the standings permanently, so it
+is refused until the results are actually final:
+
+- every **finalist** has at least one `JudgeGrade`
+- no submission is left in `disputed`
+- every creativity challenge with submissions has a shortlist
+
+Like readiness (user_journeys.md §4.2) this is **computed, not stored**. The
+admin sees what is outstanding and a link to each, and the publish action
+appears when nothing is. The confirmation states the irreversible part:
+*"The final standings become public and the museum opens. Both are
+permanent."*
+
 ### The leaderboard is not a model
 
 It is computed from submissions, exactly as memz computes its podium from
@@ -553,9 +583,24 @@ ever read, and it goes stale the moment a verification changes a score.
 | MuseumPhoto | Type | Notes |
 | --- | --- | --- |
 | `museum_page` | FK | CASCADE |
-| `image` | ImageField | |
+| `image` | ImageField | **stored externally, never on the app disk.** See §9 |
 | `caption` | CharField, blank | |
+| `uploaded_by` | FK User, null | null for the admin's own curated set |
+| `moderation_status` | choice | `pending` / `approved` / `rejected` |
 | `order` | int | |
+| `created_at` | DateTime | |
+
+**The museum is participatory, not curated-only.** Once published, anyone
+signed in may add photos and anyone at all may download them. That is the
+point: the people who were there have the good pictures, and the admin has
+twenty of the four hundred that exist.
+
+Two consequences follow and neither is optional. **Moderation**, because a
+permanent public page anyone can post to is a permanent public page anyone
+can post anything to; CrashTech reaches the site's existing safety check
+through a single named adapter, the same shape `memz/moderation.py` already
+uses (Rule 2). And **storage**, which is section 9, because this is the
+decision that can take the whole site down.
 
 The exhibition of projects is **computed**, not stored: the submissions of
 teams that gave `exhibition_consent`. No separate table, and revoking
@@ -667,6 +712,102 @@ silently inherit agreement to the old ones.
 
 ---
 
+## 9. Where the media lives
+
+**This is the decision most likely to break the site, and it is not a
+preference.** It belongs in the data model because it determines what every
+`FileField` and `ImageField` above actually does.
+
+### The arithmetic
+
+The whole site runs on one Render instance with a **1 GB persistent disk**,
+shared by babook, matazim, memz, ustrip and sensorlab. Against that:
+
+| What | Per event | Note |
+| --- | --- | --- |
+| Demo videos, raw phone capture | **~26 GB** | 24 teams x 10 challenges x ~110 MB |
+| Demo videos, compressed 720p | **~6 GB** | still six times the whole disk |
+| Museum photos, raw 12MP, 200 of them | ~680 MB | one event fills the disk |
+| Museum photos, resized 1600px q82, 200 | ~63 MB | survivable, but it accumulates forever |
+
+**Video is the problem, not photos.** A single event's demo videos are
+twenty-five times the entire site's disk. The museum photos everyone worries
+about are a rounding error beside it.
+
+### The decisions
+
+**1. Nothing a user uploads touches the Render disk.** Not videos, not
+museum photos, not submission artifacts. All of it goes to **external
+object storage** (S3-compatible), wired through `django-storages` so it is
+a settings change rather than code scattered through the app.
+
+**2. Demo video prefers a link.** `Submission` already carries both
+`video_url` and `video_file`, and that was the right instinct. The UI
+should ask for a **YouTube or Vimeo link first** and treat the upload as
+the fallback for somebody who will not use either. A link costs nothing,
+streams properly, transcodes for the viewer's connection, and survives
+longer than our bucket will. This single choice is the difference between
+26 GB and nearly zero.
+
+**3. Images are resized on upload.** 1600px long edge, q82, EXIF stripped.
+A museum photo is looked at on a phone. memz already learned this and the
+numbers above are why: it is the difference between 680 MB and 63 MB.
+
+**4. Deleting a row deletes its file.** Django stopped doing this in 1.3 and
+the usual advice is to tolerate orphans. A permanent public museum that
+anyone can upload to cannot tolerate orphans, because nothing ever prunes
+them. memz solved this with a `post_delete` to `on_commit` hook and
+CrashTech uses the same pattern.
+
+### Where it goes: Google Cloud Storage, in its own bucket
+
+**This site already has Google Cloud Storage configured.** A service
+account and a bucket exist and are used by `backup_db`, with
+`GCS_SERVICE_ACCOUNT` and `GCS_BUCKET` already in the environment and
+`GCS_STORAGE_USD_PER_GB` already in settings. There is no new account to
+open, no new vendor, no new credential to hold.
+
+**A separate bucket, not the backups one.** This matters more than it
+sounds. Backups are private and must stay private; museum media is
+public-read by definition. One bucket cannot be both without either
+exposing the backups or breaking the museum. So: a second bucket, public
+read, with the existing service account holding write access.
+
+### Why not Google Drive
+
+Drive was the first instinct and it is the wrong tool, for reasons that
+only show up after it is built:
+
+- **It is not built to serve a web page.** The `drive.google.com/uc?id=...`
+  hotlink is unofficial, rate-limited, returns an HTML interstitial for
+  larger files, and Google has broken it more than once. A museum page with
+  forty photos makes forty of those requests.
+- **No cache control, no CDN.** You cannot set cache headers on a Drive
+  file, so every visitor re-fetches everything.
+- **Per-file permissions.** Public sharing is an API call per file rather
+  than a property of the container.
+- **No maintained Django backend.** `django-storages` supports GCS as a
+  first-class backend; the Drive packages are third-party and unmaintained.
+- **Shared quota.** Personal Drive storage is shared with Gmail and Photos.
+
+GCS is the same Google account, the same billing, and an actual object
+store. Drive is a filing cabinet with a web page bolted on; GCS is what you
+serve from.
+
+### Cost at this scale
+
+GCS Standard is about $0.020/GB/month, which settings already records.
+Egress is about $0.12/GB, which is the one place R2 or B2 would be cheaper,
+and at this scale it does not matter: with demo video preferring a link and
+images resized to ~300 KB, a museum would need hundreds of thousands of
+image views a month before egress reached the price of a coffee.
+
+**If the museum ever does get that popular, moving is a settings change**,
+because everything goes through `django-storages` rather than through
+hand-written upload code. That is the main reason to route it that way now.
+
+---
+
 ## Decisions already taken, and why
 
 | Decision | Reason |
@@ -687,6 +828,11 @@ silently inherit agreement to the old ones.
 | A study carries its thesis and its literature review | Yours. A study spanning three events spans three years, and the reasoning is what gets lost. `StudyReference` keeps the sources as rows, not as pasted text (Rule 1) |
 | Membership is a through model, not a plain M2M | Yours, from the question. One team per person **per hackathon**, many across hackathons. A bare M2M cannot express that, because the constraint is on (hackathon, user) |
 | Roles can be invited by email before the person has an account | Mine, from the UX review. `RoleInvitation`. Without it an admin cannot appoint the tech lead or the judges, who are the least patient people in the system |
+| Results are published by an admin's click, once judging is final | Yours. One action, three permanent effects: standings public, museum open, both forever. Gated on judging being complete |
+| Creativity is shortlisted, then graded, and only after the event | Yours. 72 submissions get a rubber stamp; 15 finalists get real attention. Judges cannot grade during the 24 hours |
+| The museum takes uploads from anyone signed in | Yours. The people who were there have the good pictures. Needs moderation, which goes through one named adapter |
+| User media never touches the Render disk | Mine, from the arithmetic. One event's raw demo videos are 26 GB against a 1 GB shared disk |
+| Media goes to Google Cloud Storage, in its own public bucket | Yours (Google), refined. GCS is already configured on this site for backups, so no new vendor or credential. A **separate** bucket, because backups are private and museum media is public and one bucket cannot be both. Drive was considered and rejected: it cannot serve a web gallery |
 | The repo is the only home for examples, skills and methodology | Yours. The system stores a URL and links. `PracticeProject` was dropped and `ContentPage` narrowed, because a database restating a repo is two sources that drift |
 
 ---

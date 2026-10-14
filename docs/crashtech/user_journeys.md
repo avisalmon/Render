@@ -72,10 +72,23 @@ must insist on: **a team always sees its own score; the standings are a
 separate thing that may be hidden.** "My points" and "where I rank" are
 different questions.
 
-**R3. Creativity submissions look broken.** They score zero until a judge
-grades them, which is correct and will be read as a bug at 2am. Any screen
-showing a creativity submission must say *"Scored by judges after the
-event"* where the number would be. It must never show `0`.
+And the standings are hidden *for now*, not forever. **When judging is
+final, an admin publishes them in one click and they become public
+permanently**, living in the museum. So the live experience is "I know how
+I am doing, I do not know where I stand", and it resolves into a public
+result rather than fading out.
+
+**R3. Creativity submissions look broken.** They carry no score until
+judging finishes, which is correct and will be read as a bug at 2am. Any
+screen showing one says *"Judged after the event"* where the number would
+be, and **never shows `0`**.
+
+Judging is a two-step pipeline that happens entirely after the event:
+submissions are **shortlisted**, and only the shortlist is graded. 24 teams
+across 3 creativity challenges is 72 submissions, and tired judges asked to
+score all of them carefully will not. Fifteen finalists get real attention.
+A shortlisted team should be told so, because "you are a finalist" is good
+news and arrives during an otherwise quiet wait.
 
 **R4. The readiness cliff.** `status` advances in one click, and going
 `live` reveals every challenge irreversibly. If the tech lead has not
@@ -97,7 +110,21 @@ arrives late or never.
 **R7. The museum is a chore after everyone has gone home.** It is also the
 only thing that outlives the event and the only reason anyone hears about
 the next one. If publishing it is a twenty-minute job on no sleep, it does
-not happen. It has to be nearly written by the time the event ends.
+not happen. It has to be nearly written by the time the event ends: the
+exhibition, the standings and the feedback are already in the system, so
+the human adds photos and a paragraph.
+
+It is also **participatory**: once open, anyone signed in may add photos
+and anyone may download them. The people who were there have the good
+pictures and the admin has twenty of the four hundred that exist.
+
+**R8. Media volume can take the whole site down.** One event's raw demo
+videos are about **26 GB**, against a 1 GB disk shared by every app on this
+site. This is not a tuning problem, it is an architecture decision, and it
+is settled in data_model.md §9: nothing a user uploads touches the app
+disk, media goes to Google Cloud Storage (already configured here for
+backups) in its own public bucket, demo video asks for a link before an
+upload, and images are resized on the way in.
 
 ### 1.4 What "intuitive" has to mean here
 
@@ -232,15 +259,39 @@ pass, the checklist becomes the **Go live** action, whose confirmation says
 the irreversible thing: *"Every challenge becomes visible to every
 participant. This cannot be undone."*
 
-#### Stage G — During, and after
+#### Stage G — During the event
 
-During the 24 hours the admin mostly watches and announces. After close:
-confirm results, generate certificates, publish the museum.
+Mostly watching and announcing. The admin is the only role that can see the
+standings while the event runs, which is less fun than it sounds: they are
+also the only person who knows and cannot say.
 
-**The museum should be most of the way written before they open it.** The
-photos need uploading and the highlights need a paragraph; the exhibition,
-the standings and the feedback summary are already in the system. A blank
-page after a sleepless night is how it never gets published.
+#### Stage H — Closing, judging, and the one big click
+
+*Screen: `event/results` (planning).* After submissions lock, this screen
+is the admin's map of what stands between now and publishing:
+
+- Creativity challenges needing a shortlist
+- Finalists not yet graded, and by whom
+- Disputed submissions
+- Measured top scores not yet spot-checked *(a prompt, not a blocker)*
+
+**Publishing is one click with three permanent effects**: the final
+standings become public, the museum opens, and both stay that way forever.
+So the button does not exist until judging is actually final, and its
+confirmation says exactly that rather than "are you sure".
+
+This is the most meaningful action an admin takes in the whole product and
+it should feel like it. Everything before it was preparation.
+
+#### Stage I — The museum
+
+The museum opens with publishing, already most of the way written: the
+exhibition, the standings and the feedback summary come from the system.
+The admin adds photos and a paragraph.
+
+After that it is **not theirs alone**. Anyone signed in may add photos,
+anyone may download them, and the admin's remaining job is moderation when
+something needs removing rather than curation of everything that goes up.
 
 ### 2.2 Tech lead
 
@@ -330,35 +381,50 @@ score always. Standings only if the admin opened them.
 
 #### After
 
-Results, a certificate, and the museum. The question a participant has
-after an event like this is *"where is my stuff"*, and the answer should be
-one link that still works in a year.
+There is a **wait**, and it should be explained rather than endured:
+submissions are in, judges are shortlisting and grading, results come when
+that is done. A team that was shortlisted is told so, because it is good
+news arriving during a quiet stretch.
+
+Then results, a certificate, and the museum. The question a participant has
+after an event like this is *"where is my stuff"*, and the answer is one
+link that still works in a year.
+
+The museum is **theirs too**: they can add their own photos and download
+anybody's. Most of the good pictures from any event are on the
+participants' phones, not the organiser's.
 
 ### 2.4 Judge
 
-Judges work in two completely different modes, and conflating them would be
-a mistake.
+**Judges do nothing during the 24 hours.** That is deliberate and worth
+stating on their own home screen, or they will wonder. Grading live would
+mean judging the first submission against a different field from the last.
 
-**Mode 1: grading creativity.** Real work, requires thought, done once per
-submission. Blind: the team's anonymous label only.
+All of their work happens after the event closes, in three modes.
 
-*Screen: `judge/queue` (**event**).* Ordered by what needs attention most,
-which is **submissions nobody has graded yet**, not submission order. The
-criteria the tech lead wrote are on the screen, not behind a link, because
+**Mode 1: shortlisting.** Read the creativity submissions for a challenge
+and mark the finalists. Fast, comparative, done in one sitting per
+challenge. The screen shows them side by side, because shortlisting is a
+comparison and a one-at-a-time queue makes it impossible.
+
+**Mode 2: grading the shortlist.** Real work, requires thought, one
+submission at a time. Blind: the team's anonymous label only.
+
+*Screen: `judge/queue` (planning-paced).* Ordered by what needs attention
+most, which is **finalists nobody has graded**, not submission order. The
+criteria the tech lead wrote sit on the screen, not behind a link, because
 a judge who cannot see the criteria invents their own.
 
-**Mode 2: due diligence on the top scores.** Not grading. Checking. Done
-after the event, for the handful of scores that decide the outcome.
+**Mode 3: due diligence on the top measured scores.** Not grading.
+Checking. The reported number and the artifacts side by side.
 
-*Screen: `judge/verify` (planning-paced).* The top submissions per measured
-challenge, reported number and artifacts side by side. Three outcomes:
-verified, disputed, or left alone. **Left alone is the normal answer**, and
-the screen must not imply otherwise, or judges will feel obliged to check
-everything and the trust model collapses back into the 2026 model it
-replaced.
+*Screen: `judge/verify`.* Three outcomes: verified, disputed, or left
+alone. **Left alone is the normal answer**, and the screen must not imply
+otherwise, or judges feel obliged to check everything and the trust model
+collapses back into the 2026 model it replaced.
 
-Judges may also read the challenges **before** the event. They are not
-participants, and the secrecy rule is not about them.
+Judges may read the challenges **before** the event. They are not
+participants and the secrecy rule is not about them.
 
 ### 2.5 Researcher
 
@@ -393,13 +459,18 @@ front of a submission, and declining costs the participant nothing.
    to that bar. Event screens are phone-first, one action, bad-wifi
    tolerant.
 3. **Own score is not the leaderboard.** A team always sees its own points.
-   Standings are gated separately.
+   Standings are gated during the event and published permanently after.
 4. **Creativity never shows a zero.** It shows "judged after the event".
-5. **Missing things are named.** Never "incomplete".
-6. **Irreversible actions state their consequence** in the confirmation.
-7. **Research never blocks.**
-8. **The museum assembles itself**, and the human adds photos and a
-   paragraph.
+5. **Judges work only after the event**, and in two steps: shortlist, then
+   grade the shortlist.
+6. **Publishing is one gated click** with three permanent effects, and it
+   says so.
+7. **No user upload touches the app disk.** It goes to GCS (data_model.md §9).
+8. **Missing things are named.** Never "incomplete".
+9. **Irreversible actions state their consequence** in the confirmation.
+10. **Research never blocks.**
+11. **The museum assembles itself**, the human adds photos and a paragraph,
+    and then everyone else adds theirs.
 
 ---
 
