@@ -457,6 +457,91 @@ obligation to the participant outranks the study's convenience. A
 questionnaire is an invitation on the role home; it is never a gate in
 front of a submission, and declining costs the participant nothing.
 
+### 2.6 The visitor who is not signed in
+
+**Not a role, and the most important audience in the product.** Everyone in
+§2.1 to §2.5 is already inside. This is everyone who is not, which is
+everybody who has not heard of CrashTech yet, and the journeys above
+quietly assumed them away.
+
+They arrive three ways and want different things each time.
+
+**From a poster, a QR code, a lecturer, a tweet, before the event.**
+
+*Screen: `event` (public).* This is the whole funnel and it has one job:
+answer, above the fold, **what is this, when, where, who can come, what do
+I need, and how do I apply.** The 2026 static site answered these well and
+that page is the thing to beat, not to ignore.
+
+What they must not meet: a sign-in wall. Requiring an account to find out
+what the event *is* loses people who would have come. Sign-in is for
+applying, not for reading.
+
+What they cannot see: challenges. Not a hint, not a count, not a greyed-out
+list. Secrecy is the format.
+
+**During the 24 hours.** Mostly nothing, and that is correct: the
+leaderboard is gated and the work is unfinished. A quiet "this event is
+running now, it ends at X" is enough, and it is also an advertisement.
+
+**Years later, from a search engine or a shared link.**
+
+*Screen: `museum` (public, permanent).* This is where a stranger meets
+CrashTech for the first time and decides whether the next one is worth
+their weekend. It is the single best piece of marketing the project will
+ever have, and it costs nothing extra because it is made of what the event
+already produced.
+
+So the museum is **readable with no account at all**: the projects, the
+videos, the final standings, the photos, the feedback. Signing in buys one
+thing, the ability to **add** photos.
+
+**The one real tension, and it resolves in the visitor's favour.** A
+permanent public page naming people and showing their faces is exactly
+where consent has to have been real. It was: teams consent up front and may
+withdraw afterwards (`exhibition_consent`), and withdrawal removes the work
+from display without deleting anything. The public page shows what people
+agreed to show, which is why that flag exists.
+
+### 2.7 Email, and when the system is allowed to interrupt
+
+The journeys above all assume somebody is looking at the site. Most of the
+time nobody is, and **the gaps between milestones are weeks long**. Email is
+how the system reaches across them, and it is also the fastest way to make
+people resent an event.
+
+**The rule: email only for something that happened while they were not
+looking, and that they need to act on or would be upset to miss.** Nothing
+else. No digests, no engagement, no "here is what you missed".
+
+That gives a short and complete list:
+
+| Trigger | To | Why it survives the rule |
+| --- | --- | --- |
+| **Role invitation** | the invitee | They cannot act without it; this is the whole mechanism (§4.1) |
+| **Registration accepted or declined** | the applicant | They asked a question and are waiting for the answer |
+| **Kit pickup, a few days before** | accepted participants | A date and a place they must physically attend. The one email nobody minds |
+| **The event is live** | participants | The challenges just opened and the clock is running |
+| **Shortlisted** | the team | Good news, arriving during an otherwise silent wait |
+| **Results published** | everyone who took part | The thing they have been waiting for, with the museum link |
+
+Everything else a participant might want to know is on their role home,
+which they are looking at anyway during the event.
+
+**Three constraints the list implies.**
+
+The audience is **international**, so every email carries a plain
+unsubscribe for the non-essential ones and says which event it is about,
+because somebody who competed three years running has three.
+
+Email is **never the only channel** for anything that matters. Every fact
+in the table above is also on the person's role home. An email that does
+not arrive, and they do, must not cost anyone the event.
+
+And it is **not a notification system**. There is no model for it, no
+preferences screen, no inbox. Six triggers, sent at the moment they happen.
+If that ever grows, it grows deliberately and gets a model then.
+
 ---
 
 ## Part 3 — Cross-cutting rules these journeys produced
@@ -479,6 +564,11 @@ front of a submission, and declining costs the participant nothing.
 10. **Research never blocks.**
 11. **The museum assembles itself**, the human adds photos and a paragraph,
     and then everyone else adds theirs.
+12. **Reading never needs an account.** The event page and the museum are
+    public. Signing in is for applying and for adding, never for finding
+    out what this is.
+13. **Email only for what happened while they were away**, and never as the
+    only channel.
 
 ---
 
