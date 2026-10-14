@@ -1,0 +1,8 @@
+{% extends "crashtech/base.html" %}
+{% block title %}Not found &middot; CrashTech{% endblock %}
+{% block screen %}404{% endblock %}
+{% block content %}
+<h1>Not found</h1>
+<p class="ct-lede">That page does not exist here.</p>
+<a class="ct-btn ct-btn--primary" href="{% url 'crashtech:home' %}">Back to CrashTech</a>
+{% endblock %}

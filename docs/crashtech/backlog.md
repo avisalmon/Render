@@ -5,9 +5,10 @@ Sprints and their status. Spec references are
 and the spec, updated together in the commit that acts on them
 (Rule 14.1).
 
-**Status: nothing built.** The kickoff sequence is complete (interview,
-intro spec, data model approved, UX review and journeys), and Sprint C.1
-is next.
+**Status: C.1 built in dev, not pushed.** The kickoff sequence is complete
+(interview, intro spec, data model approved, UX review and journeys). The
+app exists, is sealed, has its own face, and all 28 models are real.
+36 tests pass. C.2 is next.
 
 ---
 
@@ -15,7 +16,7 @@ is next.
 
 | Sprint | Name | What it delivers | Status |
 | --- | --- | --- | --- |
-| C.1 | The skeleton and the seal | The app exists, is sealed both ways, has its own base template and its own auth screens, and every model with its migration and its admin | `TODO` |
+| C.1 | The skeleton and the seal | The app exists, is sealed both ways, has its own base template and its own auth screens, and every model with its migration and its admin | `DONE (dev), 2026-10-14` |
 | C.2 | The event, its lifecycle and its roles | Create an event, advance it by checklist, grant roles, invite by email | `TODO` |
 | C.3 | Registration, teams, hardware | Apply, accept, form a team, define the kit, and the kit desk | `TODO` |
 | C.4 | Challenges and submitting | Author challenges with deliverables, kickoff, submit, tentative points | `TODO` |
@@ -35,7 +36,7 @@ one has been looked at.
 
 ---
 
-## SPR-C.1 — The skeleton and the seal `TODO`
+## SPR-C.1 — The skeleton and the seal `DONE (dev), 2026-10-14`
 
 The app exists, is sealed in both directions, and has its own face.
 
@@ -48,7 +49,26 @@ The app exists, is sealed in both directions, and has its own face.
 | F-C.1.5 | Every model from the data model, with migrations and admin registration | data_model.md |
 | F-C.1.6 | The seal, tested: no import from `app`, `matazim`, `memz`, `ustrip`, `sensorlab` except the two named adapters; no link out of `/crashtech/` | Rule 2.1.1, 2.1.2 |
 | F-C.1.7 | babook's portal links in; CrashTech links nowhere out | Rule 2.2.3 |
-| F-C.1.8 | Tests, and the screen contract for every screen that exists | Rule 14.2, 14.3 |
+| F-C.1.8 | Tests, and every screen looked at as an image | Rule 14.2, 14.3 | DONE — `tests/test_spr_c_1.py` (36), marker `sprc1` |
+
+**Two real defects this sprint, both caught rather than shipped.**
+
+Sign-up would have **500'd for every single user**. `login()` refuses to
+guess when a project configures more than one auth backend, and this one
+does (allauth sits beside the model backend). Caught by the C.1 suite.
+
+Every date rendered with a **Hebrew month**, on pages whose templates
+contain no Hebrew at all, because the project's `LANGUAGE_CODE` is Hebrew
+and Django localises month names. The source-only Hebrew test passed
+happily throughout; a **screenshot** caught it, which is Rule 14.3 earning
+its place on the first sprint. Fixed by forcing English for everything
+inside CrashTech's base template, and a second test now checks the
+*rendered response* rather than the template source.
+
+A third thing worth recording rather than a defect: the 2026 platform
+already claims `crashtech_roles` and `crashtech_teams` as reverse
+accessors on `User`, so the new models use a `ct_` prefix until it
+retires (Rule 13.1 says do not touch it).
 
 ---
 

@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "exo",
     "blackjack",
     "improv",
+    "crashtech",
 ]
 
 MIDDLEWARE = [

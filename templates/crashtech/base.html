@@ -1,0 +1,69 @@
+{% load static i18n %}<!doctype html>
+{% comment %}
+CrashTech's own base template (spec Rule 2.2.1). It never extends
+babook's base.html and never inherits its header, footer or menu.
+
+English and LTR throughout (Rule 2.2.4): no Hebrew strings, no RTL, no
+language switcher. The audience is international and English is the single
+language of the product.
+
+Note what is NOT here: any link out of /crashtech/. babook's portal links
+in (Rule 2.2.3), and nothing links back, because a Technion participant
+has no reason to know babook exists.
+{% endcomment %}
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}CrashTech{% endblock %}</title>
+  <meta name="description" content="{% block description %}CrashTech runs hardware hackathons: kits, secret challenges, 24 hours, and a permanent public exhibition of what was made.{% endblock %}">
+  <meta name="theme-color" content="#0A1020">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="{% static 'crashtech/crashtech.css' %}">
+</head>
+<body data-screen="{% block screen %}page{% endblock %}">
+{% comment %}
+English is forced for everything inside, and this is not belt-and-braces.
+The project's LANGUAGE_CODE is Hebrew, so Django localises month names,
+and a page whose template contained not one Hebrew character still
+rendered every date with a Hebrew month. Rule 2.2.4 is about what a reader
+sees, not about what the source contains, and a screenshot is what caught
+it.
+{% endcomment %}
+{% language 'en' %}
+<div class="ct-app">
+
+  <header class="ct-head">
+    <div class="ct-head-in">
+      <a class="ct-brand" href="{% url 'crashtech:home' %}">CRASH<span>TECH</span></a>
+
+      <nav class="ct-nav">{% block nav %}{% endblock %}</nav>
+
+      <div class="ct-head-end">
+        {% block milestone %}{% endblock %}
+        {% if user.is_authenticated %}
+          <form method="post" action="{% url 'crashtech:logout' %}">{% csrf_token %}
+            <button type="submit" class="ct-btn" style="min-height:34px;padding:6px 12px;font-size:13px">Sign out</button>
+          </form>
+        {% else %}
+          <a class="ct-btn" href="{% url 'crashtech:login' %}" style="min-height:34px;padding:6px 12px;font-size:13px">Sign in</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <main class="ct-main">
+    {% if messages %}
+      {% for message in messages %}<p class="ct-note">{{ message }}</p>{% endfor %}
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="ct-foot"><span>{% block footer %}CRASHTECH{% endblock %}</span></footer>
+</div>
+{% endlanguage %}
+{% block scripts %}{% endblock %}
+</body>
+</html>

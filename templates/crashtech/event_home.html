@@ -1,0 +1,29 @@
+{% extends "crashtech/base.html" %}
+{% block title %}{{ hackathon.name }} &middot; CrashTech{% endblock %}
+{% block screen %}event-home{% endblock %}
+{% comment %}The role-aware home (Rule 11.3). C.1 establishes the shape and
+the chrome; the per-role next actions arrive with the features that create
+them, from C.2 onwards.{% endcomment %}
+{% block milestone %}
+  <span class="ct-milestone">{{ hackathon.get_status_display }}</span>
+{% endblock %}
+{% block content %}
+<h1>{{ hackathon.name }}</h1>
+{% if hackathon.tagline %}<p class="ct-lede">{{ hackathon.tagline }}</p>{% endif %}
+
+{% if my_roles %}
+  <p class="ct-cap">You are</p>
+  <p>{% for role in my_roles %}<span class="ct-tag ct-tag--go">{{ role }}</span> {% endfor %}</p>
+{% endif %}
+
+<p class="ct-cap" style="margin-top:22px">Timeline</p>
+{% for milestone in milestones %}
+  <div class="ct-row">
+    <span class="ct-row-main"><b>{{ milestone.title }}</b>
+      <span>{{ milestone.blurb }}</span></span>
+    <span class="ct-mono ct-fine">{{ milestone.occurs_at|date:"j M Y" }}</span>
+  </div>
+{% empty %}
+  <div class="ct-empty">No milestones yet.</div>
+{% endfor %}
+{% endblock %}

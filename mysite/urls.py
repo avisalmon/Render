@@ -54,6 +54,12 @@ urlpatterns = [
     # exo is its own product too (docs/exo/spec.md) — same reasoning,
     # and mounted before app.urls so the prefix is unambiguously its own.
     path("exo/", include("exo.urls", namespace="exo")),
+    # CrashTech is its own product too (docs/crashtech/spec.md), same
+    # reasoning. Mounted before app.urls so it takes /crashtech/ from the
+    # 2026 platform embedded in app/, which is reference only and holds
+    # seeded demo data (spec Rule 13.2). Anything the new app has not
+    # defined yet still falls through to the old routes below.
+    path("crashtech/", include("crashtech.urls", namespace="crashtech")),
     path("blackjack/", include("blackjack.urls", namespace="blackjack")),
     # improv is private (docs/improv/spec.md ch. 7): its gate is in the middleware.
     path("improv/", include("improv.urls", namespace="improv")),

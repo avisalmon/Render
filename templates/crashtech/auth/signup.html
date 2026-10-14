@@ -1,0 +1,19 @@
+{% extends "crashtech/base.html" %}
+{% block title %}Create an account &middot; CrashTech{% endblock %}
+{% block screen %}signup{% endblock %}
+{% block content %}
+<h1>Create an account</h1>
+<p class="ct-lede">No verification email. The account works straight away.</p>
+<form method="post">{% csrf_token %}
+  <label class="ct-field"><span>Email</span>
+    <input class="ct-input" type="email" name="email" value="{{ email }}" autocomplete="email" required autofocus>
+    {% if errors.email %}<span class="ct-error">{{ errors.email }}</span>{% endif %}</label>
+  <label class="ct-field"><span>Password</span>
+    <input class="ct-input" type="password" name="password" autocomplete="new-password" required>
+    {% if errors.password %}<span class="ct-error">{{ errors.password }}</span>{% endif %}</label>
+  <button class="ct-btn ct-btn--primary ct-btn--wide" type="submit">Create account</button>
+</form>
+<p class="ct-fine" style="margin-top:16px">
+  Already have one? <a href="{% url 'crashtech:login' %}">Sign in</a>
+</p>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "crashtech/base.html" %}
+{% block title %}CrashTech{% endblock %}
+{% block screen %}home{% endblock %}
+{% block content %}
+<h1>CrashTech</h1>
+<p class="ct-lede">Hardware hackathons: a kit, a sealed set of challenges, twenty-four hours,
+and a permanent public exhibition of what was made.</p>
+
+{% if mine %}
+  <p class="ct-cap">Your events</p>
+  {% for row in mine %}
+    <a class="ct-row" href="{% url 'crashtech:event_home' row.hackathon.slug %}">
+      <span class="ct-row-main"><b>{{ row.hackathon.name }}</b>
+        <span>{{ row.roles|join:" &middot; " }}</span></span>
+      <span class="ct-tag">{{ row.hackathon.get_status_display }}</span>
+    </a>
+  {% endfor %}
+{% endif %}
+
+<p class="ct-cap">Open events</p>
+{% for event in open_events %}
+  <a class="ct-row" href="{% url 'crashtech:event_home' event.slug %}">
+    <span class="ct-row-main"><b>{{ event.name }}</b>
+      <span>{{ event.starts_at|date:"j F Y" }}</span></span>
+    <span class="ct-tag ct-tag--go">{{ event.get_status_display }}</span>
+  </a>
+{% empty %}
+  <div class="ct-empty">No event is open right now.</div>
+{% endfor %}
+
+{% if museums %}
+  <p class="ct-cap" style="margin-top:26px">Past events</p>
+  {% for event in museums %}
+    <a class="ct-row" href="{% url 'crashtech:event_home' event.slug %}">
+      <span class="ct-row-main"><b>{{ event.name }}</b>
+        <span>{{ event.starts_at|date:"Y" }}</span></span>
+      <span class="ct-tag">Museum</span>
+    </a>
+  {% endfor %}
+{% endif %}
+{% endblock %}
