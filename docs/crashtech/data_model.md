@@ -21,6 +21,7 @@ one disagree, this one is newer.
 erDiagram
     Hackathon ||--o{ Milestone : "has"
     Hackathon ||--o{ EventRole : "grants"
+    Hackathon ||--o{ RoleInvitation : "sends"
     Hackathon ||--o{ Registration : "receives"
     Hackathon ||--o{ Team : "contains"
     Team ||--o{ TeamMembership : "has"
@@ -141,6 +142,31 @@ and on a small event usually will. The unique constraint is on
 nothing. Separating the roles is about keeping the *permissions* and the
 *screens* distinct, so that an event with two people can split the work
 cleanly; it never forces an event with one person to pretend to be two.
+
+### RoleInvitation
+
+**Added by the UX review** ([user_journeys.md](user_journeys.md) §4.1). An
+admin's first real task is appointing a tech lead and judges, and those are
+busy outsiders who have never heard of this site. `EventRole` can only
+point at a `User`, so without this the admin's first action waits on three
+prior steps by somebody else.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `hackathon` | FK | CASCADE |
+| `email` | EmailField | who is being invited |
+| `role` | choice | the same choices as `EventRole` |
+| `invited_by` | FK User | |
+| `token` | CharField, unique | in the link |
+| `sent_at` | DateTime | |
+| `accepted_at` | DateTime, null | |
+| `accepted_user` | FK User, null | who redeemed it |
+
+Unique on (`hackathon`, `email`, `role`). Redeeming creates the matching
+`EventRole`, and the invitation stays as the record of who invited whom.
+
+It also makes **invited but not joined** a visible state, which is the one
+that matters two days before an event when a judge has not appeared.
 
 ### Registration
 
@@ -660,6 +686,7 @@ silently inherit agreement to the old ones.
 | English only, international, no Hebrew | Yours. No RTL and no bilingual templates, which is the most expensive thing to retrofit and the most often done badly. Costs every 2026 template, which was Hebrew |
 | A study carries its thesis and its literature review | Yours. A study spanning three events spans three years, and the reasoning is what gets lost. `StudyReference` keeps the sources as rows, not as pasted text (Rule 1) |
 | Membership is a through model, not a plain M2M | Yours, from the question. One team per person **per hackathon**, many across hackathons. A bare M2M cannot express that, because the constraint is on (hackathon, user) |
+| Roles can be invited by email before the person has an account | Mine, from the UX review. `RoleInvitation`. Without it an admin cannot appoint the tech lead or the judges, who are the least patient people in the system |
 | The repo is the only home for examples, skills and methodology | Yours. The system stores a URL and links. `PracticeProject` was dropped and `ContentPage` narrowed, because a database restating a repo is two sources that drift |
 
 ---
