@@ -148,12 +148,17 @@ decision rather than a detail: **nothing a user uploads is stored on this
 site's own disk.** One event's raw demo videos are around 26 GB against a
 1 GB disk shared by every app here.
 
-Media goes to **Google Cloud Storage**, which this site already has
-configured for backups, in a **separate public-read bucket** because
-backups are private and museum media is not. Demo video asks for a link
-before it offers an upload, and images are resized on the way in. The
-arithmetic, and why Drive is the wrong Google product for it, are in
-[data_model.md](data_model.md) §9.
+**A demo video is a URL, and there is no upload path for one at all.**
+YouTube, Vimeo, a Drive share, anywhere: the system stores a link and never
+accepts video bytes. That single decision turns 26 GB per event into zero,
+removes the upload machinery entirely, and gives better playback than this
+site could offer. Participants are told at kit pickup, two weeks ahead,
+because demanding a hosted video is only fair if it is knowable in advance.
+
+Everything else, images and source artifacts, goes to **Google Cloud
+Storage**, which this site already has configured, in its own bucket. That
+comes to roughly 650 MB an event. The arithmetic, and why Drive is the
+wrong Google product for it, are in [data_model.md](data_model.md) §9.
 
 ### 1.5.1 Where things live
 

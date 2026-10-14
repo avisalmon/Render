@@ -428,7 +428,7 @@ exactly one zip field, identical for every challenge.
 | `challenge` | FK | CASCADE |
 | `label` | CharField | "Quartus project", "ESP32 firmware", "Demo video" |
 | `purpose` | choice | `proof` (it worked) / `artifact` (how it was built) |
-| `kind` | choice | `video` / `image` / `text` / `number` / `file` |
+| `kind` | choice | `video` (**a URL, never an upload**) / `image` / `text` / `number` / `file` |
 | `required` | bool | |
 | `help_text` | CharField, blank | |
 | `order` | int | |
@@ -495,9 +495,10 @@ otherwise indistinguishable from a bug.
 | --- | --- | --- |
 | `submission` | FK | CASCADE |
 | `deliverable` | FK Deliverable | which requirement this satisfies |
-| `file` | FileField, null | |
+| `file` | FileField, null | stored on GCS, never the app disk (§9). Size-capped |
 | `text_value` | TextField, blank | for `text` and `number` deliverables |
-| `url` | URLField, blank | a YouTube link instead of an upload |
+| `url` | URLField, blank | **the only way a video is ever provided** (§9). Also usable for any other deliverable somebody hosts elsewhere |
+| `thumbnail_url` | URLField, blank | captured at submission time for a `video`, so the museum degrades to a still image when somebody deletes their video in a year |
 | `uploaded_at` | DateTime | |
 
 Deleting a row deletes its file. memz learned this the expensive way: every
@@ -721,90 +722,122 @@ preference.** It belongs in the data model because it determines what every
 ### The arithmetic
 
 The whole site runs on one Render instance with a **1 GB persistent disk**,
-shared by babook, matazim, memz, ustrip and sensorlab. Against that:
+shared by babook, matazim, memz, ustrip and sensorlab. Against that, an
+event of 24 teams and 10 challenges:
 
-| What | Per event | Note |
+| What | If uploaded | Note |
 | --- | --- | --- |
-| Demo videos, raw phone capture | **~26 GB** | 24 teams x 10 challenges x ~110 MB |
-| Demo videos, compressed 720p | **~6 GB** | still six times the whole disk |
-| Museum photos, raw 12MP, 200 of them | ~680 MB | one event fills the disk |
-| Museum photos, resized 1600px q82, 200 | ~63 MB | survivable, but it accumulates forever |
+| Demo videos, raw phone capture | **~26 GB** | twenty-five times the whole site's disk |
+| Demo videos, compressed 720p | ~6 GB | still six times the disk |
+| Museum photos, raw 12MP, 300 of them | ~1.0 GB | one event fills the disk |
+| Museum photos, resized 1600px q82 | ~94 MB | fine |
+| Source artifacts, ~2 MB a zip | ~480 MB | |
 
-**Video is the problem, not photos.** A single event's demo videos are
-twenty-five times the entire site's disk. The museum photos everyone worries
-about are a rounding error beside it.
+**Video is the entire problem.** The museum photos everyone worries about
+are a rounding error beside it.
 
-### The decisions
+### Decision 1: a video deliverable is a URL. There is no upload path.
 
-**1. Nothing a user uploads touches the Render disk.** Not videos, not
-museum photos, not submission artifacts. All of it goes to **external
-object storage** (S3-compatible), wired through `django-storages` so it is
-a settings change rather than code scattered through the app.
+The strongest version of "ask for a link", and stronger than demanding
+YouTube specifically: **the system stores a URL and never accepts video
+bytes at all.**
 
-**2. Demo video prefers a link.** `Submission` already carries both
-`video_url` and `video_file`, and that was the right instinct. The UI
-should ask for a **YouTube or Vimeo link first** and treat the upload as
-the fallback for somebody who will not use either. A link costs nothing,
-streams properly, transcodes for the viewer's connection, and survives
-longer than our bucket will. This single choice is the difference between
-26 GB and nearly zero.
+YouTube, Vimeo, a Drive share, anything. The system does not care, which
+is what makes this work: "you must have a Google account" would be a real
+barrier for an international audience at 3am, and "paste a link to your
+video, wherever it lives" is not.
 
-**3. Images are resized on upload.** 1600px long edge, q82, EXIF stripped.
-A museum photo is looked at on a phone. memz already learned this and the
-numbers above are why: it is the difference between 680 MB and 63 MB.
+The consequences are all good:
 
-**4. Deleting a row deletes its file.** Django stopped doing this in 1.3 and
-the usual advice is to tolerate orphans. A permanent public museum that
+- **Zero bytes stored.** 26 GB becomes 0.
+- **No upload machinery to build, and none to abuse.** If the path does
+  not exist, nobody uses it and nobody has to police it.
+- **Better playback than we could offer.** Transcoding, adaptive bitrate,
+  mobile, someone else's bandwidth.
+- **It outlives our bucket.**
+
+Two things to handle rather than pretend away:
+
+- **Tell them at kit pickup, not at the deadline.** Demanding a hosted
+  video is only fair if it is knowable two weeks ahead, and milestone 2 is
+  exactly when people are being told how the event works. At 3am it would
+  be a trap.
+- **Links die.** Somebody deletes their video in a year and the museum has
+  a hole in it, permanently. Where the URL is a YouTube or Vimeo one the
+  thumbnail is derivable, so **capture it at submission time** and the
+  museum degrades to a still image rather than an empty box.
+
+With this decision, the remaining storage is about **650 MB per event**,
+or roughly **6 GB across ten events** — and the largest item in it is
+source zips, not images.
+
+### Decision 2: everything else goes to Google Cloud Storage
+
+Still not the Render disk: 6 GB across ten events is six times the disk,
+and the disk is shared with every other app here.
+
+**This site already has GCS configured.** A service account and bucket
+exist for `backup_db`, with `GCS_SERVICE_ACCOUNT` and `GCS_BUCKET` already
+in the environment. No new vendor, no new account, no new credential.
+
+Images are resized on upload (1600px long edge, q82, EXIF stripped) and
+**source artifacts get a size cap**, because at 2 MB a zip they are now the
+biggest thing stored and nothing stops somebody committing a Quartus output
+directory.
+
+Deleting a row deletes its file, on commit. A permanent public museum that
 anyone can upload to cannot tolerate orphans, because nothing ever prunes
-them. memz solved this with a `post_delete` to `on_commit` hook and
-CrashTech uses the same pattern.
+them.
 
-### Where it goes: Google Cloud Storage, in its own bucket
+### Decision 3: a separate bucket, and a correction
 
-**This site already has Google Cloud Storage configured.** A service
-account and a bucket exist and are used by `backup_db`, with
-`GCS_SERVICE_ACCOUNT` and `GCS_BUCKET` already in the environment and
-`GCS_STORAGE_USD_PER_GB` already in settings. There is no new account to
-open, no new vendor, no new credential to hold.
+An earlier draft of this document said one bucket "cannot" be both private
+and public. **That was overstated.** It is possible: per-object ACLs with
+uniform access turned off, or IAM conditions granting public read on a
+prefix like `crashtech/museum/*`, or keeping everything private and serving
+through signed URLs.
 
-**A separate bucket, not the backups one.** This matters more than it
-sounds. Backups are private and must stay private; museum media is
-public-read by definition. One bucket cannot be both without either
-exposing the backups or breaking the museum. So: a second bucket, public
-read, with the existing service account holding write access.
+The recommendation is still a **separate bucket**, but the reason is blast
+radius rather than impossibility:
+
+- A bucket is **free**. You pay for bytes and operations, never for the
+  container. There is no cost to being careful here.
+- The other bucket holds **database backups for the entire site**: every
+  user, every app, every table.
+- A mistaken prefix condition or a stray ACL is **silent**. Nothing fails,
+  nothing logs, the backups are simply readable.
+- Signed URLs would work and would keep one bucket, but they expire, and a
+  museum exists to have its links shared and still work next year.
+
+So: one command to create `crashtech-media`, public read, same service
+account for writes. That is the whole of the extra work, and it removes a
+class of mistake whose worst case is the site's entire database.
 
 ### Why not Google Drive
 
-Drive was the first instinct and it is the wrong tool, for reasons that
-only show up after it is built:
+Drive was the first instinct and it is the wrong Google product for this:
 
-- **It is not built to serve a web page.** The `drive.google.com/uc?id=...`
+- **Not built to serve a web page.** The `drive.google.com/uc?id=...`
   hotlink is unofficial, rate-limited, returns an HTML interstitial for
-  larger files, and Google has broken it more than once. A museum page with
-  forty photos makes forty of those requests.
-- **No cache control, no CDN.** You cannot set cache headers on a Drive
-  file, so every visitor re-fetches everything.
-- **Per-file permissions.** Public sharing is an API call per file rather
-  than a property of the container.
-- **No maintained Django backend.** `django-storages` supports GCS as a
-  first-class backend; the Drive packages are third-party and unmaintained.
-- **Shared quota.** Personal Drive storage is shared with Gmail and Photos.
+  larger files, and Google has broken it more than once.
+- **No cache headers**, so every visitor re-fetches everything.
+- **Per-file permissions** rather than a property of the container.
+- **No maintained Django backend**; `django-storages` supports GCS as a
+  first-class one.
+- **Quota shared with Gmail and Photos** on a personal account.
 
-GCS is the same Google account, the same billing, and an actual object
-store. Drive is a filing cabinet with a web page bolted on; GCS is what you
-serve from.
+Drive is a filing cabinet with a web page bolted on. GCS is what you serve
+from, and it is the same Google account and the same bill.
 
-### Cost at this scale
+### Cost
 
-GCS Standard is about $0.020/GB/month, which settings already records.
-Egress is about $0.12/GB, which is the one place R2 or B2 would be cheaper,
-and at this scale it does not matter: with demo video preferring a link and
-images resized to ~300 KB, a museum would need hundreds of thousands of
-image views a month before egress reached the price of a coffee.
+GCS Standard is about $0.020/GB/month, which `settings.py` already records.
+Six gigabytes across ten events is about **twelve cents a month**. Egress is
+about $0.12/GB and is the one place R2 or B2 would be cheaper; at this
+volume, with no video stored at all, it does not matter.
 
-**If the museum ever does get that popular, moving is a settings change**,
-because everything goes through `django-storages` rather than through
-hand-written upload code. That is the main reason to route it that way now.
+Everything routes through `django-storages`, so if any of this ever stops
+being true, moving is a settings change rather than a rewrite.
 
 ---
 
@@ -832,7 +865,8 @@ hand-written upload code. That is the main reason to route it that way now.
 | Creativity is shortlisted, then graded, and only after the event | Yours. 72 submissions get a rubber stamp; 15 finalists get real attention. Judges cannot grade during the 24 hours |
 | The museum takes uploads from anyone signed in | Yours. The people who were there have the good pictures. Needs moderation, which goes through one named adapter |
 | User media never touches the Render disk | Mine, from the arithmetic. One event's raw demo videos are 26 GB against a 1 GB shared disk |
-| Media goes to Google Cloud Storage, in its own public bucket | Yours (Google), refined. GCS is already configured on this site for backups, so no new vendor or credential. A **separate** bucket, because backups are private and museum media is public and one bucket cannot be both. Drive was considered and rejected: it cannot serve a web gallery |
+| A video deliverable is a URL; there is no upload path | Yours, taken further. Any host, not only YouTube, so nobody is blocked for lacking a Google account. Turns 26 GB into zero and removes the upload machinery entirely |
+| Everything else goes to GCS, in a separate bucket | Yours (Google), refined to Cloud Storage rather than Drive, which cannot serve a web gallery. Separate bucket because the other one holds the whole site's database backups and a stray ACL is silent. Buckets are free |
 | The repo is the only home for examples, skills and methodology | Yours. The system stores a URL and links. `PracticeProject` was dropped and `ContentPage` narrowed, because a database restating a repo is two sources that drift |
 
 ---

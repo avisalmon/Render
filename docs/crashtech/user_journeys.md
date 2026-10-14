@@ -121,10 +121,13 @@ pictures and the admin has twenty of the four hundred that exist.
 **R8. Media volume can take the whole site down.** One event's raw demo
 videos are about **26 GB**, against a 1 GB disk shared by every app on this
 site. This is not a tuning problem, it is an architecture decision, and it
-is settled in data_model.md §9: nothing a user uploads touches the app
-disk, media goes to Google Cloud Storage (already configured here for
-backups) in its own public bucket, demo video asks for a link before an
-upload, and images are resized on the way in.
+is settled in data_model.md §9: **a demo video is a URL and cannot be
+uploaded at all**, which turns 26 GB into zero, and everything else goes to
+Google Cloud Storage rather than the app disk.
+
+The UX consequence is a promise made early: participants are told at **kit
+pickup**, two weeks ahead, that their demo has to be hosted somewhere and a
+link pasted in. Discovering that at 3am would be a trap.
 
 ### 1.4 What "intuitive" has to mean here
 
@@ -366,8 +369,13 @@ provide and is satisfied or not. The submit control explains itself when it
 cannot be used: *"Still needed: the measured Fmax, and the Quartus
 project."*
 
-The QR upload carries over from 2026 and earns its place: the phone filming
-the demo is not the laptop that is signed in.
+The QR upload carries over from 2026 and earns its place for **images**:
+the phone that photographs the bench is not the laptop that is signed in.
+
+**Video is different and the screen must be honest about it early.** There
+is no upload button for a demo video, only a field for a link. A team
+discovering this at the deadline would be a trap, so it is said at kit
+pickup and repeated on the challenge brief, not sprung at submission.
 
 **On submit the points land and the screen says so.** For completion and
 measured work this is the reward moment and should feel like one. For
@@ -465,7 +473,7 @@ front of a submission, and declining costs the participant nothing.
    grade the shortlist.
 6. **Publishing is one gated click** with three permanent effects, and it
    says so.
-7. **No user upload touches the app disk.** It goes to GCS (data_model.md §9).
+7. **Video is a link, never an upload.** Everything else goes to GCS, never the app disk (data_model.md §9).
 8. **Missing things are named.** Never "incomplete".
 9. **Irreversible actions state their consequence** in the confirmation.
 10. **Research never blocks.**
