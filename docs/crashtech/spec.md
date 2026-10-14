@@ -24,7 +24,7 @@ collect behavioural data, because the standing question behind CrashTech is
 how people actually behave in a timed hardware competition.
 
 It is a **framework**, not a test rig. It never compiles anybody's code and
-never measures anybody's hardware. Entrants report their own results, and the
+never measures anybody's hardware. Teams report their own results, and the
 system is built around trusting them.
 
 ### 1.2 Where it comes from
@@ -93,9 +93,13 @@ visible, people can sign up to take part, and the event can be added to a
 calendar. Challenges do not exist yet as far as anyone outside can tell.
 
 **Milestone 2 — Hardware and practice.** Registered people are given a date
-to **collect their kit in person**, one kit per person. There is no
-shipping: the audience is international and travels to the event, and
-posting FPGA boards across borders is a different business. The kit is
+to **collect their kit in person**. A kit is allocated to a **team**, one
+per team by default and configurable, and any member may be the one who
+turns up for it. There is no shipping: the audience is international and
+travels to the event, and posting FPGA boards across borders is a different
+business. Because kits belong to teams, **teams have to exist by this
+milestone**, so team formation happens at registration or here, not at the
+event. The kit is
 **defined by the organizer per event**: FPGA plus ESP32 plus sensors today,
 a Raspberry Pi next time if that is the decision. Distribution is tracked and an admin confirms receipt. At the
 same moment a **supporting repository** opens, holding the example
@@ -108,12 +112,18 @@ fresh repo per event or one reused across several; the system stores a URL
 and does not care which.
 
 **Milestone 3 — Kickoff.** The 24 hours begin. Every challenge opens at
-once, with its brief and its scoring visible. Entrants build, and submit as
+once, with its brief and its scoring visible. Teams build, and submit as
 they go. A submission carries the **proof** the challenge asks for (a
 video, an image, or a reported result in text or as a number) and the
 **artifacts** the challenge requires (a Quartus project, controller code,
 whatever that task defines). Points land **immediately and tentatively** on
-the entrant's own report. Nothing waits for a human.
+the team's own report. Nothing waits for a human.
+
+**Creativity challenges are the one exception, and not because of
+distrust.** They have no number to report and nothing a later check could
+compare against, so they score only when a judge grades them. A team cannot
+report its own originality any more than it could report its own final
+placing.
 
 **Milestone 4 — Close and judging.** Submissions lock. Judges review.
 Verification is a **spot check, not an audit**: the scores that decide the
@@ -148,24 +158,32 @@ the event page links to the repo and stops. A database describing a
 repository is a second source of truth, and the two drift the first time
 somebody fixes a pin number in only one of them.
 
-### 1.5.2 Individuals, or pairs
+### 1.5.2 Teams, and how big they are
 
-**The event is built around individual participants.** One person
-registers, one person collects a kit, one person practises, and research
-is about individual behaviour.
+**A team is one or more people, and how many is an admin's decision.**
+`team_size_max` defaults to 2 and has no ceiling: set it to 1 and the event
+is individual, set it to 5 and it is five. The software does not have an
+opinion about the right number, because the right number depends on the
+event.
 
-An admin may allow **pairs**. That is the only alternative, and the ceiling
-is two. There are no teams of three, no squads, no sub-groups. The setting
-is per event and has exactly two values.
+**A team has no captain.** Every member holds every authority: any of them
+may submit, upload, collect the kit, or change anything the team owns.
 
-**A pair has no captain.** Both members hold every authority: either may
-submit, either may upload, either may change anything the entry owns.
+**A person is on exactly one team per event, and on many teams across
+events.** Someone who competes three years running has three, which is the
+point of a platform rather than a single event. Within one event, two teams
+for one person would mean two scores, two kits, and a leaderboard nobody
+can read.
 
-The word the system uses for "the thing that competes" is an **entry**,
-which is one person or two. A solo participant is an entry of one. That
-sounds like pedantry and is not: it is what stops every downstream feature,
-the leaderboard, the certificates, the blind judging, the museum, from
-having to ask whether it is looking at a person or a pair.
+A team of one is still a team. That sounds like pedantry and is not: it is
+what stops the leaderboard, the certificates, the blind judging and the
+museum from each having to ask whether they are looking at a person or a
+group.
+
+**But the research is about individuals, and teamwork does not hide them.**
+The system records who submitted each thing, who collected the hardware,
+and who answered each questionnaire. The team is how work is scored; the
+person is how behaviour is measured, and those are deliberately separate.
 
 ### 1.5.3 Language and audience
 
@@ -196,7 +214,7 @@ different ones across events.
 | **Tech lead** | one | Everything technical: the hardware definition, the example project, the secret challenges, what each challenge requires as proof and artifacts, and the judging criteria. |
 | **Admin** | several | Everything administrative: sign-ups, handing out hardware and confirming receipt, announcements, running the process. |
 | **Judge** | several | Reviewing submissions, grading the creativity challenges, and running the due-diligence spot check before results are published. |
-| **Participant** | many | Signs up, collects a kit, builds, submits, competes. Alone, or paired with one other person if the admin allows pairs. |
+| **Participant** | many | Signs up, joins a team, collects the kit, builds, submits, competes. |
 | **Researcher** | several | Defines what is being studied, authors the questionnaires attached to each milestone, and reads the data the event produces. May work across several events. |
 
 Mentors exist at the event and are deliberately **not** a role in the
@@ -204,14 +222,22 @@ system. They are people in a room, not rows.
 
 The clean separation of **tech lead from admin** is deliberate and is the
 main structural difference from the 2026 platform, which had a single
-"organizer" owning both the challenges and the logistics. Those are
-different people doing different jobs.
+"organizer" owning both the challenges and the logistics.
+
+They are different **jobs**, not necessarily different people. One person
+may hold both roles, and on a small event usually will. Separating them
+keeps the permissions and the screens distinct so a bigger event can split
+the work; it never forces a one-person event to pretend to be two.
 
 ### 1.7 Research is a first-class purpose, not a report
 
 CrashTech exists partly to study how people behave in events like this.
 That is not a feature bolted on at the end.
 
+- A study carries its **thesis**, its research questions and its **literature
+  review**, as data rather than as a file in somebody's drive. A study that
+  spans three events spans three years, and the reasoning behind the
+  questions is the first thing lost in that time.
 - A researcher attaches a **questionnaire to a milestone**, so questions
   are asked at the moment they are about rather than all at the end.
 - The system **collects behavioural data** as a side effect of running the
@@ -242,10 +268,10 @@ Named explicitly, so this is reuse of thinking rather than accident.
 - **Challenge secrecy.** Challenges are invisible until kickoff, and
   kickoff flips them all open in one move. The best-built part of the old
   system.
-- **QR video upload.** A per-entry, per-challenge token encodes a URL, so a
+- **QR video upload.** A per-team, per-challenge token encodes a URL, so a
   phone can upload a demo video without being logged in. Solves a real
   problem at 3am and is kept.
-- **Blind judging.** Entries carry a stable anonymous label so judges can
+- **Blind judging.** Teams carry a stable anonymous label so judges can
   review without knowing whose work they are looking at.
 - **Consent captured up front, with a post-event opt-out**, for the
   exhibition.

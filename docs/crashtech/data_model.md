@@ -22,17 +22,18 @@ erDiagram
     Hackathon ||--o{ Milestone : "has"
     Hackathon ||--o{ EventRole : "grants"
     Hackathon ||--o{ Registration : "receives"
-    Hackathon ||--o{ Entry : "contains"
+    Hackathon ||--o{ Team : "contains"
+    Team ||--o{ TeamMembership : "has"
     Hackathon ||--o{ KitItem : "defines"
     Hackathon ||--o{ KitIssue : "tracks"
-    Registration ||--o{ KitIssue : "collects"
     Hackathon ||--o{ Challenge : "holds (secret)"
     Hackathon ||--o{ ContentPage : "publishes"
     Hackathon ||--o{ ScheduleItem : "publishes"
     Hackathon ||--o{ Sponsor : "credits"
     Hackathon ||--|| MuseumPage : "ends in"
 
-    Entry ||--o{ Submission : "makes"
+    Team ||--o{ Submission : "makes"
+    Team ||--o{ KitIssue : "is allocated"
     Challenge ||--o{ Deliverable : "requires"
     Challenge ||--o{ Submission : "receives"
     Submission ||--o{ SubmissionFile : "carries"
@@ -45,6 +46,7 @@ erDiagram
 ```mermaid
 erDiagram
     Study }o--o{ Hackathon : "runs across"
+    Study ||--o{ StudyReference : "cites"
     Study ||--o{ Questionnaire : "asks"
     Study ||--o{ ResearchConsent : "requires"
     Questionnaire ||--o{ Question : "contains"
@@ -69,7 +71,8 @@ One event. The root of everything.
 | `status` | choice | `setup` / `published` / `kits` / `live` / `closed` / `museum`. See below |
 | `starts_at` / `ends_at` | DateTime | the 24 hours themselves |
 | `submission_deadline` | DateTime | separate from `ends_at` on purpose: submissions can close before the event does |
-| `entry_mode` | choice | `individual` (default) / `pairs`. **An admin setting, and the only two values there are.** Never three, never "teams" |
+| `team_size_max` | int, default 2 | **How many people may be on one team.** `1` means the event is individual. There is no ceiling in the model: 2, 3, 5, 100 are all legal, because the right number is an organiser's decision, not the software's |
+| `kits_per_team` | int, default 1 | How many kits a team is allocated. One board between a team is the normal case; an event that wants one each sets this higher |
 | `repo_url` | URLField, blank | pointer to the supporting repo: examples, skills, methodology. **A URL and nothing more**, so a repo reused across several events costs nothing and a fresh one per event is equally fine. Never holds challenges |
 | `timezone` | CharField | an event is a physical place; a UTC-only model gets the pickup day wrong |
 | `leaderboard_visibility` | choice | `admins` (default) / `participants` / `public`. **A setting, not a policy**: an admin opens the board up when they want to, including onto a screen in the room, and it stays shut otherwise |
@@ -128,9 +131,16 @@ Unique on (`hackathon`, `user`, `role`).
 
 **`tech_lead` and `admin` are separate, and that is the main structural
 change from 2026**, where one "organizer" owned both the challenges and the
-logistics. They are different people doing different jobs: one defines the
-hardware, the example, the secret challenges and the judging criteria; the
-other handles sign-ups, kits, announcements and process.
+logistics. They are different **jobs**: one defines the hardware, the
+example, the secret challenges and the judging criteria; the other handles
+sign-ups, kits, announcements and process.
+
+**They are not necessarily different people.** One person may hold both,
+and on a small event usually will. The unique constraint is on
+(`hackathon`, `user`, `role`), so holding two roles is two rows and costs
+nothing. Separating the roles is about keeping the *permissions* and the
+*screens* distinct, so that an event with two people can split the work
+cleanly; it never forces an event with one person to pretend to be two.
 
 ### Registration
 
@@ -151,39 +161,67 @@ Unique on (`hackathon`, `user`). Accepting a registration is what grants the
 `participant` `EventRole`; the two are kept apart so "who asked" survives
 independently of "who is in".
 
-### Entry
+### Team
 
-**An entry is one participant, or two.** Never more. Whether pairs are
-allowed at all is `Hackathon.entry_mode`, which an admin sets per event.
+A team is **one or more people**, up to `Hackathon.team_size_max`, which an
+admin sets per event and which defaults to 2. Setting it to 1 makes the
+event individual. Nothing in the model caps it.
 
 | Field | Type | Notes |
 | --- | --- | --- |
 | `hackathon` | FK | CASCADE |
-| `name` | CharField, blank | optional. A pair may name itself; a solo entry usually will not |
-| `members` | M2M User | **one or two rows, enforced against `entry_mode`** |
-| `anon_ordinal` | int | stable anonymous label for blind judging: "Entry 7" |
+| `name` | CharField, blank | optional. A team may name itself; a one-person team usually will not |
+| `members` | M2M User **through `TeamMembership`** | see below: the plain M2M was wrong |
+| `anon_ordinal` | int | stable anonymous label for blind judging: "Team 7" |
 | `exhibition_consent` | bool | for the museum, captured up front, revocable after |
 | `created_at` | DateTime | |
 
-**There is no captain and no hierarchy.** Both members of a pair hold every
-authority there is: either may submit, either may upload, either may change
-anything the entry owns. This was explicit, and it removes a field, a
-permission check, and an argument at 4am.
+**There is no captain and no hierarchy.** Every member holds every
+authority: any of them may submit, upload, collect the kit, or change
+anything the team owns. That removes a field, a permission check, and an
+argument at 4am.
 
-**Why an entry still exists as a model when most of them are one person.**
-It would be possible to attach submissions straight to a participant and
-give them an optional partner. That choice pushes a branch into every
-downstream thing: the leaderboard, certificates, blind judging, the museum
-would each need to know whether they are looking at a person or a pair.
-Keeping one model, where **a solo participant is simply an entry of one**,
-means none of them ever ask.
+A team of one is still a team. That sounds like pedantry and is not: it is
+what stops the leaderboard, the certificates, the blind judging and the
+museum from each having to ask whether they are looking at a person or a
+group.
 
-**Individual behaviour survives pairing.** You want to research individuals,
-and an entry of two could have hidden who did what. It does not:
-`Submission.submitted_by` records the individual who acted, `ResearchConsent`
-is per user, and questionnaire responses are per user. The entry is how work
-is scored; the person is how behaviour is measured, and those stay separate
-on purpose.
+**Individual behaviour survives teamwork.** The research is about
+individuals, and a team could have hidden who did what. It does not:
+`Submission.submitted_by` records the individual who acted,
+`KitIssue.collected_by` records who physically took the hardware,
+`ResearchConsent` is per user, and questionnaire responses are per user.
+**The team is how work is scored; the person is how behaviour is measured.**
+
+### TeamMembership
+
+The plain `M2M User` in the first draft was a real defect, and the question
+"can a user be in a few teams?" is exactly the one that exposes it. A bare
+M2M says yes, with no limit, in any event. That is wrong in one direction
+and right in the other:
+
+- **Within one hackathon, a person belongs to exactly one team.** Two teams
+  in the same event would mean two scores for one person, two kits, and a
+  leaderboard that cannot be read.
+- **Across hackathons, a person belongs to many teams.** Someone who
+  competes three years running has three, and that is the whole point of a
+  platform rather than one event.
+
+A plain M2M cannot express that, because the constraint is on
+(hackathon, user) and the join table only knows about (team, user). So the
+relationship gets an explicit through model carrying the hackathon:
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `team` | FK Team | CASCADE |
+| `user` | FK User | CASCADE |
+| `hackathon` | FK Hackathon | denormalised from `team`, and the only reason this model exists |
+| `joined_at` | DateTime | |
+
+**Unique on (`hackathon`, `user`).** The database refuses the second team
+rather than a view remembering to check. The denormalised `hackathon` is
+not redundancy for convenience, it is the only way to put the constraint
+where it cannot be forgotten.
 
 ---
 
@@ -212,40 +250,42 @@ Raspberry Pi and nothing in the code changes.
 
 ### KitIssue
 
-Handing one out and confirming it arrived.
-
 | Field | Type | Notes |
 | --- | --- | --- |
 | `hackathon` | FK | CASCADE |
-| `registration` | FK Registration | **who receives it: a person, not a team** |
+| `team` | FK Team | **allocated to the team.** `Hackathon.kits_per_team` says how many, default 1 |
 | `item` | FK KitItem, null | null means "the whole kit" |
 | `status` | choice | `reserved` / `collected` / `returned` / `lost` |
+| `collected_by` | FK User, null | **which member physically took it.** Any member may; there is no captain |
 | `collected_at` | DateTime, null | |
 | `confirmed_by` | FK User, null | **the admin who approved receipt** |
 | `note` | TextField, blank | |
 
-**A kit is issued to a person, not a team**, and is **collected in person**.
-Both decided, and they fit the event's shape: **the event is built around
-individuals.** A person registers, a person collects a kit, a person
-practises. Pairing, where an admin allows it at all, happens later and
-changes nothing about the hardware.
+**Allocation and collection are two different things, and the model keeps
+them apart.** The kit belongs to the **team**: one per team by default,
+`kits_per_team` if the event wants more. It is picked up **in person by one
+of the members**, any of them, and whoever that was is recorded. So the
+stock arithmetic counts teams, the queue at the desk counts people, and
+both are answerable from the same row.
 
-The FK is to `Registration` rather than straight to `User` because it
-carries the event with it, and because you cannot be issued a kit for an
-event you never registered for. That is a constraint the database enforces
-rather than a rule a view has to remember.
+Recording `collected_by` is not bookkeeping for its own sake. The research
+is about individuals, and "who actually turned up to fetch the hardware" is
+a behavioural fact that would otherwise be lost the moment the kit became a
+team asset.
 
-Sizing follows: `KitItem.quantity_total` is measured against **accepted
-registrations**. The 2026 platform computed availability as
-`stock - teams.count()`, which is now the wrong arithmetic by a factor of
-the entry size.
+**Consequence worth stating:** because kits are allocated to teams, **teams
+must exist by the hardware milestone.** Team formation is therefore part of
+registration or of milestone 2, not something deferred to the event. That
+is a scheduling fact, not a technical one, and it is the cost of one kit
+per team rather than one per person.
+
+Sizing follows: available kits is `stock - (teams x kits_per_team)`.
 
 **No shipping.** Kits are handed over at a place on a date. International
 means the audience is international and travels to the event; it does not
 mean posting FPGA boards across borders, with the addresses, tracking and
 customs that would require. If that ever changes, `KitIssue` grows a
-delivery method and `Registration` grows an address, and nothing else
-moves.
+delivery method and `Registration` grows an address, and nothing else moves.
 
 ---
 
@@ -338,7 +378,7 @@ feedback) add:
 | `max_grade` | int | what a judge may award |
 | `criteria` | TextField, blank | what the judges are told to look for |
 
-A measured challenge ranks entries by their reported number and pays by
+A measured challenge ranks teams by their reported number and pays by
 position. A creativity challenge pays by human grade. A completion
 challenge pays a flat `points` on self-report. They are one model with three
 modes rather than three models, because a submission is the same shape in
@@ -360,7 +400,7 @@ exactly one zip field, identical for every challenge.
 | `help_text` | CharField, blank | |
 | `order` | int | |
 
-Because the requirement is declared, the system can tell an entry what is
+Because the requirement is declared, the system can tell a team what is
 still missing **before** they submit. That saves a judge an argument at 3am
 and costs nothing.
 
@@ -373,19 +413,19 @@ and costs nothing.
 | Field | Type | Notes |
 | --- | --- | --- |
 | `challenge` | FK | CASCADE |
-| `entry` | FK Entry | CASCADE |
+| `team` | FK Team | CASCADE |
 | `submitted_by` | FK User, null | who pressed it |
-| `reported_value` | DecimalField, null | **the measured number the entry reports** |
+| `reported_value` | DecimalField, null | **the measured number the team reports** |
 | `reported_note` | TextField, blank | the text result, or how they got it |
 | `claimed_complete` | bool | for `completion` challenges |
-| `tentative_points` | int | **awarded immediately, on trust** |
+| `tentative_points` | int | **awarded immediately, on trust. Always 0 for `creativity` challenges**, which have no number to report and cannot be self-assessed |
 | `final_points` | int, null | set when results are confirmed; null until then |
 | `verification` | choice | `unverified` / `verified` / `disputed` / `withdrawn` |
 | `verified_by` / `verified_at` | FK User null / DateTime null | the spot check |
 | `verification_note` | TextField, blank | |
 | `created_at` / `updated_at` | DateTime | |
 
-Unique on (`challenge`, `entry`).
+Unique on (`challenge`, `team`).
 
 **This is the inversion from 2026 and the single most important behavioural
 decision in the model.** The old `Submission` started `pending` with zero
@@ -394,6 +434,25 @@ points and waited for a judge to approve before it scored anything. This one
 narrow act aimed only at the scores that decide the outcome. `verification`
 defaults to `unverified` and that is a normal, final, respectable state for
 the great majority of submissions. Nothing blocks on a judge.
+
+**With one exception, and it is not an exception to trust.** A
+`creativity` challenge scores **only** on a judge's grade (`JudgeGrade`,
+§7). Its `tentative_points` are always zero and its score stays zero until a
+human has looked at it.
+
+That is not distrust, it is arithmetic. Trust works for the other two kinds
+because there is something to report and something to check later: a
+completion challenge has "it worked", a measured challenge has a number and
+an artifact that either supports it or does not. **Creativity has neither.**
+There is no self-reported value that could be right or wrong, and nothing a
+spot check could compare against afterwards. A team cannot report its own
+originality any more than it could report its own place in the final
+standings.
+
+So the board moves live for completion and measured work, and the creativity
+scores land when judges grade them. Teams should be told that plainly on the
+challenge itself, because a submitted creativity challenge showing zero points is
+otherwise indistinguishable from a bug.
 
 ### SubmissionFile
 
@@ -417,7 +476,7 @@ demo at 3am should not have to log in.
 
 | Field | Type | Notes |
 | --- | --- | --- |
-| `entry` | FK Entry | CASCADE |
+| `team` | FK Team | CASCADE |
 | `challenge` | FK Challenge | CASCADE |
 | `token` | CharField, unique | in the QR code |
 | `expires_at` | DateTime | |
@@ -451,7 +510,7 @@ ever read, and it goes stale the moment a verification changes a score.
 
 | Field | Type | Notes |
 | --- | --- | --- |
-| `hackathon` / `entry` | FK / FK | |
+| `hackathon` / `team` | FK / FK | |
 | `type` | choice | `participation` / `winner` / `runner_up` |
 | `cert_id` | UUID, unique | the public link |
 | `generated_at` | DateTime | |
@@ -473,7 +532,7 @@ ever read, and it goes stale the moment a verification changes a score.
 | `order` | int | |
 
 The exhibition of projects is **computed**, not stored: the submissions of
-entries that gave `exhibition_consent`. No separate table, and revoking
+teams that gave `exhibition_consent`. No separate table, and revoking
 consent removes the work from display without deleting anything.
 
 ---
@@ -487,7 +546,11 @@ The part with the most care in it, because it is about people.
 | Field | Type | Notes |
 | --- | --- | --- |
 | `title` | CharField | |
-| `description` | TextField | what is being studied |
+| `description` | TextField | the short version: what is being studied |
+| `thesis` | TextField, blank | **the research thesis.** The claim the study is actually testing, written out, not a topic label |
+| `research_questions` | TextField, blank | markdown. The questions the thesis breaks down into, which is what the questionnaires are built from |
+| `literature_review` | TextField, blank | **the deep literature study**, markdown, long-form. Lives with the study rather than in a drive folder, so it is still attached when somebody reads the results in three years |
+| `literature_updated_at` | DateTime, null | a literature review decays; this says when it was last touched |
 | `researchers` | M2M User | |
 | `hackathons` | M2M Hackathon | **a study spans events**, which is how behaviour across events gets compared |
 | `consent_text` | TextField | what a participant agrees to, in full |
@@ -498,6 +561,29 @@ The part with the most care in it, because it is about people.
 Note that `Study` is **not** a child of `Hackathon`. Everything else in this
 model belongs to one event; a study deliberately does not, because the
 research question is about events plural.
+
+**Why the thesis and the literature study live in the database rather than
+in a document somewhere.** A study that spans three events spans three
+years, and the thing most likely to be lost in that time is the reasoning:
+why these questions, what was already known, who had asked before. Keeping
+the thesis and the review next to the data they produced means the answer
+and its justification cannot be separated. It also means the museum page and
+any published write-up can draw on them without someone re-finding a file.
+
+### StudyReference
+
+A literature study is a set of sources, and a `TextField` full of pasted
+citations is the "JSON file as real data" mistake in prose form (Rule 1).
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `study` | FK Study | CASCADE |
+| `citation` | TextField | the full reference as it should be rendered |
+| `url` | URLField, blank | |
+| `doi` | CharField, blank | |
+| `year` | int, null | |
+| `note` | TextField, blank | why this one matters to the thesis, which is the part a bibliography always loses |
+| `order` | int | |
 
 ### Questionnaire, Question, Response, Answer
 
@@ -560,18 +646,20 @@ silently inherit agreement to the old ones.
 | Decision | Reason |
 | --- | --- |
 | No test harness, ever | Yours. Quartus on a backend is heavy lifting you do not want, and it is not the system's job |
-| Points score immediately, on trust | Yours. Nothing waits for a human. Standings are therefore always current, though who may *see* them is `leaderboard_visibility` |
+| Points score immediately, on trust, **except creativity** | Yours. Completion and measured work score on self-report. Creativity scores only on a judge's grade, because there is no number to report and nothing a later spot check could compare against |
 | Verification is a late, narrow, manual spot check | Yours. Only the scores that decide winners, done by judges, with the uploaded artifacts as the evidence that makes trust safe |
 | Measured challenges are first class | Your choice of the three feedback options. The 8% who praised optimization challenges are the signal |
 | The platform does not enforce the format | Your choice. Fewer and bigger challenges is a tech lead's authoring decision, not a rule in code |
 | Content is per event, in the database | Yours. The next event needs no developer |
-| Tech lead is separate from admin | Yours. Technology and logistics are different jobs |
+| Tech lead is separate from admin, but one person may be both | Yours. Separate *jobs*, not necessarily separate people. Two roles is two rows |
 | The leaderboard is computed | Mine. A stored total is a second truth that goes stale on the first verification |
-| Entries are one person or two, never more | Yours. `entry_mode` is an admin setting with exactly two values. No captain: both members hold every authority |
-| A kit is issued to a person, collected in person | Yours. The event is built around individuals; pairing, where allowed, changes nothing about hardware. No shipping, so no addresses, tracking or customs |
+| Teams are any size, configurable, default 2 | Yours. `team_size_max` is an int, not a choice: 1 makes the event individual, and there is no ceiling. No captain: every member holds every authority |
+| A kit is allocated to a team, collected by any member | Yours. `kits_per_team` defaults to 1. `collected_by` records which member turned up, which is a behavioural fact the research would otherwise lose. No shipping |
 | Mentors are not in the system | Yours. They exist at the event; the software has no concept of them |
 | The live leaderboard is a per-event setting, admins only by default | Yours. Shut unless an admin opens it, which keeps score-chasing off by default and still allows a board on the wall |
 | English only, international, no Hebrew | Yours. No RTL and no bilingual templates, which is the most expensive thing to retrofit and the most often done badly. Costs every 2026 template, which was Hebrew |
+| A study carries its thesis and its literature review | Yours. A study spanning three events spans three years, and the reasoning is what gets lost. `StudyReference` keeps the sources as rows, not as pasted text (Rule 1) |
+| Membership is a through model, not a plain M2M | Yours, from the question. One team per person **per hackathon**, many across hackathons. A bare M2M cannot express that, because the constraint is on (hackathon, user) |
 | The repo is the only home for examples, skills and methodology | Yours. The system stores a URL and links. `PracticeProject` was dropped and `ContentPage` narrowed, because a database restating a repo is two sources that drift |
 
 ---
@@ -583,11 +671,11 @@ answer below.
 
 | Question | Answer |
 | --- | --- |
-| Kit to a person or a team? | **A person.** FK to `Registration` |
-| How many people in an entry? | **One or two, configurable per event.** Never more. No captain |
+| Kit to a person or a team? | **A team.** One per team by default (`kits_per_team`), collected in person by any member |
+| How many people on a team? | **Configurable per event, default 2.** `1` means individual; no upper limit. No captain |
 | How is hardware delivered? | **Pickup only, in person.** No shipping, no addresses |
 | Is `mentor` a role? | **No.** Removed from the role choices |
 | Which language? | **English only, international.** No Hebrew, no RTL, no switcher |
 | Can anyone watch the live leaderboard? | **A per-event setting**, `admins` by default, openable to participants or the public |
 | Where do examples and methodology live? | **The repo.** `PracticeProject` dropped, `ContentPage` narrowed |
-| Is there a captain? | **No.** Both members of a pair hold every authority |
+| Is there a captain? | **No.** Every member holds every authority |
