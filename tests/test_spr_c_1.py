@@ -84,7 +84,9 @@ def test_crashtech_never_extends_babooks_base_template():
     for path in Path("templates/crashtech").rglob("*.html"):
         text = path.read_text(encoding="utf-8")
         assert '{% extends "base.html" %}' not in text, f"{path} extends babook's base"
-        if path.name != "base.html":
+        # `_name.html` is a partial, included rather than rendered, so it
+        # extends nothing by design.
+        if path.name != "base.html" and not path.name.startswith("_"):
             assert '{% extends "crashtech/base.html" %}' in text, f"{path} extends nothing of ours"
 
 

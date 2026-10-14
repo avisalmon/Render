@@ -1,0 +1,37 @@
+{% extends "crashtech/base.html" %}
+{% block title %}Timeline &middot; {{ hackathon.name }}{% endblock %}
+{% block screen %}milestones{% endblock %}
+{% block nav %}{% include "crashtech/_event_nav.html" %}{% endblock %}
+{% block milestone %}<span class="ct-milestone">{{ hackathon.get_status_display }}</span>{% endblock %}
+{% block content %}
+<h1>Timeline</h1>
+<p class="ct-lede">The moments people plan around. Kit pickup is the one they
+care about most before the event.</p>
+
+{% for m in milestones %}
+  <div class="ct-row">
+    <span class="ct-row-main"><b>{{ m.title }}</b><span>{{ m.blurb }}</span></span>
+    <span class="ct-mono ct-fine">{{ m.occurs_at|date:"j M Y, H:i" }}</span>
+    <form method="post">{% csrf_token %}
+      <button class="ct-btn" name="delete" value="{{ m.pk }}"
+              style="min-height:34px;padding:6px 12px;font-size:13px">Remove</button></form>
+  </div>
+{% empty %}
+  <div class="ct-empty">Nothing on the timeline yet.</div>
+{% endfor %}
+
+<form method="post" class="ct-card" style="margin-top:18px">{% csrf_token %}
+  <p class="ct-cap">Add a moment</p>
+  <label class="ct-field"><span>What happens</span>
+    <input class="ct-input" name="title" placeholder="Kit pickup day" required></label>
+  <label class="ct-field"><span>Kind</span>
+    <select class="ct-input" name="kind">
+      {% for value, label in kinds %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+    </select></label>
+  <label class="ct-field"><span>When</span>
+    <input class="ct-input" type="datetime-local" name="occurs_at" required></label>
+  <label class="ct-field"><span>A line about it</span>
+    <input class="ct-input" name="blurb" placeholder="Collect your board. One kit per team."></label>
+  <button class="ct-btn ct-btn--primary ct-btn--wide" type="submit">Add it</button>
+</form>
+{% endblock %}

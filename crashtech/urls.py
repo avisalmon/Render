@@ -6,6 +6,11 @@ app_name = "crashtech"
 
 urlpatterns = [
     path("", views.home, name="home"),
+    # `create/` rather than `new/`: the 2026 platform still owns
+    # /crashtech/new/ and keeps working until C.8 retires it (Rule 13.3).
+    # Shadowing it here broke two of its tests, which is exactly what the
+    # fall-through mounting was chosen to avoid.
+    path("create/", views.event_create, name="event_create"),
 
     # Auth, in CrashTech's own chrome against the shared User table
     # (spec Rule 2.2.2).
@@ -21,7 +26,15 @@ urlpatterns = [
     ),
     path("password/reset/done/", auth_views.PasswordResetCompleteView.as_view(), name="password_reset_complete"),
 
-    # One event. The role-aware home every signed-in person lands on
-    # (Rule 11.3). Kept last so it never shadows a named route above.
+    # Rule 4.3: the link in a role invitation, which works whether or not
+    # the person already has an account.
+    path("invite/<str:token>/", views.accept_invitation, name="accept_invitation"),
+
+    # One event. Kept last so these never shadow a named route above.
     path("e/<slug:slug>/", views.event_home, name="event_home"),
+    path("e/<slug:slug>/settings/", views.event_settings, name="settings"),
+    path("e/<slug:slug>/milestones/", views.event_milestones, name="milestones"),
+    path("e/<slug:slug>/people/", views.event_people, name="people"),
+    path("e/<slug:slug>/readiness/", views.event_readiness, name="readiness"),
+    path("e/<slug:slug>/advance/", views.event_advance, name="advance"),
 ]

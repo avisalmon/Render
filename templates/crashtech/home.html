@@ -6,6 +6,10 @@
 <p class="ct-lede">Hardware hackathons: a kit, a sealed set of challenges, twenty-four hours,
 and a permanent public exhibition of what was made.</p>
 
+{% if can_create %}
+  <p><a class="ct-btn ct-btn--primary" href="{% url 'crashtech:event_create' %}">New event</a></p>
+{% endif %}
+
 {% if mine %}
   <p class="ct-cap">Your events</p>
   {% for row in mine %}

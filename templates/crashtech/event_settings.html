@@ -1,0 +1,47 @@
+{% extends "crashtech/base.html" %}
+{% block title %}Settings &middot; {{ hackathon.name }}{% endblock %}
+{% block screen %}settings{% endblock %}
+{% block nav %}{% include "crashtech/_event_nav.html" %}{% endblock %}
+{% block milestone %}<span class="ct-milestone">{{ hackathon.get_status_display }}</span>{% endblock %}
+{% block content %}
+<h1>Settings</h1>
+<p class="ct-lede">Each of these changes how the event behaves, so each one says
+what it does.</p>
+<form method="post">{% csrf_token %}
+  <label class="ct-field"><span>Name</span>
+    <input class="ct-input" name="name" value="{{ hackathon.name }}" required></label>
+
+  <label class="ct-field"><span>One line about it</span>
+    <input class="ct-input" name="tagline" value="{{ hackathon.tagline }}"></label>
+
+  <label class="ct-field"><span>Supporting repository</span>
+    <input class="ct-input" name="repo_url" value="{{ hackathon.repo_url }}"
+           placeholder="https://github.com/...">
+    <span class="ct-fine">Examples, skills and methodology live there.
+      Challenges never do.</span></label>
+
+  <label class="ct-field"><span>People on a team</span>
+    <input class="ct-input" type="number" name="team_size_max" min="1"
+           value="{{ hackathon.team_size_max }}">
+    <span class="ct-fine">1 makes this an individual event. There is no upper
+      limit.</span></label>
+
+  <label class="ct-field"><span>Kits per team</span>
+    <input class="ct-input" type="number" name="kits_per_team" min="1"
+           value="{{ hackathon.kits_per_team }}">
+    <span class="ct-fine">Kits are allocated to a team and collected in person by
+      any member, so teams have to exist before kit day.</span></label>
+
+  <label class="ct-field"><span>Who sees the standings</span>
+    <select class="ct-input" name="leaderboard_visibility">
+      {% for value, label in visibilities %}
+        <option value="{{ value }}" {% if hackathon.leaderboard_visibility == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <span class="ct-fine">Teams always see their own score, whichever you pick.
+      This is only the ranking, and it becomes public for good when you publish
+      the results.</span></label>
+
+  <button class="ct-btn ct-btn--primary ct-btn--wide" type="submit">Save</button>
+</form>
+{% endblock %}

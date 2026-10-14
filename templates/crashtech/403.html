@@ -1,0 +1,8 @@
+{% extends "crashtech/base.html" %}
+{% block title %}Not for you &middot; CrashTech{% endblock %}
+{% block screen %}403{% endblock %}
+{% block content %}
+<h1>Not for you</h1>
+<p class="ct-lede">You do not hold a role on this event that allows that.</p>
+<a class="ct-btn ct-btn--primary" href="{% url 'crashtech:home' %}">Back to CrashTech</a>
+{% endblock %}

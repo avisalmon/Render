@@ -126,6 +126,7 @@ markers = [
     "sprw4: SPR-W.4 memz the TV as the show: the big screen gets its own layout, live counts and a moving leaderboard",
     "sprw5: SPR-W.5 memz small wins: caption starters, the result screen moves on by itself, titles explained",
     "sprc1: SPR-C.1 CrashTech the skeleton and the seal: own app, own base, own auth, the models, the matrix",
+    "sprc2: SPR-C.2 CrashTech the event, its lifecycle and its roles: create, settings, timeline, people, readiness",
     "memzscreens: memz's screen contract - every memz screen, in every state, rendered on a phone (tests/test_memz_screens.py)",
     "screens: the screen contract - every מט״צים screen, in every state, rendered",
     "sprmobile: real-browser phone checks for מט״צים (tests/test_matazim_mobile.py)",

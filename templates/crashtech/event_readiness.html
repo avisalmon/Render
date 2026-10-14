@@ -1,0 +1,46 @@
+{% extends "crashtech/base.html" %}
+{% block title %}Readiness &middot; {{ hackathon.name }}{% endblock %}
+{% block screen %}readiness{% endblock %}
+{% block nav %}{% include "crashtech/_event_nav.html" %}{% endblock %}
+{% block milestone %}<span class="ct-milestone">{{ hackathon.get_status_display }}</span>{% endblock %}
+{% block content %}
+<h1>Before {{ next_label|lower|default:"the next step" }}</h1>
+{% if next_label %}
+  <p class="ct-lede">Moving on is a checklist, not a button. Here is what is
+  outstanding.</p>
+
+  {% for check, fix_url in checks %}
+    <div class="ct-row">
+      <span class="ct-mono" style="width:18px;
+        color:{% if check.level == 'blocker' %}var(--ct-red){% elif check.level == 'warning' %}var(--ct-amber){% else %}var(--ct-primary){% endif %}">
+        {% if check.level == 'blocker' %}&#215;{% elif check.level == 'warning' %}!{% else %}&#10003;{% endif %}</span>
+      <span class="ct-row-main"><b>{{ check.text }}</b></span>
+      {% comment %}Only on things that still need doing. A "Fix" button
+      next to a green tick reads as though something is wrong with it.
+      {% endcomment %}
+      {% if fix_url and check.level != 'ok' %}<a class="ct-btn" href="{{ fix_url }}"
+        style="min-height:34px;padding:6px 12px;font-size:13px">Go and fix it</a>{% endif %}
+    </div>
+  {% endfor %}
+
+  {% if consequence %}
+    <div class="ct-note {% if not blockers %}ct-note--warn{% endif %}" style="margin-top:18px">
+      {{ consequence }}</div>
+  {% endif %}
+
+  {% if can_advance %}
+    <form method="post" action="{% url 'crashtech:advance' hackathon.slug %}">{% csrf_token %}
+      <button class="ct-btn ct-btn--primary ct-btn--wide" type="submit">{{ next_label }}</button>
+    </form>
+  {% else %}
+    {% comment %}Rule 11.5: not a disabled button with no explanation. The
+    count names how many things are in the way, and each one above links to
+    where it is fixed.{% endcomment %}
+    <p class="ct-fine">{{ blockers|length }} thing{{ blockers|length|pluralize }} still
+      in the way.</p>
+  {% endif %}
+{% else %}
+  <p class="ct-lede">This event has finished its lifecycle. The museum is
+  permanent.</p>
+{% endif %}
+{% endblock %}

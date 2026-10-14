@@ -1,0 +1,49 @@
+{% extends "crashtech/base.html" %}
+{% block title %}People &middot; {{ hackathon.name }}{% endblock %}
+{% block screen %}people{% endblock %}
+{% block nav %}{% include "crashtech/_event_nav.html" %}{% endblock %}
+{% block milestone %}<span class="ct-milestone">{{ hackathon.get_status_display }}</span>{% endblock %}
+{% block content %}
+<h1>People</h1>
+<p class="ct-lede">An email address is enough. If they do not have an account yet,
+they are invited, and the role is waiting when they arrive.</p>
+
+<form method="post" class="ct-card">{% csrf_token %}
+  <label class="ct-field"><span>Email address</span>
+    <input class="ct-input" type="email" name="email" placeholder="judge@technion.ac.il" required></label>
+  <label class="ct-field"><span>Role</span>
+    <select class="ct-input" name="role">
+      {% for value, label in roles %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+    </select></label>
+  <button class="ct-btn ct-btn--primary ct-btn--wide" type="submit">Give them the role</button>
+</form>
+
+{% for group in grouped %}
+  <p class="ct-cap" style="margin-top:22px">{{ group.label }}</p>
+  {% for role in group.holders %}
+    <div class="ct-row">
+      <span class="ct-row-main"><b>{{ role.user.email|default:role.user.username }}</b>
+        <span>Joined {{ role.created_at|date:"j M Y" }}</span></span>
+      <span class="ct-tag ct-tag--go">Active</span>
+      <form method="post">{% csrf_token %}
+        <button class="ct-btn" name="remove_role" value="{{ role.pk }}"
+                style="min-height:34px;padding:6px 12px;font-size:13px">Remove</button></form>
+    </div>
+  {% endfor %}
+  {% for invite in group.invited %}
+    <div class="ct-row">
+      <span class="ct-row-main"><b>{{ invite.email }}</b>
+        <span>Invited {{ invite.created_at|date:"j M Y" }}</span></span>
+      {% comment %}The state that matters two days before an event when a
+      judge has not appeared.{% endcomment %}
+      <span class="ct-tag ct-tag--wait">Invited, not joined</span>
+      <form method="post">{% csrf_token %}
+        <button class="ct-btn" name="cancel_invite" value="{{ invite.pk }}"
+                style="min-height:34px;padding:6px 12px;font-size:13px">Cancel</button></form>
+    </div>
+  {% endfor %}
+  {% if not group.holders and not group.invited %}
+    <div class="ct-empty">Nobody yet.</div>
+  {% endif %}
+{% endfor %}
+{% endblock %}

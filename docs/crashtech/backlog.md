@@ -5,10 +5,11 @@ Sprints and their status. Spec references are
 and the spec, updated together in the commit that acts on them
 (Rule 14.1).
 
-**Status: C.1 built in dev, not pushed.** The kickoff sequence is complete
-(interview, intro spec, data model approved, UX review and journeys). The
-app exists, is sealed, has its own face, and all 28 models are real.
-36 tests pass. C.2 is next.
+**Status: C.1 live in production, C.2 built in dev.** The app is sealed,
+has its own face, and all 28 models are real. An admin can now create an
+event, shape it, lay out its timeline, appoint people by email before they
+have accounts, and move the event forward through a computed checklist.
+68 tests across C.1 and C.2. C.3 is next.
 
 ---
 
@@ -17,7 +18,7 @@ app exists, is sealed, has its own face, and all 28 models are real.
 | Sprint | Name | What it delivers | Status |
 | --- | --- | --- | --- |
 | C.1 | The skeleton and the seal | The app exists, is sealed both ways, has its own base template and its own auth screens, and every model with its migration and its admin | `DONE (dev), 2026-10-14` |
-| C.2 | The event, its lifecycle and its roles | Create an event, advance it by checklist, grant roles, invite by email | `TODO` |
+| C.2 | The event, its lifecycle and its roles | Create an event, advance it by checklist, grant roles, invite by email | `DONE (dev), 2026-10-14` |
 | C.3 | Registration, teams, hardware | Apply, accept, form a team, define the kit, and the kit desk | `TODO` |
 | C.4 | Challenges and submitting | Author challenges with deliverables, kickoff, submit, tentative points | `TODO` |
 | C.5 | Judging, results, publishing | Shortlist, grade, verify, and the one gated click | `TODO` |
@@ -72,7 +73,7 @@ retires (Rule 13.1 says do not touch it).
 
 ---
 
-## SPR-C.2 — The event, its lifecycle and its roles `TODO`
+## SPR-C.2 — The event, its lifecycle and its roles `DONE (dev), 2026-10-14`
 
 Everything an admin does before anyone else can do anything.
 
@@ -85,7 +86,33 @@ Everything an admin does before anyone else can do anything.
 | F-C.2.5 | **Invite by email**, redeemed on sign-up, with "invited, not yet joined" visible | Rule 4.3 |
 | F-C.2.6 | The lifecycle, advanced by a computed checklist, never a bare button | Rule 3.1, 3.4, 3.5 |
 | F-C.2.7 | Role-aware home for every role | Rule 11.3, 11.4 |
-| F-C.2.8 | The permission matrix, tested row by row | Rule 4.4, 14.2 |
+| F-C.2.8 | The permission matrix, tested row by row | Rule 4.4, 14.2 | DONE — `tests/test_spr_c_2.py` (30), marker `sprc2` |
+
+**Three defects, all found by looking at the screens rather than by any
+assertion** (Rule 14.3, two sprints running now).
+
+*"1 judges assigned"*, which is the kind of thing that makes a product
+feel unfinished and is one line to avoid.
+
+**"Go and fix it" links sat on the finished rows and not on the blocker**,
+because the blocker pointed at a screen C.4 builds and the finished rows
+pointed at one that exists. A link next to a green tick reads as though
+something is wrong with it, so those are now shown only where there is
+something to do.
+
+**The whole navigation collapsed to one item** on four screens, because
+the nav is built from `can_manage` and those views forgot to pass it.
+
+Both of the first two now have tests. A fourth defect was found by the
+tests themselves: a participant during kit distribution could land on a
+**completely empty screen** if no pickup date had been set yet, which is
+the exact moment they most need telling what is going on.
+
+**One collision worth recording.** The create route was first mounted at
+`/crashtech/new/`, which the 2026 platform already owns, and shadowing it
+broke two of its tests. That is precisely what the fall-through mounting
+was chosen to avoid, so the new route moved to `/crashtech/create/` and
+the old app keeps working until C.8 retires it.
 
 ---
 

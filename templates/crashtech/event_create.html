@@ -1,0 +1,20 @@
+{% extends "crashtech/base.html" %}
+{% block title %}New event &middot; CrashTech{% endblock %}
+{% block screen %}event-create{% endblock %}
+{% block content %}
+<h1>New event</h1>
+<p class="ct-lede">Four things now. Everything else can wait, and you will be
+its first admin.</p>
+<form method="post">{% csrf_token %}
+  <label class="ct-field"><span>Name</span>
+    <input class="ct-input" name="name" value="{{ data.name }}" required autofocus>
+    {% if errors.name %}<span class="ct-error">{{ errors.name }}</span>{% endif %}</label>
+  <label class="ct-field"><span>Starts</span>
+    <input class="ct-input" type="datetime-local" name="starts_at" value="{{ data.starts_at }}" required>
+    {% if errors.starts_at %}<span class="ct-error">{{ errors.starts_at }}</span>{% endif %}</label>
+  <label class="ct-field"><span>Ends</span>
+    <input class="ct-input" type="datetime-local" name="ends_at" value="{{ data.ends_at }}" required>
+    {% if errors.ends_at %}<span class="ct-error">{{ errors.ends_at }}</span>{% endif %}</label>
+  <button class="ct-btn ct-btn--primary ct-btn--wide" type="submit">Create the event</button>
+</form>
+{% endblock %}
