@@ -3,11 +3,13 @@
 A platform for running hardware hackathons, and for studying what happens
 at them.
 
-> **Status: chapter 1 only.** This is the thin introductory chapter the
-> kickoff sequence in [building_an_app.md](../building_an_app.md) calls
-> for: what the app is, in plain terms. The data model comes next, as its
-> own document, and waits for approval before anything else is written.
-> The remaining chapters come after that.
+> **Status: data model approved, spec complete.** Chapter 1 is the thin
+> introduction the kickoff sequence in
+> [building_an_app.md](../building_an_app.md) asks for; chapters 2 to 14
+> are the full spec, written after
+> [data_model.md](data_model.md) was approved and after the UX work in
+> [user_journeys.md](user_journeys.md). Those two documents are companions
+> to this one, not drafts of it.
 
 ---
 
@@ -320,8 +322,364 @@ Named explicitly, so this is reuse of thinking rather than accident.
 
 ---
 
-## Open questions
+---
 
-None. Every question raised during the interview has been answered; the
-full list and its answers are at the end of
-[data_model.md](data_model.md).
+## 2. The app and its boundaries
+
+### 2.1 An isolated Django app
+
+CrashTech is its own Django app (`crashtech`), following the standing
+pattern in [building_an_app.md](../building_an_app.md): own `models.py`,
+`views.py`, `urls.py`, own migration chain from `0001`, own templates under
+`templates/crashtech/`, own static files under `static/crashtech/`.
+
+Rule 2.1.1: **the only thing shared with the rest of the site is
+`auth.User`**, for sign-in. Nothing else crosses the wall in either
+direction. CrashTech never reads or writes another app's models.
+
+Rule 2.1.2: **two named adapters are permitted**, the same shape memz uses,
+and no others. One for the site's content-safety check (museum uploads,
+Rule 9.3), one for outbound email. Each lives in exactly one file, so that
+"cross-app reach is rare, deliberate and named" stays true.
+
+Rule 2.1.3: mounted at **`/crashtech/`** in `mysite/urls.py`, before the
+catch-all `app.urls` include.
+
+### 2.2 Its own front door
+
+Rule 2.2.1: **own base template and own navigation.** CrashTech never
+extends `base.html` and never inherits babook's header, footer or menu.
+
+Rule 2.2.2: **own authentication screens.** Sign in, sign up, sign out and
+password reset are CrashTech's own pages in CrashTech's own look, posting
+against the one shared `User` table underneath. A visitor never sees
+another product's branding mid-flow.
+
+Rule 2.2.3: **babook links to CrashTech; CrashTech does not link back.**
+A deliberate exception to the usual default, stated by Avi: CrashTech is
+public and production-worthy, and babook's portal routes people to it. The
+reverse stays forbidden, because a Technion participant has no reason to
+know babook exists.
+
+Rule 2.2.4: **English only, LTR.** No Hebrew strings, no RTL, no language
+switcher, anywhere, including the auth screens.
+
+### 2.3 The REST API
+
+Rule 2.3.1: every model gets full documented CRUD over Django REST
+Framework (building_an_app.md Rule 6), gated by the role rules in chapter
+4. Screens are built on the API rather than instead of it.
+
+Rule 2.3.2: **no anonymous writes.** Reading is open where Rule 8.4 and
+chapter 9 say it is; writing always requires a signed-in user holding a
+role on that event.
+
+---
+
+## 3. The event and its lifecycle
+
+Rule 3.1: an event moves through `setup`, `published`, `kits`, `live`,
+`closed`, `museum`, in that order and never backwards. Every surface gates
+on it.
+
+Rule 3.2: **entering `live` makes every challenge visible at once**, and it
+cannot be undone.
+
+Rule 3.3: **entering `museum` publishes the results**, permanently and
+publicly, and opens the museum. One action, three effects (Rule 8.5).
+
+Rule 3.4: **advancing is a checklist, not a button.** Before `live` the app
+computes what is outstanding: challenges exist, each has a required
+deliverable, at least one judge is assigned, milestone dates are ordered.
+Blockers prevent the advance and link to the screen that fixes them;
+warnings, such as kits not all collected, do not. The control appears only
+when blockers clear, and its confirmation states the irreversible effect in
+words.
+
+Rule 3.5: readiness and publish-readiness are **computed, never stored**. A
+stored flag is a second source of truth that goes stale the moment somebody
+deletes a challenge.
+
+Rule 3.6: milestones are rows with dates, not fixed offsets. The gap
+between kit pickup and kickoff is whatever the dates say.
+
+---
+
+## 4. Roles and permissions
+
+Rule 4.1: roles are **per event**: `tech_lead`, `admin`, `judge`,
+`participant`, `researcher`. One person may hold several on one event and
+different ones across events; holding two is two rows.
+
+Rule 4.2: **a site superuser creates an event and becomes its first
+admin.** The only place the chain can start, and a deliberate named
+exception. After that an admin may appoint other admins.
+
+Rule 4.3: **roles may be granted to an email address before that person has
+an account.** Redeeming on sign-up or sign-in creates the role, and the
+invitation remains as the record of who invited whom. Without this,
+appointing a judge waits on three prior steps by somebody who has never
+heard of this site.
+
+Rule 4.4: what each role may do.
+
+| | Tech lead | Admin | Judge | Participant | Researcher |
+| --- | --- | --- | --- | --- | --- |
+| Event settings, milestones | | yes | | | |
+| Grant roles, invite | | yes | | | |
+| Define the kit | yes | | | | |
+| Distribute kits | | yes | | | |
+| Decide registrations | | yes | | | |
+| Author challenges | yes | | | | |
+| Read challenges before `live` | yes | yes | yes | **no** | |
+| Submit | | | | yes | |
+| Shortlist, grade, verify | | | yes | | |
+| Advance lifecycle, publish | | yes | | | |
+| Study, questionnaires | | | | | yes |
+| Read research data | | | | | yes |
+
+Rule 4.5: **judges may read challenges before the event.** They are not
+participants and the secrecy rule is not about them.
+
+Rule 4.6: a participant sees only their own team's submissions, never
+another team's, until the museum opens.
+
+---
+
+## 5. Registration and teams
+
+Rule 5.1: **people apply; they are not invited.** An application is its own
+record with its own status, kept apart from the role, so that "who asked"
+survives independently of "who is in". Accepting grants the participant
+role.
+
+Rule 5.2: a team is one or more people, up to `team_size_max`, which
+defaults to 2 and has no ceiling. `1` makes the event individual.
+
+Rule 5.3: **a person is on exactly one team per event**, enforced by the
+database, and on many teams across events.
+
+Rule 5.4: **no captain.** Every member holds every authority: any may
+submit, upload, collect the kit, or change anything the team owns.
+
+Rule 5.5: teams must exist by the hardware milestone, because kits are
+allocated to teams.
+
+---
+
+## 6. Hardware
+
+Rule 6.1: **the kit is defined per event** as a list of items with names,
+descriptions, photos and quantities. FPGA and ESP32 today, a Raspberry Pi
+next time, with no code change.
+
+Rule 6.2: kits are **allocated to a team**, `kits_per_team` of them,
+defaulting to 1.
+
+Rule 6.3: kits are **collected in person**, by any member, and the system
+records which member turned up and which admin confirmed it. There is no
+shipping.
+
+Rule 6.4: the kit desk is an **event screen**: one search field, big rows,
+two taps, under five seconds per team, working on bad wifi. If it is slower
+than a paper list it loses to the paper list, and then the data never
+arrives.
+
+---
+
+## 7. Challenges and submissions
+
+Rule 7.1: challenges are **invisible until kickoff**. Not a hint, not a
+count, not a greyed-out list.
+
+Rule 7.2: three kinds, and a challenge is exactly one of them.
+
+- **Completion** — pass or fail, flat points, scored on the team's report.
+- **Measured** — a reported number, ranked against other teams, paying by
+  finishing position. The kind that resists being solved by prompting
+  alone, and the one real product response to the 2026 feedback.
+- **Creativity** — graded by people, after the event.
+
+Rule 7.3: **each challenge declares in advance what a submission must
+contain**: the proof (video, image, text or a number) and the artifacts (a
+Quartus project, controller code, whatever that task needs). Because the
+requirement is declared, the app can say what is still missing *before* a
+team submits rather than after.
+
+Rule 7.4: **points land immediately and tentatively on the team's own
+report**, for completion and measured challenges. Nothing waits for a
+human. Creativity is the exception and scores only when judged.
+
+Rule 7.5: **a demo video is a URL and there is no upload path for one.**
+Any host. Participants are told at kit pickup, two weeks ahead, because
+discovering it at the deadline would be a trap.
+
+Rule 7.6: the QR upload carries over from 2026 for images: the phone that
+photographs the bench is not the laptop that is signed in.
+
+Rule 7.7: submissions lock at the deadline, which may fall before the event
+itself ends.
+
+---
+
+## 8. Judging, results, publishing
+
+Rule 8.1: **judges do nothing during the event.** Grading live would score
+the first submission against a different field from the last. All judging
+happens while the event is `closed`.
+
+Rule 8.2: creativity judging is **two steps**: shortlist, then grade the
+shortlist. Seventy submissions get a rubber stamp; fifteen finalists get
+real attention. A shortlisted team is told, because it is good news during
+a quiet wait.
+
+Rule 8.3: measured top scores get a **spot check, not an audit**: the
+reported number and the artifacts side by side, with three outcomes,
+verified, disputed, or **left alone, which is the normal answer**. If a
+screen implies otherwise, judges check everything and the trust model
+collapses into the 2026 one it replaced.
+
+Rule 8.4: **the leaderboard is computed, never stored**, and its visibility
+is a per-event setting defaulting to `admins`. A team **always** sees its
+own score regardless. "My points" and "where I rank" are different
+questions, and twenty-four hours of submitting into silence is a dropbox,
+not a competition.
+
+Rule 8.5: **publishing is one gated click.** It requires every finalist
+graded, nothing left disputed, and every creativity challenge with
+submissions shortlisted. It makes the standings public permanently and
+opens the museum.
+
+Rule 8.6: certificates for participation and for the top places, each at an
+unguessable permanent URL.
+
+---
+
+## 9. The museum, and where media lives
+
+Rule 9.1: the museum opens on publishing and is **permanent and public**.
+It carries the photos, the exhibition of projects and videos, the final
+standings and the feedback. Most of it assembles itself from what the event
+already produced; the human adds photos and a paragraph.
+
+Rule 9.2: **reading needs no account.** Signing in buys one thing, the
+ability to add photos. This is the page where a stranger meets CrashTech
+for the first time, years later, and decides whether the next one is worth
+a weekend.
+
+Rule 9.3: uploads are **moderated** through the one named adapter. A
+permanent public page anyone may post to is a permanent public page anyone
+may post anything to.
+
+Rule 9.4: the exhibition is **computed from consent**, not copied. Only
+teams that gave `exhibition_consent` appear, and withdrawing removes the
+work from display without deleting anything.
+
+Rule 9.5: **no user upload touches the application disk.** Images and
+artifacts go to a dedicated Google Cloud Storage bucket, separate from the
+backups bucket, through `django-storages`. Images are resized on upload,
+artifacts are size-capped, and deleting a row deletes its file on commit.
+
+---
+
+## 10. Research
+
+Rule 10.1: a **study spans events**, carries its thesis, its research
+questions and its literature review, and cites its sources as rows.
+
+Rule 10.2: questionnaires attach to **milestones**, so a question about the
+kit is asked when the kit arrives.
+
+Rule 10.3: **research never blocks.** A questionnaire is an invitation on
+the role home. It is never a gate in front of a submission, and declining
+costs the participant nothing. The platform's obligation to the participant
+outranks the study's convenience.
+
+Rule 10.4: **consent is per person, per study, per event, versioned and
+withdrawable.** It is the only thing in this system that cannot be added
+afterwards, because data collected without it cannot be made usable
+retroactively.
+
+Rule 10.5: behavioural data is a by-product of running the event, never a
+separate instrument: when people submitted, how often, what they attempted,
+what they abandoned.
+
+---
+
+## 11. Screens, and the two products
+
+Rule 11.1: **every screen is tagged planning or event**, and designed to
+that bar. A fourteen-field settings form is correct for configuring an
+event and catastrophic at a hardware desk with thirty people waiting.
+
+Rule 11.2: **event screens are phone-first**: one primary action, thumb
+reachable, legible at arm's length, tolerant of bad wifi, 44px tap targets
+minimum.
+
+Rule 11.3: **every role lands on its own home**, naming the current
+milestone and the next action that person owns. Not a dashboard of
+statistics.
+
+Rule 11.4: the current milestone is on screen on every page for every role.
+It is the one piece of context that changes what everything else means.
+
+Rule 11.5: **never show a control that cannot be used yet.** Either explain
+the condition or do not render it.
+
+Rule 11.6: **name what is missing**, never "incomplete".
+
+Rule 11.7: **irreversible actions state their consequence** in the
+confirmation, in words, not "are you sure".
+
+Rule 11.8: **creativity never renders a zero.** It renders "judged after
+the event".
+
+---
+
+## 12. Email
+
+Rule 12.1: email is sent **only** for something that happened while the
+person was not looking and that they must act on or would be upset to miss.
+Six triggers, listed in [user_journeys.md](user_journeys.md) section 2.7.
+No digests, no engagement mail.
+
+Rule 12.2: **email is never the only channel.** Every fact it carries is
+also on the person's role home. A mail that does not arrive must not cost
+anyone the event.
+
+Rule 12.3: the audience is international. Every message names which event
+it is about, and the non-essential ones carry an unsubscribe.
+
+Rule 12.4: this is **not a notification system**. No model, no preferences
+screen, no inbox, until it deliberately becomes one.
+
+---
+
+## 13. Retiring the 2026 platform
+
+Rule 13.1: the existing CrashTech inside `app/` is **reference, not a
+dependency**. Nothing in the new app imports it.
+
+Rule 13.2: it currently owns `/crashtech/` and holds **seeded demo data
+only**, no real event. The new app takes that path when it is ready, and
+the old routes are removed in the same change.
+
+Rule 13.3: the old models are **left in place and unused** rather than
+deleted, until the retirement has been live long enough to be sure. Its 36
+tests keep running until its routes go.
+
+---
+
+## 14. Process
+
+Rule 14.1: spec and backlog are the two sources of truth and are updated
+together, in the commit that acts on them.
+
+Rule 14.2: tests for whatever can break silently. The two things most
+likely to: the lifecycle gates, such as a challenge visible before kickoff,
+and the permission matrix in Rule 4.4.
+
+Rule 14.3: **every screen is looked at as an image, once.** HTML-reading
+tests cannot see layout, and layout is most of what a person experiences.
+
+Rule 14.4: dev first. Nothing is pushed without Avi's word.
