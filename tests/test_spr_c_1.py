@@ -458,3 +458,51 @@ def test_the_event_home_tells_a_person_which_roles_they_hold(client):
     client.force_login(person)
     body = client.get(f"/crashtech/e/{event.slug}/").content.decode()
     assert "Tech lead" in body
+
+
+# -------------------------------------------------------------- the seed
+
+
+def test_the_demo_seed_is_a_one_time_import(capsys):
+    """building_an_app.md, "Data": a seed that imports from a static source
+    is a one-time import, never a sync.
+
+    This runs the **actual management command twice**, rather than a
+    fixture standing in for it, because that is the only kind of test that
+    catches "the seed deletes things it should not". On ustrip a seed wired
+    into every deploy wholesale recreated its rows, which would have
+    destroyed a real person's edits the first time the app let anybody make
+    one.
+    """
+    from django.core.management import call_command
+
+    from crashtech.models import ContentPage, Hackathon, KitItem, Milestone
+
+    call_command("seed_crashtech")
+    event = Hackathon.objects.get(slug="demo-vlsi")
+    counts = (event.milestones.count(), event.kit_items.count(), event.pages.count())
+    assert all(counts), counts
+
+    # Something a person could plausibly have changed afterwards.
+    event.tagline = "Edited by a human"
+    event.save(update_fields=["tagline"])
+    Milestone.objects.filter(hackathon=event).first().delete()
+    edited_counts = (event.milestones.count(), event.kit_items.count(), event.pages.count())
+
+    call_command("seed_crashtech")
+
+    event.refresh_from_db()
+    assert event.tagline == "Edited by a human", "the second run overwrote an edit"
+    assert (event.milestones.count(), event.kit_items.count(), event.pages.count()) == edited_counts
+    assert Hackathon.objects.filter(slug="demo-vlsi").count() == 1
+
+
+def test_the_demo_event_is_obviously_a_demo():
+    """It goes to production, where real people will see it. Nobody should
+    have to guess whether it is a real hackathon they can enter."""
+    from django.core.management import call_command
+
+    from crashtech.models import Hackathon
+
+    call_command("seed_crashtech")
+    assert "DEMO" in Hackathon.objects.get(slug="demo-vlsi").name
