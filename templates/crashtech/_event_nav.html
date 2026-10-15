@@ -18,6 +18,9 @@ one view might have forgotten to set.
 {% if may_read_standings %}
   <a href="{% url 'crashtech:standings' hackathon.slug %}">Standings</a>
 {% endif %}
+{% if hackathon.results_published_at %}
+  <a href="{% url 'crashtech:museum' hackathon.slug %}">Museum</a>
+{% endif %}
 {% if may_judge %}
   <a href="{% url 'crashtech:judging' hackathon.slug %}">Judging</a>
 {% endif %}
@@ -31,4 +34,5 @@ one view might have forgotten to set.
   <a href="{% url 'crashtech:milestones' hackathon.slug %}">Timeline</a>
   <a href="{% url 'crashtech:settings' hackathon.slug %}">Settings</a>
   <a href="{% url 'crashtech:readiness' hackathon.slug %}">Readiness</a>
+  <a href="{% url 'crashtech:museum_edit' hackathon.slug %}">Museum</a>
 {% endif %}

@@ -212,6 +212,19 @@ a { color: var(--ct-primary); }
   gap: 12px;
 }
 
+/* The museum's headline figures. Its own grid rather than .ct-grid,
+   whose 260px minimum collapses to one tile per row on a phone and put
+   four full-width cards between the reader and the first word of the
+   page. Two across is the right answer at that width. */
+.ct-numbers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.ct-numbers .ct-card { margin: 0; padding: 14px; }
+
 /* ---- tags ------------------------------------------------------------ */
 
 .ct-tag {

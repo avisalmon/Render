@@ -20,6 +20,8 @@ import uuid as _uuid
 
 from django.conf import settings
 from django.db import models
+
+from .storage import media_storage
 from django.utils import timezone
 from django.utils.text import slugify
 
@@ -668,7 +670,10 @@ class SubmissionFile(models.Model):
 
     submission = models.ForeignKey(Submission, on_delete=models.CASCADE, related_name="files")
     deliverable = models.ForeignKey(Deliverable, on_delete=models.CASCADE, related_name="files")
-    file = models.FileField(upload_to="crashtech/submissions/", blank=True, null=True)
+    file = models.FileField(
+        upload_to="crashtech/submissions/", blank=True, null=True,
+        storage=media_storage,
+    )
     text_value = models.TextField(blank=True, default="")
     url = models.URLField(max_length=500, blank=True, default="")
     # Captured at submission time where the host makes one derivable, so the
@@ -780,7 +785,7 @@ class MuseumPhoto(models.Model):
     MODERATION = [(PENDING, "Pending"), (APPROVED, "Approved"), (REJECTED, "Rejected")]
 
     museum_page = models.ForeignKey(MuseumPage, on_delete=models.CASCADE, related_name="photos")
-    image = models.ImageField(upload_to="crashtech/museum/")
+    image = models.ImageField(upload_to="crashtech/museum/", storage=media_storage)
     caption = models.CharField(max_length=200, blank=True, default="")
     # Null for the admin's own curated set.
     uploaded_by = models.ForeignKey(USER, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")

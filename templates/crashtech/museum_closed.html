@@ -1,0 +1,16 @@
+{% extends "crashtech/base.html" %}
+{% block title %}{{ hackathon.name }}{% endblock %}
+{% block screen %}museum-closed{% endblock %}
+{% block nav %}<a href="{% url 'crashtech:museum_index' %}">All events</a>{% endblock %}
+{% comment %}Not a 404 for an event that simply has not finished. The event
+exists and is public; saying so is more useful than pretending it is not
+there, and somebody arrives here from a link that will work later.{% endcomment %}
+{% block content %}
+<h1>{{ hackathon.name }}</h1>
+<div class="ct-card">
+  <p>This event has not finished, so there is nothing here yet.</p>
+  <p class="ct-fine">When the results are published, this page becomes the
+    permanent record of it: what was built, how it finished, and the
+    photographs. The link you used will keep working.</p>
+</div>
+{% endblock %}

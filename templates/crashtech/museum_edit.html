@@ -1,0 +1,80 @@
+{% extends "crashtech/base.html" %}
+{% block title %}The museum &middot; {{ hackathon.name }}{% endblock %}
+{% block screen %}museum-edit{% endblock %}
+{% block nav %}{% include "crashtech/_event_nav.html" %}{% endblock %}
+{% block milestone %}<span class="ct-milestone">{{ hackathon.get_status_display }}</span>{% endblock %}
+{% comment %}The only two things a human adds to a museum: a paragraph and a
+decision about photographs. Everything else on that page computed itself
+(Rule 9.1), which is the point: opening a blank page after a sleepless
+night is how a museum never gets published.{% endcomment %}
+{% block content %}
+<h1>The museum</h1>
+
+{% if open %}
+  <p class="ct-lede">
+    Open at <a href="{% url 'crashtech:museum' hackathon.slug %}">its public page</a>,
+    permanently. The standings, the numbers and the exhibition all assemble
+    themselves. These are the two things you add.
+  </p>
+{% else %}
+  <div class="ct-note ct-note--warn">
+    The museum opens when the results are published. You can write the
+    paragraph now.
+  </div>
+{% endif %}
+
+<form method="post" class="ct-card">{% csrf_token %}
+  <label class="ct-field"><span>A paragraph about the event</span>
+    <textarea class="ct-input" name="highlights" rows="6"
+              placeholder="What happened, in a few sentences, for somebody who was not there.">{{ page.highlights }}</textarea></label>
+  <button class="ct-btn ct-btn--primary" type="submit">Save</button>
+</form>
+
+<div class="ct-card">
+  <p class="ct-cap">The exhibition</p>
+  <p style="margin:0"><b class="ct-mono">{{ consenting }}</b> of
+    <b class="ct-mono">{{ teams }}</b> teams have agreed to show their work.</p>
+  <p class="ct-fine" style="margin:8px 0 0">
+    It is their decision and it stays theirs: they can turn it off or back on
+    at any time, from their team screen, and nothing is deleted either way.
+  </p>
+</div>
+
+<h2 style="margin-top:28px">Photographs</h2>
+<p class="ct-lede">
+  Checked automatically on the way in, and the check fails closed: anything
+  it is not confident about waits here rather than appearing on a page that
+  is public forever.
+</p>
+
+{% for photo in photos %}
+  <div class="ct-row">
+    <img src="{{ photo.image.url }}" alt="" width="64" height="64"
+         style="object-fit:cover;border-radius:6px;flex:0 0 auto">
+    <span class="ct-row-main"><b>{{ photo.caption|default:"No caption" }}</b>
+      <span>{{ photo.uploaded_by.email|default:"Added by an admin" }}
+        &middot; {{ photo.created_at|date:"d M, H:i" }}</span></span>
+    {% if photo.moderation_status == 'approved' %}
+      <span class="ct-tag ct-tag--go">Showing</span>
+    {% elif photo.moderation_status == 'pending' %}
+      <span class="ct-tag ct-tag--wait">Waiting on you</span>
+    {% else %}
+      <span class="ct-tag ct-tag--stop">Rejected</span>
+    {% endif %}
+    <form method="post" style="display:flex;gap:6px">{% csrf_token %}
+      <input type="hidden" name="photo_id" value="{{ photo.pk }}">
+      {% if photo.moderation_status != 'approved' %}
+        <button class="ct-btn" name="decision" value="approved"
+                style="min-height:40px;padding:8px 12px;font-size:13px">Show it</button>
+      {% else %}
+        <button class="ct-btn" name="decision" value="rejected"
+                style="min-height:40px;padding:8px 12px;font-size:13px">Hide it</button>
+      {% endif %}
+      <button class="ct-btn" name="decision" value="drop"
+              style="min-height:40px;padding:8px 12px;font-size:13px;color:var(--ct-red)">Delete</button>
+    </form>
+  </div>
+{% empty %}
+  <div class="ct-empty">No photographs have been added.</div>
+{% endfor %}
+{% endblock %}

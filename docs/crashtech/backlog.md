@@ -5,7 +5,7 @@ Sprints and their status. Spec references are
 and the spec, updated together in the commit that acts on them
 (Rule 14.1).
 
-**Status: C.1 and C.2 live in production, C.3 to C.5 built in dev.** An admin can
+**Status: C.1 and C.2 live in production, C.3 to C.6 built in dev.** An admin can
 create an event, shape it, lay out its timeline, appoint people by email
 before they have accounts, decide applications, and hand out hardware at a
 desk built for a queue. A tech lead can write challenges of three kinds
@@ -14,7 +14,8 @@ checklist that names what is still missing, and sees its own score while
 the standings stay shut. Judges shortlist and grade, the top numbers get
 a spot check, and one gated click publishes the results permanently and
 issues the certificates. **An event can now be run from end to end.**
-206 CrashTech tests, 242 including the 2026 platform's. C.6 is next.
+The event then ends in a permanent public page that assembles itself.
+233 CrashTech tests, 269 including the 2026 platform's. C.7 is next.
 
 ---
 
@@ -27,7 +28,7 @@ issues the certificates. **An event can now be run from end to end.**
 | C.3 | Registration, teams, hardware | Apply, accept, form a team, define the kit, and the kit desk | `DONE (dev), 2026-10-15` |
 | C.4 | Challenges and submitting | Author challenges with deliverables, kickoff, submit, tentative points | `DONE (dev), 2026-10-15` |
 | C.5 | Judging, results, publishing | Shortlist, grade, verify, and the one gated click | `DONE (dev), 2026-10-15` |
-| C.6 | The museum and media | The public permanent page, uploads to GCS, moderation | `TODO` |
+| C.6 | The museum and media | The public permanent page, moderation, consent-computed exhibition | `DONE (dev), 2026-10-15, except GCS` |
 | C.7 | Research | Studies, questionnaires per milestone, consent, data for researchers | `TODO` |
 | C.8 | The public face and the retirement | The public event page, the API surface, and taking `/crashtech/` from the 2026 app | `TODO` |
 
@@ -225,7 +226,7 @@ in, since "3 entries somewhere" is not something anybody can act on.
 
 ---
 
-## SPR-C.6 — The museum and media `TODO`
+## SPR-C.6 — The museum and media `DONE (dev), 2026-10-15, except F-C.6.5`
 
 | Feature | Description | Spec |
 | --- | --- | --- |
@@ -234,7 +235,26 @@ in, since "3 entries somewhere" is not something anybody can act on.
 | F-C.6.3 | Uploads from anyone signed in, downloads by anyone | Rule 9.2 |
 | F-C.6.4 | Moderation through the one named adapter | Rule 9.3, 2.1.2 |
 | F-C.6.5 | **GCS**: dedicated bucket, `django-storages`, resize on upload, size caps | Rule 9.5 |
-| F-C.6.6 | Deleting a row deletes its file, on commit | Rule 9.5 |
+| F-C.6.6 | Deleting a row deletes its file, on commit | Rule 9.5 | DONE — `tests/test_spr_c_6.py` (27), marker `sprc6` |
+
+**F-C.6.5 is built and switched off, which is deliberate rather than
+forgotten.** `crashtech/storage.py` holds the indirection and both user
+upload fields already go through it, with migration 0002 recording the
+callable rather than a backend, so a laptop with no credentials and a
+production server with a bucket run the same code. Turning it on needs
+three things this session cannot do: the `crashtech-media` bucket (Avi's
+billed account), `django-storages[google]` in `requirements.txt`, and
+`CRASHTECH_GCS_BUCKET` in the Render environment. Until then uploads go
+to the application disk, which is fine for a demo and is **not** fine for
+a real event: one event's photographs against a 1 GB disk shared by every
+app on the site. Resize-on-upload and size caps go in with the switch,
+since they are about what reaches the bucket.
+
+**What a screenshot found.** A measured challenge has no file to link, so
+the exhibition rendered a team's best achievement as a heading with
+nothing under it. The number is the achievement, and it is on the page
+now. The four headline figures also stacked one per row on a phone,
+putting four full-width cards between a stranger and the first word.
 
 ---
 

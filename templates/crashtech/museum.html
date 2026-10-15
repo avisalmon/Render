@@ -1,0 +1,125 @@
+{% extends "crashtech/base.html" %}
+{% block title %}{{ hackathon.name }}{% endblock %}
+{% block description %}{{ hackathon.name }}: what was built, who won, and the photographs, kept permanently.{% endblock %}
+{% block screen %}museum{% endblock %}
+{% comment %}
+The one screen in the product written for a stranger (Rule 9.2). No
+account, no nav into the event's working screens, and nothing on it
+assumes the reader knows what CrashTech is. Years later this is the page
+somebody lands on from a link, and what they decide here is whether the
+next one is worth a weekend.
+
+Almost everything assembles itself (Rule 9.1). The exhibition is computed
+from consent on every request (Rule 9.4), so a team withdrawing in three
+years disappears without anybody deleting anything.
+{% endcomment %}
+{% block nav %}<a href="{% url 'crashtech:museum_index' %}">All events</a>{% endblock %}
+{% block milestone %}<span class="ct-milestone">Finished</span>{% endblock %}
+{% block content %}
+
+<h1>{{ hackathon.name }}</h1>
+<p class="ct-lede">
+  {% if hackathon.tagline %}{{ hackathon.tagline }} &middot; {% endif %}
+  {{ hackathon.starts_at|date:"d M Y" }}
+</p>
+
+{% comment %}Numbers first, because they are the thing a stranger can read
+in two seconds and they are all computed, so this block cannot quietly
+disagree with the event it describes.{% endcomment %}
+<div class="ct-numbers">
+  <div class="ct-card" style="margin:0">
+    <b class="ct-mono" style="font-size:30px">{{ numbers.people }}</b>
+    <p class="ct-fine" style="margin:0">people</p></div>
+  <div class="ct-card" style="margin:0">
+    <b class="ct-mono" style="font-size:30px">{{ numbers.teams }}</b>
+    <p class="ct-fine" style="margin:0">teams</p></div>
+  <div class="ct-card" style="margin:0">
+    <b class="ct-mono" style="font-size:30px">{{ numbers.hours }}</b>
+    <p class="ct-fine" style="margin:0">hours</p></div>
+  <div class="ct-card" style="margin:0">
+    <b class="ct-mono" style="font-size:30px">{{ numbers.submissions }}</b>
+    <p class="ct-fine" style="margin:0">things turned in</p></div>
+</div>
+
+{% if highlights %}
+  <div class="ct-card"><p style="margin:0;white-space:pre-wrap">{{ highlights }}</p></div>
+{% endif %}
+
+<h2 style="margin-top:32px">How it finished</h2>
+{% for team, points in standings %}
+  <div class="ct-row">
+    <b class="ct-mono" style="min-width:2.2em;text-align:right;color:var(--ct-dim)">{{ forloop.counter }}</b>
+    <span class="ct-row-main"><b>{{ team.name|default:team.anon_label }}</b>
+      <span>{% for m in team.memberships.all %}{{ m.user.first_name|default:m.user.email }}{% if not forloop.last %} &middot; {% endif %}{% endfor %}</span></span>
+    {% with cert=certificates|default_if_none:None %}{% endwith %}
+    <b class="ct-mono" style="font-size:18px">{{ points }}</b>
+  </div>
+{% empty %}
+  <div class="ct-empty">Nobody scored.</div>
+{% endfor %}
+
+<h2 style="margin-top:32px">What was built</h2>
+{% if exhibition %}
+  <p class="ct-lede">Shown with each team's permission, and they can withdraw it
+    at any time.</p>
+  {% for row in exhibition %}
+    <div class="ct-card">
+      <p class="ct-cap" style="margin-bottom:9px">{{ row.team.name|default:row.team.anon_label }}</p>
+      {% for piece in row.pieces %}
+        <p style="margin:0 0 10px">
+          <b style="font-size:13.5px">{{ piece.challenge.title }}</b><br>
+          {% if piece.result %}
+            <span class="ct-mono" style="color:var(--ct-primary)">{{ piece.result }}</span>{% if piece.files %} &middot; {% endif %}
+          {% endif %}
+          {% for file in piece.files %}
+            {% if file.url %}
+              <a href="{{ file.url }}" target="_blank" rel="noopener">{{ file.deliverable.label }}</a>{% if not forloop.last %} &middot; {% endif %}
+            {% elif file.file %}
+              <a href="{{ file.file.url }}">{{ file.deliverable.label }}</a>{% if not forloop.last %} &middot; {% endif %}
+            {% endif %}
+          {% endfor %}
+        </p>
+      {% endfor %}
+    </div>
+  {% endfor %}
+{% else %}
+  <div class="ct-empty">No team has agreed to show their work here.</div>
+{% endif %}
+
+<h2 style="margin-top:32px">Photographs</h2>
+<p class="ct-lede">
+  The people who were there have the good pictures. Anyone can download
+  these; signing in lets you add one.
+</p>
+
+{% if photos %}
+  <div class="ct-grid">
+    {% for photo in photos %}
+      <figure class="ct-card" style="margin:0;padding:10px">
+        <img src="{{ photo.image.url }}" alt="{{ photo.caption|default:'Photograph from the event' }}"
+             loading="lazy" style="width:100%;height:auto;border-radius:6px;display:block">
+        <figcaption class="ct-fine" style="margin-top:7px">
+          {{ photo.caption }}
+          {% if is_admin and photo.moderation_status != 'approved' %}
+            <span class="ct-tag ct-tag--wait">{{ photo.get_moderation_status_display }}</span>
+          {% endif %}
+        </figcaption>
+      </figure>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="ct-empty">No photographs yet.</div>
+{% endif %}
+
+{% if user.is_authenticated %}
+  <form method="post" enctype="multipart/form-data" class="ct-card" style="margin-top:14px">{% csrf_token %}
+    <label class="ct-field"><span>Add a photograph</span>
+      <input class="ct-input" name="photo" type="file" accept="image/*" required></label>
+    <label class="ct-field"><span>Caption</span>
+      <input class="ct-input" name="caption" maxlength="200"></label>
+    <button class="ct-btn ct-btn--primary" type="submit">Add it</button>
+  </form>
+{% else %}
+  <p class="ct-fine"><a href="{% url 'crashtech:login' %}">Sign in</a> to add a photograph.</p>
+{% endif %}
+{% endblock %}

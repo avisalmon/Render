@@ -27,6 +27,23 @@ on submit (user_journeys.md 2.3).{% endcomment %}
       <button class="ct-btn" name="leave" value="1"
               style="min-height:44px;padding:8px 14px;font-size:13px">Leave</button></form>
   </div>
+
+  {% comment %}Rule 9.4. Theirs to change at any time, in either direction,
+  forever: the exhibition is computed from this on every request, so turning
+  it off removes the work from display and deletes nothing.{% endcomment %}
+  <form method="post" action="{% url 'crashtech:consent' hackathon.slug %}" class="ct-card">{% csrf_token %}
+    <p class="ct-cap">Showing your work afterwards</p>
+    {% if my_team.exhibition_consent %}
+      <p style="margin:0 0 10px">Your work will appear in this event's permanent
+        public page once the results are published.</p>
+      <button class="ct-btn" name="on" value="">Do not show our work</button>
+    {% else %}
+      <p style="margin:0 0 10px">Your work will not be shown publicly. You can
+        change this at any time, including years later, and nothing is deleted
+        either way.</p>
+      <button class="ct-btn ct-btn--primary" name="on" value="1">Show our work</button>
+    {% endif %}
+  </form>
 {% elif accepted %}
   <form method="post" class="ct-card">{% csrf_token %}
     <p class="ct-cap">Start a team</p>

@@ -1,0 +1,19 @@
+{% extends "crashtech/base.html" %}
+{% block title %}Past events{% endblock %}
+{% block description %}Every CrashTech event that has finished, and what was built at it.{% endblock %}
+{% block screen %}museum-index{% endblock %}
+{% block nav %}<a href="{% url 'crashtech:home' %}">CrashTech</a>{% endblock %}
+{% block content %}
+<h1>Past events</h1>
+<p class="ct-lede">Each one keeps its own page, permanently.</p>
+
+{% for event in events %}
+  <a class="ct-row" href="{% url 'crashtech:museum' event.slug %}">
+    <span class="ct-row-main"><b>{{ event.name }}</b>
+      <span>{{ event.starts_at|date:"d M Y" }}{% if event.tagline %} &middot; {{ event.tagline }}{% endif %}</span></span>
+    <span class="ct-tag ct-tag--go">Open</span>
+  </a>
+{% empty %}
+  <div class="ct-empty">No event has finished yet.</div>
+{% endfor %}
+{% endblock %}

@@ -59,6 +59,16 @@ urlpatterns = [
     path("e/<slug:slug>/judging/entry/<int:pk>/", views.submission_grade, name="grade"),
     path("e/<slug:slug>/verify/", views.event_verify, name="verify"),
     path("e/<slug:slug>/publish/", views.event_publish, name="publish"),
+
+    # Rule 9.2: reading the museum needs no account, which is why it is not
+    # behind @signed_in and why it is worth saying so here too.
+    path("e/<slug:slug>/museum/", views.event_museum, name="museum"),
+    path("e/<slug:slug>/museum/edit/", views.event_museum_edit, name="museum_edit"),
+    path("e/<slug:slug>/consent/", views.team_consent, name="consent"),
+]
+
+urlpatterns += [
+    path("museum/", views.museum_index, name="museum_index"),
 ]
 
 # Public and permanent, with no account behind it (Rule 8.6): the person

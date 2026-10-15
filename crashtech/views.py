@@ -16,14 +16,16 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from . import judging, kit, mail, readiness, roles, scoring, submissions, teams
+from . import (
+    judging, kit, mail, museum, readiness, roles, scoring, submissions, teams,
+)
 from .decorators import signed_in
 from django.db import models
 
 from .models import (
     Certificate, Challenge, Deliverable, EventRole, Hackathon, KitIssue,
-    KitItem, Milestone, Registration, RoleInvitation, Submission,
-    SubmissionFile, Team, UploadToken,
+    KitItem, Milestone, MuseumPhoto, Registration, RoleInvitation,
+    Submission, SubmissionFile, Team, UploadToken,
 )
 from .next_actions import next_actions_for
 from .roles import can, roles_for
@@ -1190,4 +1192,141 @@ def certificate(request, cert_id):
         "points": row.team.submissions.aggregate(
             total=models.Sum("final_points"),
         )["total"] or 0,
+    })
+
+
+# ----------------------------------------------------------------- museum
+
+
+def event_museum(request, slug):
+    """**Public, permanent, and the one screen a stranger meets first.**
+
+    No `@signed_in`, deliberately (Rule 9.2): this is where somebody who
+    has never heard of CrashTech lands years later and decides whether the
+    next one is worth a weekend. Signing in buys exactly one thing, the
+    ability to add a photo.
+
+    Almost all of it assembles itself (Rule 9.1). The exhibition is
+    computed from consent on every request, so a team withdrawing it in
+    three years disappears from the page without anybody deleting a row.
+    """
+    hackathon = _event(slug)
+    if not museum.is_open(hackathon):
+        # Not a 404: the event exists and is public, it just has not
+        # finished. Saying so is more useful than pretending it is not
+        # there.
+        return render(request, "crashtech/museum_closed.html", {
+            "hackathon": hackathon,
+        }, status=404 if hackathon.status == Hackathon.SETUP else 200)
+
+    page = museum.page_for(hackathon)
+    is_admin = can(request.user, hackathon, "event_settings")
+
+    if request.method == "POST":
+        if not request.user.is_authenticated:
+            messages.error(request, "Sign in to add a photo.")
+            return redirect("crashtech:login")
+        upload = request.FILES.get("photo")
+        if upload:
+            row = museum.add_photo(
+                hackathon, upload, request.POST.get("caption"), by=request.user,
+            )
+            if row.moderation_status == MuseumPhoto.APPROVED:
+                messages.success(request, "Added. Thank you.")
+            elif row.moderation_status == MuseumPhoto.PENDING:
+                # The check failed closed. Saying "pending" rather than
+                # "added" is the honest version and stops somebody
+                # uploading it four more times.
+                messages.success(request, "Added, and waiting on a check. It will appear shortly.")
+            else:
+                messages.error(request, "That one did not pass the image check.")
+        return redirect("crashtech:museum", slug=hackathon.slug)
+
+    return render(request, "crashtech/museum.html", {
+        "hackathon": hackathon,
+        "page": page,
+        "highlights": page.highlights if page else "",
+        "numbers": museum.numbers(hackathon),
+        "standings": scoring.leaderboard(hackathon),
+        "exhibition": museum.exhibition(hackathon),
+        "photos": museum.photos(hackathon, for_admin=is_admin),
+        "is_admin": is_admin,
+        "certificates": {
+            c.team_id: c for c in hackathon.certificates.all()
+        },
+    })
+
+
+@signed_in
+def event_museum_edit(request, slug):
+    """**Planning / admin.** The paragraph, and the moderation queue.
+
+    The only two things a human adds to a museum. Everything else on that
+    page computed itself.
+    """
+    hackathon = _event(slug)
+    _require(request.user, hackathon, "event_settings")
+    page = museum.page_for(hackathon, create=True)
+
+    if request.method == "POST":
+        if request.POST.get("photo_id"):
+            photo = get_object_or_404(
+                MuseumPhoto, pk=request.POST["photo_id"], museum_page=page,
+            )
+            decision = request.POST.get("decision")
+            if decision == "drop":
+                # Deleting the row deletes its file (Rule 9.5), which is
+                # the whole reason this is not a status change.
+                photo.image.delete(save=False)
+                photo.delete()
+                messages.success(request, "Removed, file and all.")
+            elif decision in (MuseumPhoto.APPROVED, MuseumPhoto.REJECTED):
+                photo.moderation_status = decision
+                photo.save(update_fields=["moderation_status"])
+                messages.success(request, f"Photo {decision}.")
+        else:
+            page.highlights = (request.POST.get("highlights") or "").strip()
+            page.published = True
+            page.published_at = page.published_at or timezone.now()
+            page.save(update_fields=["highlights", "published", "published_at"])
+            messages.success(request, "Saved.")
+        return redirect("crashtech:museum_edit", slug=hackathon.slug)
+
+    return render(request, "crashtech/museum_edit.html", {
+        "hackathon": hackathon, "can_manage": True, "page": page,
+        "photos": page.photos.all(),
+        "open": museum.is_open(hackathon),
+        "consenting": hackathon.teams.filter(exhibition_consent=True).count(),
+        "teams": hackathon.teams.count(),
+    })
+
+
+@signed_in
+def team_consent(request, slug):
+    """**Planning / participant.** Rule 9.4, in both directions, forever.
+
+    One boolean. Withdrawing removes the work from the exhibition on the
+    next request and deletes nothing, so changing it back is equally
+    cheap. That is the whole reason the exhibition is computed rather than
+    copied.
+    """
+    hackathon = _event(slug)
+    team = teams.team_for(request.user, hackathon)
+    if team is None:
+        raise PermissionDenied
+    if request.method == "POST":
+        museum.set_consent(team, bool(request.POST.get("on")))
+        messages.success(
+            request,
+            "Your work will be shown in the museum."
+            if team.exhibition_consent
+            else "Your work is no longer shown. Nothing was deleted, and you can turn it back on.",
+        )
+    return redirect("crashtech:teams", slug=hackathon.slug)
+
+
+def museum_index(request):
+    """**Public.** Every event that finished, newest first."""
+    return render(request, "crashtech/museum_index.html", {
+        "events": museum.museums(),
     })
