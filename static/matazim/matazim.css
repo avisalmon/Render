@@ -3102,3 +3102,22 @@ a.mz-path-title:hover { color: var(--mz-link); }
 }
 .mz-leaderlist-who { display: grid; gap: 2px; }
 .mz-tile-role { border-color: var(--mz-action); color: var(--mz-action-text, var(--mz-link)); }
+
+.mz-home-bottom { margin: 40px 0 56px; }
+
+/* ------------------------------------------ sign in and sign up (Avi, 2026-10-15)
+ * Google is the big, easy road; the password form sits under "other ways".
+ */
+.mz-auth-why { text-align: center; color: var(--mz-body); margin: 10px 0 18px; font-size: .95rem; }
+.mz-auth-other { margin-top: 6px; border-top: 1px solid var(--mz-line); padding-top: 6px; }
+.mz-auth-other summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mz-muted);
+  font-size: .9rem;
+}
+.mz-auth-other summary:hover { color: var(--mz-ink); }
+.mz-auth-other[open] summary { margin-bottom: 8px; }

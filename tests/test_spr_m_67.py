@@ -92,10 +92,15 @@ def _main(html):
     return html[start:html.index("</main>", start) if "</main>" in html[start:] else len(html)]
 
 
-def test_a_visitor_sees_one_button_and_no_how_it_works(client, db):
-    home = _main(client.get("/matazim/").content.decode())
-    assert home.count("mz-btn-primary") == 1
-    assert "איך זה עובד" not in home and "אני רוצה ללמוד" not in home
+def test_a_visitor_sees_marketing_and_one_big_way_in(client, db):
+    """Avi, 2026-10-15: logged out, the site is marketing: explanations, and a big
+    join button to start. The only reader the "no how it works" rule leaves out."""
+    html = client.get("/matazim/").content.decode()
+    assert "איך מצטרפים" in html and "מבחן הכניסה" in html and "מוביל" in html
+    joins = re.findall(r'class="mz-btn mz-btn-primary mz-btn-lg" href="([^"]+)"', html)
+    assert len(joins) >= 2                                   # at the top and again at the end
+    assert all("/matazim/register/" in j and "/matazim/test/" in j for j in joins)
+    assert "אני רוצה ללמוד" not in html
 
 
 def test_before_the_test_there_is_one_button_and_a_nav_of_one(client, world):
@@ -278,3 +283,29 @@ def test_every_tile_opens_for_a_manager_and_a_leader(client, world):
                      "/matazim/classes/", "/matazim/updates/"):
             status = client.get(tile, follow=True).status_code
             assert status == 200, (who.email, tile, status)
+
+
+# ------------------------------------------------------- sign in and sign up
+
+
+@pytest.mark.parametrize("url", ["/matazim/login/", "/matazim/register/"])
+def test_google_comes_first_and_the_password_form_is_folded_away(client, db, url):
+    """Avi, 2026-10-15: Google prioritised, the password a bit hidden, so that the
+    easy road is the one people take and the other is one click away."""
+    html = client.get(url).content.decode()
+    google = html.index("matazim/auth/google/")
+    form = html.index("<form method=\"post\"")
+    assert google < form
+    assert "mz-btn-lg" in html[google - 120:google + 80]          # the big one
+
+    details = html.index('<details class="mz-auth-other"')
+    assert details < form < html.index("</details>")             # the form is inside it
+    assert "open" not in html[details:html.index(">", details)]    # and it starts closed
+
+
+def test_a_failed_attempt_opens_the_form_so_an_error_is_never_hidden(client, db):
+    resp = client.post("/matazim/login/", {"email": "nobody@example.com", "password": "wrong-password"})
+    html = resp.content.decode()
+    details = html.index('<details class="mz-auth-other"')
+    assert "open" in html[details:html.index(">", details)]
+    assert "nobody@example.com" in html

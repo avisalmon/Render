@@ -298,6 +298,9 @@ def _sign_in(page, live_server):
         welcome.click()
         page.wait_for_timeout(400)
 
+    # Avi, 2026-10-15: the password form is folded under "other ways", so a
+    # person (and this test) opens it first.
+    page.evaluate("document.querySelectorAll('details.mz-auth-other').forEach(d => d.open = true)")
     page.fill('input[name="email"]', LEADER_EMAIL)
     page.fill('input[name="password"]', LEADER_PASSWORD)
     page.click('form:has(input[name="password"]) button[type="submit"]')
@@ -395,6 +398,9 @@ def test_the_program_manager_screens_fit_a_phone(phone_page, live_server, db):
     if w.count():
         w.click()
         page.wait_for_timeout(350)
+    # Avi, 2026-10-15: the password form is folded under "other ways", so a
+    # person (and this test) opens it first.
+    page.evaluate("document.querySelectorAll('details.mz-auth-other').forEach(d => d.open = true)")
     page.fill('input[name="email"]', email)
     page.fill('input[name="password"]', LEADER_PASSWORD)
     page.click('form:has(input[name="password"]) button[type="submit"]')

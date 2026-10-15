@@ -274,6 +274,12 @@ def home(request):
         return redirect("matazim:join_leader")
 
     ctx = {"stage": stage, "hero": hero_state(request)}
+    if not request.user.is_authenticated:
+        # Avi, 2026-10-15: logged out is marketing, with the explanations.
+        from .content import public_stages
+        from .public import counters, published_work
+
+        ctx.update(stages=public_stages(), counters=counters(), showcase=published_work())
     if stage == MEMBER or ctx["hero"]["kind"] in ("leader", "staff"):
         student = _student_of(request.user)
         ctx["certified"] = bool(student and student.status == "certified")

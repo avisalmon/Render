@@ -17,6 +17,134 @@
 {% block title %}מטצים · מנהיגות טכנולוגית צעירה{% endblock %}
 
 {% block content %}
+{% if not user.is_authenticated %}
+{% comment %}
+  Avi, 2026-10-15: logged out, the site is marketing: explanations, and one big
+  way in. This is the one reader the "no how it works" rule does not apply to;
+  everybody signed in gets the minimal, action-only pages below.
+{% endcomment %}
+<section class="mz-hero">
+  <span class="mz-blob mz-blob-a"></span>
+  <span class="mz-blob mz-blob-b"></span>
+  <div class="mz-container mz-hero-inner">
+    <div>
+      <h1 class="mz-hero-title">מטצים</h1>
+      <p class="mz-hero-sub">מנהיגות טכנולוגית צעירה</p>
+      <p class="mz-hero-text">
+        תוכנית של רשת עתיד בשיתוף מתנדבי אינטל. תלמידי חטיבת הביניים לומדים
+        טכנולוגיה, יוצרים תוצרים אמיתיים, ובסוף מדריכים תלמידים צעירים מהם
+        בבית הספר. לומדים, יוצרים, מדריכים ומשפיעים.
+      </p>
+      <div class="mz-hero-cta">
+        <a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:register' %}?next={% url 'matazim:entrance_test' %}">אני רוצה להצטרף</a>
+        <a class="mz-linkbtn" href="{% url 'matazim:login' %}">כבר יש לי חשבון</a>
+      </div>
+    </div>
+    <div class="mz-hero-media mz-photo"
+         style="background-image:url('/static/matazim/img/hero.webp')"
+         role="img" aria-label="תלמידי מטצים סביב מדפסת תלת-ממד ומחשב נייד"></div>
+  </div>
+</section>
+
+<div class="mz-container">
+  <section class="mz-orient" aria-labelledby="mzOrient">
+    <h2 id="mzOrient">איך מצטרפים</h2>
+    <ol class="mz-orient-steps">
+      <li class="mz-orient-step">
+        <span class="mz-orient-n" aria-hidden="true">1</span>
+        <span class="mz-orient-body">
+          <span class="mz-orient-title">פותחים חשבון ועוברים את מבחן הכניסה</span>
+          <span class="mz-orient-text">מבחן קצר בטינקרקאד: בונים אובייקט ומעלים אותו. צוות התוכנית מאשר.</span>
+        </span>
+      </li>
+      <li class="mz-orient-step">
+        <span class="mz-orient-n" aria-hidden="true">2</span>
+        <span class="mz-orient-body">
+          <span class="mz-orient-title">מצטרפים למוביל בבית הספר</span>
+          <span class="mz-orient-text">עם קוד שקיבלתם, או בבחירה מרשימת המובילים לפי בית ספר.</span>
+        </span>
+      </li>
+      <li class="mz-orient-step">
+        <span class="mz-orient-n" aria-hidden="true">3</span>
+        <span class="mz-orient-body">
+          <span class="mz-orient-title">לומדים ויוצרים</span>
+          <span class="mz-orient-text">הדרכות ב-Scratch ובתלת-ממד. בסוף כל הדרכה מגישים תוצר, והמוביל מאשר אותו ונותן משוב.</span>
+        </span>
+      </li>
+      <li class="mz-orient-step">
+        <span class="mz-orient-n" aria-hidden="true">4</span>
+        <span class="mz-orient-body">
+          <span class="mz-orient-title">מדריכים ומשפיעים</span>
+          <span class="mz-orient-text">מקבלים תעודה, ואז מעבירים פעילויות לתלמידים צעירים בבית הספר, וחוגגים ביום השיא.</span>
+        </span>
+      </li>
+    </ol>
+    <p class="mz-home-do">
+      <a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:register' %}?next={% url 'matazim:entrance_test' %}">להתחיל עכשיו</a>
+    </p>
+  </section>
+
+  <section class="mz-how" aria-labelledby="mzHow">
+    <h2 id="mzHow">לאן זה מוביל</h2>
+    <div class="mz-stages">
+      {% for stage in stages %}
+        {% if not forloop.first %}
+          <svg class="mz-stage-sep" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18 9 12l6-6"/></svg>
+        {% endif %}
+        <div class="mz-stage">
+          <span class="mz-stage-icon" data-tone="{{ stage.tone }}" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
+          </span>
+          <span>
+            <span class="mz-stage-title">{{ stage.title }}</span>
+            <span class="mz-stage-text">{{ stage.text }}</span>
+          </span>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  {% if counters %}
+    <section class="mz-band mz-band-gradient" aria-label="התוכנית במספרים">
+      <ul class="mz-figures">
+        {% for row in counters %}
+          <li><strong>{{ row.figure }}</strong><span>{{ row.label }}</span></li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  {% if showcase %}
+    <section class="mz-showcase" aria-labelledby="mzShowcase">
+      <h2 id="mzShowcase">תוצרים נבחרים</h2>
+      <p class="mz-muted">דברים שמטצים בתוכנית בנו, ובחרו לשתף.</p>
+      <ul class="mz-works">
+        {% for work in showcase %}
+          <li class="mz-work-card">
+            <h3>{{ work.title }}</h3>
+            {% if work.about %}<p>{{ work.about|truncatewords:28 }}</p>{% endif %}
+            {% if work.school %}<p class="mz-muted">{{ work.school }}</p>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  <section class="mz-partners" aria-labelledby="mzPartners">
+    <h2 id="mzPartners">שותפים מרכזיים לעשייה</h2>
+    <div class="mz-partner-row">
+      <img class="mz-logo-wide" src="{% static 'matazim/img/partners/atid.svg' %}" alt="רשת עתיד">
+      <img class="mz-logo-tall" src="{% static 'matazim/img/partners/hemed_logo.png' %}" alt="חמ״ד, חינוך בונה עם">
+      <span class="mz-partner-more">וגופים נוספים נפלאים</span>
+    </div>
+  </section>
+
+  <p class="mz-home-do mz-home-bottom">
+    <a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:register' %}?next={% url 'matazim:entrance_test' %}">אני רוצה להצטרף</a>
+  </p>
+</div>
+
+{% else %}
 <div class="mz-container mz-home">
 
   {% if stage == 'member' or hero.kind == 'leader' or hero.kind == 'staff' %}
@@ -44,14 +172,8 @@
     <h1 class="mz-home-title">מבחן הכניסה</h1>
     <p class="mz-home-do"><a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:entrance_test' %}">להתחיל</a></p>
 
-  {% else %}
-    <h1 class="mz-home-title">מטצים</h1>
-    <p class="mz-home-lead">מנהיגות טכנולוגית צעירה</p>
-    <p class="mz-home-do">
-      <a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:register' %}?next={% url 'matazim:entrance_test' %}">להתחיל</a>
-      <a class="mz-linkbtn" href="{% url 'matazim:login' %}">כבר יש לי חשבון</a>
-    </p>
   {% endif %}
 
 </div>
+{% endif %}
 {% endblock %}

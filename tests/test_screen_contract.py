@@ -973,6 +973,9 @@ def _open(browser, live_server, email, path):
     if welcome.count():
         welcome.click()
         page.wait_for_timeout(250)
+    # Avi, 2026-10-15: the password form is folded under "other ways", so a
+    # person (and this test) opens it first.
+    page.evaluate("document.querySelectorAll('details.mz-auth-other').forEach(d => d.open = true)")
     page.fill('input[name="email"]', email)
     page.fill('input[name="password"]', PASSWORD)
     page.click('form:has(input[name="password"]) button[type="submit"]')
