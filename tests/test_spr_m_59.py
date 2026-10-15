@@ -334,7 +334,8 @@ def _published(slug):
 
 def test_an_account_with_no_leader_opens_an_open_course(client, db):
     _published("python")
-    client.force_login(_member())
+    # REQ-M.189: an approved person with no leader still opens an open course.
+    client.force_login(_member(passed=True))
     response = client.get(reverse("matazim:learn_course", args=["python"]))
     assert response.status_code == 200
 

@@ -179,7 +179,9 @@ def test_a_member_with_no_leader_is_told_what_opens_it(client, db):
     from matazim.models import MemberProfile, Student
 
     user = _user("loose@example.com", "איתי")
-    MemberProfile.objects.update_or_create(user=user, defaults={"birth_year": 2012})
+    # REQ-M.189: approved, so the practicum page is open to them at all.
+    MemberProfile.objects.update_or_create(user=user, defaults={
+        "birth_year": 2012, "entrance_test_passed_at": timezone.now()})
     assert not Student.objects.filter(user=user).exists()
 
     client.force_login(user)

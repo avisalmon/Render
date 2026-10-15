@@ -323,7 +323,7 @@ img { max-width: 100%; height: auto; display: block; }
   min-height: 76px;
 }
 .mz-brand { display: flex; flex-direction: column; gap: 2px; flex: none; }
-.mz-brand img { height: 34px; width: auto; }
+.mz-brand img { height: 46px; width: auto; }
 .mz-brand-tag {
   /* .72rem measured out at 11.5px, under the 12px floor where a face this
      small stops being comfortably readable, and it sits on every page of the
@@ -3043,3 +3043,11 @@ a.mz-path-title:hover { color: var(--mz-link); }
   padding-bottom: 4px;
 }
 .mz-update h2 { margin-top: 0; }
+
+/* The logo's burgundy wordmark has no contrast on the night header, so at night
+   it sits on a light chip, the way Atid's own marks do on dark grounds. */
+:root[data-theme="dark"] .mz-brand img {
+  background: #fff;
+  border-radius: 10px;
+  padding: 4px 10px;
+}

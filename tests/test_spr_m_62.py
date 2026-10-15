@@ -105,7 +105,7 @@ def test_someone_with_no_leader_is_not_blocked(client, db, monkeypatch):
                                     password=PASSWORD)
     MemberProfile.objects.update_or_create(user=user, defaults={
         "birth_year": timezone.now().year - 14, "guardian_consent_at": timezone.now(),
-        "welcome_accepted_at": timezone.now()})
+        "welcome_accepted_at": timezone.now(), "entrance_test_passed_at": timezone.now()})
     course = _course()
     client.force_login(user)
     _watch_everything(user, course)

@@ -25,6 +25,7 @@ from django.views.decorators.http import require_POST
 from . import open_class as oc
 from .access import open_class_for_code, visible_open_classes, visible_open_members
 from .consent import consent_blocker, needs_guardian_consent
+from .gate import entrance_gated
 from .models import Request
 from .views import member_profile, shell
 
@@ -49,6 +50,7 @@ def _own_class(request, pk):
 
 
 @login_required(login_url=LOGIN_URL)
+@entrance_gated
 def open_new(request):
     """REQ-M.167 — one field, the terms ticked, and a class exists.
 
@@ -80,6 +82,7 @@ def open_new(request):
 
 
 @login_required(login_url=LOGIN_URL)
+@entrance_gated
 def open_class_page(request, pk):
     """One page, two readers: the owner and a member (REQ-M.175).
 
@@ -127,6 +130,7 @@ def open_class_page(request, pk):
 
 
 @login_required(login_url=LOGIN_URL)
+@entrance_gated
 def open_class_qr(request, pk):
     """The invite as an image, for the owner and nobody else.
 
@@ -151,6 +155,7 @@ def open_class_qr(request, pk):
 
 @login_required(login_url=LOGIN_URL)
 @require_POST
+@entrance_gated
 def open_leave(request, pk):
     """REQ-M.170 — a member leaves at any time and the owner stops seeing them.
 
@@ -165,6 +170,7 @@ def open_leave(request, pk):
 
 @login_required(login_url=LOGIN_URL)
 @require_POST
+@entrance_gated
 def open_report(request, pk):
     """REQ-M.174 — anyone in or looking at a class can report it.
 
@@ -192,6 +198,7 @@ def _file_report(request, cls):
 # --- Joining --------------------------------------------------------------------
 
 
+@entrance_gated
 def open_join(request, code):
     """REQ-M.168, REQ-M.170 — the page a class link or QR opens.
 

@@ -41,6 +41,9 @@ def _member(email="kid@example.com", name="יובל"):
         user=user,
         defaults={
             "welcome_accepted_at": timezone.now(),
+            # REQ-M.189 (Avi, 2026-10-15): the main site waits for an approved
+            # entrance product, open classes included, so these are approved people.
+            "entrance_test_passed_at": timezone.now(),
             "birth_year": 2011,
             "guardian_name": "רונית כהן",
             "guardian_email": "parent@example.com",

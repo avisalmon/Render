@@ -106,14 +106,23 @@ def test_root_is_never_gated(client, world):
     assert client.get("/matazim/learn/scratch/").status_code == 200
 
 
-def test_the_open_door_stays_open(client, world):
-    """Nobody to answer to: SPR-M.59's separate promise (Q28)."""
+def test_the_open_door_is_gated_too_until_the_team_approves(client, world):
+    """Q28, answered by Avi 2026-10-15: "Litala's definition is priority".
+
+    Nobody to answer to is no exemption. SPR-M.59's open learning and SPR-M.60's
+    open classes wait for the same approval as everything else.
+    """
     from matazim.models import MemberProfile
 
     user = _user("open")
     MemberProfile.objects.update_or_create(user=user, defaults=world["ready"])
     client.force_login(user)
+    for url in ("/matazim/learn/scratch/", "/matazim/classes/", "/matazim/classes/open/new/"):
+        assert client.get(url)["Location"] == "/matazim/test/?gate=1", url
+
+    MemberProfile.objects.filter(user=user).update(entrance_test_passed_at=timezone.now())
     assert client.get("/matazim/learn/scratch/").status_code == 200
+    assert client.get("/matazim/classes/").status_code == 200
 
 
 def test_what_a_gated_person_needs_to_get_through_stays_reachable(client, world):

@@ -8,17 +8,12 @@ away so that anyone joining by a leader's code is attached at once. Avi
 approved the request anyway, so it is built: the gate is back, and it is
 approved-by-a-person (REQ-M.182), not merely measured.
 
-**Who it applies to.** A programme participant: someone who has a leader, or has
-asked for one. They are in the programme, so the programme's main site waits for
-their entrance product to be approved. Not a leader, a program manager or root:
-the test measures a teenager's commitment and none of them is one.
-
-**Who it does not apply to.** Someone with no leader and no request out: the open
-door of SPR-M.59 and the open classes of SPR-M.60 are a separate promise Avi made
-on 2026-10-12, that anyone who registers can learn the open basics, and nothing in
-Litala's request says to take that back. She asked about "הרשמה לתכנית", the
-programme's registration. If she meant the open door too, `applies()` is the one
-function to widen (spec Q28).
+**Who it applies to.** Everyone who signs in as a learner: anyone who is not a
+leader, a candidate, a program manager or root. Avi, 2026-10-15, on Q28: "Litala's
+definition is priority". She wrote that only someone who passed the screening test
+can enter the main site, so there is no exemption for someone with no leader. The
+open door of SPR-M.59 and the open classes of SPR-M.60 close with it: they were
+Avi's own idea of 2026-10-12, and her request is the later and the client's.
 
 **What stays open to them.** The front pages, the entrance test itself, the
 annual path, their own path (which says what is next), the bell and their own
@@ -31,7 +26,6 @@ from functools import wraps
 from django.shortcuts import redirect
 
 from .access import candidate_of, is_program_manager, leader_of
-from .models import Student
 
 
 def applies(user):
@@ -42,10 +36,6 @@ def applies(user):
         return False
     if leader_of(user) or candidate_of(user):
         return False
-
-    student = Student.objects.filter(user=user).only("leader_id", "pending_leader_id").first()
-    if student is None or (student.leader_id is None and student.pending_leader_id is None):
-        return False  # the open door: nobody to answer to, and a separate promise
 
     from .views import member_profile
 

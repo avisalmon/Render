@@ -29,6 +29,7 @@ from .access import (
 )
 from .certification import certify, eligibility, eligibility_for_many, may_certify, revoke
 from .content import REQUIRED_COURSE_SLUGS
+from .gate import entrance_gated
 from .models import Student, StudyClass
 from .progress import cohort_progress, track_summary
 from .views import shell
@@ -308,6 +309,7 @@ def leader_classes(request):
 
 
 @login_required(login_url=LOGIN_URL)
+@entrance_gated
 def classes(request):
     """REQ-M.23, and Q14 defaulted: offered, never required. REQ-M.175: the hub.
 

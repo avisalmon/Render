@@ -4840,10 +4840,10 @@ approved the request over it. Worth knowing about the loop: the assessment is
 advice written from the spec as it stood, and an approval is the human reading
 the request.
 
-**Built.** `matazim/gate.py`. The gate applies to a participant: someone with a
-leader or a request out. It does not apply to a leader, a candidate, a program
-manager or root, nor to the open door (no leader, no request), which is Q28.
-`tests/test_spr_m_66.py`: 16 tests, including an end-to-end walk of turned back,
-measured (still turned back), approved, let in.
+**Built.** `matazim/gate.py`. Avi settled Q28 on 2026-10-15 ("Litala's
+definition is priority"), so the gate has no exemption: it applies to everyone
+signed in as a learner, and the open door and open classes of SPR-M.59 and M.60
+are closed until the person is approved. `tests/test_spr_m_66.py`, including an
+end-to-end walk of turned back, measured (still turned back), approved, let in.
 
-**Needs Avi.** Q28, and whether she meant the open door too.
+**Settled.** Q28, by Avi: hers is the definition.
