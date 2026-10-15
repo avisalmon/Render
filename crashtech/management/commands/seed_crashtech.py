@@ -135,8 +135,25 @@ class Command(BaseCommand):
     help = "Create one clearly-labelled demo CrashTech event, if it is not already there."
 
     def handle(self, *args, **options):
-        if Hackathon.objects.filter(slug=SLUG).exists():
-            self.stdout.write("seed_crashtech: demo event already exists, left alone")
+        existing = Hackathon.objects.filter(slug=SLUG).first()
+        if existing is not None:
+            # The event is already there, so the event is left alone. What
+            # this does do is add a part that did not exist when it was
+            # first seeded, and only if it is still missing.
+            #
+            # That is the same shape as seed_blog: add what is absent,
+            # never touch what is present. The demo event was first seeded
+            # in C.1 with no challenges at all, because C.4 had not been
+            # written yet, and without them the demo stops at the first
+            # interesting step: going live reveals nothing.
+            added = self._add_missing_challenges(existing)
+            if added:
+                self.stdout.write(
+                    f"seed_crashtech: demo event already exists; added "
+                    f"{added} missing challenges, sealed"
+                )
+            else:
+                self.stdout.write("seed_crashtech: demo event already exists, left alone")
             return
 
         now = timezone.now()
@@ -171,19 +188,7 @@ class Command(BaseCommand):
                 published=True, order=order,
             )
 
-        for order, spec in enumerate(CHALLENGES):
-            deliverables = spec.pop("deliverables")
-            challenge = Challenge.objects.create(
-                hackathon=event, order=order, visible=False, **spec,
-            )
-            for position, (label, kind, purpose, required, help_text) in enumerate(deliverables):
-                Deliverable.objects.create(
-                    challenge=challenge, label=label, kind=kind, purpose=purpose,
-                    required=required, help_text=help_text, order=position,
-                )
-            # Put it back, so running this twice in one process is the same
-            # as running it once.
-            spec["deliverables"] = deliverables
+        self._add_missing_challenges(event)
 
         ScheduleItem.objects.create(
             hackathon=event, title="Kickoff briefing", order=0,
@@ -198,3 +203,33 @@ class Command(BaseCommand):
             f"({event.milestones.count()} milestones, {event.kit_items.count()} kit items, "
             f"{event.challenges.count()} challenges, all still sealed)"
         )
+
+
+    def _add_missing_challenges(self, event):
+        """Add any seeded challenge this event does not already have.
+
+        Matched on title, so an event that has them keeps exactly what it
+        has, including anything a tech lead has since edited. Returns how
+        many were added.
+
+        Seeded `visible=False` whatever the event's status, like every
+        challenge everywhere: kickoff is the only thing that reveals one
+        (Rule 7.1), and a seed that published a challenge into a live
+        event would be the worst possible bug in this product.
+        """
+        added = 0
+        for order, spec in enumerate(CHALLENGES):
+            fields = dict(spec)
+            deliverables = fields.pop("deliverables")
+            if event.challenges.filter(title=fields["title"]).exists():
+                continue
+            challenge = Challenge.objects.create(
+                hackathon=event, order=order, visible=False, **fields,
+            )
+            for position, (label, kind, purpose, required, help_text) in enumerate(deliverables):
+                Deliverable.objects.create(
+                    challenge=challenge, label=label, kind=kind, purpose=purpose,
+                    required=required, help_text=help_text, order=position,
+                )
+            added += 1
+        return added

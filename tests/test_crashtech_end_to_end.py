@@ -313,3 +313,51 @@ def test_the_seeded_demo_event_can_be_driven_forward(client):
     # Exactly one thing stands between the seed and a running event, and
     # it is the one the guide asks him to do first.
     assert blockers == ["No judges assigned"]
+
+
+def test_the_seed_adds_challenges_to_an_event_it_already_created():
+    """Production already has the demo event, seeded in C.1 before C.4
+    existed, so it has no challenges at all.
+
+    A seed that stops at "already exists" would never give it any, and the
+    demo would stop at its first interesting step: going live reveals
+    nothing. So the seed adds what is absent and touches nothing that is
+    present, the same shape seed_blog uses.
+    """
+    from django.core.management import call_command
+
+    call_command("seed_crashtech")
+    event = Hackathon.objects.get(slug="demo-vlsi")
+
+    # Put it back in the state production is actually in.
+    event.challenges.all().delete()
+    assert event.challenges.count() == 0
+
+    call_command("seed_crashtech")
+    assert event.challenges.count() == 3
+    # Sealed, whatever the event's status. A seed that published a
+    # challenge into a live event would be the worst bug in this product.
+    assert event.challenges.filter(visible=True).count() == 0
+
+    # And the next deploy changes nothing.
+    first = sorted(event.challenges.values_list("pk", flat=True))
+    call_command("seed_crashtech")
+    assert sorted(event.challenges.values_list("pk", flat=True)) == first
+
+
+def test_the_seed_never_overwrites_a_challenge_somebody_has_edited():
+    """Matched on title, so a tech lead's edits survive every deploy."""
+    from django.core.management import call_command
+
+    call_command("seed_crashtech")
+    event = Hackathon.objects.get(slug="demo-vlsi")
+    challenge = event.challenges.first()
+    challenge.brief = "Rewritten by the tech lead."
+    challenge.points = 999
+    challenge.save()
+
+    call_command("seed_crashtech")
+    challenge.refresh_from_db()
+    assert challenge.brief == "Rewritten by the tech lead."
+    assert challenge.points == 999
+    assert event.challenges.count() == 3
