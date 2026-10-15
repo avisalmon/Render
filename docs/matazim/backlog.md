@@ -4763,6 +4763,14 @@ stored, that a returned hand-in still counts (Q27), and that someone with no
 leader is not blocked (Q25). Perturbed: with the gate disabled four of them
 fail.
 
+**Amended 2026-10-15, Q27 (Avi: "must be approved by the leader").** The first
+build opened the certificate on any hand-in. It now opens only on the leader's
+approval: `handin.handin_state` returns the furthest state (approved, waiting,
+returned, none) and `needs_handin` is true until it is approved. The course page
+says which state the product is in. `tests/test_spr_m_62.py` has the two states
+that must not open it (waiting, returned), the returned-then-approved case, and
+the panel wording; the SPR-M.51 helper now approves.
+
 ## SPR-M.63 — The year  `DONE 2026-10-15`
 
 **Delivers.** REQ-M.180, REQ-M.181, REQ-M.186, REQ-M.187. `ProgramMilestone`,

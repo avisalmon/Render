@@ -37,7 +37,7 @@ from app.bunny import get_embed_url
 from app.models import Course, Enrollment, Video
 
 from .content import REQUIRED_COURSE_SLUGS
-from .handin import needs_handin
+from .handin import handin_state, needs_handin
 from .gate import entrance_gated
 from .models import Student
 from .progress import cohort_progress
@@ -244,6 +244,7 @@ def _certificate_panel(request, course):
         "held": None,
         "ready": not_yet is None and not owes,
         "needs_handin": owes,
+        "handin_state": handin_state(_student_of(request.user), course.slug) if owes else "",
         "missing": not_yet.reason if not_yet else None,
         "state": request.GET.get("cert", ""),
     }

@@ -102,12 +102,17 @@ def _hand_in(client, course, order, pid, monkeypatch):
 
 
 def _hand_to_leader(client, slug):
-    """REQ-M.179: the product put in front of the leader, from the course page."""
-    return client.post(
+    """REQ-M.179 and Q27: the product put in front of the leader, from the course
+    page, and approved by them."""
+    from matazim.models import Submission
+
+    resp = client.post(
         "/matazim/my-work/",
         {"title": "המוצר שלי", "link": "https://scratch.mit.edu/projects/999999999/",
          "course": slug},
     )
+    Submission.objects.filter(course_slug=slug).update(status=Submission.APPROVED)
+    return resp
 
 
 # ------------------------------------------------- the one that matters

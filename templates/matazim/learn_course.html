@@ -73,11 +73,23 @@
           סיימתם את ההדרכה הזאת.
         </p>
       {% elif certificate.needs_handin %}
-        {% comment %}REQ-M.179: the last step before the certificate is a person.{% endcomment %}
-        <p class="mz-muted">
-          סיימתם את ההדרכה. לפני התעודה צריך להגיש את התוצר למוביל/ה, כדי שמישהו יראה אותו.
-        </p>
-        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:my_work' %}?course={{ course.slug }}">הגשת התוצר למוביל/ה</a>
+        {% comment %}
+          REQ-M.179, Q27: the last step before the certificate is a person, and
+          it is the leader's approval, not just the hand-in. Three states, each
+          saying what to do.
+        {% endcomment %}
+        {% if certificate.handin_state == "waiting" %}
+          <p><span class="mz-tag mz-tag-doing">מחכה למוביל/ה</span> הגשתם את התוצר.</p>
+          <p class="mz-muted">התעודה נפתחת כשהמוביל/ה מאשר/ת אותו. תקבלו התראה.</p>
+        {% elif certificate.handin_state == "returned" %}
+          <p><span class="mz-tag mz-tag-fix">הוחזר לתיקון</span> המוביל/ה ביקש/ה לשנות משהו בתוצר.</p>
+          <a class="mz-btn mz-btn-primary" href="{% url 'matazim:my_work' %}?course={{ course.slug }}">לקרוא ולהגיש שוב</a>
+        {% else %}
+          <p class="mz-muted">
+            סיימתם את ההדרכה. לפני התעודה צריך להגיש את התוצר למוביל/ה, והוא/היא מאשרים אותו.
+          </p>
+          <a class="mz-btn mz-btn-primary" href="{% url 'matazim:my_work' %}?course={{ course.slug }}">הגשת התוצר למוביל/ה</a>
+        {% endif %}
       {% elif certificate.ready %}
         <p class="mz-muted">השלמתם את הכל. אפשר להנפיק את התעודה.</p>
         <form method="post" action="{% url 'matazim:finish_course' course.slug %}">
@@ -87,7 +99,7 @@
       {% else %}
         <p class="mz-muted">
           {% if certificate.state == "handin" %}
-            התעודה מחכה להגשת התוצר למוביל/ה.
+            התעודה מחכה לאישור התוצר על ידי המוביל/ה.
           {% elif certificate.missing == "progress" %}
             צריך לסיים עוד שיעורים לפני שאפשר לקבל תעודה.
           {% elif certificate.missing == "project" %}

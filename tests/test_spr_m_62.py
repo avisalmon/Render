@@ -30,6 +30,16 @@ def _ready(client, member, monkeypatch, slug="scratch"):
     return course
 
 
+def _hand_in_and_approve(client, course, approve=True):
+    """The product handed to the leader, and (Q27) approved by them."""
+    from matazim.models import Submission
+
+    client.post("/matazim/my-work/", {"title": "המבוך", "link": "https://a.example/x",
+                                      "course": course.slug})
+    if approve:
+        Submission.objects.filter(title="המבוך").update(status=Submission.APPROVED)
+
+
 def _finish(client, course):
     return client.post(f"/matazim/learn/{course.slug}/finish/")
 
@@ -72,28 +82,59 @@ def test_a_made_up_course_name_is_not_stored(client, member, monkeypatch):
     assert Submission.objects.get(title="x").course_slug == ""
 
 
-def test_handing_in_for_the_course_opens_the_certificate(client, member, monkeypatch):
+def test_an_approved_hand_in_opens_the_certificate(client, member, monkeypatch):
     from app.models import CourseCertificate
     from matazim.models import Submission
 
     course = _ready(client, member, monkeypatch)
-    client.post("/matazim/my-work/", {"title": "המבוך", "link": "https://a.example/x",
-                                      "course": course.slug})
+    _hand_in_and_approve(client, course)
     sub = Submission.objects.get(title="המבוך")
     assert sub.course_slug == course.slug and sub.leader_id == member.matazim_student.first().leader_id
     assert _finish(client, course)["Location"].endswith("?cert=issued")
     assert CourseCertificate.objects.filter(user=member, course=course).exists()
 
 
-def test_a_returned_hand_in_still_counts_as_handed_in(client, member, monkeypatch):
-    """Q27: the gate measures that the work reached a person, not that it won."""
+@pytest.mark.parametrize("state", ["waiting", "returned"])
+def test_a_hand_in_the_leader_has_not_approved_does_not_open_it(client, member, monkeypatch, state):
+    """Q27, Avi 2026-10-15: "must be approved by the leader". Handed in and
+    waiting is not enough, and neither is returned."""
+    from app.models import CourseCertificate
     from matazim.models import Submission
 
     course = _ready(client, member, monkeypatch)
-    client.post("/matazim/my-work/", {"title": "x", "link": "https://a.example/x",
+    _hand_in_and_approve(client, course, approve=False)
+    Submission.objects.filter(title="המבוך").update(status=state)
+    assert _finish(client, course)["Location"].endswith("?cert=handin")
+    assert not CourseCertificate.objects.filter(user=member, course=course).exists()
+
+
+def test_a_returned_then_resubmitted_then_approved_version_opens_it(client, member, monkeypatch):
+    """The furthest the product has got is what counts, not the earlier versions."""
+    from matazim.models import Submission
+
+    course = _ready(client, member, monkeypatch)
+    _hand_in_and_approve(client, course, approve=False)
+    Submission.objects.filter(title="המבוך").update(status=Submission.RETURNED)
+    client.post("/matazim/my-work/", {"title": "המבוך 2", "link": "https://a.example/y",
                                       "course": course.slug})
-    Submission.objects.filter(title="x").update(status=Submission.RETURNED)
+    Submission.objects.filter(title="המבוך 2").update(status=Submission.APPROVED)
     assert _finish(client, course)["Location"].endswith("?cert=issued")
+
+
+def test_the_course_page_says_which_state_the_product_is_in(client, member, monkeypatch):
+    from matazim.models import Submission
+
+    course = _ready(client, member, monkeypatch)
+    _hand_in_and_approve(client, course, approve=False)
+
+    def panel():
+        html = client.get(f"/matazim/learn/{course.slug}/").content.decode()
+        start = html.index('id="mzCert"')
+        return html[start:html.index("</section>", start)]
+
+    assert "מחכה למוביל/ה" in panel()
+    Submission.objects.filter(title="המבוך").update(status=Submission.RETURNED)
+    assert "הוחזר לתיקון" in panel()
 
 
 def test_someone_with_no_leader_is_not_blocked(client, db, monkeypatch):
