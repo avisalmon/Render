@@ -40,6 +40,7 @@ from .models import (
     EntranceTarget,
     Event,
     ProgramMilestone,
+    SiteUpdate,
     Feedback,
     Institution,
     Leader,
@@ -67,6 +68,7 @@ from .serializers import (
     EntranceTargetSerializer,
     EventSerializer,
     ProgramMilestoneSerializer,
+    SiteUpdateSerializer,
     FeedbackSerializer,
     InstitutionSerializer,
     LeaderCourseSerializer,
@@ -676,6 +678,27 @@ class ProgramMilestoneViewSet(Scoped):
         serializer.save(institution=access.institution_of(self.request.user))
 
 
+class SiteUpdateViewSet(Scoped):
+    """REQ-M.184 - what changed on the site. Signed-in people read, a program manager writes."""
+
+    serializer_class = SiteUpdateSerializer
+    scope = staticmethod(access.visible_site_updates)
+
+    def get_permissions(self):
+        if self.action in ("list", "retrieve"):
+            return [IsSignedIn()]
+        return [IsProgramManager()]
+
+    def perform_create(self, serializer):
+        from .site_updates import announce
+
+        row = serializer.save(
+            institution=access.institution_of(self.request.user),
+            posted_by=self.request.user,
+        )
+        announce(row, by=self.request.user)
+
+
 class PostViewSet(Scoped):
     """קהילת מט״צים (REQ-M.26, REQ-M.131, §4.12).
 
@@ -1122,6 +1145,7 @@ ROUTES = [
     ("notifications", NotificationViewSet, Notification),
     ("events", EventViewSet, Event),
     ("milestones", ProgramMilestoneViewSet, ProgramMilestone),
+    ("site-updates", SiteUpdateViewSet, SiteUpdate),
     ("posts", PostViewSet, Post),
     ("requests", RequestViewSet, Request),
     ("request-messages", RequestMessageViewSet, RequestMessage),

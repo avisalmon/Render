@@ -7,6 +7,7 @@
 {% endcomment %}
 <ol class="mz-year" aria-label="לוח השנה של תשפ״ז">
   {% for m in milestones %}
+    {% ifchanged m.starts_on|date:"Y-m" %}<li class="mz-year-month" aria-hidden="true">{{ m.starts_on|date:"F Y" }}</li>{% endifchanged %}
     <li class="mz-year-row{% if m in under_way %} is-now{% endif %}{% if m == next_milestone %} is-next{% endif %}{% if m.is_peak_day %} is-peak{% endif %}">
       <div class="mz-year-when">{{ m.when_text }}</div>
       <div class="mz-year-body">

@@ -1145,6 +1145,7 @@ class Notification(models.Model):
     EVENT = "event"
     ENTRANCE_APPROVED = "entrance_approved"
     ENTRANCE_RETURNED = "entrance_returned"
+    SITE_UPDATE = "site_update"
     KIND_CHOICES = [
         (FEEDBACK, "משוב חדש"),
         (WORK_APPROVED, "עבודה אושרה"),
@@ -1156,6 +1157,7 @@ class Notification(models.Model):
         (EVENT, "יום שיא"),
         (ENTRANCE_APPROVED, "מבחן הכניסה אושר"),
         (ENTRANCE_RETURNED, "מבחן הכניסה הוחזר"),
+        (SITE_UPDATE, "עדכון באתר"),
     ]
 
     user = models.ForeignKey(
@@ -1440,6 +1442,20 @@ class OfferedCourse(models.Model):
     # the set on the screen that already exists.
     open_to_all = models.BooleanField(default=False, verbose_name="פתוחה לכולם")
 
+    # REQ-M.181, REQ-M.185 - which stage of Atid's year this הדרכה is for. Blank
+    # means unstaged: still offered, shown after the staged ones with no tag.
+    SCRATCH = "scratch"
+    THREE_D = "3d"
+    ELECTIVE = "elective"
+    STAGE_CHOICES = [
+        (SCRATCH, "Scratch"),
+        (THREE_D, "תלת־ממד"),
+        (ELECTIVE, "הדרכת בחירה"),
+    ]
+    stage = models.CharField(
+        max_length=10, choices=STAGE_CHOICES, blank=True, default="", verbose_name="שלב בשנה"
+    )
+
     class Meta:
         ordering = ["slug"]
         verbose_name = "הדרכה זמינה"
@@ -1644,3 +1660,35 @@ class ProgramMilestone(models.Model):
     @property
     def last_day(self):
         return self.ends_on or self.starts_on
+
+
+class SiteUpdate(models.Model):
+    """REQ-M.184 - one note about what changed on the site.
+
+    Atid's list for the site includes "עדכון שינויים באתר": the people who use
+    the site are told when it changes. A note is a row, not a deploy log: a
+    program manager writes it in plain words, everybody in the programme can read
+    the list, and posting one rings each person's bell once.
+
+    Owned by an `Institution` like every other institutional row (§4.4).
+    """
+
+    institution = models.ForeignKey(
+        "Institution", on_delete=models.CASCADE,
+        related_name="site_updates", verbose_name="מוסד",
+    )
+    title = models.CharField(max_length=160, verbose_name="מה השתנה")
+    body = models.TextField(blank=True, default="", verbose_name="פרטים")
+    posted_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    pinned = models.BooleanField(default=False, verbose_name="להצמיד למעלה")
+    posted_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-pinned", "-posted_at"]
+        verbose_name = "עדכון באתר"
+        verbose_name_plural = "עדכונים באתר"
+
+    def __str__(self):
+        return self.title

@@ -1,0 +1,57 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.184 - the team tells everybody what changed. Posting rings each
+  person's bell once; every note can be fixed or removed here without /admin/.
+{% endcomment %}
+
+{% block title %}מה חדש באתר · ניהול · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page mz-page-narrow">
+  <div class="mz-page-head">
+    <h1>מה חדש באתר</h1>
+    <p>כתבו במילים פשוטות מה השתנה. כל מי שבתוכנית מקבל התראה ורואה את זה ברשימה.</p>
+  </div>
+
+  {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
+
+  <section class="mz-panel">
+    <h2>עדכון חדש</h2>
+    <form method="post">
+      {% csrf_token %}
+      <label class="mz-field"><span>מה השתנה</span>
+        <input type="text" name="title" maxlength="160" required value="{{ posted.title|default:'' }}"
+               placeholder="למשל: נוסף לוח השנה של תשפ״ז"></label>
+      <label class="mz-field"><span>פרטים</span>
+        <textarea name="body" rows="3">{{ posted.body|default:'' }}</textarea></label>
+      <label class="mz-checkline"><input type="checkbox" name="pinned"> להצמיד למעלה</label>
+      <button type="submit" class="mz-btn mz-btn-primary">פרסום</button>
+    </form>
+  </section>
+
+  <section class="mz-panel">
+    <h2>מה פורסם</h2>
+    {% for row in rows %}
+      <details class="mz-milestone-edit">
+        <summary>{{ row.posted_at|date:"j.n.Y" }} · {{ row.title }}</summary>
+        <form method="post" action="{% url 'matazim:edit_update' row.pk %}">
+          {% csrf_token %}
+          <label class="mz-field"><span>מה השתנה</span>
+            <input type="text" name="title" maxlength="160" required value="{{ row.title }}"></label>
+          <label class="mz-field"><span>פרטים</span>
+            <textarea name="body" rows="3">{{ row.body }}</textarea></label>
+          <label class="mz-checkline"><input type="checkbox" name="pinned"{% if row.pinned %} checked{% endif %}> להצמיד למעלה</label>
+          <button type="submit" class="mz-btn mz-btn-primary">שמירה</button>
+        </form>
+        <form method="post" action="{% url 'matazim:delete_update' row.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="mz-btn mz-btn-ghost">מחיקה</button>
+        </form>
+      </details>
+    {% empty %}
+      <p class="mz-muted">עוד לא פורסם דבר.</p>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

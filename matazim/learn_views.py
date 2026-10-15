@@ -353,6 +353,13 @@ def staff_offered(request):
             # keeps their progress and their certificate: those live in
             # babook's tables and never belonged to this row.
             action = request.POST.get("action")
+            if action == "stage":
+                # REQ-M.185 - the team says which stage of the year this is for.
+                chosen_stage = request.POST.get("stage", "")
+                if chosen_stage in ("", *dict(OfferedCourse.STAGE_CHOICES)):
+                    row.stage = chosen_stage
+                    row.save(update_fields=["stage"])
+                return redirect("matazim:staff_offered")
             if action in ("open", "close"):
                 # REQ-M.162 — open to anyone who registered, no leader needed.
                 # Opening also makes it available, so the two cannot disagree.
@@ -375,6 +382,7 @@ def staff_offered(request):
         request,
         "matazim/staff_offered.html",
         shell(request, "staff", catalogue=catalogue,
+              stage_choices=OfferedCourse.STAGE_CHOICES,
               live=sum(1 for r in chosen.values() if r.is_active)),
     )
 

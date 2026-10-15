@@ -26,6 +26,7 @@
   </div>
   <div class="mz-course-body">
     {% if card.required %}<span class="mz-course-required">חלק מהמסלול</span>{% endif %}
+    {% if card.stage_label %}<span class="mz-course-stage">{{ card.stage_label }}</span>{% endif %}
     <h3>{{ card.title }}</h3>
     {% if card.about %}<p class="mz-course-about">{{ card.about|striptags|truncatewords:18 }}</p>{% endif %}
   </div>

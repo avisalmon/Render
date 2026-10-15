@@ -3026,3 +3026,20 @@ a.mz-path-title:hover { color: var(--mz-link); }
 .mz-entrance-row[data-state="waiting"] { border-inline-start: 4px solid var(--mz-action); padding-inline-start: 12px; }
 .mz-entrance-decide { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-top: 10px; }
 .mz-entrance-decide .mz-field { flex: 1 1 260px; }
+
+/* ---------------------------------------- stages and updates (SPR-M.65) */
+.mz-course-stage {
+  align-self: flex-start;
+  font-size: .74rem; font-weight: 600;
+  color: var(--mz-accent-text); background: var(--mz-accent-soft);
+  padding: 2px 8px; border-radius: 999px;
+}
+.mz-year-month {
+  list-style: none;
+  margin: 12px 0 0;
+  font-weight: 700;
+  color: var(--mz-ink);
+  border-bottom: 2px solid var(--mz-accent);
+  padding-bottom: 4px;
+}
+.mz-update h2 { margin-top: 0; }

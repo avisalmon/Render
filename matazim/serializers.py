@@ -32,6 +32,7 @@ from .models import (
     EntranceTarget,
     Event,
     ProgramMilestone,
+    SiteUpdate,
     Feedback,
     Institution,
     Leader,
@@ -317,6 +318,14 @@ class ProgramMilestoneSerializer(serializers.ModelSerializer):
         if starts and not milestone_dates_ok(starts, ends):
             raise serializers.ValidationError({"ends_on": "אבן דרך לא יכולה להסתיים לפני שהתחילה."})
         return attrs
+
+
+class SiteUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SiteUpdate
+        fields = ["id", "institution", "title", "body", "pinned", "posted_by", "posted_at"]
+        # Who wrote it and when are facts, not fields a caller sets.
+        read_only_fields = ["id", "institution", "posted_by", "posted_at"]
 
 
 class PostAuthorSerializer(PersonSerializer):

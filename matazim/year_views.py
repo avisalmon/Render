@@ -12,7 +12,7 @@ from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from .access import institution_of, is_program_manager, visible_milestones
+from .access import institution_of, is_program_manager, visible_milestones, visible_site_updates
 from .models import ProgramMilestone
 from .views import shell
 from .year import days_until, milestone_dates_ok, recruiting_deadline, where_are_we
@@ -30,6 +30,8 @@ def year_context(user):
         "next_milestone": upcoming,
         "days_to_next": days_until(upcoming.starts_on) if upcoming else None,
         "recruiting_deadline": recruiting_deadline(rows),
+        # REQ-M.184 - the newest note about a change, for the signed-in.
+        "latest_update": visible_site_updates(user).first(),
     }
 
 

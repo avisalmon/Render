@@ -846,6 +846,12 @@ def courses(request):
     # Counted off the cards already built, so the sidebar and the cards cannot
     # disagree about what is on the page. The locked ones count as not started,
     # which is what her sidebar does with them.
+    # REQ-M.181 - each card says which stage of the year it is for, and every
+    # group is laid out in the year's order (Scratch, 3D, electives).
+    from .stages import annotate
+
+    cards, started, offered = annotate(cards), annotate(started), annotate(offered)
+
     everything = cards + started + offered + locked
     overview = None
     stage = None

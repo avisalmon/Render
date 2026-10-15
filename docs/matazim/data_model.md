@@ -721,7 +721,7 @@ reachable only through the scope functions in `access.py` (RULE-2, §4.4).
 | Model | Fields | Why it exists |
 |---|---|---|
 | `ProgramMilestone` | `institution` FK, `order` int, `when_text` (the date as the client wrote it), `starts_on` date, `ends_on` date null, `stage` (choices: screening, training, recruiting, learning, peak, practicum), `title`, `activities` text, `is_peak_day` bool | The ten rows of her milestones table (REQ-M.186). Seeded once; the database is the only source afterwards. Ordering is `starts_on`, then `order`. |
-| `SiteUpdate` | `institution` FK, `title`, `body`, `posted_by` FK User null, `posted_at`, `pinned` bool | "What changed on the site" (REQ-M.184). A change note is a row, not a deploy log. |
+| `SiteUpdate` | `institution` FK, `title`, `body`, `posted_by` FK User null, `posted_at`, `pinned` bool | (as built: also a `site_update` kind of `Notification`) | "What changed on the site" (REQ-M.184). A change note is a row, not a deploy log. |
 
 ### 9.2 Changes to existing models
 
@@ -729,7 +729,7 @@ reachable only through the scope functions in `access.py` (RULE-2, §4.4).
 |---|---|---|
 | `EntranceAttempt` | `decision` (waiting, approved, returned; default waiting), `decided_by` FK User null, `decided_at`, `decision_note` text | A person approves the entrance product (REQ-M.182). The measurement fields (`passed`, `issues`, `measured`) stay as advice. |
 | `Submission` | `course_slug` char(80), blank | Which course's product this is, a slug and not a foreign key into babook (REQ-M.179, RULE-4). Blank means a free-standing hand-in, as today. |
-| `OfferedCourse` | `stage` (blank, scratch, 3d, elective), `stage_order` int | The programme track by stage (REQ-M.181, REQ-M.185). |
+| `OfferedCourse` | `stage` (blank, scratch, 3d, elective) | The programme track by stage (REQ-M.181, REQ-M.185). Order is derived from the stage, not stored, so there is no second number to keep in step with it. |
 
 ### 9.3 Derived, never stored
 

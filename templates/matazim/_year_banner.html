@@ -2,7 +2,7 @@
   REQ-M.180 - where the programme is today, in one line, on the screens a
   person lands on. Needs the dict from year_views.year_context as `year`.
 {% endcomment %}
-{% if year.under_way or year.next_milestone %}
+{% if year.under_way or year.next_milestone or year.latest_update %}
   <aside class="mz-year-banner" aria-label="איפה התוכנית עכשיו">
     {% if year.under_way %}
       <p>
@@ -14,6 +14,12 @@
       <p>
         <strong>הבא:</strong> {{ year.next_milestone.title }}, {{ year.next_milestone.when_text }}
         {% if year.days_to_next is not None and year.days_to_next <= 60 %}(בעוד {{ year.days_to_next }} ימים){% endif %}
+      </p>
+    {% endif %}
+    {% if year.latest_update %}
+      <p>
+        <strong>חדש באתר:</strong>
+        <a href="{% url 'matazim:updates' %}">{{ year.latest_update.title }}</a>
       </p>
     {% endif %}
   </aside>

@@ -1,0 +1,27 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.184 - what changed on the site, in the team's words. The bell points
+  here and is never the only telling.
+{% endcomment %}
+
+{% block title %}מה חדש באתר · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page mz-page-narrow">
+  <div class="mz-page-head">
+    <h1>מה חדש באתר</h1>
+    <p>כל שינוי שהצוות עשה באתר, מהחדש לישן.</p>
+  </div>
+
+  {% for row in rows %}
+    <article class="mz-panel mz-update">
+      <h2>{{ row.title }}{% if row.pinned %} <span class="mz-tag">מוצמד</span>{% endif %}</h2>
+      <p class="mz-muted">{{ row.posted_at|date:"j.n.Y" }}</p>
+      {% if row.body %}<p>{{ row.body|linebreaksbr }}</p>{% endif %}
+    </article>
+  {% empty %}
+    <section class="mz-panel"><p class="mz-muted">עוד לא פורסמו עדכונים.</p></section>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -318,6 +318,24 @@ def visible_entrance_attempts(user):
     return base.none()
 
 
+def visible_site_updates(user):
+    """REQ-M.184, §4.4 - the change notes this person reads: their institution's.
+
+    A person with no institution yet reads the programme's one institution's
+    notes (the same fallback `visible_milestones` uses), because "what changed"
+    is something a newcomer is entitled to see.
+    """
+    from .models import Institution, SiteUpdate
+
+    institution = None
+    if getattr(user, "is_authenticated", False):
+        institution = institution_of(user)
+    institution = institution or Institution.default()
+    if institution is None or not getattr(user, "is_authenticated", False):
+        return SiteUpdate.objects.none()
+    return SiteUpdate.objects.filter(institution=institution)
+
+
 def visible_milestones(user):
     """REQ-M.186, §4.4 - the year's schedule this person reads.
 

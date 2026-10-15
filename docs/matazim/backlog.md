@@ -4799,11 +4799,27 @@ fresh object while something is waiting. `tests/test_spr_m_64.py`: 11 tests;
 `test_spr_m_3` updated to the new rule. The cohort page (המחזור) is unchanged;
 the per-school, per-student overview Atid asked for is this screen.
 
-## SPR-M.65 — What changed, and more content  `TODO`
+## SPR-M.65 — What changed, and more content  `DONE 2026-10-15`
 
 **Delivers.** REQ-M.184, REQ-M.185. `SiteUpdate`, the stage on the shelf.
 
 **Open with the client:** Q24 to Q27 in the spec. All have a built default.
+
+**Built.** `SiteUpdate` and `OfferedCourse.stage` (migration 0042, which stages
+Scratch and 3D only where nobody has chosen); `site_updates.py` (the list, the
+team's screen, edit and delete, and `announce`, which rings each person's bell
+in the posting institution once); REST at `/matazim/api/site-updates/`;
+`stages.py` (the year's order: Scratch, 3D, electives, unstaged last), the stage
+tag on every course card, the stage selector on root's shelf screen; the
+schedule grouped by month with her heading; the community page in her words;
+"חדש באתר" in the banner. `tests/test_spr_m_65.py`: 11 tests.
+
+**Not built, and why.** The monthly mail that ליטל says her team will send is
+theirs to send; this product does not send it (REQ-M.190). Adding a course's
+*content* (the two 3D courses, the electives) is content work in babook's
+studio, not a screen: the shelf now lets root say which stage a course is for
+the moment it exists.
+
 
 ## SPR-M.66 — The main site waits for the test  `DONE 2026-10-15`
 

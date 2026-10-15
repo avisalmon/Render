@@ -10,6 +10,7 @@ from rest_framework.routers import DefaultRouter
 
 from . import (
     api,
+    site_updates,
     certificate_views,
     cohort_views,
     community_views,
@@ -54,6 +55,10 @@ urlpatterns = [
     path("events/", event_views.events_page, name="events"),
     path("calendar/", event_views.calendar, name="calendar"),
     path("staff/events/", event_views.staff_events, name="staff_events"),
+    path("updates/", site_updates.updates, name="updates"),
+    path("staff/updates/", site_updates.staff_updates, name="staff_updates"),
+    path("staff/updates/<int:update_id>/edit/", site_updates.edit_update, name="edit_update"),
+    path("staff/updates/<int:update_id>/delete/", site_updates.delete_update, name="delete_update"),
     path("staff/milestones/", year_views.staff_milestones, name="staff_milestones"),
     path("staff/milestones/<int:milestone_id>/edit/", year_views.edit_milestone, name="edit_milestone"),
     path("staff/milestones/<int:milestone_id>/delete/", year_views.delete_milestone, name="delete_milestone"),
