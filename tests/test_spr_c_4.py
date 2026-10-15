@@ -728,7 +728,7 @@ def test_the_phone_gets_an_upload_link_that_needs_no_sign_in(client):
 
     token = UploadToken.objects.get(team=team, challenge=challenge)
     anonymous = client.__class__()  # no session at all
-    response = anonymous.get(f"/crashtech/u/{token.token}/")
+    response = anonymous.get(f"/crashtech/upload/{token.token}/")
     assert response.status_code == 200
     assert "Bench photo" in response.content.decode()
 
@@ -742,7 +742,7 @@ def test_a_photo_posted_with_the_token_lands_on_the_right_team_and_challenge(cli
     token = submissions.upload_token_for(team, challenge)
 
     anonymous = client.__class__()
-    response = anonymous.post(f"/crashtech/u/{token.token}/", {
+    response = anonymous.post(f"/crashtech/upload/{token.token}/", {
         f"d{photo.pk}": SimpleUploadedFile("bench.jpg", b"\xff\xd8\xff", content_type="image/jpeg"),
     })
     assert response.status_code == 200
@@ -762,7 +762,7 @@ def test_the_phone_is_told_what_landed_rather_than_just_success(client):
     token = submissions.upload_token_for(team, challenge)
 
     anonymous = client.__class__()
-    body = anonymous.post(f"/crashtech/u/{token.token}/", {
+    body = anonymous.post(f"/crashtech/upload/{token.token}/", {
         f"d{photo.pk}": SimpleUploadedFile("bench.jpg", b"\xff\xd8\xff", content_type="image/jpeg"),
     }).content.decode()
     assert "Bench photo" in body
@@ -780,7 +780,7 @@ def test_an_expired_token_says_so_and_does_not_accept_anything(client):
     )
 
     anonymous = client.__class__()
-    response = anonymous.get(f"/crashtech/u/{token.token}/")
+    response = anonymous.get(f"/crashtech/upload/{token.token}/")
     assert response.status_code == 410
     assert "expired" in response.content.decode().lower()
 
@@ -1045,3 +1045,59 @@ def test_emphasis_inside_a_row_does_not_break_the_sentence():
     css = open("static/crashtech/crashtech.css", encoding="utf-8").read()
     assert ".ct-row-main > b { display: block;" in css
     assert ".ct-row-main b { display: block;" not in css
+
+
+def test_no_crashtech_route_shadows_the_2026_platform(client):
+    """Rule 13.1: the old platform is reference and keeps working until
+    C.8 retires it.
+
+    This app is mounted **before** `app.urls`, so a path we claim that it
+    already owns does not error, it silently takes a working route away
+    from it. That has now happened twice: `/crashtech/new/` in C.1, and
+    `/crashtech/u/<token>/` in C.4, where the new QR upload swallowed the
+    old one and its own test was the only thing that noticed.
+
+    So this asserts the general rule rather than those two cases: every
+    route the 2026 platform declares still resolves to the 2026 platform.
+    """
+    # The one route CrashTech takes from the old platform on purpose.
+    # Rule 2.1.3 mounts this app at /crashtech/ and C.8 retires the old
+    # front door; everything else is an accident until then.
+    DELIBERATE = {"/crashtech/"}
+
+    stolen = []
+
+    # The old platform's routes all live in `app.urls` and all point at
+    # `app.crashtech_views`. Walk them, build a concrete path for each,
+    # and check who actually answers it.
+    import re as _re
+
+    from django.urls import resolve
+
+    from app import urls as app_urls
+
+    samples = {
+        "slug": "some-2026-event",
+        "token": "aaaabbbbccccddddeeeeffff00001111",
+        "challenge_id": "1", "team_id": "1", "submission_id": "1",
+        "cert_id": "4f22a017-32c2-4c76-90eb-e634671fdbee",
+    }
+    for entry in app_urls.urlpatterns:
+        route = getattr(getattr(entry, "pattern", None), "_route", "")
+        if not route.startswith("crashtech/"):
+            continue
+        callback = getattr(entry, "callback", None)
+        if callback is None:
+            continue
+        path = "/" + _re.sub(
+            r"<[^:>]+:([^>]+)>",
+            lambda m: samples.get(m.group(1), "1"),
+            route,
+        )
+        if path in DELIBERATE:
+            continue
+        match = resolve(path)
+        if match.func.__module__ != callback.__module__:
+            stolen.append(f"{path} -> {match.func.__module__}, not {callback.__module__}")
+
+    assert not stolen, "CrashTech has shadowed the 2026 platform: " + "; ".join(stolen)

@@ -78,9 +78,15 @@ urlpatterns += [
     path("c/<uuid:cert_id>/", views.certificate, name="certificate"),
 ]
 
-# The QR target. Deliberately short, deliberately outside /e/<slug>/, and
-# deliberately without a login: it is typed or scanned by a phone that is
-# not signed in and never will be (Rule 7.6).
+# The QR target. Outside /e/<slug>/ and without a login, because it is
+# scanned by a phone that is not signed in and never will be (Rule 7.6).
+#
+# `upload/` rather than the obvious `u/`, because the 2026 platform owns
+# /crashtech/u/<token>/ for its own QR upload and keeps working until C.8
+# retires it (Rule 13.1). Mounting before `app.urls` means a collision
+# here silently takes a working route away from the old app rather than
+# erroring, which is the second time that has happened: /crashtech/new/
+# was the first, in C.1. Its own test caught this one.
 urlpatterns += [
-    path("u/<str:token>/", views.upload_by_token, name="upload_by_token"),
+    path("upload/<str:token>/", views.upload_by_token, name="upload_by_token"),
 ]
