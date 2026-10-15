@@ -357,7 +357,8 @@ def test_a_leader_cannot_confirm_someone_who_asked_another_leader(client, db):
 def test_the_leader_door_does_not_offer_a_registration_form(client, db):
     """T-F-M.7.8-1: REQ-M.66. A door labelled for one role must not be the other."""
     html = client.get(reverse("matazim:leader_entrance")).content.decode()
-    assert reverse("matazim:register") not in html
+    page = html.split("<main")[1].split("</main>")[0]      # the page, not the menu
+    assert reverse("matazim:register") not in page
     assert "צוות התוכנית" in html or "מנהלי התוכנית" in html
 
 

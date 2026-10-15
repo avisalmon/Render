@@ -367,6 +367,7 @@ def test_an_invitation_survives_making_an_account(client, db):
     client.post(
         reverse("matazim:register"),
         {
+            "school": __import__("tests.matazim_helpers", fromlist=["school_pk"]).school_pk(),
             "name": "רונית אמיתית",
             "email": "real@example.com",
             "password": PASSWORD,
@@ -395,6 +396,7 @@ def test_the_real_name_arrives_with_the_account(client, db):
     client.post(
         reverse("matazim:register"),
         {
+            "school": __import__("tests.matazim_helpers", fromlist=["school_pk"]).school_pk(),
             "name": "רונית כהן אלגרבלי",
             "email": "real@example.com",
             "password": PASSWORD,

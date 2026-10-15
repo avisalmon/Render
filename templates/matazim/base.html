@@ -111,16 +111,9 @@
       {% endcomment %}
 
       {% if not user.is_authenticated %}
-        {# The recruitment menu, in Litala's order. This reader is deciding. #}
-        <a href="{% url 'matazim:home' %}" {% if section == 'home' %}class="is-active"{% endif %}>דף הבית</a>
-        <a href="{% url 'matazim:entrance_test' %}" {% if section == 'test' %}class="is-active"{% endif %}>מבחן הכניסה</a>
+        {# Lital, 2026-10-15: "about" on the right, and registration the only other item. #}
         <a href="{% url 'matazim:about' %}" {% if section == 'about' %}class="is-active"{% endif %}>אודות התכנית</a>
-        {# REQ-M.191: the front door is minimal; the rest is in the footer and on אודות. #}
-        {% comment %}
-          REQ-M.103 — the teachers' door was linked from no page in the
-          product, so a teacher had to be sent a URL.
-        {% endcomment %}
-        <a href="{% url 'matazim:leader_entrance' %}" class="mz-nav-quiet{% if section == 'leader' %} is-active{% endif %}">כניסת מובילים</a>
+        <a href="{% url 'matazim:register' %}?next={% url 'matazim:entrance_test' %}" {% if section == 'register' %}class="is-active"{% endif %}>הרשמה לתכנית</a>
       {% else %}
 
         {% if learner_stage == 'test' %}
@@ -128,7 +121,7 @@
           <a href="{% url 'matazim:entrance_test' %}" class="is-active">מבחן הכניסה</a>
         {% elif learner_stage == 'join' %}
           <a href="{% url 'matazim:join_leader' %}" class="is-active">בחירת מוביל/ה</a>
-        {% elif is_member %}
+        {% elif is_member or previewing_member %}
           {# What a member came here to do. #}
           <a href="{% url 'matazim:my_path' %}" {% if section == 'path' %}class="is-active"{% endif %}>המסלול שלי</a>
           <a href="{% url 'matazim:courses' %}" {% if section == 'courses' %}class="is-active"{% endif %}>ההדרכות</a>
@@ -162,7 +155,7 @@
           <a href="{% url 'matazim:events' %}" {% if section == 'events' %}class="is-active"{% endif %}>ימי שיא</a>
         {% endif %}
 
-        {% if is_leader %}
+        {% if is_leader and not previewing %}
           <a href="{% url 'matazim:leader_home' %}" class="mz-nav-staff{% if section == 'leader' %} is-active{% endif %}">האזור שלי</a>
           <a href="{% url 'matazim:roster' %}" {% if section == 'roster' %}class="is-active"{% endif %}>המטצים שלי</a>
           <a href="{% url 'matazim:classes' %}" {% if section == 'classes' %}class="is-active"{% endif %}>הכיתות שלי</a>
@@ -177,7 +170,7 @@
           <a href="{% url 'matazim:leader_entrance' %}" class="mz-nav-staff{% if section == 'leader' %} is-active{% endif %}">ההרשאה שלי</a>
         {% endif %}
 
-        {% if is_site_staff %}
+        {% if is_site_staff and not previewing %}
           <a href="{% url 'matazim:pm_leaders' %}" class="mz-nav-staff{% if section == 'staff' %} is-active{% endif %}">המובילים שלי</a>
           {# Her main report, which was a grey one-line link on one screen. #}
           <a href="{% url 'matazim:cohort' %}" {% if section == 'cohort' %}class="is-active"{% endif %}>המחזור</a>
@@ -300,11 +293,21 @@
   </div>
 {% endif %}
 
+{% if previewing %}
+  <div class="mz-preview-bar" role="status">
+    <strong>אתם רואים את האתר כתלמיד.</strong>
+    <a href="{% url 'matazim:preview' 'test' %}"{% if learner_stage == 'test' %} class="is-on"{% endif %}>לפני המבחן</a>
+    <a href="{% url 'matazim:preview' 'join' %}"{% if learner_stage == 'join' %} class="is-on"{% endif %}>אחרי המבחן</a>
+    <a href="{% url 'matazim:preview' 'member' %}"{% if learner_stage == 'member' %} class="is-on"{% endif %}>משויך למוביל</a>
+    <a href="{% url 'matazim:preview' 'off' %}" class="mz-preview-off">חזרה לתצוגה שלי</a>
+  </div>
+{% endif %}
+
 <main>
   {% block content %}{% endblock %}
 </main>
 
-{% if can_request %}
+{% if can_request and not previewing %}
   {% comment %}
     The lamp. Avi, 2026-10-15: no more request system. Everything the team asks
     for goes to his Gmail, and the subject carries the word מטצים and matatzim so

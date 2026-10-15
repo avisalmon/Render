@@ -60,6 +60,33 @@ def learner_stage(user):
     return MEMBER
 
 
+PREVIEW_KEY = "mz_preview_stage"
+
+
+def may_preview(user):
+    """Who can look at the site as a student: root, a program manager, a leader.
+
+    Lital, 2026-10-15: "we want to see how the site shows to the student". They are
+    not students, so they cannot be at a stage, and a way to look is the answer.
+    """
+    if not getattr(user, "is_authenticated", False):
+        return False
+    return bool(user.is_superuser or is_program_manager(user) or leader_of(user))
+
+
+def preview_stage(request):
+    """The stage a manager has chosen to look at, or None."""
+    if not may_preview(request.user):
+        return None
+    chosen = request.session.get(PREVIEW_KEY)
+    return chosen if chosen in (TEST, JOIN, MEMBER) else None
+
+
+def stage_for(request):
+    """The stage to treat this request as: the one being previewed, else the person's own."""
+    return preview_stage(request) or learner_stage(request.user)
+
+
 def applies(user):
     """Is this person kept out of the main site for now?"""
     return learner_stage(user) in (TEST, JOIN)
@@ -70,7 +97,7 @@ def entrance_gated(view):
 
     @wraps(view)
     def wrapper(request, *args, **kwargs):
-        stage = learner_stage(request.user)
+        stage = stage_for(request)
         if stage in WHERE:
             return redirect(WHERE[stage])
         return view(request, *args, **kwargs)

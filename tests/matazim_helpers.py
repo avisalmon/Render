@@ -27,3 +27,10 @@ def attach(user, leader=None):
         leader = host
     Student.objects.get_or_create(user=user, defaults={"leader": leader, "status": Student.IN_TRAINING})
     return user
+
+
+def school_pk():
+    """A school from the seeded list, for the tests that sign somebody up (Lital, 2026-10-15)."""
+    from matazim.models import School
+
+    return (School.objects.first() or School.objects.create(name="עתיד רמלה")).pk

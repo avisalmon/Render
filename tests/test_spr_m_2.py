@@ -151,6 +151,7 @@ def test_registering_stamps_entry_through_this_door(client, db):
     resp = client.post(
         reverse("matazim:register"),
         {
+            "school": __import__("tests.matazim_helpers", fromlist=["school_pk"]).school_pk(),
             "name": "יובל כהן",
             "email": "yuval@example.com",
             "password": PASSWORD,
@@ -270,6 +271,7 @@ def test_a_new_account_meets_the_notice_once(client, db):
     client.post(
         reverse("matazim:register"),
         {
+            "school": __import__("tests.matazim_helpers", fromlist=["school_pk"]).school_pk(),
             "name": "רון",
             "email": "ron@example.com",
             "password": PASSWORD,

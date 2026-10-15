@@ -65,6 +65,30 @@ class Institution(models.Model):
         return cls.objects.order_by("created_at").first()
 
 
+class School(models.Model):
+    """A school a person signs up from (Lital, 2026-10-15).
+
+    Her sign-up asks for a full name and a school, chosen from a list: the
+    network's own schools, so a name is never typed three different ways. It is a
+    row and not a list in a template (Rule 1), seeded once by a migration and
+    maintained afterwards by the programme team. A school here is where a person
+    *says* they are from; the schools a leader teaches in (`StudyClass.school_name`)
+    stay what they were.
+    """
+
+    name = models.CharField(max_length=150, unique=True, verbose_name="שם בית הספר")
+    is_active = models.BooleanField(default=True, verbose_name="מוצג ברשימה")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name = "בית ספר"
+        verbose_name_plural = "בתי ספר"
+
+    def __str__(self):
+        return self.name
+
+
 class MemberProfile(models.Model):
     """מטצים's companion to babook's UserProfile. One row per person we meet."""
 
@@ -73,6 +97,10 @@ class MemberProfile(models.Model):
     # REQ-M.35 — did this person find us here, or are they a babook member who
     # wandered over? Without it the funnel cannot be read later.
     entered_via_matazim = models.BooleanField(default=False, verbose_name="נכנס דרך מטצים")
+    school = models.ForeignKey(
+        "School", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="members", verbose_name="בית ספר",
+    )
     first_seen_at = models.DateTimeField(auto_now_add=True)
 
     # REQ-M.40 — the prototype disclaimer was put in front of them, and they

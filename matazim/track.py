@@ -118,9 +118,9 @@ def milestones(user, profile, student, state, per_course):
             nodes.append(_node(f"course-{slug}", title, TODO,
                                where="matazim:learn_course", where_args=[slug]))
         if slug in state.certified_courses:
-            nodes.append(_node(f"cert-{slug}", f"תעודה: {title}", DONE, issued.get(slug)))
+            nodes.append(_node(f"cert-{slug}", f"סיום ההדרכה: {title}", DONE, issued.get(slug)))
         else:
-            nodes.append(_node(f"cert-{slug}", f"תעודה: {title}", TODO))
+            nodes.append(_node(f"cert-{slug}", f"סיום ההדרכה: {title}", TODO))
 
     # 4. The first piece of work handed to a leader. Only once there is a
     #    leader to hand it to; before that the node would point at a wall.

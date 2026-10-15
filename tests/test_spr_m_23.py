@@ -242,6 +242,7 @@ def test_registering_returns_there_too(client, db):
     response = client.post(
         reverse("matazim:register"),
         {
+            "school": __import__("tests.matazim_helpers", fromlist=["school_pk"]).school_pk(),
             "name": "יובל כהן",
             "email": "new@example.com",
             "password": "a-long-enough-pass",

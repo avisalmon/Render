@@ -14,6 +14,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth import login as auth_login
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.shortcuts import redirect, render
@@ -24,7 +25,7 @@ from django.views.decorators.http import require_POST
 from app.models import CourseCertificate, Enrollment, UserProfile
 
 from .content import public_stages
-from .models import MemberProfile, Student
+from .models import MemberProfile, School, Student
 
 # --- Shared helpers ---------------------------------------------------------
 
@@ -181,10 +182,16 @@ def _can_request(user):
 
 
 
-def _learner_stage(user):
-    from .gate import learner_stage
+def _stage_for(request):
+    from .gate import stage_for
 
-    return learner_stage(user)
+    return stage_for(request)
+
+
+def _preview_stage(request):
+    from .gate import preview_stage
+
+    return preview_stage(request)
 
 
 def shell(request, section, **extra):
@@ -221,7 +228,11 @@ def shell(request, section, **extra):
         "is_member": _is_member(request.user),
         # REQ-M.191 - test, join or member for a learner, None for anyone else.
         # The nav and the home page are the stage's own, and minimal.
-        "learner_stage": _learner_stage(request.user),
+        "learner_stage": _stage_for(request),
+        # Lital, 2026-10-15: a manager looking at the site as a student sees only
+        # the student's menu, and a bar that says so and lets them step out.
+        "previewing": bool(_preview_stage(request)),
+        "previewing_member": _preview_stage(request) == "member",
         "is_candidate": _is_candidate(request.user),
         # REQ-M.106, REQ-M.102 — the lamp, for the roles that own the
         # improvement loop and for nobody else.
@@ -251,22 +262,27 @@ def home(request):
     - a learner with a leader: big tiles, and nothing else
     - a leader or a program manager: their own front door
     """
-    from .gate import JOIN, MEMBER, TEST, learner_stage
+    from .gate import JOIN, MEMBER, TEST, stage_for
     from .landing import hero_state
     from .year_views import year_context
 
-    stage = learner_stage(request.user)
+    stage = stage_for(request)
     if stage == JOIN:
         return redirect("matazim:join_leader")
 
     ctx = {"stage": stage, "hero": hero_state(request)}
+    if stage == TEST:
+        from .models import School
+
+        ctx["schools"] = School.objects.filter(is_active=True)
+        ctx["needs_school"] = member_profile(request.user).school_id is None and not _preview_stage(request)
     if not request.user.is_authenticated:
         # Avi, 2026-10-15: logged out is marketing, with the explanations.
         from .content import public_stages
         from .public import counters, published_work
 
         ctx.update(stages=public_stages(), counters=counters(), showcase=published_work())
-    if stage == MEMBER or ctx["hero"]["kind"] in ("leader", "staff"):
+    if stage == MEMBER or (stage is None and ctx["hero"]["kind"] in ("leader", "staff")):
         student = _student_of(request.user)
         ctx["certified"] = bool(student and student.status == "certified")
         ctx["year"] = year_context(request.user)
@@ -417,6 +433,9 @@ def register(request):
         guardian_name = (request.POST.get("guardian_name") or "").strip()
         guardian_email = (request.POST.get("guardian_email") or "").strip()
         guardian_ok = request.POST.get("guardian_consent") == "on"
+        raw_school = request.POST.get("school") or ""
+        school = (School.objects.filter(pk=int(raw_school), is_active=True).first()
+                  if raw_school.isdigit() else None)
 
         year = int(birth_year) if birth_year.isdigit() else None
         this_year = timezone.now().year
@@ -426,6 +445,9 @@ def register(request):
 
         if not name or not email or len(password) < 8:
             error = "צריך שם, אימייל וסיסמה באורך 8 תווים לפחות."
+        elif school is None:
+            # Lital, 2026-10-15: a full name and the school, from the list.
+            error = "צריך לבחור בית ספר מהרשימה."
         elif year is None:
             error = "צריך שנת לידה. זה מה שקובע אם צריך אישור של הורה."
         elif minor and not (guardian_ok and guardian_name and guardian_email):
@@ -438,7 +460,7 @@ def register(request):
             with transaction.atomic():
                 user = User.objects.create_user(username=email, email=email, password=password)
                 UserProfile.objects.update_or_create(user=user, defaults={"display_name": name})
-                member_fields = {"entered_via_matazim": True, "birth_year": year}
+                member_fields = {"entered_via_matazim": True, "birth_year": year, "school": school}
                 if minor:
                     # REQ-M.84 — recorded_by stays null, because this consent
                     # was given here rather than collected by a school on paper.
@@ -483,8 +505,45 @@ def register(request):
             posted=request.POST if request.method == "POST" else None,
             this_year=timezone.now().year,
             next=safe_next(request),
+            schools=School.objects.filter(is_active=True),
         ),
     )
+
+
+@login_required(login_url="/matazim/login/")
+def preview(request, stage):
+    """Look at the site as a student at one of the three stages, or stop looking.
+
+    Only for root, a program manager and a leader. It changes nothing but what the
+    session is shown: no row is made for the person, and the two acts that would
+    make one (uploading the entrance model, choosing a leader) are refused while
+    looking.
+    """
+    from django.http import Http404
+
+    from .gate import PREVIEW_KEY, may_preview
+
+    if not may_preview(request.user):
+        raise PermissionDenied
+    if stage == "off":
+        request.session.pop(PREVIEW_KEY, None)
+        return redirect("matazim:home")
+    if stage not in ("test", "join", "member"):
+        raise Http404("unknown stage")
+    request.session[PREVIEW_KEY] = stage
+    return redirect("matazim:home")
+
+
+@require_POST
+@login_required(login_url="/matazim/login/")
+def set_school(request):
+    """Say which school you are from. Used by anyone who signed up with Google, which
+    asks for no form, so the question is put to them on the first screen they see."""
+    raw = request.POST.get("school") or ""
+    school = School.objects.filter(pk=int(raw), is_active=True).first() if raw.isdigit() else None
+    if school is not None:
+        MemberProfile.objects.update_or_create(user=request.user, defaults={"school": school})
+    return redirect(safe_next(request) or "matazim:home")
 
 
 def google_start(request):

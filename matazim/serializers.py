@@ -32,6 +32,7 @@ from .models import (
     EntranceTarget,
     Event,
     ProgramMilestone,
+    School,
     SiteUpdate,
     Feedback,
     Institution,
@@ -324,6 +325,13 @@ class SiteUpdateSerializer(serializers.ModelSerializer):
         fields = ["id", "institution", "title", "body", "pinned", "posted_by", "posted_at"]
         # Who wrote it and when are facts, not fields a caller sets.
         read_only_fields = ["id", "institution", "posted_by", "posted_at"]
+
+
+class SchoolSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = School
+        fields = ["id", "name", "is_active"]
+        read_only_fields = ["id"]
 
 
 class PostAuthorSerializer(PersonSerializer):

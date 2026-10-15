@@ -31,10 +31,13 @@
       <h1 class="mz-hero-title">מטצים</h1>
       <p class="mz-hero-sub">מנהיגות טכנולוגית צעירה</p>
       <p class="mz-hero-text">
-        תוכנית של רשת עתיד בשיתוף מתנדבי אינטל. תלמידי חטיבת הביניים לומדים
-        טכנולוגיה, יוצרים תוצרים אמיתיים, ובסוף מדריכים תלמידים צעירים מהם
-        בבית הספר. לומדים, יוצרים, מדריכים ומשפיעים.
+        תכנית מנהיגות טכנולוגית בשיתוף רשת החינוך עתיד ומתנדבי אינטל, המכשירה
+        תלמידי כיתות ט׳–י׳ להוביל, ליצור ולהשפיע באמצעות טכנולוגיה.
+        במהלך התכנית התלמידים רוכשים כלים בתחומי החדשנות, היצירה וההדרכה,
+        ובהמשך הופכים למנהיגים צעירים המעבירים את הידע שרכשו לתלמידים צעירים יותר
+        ותורמים לקהילה.
       </p>
+      <p class="mz-hero-motto">לומדים. מתנסים. מובילים. משפיעים.</p>
       <div class="mz-hero-cta">
         <a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:register' %}?next={% url 'matazim:entrance_test' %}">אני רוצה להצטרף</a>
         <a class="mz-linkbtn" href="{% url 'matazim:login' %}">כבר יש לי חשבון</a>
@@ -47,41 +50,16 @@
 </section>
 
 <div class="mz-container">
-  <section class="mz-orient" aria-labelledby="mzOrient">
-    <h2 id="mzOrient">איך מצטרפים</h2>
-    <ol class="mz-orient-steps">
-      <li class="mz-orient-step">
-        <span class="mz-orient-n" aria-hidden="true">1</span>
-        <span class="mz-orient-body">
-          <span class="mz-orient-title">פותחים חשבון ועוברים את מבחן הכניסה</span>
-          <span class="mz-orient-text">מבחן קצר בטינקרקאד: בונים אובייקט ומעלים אותו. צוות התוכנית מאשר.</span>
-        </span>
-      </li>
-      <li class="mz-orient-step">
-        <span class="mz-orient-n" aria-hidden="true">2</span>
-        <span class="mz-orient-body">
-          <span class="mz-orient-title">מצטרפים למוביל בבית הספר</span>
-          <span class="mz-orient-text">עם קוד שקיבלתם, או בבחירה מרשימת המובילים לפי בית ספר.</span>
-        </span>
-      </li>
-      <li class="mz-orient-step">
-        <span class="mz-orient-n" aria-hidden="true">3</span>
-        <span class="mz-orient-body">
-          <span class="mz-orient-title">לומדים ויוצרים</span>
-          <span class="mz-orient-text">הדרכות ב-Scratch ובתלת-ממד. בסוף כל הדרכה מגישים תוצר, והמוביל מאשר אותו ונותן משוב.</span>
-        </span>
-      </li>
-      <li class="mz-orient-step">
-        <span class="mz-orient-n" aria-hidden="true">4</span>
-        <span class="mz-orient-body">
-          <span class="mz-orient-title">מדריכים ומשפיעים</span>
-          <span class="mz-orient-text">מקבלים תעודה, ואז מעבירים פעילויות לתלמידים צעירים בבית הספר, וחוגגים ביום השיא.</span>
-        </span>
-      </li>
-    </ol>
-    <p class="mz-home-do">
-      <a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:register' %}?next={% url 'matazim:entrance_test' %}">להתחיל עכשיו</a>
+  <section class="mz-signup-box" aria-labelledby="mzSignup">
+    <h2 id="mzSignup">ברוכים הבאים לאתר מטצים!</h2>
+    <p>
+      כדי להתחיל את המסע שלכם, הירשמו לאתר ופתחו חשבון אישי. לאחר ההרשמה תוכלו
+      להיכנס לעולם ההדרכות, ללמוד ולהתקדם בדרך להפוך למובילים טכנולוגיים צעירים.
     </p>
+    <p class="mz-home-do">
+      <a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:register' %}?next={% url 'matazim:entrance_test' %}">מתחילים כאן – להרשמה</a>
+    </p>
+    <p><a class="mz-linkbtn" href="{% url 'matazim:entrance_test' %}">על מבחן הכניסה</a></p>
   </section>
 
   <section class="mz-how" aria-labelledby="mzHow">
@@ -147,17 +125,17 @@
 {% else %}
 <div class="mz-container mz-home">
 
-  {% if stage == 'member' or hero.kind == 'leader' or hero.kind == 'staff' %}
+  {% if stage == 'member' or not stage and hero.kind == 'leader' or not stage and hero.kind == 'staff' %}
     {% comment %}
       Avi, 2026-10-15: a program manager, a leader and root see the site as a
       student who passed the test and joined a leader sees it. Their own door is
       one extra tile, first.
     {% endcomment %}
     {% include "matazim/_year_banner.html" %}
-    <h1 class="mz-home-title">{% if certified %}מטצ{% else %}טרום מטצ{% endif %}</h1>
+    <h1 class="mz-home-title">{% if certified %}מטצ{% else %}תהליך ההכשרה{% endif %}</h1>
     <ul class="mz-tiles">
-      {% if hero.kind == 'staff' %}<li><a class="mz-tile mz-tile-role" href="{% url 'matazim:staff_home' %}">ניהול</a></li>{% endif %}
-      {% if hero.kind == 'leader' %}<li><a class="mz-tile mz-tile-role" href="{% url 'matazim:leader_home' %}">האזור שלי</a></li>{% endif %}
+      {% if hero.kind == 'staff' and not previewing %}<li><a class="mz-tile mz-tile-role" href="{% url 'matazim:staff_home' %}">ניהול</a></li>{% endif %}
+      {% if hero.kind == 'leader' and not previewing %}<li><a class="mz-tile mz-tile-role" href="{% url 'matazim:leader_home' %}">האזור שלי</a></li>{% endif %}
       <li><a class="mz-tile" href="{% url 'matazim:courses' %}">ההדרכות</a></li>
       <li><a class="mz-tile" href="{% url 'matazim:my_path' %}">המסלול שלי</a></li>
       <li><a class="mz-tile" href="{% url 'matazim:community' %}">הקהילה</a></li>
@@ -167,9 +145,31 @@
       <li><a class="mz-tile" href="{% url 'matazim:my_classes' %}">הכיתות שלי</a></li>
       <li><a class="mz-tile" href="{% url 'matazim:updates' %}">מה חדש</a></li>
     </ul>
+    {% if not stage and not previewing %}
+      <section class="mz-panel mz-preview-entry" aria-label="לראות כתלמיד">
+        <h2>לראות את האתר כתלמיד</h2>
+        <p class="mz-home-do">
+          <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:preview' 'test' %}">לפני המבחן</a>
+          <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:preview' 'join' %}">אחרי המבחן</a>
+          <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:preview' 'member' %}">משויך למוביל</a>
+        </p>
+      </section>
+    {% endif %}
 
   {% elif stage == 'test' %}
     <h1 class="mz-home-title">מבחן הכניסה</h1>
+    <p class="mz-home-lead">ברוכים הבאים לתכנית מטצים, מצורף מבחן המיון.</p>
+    {% if needs_school %}
+      <form method="post" action="{% url 'matazim:set_school' %}" class="mz-school-form">
+        {% csrf_token %}
+        <label class="mz-field"><span>באיזה בית ספר אתם?</span>
+          <select name="school" required>
+            <option value="">בחרו מהרשימה</option>
+            {% for school in schools %}<option value="{{ school.pk }}">{{ school.name }}</option>{% endfor %}
+          </select></label>
+        <button type="submit" class="mz-btn mz-btn-secondary">שמירה</button>
+      </form>
+    {% endif %}
     <p class="mz-home-do"><a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:entrance_test' %}">להתחיל</a></p>
 
   {% endif %}

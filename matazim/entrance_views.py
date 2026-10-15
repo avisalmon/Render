@@ -144,7 +144,9 @@ def test_task(request):
         return render(request, "matazim/test_task.html", shell(request, "test", no_targets=True))
 
     result = None
-    if request.method == "POST" and request.FILES.get("model_file"):
+    from .gate import preview_stage
+
+    if request.method == "POST" and request.FILES.get("model_file") and not preview_stage(request):
         upload = request.FILES["model_file"]
         passed, issues, measured = measure_submission(upload.read(), attempt.target_id)
 

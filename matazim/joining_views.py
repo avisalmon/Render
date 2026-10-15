@@ -211,9 +211,10 @@ def join_leader(request):
     for joining to be the student's own act.
     """
     from .access import joinable_leaders
-    from .gate import JOIN, MEMBER, TEST, learner_stage
+    from .gate import JOIN, MEMBER, TEST, preview_stage, stage_for
 
-    stage = learner_stage(request.user)
+    stage = stage_for(request)
+    looking = bool(preview_stage(request))
     if stage is None:
         return redirect("matazim:home")
     if stage == TEST:
@@ -229,7 +230,9 @@ def join_leader(request):
         return redirect("matazim:join", code=waiting.join_code)
 
     error = ""
-    if request.method == "POST":
+    if request.method == "POST" and looking:
+        error = "זו תצוגה בלבד, ואי אפשר להצטרף ממנה."
+    elif request.method == "POST":
         leader = joinable_leaders().filter(pk=request.POST.get("leader")).first()
         if leader is None:
             error = "בחרו מוביל/ה מהרשימה."

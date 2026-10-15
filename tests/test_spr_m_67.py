@@ -93,14 +93,17 @@ def _main(html):
 
 
 def test_a_visitor_sees_marketing_and_one_big_way_in(client, db):
-    """Avi, 2026-10-15: logged out, the site is marketing: explanations, and a big
-    join button to start. The only reader the "no how it works" rule leaves out."""
+    """Avi, 2026-10-15: logged out, the site is marketing. Lital, the same day: her
+    opening text, and one prominent registration box with the button
+    "מתחילים כאן – להרשמה"."""
     html = client.get("/matazim/").content.decode()
-    assert "איך מצטרפים" in html and "מבחן הכניסה" in html and "מוביל" in html
-    joins = re.findall(r'class="mz-btn mz-btn-primary mz-btn-lg" href="([^"]+)"', html)
-    assert len(joins) >= 2                                   # at the top and again at the end
-    assert all("/matazim/register/" in j and "/matazim/test/" in j for j in joins)
-    assert "אני רוצה ללמוד" not in html
+    assert "לומדים. מתנסים. מובילים. משפיעים." in html
+    assert "המכשירה" in html and "ט׳–י׳" in html
+    box = html[html.index('class="mz-signup-box"'):]
+    box = box[:box.index("</section>")]
+    assert "ברוכים הבאים לאתר מטצים!" in box and "מתחילים כאן – להרשמה" in box
+    assert "/matazim/register/" in box and "/matazim/test/" in box
+    assert "איך מצטרפים" not in html and "אני רוצה ללמוד" not in html
 
 
 def test_before_the_test_there_is_one_button_and_a_nav_of_one(client, world):
@@ -130,7 +133,7 @@ def test_a_member_sees_big_tiles_and_the_state_before_being_a_matz(client, world
     html = client.get("/matazim/").content.decode()
     home = _main(html)
     assert home.count('class="mz-tile"') == 8
-    assert "טרום מטצ" in home and "איך זה עובד" not in html
+    assert "תהליך ההכשרה" in home and "טרום מטצ" not in home and "איך זה עובד" not in html
 
     Student.objects.filter(user=kid).update(status="certified")
     assert ">מטצ<" in client.get("/matazim/").content.decode()
@@ -270,7 +273,7 @@ def test_a_manager_a_leader_and_root_see_the_home_a_student_sees(client, world):
         home = _main(client.get("/matazim/").content.decode())
         assert home.count('class="mz-tile"') == 8, who          # the student's eight
         assert home.count('class="mz-tile mz-tile-role"') == 1 and door in home
-        assert "טרום מטצ" in home
+        assert "תהליך ההכשרה" in home
 
 
 def test_every_tile_opens_for_a_manager_and_a_leader(client, world):

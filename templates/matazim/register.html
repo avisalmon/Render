@@ -43,6 +43,13 @@
         <input type="text" name="name" value="{{ name }}" autocomplete="name" required autofocus>
       </label>
       <label class="mz-field">
+        <span>בית ספר</span>
+        <select name="school" required>
+          <option value="">בחרו מהרשימה</option>
+          {% for school in schools %}<option value="{{ school.pk }}"{% if posted.school == school.pk|stringformat:"d" %} selected{% endif %}>{{ school.name }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="mz-field">
         <span>אימייל</span>
         <input type="email" name="email" value="{{ email }}" autocomplete="email" required>
       </label>

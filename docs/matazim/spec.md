@@ -60,6 +60,18 @@ stage the person is at.*
 | C16 | **מטצ, not מט״צ** | The word in everything a person reads. REQ-M.193. | SPR-M.67 |
 | C17 | **After joining a leader the home is big tiles: הדרכות, קהילה, and so on** | Eight tiles and the state, nothing else. REQ-M.191. | SPR-M.67 |
 
+**Lital's second round, by mail (2026-10-15, 18:11 and 18:13).** Mail to Avi's Gmail
+with מטצים in the subject, replying to the bot's invitation to try the site. Her
+words, and what each became (REQ-M.194 to REQ-M.198):
+
+| # | What she asked | What it became |
+|---|---|---|
+| C18 | The programme is "מטצים", and a new opening text; the registration area gets one prominent box ("ברוכים הבאים לאתר מטצים!", button "מתחילים כאן – להרשמה") in place of the three squares | The logged-out home carries her text and her box (REQ-M.194) |
+| C19 | The sign-up form asks a full name and a school, chosen from seven named schools | `School` rows, seeded once; the form requires one; anyone who joined with Google is asked once on their first screen (REQ-M.195) |
+| C20 | The menu: "about" on the right, registration the only other item | The logged-out menu is those two (REQ-M.196) |
+| C21 | "המסלול שלי" must show the training path, and the certificate only at the end; after a course say "סיום ההדרכה", not "מטצ מוסמך"; "תהליך ההכשרה" instead of "טרום מטצ"; the entrance test says "ברוכים הבאים לתכנית מטצים, מצורף מבחן המיון" | A training-path panel with the year's stages and the certificate last; the wording changed everywhere it appeared (REQ-M.197) |
+| C22 | "We ask for access, through the permission you gave the leaders, to enter the student's site after the screening test; at this stage we cannot see how it looks to the student" | A manager, leader or root can look at the site as a student at any of the three stages, with a bar to switch or stop; nothing is created for them while looking (REQ-M.198) |
+
 **What this overrides, explicitly.**
 
 - **§3.2 "Teal is identity, purple is action"** is replaced by REQ-M.188. The

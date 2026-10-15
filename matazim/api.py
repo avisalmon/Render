@@ -40,6 +40,7 @@ from .models import (
     EntranceTarget,
     Event,
     ProgramMilestone,
+    School,
     SiteUpdate,
     Feedback,
     Institution,
@@ -66,6 +67,7 @@ from .serializers import (
     EntranceTargetSerializer,
     EventSerializer,
     ProgramMilestoneSerializer,
+    SchoolSerializer,
     SiteUpdateSerializer,
     FeedbackSerializer,
     InstitutionSerializer,
@@ -695,6 +697,19 @@ class SiteUpdateViewSet(Scoped):
         announce(row, by=self.request.user)
 
 
+class SchoolViewSet(viewsets.ModelViewSet):
+    """The schools a person can sign up from (Lital, 2026-10-15). Anyone signed in reads
+    the list, a program manager keeps it."""
+
+    serializer_class = SchoolSerializer
+    queryset = School.objects.all()
+
+    def get_permissions(self):
+        if self.action in ("list", "retrieve"):
+            return [IsSignedIn()]
+        return [IsProgramManager()]
+
+
 class PostViewSet(Scoped):
     """קהילת מטצים (REQ-M.26, REQ-M.131, §4.12).
 
@@ -1064,6 +1079,7 @@ ROUTES = [
     ("notifications", NotificationViewSet, Notification),
     ("events", EventViewSet, Event),
     ("milestones", ProgramMilestoneViewSet, ProgramMilestone),
+    ("schools", SchoolViewSet, School),
     ("site-updates", SiteUpdateViewSet, SiteUpdate),
     ("posts", PostViewSet, Post),
     ("teaching", TeachingSessionViewSet, TeachingSession),

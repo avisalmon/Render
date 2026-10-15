@@ -147,18 +147,12 @@ def test_logged_out_nav_matches_the_prototype(client, db):
     prototype's order is still the thing this test is protecting.
     """
     html = client.get("/matazim/").content.decode()
-    items = [
-        "דף הבית",
-        "אודות התכנית",
-        "המסלול השנתי",
-        "ההדרכות",
-        "בתי הספר",
-        "קהילת מטצים",
-        "ימי שיא",
-    ]
-    positions = [html.find(item) for item in items]
+    nav = html[html.index('id="mzNav"'):html.index("</nav>", html.index('id="mzNav"'))]
+    # Lital, 2026-10-15: "about" on the right and registration the only other item.
+    items = ["אודות התכנית", "הרשמה לתכנית"]
+    positions = [nav.find(item) for item in items]
     assert all(p != -1 for p in positions), "a nav item is missing"
-    assert positions == sorted(positions), "nav items are out of the prototype's order"
+    assert positions == sorted(positions), "nav items are out of her order"
 
 
 def test_document_is_hebrew_and_rtl(client, db):

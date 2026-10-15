@@ -70,6 +70,7 @@ def test_register_lands_on_the_main_view(client, db):
     resp = client.post(
         reverse("matazim:register"),
         {
+            "school": __import__("tests.matazim_helpers", fromlist=["school_pk"]).school_pk(),
             "name": "רותם",
             "email": "rotem@example.com",
             "password": PASSWORD,

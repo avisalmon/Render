@@ -33,6 +33,18 @@
     </svg>
   </div>
 
+  {# ------------------------------------------- the training path #}
+  {% comment %}
+    Lital, 2026-10-15: "המסלול שלי" has to show the learning path itself, and only
+    at the end does someone receive the certificate. This is the year as the
+    programme runs it, with where it stands now, and the certificate last.
+  {% endcomment %}
+  <section class="mz-panel" id="mzTrainingPath">
+    <h2>מסלול ההכשרה</h2>
+    {% include "matazim/_year.html" with milestones=year.milestones under_way=year.under_way next_milestone=year.next_milestone %}
+    <p class="mz-path-end"><strong>ובסוף: תעודת מטצ.</strong> <span class="mz-muted">אחרי שהמוביל/ה מאשר/ת, ורק אחרי שסיימתם את כל המסלול.</span></p>
+  </section>
+
   {# ------------------------------------------------------ status cards #}
   <ul class="mz-status-row" aria-label="מצב נוכחי">
     {% for card in status_cards %}
@@ -183,7 +195,7 @@
 
   {# ------------------------------------------------ the detail panels #}
   <section class="mz-panel">
-    <h2>כדי להיות מטצ מוסמך</h2>
+    <h2>בדרך לתעודת מטצ</h2>
     {% if student.status == "certified" %}
       <p class="mz-verdict">
         <span class="mz-tag mz-tag-done">מטצ מוסמך</span>
@@ -208,7 +220,7 @@
         <li>
           {% if course.certified %}<span class="mz-check">✓<span class="mz-sr">הושלם.</span></span>{% else %}<span class="mz-check-todo">○<span class="mz-sr">עוד לא.</span></span>{% endif %}
           <span>
-            תעודה ב{{ course.progress.title|default:course.slug }}
+            סיום ההדרכה: {{ course.progress.title|default:course.slug }}
             {% if not course.certified and course.progress %}<span class="mz-muted">{{ course.progress.done }}/{{ course.progress.total }} שיעורים</span>{% endif %}
           </span>
         </li>

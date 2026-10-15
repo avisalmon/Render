@@ -144,6 +144,7 @@ def test_registration_records_the_year_and_the_parent(client, db):
     client.post(
         reverse("matazim:register"),
         {
+            "school": __import__("tests.matazim_helpers", fromlist=["school_pk"]).school_pk(),
             "name": "יובל כהן",
             "email": "new@example.com",
             "password": PASSWORD,

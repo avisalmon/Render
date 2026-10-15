@@ -4909,3 +4909,16 @@ mentioning it.
 
 **Old sprints** that built the loop (SPR-M.25, M.26, M.27, M.36, M.48) stay as
 written: they describe what existed. Nothing in them is current.
+
+## SPR-M.69 — Lital's second round  `DONE 2026-10-15`
+
+By mail, 18:11 and 18:13: see spec chapter 0 (C18 to C22). **Built:** `School` and
+`MemberProfile.school` (migrations 0044 and 0045, which seed her seven schools once);
+the sign-up form with a full name and a school; `/matazim/school/` for people who
+joined with Google; her opening text and registration box on the logged-out home; a
+logged-out menu of "about" and "registration"; a "מסלול ההכשרה" panel on המסלול שלי
+with the certificate at the end; "תהליך ההכשרה" for "טרום מטצ", "סיום ההדרכה" for the
+course certificate nodes; and the student preview: `/matazim/preview/<test|join|member|off>/`
+for root, managers and leaders, with a bar, the student's own menu, and no row made
+(joining and uploading the entrance model are refused while looking).
+`tests/test_spr_m_69.py`.
