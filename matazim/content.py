@@ -20,7 +20,7 @@ FUNNEL = [
         "title": "מתמיינים",
         "text": "מצטרפים למוביל/ה עם קוד",
         "detail": (
-            "מי שרוצה להיות מט״צ מקבל קוד ממוביל/ה, מצטרף אליו/ה ומיד מתחיל ללמוד. "
+            "מי שרוצה להיות מטצ מקבל קוד ממוביל/ה, מצטרף אליו/ה ומיד מתחיל ללמוד. "
             "אם המוביל/ה בחר/ה במבחן כניסה, אפשר לעשות אותו בכל שלב: הוא הדרכת "
             "טינקרקאד קצרה שבודקת התמדה ולא ידע מוקדם, ואפשר לנסות שוב בלי הגבלה."
         ),
@@ -66,7 +66,7 @@ FUNNEL = [
         "text": "יוצרים שינוי ומשפיעים בבית הספר ובקהילה",
         "detail": (
             "מובילים יוזמות בבית הספר ובקהילה, משתתפים בימי שיא, ונשארים חלק "
-            "מקהילת המט״צים גם אחרי שהשנה נגמרת."
+            "מקהילת המטצים גם אחרי שהשנה נגמרת."
         ),
         "tone": "teal",
         "teaser": True,
@@ -93,10 +93,10 @@ COMING = {
         ),
     },
     "community": {
-        "title": "קהילת מט״צים",
-        "lead": "המקום שבו המט״צים מדברים זה עם זה.",
+        "title": "קהילת מטצים",
+        "lead": "המקום שבו המטצים מדברים זה עם זה.",
         "body": (
-            "כאן יהיו עדכונים מצוות התוכנית, שאלות ותשובות בין מט״צים, ותוצרים "
+            "כאן יהיו עדכונים מצוות התוכנית, שאלות ותשובות בין מטצים, ותוצרים "
             "שאנשים בוחרים לשתף. הקהילה תיפתח כשיהיו בה אנשים, ולא לפני."
         ),
     },
@@ -104,7 +104,7 @@ COMING = {
         "title": "ימי שיא",
         "lead": "המפגשים הפיזיים של התוכנית.",
         "body": (
-            "ימי שיא הם הימים שבהם כל המט״צים נפגשים: סדנאות, תערוכת תוצרים "
+            "ימי שיא הם הימים שבהם כל המטצים נפגשים: סדנאות, תערוכת תוצרים "
             "וטקס ההסמכה. התאריכים יתפרסמו כאן ברגע שייסגרו מול בתי הספר."
         ),
     },
@@ -112,14 +112,14 @@ COMING = {
 
 
 # --------------------------------------------------------------------------
-# What a student has to finish to become a מט״צ (REQ-M.76).
+# What a student has to finish to become a מטצ (REQ-M.76).
 #
 # Avi, 2026-09-11: the entrance test, then both Scratch courses certified in
 # babook, then the leader's own approval. These two slugs are the whole
 # automatic half.
 #
 # They are slugs rather than a field on babook's `Course` deliberately. A field
-# would be babook carrying knowledge about מט״צים, which RULE-4 forbids, and it
+# would be babook carrying knowledge about מטצים, which RULE-4 forbids, and it
 # would need a migration every time the program changes its mind. Babook still
 # knows nothing about us; we simply name two of its courses.
 #

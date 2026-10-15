@@ -1,11 +1,11 @@
 """SPR-M.51 — the certification path closes.
 
 The 2026-09-17 review found the hole this sprint fills, and it was the worst
-kind: **a member who did everything מט״צים offered could not become a מט״צ
+kind: **a member who did everything מטצים offered could not become a מטצ
 מוסמך.** REQ-M.76 requires a `CourseCertificate` for `scratch` and
 `scratch-advanced`; both are `requires_project` with `project_min_count = 2`, so
 each wants two handed-in projects, and the certificate is issued by a gate that
-lived behind babook's own lesson screen. מט״צים rendered no way to hand anything
+lived behind babook's own lesson screen. מטצים rendered no way to hand anything
 in and never called that gate. Everything downstream looked correct because the
 certificates in the database had been seeded rather than earned.
 
@@ -16,7 +16,7 @@ babook's gate counts. A second opinion about who has earned a certificate is the
 one duplication this codebase could least afford.
 
 **The load-bearing test is `test_a_member_can_be_certified_without_leaving_
-matazim`.** It walks the whole thing with nothing but מט״צים URLs: watch the
+matazim`.** It walks the whole thing with nothing but מטצים URLs: watch the
 lessons, hand in two projects, press the button, hold the certificate. If that
 test passes, the product's central promise is deliverable. It was not, six days
 ago.
@@ -119,7 +119,7 @@ def _hand_to_leader(client, slug):
 
 
 def test_a_member_can_be_certified_without_leaving_matazim(client, member, monkeypatch):
-    """The whole journey, using מט״צים URLs and nothing else.
+    """The whole journey, using מטצים URLs and nothing else.
 
     Six days ago this was impossible at any step after the lessons: there was
     no way to hand a project in, and nothing in this product ever asked whether

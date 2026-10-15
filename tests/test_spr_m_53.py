@@ -89,9 +89,9 @@ def world(db):
     )
     StudyClass.objects.create(leader=taught, name="ט1", school_name="תיכון א")
 
-    kid = Student.objects.create(user=_user("kid@example.com", "מט״צ"),
+    kid = Student.objects.create(user=_user("kid@example.com", "מטצ"),
                                  leader=taught, status=Student.IN_TRAINING)
-    their_kid = Student.objects.create(user=_user("kid2@example.com", "מט״צ זר"),
+    their_kid = Student.objects.create(user=_user("kid2@example.com", "מטצ זר"),
                                        leader=foreign, status=Student.IN_TRAINING)
     return {"root": root, "naomi": naomi, "other_pm": other_pm,
             "taught": taught, "plain": plain, "waiting": waiting,
@@ -646,7 +646,7 @@ def test_neither_of_them_can_appoint_or_change_the_pool(client, pair):
 
 
 def test_only_the_certified_are_called_matazim(client, world):
-    """§4.9 — a certified מט״צ is what the whole programme produces, so the word
+    """§4.9 — a certified מטצ is what the whole programme produces, so the word
     is the outcome and not the intake. Counting everybody as one makes the
     number that matters unreadable, and the staff door had already been fixed
     once for exactly this; the new report reintroduced it, directly above the
@@ -663,9 +663,9 @@ def test_only_the_certified_are_called_matazim(client, world):
 
     for page, where in ((door, "staff door"), (report, "people report")):
         assert "לומדים בתוכנית" in page, where
-        assert "מט״צים בתוכנית" not in page, (
-            f"{where} calls everybody in training a מט״צ")
-        assert "מט״צים מוסמכים" in page, where
+        assert "מטצים בתוכנית" not in page, (
+            f"{where} calls everybody in training a מטצ")
+        assert "מטצים מוסמכים" in page, where
 
 
 # -------------------------------------------- REQ-M.156, a leader owes nothing
@@ -680,7 +680,7 @@ def test_a_leader_who_sat_nothing_and_learned_nothing_manages_everything(client,
 
     plain = world["plain"]
     assert not MemberProfile.objects.filter(user=plain.user).exists()
-    kid = Student.objects.create(user=_user("kid9@example.com", "מט״צ"),
+    kid = Student.objects.create(user=_user("kid9@example.com", "מטצ"),
                                  leader=plain, status=Student.IN_TRAINING)
 
     session = _login(client, "plain@example.com")

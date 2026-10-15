@@ -137,7 +137,7 @@ def test_closing_without_saying_what_was_built_is_refused(client, settings, a_re
 def test_the_endpoint_touches_nothing_but_requests(client, settings, a_request, naomi):
     """The blast radius, asserted rather than described.
 
-    A fingerprint of everything else מט״צים holds, before and after a full run
+    A fingerprint of everything else מטצים holds, before and after a full run
     of every verb this endpoint has.
     """
     from matazim.models import Leader, Student
@@ -230,7 +230,7 @@ def test_closing_records_the_sprint_and_mails_her_with_demo_steps(client, settin
         data={
             "id": a_request.pk, "action": "done", "sprint": "SPR-M.48",
             "outcome": "הרוסטר מקבץ לפי כיתה.",
-            "demo": "נכנסים להמט״צים שלי ורואים כותרת כיתה.",
+            "demo": "נכנסים להמטצים שלי ורואים כותרת כיתה.",
             "mail": True,
         },
         content_type="application/json",
@@ -246,7 +246,7 @@ def test_closing_records_the_sprint_and_mails_her_with_demo_steps(client, settin
     assert a_request.author.email in sent.recipients()
     assert a_request.body in sent.body, "her words, verbatim"
     assert "הרוסטר מקבץ לפי כיתה." in sent.body
-    assert "נכנסים להמט״צים שלי ורואים כותרת כיתה." in sent.body, "how to demo it"
+    assert "נכנסים להמטצים שלי ורואים כותרת כיתה." in sent.body, "how to demo it"
     assert "תודה" in sent.body, "and thank her"
 
 

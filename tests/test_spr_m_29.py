@@ -1,4 +1,4 @@
-"""SPR-M.29 — the written lesson, in מט״צים's own chrome.
+"""SPR-M.29 — the written lesson, in מטצים's own chrome.
 
 Avi, 2026-09-13: "I want the trainings based on babook infrastructure but the
 views are matazim dedicated. It's a matazim experience."
@@ -7,7 +7,7 @@ The structure was already right — one record of progress, no way out of the
 walls — but the experience was not. This page rendered
 `notes_markdown|truncatewords:60` into a grey paragraph: raw markdown, hashes
 and asterisks included, cut off after sixty words. Eighteen of the nineteen
-סקראץ׳ lessons carry notes and all nineteen carry a summary, so a מט״צ was
+סקראץ׳ lessons carry notes and all nineteen carry a summary, so a מטצ was
 getting a fragment of the lesson rendered as source code while a learner on the
 other product read the whole thing, inside the product that is supposed to be
 the better experience.

@@ -22,7 +22,7 @@ from django.utils import timezone
 
 
 class Command(BaseCommand):
-    help = "Read and close מט״צים improvement requests (§4.11)"
+    help = "Read and close מטצים improvement requests (§4.11)"
 
     def add_arguments(self, parser):
         sub = parser.add_subparsers(dest="action", required=True)

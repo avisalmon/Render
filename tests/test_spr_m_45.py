@@ -1,6 +1,6 @@
 """SPR-M.45 — a lesson page reaches nobody until somebody presses play.
 
-Found while walking the screens where a מט״צ actually spends their hours, which
+Found while walking the screens where a מטצ actually spends their hours, which
 no review had opened before. Measured on a real lesson page, simply opening it
 reached ten third-party hosts: the Bunny player's scripts from
 `assets.mediadelivery.net` and `iframe.mediadelivery.net`, video segments from
@@ -8,7 +8,7 @@ reached ten third-party hosts: the Bunny player's scripts from
 telemetry to `rum-metrics.bunny.net` and `metrics-bunny.net`, and edge latency
 probes as far apart as Auckland and Kenya.
 
-Every other screen in מט״צים contacts nobody at all, which is not an accident:
+Every other screen in מטצים contacts nobody at all, which is not an accident:
 SPR-M.21 self-hosted Rubik rather than let a Google Fonts link send a
 fourteen-year-old's IP address to Google "before they have agreed to anything
 and with nothing on screen saying so".
@@ -68,6 +68,9 @@ def member(db):
             "welcome_accepted_at": timezone.now(),
         },
     )
+    from tests.matazim_helpers import attach
+
+    attach(user)
     return user
 
 

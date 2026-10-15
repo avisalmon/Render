@@ -13,7 +13,7 @@ zero third-party cookies before the click and after sixteen seconds of playing.
 
 **The test that matters here is the last one.** Naming Bunny today fixes today.
 The way this goes wrong again is somebody embedding a map, a font, an analytics
-snippet or a chat widget in a מט״צים template a year from now, with the privacy
+snippet or a chat widget in a מטצים template a year from now, with the privacy
 page still describing a product that had one external service. So the check is
 not "does it mention Bunny": it reads every external host out of the templates
 and fails on any whose owner the privacy page does not name.
@@ -107,7 +107,7 @@ def test_the_cookie_sentence_still_stands():
 def test_every_outside_company_in_the_markup_is_named_on_the_privacy_page():
     """The tripwire for the next one.
 
-    Reads every external host out of the מט״צים templates and requires the
+    Reads every external host out of the מטצים templates and requires the
     privacy page to name whoever owns it. A future embed, a font, a widget or
     an analytics snippet fails this until somebody writes the sentence.
     """
@@ -127,6 +127,6 @@ def test_every_outside_company_in_the_markup_is_named_on_the_privacy_page():
             undisclosed.append(f"{host} -> {owner}, not named on the privacy page")
 
     assert not undisclosed, (
-        "מט״צים contacts companies the privacy page does not mention:\n  "
+        "מטצים contacts companies the privacy page does not mention:\n  "
         + "\n  ".join(undisclosed)
     )

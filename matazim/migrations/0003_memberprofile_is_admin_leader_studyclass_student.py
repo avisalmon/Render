@@ -155,8 +155,8 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "verbose_name": "מט״צ",
-                "verbose_name_plural": "מט״צים",
+                "verbose_name": "מטצ",
+                "verbose_name_plural": "מטצים",
                 "ordering": ["-cohort_year", "user__email"],
                 "unique_together": {("user", "cohort_year")},
             },

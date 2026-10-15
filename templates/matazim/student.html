@@ -15,7 +15,7 @@
   REQ-M.29: nothing here records anything about a child this mataz teaches.
 {% endcomment %}
 
-{% block title %}{{ person.user.profile.display_name|default:person.user.email }} · מט״צים{% endblock %}
+{% block title %}{{ person.user.profile.display_name|default:person.user.email }} · מטצים{% endblock %}
 
 {% block content %}
 <div class="mz-container mz-page">
@@ -29,11 +29,11 @@
   </p>
 
   <section class="mz-panel">
-    <h2>הסמכה למט״צ</h2>
+    <h2>הסמכה למטצ</h2>
 
     {% if person.status == "certified" %}
       <p class="mz-verdict">
-        <span class="mz-tag mz-tag-done">מט״צ מוסמך</span>
+        <span class="mz-tag mz-tag-done">מטצ מוסמך</span>
         הוסמך/ה ב־{{ person.certified_at|date:"j.n.Y" }}
         {% if person.certified_by %}
           על ידי {{ person.certified_by.profile.display_name|default:person.certified_by.email }}
@@ -103,7 +103,7 @@
         <form method="post" action="{% url 'matazim:certify' person.pk %}">
           {% csrf_token %}
           <input type="hidden" name="action" value="certify">
-          <button type="submit" class="mz-btn mz-btn-primary">הסמכה למט״צ</button>
+          <button type="submit" class="mz-btn mz-btn-primary">הסמכה למטצ</button>
         </form>
       {% else %}
         <p class="mz-muted">

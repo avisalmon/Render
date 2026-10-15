@@ -1,14 +1,14 @@
-"""SPR-M.52 — the shelf: הדרכות a leader opens for their own מט״צים.
+"""SPR-M.52 — the shelf: הדרכות a leader opens for their own מטצים.
 
 Avi, 2026-09-19:
 
-> "We want everybody that is in מט״צים, any student, to see the availability of
+> "We want everybody that is in מטצים, any student, to see the availability of
 > trainings that are available in babook, but not all of them. I want to be able
 > as a leader to decide what training I want to expose for my students to see
-> that are available for them to take. And then they take it inside מט״צים, but
+> that are available for them to take. And then they take it inside מטצים, but
 > with the system of babook. Now, it's not about certification."
 
-That last sentence is the design. REQ-M.76 does not move: a מט״צ מוסמך is the
+That last sentence is the design. REQ-M.76 does not move: a מטצ מוסמך is the
 entrance test, both Scratch courses, and the leader's approval. This is
 opportunity, and the screens are built so that a card here can never be mistaken
 for a card up there.
@@ -75,7 +75,7 @@ def world(db):
     for key, email, leader in (("mine", "kid1@example.com", leaders["mine"]),
                                ("theirs", "kid2@example.com", leaders["other"]),
                                ("loose", "kid3@example.com", None)):
-        user = _user(email, "מט״צ")
+        user = _user(email, "מטצ")
         MemberProfile.objects.update_or_create(
             user=user,
             defaults={"entrance_test_passed_at": timezone.now(),
@@ -149,7 +149,7 @@ def test_a_leader_cannot_shelve_what_root_never_offered(client, world):
 
 
 def test_the_programmes_own_two_are_never_withdrawable(world):
-    """REQ-M.76's courses are what a מט״צ is made of. No pool and no shelf can
+    """REQ-M.76's courses are what a מטצ is made of. No pool and no shelf can
     take them away, including from a member with no leader at all."""
     from matazim.access import visible_course_slugs
 

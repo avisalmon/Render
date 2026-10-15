@@ -467,7 +467,7 @@ def test_the_recommendation_never_contradicts_the_conversation(client, db, scrip
     from matazim.assess import split_recommendation
 
     client.force_login(_manager())
-    draft = _start(client, body="אני רוצה שיישלח מייל כשמט״צ מסיים את שתי ההדרכות")
+    draft = _start(client, body="אני רוצה שיישלח מייל כשמטצ מסיים את שתי ההדרכות")
     client.post(reverse("matazim:send_request", args=[draft.pk]))
 
     draft.refresh_from_db()

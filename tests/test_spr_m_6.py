@@ -328,7 +328,7 @@ def test_adminship_can_be_granted_from_django_admin(db):
     """T-F-M.6.7-1: REQ-M.68's second path.
 
     Avi asked whether he could assign admins in production through the admin,
-    and nothing of מט״צים was registered there at all. The command reading
+    and nothing of מטצים was registered there at all. The command reading
     MATAZIM_ADMINS covers the deploy; this covers the day someone needs adding
     without one.
     """
@@ -524,8 +524,8 @@ def test_a_refusal_inside_the_walls_stays_inside_them(client, db):
     assert response.status_code == 403
     html = response.content.decode()
     for leak in ("babook", "site-drawer", "nav-link px-2"):
-        assert leak not in html, f"babook chrome leaked into a מט״צים error page: {leak}"
-    assert "מט״צים" in html
+        assert leak not in html, f"babook chrome leaked into a מטצים error page: {leak}"
+    assert "מטצים" in html
 
 
 def test_a_missing_page_inside_the_walls_stays_inside_them(client, db):
@@ -534,7 +534,7 @@ def test_a_missing_page_inside_the_walls_stays_inside_them(client, db):
     assert response.status_code == 404
     html = response.content.decode()
     assert "babook" not in html
-    assert "מט״צים" in html
+    assert "מטצים" in html
 
 
 def test_babooks_own_errors_are_left_alone(client, db):
@@ -545,7 +545,7 @@ def test_babooks_own_errors_are_left_alone(client, db):
     """
     response = client.get("/no-such-babook-page/")
     assert response.status_code == 404
-    assert "מט״צים" not in response.content.decode()
+    assert "מטצים" not in response.content.decode()
 
 
 def test_an_anonymous_visitor_meets_our_login_not_a_refusal(client, db):

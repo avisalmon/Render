@@ -1,4 +1,4 @@
-"""The screen contract: what every מט״צים page must be true of, rendered.
+"""The screen contract: what every מטצים page must be true of, rendered.
 
 Written 2026-09-11 after eleven sprints in which **every single screen that got
 rendered turned out to have a defect no test had caught**, and not one exception.
@@ -224,7 +224,7 @@ def build_world(
         draft = Request.objects.create(
             author=manager,
             author_role="program_manager",
-            body="אני רוצה שיישלח מייל כשמט״צ מסיים את שני הקורסים.",
+            body="אני רוצה שיישלח מייל כשמטצ מסיים את שני הקורסים.",
             kind=Request.IDEA,
             from_screen="/matazim/staff/cohort/",
             status=Request.DRAFT,
@@ -232,7 +232,7 @@ def build_world(
         RequestMessage.objects.create(
             request=draft,
             who=RequestMessage.HER,
-            body="אני רוצה שיישלח מייל כשמט״צ מסיים את שני הקורסים.",
+            body="אני רוצה שיישלח מייל כשמטצ מסיים את שני הקורסים.",
         )
         RequestMessage.objects.create(
             request=draft,
@@ -240,14 +240,14 @@ def build_world(
             body=(
                 "REQ-M.33 כבר מגדיר התראות, והוא עדיין לא נבנה.\n"
                 "השאלה היא אם מספיק מייל, או שצריך גם סימון במסך.\n"
-                "נוסח מוצע: התראה למנהלת התוכנית כשמט״צ משלים את שני הקורסים."
+                "נוסח מוצע: התראה למנהלת התוכנית כשמטצ משלים את שני הקורסים."
             ),
         )
 
         Request.objects.create(
             author=manager,
             author_role="program_manager",
-            body="במסך המט״צים שלי אני לא מצליחה להבין מי מחכה לאישור שלי ומי כבר אושר.",
+            body="במסך המטצים שלי אני לא מצליחה להבין מי מחכה לאישור שלי ומי כבר אושר.",
             kind=Request.PROBLEM,
             from_screen="/matazim/leader/students/",
             assessment=(
@@ -468,7 +468,7 @@ def build_world(
         Event.objects.create(
             institution=_inst(manager),
             title="תערוכת סיום סקראץ׳",
-            about="כל מט״צ מציג את הפרויקט שלו. מביאים אוזניות.",
+            about="כל מטצ מציג את הפרויקט שלו. מביאים אוזניות.",
             starts_at=now + timezone.timedelta(days=12),
             place="אולם הספורט, עתיד רמלה",
             for_everyone=True,
@@ -618,7 +618,7 @@ SCREENS = [
     (
         "open/join-signed-in",
         lambda w: f"/matazim/class/{w['open_class'].code}/",
-        "unattached@example.com",
+        "mid@example.com",
         dict(students="mixed", open_classes=True),
     ),
     ("leader/home", "/matazim/leader/", "leader@example.com", dict(students="mixed")),
@@ -769,7 +769,7 @@ SCREENS = [
     ("events/calendar", "/matazim/calendar/", "mid@example.com", dict(students="mixed", events=True)),
     ("events/calendar-empty", "/matazim/calendar/", "mid@example.com", dict(students="mixed")),
     ("events/staff", "/matazim/staff/events/", "pm@example.com", dict(students="mixed", events=True)),
-    # REQ-M.26, M.131, M.133 — קהילת מט״צים. One door, so the states worth
+    # REQ-M.26, M.131, M.133 — קהילת מטצים. One door, so the states worth
     # looking at are the four different pages it serves.
     ("community/public", "/matazim/community/", None, dict(students="none")),
     ("community/member", "/matazim/community/", "mid@example.com", dict(students="mixed", posts=True)),
@@ -779,7 +779,10 @@ SCREENS = [
     # REQ-M.32 — פרקטיקום, in its three states.
     ("teaching/mine", "/matazim/my-teaching/", "mid@example.com", dict(students="mixed", teaching=True)),
     ("teaching/empty", "/matazim/my-teaching/", "mid@example.com", dict(students="mixed")),
-    ("teaching/no-leader", "/matazim/my-teaching/", "unattached@example.com", dict(students="mixed")),
+    # REQ-M.191/192: somebody with no leader has one page, the list of leaders,
+    # and the home of somebody with a leader is big tiles.
+    ("member/join-leader", "/matazim/join-leader/", "unattached@example.com", dict(students="mixed")),
+    ("home/tiles", "/matazim/", "mid@example.com", dict(students="mixed")),
     # REQ-M.12b — ההדרכות is two pages now: recruitment for a visitor, a track
     # with state for a member.
     ("courses/visitor", "/matazim/courses/", None, dict(students="none")),

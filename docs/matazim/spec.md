@@ -47,6 +47,19 @@ which are advice only. They are C10 to C12:
 | C11 | **#11: "צבעי אתר בצבעים של רשת החינוך עתיד"** (atidedu.org.il) | The same instruction as C9. REQ-M.188. | SPR-M.61 |
 | C12 | **#10: the home page has the הדרכות with all the topics, the community, and the annual plan "לפי חודשים, מה קורה בכל חודש"; a monthly mail from them; the community shares publications, knowledge, videos** | The annual plan reads month by month, the community page says what it is for in her words, and the programme team's monthly mail is theirs to send. REQ-M.190. | SPR-M.65 |
 
+**The entrance, as ליטל described it (2026-10-15, through Avi).** A fourth source,
+in chat, the same day. She asked for five things, and Avi added a rule over all of
+them: *no "how it works", only what there is to do, simple and minimal for the
+stage the person is at.*
+
+| # | What she asked | What it becomes | Built by |
+|---|---|---|---|
+| C13 | **A student who signs in sees no "I want to learn". Nothing is open to him and he must begin with the test; the site is very abstract and pointed at the test first** | At stage `test` the home page is one heading and one button, and the nav is one item. REQ-M.191. | SPR-M.67 |
+| C14 | **Only after he passes is he invited to join a leader: by a code, or from an open list of leaders he can sort by school** | At stage `join` there is one page: the list, a school filter, "I have a code". The list of REQ-M.165 (Q22) is back. REQ-M.192. | SPR-M.67 |
+| C15 | **Once attached to a leader, or once he has joined himself after the test, the site opens in the state before being a מטצ** | At stage `member` everything opens, and the home names the state: טרום מטצ, and מטצ once certified. Joining is the student's own act, with nobody's yes to wait for. REQ-M.192. | SPR-M.67 |
+| C16 | **מטצ, not מט״צ** | The word in everything a person reads. REQ-M.193. | SPR-M.67 |
+| C17 | **After joining a leader the home is big tiles: הדרכות, קהילה, and so on** | Eight tiles and the state, nothing else. REQ-M.191. | SPR-M.67 |
+
 **What this overrides, explicitly.**
 
 - **§3.2 "Teal is identity, purple is action"** is replaced by REQ-M.188. The
@@ -56,6 +69,12 @@ which are advice only. They are C10 to C12:
 - **REQ-M.76** gains a fourth thing without losing the other three: for a
   member who has a leader, each of the two Scratch certificates now needs a
   hand-in first (REQ-M.179).
+- **REQ-M.165 and Q22 (the list of leaders is retired), and REQ-M.177 ("no test before
+  joining")**, wholly: she asked for the list back and for the test to come first.
+  Joining is now test, then a leader, in that order, by a code or from the list.
+- **The "how it works" parts of the home page, the entrance test page and the annual
+  path's explanations**: removed from the home and the test page. REQ-M.5's public
+  sections stay as pages, and are no longer on the front door.
 - **REQ-M.177 and REQ-M.178 (2026-10-12)**, in part: the joining door stays
   open (a code attaches a person at once), but a participant who has not been
   through the test no longer enters the main site (REQ-M.189), whatever their
@@ -1204,6 +1223,9 @@ waits on an answer.
 | REQ-M.186 | The year's schedule is data | C6. `ProgramMilestone` rows, one per row of the client's table: date as she wrote it, a sortable start date, an end date where there is one, the stage, the activities, a peak-day mark. Seeded once with the ten milestones of תשפ״ז; after that the database is the only source (Rule 1). Shown as המסלול השנתי to everyone, with "now" and "next" marked, and editable by the program manager with the REST API behind it. | DONE |
 | REQ-M.187 | A patrol of about ten | C7. Each school's confirmed students are counted against ten, and the recruitment deadline (15.11.2026, from the milestone table) is shown beside the count. The number is a target and never a cap: an eleventh is not refused. The leader sees their school's count; the program manager sees every school's. | DONE |
 | REQ-M.189 | The main site waits for the test | C10. **Answered by Avi 2026-10-15 (Q28): "Litala's definition is priority", so there is no exemption.** Anyone signed in as a learner (not a leader, candidate, program manager or root) whose entrance product is not yet approved (REQ-M.182) is sent to the entrance test, with a sentence saying why, from the learning (`learn_*`), the hand-ins (`my_work`), the practicum (`my_teaching`), the community feed, and the classes (`classes`, `open_*`). Not gated: the front pages, the test itself, the annual path, המסלול שלי, the bell, rights and data (they are how a person gets through). **This closes the open door of SPR-M.59 and the open classes of SPR-M.60 to anyone not yet approved**: they were Avi's own idea of 2026-10-12 and her request is later and the client's. `gate.applies` is the one function. | DONE |
+| REQ-M.191 | Three stages, one thing each | C13, C17. `gate.learner_stage` returns `test`, `join` or `member` for a learner and `None` for a leader, candidate, program manager or root. The home page and the nav are the stage's own: a visitor, one button; `test`, one heading and one button and a nav of one; `member`, eight big tiles and the state. No "how it works" anywhere on them. | DONE |
+| REQ-M.192 | Choose a leader after the test | C14, C15. `/matazim/join-leader/` is the whole of stage `join`: the open list of active leaders, a school filter, "יש לי קוד". Choosing is the student's own act and attaches at once (`_attach`, shared with the code door), with the first line of their history written. A code does not get anyone round the test: joining by code before passing goes to the test, and the code is remembered and waiting afterwards. The consent gate for minors applies on both doors. | DONE |
+| REQ-M.193 | The word is מטצ | C16. Every string a person reads says מטצ and מטצים, never with gershayim; `tests/test_spr_m_67` scans every template, module and stylesheet for it. Code identifiers, URLs and the CSS prefix are not words a person reads and are unchanged. | DONE |
 | REQ-M.190 | The year month by month, and the community in her words | C12. The annual path groups the schedule by month ("מה קורה בכל חודש"); the community page says it is where the team shares publications, knowledge and videos. The monthly mail is the team's, and this product does not send it. | DONE |
 | REQ-M.188 | Atid's look | C9. The palette, type scale, shape and header follow atidedu.org.il: burgundy `#870335` for action and links, orange-red `#FC5029` for accents and large display only, deep plum `#1E000C` for text, warm off-whites `#FBF6F5` and `#F9F1EF` for ground, peach `#F9DAB9` and lilac `#D5C2F9` as soft fills, pill-shaped buttons (their `border-radius: 50px`), and the new logo. Tokens in `matazim.css` only, so every screen follows at once and night mode is a palette swap. Every pairing is measured for contrast; orange never carries small text. The typeface is Rubik until Atid supplies its Polin (Q26). | TODO |
 

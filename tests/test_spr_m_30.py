@@ -189,7 +189,7 @@ def test_a_notification_never_leaves_the_walls(db):
     student = _student()
     row = notify(student.user, Notification.FEEDBACK, "משהו", url="/courses/scratch/")
 
-    assert row.url == "", "a notification would have navigated out of מט״צים"
+    assert row.url == "", "a notification would have navigated out of מטצים"
 
     ok = notify(student.user, Notification.FEEDBACK, "משהו", url="/matazim/my-work/")
     assert ok.url == "/matazim/my-work/"

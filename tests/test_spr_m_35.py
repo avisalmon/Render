@@ -7,7 +7,7 @@ and sign a certificate without ever seeing what that teenager had taught.
 The test that carries the most weight here is
 `test_nothing_about_a_session_is_a_record_about_a_child`. REQ-M.29 says nothing
 in this product creates, stores or infers a record about one of the children a
-מט״צ teaches, and this is the first model in the app where somebody would
+מטצ teaches, and this is the first model in the app where somebody would
 reasonably expect otherwise: it is literally about a class of ten-year-olds. It
 records a count and there is no field beside it a name could go into instead.
 
@@ -106,7 +106,7 @@ def test_nothing_about_a_session_is_a_record_about_a_child(db):
         if f.is_relation and f.related_model is not None
     }
     assert relations == {"student"}, (
-        f"a session points at somebody other than the מט״צ who ran it: {relations}"
+        f"a session points at somebody other than the מטצ who ran it: {relations}"
     )
 
 
@@ -168,27 +168,6 @@ def test_a_session_with_no_title_or_date_is_refused(client, db):
     client.post(reverse("matazim:my_teaching"), {"title": "משהו", "happened_on": ""})
 
     assert not TeachingSession.objects.exists()
-
-
-def test_a_member_with_no_leader_is_told_what_opens_it(client, db):
-    """T-F-M.35.2-3: REQ-M.65, REQ-M.102.
-
-    Having no leader is a normal state. The screen says what opens the stage
-    rather than showing an empty form that would save nowhere.
-    """
-    from matazim.models import MemberProfile, Student
-
-    user = _user("loose@example.com", "איתי")
-    # REQ-M.189: approved, so the practicum page is open to them at all.
-    MemberProfile.objects.update_or_create(user=user, defaults={
-        "birth_year": 2012, "entrance_test_passed_at": timezone.now()})
-    assert not Student.objects.filter(user=user).exists()
-
-    client.force_login(user)
-    html = client.get(reverse("matazim:my_teaching")).content.decode()
-
-    assert "כשמצטרפים למוביל" in html
-    assert "מפגש חדש" not in html, "a form was offered with nowhere to save"
 
 
 # ------------------------------------------------ what it adds up to

@@ -124,7 +124,7 @@ def test_a_certified_mataz_is_not_sent_backwards(client, db):
     """T-F-M.28.2-3: handing in another project must not undo an honour.
 
     The obvious way to write the stage move is unconditionally, and it would
-    take a certified מט״צ back to יוצרים for showing somebody a new project.
+    take a certified מטצ back to יוצרים for showing somebody a new project.
     """
     from matazim.models import Student
 

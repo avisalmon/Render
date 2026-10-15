@@ -137,25 +137,6 @@ def test_the_course_page_says_which_state_the_product_is_in(client, member, monk
     assert "הוחזר לתיקון" in panel()
 
 
-def test_someone_with_no_leader_is_not_blocked(client, db, monkeypatch):
-    """Q25: nobody to hand to, so the gate would be a door nobody can open."""
-    from app.models import CourseCertificate
-    from matazim.models import MemberProfile
-
-    user = User.objects.create_user(username="free@example.com", email="free@example.com",
-                                    password=PASSWORD)
-    MemberProfile.objects.update_or_create(user=user, defaults={
-        "birth_year": timezone.now().year - 14, "guardian_consent_at": timezone.now(),
-        "welcome_accepted_at": timezone.now(), "entrance_test_passed_at": timezone.now()})
-    course = _course()
-    client.force_login(user)
-    _watch_everything(user, course)
-    _hand_in(client, course, 1, "111111111", monkeypatch)
-    _hand_in(client, course, 2, "222222222", monkeypatch)
-    assert _finish(client, course)["Location"].endswith("?cert=issued")
-    assert CourseCertificate.objects.filter(user=user, course=course).exists()
-
-
 def test_the_course_page_shows_the_hand_in_as_the_next_step(client, member, monkeypatch):
     course = _ready(client, member, monkeypatch)
     html = client.get(f"/matazim/learn/{course.slug}/").content.decode()

@@ -37,7 +37,7 @@ def test_course():
 
     We render its lessons and write progress through the shared tables. We never
     add a lesson to it or change its project type: it is live, its own learners
-    would see the change, and מט״צים does not write babook's content (REQ-M.47).
+    would see the change, and מטצים does not write babook's content (REQ-M.47).
     """
     return Course.objects.filter(slug=TEST_COURSE_SLUG).first()
 

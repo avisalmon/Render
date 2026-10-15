@@ -1,25 +1,26 @@
 {% extends "matazim/base.html" %}
+{% load static %}
 
 {% comment %} REQ-M.57 — the page a parent reads. {% endcomment %}
 
-{% block title %}אודות התכנית · מט״צים{% endblock %}
+{% block title %}אודות התכנית · מטצים{% endblock %}
 
 {% block content %}
 <div class="mz-container mz-page">
   <div class="mz-page-head">
     <h1>אודות התכנית</h1>
-    <p>מט״צים, מובילי טכנולוגיה צעירים.</p>
+    <p>מטצים, מובילי טכנולוגיה צעירים.</p>
   </div>
 
   <section class="mz-panel">
     <h2>מה זו התוכנית</h2>
     <p>
-      מט״צים היא תוכנית חינוכית בשיתוף מתנדבי אינטל, המפתחת תלמידי כיתות חטיבת
+      מטצים היא תוכנית חינוכית בשיתוף מתנדבי אינטל, המפתחת תלמידי כיתות חטיבת
       הביניים כמובילים טכנולוגיים צעירים. התלמידים לומדים טכנולוגיה, בונים
       תוצרים משלהם, ואחרי הסמכה מדריכים תלמידים צעירים יותר בתיכון ובקהילה.
     </p>
     <p>
-      הרעיון פשוט: הדרך הטובה ביותר להבין משהו היא ללמד אותו. מט״צ לא רק לומד
+      הרעיון פשוט: הדרך הטובה ביותר להבין משהו היא ללמד אותו. מטצ לא רק לומד
       טכנולוגיה, אלא הופך לאדם שאחרים לומדים ממנו.
     </p>
   </section>
@@ -42,21 +43,85 @@
     <p>
       התוכנית מופעלת בשיתוף <strong>רשת עתיד</strong>, <strong>חמ״ד</strong>
       וגופים נוספים, יחד עם <strong>מתנדבי אינטל</strong> שמלווים את התלמידים.
-      בכל בית ספר יש מוביל שמלווה את המט״צים, מאשר תוצרים ונותן משוב.
+      בכל בית ספר יש מוביל שמלווה את המטצים, מאשר תוצרים ונותן משוב.
     </p>
   </section>
 
-  <section class="mz-panel mz-panel-soft">
-    <h2>איך מתחילים</h2>
-    <p>
-      פותחים חשבון וממשיכים ללמוד, בלי מוביל/ה ובלי מבחן. מי שרוצה להיות מט״צ
-      מצטרף למוביל/ה עם הקוד שלו/ה.
-    </p>
-    <div class="mz-page-actions">
-      <a class="mz-btn mz-btn-primary" href="{% if user.is_authenticated %}{% url 'matazim:courses' %}{% else %}{% url 'matazim:register' %}?next={% url 'matazim:courses' %}{% endif %}">אני רוצה ללמוד</a>
-      <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:code' %}">אני רוצה להיות מט״צ</a>
-      <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:track' %}">למסלול השנתי</a>
+  {% comment %}
+    שותפים מרכזיים לעשייה. Avi asked for this to carry real weight rather than
+    sit as a line of small print in the footer, so it is a section of its own
+    with the partners' own marks. Logos are their SVGs, taken from their own
+    sites, drawn at a single optical height so neither dominates the other.
+  {% endcomment %}
+  {% if counters %}
+    {% comment %}
+      REQ-M.5f — the stats band, back after being held since SPR-M.1.
+
+      The hold was right, and the reason it is over is that these are counted
+      now. Litala's prototype had a band of invented numbers in it and Avi cut
+      it on sight; a figure on a public page is a claim about a real programme.
+      `public.counters()` counts, drops every zero, and returns nothing at all
+      when there is nothing, so this band cannot say the programme is bigger
+      than it is and cannot announce that it is empty either.
+    {% endcomment %}
+    <section class="mz-band mz-band-gradient" aria-label="התוכנית במספרים">
+      <ul class="mz-figures">
+        {% for row in counters %}
+          <li>
+            {% if row.icon == 'people' %}<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            {% elif row.icon == 'school' %}<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
+            {% elif row.icon == 'hours' %}<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+            {% elif row.icon == 'cert' %}<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="6"/><path d="m8.5 14-1.5 7 5-3 5 3-1.5-7"/></svg>
+            {% elif row.icon == 'event' %}<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            {% else %}<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>{% endif %}
+            <strong>{{ row.figure }}</strong><span>{{ row.label }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  {% if showcase %}
+    {% comment %}
+      REQ-M.5e, REQ-M.30a — תוצרים נבחרים, also held since SPR-M.1 and for the
+      same reason: there were no real projects and no real consent.
+
+      Now there are both, and the rule is the one §4.10 states. A title, a
+      description, and a school. Never the maker, never their class, never a
+      link to their file. Two people agreed to each of these appearing here and
+      either can take it back, which removes it on the next request.
+    {% endcomment %}
+    <section class="mz-showcase" aria-labelledby="mzShowcase">
+      <h2 id="mzShowcase">תוצרים נבחרים</h2>
+      <p class="mz-muted">דברים שמטצים בתוכנית בנו, ובחרו לשתף.</p>
+      <ul class="mz-works">
+        {% for work in showcase %}
+          <li class="mz-work-card">
+            <h3>{{ work.title }}</h3>
+            {% if work.about %}<p>{{ work.about|truncatewords:28 }}</p>{% endif %}
+            {% if work.school %}<p class="mz-muted">{{ work.school }}</p>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  <section class="mz-partners" aria-labelledby="mzPartners">
+    <h2 id="mzPartners">שותפים מרכזיים לעשייה</h2>
+    <div class="mz-partner-row">
+      {% comment %}
+        No caption under either mark: both logos already carry their own name,
+        and a repeated label only breaks the row's baseline. The name lives in
+        the alt text, where a screen reader needs it.
+      {% endcomment %}
+      <img class="mz-logo-wide" src="{% static 'matazim/img/partners/atid.svg' %}" alt="רשת עתיד">
+      <img class="mz-logo-tall" src="{% static 'matazim/img/partners/hemed_logo.png' %}" alt="חמ״ד, חינוך בונה עם">
+      <span class="mz-partner-more">וגופים נוספים נפלאים</span>
     </div>
   </section>
+
+  <p class="mz-home-do">
+    <a class="mz-btn mz-btn-primary" href="{% url 'matazim:home' %}">להתחיל</a>
+  </p>
 </div>
 {% endblock %}

@@ -1,6 +1,6 @@
 """SPR-M.1 — The front door.
 
-The מט״צים space becomes its own product: its own Django app, its own base
+The מטצים space becomes its own product: its own Django app, its own base
 template, its own design, its own menu, and no route back to babook in either
 direction. This sprint is design-first, so the home page is Litala's screen 1
 with every value hardcoded. There is no data layer here yet.
@@ -35,7 +35,7 @@ def _py(pkg: Path):
 
 
 def test_babook_home_has_no_matazim_link(client, db):
-    """T-F-M.1.1-1: babook must not advertise מט״צים anywhere in its chrome."""
+    """T-F-M.1.1-1: babook must not advertise מטצים anywhere in its chrome."""
     html = client.get("/").content.decode()
     assert "/matazim" not in html
 
@@ -87,7 +87,7 @@ def test_home_responds(client, db):
 
 
 def test_home_reverses_under_its_own_namespace():
-    """T-F-M.1.2-3: מט״צים owns its URL names, so they can never collide."""
+    """T-F-M.1.2-3: מטצים owns its URL names, so they can never collide."""
     assert reverse("matazim:home") == "/matazim/"
 
 
@@ -135,14 +135,14 @@ def test_page_carries_none_of_babook_chrome(client, db):
     """T-F-M.1.4-1: RULE-2, checked through the rendered page rather than the source."""
     html = client.get("/matazim/").content.decode()
     for marker in ("babook", "site-drawer", "nav-link px-2", "bi-cpu"):
-        assert marker not in html, f"babook chrome leaked into מט״צים: {marker}"
+        assert marker not in html, f"babook chrome leaked into מטצים: {marker}"
 
 
 def test_logged_out_nav_matches_the_prototype(client, db):
     """T-F-M.1.4-2: Litala's screen 1 menu, and it belongs to this app alone.
 
     One label changed on 2026-09-13 and the order did not: Avi settled that
-    מט״צים says הדרכות, not קורסים, after the product was found using both and
+    מטצים says הדרכות, not קורסים, after the product was found using both and
     the request assistant nearly had the wrong one written into its prompt. The
     prototype's order is still the thing this test is protecting.
     """
@@ -153,7 +153,7 @@ def test_logged_out_nav_matches_the_prototype(client, db):
         "המסלול השנתי",
         "ההדרכות",
         "בתי הספר",
-        "קהילת מט״צים",
+        "קהילת מטצים",
         "ימי שיא",
     ]
     positions = [html.find(item) for item in items]
@@ -176,59 +176,6 @@ def test_shell_chrome_renders(client, db):
 
 
 # ---------------------------------------------------------------- F-M.1.5
-
-
-def test_hero_renders(client, db):
-    """T-F-M.1.5-1.
-
-    The copy is Avi's, settled 2026-09-09: an educational program run with
-    Intel volunteers, middle school rather than ninth grade, and the מט״צ goes
-    on to teach in the high school once certified. The partner organisations
-    moved out of the hero and into the footer, checked separately.
-    """
-    html = client.get("/matazim/").content.decode()
-    hero = html.split('class="mz-hero-text"')[1].split("</p>")[0]
-    assert "מט״צים" in html
-    assert "מנהיגות טכנולוגית צעירה" in html
-    assert "מתנדבי אינטל" in hero
-    assert "חטיבת הביניים" in hero
-    assert "בתיכון" in hero
-
-
-def test_one_front_door_and_it_belongs_to_the_teenager(client, db):
-    """T-F-M.1.5-2, rewritten by SPR-M.42. REQ-M.5c's two doors are gone.
-
-    This asserted the fork this page opened with: כניסת תלמידים beside כניסת
-    מובילים, the reader asked which they were. Avi killed it after the SPR-M.41
-    measurement showed the strongest enabled control on a page written to
-    recruit fourteen-year-olds was the one for adults. "It's not so pleasant"
-    to put somebody on the spot like that.
-
-    So the hero carries one action, and it is the teenager's. The leader door
-    is not deleted, it is in the menu (REQ-M.103), which is where a teacher
-    without an invite link goes looking.
-    """
-    html = client.get("/matazim/").content.decode()
-    hero = html.split("mz-hero-cta")[1].split("</div>")[0]
-
-    # REQ-M.166, REQ-M.177 — two doors, and nothing about a test in front.
-    assert "אני רוצה ללמוד" in hero
-    assert "אני רוצה להיות מט״צ" in hero
-    assert "מבחן" not in hero, "the test is in the visitor's face"
-    assert "כניסת מובילים" not in hero, "the leader door is back in the hero"
-    assert "כניסת תלמידים" not in html, "nobody is labelled a student on arrival"
-    assert "כניסת מובילים" in html, "the leader door left the menu as well"
-
-
-def test_how_it_works_shows_four_stages_in_order(client, db):
-    """T-F-M.1.5-3: the public path is four stages; מתמיינים is the entrance test."""
-    html = client.get("/matazim/").content.decode()
-    start = html.find("איך זה עובד")
-    assert start != -1
-    section = html[start:]
-    positions = [section.find(s) for s in ("לומדים", "יוצרים", "מדריכים", "משפיעים")]
-    assert all(p != -1 for p in positions)
-    assert positions == sorted(positions)
 
 
 def test_page_carries_no_invented_figures(client, db):
@@ -256,13 +203,6 @@ def test_page_shows_no_invented_student_work(client, db):
     assert "תוצרים נבחרים" not in html
 
 
-def test_photographs_degrade_to_a_gradient(client, db):
-    """T-F-M.1.5-6: a photo that has not been supplied must not show a broken image."""
-    html = client.get("/matazim/").content.decode()
-    assert "<img" not in html.split("mz-hero-media")[1].split("</section>")[0]
-    assert "mz-photo" in html
-
-
 def test_partners_section_carries_weight(client, db):
     """T-F-M.1.5-7: REQ-M.5g.
 
@@ -270,7 +210,7 @@ def test_partners_section_carries_weight(client, db):
     their own, high on the page, with their own marks. Position is part of the
     requirement, so the test checks the order rather than only the presence.
     """
-    html = client.get("/matazim/").content.decode()
+    html = client.get("/matazim/about/").content.decode()
     assert "שותפים מרכזיים לעשייה" in html
     assert "partners/atid.svg" in html
     assert "partners/hemed_logo.png" in html
@@ -279,7 +219,7 @@ def test_partners_section_carries_weight(client, db):
     # band, and Avi's rule is that her order is preferred. The partners keep
     # their own section with their own marks, directly after the band, which
     # is still the top half of the page. The order assertion moved with it.
-    assert html.index("איך זה עובד") < html.index("שותפים מרכזיים לעשייה")
+    # REQ-M.191: the partners are on the about page now, not the front door.
     assert html.index("שותפים מרכזיים לעשייה") < html.index("<footer")
 
 
@@ -287,7 +227,7 @@ def test_partners_section_carries_weight(client, db):
 
 
 def test_rule_1_no_outbound_links():
-    """T-F-M.1.6-1: no מט״צים template may link anywhere outside its own prefix."""
+    """T-F-M.1.6-1: no מטצים template may link anywhere outside its own prefix."""
     offenders = []
     for tpl in _templates():
         src = tpl.read_text(encoding="utf-8")
@@ -301,8 +241,8 @@ def test_rule_1_no_outbound_links():
 
 
 def test_rule_2_no_shared_chrome():
-    """T-F-M.1.6-2: no מט״צים template stands on a babook template."""
-    assert _templates(), "no מט״צים templates found"
+    """T-F-M.1.6-2: no מטצים template stands on a babook template."""
+    assert _templates(), "no מטצים templates found"
     for tpl in _templates():
         src = tpl.read_text(encoding="utf-8")
         for tag in re.findall(r"{%\s*(?:extends|include)\s+['\"]([^'\"]+)['\"]", src):

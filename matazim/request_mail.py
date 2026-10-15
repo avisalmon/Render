@@ -55,7 +55,7 @@ def _body(row, site_url, demo=""):
     lines = [
         "שלום,",
         "",
-        f"בקשה שנרשמה במט״צים טופלה{f' בספרינט {row.sprint}' if row.sprint else ''}.",
+        f"בקשה שנרשמה במטצים טופלה{f' בספרינט {row.sprint}' if row.sprint else ''}.",
         "",
         "מה התבקש",
         f"({asked_by}, {row.created_at:%d.%m.%Y}"
@@ -91,7 +91,7 @@ def _body(row, site_url, demo=""):
         'מה באמת קורה מול המסך, ולא רק מה שתכננו שיקרה. זה משפר את המוצר יותר',
         'מכל בדיקה שאנחנו עושים לעצמנו.',
         "",
-        'צוות מט״צים',
+        'צוות מטצים',
     ]
     return "\n".join(lines)
 
@@ -116,7 +116,7 @@ def send_request_summary(row, *, site_url=None, demo=""):
     if not recipients:
         return []
 
-    subject = f"מט״צים: הבקשה שלך טופלה{f' · {row.sprint}' if row.sprint else ''}"
+    subject = f"מטצים: הבקשה שלך טופלה{f' · {row.sprint}' if row.sprint else ''}"
     try:
         send_mail(
             subject=subject,

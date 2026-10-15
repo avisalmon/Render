@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="teaching",
                         to="matazim.student",
-                        verbose_name="מט״צ",
+                        verbose_name="מטצ",
                     ),
                 ),
             ],

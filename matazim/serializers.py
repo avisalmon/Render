@@ -1,4 +1,4 @@
-"""DRF serializers for every מט״צים model (REQ-M.139, methodology Rule 6).
+"""DRF serializers for every מטצים model (REQ-M.139, methodology Rule 6).
 
 One rule runs through this whole file, and it is the reason to read the top
 before changing anything below.
@@ -433,7 +433,7 @@ class InstitutionSerializer(serializers.ModelSerializer):
 
 
 class OfferedCourseSerializer(serializers.ModelSerializer):
-    """The pool: which of babook's catalogue מט״צים may offer at all.
+    """The pool: which of babook's catalogue מטצים may offer at all.
 
     `added_by` is read-only and set from `request.user`, like every other
     "who decided this" on this file's first rule. Withdrawal is `is_active`
@@ -448,7 +448,7 @@ class OfferedCourseSerializer(serializers.ModelSerializer):
 
 
 class LeaderCourseSerializer(serializers.ModelSerializer):
-    """One leader's shelf: an offer to their own מט״צים, never a requirement.
+    """One leader's shelf: an offer to their own מטצים, never a requirement.
 
     `leader` is read-only for the reason at the top of this file: it decides
     whose members are affected, so it comes from the session. A client that

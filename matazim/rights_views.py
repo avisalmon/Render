@@ -32,7 +32,7 @@ LOGIN_URL = "/matazim/login/"
 
 
 def _everything_about(user):
-    """One dictionary holding every מט״צים fact about one person.
+    """One dictionary holding every מטצים fact about one person.
 
     Built by reading the tables rather than by remembering what they are, so a
     field added later shows up here instead of being quietly omitted from the
@@ -198,7 +198,7 @@ def delete_me(request):
 
     `User.delete()` cascades into `MemberProfile`, `Student` and
     `EntranceAttempt`, and the `post_delete` receiver added in SPR-M.9 takes the
-    uploaded file off the disk with the row. Nothing about מט״צים needs its own
+    uploaded file off the disk with the row. Nothing about מטצים needs its own
     deletion logic, and a second one would only be a second thing to keep in
     step with the first.
     """

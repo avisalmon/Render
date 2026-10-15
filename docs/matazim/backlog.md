@@ -4855,3 +4855,30 @@ are closed until the person is approved. `tests/test_spr_m_66.py`, including an
 end-to-end walk of turned back, measured (still turned back), approved, let in.
 
 **Settled.** Q28, by Avi: hers is the definition.
+
+## SPR-M.67 — The three stages of a learner  `DONE 2026-10-15`
+
+**Goal.** ליטל's description of the entrance, through Avi, and his rule over it: no
+"how it works", only what there is to do. **Delivers.** REQ-M.191, REQ-M.192,
+REQ-M.193.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.67.1 | `gate.learner_stage`: test, join, member, or None | REQ-M.191 | DONE |
+| F-M.67.2 | The home page: a visitor's one button, the test's one button, a member's eight tiles | REQ-M.191 | DONE |
+| F-M.67.3 | The nav of the stage: one item before a leader, the whole site after | REQ-M.191 | DONE |
+| F-M.67.4 | `/matazim/join-leader/`: the list, a school filter, a code, joining as the student's own act | REQ-M.192 | DONE |
+| F-M.67.5 | A code needs the test first, and waits for the student | REQ-M.192 | DONE |
+| F-M.67.6 | טרום מטצ and מטצ named on the home | REQ-M.191 | DONE |
+| F-M.67.7 | The entrance-test page with only the action on it | REQ-M.191 | DONE |
+| F-M.67.8 | מטצ everywhere a person reads, and a guard that keeps it so | REQ-M.193 | DONE |
+
+**What it undoes, on purpose.** REQ-M.165 (the list was retired), REQ-M.177 (no
+test before joining) and the open door of SPR-M.59 and SPR-M.60 for anyone not yet
+attached to a leader: all were decisions of 2026-10-12 and hers is the later and the
+client's (Avi: "Litala's definition is priority"). The application of REQ-M.16
+(three questions and a leader's yes) is no longer the road; its route is left in
+place and is no longer linked.
+
+**Tests.** `tests/test_spr_m_67.py`. The earlier suites were updated to the new
+home page and the new order.

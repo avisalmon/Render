@@ -134,67 +134,6 @@ def test_an_explicit_destination_still_wins(client, world):
 # ------------------------------------------------------- the student's door
 
 
-def test_a_visitor_sees_the_whole_road_with_the_first_step_marked(client, world):
-    """Turned round by REQ-M.177 (2026-10-12): no test on the road. Three steps,
-    every one named, exactly one עכשיו, and nothing about a test."""
-    response = client.get("/matazim/")
-    steps = response.context["orientation"]
-    assert [s["key"] for s in steps] == ["account", "learn", "join"]
-    assert [s["state"] for s in steps] == ["now", "later", "open"]
-    body = response.content.decode()
-    assert "איך זה עובד" in body
-    assert body.count("עכשיו</span>") == 1
-    assert "/matazim/test/" not in body.split('id="mzOrient"')[1].split("</section>")[0]
-
-
-def test_somebody_who_registered_is_told_to_learn_and_may_join_with_a_code(client, world):
-    """REQ-M.177: learning is the next thing, joining is an offer beside it."""
-    response = _login(client, "fresh@example.com").get("/matazim/")
-    states = {s["key"]: s["state"] for s in response.context["orientation"]}
-    assert states == {"account": "done", "learn": "now", "join": "open"}
-    assert response.context["hero"]["kind"] == "doors"
-    body = response.content.decode()
-    assert "עם קוד" in body
-
-
-def test_passing_the_test_does_not_change_what_the_front_page_asks(client, world):
-    response = _login(client, "passed@example.com").get("/matazim/")
-    states = {s["key"]: s["state"] for s in response.context["orientation"]}
-    assert "test" not in states
-    assert states["learn"] == "now" and states["join"] == "open"
-    assert response.context["hero"]["kind"] == "doors"
-
-
-def test_a_member_is_never_asked_to_join_again(client, world):
-    """The hero used to offer להצטרף לתוכנית to anybody who had passed,
-    including somebody who joined weeks ago and opened דף הבית from the
-    menu."""
-    response = _login(client, "joined@example.com").get("/matazim/")
-    assert response.context["hero"] == {"kind": "path", "certified": False}
-    body = response.content.decode()
-    assert "להצטרף לתוכנית" not in body
-    assert "/matazim/my-path/" in body
-    states = {s["key"]: s["state"] for s in response.context["orientation"]}
-    assert states == {"account": "done", "learn": "now", "join": "done"}
-
-
-def test_a_certified_mataz_sees_a_fifth_step(client, world):
-    response = _login(client, "done@example.com").get("/matazim/")
-    steps = response.context["orientation"]
-    assert [s["key"] for s in steps][-1] == "teach"
-    assert steps[-1]["state"] == "now"
-    assert all(s["state"] == "done" for s in steps[:-1])
-    assert response.context["hero"]["certified"] is True
-
-
-def test_there_is_exactly_one_now_in_every_state(client, world):
-    for email in ("fresh@example.com", "passed@example.com", "joined@example.com",
-                  "done@example.com"):
-        steps = _login(client, email).get("/matazim/").context["orientation"]
-        assert sum(1 for s in steps if s["state"] == "now") == 1, email
-        client.logout()
-
-
 def test_staff_opening_the_public_page_are_sent_to_their_own_door(client, world):
     assert _login(client, "naomi@example.com").get("/matazim/").context["hero"]["kind"] == "staff"
     client.logout()
@@ -216,7 +155,7 @@ def test_the_staff_door_opens_on_the_leaders(client, world):
     # No students is not a 0% pass rate: that would be a claim about a person.
     assert rows["מוביל חדש"]["rate"] is None
     body = response.content.decode()
-    assert "עוד אין מט״צים" in body
+    assert "עוד אין מטצים" in body
 
 
 def test_the_staff_door_names_the_person_and_the_role(client, world):
@@ -274,7 +213,7 @@ def test_the_leader_door_opens_on_the_group(client, world):
     assert names["יובל"]["status"] == "todo"
     body = response.content.decode()
     assert "שלום רונית" in body
-    assert "מט״צ מוסמך" in body
+    assert "מטצ מוסמך" in body
 
 
 def test_somebody_ready_to_certify_is_the_first_thing_a_leader_sees(client, world):
@@ -293,15 +232,15 @@ def test_somebody_ready_to_certify_is_the_first_thing_a_leader_sees(client, worl
     assert [r["name"] for r in dash["attention"]] == ["יובל"]
     body = response.content.decode()
     assert "<h2>מוכנים להסמכה" in body
-    assert body.index("<h2>מוכנים להסמכה") < body.index("<h2>המט״צים שלי")
+    assert body.index("<h2>מוכנים להסמכה") < body.index("<h2>המטצים שלי")
 
 
 def test_a_leader_on_day_one_sees_the_link_first(client, world):
     """SPR-M.44's rule kept: with nobody yet, the link is the page."""
     body = _login(client, "new@example.com").get("/matazim/leader/").content.decode()
-    assert "הקישור שלכם, כדי שהמט״צים הראשונים יצטרפו" in body
+    assert "הקישור שלכם, כדי שהמטצים הראשונים יצטרפו" in body
     assert "מוכנים להסמכה" not in body
-    assert "עוד אין מט״צים משויכים אליכם" in body
+    assert "עוד אין מטצים משויכים אליכם" in body
 
 
 def test_reporting_up_is_seeing_what_the_manager_sees(client, world):
@@ -326,7 +265,7 @@ def test_the_leader_door_does_not_grow_a_query_per_student(client, world):
     with CaptureQueriesContext(connection) as before:
         session.get("/matazim/leader/")
     for n in range(6):
-        u = _user(f"more{n}@example.com", f"מט״צ {n}")
+        u = _user(f"more{n}@example.com", f"מטצ {n}")
         _profile(u, passed=True)
         Student.objects.create(user=u, leader=world["leader"], status=Student.IN_TRAINING)
     with CaptureQueriesContext(connection) as after:

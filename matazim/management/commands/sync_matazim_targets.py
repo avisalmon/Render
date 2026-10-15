@@ -14,7 +14,7 @@ from matazim.targets import sync_bank
 
 
 class Command(BaseCommand):
-    help = "Sync the מט״צים entrance-test target bank from the generated files."
+    help = "Sync the מטצים entrance-test target bank from the generated files."
 
     def handle(self, *args, **options):
         created = sync_bank()

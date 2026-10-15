@@ -1,4 +1,4 @@
-"""מט״צים views.
+"""מטצים views.
 
 Design-first still holds for anything the program has not decided yet: the
 stats and showcase from Litala's prototype stay off the page until real data
@@ -7,7 +7,7 @@ explains itself rather than a test that pretends to grade.
 
 Identity, though, is real from here on. Login and registration write to the
 shared `User`, the profile reads babook's `UserProfile` and the course engine
-live, and only מט״צים's own flags are ours (matazim/models.py).
+live, and only מטצים's own flags are ours (matazim/models.py).
 """
 
 from django.contrib.auth import authenticate
@@ -30,7 +30,7 @@ from .models import MemberProfile, Student
 
 
 def member_profile(user):
-    """The מט״צים row for a signed-in person, created the first time we need it."""
+    """The מטצים row for a signed-in person, created the first time we need it."""
     if not user.is_authenticated:
         return None
     profile, _ = MemberProfile.objects.get_or_create(user=user)
@@ -74,7 +74,7 @@ def student_door_is_open(request):
 def is_site_staff(user):
     """Adminship, now that the role is real.
 
-    This was `is_staff or is_superuser` while מט״צים had no roles of its own.
+    This was `is_staff or is_superuser` while מטצים had no roles of its own.
     It now asks the access module, which is the single place the question is
     answered (spec §4.4). The call sites did not move, which was the point of
     routing them through one helper in the first place.
@@ -188,8 +188,14 @@ def _requests_waiting(user):
     return Request.objects.filter(status=Request.NEW).count()
 
 
+def _learner_stage(user):
+    from .gate import learner_stage
+
+    return learner_stage(user)
+
+
 def shell(request, section, **extra):
-    """Context every מט״צים page needs, so base.html never guesses."""
+    """Context every מטצים page needs, so base.html never guesses."""
     member = member_profile(request.user)
     ctx = {
         "section": section,
@@ -220,6 +226,9 @@ def shell(request, section, **extra):
         # leader is not a pupil (§4.9), and carrying המסלול שלי into a
         # teacher's menu is how that distinction got lost.
         "is_member": _is_member(request.user),
+        # REQ-M.191 - test, join or member for a learner, None for anyone else.
+        # The nav and the home page are the stage's own, and minimal.
+        "learner_stage": _learner_stage(request.user),
         "is_candidate": _is_candidate(request.user),
         # REQ-M.106, REQ-M.102 — the lamp, for the roles that own the
         # improvement loop and for nobody else.
@@ -239,37 +248,31 @@ def shell(request, section, **extra):
 
 
 def home(request):
-    """REQ-M.5 — דף הבית, open to anyone.
+    """REQ-M.191 - דף הבית, and what it is for each reader: one thing.
 
-    REQ-M.5e and REQ-M.5f were HELD here from SPR-M.1 until 2026-09-14, and the
-    hold was the right call rather than a delay: the prototype had a stats band
-    of invented numbers and a showcase of invented projects, and Avi cut both on
-    sight. They come back now because both can finally be true. `public.py`
-    counts and `public.py` reads consent; neither is typed into this template,
-    and both are empty until there is something real, in which case the page
-    reads exactly as it did before.
+    Atid, 2026-10-15, through Avi: no "how it works", only what there is to do,
+    simple and minimal for the stage the person is at.
+
+    - a visitor: one button, to begin
+    - a learner who has not passed: one button, the test
+    - a learner who passed and has no leader: the list of leaders (not here)
+    - a learner with a leader: big tiles, and nothing else
+    - a leader or a program manager: their own front door
     """
-    from .landing import hero_state, student_orientation
-    from .public import counters, published_work
+    from .gate import JOIN, MEMBER, TEST, learner_stage
+    from .landing import hero_state
     from .year_views import year_context
 
-    return render(
-        request,
-        "matazim/home.html",
-        shell(
-            request,
-            "home",
-            stages=public_stages(),
-            student_door_open=student_door_is_open(request),
-            # SPR-M.58 — the hero knows who is reading, and the strip under
-            # it is the road: four steps, with this reader's place on it.
-            hero=hero_state(request),
-            orientation=student_orientation(request),
-            counters=counters(),
-            showcase=published_work(),
-            year=year_context(request.user),
-        ),
-    )
+    stage = learner_stage(request.user)
+    if stage == JOIN:
+        return redirect("matazim:join_leader")
+
+    ctx = {"stage": stage, "hero": hero_state(request)}
+    if stage == MEMBER:
+        student = _student_of(request.user)
+        ctx["certified"] = bool(student and student.status == "certified")
+        ctx["year"] = year_context(request.user)
+    return render(request, "matazim/home.html", shell(request, "home", **ctx))
 
 
 def entrance_test(request):
@@ -566,7 +569,7 @@ def training_record(user):
     """REQ-M.44 — read live from the course engine, never copied (RULE-3).
 
     Everything the person has done anywhere on babook counts, including work
-    done long before מט״צים existed. That is the retroactive-credit rule
+    done long before מטצים existed. That is the retroactive-credit rule
     falling out of the design rather than needing a backfill.
     """
     enrollments = (
@@ -586,7 +589,7 @@ def training_record(user):
 
 @login_required(login_url="/matazim/login/")
 def profile(request):
-    """REQ-M.42 to M.44 — one identity, shown the way מט״צים needs it."""
+    """REQ-M.42 to M.44 — one identity, shown the way מטצים needs it."""
     user_profile, _ = UserProfile.objects.get_or_create(user=request.user)
 
     saved = False
@@ -658,8 +661,15 @@ def profile(request):
 def about(request):
     """REQ-M.57 — what this is, who it is for, who runs it."""
     from .content import FUNNEL
+    from .public import counters, published_work
 
-    return render(request, "matazim/about.html", shell(request, "about", funnel=FUNNEL))
+    # REQ-M.191 - the programme's facts live here now, not on the front door:
+    # the home page is only what there is to do.
+    return render(
+        request,
+        "matazim/about.html",
+        shell(request, "about", funnel=FUNNEL, counters=counters(), showcase=published_work()),
+    )
 
 
 def track(request):
@@ -834,7 +844,7 @@ def courses(request):
     # SPR-M.52 — what their leader put in front of them, and what they started
     # on their own. Separate groups rather than more cards in the same one,
     # because they mean different things: the required two are what makes a
-    # מט״צ (REQ-M.76) and these are opportunity. Rendering them alike would say
+    # מטצ (REQ-M.76) and these are opportunity. Rendering them alike would say
     # the programme requires seventeen courses, which it does not.
     offered, started = _extra_course_cards(request)
     locked = _locked_course_cards(

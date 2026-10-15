@@ -1,0 +1,48 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.191 - the one thing a learner does after the test: choose a leader.
+  Nothing else on the page. A leader can be picked from the open list, sorted by
+  school, and joining is the student's own act: no waiting for anyone to say yes.
+{% endcomment %}
+
+{% block title %}בחירת מוביל/ה · מטצים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page mz-page-narrow">
+  <div class="mz-page-head">
+    <h1>בחרו מוביל/ה</h1>
+  </div>
+
+  {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
+
+  <p><a class="mz-btn mz-btn-secondary" href="{% url 'matazim:code' %}">יש לי קוד</a></p>
+
+  <form method="get" class="mz-filter">
+    <label class="mz-field"><span>בית ספר</span>
+      <select name="school" onchange="this.form.submit()">
+        <option value="">כל בתי הספר</option>
+        {% for school in schools %}<option value="{{ school }}"{% if school == want_school %} selected{% endif %}>{{ school }}</option>{% endfor %}
+      </select></label>
+    <noscript><button type="submit" class="mz-btn mz-btn-secondary">סינון</button></noscript>
+  </form>
+
+  <ul class="mz-leaderlist">
+    {% for row in rows %}
+      <li class="mz-leaderlist-row">
+        <span class="mz-leaderlist-who">
+          <strong>{{ row.name }}</strong>
+          {% if row.schools %}<span class="mz-muted">{{ row.schools|join:" · " }}</span>{% endif %}
+        </span>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="leader" value="{{ row.leader.pk }}">
+          <button type="submit" class="mz-btn mz-btn-primary">להצטרף</button>
+        </form>
+      </li>
+    {% empty %}
+      <li class="mz-muted">אין מובילים בבית הספר הזה.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

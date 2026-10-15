@@ -1,9 +1,9 @@
-"""What מט״צים is entitled to know about a person.
+"""What מטצים is entitled to know about a person.
 
 The identity itself is not ours. Name, avatar, email and every הדרכה a person
 has done live in babook's shared tables, and a name edited here changes there
 too, because a person has one name. What is ours is the handful of facts that
-only exist because מט״צים exists: did they find us through this door, have they
+only exist because מטצים exists: did they find us through this door, have they
 been told this is a prototype, and have they passed the entrance test.
 
 Keeping those here rather than on babook's `UserProfile` is what lets RULE-3
@@ -66,13 +66,13 @@ class Institution(models.Model):
 
 
 class MemberProfile(models.Model):
-    """מט״צים's companion to babook's UserProfile. One row per person we meet."""
+    """מטצים's companion to babook's UserProfile. One row per person we meet."""
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="matazim_profile")
 
     # REQ-M.35 — did this person find us here, or are they a babook member who
     # wandered over? Without it the funnel cannot be read later.
-    entered_via_matazim = models.BooleanField(default=False, verbose_name="נכנס דרך מט״צים")
+    entered_via_matazim = models.BooleanField(default=False, verbose_name="נכנס דרך מטצים")
     first_seen_at = models.DateTimeField(auto_now_add=True)
 
     # REQ-M.40 — the prototype disclaimer was put in front of them, and they
@@ -130,11 +130,11 @@ class MemberProfile(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "פרופיל מט״צים"
-        verbose_name_plural = "פרופילי מט״צים"
+        verbose_name = "פרופיל מטצים"
+        verbose_name_plural = "פרופילי מטצים"
 
     def __str__(self):
-        return f"{self.user.email or self.user.username} · מט״צים"
+        return f"{self.user.email or self.user.username} · מטצים"
 
     def has_passed_entrance_test(self):
         return self.entrance_test_passed_at is not None
@@ -428,7 +428,7 @@ STATUS_CHOICES = [
 
 
 class Student(models.Model):
-    """מט״צ. One row per person per cohort.
+    """מטצ. One row per person per cohort.
 
     `leader` is nullable on purpose (REQ-M.65): someone registers, passes the
     entrance test, and is nobody's yet. That is a normal state, not an error.
@@ -488,8 +488,8 @@ class Student(models.Model):
     class Meta:
         unique_together = [("user", "cohort_year")]
         ordering = ["-cohort_year", "user__email"]
-        verbose_name = "מט״צ"
-        verbose_name_plural = "מט״צים"
+        verbose_name = "מטצ"
+        verbose_name_plural = "מטצים"
 
     def __str__(self):
         return f"{self.user.email or self.user.username} · {self.cohort_year}"
@@ -507,7 +507,7 @@ def _delete_upload_with_attempt(sender, instance, **kwargs):
     Found by taking Avi's advice to reuse babook's infrastructure rather than
     build a parallel one. babook already has self-service account deletion
     (`app.views.delete_account`, REQ-7.2.10), and `User.delete()` cascades
-    cleanly into `MemberProfile`, `Student` and `EntranceAttempt`. So מט״צים
+    cleanly into `MemberProfile`, `Student` and `EntranceAttempt`. So מטצים
     needs no deletion machinery of its own, which is the right answer.
 
     But Django has not deleted files on row deletion since 1.3. Without this,
@@ -697,7 +697,7 @@ class StatusLog(models.Model):
 
 
 class MatazCertificate(models.Model):
-    """What a certified מט״צ actually gets (REQ-M.20).
+    """What a certified מטצ actually gets (REQ-M.20).
 
     Before this, being certified was a status flag: the payoff of the whole
     programme was a sentence on a page nobody else could see. A certification is
@@ -741,8 +741,8 @@ class MatazCertificate(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = "תעודת מט״צ"
-        verbose_name_plural = "תעודות מט״צ"
+        verbose_name = "תעודת מטצ"
+        verbose_name_plural = "תעודות מטצ"
 
     def __str__(self):
         return f"{self.name_on_certificate} · {self.public_id}"
@@ -1125,7 +1125,7 @@ class Notification(models.Model):
     inbox nobody keeps in step with the first.
 
     **Ours rather than the shared engine's** (REQ-M.127). That table feeds the
-    other product's bell in the other product's chrome, so a מט״צים event
+    other product's bell in the other product's chrome, so a מטצים event
     landing there would put this product inside theirs, which is the mirror
     image of what RULE-1 forbids. The cost is that somebody using both has two
     bells, which for a ninth-grader in this programme is close to theoretical.
@@ -1253,7 +1253,7 @@ class Event(models.Model):
 
 
 class Post(models.Model):
-    """REQ-M.26 — קהילת מט״צים, the feed inside the walls (§4.12).
+    """REQ-M.26 — קהילת מטצים, the feed inside the walls (§4.12).
 
     **Three kinds, one stream.** An announcement from the program manager, a
     member's own words, and a piece of work a leader approved that its maker
@@ -1328,7 +1328,7 @@ class Post(models.Model):
 
 
 class TeachingSession(models.Model):
-    """REQ-M.32 — פרקטיקום: the מט״צ actually standing in front of a class.
+    """REQ-M.32 — פרקטיקום: the מטצ actually standing in front of a class.
 
     The thing the whole programme exists to produce, and the last stage that had
     no model. Everything around it was tracked and it was not: a leader could
@@ -1347,7 +1347,7 @@ class TeachingSession(models.Model):
     cannot catch prose. That residual risk is recorded rather than pretended
     away.
 
-    **Declared, not verified.** A מט״צ writes down what they ran. Nobody
+    **Declared, not verified.** A מטצ writes down what they ran. Nobody
     counter-signs it and no attendance is taken, because verification would mean
     a record about the children. Their leader can read it and talk to them about
     it, which is the mechanism this programme actually runs on.
@@ -1359,7 +1359,7 @@ class TeachingSession(models.Model):
 
     student = models.ForeignKey(
         Student, on_delete=models.CASCADE, related_name="teaching",
-        verbose_name="מט״צ",
+        verbose_name="מטצ",
     )
 
     title = models.CharField(max_length=160, verbose_name="מה לימדתם")
@@ -1405,7 +1405,7 @@ class TeachingSession(models.Model):
 
 
 class OfferedCourse(models.Model):
-    """A babook course מט״צים is allowed to put in front of its members.
+    """A babook course מטצים is allowed to put in front of its members.
 
     SPR-M.52. Avi, 2026-09-19: "I want to be able as a leader to decide what
     training I want to expose for my students... it's about just exposing them
@@ -1418,7 +1418,7 @@ class OfferedCourse(models.Model):
     audit either.
 
     **A slug rather than a foreign key**, which is what `REQUIRED_COURSE_SLUGS`
-    already is. It keeps מט״צים's tables free of a database-level dependency on
+    already is. It keeps מטצים's tables free of a database-level dependency on
     another app's (Rule 2), and the cost is a slug that can outlive its course,
     which the screens already handle: ההדרכות says "ההדרכה הזאת לא נטענה" and
     carries on.
@@ -1466,7 +1466,7 @@ class OfferedCourse(models.Model):
 
 
 class LeaderCourse(models.Model):
-    """One leader putting one הדרכה in front of their own מט״צים.
+    """One leader putting one הדרכה in front of their own מטצים.
 
     Chosen out of `OfferedCourse`, checked when it is chosen rather than when it
     is read: a course Avi later retires stays on the shelves of the leaders who

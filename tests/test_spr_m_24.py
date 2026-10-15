@@ -170,7 +170,7 @@ def test_a_member_still_sees_everything_that_is_theirs(client, db):
 def test_a_leader_is_not_offered_the_pupil_journey(client, db):
     """T-F-M.24.3-1: REQ-M.101, §4.9.
 
-    A leader is not a מט״צ. Their menu carried המסלול שלי, which is a pupil's
+    A leader is not a מטצ. Their menu carried המסלול שלי, which is a pupil's
     screen, and they could be halfway into the learning track before noticing
     that their own area was a different item.
     """
@@ -211,7 +211,9 @@ def test_the_entrance_test_stays_in_the_menu_once_passed(client, db):
     for anyone who had passed, which the reachability audit caught on the first
     run after the menu was trimmed.
     """
-    client.force_login(_member())
+    from tests.matazim_helpers import attach
+
+    client.force_login(attach(_member()))
     html = client.get(reverse("matazim:my_path")).content.decode()
     nav = html.split('<nav class="mz-nav"')[1].split("</nav>")[0]
 

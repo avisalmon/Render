@@ -2,7 +2,7 @@
 
 {% comment %} REQ-M.9, REQ-M.67 — one leader: their link, and the two switches. {% endcomment %}
 
-{% block title %}{{ leader.user.profile.display_name|default:leader.user.email }} · מט״צים{% endblock %}
+{% block title %}{{ leader.user.profile.display_name|default:leader.user.email }} · מטצים{% endblock %}
 
 {% block content %}
 <div class="mz-container mz-page">
@@ -31,7 +31,7 @@
     <section class="mz-panel">
       <h2>מצב</h2>
       <dl class="mz-facts">
-        <div><dt>מט״צים משויכים</dt><dd>{{ students }}</dd></div>
+        <div><dt>מטצים משויכים</dt><dd>{{ students }}</dd></div>
         <div><dt>ממתינים לאישור</dt><dd>{{ waiting }}</dd></div>
         <div><dt>מבחן כניסה</dt><dd>{% if leader.requires_entrance_test %}נדרש{% else %}רשות{% endif %}</dd></div>
         <div>
@@ -51,7 +51,7 @@
       </form>
       <p class="mz-muted">
         הוצאה משימוש לא מוחקת כלום: המוביל/ה יורדים מרשימת ההצטרפות ולא מקבלים
-        מט״צים חדשים, וכל מי שכבר משויך נשאר.
+        מטצים חדשים, וכל מי שכבר משויך נשאר.
       </p>
     </section>
   </div>
@@ -66,7 +66,7 @@
     fine on their own.
   {% endcomment %}
   <section class="mz-panel">
-    <h2>המט״צים של {{ leader.user.profile.display_name|default:leader.user.email }}
+    <h2>המטצים של {{ leader.user.profile.display_name|default:leader.user.email }}
       <span class="mz-count">{{ rows|length }}</span></h2>
     {% if rows %}
       <ul class="mz-roster">
@@ -88,7 +88,7 @@
             </span>
             <span class="mz-role">
               {% if row.student.status == "certified" %}
-                <span class="mz-tag mz-tag-done">מט״צ מוסמך</span>
+                <span class="mz-tag mz-tag-done">מטצ מוסמך</span>
               {% elif row.eligibility.is_eligible %}
                 <span class="mz-tag mz-tag-doing">מוכן להסמכה</span>
               {% else %}
@@ -119,7 +119,7 @@
         {% endfor %}
       </ul>
     {% else %}
-      <p class="mz-muted">עוד אין מט״צים אצל המוביל/ה הזה.</p>
+      <p class="mz-muted">עוד אין מטצים אצל המוביל/ה הזה.</p>
     {% endif %}
   </section>
 </div>

@@ -127,7 +127,7 @@ def test_a_lesson_renders_in_our_own_shell(client, db):
     """T-F-M.19.1-1: REQ-M.13, RULE-1.
 
     The point is not that a lesson is reachable, it is that reaching one does
-    not take a member out of מט״צים.
+    not take a member out of מטצים.
     """
     make_track()
     user = make_member(leader=make_leader())
@@ -248,7 +248,7 @@ def test_it_renders_only_the_courses_the_programme_requires(client, db):
     """T-F-M.19.5-1: REQ-M.47.
 
     One line would let this render any course in babook, and that would quietly
-    make מט״צים a second front end for the whole catalogue, with no owner and no
+    make מטצים a second front end for the whole catalogue, with no owner and no
     design. It renders the track and refuses the rest.
     """
     from app.models import Course
@@ -280,15 +280,15 @@ def test_a_stranger_cannot_read_the_lessons(client, db):
     assert client.get(reverse("matazim:learn_course", args=["scratch"])).status_code in (302, 403)
 
 
-def test_a_member_with_no_leader_can_still_learn(client, db):
-    """T-F-M.19.5-4: REQ-M.65.
+def test_a_member_with_no_leader_is_sent_to_choose_one(client, db):
+    """T-F-M.19.5-4, turned round by REQ-M.192 (Lital, 2026-10-15).
 
-    Having no leader is a normal state, and the courses are how somebody gets
-    ready to be taken on. Gating learning behind a leader would invert the
-    order the programme actually runs in.
+    This used to say the courses are how somebody gets ready to be taken on. The
+    client's order is the other way: the test, then a leader, then the site opens.
     """
     make_track()
     user = make_member(leader=None)
     client.force_login(user)
 
-    assert client.get(reverse("matazim:learn_course", args=["scratch"])).status_code == 200
+    resp = client.get(reverse("matazim:learn_course", args=["scratch"]))
+    assert resp["Location"] == "/matazim/join-leader/"

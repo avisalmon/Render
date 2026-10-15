@@ -247,7 +247,7 @@ def test_every_model_has_an_endpoint(db):
 def test_every_endpoint_refuses_a_stranger(client, two_worlds):
     """T-F-M.34.1-3: nothing in this app is readable by an anonymous client.
 
-    The public surfaces of מט״צים are pages, each of which decides exactly what
+    The public surfaces of מטצים are pages, each of which decides exactly what
     a stranger may see. None of them needs a queryset handed out.
     """
     open_to_all = []
@@ -643,7 +643,7 @@ def test_a_member_posts_edits_and_withdraws_their_own_work(client, two_worlds, s
 
     **About the first two lines.** This fixture certifies every member, so that
     the tenancy sweep has one row of every kind in each world, and REQ-M.147
-    freezes a certified מט״צ's work. This test is about the lifecycle *before*
+    freezes a certified מטצ's work. This test is about the lifecycle *before*
     certification, which is where fixing a mistake belongs, so it starts from a
     member in training. The frozen half is held in `test_spr_m_50.py`, and the
     last line here keeps the two facts in sight of each other.

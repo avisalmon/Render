@@ -8,7 +8,7 @@ nothing pending, which is most days.
 **The ordinary day was the one that was wrong.** A leader with a group and an
 empty queue opened האזור שלי to a page whose first screen on a phone was the
 join link and a QR code, with their own people below the fold, under a subtitle
-promising "המט״צים שמחכים לאישור" when nobody was waiting. Recruiting is
+promising "המטצים שמחכים לאישור" when nobody was waiting. Recruiting is
 occasional. Looking in on your group is why you opened the page.
 
 **And a candidate was treated as a stranger.** A teacher whose row is not yet
@@ -101,13 +101,13 @@ def test_somebody_with_no_leader_row_is_still_refused(client, db):
 
 
 def test_an_ordinary_day_names_the_group_not_a_queue_that_is_empty(client, db):
-    """The subtitle claimed "המט״צים שמחכים לאישור" on every visit."""
+    """The subtitle claimed "המטצים שמחכים לאישור" on every visit."""
     leader = _leader()
     _student("kid1@example.com", "אלמה", leader)
     client.force_login(leader.user)
 
     html = client.get(reverse("matazim:leader_home")).content.decode()
-    assert "המט״צים שלכם, ואיפה הם בתוכנית" in html
+    assert "המטצים שלכם, ואיפה הם בתוכנית" in html
     assert "שמחכים לאישור" not in html
 
 
@@ -127,7 +127,7 @@ def test_a_leader_with_nobody_yet_is_pointed_at_the_link(client, db):
     client.force_login(leader.user)
 
     html = client.get(reverse("matazim:leader_home")).content.decode()
-    assert "הקישור שלכם, כדי שהמט״צים הראשונים יצטרפו" in html
+    assert "הקישור שלכם, כדי שהמטצים הראשונים יצטרפו" in html
 
 
 # ------------------------------------------- the group comes before the tool
@@ -146,14 +146,14 @@ def test_the_group_is_put_before_the_join_link_once_there_is_a_group(client, db)
     # SPR-M.58 rebuilt the page as a dashboard: the group is its own section
     # above the link, so the order no longer needs a flip class to hold it.
     html = client.get(reverse("matazim:leader_home")).content.decode()
-    assert html.index("<h2>המט״צים שלי") < html.index('class="mz-copy"')
+    assert html.index("<h2>המטצים שלי") < html.index('class="mz-copy"')
 
 
 def test_a_leader_with_nobody_keeps_the_link_first(client, db):
     leader = _leader()
     client.force_login(leader.user)
     html = client.get(reverse("matazim:leader_home")).content.decode()
-    assert "<h2>המט״צים שלי" not in html
+    assert "<h2>המטצים שלי" not in html
     assert "<h2>הקישור שלכם" in html
 
 

@@ -40,7 +40,7 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-/* מט״צים — design system
+/* מטצים — design system
  *
  * Standalone. This file never loads alongside babook's style.css and never
  * inherits from it (RULE-2). Everything here is derived from Litala's three
@@ -2229,8 +2229,8 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
 
 .mz-lesson-summary { color: var(--mz-body); margin: 0 0 4px; }
 
-/* babook's markdown, in מט״צים's voice. The content is theirs; the typography
-   is ours, which is the whole of what "a מט״צים experience" means here. */
+/* babook's markdown, in מטצים's voice. The content is theirs; the typography
+   is ours, which is the whole of what "a מטצים experience" means here. */
 .mz-notes { color: var(--mz-body); line-height: 1.75; overflow-wrap: anywhere; }
 .mz-notes h1,
 .mz-notes h2,
@@ -2389,7 +2389,7 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
 }
 
 
-/* ------------------------------------------ קהילת מט״צים (REQ-M.26, §4.12) */
+/* ------------------------------------------ קהילת מטצים (REQ-M.26, §4.12) */
 
 .mz-feed { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
 
@@ -3051,3 +3051,53 @@ a.mz-path-title:hover { color: var(--mz-link); }
   border-radius: 10px;
   padding: 4px 10px;
 }
+
+/* ------------------------------------------- the minimal home (SPR-M.67)
+ *
+ * REQ-M.191. Atid, through Avi: no "how it works", only what there is to do,
+ * minimal for the stage. One thing per reader; for a member, big tiles.
+ */
+.mz-home { padding-block: 56px; text-align: center; }
+.mz-home-title { font-size: clamp(2rem, 6vw, 3.2rem); margin: 0 0 12px; color: var(--mz-ink); }
+.mz-home-lead { font-size: 1.2rem; color: var(--mz-body); margin: 0 0 28px; }
+.mz-home-do { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; align-items: center; margin: 24px 0 0; }
+.mz-btn-lg { padding: 16px 40px; font-size: 1.2rem; }
+
+.mz-tiles {
+  list-style: none;
+  margin: 28px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 18px;
+}
+.mz-tile {
+  display: grid;
+  place-items: center;
+  min-height: 150px;
+  padding: 20px;
+  border-radius: var(--mz-radius);
+  background: var(--mz-card);
+  border: 2px solid var(--mz-line);
+  box-shadow: var(--mz-shadow);
+  color: var(--mz-ink);
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.mz-tile:hover { transform: translateY(-2px); border-color: var(--mz-action); box-shadow: var(--mz-shadow-lift); }
+.mz-tile:focus-visible { outline: 3px solid var(--mz-action); outline-offset: 3px; }
+
+.mz-leaderlist { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 10px; }
+.mz-leaderlist-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  background: var(--mz-card);
+  border: 1px solid var(--mz-line);
+  border-radius: var(--mz-radius-sm);
+}
+.mz-leaderlist-who { display: grid; gap: 2px; }

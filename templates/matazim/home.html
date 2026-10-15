@@ -2,248 +2,57 @@
 {% load static %}
 
 {% comment %}
-  REQ-M.5 — דף הבית, open to anyone, built to Litala's screen 1
-  (docs/matazim/prototype/image011.png). SPR-M.1 is a design pass: every value
-  comes from matazim/views.py by hand, and the counters go live under REQ-M.5f.
+  REQ-M.191 - דף הבית. Atid, 2026-10-15, through Avi: no "how it works", only
+  what there is to do, simple and minimal for the stage this person is at.
+
+  Five readers, one thing each:
+    a visitor ........... one button: begin
+    before the test ..... one button: the test
+    a member ............ big tiles
+    a leader ............ their own front door
+    a program manager ... their own front door
+  (After the test and before a leader, home sends them to the list.)
 {% endcomment %}
 
+{% block title %}מטצים · מנהיגות טכנולוגית צעירה{% endblock %}
+
 {% block content %}
-<div class="mz-container">{% include "matazim/_year_banner.html" %}</div>
+<div class="mz-container mz-home">
 
-{# ------------------------------------------------------------------ hero #}
-<section class="mz-hero">
-  <span class="mz-blob mz-blob-a"></span>
-  <span class="mz-blob mz-blob-b"></span>
-  <svg class="mz-arc" width="120" height="180" viewBox="0 0 120 180" fill="none" aria-hidden="true">
-    <path d="M110 4C40 34 6 92 14 176" stroke="#870335" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="2 12"/>
-  </svg>
+  {% if stage == 'member' %}
+    {% include "matazim/_year_banner.html" %}
+    <h1 class="mz-home-title">{% if certified %}מטצ{% else %}טרום מטצ{% endif %}</h1>
+    <ul class="mz-tiles">
+      <li><a class="mz-tile" href="{% url 'matazim:courses' %}">ההדרכות</a></li>
+      <li><a class="mz-tile" href="{% url 'matazim:my_path' %}">המסלול שלי</a></li>
+      <li><a class="mz-tile" href="{% url 'matazim:community' %}">הקהילה</a></li>
+      <li><a class="mz-tile" href="{% url 'matazim:events' %}">ימי שיא</a></li>
+      <li><a class="mz-tile" href="{% url 'matazim:my_work' %}">ההגשות שלי</a></li>
+      <li><a class="mz-tile" href="{% url 'matazim:my_teaching' %}">הפרקטיקום</a></li>
+      <li><a class="mz-tile" href="{% url 'matazim:my_classes' %}">הכיתות שלי</a></li>
+      <li><a class="mz-tile" href="{% url 'matazim:updates' %}">מה חדש</a></li>
+    </ul>
 
-  <div class="mz-container mz-hero-inner">
-    <div>
-      <h1 class="mz-hero-title">מט״צים</h1>
-      <p class="mz-hero-sub">מנהיגות טכנולוגית צעירה</p>
-      <p class="mz-hero-text">
-תוכנית חינוכית בשיתוף מתנדבי אינטל, המפתחת תלמידי כיתות חטיבת הביניים
-        כמובילים טכנולוגיים צעירים. לאחר הסמכה למט״צים מדריכים בתיכון. לומדים,
-        יוצרים, מדריכים ומשפיעים על הקהילה.
-      </p>
+  {% elif stage == 'test' %}
+    <h1 class="mz-home-title">מבחן הכניסה</h1>
+    <p class="mz-home-do"><a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:entrance_test' %}">להתחיל</a></p>
 
-      {% comment %}
-        SPR-M.42, replacing REQ-M.5c's two doors.
+  {% elif hero.kind == 'leader' %}
+    <h1 class="mz-home-title">מוביל/ה</h1>
+    <p class="mz-home-do"><a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:leader_home' %}">האזור שלי</a></p>
 
-        This page used to open by asking the reader which kind of person they
-        are: a disabled כניסת תלמידים behind a padlock, a solid כניסת מובילים
-        beside it, and the entrance test third, as an outline. Avi, on reading
-        the SPR-M.41 measurement of that: the site should not put anybody on
-        the spot like that, it is not pleasant, and the weight was pointing at
-        adults on a page written to recruit fourteen-year-olds.
+  {% elif hero.kind == 'staff' %}
+    <h1 class="mz-home-title">ניהול התכנית</h1>
+    <p class="mz-home-do"><a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:staff_home' %}">לניהול</a></p>
 
-        So there is one path here now, and it belongs to the teenager the
-        product is for. Whoever lands here is assumed to be one.
-
-        A leader is never asked either. They arrive through their own invite
-        link, which already carries the fact that they are a leader, and the
-        door for a teacher who has no link yet stays in the menu: מבחן הכניסה
-        is not in their way, and כניסת מובילים has been a nav item since
-        REQ-M.103. Seen, but not in front of your eyes.
-      {% endcomment %}
-      {% comment %}
-        SPR-M.58 — the one action, for whoever is actually reading. This used
-        to offer להצטרף לתוכנית to anybody who had passed the test, including
-        a member who joined weeks ago and opened דף הבית from the menu. A
-        front door that asks a member to join has not noticed who walked in.
-        The road itself is the strip under the hero.
-      {% endcomment %}
-      <div class="mz-hero-cta">
-        {% if hero.kind == 'path' %}
-          <a class="mz-btn mz-btn-primary" href="{% url 'matazim:my_path' %}">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            המסלול שלי
-          </a>
-          <span class="mz-hero-note">{% if hero.certified %}אתם מט״צ מוסמך. מכאן מדריכים.{% else %}אתם בתוכנית. המשימה הבאה מחכה שם.{% endif %}</span>
-        {% elif hero.kind == 'leader' %}
-          <a class="mz-btn mz-btn-primary" href="{% url 'matazim:leader_home' %}">האזור שלי</a>
-          <span class="mz-hero-note">אתם מוביל/ה. הקבוצה שלכם מחכה שם.</span>
-        {% elif hero.kind == 'staff' %}
-          <a class="mz-btn mz-btn-primary" href="{% url 'matazim:staff_home' %}">ניהול התכנית</a>
-          <span class="mz-hero-note">אתם מנהל/ת התכנית. המובילים שלכם מחכים שם.</span>
-        {% else %}
-          {% comment %}
-            REQ-M.166, REQ-M.177 — two doors and nothing about a test. The
-            first is for anybody; the second asks for a leader's code, and says
-            on the next screen that without one the person can still learn.
-          {% endcomment %}
-          <a class="mz-btn mz-btn-primary" href="{% if user.is_authenticated %}{% url 'matazim:courses' %}{% else %}{% url 'matazim:register' %}?next={% url 'matazim:courses' %}{% endif %}">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-            אני רוצה ללמוד
-          </a>
-          <a class="mz-btn mz-btn-ghost" href="{% if invite %}{% url 'matazim:join' invite.join_code %}{% else %}{% url 'matazim:code' %}{% endif %}">אני רוצה להיות מט״צ</a>
-          <span class="mz-hero-note">בלי קוד ממוביל/ה אפשר ללמוד הכל. מט״צ מוסמך אפשר להיות רק עם מוביל/ה.</span>
-        {% endif %}
-      </div>
-    </div>
-
-    {% comment %}
-      The photograph is referenced by a plain path rather than the static tag:
-      a picture that has not been supplied yet must degrade to the .mz-photo
-      gradient rather than break the static manifest at build time.
-    {% endcomment %}
-    <div class="mz-hero-media mz-photo"
-         style="background-image:url('/static/matazim/img/hero.webp')"
-         role="img" aria-label="תלמידי מט״צים סביב מדפסת תלת-ממד ומחשב נייד"></div>
-  </div>
-</section>
-
-{# ------------------------------------------------------- how it works #}
-<div class="mz-container">
-  {% comment %}
-    SPR-M.58 — the road, with this reader's place on it. Avi: a first-time
-    student "needs to know exactly what he's expected to do", and "even if
-    he can only do the test, it needs to be informative enough to tell him
-    that he needs to do the test now and what he will do in the future."
-    Four steps in the programme's order, each with a state word: עכשיו for
-    the one thing to do, הושלם behind them, פתוח כבר for the הדרכות a
-    signed-in person may start before the test, בהמשך for the rest of the
-    road. Sits between the hero and איך זה עובד: the hero says what this is,
-    this says what *you* do, and the four stages below say where it leads.
-  {% endcomment %}
-  <section class="mz-orient" aria-labelledby="mzOrient">
-    <h2 id="mzOrient">{% if user.is_authenticated %}איפה אתם, ומה עכשיו{% else %}איך זה עובד{% endif %}</h2>
-    <ol class="mz-orient-steps">
-      {% for step in orientation %}
-        <li class="mz-orient-step is-{{ step.state }}">
-          <span class="mz-orient-n" aria-hidden="true">{% if step.state == 'done' %}✓{% else %}{{ forloop.counter }}{% endif %}</span>
-          <span class="mz-orient-body">
-            <span class="mz-orient-title">
-              {{ step.title }}
-              {% if step.state == 'now' %}<span class="mz-tag mz-tag-doing">עכשיו</span>
-              {% elif step.state == 'done' %}<span class="mz-tag mz-tag-done">הושלם</span>
-              {% elif step.state == 'open' %}<span class="mz-tag mz-tag-done">{{ step.tag|default:"פתוח כבר" }}</span>
-              {% else %}<span class="mz-tag mz-tag-idle">בהמשך</span>{% endif %}
-            </span>
-            <span class="mz-orient-text">{{ step.text }}</span>
-            {% if step.where and step.state != 'later' %}
-              <a class="mz-linkbtn" href="{% url step.where %}">{{ step.button }}</a>
-            {% endif %}
-          </span>
-        </li>
-      {% endfor %}
-    </ol>
-  </section>
-
-  {% comment %}
-    SPR-M.56 — her order. Screen 1 reads hero, איך זה עובד, the band, then the
-    showcase. The partners were sitting between the hero and the four stages,
-    which put two logos where she put the programme.
-  {% endcomment %}
-  <section class="mz-how" aria-labelledby="mzHow">
-    <h2 id="mzHow">איך זה עובד?</h2>
-
-    {% comment %}
-      Four stages, not five: מתמיינים is joining a leader, which has its own
-      step in the strip above. Spec Q12.
-    {% endcomment %}
-    <div class="mz-stages">
-      {% for stage in stages %}
-        {% if not forloop.first %}
-          <svg class="mz-stage-sep" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18 9 12l6-6"/></svg>
-        {% endif %}
-        <div class="mz-stage">
-          <span class="mz-stage-icon" data-tone="{{ stage.tone }}" aria-hidden="true">
-            {% if stage.key == 'learn' %}
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-            {% elif stage.key == 'create' %}
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12"/></svg>
-            {% elif stage.key == 'teach' %}
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            {% else %}
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
-            {% endif %}
-          </span>
-          <span>
-            <span class="mz-stage-title">{{ stage.title }}</span>
-            <span class="mz-stage-text">{{ stage.text }}</span>
-          </span>
-        </div>
-      {% endfor %}
-    </div>
-  </section>
-
-  {% comment %}
-    שותפים מרכזיים לעשייה. Avi asked for this to carry real weight rather than
-    sit as a line of small print in the footer, so it is a section of its own
-    with the partners' own marks. Logos are their SVGs, taken from their own
-    sites, drawn at a single optical height so neither dominates the other.
-  {% endcomment %}
-  {% if counters %}
-    {% comment %}
-      REQ-M.5f — the stats band, back after being held since SPR-M.1.
-
-      The hold was right, and the reason it is over is that these are counted
-      now. Litala's prototype had a band of invented numbers in it and Avi cut
-      it on sight; a figure on a public page is a claim about a real programme.
-      `public.counters()` counts, drops every zero, and returns nothing at all
-      when there is nothing, so this band cannot say the programme is bigger
-      than it is and cannot announce that it is empty either.
-    {% endcomment %}
-    <section class="mz-band mz-band-gradient" aria-label="התוכנית במספרים">
-      <ul class="mz-figures">
-        {% for row in counters %}
-          <li>
-            {% if row.icon == 'people' %}<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            {% elif row.icon == 'school' %}<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
-            {% elif row.icon == 'hours' %}<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-            {% elif row.icon == 'cert' %}<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="6"/><path d="m8.5 14-1.5 7 5-3 5 3-1.5-7"/></svg>
-            {% elif row.icon == 'event' %}<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-            {% else %}<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>{% endif %}
-            <strong>{{ row.figure }}</strong><span>{{ row.label }}</span>
-          </li>
-        {% endfor %}
-      </ul>
-    </section>
+  {% else %}
+    <h1 class="mz-home-title">מטצים</h1>
+    <p class="mz-home-lead">מנהיגות טכנולוגית צעירה</p>
+    <p class="mz-home-do">
+      <a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:register' %}?next={% url 'matazim:entrance_test' %}">להתחיל</a>
+      <a class="mz-linkbtn" href="{% url 'matazim:login' %}">כבר יש לי חשבון</a>
+    </p>
   {% endif %}
-
-  {% if showcase %}
-    {% comment %}
-      REQ-M.5e, REQ-M.30a — תוצרים נבחרים, also held since SPR-M.1 and for the
-      same reason: there were no real projects and no real consent.
-
-      Now there are both, and the rule is the one §4.10 states. A title, a
-      description, and a school. Never the maker, never their class, never a
-      link to their file. Two people agreed to each of these appearing here and
-      either can take it back, which removes it on the next request.
-    {% endcomment %}
-    <section class="mz-showcase" aria-labelledby="mzShowcase">
-      <h2 id="mzShowcase">תוצרים נבחרים</h2>
-      <p class="mz-muted">דברים שמט״צים בתוכנית בנו, ובחרו לשתף.</p>
-      <ul class="mz-works">
-        {% for work in showcase %}
-          <li class="mz-work-card">
-            <h3>{{ work.title }}</h3>
-            {% if work.about %}<p>{{ work.about|truncatewords:28 }}</p>{% endif %}
-            {% if work.school %}<p class="mz-muted">{{ work.school }}</p>{% endif %}
-          </li>
-        {% endfor %}
-      </ul>
-    </section>
-  {% endif %}
-
-  <section class="mz-partners" aria-labelledby="mzPartners">
-    <h2 id="mzPartners">שותפים מרכזיים לעשייה</h2>
-    <div class="mz-partner-row">
-      {% comment %}
-        No caption under either mark: both logos already carry their own name,
-        and a repeated label only breaks the row's baseline. The name lives in
-        the alt text, where a screen reader needs it.
-      {% endcomment %}
-      <img class="mz-logo-wide" src="{% static 'matazim/img/partners/atid.svg' %}" alt="רשת עתיד">
-      <img class="mz-logo-tall" src="{% static 'matazim/img/partners/hemed_logo.png' %}" alt="חמ״ד, חינוך בונה עם">
-      <span class="mz-partner-more">וגופים נוספים נפלאים</span>
-    </div>
-  </section>
-
-
 
 </div>
-
 {% endblock %}

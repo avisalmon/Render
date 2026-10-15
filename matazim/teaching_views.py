@@ -1,9 +1,9 @@
-"""פרקטיקום: what a מט״צ actually taught.
+"""פרקטיקום: what a מטצ actually taught.
 
 REQ-M.32. The stage the whole programme exists to produce, and the last one
 without a screen.
 
-Two screens and one panel. A מט״צ writes down what they ran and sees their own
+Two screens and one panel. A מטצ writes down what they ran and sees their own
 record; their leader reads it on the student's page, because a leader who can
 approve work and certify somebody should be able to see the teaching they are
 certifying; and המסלול שלי carries the count, because a total that only appears
@@ -54,7 +54,7 @@ def _mine(user):
 @login_required(login_url=LOGIN_URL)
 @entrance_gated
 def my_teaching(request):
-    """REQ-M.32 — the מט״צ's own record."""
+    """REQ-M.32 — the מטצ's own record."""
     student = _mine(request.user)
     error = ""
 

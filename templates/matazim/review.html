@@ -9,7 +9,7 @@
   to change, and the view refuses that rather than merely discouraging it.
 {% endcomment %}
 
-{% block title %}עבודה להערכה · מט״צים{% endblock %}
+{% block title %}עבודה להערכה · מטצים{% endblock %}
 
 {% block content %}
 <div class="mz-container mz-page mz-page-narrow">
@@ -93,7 +93,7 @@
       <form method="post">
         {% csrf_token %}
         <label class="mz-field">
-          <span>מה לכתוב למט״צ</span>
+          <span>מה לכתוב למטצ</span>
           <textarea name="body" rows="5"
                     placeholder="מה טוב, ומה לשנות. זה מה שהוא יקרא.">{{ posted.body|default:'' }}</textarea>
           <small>
@@ -134,7 +134,7 @@
       {% else %}
         <p>
           היוצר/ת ביקש/ה להציג את זה בדף הבית. בדף יופיעו שם התוצר, התיאור
-          ובית הספר, אף פעם לא שם של מט״צ.
+          ובית הספר, אף פעם לא שם של מטצ.
         </p>
         <form method="post" action="{% url 'matazim:publish_work' submission.pk %}">
           {% csrf_token %}
@@ -146,7 +146,7 @@
 
   <p class="mz-page-actions">
     <a class="mz-linkbtn" href="{% url 'matazim:leader_home' %}">לאזור שלי</a>
-    <a class="mz-linkbtn" href="{% url 'matazim:student' submission.student.pk %}">לכרטיס של המט״צ</a>
+    <a class="mz-linkbtn" href="{% url 'matazim:student' submission.student.pk %}">לכרטיס של המטצ</a>
   </p>
 </div>
 {% endblock %}

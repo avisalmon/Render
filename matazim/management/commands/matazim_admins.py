@@ -1,4 +1,4 @@
-"""Grant and revoke the מט״צים program-manager role.
+"""Grant and revoke the מטצים program-manager role.
 
 REQ-M.68: the program-manager role is seeded, never self-served. There is no
 screen that makes the first one, because they could never have used it.
@@ -46,7 +46,7 @@ def _emails_from_env():
 
 
 class Command(BaseCommand):
-    help = "Grant, revoke or list the מט״צים program-manager role (REQ-M.68)."
+    help = "Grant, revoke or list the מטצים program-manager role (REQ-M.68)."
 
     def add_arguments(self, parser):
         parser.add_argument("--grant", nargs="*", default=[], metavar="EMAIL")
@@ -117,8 +117,8 @@ class Command(BaseCommand):
         inst = Institution.default()
         managers = list(inst.managers.order_by("email")) if inst else []
         if not managers:
-            self.stdout.write("no מט״צים program managers yet")
+            self.stdout.write("no מטצים program managers yet")
             return
-        self.stdout.write("מט״צים program managers:")
+        self.stdout.write("מטצים program managers:")
         for person in managers:
             self.stdout.write(f"  {person.email or person.username}")

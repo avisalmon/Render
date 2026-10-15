@@ -120,7 +120,13 @@ def test_the_open_door_is_gated_too_until_the_team_approves(client, world):
     for url in ("/matazim/learn/scratch/", "/matazim/classes/", "/matazim/classes/open/new/"):
         assert client.get(url)["Location"] == "/matazim/test/?gate=1", url
 
+    # Approved, but with nobody to join yet: the stage after the test (REQ-M.192).
     MemberProfile.objects.filter(user=user).update(entrance_test_passed_at=timezone.now())
+    assert client.get("/matazim/learn/scratch/")["Location"] == "/matazim/join-leader/"
+
+    from tests.matazim_helpers import attach
+
+    attach(user)
     assert client.get("/matazim/learn/scratch/").status_code == 200
     assert client.get("/matazim/classes/").status_code == 200
 

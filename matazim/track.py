@@ -143,12 +143,12 @@ def milestones(user, profile, student, state, per_course):
 
     # 5. Certification: the leader's yes.
     if student is not None and student.status == "certified":
-        nodes.append(_node("certified", "מט״צ מוסמך", DONE, student.certified_at,
+        nodes.append(_node("certified", "מטצ מוסמך", DONE, student.certified_at,
                            where="matazim:my_certificate"))
     elif state.is_eligible:
-        nodes.append(_node("certified", "מט״צ מוסמך", DOING))
+        nodes.append(_node("certified", "מטצ מוסמך", DOING))
     else:
-        nodes.append(_node("certified", "מט״צ מוסמך", TODO))
+        nodes.append(_node("certified", "מטצ מוסמך", TODO))
 
     # 6. The thing the whole programme is for: teaching somebody younger.
     if student is not None and student.status == "certified":

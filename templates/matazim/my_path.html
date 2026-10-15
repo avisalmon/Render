@@ -15,7 +15,7 @@
   `matazim/track.py` reads what is true and this template shows that.
 {% endcomment %}
 
-{% block title %}המסלול שלי · מט״צים{% endblock %}
+{% block title %}המסלול שלי · מטצים{% endblock %}
 
 {% block content %}
 <div class="mz-container mz-page">
@@ -183,10 +183,10 @@
 
   {# ------------------------------------------------ the detail panels #}
   <section class="mz-panel">
-    <h2>כדי להיות מט״צ מוסמך</h2>
+    <h2>כדי להיות מטצ מוסמך</h2>
     {% if student.status == "certified" %}
       <p class="mz-verdict">
-        <span class="mz-tag mz-tag-done">מט״צ מוסמך</span>
+        <span class="mz-tag mz-tag-done">מטצ מוסמך</span>
         הוסמכתם ב־{{ student.certified_at|date:"j.n.Y" }}. מזל טוב.
       </p>
       <p class="mz-page-actions">
@@ -245,7 +245,7 @@
       {% elif pending_name %}
         <p>ביקשתם להצטרף ל<strong>{{ pending_name }}</strong>, ומחכים לאישור.</p>
       {% else %}
-        <p class="mz-muted">אפשר ללמוד בלי מוביל/ה. כדי להיות מט״צ מוסמך צריך קוד ממוביל/ה.</p>
+        <p class="mz-muted">אפשר ללמוד בלי מוביל/ה. כדי להיות מטצ מוסמך צריך קוד ממוביל/ה.</p>
         <p class="mz-page-actions"><a class="mz-btn mz-btn-secondary" href="{% url 'matazim:code' %}">יש לי קוד</a></p>
       {% endif %}
     </section>

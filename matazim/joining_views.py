@@ -75,7 +75,7 @@ def _client_key(request):
 
 
 def enter_code(request):
-    """REQ-M.165, REQ-M.166 — "I want to be a מט״צ": a box for a leader's code.
+    """REQ-M.165, REQ-M.166 — "I want to be a מטצ": a box for a leader's code.
 
     Public on purpose, like the link it stands in for: the code is read off a
     board or out of a chat and typed by someone who may have no account yet.
@@ -146,31 +146,18 @@ def join(request, code):
     if request.method == "POST" and request.POST.get("action") == "join":
         if not request.user.is_authenticated:
             return redirect(f"{LOGIN_URL}?next={request.path}")
-        # REQ-M.177 — no test before joining. The test runs beside the road: a
-        # person is attached to the leader at once and takes it whenever they
-        # like, and it matters only if this leader asks for it (REQ-M.178).
+        # REQ-M.191 (Atid, 2026-10-15): only after passing the test is somebody
+        # invited to join a leader, by a code or from the list. This replaces
+        # REQ-M.177's "no test before joining". The code is remembered, so after
+        # the test it is waiting for them.
+        if not passed:
+            return redirect("/matazim/test/?gate=1")
         if needs_guardian_consent(member_profile(request.user)):
             # REQ-M.84 — this is the moment their data starts being shown to
             # another person, which is the moment consent is owed. Not earlier:
             # signing in and doing the test are disclosed to nobody.
             return redirect("matazim:profile")
-        if already is None:
-            already = Student.objects.create(
-                user=request.user, leader=leader, status=Student.IN_TRAINING
-            )
-            # REQ-M.21 — the first line of their history. A Student starts at
-            # מתמיינים by default, so without this the record would begin at
-            # whatever happened second.
-            record_arrival(already, by=request.user, note="הצטרפות בקישור")
-        else:
-            already.leader = leader
-            already.pending_leader = None
-            # Being taken on by a leader is the moment someone stops being a
-            # candidate and starts being a learner. Nothing advanced this
-            # before, so every student sat at מתמיינים forever and the roster's
-            # status column answered nothing.
-            already.save(update_fields=["leader", "pending_leader", "updated_at"])
-            set_status(already, Student.IN_TRAINING, by=request.user, note="הצטרפות בקישור")
+        _attach(request, leader, "הצטרפות בקישור")
         request.session.pop(INVITE_KEY, None)
         return redirect("matazim:joined")
 
@@ -190,6 +177,81 @@ def join(request, code):
                 else None
             ),
         ),
+    )
+
+
+def _attach(request, leader, note):
+    """Make this person that leader's student, at once.
+
+    One act for both doors, the code and the list, so they cannot drift apart:
+    joining is the student's own act and needs nobody's yes (Atid, 2026-10-15:
+    "הוא יכול באופן עצמאי לצרף את עצמו אחרי המבחן"). The first line of their
+    history is written here (REQ-M.21).
+    """
+    already = student_of(request.user)
+    if already is None:
+        already = Student.objects.create(
+            user=request.user, leader=leader, status=Student.IN_TRAINING
+        )
+        record_arrival(already, by=request.user, note=note)
+    else:
+        already.leader = leader
+        already.pending_leader = None
+        already.save(update_fields=["leader", "pending_leader", "updated_at"])
+        set_status(already, Student.IN_TRAINING, by=request.user, note=note)
+    return already
+
+
+@login_required(login_url=LOGIN_URL)
+def join_leader(request):
+    """REQ-M.191 - after the test, choose a leader: the one thing there is to do.
+
+    The open list, sortable by school. Replaces the application of REQ-M.16 and
+    the retirement of the list in REQ-M.165 (Q22): Atid asked for the list, and
+    for joining to be the student's own act.
+    """
+    from .access import joinable_leaders
+    from .gate import JOIN, MEMBER, TEST, learner_stage
+
+    stage = learner_stage(request.user)
+    if stage is None:
+        return redirect("matazim:home")
+    if stage == TEST:
+        return redirect("/matazim/test/?gate=1")
+    if stage == MEMBER:
+        return redirect("matazim:my_path")
+
+    # A code they were handed before the test is waiting for them.
+    waiting = Leader.objects.filter(
+        join_code=request.session.get(INVITE_KEY, ""), is_active=True
+    ).first()
+    if waiting is not None and request.method == "GET":
+        return redirect("matazim:join", code=waiting.join_code)
+
+    error = ""
+    if request.method == "POST":
+        leader = joinable_leaders().filter(pk=request.POST.get("leader")).first()
+        if leader is None:
+            error = "בחרו מוביל/ה מהרשימה."
+        elif needs_guardian_consent(member_profile(request.user)):
+            return redirect("matazim:profile")
+        else:
+            _attach(request, leader, "בחירה מהרשימה")
+            return redirect("matazim:joined")
+
+    want_school = (request.GET.get("school") or "").strip()
+    leaders = list(joinable_leaders().select_related("user", "user__profile").prefetch_related("classes"))
+    schools = sorted({name for leader in leaders for name in leader.school_names})
+    rows = [
+        {"leader": leader, "name": _name_of(leader), "schools": leader.school_names}
+        for leader in leaders
+        if not want_school or want_school in leader.school_names
+    ]
+    rows.sort(key=lambda r: (r["schools"][:1] or [""], r["name"]))
+    return render(
+        request,
+        "matazim/join_leader.html",
+        shell(request, "join", rows=rows, schools=schools, want_school=want_school, error=error),
     )
 
 
@@ -568,7 +630,7 @@ def staff_leader(request, leader_id):
             # new students; everyone they already have stays theirs.
             leader.is_active = False
             leader.save(update_fields=["is_active"])
-            notice = "המוביל/ה הוצא/ה משימוש. המט״צים הקיימים נשארים משויכים."
+            notice = "המוביל/ה הוצא/ה משימוש. המטצים הקיימים נשארים משויכים."
         elif action == "activate":
             leader.is_active = True
             leader.save(update_fields=["is_active"])
@@ -586,9 +648,9 @@ def staff_leader(request, leader_id):
                 pk=request.POST.get("to"), is_active=True
             ).first()
             if student is None or target is None:
-                notice = "לא הצלחנו להעביר. בדקו שהמט״צ והמוביל/ה עדיין קיימים."
+                notice = "לא הצלחנו להעביר. בדקו שהמטצ והמוביל/ה עדיין קיימים."
             elif target.pk == leader.pk:
-                notice = "המט״צ כבר משויך למוביל/ה הזה."
+                notice = "המטצ כבר משויך למוביל/ה הזה."
             else:
                 record_leader_change(
                     student,

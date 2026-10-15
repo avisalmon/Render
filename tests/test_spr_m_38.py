@@ -7,7 +7,7 @@ is now.
 
 This file is unusual in this suite: almost every test here is about something
 **not** appearing. That is the shape of the requirement. This is the only code
-in מט״צים whose output is readable by anybody on the internet, and it is about
+in מטצים whose output is readable by anybody on the internet, and it is about
 fourteen-year-olds, so the interesting cases are all the ways a thing could
 reach that page without having earned it.
 
@@ -97,7 +97,7 @@ def _work(student, leader, *, approved=True, offered=False, published=False, **e
 
 
 def _home(client):
-    return client.get(reverse("matazim:home")).content.decode()
+    return client.get(reverse("matazim:about")).content.decode()
 
 
 # ----------------------------------------- REQ-M.5e: two yeses, either revocable
@@ -471,7 +471,7 @@ def test_one_of_something_reads_as_one(db):
 
     assert "בית ספר" in labels
     assert "בתי ספר" not in labels
-    # SPR-M.56: the word is לומדים now (§4.9 — מט״צ is the outcome), but the
+    # SPR-M.56: the word is לומדים now (§4.9 — מטצ is the outcome), but the
     # rule this test holds is singular against plural, and it holds the same.
     assert "לומד/ת בתוכנית" in labels
     assert "לומדים בתוכנית" not in labels

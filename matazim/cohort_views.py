@@ -165,7 +165,7 @@ def cohort_export(request):
     response.write("﻿")
 
     writer = csv.writer(response)
-    writer.writerow(["דוח מט״צים", stamp])
+    writer.writerow(["דוח מטצים", stamp])
     writer.writerow([])
 
     writer.writerow(["שלב", "כמה"])
@@ -174,12 +174,12 @@ def cohort_export(request):
     writer.writerow(["סך הכול", data["funnel_total"]])
     writer.writerow([])
 
-    writer.writerow(["מוביל/ה", "בתי ספר", "מט״צים", "מתוכם מוסמכים"])
+    writer.writerow(["מוביל/ה", "בתי ספר", "מטצים", "מתוכם מוסמכים"])
     for row in data["by_leader"]:
         writer.writerow([row["name"], " · ".join(row["schools"]), row["total"], row["certified"]])
     writer.writerow([])
 
-    writer.writerow(["בית ספר", "מט״צים", "מתוכם מוסמכים"])
+    writer.writerow(["בית ספר", "מטצים", "מתוכם מוסמכים"])
     for row in data["by_school"]:
         writer.writerow([row["school"], row["total"], row["certified"]])
 

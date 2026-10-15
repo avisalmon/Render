@@ -1,6 +1,6 @@
 {% load static %}<!doctype html>
 {% comment %}
-  מט״צים — the standalone base.
+  מטצים — the standalone base.
 
   It extends nothing. babook's base.html, drawer, search, footer and design
   tokens are deliberately absent (RULE-2), and no link here leaves /matazim/
@@ -12,8 +12,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}מט״צים · מנהיגות טכנולוגית צעירה{% endblock %}</title>
-  <meta name="description" content="{% block meta_description %}תוכנית מט״צים: תלמידי חטיבת הביניים לומדים טכנולוגיה, יוצרים, מדריכים ומשפיעים על הקהילה, בשיתוף מתנדבי אינטל.{% endblock %}">
+  <title>{% block title %}מטצים · מנהיגות טכנולוגית צעירה{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}תוכנית מטצים: תלמידי חטיבת הביניים לומדים טכנולוגיה, יוצרים, מדריכים ומשפיעים על הקהילה, בשיתוף מתנדבי אינטל.{% endblock %}">
 
   <link rel="icon" href="{% static 'matazim/logo.png' %}">
   {% comment %}
@@ -74,7 +74,7 @@
 
     <a class="mz-brand" href="{% url 'matazim:home' %}">
       <img src="{% static 'matazim/logo.png' %}" alt="עתיד שבילים משותפים">
-      <span class="mz-brand-tag">מט״צים · מנהיגות טכנולוגית צעירה</span>
+      <span class="mz-brand-tag">מטצים · מנהיגות טכנולוגית צעירה</span>
     </a>
 
     {% comment %}
@@ -101,7 +101,7 @@
         forever, for every role. A student mid-programme read nine items of
         which two were theirs. A leader and a program manager both carried
         המסלול שלי, which is a pupil's screen, when §4.9 is explicit that a
-        leader is not a מט״צ.
+        leader is not a מטצ.
 
         So each role gets its own working set. The public sections are not
         deleted for members, because a programme whose own pages become
@@ -113,12 +113,9 @@
       {% if not user.is_authenticated %}
         {# The recruitment menu, in Litala's order. This reader is deciding. #}
         <a href="{% url 'matazim:home' %}" {% if section == 'home' %}class="is-active"{% endif %}>דף הבית</a>
+        <a href="{% url 'matazim:entrance_test' %}" {% if section == 'test' %}class="is-active"{% endif %}>מבחן הכניסה</a>
         <a href="{% url 'matazim:about' %}" {% if section == 'about' %}class="is-active"{% endif %}>אודות התכנית</a>
-        <a href="{% url 'matazim:track' %}" {% if section == 'track' %}class="is-active"{% endif %}>המסלול השנתי</a>
-        <a href="{% url 'matazim:courses' %}" {% if section == 'courses' %}class="is-active"{% endif %}>ההדרכות</a>
-        <a href="{% url 'matazim:schools' %}" {% if section == 'schools' %}class="is-active"{% endif %}>בתי הספר</a>
-        <a href="{% url 'matazim:community' %}" {% if section == 'community' %}class="is-active"{% endif %}>קהילת מט״צים</a>
-        <a href="{% url 'matazim:events' %}" {% if section == 'events' %}class="is-active"{% endif %}>ימי שיא</a>
+        {# REQ-M.191: the front door is minimal; the rest is in the footer and on אודות. #}
         {% comment %}
           REQ-M.103 — the teachers' door was linked from no page in the
           product, so a teacher had to be sent a URL.
@@ -126,7 +123,12 @@
         <a href="{% url 'matazim:leader_entrance' %}" class="mz-nav-quiet{% if section == 'leader' %} is-active{% endif %}">כניסת מובילים</a>
       {% else %}
 
-        {% if is_member %}
+        {% if learner_stage == 'test' %}
+          {# REQ-M.191: before the test there is one thing to do. #}
+          <a href="{% url 'matazim:entrance_test' %}" class="is-active">מבחן הכניסה</a>
+        {% elif learner_stage == 'join' %}
+          <a href="{% url 'matazim:join_leader' %}" class="is-active">בחירת מוביל/ה</a>
+        {% elif is_member %}
           {# What a member came here to do. #}
           <a href="{% url 'matazim:my_path' %}" {% if section == 'path' %}class="is-active"{% endif %}>המסלול שלי</a>
           <a href="{% url 'matazim:courses' %}" {% if section == 'courses' %}class="is-active"{% endif %}>ההדרכות</a>
@@ -156,16 +158,16 @@
             מבחן הכניסה
           </a>
           {# Programme sections for the people in it, not recruitment copy. #}
-          <a href="{% url 'matazim:community' %}" {% if section == 'community' %}class="is-active"{% endif %}>קהילת מט״צים</a>
+          <a href="{% url 'matazim:community' %}" {% if section == 'community' %}class="is-active"{% endif %}>קהילת מטצים</a>
           <a href="{% url 'matazim:events' %}" {% if section == 'events' %}class="is-active"{% endif %}>ימי שיא</a>
         {% endif %}
 
         {% if is_leader %}
           <a href="{% url 'matazim:leader_home' %}" class="mz-nav-staff{% if section == 'leader' %} is-active{% endif %}">האזור שלי</a>
-          <a href="{% url 'matazim:roster' %}" {% if section == 'roster' %}class="is-active"{% endif %}>המט״צים שלי</a>
+          <a href="{% url 'matazim:roster' %}" {% if section == 'roster' %}class="is-active"{% endif %}>המטצים שלי</a>
           <a href="{% url 'matazim:classes' %}" {% if section == 'classes' %}class="is-active"{% endif %}>הכיתות שלי</a>
           {% if not is_member %}
-            <a href="{% url 'matazim:community' %}" {% if section == 'community' %}class="is-active"{% endif %}>קהילת מט״צים</a>
+            <a href="{% url 'matazim:community' %}" {% if section == 'community' %}class="is-active"{% endif %}>קהילת מטצים</a>
             <a href="{% url 'matazim:events' %}" {% if section == 'events' %}class="is-active"{% endif %}>ימי שיא</a>
           {% endif %}
         {% endif %}
@@ -198,7 +200,7 @@
             <a href="{% url 'matazim:my_requests' %}" class="mz-nav-staff{% if section == 'requests' %} is-active{% endif %}">הבקשות שלי</a>
           {% endif %}
           {% if not is_member and not is_leader %}
-            <a href="{% url 'matazim:community' %}" {% if section == 'community' %}class="is-active"{% endif %}>קהילת מט״צים</a>
+            <a href="{% url 'matazim:community' %}" {% if section == 'community' %}class="is-active"{% endif %}>קהילת מטצים</a>
             <a href="{% url 'matazim:events' %}" {% if section == 'events' %}class="is-active"{% endif %}>ימי שיא</a>
           {% endif %}
         {% endif %}
@@ -207,7 +209,9 @@
           The programme's own pages, one step away rather than eight items
           across the top of every screen.
         {% endcomment %}
-        <a href="{% url 'matazim:about' %}" class="mz-nav-quiet{% if section == 'about' %} is-active{% endif %}">אודות התכנית</a>
+        {% if learner_stage != 'test' and learner_stage != 'join' %}
+          <a href="{% url 'matazim:about' %}" class="mz-nav-quiet{% if section == 'about' %} is-active{% endif %}">אודות התכנית</a>
+        {% endif %}
       {% endif %}
     </nav>
 
@@ -299,7 +303,7 @@
     <div class="mz-container">
       <span>
         <strong>{{ invite.user.profile.display_name|default:invite.user.email }}</strong>
-        מזמין/ה אתכם למט״צים. ההזמנה שמורה.
+        מזמין/ה אתכם למטצים. ההזמנה שמורה.
       </span>
       <a href="{% url 'matazim:join' invite.join_code %}">להזמנה</a>
     </div>
@@ -343,7 +347,7 @@
 
 <footer class="mz-footer">
   <div class="mz-container mz-footer-inner">
-    <span>מט״צים · מנהיגות טכנולוגית צעירה</span>
+    <span>מטצים · מנהיגות טכנולוגית צעירה</span>
     {% comment %}
       REQ-M.81 — on every page, because a policy you have to know the URL for is
       a policy nobody reads. These stay inside /matazim/: RULE-1 forbids linking
@@ -362,7 +366,7 @@
       <a href="{% url 'matazim:track' %}">המסלול השנתי</a>
       <a href="{% url 'matazim:courses' %}">ההדרכות</a>
       <a href="{% url 'matazim:schools' %}">בתי הספר</a>
-      <a href="{% url 'matazim:community' %}">קהילת מט״צים</a>
+      <a href="{% url 'matazim:community' %}">קהילת מטצים</a>
       <a href="{% url 'matazim:events' %}">ימי שיא</a>
       <a href="{% url 'matazim:leader_entrance' %}">כניסת מובילים</a>
     </span>

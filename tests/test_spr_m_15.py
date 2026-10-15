@@ -91,7 +91,7 @@ def test_that_list_carries_progress_and_state(client, db):
 
     html = client.get(reverse("matazim:staff_leader", args=[leader.pk])).content.decode()
     assert "mz-bar-fill" in html, "no progress shown"
-    assert "מט״צ מוסמך" in html, "certification state not shown"
+    assert "מטצ מוסמך" in html, "certification state not shown"
 
 
 def test_each_student_is_reachable_from_there(client, db):
@@ -119,7 +119,7 @@ def test_the_list_shows_the_counts_that_answer_who_needs_me(client, db):
     html = client.get(reverse("matazim:pm_leaders")).content.decode()
     assert "נעה מורה" in html
     assert "עתיד רמלה" in html, "the school is how she recognises a leader"
-    assert "2 מט״צים" in html, "the student count belongs on the line"
+    assert "2 מטצים" in html, "the student count belongs on the line"
 
 
 def test_a_leader_with_no_class_reads_as_a_state_not_a_blank(client, db):

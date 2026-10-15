@@ -90,7 +90,7 @@ def test_she_can_file_a_request_and_it_remembers_the_screen(client, db):
     response = client.post(
         reverse("matazim:new_request"),
         {
-            "body": "במסך המט״צים שלי אני לא מצליחה להבין מי מחכה לאישור שלי",
+            "body": "במסך המטצים שלי אני לא מצליחה להבין מי מחכה לאישור שלי",
             "kind": Request.PROBLEM,
             "from_screen": "/matazim/leader/students/",
         },

@@ -1,4 +1,4 @@
-"""The certificate: the thing a certified מט״צ can actually show somebody.
+"""The certificate: the thing a certified מטצ can actually show somebody.
 
 REQ-M.20 and REQ-M.28. Two pages with opposite audiences, which is the whole
 design problem.

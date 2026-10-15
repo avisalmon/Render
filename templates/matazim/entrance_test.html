@@ -13,7 +13,7 @@
   it on the first screen rather than at lesson four on a phone.
 {% endcomment %}
 
-{% block title %}מבחן הכניסה · מט״צים{% endblock %}
+{% block title %}מבחן הכניסה · מטצים{% endblock %}
 
 {% block content %}
 {% if request.GET.gate %}
@@ -24,78 +24,22 @@
   </div>
 </div>
 {% endif %}
-<div class="mz-container mz-page">
-  <div class="mz-page-head">
-    <h1>מבחן הכניסה</h1>
-    {% if test_passed %}
-      <p>עברתם. השלב הבא הוא ההרשמה לתוכנית.</p>
-    {% else %}
-      <p>הצעד הראשון בדרך להיות מט״צ. אפשר להתחיל עכשיו.</p>
-    {% endif %}
-  </div>
-
-  <section class="mz-panel">
-    <h2>מה עושים</h2>
-    <ol class="mz-steps">
-      <li>
-        <span class="mz-step-n">1</span>
-        <span><strong>לומדים טינקרקאד</strong> בהדרכה קצרה של תשעה שיעורים.</span>
-      </li>
-      <li>
-        <span class="mz-step-n">2</span>
-        <span><strong>מקבלים אובייקט לבנות.</strong> כל אחד מקבל אובייקט משלו, עם שרטוט ומודל תלת-ממדי שאפשר לסובב.</span>
-      </li>
-      <li>
-        <span class="mz-step-n">3</span>
-        <span><strong>בונים ומעלים.</strong> מייצאים STL מטינקרקאד ומעלים לכאן, והמערכת בודקת מיד.</span>
-      </li>
-    </ol>
-
-    <div class="mz-page-actions">
-      {% if test_passed %}
-        <span class="mz-btn mz-btn-done" aria-disabled="true">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-          עברתם את מבחן הכניסה
-        </span>
-        <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:test_lessons' %}">לחזור על השיעורים</a>
-      {% else %}
-        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:test_lessons' %}">מתחילים</a>
-      {% endif %}
-      <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:track' %}">מה קורה אחר כך</a>
-    </div>
-  </section>
-
-  <div class="mz-two-up">
-    <section class="mz-panel">
-      <h2>מה צריך</h2>
-      <ul class="mz-needs">
-        <li><strong>מחשב.</strong> טינקרקאד רצה בדפדפן ולא עובדת מהטלפון.</li>
-        <li><strong>חשבון טינקרקאד</strong>, חינם. אם אתם מתחת לגיל 13, המורה או ההורים פותחים אותו איתכם.</li>
-        <li><strong>בערך שעה</strong>, ולא חייבים ברצף.</li>
-      </ul>
-      <p class="mz-muted">אם אין מחשב בבית, שווה לדבר עם המוביל בבית הספר.</p>
-    </section>
-
-    <section class="mz-panel">
-      <h2>ואם זה לא יוצא?</h2>
-      <p>
-        <strong>המבחן בודק התמדה, לא ידע מוקדם.</strong> אף אחד לא נפסל על ידי
-        המערכת. אם משהו לא יצא מדויק תקבלו בדיוק מה לתקן, ואפשר לנסות שוב בלי
-        הגבלה, עם אובייקט חדש בכל פעם.
-      </p>
-      <p>
-        ניסיון חוזר הוא סימן טוב אצלנו, לא כתם. מי שפספס, קרא את ההערות וחזר,
-        הראה בדיוק את מה שהתוכנית מחפשת.
-      </p>
-    </section>
-  </div>
-
-  <section class="mz-panel mz-panel-soft">
-    <h2>ומה זה פותח</h2>
-    <p>
-      מי שעובר נפתחת לו כניסת התלמידים והוא יכול להירשם לתוכנית. את ההדרכה עצמה
-      אתם לוקחים איתכם בכל מקרה: גם מי שלא ימשיך יצא מכאן יודע לתכנן בתלת-ממד.
+<div class="mz-container mz-home">
+  {% comment %}
+    REQ-M.191 - Atid, through Avi: no "how it works", only what there is to do.
+    One heading, one button, and the one fact a person needs to act on.
+  {% endcomment %}
+  <h1 class="mz-home-title">מבחן הכניסה</h1>
+  {% if test_passed %}
+    <p class="mz-home-do">
+      <span class="mz-btn mz-btn-done" aria-disabled="true">עברתם</span>
+      <a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:home' %}">להמשיך</a>
     </p>
-  </section>
+  {% else %}
+    <p class="mz-home-do">
+      <a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:test_lessons' %}">להתחיל</a>
+    </p>
+    <p class="mz-muted">צריך מחשב, חשבון טינקרקאד, ובערך שעה.</p>
+  {% endif %}
 </div>
 {% endblock %}

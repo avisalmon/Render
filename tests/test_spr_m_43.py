@@ -15,7 +15,7 @@ open to them right then, and the panel directly below was showing 6/19 in
 another person's decision is context, not a task, so it now sits below the
 learning rather than in front of it.
 
-**The other.** A certified מט״צ got "אתם מט״צ מוסמך. מכאן מדריכים אחרים" and
+**The other.** A certified מטצ got "אתם מטצ מוסמך. מכאן מדריכים אחרים" and
 nowhere to go, on the screen whose job is pointing at the next thing, when
 הפרקטיקום is exactly that next thing and already exists.
 

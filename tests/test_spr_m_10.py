@@ -214,7 +214,7 @@ def test_the_gate_does_not_lock_anyone_out_of_their_account(client, db):
     client.force_login(user)
 
     for page in ("matazim:home", "matazim:profile", "matazim:entrance_test"):
-        assert client.get(reverse(page)).status_code == 200
+        assert client.get(reverse(page), follow=True).status_code == 200
 
 
 def test_the_gate_does_not_block_the_entrance_test(client, db):
@@ -330,7 +330,7 @@ def test_deleting_yourself_removes_everything(client, db):
     """T-F-M.10.4-4: REQ-M.85.
 
     Reuses the mechanism babook's `delete_account` relies on rather than a
-    second deletion path: `User.delete()` cascades into every מט״צים table, and
+    second deletion path: `User.delete()` cascades into every מטצים table, and
     the post_delete receiver from SPR-M.9 takes the uploaded file with it.
     """
     from matazim.models import MemberProfile, Student

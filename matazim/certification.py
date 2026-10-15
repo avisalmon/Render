@@ -1,4 +1,4 @@
-"""What makes a מט״צ, and who is allowed to say so.
+"""What makes a מטצ, and who is allowed to say so.
 
 Avi, 2026-09-11. Three conditions, all of them required (REQ-M.76):
 
@@ -225,7 +225,7 @@ def certify(user, student):
     notify(
         student.user,
         Notification.CERTIFIED,
-        "הוסמכתם כמט״צ. התעודה מחכה לכם.",
+        "הוסמכתם כמטצ. התעודה מחכה לכם.",
         url=reverse("matazim:my_certificate"),
         actor=user,
     )

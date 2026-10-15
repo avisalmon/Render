@@ -1,4 +1,4 @@
-"""SPR-M.32 — קהילת מט״צים, the feed inside the walls.
+"""SPR-M.32 — קהילת מטצים, the feed inside the walls.
 
 REQ-M.26, M.131, M.132, M.133, M.134. Spec §4.12. The last of the three
 SPR-M.1 placeholders becomes real.
@@ -40,7 +40,7 @@ PASSWORD = "sprm32-pass-4471"
 def no_model_calls(settings):
     """The relevance gate is babook's, and babook's tests exercise it.
 
-    Off by default here so these tests measure מט״צים's decisions rather than
+    Off by default here so these tests measure מטצים's decisions rather than
     somebody's API uptime. The two tests about moderation turn it back on with
     a stub, which is the part that is ours.
     """

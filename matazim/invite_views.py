@@ -108,16 +108,16 @@ def tell_them(request, leader):
     where = request.build_absolute_uri("/matazim/leader/")
     body = (
         f"שלום,\n\n"
-        f"קיבלת הרשאת מוביל/ה בתוכנית מט״צים"
+        f"קיבלת הרשאת מוביל/ה בתוכנית מטצים"
         f"{f', על ידי {manager_name}' if manager_name else ''}.\n\n"
         f"האזור שלך נמצא כאן:\n{where}\n\n"
         f"שם תמצא/י את קישור ההצטרפות שלך לתלמידים, את הכיתות שלך, "
-        f"ואת רשימת המט״צים שלך ככל שיצטרפו.\n\n"
-        f"בהצלחה,\nצוות מט״צים\n"
+        f"ואת רשימת המטצים שלך ככל שיצטרפו.\n\n"
+        f"בהצלחה,\nצוות מטצים\n"
     )
     try:
         send_mail(
-            subject="קיבלת הרשאת מוביל/ה במט״צים",
+            subject="קיבלת הרשאת מוביל/ה במטצים",
             message=body,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[to],
@@ -211,14 +211,14 @@ def leaders(request):
 def _send_invite(request, invite):
     body = (
         f"שלום,\n\n"
-        f"הוזמנת להצטרף לתוכנית מט״צים כמוביל/ה.\n\n"
+        f"הוזמנת להצטרף לתוכנית מטצים כמוביל/ה.\n\n"
         f"הקישור להרשמה:\n{_invite_url(request, invite)}\n\n"
         f"אחרי ההרשמה, מנהל/ת התוכנית תאשר אותך ותקבל/י גישה לאזור המובילים.\n\n"
-        f"צוות מט״צים\n"
+        f"צוות מטצים\n"
     )
     try:
         send_mail(
-            subject="הזמנה להיות מוביל/ה במט״צים",
+            subject="הזמנה להיות מוביל/ה במטצים",
             message=body,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[invite.email],

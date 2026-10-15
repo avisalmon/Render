@@ -9,13 +9,13 @@
   lost.
 {% endcomment %}
 
-{% block title %}הזמנה למט״צים{% endblock %}
+{% block title %}הזמנה למטצים{% endblock %}
 
 {% block content %}
 <div class="mz-container mz-page">
   <div class="mz-page-head">
     <p class="mz-eyebrow">הזמנה אישית</p>
-    <h1>{{ leader.user.profile.display_name|default:leader.user.email }} מזמין/ה אתכם למט״צים</h1>
+    <h1>{{ leader.user.profile.display_name|default:leader.user.email }} מזמין/ה אתכם למטצים</h1>
     {% if schools %}
       <p>{% for school in schools %}{% if school %}{{ school }}{% if not forloop.last %} · {% endif %}{% endif %}{% endfor %}</p>
     {% endif %}

@@ -230,25 +230,26 @@ def test_joining_by_link_needs_no_confirmation(client, db):
     assert student.pending_leader is None
 
 
-def test_you_can_join_before_passing_the_test(client, db):
-    """T-F-M.7.7-2, turned round by REQ-M.177 (2026-10-12): the test runs beside
-    the road, so an invite in hand attaches the person at once."""
+def test_you_cannot_join_before_passing_the_test(client, db):
+    """T-F-M.7.7-2, turned round again by REQ-M.192 (Lital, 2026-10-15): the test
+    comes first, so an invite in hand waits and attaches nobody before it."""
     from matazim.models import Student
 
     leader = make_leader()
     user = sign_in(client, passed=False)
 
-    client.post(reverse("matazim:join", args=[leader.join_code]), {"action": "join"})
-    assert Student.objects.get(user=user).leader == leader
+    resp = client.post(reverse("matazim:join", args=[leader.join_code]), {"action": "join"})
+    assert resp["Location"] == "/matazim/test/?gate=1"
+    assert not Student.objects.filter(user=user).exists()
 
 
 # ------------------------------------------------- Journey B: the open door
 
 
 def test_the_second_door_leads_to_the_code_box(client, db):
-    """T-F-M.7.4-1, REQ-M.166: "I want to be a מט״צ" asks for a leader's code."""
+    """T-F-M.7.4-1, REQ-M.166: "I want to be a מטצ" asks for a leader's code."""
     sign_in(client, passed=True)
-    html = client.get(reverse("matazim:home")).content.decode()
+    html = client.get(reverse("matazim:join_leader")).content.decode()
     assert reverse("matazim:code") in html
 
 

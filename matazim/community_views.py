@@ -1,4 +1,4 @@
-"""קהילת מט״צים: the feed inside the walls, and the page outside them.
+"""קהילת מטצים: the feed inside the walls, and the page outside them.
 
 REQ-M.26, REQ-M.131, REQ-M.132, REQ-M.133. Spec §4.12.
 
@@ -34,7 +34,7 @@ MIN_BODY = 2
 
 
 def moderate(text, user):
-    """(ok, why) — babook's engine, מט״צים's decision about what to do with it.
+    """(ok, why) — babook's engine, מטצים's decision about what to do with it.
 
     §2.1: shared engine, our own views. `text_relevance_ok` fails open on any
     error, which is right, and means this is a filter rather than a guarantee.

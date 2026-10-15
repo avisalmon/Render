@@ -1,4 +1,4 @@
-"""מט״צים URL space.
+"""מטצים URL space.
 
 Namespaced, so every name in this product is `matazim:*` and can never collide
 with a babook name. RULE-1 is enforced against this: a template under
@@ -45,7 +45,7 @@ urlpatterns = [
     path("track/", views.track, name="track"),
     path("courses/", views.courses, name="courses"),
     path("schools/", views.schools, name="schools"),
-    # REQ-M.26, M.131-M.134 — קהילת מט״צים. One door: a visitor or a
+    # REQ-M.26, M.131-M.134 — קהילת מטצים. One door: a visitor or a
     # candidate gets the page about the community, a member gets the feed.
     path("community/", community_views.community, name="community"),
     path("community/<int:post_id>/hide/", community_views.hide_post, name="hide_post"),
@@ -110,6 +110,7 @@ urlpatterns = [
     # Becoming someone: the invite link, the open door, and the leader's page.
     path("code/", joining_views.enter_code, name="code"),
     path("join/<str:code>/", joining_views.join, name="join"),
+    path("join-leader/", joining_views.join_leader, name="join_leader"),
     path("joined/", joining_views.joined, name="joined"),
     path("apply/", joining_views.apply, name="apply"),
     path("leaders/", joining_views.leader_entrance, name="leader_entrance"),
@@ -194,7 +195,7 @@ urlpatterns = [
     # taken back. The maker offers, the programme publishes.
     path("work/<int:submission_id>/offer/", submission_views.offer_publicly, name="offer_publicly"),
     path("work/<int:submission_id>/publish/", submission_views.publish, name="publish_work"),
-    # REQ-M.20 — what a certified מט״צ can actually show somebody. `verify` is
+    # REQ-M.20 — what a certified מטצ can actually show somebody. `verify` is
     # public on purpose: a school checking one has no account.
     path("my-certificate/", certificate_views.my_certificate, name="my_certificate"),
     path("verify/<uuid:public_id>/", certificate_views.verify, name="verify"),
@@ -206,7 +207,7 @@ urlpatterns = [
     path("learn/<slug:slug>/<int:order>/project/", learn_views.submit_project, name="submit_project"),
     path("learn/<slug:slug>/finish/", learn_views.finish_course, name="finish_course"),
     # SPR-M.52 — the two shelves: what the programme may offer (root), and
-    # what one leader offers their own מט״צים.
+    # what one leader offers their own מטצים.
     path("staff/offered/", learn_views.staff_offered, name="staff_offered"),
     path("leader/courses/", learn_views.leader_shelf, name="leader_shelf"),
     path("profile/", views.profile, name="profile"),

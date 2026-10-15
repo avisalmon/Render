@@ -12,7 +12,7 @@
   RULE-1 governs navigation, and nobody leaves /matazim/.
 {% endcomment %}
 
-{% block title %}{{ lesson.title }} · {{ course.title }} · מט״צים{% endblock %}
+{% block title %}{{ lesson.title }} · {{ course.title }} · מטצים{% endblock %}
 
 {% block content %}
 <div class="mz-container mz-page">
@@ -30,7 +30,7 @@
       iframe.mediadelivery.net, video segments from vz-*.b-cdn.net before
       anybody pressed play, fonts.bunny.net, performance telemetry to
       rum-metrics.bunny.net and metrics-bunny.net, and latency probes to edge
-      zones as far apart as Auckland and Kenya. Every other screen in מט״צים
+      zones as far apart as Auckland and Kenya. Every other screen in מטצים
       contacts nobody at all.
 
       The privacy page says, in bold, "אין כאן גוגל אנליטיקס, אין פיקסל של
@@ -100,7 +100,7 @@
       This page used to render `notes_markdown|truncatewords:60` into a grey
       paragraph: raw markdown, hashes and asterisks included, cut off after
       sixty words. Eighteen of the nineteen סקראץ׳ lessons carry notes, so a
-      מט״צ was getting a fragment of the lesson rendered as source code while a
+      מטצ was getting a fragment of the lesson rendered as source code while a
       babook learner read the whole thing.
 
       Rendered through `app.lesson_notes`, the same function babook's own
@@ -117,7 +117,7 @@
 
     REQ-M.76 wants a CourseCertificate for both Scratch courses and both are
     requires_project with project_min_count 2, so this is not an extra: without
-    it nobody can be certified through מט״צים at all, which is what the review
+    it nobody can be certified through מטצים at all, which is what the review
     on 2026-09-17 found.
 
     The link goes to our own view, which uses babook's parser and its sharing
@@ -202,7 +202,7 @@
   {% if reflection_prompt %}
     {% comment %}
       The address comes from the view rather than `{% url %}`, because RULE-1's
-      test forbids a babook url name in a מט״צים template and it is right to:
+      test forbids a babook url name in a מטצים template and it is right to:
       that rule is about navigation, and this is an API the page posts to, the
       same treatment `/api/video-progress/` already gets below.
     {% endcomment %}

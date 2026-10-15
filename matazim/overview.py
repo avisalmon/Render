@@ -117,7 +117,7 @@ def leader_rows(user):
 
     Avi's second item, and the three facts he named are the three columns:
     who they are, how far through the training they are, and whether they sat
-    the entrance test. The counts of their own מט״צים come along because a
+    the entrance test. The counts of their own מטצים come along because a
     leader with no students and a leader with twelve are different situations
     and the list was showing them identically.
 

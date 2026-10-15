@@ -1,21 +1,21 @@
 {% extends "matazim/base.html" %}
 
 {% comment %}
-  SPR-M.52 — the shelf. What one leader puts in front of their own מט״צים.
+  SPR-M.52 — the shelf. What one leader puts in front of their own מטצים.
 
   There is no control here to make anything required, and that is the design:
-  REQ-M.76 says a מט״צ מוסמך is the entrance test, both Scratch courses and the
+  REQ-M.76 says a מטצ מוסמך is the entrance test, both Scratch courses and the
   leader's approval. A leader who wants more of somebody weighs it in the
   approval they already give by hand (Avi, 2026-09-16).
 {% endcomment %}
 
-{% block title %}הדרכות למט״צים שלי · מט״צים{% endblock %}
+{% block title %}הדרכות למטצים שלי · מטצים{% endblock %}
 
 {% block content %}
 <div class="mz-container mz-page">
   <div class="mz-page-head">
-    <h1>הדרכות למט״צים שלי</h1>
-    <p>מה שתסמנו כאן יופיע למט״צים שלכם, והם יוכלו ללמוד את זה כאן באתר.</p>
+    <h1>הדרכות למטצים שלי</h1>
+    <p>מה שתסמנו כאן יופיע למטצים שלכם, והם יוכלו ללמוד את זה כאן באתר.</p>
   </div>
 
   <section class="mz-panel mz-panel-wide">
@@ -43,7 +43,7 @@
               <input type="hidden" name="action" value="remove">
               <button type="submit" class="mz-linkbtn">להוריד מהמדף</button>
             {% else %}
-              <button type="submit" class="mz-linkbtn">לפתוח למט״צים שלי</button>
+              <button type="submit" class="mz-linkbtn">לפתוח למטצים שלי</button>
             {% endif %}
           </form>
         </li>

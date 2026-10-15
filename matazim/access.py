@@ -1,6 +1,6 @@
 """Who sees whom.
 
-The whole permission model of מט״צים lives in this file, and it is deliberately
+The whole permission model of מטצים lives in this file, and it is deliberately
 small. Nothing else in the app asks "may this person do that". Every screen asks
 `visible_students(user)` and works with what comes back.
 
@@ -635,7 +635,7 @@ def visible_request_messages(user):
 def visible_sessions(user):
     """REQ-M.32 — פרקטיקום, reached through the student who ran it.
 
-    A leader reads their own מט״צים's teaching because a leader who approves
+    A leader reads their own מטצים's teaching because a leader who approves
     work and signs a certificate should be able to see the thing being
     certified. Nobody else does: a session is a teenager's own account of their
     own year, including what they found hard.
@@ -665,7 +665,7 @@ def visible_institutions(user):
 
 
 def visible_course_slugs(user):
-    """Every הדרכה this person may see and take inside מט״צים.
+    """Every הדרכה this person may see and take inside מטצים.
 
     SPR-M.52. One function because four screens ask the same question and a
     second opinion would eventually answer differently: the courses list, the
@@ -674,7 +674,7 @@ def visible_course_slugs(user):
     Three sources, in the order a member would name them:
 
     1. **The programme's own two.** `REQUIRED_COURSE_SLUGS` is what REQ-M.76
-       makes a מט״צ out of, and it is never withdrawable by anybody.
+       makes a מטצ out of, and it is never withdrawable by anybody.
     2. **What their leader put on the shelf**, out of the pool Avi allows
        (`OfferedCourse`). Exposure, not a requirement: Avi, 2026-09-16 and
        again on the 19th.

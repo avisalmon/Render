@@ -6,7 +6,7 @@
   anybody.
 {% endcomment %}
 
-{% block title %}בקשה חדשה · מט״צים{% endblock %}
+{% block title %}בקשה חדשה · מטצים{% endblock %}
 
 {% block content %}
 <div class="mz-container mz-page">
@@ -45,14 +45,14 @@
       <label class="mz-field">
         <span>הבקשה</span>
         <textarea name="body" rows="7" required
-                  placeholder="לדוגמה: במסך המט״צים שלי אני לא מצליחה להבין מי מחכה לאישור שלי ומי כבר אושר.">{{ posted.body|default:"" }}</textarea>
+                  placeholder="לדוגמה: במסך המטצים שלי אני לא מצליחה להבין מי מחכה לאישור שלי ומי כבר אושר.">{{ posted.body|default:"" }}</textarea>
         {% comment %}
           REQ-M.113 — free text about a programme is one sentence away from free
           text about a child, and that would put a new category of personal data
           outside everything §4.10 describes.
         {% endcomment %}
         <small>
-          בלי שמות של תלמידים. אם צריך להצביע על מישהו ספציפי, כתבו "מט״צ אחד
+          בלי שמות של תלמידים. אם צריך להצביע על מישהו ספציפי, כתבו "מטצ אחד
           בכיתה ט2" ואבי ימצא אותו.
         </small>
       </label>

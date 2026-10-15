@@ -8,13 +8,13 @@
   inside a group here and there should not be one.
 {% endcomment %}
 
-{% block title %}הכיתות שלי · מט״צים{% endblock %}
+{% block title %}הכיתות שלי · מטצים{% endblock %}
 
 {% block content %}
 <div class="mz-container mz-page">
   <div class="mz-page-head">
     <h1>הכיתות שלי</h1>
-    <p>{% if leader %}דרך לסדר את המט״צים שלכם. אפשר גם בלי, ואף אחד לא חייב להיות בכיתה.{% else %}הכיתות הפתוחות שפתחתם, ואלה שהצטרפתם אליהן.{% endif %}</p>
+    <p>{% if leader %}דרך לסדר את המטצים שלכם. אפשר גם בלי, ואף אחד לא חייב להיות בכיתה.{% else %}הכיתות הפתוחות שפתחתם, ואלה שהצטרפתם אליהן.{% endif %}</p>
   </div>
 
   {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
@@ -49,7 +49,7 @@
             </span>
             <span class="mz-role">
               <a class="mz-linkbtn" href="{% url 'matazim:roster' %}?class={{ c.pk }}">
-                {{ c.students.count }} מט״צים
+                {{ c.students.count }} מטצים
               </a>
             </span>
           </li>
@@ -110,7 +110,7 @@
 
   {% if leader %}
   <p class="mz-page-actions">
-    <a class="mz-linkbtn" href="{% url 'matazim:roster' %}">חזרה לרשימת המט״צים</a>
+    <a class="mz-linkbtn" href="{% url 'matazim:roster' %}">חזרה לרשימת המטצים</a>
   </p>
   {% endif %}
 </div>

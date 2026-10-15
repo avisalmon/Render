@@ -1,4 +1,4 @@
-"""A whole imaginary מט״צים, so the screens can be judged on real-looking data.
+"""A whole imaginary מטצים, so the screens can be judged on real-looking data.
 
     python manage.py seed_matazim_demo            # build it
     python manage.py seed_matazim_demo --purge    # take it away again
@@ -67,7 +67,7 @@ STUDENTS = [
 
 
 class Command(BaseCommand):
-    help = "Seed (or purge) an imaginary מט״צים world for judging the screens."
+    help = "Seed (or purge) an imaginary מטצים world for judging the screens."
 
     def add_arguments(self, parser):
         parser.add_argument("--purge", action="store_true", help="delete the demo world")

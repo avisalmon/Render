@@ -1,13 +1,13 @@
-"""מט״צים in Django's admin.
+"""מטצים in Django's admin.
 
 This is the escape hatch REQ-M.68 needs. Adminship is never self-served inside
-מט״צים, because the first admin could never have used a screen that requires
+מטצים, because the first admin could never have used a screen that requires
 being one. Two ways in, then: the `matazim_admins` command reading
 `MATAZIM_ADMINS` on every deploy, and here, where only a site superuser can
 reach it.
 
 Django's admin is babook's plumbing and the spec lists it as shared. It is not a
-מט״צים surface, no member ever sees it, and RULE-2 is about the templates under
+מטצים surface, no member ever sees it, and RULE-2 is about the templates under
 templates/matazim/, so nothing is bent by being here.
 """
 
@@ -44,7 +44,7 @@ class InstitutionAdmin(admin.ModelAdmin):
 
 @admin.register(MemberProfile)
 class MemberProfileAdmin(admin.ModelAdmin):
-    """A person's מט״צים row. The program-manager role is not here any more:
+    """A person's מטצים row. The program-manager role is not here any more:
     it is `Institution.managers`, granted on that screen."""
 
     list_display = (
@@ -90,7 +90,7 @@ class LeaderAdmin(admin.ModelAdmin):
     def class_count(self, obj):
         return obj.classes.count()
 
-    @admin.display(description="מט״צים")
+    @admin.display(description="מטצים")
     def student_count(self, obj):
         return obj.students.count()
 
@@ -101,7 +101,7 @@ class StudyClassAdmin(admin.ModelAdmin):
     list_filter = ("school_name", "year", "is_active")
     search_fields = ("name", "school_name", "leader__user__email")
 
-    @admin.display(description="מט״צים")
+    @admin.display(description="מטצים")
     def student_count(self, obj):
         return obj.students.count()
 

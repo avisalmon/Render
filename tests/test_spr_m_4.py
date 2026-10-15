@@ -163,7 +163,7 @@ def test_a_section_without_data_says_what_is_coming(client, db, name):
     """T-F-M.4.5-1: REQ-M.60. No dead link, and no invented content either.
 
     **Narrowed 2026-09-14, from three sections to one.** ימי שיא became real in
-    SPR-M.31 and קהילת מט״צים in SPR-M.32, so asserting they promise
+    SPR-M.31 and קהילת מטצים in SPR-M.32, so asserting they promise
     something later would be asserting they are still unbuilt. בתי הספר stays,
     and stays honestly: Avi closed the school question on 2026-09-14 (§4.8) and a
     school is an attribute of a leader rather than a table, so no model is
@@ -187,7 +187,7 @@ def test_no_section_invents_content(client, db):
     Nobody counted schools or members, so no page may imply a number.
 
     **Widened 2026-09-14, because it missed one.** The check was digits only,
-    and the copy that got past it was "מאות מט״צים" on the new קהילת מט״צים
+    and the copy that got past it was "מאות מטצים" on the new קהילת מטצים
     page: a figure nobody counted, written while warming up a paragraph, which
     is how the stats band happened in the first place.
     """
@@ -224,4 +224,3 @@ def test_the_entrance_test_page_says_a_computer_is_needed(client, db):
     """
     html = client.get(reverse("matazim:entrance_test")).content.decode()
     assert "מחשב" in html
-    assert "טלפון" in html

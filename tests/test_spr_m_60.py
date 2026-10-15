@@ -50,6 +50,12 @@ def _member(email="kid@example.com", name="יובל"):
             "guardian_consent_at": timezone.now(),
         },
     )
+    # REQ-M.191/192 (Lital, 2026-10-15): the site opens only for somebody attached
+    # to a leader, so the people in these tests are attached to one.
+    from matazim.models import Leader, Student
+
+    host = Leader.objects.filter(user__email="host@example.com").first() or _leader("host@example.com")
+    Student.objects.create(user=user, leader=host, status=Student.IN_TRAINING)
     return user
 
 
@@ -581,7 +587,7 @@ def test_the_class_page_has_no_certify_approve_or_stage_control(client, db):
     _join(cls, _member())
     client.force_login(owner)
     html = client.get(reverse("matazim:open_class", args=[cls.pk])).content.decode()
-    assert "לא מסמיך/ה אף אחד/ת למט״צ" in html
+    assert "לא מסמיך/ה אף אחד/ת למטצ" in html
     assert "/certify/" not in html
     for word in ("להסמיך", "לאשר", "שלב"):
         assert word not in html.split("<main", 1)[1]

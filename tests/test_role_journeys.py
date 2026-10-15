@@ -15,7 +15,7 @@ this project has now learned four times is a screen nobody uses.
 **Are they shown only what is theirs.** The menu is checked against an explicit
 map. A leader carrying המסלול שלי is not a permission breach, it is a product
 that does not know who is reading it: §4.9 is explicit that a leader is not a
-מט״צ, and an adult teacher was being offered a pupil's journey and a
+מטצ, and an adult teacher was being offered a pupil's journey and a
 parental-consent panel.
 """
 
@@ -122,8 +122,9 @@ NEEDS = {
            "entrance_test", "login", "register", "privacy", "terms", "leader_entrance"],
     "fresh@example.com": ["my_path", "entrance_test", "test_lessons", "test_task",
                           "profile", "my_data", "privacy", "terms"],
-    "free@example.com": ["my_path", "apply", "profile", "my_data", "privacy", "terms",
-                         "learn_course"],
+    # REQ-M.192: somebody with no leader has the list of leaders, and not the
+    # application or the learning, which open once there is one.
+    "free@example.com": ["my_path", "join_leader", "profile", "my_data", "privacy", "terms"],
     "mid@example.com": ["my_path", "learn_course", "profile", "my_data", "delete_me",
                         "privacy", "terms", "courses", "community", "events"],
     "done@example.com": ["my_path", "my_certificate", "profile", "my_data", "privacy"],
@@ -196,7 +197,7 @@ MENU = {
     },
     "leader@example.com": {
         "has": ["leader_home", "roster", "classes", "community", "events", "about"],
-        # §4.9 — a leader is not a מט״צ, so a pupil's screens are not theirs.
+        # §4.9 — a leader is not a מטצ, so a pupil's screens are not theirs.
         "hasnt": ["my_path", "entrance_test", "pm_leaders", "staff_home"],
     },
     "candidate@example.com": {

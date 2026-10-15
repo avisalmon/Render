@@ -246,14 +246,14 @@ def test_a_leader_cannot_fetch_someone_elses_students_upload(client, db):
     assert response.status_code in (302, 403, 404)
 
 
-# ------------------------------------------- F-M.9.3: מט״צים carries its own terms
+# ------------------------------------------- F-M.9.3: מטצים carries its own terms
 
 
 def test_the_privacy_policy_exists_inside_the_walls(client, db):
     """T-F-M.9.3-1: REQ-M.81, finding P3."""
     response = client.get(reverse("matazim:privacy"))
     assert response.status_code == 200
-    assert "מט״צים" in response.content.decode()
+    assert "מטצים" in response.content.decode()
 
 
 def test_the_terms_exist_inside_the_walls(client, db):
@@ -461,7 +461,7 @@ def test_deleting_the_account_takes_the_uploaded_file_with_it(db):
     Avi, mid-sprint: use babook's infrastructure. Correct, and babook already
     has self-service deletion (`app.views.delete_account`), whose `User.delete()`
     cascades cleanly through `MemberProfile`, `Student` and `EntranceAttempt`.
-    So מט״צים needs no deletion path of its own.
+    So מטצים needs no deletion path of its own.
 
     What reuse does not do on its own is delete files: Django stopped doing that
     in 1.3. Without the signal this covers, a teenager who asked to be deleted

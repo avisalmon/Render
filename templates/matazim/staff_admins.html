@@ -1,20 +1,20 @@
 {% extends "matazim/base.html" %}
 
 {% comment %}
-  REQ-M.70 — granting adminship from inside מט״צים.
+  REQ-M.70 — granting adminship from inside מטצים.
 
   Not self-service: you must already be an admin to open this page. What
   REQ-M.68 forbids is a screen that hands the role to someone who has none,
   which is why the bootstrap stays with the deploy and with Django's admin.
 {% endcomment %}
 
-{% block title %}מנהלי התוכנית · מט״צים{% endblock %}
+{% block title %}מנהלי התוכנית · מטצים{% endblock %}
 
 {% block content %}
 <div class="mz-container mz-page">
   <div class="mz-page-head">
     <h1>מנהלי התוכנית</h1>
-    <p>מנהל רואה את כל המט״צים, את כל המובילים ואת כל ההתקדמות, וממנה מובילים.</p>
+    <p>מנהל רואה את כל המטצים, את כל המובילים ואת כל ההתקדמות, וממנה מובילים.</p>
   </div>
 
   {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
@@ -114,11 +114,11 @@
     <dl class="mz-facts mz-role-key">
       <div>
         <dt><span class="mz-tag mz-tag-doing">מנהל/ת התוכנית</span></dt>
-        <dd class="mz-muted">רואה את כל המט״צים, המובילים וההתקדמות בתוך מט״צים בלבד. זו ההרשאה שניתנת מכאן.</dd>
+        <dd class="mz-muted">רואה את כל המטצים, המובילים וההתקדמות בתוך מטצים בלבד. זו ההרשאה שניתנת מכאן.</dd>
       </div>
       <div>
         <dt><span class="mz-tag mz-tag-done">מנהל/ת מערכת</span></dt>
-        <dd class="mz-muted">הרשאת על לכל הפלטפורמה, לא רק למט״צים. לא ניתנת מכאן ואי אפשר להסיר אותה מכאן.</dd>
+        <dd class="mz-muted">הרשאת על לכל הפלטפורמה, לא רק למטצים. לא ניתנת מכאן ואי אפשר להסיר אותה מכאן.</dd>
       </div>
     </dl>
   </section>

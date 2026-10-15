@@ -1,4 +1,4 @@
-"""The REST API for מט״צים (REQ-M.134, REQ-M.139, methodology Rule 6).
+"""The REST API for מטצים (REQ-M.134, REQ-M.139, methodology Rule 6).
 
 Full documented CRUD over every model in this app, one `ModelViewSet` each,
 registered on a router under `/matazim/api/`. DRF's browsable API is the
@@ -97,7 +97,7 @@ from .serializers import (
 class IsSignedIn(permissions.BasePermission):
     """The floor. Nothing in this app is readable by a stranger through the API.
 
-    The public surfaces of מט״צים are pages, not endpoints: the events page, the
+    The public surfaces of מטצים are pages, not endpoints: the events page, the
     certificate verification page, the recruitment sections. Each of those has a
     view that decides exactly what a stranger may see, and none of them needs a
     queryset handed to an anonymous client.
@@ -144,7 +144,7 @@ class IsInTheProgramme(permissions.BasePermission):
 
 
 def _refuse_if_frozen(user):
-    """F-M.50.8, decided by Avi 2026-09-20: a certified מט״צ's work is frozen.
+    """F-M.50.8, decided by Avi 2026-09-20: a certified מטצ's work is frozen.
 
     Here rather than inside each viewset, and asking `certification` rather than
     re-reading the certificate table, so the rule has one definition and the
@@ -337,7 +337,7 @@ class StudentViewSet(NoDeleteMixin, Scoped):
     serializer_class = StudentSerializer
     scope = staticmethod(access.visible_students)
     delete_refusal = (
-        "מט״צ לא נמחק/ת. יציאה מהתוכנית היא שינוי סטטוס, שנשמר עם מי שהחליט ומתי."
+        "מטצ לא נמחק/ת. יציאה מהתוכנית היא שינוי סטטוס, שנשמר עם מי שהחליט ומתי."
     )
 
     @action(detail=True, methods=["post"])
@@ -511,7 +511,7 @@ class SubmissionViewSet(Scoped):
     def perform_create(self, serializer):
         student = Student.objects.filter(user=self.request.user).first()
         if student is None:
-            raise PermissionDenied("רק מט״צ/ית בתוכנית מגיש/ה עבודה.")
+            raise PermissionDenied("רק מטצ/ית בתוכנית מגיש/ה עבודה.")
         serializer.save(student=student, leader=student.leader)
 
     def perform_update(self, serializer):
@@ -700,7 +700,7 @@ class SiteUpdateViewSet(Scoped):
 
 
 class PostViewSet(Scoped):
-    """קהילת מט״צים (REQ-M.26, REQ-M.131, §4.12).
+    """קהילת מטצים (REQ-M.26, REQ-M.131, §4.12).
 
     Three departures from plain CRUD, each a requirement. `create` stamps the
     author and the institution server-side and moderates the text. `destroy` is
@@ -973,7 +973,7 @@ class OfferedCourseViewSet(Scoped):
 
 
 class LeaderCourseViewSet(Scoped):
-    """SPR-M.52 — what one leader puts in front of their own מט״צים.
+    """SPR-M.52 — what one leader puts in front of their own מטצים.
 
     Two rules, and they are the same two the screen enforces, asked of the same
     function so they cannot drift (RULE-3):

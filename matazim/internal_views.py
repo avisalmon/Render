@@ -5,8 +5,8 @@ a shared secret, and the work runs inside the live web service because a
 separate cron container cannot see the SQLite file on Render's persistent disk.
 
 Its own endpoint inside `/matazim/` rather than a line added to babook's,
-because §2.1 says shared engine and own surfaces, and a job that rings מט״צים's
-bell belongs to מט״צים. It reuses `BACKUP_TRIGGER_TOKEN` rather than inventing a
+because §2.1 says shared engine and own surfaces, and a job that rings מטצים's
+bell belongs to מטצים. It reuses `BACKUP_TRIGGER_TOKEN` rather than inventing a
 secret, so there is one thing to rotate rather than three.
 
 **It can only send reminders.** Not a general "run a command" endpoint, which is

@@ -353,7 +353,7 @@ def test_being_certified_and_having_a_certificate_cannot_come_apart(db):
 
     `certification.certify` is what issues a certificate, so anything that sets
     `Student.status` to CERTIFIED by another route produces somebody who *is* a
-    certified מט״צ with nothing to show for it. The demo seeder did exactly that
+    certified מטצ with nothing to show for it. The demo seeder did exactly that
     and the screen 404d, which is how it was found.
 
     This checks the rule at its source rather than in one code path: nothing
@@ -379,7 +379,7 @@ def test_being_certified_and_having_a_certificate_cannot_come_apart(db):
 
     assert not offenders, (
         "certification happens somewhere other than certification.certify(), "
-        "which produces a certified מט״צ with no certificate:\n  " + "\n  ".join(offenders)
+        "which produces a certified מטצ with no certificate:\n  " + "\n  ".join(offenders)
     )
 
 

@@ -30,7 +30,7 @@ PASSWORD = "sprm3-pass-4417"
 def make_user(email="dana@example.com", name="דנה כהן", staff=False):
     user = User.objects.create_user(username=email, email=email, password=PASSWORD)
     if staff:
-        # "Staff" became מט״צים adminship in SPR-M.6: is_staff was a stand-in while
+        # "Staff" became מטצים adminship in SPR-M.6: is_staff was a stand-in while
         # this app had no roles of its own. Granting the real thing, not the
         # stand-in, so the test exercises the rule that actually ships.
         from matazim.models import MemberProfile
@@ -425,7 +425,14 @@ def test_a_retry_draws_a_fresh_target_and_keeps_the_history(client, db):
 
 
 def test_passing_opens_the_student_door(client, db):
-    """T-F-M.3.9-1: REQ-M.54, and the flag SPR-M.2 shipped finally gets set."""
+    """T-F-M.3.9-1: REQ-M.54, REQ-M.182, REQ-M.192.
+
+    The upload alone opens nothing; the team's approval is what sets the flag, and
+    from then on home is the list of leaders (the stage after the test).
+    """
+    from django.contrib.auth.models import User
+
+    from matazim import entrance_review
     from matazim.models import EntranceAttempt, MemberProfile
     from matazim.targets import sync_bank
 
@@ -433,14 +440,6 @@ def test_passing_opens_the_student_door(client, db):
     user = sign_in(client)
     client.get(reverse("matazim:test_task"))
     attempt = EntranceAttempt.objects.get(member__user=user)
-
-    def hero():
-        html = client.get(reverse("matazim:home")).content.decode()
-        return html.split("mz-hero-cta")[1].split("</div>")[0]
-
-    # Before: the hero carries no test (REQ-M.177; SPR-M.42 once made the test
-    # the hero's one action, and before that it was a padlocked door).
-    assert reverse("matazim:entrance_test") not in hero()
 
     client.post(
         reverse("matazim:test_task"),
@@ -452,17 +451,11 @@ def test_passing_opens_the_student_door(client, db):
     assert MemberProfile.objects.get(user=user).entrance_test_passed_at is None
     attempt.refresh_from_db()
     assert attempt.passed and attempt.decision == EntranceAttempt.WAITING
-
-    from django.contrib.auth.models import User
-
-    from matazim import entrance_review
+    assert client.get(reverse("matazim:home")).status_code == 200   # still the test's page
 
     entrance_review.approve(attempt, User.objects.create_user("pm-3", "pm-3@x.com", "x"))
     assert MemberProfile.objects.get(user=user).entrance_test_passed_at is not None
-    # After: the hero is unchanged and still does not invite anyone to the
-    # test again (REQ-M.63); the pass is recorded on the profile.
-    after = hero()
-    assert reverse("matazim:entrance_test") not in after
+    assert client.get(reverse("matazim:home"))["Location"] == reverse("matazim:join_leader")
 
 
 # --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---

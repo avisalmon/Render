@@ -25,7 +25,7 @@ PASSWORD = "sprm5-pass-8823"
 def make_user(email="tal@example.com", staff=False):
     user = User.objects.create_user(username=email, email=email, password=PASSWORD)
     if staff:
-        # "Staff" became מט״צים adminship in SPR-M.6: is_staff was a stand-in while
+        # "Staff" became מטצים adminship in SPR-M.6: is_staff was a stand-in while
         # this app had no roles of its own. Granting the real thing, not the
         # stand-in, so the test exercises the rule that actually ships.
         from matazim.models import MemberProfile
@@ -85,7 +85,9 @@ def test_members_and_visitors_never_see_it(client, db):
 
 def test_a_passed_test_is_marked_in_the_nav(client, db):
     """T-F-M.5.2-1: REQ-M.63. Nobody should be invited twice to what they finished."""
-    sign_in(client, "done@example.com", passed=True)
+    from tests.matazim_helpers import attach
+
+    attach(sign_in(client, "done@example.com", passed=True))
     html = client.get(reverse("matazim:home")).content.decode()
     nav = html.split('id="mzNav"')[1].split("</nav>")[0]
     assert "mz-nav-done" in nav
@@ -111,7 +113,7 @@ def test_no_page_still_invites_someone_who_passed(client, db, name):
     already passed to go and take the test.
     """
     sign_in(client, "done2@example.com", passed=True)
-    html = client.get(reverse(name)).content.decode()
+    html = client.get(reverse(name), follow=True).content.decode()
     body = html.split("<main>")[1].split("</main>")[0]
     for target in (reverse("matazim:entrance_test"), reverse("matazim:test_lessons")):
         assert (

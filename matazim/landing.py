@@ -29,7 +29,7 @@ def student_orientation(request):
     """The three steps into the programme, each with where *this* reader is.
 
     Shown on דף הבית to everybody, signed in or not. Avi, 2026-10-12: anyone
-    who registers can learn, and being a מט״צ is a separate thing that needs a
+    who registers can learn, and being a מטצ is a separate thing that needs a
     leader's code. The entrance test is **not** a step here at all: it runs
     beside the road as a leader's optional choice and "must not be broadcast as
     something in your face" (REQ-M.177).
@@ -39,7 +39,7 @@ def student_orientation(request):
     - ``open``  available already, though not the next thing
     - ``later`` ahead of them, named so the road is visible
 
-    A visitor sees step one as עכשיו; a certified מט״צ sees the learning behind
+    A visitor sees step one as עכשיו; a certified מטצ sees the learning behind
     them and a fourth step, teaching, which is what the rest of their year is.
     """
     from .views import _has_leader, _student_of
@@ -70,9 +70,9 @@ def student_orientation(request):
         },
         {
             "key": "join",
-            "title": "רוצים להיות מט״צ? מצטרפים למוביל/ה",
-            "text": "מט״צ מוסמך הוא מי שמוביל/ה מסמיך/ה, ולכן צריך קוד ממנו/ה. "
-            "בלי קוד אפשר ללמוד הכל, ולא להיות מט״צ.",
+            "title": "רוצים להיות מטצ? מצטרפים למוביל/ה",
+            "text": "מטצ מוסמך הוא מי שמוביל/ה מסמיך/ה, ולכן צריך קוד ממנו/ה. "
+            "בלי קוד אפשר ללמוד הכל, ולא להיות מטצ.",
             "state": DONE if joined else OPEN,
             "tag": "עם קוד",
             "where": None if joined else "matazim:code",
@@ -104,7 +104,7 @@ def hero_state(request):
 
     Four kinds. A member who has a leader gets their path, a leader and a
     program manager get their own front door, and everybody else gets the two
-    doors of REQ-M.166: learn, or become a מט״צ with a code. There is no test
+    doors of REQ-M.166: learn, or become a מטצ with a code. There is no test
     kind any more (REQ-M.177).
     """
     from .views import _has_leader, _is_member, _student_of
@@ -157,7 +157,7 @@ def leader_dashboard(leader):
         summary = track_summary(progress.get(student.user_id, {}))
         state = states.get(student.user_id)
         if student.status == "certified":
-            status, word = "done", "מט״צ מוסמך"
+            status, word = "done", "מטצ מוסמך"
         elif state and state.is_eligible:
             status, word = "fix", "מוכן להסמכה"
         elif summary["pct"]:

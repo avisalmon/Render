@@ -17,7 +17,7 @@
   role on its own (hiding a link has never been access control).
 {% endcomment %}
 
-{% block title %}ניהול · מט״צים{% endblock %}
+{% block title %}ניהול · מטצים{% endblock %}
 
 {% block content %}
 <div class="mz-container mz-page">
@@ -26,7 +26,7 @@
       <span class="mz-eyebrow">מנהל/ת התכנית{% if dashboard.institution %} · {{ dashboard.institution }}{% endif %}</span>
       <h1>שלום{% if '@' not in manager_name %} {{ manager_name }}{% endif %}</h1>
       <p>
-        {{ counts.leaders }} מובילים פעילים, {{ counts.students }} לומדים בתוכנית, {{ counts.certified }} מט״צים מוסמכים.
+        {{ counts.leaders }} מובילים פעילים, {{ counts.students }} לומדים בתוכנית, {{ counts.certified }} מטצים מוסמכים.
         {% if counts.candidates %}<strong>{{ counts.candidates }} ממתינים לאישור שלכם.</strong>{% endif %}
       </p>
     </div>
@@ -78,14 +78,14 @@
               {% if row.rate is not None %}
                 <span class="mz-stat"><strong>{{ row.rate }}%</strong> הסמכה</span>
               {% else %}
-                <span class="mz-muted">עוד אין מט״צים</span>
+                <span class="mz-muted">עוד אין מטצים</span>
               {% endif %}
               {% if not row.is_active %}<span class="mz-tag mz-tag-idle">לא פעיל/ה</span>{% endif %}
             </span>
           </li>
         {% endfor %}
       </ul>
-      <p class="mz-muted mz-small">לוחצים על שם כדי לראות את המט״צים שלו, להחליף את הקישור שלו או להעביר מט״צ.</p>
+      <p class="mz-muted mz-small">לוחצים על שם כדי לראות את המטצים שלו, להחליף את הקישור שלו או להעביר מטצ.</p>
     {% else %}
       <p class="mz-muted">עוד אין מובילים. הזמנת מוביל/ה היא הצעד הראשון, ומשם הכל מתחיל.</p>
       <div class="mz-page-actions">
@@ -120,7 +120,7 @@
       {% else %}
         <li><a class="mz-linkbtn" href="{% url 'matazim:my_requests' %}">הבקשות שלי</a></li>
       {% endif %}
-      <li><a class="mz-linkbtn" href="{% url 'matazim:my_path' %}">איך זה נראה למט״צ</a></li>
+      <li><a class="mz-linkbtn" href="{% url 'matazim:my_path' %}">איך זה נראה למטצ</a></li>
       <li><a class="mz-linkbtn" href="{% url 'matazim:staff_targets' %}">משימות מבחן הכניסה</a></li>
       <li>
         <a class="mz-linkbtn" href="{% url 'matazim:staff_retention' %}">

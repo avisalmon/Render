@@ -273,14 +273,6 @@ def test_a_visitor_still_gets_the_visitor_page(client, world):
 # ------------------------------------------------------- דף הבית, screen 1
 
 
-def test_the_home_reads_in_her_order(client, world):
-    """Hero, איך זה עובד, the band, then everything else. The partners sat
-    between the hero and the four stages, where she put the programme."""
-    body = client.get("/matazim/").content.decode()
-    assert body.index("mzHow") < body.index("mzPartners")
-    assert body.index("mzHow") < body.index('class="mz-band')
-
-
 def test_the_band_is_her_gradient_with_a_pictogram_per_figure(client, world):
     from matazim.public import counters
 
@@ -288,7 +280,7 @@ def test_the_band_is_her_gradient_with_a_pictogram_per_figure(client, world):
     assert rows, "the fixture has a leader, so there is a figure"
     assert all(row.get("icon") for row in rows)
 
-    body = client.get("/matazim/").content.decode()
+    body = client.get("/matazim/about/").content.decode()
     assert "mz-band-gradient" in body
 
 
@@ -300,8 +292,8 @@ def test_the_band_uses_the_earned_word(world):
 
     Student.objects.filter(user=world["mid"]).update(status=Student.CERTIFIED)
     labels = {row["label"] for row in counters()}
-    assert not any(label.startswith("מט״צים בתוכנית") for label in labels)
-    assert "מט״צ מוסמך/ת" in labels
+    assert not any(label.startswith("מטצים בתוכנית") for label in labels)
+    assert "מטצ מוסמך/ת" in labels
 
 
 def test_nothing_on_any_of_the_three_screens_is_invented(client, world):

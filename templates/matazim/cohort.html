@@ -11,13 +11,13 @@
   can cross a world (REQ-M.88).
 {% endcomment %}
 
-{% block title %}הקבוצה · מט״צים{% endblock %}
+{% block title %}הקבוצה · מטצים{% endblock %}
 
 {% block content %}
 <div class="mz-container mz-page">
   <div class="mz-page-head">
     <h1>הקבוצה</h1>
-    <p>כמה מט״צים יש, איפה הם עומדים, ואצל מי.</p>
+    <p>כמה מטצים יש, איפה הם עומדים, ואצל מי.</p>
   </div>
 
   <section class="mz-panel">
@@ -40,7 +40,7 @@
         {% endfor %}
       </ul>
     {% else %}
-      <p class="mz-muted">עוד אין מט״צים בתוכנית שלכם.</p>
+      <p class="mz-muted">עוד אין מטצים בתוכנית שלכם.</p>
     {% endif %}
   </section>
 
@@ -57,7 +57,7 @@
               </span>
             </a>
             <span class="mz-role">
-              <span class="mz-muted">{{ row.total }} מט״צים</span>
+              <span class="mz-muted">{{ row.total }} מטצים</span>
               {% if row.certified %}
                 <span class="mz-tag mz-tag-done">{{ row.certified }} מוסמכים</span>
               {% endif %}
@@ -78,7 +78,7 @@
           <li>
             <span class="mz-training-title">{{ row.school }}</span>
             <span class="mz-role">
-              <span class="mz-muted">{{ row.total }} מט״צים</span>
+              <span class="mz-muted">{{ row.total }} מטצים</span>
               {% if row.certified %}
                 <span class="mz-tag mz-tag-done">{{ row.certified }} מוסמכים</span>
               {% endif %}
@@ -99,7 +99,7 @@
     {% endcomment %}
     <p class="mz-muted">
       הדוח יורד כקובץ לאקסל: מספרים לפי שלב, לפי מוביל/ה ולפי בית ספר.
-      <strong>שמות של מט״צים לא נכללים בו.</strong> קובץ שיוצא מהמערכת מגיע
+      <strong>שמות של מטצים לא נכללים בו.</strong> קובץ שיוצא מהמערכת מגיע
       לתיקיית הורדות ונשלח הלאה, ואין סיבה שיהיו בו שמות של קטינים כדי לענות
       על השאלות שהדוח הזה עונה עליהן.
     </p>

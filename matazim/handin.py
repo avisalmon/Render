@@ -14,7 +14,7 @@ One decision, recorded in the spec (Q25) and one line here:
 - **Only for someone who has a leader.** A member who came through the open door
   has nobody to approve, and a gate nobody can open is a broken site, not a rule.
 
-This is the gate in מט״צים only. babook's own finish button is outside this
+This is the gate in מטצים only. babook's own finish button is outside this
 product and is not touched (RULE-2).
 """
 

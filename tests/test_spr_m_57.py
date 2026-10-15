@@ -56,7 +56,7 @@ def world(db):
                                    institution=inst, approved_at=timezone.now())
     waiting = Leader.objects.create(user=_user("waiting@example.com", "ממתין"),
                                     institution=inst)
-    kid = Student.objects.create(user=_user("kid@example.com", "מט״צ"),
+    kid = Student.objects.create(user=_user("kid@example.com", "מטצ"),
                                  leader=leader, status=Student.IN_TRAINING)
     root = User.objects.create_superuser("root@example.com", "root@example.com", PASSWORD)
 

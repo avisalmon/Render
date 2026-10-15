@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "entered_via_matazim",
-                    models.BooleanField(default=False, verbose_name="נכנס דרך מט״צים"),
+                    models.BooleanField(default=False, verbose_name="נכנס דרך מטצים"),
                 ),
                 ("first_seen_at", models.DateTimeField(auto_now_add=True)),
                 (
@@ -49,8 +49,8 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "verbose_name": "פרופיל מט״צים",
-                "verbose_name_plural": "פרופילי מט״צים",
+                "verbose_name": "פרופיל מטצים",
+                "verbose_name_plural": "פרופילי מטצים",
             },
         ),
     ]

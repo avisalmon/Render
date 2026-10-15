@@ -122,7 +122,7 @@ def _next_step(profile, student, state, per_course):
             "text": "להמשיך ללמוד",
             "where": "matazim:courses",
             "why": "סיימתם את שתי ההדרכות הראשונות, ויש עוד הדרכות פתוחות לכולם. "
-            "כדי להיות מט״צ מוסמך צריך קוד ממוביל/ה.",
+            "כדי להיות מטצ מוסמך צריך קוד ממוביל/ה.",
         }
 
     if not state.test_met:
@@ -143,11 +143,11 @@ def _next_step(profile, student, state, per_course):
     # "מכאן מדריכים אחרים" used to be the end of the road, with nowhere to go
     # from it (SPR-M.43). The sentence names the next stage of the programme and
     # the screen for it already exists, so it points at it: מדריכים is where a
-    # מט״צ actually spends the rest of the year.
+    # מטצ actually spends the rest of the year.
     return {
         "text": "להעביר מפגש",
         "where": "matazim:my_teaching",
-        "why": "אתם מט״צ מוסמך. מכאן מדריכים אחרים, וכל מפגש שתעבירו נרשם כאן.",
+        "why": "אתם מטצ מוסמך. מכאן מדריכים אחרים, וכל מפגש שתעבירו נרשם כאן.",
     }
 
 

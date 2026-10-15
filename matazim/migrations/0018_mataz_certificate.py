@@ -49,8 +49,8 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "verbose_name": "תעודת מט״צ",
-                "verbose_name_plural": "תעודות מט״צ",
+                "verbose_name": "תעודת מטצ",
+                "verbose_name_plural": "תעודות מטצ",
             },
         ),
     ]

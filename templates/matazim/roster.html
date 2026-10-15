@@ -13,12 +13,12 @@
   a leader is not entitled to (REQ-M.22).
 {% endcomment %}
 
-{% block title %}המט״צים שלי · מט״צים{% endblock %}
+{% block title %}המטצים שלי · מטצים{% endblock %}
 
 {% block content %}
 <div class="mz-container mz-page">
   <div class="mz-page-head">
-    <h1>המט״צים שלי</h1>
+    <h1>המטצים שלי</h1>
     <p>מי אצלכם, איפה כל אחד עומד, ומה חסר כדי להסמיך.</p>
   </div>
 
@@ -62,7 +62,7 @@
 
   <section class="mz-panel">
     <h2>
-      {% if query or in_class %}תוצאות{% else %}כל המט״צים{% endif %}
+      {% if query or in_class %}תוצאות{% else %}כל המטצים{% endif %}
       <span class="mz-count">{{ page.paginator.count }}</span>
     </h2>
 
@@ -88,7 +88,7 @@
 
             <span class="mz-role">
               {% if row.student.status == "certified" %}
-                <span class="mz-tag mz-tag-done">מט״צ מוסמך</span>
+                <span class="mz-tag mz-tag-done">מטצ מוסמך</span>
               {% elif row.eligibility.is_eligible %}
                 <span class="mz-tag mz-tag-doing">מוכן להסמכה</span>
               {% else %}
@@ -112,10 +112,10 @@
       {% endif %}
 
     {% elif query or in_class %}
-      <p class="mz-muted">אין מט״צ שמתאים לחיפוש הזה.</p>
+      <p class="mz-muted">אין מטצ שמתאים לחיפוש הזה.</p>
     {% else %}
       <p class="mz-muted">
-        עוד אין מט״צים אצלכם. שלחו את הקישור שלכם ונתחיל.
+        עוד אין מטצים אצלכם. שלחו את הקישור שלכם ונתחיל.
         <a href="{% url 'matazim:leader_home' %}">הקישור וקוד ה־QR</a>
       </p>
     {% endif %}

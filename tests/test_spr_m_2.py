@@ -10,7 +10,7 @@ The shape of it, decided with Avi on 2026-09-10:
   no reason to model a 3D object.
 - התחברות in the header is never gated, or the gate locks out everyone who
   already passed and came back.
-- מט״צים keeps its own flags in its own table and reads identity and training
+- מטצים keeps its own flags in its own table and reads identity and training
   from the shared babook profile, so a person has one name and one history.
 
 Traces: REQ-M.6, M.7, M.35 to M.44.
@@ -83,7 +83,7 @@ def test_passing_the_test_is_read_through_a_method(db):
 def test_login_page_is_ours(client, db):
     """T-F-M.2.2-1."""
     html = client.get(reverse("matazim:login")).content.decode()
-    assert "מט״צים" in html
+    assert "מטצים" in html
     for marker in ("babook", "site-drawer", "nav-link px-2"):
         assert marker not in html
 
@@ -140,7 +140,7 @@ def test_an_account_made_on_babook_signs_in_here(client, db):
 def test_register_page_is_ours(client, db):
     """T-F-M.2.3-1."""
     html = client.get(reverse("matazim:register")).content.decode()
-    assert "מט״צים" in html
+    assert "מטצים" in html
     assert "babook" not in html
 
 
@@ -389,7 +389,7 @@ def test_the_replay_control_brings_the_welcome_back(client, db):
     tool rather than a feature, so it is staff only now, and the user here is
     staff for that reason and not by accident.
 
-    Narrowed again in SPR-M.6: "staff" became מט״צים adminship, so this grants
+    Narrowed again in SPR-M.6: "staff" became מטצים adminship, so this grants
     the real role rather than the `is_staff` stand-in it used while this app had
     no roles of its own.
     """
@@ -408,26 +408,6 @@ def test_the_replay_control_brings_the_welcome_back(client, db):
 
 
 # ---------------------------------------------------------------- F-M.2.7
-
-
-def test_without_a_passed_test_the_hero_is_the_test(client, db):
-    """T-F-M.2.7-1, rewritten by SPR-M.42.
-
-    REQ-M.36 still holds: somebody who has not passed cannot join. What
-    changed is how the page says so. It used to draw a padlocked כניסת
-    תלמידים with the way forward underneath it in .8rem grey, which is a
-    locked door with the key taped to it. The test is the way in, so the test
-    is the button now, and there is no gate to explain.
-    """
-    html = client.get(reverse("matazim:home")).content.decode()
-    hero = html.split("mz-hero-cta")[1].split("</div>")[0]
-
-    assert "mz-door-locked" not in html, "the padlocked door is back"
-    # REQ-M.177 (2026-10-12) turned this round: the test is no longer the way
-    # in, it runs beside the road, so the hero shows two doors and no test.
-    assert reverse("matazim:entrance_test") not in hero
-    assert "מבחן" not in hero
-    assert reverse("matazim:code") in hero
 
 
 def test_the_leader_door_is_never_gated(client, db):
@@ -474,13 +454,6 @@ def test_the_entrance_test_page_serves_without_an_account(client, db):
     assert "מבחן הכניסה" in resp.content.decode()
 
 
-def test_the_shut_door_points_at_the_test(client, db):
-    """T-F-M.2.8-2, turned round by REQ-M.177: there is no shut door any more,
-    and a visitor's front page does not send them to the test."""
-    html = client.get(reverse("matazim:home")).content.decode()
-    assert reverse("matazim:entrance_test") not in html
-
-
 # --- SPR-M.40: the role is Institution.managers, the FKs are `institution` ---
 
 def _make_manager(user):
@@ -500,3 +473,10 @@ def _is_pm(user):
     from matazim.access import is_program_manager
 
     return is_program_manager(user)
+
+
+def test_the_front_door_is_one_button_that_begins_with_the_test(client, db):
+    """REQ-M.191: a visitor's home is one button, and it leads to the test."""
+    html = client.get(reverse("matazim:home")).content.decode()
+    assert "mz-door-locked" not in html
+    assert reverse("matazim:entrance_test") in html

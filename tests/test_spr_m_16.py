@@ -260,9 +260,9 @@ def test_a_member_who_is_ready_is_told_so(client, db):
     assert "מוכנים" in html or "המוביל" in html
 
     # The badge, not the phrase. A bare substring catches the section heading
-    # "כדי להיות מט״צ מוסמך", which is the page correctly describing the goal,
+    # "כדי להיות מטצ מוסמך", which is the page correctly describing the goal,
     # and asserting against it would be the test misreading its own screen.
-    assert 'mz-tag-done">מט״צ מוסמך' not in html, "ready must not wear the certified badge"
+    assert 'mz-tag-done">מטצ מוסמך' not in html, "ready must not wear the certified badge"
 
 
 def test_a_certified_member_sees_it_plainly(client, db):
@@ -281,7 +281,7 @@ def test_a_certified_member_sees_it_plainly(client, db):
 
     client.force_login(user)
     html = client.get(reverse("matazim:my_path")).content.decode()
-    assert "מט״צ מוסמך" in html
+    assert "מטצ מוסמך" in html
 
 
 # ------------------------------------------------- F-M.16.5: their leader

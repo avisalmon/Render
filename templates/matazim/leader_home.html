@@ -20,7 +20,7 @@
   first thing, which SPR-M.44 settled and this keeps.
 {% endcomment %}
 
-{% block title %}האזור שלי · מט״צים{% endblock %}
+{% block title %}האזור שלי · מטצים{% endblock %}
 
 {% block content %}
 <div class="mz-container mz-page">
@@ -36,17 +36,17 @@
         <p>מה מחכה לכם עכשיו.</p>
       {% elif mine %}
         <p>
-          המט״צים שלכם, ואיפה הם בתוכנית.
-          {{ dashboard.students }} מט״צים, {{ dashboard.certified }} מוסמכים{% if dashboard.ready %},
+          המטצים שלכם, ואיפה הם בתוכנית.
+          {{ dashboard.students }} מטצים, {{ dashboard.certified }} מוסמכים{% if dashboard.ready %},
           <strong>{{ dashboard.ready }} מוכנים להסמכה</strong>{% endif %}.
         </p>
       {% else %}
-        <p>הקישור שלכם, כדי שהמט״צים הראשונים יצטרפו.</p>
+        <p>הקישור שלכם, כדי שהמטצים הראשונים יצטרפו.</p>
       {% endif %}
     </div>
     <div class="mz-hello-actions">
       {% if mine %}
-        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:roster' %}">המט״צים שלי</a>
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:roster' %}">המטצים שלי</a>
       {% endif %}
       <a class="mz-linkbtn" href="{% url 'matazim:leader_guide' %}">מדריך למוביל/ה</a>
     </div>
@@ -161,7 +161,7 @@
 
   {% if mine %}
     <section class="mz-panel">
-      <h2>המט״צים שלי <span class="mz-count">{{ dashboard.students }}</span></h2>
+      <h2>המטצים שלי <span class="mz-count">{{ dashboard.students }}</span></h2>
       <ul class="mz-roster">
         {% for row in dashboard.rows %}
           <li class="mz-roster-row">
@@ -185,7 +185,7 @@
 
   <div class="mz-two-up">
     <section class="mz-panel">
-      <h2>{% if mine %}להזמין עוד מט״צים{% else %}הקישור שלכם{% endif %}</h2>
+      <h2>{% if mine %}להזמין עוד מטצים{% else %}הקישור שלכם{% endif %}</h2>
       <p class="mz-muted">
         שלחו אותו לתלמידים בוואטסאפ, או תלו את הקוד בכיתה. מי שמגיע דרכו מצטרף
         אליכם ישירות, בלי שתצטרכו לאשר.
@@ -194,9 +194,9 @@
              aria-label="קישור ההצטרפות שלכם">
       <img class="mz-qr" src="{% url 'matazim:leader_qr' leader.pk %}" alt="קוד QR להצטרפות">
       {% if not mine %}
-        <p class="mz-muted">עוד אין מט״צים משויכים אליכם. שלחו את הקישור ונתחיל.</p>
+        <p class="mz-muted">עוד אין מטצים משויכים אליכם. שלחו את הקישור ונתחיל.</p>
         <p class="mz-page-actions">
-          <a class="mz-linkbtn" href="{% url 'matazim:roster' %}">רשימת המט״צים</a>
+          <a class="mz-linkbtn" href="{% url 'matazim:roster' %}">רשימת המטצים</a>
         </p>
       {% endif %}
     </section>
@@ -205,9 +205,9 @@
       <h2>עוד כלים</h2>
       <ul class="mz-toolrow">
         <li><a class="mz-linkbtn" href="{% url 'matazim:classes' %}">הכיתות שלי</a></li>
-        <li><a class="mz-linkbtn" href="{% url 'matazim:leader_shelf' %}">הדרכות נוספות למט״צים שלי</a></li>
+        <li><a class="mz-linkbtn" href="{% url 'matazim:leader_shelf' %}">הדרכות נוספות למטצים שלי</a></li>
         <li><a class="mz-linkbtn" href="{% url 'matazim:events' %}">ימי שיא</a></li>
-        <li><a class="mz-linkbtn" href="{% url 'matazim:community' %}">קהילת מט״צים</a></li>
+        <li><a class="mz-linkbtn" href="{% url 'matazim:community' %}">קהילת מטצים</a></li>
       </ul>
       <p class="mz-muted mz-small">
         מנהל/ת התכנית רואה את המספרים של הקבוצה שלכם בדיוק כפי שהם כאן. אין מה לדווח בנפרד.
@@ -223,7 +223,7 @@
         <input type="hidden" name="required" value="{% if leader.requires_entrance_test %}0{% else %}1{% endif %}">
         <p>
           <strong>מבחן כניסה:</strong>
-          {% if leader.requires_entrance_test %}נדרש מהמט״צים שלכם להסמכה.{% else %}רשות. המט״צים שלכם לומדים ומוסמכים גם בלעדיו.{% endif %}
+          {% if leader.requires_entrance_test %}נדרש מהמטצים שלכם להסמכה.{% else %}רשות. המטצים שלכם לומדים ומוסמכים גם בלעדיו.{% endif %}
         </p>
         <button type="submit" class="mz-linkbtn">{% if leader.requires_entrance_test %}לא לדרוש{% else %}לדרוש מבחן כניסה{% endif %}</button>
         <p class="mz-muted mz-small">שינוי לא מוציא אף אחד ולא מבטל הסמכה קיימת.</p>

@@ -2,7 +2,7 @@
 
 REQ-M.5e, REQ-M.5f, REQ-M.30a. Everything on the public front that is derived
 from real rows rather than typed into a template lives here, in one file, for
-one reason: this is the only code in מט״צים whose output is readable by anybody
+one reason: this is the only code in מטצים whose output is readable by anybody
 on the internet, and it is about fourteen-year-olds.
 
 Three rules, and they are the whole module.
@@ -80,7 +80,7 @@ def counters():
         # 2026-09-14 caught it; the practicum screen had already been renamed
         # for the same collision and the band was missed.
         (round(minutes / 60), "שעת פרקטיקום", "שעות פרקטיקום", "hours"),
-        (certified, "מט״צ מוסמך/ת", "מט״צים מוסמכים", "cert"),
+        (certified, "מטצ מוסמך/ת", "מטצים מוסמכים", "cert"),
         (events, "יום שיא", "ימי שיא", "event"),
     ]
     return [

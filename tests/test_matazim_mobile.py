@@ -1,4 +1,4 @@
-"""Does מט״צים still work on a phone?
+"""Does מטצים still work on a phone?
 
 Avi, 2026-09-10: "make sure everything we develop is adaptive to phone." A
 one-off look does not make that true a week later, so this drives a real browser
@@ -352,7 +352,7 @@ def test_the_rights_screens_fit_a_phone(phone_page, live_server, db):
     broken = []
     for path in MEMBER_PAGES:
         # The status, not the title. The first attempt at this checked the title
-        # for "404" and passed even with the courses removed, because מט״צים's
+        # for "404" and passed even with the courses removed, because מטצים's
         # error page is branded and says nothing of the sort. Proving a guard
         # against the case it is for is the only way to find that out.
         response = phone_page.goto(live_server.url + path, wait_until="domcontentloaded")

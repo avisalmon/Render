@@ -23,7 +23,7 @@ from matazim.retention import FAILED_ATTEMPT_DAYS, purge_failed_attempts
 
 
 class Command(BaseCommand):
-    help = "Delete failed מט״צים entrance attempts past their retention period."
+    help = "Delete failed מטצים entrance attempts past their retention period."
 
     def add_arguments(self, parser):
         parser.add_argument(

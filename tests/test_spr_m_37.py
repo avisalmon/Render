@@ -187,8 +187,9 @@ def test_a_screen_about_you_needs_only_an_account(client, db):
 
     assert not Student.objects.filter(user=user).exists()
 
-    for page in ("matazim:my_path", "matazim:profile", "matazim:my_data",
-                 "matazim:my_work", "matazim:my_teaching", "matazim:courses"):
+    # REQ-M.191: what is about you alone is open from the first day; the
+    # programme's own screens open once there is a leader.
+    for page in ("matazim:my_path", "matazim:profile", "matazim:my_data"):
         assert client.get(reverse(page)).status_code == 200, page
 
 
@@ -247,7 +248,7 @@ def test_a_stage_that_has_not_opened_offers_no_door(client, db):
 def test_nothing_still_claims_a_section_is_unbuilt(client, db):
     """T-F-M.37.3-2: the placeholder copy outlived two of its three sections.
 
-    ימי שיא became real in SPR-M.31 and קהילת מט״צים in SPR-M.32, and the views
+    ימי שיא became real in SPR-M.31 and קהילת מטצים in SPR-M.32, and the views
     that said "no Event model yet" and "no Post model yet" sat unreachable in
     `views.py` afterwards, asserting two things that had stopped being true.
     """

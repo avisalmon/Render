@@ -17,7 +17,7 @@ path". That is not an outbound link: RULE-1 governs navigation, and a member
 never leaves `/matazim/`.
 
 **Deliberately narrow.** One line would let this render any course in the
-catalogue, which would quietly turn מט״צים into a second front end for all of
+catalogue, which would quietly turn מטצים into a second front end for all of
 babook, with no owner and no design. It renders the courses the programme
 requires and 404s the rest.
 
@@ -143,15 +143,15 @@ def learn_lesson(request, slug, order):
     lessons = list(Video.objects.filter(course=course).order_by("lesson_order"))
     orders = [row.lesson_order for row in lessons]
 
-    # REQ-M.126 — the trainings are babook's, the experience is מט״צים's.
+    # REQ-M.126 — the trainings are babook's, the experience is מטצים's.
     #
     # Until now this page rendered a video and nothing else, while 18 of the 19
-    # `scratch` lessons carry written notes and all 19 carry a summary. A מט״צ
+    # `scratch` lessons carry written notes and all 19 carry a summary. A מטצ
     # was getting materially less of the same lesson than a babook learner,
     # inside the product that is supposed to be the better experience.
     #
     # Everything below is read from babook's own rows and written back through
-    # babook's own endpoints (REQ-M.14, RULE-3). What belongs to מט״צים is the
+    # babook's own endpoints (REQ-M.14, RULE-3). What belongs to מטצים is the
     # page around it.
     from app.lesson_notes import render_lesson_notes
     from app.models import LessonQuiz, LessonReflection, UserVideoProgress
@@ -258,8 +258,8 @@ def submit_project(request, slug, order):
 
     REQ-M.76 requires a `CourseCertificate` for both Scratch courses, and both
     are `requires_project` with `project_min_count = 2`. So a member had to
-    submit two projects to be certified, and מט״צים rendered no way to submit
-    one: the review on 2026-09-17 found that nobody could become a מט״צ מוסמך
+    submit two projects to be certified, and מטצים rendered no way to submit
+    one: the review on 2026-09-17 found that nobody could become a מטצ מוסמך
     through this product at all.
 
     Avi, 2026-09-19: "whatever babook can do that is needed I want matazim to
@@ -326,7 +326,7 @@ def finish_course(request, slug):
 
 @login_required(login_url=LOGIN_URL)
 def staff_offered(request):
-    """SPR-M.52 — which of babook's catalogue מט״צים may offer at all.
+    """SPR-M.52 — which of babook's catalogue מטצים may offer at all.
 
     Root only: Avi asked on 2026-09-16 for an admin screen that sets the
     default pool leaders then choose from. (His wording is in the backlog under
@@ -390,7 +390,7 @@ def staff_offered(request):
 
 @login_required(login_url=LOGIN_URL)
 def leader_shelf(request):
-    """The הדרכות one leader puts in front of their own מט״צים.
+    """The הדרכות one leader puts in front of their own מטצים.
 
     Chosen out of what root allows, and checked at the moment of choosing: a
     course retired later stays on the shelves that already hold it, and the

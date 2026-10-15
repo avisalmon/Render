@@ -108,7 +108,7 @@ def test_root_still_crosses_every_world(client, db):
 def test_a_learner_is_not_called_a_mataz_until_certified(client, db):
     """T-F-M.21.1-3: §4.9.
 
-    The dashboard labelled every student "מט״צים". That is the word for someone
+    The dashboard labelled every student "מטצים". That is the word for someone
     who finished, and handing it to four people when one has earned it makes the
     programme's own headline number wrong.
     """
