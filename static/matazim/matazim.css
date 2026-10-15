@@ -166,6 +166,8 @@
   --mz-good-bg: #10312a;
   --mz-good-ink: #5ee3bd;
 
+  --mz-radius-pill: 999px;   /* a shape, the same at night */
+
   --mz-secondary: #6b2e48;
   --mz-secondary-deep: #55233a;
 

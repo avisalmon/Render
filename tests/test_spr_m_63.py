@@ -174,12 +174,15 @@ def test_a_bad_row_is_refused_whole(client, world):
 # ------------------------------------------------------------------ the API
 
 
-def test_the_api_is_public_to_read_and_the_managers_to_write(client, world):
+def test_the_api_is_for_signed_in_people_to_read_and_the_managers_to_write(client, world):
     from matazim.models import ProgramMilestone
 
     _seed()
-    assert len(client.get("/matazim/api/milestones/").json()) in (10, ) or \
-        len(client.get("/matazim/api/milestones/").json().get("results", [])) == 10
+    assert client.get("/matazim/api/milestones/").status_code in (401, 403)  # a stranger
+    client.force_login(world["leader"].user)
+    body = client.get("/matazim/api/milestones/").json()
+    assert len(body["results"] if isinstance(body, dict) else body) == 10
+    client.logout()
 
     payload = {"title": "חדש", "when_text": "מאי", "starts_on": "2027-05-01", "stage": "peak"}
     assert client.post("/matazim/api/milestones/", payload).status_code in (401, 403)

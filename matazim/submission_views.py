@@ -23,6 +23,7 @@ from django.views.decorators.http import require_POST
 
 from .access import is_program_manager, leader_of, visible_students
 from .history import set_status
+from .gate import entrance_gated
 from .models import Feedback, Notification, Student, Submission
 from .notify import notify
 from .views import shell
@@ -91,6 +92,7 @@ def _for_course(request):
 
 
 @login_required(login_url=LOGIN_URL)
+@entrance_gated
 def my_work(request, submission_id=None):
     """REQ-M.19 — hand work in, and read what came back.
 

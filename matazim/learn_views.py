@@ -38,6 +38,7 @@ from app.models import Course, Enrollment, Video
 
 from .content import REQUIRED_COURSE_SLUGS
 from .handin import needs_handin
+from .gate import entrance_gated
 from .models import Student
 from .progress import cohort_progress
 from .views import shell
@@ -89,6 +90,7 @@ def _progress_for(user, slug):
 
 
 @login_required(login_url=LOGIN_URL)
+@entrance_gated
 def learn_course(request, slug):
     """REQ-M.13 — one course, lesson by lesson, in our chrome.
 
@@ -125,6 +127,7 @@ def learn_course(request, slug):
 
 
 @login_required(login_url=LOGIN_URL)
+@entrance_gated
 def learn_lesson(request, slug, order):
     """REQ-M.13, REQ-M.14 — the lesson itself, and the heartbeat that counts it."""
     course = _track_course(slug, request.user)
@@ -248,6 +251,7 @@ def _certificate_panel(request, course):
 
 @require_POST
 @login_required(login_url=LOGIN_URL)
+@entrance_gated
 def submit_project(request, slug, order):
     """SPR-M.51 — the thing a member built, handed in without leaving our walls.
 
@@ -294,6 +298,7 @@ def submit_project(request, slug, order):
 
 @require_POST
 @login_required(login_url=LOGIN_URL)
+@entrance_gated
 def finish_course(request, slug):
     """Ask babook whether this member has earned the certificate, and issue it.
 

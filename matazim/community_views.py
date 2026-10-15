@@ -21,6 +21,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from .access import institution_of, is_program_manager, readable_posts, visible_posts
+from .gate import entrance_gated
 from .models import Post, Submission
 from .views import shell
 
@@ -95,6 +96,7 @@ def community(request):
 
 
 @login_required(login_url=LOGIN_URL)
+@entrance_gated
 def feed(request):
     """REQ-M.26 — the stream itself."""
     institution = institution_of(request.user)

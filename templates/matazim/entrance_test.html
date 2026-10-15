@@ -16,6 +16,14 @@
 {% block title %}מבחן הכניסה · מט״צים{% endblock %}
 
 {% block content %}
+{% if request.GET.gate %}
+<div class="mz-container">
+  <div class="mz-alert" role="status" id="mzGateWhy">
+    כדי להיכנס לאתר צריך לעבור את מבחן הכניסה, ואדם מצוות התוכנית מאשר אותו.
+    מכאן אפשר להתחיל.
+  </div>
+</div>
+{% endif %}
 <div class="mz-container mz-page">
   <div class="mz-page-head">
     <h1>מבחן הכניסה</h1>

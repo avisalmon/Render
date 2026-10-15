@@ -4774,7 +4774,7 @@ client's ten rows once per institution and never touches one that has rows),
 `access.visible_milestones`, `year.py` (`where_are_we`, `patrol_by_school`,
 `PATROL_TARGET`), the annual path with the schedule on it, the now/next banner,
 the program manager's schedule editor at `/matazim/staff/milestones/`, REST at
-`/matazim/api/milestones/` (public read, program-manager write, institution never
+`/matazim/api/milestones/` (signed-in read, program-manager write, institution never
 settable), and the patrol count on the leader's and the manager's homes. The
 count is a target and never a cap. `tests/test_spr_m_63.py`: 13 tests; the
 screen contract, mobile and SPR-M.41 suites pass. The nav is not reordered yet
@@ -4804,3 +4804,30 @@ the per-school, per-student overview Atid asked for is this screen.
 **Delivers.** REQ-M.184, REQ-M.185. `SiteUpdate`, the stage on the shelf.
 
 **Open with the client:** Q24 to Q27 in the spec. All have a built default.
+
+## SPR-M.66 — The main site waits for the test  `DONE 2026-10-15`
+
+**Goal.** Request #12 from the site, filed by ליטל and approved by Avi: only
+someone who passed the screening test enters the main site. **Delivers.**
+REQ-M.189.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.66.1 | `gate.applies` and `@entrance_gated` | REQ-M.189 | DONE |
+| F-M.66.2 | On learning, hand-ins, practicum and the community feed | REQ-M.189 | DONE |
+| F-M.66.3 | The test page says why they were sent | REQ-M.189 | DONE |
+
+**What the site's own assessment got wrong.** It said the gate already existed
+(REQ-M.36). REQ-M.177 had removed it four days earlier so a code attaches a
+person at once; the assessment read a requirement that had been amended. Avi
+approved the request over it. Worth knowing about the loop: the assessment is
+advice written from the spec as it stood, and an approval is the human reading
+the request.
+
+**Built.** `matazim/gate.py`. The gate applies to a participant: someone with a
+leader or a request out. It does not apply to a leader, a candidate, a program
+manager or root, nor to the open door (no leader, no request), which is Q28.
+`tests/test_spr_m_66.py`: 16 tests, including an end-to-end walk of turned back,
+measured (still turned back), approved, let in.
+
+**Needs Avi.** Q28, and whether she meant the open door too.

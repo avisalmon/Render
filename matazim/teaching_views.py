@@ -20,6 +20,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from .access import visible_sessions
+from .gate import entrance_gated
 from .models import Student, TeachingSession
 from .views import shell
 
@@ -51,6 +52,7 @@ def _mine(user):
 
 
 @login_required(login_url=LOGIN_URL)
+@entrance_gated
 def my_teaching(request):
     """REQ-M.32 — the מט״צ's own record."""
     student = _mine(request.user)
@@ -111,6 +113,7 @@ def _number(raw, fallback):
 
 @require_POST
 @login_required(login_url=LOGIN_URL)
+@entrance_gated
 def cancel_session(request, session_id):
     """Cancelled rather than deleted, and only by the person who wrote it.
 

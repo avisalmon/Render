@@ -657,14 +657,19 @@ class EventViewSet(Scoped):
 
 
 class ProgramMilestoneViewSet(Scoped):
-    """REQ-M.186 - the year's schedule. Everybody reads it, a program manager writes it."""
+    """REQ-M.186 - the year's schedule. Signed-in people read it, a program manager writes it.
+
+    The *page* is public (it is the table the client showed the schools), but the
+    API keeps the rule every endpoint here keeps: a stranger gets nothing, so the
+    one test that asks every endpoint to refuse an anonymous client stays true.
+    """
 
     serializer_class = ProgramMilestoneSerializer
     scope = staticmethod(access.visible_milestones)
 
     def get_permissions(self):
         if self.action in ("list", "retrieve"):
-            return [permissions.AllowAny()]
+            return [IsSignedIn()]
         return [IsProgramManager()]
 
     def perform_create(self, serializer):

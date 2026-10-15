@@ -33,6 +33,20 @@
 | C8 | **"מבחן דיגיטלי בטינקרקאד והצגת תוצר לצורך קבלה לתכנית"; the product goes to שקד and אבי "לאישור"** | The entrance test is a TinkerCAD product shown for acceptance, approved by the programme team and not by the measuring script alone. REQ-M.182. | SPR-M.64 |
 | C9 | **A new logo, and "the design styling and coloring follow atidedu.org.il"** | The look is Atid's, not the teal and purple of the prototype. REQ-M.188. | SPR-M.61 |
 
+**Requirements arrive any way they arrive** (Avi, 2026-10-15: "from the site,
+and also from mail, any way it arrives"). The programme's own request queue on
+the site (`/matazim/staff/requests/`, readable by the build through
+`/matazim/internal/requests/`) is as much a source as the mail above. Three
+requests were filed there by ליטל on 2026-10-15 and approved by Avi the same
+morning, over the site's own automatic assessments ("already exists", "not now"),
+which are advice only. They are C10 to C12:
+
+| # | Request (queue id, her words) | What it becomes | Built by |
+|---|---|---|---|
+| C10 | **#12: "הרשמה לתכנית: להכניס את מבחן המיון. רק מי שעבר מבחן מיון יכול להיכנס לאתר הראשי"** | The main site opens to a programme participant only after the entrance product is approved. REQ-M.189. | SPR-M.66 |
+| C11 | **#11: "צבעי אתר בצבעים של רשת החינוך עתיד"** (atidedu.org.il) | The same instruction as C9. REQ-M.188. | SPR-M.61 |
+| C12 | **#10: the home page has the הדרכות with all the topics, the community, and the annual plan "לפי חודשים, מה קורה בכל חודש"; a monthly mail from them; the community shares publications, knowledge, videos** | The annual plan reads month by month, the community page says what it is for in her words, and the programme team's monthly mail is theirs to send. REQ-M.190. | SPR-M.65 |
+
 **What this overrides, explicitly.**
 
 - **§3.2 "Teal is identity, purple is action"** is replaced by REQ-M.188. The
@@ -42,6 +56,11 @@
 - **REQ-M.76** gains a fourth thing without losing the other three: for a
   member who has a leader, each of the two Scratch certificates now needs a
   hand-in first (REQ-M.179).
+- **REQ-M.177 and REQ-M.178 (2026-10-12)**, in part: the joining door stays
+  open (a code attaches a person at once), but a participant who has not been
+  through the test no longer enters the main site (REQ-M.189), whatever their
+  leader's "test required" switch says. The switch stays on the leader's page
+  and is moot for anyone the gate covers.
 - **REQ-M.17 and the machine-checked entrance test**: the script's measurement
   stays, as advice, and a person decides (REQ-M.182). The earlier line "there is
   no machine rejection, only not yet" still holds; what is new is that there is
@@ -1184,6 +1203,8 @@ waits on an answer.
 | REQ-M.185 | Adding content | C5. The team can add a course to the programme track and say which stage it belongs to, from the shelf they already use (`OfferedCourse` gains `stage`). The track the client described is the default: two Scratch, two 3D, two electives in the first half and two in the practicum. | TODO |
 | REQ-M.186 | The year's schedule is data | C6. `ProgramMilestone` rows, one per row of the client's table: date as she wrote it, a sortable start date, an end date where there is one, the stage, the activities, a peak-day mark. Seeded once with the ten milestones of תשפ״ז; after that the database is the only source (Rule 1). Shown as המסלול השנתי to everyone, with "now" and "next" marked, and editable by the program manager with the REST API behind it. | DONE |
 | REQ-M.187 | A patrol of about ten | C7. Each school's confirmed students are counted against ten, and the recruitment deadline (15.11.2026, from the milestone table) is shown beside the count. The number is a target and never a cap: an eleventh is not refused. The leader sees their school's count; the program manager sees every school's. | DONE |
+| REQ-M.189 | The main site waits for the test | C10. A programme participant (someone with a leader, or who has asked for one) whose entrance product is not yet approved (REQ-M.182) is sent to the entrance test, with a sentence saying why, from the learning (`learn_*`), the hand-ins (`my_work`), the practicum (`my_teaching`) and the community feed. Not gated: leaders, candidates, program managers, root; the front pages, the test itself, the annual path, המסלול שלי, the bell, rights and data (they are how a person gets through). **The open door of SPR-M.59 and SPR-M.60 (no leader, no request out) is a separate promise and stays open** (Q28). `gate.applies` is the one function. | DONE |
+| REQ-M.190 | The year month by month, and the community in her words | C12. The annual path groups the schedule by month ("מה קורה בכל חודש"); the community page says it is where the team shares publications, knowledge and videos. The monthly mail is the team's, and this product does not send it. | TODO |
 | REQ-M.188 | Atid's look | C9. The palette, type scale, shape and header follow atidedu.org.il: burgundy `#870335` for action and links, orange-red `#FC5029` for accents and large display only, deep plum `#1E000C` for text, warm off-whites `#FBF6F5` and `#F9F1EF` for ground, peach `#F9DAB9` and lilac `#D5C2F9` as soft fills, pill-shaped buttons (their `border-radius: 50px`), and the new logo. Tokens in `matazim.css` only, so every screen follows at once and night mode is a palette swap. Every pairing is measured for contrast; orange never carries small text. The typeface is Rubik until Atid supplies its Polin (Q26). | TODO |
 
 ## 6. Open questions
@@ -1207,6 +1228,7 @@ waits on an answer.
 | Q24 | **15.11.2026 or 15.11.2027?** The kickoff mail writes the patrol deadline both ways. The milestone table, the year, and every other date say 2026. **Built as 2026.** | The deadline shown on every leader's screen. One field on one milestone row if she meant otherwise. |
 | Q25 | **Does the hand-in gate (REQ-M.179) reach people with no leader?** Her sentence says "to the leader". Someone who joined through the open door has none, so there is no one to hand it to. **Built so the gate applies to anyone who has a leader and not to anyone who does not.** | Whether an open-door learner can ever hold a certificate from this site. If she wants it closed for them too, the open class owner would have to become the person handed to. |
 | Q26 | **Atid's typeface.** atidedu.org.il sets its text in Polin, a font Atid owns. Copying its files from their server is not ours to do. **Built in Rubik**, which is rounded and Hebrew-complete, and the token `--mz-font` is the one line to change. | Whether Atid can supply Polin for this site. Nothing else changes when it arrives. |
+| Q28 | **Does request #12 reach the open door?** She filed it under "הרשמה לתכנית", the programme's registration, so it is built to gate programme participants and to leave SPR-M.59's open learning for someone with no leader. If she meant that nobody unscreened enters any part of the site, `gate.applies` widens by deleting its "no leader" exemption, and the open classes close with it. | Whether the open door Avi built on 2026-10-12 survives. The site's own assessment of her request (that it already existed under REQ-M.36) was out of date. |
 | Q27 | **Does "submitted to the leader" mean approved?** She writes הגשת התוצר, not אישור. **Built as handed in, any state**, with the leader's approval staying their own decision on top. | Whether the gate should wait for approval. One condition in one function. |
 
 **Closed:** Q1 start clean, new Django app (2026-09-09). Q2 מט״צים-branded auth
