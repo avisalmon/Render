@@ -15,7 +15,10 @@ obvious what it is and trivial to delete.
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from crashtech.models import ContentPage, Hackathon, KitItem, Milestone, ScheduleItem
+from crashtech.models import (
+    Challenge, ContentPage, Deliverable, Hackathon, KitItem, Milestone,
+    ScheduleItem,
+)
 
 SLUG = "demo-vlsi"
 
@@ -59,6 +62,75 @@ link. Nothing is uploaded here."""),
 ]
 
 
+# One of each kind, because the difference between them is the product and
+# an event with three completion challenges is the 2026 event the feedback
+# complained about. They are seeded invisible, like every challenge: the
+# demo event is at `kits`, and kickoff is what reveals them.
+#
+# Each carries its deliverables, so the demo shows a submit screen that
+# actually names what is missing rather than an empty form.
+CHALLENGES = [
+    {
+        "title": "Get the board talking",
+        "kind": "completion",
+        "points": 50,
+        "brief": (
+            "Bring the board up, read something real off it, and get a value "
+            "out over serial. Any language, any toolchain, any amount of help "
+            "from a model. It either works or it does not."
+        ),
+        "deliverables": [
+            ("Source files", "file", "artifact", True, "A zip is fine."),
+            ("Serial output, photographed", "image", "proof", True,
+             "A phone photo of the terminal is fine."),
+        ],
+    },
+    {
+        "title": "Fastest 8-bit multiplier",
+        "kind": "measured",
+        "points": 0,
+        "metric_name": "Fmax",
+        "metric_unit": "MHz",
+        "metric_direction": "higher_is_better",
+        "rank_points": [60, 40, 25, 15, 10],
+        "brief": (
+            "Synthesise an 8x8 multiplier and report the Fmax your timing "
+            "report gives you. Pipelining is allowed and so is everything "
+            "else. Report the real number: the top few get looked at."
+        ),
+        "deliverables": [
+            ("Timing report", "image", "proof", True,
+             "The screenshot showing the number you reported."),
+            ("HDL sources", "file", "artifact", True, ""),
+            ("Demo video", "video", "proof", False,
+             "Sixty seconds, pointed at the bench. A link, on any host."),
+        ],
+    },
+    {
+        "title": "Most elegant thing on the bench",
+        "kind": "creativity",
+        "points": 40,
+        "max_grade": 10,
+        "criteria": (
+            "Does it do something nobody asked for, and does it do it well? "
+            "We are looking for the thing you would show somebody, not the "
+            "thing that scored."
+        ),
+        "brief": (
+            "Anything you built that the other challenges do not cover. There "
+            "is no number to report on this one: judges look at it after the "
+            "event, so you will see no points until then."
+        ),
+        "deliverables": [
+            ("Demo video", "video", "proof", True,
+             "A link, on any host. Nothing is uploaded here."),
+            ("What it is", "text", "artifact", True,
+             "A paragraph. What it does and why you built it."),
+        ],
+    },
+]
+
+
 class Command(BaseCommand):
     help = "Create one clearly-labelled demo CrashTech event, if it is not already there."
 
@@ -99,6 +171,20 @@ class Command(BaseCommand):
                 published=True, order=order,
             )
 
+        for order, spec in enumerate(CHALLENGES):
+            deliverables = spec.pop("deliverables")
+            challenge = Challenge.objects.create(
+                hackathon=event, order=order, visible=False, **spec,
+            )
+            for position, (label, kind, purpose, required, help_text) in enumerate(deliverables):
+                Deliverable.objects.create(
+                    challenge=challenge, label=label, kind=kind, purpose=purpose,
+                    required=required, help_text=help_text, order=position,
+                )
+            # Put it back, so running this twice in one process is the same
+            # as running it once.
+            spec["deliverables"] = deliverables
+
         ScheduleItem.objects.create(
             hackathon=event, title="Kickoff briefing", order=0,
             starts_at=event.starts_at,
@@ -109,5 +195,6 @@ class Command(BaseCommand):
 
         self.stdout.write(
             f"seed_crashtech: created the demo event at /crashtech/e/{SLUG}/ "
-            f"({event.milestones.count()} milestones, {event.kit_items.count()} kit items)"
+            f"({event.milestones.count()} milestones, {event.kit_items.count()} kit items, "
+            f"{event.challenges.count()} challenges, all still sealed)"
         )
