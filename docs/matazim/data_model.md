@@ -706,3 +706,43 @@ Defaults chosen so nothing waits; each is a one-line change.
 4. 10 live classes per owner, 100 members per class (Q20).
 5. The entrance test is a leader's optional choice and runs beside the road, not before joining (Q16 answered; defaults in Q23).
 6. The list of leaders to apply to is retired for new people (Q22).
+
+
+## 9. The client's requirements of 2026-10-15 (spec chapter 0)
+
+Hard requirements from Atid, so built on the shape below without waiting on the
+usual approval gate; Avi's instruction on 2026-10-15 was to realign and build.
+Shout if any of it is wrong and it is one migration to change. Everything is
+inside `matazim`, owned by an `Institution` where it is institutional data, and
+reachable only through the scope functions in `access.py` (RULE-2, §4.4).
+
+### 9.1 New models
+
+| Model | Fields | Why it exists |
+|---|---|---|
+| `ProgramMilestone` | `institution` FK, `order` int, `when_text` (the date as the client wrote it), `starts_on` date, `ends_on` date null, `stage` (choices: screening, training, recruiting, learning, peak, practicum), `title`, `activities` text, `is_peak_day` bool | The ten rows of her milestones table (REQ-M.186). Seeded once; the database is the only source afterwards. Ordering is `starts_on`, then `order`. |
+| `SiteUpdate` | `institution` FK, `title`, `body`, `posted_by` FK User null, `posted_at`, `pinned` bool | "What changed on the site" (REQ-M.184). A change note is a row, not a deploy log. |
+
+### 9.2 Changes to existing models
+
+| Model | Change | Why |
+|---|---|---|
+| `EntranceAttempt` | `decision` (waiting, approved, returned; default waiting), `decided_by` FK User null, `decided_at`, `decision_note` text | A person approves the entrance product (REQ-M.182). The measurement fields (`passed`, `issues`, `measured`) stay as advice. |
+| `Submission` | `course_slug` char(80), blank | Which course's product this is, a slug and not a foreign key into babook (REQ-M.179, RULE-4). Blank means a free-standing hand-in, as today. |
+| `OfferedCourse` | `stage` (blank, scratch, 3d, elective), `stage_order` int | The programme track by stage (REQ-M.181, REQ-M.185). |
+
+### 9.3 Derived, never stored
+
+- *Entrance state* of a member: no attempt, measuring failed, waiting for the
+  team, returned, approved. Computed from the latest submitted attempt.
+- *Patrol count* of a school: confirmed students on that school's leaders'
+  rosters, against `PATROL_TARGET = 10` (a constant in one module, because it
+  is a target and not a rule the database enforces).
+- *Course hand-in state*: whether a `Submission` exists for
+  (student, `course_slug`).
+
+### 9.4 The rule that carries over
+
+`MemberProfile.entrance_test_passed_at` stays the one flag every downstream
+reader asks. What changes is who sets it: approval by a program manager, not
+the measuring script. No reader changes.

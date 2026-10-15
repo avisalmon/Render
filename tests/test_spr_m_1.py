@@ -95,12 +95,12 @@ def test_home_reverses_under_its_own_namespace():
 
 
 def test_stylesheet_defines_the_design_tokens():
-    """T-F-M.1.3-1: teal is identity, purple is action, per spec 3.2."""
+    """T-F-M.1.3-1: orange is identity, burgundy is action, per REQ-M.188."""
     css = (ROOT / "static" / "matazim" / "matazim.css").read_text(encoding="utf-8")
     for token in (
-        "--mz-teal",
-        "--mz-purple",
-        "--mz-blue",
+        "--mz-accent",
+        "--mz-action",
+        "--mz-secondary",
         "--mz-ink",
         "--mz-page",
         "--mz-card",

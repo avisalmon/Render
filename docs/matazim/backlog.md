@@ -4714,3 +4714,59 @@ Depends on SPR-M.59 for the open set and for the code box.
   `OpenClassMember`; a test scans the source for any other.
 - Tests: 70 in `tests/test_spr_m_60.py`, and nine `open/` entries in
   `tests/test_screen_contract.py`.
+
+
+---
+
+# EPIC-M-ATID — the client's requirements of 2026-10-15
+
+**Authority.** `spec.md` chapter 0: hard requirements from Atid, above Avi's own
+definitions. Order is the order the client's mail gives them weight: the look and
+the schedule everyone sees first, then the two gates, then the extras. Dev first;
+nothing goes to production without Avi's word.
+
+## SPR-M.61 — Atid's look  `IN PROGRESS: look done, logo waiting on the file`
+
+**Goal.** The whole product looks like atidedu.org.il. Tokens only.
+**Delivers.** REQ-M.188.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.61.1 | Palette tokens: burgundy action, orange accent, plum text, cream grounds; every pairing measured | REQ-M.188 | DONE |
+| F-M.61.2 | Night palette in the same hues | REQ-M.188 | DONE |
+| F-M.61.3 | Pill buttons and Atid-style header and footer | REQ-M.188 | DONE |
+| F-M.61.4 | The new logo in the header, favicon and certificate | REQ-M.188 | TODO |
+| F-M.61.5 | Screen contract and mobile tests green on the new palette | REQ-M.188 | DONE |
+
+
+**Built 2026-10-15.** Tokens renamed to say what they are (`--mz-teal` is now
+`--mz-accent`, `--mz-purple` is `--mz-action`, `--mz-blue` is `--mz-secondary`).
+Orange `#FC5029` is identity and never carries a label (white on it is 3.32:1);
+burgundy `#870335` is action (10.03:1). Night mode uses Atid's lilac for links
+(11.18:1). `test_spr_m_1`, `test_screen_contract` and `test_matazim_mobile`: 131
+passed. **F-M.61.4 waits on the logo file:** the mail's attachments are not
+readable from the mail connector, so the old logo is still in
+`static/matazim/logo.png`, and replacing that one file (and the favicon) is the
+whole change.
+
+## SPR-M.62 — The certificate follows the hand-in  `TODO`
+
+**Delivers.** REQ-M.179. `Submission.course_slug`; the gate in `finish_course`;
+the course page shows the hand-in as the step before the certificate.
+
+## SPR-M.63 — The year  `TODO`
+
+**Delivers.** REQ-M.180, REQ-M.181, REQ-M.186, REQ-M.187. `ProgramMilestone`,
+seed, המסלול השנתי page, now/next, patrol count against ten, nav in the order
+of the year.
+
+## SPR-M.64 — The entrance product is approved by a person  `TODO`
+
+**Delivers.** REQ-M.182, REQ-M.183. Attempt decision fields, the staff review
+screen, the per-school per-student overview.
+
+## SPR-M.65 — What changed, and more content  `TODO`
+
+**Delivers.** REQ-M.184, REQ-M.185. `SiteUpdate`, the stage on the shelf.
+
+**Open with the client:** Q24 to Q27 in the spec. All have a built default.

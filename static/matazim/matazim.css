@@ -54,30 +54,38 @@
 
 /* ---------------------------------------------------------------- tokens */
 
+/* SPR-M.61, REQ-M.188 — Atid's look. Avi, 2026-10-15: the client's design
+ * follows https://atidedu.org.il, so the palette below is theirs, read from
+ * their stylesheet: #FC5029 orange-red, #870335 burgundy, #1E000C deep plum,
+ * #FBF6F5 and #F9F1EF warm off-whites, #F9DAB9 peach, #D5C2F9 lilac.
+ *
+ * The one rule that shapes it, which replaces "teal is identity, purple is
+ * action": ORANGE IS IDENTITY, BURGUNDY IS ACTION. White on #FC5029 is 3.32:1,
+ * under the line for any label, so orange never carries a button or small
+ * text. It paints the wordmark's accents, rings, markers and large display;
+ * every button and link is burgundy (white on it is 10.03:1). Where orange has
+ * to be read as text it uses --mz-accent-text, 6.06:1 on white.
+ */
 :root {
   /* identity */
-  --mz-teal: #0fc49b;
-  --mz-teal-deep: #0aa082;
-  /* Teal that carries meaning as text rather than as identity. The brand teal
-     is 2.24:1 on white, so every ✓, every lesson number and every step marker
-     painted with it was under the line. Identity keeps --mz-teal; anything a
-     person has to read uses this. */
-  --mz-teal-text: #077460;
-  /* A teal *surface* carrying white text, as opposed to teal you read.
-     White on it is 5.71:1, and it stays this value at night: lightening
-     it for the dark page took the white label to 1.79:1 on the מסלול
-     markers, which the night contract caught. */
-  --mz-teal-solid: #077460;
-  --mz-teal-soft: #e3f8f2;
+  --mz-accent: #fc5029;
+  --mz-accent-deep: #d93a14;
+  /* Accent that carries meaning as text. Every ✓, lesson number and step
+     marker that a person has to read uses this: 6.06:1 on white, 5.65:1 on
+     the page ground. */
+  --mz-accent-text: #b8300f;
+  /* An accent *surface* carrying white text. Burgundy, not orange: white on it
+     is 10.03:1 and it stays this value at night. */
+  --mz-accent-solid: #870335;
+  --mz-accent-soft: #ffe9e2;
 
   /* action */
-  --mz-purple: #6b4cd6;
-  --mz-purple-deep: #5739bd;
-  --mz-purple-soft: #eeeafc;
-  /* Purple as *text*. Identical to --mz-purple in daylight; night mode
-     lightens it, because the button colour measured 2.65:1 as a link on
-     the dark page and every link in the product used it. */
-  --mz-link: #6b4cd6;
+  --mz-action: #870335;
+  --mz-action-deep: #6b022a;
+  --mz-action-soft: #f7e6ec;
+  /* Action as *text*: the same burgundy, 9.36:1 on the page. Night mode swaps
+     it for Atid's lilac. */
+  --mz-link: #870335;
   --mz-tag-done-ink: #0a6b58;
   --mz-tag-doing-bg: #e6efff;
   --mz-tag-doing-ink: #1d4ed8;
@@ -86,22 +94,17 @@
   --mz-good-bg: #e6f7f1;
   --mz-good-ink: #0a6b58;   /* 5.9:1 */
 
-  /* secondary action */
-  --mz-blue: #1d6e96;
-  --mz-blue-deep: #175a7c;
+  /* secondary action: deep plum, from Atid's text colour */
+  --mz-secondary: #4a1a30;
+  --mz-secondary-deep: #1e000c;
 
   /* text and surfaces */
-  --mz-ink: #17223b;
-  --mz-body: #56607a;
-  /* Measured, not chosen: #8a93a8 was 3.08:1 on white and 2.88:1 on the page
-     ground, under the 4.5:1 AA asks for body text. Most of the explanatory copy
-     in this product is muted, including the account-deletion control the law
-     requires us to offer, so this was most of the writing on the site sitting
-     below the line. #667085 is 4.97:1 on white and 4.65:1 on the page. */
-  --mz-muted: #5f6878;
-  --mz-page: #f6f7fb;
+  --mz-ink: #1e000c;       /* 18.48:1 on the page */
+  --mz-body: #5b4650;      /* 8.62:1 on a card, 8.04 on the page */
+  --mz-muted: #6a5560;     /* 6.36:1 on the page ground */
+  --mz-page: #fbf6f5;
   --mz-card: #ffffff;
-  --mz-line: #e7eaf3;
+  --mz-line: #ecdfdb;
 
   /* status: always a word plus a colour, never a colour alone */
   --mz-done: #10b981;
@@ -112,11 +115,15 @@
   --mz-late: #ef4444;
   --mz-idle: #94a3b8;
 
-  --mz-radius: 16px;
-  --mz-radius-sm: 10px;
-  --mz-shadow: 0 2px 10px rgba(23, 34, 59, 0.06);
-  --mz-shadow-lift: 0 10px 28px rgba(23, 34, 59, 0.12);
+  --mz-radius: 20px;
+  --mz-radius-sm: 12px;
+  /* Atid's buttons are pills (border-radius: 50px on their site). */
+  --mz-radius-pill: 999px;
+  --mz-shadow: 0 2px 10px rgba(30, 0, 12, 0.07);
+  --mz-shadow-lift: 0 10px 28px rgba(30, 0, 12, 0.14);
   --mz-container: 1180px;
+  /* Atid sets its text in Polin, which Atid owns and has not licensed to us
+     (spec Q26). Rubik is the stand-in; this is the one line to change. */
   --mz-font: "Rubik", "Segoe UI", Arial, sans-serif;
 }
 
@@ -137,20 +144,21 @@
  * the people reading this are fourteen and often on a phone at night.
  */
 :root[data-theme="dark"] {
-  /* Identity keeps its brand teal; text uses the lighter one, 8.6:1 on a card. */
-  --mz-teal: #0fc49b;
-  --mz-teal-deep: #14d8ab;
-  --mz-teal-text: #3fd9b0;
-  --mz-teal-soft: #10312a;
-  --mz-teal-solid: #077460;   /* unchanged: see the light block */
+  /* Identity keeps its brand orange; text uses the lighter one, 7.88:1 on a card. */
+  --mz-accent: #fc5029;
+  --mz-accent-deep: #ff7a58;
+  --mz-accent-text: #ff8a6b;
+  --mz-accent-soft: #3a1410;
+  --mz-accent-solid: #870335;   /* unchanged: white on it is 10.03:1 */
 
-  /* White on this purple is 5.79:1, so the action colour survives the swap
-     unchanged, which keeps every primary button recognisably the same button. */
-  --mz-purple: #6b4cd6;
-  --mz-purple-deep: #7d5fe0;
-  --mz-purple-soft: #241f3d;
-  --mz-link: #a48cf5;   /* 5.59:1 on a card */
-  --mz-tag-done-ink: #5ee3bd;   /* on --mz-teal-soft #10312a */
+  /* The action surface stays Atid burgundy so every primary button is
+     recognisably the same button at night. As *text* it would be 1.81:1 on the
+     dark card, so links use Atid's own lilac, 11.18:1. */
+  --mz-action: #870335;
+  --mz-action-deep: #a3104a;
+  --mz-action-soft: #3a1226;
+  --mz-link: #d5c2f9;
+  --mz-tag-done-ink: #5ee3bd;
   --mz-tag-doing-bg: #17263f;
   --mz-tag-doing-ink: #8fbcff;
   --mz-alert-bg: #3a1d1d;
@@ -158,18 +166,15 @@
   --mz-good-bg: #10312a;
   --mz-good-ink: #5ee3bd;
 
-  /* Unchanged from daylight on purpose. This is a surface that carries
-     white text, so lightening it for a dark page lowers the label's
-     contrast rather than raising it: 5.64:1 became 4.05:1. */
-  --mz-blue: #1d6e96;
-  --mz-blue-deep: #175a7c;
+  --mz-secondary: #6b2e48;
+  --mz-secondary-deep: #55233a;
 
-  --mz-ink: #eef2f8;     /* 13.67:1 on a card */
-  --mz-body: #c6cedd;    /* 9.71 on a card, 11.01 on the page */
-  --mz-muted: #9aa5ba;   /* 6.19 on a card, 7.02 on the page */
-  --mz-page: #141a26;
-  --mz-card: #1e2533;
-  --mz-line: #2f394b;
+  --mz-ink: #fbf6f5;     /* 18.83:1 on the page */
+  --mz-body: #e3cfd6;    /* 12.26 on a card */
+  --mz-muted: #bfa3ae;   /* 7.85 on a card, 8.71 on the page */
+  --mz-page: #17000a;
+  --mz-card: #2a0a18;
+  --mz-line: #4a2434;
 
   /* doing and late are lightened: the light-mode blue measured 4.17:1 here and
      the red 4.08:1, both under the line for body text. */
@@ -190,7 +195,7 @@
 /* Two places draw on a fixed light ground rather than a token, and would glow
    white in the middle of a dark screen. */
 :root[data-theme="dark"] .mz-photo {
-  background-image: linear-gradient(135deg, #10312a, #241f3d);
+  background-image: linear-gradient(135deg, #3a1410, #3a1226);
 }
 :root[data-theme="dark"] .mz-welcome { background: rgba(0, 0, 0, .66); }
 
@@ -209,7 +214,7 @@
   padding: 0;
 }
 .mz-theme-btn:hover { color: var(--mz-ink); border-color: var(--mz-muted); }
-.mz-theme-btn:focus-visible { outline: 3px solid var(--mz-purple); outline-offset: 2px; }
+.mz-theme-btn:focus-visible { outline: 3px solid var(--mz-action); outline-offset: 2px; }
 .mz-theme-btn .mz-theme-moon { display: none; }
 :root[data-theme="dark"] .mz-theme-btn .mz-theme-moon { display: block; }
 :root[data-theme="dark"] .mz-theme-btn .mz-theme-sun { display: none; }
@@ -249,7 +254,7 @@ h1, h2, h3, h4 {
 }
 
 a { color: var(--mz-link); text-decoration: none; }
-a:hover { color: var(--mz-purple-deep); }
+a:hover { color: var(--mz-action-deep); }
 img { max-width: 100%; height: auto; display: block; }
 
 .mz-container {
@@ -263,8 +268,8 @@ img { max-width: 100%; height: auto; display: block; }
  * whenever the file has not been supplied yet, so a missing asset looks
  * deliberate instead of broken. */
 .mz-photo {
-  background-color: var(--mz-teal-soft);
-  background-image: linear-gradient(135deg, var(--mz-teal-soft), var(--mz-purple-soft));
+  background-color: var(--mz-accent-soft);
+  background-image: linear-gradient(135deg, var(--mz-accent-soft), var(--mz-action-soft));
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -278,20 +283,20 @@ img { max-width: 100%; height: auto; display: block; }
   gap: 8px;
   padding: 12px 22px;
   border: 2px solid transparent;
-  border-radius: var(--mz-radius-sm);
+  border-radius: var(--mz-radius-pill);
   font: inherit;
   font-weight: 500;
   cursor: pointer;
   transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease;
 }
 .mz-btn:hover { transform: translateY(-1px); box-shadow: var(--mz-shadow-lift); }
-.mz-btn:focus-visible { outline: 3px solid var(--mz-purple); outline-offset: 2px; }
+.mz-btn:focus-visible { outline: 3px solid var(--mz-action); outline-offset: 2px; }
 
-.mz-btn-primary { background: var(--mz-purple); color: #fff; }
-.mz-btn-primary:hover { background: var(--mz-purple-deep); color: #fff; }
+.mz-btn-primary { background: var(--mz-action); color: #fff; }
+.mz-btn-primary:hover { background: var(--mz-action-deep); color: #fff; }
 
-.mz-btn-secondary { background: var(--mz-blue); color: #fff; }
-.mz-btn-secondary:hover { background: var(--mz-blue-deep); color: #fff; }
+.mz-btn-secondary { background: var(--mz-secondary); color: #fff; }
+.mz-btn-secondary:hover { background: var(--mz-secondary-deep); color: #fff; }
 
 .mz-btn-ghost {
   background: var(--mz-card);
@@ -349,7 +354,7 @@ img { max-width: 100%; height: auto; display: block; }
   bottom: -2px;
   height: 3px;
   border-radius: 3px;
-  background: var(--mz-teal);
+  background: var(--mz-accent);
 }
 
 .mz-header-action { flex: none; margin-inline-start: 8px; }
@@ -370,7 +375,7 @@ img { max-width: 100%; height: auto; display: block; }
   font-weight: 600;
   cursor: pointer;
 }
-.mz-nav-toggle[aria-expanded="true"] { background: var(--mz-purple); border-color: var(--mz-purple); color: #fff; }
+.mz-nav-toggle[aria-expanded="true"] { background: var(--mz-action); border-color: var(--mz-action); color: #fff; }
 
 /* ---------------------------------------------------------------- hero */
 
@@ -388,7 +393,7 @@ img { max-width: 100%; height: auto; display: block; }
      3:1, and the brand teal was 2.09:1 even against that. This is the smallest
      step that meets the standard; a deeper teal would be safer still and is a
      call for Avi, not for this file. */
-  color: var(--mz-teal-deep);
+  color: var(--mz-accent-deep);
   font-size: clamp(2.6rem, 6vw, 4.2rem);
   font-weight: 700;
   letter-spacing: -.01em;
@@ -420,7 +425,7 @@ img { max-width: 100%; height: auto; display: block; }
   bottom: -40px;
   width: 240px;
   height: 240px;
-  background: var(--mz-purple);
+  background: var(--mz-action);
   opacity: .18;
 }
 .mz-blob-b {
@@ -428,7 +433,7 @@ img { max-width: 100%; height: auto; display: block; }
   top: 20px;
   width: 120px;
   height: 120px;
-  background: var(--mz-teal);
+  background: var(--mz-accent);
   opacity: .12;
 }
 .mz-arc { position: absolute; inset-inline-end: 18px; top: 110px; z-index: -1; opacity: .45; }
@@ -465,9 +470,9 @@ img { max-width: 100%; height: auto; display: block; }
   border-radius: 50%;
   color: #fff;
 }
-.mz-stage-icon[data-tone="teal"] { background: var(--mz-teal); }
-.mz-stage-icon[data-tone="purple"] { background: var(--mz-purple); }
-.mz-stage-icon[data-tone="blue"] { background: var(--mz-blue); }
+.mz-stage-icon[data-tone="teal"] { background: var(--mz-accent); }
+.mz-stage-icon[data-tone="purple"] { background: var(--mz-action); }
+.mz-stage-icon[data-tone="blue"] { background: var(--mz-secondary); }
 .mz-stage-title {
   display: block;
   color: var(--mz-ink);
@@ -490,7 +495,7 @@ img { max-width: 100%; height: auto; display: block; }
   gap: 12px;
   padding: 26px 30px;
   border-radius: var(--mz-radius);
-  background: linear-gradient(to left, var(--mz-teal), var(--mz-purple));
+  background: linear-gradient(to left, var(--mz-accent), var(--mz-action));
   color: #fff;
   box-shadow: var(--mz-shadow);
 }
@@ -626,7 +631,7 @@ img { max-width: 100%; height: auto; display: block; }
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: var(--mz-purple-soft);
+  background: var(--mz-action-soft);
   color: var(--mz-link);
 }
 .mz-welcome-card h2 { font-size: 1.35rem; }
@@ -634,7 +639,7 @@ img { max-width: 100%; height: auto; display: block; }
   margin: 20px 0 24px;
   padding: 16px 18px;
   border-radius: var(--mz-radius-sm);
-  background: var(--mz-teal-soft);
+  background: var(--mz-accent-soft);
   border: 1px solid rgba(15, 196, 155, .35);
   color: var(--mz-ink);
   font-size: .92rem;
@@ -684,7 +689,7 @@ img { max-width: 100%; height: auto; display: block; }
 .mz-field input:focus {
   outline: none;
   border-color: var(--mz-link);
-  box-shadow: 0 0 0 3px var(--mz-purple-soft);
+  box-shadow: 0 0 0 3px var(--mz-action-soft);
 }
 .mz-field input:disabled { background: var(--mz-page); color: var(--mz-muted); }
 .mz-field small { display: block; margin-top: 5px; color: var(--mz-muted); font-size: .78rem; }
@@ -738,7 +743,7 @@ img { max-width: 100%; height: auto; display: block; }
   color: var(--mz-good-ink);
 }
 
-.mz-alert-ok { background: var(--mz-teal-soft); border-color: rgba(15,196,155,.4); color: #0a6b58; }
+.mz-alert-ok { background: var(--mz-good-bg); border-color: rgba(16,185,129,.4); color: var(--mz-good-ink); }
 
 /* ---------------------------------------------------------------- pages */
 
@@ -762,7 +767,7 @@ img { max-width: 100%; height: auto; display: block; }
   font-weight: 500;
   color: var(--mz-muted);
 }
-.mz-panel-soft { background: var(--mz-purple-soft); box-shadow: none; }
+.mz-panel-soft { background: var(--mz-action-soft); box-shadow: none; }
 
 /* A reading measure for prose (SPR-M.41 F-M.41.3).
  *
@@ -838,7 +843,7 @@ img { max-width: 100%; height: auto; display: block; }
 }
 /* Tokenised in SPR-M.49. These were hardcoded, so a tag stayed dark-green
    on dark-green when the palette swapped: 2.18:1. */
-.mz-tag-done { background: var(--mz-teal-soft); color: var(--mz-tag-done-ink); }
+.mz-tag-done { background: var(--mz-accent-soft); color: var(--mz-tag-done-ink); }
 .mz-tag-doing { background: var(--mz-tag-doing-bg); color: var(--mz-tag-doing-ink); }
 .mz-tag-idle { background: var(--mz-page); color: var(--mz-muted); }
 
@@ -890,7 +895,7 @@ img { max-width: 100%; height: auto; display: block; }
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: var(--mz-purple-soft);
+  background: var(--mz-action-soft);
   color: var(--mz-link);
   font-size: .85rem;
   font-weight: 500;
@@ -898,7 +903,7 @@ img { max-width: 100%; height: auto; display: block; }
 .mz-lesson-title { font-weight: 500; }
 
 .mz-lesson-grid { display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start; }
-.mz-player { border-radius: var(--mz-radius-sm); overflow: hidden; background: #0f1524; }
+.mz-player { border-radius: var(--mz-radius-sm); overflow: hidden; background: #1e000c; }
 .mz-player iframe { width: 100%; aspect-ratio: 16 / 9; border: 0; display: block; }
 .mz-player-empty { aspect-ratio: 16 / 9; display: grid; place-items: center; background: var(--mz-page); }
 
@@ -918,10 +923,10 @@ img { max-width: 100%; height: auto; display: block; }
   font: inherit;
   color: #fff;
   text-align: center;
-  background: linear-gradient(135deg, #17223b, #0f1524);
+  background: linear-gradient(135deg, #3a0a22, #1e000c);
 }
 .mz-player-start:hover .mz-player-icon { transform: scale(1.08); }
-.mz-player-start:focus-visible { outline: 3px solid var(--mz-purple); outline-offset: -3px; }
+.mz-player-start:focus-visible { outline: 3px solid var(--mz-action); outline-offset: -3px; }
 
 .mz-player-icon {
   width: 62px;
@@ -929,7 +934,7 @@ img { max-width: 100%; height: auto; display: block; }
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: var(--mz-purple);
+  background: var(--mz-action);
   font-size: 1.4rem;
   /* The glyph is a right-pointing triangle, and this page is RTL, so without
      this it is mirrored into a rewind button. */
@@ -960,7 +965,7 @@ img { max-width: 100%; height: auto; display: block; }
   font-size: .9rem;
 }
 .mz-lesson-rail a:hover { background: var(--mz-page); }
-.mz-lesson-rail .is-current a { background: var(--mz-purple-soft); color: var(--mz-ink); font-weight: 500; }
+.mz-lesson-rail .is-current a { background: var(--mz-action-soft); color: var(--mz-ink); font-weight: 500; }
 .mz-rail-task a { color: var(--mz-link); font-weight: 500; }
 
 /* --- the task --- */
@@ -986,7 +991,7 @@ img { max-width: 100%; height: auto; display: block; }
 .mz-verdict h2 { margin-bottom: 8px; font-size: 1.15rem; }
 /* Status is a word plus a colour, never a colour alone (spec 3.2), and the word
  * is never "rejected": what a kid reads first decides whether they try again. */
-.mz-verdict.is-pass { background: var(--mz-teal-soft); border-color: var(--mz-teal); }
+.mz-verdict.is-pass { background: var(--mz-accent-soft); border-color: var(--mz-accent); }
 .mz-verdict.is-notyet { background: #fff8e8; border-color: var(--mz-fix); }
 .mz-issues { margin: 10px 0 14px; padding-inline-start: 20px; display: grid; gap: 6px; color: var(--mz-ink); }
 
@@ -1044,9 +1049,9 @@ img { max-width: 100%; height: auto; display: block; }
   font-weight: 700;
 }
 /* White sits on this one, so the background is what has to be dark enough. */
-.mz-path-mark[data-tone="teal"] { background: var(--mz-teal-solid); }
-.mz-path-mark[data-tone="purple"] { background: var(--mz-purple); }
-.mz-path-mark[data-tone="blue"] { background: var(--mz-blue); }
+.mz-path-mark[data-tone="teal"] { background: var(--mz-accent-solid); }
+.mz-path-mark[data-tone="purple"] { background: var(--mz-action); }
+.mz-path-mark[data-tone="blue"] { background: var(--mz-secondary); }
 .mz-path-body {
   flex: 1;
   background: var(--mz-card);
@@ -1064,7 +1069,7 @@ img { max-width: 100%; height: auto; display: block; }
   margin: 0 0 12px;
   padding: 3px 12px;
   border-radius: 20px;
-  background: var(--mz-purple-soft);
+  background: var(--mz-action-soft);
   color: var(--mz-link);
   font-size: .8rem;
   font-weight: 500;
@@ -1075,7 +1080,7 @@ img { max-width: 100%; height: auto; display: block; }
 /* A finished step is stated, not offered. Teal because that is the identity
    colour and the colour completion carries everywhere else in the system. */
 .mz-btn-done {
-  background: var(--mz-teal-soft);
+  background: var(--mz-accent-soft);
   color: var(--mz-tag-done-ink);
   border-color: rgba(15, 196, 155, .45);
   cursor: default;
@@ -1091,7 +1096,7 @@ img { max-width: 100%; height: auto; display: block; }
  * competing with the things they still have to do, and stays reachable,
  * because hiding it broke the test chain for exactly the people who passed. */
 .mz-nav-done { color: var(--mz-muted) !important; font-weight: 400 !important; }
-.mz-check { color: var(--mz-teal-text); font-weight: 700; }
+.mz-check { color: var(--mz-accent-text); font-weight: 700; }
 
 /* Text for assistive technology only. A ✓ and a ○ are read out as punctuation
    or skipped entirely, so the word rides along invisibly beside them. */
@@ -1128,7 +1133,7 @@ img { max-width: 100%; height: auto; display: block; }
   border: 1px dashed var(--mz-line);
   border-radius: var(--mz-radius-sm);
   /* Text, so it takes the link token. The !important is why the sweep
-     over `color: var(--mz-purple);` missed it. */
+     over `color: var(--mz-action);` missed it. */
   color: var(--mz-link) !important;
 }
 .mz-nav-staff:hover { border-color: var(--mz-link); }
@@ -1138,7 +1143,7 @@ img { max-width: 100%; height: auto; display: block; }
 /* The invite bar. Sits above everything because its whole job is to say "your
    invite is still here" to someone who is in the middle of something else. */
 .mz-invite-bar {
-  background: var(--mz-purple-soft);
+  background: var(--mz-action-soft);
   border-bottom: 1px solid rgba(107, 76, 214, .25);
   padding: 10px 0;
   font-size: .9rem;
@@ -1168,7 +1173,7 @@ img { max-width: 100%; height: auto; display: block; }
 .mz-choice:hover { border-color: var(--mz-link); }
 .mz-choice:has(input:checked) {
   border-color: var(--mz-link);
-  background: var(--mz-purple-soft);
+  background: var(--mz-action-soft);
 }
 .mz-choice input { width: 20px; height: 20px; accent-color: var(--mz-link); flex: none; }
 .mz-choice-name { display: block; color: var(--mz-ink); font-weight: 500; }
@@ -1187,7 +1192,7 @@ img { max-width: 100%; height: auto; display: block; }
 .mz-field textarea:focus {
   outline: none;
   border-color: var(--mz-link);
-  box-shadow: 0 0 0 3px var(--mz-purple-soft);
+  box-shadow: 0 0 0 3px var(--mz-action-soft);
 }
 
 /* The link a leader hands out. Wide, selectable, and obviously a thing to copy. */
@@ -1267,7 +1272,7 @@ img { max-width: 100%; height: auto; display: block; }
   cursor: pointer;
 }
 .mz-picker-results li:hover,
-.mz-picker-results li:focus { background: var(--mz-purple-soft); outline: none; }
+.mz-picker-results li:focus { background: var(--mz-action-soft); outline: none; }
 .mz-picker-name { color: var(--mz-ink); font-weight: 500; font-size: .92rem; }
 .mz-picker-email { color: var(--mz-muted); font-size: .8rem; }
 
@@ -1275,7 +1280,7 @@ img { max-width: 100%; height: auto; display: block; }
   margin: 0 0 14px;
   padding: 10px 14px;
   border-radius: var(--mz-radius-sm);
-  background: var(--mz-teal-soft);
+  background: var(--mz-accent-soft);
   color: var(--mz-tag-done-ink);
   font-size: .9rem;
 }
@@ -1300,7 +1305,7 @@ img { max-width: 100%; height: auto; display: block; }
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: var(--mz-purple);
+  background: var(--mz-action);
   color: #fff;
   font-size: .85rem;
   font-weight: 500;
@@ -1457,7 +1462,7 @@ img { max-width: 100%; height: auto; display: block; }
 .mz-bar-fill {
   display: block;
   height: 100%;
-  background: var(--mz-teal);
+  background: var(--mz-accent);
   border-radius: 999px;
 }
 /* SPR-M.53 — the same bar inside a roster row, where it is one fact among
@@ -1500,7 +1505,7 @@ img { max-width: 100%; height: auto; display: block; }
 }
 /* --mz-done is a background colour that happens to be green; as text on the
    page grey it measured 2.37:1, and this ✓ is the whole message. */
-.mz-needs li .mz-check:not(:empty) { color: var(--mz-teal-text); }
+.mz-needs li .mz-check:not(:empty) { color: var(--mz-accent-text); }
 
 @media (max-width: 640px) {
   .mz-roster-row { align-items: flex-start; }
@@ -1555,7 +1560,7 @@ a.mz-training-title:hover { color: var(--mz-link); }
   margin: 4px 0 16px;
   padding: 12px 14px;
   border: 1px solid var(--mz-line);
-  border-inline-start: 3px solid var(--mz-teal);
+  border-inline-start: 3px solid var(--mz-accent);
   border-radius: 10px;
   background: var(--mz-card);
   font-size: .92rem;
@@ -1620,7 +1625,7 @@ a.mz-training-title:hover { color: var(--mz-link); }
  * never asked for.
  */
 
-.mz-next { border-inline-start: 4px solid var(--mz-purple); }
+.mz-next { border-inline-start: 4px solid var(--mz-action); }
 .mz-next h2 { margin: 2px 0 6px; }
 
 .mz-journey { list-style: none; margin: 0; padding: 0; }
@@ -1659,8 +1664,8 @@ a.mz-training-title:hover { color: var(--mz-link); }
 
 /* The current stage is marked by weight and a ring, never by colour alone. */
 .mz-journey-step.is-current .mz-journey-dot {
-  background: var(--mz-purple);
-  box-shadow: 0 0 0 4px var(--mz-purple-soft);
+  background: var(--mz-action);
+  box-shadow: 0 0 0 4px var(--mz-action-soft);
 }
 .mz-journey-step.is-current .mz-journey-name { color: var(--mz-ink); }
 
@@ -1733,7 +1738,7 @@ a.mz-training-title:hover { color: var(--mz-link); }
   color: var(--mz-muted);
   font-size: .85rem;
 }
-.mz-track-row.is-done .mz-track-n { background: var(--mz-teal-soft); color: var(--mz-teal-text); }
+.mz-track-row.is-done .mz-track-n { background: var(--mz-accent-soft); color: var(--mz-accent-text); }
 .mz-track-row .mz-track-title { flex: 1; }
 
 /* ------------------------------------------------ the certificate (SPR-M.20)
@@ -1746,7 +1751,7 @@ a.mz-training-title:hover { color: var(--mz-link); }
 
 .mz-cert-sheet {
   background: var(--mz-card);
-  border: 2px solid var(--mz-teal);
+  border: 2px solid var(--mz-accent);
   border-radius: var(--mz-radius);
   padding: 48px 40px 36px;
   text-align: center;
@@ -1756,7 +1761,7 @@ a.mz-training-title:hover { color: var(--mz-link); }
 .mz-cert-mark {
   font-weight: 700;
   font-size: 1.4rem;
-  color: var(--mz-teal-deep);
+  color: var(--mz-accent-deep);
   letter-spacing: .02em;
 }
 .mz-cert-kicker { margin: 2px 0 28px; color: var(--mz-muted); font-size: .9rem; }
@@ -1965,13 +1970,13 @@ a.mz-training-title:hover { color: var(--mz-link); }
   min-height: 48px;
   padding: 0 18px 0 14px;
   border-radius: 999px;
-  background: var(--mz-purple);
+  background: var(--mz-action);
   color: #fff;
   font-weight: 500;
   box-shadow: var(--mz-shadow-lift);
   transition: transform .15s ease, background-color .15s ease;
 }
-.mz-lamp:hover { background: var(--mz-purple-deep); color: #fff; transform: translateY(-2px); }
+.mz-lamp:hover { background: var(--mz-action-deep); color: #fff; transform: translateY(-2px); }
 .mz-lamp:focus-visible { outline: 3px solid var(--mz-ink); outline-offset: 3px; }
 
 .mz-lamp-text { font-size: .92rem; }
@@ -1994,7 +1999,7 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
      purple lamp. The blanket move to --mz-link in SPR-M.49 lightened it to
      1.79:1 on its own white ground, which the night run of the screen
      contract caught on five screens. */
-  color: var(--mz-purple);
+  color: var(--mz-action);
   font-size: .78rem;
   font-weight: 700;
   display: inline-flex;
@@ -2100,7 +2105,7 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
 }
 /* Hers reads as the page's own voice; the assistant's is visibly a guest, so
    nobody reads a machine's sentence back as something she said. */
-.mz-turn.is-hers { background: var(--mz-purple-soft); }
+.mz-turn.is-hers { background: var(--mz-action-soft); }
 .mz-turn.is-assistant { background: var(--mz-page); border: 1px solid var(--mz-line); }
 
 .mz-turn-who {
@@ -2121,7 +2126,7 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
 /* Avi's recommendation, above the assessment because it is what he asked for
    and because a recommendation commits where a verdict only classifies. */
 .mz-req-rec {
-  border-inline-start: 3px solid var(--mz-purple);
+  border-inline-start: 3px solid var(--mz-action);
   padding: 4px 12px;
   margin: 0 0 12px;
 }
@@ -2157,7 +2162,7 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
 /* A suggested wording (REQ-M.119). Visibly an offer sitting beside the
    conversation, not a correction applied to what she wrote. */
 .mz-proposal {
-  border: 1px dashed var(--mz-purple);
+  border: 1px dashed var(--mz-action);
   border-radius: var(--mz-radius-sm);
   padding: 12px 14px;
   margin: 0 0 16px;
@@ -2204,7 +2209,7 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
    it is the thing the member came back to read (REQ-M.123) and the rest of the
    card is context for it. */
 .mz-feedback {
-  border-inline-start: 3px solid var(--mz-teal-text);
+  border-inline-start: 3px solid var(--mz-accent-text);
   padding: 4px 12px;
   margin: 0 0 12px;
 }
@@ -2281,7 +2286,7 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
 }
 .mz-quiz label:hover { border-color: var(--mz-link); }
 .mz-quiz-feedback { margin: 10px 0 0; color: var(--mz-body); }
-.mz-quiz-feedback.is-right { color: var(--mz-teal-text); font-weight: 500; }
+.mz-quiz-feedback.is-right { color: var(--mz-accent-text); font-weight: 500; }
 
 
 /* ------------------------------------------------------ the bell (REQ-M.33) */
@@ -2309,7 +2314,7 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
   height: 17px;
   padding: 0 4px;
   border-radius: 999px;
-  background: var(--mz-purple);
+  background: var(--mz-action);
   color: #fff;
   font-size: .68rem;
   font-weight: 700;
@@ -2330,7 +2335,7 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
 }
 /* What was new when the page opened. It is marked read on opening, so without
    this the list gives no sign of which ones the reader had not seen. */
-.mz-notice.is-new { border-inline-start: 3px solid var(--mz-purple); }
+.mz-notice.is-new { border-inline-start: 3px solid var(--mz-action); }
 .mz-notice-body { flex: 1 1 auto; min-width: 0; }
 .mz-notice-body p { margin: 0; color: var(--mz-ink); overflow-wrap: anywhere; }
 .mz-notice-when { font-size: .78rem; color: var(--mz-muted); }
@@ -2360,7 +2365,7 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
   text-align: center;
   padding: 6px 8px;
   border-radius: var(--mz-radius-sm);
-  background: var(--mz-purple-soft);
+  background: var(--mz-action-soft);
   color: var(--mz-ink);
 }
 .mz-event-day { display: block; font-size: 1.4rem; font-weight: 700; line-height: 1.1; }
@@ -2398,8 +2403,8 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
    rather than a colour fill, because the feed is mostly text and a filled card
    would win the page away from what people actually wrote. */
 .mz-post.is-announcement {
-  border-inline-start: 3px solid var(--mz-teal-text);
-  background: var(--mz-teal-soft);
+  border-inline-start: 3px solid var(--mz-accent-text);
+  background: var(--mz-accent-soft);
 }
 
 /* REQ-M.131 — a taken-down post keeps its row and says so. Faded, never gone:
@@ -2421,7 +2426,7 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
   margin-top: 10px;
   padding: 10px 12px;
   border-radius: var(--mz-radius-sm);
-  background: var(--mz-purple-soft);
+  background: var(--mz-action-soft);
 }
 .mz-post-work p { margin: 0; }
 
@@ -2488,14 +2493,14 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
   flex: 1 1 7rem;
   padding: 12px 14px;
   border-radius: var(--mz-radius-sm);
-  background: var(--mz-teal-soft);
+  background: var(--mz-accent-soft);
   text-align: center;
 }
 .mz-figures strong {
   display: block;
   font-size: 1.7rem;
   line-height: 1.1;
-  color: var(--mz-teal-text);
+  color: var(--mz-accent-text);
 }
 .mz-figures span { font-size: .82rem; color: var(--mz-body); }
 
@@ -2540,7 +2545,7 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
   border-radius: var(--mz-radius-sm);
   background: var(--mz-card);
 }
-.mz-card.is-done { border-color: var(--mz-teal-text); }
+.mz-card.is-done { border-color: var(--mz-accent-text); }
 
 .mz-card-head {
   display: flex;
@@ -2562,7 +2567,7 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
 .mz-progress > span {
   display: block;
   height: 100%;
-  background: var(--mz-teal-text);
+  background: var(--mz-accent-text);
 }
 .mz-card-pct { margin: 0; font-size: .82rem; color: var(--mz-muted); }
 
@@ -2666,9 +2671,9 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
   box-shadow: var(--mz-shadow);
   border-top: 4px solid var(--mz-line);
 }
-.mz-status-purple { border-top-color: var(--mz-purple); }
-.mz-status-blue   { border-top-color: var(--mz-blue); }
-.mz-status-teal   { border-top-color: var(--mz-teal); }
+.mz-status-purple { border-top-color: var(--mz-action); }
+.mz-status-blue   { border-top-color: var(--mz-secondary); }
+.mz-status-teal   { border-top-color: var(--mz-accent); }
 .mz-status-amber  { border-top-color: var(--mz-fix); }
 .mz-status-title { font-size: .82rem; font-weight: 600; color: var(--mz-muted); }
 .mz-status-figure { font-size: 2rem; line-height: 1; color: var(--mz-ink); }
@@ -2705,17 +2710,17 @@ body:has(.mz-lamp) .mz-footer { padding-block-end: 84px; }
   background: var(--mz-card); color: var(--mz-body);
   border: 3px solid var(--mz-idle);
 }
-.is-done  > .mz-path-dot { background: var(--mz-teal-solid); border-color: var(--mz-teal-solid); color: #fff; }
+.is-done  > .mz-path-dot { background: var(--mz-accent-solid); border-color: var(--mz-accent-solid); color: #fff; }
 .is-doing > .mz-path-dot { background: var(--mz-tag-doing-bg); border-color: var(--mz-doing); color: var(--mz-tag-doing-ink); }
 .is-fix   > .mz-path-dot { background: var(--mz-fix-bg); border-color: var(--mz-fix); color: var(--mz-fix-ink); }
 /* The current step is marked by weight and a ring, never by colour alone. */
 /* `--mz-link` rather than purple-deep: it is the purple the night palette
    lightens for reading, and this is text. */
-.mz-path-node.is-current > .mz-path-dot { box-shadow: 0 0 0 5px var(--mz-purple-soft); border-color: var(--mz-purple); color: var(--mz-link); }
+.mz-path-node.is-current > .mz-path-dot { box-shadow: 0 0 0 5px var(--mz-action-soft); border-color: var(--mz-action); color: var(--mz-link); }
 .mz-path-now {
   position: absolute; top: -4px; inset-inline: 0; margin: 0 auto; width: max-content; max-width: 100%;
   font-size: .7rem; font-weight: 700; padding: 3px 9px; border-radius: 999px;
-  background: var(--mz-purple); color: #fff;
+  background: var(--mz-action); color: #fff;
 }
 .mz-path-body { display: flex; flex-direction: column; gap: 2px; padding: 0 6px; }
 .mz-path-title { font-size: .86rem; font-weight: 600; color: var(--mz-ink); text-decoration: none; line-height: 1.25;
@@ -2769,11 +2774,11 @@ a.mz-path-title:hover { color: var(--mz-link); }
 .mz-ring {
   --pct: 0;
   position: relative; flex: none; width: 64px; height: 64px; border-radius: 50%;
-  background: conic-gradient(var(--mz-teal) calc(var(--pct) * 1%), var(--mz-line) 0);
+  background: conic-gradient(var(--mz-accent) calc(var(--pct) * 1%), var(--mz-line) 0);
   display: inline-flex; align-items: center; justify-content: center;
 }
 .mz-ring::before { content: ""; position: absolute; width: 50px; height: 50px; border-radius: 50%; background: var(--mz-card); }
-.mz-ring-label { position: relative; font-size: .82rem; font-weight: 700; color: var(--mz-teal-text); font-variant-numeric: tabular-nums; }
+.mz-ring-label { position: relative; font-size: .82rem; font-weight: 700; color: var(--mz-accent-text); font-variant-numeric: tabular-nums; }
 .mz-ring-sm { width: 48px; height: 48px; }
 .mz-ring-sm::before { width: 36px; height: 36px; }
 .mz-ring-sm .mz-ring-label { font-size: .72rem; }
@@ -2801,7 +2806,7 @@ a.mz-path-title:hover { color: var(--mz-link); }
   font-size: .8rem; font-weight: 700;
   background: var(--mz-page); color: var(--mz-body);
 }
-.mz-lesson.is-done .mz-lesson-mark { background: var(--mz-teal-soft); color: var(--mz-teal-text); }
+.mz-lesson.is-done .mz-lesson-mark { background: var(--mz-accent-soft); color: var(--mz-accent-text); }
 .mz-lesson.is-current .mz-lesson-mark { background: var(--mz-tag-doing-bg); color: var(--mz-tag-doing-ink); }
 .mz-lesson.is-current .mz-lesson-title { color: var(--mz-ink); font-weight: 600; }
 .mz-lesson-title { font-size: .92rem; }
@@ -2824,10 +2829,10 @@ a.mz-path-title:hover { color: var(--mz-link); }
   border: 1px solid var(--mz-line); box-shadow: var(--mz-shadow);
   font: inherit; font-size: .92rem; cursor: pointer;
 }
-.mz-chip[aria-pressed="true"] { background: var(--mz-purple); border-color: var(--mz-purple); color: #fff; }
+.mz-chip[aria-pressed="true"] { background: var(--mz-action); border-color: var(--mz-action); color: #fff; }
 /* The count keeps its own pill; on the pressed chip it inverts so the figure
    stays readable on purple. */
-.mz-chip[aria-pressed="true"] .mz-count { background: #fff; color: var(--mz-purple-deep); }
+.mz-chip[aria-pressed="true"] .mz-count { background: #fff; color: var(--mz-action-deep); }
 
 /* Her sidebar is on the start side, so in RTL it is the first column. */
 .mz-courses-layout { display: grid; grid-template-columns: 17rem 1fr; gap: 20px; align-items: start; }
@@ -2859,9 +2864,9 @@ a.mz-path-title:hover { color: var(--mz-link); }
 .mz-course[hidden] { display: none; }
 .mz-course-cover {
   display: block; aspect-ratio: 16 / 9; width: 100%; object-fit: cover;
-  background: linear-gradient(135deg, var(--mz-teal-soft), var(--mz-purple-soft));
+  background: linear-gradient(135deg, var(--mz-accent-soft), var(--mz-action-soft));
 }
-.mz-course-cover-art { display: flex; align-items: center; justify-content: center; color: var(--mz-purple); }
+.mz-course-cover-art { display: flex; align-items: center; justify-content: center; color: var(--mz-action); }
 .mz-course-body { display: flex; flex-direction: column; gap: 6px; padding: 0 16px; flex: 1; }
 .mz-course-body h3 { margin: 0; font-size: 1rem; }
 .mz-course-about { font-size: .86rem; color: var(--mz-muted); margin: 0;
@@ -2872,17 +2877,17 @@ a.mz-path-title:hover { color: var(--mz-link); }
 .mz-course-badge {
   position: absolute; inset-inline-end: 10px; top: 10px;
   width: 26px; height: 26px; border-radius: 50%;
-  background: var(--mz-teal-solid); color: #fff;
+  background: var(--mz-accent-solid); color: #fff;
   display: inline-flex; align-items: center; justify-content: center; font-size: .8rem; font-weight: 700;
 }
 .mz-course-head { position: relative; }
 /* The same pair the primary button wears, which passes the contract in both
    palettes; purple-deep on purple-soft measured 3.43:1 at night. */
-.mz-course-required { font-size: .74rem; font-weight: 600; color: #fff; background: var(--mz-purple); padding: 2px 8px; border-radius: 999px; align-self: flex-start; }
+.mz-course-required { font-size: .74rem; font-weight: 600; color: #fff; background: var(--mz-action); padding: 2px 8px; border-radius: 999px; align-self: flex-start; }
 
 /* ---- screen 1, the stats band as she drew it: one gradient, white figures - */
 .mz-band-gradient {
-  background: linear-gradient(90deg, var(--mz-teal) 0%, var(--mz-purple) 100%);
+  background: linear-gradient(90deg, var(--mz-accent) 0%, var(--mz-action) 100%);
   border-radius: var(--mz-radius); padding: 18px 22px;
 }
 .mz-band-gradient .mz-figures { gap: 10px; }
@@ -2912,7 +2917,7 @@ a.mz-path-title:hover { color: var(--mz-link); }
 
 /* A panel that needs a decision carries a stripe, so it is told apart from
    the panels that merely inform. Purple, because action is purple here. */
-.mz-attention { border-inline-start: 4px solid var(--mz-purple); }
+.mz-attention { border-inline-start: 4px solid var(--mz-action); }
 
 /* One number and its word, on a dashboard row. */
 .mz-stat { font-size: .88rem; color: var(--mz-body); white-space: nowrap; }
@@ -2940,14 +2945,14 @@ a.mz-path-title:hover { color: var(--mz-link); }
   font-weight: 700; font-size: .9rem;
   background: var(--mz-page); color: var(--mz-body); border: 2px solid var(--mz-line);
 }
-.mz-orient-step.is-now  .mz-orient-n { background: var(--mz-purple); border-color: var(--mz-purple); color: #fff; }
-.mz-orient-step.is-done .mz-orient-n { background: var(--mz-teal-solid); border-color: var(--mz-teal-solid); color: #fff; }
-.mz-orient-step.is-open .mz-orient-n { border-color: var(--mz-teal); color: var(--mz-teal-text); }
+.mz-orient-step.is-now  .mz-orient-n { background: var(--mz-action); border-color: var(--mz-action); color: #fff; }
+.mz-orient-step.is-done .mz-orient-n { background: var(--mz-accent-solid); border-color: var(--mz-accent-solid); color: #fff; }
+.mz-orient-step.is-open .mz-orient-n { border-color: var(--mz-accent); color: var(--mz-accent-text); }
 .mz-orient-body { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
 .mz-orient-title { font-weight: 700; color: var(--mz-ink); display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .mz-orient-text { font-size: .9rem; color: var(--mz-body); line-height: 1.45; }
 .mz-orient-step.is-later .mz-orient-title, .mz-orient-step.is-later .mz-orient-text { color: var(--mz-muted); }
-.mz-orient-step.is-now { background: var(--mz-purple-soft); border-radius: var(--mz-radius-sm); padding: 10px; margin: -10px; }
+.mz-orient-step.is-now { background: var(--mz-action-soft); border-radius: var(--mz-radius-sm); padding: 10px; margin: -10px; }
 @media (max-width: 640px) {
   .mz-orient { padding: 18px 16px 16px; }
   .mz-orient-step.is-now { margin: 0; }

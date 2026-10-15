@@ -92,3 +92,48 @@ a school. Our docs call the teenagers **מט״צים** and the adults **מובי
 ספר** or program staff. Same people, and worth settling on one set of words in
 the UI copy before SPR-M.2. Note also that her subject line writes מטצים without
 the gershayim; the brand form on the site stays **מט״צים**.
+
+---
+
+## Kickoff mail תשפ״ז (2026-06-25, reached Avi 2026-10-15)
+
+From ליטל אביב to the programme team (Intel's Tal Eshkol and Avi Salmon,
+Amir Cain, Atid's שקד פלדי), subject "שבילים משותפים | תכנית מטצים | התנעת
+תשפ״ז". Forwarded to Avi on 2026-10-15 by נעמי אושרי (רכזת השתלמויות רשתית,
+רשת החינוך עתיד), Litala in Cc, with "the logo and the schedule" attached and
+the line "בהמשך לבקשות שלנו באתר החדש של המטצים".
+
+**Avi, 2026-10-15: these are hard requirements from the client and outrank his
+own definitions.** They are `spec.md` chapter 0, with the requirement rows in
+§5.9. This file keeps her words; the spec keeps what we do about them.
+
+**The model.** לומדים, מתנסים, מובילים, משפיעים. A patrol (סיירת) of about ten
+ninth-graders per school; a structured year: screening and acceptance
+(Zoom 10.9.2026, a digital TinkerCAD test, a product shown for approval),
+leader training 26.10.2026, patrol chosen by mid-November, two Scratch courses
+by 2 December, peak day 1 on 17.12.2026 (Scratch products, Intel tour), two 3D
+courses December to February, a "good instruction" peak day in February 2027,
+the practicum February to May with two elective courses and two practicums
+teaching younger students, and a closing peak day on 24.05.2027. Products are
+"an inseparable part of the learning": each course ends with an applied product
+shown to the school's leaders.
+
+**What she asks of the site ("אתר - תוספות")**
+
+1. The certificate from the site only after the product is submitted to the
+   leader.
+2. The site more accessible in its order and its content.
+3. In the screening test, שקד can see who submitted the product, and there is
+   an overview over every school and every student.
+4. Updates about changes to the site.
+5. Added content.
+
+**Asked of Intel, not of the site.** A mentor per school; online inspiration
+sessions led by Intel people; another Zoom to align the stages. Recorded in
+`spec.md` chapter 0 so they are not mistaken for missed screens.
+
+**Design.** Naomi's mail brings a new logo, and Avi's instruction is that the
+design, styling and colour follow https://atidedu.org.il (REQ-M.188).
+
+**Her typo.** The patrol is chosen "עד 15.11.2027" in one paragraph; the
+table, and the rest of the mail, say 2026 (Q24).
