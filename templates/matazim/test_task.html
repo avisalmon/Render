@@ -32,7 +32,19 @@
 {% block content %}
 <div class="mz-container mz-page">
 
-  {% if no_targets %}
+  {% if review.state == "approved" %}
+    <div class="mz-page-head"><h1>מבחן הכניסה</h1></div>
+    <section class="mz-panel">
+      <p><span class="mz-tag mz-tag-done">אושר</span> צוות התוכנית אישר את המשימה שלכם.</p>
+      <a class="mz-btn mz-btn-primary" href="{% url 'matazim:home' %}">לדף הבית</a>
+    </section>
+  {% elif review.state == "waiting" %}
+    <div class="mz-page-head"><h1>מבחן הכניסה</h1></div>
+    <section class="mz-panel" id="mzWaitingTeam">
+      <p><span class="mz-tag mz-tag-doing">מחכה לצוות</span> הגשתם את המשימה{% if review.when %} ב-{{ review.when|date:"j.n" }}{% endif %}.</p>
+      <p class="mz-muted">אדם מצוות התוכנית רואה את המודל ומחליט. תקבלו התראה כשיש תשובה.</p>
+    </section>
+  {% elif no_targets %}
     <div class="mz-page-head"><h1>המשימה</h1></div>
     <section class="mz-panel">
       <p class="mz-muted">אין כרגע משימות זמינות. חזרו אלינו בקרוב.</p>
@@ -45,11 +57,22 @@
       <p>בנו אותו בטינקרקאד, ייצאו STL, והעלו לכאן. אין צורך בדיוק מושלם.</p>
     </div>
 
+    {% if review.state == "returned" %}
+      <section class="mz-verdict is-notyet" id="mzReturned">
+        <h2>הצוות מבקש לתקן</h2>
+        <p>{{ review.note }}</p>
+        <p class="mz-muted">תקנו והעלו שוב. ניסיון נוסף הוא סימן טוב.</p>
+      </section>
+    {% endif %}
+
     {% if result %}
       <section class="mz-verdict {% if result.passed %}is-pass{% else %}is-notyet{% endif %}">
         <h2>{{ result.headline }}</h2>
         {% if result.passed %}
-          <p>המשימה אושרה, וכניסת התלמידים נפתחה עבורכם.</p>
+          <p>
+            המדידה עברה, וההגשה נשלחה לצוות התוכנית. אדם מהצוות רואה את המודל ומחליט,
+            ותקבלו התראה כשיש תשובה. כניסת התלמידים נפתחת באישור.
+          </p>
           <div class="mz-page-actions">
             <a class="mz-btn mz-btn-primary" href="{% url 'matazim:home' %}">לדף הבית</a>
           </div>
@@ -133,7 +156,7 @@
 <script type="module">
   import { initStlViewer } from "{{ STATIC_URL|default:'/static/' }}js/stl-viewer.js";
   const box = document.getElementById("mzTargetModel");
-  if (box) { initStlViewer(box, box.dataset.stl, { color: 0x0fc49b }); }
+  if (box) { initStlViewer(box, box.dataset.stl, { color: 0xfc5029 }); }
 </script>
 {% endif %}
 {% endblock %}

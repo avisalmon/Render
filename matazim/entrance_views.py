@@ -16,6 +16,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -113,7 +114,31 @@ def _open_attempt(member):
 @login_required(login_url=LOGIN_URL)
 def test_task(request):
     """The final step. No video: a drawing, a 3D view of the same object, upload."""
+    from . import entrance_review
+
     member = member_profile(request.user)
+
+    # REQ-M.182 - where this person stands with the team, before any new task.
+    # Something already handed in and waiting is not answered by drawing a fresh
+    # object: it is answered by saying it is waiting.
+    last = entrance_review.latest_submitted(member)
+    review = None
+    if last is not None and request.method != "POST":
+        state = entrance_review.attempt_state(last)
+        if member.entrance_test_passed_at is not None or state == "approved":
+            return render(
+                request, "matazim/test_task.html",
+                shell(request, "test", review={"state": "approved"}, no_targets=True),
+            )
+        if state == "waiting":
+            return render(
+                request, "matazim/test_task.html",
+                shell(request, "test", review={"state": "waiting", "when": last.submitted_at},
+                      no_targets=True),
+            )
+        if state == "returned":
+            review = {"state": "returned", "note": last.decision_note}
+
     attempt = _open_attempt(member)
     if attempt is None:
         return render(request, "matazim/test_task.html", shell(request, "test", no_targets=True))
@@ -131,12 +156,9 @@ def test_task(request):
         attempt.submitted_at = timezone.now()
         attempt.save()
 
-        if passed and member.entrance_test_passed_at is None:
-            # REQ-M.54 — the flag SPR-M.2 shipped finally gets set, and
-            # כניסת תלמידים opens on the home page.
-            member.entrance_test_passed_at = timezone.now()
-            member.save(update_fields=["entrance_test_passed_at", "updated_at"])
-
+        # REQ-M.182 - the measurement is advice. The flag that opens
+        # כניסת תלמידים is set by a program manager's approval
+        # (entrance_review.approve) and by nothing here.
         result = {
             "passed": passed,
             "issues": issues,
@@ -152,6 +174,7 @@ def test_task(request):
             attempt=attempt,
             target=target_facts(attempt.target_id),
             result=result,
+            review=review,
         ),
     )
 
@@ -575,3 +598,112 @@ def staff_retention(request):
             notice=notice,
         ),
     )
+
+
+@login_required(login_url=LOGIN_URL)
+def staff_entrance(request):
+    """REQ-M.183 - who handed in the entrance product, by school, and the decision.
+
+    One screen for the question Atid asked: that שקד knows who submitted the
+    product, with a view over every school and every student. Each row is a
+    person's latest hand-in with the script's measurement beside it as advice,
+    their hand-ins to a leader so far, and the two buttons.
+    """
+    from . import entrance_review
+    from .access import visible_entrance_attempts
+    from .models import Student, Submission
+
+    if not _is_staff(request.user):
+        raise PermissionDenied
+
+    attempts = list(
+        visible_entrance_attempts(request.user)
+        .select_related("member__user", "member__user__profile")
+        .order_by("member_id", "-number")
+    )
+    latest = {}
+    for attempt in attempts:
+        latest.setdefault(attempt.member_id, attempt)
+
+    students = {
+        s.user_id: s
+        for s in Student.objects.filter(user_id__in=[a.member.user_id for a in latest.values()])
+        .select_related("leader__user", "leader__user__profile")
+        .prefetch_related("classes", "leader__classes")
+    }
+    handed = {}
+    for student_id, slug in Submission.objects.filter(
+        student__in=students.values()
+    ).values_list("student_id", "course_slug"):
+        handed.setdefault(student_id, []).append(slug)
+
+    want_state = request.GET.get("state", "")
+    want_school = request.GET.get("school", "")
+    rows = []
+    for attempt in latest.values():
+        student = students.get(attempt.member.user_id)
+        has_leader = bool(student and student.leader)
+        schools = (student.school_names or student.leader.school_names) if has_leader else []
+        rows.append({
+            "attempt": attempt,
+            "name": _display_name_of(attempt.member.user),
+            "school": schools[0] if schools else "",
+            "leader": _display_name_of(student.leader.user) if has_leader else "",
+            "state": entrance_review.attempt_state(attempt),
+            "advice": attempt.issues,
+            "handins": handed.get(student.pk, []) if student else [],
+        })
+
+    counts = {}
+    for row in rows:
+        counts[row["state"]] = counts.get(row["state"], 0) + 1
+    schools_present = sorted({r["school"] for r in rows})
+
+    if want_state:
+        rows = [r for r in rows if r["state"] == want_state]
+    if want_school:
+        rows = [r for r in rows if r["school"] == want_school]
+
+    grouped = {}
+    for row in sorted(rows, key=lambda r: (r["state"] != "waiting", r["name"])):
+        grouped.setdefault(row["school"], []).append(row)
+
+    return render(
+        request,
+        "matazim/staff_entrance.html",
+        shell(
+            request,
+            "staff",
+            groups=sorted(grouped.items(), key=lambda kv: kv[0]),
+            counts=counts,
+            total=sum(counts.values()),
+            schools=schools_present,
+            want_state=want_state,
+            want_school=want_school,
+            error=request.GET.get("error", ""),
+        ),
+    )
+
+
+@require_POST
+@login_required(login_url=LOGIN_URL)
+def decide_attempt(request, attempt_id):
+    """REQ-M.182 - approve or return one hand-in. Program managers only."""
+    from . import entrance_review
+    from .access import visible_entrance_attempts
+
+    if not _is_staff(request.user):
+        raise PermissionDenied
+
+    attempt = get_object_or_404(
+        visible_entrance_attempts(request.user).select_related("member__user"), pk=attempt_id
+    )
+    action = request.POST.get("action")
+    if action == "approve":
+        entrance_review.approve(attempt, request.user)
+    elif action == "return":
+        try:
+            entrance_review.return_attempt(attempt, request.user, request.POST.get("note"))
+        except ValueError:
+            return redirect(f"{reverse('matazim:staff_entrance')}?error=note")
+    return redirect("matazim:staff_entrance")

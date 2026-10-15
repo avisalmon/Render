@@ -3015,3 +3015,12 @@ a.mz-path-title:hover { color: var(--mz-link); }
   .mz-patrol-row { grid-template-columns: 1fr auto; }
   .mz-patrol-count { grid-column: 1; }
 }
+
+/* ------------------------------------------- entrance review (SPR-M.64) */
+.mz-filter { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-top: 12px; }
+.mz-entrance-school h2 { margin-top: 0; }
+.mz-entrance-row { border-top: 1px solid var(--mz-line); padding: 14px 0; }
+.mz-entrance-row header { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.mz-entrance-row[data-state="waiting"] { border-inline-start: 4px solid var(--mz-action); padding-inline-start: 12px; }
+.mz-entrance-decide { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-top: 10px; }
+.mz-entrance-decide .mz-field { flex: 1 1 260px; }

@@ -111,6 +111,7 @@
       <li><a class="mz-linkbtn" href="{% url 'matazim:cohort' %}">המחזור</a></li>
       <li><a class="mz-linkbtn" href="{% url 'matazim:staff_courses' %}">כל ההדרכות</a></li>
       <li><a class="mz-linkbtn" href="{% url 'matazim:staff_events' %}">ימי שיא</a></li>
+      <li><a class="mz-linkbtn" href="{% url 'matazim:staff_entrance' %}">מבחן הכניסה: מי הגיש</a></li>
       <li><a class="mz-linkbtn" href="{% url 'matazim:staff_milestones' %}">לוח השנה</a></li>
       <li><a class="mz-linkbtn" href="{% url 'matazim:new_request' %}?from={{ request.path|urlencode }}">בקשת שיפור</a></li>
       {% if user.is_superuser %}

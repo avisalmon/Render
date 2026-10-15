@@ -4780,10 +4780,24 @@ count is a target and never a cap. `tests/test_spr_m_63.py`: 13 tests; the
 screen contract, mobile and SPR-M.41 suites pass. The nav is not reordered yet
 (REQ-M.180 partly).
 
-## SPR-M.64 — The entrance product is approved by a person  `TODO`
+## SPR-M.64 — The entrance product is approved by a person  `DONE 2026-10-15`
 
 **Delivers.** REQ-M.182, REQ-M.183. Attempt decision fields, the staff review
 screen, the per-school per-student overview.
+
+**Built.** `EntranceAttempt.decision`, `decided_by`, `decided_at`,
+`decision_note` (migration 0041, whose data step records every attempt that
+already let someone in as approved, so nobody is un-passed). `entrance_review.py`
+(approve, return with words, state). `access.visible_entrance_attempts`: a
+program manager reads their own institution's members and the people with no
+leader yet; a leader reads their own students; root reads all. The upload no
+longer sets `entrance_test_passed_at`; only an approval does. Staff screen
+`/matazim/staff/entrance/` groups by school, filters by state and school, shows
+the script's measurement as advice and each person's hand-ins to a leader. The
+member sees waiting, returned (with the note) and approved, and is not dealt a
+fresh object while something is waiting. `tests/test_spr_m_64.py`: 11 tests;
+`test_spr_m_3` updated to the new rule. The cohort page (המחזור) is unchanged;
+the per-school, per-student overview Atid asked for is this screen.
 
 ## SPR-M.65 — What changed, and more content  `TODO`
 

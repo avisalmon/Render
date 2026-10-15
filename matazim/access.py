@@ -286,6 +286,38 @@ def institution_of(user):
     return None
 
 
+def visible_entrance_attempts(user):
+    """REQ-M.183, §4.4 - the entrance hand-ins this person may read.
+
+    A program manager reads their own institution's members *and* the members who
+    have taken the test and joined nobody yet. That second group is the seam
+    `visible_students` already documents (Q15): a teenager who passed the test and
+    is nobody's has no leader and so no world, and dropping them would make them
+    invisible to the only person who can approve them. A leader reads their own
+    students'. Root reads all. Writing is not decided here.
+    """
+    from django.db.models import Q
+
+    from .models import EntranceAttempt
+
+    base = EntranceAttempt.objects.filter(submitted_at__isnull=False)
+    if not getattr(user, "is_authenticated", False):
+        return base.none()
+    if user.is_superuser:
+        return base
+    if is_program_manager(user):
+        owned = Student.objects.filter(leader__institution__managers=user).values("user_id")
+        claimed = Student.objects.filter(leader__isnull=False).values("user_id")
+        return base.filter(
+            Q(member__user_id__in=owned) | ~Q(member__user_id__in=claimed)
+        )
+    if leader := leader_of(user):
+        return base.filter(
+            member__user_id__in=Student.objects.filter(leader=leader).values("user_id")
+        )
+    return base.none()
+
+
 def visible_milestones(user):
     """REQ-M.186, §4.4 - the year's schedule this person reads.
 

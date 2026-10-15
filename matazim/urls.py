@@ -73,6 +73,8 @@ urlpatterns = [
     path("test/retry/", entrance_views.test_retry, name="test_retry"),
     # Staff curate the bank (REQ-M.55).
     path("staff/", entrance_views.staff_home, name="staff_home"),
+    path("staff/entrance/", entrance_views.staff_entrance, name="staff_entrance"),
+    path("staff/entrance/<int:attempt_id>/decide/", entrance_views.decide_attempt, name="decide_attempt"),
     path("staff/admins/", entrance_views.staff_admins, name="staff_admins"),
     path("staff/users/search/", entrance_views.staff_user_search, name="staff_user_search"),
     # REQ-M.87 — what is due for deletion, and the person who approves it.

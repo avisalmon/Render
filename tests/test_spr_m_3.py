@@ -447,6 +447,17 @@ def test_passing_opens_the_student_door(client, db):
         {"model_file": SimpleUploadedFile("mine.stl", target_stl(attempt.target_id))},
     )
 
+    # REQ-M.182 (Atid, 2026-10-15): the script's pass is advice. The flag is set
+    # by a program manager's approval and by nothing the upload does.
+    assert MemberProfile.objects.get(user=user).entrance_test_passed_at is None
+    attempt.refresh_from_db()
+    assert attempt.passed and attempt.decision == EntranceAttempt.WAITING
+
+    from django.contrib.auth.models import User
+
+    from matazim import entrance_review
+
+    entrance_review.approve(attempt, User.objects.create_user("pm-3", "pm-3@x.com", "x"))
     assert MemberProfile.objects.get(user=user).entrance_test_passed_at is not None
     # After: the hero is unchanged and still does not invite anyone to the
     # test again (REQ-M.63); the pass is recorded on the profile.

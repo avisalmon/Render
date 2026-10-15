@@ -209,6 +209,31 @@ class EntranceAttempt(models.Model):
     submitted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # REQ-M.182 - a person decides. `passed` above is the script's measurement
+    # and stays what it always was, advice. Atid, 2026-06-25: the product goes
+    # to שקד and to Avi "לאישור". Only an approval sets
+    # `MemberProfile.entrance_test_passed_at`, which every downstream reader
+    # (the joining door, certification, the overview) already asks.
+    WAITING = "waiting"
+    APPROVED = "approved"
+    RETURNED = "returned"
+    DECISION_CHOICES = [
+        (WAITING, "מחכה לצוות"),
+        (APPROVED, "אושר"),
+        (RETURNED, "הוחזר לתיקון"),
+    ]
+    decision = models.CharField(
+        max_length=10, choices=DECISION_CHOICES, default=WAITING, db_index=True,
+        verbose_name="החלטת הצוות",
+    )
+    decided_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    decided_at = models.DateTimeField(null=True, blank=True)
+    # A return carries words (the same rule as REQ-M.123): "returned" alone tells
+    # a fourteen-year-old they failed and not what to change.
+    decision_note = models.TextField(blank=True, default="", verbose_name="מה לתקן")
+
     class Meta:
         ordering = ["number"]
         unique_together = [("member", "number")]
@@ -1118,6 +1143,8 @@ class Notification(models.Model):
     OPEN_JOINED = "open_joined"
     CERTIFIED = "certified"
     EVENT = "event"
+    ENTRANCE_APPROVED = "entrance_approved"
+    ENTRANCE_RETURNED = "entrance_returned"
     KIND_CHOICES = [
         (FEEDBACK, "משוב חדש"),
         (WORK_APPROVED, "עבודה אושרה"),
@@ -1127,6 +1154,8 @@ class Notification(models.Model):
         (OPEN_JOINED, "הצטרפות לכיתה פתוחה"),
         (CERTIFIED, "הסמכה"),
         (EVENT, "יום שיא"),
+        (ENTRANCE_APPROVED, "מבחן הכניסה אושר"),
+        (ENTRANCE_RETURNED, "מבחן הכניסה הוחזר"),
     ]
 
     user = models.ForeignKey(

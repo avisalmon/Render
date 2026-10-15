@@ -1,0 +1,93 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.182, REQ-M.183 - who handed in the entrance product, school by school.
+
+  Atid asked that שקד knows who submitted and has a view over every school and
+  every student. The script's measurement is shown as advice; a person decides.
+  A return needs words, the same rule as every other return here.
+{% endcomment %}
+
+{% block title %}מבחן הכניסה: מי הגיש · ניהול · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>מבחן הכניסה: מי הגיש</h1>
+    <p>המודל של כל אחד, מה הבדיקה האוטומטית מצאה (עצה בלבד), וההחלטה שלכם.</p>
+  </div>
+
+  {% if error == "note" %}
+    <div class="mz-alert" role="alert">החזרה צריכה הערה: מה לתקן. בלי מילים, התלמיד/ה לא יודעים מה לשנות.</div>
+  {% endif %}
+
+  <section class="mz-panel">
+    <p>
+      <strong>{{ total }}</strong> הגישו:
+      {{ counts.waiting|default:0 }} מחכים לכם,
+      {{ counts.approved|default:0 }} אושרו,
+      {{ counts.returned|default:0 }} הוחזרו,
+      {{ counts.retry|default:0 }} עוד מתקנים.
+    </p>
+    <form method="get" class="mz-filter">
+      <label class="mz-field"><span>מצב</span>
+        <select name="state">
+          <option value="">הכל</option>
+          <option value="waiting"{% if want_state == "waiting" %} selected{% endif %}>מחכים להחלטה</option>
+          <option value="approved"{% if want_state == "approved" %} selected{% endif %}>אושרו</option>
+          <option value="returned"{% if want_state == "returned" %} selected{% endif %}>הוחזרו</option>
+          <option value="retry"{% if want_state == "retry" %} selected{% endif %}>עוד מתקנים</option>
+        </select></label>
+      <label class="mz-field"><span>בית ספר</span>
+        <select name="school">
+          <option value="">כל בתי הספר</option>
+          {% for school in schools %}<option value="{{ school }}"{% if want_school == school %} selected{% endif %}>{{ school|default:"לא צוין בית ספר" }}</option>{% endfor %}
+        </select></label>
+      <button type="submit" class="mz-btn mz-btn-secondary">סינון</button>
+    </form>
+  </section>
+
+  {% for school, rows in groups %}
+    <section class="mz-panel mz-entrance-school">
+      <h2>{{ school|default:"לא צוין בית ספר" }} <span class="mz-muted">({{ rows|length }})</span></h2>
+      {% for row in rows %}
+        <article class="mz-entrance-row" data-state="{{ row.state }}">
+          <header>
+            <strong>{{ row.name }}</strong>
+            {% if row.leader %}<span class="mz-muted">מוביל/ה: {{ row.leader }}</span>{% endif %}
+            {% if row.state == "waiting" %}<span class="mz-tag mz-tag-doing">מחכה להחלטה</span>
+            {% elif row.state == "approved" %}<span class="mz-tag mz-tag-done">אושר</span>
+            {% elif row.state == "returned" %}<span class="mz-tag mz-tag-fix">הוחזר</span>
+            {% else %}<span class="mz-tag">הבדיקה מצאה מה לתקן</span>{% endif %}
+          </header>
+          <p class="mz-muted">
+            הוגש {{ row.attempt.submitted_at|date:"j.n.Y" }}, ניסיון {{ row.attempt.number }}.
+            {% if row.handins %}הגשות למוביל/ה: {{ row.handins|length }}.{% endif %}
+          </p>
+          {% if row.advice %}
+            <ul class="mz-issues">
+              {% for issue in row.advice %}<li>{{ issue.text }}</li>{% endfor %}
+            </ul>
+          {% else %}
+            <p class="mz-muted">הבדיקה האוטומטית לא מצאה מה לתקן.</p>
+          {% endif %}
+          {% if row.attempt.model_file %}
+            <a class="mz-linkbtn" href="{% url 'matazim:attempt_file' row.attempt.pk %}">להורדת המודל</a>
+          {% endif %}
+          {% if row.state != "approved" %}
+            <form method="post" action="{% url 'matazim:decide_attempt' row.attempt.pk %}" class="mz-entrance-decide">
+              {% csrf_token %}
+              <label class="mz-field"><span>אם מחזירים: מה לתקן</span>
+                <textarea name="note" rows="2">{{ row.attempt.decision_note }}</textarea></label>
+              <button type="submit" name="action" value="approve" class="mz-btn mz-btn-primary">אישור</button>
+              <button type="submit" name="action" value="return" class="mz-btn mz-btn-ghost">החזרה לתיקון</button>
+            </form>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </section>
+  {% empty %}
+    <section class="mz-panel"><p class="mz-muted">עוד אף אחד לא הגיש את משימת הכניסה.</p></section>
+  {% endfor %}
+</div>
+{% endblock %}
