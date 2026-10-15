@@ -8,7 +8,6 @@ forming.
 """
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
@@ -17,6 +16,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from . import mail, readiness
+from .decorators import signed_in
 from .models import EventRole, Hackathon, Milestone, RoleInvitation
 from .next_actions import next_actions_for
 from .roles import can, roles_for
@@ -95,7 +95,7 @@ def event_home(request, slug):
 # --------------------------------------------------------- creating an event
 
 
-@login_required
+@signed_in
 def event_create(request):
     """**Planning.** Rule 4.2: a site superuser creates an event and becomes
     its first admin.
@@ -159,7 +159,7 @@ def _parse_dt(value):
 # -------------------------------------------------------------- settings
 
 
-@login_required
+@signed_in
 def event_settings(request, slug):
     """**Planning.** Rule 11.5 in practice: every setting carries its
     consequence next to it rather than in a help page somewhere.
@@ -193,7 +193,7 @@ def event_settings(request, slug):
 # ------------------------------------------------------------- milestones
 
 
-@login_required
+@signed_in
 def event_milestones(request, slug):
     """**Planning.** The timeline, and where the kit pickup date lives,
     which is the single date participants care about most before the
@@ -227,7 +227,7 @@ def event_milestones(request, slug):
 # ------------------------------------------------------------------ people
 
 
-@login_required
+@signed_in
 def event_people(request, slug):
     """**Planning.** The admin's real first task (user_journeys.md 2.1 B).
 
@@ -340,7 +340,7 @@ def accept_invitation(request, token):
 # --------------------------------------------------------------- lifecycle
 
 
-@login_required
+@signed_in
 def event_readiness(request, slug):
     """**Planning.** Rule 3.4: the advance control is a checklist that
     becomes a button, never a button on its own.
@@ -364,7 +364,7 @@ def event_readiness(request, slug):
 
 
 @require_POST
-@login_required
+@signed_in
 def event_advance(request, slug):
     """The transition itself, re-checked server side.
 

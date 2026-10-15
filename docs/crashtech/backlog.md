@@ -103,6 +103,19 @@ something to do.
 **The whole navigation collapsed to one item** on four screens, because
 the nav is built from `can_manage` and those views forgot to pass it.
 
+**A fifth, and the worst of them, reached production.** A signed-out
+visitor hitting any protected CrashTech page was redirected to **babook's**
+sign-in at `/accounts/login/`, which is precisely the thing Rule 2.2.2
+exists to prevent: another product's branding, mid-flow, in an app whose
+whole point is that a Technion participant never learns babook exists.
+
+Nothing caught it because **every permission test used `force_login`**, so
+not one of them ever walked the signed-out path. memz made the same
+mistake once before. Fixed with a single `@signed_in` decorator rather
+than an argument at thirty call sites, because the call site you forget is
+the one somebody finds. Reverted-and-confirmed: the test fails with the
+bug back in.
+
 Both of the first two now have tests. A fourth defect was found by the
 tests themselves: a participant during kit distribution could land on a
 **completely empty screen** if no pickup date had been set yet, which is

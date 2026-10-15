@@ -464,3 +464,35 @@ def test_every_event_screen_keeps_its_navigation(client):
         body = client.get(f"/crashtech/e/{event.slug}/{path}").content.decode()
         for item in ("People", "Timeline", "Settings", "Readiness"):
             assert f">{item}<" in body, f"/{path} lost {item} from the nav"
+
+
+def test_a_signed_out_visitor_is_sent_to_crashtechs_own_login(client):
+    """Rule 2.2.2, and a real seal break that reached production.
+
+    Django's `login_required` redirects to the project-wide `LOGIN_URL`,
+    which on this site is babook's allauth page. So a visitor halfway
+    through a CrashTech flow landed on another product's branded sign-in,
+    which is the one thing this app having its own front door exists to
+    prevent.
+
+    Every permission test used `force_login` and therefore never walked
+    the signed-out path, which is why nothing caught it. memz made the
+    same mistake once before.
+    """
+    event = _event()
+    protected = [
+        "/crashtech/create/",
+        f"/crashtech/e/{event.slug}/settings/",
+        f"/crashtech/e/{event.slug}/milestones/",
+        f"/crashtech/e/{event.slug}/people/",
+        f"/crashtech/e/{event.slug}/readiness/",
+    ]
+    for path in protected:
+        response = client.get(path)
+        assert response.status_code == 302, path
+        # Assert the destination, not a substring: "/login/" alone would
+        # pass happily on "/accounts/login/", which is the bug.
+        assert response["Location"].startswith("/crashtech/login/"), (
+            f"{path} redirected out of CrashTech to {response['Location']}"
+        )
+        assert path in response["Location"], f"{path} lost its next= on the way"
