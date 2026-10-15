@@ -276,6 +276,10 @@ def test_the_permission_matrix_matches_the_spec():
         "read_secret_challenges": {EventRole.TECH_LEAD, EventRole.ADMIN, EventRole.JUDGE},
         "submit": {EventRole.PARTICIPANT},
         "judge": {EventRole.JUDGE},
+        # Added in C.5. Reading judging is not judging: an admin has to be
+        # able to see whether grading is progressing, because their publish
+        # button is waiting on it and the publish screen links them at it.
+        "read_judging": {EventRole.JUDGE, EventRole.ADMIN},
         "advance_lifecycle": {EventRole.ADMIN},
         "manage_study": {EventRole.RESEARCHER},
         "read_research_data": {EventRole.RESEARCHER},

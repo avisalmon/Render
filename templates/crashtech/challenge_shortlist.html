@@ -1,0 +1,69 @@
+{% extends "crashtech/base.html" %}
+{% block title %}Shortlist &middot; {{ challenge.title }}{% endblock %}
+{% block screen %}shortlist{% endblock %}
+{% block nav %}<a href="{% url 'crashtech:judging' hackathon.slug %}">&larr; Judging</a>{% endblock %}
+{% block milestone %}<span class="ct-milestone">{{ hackathon.get_status_display }}</span>{% endblock %}
+{% comment %}
+Rule 8.2, step one, as a COMPARISON. Every entry on one screen rather than
+one at a time, because the question is not "is this good" but "is this one
+of the few worth real attention". One at a time turns it into seventy
+separate verdicts, which is exactly what the two-step exists to avoid.
+
+Blind (Rule 4.6): "Entry 7", never a team name. A name decides it before
+the work does.
+{% endcomment %}
+{% block content %}
+<h1>{{ challenge.title }}</h1>
+<p class="ct-lede">
+  Pick the ones worth real attention. You are not grading yet, and nothing
+  here tells you whose work it is.
+  {% if challenge.criteria %}<br>What to look for: {{ challenge.criteria }}{% endif %}
+</p>
+
+{% if blocker %}<p class="ct-note ct-note--warn">{{ blocker }}</p>{% endif %}
+
+<div class="ct-grid">
+  {% for entry in entries %}
+    {% comment %}A shortlisted card has to be obvious at a glance. With
+    seventy entries, reading the button text on each one to find out which
+    are in is not a comparison any more.{% endcomment %}
+    <div class="ct-card" style="margin:0;display:flex;flex-direction:column;gap:9px{% if entry.submission.is_finalist %};border-color:var(--ct-primary){% endif %}">
+      <p class="ct-cap" style="margin:0;display:flex;justify-content:space-between;gap:8px">
+        <span>{{ entry.submission.team.anon_label }}</span>
+        {% if entry.submission.is_finalist %}<span style="color:var(--ct-primary)">Shortlisted</span>{% endif %}
+      </p>
+
+      {% for file in entry.files %}
+        {% if file.url %}
+          <a class="ct-fine" href="{{ file.url }}" target="_blank" rel="noopener">{{ file.deliverable.label }} &rarr;</a>
+        {% elif file.text_value %}
+          <p class="ct-fine" style="white-space:pre-wrap;margin:0">{{ file.text_value|truncatechars:320 }}</p>
+        {% elif file.file %}
+          <a class="ct-fine" href="{{ file.file.url }}">{{ file.deliverable.label }}</a>
+        {% endif %}
+      {% empty %}
+        <p class="ct-fine" style="margin:0">Nothing was turned in for this one.</p>
+      {% endfor %}
+
+      <form method="post" style="margin-top:auto">{% csrf_token %}
+        <input type="hidden" name="submission" value="{{ entry.submission.pk }}">
+        {% if entry.submission.is_finalist %}
+          {% if may_grade %}
+            <button class="ct-btn" name="on" value="" style="width:100%">Take off the shortlist</button>
+          {% endif %}
+          <a class="ct-btn ct-btn--primary" style="width:100%;margin-top:6px"
+             href="{% url 'crashtech:grade' hackathon.slug entry.submission.pk %}">
+            {% if entry.my_grade %}Your grade: {{ entry.my_grade.grade }}
+            {% elif may_grade %}Grade it{% else %}See it{% endif %}</a>
+        {% elif may_grade %}
+          <button class="ct-btn ct-btn--primary" name="on" value="1" style="width:100%">Shortlist</button>
+        {% else %}
+          <span class="ct-fine">Not shortlisted</span>
+        {% endif %}
+      </form>
+    </div>
+  {% empty %}
+    <div class="ct-empty">Nobody submitted to this challenge.</div>
+  {% endfor %}
+</div>
+{% endblock %}

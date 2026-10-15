@@ -118,14 +118,21 @@ def _kit_checks(hackathon):
         )
 
 
-def resolve(url_name, hackathon):
+def resolve(url_name, hackathon, challenge=None):
     """See `next_actions.resolve`: a checklist item for a screen that does
-    not exist yet still says the true thing, it just does not link."""
+    not exist yet still says the true thing, it just does not link.
+
+    `challenge` is for the publish blockers, where "this challenge has no
+    shortlist" should land on *that* challenge rather than on a list.
+    """
     if not url_name:
         return ""
     from django.urls import NoReverseMatch, reverse
 
-    for args in ((), (hackathon.slug,)):
+    attempts = [(), (hackathon.slug,)]
+    if challenge is not None:
+        attempts.insert(0, (hackathon.slug, challenge.pk))
+    for args in attempts:
         try:
             return reverse(url_name, args=args)
         except NoReverseMatch:
@@ -171,10 +178,17 @@ def checks_for(hackathon):
         yield Check(OK, "Closing locks submissions and lets judges start")
 
     elif status == Hackathon.CLOSED:
-        # The publish gate (Rule 8.5) lands properly in C.5 with judging.
-        # Until then this says what it will require, rather than pretending
-        # there is nothing to do.
-        yield Check(WARNING, "Judging is not built yet (sprint C.5)")
+        # The last transition is publishing, and it has its own screen and
+        # its own gate (Rule 8.5), because its three effects are permanent
+        # and it is the one click in the product that cannot be walked
+        # back. This checklist reflects that gate rather than restating it.
+        from .judging import publish_blockers
+
+        blockers = publish_blockers(hackathon)
+        for blocker in blockers:
+            yield Check(BLOCKER, blocker.text, blocker.url_name)
+        if not blockers:
+            yield Check(OK, "Judging is finished. Results can be published", "crashtech:publish")
 
 
 def blockers_for(hackathon):
@@ -209,7 +223,8 @@ CONSEQUENCES = {
     ),
     Hackathon.MUSEUM: (
         "The final standings become public and the museum opens. Both are "
-        "permanent."
+        "permanent. This happens on the publish screen, where the list of "
+        "what is still outstanding is."
     ),
 }
 

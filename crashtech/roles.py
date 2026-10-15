@@ -31,6 +31,11 @@ MATRIX = {
     "read_secret_challenges": {TECH_LEAD, ADMIN, JUDGE},
     "submit": {PARTICIPANT},
     "judge": {JUDGE},
+    # Reading judging is not judging. An admin has to be able to see
+    # whether grading is progressing, because they are the one whose
+    # publish button is waiting on it, and the publish screen links
+    # them straight at it. They still cannot shortlist or grade.
+    "read_judging": {JUDGE, ADMIN},
     "advance_lifecycle": {ADMIN},
     "manage_study": {RESEARCHER},
     "read_research_data": {RESEARCHER},

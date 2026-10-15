@@ -53,6 +53,19 @@ urlpatterns = [
     path("e/<slug:slug>/challenges/<int:pk>/preview/", views.challenge_preview, name="challenge_preview"),
     path("e/<slug:slug>/challenges/<int:pk>/submit/", views.challenge_submit, name="challenge_submit"),
     path("e/<slug:slug>/standings/", views.event_standings, name="standings"),
+
+    path("e/<slug:slug>/judging/", views.event_judging, name="judging"),
+    path("e/<slug:slug>/judging/<int:pk>/shortlist/", views.challenge_shortlist, name="shortlist"),
+    path("e/<slug:slug>/judging/entry/<int:pk>/", views.submission_grade, name="grade"),
+    path("e/<slug:slug>/verify/", views.event_verify, name="verify"),
+    path("e/<slug:slug>/publish/", views.event_publish, name="publish"),
+]
+
+# Public and permanent, with no account behind it (Rule 8.6): the person
+# who needs to open this is a recruiter following a link on a CV two years
+# later, and an account wall is how they decide it is not worth it.
+urlpatterns += [
+    path("c/<uuid:cert_id>/", views.certificate, name="certificate"),
 ]
 
 # The QR target. Deliberately short, deliberately outside /e/<slug>/, and

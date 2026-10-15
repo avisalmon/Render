@@ -5,14 +5,16 @@ Sprints and their status. Spec references are
 and the spec, updated together in the commit that acts on them
 (Rule 14.1).
 
-**Status: C.1 and C.2 live in production, C.3 and C.4 built in dev.** An admin can
+**Status: C.1 and C.2 live in production, C.3 to C.5 built in dev.** An admin can
 create an event, shape it, lay out its timeline, appoint people by email
 before they have accounts, decide applications, and hand out hardware at a
 desk built for a queue. A tech lead can write challenges of three kinds
 and declare what each one needs; a team can turn work in against a
 checklist that names what is still missing, and sees its own score while
-the standings stay shut. 161 CrashTech tests, 197 including the 2026
-platform's. C.5 is next.
+the standings stay shut. Judges shortlist and grade, the top numbers get
+a spot check, and one gated click publishes the results permanently and
+issues the certificates. **An event can now be run from end to end.**
+206 CrashTech tests, 242 including the 2026 platform's. C.6 is next.
 
 ---
 
@@ -24,7 +26,7 @@ platform's. C.5 is next.
 | C.2 | The event, its lifecycle and its roles | Create an event, advance it by checklist, grant roles, invite by email | `DONE (dev), 2026-10-14` |
 | C.3 | Registration, teams, hardware | Apply, accept, form a team, define the kit, and the kit desk | `DONE (dev), 2026-10-15` |
 | C.4 | Challenges and submitting | Author challenges with deliverables, kickoff, submit, tentative points | `DONE (dev), 2026-10-15` |
-| C.5 | Judging, results, publishing | Shortlist, grade, verify, and the one gated click | `TODO` |
+| C.5 | Judging, results, publishing | Shortlist, grade, verify, and the one gated click | `DONE (dev), 2026-10-15` |
 | C.6 | The museum and media | The public permanent page, uploads to GCS, moderation | `TODO` |
 | C.7 | Research | Studies, questionnaires per milestone, consent, data for researchers | `TODO` |
 | C.8 | The public face and the retirement | The public event page, the API surface, and taking `/crashtech/` from the 2026 app | `TODO` |
@@ -201,7 +203,7 @@ forty characters of random token. It is now an actual QR, inline.
 
 ---
 
-## SPR-C.5 — Judging, results, publishing `TODO`
+## SPR-C.5 — Judging, results, publishing `DONE (dev), 2026-10-15`
 
 | Feature | Description | Spec |
 | --- | --- | --- |
@@ -211,7 +213,15 @@ forty characters of random token. It is now an actual QR, inline.
 | F-C.5.4 | Verification where "left alone" is plainly the normal answer | Rule 8.3 |
 | F-C.5.5 | The computed leaderboard | Rule 8.4 |
 | F-C.5.6 | **Publishing**: one gated click, three permanent effects | Rule 8.5, 11.7 |
-| F-C.5.7 | Certificates at permanent unguessable URLs | Rule 8.6 |
+| F-C.5.7 | Certificates at permanent unguessable URLs | Rule 8.6 | DONE — `tests/test_spr_c_5.py` (45), marker `sprc5` |
+
+**What a screenshot found.** The publish screen told an admin that three
+entries had no grade and linked them at the judging screen, which refused
+them: the one screen that says what is blocking publication was pointing
+an admin somewhere they are forbidden. Reading judging is now its own
+capability, held by admins as well as judges, while shortlisting and
+grading stay the judges'. The same blocker now names the challenge it is
+in, since "3 entries somewhere" is not something anybody can act on.
 
 ---
 

@@ -1,0 +1,62 @@
+{% extends "crashtech/base.html" %}
+{% block title %}Grade {{ submission.team.anon_label }}{% endblock %}
+{% block screen %}grade{% endblock %}
+{% block nav %}<a href="{% url 'crashtech:shortlist' hackathon.slug challenge.pk %}">&larr; {{ challenge.title|truncatechars:24 }}</a>{% endblock %}
+{% block milestone %}<span class="ct-milestone">{{ hackathon.get_status_display }}</span>{% endblock %}
+{% comment %}Rule 8.2, step two. The criteria are ON THE SCREEN, because a
+grade given against remembered criteria is a different grade from one
+given against the written ones, and the team was told what they were.{% endcomment %}
+{% block content %}
+<h1>{{ submission.team.anon_label }}</h1>
+<p class="ct-lede">{{ challenge.title }} &middot; graded out of {{ challenge.max_grade }}</p>
+
+{% if challenge.criteria %}
+  <div class="ct-card">
+    <p class="ct-cap">What this is graded on</p>
+    <p style="margin:0;white-space:pre-wrap">{{ challenge.criteria }}</p>
+  </div>
+{% endif %}
+
+<div class="ct-card">
+  <p class="ct-cap">What they turned in</p>
+  {% for file in files %}
+    <p style="margin:0 0 9px">
+      <b style="font-size:13px">{{ file.deliverable.label }}</b><br>
+      {% if file.url %}<a href="{{ file.url }}" target="_blank" rel="noopener">{{ file.url|truncatechars:70 }}</a>
+      {% elif file.text_value %}<span class="ct-fine" style="white-space:pre-wrap">{{ file.text_value }}</span>
+      {% elif file.file %}<a href="{{ file.file.url }}">Open the file</a>{% endif %}</p>
+  {% empty %}
+    <p class="ct-fine" style="margin:0">Nothing was turned in.</p>
+  {% endfor %}
+  {% if submission.reported_note %}
+    <p class="ct-fine" style="margin-top:12px">Their note: {{ submission.reported_note }}</p>
+  {% endif %}
+</div>
+
+{% if may_grade %}
+<form method="post" class="ct-card">{% csrf_token %}
+  <label class="ct-field"><span>Your grade, 0 to {{ challenge.max_grade }}</span>
+    <input class="ct-input ct-mono" name="grade" type="number" min="0"
+           max="{{ challenge.max_grade }}" style="font-size:19px;min-height:52px;max-width:140px"
+           value="{{ mine.grade|default_if_none:'' }}" required></label>
+  <label class="ct-field"><span>Why, for the record</span>
+    <textarea class="ct-input" name="note" rows="3">{{ mine.note|default:'' }}</textarea></label>
+  <button class="ct-btn ct-btn--primary" type="submit" {% if blocker %}disabled{% endif %}>
+    {% if mine %}Change it{% else %}Save the grade{% endif %}</button>
+</form>
+{% endif %}
+
+{% if others %}
+  {% comment %}Shown after the form on purpose. More than one judge may
+  grade the same entry and the first to arrive should not decide it.{% endcomment %}
+  <p class="ct-cap" style="margin-top:22px">Other judges</p>
+  {% for other in others %}
+    <div class="ct-row">
+      <span class="ct-row-main"><b>{{ other.judge.first_name|default:other.judge.email }}</b>
+        <span>{{ other.note|default:"No note" }}</span></span>
+      <b class="ct-mono" style="font-size:18px">{{ other.grade }}</b>
+    </div>
+  {% endfor %}
+  <p class="ct-fine">Grades are averaged, so this one does not override yours.</p>
+{% endif %}
+{% endblock %}

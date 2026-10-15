@@ -16,12 +16,14 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from . import kit, mail, readiness, roles, scoring, submissions, teams
+from . import judging, kit, mail, readiness, roles, scoring, submissions, teams
 from .decorators import signed_in
+from django.db import models
+
 from .models import (
-    Challenge, Deliverable, EventRole, Hackathon, KitIssue, KitItem,
-    Milestone, Registration, RoleInvitation, Submission, SubmissionFile,
-    Team, UploadToken,
+    Certificate, Challenge, Deliverable, EventRole, Hackathon, KitIssue,
+    KitItem, Milestone, Registration, RoleInvitation, Submission,
+    SubmissionFile, Team, UploadToken,
 )
 from .next_actions import next_actions_for
 from .roles import can, roles_for
@@ -400,6 +402,11 @@ def event_advance(request, slug):
         if nxt == Hackathon.LIVE:
             # Rule 3.2: every challenge becomes visible at once.
             hackathon.challenges.update(visible=True)
+        if nxt == Hackathon.CLOSED:
+            # Rule 4.6: blind judging needs stable "Entry 1..n" labels, and
+            # they are assigned here rather than at team creation so the
+            # order carries no information about who signed up first.
+            judging.assign_anonymous_labels(hackathon)
         if nxt == Hackathon.MUSEUM:
             hackathon.results_published_at = timezone.now()
             fields.append("results_published_at")
@@ -942,4 +949,245 @@ def event_standings(request, slug):
         "rows": scoring.leaderboard(hackathon),
         "published": bool(hackathon.results_published_at),
         "my_team": teams.team_for(request.user, hackathon),
+    })
+
+
+# ------------------------------------------------- judging, results, publishing
+
+
+@signed_in
+def event_judging(request, slug):
+    """**Planning / judge.** A judge's one screen: what is left to do.
+
+    During the event it is locked and says why in words (Rule 8.1). A
+    locked screen that does not explain itself reads as broken, and the
+    one thing a judge wants to know during the 24 hours is what they are
+    waiting for.
+    """
+    hackathon = _event(slug)
+    _require(request.user, hackathon, "read_judging")
+    blocker = judging.judging_blocker(hackathon)
+    may_grade = can(request.user, hackathon, "judge")
+
+    creativity = hackathon.challenges.filter(kind=Challenge.CREATIVITY)
+    work = []
+    if not blocker:
+        for challenge in creativity.prefetch_related("submissions__grades"):
+            entries = challenge.submissions.exclude(verification=Submission.WITHDRAWN)
+            finalists = [s for s in entries if s.is_finalist]
+            ungraded = [s for s in finalists if not s.grades.exists()]
+            work.append({
+                "challenge": challenge,
+                "entries": len(entries),
+                "finalists": len(finalists),
+                "ungraded": len(ungraded),
+            })
+
+    return render(request, "crashtech/event_judging.html", {
+        "hackathon": hackathon,
+        "can_manage": can(request.user, hackathon, "event_settings"),
+        "blocker": blocker,
+        "may_grade": may_grade,
+        "work": work,
+        "spot_checks": len(judging.spot_check_queue(hackathon)) if not blocker else 0,
+        "challenges": hackathon.challenges.all(),
+    })
+
+
+@signed_in
+def challenge_shortlist(request, slug, pk):
+    """**Planning / judge.** Rule 8.2, step one, as a comparison.
+
+    Every entry on one screen rather than one at a time, because
+    shortlisting *is* a comparison: the question is not "is this good" but
+    "is this one of the fifteen worth real attention". One at a time turns
+    it into seventy separate verdicts, which is the thing the two-step
+    exists to avoid.
+
+    Blind (Rule 4.6): the team is "Entry 7" here, and a name would decide
+    it before the work did.
+    """
+    hackathon = _event(slug)
+    _require(request.user, hackathon, "read_judging")
+    challenge = _challenge(hackathon, pk)
+    blocker = judging.judging_blocker(hackathon)
+    may_grade = can(request.user, hackathon, "judge")
+
+    if request.method == "POST":
+        if not may_grade:
+            raise PermissionDenied
+        if blocker:
+            messages.error(request, blocker)
+            return redirect("crashtech:shortlist", slug=hackathon.slug, pk=challenge.pk)
+        submission = get_object_or_404(
+            Submission, pk=request.POST.get("submission"), challenge=challenge,
+        )
+        try:
+            judging.set_finalist(submission, request.user, on=bool(request.POST.get("on")))
+        except judging.JudgingError as exc:
+            messages.error(request, str(exc))
+        return redirect("crashtech:shortlist", slug=hackathon.slug, pk=challenge.pk)
+
+    entries = []
+    for submission in judging.shortlist_for(challenge):
+        entries.append({
+            "submission": submission,
+            "files": list(submission.files.all()),
+            "my_grade": judging.my_grade(submission, request.user),
+        })
+    return render(request, "crashtech/challenge_shortlist.html", {
+        "hackathon": hackathon,
+        "can_manage": can(request.user, hackathon, "event_settings"),
+        "challenge": challenge, "entries": entries, "blocker": blocker,
+        "may_grade": may_grade,
+    })
+
+
+@signed_in
+def submission_grade(request, slug, pk):
+    """**Planning / judge.** Rule 8.2, step two: one entry, real attention.
+
+    The criteria are on the screen, because a grade given against
+    remembered criteria is a different grade from one given against the
+    written ones, and the team was told what they were.
+    """
+    hackathon = _event(slug)
+    _require(request.user, hackathon, "read_judging")
+    submission = get_object_or_404(Submission, pk=pk, challenge__hackathon=hackathon)
+    blocker = judging.judging_blocker(hackathon)
+    may_grade = can(request.user, hackathon, "judge")
+
+    if request.method == "POST":
+        if not may_grade:
+            raise PermissionDenied
+    if request.method == "POST" and not blocker:
+        try:
+            judging.grade(
+                submission, request.user,
+                request.POST.get("grade"), request.POST.get("note"),
+            )
+            messages.success(request, f"Graded {submission.team.anon_label}.")
+            return redirect("crashtech:shortlist", slug=hackathon.slug,
+                            pk=submission.challenge.pk)
+        except judging.JudgingError as exc:
+            messages.error(request, str(exc))
+
+    return render(request, "crashtech/submission_grade.html", {
+        "hackathon": hackathon,
+        "can_manage": can(request.user, hackathon, "event_settings"),
+        "submission": submission, "challenge": submission.challenge,
+        "files": list(submission.files.select_related("deliverable")),
+        "mine": judging.my_grade(submission, request.user),
+        "others": submission.grades.exclude(judge=request.user).select_related("judge"),
+        "blocker": blocker, "may_grade": may_grade,
+    })
+
+
+@signed_in
+def event_verify(request, slug):
+    """**Planning / judge.** Rule 8.3, and the screen most easily got wrong.
+
+    It shows the top few scores per measured challenge and nothing else.
+    Listing every submission here would be read as an instruction to check
+    every submission, and the trust model would have quietly become the
+    2026 one it replaced. The screen says so in as many words.
+    """
+    hackathon = _event(slug)
+    _require(request.user, hackathon, "read_judging")
+    blocker = judging.judging_blocker(hackathon)
+    may_grade = can(request.user, hackathon, "judge")
+
+    if request.method == "POST":
+        if not may_grade:
+            raise PermissionDenied
+    if request.method == "POST" and not blocker:
+        submission = get_object_or_404(
+            Submission, pk=request.POST.get("submission"), challenge__hackathon=hackathon,
+        )
+        try:
+            judging.verify(
+                submission, request.user,
+                request.POST.get("outcome"), request.POST.get("note"),
+            )
+            messages.success(request, f"{submission.team.anon_label}: recorded.")
+        except judging.JudgingError as exc:
+            messages.error(request, str(exc))
+        return redirect("crashtech:verify", slug=hackathon.slug)
+
+    # Grouped by challenge rather than one flat list: with two measured
+    # challenges the flat version repeated the same heading six times, which
+    # buries the one thing that distinguishes the rows.
+    groups = []
+    if not blocker:
+        by_challenge = {}
+        for submission in judging.spot_check_queue(hackathon):
+            by_challenge.setdefault(submission.challenge_id, {
+                "challenge": submission.challenge, "rows": [],
+            })["rows"].append({
+                "submission": submission,
+                "value": submissions.tidy(submission.reported_value),
+                "points": scoring.points_for(submission),
+                "files": list(submission.files.select_related("deliverable")),
+            })
+        groups = list(by_challenge.values())
+    return render(request, "crashtech/event_verify.html", {
+        "hackathon": hackathon,
+        "can_manage": can(request.user, hackathon, "event_settings"),
+        "groups": groups, "blocker": blocker, "may_grade": may_grade,
+    })
+
+
+@signed_in
+def event_publish(request, slug):
+    """**Planning / admin.** The one gated click (Rule 8.5, 11.7).
+
+    Three permanent effects at once, named in words before the button, and
+    gated on conditions that are computed rather than tracked: a stored
+    "ready to publish" goes stale the moment a judge disputes something.
+    """
+    hackathon = _event(slug)
+    _require(request.user, hackathon, "advance_lifecycle")
+    blockers = judging.publish_blockers(hackathon)
+
+    if request.method == "POST":
+        if hackathon.results_published_at:
+            messages.error(request, "These results are already published.")
+        elif blockers:
+            # The screen hid the button, which is a courtesy. The refusal
+            # has to live here too, or a stale tab is enough to publish
+            # half-judged results permanently.
+            messages.error(request, "Publishing is still blocked. The list says by what.")
+        else:
+            judging.publish(hackathon, by=request.user)
+            messages.success(request, "Published. The standings and the museum are open.")
+            return redirect("crashtech:standings", slug=hackathon.slug)
+        return redirect("crashtech:publish", slug=hackathon.slug)
+
+    return render(request, "crashtech/event_publish.html", {
+        "hackathon": hackathon,
+        "can_manage": True,
+        "blockers": [
+            (b, readiness.resolve(b.url_name, hackathon, challenge=b.challenge))
+            for b in blockers
+        ],
+        "consequence": judging.PUBLISH_CONSEQUENCE,
+        "rows": scoring.leaderboard(hackathon),
+        "published": bool(hackathon.results_published_at),
+    })
+
+
+def certificate(request, cert_id):
+    """**Public, permanent, unguessable** (Rule 8.6).
+
+    No account, deliberately: the person who needs to see this is a
+    recruiter following a link on a CV two years later, and an account
+    wall is how they decide it is not worth it.
+    """
+    row = get_object_or_404(Certificate, cert_id=cert_id)
+    return render(request, "crashtech/certificate.html", {
+        "certificate": row, "hackathon": row.hackathon, "team": row.team,
+        "members": [m.user for m in row.team.memberships.select_related("user")],
+        "points": row.team.submissions.aggregate(
+            total=models.Sum("final_points"),
+        )["total"] or 0,
     })

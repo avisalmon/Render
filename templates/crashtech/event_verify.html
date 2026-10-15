@@ -1,0 +1,74 @@
+{% extends "crashtech/base.html" %}
+{% block title %}Spot check &middot; {{ hackathon.name }}{% endblock %}
+{% block screen %}verify{% endblock %}
+{% block nav %}{% include "crashtech/_event_nav.html" %}{% endblock %}
+{% block milestone %}<span class="ct-milestone">{{ hackathon.get_status_display }}</span>{% endblock %}
+{% comment %}
+Rule 8.3, and the screen most easily got wrong in the whole product. It
+shows the top few scores per measured challenge and NOTHING else. A screen
+listing every submission is read as an instruction to check every
+submission, and then the trust model has quietly become the 2026 one it
+replaced. The page says that out loud, because the next person to work on
+it will be tempted to add "show all".
+{% endcomment %}
+{% block content %}
+<h1>Spot check</h1>
+<p class="ct-lede">
+  The scores near the top of each measured challenge, which are the only ones
+  that change who wins. <b>Leaving one alone is the normal answer</b> and is
+  not a gap in the record. Everything else in this event stands on the teams'
+  own word, by design.
+</p>
+
+{% if blocker %}<p class="ct-note ct-note--warn">{{ blocker }}</p>{% endif %}
+
+{% for group in groups %}
+  <h2 style="margin:26px 0 10px">{{ group.challenge.title }}</h2>
+  {% for row in group.rows %}
+  <div class="ct-card">
+    <div style="display:flex;gap:14px;align-items:baseline;flex-wrap:wrap;margin-bottom:10px">
+      <b>{{ row.submission.team.anon_label }}</b>
+      <b class="ct-mono" style="font-size:22px">{{ row.value }}</b>
+      <span class="ct-fine">{{ group.challenge.metric_unit }} &middot; worth {{ row.points }} points</span>
+      {% if row.submission.verification == 'verified' %}
+        <span class="ct-tag ct-tag--go">Verified</span>
+      {% elif row.submission.verification == 'disputed' %}
+        <span class="ct-tag ct-tag--stop">Disputed</span>
+      {% endif %}
+    </div>
+
+    {% for file in row.files %}
+      <p class="ct-fine" style="margin:0 0 5px">{{ file.deliverable.label }}:
+        {% if file.url %}<a href="{{ file.url }}" target="_blank" rel="noopener">open</a>
+        {% elif file.file %}<a href="{{ file.file.url }}">open</a>
+        {% else %}{{ file.text_value|truncatechars:120 }}{% endif %}</p>
+    {% empty %}
+      <p class="ct-fine" style="margin:0 0 5px">Nothing was attached to this one.</p>
+    {% endfor %}
+
+    {% comment %}Their own note, which is the first thing somebody checking a
+    number wants to read and was missing from the first version.{% endcomment %}
+    {% if row.submission.reported_note %}
+      <p class="ct-fine" style="margin:9px 0 0">Their note: {{ row.submission.reported_note }}</p>
+    {% endif %}
+
+    {% if may_grade %}
+    <form method="post" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">{% csrf_token %}
+      <input type="hidden" name="submission" value="{{ row.submission.pk }}">
+      <input class="ct-input" name="note" placeholder="Reason, if you are disputing it"
+             style="flex:1;min-width:190px" value="{{ row.submission.verification_note }}">
+      <button class="ct-btn" name="outcome" value="verified">Checked, it holds</button>
+      <button class="ct-btn" name="outcome" value="disputed" style="color:var(--ct-red)">Dispute</button>
+      {% if row.submission.verification != 'unverified' %}
+        <button class="ct-btn" name="outcome" value="unverified">Undo</button>
+      {% endif %}
+    </form>
+    {% endif %}
+  </div>
+  {% endfor %}
+{% empty %}
+  <div class="ct-empty">
+    {% if not blocker %}No measured challenge has a reported number yet.{% endif %}
+  </div>
+{% endfor %}
+{% endblock %}

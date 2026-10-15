@@ -1,0 +1,55 @@
+{% extends "crashtech/base.html" %}
+{% block title %}Publish the results &middot; {{ hackathon.name }}{% endblock %}
+{% block screen %}publish{% endblock %}
+{% block nav %}{% include "crashtech/_event_nav.html" %}{% endblock %}
+{% block milestone %}<span class="ct-milestone">{{ hackathon.get_status_display }}</span>{% endblock %}
+{% comment %}
+The one click in the product that cannot be walked back (Rule 8.5, 11.7).
+Three permanent effects, named in words BEFORE the button rather than
+behind an "are you sure" that tells nobody anything, and the blockers
+listed as the specific things they are rather than as a count.
+{% endcomment %}
+{% block content %}
+<h1>Publish the results</h1>
+
+{% if published %}
+  <div class="ct-card">
+    <p class="ct-cap">Published</p>
+    <p>{{ hackathon.results_published_at|date:"d M Y, H:i" }}. The standings and
+      the museum are open, and the scores are frozen as they stood.</p>
+    <a class="ct-btn ct-btn--primary" href="{% url 'crashtech:standings' hackathon.slug %}">See the standings</a>
+  </div>
+
+{% else %}
+  <div class="ct-note ct-note--warn">{{ consequence }}</div>
+
+  {% if blockers %}
+    <p class="ct-cap">Still outstanding</p>
+    {% for blocker, url in blockers %}
+      <div class="ct-row">
+        <span class="ct-tag ct-tag--stop">Blocks</span>
+        <span class="ct-row-main"><b style="font-weight:400">{{ blocker.text }}</b></span>
+        {% if url %}<a class="ct-btn" href="{{ url }}"
+            style="min-height:40px;padding:8px 13px;font-size:13px">Go</a>{% endif %}
+      </div>
+    {% endfor %}
+    <p class="ct-fine">The button appears when this list is empty.</p>
+  {% else %}
+    <p class="ct-cap">What will be published</p>
+    {% for team, points in rows %}
+      <div class="ct-row">
+        <b class="ct-mono" style="min-width:2.2em;text-align:right;color:var(--ct-dim)">{{ forloop.counter }}</b>
+        <span class="ct-row-main"><b>{{ team.name|default:team.anon_label }}</b></span>
+        <b class="ct-mono" style="font-size:17px">{{ points }}</b>
+      </div>
+    {% empty %}
+      <div class="ct-empty">No team has scored anything.</div>
+    {% endfor %}
+
+    <form method="post" style="margin-top:20px">{% csrf_token %}
+      <button class="ct-btn ct-btn--primary" type="submit"
+              style="min-height:52px;padding:12px 24px;font-size:16px">Publish, permanently</button>
+    </form>
+  {% endif %}
+{% endif %}
+{% endblock %}

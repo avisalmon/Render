@@ -26,3 +26,10 @@ def ct_may_see_challenges(user, hackathon):
 @register.simple_tag
 def ct_may_see_standings(user, hackathon):
     return roles.may_see_standings(user, hackathon)
+
+
+@register.simple_tag
+def ct_may_judge(user, hackathon):
+    """A judge is not an admin, so `can_manage` does not reach their two
+    screens and the nav would leave them with no way in at all."""
+    return roles.can(user, hackathon, "judge")

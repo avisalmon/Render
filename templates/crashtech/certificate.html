@@ -1,0 +1,30 @@
+{% extends "crashtech/base.html" %}
+{% block title %}{{ team.name|default:team.anon_label }} &middot; {{ hackathon.name }}{% endblock %}
+{% block screen %}certificate{% endblock %}
+{% block nav %}{% endblock %}
+{% comment %}
+Public, permanent, unguessable (Rule 8.6). No account: the person opening
+this is following a link on a CV two years later, and an account wall is
+how they decide it is not worth it.
+
+Written to be read by a stranger who has never heard of CrashTech, so it
+says what the event was as well as what this team did.
+{% endcomment %}
+{% block content %}
+<div class="ct-card" style="text-align:center;padding:38px 22px">
+  <p class="ct-cap" style="margin-bottom:18px">{{ certificate.get_type_display }}</p>
+  <h1 style="font-size:31px;margin-bottom:6px">{{ team.name|default:team.anon_label }}</h1>
+  <p class="ct-fine" style="margin-bottom:22px">
+    {% for member in members %}{{ member.first_name|default:member.email }}{% if not forloop.last %} &middot; {% endif %}{% endfor %}
+  </p>
+
+  <p style="margin-bottom:6px">took part in <b>{{ hackathon.name }}</b>,</p>
+  <p class="ct-fine" style="margin-bottom:22px">
+    a hardware hackathon held {{ hackathon.starts_at|date:"d M Y" }}.</p>
+
+  <p style="margin:0"><b class="ct-mono" style="font-size:36px">{{ points }}</b></p>
+  <p class="ct-fine">points scored</p>
+
+  <p class="ct-fine ct-mono" style="margin-top:30px;font-size:11px">{{ certificate.cert_id }}</p>
+</div>
+{% endblock %}

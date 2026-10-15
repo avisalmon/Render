@@ -434,12 +434,18 @@ Rule 4.4: what each role may do.
 | Read challenges before `live` | yes | yes | yes | **no** | |
 | Submit | | | | yes | |
 | Shortlist, grade, verify | | | yes | | |
+| Watch judging progress | | yes | yes | | |
 | Advance lifecycle, publish | | yes | | | |
 | Study, questionnaires | | | | | yes |
 | Read research data | | | | | yes |
 
 Rule 4.5: **judges may read challenges before the event.** They are not
 participants and the secrecy rule is not about them.
+
+Rule 4.5.1: **reading judging is not judging.** An admin may watch grading
+progress and may not shortlist, grade or verify. Added in C.5 because the
+publish screen tells an admin what is blocking publication and links them
+at the screen that clears it, and that link was refusing them.
 
 Rule 4.6: a participant sees only their own team's submissions, never
 another team's, until the museum opens.

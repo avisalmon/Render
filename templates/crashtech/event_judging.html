@@ -1,0 +1,70 @@
+{% extends "crashtech/base.html" %}
+{% block title %}Judging &middot; {{ hackathon.name }}{% endblock %}
+{% block screen %}judging{% endblock %}
+{% block nav %}{% include "crashtech/_event_nav.html" %}{% endblock %}
+{% block milestone %}<span class="ct-milestone">{{ hackathon.get_status_display }}</span>{% endblock %}
+{% comment %}
+A judge's one screen: what is left to do, and nothing else. Rule 8.1 locks
+it during the event, and a locked screen that does not say why reads as
+broken, so the reason is the first thing on the page.
+{% endcomment %}
+{% block content %}
+<h1>Judging</h1>
+{% if not may_grade %}
+  {% comment %}An admin reaches this screen because the publish screen links
+  them at it. They are watching progress, not grading.{% endcomment %}
+  <p class="ct-note">You can see how judging is going. Grading is the judges'.</p>
+{% endif %}
+
+{% if blocker %}
+  <div class="ct-card">
+    <p class="ct-cap">Not yet</p>
+    <p>{{ blocker }}</p>
+  </div>
+  {% if challenges %}
+    <p class="ct-cap" style="margin-top:22px">The challenges, to read now</p>
+    {% for challenge in challenges %}
+      <div class="ct-row">
+        <span class="ct-row-main"><b>{{ challenge.title }}</b>
+          <span>{{ challenge.get_kind_display }}{% if challenge.criteria %} &middot; {{ challenge.criteria|truncatechars:70 }}{% endif %}</span></span>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+{% else %}
+  <p class="ct-lede">
+    Creativity challenges are shortlisted first, then the shortlist is graded.
+    Everything else scored on the teams' own word, and only the handful of
+    numbers that decide the result need a second look.
+  </p>
+
+  {% for row in work %}
+    <div class="ct-row">
+      <span class="ct-row-main"><b>{{ row.challenge.title }}</b>
+        <span><b class="ct-mono">{{ row.entries }}</b> entries
+          &middot; <b class="ct-mono">{{ row.finalists }}</b> shortlisted</span></span>
+      {% if row.ungraded %}
+        <span class="ct-tag ct-tag--wait">{{ row.ungraded }} to grade</span>
+      {% elif row.finalists %}
+        <span class="ct-tag ct-tag--go">Graded</span>
+      {% else %}
+        <span class="ct-tag ct-tag--stop">No shortlist</span>
+      {% endif %}
+      <a class="ct-btn ct-btn--primary" href="{% url 'crashtech:shortlist' hackathon.slug row.challenge.pk %}"
+         style="min-height:42px;padding:9px 15px;font-size:13px">Open</a>
+    </div>
+  {% empty %}
+    <div class="ct-empty">This event has no creativity challenges, so there is
+      nothing to shortlist or grade.</div>
+  {% endfor %}
+
+  <p class="ct-cap" style="margin-top:26px">The spot check</p>
+  <div class="ct-row">
+    <span class="ct-row-main"><b>Top reported numbers</b>
+      <span>{{ spot_checks }} scores near the top of a measured challenge.
+        Looking at none of them is a perfectly normal day.</span></span>
+    <a class="ct-btn" href="{% url 'crashtech:verify' hackathon.slug %}"
+       style="min-height:42px;padding:9px 15px;font-size:13px">Open</a>
+  </div>
+{% endif %}
+{% endblock %}
