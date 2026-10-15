@@ -1,0 +1,37 @@
+{% extends "crashtech/base.html" %}
+{% block title %}Standings &middot; {{ hackathon.name }}{% endblock %}
+{% block screen %}standings{% endblock %}
+{% block nav %}{% include "crashtech/_event_nav.html" %}{% endblock %}
+{% block milestone %}<span class="ct-milestone">{{ hackathon.get_status_display }}</span>{% endblock %}
+{% comment %}
+Computed on every request, never stored (Rule 8.4). A stored total is a
+second source of truth and goes stale the moment a verification changes a
+score or another team beats a ranked number.
+{% endcomment %}
+{% block content %}
+<h1>Standings</h1>
+
+{% if published %}
+  <p class="ct-lede">Final, published {{ hackathon.results_published_at|date:"d M Y" }}.
+    These are the results and they stay here.</p>
+{% else %}
+  <div class="ct-note ct-note--warn">
+    Provisional. Creativity challenges are not graded yet, ranked challenges
+    move as teams submit, and nothing is final until an admin publishes.
+  </div>
+{% endif %}
+
+{% for team, points in rows %}
+  <div class="ct-row" {% if my_team and team.pk == my_team.pk %}style="border-color:var(--ct-primary)"{% endif %}>
+    <b class="ct-mono" style="font-size:17px;min-width:2.4em;text-align:right;color:var(--ct-dim)">{{ forloop.counter }}</b>
+    <span class="ct-row-main">
+      <b>{{ team.name|default:team.anon_label }}</b>
+      <span>{% for m in team.memberships.all %}{{ m.user.first_name|default:m.user.email }}{% if not forloop.last %} &middot; {% endif %}{% endfor %}
+        {% if my_team and team.pk == my_team.pk %}&middot; you{% endif %}</span>
+    </span>
+    <b class="ct-mono" style="font-size:19px">{{ points }}</b>
+  </div>
+{% empty %}
+  <div class="ct-empty">No teams have scored yet.</div>
+{% endfor %}
+{% endblock %}

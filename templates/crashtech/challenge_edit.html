@@ -1,0 +1,165 @@
+{% extends "crashtech/base.html" %}
+{% block title %}{% if challenge %}{{ challenge.title }}{% else %}New challenge{% endif %} &middot; {{ hackathon.name }}{% endblock %}
+{% block screen %}challenge-edit{% endblock %}
+{% block nav %}{% include "crashtech/_event_nav.html" %}{% endblock %}
+{% block milestone %}<span class="ct-milestone">{{ hackathon.get_status_display }}</span>{% endblock %}
+{% comment %}
+A PLANNING screen: a laptop, days before the event, with time to think.
+Dense and explanatory, which is the opposite of the submit screen it
+produces.
+
+The kind picker explains itself here rather than in a manual (Rule 7.2).
+It is the most consequential decision on the screen and the three words
+alone do not carry it: a tech lead who picks `completion` for everything
+has rebuilt the 2026 event the feedback complained about.
+{% endcomment %}
+{% block content %}
+
+<h1>{% if challenge %}{{ challenge.title }}{% else %}Write a challenge{% endif %}</h1>
+<p class="ct-lede">
+  Written now, sealed until kickoff. Nothing here is visible to a
+  participant until the event goes live, and then all of it is, at once.
+</p>
+
+<form method="post">{% csrf_token %}
+
+  <label class="ct-field"><span>Title</span>
+    <input class="ct-input" name="title" required maxlength="200"
+           value="{{ challenge.title|default:'' }}"
+           placeholder="Fastest 8-bit multiplier"></label>
+
+  <label class="ct-field"><span>Brief: what the task is, and what counts as done</span>
+    <textarea class="ct-input" name="brief" rows="6"
+              placeholder="A team reads this once, at speed, with 24 hours on the clock.">{{ challenge.brief|default:'' }}</textarea></label>
+
+  <p class="ct-cap">What kind of challenge is this</p>
+  <div class="ct-card" style="padding:4px 0;margin-bottom:14px">
+    {% for value, label in kinds %}
+      <label class="ct-row" style="margin:8px 14px;align-items:flex-start;cursor:pointer">
+        <input type="radio" name="kind" value="{{ value }}" style="margin-top:4px"
+               {% if challenge.kind == value %}checked{% elif not challenge and value == 'completion' %}checked{% endif %}>
+        <span class="ct-row-main">
+          <b>{{ label }}</b>
+          <span>
+            {% if value == 'completion' %}
+              It either works or it does not. The team says it worked, and the
+              points land straight away. Simple, and the easiest kind to talk
+              your way through, so do not make every challenge this one.
+            {% elif value == 'measured' %}
+              The team reports a number and the points go by finishing position
+              against everybody else. <b>This is the kind that answers the 2026
+              feedback</b>: a number is either hit or not, and it cannot be
+              argued into existing. A score here moves when another team beats
+              it, which is the point.
+            {% else %}
+              There is no number, so there is no honest score on trust. Judges
+              shortlist and grade this one <b>after</b> the event, and until
+              they do the team sees "judged later" rather than a zero.
+            {% endif %}
+          </span>
+        </span>
+      </label>
+    {% endfor %}
+  </div>
+
+  <label class="ct-field"><span>Points this challenge is worth</span>
+    <input class="ct-input ct-mono" name="points" type="number" min="0" step="1"
+           value="{{ challenge.points|default:0 }}"></label>
+
+  <p class="ct-cap">If it is measured</p>
+  <div class="ct-card">
+    <label class="ct-field"><span>What is being measured</span>
+      <input class="ct-input" name="metric_name" maxlength="80"
+             value="{{ challenge.metric_name|default:'' }}" placeholder="Fmax"></label>
+    <label class="ct-field"><span>Unit</span>
+      <input class="ct-input ct-mono" name="metric_unit" maxlength="40"
+             value="{{ challenge.metric_unit|default:'' }}" placeholder="MHz"></label>
+    <label class="ct-field"><span>Which way is better</span>
+      <select class="ct-input" name="metric_direction">
+        {% for value, label in directions %}
+          <option value="{{ value }}" {% if challenge.metric_direction == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select></label>
+    <label class="ct-field"><span>Points by finishing position</span>
+      <input class="ct-input ct-mono" name="rank_points" value="{{ rank_points_text }}"
+             placeholder="50, 30, 20, 10">
+      <span class="ct-fine">First gets the first number, second the second, and
+        anyone past the end of the list gets nothing. Commas or spaces, either.</span></label>
+  </div>
+
+  <p class="ct-cap">If it is judged for creativity</p>
+  <div class="ct-card">
+    <label class="ct-field"><span>Graded out of</span>
+      <input class="ct-input ct-mono" name="max_grade" type="number" min="1" step="1"
+             value="{{ challenge.max_grade|default:10 }}"></label>
+    <label class="ct-field"><span>What the judges are looking for</span>
+      <textarea class="ct-input" name="criteria" rows="3"
+                placeholder="Named in advance, so a grade is a judgement and not a surprise.">{{ challenge.criteria|default:'' }}</textarea></label>
+  </div>
+
+  <button class="ct-btn ct-btn--primary" type="submit">
+    {% if challenge %}Save{% else %}Create{% endif %}</button>
+  {% if challenge %}
+    <a class="ct-btn" href="{% url 'crashtech:challenge_preview' hackathon.slug challenge.pk %}">See the participant's screen</a>
+  {% endif %}
+</form>
+
+{% if challenge %}
+  <h2 style="margin-top:34px">What a team has to turn in</h2>
+  <p class="ct-lede">
+    Declared here, in advance. This is the entire reason the app can tell a
+    team <i>what</i> is missing instead of "incomplete", and the reason a
+    judge later has something specific to look at.
+    {% if not deliverables %}
+      <b style="color:var(--ct-amber)">With nothing on this list, a team can
+      submit an empty claim and the readiness checklist will block the event.</b>
+    {% endif %}
+  </p>
+
+  {% for item in deliverables %}
+    <div class="ct-row">
+      <span class="ct-row-main">
+        <b>{{ item.label }}</b>
+        <span>{{ item.get_kind_display }} &middot; {{ item.get_purpose_display }}
+          &middot; {% if item.required %}required{% else %}optional{% endif %}
+          {% if item.help_text %}&middot; {{ item.help_text }}{% endif %}</span>
+      </span>
+      {% if item.is_link_only %}
+        <span class="ct-tag">Link only</span>
+      {% endif %}
+      <form method="post">{% csrf_token %}
+        <button class="ct-btn" name="drop_deliverable" value="{{ item.pk }}"
+                style="min-height:40px;padding:8px 12px;font-size:13px">Remove</button></form>
+    </div>
+  {% endfor %}
+
+  <form method="post" class="ct-card" style="margin-top:12px">{% csrf_token %}
+    <label class="ct-field"><span>Add something to the list</span>
+      <input class="ct-input" name="label" maxlength="160" placeholder="Timing report screenshot"></label>
+    <label class="ct-field"><span>What it is</span>
+      <select class="ct-input" name="kind">
+        {% for value, label in deliverable_kinds %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+      </select>
+      {% comment %}Rule 7.5, stated where the decision is made rather than
+      discovered at 3am by somebody holding a phone.{% endcomment %}
+      <span class="ct-fine">A video is always a link, on any host. There is no
+        upload path for one, because a single event's phone video is tens of
+        gigabytes and the site has a gigabyte of disk.</span></label>
+    <label class="ct-field"><span>Why it is being asked for</span>
+      <select class="ct-input" name="purpose">
+        {% for value, label in purposes %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+      </select></label>
+    <label class="ct-field"><span>Hint shown to the team</span>
+      <input class="ct-input" name="help_text" maxlength="200"></label>
+    <label class="ct-field" style="display:flex;gap:9px;align-items:center">
+      <input type="checkbox" name="required" checked>
+      <span style="margin:0">Required: a team cannot claim this challenge worked without it</span></label>
+    <button class="ct-btn ct-btn--primary" name="add_deliverable" value="1">Add</button>
+  </form>
+
+  <form method="post" style="margin-top:26px">{% csrf_token %}
+    <button class="ct-btn" name="delete" value="1" style="color:var(--ct-red)">Delete this challenge</button>
+    <span class="ct-fine">Refused once a team has submitted to it.</span>
+  </form>
+{% endif %}
+{% endblock %}

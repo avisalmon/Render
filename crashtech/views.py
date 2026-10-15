@@ -12,14 +12,16 @@ from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from . import kit, mail, readiness, teams
+from . import kit, mail, readiness, roles, scoring, submissions, teams
 from .decorators import signed_in
 from .models import (
-    EventRole, Hackathon, KitIssue, KitItem, Milestone, Registration,
-    RoleInvitation, Team,
+    Challenge, Deliverable, EventRole, Hackathon, KitIssue, KitItem,
+    Milestone, Registration, RoleInvitation, Submission, SubmissionFile,
+    Team, UploadToken,
 )
 from .next_actions import next_actions_for
 from .roles import can, roles_for
@@ -609,4 +611,335 @@ def event_kit_desk(request, slug):
     return render(request, "crashtech/event_kit_desk.html", {
         "hackathon": hackathon, "can_manage": True,
         "query": query, "rows": rows, "counts": kit.counts_for(hackathon),
+    })
+
+
+# --------------------------------------------------------------- challenges
+
+
+def _challenge(hackathon, pk):
+    return get_object_or_404(Challenge, pk=pk, hackathon=hackathon)
+
+
+@signed_in
+def event_challenges(request, slug):
+    """**Planning or event, depending entirely on who is reading.**
+
+    One route, three genuinely different screens, which is why it is one
+    view: a tech lead writing them, a participant working through them, a
+    judge reading them after the close. Splitting it into three URLs would
+    mean three places where the secrecy rule could be got wrong.
+
+    Before kickoff a participant gets a screen with **no count on it**
+    (Rule 7.1). Not a greyed-out list, not "7 challenges", nothing. A
+    number is the leak most easily left in by accident.
+    """
+    hackathon = _event(slug)
+    may_read = roles.may_see_challenges(request.user, hackathon)
+    may_author = can(request.user, hackathon, "author_challenges")
+
+    team = teams.team_for(request.user, hackathon)
+    blocker = submissions.submit_blocker(request.user, hackathon)
+    rows = []
+    if may_read:
+        mine = {}
+        if team is not None:
+            mine = {s.challenge_id: s for s in team.submissions.prefetch_related("grades", "files")}
+        for challenge in hackathon.challenges.prefetch_related("deliverables"):
+            submission = mine.get(challenge.pk)
+            rows.append({
+                "challenge": challenge,
+                "submission": submission,
+                "missing": submissions.missing_labels(challenge, submission),
+                "submitted": challenge.submissions.count(),
+                "points": scoring.points_for(submission) if submission else None,
+                "awaiting_judge": (
+                    challenge.kind == Challenge.CREATIVITY
+                    and submission is not None
+                    and not submission.grades.exists()
+                ),
+            })
+
+    return render(request, "crashtech/event_challenges.html", {
+        "hackathon": hackathon,
+        "can_manage": can(request.user, hackathon, "event_settings"),
+        "may_read": may_read,
+        "may_author": may_author,
+        "rows": rows,
+        "my_team": team,
+        "blocker": blocker,
+        "card": submissions.team_card(team),
+        "secret": not hackathon.challenges_visible,
+        "kickoff": hackathon.milestones.filter(kind=Milestone.KICKOFF).first(),
+    })
+
+
+@signed_in
+def challenge_edit(request, slug, pk=None):
+    """**Planning / tech lead.** Writing one challenge.
+
+    The kind picker explains itself on the screen rather than in a manual
+    (Rule 7.2), because the choice between the three is the single most
+    consequential decision a tech lead makes and it is not obvious from
+    three words. `measured` is the one the 2026 feedback actually asked
+    for, so the screen says so.
+    """
+    hackathon = _event(slug)
+    _require(request.user, hackathon, "author_challenges")
+    challenge = _challenge(hackathon, pk) if pk else None
+
+    if request.method == "POST":
+        if request.POST.get("delete") and challenge:
+            if challenge.submissions.exists():
+                messages.error(
+                    request,
+                    "Teams have already submitted to this challenge, so it stays. "
+                    "Deleting it would delete their work.",
+                )
+                return redirect("crashtech:challenge_edit", slug=hackathon.slug, pk=challenge.pk)
+            challenge.delete()
+            messages.success(request, "Challenge deleted.")
+            return redirect("crashtech:challenges", slug=hackathon.slug)
+
+        if request.POST.get("add_deliverable") and challenge:
+            label = (request.POST.get("label") or "").strip()
+            if label:
+                Deliverable.objects.create(
+                    challenge=challenge, label=label,
+                    kind=request.POST.get("kind") or Deliverable.FILE,
+                    purpose=request.POST.get("purpose") or Deliverable.ARTIFACT,
+                    required=bool(request.POST.get("required")),
+                    help_text=(request.POST.get("help_text") or "").strip(),
+                    order=challenge.deliverables.count(),
+                )
+            return redirect("crashtech:challenge_edit", slug=hackathon.slug, pk=challenge.pk)
+
+        if request.POST.get("drop_deliverable") and challenge:
+            challenge.deliverables.filter(pk=request.POST["drop_deliverable"]).delete()
+            return redirect("crashtech:challenge_edit", slug=hackathon.slug, pk=challenge.pk)
+
+        title = (request.POST.get("title") or "").strip()
+        if not title:
+            messages.error(request, "A challenge needs a title.")
+        else:
+            if challenge is None:
+                challenge = Challenge(
+                    hackathon=hackathon, created_by=request.user,
+                    order=hackathon.challenges.count(),
+                    # Rule 7.1: written in advance, invisible until kickoff.
+                    # Never default to visible, whatever the event's status.
+                    visible=False,
+                )
+            challenge.title = title
+            challenge.brief = (request.POST.get("brief") or "").strip()
+            challenge.kind = request.POST.get("kind") or Challenge.COMPLETION
+            challenge.points = max(0, int(request.POST.get("points") or 0))
+            challenge.metric_name = (request.POST.get("metric_name") or "").strip()
+            challenge.metric_unit = (request.POST.get("metric_unit") or "").strip()
+            challenge.metric_direction = (
+                request.POST.get("metric_direction") or Challenge.HIGHER
+            )
+            challenge.rank_points = _parse_rank_points(request.POST.get("rank_points"))
+            challenge.max_grade = max(1, int(request.POST.get("max_grade") or 10))
+            challenge.criteria = (request.POST.get("criteria") or "").strip()
+            challenge.save()
+            scoring.recompute_challenge(challenge)
+            messages.success(request, challenge.title + " saved.")
+            return redirect("crashtech:challenge_edit", slug=hackathon.slug, pk=challenge.pk)
+
+    return render(request, "crashtech/challenge_edit.html", {
+        "hackathon": hackathon,
+        "can_manage": can(request.user, hackathon, "event_settings"),
+        "challenge": challenge,
+        "deliverables": challenge.deliverables.all() if challenge else [],
+        "kinds": Challenge.KINDS,
+        "deliverable_kinds": Deliverable.KINDS,
+        "purposes": Deliverable.PURPOSES,
+        "directions": Challenge.DIRECTIONS,
+        "rank_points_text": ", ".join(str(n) for n in (challenge.rank_points if challenge else [])),
+    })
+
+
+def _parse_rank_points(raw):
+    """Turn "50, 30, 20" into [50, 30, 20], forgiving about how it was typed.
+
+    A tech lead types this once, under time pressure, and the difference
+    between a comma and a space should not be a validation error.
+    """
+    out = []
+    for piece in (raw or "").replace(",", " ").split():
+        try:
+            out.append(max(0, int(piece)))
+        except ValueError:
+            continue
+    return out
+
+
+@signed_in
+def challenge_preview(request, slug, pk):
+    """**Planning / tech lead.** Exactly what a participant will see.
+
+    Its own route rather than a flag on the authoring screen, because the
+    point is to look at the participant's screen and not at a rendering of
+    the editor (user_journeys.md 2.2). A challenge is written days early
+    and read once, at speed, by somebody who has twenty-four hours. This
+    is the only chance to notice that the brief never says what to
+    actually submit.
+    """
+    hackathon = _event(slug)
+    _require(request.user, hackathon, "author_challenges")
+    challenge = _challenge(hackathon, pk)
+    return render(request, "crashtech/challenge_submit.html", {
+        "hackathon": hackathon,
+        "can_manage": can(request.user, hackathon, "event_settings"),
+        "challenge": challenge,
+        "submission": None,
+        "checklist": submissions.checklist(challenge, None),
+        "missing": submissions.missing_labels(challenge, None),
+        "blocker": None,
+        "preview": True,
+        "my_team": None,
+        "upload_token": None,
+        "upload_url": None,
+        "upload_qr": None,
+        "reported_text": "",
+    })
+
+
+@signed_in
+def challenge_submit(request, slug, pk):
+    """**Event screen.** Turning work in, at 3am, on bad wifi.
+
+    A checklist, not a form: every declared deliverable on screen with
+    either what is already in or its own name as the thing still needed
+    (Rule 11.6). Saving part of it is normal and expected, because the
+    alternative pushes every team into the last ten minutes.
+    """
+    hackathon = _event(slug)
+    if not roles.may_see_challenges(request.user, hackathon):
+        raise PermissionDenied
+    challenge = _challenge(hackathon, pk)
+    team = teams.team_for(request.user, hackathon)
+    blocker = submissions.submit_blocker(request.user, hackathon)
+
+    if request.method == "POST":
+        if blocker:
+            messages.error(request, blocker)
+            return redirect("crashtech:challenge_submit", slug=hackathon.slug, pk=challenge.pk)
+        try:
+            submission, _created = submissions.save_submission(
+                request.user, team, challenge,
+                data=request.POST, files=request.FILES,
+            )
+        except submissions.SubmitError as exc:
+            messages.error(request, str(exc))
+        else:
+            # Rule 11.6: what landed, named, and what it is worth. Never
+            # "submitted successfully" with nothing to check it against.
+            still = submissions.missing_labels(challenge, submission)
+            if still:
+                messages.success(request, "Saved. Still needed: " + ", ".join(still))
+            elif challenge.kind == Challenge.CREATIVITY:
+                messages.success(
+                    request,
+                    "Saved, and complete. This one is graded by judges after the event.",
+                )
+            else:
+                messages.success(
+                    request,
+                    "Saved, and complete. "
+                    + str(scoring.points_for(submission))
+                    + " points on the board.",
+                )
+        return redirect("crashtech:challenge_submit", slug=hackathon.slug, pk=challenge.pk)
+
+    submission = submissions.submission_for(team, challenge)
+    token = qr = upload_url = None
+    if team is not None and submissions.image_deliverables(challenge).exists():
+        token = submissions.upload_token_for(team, challenge)
+        upload_url = request.build_absolute_uri(
+            reverse("crashtech:upload_by_token", args=[token.token]),
+        )
+        qr = submissions.qr_data_uri(upload_url)
+
+    return render(request, "crashtech/challenge_submit.html", {
+        "hackathon": hackathon,
+        "can_manage": can(request.user, hackathon, "event_settings"),
+        "challenge": challenge,
+        "submission": submission,
+        "checklist": submissions.checklist(challenge, submission),
+        "missing": submissions.missing_labels(challenge, submission),
+        "points": scoring.points_for(submission) if submission else None,
+        "blocker": blocker,
+        "preview": False,
+        "my_team": team,
+        "upload_token": token,
+        "upload_url": upload_url,
+        "upload_qr": qr,
+        "reported_text": submissions.tidy(submission.reported_value) if submission else "",
+    })
+
+
+def upload_by_token(request, token):
+    """**Event screen, and the only one with no account behind it.**
+
+    The laptop is signed in. The phone that photographs the bench is not,
+    and asking somebody to type a password into a phone at 3am is how the
+    photograph does not get taken (Rule 7.6). The token carries the team
+    and the challenge, so the upload cannot land on the wrong one.
+    """
+    row = get_object_or_404(UploadToken, token=token)
+    if not row.is_valid:
+        return render(request, "crashtech/upload_expired.html", {
+            "hackathon": row.challenge.hackathon,
+        }, status=410)
+
+    challenge = row.challenge
+    deliverables = list(submissions.image_deliverables(challenge))
+    if request.method == "POST":
+        submission, _ = Submission.objects.get_or_create(challenge=challenge, team=row.team)
+        saved = []
+        for deliverable in deliverables:
+            upload = request.FILES.get("d" + str(deliverable.pk))
+            if not upload:
+                continue
+            existing = submission.files.filter(deliverable=deliverable).first()
+            if existing:
+                existing.file = upload
+                existing.save(update_fields=["file"])
+            else:
+                SubmissionFile.objects.create(
+                    submission=submission, deliverable=deliverable, file=upload,
+                )
+            saved.append(deliverable.label)
+        return render(request, "crashtech/upload_done.html", {
+            "hackathon": challenge.hackathon, "challenge": challenge,
+            "team": row.team, "saved": saved,
+        })
+
+    return render(request, "crashtech/upload_by_token.html", {
+        "hackathon": challenge.hackathon, "challenge": challenge,
+        "team": row.team, "deliverables": deliverables,
+    })
+
+
+@signed_in
+def event_standings(request, slug):
+    """**Planning.** The leaderboard, which is computed and never stored.
+
+    Gated by `leaderboard_visibility` until results are published, and
+    admin-only by default (Rule 8.4). A team's **own** score is not gated
+    by this and lives on the challenges screen, because those are two
+    different questions and conflating them is what makes an event feel
+    like submitting into silence.
+    """
+    hackathon = _event(slug)
+    if not roles.may_see_standings(request.user, hackathon):
+        raise PermissionDenied
+    return render(request, "crashtech/event_standings.html", {
+        "hackathon": hackathon,
+        "can_manage": can(request.user, hackathon, "event_settings"),
+        "rows": scoring.leaderboard(hackathon),
+        "published": bool(hackathon.results_published_at),
+        "my_team": teams.team_for(request.user, hackathon),
     })

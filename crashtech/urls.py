@@ -44,4 +44,20 @@ urlpatterns = [
     # The one event screen an admin owns: a queue of people, a box of
     # boards, five seconds each (Rule 6.4).
     path("e/<slug:slug>/kit-desk/", views.event_kit_desk, name="kit_desk"),
+
+    path("e/<slug:slug>/challenges/", views.event_challenges, name="challenges"),
+    path("e/<slug:slug>/challenges/new/", views.challenge_edit, name="challenge_new"),
+    path("e/<slug:slug>/challenges/<int:pk>/edit/", views.challenge_edit, name="challenge_edit"),
+    # A separate route from the editor on purpose: the point is to look at
+    # the participant's screen, not at a rendering of the editor.
+    path("e/<slug:slug>/challenges/<int:pk>/preview/", views.challenge_preview, name="challenge_preview"),
+    path("e/<slug:slug>/challenges/<int:pk>/submit/", views.challenge_submit, name="challenge_submit"),
+    path("e/<slug:slug>/standings/", views.event_standings, name="standings"),
+]
+
+# The QR target. Deliberately short, deliberately outside /e/<slug>/, and
+# deliberately without a login: it is typed or scanned by a phone that is
+# not signed in and never will be (Rule 7.6).
+urlpatterns += [
+    path("u/<str:token>/", views.upload_by_token, name="upload_by_token"),
 ]

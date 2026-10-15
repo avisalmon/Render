@@ -128,6 +128,7 @@ markers = [
     "sprc1: SPR-C.1 CrashTech the skeleton and the seal: own app, own base, own auth, the models, the matrix",
     "sprc2: SPR-C.2 CrashTech the event, its lifecycle and its roles: create, settings, timeline, people, readiness",
     "sprc3: SPR-C.3 CrashTech registration, teams and the kit desk",
+    "sprc4: SPR-C.4 CrashTech challenges, submitting and what a submission is worth",
     "memzscreens: memz's screen contract - every memz screen, in every state, rendered on a phone (tests/test_memz_screens.py)",
     "screens: the screen contract - every מט״צים screen, in every state, rendered",
     "sprmobile: real-browser phone checks for מט״צים (tests/test_matazim_mobile.py)",

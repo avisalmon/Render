@@ -1,0 +1,25 @@
+{% extends "crashtech/base.html" %}
+{% block title %}Uploaded{% endblock %}
+{% block screen %}upload-done{% endblock %}
+{% block nav %}{% endblock %}
+{% comment %}Rule 11.6 on the smallest possible screen: name what landed.
+"Upload successful" with nothing to check it against is the 2026
+complaint, and this phone has no session to go and check with.{% endcomment %}
+{% block content %}
+<h1 style="font-size:21px">{% if saved %}That is in{% else %}Nothing was chosen{% endif %}</h1>
+{% if saved %}
+  <div class="ct-card">
+    <p>Saved for {{ team.name|default:team.anon_label }} on
+      <b>{{ challenge.title }}</b>:</p>
+    <ul style="margin:0;padding-left:20px">
+      {% for label in saved %}<li>{{ label }}</li>{% endfor %}
+    </ul>
+    <p class="ct-fine" style="margin-top:12px">It is on the laptop's submit
+      screen now. You can close this.</p>
+  </div>
+  <a class="ct-btn ct-btn--wide" href="{{ request.path }}">Upload another</a>
+{% else %}
+  <div class="ct-empty">Pick a photo and press Upload.</div>
+  <a class="ct-btn ct-btn--wide" href="{{ request.path }}" style="margin-top:12px">Back</a>
+{% endif %}
+{% endblock %}

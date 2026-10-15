@@ -1,0 +1,123 @@
+{% extends "crashtech/base.html" %}{% load crashtech_tags %}
+{% block title %}Challenges &middot; {{ hackathon.name }}{% endblock %}
+{% block screen %}challenges{% endblock %}
+{% block nav %}{% include "crashtech/_event_nav.html" %}{% endblock %}
+{% block milestone %}<span class="ct-milestone">{{ hackathon.get_status_display }}</span>{% endblock %}
+{% comment %}
+One screen, three readers (views.event_challenges). The secrecy branch is
+first and absolute: a participant before kickoff gets a sentence and a
+date, and NOTHING that implies a quantity. No "7 challenges", no stub
+rows, no count. A number here is the leak most easily left in by accident.
+{% endcomment %}
+{% block content %}
+{% ct_may_see_standings user hackathon as may_read_standings %}
+
+{% if not may_read %}
+  <h1>The challenges</h1>
+  <div class="ct-card">
+    <p>They stay sealed until the event starts. Every one of them opens at
+      the same moment, for everybody, and the clock starts then.</p>
+    {% if kickoff and kickoff.occurs_at %}
+      <p class="ct-fine">Kickoff: <b class="ct-mono">{{ kickoff.occurs_at|date:"d M Y, H:i" }}</b></p>
+    {% endif %}
+    <p class="ct-fine">Until then: collect your kit and practise with the
+      examples in the event repository. Nothing in those examples is one of
+      the challenges.</p>
+  </div>
+
+{% else %}
+  <h1>Challenges</h1>
+
+  {% if secret %}
+    {% comment %}Only a tech lead, admin or judge reaches this, and the
+    warning matters: an unsaved draft here is invisible to everybody else
+    and will stay invisible until the irreversible kickoff.{% endcomment %}
+    <div class="ct-note ct-note--warn">
+      Not yet visible to participants. Every challenge below becomes visible
+      at once when the event goes live, and that cannot be undone.
+    </div>
+  {% endif %}
+
+  {% if my_team %}
+    <div class="ct-card" style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
+      <span class="ct-cap" style="margin:0">Your points</span>
+      <b class="ct-mono" style="font-size:30px;line-height:1">{{ card.total }}</b>
+      <span class="ct-fine">{{ my_team.name|default:my_team.anon_label }}
+        {% if not may_read_standings %}&middot; the standings open when results are published{% endif %}</span>
+    </div>
+  {% endif %}
+
+  {% if blocker and my_team %}
+    <p class="ct-note ct-note--warn">{{ blocker }}</p>
+  {% endif %}
+
+  {% for row in rows %}
+    <div class="ct-row" style="align-items:flex-start">
+      <span class="ct-row-main">
+        <b style="font-size:15px">{{ row.challenge.title }}</b>
+        <span>
+          {% if row.challenge.kind == 'measured' %}
+            Ranked on {{ row.challenge.metric_name|default:"the result" }}{% if row.challenge.metric_unit %} ({{ row.challenge.metric_unit }}){% endif %}
+            &middot; {{ row.challenge.get_metric_direction_display|lower }}
+          {% elif row.challenge.kind == 'creativity' %}
+            Judged after the event &middot; out of {{ row.challenge.max_grade }}
+          {% else %}
+            {{ row.challenge.points }} points for getting it working
+          {% endif %}
+        </span>
+        {% if row.submission and row.missing %}
+          {% comment %}Rule 11.6: the missing things by name, on the list
+          screen, so a team does not have to open each one to find out.{% endcomment %}
+          <span style="color:var(--ct-amber)">Still needed: {{ row.missing|join:", " }}</span>
+        {% endif %}
+      </span>
+
+      {% if row.submission %}
+        {% if row.awaiting_judge %}
+          {% comment %}Rule 11.8: never a 0 here. A zero reads as a failed
+          attempt, and this is a pending one.{% endcomment %}
+          <span class="ct-tag ct-tag--wait">Judged later</span>
+        {% elif row.missing %}
+          <span class="ct-tag ct-tag--wait">Part in</span>
+        {% else %}
+          <span class="ct-tag ct-tag--go"><span class="ct-mono">{{ row.points }}</span> pts</span>
+        {% endif %}
+      {% endif %}
+
+      {% if may_author %}
+        {% comment %}What a tech lead actually wants to know while looking at
+        this list: has anybody got it, and is this one finished. Neither was
+        on the screen, which made three rows of titles and nothing else.{% endcomment %}
+        {% if not row.challenge.is_finished %}
+          <span class="ct-tag ct-tag--stop">Nothing to turn in</span>
+        {% endif %}
+        <span class="ct-fine ct-mono" style="white-space:nowrap">{{ row.submitted }} in</span>
+        <a class="ct-btn" href="{% url 'crashtech:challenge_edit' hackathon.slug row.challenge.pk %}"
+           style="min-height:40px;padding:8px 13px;font-size:13px">Edit</a>
+        <a class="ct-btn" href="{% url 'crashtech:challenge_preview' hackathon.slug row.challenge.pk %}"
+           style="min-height:40px;padding:8px 13px;font-size:13px">Preview</a>
+      {% elif not blocker %}
+        <a class="ct-btn ct-btn--primary" href="{% url 'crashtech:challenge_submit' hackathon.slug row.challenge.pk %}"
+           style="min-height:44px;padding:9px 16px">{% if row.submission %}Open{% else %}Start{% endif %}</a>
+      {% else %}
+        <a class="ct-btn" href="{% url 'crashtech:challenge_submit' hackathon.slug row.challenge.pk %}"
+           style="min-height:44px;padding:9px 16px">Read</a>
+      {% endif %}
+    </div>
+  {% empty %}
+    <div class="ct-empty">
+      {% if may_author %}
+        Nothing written yet. A challenge takes a title, a kind, and a list of
+        what a team has to turn in.
+      {% else %}
+        No challenges have been written for this event.
+      {% endif %}
+    </div>
+  {% endfor %}
+
+  {% if may_author %}
+    <a class="ct-btn ct-btn--primary" href="{% url 'crashtech:challenge_new' hackathon.slug %}"
+       style="margin-top:8px">Write a challenge</a>
+  {% endif %}
+{% endif %}
+{% endblock %}

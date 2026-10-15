@@ -5,12 +5,14 @@ Sprints and their status. Spec references are
 and the spec, updated together in the commit that acts on them
 (Rule 14.1).
 
-**Status: C.1 and C.2 live in production, C.3 built in dev.** An admin can
+**Status: C.1 and C.2 live in production, C.3 and C.4 built in dev.** An admin can
 create an event, shape it, lay out its timeline, appoint people by email
 before they have accounts, decide applications, and hand out hardware at a
-desk built for a queue. Participants can apply and form teams inside the
-rules. 102 CrashTech tests, 110 including the 2026 platform's. C.4 is
-next.
+desk built for a queue. A tech lead can write challenges of three kinds
+and declare what each one needs; a team can turn work in against a
+checklist that names what is still missing, and sees its own score while
+the standings stay shut. 161 CrashTech tests, 197 including the 2026
+platform's. C.5 is next.
 
 ---
 
@@ -21,7 +23,7 @@ next.
 | C.1 | The skeleton and the seal | The app exists, is sealed both ways, has its own base template and its own auth screens, and every model with its migration and its admin | `DONE (dev), 2026-10-14` |
 | C.2 | The event, its lifecycle and its roles | Create an event, advance it by checklist, grant roles, invite by email | `DONE (dev), 2026-10-14` |
 | C.3 | Registration, teams, hardware | Apply, accept, form a team, define the kit, and the kit desk | `DONE (dev), 2026-10-15` |
-| C.4 | Challenges and submitting | Author challenges with deliverables, kickoff, submit, tentative points | `TODO` |
+| C.4 | Challenges and submitting | Author challenges with deliverables, kickoff, submit, tentative points | `DONE (dev), 2026-10-15` |
 | C.5 | Judging, results, publishing | Shortlist, grade, verify, and the one gated click | `TODO` |
 | C.6 | The museum and media | The public permanent page, uploads to GCS, moderation | `TODO` |
 | C.7 | Research | Studies, questionnaires per milestone, consent, data for researchers | `TODO` |
@@ -164,7 +166,7 @@ with their guard removed.
 
 ---
 
-## SPR-C.4 — Challenges and submitting `TODO`
+## SPR-C.4 — Challenges and submitting `DONE (dev), 2026-10-15`
 
 | Feature | Description | Spec |
 | --- | --- | --- |
@@ -177,7 +179,25 @@ with their guard removed.
 | F-C.4.7 | Tentative points on submit; creativity renders "judged after the event", never `0` | Rule 7.4, 11.8 |
 | F-C.4.8 | Demo video is a URL, with no upload path, told at kit pickup | Rule 7.5 |
 | F-C.4.9 | QR upload for images | Rule 7.6 |
-| F-C.4.10 | Own score always visible; standings gated | Rule 8.4 |
+| F-C.4.10 | Own score always visible; standings gated | Rule 8.4 | DONE — `tests/test_spr_c_4.py` (59), marker `sprc4` |
+
+**Three things this sprint changed that were not on the list.**
+
+A refusal used to cost a team everything they had already typed:
+`save_submission` ran inside one transaction and raised on the first
+problem, so ticking "it worked" too early rolled back the two fields
+filled in beside it. It now saves what is valid, collects the problems,
+and complains afterwards. At 3am that is the difference between a
+correction and a retyped submission.
+
+Every `PermissionDenied` under `/crashtech/` was rendering **babook's**
+403 page, and had been since C.1. Django's error handlers are
+project-wide and CrashTech was never added to `mysite/errors.py`. No
+test caught it because 403 is 403 whichever page it is; a screenshot of
+one did. Fixed in `crashtech/errors.py`, with a 404 and a 500 besides.
+
+The phone upload printed the URL as text and expected somebody to type
+forty characters of random token. It is now an actual QR, inline.
 
 ---
 

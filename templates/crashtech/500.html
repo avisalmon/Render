@@ -1,0 +1,14 @@
+{% extends "crashtech/base.html" %}
+{% block title %}Something broke &middot; CrashTech{% endblock %}
+{% block screen %}500{% endblock %}
+{% block nav %}{% endblock %}
+{% comment %}Rendered when something has already failed, so it asks nothing
+of the database and nothing of the session. It is also the one page most
+likely to be read at 3am by somebody mid-submission, which is why it says
+what to do rather than apologising.{% endcomment %}
+{% block content %}
+<h1>Something broke</h1>
+<p class="ct-lede">Not your doing, and nothing you had already saved is lost.</p>
+<p>Try again in a moment. If you were in the middle of submitting, open the
+  challenge again and check what is listed as still needed.</p>
+{% endblock %}

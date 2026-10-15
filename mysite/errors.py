@@ -1,7 +1,7 @@
 """Project-wide error handler dispatch.
 
 Django only allows one handler403/404/500 for the whole project, but the
-isolated sub-products (matazim, ustrip, memz, sensorlab) each need their own error
+isolated sub-products (matazim, ustrip, memz, sensorlab, crashtech) each need their own error
 pages so none leaks babook's chrome into their walls (REQ-M.2; ustrip spec
 §1; memz spec §12.1). This composes them by path prefix rather than teaching
 any app about another — they stay unaware of each other's existence,
@@ -12,6 +12,7 @@ through to Django's own defaults, which is what renders babook's own
 
 from django.views import defaults
 
+from crashtech import errors as crashtech_errors
 from exo import errors as exo_errors
 from matazim import errors as matazim_errors
 from memz import errors as memz_errors
@@ -30,6 +31,8 @@ def page_not_found(request, exception=None):
         return sensorlab_errors.page_not_found(request, exception)
     if request.path.startswith(exo_errors.PREFIX):
         return exo_errors.page_not_found(request, exception)
+    if request.path.startswith(crashtech_errors.PREFIX):
+        return crashtech_errors.page_not_found(request, exception)
     return defaults.page_not_found(request, exception)
 
 
@@ -44,6 +47,8 @@ def server_error(request):
         return sensorlab_errors.server_error(request)
     if request.path.startswith(exo_errors.PREFIX):
         return exo_errors.server_error(request)
+    if request.path.startswith(crashtech_errors.PREFIX):
+        return crashtech_errors.server_error(request)
     return defaults.server_error(request)
 
 
@@ -58,4 +63,6 @@ def permission_denied(request, exception=None):
         return sensorlab_errors.permission_denied(request, exception)
     if request.path.startswith(exo_errors.PREFIX):
         return exo_errors.permission_denied(request, exception)
+    if request.path.startswith(crashtech_errors.PREFIX):
+        return crashtech_errors.permission_denied(request, exception)
     return defaults.permission_denied(request, exception)

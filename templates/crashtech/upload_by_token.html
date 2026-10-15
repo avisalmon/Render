@@ -1,0 +1,30 @@
+{% extends "crashtech/base.html" %}
+{% block title %}Upload a photo &middot; {{ challenge.title }}{% endblock %}
+{% block screen %}upload{% endblock %}
+{% comment %}
+The only screen in the product with no account behind it (Rule 7.6), and
+the smallest. A phone held in one hand at 3am: a heading that says which
+challenge this is so a tired person can tell they scanned the right code,
+one file control per image, one big button, nothing else. No nav, because
+there is nowhere to go and no session to go there with.
+{% endcomment %}
+{% block nav %}{% endblock %}
+{% block content %}
+<h1 style="font-size:21px">Photo for {{ challenge.title }}</h1>
+<p class="ct-lede">{{ team.name|default:team.anon_label }} &middot; {{ hackathon.name }}</p>
+
+{% if deliverables %}
+  <form method="post" enctype="multipart/form-data">{% csrf_token %}
+    {% for item in deliverables %}
+      <label class="ct-field"><span><b style="color:var(--ct-ink)">{{ item.label }}</b>
+        {% if item.help_text %}<br>{{ item.help_text }}{% endif %}</span>
+        <input class="ct-input" name="d{{ item.pk }}" type="file"
+               accept="image/*" capture="environment" style="min-height:52px"></label>
+    {% endfor %}
+    <button class="ct-btn ct-btn--primary ct-btn--wide" type="submit"
+            style="min-height:56px;font-size:17px">Upload</button>
+  </form>
+{% else %}
+  <div class="ct-empty">This challenge does not ask for a photo.</div>
+{% endif %}
+{% endblock %}

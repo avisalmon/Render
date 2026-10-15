@@ -1,9 +1,22 @@
-{% comment %}
+{% load crashtech_tags %}{% comment %}
 The event's own navigation. Only what this person may actually use
 (Rule 11.5: never show a control that cannot be used yet).
+
+Challenges and Standings are the two links that are visible to one role
+and invisible to another on the very same screen, so they ask the same
+functions the views enforce with rather than trusting a context key that
+one view might have forgotten to set.
 {% endcomment %}
+{% ct_may_see_challenges user hackathon as may_read_challenges %}
+{% ct_may_see_standings user hackathon as may_read_standings %}
 <a href="{% url 'crashtech:event_home' hackathon.slug %}">Overview</a>
+{% if may_read_challenges %}
+  <a href="{% url 'crashtech:challenges' hackathon.slug %}">Challenges</a>
+{% endif %}
 <a href="{% url 'crashtech:teams' hackathon.slug %}">Teams</a>
+{% if may_read_standings %}
+  <a href="{% url 'crashtech:standings' hackathon.slug %}">Standings</a>
+{% endif %}
 {% if can_manage %}
   <a href="{% url 'crashtech:registrations' hackathon.slug %}">Applications</a>
   <a href="{% url 'crashtech:kit_desk' hackathon.slug %}">Kit desk</a>

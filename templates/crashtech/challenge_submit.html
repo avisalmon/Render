@@ -1,0 +1,172 @@
+{% extends "crashtech/base.html" %}
+{% block title %}{{ challenge.title }} &middot; {{ hackathon.name }}{% endblock %}
+{% block screen %}submit{% endblock %}
+{% comment %}An EVENT screen (Rule 11.1): a phone, 3am, hands that have been
+holding a soldering iron. The nav is a single way back for the same reason
+the kit desk has one, and everything below is one column of large taps.{% endcomment %}
+{% block nav %}<a href="{% url 'crashtech:challenges' hackathon.slug %}">&larr; Challenges</a>{% endblock %}
+{% block milestone %}<span class="ct-milestone">{{ hackathon.get_status_display }}</span>{% endblock %}
+{% block content %}
+
+{% if preview %}
+  {% comment %}The tech lead is looking at the participant's screen, so the
+  screen has to actually be the participant's, with one unmistakable band
+  saying so.{% endcomment %}
+  <div class="ct-note ct-note--warn">
+    This is the participant's screen, exactly. Nothing you type here is saved.
+    <a href="{% url 'crashtech:challenge_edit' hackathon.slug challenge.pk %}">Back to editing</a>
+  </div>
+{% endif %}
+
+<h1>{{ challenge.title }}</h1>
+
+<div class="ct-card">
+  {% if challenge.kind == 'measured' %}
+    <p class="ct-cap" style="margin-bottom:6px">Ranked</p>
+    <p>Report your {{ challenge.metric_name|default:"result" }} and the points go
+      by finishing position. {{ challenge.get_metric_direction_display }}.
+      <b>Your score here moves if another team beats your number.</b></p>
+    {% if challenge.rank_points %}
+      <p class="ct-fine">Positions pay
+        {% for n in challenge.rank_points %}<b class="ct-mono">{{ n }}</b>{% if not forloop.last %}, {% endif %}{% endfor %}.</p>
+    {% endif %}
+  {% elif challenge.kind == 'creativity' %}
+    <p class="ct-cap" style="margin-bottom:6px">Judged after the event</p>
+    <p>There is no number to report on this one. Judges shortlist and grade it
+      once the 24 hours are over, out of {{ challenge.max_grade }}. Until then
+      it shows as waiting, not as zero.</p>
+    {% if challenge.criteria %}
+      <p class="ct-fine">What they are looking for: {{ challenge.criteria }}</p>
+    {% endif %}
+  {% else %}
+    <p class="ct-cap" style="margin-bottom:6px">Worth {{ challenge.points }} points</p>
+    <p>Get it working, turn in the proof, and the points land straight away on
+      your word. Judges spot-check only the scores that decide the winners.</p>
+  {% endif %}
+
+  {% if challenge.brief %}<p style="white-space:pre-wrap;margin-top:12px">{{ challenge.brief }}</p>{% endif %}
+</div>
+
+{% if blocker %}
+  <p class="ct-note ct-note--warn">{{ blocker }}</p>
+{% endif %}
+
+{% comment %}
+The checklist, which is the whole point of the screen (Rule 11.6). Every
+declared deliverable is a row, and a row is either in, with what is in it,
+or still outstanding BY ITS OWN NAME. The word "incomplete" appears
+nowhere in this product.
+{% endcomment %}
+<h2 style="margin-top:26px">What this needs</h2>
+
+{% if not checklist %}
+  <div class="ct-empty">Nothing has been declared for this challenge yet.</div>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data">{% csrf_token %}
+
+  {% if challenge.kind == 'measured' %}
+    <label class="ct-field">
+      <span>Your {{ challenge.metric_name|default:"result" }}{% if challenge.metric_unit %} in {{ challenge.metric_unit }}{% endif %}</span>
+      <input class="ct-input ct-mono" name="reported_value" inputmode="decimal"
+             style="font-size:19px;min-height:52px"
+             value="{{ reported_text }}"></label>
+  {% endif %}
+
+  {% for row in checklist %}
+    <div class="ct-card" style="margin-bottom:10px">
+      <p class="ct-cap" style="margin-bottom:7px">
+        {% if row.done %}<span style="color:var(--ct-primary)">In</span>
+        {% elif row.required %}<span style="color:var(--ct-amber)">Still needed</span>
+        {% else %}Optional{% endif %}
+        &middot; {{ row.purpose }}
+      </p>
+      <label class="ct-field" style="margin-bottom:0">
+        <span><b style="color:var(--ct-ink);font-size:14px">{{ row.label }}</b>
+          {% if row.help_text %}<br>{{ row.help_text }}{% endif %}</span>
+
+        {% if row.kind == 'video' %}
+          {% comment %}Rule 7.5. No file input exists on this path at all, and
+          the sentence says why so nobody goes looking for one.{% endcomment %}
+          <input class="ct-input" name="{{ row.field }}" type="url"
+                 placeholder="https://..." value="{{ row.value_text }}">
+          <span class="ct-fine">A link, on any host: YouTube, Drive, anywhere
+            that plays. Videos are not uploaded here.</span>
+        {% elif row.kind == 'number' %}
+          <input class="ct-input ct-mono" name="{{ row.field }}" inputmode="decimal"
+                 value="{{ row.value_text }}">
+        {% elif row.kind == 'text' %}
+          <textarea class="ct-input" name="{{ row.field }}" rows="3">{{ row.value_text }}</textarea>
+        {% elif row.kind == 'image' %}
+          <input class="ct-input" name="{{ row.field }}" type="file" accept="image/*" capture="environment">
+          {% if row.done %}<span class="ct-fine">In: {{ row.value_text }}. Choosing another replaces it.</span>{% endif %}
+        {% else %}
+          <input class="ct-input" name="{{ row.field }}" type="file">
+          {% if row.done %}<span class="ct-fine">In: {{ row.value_text }}. Choosing another replaces it.</span>{% endif %}
+        {% endif %}
+      </label>
+    </div>
+  {% endfor %}
+
+  <label class="ct-field"><span>Anything the judges should know</span>
+    <textarea class="ct-input" name="reported_note" rows="2">{{ submission.reported_note|default:'' }}</textarea></label>
+
+  {% if challenge.kind != 'creativity' %}
+    <label class="ct-row" style="align-items:flex-start;cursor:pointer">
+      <input type="checkbox" name="claimed_complete" value="1" style="margin-top:4px"
+             {% if submission.claimed_complete %}checked{% endif %}>
+      <span class="ct-row-main"><b>It worked</b>
+        <span>This is the claim the points are paid on, and the one a judge may
+          spot-check later.
+          {% if missing %}Still needs {{ missing|join:", " }} before you can make it.{% endif %}</span></span>
+    </label>
+  {% endif %}
+
+  <button class="ct-btn ct-btn--primary ct-btn--wide" type="submit"
+          style="margin-top:14px;min-height:54px;font-size:16px"
+          {% if blocker or preview %}disabled{% endif %}>
+    {% if submission %}Save what I have{% else %}Submit{% endif %}</button>
+  <p class="ct-fine" style="margin-top:8px">
+    Saving part of it is fine, as often as you like, right up to the deadline.
+  </p>
+</form>
+
+{% if submission and not preview %}
+  <div class="ct-card" style="margin-top:20px">
+    <p class="ct-cap">Where this stands</p>
+    {% if challenge.kind == 'creativity' %}
+      <p><b class="ct-tag ct-tag--wait">Judged after the event</b></p>
+    {% elif missing %}
+      <p>Part of it is in. Still needed: <b>{{ missing|join:", " }}</b>.</p>
+    {% else %}
+      <p><b class="ct-mono" style="font-size:26px">{{ points }}</b> points, on trust.</p>
+    {% endif %}
+    <p class="ct-fine">Last saved {{ submission.updated_at|date:"d M, H:i" }}
+      by {{ submission.submitted_by.email|default:"your team" }}.</p>
+  </div>
+{% endif %}
+
+{% if upload_token %}
+  {% comment %}Rule 7.6: the laptop is signed in, the phone holding the camera
+  is not, and nobody is typing a password into a phone at 3am.
+
+  An actual scannable code, not the URL as text. The first version printed
+  the link and expected somebody to type 40 characters of random token on a
+  phone, which is not a QR feature at all, it is a worse version of the
+  problem. White plate behind it on purpose: a dark QR on a dark ground does
+  not scan.{% endcomment %}
+  <div class="ct-card" style="margin-top:20px">
+    <p class="ct-cap">Uploading a photo from your phone</p>
+    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+      <img src="{{ upload_qr }}" alt="QR code to open the upload page on a phone"
+           width="132" height="132"
+           style="background:#fff;padding:6px;border-radius:6px;flex:0 0 auto">
+      <span class="ct-fine" style="flex:1;min-width:160px">
+        Point a phone camera at this. No sign-in, and whatever it uploads lands
+        on this challenge for your team.<br>
+        <a href="{{ upload_url }}">Or open the link here</a>
+      </span>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}
