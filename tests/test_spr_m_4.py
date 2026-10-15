@@ -49,12 +49,12 @@ def test_nothing_in_the_nav_points_at_itself(client, db):
         hrefs = re.findall(r'href="([^"]+)"', nav)
         assert len(set(hrefs)) == len(hrefs), f"{name} has a duplicated nav target"
         assert reverse("matazim:about") in hrefs
-        assert reverse("matazim:track") in hrefs
+        # REQ-M.191: the front door is minimal; the annual path is in the footer.
 
 
 def test_the_current_section_is_marked(client, db):
     """T-F-M.4.6-3: you should be able to tell where you are."""
-    html = client.get(reverse("matazim:track")).content.decode()
+    html = client.get(reverse("matazim:about")).content.decode()
     nav = html.split('id="mzNav"')[1].split("</nav>")[0]
     assert nav.count("is-active") == 1
 
@@ -124,8 +124,9 @@ def test_the_track_starts_at_joining_with_a_code(client, db):
     """T-F-M.4.3-2, REQ-M.177: מתמיינים is joining a leader with a code, and the
     page links to the code box, not to the test."""
     html = client.get(reverse("matazim:track")).content.decode()
-    assert reverse("matazim:code") in html
-    assert reverse("matazim:entrance_test") not in html
+    body = html.split("<main")[1].split("</main>")[0]       # the page, not the menu
+    assert reverse("matazim:code") in body
+    assert reverse("matazim:entrance_test") not in body
 
 
 # ---------------------------------------------------------------- F-M.4.4
@@ -148,7 +149,9 @@ def test_courses_is_honest_about_what_is_open(client, db):
     html = client.get(reverse("matazim:courses")).content.decode()
 
     assert reverse("matazim:register") in html or reverse("matazim:courses") in html
-    assert reverse("matazim:entrance_test") not in html, "a visitor was sent to the test"
+    # The menu now carries the test (REQ-M.191); the page itself must not push it.
+    page = html.split("<main")[1].split("</main>")[0]
+    assert reverse("matazim:entrance_test") not in page, "a visitor was sent to the test"
     assert "המסלול הנדרש" not in html, "a visitor was shown a member's track"
     assert "%" not in html.split("<main>")[-1].split("</main>")[0], (
         "a visitor was shown a progress figure that cannot be theirs"

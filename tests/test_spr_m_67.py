@@ -233,3 +233,48 @@ def test_nothing_says_matz_with_gershayim():
                     if pattern.search(line):
                         offenders.append(f"{path.relative_to(ROOT)}:{number}: {line.strip()[:60]}")
     assert not offenders, "מט״צ in what a person reads:\n" + "\n".join(offenders[:20])
+
+
+# ------------------------------------------- staff see the site as a student does
+
+
+def test_root_with_an_old_student_row_is_a_manager_not_a_pupil(client, world):
+    """Avi, 2026-10-15: signed in as himself he was shown a pupil's view because a
+    Student row left over from testing counted before his role did. The role wins
+    for the menu; the home is the student's (below)."""
+    from matazim.models import Student
+
+    root = User.objects.create_superuser("root@example.com", "root@example.com", PASSWORD)
+    Student.objects.create(user=root, leader=world["ramla"], status="in_training")
+    client.force_login(root)
+    html = client.get("/matazim/").content.decode()
+    nav = html[html.index('id="mzNav"'):html.index("</nav>", html.index('id="mzNav"'))]
+    assert "המסלול שלי" not in nav and "ניהול" in nav
+
+
+def test_a_manager_a_leader_and_root_see_the_home_a_student_sees(client, world):
+    """Avi, 2026-10-15: "as a pm or leader I want to see the web as a student that
+    passed the test and is assigned to a leader sees it". The student's eight tiles,
+    and their own door as one more, first."""
+    root = User.objects.create_superuser("root2@example.com", "root2@example.com", PASSWORD)
+    cases = [(world["pm"], 'href="/matazim/staff/"'),
+             (root, 'href="/matazim/staff/"'),
+             (world["ramla"].user, 'href="/matazim/leader/"')]
+    for who, door in cases:
+        client.force_login(who)
+        home = _main(client.get("/matazim/").content.decode())
+        assert home.count('class="mz-tile"') == 8, who          # the student's eight
+        assert home.count('class="mz-tile mz-tile-role"') == 1 and door in home
+        assert "טרום מטצ" in home
+
+
+def test_every_tile_opens_for_a_manager_and_a_leader(client, world):
+    """The student's tiles are only worth showing if they open for them."""
+    root = User.objects.create_superuser("root3@example.com", "root3@example.com", PASSWORD)
+    for who in (world["pm"], root, world["ramla"].user):
+        client.force_login(who)
+        for tile in ("/matazim/courses/", "/matazim/my-path/", "/matazim/community/",
+                     "/matazim/events/", "/matazim/my-work/", "/matazim/my-teaching/",
+                     "/matazim/classes/", "/matazim/updates/"):
+            status = client.get(tile, follow=True).status_code
+            assert status == 200, (who.email, tile, status)

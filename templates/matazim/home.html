@@ -19,10 +19,17 @@
 {% block content %}
 <div class="mz-container mz-home">
 
-  {% if stage == 'member' %}
+  {% if stage == 'member' or hero.kind == 'leader' or hero.kind == 'staff' %}
+    {% comment %}
+      Avi, 2026-10-15: a program manager, a leader and root see the site as a
+      student who passed the test and joined a leader sees it. Their own door is
+      one extra tile, first.
+    {% endcomment %}
     {% include "matazim/_year_banner.html" %}
     <h1 class="mz-home-title">{% if certified %}מטצ{% else %}טרום מטצ{% endif %}</h1>
     <ul class="mz-tiles">
+      {% if hero.kind == 'staff' %}<li><a class="mz-tile mz-tile-role" href="{% url 'matazim:staff_home' %}">ניהול</a></li>{% endif %}
+      {% if hero.kind == 'leader' %}<li><a class="mz-tile mz-tile-role" href="{% url 'matazim:leader_home' %}">האזור שלי</a></li>{% endif %}
       <li><a class="mz-tile" href="{% url 'matazim:courses' %}">ההדרכות</a></li>
       <li><a class="mz-tile" href="{% url 'matazim:my_path' %}">המסלול שלי</a></li>
       <li><a class="mz-tile" href="{% url 'matazim:community' %}">הקהילה</a></li>
@@ -36,14 +43,6 @@
   {% elif stage == 'test' %}
     <h1 class="mz-home-title">מבחן הכניסה</h1>
     <p class="mz-home-do"><a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:entrance_test' %}">להתחיל</a></p>
-
-  {% elif hero.kind == 'leader' %}
-    <h1 class="mz-home-title">מוביל/ה</h1>
-    <p class="mz-home-do"><a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:leader_home' %}">האזור שלי</a></p>
-
-  {% elif hero.kind == 'staff' %}
-    <h1 class="mz-home-title">ניהול התכנית</h1>
-    <p class="mz-home-do"><a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:staff_home' %}">לניהול</a></p>
 
   {% else %}
     <h1 class="mz-home-title">מטצים</h1>

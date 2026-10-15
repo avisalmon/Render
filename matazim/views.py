@@ -146,9 +146,15 @@ def _is_member(user):
 
     if not getattr(user, "is_authenticated", False):
         return False
+    # Avi, 2026-10-15: signed in as himself he got a pupil's home, because an old
+    # Student row from testing counted before his role did. The role wins: a
+    # program manager or a leader is never shown a pupil's view, whatever else
+    # is on their account.
+    if is_site_staff(user) or leader_of(user):
+        return False
     if Student.objects.filter(user=user).exists():
         return True
-    return not (leader_of(user) or candidate_of(user) or is_site_staff(user))
+    return not candidate_of(user)
 
 
 def _is_candidate(user):
@@ -268,7 +274,7 @@ def home(request):
         return redirect("matazim:join_leader")
 
     ctx = {"stage": stage, "hero": hero_state(request)}
-    if stage == MEMBER:
+    if stage == MEMBER or ctx["hero"]["kind"] in ("leader", "staff"):
         student = _student_of(request.user)
         ctx["certified"] = bool(student and student.status == "certified")
         ctx["year"] = year_context(request.user)

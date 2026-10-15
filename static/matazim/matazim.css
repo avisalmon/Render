@@ -3101,3 +3101,4 @@ a.mz-path-title:hover { color: var(--mz-link); }
   border-radius: var(--mz-radius-sm);
 }
 .mz-leaderlist-who { display: grid; gap: 2px; }
+.mz-tile-role { border-color: var(--mz-action); color: var(--mz-action-text, var(--mz-link)); }

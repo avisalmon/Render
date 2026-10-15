@@ -327,7 +327,10 @@ def test_staff_are_never_treated_as_pupils(client, world):
     assert _is_member(world["root"]) is False
 
     body = _login(client, "naomi@example.com").get("/matazim/").content.decode()
-    assert "המסלול שלי" not in body, "a pupil's menu item on a manager's screen"
+    # Avi, 2026-10-15: she sees the home a student sees, tiles included; what must
+    # not appear is a pupil's *menu*.
+    nav = body.split('id="mzNav"')[1].split("</nav>")[0]
+    assert "המסלול שלי" not in nav, "a pupil's menu item on a manager's screen"
 
 
 def test_looking_at_the_member_screens_joins_nothing(client, world):
