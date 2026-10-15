@@ -31,6 +31,7 @@ from .models import (
     EntranceAttempt,
     EntranceTarget,
     Event,
+    ProgramMilestone,
     Feedback,
     Institution,
     Leader,
@@ -296,6 +297,26 @@ class EventSerializer(serializers.ModelSerializer):
         # `cancelled_at` read-only: cancelling tells everybody who was invited,
         # so it is the `cancel` action and not a date somebody can set quietly.
         read_only_fields = ["id", "institution", "cancelled_at", "created_at"]
+
+
+class ProgramMilestoneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProgramMilestone
+        fields = [
+            "id", "institution", "order", "when_text", "starts_on", "ends_on",
+            "stage", "title", "activities", "is_peak_day",
+        ]
+        # The institution is the writer's own, never a field a caller sets.
+        read_only_fields = ["id", "institution"]
+
+    def validate(self, attrs):
+        from .year import milestone_dates_ok
+
+        starts = attrs.get("starts_on", getattr(self.instance, "starts_on", None))
+        ends = attrs.get("ends_on", getattr(self.instance, "ends_on", None))
+        if starts and not milestone_dates_ok(starts, ends):
+            raise serializers.ValidationError({"ends_on": "אבן דרך לא יכולה להסתיים לפני שהתחילה."})
+        return attrs
 
 
 class PostAuthorSerializer(PersonSerializer):

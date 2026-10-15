@@ -211,6 +211,8 @@ def my_path(request):
     Built from `request.user` and nothing in the URL, so there is no identifier
     here to tamper with and no way to ask about somebody else (REQ-M.22).
     """
+    from .year_views import year_context
+
     profile = member_profile(request.user)
     student = (
         Student.objects.filter(user=request.user)
@@ -256,6 +258,7 @@ def my_path(request):
             "path",
             student=student,
             stages=stages,
+            year=year_context(request.user),
             summary=summary,
             milestones=track.milestones(request.user, profile, student, state, per_course),
             legend=track.LEGEND,

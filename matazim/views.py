@@ -251,6 +251,7 @@ def home(request):
     """
     from .landing import hero_state, student_orientation
     from .public import counters, published_work
+    from .year_views import year_context
 
     return render(
         request,
@@ -266,6 +267,7 @@ def home(request):
             orientation=student_orientation(request),
             counters=counters(),
             showcase=published_work(),
+            year=year_context(request.user),
         ),
     )
 
@@ -668,8 +670,13 @@ def track(request):
     call to action there; this page is the journey itself.
     """
     from .content import FUNNEL
+    from .year_views import year_context
 
-    return render(request, "matazim/track.html", shell(request, "track", funnel=FUNNEL))
+    return render(
+        request,
+        "matazim/track.html",
+        shell(request, "track", funnel=FUNNEL, year=year_context(request.user)),
+    )
 
 
 def _extra_course_cards(request):

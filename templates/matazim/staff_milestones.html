@@ -1,0 +1,79 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.186 - the year's schedule, edited by the program manager.
+
+  Every row is a real object: it can be fixed and it can be removed without
+  going to /admin/. The date is written twice on purpose, once as the client
+  wrote it (what people read) and once as a real date (what the "now" and
+  "next" labels are worked out from).
+{% endcomment %}
+
+{% block title %}לוח השנה · ניהול · מט״צים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>לוח השנה</h1>
+    <p>אבני הדרך של השנה. כל מה שהתוכנית אומרת על "עכשיו" ו"הבא" נקרא מכאן.</p>
+  </div>
+
+  {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
+
+  <section class="mz-panel">
+    <h2>אבן דרך חדשה</h2>
+    <form method="post">
+      {% csrf_token %}
+      <label class="mz-field"><span>שלב</span>
+        <input type="text" name="title" maxlength="120" required value="{{ posted.title|default:'' }}"></label>
+      <label class="mz-field"><span>התאריך כפי שיוצג</span>
+        <input type="text" name="when_text" maxlength="80" required value="{{ posted.when_text|default:'' }}"
+               placeholder="למשל: עד אמצע נובמבר 2026"></label>
+      <label class="mz-field"><span>מתחיל</span>
+        <input type="date" name="starts_on" required value="{{ posted.starts_on|default:'' }}"></label>
+      <label class="mz-field"><span>מסתיים (אפשר להשאיר ריק)</span>
+        <input type="date" name="ends_on" value="{{ posted.ends_on|default:'' }}"></label>
+      <label class="mz-field"><span>סוג</span>
+        <select name="stage">{% for key, label in stages %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select></label>
+      <label class="mz-field"><span>עיקרי הפעילות</span>
+        <textarea name="activities" rows="3">{{ posted.activities|default:'' }}</textarea></label>
+      <label class="mz-checkline"><input type="checkbox" name="is_peak_day"> יום שיא</label>
+      <button type="submit" class="mz-btn mz-btn-primary">הוספה</button>
+    </form>
+  </section>
+
+  <section class="mz-panel">
+    <h2>השנה</h2>
+    {% for m in rows %}
+      <details class="mz-milestone-edit">
+        <summary>{{ m.when_text }} · {{ m.title }}</summary>
+        <form method="post" action="{% url 'matazim:edit_milestone' m.pk %}">
+          {% csrf_token %}
+          <label class="mz-field"><span>שלב</span>
+            <input type="text" name="title" maxlength="120" required value="{{ m.title }}"></label>
+          <label class="mz-field"><span>התאריך כפי שיוצג</span>
+            <input type="text" name="when_text" maxlength="80" required value="{{ m.when_text }}"></label>
+          <label class="mz-field"><span>מתחיל</span>
+            <input type="date" name="starts_on" required value="{{ m.starts_on|date:'Y-m-d' }}"></label>
+          <label class="mz-field"><span>מסתיים</span>
+            <input type="date" name="ends_on" value="{{ m.ends_on|date:'Y-m-d' }}"></label>
+          <label class="mz-field"><span>סוג</span>
+            <select name="stage">{% for key, label in stages %}<option value="{{ key }}"{% if key == m.stage %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+          <label class="mz-field"><span>סדר</span>
+            <input type="number" name="order" min="0" value="{{ m.order }}"></label>
+          <label class="mz-field"><span>עיקרי הפעילות</span>
+            <textarea name="activities" rows="3">{{ m.activities }}</textarea></label>
+          <label class="mz-checkline"><input type="checkbox" name="is_peak_day"{% if m.is_peak_day %} checked{% endif %}> יום שיא</label>
+          <button type="submit" class="mz-btn mz-btn-primary">שמירה</button>
+        </form>
+        <form method="post" action="{% url 'matazim:delete_milestone' m.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="mz-btn mz-btn-ghost">מחיקה</button>
+        </form>
+      </details>
+    {% empty %}
+      <p class="mz-muted">עוד אין אבני דרך.</p>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

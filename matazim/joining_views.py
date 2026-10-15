@@ -321,7 +321,10 @@ def leader_home(request):
         raise PermissionDenied
 
     from .landing import leader_dashboard
+    from .year import patrol_by_school, recruiting_deadline
+    from .year_views import year_context
 
+    year = year_context(request.user)
     return render(
         request,
         "matazim/leader_home.html",
@@ -330,6 +333,9 @@ def leader_home(request):
             "leader",
             leader=leader,
             leader_name=_name_of(leader),
+            # REQ-M.187 - the patrol of about ten, against the deadline.
+            year=year,
+            patrol=patrol_by_school(Student.objects.filter(leader=leader)),
             # SPR-M.58 — the group at a glance, and the numbers the program
             # manager sees about it, on the page a leader opens every day.
             dashboard=leader_dashboard(leader),

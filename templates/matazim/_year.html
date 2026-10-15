@@ -1,0 +1,23 @@
+{% comment %}
+  REQ-M.186 - the year's schedule, one row per milestone, as Atid wrote it.
+  "Under way" and "next" are said in words as well as colour, because status is
+  never a colour alone.
+
+  Needs: milestones, under_way, next_milestone.
+{% endcomment %}
+<ol class="mz-year" aria-label="לוח השנה של תשפ״ז">
+  {% for m in milestones %}
+    <li class="mz-year-row{% if m in under_way %} is-now{% endif %}{% if m == next_milestone %} is-next{% endif %}{% if m.is_peak_day %} is-peak{% endif %}">
+      <div class="mz-year-when">{{ m.when_text }}</div>
+      <div class="mz-year-body">
+        <h3>
+          {{ m.title }}
+          {% if m in under_way %}<span class="mz-tag mz-tag-doing">עכשיו</span>{% endif %}
+          {% if m == next_milestone %}<span class="mz-tag">הבא</span>{% endif %}
+          {% if m.is_peak_day %}<span class="mz-tag mz-tag-done">יום שיא</span>{% endif %}
+        </h3>
+        {% if m.activities %}<p>{{ m.activities }}</p>{% endif %}
+      </div>
+    </li>
+  {% endfor %}
+</ol>

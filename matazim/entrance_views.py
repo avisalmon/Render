@@ -278,6 +278,10 @@ def staff_home(request):
     # the program manager is who are his leaders and how can he get
     # progress." The reports stay one tap away; this page leads with the
     # people.
+    from .access import visible_students
+    from .year import patrol_by_school
+    from .year_views import year_context
+
     dashboard = pm_dashboard(request.user)
     counts = dict(dashboard["counts"])
     counts.update({
@@ -293,6 +297,8 @@ def staff_home(request):
             request,
             "staff",
             counts=counts,
+            year=year_context(request.user),
+            patrol=patrol_by_school(visible_students(request.user)),
             dashboard=dashboard,
             manager_name=_display_name_of(request.user),
             # REQ-M.87 — standing, so nobody has to remember to go looking.

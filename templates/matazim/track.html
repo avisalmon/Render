@@ -17,6 +17,12 @@
     <p>חמישה שלבים, משנה אחת. כל שלב נפתח כשמסיימים את הקודם.</p>
   </div>
 
+  <section class="mz-panel" id="mzYear">
+    <h2>לוח השנה של תשפ״ז</h2>
+    {% include "matazim/_year_banner.html" %}
+    {% include "matazim/_year.html" with milestones=year.milestones under_way=year.under_way next_milestone=year.next_milestone %}
+  </section>
+
   <ol class="mz-path">
     {% for stage in funnel %}
       <li class="mz-path-step">
@@ -36,9 +42,9 @@
   <section class="mz-panel mz-panel-soft">
     <h2>וכמה זמן זה לוקח?</h2>
     <p>
-      המסלול נפרס על שנת לימודים. אין לוח זמנים קשיח: לומדים בקצב שלכם, והמוביל
-      בבית הספר מלווה ומאשר את התוצרים. מי שנתקע לא נופל מהתוכנית, פשוט מנסה
-      שוב.
+      המסלול נפרס על שנת לימודים, ולימי השיא ולמועדי הגיוס יש תאריכים, למעלה.
+      בין התאריכים לומדים בקצב שלכם, והמוביל בבית הספר מלווה ומאשר את התוצרים.
+      מי שנתקע לא נופל מהתוכנית, פשוט מנסה שוב.
     </p>
   </section>
 </div>

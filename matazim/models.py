@@ -1551,3 +1551,67 @@ class OpenClassMember(models.Model):
     @property
     def is_active(self):
         return self.ended_at is None
+
+
+class ProgramMilestone(models.Model):
+    """REQ-M.186 - one row of the year's schedule, as the client wrote it.
+
+    Atid's kickoff mail for תשפ״ז carries a table of ten milestones, and Avi's
+    instruction on 2026-10-15 was that the site follows it. So the schedule is
+    data: a program manager edits a date here, and every screen that says what
+    comes next changes with it. It is not a paragraph in a template and not a
+    list in a module (Rule 1).
+
+    **Two kinds of date on purpose.** `when_text` is what the client wrote
+    ("עד אמצע נובמבר 2026", "דצמבר–פברואר") and is what a person reads.
+    `starts_on` and `ends_on` are what the code reads, to say which milestone is
+    now and which is next. Keeping both avoids two failures: a screen that
+    prints a precise date nobody promised, and a "next" that cannot be worked
+    out because the client's wording is a sentence.
+
+    **Order is the table's order.** `order` is the client's own sequence, which
+    is the one thing the sorted dates would get wrong ("February" appears twice).
+
+    Owned by an `Institution` like every other institutional row (§4.4), and
+    seeded once by a migration; after that the database is the only source.
+    """
+
+    SCREENING = "screening"
+    TRAINING = "training"
+    RECRUITING = "recruiting"
+    LEARNING = "learning"
+    PEAK = "peak"
+    PRACTICUM = "practicum"
+    STAGE_CHOICES = [
+        (SCREENING, "מיון וקבלה"),
+        (TRAINING, "הכשרת מובילים"),
+        (RECRUITING, "גיוס תלמידים"),
+        (LEARNING, "למידה עצמאית"),
+        (PEAK, "יום שיא"),
+        (PRACTICUM, "פרקטיקום"),
+    ]
+
+    institution = models.ForeignKey(
+        "Institution", on_delete=models.CASCADE,
+        related_name="milestones", verbose_name="מוסד",
+    )
+    order = models.PositiveIntegerField(default=0, verbose_name="סדר")
+    when_text = models.CharField(max_length=80, verbose_name="תאריך, כפי שנכתב")
+    starts_on = models.DateField(verbose_name="מתחיל")
+    ends_on = models.DateField(null=True, blank=True, verbose_name="מסתיים")
+    stage = models.CharField(max_length=20, choices=STAGE_CHOICES, default=LEARNING)
+    title = models.CharField(max_length=120, verbose_name="שלב")
+    activities = models.TextField(blank=True, default="", verbose_name="עיקרי הפעילות")
+    is_peak_day = models.BooleanField(default=False, verbose_name="יום שיא")
+
+    class Meta:
+        ordering = ["order", "starts_on"]
+        verbose_name = "אבן דרך"
+        verbose_name_plural = "אבני דרך"
+
+    def __str__(self):
+        return f"{self.when_text} · {self.title}"
+
+    @property
+    def last_day(self):
+        return self.ends_on or self.starts_on

@@ -4763,11 +4763,22 @@ stored, that a returned hand-in still counts (Q27), and that someone with no
 leader is not blocked (Q25). Perturbed: with the gate disabled four of them
 fail.
 
-## SPR-M.63 — The year  `TODO`
+## SPR-M.63 — The year  `DONE 2026-10-15`
 
 **Delivers.** REQ-M.180, REQ-M.181, REQ-M.186, REQ-M.187. `ProgramMilestone`,
 seed, המסלול השנתי page, now/next, patrol count against ten, nav in the order
 of the year.
+
+**Built.** `ProgramMilestone` (migrations 0039 and 0040, the second seeds the
+client's ten rows once per institution and never touches one that has rows),
+`access.visible_milestones`, `year.py` (`where_are_we`, `patrol_by_school`,
+`PATROL_TARGET`), the annual path with the schedule on it, the now/next banner,
+the program manager's schedule editor at `/matazim/staff/milestones/`, REST at
+`/matazim/api/milestones/` (public read, program-manager write, institution never
+settable), and the patrol count on the leader's and the manager's homes. The
+count is a target and never a cap. `tests/test_spr_m_63.py`: 13 tests; the
+screen contract, mobile and SPR-M.41 suites pass. The nav is not reordered yet
+(REQ-M.180 partly).
 
 ## SPR-M.64 — The entrance product is approved by a person  `TODO`
 

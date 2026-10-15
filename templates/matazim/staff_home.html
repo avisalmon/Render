@@ -99,6 +99,10 @@
     SPR-M.58, eight cards in a grid; it is a row now, because the people above
     are what somebody opens this page for.
   {% endcomment %}
+  {% include "matazim/_year_banner.html" %}
+
+  {% include "matazim/_patrol.html" %}
+
   <section class="mz-panel mz-panel-soft">
     <h2>דוחות וכלים</h2>
     <ul class="mz-toolrow">
@@ -107,6 +111,7 @@
       <li><a class="mz-linkbtn" href="{% url 'matazim:cohort' %}">המחזור</a></li>
       <li><a class="mz-linkbtn" href="{% url 'matazim:staff_courses' %}">כל ההדרכות</a></li>
       <li><a class="mz-linkbtn" href="{% url 'matazim:staff_events' %}">ימי שיא</a></li>
+      <li><a class="mz-linkbtn" href="{% url 'matazim:staff_milestones' %}">לוח השנה</a></li>
       <li><a class="mz-linkbtn" href="{% url 'matazim:new_request' %}?from={{ request.path|urlencode }}">בקשת שיפור</a></li>
       {% if user.is_superuser %}
         <li><a class="mz-linkbtn" href="{% url 'matazim:request_queue' %}">תור הבקשות</a></li>

@@ -1,0 +1,30 @@
+{% comment %}
+  REQ-M.187 - the patrol of about ten per school, counted against ten.
+
+  A target and never a cap: nobody is refused an eleventh. Atid's deadline
+  (from the recruiting milestone) is shown beside the count so the number is
+  read against the date. Status is a word as well as a colour.
+
+  Needs: patrol (rows from year.patrol_by_school), year.recruiting_deadline.
+{% endcomment %}
+{% if patrol %}
+  <section class="mz-panel mz-patrol" aria-label="הסיירת בכל בית ספר">
+    <h2>הסיירת: כ-{{ patrol.0.target }} תלמידים בכל בית ספר</h2>
+    {% if year.recruiting_deadline %}
+      <p class="mz-muted">הבחירה מסתיימת עד {{ year.recruiting_deadline|date:"j.n.Y" }}.</p>
+    {% endif %}
+    <ul class="mz-patrol-list">
+      {% for row in patrol %}
+        <li class="mz-patrol-row">
+          <span class="mz-patrol-school">{{ row.school|default:"לא צוין בית ספר" }}</span>
+          <span class="mz-patrol-count">{{ row.count }} מתוך כ-{{ row.target }}</span>
+          {% if row.missing %}
+            <span class="mz-tag">חסרים {{ row.missing }}</span>
+          {% else %}
+            <span class="mz-tag mz-tag-done">הסיירת מלאה</span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endif %}

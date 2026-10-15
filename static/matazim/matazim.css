@@ -2957,3 +2957,61 @@ a.mz-path-title:hover { color: var(--mz-link); }
   .mz-orient { padding: 18px 16px 16px; }
   .mz-orient-step.is-now { margin: 0; }
 }
+
+/* ------------------------------------------------- the year (SPR-M.63)
+ *
+ * REQ-M.186, REQ-M.187. Atid's schedule as rows, where the programme is today,
+ * and the patrol count. "Now" and "next" are tags with words, never colour
+ * alone; the row border is a second cue.
+ */
+.mz-year { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 10px; }
+.mz-year-row {
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  gap: 16px;
+  padding: 14px 16px;
+  background: var(--mz-card);
+  border: 1px solid var(--mz-line);
+  border-inline-start: 5px solid var(--mz-line);
+  border-radius: var(--mz-radius-sm);
+}
+.mz-year-row.is-peak { border-inline-start-color: var(--mz-accent); }
+.mz-year-row.is-next { border-inline-start-color: var(--mz-action); }
+.mz-year-row.is-now { border-inline-start-color: var(--mz-action); background: var(--mz-action-soft); }
+.mz-year-when { font-weight: 700; color: var(--mz-accent-text); }
+.mz-year-body h3 { margin: 0 0 4px; font-size: 1.05rem; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.mz-year-body p { margin: 0; color: var(--mz-body); }
+@media (max-width: 560px) {
+  .mz-year-row { grid-template-columns: 1fr; gap: 4px; }
+}
+
+.mz-year-banner {
+  margin: 0 0 16px;
+  padding: 12px 18px;
+  background: var(--mz-action-soft);
+  border: 1px solid var(--mz-line);
+  border-radius: var(--mz-radius-sm);
+  color: var(--mz-ink);
+}
+.mz-year-banner p { margin: 2px 0; }
+
+.mz-milestone-edit { border-top: 1px solid var(--mz-line); padding: 10px 0; }
+.mz-milestone-edit summary { cursor: pointer; font-weight: 600; min-height: 44px; display: flex; align-items: center; }
+.mz-checkline { display: flex; align-items: center; gap: 10px; min-height: 44px; margin: 8px 0; }
+
+.mz-patrol { position: relative; }
+.mz-patrol-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }
+.mz-patrol-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid var(--mz-line);
+}
+.mz-patrol-school { font-weight: 600; }
+.mz-patrol-count { color: var(--mz-body); }
+@media (max-width: 560px) {
+  .mz-patrol-row { grid-template-columns: 1fr auto; }
+  .mz-patrol-count { grid-column: 1; }
+}

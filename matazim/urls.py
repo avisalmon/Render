@@ -16,6 +16,7 @@ from . import (
     conversation_views,
     entrance_views,
     event_views,
+    year_views,
     guide_views,
     internal_views,
     invite_views,
@@ -53,6 +54,9 @@ urlpatterns = [
     path("events/", event_views.events_page, name="events"),
     path("calendar/", event_views.calendar, name="calendar"),
     path("staff/events/", event_views.staff_events, name="staff_events"),
+    path("staff/milestones/", year_views.staff_milestones, name="staff_milestones"),
+    path("staff/milestones/<int:milestone_id>/edit/", year_views.edit_milestone, name="edit_milestone"),
+    path("staff/milestones/<int:milestone_id>/delete/", year_views.delete_milestone, name="delete_milestone"),
     path("staff/events/<int:event_id>/cancel/", event_views.cancel_event, name="cancel_event"),
     # REQ-M.34 — the one machine-triggered endpoint here. A token, a POST,
     # and it can only send reminders.

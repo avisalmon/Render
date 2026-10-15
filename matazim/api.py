@@ -39,6 +39,7 @@ from .models import (
     EntranceAttempt,
     EntranceTarget,
     Event,
+    ProgramMilestone,
     Feedback,
     Institution,
     Leader,
@@ -65,6 +66,7 @@ from .serializers import (
     EntranceAttemptSerializer,
     EntranceTargetSerializer,
     EventSerializer,
+    ProgramMilestoneSerializer,
     FeedbackSerializer,
     InstitutionSerializer,
     LeaderCourseSerializer,
@@ -654,6 +656,21 @@ class EventViewSet(Scoped):
         return Response(EventSerializer(event).data)
 
 
+class ProgramMilestoneViewSet(Scoped):
+    """REQ-M.186 - the year's schedule. Everybody reads it, a program manager writes it."""
+
+    serializer_class = ProgramMilestoneSerializer
+    scope = staticmethod(access.visible_milestones)
+
+    def get_permissions(self):
+        if self.action in ("list", "retrieve"):
+            return [permissions.AllowAny()]
+        return [IsProgramManager()]
+
+    def perform_create(self, serializer):
+        serializer.save(institution=access.institution_of(self.request.user))
+
+
 class PostViewSet(Scoped):
     """קהילת מט״צים (REQ-M.26, REQ-M.131, §4.12).
 
@@ -1099,6 +1116,7 @@ ROUTES = [
     ("feedback", FeedbackViewSet, Feedback),
     ("notifications", NotificationViewSet, Notification),
     ("events", EventViewSet, Event),
+    ("milestones", ProgramMilestoneViewSet, ProgramMilestone),
     ("posts", PostViewSet, Post),
     ("requests", RequestViewSet, Request),
     ("request-messages", RequestMessageViewSet, RequestMessage),

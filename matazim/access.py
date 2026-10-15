@@ -286,6 +286,29 @@ def institution_of(user):
     return None
 
 
+def visible_milestones(user):
+    """REQ-M.186, §4.4 - the year's schedule this person reads.
+
+    Unlike events, the schedule is public: it is the table the client showed
+    the schools at the exposure Zoom, and the annual path is one of the pages
+    that are open to a stranger (REQ-M.5). A stranger and a person with no
+    institution yet get the programme's one institution's schedule, which is
+    the same fact `Institution.default()` already states for stamping
+    ownership. Anyone attached to an institution gets that institution's own.
+    Writing is not decided here: the program manager's screen and the API
+    check the role.
+    """
+    from .models import Institution, ProgramMilestone
+
+    institution = None
+    if getattr(user, "is_authenticated", False):
+        institution = institution_of(user)
+    institution = institution or Institution.default()
+    if institution is None:
+        return ProgramMilestone.objects.none()
+    return ProgramMilestone.objects.filter(institution=institution)
+
+
 def visible_posts(user):
     """REQ-M.26, §4.4 — the community rows this person may read.
 
