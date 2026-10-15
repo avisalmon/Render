@@ -331,7 +331,21 @@ a:focus-visible {
   h1 { font-size: 23px; }
   .ct-main { padding-top: 18px; }
   .ct-head-in { gap: 12px; }
-  .ct-nav { gap: 13px; }
+
+  /* One scrolling line rather than three stacked rows. Seven nav items
+     wrapped on a phone pushed the first real control a third of the way
+     down the screen, which is most of the viewport gone before anything
+     has been done. */
+  .ct-nav {
+    gap: 15px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    max-width: 100%;
+  }
+  .ct-nav::-webkit-scrollbar { display: none; }
+  .ct-nav a { white-space: nowrap; }
 }
 
 @media (prefers-reduced-motion: reduce) {

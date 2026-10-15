@@ -7,6 +7,15 @@
 <h1>{{ hackathon.name }}</h1>
 {% if hackathon.tagline %}<p class="ct-lede">{{ hackathon.tagline }}</p>{% endif %}
 
+{% if can_apply %}
+  <form method="post" action="{% url 'crashtech:apply' hackathon.slug %}">{% csrf_token %}
+    <button class="ct-btn ct-btn--primary" type="submit">Apply to take part</button>
+  </form>
+{% elif my_registration %}
+  <p><span class="ct-tag {% if my_registration.status == 'accepted' %}ct-tag--go{% elif my_registration.status == 'declined' %}ct-tag--stop{% else %}ct-tag--wait{% endif %}">
+    Application {{ my_registration.get_status_display|lower }}</span></p>
+{% endif %}
+
 {% if actions %}
   {% comment %}Rule 11.3: what do I do now, per role.{% endcomment %}
   {% for role_label, items in actions %}

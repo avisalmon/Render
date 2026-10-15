@@ -5,11 +5,12 @@ Sprints and their status. Spec references are
 and the spec, updated together in the commit that acts on them
 (Rule 14.1).
 
-**Status: C.1 live in production, C.2 built in dev.** The app is sealed,
-has its own face, and all 28 models are real. An admin can now create an
-event, shape it, lay out its timeline, appoint people by email before they
-have accounts, and move the event forward through a computed checklist.
-68 tests across C.1 and C.2. C.3 is next.
+**Status: C.1 and C.2 live in production, C.3 built in dev.** An admin can
+create an event, shape it, lay out its timeline, appoint people by email
+before they have accounts, decide applications, and hand out hardware at a
+desk built for a queue. Participants can apply and form teams inside the
+rules. 102 CrashTech tests, 110 including the 2026 platform's. C.4 is
+next.
 
 ---
 
@@ -19,7 +20,7 @@ have accounts, and move the event forward through a computed checklist.
 | --- | --- | --- | --- |
 | C.1 | The skeleton and the seal | The app exists, is sealed both ways, has its own base template and its own auth screens, and every model with its migration and its admin | `DONE (dev), 2026-10-14` |
 | C.2 | The event, its lifecycle and its roles | Create an event, advance it by checklist, grant roles, invite by email | `DONE (dev), 2026-10-14` |
-| C.3 | Registration, teams, hardware | Apply, accept, form a team, define the kit, and the kit desk | `TODO` |
+| C.3 | Registration, teams, hardware | Apply, accept, form a team, define the kit, and the kit desk | `DONE (dev), 2026-10-15` |
 | C.4 | Challenges and submitting | Author challenges with deliverables, kickoff, submit, tentative points | `TODO` |
 | C.5 | Judging, results, publishing | Shortlist, grade, verify, and the one gated click | `TODO` |
 | C.6 | The museum and media | The public permanent page, uploads to GCS, moderation | `TODO` |
@@ -129,7 +130,7 @@ the old app keeps working until C.8 retires it.
 
 ---
 
-## SPR-C.3 — Registration, teams, hardware `TODO`
+## SPR-C.3 — Registration, teams, hardware `DONE (dev), 2026-10-15`
 
 | Feature | Description | Spec |
 | --- | --- | --- |
@@ -138,7 +139,28 @@ the old app keeps working until C.8 retires it.
 | F-C.3.3 | No captain: every member holds every authority | Rule 5.4 |
 | F-C.3.4 | The kit defined per event as items with photos and quantities | Rule 6.1 |
 | F-C.3.5 | Allocation to teams, `kits_per_team` | Rule 6.2 |
-| F-C.3.6 | **The kit desk**: an event screen, two taps, under five seconds, bad wifi | Rule 6.3, 6.4, 11.2 |
+| F-C.3.6 | **The kit desk**: an event screen, two taps, under five seconds, bad wifi | Rule 6.3, 6.4, 11.2 | DONE — `tests/test_spr_c_3.py` (33), marker `sprc3` |
+
+**The desk is the only screen with a hard time budget**, and the shape it
+produced: a team of **one** is a single tap, because the desk does not ask
+a question that has one answer; a team of **two or more** shows its
+members as buttons and the admin taps whoever is actually standing there,
+which is also how `collected_by` gets recorded; submitting returns to an
+**empty search** ready for the next person; and there is **no JavaScript
+anywhere on it**, because the corridor it runs in has the worst wifi of
+the event.
+
+**The screenshot finding this sprint:** the seven-item navigation pushed
+the search field **a third of the way down a phone**, on the one screen
+that is supposed to be a single action. The desk now carries one way back
+and nothing else, and the nav elsewhere scrolls on one line rather than
+stacking into three rows. That change made an earlier test of mine fail,
+correctly, so it was rewritten to say that planning screens carry the menu
+and event screens do not.
+
+**Three guards were perturbed and confirmed**: one team per person per
+event, the team size cap, and the kit allocation cap. All three tests fail
+with their guard removed.
 
 ---
 

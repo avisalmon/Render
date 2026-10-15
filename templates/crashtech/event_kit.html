@@ -1,0 +1,37 @@
+{% extends "crashtech/base.html" %}
+{% block title %}The kit &middot; {{ hackathon.name }}{% endblock %}
+{% block screen %}kit{% endblock %}
+{% block nav %}{% include "crashtech/_event_nav.html" %}{% endblock %}
+{% block milestone %}<span class="ct-milestone">{{ hackathon.get_status_display }}</span>{% endblock %}
+{% block content %}
+<h1>The kit</h1>
+<p class="ct-lede">What this event hands out. Next year this list can say
+something completely different, and nothing in the code changes.</p>
+
+{% for item in items %}
+  <div class="ct-row">
+    <span class="ct-row-main"><b>{{ item.name }}</b><span>{{ item.description }}</span></span>
+    <span class="ct-mono ct-fine">{{ item.quantity_total }}</span>
+    {% if item.is_returnable %}<span class="ct-tag">Comes back</span>{% endif %}
+    <form method="post">{% csrf_token %}
+      <button class="ct-btn" name="delete" value="{{ item.pk }}"
+              style="min-height:44px;padding:8px 12px;font-size:13px">Remove</button></form>
+  </div>
+{% empty %}
+  <div class="ct-empty">The kit has not been defined yet.</div>
+{% endfor %}
+
+<form method="post" class="ct-card" style="margin-top:18px">{% csrf_token %}
+  <p class="ct-cap">Add something</p>
+  <label class="ct-field"><span>What it is</span>
+    <input class="ct-input" name="name" placeholder="Intel DE10-Lite" required></label>
+  <label class="ct-field"><span>A line about it</span>
+    <input class="ct-input" name="description" placeholder="MAX 10 FPGA board, 50 MHz."></label>
+  <label class="ct-field"><span>How many you have</span>
+    <input class="ct-input" type="number" name="quantity_total" min="0" value="30"></label>
+  <label class="ct-field" style="display:flex;gap:9px;align-items:center">
+    <input type="checkbox" name="is_returnable" checked style="width:22px;height:22px">
+    <span style="margin:0">It comes back at the end</span></label>
+  <button class="ct-btn ct-btn--primary ct-btn--wide" type="submit">Add it</button>
+</form>
+{% endblock %}

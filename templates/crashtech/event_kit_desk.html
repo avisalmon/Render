@@ -1,0 +1,80 @@
+{% extends "crashtech/base.html" %}
+{% block title %}Kit desk &middot; {{ hackathon.name }}{% endblock %}
+{% block screen %}kit-desk{% endblock %}
+{% comment %}No nav. This is the one screen with a queue in front of it,
+and a seven-item menu pushing the search field down the phone is exactly
+what Rule 11.2 is about. One way back, nothing else.{% endcomment %}
+{% block nav %}<a href="{% url 'crashtech:event_home' hackathon.slug %}">&larr; {{ hackathon.name|truncatechars:22 }}</a>{% endblock %}
+{% block milestone %}<span class="ct-milestone">{{ hackathon.get_status_display }}</span>{% endblock %}
+{% comment %}
+An EVENT screen, not a planning one (Rule 11.1). Thirty people in a
+corridor, one admin, a box of boards. Everything here is the five-second
+target: the search field takes focus on arrival, rows are thumb-sized, a
+team of one is a single tap, and submitting returns to an empty search
+ready for the next person.
+
+No JavaScript anywhere on purpose. The corridor this runs in has the worst
+wifi of the event, and a plain form post is the thing most likely to
+survive it.
+{% endcomment %}
+{% block content %}
+<h1>Kit desk</h1>
+
+<form method="get" style="margin-bottom:14px">
+  <input class="ct-input ct-mono" name="q" value="{{ query }}" autofocus
+         placeholder="Team or name" autocomplete="off"
+         style="font-size:17px;min-height:52px">
+</form>
+
+<p class="ct-fine" style="margin-bottom:14px">
+  <b class="ct-mono">{{ counts.collected_teams }}</b> of
+  <b class="ct-mono">{{ counts.teams }}</b> teams collected
+  &middot; <b class="ct-mono">{{ counts.waiting }}</b> still waiting
+</p>
+
+{% for row in rows %}
+  <div class="ct-row" style="min-height:66px">
+    <span class="ct-row-main">
+      <b style="font-size:16px">{{ row.team.name|default:row.team.anon_label }}</b>
+      <span>{% for member in row.members %}{{ member.email|default:member.username }}{% if not forloop.last %} &middot; {% endif %}{% empty %}Nobody on this team yet{% endfor %}</span>
+    </span>
+
+    {% if row.status == 'collected' %}
+      <span class="ct-tag ct-tag--go">Collected</span>
+      <form method="post">{% csrf_token %}
+        <input type="hidden" name="team" value="{{ row.team.pk }}">
+        <button class="ct-btn" name="take_back" value="1"
+                style="min-height:44px;padding:8px 12px;font-size:13px">Back in the box</button>
+      </form>
+    {% elif row.members|length == 1 %}
+      {% comment %}A team of one needs no choice, so the desk does not ask
+      for one. This is the single-tap case and the common one.{% endcomment %}
+      <form method="post">{% csrf_token %}
+        <input type="hidden" name="team" value="{{ row.team.pk }}">
+        <input type="hidden" name="member" value="{{ row.members.0.pk }}">
+        <button class="ct-btn ct-btn--primary" type="submit"
+                style="min-height:48px;padding:10px 18px">Give kit</button>
+      </form>
+    {% elif row.members %}
+      {% comment %}More than one member: the admin taps whoever is actually
+      standing there. Any of them may collect, because there is no captain
+      (Rule 5.4), and which one turned up is a behavioural fact the
+      research would otherwise lose.{% endcomment %}
+      <form method="post" style="display:flex;gap:6px;flex-wrap:wrap">{% csrf_token %}
+        <input type="hidden" name="team" value="{{ row.team.pk }}">
+        {% for member in row.members %}
+          <button class="ct-btn ct-btn--primary" name="member" value="{{ member.pk }}"
+                  style="min-height:48px;padding:10px 14px;font-size:13px">
+            {{ member.first_name|default:member.email|truncatechars:16 }}</button>
+        {% endfor %}
+      </form>
+    {% else %}
+      <span class="ct-tag ct-tag--stop">No members</span>
+    {% endif %}
+  </div>
+{% empty %}
+  <div class="ct-empty">
+    {% if query %}Nothing matches "{{ query }}".{% else %}No teams yet.{% endif %}
+  </div>
+{% endfor %}
+{% endblock %}

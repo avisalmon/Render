@@ -37,4 +37,11 @@ urlpatterns = [
     path("e/<slug:slug>/people/", views.event_people, name="people"),
     path("e/<slug:slug>/readiness/", views.event_readiness, name="readiness"),
     path("e/<slug:slug>/advance/", views.event_advance, name="advance"),
+    path("e/<slug:slug>/apply/", views.event_apply, name="apply"),
+    path("e/<slug:slug>/registrations/", views.event_registrations, name="registrations"),
+    path("e/<slug:slug>/teams/", views.event_teams, name="teams"),
+    path("e/<slug:slug>/kit/", views.event_kit, name="kit"),
+    # The one event screen an admin owns: a queue of people, a box of
+    # boards, five seconds each (Rule 6.4).
+    path("e/<slug:slug>/kit-desk/", views.event_kit_desk, name="kit_desk"),
 ]

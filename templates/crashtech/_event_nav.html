@@ -3,7 +3,10 @@ The event's own navigation. Only what this person may actually use
 (Rule 11.5: never show a control that cannot be used yet).
 {% endcomment %}
 <a href="{% url 'crashtech:event_home' hackathon.slug %}">Overview</a>
+<a href="{% url 'crashtech:teams' hackathon.slug %}">Teams</a>
 {% if can_manage %}
+  <a href="{% url 'crashtech:registrations' hackathon.slug %}">Applications</a>
+  <a href="{% url 'crashtech:kit_desk' hackathon.slug %}">Kit desk</a>
   <a href="{% url 'crashtech:people' hackathon.slug %}">People</a>
   <a href="{% url 'crashtech:milestones' hackathon.slug %}">Timeline</a>
   <a href="{% url 'crashtech:settings' hackathon.slug %}">Settings</a>

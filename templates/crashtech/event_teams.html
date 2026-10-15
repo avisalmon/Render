@@ -1,0 +1,66 @@
+{% extends "crashtech/base.html" %}
+{% block title %}Teams &middot; {{ hackathon.name }}{% endblock %}
+{% block screen %}teams{% endblock %}
+{% block nav %}{% include "crashtech/_event_nav.html" %}{% endblock %}
+{% block milestone %}<span class="ct-milestone">{{ hackathon.get_status_display }}</span>{% endblock %}
+{% block content %}
+<h1>Teams</h1>
+{% comment %}The size limit as a fact, not as an error somebody discovers
+on submit (user_journeys.md 2.3).{% endcomment %}
+<p class="ct-lede">
+  {% if hackathon.team_size_max == 1 %}
+    This is an individual event. Everybody competes alone.
+  {% else %}
+    Teams here hold up to {{ hackathon.team_size_max }} people.
+    Everybody on a team can do everything: submit, upload, collect the kit.
+    There is no captain.
+  {% endif %}
+</p>
+
+{% if my_team %}
+  <p class="ct-cap">Your team</p>
+  <div class="ct-row">
+    <span class="ct-row-main"><b>{{ my_team.name }}</b>
+      <span>{% for m in my_team.memberships.all %}{{ m.user.email|default:m.user.username }}{% if not forloop.last %} &middot; {% endif %}{% endfor %}
+        &middot; {{ my_team.memberships.count }} of {{ hackathon.team_size_max }}</span></span>
+    <form method="post">{% csrf_token %}
+      <button class="ct-btn" name="leave" value="1"
+              style="min-height:44px;padding:8px 14px;font-size:13px">Leave</button></form>
+  </div>
+{% elif accepted %}
+  <form method="post" class="ct-card">{% csrf_token %}
+    <p class="ct-cap">Start a team</p>
+    <label class="ct-field"><span>Name it</span>
+      <input class="ct-input" name="name" placeholder="Nova Logic" required></label>
+    <button class="ct-btn ct-btn--primary ct-btn--wide" type="submit">Create</button>
+  </form>
+
+  {% if joinable %}
+    <p class="ct-cap" style="margin-top:22px">Or join one</p>
+    {% for team in joinable %}
+      <div class="ct-row">
+        <span class="ct-row-main"><b>{{ team.name }}</b>
+          <span>{{ team.memberships.count }} of {{ hackathon.team_size_max }}</span></span>
+        <form method="post">{% csrf_token %}
+          <button class="ct-btn" name="join" value="{{ team.pk }}"
+                  style="min-height:44px;padding:8px 14px;font-size:13px">Join</button></form>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% else %}
+  <div class="ct-empty">You need to be accepted to the event before you can form a team.</div>
+{% endif %}
+
+{% if can_manage %}
+  <p class="ct-cap" style="margin-top:26px">Every team</p>
+  {% for team in all_teams %}
+    <div class="ct-row">
+      <span class="ct-row-main"><b>{{ team.name|default:team.anon_label }}</b>
+        <span>{% for m in team.memberships.all %}{{ m.user.email|default:m.user.username }}{% if not forloop.last %} &middot; {% endif %}{% empty %}Empty{% endfor %}</span></span>
+      <span class="ct-mono ct-fine">{{ team.memberships.count }}/{{ hackathon.team_size_max }}</span>
+    </div>
+  {% empty %}
+    <div class="ct-empty">No teams yet.</div>
+  {% endfor %}
+{% endif %}
+{% endblock %}

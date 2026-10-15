@@ -15,9 +15,12 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from . import mail, readiness
+from . import kit, mail, readiness, teams
 from .decorators import signed_in
-from .models import EventRole, Hackathon, Milestone, RoleInvitation
+from .models import (
+    EventRole, Hackathon, KitIssue, KitItem, Milestone, Registration,
+    RoleInvitation, Team,
+)
 from .next_actions import next_actions_for
 from .roles import can, roles_for
 
@@ -83,7 +86,16 @@ def event_home(request, slug):
     hackathon = _event(slug)
     labels = dict(EventRole.ROLES)
     held = roles_for(request.user, hackathon)
+    my_registration = None
+    if request.user.is_authenticated:
+        my_registration = hackathon.registrations.filter(user=request.user).first()
     return render(request, "crashtech/event_home.html", {
+        "my_registration": my_registration,
+        "can_apply": (
+            request.user.is_authenticated
+            and hackathon.accepts_registrations
+            and my_registration is None
+        ),
         "hackathon": hackathon,
         "my_roles": sorted(labels.get(r, r) for r in held),
         "milestones": hackathon.milestones.all(),
@@ -404,3 +416,197 @@ def not_found(request, exception=None):
 
 def forbidden(request, exception=None):
     return render(request, "crashtech/403.html", status=403)
+
+
+# -------------------------------------------------------- registration
+
+
+@signed_in
+def event_apply(request, slug):
+    """**Planning / participant.** Rule 5.1: people apply, they are not
+    invited.
+
+    The application is its own record, kept apart from the role, so "who
+    asked" survives independently of "who is in" and a declined
+    application is a fact rather than an absence.
+    """
+    hackathon = _event(slug)
+    if not hackathon.accepts_registrations:
+        messages.error(request, "Applications are not open for this event.")
+        return redirect("crashtech:event_home", slug=hackathon.slug)
+
+    registration, created = Registration.objects.get_or_create(
+        hackathon=hackathon, user=request.user,
+        defaults={"note": (request.POST.get("note") or "").strip()},
+    )
+    if created:
+        messages.success(request, "Applied. You will hear when a decision is made.")
+    elif registration.status == Registration.WITHDRAWN:
+        registration.status = Registration.APPLIED
+        registration.save(update_fields=["status"])
+        messages.success(request, "Applied again.")
+    else:
+        messages.success(request, "You have already applied.")
+    return redirect("crashtech:event_home", slug=hackathon.slug)
+
+
+@signed_in
+def event_registrations(request, slug):
+    """**Planning / admin.** Accept or decline, with a note."""
+    hackathon = _event(slug)
+    _require(request.user, hackathon, "decide_registrations")
+
+    if request.method == "POST":
+        decision = request.POST.get("decision")
+        registration = hackathon.registrations.filter(pk=request.POST.get("registration")).first()
+        if registration and decision in (Registration.ACCEPTED, Registration.DECLINED):
+            registration.status = decision
+            registration.decided_at = timezone.now()
+            registration.decided_by = request.user
+            registration.save(update_fields=["status", "decided_at", "decided_by"])
+            if decision == Registration.ACCEPTED:
+                # Accepting is what grants the role. The two are separate
+                # records on purpose (Rule 5.1).
+                EventRole.objects.get_or_create(
+                    hackathon=hackathon, user=registration.user,
+                    role=EventRole.PARTICIPANT, defaults={"granted_by": request.user},
+                )
+            else:
+                hackathon.roles.filter(
+                    user=registration.user, role=EventRole.PARTICIPANT,
+                ).delete()
+            messages.success(request, f"{registration.user.email}: {decision}.")
+        return redirect("crashtech:registrations", slug=hackathon.slug)
+
+    return render(request, "crashtech/event_registrations.html", {
+        "hackathon": hackathon, "can_manage": True,
+        "waiting": hackathon.registrations.filter(status=Registration.APPLIED).select_related("user"),
+        "decided": hackathon.registrations.exclude(status=Registration.APPLIED).select_related("user"),
+    })
+
+
+# --------------------------------------------------------------- teams
+
+
+@signed_in
+def event_teams(request, slug):
+    """**Planning.** Form a team or join one.
+
+    The size limit is shown as a fact, not discovered as an error
+    (user_journeys.md 2.3): "Teams of up to 3. Yours has 2."
+    """
+    hackathon = _event(slug)
+
+    if request.method == "POST":
+        try:
+            if request.POST.get("leave"):
+                team = teams.leave_team(request.user, hackathon)
+                messages.success(request, f"You have left {team.name}.")
+            elif request.POST.get("join"):
+                target = get_object_or_404(Team, pk=request.POST["join"], hackathon=hackathon)
+                teams.join_team(request.user, hackathon, target)
+                messages.success(request, f"You are on {target.name}.")
+            else:
+                team = teams.create_team(request.user, hackathon, request.POST.get("name"))
+                messages.success(request, f"{team.name} is yours.")
+        except teams.TeamError as exc:
+            messages.error(request, str(exc))
+        return redirect("crashtech:teams", slug=hackathon.slug)
+
+    mine = teams.team_for(request.user, hackathon)
+    joinable = teams.joinable_teams(hackathon)
+    if mine:
+        joinable = joinable.exclude(pk=mine.pk)
+    return render(request, "crashtech/event_teams.html", {
+        "hackathon": hackathon,
+        "can_manage": can(request.user, hackathon, "event_settings"),
+        "my_team": mine,
+        "accepted": teams.is_accepted(request.user, hackathon),
+        "joinable": joinable,
+        "all_teams": hackathon.teams.prefetch_related("memberships__user"),
+    })
+
+
+# ----------------------------------------------------------------- kit
+
+
+@signed_in
+def event_kit(request, slug):
+    """**Planning / tech lead.** What the hardware is, per event.
+
+    Rule 6.1: FPGA and ESP32 today, a Raspberry Pi next time, with no code
+    change. The 2026 platform had a single integer and could not express
+    any of it.
+    """
+    hackathon = _event(slug)
+    _require(request.user, hackathon, "define_kit")
+
+    if request.method == "POST":
+        if request.POST.get("delete"):
+            hackathon.kit_items.filter(pk=request.POST["delete"]).delete()
+        else:
+            name = (request.POST.get("name") or "").strip()
+            if name:
+                KitItem.objects.create(
+                    hackathon=hackathon, name=name,
+                    description=(request.POST.get("description") or "").strip(),
+                    quantity_total=max(0, int(request.POST.get("quantity_total") or 0)),
+                    is_returnable=bool(request.POST.get("is_returnable")),
+                    order=hackathon.kit_items.count(),
+                )
+        return redirect("crashtech:kit", slug=hackathon.slug)
+
+    return render(request, "crashtech/event_kit.html", {
+        "hackathon": hackathon,
+        "can_manage": can(request.user, hackathon, "event_settings"),
+        "items": hackathon.kit_items.all(),
+    })
+
+
+@signed_in
+def event_kit_desk(request, slug):
+    """**Event screen.** The desk, with a queue in front of it.
+
+    Everything about this screen is the five-second target: one search
+    field focused on arrival, big rows, a single tap for a team of one,
+    and back to an empty search ready for the next person. No JavaScript,
+    because the corridor it runs in has the worst wifi of the event.
+    """
+    hackathon = _event(slug)
+    _require(request.user, hackathon, "distribute_kits")
+
+    if request.method == "POST":
+        team = get_object_or_404(Team, pk=request.POST.get("team"), hackathon=hackathon)
+        try:
+            if request.POST.get("take_back"):
+                issue = team.kit_issues.filter(status=KitIssue.COLLECTED).first()
+                if issue:
+                    kit.take_back(issue)
+                messages.success(request, f"{team.name}: kit back in the box.")
+            else:
+                member_id = request.POST.get("member")
+                members = kit.collectors_for(team)
+                collector = next((m for m in members if str(m.pk) == str(member_id)), None)
+                if collector is None and len(members) == 1:
+                    collector = members[0]
+                kit.give_kit(team, collector, request.user)
+                who = collector.email if collector else "the team"
+                messages.success(request, f"{team.name}: kit given to {who}.")
+        except kit.KitError as exc:
+            messages.error(request, str(exc))
+        # Back to an empty search, ready for the next person in the queue.
+        return redirect("crashtech:kit_desk", slug=hackathon.slug)
+
+    query = request.GET.get("q", "")
+    rows = []
+    for team in kit.search_teams(hackathon, query):
+        rows.append({
+            "team": team,
+            "members": kit.collectors_for(team),
+            "status": kit.status_of(team),
+        })
+
+    return render(request, "crashtech/event_kit_desk.html", {
+        "hackathon": hackathon, "can_manage": True,
+        "query": query, "rows": rows, "counts": kit.counts_for(hackathon),
+    })

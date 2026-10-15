@@ -1,0 +1,38 @@
+{% extends "crashtech/base.html" %}
+{% block title %}Applications &middot; {{ hackathon.name }}{% endblock %}
+{% block screen %}registrations{% endblock %}
+{% block nav %}{% include "crashtech/_event_nav.html" %}{% endblock %}
+{% block milestone %}<span class="ct-milestone">{{ hackathon.get_status_display }}</span>{% endblock %}
+{% block content %}
+<h1>Applications</h1>
+<p class="ct-lede">Accepting somebody lets them form a team and collect a kit.</p>
+
+<p class="ct-cap">Waiting on you</p>
+{% for reg in waiting %}
+  <div class="ct-row">
+    <span class="ct-row-main"><b>{{ reg.user.email|default:reg.user.username }}</b>
+      <span>Applied {{ reg.applied_at|date:"j M Y" }}{% if reg.note %} &middot; {{ reg.note }}{% endif %}</span></span>
+    <form method="post" style="display:flex;gap:6px">{% csrf_token %}
+      <input type="hidden" name="registration" value="{{ reg.pk }}">
+      <button class="ct-btn ct-btn--primary" name="decision" value="accepted"
+              style="min-height:44px;padding:8px 14px;font-size:13px">Accept</button>
+      <button class="ct-btn" name="decision" value="declined"
+              style="min-height:44px;padding:8px 14px;font-size:13px">Decline</button>
+    </form>
+  </div>
+{% empty %}
+  <div class="ct-empty">Nothing waiting.</div>
+{% endfor %}
+
+{% if decided %}
+  <p class="ct-cap" style="margin-top:24px">Decided</p>
+  {% for reg in decided %}
+    <div class="ct-row">
+      <span class="ct-row-main"><b>{{ reg.user.email|default:reg.user.username }}</b>
+        <span>{{ reg.decided_at|date:"j M Y" }}</span></span>
+      <span class="ct-tag {% if reg.status == 'accepted' %}ct-tag--go{% else %}ct-tag--stop{% endif %}">
+        {{ reg.get_status_display }}</span>
+    </div>
+  {% endfor %}
+{% endif %}
+{% endblock %}
