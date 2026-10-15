@@ -45,8 +45,6 @@ from .models import (
     Notification,
     OfferedCourse,
     Post,
-    Request,
-    RequestMessage,
     RetentionRun,
     StatusLog,
     Student,
@@ -353,33 +351,6 @@ class PostSerializer(serializers.ModelSerializer):
 
 
 # --- The improvement loop ---------------------------------------------------
-
-
-class RequestSerializer(serializers.ModelSerializer):
-    author = PersonSerializer(read_only=True)
-
-    class Meta:
-        model = Request
-        fields = [
-            "id", "author", "author_role", "body", "kind", "from_screen",
-            "status", "decided_by", "decided_at", "assessment", "assessed_at",
-            "recommendation", "sprint", "outcome", "done_at", "created_at",
-        ]
-        # Everything except her own words and the kind is read-only. §4.11: the
-        # assessment is advisory and machine-written, the decision is Avi's
-        # press, and the log is the customer voice rather than a second plan.
-        read_only_fields = [
-            "id", "author", "author_role", "from_screen", "status", "decided_by",
-            "decided_at", "assessment", "assessed_at", "recommendation", "sprint",
-            "outcome", "done_at", "created_at",
-        ]
-
-
-class RequestMessageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = RequestMessage
-        fields = ["id", "request", "who", "body", "created_at"]
-        read_only_fields = ["id", "who", "created_at"]
 
 
 class TeachingSessionSerializer(serializers.ModelSerializer):

@@ -163,24 +163,6 @@ def test_a_leaders_feedback_is_attributed_to_the_leader(client, world):
     assert said.body == "הבסיס צריך להיות רחב יותר"
 
 
-def test_a_request_is_attributed_to_whoever_sent_it(client, world):
-    """REQ-M.112 — the words are the author's, and so is the name on them. The
-    improvement queue is read from a chat now (SPR-M.48), which makes a request
-    filed under the wrong name harder to notice, not easier."""
-    from matazim.models import Request
-
-    client.force_login(world["manager"])
-    resp = client.post(
-        "/matazim/api/requests/",
-        {"body": "הרוסטר מבלבל", "kind": "problem", "author": world["me"].user_id},
-        content_type="application/json",
-    )
-    assert resp.status_code in (200, 201), resp.content[:200]
-    row = Request.objects.latest("created_at")
-    assert row.author_id == world["manager"].pk
-    assert row.body == "הרוסטר מבלבל"
-
-
 def test_creating_a_leader_refuses_an_account_that_does_not_exist(client, world):
     """A typo must never conjure a record holding a role. The view says so in
     words; nothing had ever run it."""

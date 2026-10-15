@@ -33,7 +33,7 @@
 | C8 | **"מבחן דיגיטלי בטינקרקאד והצגת תוצר לצורך קבלה לתכנית"; the product goes to שקד and אבי "לאישור"** | The entrance test is a TinkerCAD product shown for acceptance, approved by the programme team and not by the measuring script alone. REQ-M.182. | SPR-M.64 |
 | C9 | **A new logo, and "the design styling and coloring follow atidedu.org.il"** | The look is Atid's, not the teal and purple of the prototype. REQ-M.188. | SPR-M.61 |
 
-**Requirements arrive any way they arrive** (Avi, 2026-10-15: "from the site,
+**Requirements arrive any way they arrive (and, since 2026-10-15, requests from the team only by mail: see SPR-M.68)** (Avi, 2026-10-15: "from the site,
 and also from mail, any way it arrives"). The programme's own request queue on
 the site (`/matazim/staff/requests/`, readable by the build through
 `/matazim/internal/requests/`) is as much a source as the mail above. Three
@@ -667,6 +667,9 @@ one artefact that is unmistakably theirs. A `post_delete` receiver on
 | P6 | No record of a certification being revoked or a roster being read. Granting is recorded (REQ-M.78); nothing else is. | Low |
 
 ### 4.11 The improvement loop
+
+> **Retired 2026-10-15 (Avi).** The request system described in this section (the lamp that opened a conversation, the assessment, the queue, the approval, the token endpoint and the summary mail) is gone, models and all. Requests now arrive **by mail only**: Naomi or Lital write to Avi's Gmail with מטצים or matatzim in the subject; the build finds those mails, does the work and writes back. The lamp stays on the site and opens a message saying so, with one button that starts that mail. Kept below as the record of what existed. See SPR-M.68.
+
 
 Avi, 2026-09-12. Every review in this project has ended on the same sentence:
 it checks the product against itself, and cannot say what a real person tried

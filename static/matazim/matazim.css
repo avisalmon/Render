@@ -3121,3 +3121,19 @@ a.mz-path-title:hover { color: var(--mz-link); }
 }
 .mz-auth-other summary:hover { color: var(--mz-ink); }
 .mz-auth-other[open] summary { margin-bottom: 8px; }
+
+/* The lamp is a button now and opens a dialog (no request system: mail only). */
+button.mz-lamp { border: 0; font: inherit; cursor: pointer; }
+.mz-dialog {
+  border: 0;
+  border-radius: var(--mz-radius);
+  padding: 24px;
+  max-width: 440px;
+  width: calc(100% - 32px);
+  background: var(--mz-card);
+  color: var(--mz-ink);
+  box-shadow: var(--mz-shadow-lift);
+}
+.mz-dialog::backdrop { background: rgba(30, 0, 12, .55); }
+.mz-dialog h2 { margin-top: 0; }
+.mz-dialog-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }

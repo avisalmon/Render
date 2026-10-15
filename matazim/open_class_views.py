@@ -26,7 +26,6 @@ from . import open_class as oc
 from .access import open_class_for_code, visible_open_classes, visible_open_members
 from .consent import consent_blocker, needs_guardian_consent
 from .gate import entrance_gated
-from .models import Request
 from .views import member_profile, shell
 
 LOGIN_URL = "/matazim/login/"
@@ -168,33 +167,6 @@ def open_leave(request, pk):
     return redirect("matazim:my_classes")
 
 
-@login_required(login_url=LOGIN_URL)
-@require_POST
-@entrance_gated
-def open_report(request, pk):
-    """REQ-M.174 — anyone in or looking at a class can report it.
-
-    The lamp is the program managers' tool, so a report is written as a `Request`
-    row, which is what the lamp writes, and it reaches root through the queue
-    root already reads. It carries the class and the words and never the code.
-    """
-    cls = get_object_or_404(visible_open_classes(request.user), pk=pk)
-    _file_report(request, cls)
-    return redirect("matazim:open_class", pk=cls.pk)
-
-
-def _file_report(request, cls):
-    reason = (request.POST.get("reason") or "").strip()[:500]
-    Request.objects.create(
-        author=request.user,
-        author_role="כיתה פתוחה",
-        kind=Request.PROBLEM,
-        status=Request.NEW,
-        body=f"דיווח על כיתה פתוחה מספר {cls.pk}, \"{cls.name}\". {reason}".strip(),
-        from_screen=request.path[:300],
-    )
-
-
 # --- Joining --------------------------------------------------------------------
 
 
@@ -219,9 +191,6 @@ def open_join(request, code):
     error = ""
 
     if request.method == "POST" and signed_in and not is_owner:
-        if request.POST.get("action") == "report":
-            _file_report(request, cls)
-            return redirect("matazim:open_join", code=code)
         if request.POST.get("action") == "join":
             # REQ-M.84, behind its flag: the moment another person starts to see
             # your progress is the moment consent is owed.

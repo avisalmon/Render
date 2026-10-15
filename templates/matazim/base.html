@@ -189,16 +189,6 @@
             and signing in as staff lands on that door.
           {% endcomment %}
           <a href="{% url 'matazim:staff_home' %}" class="mz-nav-staff{% if section == 'staff' %} is-active{% endif %}">ניהול</a>
-          {% comment %}
-            §4.11 — Avi asked for the menu option as well as the lamp. Root
-            goes to the queue, where the decisions are; a program manager goes
-            to her own log, where the answers are.
-          {% endcomment %}
-          {% if user.is_superuser %}
-            <a href="{% url 'matazim:request_queue' %}" class="mz-nav-staff{% if section == 'requests' %} is-active{% endif %}">בקשות{% if requests_waiting %} <span class="mz-count">{{ requests_waiting }}</span>{% endif %}</a>
-          {% else %}
-            <a href="{% url 'matazim:my_requests' %}" class="mz-nav-staff{% if section == 'requests' %} is-active{% endif %}">הבקשות שלי</a>
-          {% endif %}
           {% if not is_member and not is_leader %}
             <a href="{% url 'matazim:community' %}" {% if section == 'community' %}class="is-active"{% endif %}>קהילת מטצים</a>
             <a href="{% url 'matazim:events' %}" {% if section == 'events' %}class="is-active"{% endif %}>ימי שיא</a>
@@ -314,25 +304,15 @@
   {% block content %}{% endblock %}
 </main>
 
-{% if can_request and section != "requests" %}
+{% if can_request %}
   {% comment %}
-    REQ-M.106 — the lamp.
-
-    Deliberately not a nav item. The value is that it is there at the moment
-    she notices something; a menu entry she has to go and find is one she uses
-    once, and SPR-M.24 just cut her menu to six items on purpose.
-
-    It carries the current path so the request records the screen she was
-    looking at, which is the single most useful field on the row later. Built
-    from `request.path` rather than the Referer header, which is missing often
-    enough to fail exactly when it matters.
-
-    Not shown on the request screens themselves: there it floats over the
-    textarea she is typing into, and it invites starting a second conversation
-    while she is in the middle of one.
+    The lamp. Avi, 2026-10-15: no more request system. Everything the team asks
+    for goes to his Gmail, and the subject carries the word מטצים and matatzim so
+    it is found. The lamp stays, so nobody has to learn that it moved, and what it
+    opens is one sentence and one button that starts that mail.
   {% endcomment %}
-  <a class="mz-lamp" href="{% url 'matazim:new_request' %}?from={{ request.path|urlencode }}"
-     title="בקשה או משוב על המערכת" aria-label="בקשה או משוב על המערכת">
+  <button type="button" class="mz-lamp" id="mzLamp" aria-haspopup="dialog"
+          title="בקשה או משוב על המערכת" aria-label="בקשה או משוב על המערכת">
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor"
          stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="M4 15h9a3 3 0 0 0 3-3 4 4 0 0 0-4-4H8a4 4 0 0 0-4 4z"/>
@@ -341,9 +321,49 @@
       <path d="M18.5 6.2c.6-.5 1-1.1 1.2-1.9M20.5 9.3c.8.1 1.5.1 2.1 0"/>
     </svg>
     <span class="mz-lamp-text">בקשה</span>
-    {% if requests_waiting %}<span class="mz-lamp-count">{{ requests_waiting }}</span>{% endif %}
-  </a>
+  </button>
+  <dialog class="mz-dialog" id="mzLampDialog" aria-labelledby="mzLampTitle">
+    <h2 id="mzLampTitle">בקשה או משוב</h2>
+    <p>מעכשיו כל בקשה נשלחת במייל לאבי. לחצו על הכפתור ותיפתח הודעה מוכנה, וצריך רק לכתוב מה אתם רוצים.</p>
+    <p class="mz-muted">אפשר גם לכתוב ישירות ל-avi.salmon@gmail.com, ובנושא להוסיף את המילה מטצים.</p>
+    <div class="mz-dialog-actions">
+      <button type="button" class="mz-btn mz-btn-primary" data-mz-mail
+              data-subject="מטצים matatzim: בקשה"
+              data-body="שלום אבי,&#10;&#10;הבקשה שלי:&#10;&#10;&#10;(נשלח מהמסך: __PATH__)">לפתוח הודעה במייל</button>
+      <button type="button" class="mz-btn mz-btn-ghost" data-mz-close>סגירה</button>
+    </div>
+  </dialog>
 {% endif %}
+
+<script>
+  // One way to ask for anything: an email to Avi with מטצים and matatzim in the
+  // subject. Built here, at the click, so the mail carries the page it was sent
+  // from, and so no page has to link out of this site to offer it.
+  (function () {
+    var TO = "avi.salmon@gmail.com";
+    function compose(button) {
+      var subject = button.getAttribute("data-subject") || "מטצים matatzim: בקשה";
+      var body = (button.getAttribute("data-body") || "").replace("__PATH__", location.pathname);
+      window.location.href = "mailto:" + TO + "?subject=" + encodeURIComponent(subject) +
+        "&body=" + encodeURIComponent(body);
+    }
+    document.addEventListener("click", function (event) {
+      var mail = event.target.closest && event.target.closest("[data-mz-mail]");
+      if (mail) { compose(mail); return; }
+      if (event.target.closest && event.target.closest("[data-mz-close]")) {
+        var dialog = document.getElementById("mzLampDialog");
+        if (dialog && dialog.close) { dialog.close(); }
+      }
+    });
+    var lamp = document.getElementById("mzLamp");
+    var dialog = document.getElementById("mzLampDialog");
+    if (lamp && dialog) {
+      lamp.addEventListener("click", function () {
+        if (dialog.showModal) { dialog.showModal(); } else { dialog.setAttribute("open", ""); }
+      });
+    }
+  })();
+</script>
 
 <footer class="mz-footer">
   <div class="mz-container mz-footer-inner">

@@ -628,7 +628,6 @@ def test_a_stranger_gets_a_404_for_every_surface_of_a_class(client, db):
             assert client.get(url).status_code == 404, (who.email, url)
         assert client.post(reverse("matazim:open_class", args=[cls.pk]), {"action": "archive"}).status_code == 404
         assert client.post(reverse("matazim:open_leave", args=[cls.pk])).status_code == 404
-        assert client.post(reverse("matazim:open_report", args=[cls.pk]), {"reason": "x"}).status_code == 404
         assert client.get(f"/matazim/api/open-classes/{cls.pk}/").status_code == 404
         assert client.get("/matazim/api/open-class-members/").json() in ([], {"count": 0, "next": None, "previous": None, "results": []})
     cls.refresh_from_db()
@@ -746,30 +745,6 @@ def test_the_owner_gets_a_bell_and_no_email_when_somebody_joins(client, db):
     assert mail.outbox == []
     client.post(reverse("matazim:open_join", args=[cls.code]), {"action": "join"})
     assert Notification.objects.filter(user=owner, kind=Notification.OPEN_JOINED).count() == 1
-
-
-def test_a_report_reaches_root_through_the_request_queue_without_the_code(client, db):
-    from matazim.models import Request
-
-    owner = _member("owner@example.com")
-    cls = _open(owner)
-    kid = _member()
-    _join(cls, kid)
-    client.force_login(kid)
-    client.post(reverse("matazim:open_report", args=[cls.pk]), {"reason": "שמות לא הולמים"})
-    row = Request.objects.get()
-    assert row.author_id == kid.pk and row.status == Request.NEW and row.kind == Request.PROBLEM
-    assert "שמות לא הולמים" in row.body and cls.name in row.body
-    assert cls.code not in row.body
-
-
-def test_a_visitor_to_the_join_page_can_report_it_too(client, db):
-    from matazim.models import Request
-
-    cls = _open(_member("owner@example.com"))
-    client.force_login(_member())
-    client.post(reverse("matazim:open_join", args=[cls.code]), {"action": "report", "reason": "ספאם"})
-    assert Request.objects.count() == 1
 
 
 # --- the hub, the nav, the guide (REQ-M.175, REQ-M.176) ----------------------
@@ -1004,3 +979,19 @@ def test_a_person_on_a_leaders_roster_joins_an_open_class_and_the_roster_is_unch
     assert student.status == status
     assert MatazCertificate.objects.filter(student=student).count() == certified
     assert Student.objects.filter(leader=leader).count() == roster
+
+
+def test_a_class_is_reported_by_mail_and_never_with_its_code(client, db):
+    """Avi, 2026-10-15: no request system, everything by mail. The report button
+    opens an email to Avi with matatzim in the subject, and carries the class's
+    number and name, never its code."""
+    owner = _member("owner@example.com")
+    cls = _open(owner)
+    kid = _member()
+    _join(cls, kid)
+    client.force_login(kid)
+    html = client.get(reverse("matazim:open_class", args=[cls.pk])).content.decode()
+    button = html[html.index("data-mz-mail"):]
+    button = button[:button.index("</button>")]
+    assert "matatzim" in button and "מטצים" in button
+    assert cls.name in button and cls.code not in button

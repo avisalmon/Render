@@ -28,6 +28,14 @@ from .models import Notification
 logger = logging.getLogger(__name__)
 
 
+def _site_url():
+    """The address this site is served from, for the links in a mail."""
+    from django.conf import settings
+
+    base = getattr(settings, "SITE_URL", "") or "https://babook.co.il"
+    return base.rstrip("/")
+
+
 def notify(user, kind, text, *, url="", actor=None):
     """Tell somebody something happened. Returns the row, or None.
 
@@ -102,8 +110,6 @@ def _mail(row):
 
     from django.conf import settings
     from django.core.mail import send_mail
-
-    from .request_mail import _site_url
 
     body = (
         f"{row.text}\n\n"

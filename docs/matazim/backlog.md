@@ -4882,3 +4882,30 @@ place and is no longer linked.
 
 **Tests.** `tests/test_spr_m_67.py`. The earlier suites were updated to the new
 home page and the new order.
+
+## SPR-M.68 — No request system: everything by mail  `DONE 2026-10-15`
+
+**Goal.** Avi: "I want to delete all this mechanism and do everything by mails."
+Naomi or Lital write to his Gmail with **מטצים** or **matatzim** in the subject. The
+build scans his mail for those subjects, reads them, implements them and writes back.
+No queue, no approval screen, no assessment, no token endpoint.
+
+**Removed.** `Request` and `RequestMessage` (migration 0043 drops both tables),
+`request_views`, `requests_api`, `request_mail`, `conversation_views`, `assess`,
+`model_script`, the `matazim_requests` command, the REST routes `requests` and
+`request-messages`, `/matazim/internal/requests/`, the request screens and the
+"requests" menu entries, and the closed-requests retention step. The open-class
+report, which wrote a request row, is now a button that starts an email.
+
+**Kept, changed.** The lamp (the genie) in the corner of the manager's screens is
+now a button. It opens a dialog: *"from now on every request goes by mail to Avi"*,
+one button that opens a prepared email to avi.salmon@gmail.com with the subject
+"מטצים matatzim: בקשה" and the page it was sent from, and the address in words for
+anyone who prefers to write themselves.
+
+**Tests.** `tests/test_spr_m_68.py`; the suites that existed only for the request
+system (SPR-M.25, M.27, M.36, M.48) are deleted, and the rest were edited to stop
+mentioning it.
+
+**Old sprints** that built the loop (SPR-M.25, M.26, M.27, M.36, M.48) stay as
+written: they describe what existed. Nothing in them is current.

@@ -133,9 +133,10 @@ def test_every_link_on_the_staff_guide_resolves(client, world):
     for path in ("/matazim/staff/team/", "/matazim/staff/people/",
                  "/matazim/staff/courses/", "/matazim/staff/cohort/",
                  "/matazim/staff/events/", "/matazim/staff/retention/",
-                 "/matazim/staff/targets/", "/matazim/requests/new/",
-                 "/matazim/requests/"):
+                 "/matazim/staff/targets/"):
         assert path in body, path
+    # Avi, 2026-10-15: no request screens any more, requests go by mail.
+    assert "/matazim/requests/" not in body
 
 
 # ------------------------------------------------ neither guide overpromises

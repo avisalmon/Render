@@ -180,19 +180,6 @@ def _can_request(user):
     return bool(getattr(user, "is_authenticated", False)) and is_program_manager(user)
 
 
-def _requests_waiting(user):
-    """A count on the lamp, for the person whose press is the decision.
-
-    Only for root: telling נעמי how many of her own requests are unanswered is
-    a nag about somebody else's queue, and telling a second program manager
-    anything about the first one's requests would break §4.4.
-    """
-    if not (getattr(user, "is_authenticated", False) and user.is_superuser):
-        return 0
-    from .models import Request
-
-    return Request.objects.filter(status=Request.NEW).count()
-
 
 def _learner_stage(user):
     from .gate import learner_stage
@@ -241,7 +228,6 @@ def shell(request, section, **extra):
         # REQ-M.33 — the bell, for every signed-in role.
         "unread_notices": _unread_notices(request.user),
         "can_request": _can_request(request.user),
-        "requests_waiting": _requests_waiting(request.user),
         # REQ-M.84 — why they cannot join yet, in words, on whatever page they
         # are looking at. None when nothing is in the way.
         "consent_blocker": _consent_blocker(member),

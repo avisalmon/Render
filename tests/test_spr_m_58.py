@@ -184,7 +184,7 @@ def test_a_candidate_waiting_sits_above_the_list(client, world):
 def test_the_reports_are_still_one_tap_away(client, world):
     body = _login(client, "naomi@example.com").get("/matazim/staff/").content.decode()
     for path in ("/matazim/staff/people/", "/matazim/staff/cohort/", "/matazim/staff/courses/",
-                 "/matazim/staff/events/", "/matazim/requests/new/", "/matazim/my-path/"):
+                 "/matazim/staff/events/", "/matazim/my-path/"):
         assert path in body, path
 
 

@@ -560,11 +560,8 @@ def staff_retention(request):
     from .access import is_program_manager
     from .retention import (
         FAILED_ATTEMPT_DAYS,
-        REQUEST_DAYS,
         approve_purge,
-        approve_request_purge,
         due_attempts,
-        due_requests,
         summary,
     )
 
@@ -577,12 +574,6 @@ def staff_retention(request):
         if action == "purge":
             removed = approve_purge(request.user)
             notice = f"{removed} רשומות נמחקו, יחד עם הקבצים שלהן."
-        elif action == "purge_requests":
-            # REQ-M.113 — the improvement loop's own rows, on the same screen
-            # and behind the same person, because a second deletion mechanism
-            # somewhere else is a second thing to forget.
-            removed = approve_request_purge(request.user)
-            notice = f"{removed} בקשות סגורות נמחקו."
 
     return render(
         request,
@@ -592,8 +583,6 @@ def staff_retention(request):
             "staff",
             due=due_attempts(),
             days=FAILED_ATTEMPT_DAYS,
-            due_requests=due_requests(),
-            request_days=REQUEST_DAYS,
             info=summary(),
             notice=notice,
         ),

@@ -211,87 +211,8 @@ def build_world(
             approved_at=None,
         )
 
-    # §4.11 — the improvement loop, in the states its screens are read in: one
-    # waiting on Avi, one he approved, one already shipped with an outcome she
-    # can read. An empty queue is not the queue screen.
     draft = None
     first_work = None
-    if requests:
-        from matazim.models import Request, RequestMessage
-
-        # REQ-M.117 — a conversation she has not sent. The state the talk screen
-        # is read in, and one that appears on no other screen in the product.
-        draft = Request.objects.create(
-            author=manager,
-            author_role="program_manager",
-            body="אני רוצה שיישלח מייל כשמטצ מסיים את שני הקורסים.",
-            kind=Request.IDEA,
-            from_screen="/matazim/staff/cohort/",
-            status=Request.DRAFT,
-        )
-        RequestMessage.objects.create(
-            request=draft,
-            who=RequestMessage.HER,
-            body="אני רוצה שיישלח מייל כשמטצ מסיים את שני הקורסים.",
-        )
-        RequestMessage.objects.create(
-            request=draft,
-            who=RequestMessage.ASSISTANT,
-            body=(
-                "REQ-M.33 כבר מגדיר התראות, והוא עדיין לא נבנה.\n"
-                "השאלה היא אם מספיק מייל, או שצריך גם סימון במסך.\n"
-                "נוסח מוצע: התראה למנהלת התוכנית כשמטצ משלים את שני הקורסים."
-            ),
-        )
-
-        Request.objects.create(
-            author=manager,
-            author_role="program_manager",
-            body="במסך המטצים שלי אני לא מצליחה להבין מי מחכה לאישור שלי ומי כבר אושר.",
-            kind=Request.PROBLEM,
-            from_screen="/matazim/leader/students/",
-            assessment=(
-                "רעיון טוב\n"
-                "הרוסטר לא מבדיל בין מחכה לאישור לבין מאושר.\n"
-                "נוגע ברוסטר ובמסך המוביל."
-            ),
-            assessed_at=now,
-        )
-        Request.objects.create(
-            author=manager,
-            author_role="program_manager",
-            body="אפשר להוסיף ייצוא לאקסל של המחזור?",
-            kind=Request.IDEA,
-            from_screen="/matazim/staff/cohort/",
-            status=Request.APPROVED,
-            decided_at=now,
-            assessment=(
-                "כבר קיים\n"
-                "REQ-M.24 כבר מגדיר ייצוא CSV מהמסך הזה.\n"
-                "כדאי לבדוק אם הכפתור פשוט לא נראה."
-            ),
-            # REQ-M.118 — the thing Avi actually asked to see on this screen.
-            # Without it here the catalogue renders his card without its
-            # headline feature, which is the same trap as a fixture with no
-            # candidate leader in it.
-            recommendation=(
-                "REQ-M.24\n"
-                "כבר קיים\n"
-                "הייתי מראה לה איפה הכפתור במקום לבנות אחד שני."
-            ),
-            assessed_at=now,
-        )
-        Request.objects.create(
-            author=manager,
-            author_role="program_manager",
-            body="הכיתות מוצגות פעמיים כשיש שתי כיתות באותו בית ספר.",
-            kind=Request.PROBLEM,
-            status=Request.DONE,
-            decided_at=now,
-            sprint="SPR-M.20",
-            outcome="שם בית הספר מוצג פעם אחת, והכיתות מתחתיו.",
-            done_at=now,
-        )
 
     rooms = []
     if classes == "one":
@@ -736,26 +657,6 @@ SCREENS = [
         "candidate@example.com",
         dict(students="none", candidate=True),
     ),
-    # SPR-M.25 — the improvement loop.
-    (
-        "requests/queue",
-        "/matazim/requests/queue/",
-        "root@example.com",
-        dict(students="none", requests=True),
-    ),
-    (
-        "requests/queue-empty",
-        "/matazim/requests/queue/",
-        "root@example.com",
-        dict(students="none"),
-    ),
-    (
-        "requests/mine",
-        "/matazim/requests/",
-        "pm@example.com",
-        dict(students="none", requests=True),
-    ),
-    ("requests/new", "/matazim/requests/new/", "pm@example.com", dict(students="none")),
     # SPR-M.28 — יוצרים.
     ("work/mine", "/matazim/my-work/", "mid@example.com", dict(students="mixed", work=True)),
     ("work/none", "/matazim/my-work/", "fresh@example.com", dict(students="mixed")),
@@ -797,12 +698,6 @@ SCREENS = [
         dict(students="mixed", work=True),
     ),
     ("leader/work-waiting", "/matazim/leader/", "leader@example.com", dict(students="mixed", work=True)),
-    (
-        "requests/talk",
-        lambda w: f"/matazim/requests/{w['draft'].pk}/talk/",
-        "pm@example.com",
-        dict(students="none", requests=True),
-    ),
     (
         "public/verify",
         lambda w: f"/matazim/verify/{w['students']['done@example.com'].certificate.public_id}/",

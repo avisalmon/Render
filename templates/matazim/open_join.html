@@ -65,18 +65,11 @@
   </section>
 
   {% if user.is_authenticated and not is_owner %}
-    <details class="mz-panel">
-      <summary>משהו כאן לא בסדר? אפשר לדווח</summary>
-      <form method="post">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="report">
-        <label class="mz-field">
-          <span>מה קרה</span>
-          <textarea id="reason" name="reason" rows="3" maxlength="500"></textarea>
-        </label>
-        <button type="submit" class="mz-btn mz-btn-ghost">שליחת דיווח</button>
-      </form>
-    </details>
+    <p>
+      <button type="button" class="mz-btn mz-btn-ghost" data-mz-mail
+              data-subject="מטצים matatzim: דיווח על כיתה פתוחה"
+              data-body="דיווח על כיתה פתוחה, &quot;{{ cls.name }}&quot;.&#10;&#10;מה קרה:&#10;">משהו כאן לא בסדר? לדווח</button>
+    </p>
   {% endif %}
 </div>
 {% endblock %}

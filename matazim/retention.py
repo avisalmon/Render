@@ -124,47 +124,7 @@ def summary():
 
     return {
         "failed_attempt_days": FAILED_ATTEMPT_DAYS,
-        "request_days": REQUEST_DAYS,
         "pending": overdue_count(),
-        "pending_requests": due_requests().count(),
         "last_run": RetentionRun.objects.first(),
     }
 
-
-# --- REQ-M.113: the improvement loop's own rows -----------------------------
-
-
-def due_requests(days=REQUEST_DAYS):
-    """Closed requests past their period.
-
-    Closed means done or declined. A request still open is never due, whatever
-    its age: an unanswered question is not stale data.
-    """
-    from .models import Request
-
-    cutoff = timezone.now() - timedelta(days=days)
-    return Request.objects.filter(
-        status__in=[Request.DONE, Request.DECLINED],
-        decided_at__isnull=False,
-        decided_at__lt=cutoff,
-    )
-
-
-def approve_request_purge(user, days=REQUEST_DAYS):
-    """Delete what is due, and record who said so.
-
-    A person in front of it, like every other deletion here (REQ-M.87). The
-    conversation behind each request goes with it through the cascade, which is
-    right: a chat about a request that no longer exists is a record of nothing,
-    about a person, kept for no reason.
-    """
-    from .models import RetentionRun
-
-    doomed = list(due_requests(days))
-    removed = 0
-    for row in doomed:
-        row.delete()
-        removed += 1
-
-    RetentionRun.objects.create(ran_by=user, deleted_count=removed, kind="requests")
-    return removed

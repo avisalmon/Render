@@ -53,8 +53,6 @@ from .models import (
     OpenClassMember,
     OfferedCourse,
     Post,
-    Request,
-    RequestMessage,
     RetentionRun,
     StatusLog,
     Student,
@@ -81,8 +79,6 @@ from .serializers import (
     OpenClassMemberSerializer,
     OpenClassSerializer,
     PostSerializer,
-    RequestMessageSerializer,
-    RequestSerializer,
     RetentionRunSerializer,
     StatusLogSerializer,
     StudentSerializer,
@@ -862,83 +858,6 @@ class TeachingSessionViewSet(Scoped):
 # ------------------------------------------------------- the improvement loop
 
 
-class RequestViewSet(NoDeleteMixin, Scoped):
-    """§4.11 — what the person who runs the programme asked for.
-
-    **Her words are hers** (REQ-M.112). The body is editable only by its author
-    and only while it is still a draft, because once it is filed, Avi has read
-    what she wrote and a later edit changes the thing he decided on. Everything
-    else on the row is written beside her words and never over them: the
-    assessment is machine-written and advisory, the decision is Avi's press.
-
-    **The queue cannot start work.** `approve` marks a row ready and summons
-    nobody. Nothing in this app triggers a sprint.
-    """
-
-    serializer_class = RequestSerializer
-    scope = staticmethod(access.visible_requests)
-    permission_classes = [IsProgramManager]
-    delete_refusal = "בקשה לא נמחקת. אפשר לדחות אותה, וזה נשאר רשום."
-
-    def perform_create(self, serializer):
-        serializer.save(
-            author=self.request.user,
-            author_role=access.role_of(self.request.user),
-            status=Request.NEW,
-        )
-
-    def perform_update(self, serializer):
-        row = serializer.instance
-        if row.author_id != self.request.user.id:
-            raise PermissionDenied("המילים שלה הן שלה.")
-        if row.status != Request.DRAFT:
-            raise PermissionDenied("בקשה שנשלחה לא נערכת. מה שנכתב הוא מה שנקרא.")
-        serializer.save()
-
-    def _decide(self, request, status):
-        if not request.user.is_superuser:
-            raise PermissionDenied("ההחלטה היא של מנהל המוצר.")
-        row = self.get_object()
-        row.status = status  # not-a-student-status: Request
-        row.decided_by = request.user
-        row.decided_at = timezone.now()
-        row.save(update_fields=["status", "decided_by", "decided_at"])
-        return Response(RequestSerializer(row).data)
-
-    @action(detail=True, methods=["post"])
-    def approve(self, request, pk=None):
-        return self._decide(request, Request.APPROVED)
-
-    @action(detail=True, methods=["post"])
-    def decline(self, request, pk=None):
-        return self._decide(request, Request.DECLINED)
-
-
-class RequestMessageViewSet(NoUpdateMixin, NoDeleteMixin, Scoped):
-    """REQ-M.115 — one turn of the conversation behind a request.
-
-    A conversation is not rewritten after the fact. The chat may propose new
-    wording and never replaces what she typed unless she takes the proposal.
-    """
-
-    serializer_class = RequestMessageSerializer
-    scope = staticmethod(access.visible_request_messages)
-    permission_classes = [IsProgramManager]
-    update_refusal = "שיחה לא נערכת בדיעבד."
-    delete_refusal = "שיחה לא נמחקת."
-
-    def perform_create(self, serializer):
-        parent = serializer.validated_data.get("request")
-        if not access.visible_requests(self.request.user).filter(
-            pk=getattr(parent, "pk", None)
-        ).exists():
-            raise NotFound()
-        serializer.save(who=RequestMessage.HER)
-
-
-# ------------------------------------------------------------- the shelf
-
-
 class OfferedCourseViewSet(Scoped):
     """SPR-M.52 — the pool of הדרכות leaders may choose from.
 
@@ -1147,8 +1066,6 @@ ROUTES = [
     ("milestones", ProgramMilestoneViewSet, ProgramMilestone),
     ("site-updates", SiteUpdateViewSet, SiteUpdate),
     ("posts", PostViewSet, Post),
-    ("requests", RequestViewSet, Request),
-    ("request-messages", RequestMessageViewSet, RequestMessage),
     ("teaching", TeachingSessionViewSet, TeachingSession),
     ("offered-courses", OfferedCourseViewSet, OfferedCourse),
     ("leader-courses", LeaderCourseViewSet, LeaderCourse),

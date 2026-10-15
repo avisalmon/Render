@@ -14,7 +14,6 @@ from . import (
     certificate_views,
     cohort_views,
     community_views,
-    conversation_views,
     entrance_views,
     event_views,
     year_views,
@@ -27,8 +26,6 @@ from . import (
     notice_views,
     overview_views,
     path_views,
-    request_views,
-    requests_api,
     rights_views,
     roster_views,
     submission_views,
@@ -65,9 +62,6 @@ urlpatterns = [
     path("staff/events/<int:event_id>/cancel/", event_views.cancel_event, name="cancel_event"),
     # REQ-M.34 — the one machine-triggered endpoint here. A token, a POST,
     # and it can only send reminders.
-    # The improvement loop, for the chat that runs the sprints (§4.11).
-    # Token-or-superuser, and scoped to Request rows only: see requests_api.py.
-    path("internal/requests/", requests_api.RequestQueueView.as_view(), name="api_requests_admin"),
     path("internal/remind/", internal_views.run_reminders, name="run_reminders"),
     # מבחן הכניסה is public: the link gets pasted around, and signing up
     # happens around the test rather than before it (REQ-M.5d).
@@ -146,7 +140,6 @@ urlpatterns = [
     path("classes/open/<int:pk>/", open_class_views.open_class_page, name="open_class"),
     path("classes/open/<int:pk>/qr.png", open_class_views.open_class_qr, name="open_class_qr"),
     path("classes/open/<int:pk>/leave/", open_class_views.open_leave, name="open_leave"),
-    path("classes/open/<int:pk>/report/", open_class_views.open_report, name="open_report"),
     path("class/<str:code>/", open_class_views.open_join, name="open_join"),
     path("leader/<int:leader_id>/qr.png", joining_views.leader_qr, name="leader_qr"),
     path("staff/leaders/", joining_views.staff_leaders, name="staff_leaders"),
@@ -160,21 +153,6 @@ urlpatterns = [
     path("me/delete/", rights_views.delete_me, name="delete_me"),
     # REQ-M.84 — an admin records a school's paper consent.
     path("staff/consent/<int:profile_id>/", entrance_views.staff_consent, name="staff_consent"),
-    # §4.11 — the improvement loop. Behind the program-manager role and root,
-    # and every view refuses everyone else on its own (REQ-M.102). Proposing a
-    # change is a conversation (REQ-M.115), so `new_request` opens one.
-    path("requests/new/", conversation_views.start, name="new_request"),
-    path("requests/<int:request_id>/talk/", conversation_views.talk, name="talk"),
-    path("requests/<int:request_id>/adopt/", conversation_views.adopt, name="adopt_wording"),
-    path("requests/<int:request_id>/send/", conversation_views.send, name="send_request"),
-    path(
-        "requests/<int:request_id>/discard/",
-        conversation_views.discard,
-        name="discard_request",
-    ),
-    path("requests/", request_views.my_requests, name="my_requests"),
-    path("requests/queue/", request_views.request_queue, name="request_queue"),
-    path("requests/<int:request_id>/decide/", request_views.decide_request, name="decide_request"),
     path("privacy/", views.privacy, name="privacy"),
     path("terms/", views.terms, name="terms"),
     # A minor's uploaded work, handed out only to people entitled to it

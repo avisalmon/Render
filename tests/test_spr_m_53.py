@@ -273,7 +273,6 @@ def test_the_entry_screen_leads_to_both_reports(client, world):
     assert "/matazim/staff/people/" in body
     assert "/matazim/staff/courses/" in body
     assert "/matazim/staff/cohort/" in body, "the cohort funnel"
-    assert "/matazim/requests/new/" in body, "the improvement loop"
     assert "/matazim/my-path/" in body, "the member's own screens, to look at"
 
 
@@ -584,58 +583,6 @@ def test_every_staff_screen_renders_the_same_for_both(client, pair):
 
     for path in paths:
         assert body("naomi@example.com", path) == body("litala2@example.com", path), path
-
-
-def test_the_improvement_log_is_the_programmes_and_not_one_persons(pair):
-    """The one place they were not the same person. ליטל's job is to file
-    feedback about the site; a log only she can read is a log נעמי cannot act
-    on."""
-    from matazim.access import visible_requests
-    from matazim.models import Request
-
-    hers = Request.objects.create(author=pair["litala"], body="הכפתור קטן מדי")
-    theirs = Request.objects.create(author=pair["naomi"], body="חסר ייצוא")
-
-    for who in (pair["naomi"], pair["litala"]):
-        seen = set(visible_requests(who).values_list("pk", flat=True))
-        assert {hers.pk, theirs.pk} <= seen
-
-
-def test_another_programmes_requests_are_still_invisible(pair, world):
-    """What the author filter was protecting, kept by the join rather than
-    lost with it."""
-    from matazim.access import visible_requests
-    from matazim.models import Request
-
-    elsewhere = Request.objects.create(author=world["other_pm"], body="לא שלכם")
-    assert elsewhere.pk not in set(
-        visible_requests(pair["naomi"]).values_list("pk", flat=True))
-    assert elsewhere.pk in set(
-        visible_requests(world["root"]).values_list("pk", flat=True))
-
-
-def test_the_screen_and_the_api_scope_requests_identically(client, pair):
-    """They were two copies of one rule, and only one of them would have been
-    changed. A locked door beside an open window is SPR-M.50's finding."""
-    from matazim import request_views
-    from matazim.access import visible_requests
-    from matazim.models import Request
-
-    Request.objects.create(author=pair["litala"], body="אחת")
-    Request.objects.create(author=pair["naomi"], body="שתיים")
-
-    for who in (pair["naomi"], pair["litala"]):
-        assert (sorted(visible_requests(who).values_list("pk", flat=True))
-                == sorted(request_views.visible_requests(who).values_list("pk", flat=True)))
-
-
-def test_deciding_is_still_only_avis(pair):
-    """Seeing the same things is not deciding the same things. REQ-M.108 is one
-    human gate, and widening the log must not have widened the press."""
-    from matazim.request_views import may_decide
-
-    assert may_decide(pair["naomi"]) is False
-    assert may_decide(pair["litala"]) is False
 
 
 def test_neither_of_them_can_appoint_or_change_the_pool(client, pair):

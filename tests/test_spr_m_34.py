@@ -66,8 +66,6 @@ def build_world(tag, *, secret):
         MemberProfile,
         Notification,
         Post,
-        Request,
-        RequestMessage,
         RetentionRun,
         Student,
         StudyClass,
@@ -144,12 +142,6 @@ def build_world(tag, *, secret):
 
     Post.objects.create(author=member_user, institution=_inst(manager), body=secret)
 
-    req = Request.objects.create(
-        author=manager, author_role="program_manager", body=secret,
-        kind=Request.IDEA, status=Request.NEW,
-    )
-    RequestMessage.objects.create(request=req, who=RequestMessage.HER, body=secret)
-
     RetentionRun.objects.create(ran_by=manager, deleted_count=0, kind="failed_attempts")
 
     set_status(student, Student.PROJECT_SUBMITTED, by=leader.user, note=secret)
@@ -169,7 +161,6 @@ def build_world(tag, *, secret):
         "member_user": member_user,
         "submission": submission,
         "event": event,
-        "request": req,
     }
 
 
@@ -525,41 +516,6 @@ def test_a_certificate_is_not_created_or_deleted_through_the_api(client, two_wor
     assert client.post(f"{API}certificates/", {}, content_type="application/json").status_code == 405
     assert client.delete(f"{API}certificates/{row.pk}/").status_code == 405
     assert MatazCertificate.objects.filter(pk=row.pk).exists()
-
-
-def test_her_words_are_hers(client, two_worlds):
-    """T-F-M.34.2-12: REQ-M.112, §4.11.
-
-    A filed request is the thing Avi read. A later edit changes what he decided
-    on, so the body is editable only by its author and only while it is a draft.
-    """
-    from matazim.models import Request
-
-    row = two_worlds["ours"]["request"]
-    other = two_worlds["theirs"]["manager"]
-
-    client.force_login(other)
-    assert client.patch(f"{API}requests/{row.pk}/", {"body": "משהו אחר"},
-                        content_type="application/json").status_code == 404
-
-    client.force_login(two_worlds["ours"]["manager"])
-    assert client.patch(f"{API}requests/{row.pk}/", {"body": "משהו אחר"},
-                        content_type="application/json").status_code == 403
-
-    row.refresh_from_db()
-    assert row.body == "אלפא"
-
-
-def test_only_root_decides_a_request(client, two_worlds):
-    """T-F-M.34.2-13: §4.11 — one human gate, and it is Avi's press."""
-    from matazim.models import Request
-
-    row = two_worlds["ours"]["request"]
-    client.force_login(two_worlds["ours"]["manager"])
-
-    assert client.post(f"{API}requests/{row.pk}/approve/").status_code == 403
-    row.refresh_from_db()
-    assert row.status == Request.NEW
 
 
 def test_a_retention_run_is_a_record_not_a_row_to_write(client, two_worlds):

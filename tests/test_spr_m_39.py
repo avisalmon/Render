@@ -100,7 +100,7 @@ def outbox(settings):
 
 def _her_world(naomi):
     """Everything a program manager owns, one of each."""
-    from matazim.models import Event, LeaderInvite, Post, Request
+    from matazim.models import Event, LeaderInvite, Post
 
     noa = _leader("noa@example.com", "נעה", naomi)
     event = Event.objects.create(
@@ -114,11 +114,7 @@ def _her_world(naomi):
     post = Post.objects.create(
         author=naomi, institution=_inst(naomi), kind=Post.ANNOUNCEMENT, body="שלום"
     )
-    request = Request.objects.create(
-        author=naomi, author_role="program_manager", body="בקשה שלי",
-        kind=Request.IDEA, status=Request.NEW,
-    )
-    return noa, event, invite, post, request
+    return noa, event, invite, post, None
 
 
 def test_a_successor_inherits_the_whole_institution(db):
@@ -169,21 +165,6 @@ def test_handover_moves_ownership_and_not_history(db):
     noa.refresh_from_db()
     assert successor in noa.institution.managers.all(), "the successor does not run the institution"
     assert noa.approved_by_id == naomi.id, "history was rewritten"
-
-
-def test_her_requests_stay_hers(db):
-    """T-F-M.39.1-3: §4.11 — the log is her voice, and a successor inherits the
-    programme, not the things the previous manager asked for."""
-    from matazim.handover import hand_over
-
-    naomi = _manager()
-    successor = _user("next@example.com", "רות")
-    *_rest, request = _her_world(naomi)
-
-    hand_over(naomi, successor)
-
-    request.refresh_from_db()
-    assert request.author_id == naomi.id
 
 
 def test_the_successor_becomes_a_program_manager_the_same_way_the_screen_does(db):
