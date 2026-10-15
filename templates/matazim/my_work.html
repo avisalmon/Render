@@ -166,6 +166,14 @@
       <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
 
+        {% if for_course %}
+          <input type="hidden" name="course" value="{{ for_course.slug }}">
+          <p class="mz-alert mz-alert-ok" role="status">
+            זה התוצר של ההדרכה <strong>{{ for_course.title }}</strong>.
+            אחרי שמגישים אותו למוביל/ה אפשר להנפיק את התעודה.
+          </p>
+        {% endif %}
+
         {% if returned %}
           <label class="mz-field">
             <span>זו גרסה חדשה של</span>

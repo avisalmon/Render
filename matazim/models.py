@@ -975,6 +975,14 @@ class Submission(models.Model):
         related_name="submissions", verbose_name="הוגש ל",
     )
 
+    # REQ-M.179 - which course this product is the product of. A slug, not a
+    # foreign key into babook's tables (RULE-4), and blank for a free-standing
+    # hand-in. The certificate for a course is issued only after one of these
+    # exists for it.
+    course_slug = models.CharField(
+        max_length=80, blank=True, default="", db_index=True,
+        verbose_name="ההדרכה שזה התוצר שלה",
+    )
     title = models.CharField(max_length=160, verbose_name="מה זה")
     about = models.TextField(blank=True, default="", verbose_name="כמה מילים על זה")
     # A file, a link, or both. A Scratch project is a link and an STL is a file,

@@ -101,6 +101,15 @@ def _hand_in(client, course, order, pid, monkeypatch):
     )
 
 
+def _hand_to_leader(client, slug):
+    """REQ-M.179: the product put in front of the leader, from the course page."""
+    return client.post(
+        "/matazim/my-work/",
+        {"title": "המוצר שלי", "link": "https://scratch.mit.edu/projects/999999999/",
+         "course": slug},
+    )
+
+
 # ------------------------------------------------- the one that matters
 
 
@@ -127,6 +136,13 @@ def test_a_member_can_be_certified_without_leaving_matazim(client, member, monke
     _hand_in(client, course, 1, "111111111", monkeypatch)
     _hand_in(client, course, 2, "222222222", monkeypatch)
     assert LessonModelSubmission.objects.filter(user=member, video__course=course).count() == 2
+
+    # REQ-M.179: babook is satisfied, and the site still waits for the product
+    # to have been handed to the leader.
+    resp = client.post(f"/matazim/learn/{course.slug}/finish/")
+    assert resp["Location"].endswith("?cert=handin"), resp["Location"]
+    assert not CourseCertificate.objects.filter(user=member, course=course).exists()
+    _hand_to_leader(client, course.slug)
 
     # And now the certificate is real, issued through babook's own writer.
     resp = client.post(f"/matazim/learn/{course.slug}/finish/")
@@ -250,6 +266,7 @@ def test_certification_now_reaches_all_three_conditions(client, member, monkeypa
         _watch_everything(member, course)
         _hand_in(client, course, 1, f"1{slug[-1]}1111111", monkeypatch)
         _hand_in(client, course, 2, f"2{slug[-1]}2222222", monkeypatch)
+        _hand_to_leader(client, slug)
         assert client.post(f"/matazim/learn/{slug}/finish/")["Location"].endswith("?cert=issued")
 
     state = eligibility(Student.objects.get(user=member))

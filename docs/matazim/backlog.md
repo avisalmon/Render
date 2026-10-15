@@ -4749,10 +4749,19 @@ readable from the mail connector, so the old logo is still in
 `static/matazim/logo.png`, and replacing that one file (and the favicon) is the
 whole change.
 
-## SPR-M.62 — The certificate follows the hand-in  `TODO`
+## SPR-M.62 — The certificate follows the hand-in  `DONE 2026-10-15`
 
 **Delivers.** REQ-M.179. `Submission.course_slug`; the gate in `finish_course`;
 the course page shows the hand-in as the step before the certificate.
+
+**Built.** `matazim/handin.py` (`needs_handin`), `Submission.course_slug`
+(migration 0038, scoped), the gate in `finish_course`, the hand-in step on the
+course page, and the hand-in form carrying the course. The two existing
+certificate tests now hand in first. `tests/test_spr_m_62.py`: eight tests,
+including that the gate is per course, that a made-up course name is not
+stored, that a returned hand-in still counts (Q27), and that someone with no
+leader is not blocked (Q25). Perturbed: with the gate disabled four of them
+fail.
 
 ## SPR-M.63 — The year  `TODO`
 

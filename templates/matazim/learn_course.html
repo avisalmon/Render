@@ -72,6 +72,12 @@
           <span class="mz-tag mz-tag-done">יש תעודה</span>
           סיימתם את ההדרכה הזאת.
         </p>
+      {% elif certificate.needs_handin %}
+        {% comment %}REQ-M.179: the last step before the certificate is a person.{% endcomment %}
+        <p class="mz-muted">
+          סיימתם את ההדרכה. לפני התעודה צריך להגיש את התוצר למוביל/ה, כדי שמישהו יראה אותו.
+        </p>
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:my_work' %}?course={{ course.slug }}">הגשת התוצר למוביל/ה</a>
       {% elif certificate.ready %}
         <p class="mz-muted">השלמתם את הכל. אפשר להנפיק את התעודה.</p>
         <form method="post" action="{% url 'matazim:finish_course' course.slug %}">
@@ -80,7 +86,9 @@
         </form>
       {% else %}
         <p class="mz-muted">
-          {% if certificate.missing == "progress" %}
+          {% if certificate.state == "handin" %}
+            התעודה מחכה להגשת התוצר למוביל/ה.
+          {% elif certificate.missing == "progress" %}
             צריך לסיים עוד שיעורים לפני שאפשר לקבל תעודה.
           {% elif certificate.missing == "project" %}
             צריך להגיש את הפרויקטים. ההגשה נמצאת בתוך השיעורים עצמם.

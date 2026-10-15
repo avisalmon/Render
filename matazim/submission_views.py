@@ -67,6 +67,29 @@ def waiting_for(leader):
 # --- The member's side ------------------------------------------------------
 
 
+def _course_slug_for(raw):
+    """REQ-M.179 - the course a hand-in is for, or blank.
+
+    Only a slug that names a real course is kept, so a hand-in cannot be filed
+    under a name that satisfies nothing and looks as if it did.
+    """
+    from app.models import Course
+
+    slug = (raw or "").strip()[:80]
+    if slug and Course.objects.filter(slug=slug).exists():
+        return slug
+    return ""
+
+
+def _for_course(request):
+    """The course this hand-in is for, as a slug and a title, or None."""
+    from app.models import Course
+
+    slug = (request.POST.get("course") or request.GET.get("course") or "").strip()[:80]
+    course = Course.objects.filter(slug=slug).only("slug", "title").first() if slug else None
+    return {"slug": course.slug, "title": course.title} if course else None
+
+
 @login_required(login_url=LOGIN_URL)
 def my_work(request, submission_id=None):
     """REQ-M.19 — hand work in, and read what came back.
@@ -117,6 +140,7 @@ def my_work(request, submission_id=None):
             submission = Submission.objects.create(
                 student=student,
                 leader=student.leader,
+                course_slug=_course_slug_for(request.POST.get("course")),
                 title=title,
                 about=about,
                 link=link,
@@ -161,6 +185,8 @@ def my_work(request, submission_id=None):
             submissions=list(rows),
             error=error,
             posted=request.POST if request.method == "POST" else None,
+            # REQ-M.179 - arriving from a course page: the hand-in is for it.
+            for_course=_for_course(request),
             # REQ-M.125 — what a new version would be answering, if anything.
             returned=[row for row in rows if row.status == Submission.RETURNED],
         ),

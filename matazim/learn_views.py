@@ -37,10 +37,16 @@ from app.bunny import get_embed_url
 from app.models import Course, Enrollment, Video
 
 from .content import REQUIRED_COURSE_SLUGS
+from .handin import needs_handin
+from .models import Student
 from .progress import cohort_progress
 from .views import shell
 
 LOGIN_URL = "/matazim/login/"
+
+
+def _student_of(user):
+    return Student.objects.filter(user=user).select_related("leader").first()
 
 
 def _track_course(slug, user=None):
@@ -228,9 +234,13 @@ def _certificate_panel(request, course):
         return None
 
     not_yet = why_not_certified(request.user, course)
+    # REQ-M.179 - everything else is done, and the one thing left is to put the
+    # product in front of the leader. Shown as a step, not as a refusal.
+    owes = not_yet is None and needs_handin(_student_of(request.user), course.slug)
     return {
         "held": None,
-        "ready": not_yet is None,
+        "ready": not_yet is None and not owes,
+        "needs_handin": owes,
         "missing": not_yet.reason if not_yet else None,
         "state": request.GET.get("cert", ""),
     }
@@ -298,6 +308,11 @@ def finish_course(request, slug):
     url = reverse("matazim:learn_course", kwargs={"slug": slug})
     if not_yet:
         return redirect(f"{url}?cert={not_yet.reason}")
+
+    # REQ-M.179 - Atid: the certificate only after the product has been handed
+    # to the leader. Refused here on the server, not merely hidden on the page.
+    if needs_handin(_student_of(request.user), slug):
+        return redirect(f"{url}?cert=handin")
 
     issue_certificate(request.user, course)
     return redirect(f"{url}?cert=issued")

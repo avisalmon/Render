@@ -95,6 +95,7 @@ markers = [
     "sprm49: SPR-M.49 מט״צים מצב לילה, the first sprint from the request queue",
     "sprm50: SPR-M.50 מט״צים the second review: API writes, fonts, images, a door",
     "sprm51: SPR-M.51 מט״צים the certification path closes",
+    "sprm62: SPR-M.62 מט״צים a certificate follows the hand-in",
     "sprm52: SPR-M.52 מט״צים the shelf: הדרכות a leader opens for their members",
     "sprm53: SPR-M.53 מט״צים the programme from above: all courses, all leaders, progress and the test",
     "sprm56: SPR-M.56 מט״צים Litala's three screens, as drawn",
