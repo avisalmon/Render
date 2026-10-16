@@ -17,6 +17,26 @@ Newest first.
 
 ---
 
+## PM-13 · 2026-10-16 · In a shared working copy, a commit is a release
+
+**What happened.** CrashTech's checkpoint sprint was committed, and the full
+regression promised before pushing was started. While it ran, other chats
+pushed under the "push means everything" rule, and the commit reached
+production before the run finished. Four failures from the other chats
+(blackjack nav, memz CSS variable, matazim dashboard, counter registry)
+shipped the same way.
+
+**Why.** One working copy, several sessions, and any push sweeps up every
+commit. The full regression was treated as a step before *my* push, when
+any session's push is the real gate.
+
+**Rule.** In a shared working copy, commit only what you would ship now,
+after its own tests pass. Whoever pushes runs the full regression first and
+owns what it finds, including other sessions' work.
+
+Here: this file; `parallel-chats-deploy-all` memory
+BKM: FullStackBKM 30700d4, 87d6004
+
 ## PM-12 · 2026-10-16 · Nothing made sure a lesson reached the shared kit
 
 **What happened.** The methodology document here is 627 lines and
