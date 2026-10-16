@@ -147,6 +147,23 @@ def _list(value, low, high, longest, what):
     return [_int(v, low, high, what) for v in value]
 
 
+def _pairs(value, longest, what):
+    """A list of freeze steps, each `[profit that sets it off, amount sent home]`.
+    A bare number is the old form of a step, where both were the same."""
+    if not isinstance(value, list) or len(value) > longest:
+        raise Refused(f"{what}: רשימה של עד {longest} שלבים.")
+    out = []
+    for entry in value:
+        if isinstance(entry, list) and len(entry) == 2:
+            gain, take = entry
+        elif isinstance(entry, list):
+            raise Refused(what + ": בכל שלב שני מספרים, כמה רווח וכמה להוציא הביתה.")
+        else:
+            gain = take = entry
+        out.append([_int(gain, 1, BIG, what), _int(take, 1, BIG, what)])
+    return out
+
+
 # ---------------------------------------------------------------- the policy
 
 
@@ -159,7 +176,7 @@ def clean_policy(data):
     ladder = _list(data.get("ladder"), 1, BIG, MAX_LADDER, "סולם ההימורים")
     if not ladder:
         raise Refused("סולם ההימורים ריק.")
-    freeze = _list(data.get("freeze"), 1, BIG, MAX_FREEZE, "שלבי ההקפאה")
+    freeze = _pairs(data.get("freeze"), MAX_FREEZE, "שלבי ההקפאה")
     return {
         "start": start,
         "minBet": min_bet,
@@ -313,7 +330,7 @@ def default_settings():
             "start": 1000, "minBet": 15, "limit": 500,
             "ladder": [15, 50, 150, 500],
             "afterWin": "reset", "atLimit": "stay", "short": "rest",
-            "freeze": [500, 500, 1000, 2000], "freezeAfter": "stop",
+            "freeze": [[500, 1000], [500, 500], [1000, 500], [2000, 1000]], "freezeAfter": "stop",
         },
         "overrides": {},
         "handsPerDay": MAX_HANDS,

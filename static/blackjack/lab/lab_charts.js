@@ -174,8 +174,17 @@
     return Math.round(sc.ahead * 100) + "% ימים ברווח · ממוצע " + fmt(sc.avg) + " · " + fmt(sc.survive) + " ידיים";
   }
 
+  /* "500" when a step takes out what it earned, "רווח 500 והוצאה 1,000" when not. */
+  function freezeText(list) {
+    if (!list || !list.length) return "אין";
+    return list.map(function (e) {
+      var g = Array.isArray(e) ? e[0] : e, t = Array.isArray(e) ? e[1] : e;
+      return g === t ? fmt(g) : "רווח " + fmt(g) + " והוצאה " + fmt(t);
+    }).join(", ");
+  }
+
   function policyLine(p) {
-    return "סולם: " + p.ladder.join(", ") + " · הקפאה: " + (p.freeze.length ? p.freeze.join(", ") : "אין");
+    return "סולם: " + p.ladder.join(", ") + " · הקפאה: " + freezeText(p.freeze);
   }
 
   function searchBody(r) {
@@ -196,6 +205,6 @@
   return {
     fmt: fmt, esc: esc, lineChart: lineChart, histogram: histogram,
     tile: tile, daysTop: daysTop, trendFigure: trendFigure, daysFigure: daysFigure,
-    histFigure: histFigure, searchBody: searchBody, policyLine: policyLine
+    histFigure: histFigure, searchBody: searchBody, policyLine: policyLine, freezeText: freezeText
   };
 });

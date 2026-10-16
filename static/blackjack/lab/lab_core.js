@@ -339,7 +339,8 @@
       afterWin: "reset",      // reset | stay | back
       atLimit: "stay",        // stay | restart | stop
       short: "rest",          // rest | restart | stop
-      freeze: [500, 500, 1000, 2000],
+      // [profit above the starting point that sets it off, amount sent home]; what is left is the next starting point
+      freeze: [[500, 1000], [500, 500], [1000, 500], [2000, 1000]],
       freezeAfter: "stop"     // stop | repeat
     };
   }
@@ -352,8 +353,22 @@
   /* The policy as plain state and two small functions, so each rule in the
      spec can be tested with a scripted run of wins and losses and no cards. */
 
+  /* A freeze step is two numbers: the profit, above the current starting
+     point, that sets it off, and how much of the money on the table is then
+     sent home. What stays on the table is the next starting point (REQ-B.11.16).
+     A bare number is the old form of a step, where both were the same. */
+  function stepOf(entry) {
+    if (Array.isArray(entry)) return { gain: entry[0], take: entry[1] };
+    return { gain: entry, take: entry };
+  }
+
+  function pairOf(entry) {
+    var s = stepOf(entry);
+    return [s.gain, s.take];
+  }
+
   function newPolicyState(pol) {
-    return { ladder: usableLadder(pol), rung: 0, playing: pol.start, frozen: 0, frozenSteps: 0 };
+    return { ladder: usableLadder(pol), rung: 0, playing: pol.start, base: pol.start, frozen: 0, frozenSteps: 0, lastFreezes: [] };
   }
 
   /* The next bet, or why the day is over (REQ-B.11.13, B.11.15). */
@@ -386,15 +401,20 @@
         }
       }
     }
-    // Winnings above the starting amount move to the frozen pile, one chunk
-    // at a time, and are never bet again.
+    // When the money on the table is the step's profit above the current
+    // starting point, the step's amount goes home and is never bet again. What
+    // is left on the table is the new starting point.
+    ps.lastFreezes = [];
     for (;;) {
-      var chunk;
-      if (ps.frozenSteps < pol.freeze.length) chunk = pol.freeze[ps.frozenSteps];
-      else if (pol.freezeAfter === "repeat" && pol.freeze.length) chunk = pol.freeze[pol.freeze.length - 1];
+      var entry;
+      if (ps.frozenSteps < pol.freeze.length) entry = pol.freeze[ps.frozenSteps];
+      else if (pol.freezeAfter === "repeat" && pol.freeze.length) entry = pol.freeze[pol.freeze.length - 1];
       else break;
-      if (!(chunk > 0) || ps.playing < pol.start + chunk) break;
-      ps.frozen += chunk; ps.playing -= chunk; ps.frozenSteps++;
+      var step = stepOf(entry);
+      if (!(step.gain > 0) || !(step.take > 0) || ps.playing < ps.base + step.gain) break;
+      var take = Math.min(step.take, ps.playing);
+      ps.lastFreezes.push({ gain: step.gain, take: take, reached: ps.playing, base: ps.base });
+      ps.frozen += take; ps.playing -= take; ps.base = ps.playing; ps.frozenSteps++;
     }
     return stop;
   }
@@ -425,14 +445,19 @@
       if (needsShuffle(shoe)) shuffle(shoe);
       var result = playRound(shoe, next.bet, rules, ps.playing, chart, overrides, counters);
       rounds++;
-      var frozenBefore = ps.frozen, stepsBefore = ps.frozenSteps;
+      var frozenBefore = ps.frozen;
       var stopNow = settleRound(ps, pol, result);
       if (trace) {
         trace.bets.push(next.bet); trace.nets.push(result);
         trace.playing.push(ps.playing); trace.frozen.push(ps.frozen);
-        if (ps.frozen > frozenBefore) {
-          trace.freezes.push({ round: rounds, amount: ps.frozen - frozenBefore, frozen: ps.frozen, steps: ps.frozenSteps - stepsBefore });
-        }
+        var running = frozenBefore;
+        ps.lastFreezes.forEach(function (f) {
+          running += f.take;
+          trace.freezes.push({
+            round: rounds, amount: f.take, frozen: running, steps: 1,
+            gain: f.gain, reached: f.reached, base: f.base, left: f.reached - f.take
+          });
+        });
       }
       if (ps.playing > peak) peak = ps.playing;
       if (ps.playing < low) low = ps.playing;
@@ -613,6 +638,7 @@
 
   function mutate(policy, rng) {
     var p = JSON.parse(JSON.stringify(policy));
+    p.freeze = p.freeze.map(pairOf);
     var unit = Math.max(1, p.minBet);
     var chunkUnit = Math.max(1, Math.round(p.start / 20));
     var pick = rng();
@@ -625,10 +651,12 @@
     } else if (pick < 0.48 && p.ladder.length > 1) {
       p.ladder.splice(Math.floor(rng() * p.ladder.length), 1);
     } else if (pick < 0.80 && p.freeze.length) {
-      var j = Math.floor(rng() * p.freeze.length);
-      p.freeze[j] = roundTo(p.freeze[j] * factor(), chunkUnit);
+      var j = Math.floor(rng() * p.freeze.length), which = rng() < 0.5 ? 0 : 1;
+      p.freeze[j][which] = roundTo(p.freeze[j][which] * factor(), chunkUnit);
     } else if (pick < 0.90 && p.freeze.length < 6) {
-      p.freeze.push(roundTo(p.start * (0.25 + rng() * 1.5), chunkUnit));
+      var gain = roundTo(p.start * (0.25 + rng() * 1.5), chunkUnit);
+      var take = rng() < 0.5 ? gain : roundTo(gain * (0.3 + rng() * 1.7), chunkUnit);
+      p.freeze.push([gain, take]);
     } else if (p.freeze.length) {
       p.freeze.splice(Math.floor(rng() * p.freeze.length), 1);
     }
@@ -691,7 +719,7 @@
     situation: situation, staked: staked, net: net,
     makeChart: makeChart, chooseAction: chooseAction, playRound: playRound,
     defaultPolicy: defaultPolicy, usableLadder: usableLadder, playDay: playDay,
-    newPolicyState: newPolicyState, nextBet: nextBet, settleRound: settleRound,
+    newPolicyState: newPolicyState, stepOf: stepOf, pairOf: pairOf, nextBet: nextBet, settleRound: settleRound,
     traceDay: traceDay, createDays: createDays, runDays: runDays, createSearch: createSearch,
     searchPolicies: searchPolicies, mutate: mutate
   };

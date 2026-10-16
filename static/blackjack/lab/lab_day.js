@@ -251,7 +251,8 @@
       var li = document.createElement("li");
       var b = document.createElement("button");
       b.type = "button"; b.className = "bj-day-freeze-go";
-      b.textContent = "יד " + fmt(f.round) + ": הוקפאו " + fmt(f.amount) + " (מוקפא עד עכשיו " + fmt(f.frozen) + ")";
+      b.textContent = "יד " + fmt(f.round) + ": הוקפאו " + fmt(f.amount) + " (מוקפא עד עכשיו " + fmt(f.frozen) + ")" +
+        (f.left != null ? " · נשארו " + fmt(f.left) + " למשחק" : "");
       b.addEventListener("click", function () {
         var span = Math.max(minSpan(n), Math.min(n, 40));
         hover = f.round;

@@ -297,7 +297,7 @@ def test_the_lab_screen_opens_with_avis_defaults(client, me):
     policy = boot["settings"]["policy"]
     assert policy["start"] == 1000 and policy["minBet"] == 15 and policy["limit"] == 500
     assert policy["ladder"] == [15, 50, 150, 500]
-    assert policy["freeze"] == [500, 500, 1000, 2000]
+    assert policy["freeze"] == [[500, 1000], [500, 500], [1000, 500], [2000, 1000]]
     assert policy["afterWin"] == "reset"
     assert boot["settings"]["handsPerDay"] == 100000
 
@@ -422,3 +422,38 @@ def test_a_mixed_goal_is_saved_with_its_weights(client, me):
 def test_a_mixed_goal_needs_sensible_weights(client, me, mix):
     """T-F-B.12.2-28"""
     assert _post(client, _search_body("mix", mix)).status_code == 400
+
+# ------------------------------------------------------------ two numbers to a freeze step
+
+
+def test_a_freeze_step_is_two_numbers_and_is_stored_as_two(client, me):
+    """T-F-B.12.2-29: REQ-B.11.16. The profit that sets it off, and what goes home."""
+    from blackjack.models import LabRun
+
+    body = _payload()
+    body["settings"]["policy"]["freeze"] = [[500, 1000], [500, 400]]
+    assert _post(client, body).status_code == 201
+    assert LabRun.objects.get().settings["policy"]["freeze"] == [[500, 1000], [500, 400]]
+
+
+def test_a_bare_number_is_the_old_form_of_a_step(client, me):
+    """T-F-B.12.2-30: runs saved before a step had two numbers hold one."""
+    from blackjack import lab
+
+    cleaned = lab.clean_policy(_policy())
+    assert cleaned["freeze"] == [[500, 500], [500, 500], [1000, 1000], [2000, 2000]]
+    assert lab.clean_policy({**_policy(), "freeze": [[300, 100], 50]})["freeze"] == [[300, 100], [50, 50]]
+
+
+@pytest.mark.parametrize("freeze", [
+    [[500]], [[500, 0]], [[0, 500]], [[1, 2, 3]], [["a", 1]], [[-5, 5]], [[1.5, 2]],
+    [[100, 100]] * 13, "500",
+])
+def test_a_freeze_step_needs_two_positive_whole_numbers(client, me, freeze):
+    """T-F-B.12.2-31"""
+    from blackjack.models import LabRun
+
+    body = _payload()
+    body["settings"]["policy"]["freeze"] = freeze
+    assert _post(client, body).status_code == 400
+    assert LabRun.objects.count() == 0

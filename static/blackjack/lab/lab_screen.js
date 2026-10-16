@@ -16,9 +16,15 @@
 
   function $(id) { return document.getElementById(id); }
 
+  // A freeze step is [profit that sets it off, amount sent home]. Runs saved
+  // before that was so hold a bare number, which meant both at once.
+  function pairs(list) {
+    return list.map(function (e) { return Array.isArray(e) ? [e[0], e[1]] : [e, e]; });
+  }
+
   var state = {
     ladder: boot.settings.policy.ladder.slice(),
-    freeze: boot.settings.policy.freeze.slice(),
+    freeze: pairs(boot.settings.policy.freeze),
     overrides: Object.assign({}, boot.settings.overrides || {}),
     worker: null,
     result: null
@@ -106,7 +112,39 @@
   }
 
   function renderLadder() { numberRows("labLadder", state.ladder, "שלב", 1); }
-  function renderFreeze() { numberRows("labFreeze", state.freeze, "שלב", 0); }
+  function renderFreeze() {
+    var box = $("labFreeze");
+    box.textContent = "";
+    state.freeze.forEach(function (step, i) {
+      var row = document.createElement("div");
+      row.className = "bj-lab-row bj-lab-row-pair";
+      var label = document.createElement("span");
+      label.className = "bj-muted bj-small";
+      label.textContent = "שלב " + (i + 1);
+      row.appendChild(label);
+      [["כשהרווח מגיע ל", 0], ["מוציאים הביתה", 1]].forEach(function (part) {
+        var wrap = document.createElement("label");
+        wrap.className = "bj-lab-mini";
+        var text = document.createElement("span");
+        text.className = "bj-muted bj-small";
+        text.textContent = part[0];
+        var input = document.createElement("input");
+        input.type = "number"; input.min = "1"; input.step = "1"; input.value = step[part[1]];
+        input.setAttribute("inputmode", "numeric");
+        input.setAttribute("aria-label", "שלב " + (i + 1) + ": " + part[0]);
+        input.addEventListener("input", function () { step[part[1]] = parseInt(input.value, 10) || 0; });
+        wrap.appendChild(text); wrap.appendChild(input);
+        row.appendChild(wrap);
+      });
+      var remove = document.createElement("button");
+      remove.type = "button"; remove.className = "bj-btn bj-btn-small bj-btn-quiet";
+      remove.textContent = "הסרה";
+      remove.setAttribute("aria-label", "הסרת שלב " + (i + 1));
+      remove.addEventListener("click", function () { state.freeze.splice(i, 1); renderFreeze(); });
+      row.appendChild(remove);
+      box.appendChild(row);
+    });
+  }
 
   $("labLadderAdd").addEventListener("click", function () {
     if (state.ladder.length >= boot.limits.maxLadder) return;
@@ -116,7 +154,8 @@
   });
   $("labFreezeAdd").addEventListener("click", function () {
     if (state.freeze.length >= boot.limits.maxFreeze) return;
-    state.freeze.push(state.freeze[state.freeze.length - 1] || 500);
+    var last = state.freeze[state.freeze.length - 1];
+    state.freeze.push(last ? last.slice() : [500, 500]);
     renderFreeze();
   });
 
@@ -242,7 +281,7 @@
       afterWin: $("labAfterWin").value,
       atLimit: $("labAtLimit").value,
       short: $("labShort").value,
-      freeze: state.freeze.slice(),
+      freeze: state.freeze.map(function (e) { return e.slice(); }),
       freezeAfter: $("labFreezeAfter").value
     };
     if (policy.limit < policy.minBet) throw new Error("מגבלת השולחן קטנה מההימור המינימלי.");
@@ -250,8 +289,8 @@
     if (!policy.ladder.length || policy.ladder.some(function (v) { return !(v >= 1); })) {
       throw new Error("בסולם ההימורים צריך שלב אחד לפחות, וכל שלב הוא מספר חיובי.");
     }
-    if (policy.freeze.some(function (v) { return !(v >= 1); })) {
-      throw new Error("כל שלב הקפאה הוא מספר חיובי. אפשר להסיר שלבים.");
+    if (policy.freeze.some(function (e) { return !(e[0] >= 1) || !(e[1] >= 1); })) {
+      throw new Error("בכל שלב הקפאה צריכים להיות שני מספרים חיוביים: כמה רווח, וכמה להוציא הביתה. אפשר להסיר שלבים.");
     }
     var usable = policy.ladder.filter(function (v) { return v >= policy.minBet && v <= policy.limit; });
     if (!usable.length) throw new Error("אף שלב בסולם לא נמצא בין ההימור המינימלי למגבלת השולחן.");
@@ -497,7 +536,7 @@
     var use = $("labUse");
     if (use) use.addEventListener("click", function () {
       state.ladder = r.best.policy.ladder.slice();
-      state.freeze = r.best.policy.freeze.slice();
+      state.freeze = pairs(r.best.policy.freeze);
       renderLadder(); renderFreeze();
       document.querySelector('input[name="mode"][value="days"]').checked = true;
       showMode();

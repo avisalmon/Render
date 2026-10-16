@@ -81,7 +81,8 @@ def test_the_form_opens_with_the_defaults_and_fits_a_phone(browser, live_server,
         assert page.input_value("#labMinBet") == "15"
         assert page.input_value("#labLimit") == "500"
         assert page.eval_on_selector_all("#labLadder input", "els => els.map(e => e.value)") == ["15", "50", "150", "500"]
-        assert page.eval_on_selector_all("#labFreeze input", "els => els.map(e => e.value)") == ["500", "500", "1000", "2000"]
+        assert page.eval_on_selector_all("#labFreeze input", "els => els.map(e => e.value)") == [
+            "500", "1000", "500", "500", "1000", "500", "2000", "1000"], "each step is two numbers"
         assert page.input_value("#labAfterWin") == "reset"
         assert _sideways(page) <= 1, f"the lab scrolls sideways at {width}px"
         for selector in ("#labRun", "#labLadderAdd", "#labFreezeAdd", "#labOvAdd"):
@@ -180,14 +181,15 @@ def test_the_lists_are_free_to_edit(browser, live_server, world):
     page.click("#labLadderAdd")
     page.click("#labFreezeAdd")
     assert page.locator("#labLadder input").count() == 5
-    assert page.locator("#labFreeze input").count() == 5
+    assert page.locator("#labFreeze .bj-lab-row").count() == 5
+    assert page.locator("#labFreeze input").count() == 10, "two numbers to a step"
     page.locator("#labFreeze .bj-lab-row button").first.click()
-    assert page.locator("#labFreeze input").count() == 4
+    assert page.locator("#labFreeze .bj-lab-row").count() == 4
     for _ in range(3):
         page.locator("#labFreeze .bj-lab-row button").first.click()
-    assert page.locator("#labFreeze input").count() == 1
+    assert page.locator("#labFreeze .bj-lab-row").count() == 1
     page.locator("#labFreeze .bj-lab-row button").first.click()
-    assert page.locator("#labFreeze input").count() == 0
+    assert page.locator("#labFreeze .bj-lab-row").count() == 0
     page.fill("#labDays", "5")
     page.fill("#labHands", "100")
     page.click("#labRun")

@@ -76,27 +76,33 @@ const cases = {
     assert.strictEqual(r.ended, "bust");
   },
   freeze_follows_the_default_steps_one_by_one() {
+    // Avi's defaults: start 1,000.
+    //  profit 500, take 1,000, keep 500 as the new starting point
+    //  profit 500, take 500,   keep 500
+    //  profit 1,000, take 500, keep 1,000
+    //  profit 2,000, take 1,000, keep 2,000
     const pol = policy();
     const ps = L.newPolicyState(pol);
     const win = (n) => L.settleRound(ps, pol, n);
-    win(500);  assert.deepStrictEqual([ps.playing, ps.frozen], [1000, 500]);
-    win(500);  assert.deepStrictEqual([ps.playing, ps.frozen], [1000, 1000]);
-    win(1000); assert.deepStrictEqual([ps.playing, ps.frozen], [1000, 2000]);
-    win(2000); assert.deepStrictEqual([ps.playing, ps.frozen], [1000, 4000]);
+    win(500);  assert.deepStrictEqual([ps.playing, ps.frozen, ps.base], [500, 1000, 500]);
+    win(500);  assert.deepStrictEqual([ps.playing, ps.frozen, ps.base], [500, 1500, 500]);
+    win(1000); assert.deepStrictEqual([ps.playing, ps.frozen, ps.base], [1000, 2000, 1000]);
+    win(2000); assert.deepStrictEqual([ps.playing, ps.frozen, ps.base], [2000, 3000, 2000]);
+    win(5000); assert.deepStrictEqual([ps.playing, ps.frozen], [7000, 3000], "no step left");
   },
-  freeze_waits_for_the_whole_chunk() {
+  freeze_waits_for_the_whole_profit() {
     const pol = policy();
     const ps = L.newPolicyState(pol);
     L.settleRound(ps, pol, 499);
     assert.deepStrictEqual([ps.playing, ps.frozen], [1499, 0]);
     L.settleRound(ps, pol, 1);
-    assert.deepStrictEqual([ps.playing, ps.frozen], [1000, 500]);
+    assert.deepStrictEqual([ps.playing, ps.frozen], [500, 1000]);
   },
-  freeze_takes_exactly_the_chunk_from_a_big_jump() {
+  freeze_takes_one_step_from_a_big_jump() {
     const pol = policy();
     const ps = L.newPolicyState(pol);
     L.settleRound(ps, pol, 700);
-    assert.deepStrictEqual([ps.playing, ps.frozen], [1200, 500]);
+    assert.deepStrictEqual([ps.playing, ps.frozen, ps.base], [700, 1000, 700], "one step, and what is left is the new starting point");
   },
   after_the_last_step_nothing_more_is_frozen_by_default() {
     const pol = policy({ freeze: [100] });
@@ -105,21 +111,78 @@ const cases = {
     L.settleRound(ps, pol, 5000);
     assert.deepStrictEqual([ps.playing, ps.frozen], [6000, 100]);
   },
-  after_the_last_step_the_last_chunk_can_repeat() {
+  after_the_last_step_the_last_step_can_repeat() {
     const pol = policy({ freeze: [100], freezeAfter: "repeat" });
     const ps = L.newPolicyState(pol);
     L.settleRound(ps, pol, 100);
+    assert.deepStrictEqual([ps.playing, ps.frozen], [1000, 100]);
     L.settleRound(ps, pol, 300);
-    assert.deepStrictEqual([ps.playing, ps.frozen], [1000, 400]);
+    assert.deepStrictEqual([ps.playing, ps.frozen], [1200, 200], "the profit is counted from the new starting point");
+    L.settleRound(ps, pol, 100);
+    assert.deepStrictEqual([ps.playing, ps.frozen], [1200, 300]);
+  },
+  a_step_has_two_numbers_the_profit_that_sets_it_off_and_what_goes_home() {
+    // Avi, 2026-10-16: start 1,000; at a profit of 500 send 1,000 home and keep
+    // 500 as the new starting point; at a further profit of 500 send 400 home
+    // and keep 600 as the next starting point.
+    const pol = policy({ start: 1000, freeze: [[500, 1000], [500, 400]] });
+    const ps = L.newPolicyState(pol);
+    L.settleRound(ps, pol, 499);
+    assert.deepStrictEqual([ps.playing, ps.frozen], [1499, 0], "not yet");
+    L.settleRound(ps, pol, 1);
+    assert.deepStrictEqual([ps.playing, ps.frozen, ps.base], [500, 1000, 500]);
+    L.settleRound(ps, pol, 499);
+    assert.deepStrictEqual([ps.playing, ps.frozen], [999, 1000], "the second profit counts from 500, not from 1,000");
+    L.settleRound(ps, pol, 1);
+    assert.deepStrictEqual([ps.playing, ps.frozen, ps.base], [600, 1400, 600]);
+    L.settleRound(ps, pol, 100000);
+    assert.deepStrictEqual([ps.playing, ps.frozen], [100600, 1400], "no step left, nothing more goes home");
+  },
+  each_step_counts_from_the_starting_point_the_last_one_left() {
+    const pol = policy({ start: 1000, freeze: [[500, 1000], [100, 50]] });
+    const ps = L.newPolicyState(pol);
+    L.settleRound(ps, pol, 500);
+    assert.strictEqual(ps.base, 500);
+    L.settleRound(ps, pol, 100);
+    assert.deepStrictEqual([ps.playing, ps.frozen, ps.base], [550, 1050, 550]);
+  },
+  a_bare_number_is_a_step_that_takes_out_what_it_earned() {
+    const a = policy({ freeze: [300] });
+    const b = policy({ freeze: [[300, 300]] });
+    const pa = L.newPolicyState(a), pb = L.newPolicyState(b);
+    [250, 100, -40, 400].forEach((n) => { L.settleRound(pa, a, n); L.settleRound(pb, b, n); });
+    assert.deepStrictEqual([pa.playing, pa.frozen], [pb.playing, pb.frozen]);
+  },
+  a_step_cannot_take_more_than_the_table_has() {
+    const pol = policy({ start: 1000, freeze: [[10, 5000]] });
+    const ps = L.newPolicyState(pol);
+    L.settleRound(ps, pol, 10);
+    assert.deepStrictEqual([ps.playing, ps.frozen], [0, 1010]);
+    assert.strictEqual(L.nextBet(ps, pol).end, "bust");
+  },
+  a_freeze_point_in_the_trace_says_what_set_it_off_and_what_was_left(chart, rules) {
+    const pol = policy({ start: 200, ladder: [15, 30], limit: 30, freeze: [[20, 60], [20, 10]], freezeAfter: "repeat" });
+    const cfg = { rules, policy: pol, overrides: {}, handsPerDay: 500, days: 20, seed: 4 };
+    let seen = 0;
+    for (let d = 0; d < cfg.days; d++) {
+      const { trace } = L.traceDay(cfg, chart, {}, d);
+      trace.freezes.forEach((f) => {
+        seen++;
+        assert.ok(f.reached >= f.base + f.gain);
+        assert.strictEqual(f.left, f.reached - f.amount);
+        assert.strictEqual(trace.playing[f.round], f.left, "what is left on the table");
+      });
+    }
+    assert.ok(seen > 0);
   },
   frozen_money_is_never_bet_again() {
     const pol = policy({ start: 1000 });
     const ps = L.newPolicyState(pol);
     L.settleRound(ps, pol, 500);
-    L.settleRound(ps, pol, -990);
+    L.settleRound(ps, pol, -490);
     assert.strictEqual(ps.playing, 10);
     assert.strictEqual(L.nextBet(ps, pol).end, "bust");
-    assert.strictEqual(ps.frozen, 500);
+    assert.strictEqual(ps.frozen, 1000);
   },
   the_freeze_steps_are_a_free_list() {
     const pol = policy({ freeze: [100, 300, 50, 50, 50, 50, 50] });
@@ -246,7 +309,7 @@ const cases = {
   },
   the_trace_follows_the_money_hand_by_hand(chart, rules) {
     // A policy that freezes often, so the days have freeze points to check.
-    const pol = policy({ start: 200, ladder: [15, 30], limit: 30, freeze: [25, 25, 25, 25, 25, 25], freezeAfter: "repeat" });
+    const pol = policy({ start: 200, ladder: [15, 30], limit: 30, freeze: [[25, 25], [25, 25], [25, 40]], freezeAfter: "repeat" });
     const cfg = { rules, policy: pol, overrides: {}, handsPerDay: 500, days: 15, seed: 4 };
     let sawFreeze = false;
     for (let d = 0; d < cfg.days; d++) {
@@ -349,7 +412,7 @@ const cases = {
       assert.ok(p.ladder.length >= 1 && p.ladder.length <= 12);
       assert.ok(p.freeze.length <= 12);
       p.ladder.forEach(v => assert.ok(Number.isInteger(v) && v >= 1 && v <= p.limit));
-      p.freeze.forEach(v => assert.ok(Number.isInteger(v) && v >= 1));
+      p.freeze.forEach(e => { assert.strictEqual(e.length, 2); e.forEach(v => assert.ok(Number.isInteger(v) && v >= 1)); });
     }
   }
 };

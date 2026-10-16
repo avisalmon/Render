@@ -18,7 +18,7 @@
   put("runMin", Charts.fmt(policy.minBet));
   put("runLimit", Charts.fmt(policy.limit));
   put("runLadder", policy.ladder.map(Charts.fmt).join(", "));
-  put("runFreeze", policy.freeze.length ? policy.freeze.map(Charts.fmt).join(", ") : "בלי הקפאה");
+  put("runFreeze", policy.freeze.length ? Charts.freezeText(policy.freeze) : "בלי הקפאה");
   put("runChart", settings.chart === "calculated" ? "מחושבת" : "קלאסית");
   if (settings.mix) {
     put("runMix", " · שילוב מטרות: ימים ברווח " + settings.mix.ahead + ", ממוצע " + settings.mix.avg + ", משך " + settings.mix.survive);

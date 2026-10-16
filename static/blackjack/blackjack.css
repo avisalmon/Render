@@ -1696,3 +1696,7 @@
   background: transparent; color: var(--bj-ink); border: 1px solid var(--bj-line); border-radius: 8px; font: inherit; cursor: pointer;
 }
 .bj-day-freeze-go:hover { border-color: #4fc3a1; }
+
+.bj-lab-row-pair { flex-wrap: wrap; }
+.bj-lab-mini { display: flex; flex-direction: column; gap: 2px; flex: 1 1 8em; }
+.bj-lab-mini input { width: 100%; }

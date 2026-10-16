@@ -72,7 +72,7 @@ def _run_with_freezes(page, days="20", hands="600"):
     page.evaluate("""() => {
       const set = (id, i, v) => { const el = document.querySelectorAll('#' + id + ' input')[i]; el.value = v; el.dispatchEvent(new Event('input')); };
       set('labLadder', 0, 10); set('labLadder', 1, 20); set('labLadder', 2, 30); set('labLadder', 3, 40);
-      set('labFreeze', 0, 20); set('labFreeze', 1, 20); set('labFreeze', 2, 30); set('labFreeze', 3, 50);
+      [[20, 20], [20, 20], [30, 30], [50, 50]].forEach((pair, i) => { set('labFreeze', 2 * i, pair[0]); set('labFreeze', 2 * i + 1, pair[1]); });
     }""")
     page.fill("#labDays", days)
     page.fill("#labHands", hands)
@@ -262,5 +262,35 @@ def test_a_very_long_day_is_drawn_and_zoomed(browser, live_server, world):
     assert _window(page)[1] - _window(page)[0] < 3000
     page.click("#dayReset")
     assert time.time() - began < 45
+    assert errors == []
+    context.close()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_a_step_that_sends_home_more_than_it_earned_leaves_the_rest_on_the_table(browser, live_server, world):
+    """T-F-B.12.5-8: REQ-B.11.16. Two numbers to a step, seen on a real day."""
+    _user, session = world
+    context, page, errors, writes = _open(browser, live_server, session)
+    page.fill("#labStart", "300")
+    page.fill("#labMinBet", "10")
+    page.fill("#labLimit", "40")
+    page.evaluate("""() => {
+      const set = (id, i, v) => { const el = document.querySelectorAll('#' + id + ' input')[i]; el.value = v; el.dispatchEvent(new Event('input')); };
+      [[20, 100], [20, 15]].forEach((pair, i) => { set('labFreeze', 2 * i, pair[0]); set('labFreeze', 2 * i + 1, pair[1]); });
+      const rows = document.querySelectorAll('#labFreeze .bj-lab-row button');
+      rows[3].click(); rows[2].click();
+    }""")
+    page.fill("#labDays", "15")
+    page.fill("#labHands", "800")
+    page.fill("#labSeed", "9")
+    page.click("#labRun")
+    page.wait_for_selector("#daySection #dayView svg", timeout=40000)
+    options = page.eval_on_selector_all("#daySelect option", "els => els.map(e => e.textContent)")
+    index = next(i for i, text in enumerate(options) if "מוקפא" in text)
+    page.select_option("#daySelect", str(index))
+    listed = page.inner_text("#dayFreezes")
+    assert "נשארו" in listed
+    first = page.locator("#dayFreezes .bj-day-freeze-go").first.inner_text()
+    assert "הוקפאו 100" in first, first
     assert errors == []
     context.close()

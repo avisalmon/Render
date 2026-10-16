@@ -275,11 +275,12 @@ rule that sets winnings aside in chunks (REQ-B.11.5, B.11.13 to B.11.17).
 **What was built, and what was decided on the way.**
 
 - The hands are played in the browser, in a Web Worker, by `static/blackjack/lab/lab_core.js`, a copy of `engine.py`. `tests/test_spr_b_12_1.py` plays the same card orders and decisions through both over twelve rule combinations and requires every round to match to the chip, and plays the chart's own answers through the JavaScript glue. Measured: about one million rounds a second in node, so the default thirty days of up to 100,000 hands finish in well under a second.
-- With Avi's default policy a day lasts about 40 hands before the playing 1,000 is gone, which is the answer to his question of how long it takes to lose it.
+- With Avi's default policy a day lasts about 35 hands before the playing 1,000 is gone, which is the answer to his question of how long it takes to lose it.
 - Storage: `LabRun` (migration 0012), about 2 KB per run, newest 50 per person (`blackjack/lab.py`). Tests in `tests/test_spr_b_12_2.py`; the screen is driven in a real browser at 390 and 1280 in `tests/test_spr_b_12_3.py`.
 - The search is hill climbing on whole-number lists, scored on the same shuffles for every candidate, then re-scored on shuffles it never saw. The goals are most days ahead, best average, longest-lasting money, or a weighted mix.
 - The base chart is a choice: the classic one, or one the lab calculates (`lab_best.js`), for 1 to 8 decks. The calculator reproduces the classic chart in 340 of 340 cells for eight covered rule sets and 339 of 340 for a ninth (a gap of 0.0009 of a bet), and the test holds that. Where the engine plays the rules, the calculated chart can play them.
 - Not built, because the engine does not play them: surrender, a dealer who does not peek, and doubling on some totals only. They need engine work (and the same parity guard) before the lab can offer them.
+- **A freeze step has two numbers** (corrected 2026-10-16): the profit above the current starting point that sets it off, and how much of the money on the table goes home; what stays is the next starting point. Runs saved before then hold one number per step, which still reads as both being the same.
 - Any day of a run can be opened hand by hand (`lab_day.js`): money, bets, freeze points, zoom. The day is played again from the run's seed rather than kept, so it costs nothing in the database; `tests/test_spr_b_12_5.py` checks that viewing sends no request and stores no row.
 - The search has a fourth goal, a weighted mix, with weights 0 to 10 for days ahead, average result and how long the money lasts.
 - Free, no AI, nothing ranked or shared.
