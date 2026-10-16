@@ -1,4 +1,4 @@
-{% extends "crashtech/base.html" %}
+{% extends "crashtech/base.html" %}{% load crashtech_tags %}
 {% block title %}Grade {{ submission.team.anon_label }}{% endblock %}
 {% block screen %}grade{% endblock %}
 {% block nav %}<a href="{% url 'crashtech:shortlist' hackathon.slug challenge.pk %}">&larr; {{ challenge.title|truncatechars:24 }}</a>{% endblock %}
@@ -52,7 +52,7 @@ given against the written ones, and the team was told what they were.{% endcomme
   <p class="ct-cap" style="margin-top:22px">Other judges</p>
   {% for other in others %}
     <div class="ct-row">
-      <span class="ct-row-main"><b>{{ other.judge.first_name|default:other.judge.email }}</b>
+      <span class="ct-row-main"><b>{{ other.judge|ct_name:"Another judge" }}</b>
         <span>{{ other.note|default:"No note" }}</span></span>
       <b class="ct-mono" style="font-size:18px">{{ other.grade }}</b>
     </div>

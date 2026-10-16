@@ -116,7 +116,7 @@ def test_one_whole_event_from_setup_to_museum(client):
         person = _person(email)
         entrants.append(person)
         client.force_login(person)
-        client.post(f"/crashtech/e/{slug}/apply/", follow=True)
+        client.post(f"/crashtech/e/{slug}/apply/", {"name": email.split("@")[0].title() + " Tester"}, follow=True)
     assert event.registrations.filter(status=Registration.APPLIED).count() == 2
 
     client.force_login(organiser)

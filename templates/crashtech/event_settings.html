@@ -11,6 +11,28 @@ what it does.</p>
   <label class="ct-field"><span>Name</span>
     <input class="ct-input" name="name" value="{{ hackathon.name }}" required></label>
 
+  {% comment %}The dates, editable at any time, in the event's own zone.
+  Typed without a zone because that is what a browser's date field does;
+  the zone underneath says which one they mean.{% endcomment %}
+  <div class="ct-card">
+    <p class="ct-cap">When</p>
+    <label class="ct-field"><span>Starts</span>
+      <input class="ct-input ct-mono" type="datetime-local" name="starts_at"
+             value="{{ hackathon.starts_at|date:'Y-m-d\TH:i' }}"></label>
+    <label class="ct-field"><span>Submissions close</span>
+      <input class="ct-input ct-mono" type="datetime-local" name="submission_deadline"
+             value="{{ hackathon.submission_deadline|date:'Y-m-d\TH:i' }}">
+      <span class="ct-fine">May fall before the end. Nothing can be added after it,
+        from a laptop or a phone.</span></label>
+    <label class="ct-field"><span>Ends</span>
+      <input class="ct-input ct-mono" type="datetime-local" name="ends_at"
+             value="{{ hackathon.ends_at|date:'Y-m-d\TH:i' }}"></label>
+    <label class="ct-field" style="margin-bottom:0"><span>Timezone</span>
+      <input class="ct-input ct-mono" name="timezone_name" value="{{ hackathon.timezone_name }}">
+      <span class="ct-fine">Every time on every page of this event is shown in it, with
+        its name, because people read it from other countries.</span></label>
+  </div>
+
   <label class="ct-field"><span>One line about it</span>
     <input class="ct-input" name="tagline" value="{{ hackathon.tagline }}"></label>
 

@@ -44,11 +44,11 @@ it.
       <div class="ct-head-end">
         {% block milestone %}{% endblock %}
         {% if user.is_authenticated %}
-          <form method="post" action="{% url 'crashtech:logout' %}">{% csrf_token %}
+          <form method="post" action="{% url 'crashtech:logout' %}" class="ct-signout">{% csrf_token %}
             <button type="submit" class="ct-btn" style="min-height:34px;padding:6px 12px;font-size:13px">Sign out</button>
           </form>
         {% else %}
-          <a class="ct-btn" href="{% url 'crashtech:login' %}" style="min-height:34px;padding:6px 12px;font-size:13px">Sign in</a>
+          <a class="ct-btn ct-signout" href="{% url 'crashtech:login' %}" style="min-height:34px;padding:6px 12px;font-size:13px">Sign in</a>
         {% endif %}
       </div>
     </div>

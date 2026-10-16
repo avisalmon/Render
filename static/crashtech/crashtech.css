@@ -343,6 +343,176 @@ a:focus-visible {
   color: var(--ct-dim);
 }
 
+/* ---- the event home's band ------------------------------------------ */
+
+/* Where this event is in its life, said once, at the top. During the 24
+   hours it is a clock, which the first version had nowhere at all. */
+.ct-band {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 18px;
+  margin: 4px 0 18px;
+  border-radius: var(--ct-r);
+  background: var(--ct-surface);
+  border: 1px solid var(--ct-line);
+}
+.ct-band .ct-cap { margin: 0; }
+.ct-band-line { font-size: 19px; font-weight: 600; }
+.ct-band--live { border-color: var(--ct-amber); background: rgba(255, 176, 32, 0.07); }
+.ct-band--live .ct-cap { color: var(--ct-amber); }
+.ct-clock {
+  font-family: var(--ct-mono);
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.ct-band--results { border-color: var(--ct-primary); gap: 8px; }
+.ct-band--results .ct-btn { margin-top: 8px; align-self: flex-start; }
+.ct-podium { display: flex; align-items: baseline; gap: 12px; font-size: 16px; }
+.ct-podium-place { color: var(--ct-primary); min-width: 1.4em; }
+.ct-podium-name { flex: 1; min-width: 0; }
+
+/* ---- facts, pages, the repository ---------------------------------- */
+
+.ct-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+  margin: 22px 0 14px;
+}
+.ct-facts > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 13px 14px;
+  border: 1px solid var(--ct-line);
+  border-radius: var(--ct-r);
+}
+.ct-facts .ct-cap { margin: 0 0 2px; }
+.ct-facts b { font-weight: 500; font-size: 14.5px; }
+
+.ct-repo { display: flex; flex-direction: column; gap: 4px; text-decoration: none; color: inherit; margin-top: 16px; }
+.ct-repo:hover { border-color: var(--ct-primary); }
+.ct-repo .ct-cap { margin: 0; }
+/* Breaks only where it has to, never mid-word when it fits: break-all
+   split "TechCrash2026" into "TechCrash202" and "6". */
+.ct-repo b { color: var(--ct-primary); font-size: 13.5px; overflow-wrap: anywhere; }
+
+.ct-page {
+  border: 1px solid var(--ct-line);
+  border-radius: var(--ct-r);
+  background: var(--ct-surface);
+  margin-bottom: 8px;
+}
+.ct-page summary {
+  cursor: pointer;
+  padding: 14px 16px;
+  min-height: var(--ct-tap);
+  font-weight: 500;
+  list-style-position: inside;
+}
+.ct-page[open] summary { border-bottom: 1px solid var(--ct-line); }
+.ct-prose { padding: 4px 16px 10px; max-width: 68ch; }
+.ct-prose p, .ct-prose li { color: var(--ct-ink); }
+.ct-prose strong { font-weight: 600; }
+
+.ct-sponsors { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.ct-sponsors a, .ct-sponsors span { color: var(--ct-dim); }
+
+/* A row that is not a link must not look like one. Every row used to
+   share the hover border, so a timeline entry looked tappable and did
+   nothing. */
+.ct-row--still:hover { border-color: var(--ct-line); }
+.ct-row-go { color: var(--ct-dim); font-size: 16px; }
+a.ct-row:hover .ct-row-go { color: var(--ct-primary); }
+
+/* ---- the event home, two columns on a laptop ------------------------ */
+
+.ct-home { display: block; }
+@media (min-width: 1000px) {
+  .ct-home {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 28px;
+    align-items: start;
+  }
+  .ct-home-side .ct-repo { margin-top: 0; }
+  .ct-home-side .ct-facts { grid-template-columns: 1fr 1fr; margin-top: 14px; }
+  .ct-home-side .ct-row { padding: 10px 13px; }
+}
+
+/* ---- small buttons --------------------------------------------------- */
+
+/* One class instead of the same inline style pasted into nine templates,
+   which is how polish drifts. Still 40px: a thumb, not a cursor. */
+.ct-btn--sm { min-height: 40px; padding: 8px 13px; font-size: 13px; }
+
+/* Native controls in the product's colour, not the browser's blue. */
+input[type="radio"], input[type="checkbox"] { accent-color: var(--ct-primary); width: 18px; height: 18px; }
+
+/* ---- the phone menu -------------------------------------------------- */
+
+/* Every signed-in role with more than a few links lost most of them on a
+   phone: the admin saw five of thirteen, and the rest were scrolled off
+   the right edge with nothing to say they existed. Under 900px the links
+   fold into a Menu that opens as a full-width list. No script: a checkbox
+   and a label, so it works on the worst wifi of the event. */
+.ct-menu-toggle { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.ct-menu-btn { display: none; }
+.ct-menu-items { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; }
+.ct-nav a.is-on { color: var(--ct-ink); box-shadow: inset 0 -2px 0 var(--ct-primary); }
+.ct-menu-only { display: none; }
+.ct-menu-signout {
+  background: none; border: 0; padding: 13px 2px; width: 100%; text-align: left;
+  font: 500 15px/1.2 var(--ct-sans); color: var(--ct-dim); cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .ct-head-in { gap: 10px; }
+  .ct-nav, .ct-menu { display: contents; }
+  .ct-head-end { order: 2; margin-left: auto; gap: 8px; }
+  .ct-menu-btn {
+    order: 3;
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 6px 12px;
+    border: 1px solid var(--ct-line);
+    border-radius: var(--ct-r);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ct-ink);
+    cursor: pointer;
+  }
+  .ct-menu-toggle:checked + .ct-menu-btn { border-color: var(--ct-primary); }
+  .ct-menu-toggle:focus-visible + .ct-menu-btn { outline: 2px solid var(--ct-primary); outline-offset: 2px; }
+  .ct-menu-items {
+    order: 4;
+    display: none;
+    flex-basis: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    margin: 2px 0 -11px;
+    border-top: 1px solid var(--ct-line);
+  }
+  .ct-menu-toggle:checked ~ .ct-menu-items { display: flex; }
+  /* A page with a menu moves Sign out into it. A page without one, the
+     sign-in screen or an event screen with a single back link, keeps it. */
+  .ct-head-in:has(.ct-menu) .ct-signout { display: none; }
+  .ct-menu-only { display: block; border-top: 1px solid var(--ct-line); }
+  .ct-menu-items a {
+    padding: 13px 2px;
+    font-size: 15px;
+    border-bottom: 1px solid var(--ct-line);
+  }
+  .ct-menu-items a:last-child { border-bottom: 0; }
+  .ct-nav a.is-on { box-shadow: inset 3px 0 0 var(--ct-primary); padding-left: 12px; }
+}
+
 /* ---- narrow ---------------------------------------------------------- */
 
 @media (max-width: 560px) {
@@ -350,19 +520,8 @@ a:focus-visible {
   .ct-main { padding-top: 18px; }
   .ct-head-in { gap: 12px; }
 
-  /* One scrolling line rather than three stacked rows. Seven nav items
-     wrapped on a phone pushed the first real control a third of the way
-     down the screen, which is most of the viewport gone before anything
-     has been done. */
-  .ct-nav {
-    gap: 15px;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    max-width: 100%;
-  }
-  .ct-nav::-webkit-scrollbar { display: none; }
+  /* The sideways-scrolling nav that was here hid most of an admin's links
+     off the edge of the screen. The Menu above replaced it. */
   .ct-nav a { white-space: nowrap; }
 }
 

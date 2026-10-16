@@ -561,9 +561,14 @@ def test_everybody_who_submitted_gets_a_certificate():
     thing somebody puts on a CV two years later, which is most of what a
     hackathon is worth to most of the people in it."""
     event = _event()
-    challenge = _challenge(event, kind=Challenge.COMPLETION, points=10)
     judge = _with_role(event, "judge@example.com", EventRole.JUDGE)
+    # Distinct scores, so the places are distinct. Equal scores share a
+    # place, and that has its own test; this one used to give five teams
+    # level on points one winner and two runners-up by sign-up order.
     for n in range(5):
+        challenge = _challenge(
+            event, kind=Challenge.COMPLETION, points=50 - n * 10, title=f"Task {n}",
+        )
         team = _team(event, f"p{n}@example.com", name=f"Team {n}", ordinal=n + 1)
         Submission.objects.create(
             challenge=challenge, team=team, claimed_complete=True,

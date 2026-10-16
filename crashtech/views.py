@@ -11,13 +11,15 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import render as _django_render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from . import (
-    judging, kit, mail, museum, readiness, roles, scoring, submissions, teams,
+    judging, kit, mail, museum, naming, readiness, roles, scoring, submissions,
+    teams,
 )
 from .decorators import signed_in
 from django.db import models
@@ -29,6 +31,24 @@ from .models import (
 )
 from .next_actions import next_actions_for
 from .roles import can, roles_for
+
+
+def render(request, template, context=None, status=None):
+    """Every CrashTech page, rendered in its event's own timezone.
+
+    The project runs in UTC, so a kickoff at 10:00 in Haifa was printed as
+    07:00 or 08:00 depending on the season, on the one product where the
+    time on the screen is what people plan a sleepless night around
+    (Rule 12.3: the audience is international, so the zone is named too).
+
+    One wrapper rather than a line in every view, because the view that
+    forgot would be the one somebody read the wrong kickoff time from.
+    """
+    hackathon = (context or {}).get("hackathon")
+    if hackathon is None:
+        return _django_render(request, template, context, status=status)
+    with timezone.override(hackathon.tz):
+        return _django_render(request, template, context, status=status)
 
 
 def _event(slug):
@@ -95,12 +115,48 @@ def event_home(request, slug):
     my_registration = None
     if request.user.is_authenticated:
         my_registration = hackathon.registrations.filter(user=request.user).first()
+
+    # The repository opens at kit stage, to the people who were accepted
+    # and to the people running the event (Avi's milestone 2, and the
+    # consequence the KITS transition already promises in words). The
+    # first version stored the link and showed it to nobody.
+    accepted = bool(my_registration and my_registration.status == Registration.ACCEPTED)
+    staff = bool(held - {EventRole.PARTICIPANT})
+    reached_kits = hackathon.status in (
+        Hackathon.KITS, Hackathon.LIVE, Hackathon.CLOSED, Hackathon.MUSEUM,
+    )
+    show_repo = bool(hackathon.repo_url) and reached_kits and (accepted or staff)
+
+    from . import clock
+
+    results = []
+    if hackathon.results_published_at:
+        results = scoring.standings(hackathon)[:3]
+
     return render(request, "crashtech/event_home.html", {
+        "show_repo": show_repo,
+        "pages": _visible_pages(hackathon),
+        "schedule": hackathon.schedule.all(),
+        "sponsors": hackathon.sponsors.all(),
+        "deadline_left": (
+            clock.remaining(hackathon.submission_deadline)
+            if hackathon.status == Hackathon.LIVE else ""
+        ),
+        "kickoff_left": (
+            clock.remaining(hackathon.starts_at)
+            if hackathon.status in (Hackathon.SETUP, Hackathon.PUBLISHED, Hackathon.KITS) else ""
+        ),
+        "hours": round((hackathon.ends_at - hackathon.starts_at).total_seconds() / 3600),
+        "results": results,
         "my_registration": my_registration,
         "can_apply": (
             request.user.is_authenticated
             and hackathon.accepts_registrations
             and my_registration is None
+            and roles.may_compete(request.user, hackathon)
+        ),
+        "needs_name": (
+            request.user.is_authenticated and not naming.has_name(request.user)
         ),
         "hackathon": hackathon,
         "my_roles": sorted(labels.get(r, r) for r in held),
@@ -108,6 +164,32 @@ def event_home(request, slug):
         "actions": next_actions_for(request.user, hackathon),
         "can_manage": can(request.user, hackathon, "event_settings"),
     })
+
+
+_STAGE_ORDER = [
+    Hackathon.SETUP, Hackathon.PUBLISHED, Hackathon.KITS,
+    Hackathon.LIVE, Hackathon.CLOSED, Hackathon.MUSEUM,
+]
+_STAGE_OF_MILESTONE = {
+    "publication": Hackathon.PUBLISHED, "hardware": Hackathon.KITS,
+    "kickoff": Hackathon.LIVE, "close": Hackathon.CLOSED, "museum": Hackathon.MUSEUM,
+}
+
+
+def _visible_pages(hackathon):
+    """The event's own pages, About and Rules, once they are due.
+
+    Modelled in C.1 and seeded with the text that explains trust scoring to
+    a participant, and then shown nowhere. `visible_from` lets a page wait
+    for a milestone, so a page about the kit can appear at kit stage.
+    """
+    reached = _STAGE_ORDER.index(hackathon.status)
+    out = []
+    for page in hackathon.pages.filter(published=True).order_by("order", "id"):
+        due = _STAGE_OF_MILESTONE.get(page.visible_from)
+        if due is None or _STAGE_ORDER.index(due) <= reached:
+            out.append(page)
+    return out
 
 
 # --------------------------------------------------------- creating an event
@@ -133,8 +215,8 @@ def event_create(request):
     data = {"name": "", "starts_at": "", "ends_at": ""}
     if request.method == "POST":
         data = {k: (request.POST.get(k) or "").strip() for k in data}
-        starts = _parse_dt(data["starts_at"])
-        ends = _parse_dt(data["ends_at"])
+        starts = _parse_dt(data["starts_at"], Hackathon().tz)
+        ends = _parse_dt(data["ends_at"], Hackathon().tz)
 
         if not data["name"]:
             errors["name"] = "Give the event a name."
@@ -161,7 +243,13 @@ def event_create(request):
     return render(request, "crashtech/event_create.html", {"errors": errors, "data": data})
 
 
-def _parse_dt(value):
+def _parse_dt(value, tz=None):
+    """A typed date and time, read in the event's timezone.
+
+    A browser's datetime field carries no zone at all, so "10:00" means
+    10:00 where the event is. Reading it as UTC, which is what this did,
+    moved every milestone by two or three hours.
+    """
     from django.utils.dateparse import parse_datetime
 
     if not value:
@@ -170,7 +258,7 @@ def _parse_dt(value):
     if parsed is None:
         return None
     if timezone.is_naive(parsed):
-        parsed = timezone.make_aware(parsed)
+        parsed = timezone.make_aware(parsed, tz or Hackathon().tz)
     return parsed
 
 
@@ -189,7 +277,44 @@ def event_settings(request, slug):
     hackathon = _event(slug)
     _require(request.user, hackathon, "event_settings")
 
+    errors = {}
     if request.method == "POST":
+        zone = (request.POST.get("timezone_name") or hackathon.timezone_name).strip()
+        try:
+            from zoneinfo import ZoneInfo
+
+            ZoneInfo(zone)
+        except Exception:
+            errors["timezone_name"] = (
+                "Not a timezone name. It looks like Asia/Jerusalem or Europe/Berlin."
+            )
+            zone = hackathon.timezone_name
+        hackathon.timezone_name = zone
+
+        # The dates, which Avi decided come after the event exists: "after
+        # we are live we will set dates". They could only be set at
+        # creation, so an event could never move.
+        starts = _parse_dt(request.POST.get("starts_at"), hackathon.tz) or hackathon.starts_at
+        ends = _parse_dt(request.POST.get("ends_at"), hackathon.tz) or hackathon.ends_at
+        deadline = (
+            _parse_dt(request.POST.get("submission_deadline"), hackathon.tz)
+            or hackathon.submission_deadline
+        )
+        if ends <= starts:
+            errors["ends_at"] = "It has to end after it starts."
+        elif deadline <= starts:
+            errors["submission_deadline"] = "Submissions have to close after the event starts."
+        elif deadline > ends:
+            errors["submission_deadline"] = (
+                "Submissions cannot close after the event ends. They may close before it."
+            )
+        if errors:
+            for message in errors.values():
+                messages.error(request, message)
+            return redirect("crashtech:settings", slug=hackathon.slug)
+        hackathon.starts_at, hackathon.ends_at = starts, ends
+        hackathon.submission_deadline = deadline
+
         hackathon.name = (request.POST.get("name") or hackathon.name).strip()
         hackathon.tagline = (request.POST.get("tagline") or "").strip()
         hackathon.repo_url = (request.POST.get("repo_url") or "").strip()
@@ -223,7 +348,7 @@ def event_milestones(request, slug):
         if request.POST.get("delete"):
             hackathon.milestones.filter(pk=request.POST["delete"]).delete()
         else:
-            occurs = _parse_dt(request.POST.get("occurs_at"))
+            occurs = _parse_dt(request.POST.get("occurs_at"), hackathon.tz)
             title = (request.POST.get("title") or "").strip()
             if title and occurs:
                 Milestone.objects.create(
@@ -398,6 +523,14 @@ def event_advance(request, slug):
         return redirect("crashtech:readiness", slug=hackathon.slug)
 
     nxt = hackathon.next_status
+    if nxt == Hackathon.MUSEUM:
+        # Publishing has exactly one door, the publish screen, because it
+        # does three permanent things together and this generic transition
+        # only did one of them: it opened the museum without freezing the
+        # scores or issuing a single certificate. Rule 8.5 is "one gated
+        # click", and two doors that do different things is not that.
+        return redirect("crashtech:publish", slug=hackathon.slug)
+
     with transaction.atomic():
         hackathon.status = nxt
         fields = ["status"]
@@ -409,9 +542,6 @@ def event_advance(request, slug):
             # they are assigned here rather than at team creation so the
             # order carries no information about who signed up first.
             judging.assign_anonymous_labels(hackathon)
-        if nxt == Hackathon.MUSEUM:
-            hackathon.results_published_at = timezone.now()
-            fields.append("results_published_at")
         hackathon.save(update_fields=fields)
 
     messages.success(request, f"Now: {dict(Hackathon.STATUSES)[nxt]}.")
@@ -433,6 +563,7 @@ def forbidden(request, exception=None):
 
 
 @signed_in
+@require_POST
 def event_apply(request, slug):
     """**Planning / participant.** Rule 5.1: people apply, they are not
     invited.
@@ -445,6 +576,22 @@ def event_apply(request, slug):
     if not hackathon.accepts_registrations:
         messages.error(request, "Applications are not open for this event.")
         return redirect("crashtech:event_home", slug=hackathon.slug)
+    if not roles.may_compete(request.user, hackathon):
+        messages.error(
+            request,
+            "You can read this event's challenges before it starts, so you "
+            "cannot also compete in it.",
+        )
+        return redirect("crashtech:event_home", slug=hackathon.slug)
+
+    # The name has to exist before anything public can carry it. An
+    # account from babook, or from before sign-up asked, may not have one.
+    if not naming.has_name(request.user):
+        typed = " ".join((request.POST.get("name") or "").split())
+        if not typed:
+            messages.error(request, "Add your name first. It goes on your certificate.")
+            return redirect("crashtech:event_home", slug=hackathon.slug)
+        naming.set_name(request.user, typed)
 
     registration, created = Registration.objects.get_or_create(
         hackathon=hackathon, user=request.user,
@@ -470,6 +617,17 @@ def event_registrations(request, slug):
     if request.method == "POST":
         decision = request.POST.get("decision")
         registration = hackathon.registrations.filter(pk=request.POST.get("registration")).first()
+        if (
+            registration
+            and decision == Registration.ACCEPTED
+            and not roles.may_compete(registration.user, hackathon)
+        ):
+            messages.error(
+                request,
+                f"{registration.user.email} can read the challenges early, "
+                "so they cannot also compete.",
+            )
+            return redirect("crashtech:registrations", slug=hackathon.slug)
         if registration and decision in (Registration.ACCEPTED, Registration.DECLINED):
             registration.status = decision
             registration.decided_at = timezone.now()
@@ -532,6 +690,9 @@ def event_teams(request, slug):
         "hackathon": hackathon,
         "can_manage": can(request.user, hackathon, "event_settings"),
         "my_team": mine,
+        "locked": teams.teams_locked(hackathon),
+        "late_solo": teams.late_solo_allowed(hackathon),
+        "may_compete": roles.may_compete(request.user, hackathon),
         "accepted": teams.is_accepted(request.user, hackathon),
         "joinable": joinable,
         "all_teams": hackathon.teams.prefetch_related("memberships__user"),
@@ -724,7 +885,19 @@ def challenge_edit(request, slug, pk=None):
             return redirect("crashtech:challenge_edit", slug=hackathon.slug, pk=challenge.pk)
 
         if request.POST.get("drop_deliverable") and challenge:
-            challenge.deliverables.filter(pk=request.POST["drop_deliverable"]).delete()
+            item = challenge.deliverables.filter(pk=request.POST["drop_deliverable"]).first()
+            if item and item.files.exists():
+                # The cascade would delete every file every team turned in
+                # for it, mid-event, with no warning. The same rule as
+                # deleting a challenge somebody has submitted to.
+                messages.error(
+                    request,
+                    f"{item.files.count()} team(s) have already turned in "
+                    f'"{item.label}", so it stays. Removing it would delete their work. '
+                    "Untick Required instead if it should stop being asked for.",
+                )
+            elif item:
+                item.delete()
             return redirect("crashtech:challenge_edit", slug=hackathon.slug, pk=challenge.pk)
 
         title = (request.POST.get("title") or "").strip()
@@ -904,6 +1077,14 @@ def upload_by_token(request, token):
         }, status=410)
 
     challenge = row.challenge
+    hackathon = challenge.hackathon
+    if not hackathon.accepts_submissions:
+        # Rule 7.7 holds on every path in, and this one has no account
+        # behind it, so it is the one most easily forgotten. The token
+        # lives 30 hours, which outlives the deadline.
+        return render(request, "crashtech/upload_expired.html", {
+            "hackathon": hackathon, "closed": True,
+        }, status=410)
     deliverables = list(submissions.image_deliverables(challenge))
     if request.method == "POST":
         submission, _ = Submission.objects.get_or_create(challenge=challenge, team=row.team)
@@ -948,7 +1129,7 @@ def event_standings(request, slug):
     return render(request, "crashtech/event_standings.html", {
         "hackathon": hackathon,
         "can_manage": can(request.user, hackathon, "event_settings"),
-        "rows": scoring.leaderboard(hackathon),
+        "rows": scoring.standings(hackathon),
         "published": bool(hackathon.results_published_at),
         "my_team": teams.team_for(request.user, hackathon),
     })
@@ -1173,7 +1354,7 @@ def event_publish(request, slug):
             for b in blockers
         ],
         "consequence": judging.PUBLISH_CONSEQUENCE,
-        "rows": scoring.leaderboard(hackathon),
+        "rows": scoring.standings(hackathon),
         "published": bool(hackathon.results_published_at),
     })
 
@@ -1221,6 +1402,9 @@ def event_museum(request, slug):
 
     page = museum.page_for(hackathon)
     is_admin = can(request.user, hackathon, "event_settings")
+    # Certificates were issued and then linked from nowhere at all, so the
+    # one artefact somebody puts on a CV could not be found.
+    certs = {c.team_id: c for c in hackathon.certificates.all()}
 
     if request.method == "POST":
         if not request.user.is_authenticated:
@@ -1247,13 +1431,13 @@ def event_museum(request, slug):
         "page": page,
         "highlights": page.highlights if page else "",
         "numbers": museum.numbers(hackathon),
-        "standings": scoring.leaderboard(hackathon),
         "exhibition": museum.exhibition(hackathon),
         "photos": museum.photos(hackathon, for_admin=is_admin),
         "is_admin": is_admin,
-        "certificates": {
-            c.team_id: c for c in hackathon.certificates.all()
-        },
+        "standings": [
+            (place, team, points, certs.get(team.pk))
+            for place, team, points in scoring.standings(hackathon)
+        ],
     })
 
 

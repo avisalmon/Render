@@ -43,6 +43,33 @@ def is_accepted(user, hackathon):
     ).exists()
 
 
+def teams_locked(hackathon):
+    """Rule 5.5: who is on which team stops changing at kickoff.
+
+    Before this lock existed, somebody could join the winning team after
+    the event closed, or even after the results were published, and their
+    name would appear on its certificate, since a certificate lists the
+    members it has. Leaving mid-event was worse: the last member out
+    dissolved the team and its submissions with it.
+    """
+    from .models import Hackathon
+
+    return hackathon.status in (Hackathon.LIVE, Hackathon.CLOSED, Hackathon.MUSEUM)
+
+
+def late_solo_allowed(hackathon):
+    """The one change still allowed once the event is live.
+
+    An accepted person who never formed a team would otherwise be stranded
+    for twenty-four hours, unable to submit anything. Starting a team of
+    their own, late, gives nobody an advantage: it joins nothing and
+    nobody joins it.
+    """
+    from .models import Hackathon
+
+    return hackathon.status == Hackathon.LIVE
+
+
 def _guard(user, hackathon):
     if not is_accepted(user, hackathon):
         raise TeamError("You need to be accepted to the event first.")
@@ -54,6 +81,8 @@ def _guard(user, hackathon):
 
 @transaction.atomic
 def create_team(user, hackathon, name):
+    if teams_locked(hackathon) and not late_solo_allowed(hackathon):
+        raise TeamError("Teams are fixed now. The event is over.")
     _guard(user, hackathon)
     name = (name or "").strip()
     if not name:
@@ -61,18 +90,21 @@ def create_team(user, hackathon, name):
     if Team.objects.filter(hackathon=hackathon, name__iexact=name).exists():
         raise TeamError("A team here already has that name.")
 
-    team = Team.objects.create(
-        hackathon=hackathon, name=name,
-        # Stable, assigned once, and the label judges see instead of a name
-        # (Rule 4.6).
-        anon_ordinal=hackathon.teams.count() + 1,
-    )
+    # No anonymous label yet. It is handed out at the close, shuffled
+    # (judging.assign_anonymous_labels). Assigning it here made "Entry 1"
+    # mean "signed up first", which is exactly the information Rule 4.6
+    # promises a judge does not have.
+    team = Team.objects.create(hackathon=hackathon, name=name)
     TeamMembership.objects.create(team=team, user=user, hackathon=hackathon)
     return team
 
 
 @transaction.atomic
 def join_team(user, hackathon, team):
+    if teams_locked(hackathon):
+        raise TeamError(
+            "Teams are fixed once the event starts. Nobody can join one now."
+        )
     _guard(user, hackathon)
     if team.hackathon_id != hackathon.id:
         raise TeamError("That team is not in this event.")
@@ -94,6 +126,11 @@ def leave_team(user, hackathon):
     blocks the next person who wants it, and an empty team on the kit desk
     is a kit allocated to nobody.
     """
+    if teams_locked(hackathon):
+        raise TeamError(
+            "Teams are fixed once the event starts. Your team keeps you, and "
+            "everything it turned in."
+        )
     membership = TeamMembership.objects.filter(hackathon=hackathon, user=user).first()
     if not membership:
         raise TeamError("You are not on a team.")
@@ -114,7 +151,7 @@ def joinable_teams(hackathon):
     An individual event (`team_size_max == 1`) has none by definition, and
     the screen says so rather than showing a list of full teams.
     """
-    if hackathon.team_size_max <= 1:
+    if hackathon.team_size_max <= 1 or teams_locked(hackathon):
         return Team.objects.none()
     full = [t.id for t in hackathon.teams.all() if t.memberships.count() >= hackathon.team_size_max]
     return hackathon.teams.exclude(id__in=full)

@@ -71,10 +71,17 @@ def signup(request):
     nobody has ever enjoyed being told their chosen username is taken.
     """
     errors = {}
-    email = ""
+    email = name = ""
     if request.method == "POST":
         email = (request.POST.get("email") or "").strip().lower()
         password = request.POST.get("password") or ""
+        # Asked for here because public pages name people (a certificate,
+        # the museum, the standings) and the only alternative they had was
+        # the email address, which is what they were printing.
+        name = " ".join((request.POST.get("name") or "").split())
+
+        if not name:
+            errors["name"] = "Your name, as it should appear on a certificate."
 
         if not email or "@" not in email:
             errors["email"] = "Enter an email address."
@@ -89,6 +96,9 @@ def signup(request):
             while User.objects.filter(username=username).exists():
                 username, i = f"{base}{i}", i + 1
             user = User.objects.create_user(username=username, email=email, password=password)
+            from .naming import set_name
+
+            set_name(user, name)
             # The backend has to be named: this site configures more than
             # one (allauth sits alongside the model backend), and `login()`
             # refuses to guess. Without it every single sign-up 500s, which
@@ -101,6 +111,17 @@ def signup(request):
             from .invitations import redeem_for
 
             redeem_for(user)
-            return redirect(request.GET.get("next") or "crashtech:home")
+            # Only somewhere on this site. Following any `next` sent a new
+            # account straight to whatever host the link named.
+            from django.utils.http import url_has_allowed_host_and_scheme
 
-    return render(request, "crashtech/auth/signup.html", {"errors": errors, "email": email})
+            target = request.GET.get("next") or ""
+            if not url_has_allowed_host_and_scheme(
+                target, allowed_hosts={request.get_host()}, require_https=request.is_secure(),
+            ):
+                target = "crashtech:home"
+            return redirect(target)
+
+    return render(request, "crashtech/auth/signup.html", {
+        "errors": errors, "email": email, "name": name,
+    })

@@ -67,6 +67,19 @@ def can(user, hackathon, capability):
     return bool(roles_for(user, hackathon) & MATRIX[capability])
 
 
+def may_compete(user, hackathon):
+    """Whether this person may apply to take part.
+
+    Not if they can read the challenges before kickoff (Rule 4.5): a tech
+    lead, an admin or a judge who also competed would have had the tasks
+    for days. The review found the event home offering every one of them
+    an "Apply to take part" button.
+
+    A researcher may compete; they never see a challenge early.
+    """
+    return not can(user, hackathon, "read_secret_challenges")
+
+
 def may_see_challenges(user, hackathon):
     """Rule 7.1 and 4.5 together, which is the pair most easily got wrong.
 

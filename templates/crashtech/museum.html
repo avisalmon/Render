@@ -1,4 +1,4 @@
-{% extends "crashtech/base.html" %}
+{% extends "crashtech/base.html" %}{% load crashtech_tags %}
 {% block title %}{{ hackathon.name }}{% endblock %}
 {% block description %}{{ hackathon.name }}: what was built, who won, and the photographs, kept permanently.{% endblock %}
 {% block screen %}museum{% endblock %}
@@ -46,12 +46,12 @@ disagree with the event it describes.{% endcomment %}
 {% endif %}
 
 <h2 style="margin-top:32px">How it finished</h2>
-{% for team, points in standings %}
+{% for place, team, points, cert in standings %}
   <div class="ct-row">
-    <b class="ct-mono" style="min-width:2.2em;text-align:right;color:var(--ct-dim)">{{ forloop.counter }}</b>
+    <b class="ct-mono" style="min-width:2.2em;text-align:right;color:var(--ct-dim)">{{ place }}</b>
     <span class="ct-row-main"><b>{{ team.name|default:team.anon_label }}</b>
-      <span>{% for m in team.memberships.all %}{{ m.user.first_name|default:m.user.email }}{% if not forloop.last %} &middot; {% endif %}{% endfor %}</span></span>
-    {% with cert=certificates|default_if_none:None %}{% endwith %}
+      <span>{% for m in team.memberships.all %}{{ m.user|ct_name }}{% if not forloop.last %} &middot; {% endif %}{% endfor %}</span></span>
+    {% if cert %}<a class="ct-fine" href="{% url 'crashtech:certificate' cert.cert_id %}" style="white-space:nowrap">Certificate</a>{% endif %}
     <b class="ct-mono" style="font-size:18px">{{ points }}</b>
   </div>
 {% empty %}

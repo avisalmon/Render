@@ -6,33 +6,41 @@ Challenges and Standings are the two links that are visible to one role
 and invisible to another on the very same screen, so they ask the same
 functions the views enforce with rather than trusting a context key that
 one view might have forgotten to set.
+
+On a phone the links fold into a Menu (crashtech.css, "the phone menu").
+The current page is marked, which it never was.
 {% endcomment %}
 {% ct_may_see_challenges user hackathon as may_read_challenges %}
 {% ct_may_see_standings user hackathon as may_read_standings %}
 {% ct_may_judge user hackathon as may_judge %}
-<a href="{% url 'crashtech:event_home' hackathon.slug %}">Overview</a>
-{% if may_read_challenges %}
-  <a href="{% url 'crashtech:challenges' hackathon.slug %}">Challenges</a>
-{% endif %}
-<a href="{% url 'crashtech:teams' hackathon.slug %}">Teams</a>
-{% if may_read_standings %}
-  <a href="{% url 'crashtech:standings' hackathon.slug %}">Standings</a>
-{% endif %}
-{% if hackathon.results_published_at %}
-  <a href="{% url 'crashtech:museum' hackathon.slug %}">Museum</a>
-{% endif %}
-{% if may_judge %}
-  <a href="{% url 'crashtech:judging' hackathon.slug %}">Judging</a>
-{% endif %}
-{% if can_manage %}
-  {% if hackathon.status == 'closed' or hackathon.results_published_at %}
-    <a href="{% url 'crashtech:publish' hackathon.slug %}">Publish</a>
-  {% endif %}
-  <a href="{% url 'crashtech:registrations' hackathon.slug %}">Applications</a>
-  <a href="{% url 'crashtech:kit_desk' hackathon.slug %}">Kit desk</a>
-  <a href="{% url 'crashtech:people' hackathon.slug %}">People</a>
-  <a href="{% url 'crashtech:milestones' hackathon.slug %}">Timeline</a>
-  <a href="{% url 'crashtech:settings' hackathon.slug %}">Settings</a>
-  <a href="{% url 'crashtech:readiness' hackathon.slug %}">Readiness</a>
-  <a href="{% url 'crashtech:museum_edit' hackathon.slug %}">Museum</a>
-{% endif %}
+<div class="ct-menu">
+  <input type="checkbox" id="ct-menu" class="ct-menu-toggle">
+  <label for="ct-menu" class="ct-menu-btn">Menu</label>
+  <div class="ct-menu-items">
+    {% ct_link "crashtech:event_home" hackathon.slug "Overview" %}
+    {% if may_read_challenges %}{% ct_link "crashtech:challenges" hackathon.slug "Challenges" %}{% endif %}
+    {% ct_link "crashtech:teams" hackathon.slug "Teams" %}
+    {% if may_read_standings %}{% ct_link "crashtech:standings" hackathon.slug "Standings" %}{% endif %}
+    {% if hackathon.results_published_at %}{% ct_link "crashtech:museum" hackathon.slug "Museum" %}{% endif %}
+    {% if may_judge %}{% ct_link "crashtech:judging" hackathon.slug "Judging" %}{% endif %}
+    {% if can_manage %}
+      {% if hackathon.status == 'closed' or hackathon.results_published_at %}{% ct_link "crashtech:publish" hackathon.slug "Publish" %}{% endif %}
+      {% ct_link "crashtech:registrations" hackathon.slug "Applications" %}
+      {% ct_link "crashtech:kit_desk" hackathon.slug "Kit desk" %}
+      {% ct_link "crashtech:people" hackathon.slug "People" %}
+      {% ct_link "crashtech:milestones" hackathon.slug "Timeline" %}
+      {% ct_link "crashtech:settings" hackathon.slug "Settings" %}
+      {% ct_link "crashtech:readiness" hackathon.slug "Readiness" %}
+      {% ct_link "crashtech:museum_edit" hackathon.slug "Museum page" %}
+    {% endif %}
+    {% if user.is_authenticated %}
+      {% comment %}On a phone Sign out lives here, at the bottom of the menu,
+      so the header holds on one line even with a long stage name like
+      "Kit distribution". On a laptop it stays in the header.{% endcomment %}
+      <form method="post" action="{% url 'crashtech:logout' %}" class="ct-menu-only">{% csrf_token %}
+        <button type="submit" class="ct-menu-signout">Sign out</button></form>
+    {% else %}
+      <a href="{% url 'crashtech:login' %}" class="ct-menu-only">Sign in</a>
+    {% endif %}
+  </div>
+</div>

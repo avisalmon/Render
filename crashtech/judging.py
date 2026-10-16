@@ -23,6 +23,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from .models import Certificate, Challenge, Hackathon, JudgeGrade, Submission, Team
+from .scoring import standings as ranked_standings
 from .scoring import (
     awaiting_judgement, disputed, leaderboard, points_for,
     recompute_challenge, top_measured, unshortlisted_creativity_challenges,
@@ -252,8 +253,7 @@ def publish(hackathon, by=None):
             final_points=points_for(submission),
         )
 
-    standings = leaderboard(hackathon)
-    _issue_certificates(hackathon, standings)
+    _issue_certificates(hackathon, ranked_standings(hackathon))
 
     hackathon.results_published_at = timezone.now()
     hackathon.status = Hackathon.MUSEUM
@@ -261,19 +261,22 @@ def publish(hackathon, by=None):
     return hackathon
 
 
-def _issue_certificates(hackathon, standings):
+def _issue_certificates(hackathon, rows):
     """Rule 8.6. Everybody who turned something in gets one.
 
     A participation certificate is not a consolation prize, it is the
     thing somebody puts on a CV two years later, which is most of what a
     hackathon is worth to most of the people in it.
+
+    By place, not by position in the list: teams level on points share a
+    place and share the certificate that goes with it.
     """
-    for position, (team, _points) in enumerate(standings):
+    for place, team, _points in rows:
         if not team.submissions.exists():
             continue
-        if position == 0:
+        if place == 1:
             kind = Certificate.WINNER
-        elif position in (1, 2):
+        elif place in (2, 3):
             kind = Certificate.RUNNER_UP
         else:
             kind = Certificate.PARTICIPATION
@@ -296,12 +299,21 @@ def assign_anonymous_labels(hackathon):
     Idempotent: a team that already has an ordinal keeps it, because a
     label that moved between two judging sessions would be worse than no
     label at all.
+
+    **Shuffled.** The first version walked teams in creation order, and
+    team creation was also handing out ordinals in sign-up order, so
+    "Entry 1" simply meant "signed up first". Both are fixed: nothing is
+    assigned before the close, and the close shuffles.
     """
+    import random
+
     taken = set(
         hackathon.teams.exclude(anon_ordinal=0).values_list("anon_ordinal", flat=True)
     )
     nxt = 1
-    for team in hackathon.teams.filter(anon_ordinal=0).order_by("pk"):
+    waiting = list(hackathon.teams.filter(anon_ordinal=0))
+    random.shuffle(waiting)
+    for team in waiting:
         while nxt in taken:
             nxt += 1
         Team.objects.filter(pk=team.pk).update(anon_ordinal=nxt)

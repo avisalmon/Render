@@ -28,7 +28,12 @@
       {{ consequence }}</div>
   {% endif %}
 
-  {% if can_advance %}
+  {% if can_advance and hackathon.status == 'closed' %}
+    {% comment %}Publishing has its own screen and only that screen
+    publishes (Rule 8.5). It shows exactly what will become permanent.{% endcomment %}
+    <a class="ct-btn ct-btn--primary ct-btn--wide" href="{% url 'crashtech:publish' hackathon.slug %}">
+      Go to the publish screen</a>
+  {% elif can_advance %}
     <form method="post" action="{% url 'crashtech:advance' hackathon.slug %}">{% csrf_token %}
       <button class="ct-btn ct-btn--primary ct-btn--wide" type="submit">{{ next_label }}</button>
     </form>

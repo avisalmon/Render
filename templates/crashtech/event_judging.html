@@ -50,8 +50,7 @@ broken, so the reason is the first thing on the page.
       {% else %}
         <span class="ct-tag ct-tag--stop">No shortlist</span>
       {% endif %}
-      <a class="ct-btn ct-btn--primary" href="{% url 'crashtech:shortlist' hackathon.slug row.challenge.pk %}"
-         style="min-height:42px;padding:9px 15px;font-size:13px">Open</a>
+      <a class="ct-btn ct-btn--sm ct-btn--primary" href="{% url 'crashtech:shortlist' hackathon.slug row.challenge.pk %}">Open</a>
     </div>
   {% empty %}
     <div class="ct-empty">This event has no creativity challenges, so there is
@@ -63,8 +62,7 @@ broken, so the reason is the first thing on the page.
     <span class="ct-row-main"><b>Top reported numbers</b>
       <span>{{ spot_checks }} scores near the top of a measured challenge.
         Looking at none of them is a perfectly normal day.</span></span>
-    <a class="ct-btn" href="{% url 'crashtech:verify' hackathon.slug %}"
-       style="min-height:42px;padding:9px 15px;font-size:13px">Open</a>
+    <a class="ct-btn ct-btn--sm" href="{% url 'crashtech:verify' hackathon.slug %}">Open</a>
   </div>
 {% endif %}
 {% endblock %}

@@ -64,11 +64,9 @@ night is how a museum never gets published.{% endcomment %}
     <form method="post" style="display:flex;gap:6px">{% csrf_token %}
       <input type="hidden" name="photo_id" value="{{ photo.pk }}">
       {% if photo.moderation_status != 'approved' %}
-        <button class="ct-btn" name="decision" value="approved"
-                style="min-height:40px;padding:8px 12px;font-size:13px">Show it</button>
+        <button class="ct-btn ct-btn--sm" name="decision" value="approved">Show it</button>
       {% else %}
-        <button class="ct-btn" name="decision" value="rejected"
-                style="min-height:40px;padding:8px 12px;font-size:13px">Hide it</button>
+        <button class="ct-btn ct-btn--sm" name="decision" value="rejected">Hide it</button>
       {% endif %}
       <button class="ct-btn" name="decision" value="drop"
               style="min-height:40px;padding:8px 12px;font-size:13px;color:var(--ct-red)">Delete</button>

@@ -3,6 +3,13 @@
 {% block screen %}upload-expired{% endblock %}
 {% block nav %}{% endblock %}
 {% block content %}
+{% if closed %}
+<h1 style="font-size:21px">Submissions are closed</h1>
+<div class="ct-card">
+  <p>The deadline for {{ hackathon.name }} has passed, so nothing more can be
+    added, from a phone or anywhere else.</p>
+</div>
+{% else %}
 <h1 style="font-size:21px">This link has expired</h1>
 <div class="ct-card">
   <p>Upload links last a little longer than the event itself and this one is
@@ -10,4 +17,5 @@
   <p class="ct-fine">Open the challenge on the laptop that is signed in. There
     is a fresh link on it.</p>
 </div>
+{% endif %}
 {% endblock %}

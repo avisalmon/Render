@@ -1,4 +1,4 @@
-{% extends "crashtech/base.html" %}
+{% extends "crashtech/base.html" %}{% load crashtech_tags %}
 {% block title %}{{ team.name|default:team.anon_label }} &middot; {{ hackathon.name }}{% endblock %}
 {% block screen %}certificate{% endblock %}
 {% block nav %}{% endblock %}
@@ -15,7 +15,7 @@ says what the event was as well as what this team did.
   <p class="ct-cap" style="margin-bottom:18px">{{ certificate.get_type_display }}</p>
   <h1 style="font-size:31px;margin-bottom:6px">{{ team.name|default:team.anon_label }}</h1>
   <p class="ct-fine" style="margin-bottom:22px">
-    {% for member in members %}{{ member.first_name|default:member.email }}{% if not forloop.last %} &middot; {% endif %}{% endfor %}
+    {% for member in members %}{{ member|ct_name }}{% if not forloop.last %} &middot; {% endif %}{% endfor %}
   </p>
 
   <p style="margin-bottom:6px">took part in <b>{{ hackathon.name }}</b>,</p>

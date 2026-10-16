@@ -1,4 +1,4 @@
-{% extends "crashtech/base.html" %}
+{% extends "crashtech/base.html" %}{% load crashtech_tags %}
 {% block title %}Standings &middot; {{ hackathon.name }}{% endblock %}
 {% block screen %}standings{% endblock %}
 {% block nav %}{% include "crashtech/_event_nav.html" %}{% endblock %}
@@ -21,12 +21,12 @@ score or another team beats a ranked number.
   </div>
 {% endif %}
 
-{% for team, points in rows %}
+{% for place, team, points in rows %}
   <div class="ct-row" {% if my_team and team.pk == my_team.pk %}style="border-color:var(--ct-primary)"{% endif %}>
-    <b class="ct-mono" style="font-size:17px;min-width:2.4em;text-align:right;color:var(--ct-dim)">{{ forloop.counter }}</b>
+    <b class="ct-mono" style="font-size:17px;min-width:2.4em;text-align:right;color:var(--ct-dim)">{{ place }}</b>
     <span class="ct-row-main">
       <b>{{ team.name|default:team.anon_label }}</b>
-      <span>{% for m in team.memberships.all %}{{ m.user.first_name|default:m.user.email }}{% if not forloop.last %} &middot; {% endif %}{% endfor %}
+      <span>{% for m in team.memberships.all %}{{ m.user|ct_name }}{% if not forloop.last %} &middot; {% endif %}{% endfor %}
         {% if my_team and team.pk == my_team.pk %}&middot; you{% endif %}</span>
     </span>
     <b class="ct-mono" style="font-size:19px">{{ points }}</b>

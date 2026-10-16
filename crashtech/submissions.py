@@ -180,6 +180,11 @@ def save_submission(user, team, challenge, *, data=None, files=None):
         submission, created = Submission.objects.get_or_create(
             challenge=challenge, team=team, defaults={"submitted_by": user},
         )
+        # Whoever acted last, which is what the screen says ("last saved
+        # by") and what the research asks (Rule 10.5). It was only ever set
+        # on creation, so it named the first person forever. A full history
+        # of who did what is C.7's event log, not this field.
+        submission.submitted_by = user
 
         # The reported result, for a measured challenge. Decimal rather
         # than float because this number decides who wins and a float

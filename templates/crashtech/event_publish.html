@@ -29,16 +29,15 @@ listed as the specific things they are rather than as a count.
       <div class="ct-row">
         <span class="ct-tag ct-tag--stop">Blocks</span>
         <span class="ct-row-main"><b style="font-weight:400">{{ blocker.text }}</b></span>
-        {% if url %}<a class="ct-btn" href="{{ url }}"
-            style="min-height:40px;padding:8px 13px;font-size:13px">Go</a>{% endif %}
+        {% if url %}<a class="ct-btn ct-btn--sm" href="{{ url }}">Go</a>{% endif %}
       </div>
     {% endfor %}
     <p class="ct-fine">The button appears when this list is empty.</p>
   {% else %}
     <p class="ct-cap">What will be published</p>
-    {% for team, points in rows %}
+    {% for place, team, points in rows %}
       <div class="ct-row">
-        <b class="ct-mono" style="min-width:2.2em;text-align:right;color:var(--ct-dim)">{{ forloop.counter }}</b>
+        <b class="ct-mono" style="min-width:2.2em;text-align:right;color:var(--ct-dim)">{{ place }}</b>
         <span class="ct-row-main"><b>{{ team.name|default:team.anon_label }}</b></span>
         <b class="ct-mono" style="font-size:17px">{{ points }}</b>
       </div>

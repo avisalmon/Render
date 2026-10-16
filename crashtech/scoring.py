@@ -52,10 +52,22 @@ def points_for(submission):
         tiers = challenge.rank_points or []
         if not tiers or submission.reported_value is None:
             return 0
-        for position, ranked in enumerate(_ranked_submissions(challenge)):
-            if ranked.pk == submission.pk:
-                return tiers[position] if position < len(tiers) else 0
-        return 0
+        if submission.verification == Submission.WITHDRAWN:
+            return 0
+        # A shared place for a shared number. The position is how many
+        # submissions are strictly better, so two teams reporting the same
+        # Fmax both take the higher tier and the next one down skips a
+        # place, which is how every race scores a dead heat. The first
+        # version broke the tie on whoever submitted first.
+        better = 0
+        higher = challenge.metric_direction == Challenge.HIGHER
+        for other in _ranked_submissions(challenge):
+            if other.pk == submission.pk:
+                continue
+            if (other.reported_value > submission.reported_value) if higher \
+                    else (other.reported_value < submission.reported_value):
+                better += 1
+        return tiers[better] if better < len(tiers) else 0
 
     if challenge.kind == Challenge.CREATIVITY:
         # Rule 8.2: nothing until a human has looked at it. Averaged across
@@ -115,6 +127,27 @@ def leaderboard(hackathon):
     for team in hackathon.teams.prefetch_related("submissions__challenge", "submissions__grades"):
         rows.append((team, sum(points_for(s) for s in team.submissions.all())))
     return sorted(rows, key=lambda row: (-row[1], row[0].created_at, row[0].pk))
+
+
+def standings(hackathon):
+    """The leaderboard with places, as `[(place, team, points), ...]`.
+
+    Competition ranking: equal points share a place and the next place is
+    skipped (1, 1, 3). The order inside a tie is still stable, so the page
+    does not reshuffle on refresh, but the order is no longer the result.
+    It used to be: two teams level on points became "Winner" and
+    "Runner-up" on permanent certificates, decided by who formed their team
+    first.
+    """
+    rows = []
+    place = 0
+    previous = None
+    for index, (team, points) in enumerate(leaderboard(hackathon)):
+        if points != previous:
+            place = index + 1
+            previous = points
+        rows.append((place, team, points))
+    return rows
 
 
 def awaiting_judgement(hackathon):

@@ -43,8 +43,7 @@ survive it.
       <span class="ct-tag ct-tag--go">Collected</span>
       <form method="post">{% csrf_token %}
         <input type="hidden" name="team" value="{{ row.team.pk }}">
-        <button class="ct-btn" name="take_back" value="1"
-                style="min-height:44px;padding:8px 12px;font-size:13px">Back in the box</button>
+        <button class="ct-btn ct-btn--sm" name="take_back" value="1">Back in the box</button>
       </form>
     {% elif row.members|length == 1 %}
       {% comment %}A team of one needs no choice, so the desk does not ask

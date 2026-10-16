@@ -62,7 +62,7 @@ def test_applying_creates_a_record_separate_from_the_role(client):
     person = _user("hopeful@example.com")
     client.force_login(person)
 
-    client.post(f"/crashtech/e/{event.slug}/apply/")
+    client.post(f"/crashtech/e/{event.slug}/apply/", {"name": "Hopeful Person"})
     registration = Registration.objects.get(hackathon=event, user=person)
     assert registration.status == Registration.APPLIED
     assert not EventRole.objects.filter(hackathon=event, user=person).exists()
@@ -107,8 +107,8 @@ def test_applying_twice_does_not_make_two_records(client):
     event = _event()
     person = _user("eager@example.com")
     client.force_login(person)
-    client.post(f"/crashtech/e/{event.slug}/apply/")
-    client.post(f"/crashtech/e/{event.slug}/apply/")
+    client.post(f"/crashtech/e/{event.slug}/apply/", {"name": "Hopeful Person"})
+    client.post(f"/crashtech/e/{event.slug}/apply/", {"name": "Hopeful Person"})
     assert Registration.objects.filter(hackathon=event, user=person).count() == 1
 
 
@@ -116,7 +116,7 @@ def test_applications_are_refused_once_the_event_is_live(client):
     event = _event(status=Hackathon.LIVE)
     person = _user("late@example.com")
     client.force_login(person)
-    client.post(f"/crashtech/e/{event.slug}/apply/")
+    client.post(f"/crashtech/e/{event.slug}/apply/", {"name": "Hopeful Person"})
     assert not Registration.objects.filter(hackathon=event).exists()
 
 

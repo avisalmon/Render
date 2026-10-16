@@ -113,6 +113,20 @@ class Hackathon(models.Model):
     # --- the lifecycle (Rule 3.1) ---
 
     @property
+    def tz(self):
+        """The event's own timezone, as an object Django can use.
+
+        Falls back to Jerusalem rather than raising, because a mistyped
+        zone name should not take an event page down.
+        """
+        from zoneinfo import ZoneInfo
+
+        try:
+            return ZoneInfo(self.timezone_name or "Asia/Jerusalem")
+        except Exception:
+            return ZoneInfo("Asia/Jerusalem")
+
+    @property
     def is_individual(self):
         return self.team_size_max <= 1
 

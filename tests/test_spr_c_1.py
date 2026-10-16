@@ -361,7 +361,7 @@ def test_a_role_can_be_granted_to_an_email_with_no_account_yet(client):
     assert not User.objects.filter(email="judge@technion.ac.il").exists()
 
     response = client.post("/crashtech/signup/", {
-        "email": "judge@technion.ac.il", "password": "crashtech-7781",
+        "name": "Test Person", "email": "judge@technion.ac.il", "password": "crashtech-7781",
     })
     assert response.status_code == 302
 
@@ -395,7 +395,7 @@ def test_an_invitation_for_a_different_email_is_not_redeemed():
 
 def test_signup_works_immediately_with_no_verification_mail(client, mailoutbox):
     response = client.post("/crashtech/signup/", {
-        "email": "New.Person@Example.com", "password": "crashtech-7781",
+        "name": "Test Person", "email": "New.Person@Example.com", "password": "crashtech-7781",
     })
     assert response.status_code == 302
     user = User.objects.get(email="new.person@example.com")
@@ -406,7 +406,7 @@ def test_signup_works_immediately_with_no_verification_mail(client, mailoutbox):
 def test_signup_refuses_an_email_that_already_has_an_account(client):
     _user("taken@example.com")
     response = client.post("/crashtech/signup/", {
-        "email": "taken@example.com", "password": "crashtech-7781",
+        "name": "Test Person", "email": "taken@example.com", "password": "crashtech-7781",
     })
     assert response.status_code == 200
     assert "already" in response.content.decode().lower()
@@ -414,7 +414,7 @@ def test_signup_refuses_an_email_that_already_has_an_account(client):
 
 
 def test_signup_refuses_a_short_password(client):
-    response = client.post("/crashtech/signup/", {"email": "a@example.com", "password": "short"})
+    response = client.post("/crashtech/signup/", {"name": "Test Person", "email": "a@example.com", "password": "short"})
     assert response.status_code == 200
     assert not User.objects.filter(email="a@example.com").exists()
 

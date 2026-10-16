@@ -128,8 +128,7 @@ has rebuilt the 2026 event the feedback complained about.
         <span class="ct-tag">Link only</span>
       {% endif %}
       <form method="post">{% csrf_token %}
-        <button class="ct-btn" name="drop_deliverable" value="{{ item.pk }}"
-                style="min-height:40px;padding:8px 12px;font-size:13px">Remove</button></form>
+        <button class="ct-btn ct-btn--sm" name="drop_deliverable" value="{{ item.pk }}">Remove</button></form>
     </div>
   {% endfor %}
 

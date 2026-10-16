@@ -5,7 +5,7 @@ Sprints and their status. Spec references are
 and the spec, updated together in the commit that acts on them
 (Rule 14.1).
 
-**Status: C.1 and C.2 live in production, C.3 to C.6 built in dev.** An admin can
+**Status: C.1 to C.6 live in production; C.6.5, the checkpoint fixes, built in dev.** An admin can
 create an event, shape it, lay out its timeline, appoint people by email
 before they have accounts, decide applications, and hand out hardware at a
 desk built for a queue. A tech lead can write challenges of three kinds
@@ -29,6 +29,7 @@ The event then ends in a permanent public page that assembles itself.
 | C.4 | Challenges and submitting | Author challenges with deliverables, kickoff, submit, tentative points | `DONE (dev), 2026-10-15` |
 | C.5 | Judging, results, publishing | Shortlist, grade, verify, and the one gated click | `DONE (dev), 2026-10-15` |
 | C.6 | The museum and media | The public permanent page, moderation, consent-computed exhibition | `DONE (dev), 2026-10-15, except GCS` |
+| C.6.5 | The checkpoint | Everything a review of C.1 to C.6 found: correctness, privacy, and every role's home | `DONE (dev), 2026-10-16` |
 | C.7 | Research | Studies, questionnaires per milestone, consent, data for researchers | `TODO` |
 | C.8 | The public face and the retirement | The public event page, the API surface, and taking `/crashtech/` from the 2026 app | `TODO` |
 
@@ -255,6 +256,86 @@ the exhibition rendered a team's best achievement as a heading with
 nothing under it. The number is the achievement, and it is on the page
 now. The four headline figures also stacked one per row on a phone,
 putting four full-width cards between a stranger and the first word.
+
+---
+
+## SPR-C.6.5 — The checkpoint `DONE (dev), 2026-10-16`
+
+Not planned. Avi called a checkpoint after C.6 and asked for a review of
+everything against the spec, the intent, and how every role actually
+experiences it, on a phone and on a laptop. The review shot every role at
+every stage side by side and read the code against the rules, and it
+found more than any sprint suite had: seven correctness and privacy bugs,
+four gaps against what was dictated, and a role-aware home that routed
+people correctly while telling them almost nothing.
+
+The lesson worth keeping: each sprint verified its own screens, and no
+test ever asked "does this role's next action lead somewhere useful, at
+this stage". Looking at all the roles at once is what found it.
+
+### Must fix
+
+| Feature | Description | Spec |
+| --- | --- | --- |
+| F-C.6.5.1 | **No email address on any public page.** Sign-up collects a name; public pages fall back to "A participant", never an email | Rule 9.2, privacy |
+| F-C.6.5.2 | **One door to publishing.** Readiness no longer publishes from `closed`; only the publish screen does, with the freeze and the certificates | Rule 8.5 |
+| F-C.6.5.3 | **Teams lock at kickoff.** No joining or leaving once the event is live; a late solo team is still allowed, so nobody is stranded | Rule 5.5 |
+| F-C.6.5.4 | Removing a deliverable is refused once any team has turned something in for it | Rule 7.3 |
+| F-C.6.5.5 | The phone upload stops at the deadline like every other submission path | Rule 7.7 |
+| F-C.6.5.6 | "Last saved by" names who last saved | Rule 10.5 |
+| F-C.6.5.7 | **Ties share a place**, on the standings, in a ranked challenge, and on the certificates | Rule 8.4, 8.6 |
+| F-C.6.5.8 | Certificates reachable: from the participant's home and the museum | Rule 8.6 |
+| F-C.6.5.9 | People who can read the challenges early cannot apply to compete; applying is a POST | Rule 4.5, 7.1 |
+
+### Gaps against the spec and the dictation
+
+| Feature | Description | Spec |
+| --- | --- | --- |
+| F-C.6.5.10 | Event dates editable after creation | Avi, 2026-10-14: "after we are live we will set dates" |
+| F-C.6.5.11 | Every time shown and typed in the event's own timezone | Rule 12.3 |
+| F-C.6.5.12 | The supporting repository shown to accepted participants from kit stage | Avi's milestone 2; CONSEQUENCES[KITS] |
+| F-C.6.5.13 | The event page states when it is, and shows its About and Rules pages, schedule and sponsors | Rule 3.6, 11.3 |
+
+### Every role's home
+
+| Feature | Description | Spec |
+| --- | --- | --- |
+| F-C.6.5.14 | A clock during the event, for everybody | Rule 11.2 |
+| F-C.6.5.15 | Each role's next actions carry state and lead to the screen that acts on them, at every stage | Rule 11.3 |
+| F-C.6.5.16 | The results moment: a participant sees their place, their certificate and the museum | Rule 8.6, 9.1 |
+
+### Phone and polish
+
+| Feature | Description | Spec |
+| --- | --- | --- |
+| F-C.6.5.17 | A real phone menu instead of a nav scrolled off the edge, with the current page marked | Rule 11.2 |
+| F-C.6.5.18 | Small buttons as a class, not repeated inline styles; form controls in the product's colour | Rule 2.2.1 | DONE — `tests/test_spr_c_6_5.py` (60), marker `sprc65` |
+
+**What building it found on top of the review.**
+
+- **Blind labels were sign-up order.** `create_team` handed out "Entry n"
+  as `teams.count() + 1` and the close skipped any team that already had
+  one, so "Entry 1" meant "signed up first". Nothing is assigned before
+  the close now, and the close shuffles.
+- **Sign-up followed any `?next=`**, including another site. Now only this
+  one.
+- **Applying was a GET with a side effect**, so a link prefetch could apply
+  somebody to an event. POST only.
+- **Every time was UTC.** A kickoff at 10:00 in Haifa printed as 07:00 or
+  08:00. Pages render in the event's zone, typed times are read in it, and
+  the zone is named by its city, because "IST" is Israel to the organiser
+  and India to half the readers.
+- **Two "Next" items on one home** (a tech lead with neither challenges nor
+  a kit). The new test that no home ever has more than one caught it.
+
+**The test the review showed was missing all along:**
+`test_every_link_on_every_roles_home_opens_for_that_role`, run at every
+stage. No sprint suite ever asked whether a role's next action leads
+somewhere that role can open.
+
+**For the demo:** a site superuser is admin on every event, and people who
+can read the challenges early can no longer apply to compete. Run the
+participant side from a second account in a private window.
 
 ---
 

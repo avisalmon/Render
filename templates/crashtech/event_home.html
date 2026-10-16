@@ -1,50 +1,216 @@
-{% extends "crashtech/base.html" %}
+{% extends "crashtech/base.html" %}{% load crashtech_tags %}
 {% block title %}{{ hackathon.name }} &middot; CrashTech{% endblock %}
+{% block description %}{{ hackathon.name }}{% if hackathon.tagline %}: {{ hackathon.tagline }}{% endif %}{% endblock %}
 {% block screen %}event-home{% endblock %}
 {% block nav %}{% include "crashtech/_event_nav.html" %}{% endblock %}
 {% block milestone %}<span class="ct-milestone">{{ hackathon.get_status_display }}</span>{% endblock %}
+{% comment %}
+The role-aware home (Rule 11.3), and the event's public page for anybody
+with no role at all.
+
+Top to bottom it answers, in order: where is this event in its life
+(the band), what do I do now (the actions, per role), and what is this
+event (the facts, its pages, its timeline). The review that rewrote it
+found that the first version answered only the last question for most
+people, and none of them during the 24 hours, when the band is a clock.
+
+Every time on this page is in the event's own zone and says which one
+(views.render), because people read it from other countries.
+{% endcomment %}
 {% block content %}
 <h1>{{ hackathon.name }}</h1>
 {% if hackathon.tagline %}<p class="ct-lede">{{ hackathon.tagline }}</p>{% endif %}
 
+{% comment %}Two columns on a laptop: what to do now on the left, what the
+event is on the right. One column on a phone, in that same order, so the
+thing this person has to act on is never below the fold behind a
+timeline.{% endcomment %}
+<div class="ct-home">
+<div class="ct-home-main">
+
+{# ---------------------------------------------------------------- the band #}
+{% if hackathon.status == 'live' %}
+  {% comment %}The single most important fact of the night, for everybody,
+  signed in or not. Server-rendered so it is true without a script; the
+  script below only keeps it ticking.{% endcomment %}
+  <div class="ct-band ct-band--live">
+    <span class="ct-cap">Submissions close in</span>
+    <b class="ct-clock" data-deadline="{{ hackathon.submission_deadline|date:'c' }}">{{ deadline_left|default:"a moment" }}</b>
+    <span class="ct-fine">{{ hackathon.submission_deadline|date:"D j M, H:i" }} {{ hackathon|ct_zone }}</span>
+  </div>
+{% elif hackathon.status == 'closed' %}
+  <div class="ct-band">
+    <span class="ct-cap">Submissions are closed</span>
+    <b class="ct-band-line">The judges are looking at the work.</b>
+    <span class="ct-fine">Results are published here when they finish.</span>
+  </div>
+{% elif hackathon.results_published_at %}
+  {% comment %}The moment the whole event leads to. It used to be a list of
+  past dates, for everybody, including the team that won.{% endcomment %}
+  <div class="ct-band ct-band--results">
+    <span class="ct-cap">The results</span>
+    {% for place, team, points in results %}
+      <div class="ct-podium">
+        <b class="ct-mono ct-podium-place">{{ place }}</b>
+        <span class="ct-podium-name">{{ team.name|default:team.anon_label }}</span>
+        <b class="ct-mono">{{ points }}</b>
+      </div>
+    {% endfor %}
+    <a class="ct-btn ct-btn--primary" href="{% url 'crashtech:museum' hackathon.slug %}">See what was built</a>
+  </div>
+{% elif hackathon.status != 'setup' %}
+  <div class="ct-band">
+    <span class="ct-cap">Starts</span>
+    <b class="ct-band-line ct-mono">{{ hackathon.starts_at|date:"D j M, H:i" }}</b>
+    <span class="ct-fine">{{ hackathon|ct_zone }}. {% if kickoff_left %}In {{ kickoff_left }}. {% endif %}{{ hours }} hours, start to finish.</span>
+  </div>
+{% endif %}
+
+{# ------------------------------------------------------------ taking part #}
 {% if can_apply %}
-  <form method="post" action="{% url 'crashtech:apply' hackathon.slug %}">{% csrf_token %}
-    <button class="ct-btn ct-btn--primary" type="submit">Apply to take part</button>
+  <form method="post" action="{% url 'crashtech:apply' hackathon.slug %}" class="ct-card">{% csrf_token %}
+    <p class="ct-cap">Take part</p>
+    {% if needs_name %}
+      {% comment %}Asked here because it has to exist before anything public
+      can carry it, and an account from babook may not have one.{% endcomment %}
+      <label class="ct-field"><span>Your name, as it should appear on a certificate</span>
+        <input class="ct-input" name="name" autocomplete="name" required maxlength="300"></label>
+    {% endif %}
+    <button class="ct-btn ct-btn--primary ct-btn--wide" type="submit">Apply to take part</button>
+    <p class="ct-fine" style="margin:8px 0 0">An organiser accepts each application. Your email address is never shown publicly.</p>
   </form>
 {% elif my_registration %}
   <p><span class="ct-tag {% if my_registration.status == 'accepted' %}ct-tag--go{% elif my_registration.status == 'declined' %}ct-tag--stop{% else %}ct-tag--wait{% endif %}">
-    Application {{ my_registration.get_status_display|lower }}</span></p>
+    Application {{ my_registration.get_status_display|lower }}</span>
+    {% if my_registration.status == 'applied' %}<span class="ct-fine">An organiser will decide. It shows here when they do.</span>{% endif %}</p>
+{% elif not user.is_authenticated and hackathon.accepts_registrations %}
+  <p><a class="ct-btn ct-btn--primary" href="{% url 'crashtech:signup' %}?next={{ request.path|urlencode }}">Sign up to take part</a></p>
 {% endif %}
 
-{% if actions %}
-  {% comment %}Rule 11.3: what do I do now, per role.{% endcomment %}
-  {% for role_label, items in actions %}
-    <p class="ct-cap">As {{ role_label }}</p>
-    {% for action, url in items %}
-      {% if url %}
-        <a class="ct-row" href="{{ url }}">
-          <span class="ct-row-main"><b>{{ action.text }}</b></span>
-          {% if action.urgent %}<span class="ct-tag ct-tag--wait">Next</span>{% endif %}
-        </a>
-      {% else %}
-        <div class="ct-row">
-          <span class="ct-row-main"><b>{{ action.text }}</b></span>
-          {% if action.urgent %}<span class="ct-tag ct-tag--wait">Next</span>{% endif %}
-        </div>
-      {% endif %}
-    {% endfor %}
+{# ------------------------------------------------------- what to do now #}
+{% for role_label, items in actions %}
+  <p class="ct-cap" style="margin-top:20px">As {{ role_label }}</p>
+  {% for action, url in items %}
+    {% if url %}
+      <a class="ct-row" href="{{ url }}"{% if action.href %} target="_blank" rel="noopener"{% endif %}>
+        <span class="ct-row-main"><b>{{ action.text }}</b></span>
+        {% if action.urgent %}<span class="ct-tag ct-tag--wait">Next</span>{% endif %}
+        <span class="ct-row-go" aria-hidden="true">&rarr;</span>
+      </a>
+    {% else %}
+      <div class="ct-row ct-row--still">
+        <span class="ct-row-main"><b>{{ action.text }}</b></span>
+        {% if action.urgent %}<span class="ct-tag ct-tag--wait">Next</span>{% endif %}
+      </div>
+    {% endif %}
   {% endfor %}
-{% elif my_roles %}
-  <div class="ct-empty">Nothing for you to do right now.</div>
+{% empty %}
+  {% if my_roles %}<div class="ct-empty">Nothing for you to do right now.</div>{% endif %}
+{% endfor %}
+
+{# ----------------------------------------------------- the event's pages #}
+{% for page in pages %}
+  {% comment %}The About and Rules pages, seeded in C.1 with the text that
+  explains trust scoring, and shown nowhere until this review.{% endcomment %}
+  <details class="ct-page" {% if forloop.first and hackathon.status != 'live' %}open{% endif %}>
+    <summary>{{ page.title }}</summary>
+    <div class="ct-prose">{{ page.body|ct_markdown }}</div>
+  </details>
+{% endfor %}
+</div>
+
+<aside class="ct-home-side">
+{# --------------------------------------------------------- the repository #}
+{% if show_repo %}
+  <a class="ct-card ct-repo" href="{{ hackathon.repo_url }}" target="_blank" rel="noopener">
+    <span class="ct-cap">The event repository</span>
+    <b class="ct-mono">{{ hackathon.repo_url|cut:"https://"|cut:"http://" }}</b>
+    <span class="ct-fine">Examples, skills and the methodology to practise with. The challenges are never in it.</span>
+  </a>
+{% endif %}
+
+{# ------------------------------------------------------------------ facts #}
+<div class="ct-facts">
+  <div><span class="ct-cap">When</span>
+    <b>{{ hackathon.starts_at|date:"D j M Y, H:i" }}</b>
+    <span class="ct-fine">to {{ hackathon.ends_at|date:"D j M, H:i" }} {{ hackathon|ct_zone }}</span></div>
+  {% if hackathon.status != 'closed' and not hackathon.results_published_at %}
+  {% comment %}Planning facts. Once the event is over they are history,
+  and a finished event's page saying "collected in person" reads as if
+  something is still to do.{% endcomment %}
+  <div><span class="ct-cap">Submissions close</span>
+    <b>{{ hackathon.submission_deadline|date:"D j M, H:i" }}</b>
+    <span class="ct-fine">{{ hackathon|ct_zone }}</span></div>
+  {% endif %}
+  <div><span class="ct-cap">Teams</span>
+    <b>{% if hackathon.team_size_max <= 1 %}Individual{% else %}Up to {{ hackathon.team_size_max }}{% endif %}</b>
+    <span class="ct-fine">{% if hackathon.team_size_max <= 1 %}Everybody competes alone{% else %}No captain, everybody can do everything{% endif %}</span></div>
+  {% if hackathon.status != 'closed' and not hackathon.results_published_at %}
+  <div><span class="ct-cap">Kit</span>
+    <b>{{ hackathon.kits_per_team }} per team</b>
+    <span class="ct-fine">Collected in person</span></div>
+  {% endif %}
+</div>
+
+{% if schedule %}
+  <p class="ct-cap" style="margin-top:26px">Schedule</p>
+  {% for item in schedule %}
+    <div class="ct-row ct-row--still">
+      <span class="ct-row-main"><b>{{ item.title }}</b>
+        <span>{% if item.location %}{{ item.location }}{% endif %}{% if item.location and item.description %} &middot; {% endif %}{{ item.description }}</span></span>
+      <span class="ct-mono ct-fine" style="white-space:nowrap">{{ item.starts_at|date:"D j M, H:i" }}</span>
+    </div>
+  {% endfor %}
 {% endif %}
 
 <p class="ct-cap" style="margin-top:26px">Timeline</p>
 {% for milestone in milestones %}
-  <div class="ct-row">
+  <div class="ct-row ct-row--still">
     <span class="ct-row-main"><b>{{ milestone.title }}</b><span>{{ milestone.blurb }}</span></span>
-    <span class="ct-mono ct-fine">{{ milestone.occurs_at|date:"j M Y" }}</span>
+    <span class="ct-mono ct-fine" style="white-space:nowrap;text-align:right">{{ milestone.occurs_at|date:"j M" }}<br>{{ milestone.occurs_at|date:"H:i" }}</span>
   </div>
 {% empty %}
   <div class="ct-empty">No milestones yet.</div>
 {% endfor %}
+<p class="ct-fine">All times are {{ hackathon|ct_zone }}.</p>
+
+{% if sponsors %}
+  <p class="ct-cap" style="margin-top:26px">With thanks to</p>
+  <div class="ct-sponsors">
+    {% for sponsor in sponsors %}
+      {% if sponsor.url %}<a href="{{ sponsor.url }}" target="_blank" rel="noopener">{{ sponsor.name }}</a>{% else %}<span>{{ sponsor.name }}</span>{% endif %}
+    {% endfor %}
+  </div>
+{% endif %}
+</aside>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if hackathon.status == 'live' %}
+<script>
+/* Keeps the clock ticking. The server's sentence is already true when the
+   page arrives; this only stops it going stale on a phone left open on
+   the bench. Same wording as clock.remaining(). */
+(function () {
+  var el = document.querySelector("[data-deadline]");
+  if (!el) return;
+  var end = Date.parse(el.getAttribute("data-deadline"));
+  if (isNaN(end)) return;
+  function words(s) {
+    if (s <= 0) return "a moment";
+    var m = Math.floor(s / 60), h = Math.floor(m / 60), d = Math.floor(h / 24);
+    m = m % 60; h = h % 24;
+    if (d >= 2) return d + " days";
+    if (d === 1) return "1 day " + h + "h";
+    if (h) return h + "h " + (m < 10 ? "0" : "") + m + "m";
+    if (m) return m + " minute" + (m === 1 ? "" : "s");
+    return "less than a minute";
+  }
+  function tick() { el.textContent = words(Math.floor((end - Date.now()) / 1000)); }
+  tick();
+  setInterval(tick, 20000);
+})();
+</script>
+{% endif %}
 {% endblock %}

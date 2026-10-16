@@ -1,4 +1,4 @@
-{% extends "crashtech/base.html" %}
+{% extends "crashtech/base.html" %}{% load crashtech_tags %}
 {% block title %}Teams &middot; {{ hackathon.name }}{% endblock %}
 {% block screen %}teams{% endblock %}
 {% block nav %}{% include "crashtech/_event_nav.html" %}{% endblock %}
@@ -21,12 +21,17 @@ on submit (user_journeys.md 2.3).{% endcomment %}
   <p class="ct-cap">Your team</p>
   <div class="ct-row">
     <span class="ct-row-main"><b>{{ my_team.name }}</b>
-      <span>{% for m in my_team.memberships.all %}{{ m.user.email|default:m.user.username }}{% if not forloop.last %} &middot; {% endif %}{% endfor %}
+      <span>{% for m in my_team.memberships.all %}{{ m.user|ct_name }}{% if not forloop.last %} &middot; {% endif %}{% endfor %}
         &middot; {{ my_team.memberships.count }} of {{ hackathon.team_size_max }}</span></span>
-    <form method="post">{% csrf_token %}
-      <button class="ct-btn" name="leave" value="1"
-              style="min-height:44px;padding:8px 14px;font-size:13px">Leave</button></form>
+    {% if not locked %}
+      <form method="post">{% csrf_token %}
+        <button class="ct-btn ct-btn--sm" name="leave" value="1">Leave</button></form>
+    {% endif %}
   </div>
+  {% if locked %}
+    <p class="ct-fine">Teams are fixed now the event has started. Your team keeps
+      you and everything it turned in.</p>
+  {% endif %}
 
   {% comment %}Rule 9.4. Theirs to change at any time, in either direction,
   forever: the exhibition is computed from this on every request, so turning
@@ -44,9 +49,15 @@ on submit (user_journeys.md 2.3).{% endcomment %}
       <button class="ct-btn ct-btn--primary" name="on" value="1">Show our work</button>
     {% endif %}
   </form>
+{% elif accepted and locked and not late_solo %}
+  <div class="ct-empty">Teams are fixed now. You did not join one for this event.</div>
 {% elif accepted %}
   <form method="post" class="ct-card">{% csrf_token %}
-    <p class="ct-cap">Start a team</p>
+    <p class="ct-cap">{% if late_solo %}Start a team, late{% else %}Start a team{% endif %}</p>
+    {% if late_solo %}
+      <p class="ct-fine">The event has started, so nobody can join an existing team,
+        but you can still start your own and submit from now. A team of one is fine.</p>
+    {% endif %}
     <label class="ct-field"><span>Name it</span>
       <input class="ct-input" name="name" placeholder="Nova Logic" required></label>
     <button class="ct-btn ct-btn--primary ct-btn--wide" type="submit">Create</button>
@@ -59,11 +70,14 @@ on submit (user_journeys.md 2.3).{% endcomment %}
         <span class="ct-row-main"><b>{{ team.name }}</b>
           <span>{{ team.memberships.count }} of {{ hackathon.team_size_max }}</span></span>
         <form method="post">{% csrf_token %}
-          <button class="ct-btn" name="join" value="{{ team.pk }}"
-                  style="min-height:44px;padding:8px 14px;font-size:13px">Join</button></form>
+          <button class="ct-btn ct-btn--sm" name="join" value="{{ team.pk }}">Join</button></form>
       </div>
     {% endfor %}
   {% endif %}
+{% elif can_manage or not may_compete %}
+  {% comment %}Somebody running the event. The first version told an admin
+  they needed to be accepted before they could form a team.{% endcomment %}
+  <p class="ct-fine">You are running this event, so you are not on a team.</p>
 {% else %}
   <div class="ct-empty">You need to be accepted to the event before you can form a team.</div>
 {% endif %}
@@ -73,7 +87,7 @@ on submit (user_journeys.md 2.3).{% endcomment %}
   {% for team in all_teams %}
     <div class="ct-row">
       <span class="ct-row-main"><b>{{ team.name|default:team.anon_label }}</b>
-        <span>{% for m in team.memberships.all %}{{ m.user.email|default:m.user.username }}{% if not forloop.last %} &middot; {% endif %}{% empty %}Empty{% endfor %}</span></span>
+        <span>{% for m in team.memberships.all %}{{ m.user|ct_name }}{% if not forloop.last %} &middot; {% endif %}{% empty %}Empty{% endfor %}</span></span>
       <span class="ct-mono ct-fine">{{ team.memberships.count }}/{{ hackathon.team_size_max }}</span>
     </div>
   {% empty %}

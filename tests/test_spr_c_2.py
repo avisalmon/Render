@@ -364,7 +364,7 @@ def test_an_action_for_a_screen_that_does_not_exist_yet_still_says_its_piece():
 
     actions = next_actions_for(admin, event)
     pairs = [(a, u) for _l, items in actions for a, u in items]
-    assert any("applications waiting" in a.text for a, _u in pairs)
+    assert any("waiting on you" in a.text for a, _u in pairs)
     assert all(u == "" or u.startswith("/crashtech/") for _a, u in pairs)
 
 

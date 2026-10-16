@@ -92,10 +92,8 @@ rows, no count. A number here is the leak most easily left in by accident.
           <span class="ct-tag ct-tag--stop">Nothing to turn in</span>
         {% endif %}
         <span class="ct-fine ct-mono" style="white-space:nowrap">{{ row.submitted }} in</span>
-        <a class="ct-btn" href="{% url 'crashtech:challenge_edit' hackathon.slug row.challenge.pk %}"
-           style="min-height:40px;padding:8px 13px;font-size:13px">Edit</a>
-        <a class="ct-btn" href="{% url 'crashtech:challenge_preview' hackathon.slug row.challenge.pk %}"
-           style="min-height:40px;padding:8px 13px;font-size:13px">Preview</a>
+        <a class="ct-btn ct-btn--sm" href="{% url 'crashtech:challenge_edit' hackathon.slug row.challenge.pk %}">Edit</a>
+        <a class="ct-btn ct-btn--sm" href="{% url 'crashtech:challenge_preview' hackathon.slug row.challenge.pk %}">Preview</a>
       {% elif not blocker %}
         <a class="ct-btn ct-btn--primary" href="{% url 'crashtech:challenge_submit' hackathon.slug row.challenge.pk %}"
            style="min-height:44px;padding:9px 16px">{% if row.submission %}Open{% else %}Start{% endif %}</a>

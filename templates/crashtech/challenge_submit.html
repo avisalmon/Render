@@ -1,4 +1,4 @@
-{% extends "crashtech/base.html" %}
+{% extends "crashtech/base.html" %}{% load crashtech_tags %}
 {% block title %}{{ challenge.title }} &middot; {{ hackathon.name }}{% endblock %}
 {% block screen %}submit{% endblock %}
 {% comment %}An EVENT screen (Rule 11.1): a phone, 3am, hands that have been
@@ -142,7 +142,7 @@ nowhere in this product.
       <p><b class="ct-mono" style="font-size:26px">{{ points }}</b> points, on trust.</p>
     {% endif %}
     <p class="ct-fine">Last saved {{ submission.updated_at|date:"d M, H:i" }}
-      by {{ submission.submitted_by.email|default:"your team" }}.</p>
+      by {{ submission.submitted_by|ct_name:"your team" }}.</p>
   </div>
 {% endif %}
 

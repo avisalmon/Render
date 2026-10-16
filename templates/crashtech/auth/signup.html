@@ -5,8 +5,12 @@
 <h1>Create an account</h1>
 <p class="ct-lede">No verification email. The account works straight away.</p>
 <form method="post">{% csrf_token %}
+  <label class="ct-field"><span>Your name</span>
+    <input class="ct-input" name="name" value="{{ name }}" autocomplete="name" required autofocus maxlength="300">
+    <span class="ct-fine">As it should appear on a certificate. Your email address is never shown publicly.</span>
+    {% if errors.name %}<span class="ct-error">{{ errors.name }}</span>{% endif %}</label>
   <label class="ct-field"><span>Email</span>
-    <input class="ct-input" type="email" name="email" value="{{ email }}" autocomplete="email" required autofocus>
+    <input class="ct-input" type="email" name="email" value="{{ email }}" autocomplete="email" required>
     {% if errors.email %}<span class="ct-error">{{ errors.email }}</span>{% endif %}</label>
   <label class="ct-field"><span>Password</span>
     <input class="ct-input" type="password" name="password" autocomplete="new-password" required>

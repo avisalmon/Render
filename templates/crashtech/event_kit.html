@@ -14,8 +14,7 @@ something completely different, and nothing in the code changes.</p>
     <span class="ct-mono ct-fine">{{ item.quantity_total }}</span>
     {% if item.is_returnable %}<span class="ct-tag">Comes back</span>{% endif %}
     <form method="post">{% csrf_token %}
-      <button class="ct-btn" name="delete" value="{{ item.pk }}"
-              style="min-height:44px;padding:8px 12px;font-size:13px">Remove</button></form>
+      <button class="ct-btn ct-btn--sm" name="delete" value="{{ item.pk }}">Remove</button></form>
   </div>
 {% empty %}
   <div class="ct-empty">The kit has not been defined yet.</div>
