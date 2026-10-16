@@ -4725,7 +4725,7 @@ definitions. Order is the order the client's mail gives them weight: the look an
 the schedule everyone sees first, then the two gates, then the extras. Dev first;
 nothing goes to production without Avi's word.
 
-## SPR-M.61 — Atid's look  `IN PROGRESS: look done, logo waiting on the file`
+## SPR-M.61 — Atid's look  `DONE 2026-10-15`
 
 **Goal.** The whole product looks like atidedu.org.il. Tokens only.
 **Delivers.** REQ-M.188.
@@ -4735,7 +4735,7 @@ nothing goes to production without Avi's word.
 | F-M.61.1 | Palette tokens: burgundy action, orange accent, plum text, cream grounds; every pairing measured | REQ-M.188 | DONE |
 | F-M.61.2 | Night palette in the same hues | REQ-M.188 | DONE |
 | F-M.61.3 | Pill buttons and Atid-style header and footer | REQ-M.188 | DONE |
-| F-M.61.4 | The new logo in the header, favicon and certificate | REQ-M.188 | TODO |
+| F-M.61.4 | The new logo in the header, favicon and certificate | REQ-M.188 | DONE |
 | F-M.61.5 | Screen contract and mobile tests green on the new palette | REQ-M.188 | DONE |
 
 
@@ -4744,10 +4744,7 @@ nothing goes to production without Avi's word.
 Orange `#FC5029` is identity and never carries a label (white on it is 3.32:1);
 burgundy `#870335` is action (10.03:1). Night mode uses Atid's lilac for links
 (11.18:1). `test_spr_m_1`, `test_screen_contract` and `test_matazim_mobile`: 131
-passed. **F-M.61.4 waits on the logo file:** the mail's attachments are not
-readable from the mail connector, so the old logo is still in
-`static/matazim/logo.png`, and replacing that one file (and the favicon) is the
-whole change.
+passed. **F-M.61.4 done 2026-10-15** (commit 7bbe4a8): Avi pasted the עתיד שבילים משותפים logo into the chat, and it is `static/matazim/logo.png` (header and favicon), on a light chip at night.
 
 ## SPR-M.62 — The certificate follows the hand-in  `DONE 2026-10-15`
 
