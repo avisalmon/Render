@@ -1,0 +1,7 @@
+{% extends "counter/base.html" %}
+{% block title %}Not for you · counter{% endblock %}
+{% block content %}
+<h1>Not for you</h1>
+<p class="counter-lead">This is a private tool.</p>
+<a class="counter-btn" href="{% url 'counter:dashboard' %}">Back to counter</a>
+{% endblock %}

@@ -1,0 +1,7 @@
+{% extends "counter/base.html" %}
+{% block title %}Something broke · counter{% endblock %}
+{% block content %}
+<h1>Something broke</h1>
+<p class="counter-lead">Try again in a moment.</p>
+<a class="counter-btn" href="{% url 'counter:dashboard' %}">Back to counter</a>
+{% endblock %}

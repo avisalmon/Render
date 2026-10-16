@@ -1,0 +1,29 @@
+{% extends "counter/base.html" %}
+{% block title %}counter{% endblock %}
+{% block content %}
+<h1>Your sites</h1>
+{% if rows %}
+<ul class="counter-sites">
+  {% for row in rows %}
+  <li class="counter-card counter-site{% if not row.site.is_active %} counter-site--off{% endif %}" data-site-id="{{ row.site.pk }}">
+    <a class="counter-site-name" href="{% url 'counter:site' row.site.pk %}">{{ row.site.name }}</a>
+    <span class="counter-stat"><b>{{ row.totals.views }}</b> views</span>
+    <span class="counter-stat"><b>{{ row.totals.uniques }}</b> unique</span>
+    <span class="counter-stat"><b>{{ row.clicks }}</b> other events</span>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="counter-lead">No sites yet. Add the first one below.</p>
+{% endif %}
+
+<h2>Track a new site</h2>
+<form class="counter-card counter-form" data-site-form>
+  <label>Name <input name="name" required maxlength="120" placeholder="my-notes on GitHub Pages"></label>
+  <label>Base URL <input name="base_url" maxlength="300" placeholder="https://avisalmon.github.io/my-notes/"></label>
+  <label>GitHub repo <input name="repo" maxlength="200" placeholder="avisalmon/my-notes"></label>
+  <label>Local folder <input name="local_path" maxlength="300" placeholder="C:\Projects\my-notes"></label>
+  <button type="submit" class="counter-btn counter-btn--primary">Add site</button>
+  <p class="counter-error" data-form-error hidden></p>
+</form>
+{% endblock %}

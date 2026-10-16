@@ -1,0 +1,7 @@
+{% extends "counter/base.html" %}
+{% block title %}Nothing here · counter{% endblock %}
+{% block content %}
+<h1>Nothing here</h1>
+<p class="counter-lead">That page does not exist.</p>
+<a class="counter-btn" href="{% url 'counter:dashboard' %}">Back to counter</a>
+{% endblock %}

@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "matazim",
     "ustrip",
     "memz",
+    "counter",
     "sensorlab",
     "exo",
     "blackjack",
@@ -515,3 +516,8 @@ except ImportError:
 if EMAIL_BACKEND != "app.mail_guard.GuardedEmailBackend":
     MAIL_GUARD_INNER_BACKEND = EMAIL_BACKEND
     EMAIL_BACKEND = "app.mail_guard.GuardedEmailBackend"
+
+# counter: the origin printed into the snippet a static site pastes. Always the
+# live site, even when generated on a dev server, so a copied snippet never
+# points at localhost (docs/counter/spec.md).
+COUNTER_PUBLIC_ORIGIN = os.environ.get("COUNTER_PUBLIC_ORIGIN", "https://babook.co.il")

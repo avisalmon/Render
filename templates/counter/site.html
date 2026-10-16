@@ -1,0 +1,56 @@
+{% extends "counter/base.html" %}
+{% block title %}{{ site.name }} · counter{% endblock %}
+{% block content %}
+<p><a href="{% url 'counter:dashboard' %}">&larr; All sites</a></p>
+<h1>{{ site.name }}</h1>
+
+<div class="counter-tiles">
+  <div class="counter-card counter-tile"><b>{{ summary.all.views }}</b><span>views, all time</span></div>
+  <div class="counter-card counter-tile"><b>{{ summary.all.uniques }}</b><span>unique, all time</span></div>
+  <div class="counter-card counter-tile"><b>{{ summary.today.views }}</b><span>views today</span></div>
+  <div class="counter-card counter-tile"><b>{{ summary.last_days.views }}</b><span>views, last {{ summary.days }} days</span></div>
+</div>
+
+<h2>Last {{ summary.days }} days</h2>
+{% if summary.by_day %}
+<ol class="counter-days">
+  {% for d in summary.by_day %}
+  <li><span class="counter-day">{{ d.day|date:"m-d" }}</span>
+      <span class="counter-bar"><i style="width:{{ d.pct }}%"></i></span>
+      <span class="counter-day-n">{{ d.views }}</span></li>
+  {% endfor %}
+</ol>
+{% else %}<p class="counter-muted">No views in this period yet.</p>{% endif %}
+
+<h2>Top pages</h2>
+{% if summary.top_pages %}
+<table class="counter-table">
+  <thead><tr><th>Page</th><th>Views</th><th>Unique</th></tr></thead>
+  <tbody>
+    {% for p in summary.top_pages %}
+    <tr><td>{{ p.page__path }}{% if p.page__title %}<small>{{ p.page__title }}</small>{% endif %}</td><td>{{ p.views }}</td><td>{{ p.uniques }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}<p class="counter-muted">No pages seen yet.</p>{% endif %}
+
+<h2>Snippet</h2>
+<p class="counter-muted">Paste before <code>&lt;/body&gt;</code> on every page. Key: <code>{{ site.key }}</code></p>
+<pre class="counter-code" data-snippet>{{ snippet }}</pre>
+<p class="counter-muted">Show a number anywhere:
+  <code>&lt;span data-counter="views"&gt;&lt;/span&gt;</code> (this page),
+  <code>data-counter="uniques"</code>, add <code>data-counter-scope="site"</code> for the whole site.
+  Count a click: <code>data-counter-click="name"</code> on the element.</p>
+
+<h2>Settings</h2>
+<form class="counter-card counter-form" data-site-edit data-site-id="{{ site.pk }}">
+  <label>Name <input name="name" value="{{ site.name }}" maxlength="120" required></label>
+  <label>Base URL <input name="base_url" value="{{ site.base_url }}" maxlength="300"></label>
+  <label>GitHub repo <input name="repo" value="{{ site.repo }}" maxlength="200"></label>
+  <label>Local folder <input name="local_path" value="{{ site.local_path }}" maxlength="300"></label>
+  <label class="counter-check"><input type="checkbox" name="is_active"{% if site.is_active %} checked{% endif %}> Counting</label>
+  <button type="submit" class="counter-btn counter-btn--primary">Save</button>
+  <button type="button" class="counter-btn counter-btn--danger" data-site-delete>Delete site and all its data</button>
+  <p class="counter-error" data-form-error hidden></p>
+</form>
+{% endblock %}
