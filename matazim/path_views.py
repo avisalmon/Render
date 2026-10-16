@@ -204,6 +204,13 @@ def _leader_name(leader):
     return getattr(profile, "display_name", "") or leader.user.email
 
 
+def _peak_days(user):
+    """The programme's peak days in date order, from the schedule rows (editable by the team)."""
+    from .access import visible_milestones
+
+    return sorted((m for m in visible_milestones(user) if m.is_peak_day), key=lambda m: m.starts_on)
+
+
 @login_required(login_url=LOGIN_URL)
 def my_path(request):
     """REQ-M.12 — where I am, what I have done, what is next.
@@ -260,7 +267,7 @@ def my_path(request):
             stages=stages,
             year=year_context(request.user),
             summary=summary,
-            milestones=track.milestones(request.user, profile, student, state, per_course),
+            path_steps=track.path_steps(request.user, student, per_course, _peak_days(request.user)),
             legend=track.LEGEND,
             status_cards=track.status_cards(
                 summary=summary, next_step=next_step, student=student,

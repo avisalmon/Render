@@ -33,18 +33,6 @@
     </svg>
   </div>
 
-  {# ------------------------------------------- the training path #}
-  {% comment %}
-    Lital, 2026-10-15: "המסלול שלי" has to show the learning path itself, and only
-    at the end does someone receive the certificate. This is the year as the
-    programme runs it, with where it stands now, and the certificate last.
-  {% endcomment %}
-  <section class="mz-panel" id="mzTrainingPath">
-    <h2>מסלול ההכשרה</h2>
-    {% include "matazim/_year.html" with milestones=year.milestones under_way=year.under_way next_milestone=year.next_milestone %}
-    <p class="mz-path-end"><strong>ובסוף: תעודת מטצ.</strong> <span class="mz-muted">אחרי שהמוביל/ה מאשר/ת, ורק אחרי שסיימתם את כל המסלול.</span></p>
-  </section>
-
   {# ------------------------------------------------------ status cards #}
   <ul class="mz-status-row" aria-label="מצב נוכחי">
     {% for card in status_cards %}
@@ -73,28 +61,25 @@
   </ul>
 
   {# ------------------------------------------------------- the path #}
-  <section class="mz-panel">
+  {% comment %}
+    Lital, 2026-10-15 (mail): the training itself, by months, in her order, and the
+    certificate only after all of it. The steps come from `track.path_steps`.
+  {% endcomment %}
+  <section class="mz-panel" id="mzTrainingPath">
     <h2>המסלול שלי בתכנית</h2>
-    {% comment %}
-      Horizontal on a wide screen, reading right to left like her drawing;
-      vertical on a phone, where a scrolling strip of fourteen nodes is a thing
-      a thumb loses. Same markup, one class switch in CSS.
-    {% endcomment %}
-    <ol class="mz-path" aria-label="אבני הדרך">
-      {% for node in milestones %}
-        <li class="mz-path-node is-{{ node.status }}{% if node.is_current %} is-current{% endif %}">
-          {% if node.is_current %}<span class="mz-path-now">המשימה הנוכחית</span>{% endif %}
-          <span class="mz-path-dot" aria-hidden="true">
-            {% if node.status == 'done' %}✓{% elif node.status == 'doing' and node.pct %}{{ node.pct }}%{% elif node.status == 'doing' %}…{% elif node.status == 'fix' %}!{% else %}{{ forloop.counter }}{% endif %}
-          </span>
+    <ol class="mz-path" aria-label="המסלול לפי חודשים">
+      {% for step in path_steps %}
+        <li class="mz-path-node is-{{ step.status }}{% if step.is_current %} is-current{% endif %}">
+          {% if step.is_current %}<span class="mz-path-now">המשימה הנוכחית</span>{% endif %}
+          <span class="mz-path-dot" aria-hidden="true">{% if step.status == 'done' %}✓{% else %}{{ forloop.counter }}{% endif %}</span>
           <span class="mz-path-body">
-            {% if node.where %}
-              <a class="mz-path-title" href="{% if node.where_args %}{% url node.where node.where_args.0 %}{% else %}{% url node.where %}{% endif %}">{{ node.title }}</a>
+            {% if step.where %}
+              <a class="mz-path-title" href="{% if step.where_args %}{% url step.where step.where_args.0 %}{% else %}{% url step.where %}{% endif %}">{{ step.title }}</a>
             {% else %}
-              <span class="mz-path-title">{{ node.title }}</span>
+              <span class="mz-path-title">{{ step.title }}</span>
             {% endif %}
-            <span class="mz-path-word">{{ node.word }}{% if node.status == 'doing' and node.pct %} {{ node.pct }}%{% endif %}</span>
-            {% if node.when %}<span class="mz-path-when">{{ node.when|date:"d.m.y" }}</span>{% endif %}
+            <span class="mz-path-word">{{ step.word }}{% if step.pct and step.status == 'doing' %} {{ step.pct }}%{% endif %}</span>
+            <span class="mz-path-when">{{ step.month }}</span>
           </span>
         </li>
       {% endfor %}
@@ -104,6 +89,7 @@
         <li><span class="mz-legend-dot is-{{ status }}" aria-hidden="true"></span>{{ word }}</li>
       {% endfor %}
     </ul>
+    <p class="mz-path-end"><strong>ובסוף: תעודת מטצ.</strong> <span class="mz-muted">אחרי שהמוביל/ה מאשר/ת, ורק אחרי שסיימתם את כל המסלול.</span></p>
   </section>
 
   {# ------------------------------------------------ the three panels #}

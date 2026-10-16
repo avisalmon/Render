@@ -140,16 +140,88 @@ def test_a_visitors_menu_is_about_on_the_right_and_registration_only(client, db)
 # ---------------------------------------------------------------- the path
 
 
-def test_the_path_shows_the_training_and_the_certificate_only_at_the_end(client, world):
+def test_the_path_is_her_list_by_months_and_the_certificate_comes_after(client, world):
+    """Lital, 2026-10-15 (mail): remove all of the old training, and put in: a Scratch
+    הדרכה, arriving at a peak day, a Python הדרכה, the good-instruction day, two
+    elective הדרכות from what is left, two practicums, the closing peak day. By months."""
+    from tests.test_spr_m_63 import _seed
+
+    _seed()
     client.force_login(_attached_kid())
     html = client.get("/matazim/my-path/").content.decode()
-
     start = html.index('id="mzTrainingPath"')
     panel = html[start:html.index("</section>", start)]
-    assert "מסלול ההכשרה" in panel and "יום שיא" in panel and "פרקטיקום" in panel
-    assert panel.rindex("פרקטיקום") < panel.index("ובסוף: תעודת מטצ")      # the certificate last
-    assert "בדרך לתעודת מטצ" in html
-    assert "מטצ מוסמך" not in panel
+
+    order = ["הדרכה על סקראץ", "הגעה ליום שיא", "הדרכה על פייתון", "הדרכה טובה",
+             "2 הדרכות לבחירה", "2 פרקטיקומים", "הגעה ליום שיא מסכם", "ובסוף: תעודת מטצ"]
+    positions = [panel.index(item) for item in order]
+    assert positions == sorted(positions)
+    for month in ("נובמבר–דצמבר 2026", "17.12.2026", "דצמבר–פברואר", "פברואר 2027",
+                  "פברואר–מאי 2027", "24.05.2027"):
+        assert month in panel
+    # none of what she asked to take out
+    for gone in ("הצטרפות למוביל", "סקראץ' 1", "סקראץ' 2", "סיום ההדרכה", "מטצ מוסמך"):
+        assert gone not in panel
+    assert panel.count('class="mz-path-node') == 7
+
+
+def test_the_steps_know_how_far_the_member_is(db):
+    from datetime import date
+
+    from matazim.models import Student, TeachingSession
+    from matazim.track import path_steps
+    from tests.matazim_helpers import attach
+
+    kid = attach(_user("steps"))
+    student = Student.objects.get(user=kid)
+    steps = {s["key"]: s for s in path_steps(kid, student, {}, [], today=date(2026, 11, 20))}
+    assert steps["scratch"]["status"] == "todo" and steps["practicum"]["word"] == "0 מתוך 2"
+    assert steps["peak1"]["word"] == "בהמשך"                      # no schedule row, never invented
+
+    TeachingSession.objects.create(student=student, title="מפגש", happened_on=date(2027, 3, 1))
+    steps = {s["key"]: s for s in path_steps(kid, student, {}, [], today=date(2027, 3, 2))}
+    assert steps["practicum"]["status"] == "doing" and steps["practicum"]["word"] == "1 מתוך 2"
+
+
+def test_a_peak_day_is_ahead_on_now_or_held_from_the_schedule_rows(world):
+    from datetime import date
+
+    from matazim.models import Institution, ProgramMilestone
+    from matazim.track import path_steps
+    from tests.matazim_helpers import attach
+
+    inst = Institution.objects.order_by("created_at").first()
+    rows = [ProgramMilestone(institution=inst, order=i, when_text="x", starts_on=d, stage="peak",
+                             title="יום שיא", is_peak_day=True)
+            for i, d in enumerate((date(2026, 12, 17), date(2027, 2, 10), date(2027, 5, 24)))]
+    kid = attach(_user("peaks"))
+    words = lambda today: [s["word"] for s in path_steps(kid, None, {}, rows, today=today)
+                           if s["key"] in ("peak1", "good", "final")]
+    assert words(date(2026, 12, 1)) == ["בהמשך", "בהמשך", "בהמשך"]
+    assert words(date(2026, 12, 17)) == ["עכשיו", "בהמשך", "בהמשך"]
+    assert words(date(2027, 3, 1)) == ["התקיים", "התקיים", "בהמשך"]
+
+
+def test_the_winter_row_says_python_unless_the_team_changed_it(db):
+    import importlib
+
+    from django.apps import apps
+
+    from matazim.models import Institution, ProgramMilestone
+
+    inst = Institution.objects.create(name="רשת בדיקה")
+    from datetime import date
+
+    kept = ProgramMilestone.objects.create(
+        institution=inst, order=1, when_text="x", starts_on=date(2026, 12, 18), title="למידה",
+        activities="הצוות כתב משהו אחר")
+    old = ProgramMilestone.objects.create(
+        institution=inst, order=2, when_text="x", starts_on=date(2026, 12, 18), title="למידה",
+        activities="שתי הדרכות תלת־ממד והכנת תוצר.")
+    importlib.import_module("matazim.migrations.0046_python_in_the_winter_row").change(apps, None)
+    kept.refresh_from_db(); old.refresh_from_db()
+    assert kept.activities == "הצוות כתב משהו אחר"
+    assert old.activities == "הדרכה על פייתון והכנת תוצר."
 
 
 def test_finishing_a_course_is_called_finishing_the_course():

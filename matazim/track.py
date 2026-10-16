@@ -300,3 +300,104 @@ def recent_work(student, limit=3):
         out.append({"title": row.title, "status": status, "word": word,
                     "when": row.decided_at or row.created_at})
     return out
+
+
+# ------------------------------------------------------------------ the year's path
+#
+# Lital, 2026-10-15 (mail, 23:30): "המסלול שלי בתכנית" lists the training itself, by
+# months, and nothing else: a Scratch הדרכה, arriving at a peak day, a Python הדרכה,
+# the good-instruction day, two elective הדרכות from what is left, two practicums
+# and the closing peak day. The certificate comes after all of it, and is not a
+# step in the list.
+
+PATH_COURSE_SCRATCH = REQUIRED_COURSE_SLUGS
+PATH_COURSE_PYTHON = "python"
+
+
+def _date_status(start, end, today):
+    """A day the programme holds: ahead, on now, or held. Attendance is not tracked."""
+    if start is None:
+        return TODO, "בהמשך"
+    if today < start:
+        return TODO, "בהמשך"
+    if today <= (end or start):
+        return DOING, "עכשיו"
+    return DONE, "התקיים"
+
+
+def path_steps(user, student, per_course, peaks, today=None):
+    """The member's path, in her order, each step with where it stands.
+
+    `peaks` is the programme's peak days in date order, from `ProgramMilestone`
+    rows (so the team moves them on the schedule screen and this follows):
+    the first is the first peak day, the second the good-instruction day, the
+    last the closing day. Missing ones leave that step unscheduled and never
+    invented.
+    """
+    from django.utils import timezone
+
+    from app.models import CourseCertificate, Enrollment
+
+    from .models import TeachingSession
+
+    today = today or timezone.localdate()
+    held = {c.course.slug for c in CourseCertificate.objects.filter(user=user).select_related("course")}
+    enrolled = set(Enrollment.objects.filter(user=user).values_list("course__slug", flat=True))
+
+    def peak(i):
+        if i < len(peaks):
+            return peaks[i].starts_on, peaks[i].ends_on
+        return None, None
+
+    # Scratch: both of the programme's two, as one step with the figure of how far.
+    scratch_pcts = [int((per_course.get(slug) or {}).get("pct") or 0) for slug in PATH_COURSE_SCRATCH]
+    scratch_done = all(slug in held for slug in PATH_COURSE_SCRATCH)
+    scratch_pct = 100 if scratch_done else int(sum(scratch_pcts) / max(len(scratch_pcts), 1))
+    scratch_status = DONE if scratch_done else (DOING if scratch_pct else TODO)
+
+    python_status = DONE if PATH_COURSE_PYTHON in held else (
+        DOING if PATH_COURSE_PYTHON in enrolled else TODO)
+
+    other = {s for s in held if s not in PATH_COURSE_SCRATCH and s != PATH_COURSE_PYTHON}
+    electives = len(other)
+    elective_status = DONE if electives >= 2 else (DOING if electives == 1 else TODO)
+
+    practicums = 0
+    if student is not None:
+        practicums = TeachingSession.objects.filter(student=student, cancelled_at__isnull=True).count()
+    practicum_status = DONE if practicums >= 2 else (DOING if practicums == 1 else TODO)
+
+    steps = []
+
+    def add(key, month, title, status, word, where=None, where_args=None, pct=None):
+        steps.append({"key": key, "month": month, "title": title, "status": status,
+                      "word": word, "where": where, "where_args": where_args or [], "pct": pct})
+
+    add("scratch", "נובמבר–דצמבר 2026", "הדרכה על סקראץ'", scratch_status,
+        STATUS_WORD[scratch_status], "matazim:learn_course", [PATH_COURSE_SCRATCH[0]], pct=scratch_pct or None)
+
+    status, word = _date_status(*peak(0), today)
+    add("peak1", "17.12.2026", "הגעה ליום שיא", status, word)
+
+    add("python", "דצמבר–פברואר", "הדרכה על פייתון", python_status, STATUS_WORD[python_status],
+        "matazim:learn_course", [PATH_COURSE_PYTHON])
+
+    status, word = _date_status(*peak(1), today)
+    add("good", "פברואר 2027", "הדרכה טובה", status, word)
+
+    add("electives", "פברואר–מאי 2027", "2 הדרכות לבחירה, מתוך ההדרכות שנשארו", elective_status,
+        f"{min(electives, 2)} מתוך 2", "matazim:courses")
+
+    add("practicum", "פברואר–מאי 2027", "2 פרקטיקומים", practicum_status,
+        f"{min(practicums, 2)} מתוך 2", "matazim:my_teaching" if student is not None else None)
+
+    status, word = _date_status(*peak(len(peaks) - 1 if len(peaks) > 2 else 2), today)
+    add("final", "24.05.2027", "הגעה ליום שיא מסכם", status, word)
+
+    for step in steps:
+        step["is_current"] = False
+    for step in steps:
+        if step["status"] in (DOING, TODO):
+            step["is_current"] = True
+            break
+    return steps

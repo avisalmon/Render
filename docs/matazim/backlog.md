@@ -4922,3 +4922,19 @@ course certificate nodes; and the student preview: `/matazim/preview/<test|join|
 for root, managers and leaders, with a bar, the student's own menu, and no row made
 (joining and uploading the entrance model are refused while looking).
 `tests/test_spr_m_69.py`.
+
+## SPR-M.70 — The path by months, in her steps  `DONE 2026-10-16`
+
+Lital's mail of 15.10 (spec C23). The first sprint run under Avi's standing rule of
+2026-10-16: a mail from Lital or Naomi is as if he asked; spec it, sprint it, build
+it, publish, and answer her.
+
+**Built.** `track.path_steps` replaces the old nodes (joining, each Scratch course
+and its certificate, "מטצ מוסמך") on המסלול שלי with her seven steps by months:
+הדרכה על סקראץ' (Nov–Dec), הגעה ליום שיא (17.12), הדרכה על פייתון (Dec–Feb), הדרכה
+טובה (Feb), 2 הדרכות לבחירה (Feb–May), 2 פרקטיקומים (Feb–May), הגעה ליום שיא מסכם
+(24.5), then the certificate. The status of each step is real (course progress,
+counts of electives and practicums, peak days read from the schedule rows and never
+invented). The separate "מסלול ההכשרה" panel from SPR-M.69 is folded into this one.
+Migration 0046 changes the schedule's winter row from 3D to Python only where it
+still says what the seed wrote. `tests/test_spr_m_69.py`.
