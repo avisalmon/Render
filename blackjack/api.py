@@ -38,6 +38,7 @@ from .models import (
     Clip,
     Coupon,
     Grant,
+    LabRun,
     Mastery,
     Player,
     PlayRound,
@@ -55,6 +56,7 @@ from .serializers import (
     ClipSerializer,
     CouponSerializer,
     GrantSerializer,
+    LabRunSerializer,
     MasterySerializer,
     PlayerSerializer,
     PlayRoundSerializer,
@@ -529,6 +531,36 @@ class PlayRoundViewSet(ReadOnlyScoped):
     scope = staticmethod(access.visible_play_rounds)
 
 
+class LabRunViewSet(Scoped):
+    """Your finished lab runs (REQ-B.11.7).
+
+    Create saves a run the browser has just played; list and retrieve are your
+    own; delete removes one; update renames. A saved run's settings and summary
+    are never edited (a PATCH that tries is refused), because a graph that can
+    be rewritten is not a result. Free for everybody signed in and never asks
+    the gate: nothing here calls a model.
+    """
+
+    serializer_class = LabRunSerializer
+    scope = staticmethod(access.visible_lab_runs)
+
+    def perform_create(self, serializer):
+        from . import lab
+
+        data = serializer.validated_data
+        rules = data.pop("_rules")
+        player = Player.for_user(self.request.user)
+        serializer.save(player=player, rule_set=RuleSet.for_rules(**rules))
+        lab.prune(player)
+
+    def update(self, request, *args, **kwargs):
+        stray = set(request.data) - {"name"}
+        if stray:
+            raise ValidationError("אפשר רק לשנות שם לריצה שמורה. ריצה חדשה נשמרת כריצה חדשה.")
+        kwargs["partial"] = True
+        return super().update(request, *args, **kwargs)
+
+
 # Every model this app owns, and the route it answers on. Kept here rather than
 # in urls.py so that adding a model and forgetting its endpoint is visible in
 # one place: `test_every_model_has_an_endpoint` reads this.
@@ -548,4 +580,5 @@ ROUTES = [
     ("clips", ClipViewSet, Clip),
     ("play-tables", PlayTableViewSet, PlayTable),
     ("play-rounds", PlayRoundViewSet, PlayRound),
+    ("lab-runs", LabRunViewSet, LabRun),
 ]

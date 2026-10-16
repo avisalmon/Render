@@ -703,3 +703,34 @@ class PlayRound(models.Model):
 
     def __str__(self):
         return f"round {self.pk}: {self.get_phase_display()}"
+
+
+class LabRun(models.Model):
+    """A finished run of the strategy lab, kept small on purpose (REQ-B.11.7).
+
+    The lab plays hundreds of thousands of hands in the person's browser. None
+    of them is stored. What is kept is the conditions, the gambling policy and
+    the chart changes (`settings`, so the run can be set up again) and a short
+    summary (`summary`: counts, a 60-point trend line for the run and for the
+    classic chart, and a 20-bar histogram). `blackjack.lab` checks the shape
+    and caps the size of both before they are written, and keeps only a
+    person's newest `lab.KEEP_RUNS` runs.
+
+    Play money, private to the player, never ranked or shared.
+    """
+
+    MODES = [("days", "ימים בקזינו"), ("search", "חיפוש מדיניות")]
+
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="lab_runs")
+    rule_set = models.ForeignKey(RuleSet, on_delete=models.PROTECT, related_name="+")
+    mode = models.CharField(max_length=8, choices=MODES)
+    name = models.CharField(max_length=80, blank=True, default="")
+    settings = models.JSONField(default=dict)
+    summary = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+
+    def __str__(self):
+        return self.name or f"{self.get_mode_display()} {self.created_at:%Y-%m-%d}"

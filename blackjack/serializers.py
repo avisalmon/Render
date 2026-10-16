@@ -20,6 +20,7 @@ from .models import (
     Clip,
     Coupon,
     Grant,
+    LabRun,
     Mastery,
     Player,
     PlayRound,
@@ -285,3 +286,40 @@ class PlayRoundSerializer(serializers.ModelSerializer):
 
     def get_hands(self, round_):
         return self._public(round_)["hands"]
+
+
+class LabRunSerializer(serializers.ModelSerializer):
+    """A finished lab run (REQ-B.11.7).
+
+    The browser plays the hands and reports the result, so everything it sends
+    is rebuilt field by field by `blackjack.lab` and refused if it does not fit
+    (REQ-B.11.25): this is a place for a small summary, not a notebook. `rules`
+    is written as a dict and stored as the shared `RuleSet` row; the player is
+    the session and never a field.
+    """
+
+    rules = serializers.SerializerMethodField()
+    rules_in = serializers.DictField(write_only=True, required=False)
+
+    class Meta:
+        model = LabRun
+        fields = ["id", "name", "mode", "rules", "rules_in", "settings", "summary", "created_at"]
+        read_only_fields = ["id", "rules", "created_at"]
+
+    def get_rules(self, run):
+        return run.rule_set.rules
+
+    def validate(self, attrs):
+        from . import lab
+
+        if self.instance is not None:
+            return attrs          # a saved run is only ever renamed
+        mode = attrs.get("mode")
+        try:
+            attrs["settings"] = lab.clean_settings(mode, attrs.get("settings"))
+            rules = lab.clean_rules(attrs.pop("rules_in", {}), attrs["settings"]["chart"])
+            attrs["summary"] = lab.clean_summary(mode, attrs.get("summary"))
+        except lab.Refused as why:
+            raise serializers.ValidationError(str(why))
+        attrs["_rules"] = rules
+        return attrs

@@ -1,0 +1,44 @@
+{% extends "blackjack/base.html" %}
+{% load static %}
+
+{% block title %}ריצה שמורה · מעבדה · blackjack{% endblock %}
+
+{% block content %}
+
+{% comment %}
+  A saved lab run (REQ-B.11.7): its conditions and its small summary, drawn by
+  the same code that drew it live. The hands themselves were never stored.
+{% endcomment %}
+
+{{ boot|json_script:"bjLabRunBoot" }}
+
+<div id="bjLabRun" data-api="/blackjack/api/lab-runs/{{ run.pk }}/" data-list="{% url 'blackjack:lab' %}">
+
+<p class="bj-small"><a href="{% url 'blackjack:lab' %}">חזרה למעבדה</a></p>
+<h1 class="bj-h1">{{ run.name|default:run.get_mode_display }}</h1>
+<p class="bj-muted bj-small">{{ run.created_at|date:"d.m.Y H:i" }} · {{ run.get_mode_display }} · {{ headline }}</p>
+
+<section class="bj-lab-set">
+  <h2 class="bj-lab-h2">התנאים</h2>
+  <ul class="bj-lab-facts">
+    <li>שולחן: {{ run.rule_set.describe }} · טבלה <span id="runChart"></span><span id="runMix"></span></li>
+    <li>כסף להתחלה: <span id="runStart"></span>, הימור מינימלי <span id="runMin"></span>, מגבלת שולחן <span id="runLimit"></span></li>
+    <li>סולם ההימורים: <span id="runLadder"></span></li>
+    <li>הקפאה: <span id="runFreeze"></span></li>
+    <li id="runOverridesLine">שינויים בטבלה: <span id="runOverrides"></span></li>
+    <li>ידיים ביום: <span id="runHands"></span> · ימים: <span id="runDays"></span> · זרע: <span id="runSeed"></span></li>
+  </ul>
+  <p class="bj-lab-go">
+    <a class="bj-btn bj-btn-small" href="{% url 'blackjack:lab' %}?from={{ run.pk }}">להריץ שוב עם אותם תנאים</a>
+    <button type="button" id="runDelete" class="bj-btn bj-btn-small bj-btn-quiet">מחיקת הריצה</button>
+  </p>
+  <p id="runNote" class="bj-muted bj-small" aria-live="polite"></p>
+</section>
+
+<section id="runResults" class="bj-lab-results"></section>
+
+</div>
+
+<script src="{% static 'blackjack/lab/lab_charts.js' %}"></script>
+<script src="{% static 'blackjack/lab/lab_run.js' %}"></script>
+{% endblock %}

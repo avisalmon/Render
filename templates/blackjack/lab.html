@@ -1,0 +1,215 @@
+{% extends "blackjack/base.html" %}
+{% load static %}
+
+{% block title %}מעבדה · blackjack{% endblock %}
+
+{% block content %}
+
+{% comment %}
+  SPR-B.12, REQ-B.11 — the strategy lab.
+
+  Avi sets the table, the gambling policy and, if he likes, changes to single
+  cells of the chart, and the lab plays many days at the casino with it, each
+  day beside the same day played by the classic chart. The hands are played in
+  this browser, in a worker, and are not kept: only the conditions and a short
+  summary are saved (REQ-B.11.7). Free for everybody signed in; no model.
+{% endcomment %}
+
+{{ boot|json_script:"bjLabBoot" }}
+
+<div id="bjLab"
+     data-core="{% static 'blackjack/lab/lab_core.js' %}"
+     data-worker="{% static 'blackjack/lab/lab_worker.js' %}"
+     data-best="{% static 'blackjack/lab/lab_best.js' %}"
+     data-chart="{% url 'blackjack:lab_chart' %}"
+     data-api="/blackjack/api/lab-runs/">
+
+<h1 class="bj-h1">מעבדה</h1>
+<p class="bj-lead">
+  כאן בודקים מה עושה שיטת הימורים לאורך זמן. קובעים שולחן, כסף ומדיניות, והמעבדה
+  משחקת אלפי ידיים ומציירת את התוצאה, תמיד לצד אותם ימים בדיוק עם הטבלה הקלאסית.
+</p>
+<p class="bj-muted bj-small">
+  כסף משחק בלבד, בלי בינה מלאכותית. הידיים נשחקות בדפדפן שלכם ונעלמות כשסוגרים את
+  הדף. נשמרים רק התנאים והסיכום, ועד {{ keep }} ריצות אחרונות.
+</p>
+
+<form id="labForm" class="bj-form bj-lab-form" onsubmit="return false">
+
+  <fieldset class="bj-lab-set">
+    <legend>סוג הריצה</legend>
+    <label class="bj-lab-choice">
+      <input type="radio" name="mode" value="days" checked>
+      <span><strong>ימים בקזינו</strong> אותה מדיניות, כמה ימים ברצף, וכמה מהם חזרתם הביתה עם רווח.</span>
+    </label>
+    <label class="bj-lab-choice">
+      <input type="radio" name="mode" value="search">
+      <span><strong>חיפוש מדיניות</strong> המעבדה מנסה מדיניות אחרות ומדווחת על הטובה ביותר שמצאה.</span>
+    </label>
+  </fieldset>
+
+  <fieldset class="bj-lab-set">
+    <legend>השולחן</legend>
+    <div class="bj-lab-grid2">
+      <label class="bj-field"><span>חפיסות</span>
+        <select id="labDecks"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select></label>
+      <label class="bj-field"><span>בלאקג'ק משלם</span>
+        <select id="labPays"><option value="3:2">3 ל-2</option><option value="6:5">6 ל-5</option></select></label>
+      <label class="bj-field"><span>ידיים אחרי פיצול, לכל היותר</span>
+        <select id="labSplits"><option>2</option><option>3</option><option>4</option></select></label>
+      <label class="bj-field"><span>הימור מינימלי בשולחן</span>
+        <input id="labMinBet" type="number" min="1" step="1" inputmode="numeric"></label>
+      <label class="bj-field"><span>מגבלת שולחן</span>
+        <input id="labLimit" type="number" min="1" step="1" inputmode="numeric"></label>
+    </div>
+    <p class="bj-lab-label">הטבלה שמשחקים לפיה</p>
+    <label class="bj-lab-choice">
+      <input type="radio" name="chart" value="classic" checked>
+      <span><strong>הקלאסית</strong> הטבלה שהאתר מלמד, ל-4, 6 או 8 חפיסות.</span>
+    </label>
+    <label class="bj-lab-choice">
+      <input type="radio" name="chart" value="calculated">
+      <span><strong>מחושבת</strong> המעבדה מחשבת את המהלך הטוב ביותר לכללים שבחרתם, גם לחפיסה אחת או שתיים.</span>
+    </label>
+    <label class="bj-lab-check"><input id="labH17" type="checkbox"> הדילר לוקח קלף על 17 רך</label>
+    <label class="bj-lab-check"><input id="labDas" type="checkbox"> מותר להכפיל אחרי פיצול</label>
+    <label class="bj-lab-check"><input id="labResplitAces" type="checkbox"> מותר לפצל אסים שוב</label>
+    <label class="bj-lab-check"><input id="labHitSplitAces" type="checkbox"> מותר לקחת קלף על אס מפוצל</label>
+    <p class="bj-muted bj-small">
+      שולחן עם כניעה, בלי הצצה, או שמכפילים בו רק על 9 עד 11 עוד אין לו טבלה קלאסית, ולכן לא מוצע כאן.
+    </p>
+  </fieldset>
+
+  <fieldset class="bj-lab-set">
+    <legend>כסף והימורים</legend>
+    <label class="bj-field"><span>כסף להתחלה</span>
+      <input id="labStart" type="number" min="1" step="1" inputmode="numeric"></label>
+
+    <p class="bj-lab-label">סולם ההימורים</p>
+    <p class="bj-muted bj-small">מתחילים בהימור הראשון. אחרי כל הפסד עוברים להימור הבא. שלבים מעל מגבלת השולחן לא בשימוש.</p>
+    <div id="labLadder" class="bj-lab-list"></div>
+    <button type="button" id="labLadderAdd" class="bj-btn bj-btn-small bj-btn-quiet">הוספת שלב</button>
+
+    <div class="bj-lab-grid2">
+      <label class="bj-field"><span>אחרי ניצחון</span>
+        <select id="labAfterWin">
+          <option value="reset">חוזרים להימור הראשון</option>
+          <option value="stay">נשארים באותו שלב</option>
+          <option value="back">יורדים שלב אחד</option>
+        </select></label>
+      <label class="bj-field"><span>הפסדתם בשלב העליון</span>
+        <select id="labAtLimit">
+          <option value="stay">ממשיכים על השלב העליון</option>
+          <option value="restart">מתחילים את הסולם מחדש</option>
+          <option value="stop">מפסיקים לשחק</option>
+        </select></label>
+      <label class="bj-field"><span>כשחסר כסף להימור הבא</span>
+        <select id="labShort">
+          <option value="rest">מהמרים מה שנשאר</option>
+          <option value="restart">חוזרים להימור הראשון</option>
+          <option value="stop">מפסיקים לשחק</option>
+        </select></label>
+    </div>
+  </fieldset>
+
+  <fieldset class="bj-lab-set">
+    <legend>הקפאת רווחים</legend>
+    <p class="bj-muted bj-small">
+      כשהכסף למשחק עולה מעל הסכום שהתחלתם איתו בגודל השלב, הרווח הזה מוקפא ולא משחקים בו שוב.
+      אחרי זה מחכים לשלב הבא.
+    </p>
+    <div id="labFreeze" class="bj-lab-list"></div>
+    <button type="button" id="labFreezeAdd" class="bj-btn bj-btn-small bj-btn-quiet">הוספת שלב</button>
+    <label class="bj-field"><span>אחרי השלב האחרון</span>
+      <select id="labFreezeAfter">
+        <option value="stop">לא מקפיאים עוד</option>
+        <option value="repeat">ממשיכים להקפיא לפי השלב האחרון</option>
+      </select></label>
+  </fieldset>
+
+  <fieldset class="bj-lab-set">
+    <legend>שינויים בטבלה</legend>
+    <p class="bj-muted bj-small">
+      אפשר לשנות החלטה אחת או כמה, רק בשביל הריצה הזו. הטבלה הרגילה והכללים לא משתנים.
+      כל ריצה מצוירת מול אותם ימים בדיוק עם הטבלה הקלאסית.
+    </p>
+    <div class="bj-lab-adder">
+      <select id="labOvKind" aria-label="סוג יד">
+        <option value="hard">יד קשה</option><option value="soft">יד רכה</option><option value="pair">זוג</option>
+      </select>
+      <select id="labOvPlayer" aria-label="היד שלכם"></select>
+      <select id="labOvDealer" aria-label="קלף הדילר"></select>
+      <select id="labOvAction" aria-label="מה עושים">
+        <option value="H">קלף</option><option value="S">עצור</option><option value="D">הכפל</option><option value="P">פצל</option>
+      </select>
+      <button type="button" id="labOvAdd" class="bj-btn bj-btn-small">הוספה</button>
+    </div>
+    <ul id="labOverrides" class="bj-lab-chips"></ul>
+  </fieldset>
+
+  <fieldset class="bj-lab-set">
+    <legend>הריצה</legend>
+    <div class="bj-lab-grid2">
+      <label class="bj-field"><span>ידיים ביום, עד {{ boot.limits.maxHands }}</span>
+        <input id="labHands" type="number" min="1" step="1" inputmode="numeric"></label>
+      <label class="bj-field" data-for="days"><span>כמה ימים, עד {{ boot.limits.maxDays }}</span>
+        <input id="labDays" type="number" min="1" step="1" inputmode="numeric"></label>
+      <label class="bj-field" data-for="search"><span>מה מחפשים</span>
+        <select id="labGoal">
+          <option value="ahead">הכי הרבה ימים ברווח</option>
+          <option value="avg">התוצאה הממוצעת הכי גבוהה</option>
+          <option value="survive">הכסף מחזיק הכי הרבה ידיים</option>
+          <option value="mix">שילוב של השלושה</option>
+        </select></label>
+      <div id="labMixBox" class="bj-lab-mix" data-for="search" hidden>
+        <p class="bj-muted bj-small">כמה כל דבר חשוב, מ-0 עד 10.</p>
+        <label class="bj-field"><span>ימים ברווח</span><input id="labMixAhead" type="number" min="0" max="10" step="1" inputmode="numeric"></label>
+        <label class="bj-field"><span>תוצאה ממוצעת</span><input id="labMixAvg" type="number" min="0" max="10" step="1" inputmode="numeric"></label>
+        <label class="bj-field"><span>כמה זמן הכסף מחזיק</span><input id="labMixSurvive" type="number" min="0" max="10" step="1" inputmode="numeric"></label>
+      </div>
+      <label class="bj-field" data-for="search"><span>ימים לכל מדיניות</span>
+        <input id="labSearchDays" type="number" min="1" step="1" inputmode="numeric"></label>
+      <label class="bj-field" data-for="search"><span>ימים לבדיקה על קלפים חדשים</span>
+        <input id="labHoldout" type="number" min="1" step="1" inputmode="numeric"></label>
+      <label class="bj-field" data-for="search"><span>זמן חיפוש בשניות</span>
+        <input id="labBudget" type="number" min="1" max="300" step="1" inputmode="numeric"></label>
+      <label class="bj-field"><span>זרע (אותו זרע, אותה ריצה)</span>
+        <input id="labSeed" type="number" min="0" step="1" inputmode="numeric"></label>
+    </div>
+    <div class="bj-lab-go">
+      <button type="button" id="labRun" class="bj-btn">הרצה</button>
+      <button type="button" id="labStop" class="bj-btn bj-btn-small" hidden>עצירה</button>
+      <button type="button" id="labReseed" class="bj-btn bj-btn-small bj-btn-quiet">זרע חדש</button>
+    </div>
+    <progress id="labProgress" class="bj-lab-progress" max="1" value="0" hidden></progress>
+    <p id="labStatus" class="bj-muted bj-small" aria-live="polite"></p>
+    <p id="labError" class="bj-sim-error" role="alert" hidden></p>
+  </fieldset>
+</form>
+
+<section id="labResults" class="bj-lab-results" hidden aria-live="polite"></section>
+
+<section class="bj-lab-past">
+  <h2 class="bj-lab-h2">ריצות שמורות</h2>
+  {% if runs %}
+    <ul class="bj-lab-runs">
+      {% for r in runs %}
+        <li>
+          <a href="{% url 'blackjack:lab_run' r.id %}">
+            <strong>{{ r.name }}</strong>
+            <span class="bj-muted bj-small">{{ r.when|date:"d.m.Y H:i" }} · {{ r.mode }}</span>
+            <span class="bj-small">{{ r.headline }}</span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="bj-muted">עוד לא שמרתם ריצה. אחרי שמריצים, אפשר לשמור את התוצאה.</p>
+  {% endif %}
+</section>
+
+</div>
+
+<script src="{% static 'blackjack/lab/lab_charts.js' %}"></script>
+<script src="{% static 'blackjack/lab/lab_screen.js' %}"></script>
+{% endblock %}

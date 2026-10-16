@@ -246,6 +246,44 @@ leaderboard, side bets other than insurance.
 
 ---
 
+## The strategy lab (2026-10-16)
+
+Avi described a simulation feature: choose the decks, the rules, the starting
+money and a gambling policy, optionally override single cells of the chart for
+that run only (for example, never split eights), play 10,000 to 100,000 hands
+and graph the result. Spec: Chapter 11, REQ-B.11.1 to B.11.12. Decided the same
+day: free, up to 100,000 hands ending early on bust, a section of its own, and
+every run drawn against the classic chart on the same shuffles. The gambling
+policy was described later that day: a bet ladder (15, 50, 150, 500) with its
+rules after a win, at the table limit and when money is short, and a freeze
+rule that sets winnings aside in chunks (REQ-B.11.5, B.11.13 to B.11.17).
+
+| Item | What | Traces | Status |
+|---|---|---|---|
+| SPR-B.12.0 | Avi's policy and defaults settled; data model section added | REQ-B.11.5, B.11.13 to B.11.20 | **DONE 2026-10-16** |
+| SPR-B.12.1 | The runner in JavaScript in a Web Worker, with chart overrides, a seed, and a run played with its classic twin on identical shuffles; the parity test that plays fixed card orders through both engines and must match to the chip; timed on a phone at 100,000 hands | REQ-B.11.2, B.11.3, B.11.8, B.11.10, B.11.12, B.11.23 | **DONE 2026-10-16** |
+| SPR-B.12.2 | `LabRun` model and API: conditions, policy, overrides, seed and summary figures; a finished run can be reopened and reused | REQ-B.11.7, B.11.11 | **DONE 2026-10-16** |
+| SPR-B.12.3 | The conditions screen: rules, table limits, starting money, and the override editor | REQ-B.11.1, B.11.3, B.11.4, B.11.20 | **DONE 2026-10-16** |
+| SPR-B.12.4 | The policy: editable bet ladder, table limit, short money, editable freeze steps, and Avi's defaults | REQ-B.11.5, B.11.13 to B.11.19 | **DONE 2026-10-16** |
+| SPR-B.12.5 | Results and the two-line comparison graph | REQ-B.11.6, B.11.19 | **DONE 2026-10-16** |
+| SPR-B.12.6 | Mode one, many days: the day lines, the histogram, days ahead, helped and hurt | REQ-B.11.21, B.11.24 | **DONE 2026-10-16** |
+| SPR-B.12.8 | The calculated base chart for 1 to 8 decks, checked against the classic chart, offered as an option in the lab | REQ-B.11.26 | **DONE 2026-10-16** |
+| SPR-B.12.9 | The mixed goal for the search | REQ-B.11.27 | **DONE 2026-10-16** |
+| SPR-B.12.7 | Mode two, the policy search with a held-out check, and saving a found policy | REQ-B.11.22, B.11.24 | **DONE 2026-10-16** |
+
+**What was built, and what was decided on the way.**
+
+- The hands are played in the browser, in a Web Worker, by `static/blackjack/lab/lab_core.js`, a copy of `engine.py`. `tests/test_spr_b_12_1.py` plays the same card orders and decisions through both over twelve rule combinations and requires every round to match to the chip, and plays the chart's own answers through the JavaScript glue. Measured: about one million rounds a second in node, so the default thirty days of up to 100,000 hands finish in well under a second.
+- With Avi's default policy a day lasts about 40 hands before the playing 1,000 is gone, which is the answer to his question of how long it takes to lose it.
+- Storage: `LabRun` (migration 0012), about 2 KB per run, newest 50 per person (`blackjack/lab.py`). Tests in `tests/test_spr_b_12_2.py`; the screen is driven in a real browser at 390 and 1280 in `tests/test_spr_b_12_3.py`.
+- The search is hill climbing on whole-number lists, scored on the same shuffles for every candidate, then re-scored on shuffles it never saw. The goals are most days ahead, best average, longest-lasting money, or a weighted mix.
+- The base chart is a choice: the classic one, or one the lab calculates (`lab_best.js`), for 1 to 8 decks. The calculator reproduces the classic chart in 340 of 340 cells for eight covered rule sets and 339 of 340 for a ninth (a gap of 0.0009 of a bet), and the test holds that. Where the engine plays the rules, the calculated chart can play them.
+- Not built, because the engine does not play them: surrender, a dealer who does not peek, and doubling on some totals only. They need engine work (and the same parity guard) before the lab can offer them.
+- The search has a fourth goal, a weighted mix, with weights 0 to 10 for days ahead, average result and how long the money lasts.
+- Free, no AI, nothing ranked or shared.
+
+---
+
 ## Questions, all answered
 
 | # | Question | Answer |

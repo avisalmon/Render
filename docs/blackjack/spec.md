@@ -244,3 +244,113 @@ Sketched so the shape is known. Not designed until the core works.
 | REQ-B.10.4 | No idle work | The drill does no animation frame loop while waiting for an answer. A trainer that drains a battery is a trainer nobody opens twice. | TODO |
 | REQ-B.10.5 | Its own chrome | Own base template, own nav. No link back to babook unless asked for. | TODO |
 | REQ-B.10.6 | Full CRUD REST API | Methodology Rule 6, on DRF, over every model this app owns. | TODO |
+
+## Chapter 11 — The strategy lab
+
+> **Status: built 2026-10-16 (SPR-B.12), awaiting Avi's review in dev.** Specified
+> from Avi's description and answers the same day, then built as written. The
+> open questions at the end of 11.4 were settled by the defaults stated there.
+
+### 11.1 What it is
+
+The play simulator (REQ-B.9.1) answers "what is this hand?". The strategy lab
+answers "what does this way of playing do over a very long time?". Avi sets the
+conditions, the lab plays tens or hundreds of thousands of hands with no cards
+on screen, and the result is drawn as graphs.
+
+Avi, 2026-10-16: "I give the conditions: the amount of card decks in the
+shuffle, the rules, and I can manipulate the classical table ... it's a
+specific manipulation of the table for that simulation. It doesn't change the
+rules, the classical rules. And you run like 10,000 hands, 100,000 hands,
+whatever, and we graph the results. I also choose the initial amount of money
+and the policy of my gambling."
+
+### 11.2 The two things that are easy to confuse
+
+**The rules** are the casino's: decks, dealer on soft 17, double after split,
+and the rest of the rule set the app already has. They decide what is legal and
+what a hand pays.
+
+**The table** is the chart: for each situation, the play a person makes. The
+lab lets Avi override single cells of the chart for one run, for example "never
+split eights". An override changes the player's decision, never a rule, and
+never anything outside that run.
+
+### 11.3 Requirements
+
+| REQ | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-B.11.1 | Conditions are chosen per run | Number of decks, the rule set and the starting bankroll. A day lasts up to 100,000 hands by default and ends early if the money is gone (Avi: "100,000 until you bust and lose all the money"). Defaults are the person's own rules and basic strategy. **Built 2026-10-16.** | DONE |
+| REQ-B.11.2 | One blackjack, held to the same answers | Dealing, legality and payouts in the lab must be exactly those of `engine.py`, so a lab hand and a table hand cannot disagree about a rule. Because the lab runs in the browser (REQ-B.11.23) it needs a JavaScript copy of the engine; that copy is allowed only with a guard: a fixed set of card orders is played through both, and every round must match to the chip, for every rule the lab offers. A rule added to one and not the other fails the build. **Built 2026-10-16.** | DONE |
+| REQ-B.11.3 | Table overrides | Any cell of the chart (hard, soft or pair, against a dealer card) can be set to another action for the run. The override is stored with the run and shows beside its results. The classic chart, the person's saved rule set and their history are never touched. An override naming an action the rules do not allow in that spot falls back the way the chart already does, and the run says how often that happened. **Built 2026-10-16.** | DONE |
+| REQ-B.11.4 | Starting money | Chosen per run; the default is 1,000. Play money only; no link to the simulator's chips (REQ-B.9.1) in either direction. **Built 2026-10-16.** | DONE |
+| REQ-B.11.5 | The gambling policy has two blocks | A **bet ladder** (REQ-B.11.13 to B.11.15) says how much to bet on each round. A **freeze rule** (REQ-B.11.16) says when to set winnings aside untouched. Both are settings of the run, both are optional, and a policy with neither is a flat bet. **Built 2026-10-16.** | DONE |
+| REQ-B.11.13 | The bet ladder | An ordered list of bet sizes, chosen by the person, with as many rungs as they like. The default is 15, 50, 150, 500. The run starts on the first rung and, after each lost round, moves to the next rung. A rung is a number of chips, not a multiple of the last one, so any sequence can be entered. **Built 2026-10-16.** | DONE |
+| REQ-B.11.14 | After a win, and after a push | After a won round the ladder goes back to the first rung. That is the default (Avi: "the default is jumping again to the beginning"). The person can instead choose to stay on the same rung, or step back one rung. A push is neither a win nor a loss: the rung does not change. A round is won or lost by its net result, so a split or doubled round that nets chips counts as a win and one that loses chips as a loss. **Built 2026-10-16.** | DONE |
+| REQ-B.11.15 | At the end of the ladder, and when the money is short | Two edges, each with a chosen behavior. **Table limit** (a setting of the run, since a table has a maximum bet): when the next rung is above the limit, or the last rung was lost, the person picks to keep betting the top rung, to start the ladder again from the first rung, or to stop the run. **Not enough money:** when the next bet is more than the playing stack, the person picks to bet what is left, to go back to the first rung, or to stop. The default for both is to bet the top allowed rung and then what is left. **Built 2026-10-16.** | DONE |
+| REQ-B.11.16 | The freeze rule is a list of chunks | Avi: "the first chunk will be 1,000, then the second chunk 500, and I can choose whatever I like as I go. So it must be flexible." The money is split into a **frozen** amount and a **playing** amount. The freeze rule is an ordered list of chunk sizes. Step one waits until the playing amount has grown by the first chunk, moves exactly that profit to the frozen amount, and play continues from the starting playing amount. Step two then waits for the second chunk, and so on. The person adds, removes and edits steps freely, with as many as they like. Frozen money is never bet again. **Built 2026-10-16.** | DONE |
+| REQ-B.11.18 | The defaults are Avi's own run | Starting money 1,000; table minimum 15; table limit 500; bet ladder 15, 50, 150, 500, back to 15 after a win; freeze steps 500, 500, 1,000, 2,000. Read as Avi described it: at 1,500 freeze 500 and play on from 1,000; at 1,500 again freeze 500 and play on from 1,000; at 2,000 freeze 1,000 and play on from 1,000; at 3,000 freeze 2,000 and play on from 1,000. Raising the table limit unlocks the next rungs the person has entered; rungs above the limit are not used. Every default can be changed on the conditions screen, and every list can be lengthened or shortened without limit. **Built 2026-10-16.** | DONE |
+| REQ-B.11.19 | What a run reports | The question Avi asks of the defaults is how long the playing money lasts: "until I lose this 1,000 dollars, and I want to see how much it will take to lose them." Each run reports the number of hands until bust (or "survived all 100,000"), money frozen by then, the highest the playing amount reached, the lowest it fell to, and the final total (frozen plus playing). The same figures are shown for the classic twin. **Built 2026-10-16.** | DONE |
+| REQ-B.11.20 | The table is chosen per run | Every rule the app already keeps in a rule set (REQ-B.2.1) can be set for a run: number of decks, whether the dealer hits or stands on soft 17, what a blackjack pays (3:2 or 6:5), double on any two cards or only some, double after split, how many splits and whether aces may be resplit or hit, surrender, and whether the dealer peeks. Avi, 2026-10-16: "the table limit, how much it pays, 2 to 3 or 5 to 6, the dealer policy of soft 17, does he hit or not, etc." The **table minimum and table limit** (default 15 and 500) are settings of the run beside the rules, not part of the rule set, because they change what can be bet and never what a hand is worth. The default rules are the app's common case (REQ-B.2.2): 6 decks, dealer stands on soft 17, 3:2. **Built 2026-10-16.** | DONE |
+| REQ-B.11.21 | Mode one: many days at the casino | Avi: "one run of a policy doesn't mean anything ... take this policy, take these rules, and run it 10, 20, 30 times, and how many of those tries I won, and the final count at the end. It simulates like if I went with the same policy X days in a row to a casino, how many of those days I took money home, how much." The person sets everything and the number of days. Each day starts from the starting money, plays until bust or until the day's hand limit, and ends with a result. The report: days finished ahead out of days played, the total and average taken home, the best and the worst day, how long the playing money lasted on each day, and the days drawn as lines on one graph with a histogram of how the days ended. Each day is played again with the classic chart on the same shuffles (REQ-B.11.12), so the report also says how many days the change helped and how many it hurt. **Built 2026-10-16.** | DONE |
+| REQ-B.11.22 | Mode two: find a better policy | Avi: "you analyze and try policies and figure out what you would have done, like a gradient descent on policies." Given the rules and a goal, the lab tries many policies and reports the best it found. What it may change: the bet ladder, the table-limit behavior, the freeze steps, and (as a later step) table overrides. The goal is chosen from: most days finished ahead, highest average result, longest-lasting playing money, or a weighted mix of the three (REQ-B.11.27). Because results are random and the choices are whole numbers and lists, a literal gradient does not exist; the search tries a policy, nudges it, keeps what scores better, and every policy is scored on the same shuffles so the comparison is fair. The best policy is then re-scored on shuffles it has never seen, and both scores are shown, so a policy that only fits the shuffles it was tuned on is exposed. The result states plainly what no policy can change: the house edge on each hand. A found policy can be saved as the person's own and run in mode one. **Built 2026-10-16.** | DONE |
+| REQ-B.11.23 | It runs in the browser, in the background | Avi: "if you do everything in JavaScript and scripts in the background, it's not high compute ... make sure it's not so slow." The runs execute in a Web Worker in the person's own browser, so the page stays responsive, the server does no simulation work, and no shuffle ever needs to be sent. Measured on the server's engine first: about 50,000 hands a second in Python on this machine, which would make 30 days of 100,000 hands, each played twice, take about two minutes of one shared server's time. Only settings and summary figures are sent to the server to be kept (REQ-B.11.7). **Built 2026-10-16.** | DONE |
+| REQ-B.11.24 | The limits | Set in one place and shown on the screen: hands per day (default 100,000), days per run, how many policies the search tries, and a time budget after which the search stops and reports the best so far. Defaults are proposed in 11.4 and set after timing a real run. **Built 2026-10-16.** | DONE |
+| REQ-B.11.25 | A saved run is a summary, never a notebook | Avi, 2026-10-16: "keep all the simulation in the user history, but don't bombard the database ... just save the results: the policy, the trending graph of the wins or loses, a minimum set of data, because I don't want to overflow the database." Every hand, every day's line and every policy a search tried stays in the page that ran it and is gone when it closes. What is stored is the conditions and policy (so the run can be set up again) and a summary: counts, a 60-point trend line for the run and for the classic chart, and a 20-bar histogram, about 2 KB. The server rebuilds the summary field by field, refuses anything outside the list or over 6,000 bytes, and keeps a person's newest 50 runs. A saved run is renamed or deleted, never edited. **Built 2026-10-16.** | DONE |
+| REQ-B.11.26 | The base chart is a choice: classic, or calculated | Avi, 2026-10-16, asked whether the lab should offer only the rules the classic chart covers or work out the best play itself: "both as options". **Classic** is the published chart the rest of the app teaches (REQ-B.2.5, 4, 6 or 8 decks). **Calculated** works out the best play for the rules chosen, in the browser, by exact arithmetic over the shoe left after the player's two cards and the dealer's up card are removed; it is offered for any number of decks from 1 to 8 and for every rule the engine plays, and it never replaces the classic chart anywhere else in the app. Whichever is chosen is the chart the run's comparison line plays by, and the run says which it was. A calculated chart for rules the classic chart covers must agree with it in nearly every cell, and where it differs the two plays must be nearly tied in value: a test holds this, so the calculator is checked against the published chart and not only against itself. Measured on nine covered rule sets: 340 of 340 cells in eight of them, and 339 of 340 in the ninth, differing by 0.0009 of a bet. Rules the engine does not play at all (surrender, a dealer who does not peek, doubling on some totals only) are not offered until the engine does; that is engine work, listed as a later step. **Built 2026-10-16.** | DONE |
+| REQ-B.11.27 | A mixed goal for the search | Avi, 2026-10-16: "both as options". The search can be told to chase a weighted mix of the three goals (days finished ahead, average result, how long the playing money lasts), with a weight of 0 to 10 for each. The score is the weighted average of the three after each is put on a 0-to-1 footing: days ahead as a share, the average result as a share of the starting money, and the hands survived as a share of the day. The weights are kept with the run. **Built 2026-10-16.** | DONE |
+| REQ-B.11.17 | What a bust means with a freeze | The run ends when the playing amount cannot cover the smallest bet the policy would make. Frozen money is not at risk and is kept in the result: the graph shows playing and frozen as two layers, and the final result is their sum. The classic twin (REQ-B.11.12) uses the same policy and freeze, and ends on its own bust. **Built 2026-10-16.** | DONE |
+| REQ-B.11.6 | Results are graphed, always against the classic | Every run is drawn with the classic chart's run beside it on one graph: bankroll over hands played, both lines, and the final result of each. Avi: "every manipulation that I do, you compare it with the classic ... I see how my updated policy ruined or maybe improved against the classical one." More graphs once the policy is known. The numbers behind each graph are shown, as on the history graph. **Built 2026-10-16.** | DONE |
+| REQ-B.11.12 | The comparison is fair | The classic run and the run with overrides play the same shuffles in the same order, with the same rules, starting money and gambling policy, so the only difference between the two lines is the overridden cells. The classic run is made on every run, whether or not any cell was overridden. Each line ends on its own bust. **Built 2026-10-16.** | DONE |
+| REQ-B.11.7 | Runs are kept | A finished run is stored with its conditions, overrides, seed and both results (the run and its classic twin), so it can be reopened and its settings reused. **Built 2026-10-16.** | DONE |
+| REQ-B.11.8 | Reproducible | Every run records its random seed. The same conditions and seed give the same graph. **Built 2026-10-16.** | DONE |
+| REQ-B.11.9 | Free, and no AI | Avi, 2026-10-16: the lab is free. Like the drill and the table, it calls no model and asks nothing of the gate. **Built 2026-10-16.** | DONE |
+| REQ-B.11.10 | A long run never freezes the page | Every run, including many days and the search, shows progress, can be cancelled, and can be left running while the person looks at something else (REQ-B.11.23). Measured on a phone, not assumed. **Built 2026-10-16.** | DONE |
+| REQ-B.11.11 | Phone first, full REST API | As Chapter 10: built at 390px first, and every model the lab owns has a DRF CRUD API (Rule 6). **Built 2026-10-16.** | DONE |
+
+### 11.4 Decisions and open questions
+
+Decided by Avi, 2026-10-16:
+
+1. **Free** for everybody signed in (REQ-B.11.9).
+2. **Up to 100,000 hands per run, ending early on bust** (REQ-B.11.1).
+3. **Always compared with the classic chart**, on the same shuffles
+   (REQ-B.11.6, REQ-B.11.12).
+4. **A section of its own** in the app, not a page inside the simulator.
+
+Still open:
+
+1. **How long is a day.** Avi's original ceiling was 100,000 hands "until you
+    bust". Thirty days of that is three million hands, which is fine for the
+    worker but is not what an evening at a casino looks like. Assumed: hands
+    per day is a setting, default 100,000, and a person who wants a realistic
+    evening sets it to a few hundred.
+2. **How many days.** Proposed ceiling 500 days per run, to be set after
+    timing in a real browser.
+3. **What the search may change first.** Proposed: the ladder and the freeze
+    steps, then table overrides. Overrides multiply the search space, so they
+    wait.
+
+4. **Rules the chart does not cover.** The classic chart exists only for 4, 6
+   or 8 decks, double on any two cards, a peeking dealer and no surrender
+   (REQ-B.2.5, `strategy.supports`). Avi's "etc." probably includes a single
+   deck, a deck or two, and a table with surrender. For those rules there is no
+   classic chart to compare with, and the app refuses to invent one. Two
+   options: the lab offers only the covered rules at first, or the lab works
+   out the best play for any rule set itself, by exact calculation, and uses
+   that as the classic chart. The second is more work and would also widen
+   Practice. Assumed: the first, with the rest listed as a later sprint.
+   **Avi to choose.**
+
+5. **After the last freeze step.** Avi's default list ends at 2,000 and then
+   "I play endlessly" until the 1,000 is lost. Assumed: once the list is used
+   up, nothing more is frozen. The alternative is to repeat the last step. A
+   setting for it costs one switch, so it is offered either way.
+6. **"My updated policy."** The comparison against the classic (REQ-B.11.12)
+   changes only the table overrides and shares the gambling policy. Comparing
+   two gambling policies on the same shuffles (for example the ladder against a
+   flat bet) is a natural second use, and is held until he asks for it.
+7. **Fewer hands.** Assumed: fewer than 100,000 is allowed, 100,000 is the
+   ceiling.
+8. **How many runs a person keeps.** Proposed: 50. To be set after timing a
+   real run.

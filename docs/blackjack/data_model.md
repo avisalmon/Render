@@ -417,3 +417,19 @@ The dealer's down card is a placeholder in every response until `phase` is
 `Attempt` with `source="simulator"`, and that is where the grid and the graph
 read it from. Chips are private and are not ranked by anything; the champion
 league (REQ-B.9.3) ranks accuracy.
+
+## LabRun (SPR-B.12, 2026-10-16)
+
+One finished run of the strategy lab. **Small on purpose** (REQ-B.11.25): the hands are played in the browser and never stored.
+
+| Field | What |
+|---|---|
+| `player` | FK to `Player`, cascade. The owner, set from the session. |
+| `rule_set` | FK to `RuleSet`, protect. The table played, through `RuleSet.for_rules`. |
+| `mode` | `days` (many days at the casino) or `search` (a policy search). |
+| `name` | Optional label, 80 characters. The only field that can change after saving. |
+| `settings` | JSON: policy (start, minBet, limit, ladder, afterWin, atLimit, short, freeze, freezeAfter), overrides, handsPerDay, seed, days, `chart` (`classic` or `calculated`), and for a search the goal, the mix weights if the goal is a mix, and holdout days. Enough to set the same run up again. |
+| `summary` | JSON, about 2 KB: counts, a 60-point trend for the run and for the classic chart, a 20-bar histogram. For a search: the scores of the baseline and the best policy on training and on unseen shuffles, and the best policy. |
+| `created_at` | Set on save. |
+
+`blackjack.lab` rebuilds `settings` and `summary` field by field, refuses anything outside the lists and anything over 6,000 bytes, and keeps a person's newest 50. Scope: your own, through `access.visible_lab_runs`. API: `lab-runs`.

@@ -929,3 +929,107 @@ def explain(request):
 def _hand_label(kind, value, dealer):
     face = "A" if dealer == 11 else str(dealer)
     return f"{_row_label(kind, value)} מול {face}"
+
+
+# ---------------------------------------------------------------- the lab
+# SPR-B.12, REQ-B.11. The hands are played in the browser (REQ-B.11.23); these
+# views only hand it a chart, remember what it reports, and show saved runs.
+
+
+def _headline(run):
+    """One line about a saved run, from its summary alone."""
+    s = run.summary or {}
+    if run.mode == "days":
+        return f"{s.get('ahead', 0)} מתוך {s.get('days', 0)} ימים הסתיימו ברווח"
+    return "נמצאה מדיניות טובה יותר" if s.get("improved") else "לא נמצאה מדיניות טובה יותר"
+
+
+@ensure_csrf_cookie
+@login_required(login_url=LOGIN_URL)
+def lab(request):
+    """The conditions, the run and the past runs, on one screen.
+
+    `?from=<id>` opens it with an earlier run's settings, which is how "run it
+    again" works. Free for everybody signed in; no model is called.
+    """
+    from . import lab as labmod
+    from .models import DEFAULT_RULES, LabRun, Player
+    from .strategy import supports
+
+    player = Player.for_user(request.user)
+    settings = labmod.default_settings()
+    rules = dict(DEFAULT_RULES)
+    mine = player.rule_set.rules
+    if supports(mine)[0]:
+        rules = {f: mine[f] for f in rules}
+    mode = "days"
+
+    again = request.GET.get("from", "")
+    if again.isdigit():
+        run = LabRun.objects.filter(player=player, pk=int(again)).first()
+        if run:
+            settings = {**settings, **run.settings}
+            rules = run.rule_set.rules
+            mode = run.mode
+
+    runs = []
+    for run in LabRun.objects.filter(player=player)[: labmod.KEEP_RUNS]:
+        runs.append({
+            "id": run.pk,
+            "name": run.name or run.get_mode_display(),
+            "mode": run.get_mode_display(),
+            "when": run.created_at,
+            "headline": _headline(run),
+        })
+
+    settings.setdefault("chart", "classic")
+    boot = {
+        "rules": rules,
+        "settings": settings,
+        "mode": mode,
+        "limits": {
+            "maxDays": labmod.MAX_DAYS, "maxHands": labmod.MAX_HANDS,
+            "maxLadder": labmod.MAX_LADDER, "maxFreeze": labmod.MAX_FREEZE,
+            "keepRuns": labmod.KEEP_RUNS,
+        },
+    }
+    return render(request, "blackjack/lab.html", {"runs": runs, "boot": boot, "keep": labmod.KEEP_RUNS})
+
+
+@ensure_csrf_cookie
+@login_required(login_url=LOGIN_URL)
+def lab_run(request, pk):
+    """A saved run: its conditions and its small summary. A run that is not
+    yours is a 404, the same as one that does not exist."""
+    from django.http import Http404
+
+    from . import access
+
+    run = access.visible_lab_runs(request.user).filter(pk=pk).select_related("rule_set").first()
+    if run is None:
+        raise Http404
+    return render(request, "blackjack/lab_run.html", {
+        "run": run,
+        "headline": _headline(run),
+        "boot": {"mode": run.mode, "settings": run.settings, "summary": run.summary, "rules": run.rule_set.rules},
+    })
+
+
+def lab_chart(request):
+    """The chart the browser plays by, for the rules it asked about.
+
+    Built by `strategy`, never by the page, so the browser has no idea of its
+    own about the right play. Rules the chart does not cover are refused with
+    the reason (REQ-B.2.5), not approximated.
+    """
+    from django.http import JsonResponse
+
+    from . import lab as labmod
+
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "צריך להתחבר."}, status=403)
+    try:
+        rules = labmod.clean_rules(request.GET.dict())
+    except labmod.Refused as why:
+        return JsonResponse({"error": str(why)}, status=400)
+    return JsonResponse({"rules": rules, "cells": labmod.chart_cells(rules)})

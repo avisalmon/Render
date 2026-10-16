@@ -169,3 +169,13 @@ def visible_play_rounds(user):
     if not getattr(user, "is_authenticated", False):
         return PlayRound.objects.none()
     return PlayRound.objects.filter(table__player__user=user)
+
+
+def visible_lab_runs(user):
+    """Your own runs and nobody else's. They are play money and a person's own
+    experiments; nothing about them is ranked or shared."""
+    from .models import LabRun
+
+    if not getattr(user, "is_authenticated", False):
+        return LabRun.objects.none()
+    return LabRun.objects.filter(player__user=user)
