@@ -233,6 +233,114 @@ const cases = {
     delete cfg.chart;
     assert.strictEqual(L.runDays(cfg, chart).summary.chart, "classic");
   },
+  a_day_played_again_from_the_seed_is_the_day_that_was_played(chart, rules) {
+    const cfg = { rules, policy: policy(), overrides: {}, handsPerDay: 3000, days: 25, seed: 31 };
+    const run = L.runDays(cfg, chart);
+    run.temp.days.forEach((d, i) => {
+      const again = L.traceDay(cfg, chart, cfg.overrides, i).result;
+      assert.strictEqual(again.total, d.total, "day " + i);
+      assert.strictEqual(again.rounds, d.rounds, "day " + i);
+      assert.strictEqual(again.ended, d.ended, "day " + i);
+      assert.strictEqual(again.frozen, d.frozen, "day " + i);
+    });
+  },
+  the_trace_follows_the_money_hand_by_hand(chart, rules) {
+    // A policy that freezes often, so the days have freeze points to check.
+    const pol = policy({ start: 200, ladder: [15, 30], limit: 30, freeze: [25, 25, 25, 25, 25, 25], freezeAfter: "repeat" });
+    const cfg = { rules, policy: pol, overrides: {}, handsPerDay: 500, days: 15, seed: 4 };
+    let sawFreeze = false;
+    for (let d = 0; d < cfg.days; d++) {
+      const { trace, result } = L.traceDay(cfg, chart, {}, d);
+      const n = result.rounds;
+      assert.strictEqual(trace.playing.length, n + 1);
+      assert.strictEqual(trace.frozen.length, n + 1);
+      assert.strictEqual(trace.bets.length, n);
+      assert.strictEqual(trace.nets.length, n);
+      assert.strictEqual(trace.playing[0], pol.start);
+      assert.strictEqual(trace.frozen[0], 0);
+      for (let i = 1; i <= n; i++) {
+        const before = trace.playing[i - 1] + trace.frozen[i - 1];
+        const after = trace.playing[i] + trace.frozen[i];
+        assert.strictEqual(after - before, trace.nets[i - 1], "day " + d + " hand " + i);
+        assert.ok(trace.frozen[i] >= trace.frozen[i - 1], "frozen money only grows");
+        assert.ok(trace.bets[i - 1] <= trace.playing[i - 1], "a bet is never more than the playing money");
+      }
+      let sum = 0, last = 0;
+      trace.freezes.forEach((f) => {
+        assert.ok(f.round > last, "freeze points are in order");
+        last = f.round;
+        sum += f.amount;
+        assert.strictEqual(trace.frozen[f.round], f.frozen);
+        assert.ok(trace.frozen[f.round] > trace.frozen[f.round - 1]);
+        sawFreeze = true;
+      });
+      assert.strictEqual(sum, result.frozen);
+      assert.strictEqual(trace.playing[n] + trace.frozen[n], result.total);
+    }
+    assert.ok(sawFreeze, "no day froze anything, so nothing was checked");
+  },
+  tracing_a_day_changes_nothing_about_it(chart, rules) {
+    const cfg = { rules, policy: policy(), overrides: {}, handsPerDay: 3000, days: 6, seed: 12 };
+    const plain = L.playDay(cfg, chart, {}, L.seededSource(cfg.seed, 2, rules.decks), cfg.handsPerDay);
+    const traced = L.traceDay(cfg, chart, {}, 2).result;
+    assert.strictEqual(plain.total, traced.total);
+    assert.strictEqual(plain.rounds, traced.rounds);
+  },
+  the_day_viewer_keeps_its_window_inside_the_day() {
+    const D = require("../../static/blackjack/lab/lab_day.js");
+    let w = D.clampWindow(-5, 20, 100);
+    assert.deepStrictEqual(w, [0, 25]);
+    w = D.clampWindow(90, 130, 100);
+    assert.deepStrictEqual(w, [60, 100]);
+    w = D.clampWindow(40, 41, 100);
+    assert.strictEqual(w[1] - w[0], 10, "never narrower than ten hands");
+    w = D.clampWindow(0, 500, 100);
+    assert.deepStrictEqual(w, [0, 100]);
+    assert.deepStrictEqual(D.clampWindow(0, 3, 4), [0, 4], "a short day is shown whole");
+  },
+  zooming_keeps_the_hand_under_the_finger_where_it_is() {
+    const D = require("../../static/blackjack/lab/lab_day.js");
+    const w = D.zoomWindow(0, 100, 1000, 0.5, 25);
+    assert.ok(Math.abs((25 - w[0]) / (w[1] - w[0]) - 0.25) < 1e-9);
+    assert.ok(Math.abs((w[1] - w[0]) - 50) < 1e-9);
+    const out = D.zoomWindow(40, 60, 1000, 4, 50);
+    assert.ok(Math.abs((50 - out[0]) / (out[1] - out[0]) - 0.5) < 1e-9);
+    assert.deepStrictEqual(D.zoomWindow(0, 100, 100, 2, 50), [0, 100], "cannot zoom out past the whole day");
+  },
+  panning_stops_at_the_ends_of_the_day() {
+    const D = require("../../static/blackjack/lab/lab_day.js");
+    assert.deepStrictEqual(D.panWindow(10, 30, 100, -50), [0, 20]);
+    assert.deepStrictEqual(D.panWindow(10, 30, 100, 500), [80, 100]);
+    assert.deepStrictEqual(D.panWindow(10, 30, 100, 5), [15, 35]);
+  },
+  the_envelope_is_the_true_min_and_max_of_each_column() {
+    const D = require("../../static/blackjack/lab/lab_day.js");
+    const rng = L.mulberry32(9);
+    const values = [];
+    for (let i = 0; i < 5000; i++) values.push(Math.round(rng() * 1000));
+    const env = D.envelope(values, 0, 4999, 100);
+    for (let c = 0; c < 100; c++) {
+      let lo = Infinity, hi = -Infinity;
+      for (let i = 0; i < values.length; i++) {
+        const col = Math.min(99, Math.max(0, Math.floor(i / 4999 * 100)));
+        if (col === c) { lo = Math.min(lo, values[i]); hi = Math.max(hi, values[i]); }
+      }
+      assert.strictEqual(env.lo[c], lo, "column " + c);
+      assert.strictEqual(env.hi[c], hi, "column " + c);
+    }
+    const all = D.envelope(values, 0, 4999, 1);
+    assert.strictEqual(all.lo[0], Math.min.apply(null, values));
+    assert.strictEqual(all.hi[0], Math.max.apply(null, values));
+  },
+  a_long_day_traces_in_a_moment(chart, rules) {
+    const pol = policy({ start: 1000000, ladder: [15], limit: 15, freeze: [] });
+    const cfg = { rules, policy: pol, overrides: {}, handsPerDay: 100000, days: 1, seed: 1 };
+    const t = Date.now();
+    const out = L.traceDay(cfg, chart, {}, 0);
+    assert.strictEqual(out.result.rounds, 100000);
+    assert.strictEqual(out.trace.playing.length, 100001);
+    assert.ok(Date.now() - t < 5000, "took " + (Date.now() - t) + " ms");
+  },
   the_search_only_proposes_policies_the_server_will_accept() {
     let p = policy();
     const rng = L.mulberry32(5);

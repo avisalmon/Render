@@ -269,6 +269,7 @@ rule that sets winnings aside in chunks (REQ-B.11.5, B.11.13 to B.11.17).
 | SPR-B.12.6 | Mode one, many days: the day lines, the histogram, days ahead, helped and hurt | REQ-B.11.21, B.11.24 | **DONE 2026-10-16** |
 | SPR-B.12.8 | The calculated base chart for 1 to 8 decks, checked against the classic chart, offered as an option in the lab | REQ-B.11.26 | **DONE 2026-10-16** |
 | SPR-B.12.9 | The mixed goal for the search | REQ-B.11.27 | **DONE 2026-10-16** |
+| SPR-B.12.10 | The day viewer: any day hand by hand, freeze points, zoom, replayed from the seed and never stored | REQ-B.11.28 | **DONE 2026-10-16** |
 | SPR-B.12.7 | Mode two, the policy search with a held-out check, and saving a found policy | REQ-B.11.22, B.11.24 | **DONE 2026-10-16** |
 
 **What was built, and what was decided on the way.**
@@ -279,6 +280,7 @@ rule that sets winnings aside in chunks (REQ-B.11.5, B.11.13 to B.11.17).
 - The search is hill climbing on whole-number lists, scored on the same shuffles for every candidate, then re-scored on shuffles it never saw. The goals are most days ahead, best average, longest-lasting money, or a weighted mix.
 - The base chart is a choice: the classic one, or one the lab calculates (`lab_best.js`), for 1 to 8 decks. The calculator reproduces the classic chart in 340 of 340 cells for eight covered rule sets and 339 of 340 for a ninth (a gap of 0.0009 of a bet), and the test holds that. Where the engine plays the rules, the calculated chart can play them.
 - Not built, because the engine does not play them: surrender, a dealer who does not peek, and doubling on some totals only. They need engine work (and the same parity guard) before the lab can offer them.
+- Any day of a run can be opened hand by hand (`lab_day.js`): money, bets, freeze points, zoom. The day is played again from the run's seed rather than kept, so it costs nothing in the database; `tests/test_spr_b_12_5.py` checks that viewing sends no request and stores no row.
 - The search has a fourth goal, a weighted mix, with weights 0 to 10 for days ahead, average result and how long the money lasts.
 - Free, no AI, nothing ranked or shared.
 

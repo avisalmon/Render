@@ -1662,3 +1662,37 @@
 
 .bj-lab-mix { grid-column: 1 / -1; padding: 4px 0 8px; }
 .bj-lab-mix .bj-field { margin-top: 6px; }
+
+/* --- the day viewer (SPR-B.12, REQ-B.11.28) ------------------------------ */
+
+.bj-day { margin: 22px 0; }
+.bj-day-pick, .bj-day-quick, .bj-day-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0; }
+.bj-day-pick .bj-btn-small, .bj-day-quick .bj-btn-small, .bj-day-tools .bj-btn-small { margin-top: 0; }
+.bj-day-select {
+  order: -1;
+  flex: 1 1 100%; min-width: 0; min-height: 44px; padding: 4px 8px;
+  background: var(--bj-felt); color: var(--bj-ink); border: 1px solid var(--bj-line); border-radius: 8px; font: inherit;
+}
+.bj-day-facts { margin: 8px 0; line-height: 1.6; }
+.bj-day-readout { min-height: 3.2em; margin: 8px 0 4px; font-size: .95rem; font-variant-numeric: tabular-nums; }
+.bj-day-plot { touch-action: none; user-select: none; cursor: grab; border-radius: 8px; outline-offset: 2px; }
+.bj-day-plot:focus-visible { outline: 2px solid var(--bj-gold); }
+.bj-day-plot-bets { cursor: default; touch-action: pan-y; }
+.bj-day-frozen { fill: none; stroke: #4fc3a1; stroke-width: 1.6; }
+.bj-day-playing { fill: none; stroke: var(--bj-ink); stroke-width: 1.4; opacity: .85; }
+.bj-day-freeze-line { stroke: #4fc3a1; stroke-width: 1; stroke-dasharray: 3 3; }
+.bj-day-freeze-dot { fill: #4fc3a1; stroke: var(--bj-felt); stroke-width: 1.5; }
+.bj-day-freeze-text { fill: #4fc3a1; font-size: 10px; }
+.bj-day-end-line { stroke: #e0826f; stroke-width: 1; stroke-dasharray: 2 3; }
+.bj-day-end-text { fill: #e0826f; font-size: 10px; }
+.bj-day-cursor { stroke: var(--bj-ink-soft); stroke-width: 1; }
+.bj-day-cursor-dot { fill: var(--bj-gold); stroke: var(--bj-felt); stroke-width: 1.5; }
+.bj-day-bar-win { fill: #4fc3a1; }
+.bj-day-bar-loss { fill: #e0826f; }
+.bj-day-bar-push { fill: var(--bj-ink-soft); }
+.bj-day-freezes { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; }
+.bj-day-freeze-go {
+  min-height: 44px; width: 100%; padding: 6px 12px; text-align: start;
+  background: transparent; color: var(--bj-ink); border: 1px solid var(--bj-line); border-radius: 8px; font: inherit; cursor: pointer;
+}
+.bj-day-freeze-go:hover { border-color: #4fc3a1; }

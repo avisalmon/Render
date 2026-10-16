@@ -354,6 +354,7 @@
       cfg.maxTries = 5000;
       cfg.budgetMs = form.budgetSeconds * 1000;
     }
+    state.cells = chart.cells;
     state.worker = new Worker(root.dataset.worker);
     state.worker.onmessage = function (event) { heard(event.data, form, cfg); };
     state.worker.onerror = function () { finish(); fail("הריצה נעצרה בגלל שגיאה בדפדפן."); };
@@ -409,14 +410,78 @@
       '<p id="labSaved" class="bj-muted bj-small" aria-live="polite"></p></form>';
   }
 
+  /* ---------- one day at a time, hand by hand (REQ-B.11.28) ----------
+
+     Nothing about a single day was kept: the page plays the chosen day again
+     from the run's seed, which gives the same cards, and draws it. Choosing
+     another day, or closing the page, throws it away. */
+
+  function dayPicker(days) {
+    var html = '<section class="bj-day" id="daySection"><h2 class="bj-lab-h2">יום ביום</h2>' +
+      '<p class="bj-muted bj-small">בחרו יום כדי לראות אותו יד אחרי יד: הכסף, ההימורים, והנקודות שבהן הוקפא כסף. אפשר לגרור, לצבוט ולהתקרב.</p>' +
+      '<div class="bj-day-pick">' +
+      '<button type="button" class="bj-btn bj-btn-small bj-btn-quiet" id="dayPrev">היום הקודם</button>' +
+      '<label class="bj-sr" for="daySelect">איזה יום</label><select id="daySelect" class="bj-day-select">';
+    days.forEach(function (d, i) {
+      html += '<option value="' + i + '">יום ' + (i + 1) + " · " + fmt(d.total) + " · " + fmt(d.rounds) + " ידיים" +
+        (d.frozen ? " · מוקפא " + fmt(d.frozen) : "") + "</option>";
+    });
+    html += '</select><button type="button" class="bj-btn bj-btn-small bj-btn-quiet" id="dayNext">היום הבא</button></div>' +
+      '<div class="bj-day-quick">' +
+      '<button type="button" class="bj-btn bj-btn-small bj-btn-quiet" id="dayBest">היום הכי טוב</button>' +
+      '<button type="button" class="bj-btn bj-btn-small bj-btn-quiet" id="dayWorst">היום הכי גרוע</button>' +
+      '<button type="button" class="bj-btn bj-btn-small bj-btn-quiet" id="dayLong">היום הכי ארוך</button></div>' +
+      '<p class="bj-day-facts" id="dayFacts" aria-live="polite"></p><div id="dayView"></div></section>';
+    return html;
+  }
+
+  var ENDED = { bust: "נגמר הכסף", limit: "הגיע למספר הידיים שנקבע", stopped: "המדיניות עצרה את המשחק" };
+
+  function chartFor(res) {
+    var cells = state.cells;
+    if (!cells) cells = window.LabBest.calculate(res.cfg.rules).cells;
+    return window.LabCore.makeChart(cells);
+  }
+
+  function showDay(res, index) {
+    var chart = state.dayChart || (state.dayChart = chartFor(res));
+    var one = window.LabCore.traceDay(res.cfg, chart, res.cfg.overrides, index);
+    var twin = null;
+    if (res.result.summary.changed) twin = window.LabCore.traceDay(res.cfg, chart, {}, index).trace;
+    $("daySelect").value = String(index);
+    $("dayFacts").textContent = "יום " + (index + 1) + ": " + fmt(one.result.rounds) + " ידיים. " + ENDED[one.result.ended] +
+      ". השיא של הכסף למשחק " + fmt(one.result.peak) + ", השפל " + fmt(one.result.low) + ". הוקפאו " + fmt(one.result.frozen) +
+      ", ובסך הכול נשארו " + fmt(one.result.total) + " (התחלתם עם " + fmt(res.cfg.policy.start) + ").";
+    window.LabDay.mount($("dayView"), { trace: one.trace, result: one.result, classicTrace: twin });
+    state.day = index;
+  }
+
+  function wireDays(res) {
+    var days = res.result.temp.days;
+    state.dayChart = null;
+    $("daySelect").addEventListener("change", function () { showDay(res, parseInt($("daySelect").value, 10)); });
+    $("dayPrev").addEventListener("click", function () { showDay(res, (state.day + days.length - 1) % days.length); });
+    $("dayNext").addEventListener("click", function () { showDay(res, (state.day + 1) % days.length); });
+    function pick(better) {
+      var at = 0;
+      days.forEach(function (d, i) { if (better(d, days[at])) at = i; });
+      showDay(res, at);
+    }
+    $("dayBest").addEventListener("click", function () { pick(function (a, b) { return a.total > b.total; }); });
+    $("dayWorst").addEventListener("click", function () { pick(function (a, b) { return a.total < b.total; }); });
+    $("dayLong").addEventListener("click", function () { pick(function (a, b) { return a.rounds > b.rounds; }); });
+    showDay(res, 0);
+  }
+
   function showDays(res) {
     var s = res.result.summary, temp = res.result.temp;
     var html = Charts.daysTop(s) + Charts.trendFigure(s) + Charts.daysFigure(s, temp.curves) +
-      Charts.histFigure(s) + saveBox();
+      Charts.histFigure(s) + dayPicker(temp.days) + saveBox();
     var box = $("labResults");
     box.innerHTML = html;
     box.hidden = false;
     $("labSave").addEventListener("click", function () { save(res); });
+    wireDays(res);
     box.scrollIntoView({ block: "start" });
   }
 

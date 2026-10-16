@@ -401,7 +401,11 @@
 
   /* One day at the casino: up to handsPerDay rounds, ending early on bust or
      when the policy says stop. */
-  function playDay(cfg, chart, overrides, source, handsPerDay, curvePoints) {
+  /* `trace`, when given, is filled with the day hand by hand, for the page's
+     day viewer (REQ-B.11.28): money after each round, the bet and the result of
+     each round, and every time winnings were frozen. Index 0 of `playing` and
+     `frozen` is the start; round r is `bets[r - 1]`. Never stored anywhere. */
+  function playDay(cfg, chart, overrides, source, handsPerDay, curvePoints, trace) {
     var pol = cfg.policy, rules = cfg.rules;
     var shoe = makeShoe(source);
     var ps = newPolicyState(pol);
@@ -410,6 +414,10 @@
     var points = Math.floor(handsPerDay / step) + 1;
     var curve = [pol.start];
     var rounds = 0, peak = ps.playing, low = ps.playing, ended = "limit";
+    if (trace) {
+      trace.bets = []; trace.nets = []; trace.freezes = [];
+      trace.playing = [ps.playing]; trace.frozen = [0];
+    }
 
     while (rounds < handsPerDay) {
       var next = nextBet(ps, pol);
@@ -417,7 +425,15 @@
       if (needsShuffle(shoe)) shuffle(shoe);
       var result = playRound(shoe, next.bet, rules, ps.playing, chart, overrides, counters);
       rounds++;
+      var frozenBefore = ps.frozen, stepsBefore = ps.frozenSteps;
       var stopNow = settleRound(ps, pol, result);
+      if (trace) {
+        trace.bets.push(next.bet); trace.nets.push(result);
+        trace.playing.push(ps.playing); trace.frozen.push(ps.frozen);
+        if (ps.frozen > frozenBefore) {
+          trace.freezes.push({ round: rounds, amount: ps.frozen - frozenBefore, frozen: ps.frozen, steps: ps.frozenSteps - stepsBefore });
+        }
+      }
       if (ps.playing > peak) peak = ps.playing;
       if (ps.playing < low) low = ps.playing;
       if (rounds % step === 0) curve.push(ps.playing + ps.frozen);
@@ -431,6 +447,14 @@
       peak: peak, low: low, curve: curve, step: step,
       overrideFallbacks: counters.overrideFallbacks
     };
+  }
+
+  /* One day again, hand by hand. The same seed and day give the same cards, so
+     the day the page shows is the day that was played; nothing was kept. */
+  function traceDay(cfg, chart, overrides, day) {
+    var trace = {};
+    var result = playDay(cfg, chart, overrides || {}, seededSource(cfg.seed, day, cfg.rules.decks), cfg.handsPerDay, 4, trace);
+    return { trace: trace, result: result };
   }
 
   /* ---------- many days, each against its classic twin (REQ-B.11.21) ---------- */
@@ -555,7 +579,8 @@
       temp: {
         curves: mine.map(function (x) { return downsample(x.curve, 100); }),
         classicCurves: changed ? classic.map(function (x) { return downsample(x.curve, 100); }) : null,
-        totals: m.totals, classicTotals: c.totals
+        totals: m.totals, classicTotals: c.totals,
+        days: mine.map(function (x) { return { total: x.total, rounds: x.rounds, ended: x.ended, frozen: x.frozen, peak: x.peak, low: x.low }; })
       }
     };
   }
@@ -667,7 +692,7 @@
     makeChart: makeChart, chooseAction: chooseAction, playRound: playRound,
     defaultPolicy: defaultPolicy, usableLadder: usableLadder, playDay: playDay,
     newPolicyState: newPolicyState, nextBet: nextBet, settleRound: settleRound,
-    createDays: createDays, runDays: runDays, createSearch: createSearch,
+    traceDay: traceDay, createDays: createDays, runDays: runDays, createSearch: createSearch,
     searchPolicies: searchPolicies, mutate: mutate
   };
 });

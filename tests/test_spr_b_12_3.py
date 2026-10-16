@@ -104,9 +104,9 @@ def test_many_days_runs_draws_and_saves_a_small_summary(browser, live_server, wo
     page.wait_for_selector("#labResults:not([hidden]) svg", timeout=30000)
     text = page.inner_text("#labResults")
     assert "מתוך 12" in text
-    assert page.locator("#labResults svg").count() == 3
+    assert page.locator("#labResults figure svg").count() == 3
     assert _sideways(page) <= 1
-    assert page.locator("#labResults path.bj-lab-day").count() == 12
+    assert page.locator("#labResults figure path.bj-lab-day").count() == 12
 
     page.fill("#labName", "הריצה הראשונה")
     page.click("#labSave")
@@ -164,7 +164,7 @@ def test_a_change_to_the_table_is_compared_with_the_classic(browser, live_server
     page.wait_for_selector("#labResults:not([hidden]) svg", timeout=30000)
     text = page.inner_text("#labResults")
     assert "לעומת הטבלה הקלאסית" in text and "עזר ב-" in text
-    assert page.locator("#labResults path.bj-lab-line-classic").count() == 1
+    assert page.locator("#labResults figure path.bj-lab-line-classic").count() == 1
     assert errors == []
 
     page.click("#labOverrides .bj-lab-chip-x")
