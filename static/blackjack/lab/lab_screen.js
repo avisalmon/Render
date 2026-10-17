@@ -249,6 +249,66 @@
     });
   }
 
+
+  /* ---------- the recommender (REQ-B.11.29) ---------- */
+
+  var model = null;
+
+  function adviceNote(text, warn) {
+    var el = $("labAdviceNote");
+    el.textContent = text;
+    el.hidden = !text;
+    el.classList.toggle("bj-lab-advice-warn", !!warn);
+  }
+
+  function conditions() {
+    var big = 1000000000;
+    return {
+      start: whole("labStart", 1, big, "כסף להתחלה"),
+      minBet: whole("labMinBet", 1, big, "הימור מינימלי"),
+      limit: whole("labLimit", 1, big, "מגבלת שולחן"),
+      handsPerDay: whole("labHands", 1, boot.limits.maxHands, "ידיים ביום"),
+      decks: parseInt($("labDecks").value, 10),
+      h17: $("labH17").checked,
+      das: $("labDas").checked,
+      pays: $("labPays").value
+    };
+  }
+
+  function applyAdvice() {
+    var c;
+    try { c = conditions(); } catch (err) { adviceNote(err.message, true); return; }
+    if (c.limit < c.minBet) { adviceNote("מגבלת השולחן קטנה מההימור המינימלי.", true); return; }
+    var out = window.LabRecommend.recommend(model, c);
+    var p = out.policy;
+    state.ladder = p.ladder.slice();
+    state.freeze = p.freeze.map(function (e) { return e.slice(); });
+    $("labAfterWin").value = p.afterWin;
+    $("labAtLimit").value = p.atLimit;
+    $("labShort").value = p.short;
+    $("labFreezeAfter").value = p.freezeAfter;
+    renderLadder();
+    renderFreeze();
+    var m = model.measured;
+    var text = "מולא: " + Charts.policyLine(p) + (p.freezeAfter === "repeat" ? ", ואחרי השלב האחרון ממשיכים לפיו" : "") + ". " +
+      "על " + fmt(m.held_out) + " שולחנות שהמודל לא ראה, המלצות כאלה הסתיימו ברווח ב-" + m.ahead_pct + "% מהימים, " +
+      "מול " + m.default_ahead_pct + "% במדיניות ברירת המחדל ו-" + m.flat_ahead_pct + "% בהימור קבוע. הממוצע לא משתנה: היתרון של הקזינו נשאר.";
+    var warn = [];
+    if (out.outside.length) warn.push("התנאים כאן מחוץ למה שהמודל אומן עליו, אז ההמלצה היא ניחוש.");
+    if (document.querySelector('input[name="chart"]:checked').value !== "classic") warn.push("המודל אומן על הטבלה הקלאסית.");
+    if (Object.keys(state.overrides).length) warn.push("המודל אומן בלי שינויים בטבלה.");
+    adviceNote(text + (warn.length ? " " + warn.join(" ") : ""), warn.length > 0);
+  }
+
+  $("labRecommend").addEventListener("click", function () {
+    if (model) { applyAdvice(); return; }
+    adviceNote("טוען את המודל...", false);
+    fetch(root.dataset.model, { credentials: "same-origin" })
+      .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
+      .then(function (m) { model = m; applyAdvice(); })
+      .catch(function () { adviceNote("לא הצלחתי לטעון את המודל. נסו שוב.", true); });
+  });
+
   /* ---------- reading the form ---------- */
 
   function whole(id, low, high, what) {

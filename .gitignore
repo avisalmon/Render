@@ -49,3 +49,8 @@ docs/memz/image_bank/
 # the 2.5MB generated bundle (artboards + a packaged editor) that
 # seed-canvas.mjs rebuilds from them on demand — a build output, not source.
 docs/sensorlab/design/sensorlab-screens.html
+
+# Offline training workspace for the blackjack lab's recommender (its own env,
+# the dataset and the experiments). Only the trained model ships, copied into
+# static/blackjack/lab/.
+blackjack_model/

@@ -21,6 +21,7 @@
      data-core="{% static 'blackjack/lab/lab_core.js' %}"
      data-worker="{% static 'blackjack/lab/lab_worker.js' %}"
      data-best="{% static 'blackjack/lab/lab_best.js' %}"
+     data-model="{% static 'blackjack/lab/recommend_model.json' %}"
      data-chart="{% url 'blackjack:lab_chart' %}"
      data-api="/blackjack/api/lab-runs/">
 
@@ -128,6 +129,17 @@
       </select></label>
   </fieldset>
 
+  <fieldset class="bj-lab-set" id="labAdvice">
+    <legend>המלצה</legend>
+    <p class="bj-muted bj-small">
+      מודל שאומן על 12,000 שולחנות שונים מציע סולם הימורים ושלבי הקפאה לשולחן ולכסף שבטופס.
+      המטרה שלו: הכי הרבה ימים שנגמרים ברווח, כשמשחקים את כל היום ומקפיאים רק רווח.
+      הוא ממלא את הטופס, ואז מריצים ובודקים מול הטבלה הקלאסית כרגיל.
+    </p>
+    <button type="button" id="labRecommend" class="bj-btn bj-btn-small">המלצה לשולחן הזה</button>
+    <p id="labAdviceNote" class="bj-small bj-lab-advice" aria-live="polite" hidden></p>
+  </fieldset>
+
   <fieldset class="bj-lab-set">
     <legend>שינויים בטבלה</legend>
     <p class="bj-muted bj-small">
@@ -215,5 +227,6 @@
 <script src="{% static 'blackjack/lab/lab_best.js' %}"></script>
 <script src="{% static 'blackjack/lab/lab_charts.js' %}"></script>
 <script src="{% static 'blackjack/lab/lab_day.js' %}"></script>
+<script src="{% static 'blackjack/lab/lab_recommend.js' %}"></script>
 <script src="{% static 'blackjack/lab/lab_screen.js' %}"></script>
 {% endblock %}

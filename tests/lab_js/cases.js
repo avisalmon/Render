@@ -404,6 +404,57 @@ const cases = {
     assert.strictEqual(out.trace.playing.length, 100001);
     assert.ok(Date.now() - t < 5000, "took " + (Date.now() - t) + " ms");
   },
+  the_recommender_in_the_browser_matches_the_trained_network() {
+    const R = require("../../static/blackjack/lab/lab_recommend.js");
+    const m = require("../../static/blackjack/lab/recommend_model.json");
+    assert.ok(m.checks.length >= 20);
+    m.checks.forEach((k) => {
+      R.features(k.case).forEach((v, i) => assert.ok(Math.abs(v - k.features[i]) < 1e-9, "feature " + i));
+      R.predict(m, k.case).forEach((v, i) => assert.ok(Math.abs(v - k.theta[i]) < 1e-5, "output " + i));
+    });
+  },
+  a_recommendation_never_runs_away_and_is_a_valid_policy(chart, rules) {
+    const R = require("../../static/blackjack/lab/lab_recommend.js");
+    const m = require("../../static/blackjack/lab/recommend_model.json");
+    const rng = L.mulberry32(17);
+    const pick = (list) => list[Math.floor(rng() * list.length)];
+    for (let i = 0; i < 2000; i++) {
+      const minBet = pick([1, 5, 10, 15, 25, 50, 100, 7]);
+      const c = {
+        start: Math.max(minBet, Math.round(10 + rng() * 60000)), minBet, limit: minBet * pick([1, 3, 10, 50, 200, 1000]),
+        handsPerDay: pick([1, 50, 100, 400, 800, 5000]), decks: pick([1, 2, 4, 6, 8]),
+        h17: rng() < 0.5, das: rng() < 0.5, pays: rng() < 0.5 ? "3:2" : "6:5"
+      };
+      const { policy } = R.recommend(m, c);
+      assert.ok(policy.ladder.length >= 1 && policy.ladder.length <= 12);
+      policy.ladder.forEach((b, k) => {
+        assert.ok(Number.isInteger(b) && b >= 1 && b <= Math.max(c.limit, c.minBet), "rung " + b);
+        if (k) assert.ok(b > policy.ladder[k - 1]);
+      });
+      assert.ok(policy.freeze.length <= 12);
+      let base = c.start;
+      policy.freeze.forEach(([gain, take]) => {
+        assert.ok(Number.isInteger(gain) && gain >= 1 && Number.isInteger(take) && take >= 1);
+        assert.ok(base + gain - take >= c.start, "a freeze took the table below the start");
+        base = base + gain - take;
+      });
+      assert.ok(["reset"].includes(policy.afterWin) && ["stay"].includes(policy.atLimit) && ["rest"].includes(policy.short));
+    }
+    const advice = R.recommend(m, { start: 1000, minBet: 15, limit: 500, handsPerDay: 400, decks: 6, h17: false, das: true, pays: "3:2" });
+    const s = L.runDays({ rules, policy: advice.policy, overrides: {}, handsPerDay: 400, days: 20, seed: 1 }, chart).summary;
+    assert.strictEqual(s.days, 20);
+    assert.deepStrictEqual(advice.outside, []);
+  },
+  the_recommender_says_when_it_is_guessing() {
+    const R = require("../../static/blackjack/lab/lab_recommend.js");
+    const m = require("../../static/blackjack/lab/recommend_model.json");
+    const base = { start: 1000, minBet: 15, limit: 500, handsPerDay: 400, decks: 6, h17: false, das: true, pays: "3:2" };
+    assert.deepStrictEqual(R.recommend(m, base).outside, []);
+    assert.ok(R.recommend(m, Object.assign({}, base, { start: 90000 })).outside.includes("start"));
+    assert.ok(R.recommend(m, Object.assign({}, base, { decks: 1 })).outside.includes("decks"));
+    assert.ok(R.recommend(m, Object.assign({}, base, { handsPerDay: 5000 })).outside.includes("hands"));
+    assert.ok(R.recommend(m, Object.assign({}, base, { limit: 15 })).outside.includes("limit"));
+  },
   the_search_only_proposes_policies_the_server_will_accept() {
     let p = policy();
     const rng = L.mulberry32(5);

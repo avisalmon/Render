@@ -270,6 +270,7 @@ rule that sets winnings aside in chunks (REQ-B.11.5, B.11.13 to B.11.17).
 | SPR-B.12.8 | The calculated base chart for 1 to 8 decks, checked against the classic chart, offered as an option in the lab | REQ-B.11.26 | **DONE 2026-10-16** |
 | SPR-B.12.9 | The mixed goal for the search | REQ-B.11.27 | **DONE 2026-10-16** |
 | SPR-B.12.10 | The day viewer: any day hand by hand, freeze points, zoom, replayed from the seed and never stored | REQ-B.11.28 | **DONE 2026-10-16** |
+| SPR-B.12.11 | The recommender: dataset of 12,000 searched cases, a distilled network, the button in the lab | REQ-B.11.29 | **DONE 2026-10-17** |
 | SPR-B.12.7 | Mode two, the policy search with a held-out check, and saving a found policy | REQ-B.11.22, B.11.24 | **DONE 2026-10-16** |
 
 **What was built, and what was decided on the way.**

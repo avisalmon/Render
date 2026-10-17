@@ -61,6 +61,8 @@ def _sideways(page):
 
 
 def _window(page):
+    # The viewer redraws on the next animation frame; read after it has.
+    page.evaluate("() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))")
     return (int(page.get_attribute("#dayPlot", "data-from")), int(page.get_attribute("#dayPlot", "data-to")))
 
 

@@ -1700,3 +1700,6 @@
 .bj-lab-row-pair { flex-wrap: wrap; }
 .bj-lab-mini { display: flex; flex-direction: column; gap: 2px; flex: 1 1 8em; }
 .bj-lab-mini input { width: 100%; }
+
+.bj-lab-advice { margin: 10px 0 0; line-height: 1.6; padding: 10px 12px; border: 1px solid var(--bj-line); border-radius: 8px; }
+.bj-lab-advice-warn { border-color: var(--bj-gold); }
