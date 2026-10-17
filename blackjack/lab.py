@@ -333,7 +333,7 @@ def default_settings():
             "freeze": [[500, 1000], [500, 500], [1000, 500], [2000, 1000]], "freezeAfter": "stop",
         },
         "overrides": {},
-        "handsPerDay": MAX_HANDS,
+        "handsPerDay": 400,
         "days": 30,
         "goal": "ahead",
         "mix": {"ahead": 5, "avg": 3, "survive": 2},

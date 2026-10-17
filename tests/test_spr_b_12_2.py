@@ -299,7 +299,7 @@ def test_the_lab_screen_opens_with_avis_defaults(client, me):
     assert policy["ladder"] == [15, 50, 150, 500]
     assert policy["freeze"] == [[500, 1000], [500, 500], [1000, 500], [2000, 1000]]
     assert policy["afterWin"] == "reset"
-    assert boot["settings"]["handsPerDay"] == 100000
+    assert boot["settings"]["handsPerDay"] == 400
 
 
 def test_the_nav_links_to_the_lab(client, me):

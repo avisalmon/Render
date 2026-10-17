@@ -280,6 +280,15 @@
     try { c = conditions(); } catch (err) { adviceNote(err.message, true); return; }
     if (c.limit < c.minBet) { adviceNote("מגבלת השולחן קטנה מההימור המינימלי.", true); return; }
     var out = window.LabRecommend.recommend(model, c);
+    if (out.outside.length) {
+      var r = model.ranges, why = [];
+      if (out.outside.indexOf("hands") >= 0) why.push("ידיים ביום בין " + fmt(r.handsPerDay[0]) + " ל-" + fmt(r.handsPerDay[1]));
+      if (out.outside.indexOf("start") >= 0) why.push("כסף להתחלה בין " + fmt(r.start[0]) + " ל-" + fmt(r.start[1]) + ", ולפחות 5 הימורים מינימליים");
+      if (out.outside.indexOf("limit") >= 0) why.push("מגבלת שולחן בין " + r.limitRatio[0] + " ל-" + r.limitRatio[1] + " הימורים מינימליים");
+      if (out.outside.indexOf("decks") >= 0) why.push(r.decks.join(", ") + " חפיסות");
+      adviceNote("המודל לא אומן על שולחן כזה, ולכן הוא לא ממליץ כאן. הוא למד: " + why.join("; ") + ". הטופס לא שונה.", true);
+      return;
+    }
     var p = out.policy;
     state.ladder = p.ladder.slice();
     state.freeze = p.freeze.map(function (e) { return e.slice(); });
@@ -294,7 +303,6 @@
       "על " + fmt(m.held_out) + " שולחנות שהמודל לא ראה, המלצות כאלה הסתיימו ברווח ב-" + m.ahead_pct + "% מהימים, " +
       "מול " + m.default_ahead_pct + "% במדיניות ברירת המחדל ו-" + m.flat_ahead_pct + "% בהימור קבוע. הממוצע לא משתנה: היתרון של הקזינו נשאר.";
     var warn = [];
-    if (out.outside.length) warn.push("התנאים כאן מחוץ למה שהמודל אומן עליו, אז ההמלצה היא ניחוש.");
     if (document.querySelector('input[name="chart"]:checked').value !== "classic") warn.push("המודל אומן על הטבלה הקלאסית.");
     if (Object.keys(state.overrides).length) warn.push("המודל אומן בלי שינויים בטבלה.");
     adviceNote(text + (warn.length ? " " + warn.join(" ") : ""), warn.length > 0);

@@ -261,6 +261,7 @@ def test_a_hundred_thousand_hands_a_day_for_thirty_days_finishes(browser, live_s
     """T-F-B.12.3-9: Avi's defaults, at full size, on a page that must stay alive."""
     _user, session = world
     context, page, errors = _page(browser, live_server, 390, session)
+    page.fill("#labHands", "100000")
     page.click("#labRun")
     page.wait_for_selector("#labResults:not([hidden]) svg", timeout=60000)
     assert "מתוך 30" in page.inner_text("#labResults")

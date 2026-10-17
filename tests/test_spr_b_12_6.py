@@ -108,7 +108,7 @@ def test_the_button_fills_in_the_policy_and_says_how_good_it_is(browser, live_se
     page.wait_for_function("document.getElementById('labAdviceNote').textContent.includes('מולא')", timeout=10000)
     note = page.inner_text("#labAdviceNote")
     assert "מהימים" in note and "היתרון של הקזינו" in note
-    assert "ניחוש" not in note
+    assert "לא אומן" not in note
     after = page.eval_on_selector_all("#labLadder input", "els => els.map(e => e.value)")
     assert after and after != before
     rows = page.eval_on_selector_all("#labFreeze .bj-lab-row", "els => els.map(r => [...r.querySelectorAll('input')].map(i => +i.value))")
@@ -132,8 +132,10 @@ def test_the_button_warns_outside_what_it_learned(browser, live_server, world):
     context, page, errors = _open(browser, live_server, session)
     page.fill("#labStart", "90000")
     page.fill("#labHands", "400")
+    before = page.eval_on_selector_all("#labLadder input", "els => els.map(e => e.value)")
     page.click("#labRecommend")
-    page.wait_for_function("document.getElementById('labAdviceNote').textContent.includes('ניחוש')", timeout=10000)
+    page.wait_for_function("document.getElementById('labAdviceNote').textContent.includes('לא אומן')", timeout=10000)
+    assert page.eval_on_selector_all("#labLadder input", "els => els.map(e => e.value)") == before, "the form was changed"
     page.fill("#labStart", "1000")
     page.check('input[name="chart"][value="calculated"]')
     page.click("#labRecommend")
