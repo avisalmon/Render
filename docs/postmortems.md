@@ -17,6 +17,22 @@ Newest first.
 
 ---
 
+## PM-14 · 2026-10-17 · A pipe hid a failure, and an empty pattern ran everything
+
+**What happened.** Registering the Daily news site for counter, the tests
+were run as `pytest $(ls tests/x*.py) | tail -1 && git commit`. The pattern
+matched no file, so it ran the whole suite (three hours). The pipe's exit
+status was `tail`'s, so the commit went ahead although 10 tests had
+failed, and the failure names were thrown away. The change itself was
+checked afterwards and was clean.
+
+**Rule.** Never chain an action after a piped test run. Write the output to
+a file and act on the test command's own exit code; confirm a file pattern
+matched something before passing it on.
+
+Here: this file
+BKM: FullStackBKM 2458104
+
 ## PM-13 · 2026-10-16 · In a shared working copy, a commit is a release
 
 **What happened.** CrashTech's checkpoint sprint was committed, and the full
