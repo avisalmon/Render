@@ -1,6 +1,7 @@
 # Books: Spec
 
-Status: **Full spec, first draft, 2026-10-18, for Avi's review.** Part A
+Status: **Full spec approved by Avi, 2026-10-18** (design gate closed the
+same day, BK1 §1.1c; backlog in [backlog.md](backlog.md)). Part A
 (sections 1 to 13) is the introduction Avi reviewed. Part B is the full spec,
 one chapter per epic (BK1 to BK13). The data model,
 [data_model.md](data_model.md), was approved by Avi on 2026-10-18. Process:
@@ -425,9 +426,21 @@ alt text on covers, no meaning carried by colour alone.
   owner-scoped permissions from the start (Rule 6).
 
 **1.6 Storage and jobs.**
-- **Images** (shelf photos, spine crops, covers, copy photos) go to the site's
-  existing object storage in Books' own folder, never to the web server's
-  disk alone. Covers are always our own copies.
+- **Images** (shelf photos, spine crops, covers, copy photos) go to **Books'
+  own Google Cloud Storage bucket** (Avi, 2026-10-18), never to the web
+  server's 1 GB disk. The site's existing shared storage is Google Drive
+  (`app/drive.py`, made for ustrip's photos); it is not built to serve many
+  images to many phones, and using it would make Books depend on `app/`
+  (Rule 2). The bucket is private: covers may be served publicly, everything
+  personal (shelf photos, copy photos) only through short-lived signed links
+  to its owner and to the people the owner shares a deal with. Covers are
+  always our own copies.
+- **Photo location, a bonus if present** (Avi, 2026-10-18). When a shelf
+  photo carries GPS data, Books reads it once on upload and uses it only
+  rounded to a neighbourhood: to suggest the person's area during onboarding
+  or when they have none, and to tell which home a shelf belongs to. The
+  precise point is then removed from the stored image and never saved, in
+  line with spec 12.9.
 - **Recognition runs outside the page request,** so a scan never times out a
   phone. The mechanism is chosen in the sprint (the site already runs
   in-process jobs triggered by tokens).
