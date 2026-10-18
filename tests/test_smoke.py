@@ -32,6 +32,8 @@ pytestmark = pytest.mark.smoke
         "/memz/",  # the memz front door (docs/memz/spec.md §4.1)
         "/memz/login/",
         "/memz/signup/",
+        "/books/login/",  # Books' front door (docs/books/spec.md BK1)
+        "/books/signup/",
     ],
 )
 def test_the_page_serves(client, db, path):
@@ -66,6 +68,16 @@ def test_memz_stays_sealed_too(client, db):
     memz = client.get("/memz/").content.decode()
     assert "babook" not in memz.lower()
     assert "/matazim" not in memz and "/ustrip" not in memz
+
+
+def test_books_stays_sealed_too(client, db):
+    """The same seal for Books (docs/books/spec.md BK1, building_an_app.md Rule 3)."""
+    babook = client.get("/").content.decode()
+    assert 'href="/books' not in babook
+
+    books = client.get("/books/login/").content.decode()
+    assert "babook" not in books.lower()
+    assert "/matazim" not in books and "/memz" not in books
 
 
 def test_every_memz_css_variable_is_defined():

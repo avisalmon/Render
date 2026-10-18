@@ -1,0 +1,10 @@
+{% extends "books/base.html" %}
+{% block title %}לא נמצא · ספרים{% endblock %}
+{% block screen %}404{% endblock %}
+{% block content %}
+<div class="bk-narrow bk-empty">
+  <h1 class="bk-title">הדף הזה לא על המדף</h1>
+  <p class="bk-lead">אולי הוא הושאל, אולי מעולם לא היה.</p>
+  <a class="bk-btn bk-btn--primary" href="{% url 'books:home' %}">חזרה לספרייה</a>
+</div>
+{% endblock %}

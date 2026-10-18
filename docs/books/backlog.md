@@ -47,7 +47,7 @@ waits for Avi's approval before any code.**
 Goal and done-when: spec Part B, BK1. Built in this order so that a real,
 finished-looking empty Books exists after the first two sprints.
 
-### SPR-BK1.1: The skeleton and the seal `TODO`
+### SPR-BK1.1: The skeleton and the seal `DONE (dev), 2026-10-18, awaiting review`
 
 **Goal:** `/books/` exists, sealed from babook in both directions, with its own
 base template in the approved bright palette, its own sign-in, onboarding that
@@ -56,16 +56,35 @@ library at the end.
 
 | ID | Feature | Traces | Status |
 | --- | --- | --- | --- |
-| F-BK1.1.1 | Django app `books` in `INSTALLED_APPS`, mounted at `/books/` before the catch-all, namespace `books`, own migration chain from `0001` | Rules 2, 5 | TODO |
-| F-BK1.1.2 | Own 403/404/500 in Books' look, composed into `mysite/errors.py` by prefix | spec BK1 §1.5 | TODO |
-| F-BK1.1.3 | Base template: `--bk-*` tokens from spec §1.1c (light default, dark under a `data-theme` switch), David Libre + Heebo, header and menu, no babook chrome, no link out | Rule 3, §1.1c | TODO |
-| F-BK1.1.4 | Sign in, sign up, sign out, password reset in Books' look on the shared `User`; Google sign-in first | §1.5 | TODO |
-| F-BK1.1.5 | `Profile` model (data model §4), created at onboarding: display name, language, 18+ confirmation, terms accepted, area (stored **rounded**, never an address) | data model §4, spec 12.9 | TODO |
-| F-BK1.1.6 | DRF scaffold under `/books/api/`: router, owner-scoped permission base, `profile` endpoint; browsable for staff | Rule 6 | TODO |
-| F-BK1.1.7 | Refusal tests: anonymous refused everywhere; another person's profile is 404; unrounded coordinates are rounded on save; no route answers for a person without a Profile except onboarding | §1.7 | TODO |
-| F-BK1.1.8 | The empty library screen (an empty shelf under the lamp, "photograph your first shelf") | design board | TODO |
-| F-BK1.1.9 | The seal in `tests/test_smoke.py`: Books' pages serve 200; no `/books` link from babook; no babook chrome or link inside Books | Rule 3 | TODO |
-| F-BK1.1.10 | `docs/books/dashboard.html`, Books' own progress view | Rule 4 | TODO |
+| F-BK1.1.1 | Django app `books` in `INSTALLED_APPS`, mounted at `/books/` before the catch-all, namespace `books`, own migration chain from `0001` | Rules 2, 5 | DONE |
+| F-BK1.1.2 | Own 403/404/500 in Books' look, composed into `mysite/errors.py` by prefix | spec BK1 §1.5 | DONE |
+| F-BK1.1.3 | Base template: `--bk-*` tokens from spec §1.1c (light default, dark under a `data-theme` switch), David Libre + Heebo, header and menu, no babook chrome, no link out | Rule 3, §1.1c | DONE |
+| F-BK1.1.4 | Sign in, sign up, sign out, password reset in Books' look on the shared `User`; Google sign-in first | §1.5 | DONE |
+| F-BK1.1.5 | `Profile` model (data model §4), created at onboarding: display name, language, 18+ confirmation, terms accepted, area (stored **rounded**, never an address) | data model §4, spec 12.9 | DONE |
+| F-BK1.1.6 | DRF scaffold under `/books/api/`: router, owner-scoped permission base, `profile` endpoint; browsable for staff | Rule 6 | DONE |
+| F-BK1.1.7 | Refusal tests: anonymous refused everywhere; another person's profile is 404; unrounded coordinates are rounded on save; no route answers for a person without a Profile except onboarding | §1.7 | DONE |
+| F-BK1.1.8 | The empty library screen (an empty shelf under the lamp, "photograph your first shelf") | design board | DONE |
+| F-BK1.1.9 | The seal in `tests/test_smoke.py`: Books' pages serve 200; no `/books` link from babook; no babook chrome or link inside Books | Rule 3 | DONE |
+| F-BK1.1.10 | `docs/books/dashboard.html`, Books' own progress view | Rule 4 | DONE |
+
+**Sprint notes (2026-10-18).**
+
+- 30 tests in `tests/test_books_1_1.py` (marker `sprbk1_1`), refusals first; the
+  smoke gate gains Books' front doors and its seal. All green. The two smoke
+  failures in the same run are matazim's (`--mz-action-text`, a stale matazim
+  dashboard), from another session's uncommitted work, present before this
+  sprint.
+- A test caught a real gap on the first run: Django's sign-in follows any
+  same-site `next`, so `/books/login/?next=/admin/` left Books. Sign-in now only
+  follows a `next` inside `/books/`.
+- Screenshots at 390 and 1280 looked at: sign-in, onboarding, the empty
+  library. One fix from looking: letter-spacing on Hebrew text pulls the
+  letters apart, so the kicker style has none (the design boards used it;
+  it does not work in Hebrew).
+- The profile API is full CRUD scoped to the caller, except create, which is
+  onboarding's job (it records age and terms); tier, age and terms are
+  read-only. A precise point sent to it is stored rounded.
+- Not deployed. The dev database has migration `books.0001`.
 
 ### SPR-BK1.2: The design system and the shelf `TODO`
 

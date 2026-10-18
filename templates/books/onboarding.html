@@ -1,0 +1,25 @@
+{% extends "books/base.html" %}
+{% block title %}ברוכים הבאים · ספרים{% endblock %}
+{% block screen %}onboarding{% endblock %}
+{% block account %}{% endblock %}
+{% block content %}
+<div class="bk-narrow">
+  <h1 class="bk-title">ברוכים הבאים לספרים</h1>
+  <p class="bk-lead">שלושה דברים קטנים, ואפשר להתחיל לבנות את המדף.</p>
+  <form method="post" class="bk-card bk-form" novalidate>
+    {% csrf_token %}
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+    {% for field in form %}
+      {% if field.name == "is_adult_confirmed" or field.name == "accept_terms" %}
+        <label class="bk-check">{{ field }} <span>{% if field.name == "accept_terms" %}קראתי ואני מסכימ/ה ל<a href="{% url 'books:terms' %}">תנאי השימוש</a> ול<a href="{% url 'books:privacy' %}">מדיניות הפרטיות</a>{% else %}{{ field.label }}{% endif %}</span></label>
+      {% else %}
+        <label class="bk-field">{{ field.label }} {{ field }}
+          {% if field.help_text %}<span class="bk-help">{{ field.help_text }}</span>{% endif %}
+        </label>
+      {% endif %}
+      {% if field.errors %}<p class="bk-error" role="alert">{{ field.errors.0 }}</p>{% endif %}
+    {% endfor %}
+    <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">ממשיכים</button>
+  </form>
+</div>
+{% endblock %}

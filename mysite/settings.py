@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "ustrip",
     "memz",
     "counter",
+    "books",
     "sensorlab",
     "exo",
     "blackjack",

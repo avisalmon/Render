@@ -1,0 +1,47 @@
+{% extends "books/base.html" %}
+{% block title %}הספרייה שלי · ספרים{% endblock %}
+{% block screen %}home{% endblock %}
+{% block content %}
+<div class="bk-room">
+  <div class="bk-lamp" aria-hidden="true">
+    <svg width="120" height="44" viewBox="0 0 120 44" fill="none">
+      <path class="bk-lamp-cord" d="M60 0v14" stroke-width="2"/>
+      <path class="bk-lamp-shade" d="M38 30 L48 14 H72 L82 30 Z"/>
+      <path class="bk-lamp-rim" d="M38 30 H82" stroke-width="2"/>
+      <ellipse class="bk-lamp-bulb" cx="60" cy="33" rx="12" ry="3"/>
+    </svg>
+  </div>
+  <p class="bk-kicker" style="text-align: center; margin: 4px 0 8px">המדף של {{ profile.display_name }}</p>
+  <div class="bk-shelf" aria-label="המדף שלך, עדיין ריק">
+    <span class="bk-bookend bk-bookend--start" aria-hidden="true"></span>
+    <span class="bk-bookend bk-bookend--end" aria-hidden="true"></span>
+    <div class="bk-shelf-empty"><span class="bk-muted">המדף עוד ריק</span></div>
+  </div>
+  <div class="bk-shelf-board" aria-hidden="true"></div>
+</div>
+
+<div class="bk-empty bk-narrow">
+  <h1 class="bk-title">כאן יעמדו הספרים שלך</h1>
+  <p class="bk-lead">מצלמים מדף אחד, ותוך דקות הספרים שעליו עומדים כאן, כל אחד עם השם שלו על השדרה.</p>
+  <span class="bk-btn bk-btn--primary bk-btn--wide" role="button" aria-disabled="true">
+    <svg class="bk-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+    צילום המדף הראשון
+  </span>
+  <p class="bk-muted">הצילום נפתח בקרוב.</p>
+</div>
+{% endblock %}
+
+{% block nav %}
+<nav class="bk-nav" aria-label="ניווט ראשי">
+  <a class="bk-nav-item" href="{% url 'books:home' %}" aria-current="page">
+    <svg class="bk-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h4v16H5zM10 4h4v16h-4zM15.5 5l3.8 1-3.6 14-3.8-1z"/></svg>אוסף</a>
+  <span class="bk-nav-item" aria-disabled="true">
+    <svg class="bk-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.5-6-11a6 6 0 0 1 12 0c0 5.5-6 11-6 11z"/><circle cx="12" cy="10" r="2"/></svg>בקרבתך</span>
+  <span class="bk-nav-item" aria-disabled="true">
+    <svg class="bk-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10l9-6 9 6M5 10v9M19 10v9M9 10v9M15 10v9M3 21h18"/></svg>מוזיאון</span>
+  <span class="bk-nav-item" aria-disabled="true">
+    <svg class="bk-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M15 14.5c3 0 6 2 6 5.5"/></svg>מועדון</span>
+  <span class="bk-nav-item" aria-disabled="true">
+    <svg class="bk-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>אני</span>
+</nav>
+{% endblock %}

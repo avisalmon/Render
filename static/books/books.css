@@ -1,0 +1,155 @@
+/* Books: the lamp-lit shelf (spec BK1 §1.1c, the approved design board).
+   Light is the default; dark mode is html[data-theme="dark"]. Every colour
+   used anywhere in Books is one of these tokens. */
+:root {
+  --bk-ground: #EFE6D6;
+  --bk-surface: #F8F2E7;
+  --bk-ink: #241C13;
+  --bk-muted: #6A5D4A;
+  --bk-brass: #7A5518;
+  --bk-on-brass: #FFF8EA;
+  --bk-line: #D3C4A8;
+  --bk-wood: #B08A5A;
+  --bk-wood-edge: #C9A473;
+  --bk-lamp-glow: rgba(255, 214, 140, 0.5);
+  --bk-lamp-fade: rgba(239, 230, 214, 0);
+  --bk-lamp-shade: #A87C34;
+  --bk-lamp-cord: #9C8460;
+  --bk-lamp-bulb: #FFE2A0;
+  --bk-shadow: rgba(80, 55, 20, 0.25);
+  --bk-danger: #A3261B;
+  --bk-serif: "David Libre", "Frank Ruhl Libre", Georgia, serif;
+  --bk-sans: "Heebo", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+html[data-theme="dark"] {
+  --bk-ground: #120F0C;
+  --bk-surface: #18140F;
+  --bk-ink: #EFE6D2;
+  --bk-muted: #A89C86;
+  --bk-brass: #D8B46A;
+  --bk-on-brass: #15120F;
+  --bk-line: #3A3128;
+  --bk-wood: #4E3B28;
+  --bk-wood-edge: #7A6040;
+  --bk-lamp-glow: rgba(216, 180, 106, 0.2);
+  --bk-lamp-fade: rgba(18, 15, 12, 0);
+  --bk-lamp-shade: #B8924A;
+  --bk-lamp-cord: #6A5338;
+  --bk-lamp-bulb: #F3D99A;
+  --bk-shadow: rgba(0, 0, 0, 0.6);
+  --bk-danger: #F08A7E;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body.bk {
+  background: var(--bk-ground);
+  color: var(--bk-ink);
+  font: 16px/1.55 var(--bk-sans);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+a { color: var(--bk-brass); }
+a:hover { color: var(--bk-ink); }
+:focus-visible { outline: 2px solid var(--bk-brass); outline-offset: 2px; }
+
+.bk-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 14px 22px; max-width: 1100px; width: 100%; margin: 0 auto;
+}
+.bk-wordmark {
+  font-family: var(--bk-serif); font-weight: 700; font-size: 30px; letter-spacing: 1px;
+  color: var(--bk-brass); text-decoration: none;
+}
+.bk-account { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--bk-muted); }
+.bk-account form { margin: 0; }
+
+.bk-main { flex: 1; width: 100%; max-width: 1100px; margin: 0 auto; padding: 0 22px 28px; }
+.bk-narrow { max-width: 440px; margin: 0 auto; }
+
+.bk-title { font-family: var(--bk-serif); font-weight: 500; font-size: 28px; line-height: 1.2; margin: 8px 0 14px; }
+.bk-lead { color: var(--bk-muted); margin: 0 0 18px; }
+.bk-kicker { font-size: 13px; color: var(--bk-muted); letter-spacing: 0; }
+.bk-muted { color: var(--bk-muted); font-size: 14px; }
+.bk-divider { text-align: center; color: var(--bk-muted); font-size: 14px; margin: 16px 0; }
+
+.bk-card { background: var(--bk-surface); border: 1px solid var(--bk-line); border-radius: 6px; padding: 18px; }
+.bk-form { display: grid; gap: 14px; }
+.bk-field { display: grid; gap: 4px; font-size: 14px; color: var(--bk-muted); }
+.bk-field .bk-help { font-size: 13px; }
+.bk-check { display: flex; align-items: flex-start; gap: 10px; font-size: 15px; color: var(--bk-ink); min-height: 44px; }
+.bk-check input { width: 20px; height: 20px; margin-top: 3px; accent-color: var(--bk-brass); flex: none; }
+.bk-input {
+  font: inherit; color: var(--bk-ink); background: var(--bk-ground);
+  border: 1px solid var(--bk-line); border-radius: 6px; padding: 10px 12px; min-height: 44px; width: 100%;
+}
+.bk-error { color: var(--bk-danger); font-size: 14px; margin: 0; }
+
+.bk-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  font: inherit; font-size: 16px; min-height: 48px; padding: 0 18px; border-radius: 6px;
+  border: 1px solid var(--bk-line); background: var(--bk-surface); color: var(--bk-ink);
+  cursor: pointer; text-decoration: none;
+}
+.bk-btn:hover { color: var(--bk-ink); border-color: var(--bk-brass); }
+.bk-btn--primary { background: var(--bk-brass); border-color: var(--bk-brass); color: var(--bk-on-brass); font-weight: 700; }
+.bk-btn--primary:hover { color: var(--bk-on-brass); }
+.bk-btn--quiet { border: 0; background: none; color: var(--bk-muted); min-height: 44px; padding: 0 8px; font-size: 14px; }
+.bk-btn--wide { width: 100%; }
+.bk-btn[aria-disabled="true"] { opacity: 0.6; cursor: default; }
+.bk-stack { display: grid; gap: 10px; margin-top: 16px; }
+
+/* The lamp and the shelf (approved board C3). */
+.bk-room {
+  background: radial-gradient(ellipse 70% 60% at 50% 20%, var(--bk-lamp-glow), var(--bk-lamp-fade) 70%);
+  padding: 0 0 8px;
+}
+.bk-lamp { display: flex; justify-content: center; }
+.bk-lamp-cord { stroke: var(--bk-lamp-cord); }
+.bk-lamp-shade { fill: var(--bk-lamp-shade); }
+.bk-lamp-rim { stroke: var(--bk-brass); }
+.bk-lamp-bulb { fill: var(--bk-lamp-bulb); }
+.bk-shelf { position: relative; height: 150px; }
+.bk-shelf-board {
+  height: 14px; background: var(--bk-wood); border-top: 2px solid var(--bk-wood-edge);
+  box-shadow: 0 8px 14px var(--bk-shadow);
+}
+.bk-shelf-empty {
+  position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center;
+  padding-bottom: 18px; text-align: center;
+}
+.bk-bookend { position: absolute; bottom: 0; width: 12px; height: 64px; background: var(--bk-lamp-shade); border-radius: 2px 2px 0 0; }
+.bk-bookend--start { inset-inline-start: 12%; }
+.bk-bookend--end { inset-inline-end: 12%; }
+
+.bk-empty { text-align: center; margin-top: 20px; }
+.bk-empty .bk-btn { margin-top: 6px; }
+
+/* Bottom navigation on a phone; future sections are shown, not linked. */
+.bk-nav {
+  position: sticky; bottom: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+  background: var(--bk-surface); border-top: 1px solid var(--bk-line); padding: 6px 4px 14px;
+}
+.bk-nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 3px; min-height: 48px;
+  font-size: 12px; color: var(--bk-muted); text-decoration: none; justify-content: center;
+}
+.bk-nav-item[aria-current="page"] { color: var(--bk-brass); font-weight: 700; }
+.bk-nav-item[aria-disabled="true"] { opacity: 0.55; }
+.bk-icon { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+.bk-footer { text-align: center; font-size: 13px; color: var(--bk-muted); padding: 12px 22px 20px; }
+.bk-footer a { color: var(--bk-muted); }
+
+.bk-prose { max-width: 680px; }
+.bk-prose h2 { font-family: var(--bk-serif); font-weight: 500; }
+.bk-draft { background: var(--bk-surface); border: 1px dashed var(--bk-brass); padding: 10px 14px; border-radius: 6px; }
+
+@media (min-width: 900px) {
+  .bk-nav { display: none; }
+  .bk-shelf { height: 190px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}

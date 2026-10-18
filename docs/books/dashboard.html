@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Books · Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --bg: #EFE6D6; --card: #F8F2E7; --ink: #241C13; --muted: #6A5D4A; --brass: #7A5518; --line: #D3C4A8;
+          --done: #2E6B45; --wip: #8A5A00; --todo: #6A5D4A; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 28px 16px 60px; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, sans-serif; }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  h1 { font-family: Georgia, serif; font-weight: 500; font-size: 30px; margin: 0 0 4px; color: var(--brass); }
+  .sub { color: var(--muted); margin: 0 0 22px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 26px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+  .stat b { display: block; font-size: 24px; }
+  .stat span { font-size: 12px; color: var(--muted); }
+  h2 { font-size: 17px; margin: 24px 0 8px; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  td, th { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 12px; color: var(--muted); font-weight: 600; }
+  .s { font-weight: 700; font-size: 12px; white-space: nowrap; }
+  .done { color: var(--done); } .wip { color: var(--wip); } .todo { color: var(--todo); }
+  .box { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Books</h1>
+  <p class="sub">Progress view for the Books app. Sources of truth: docs/books/spec.md and docs/books/backlog.md. Updated by hand at the end of each sprint.</p>
+
+  <div class="stats">
+    <div class="stat"><b>4 / 4</b><span>kickoff gates closed</span></div>
+    <div class="stat"><b>1 / 7</b><span>BK1 sprints done (dev)</span></div>
+    <div class="stat"><b>0</b><span>deployed</span></div>
+    <div class="stat"><b>6</b><span>Avi's actions open</span></div>
+  </div>
+
+  <h2>Gates</h2>
+  <div class="box"><table>
+    <tr><th>Gate</th><th>Status</th></tr>
+    <tr><td>Intro spec (Part A)</td><td class="s done">Reviewed 2026-10-18</td></tr>
+    <tr><td>Data model</td><td class="s done">Approved 2026-10-18</td></tr>
+    <tr><td>Design board (lamp-lit, bright default)</td><td class="s done">Approved 2026-10-18</td></tr>
+    <tr><td>Full spec (Part B) and backlog</td><td class="s done">Approved 2026-10-18</td></tr>
+  </table></div>
+
+  <h2>Epic BK1: design, graphics and infrastructure</h2>
+  <div class="box"><table>
+    <tr><th>Sprint</th><th>What</th><th>Status</th></tr>
+    <tr><td>SPR-BK1.1</td><td>Skeleton and seal: app, sign-in, onboarding, Profile, API, empty library</td><td class="s done">Done (dev)</td></tr>
+    <tr><td>SPR-BK1.2</td><td>Design system and the shelf</td><td class="s todo">To do</td></tr>
+    <tr><td>SPR-BK1.3</td><td>Hebrew and English, two directions</td><td class="s todo">To do</td></tr>
+    <tr><td>SPR-BK1.4</td><td>Desktop, tablet, installable, accessible</td><td class="s todo">To do</td></tr>
+    <tr><td>SPR-BK1.5</td><td>Bucket storage, jobs, cost, privacy plumbing</td><td class="s todo">To do</td></tr>
+    <tr><td>SPR-BK1.6</td><td>Appearance settings</td><td class="s todo">To do</td></tr>
+    <tr><td>SPR-BK1.7</td><td>Other shelf views</td><td class="s todo">To do</td></tr>
+  </table></div>
+
+  <h2>Pilot epics</h2>
+  <div class="box"><table>
+    <tr><th>Epic</th><th>Status</th></tr>
+    <tr><td>BK2 The book catalogue</td><td class="s todo">Outlined</td></tr>
+    <tr><td>BK3 Shelf scan and confirmation</td><td class="s todo">Outlined</td></tr>
+    <tr><td>BK4 My library</td><td class="s todo">Outlined</td></tr>
+    <tr><td>BK5 The hub</td><td class="s todo">Outlined</td></tr>
+    <tr><td>BK6 Circles and the first launch</td><td class="s todo">Outlined</td></tr>
+  </table></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,35 @@
+{% load static %}<!doctype html>
+<html lang="he" dir="rtl" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}ספרים{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=David+Libre:wght@400;500;700&amp;family=Heebo:wght@300;400;500;700&amp;display=swap">
+  <link rel="stylesheet" href="{% static 'books/books.css' %}">
+  <meta name="theme-color" content="#EFE6D6">
+</head>
+<body class="bk" data-screen="{% block screen %}page{% endblock %}">
+  <header class="bk-header">
+    <a class="bk-wordmark" href="{% url 'books:home' %}">ספרים</a>
+    <div class="bk-account">
+      {% if user.is_authenticated %}
+        {% block account %}<span>{{ user.books_profile.display_name|default:user.email }}</span>{% endblock %}
+        <form method="post" action="{% url 'books:logout' %}">{% csrf_token %}
+          <button type="submit" class="bk-btn bk-btn--quiet">יציאה</button>
+        </form>
+      {% else %}
+        {% block signin %}<a class="bk-btn bk-btn--quiet" href="{% url 'books:login' %}">כניסה</a>{% endblock %}
+      {% endif %}
+    </div>
+  </header>
+
+  <main class="bk-main">{% block content %}{% endblock %}</main>
+
+  {% block nav %}{% endblock %}
+
+  <footer class="bk-footer">
+    <a href="{% url 'books:terms' %}">תנאי שימוש</a> · <a href="{% url 'books:privacy' %}">פרטיות</a>
+  </footer>
+</body>
+</html>

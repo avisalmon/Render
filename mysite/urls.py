@@ -62,6 +62,8 @@ urlpatterns = [
     path("crashtech/", include("crashtech.urls", namespace="crashtech")),
     # counter is its own capability (docs/counter/spec.md), same reasoning.
     path("counter/", include("counter.urls", namespace="counter")),
+    # Books is the central app (docs/books/spec.md), its own product, same reasoning.
+    path("books/", include("books.urls", namespace="books")),
     path("blackjack/", include("blackjack.urls", namespace="blackjack")),
     # improv is private (docs/improv/spec.md ch. 7): its gate is in the middleware.
     path("improv/", include("improv.urls", namespace="improv")),

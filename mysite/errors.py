@@ -12,6 +12,7 @@ through to Django's own defaults, which is what renders babook's own
 
 from django.views import defaults
 
+from books import errors as books_errors
 from counter import errors as counter_errors
 from crashtech import errors as crashtech_errors
 from exo import errors as exo_errors
@@ -32,6 +33,8 @@ def page_not_found(request, exception=None):
         return sensorlab_errors.page_not_found(request, exception)
     if request.path.startswith(exo_errors.PREFIX):
         return exo_errors.page_not_found(request, exception)
+    if request.path.startswith(books_errors.PREFIX):
+        return books_errors.page_not_found(request, exception)
     if request.path.startswith(counter_errors.PREFIX):
         return counter_errors.page_not_found(request, exception)
     if request.path.startswith(crashtech_errors.PREFIX):
@@ -50,6 +53,8 @@ def server_error(request):
         return sensorlab_errors.server_error(request)
     if request.path.startswith(exo_errors.PREFIX):
         return exo_errors.server_error(request)
+    if request.path.startswith(books_errors.PREFIX):
+        return books_errors.server_error(request)
     if request.path.startswith(counter_errors.PREFIX):
         return counter_errors.server_error(request)
     if request.path.startswith(crashtech_errors.PREFIX):
@@ -68,6 +73,8 @@ def permission_denied(request, exception=None):
         return sensorlab_errors.permission_denied(request, exception)
     if request.path.startswith(exo_errors.PREFIX):
         return exo_errors.permission_denied(request, exception)
+    if request.path.startswith(books_errors.PREFIX):
+        return books_errors.permission_denied(request, exception)
     if request.path.startswith(counter_errors.PREFIX):
         return counter_errors.permission_denied(request, exception)
     if request.path.startswith(crashtech_errors.PREFIX):

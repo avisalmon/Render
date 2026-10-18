@@ -1,0 +1,10 @@
+{% extends "books/base.html" %}
+{% block title %}אין גישה · ספרים{% endblock %}
+{% block screen %}403{% endblock %}
+{% block content %}
+<div class="bk-narrow bk-empty">
+  <h1 class="bk-title">המדף הזה סגור</h1>
+  <p class="bk-lead">אין לך גישה לדף הזה.</p>
+  <a class="bk-btn bk-btn--primary" href="{% url 'books:home' %}">חזרה לספרייה</a>
+</div>
+{% endblock %}
