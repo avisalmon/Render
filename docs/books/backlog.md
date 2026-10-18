@@ -38,7 +38,9 @@ listed for his ack when BK2 is live).
 | ACT-BK.3 | Photograph 10 or more real shelves (Hebrew, English, mixed) and label them, for the accuracy gate | SPR-BK3.4 | TODO |
 | ACT-BK.4 | Choose the first circle (a book club, school, workplace or neighbourhood) and its first members | BK6 | TODO |
 | ACT-BK.5 | Read the Google Books terms against the paid tier (spec 12.11) | BK11 | TODO |
-| ACT-BK.6 | Create the Google Cloud Storage bucket for Books (private, Europe or Israel region) and a service account limited to that one bucket; put its key in Render's environment, never in git. I can write the exact steps | SPR-BK1.5 (dev can use local disk until then) | TODO |
+| ACT-BK.6 | Create the Google Cloud Storage bucket for Books (private, Europe or Israel region) and a service account limited to that one bucket; put its key in Render's environment (`BOOKS_GCS_BUCKET`, `BOOKS_GCS_CREDENTIALS_JSON`), never in git. I can write the exact steps | images in prod (disk fallback until then) | TODO |
+| ACT-BK.7 | Request a National Library of Israel API key and set `BOOKS_NLI_API_KEY` in Render; until then Hebrew look-ups rely on Open Library and Google Books | BK3 accuracy gate | TODO |
+| ACT-BK.8 | Optionally a Google Books API key (`BOOKS_GOOGLE_BOOKS_KEY`) for a higher quota | BK3 | TODO |
 
 ---
 
@@ -199,18 +201,57 @@ sooner; they do not block anything.
 
 ---
 
-## Epic BK2: The book catalogue (outline)
+## Epic BK2: The book catalogue `DONE (dev), 2026-10-18`
 
-Sprints are written in full when BK1 is done.
+Goal and done-when: spec Part B, BK2. Built in the autonomous run; decisions
+listed in data_model.md section 11 and in the sprint notes for Avi's ack.
 
-- **SPR-BK2.1** CatalogEntry, Creator (with aliases), Tag, EntryIdentifier,
-  BookDetail; admin; API with refusal tests; the tag list seeded once.
-- **SPR-BK2.2** Sources: Open Library, National Library of Israel, Google
-  Books, each copied into our records with its source; caching and limits;
-  covers into storage.
-- **SPR-BK2.3** Matching (identifier, then title, creator and publisher;
-  danacode) and search in both languages, tolerant of spelling and vowel marks.
-- **SPR-BK2.4** Curation: verify, merge duplicates, accept corrections.
+### SPR-BK2.1: Models, seed, API `DONE (dev), 2026-10-18`
+
+| ID | Feature | Status |
+| --- | --- | --- |
+| F-BK2.1.1 | CollectionType, Creator (+ CreatorAlias), Tag, CatalogEntry (editions under a parent), EntryCreator, EntryIdentifier, BookDetail, EntryCorrection; migration 0004 | DONE |
+| F-BK2.1.2 | `seed_books`: the `book` type and 54 tags (genre, audience, mood, form) from `books/seed_assets/tags.json`, one-time, never overwrites; wired into render.yaml | DONE |
+| F-BK2.1.3 | DRF: catalog, creators, creator-aliases, tags, identifiers, book-details, corrections; search / verify / merge / suggest actions | DONE |
+| F-BK2.1.4 | Refusal tests: anonymous and un-onboarded get nothing; a reader may add an unverified record and edit it until verified; nobody sets verified, owner or source; delete, verify and merge are a curator's; tags and creators read-only for readers | DONE |
+
+### SPR-BK2.2: Sources `DONE (dev), 2026-10-18`
+
+| ID | Feature | Status |
+| --- | --- | --- |
+| F-BK2.2.1 | Adapters: Open Library (no key, contact User-Agent, 0.4 s interval), Google Books (optional key), National Library of Israel (needs `BOOKS_NLI_API_KEY`, skipped without; reads danacodes) | DONE |
+| F-BK2.2.2 | `lookup()` across enabled sources, cached a day, a failing source skipped and logged | DONE |
+| F-BK2.2.3 | `upsert_from_record`: identifier match, then exact normalised title + creator; fills blanks on an existing entry; importing twice changes nothing | DONE |
+| F-BK2.2.4 | Covers copied into Books' storage by a background job; Open Library's 1x1 placeholder ignored | DONE |
+
+### SPR-BK2.3: Matching and search `DONE (dev), 2026-10-18`
+
+| ID | Feature | Status |
+| --- | --- | --- |
+| F-BK2.3.1 | `textnorm`: vowel marks, final letters, quotes, articles, ISBN-10/13 validation and folding, danacode, similarity | DONE |
+| F-BK2.3.2 | `search_local`: a typed ISBN or danacode goes straight to the record; else every token must appear, ranked by similarity; merged entries never return | DONE |
+| F-BK2.3.3 | `/books/catalog/`: search, genre chips, "look in the big libraries too" (copies the results in), "add a book by hand" | DONE |
+| F-BK2.3.4 | `/books/catalog/new/` and `/edit/`: title, subtitle, creators, language, year, publisher, ISBN or danacode (validated), genres | DONE |
+| F-BK2.3.5 | `/books/catalog/<id>/`: cover, creators, facts, identifiers, editions, tags, a correction form; merged records redirect to their winner | DONE |
+
+### SPR-BK2.4: Curation `DONE (dev), 2026-10-18`
+
+| ID | Feature | Status |
+| --- | --- | --- |
+| F-BK2.4.1 | Verify; merge (identifiers, creators, tags, editions, corrections and blanks move to the winner, the loser points at it so old links resolve); duplicate suspects by normalised title and a shared creator | DONE |
+| F-BK2.4.2 | Corrections: a reader suggests (page form or API), sees only their own; a curator accepts (the record changes) or declines | DONE |
+| F-BK2.4.3 | `/books/curate/` (staff, 404 for others): unverified queue, suspects with one-click merge, open corrections | DONE |
+
+**Epic notes (2026-10-18).** 62 tests in `tests/test_books_2_*.py` plus seven
+catalogue screens in the contract, both themes and widths. Decisions for
+Avi's ack: (1) anyone onboarded may add a record, unverified, and edit it
+until a curator verifies it; (2) a mistyped 13-digit ISBN is refused rather
+than kept as a danacode; (3) sources are not deduped at look-up, the merge
+happens on import so the second source fills the first's blanks; (4) the NLI
+adapter waits for a key, ACT-BK.7; (5) `EntryCorrection`, `merged_into`,
+`search_text` and `CreatorAlias` are additions to the approved model. Known
+polish: the language shows as its code on a record page; the genre list on
+the add-by-hand form is long on a phone.
 
 ## Epic BK3: Shelf scan and confirmation (outline)
 

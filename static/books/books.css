@@ -391,3 +391,21 @@ html[dir="rtl"] .bk-tile-cover { border-radius: 8px 3px 3px 8px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+/* ---- the catalogue (BK2) ------------------------------------------------- */
+.bk-entry-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
+.bk-entry-row { background: var(--bk-surface); border: 1px solid var(--bk-line); border-radius: var(--bk-radius); }
+.bk-entry-row--actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; }
+.bk-entry-row--actions form { margin: 0; }
+.bk-entry-link { display: flex; gap: 12px; align-items: center; padding: 10px 12px; text-decoration: none; color: var(--bk-ink); min-height: 64px; }
+.bk-entry-link:hover { color: var(--bk-ink); }
+.bk-entry-cover { width: 36px; height: 52px; flex: none; background: var(--bk-surface-2); border-radius: 2px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.bk-entry-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.bk-entry-cover--large { width: 120px; height: 172px; border-radius: 3px; box-shadow: 0 8px 16px var(--bk-shadow); text-align: center; font-size: 12px; padding: 6px; }
+.bk-entry-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.bk-entry-title { font-family: var(--bk-serif); font-size: 18px; line-height: 1.2; }
+.bk-entry-head { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 16px; }
+.bk-plain-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.bk-plain-list code { background: var(--bk-surface); border: 1px solid var(--bk-line); border-radius: 4px; padding: 1px 6px; }
+.bk-link-row { display: flex; align-items: center; gap: 8px; min-height: 44px; text-decoration: none; color: var(--bk-ink); }
+.bk-link-row:hover { color: var(--bk-brass); }

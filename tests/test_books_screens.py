@@ -116,11 +116,29 @@ A11Y_JS = """() => {
 
 
 def build_world():
+    from django.core.management import call_command
+
+    from books import catalog
+    from books.models import EntryCorrection
+
     reader = User.objects.create_user("reader", "reader@example.com", PASSWORD)
-    Profile.objects.create(user=reader, display_name="נועה", is_adult_confirmed=True)
+    rp = Profile.objects.create(user=reader, display_name="נועה", is_adult_confirmed=True)
     staff = User.objects.create_user("staff", "staff@example.com", PASSWORD, is_staff=True)
     Profile.objects.create(user=staff, display_name="אבי", is_adult_confirmed=True)
     fresh = User.objects.create_user("fresh", "fresh@example.com", PASSWORD)
+    call_command("seed_books", verbosity=0)
+    # A small real catalogue: two of the same title for the curator's desk,
+    # an open correction, a verified record with a publisher and an ISBN.
+    a = catalog.CatalogEntry.objects.create(collection_type=catalog.book_type(), title="מיכאל שלי", year=1968,
+                                            language="he", is_verified=True, pk=1001)
+    catalog.set_creators(a, ["עמוס עוז"])
+    catalog.add_identifier(a, "isbn13", "9780156031608")
+    catalog.BookDetail.objects.create(entry=a, publisher="עם עובד", pages=220)
+    b = catalog.CatalogEntry.objects.create(collection_type=catalog.book_type(), title="מיכאל שלי", created_by=rp)
+    catalog.set_creators(b, ["עמוס עוז"])
+    c = catalog.CatalogEntry.objects.create(collection_type=catalog.book_type(), title="Jane Eyre", year=1847)
+    catalog.set_creators(c, ["Charlotte Brontë"])
+    EntryCorrection.objects.create(entry=a, profile=rp, field="year", value="1968", note="בדקתי")
     return {"reader": reader, "staff": staff, "fresh": fresh}
 
 
@@ -136,6 +154,13 @@ SCREENS = [
     ("settings", "/books/settings/", "reader", "settings"),
     ("my-data", "/books/me/data/", "reader", "my-data"),
     ("design", "/books/design/", "staff", "design"),
+    ("catalog-empty", "/books/catalog/", "reader", "catalog"),
+    ("catalog-results", "/books/catalog/?q=עוז", "reader", "catalog"),
+    ("catalog-none", "/books/catalog/?q=zzzz", "reader", "catalog"),
+    ("catalog-entry", "/books/catalog/1001/", "reader", "catalog-entry"),
+    ("catalog-new", "/books/catalog/new/", "reader", "catalog-new"),
+    ("catalog-tag", "/books/catalog/tag/fiction/", "reader", "catalog-tag"),
+    ("curate", "/books/curate/", "staff", "curate"),
 ]
 
 

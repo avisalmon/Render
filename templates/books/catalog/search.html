@@ -1,0 +1,36 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "catalog.title" %} · {% t "brand" %}{% endblock %}
+{% block screen %}catalog{% endblock %}
+{% block content %}
+<div class="bk-wide">
+  <h1 class="bk-title">{% t "catalog.title" %}</h1>
+  <p class="bk-lead">{% t "catalog.lead" %}</p>
+  <form method="get" class="bk-row" role="search">
+    <label class="bk-visually-hidden" for="catalog-q">{% t "search" %}</label>
+    <input id="catalog-q" class="bk-input" style="flex: 1 1 260px" type="search" name="q" value="{{ q }}" placeholder="{% t "catalog.placeholder" %}" autocomplete="off">
+    <button type="submit" class="bk-btn bk-btn--primary">{% t "search" %}</button>
+  </form>
+
+  {% if q %}
+    {% if searched_sources %}<p class="bk-notice bk-notice--ok" role="status">{% t "catalog.looked_further" %}</p>{% endif %}
+    {% if results %}
+      <p class="bk-muted">{% t "catalog.results" count=results|length %}</p>
+      {% include "books/catalog/_entry_list.html" with entries=results %}
+    {% else %}
+      <p class="bk-lead">{% t "catalog.none" %}</p>
+    {% endif %}
+    <div class="bk-row" style="margin-top: 16px">
+      {% if not searched_sources %}<a class="bk-btn" href="{% url 'books:catalog' %}?q={{ q|urlencode }}&amp;sources=1">{% t "catalog.look_further" %}</a>{% endif %}
+      <a class="bk-btn" href="{% url 'books:catalog_new' %}?q={{ q|urlencode }}">{% t "catalog.add_by_hand" %}</a>
+    </div>
+  {% else %}
+    <h2 class="bk-h2">{% t "catalog.browse_genres" %}</h2>
+    <div class="bk-chips">
+      {% for tag in tags %}<a class="bk-chip" style="display: inline-flex; align-items: center; text-decoration: none" href="{% url 'books:catalog_tag' tag.key %}">{% if lang == "he" %}{{ tag.name_he }}{% else %}{{ tag.name_en }}{% endif %}</a>{% endfor %}
+    </div>
+    <div class="bk-stack" style="max-width: 320px">
+      <a class="bk-btn" href="{% url 'books:catalog_new' %}">{% t "catalog.add_by_hand" %}</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

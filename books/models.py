@@ -9,6 +9,8 @@ from decimal import ROUND_HALF_UP, Decimal
 from django.conf import settings
 from django.db import models
 
+from .storage import books_storage
+
 # Two decimal places of latitude/longitude is about a kilometre: a
 # neighbourhood, never a building (spec 12.9, data model section 9).
 AREA_PLACES = Decimal("0.01")
@@ -106,3 +108,218 @@ class ModelCall(models.Model):
 
     def __str__(self):
         return f"{self.provider}/{self.model} {self.purpose} ${self.cost_usd}"
+
+
+# ---- Foundation: the shared catalogue (data model section 3) ----------------
+
+
+class CollectionType(models.Model):
+    """What kind of thing is collected. Today one row: book."""
+
+    key = models.SlugField(max_length=20, unique=True)
+    name_he = models.CharField(max_length=60)
+    name_en = models.CharField(max_length=60)
+    condition_scale = models.CharField(max_length=20, default="book")
+
+    def __str__(self):
+        return self.key
+
+
+class Creator(models.Model):
+    """An author, translator, illustrator; later a mint or an engraver. A
+    model, not a text column, so "books by this author" is a real query."""
+
+    name = models.CharField(max_length=200)
+    name_he = models.CharField(max_length=200, blank=True)
+    name_en = models.CharField(max_length=200, blank=True)
+    sort_name = models.CharField(max_length=200, blank=True)
+    search_name = models.CharField(max_length=200, blank=True, db_index=True)
+    source = models.CharField(max_length=30, blank=True)
+    is_verified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["sort_name", "name"]
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        from .textnorm import normalize
+
+        self.search_name = normalize(self.name)[:200]
+        if not self.sort_name:
+            self.sort_name = self.name
+        super().save(*args, **kwargs)
+
+
+class CreatorAlias(models.Model):
+    """Another spelling of the same person, so a Hebrew spine and an English
+    record meet on one creator."""
+
+    creator = models.ForeignKey(Creator, on_delete=models.CASCADE, related_name="aliases")
+    name = models.CharField(max_length=200)
+    search_name = models.CharField(max_length=200, blank=True, db_index=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["creator", "search_name"], name="books_alias_unique")]
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        from .textnorm import normalize
+
+        self.search_name = normalize(self.name)[:200]
+        super().save(*args, **kwargs)
+
+
+class Tag(models.Model):
+    """Genre, subject, mood, audience, form. A controlled list, so two
+    people's "thriller" is one tag. Drives browsing and, later, taste."""
+
+    KINDS = [("genre", "genre"), ("subject", "subject"), ("mood", "mood"), ("audience", "audience"), ("form", "form")]
+
+    kind = models.CharField(max_length=10, choices=KINDS, default="genre")
+    key = models.SlugField(max_length=40, unique=True)
+    name_he = models.CharField(max_length=80)
+    name_en = models.CharField(max_length=80)
+    parent = models.ForeignKey("self", on_delete=models.SET_NULL, null=True, blank=True, related_name="children")
+    collection_type = models.ForeignKey(CollectionType, on_delete=models.CASCADE, null=True, blank=True,
+                                        related_name="tags")
+
+    class Meta:
+        ordering = ["kind", "name_en"]
+
+    def __str__(self):
+        return self.key
+
+    def tr(self, lang):
+        return self.name_he if lang == "he" else self.name_en
+
+
+class CatalogEntry(models.Model):
+    """One shared, public record of a thing, the same for everyone. The
+    book, not my book. Editions group under a parent work."""
+
+    collection_type = models.ForeignKey(CollectionType, on_delete=models.PROTECT, related_name="entries")
+    title = models.CharField(max_length=300)
+    subtitle = models.CharField(max_length=300, blank=True)
+    language = models.CharField(max_length=8, blank=True)
+    year = models.PositiveSmallIntegerField(null=True, blank=True)
+    description = models.TextField(blank=True)
+    creators = models.ManyToManyField(Creator, through="EntryCreator", related_name="entries", blank=True)
+    tags = models.ManyToManyField(Tag, related_name="entries", blank=True)
+    cover = models.ImageField(upload_to="covers/%Y/%m/", storage=books_storage, blank=True)
+    cover_source_url = models.URLField(max_length=500, blank=True)
+    parent = models.ForeignKey("self", on_delete=models.SET_NULL, null=True, blank=True, related_name="editions")
+    source = models.CharField(max_length=30, blank=True)
+    source_ref = models.CharField(max_length=120, blank=True)
+    confidence_note = models.CharField(max_length=200, blank=True)
+    created_by = models.ForeignKey(Profile, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name="catalog_entries")
+    is_verified = models.BooleanField(default=False)
+    merged_into = models.ForeignKey("self", on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name="merged_from")
+    search_text = models.CharField(max_length=600, blank=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["title"]
+        verbose_name_plural = "catalog entries"
+
+    def __str__(self):
+        return self.title
+
+    def save(self, *args, **kwargs):
+        from .textnorm import normalize
+
+        if not self.pk or not self.search_text:
+            self.search_text = normalize(f"{self.title} {self.subtitle}")[:600]
+        super().save(*args, **kwargs)
+
+    def refresh_search_text(self):
+        """Title, subtitle and the creators, which only exist after the first save."""
+        from .textnorm import normalize
+
+        names = " ".join(c.name for c in self.creators.all())
+        text = normalize(f"{self.title} {self.subtitle} {names}")[:600]
+        CatalogEntry.objects.filter(pk=self.pk).update(search_text=text)
+        self.search_text = text
+
+    @property
+    def creator_names(self):
+        return ", ".join(c.name for c in self.creators.all())
+
+
+class EntryCreator(models.Model):
+    ROLES = [("author", "author"), ("translator", "translator"), ("illustrator", "illustrator"), ("editor", "editor")]
+
+    entry = models.ForeignKey(CatalogEntry, on_delete=models.CASCADE, related_name="entry_creators")
+    creator = models.ForeignKey(Creator, on_delete=models.CASCADE, related_name="entry_creators")
+    role = models.CharField(max_length=12, choices=ROLES, default="author")
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order"]
+        constraints = [models.UniqueConstraint(fields=["entry", "creator", "role"], name="books_entrycreator_unique")]
+
+
+class EntryIdentifier(models.Model):
+    """The ways a record can be recognised. Many Israeli books have a danacode
+    and no ISBN (spec 12.7)."""
+
+    SCHEMES = [("isbn13", "ISBN-13"), ("isbn10", "ISBN-10"), ("danacode", "danacode"),
+               ("openlibrary", "Open Library"), ("googlebooks", "Google Books"), ("nli", "National Library of Israel")]
+
+    entry = models.ForeignKey(CatalogEntry, on_delete=models.CASCADE, related_name="identifiers")
+    scheme = models.CharField(max_length=12, choices=SCHEMES)
+    value = models.CharField(max_length=64)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["scheme", "value"], name="books_identifier_unique")]
+
+    def __str__(self):
+        return f"{self.scheme}:{self.value}"
+
+
+class BookDetail(models.Model):
+    """Facts only books have."""
+
+    entry = models.OneToOneField(CatalogEntry, on_delete=models.CASCADE, related_name="book")
+    publisher = models.CharField(max_length=200, blank=True)
+    pages = models.PositiveIntegerField(null=True, blank=True)
+    edition_statement = models.CharField(max_length=120, blank=True)
+    binding = models.CharField(max_length=40, blank=True)
+    original_language = models.CharField(max_length=8, blank=True)
+
+    def __str__(self):
+        return f"book facts for {self.entry_id}"
+
+
+class EntryCorrection(models.Model):
+    """A person's suggestion that a record is wrong; a curator accepts it
+    (spec BK2 curation). Added in SPR-BK2.4, data model section 11."""
+
+    OPEN, ACCEPTED, DECLINED = "open", "accepted", "declined"
+    STATUSES = [(OPEN, "open"), (ACCEPTED, "accepted"), (DECLINED, "declined")]
+    FIELDS = [("title", "title"), ("subtitle", "subtitle"), ("creators", "creators"), ("year", "year"),
+              ("language", "language"), ("publisher", "publisher"), ("cover", "cover"), ("other", "other")]
+
+    entry = models.ForeignKey(CatalogEntry, on_delete=models.CASCADE, related_name="corrections")
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="corrections")
+    field = models.CharField(max_length=12, choices=FIELDS, default="other")
+    value = models.CharField(max_length=300, blank=True)
+    note = models.CharField(max_length=500, blank=True)
+    status = models.CharField(max_length=10, choices=STATUSES, default=OPEN, db_index=True)
+    handled_by = models.ForeignKey(Profile, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name="handled_corrections")
+    created_at = models.DateTimeField(auto_now_add=True)
+    handled_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.field} on {self.entry_id}: {self.status}"

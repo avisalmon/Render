@@ -406,3 +406,20 @@ paid model call: `profile`, `job` (both nullable), `provider`, `model`,
 
 **Storage** is not a model: images live in Books' own private GCS bucket
 (`books/` prefix, signed links) or, until ACT-BK.6, under `media/books/`.
+
+**CreatorAlias** (SPR-BK2.1). Another spelling of the same person (`creator`,
+`name`, `search_name`), so a Hebrew spine and an English record meet on one
+creator. Replaces the one-line mention under Creator with a real table.
+
+**CatalogEntry.merged_into, CatalogEntry.search_text, Creator.search_name,
+CreatorAlias.search_name** (SPR-BK2.3, 2.4). `merged_into` is how a duplicate
+points at its winner after a curator merges, so old links still resolve;
+the `search_*` columns hold the normalised text (no vowel marks, no final
+letters, no quotes, lower case) that search and matching compare on.
+
+**EntryCorrection** (SPR-BK2.4). A reader's suggestion that a record is
+wrong: `entry`, `profile`, `field`, `value`, `note`, `status` open / accepted
+/ declined, `handled_by`, timestamps. A curator's accept changes the record.
+
+**EntryIdentifier.scheme** gained the provider schemes `openlibrary`,
+`googlebooks`, `nli`, so a source record is recognised on a second import.

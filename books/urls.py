@@ -1,6 +1,6 @@
 from django.urls import include, path
 
-from . import auth_views, internal, views
+from . import auth_views, catalog_views, internal, views
 from .api import router
 
 app_name = "books"
@@ -13,6 +13,14 @@ urlpatterns = [
     path("me/data/export.json", views.my_data_export, name="my_data_export"),
     path("lang/<str:code>/", views.set_language, name="set_language"),
     path("theme/<str:theme>/", views.set_theme, name="set_theme"),
+    # The shared catalogue (BK2).
+    path("catalog/", catalog_views.search, name="catalog"),
+    path("catalog/new/", catalog_views.new_entry, name="catalog_new"),
+    path("catalog/tag/<slug:key>/", catalog_views.by_tag, name="catalog_tag"),
+    path("catalog/<int:pk>/", catalog_views.entry, name="catalog_entry"),
+    path("catalog/<int:pk>/edit/", catalog_views.new_entry, name="catalog_edit"),
+    path("curate/", catalog_views.curate, name="curate"),
+    path("curate/act/", catalog_views.curate_action, name="curate_action"),
     path("terms/", views.terms, name="terms"),
     path("privacy/", views.privacy, name="privacy"),
     # Staff only, linked from nowhere: every component once (spec BK1 §1.1).

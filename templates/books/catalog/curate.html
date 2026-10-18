@@ -1,0 +1,54 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "curate.title" %} · {% t "brand" %}{% endblock %}
+{% block screen %}curate{% endblock %}
+{% block content %}
+<div class="bk-wide">
+  <h1 class="bk-title">{% t "curate.title" %}</h1>
+  <p class="bk-lead">{% t "curate.lead" %}</p>
+
+  <h2 class="bk-h2">{% t "curate.unverified" %}</h2>
+  {% if unverified %}
+  <ul class="bk-entry-list">
+    {% for e in unverified %}
+    <li class="bk-entry-row bk-entry-row--actions">
+      <a class="bk-entry-link" href="{% url 'books:catalog_entry' e.pk %}"><span class="bk-entry-text"><span class="bk-entry-title">{{ e.title }}</span><span class="bk-muted">{{ e.creator_names }}{% if e.year %} · {{ e.year }}{% endif %} · {{ e.source|default:"manual" }}</span></span></a>
+      <form method="post" action="{% url 'books:curate_action' %}">{% csrf_token %}<input type="hidden" name="action" value="verify"><input type="hidden" name="entry" value="{{ e.pk }}"><button type="submit" class="bk-btn bk-btn--small">{% t "curate.verify" %}</button></form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="bk-muted">{% t "curate.nothing" %}</p>{% endif %}
+
+  <h2 class="bk-h2">{% t "curate.suspects" %}</h2>
+  {% if suspects %}
+  <ul class="bk-entry-list">
+    {% for a, b in suspects %}
+    <li class="bk-entry-row bk-entry-row--actions">
+      <span class="bk-entry-text">
+        <a class="bk-link-row" href="{% url 'books:catalog_entry' a.pk %}">{{ a.title }} <span class="bk-muted">{{ a.creator_names }} · #{{ a.pk }}</span></a>
+        <a class="bk-link-row" href="{% url 'books:catalog_entry' b.pk %}">{{ b.title }} <span class="bk-muted">{{ b.creator_names }} · #{{ b.pk }}</span></a>
+      </span>
+      <form method="post" action="{% url 'books:curate_action' %}">{% csrf_token %}<input type="hidden" name="action" value="merge"><input type="hidden" name="winner" value="{{ a.pk }}"><input type="hidden" name="loser" value="{{ b.pk }}"><button type="submit" class="bk-btn bk-btn--small">{% t "curate.merge_into_first" %}</button></form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="bk-muted">{% t "curate.nothing" %}</p>{% endif %}
+
+  <h2 class="bk-h2">{% t "curate.corrections" %}</h2>
+  {% if corrections %}
+  <ul class="bk-entry-list">
+    {% for c in corrections %}
+    <li class="bk-entry-row bk-entry-row--actions">
+      <span class="bk-entry-text">
+        <a class="bk-link-row" href="{% url 'books:catalog_entry' c.entry.pk %}">{{ c.entry.title }}</a>
+        <span class="bk-muted">{{ c.get_field_display }}: <b>{{ c.value }}</b>{% if c.note %} · {{ c.note }}{% endif %} · {% t "curate.by" %} {{ c.profile.display_name }}</span>
+      </span>
+      <span class="bk-row">
+        <form method="post" action="{% url 'books:curate_action' %}">{% csrf_token %}<input type="hidden" name="action" value="accept"><input type="hidden" name="correction" value="{{ c.pk }}"><button type="submit" class="bk-btn bk-btn--small bk-btn--primary">{% t "curate.accept" %}</button></form>
+        <form method="post" action="{% url 'books:curate_action' %}">{% csrf_token %}<input type="hidden" name="action" value="decline"><input type="hidden" name="correction" value="{{ c.pk }}"><button type="submit" class="bk-btn bk-btn--small">{% t "curate.decline" %}</button></form>
+      </span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="bk-muted">{% t "curate.nothing" %}</p>{% endif %}
+</div>
+{% endblock %}

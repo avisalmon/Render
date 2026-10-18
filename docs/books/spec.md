@@ -494,6 +494,12 @@ Hebrew included.
 what. Seeding from any file is one-time and never overwrites a curated record
 (methodology, "Data").
 
+**Built (2026-10-18).** Sources: Open Library and Google Books live without
+keys; the National Library of Israel adapter is written and waits for a key
+(ACT-BK.7), which matters most for Hebrew books and danacodes. Anyone
+onboarded may add a record by hand; it stays unverified until a curator at
+`/books/curate/` verifies it. See backlog BK2 and data_model.md section 11.
+
 **Depends on.** BK1.
 
 **Done when.** A Hebrew and an English book can each be found by title, by

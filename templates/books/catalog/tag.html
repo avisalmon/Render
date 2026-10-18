@@ -1,0 +1,11 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% if lang == "he" %}{{ tag.name_he }}{% else %}{{ tag.name_en }}{% endif %} · {% t "brand" %}{% endblock %}
+{% block screen %}catalog-tag{% endblock %}
+{% block content %}
+<div class="bk-wide">
+  <p><a href="{% url 'books:catalog' %}">{% t "catalog.title" %}</a></p>
+  <p class="bk-kicker">{% t "catalog.in_tag" %}</p>
+  <h1 class="bk-title">{% if lang == "he" %}{{ tag.name_he }}{% else %}{{ tag.name_en }}{% endif %}</h1>
+  {% if entries %}{% include "books/catalog/_entry_list.html" %}{% else %}<p class="bk-lead">{% t "catalog.none" %}</p>{% endif %}
+</div>
+{% endblock %}
