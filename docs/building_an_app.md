@@ -625,3 +625,20 @@ closing the sprint, and write the test over the principle, not the instance:
 *no cell on any view sits outside a 390px viewport*, not *the hard table has
 five columns*. The first catches the next view somebody adds; the second
 passed while three views were broken.
+
+### 17. Nothing that runs at import may touch the persistent disk
+
+Books' storage helper created `media/books/` the moment it was built, and a
+model's `ImageField(storage=...)` made Django build it while the models
+loaded. Locally that is harmless. On Render the models load during
+`collectstatic`, in the build, before `/var/data` is mounted, and the deploy
+failed in forty seconds with nothing in the app's own tests to show for it.
+The sprint before had the same helper and deployed fine, because nothing
+referenced it yet.
+
+**The rule.** Code that runs at import time (module level, model field
+arguments, app `ready()`) may read settings and nothing else: no `mkdir`, no
+file open, no network, no database. Create folders on first write, which is
+what Django's storages already do. And when a deploy fails fast, read the
+GitHub Deployments API for the service (`/repos/<owner>/<repo>/deployments`,
+then `/statuses`): a failure forty seconds in is the build, not the app.
