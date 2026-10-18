@@ -38,3 +38,6 @@ pre-commit>=3.7,<5
 # Web Push (REQ-11.6.9): browser notifications that arrive with the browser
 # closed. VAPID keys live in env vars, never in the repo.
 pywebpush>=2.0
+# books (SPR-BK1.5): images in Books' own private Google Cloud Storage bucket
+# with short-lived signed links; the google extra brings google-cloud-storage.
+django-storages[google]>=1.14,<2

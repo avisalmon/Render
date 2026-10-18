@@ -1,0 +1,44 @@
+{% load books_tags %}{% comment %}
+The lamp, the shelf and the label (board C3). Takes:
+  shelf_id   a unique id for this shelf on the page
+  books_json the books as JSON (list of {id,title,author,status,color,ink,w,h,lean,rare,url})
+  view       lamp | bookcase | living
+  kicker     the line under the lamp
+  lifted     id of the book lifted on load (optional)
+{% endcomment %}
+<div class="bk-room">
+  <div class="bk-lamp" aria-hidden="true">
+    <svg width="120" height="44" viewBox="0 0 120 44" fill="none">
+      <path class="bk-lamp-cord" d="M60 0v14" stroke-width="2"/>
+      <path class="bk-lamp-shade" d="M38 30 L48 14 H72 L82 30 Z"/>
+      <path class="bk-lamp-rim" d="M38 30 H82" stroke-width="2"/>
+      <ellipse class="bk-lamp-bulb" cx="60" cy="33" rx="12" ry="3"/>
+    </svg>
+  </div>
+  {% if kicker %}<p class="bk-kicker bk-room-kicker">{{ kicker }}</p>{% endif %}
+  {% if books_json and books_json != "[]" %}
+    <div class="bk-shelf" data-shelf data-shelf-view="{{ view|default:'lamp' }}" data-shelf-source="{{ shelf_id }}-data" data-shelf-strings="{{ shelf_id }}-strings" data-shelf-label="{{ shelf_id }}-label" data-shelf-aria="{% t "shelf.your_shelf" %}" data-shelf-plate-1="{{ plate1|default:'' }}" data-shelf-plate-2="{{ plate2|default:'' }}" {% if lifted %}data-shelf-lifted="{{ lifted }}"{% endif %}></div>
+    <script type="application/json" id="{{ shelf_id }}-data">{{ books_json|safe }}</script>
+    <script type="application/json" id="{{ shelf_id }}-strings">{"shelf.from_yours": "{% t "shelf.from_yours" %}", "shelf.rare": "{% t "shelf.rare" %}", "status.private": "{% t "status.private" %}", "status.public": "{% t "status.public" %}", "status.lend": "{% t "status.lend" %}", "status.exchange": "{% t "status.exchange" %}", "status.sell": "{% t "status.sell" %}"}</script>
+    <div class="bk-shelf-hints">
+      <span>{% if view == "living" %}{% t "shelf.drag_hint" %}{% else %}{% t "shelf.swipe_hint" %}{% endif %}</span>
+      <span>{{ hint_end|default:'' }}</span>
+    </div>
+    <div class="bk-card bk-label-card" id="{{ shelf_id }}-label" hidden style="margin-top: 12px">
+      <span class="bk-kicker" data-label-kind></span>
+      <span class="bk-label-title" data-label-title></span>
+      <span class="bk-muted" data-label-author></span>
+      <span class="bk-label-status" data-label-status></span>
+      <a class="bk-btn bk-btn--small" data-label-link hidden href="#">{% t "shelf.card" %}</a>
+    </div>
+  {% else %}
+    <div class="bk-shelf" aria-label="{% t "home.shelf_empty" %}">
+      <div class="bk-shelf-row bk-shelf-row--empty">
+        <span class="bk-bookend bk-bookend--start" aria-hidden="true"></span>
+        <span class="bk-bookend bk-bookend--end" aria-hidden="true"></span>
+        <div class="bk-shelf-empty"><span class="bk-muted">{% t "home.shelf_empty" %}</span></div>
+      </div>
+      <div class="bk-shelf-board" aria-hidden="true"></div>
+    </div>
+  {% endif %}
+</div>

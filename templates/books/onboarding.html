@@ -1,25 +1,24 @@
-{% extends "books/base.html" %}
-{% block title %}ברוכים הבאים · ספרים{% endblock %}
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "onb.title" %} · {% t "brand" %}{% endblock %}
 {% block screen %}onboarding{% endblock %}
 {% block account %}{% endblock %}
 {% block content %}
 <div class="bk-narrow">
-  <h1 class="bk-title">ברוכים הבאים לספרים</h1>
-  <p class="bk-lead">שלושה דברים קטנים, ואפשר להתחיל לבנות את המדף.</p>
+  <h1 class="bk-title">{% t "onb.title" %}</h1>
+  <p class="bk-lead">{% t "onb.lead" %}</p>
   <form method="post" class="bk-card bk-form" novalidate>
     {% csrf_token %}
     {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
-    {% for field in form %}
-      {% if field.name == "is_adult_confirmed" or field.name == "accept_terms" %}
-        <label class="bk-check">{{ field }} <span>{% if field.name == "accept_terms" %}קראתי ואני מסכימ/ה ל<a href="{% url 'books:terms' %}">תנאי השימוש</a> ול<a href="{% url 'books:privacy' %}">מדיניות הפרטיות</a>{% else %}{{ field.label }}{% endif %}</span></label>
-      {% else %}
-        <label class="bk-field">{{ field.label }} {{ field }}
-          {% if field.help_text %}<span class="bk-help">{{ field.help_text }}</span>{% endif %}
-        </label>
-      {% endif %}
-      {% if field.errors %}<p class="bk-error" role="alert">{{ field.errors.0 }}</p>{% endif %}
-    {% endfor %}
-    <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">ממשיכים</button>
+    <label class="bk-field">{% t "onb.name" %} {{ form.display_name }}</label>
+    {% if form.display_name.errors %}<p class="bk-error" role="alert">{{ form.display_name.errors.0 }}</p>{% endif %}
+    <label class="bk-field">{% t "onb.language" %} {{ form.language }}</label>
+    <label class="bk-field">{% t "onb.area" %} {{ form.area_name }}<span class="bk-help">{% t "onb.area_help" %}</span></label>
+    {% if form.area_name.errors %}<p class="bk-error" role="alert">{{ form.area_name.errors.0 }}</p>{% endif %}
+    <label class="bk-check">{{ form.is_adult_confirmed }} <span>{% t "onb.adult" %}</span></label>
+    {% if form.is_adult_confirmed.errors %}<p class="bk-error" role="alert">{{ form.is_adult_confirmed.errors.0 }}</p>{% endif %}
+    <label class="bk-check">{{ form.accept_terms }} <span>{% t "onb.terms_before" %}<a href="{% url 'books:terms' %}">{% t "onb.terms_link" %}</a>{% t "onb.terms_and" %}<a href="{% url 'books:privacy' %}">{% t "onb.privacy_link" %}</a></span></label>
+    {% if form.accept_terms.errors %}<p class="bk-error" role="alert">{{ form.accept_terms.errors.0 }}</p>{% endif %}
+    <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "onb.submit" %}</button>
   </form>
 </div>
 {% endblock %}

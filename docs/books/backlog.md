@@ -23,9 +23,9 @@ looked at as a screenshot at least once (methodology entry 6).
 
 **Status values:** `TODO`, `WIP`, `DONE (dev)`, `DONE, DEPLOYED <date>`.
 
-**Gate status, 2026-10-18:** intro spec reviewed; data model approved; design
-gate closed (spec BK1 §1.1c); full spec approved ("cont"); **this backlog
-waits for Avi's approval before any code.**
+**Gate status, 2026-10-18:** every kickoff gate closed; backlog approved;
+BK1 built and pushed the same day (autonomous run on Avi's mandate, decisions
+listed for his ack when BK2 is live).
 
 ---
 
@@ -86,7 +86,7 @@ library at the end.
   read-only. A precise point sent to it is stored rounded.
 - Not deployed. The dev database has migration `books.0001`.
 
-### SPR-BK1.2: The design system and the shelf `TODO`
+### SPR-BK1.2: The design system and the shelf `DONE (dev), 2026-10-18`
 
 **Goal:** every shared component exists once, in both themes, and the home
 shelf (lamp, spines from data, swipe along, tap to lift, the museum label) works
@@ -94,54 +94,105 @@ on sample data exactly as on the approved board.
 
 | ID | Feature | Status |
 | --- | --- | --- |
-| F-BK1.2.1 | Components: buttons, fields, chips (the five choices), cards, sheet, dialog, toast, empty states, the cover tile, the spine. Every class `bk-`-namespaced | TODO |
-| F-BK1.2.2 | The shelf component: spines drawn from data (colour, height, width, title, author), leaning and slight tilt, swipe along, tap to lift and light, label below, keyboard reachable | TODO |
-| F-BK1.2.3 | One icon family, inline SVG, labelled or hidden from screen readers | TODO |
-| F-BK1.2.4 | Motion: lift, settle, slide-in on accept; respects reduced-motion | TODO |
-| F-BK1.2.5 | Guard tests: every class used is defined (entry 13); no colour outside the tokens; contrast AA measured in both themes | TODO |
-| F-BK1.2.6 | Screen contract entries for home (empty, with books, a book lifted) at 390 and 1280, light and dark; screenshots looked at | TODO |
+| F-BK1.2.1 | Components: buttons, fields, chips (the five choices), cards, sheet, dialog, toast, empty states, the cover tile, the spine. Every class `bk-`-namespaced | DONE |
+| F-BK1.2.2 | The shelf component: spines drawn from data (colour, height, width, title, author), leaning and slight tilt, swipe along, tap to lift and light, label below, keyboard reachable | DONE |
+| F-BK1.2.3 | One icon family, inline SVG, labelled or hidden from screen readers | DONE |
+| F-BK1.2.4 | Motion: lift, settle, slide-in on accept; respects reduced-motion | DONE |
+| F-BK1.2.5 | Guard tests: every class used is defined (entry 13); no colour outside the tokens; contrast AA measured in both themes | DONE |
+| F-BK1.2.6 | Screen contract entries for home (empty, with books, a book lifted) at 390 and 1280, light and dark; screenshots looked at | DONE |
 
-### SPR-BK1.3: Two languages, two directions `TODO`
+**Sprint notes.** Tokens for light, dark and the three other palettes in one
+stylesheet; every class `bk-` namespaced; the shelf (`static/books/shelf.js`)
+draws spines from JSON (colour, width, height, lean, title, author), swipes by
+native scrolling, lifts on tap with the label below, walks by arrow keys. A
+staff-only `/books/design/` page shows every component and all three shelf
+views on sample books (linked from nowhere). Guards: every class used is
+defined, no colour outside the token blocks, no hex in templates. Screen
+contract `tests/test_books_screens.py` (marker `booksscreens`): 10 screens x
+light/dark x 390/1280, contrast measured, overflow, 44 px targets, labels,
+plus the lift, the keyboard, the English direction and the drag. Looked at as
+images in both themes and widths. One fix from looking: letter-spacing is off
+on Hebrew.
 
-| ID | Feature | Status |
-| --- | --- | --- |
-| F-BK1.3.1 | One string catalogue, Hebrew and English, inside the app; language from Profile, else the browser; a switch in the header | TODO |
-| F-BK1.3.2 | Right-to-left and left-to-right mirroring, including pointing icons; book titles keep their own direction whatever the interface | TODO |
-| F-BK1.3.3 | Guard test: no hard-coded interface string in Books' templates | TODO |
-
-### SPR-BK1.4: Every screen size, installable, accessible `TODO`
-
-| ID | Feature | Status |
-| --- | --- | --- |
-| F-BK1.4.1 | The approved desktop layout: side menu with rooms, two shelves per room, side panel | TODO |
-| F-BK1.4.2 | Tablet layout between the two | TODO |
-| F-BK1.4.3 | Web manifest and icons, installable to the home screen | TODO |
-| F-BK1.4.4 | Accessibility pass: screen-reader labels, keyboard, focus, 44 px targets, no meaning by colour alone; checked in the screen contract | TODO |
-
-### SPR-BK1.5: Storage, jobs, cost, privacy plumbing `TODO`
+### SPR-BK1.3: Two languages, two directions `DONE (dev), 2026-10-18`
 
 | ID | Feature | Status |
 | --- | --- | --- |
-| F-BK1.5.1 | Images to Books' own private Google Cloud Storage bucket (needs ACT-BK.6); resized copies; covers public, personal photos through short-lived signed links only | TODO |
-| F-BK1.5.1b | Photo location as a bonus: read EXIF GPS once on upload, keep it only rounded to a neighbourhood (suggest the area, tell which home a shelf is in), then strip the precise point from the stored image | TODO |
-| F-BK1.5.2 | A background job runner for recognition (no request ever waits on a model) | TODO |
-| F-BK1.5.3 | Every model call recorded with its cost. **Needs a small data model addition** (a cost record per call), to be shown to Avi before it is built | TODO |
-| F-BK1.5.4 | Download everything Books holds about me; delete my Books data | TODO |
-| F-BK1.5.5 | Privacy and terms pages in both languages, marked draft until ACT-BK.2 | TODO |
+| F-BK1.3.1 | One string catalogue, Hebrew and English, inside the app; language from Profile, else the browser; a switch in the header | DONE |
+| F-BK1.3.2 | Right-to-left and left-to-right mirroring, including pointing icons; book titles keep their own direction whatever the interface | DONE |
+| F-BK1.3.3 | Guard test: no hard-coded interface string in Books' templates | DONE |
 
-### SPR-BK1.6: Appearance settings `TODO`
+**Sprint notes.** `books/strings.py` is the one catalogue (he and en for every
+key, a test fails on a missing half); `{% t %}` in templates, `t()` in forms;
+`books/middleware.py` decides the language (Profile, then session, then the
+browser, then Hebrew), the direction, the theme, and runs the request under
+`translation.override` so Django's own messages follow and nothing leaks to
+the next request. A header switch saves on the Profile or in the session.
+Guard: no Hebrew and no English copy hard-coded in any template. Decision: not
+gettext, for the reason exo and sensorlab recorded (no msgfmt here or on
+Render).
+
+### SPR-BK1.4: Every screen size, installable, accessible `DONE (dev), 2026-10-18`
 
 | ID | Feature | Status |
 | --- | --- | --- |
-| F-BK1.6.1 | Settings › Appearance: light (default), dark, follow the device | TODO |
-| F-BK1.6.2 | The other themes as token sets: Warm library, Bright and playful, Collector's den | TODO |
+| F-BK1.4.1 | The approved desktop layout: side menu with rooms, two shelves per room, side panel | DONE |
+| F-BK1.4.2 | Tablet layout between the two | DONE |
+| F-BK1.4.3 | Web manifest and icons, installable to the home screen | DONE |
+| F-BK1.4.4 | Accessibility pass: screen-reader labels, keyboard, focus, 44 px targets, no meaning by colour alone; checked in the screen contract | DONE |
 
-### SPR-BK1.7: Other shelf views `TODO`
+**Sprint notes.** Desktop from 900 px: side menu, wider shelf, a two-column
+home with an aside; a tablet step at 700 px. Web manifest, SVG favicon and PNG
+icons drawn by `books/design_assets/make_icons.py` (a lamp over a shelf).
+Accessibility checked in the contract: every image has alt, every control a
+name, every field a label, a skip link, `lang` and `dir` on the page, focus
+visible, reduced motion respected.
+
+### SPR-BK1.5: Storage, jobs, cost, privacy plumbing `DONE (dev), 2026-10-18`
 
 | ID | Feature | Status |
 | --- | --- | --- |
-| F-BK1.7.1 | Bookcase view (two shelves, tap to pull out) | TODO |
-| F-BK1.7.2 | Living shelf view (drag to rearrange, tap to pull) | TODO |
+| F-BK1.5.1 | Images to Books' own private Google Cloud Storage bucket (needs ACT-BK.6); resized copies; covers public, personal photos through short-lived signed links only | DONE |
+| F-BK1.5.1b | Photo location as a bonus: read EXIF GPS once on upload, keep it only rounded to a neighbourhood (suggest the area, tell which home a shelf is in), then strip the precise point from the stored image | DONE |
+| F-BK1.5.2 | A background job runner for recognition (no request ever waits on a model) | DONE |
+| F-BK1.5.3 | Every model call recorded with its cost. **Needs a small data model addition** (a cost record per call), to be shown to Avi before it is built | DONE |
+| F-BK1.5.4 | Download everything Books holds about me; delete my Books data | DONE |
+| F-BK1.5.5 | Privacy and terms pages in both languages, marked draft until ACT-BK.2 | DONE |
+
+**Sprint notes.** `books/storage.py`: Books' own private GCS bucket through
+django-storages (signed links, 10 minutes) when `BOOKS_GCS_BUCKET` is set,
+else `media/books/`; `books/images.py`: reads GPS once, keeps it rounded to
+two decimals, re-encodes as a clean JPEG with no metadata (tested with a real
+EXIF GPS block); `books/jobs.py` + `Job` + `ModelCall` (data model section
+11); `/books/internal/run-jobs/` behind a token that fails shut, plus
+`books_run_jobs`; My data: a JSON export that walks every owned model, and a
+typed-word delete that removes Books' data and keeps the account. Terms and
+privacy pages are drafts in both languages. ACT-BK.6 (the bucket) still open;
+dev and prod run on the disk fallback until then, and prod logs it.
+
+### SPR-BK1.6: Appearance settings `DONE (dev), 2026-10-18`
+
+| ID | Feature | Status |
+| --- | --- | --- |
+| F-BK1.6.1 | Settings › Appearance: light (default), dark, follow the device | DONE |
+| F-BK1.6.2 | The other themes as token sets: Warm library, Bright and playful, Collector's den | DONE |
+
+**Sprint notes.** Settings page: name, language, area, radius, theme (light /
+dark / follow the device), style (lamp-lit / warm library / bright and playful
+/ collector's den), shelf view, two privacy toggles. Palettes are token sets;
+warm and bright bring their own type. Defaults are Avi's.
+
+### SPR-BK1.7: Other shelf views `DONE (dev), 2026-10-18`
+
+| ID | Feature | Status |
+| --- | --- | --- |
+| F-BK1.7.1 | Bookcase view (two shelves, tap to pull out) | DONE |
+| F-BK1.7.2 | Living shelf view (drag to rearrange, tap to pull) | DONE |
+
+**Sprint notes.** Bookcase (two shelves in a wooden case with brass plates,
+tap pulls out) and living shelf (pointer drag to rearrange, the others make
+room, order event emitted) live in the same `shelf.js`, chosen by
+`data-shelf-view`. Persisting a dragged order waits for Copy (BK3).
 
 SPR-BK1.6 and BK1.7 can move after BK3 if Avi prefers to reach scanning
 sooner; they do not block anything.

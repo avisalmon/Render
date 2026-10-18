@@ -383,3 +383,26 @@ Proposed in this file, marked **[decision]** above:
    ScanCandidate, Copy, CopyPhoto, Offer (declaration only), Wish.
 
 **All eight approved by Avi on 2026-10-18, as written.**
+
+## 11. Additions made during the build (for Avi's ack)
+
+Recorded here the day they were built, as the methodology asks. Each is a
+small model the approved picture did not have; none changes an approved one.
+
+**Profile.theme, Profile.palette, Profile.shelf_view** (SPR-BK1.6, spec BK1
+§1.1b). The person's appearance choices: `theme` light / dark / system,
+`palette` lamplit / warm / bright / den, `shelf_view` lamp / bookcase /
+living. Defaults are the ones Avi chose.
+
+**Job** (SPR-BK1.5). One unit of background work, so no page waits on a
+model: `kind`, `ref_id` (the row it works on), `profile` (nullable),
+`status` queued / running / done / failed, `attempts`, `error`, timestamps.
+A thread runs it; a token endpoint and a command re-run anything dropped.
+
+**ModelCall** (SPR-BK1.5, spec BK1 §1.6 "every model call is costed"). One
+paid model call: `profile`, `job` (both nullable), `provider`, `model`,
+`purpose`, `input_tokens`, `output_tokens`, `cost_usd`, `duration_ms`, `ok`,
+`created_at`. Cost per scan and per person are sums over this table.
+
+**Storage** is not a model: images live in Books' own private GCS bucket
+(`books/` prefix, signed links) or, until ACT-BK.6, under `media/books/`.

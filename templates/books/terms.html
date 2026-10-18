@@ -1,17 +1,13 @@
-{% extends "books/base.html" %}
-{% block title %}תנאי שימוש · ספרים{% endblock %}
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "terms.title" %} · {% t "brand" %}{% endblock %}
 {% block screen %}terms{% endblock %}
 {% block content %}
 <div class="bk-prose">
-  <h1 class="bk-title">תנאי שימוש</h1>
-  <p class="bk-draft">טיוטה. הנוסח הסופי ייכתב אחרי שעורך דין יקרא אותו.</p>
-  <h2>מה זה ספרים</h2>
-  <p>מקום לקטלג את הספרים שלך מצילום של מדף, ולשתף אותם עם אנשים קרובים: השאלה, החלפה או מכירה.</p>
-  <h2>גיל</h2>
-  <p>השימוש מגיל 18 ומעלה.</p>
-  <h2>כסף</h2>
-  <p>כשספר נמכר, הכסף עובר ישירות בין האנשים, פנים אל פנים. ספרים לא מחזיקה ולא מעבירה כסף בין משתמשים.</p>
-  <h2>מה אתם מפרסמים</h2>
-  <p>אתם אחראים למה שאתם מעלים ומפרסמים. אפשר לדווח על כל דבר, ונטפל בדיווחים.</p>
+  <h1 class="bk-title">{% t "terms.title" %}</h1>
+  <p class="bk-draft">{% t "draft" %}</p>
+  <h2>{% t "terms.what_h" %}</h2><p>{% t "terms.what_p" %}</p>
+  <h2>{% t "terms.age_h" %}</h2><p>{% t "terms.age_p" %}</p>
+  <h2>{% t "terms.money_h" %}</h2><p>{% t "terms.money_p" %}</p>
+  <h2>{% t "terms.content_h" %}</h2><p>{% t "terms.content_p" %}</p>
 </div>
 {% endblock %}

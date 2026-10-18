@@ -1,23 +1,25 @@
-{% extends "books/base.html" %}
-{% block title %}הרשמה · ספרים{% endblock %}
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "signup.title" %} · {% t "brand" %}{% endblock %}
 {% block screen %}signup{% endblock %}
 {% block signin %}{% endblock %}
 {% block content %}
 <div class="bk-narrow">
-  <h1 class="bk-title">פותחים חשבון</h1>
-  <a class="bk-btn bk-btn--primary bk-btn--wide" href="/accounts/google/login/?process=login&amp;next={{ next|default:'/books/welcome/'|urlencode }}">המשך עם גוגל</a>
-  <p class="bk-divider">או עם אימייל וסיסמה</p>
+  <h1 class="bk-title">{% t "signup.title" %}</h1>
+  <a class="bk-btn bk-btn--primary bk-btn--wide" href="/accounts/google/login/?process=login&amp;next={{ next|default:'/books/welcome/'|urlencode }}">{% t "login.google" %}</a>
+  <p class="bk-divider">{% t "login.or" %}</p>
   <form method="post" class="bk-card bk-form" novalidate>
     {% csrf_token %}
     {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
-    {% for field in form %}
-      <label class="bk-field">{{ field.label }} {{ field }}</label>
-      {% if field.errors %}<p class="bk-error" role="alert">{{ field.errors.0 }}</p>{% endif %}
-    {% endfor %}
-    <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">פותחים</button>
+    <label class="bk-field">{% t "field.email" %} {{ form.email }}</label>
+    {% if form.email.errors %}<p class="bk-error" role="alert">{{ form.email.errors.0 }}</p>{% endif %}
+    <label class="bk-field">{% t "field.password" %} {{ form.password1 }}</label>
+    {% if form.password1.errors %}<p class="bk-error" role="alert">{{ form.password1.errors.0 }}</p>{% endif %}
+    <label class="bk-field">{% t "field.password2" %} {{ form.password2 }}</label>
+    {% if form.password2.errors %}<p class="bk-error" role="alert">{{ form.password2.errors.0 }}</p>{% endif %}
+    <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "signup.submit" %}</button>
   </form>
   <div class="bk-stack">
-    <a class="bk-btn" href="{% url 'books:login' %}">כבר יש לכם חשבון? נכנסים</a>
+    <a class="bk-btn" href="{% url 'books:login' %}">{% t "signup.have_account" %}</a>
   </div>
 </div>
 {% endblock %}

@@ -1,0 +1,46 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "settings" %} · {% t "brand" %}{% endblock %}
+{% block screen %}settings{% endblock %}
+{% block content %}
+<div class="bk-narrow">
+  <h1 class="bk-title">{% t "settings" %}</h1>
+  {% if saved %}<p class="bk-notice bk-notice--ok" role="status">{% t "settings.saved" %}</p>{% endif %}
+  <form method="post" class="bk-card bk-form" novalidate>
+    {% csrf_token %}
+    <label class="bk-field">{{ form.display_name.label }} {{ form.display_name }}</label>
+    {% if form.display_name.errors %}<p class="bk-error" role="alert">{{ form.display_name.errors.0 }}</p>{% endif %}
+
+    <fieldset class="bk-field" style="border: 0; padding: 0; margin: 0">
+      <legend class="bk-field">{{ form.language.label }}</legend>
+      <div class="bk-radio-row">{% for radio in form.language %}<label class="bk-radio">{{ radio.tag }} {{ radio.choice_label }}</label>{% endfor %}</div>
+    </fieldset>
+
+    <label class="bk-field">{{ form.area_name.label }} {{ form.area_name }}<span class="bk-help">{% t "onb.area_help" %}</span></label>
+    <label class="bk-field">{{ form.radius_km.label }} {{ form.radius_km }}</label>
+    {% if form.radius_km.errors %}<p class="bk-error" role="alert">{{ form.radius_km.errors.0 }}</p>{% endif %}
+
+    <h2 class="bk-h2">{% t "settings.appearance" %}</h2>
+    <fieldset class="bk-field" style="border: 0; padding: 0; margin: 0">
+      <legend class="bk-field">{{ form.theme.label }}</legend>
+      <div class="bk-radio-row">{% for radio in form.theme %}<label class="bk-radio">{{ radio.tag }} {{ radio.choice_label }}</label>{% endfor %}</div>
+    </fieldset>
+    <fieldset class="bk-field" style="border: 0; padding: 0; margin: 0">
+      <legend class="bk-field">{{ form.palette.label }}</legend>
+      <div class="bk-radio-row">{% for radio in form.palette %}<label class="bk-radio">{{ radio.tag }} {{ radio.choice_label }}</label>{% endfor %}</div>
+    </fieldset>
+    <fieldset class="bk-field" style="border: 0; padding: 0; margin: 0">
+      <legend class="bk-field">{{ form.shelf_view.label }}</legend>
+      <div class="bk-radio-row">{% for radio in form.shelf_view %}<label class="bk-radio">{{ radio.tag }} {{ radio.choice_label }}</label>{% endfor %}</div>
+    </fieldset>
+
+    <h2 class="bk-h2">{% t "settings.privacy" %}</h2>
+    <label class="bk-check">{{ form.profile_public }} <span>{{ form.profile_public.label }}</span></label>
+    <label class="bk-check">{{ form.show_points_public }} <span>{{ form.show_points_public.label }}</span></label>
+
+    <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "settings.save" %}</button>
+  </form>
+  <div class="bk-stack">
+    <a class="bk-btn" href="{% url 'books:my_data' %}">{% t "data.title" %}</a>
+  </div>
+</div>
+{% endblock %}

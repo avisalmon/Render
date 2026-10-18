@@ -1,10 +1,10 @@
-{% extends "books/base.html" %}
-{% block title %}אין גישה · ספרים{% endblock %}
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "err403.title" %} · {% t "brand" %}{% endblock %}
 {% block screen %}403{% endblock %}
 {% block content %}
 <div class="bk-narrow bk-empty">
-  <h1 class="bk-title">המדף הזה סגור</h1>
-  <p class="bk-lead">אין לך גישה לדף הזה.</p>
-  <a class="bk-btn bk-btn--primary" href="{% url 'books:home' %}">חזרה לספרייה</a>
+  <h1 class="bk-title">{% t "err403.title" %}</h1>
+  <p class="bk-lead">{% t "err403.lead" %}</p>
+  <a class="bk-btn bk-btn--primary" href="{% url 'books:home' %}">{% t "back_home" %}</a>
 </div>
 {% endblock %}

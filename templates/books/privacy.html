@@ -1,17 +1,13 @@
-{% extends "books/base.html" %}
-{% block title %}פרטיות · ספרים{% endblock %}
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "privacy.title" %} · {% t "brand" %}{% endblock %}
 {% block screen %}privacy{% endblock %}
 {% block content %}
 <div class="bk-prose">
-  <h1 class="bk-title">פרטיות</h1>
-  <p class="bk-draft">טיוטה. הנוסח הסופי ייכתב אחרי שעורך דין יקרא אותו.</p>
-  <h2>פרטי כברירת מחדל</h2>
-  <p>כל ספר שנוסף לספרייה פרטי עד שתבחרו אחרת. רק אתם רואים ספר פרטי.</p>
-  <h2>מיקום</h2>
-  <p>אנחנו שומרים רק שכונה או עיר, מעוגלים לבערך קילומטר. לעולם לא כתובת. אם בתמונה של מדף יש נתוני מיקום, הם משמשים פעם אחת, בעיגול לשכונה, ונמחקים מהתמונה השמורה.</p>
-  <h2>תמונות המדף</h2>
-  <p>תמונות המדף שלכם נשמרות בשבילכם בלבד ואינן מוצגות לאף אחד אחר. אפשר למחוק אותן בכל רגע.</p>
-  <h2>הנתונים שלכם</h2>
-  <p>אפשר להוריד את כל מה ששמור עליכם בספרים, ולמחוק את נתוני הספרים שלכם.</p>
+  <h1 class="bk-title">{% t "privacy.title" %}</h1>
+  <p class="bk-draft">{% t "draft" %}</p>
+  <h2>{% t "privacy.default_h" %}</h2><p>{% t "privacy.default_p" %}</p>
+  <h2>{% t "privacy.location_h" %}</h2><p>{% t "privacy.location_p" %}</p>
+  <h2>{% t "privacy.photos_h" %}</h2><p>{% t "privacy.photos_p" %}</p>
+  <h2>{% t "privacy.data_h" %}</h2><p>{% t "privacy.data_p" %}</p>
 </div>
 {% endblock %}

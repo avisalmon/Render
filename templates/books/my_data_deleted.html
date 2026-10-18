@@ -1,0 +1,10 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "data.title" %} · {% t "brand" %}{% endblock %}
+{% block screen %}my-data-deleted{% endblock %}
+{% block account %}{% endblock %}
+{% block content %}
+<div class="bk-narrow bk-empty">
+  <h1 class="bk-title">{% t "data.deleted" %}</h1>
+  <a class="bk-btn bk-btn--primary" href="{% url 'books:login' %}">{% t "sign_in" %}</a>
+</div>
+{% endblock %}

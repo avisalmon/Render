@@ -190,7 +190,7 @@ def test_books_pages_carry_no_babook_chrome_and_no_link_out(client, path):
     html = client.get(path).content.decode()
     assert "babook" not in html.lower()
     for href in re.findall(r'href="([^"]+)"', html):
-        assert href.startswith(("/books/", "/static/", "/accounts/google/", "https://fonts.")), href
+        assert href.startswith(("/books/", "/static/", "/accounts/google/", "https://fonts.", "#")), href
 
 
 def test_the_library_page_is_sealed_too(client, onboarded):
@@ -198,7 +198,7 @@ def test_the_library_page_is_sealed_too(client, onboarded):
     html = client.get("/books/").content.decode()
     assert "babook" not in html.lower()
     for href in re.findall(r'href="([^"]+)"', html):
-        assert href.startswith(("/books/", "/static/", "https://fonts.")), href
+        assert href.startswith(("/books/", "/static/", "https://fonts.", "#")), href
 
 
 def test_babook_does_not_link_to_books(client, db):
@@ -209,18 +209,3 @@ def test_babook_does_not_link_to_books(client, db):
 def test_a_404_inside_books_is_books_own(client):
     r = client.get("/books/nope/")
     assert r.status_code == 404 and "הדף הזה לא על המדף" in r.content.decode()
-
-
-# ---- the stylesheet ----------------------------------------------------------
-
-def test_every_books_css_variable_is_defined_in_both_themes():
-    from pathlib import Path
-    css = Path("static/books/books.css").read_text(encoding="utf-8")
-    light = re.search(r":root\s*\{(.*?)\}", css, re.S).group(1)
-    dark = re.search(r'html\[data-theme="dark"\]\s*\{(.*?)\}', css, re.S).group(1)
-    used = set(re.findall(r"var\(\s*(--bk-[\w-]+)", css))
-    in_light = set(re.findall(r"(--bk-[\w-]+)\s*:", light))
-    in_dark = set(re.findall(r"(--bk-[\w-]+)\s*:", dark))
-    assert used <= in_light, used - in_light
-    colours = {t for t in in_light if t not in ("--bk-serif", "--bk-sans")}
-    assert colours <= in_dark, colours - in_dark

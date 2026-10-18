@@ -1,10 +1,10 @@
-{% extends "books/base.html" %}
-{% block title %}תקלה · ספרים{% endblock %}
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "err500.title" %} · {% t "brand" %}{% endblock %}
 {% block screen %}500{% endblock %}
 {% block content %}
 <div class="bk-narrow bk-empty">
-  <h1 class="bk-title">משהו נפל מהמדף</h1>
-  <p class="bk-lead">תקלה אצלנו. נסו שוב בעוד רגע.</p>
-  <a class="bk-btn bk-btn--primary" href="/books/">חזרה לספרייה</a>
+  <h1 class="bk-title">{% t "err500.title" %}</h1>
+  <p class="bk-lead">{% t "err500.lead" %}</p>
+  <a class="bk-btn bk-btn--primary" href="/books/">{% t "back_home" %}</a>
 </div>
 {% endblock %}

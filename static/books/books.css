@@ -1,9 +1,14 @@
-/* Books: the lamp-lit shelf (spec BK1 §1.1c, the approved design board).
-   Light is the default; dark mode is html[data-theme="dark"]. Every colour
-   used anywhere in Books is one of these tokens. */
-:root {
+/* Books: the design system (spec BK1 §1.1c, the approved board).
+   Light is the default; html[data-theme="dark"] is dark mode; "system"
+   follows the device. Every colour in Books is one of these tokens, and
+   every class is bk- namespaced. Spine colours are the book's own and come
+   inline from data, never from here. */
+
+:root,
+html[data-palette="lamplit"] {
   --bk-ground: #EFE6D6;
   --bk-surface: #F8F2E7;
+  --bk-surface-2: #E6DAC4;
   --bk-ink: #241C13;
   --bk-muted: #6A5D4A;
   --bk-brass: #7A5518;
@@ -17,13 +22,25 @@
   --bk-lamp-cord: #9C8460;
   --bk-lamp-bulb: #FFE2A0;
   --bk-shadow: rgba(80, 55, 20, 0.25);
+  --bk-shadow-strong: rgba(80, 55, 20, 0.4);
   --bk-danger: #A3261B;
+  --bk-on-danger: #FFF8EA;
+  --bk-ok: #2E6B45;
+  --bk-scrim: rgba(36, 28, 19, 0.55);
   --bk-serif: "David Libre", "Frank Ruhl Libre", Georgia, serif;
   --bk-sans: "Heebo", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --bk-radius: 6px;
+  color-scheme: light;
 }
-html[data-theme="dark"] {
+
+/* Dark mode: the lamp-lit dark palette from the boards. Declared once as a
+   mixin via a custom-property block, applied to data-theme="dark" and to
+   "system" under a dark device, and to the always-dark "den" palette. */
+html[data-theme="dark"],
+html[data-palette="den"] {
   --bk-ground: #120F0C;
   --bk-surface: #18140F;
+  --bk-surface-2: #211C17;
   --bk-ink: #EFE6D2;
   --bk-muted: #A89C86;
   --bk-brass: #D8B46A;
@@ -37,11 +54,90 @@ html[data-theme="dark"] {
   --bk-lamp-cord: #6A5338;
   --bk-lamp-bulb: #F3D99A;
   --bk-shadow: rgba(0, 0, 0, 0.6);
+  --bk-shadow-strong: rgba(0, 0, 0, 0.75);
   --bk-danger: #F08A7E;
+  --bk-on-danger: #15120F;
+  --bk-ok: #7FBF95;
+  --bk-scrim: rgba(0, 0, 0, 0.7);
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  html[data-theme="system"] {
+    --bk-ground: #120F0C;
+    --bk-surface: #18140F;
+    --bk-surface-2: #211C17;
+    --bk-ink: #EFE6D2;
+    --bk-muted: #A89C86;
+    --bk-brass: #D8B46A;
+    --bk-on-brass: #15120F;
+    --bk-line: #3A3128;
+    --bk-wood: #4E3B28;
+    --bk-wood-edge: #7A6040;
+    --bk-lamp-glow: rgba(216, 180, 106, 0.2);
+    --bk-lamp-fade: rgba(18, 15, 12, 0);
+    --bk-lamp-shade: #B8924A;
+    --bk-lamp-cord: #6A5338;
+    --bk-lamp-bulb: #F3D99A;
+    --bk-shadow: rgba(0, 0, 0, 0.6);
+    --bk-shadow-strong: rgba(0, 0, 0, 0.75);
+    --bk-danger: #F08A7E;
+    --bk-on-danger: #15120F;
+    --bk-ok: #7FBF95;
+    --bk-scrim: rgba(0, 0, 0, 0.7);
+    color-scheme: dark;
+  }
 }
 
+/* The other explored looks, selectable in settings (spec BK1 §1.1b). Each
+   is a token set over the same screens; dark mode on them is the lamp-lit
+   dark above, which the rule order gives them for free. */
+html[data-palette="warm"]:not([data-theme="dark"]) {
+  --bk-ground: #F5EFE3;
+  --bk-surface: #FFFDF8;
+  --bk-surface-2: #EFE6D6;
+  --bk-ink: #1E2B45;
+  --bk-muted: #5E5A52;
+  --bk-brass: #B4532A;
+  --bk-on-brass: #FFFDF8;
+  --bk-line: #E4DACA;
+  --bk-wood: #C9A473;
+  --bk-wood-edge: #D9B98A;
+  --bk-lamp-glow: rgba(255, 214, 140, 0.35);
+  --bk-lamp-fade: rgba(245, 239, 227, 0);
+  --bk-shadow: rgba(30, 43, 69, 0.18);
+  --bk-shadow-strong: rgba(30, 43, 69, 0.3);
+  --bk-serif: "Frank Ruhl Libre", "David Libre", Georgia, serif;
+  --bk-sans: "Assistant", "Heebo", system-ui, sans-serif;
+  --bk-radius: 12px;
+}
+html[data-palette="bright"]:not([data-theme="dark"]) {
+  --bk-ground: #F6F5FF;
+  --bk-surface: #FFFFFF;
+  --bk-surface-2: #EEEBFF;
+  --bk-ink: #1D1A33;
+  --bk-muted: #5B5775;
+  --bk-brass: #4A2FD6;
+  --bk-on-brass: #FFFFFF;
+  --bk-line: #E3DEFF;
+  --bk-wood: #B9AEFF;
+  --bk-wood-edge: #D6CFFF;
+  --bk-lamp-glow: rgba(255, 201, 60, 0.3);
+  --bk-lamp-fade: rgba(246, 245, 255, 0);
+  --bk-lamp-shade: #FFC93C;
+  --bk-lamp-cord: #B9AEFF;
+  --bk-lamp-bulb: #FFF1C9;
+  --bk-shadow: rgba(74, 47, 214, 0.15);
+  --bk-shadow-strong: rgba(74, 47, 214, 0.3);
+  --bk-danger: #C0392B;
+  --bk-serif: "Rubik", "Heebo", system-ui, sans-serif;
+  --bk-sans: "Rubik", "Heebo", system-ui, sans-serif;
+  --bk-radius: 16px;
+}
+
+/* ---- base ---------------------------------------------------------------- */
 * { box-sizing: border-box; }
 html, body { margin: 0; }
+[hidden] { display: none !important; }
 body.bk {
   background: var(--bk-ground);
   color: var(--bk-ink);
@@ -53,54 +149,154 @@ body.bk {
 a { color: var(--bk-brass); }
 a:hover { color: var(--bk-ink); }
 :focus-visible { outline: 2px solid var(--bk-brass); outline-offset: 2px; }
+.bk-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.bk-skip {
+  position: absolute; inset-inline-start: 8px; top: -60px; z-index: 50;
+  background: var(--bk-brass); color: var(--bk-on-brass); padding: 10px 14px; border-radius: var(--bk-radius);
+}
+.bk-skip:focus { top: 8px; color: var(--bk-on-brass); }
 
+/* ---- type ---------------------------------------------------------------- */
+.bk-title { font-family: var(--bk-serif); font-weight: 500; font-size: 28px; line-height: 1.2; margin: 8px 0 14px; }
+.bk-h2 { font-family: var(--bk-serif); font-weight: 500; font-size: 20px; margin: 22px 0 10px; }
+.bk-lead { color: var(--bk-muted); margin: 0 0 18px; }
+.bk-kicker { font-size: 13px; color: var(--bk-muted); }
+.bk-muted { color: var(--bk-muted); font-size: 14px; }
+.bk-divider { text-align: center; color: var(--bk-muted); font-size: 14px; margin: 16px 0; }
+.bk-prose { max-width: 680px; }
+.bk-prose h2 { font-family: var(--bk-serif); font-weight: 500; font-size: 20px; margin: 22px 0 6px; }
+.bk-draft { background: var(--bk-surface); border: 1px dashed var(--bk-brass); padding: 10px 14px; border-radius: var(--bk-radius); }
+
+/* ---- layout -------------------------------------------------------------- */
 .bk-header {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 14px 22px; max-width: 1100px; width: 100%; margin: 0 auto;
+  padding: 14px 22px; width: 100%;
 }
 .bk-wordmark {
   font-family: var(--bk-serif); font-weight: 700; font-size: 30px; letter-spacing: 1px;
   color: var(--bk-brass); text-decoration: none;
 }
-.bk-account { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--bk-muted); }
+html[dir="rtl"] .bk-wordmark { letter-spacing: 0; }
+.bk-account { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--bk-muted); }
 .bk-account form { margin: 0; }
-
-.bk-main { flex: 1; width: 100%; max-width: 1100px; margin: 0 auto; padding: 0 22px 28px; }
+.bk-layout { flex: 1; display: flex; width: 100%; }
+.bk-side { display: none; }
+.bk-main { flex: 1; min-width: 0; width: 100%; padding: 0 22px 28px; }
 .bk-narrow { max-width: 440px; margin: 0 auto; }
+.bk-wide { max-width: 1100px; margin: 0 auto; }
+.bk-footer { text-align: center; font-size: 13px; color: var(--bk-muted); padding: 12px 22px 20px; }
+.bk-footer a { color: var(--bk-muted); }
 
-.bk-title { font-family: var(--bk-serif); font-weight: 500; font-size: 28px; line-height: 1.2; margin: 8px 0 14px; }
-.bk-lead { color: var(--bk-muted); margin: 0 0 18px; }
-.bk-kicker { font-size: 13px; color: var(--bk-muted); letter-spacing: 0; }
-.bk-muted { color: var(--bk-muted); font-size: 14px; }
-.bk-divider { text-align: center; color: var(--bk-muted); font-size: 14px; margin: 16px 0; }
-
-.bk-card { background: var(--bk-surface); border: 1px solid var(--bk-line); border-radius: 6px; padding: 18px; }
-.bk-form { display: grid; gap: 14px; }
-.bk-field { display: grid; gap: 4px; font-size: 14px; color: var(--bk-muted); }
-.bk-field .bk-help { font-size: 13px; }
-.bk-check { display: flex; align-items: flex-start; gap: 10px; font-size: 15px; color: var(--bk-ink); min-height: 44px; }
-.bk-check input { width: 20px; height: 20px; margin-top: 3px; accent-color: var(--bk-brass); flex: none; }
-.bk-input {
-  font: inherit; color: var(--bk-ink); background: var(--bk-ground);
-  border: 1px solid var(--bk-line); border-radius: 6px; padding: 10px 12px; min-height: 44px; width: 100%;
+/* Bottom navigation on a phone. */
+.bk-nav {
+  position: sticky; bottom: 0; z-index: 10; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+  background: var(--bk-surface); border-top: 1px solid var(--bk-line); padding: 6px 4px 14px;
 }
-.bk-error { color: var(--bk-danger); font-size: 14px; margin: 0; }
+.bk-nav-item {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  min-height: 48px; font-size: 12px; color: var(--bk-muted); text-decoration: none;
+}
+.bk-nav-item[aria-current="page"] { color: var(--bk-brass); font-weight: 700; }
+.bk-nav-item[aria-disabled="true"] { opacity: 0.55; }
+.bk-icon { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.bk-icon--fill { fill: currentColor; stroke: none; }
 
+/* ---- buttons ------------------------------------------------------------- */
 .bk-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 10px;
-  font: inherit; font-size: 16px; min-height: 48px; padding: 0 18px; border-radius: 6px;
+  font: inherit; font-size: 16px; min-height: 48px; padding: 0 18px; border-radius: var(--bk-radius);
   border: 1px solid var(--bk-line); background: var(--bk-surface); color: var(--bk-ink);
-  cursor: pointer; text-decoration: none;
+  cursor: pointer; text-decoration: none; transition: border-color 150ms ease, background 150ms ease;
 }
 .bk-btn:hover { color: var(--bk-ink); border-color: var(--bk-brass); }
 .bk-btn--primary { background: var(--bk-brass); border-color: var(--bk-brass); color: var(--bk-on-brass); font-weight: 700; }
-.bk-btn--primary:hover { color: var(--bk-on-brass); }
-.bk-btn--quiet { border: 0; background: none; color: var(--bk-muted); min-height: 44px; padding: 0 8px; font-size: 14px; }
+.bk-btn--primary:hover { color: var(--bk-on-brass); filter: brightness(1.08); }
+.bk-btn--quiet { border-color: transparent; background: none; color: var(--bk-muted); min-height: 44px; padding: 0 10px; font-size: 14px; }
+.bk-btn--quiet:hover { border-color: transparent; }
+.bk-btn--danger { color: var(--bk-danger); border-color: var(--bk-danger); background: var(--bk-surface); }
+.bk-btn--danger:hover { color: var(--bk-danger); }
 .bk-btn--wide { width: 100%; }
-.bk-btn[aria-disabled="true"] { opacity: 0.6; cursor: default; }
+.bk-btn--small { min-height: 44px; font-size: 14px; padding: 0 12px; }
+.bk-btn[aria-disabled="true"], .bk-btn:disabled { opacity: 0.6; cursor: default; }
 .bk-stack { display: grid; gap: 10px; margin-top: 16px; }
+.bk-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 
-/* The lamp and the shelf (approved board C3). */
+/* ---- fields -------------------------------------------------------------- */
+.bk-form { display: grid; gap: 14px; }
+.bk-field { display: grid; gap: 4px; font-size: 14px; color: var(--bk-muted); }
+.bk-help { font-size: 13px; color: var(--bk-muted); }
+.bk-check { display: flex; align-items: flex-start; gap: 10px; font-size: 15px; color: var(--bk-ink); min-height: 44px; }
+.bk-check input { width: 20px; height: 20px; margin-top: 3px; accent-color: var(--bk-brass); flex: none; }
+.bk-input, .bk-select, .bk-textarea {
+  font: inherit; color: var(--bk-ink); background: var(--bk-ground);
+  border: 1px solid var(--bk-line); border-radius: var(--bk-radius); padding: 10px 12px; min-height: 44px; width: 100%;
+}
+.bk-input:focus, .bk-select:focus, .bk-textarea:focus { border-color: var(--bk-brass); outline: none; box-shadow: 0 0 0 2px var(--bk-lamp-glow); }
+.bk-textarea { min-height: 96px; resize: vertical; }
+.bk-error { color: var(--bk-danger); font-size: 14px; margin: 0; }
+.bk-radio-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.bk-radio {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px;
+  border: 1px solid var(--bk-line); border-radius: var(--bk-radius); background: var(--bk-surface); cursor: pointer; color: var(--bk-ink);
+}
+.bk-radio input { accent-color: var(--bk-brass); }
+.bk-radio:has(input:checked) { border-color: var(--bk-brass); background: var(--bk-surface-2); }
+
+/* ---- chips: the five choices --------------------------------------------- */
+.bk-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.bk-chip {
+  font: inherit; font-size: 14px; min-height: 44px; padding: 0 14px; border-radius: 4px; cursor: pointer;
+  border: 1px solid var(--bk-line); background: var(--bk-surface); color: var(--bk-ink);
+}
+.bk-chip[aria-pressed="true"] { background: var(--bk-brass); border-color: var(--bk-brass); color: var(--bk-on-brass); font-weight: 700; }
+
+/* ---- cards and tiles ----------------------------------------------------- */
+.bk-card { background: var(--bk-surface); border: 1px solid var(--bk-line); border-radius: var(--bk-radius); padding: 18px; }
+.bk-card--tight { padding: 12px 14px; }
+.bk-label-card { text-align: center; display: flex; flex-direction: column; gap: 4px; }
+.bk-label-card .bk-label-title { font-family: var(--bk-serif); font-size: 24px; line-height: 1.15; }
+.bk-label-card .bk-label-status { font-size: 13px; color: var(--bk-brass); margin-top: 2px; }
+.bk-tile { display: flex; flex-direction: column; gap: 6px; width: 104px; text-decoration: none; color: var(--bk-ink); }
+.bk-tile-cover {
+  height: 150px; border-radius: 3px 8px 8px 3px; padding: 12px 10px; display: flex; flex-direction: column; justify-content: space-between;
+  background: var(--spine-bg, var(--bk-surface-2)); color: var(--spine-ink, var(--bk-ink)); box-shadow: 0 6px 14px var(--bk-shadow);
+  font-family: var(--bk-serif); font-weight: 700; font-size: 15px; line-height: 1.2;
+}
+html[dir="rtl"] .bk-tile-cover { border-radius: 8px 3px 3px 8px; }
+.bk-tile-cover small { font-family: var(--bk-sans); font-weight: 400; font-size: 11px; }
+.bk-tile-meta { font-size: 13px; color: var(--bk-muted); }
+.bk-tile-grid { display: flex; gap: 12px; flex-wrap: wrap; }
+
+/* ---- feedback: notices, toasts, sheets, dialogs -------------------------- */
+.bk-notice { border: 1px solid var(--bk-line); border-inline-start: 3px solid var(--bk-brass); background: var(--bk-surface); padding: 10px 14px; border-radius: var(--bk-radius); }
+.bk-notice--ok { border-inline-start-color: var(--bk-ok); }
+.bk-notice--danger { border-inline-start-color: var(--bk-danger); }
+.bk-toast {
+  position: fixed; inset-inline: 16px; bottom: 90px; z-index: 40; margin: 0 auto; max-width: 440px;
+  background: var(--bk-ink); color: var(--bk-ground); padding: 12px 16px; border-radius: var(--bk-radius);
+  box-shadow: 0 10px 24px var(--bk-shadow-strong); font-size: 15px;
+}
+.bk-toast--static { position: static; }
+.bk-scrim { position: fixed; inset: 0; background: var(--bk-scrim); z-index: 30; }
+.bk-sheet {
+  position: fixed; inset-inline: 0; bottom: 0; z-index: 35; background: var(--bk-surface);
+  border-radius: 14px 14px 0 0; padding: 14px 22px 28px; max-height: 85vh; overflow: auto; box-shadow: 0 -10px 30px var(--bk-shadow-strong);
+}
+.bk-sheet--static { position: static; border-radius: 14px; box-shadow: 0 6px 20px var(--bk-shadow); }
+.bk-sheet-handle { width: 44px; height: 4px; border-radius: 2px; background: var(--bk-line); margin: 0 auto 12px; }
+.bk-dialog {
+  background: var(--bk-surface); color: var(--bk-ink); border: 1px solid var(--bk-line); border-radius: var(--bk-radius);
+  padding: 20px; max-width: 420px; width: calc(100% - 32px); box-shadow: 0 20px 40px var(--bk-shadow-strong);
+}
+.bk-dialog::backdrop { background: var(--bk-scrim); }
+.bk-dialog-title { font-family: var(--bk-serif); font-weight: 500; font-size: 22px; margin: 0 0 6px; }
+.bk-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+
+/* ---- empty states -------------------------------------------------------- */
+.bk-empty { text-align: center; margin-top: 20px; }
+.bk-empty .bk-btn { margin-top: 6px; }
+
+/* ---- the lamp and the shelf (board C3) ----------------------------------- */
 .bk-room {
   background: radial-gradient(ellipse 70% 60% at 50% 20%, var(--bk-lamp-glow), var(--bk-lamp-fade) 70%);
   padding: 0 0 8px;
@@ -110,46 +306,88 @@ a:hover { color: var(--bk-ink); }
 .bk-lamp-shade { fill: var(--bk-lamp-shade); }
 .bk-lamp-rim { stroke: var(--bk-brass); }
 .bk-lamp-bulb { fill: var(--bk-lamp-bulb); }
-.bk-shelf { position: relative; height: 150px; }
+.bk-room-kicker { text-align: center; margin: 4px 0 8px; }
+
+.bk-shelf { position: relative; }
+.bk-shelf-scroll { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.bk-shelf-scroll::-webkit-scrollbar { display: none; }
+.bk-shelf-row { position: relative; height: 214px; direction: ltr; min-width: 100%; }
+.bk-shelf-row--empty { height: 150px; }
 .bk-shelf-board {
   height: 14px; background: var(--bk-wood); border-top: 2px solid var(--bk-wood-edge);
-  box-shadow: 0 8px 14px var(--bk-shadow);
+  box-shadow: 0 8px 14px var(--bk-shadow); min-width: 100%;
 }
-.bk-shelf-empty {
-  position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center;
-  padding-bottom: 18px; text-align: center;
-}
+.bk-shelf-empty { position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 18px; text-align: center; }
 .bk-bookend { position: absolute; bottom: 0; width: 12px; height: 64px; background: var(--bk-lamp-shade); border-radius: 2px 2px 0 0; }
-.bk-bookend--start { inset-inline-start: 12%; }
-.bk-bookend--end { inset-inline-end: 12%; }
+.bk-bookend--start { left: 12%; }
+.bk-bookend--end { right: 12%; }
+.bk-shelf-hints { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0 0; font-size: 12px; color: var(--bk-muted); }
 
-.bk-empty { text-align: center; margin-top: 20px; }
-.bk-empty .bk-btn { margin-top: 6px; }
-
-/* Bottom navigation on a phone; future sections are shown, not linked. */
-.bk-nav {
-  position: sticky; bottom: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
-  background: var(--bk-surface); border-top: 1px solid var(--bk-line); padding: 6px 4px 14px;
+.bk-spine {
+  position: absolute; bottom: 0; left: var(--spine-left, 0); width: var(--spine-w, 28px); height: var(--spine-h, 170px);
+  background: var(--spine-bg); color: var(--spine-ink); border: 0; padding: 0; margin: 0; font: inherit;
+  border-radius: 2px 2px 1px 1px; cursor: pointer; transform-origin: var(--spine-origin, bottom center);
+  transform: rotate(var(--spine-lean, 0deg));
+  box-shadow: inset 4px 0 0 rgba(255, 255, 255, 0.07), inset -5px 0 0 rgba(0, 0, 0, 0.32), 3px 0 4px var(--bk-shadow);
+  transition: transform 300ms cubic-bezier(.2, .8, .2, 1), filter 300ms ease, box-shadow 300ms ease;
+  z-index: 1;
 }
-.bk-nav-item {
-  display: flex; flex-direction: column; align-items: center; gap: 3px; min-height: 48px;
-  font-size: 12px; color: var(--bk-muted); text-decoration: none; justify-content: center;
+.bk-spine:focus-visible { outline: 2px solid var(--bk-brass); outline-offset: 3px; }
+.bk-spine.is-lifted {
+  transform: translateY(-14px) rotate(0deg); z-index: 5; filter: brightness(1.12);
+  box-shadow: 0 16px 24px var(--bk-shadow-strong), 0 0 0 1px var(--bk-brass), 0 -6px 30px var(--bk-lamp-glow);
 }
-.bk-nav-item[aria-current="page"] { color: var(--bk-brass); font-weight: 700; }
-.bk-nav-item[aria-disabled="true"] { opacity: 0.55; }
-.bk-icon { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.bk-spine-band {
+  position: absolute; top: 10px; left: 4px; right: 4px; height: 3px; pointer-events: none;
+  border-top: 1px solid var(--spine-band, rgba(216, 180, 106, 0.6)); border-bottom: 1px solid var(--spine-band, rgba(216, 180, 106, 0.6));
+}
+.bk-spine--rare { --spine-band: var(--bk-brass); }
+.bk-spine--rare::after { content: ""; position: absolute; inset: 3px; border: 1px solid var(--bk-brass); pointer-events: none; border-radius: 1px; }
+.bk-spine-title {
+  position: absolute; top: 22px; bottom: 34px; left: 0; right: 0; display: flex; align-items: center; justify-content: center;
+  writing-mode: vertical-rl; font-family: var(--bk-serif); font-size: var(--spine-font, 13px); white-space: nowrap; overflow: hidden; pointer-events: none;
+}
+.bk-spine-author {
+  position: absolute; bottom: 8px; left: 0; right: 0; height: 22px; display: flex; align-items: center; justify-content: center;
+  writing-mode: vertical-rl; font-size: 8px; opacity: 0.8; white-space: nowrap; overflow: hidden; pointer-events: none;
+}
 
-.bk-footer { text-align: center; font-size: 13px; color: var(--bk-muted); padding: 12px 22px 20px; }
-.bk-footer a { color: var(--bk-muted); }
+/* Bookcase view: two shelves in a wooden case (board C2). */
+.bk-case { background: var(--bk-wood); padding: 10px 10px 0; border-radius: 4px; box-shadow: 0 18px 30px var(--bk-shadow-strong); }
+.bk-case-back { background: var(--bk-ground); box-shadow: inset 0 10px 18px var(--bk-shadow); padding: 14px 8px 0; }
+.bk-case .bk-shelf-row { height: 128px; }
+.bk-case-board { height: 14px; background: var(--bk-wood); border-top: 2px solid var(--bk-wood-edge); margin: 0 -10px; display: flex; justify-content: center; align-items: center; }
+.bk-case-plate { background: var(--bk-brass); color: var(--bk-on-brass); font-size: 11px; font-weight: 700; padding: 0 8px; border-radius: 1px; line-height: 13px; }
+.bk-case .bk-spine.is-lifted { transform: translateY(-22px) scale(1.1); }
 
-.bk-prose { max-width: 680px; }
-.bk-prose h2 { font-family: var(--bk-serif); font-weight: 500; }
-.bk-draft { background: var(--bk-surface); border: 1px dashed var(--bk-brass); padding: 10px 14px; border-radius: 6px; }
+/* Living shelf: drag to arrange (board C1). */
+.bk-shelf--living .bk-spine { cursor: grab; touch-action: none; transition: left 260ms ease, transform 220ms ease, box-shadow 220ms ease; }
+.bk-shelf--living .bk-spine.is-dragging { cursor: grabbing; transition: none; z-index: 6; transform: translateY(-12px); box-shadow: 0 16px 24px var(--bk-shadow-strong); }
 
+/* ---- desktop and tablet (spec BK1 §1.3) ---------------------------------- */
+@media (min-width: 700px) {
+  .bk-main { padding: 0 32px 32px; }
+  .bk-header { padding: 18px 32px; }
+}
 @media (min-width: 900px) {
   .bk-nav { display: none; }
-  .bk-shelf { height: 190px; }
+  .bk-layout { max-width: 1280px; margin: 0 auto; }
+  .bk-side {
+    display: flex; flex-direction: column; gap: 4px; width: 200px; flex: none; padding: 8px 20px 24px;
+    border-inline-end: 1px solid var(--bk-line);
+  }
+  .bk-side .bk-nav-item {
+    flex-direction: row; justify-content: flex-start; gap: 10px; padding: 10px 12px; border-radius: 4px; font-size: 15px; min-height: 44px;
+  }
+  .bk-side .bk-nav-item[aria-current="page"] { background: var(--bk-surface-2); }
+  .bk-side-section { margin-top: 22px; padding: 0 12px; }
+  .bk-header { max-width: 1280px; margin: 0 auto; }
+  .bk-shelf-row { height: 230px; }
+  .bk-shelf-row--empty { height: 170px; }
+  .bk-home-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 28px; align-items: start; }
+  .bk-aside { display: grid; gap: 16px; }
 }
+
 @media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; animation: none !important; }
+  *, *::before, *::after { transition: none !important; animation: none !important; }
 }

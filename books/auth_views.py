@@ -17,7 +17,18 @@ def safe_next(request, default="/books/"):
     return default
 
 
-class LoginView(auth.LoginView):
+def _lang(request):
+    return getattr(request, "books_lang", "he")
+
+
+class _LangForm:
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["lang"] = _lang(self.request)
+        return kwargs
+
+
+class LoginView(_LangForm, auth.LoginView):
     template_name = "books/auth/login.html"
     authentication_form = BooksLoginForm
     redirect_authenticated_user = True
@@ -40,29 +51,36 @@ def signup(request):
         return redirect(safe_next(request))
     nxt = safe_next(request, default="")
     if request.method == "POST":
-        form = BooksSignupForm(request.POST)
+        form = BooksSignupForm(request.POST, lang=_lang(request))
         if form.is_valid():
             user = form.save()
             auth_login(request, user, backend="django.contrib.auth.backends.ModelBackend")
             return redirect(nxt or "books:onboarding")
     else:
-        form = BooksSignupForm()
+        form = BooksSignupForm(lang=_lang(request))
     return render(request, "books/auth/signup.html", {"form": form, "next": nxt})
 
 
-class PasswordResetView(auth.PasswordResetView):
+class PasswordResetView(_LangForm, auth.PasswordResetView):
     form_class = BooksPasswordResetForm
     template_name = "books/auth/password_reset_form.html"
     email_template_name = "books/auth/password_reset_email.txt"
     subject_template_name = "books/auth/password_reset_subject.txt"
     success_url = reverse_lazy("books:password_reset_done")
 
+    def get_extra_email_context(self):
+        return {"books_lang": _lang(self.request)}
+
+    def form_valid(self, form):
+        self.extra_email_context = self.get_extra_email_context()
+        return super().form_valid(form)
+
 
 class PasswordResetDoneView(auth.PasswordResetDoneView):
     template_name = "books/auth/password_reset_done.html"
 
 
-class PasswordResetConfirmView(auth.PasswordResetConfirmView):
+class PasswordResetConfirmView(_LangForm, auth.PasswordResetConfirmView):
     form_class = BooksSetPasswordForm
     template_name = "books/auth/password_reset_confirm.html"
     success_url = reverse_lazy("books:password_reset_complete")

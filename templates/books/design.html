@@ -1,0 +1,77 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "design.title" %} · {% t "brand" %}{% endblock %}
+{% block screen %}design{% endblock %}
+{% block content %}
+<div class="bk-wide">
+  <h1 class="bk-title">{% t "design.title" %}</h1>
+  <p class="bk-lead">{% t "design.lead" %}</p>
+  <div class="bk-row">
+    <form method="post" action="{% url 'books:set_theme' 'light' %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="bk-btn bk-btn--small" type="submit">{% t "design.theme_light" %}</button></form>
+    <form method="post" action="{% url 'books:set_theme' 'dark' %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="bk-btn bk-btn--small" type="submit">{% t "design.theme_dark" %}</button></form>
+  </div>
+
+  <h2 class="bk-h2">{% t "design.sample_shelf" %} · {% t "settings.view_lamp" %}</h2>
+  {% include "books/_shelf.html" with shelf_id="sample-lamp" books_json=sample_json view="lamp" kicker=sample_kicker lifted=sample_lifted %}
+  <h2 class="bk-h2">{% t "design.sample_shelf" %} · {% t "settings.view_bookcase" %}</h2>
+  {% include "books/_shelf.html" with shelf_id="sample-case" books_json=sample_json view="bookcase" plate1=sample_plate1 plate2=sample_plate2 %}
+  <h2 class="bk-h2">{% t "design.sample_shelf" %} · {% t "settings.view_living" %}</h2>
+  {% include "books/_shelf.html" with shelf_id="sample-living" books_json=sample_json view="living" %}
+
+  <h2 class="bk-h2">{% t "design.buttons" %}</h2>
+  <div class="bk-row">
+    <button type="button" class="bk-btn bk-btn--primary">{% t "design.primary" %}</button>
+    <button type="button" class="bk-btn">{% t "design.secondary" %}</button>
+    <button type="button" class="bk-btn bk-btn--quiet">{% t "design.quiet" %}</button>
+    <button type="button" class="bk-btn bk-btn--danger">{% t "design.danger" %}</button>
+    <button type="button" class="bk-btn bk-btn--small">{% t "design.secondary" %}</button>
+  </div>
+
+  <h2 class="bk-h2">{% t "design.fields" %}</h2>
+  <div class="bk-card bk-form" style="max-width: 440px">
+    <label class="bk-field">{% t "field.email" %} <input class="bk-input" type="email" value="noa@example.com"><span class="bk-help">{% t "onb.area_help" %}</span></label>
+    <label class="bk-field">{% t "onb.language" %} <select class="bk-select"><option>{% t "lang.name_he" %}</option><option>{% t "lang.name_en" %}</option></select></label>
+    <label class="bk-field">{% t "design.sample_text" %} <textarea class="bk-textarea"></textarea></label>
+    <label class="bk-check"><input type="checkbox" checked> <span>{% t "onb.adult" %}</span></label>
+    <div class="bk-radio-row">
+      <label class="bk-radio"><input type="radio" name="r" checked> {% t "design.theme_light" %}</label>
+      <label class="bk-radio"><input type="radio" name="r"> {% t "design.theme_dark" %}</label>
+    </div>
+    <p class="bk-error" role="alert">{% t "signup.err_mismatch" %}</p>
+  </div>
+
+  <h2 class="bk-h2">{% t "design.chips" %}</h2>
+  <div class="bk-chips">
+    <button type="button" class="bk-chip" aria-pressed="false">{% t "status.private" %}</button>
+    <button type="button" class="bk-chip" aria-pressed="false">{% t "status.public" %}</button>
+    <button type="button" class="bk-chip" aria-pressed="true">{% t "status.lend" %}</button>
+    <button type="button" class="bk-chip" aria-pressed="true">{% t "status.exchange" %}</button>
+    <button type="button" class="bk-chip" aria-pressed="false">{% t "status.sell" %}</button>
+  </div>
+
+  <h2 class="bk-h2">{% t "design.cards" %}</h2>
+  <div class="bk-row">
+    <div class="bk-card" style="max-width: 320px"><h3 class="bk-h2" style="margin-top: 0">{% t "design.sample_title" %}</h3><p class="bk-muted">{% t "design.sample_text" %}</p></div>
+    <div class="bk-card bk-label-card" style="min-width: 260px"><span class="bk-kicker">{% t "shelf.rare" %}</span><span class="bk-label-title">{% t "design.sample_title" %}</span><span class="bk-muted">{% t "design.sample_author" %}</span><span class="bk-label-status">{% t "status.lend" %}</span></div>
+  </div>
+
+  <h2 class="bk-h2">{% t "design.tiles" %}</h2>
+  <div class="bk-tile-grid">
+    <a class="bk-tile" href="#"><span class="bk-tile-cover" style="--spine-bg: #7A2E2A; --spine-ink: #F5EFE3">{% t "design.sample_title" %}<small>{% t "design.sample_author" %}</small></span><span class="bk-tile-meta">{% t "status.lend" %} · 1.2 km</span></a>
+    <a class="bk-tile" href="#"><span class="bk-tile-cover" style="--spine-bg: #2F5D50; --spine-ink: #F5EFE3">{% t "design.sample_title" %}<small>{% t "design.sample_author" %}</small></span><span class="bk-tile-meta">{% t "status.exchange" %} · 2.8 km</span></a>
+    <a class="bk-tile" href="#"><span class="bk-tile-cover" style="--spine-bg: #D9A441; --spine-ink: #1E2B45">{% t "design.sample_title" %}<small>{% t "design.sample_author" %}</small></span><span class="bk-tile-meta">{% t "status.sell" %} · 4 km</span></a>
+  </div>
+
+  <h2 class="bk-h2">{% t "design.feedback" %}</h2>
+  <div class="bk-stack" style="max-width: 440px">
+    <div class="bk-notice">{% t "design.sample_text" %}</div>
+    <div class="bk-notice bk-notice--ok">{% t "design.toast_text" %}</div>
+    <div class="bk-notice bk-notice--danger">{% t "err500.lead" %}</div>
+    <div class="bk-toast bk-toast--static" role="status">{% t "design.toast_text" %}</div>
+    <div class="bk-sheet bk-sheet--static"><div class="bk-sheet-handle"></div><p class="bk-h2" style="margin-top: 0">{% t "design.dialog_title" %}</p><p class="bk-muted">{% t "design.dialog_text" %}</p><div class="bk-row"><button type="button" class="bk-btn">{% t "design.cancel" %}</button><button type="button" class="bk-btn bk-btn--danger">{% t "design.confirm_delete" %}</button></div></div>
+    <div class="bk-dialog" style="width: auto"><p class="bk-dialog-title">{% t "design.dialog_title" %}</p><p class="bk-muted">{% t "design.dialog_text" %}</p><div class="bk-dialog-actions"><button type="button" class="bk-btn">{% t "design.cancel" %}</button><button type="button" class="bk-btn bk-btn--danger">{% t "design.confirm_delete" %}</button></div></div>
+  </div>
+
+  <h2 class="bk-h2">{% t "design.empty" %}</h2>
+  {% include "books/_shelf.html" with shelf_id="sample-empty" books_json="[]" kicker=sample_kicker %}
+</div>
+{% endblock %}

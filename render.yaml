@@ -69,6 +69,20 @@ services:
         sync: false
       - key: DRIVE_FOLDER_ID
         sync: false
+      # Books (docs/books/spec.md BK1 §1.6): its own private GCS bucket and a
+      # service account limited to it (ACT-BK.6). Unset means images fall back
+      # to the disk, which is logged, never silent. BOOKS_JOBS_TOKEN lets a
+      # scheduler re-run dropped background jobs; unset means closed.
+      - key: BOOKS_GCS_BUCKET
+        sync: false
+      - key: BOOKS_GCS_CREDENTIALS_JSON
+        sync: false
+      - key: BOOKS_JOBS_TOKEN
+        sync: false
+      - key: BOOKS_GOOGLE_BOOKS_KEY
+        sync: false
+      - key: BOOKS_NLI_API_KEY
+        sync: false
     disk:
       name: mysite-disk
       mountPath: /var/data

@@ -1,0 +1,19 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "data.title" %} · {% t "brand" %}{% endblock %}
+{% block screen %}my-data{% endblock %}
+{% block content %}
+<div class="bk-narrow">
+  <h1 class="bk-title">{% t "data.title" %}</h1>
+  <p class="bk-lead">{% t "data.lead" %}</p>
+  <a class="bk-btn bk-btn--primary bk-btn--wide" href="{% url 'books:my_data_export' %}" download>{% t "data.export" %}</a>
+
+  <h2 class="bk-h2">{% t "data.delete_h" %}</h2>
+  <form method="post" class="bk-card bk-form" novalidate>
+    {% csrf_token %}
+    <p class="bk-muted" style="margin: 0">{% t "data.delete_p" %}</p>
+    <label class="bk-field">{% t "data.delete_type" %} <input class="bk-input" name="confirm" autocomplete="off"></label>
+    {% if error %}<p class="bk-error" role="alert">{{ error }}</p>{% endif %}
+    <button type="submit" class="bk-btn bk-btn--danger bk-btn--wide">{% t "data.delete_confirm" %}</button>
+  </form>
+</div>
+{% endblock %}

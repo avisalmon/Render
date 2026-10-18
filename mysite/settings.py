@@ -81,6 +81,9 @@ MIDDLEWARE = [
     # inside an English exo page. Uses translation.override, so nothing
     # leaks to the next request. Same shape as SensorLab's.
     "exo.middleware.ExoLanguageMiddleware",
+    # Runs /books/ requests in the person's language, direction and theme,
+    # and only those. Same shape as exo's. See books/middleware.py.
+    "books.middleware.BooksMiddleware",
 ]
 
 ROOT_URLCONF = "mysite.urls"
@@ -522,3 +525,18 @@ if EMAIL_BACKEND != "app.mail_guard.GuardedEmailBackend":
 # live site, even when generated on a dev server, so a copied snippet never
 # points at localhost (docs/counter/spec.md).
 COUNTER_PUBLIC_ORIGIN = os.environ.get("COUNTER_PUBLIC_ORIGIN", "https://babook.co.il")
+
+# Books (docs/books/spec.md BK1 §1.6). Images go to Books' own private Google
+# Cloud Storage bucket when these are set (ACT-BK.6); unset means the local
+# media/books/ folder, which is the dev fallback and is logged as such in prod.
+BOOKS_GCS_BUCKET = os.environ.get("BOOKS_GCS_BUCKET", "")
+BOOKS_GCS_CREDENTIALS_JSON = os.environ.get("BOOKS_GCS_CREDENTIALS_JSON", "")
+# Background jobs run on a thread; this token lets a scheduler re-run anything
+# a restart dropped (books/jobs.py). Unset means that endpoint is closed.
+BOOKS_JOBS_TOKEN = os.environ.get("BOOKS_JOBS_TOKEN", "")
+BOOKS_JOBS_INLINE = False
+# Catalogue sources (BK2). Open Library wants a contact in the User-Agent;
+# Google Books and the National Library of Israel take optional keys.
+BOOKS_CONTACT_EMAIL = os.environ.get("BOOKS_CONTACT_EMAIL", "avi.salmon@gmail.com")
+BOOKS_GOOGLE_BOOKS_KEY = os.environ.get("BOOKS_GOOGLE_BOOKS_KEY", "")
+BOOKS_NLI_API_KEY = os.environ.get("BOOKS_NLI_API_KEY", "")

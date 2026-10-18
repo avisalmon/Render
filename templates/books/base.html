@@ -1,35 +1,58 @@
-{% load static %}<!doctype html>
-<html lang="he" dir="rtl" data-theme="light">
+{% load static books_tags %}<!doctype html>
+<html lang="{{ request.books_lang|default:'he' }}" dir="{{ request.books_dir|default:'rtl' }}" data-theme="{{ request.books_theme|default:'light' }}" data-palette="{{ request.books_palette|default:'lamplit' }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>{% block title %}ספרים{% endblock %}</title>
+  <title>{% block title %}{% t "brand" %}{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  {% if request.books_palette == "warm" %}
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&amp;family=Assistant:wght@400;600;700&amp;display=swap">
+  {% elif request.books_palette == "bright" %}
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&amp;display=swap">
+  {% else %}
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=David+Libre:wght@400;500;700&amp;family=Heebo:wght@300;400;500;700&amp;display=swap">
+  {% endif %}
   <link rel="stylesheet" href="{% static 'books/books.css' %}">
-  <meta name="theme-color" content="#EFE6D6">
+  <link rel="manifest" href="{% static 'books/manifest.webmanifest' %}">
+  <link rel="icon" href="{% static 'books/icon.svg' %}" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{% static 'books/icon-180.png' %}">
+  <meta name="theme-color" content="{{ request.books_theme_color|default:'' }}">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="{% t "brand" %}">
 </head>
-<body class="bk" data-screen="{% block screen %}page{% endblock %}">
+<body class="bk" data-screen="{% block screen %}page{% endblock %}" data-csrf="{{ csrf_token }}">
+  <a class="bk-skip" href="#bk-content">{% t "skip" %}</a>
   <header class="bk-header">
-    <a class="bk-wordmark" href="{% url 'books:home' %}">ספרים</a>
+    <a class="bk-wordmark" href="{% url 'books:home' %}">{% t "brand" %}</a>
     <div class="bk-account">
+      <form method="post" action="{% url 'books:set_language' request.books_other_lang|default:'en' %}">{% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <button type="submit" class="bk-btn bk-btn--quiet" lang="{{ request.books_other_lang|default:'en' }}" aria-label="{% t "lang.switch" %}">{% t "lang.other" %}</button>
+      </form>
       {% if user.is_authenticated %}
-        {% block account %}<span>{{ user.books_profile.display_name|default:user.email }}</span>{% endblock %}
+        {% block account %}
+          {% if user.books_profile %}<a class="bk-btn bk-btn--quiet" href="{% url 'books:settings' %}">{{ user.books_profile.display_name }}</a>{% endif %}
+        {% endblock %}
         <form method="post" action="{% url 'books:logout' %}">{% csrf_token %}
-          <button type="submit" class="bk-btn bk-btn--quiet">יציאה</button>
+          <button type="submit" class="bk-btn bk-btn--quiet">{% t "sign_out" %}</button>
         </form>
       {% else %}
-        {% block signin %}<a class="bk-btn bk-btn--quiet" href="{% url 'books:login' %}">כניסה</a>{% endblock %}
+        {% block signin %}<a class="bk-btn bk-btn--quiet" href="{% url 'books:login' %}">{% t "sign_in" %}</a>{% endblock %}
       {% endif %}
     </div>
   </header>
 
-  <main class="bk-main">{% block content %}{% endblock %}</main>
+  <div class="bk-layout">
+    {% if user.books_profile %}{% include "books/_nav.html" with side=True %}{% endif %}
+    <main class="bk-main" id="bk-content">{% block content %}{% endblock %}</main>
+  </div>
 
-  {% block nav %}{% endblock %}
+  {% if user.books_profile %}{% include "books/_nav.html" with side=False %}{% endif %}
 
   <footer class="bk-footer">
-    <a href="{% url 'books:terms' %}">תנאי שימוש</a> · <a href="{% url 'books:privacy' %}">פרטיות</a>
+    <a href="{% url 'books:terms' %}">{% t "footer.terms" %}</a> · <a href="{% url 'books:privacy' %}">{% t "footer.privacy" %}</a>
   </footer>
+  <script src="{% static 'books/shelf.js' %}" defer></script>
+  {% block scripts %}{% endblock %}
 </body>
 </html>
