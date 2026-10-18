@@ -40,8 +40,10 @@ def _build():
         )
     if not settings.DEBUG:
         log.warning("books: BOOKS_GCS_BUCKET is not set; images are on the local disk, which is the dev fallback")
+    # No mkdir here: Django calls this while the models load, which on Render
+    # happens during the build, before the persistent disk is mounted. The
+    # first save creates the folder (broke the BK2 deploy, 2026-10-18).
     root = Path(settings.MEDIA_ROOT) / "books"
-    root.mkdir(parents=True, exist_ok=True)
     return FileSystemStorage(location=str(root), base_url=f"{settings.MEDIA_URL}books/")
 
 
