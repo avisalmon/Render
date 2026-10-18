@@ -384,7 +384,7 @@ Proposed in this file, marked **[decision]** above:
 
 **All eight approved by Avi on 2026-10-18, as written.**
 
-## 11. Additions made during the build (for Avi's ack)
+## 11. Additions made during the build (acked by Avi, 2026-10-18)
 
 Recorded here the day they were built, as the methodology asks. Each is a
 small model the approved picture did not have; none changes an approved one.

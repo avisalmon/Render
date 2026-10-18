@@ -24,8 +24,9 @@ looked at as a screenshot at least once (methodology entry 6).
 **Status values:** `TODO`, `WIP`, `DONE (dev)`, `DONE, DEPLOYED <date>`.
 
 **Gate status, 2026-10-18:** every kickoff gate closed; backlog approved;
-BK1 built and pushed the same day (autonomous run on Avi's mandate, decisions
-listed for his ack when BK2 is live).
+BK1 and BK2 built and pushed the same day (autonomous run on Avi's mandate).
+**Avi acked every decision of BK1 and BK2 on 2026-10-18**, kept Books open to
+anyone who reaches it (no allow-list), and said start BK3.
 
 ---
 
