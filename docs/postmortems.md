@@ -17,6 +17,27 @@ Newest first.
 
 ---
 
+## PM-16 · 2026-10-19 · BK6 sprint end: two wrong numbers only a person saw
+
+**What happened.** The circle page showed "1 members" for a circle of two,
+and the owner's circle page said "no books offered" while the owner had
+offered two. Both passed every test; both were visible on the sprint-end
+screenshots when read against the seeded world. A third item, pilot table
+links too small to tap, the screen contract caught by itself.
+
+**Why.** The count came from `filter(members__profile=me)` followed by
+`Count("members")`, which share one join; the test circle had one member,
+so the wrong number equalled the right one. The empty state did not
+distinguish "none" from "only yours". The screen contract checks shape, not
+meaning.
+
+**Rule.** Annotate before filtering on the same relation (or filter with a
+subquery), and test with at least two rows on it. At sprint end, read every
+number and empty state on a screenshot against the seeded data.
+
+Here: docs/building_an_app.md mistakes 20 and 21; tests/test_books_6.py
+BKM: FullStackBKM 30029bb
+
 ## PM-15 · 2026-10-19 · BK5 sprint end: the bell and the spine colours
 
 **What happened.** Two things the sprint's own tests missed. (1) The new

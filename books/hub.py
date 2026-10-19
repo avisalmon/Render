@@ -21,7 +21,18 @@ from django.db.models import Q
 from django.utils import timezone
 
 from . import jobs
-from .models import Block, Copy, CopyTransfer, Deal, Message, Notification, Offer, Profile, Wish, round_coordinate
+from .models import (
+    Block,
+    Copy,
+    CopyTransfer,
+    Deal,
+    Message,
+    Notification,
+    Offer,
+    Profile,
+    Wish,
+    round_coordinate,
+)
 from .textnorm import normalize
 
 log = logging.getLogger(__name__)
@@ -98,11 +109,15 @@ def area_changed(profile):
 
 # ---- near you ------------------------------------------------------------------------------
 
-def offered_copies(viewer, kind=None, q=None, tag=None, language=None, limit=300):
+def offered_copies(viewer, kind=None, q=None, tag=None, language=None, limit=300, circles_only=False):
     """Public, offered, held copies of other people within the viewer's
-    radius (or in the same named area when either has no point), nearest
-    first. Returns [(copy, km or None)]."""
+    radius (or in the same named area when either has no point), plus every
+    circle peer's at any distance (BK6), nearest first. Returns
+    [(copy, km or None)]."""
+    from .circles import peer_ids
+
     hidden = blocked_ids(viewer)
+    peers = peer_ids(viewer)
     offers = Offer.objects.filter(is_active=True, copy__visibility=Copy.PUBLIC, copy__status=Copy.WITH_OWNER,
                                   copy__display_only=False).exclude(copy__owner=viewer).exclude(copy__owner_id__in=hidden)
     if kind:
@@ -114,13 +129,17 @@ def offered_copies(viewer, kind=None, q=None, tag=None, language=None, limit=300
         offers = offers.filter(copy__entry__tags__key=tag)
     if language:
         offers = offers.filter(copy__entry__language=language)
+    if circles_only:
+        offers = offers.filter(copy__owner_id__in=peers)
     copy_ids = list(offers.values_list("copy_id", flat=True).distinct()[:2000])
     copies = (Copy.objects.filter(pk__in=copy_ids).select_related("entry", "owner")
               .prefetch_related("offers", "entry__creators"))
     out = []
     for c in copies:
         km = km_between(viewer, c.owner)
-        if km is None:
+        if c.owner_id in peers:
+            pass  # a circle's books reach its members beyond the radius
+        elif km is None:
             if not same_area(viewer, c.owner):
                 continue
         elif km > (viewer.radius_km or 10):
@@ -478,11 +497,19 @@ def alert_wishers(offer):
     copy = offer.copy
     if not offer.is_active or copy.visibility != Copy.PUBLIC or copy.display_only:
         return 0
+    from .circles import peer_ids
+
     n = 0
+    peers = peer_ids(copy.owner)
     for wish in Wish.objects.filter(entry=copy.entry, notify_when_available=True).exclude(profile=copy.owner) \
             .select_related("profile"):
         p = wish.profile
         if blocked_between(p, copy.owner):
+            continue
+        if p.pk in peers:
+            if not Notification.objects.filter(profile=p, kind="wish.available", copy=copy).exists():
+                notify(p, "wish.available", entry=copy.entry, copy=copy)
+                n += 1
             continue
         km = km_between(p, copy.owner)
         if km is None and not same_area(p, copy.owner):

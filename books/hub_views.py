@@ -9,7 +9,8 @@ from django.views.decorators.http import require_POST
 from . import hub
 from .access import books_page
 from .auth_views import safe_next
-from .models import Copy, Deal, MeetingPlace, Notification, Profile, Report, Tag
+from .circles import places_for
+from .models import Copy, Deal, Notification, Profile, Report, Tag
 from .shelf import spine_for
 from .strings import text as t
 
@@ -25,11 +26,13 @@ def near(request):
     me = request.books_profile
     hub.sweep_lazily()
     kind = request.GET.get("kind") if request.GET.get("kind") in ("lend", "exchange", "sell") else None
+    in_circles = request.GET.get("circles") == "1"
     rows = hub.offered_copies(me, kind=kind, q=request.GET.get("q"), tag=request.GET.get("tag") or None,
-                              language=request.GET.get("language") or None)
+                              language=request.GET.get("language") or None, circles_only=in_circles)
     rows = [(c, km, spine_for(c.entry_id, c.entry.title)) for c, km in rows]
     return render(request, "books/hub/near.html", {
-        "rows": rows, "filtered": bool(kind or request.GET.get("tag") or request.GET.get("language")), "kind": kind or "", "q": request.GET.get("q", ""), "tag": request.GET.get("tag", ""),
+        "rows": rows, "in_circles": in_circles, "has_circles": me.circle_memberships.exists(),
+        "filtered": bool(kind or request.GET.get("tag") or request.GET.get("language") or in_circles), "kind": kind or "", "q": request.GET.get("q", ""), "tag": request.GET.get("tag", ""),
         "language": request.GET.get("language", ""), "has_area": bool(me.area_name),
         "tags": Tag.objects.filter(kind="genre", entries__copies__offers__is_active=True).distinct().order_by("name_en"),
         "lang": _lang(request), "radius": me.radius_km,
@@ -100,7 +103,7 @@ def deal_page(request, pk):
         "deal": deal, "role": role, "other": other, "rep": hub.reputation(other),
         "messages_list": deal.messages.select_related("sender"), "contact": hub.contact_for(deal, me),
         "my_shares": my_shares, "share_ways": hub.SHARE_WAYS, "has_phone": bool(me.phone),
-        "places": MeetingPlace.objects.filter(is_active=True), "today": timezone.now().date(),
+        "places": places_for(deal.owner, deal.requester), "today": timezone.now().date(),
         "i_confirmed": bool(deal.owner_confirmed_handover_at if role == "owner" else deal.requester_confirmed_handover_at),
         "error": _error_text(request), "blocked": hub.blocked_between(me, other),
     })
@@ -120,9 +123,8 @@ ACTIONS = {
     "got_back": lambda d, p, r: hub.confirm_returned(d, p),
     "dispute": lambda d, p, r: hub.dispute(d, p, r.POST.get("note", "")),
     "message": lambda d, p, r: hub.send_message(d, p, r.POST.get("body", "")),
-    "meeting": lambda d, p, r: hub.set_meeting(d, p, MeetingPlace.objects.filter(pk=r.POST.get("place") or 0,
-                                                                                 is_active=True).first(),
-                                               r.POST.get("meeting_note", "")),
+    "meeting": lambda d, p, r: hub.set_meeting(d, p, places_for(d.owner, d.requester).filter(
+        pk=r.POST.get("place") or 0).first(), r.POST.get("meeting_note", "")),
     "share": lambda d, p, r: _share(d, p, r),
 }
 

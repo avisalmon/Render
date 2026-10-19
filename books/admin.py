@@ -1,6 +1,16 @@
 from django.contrib import admin
 
-from .models import Deal, Job, MeetingPlace, ModelCall, Profile, Report
+from .models import (
+    Circle,
+    CircleMember,
+    Deal,
+    Feedback,
+    Job,
+    MeetingPlace,
+    ModelCall,
+    Profile,
+    Report,
+)
 
 
 @admin.register(Profile)
@@ -44,3 +54,23 @@ class ReportAdmin(admin.ModelAdmin):
     list_display = ["created_at", "reporter", "reason", "status"]
     list_filter = ["status"]
     raw_id_fields = ["reporter", "copy", "profile", "deal", "handled_by"]
+
+
+class CircleMemberInline(admin.TabularInline):
+    model = CircleMember
+    extra = 0
+    raw_id_fields = ["profile"]
+
+
+@admin.register(Circle)
+class CircleAdmin(admin.ModelAdmin):
+    list_display = ["name", "kind", "area_name", "is_private", "join_code", "created_at"]
+    list_filter = ["kind", "is_private"]
+    search_fields = ["name", "area_name", "join_code"]
+    inlines = [CircleMemberInline]
+
+
+@admin.register(Feedback)
+class FeedbackAdmin(admin.ModelAdmin):
+    list_display = ["created_at", "profile", "status", "path"]
+    list_filter = ["status"]

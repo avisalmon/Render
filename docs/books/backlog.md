@@ -360,11 +360,35 @@ books" and its filters filled the phone screen (now one field and "more
 filters"); the request page put the counts above the actions (now the actions
 and messages come first); books without a cover show their spine colours.
 
-## Epic BK6: Circles and the first launch (outline)
+## Epic BK6: Circles and the first launch `DONE (dev), 2026-10-19`
 
-- **SPR-BK6.1** Circle and CircleMember, invites, a circle's books.
-- **SPR-BK6.2** Pilot tools and dashboard for Avi, in-app feedback; launch
-  checklist (ACT-BK.1, ACT-BK.2, ACT-BK.4 done).
+| ID | Feature | Status |
+| --- | --- | --- |
+| F-BK6.1 | `/books/circles/`: my circles, the open ones, join with a code, start one (book club, school, workplace, neighbourhood; private or open) | DONE |
+| F-BK6.2 | Invite by link (`/books/join/<code>/`, a page that names the circle and one tap) or by a code read aloud (8 letters, no 0/O/1/I); a moderator can retire the code, members already in stay | DONE |
+| F-BK6.3 | Roles: owner, moderator, member. The owner names moderators; a moderator removes members; nobody removes the owner; an owner who leaves hands the circle to the longest-serving moderator, else member; the last one out closes it | DONE |
+| F-BK6.4 | A circle's books: members' public, offered books at any distance, on the circle's page and under "near you" (with an "only from my circles" filter); a private book never; a blocked person's never | DONE |
+| F-BK6.5 | Wishlist alerts reach circle members beyond the radius | DONE |
+| F-BK6.6 | A circle's own meeting places (partners marked), offered on a request only when both sides share that circle | DONE |
+| F-BK6.7 | Feedback from the footer of every page, straight to the pilot desk, with the page it was written on | DONE |
+| F-BK6.8 | The pilot desk (`/books/pilot/`, staff): the funnel in people (signed up, photographed, have books, offer, asked, completed), people / books / scans / requests this week and in all, model cost, circles, open reports, feedback; the same numbers as JSON at `/books/api/pilot/` | DONE |
+| F-BK6.9 | API: circles (create, update, join, leave, new code, books), circle members (role, remove), feedback, pilot; admin for circles and feedback | DONE |
+| F-BK6.10 | The launch checklist: [docs/books/launch.md](launch.md) | DONE |
+
+Models: `Circle`, `CircleMember` (approved), `Feedback` and
+`MeetingPlace.circle` (additions, data_model.md section 11; migration 0008).
+Decisions for Avi's ack: (1) a private circle is joined only with its link
+or code, an open one is listed and anyone may join; (2) circle members see
+each other's offered books at any distance, which is the point of a circle;
+(3) only the owner names moderators, a moderator may remove plain members,
+ownership passes on leaving rather than being handed over; (4) the pilot
+desk is a staff page inside Books plus JSON, not a file in docs, so the
+numbers are live; (5) feedback is a footer box on every signed-in page and
+goes nowhere but the pilot desk (no email, like notifications). Found by
+looking at the screens: a circle showed "1 members" for a circle of two (a
+count after a filter on the same relation); the owner's page said "no books"
+when the only offered books were the owner's own; the pilot table's links
+were too small to tap.
 
 ## Epics BK7 to BK13
 

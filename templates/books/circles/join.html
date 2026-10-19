@@ -1,0 +1,19 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{{ circle.name }} · {% t "brand" %}{% endblock %}
+{% block screen %}circle-join{% endblock %}
+{% block content %}
+<div class="bk-narrow">
+  <p class="bk-kicker">{% t "circle.join_lead" %}</p>
+  <h1 class="bk-title">{{ circle.name }}</h1>
+  <p class="bk-muted">{% with key="ckind."|add:circle.kind %}{% t key %}{% endwith %}{% if circle.area_name %} · {{ circle.area_name }}{% endif %} · {% t "circles.members" n=n_members %} · {% t "circles.books" n=n_books %}</p>
+  {% if circle.description %}<p>{{ circle.description }}</p>{% endif %}
+  {% if member %}
+    <p class="bk-notice" role="status">{% t "circle.already" %}</p>
+    <a class="bk-btn bk-btn--primary" href="{% url 'books:circle' circle.pk %}">{% t "circle.to_circle" %}</a>
+  {% else %}
+    <form method="post" class="bk-form">{% csrf_token %}
+      <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "circles.join" %}</button>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

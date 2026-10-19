@@ -1,6 +1,15 @@
 from django.urls import include, path
 
-from . import auth_views, catalog_views, hub_views, internal, library_views, scan_views, views
+from . import (
+    auth_views,
+    catalog_views,
+    circle_views,
+    hub_views,
+    internal,
+    library_views,
+    scan_views,
+    views,
+)
 from .api import router
 
 app_name = "books"
@@ -32,6 +41,14 @@ urlpatterns = [
     path("report/", hub_views.report, name="report"),
     path("notifications/", hub_views.notifications, name="notifications"),
     path("notifications/unread/", hub_views.unread, name="notifications_unread"),
+    # Circles, feedback and the pilot desk (BK6).
+    path("circles/", circle_views.circles_page, name="circles"),
+    path("circles/<int:pk>/", circle_views.circle_page, name="circle"),
+    path("circles/<int:pk>/act/", circle_views.circle_action, name="circle_action"),
+    path("join/<str:code>/", circle_views.join_by_link, name="circle_join"),
+    path("feedback/", circle_views.feedback, name="feedback"),
+    path("pilot/", circle_views.pilot, name="pilot"),
+    path("pilot/feedback/<int:pk>/read/", circle_views.feedback_read, name="feedback_read"),
     # My library (BK4).
     path("library/", library_views.library, name="library"),
     path("library/bulk/", library_views.bulk, name="library_bulk"),

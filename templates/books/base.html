@@ -52,6 +52,20 @@
   {% if user.books_profile %}{% include "books/_nav.html" with side=False %}{% endif %}
 
   <footer class="bk-footer">
+    {% if user.books_profile %}
+    {% if request.GET.thanks %}<p class="bk-notice bk-notice--ok bk-feedback-thanks" role="status">{% t "feedback.thanks" %}</p>{% endif %}
+    <details class="bk-feedback">
+      <summary>{% t "feedback.open" %}</summary>
+      <form method="post" action="{% url 'books:feedback' %}" class="bk-form">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.path }}">
+        <input type="hidden" name="path" value="{{ request.get_full_path }}">
+        <p class="bk-help" style="margin: 0">{% t "feedback.lead" %}</p>
+        <label class="bk-field">{% t "feedback.title" %} <textarea class="bk-input" name="body" rows="3" maxlength="2000" required></textarea></label>
+        <button type="submit" class="bk-btn bk-btn--small">{% t "feedback.send" %}</button>
+      </form>
+    </details>
+    {% endif %}
     <a href="{% url 'books:terms' %}">{% t "footer.terms" %}</a> · <a href="{% url 'books:privacy' %}">{% t "footer.privacy" %}</a>
   </footer>
   <script src="{% static 'books/shelf.js' %}" defer></script>

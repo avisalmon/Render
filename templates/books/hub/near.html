@@ -23,6 +23,7 @@
     <details class="bk-more" {% if filtered %}open{% endif %}>
     <summary>{% t "near.more_filters" %}</summary>
     <div class="bk-filter">
+    {% if has_circles %}<label class="bk-check"><input type="checkbox" name="circles" value="1" {% if in_circles %}checked{% endif %}> <span>{% t "near.in_circles" %}</span></label>{% endif %}
     <label class="bk-field">{% t "offered.offers" %}
       <select class="bk-select" name="kind">
         <option value="">{% t "near.kind_all" %}</option>
@@ -46,7 +47,7 @@
     </div>
     </details>
   </form>
-  <p class="bk-kicker">{% t "near.radius" km=radius %}</p>
+  <p class="bk-kicker">{% t "near.radius" km=radius %}{% if has_circles %} · {% t "near.circle_hint" %}{% endif %}</p>
 
   {% if rows %}
   <div class="bk-near-grid">

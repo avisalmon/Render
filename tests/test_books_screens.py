@@ -187,6 +187,19 @@ def build_world():
     deal = hub.ask(rp, lent, "lend", "שלום, אשמח לשאול אותו לחודש")
     hub.approve(deal, sp)
     hub.send_message(deal, sp, "בשמחה. מתי נוח לך?")
+
+    # Circles (BK6): the shelver owns a private club the reader is in, with a
+    # partner cafe; an open neighbourhood circle the reader is not in; feedback.
+    from books import circles
+    from books.models import Feedback
+    club = circles.create(sp, "מועדון הקריאה של הדר", "club", "הדר", "נפגשים כל חודש", is_private=True)
+    Circle = type(club)
+    Circle.objects.filter(pk=club.pk).update(join_code="HADAR247")
+    club.refresh_from_db()
+    circles.join(rp, club, club.join_code)
+    circles.add_place(sp, club, "בית הקפה של השכונה", "הדר", "cafe", is_partner=True)
+    circles.create(sp, "שכונת נווה שאנן", "neighbourhood", "נווה שאנן", is_private=False)
+    Feedback.objects.create(profile=rp, path="/books/near/", body="הכפתור לבקשה קטן מדי בטלפון")
     return {"reader": reader, "staff": staff, "fresh": fresh}
 
 
@@ -225,6 +238,13 @@ SCREENS = [
     ("deal-borrower", lambda: f"/books/deals/{__import__('books.models', fromlist=['Deal']).Deal.objects.get().pk}/", "reader", "deal"),
     ("deal-owner", lambda: f"/books/deals/{__import__('books.models', fromlist=['Deal']).Deal.objects.get().pk}/", "shelver", "deal"),
     ("notifications", "/books/notifications/", "reader", "notifications"),
+    ("circles", "/books/circles/", "reader", "circles"),
+    ("circles-empty", "/books/circles/", "staff", "circles"),
+    ("circle-owner", lambda: f"/books/circles/{__import__('books.models', fromlist=['Circle']).Circle.objects.get(is_private=True).pk}/", "shelver", "circle"),
+    ("circle-member", lambda: f"/books/circles/{__import__('books.models', fromlist=['Circle']).Circle.objects.get(is_private=True).pk}/", "reader", "circle"),
+    ("circle-open-outside", lambda: f"/books/circles/{__import__('books.models', fromlist=['Circle']).Circle.objects.get(is_private=False).pk}/", "reader", "circle"),
+    ("circle-join", "/books/join/HADAR247/", "staff", "circle-join"),
+    ("pilot", "/books/pilot/", "staff", "pilot"),
 ]
 
 

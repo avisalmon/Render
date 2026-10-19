@@ -11,7 +11,16 @@ from rest_framework.response import Response
 
 from .. import hub
 from ..access import profile_for
-from ..models import Block, Copy, CopyTransfer, Deal, MeetingPlace, Message, Notification, Profile, Report
+from ..circles import places_for
+from ..models import (
+    Block,
+    CopyTransfer,
+    Deal,
+    MeetingPlace,
+    Message,
+    Notification,
+    Report,
+)
 from .permissions import HasBooksProfile, StaffWrite
 
 
@@ -169,7 +178,8 @@ class DealViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Creat
 
     @action(detail=True, methods=["post"])
     def meeting(self, request, pk=None):
-        place = MeetingPlace.objects.filter(pk=request.data.get("meeting_place") or 0, is_active=True).first()
+        deal = self.get_object()
+        place = places_for(deal.owner, deal.requester).filter(pk=request.data.get("meeting_place") or 0).first()
         return self._step(request, hub.set_meeting, place, request.data.get("meeting_note", ""))
 
     @action(detail=True, methods=["post"])

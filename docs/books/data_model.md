@@ -447,3 +447,10 @@ offered near you"); its words come from the catalogue by `kind`, never
 stored text. `Report` gains `deal`, `status` open / handled and `handled_by`.
 `MeetingPlace`, `Deal`, `Message`, `CopyTransfer`, `Block`, `Notification`
 and `Report` are otherwise as approved above (migration 0007).
+
+**BK6 additions (2026-10-19, for Avi's ack).** `Circle` and `CircleMember`
+are as approved, plus `Circle.description` and `created_at`. `Feedback` is
+new: `profile`, `path` (the page it was written on), `body`, `status` open /
+read, `created_at`; it is the in-app feedback of spec BK6 and reaches only
+the pilot desk. `MeetingPlace.circle` (nullable) makes a place a circle's
+own; empty means everyone's (migration 0008).

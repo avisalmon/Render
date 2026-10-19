@@ -1,10 +1,32 @@
 from rest_framework.routers import DefaultRouter
 
-from .hub import (BlockViewSet, DealViewSet, MeetingPlaceViewSet, MessageViewSet, NearViewSet,
-                  NotificationViewSet, ReportViewSet, TransferViewSet)
-from .viewsets import (BookDetailViewSet, CatalogEntryViewSet, CopyPhotoViewSet, CopyViewSet, CreatorAliasViewSet,
-                       CreatorViewSet, EntryCorrectionViewSet, EntryIdentifierViewSet, OfferViewSet, ProfileViewSet,
-                       ScanItemViewSet, ShelfScanViewSet, TagViewSet, WishViewSet)
+from .circles import CircleMemberViewSet, CircleViewSet, FeedbackViewSet, PilotViewSet
+from .hub import (
+                  BlockViewSet,
+                  DealViewSet,
+                  MeetingPlaceViewSet,
+                  MessageViewSet,
+                  NearViewSet,
+                  NotificationViewSet,
+                  ReportViewSet,
+                  TransferViewSet,
+)
+from .viewsets import (
+                  BookDetailViewSet,
+                  CatalogEntryViewSet,
+                  CopyPhotoViewSet,
+                  CopyViewSet,
+                  CreatorAliasViewSet,
+                  CreatorViewSet,
+                  EntryCorrectionViewSet,
+                  EntryIdentifierViewSet,
+                  OfferViewSet,
+                  ProfileViewSet,
+                  ScanItemViewSet,
+                  ShelfScanViewSet,
+                  TagViewSet,
+                  WishViewSet,
+)
 
 router = DefaultRouter()
 router.register("profiles", ProfileViewSet, basename="profile")
@@ -29,3 +51,7 @@ router.register("blocks", BlockViewSet, basename="block")
 router.register("reports", ReportViewSet, basename="report")
 router.register("meeting-places", MeetingPlaceViewSet, basename="meeting-place")
 router.register("transfers", TransferViewSet, basename="transfer")
+router.register("circles", CircleViewSet, basename="circle")
+router.register("circle-members", CircleMemberViewSet, basename="circle-member")
+router.register("feedback", FeedbackViewSet, basename="feedback")
+router.register("pilot", PilotViewSet, basename="pilot")

@@ -1,0 +1,65 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "circles.title" %} · {% t "brand" %}{% endblock %}
+{% block screen %}circles{% endblock %}
+{% block content %}
+<div class="bk-narrow">
+  <h1 class="bk-title">{% t "circles.title" %}</h1>
+  <p class="bk-lead">{% t "circles.lead" %}</p>
+  {% if error %}<p class="bk-error" role="alert">{{ error }}</p>{% endif %}
+
+  {% if mine %}
+  <div class="bk-circle-grid">
+    {% for c in mine %}
+    <a class="bk-circle-card" href="{% url 'books:circle' c.pk %}">
+      <span class="bk-entry-title">{{ c.name }}</span>
+      <span class="bk-muted">{% with key="ckind."|add:c.kind %}{% t key %}{% endwith %}{% if c.area_name %} · {{ c.area_name }}{% endif %}</span>
+      <span class="bk-kicker">{% t "circles.members" n=c.n_members %}</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+    <p class="bk-notice" role="status">{% t "circles.none" %}</p>
+  {% endif %}
+
+  <form method="post" class="bk-card bk-form" id="join">
+    {% csrf_token %}<input type="hidden" name="action" value="join">
+    <h2 class="bk-h2" style="margin-top: 0">{% t "circles.join_code" %}</h2>
+    <div class="bk-row">
+      <label class="bk-field" style="flex: 1 1 200px">{% t "circles.code" %} <input class="bk-input" name="code" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="12" required></label>
+      <button type="submit" class="bk-btn bk-btn--primary" style="align-self: flex-end">{% t "circles.join" %}</button>
+    </div>
+  </form>
+
+  {% if open %}
+  <h2 class="bk-h2">{% t "circles.open" %}</h2>
+  <div class="bk-circle-grid">
+    {% for c in open %}
+    <a class="bk-circle-card" href="{% url 'books:circle' c.pk %}">
+      <span class="bk-entry-title">{{ c.name }}</span>
+      <span class="bk-muted">{% with key="ckind."|add:c.kind %}{% t key %}{% endwith %}{% if c.area_name %} · {{ c.area_name }}{% endif %}</span>
+      <span class="bk-kicker">{% t "circles.members" n=c.n_members %}</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <details class="bk-more" id="create" {% if error %}open{% endif %}>
+    <summary>{% t "circles.create" %}</summary>
+    <form method="post" class="bk-card bk-form">
+      {% csrf_token %}<input type="hidden" name="action" value="create">
+      <label class="bk-field">{% t "circles.name" %} <input class="bk-input" name="name" maxlength="80" required></label>
+      <label class="bk-field">{% t "circles.kind" %}
+        <select class="bk-select" name="kind">{% for k, _ in kinds %}<option value="{{ k }}">{% with key="ckind."|add:k %}{% t key %}{% endwith %}</option>{% endfor %}</select>
+      </label>
+      <label class="bk-field">{% t "circles.area" %} <input class="bk-input" name="area_name" maxlength="80"></label>
+      <label class="bk-field">{% t "circles.description" %} <textarea class="bk-input" name="description" rows="2" maxlength="500"></textarea></label>
+      <fieldset class="bk-fieldset">
+        <legend class="bk-visually-hidden">{% t "circles.private" %}</legend>
+        <label class="bk-radio"><input type="radio" name="is_private" value="1" checked> {% t "circles.private" %}</label>
+        <label class="bk-radio"><input type="radio" name="is_private" value="0"> {% t "circles.open_one" %}</label>
+      </fieldset>
+      <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "circles.create" %}</button>
+    </form>
+  </details>
+</div>
+{% endblock %}

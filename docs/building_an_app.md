@@ -666,3 +666,26 @@ contract caught it only because that screen happened to show those pairs.
 **The rule.** Every colour pair the code generates gets a unit test over the
 whole list (Books: `test_every_spine_colour_pair_is_readable_as_body_text`),
 not only the pairs a screen happens to render.
+
+### 20. A count after a filter on the same relation counts the filtered rows
+
+`Circle.objects.filter(members__profile=me).annotate(n=Count("members"))`
+showed "1 members" for a circle of three: the filter and the count share one
+join, so the count is of the rows the filter kept (me). The tests built a
+circle of one and were happy. A screenshot of a two-person circle was not.
+
+**The rule.** Annotate counts before filtering on the same relation, or
+filter with a subquery (`pk__in=...`), and write the test with at least two
+rows on the relation so the wrong number can appear.
+
+### 21. Read the numbers on the screenshot against the data you seeded
+
+The screen contract checks tap targets, contrast and labels; it does not
+know that the club you seeded has two members and three books. Two wrong
+numbers (the member count above, and "no books offered" on a page whose
+owner had offered two) were visible only to a person comparing the picture
+with the seed. That comparison is cheap and is now part of looking at the
+screens at sprint end.
+
+**The rule.** When you look at a screenshot, read every number and empty
+state on it against what you know the seeded world contains.

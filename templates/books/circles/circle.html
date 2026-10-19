@@ -1,0 +1,136 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{{ circle.name }} · {% t "brand" %}{% endblock %}
+{% block screen %}circle{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var btn = document.querySelector('[data-copy-link]');
+  if (!btn || !navigator.clipboard) return;
+  btn.addEventListener('click', function () {
+    navigator.clipboard.writeText(btn.getAttribute('data-copy-link')).then(function () {
+      btn.textContent = btn.getAttribute('data-copied');
+    });
+  });
+})();
+</script>
+{% endblock %}
+{% block content %}{% url 'books:circle_action' circle.pk as act %}
+<div class="bk-narrow">
+  <p><a href="{% url 'books:circles' %}">{% t "circles.title" %}</a></p>
+  <h1 class="bk-title">{{ circle.name }}</h1>
+  <p class="bk-muted" style="margin-top: 0">{% with key="ckind."|add:circle.kind %}{% t key %}{% endwith %}{% if circle.area_name %} · {{ circle.area_name }}{% endif %} · {% t "circles.members" n=n_members %} · {% t "circles.books" n=n_books %}</p>
+  {% if circle.description %}<p>{{ circle.description }}</p>{% endif %}
+  {% if joined %}<p class="bk-notice bk-notice--ok" role="status">{% t "circle.joined" %}</p>{% endif %}
+  {% if error %}<p class="bk-error" role="alert">{{ error }}</p>{% endif %}
+
+  {% if not member %}
+    <form method="post" action="{{ act }}" class="bk-form">{% csrf_token %}<input type="hidden" name="action" value="join">
+      <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "circles.join" %}</button>
+    </form>
+  {% else %}
+
+  <h2 class="bk-h2" id="books">{% t "circle.books_h" %}</h2>
+  {% if rows %}
+  <div class="bk-near-grid">
+    {% for c, km, spine in rows %}
+    <a class="bk-near-card" href="{% url 'books:offered' c.pk %}">
+      {% if c.entry.cover %}<span class="bk-near-cover bk-near-cover--img"><img src="{{ c.entry.cover.url }}" alt="" loading="lazy"></span>
+      {% else %}<span class="bk-near-cover" style="--spine-bg: {{ spine.color }}; --spine-ink: {{ spine.ink }}" aria-hidden="true"><span>{{ c.entry.title }}</span><span class="bk-near-cover-by">{{ c.entry.creator_names }}</span></span>{% endif %}
+      <span class="bk-entry-title">{{ c.entry.title }}</span>
+      <span class="bk-muted">{{ c.entry.creator_names }}</span>
+      <span class="bk-kicker">{% for o in c.offers.all %}{% if o.is_active %}{% with key="status."|add:o.kind %}{% t key %}{% endwith %}{% if not forloop.last %} · {% endif %}{% endif %}{% endfor %}</span>
+      <span class="bk-muted">{{ c.owner.display_name }}{% if km is not None %} · {% t "near.km" km=km|floatformat:"0" %}{% endif %}</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% elif only_mine %}<p class="bk-muted">{% t "circle.only_mine" %}</p>
+  {% else %}<p class="bk-muted">{% t "circle.no_books" %}</p>{% endif %}
+
+  <section class="bk-card" id="invite">
+    <h2 class="bk-h2" style="margin-top: 0">{% t "circle.invite_h" %}</h2>
+    <p class="bk-help" style="margin-top: 0">{% t "circle.invite_lead" %}</p>
+    <div class="bk-invite">
+      <code dir="ltr">{{ circle.join_code }}</code>
+      <input class="bk-input" type="text" readonly value="{{ invite_url }}" aria-label="{% t "circle.copy_link" %}" dir="ltr">
+      <button type="button" class="bk-btn bk-btn--small" data-copy-link="{{ invite_url }}" data-copied="{% t "circle.copied" %}">{% t "circle.copy_link" %}</button>
+    </div>
+    {% if member.can_moderate %}
+    <form method="post" action="{{ act }}" style="margin-top: 10px">{% csrf_token %}<input type="hidden" name="action" value="new_code">
+      <button type="submit" class="bk-btn bk-btn--small bk-btn--quiet" data-confirm>{% t "circle.new_code" %}</button>
+    </form>
+    {% endif %}
+  </section>
+
+  <section id="members">
+    <h2 class="bk-h2">{% t "circle.members_h" %}</h2>
+    {% for m in members %}
+    <div class="bk-member-row">
+      <span>{{ m.profile.display_name }} <span class="bk-muted">· {% with key="circle.role."|add:m.role %}{% t key %}{% endwith %}{% if m.profile.area_name %} · {{ m.profile.area_name }}{% endif %}</span></span>
+      {% if member.can_moderate and m.role != "owner" and m.profile_id != member.profile_id %}
+      <span class="bk-row">
+        {% if member.role == "owner" %}
+          {% if m.role == "member" %}<form method="post" action="{{ act }}">{% csrf_token %}<input type="hidden" name="action" value="moderator"><input type="hidden" name="member" value="{{ m.pk }}"><button type="submit" class="bk-btn bk-btn--small">{% t "circle.make_mod" %}</button></form>
+          {% else %}<form method="post" action="{{ act }}">{% csrf_token %}<input type="hidden" name="action" value="member"><input type="hidden" name="member" value="{{ m.pk }}"><button type="submit" class="bk-btn bk-btn--small">{% t "circle.unmake_mod" %}</button></form>{% endif %}
+        {% endif %}
+        {% if m.role == "member" or member.role == "owner" %}<form method="post" action="{{ act }}">{% csrf_token %}<input type="hidden" name="action" value="remove"><input type="hidden" name="member" value="{{ m.pk }}"><button type="submit" class="bk-btn bk-btn--small bk-btn--quiet" data-confirm>{% t "circle.remove" %}</button></form>{% endif %}
+      </span>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </section>
+
+  <section id="places">
+    <h2 class="bk-h2">{% t "circle.places_h" %}</h2>
+    {% for p in places %}
+    <div class="bk-member-row">
+      <span>{{ p.name }}{% if p.area_name %} <span class="bk-muted">· {{ p.area_name }}</span>{% endif %}{% if p.is_partner %} <span class="bk-status-pill">{% t "circle.partner" %}</span>{% endif %}{% if p.notes %} <span class="bk-muted">· {{ p.notes }}</span>{% endif %}</span>
+      {% if member.can_moderate %}<form method="post" action="{{ act }}">{% csrf_token %}<input type="hidden" name="action" value="remove_place"><input type="hidden" name="place" value="{{ p.pk }}"><button type="submit" class="bk-btn bk-btn--small bk-btn--quiet" data-confirm>{% t "circle.remove" %}</button></form>{% endif %}
+    </div>
+    {% empty %}<p class="bk-muted">{% t "pilot.none" %}</p>{% endfor %}
+    {% if member.can_moderate %}
+    <details class="bk-more">
+      <summary>{% t "circle.add_place" %}</summary>
+      <form method="post" action="{{ act }}" class="bk-card bk-form">{% csrf_token %}<input type="hidden" name="action" value="add_place">
+        <label class="bk-field">{% t "circle.place_name" %} <input class="bk-input" name="name" maxlength="120" required></label>
+        <label class="bk-field">{% t "circles.area" %} <input class="bk-input" name="area_name" maxlength="80" value="{{ circle.area_name }}"></label>
+        <label class="bk-field">{% t "circles.kind" %}
+          <select class="bk-select" name="kind">{% for k, label in place_kinds %}<option value="{{ k }}">{{ label }}</option>{% endfor %}</select>
+        </label>
+        <label class="bk-field">{% t "circles.description" %} <input class="bk-input" name="notes" maxlength="300"></label>
+        <label class="bk-check"><input type="checkbox" name="is_partner" value="1"> <span>{% t "circle.partner" %}</span></label>
+        <button type="submit" class="bk-btn">{% t "circle.add_place" %}</button>
+      </form>
+    </details>
+    {% endif %}
+  </section>
+
+  {% if member.can_moderate %}
+  <details class="bk-more" id="edit">
+    <summary>{% t "circle.settings_h" %}</summary>
+    <form method="post" action="{{ act }}" class="bk-card bk-form">{% csrf_token %}<input type="hidden" name="action" value="edit">
+      <label class="bk-field">{% t "circles.name" %} <input class="bk-input" name="name" maxlength="80" value="{{ circle.name }}" required></label>
+      <label class="bk-field">{% t "circles.kind" %}
+        <select class="bk-select" name="kind">{% for k, _ in kinds %}<option value="{{ k }}" {% if k == circle.kind %}selected{% endif %}>{% with key="ckind."|add:k %}{% t key %}{% endwith %}</option>{% endfor %}</select>
+      </label>
+      <label class="bk-field">{% t "circles.area" %} <input class="bk-input" name="area_name" maxlength="80" value="{{ circle.area_name }}"></label>
+      <label class="bk-field">{% t "circles.description" %} <textarea class="bk-input" name="description" rows="2" maxlength="500">{{ circle.description }}</textarea></label>
+      <fieldset class="bk-fieldset">
+        <legend class="bk-visually-hidden">{% t "circles.private" %}</legend>
+        <label class="bk-radio"><input type="radio" name="is_private" value="1" {% if circle.is_private %}checked{% endif %}> {% t "circles.private" %}</label>
+        <label class="bk-radio"><input type="radio" name="is_private" value="0" {% if not circle.is_private %}checked{% endif %}> {% t "circles.open_one" %}</label>
+      </fieldset>
+      <button type="submit" class="bk-btn bk-btn--primary">{% t "circle.save" %}</button>
+    </form>
+  </details>
+  {% endif %}
+
+  <details class="bk-more" id="leave">
+    <summary>{% t "circle.leave" %}</summary>
+    <form method="post" action="{{ act }}" class="bk-card bk-form">{% csrf_token %}<input type="hidden" name="action" value="leave">
+      <p class="bk-muted" style="margin: 0">{% t "circle.leave_note" %}</p>
+      <button type="submit" class="bk-btn bk-btn--danger" data-confirm>{% t "circle.leave" %}</button>
+    </form>
+  </details>
+  {% endif %}
+</div>
+{% endblock %}

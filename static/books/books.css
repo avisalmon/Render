@@ -29,6 +29,7 @@ html[data-palette="lamplit"] {
   --bk-scrim: rgba(36, 28, 19, 0.55);
   --bk-serif: "David Libre", "Frank Ruhl Libre", Georgia, serif;
   --bk-sans: "Heebo", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --bk-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
   --bk-radius: 6px;
   color-scheme: light;
 }
@@ -475,3 +476,28 @@ details.bk-more > summary { cursor: pointer; color: var(--bk-muted); min-height:
 .bk-plain-list { margin: 0; padding-inline-start: 18px; display: grid; gap: 4px; }
 .bk-unread { border-inline-start: 3px solid var(--bk-brass); }
 .bk-near-cover-by { font-family: var(--bk-sans, inherit); font-weight: 400; font-size: 13px; }
+
+/* ---- circles, feedback, the pilot desk (BK6) ------------------------------- */
+.bk-circle-card { display: flex; flex-direction: column; gap: 4px; text-decoration: none; color: var(--bk-ink); background: var(--bk-surface); border: 1px solid var(--bk-line); border-radius: var(--bk-radius); padding: 12px 14px; min-height: 44px; }
+.bk-circle-card:hover { color: var(--bk-ink); border-color: var(--bk-brass); }
+.bk-circle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.bk-member-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--bk-line); }
+.bk-member-row:last-child { border-bottom: 0; }
+.bk-member-row form { margin: 0; }
+.bk-invite { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.bk-invite code { font-size: 20px; letter-spacing: 0; font-family: var(--bk-mono, monospace); background: var(--bk-surface-2); padding: 6px 12px; border-radius: var(--bk-radius); }
+.bk-invite input { flex: 1 1 220px; }
+.bk-feedback { max-width: 520px; margin: 0 auto 14px; text-align: start; }
+.bk-feedback > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; justify-content: center; color: var(--bk-muted); }
+.bk-feedback-thanks { max-width: 520px; margin: 0 auto 10px; }
+.bk-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 12px 0; }
+.bk-stat { background: var(--bk-surface); border: 1px solid var(--bk-line); border-radius: var(--bk-radius); padding: 12px; display: flex; flex-direction: column; gap: 2px; }
+.bk-stat b { font-size: 28px; font-family: var(--bk-serif); line-height: 1.1; }
+.bk-stat span { color: var(--bk-muted); font-size: 14px; }
+.bk-funnel { display: grid; gap: 6px; margin: 10px 0; }
+.bk-funnel-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
+.bk-funnel-bar { height: 22px; background: var(--bk-brass); border-radius: 4px; min-width: 2px; }
+.bk-funnel-track { background: var(--bk-surface-2); border-radius: 4px; }
+.bk-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.bk-table th, .bk-table td { text-align: start; padding: 8px 6px; border-bottom: 1px solid var(--bk-line); }
+.bk-feedback-item { background: var(--bk-surface); border: 1px solid var(--bk-line); border-radius: var(--bk-radius); padding: 10px 12px; margin-bottom: 8px; }

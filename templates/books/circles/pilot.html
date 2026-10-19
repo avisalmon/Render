@@ -1,0 +1,80 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "pilot.title" %} · {% t "brand" %}{% endblock %}
+{% block screen %}pilot{% endblock %}
+{% block content %}
+<div class="bk-wide">
+  <h1 class="bk-title">{% t "pilot.title" %}</h1>
+  <p class="bk-lead">{% t "pilot.lead" %}</p>
+  <div class="bk-row" style="margin-bottom: 8px">
+    <a class="bk-btn bk-btn--small" href="{% url 'books:curate' %}">{% t "curate.title" %}</a>
+    <a class="bk-btn bk-btn--small" href="/books/api/pilot/">{% t "pilot.export" %}</a>
+  </div>
+
+  <h2 class="bk-h2">{% t "pilot.funnel" %}</h2>
+  <div class="bk-funnel">
+    {% with top=funnel.0.1 %}
+    {% for key, n in funnel %}
+    <div class="bk-funnel-row">
+      <div class="bk-funnel-track"><div class="bk-funnel-bar" style="width: {% widthratio n top|default:1 100 %}%"></div></div>
+      <span>{% with k="funnel."|add:key %}{% t k %}{% endwith %}: <b>{{ n }}</b></span>
+    </div>
+    {% endfor %}
+    {% endwith %}
+  </div>
+
+  <h2 class="bk-h2">{% t "pilot.people" %} <span class="bk-muted">· {% t "pilot.week" days=days %}: {{ people.new }} {% t "pilot.people_new" %}</span></h2>
+  <div class="bk-stats">
+    <div class="bk-stat"><b>{{ people.total }}</b><span>{% t "pilot.people" %}</span></div>
+    <div class="bk-stat"><b>{{ people.with_books }}</b><span>{% t "pilot.people_with_books" %}</span></div>
+    <div class="bk-stat"><b>{{ people.active }}</b><span>{% t "pilot.people_active" %}</span></div>
+  </div>
+
+  <h2 class="bk-h2">{% t "pilot.books" %} <span class="bk-muted">· {% t "pilot.week" days=days %}: {{ books.new }}</span></h2>
+  <div class="bk-stats">
+    <div class="bk-stat"><b>{{ books.held }}</b><span>{% t "pilot.books" %}</span></div>
+    <div class="bk-stat"><b>{{ books.public }}</b><span>{% t "pilot.books_public" %}</span></div>
+    <div class="bk-stat"><b>{{ books.offered }}</b><span>{% t "pilot.books_offered" %}</span></div>
+  </div>
+
+  <h2 class="bk-h2">{% t "pilot.scans" %} <span class="bk-muted">· {% t "pilot.week" days=days %}: {{ scans.new }}</span></h2>
+  <div class="bk-stats">
+    <div class="bk-stat"><b>{{ scans.done }}</b><span>{% t "pilot.scans" %}</span></div>
+    <div class="bk-stat"><b>{{ scans.failed }}</b><span>{% t "pilot.scans_failed" %}</span></div>
+    <div class="bk-stat"><b>{{ scans.accepted }}</b><span>{% t "pilot.scans_found" found=scans.found accepted=scans.accepted %}</span></div>
+  </div>
+
+  <h2 class="bk-h2">{% t "pilot.deals" %} <span class="bk-muted">· {% t "pilot.week" days=days %}: {{ deals.new }}</span></h2>
+  <div class="bk-stats">
+    <div class="bk-stat"><b>{{ deals.total }}</b><span>{% t "pilot.deals" %}</span></div>
+    <div class="bk-stat"><b>{{ deals.open }}</b><span>{% t "pilot.deals_open" %}</span></div>
+    <div class="bk-stat"><b>{{ deals.completed }}</b><span>{% t "pilot.deals_completed" %}</span></div>
+    <div class="bk-stat"><b>{{ deals.declined }}</b><span>{% t "pilot.deals_declined" %}</span></div>
+    <div class="bk-stat"><b>{{ deals.cancelled }}</b><span>{% t "pilot.deals_cancelled" %}</span></div>
+    <div class="bk-stat"><b>{{ deals.lost }}</b><span>{% t "pilot.deals_lost" %}</span></div>
+    <div class="bk-stat"><b>{{ deals.disputed }}</b><span>{% t "pilot.deals_disputed" %}</span></div>
+    <div class="bk-stat"><b>{{ deals.messages }}</b><span>{% t "pilot.messages" %}</span></div>
+  </div>
+  <p class="bk-muted">{% for k, n in deals.by_kind.items %}{% with key="status."|add:k %}{% t key %}{% endwith %}: {{ n }}{% if not forloop.last %} · {% endif %}{% endfor %}</p>
+
+  <h2 class="bk-h2">{% t "pilot.cost" %}</h2>
+  <p>{% t "pilot.cost_total" usd=cost.total_usd|floatformat:2 %} · {% t "pilot.cost_week" usd=cost.week_usd|floatformat:2 %}</p>
+
+  <h2 class="bk-h2">{% t "pilot.circles" %}</h2>
+  {% if circles %}
+  <table class="bk-table">
+    <thead><tr><th>{% t "circles.name" %}</th><th>{% t "circles.kind" %}</th><th>{% t "circle.members_h" %}</th><th>{% t "pilot.books_offered" %}</th></tr></thead>
+    <tbody>{% for c in circles %}<tr><td><a class="bk-link-row" href="{% url 'books:circle' c.pk %}">{{ c.name }}</a></td><td>{% with key="ckind."|add:c.kind %}{% t key %}{% endwith %}</td><td>{{ c.n_members }}</td><td>{{ c.n_books }}</td></tr>{% endfor %}</tbody>
+  </table>
+  {% else %}<p class="bk-muted">{% t "pilot.none" %}</p>{% endif %}
+
+  <p><a href="{% url 'books:curate' %}">{% t "pilot.reports" n=open_reports %}</a></p>
+
+  <h2 class="bk-h2">{% t "pilot.feedback" n=open_feedback %}</h2>
+  {% for f in feedback %}
+  <div class="bk-feedback-item">
+    <p style="margin: 0 0 4px">{{ f.body|linebreaksbr }}</p>
+    <span class="bk-kicker">{% if f.profile %}{{ f.profile.display_name }}{% endif %} · {{ f.created_at|date:"d.m.Y H:i" }}{% if f.path %} · <code dir="ltr">{{ f.path }}</code>{% endif %}{% if f.status == "open" %} · <form method="post" action="{% url 'books:feedback_read' f.pk %}" style="display: inline">{% csrf_token %}<button type="submit" class="bk-btn bk-btn--small bk-btn--quiet">{% t "pilot.mark_read" %}</button></form>{% endif %}</span>
+  </div>
+  {% empty %}<p class="bk-muted">{% t "pilot.none" %}</p>{% endfor %}
+</div>
+{% endblock %}

@@ -515,6 +515,8 @@ class MeetingPlace(models.Model):
     is_partner = models.BooleanField(default=False)
     notes = models.CharField(max_length=300, blank=True)
     is_active = models.BooleanField(default=True)
+    circle = models.ForeignKey("Circle", on_delete=models.CASCADE, null=True, blank=True,
+                               related_name="meeting_places", help_text="a circle's own place; empty means everyone's")
 
     class Meta:
         ordering = ["area_name", "name"]
@@ -652,3 +654,65 @@ class Report(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+
+
+# ---- circles and the first launch (BK6) --------------------------------------------------
+
+class Circle(models.Model):
+    """A group of people (book club, school, workplace, neighbourhood). Its
+    members see each other's offered books even beyond their radius. A
+    private circle is joined only with its link or code; an open one is
+    listed and anyone may join."""
+
+    KINDS = [("club", "book club"), ("school", "school"), ("work", "workplace"),
+             ("neighbourhood", "neighbourhood"), ("other", "other")]
+
+    name = models.CharField(max_length=80)
+    kind = models.CharField(max_length=14, choices=KINDS, default="club")
+    area_name = models.CharField(max_length=80, blank=True)
+    description = models.CharField(max_length=500, blank=True)
+    join_code = models.CharField(max_length=12, unique=True)
+    is_private = models.BooleanField(default=True)
+    created_by = models.ForeignKey(Profile, on_delete=models.SET_NULL, null=True, related_name="circles_created")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+class CircleMember(models.Model):
+    MEMBER, MODERATOR, OWNER = "member", "moderator", "owner"
+    ROLES = [(MEMBER, "member"), (MODERATOR, "moderator"), (OWNER, "owner")]
+
+    circle = models.ForeignKey(Circle, on_delete=models.CASCADE, related_name="members")
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="circle_memberships")
+    role = models.CharField(max_length=10, choices=ROLES, default=MEMBER)
+    joined_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["joined_at"]
+        constraints = [models.UniqueConstraint(fields=["circle", "profile"], name="books_circle_member_once")]
+
+    @property
+    def can_moderate(self):
+        return self.role in (self.MODERATOR, self.OWNER)
+
+
+class Feedback(models.Model):
+    """A few words from inside the app, straight to Avi (spec BK6). The page
+    it was written on is kept so the words have their context."""
+
+    OPEN, READ = "open", "read"
+
+    profile = models.ForeignKey(Profile, on_delete=models.SET_NULL, null=True, related_name="feedback")
+    path = models.CharField(max_length=300, blank=True)
+    body = models.TextField(max_length=2000)
+    status = models.CharField(max_length=8, default=OPEN, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name_plural = "feedback"
