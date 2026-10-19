@@ -12,7 +12,7 @@ from .access import books_page, profile_for
 from .auth_views import safe_next
 from .forms import OnboardingForm, SettingsForm
 from .middleware import LANG_SESSION_KEY, THEME_SESSION_KEY, THEMES
-from .models import Profile
+from .models import Profile, ShelfScan
 from .strings import LANGUAGES
 from .strings import text as t
 
@@ -43,8 +43,15 @@ def onboarding(request):
 
 @books_page
 def home(request):
-    # The shelf draws from the person's copies (BK3). Until then it is empty.
-    return render(request, "books/home.html", {"profile": request.books_profile, "books_json": "[]"})
+    from . import shelf
+
+    profile = request.books_profile
+    rows = shelf.shelf_books(profile)
+    return render(request, "books/home.html", {
+        "profile": profile, "books_json": json.dumps(rows, ensure_ascii=False), "count": len(rows),
+        "open_scan": ShelfScan.objects.filter(owner=profile, status__in=[ShelfScan.UPLOADED, ShelfScan.READING,
+                                                                          ShelfScan.REVIEW]).first(),
+    })
 
 
 @books_page

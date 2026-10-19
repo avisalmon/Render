@@ -423,3 +423,12 @@ wrong: `entry`, `profile`, `field`, `value`, `note`, `status` open / accepted
 
 **EntryIdentifier.scheme** gained the provider schemes `openlibrary`,
 `googlebooks`, `nli`, so a source record is recognised on a second import.
+
+**BK3 additions (2026-10-19, for Avi's ack).** `ShelfScan` gains `error`,
+`seconds`, `default_visibility` and `default_offers` (the choices every book
+of the scan starts with). `ScanItem.raw_text` is split into `raw_title` and
+`raw_author` (the reader returns them apart), plus `added_by_hand` for a book
+the photo missed; `ScanItem.crop_image` is not built, because the reader
+returns titles in shelf order, not positions. `Copy.position` is the order
+on the person's shelf (the living shelf's drag). `Offer` is unique per copy
+and kind.

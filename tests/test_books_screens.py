@@ -139,6 +139,33 @@ def build_world():
     c = catalog.CatalogEntry.objects.create(collection_type=catalog.book_type(), title="Jane Eyre", year=1847)
     catalog.set_creators(c, ["Charlotte Brontë"])
     EntryCorrection.objects.create(entry=a, profile=rp, field="year", value="1968", note="בדקתי")
+
+    # A scan waiting for confirmation, the way the job leaves it.
+    import io as _io
+
+    from django.core.files.base import ContentFile
+    from PIL import Image as _Image
+
+    from books.models import Copy, ScanCandidate, ScanItem, ShelfScan
+
+    buf = _io.BytesIO(); _Image.new("RGB", (800, 400), (110, 80, 50)).save(buf, format="JPEG")
+    scan = ShelfScan(pk=2001, owner=rp, shelf_label="סלון, מדף עליון", status=ShelfScan.REVIEW, books_found=3,
+                     default_visibility="private")
+    scan.photo.save("screens.jpg", ContentFile(buf.getvalue()), save=False)
+    scan.save()
+    i1 = ScanItem.objects.create(scan=scan, position=0, raw_title="מיכאל שלי", raw_author="עמוס עוז", confidence="0.95")
+    ScanCandidate.objects.create(item=i1, entry=a, confidence="0.95", rank=0)
+    ScanCandidate.objects.create(item=i1, entry=b, confidence="0.90", rank=1)
+    ScanItem.objects.create(scan=scan, position=1, raw_title="ספר שלא זוהה", raw_author="")
+    ScanItem.objects.create(scan=scan, position=2, raw_title="Jane Eyre", raw_author="Charlotte Brontë",
+                            review_status=ScanItem.SKIPPED)
+
+    # Someone whose shelf has books on it.
+    shelver = User.objects.create_user("shelver", "shelver@example.com", PASSWORD)
+    sp = Profile.objects.create(user=shelver, display_name="דנה", is_adult_confirmed=True)
+    for i, e in enumerate((a, b, c)):
+        Copy.objects.create(owner=sp, entry=e, position=i, visibility="public" if i else "private")
+    ShelfScan.objects.create(owner=sp, status=ShelfScan.REVIEW, photo="x.jpg")
     return {"reader": reader, "staff": staff, "fresh": fresh}
 
 
@@ -161,6 +188,9 @@ SCREENS = [
     ("catalog-new", "/books/catalog/new/", "reader", "catalog-new"),
     ("catalog-tag", "/books/catalog/tag/fiction/", "reader", "catalog-tag"),
     ("curate", "/books/curate/", "staff", "curate"),
+    ("scan-new", "/books/scan/", "reader", "scan-new"),
+    ("scan-review", "/books/scan/2001/", "reader", "scan-review"),
+    ("home-shelf", "/books/", "shelver", "home"),
 ]
 
 

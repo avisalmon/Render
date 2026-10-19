@@ -4,27 +4,45 @@
 {% block content %}
 <div class="bk-home-grid">
   <div>
+    {% if books_json and books_json != "[]" %}<h1 class="bk-visually-hidden">{% t "home.title" %}</h1>{% endif %}
     {% t "home.shelf_of" name=profile.display_name as kicker %}
-    {% include "books/_shelf.html" with shelf_id="home" books_json=books_json view=request.books_shelf_view kicker=kicker %}
+    {% t "home.count" n=count as hint_end %}
+    {% include "books/_shelf.html" with shelf_id="home" books_json=books_json view=request.books_shelf_view kicker=kicker hint_end=hint_end %}
     {% if not books_json or books_json == "[]" %}
     <div class="bk-empty bk-narrow">
       <h1 class="bk-title">{% t "home.empty_title" %}</h1>
       <p class="bk-lead">{% t "home.empty_lead" %}</p>
-      <span class="bk-btn bk-btn--primary bk-btn--wide" role="button" aria-disabled="true">
+      <a class="bk-btn bk-btn--primary bk-btn--wide" href="{% url 'books:scan_new' %}">
         <svg class="bk-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
         {% t "home.scan_first" %}
-      </span>
-      <p class="bk-muted">{% t "home.scan_soon" %}</p>
+      </a>
     </div>
     {% endif %}
   </div>
   <aside class="bk-aside">
+    {% if open_scan %}<a class="bk-notice" href="{% url 'books:scan' open_scan.pk %}">{% t "home.continue_scan" %}</a>{% endif %}
     {% if books_json and books_json != "[]" %}
-    <span class="bk-btn bk-btn--primary bk-btn--wide" role="button" aria-disabled="true">
+    <a class="bk-btn bk-btn--primary bk-btn--wide" href="{% url 'books:scan_new' %}">
       <svg class="bk-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
       {% t "home.scan" %}
-    </span>
+    </a>
     {% endif %}
   </aside>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  // The living shelf's drag is saved as the shelf's order.
+  var shelf = document.querySelector('[data-shelf]');
+  if (!shelf) return;
+  shelf.addEventListener('bkshelf:reorder', function (e) {
+    var body = new URLSearchParams();
+    e.detail.order.forEach(function (id) { body.append('order', id); });
+    fetch('{% url "books:shelf_reorder" %}', {method: 'POST', body: body,
+      headers: {'X-CSRFToken': document.body.getAttribute('data-csrf')}});
+  });
+})();
+</script>
 {% endblock %}

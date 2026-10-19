@@ -193,3 +193,18 @@ def test_the_cover_job_stores_our_own_copy_and_ignores_a_placeholder(monkeypatch
     f.refresh_from_db()
     assert not f.cover
     storage.reset_for_tests()
+
+
+def test_a_source_over_quota_is_paused_for_ten_minutes(monkeypatch):
+    from books import sources
+    calls = []
+
+    def over(q, limit=8):
+        calls.append(q)
+        raise base.SourceError("googlebooks: HTTP 429")
+
+    monkeypatch.setattr(googlebooks, "search", over)
+    monkeypatch.setattr(openlibrary, "search", lambda q, limit=8: [])
+    lookup(query="a"); lookup(query="b")
+    assert calls == ["a"]
+    assert googlebooks not in sources.enabled()

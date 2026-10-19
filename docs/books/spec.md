@@ -537,6 +537,11 @@ against a hand-labelled truth, using the skill's evaluator. The number is
 written into this chapter. 90 percent is the target for books confirmed
 without retyping.
 
+**The gate, measured (2026-10-19).** 63 of 70 labelled books found (90%),
+3 extra, about $0.024 a shelf, on the skill's four labelled shelves, at up to
+4000 px. Hebrew matches against the catalogue wait for the National Library
+key (ACT-BK.7); until then a Hebrew book is kept as read. See backlog BK3.
+
 **Rules.** A scan never creates a book by itself; the person's accept does.
 Shelf photos are kept for the owner only and deleted on request. Every scan
 records its model and its cost.

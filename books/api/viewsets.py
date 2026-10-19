@@ -11,13 +11,18 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
+from rest_framework.parsers import FormParser, MultiPartParser
+
 from .. import catalog
+from .. import shelf as shelf_service
 from ..access import profile_for
-from ..models import BookDetail, CatalogEntry, Creator, CreatorAlias, EntryCorrection, EntryIdentifier, Profile, Tag
+from ..models import (BookDetail, CatalogEntry, Copy, Creator, CreatorAlias, EntryCorrection, EntryIdentifier, Offer,
+                      Profile, ScanItem, ShelfScan, Tag)
 from ..textnorm import identifier_scheme
 from .permissions import CatalogueWrite, HasBooksProfile, StaffWrite
-from .serializers import (BookDetailSerializer, CatalogEntrySerializer, CreatorAliasSerializer, CreatorSerializer,
-                          EntryCorrectionSerializer, EntryIdentifierSerializer, ProfileSerializer, TagSerializer)
+from .serializers import (BookDetailSerializer, CatalogEntrySerializer, CopySerializer, CreatorAliasSerializer,
+                          CreatorSerializer, EntryCorrectionSerializer, EntryIdentifierSerializer, OfferSerializer,
+                          ProfileSerializer, ScanItemSerializer, ShelfScanSerializer, TagSerializer)
 
 
 class ProfileViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
@@ -194,3 +199,104 @@ class EntryCorrectionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, m
         else:
             raise ValidationError({"status": "accepted or declined"})
         return Response(self.get_serializer(correction).data)
+
+
+# ---- the person's shelf (BK3): everything scoped to the caller ---------------------
+
+
+class ShelfScanViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
+                       mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    """Create through POST /scans/upload/ (multipart: photo, shelf_label,
+    default_visibility, default_offers). The photo itself is never in the API."""
+
+    serializer_class = ShelfScanSerializer
+    permission_classes = [HasBooksProfile]
+
+    def get_queryset(self):
+        return ShelfScan.objects.filter(owner=profile_for(self.request.user)).prefetch_related("items__candidates")
+
+    @action(detail=False, methods=["post"], parser_classes=[MultiPartParser, FormParser])
+    def upload(self, request):
+        photo = request.FILES.get("photo")
+        if photo is None:
+            raise ValidationError({"photo": "required"})
+        me = profile_for(request.user)
+        if shelf_service.room_left(me) == 0:
+            return Response({"detail": "cap"}, status=status.HTTP_409_CONFLICT)
+        offers = request.data.getlist("default_offers") if hasattr(request.data, "getlist") else []
+        scan = shelf_service.start_scan(me, photo, request.data.get("shelf_label", ""),
+                                        request.data.get("default_visibility", "private"), offers)
+        scan.refresh_from_db()
+        return Response(ShelfScanSerializer(scan).data, status=status.HTTP_201_CREATED)
+
+
+class ScanItemViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+    serializer_class = ScanItemSerializer
+    permission_classes = [HasBooksProfile]
+
+    def get_queryset(self):
+        return ScanItem.objects.filter(scan__owner=profile_for(self.request.user)).prefetch_related("candidates")
+
+    @action(detail=True, methods=["post"])
+    def accept(self, request, pk=None):
+        item = self.get_object()
+        entry_id = request.data.get("entry")
+        if entry_id:
+            cand = item.candidates.filter(entry_id=entry_id).select_related("entry").first()
+            if cand is None:
+                raise ValidationError({"entry": "one of this item's candidates"})
+            entry = cand.entry.merged_into or cand.entry
+        elif request.data.get("title"):
+            entry = shelf_service.entry_from_text(request.data["title"], request.data.get("author", ""), item.scan.owner)
+        else:
+            raise ValidationError({"entry": "a candidate, or a title"})
+        offers = request.data.get("offers") or []
+        try:
+            copy = shelf_service.accept(item, entry, request.data.get("visibility", "private"), offers,
+                                        request.data.get("location_note", item.scan.shelf_label))
+        except shelf_service.CapReached:
+            return Response({"detail": "cap"}, status=status.HTTP_409_CONFLICT)
+        return Response(CopySerializer(copy).data)
+
+    @action(detail=True, methods=["post"])
+    def skip(self, request, pk=None):
+        shelf_service.skip(self.get_object())
+        return Response({"ok": True})
+
+
+class CopyViewSet(viewsets.ModelViewSet):
+    serializer_class = CopySerializer
+    permission_classes = [HasBooksProfile]
+
+    def get_queryset(self):
+        return Copy.objects.filter(owner=profile_for(self.request.user)).select_related("entry").prefetch_related("offers")
+
+    def perform_create(self, serializer):
+        me = profile_for(self.request.user)
+        if shelf_service.room_left(me) == 0:
+            raise ValidationError({"detail": "cap"})
+        serializer.save(owner=me, added_via="manual", position=shelf_service.next_position(me))
+
+    def perform_update(self, serializer):
+        copy = serializer.save()
+        if copy.visibility == Copy.PRIVATE:
+            copy.offers.all().delete()  # private means no offers (data model section 9)
+
+
+class OfferViewSet(viewsets.ModelViewSet):
+    serializer_class = OfferSerializer
+    permission_classes = [HasBooksProfile]
+
+    def get_queryset(self):
+        return Offer.objects.filter(copy__owner=profile_for(self.request.user))
+
+    def perform_create(self, serializer):
+        if serializer.validated_data["copy"].owner != profile_for(self.request.user):
+            raise ValidationError({"copy": "not yours"})
+        serializer.save()
+
+    def perform_update(self, serializer):
+        copy = serializer.validated_data.get("copy")
+        if copy is not None and copy.owner != profile_for(self.request.user):
+            raise ValidationError({"copy": "not yours"})
+        serializer.save()

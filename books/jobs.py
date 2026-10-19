@@ -53,6 +53,11 @@ def enqueue(kind, ref_id=None, profile=None):
 
 
 def _thread_main(job_id):
+    # A thread gets its own connection; tidy it before and after. Never do
+    # this in run() itself: run() is also called inline, inside the caller's
+    # transaction, and closing the caller's connection there breaks it
+    # ("Cannot operate on a closed database", found on the first real scan).
+    close_old_connections()
     try:
         run(job_id)
     finally:
@@ -60,7 +65,6 @@ def _thread_main(job_id):
 
 
 def run(job_id):
-    close_old_connections()
     row = Job.objects.filter(pk=job_id).first()
     if row is None or row.status in (Job.DONE, Job.RUNNING):
         return row

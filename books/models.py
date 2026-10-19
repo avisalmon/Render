@@ -323,3 +323,141 @@ class EntryCorrection(models.Model):
 
     def __str__(self):
         return f"{self.field} on {self.entry_id}: {self.status}"
+
+
+# ---- Layer 1: the catalog (data model section 4) ------------------------------
+
+
+class ShelfScan(models.Model):
+    """One photo of a shelf, and the run that read it (BK3)."""
+
+    UPLOADED, READING, REVIEW, DONE, FAILED = "uploaded", "reading", "review", "done", "failed"
+    STATUSES = [(UPLOADED, "uploaded"), (READING, "reading"), (REVIEW, "review"), (DONE, "done"), (FAILED, "failed")]
+
+    owner = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="scans")
+    photo = models.ImageField(upload_to="scans/%Y/%m/", storage=books_storage)
+    shelf_label = models.CharField(max_length=120, blank=True)
+    status = models.CharField(max_length=10, choices=STATUSES, default=UPLOADED, db_index=True)
+    error = models.CharField(max_length=300, blank=True)
+    model_name = models.CharField(max_length=60, blank=True)
+    cost_usd = models.DecimalField(max_digits=8, decimal_places=5, default=0)
+    seconds = models.DecimalField(max_digits=6, decimal_places=1, default=0)
+    books_found = models.PositiveSmallIntegerField(default=0)
+    books_accepted = models.PositiveSmallIntegerField(default=0)
+    # The choices to start every book of this scan with (spec BK3).
+    default_visibility = models.CharField(max_length=8, default="private")
+    default_offers = models.CharField(max_length=40, blank=True, help_text="comma list of lend,exchange,sell")
+    created_at = models.DateTimeField(auto_now_add=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"scan {self.pk} by {self.owner_id}: {self.status}"
+
+
+class ScanItem(models.Model):
+    """One book the reader found on the photo, in shelf order."""
+
+    PENDING, ACCEPTED, EDITED, SKIPPED = "pending", "accepted", "edited", "skipped"
+    REVIEW = [(PENDING, "pending"), (ACCEPTED, "accepted"), (EDITED, "edited"), (SKIPPED, "skipped")]
+
+    scan = models.ForeignKey(ShelfScan, on_delete=models.CASCADE, related_name="items")
+    position = models.PositiveSmallIntegerField(default=0)
+    raw_title = models.CharField(max_length=300, blank=True)
+    raw_author = models.CharField(max_length=200, blank=True)
+    added_by_hand = models.BooleanField(default=False)
+    confidence = models.DecimalField(max_digits=4, decimal_places=3, default=0)
+    review_status = models.CharField(max_length=8, choices=REVIEW, default=PENDING, db_index=True)
+    copy = models.ForeignKey("Copy", on_delete=models.SET_NULL, null=True, blank=True, related_name="scan_items")
+
+    class Meta:
+        ordering = ["position"]
+
+    def __str__(self):
+        return f"{self.raw_title} ({self.review_status})"
+
+    @property
+    def raw_text(self):
+        return f"{self.raw_title} | {self.raw_author}" if self.raw_author else self.raw_title
+
+
+class ScanCandidate(models.Model):
+    """The catalogue entries a spine may be, best first."""
+
+    item = models.ForeignKey(ScanItem, on_delete=models.CASCADE, related_name="candidates")
+    entry = models.ForeignKey(CatalogEntry, on_delete=models.CASCADE, related_name="scan_candidates")
+    confidence = models.DecimalField(max_digits=4, decimal_places=3, default=0)
+    rank = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ["rank"]
+        constraints = [models.UniqueConstraint(fields=["item", "entry"], name="books_candidate_unique")]
+
+
+class Copy(models.Model):
+    """One physical book one person owns. The same row moves to a new owner
+    when it changes hands (data model decision)."""
+
+    PRIVATE, PUBLIC = "private", "public"
+    VISIBILITY = [(PRIVATE, "private"), (PUBLIC, "public")]
+    WITH_OWNER, ON_LOAN_OUT, TRANSFERRED, LOST = "with_owner", "on_loan_out", "transferred", "lost"
+    STATUSES = [(WITH_OWNER, "with owner"), (ON_LOAN_OUT, "on loan"), (TRANSFERRED, "transferred"), (LOST, "lost")]
+    ADDED = [("scan", "scan"), ("manual", "manual"), ("import", "import"), ("received", "received")]
+
+    owner = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="copies")
+    entry = models.ForeignKey(CatalogEntry, on_delete=models.PROTECT, related_name="copies")
+    location_note = models.CharField(max_length=120, blank=True)
+    position = models.PositiveIntegerField(default=0, help_text="order on the person's shelf")
+    condition = models.CharField(max_length=20, blank=True)
+    notes = models.TextField(blank=True)
+    visibility = models.CharField(max_length=8, choices=VISIBILITY, default=PRIVATE)
+    status = models.CharField(max_length=12, choices=STATUSES, default=WITH_OWNER, db_index=True)
+    is_rare_candidate = models.BooleanField(default=False)
+    rarity_note = models.CharField(max_length=300, blank=True)
+    display_only = models.BooleanField(default=False)
+    added_via = models.CharField(max_length=10, choices=ADDED, default="manual")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["position", "created_at"]
+        verbose_name_plural = "copies"
+
+    def __str__(self):
+        return f"{self.entry} ({self.owner_id})"
+
+    HELD = (WITH_OWNER, ON_LOAN_OUT)
+
+
+class Offer(models.Model):
+    """How a public copy is offered. One copy may carry several. An offer on
+    a private copy is refused (data model section 9)."""
+
+    LEND, EXCHANGE, SELL = "lend", "exchange", "sell"
+    KINDS = [(LEND, "lend"), (EXCHANGE, "exchange"), (SELL, "sell")]
+
+    copy = models.ForeignKey(Copy, on_delete=models.CASCADE, related_name="offers")
+    kind = models.CharField(max_length=8, choices=KINDS)
+    loan_days = models.PositiveSmallIntegerField(null=True, blank=True)
+    price_amount = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    price_currency = models.CharField(max_length=3, default="ILS")
+    wants_note = models.CharField(max_length=200, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["copy", "kind"], name="books_offer_one_per_kind")]
+
+    def __str__(self):
+        return f"{self.kind} {self.copy_id}"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        if self.copy_id and self.copy.visibility != Copy.PUBLIC:
+            raise ValidationError("An offer needs a public copy.")
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)

@@ -13,3 +13,8 @@ class BooksConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "books"
     verbose_name = "Books"
+
+    def ready(self):
+        # Job workers register themselves on import; import them here so a
+        # job run from a command or the token endpoint finds its worker.
+        from . import catalog, shelf  # noqa: F401

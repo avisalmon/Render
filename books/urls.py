@@ -1,6 +1,6 @@
 from django.urls import include, path
 
-from . import auth_views, catalog_views, internal, views
+from . import auth_views, catalog_views, internal, scan_views, views
 from .api import router
 
 app_name = "books"
@@ -13,6 +13,15 @@ urlpatterns = [
     path("me/data/export.json", views.my_data_export, name="my_data_export"),
     path("lang/<str:code>/", views.set_language, name="set_language"),
     path("theme/<str:theme>/", views.set_theme, name="set_theme"),
+    # Photographing a shelf and confirming its books (BK3).
+    path("scan/", scan_views.new_scan, name="scan_new"),
+    path("scan/<int:pk>/", scan_views.scan_page, name="scan"),
+    path("scan/<int:pk>/status/", scan_views.scan_status, name="scan_status"),
+    path("scan/<int:pk>/photo.jpg", scan_views.scan_photo, name="scan_photo"),
+    path("scan/<int:pk>/item/<int:item_pk>/", scan_views.item_action, name="scan_item"),
+    path("scan/<int:pk>/accept-confident/", scan_views.accept_confident, name="scan_accept_confident"),
+    path("scan/<int:pk>/add/", scan_views.add_missed, name="scan_add"),
+    path("shelf/reorder/", scan_views.reorder_shelf, name="shelf_reorder"),
     # The shared catalogue (BK2).
     path("catalog/", catalog_views.search, name="catalog"),
     path("catalog/new/", catalog_views.new_entry, name="catalog_new"),

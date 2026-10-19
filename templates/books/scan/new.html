@@ -1,0 +1,69 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "scan.title" %} · {% t "brand" %}{% endblock %}
+{% block screen %}scan-new{% endblock %}
+{% block content %}
+<div class="bk-narrow">
+  <h1 class="bk-title">{% t "scan.title" %}</h1>
+  <p class="bk-lead">{% t "scan.lead" %}</p>
+
+  <div class="bk-card bk-card--tight" style="margin-bottom: 14px">
+    <p class="bk-kicker" style="margin: 0 0 6px">{% t "scan.tips_title" %}</p>
+    <ul class="bk-tips">
+      <li>{% t "scan.tip_1" %}</li>
+      <li>{% t "scan.tip_2" %}</li>
+      <li>{% t "scan.tip_3" %}</li>
+    </ul>
+  </div>
+
+  {% if left is not None and left < 50 %}<p class="bk-notice" role="status">{% t "scan.left" left=left %}</p>{% endif %}
+
+  <form method="post" enctype="multipart/form-data" class="bk-card bk-form" novalidate data-scan-form>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<p class="bk-error" role="alert">{{ form.non_field_errors.0 }}</p>{% endif %}
+    <label class="bk-field">{{ form.photo.label }}
+      <span class="bk-file-drop">
+        <svg class="bk-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+        {{ form.photo }}
+      </span>
+    </label>
+    {% if form.photo.errors %}<p class="bk-error" role="alert">{{ form.photo.errors.0 }}</p>{% endif %}
+    <img class="bk-scan-preview" data-scan-preview alt="{% t "scan.photo_alt" %}" hidden>
+    <label class="bk-field">{{ form.shelf_label.label }} {{ form.shelf_label }}</label>
+    <fieldset class="bk-fieldset">
+      <legend class="bk-field">{{ form.default_visibility.label }}</legend>
+      <div class="bk-radio-row">{% for r in form.default_visibility %}<label class="bk-radio">{{ r.tag }} {{ r.choice_label }}</label>{% endfor %}</div>
+    </fieldset>
+    <fieldset class="bk-fieldset">
+      <legend class="bk-field">{{ form.default_offers.label }}</legend>
+      <div class="bk-radio-row">{% for r in form.default_offers %}<label class="bk-radio">{{ r.tag }} {{ r.choice_label }}</label>{% endfor %}</div>
+    </fieldset>
+    <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "scan.submit" %}</button>
+  </form>
+
+  {% if recent %}
+  <h2 class="bk-h2">{% t "scan.recent" %}</h2>
+  <ul class="bk-entry-list">
+    {% for s in recent %}
+    <li class="bk-entry-row"><a class="bk-entry-link" href="{% url 'books:scan' s.pk %}">
+      <span class="bk-entry-text"><span class="bk-entry-title">{{ s.shelf_label|default:s.created_at|date:"j.n.Y" }}{% if s.shelf_label %}{% endif %}</span>
+      <span class="bk-muted">{% if s.shelf_label %}{{ s.created_at|date:"j.n.Y" }} · {% endif %}{{ s.books_accepted }} / {{ s.books_found }} · {% with key="scan.status_"|add:s.status %}{% t key %}{% endwith %}</span></span>
+    </a></li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var input = document.querySelector('[data-scan-form] input[type=file]');
+  var img = document.querySelector('[data-scan-preview]');
+  if (!input || !img) return;
+  input.addEventListener('change', function () {
+    var f = input.files && input.files[0];
+    if (!f) { img.hidden = true; return; }
+    img.src = URL.createObjectURL(f); img.hidden = false;
+  });
+})();
+</script>
+{% endblock %}

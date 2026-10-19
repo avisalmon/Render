@@ -254,17 +254,52 @@ adapter waits for a key, ACT-BK.7; (5) `EntryCorrection`, `merged_into`,
 polish: the language shows as its code on a record page; the genre list on
 the add-by-hand form is long on a phone.
 
-## Epic BK3: Shelf scan and confirmation (outline)
+## Epic BK3: Shelf scan and confirmation `DONE (dev), 2026-10-19`
 
-- **SPR-BK3.1** ShelfScan, ScanItem, ScanCandidate; capture from the phone
-  camera and upload on desktop; the shelf label.
-- **SPR-BK3.2** The recognition job on the `bookshelf-recognition` pipeline,
-  candidates from BK2, confidence, cost per scan.
-- **SPR-BK3.3** The confirmation flow from the approved board: lowest
-  confidence first, one tap to accept, alternatives, manual search, skip, bulk
-  accept, Copy and Offer created on accept, location prefilled, the 1,000 cap.
-- **SPR-BK3.4** **The accuracy gate** on ACT-BK.3's shelves, the number
-  written into the spec.
+Built in one run after Avi acked BK1 and BK2 and said start BK3, with his
+answers: use the site's OpenAI key (every call recorded with its cost); the
+accuracy labels come through the app (his corrections in real scans are the
+labels); bucket steps sent to his email.
+
+| ID | Feature | Status |
+| --- | --- | --- |
+| F-BK3.1 | ShelfScan, ScanItem, ScanCandidate, Copy, Offer (migration 0005); capture page: phone camera or upload, photo tips, shelf label, default choices for the scan | DONE |
+| F-BK3.2 | `books/recognition.py`: the skill's measured method ported (gpt-6.1-sol, effort low, detail high, 2 strips 15% overlap, strict schema, edge-only merge), key from settings, a 401 stops the job, each strip call a ModelCall with cost | DONE |
+| F-BK3.3 | The `scan.read` job: reads, records, then candidates per book (local catalogue, then the sources when nothing local is strong, top 3 with confidence); the page polls and turns into the confirmation list | DONE |
+| F-BK3.4 | Confirmation: lowest confidence first, the photo's reading beside up to three candidates, "keep it as read" with editable title and author, the five choices in the same card, location prefilled, skip, "confirm all sure ones", add a book the photo missed; nothing becomes a Copy without an accept; offers imply public; the free cap of 1,000 held books | DONE |
+| F-BK3.5 | Photo privacy: stored with no metadata, served only to its owner through `/books/scan/<id>/photo.jpg` (never /media/); GPS used once, rounded, to fill an empty area | DONE |
+| F-BK3.6 | The home shelf draws the person's copies (colour, width, height and lean stable per book, from the board's palette); the living shelf's drag is saved | DONE |
+| F-BK3.7 | API: scans (upload), scan-items (accept, skip), copies, offers, all scoped to the caller; going private withdraws every offer | DONE |
+| F-BK3.8 | **The accuracy gate**: `manage.py books_measure` over labelled shelves, and `--app` for the share confirmed without retyping in real scans | DONE, measured below |
+
+**The accuracy gate, measured 2026-10-19** on the four labelled shelves the
+skill was built on (70 books, mostly Hebrew): at 2000 px, 61/70 found (87%), 5
+extra; at 4000 px, **63/70 found (90%), 3 extra, about $0.024 a shelf, 23 to
+45 s**. Books therefore reads and stores scans at up to 4000 px. The 90%
+target is met on this set. The in-app number (confirmed without retyping)
+starts counting with Avi's first real scans (ACT-BK.3, now done through the
+app).
+
+**What a real end-to-end run in dev showed** (one of Avi's BookEngine shelves,
+17 books, $0.027, 35 s): every title read correctly, but only the two English
+books found a catalogue match. Hebrew books have no free source here: Open
+Library rarely has them and Google Books answered 429 without a key. They go
+through "keep it as read", which creates an unverified record from the spine
+reading; the next person with the same book matches it. The National Library
+key (ACT-BK.7) is what turns Hebrew matches on. Two bugs found by that run and
+fixed: a nested inline job closed the caller's database connection; the
+lookup cache key held raw Hebrew. A source answering 429 is now paused ten
+minutes instead of asked per book.
+
+Decisions for Avi's ack: (1) scans stored at up to 4000 px (measured better);
+(2) shelf photos served only through Books to their owner; (3) GPS fills the
+area only when the person has none; (4) the shelf's spine colours and sizes
+are derived from the record, stable, from the board's palette (no colour is
+read from the photo yet); (5) "confirm all sure ones" means confidence of 0.85
+or more with a catalogue match; (6) a lend offer defaults to 30 days; (7)
+`Copy.position`, the scan's default choices and cost fields, and the split of
+`raw_text` into `raw_title` / `raw_author` are additions to the model, in
+data_model.md section 11.
 
 ## Epic BK4: My library (outline)
 

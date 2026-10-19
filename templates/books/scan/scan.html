@@ -1,0 +1,171 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "scan.review_title" %} · {% t "brand" %}{% endblock %}
+{% block screen %}scan-{{ scan.status }}{% endblock %}
+{% block content %}
+<div class="bk-narrow" data-scan data-scan-id="{{ scan.pk }}" data-scan-status="{{ scan.status }}" data-status-url="{% url 'books:scan_status' scan.pk %}">
+  <p><a href="{% url 'books:scan_new' %}">{% t "scan.title" %}</a></p>
+
+  {% if scan.status == "uploaded" or scan.status == "reading" %}
+    <div class="bk-room bk-empty">
+      <div class="bk-lamp" aria-hidden="true">
+        <svg width="120" height="44" viewBox="0 0 120 44" fill="none"><path class="bk-lamp-cord" d="M60 0v14" stroke-width="2"/><path class="bk-lamp-shade" d="M38 30 L48 14 H72 L82 30 Z"/><path class="bk-lamp-rim" d="M38 30 H82" stroke-width="2"/><ellipse class="bk-lamp-bulb" cx="60" cy="33" rx="12" ry="3"/></svg>
+      </div>
+      <h1 class="bk-title" role="status">{% t "scan.reading" %}</h1>
+      <p class="bk-lead">{% t "scan.reading_lead" %}</p>
+      <div class="bk-reading-bar" aria-hidden="true"><span></span></div>
+      <img class="bk-scan-photo" src="{% url 'books:scan_photo' scan.pk %}" alt="{% t "scan.photo_alt" %}">
+    </div>
+
+  {% elif scan.status == "failed" %}
+    <h1 class="bk-title">{% t "scan.failed" %}</h1>
+    <p class="bk-lead">{% if scan.error == "key" %}{% t "scan.failed_key" %}{% else %}{% t "err500.lead" %}{% endif %}</p>
+    <a class="bk-btn bk-btn--primary" href="{% url 'books:scan_new' %}">{% t "scan.retry" %}</a>
+
+  {% else %}
+    <h1 class="bk-title">{% if scan.status == "done" %}{% t "scan.done_title" %}{% else %}{% t "scan.review_title" %}{% endif %}</h1>
+    <p class="bk-kicker">{{ scan.shelf_label }}{% if scan.shelf_label %} · {% endif %}{% t "scan.progress" done=scan.books_accepted total=scan.books_found %}</p>
+    <div class="bk-spine-progress" role="img" aria-label="{% t "scan.progress" done=scan.books_accepted total=scan.books_found %}">
+      {% for p in progress %}<span class="bk-spine-tick{% if p.state == 'done' %} is-done{% endif %}"></span>{% endfor %}
+    </div>
+
+    {% if not scan.books_found %}
+      <p class="bk-lead">{% t "scan.nothing_found" %}</p>
+    {% endif %}
+
+    {% if request.GET.msg %}<p class="bk-notice bk-notice--danger" role="alert">{{ request.GET.msg }}</p>{% endif %}
+
+    {% if confident > 1 %}
+    <form method="post" action="{% url 'books:scan_accept_confident' scan.pk %}" class="bk-stack">{% csrf_token %}
+      <button type="submit" class="bk-btn bk-btn--wide">{% t "scan.accept_confident" n=confident %}</button>
+    </form>
+    {% endif %}
+
+    <div class="bk-scan-cards">
+    {% for item in pending %}
+      {% with top=item.candidates.all.0 %}
+      <form method="post" action="{% url 'books:scan_item' scan.pk item.pk %}" class="bk-card bk-scan-card" data-scan-card id="item-{{ item.pk }}">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="accept">
+        <div class="bk-scan-match">
+          <div class="bk-scan-read">
+            <span class="bk-kicker">{% t "scan.from_photo" %}</span>
+            <span class="bk-scan-read-title">{{ item.raw_title }}</span>
+            {% if item.raw_author %}<span class="bk-muted">{{ item.raw_author }}</span>{% endif %}
+          </div>
+          {% if top %}
+          <span class="bk-chip-note">{% widthratio item.confidence 1 100 as pct %}{% t "scan.confidence" pct=pct %}</span>
+          {% endif %}
+        </div>
+
+        {% if item.candidates.all %}
+        <fieldset class="bk-fieldset">
+          <legend class="bk-kicker">{% t "scan.best_match" %}</legend>
+          <div class="bk-candidates">
+          {% for c in item.candidates.all %}
+            <label class="bk-candidate">
+              <input type="radio" name="entry" value="{{ c.entry.pk }}" {% if forloop.first %}checked{% endif %}>
+              <span class="bk-entry-cover" aria-hidden="true">{% if c.entry.cover %}<img src="{{ c.entry.cover.url }}" alt="">{% endif %}</span>
+              <span class="bk-entry-text">
+                <span class="bk-entry-title">{{ c.entry.title }}</span>
+                <span class="bk-muted">{{ c.entry.creator_names }}{% if c.entry.year %} · {{ c.entry.year }}{% endif %}{% if c.entry.book.publisher %} · {{ c.entry.book.publisher }}{% endif %}</span>
+              </span>
+            </label>
+          {% endfor %}
+            <label class="bk-candidate">
+              <input type="radio" name="entry" value="" {% if not item.candidates.all %}checked{% endif %} data-keep-as-read>
+              <span class="bk-entry-text"><span class="bk-entry-title">{% t "scan.keep_as_read" %}</span><span class="bk-muted">{% t "scan.fix_it" %}</span></span>
+            </label>
+          </div>
+        </fieldset>
+        {% else %}
+        <input type="hidden" name="entry" value="">
+        {% endif %}
+
+        <div class="bk-scan-fix" data-fix {% if item.candidates.all %}hidden{% endif %}>
+          <label class="bk-field">{% t "scan.title_field" %} <input class="bk-input" name="title" value="{{ item.raw_title }}"></label>
+          <label class="bk-field">{% t "scan.author_field" %} <input class="bk-input" name="author" value="{{ item.raw_author }}"></label>
+        </div>
+
+        <fieldset class="bk-fieldset">
+          <legend class="bk-kicker">{% t "scan.what_to_do" %}</legend>
+          <div class="bk-radio-row">
+            <label class="bk-radio"><input type="radio" name="visibility" value="private" {% if scan.default_visibility == "private" %}checked{% endif %}> {% t "status.private" %}</label>
+            <label class="bk-radio"><input type="radio" name="visibility" value="public" {% if scan.default_visibility == "public" %}checked{% endif %}> {% t "status.public" %}</label>
+            {% for k in offer_kinds %}<label class="bk-radio"><input type="checkbox" name="offers" value="{{ k }}" {% if k in default_offers %}checked{% endif %}> {% with key="status."|add:k %}{% t key %}{% endwith %}</label>{% endfor %}
+          </div>
+        </fieldset>
+        <label class="bk-field">{% t "scan.location" %} <input class="bk-input" name="location_note" value="{{ scan.shelf_label }}"></label>
+
+        <div class="bk-row">
+          <button type="submit" class="bk-btn bk-btn--primary" style="flex: 1">{% t "scan.accept" %}</button>
+          <button type="submit" class="bk-btn" name="action" value="skip" formnovalidate>{% t "scan.skip" %}</button>
+        </div>
+      </form>
+      {% endwith %}
+    {% endfor %}
+    </div>
+
+    <h2 class="bk-h2">{% t "scan.missed_title" %}</h2>
+    <form method="post" action="{% url 'books:scan_add' scan.pk %}" class="bk-card bk-form">{% csrf_token %}
+      <label class="bk-field">{% t "scan.title_field" %} <input class="bk-input" name="title" required></label>
+      <label class="bk-field">{% t "scan.author_field" %} <input class="bk-input" name="author"></label>
+      <button type="submit" class="bk-btn">{% t "scan.missed_add" %}</button>
+    </form>
+
+    {% if done %}
+    <h2 class="bk-h2">{% t "scan.decided" %}</h2>
+    <ul class="bk-entry-list">
+      {% for item in done %}
+      <li class="bk-entry-row bk-entry-row--actions">
+        <span class="bk-entry-text"><span class="bk-entry-title">{% if item.copy %}{{ item.copy.entry.title }}{% else %}{{ item.raw_title }}{% endif %}</span>
+        <span class="bk-muted">{% if item.review_status == "skipped" %}{% t "scan.was_skipped" %}{% else %}{% t "scan.was_accepted" %}{% endif %}</span></span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if scan.status == "done" %}
+    <div class="bk-stack">
+      <p class="bk-lead">{% t "scan.done_lead" n=scan.books_accepted %}</p>
+      <a class="bk-btn bk-btn--primary bk-btn--wide" href="{% url 'books:home' %}">{% t "scan.to_library" %}</a>
+      <a class="bk-btn bk-btn--wide" href="{% url 'books:scan_new' %}">{% t "scan.another" %}</a>
+    </div>
+    {% endif %}
+
+    <img class="bk-scan-photo" src="{% url 'books:scan_photo' scan.pk %}" alt="{% t "scan.photo_alt" %}" loading="lazy">
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var root = document.querySelector('[data-scan]');
+  if (!root) return;
+  var status = root.getAttribute('data-scan-status');
+  // While reading: poll, then reload into the confirmation list.
+  if (status === 'uploaded' || status === 'reading') {
+    var url = root.getAttribute('data-status-url');
+    var tick = function () {
+      fetch(url, {headers: {'Accept': 'application/json'}}).then(function (r) { return r.json(); }).then(function (d) {
+        if (d.status !== 'uploaded' && d.status !== 'reading') { location.reload(); } else { setTimeout(tick, 2500); }
+      }).catch(function () { setTimeout(tick, 5000); });
+    };
+    setTimeout(tick, 2500);
+    return;
+  }
+  // "Keep it as read" shows the fix fields; a candidate hides them.
+  root.querySelectorAll('[data-scan-card]').forEach(function (card) {
+    var fix = card.querySelector('[data-fix]');
+    card.addEventListener('change', function (e) {
+      if (e.target.name === 'entry' && fix) fix.hidden = !e.target.hasAttribute('data-keep-as-read');
+      if (e.target.name === 'offers' && e.target.checked) {
+        var pub = card.querySelector('input[name=visibility][value=public]'); if (pub) pub.checked = true;
+      }
+      if (e.target.name === 'visibility' && e.target.value === 'private') {
+        card.querySelectorAll('input[name=offers]').forEach(function (o) { o.checked = false; });
+      }
+    });
+  });
+})();
+</script>
+{% endblock %}

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
-from ..models import (BookDetail, CatalogEntry, Creator, CreatorAlias, EntryCorrection, EntryIdentifier, Profile,
-                      Tag)
+from ..models import (BookDetail, CatalogEntry, Copy, Creator, CreatorAlias, EntryCorrection, EntryIdentifier, Offer,
+                      Profile, ScanCandidate, ScanItem, ShelfScan, Tag)
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -77,6 +77,58 @@ class CatalogEntrySerializer(serializers.ModelSerializer):
             return obj.cover.url if obj.cover else ""
         except Exception:  # noqa: BLE001
             return ""
+
+
+class OfferSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Offer
+        fields = ["id", "copy", "kind", "loan_days", "price_amount", "price_currency", "wants_note", "is_active",
+                  "created_at"]
+        read_only_fields = ["created_at"]
+
+    def validate(self, attrs):
+        copy = attrs.get("copy") or getattr(self.instance, "copy", None)
+        if copy is not None and copy.visibility != Copy.PUBLIC:
+            raise serializers.ValidationError({"copy": "An offer needs a public copy."})
+        return attrs
+
+
+class CopySerializer(serializers.ModelSerializer):
+    offers = OfferSerializer(many=True, read_only=True)
+    title = serializers.CharField(source="entry.title", read_only=True)
+
+    class Meta:
+        model = Copy
+        fields = ["id", "entry", "title", "location_note", "position", "condition", "notes", "visibility", "status",
+                  "is_rare_candidate", "rarity_note", "display_only", "added_via", "offers", "created_at"]
+        read_only_fields = ["status", "added_via", "created_at"]
+
+
+class ScanCandidateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ScanCandidate
+        fields = ["id", "entry", "confidence", "rank"]
+
+
+class ScanItemSerializer(serializers.ModelSerializer):
+    candidates = ScanCandidateSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ScanItem
+        fields = ["id", "scan", "position", "raw_title", "raw_author", "added_by_hand", "confidence", "review_status",
+                  "copy", "candidates"]
+        read_only_fields = fields
+
+
+class ShelfScanSerializer(serializers.ModelSerializer):
+    items = ScanItemSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ShelfScan
+        fields = ["id", "shelf_label", "status", "error", "model_name", "cost_usd", "seconds", "books_found",
+                  "books_accepted", "default_visibility", "default_offers", "created_at", "finished_at", "items"]
+        read_only_fields = ["status", "error", "model_name", "cost_usd", "seconds", "books_found", "books_accepted",
+                            "created_at", "finished_at", "items"]
 
 
 class EntryCorrectionSerializer(serializers.ModelSerializer):
