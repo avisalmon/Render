@@ -35,8 +35,8 @@ DEFAULT_LOAN_DAYS = 30
 # Spine colours for the home shelf, from the approved board. A book's colour
 # is stable (a hash of its record), so the shelf looks the same every visit.
 SPINE_PALETTE = [("#6B2320", "#EFD9A8"), ("#24384A", "#E8DDC7"), ("#2E4A3B", "#E8DDC7"), ("#5A1E1A", "#D8B46A"),
-                 ("#8A6A2E", "#1A140E"), ("#3C3C3C", "#EFE6D2"), ("#4A3B5C", "#E8DDC7"), ("#3D2A1E", "#D8B46A"),
-                 ("#2B3442", "#E8DDC7"), ("#5C3A4A", "#EFD9A8"), ("#7A5A24", "#1A140E"), ("#3A4A2E", "#E8DDC7")]
+                 ("#A68240", "#1A140E"), ("#3C3C3C", "#EFE6D2"), ("#4A3B5C", "#E8DDC7"), ("#3D2A1E", "#D8B46A"),
+                 ("#2B3442", "#E8DDC7"), ("#5C3A4A", "#EFD9A8"), ("#B08A48", "#1A140E"), ("#3A4A2E", "#E8DDC7")]
 
 
 class CapReached(Exception):

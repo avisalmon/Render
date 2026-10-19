@@ -642,3 +642,27 @@ file open, no network, no database. Create folders on first write, which is
 what Django's storages already do. And when a deploy fails fast, read the
 GitHub Deployments API for the service (`/repos/<owner>/<repo>/deployments`,
 then `/statuses`): a failure forty seconds in is the build, not the app.
+
+### 18. Something added to the shared frame needs the whole app's tests
+
+Books' notification bell went into the base template, so every page counted
+the person's unread notifications. On the one request that deletes a
+person's Books profile, the page that follows rendered with a profile that
+no longer existed, and crashed. BK5's own tests never deleted anyone; a BK1
+test did, and only the whole Books suite ran it.
+
+**The rule.** Anything in an app's base template must survive every state of
+the person: signed out, not onboarded, just deleted on this request. Adding
+to the base template means running every test of that app before the
+sprint is called done, not only the sprint's own.
+
+### 19. Colours made in code escape the colour checks
+
+The `--bk-*` tokens are guarded, but the spine palette lives in
+`books/shelf.py` as data. As tall spines it looked fine; when "near you"
+used the same pairs for 15px text, two gold pairs measured 3.6:1. The screen
+contract caught it only because that screen happened to show those pairs.
+
+**The rule.** Every colour pair the code generates gets a unit test over the
+whole list (Books: `test_every_spine_colour_pair_is_readable_as_body_text`),
+not only the pairs a screen happens to render.

@@ -171,6 +171,22 @@ def build_world():
     from books.models import Wish
     Wish.objects.create(profile=sp, entry=c)
     Wish.objects.create(profile=sp, free_text="ספר שעוד לא בקטלוג")
+
+    # The hub (BK5): both in the same neighbourhood, the shelver's public
+    # books offered, and one loan the reader asked for and was approved.
+    from books import hub
+    from books.models import MeetingPlace, Offer
+    Profile.objects.filter(pk__in=[rp.pk, sp.pk]).update(area_name="הדר")
+    rp.refresh_from_db()
+    sp.refresh_from_db()
+    lent, sold = Copy.objects.filter(owner=sp, visibility="public").order_by("position")
+    Offer.objects.create(copy=lent, kind="lend", loan_days=30)
+    Offer.objects.create(copy=sold, kind="sell", price_amount=35)
+    Offer.objects.create(copy=sold, kind="exchange", wants_note="ספרי מדע בדיוני")
+    MeetingPlace.objects.create(name="הספרייה העירונית", area_name="הדר")
+    deal = hub.ask(rp, lent, "lend", "שלום, אשמח לשאול אותו לחודש")
+    hub.approve(deal, sp)
+    hub.send_message(deal, sp, "בשמחה. מתי נוח לך?")
     return {"reader": reader, "staff": staff, "fresh": fresh}
 
 
@@ -202,6 +218,13 @@ SCREENS = [
     ("library-add", "/books/library/add/?q=עוז", "shelver", "library-add"),
     ("wishlist", "/books/wishlist/", "shelver", "wishlist"),
     ("scans", "/books/library/scans/", "shelver", "scans"),
+    ("near", "/books/near/", "reader", "near"),
+    ("near-no-area", "/books/near/", "staff", "near"),
+    ("offered", lambda: f"/books/near/{__import__('books.models', fromlist=['Copy']).Copy.objects.filter(offers__kind='sell').first().pk}/", "reader", "offered"),
+    ("deals", "/books/deals/", "reader", "deals"),
+    ("deal-borrower", lambda: f"/books/deals/{__import__('books.models', fromlist=['Deal']).Deal.objects.get().pk}/", "reader", "deal"),
+    ("deal-owner", lambda: f"/books/deals/{__import__('books.models', fromlist=['Deal']).Deal.objects.get().pk}/", "shelver", "deal"),
+    ("notifications", "/books/notifications/", "reader", "notifications"),
 ]
 
 

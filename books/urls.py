@@ -1,6 +1,6 @@
 from django.urls import include, path
 
-from . import auth_views, catalog_views, internal, library_views, scan_views, views
+from . import auth_views, catalog_views, hub_views, internal, library_views, scan_views, views
 from .api import router
 
 app_name = "books"
@@ -22,6 +22,16 @@ urlpatterns = [
     path("scan/<int:pk>/accept-confident/", scan_views.accept_confident, name="scan_accept_confident"),
     path("scan/<int:pk>/add/", scan_views.add_missed, name="scan_add"),
     path("shelf/reorder/", scan_views.reorder_shelf, name="shelf_reorder"),
+    # The hub (BK5).
+    path("near/", hub_views.near, name="near"),
+    path("near/<int:pk>/", hub_views.offered, name="offered"),
+    path("deals/", hub_views.deals, name="deals"),
+    path("deals/<int:pk>/", hub_views.deal_page, name="deal"),
+    path("deals/<int:pk>/act/", hub_views.deal_action, name="deal_action"),
+    path("block/<int:profile_pk>/", hub_views.block, name="block"),
+    path("report/", hub_views.report, name="report"),
+    path("notifications/", hub_views.notifications, name="notifications"),
+    path("notifications/unread/", hub_views.unread, name="notifications_unread"),
     # My library (BK4).
     path("library/", library_views.library, name="library"),
     path("library/bulk/", library_views.bulk, name="library_bulk"),

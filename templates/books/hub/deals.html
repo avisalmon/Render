@@ -1,0 +1,20 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "deals.title" %} · {% t "brand" %}{% endblock %}
+{% block screen %}deals{% endblock %}
+{% block content %}
+<div class="bk-narrow">
+  <p><a href="{% url 'books:near' %}">{% t "near.title" %}</a></p>
+  <h1 class="bk-title">{% t "deals.title" %}</h1>
+  {% if not open and not closed %}
+    <p class="bk-lead">{% t "deals.none" %}</p>
+  {% endif %}
+  {% if open %}
+  <h2 class="bk-h2">{% t "deals.open" %}</h2>
+  {% include "books/hub/_deal_rows.html" with rows=open %}
+  {% endif %}
+  {% if closed %}
+  <h2 class="bk-h2">{% t "deals.closed" %}</h2>
+  {% include "books/hub/_deal_rows.html" with rows=closed %}
+  {% endif %}
+</div>
+{% endblock %}

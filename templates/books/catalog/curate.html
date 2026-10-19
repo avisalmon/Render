@@ -50,5 +50,35 @@
     {% endfor %}
   </ul>
   {% else %}<p class="bk-muted">{% t "curate.nothing" %}</p>{% endif %}
+
+  <h2 class="bk-h2">{% t "curate.reports" %}</h2>
+  {% if reports %}
+  <ul class="bk-entry-list">
+    {% for r in reports %}
+    <li class="bk-entry-row bk-entry-row--actions">
+      <span class="bk-entry-text">
+        <span>{{ r.reason }}</span>
+        <span class="bk-muted">{% if r.copy %}{{ r.copy.entry.title }} · {% endif %}{% if r.profile %}{{ r.profile.display_name }} · {% endif %}{% if r.deal_id %}#{{ r.deal_id }} · {% endif %}{% t "curate.by" %} {{ r.reporter.display_name }} · {{ r.created_at|date:"d.m.Y" }}</span>
+      </span>
+      <form method="post" action="{% url 'books:curate_action' %}">{% csrf_token %}<input type="hidden" name="action" value="report_handled"><input type="hidden" name="report" value="{{ r.pk }}"><button type="submit" class="bk-btn bk-btn--small">{% t "curate.handled" %}</button></form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="bk-muted">{% t "curate.nothing" %}</p>{% endif %}
+
+  <h2 class="bk-h2">{% t "curate.disputed" %}</h2>
+  {% if disputed %}
+  <ul class="bk-entry-list">
+    {% for d in disputed %}
+    <li class="bk-entry-row">
+      <span class="bk-entry-text">
+        <span class="bk-entry-title">{{ d.copy.entry.title }}</span>
+        <span class="bk-muted">{{ d.owner.display_name }} · {{ d.requester.display_name }}{% if d.closed_note %} · {{ d.closed_note }}{% endif %}</span>
+        <a class="bk-link-row" href="{% url 'admin:books_deal_change' d.pk %}">{% t "curate.open_admin" %}</a>
+      </span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="bk-muted">{% t "curate.nothing" %}</p>{% endif %}
 </div>
 {% endblock %}

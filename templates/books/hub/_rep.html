@@ -1,0 +1,8 @@
+{% load books_tags %}<p class="bk-rep" style="margin: 0">
+  {% if rep.lent or rep.passed_on or rep.ended %}
+    {% if rep.lent %}<span>{% t "rep.lent" n=rep.lent %}</span>{% endif %}
+    {% if rep.passed_on %}<span>{% t "rep.passed_on" n=rep.passed_on %}</span>{% endif %}
+    {% if rep.reliability is not None %}<span>{% t "rep.reliability" pct=rep.reliability %}</span>{% endif %}
+    {% if rep.lost %}<span>{% t "rep.lost" n=rep.lost %}</span>{% endif %}
+  {% else %}<span>{% t "rep.new" %}</span>{% endif %}
+</p>

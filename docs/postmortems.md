@@ -17,6 +17,28 @@ Newest first.
 
 ---
 
+## PM-15 · 2026-10-19 · BK5 sprint end: the bell and the spine colours
+
+**What happened.** Two things the sprint's own tests missed. (1) The new
+notification bell in Books' base template crashed the page that follows
+deleting a profile; an older Books test found it in the whole-app run. (2)
+Two spine colour pairs, made in Python and outside the guarded tokens, were
+unreadable as small text on the new "near you" cards (3.6:1); the browser
+screen contract found it. Both fixed before any push.
+
+**Why.** The base template is shared by every screen, but the sprint ran
+its own tests first; and the contrast guards only covered CSS tokens and
+whatever pairs a screen happened to show.
+
+**Rule.** Adding to the shared frame means the whole app's tests, and it
+must survive every state of the person. Colour pairs made in code get a
+unit test over the whole list. Also closed the drift `bkm_drift.py`
+reported: "nothing at import touches the persistent disk" is now in
+FullStackBKM.
+
+Here: docs/building_an_app.md mistakes 18 and 19; tests/test_books_5.py
+BKM: FullStackBKM 87387dc
+
 ## PM-14 · 2026-10-17 · A pipe hid a failure, and an empty pattern ran everything
 
 **What happened.** Registering the Daily news site for counter, the tests

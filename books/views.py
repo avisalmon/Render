@@ -34,6 +34,10 @@ def onboarding(request):
             profile.is_adult_confirmed = True
             profile.accepted_terms_at = timezone.now()
             profile.save()
+            if profile.area_name and profile.area_lat is None:
+                from . import hub
+
+                hub.area_changed(profile)
             return redirect(safe_next(request))
     else:
         guess = request.user.first_name or request.user.get_username().split("@")[0]
@@ -59,9 +63,14 @@ def settings_page(request):
     profile = request.books_profile
     saved = False
     if request.method == "POST":
+        before = profile.area_name
         form = SettingsForm(request.POST, instance=profile, lang=_lang(request))
         if form.is_valid():
-            form.save()
+            saved = form.save()
+            if saved.area_name != before:
+                from . import hub
+
+                hub.area_changed(saved)
             # The language may have just changed: come back in the new one.
             return redirect(f"{reverse('books:settings')}?saved=1")
     else:
@@ -177,7 +186,7 @@ SAMPLE_BOOKS = {
         {"id": "s2", "title": "החיים שלפנינו", "author": "רומן גארי", "status": "exchange", "color": "#24384A", "ink": "#E8DDC7", "w": 36, "h": 192, "lean": -0.8},
         {"id": "s3", "title": "זכרון דברים", "author": "יעקב שבתאי", "status": "lend", "color": "#2E4A3B", "ink": "#E8DDC7", "w": 34, "h": 186},
         {"id": "s4", "title": "אלטנוילנד", "author": "בנימין זאב הרצל", "status": "public", "color": "#5A1E1A", "ink": "#D8B46A", "w": 40, "h": 200, "rare": True},
-        {"id": "s5", "title": "הנסיך הקטן", "author": "סנט-אכזופרי", "status": "private", "color": "#8A6A2E", "ink": "#1A140E", "w": 26, "h": 150, "lean": 10},
+        {"id": "s5", "title": "הנסיך הקטן", "author": "סנט-אכזופרי", "status": "private", "color": "#A68240", "ink": "#1A140E", "w": 26, "h": 150, "lean": 10},
         {"id": "s6", "title": "1984", "author": "ג׳ורג׳ אורוול", "status": "sell", "color": "#3C3C3C", "ink": "#EFE6D2", "w": 28, "h": 168, "lean": 0.6},
         {"id": "s7", "title": "סיפור פשוט", "author": "ש״י עגנון", "status": "private", "color": "#4A3B5C", "ink": "#E8DDC7", "w": 32, "h": 182},
         {"id": "s8", "title": "תמול שלשום", "author": "ש״י עגנון", "status": "exchange", "color": "#3D2A1E", "ink": "#D8B46A", "w": 42, "h": 196},
@@ -190,12 +199,12 @@ SAMPLE_BOOKS = {
         {"id": "s2", "title": "Moby-Dick", "author": "Herman Melville", "status": "exchange", "color": "#24384A", "ink": "#E8DDC7", "w": 34, "h": 184, "lean": -0.8},
         {"id": "s3", "title": "Jane Eyre", "author": "Charlotte Brontë", "status": "private", "color": "#6B2320", "ink": "#EFD9A8", "w": 28, "h": 170},
         {"id": "s4", "title": "Ulysses", "author": "James Joyce", "status": "public", "color": "#5A1E1A", "ink": "#D8B46A", "w": 42, "h": 200, "rare": True},
-        {"id": "s5", "title": "The Little Prince", "author": "Saint-Exupéry", "status": "private", "color": "#8A6A2E", "ink": "#1A140E", "w": 24, "h": 150, "lean": 10},
+        {"id": "s5", "title": "The Little Prince", "author": "Saint-Exupéry", "status": "private", "color": "#A68240", "ink": "#1A140E", "w": 24, "h": 150, "lean": 10},
         {"id": "s6", "title": "1984", "author": "George Orwell", "status": "sell", "color": "#3C3C3C", "ink": "#EFE6D2", "w": 28, "h": 168, "lean": 0.6},
         {"id": "s7", "title": "Walden", "author": "H. D. Thoreau", "status": "lend", "color": "#4A3B5C", "ink": "#E8DDC7", "w": 26, "h": 160},
         {"id": "s8", "title": "The Odyssey", "author": "Homer", "status": "exchange", "color": "#3D2A1E", "ink": "#D8B46A", "w": 40, "h": 196},
         {"id": "s9", "title": "Emma", "author": "Jane Austen", "status": "lend", "color": "#2B3442", "ink": "#E8DDC7", "w": 24, "h": 156, "lean": -1},
-        {"id": "s10", "title": "Hamlet", "author": "Shakespeare", "status": "lend", "color": "#7A5A24", "ink": "#1A140E", "w": 22, "h": 150, "lean": 12},
+        {"id": "s10", "title": "Hamlet", "author": "Shakespeare", "status": "lend", "color": "#B08A48", "ink": "#1A140E", "w": 22, "h": 150, "lean": 12},
     ],
 }
 

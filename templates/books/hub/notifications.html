@@ -1,0 +1,26 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "notif.title" %} · {% t "brand" %}{% endblock %}
+{% block screen %}notifications{% endblock %}
+{% block content %}
+<div class="bk-narrow">
+  <h1 class="bk-title">{% t "notif.title" %}</h1>
+  {% if items %}
+  <ul class="bk-entry-list">
+    {% for n in items %}
+    <li class="bk-entry-row{% if not n.read_at %} bk-unread{% endif %}">
+      {% if n.deal %}<a class="bk-entry-link" href="{% url 'books:deal' n.deal.pk %}">
+      {% elif n.copy %}<a class="bk-entry-link" href="{% url 'books:offered' n.copy.pk %}">
+      {% else %}<a class="bk-entry-link" href="{% url 'books:near' %}">{% endif %}
+        <span class="bk-entry-text">
+          <span>{% notification_text n %}</span>
+          <span class="bk-kicker">{{ n.created_at|date:"d.m.Y H:i" }}</span>
+        </span>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+    <p class="bk-lead">{% t "notif.none" %}</p>
+  {% endif %}
+</div>
+{% endblock %}

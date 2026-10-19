@@ -323,14 +323,42 @@ an offer cannot go together; (5) the barcode reader uses the browser's own
 Found by looking at the screens: the bulk bar covered the list, now it appears
 only when a book is ticked; the "added from the scan of" line came out empty.
 
-## Epic BK5: The hub (outline)
+## Epic BK5: The hub `DONE (dev), 2026-10-19`
 
-- **SPR-BK5.1** Browse near me and the free-tier view; Deal requests and
-  Messages; Block and Report.
-- **SPR-BK5.2** Handover, loans, due dates, reminders, returns, exchange,
-  transfers with CopyTransfer, the lost and dispute rules.
-- **SPR-BK5.3** Reputation counts, wishlist alerts, notifications, meeting
-  places.
+Avi's rules, given before the build: notifications in the app only; after a
+request is approved, offer several ways to talk; a loan not back at twice its
+loan time is lost, nobody is blocked for it, the borrower's reliability goes
+down.
+
+| ID | Feature | Status |
+| --- | --- | --- |
+| F-BK5.1 | `/books/near/`: offered books of other people inside my radius, nearest first, with a neighbourhood and a rounded distance, never an address; search, offer kind, language, genre. Without a point on either side, the same named area counts | DONE |
+| F-BK5.2 | My area becomes a point (two decimals) through OpenStreetMap's Nominatim, as a job, whenever the area name changes in onboarding or settings | DONE |
+| F-BK5.3 | An offered book's page: what is offered, the owner's counts, and the ask (lend, swap with one of my books, buy) with a first message | DONE |
+| F-BK5.4 | A request's page: approve or decline; cancel before the handover; a meeting place (a known place or a few words); both sides confirm the handover; a loan gets its due date; the borrower marks it returned and the owner confirms; a problem button | DONE |
+| F-BK5.5 | Swap and sale: when both confirm the handover, the book moves to its new owner, private and unoffered, with a CopyTransfer; a swap moves both books; a book I receive leaves my wishlist | DONE |
+| F-BK5.6 | Messages inside a request, and after approval each side may open phone, WhatsApp or email to the other, one tick at a time | DONE |
+| F-BK5.7 | Notifications in the app: a bell with the unread count on every Books page, a notifications page, one per event, in the reader's language | DONE |
+| F-BK5.8 | Reminders three days before the due date and on it, once each; lost at twice the loan time; a lost book that comes back is recorded as late | DONE |
+| F-BK5.9 | Reputation as counts, never stars: lent, passed on, returned on time as a percentage, never came back | DONE |
+| F-BK5.10 | Wishlist alerts: a book I wished for, offered inside my radius, tells me once | DONE |
+| F-BK5.11 | Block (hides both sides, cancels open requests, can be undone) and report (a copy, a person, a request); the curator's desk lists open reports and disputed requests; admin for deals, reports and meeting places | DONE |
+| F-BK5.12 | API: near, deals (create asks, delete cancels, every step an action), messages, notifications, blocks, reports, meeting places (staff write), transfers (read) | DONE |
+
+Decisions for Avi's ack: (1) the pilot lets everyone ask
+(`BOOKS_PILOT_EVERYONE_ASKS`, on); after the pilot the free plan answers but
+does not ask, as the spec says; (2) approving one request declines the other
+open requests for the same book; (3) the handover counts only when both sides
+confirm, and the owner's "got it back" decides a return; (4) reminders and the
+lost rule run on a sweep at most every ten minutes from page views, plus the
+jobs endpoint, so no scheduler is needed; (5) a dispute goes to the curator's
+desk and is settled in admin for now; (6) the phone lives in settings and is
+shown only on a request where its owner ticked it; (7) "near you" took the
+museum's place in the bottom bar, the museum returns with its epic.
+Found by looking at the screens: the near page's search said "search my
+books" and its filters filled the phone screen (now one field and "more
+filters"); the request page put the counts above the actions (now the actions
+and messages come first); books without a cover show their spine colours.
 
 ## Epic BK6: Circles and the first launch (outline)
 

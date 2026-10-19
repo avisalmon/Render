@@ -613,6 +613,21 @@ the book over, with the app keeping track.
 - **Notifications** in the app, and by email for what cannot wait (a request,
   a due date). Quiet by default.
 
+**Decided by Avi before the build (2026-10-19).**
+- **Notifications are in the app only**: a bell with the unread count, a
+  list; no email, no push.
+- **After a request is approved, several ways to talk**: the in-app
+  messages always; each side may also choose, per request, to show the other
+  their phone, a WhatsApp link, or their email. Nothing is shown unless that
+  person chooses it.
+- **A loan is lost at twice its loan time** (30 days becomes lost at day 60).
+  Nobody is blocked for it; the borrower's reliability goes down instead.
+  Reliability is shown as counts and a share (returned on time out of loans
+  that ended), never as stars (spec 12.4).
+- **During the pilot everyone may ask** (until billing exists in BK11, every
+  profile is treated as a subscriber; `BOOKS_PILOT_EVERYONE_ASKS`). The
+  free-tier rule (reply, not start) switches on with billing.
+
 **Rules.** Nothing is credited, transferred or counted until both sides
 confirm. A blocked person sees nothing of the blocker. Location shown to
 others is a neighbourhood and a rough distance, never a point.

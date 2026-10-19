@@ -432,3 +432,18 @@ the photo missed; `ScanItem.crop_image` is not built, because the reader
 returns titles in shelf order, not positions. `Copy.position` is the order
 on the person's shelf (the living shelf's drag). `Offer` is unique per copy
 and kind.
+
+**BK5 additions (2026-10-19, for Avi's ack).** `Profile.phone`, private,
+shown to the other side of one deal only when its owner ticks it there (Avi:
+more ways to talk after approval). `Deal` gains `loan_days` and
+`price_amount` (copied from the offer when asked, so a later change to the
+offer does not change a deal in progress), `requester_marked_returned_at`
+(the borrower says "I returned it"; the owner's confirmation still decides),
+`returned_late`, `owner_shares` / `requester_shares` (which ways to talk each
+side opened: phone, WhatsApp, email), `closed_note` (why it was cancelled or
+disputed), `reminded` (which reminders went out, so each goes once) and
+`updated_at`. `Notification` gains `copy` (for "a book you wished for is
+offered near you"); its words come from the catalogue by `kind`, never
+stored text. `Report` gains `deal`, `status` open / handled and `handled_by`.
+`MeetingPlace`, `Deal`, `Message`, `CopyTransfer`, `Block`, `Notification`
+and `Report` are otherwise as approved above (migration 0007).

@@ -143,13 +143,14 @@ class SettingsForm(_Localised, forms.ModelForm):
 
     class Meta:
         model = Profile
-        fields = ["display_name", "language", "area_name", "radius_km", "theme", "palette", "shelf_view",
+        fields = ["display_name", "language", "area_name", "radius_km", "phone", "theme", "palette", "shelf_view",
                   "profile_public", "show_points_public"]
         widgets = {
             "display_name": forms.TextInput(attrs={"class": "bk-input"}),
             "language": forms.RadioSelect,
             "area_name": forms.TextInput(attrs={"class": "bk-input"}),
             "radius_km": forms.NumberInput(attrs={"class": "bk-input", "min": 1, "max": 100}),
+            "phone": forms.TextInput(attrs={"class": "bk-input", "inputmode": "tel", "autocomplete": "tel"}),
             "theme": forms.RadioSelect,
             "palette": forms.RadioSelect,
             "shelf_view": forms.RadioSelect,
@@ -160,7 +161,7 @@ class SettingsForm(_Localised, forms.ModelForm):
         self.fields["theme"].choices = [(k, self.t(f"settings.theme_{k}")) for k in THEMES]
         self.fields["palette"].choices = [(k, self.t(f"settings.palette_{k}")) for k in PALETTES]
         self.fields["shelf_view"].choices = [(k, self.t(f"settings.view_{k}")) for k in SHELF_VIEWS]
-        for name in ("display_name", "language", "area_name", "radius_km", "theme", "palette", "shelf_view",
+        for name in ("display_name", "language", "area_name", "radius_km", "phone", "theme", "palette", "shelf_view",
                      "profile_public", "show_points_public"):
             self.fields[name].label = self.t(f"settings.{name}")
         self.fields["radius_km"].min_value = 1

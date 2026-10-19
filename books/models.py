@@ -48,6 +48,8 @@ class Profile(models.Model):
     theme = models.CharField(max_length=8, choices=THEMES, default="light")
     palette = models.CharField(max_length=8, choices=PALETTES, default="lamplit")
     shelf_view = models.CharField(max_length=10, choices=SHELF_VIEWS, default="lamp")
+    # Shown to the other side of a deal only if this person chooses to (BK5).
+    phone = models.CharField(max_length=30, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -494,3 +496,159 @@ class Wish(models.Model):
 
     def __str__(self):
         return self.entry.title if self.entry_id else self.free_text
+
+
+# ---- Layer 2: the hub (data model section 5) -----------------------------------
+
+
+class MeetingPlace(models.Model):
+    """A named handover point (a cafe, a library, a bookshop). The place's own
+    coordinates, never a person's."""
+
+    KINDS = [("cafe", "cafe"), ("library", "library"), ("bookshop", "bookshop"), ("other", "other")]
+
+    name = models.CharField(max_length=120)
+    kind = models.CharField(max_length=10, choices=KINDS, default="other")
+    area_name = models.CharField(max_length=80, blank=True)
+    lat = models.DecimalField(max_digits=8, decimal_places=5, null=True, blank=True)
+    lng = models.DecimalField(max_digits=8, decimal_places=5, null=True, blank=True)
+    is_partner = models.BooleanField(default=False)
+    notes = models.CharField(max_length=300, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["area_name", "name"]
+
+    def __str__(self):
+        return f"{self.name}, {self.area_name}" if self.area_name else self.name
+
+
+class Deal(models.Model):
+    """One person asking for one offered copy, and what happened (lend,
+    exchange and sale in one model). `copy` and `owner` are kept even though
+    the offer gives them: after a transfer the copy's owner changes, and the
+    deal must still say who owned it then."""
+
+    REQUESTED, APPROVED, DECLINED, CANCELLED = "requested", "approved", "declined", "cancelled"
+    HANDED_OVER, RETURNED, COMPLETED, LOST, DISPUTED = "handed_over", "returned", "completed", "lost", "disputed"
+    STATUSES = [(REQUESTED, "requested"), (APPROVED, "approved"), (DECLINED, "declined"), (CANCELLED, "cancelled"),
+                (HANDED_OVER, "handed over"), (RETURNED, "returned"), (COMPLETED, "completed"), (LOST, "lost"),
+                (DISPUTED, "disputed")]
+    OPEN = (REQUESTED, APPROVED, HANDED_OVER, DISPUTED)
+
+    offer = models.ForeignKey(Offer, on_delete=models.SET_NULL, null=True, blank=True, related_name="deals")
+    copy = models.ForeignKey(Copy, on_delete=models.PROTECT, related_name="deals")
+    owner = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="deals_as_owner")
+    requester = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="deals_as_requester")
+    kind = models.CharField(max_length=8, choices=Offer.KINDS)
+    status = models.CharField(max_length=12, choices=STATUSES, default=REQUESTED, db_index=True)
+    swap_copy = models.ForeignKey(Copy, on_delete=models.SET_NULL, null=True, blank=True, related_name="swap_deals")
+    loan_days = models.PositiveSmallIntegerField(null=True, blank=True)
+    price_amount = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    due_date = models.DateField(null=True, blank=True)
+    meeting_place = models.ForeignKey(MeetingPlace, on_delete=models.SET_NULL, null=True, blank=True,
+                                      related_name="deals")
+    meeting_note = models.CharField(max_length=300, blank=True)
+    owner_confirmed_handover_at = models.DateTimeField(null=True, blank=True)
+    requester_confirmed_handover_at = models.DateTimeField(null=True, blank=True)
+    requester_marked_returned_at = models.DateTimeField(null=True, blank=True)
+    returned_confirmed_at = models.DateTimeField(null=True, blank=True)
+    returned_late = models.BooleanField(default=False)
+    # Ways to talk each side chose to open after approval: phone, whatsapp, email.
+    owner_shares = models.CharField(max_length=40, blank=True)
+    requester_shares = models.CharField(max_length=40, blank=True)
+    closed_note = models.CharField(max_length=300, blank=True)
+    reminded = models.CharField(max_length=40, blank=True, help_text="reminders already sent: soon,due,lost")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at"]
+
+    def __str__(self):
+        return f"{self.kind} {self.copy_id} {self.status}"
+
+    def other(self, profile):
+        return self.requester if profile.pk == self.owner_id else self.owner
+
+    def role(self, profile):
+        if profile.pk == self.owner_id:
+            return "owner"
+        if profile.pk == self.requester_id:
+            return "requester"
+        return None
+
+
+class Message(models.Model):
+    deal = models.ForeignKey(Deal, on_delete=models.CASCADE, related_name="messages")
+    sender = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="messages_sent")
+    body = models.TextField(max_length=2000)
+    created_at = models.DateTimeField(auto_now_add=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+
+class CopyTransfer(models.Model):
+    """A copy changing hands: the same row moves to its new owner, and this
+    records the move (data model decision; provenance for the museum)."""
+
+    KINDS = [("sold", "sold"), ("given", "given"), ("exchanged", "exchanged")]
+
+    copy = models.ForeignKey(Copy, on_delete=models.CASCADE, related_name="transfers")
+    from_profile = models.ForeignKey(Profile, on_delete=models.SET_NULL, null=True, related_name="transfers_out")
+    to_profile = models.ForeignKey(Profile, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name="transfers_in")
+    deal = models.ForeignKey(Deal, on_delete=models.SET_NULL, null=True, blank=True, related_name="transfers")
+    kind = models.CharField(max_length=10, choices=KINDS)
+    transferred_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["transferred_at"]
+
+
+class Block(models.Model):
+    blocker = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="blocks_made")
+    blocked = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="blocks_received")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["blocker", "blocked"], name="books_block_once")]
+
+
+class Notification(models.Model):
+    """In the app only (Avi, 2026-10-19). The words come from the catalogue
+    by `kind`, in the reader's language, so nothing is stored in one tongue."""
+
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="notifications")
+    kind = models.CharField(max_length=30)
+    deal = models.ForeignKey(Deal, on_delete=models.CASCADE, null=True, blank=True, related_name="notifications")
+    entry = models.ForeignKey(CatalogEntry, on_delete=models.CASCADE, null=True, blank=True,
+                              related_name="notifications")
+    copy = models.ForeignKey(Copy, on_delete=models.CASCADE, null=True, blank=True, related_name="notifications")
+    read_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+
+class Report(models.Model):
+    """A report button for anything (spec 12.10). Posts and reviews join in BK7."""
+
+    OPEN, HANDLED = "open", "handled"
+
+    reporter = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="reports_made")
+    copy = models.ForeignKey(Copy, on_delete=models.SET_NULL, null=True, blank=True, related_name="reports")
+    profile = models.ForeignKey(Profile, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name="reports_about")
+    deal = models.ForeignKey(Deal, on_delete=models.SET_NULL, null=True, blank=True, related_name="reports")
+    reason = models.CharField(max_length=500)
+    status = models.CharField(max_length=10, default=OPEN, db_index=True)
+    handled_by = models.ForeignKey(Profile, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name="reports_handled")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]

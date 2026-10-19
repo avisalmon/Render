@@ -1,0 +1,77 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{{ entry.title }} · {% t "brand" %}{% endblock %}
+{% block screen %}offered{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  // The swap choice shows only when a swap is what is asked for.
+  var form = document.getElementById('ask');
+  var swap = form && form.querySelector('[data-swap]');
+  if (!swap) return;
+  function sync() {
+    var k = form.querySelector('input[name=kind]:checked');
+    swap.hidden = !(k && k.value === 'exchange');
+  }
+  form.addEventListener('change', sync);
+  sync();
+})();
+</script>
+{% endblock %}
+{% block content %}
+<div class="bk-narrow">
+  <p><a href="{% url 'books:near' %}">{% t "near.title" %}</a></p>
+  <div class="bk-entry-head">
+    <div class="bk-entry-cover bk-entry-cover--large">
+      {% if entry.cover %}<img src="{{ entry.cover.url }}" alt="{% t "entry.cover" %}: {{ entry.title }}">{% else %}<span class="bk-muted">{% t "catalog.no_cover" %}</span>{% endif %}
+    </div>
+    <div>
+      <h1 class="bk-title" style="margin-top: 0">{{ entry.title }}</h1>
+      <p style="margin: 0 0 6px">{{ entry.creator_names }}</p>
+      <p class="bk-muted" style="margin: 0">{% t "offered.has_it" name=owner.display_name area=owner.area_name %}{% if km is not None %} · {% t "near.km" km=km %}{% endif %}</p>
+      {% if copy.condition %}<p class="bk-muted" style="margin: 6px 0 0">{{ copy.condition }}</p>{% endif %}
+      <div class="bk-row" style="margin-top: 10px"><a class="bk-btn bk-btn--small" href="{% url 'books:catalog_entry' entry.pk %}">{% t "copy.record" %}</a></div>
+    </div>
+  </div>
+
+  {% if request.GET.reported %}<p class="bk-notice bk-notice--ok" role="status">{% t "report.thanks" %}</p>{% endif %}
+
+  <section class="bk-card">
+    <h2 class="bk-h2" style="margin-top: 0">{% t "offered.offers" %}</h2>
+    <ul class="bk-plain-list">
+      {% for o in offers %}
+      <li>{% if o.kind == "lend" %}{% t "offered.lend_days" days=o.loan_days %}{% elif o.kind == "exchange" %}{% if o.wants_note %}{% t "offered.exchange_for" note=o.wants_note %}{% else %}{% t "status.exchange" %}{% endif %}{% else %}{% t "offered.sell_price" price=o.price_amount|floatformat:"0" %}{% endif %}</li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="bk-card">
+    <h2 class="bk-h2" style="margin-top: 0">{% t "rep.title" %}</h2>
+    {% include "books/hub/_rep.html" %}
+  </section>
+
+  {% if open_deal %}
+    <p class="bk-notice" role="status">{% t "offered.already" %} <a href="{% url 'books:deal' open_deal.pk %}">{% t "offered.see_request" %}</a></p>
+  {% elif not can_start %}
+    <p class="bk-notice" role="status">{% t "offered.cannot_start" %}</p>
+  {% else %}
+  <form method="post" class="bk-card bk-form" id="ask">
+    {% csrf_token %}
+    <h2 class="bk-h2" style="margin-top: 0">{% t "offered.ask" %}</h2>
+    {% if error %}<p class="bk-error" role="alert">{{ error }}</p>{% endif %}
+    <fieldset class="bk-fieldset">
+      <legend class="bk-field">{% t "offered.ask_kind" %}</legend>
+      <div class="bk-radio-row">{% for o in offers %}<label class="bk-radio"><input type="radio" name="kind" value="{{ o.kind }}" {% if forloop.first %}checked{% endif %}> {% with key="status."|add:o.kind %}{% t key %}{% endwith %}</label>{% endfor %}</div>
+    </fieldset>
+    {% for o in offers %}{% if o.kind == "exchange" %}
+    <label class="bk-field" data-swap>{% t "offered.swap_with" %}
+      <select class="bk-select" name="swap_copy"><option value=""></option>{% for mc in my_copies %}<option value="{{ mc.pk }}">{{ mc.entry.title }}</option>{% endfor %}</select>
+    </label>
+    {% endif %}{% endfor %}
+    <label class="bk-field">{% t "offered.message" name=owner.display_name %} <textarea class="bk-input" name="message" rows="3" maxlength="2000"></textarea></label>
+    <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "offered.send" %}</button>
+  </form>
+  {% endif %}
+
+  {% include "books/hub/_report_block.html" with who=owner %}
+</div>
+{% endblock %}

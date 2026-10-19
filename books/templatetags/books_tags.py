@@ -42,3 +42,28 @@ def langname(context, code):
     if not names:
         return code or ""
     return names[0] if _language(context) == "he" else names[1]
+
+
+@register.simple_tag(takes_context=True)
+def books_unread(context):
+    request = context.get("request")
+    profile = getattr(getattr(request, "user", None), "books_profile", None) if request else None
+    if profile is None or profile.pk is None:  # none yet, or just deleted on this request
+        return 0
+    from ..hub import unread_count
+
+    return unread_count(profile)
+
+
+@register.simple_tag(takes_context=True)
+def notification_text(context, n):
+    """One notification in the reader's language, built from its kind."""
+    lang = _language(context)
+    deal = n.deal
+    title = (deal.copy.entry.title if deal else (n.entry.title if n.entry else ""))
+    name = ""
+    if deal:
+        viewer = n.profile
+        name = deal.other(viewer).display_name
+    date = deal.due_date.strftime("%d.%m.%Y") if deal and deal.due_date else ""
+    return lookup(f"nk.{n.kind}", lang, title=title, name=name, date=date)

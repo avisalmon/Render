@@ -1,0 +1,117 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{{ deal.copy.entry.title }} · {% t "brand" %}{% endblock %}
+{% block screen %}deal{% endblock %}
+{% block content %}{% url 'books:deal_action' deal.pk as act %}
+<div class="bk-narrow">
+  <p><a href="{% url 'books:deals' %}">{% t "deals.title" %}</a></p>
+  <h1 class="bk-title">{% t "deal.title" title=deal.copy.entry.title %}</h1>
+  <p style="margin: 0 0 8px"><span class="bk-status-pill">{% with key="dstatus."|add:deal.status %}{% t key %}{% endwith %}</span></p>
+  <p class="bk-muted" style="margin: 0">
+    {% if deal.kind == "lend" %}{% t "deal.kind_lend" days=deal.loan_days %}{% elif deal.kind == "exchange" %}{% t "deal.kind_exchange" title=deal.swap_copy.entry.title %}{% else %}{% t "deal.kind_sell" price=deal.price_amount|floatformat:"0" %}{% endif %}
+    {% if deal.due_date and deal.kind == "lend" %} · {% t "deal.due" date=deal.due_date|date:"d.m.Y" %}{% endif %}
+  </p>
+  <p class="bk-muted" style="margin: 4px 0 0">{% if role == "owner" %}{% t "deal.you_owner" %}{% else %}{% t "deal.you_requester" %}{% endif %} · {% t "deal.other_side" %}: {{ other.display_name }}{% if other.area_name %}, {{ other.area_name }}{% endif %}</p>
+  {% if deal.status == "disputed" and deal.closed_note %}<p class="bk-notice" role="status">{{ deal.closed_note }}</p>{% endif %}
+  {% if error %}<p class="bk-error" role="alert">{{ error }}</p>{% endif %}
+  {% if request.GET.reported %}<p class="bk-notice bk-notice--ok" role="status">{% t "report.thanks" %}</p>{% endif %}
+
+  <div class="bk-deal-actions" id="actions">
+    {% if role == "owner" and deal.status == "requested" %}
+      <form method="post" action="{{ act }}">{% csrf_token %}<button class="bk-btn bk-btn--primary" name="action" value="approve">{% t "deal.approve" %}</button></form>
+      <form method="post" action="{{ act }}">{% csrf_token %}<button class="bk-btn" name="action" value="decline">{% t "deal.decline" %}</button></form>
+    {% endif %}
+    {% if deal.status == "approved" %}
+      {% if i_confirmed %}<p class="bk-notice" role="status" style="margin: 0">{% t "deal.waiting_other" %}</p>
+      {% else %}<form method="post" action="{{ act }}">{% csrf_token %}<button class="bk-btn bk-btn--primary" name="action" value="handover">{% t "deal.handover" %}</button></form>{% endif %}
+    {% endif %}
+    {% if deal.kind == "lend" and deal.status == "handed_over" or deal.kind == "lend" and deal.status == "lost" or deal.kind == "lend" and deal.status == "disputed" %}
+      {% if role == "requester" %}
+        {% if deal.requester_marked_returned_at %}<p class="bk-notice" role="status" style="margin: 0">{% t "deal.returned_waiting" %}</p>
+        {% else %}<form method="post" action="{{ act }}">{% csrf_token %}<button class="bk-btn bk-btn--primary" name="action" value="returned">{% t "deal.returned" %}</button></form>{% endif %}
+      {% else %}
+        <form method="post" action="{{ act }}">{% csrf_token %}<button class="bk-btn bk-btn--primary" name="action" value="got_back">{% t "deal.got_back" %}</button></form>
+      {% endif %}
+    {% endif %}
+    {% if deal.status == "requested" or deal.status == "approved" %}
+      <form method="post" action="{{ act }}">{% csrf_token %}<button class="bk-btn bk-btn--quiet" name="action" value="cancel" data-confirm>{% t "deal.cancel" %}</button></form>
+    {% endif %}
+  </div>
+  {% if deal.status == "approved" %}<p class="bk-help">{% t "deal.handover_hint" %}</p>{% endif %}
+
+  <section id="messages">
+    <h2 class="bk-h2">{% t "deal.messages" %}</h2>
+    <div class="bk-thread">
+      {% for m in messages_list %}
+      <p class="bk-msg{% if m.sender_id == request.books_profile.pk %} bk-msg--mine{% endif %}">{{ m.body|linebreaksbr }}<span class="bk-msg-meta">{{ m.sender.display_name }} · {{ m.created_at|date:"d.m H:i" }}</span></p>
+      {% empty %}<p class="bk-muted">{% t "deal.no_messages" %}</p>{% endfor %}
+    </div>
+    {% if deal.status != "declined" and deal.status != "cancelled" and not blocked %}
+    <form method="post" action="{{ act }}" class="bk-form">
+      {% csrf_token %}<input type="hidden" name="action" value="message">
+      <label class="bk-field">{% t "deal.write" %} <textarea class="bk-input" name="body" rows="2" maxlength="2000" required></textarea></label>
+      <button type="submit" class="bk-btn bk-btn--primary">{% t "deal.send" %}</button>
+    </form>
+    {% endif %}
+  </section>
+
+  {% if deal.status == "approved" %}
+  <form method="post" action="{{ act }}" class="bk-card bk-form" id="meeting">
+    {% csrf_token %}<input type="hidden" name="action" value="meeting">
+    <h2 class="bk-h2" style="margin-top: 0">{% t "deal.meeting" %}</h2>
+    {% if places %}
+    <label class="bk-field">{% t "deal.meeting_place" %}
+      <select class="bk-select" name="place"><option value="">{% t "deal.meeting_none" %}</option>{% for p in places %}<option value="{{ p.pk }}" {% if deal.meeting_place_id == p.pk %}selected{% endif %}>{{ p }}</option>{% endfor %}</select>
+    </label>
+    {% endif %}
+    <label class="bk-field">{% t "deal.meeting_note" %} <input class="bk-input" name="meeting_note" maxlength="300" value="{{ deal.meeting_note }}"></label>
+    <button type="submit" class="bk-btn">{% t "deal.meeting_save" %}</button>
+  </form>
+  {% elif deal.meeting_place or deal.meeting_note %}
+  <p class="bk-muted">{% t "deal.meeting" %}: {% if deal.meeting_place %}{{ deal.meeting_place }}{% endif %}{% if deal.meeting_place and deal.meeting_note %} · {% endif %}{{ deal.meeting_note }}</p>
+  {% endif %}
+
+  <section class="bk-card" id="talk">
+    <h2 class="bk-h2" style="margin-top: 0">{% t "deal.talk" %}</h2>
+    {% if deal.status == "requested" or deal.status == "declined" or deal.status == "cancelled" %}
+      <p class="bk-muted" style="margin: 0">{% t "deal.talk_after" %}</p>
+    {% else %}
+      <p class="bk-help" style="margin-top: 0">{% t "deal.talk_lead" %}</p>
+      {% if contact %}
+      <div class="bk-contact">
+        <span>{% t "deal.they_shared" name=other.display_name %}</span>
+        {% if contact.phone %}<a href="tel:{{ contact.phone }}">{% t "deal.share_phone" %}: {{ contact.phone }}</a>{% endif %}
+        {% if contact.whatsapp %}<a href="{{ contact.whatsapp }}" target="_blank" rel="noopener">{% t "deal.share_whatsapp" %}</a>{% endif %}
+        {% if contact.email %}<a href="mailto:{{ contact.email }}">{{ contact.email }}</a>{% endif %}
+      </div>
+      {% else %}<p class="bk-muted">{% t "deal.they_nothing" name=other.display_name %}</p>{% endif %}
+      <form method="post" action="{{ act }}" class="bk-form" style="margin-top: 12px">
+        {% csrf_token %}<input type="hidden" name="action" value="share">
+        {% for w in share_ways %}
+        <label class="bk-check"><input type="checkbox" name="ways" value="{{ w }}" {% if w in my_shares %}checked{% endif %}> <span>{% with key="deal.share_"|add:w %}{% t key %}{% endwith %}</span></label>
+        {% endfor %}
+        {% if not has_phone %}<label class="bk-field">{% t "deal.phone_field" %} <input class="bk-input" name="phone" inputmode="tel" autocomplete="tel" maxlength="30"></label>{% endif %}
+        <button type="submit" class="bk-btn">{% t "deal.share_save" %}</button>
+      </form>
+    {% endif %}
+  </section>
+
+
+  <section>
+    <h2 class="bk-h2">{% t "rep.title" %}: {{ other.display_name }}</h2>
+    {% include "books/hub/_rep.html" %}
+  </section>
+
+  {% if deal.status == "approved" or deal.status == "handed_over" or deal.status == "lost" %}
+  <details class="bk-more">
+    <summary>{% t "deal.dispute" %}</summary>
+    <form method="post" action="{{ act }}" class="bk-card bk-form">
+      {% csrf_token %}<input type="hidden" name="action" value="dispute">
+      <label class="bk-field">{% t "deal.dispute_note" %} <textarea class="bk-input" name="note" rows="2" maxlength="300" required></textarea></label>
+      <button type="submit" class="bk-btn bk-btn--danger">{% t "deal.dispute" %}</button>
+    </form>
+  </details>
+  {% endif %}
+
+  {% include "books/hub/_report_block.html" with who=other %}
+</div>
+{% endblock %}

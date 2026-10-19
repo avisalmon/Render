@@ -17,6 +17,7 @@
 
     <label class="bk-field">{{ form.area_name.label }} {{ form.area_name }}<span class="bk-help">{% t "onb.area_help" %}</span></label>
     <label class="bk-field">{{ form.radius_km.label }} {{ form.radius_km }}</label>
+    <label class="bk-field">{{ form.phone.label }} {{ form.phone }}</label>
     {% if form.radius_km.errors %}<p class="bk-error" role="alert">{{ form.radius_km.errors.0 }}</p>{% endif %}
 
     <h2 class="bk-h2">{% t "settings.appearance" %}</h2>

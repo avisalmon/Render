@@ -30,6 +30,8 @@
         <button type="submit" class="bk-btn bk-btn--quiet" lang="{{ request.books_other_lang|default:'en' }}" aria-label="{% t "lang.switch" %}">{% t "lang.other" %}</button>
       </form>
       {% if user.is_authenticated %}
+        {% if user.books_profile %}{% books_unread as unread_n %}<a class="bk-bell" href="{% url 'books:notifications' %}" aria-label="{% t "notif.bell" n=unread_n %}">
+          <svg class="bk-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>{% if unread_n %}<span class="bk-bell-n">{{ unread_n }}</span>{% endif %}</a>{% endif %}
         {% block account %}
           {% if user.books_profile %}<a class="bk-btn bk-btn--quiet" href="{% url 'books:settings' %}">{{ user.books_profile.display_name }}</a>{% endif %}
         {% endblock %}

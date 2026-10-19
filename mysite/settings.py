@@ -540,3 +540,5 @@ BOOKS_JOBS_INLINE = False
 BOOKS_CONTACT_EMAIL = os.environ.get("BOOKS_CONTACT_EMAIL", "avi.salmon@gmail.com")
 BOOKS_GOOGLE_BOOKS_KEY = os.environ.get("BOOKS_GOOGLE_BOOKS_KEY", "")
 BOOKS_NLI_API_KEY = os.environ.get("BOOKS_NLI_API_KEY", "")
+# Books BK5: until billing exists (BK11) every profile may start a request.
+BOOKS_PILOT_EVERYONE_ASKS = os.environ.get("BOOKS_PILOT_EVERYONE_ASKS", "1") == "1"

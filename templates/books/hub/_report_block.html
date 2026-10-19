@@ -1,0 +1,20 @@
+{% load books_tags %}<details class="bk-more">
+  <summary>{% t "report.title" %} · {% t "block.do" name=who.display_name %}</summary>
+  <form method="post" action="{% url 'books:report' %}" class="bk-card bk-form">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.path }}">
+    <input type="hidden" name="profile" value="{{ who.pk }}">
+    {% if copy %}<input type="hidden" name="copy" value="{{ copy.pk }}">{% endif %}
+    {% if deal %}<input type="hidden" name="deal" value="{{ deal.pk }}">{% endif %}
+    <label class="bk-field">{% t "report.reason" %} <textarea class="bk-input" name="reason" rows="2" maxlength="500" required></textarea></label>
+    <button type="submit" class="bk-btn">{% t "report.send" %}</button>
+  </form>
+  <form method="post" action="{% url 'books:block' who.pk %}" class="bk-card bk-form">
+    {% csrf_token %}
+    <p class="bk-help" style="margin: 0">{% t "block.note" %}</p>
+    {% if blocked %}<input type="hidden" name="undo" value="1"><input type="hidden" name="next" value="{{ request.path }}">
+    <button type="submit" class="bk-btn">{% t "block.undo" %}</button>
+    {% else %}<input type="hidden" name="next" value="{% url 'books:near' %}">
+    <button type="submit" class="bk-btn bk-btn--danger" data-confirm>{% t "block.do" name=who.display_name %}</button>{% endif %}
+  </form>
+</details>

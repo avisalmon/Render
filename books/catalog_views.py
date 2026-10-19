@@ -10,8 +10,9 @@ from django.views.decorators.http import require_POST
 
 from . import catalog
 from .access import books_page
+from .auth_views import safe_next
 from .forms import _Localised
-from .models import BookDetail, CatalogEntry, EntryCorrection, Tag
+from .models import BookDetail, CatalogEntry, Deal, EntryCorrection, Report, Tag
 from .textnorm import identifier_scheme
 
 
@@ -175,8 +176,11 @@ def curate(request):
     _curator(request)
     unverified = catalog.live().filter(is_verified=False).prefetch_related("creators").order_by("-created_at")[:50]
     corrections = EntryCorrection.objects.filter(status=EntryCorrection.OPEN).select_related("entry", "profile")[:50]
+    reports = Report.objects.filter(status=Report.OPEN).select_related("reporter", "profile", "copy__entry")[:50]
+    disputed = Deal.objects.filter(status=Deal.DISPUTED).select_related("copy__entry", "owner", "requester")[:50]
     return render(request, "books/catalog/curate.html", {
         "unverified": unverified, "corrections": corrections, "suspects": catalog.duplicate_suspects(limit=30),
+        "reports": reports, "disputed": disputed,
         "lang": _lang(request),
     })
 
@@ -196,6 +200,8 @@ def curate_action(request):
     elif action in ("accept", "decline"):
         correction = get_object_or_404(EntryCorrection, pk=request.POST.get("correction"))
         (catalog.accept_correction if action == "accept" else catalog.decline_correction)(correction, me)
+    elif action == "report_handled":
+        Report.objects.filter(pk=request.POST.get("report") or 0).update(status=Report.HANDLED, handled_by=me)
     else:
         raise Http404
-    return redirect(request.POST.get("next") or reverse("books:curate"))
+    return redirect(safe_next(request, reverse("books:curate")))
