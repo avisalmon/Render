@@ -26,7 +26,11 @@ urlpatterns = [
     # Photographing a shelf and confirming its books (BK3).
     path("scan/", scan_views.new_scan, name="scan_new"),
     path("scan/<int:pk>/", scan_views.scan_page, name="scan"),
+    path("scan/queue/", scan_views.scan_queue, name="scan_queue"),
     path("scan/<int:pk>/status/", scan_views.scan_status, name="scan_status"),
+    path("scan/<int:pk>/label/", scan_views.scan_label, name="scan_label"),
+    path("scan/<int:pk>/retry/", scan_views.scan_retry, name="scan_retry"),
+    path("scan/<int:pk>/remove/", scan_views.scan_remove, name="scan_remove"),
     path("scan/<int:pk>/photo.jpg", scan_views.scan_photo, name="scan_photo"),
     path("scan/<int:pk>/item/<int:item_pk>/", scan_views.item_action, name="scan_item"),
     path("scan/<int:pk>/accept-confident/", scan_views.accept_confident, name="scan_accept_confident"),

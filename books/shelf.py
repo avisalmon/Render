@@ -94,11 +94,13 @@ def read_job(job):
     except KeyProblem as exc:
         scan.status, scan.error = ShelfScan.FAILED, "key"
         scan.save(update_fields=["status", "error"])
+        _notify_scan(scan, "scan.failed")
         log.error("books scan %s: the OpenAI key needs replacing: %s", scan.pk, exc)
         return
     except Exception as exc:  # noqa: BLE001
         scan.status, scan.error = ShelfScan.FAILED, str(exc)[:300]
         scan.save(update_fields=["status", "error"])
+        _notify_scan(scan, "scan.failed")
         raise
     for call in reading.calls:
         ModelCall.objects.create(profile=scan.owner, job=job, provider="openai", model=reading.model,
@@ -122,6 +124,7 @@ def read_job(job):
     scan.status = ShelfScan.REVIEW if scan.books_found else ShelfScan.DONE
     scan.finished_at = timezone.now()
     scan.save(update_fields=["status", "finished_at"])
+    _notify_scan(scan, "scan.ready" if scan.books_found else "scan.empty")
 
 
 # ---- candidates ------------------------------------------------------------------
@@ -196,6 +199,10 @@ def accept(item, entry, visibility, offer_kinds, location_note, edited=False):
     copy.visibility = visibility
     copy.location_note = (location_note or "").strip()[:120]
     copy.save()
+    # The first place typed in a batch becomes the batch's default for the
+    # books still waiting (Avi, 2026-10-19): one shelf, one place.
+    if copy.location_note and copy.location_note != item.scan.shelf_label:
+        set_label(item.scan, copy.location_note)
     copy.offers.exclude(kind__in=offer_kinds).delete()
     for kind in offer_kinds:
         Offer.objects.get_or_create(copy=copy, kind=kind,
@@ -289,3 +296,110 @@ def reorder(profile, copy_ids):
             c.position = pos
             c.save(update_fields=["position"])
     return len(mine)
+
+
+# ---- the batch's place, and the queue of shelves (Avi, 2026-10-19) -------------------
+
+STUCK_AFTER_MINUTES = 5
+MAX_READ_ATTEMPTS = 3
+
+
+def set_label(scan, label):
+    """The place for this batch: the default for every book still waiting,
+    and filled in on books of this batch already shelved without one."""
+    label = (label or "").strip()[:120]
+    scan.shelf_label = label
+    scan.save(update_fields=["shelf_label"])
+    if label:
+        Copy.objects.filter(scan_items__scan=scan, location_note="").update(location_note=label)
+    return scan
+
+
+def _notify_scan(scan, kind):
+    from .models import Notification
+
+    Notification.objects.create(profile=scan.owner, kind=kind, scan=scan)
+
+
+def _read_jobs(scan):
+    from .models import Job
+
+    return Job.objects.filter(kind="scan.read", ref_id=scan.pk).order_by("-created_at")
+
+
+def heal(scan, now=None):
+    """A scan whose reading thread died (a deploy, a restart) is read again,
+    up to three tries; after that it is marked failed so it never just sits.
+    Returns True when it restarted the reading."""
+    from .models import Job
+
+    if scan.status not in (ShelfScan.UPLOADED, ShelfScan.READING):
+        return False
+    now = now or timezone.now()
+    cutoff = now - timezone.timedelta(minutes=STUCK_AFTER_MINUTES)
+    last = _read_jobs(scan).first()
+    started = (last.started_at or last.created_at) if last else scan.created_at
+    if last is not None and last.status in (Job.QUEUED, Job.RUNNING) and started > cutoff:
+        return False  # still within its time
+    if last is None and scan.created_at > cutoff:
+        return False
+    if last is not None and last.status in (Job.QUEUED, Job.RUNNING):
+        last.status, last.error = Job.FAILED, "abandoned: no progress, read again"
+        last.finished_at = now
+        last.save(update_fields=["status", "error", "finished_at"])
+    if _read_jobs(scan).count() >= MAX_READ_ATTEMPTS:
+        scan.status, scan.error = ShelfScan.FAILED, "stuck"
+        scan.save(update_fields=["status", "error"])
+        _notify_scan(scan, "scan.failed")
+        return False
+    scan.status = ShelfScan.UPLOADED
+    scan.save(update_fields=["status"])
+    jobs.enqueue("scan.read", ref_id=scan.pk, profile=scan.owner)
+    return True
+
+
+def heal_all(profile):
+    return sum(1 for scan in ShelfScan.objects.filter(owner=profile, status__in=[ShelfScan.UPLOADED,
+                                                                               ShelfScan.READING]) if heal(scan))
+
+
+def retry(scan):
+    """Read the same photo again after a failure (not after a key problem:
+    that needs the site's key replaced first)."""
+    if scan.status != ShelfScan.FAILED:
+        return False
+    if scan.error == "key":
+        return False
+    scan.status, scan.error = ShelfScan.UPLOADED, ""
+    scan.save(update_fields=["status", "error"])
+    jobs.enqueue("scan.read", ref_id=scan.pk, profile=scan.owner)
+    return True
+
+
+def remove(scan):
+    """Forget a scan and its photo. Books already shelved from it stay."""
+    try:
+        scan.photo.delete(save=False)
+    except Exception:  # noqa: BLE001
+        log.exception("books scan %s: photo delete", scan.pk)
+    scan.delete()
+
+
+def queue(profile):
+    """The person's open shelves: reading, waiting for them, or failed."""
+    rows = []
+    for scan in ShelfScan.objects.filter(owner=profile, status__in=[ShelfScan.UPLOADED, ShelfScan.READING,
+                                                                    ShelfScan.REVIEW, ShelfScan.FAILED]):
+        pending = scan.items.filter(review_status=ScanItem.PENDING).count() if scan.status == ShelfScan.REVIEW else 0
+        rows.append({"scan": scan, "pending": pending})
+    return rows
+
+
+def queue_summary(profile):
+    rows = queue(profile)
+    reading = sum(1 for r in rows if r["scan"].status in (ShelfScan.UPLOADED, ShelfScan.READING))
+    waiting = [r for r in rows if r["scan"].status == ShelfScan.REVIEW and r["pending"]]
+    failed = sum(1 for r in rows if r["scan"].status == ShelfScan.FAILED)
+    return {"reading": reading, "books": sum(r["pending"] for r in waiting), "shelves": len(waiting),
+            "failed": failed, "any": bool(reading or waiting or failed),
+            "first": waiting[0]["scan"] if len(waiting) == 1 else None}

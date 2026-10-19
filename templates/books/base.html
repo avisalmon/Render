@@ -46,7 +46,15 @@
 
   <div class="bk-layout">
     {% if user.books_profile %}{% include "books/_nav.html" with side=True %}{% endif %}
-    <main class="bk-main" id="bk-content">{% block content %}{% endblock %}</main>
+    <main class="bk-main" id="bk-content">
+      {% if user.books_profile %}{% books_scan_queue as sq %}{% if sq.any %}{% block scanbar %}
+      <a class="bk-notice bk-scanbar" href="{% if sq.first %}{% url 'books:scan' sq.first.pk %}{% else %}{% url 'books:scan_new' %}{% endif %}" role="status">
+        {% if sq.books %}<b>{% t "scanbar.waiting" n=sq.books shelves=sq.shelves %}</b>{% endif %}
+        {% if sq.reading %}<span>{% t "scanbar.reading" n=sq.reading %}</span>{% endif %}
+        {% if sq.failed %}<span>{% t "scanbar.failed" n=sq.failed %}</span>{% endif %}
+      </a>{% endblock %}{% endif %}{% endif %}
+      {% block content %}{% endblock %}
+    </main>
   </div>
 
   {% if user.books_profile %}{% include "books/_nav.html" with side=False %}{% endif %}

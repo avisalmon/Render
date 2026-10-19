@@ -12,7 +12,7 @@ from . import catalog
 from .access import books_page
 from .auth_views import safe_next
 from .forms import _Localised
-from .models import BookDetail, CatalogEntry, Deal, EntryCorrection, Report, Tag
+from .models import BookDetail, CatalogEntry, EntryCorrection, Report, Tag
 from .textnorm import identifier_scheme
 
 
@@ -188,10 +188,9 @@ def curate(request):
     corrections = EntryCorrection.objects.filter(status=EntryCorrection.OPEN).select_related("entry", "profile")[:50]
     reports = Report.objects.filter(status=Report.OPEN).select_related(
         "reporter", "profile", "copy__entry", "post__thread", "review__entry")[:50]
-    disputed = Deal.objects.filter(status=Deal.DISPUTED).select_related("copy__entry", "owner", "requester")[:50]
     return render(request, "books/catalog/curate.html", {
         "unverified": unverified, "corrections": corrections, "suspects": catalog.duplicate_suspects(limit=30),
-        "reports": reports, "disputed": disputed,
+        "reports": reports,
         "lang": _lang(request),
     })
 

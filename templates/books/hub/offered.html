@@ -68,6 +68,7 @@
     </label>
     {% endif %}{% endfor %}
     <label class="bk-field">{% t "offered.message" name=owner.display_name %} <textarea class="bk-input" name="message" rows="3" maxlength="2000"></textarea></label>
+    <p class="bk-help" style="margin: 0">{% t "deal.between_you" name=owner.display_name %}</p>
     <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "offered.send" %}</button>
   </form>
   {% endif %}

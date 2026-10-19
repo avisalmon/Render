@@ -1,6 +1,7 @@
 {% extends "books/base.html" %}{% load books_tags %}
 {% block title %}{% t "scan.review_title" %} · {% t "brand" %}{% endblock %}
 {% block screen %}scan-{{ scan.status }}{% endblock %}
+{% block scanbar %}{% endblock %}
 {% block content %}
 <div class="bk-narrow" data-scan data-scan-id="{{ scan.pk }}" data-scan-status="{{ scan.status }}" data-status-url="{% url 'books:scan_status' scan.pk %}">
   <p><a href="{% url 'books:scan_new' %}">{% t "scan.title" %}</a></p>
@@ -13,13 +14,20 @@
       <h1 class="bk-title" role="status">{% t "scan.reading" %}</h1>
       <p class="bk-lead">{% t "scan.reading_lead" %}</p>
       <div class="bk-reading-bar" aria-hidden="true"><span></span></div>
+      <p class="bk-help">{% t "scan.while_reading" %}</p>
+      <a class="bk-btn bk-btn--primary" href="{% url 'books:scan_new' %}">{% t "scan.another" %}</a>
       <img class="bk-scan-photo" src="{% url 'books:scan_photo' scan.pk %}" alt="{% t "scan.photo_alt" %}">
     </div>
 
   {% elif scan.status == "failed" %}
     <h1 class="bk-title">{% t "scan.failed" %}</h1>
-    <p class="bk-lead">{% if scan.error == "key" %}{% t "scan.failed_key" %}{% else %}{% t "err500.lead" %}{% endif %}</p>
-    <a class="bk-btn bk-btn--primary" href="{% url 'books:scan_new' %}">{% t "scan.retry" %}</a>
+    <p class="bk-lead">{% if scan.error == "key" %}{% t "scan.failed_key" %}{% elif scan.error == "stuck" %}{% t "scan.failed_stuck" %}{% else %}{% t "err500.lead" %}{% endif %}</p>
+    <div class="bk-row">
+      {% if scan.error != "key" %}<form method="post" action="{% url 'books:scan_retry' scan.pk %}">{% csrf_token %}<button type="submit" class="bk-btn bk-btn--primary">{% t "scan.retry" %}</button></form>{% endif %}
+      <a class="bk-btn" href="{% url 'books:scan_new' %}">{% t "scan.another" %}</a>
+      <form method="post" action="{% url 'books:scan_remove' scan.pk %}">{% csrf_token %}<button type="submit" class="bk-btn bk-btn--quiet" data-confirm>{% t "scan.remove" %}</button></form>
+    </div>
+    <img class="bk-scan-photo" src="{% url 'books:scan_photo' scan.pk %}" alt="{% t "scan.photo_alt" %}" loading="lazy">
 
   {% else %}
     <h1 class="bk-title">{% if scan.status == "done" %}{% t "scan.done_title" %}{% else %}{% t "scan.review_title" %}{% endif %}</h1>
@@ -30,6 +38,16 @@
 
     {% if not scan.books_found %}
       <p class="bk-lead">{% t "scan.nothing_found" %}</p>
+    {% endif %}
+
+    {% if pending %}
+    <form method="post" action="{% url 'books:scan_label' scan.pk %}" class="bk-card bk-card--tight bk-form" id="place">{% csrf_token %}
+      <div class="bk-row">
+        <label class="bk-field" style="flex: 1 1 200px">{% t "scan.batch_place" %} <input class="bk-input" name="shelf_label" value="{{ scan.shelf_label }}" placeholder="{% t "scan.shelf_label_hint" %}" data-batch-place></label>
+        <button type="submit" class="bk-btn" style="align-self: flex-end">{% t "scan.batch_place_save" %}</button>
+      </div>
+      <p class="bk-help" style="margin: 0">{% t "scan.batch_place_help" %}</p>
+    </form>
     {% endif %}
 
     {% if request.GET.msg %}<p class="bk-notice bk-notice--danger" role="alert">{{ request.GET.msg }}</p>{% endif %}
@@ -94,7 +112,7 @@
             {% for k in offer_kinds %}<label class="bk-radio"><input type="checkbox" name="offers" value="{{ k }}" {% if k in default_offers %}checked{% endif %}> {% with key="status."|add:k %}{% t key %}{% endwith %}</label>{% endfor %}
           </div>
         </fieldset>
-        <label class="bk-field">{% t "scan.location" %} <input class="bk-input" name="location_note" value="{{ scan.shelf_label }}"></label>
+        <label class="bk-field">{% t "scan.location" %} <input class="bk-input" name="location_note" value="{{ scan.shelf_label }}" data-location></label>
 
         <div class="bk-row">
           <button type="submit" class="bk-btn bk-btn--primary" style="flex: 1">{% t "scan.accept" %}</button>
@@ -153,6 +171,18 @@
     setTimeout(tick, 2500);
     return;
   }
+  // One shelf, one place: typing it on any card (or at the top) fills every
+  // other card that is still empty or still holds the old place.
+  var place = root.querySelector('[data-batch-place]');
+  var fields = function () { return root.querySelectorAll('[data-location]'); };
+  var spread = function (from, value, old) {
+    fields().forEach(function (f) { if (f !== from && (f.value === '' || f.value === old)) f.value = value; });
+    if (place && place !== from && (place.value === '' || place.value === old)) place.value = value;
+  };
+  root.querySelectorAll('[data-location], [data-batch-place]').forEach(function (f) {
+    f.addEventListener('focus', function () { f.setAttribute('data-old', f.value); });
+    f.addEventListener('change', function () { spread(f, f.value, f.getAttribute('data-old') || ''); f.setAttribute('data-old', f.value); });
+  });
   // "Keep it as read" shows the fix fields; a candidate hides them.
   root.querySelectorAll('[data-scan-card]').forEach(function (card) {
     var fix = card.querySelector('[data-fix]');

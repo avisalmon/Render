@@ -257,13 +257,14 @@ def test_the_photo_is_served_to_its_owner_privately(client, scan, reader):
     assert "/media/" not in html
 
 
-def test_upload_page_starts_a_scan_and_lands_on_it(client, reader, fake_reader, known):
+def test_upload_page_starts_a_scan_and_returns_to_the_camera(client, reader, fake_reader, known):
     client.force_login(reader)
     r = client.post("/books/scan/", {"photo": upload(), "shelf_label": "חדר עבודה", "default_visibility": "public",
                                      "default_offers": ["lend"]})
     scan = ShelfScan.objects.get(owner=reader.books_profile)
-    assert r.status_code == 302 and r["Location"] == f"/books/scan/{scan.pk}/"
-    html = client.get(r["Location"]).content.decode()
+    # Back to the camera (Avi, 2026-10-19): the next shelf can go while this one reads.
+    assert r.status_code == 302 and r["Location"] == f"/books/scan/?sent={scan.pk}"
+    html = client.get(f"/books/scan/{scan.pk}/").content.decode()
     assert "מיכאל שלי" in html and "Jane Eyre" in html and 'data-scan-card' in html
     assert client.get(f"/books/scan/{scan.pk}/status/").json()["status"] == "review"
 

@@ -16,6 +16,7 @@
     {% if form.area_name.errors %}<p class="bk-error" role="alert">{{ form.area_name.errors.0 }}</p>{% endif %}
     <label class="bk-check">{{ form.is_adult_confirmed }} <span>{% t "onb.adult" %}</span></label>
     {% if form.is_adult_confirmed.errors %}<p class="bk-error" role="alert">{{ form.is_adult_confirmed.errors.0 }}</p>{% endif %}
+    <p class="bk-notice" style="margin: 0">{% t "onb.deals_notice" %}</p>
     <label class="bk-check">{{ form.accept_terms }} <span>{% t "onb.terms_before" %}<a href="{% url 'books:terms' %}">{% t "onb.terms_link" %}</a>{% t "onb.terms_and" %}<a href="{% url 'books:privacy' %}">{% t "onb.privacy_link" %}</a></span></label>
     {% if form.accept_terms.errors %}<p class="bk-error" role="alert">{{ form.accept_terms.errors.0 }}</p>{% endif %}
     <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "onb.submit" %}</button>

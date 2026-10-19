@@ -9,6 +9,7 @@
     {% for n in items %}
     <li class="bk-entry-row{% if not n.read_at %} bk-unread{% endif %}">
       {% if n.deal %}<a class="bk-entry-link" href="{% url 'books:deal' n.deal.pk %}">
+      {% elif n.scan_id %}<a class="bk-entry-link" href="{% url 'books:scan' n.scan_id %}">
       {% elif n.thread_id %}<a class="bk-entry-link" href="{% url 'books:thread' n.thread_id %}">
       {% elif n.copy %}<a class="bk-entry-link" href="{% url 'books:offered' n.copy.pk %}">
       {% else %}<a class="bk-entry-link" href="{% url 'books:near' %}">{% endif %}

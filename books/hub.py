@@ -327,6 +327,8 @@ def confirm_returned(deal, profile):
 
 
 def dispute(deal, profile, note):
+    """A flag on the request and a message to the other side. Books does not
+    decide between them (Avi, 2026-10-19: it is between the two people)."""
     _need(deal, profile, "either", Deal.APPROVED, Deal.HANDED_OVER, Deal.LOST)
     deal.status = Deal.DISPUTED
     deal.closed_note = (note or "").strip()[:300]

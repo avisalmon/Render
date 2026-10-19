@@ -628,6 +628,10 @@ the book over, with the app keeping track.
   profile is treated as a subscriber; `BOOKS_PILOT_EVERYONE_ASKS`). The
   free-tier rule (reply, not start) switches on with billing.
 
+- **Disputes are between the two people** (Avi, 2026-10-19): Books takes no
+  responsibility for damage, loss, lateness or disputes and does not decide;
+  the terms say so, onboarding shows it, every request page repeats it.
+
 **Rules.** Nothing is credited, transferred or counted until both sides
 confirm. A blocked person sees nothing of the blocker. Location shown to
 others is a neighbourhood and a rough distance, never a point.

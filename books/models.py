@@ -634,6 +634,7 @@ class Notification(models.Model):
                               related_name="notifications")
     copy = models.ForeignKey(Copy, on_delete=models.CASCADE, null=True, blank=True, related_name="notifications")
     thread = models.ForeignKey("Thread", on_delete=models.CASCADE, null=True, blank=True, related_name="notifications")
+    scan = models.ForeignKey(ShelfScan, on_delete=models.CASCADE, null=True, blank=True, related_name="notifications")
     read_at = models.DateTimeField(null=True, blank=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

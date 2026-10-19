@@ -254,6 +254,37 @@ adapter waits for a key, ACT-BK.7; (5) `EntryCorrection`, `merged_into`,
 polish: the language shows as its code on a record page; the genre list on
 the add-by-hand form is long on a phone.
 
+## Avi's answers on the BK3 to BK7 decisions (2026-10-19)
+
+Asked the four that needed him; the rest stand as written in each epic
+below unless he objects.
+
+- **Who may start a request during the pilot:** everyone (BK5 decision 1
+  stands; the free-tier rule switches on with billing).
+- **Disputes: between the two people.** Books takes no responsibility and
+  does not decide. Changed: a terms section ("Loans, swaps and sales are
+  between you"), a notice on onboarding above the terms checkbox, a line on
+  the ask form and on every request page, the "there is a problem" form says
+  the other side is told and solving it is theirs, the status reads "a
+  problem was flagged", and the curator's desk no longer lists disputes
+  (reports, which are about safety, stay). Replaces BK5 decision 5.
+- **Circle members see each other's books at any distance:** yes (BK6
+  decision 2 stands).
+- **Contact details refused in club posts and reviews:** yes (BK7 decision
+  2 stands).
+
+## After Avi's first real scans (2026-10-19)
+
+He photographed several shelves; they vanished (the reading threads died
+in that day's deploys) and he retyped the place on every book. Fixed:
+
+| ID | Feature | Status |
+| --- | --- | --- |
+| F-BK3.9 | After sending a photo, back to the camera with "reading in the background"; a live list of my open shelves (reading, waiting with how many books, failed); several shelves read at once | DONE |
+| F-BK3.10 | A reminder bar on every Books page while books wait ("N books from M shelves are waiting for you"), shelves reading, or failed; the bell rings when a shelf is read or fails | DONE |
+| F-BK3.11 | A scan whose reading stopped (a restart) is read again from any visit after five minutes, up to three tries, then shown as failed; "try again" reads the same photo; a scan can be removed (shelved books stay) | DONE |
+| F-BK3.12 | One place per batch: the first place typed on a book becomes the default for the books still waiting; "where is this shelf?" at the top sets it for all and fills books already shelved without one; typing it in any card fills the others on the page | DONE |
+
 ## Epic BK3: Shelf scan and confirmation `DONE (dev), 2026-10-19`
 
 Built in one run after Avi acked BK1 and BK2 and said start BK3, with his

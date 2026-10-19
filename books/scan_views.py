@@ -61,12 +61,29 @@ def new_scan(request):
         elif form.is_valid():
             d = form.cleaned_data
             scan = shelf.start_scan(profile, d["photo"], d["shelf_label"], d["default_visibility"], d["default_offers"])
-            return redirect("books:scan", pk=scan.pk)
+            # Back to the camera at once: the next shelf can go while this one reads.
+            return redirect(f"{reverse('books:scan_new')}?sent={scan.pk}")
     else:
         last = ShelfScan.objects.filter(owner=profile).first()
-        form = ScanForm(lang=_lang(request), initial={"default_visibility": last.default_visibility if last else "private"})
-    return render(request, "books/scan/new.html", {"form": form, "left": left, "cap": shelf.FREE_CAP,
-                                                   "recent": ShelfScan.objects.filter(owner=profile)[:5]})
+        form = ScanForm(lang=_lang(request), initial={
+            "default_visibility": last.default_visibility if last else "private",
+            "default_offers": [k for k in (last.default_offers.split(",") if last else []) if k]})
+    shelf.heal_all(profile)
+    sent = ShelfScan.objects.filter(owner=profile, pk=request.GET.get("sent") or 0).first()
+    return render(request, "books/scan/new.html", {
+        "form": form, "left": left, "cap": shelf.FREE_CAP, "sent": sent, "queue": shelf.queue(profile),
+        "recent": ShelfScan.objects.filter(owner=profile, status=ShelfScan.DONE)[:5]})
+
+
+@books_page
+def scan_queue(request):
+    """The open shelves as JSON, for the camera page's live list."""
+    profile = request.books_profile
+    shelf.heal_all(profile)
+    return JsonResponse({"scans": [{
+        "id": r["scan"].pk, "status": r["scan"].status, "pending": r["pending"], "found": r["scan"].books_found,
+        "label": r["scan"].shelf_label, "url": reverse("books:scan", args=[r["scan"].pk]),
+    } for r in shelf.queue(profile)], **{k: v for k, v in shelf.queue_summary(profile).items() if k != "first"}})
 
 
 def _scan_for(request, pk):
@@ -84,6 +101,8 @@ def _cards(scan):
 @books_page
 def scan_page(request, pk):
     scan = _scan_for(request, pk)
+    if shelf.heal(scan):
+        scan.refresh_from_db()
     pending, done = _cards(scan)
     confident = sum(1 for i in pending if i.confidence >= shelf.HIGH_CONFIDENCE and i.candidates.exists())
     offers = [k for k in scan.default_offers.split(",") if k]
@@ -98,6 +117,8 @@ def scan_page(request, pk):
 @books_page
 def scan_status(request, pk):
     scan = _scan_for(request, pk)
+    if shelf.heal(scan):
+        scan.refresh_from_db()
     return JsonResponse({"status": scan.status, "found": scan.books_found, "accepted": scan.books_accepted,
                          "error": scan.error})
 
@@ -142,6 +163,29 @@ def item_action(request, pk, item_pk):
     except shelf.CapReached:
         return _reply(request, scan, ok=False, message=t("scan.cap", lang, cap=shelf.FREE_CAP), status=409)
     return _reply(request, scan)
+
+
+@books_page
+@require_POST
+def scan_label(request, pk):
+    scan = _scan_for(request, pk)
+    shelf.set_label(scan, request.POST.get("shelf_label", ""))
+    return _reply(request, scan)
+
+
+@books_page
+@require_POST
+def scan_retry(request, pk):
+    scan = _scan_for(request, pk)
+    shelf.retry(scan)
+    return redirect("books:scan", pk=scan.pk)
+
+
+@books_page
+@require_POST
+def scan_remove(request, pk):
+    shelf.remove(_scan_for(request, pk))
+    return redirect("books:scan_new")
 
 
 @books_page

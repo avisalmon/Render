@@ -17,6 +17,33 @@ Newest first.
 
 ---
 
+## PM-18 · 2026-10-19 · Avi's scans vanished: a dead thread, no recovery, no sign
+
+**What happened.** Avi photographed several shelves on production. The page
+said reading takes a while and he could leave; when he came back nothing
+was waiting and nothing said why. The reading ran on a daemon thread in
+the web process; the BK6 and BK7 deploys that day restarted the process,
+the threads died, and the scans stayed "reading" with no one to pick them
+up. Separately, he had to retype the shelf's place on every book because
+he forgot it at upload.
+
+**Why our process let it happen.** The jobs module documented that a
+scheduler or the token endpoint re-runs dropped jobs, but no scheduler was
+ever set up, and no test simulated a restart. The flow was designed around
+one photo at a time with the person watching it; nothing reminded anyone of
+books waiting.
+
+**Rule.** Background work a person waits on heals itself from page visits
+(five minutes, three tries, then a visible failure with "try again"), and
+its result keeps reminding until dealt with. Built: back to the camera
+after each photo with a live list of shelves, several reading at once, the
+bar on every Books page, the bell when a shelf is ready or failed, retry and
+remove. One place per batch: the first place typed becomes the default for
+the rest and fills books already shelved without one.
+
+Here: docs/building_an_app.md mistake 22; tests/test_books_3_flow.py
+BKM: FullStackBKM 0177ddf
+
 ## PM-17 · 2026-10-19 · BK7 sprint end: nothing new, one repeat
 
 **What happened.** The community epic shipped with its tests, screen

@@ -450,7 +450,7 @@ def test_a_lost_book_that_comes_back_counts_as_late(noa, dan, entry):
     assert rep["lost"] == 0 and rep["borrowed_late"] == 1 and rep["reliability"] == 0
 
 
-def test_a_dispute_reaches_the_curators_desk(client, noa, dan, entry):
+def test_a_dispute_stays_between_the_two_and_reports_reach_the_desk(client, noa, dan, entry):
     c, deal = _lent(noa, dan, entry)
     hub.dispute(deal, noa, "הספר חזר קרוע")
     deal.refresh_from_db()
@@ -460,7 +460,11 @@ def test_a_dispute_reaches_the_curators_desk(client, noa, dan, entry):
     staff.user.save()
     Report.objects.create(reporter=noa, profile=dan, reason="לא עונה")
     page = login(client, staff).get("/books/curate/").content.decode()
-    assert "הספר חזר קרוע" in page and "לא עונה" in page
+    assert "הספר חזר קרוע" not in page and "לא עונה" in page
+    assert Notification.objects.filter(profile=dan, kind="deal.disputed").exists()
+    deal_page = login(client, dan).get(f"/books/deals/{deal.pk}/").content.decode()
+    assert "הספר חזר קרוע" in deal_page and "לא אחראית" in deal_page
+    login(client, staff)
     client.post("/books/curate/act/", {"action": "report_handled", "report": Report.objects.get().pk})
     assert Report.objects.get().status == Report.HANDLED
 

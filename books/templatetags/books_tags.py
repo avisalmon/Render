@@ -60,6 +60,9 @@ def notification_text(context, n):
     """One notification in the reader's language, built from its kind."""
     lang = _language(context)
     deal = n.deal
+    if n.scan_id:
+        label = n.scan.shelf_label or n.scan.created_at.strftime("%d.%m %H:%M")
+        return lookup(f"nk.{n.kind}", lang, title=label, n=n.scan.books_found, name="", date="")
     if n.thread_id:
         return lookup(f"nk.{n.kind}", lang, title=n.thread.title, name="", date="")
     title = (deal.copy.entry.title if deal else (n.entry.title if n.entry else ""))
@@ -77,3 +80,23 @@ def dictkey(d, key):
         return d.get(key, 0)
     except AttributeError:
         return 0
+
+
+@register.simple_tag(takes_context=True)
+def books_scan_queue(context):
+    """Shelves waiting on this person, for the reminder bar. Never breaks a
+    page: no profile, or one deleted on this request, means nothing to show."""
+    request = context.get("request")
+    profile = getattr(getattr(request, "user", None), "books_profile", None) if request else None
+    if profile is None or profile.pk is None:
+        return {"any": False}
+    from django.core.cache import cache
+
+    from ..shelf import heal_all, queue_summary
+
+    try:
+        if cache.add(f"books:scan-heal:{profile.pk}", True, 60):
+            heal_all(profile)
+        return queue_summary(profile)
+    except Exception:  # noqa: BLE001
+        return {"any": False}

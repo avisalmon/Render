@@ -106,12 +106,14 @@
     <summary>{% t "deal.dispute" %}</summary>
     <form method="post" action="{{ act }}" class="bk-card bk-form">
       {% csrf_token %}<input type="hidden" name="action" value="dispute">
+      <p class="bk-help" style="margin: 0">{% t "deal.dispute_help" %}</p>
       <label class="bk-field">{% t "deal.dispute_note" %} <textarea class="bk-input" name="note" rows="2" maxlength="300" required></textarea></label>
       <button type="submit" class="bk-btn bk-btn--danger">{% t "deal.dispute" %}</button>
     </form>
   </details>
   {% endif %}
 
+  <p class="bk-help">{% t "deal.between_you" name=other.display_name %}</p>
   {% include "books/hub/_report_block.html" with who=other %}
 </div>
 {% endblock %}

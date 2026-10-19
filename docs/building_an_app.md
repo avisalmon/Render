@@ -689,3 +689,18 @@ screens at sprint end.
 
 **The rule.** When you look at a screenshot, read every number and empty
 state on it against what you know the seeded world contains.
+
+### 22. Background work a person waits on must heal itself and always say where it is
+
+Books read shelf photos on a daemon thread in the web process. Two deploys
+on 2026-10-19 restarted the process mid-read; the threads died and the scans
+sat as "reading" for good. `run_pending()` existed, but nothing was
+scheduled to call it, and the page said nothing. Avi found it by using the
+app: "it disappeared and nothing is waiting for me".
+
+**The rule.** A job a person waits for is recovered from the person's own
+page visits (Books: `shelf.heal`, five minutes, three tries), always ends in
+a state the person sees (including "failed, try again" with the same
+input), and leaves its result where it keeps reminding them (Books: the bar
+on every page, and the bell). Every deploy is a restart: test what happens
+to work in flight.
