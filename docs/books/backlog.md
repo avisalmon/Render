@@ -39,7 +39,7 @@ anyone who reaches it (no allow-list), and said start BK3.
 | ACT-BK.3 | Photograph 10 or more real shelves (Hebrew, English, mixed) and label them, for the accuracy gate | SPR-BK3.4 | TODO |
 | ACT-BK.4 | Choose the first circle (a book club, school, workplace or neighbourhood) and its first members | BK6 | TODO |
 | ACT-BK.5 | Read the Google Books terms against the paid tier (spec 12.11) | BK11 | TODO |
-| ACT-BK.6 | Create the Google Cloud Storage bucket for Books (private, Europe or Israel region) and a service account limited to that one bucket; put its key in Render's environment (`BOOKS_GCS_BUCKET`, `BOOKS_GCS_CREDENTIALS_JSON`), never in git. I can write the exact steps | images in prod (disk fallback until then) | TODO |
+| ACT-BK.6 | Create the Google Cloud Storage bucket for Books (private, Europe or Israel region) and a service account limited to that one bucket; put its key in Render's environment (`BOOKS_GCS_BUCKET`, `BOOKS_GCS_CREDENTIALS_JSON`), never in git. I can write the exact steps | images in prod (disk fallback until then) | DONE 2026-10-19: bucket `babook-books-images` (me-west1, not public) in project `babook-storage`, service account `books-storage` with Storage Object Admin on that bucket only; live check: write ok, signed read 200, unsigned read 403 |
 | ACT-BK.7 | Request a National Library of Israel API key and set `BOOKS_NLI_API_KEY` in Render; until then Hebrew look-ups rely on Open Library and Google Books | BK3 accuracy gate | TODO |
 | ACT-BK.8 | Optionally a Google Books API key (`BOOKS_GOOGLE_BOOKS_KEY`) for a higher quota | BK3 | TODO |
 
