@@ -1,6 +1,7 @@
 from rest_framework.routers import DefaultRouter
 
 from .circles import CircleMemberViewSet, CircleViewSet, FeedbackViewSet, PilotViewSet
+from .community import PeopleViewSet, PostViewSet, ReadingLogViewSet, ReviewViewSet, ThreadViewSet
 from .hub import (
                   BlockViewSet,
                   DealViewSet,
@@ -55,3 +56,8 @@ router.register("circles", CircleViewSet, basename="circle")
 router.register("circle-members", CircleMemberViewSet, basename="circle-member")
 router.register("feedback", FeedbackViewSet, basename="feedback")
 router.register("pilot", PilotViewSet, basename="pilot")
+router.register("threads", ThreadViewSet, basename="thread")
+router.register("posts", PostViewSet, basename="post")
+router.register("reviews", ReviewViewSet, basename="review")
+router.register("reading", ReadingLogViewSet, basename="reading")
+router.register("people", PeopleViewSet, basename="people")

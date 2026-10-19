@@ -390,8 +390,34 @@ count after a filter on the same relation); the owner's page said "no books"
 when the only offered books were the owner's own; the pilot table's links
 were too small to tap.
 
-## Epics BK7 to BK13
+## Epic BK7: Community `DONE (dev), 2026-10-19`
 
-Not broken into sprints yet: community, play, discovery, rare books and the
-museum, tiers and billing, advanced creation, other collections. Each gets its
-sprints when the pilot (BK1 to BK6) is live and Avi has seen it used.
+| ID | Feature | Status |
+| --- | --- | --- |
+| F-BK7.1 | `/books/club/`: threads of three kinds (discussion, piece, book report), open to all of Books or a circle's own; filter by kind, circle and title; a thread may be about one book and shows on that book's page | DONE |
+| F-BK7.2 | A thread's page: the opening post and comments; the author edits or deletes their own (deleting the opening post deletes the thread); one in-app notification per thread to its author until read | DONE |
+| F-BK7.3 | Moderation: a circle's owner and moderators moderate its threads, staff moderate everything; hide and unhide a post (reversible, marked, visible to its author and moderators), lock and unlock, pin and unpin; report a post from the thread | DONE |
+| F-BK7.4 | No contact details in a post or a review: a phone number or an email is refused with a pointer to the request page | DONE |
+| F-BK7.5 | Reviews on a book's page: one per person per book, 1 to 5, a few words, a spoiler flag that folds the text; an average and a count; staff can hide one | DONE |
+| F-BK7.6 | The reading log: want, reading, read, did not finish, as chips on a book's page; `/books/reading/` lists mine with my reviews; private by default | DONE |
+| F-BK7.7 | Public profiles, opt-in part by part: the profile switch (BK1) plus three new switches for visible books, reading log and reviews; `/books/people/` lists public profiles; `/books/people/<id>/` shows only the parts opened; my own page shows me everything with the hidden parts marked | DONE |
+| F-BK7.8 | The curator's desk shows reported posts and reviews with the text and a hide button | DONE |
+| F-BK7.9 | API: threads (start, reply, posts, lock, pin), posts (edit, delete, hide), reviews, reading, people; admin for threads, reviews and the log | DONE |
+
+Models: `Thread`, `Post`, `Review`, `ReadingLog` (approved), plus
+`Post.hidden_by`, `Thread.is_pinned` / `last_post_at`, `Review.status`,
+`Notification.thread`, `Report.post` / `review`, and three `Profile.public_*`
+switches (data_model.md section 11; migration 0009). Decisions for Avi's
+ack: (1) no email digests, notifications stay in the app (his BK5 rule);
+(2) contact details are refused in posts and reviews, the request page is
+where people share them; (3) a circle's owner and moderators moderate its
+threads, staff moderate everything, hidden is reversible and marked,
+deleted is the author's choice; (4) the reading log and reviews are private
+until each is opened in settings, separately from the profile switch;
+(5) a spoiler review is folded behind a tap, not hidden.
+
+## Epics BK8 to BK13
+
+Not broken into sprints yet: play, discovery, rare books and the museum,
+tiers and billing, advanced creation, other collections. Each gets its
+sprints when its turn comes, after the pilot has run.

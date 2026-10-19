@@ -1,0 +1,40 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "reading.title" %} · {% t "brand" %}{% endblock %}
+{% block screen %}my-reading{% endblock %}
+{% block content %}
+<div class="bk-narrow">
+  <p><a href="{% url 'books:club' %}">{% t "club.title" %}</a></p>
+  <h1 class="bk-title">{% t "reading.title" %}</h1>
+  <p class="bk-help">{% t "reading.private_note" %}</p>
+  <div class="bk-chips">
+    <a class="bk-chip" href="{% url 'books:my_reading' %}" aria-pressed="{% if not status %}true{% else %}false{% endif %}">{% t "club.kind_all" %}</a>
+    {% for k, _ in statuses %}<a class="bk-chip" href="?status={{ k }}" aria-pressed="{% if status == k %}true{% else %}false{% endif %}">{% with key="reading."|add:k %}{% t key %}{% endwith %} ({{ counts|dictkey:k }})</a>{% endfor %}
+  </div>
+  {% if rows %}
+  <ul class="bk-entry-list">
+    {% for r in rows %}
+    <li class="bk-entry-row">
+      <a class="bk-entry-link" href="{% url 'books:catalog_entry' r.entry.pk %}#reading">
+        <span class="bk-entry-cover" aria-hidden="true">{% if r.entry.cover %}<img src="{{ r.entry.cover.url }}" alt="">{% endif %}</span>
+        <span class="bk-entry-text">
+          <span class="bk-entry-title">{{ r.entry.title }}</span>
+          <span class="bk-muted">{{ r.entry.creator_names }}</span>
+          <span class="bk-kicker">{% with key="reading."|add:r.status %}{% t key %}{% endwith %}{% if r.status == "reading" and r.started_on %} · {% t "reading.since" date=r.started_on|date:"d.m.Y" %}{% elif r.finished_on %} · {% t "reading.finished" date=r.finished_on|date:"d.m.Y" %}{% endif %}{% if r.note %} · {{ r.note }}{% endif %}</span>
+        </span>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="bk-lead">{% t "reading.none" %}</p>{% endif %}
+
+  {% if reviews %}
+  <h2 class="bk-h2">{% t "reading.my_reviews" %}</h2>
+  {% for rv in reviews %}
+  <article class="bk-review">
+    <p class="bk-kicker" style="margin: 0 0 4px"><a href="{% url 'books:catalog_entry' rv.entry.pk %}#reviews">{{ rv.entry.title }}</a> · {% t "review.stars" n=rv.rating %} · {{ rv.created_at|date:"d.m.Y" }}</p>
+    {% if rv.body %}<p style="margin: 0">{{ rv.body|linebreaksbr }}</p>{% endif %}
+  </article>
+  {% endfor %}
+  {% endif %}
+</div>
+{% endblock %}

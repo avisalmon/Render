@@ -1,0 +1,65 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{{ person.display_name }} · {% t "brand" %}{% endblock %}
+{% block screen %}person{% endblock %}
+{% block content %}
+<div class="bk-narrow">
+  <p><a href="{% url 'books:people' %}">{% t "people.title" %}</a></p>
+  <div class="bk-person-head">
+    <h1 class="bk-title" style="margin: 0">{{ person.display_name }}</h1>
+    {% if person.area_name %}<span class="bk-muted">{{ person.area_name }}</span>{% endif %}
+  </div>
+  {% if me %}<p class="bk-notice" role="status">{% if person.profile_public %}{% t "person.me_note" %}{% else %}{% t "person.me_hidden" %}{% endif %} <a href="{% url 'books:settings' %}">{% t "settings" %}</a></p>{% endif %}
+  {% if reported %}<p class="bk-notice bk-notice--ok" role="status">{% t "report.thanks" %}</p>{% endif %}
+
+  <p class="bk-rep">
+    <span>{% t "person.offered" n=offered %}</span>
+    <span>{% t "person.completed" n=completed %}</span>
+    {% if rep.lent %}<span>{% t "rep.lent" n=rep.lent %}</span>{% endif %}
+    {% if rep.reliability is not None %}<span>{% t "rep.reliability" pct=rep.reliability %}</span>{% endif %}
+  </p>
+
+  {% if library or me %}
+  <h2 class="bk-h2">{% t "person.library" %}{% if me and not person.public_library %} <span class="bk-muted">{% t "person.hidden_part" %}</span>{% endif %}</h2>
+  {% if library %}
+  <ul class="bk-entry-list">
+    {% for c in library %}
+    <li class="bk-entry-row">
+      <a class="bk-entry-link" href="{% if me %}{% url 'books:copy' c.pk %}{% else %}{% url 'books:offered' c.pk %}{% endif %}">
+        <span class="bk-entry-cover" aria-hidden="true">{% if c.entry.cover %}<img src="{{ c.entry.cover.url }}" alt="">{% endif %}</span>
+        <span class="bk-entry-text">
+          <span class="bk-entry-title">{{ c.entry.title }}</span>
+          <span class="bk-muted">{{ c.entry.creator_names }}</span>
+          <span class="bk-kicker">{% for o in c.offers.all %}{% if o.is_active %}{% with key="status."|add:o.kind %}{% t key %}{% endwith %}{% if not forloop.last %} · {% endif %}{% endif %}{% empty %}{% t "status.public_only" %}{% endfor %}</span>
+        </span>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="bk-muted">{% t "lib.empty" %}</p>{% endif %}
+  {% endif %}
+
+  {% if reading or me %}
+  <h2 class="bk-h2">{% t "person.reading" %}{% if me and not person.public_reading %} <span class="bk-muted">{% t "person.hidden_part" %}</span>{% endif %}</h2>
+  {% if reading %}
+  <ul class="bk-plain-list" style="list-style: none; padding: 0">{% for r in reading %}<li><a class="bk-link-row" href="{% url 'books:catalog_entry' r.entry.pk %}">{{ r.entry.title }} <span class="bk-muted">· {% with key="reading."|add:r.status %}{% t key %}{% endwith %}</span></a></li>{% endfor %}</ul>
+  {% else %}<p class="bk-muted">{% t "reading.none" %}</p>{% endif %}
+  {% endif %}
+
+  {% if reviews or me %}
+  <h2 class="bk-h2">{% t "person.reviews" %}{% if me and not person.public_reviews %} <span class="bk-muted">{% t "person.hidden_part" %}</span>{% endif %}</h2>
+  {% for rv in reviews %}
+  <article class="bk-review">
+    <p class="bk-kicker" style="margin: 0 0 4px"><a href="{% url 'books:catalog_entry' rv.entry.pk %}#reviews">{{ rv.entry.title }}</a> · {% t "review.stars" n=rv.rating %}{% if rv.has_spoilers %} · <b>{% t "review.has_spoilers" %}</b>{% endif %}</p>
+    {% if rv.body and not rv.has_spoilers %}<p style="margin: 0">{{ rv.body|linebreaksbr }}</p>{% endif %}
+  </article>
+  {% empty %}<p class="bk-muted">{% t "review.none" %}</p>{% endfor %}
+  {% endif %}
+
+  {% if threads %}
+  <h2 class="bk-h2">{% t "person.threads" %}</h2>
+  {% include "books/club/_thread_rows.html" %}
+  {% endif %}
+
+  {% if not me %}{% include "books/hub/_report_block.html" with who=person %}{% endif %}
+</div>
+{% endblock %}

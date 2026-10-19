@@ -182,8 +182,12 @@ def report(request):
     deal = Deal.objects.filter(pk=request.POST.get("deal") or 0).first()
     if deal is not None and deal.role(me) is None:
         deal = None
-    if reason and (copy or who or deal):
-        Report.objects.create(reporter=me, copy=copy, profile=who, deal=deal, reason=reason)
+    from .models import Post, Review
+
+    post = Post.objects.filter(pk=request.POST.get("post") or 0).first()
+    review = Review.objects.filter(pk=request.POST.get("review") or 0).first()
+    if reason and (copy or who or deal or post or review):
+        Report.objects.create(reporter=me, copy=copy, profile=who, deal=deal, post=post, review=review, reason=reason)
     nxt = safe_next(request, reverse("books:near"))
     return redirect(f"{nxt}{'&' if '?' in nxt else '?'}reported=1")
 
@@ -194,7 +198,8 @@ def report(request):
 def notifications(request):
     me = request.books_profile
     hub.sweep_lazily()
-    items = list(Notification.objects.filter(profile=me).select_related("deal__copy__entry", "entry", "copy__entry")[:100])
+    items = list(Notification.objects.filter(profile=me)
+                 .select_related("deal__copy__entry", "entry", "copy__entry", "thread")[:100])
     Notification.objects.filter(profile=me, read_at__isnull=True).update(read_at=timezone.now())
     return render(request, "books/hub/notifications.html", {"items": items})
 

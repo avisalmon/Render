@@ -60,8 +60,14 @@
       <span class="bk-entry-text">
         <span>{{ r.reason }}</span>
         <span class="bk-muted">{% if r.copy %}{{ r.copy.entry.title }} · {% endif %}{% if r.profile %}{{ r.profile.display_name }} · {% endif %}{% if r.deal_id %}#{{ r.deal_id }} · {% endif %}{% t "curate.by" %} {{ r.reporter.display_name }} · {{ r.created_at|date:"d.m.Y" }}</span>
+        {% if r.post %}<a class="bk-link-row" href="{% url 'books:thread' r.post.thread_id %}#post-{{ r.post.pk }}">{{ r.post.body|truncatechars:140 }}</a>{% endif %}
+        {% if r.review %}<a class="bk-link-row" href="{% url 'books:catalog_entry' r.review.entry_id %}#reviews">{{ r.review.entry.title }}: {{ r.review.body|truncatechars:140 }}</a>{% endif %}
       </span>
-      <form method="post" action="{% url 'books:curate_action' %}">{% csrf_token %}<input type="hidden" name="action" value="report_handled"><input type="hidden" name="report" value="{{ r.pk }}"><button type="submit" class="bk-btn bk-btn--small">{% t "curate.handled" %}</button></form>
+      <span class="bk-row">
+        {% if r.post and r.post.status != "hidden" %}<form method="post" action="{% url 'books:curate_action' %}">{% csrf_token %}<input type="hidden" name="action" value="hide_post"><input type="hidden" name="post" value="{{ r.post.pk }}"><button type="submit" class="bk-btn bk-btn--small bk-btn--quiet">{% t "club.hide" %}</button></form>{% endif %}
+        {% if r.review and r.review.status != "hidden" %}<form method="post" action="{% url 'books:curate_action' %}">{% csrf_token %}<input type="hidden" name="action" value="hide_review"><input type="hidden" name="review" value="{{ r.review.pk }}"><button type="submit" class="bk-btn bk-btn--small bk-btn--quiet">{% t "club.hide" %}</button></form>{% endif %}
+        <form method="post" action="{% url 'books:curate_action' %}">{% csrf_token %}<input type="hidden" name="action" value="report_handled"><input type="hidden" name="report" value="{{ r.pk }}"><button type="submit" class="bk-btn bk-btn--small">{% t "curate.handled" %}</button></form>
+      </span>
     </li>
     {% endfor %}
   </ul>

@@ -60,6 +60,8 @@ def notification_text(context, n):
     """One notification in the reader's language, built from its kind."""
     lang = _language(context)
     deal = n.deal
+    if n.thread_id:
+        return lookup(f"nk.{n.kind}", lang, title=n.thread.title, name="", date="")
     title = (deal.copy.entry.title if deal else (n.entry.title if n.entry else ""))
     name = ""
     if deal:
@@ -67,3 +69,11 @@ def notification_text(context, n):
         name = deal.other(viewer).display_name
     date = deal.due_date.strftime("%d.%m.%Y") if deal and deal.due_date else ""
     return lookup(f"nk.{n.kind}", lang, title=title, name=name, date=date)
+
+
+@register.filter
+def dictkey(d, key):
+    try:
+        return d.get(key, 0)
+    except AttributeError:
+        return 0

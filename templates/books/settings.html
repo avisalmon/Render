@@ -37,6 +37,11 @@
     <h2 class="bk-h2">{% t "settings.privacy" %}</h2>
     <label class="bk-check">{{ form.profile_public }} <span>{{ form.profile_public.label }}</span></label>
     <label class="bk-check">{{ form.show_points_public }} <span>{{ form.show_points_public.label }}</span></label>
+    <p class="bk-help" style="margin: 4px 0 0">{% t "settings.public_parts" %}</p>
+    <label class="bk-check">{{ form.public_library }} <span>{{ form.public_library.label }}</span></label>
+    <label class="bk-check">{{ form.public_reading }} <span>{{ form.public_reading.label }}</span></label>
+    <label class="bk-check">{{ form.public_reviews }} <span>{{ form.public_reviews.label }}</span></label>
+    {% if form.instance.pk %}<p class="bk-help" style="margin: 4px 0 0"><a href="{% url 'books:person' form.instance.pk %}">{% t "settings.see_my_page" %}</a></p>{% endif %}
 
     <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "settings.save" %}</button>
   </form>

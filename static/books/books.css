@@ -501,3 +501,19 @@ details.bk-more > summary { cursor: pointer; color: var(--bk-muted); min-height:
 .bk-table { width: 100%; border-collapse: collapse; font-size: 15px; }
 .bk-table th, .bk-table td { text-align: start; padding: 8px 6px; border-bottom: 1px solid var(--bk-line); }
 .bk-feedback-item { background: var(--bk-surface); border: 1px solid var(--bk-line); border-radius: var(--bk-radius); padding: 10px 12px; margin-bottom: 8px; }
+
+/* ---- the club (BK7) ----------------------------------------------------------- */
+.bk-thread-row { display: grid; gap: 2px; padding: 10px 12px; }
+.bk-thread-row .bk-entry-title { font-size: 17px; }
+.bk-post { background: var(--bk-surface); border: 1px solid var(--bk-line); border-radius: var(--bk-radius); padding: 12px 14px; margin-bottom: 10px; }
+.bk-post--first { border-inline-start: 3px solid var(--bk-brass); }
+.bk-post--hidden { opacity: .7; border-style: dashed; }
+.bk-post-meta { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 13px; color: var(--bk-muted); margin-bottom: 6px; }
+.bk-post-body { white-space: pre-wrap; max-width: 680px; margin: 0; }
+.bk-post-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.bk-post-actions form { margin: 0; }
+.bk-review { padding: 10px 0; border-bottom: 1px solid var(--bk-line); max-width: 680px; }
+.bk-review:last-of-type { border-bottom: 0; }
+.bk-person-head { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; }
+.bk-chips form { margin: 0; }
+.bk-post-meta a, .bk-review a, .bk-person-head a { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; }

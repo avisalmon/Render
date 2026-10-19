@@ -1,0 +1,28 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "club.new" %} · {% t "brand" %}{% endblock %}
+{% block screen %}thread-new{% endblock %}
+{% block content %}
+<div class="bk-narrow">
+  <p><a href="{% url 'books:club' %}">{% t "club.title" %}</a></p>
+  <h1 class="bk-title">{% with key="tkind."|add:kind %}{% t key as kind_label %}{% t "club.new_title" kind=kind_label %}{% endwith %}</h1>
+  {% if entry %}<p class="bk-muted">{% t "club.about" title=entry.title %}</p>{% endif %}
+  {% if error %}<p class="bk-error" role="alert">{{ error }}</p>{% endif %}
+  <form method="post" class="bk-card bk-form" novalidate>
+    {% csrf_token %}
+    {% if entry %}<input type="hidden" name="entry" value="{{ entry.pk }}">{% endif %}
+    <fieldset class="bk-fieldset">
+      <legend class="bk-field">{% t "club.field_kind" %}</legend>
+      <div class="bk-radio-row">{% for k, _ in kinds %}<label class="bk-radio"><input type="radio" name="kind" value="{{ k }}" {% if k == kind %}checked{% endif %}> {% with key="tkind."|add:k %}{% t key %}{% endwith %}</label>{% endfor %}</div>
+    </fieldset>
+    <label class="bk-field">{% t "club.field_title" %} <input class="bk-input" name="title" maxlength="160" value="{{ title }}" required></label>
+    <label class="bk-field">{% t "club.field_body" %} <textarea class="bk-input" name="body" rows="10" maxlength="20000" required>{{ body }}</textarea><span class="bk-help">{% t "club.body_help" %}</span></label>
+    <label class="bk-field">{% t "club.field_where" %}
+      <select class="bk-select" name="circle">
+        <option value="">{% t "club.everyone" %}</option>
+        {% for c in my_circles %}<option value="{{ c.pk }}" {% if circle_id|stringformat:"s" == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "club.publish" %}</button>
+  </form>
+</div>
+{% endblock %}

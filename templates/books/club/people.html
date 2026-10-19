@@ -1,0 +1,27 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "people.title" %} · {% t "brand" %}{% endblock %}
+{% block screen %}people{% endblock %}
+{% block content %}
+<div class="bk-narrow">
+  <p><a href="{% url 'books:club' %}">{% t "club.title" %}</a></p>
+  <h1 class="bk-title">{% t "people.title" %}</h1>
+  <p class="bk-lead">{% t "people.lead" %}</p>
+  {% if not me_public %}<p class="bk-notice" role="status">{% t "people.me_hidden" %} <a href="{% url 'books:settings' %}">{% t "settings" %}</a></p>{% endif %}
+  <form method="get" class="bk-card bk-card--tight" role="search">
+    <div class="bk-row">
+      <label class="bk-field" style="flex: 1 1 200px">{% t "people.search" %} <input class="bk-input" type="search" name="q" value="{{ q }}"></label>
+      <button type="submit" class="bk-btn" style="align-self: flex-end">{% t "lib.filter" %}</button>
+    </div>
+  </form>
+  {% if people %}
+  <div class="bk-circle-grid">
+    {% for p in people %}
+    <a class="bk-circle-card" href="{% url 'books:person' p.pk %}">
+      <span class="bk-entry-title">{{ p.display_name }}</span>
+      {% if p.area_name %}<span class="bk-muted">{{ p.area_name }}</span>{% endif %}
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}<p class="bk-muted">{% t "people.none" %}</p>{% endif %}
+</div>
+{% endblock %}

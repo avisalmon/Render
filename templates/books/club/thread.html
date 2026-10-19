@@ -1,0 +1,63 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{{ thread.title }} · {% t "brand" %}{% endblock %}
+{% block screen %}thread{% endblock %}
+{% block content %}{% url 'books:thread_action' thread.pk as act %}
+<div class="bk-narrow">
+  <p><a href="{% url 'books:club' %}">{% t "club.title" %}</a>{% if thread.circle %} · <a href="{% url 'books:circle' thread.circle.pk %}">{{ thread.circle.name }}</a>{% endif %}</p>
+  <h1 class="bk-title">{{ thread.title }}</h1>
+  <p class="bk-muted" style="margin-top: 0">{% with key="tkind."|add:thread.kind %}{% t key %}{% endwith %} · {% t "club.by" name=thread.author.display_name %}{% if thread.entry %} · <a href="{% url 'books:catalog_entry' thread.entry.pk %}">{% t "club.about" title=thread.entry.title %}</a>{% endif %} · {% if thread.circle %}{% t "club.in_circle" name=thread.circle.name %}{% else %}{% t "club.everyone" %}{% endif %}{% if thread.is_locked %} · <b>{% t "club.locked" %}</b>{% endif %}{% if thread.is_pinned %} · {% t "club.pinned" %}{% endif %}</p>
+  {% if error %}<p class="bk-error" role="alert">{{ error }}</p>{% endif %}
+  {% if reported %}<p class="bk-notice bk-notice--ok" role="status">{% t "report.thanks" %}</p>{% endif %}
+
+  {% for p in posts %}
+  <article class="bk-post{% if forloop.first %} bk-post--first{% endif %}{% if p.status == "hidden" %} bk-post--hidden{% endif %}" id="post-{{ p.pk }}">
+    <div class="bk-post-meta">
+      <a href="{% url 'books:person' p.author.pk %}">{{ p.author.display_name }}</a>
+      <span>{{ p.created_at|date:"d.m.Y H:i" }}</span>
+      {% if p.edited_at %}<span>({% t "club.edited" %})</span>{% endif %}
+      {% if p.status == "hidden" %}<span class="bk-status-pill">{% t "club.hidden" %}</span>{% endif %}
+    </div>
+    {% if edit == p.pk|stringformat:"s" and p.author_id == request.books_profile.pk %}
+    <form method="post" action="{{ act }}" class="bk-form">{% csrf_token %}<input type="hidden" name="action" value="edit"><input type="hidden" name="post" value="{{ p.pk }}">
+      <label class="bk-field"><span class="bk-visually-hidden">{% t "club.field_body" %}</span><textarea class="bk-input" name="body" rows="8" maxlength="20000" required>{{ p.body }}</textarea></label>
+      <button type="submit" class="bk-btn bk-btn--primary bk-btn--small">{% t "club.save" %}</button>
+    </form>
+    {% else %}
+    <p class="bk-post-body">{{ p.body }}</p>
+    {% endif %}
+    <div class="bk-post-actions">
+      {% if p.author_id == request.books_profile.pk and p.status != "hidden" %}
+        <a class="bk-btn bk-btn--small bk-btn--quiet" href="?edit={{ p.pk }}#post-{{ p.pk }}">{% t "club.edit" %}</a>
+        <form method="post" action="{{ act }}">{% csrf_token %}<input type="hidden" name="action" value="delete"><input type="hidden" name="post" value="{{ p.pk }}"><button type="submit" class="bk-btn bk-btn--small bk-btn--quiet" data-confirm title="{% if forloop.first %}{% t "club.delete_first_note" %}{% endif %}">{% t "club.delete" %}</button></form>
+      {% endif %}
+      {% if mod and p.author_id != request.books_profile.pk %}
+        {% if p.status == "hidden" %}<form method="post" action="{{ act }}">{% csrf_token %}<input type="hidden" name="action" value="unhide"><input type="hidden" name="post" value="{{ p.pk }}"><button type="submit" class="bk-btn bk-btn--small">{% t "club.unhide" %}</button></form>
+        {% else %}<form method="post" action="{{ act }}">{% csrf_token %}<input type="hidden" name="action" value="hide"><input type="hidden" name="post" value="{{ p.pk }}"><button type="submit" class="bk-btn bk-btn--small bk-btn--quiet">{% t "club.hide" %}</button></form>{% endif %}
+      {% endif %}
+      {% if p.author_id != request.books_profile.pk %}
+        <form method="post" action="{% url 'books:report' %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><input type="hidden" name="post" value="{{ p.pk }}"><input type="hidden" name="profile" value="{{ p.author.pk }}"><input type="hidden" name="reason" value="post"><button type="submit" class="bk-btn bk-btn--small bk-btn--quiet">{% t "report.title" %}</button></form>
+      {% endif %}
+    </div>
+  </article>
+  {% endfor %}
+
+  {% if thread.is_locked and not mod %}
+    <p class="bk-notice" role="status">{% t "club.reply_locked" %}</p>
+  {% else %}
+  <form method="post" action="{{ act }}" class="bk-card bk-form" id="reply">
+    {% csrf_token %}<input type="hidden" name="action" value="reply">
+    <label class="bk-field">{% t "club.reply" %} <textarea class="bk-input" name="body" rows="4" maxlength="20000" required></textarea><span class="bk-help">{% t "club.body_help" %}</span></label>
+    <button type="submit" class="bk-btn bk-btn--primary">{% t "club.reply_send" %}</button>
+  </form>
+  {% endif %}
+
+  {% if mod %}
+  <div class="bk-row" style="margin-top: 12px">
+    {% if thread.is_locked %}<form method="post" action="{{ act }}">{% csrf_token %}<input type="hidden" name="action" value="unlock"><button type="submit" class="bk-btn bk-btn--small">{% t "club.unlock" %}</button></form>
+    {% else %}<form method="post" action="{{ act }}">{% csrf_token %}<input type="hidden" name="action" value="lock"><button type="submit" class="bk-btn bk-btn--small">{% t "club.lock" %}</button></form>{% endif %}
+    {% if thread.is_pinned %}<form method="post" action="{{ act }}">{% csrf_token %}<input type="hidden" name="action" value="unpin"><button type="submit" class="bk-btn bk-btn--small">{% t "club.unpin" %}</button></form>
+    {% else %}<form method="post" action="{{ act }}">{% csrf_token %}<input type="hidden" name="action" value="pin"><button type="submit" class="bk-btn bk-btn--small">{% t "club.pin" %}</button></form>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

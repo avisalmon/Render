@@ -114,7 +114,17 @@ def entry(request, pk):
     editions = obj.editions.filter(merged_into__isnull=True)
     siblings = obj.parent.editions.exclude(pk=obj.pk).filter(merged_into__isnull=True) if obj.parent_id else []
     can_edit = request.user.is_staff or (obj.created_by_id == request.books_profile.pk and not obj.is_verified)
+    from . import community
+    from .models import ReadingLog, Review, Thread
+
+    me = request.books_profile
     return render(request, "books/catalog/entry.html", {
+        "reviews": community.reviews_for(obj, me), "rating": community.rating_summary(obj),
+        "my_review": Review.objects.filter(profile=me, entry=obj).first(),
+        "my_reading": ReadingLog.objects.filter(profile=me, entry=obj).first(),
+        "reading_statuses": ReadingLog.STATUSES, "ratings": range(1, community.MAX_RATING + 1),
+        "threads": community.visible_threads(me, entry=obj)[:20], "thread_kinds": Thread.KINDS,
+        "club_error": community.CommunityError and (request.GET.get("error") or ""),
         "entry": obj, "detail": detail, "form": form, "sent": sent, "editions": list(editions) + list(siblings),
         "can_edit": can_edit, "lang": _lang(request),
         "my_copy": obj.copies.filter(owner=request.books_profile, status__in=("with_owner", "on_loan_out")).first(),
@@ -176,7 +186,8 @@ def curate(request):
     _curator(request)
     unverified = catalog.live().filter(is_verified=False).prefetch_related("creators").order_by("-created_at")[:50]
     corrections = EntryCorrection.objects.filter(status=EntryCorrection.OPEN).select_related("entry", "profile")[:50]
-    reports = Report.objects.filter(status=Report.OPEN).select_related("reporter", "profile", "copy__entry")[:50]
+    reports = Report.objects.filter(status=Report.OPEN).select_related(
+        "reporter", "profile", "copy__entry", "post__thread", "review__entry")[:50]
     disputed = Deal.objects.filter(status=Deal.DISPUTED).select_related("copy__entry", "owner", "requester")[:50]
     return render(request, "books/catalog/curate.html", {
         "unverified": unverified, "corrections": corrections, "suspects": catalog.duplicate_suspects(limit=30),
@@ -202,6 +213,16 @@ def curate_action(request):
         (catalog.accept_correction if action == "accept" else catalog.decline_correction)(correction, me)
     elif action == "report_handled":
         Report.objects.filter(pk=request.POST.get("report") or 0).update(status=Report.HANDLED, handled_by=me)
+    elif action in ("hide_post", "unhide_post"):
+        from . import community
+        from .models import Post
+
+        community.hide_post(me, get_object_or_404(Post, pk=request.POST.get("post")), action == "hide_post")
+    elif action in ("hide_review", "unhide_review"):
+        from . import community
+        from .models import Review
+
+        community.hide_review(me, get_object_or_404(Review, pk=request.POST.get("review")), action == "hide_review")
     else:
         raise Http404
     return redirect(safe_next(request, reverse("books:curate")))

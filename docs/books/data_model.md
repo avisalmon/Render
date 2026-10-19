@@ -454,3 +454,12 @@ new: `profile`, `path` (the page it was written on), `body`, `status` open /
 read, `created_at`; it is the in-app feedback of spec BK6 and reaches only
 the pilot desk. `MeetingPlace.circle` (nullable) makes a place a circle's
 own; empty means everyone's (migration 0008).
+
+**BK7 additions (2026-10-19, for Avi's ack).** `Thread`, `Post`, `Review`
+and `ReadingLog` are as approved, plus: `Thread.is_pinned` and
+`last_post_at` (the list's order); `Post.hidden_by` and `edited_at`;
+`Review.status` visible / hidden and `updated_at`; `Notification.thread`
+(a new comment on your thread); `Report.post` and `Report.review` (the
+Phase 3 columns of the approved Report); `Profile.public_library`,
+`public_reading`, `public_reviews`, each an opt-in on its own under the
+profile switch (spec 12.9). Migration 0009.

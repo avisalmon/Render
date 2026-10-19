@@ -8,8 +8,12 @@ from .models import (
     Job,
     MeetingPlace,
     ModelCall,
+    Post,
     Profile,
+    ReadingLog,
     Report,
+    Review,
+    Thread,
 )
 
 
@@ -74,3 +78,32 @@ class CircleAdmin(admin.ModelAdmin):
 class FeedbackAdmin(admin.ModelAdmin):
     list_display = ["created_at", "profile", "status", "path"]
     list_filter = ["status"]
+
+
+class PostInline(admin.TabularInline):
+    model = Post
+    extra = 0
+    raw_id_fields = ["author", "hidden_by"]
+
+
+@admin.register(Thread)
+class ThreadAdmin(admin.ModelAdmin):
+    list_display = ["title", "kind", "circle", "author", "is_locked", "is_pinned", "last_post_at"]
+    list_filter = ["kind", "is_locked", "is_pinned"]
+    search_fields = ["title"]
+    raw_id_fields = ["author", "entry", "circle"]
+    inlines = [PostInline]
+
+
+@admin.register(Review)
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = ["entry", "profile", "rating", "has_spoilers", "status", "created_at"]
+    list_filter = ["status", "rating"]
+    raw_id_fields = ["profile", "entry"]
+
+
+@admin.register(ReadingLog)
+class ReadingLogAdmin(admin.ModelAdmin):
+    list_display = ["profile", "entry", "status", "updated_at"]
+    list_filter = ["status"]
+    raw_id_fields = ["profile", "entry"]

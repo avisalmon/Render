@@ -45,6 +45,45 @@
   {% include "books/catalog/_entry_list.html" with entries=editions %}
   {% endif %}
 
+  <h2 class="bk-h2" id="reading">{% t "reading.title" %}</h2>
+  {% if club_error %}<p class="bk-error" role="alert">{% with key=club_error %}{% t key %}{% endwith %}</p>{% endif %}
+  <div class="bk-chips">
+    {% for k, _ in reading_statuses %}
+    <form method="post" action="{% url 'books:reading' entry.pk %}">{% csrf_token %}<input type="hidden" name="status" value="{% if my_reading and my_reading.status == k %}none{% else %}{{ k }}{% endif %}">
+      <button type="submit" class="bk-chip" aria-pressed="{% if my_reading and my_reading.status == k %}true{% else %}false{% endif %}">{% with key="reading."|add:k %}{% t key %}{% endwith %}</button></form>
+    {% endfor %}
+  </div>
+  <p class="bk-help">{% t "reading.private_note" %}</p>
+
+  <h2 class="bk-h2" id="reviews">{% t "review.title" %}{% if rating.count %} <span class="bk-muted">· {% t "review.summary" avg=rating.average n=rating.count %}</span>{% endif %}</h2>
+  <form method="post" action="{% url 'books:review' entry.pk %}" class="bk-card bk-form" style="max-width: 440px">
+    {% csrf_token %}
+    <fieldset class="bk-fieldset">
+      <legend class="bk-field">{% t "review.rating" %}</legend>
+      <div class="bk-radio-row">{% for r in ratings %}<label class="bk-radio"><input type="radio" name="rating" value="{{ r }}" {% if my_review and my_review.rating == r %}checked{% endif %} required> {{ r }}</label>{% endfor %}</div>
+    </fieldset>
+    <label class="bk-field">{% t "review.body" %} <textarea class="bk-input" name="body" rows="3" maxlength="4000">{% if my_review %}{{ my_review.body }}{% endif %}</textarea></label>
+    <label class="bk-check"><input type="checkbox" name="has_spoilers" value="1" {% if my_review and my_review.has_spoilers %}checked{% endif %}> <span>{% t "review.spoilers" %}</span></label>
+    <div class="bk-row">
+      <button type="submit" class="bk-btn bk-btn--primary">{% if my_review %}{% t "review.update" %}{% else %}{% t "review.send" %}{% endif %}</button>
+      {% if my_review %}<button type="submit" class="bk-btn bk-btn--quiet" name="action" value="delete" data-confirm>{% t "review.delete" %}</button>{% endif %}
+    </div>
+  </form>
+  {% for rv in reviews %}
+  <article class="bk-review">
+    <p class="bk-kicker" style="margin: 0 0 4px"><a href="{% url 'books:person' rv.profile.pk %}">{{ rv.profile.display_name }}</a> · {% t "review.stars" n=rv.rating %} · {{ rv.created_at|date:"d.m.Y" }}{% if rv.has_spoilers %} · <b>{% t "review.has_spoilers" %}</b>{% endif %}</p>
+    {% if rv.body %}{% if rv.has_spoilers %}<details><summary>{% t "review.show_spoilers" %}</summary><p style="margin: 6px 0 0">{{ rv.body|linebreaksbr }}</p></details>{% else %}<p style="margin: 0">{{ rv.body|linebreaksbr }}</p>{% endif %}{% endif %}
+    {% if request.user.is_staff and rv.profile_id != request.books_profile.pk %}<form method="post" action="{% url 'books:review' entry.pk %}" style="margin-top: 4px">{% csrf_token %}<input type="hidden" name="action" value="hide"><input type="hidden" name="review" value="{{ rv.pk }}"><button type="submit" class="bk-btn bk-btn--small bk-btn--quiet">{% t "club.hide" %}</button></form>{% endif %}
+  </article>
+  {% empty %}<p class="bk-muted">{% t "review.none" %}</p>{% endfor %}
+
+  <h2 class="bk-h2" id="threads">{% t "club.about_book" %}</h2>
+  {% if threads %}{% include "books/club/_thread_rows.html" %}{% else %}<p class="bk-muted">{% t "club.none_about" %}</p>{% endif %}
+  <div class="bk-row" style="margin-top: 8px">
+    <a class="bk-btn bk-btn--small" href="{% url 'books:thread_new' %}?entry={{ entry.pk }}&kind=discussion">{% t "club.start_discussion" %}</a>
+    <a class="bk-btn bk-btn--small" href="{% url 'books:thread_new' %}?entry={{ entry.pk }}&kind=report">{% t "club.write_report" %}</a>
+  </div>
+
   <h2 class="bk-h2">{% t "correct.title" %}</h2>
   <p class="bk-lead">{% t "correct.lead" %}</p>
   {% if sent %}<p class="bk-notice bk-notice--ok" role="status">{% t "correct.sent" %}</p>{% endif %}

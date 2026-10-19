@@ -1,0 +1,30 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "club.title" %} · {% t "brand" %}{% endblock %}
+{% block screen %}club{% endblock %}
+{% block content %}
+<div class="bk-wide">
+  <h1 class="bk-title">{% t "club.title" %}</h1>
+  <p class="bk-lead">{% t "club.lead" %}</p>
+  <div class="bk-row" style="margin-bottom: 12px">
+    <a class="bk-btn bk-btn--small bk-btn--primary" href="{% url 'books:thread_new' %}">{% t "club.new" %}</a>
+    <a class="bk-btn bk-btn--small" href="{% url 'books:circles' %}">{% t "circles.title" %}</a>
+    <a class="bk-btn bk-btn--small" href="{% url 'books:people' %}">{% t "club.people" n=people_count %}</a>
+    <a class="bk-btn bk-btn--small" href="{% url 'books:my_reading' %}">{% t "club.my_reading" %}</a>
+  </div>
+
+  <form method="get" class="bk-card bk-card--tight bk-filter" role="search">
+    <label class="bk-field">{% t "club.search" %} <input class="bk-input" type="search" name="q" value="{{ q }}"></label>
+    <label class="bk-field">{% t "club.field_kind" %}
+      <select class="bk-select" name="kind"><option value="">{% t "club.kind_all" %}</option>{% for k, _ in kinds %}<option value="{{ k }}" {% if k == kind %}selected{% endif %}>{% with key="tkind."|add:k %}{% t key %}{% endwith %}</option>{% endfor %}</select>
+    </label>
+    {% if my_circles %}
+    <label class="bk-field">{% t "club.where" %}
+      <select class="bk-select" name="circle"><option value="">{% t "club.kind_all" %}</option>{% for c in my_circles %}<option value="{{ c.pk }}" {% if circle and c.pk == circle.pk %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select>
+    </label>
+    {% endif %}
+    <button type="submit" class="bk-btn">{% t "lib.filter" %}</button>
+  </form>
+
+  {% if threads %}{% include "books/club/_thread_rows.html" %}{% else %}<p class="bk-lead">{% t "club.none" %}</p>{% endif %}
+</div>
+{% endblock %}

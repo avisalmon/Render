@@ -1,0 +1,11 @@
+{% load books_tags %}<ul class="bk-entry-list">
+  {% for th in threads %}
+  <li class="bk-entry-row">
+    <a class="bk-entry-link bk-thread-row" href="{% url 'books:thread' th.pk %}">
+      <span class="bk-entry-title">{{ th.title }}</span>
+      <span class="bk-muted">{% with key="tkind."|add:th.kind %}{% t key %}{% endwith %} · {% t "club.by" name=th.author.display_name %}{% if th.entry %} · {% t "club.about" title=th.entry.title %}{% endif %}</span>
+      <span class="bk-kicker">{% if th.circle %}{% t "club.in_circle" name=th.circle.name %}{% else %}{% t "club.everyone" %}{% endif %} · {{ th.last_post_at|date:"d.m.Y" }}{% if th.is_pinned %} · {% t "club.pinned" %}{% endif %}{% if th.is_locked %} · {% t "club.locked" %}{% endif %}</span>
+    </a>
+  </li>
+  {% endfor %}
+</ul>

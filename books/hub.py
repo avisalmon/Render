@@ -151,8 +151,8 @@ def offered_copies(viewer, kind=None, q=None, tag=None, language=None, limit=300
 
 # ---- notifications ---------------------------------------------------------------------
 
-def notify(profile, kind, deal=None, entry=None, copy=None):
-    return Notification.objects.create(profile=profile, kind=kind, deal=deal, entry=entry, copy=copy)
+def notify(profile, kind, deal=None, entry=None, copy=None, thread=None):
+    return Notification.objects.create(profile=profile, kind=kind, deal=deal, entry=entry, copy=copy, thread=thread)
 
 
 def unread_count(profile):

@@ -50,6 +50,10 @@ class Profile(models.Model):
     shelf_view = models.CharField(max_length=10, choices=SHELF_VIEWS, default="lamp")
     # Shown to the other side of a deal only if this person chooses to (BK5).
     phone = models.CharField(max_length=30, blank=True)
+    # What a public profile shows, each opt-in on its own (BK7, spec 12.9).
+    public_library = models.BooleanField(default=False)
+    public_reading = models.BooleanField(default=False)
+    public_reviews = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -629,6 +633,7 @@ class Notification(models.Model):
     entry = models.ForeignKey(CatalogEntry, on_delete=models.CASCADE, null=True, blank=True,
                               related_name="notifications")
     copy = models.ForeignKey(Copy, on_delete=models.CASCADE, null=True, blank=True, related_name="notifications")
+    thread = models.ForeignKey("Thread", on_delete=models.CASCADE, null=True, blank=True, related_name="notifications")
     read_at = models.DateTimeField(null=True, blank=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -646,6 +651,8 @@ class Report(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.SET_NULL, null=True, blank=True,
                                 related_name="reports_about")
     deal = models.ForeignKey(Deal, on_delete=models.SET_NULL, null=True, blank=True, related_name="reports")
+    post = models.ForeignKey("Post", on_delete=models.SET_NULL, null=True, blank=True, related_name="reports")
+    review = models.ForeignKey("Review", on_delete=models.SET_NULL, null=True, blank=True, related_name="reports")
     reason = models.CharField(max_length=500)
     status = models.CharField(max_length=10, default=OPEN, db_index=True)
     handled_by = models.ForeignKey(Profile, on_delete=models.SET_NULL, null=True, blank=True,
@@ -716,3 +723,90 @@ class Feedback(models.Model):
     class Meta:
         ordering = ["-created_at"]
         verbose_name_plural = "feedback"
+
+
+# ---- community (BK7) ----------------------------------------------------------------------------
+
+class Thread(models.Model):
+    """A discussion, a blog piece or a book report. Forums and blogs are one
+    structure with a `kind` (data model section 6). `circle` empty means
+    open to everyone in Books; set, it is that circle's own and only its
+    members read it."""
+
+    DISCUSSION, BLOG, REPORT = "discussion", "blog", "report"
+    KINDS = [(DISCUSSION, "discussion"), (BLOG, "blog"), (REPORT, "book report")]
+
+    kind = models.CharField(max_length=10, choices=KINDS, default=DISCUSSION, db_index=True)
+    circle = models.ForeignKey(Circle, on_delete=models.CASCADE, null=True, blank=True, related_name="threads")
+    author = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="threads")
+    title = models.CharField(max_length=160)
+    entry = models.ForeignKey(CatalogEntry, on_delete=models.SET_NULL, null=True, blank=True, related_name="threads")
+    is_locked = models.BooleanField(default=False)
+    is_pinned = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_post_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-is_pinned", "-last_post_at"]
+
+    def __str__(self):
+        return self.title
+
+
+class Post(models.Model):
+    """The first post of a blog or report thread is the piece itself; the
+    rest are comments. Hidden is reversible (a moderator); deleted is the
+    author's own choice and is final."""
+
+    VISIBLE, HIDDEN = "visible", "hidden"
+    STATUSES = [(VISIBLE, "visible"), (HIDDEN, "hidden")]
+
+    thread = models.ForeignKey(Thread, on_delete=models.CASCADE, related_name="posts")
+    author = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="posts")
+    body = models.TextField(max_length=20000)
+    status = models.CharField(max_length=8, choices=STATUSES, default=VISIBLE, db_index=True)
+    hidden_by = models.ForeignKey(Profile, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    created_at = models.DateTimeField(auto_now_add=True)
+    edited_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+
+class Review(models.Model):
+    """A short opinion of a book, one per person per book. Longer analysis
+    is a `report` thread."""
+
+    VISIBLE, HIDDEN = "visible", "hidden"
+
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="reviews")
+    entry = models.ForeignKey(CatalogEntry, on_delete=models.CASCADE, related_name="reviews")
+    rating = models.PositiveSmallIntegerField()
+    body = models.TextField(max_length=4000, blank=True)
+    has_spoilers = models.BooleanField(default=False)
+    status = models.CharField(max_length=8, default=VISIBLE, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [models.UniqueConstraint(fields=["profile", "entry"], name="books_review_one_per_book")]
+
+
+class ReadingLog(models.Model):
+    """What a person says they read, on trust, private by default (spec 12.9)."""
+
+    WANT, READING, READ, DNF = "want", "reading", "read", "dnf"
+    STATUSES = [(WANT, "want to read"), (READING, "reading"), (READ, "read"), (DNF, "did not finish")]
+
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="reading")
+    entry = models.ForeignKey(CatalogEntry, on_delete=models.CASCADE, related_name="reading")
+    status = models.CharField(max_length=8, choices=STATUSES, db_index=True)
+    started_on = models.DateField(null=True, blank=True)
+    finished_on = models.DateField(null=True, blank=True)
+    note = models.CharField(max_length=500, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at"]
+        constraints = [models.UniqueConstraint(fields=["profile", "entry"], name="books_reading_one_per_book")]

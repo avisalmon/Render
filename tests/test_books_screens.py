@@ -200,6 +200,21 @@ def build_world():
     circles.add_place(sp, club, "בית הקפה של השכונה", "הדר", "cafe", is_partner=True)
     circles.create(sp, "שכונת נווה שאנן", "neighbourhood", "נווה שאנן", is_private=False)
     Feedback.objects.create(profile=rp, path="/books/near/", body="הכפתור לבקשה קטן מדי בטלפון")
+
+    # The club (BK7): an open discussion about a book with comments (one hidden),
+    # a book report inside the club, a review, a reading log, a public profile.
+    from books import community
+    th = community.start_thread(sp, "discussion", "מי קרא את מיכאל שלי?", "ומה חשבתם על הסוף?", entry=a)
+    community.reply(rp, th, "קראתי לפני שנים. הסוף נשאר איתי.")
+    hidden = community.reply(rp, th, "תגובה שהוסתרה")
+    community.hide_post(Profile.objects.get(user=staff), hidden)
+    community.start_thread(rp, "report", "דוח קריאה: ג׳יין אייר", "רשימה ארוכה על הספר.\n\nפסקה שנייה.",
+                           circle=club, entry=c)
+    community.set_review(sp, a, 4, "יפה ועצוב.")
+    community.set_review(rp, a, 5, "הסוף מפתיע.", has_spoilers=True)
+    community.log_reading(rp, a, "read")
+    community.log_reading(rp, c, "reading")
+    Profile.objects.filter(pk=sp.pk).update(profile_public=True, public_library=True, public_reviews=True)
     return {"reader": reader, "staff": staff, "fresh": fresh}
 
 
@@ -245,6 +260,15 @@ SCREENS = [
     ("circle-open-outside", lambda: f"/books/circles/{__import__('books.models', fromlist=['Circle']).Circle.objects.get(is_private=False).pk}/", "reader", "circle"),
     ("circle-join", "/books/join/HADAR247/", "staff", "circle-join"),
     ("pilot", "/books/pilot/", "staff", "pilot"),
+    ("club", "/books/club/", "reader", "club"),
+    ("club-empty", "/books/club/?q=zzzz", "reader", "club"),
+    ("thread-new", "/books/club/new/?kind=report&entry=1001", "reader", "thread-new"),
+    ("thread-author", lambda: f"/books/club/{__import__('books.models', fromlist=['Thread']).Thread.objects.get(kind='discussion').pk}/", "shelver", "thread"),
+    ("thread-mod", lambda: f"/books/club/{__import__('books.models', fromlist=['Thread']).Thread.objects.get(kind='discussion').pk}/", "staff", "thread"),
+    ("my-reading", "/books/reading/", "reader", "my-reading"),
+    ("people", "/books/people/", "reader", "people"),
+    ("person", lambda: f"/books/people/{__import__('books.models', fromlist=['Profile']).Profile.objects.get(user__username='shelver').pk}/", "reader", "person"),
+    ("person-me", lambda: f"/books/people/{__import__('books.models', fromlist=['Profile']).Profile.objects.get(user__username='reader').pk}/", "reader", "person"),
 ]
 
 

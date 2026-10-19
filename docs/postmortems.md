@@ -17,6 +17,22 @@ Newest first.
 
 ---
 
+## PM-17 · 2026-10-19 · BK7 sprint end: nothing new, one repeat
+
+**What happened.** The community epic shipped with its tests, screen
+contract and a read of the screenshots against the seeded world (all the
+numbers matched). One slip during the build: a Python patch fed through a
+shell heredoc turned a `\n` inside a string into a real newline and broke a
+test file until the next run. That is mistake 22 (do not push code through
+the shell), already written down and already in FullStackBKM; the fix was
+to write the patch to a file, as the rule says.
+
+**Rule.** No new rule. Reinforced: patch scripts are files in the
+scratchpad, run by path, never heredocs, whatever their size.
+
+Here: docs/building_an_app.md mistake 22 (unchanged)
+BKM: deferred - a repeat of mistake 22, which FullStackBKM already carries
+
 ## PM-16 · 2026-10-19 · BK6 sprint end: two wrong numbers only a person saw
 
 **What happened.** The circle page showed "1 members" for a circle of two,
