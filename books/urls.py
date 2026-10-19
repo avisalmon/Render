@@ -1,6 +1,6 @@
 from django.urls import include, path
 
-from . import auth_views, catalog_views, internal, scan_views, views
+from . import auth_views, catalog_views, internal, library_views, scan_views, views
 from .api import router
 
 app_name = "books"
@@ -22,6 +22,21 @@ urlpatterns = [
     path("scan/<int:pk>/accept-confident/", scan_views.accept_confident, name="scan_accept_confident"),
     path("scan/<int:pk>/add/", scan_views.add_missed, name="scan_add"),
     path("shelf/reorder/", scan_views.reorder_shelf, name="shelf_reorder"),
+    # My library (BK4).
+    path("library/", library_views.library, name="library"),
+    path("library/bulk/", library_views.bulk, name="library_bulk"),
+    path("library/add/", library_views.add, name="library_add"),
+    path("library/export.csv", library_views.export_csv, name="library_export"),
+    path("library/scans/", library_views.scans, name="scans"),
+    path("have/<int:entry_pk>/", library_views.have, name="have"),
+    path("copy/<int:pk>/", library_views.copy_page, name="copy"),
+    path("copy/<int:pk>/delete/", library_views.copy_delete, name="copy_delete"),
+    path("copy/<int:pk>/photo/", library_views.photo_add, name="copy_photo_add"),
+    path("copy/<int:pk>/photo/<int:photo_pk>.jpg", library_views.photo_file, name="copy_photo"),
+    path("copy/<int:pk>/photo/<int:photo_pk>/delete/", library_views.photo_delete, name="copy_photo_delete"),
+    path("wishlist/", library_views.wishlist, name="wishlist"),
+    path("wishlist/add/<int:entry_pk>/", library_views.wish_entry, name="wish_entry"),
+    path("wishlist/<int:pk>/delete/", library_views.wish_delete, name="wish_delete"),
     # The shared catalogue (BK2).
     path("catalog/", catalog_views.search, name="catalog"),
     path("catalog/new/", catalog_views.new_entry, name="catalog_new"),

@@ -15,10 +15,16 @@
         {% for c in entry.creators.all %}<a href="{% url 'books:catalog' %}?q={{ c.name|urlencode }}">{{ c.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
       </p>
       <p class="bk-muted" style="margin: 0">
-        {% if detail and detail.publisher %}{{ detail.publisher }}{% endif %}{% if entry.year %} · {{ entry.year }}{% endif %}{% if entry.language %} · {{ entry.language }}{% endif %}{% if detail and detail.pages %} · {{ detail.pages }}{% endif %}
+        {% if detail and detail.publisher %}{{ detail.publisher }}{% endif %}{% if entry.year %} · {{ entry.year }}{% endif %}{% if entry.language %} · {% langname entry.language %}{% endif %}{% if detail and detail.pages %} · {{ detail.pages }}{% endif %}
       </p>
       <p class="bk-kicker" style="margin: 8px 0 0">{% if entry.is_verified %}{% t "catalog.verified" %}{% else %}{% t "catalog.unverified" %}{% endif %} · {% t "catalog.source" %}: {% if entry.source == "manual" or not entry.source %}{% t "catalog.source_manual" %}{% else %}{{ entry.source }}{% endif %}</p>
-      {% if can_edit %}<div class="bk-row" style="margin-top: 10px"><a class="bk-btn bk-btn--small" href="{% url 'books:catalog_edit' entry.pk %}">{% t "catalog.edit" %}</a></div>{% endif %}
+      <div class="bk-row" style="margin-top: 10px">
+        {% if my_copy %}<a class="bk-btn bk-btn--small bk-btn--primary" href="{% url 'books:copy' my_copy.pk %}">{% t "add.already" %}</a>
+        {% else %}<form method="post" action="{% url 'books:have' entry.pk %}">{% csrf_token %}<button type="submit" class="bk-btn bk-btn--small bk-btn--primary">{% t "add.have" %}</button></form>{% endif %}
+        {% if wished %}<span class="bk-chip-note">{% t "wish.wanted" %}</span>
+        {% elif not my_copy %}<form method="post" action="{% url 'books:wish_entry' entry.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button type="submit" class="bk-btn bk-btn--small">{% t "wish.want" %}</button></form>{% endif %}
+        {% if can_edit %}<a class="bk-btn bk-btn--small" href="{% url 'books:catalog_edit' entry.pk %}">{% t "catalog.edit" %}</a>{% endif %}
+      </div>
     </div>
   </div>
 

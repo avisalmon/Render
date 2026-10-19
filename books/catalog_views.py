@@ -116,6 +116,8 @@ def entry(request, pk):
     return render(request, "books/catalog/entry.html", {
         "entry": obj, "detail": detail, "form": form, "sent": sent, "editions": list(editions) + list(siblings),
         "can_edit": can_edit, "lang": _lang(request),
+        "my_copy": obj.copies.filter(owner=request.books_profile, status__in=("with_owner", "on_loan_out")).first(),
+        "wished": obj.wishes.filter(profile=request.books_profile).exists(),
     })
 
 

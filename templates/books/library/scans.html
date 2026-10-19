@@ -1,0 +1,22 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "scans.title" %} · {% t "brand" %}{% endblock %}
+{% block screen %}scans{% endblock %}
+{% block content %}
+<div class="bk-narrow">
+  <p><a href="{% url 'books:library' %}">{% t "copy.back" %}</a></p>
+  <h1 class="bk-title">{% t "scans.title" %}</h1>
+  {% if scans %}
+  <ul class="bk-entry-list">
+    {% for s in scans %}
+    <li class="bk-entry-row"><a class="bk-entry-link" href="{% url 'books:scan' s.pk %}">
+      <span class="bk-entry-text">
+        <span class="bk-entry-title">{% if s.shelf_label %}{{ s.shelf_label }}{% else %}{{ s.created_at|date:"j.n.Y" }}{% endif %}</span>
+        <span class="bk-muted">{{ s.created_at|date:"j.n.Y" }} · {% t "scan.progress" done=s.books_accepted total=s.books_found %} · {% with key="scan.status_"|add:s.status %}{% t key %}{% endwith %}</span>
+      </span>
+    </a></li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="bk-lead">{% t "scans.empty" %}</p>{% endif %}
+  <div class="bk-stack"><a class="bk-btn bk-btn--primary" href="{% url 'books:scan_new' %}">{% t "home.scan" %}</a></div>
+</div>
+{% endblock %}

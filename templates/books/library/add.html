@@ -1,0 +1,69 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "add.title" %} · {% t "brand" %}{% endblock %}
+{% block screen %}library-add{% endblock %}
+{% block content %}
+<div class="bk-narrow">
+  <p><a href="{% url 'books:library' %}">{% t "copy.back" %}</a></p>
+  <h1 class="bk-title">{% t "add.title" %}</h1>
+  <p class="bk-lead">{% t "add.lead" %}</p>
+  {% if request.GET.cap %}<p class="bk-notice bk-notice--danger" role="alert">{% t "add.cap" %}</p>{% endif %}
+  <form method="get" class="bk-row" role="search" data-add-form>
+    <label class="bk-visually-hidden" for="add-q">{% t "search" %}</label>
+    <input id="add-q" class="bk-input" style="flex: 1 1 220px" type="search" name="q" value="{{ q }}" placeholder="{% t "catalog.placeholder" %}" autocomplete="off" inputmode="search">
+    <button type="submit" class="bk-btn bk-btn--primary">{% t "search" %}</button>
+  </form>
+  <div class="bk-stack" data-barcode hidden>
+    <button type="button" class="bk-btn" data-barcode-start>{% t "add.scan_barcode" %}</button>
+    <video class="bk-barcode-video" data-barcode-video playsinline muted hidden></video>
+  </div>
+
+  {% if q %}
+    {% if results %}
+    <ul class="bk-entry-list" style="margin-top: 16px">
+      {% for e in results %}
+      <li class="bk-entry-row bk-entry-row--actions">
+        <a class="bk-entry-link" href="{% url 'books:catalog_entry' e.pk %}">
+          <span class="bk-entry-cover" aria-hidden="true">{% if e.cover %}<img src="{{ e.cover.url }}" alt="">{% endif %}</span>
+          <span class="bk-entry-text"><span class="bk-entry-title">{{ e.title }}</span><span class="bk-muted">{{ e.creator_names }}{% if e.year %} · {{ e.year }}{% endif %}</span></span>
+        </a>
+        {% if e.pk in held %}<span class="bk-chip-note">{% t "add.already" %}</span>
+        {% else %}<form method="post" action="{% url 'books:have' e.pk %}">{% csrf_token %}<button type="submit" class="bk-btn bk-btn--small bk-btn--primary">{% t "add.have" %}</button></form>{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="bk-lead" style="margin-top: 16px">{% t "add.not_found" %}</p>
+    {% endif %}
+    <div class="bk-stack"><a class="bk-btn" href="{% url 'books:catalog_new' %}?q={{ q|urlencode }}">{% t "catalog.add_by_hand" %}</a></div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  // The phone's own barcode reader, where the browser has one (Chrome on
+  // Android does; Safari does not yet). Without it the field is enough.
+  if (!('BarcodeDetector' in window) || !navigator.mediaDevices) return;
+  var box = document.querySelector('[data-barcode]');
+  var video = document.querySelector('[data-barcode-video]');
+  var input = document.getElementById('add-q');
+  box.hidden = false;
+  document.querySelector('[data-barcode-start]').addEventListener('click', function () {
+    var detector = new BarcodeDetector({formats: ['ean_13', 'ean_8', 'upc_a']});
+    navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}}).then(function (stream) {
+      video.srcObject = stream; video.hidden = false; video.play();
+      var look = function () {
+        detector.detect(video).then(function (codes) {
+          if (codes.length) {
+            stream.getTracks().forEach(function (tr) { tr.stop(); });
+            input.value = codes[0].rawValue;
+            input.form.submit();
+          } else { requestAnimationFrame(look); }
+        }).catch(function () { requestAnimationFrame(look); });
+      };
+      look();
+    }).catch(function () { box.hidden = true; });
+  });
+})();
+</script>
+{% endblock %}

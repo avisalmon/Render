@@ -21,6 +21,11 @@
   </div>
   <aside class="bk-aside">
     {% if open_scan %}<a class="bk-notice" href="{% url 'books:scan' open_scan.pk %}">{% t "home.continue_scan" %}</a>{% endif %}
+    {% if books_json and books_json != "[]" %}<a class="bk-btn bk-btn--wide" href="{% url 'books:library' %}">{% t "lib.all_books" %}</a>{% endif %}
+    <div class="bk-row">
+      <a class="bk-btn bk-btn--quiet" href="{% url 'books:library_add' %}">{% t "lib.add" %}</a>
+      <a class="bk-btn bk-btn--quiet" href="{% url 'books:wishlist' %}">{% t "lib.wishlist" %}</a>
+    </div>
     {% if books_json and books_json != "[]" %}
     <a class="bk-btn bk-btn--primary bk-btn--wide" href="{% url 'books:scan_new' %}">
       <svg class="bk-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>

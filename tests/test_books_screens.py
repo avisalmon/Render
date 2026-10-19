@@ -166,6 +166,11 @@ def build_world():
     for i, e in enumerate((a, b, c)):
         Copy.objects.create(owner=sp, entry=e, position=i, visibility="public" if i else "private")
     ShelfScan.objects.create(owner=sp, status=ShelfScan.REVIEW, photo="x.jpg")
+    first = Copy.objects.filter(owner=sp).order_by("position").first()
+    first.pk  # the copy page below is the shelver's first book
+    from books.models import Wish
+    Wish.objects.create(profile=sp, entry=c)
+    Wish.objects.create(profile=sp, free_text="ספר שעוד לא בקטלוג")
     return {"reader": reader, "staff": staff, "fresh": fresh}
 
 
@@ -191,6 +196,12 @@ SCREENS = [
     ("scan-new", "/books/scan/", "reader", "scan-new"),
     ("scan-review", "/books/scan/2001/", "reader", "scan-review"),
     ("home-shelf", "/books/", "shelver", "home"),
+    ("library", "/books/library/", "shelver", "library"),
+    ("library-empty", "/books/library/", "reader", "library"),
+    ("copy", lambda: f"/books/copy/{__import__('books.models', fromlist=['Copy']).Copy.objects.order_by('pk').first().pk}/", "shelver", "copy"),
+    ("library-add", "/books/library/add/?q=עוז", "shelver", "library-add"),
+    ("wishlist", "/books/wishlist/", "shelver", "wishlist"),
+    ("scans", "/books/library/scans/", "shelver", "scans"),
 ]
 
 
@@ -236,6 +247,8 @@ def _open(browser, live_server, who, path, viewport, theme, lang="he"):
 @pytest.mark.parametrize("label,path,who,screen", SCREENS, ids=[s[0] for s in SCREENS])
 def test_screen_contract(browser, live_server, db, label, path, who, screen, theme, viewport):
     build_world()
+    if callable(path):
+        path = path()
     context, page, dialogs = _open(browser, live_server, who, path, viewport, theme)
     try:
         assert page.get_attribute("body", "data-screen") == screen, page.url

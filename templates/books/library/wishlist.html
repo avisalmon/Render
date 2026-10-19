@@ -1,0 +1,31 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "wish.title" %} · {% t "brand" %}{% endblock %}
+{% block screen %}wishlist{% endblock %}
+{% block content %}
+<div class="bk-narrow">
+  <p><a href="{% url 'books:library' %}">{% t "copy.back" %}</a></p>
+  <h1 class="bk-title">{% t "wish.title" %}</h1>
+  <p class="bk-lead">{% t "wish.lead" %}</p>
+  {% if wishes %}
+  <ul class="bk-entry-list">
+    {% for w in wishes %}
+    <li class="bk-entry-row bk-entry-row--actions">
+      {% if w.entry %}
+      <a class="bk-entry-link" href="{% url 'books:catalog_entry' w.entry.pk %}"><span class="bk-entry-text"><span class="bk-entry-title">{{ w.entry.title }}</span><span class="bk-muted">{{ w.entry.creator_names }}</span></span></a>
+      {% else %}
+      <span class="bk-entry-text" style="padding: 10px 12px"><span class="bk-entry-title">{{ w.free_text }}</span></span>
+      {% endif %}
+      <form method="post" action="{% url 'books:wish_delete' w.pk %}">{% csrf_token %}<button type="submit" class="bk-btn bk-btn--small">{% t "wish.remove" %}</button></form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="bk-muted">{% t "wish.empty" %}</p>{% endif %}
+
+  <form method="post" class="bk-card bk-form" style="margin-top: 16px">
+    {% csrf_token %}
+    <label class="bk-field">{% t "wish.add_text" %} <input class="bk-input" name="free_text" maxlength="300" required></label>
+    <button type="submit" class="bk-btn">{% t "wish.add" %}</button>
+  </form>
+  <p class="bk-help">{% t "wish.from_catalog" %} <a href="{% url 'books:catalog' %}">{% t "catalog.title" %}</a></p>
+</div>
+{% endblock %}

@@ -16,13 +16,14 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from .. import catalog
 from .. import shelf as shelf_service
 from ..access import profile_for
-from ..models import (BookDetail, CatalogEntry, Copy, Creator, CreatorAlias, EntryCorrection, EntryIdentifier, Offer,
-                      Profile, ScanItem, ShelfScan, Tag)
+from ..models import (BookDetail, CatalogEntry, Copy, CopyPhoto, Creator, CreatorAlias, EntryCorrection,
+                      EntryIdentifier, Offer, Profile, ScanItem, ShelfScan, Tag, Wish)
 from ..textnorm import identifier_scheme
 from .permissions import CatalogueWrite, HasBooksProfile, StaffWrite
-from .serializers import (BookDetailSerializer, CatalogEntrySerializer, CopySerializer, CreatorAliasSerializer,
-                          CreatorSerializer, EntryCorrectionSerializer, EntryIdentifierSerializer, OfferSerializer,
-                          ProfileSerializer, ScanItemSerializer, ShelfScanSerializer, TagSerializer)
+from .serializers import (BookDetailSerializer, CatalogEntrySerializer, CopyPhotoSerializer, CopySerializer,
+                          CreatorAliasSerializer, CreatorSerializer, EntryCorrectionSerializer,
+                          EntryIdentifierSerializer, OfferSerializer, ProfileSerializer, ScanItemSerializer,
+                          ShelfScanSerializer, TagSerializer, WishSerializer)
 
 
 class ProfileViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
@@ -300,3 +301,40 @@ class OfferViewSet(viewsets.ModelViewSet):
         if copy is not None and copy.owner != profile_for(self.request.user):
             raise ValidationError({"copy": "not yours"})
         serializer.save()
+
+
+class CopyPhotoViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
+                       mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    """List, retrieve, relabel, delete. Upload through the copy page (the
+    photo goes through the same metadata stripping as a shelf photo)."""
+
+    serializer_class = CopyPhotoSerializer
+    permission_classes = [HasBooksProfile]
+
+    def get_queryset(self):
+        return CopyPhoto.objects.filter(copy__owner=profile_for(self.request.user))
+
+    def perform_update(self, serializer):
+        copy = serializer.validated_data.get("copy")
+        if copy is not None and copy.owner != profile_for(self.request.user):
+            raise ValidationError({"copy": "not yours"})
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        instance.image.delete(save=False)
+        instance.delete()
+
+
+class WishViewSet(viewsets.ModelViewSet):
+    serializer_class = WishSerializer
+    permission_classes = [HasBooksProfile]
+
+    def get_queryset(self):
+        return Wish.objects.filter(profile=profile_for(self.request.user))
+
+    def perform_create(self, serializer):
+        me = profile_for(self.request.user)
+        entry = serializer.validated_data.get("entry")
+        if entry is not None and Wish.objects.filter(profile=me, entry=entry).exists():
+            raise ValidationError({"entry": "already wished"})
+        serializer.save(profile=me)

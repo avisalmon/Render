@@ -1,0 +1,89 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "lib.title" %} · {% t "brand" %}{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  // The bulk bar appears once a book is ticked, so it never hides the list.
+  var form = document.querySelector('[data-bulk]');
+  if (!form) return;
+  var bar = form.querySelector('[data-bulk-bar]');
+  form.addEventListener('change', function () {
+    bar.hidden = !form.querySelector('input[name=copy]:checked');
+  });
+})();
+</script>
+{% endblock %}
+{% block screen %}library{% endblock %}
+{% block content %}
+<div class="bk-wide">
+  <h1 class="bk-title">{% t "lib.title" %}</h1>
+  <p class="bk-kicker">{% t "lib.count" n=total %}{% if left is not None %} · {% t "scan.left" left=left %}{% endif %}</p>
+  <div class="bk-row" style="margin-bottom: 12px">
+    <a class="bk-btn bk-btn--small bk-btn--primary" href="{% url 'books:scan_new' %}">{% t "home.scan" %}</a>
+    <a class="bk-btn bk-btn--small" href="{% url 'books:library_add' %}">{% t "lib.add" %}</a>
+    <a class="bk-btn bk-btn--small" href="{% url 'books:wishlist' %}">{% t "lib.wishlist" %}</a>
+    <a class="bk-btn bk-btn--small" href="{% url 'books:scans' %}">{% t "lib.scans" %}</a>
+    <a class="bk-btn bk-btn--small" href="{% url 'books:library_export' %}">{% t "lib.export" %}</a>
+  </div>
+
+  <form method="get" class="bk-card bk-card--tight bk-filter" role="search">
+    <label class="bk-field">{% t "lib.search" %} <input class="bk-input" type="search" name="q" value="{{ q }}"></label>
+    <label class="bk-field">{% t "lib.where" %}
+      <select class="bk-select" name="where"><option value="">{% t "lib.where_all" %}</option>{% for p in places %}<option value="{{ p }}" {% if p == where %}selected{% endif %}>{{ p }}</option>{% endfor %}</select>
+    </label>
+    <label class="bk-field">{% t "lib.show" %}
+      <select class="bk-select" name="show">
+        <option value="">{% t "lib.show_all" %}</option>
+        <option value="private" {% if show == "private" %}selected{% endif %}>{% t "status.private" %}</option>
+        <option value="public" {% if show == "public" %}selected{% endif %}>{% t "status.public_only" %}</option>
+        {% for k in offer_kinds %}<option value="{{ k }}" {% if show == k %}selected{% endif %}>{% with key="status."|add:k %}{% t key %}{% endwith %}</option>{% endfor %}
+        <option value="rare" {% if show == "rare" %}selected{% endif %}>{% t "lib.show_rare" %}</option>
+      </select>
+    </label>
+    {% if tags %}
+    <label class="bk-field">{% t "entry.tags" %}
+      <select class="bk-select" name="tag"><option value="">{% t "lib.genre_all" %}</option>{% for tg in tags %}<option value="{{ tg.key }}" {% if tg.key == tag %}selected{% endif %}>{% if lang == "he" %}{{ tg.name_he }}{% else %}{{ tg.name_en }}{% endif %}</option>{% endfor %}</select>
+    </label>
+    {% endif %}
+    <button type="submit" class="bk-btn">{% t "lib.filter" %}</button>
+  </form>
+
+  {% if copies %}
+  <form method="post" action="{% url 'books:library_bulk' %}" data-bulk>
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <ul class="bk-entry-list">
+      {% for c in copies %}
+      <li class="bk-entry-row bk-copy-row">
+        <label class="bk-copy-pick"><input type="checkbox" name="copy" value="{{ c.pk }}"><span class="bk-visually-hidden">{% t "lib.select" title=c.entry.title %}</span></label>
+        <a class="bk-entry-link" href="{% url 'books:copy' c.pk %}">
+          <span class="bk-entry-cover" aria-hidden="true">{% if c.entry.cover %}<img src="{{ c.entry.cover.url }}" alt="">{% endif %}</span>
+          <span class="bk-entry-text">
+            <span class="bk-entry-title">{{ c.entry.title }}</span>
+            <span class="bk-muted">{{ c.entry.creator_names }}{% if c.location_note %} · {{ c.location_note }}{% endif %}</span>
+            <span class="bk-kicker">{% if c.offers.all %}{% for o in c.offers.all %}{% with key="status."|add:o.kind %}{% t key %}{% endwith %}{% if not forloop.last %} · {% endif %}{% endfor %}{% elif c.visibility == "public" %}{% t "status.public_only" %}{% else %}{% t "status.private" %}{% endif %}{% if c.is_rare_candidate %} · {% t "shelf.rare" %}{% endif %}</span>
+          </span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+    <div class="bk-card bk-card--tight bk-bulk" data-bulk-bar hidden>
+      <p class="bk-kicker" style="margin: 0">{% t "lib.bulk_title" %}</p>
+      <div class="bk-row">
+        <label class="bk-field" style="flex: 1 1 180px">{% t "lib.bulk_move" %} <input class="bk-input" name="location_note" list="bk-places"></label>
+        <datalist id="bk-places">{% for p in places %}<option value="{{ p }}">{% endfor %}</datalist>
+        <button type="submit" class="bk-btn" name="action" value="move">{% t "lib.bulk_move_go" %}</button>
+      </div>
+      <div class="bk-row">
+        <button type="submit" class="bk-btn bk-btn--small" name="action" value="private">{% t "lib.bulk_private" %}</button>
+        <button type="submit" class="bk-btn bk-btn--small" name="action" value="public">{% t "lib.bulk_public" %}</button>
+      </div>
+    </div>
+  </form>
+  {% elif total %}
+    <p class="bk-lead">{% t "lib.none" %}</p>
+  {% else %}
+    <p class="bk-lead">{% t "lib.empty" %}</p>
+  {% endif %}
+</div>
+{% endblock %}

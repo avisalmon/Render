@@ -461,3 +461,36 @@ class Offer(models.Model):
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
+
+
+class CopyPhoto(models.Model):
+    """Photos of one copy: the cover, the copyright page, a signature, damage.
+    Private to the owner (and, from BK5, to the other side of a deal)."""
+
+    KINDS = [("cover", "cover"), ("copyright_page", "copyright page"), ("signed", "signed"), ("other", "other")]
+
+    copy = models.ForeignKey(Copy, on_delete=models.CASCADE, related_name="photos")
+    image = models.ImageField(upload_to="copies/%Y/%m/", storage=books_storage)
+    kind = models.CharField(max_length=16, choices=KINDS, default="other")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+
+class Wish(models.Model):
+    """A book a person wants (BK4 list; BK5 alerts)."""
+
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="wishes")
+    entry = models.ForeignKey(CatalogEntry, on_delete=models.CASCADE, null=True, blank=True, related_name="wishes")
+    free_text = models.CharField(max_length=300, blank=True)
+    notify_when_available = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [models.UniqueConstraint(fields=["profile", "entry"], name="books_wish_once",
+                                               condition=models.Q(entry__isnull=False))]
+
+    def __str__(self):
+        return self.entry.title if self.entry_id else self.free_text

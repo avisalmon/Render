@@ -274,7 +274,7 @@ def shelf_books(profile, limit=400):
         kinds = [o.kind for o in c.offers.all() if o.is_active]
         status = kinds[0] if kinds else ("public" if c.visibility == Copy.PUBLIC else "private")
         row = {"id": c.pk, "title": c.entry.title, "author": c.entry.creator_names, "status": status,
-               "rare": c.is_rare_candidate, "url": f"/books/catalog/{c.entry_id}/"}
+               "rare": c.is_rare_candidate, "url": f"/books/copy/{c.pk}/"}
         row.update(spine_for(c.entry_id, c.entry.title))
         rows.append(row)
     return rows

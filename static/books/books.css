@@ -438,3 +438,16 @@ html[dir="rtl"] .bk-reading-bar span { animation-name: bk-reading-rtl; }
 .bk-scan-fix { display: grid; gap: 10px; }
 .bk-aside { display: grid; gap: 12px; margin-top: 14px; }
 a.bk-notice { display: block; text-decoration: none; color: var(--bk-ink); min-height: 44px; }
+
+/* ---- my library (BK4) ---------------------------------------------------- */
+.bk-filter { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; align-items: end; margin-bottom: 12px; }
+.bk-copy-row { display: flex; align-items: center; }
+.bk-copy-row .bk-entry-link { flex: 1; min-width: 0; }
+.bk-copy-pick { display: flex; align-items: center; justify-content: center; width: 48px; min-height: 64px; flex: none; cursor: pointer; }
+.bk-copy-pick input { width: 20px; height: 20px; accent-color: var(--bk-brass); }
+.bk-bulk { margin-top: 12px; display: grid; gap: 8px; }
+.bk-offer { display: grid; gap: 6px; padding: 10px 12px; border: 1px solid var(--bk-line); border-radius: var(--bk-radius); background: var(--bk-ground); }
+.bk-photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.bk-photo { margin: 0; display: grid; gap: 4px; }
+.bk-photo img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--bk-radius); border: 1px solid var(--bk-line); }
+.bk-barcode-video { width: 100%; border-radius: var(--bk-radius); border: 1px solid var(--bk-line); }

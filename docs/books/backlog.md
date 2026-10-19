@@ -301,11 +301,27 @@ or more with a catalogue match; (6) a lend offer defaults to 30 days; (7)
 `raw_text` into `raw_title` / `raw_author` are additions to the model, in
 data_model.md section 11.
 
-## Epic BK4: My library (outline)
+## Epic BK4: My library `DONE (dev), 2026-10-19`
 
-- **SPR-BK4.1** Copy page, edit, delete, move in bulk, photos, rooms and
-  shelves on the home shelf.
-- **SPR-BK4.2** Browse and search my books, wishlist, scan history, export.
+| ID | Feature | Status |
+| --- | --- | --- |
+| F-BK4.1 | `/books/library/`: every book I hold, filtered by text, place, status (private, visible, each offer, rare) and genre; tick many and move them, make them private or visible | DONE |
+| F-BK4.2 | A book's page (`/books/copy/<id>/`): visibility, place, condition, notes, the three offers with their details (loan days, what I want in return, price), rare candidate with a note, display only (never offered), photos of my copy, "I no longer have it" | DONE |
+| F-BK4.3 | Copy photos (cover, copyright page, signature, other): metadata stripped like a shelf photo, served only to the owner | DONE |
+| F-BK4.4 | Adding without a shelf photo: ISBN, danacode or title, the phone's barcode reader where the browser has one; "I have this" on any catalogue record | DONE |
+| F-BK4.5 | Wishlist: from a catalogue record ("I want this") or as free text; having the book removes its wish | DONE |
+| F-BK4.6 | Export as a spreadsheet (UTF-8 with a byte-order mark so Excel opens Hebrew); scan history | DONE |
+| F-BK4.7 | API: copy-photos and wishes, scoped to the caller; the home shelf's spines now open the copy's page | DONE |
+| F-BK4.8 | BK2 polish: a record page names the book's language ("עברית", not "he") | DONE |
+
+Models: `CopyPhoto` and `Wish`, both in the approved data model (migration
+0006). Decisions for Avi's ack: (1) a copy photo goes through the same
+stripping as a shelf photo; (2) "I have this" makes a private copy and opens
+its page; (3) having a book removes it from the wishlist; (4) display only and
+an offer cannot go together; (5) the barcode reader uses the browser's own
+(Chrome on Android has it, Safari not yet; the typed field always works).
+Found by looking at the screens: the bulk bar covered the list, now it appears
+only when a book is ticked; the "added from the scan of" line came out empty.
 
 ## Epic BK5: The hub (outline)
 

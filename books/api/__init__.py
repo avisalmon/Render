@@ -1,8 +1,8 @@
 from rest_framework.routers import DefaultRouter
 
-from .viewsets import (BookDetailViewSet, CatalogEntryViewSet, CopyViewSet, CreatorAliasViewSet, CreatorViewSet,
-                       EntryCorrectionViewSet, EntryIdentifierViewSet, OfferViewSet, ProfileViewSet, ScanItemViewSet,
-                       ShelfScanViewSet, TagViewSet)
+from .viewsets import (BookDetailViewSet, CatalogEntryViewSet, CopyPhotoViewSet, CopyViewSet, CreatorAliasViewSet,
+                       CreatorViewSet, EntryCorrectionViewSet, EntryIdentifierViewSet, OfferViewSet, ProfileViewSet,
+                       ScanItemViewSet, ShelfScanViewSet, TagViewSet, WishViewSet)
 
 router = DefaultRouter()
 router.register("profiles", ProfileViewSet, basename="profile")
@@ -17,3 +17,5 @@ router.register("scans", ShelfScanViewSet, basename="scan")
 router.register("scan-items", ScanItemViewSet, basename="scan-item")
 router.register("copies", CopyViewSet, basename="copy")
 router.register("offers", OfferViewSet, basename="offer")
+router.register("copy-photos", CopyPhotoViewSet, basename="copy-photo")
+router.register("wishes", WishViewSet, basename="wish")

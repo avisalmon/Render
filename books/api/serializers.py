@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
-from ..models import (BookDetail, CatalogEntry, Copy, Creator, CreatorAlias, EntryCorrection, EntryIdentifier, Offer,
-                      Profile, ScanCandidate, ScanItem, ShelfScan, Tag)
+from ..models import (BookDetail, CatalogEntry, Copy, CopyPhoto, Creator, CreatorAlias, EntryCorrection,
+                      EntryIdentifier, Offer, Profile, ScanCandidate, ScanItem, ShelfScan, Tag, Wish)
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -136,3 +136,27 @@ class EntryCorrectionSerializer(serializers.ModelSerializer):
         model = EntryCorrection
         fields = ["id", "entry", "profile", "field", "value", "note", "status", "handled_by", "created_at", "handled_at"]
         read_only_fields = ["profile", "status", "handled_by", "created_at", "handled_at"]
+
+
+class CopyPhotoSerializer(serializers.ModelSerializer):
+    url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CopyPhoto
+        fields = ["id", "copy", "kind", "url", "created_at"]
+        read_only_fields = ["created_at"]
+
+    def get_url(self, obj):
+        return f"/books/copy/{obj.copy_id}/photo/{obj.pk}.jpg"
+
+
+class WishSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Wish
+        fields = ["id", "entry", "free_text", "notify_when_available", "created_at"]
+        read_only_fields = ["created_at"]
+
+    def validate(self, attrs):
+        if not attrs.get("entry") and not (attrs.get("free_text") or "").strip() and self.instance is None:
+            raise serializers.ValidationError("an entry or a free text")
+        return attrs
