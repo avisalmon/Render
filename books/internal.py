@@ -30,3 +30,36 @@ def run_jobs(request):
         return JsonResponse({"ok": False}, status=403)
     ran = jobs.run_pending(retry_failed=request.GET.get("retry") == "1")
     return JsonResponse({"ok": True, "ran": [{"id": j.pk, "kind": j.kind, "status": j.status} for j in ran]})
+
+
+def storage_check(request):
+    """Superuser only (404 for anyone else): which storage Books is really
+    using, and a live round trip when it is the bucket: write a small file,
+    read it back through its signed link, confirm the same object is refused
+    without the signature, delete it."""
+    from django.http import Http404
+    from django.utils import timezone
+
+    import requests
+    from django.core.files.base import ContentFile
+
+    from . import storage
+
+    if not (request.user.is_authenticated and request.user.is_superuser):
+        raise Http404
+    out = storage.status()
+    if storage.is_bucket():
+        st = storage.books_storage()
+        name = st.save(f"_check/{timezone.now():%Y%m%d%H%M%S}.txt", ContentFile(b"books storage check"))
+        try:
+            signed = st.url(name)
+            out["write"] = True
+            out["signed_read"] = requests.get(signed, timeout=10).status_code
+            public = f"https://storage.googleapis.com/{out['bucket']}/books/{name}"
+            out["public_read"] = requests.get(public, timeout=10).status_code
+            out["ok"] = out["signed_read"] == 200 and out["public_read"] in (401, 403)
+        finally:
+            st.delete(name)
+    else:
+        out["ok"] = False
+    return JsonResponse(out)

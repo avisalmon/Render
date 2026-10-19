@@ -45,6 +45,7 @@ urlpatterns = [
     path("password/reset/done/", auth_views.PasswordResetCompleteView.as_view(), name="password_reset_complete"),
     # A scheduler's door: re-run dropped background jobs (books/internal.py).
     path("internal/run-jobs/", internal.run_jobs, name="run_jobs"),
+    path("internal/storage/", internal.storage_check, name="storage_check"),
     # The API (Rule 6).
     path("api/", include(router.urls)),
 ]

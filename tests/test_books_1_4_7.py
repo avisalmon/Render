@@ -75,6 +75,43 @@ def test_with_a_bucket_the_backend_is_gcs_private_and_signed(settings):
     storage.reset_for_tests()
 
 
+def test_a_broken_key_falls_back_to_disk_instead_of_failing(settings):
+    settings.BOOKS_GCS_BUCKET = "books-test-bucket"
+    settings.BOOKS_GCS_CREDENTIALS_JSON = "{not json"
+    storage.reset_for_tests()
+    st = storage.books_storage()
+    assert type(st).__name__ == "FileSystemStorage"
+    assert storage.status()["problem"].startswith("JSONDecodeError")
+    assert storage.is_bucket() is False
+    storage.reset_for_tests()
+
+
+def test_a_key_with_raw_newlines_in_the_private_key_still_parses(settings):
+    import json as _json
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import rsa
+    pem = rsa.generate_private_key(public_exponent=65537, key_size=2048).private_bytes(
+        serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()).decode()
+    info = {"type": "service_account", "project_id": "p", "private_key_id": "k", "private_key": pem,
+            "client_email": "a@p.iam.gserviceaccount.com", "client_id": "1", "token_uri": "https://oauth2.googleapis.com/token"}
+    pasted = _json.dumps(info).replace("\\n", "\n")  # the private key's line breaks arrive as real newlines
+    settings.BOOKS_GCS_BUCKET = "books-test-bucket"
+    settings.BOOKS_GCS_CREDENTIALS_JSON = pasted
+    storage.reset_for_tests()
+    assert storage.is_bucket() and storage.status()["problem"] == ""
+    storage.reset_for_tests()
+
+
+def test_the_storage_check_is_404_for_anyone_but_a_superuser(client, reader):
+    assert client.get("/books/internal/storage/").status_code == 404
+    client.force_login(reader)
+    assert client.get("/books/internal/storage/").status_code == 404
+    su = User.objects.create_superuser("root2", "r2@example.com", "pw")
+    client.force_login(su)
+    data = client.get("/books/internal/storage/").json()
+    assert data["backend"] == "FileSystemStorage" and data["ok"] is False
+
+
 # ---- BK1.5: photos lose their metadata, keep a rounded point -----------------
 
 def _jpeg_with_gps(lat=(32, 47, 39.12), lng=(34, 59, 20.5), ns="N", ew="E", orientation=1):

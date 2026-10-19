@@ -23,28 +23,51 @@ log = logging.getLogger(__name__)
 _instance = None
 
 
-def _build():
-    bucket = getattr(settings, "BOOKS_GCS_BUCKET", "")
-    if bucket:
-        from storages.backends.gcloud import GoogleCloudStorage
+_problem = ""
 
-        credentials = None
-        raw = getattr(settings, "BOOKS_GCS_CREDENTIALS_JSON", "")
-        if raw:
-            from google.oauth2 import service_account
 
-            credentials = service_account.Credentials.from_service_account_info(json.loads(raw))
-        return GoogleCloudStorage(
-            bucket_name=bucket, location="books", credentials=credentials,
-            default_acl=None, querystring_auth=True, expiration=timedelta(minutes=10), file_overwrite=False,
-        )
-    if not settings.DEBUG:
-        log.warning("books: BOOKS_GCS_BUCKET is not set; images are on the local disk, which is the dev fallback")
+def _credentials(raw):
+    """The service-account key from the environment. strict=False lets a key
+    whose line breaks were pasted as real newlines still parse."""
+    from google.oauth2 import service_account
+
+    info = json.loads(raw.strip(), strict=False)
+    return service_account.Credentials.from_service_account_info(info)
+
+
+def _disk():
     # No mkdir here: Django calls this while the models load, which on Render
     # happens during the build, before the persistent disk is mounted. The
     # first save creates the folder (broke the BK2 deploy, 2026-10-18).
     root = Path(settings.MEDIA_ROOT) / "books"
     return FileSystemStorage(location=str(root), base_url=f"{settings.MEDIA_URL}books/")
+
+
+def _build():
+    """The bucket when it is configured and its key reads; otherwise the disk.
+    A bad key must never take the site down (a deploy failed on 2026-10-19
+    the day the key was first set): it is logged, shown on the staff check
+    page, and Books keeps working on the disk until it is fixed."""
+    global _problem
+    _problem = ""
+    bucket = getattr(settings, "BOOKS_GCS_BUCKET", "")
+    if bucket:
+        try:
+            from storages.backends.gcloud import GoogleCloudStorage
+
+            raw = getattr(settings, "BOOKS_GCS_CREDENTIALS_JSON", "")
+            credentials = _credentials(raw) if raw else None
+            return GoogleCloudStorage(
+                bucket_name=bucket, location="books", credentials=credentials,
+                default_acl=None, querystring_auth=True, expiration=timedelta(minutes=10), file_overwrite=False,
+            )
+        except Exception as exc:  # noqa: BLE001
+            _problem = f"{exc.__class__.__name__}: {str(exc)[:200]}"
+            log.error("books: the bucket is configured but could not be used, falling back to disk: %s", _problem)
+            return _disk()
+    if not settings.DEBUG:
+        log.warning("books: BOOKS_GCS_BUCKET is not set; images are on the local disk, which is the dev fallback")
+    return _disk()
 
 
 def books_storage():
@@ -60,4 +83,10 @@ def reset_for_tests():
 
 
 def is_bucket():
-    return bool(getattr(settings, "BOOKS_GCS_BUCKET", ""))
+    return type(books_storage()).__name__ == "GoogleCloudStorage"
+
+
+def status():
+    st = books_storage()
+    return {"backend": type(st).__name__, "bucket": getattr(settings, "BOOKS_GCS_BUCKET", ""),
+            "problem": _problem, "key_set": bool(getattr(settings, "BOOKS_GCS_CREDENTIALS_JSON", ""))}
