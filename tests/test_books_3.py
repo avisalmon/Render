@@ -222,7 +222,8 @@ def test_a_missed_book_can_be_added_and_matched(scan, known):
     assert item.added_by_hand and item.candidates.first().entry == known[0]
 
 
-def test_the_free_cap_stops_accepting(scan, known, monkeypatch):
+def test_the_free_cap_stops_accepting(scan, known, monkeypatch, settings):
+    settings.BOOKS_PILOT_EVERYONE_ASKS = False  # the cap is the free tier's (tests/conftest.py opens tiers)
     monkeypatch.setattr(shelf, "FREE_CAP", 1)
     shelf.accept(scan.items.get(position=0), known[0], "private", [], "")
     with pytest.raises(shelf.CapReached):

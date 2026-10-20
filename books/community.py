@@ -90,6 +90,10 @@ def visible_threads(profile, kind=None, circle=None, entry=None, q=None):
 
 @transaction.atomic
 def start_thread(author, kind, title, body, circle=None, entry=None):
+    from .tiers import allows
+
+    if not allows(author, "club_post"):
+        raise CommunityError("club.err.tier")
     if kind not in dict(Thread.KINDS):
         kind = Thread.DISCUSSION
     title = (title or "").strip()[:160]
@@ -107,6 +111,10 @@ def start_thread(author, kind, title, body, circle=None, entry=None):
 
 
 def reply(author, thread, body):
+    from .tiers import allows
+
+    if not allows(author, "club_post"):
+        raise CommunityError("club.err.tier")
     if not can_read(author, thread):
         raise CommunityError("club.err.not_member")
     if thread.is_locked and not is_moderator(author, thread):

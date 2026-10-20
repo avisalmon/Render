@@ -79,6 +79,8 @@ def numbers(days=7):
         "circles": circles,
         "open_reports": Report.objects.filter(status=Report.OPEN).count(),
         "web": _web(),
+        "plus_by_code": __import__("books.models", fromlist=["Subscription"]).Subscription.objects.filter(
+            provider="coupon", ends_at__gt=now).values("profile_id").distinct().count(),
         "enrich": __import__("books.enrich", fromlist=["counts"]).counts(),
         "feedback": list(Feedback.objects.select_related("profile")[:30]),
         "open_feedback": Feedback.objects.filter(status=Feedback.OPEN).count(),

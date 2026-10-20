@@ -1,0 +1,55 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "plans.title" %} · {% t "brand" %}{% endblock %}
+{% block screen %}plans{% endblock %}
+{% block content %}
+<div class="bk-narrow">
+  <h1 class="bk-title">{% t "plans.title" %}</h1>
+  <p class="bk-notice{% if tier != 'free' %} bk-notice--ok{% endif %}" role="status">
+    {% with key="plans.name_"|add:tier %}{% t key as name %}{% t "plans.yours" name=name %}{% endwith %}{% if until %} · {% t "plans.until" date=until|date:"d.m.Y" %}{% endif %}
+  </p>
+  {% if redeemed %}<p class="bk-notice bk-notice--ok" role="status">{% t "plans.redeemed" %}</p>{% endif %}
+
+  <form method="post" class="bk-card bk-form" id="code">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <label class="bk-field">{% t "plans.code" %} <input class="bk-input" name="code" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="40" required dir="ltr"></label>
+    {% if error %}<p class="bk-error" role="alert">{{ error }}</p>{% endif %}
+    <button type="submit" class="bk-btn bk-btn--primary">{% t "plans.use_code" %}</button>
+  </form>
+
+  <div class="bk-plans">
+    <section class="bk-plan{% if tier == 'free' %} is-current{% endif %}">
+      <h2 class="bk-h2" style="margin: 0">{% t "plans.name_free" %}</h2>
+      <p class="bk-plan-price">{% t "plans.price_free" %}</p>
+      <ul class="bk-plain-list">
+        <li>{% t "plans.f_catalogue" %}</li>
+        <li>{% t "plans.f_see" %}</li>
+        <li>{% t "plans.f_answer" %}</li>
+        <li>{% t "plans.f_read_club" %}</li>
+      </ul>
+    </section>
+    <section class="bk-plan{% if tier == 'plus' %} is-current{% endif %}">
+      <h2 class="bk-h2" style="margin: 0">{% t "plans.name_plus" %}</h2>
+      <p class="bk-plan-price">{% t "plans.price_plus" %}</p>
+      <ul class="bk-plain-list">
+        <li>{% t "plans.f_ask" %}</li>
+        <li>{% t "plans.f_club" %}</li>
+        <li>{% t "plans.f_circles" %}</li>
+        <li>{% t "plans.f_web" %}</li>
+        <li>{% t "plans.f_unlimited" %}</li>
+      </ul>
+      <button type="button" class="bk-btn bk-btn--wide" disabled aria-disabled="true">{% t "plans.pay_soon" %}</button>
+    </section>
+    <section class="bk-plan{% if tier == 'pro' %} is-current{% endif %}">
+      <h2 class="bk-h2" style="margin: 0">{% t "plans.name_pro" %}</h2>
+      <p class="bk-plan-price">{% t "plans.price_pro" %}</p>
+      <ul class="bk-plain-list">
+        <li>{% t "plans.f_plus_all" %}</li>
+        <li>{% t "plans.f_advanced" %}</li>
+      </ul>
+      <button type="button" class="bk-btn bk-btn--wide" disabled aria-disabled="true">{% t "plans.not_yet" %}</button>
+    </section>
+  </div>
+  <p class="bk-help">{% t "plans.note" %}</p>
+</div>
+{% endblock %}

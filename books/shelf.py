@@ -23,7 +23,6 @@ from .models import (
     Copy,
     ModelCall,
     Offer,
-    Profile,
     ScanCandidate,
     ScanItem,
     ShelfScan,
@@ -59,7 +58,9 @@ def held_count(profile):
 
 
 def room_left(profile):
-    if profile.tier != Profile.FREE:
+    from .tiers import allows
+
+    if allows(profile, "unlimited_library"):
         return None
     return max(FREE_CAP - held_count(profile), 0)
 
@@ -185,9 +186,10 @@ def web_candidates(scan, job=None):
     (books/weblookup.py: cached per book site-wide, capped per day). A find
     joins the item's candidates, just below "sure"."""
     from . import weblookup
+    from .tiers import allows
 
     weak = [i for i in scan.items.filter(review_status=ScanItem.PENDING) if i.confidence < HIGH_CONFIDENCE]
-    if not weak or not weblookup.enabled():
+    if not weak or not weblookup.enabled() or not allows(scan.owner, "web_lookup"):
         return 0
     found = weblookup.lookup_many([(i.raw_title, i.raw_author) for i in weak], profile=scan.owner, job=job)
     added = 0

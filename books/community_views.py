@@ -55,7 +55,10 @@ def new_thread(request):
         except community.CommunityError as exc:
             error = _err(request, str(exc))
         kind = request.POST.get("kind", kind)
+    from .tiers import allows
+
     return render(request, "books/club/new.html", {
+        "can_post": allows(me, "club_post"),
         "error": error, "kind": kind, "entry": entry, "kinds": Thread.KINDS, "my_circles": circles.my_circles(me),
         "title": request.POST.get("title", ""), "body": request.POST.get("body", ""),
         "circle_id": request.POST.get("circle") or request.GET.get("circle") or "",
@@ -78,7 +81,10 @@ def thread_page(request, pk):
     Notification.objects.filter(profile=me, thread=thread, read_at__isnull=True).update(
         read_at=__import__("django.utils.timezone", fromlist=["now"]).now())
     posts = list(community.posts_for(thread, me))
+    from .tiers import allows
+
     return render(request, "books/club/thread.html", {
+        "can_post": allows(me, "club_post"),
         "thread": thread, "posts": posts, "first": posts[0] if posts else None, "comments": posts[1:],
         "mod": community.is_moderator(me, thread), "error": _err(request, request.GET.get("error")),
         "edit": request.GET.get("edit"), "reported": request.GET.get("reported"),

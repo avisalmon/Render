@@ -43,6 +43,9 @@
   </div>
   {% endif %}
 
+  {% if not can_create %}
+  <a class="bk-notice" style="margin-top: 14px" href="{% url 'books:plans' %}?next={{ request.path|urlencode }}">{% t "circle.tier_note" %} {% t "plans.see" %}</a>
+  {% else %}
   <details class="bk-more" id="create" {% if error %}open{% endif %}>
     <summary>{% t "circles.create" %}</summary>
     <form method="post" class="bk-card bk-form">
@@ -61,5 +64,6 @@
       <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "circles.create" %}</button>
     </form>
   </details>
+  {% endif %}
 </div>
 {% endblock %}

@@ -43,6 +43,8 @@
 
   {% if thread.is_locked and not mod %}
     <p class="bk-notice" role="status">{% t "club.reply_locked" %}</p>
+  {% elif not can_post %}
+    <a class="bk-notice" href="{% url 'books:plans' %}?next={{ request.path|urlencode }}">{% t "club.tier_note" %} {% t "plans.see" %}</a>
   {% else %}
   <form method="post" action="{{ act }}" class="bk-card bk-form" id="reply">
     {% csrf_token %}<input type="hidden" name="action" value="reply">

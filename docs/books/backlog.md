@@ -552,7 +552,29 @@ of Books; (4) only a copy a curator confirmed can be invited; (5) the
 owner's name and photos are off unless they choose them. Found by the
 screen check: the item title link in an exhibition was too small to tap.
 
-## Epics BK11 to BK13
+## Epic BK11: Tiers, payment blocked (Avi, 2026-10-20) `DONE (dev), 2026-10-20`
 
-Not broken into sprints yet: tiers and billing, advanced creation, other
-collections.
+Avi: "Make the payment partial with no billing, like blocked, but anyone
+with the code helpavi can get 90 days free access to the 4.99."
+
+| ID | Feature | Status |
+| --- | --- | --- |
+| F-BK11.1 | One function decides (`tiers.allows`): starting a request, writing in the club, starting a circle, the web lookup and a library over 1,000 books are the 4.99 tier's; answering requests, reading the club, joining circles and the catalogue are free; staff are never refused; the hand-set `Profile.tier` still counts | DONE |
+| F-BK11.2 | `/books/plans/` (from settings): the three tiers and what each gives, the current one with its end date, payment shown and disabled ("payment opens soon"), and a code field | DONE |
+| F-BK11.3 | Codes (`Coupon`): "helpavi" = the 4.99 tier for 90 days, created once by a migration; case and spaces ignored; once per person; a second code starts when the first ends; inactive, expired and used-up codes refused; admin to add, limit or stop codes | DONE |
+| F-BK11.4 | `Subscription`: a period on a tier (code, by hand, later payment); when it ends the person is free again and keeps their library, offers and deals | DONE |
+| F-BK11.5 | Every refusal says why and links to the plans page with the code, then back to where the person was | DONE |
+| F-BK11.6 | API: `plan` (my tier, until, the features it opens, payment closed) and `plan/redeem`; the pilot desk counts subscribers by code | DONE |
+
+The BK5 pilot switch (`BOOKS_PILOT_EVERYONE_ASKS`) now defaults to off, so
+the tiers are enforced; setting it to "1" in Render opens everything again.
+Decisions for Avi's ack: (1) the feature map above from spec 12.11; (2)
+staff are never refused; (3) a lapsed subscriber keeps everything they
+have and loses only starting new things; (4) a second code queues after the
+first. Payment provider, receipts and cancellation stay for when payment
+opens. The Google Books terms question (spec 12.11) is still open before
+charging for the web lookup.
+
+## Epics BK12 and BK13
+
+Not broken into sprints yet: advanced creation, other collections.

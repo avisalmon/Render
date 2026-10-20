@@ -1037,3 +1037,45 @@ class ExhibitItem(models.Model):
     class Meta:
         ordering = ["position", "pk"]
         constraints = [models.UniqueConstraint(fields=["exhibit", "copy"], name="books_exhibit_copy_once")]
+
+
+# ---- tiers (BK11) -----------------------------------------------------------------------------------
+
+class Coupon(models.Model):
+    """A code that grants a tier for some days (Avi, 2026-10-20: "helpavi",
+    90 days of the 4.99 tier, while payment is not open)."""
+
+    code = models.CharField(max_length=40, unique=True, help_text="stored lower case")
+    tier = models.CharField(max_length=8, choices=Profile.TIERS, default=Profile.PLUS)
+    days = models.PositiveSmallIntegerField(default=90)
+    is_active = models.BooleanField(default=True)
+    max_uses = models.PositiveIntegerField(null=True, blank=True, help_text="empty = no limit")
+    uses = models.PositiveIntegerField(default=0)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    note = models.CharField(max_length=200, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.code
+
+
+class Subscription(models.Model):
+    """A period on a tier (data model section 7): from a coupon now, from a
+    payment provider later, or set by hand by staff. The person's tier is
+    the highest one in force; Profile.tier stays the hand-set floor."""
+
+    COUPON, MANUAL, PAID = "coupon", "manual", "paid"
+    PROVIDERS = [(COUPON, "coupon"), (MANUAL, "set by hand"), (PAID, "payment")]
+
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="subscriptions")
+    tier = models.CharField(max_length=8, choices=Profile.TIERS)
+    started_at = models.DateTimeField()
+    ends_at = models.DateTimeField(db_index=True)
+    provider = models.CharField(max_length=8, choices=PROVIDERS, default=COUPON)
+    coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL, null=True, blank=True, related_name="redemptions")
+    note = models.CharField(max_length=200, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-ends_at"]
+        constraints = [models.UniqueConstraint(fields=["profile", "coupon"], name="books_coupon_once_per_person")]

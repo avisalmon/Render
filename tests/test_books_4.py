@@ -214,7 +214,8 @@ def test_having_a_book_fulfils_its_wish(client, reader, books):
     assert not Wish.objects.filter(profile=reader.books_profile).exists()
 
 
-def test_have_respects_the_cap(client, reader, books, monkeypatch):
+def test_have_respects_the_cap(client, reader, books, monkeypatch, settings):
+    settings.BOOKS_PILOT_EVERYONE_ASKS = False  # the cap is the free tier's (tests/conftest.py opens tiers)
     monkeypatch.setattr(shelf, "FREE_CAP", 0)
     client.force_login(reader)
     r = client.post(f"/books/have/{books[0].pk}/")

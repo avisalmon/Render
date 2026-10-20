@@ -7,6 +7,9 @@
   <h1 class="bk-title">{% with key="tkind."|add:kind %}{% t key as kind_label %}{% t "club.new_title" kind=kind_label %}{% endwith %}</h1>
   {% if entry %}<p class="bk-muted">{% t "club.about" title=entry.title %}</p>{% endif %}
   {% if error %}<p class="bk-error" role="alert">{{ error }}</p>{% endif %}
+  {% if not can_post %}
+  <a class="bk-notice" href="{% url 'books:plans' %}?next={{ request.get_full_path|urlencode }}">{% t "club.tier_note" %} {% t "plans.see" %}</a>
+  {% else %}
   <form method="post" class="bk-card bk-form" novalidate>
     {% csrf_token %}
     {% if entry %}<input type="hidden" name="entry" value="{{ entry.pk }}">{% endif %}
@@ -24,5 +27,6 @@
     </label>
     <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "club.publish" %}</button>
   </form>
+  {% endif %}
 </div>
 {% endblock %}

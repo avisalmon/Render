@@ -81,6 +81,10 @@ def can_see(profile, circle):
 
 @transaction.atomic
 def create(profile, name, kind="club", area_name="", description="", is_private=True):
+    from .tiers import allows
+
+    if not allows(profile, "circle_create"):
+        raise CircleError("circle.err.tier")
     name = (name or "").strip()[:80]
     if not name:
         raise CircleError("circle.err.name")

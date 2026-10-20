@@ -605,3 +605,10 @@ details.bk-filterbox .bk-filter { margin-bottom: 0; }
 .bk-exhibit-photos img { height: 180px; width: auto; border-radius: var(--bk-radius); border: 1px solid var(--bk-line); }
 .bk-exhibit-text { white-space: pre-wrap; max-width: 680px; }
 .bk-exhibit-item h2 a { display: inline-flex; align-items: center; min-height: 44px; }
+
+/* ---- plans (BK11) -------------------------------------------------------------- */
+.bk-plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 14px 0; }
+.bk-plan { background: var(--bk-surface); border: 1px solid var(--bk-line); border-radius: var(--bk-radius); padding: 14px; display: grid; gap: 8px; align-content: start; }
+.bk-plan.is-current { border: 2px solid var(--bk-brass); }
+.bk-plan-price { font-family: var(--bk-serif); font-size: 20px; margin: 0; }
+.bk-plan .bk-btn[disabled] { opacity: .65; cursor: not-allowed; }

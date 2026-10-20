@@ -14,6 +14,7 @@ from .hub import (
                   TransferViewSet,
 )
 from .museum import ExhibitItemViewSet, ExhibitViewSet, RareReviewViewSet
+from .plans import PlanViewSet
 from .play import BadgeViewSet, CheckinViewSet, PlayViewSet, PointEventViewSet
 from .viewsets import (
                   BookDetailViewSet,
@@ -72,3 +73,4 @@ router.register("discover", DiscoverViewSet, basename="discover")
 router.register("rare-reviews", RareReviewViewSet, basename="rare-review")
 router.register("exhibits", ExhibitViewSet, basename="exhibit")
 router.register("exhibit-items", ExhibitItemViewSet, basename="exhibit-item")
+router.register("plan", PlanViewSet, basename="plan")

@@ -266,6 +266,13 @@ def build_world():
     waiting = Copy.objects.create(owner=staff_p, entry=old, position=60)
     photo_for(waiting, "copyright_page")
     rare.send_for_review(staff_p, waiting, "נראה לי מהדורה ראשונה")
+
+    # Tiers (BK11): the shelver applied the code; the reader is on the free tier.
+    from books import tiers
+    from books.models import Coupon
+    # Live-server tests empty the database between tests, migration data too.
+    Coupon.objects.get_or_create(code="helpavi", defaults={"tier": "plus", "days": 90})
+    tiers.redeem(sp, "helpavi")
     return {"reader": reader, "staff": staff, "fresh": fresh}
 
 
@@ -333,6 +340,8 @@ SCREENS = [
     ("rare-desk", "/books/curate/rare/", "staff", "rare-desk"),
     ("copy-rare", lambda: f"/books/copy/{__import__('books.models', fromlist=['Copy']).Copy.objects.get(entry__title='חסמב״ה').pk}/", "shelver", "copy"),
     ("copy-rare-waiting", lambda: f"/books/copy/{__import__('books.models', fromlist=['Copy']).Copy.objects.get(entry__title='ספר ישן מאוד').pk}/", "staff", "copy"),
+    ("plans", "/books/plans/", "reader", "plans"),
+    ("plans-plus", "/books/plans/?redeemed=1", "shelver", "plans"),
     ("person-me", lambda: f"/books/people/{__import__('books.models', fromlist=['Profile']).Profile.objects.get(user__username='reader').pk}/", "reader", "person"),
 ]
 

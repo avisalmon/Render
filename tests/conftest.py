@@ -19,4 +19,7 @@ def _books_no_real_model_calls(request, settings):
         return
     settings.OPENAI_API_KEY = ""
     settings.BOOKS_ENRICH_SWEEP = False
+    # Each feature's own tests run with every tier open; tests/test_books_11.py
+    # closes them to test the tiers themselves.
+    settings.BOOKS_PILOT_EVERYONE_ASKS = True
     yield

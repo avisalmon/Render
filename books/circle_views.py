@@ -43,7 +43,10 @@ def circles_page(request):
         else:
             circles.join(me, circle, request.POST.get("code"))
             return redirect("books:circle", pk=circle.pk)
+    from .tiers import allows
+
     return render(request, "books/circles/list.html", {
+        "can_create": allows(me, "circle_create"),
         "mine": circles.my_circles(me), "open": circles.open_circles(me)[:30], "error": error,
         "kinds": Circle.KINDS, "joined": request.GET.get("joined"),
     })

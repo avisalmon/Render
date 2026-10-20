@@ -4,6 +4,7 @@ from .models import (
     Badge,
     Circle,
     CircleMember,
+    Coupon,
     Deal,
     EntryEnrichment,
     EntryTagging,
@@ -21,6 +22,7 @@ from .models import (
     ReadingLog,
     Report,
     Review,
+    Subscription,
     Thread,
     WebLookup,
 )
@@ -184,3 +186,20 @@ class ExhibitAdmin(admin.ModelAdmin):
     list_display = ["title_he", "is_published", "published_at", "curator"]
     raw_id_fields = ["curator"]
     inlines = [ExhibitItemInline]
+
+
+@admin.register(Coupon)
+class CouponAdmin(admin.ModelAdmin):
+    """Codes that grant a tier. Untick is_active to stop a code."""
+
+    list_display = ["code", "tier", "days", "is_active", "uses", "max_uses", "expires_at"]
+    list_filter = ["is_active", "tier"]
+
+
+@admin.register(Subscription)
+class SubscriptionAdmin(admin.ModelAdmin):
+    """A period on a tier. Add one with provider "set by hand" to give someone a tier."""
+
+    list_display = ["profile", "tier", "provider", "started_at", "ends_at", "coupon"]
+    list_filter = ["tier", "provider"]
+    raw_id_fields = ["profile", "coupon"]

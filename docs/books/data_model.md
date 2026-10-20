@@ -503,3 +503,12 @@ owner chooses), `position`, `answered_at`; unique (`exhibit`, `copy`).
 `owner_note`, `curator_note`, `reviewed_by`, timestamps; sending one is the
 owner's consent for curators to see the copy's photos. No value or price
 field anywhere (spec 12.8). `Notification.exhibit_item`. Migration 0015.
+
+**BK11 additions (2026-10-20, Avi asked for it).** `Subscription` as
+reserved in section 7 (`profile`, `tier`, `started_at`, `ends_at`,
+`provider` coupon / manual / paid) plus `coupon` and `note`; the tier in
+force is the highest current one, with `Profile.tier` as the hand-set
+floor. `Coupon` is new: `code` (unique, lower case), `tier`, `days`,
+`is_active`, `max_uses`, `uses`, `expires_at`, `note`; unique (`profile`,
+`coupon`) on Subscription makes a code once per person. "helpavi" is
+created by migration 0017. Migrations 0016 and 0017.

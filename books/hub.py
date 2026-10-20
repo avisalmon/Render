@@ -49,9 +49,10 @@ class DealError(Exception):
 # ---- who may ask ------------------------------------------------------------------
 
 def can_start(profile):
-    if getattr(settings, "BOOKS_PILOT_EVERYONE_ASKS", True):
-        return True
-    return profile.tier != Profile.FREE
+    """Starting a request is the 4.99 tier's (books/tiers.py); answering one is free."""
+    from .tiers import allows
+
+    return allows(profile, "ask")
 
 
 def blocked_between(a, b):

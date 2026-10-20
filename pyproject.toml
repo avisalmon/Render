@@ -154,6 +154,7 @@ markers = [
     "sprbk8: BK8 books: play",
     "sprbk9: BK9 books: discovery",
     "sprbk10: BK10 books: rare books and the museum",
+    "sprbk11: BK11 books: tiers, payment blocked, codes",
     "booksscreens: books screen contract, every screen by state in a real browser",
     "ctr1: SPR-N.1 counter counts: the hit and stats API, the owner API refusals, the dashboard gate, the snippet",
     "sprc2: SPR-C.2 CrashTech the event, its lifecycle and its roles: create, settings, timeline, people, readiness",

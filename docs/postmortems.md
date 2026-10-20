@@ -17,6 +17,19 @@ Newest first.
 
 ---
 
+## PM-25 · 2026-10-20 · BK11 sprint end: nothing new
+
+**What happened.** Nothing reached production. Turning the tiers on made
+two older tests of the free 1,000-book cap fail, because the shared test
+setup now opens every tier so each feature's own tests stay about their
+feature; those two now close the tiers explicitly. The BK11 refusal tests
+pass only with the tiers closed, which proves their own setup works.
+
+**Rule.** No new rule.
+
+Here: this file
+BKM: deferred - no new general lesson
+
 ## PM-24 · 2026-10-20 · BK10 sprint end: a real key could reach the tests
 
 **What happened.** Nothing reached production. The screen check caught one

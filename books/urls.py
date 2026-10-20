@@ -8,6 +8,7 @@ from . import (
     community_views,
     discover_views,
     museum_views,
+    plans_views,
     hub_views,
     internal,
     library_views,
@@ -77,6 +78,8 @@ urlpatterns = [
     path("curate/rare/", museum_views.rare_desk, name="rare_desk"),
     path("copy/<int:pk>/rare/", museum_views.copy_rare, name="copy_rare"),
     path("photo/<int:pk>.jpg", museum_views.photo, name="photo"),
+    # Tiers (BK11).
+    path("plans/", plans_views.plans, name="plans"),
     # Play (BK8).
     path("play/", play_views.play_page, name="play"),
     path("play/checkin/", play_views.checkin, name="checkin"),

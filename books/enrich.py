@@ -144,7 +144,11 @@ def enrich(entry, profile=None, job=None, use_web=True):
                 filled += got
                 used.append(record.source)
     still = missing(entry)
-    if use_web and ("isbn" in still or "cover" in still) and weblookup.enabled():
+    from .tiers import allows
+
+    holders = [c.owner for c in Copy.objects.filter(entry=entry).select_related("owner__user")[:20]]
+    paid = any(allows(p, "web_lookup") for p in holders + ([profile] if profile else []))
+    if use_web and paid and ("isbn" in still or "cover" in still) and weblookup.enabled():
         try:
             found = weblookup.lookup_many([(entry.title, names[0] if names else "")], profile=profile, job=job,
                                           save_entries=False)

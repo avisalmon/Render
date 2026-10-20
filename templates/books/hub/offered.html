@@ -52,7 +52,7 @@
   {% if open_deal %}
     <p class="bk-notice" role="status">{% t "offered.already" %} <a href="{% url 'books:deal' open_deal.pk %}">{% t "offered.see_request" %}</a></p>
   {% elif not can_start %}
-    <p class="bk-notice" role="status">{% t "offered.cannot_start" %}</p>
+    <a class="bk-notice" href="{% url 'books:plans' %}?next={{ request.path|urlencode }}">{% t "offered.cannot_start" %} {% t "plans.see" %}</a>
   {% else %}
   <form method="post" class="bk-card bk-form" id="ask">
     {% csrf_token %}
