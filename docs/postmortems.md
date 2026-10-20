@@ -17,6 +17,26 @@ Newest first.
 
 ---
 
+## PM-27 · 2026-10-20 · Avi could not start reading on his phone
+
+**What happened.** Avi tried "start reading" on his phone: not made for a
+phone, a drop-down of all his books with no search, and no Start button
+(choosing led to a second screen). The pages had passed the screen
+contract; the screenshots had a library of two books.
+
+**Why our process let it happen.** Every check looked at one page at a
+time; none did the task (find, start, finish) at phone size with a real
+library. Mistake 25 (content first) covered list pages, not flows.
+
+**Rule.** Every new flow: one phone-size browser test that does the whole
+job, with realistic data, and a walk-through before shipping. Fixed and
+shipped the same hour (0895398): a search box, one list with the books I
+am in first, each row opening to the page and a big Start, one match
+opening by itself.
+
+Here: docs/building_an_app.md mistake 27; tests/test_books_screens.py
+BKM: FullStackBKM 5fbf18d
+
 ## PM-26 · 2026-10-20 · The counter app was never registered with the portal
 
 **What happened.** Adding the Books card to babook's portal ran the

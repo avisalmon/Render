@@ -765,3 +765,16 @@ logs, which was luck.
 **The rule.** One shared fixture (`tests/conftest.py`) blanks the key and
 switches off background sweeps for every `test_books_*` test; a test that
 needs a key sets a fake one and replaces the client.
+
+### 27. Test the task on a phone, not only the pages
+
+Books' "start reading" passed the screen contract on every page. Avi tried
+it on his phone and could not use it: his books in a long drop-down, no
+search, and a second screen before any Start button. No test had done the
+job itself, and the screenshots had two books where his library has
+dozens.
+
+**The rule.** Every new flow gets one browser test at phone size that does
+the person's job start to finish
+(`test_on_a_phone_a_reader_can_find_a_book_start_and_finish`), with a
+realistic amount of data, and the builder walks it once before shipping.

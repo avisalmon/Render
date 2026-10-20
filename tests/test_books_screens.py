@@ -535,3 +535,33 @@ def test_on_a_phone_the_list_comes_first(browser, live_server, db, label, path, 
         assert top < PHONE["height"] / 2, f"{label}: the first row starts at {top:.0f}px of {PHONE['height']}"
     finally:
         context.close()
+
+
+def test_on_a_phone_a_reader_can_find_a_book_start_and_finish(browser, live_server, db):
+    """The task, not the page (Avi, 2026-10-20: "no search, no Start button"):
+    on a phone, type part of a title, tap the book, tap Start, see the timer,
+    enter a page, tap I'm done, see the summary."""
+    from books import catalog
+    from books.models import Copy, Profile, ReadingSession
+    build_world()
+    rp = Profile.objects.get(user__username="reader")
+    for i in range(20):
+        e = catalog.CatalogEntry.objects.create(collection_type=catalog.book_type(), title=f"ספר מספר {i + 1}")
+        Copy.objects.create(owner=rp, entry=e, position=i)
+    context, page, _ = _open(browser, live_server, "reader", "/books/read/", PHONE, "light")
+    try:
+        page.fill("[data-read-search]", "מספר 17")
+        page.wait_for_timeout(200)
+        start = page.locator(".bk-read-row:not([hidden]) details[open] button[type=submit]")
+        assert start.count() == 1 and start.is_visible()
+        page.locator(".bk-read-row:not([hidden]) input[name=page]").fill("12")
+        start.click()
+        page.wait_for_selector("[data-timer]")
+        assert ReadingSession.objects.get(ended_at__isnull=True, profile=rp).start_page == 12
+        page.fill("input[name=end_page]", "20")
+        page.click("form[action$='/end/'] button[type=submit]")
+        page.wait_for_load_state("domcontentloaded")
+        assert "/books/read/" in page.url and page.locator(".bk-stat").count() >= 3
+        assert ReadingSession.objects.get(profile=rp, entry__title="ספר מספר 17").end_page == 20
+    finally:
+        context.close()
