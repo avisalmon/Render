@@ -32,9 +32,18 @@ def _paused(source):
 
 
 def pause(source):
-    """A source that says 429 (over quota) is left alone for ten minutes,
-    instead of being asked again for every book on the shelf."""
+    """A source that says 429 (over quota), or is down or blocking us (5xx,
+    403), is left alone for ten minutes, instead of being asked again for
+    every book on the shelf."""
     cache.set(f"books:source-paused:{source.NAME}", True, PAUSE_SECONDS)
+
+
+def should_pause(exc):
+    """The National Library sits behind Cloudflare, which answered our
+    servers with a 403 challenge page and Render's with 502 (2026-10-20):
+    a failure that will not pass in a second is a reason to stop asking."""
+    text = str(exc)
+    return any(code in text for code in ("429", "HTTP 403", "HTTP 5"))
 
 
 def enabled():
@@ -62,7 +71,7 @@ def lookup(query=None, isbn=None, limit=8):
                 records.extend(source.search(query, limit=limit))
         except SourceError as exc:
             log.warning("books source %s failed: %s", source.NAME, exc)
-            if "429" in str(exc):
+            if should_pause(exc):
                 pause(source)
         except Exception:  # noqa: BLE001
             log.exception("books source %s crashed", source.NAME)

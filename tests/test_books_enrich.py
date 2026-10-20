@@ -202,3 +202,25 @@ def test_enriching_from_the_web_never_makes_a_second_copy_of_the_book(noa, monke
     enrich.enrich(e)
     assert CatalogEntry.objects.count() == before
     assert e.identifiers.get(scheme="isbn13").value == "9789655455205"
+
+
+def test_a_source_that_is_down_or_blocking_is_paused_not_asked_per_book(monkeypatch):
+    """The National Library's Cloudflare answered 403 here and 502 from Render."""
+    from django.core.cache import cache
+
+    from books import sources
+    from books.sources import SourceError
+
+    cache.clear()
+    calls = []
+
+    def down(query, limit=8):
+        calls.append(query)
+        raise SourceError("nli: HTTP 502")
+
+    monkeypatch.setattr(sources, "enabled", lambda: [s for s in [sources.nli] if not sources._paused(s)])
+    monkeypatch.setattr(sources.nli, "search", down)
+    sources.lookup(query="א")
+    sources.lookup(query="ב")
+    assert calls == ["א"]  # paused after the first failure
+    assert sources.should_pause(SourceError("nli: HTTP 403")) and not sources.should_pause(SourceError("timeout"))
