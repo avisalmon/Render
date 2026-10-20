@@ -4,11 +4,11 @@
 {% block content %}
 <div class="bk-wide">
   <h1 class="bk-title">{% t "catalog.title" %}</h1>
-  <p class="bk-lead">{% t "catalog.lead" %}</p>
-  <form method="get" class="bk-row" role="search">
+  <p class="bk-lead bk-intro">{% t "catalog.lead" %}</p>
+  <form method="get" class="bk-row" role="search" style="flex-wrap: nowrap; gap: 8px">
     <label class="bk-visually-hidden" for="catalog-q">{% t "search" %}</label>
-    <input id="catalog-q" class="bk-input" style="flex: 1 1 260px" type="search" name="q" value="{{ q }}" placeholder="{% t "catalog.placeholder" %}" autocomplete="off">
-    <button type="submit" class="bk-btn bk-btn--primary">{% t "search" %}</button>
+    <input id="catalog-q" class="bk-input" style="flex: 1 1 200px; width: auto" type="search" name="q" value="{{ q }}" placeholder="{% t "catalog.placeholder" %}" autocomplete="off">
+    <button type="submit" class="bk-iconbtn bk-iconbtn--primary" aria-label="{% t "search" %}" title="{% t "search" %}">{% include "books/ui/_icon.html" with name="search" %}</button>
   </form>
 
   {% if q %}

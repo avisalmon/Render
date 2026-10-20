@@ -432,3 +432,31 @@ def test_the_bookcase_and_living_views_render_their_spines(browser, live_server,
         assert order[0] != "s1" and "s1" in order[:4]
     finally:
         context.close()
+
+
+# Avi, 2026-10-20: "I want to see immediately the books in front of my eyes."
+# On a phone, the first row of every list screen starts in the top half of
+# the first screen: options live in a menu, search and filters fold.
+CONTENT_FIRST = [
+    ("library", "/books/library/", "shelver"),
+    ("near", "/books/near/", "reader"),
+    ("club", "/books/club/", "reader"),
+    ("catalog", "/books/catalog/?q=%D7%9E%D7%99%D7%9B%D7%90%D7%9C", "reader"),
+    ("deals", "/books/deals/", "reader"),
+    ("discover", "/books/discover/", "reader"),
+    ("notifications", "/books/notifications/", "reader"),
+    ("my-reading", "/books/reading/", "reader"),
+]
+
+
+@pytest.mark.parametrize("label,path,who", CONTENT_FIRST, ids=[c[0] for c in CONTENT_FIRST])
+def test_on_a_phone_the_list_comes_first(browser, live_server, db, label, path, who):
+    build_world()
+    context, page, _ = _open(browser, live_server, who, path, PHONE, "light")
+    try:
+        top = page.evaluate("() => { const r = document.querySelector('.bk-entry-list .bk-entry-row');"
+                            " return r ? r.getBoundingClientRect().top : null; }")
+        assert top is not None, f"{label}: no list row"
+        assert top < PHONE["height"] / 2, f"{label}: the first row starts at {top:.0f}px of {PHONE['height']}"
+    finally:
+        context.close()

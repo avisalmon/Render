@@ -3,17 +3,25 @@
 {% block screen %}club{% endblock %}
 {% block content %}
 <div class="bk-wide">
-  <h1 class="bk-title">{% t "club.title" %}</h1>
-  <p class="bk-lead">{% t "club.lead" %}</p>
-  <div class="bk-row" style="margin-bottom: 12px">
-    <a class="bk-btn bk-btn--small bk-btn--primary" href="{% url 'books:thread_new' %}">{% t "club.new" %}</a>
-    <a class="bk-btn bk-btn--small" href="{% url 'books:circles' %}">{% t "circles.title" %}</a>
-    <a class="bk-btn bk-btn--small" href="{% url 'books:people' %}">{% t "club.people" n=people_count %}</a>
-    <a class="bk-btn bk-btn--small" href="{% url 'books:my_reading' %}">{% t "club.my_reading" %}</a>
-    <a class="bk-btn bk-btn--small" href="{% url 'books:play' %}">{% t "play.title" %}</a>
+  <div class="bk-pagehead">
+    <h1 class="bk-title">{% t "club.title" %}</h1>
+    <a class="bk-iconbtn bk-iconbtn--primary" href="{% url 'books:thread_new' %}" aria-label="{% t "club.new" %}" title="{% t "club.new" %}">{% include "books/ui/_icon.html" with name="plus" %}</a>
+    <details class="bk-menu">
+      <summary class="bk-iconbtn" aria-label="{% t "ui.more" %}" title="{% t "ui.more" %}">{% include "books/ui/_icon.html" with name="more" %}</summary>
+      <div class="bk-menu-pop">
+        <a href="{% url 'books:circles' %}">{% t "circles.title" %}</a>
+        <a href="{% url 'books:people' %}">{% t "club.people" n=people_count %}</a>
+        <a href="{% url 'books:my_reading' %}">{% t "club.my_reading" %}</a>
+        <a href="{% url 'books:play' %}">{% t "play.title" %}</a>
+        <a href="{% url 'books:discover' %}">{% t "disc.title" %}</a>
+      </div>
+    </details>
   </div>
+  <p class="bk-lead bk-intro">{% t "club.lead" %}</p>
 
-  <form method="get" class="bk-card bk-card--tight bk-filter" role="search">
+  <details class="bk-filterbox" {% if q or kind or circle %}open{% endif %}>
+  <summary>{% include "books/ui/_icon.html" with name="search" %} {% t "ui.search_filter" %}{% if q %} · <b>{{ q }}</b>{% endif %}</summary>
+  <form method="get" class="bk-filter" role="search">
     <label class="bk-field">{% t "club.search" %} <input class="bk-input" type="search" name="q" value="{{ q }}"></label>
     <label class="bk-field">{% t "club.field_kind" %}
       <select class="bk-select" name="kind"><option value="">{% t "club.kind_all" %}</option>{% for k, _ in kinds %}<option value="{{ k }}" {% if k == kind %}selected{% endif %}>{% with key="tkind."|add:k %}{% t key %}{% endwith %}</option>{% endfor %}</select>
@@ -25,6 +33,7 @@
     {% endif %}
     <button type="submit" class="bk-btn">{% t "lib.filter" %}</button>
   </form>
+  </details>
 
   {% if threads %}{% include "books/club/_thread_rows.html" %}{% else %}<p class="bk-lead">{% t "club.none" %}</p>{% endif %}
 </div>

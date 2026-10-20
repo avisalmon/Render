@@ -31,18 +31,7 @@
 
   <h2 class="bk-h2" id="books">{% t "circle.books_h" %}</h2>
   {% if rows %}
-  <div class="bk-near-grid">
-    {% for c, km, spine in rows %}
-    <a class="bk-near-card" href="{% url 'books:offered' c.pk %}">
-      {% if c.entry.cover %}<span class="bk-near-cover bk-near-cover--img"><img src="{{ c.entry.cover.url }}" alt="" loading="lazy"></span>
-      {% else %}<span class="bk-near-cover" style="--spine-bg: {{ spine.color }}; --spine-ink: {{ spine.ink }}" aria-hidden="true"><span>{{ c.entry.title }}</span><span class="bk-near-cover-by">{{ c.entry.creator_names }}</span></span>{% endif %}
-      <span class="bk-entry-title">{{ c.entry.title }}</span>
-      <span class="bk-muted">{{ c.entry.creator_names }}</span>
-      <span class="bk-kicker">{% for o in c.offers.all %}{% if o.is_active %}{% with key="status."|add:o.kind %}{% t key %}{% endwith %}{% if not forloop.last %} · {% endif %}{% endif %}{% endfor %}</span>
-      <span class="bk-muted">{{ c.owner.display_name }}{% if km is not None %} · {% t "near.km" km=km|floatformat:"0" %}{% endif %}</span>
-    </a>
-    {% endfor %}
-  </div>
+  {% include "books/hub/_offered_rows.html" with show_owner=True %}
   {% elif only_mine %}<p class="bk-muted">{% t "circle.only_mine" %}</p>
   {% else %}<p class="bk-muted">{% t "circle.no_books" %}</p>{% endif %}
 

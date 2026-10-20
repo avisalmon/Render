@@ -3,12 +3,11 @@
 {% block screen %}discover{% endblock %}
 {% block content %}
 <div class="bk-wide">
-  <h1 class="bk-title">{% t "disc.title" %}</h1>
-  <p class="bk-lead">{% t "disc.lead" %}</p>
-  <div class="bk-row" style="margin-bottom: 12px">
+  <div class="bk-pagehead">
+    <h1 class="bk-title">{% t "disc.title" %}</h1>
     <a class="bk-btn bk-btn--small{% if not has_taste %} bk-btn--primary{% endif %}" href="{% url 'books:taste' %}">{% t "disc.edit_taste" %}</a>
-    <a class="bk-btn bk-btn--small" href="{% url 'books:catalog' %}">{% t "nav.catalog" %}</a>
   </div>
+  <p class="bk-lead bk-intro">{% t "disc.lead" %}</p>
   {% if not has_taste %}<p class="bk-notice" role="status">{% t "disc.no_taste" %}</p>{% endif %}
 
   {% if near %}

@@ -5,7 +5,7 @@
 <div class="bk-narrow">
   <p><a href="{% url 'books:club' %}">{% t "club.title" %}</a></p>
   <h1 class="bk-title">{% t "people.title" %}</h1>
-  <p class="bk-lead">{% t "people.lead" %}</p>
+  <p class="bk-lead bk-intro">{% t "people.lead" %}</p>
   {% if not me_public %}<p class="bk-notice" role="status">{% t "people.me_hidden" %} <a href="{% url 'books:settings' %}">{% t "settings" %}</a></p>{% endif %}
   <form method="get" class="bk-card bk-card--tight" role="search">
     <div class="bk-row">

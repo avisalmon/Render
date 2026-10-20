@@ -16,17 +16,24 @@
 {% block screen %}library{% endblock %}
 {% block content %}
 <div class="bk-wide">
-  <h1 class="bk-title">{% t "lib.title" %}</h1>
-  <p class="bk-kicker">{% t "lib.count" n=total %}{% if left is not None %} · {% t "scan.left" left=left %}{% endif %}</p>
-  <div class="bk-row" style="margin-bottom: 12px">
-    <a class="bk-btn bk-btn--small bk-btn--primary" href="{% url 'books:scan_new' %}">{% t "home.scan" %}</a>
-    <a class="bk-btn bk-btn--small" href="{% url 'books:library_add' %}">{% t "lib.add" %}</a>
-    <a class="bk-btn bk-btn--small" href="{% url 'books:wishlist' %}">{% t "lib.wishlist" %}</a>
-    <a class="bk-btn bk-btn--small" href="{% url 'books:scans' %}">{% t "lib.scans" %}</a>
-    <a class="bk-btn bk-btn--small" href="{% url 'books:library_export' %}">{% t "lib.export" %}</a>
+  <div class="bk-pagehead">
+    <h1 class="bk-title">{% t "lib.title" %}</h1>
+    <a class="bk-iconbtn bk-iconbtn--primary" href="{% url 'books:scan_new' %}" aria-label="{% t "home.scan" %}" title="{% t "home.scan" %}">{% include "books/ui/_icon.html" with name="camera" %}</a>
+    <details class="bk-menu">
+      <summary class="bk-iconbtn" aria-label="{% t "ui.more" %}" title="{% t "ui.more" %}">{% include "books/ui/_icon.html" with name="more" %}</summary>
+      <div class="bk-menu-pop">
+        <a href="{% url 'books:library_add' %}">{% t "lib.add" %}</a>
+        <a href="{% url 'books:wishlist' %}">{% t "lib.wishlist" %}</a>
+        <a href="{% url 'books:scans' %}">{% t "lib.scans" %}</a>
+        <a href="{% url 'books:library_export' %}">{% t "lib.export" %}</a>
+      </div>
+    </details>
   </div>
+  <p class="bk-pagehead-sub">{% t "lib.count" n=total %}{% if left is not None and left < 100 %} · {% t "scan.left" left=left %}{% endif %}</p>
 
-  <form method="get" class="bk-card bk-card--tight bk-filter" role="search">
+  <details class="bk-filterbox" {% if q or where or show or tag %}open{% endif %}>
+    <summary>{% include "books/ui/_icon.html" with name="search" %} {% t "ui.search_filter" %}{% if q %} · <b>{{ q }}</b>{% endif %}{% if where %} · <b>{{ where }}</b>{% endif %}</summary>
+  <form method="get" class="bk-filter" role="search">
     <label class="bk-field">{% t "lib.search" %} <input class="bk-input" type="search" name="q" value="{{ q }}"></label>
     <label class="bk-field">{% t "lib.where" %}
       <select class="bk-select" name="where"><option value="">{% t "lib.where_all" %}</option>{% for p in places %}<option value="{{ p }}" {% if p == where %}selected{% endif %}>{{ p }}</option>{% endfor %}</select>
@@ -47,6 +54,7 @@
     {% endif %}
     <button type="submit" class="bk-btn">{% t "lib.filter" %}</button>
   </form>
+  </details>
 
   {% if copies %}
   <form method="post" action="{% url 'books:library_bulk' %}" data-bulk>

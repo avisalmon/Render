@@ -17,6 +17,29 @@ Newest first.
 
 ---
 
+## PM-22 · 2026-10-20 · On Avi's phone the options covered the books
+
+**What happened.** Avi, using Books on his phone: buttons across the top
+of every screen take the real estate, and in the library the search form
+fills the screen and no book is visible. Confirmed with phone screenshots:
+the library's first book started at about 740px of an 844px screen; the
+club, near you and the catalogue were the same pattern; catalogue rows were
+cards of about 96px, four books a screen.
+
+**Why our process let it happen.** The screen contract checks overflow,
+contrast, labels and 44px targets, all of which passed. Nothing asked what
+the first screen shows; the screenshots were read for bugs, not priority.
+
+**Rule.** On a phone the content comes first and options fold, with a test
+that the first list row starts in the top half of the screen. Built: a page
+head with one icon action and a "more" menu, search and filters folded
+behind one slim line, two-line list rows everywhere, explaining sentences
+hidden on phones, a slimmer reminder bar. The library went from 0 to about
+9 books on the first screen; the catalogue from 4 to about 10.
+
+Here: docs/building_an_app.md mistake 25; tests/test_books_screens.py
+BKM: FullStackBKM f0d5a0b, e7c6ac3 (design-review skill)
+
 ## PM-21 · 2026-10-20 · The web lookup's search cap did not cap
 
 **What happened.** Avi asked for a cheap web lookup of every scanned book.

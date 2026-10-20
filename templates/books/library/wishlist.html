@@ -5,7 +5,7 @@
 <div class="bk-narrow">
   <p><a href="{% url 'books:library' %}">{% t "copy.back" %}</a></p>
   <h1 class="bk-title">{% t "wish.title" %}</h1>
-  <p class="bk-lead">{% t "wish.lead" %}</p>
+  <p class="bk-lead bk-intro">{% t "wish.lead" %}</p>
   {% if wishes %}
   <ul class="bk-entry-list">
     {% for w in wishes %}

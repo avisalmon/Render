@@ -548,3 +548,53 @@ details.bk-more > summary { cursor: pointer; color: var(--bk-muted); min-height:
 .bk-taste-grid { display: grid; gap: 6px; }
 .bk-taste-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; padding: 6px 0; border-bottom: 1px solid var(--bk-line); }
 .bk-taste-row .bk-radio-row { gap: 6px; }
+
+/* ---- screen real estate (Avi, 2026-10-20): the books first, options folded --- */
+/* Compact list rows everywhere: a thin divider, a small cover, one line each. */
+.bk-entry-list { gap: 0; margin-top: 6px; }
+.bk-entry-list > .bk-entry-row { border: 0; border-bottom: 1px solid var(--bk-line); border-radius: 0; background: transparent; }
+.bk-entry-list > .bk-entry-row:first-child { border-top: 1px solid var(--bk-line); }
+.bk-entry-list .bk-entry-link { padding: 6px 2px; min-height: 52px; gap: 10px; }
+.bk-entry-list .bk-entry-cover { width: 30px; height: 42px; }
+.bk-entry-list .bk-entry-text > * { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bk-entry-list .bk-entry-title { font-size: 16px; }
+.bk-entry-list .bk-muted, .bk-entry-list .bk-kicker, .bk-entry-list .bk-rec-why { font-size: 13px; }
+.bk-entry-list > .bk-entry-row--actions { padding: 8px 2px; }
+
+/* A page head: the title, one main action, and a menu for the rest. */
+.bk-pagehead { display: flex; align-items: center; gap: 8px; margin: 2px 0 8px; }
+.bk-pagehead .bk-title { flex: 1; margin: 0; min-width: 0; }
+.bk-pagehead-sub { font-size: 13px; color: var(--bk-muted); margin: -4px 0 8px; }
+.bk-iconbtn { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; flex: none; border-radius: var(--bk-radius); border: 1px solid var(--bk-line); background: var(--bk-surface); color: var(--bk-ink); text-decoration: none; cursor: pointer; }
+.bk-iconbtn:hover { color: var(--bk-ink); border-color: var(--bk-brass); }
+.bk-iconbtn--primary { background: var(--bk-brass); border-color: var(--bk-brass); color: var(--bk-on-brass); }
+.bk-iconbtn--primary:hover { color: var(--bk-on-brass); }
+details.bk-menu { position: relative; }
+details.bk-menu > summary { list-style: none; }
+details.bk-menu > summary::-webkit-details-marker { display: none; }
+.bk-menu-pop { position: absolute; inset-inline-end: 0; top: 50px; z-index: 40; min-width: 220px; display: grid; background: var(--bk-surface); border: 1px solid var(--bk-line); border-radius: var(--bk-radius); box-shadow: 0 10px 24px var(--bk-shadow); padding: 4px 0; }
+.bk-menu-pop a, .bk-menu-pop button { display: flex; align-items: center; min-height: 44px; padding: 0 14px; color: var(--bk-ink); text-decoration: none; background: none; border: 0; font: inherit; text-align: start; cursor: pointer; }
+.bk-menu-pop a:hover, .bk-menu-pop button:hover { background: var(--bk-surface-2); color: var(--bk-ink); }
+
+/* Search and filters behind one slim line; open when something is applied. */
+details.bk-filterbox { margin: 0 0 6px; }
+details.bk-filterbox > summary { list-style: none; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px; border: 1px solid var(--bk-line); border-radius: var(--bk-radius); background: var(--bk-surface); cursor: pointer; color: var(--bk-muted); }
+details.bk-filterbox > summary::-webkit-details-marker { display: none; }
+details.bk-filterbox > summary b { color: var(--bk-ink); font-weight: 500; }
+details.bk-filterbox[open] > summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+details.bk-filterbox > form, details.bk-filterbox > .bk-filterbox-body { border: 1px solid var(--bk-line); border-top: 0; border-radius: 0 0 var(--bk-radius) var(--bk-radius); padding: 10px; background: var(--bk-surface); }
+details.bk-filterbox .bk-filter { margin-bottom: 0; }
+
+/* On a phone: no explaining sentence under a list's title; a slimmer bar. */
+@media (max-width: 699px) {
+  .bk-intro { display: none; }
+  .bk-title { font-size: 24px; }
+  .bk-scanbar { padding: 6px 12px; font-size: 14px; margin-bottom: 8px; min-height: 44px; }
+}
+/* Two lines a row: the title, then everything else side by side. */
+.bk-entry-list .bk-entry-text { display: grid; grid-template-columns: minmax(0, max-content) minmax(0, 1fr); row-gap: 1px; align-items: baseline; }
+.bk-entry-list .bk-entry-text > .bk-entry-title { grid-column: 1 / -1; }
+.bk-entry-list .bk-entry-text > :nth-child(3)::before { content: " · "; white-space: pre; }
+.bk-entry-list .bk-entry-text > :nth-child(n+4) { grid-column: 1 / -1; }
+.bk-entry-list .bk-entry-link { min-height: 48px; padding: 5px 2px; }
+.bk-entry-list .bk-entry-cover { width: 28px; height: 38px; }

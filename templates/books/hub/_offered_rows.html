@@ -1,0 +1,12 @@
+{% load books_tags %}<ul class="bk-entry-list">
+  {% for c, km, spine in rows %}
+  <li class="bk-entry-row"><a class="bk-entry-link" href="{% url 'books:offered' c.pk %}">
+    <span class="bk-entry-cover" aria-hidden="true"{% if not c.entry.cover %} style="background: {{ spine.color }}"{% endif %}>{% if c.entry.cover %}<img src="{{ c.entry.cover.url }}" alt="" loading="lazy">{% endif %}</span>
+    <span class="bk-entry-text">
+      <span class="bk-entry-title">{{ c.entry.title }}</span>
+      <span class="bk-muted">{{ c.entry.creator_names }}</span>
+      <span class="bk-kicker">{% for o in c.offers.all %}{% if o.is_active %}{% with key="status."|add:o.kind %}{% t key %}{% endwith %}{% if not forloop.last %} · {% endif %}{% endif %}{% endfor %} · {% if show_owner %}{{ c.owner.display_name }}{% else %}{{ c.owner.area_name }}{% endif %}{% if km is not None %} · {% t "near.km" km=km|floatformat:"0" %}{% elif not show_owner %} · {% t "near.same_area" %}{% endif %}</span>
+    </span>
+  </a></li>
+  {% endfor %}
+</ul>

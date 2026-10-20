@@ -77,6 +77,12 @@
     <a href="{% url 'books:terms' %}">{% t "footer.terms" %}</a> · <a href="{% url 'books:privacy' %}">{% t "footer.privacy" %}</a>
   </footer>
   <script src="{% static 'books/shelf.js' %}" defer></script>
+  <script>
+  // An open menu closes when you tap anywhere else (one shared rule, every page).
+  document.addEventListener('click', function (e) {
+    document.querySelectorAll('details.bk-menu[open]').forEach(function (m) { if (!m.contains(e.target)) m.removeAttribute('open'); });
+  });
+  </script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

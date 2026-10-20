@@ -3,8 +3,10 @@
 {% block screen %}deals{% endblock %}
 {% block content %}
 <div class="bk-narrow">
-  <p><a href="{% url 'books:near' %}">{% t "near.title" %}</a></p>
-  <h1 class="bk-title">{% t "deals.title" %}</h1>
+  <div class="bk-pagehead">
+    <h1 class="bk-title">{% t "deals.title" %}</h1>
+    <a class="bk-btn bk-btn--small" href="{% url 'books:near' %}">{% t "near.title" %}</a>
+  </div>
   {% if not open and not closed %}
     <p class="bk-lead">{% t "deals.none" %}</p>
   {% endif %}

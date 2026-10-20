@@ -729,3 +729,21 @@ obeys whatever the code assumes.
 the actual count and bill from the response. Budget on the measured number
 (Books: $0.04 reserved a book), and keep a hard daily cap in our own code
 (`BOOKS_WEB_DAILY_USD`), never the vendor's knob alone.
+
+### 25. On a phone, the content comes first; options fold
+
+Avi, 2026-10-20, on his phone: "most of the area of the screen is a search
+button, and I don't see the books." Every Books list screen opened with a
+title, an explaining sentence, five buttons and a four-field filter form;
+on the library not one book showed without scrolling. The screen contract
+passed: nothing overflowed and every target was 44px. It measured fit, not
+priority.
+
+**The rule.** On a phone the first row of a list screen starts in the top
+half of the first screen, and a test measures it
+(`test_on_a_phone_the_list_comes_first`). The pattern, for every app: one
+main action as an icon in the page head, the rest in a "more" menu
+(`bk-pagehead`, `bk-menu`); search and filters behind one slim line that
+opens on tap and stays open when a filter is active (`bk-filterbox`); list
+rows of two lines, not cards; explaining sentences hidden under 700px
+(`bk-intro`).

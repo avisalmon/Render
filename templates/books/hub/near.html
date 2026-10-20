@@ -3,11 +3,11 @@
 {% block screen %}near{% endblock %}
 {% block content %}
 <div class="bk-wide">
-  <h1 class="bk-title">{% t "near.title" %}</h1>
-  <p class="bk-lead">{% t "near.lead" %}</p>
-  <div class="bk-row" style="margin-bottom: 12px">
+  <div class="bk-pagehead">
+    <h1 class="bk-title">{% t "near.title" %}</h1>
     <a class="bk-btn bk-btn--small" href="{% url 'books:deals' %}">{% t "deals.title" %}</a>
   </div>
+  <p class="bk-lead bk-intro">{% t "near.lead" %}</p>
 
   {% if not has_area %}
     <div class="bk-card">
@@ -15,14 +15,11 @@
       <a class="bk-btn bk-btn--primary" href="{% url 'books:settings' %}">{% t "near.set_area" %}</a>
     </div>
   {% else %}
-  <form method="get" class="bk-card bk-card--tight" role="search">
-    <div class="bk-row">
-      <label class="bk-field" style="flex: 1 1 200px">{% t "near.search" %} <input class="bk-input" type="search" name="q" value="{{ q }}"></label>
-      <button type="submit" class="bk-btn" style="align-self: flex-end">{% t "lib.filter" %}</button>
-    </div>
-    <details class="bk-more" {% if filtered %}open{% endif %}>
-    <summary>{% t "near.more_filters" %}</summary>
+  <details class="bk-filterbox" {% if q or filtered %}open{% endif %}>
+  <summary>{% include "books/ui/_icon.html" with name="search" %} {% t "ui.search_filter" %}{% if q %} · <b>{{ q }}</b>{% endif %}</summary>
+  <form method="get" role="search">
     <div class="bk-filter">
+    <label class="bk-field">{% t "near.search" %} <input class="bk-input" type="search" name="q" value="{{ q }}"></label>
     {% if has_circles %}<label class="bk-check"><input type="checkbox" name="circles" value="1" {% if in_circles %}checked{% endif %}> <span>{% t "near.in_circles" %}</span></label>{% endif %}
     <label class="bk-field">{% t "offered.offers" %}
       <select class="bk-select" name="kind">
@@ -44,24 +41,14 @@
       <select class="bk-select" name="tag"><option value="">{% t "lib.genre_all" %}</option>{% for tg in tags %}<option value="{{ tg.key }}" {% if tg.key == tag %}selected{% endif %}>{% if lang == "he" %}{{ tg.name_he }}{% else %}{{ tg.name_en }}{% endif %}</option>{% endfor %}</select>
     </label>
     {% endif %}
+    <button type="submit" class="bk-btn">{% t "lib.filter" %}</button>
     </div>
-    </details>
   </form>
+  </details>
   <p class="bk-kicker">{% t "near.radius" km=radius %}{% if has_circles %} · {% t "near.circle_hint" %}{% endif %}</p>
 
   {% if rows %}
-  <div class="bk-near-grid">
-    {% for c, km, spine in rows %}
-    <a class="bk-near-card" href="{% url 'books:offered' c.pk %}">
-      {% if c.entry.cover %}<span class="bk-near-cover bk-near-cover--img"><img src="{{ c.entry.cover.url }}" alt="" loading="lazy"></span>
-      {% else %}<span class="bk-near-cover" style="--spine-bg: {{ spine.color }}; --spine-ink: {{ spine.ink }}" aria-hidden="true"><span>{{ c.entry.title }}</span><span class="bk-near-cover-by">{{ c.entry.creator_names }}</span></span>{% endif %}
-      <span class="bk-entry-title">{{ c.entry.title }}</span>
-      <span class="bk-muted">{{ c.entry.creator_names }}</span>
-      <span class="bk-kicker">{% for o in c.offers.all %}{% if o.is_active %}{% with key="status."|add:o.kind %}{% t key %}{% endwith %}{% if not forloop.last %} · {% endif %}{% endif %}{% endfor %}</span>
-      <span class="bk-muted">{{ c.owner.area_name }} · {% if km is not None %}{% t "near.km" km=km|floatformat:"0" %}{% else %}{% t "near.same_area" %}{% endif %}</span>
-    </a>
-    {% endfor %}
-  </div>
+  {% include "books/hub/_offered_rows.html" %}
   {% else %}
     <p class="bk-lead">{% t "near.none" %}</p>
   {% endif %}
