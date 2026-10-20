@@ -18,9 +18,18 @@ from django.db.models import Max
 from django.utils import timezone
 
 from . import catalog, images, jobs
-from .models import (BookDetail, CatalogEntry, Copy, ModelCall, Offer, Profile, ScanCandidate, ScanItem, ShelfScan)
+from .models import (
+    BookDetail,
+    Copy,
+    ModelCall,
+    Offer,
+    Profile,
+    ScanCandidate,
+    ScanItem,
+    ShelfScan,
+)
 from .recognition import KeyProblem, read_shelf
-from .textnorm import normalize, similarity
+from .textnorm import similarity
 
 log = logging.getLogger(__name__)
 
@@ -121,6 +130,12 @@ def read_job(job):
             find_candidates(item, created_by=scan.owner)
         except Exception:  # noqa: BLE001
             log.exception("books scan %s: candidates for item %s", scan.pk, item.pk)
+    try:
+        web_candidates(scan, job=job)
+    except KeyProblem:
+        log.error("books scan %s: web lookup stopped, the OpenAI key needs replacing", scan.pk)
+    except Exception:  # noqa: BLE001
+        log.exception("books scan %s: web lookup", scan.pk)
     scan.status = ShelfScan.REVIEW if scan.books_found else ShelfScan.DONE
     scan.finished_at = timezone.now()
     scan.save(update_fields=["status", "finished_at"])
@@ -160,6 +175,46 @@ def find_candidates(item, created_by=None, use_sources=True):
     item.confidence = Decimal(str(round(_score(item, ranked[0]), 3))) if ranked else Decimal(0)
     item.save(update_fields=["confidence"])
     return ranked
+
+
+WEB_CEILING = Decimal("0.84")  # a web find is never "sure": the person confirms it
+
+
+def web_candidates(scan, job=None):
+    """The books the free sources did not match well go to the web together
+    (books/weblookup.py: cached per book site-wide, capped per day). A find
+    joins the item's candidates, just below "sure"."""
+    from . import weblookup
+
+    weak = [i for i in scan.items.filter(review_status=ScanItem.PENDING) if i.confidence < HIGH_CONFIDENCE]
+    if not weak or not weblookup.enabled():
+        return 0
+    found = weblookup.lookup_many([(i.raw_title, i.raw_author) for i in weak], profile=scan.owner, job=job)
+    added = 0
+    for item in weak:
+        row = found.get((item.raw_title, item.raw_author))
+        if row is None or not row.found or row.entry_id is None:
+            continue
+        entry = row.entry.merged_into or row.entry
+        sure = Decimal(str(max(0.0, min(1.0, float((row.result or {}).get("confidence") or 0)))))
+        conf = min(WEB_CEILING, max(Decimal(str(round(_score(item, entry), 3))), (sure * Decimal("0.85")).quantize(
+            Decimal("0.001"))))
+        existing = ScanCandidate.objects.filter(item=item, entry=entry).first()
+        if existing:
+            existing.confidence = max(existing.confidence, conf)
+            existing.save(update_fields=["confidence"])
+        else:
+            ScanCandidate.objects.create(item=item, entry=entry, rank=99, confidence=conf)
+        ranked = sorted(item.candidates.all(), key=lambda c: -c.confidence)[:CANDIDATES]
+        item.candidates.exclude(pk__in=[c.pk for c in ranked]).delete()
+        for rank, c in enumerate(ranked):
+            if c.rank != rank:
+                c.rank = rank
+                c.save(update_fields=["rank"])
+        item.confidence = ranked[0].confidence
+        item.save(update_fields=["confidence"])
+        added += 1
+    return added
 
 
 # ---- confirming ------------------------------------------------------------------

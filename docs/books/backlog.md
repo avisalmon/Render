@@ -285,6 +285,25 @@ in that day's deploys) and he retyped the place on every book. Fixed:
 | F-BK3.11 | A scan whose reading stopped (a restart) is read again from any visit after five minutes, up to three tries, then shown as failed; "try again" reads the same photo; a scan can be removed (shelved books stay) | DONE |
 | F-BK3.12 | One place per batch: the first place typed on a book becomes the default for the books still waiting; "where is this shelf?" at the top sets it for all and fills books already shelved without one; typing it in any card fills the others on the page | DONE |
 
+## Finding scanned books on the web (Avi, 2026-10-20)
+
+Avi: every scanned book should also be looked up on the web for its image,
+ISBN and details, very cheaply, as part of the scan; cap $2 a day.
+
+| ID | Feature | Status |
+| --- | --- | --- |
+| F-BK3.13 | After the free sources (Open Library, Google Books, National Library), the books still without a strong match go to OpenAI web search together, in parallel, inside the scan job, so the review screen already shows them | DONE |
+| F-BK3.14 | Cheapest model (gpt-6-luna); each book searched once for the whole site (`WebLookup`, found or not); a $2 daily cap in our own code with a $0.04 reserve a book; every call costed with its search fee; the pilot desk shows today's spend against the cap | DONE |
+| F-BK3.15 | Nothing trusted blindly: an ISBN must pass its checksum, a year must be a year, a cover link must be https; a web find is a candidate scored just below "sure", so "confirm all sure ones" never takes it and the person confirms | DONE |
+
+Measured with real calls: 4 of 5 spines found (title, ISBN, publisher,
+year, mostly a cover); about $0.03 a book, three searches each, the search
+fee being nearly all of it; `max_tool_calls` did not cap the searches
+(PM-21). Runs differ: the same book came back once with Keter and once with
+Am Oved. A $2 day covers about 50 new books; repeats are free. The free
+keys (ACT-BK.7 National Library, ACT-BK.8 Google Books) make most books
+free and leave the web for the rest.
+
 ## Epic BK3: Shelf scan and confirmation `DONE (dev), 2026-10-19`
 
 Built in one run after Avi acked BK1 and BK2 and said start BK3, with his

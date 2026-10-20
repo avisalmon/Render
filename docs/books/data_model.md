@@ -480,3 +480,10 @@ never erases the other. `EntryTagging` is new: one row per record saying
 how it got its tags (`source` model / curator, `model_name`, `confidence`,
 `raw` answer for audit, `tagged_at`); a curator row stops the model.
 Migration 0012.
+
+**Web lookup addition (2026-10-20, Avi asked for it).** `WebLookup`: one
+web search for one book as read from a spine, kept so it is never searched
+twice by anyone: `key` (normalised title and author, unique), `title`,
+`author`, `found`, `result` (the answer, for audit), `source_url`, `entry`
+(the record it produced), `searches`, `cost_usd`, `created_at`. A record it
+produces has `source` "web". Migration 0013.

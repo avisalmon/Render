@@ -923,3 +923,24 @@ class ProfileTaste(models.Model):
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=["profile", "tag", "source"], name="books_taste_once")]
+
+
+class WebLookup(models.Model):
+    """One web search for one book, kept so the same book is never searched
+    twice, for anyone (Avi, 2026-10-20: very cheap, part of the scan). The
+    key is the normalised title and author as read; found or not, it is
+    stored. `entry` is the record it produced, if any."""
+
+    key = models.CharField(max_length=300, unique=True)
+    title = models.CharField(max_length=300)
+    author = models.CharField(max_length=200, blank=True)
+    found = models.BooleanField(default=False)
+    result = models.JSONField(default=dict, blank=True)
+    source_url = models.URLField(max_length=500, blank=True)
+    entry = models.ForeignKey(CatalogEntry, on_delete=models.SET_NULL, null=True, blank=True, related_name="web_lookups")
+    searches = models.PositiveSmallIntegerField(default=0)
+    cost_usd = models.DecimalField(max_digits=8, decimal_places=5, default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]

@@ -716,3 +716,16 @@ screenshot, read against the seed, showed it.
 **The rule.** For every choice list, a test that it offers every value the
 stored data can hold, and that a saved answer shows as chosen
 (`test_the_survey_offers_every_genre_and_shows_my_answers`).
+
+### 24. A setting that limits cost is not a limit until you have measured it
+
+Books' web lookup is priced per search (about one cent each), so the code
+passed OpenAI's `max_tool_calls=2` and budgeted on two. One real call ran
+three searches anyway; asking for one search in the prompt was obeyed once
+in three and then lost the ISBN. The unit tests used a fake client, which
+obeys whatever the code assumes.
+
+**The rule.** Before a cost estimate goes to Avi, one real call, and read
+the actual count and bill from the response. Budget on the measured number
+(Books: $0.04 reserved a book), and keep a hard daily cap in our own code
+(`BOOKS_WEB_DAILY_USD`), never the vendor's knob alone.

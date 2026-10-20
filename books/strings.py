@@ -634,6 +634,7 @@ STRINGS = {
     "pilot.cost": {"he": "עלות מודלים", "en": "Model cost"},
     "pilot.cost_total": {"he": "סך הכל {usd}$", "en": "{usd} USD in all"},
     "pilot.cost_week": {"he": "השבוע {usd}$", "en": "{usd} USD this week"},
+    "pilot.web": {"he": "חיפוש ברשת: היום {today}$ מתוך {cap}$ · {found} נמצאו מתוך {n} ספרים · {total}$ בסך הכל", "en": "Web lookup: {today} of {cap} USD today · {found} found of {n} books · {total} USD in all"},
     "pilot.circles": {"he": "מעגלים", "en": "Circles"},
     "pilot.reports": {"he": "דיווחים פתוחים: {n}", "en": "Open reports: {n}"},
     "pilot.feedback": {"he": "משוב ({n} חדשים)", "en": "Feedback ({n} new)"},

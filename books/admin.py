@@ -18,6 +18,7 @@ from .models import (
     Report,
     Review,
     Thread,
+    WebLookup,
 )
 
 
@@ -139,4 +140,14 @@ class EntryTaggingAdmin(admin.ModelAdmin):
 
     list_display = ["entry", "source", "model_name", "confidence", "tagged_at"]
     list_filter = ["source"]
+    raw_id_fields = ["entry"]
+
+
+@admin.register(WebLookup)
+class WebLookupAdmin(admin.ModelAdmin):
+    """One web search per book, cached for the whole site. Delete a row to search that book again."""
+
+    list_display = ["title", "author", "found", "searches", "cost_usd", "created_at"]
+    list_filter = ["found"]
+    search_fields = ["title", "author"]
     raw_id_fields = ["entry"]

@@ -542,3 +542,6 @@ BOOKS_GOOGLE_BOOKS_KEY = os.environ.get("BOOKS_GOOGLE_BOOKS_KEY", "")
 BOOKS_NLI_API_KEY = os.environ.get("BOOKS_NLI_API_KEY", "")
 # Books BK5: until billing exists (BK11) every profile may start a request.
 BOOKS_PILOT_EVERYONE_ASKS = os.environ.get("BOOKS_PILOT_EVERYONE_ASKS", "1") == "1"
+# Books: find unmatched books on the web as part of a scan, at most this much a day (Avi, 2026-10-20).
+BOOKS_WEB_LOOKUP = os.environ.get("BOOKS_WEB_LOOKUP", "1") == "1"
+BOOKS_WEB_DAILY_USD = os.environ.get("BOOKS_WEB_DAILY_USD", "2")

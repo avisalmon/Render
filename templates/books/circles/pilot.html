@@ -58,6 +58,7 @@
 
   <h2 class="bk-h2">{% t "pilot.cost" %}</h2>
   <p>{% t "pilot.cost_total" usd=cost.total_usd|floatformat:2 %} · {% t "pilot.cost_week" usd=cost.week_usd|floatformat:2 %}</p>
+  <p>{% t "pilot.web" today=web.today_usd|floatformat:2 cap=web.cap_usd|floatformat:2 found=web.found n=web.lookups total=web.total_usd|floatformat:2 %}</p>
 
   <h2 class="bk-h2">{% t "pilot.circles" %}</h2>
   {% if circles %}

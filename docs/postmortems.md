@@ -17,6 +17,25 @@ Newest first.
 
 ---
 
+## PM-21 · 2026-10-20 · The web lookup's search cap did not cap
+
+**What happened.** Avi asked for a cheap web lookup of every scanned book.
+The first estimate to him (about $0.011 a book with one search) assumed a
+cap; the code passed `max_tool_calls=2`. One real call before shipping ran
+three searches per book at $0.032; asking in the prompt for one search was
+obeyed once in three and lost the ISBN. The real figure, about $0.03 a book,
+went into the code (a $0.04 reserve) and to Avi before anything shipped.
+
+**Why our process let it happen.** The estimate was arithmetic on a
+documented parameter; the tests used a fake client that obeys the code's
+assumptions.
+
+**Rule.** A setting that limits cost is not a limit until measured: one
+real call, read the bill, budget on that, keep our own hard daily cap.
+
+Here: docs/building_an_app.md mistake 24; books/weblookup.py
+BKM: FullStackBKM d1502bd
+
 ## PM-20 · 2026-10-20 · BK9 sprint end: a survey too coarse, and two tests that could not fail
 
 **What happened.** Nothing reached production. (1) The taste survey offered

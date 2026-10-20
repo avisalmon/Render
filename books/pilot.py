@@ -78,6 +78,17 @@ def numbers(days=7):
         "cost": {"total_usd": float(cost), "week_usd": float(cost_week)},
         "circles": circles,
         "open_reports": Report.objects.filter(status=Report.OPEN).count(),
+        "web": _web(),
         "feedback": list(Feedback.objects.select_related("profile")[:30]),
         "open_feedback": Feedback.objects.filter(status=Feedback.OPEN).count(),
     }
+
+
+def _web():
+    from .models import WebLookup
+    from .weblookup import daily_cap, spent_today
+
+    rows = WebLookup.objects.all()
+    return {"today_usd": float(spent_today()), "cap_usd": float(daily_cap()), "lookups": rows.count(),
+            "found": rows.filter(found=True).count(),
+            "total_usd": float(rows.aggregate(n=Sum("cost_usd"))["n"] or 0)}
