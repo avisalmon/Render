@@ -1,0 +1,57 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "play.title" %} · {% t "brand" %}{% endblock %}
+{% block screen %}play{% endblock %}
+{% block content %}
+<div class="bk-narrow">
+  <p><a href="{% url 'books:club' %}">{% t "club.title" %}</a></p>
+  <h1 class="bk-title">{% t "play.title" %}</h1>
+  <p class="bk-lead">{% t "play.lead" %}</p>
+
+  <section class="bk-card bk-streak-card" id="streak">
+    <p style="margin: 0"><b class="bk-streak-n">{{ streak }}</b> {% t "play.streak_days" n=streak %}{% if freezes %} <span class="bk-muted">· {% t "play.freezes" n=freezes %}</span>{% endif %}</p>
+    {% if read_today %}
+      <p class="bk-muted" style="margin: 0">{% t "play.read_today_done" %}</p>
+      <form method="post" action="{% url 'books:checkin' %}">{% csrf_token %}<input type="hidden" name="undo" value="1"><button type="submit" class="bk-btn bk-btn--small bk-btn--quiet">{% t "play.undo" %}</button></form>
+    {% else %}
+      <form method="post" action="{% url 'books:checkin' %}" class="bk-form">{% csrf_token %}
+        <label class="bk-field">{% t "play.minutes" %} <input class="bk-input" name="minutes" type="number" min="1" max="1440" inputmode="numeric"></label>
+        <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "play.i_read_today" %}</button>
+      </form>
+    {% endif %}
+    <p class="bk-help" style="margin: 0">{% t "play.freezes_help" %}</p>
+  </section>
+
+  <div class="bk-stats">
+    <div class="bk-stat"><b>{{ points }}</b><span>{% t "play.points_total" %}</span></div>
+    <div class="bk-stat"><b>{{ week }}</b><span>{% t "play.points_week" %}</span></div>
+    <div class="bk-stat"><b>{{ badges|length }}</b><span>{% t "play.badges" %}</span></div>
+  </div>
+  <p><a class="bk-btn" href="{% url 'books:year' %}">{% t "play.year" %}</a></p>
+
+  {% for circle, board in boards %}
+  <h2 class="bk-h2">{{ circle.name }} · {% t "play.board_week" %}</h2>
+  {% include "books/play/_board.html" %}
+  {% endfor %}
+
+  <h2 class="bk-h2">{% t "play.badges" %}</h2>
+  <div class="bk-badges">
+    {% for pb in badges %}
+    <div class="bk-badge"><b>{% if request.books_lang == "he" %}{{ pb.badge.name_he }}{% else %}{{ pb.badge.name_en }}{% endif %}</b><span>{% if request.books_lang == "he" %}{{ pb.badge.about_he }}{% else %}{{ pb.badge.about_en }}{% endif %}</span><span>{{ pb.earned_at|date:"d.m.Y" }}</span></div>
+    {% endfor %}
+  </div>
+
+  <h2 class="bk-h2">{% t "play.how_h" %}</h2>
+  <ul class="bk-plain-list">
+    {% for k, n in points_table.items %}<li>{% with key="play.how_"|add:k %}{% t key %}{% endwith %}: {% t "play.points" n=n %}</li>{% endfor %}
+  </ul>
+  <p class="bk-help">{% t "play.how_fair" %}</p>
+
+  <h2 class="bk-h2">{% t "play.history" %}</h2>
+  {% for e in events %}
+  <div class="bk-ledger-row{% if e.reversed_at %} is-reversed{% endif %}">
+    <span>{% with key="pkind."|add:e.kind %}{% t key %}{% endwith %}{% if e.deal %} · {{ e.deal.copy.entry.title }}{% elif e.entry %} · {{ e.entry.title }}{% elif e.thread %} · {{ e.thread.title }}{% endif %}{% if e.reversed_at %} ({% t "play.reversed" %}){% endif %}</span>
+    <span>+{{ e.points }} · {{ e.created_at|date:"d.m" }}</span>
+  </div>
+  {% empty %}<p class="bk-muted">{% t "play.none" %}</p>{% endfor %}
+</div>
+{% endblock %}

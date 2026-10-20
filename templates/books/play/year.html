@@ -1,0 +1,44 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "year.title" year=year %} · {% t "brand" %}{% endblock %}
+{% block screen %}year{% endblock %}
+{% block content %}
+<div class="bk-narrow">
+  <p><a href="{% url 'books:play' %}">{% t "play.title" %}</a></p>
+  <h1 class="bk-title">{% t "year.title" year=year %}</h1>
+  <p class="bk-help">{% t "year.private" %}</p>
+
+  <div class="bk-stats">
+    <div class="bk-stat"><b>{{ read|length }}</b><span>{% t "year.read" %}</span></div>
+    <div class="bk-stat"><b>{{ days_read }}</b><span>{% t "year.days_read" %}</span></div>
+    <div class="bk-stat"><b>{{ longest }}</b><span>{% t "year.longest" %}</span></div>
+    <div class="bk-stat"><b>{{ added }}</b><span>{% t "year.added" %}</span></div>
+    <div class="bk-stat"><b>{{ lent }}</b><span>{% t "year.lent" %}</span></div>
+    <div class="bk-stat"><b>{{ borrowed }}</b><span>{% t "year.borrowed" %}</span></div>
+    <div class="bk-stat"><b>{{ passed_on }}</b><span>{% t "year.passed_on" %}</span></div>
+    <div class="bk-stat"><b>{{ received }}</b><span>{% t "year.received" %}</span></div>
+    <div class="bk-stat"><b>{{ reviews }}</b><span>{% t "year.reviews" %}{% if avg_rating %} · {% t "year.avg" avg=avg_rating %}{% endif %}</span></div>
+    <div class="bk-stat"><b>{{ threads }}</b><span>{% t "year.threads" %}</span></div>
+    <div class="bk-stat"><b>{{ points }}</b><span>{% t "year.points" %}</span></div>
+    {% if dnf %}<div class="bk-stat"><b>{{ dnf }}</b><span>{% t "year.dnf" %}</span></div>{% endif %}
+  </div>
+
+  <h2 class="bk-h2">{% t "year.read" %}</h2>
+  {% if read %}
+  <ul class="bk-entry-list">
+    {% for r in read %}
+    <li class="bk-entry-row"><a class="bk-entry-link" href="{% url 'books:catalog_entry' r.entry.pk %}">
+      <span class="bk-entry-cover" aria-hidden="true">{% if r.entry.cover %}<img src="{{ r.entry.cover.url }}" alt="">{% endif %}</span>
+      <span class="bk-entry-text"><span class="bk-entry-title">{{ r.entry.title }}</span><span class="bk-muted">{{ r.entry.creator_names }}{% if r.finished_on %} · {{ r.finished_on|date:"d.m" }}{% endif %}</span></span>
+    </a></li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="bk-muted">{% t "year.none_read" %}</p>{% endif %}
+
+  {% if badges %}
+  <h2 class="bk-h2">{% t "year.badges" %}</h2>
+  <div class="bk-badges">{% for pb in badges %}<div class="bk-badge"><b>{% if request.books_lang == "he" %}{{ pb.badge.name_he }}{% else %}{{ pb.badge.name_en }}{% endif %}</b><span>{{ pb.earned_at|date:"d.m" }}</span></div>{% endfor %}</div>
+  {% endif %}
+
+  {% if year > 2025 %}<p style="margin-top: 16px"><a class="bk-link-row" href="{% url 'books:year_of' year|add:-1 %}">{% t "year.prev" %}</a></p>{% endif %}
+</div>
+{% endblock %}

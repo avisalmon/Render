@@ -297,6 +297,9 @@ def confirm_handover(deal, profile):
     deal.save(update_fields=["status", "due_date", "updated_at"])
     for p in (deal.owner, deal.requester):
         notify(p, "deal.handed_over", deal=deal)
+    from . import play
+
+    play.deal_handed_over(deal)
     return deal
 
 
@@ -323,6 +326,9 @@ def confirm_returned(deal, profile):
     deal.copy.status = Copy.WITH_OWNER
     deal.copy.save(update_fields=["status"])
     notify(deal.requester, "deal.returned", deal=deal)
+    from . import play
+
+    play.deal_returned(deal)
     return deal
 
 

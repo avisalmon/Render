@@ -527,3 +527,18 @@ details.bk-more > summary { cursor: pointer; color: var(--bk-muted); min-height:
 .bk-queue-state { color: var(--bk-muted); font-size: 14px; }
 .bk-queue-row[data-state="review"] { border-inline-start: 3px solid var(--bk-brass); }
 .bk-queue-row[data-state="failed"] { border-inline-start: 3px solid var(--bk-danger); }
+
+/* ---- play (BK8) ---------------------------------------------------------------- */
+.bk-streak-card { display: grid; gap: 8px; }
+.bk-streak-n { font-family: var(--bk-serif); font-size: 30px; line-height: 1; color: var(--bk-brass); }
+.bk-badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.bk-badge { background: var(--bk-surface); border: 1px solid var(--bk-line); border-radius: var(--bk-radius); padding: 10px 12px; display: grid; gap: 2px; }
+.bk-badge b { font-family: var(--bk-serif); font-size: 16px; }
+.bk-badge span { font-size: 13px; color: var(--bk-muted); }
+.bk-badge--locked { border-style: dashed; }
+.bk-badge--locked b { color: var(--bk-muted); }
+.bk-board { width: 100%; border-collapse: collapse; }
+.bk-board td, .bk-board th { padding: 8px 6px; border-bottom: 1px solid var(--bk-line); text-align: start; }
+.bk-board tr.is-me td { font-weight: 700; background: var(--bk-surface); }
+.bk-ledger-row { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--bk-line); }
+.bk-ledger-row.is-reversed { color: var(--bk-muted); text-decoration: line-through; }

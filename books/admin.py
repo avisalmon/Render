@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from .models import (
+    Badge,
     Circle,
     CircleMember,
     Deal,
@@ -8,8 +9,10 @@ from .models import (
     Job,
     MeetingPlace,
     ModelCall,
+    PointEvent,
     Post,
     Profile,
+    ProfileBadge,
     ReadingLog,
     Report,
     Review,
@@ -107,3 +110,23 @@ class ReadingLogAdmin(admin.ModelAdmin):
     list_display = ["profile", "entry", "status", "updated_at"]
     list_filter = ["status"]
     raw_id_fields = ["profile", "entry"]
+
+
+@admin.register(PointEvent)
+class PointEventAdmin(admin.ModelAdmin):
+    """Any award can be reversed: set reversed_at, never delete the row."""
+
+    list_display = ["created_at", "profile", "kind", "points", "reversed_at"]
+    list_filter = ["kind"]
+    raw_id_fields = ["profile", "deal", "review", "thread", "entry", "reversed_by"]
+
+
+@admin.register(Badge)
+class BadgeAdmin(admin.ModelAdmin):
+    list_display = ["key", "name_he", "name_en"]
+
+
+@admin.register(ProfileBadge)
+class ProfileBadgeAdmin(admin.ModelAdmin):
+    list_display = ["profile", "badge", "earned_at"]
+    raw_id_fields = ["profile"]

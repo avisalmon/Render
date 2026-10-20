@@ -199,7 +199,7 @@ def notifications(request):
     me = request.books_profile
     hub.sweep_lazily()
     items = list(Notification.objects.filter(profile=me)
-                 .select_related("deal__copy__entry", "entry", "copy__entry", "thread", "scan")[:100])
+                 .select_related("deal__copy__entry", "entry", "copy__entry", "thread", "scan", "badge")[:100])
     Notification.objects.filter(profile=me, read_at__isnull=True).update(read_at=timezone.now())
     return render(request, "books/hub/notifications.html", {"items": items})
 

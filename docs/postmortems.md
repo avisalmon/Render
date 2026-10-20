@@ -17,6 +17,23 @@ Newest first.
 
 ---
 
+## PM-19 · 2026-10-20 · BK8 sprint end: a timezone caught before it shipped
+
+**What happened.** Nothing reached production. While writing the streak,
+"today" first used Django's local date; the site runs on UTC, so a reader
+in Israel checking in after midnight but before 2 or 3 in the morning would
+have been credited to the day before, and the week would have turned on the
+wrong night. Caught on writing, by reading `TIME_ZONE` before trusting
+`localdate()`. Fixed: play uses Asia/Jerusalem explicitly for the day, the
+week and the daily caps. The screenshot read against the seed matched.
+
+**Rule.** No new rule: the site already records that it runs on UTC and
+display converts ("Times belong to a place", building_an_app.md). Applied
+to streaks.
+
+Here: books/play.py (ISRAEL)
+BKM: deferred - "times belong to a place" is already in FullStackBKM
+
 ## PM-18 · 2026-10-19 · Avi's scans vanished: a dead thread, no recovery, no sign
 
 **What happened.** Avi photographed several shelves on production. The page

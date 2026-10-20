@@ -12,6 +12,7 @@ from .hub import (
                   ReportViewSet,
                   TransferViewSet,
 )
+from .play import BadgeViewSet, CheckinViewSet, PlayViewSet, PointEventViewSet
 from .viewsets import (
                   BookDetailViewSet,
                   CatalogEntryViewSet,
@@ -61,3 +62,7 @@ router.register("posts", PostViewSet, basename="post")
 router.register("reviews", ReviewViewSet, basename="review")
 router.register("reading", ReadingLogViewSet, basename="reading")
 router.register("people", PeopleViewSet, basename="people")
+router.register("checkins", CheckinViewSet, basename="checkin")
+router.register("points", PointEventViewSet, basename="point")
+router.register("badges", BadgeViewSet, basename="badge")
+router.register("play", PlayViewSet, basename="play")

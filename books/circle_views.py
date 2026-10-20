@@ -83,6 +83,7 @@ def circle_page(request, pk):
         "invite_url": request.build_absolute_uri(reverse("books:circle_join", args=[circle.join_code]))
         if member else "", "kinds": Circle.KINDS, "place_kinds": MeetingPlace.KINDS,
         "error": _err(request, request.GET.get("error") or ""), "joined": request.GET.get("joined"),
+        "board": __import__("books.play", fromlist=["leaderboard"]).leaderboard(circle, me) if member else None,
     })
 
 

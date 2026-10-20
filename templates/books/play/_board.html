@@ -1,0 +1,16 @@
+{% load books_tags %}{% if board.rows %}
+<table class="bk-board">
+  <tbody>
+    {% for r in board.rows %}
+    <tr{% if r.me %} class="is-me"{% endif %}>
+      <td>{{ r.rank }}</td>
+      <td><a class="bk-link-row" href="{% url 'books:person' r.profile.pk %}">{{ r.profile.display_name }}</a></td>
+      <td>{% t "play.points" n=r.points %}</td>
+      <td class="bk-muted">{{ r.streak }} {% t "play.streak_days" n=r.streak %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}<p class="bk-muted">{% t "play.board_none" %}</p>{% endif %}
+{% if board.hidden %}<p class="bk-help">{% t "play.board_hidden" n=board.hidden %}</p>{% endif %}
+{% if not request.books_profile.show_points_public %}<p class="bk-help">{% t "play.board_you_hidden" %} <a href="{% url 'books:settings' %}">{% t "settings" %}</a></p>{% endif %}

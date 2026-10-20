@@ -100,6 +100,9 @@ def start_thread(author, kind, title, body, circle=None, entry=None):
     body = clean_body(body)
     thread = Thread.objects.create(kind=kind, circle=circle, author=author, title=title, entry=entry)
     Post.objects.create(thread=thread, author=author, body=body)
+    from . import play
+
+    play.report_published(thread)
     return thread
 
 
@@ -140,6 +143,9 @@ def delete_post(actor, post):
     thread = post.thread
     first = thread.posts.order_by("created_at").first()
     if first and first.pk == post.pk:
+        from . import play
+
+        play.thread_removed(thread)
         thread.delete()
         return None
     post.delete()
@@ -192,14 +198,22 @@ def set_review(profile, entry, rating, body="", has_spoilers=False):
     body = (body or "").strip()[:4000]
     if body and (PHONE_RE.search(body) or EMAIL_RE.search(body)):
         raise CommunityError("club.err.contact")
-    review, _ = Review.objects.update_or_create(
+    review, created = Review.objects.update_or_create(
         profile=profile, entry=entry,
         defaults={"rating": rating, "body": body, "has_spoilers": bool(has_spoilers), "status": Review.VISIBLE})
+    if created:
+        from . import play
+
+        play.review_written(review)
     return review
 
 
 def delete_review(profile, entry):
-    Review.objects.filter(profile=profile, entry=entry).delete()
+    from . import play
+
+    for review in Review.objects.filter(profile=profile, entry=entry):
+        play.review_removed(review)
+        review.delete()
 
 
 def hide_review(actor, review, hidden=True):
@@ -263,6 +277,10 @@ def public_view(person, viewer):
     if me or person.public_reviews:
         view["reviews"] = list(Review.objects.filter(profile=person, status=Review.VISIBLE).select_related("entry")[:100])
     view["threads"] = list(Thread.objects.filter(author=person, circle__isnull=True).select_related("entry")[:50])
+    if me or person.show_points_public:
+        from . import play
+
+        view["play"] = play.summary(person)
     view["offered"] = Offer.objects.filter(copy__owner=person, is_active=True, copy__visibility=Copy.PUBLIC,
                                            copy__status=Copy.WITH_OWNER).values("copy_id").distinct().count()
     view["completed"] = Deal.objects.filter(Q(owner=person) | Q(requester=person),

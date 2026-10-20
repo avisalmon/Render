@@ -447,8 +447,31 @@ deleted is the author's choice; (4) the reading log and reviews are private
 until each is opened in settings, separately from the profile switch;
 (5) a spoiler review is folded behind a tap, not hidden.
 
-## Epics BK8 to BK13
+## Epic BK8: Play `DONE (dev), 2026-10-20`
 
-Not broken into sprints yet: play, discovery, rare books and the museum,
-tiers and billing, advanced creation, other collections. Each gets its
-sprints when its turn comes, after the pilot has run.
+| ID | Feature | Status |
+| --- | --- | --- |
+| F-BK8.1 | "I read today" on the home page and the play page (minutes optional, undo for today); the streak is computed from check-ins and spent freezes, never stored; a week in a row earns a freeze (two at most), spent on its own on a missed day; the day and week are Israel's (the site runs on UTC) | DONE |
+| F-BK8.2 | Points as a ledger: a handover both confirmed (10 each), an on-time return the owner confirmed (10 to the borrower), a review (3), a book report (10), a book confirmed from a shelf photo (1); daily caps per kind; any row reversible (staff, API and admin), never deleted | DONE |
+| F-BK8.3 | Nothing for farming: one deal pays once; the same book between the same two people pays nothing the second time (lend it again, swap it back); a review, a book report and a confirmed scanned book pay once per book ever, so rewriting or rescanning earns nothing; deleting a review or report reverses its points; check-ins earn no points | DONE |
+| F-BK8.4 | Badges for milestones (first shelf, a hundred books, first lend, ten lent, five on time, five reviews, first report, twelve read, a week and a month in a row, a circle of five), each once, with a notification in the bell | DONE |
+| F-BK8.5 | This week's table on every circle page and on the play page: points this week, the streak; people who keep points private are counted, not named, and always see themselves | DONE |
+| F-BK8.6 | The year in books (`/books/year/`), private: books read, reading days, longest streak, added, lent, borrowed, passed on, received, reviews and average, threads, points, badges | DONE |
+| F-BK8.7 | A public profile shows streak, points and badges only with "show my points and streak" on | DONE |
+| F-BK8.8 | API: check-ins (with a summary), the points ledger (mine; staff all and reverse), badges (staff edit the words, `mine`), play board and year | DONE |
+
+Models: `ReadingCheckin`, `StreakFreeze`, `PointEvent`, `Badge`,
+`ProfileBadge` (approved), plus `StreakFreeze.earned_at`, `PointEvent.entry`,
+`note`, `reversed_at`, `reversed_by` and a `adjustment` kind, `Badge.about_*`,
+and `Notification.badge` (data_model.md section 11; migration 0011).
+Decisions for Avi's ack: (1) the point values above; (2) the week runs Sunday
+to Saturday; (3) a freeze per seven days in a row, at most two held, spent on
+its own; (4) "friends" leaderboards are the circle tables (a circle is the
+cohort); (5) the year in books is private. Found by looking at the screens:
+the home page showed the old "a shelf is waiting" notice under the new
+reminder bar; removed.
+
+## Epics BK9 to BK13
+
+Not broken into sprints yet: discovery, rare books and the museum, tiers
+and billing, advanced creation, other collections.

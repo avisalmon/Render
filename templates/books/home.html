@@ -20,7 +20,11 @@
     {% endif %}
   </div>
   <aside class="bk-aside">
-    {% if open_scan %}<a class="bk-notice" href="{% url 'books:scan' open_scan.pk %}">{% t "home.continue_scan" %}</a>{% endif %}
+    <div class="bk-card bk-card--tight bk-streak-card">
+      <a class="bk-link-row" href="{% url 'books:play' %}"><b class="bk-streak-n">{{ play.streak }}</b> <span>{% t "play.streak_days" n=play.streak %}</span>{% if play.freezes %} <span class="bk-muted">· {% t "play.freezes" n=play.freezes %}</span>{% endif %}</a>
+      {% if play.read_today %}<p class="bk-muted" style="margin: 0">{% t "play.read_today_done" %}</p>
+      {% else %}<form method="post" action="{% url 'books:checkin' %}">{% csrf_token %}<input type="hidden" name="next" value="{% url 'books:home' %}"><button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "play.i_read_today" %}</button></form>{% endif %}
+    </div>
     {% if books_json and books_json != "[]" %}<a class="bk-btn bk-btn--wide" href="{% url 'books:library' %}">{% t "lib.all_books" %}</a>{% endif %}
     <div class="bk-row">
       <a class="bk-btn bk-btn--quiet" href="{% url 'books:library_add' %}">{% t "lib.add" %}</a>

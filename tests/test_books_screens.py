@@ -214,7 +214,17 @@ def build_world():
     community.set_review(rp, a, 5, "הסוף מפתיע.", has_spoilers=True)
     community.log_reading(rp, a, "read")
     community.log_reading(rp, c, "reading")
-    Profile.objects.filter(pk=sp.pk).update(profile_public=True, public_library=True, public_reviews=True)
+    Profile.objects.filter(pk=sp.pk).update(profile_public=True, public_library=True, public_reviews=True,
+                                            show_points_public=True)
+
+    # Play (BK8): a reading streak with a freeze, points, a badge, a board.
+    from datetime import timedelta
+
+    from books import play
+    for i in range(8, 0, -1):
+        play.checkin(rp, day=play.today() - timedelta(days=i))
+    play.book_confirmed(rp, a)
+    play.book_confirmed(sp, c)
     return {"reader": reader, "staff": staff, "fresh": fresh}
 
 
@@ -268,6 +278,9 @@ SCREENS = [
     ("my-reading", "/books/reading/", "reader", "my-reading"),
     ("people", "/books/people/", "reader", "people"),
     ("person", lambda: f"/books/people/{__import__('books.models', fromlist=['Profile']).Profile.objects.get(user__username='shelver').pk}/", "reader", "person"),
+    ("play", "/books/play/", "reader", "play"),
+    ("play-empty", "/books/play/", "staff", "play"),
+    ("year", "/books/year/", "reader", "year"),
     ("person-me", lambda: f"/books/people/{__import__('books.models', fromlist=['Profile']).Profile.objects.get(user__username='reader').pk}/", "reader", "person"),
 ]
 

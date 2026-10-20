@@ -463,3 +463,12 @@ and `ReadingLog` are as approved, plus: `Thread.is_pinned` and
 Phase 3 columns of the approved Report); `Profile.public_library`,
 `public_reading`, `public_reviews`, each an opt-in on its own under the
 profile switch (spec 12.9). Migration 0009.
+
+**BK8 additions (2026-10-20, for Avi's ack).** `ReadingCheckin`,
+`StreakFreeze`, `PointEvent`, `Badge` and `ProfileBadge` are as approved,
+plus: `StreakFreeze.earned_at`; `PointEvent.entry` (the book that earned a
+once-per-book award), `note`, `reversed_at` and `reversed_by` (an award is
+reversed, never deleted) and an `adjustment` kind; the unique (`profile`,
+`kind`, `deal`) applies only when a deal is set; `Badge.about_he` /
+`about_en`; `Notification.badge` and `Notification.scan` (the bell for a
+badge and for a shelf read or failed, migration 0010). Migration 0011.

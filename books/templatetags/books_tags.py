@@ -60,6 +60,9 @@ def notification_text(context, n):
     """One notification in the reader's language, built from its kind."""
     lang = _language(context)
     deal = n.deal
+    if n.badge_id:
+        name = n.badge.name_he if lang == "he" else n.badge.name_en
+        return lookup(f"nk.{n.kind}", lang, title=name, name="", date="")
     if n.scan_id:
         label = n.scan.shelf_label or n.scan.created_at.strftime("%d.%m %H:%M")
         return lookup(f"nk.{n.kind}", lang, title=label, n=n.scan.books_found, name="", date="")

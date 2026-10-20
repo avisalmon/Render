@@ -12,7 +12,7 @@ from .access import books_page, profile_for
 from .auth_views import safe_next
 from .forms import OnboardingForm, SettingsForm
 from .middleware import LANG_SESSION_KEY, THEME_SESSION_KEY, THEMES
-from .models import Profile, ShelfScan
+from .models import Profile
 from .strings import LANGUAGES
 from .strings import text as t
 
@@ -51,10 +51,11 @@ def home(request):
 
     profile = request.books_profile
     rows = shelf.shelf_books(profile)
+    from . import play
+
     return render(request, "books/home.html", {
         "profile": profile, "books_json": json.dumps(rows, ensure_ascii=False), "count": len(rows),
-        "open_scan": ShelfScan.objects.filter(owner=profile, status__in=[ShelfScan.UPLOADED, ShelfScan.READING,
-                                                                          ShelfScan.REVIEW]).first(),
+        "play": play.summary(profile),
     })
 
 

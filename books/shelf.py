@@ -186,6 +186,7 @@ def next_position(profile):
 @transaction.atomic
 def accept(item, entry, visibility, offer_kinds, location_note, edited=False):
     profile = item.scan.owner
+    first_time = item.review_status == ScanItem.PENDING
     left = room_left(profile)
     if left is not None and left <= 0:
         raise CapReached()
@@ -211,6 +212,10 @@ def accept(item, entry, visibility, offer_kinds, location_note, edited=False):
     item.review_status = ScanItem.EDITED if edited else ScanItem.ACCEPTED
     item.save(update_fields=["copy", "review_status"])
     _refresh_scan(item.scan)
+    if first_time:
+        from . import play
+
+        play.book_confirmed(profile, entry)
     return copy
 
 

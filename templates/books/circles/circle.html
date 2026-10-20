@@ -46,6 +46,13 @@
   {% elif only_mine %}<p class="bk-muted">{% t "circle.only_mine" %}</p>
   {% else %}<p class="bk-muted">{% t "circle.no_books" %}</p>{% endif %}
 
+  {% if board %}
+  <section id="board">
+    <h2 class="bk-h2">{% t "play.board_week" %}</h2>
+    {% include "books/play/_board.html" %}
+  </section>
+  {% endif %}
+
   <section class="bk-card" id="invite">
     <h2 class="bk-h2" style="margin-top: 0">{% t "circle.invite_h" %}</h2>
     <p class="bk-help" style="margin-top: 0">{% t "circle.invite_lead" %}</p>

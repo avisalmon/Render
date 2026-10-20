@@ -635,6 +635,7 @@ class Notification(models.Model):
     copy = models.ForeignKey(Copy, on_delete=models.CASCADE, null=True, blank=True, related_name="notifications")
     thread = models.ForeignKey("Thread", on_delete=models.CASCADE, null=True, blank=True, related_name="notifications")
     scan = models.ForeignKey(ShelfScan, on_delete=models.CASCADE, null=True, blank=True, related_name="notifications")
+    badge = models.ForeignKey("Badge", on_delete=models.CASCADE, null=True, blank=True, related_name="notifications")
     read_at = models.DateTimeField(null=True, blank=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -811,3 +812,81 @@ class ReadingLog(models.Model):
     class Meta:
         ordering = ["-updated_at"]
         constraints = [models.UniqueConstraint(fields=["profile", "entry"], name="books_reading_one_per_book")]
+
+
+# ---- play (BK8) ------------------------------------------------------------------------------
+
+class ReadingCheckin(models.Model):
+    """One row per day the person says they read. The streak is computed
+    from these and the freezes, never stored (data model section 6)."""
+
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="checkins")
+    day = models.DateField()
+    minutes = models.PositiveSmallIntegerField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-day"]
+        constraints = [models.UniqueConstraint(fields=["profile", "day"], name="books_checkin_once_a_day")]
+
+
+class StreakFreeze(models.Model):
+    """Earned by a week of reading; spent on a missed day so the streak
+    survives it (the Duolingo freeze, spec 12.5)."""
+
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="freezes")
+    earned_at = models.DateTimeField(auto_now_add=True)
+    used_on = models.DateField(null=True, blank=True, db_index=True)
+
+    class Meta:
+        ordering = ["earned_at"]
+
+
+class PointEvent(models.Model):
+    """Points are a ledger: one row per award, the total is the sum, nothing
+    is overwritten, and any award can be reversed (data model decision)."""
+
+    KINDS = [("handover_confirmed", "handover confirmed"), ("returned_on_time", "returned on time"),
+             ("review", "review"), ("report", "book report"), ("catalog_confirm", "catalogue confirm"),
+             ("adjustment", "adjustment")]
+
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="points")
+    kind = models.CharField(max_length=20, choices=KINDS, db_index=True)
+    points = models.IntegerField()
+    deal = models.ForeignKey("Deal", on_delete=models.SET_NULL, null=True, blank=True, related_name="points")
+    review = models.ForeignKey("Review", on_delete=models.SET_NULL, null=True, blank=True, related_name="points")
+    thread = models.ForeignKey("Thread", on_delete=models.SET_NULL, null=True, blank=True, related_name="points")
+    entry = models.ForeignKey(CatalogEntry, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    note = models.CharField(max_length=200, blank=True)
+    reversed_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    reversed_by = models.ForeignKey(Profile, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [models.UniqueConstraint(fields=["profile", "kind", "deal"], condition=models.Q(deal__isnull=False),
+                                               name="books_points_one_deal_once")]
+
+
+class Badge(models.Model):
+    """A milestone. Created on first award from the definitions in
+    books/play.py; the words live here so they can be edited in admin."""
+
+    key = models.CharField(max_length=40, unique=True)
+    name_he = models.CharField(max_length=80)
+    name_en = models.CharField(max_length=80)
+    about_he = models.CharField(max_length=200, blank=True)
+    about_en = models.CharField(max_length=200, blank=True)
+
+    def __str__(self):
+        return self.key
+
+
+class ProfileBadge(models.Model):
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="badges")
+    badge = models.ForeignKey(Badge, on_delete=models.CASCADE, related_name="holders")
+    earned_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-earned_at"]
+        constraints = [models.UniqueConstraint(fields=["profile", "badge"], name="books_badge_once")]

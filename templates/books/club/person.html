@@ -18,6 +18,15 @@
     {% if rep.reliability is not None %}<span>{% t "rep.reliability" pct=rep.reliability %}</span>{% endif %}
   </p>
 
+  {% if play %}
+  <p class="bk-rep">
+    <span>{% t "play.streak_days" n=play.streak %}: <b>{{ play.streak }}</b></span>
+    <span>{% t "play.points" n=play.points %}</span>
+    {% for pb in play.badges %}<span class="bk-chip-note">{% if request.books_lang == "he" %}{{ pb.badge.name_he }}{% else %}{{ pb.badge.name_en }}{% endif %}</span>{% endfor %}
+    {% if me and not person.show_points_public %}<span class="bk-muted">{% t "person.hidden_part" %}</span>{% endif %}
+  </p>
+  {% endif %}
+
   {% if library or me %}
   <h2 class="bk-h2">{% t "person.library" %}{% if me and not person.public_library %} <span class="bk-muted">{% t "person.hidden_part" %}</span>{% endif %}</h2>
   {% if library %}

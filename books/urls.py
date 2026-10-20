@@ -4,6 +4,7 @@ from . import (
     auth_views,
     catalog_views,
     circle_views,
+    play_views,
     community_views,
     hub_views,
     internal,
@@ -64,6 +65,11 @@ urlpatterns = [
     path("reading/", community_views.my_reading, name="my_reading"),
     path("people/", community_views.people, name="people"),
     path("people/<int:pk>/", community_views.person, name="person"),
+    # Play (BK8).
+    path("play/", play_views.play_page, name="play"),
+    path("play/checkin/", play_views.checkin, name="checkin"),
+    path("year/", play_views.year_page, name="year"),
+    path("year/<int:year>/", play_views.year_page, name="year_of"),
     # My library (BK4).
     path("library/", library_views.library, name="library"),
     path("library/bulk/", library_views.bulk, name="library_bulk"),
