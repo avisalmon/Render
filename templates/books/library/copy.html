@@ -55,6 +55,32 @@
     <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "copy.save" %}</button>
   </form>
 
+  <section id="rare">
+  <h2 class="bk-h2">{% t "rare.h" %}</h2>
+  {% if rare_error %}<p class="bk-error" role="alert">{{ rare_error }}</p>{% endif %}
+  {% if rare_hints and not copy.is_rare_candidate %}
+  <div class="bk-notice">
+    <p style="margin: 0 0 6px">{% t "rare.maybe" %} {% for h in rare_hints %}{% t h %}{% if not forloop.last %} · {% endif %}{% endfor %}</p>
+    <form method="post" action="{% url 'books:copy_rare' copy.pk %}">{% csrf_token %}<input type="hidden" name="action" value="mark"><button type="submit" class="bk-btn bk-btn--small">{% t "rare.mark" %}</button></form>
+  </div>
+  {% endif %}
+  {% if rare_review %}
+    <p class="bk-notice" role="status">{% with key="rare.status_"|add:rare_review.status %}{% t key %}{% endwith %}{% if rare_review.curator_note %}: {{ rare_review.curator_note }}{% endif %}</p>
+    {% for inv in invitations %}{% if inv.consent == "invited" %}<a class="bk-notice" href="{% url 'books:invitation' inv.pk %}">{% t "rare.invited_to" title=inv.exhibit.title_he %}</a>{% endif %}{% endfor %}
+    <form method="post" action="{% url 'books:copy_rare' copy.pk %}">{% csrf_token %}<input type="hidden" name="action" value="withdraw"><button type="submit" class="bk-btn bk-btn--small bk-btn--quiet" data-confirm>{% t "rare.withdraw" %}</button></form>
+  {% elif copy.is_rare_candidate %}
+    <form method="post" action="{% url 'books:copy_rare' copy.pk %}" class="bk-card bk-form">{% csrf_token %}
+      <p class="bk-help" style="margin: 0">{% t "rare.send_help" %}</p>
+      <label class="bk-field">{% t "rare.owner_note" %} <textarea class="bk-input" name="note" rows="2" maxlength="500"></textarea></label>
+      <button type="submit" class="bk-btn bk-btn--primary">{% t "rare.send" %}</button>
+    </form>
+  {% endif %}
+  {% if provenance %}
+  <h3 class="bk-h2" style="font-size: 17px">{% t "rare.provenance" %}</h3>
+  <ul class="bk-plain-list">{% for p in provenance %}<li>{{ p.when|date:"d.m.Y" }} · {% with key="rare.moved_"|add:p.kind %}{% t key %}{% endwith %}{% if p.from %} · {% t "rare.from" name=p.from %}{% endif %}{% if p.to %} · {% t "rare.to" name=p.to %}{% endif %}</li>{% endfor %}</ul>
+  {% endif %}
+  </section>
+
   <h2 class="bk-h2">{% t "copy.photos_h" %}</h2>
   {% if copy.photos.all %}
   <div class="bk-photo-grid">

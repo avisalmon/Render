@@ -1,0 +1,22 @@
+"""Test-wide guards for Books (tests/test_books_*.py only; other apps' tests
+are untouched).
+
+A developer machine may carry a real OPENAI_API_KEY in its environment.
+Books' scan reading, tagging and web lookup would then make real, paid
+calls from tests, and their background threads would outlive a live-server
+test ("database table is locked"). Every Books test therefore starts with no
+key and no background sweep; a test that needs a key sets a fake one and
+replaces the client.
+"""
+
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _books_no_real_model_calls(request, settings):
+    if not request.node.fspath.basename.startswith("test_books"):
+        yield
+        return
+    settings.OPENAI_API_KEY = ""
+    settings.BOOKS_ENRICH_SWEEP = False
+    yield

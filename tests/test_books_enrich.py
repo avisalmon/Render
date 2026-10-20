@@ -161,7 +161,8 @@ def test_a_book_added_to_a_library_is_enriched_in_the_background(client, noa, mo
     assert EntryEnrichment.objects.get(entry=e).status == EntryEnrichment.DONE
 
 
-def test_the_backlog_is_worked_through_from_page_views(client, noa, monkeypatch):
+def test_the_backlog_is_worked_through_from_page_views(client, noa, monkeypatch, settings):
+    settings.BOOKS_ENRICH_SWEEP = True  # off by default in tests (tests/conftest.py)
     for i in range(3):
         bare(f"ספר {i}", "", noa)
     sources_answer(monkeypatch, [])

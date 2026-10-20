@@ -60,6 +60,9 @@ def notification_text(context, n):
     """One notification in the reader's language, built from its kind."""
     lang = _language(context)
     deal = n.deal
+    if n.kind in ("rare.reviewed", "rare.invited"):
+        title = n.copy.entry.title if n.copy_id else ""
+        return lookup(f"nk.{n.kind}", lang, title=title, name="", date="")
     if n.badge_id:
         name = n.badge.name_he if lang == "he" else n.badge.name_en
         return lookup(f"nk.{n.kind}", lang, title=name, name="", date="")

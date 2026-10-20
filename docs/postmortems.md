@@ -17,6 +17,37 @@ Newest first.
 
 ---
 
+## PM-24 · 2026-10-20 · BK10 sprint end: a real key could reach the tests
+
+**What happened.** Nothing reached production. The screen check caught one
+tap target (an exhibition item's title link) and a "database table is
+locked" error when two browser runs overlapped; the second was the test
+environment, not the product. All ten BK10 tests passed first time; they
+were read again for tests that cannot fail (mistake 3) and each one checks
+a status, an exact list or a field that would change if the rule broke.
+The screenshots were read against the seed and matched.
+
+Then the full screen run found two more: the English home test expects the
+test reader's library to be empty, and the new seed gave the reader a
+copy (moved to the staff user); and the automatic enrichment sweep, started
+from page views, ran a thread that was still writing while the live-server
+test tore its database down ("database table is locked", foreign key
+errors). The sweep now has a switch (`BOOKS_ENRICH_SWEEP`), off for the
+browser tests only; its own tests run it inline.
+
+A second lock then appeared on another page: this machine carries a real
+OPENAI_API_KEY in its environment, and Books starts paid work (tagging,
+web lookup) whenever a key exists. Test files were each meant to clear it;
+not all did. No real call showed in the logs, which was luck.
+
+**Rule.** New: one shared fixture (`tests/conftest.py`) blanks paid keys and
+background sweeps for every Books test (mistake 26 here, 34 in
+FullStackBKM). Reinforced: do not run two browser test runs on one SQLite
+test database at once.
+
+Here: docs/building_an_app.md mistake 26; tests/conftest.py
+BKM: FullStackBKM 88c7905
+
 ## PM-23 · 2026-10-20 · Enrichment: one duplicate caught by the tests
 
 **What happened.** Nothing reached production. Building the once-per-book

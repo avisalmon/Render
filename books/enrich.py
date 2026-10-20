@@ -216,6 +216,10 @@ def batch_job(job):
 def sweep_lazily():
     """From ordinary page views, at most every ten minutes: a few waiting
     records in the background (lesson 30: no scheduler to forget)."""
+    from django.conf import settings
+
+    if not getattr(settings, "BOOKS_ENRICH_SWEEP", True):
+        return False
     try:
         if not waiting().exists():
             return False

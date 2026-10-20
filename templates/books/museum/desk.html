@@ -1,0 +1,42 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "rare.desk" %} · {% t "brand" %}{% endblock %}
+{% block screen %}rare-desk{% endblock %}
+{% block content %}
+<div class="bk-narrow">
+  <p><a href="{% url 'books:curate' %}">{% t "curate.title" %}</a> · <a href="{% url 'books:museum' %}">{% t "museum.title" %}</a></p>
+  <h1 class="bk-title">{% t "rare.desk" %}</h1>
+  <p class="bk-lead bk-intro">{% t "rare.desk_lead" %}</p>
+  {% if error %}<p class="bk-error" role="alert">{{ error }}</p>{% endif %}
+
+  <h2 class="bk-h2">{% t "rare.pending" %}</h2>
+  {% for r in pending %}
+  <article class="bk-exhibit-item">
+    <p style="margin: 0"><a href="{% url 'books:catalog_entry' r.copy.entry_id %}"><b>{{ r.copy.entry.title }}</b></a> <span class="bk-muted">· {{ r.copy.entry.creator_names }}{% if r.copy.entry.year %} · {{ r.copy.entry.year }}{% endif %} · {{ r.copy.owner.display_name }}</span></p>
+    {% if r.owner_note %}<p class="bk-exhibit-text" style="margin: 0">{{ r.owner_note }}</p>{% endif %}
+    <div class="bk-exhibit-photos">{% for p in r.copy.photos.all %}<img src="{% url 'books:photo' p.pk %}" alt="{{ r.copy.entry.title }}: {% with key="photo."|add:p.kind %}{% t key %}{% endwith %}" loading="lazy">{% endfor %}</div>
+    <form method="post" class="bk-form">{% csrf_token %}<input type="hidden" name="review" value="{{ r.pk }}">
+      <label class="bk-field">{% t "rare.curator_note" %} <textarea class="bk-input" name="note" rows="2" maxlength="500"></textarea></label>
+      <div class="bk-row">
+        <button type="submit" class="bk-btn bk-btn--primary" name="action" value="confirm">{% t "rare.confirm" %}</button>
+        <button type="submit" class="bk-btn" name="action" value="not_rare">{% t "rare.not_rare" %}</button>
+      </div>
+    </form>
+  </article>
+  {% empty %}<p class="bk-muted">{% t "rare.none" %}</p>{% endfor %}
+
+  <h2 class="bk-h2">{% t "rare.confirmed" %}</h2>
+  {% for r in confirmed %}
+  <div class="bk-exhibit-item">
+    <p style="margin: 0"><b>{{ r.copy.entry.title }}</b> <span class="bk-muted">· {{ r.copy.owner.display_name }}{% if r.curator_note %} · {{ r.curator_note }}{% endif %}</span></p>
+    {% if exhibits %}
+    <form method="post" class="bk-row">{% csrf_token %}<input type="hidden" name="review" value="{{ r.pk }}"><input type="hidden" name="action" value="invite">
+      <label class="bk-field" style="flex: 1 1 200px">{% t "rare.invite" %}
+        <select class="bk-select" name="exhibit">{% for ex in exhibits %}<option value="{{ ex.pk }}">{{ ex.title_he }}</option>{% endfor %}</select>
+      </label>
+      <button type="submit" class="bk-btn" style="align-self: flex-end">{% t "rare.invite" %}</button>
+    </form>
+    {% endif %}
+  </div>
+  {% empty %}<p class="bk-muted">{% t "rare.none" %}</p>{% endfor %}
+</div>
+{% endblock %}

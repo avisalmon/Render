@@ -1,0 +1,52 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% if lang == "en" and ex.title_en %}{{ ex.title_en }}{% else %}{{ ex.title_he }}{% endif %} · {% t "brand" %}{% endblock %}
+{% block screen %}exhibit{% endblock %}
+{% block content %}
+<div class="bk-narrow">
+  <p><a href="{% url 'books:museum' %}">{% t "museum.title" %}</a></p>
+  <h1 class="bk-title">{% if lang == "en" and ex.title_en %}{{ ex.title_en }}{% else %}{{ ex.title_he }}{% endif %}</h1>
+  {% if not ex.is_published %}<p class="bk-status-pill">{% t "museum.draft" %}</p>{% endif %}
+  {% if lang == "en" and ex.text_en %}<p class="bk-exhibit-text">{{ ex.text_en }}</p>{% elif ex.text_he %}<p class="bk-exhibit-text">{{ ex.text_he }}</p>{% endif %}
+
+  {% for r in rows %}
+  <article class="bk-exhibit-item">
+    <h2 class="bk-h2" style="margin: 0"><a href="{% url 'books:catalog_entry' r.item.entry_id %}">{{ r.item.entry.title }}</a></h2>
+    <p class="bk-muted" style="margin: 0">{{ r.item.entry.creator_names }}{% if r.item.entry.year %} · {{ r.item.entry.year }}{% endif %} · {% if r.item.show_owner_name %}{% t "museum.from_name" name=r.item.copy.owner.display_name %}{% else %}{% t "museum.from_member" %}{% endif %}</p>
+    {% if r.photos %}<div class="bk-exhibit-photos">{% for p in r.photos %}<img src="{% url 'books:photo' p.pk %}" alt="{{ r.item.entry.title }}: {% with key="photo."|add:p.kind %}{% t key %}{% endwith %}" loading="lazy">{% endfor %}</div>{% endif %}
+    {% if r.item.note %}<p class="bk-exhibit-text" style="margin: 0">{{ r.item.note }}</p>{% endif %}
+    {% if r.provenance %}<p class="bk-muted" style="margin: 0">{% t "rare.provenance" %}: {% for p in r.provenance %}{{ p.when|date:"Y" }} {% with key="rare.moved_"|add:p.kind %}{% t key %}{% endwith %}{% if not forloop.last %} · {% endif %}{% endfor %}</p>{% endif %}
+    <p class="bk-kicker" style="margin: 0">{% t "museum.rights" %}: {{ r.rights }}</p>
+  </article>
+  {% empty %}<p class="bk-muted">{% t "museum.no_items" %}</p>{% endfor %}
+
+  {% if staff %}
+  <section class="bk-card" style="margin-top: 18px">
+    <div class="bk-row">
+      <form method="post">{% csrf_token %}<input type="hidden" name="action" value="{% if ex.is_published %}unpublish{% else %}publish{% endif %}"><button type="submit" class="bk-btn{% if not ex.is_published %} bk-btn--primary{% endif %}">{% if ex.is_published %}{% t "museum.unpublish" %}{% else %}{% t "museum.publish" %}{% endif %}</button></form>
+    </div>
+    <h2 class="bk-h2">{% t "museum.items_h" %}</h2>
+    {% for i in all_items %}
+    <form method="post" class="bk-form" style="padding: 10px 0; border-bottom: 1px solid var(--bk-line)">{% csrf_token %}<input type="hidden" name="item" value="{{ i.pk }}">
+      <p style="margin: 0"><b>{{ i.copy.entry.title }}</b> · <span class="bk-muted">{{ i.copy.owner.display_name }} · {% with key="museum.consent_"|add:i.consent %}{% t key %}{% endwith %}</span></p>
+      <label class="bk-field">{% t "museum.note" %} <textarea class="bk-input" name="note" rows="2">{{ i.note }}</textarea></label>
+      <label class="bk-field">{% t "museum.rights" %} <input class="bk-input" name="rights" maxlength="300" value="{{ i.rights_statement }}"></label>
+      <div class="bk-row">
+        <button type="submit" class="bk-btn bk-btn--small" name="action" value="item">{% t "museum.save" %}</button>
+        <button type="submit" class="bk-btn bk-btn--small bk-btn--quiet" name="action" value="remove" data-confirm>{% t "museum.remove" %}</button>
+      </div>
+    </form>
+    {% empty %}<p class="bk-muted">{% t "rare.none" %}</p>{% endfor %}
+    <details class="bk-more">
+      <summary>{% t "museum.save" %}: {% t "museum.title_he" %}</summary>
+      <form method="post" class="bk-form">{% csrf_token %}<input type="hidden" name="action" value="edit">
+        <label class="bk-field">{% t "museum.title_he" %} <input class="bk-input" name="title_he" maxlength="160" value="{{ ex.title_he }}" required></label>
+        <label class="bk-field">{% t "museum.title_en" %} <input class="bk-input" name="title_en" maxlength="160" value="{{ ex.title_en }}" dir="ltr"></label>
+        <label class="bk-field">{% t "museum.text_he" %} <textarea class="bk-input" name="text_he" rows="4">{{ ex.text_he }}</textarea></label>
+        <label class="bk-field">{% t "museum.text_en" %} <textarea class="bk-input" name="text_en" rows="4" dir="ltr">{{ ex.text_en }}</textarea></label>
+        <button type="submit" class="bk-btn">{% t "museum.save" %}</button>
+      </form>
+    </details>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

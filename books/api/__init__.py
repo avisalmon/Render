@@ -13,6 +13,7 @@ from .hub import (
                   ReportViewSet,
                   TransferViewSet,
 )
+from .museum import ExhibitItemViewSet, ExhibitViewSet, RareReviewViewSet
 from .play import BadgeViewSet, CheckinViewSet, PlayViewSet, PointEventViewSet
 from .viewsets import (
                   BookDetailViewSet,
@@ -68,3 +69,6 @@ router.register("points", PointEventViewSet, basename="point")
 router.register("badges", BadgeViewSet, basename="badge")
 router.register("play", PlayViewSet, basename="play")
 router.register("discover", DiscoverViewSet, basename="discover")
+router.register("rare-reviews", RareReviewViewSet, basename="rare-review")
+router.register("exhibits", ExhibitViewSet, basename="exhibit")
+router.register("exhibit-items", ExhibitItemViewSet, basename="exhibit-item")

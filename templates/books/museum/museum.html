@@ -1,0 +1,50 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "museum.title" %} · {% t "brand" %}{% endblock %}
+{% block screen %}museum{% endblock %}
+{% block content %}
+<div class="bk-narrow">
+  <div class="bk-pagehead">
+    <h1 class="bk-title">{% t "museum.title" %}</h1>
+    {% if staff %}<a class="bk-btn bk-btn--small" href="{% url 'books:rare_desk' %}">{% t "rare.desk" %}</a>{% endif %}
+  </div>
+  <p class="bk-lead bk-intro">{% t "museum.lead" %}</p>
+  {% if error %}<p class="bk-error" role="alert">{{ error }}</p>{% endif %}
+
+  {% if invitations %}
+  <h2 class="bk-h2">{% t "museum.invitations" %}</h2>
+  <ul class="bk-entry-list">
+    {% for inv in invitations %}
+    <li class="bk-entry-row"><a class="bk-entry-link" href="{% url 'books:invitation' inv.pk %}">
+      <span class="bk-entry-text"><span class="bk-entry-title">{{ inv.copy.entry.title }}</span><span class="bk-muted">{{ inv.exhibit.title_he }}</span></span>
+    </a></li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if exhibits %}
+  <ul class="bk-entry-list">
+    {% for ex in exhibits %}
+    <li class="bk-entry-row"><a class="bk-entry-link" href="{% url 'books:exhibit' ex.pk %}">
+      <span class="bk-entry-text">
+        <span class="bk-entry-title">{% if lang == "en" and ex.title_en %}{{ ex.title_en }}{% else %}{{ ex.title_he }}{% endif %}</span>
+        <span class="bk-muted">{% if ex.is_published %}{{ ex.published_at|date:"d.m.Y" }}{% else %}{% t "museum.draft" %}{% endif %}</span>
+      </span>
+    </a></li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="bk-lead">{% t "museum.none" %}</p>{% endif %}
+
+  {% if staff %}
+  <details class="bk-more">
+    <summary>{% t "museum.new" %}</summary>
+    <form method="post" class="bk-card bk-form">{% csrf_token %}
+      <label class="bk-field">{% t "museum.title_he" %} <input class="bk-input" name="title_he" maxlength="160" required></label>
+      <label class="bk-field">{% t "museum.title_en" %} <input class="bk-input" name="title_en" maxlength="160" dir="ltr"></label>
+      <label class="bk-field">{% t "museum.text_he" %} <textarea class="bk-input" name="text_he" rows="4"></textarea></label>
+      <label class="bk-field">{% t "museum.text_en" %} <textarea class="bk-input" name="text_en" rows="4" dir="ltr"></textarea></label>
+      <button type="submit" class="bk-btn bk-btn--primary">{% t "museum.create" %}</button>
+    </form>
+  </details>
+  {% endif %}
+</div>
+{% endblock %}

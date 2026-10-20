@@ -236,6 +236,36 @@ def build_world():
     catalog.set_creators(hobbit, ["J.R.R. Tolkien"])
     hobbit.tags.add(*Tag.objects.filter(key__in=["fantasy", "classics", "hopeful"]))
     discover.set_survey(rp, ["classics", "fantasy", "emotional"], ["thriller"])
+
+    # Rare books and the museum (BK10): an old signed copy of the shelver's,
+    # confirmed by a curator, accepted into a published exhibition; another
+    # waiting on the curator's desk; an invitation the reader has not answered.
+    from books import rare
+    from books.models import CopyPhoto
+    staff_p = Profile.objects.get(user=staff)
+
+    def photo_for(copy, kind):
+        buf = _io.BytesIO()
+        _Image.new("RGB", (300, 400), (190, 170, 140)).save(buf, format="JPEG")
+        ph = CopyPhoto(copy=copy, kind=kind)
+        ph.image.save(f"museum-{copy.pk}-{kind}.jpg", ContentFile(buf.getvalue()), save=True)
+
+    hasamba = catalog.CatalogEntry.objects.create(collection_type=catalog.book_type(), title="חסמב״ה", year=1950)
+    catalog.set_creators(hasamba, ["יגאל מוסינזון"])
+    signed = Copy.objects.create(owner=sp, entry=hasamba, notes="חתום על ידי המחבר", position=50)
+    photo_for(signed, "signed")
+    review = rare.send_for_review(sp, signed, "חתימה של המחבר בעמוד הראשון")
+    rare.decide(staff_p, review, True, "חתימה מקורית, מהדורה ראשונה")
+    ex = rare.new_exhibit(staff_p, "חתימות של סופרים", "Authors' signatures", "עותקים חתומים מספריות החברים.")
+    item = rare.invite(staff_p, ex, signed, "הקדשה בכתב ידו של המחבר.")
+    rare.answer(sp, item, True, show_name=True, show_photos=True)
+    rare.publish(staff_p, ex)
+    old = catalog.CatalogEntry.objects.create(collection_type=catalog.book_type(), title="ספר ישן מאוד", year=1938)
+    # The staff member's own copy (the reader's home must stay empty for the
+    # empty-home screens).
+    waiting = Copy.objects.create(owner=staff_p, entry=old, position=60)
+    photo_for(waiting, "copyright_page")
+    rare.send_for_review(staff_p, waiting, "נראה לי מהדורה ראשונה")
     return {"reader": reader, "staff": staff, "fresh": fresh}
 
 
@@ -296,8 +326,23 @@ SCREENS = [
     ("discover-empty", "/books/discover/", "staff", "discover"),
     ("taste", "/books/taste/", "reader", "taste"),
     ("taste-first", "/books/taste/?first=1", "staff", "taste"),
+    ("museum", "/books/museum/", "reader", "museum"),
+    ("museum-staff", "/books/museum/", "staff", "museum"),
+    ("exhibit", lambda: f"/books/museum/{__import__('books.models', fromlist=['Exhibit']).Exhibit.objects.get().pk}/", "reader", "exhibit"),
+    ("exhibit-staff", lambda: f"/books/museum/{__import__('books.models', fromlist=['Exhibit']).Exhibit.objects.get().pk}/", "staff", "exhibit"),
+    ("rare-desk", "/books/curate/rare/", "staff", "rare-desk"),
+    ("copy-rare", lambda: f"/books/copy/{__import__('books.models', fromlist=['Copy']).Copy.objects.get(entry__title='חסמב״ה').pk}/", "shelver", "copy"),
+    ("copy-rare-waiting", lambda: f"/books/copy/{__import__('books.models', fromlist=['Copy']).Copy.objects.get(entry__title='ספר ישן מאוד').pk}/", "staff", "copy"),
     ("person-me", lambda: f"/books/people/{__import__('books.models', fromlist=['Profile']).Profile.objects.get(user__username='reader').pk}/", "reader", "person"),
 ]
+
+
+@pytest.fixture(autouse=True)
+def _no_background_sweeps(settings):
+    # The enrichment sweep starts a thread from page views; in a live-server
+    # test it would still be writing while the test database is torn down
+    # ("database table is locked", foreign key errors). Its own tests cover it.
+    settings.BOOKS_ENRICH_SWEEP = False
 
 
 @pytest.fixture(scope="module")

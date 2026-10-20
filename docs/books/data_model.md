@@ -493,3 +493,13 @@ one per record, the mark that it was enriched so it never is twice:
 `entry` (one-to-one), `status` done / partial / not_found, `filled` (the
 fields that were blank and are now filled), `sources`, `used_web`,
 `cost_usd`, `note`, `enriched_at`. Migration 0014.
+
+**BK10 additions (2026-10-20, for Avi's ack).** `Exhibit` as approved with
+`title_he`/`title_en`, `text_he`/`text_en` and `published_at`.
+`ExhibitItem` as approved plus the owner's answer: `consent` invited /
+accepted / declined, `show_owner_name`, `show_photos` (both off unless the
+owner chooses), `position`, `answered_at`; unique (`exhibit`, `copy`).
+`RareReview` is new: one per copy, `status` pending / confirmed / not_rare,
+`owner_note`, `curator_note`, `reviewed_by`, timestamps; sending one is the
+owner's consent for curators to see the copy's photos. No value or price
+field anywhere (spec 12.8). `Notification.exhibit_item`. Migration 0015.

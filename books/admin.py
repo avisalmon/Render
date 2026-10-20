@@ -7,6 +7,8 @@ from .models import (
     Deal,
     EntryEnrichment,
     EntryTagging,
+    Exhibit,
+    ExhibitItem,
     Feedback,
     Job,
     MeetingPlace,
@@ -15,6 +17,7 @@ from .models import (
     Post,
     Profile,
     ProfileBadge,
+    RareReview,
     ReadingLog,
     Report,
     Review,
@@ -161,3 +164,23 @@ class EntryEnrichmentAdmin(admin.ModelAdmin):
     list_display = ["entry", "status", "used_web", "cost_usd", "enriched_at"]
     list_filter = ["status", "used_web"]
     raw_id_fields = ["entry"]
+
+
+@admin.register(RareReview)
+class RareReviewAdmin(admin.ModelAdmin):
+    list_display = ["copy", "status", "reviewed_by", "created_at"]
+    list_filter = ["status"]
+    raw_id_fields = ["copy", "reviewed_by"]
+
+
+class ExhibitItemInline(admin.TabularInline):
+    model = ExhibitItem
+    extra = 0
+    raw_id_fields = ["copy", "entry"]
+
+
+@admin.register(Exhibit)
+class ExhibitAdmin(admin.ModelAdmin):
+    list_display = ["title_he", "is_published", "published_at", "curator"]
+    raw_id_fields = ["curator"]
+    inlines = [ExhibitItemInline]

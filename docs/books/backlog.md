@@ -530,7 +530,29 @@ skipped; (5) tagging is not run over the whole catalogue on deploy, only as
 books reach libraries and on request. Found by looking at the screens: the
 survey offered only the top-level genres (PM-20).
 
-## Epics BK10 to BK13
+## Epic BK10: Rare books and the museum `DONE (dev), 2026-10-20`
 
-Not broken into sprints yet: rare books and the museum, tiers and billing,
-advanced creation, other collections.
+| ID | Feature | Status |
+| --- | --- | --- |
+| F-BK10.1 | Hints on a copy's page, for its owner only: published before 1966, "first edition" wording, a signature or inscription in the notes; a hint marks nothing, one tap does | DONE |
+| F-BK10.2 | Sending to the curators: needs a photo of the copyright page or the signature; sending is consent for curators to see that copy's photos; the owner can withdraw (it leaves every exhibition too) | DONE |
+| F-BK10.3 | The rare desk (`/books/curate/rare/`, staff): pending copies with the owner's note and photos, "special" or "not rare" with words of what was seen; never a value; the owner is told in the bell | DONE |
+| F-BK10.4 | Provenance: a copy's changes of hands from its transfers, names only of people whose profile is public | DONE |
+| F-BK10.5 | The museum (`/books/museum/`): curators write exhibitions in Hebrew and English, invite confirmed copies, publish; the owner answers an invitation and chooses whether their name and their photos are shown; nothing shows before they agree; rights statement per item | DONE |
+| F-BK10.6 | A copy's photos are served by one rule (`rare.can_see_photo`): the owner, curators of a copy sent for review, visitors of a published exhibition the owner agreed to with photos | DONE |
+| F-BK10.7 | API: rare reviews (send, withdraw, decide), exhibits (staff write, publish, items), exhibit items (invite, answer); admin | DONE |
+
+Models: `Exhibit`, `ExhibitItem` (approved, with `title`/`text` in two
+languages, `published_at`, and on the item the owner's `consent`,
+`show_owner_name`, `show_photos`, `position`, `answered_at`), `RareReview`
+(new) and `Notification.exhibit_item`; migration 0015. Decisions for Avi's
+ack: (1) the 1966 line is spec 12.8's; (2) staff are the curators until a
+curator role exists; (3) the museum is for signed-in members like the rest
+of Books; (4) only a copy a curator confirmed can be invited; (5) the
+owner's name and photos are off unless they choose them. Found by the
+screen check: the item title link in an exhibition was too small to tap.
+
+## Epics BK11 to BK13
+
+Not broken into sprints yet: tiers and billing, advanced creation, other
+collections.

@@ -747,3 +747,16 @@ main action as an icon in the page head, the rest in a "more" menu
 opens on tap and stays open when a filter is active (`bk-filterbox`); list
 rows of two lines, not cards; explaining sentences hidden under 700px
 (`bk-intro`).
+
+### 26. A real key in the developer's environment reaches the tests
+
+This machine has a real `OPENAI_API_KEY` in its environment, and Books
+turns its paid features on whenever a key exists. Each Books test file was
+meant to clear it; the ones that did not could make real, billed calls, and
+the threads those features start outlived live-server tests and locked the
+test database (found at BK10's sprint end). No real call was found in the
+logs, which was luck.
+
+**The rule.** One shared fixture (`tests/conftest.py`) blanks the key and
+switches off background sweeps for every `test_books_*` test; a test that
+needs a key sets a fake one and replaces the client.

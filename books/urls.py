@@ -7,6 +7,7 @@ from . import (
     play_views,
     community_views,
     discover_views,
+    museum_views,
     hub_views,
     internal,
     library_views,
@@ -69,6 +70,13 @@ urlpatterns = [
     # Discovery (BK9).
     path("discover/", discover_views.discover_page, name="discover"),
     path("taste/", discover_views.taste_page, name="taste"),
+    # Rare books and the museum (BK10).
+    path("museum/", museum_views.museum, name="museum"),
+    path("museum/<int:pk>/", museum_views.exhibit, name="exhibit"),
+    path("museum/invitation/<int:pk>/", museum_views.invitation, name="invitation"),
+    path("curate/rare/", museum_views.rare_desk, name="rare_desk"),
+    path("copy/<int:pk>/rare/", museum_views.copy_rare, name="copy_rare"),
+    path("photo/<int:pk>.jpg", museum_views.photo, name="photo"),
     # Play (BK8).
     path("play/", play_views.play_page, name="play"),
     path("play/checkin/", play_views.checkin, name="checkin"),

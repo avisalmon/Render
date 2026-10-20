@@ -598,3 +598,10 @@ details.bk-filterbox .bk-filter { margin-bottom: 0; }
 .bk-entry-list .bk-entry-text > :nth-child(n+4) { grid-column: 1 / -1; }
 .bk-entry-list .bk-entry-link { min-height: 48px; padding: 5px 2px; }
 .bk-entry-list .bk-entry-cover { width: 28px; height: 38px; }
+
+/* ---- the museum (BK10) -------------------------------------------------------- */
+.bk-exhibit-item { display: grid; gap: 8px; padding: 14px 0; border-bottom: 1px solid var(--bk-line); }
+.bk-exhibit-photos { display: flex; gap: 8px; overflow-x: auto; }
+.bk-exhibit-photos img { height: 180px; width: auto; border-radius: var(--bk-radius); border: 1px solid var(--bk-line); }
+.bk-exhibit-text { white-space: pre-wrap; max-width: 680px; }
+.bk-exhibit-item h2 a { display: inline-flex; align-items: center; min-height: 44px; }

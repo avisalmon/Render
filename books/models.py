@@ -636,6 +636,8 @@ class Notification(models.Model):
     thread = models.ForeignKey("Thread", on_delete=models.CASCADE, null=True, blank=True, related_name="notifications")
     scan = models.ForeignKey(ShelfScan, on_delete=models.CASCADE, null=True, blank=True, related_name="notifications")
     badge = models.ForeignKey("Badge", on_delete=models.CASCADE, null=True, blank=True, related_name="notifications")
+    exhibit_item = models.ForeignKey("ExhibitItem", on_delete=models.CASCADE, null=True, blank=True,
+                                     related_name="notifications")
     read_at = models.DateTimeField(null=True, blank=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -965,3 +967,73 @@ class EntryEnrichment(models.Model):
 
     class Meta:
         ordering = ["-enriched_at"]
+
+
+# ---- rare books and the museum (BK10) ----------------------------------------------------------
+
+class RareReview(models.Model):
+    """An owner asks the curators to look at a copy they think is special.
+    Sending it is consent for curators to see that copy's photos. Books
+    never puts a value on anything (spec 12.8): the outcome is words."""
+
+    PENDING, CONFIRMED, NOT_RARE = "pending", "confirmed", "not_rare"
+    STATUSES = [(PENDING, "pending"), (CONFIRMED, "confirmed special"), (NOT_RARE, "not rare")]
+
+    copy = models.OneToOneField(Copy, on_delete=models.CASCADE, related_name="rare_review")
+    status = models.CharField(max_length=10, choices=STATUSES, default=PENDING, db_index=True)
+    owner_note = models.CharField(max_length=500, blank=True)
+    curator_note = models.CharField(max_length=500, blank=True)
+    reviewed_by = models.ForeignKey(Profile, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    created_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+
+class Exhibit(models.Model):
+    """A curated exhibition in the museum (data model section 6)."""
+
+    title_he = models.CharField(max_length=160)
+    title_en = models.CharField(max_length=160, blank=True)
+    text_he = models.TextField(blank=True)
+    text_en = models.TextField(blank=True)
+    curator = models.ForeignKey(Profile, on_delete=models.SET_NULL, null=True, related_name="exhibits")
+    is_published = models.BooleanField(default=False, db_index=True)
+    published_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-published_at", "-created_at"]
+
+    def __str__(self):
+        return self.title_he
+
+    def title(self, lang):
+        return self.title_en if lang == "en" and self.title_en else self.title_he
+
+    def text(self, lang):
+        return self.text_en if lang == "en" and self.text_en else self.text_he
+
+
+class ExhibitItem(models.Model):
+    """One copy in an exhibition. Shown only once its owner agreed, and with
+    their name only if they chose that (spec BK10: the owner decides)."""
+
+    INVITED, ACCEPTED, DECLINED = "invited", "accepted", "declined"
+    CONSENTS = [(INVITED, "invited"), (ACCEPTED, "accepted"), (DECLINED, "declined")]
+
+    exhibit = models.ForeignKey(Exhibit, on_delete=models.CASCADE, related_name="items")
+    copy = models.ForeignKey(Copy, on_delete=models.CASCADE, null=True, blank=True, related_name="exhibit_items")
+    entry = models.ForeignKey(CatalogEntry, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    note = models.TextField(blank=True, help_text="the curator's words about this item")
+    rights_statement = models.CharField(max_length=300, blank=True)
+    position = models.PositiveSmallIntegerField(default=0)
+    consent = models.CharField(max_length=10, choices=CONSENTS, default=INVITED, db_index=True)
+    show_owner_name = models.BooleanField(default=False)
+    show_photos = models.BooleanField(default=True)
+    answered_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["position", "pk"]
+        constraints = [models.UniqueConstraint(fields=["exhibit", "copy"], name="books_exhibit_copy_once")]
